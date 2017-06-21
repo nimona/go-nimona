@@ -36,7 +36,7 @@ func (rt *RoutingTableSimple) Remove(peer Peer) error {
 
 // Get ...
 func (rt *RoutingTableSimple) Get(id ID) (Peer, error) {
-	rt.mx.RLock()
+	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
 	pr, ok := rt.store[id]
@@ -58,4 +58,10 @@ func (rt *RoutingTableSimple) Update(peer Peer) error {
 	rt.store[peer.ID] = &peer
 
 	return nil
+}
+
+func NewSimpleRoutingTable() *RoutingTableSimple {
+	return &RoutingTableSimple{
+		store: make(map[ID]*Peer),
+	}
 }

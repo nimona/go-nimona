@@ -2,10 +2,10 @@ package dht
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type DHTNode struct {
@@ -21,25 +21,27 @@ type DHTNode struct {
 	lc map[string]chan []Peer
 }
 
-func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable) *DHTNode {
+func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, addr string) *DHTNode {
 	nt := &UDPNet{}
 	dhtNode := &DHTNode{
 		bps: bps,
 		lp:  localPeer,
 		rt:  rt,
 		nt:  nt,
+		lc:  make(map[string]chan []Peer),
 	}
-
-	nt.StartServer(dhtNode.handleConnection)
+	log.WithField("address", addr).Info("Server starting...")
+	go nt.StartServer(addr, dhtNode.handleConnection)
 	return dhtNode
 }
 
 func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 	peer, err := nd.rt.Get(id)
-
+	log.Info("Searching for peer with id: ", id)
 	if err == ErrPeerNotFound {
 		nc, err := uuid.NewUUID()
 		if err != nil {
+			log.WithField("error", err).Error("Failed to generate uuid")
 			return []Peer{}, err
 		}
 
@@ -49,49 +51,54 @@ func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 			OriginPeer:  *nd.lp,
 			QueryPeerID: id,
 		}
-
 		for _, bootPeer := range nd.bps {
 			for _, addr := range bootPeer.Address {
-				nd.nt.SendMessage(*msg, addr)
+				i, err := nd.nt.SendMessage(*msg, addr)
+				if err != nil {
+					log.WithField("error", err).Error("Failed to send message")
+				}
+				log.Info("Sent message: ", i)
 			}
 		}
 
-		nd.lc[nc.String()] = make(chan []Peer)
-		//TODO:  Wait for response in the channel
-
-		return []Peer{peer}, nil
+		result := make(chan []Peer)
+		nd.lc[nc.String()] = result
+		// timeout to wait for response
+		return <-result, nil
 	}
 	if err != nil {
+		log.WithField("error", err).Error("Failed to find peer")
 		return []Peer{}, err
 	}
-
 	return []Peer{peer}, nil
 }
 
 func (nd *DHTNode) handleConnection(conn net.Conn) {
 	for {
+		// TODO: https://golang.org/pkg/bufio/#Reader.ReadLine
 		buffer := make([]byte, 1024)
-		i, err := conn.Read(buffer)
+		_, err := conn.Read(buffer)
 		if err != nil {
+			log.WithField("error", err).Error("Failed to read from comm")
 			return
 		}
 
-		fmt.Println("i: ", i, "\tbuffer size: ", len(buffer))
+		log.Info("Message received")
 
 		msg := &Message{}
 		err = json.Unmarshal(buffer, msg)
 		if err != nil {
-			fmt.Println(err)
+			log.WithField("error", err).Error("Failed to unmarshall json")
 		}
 
 		// Check if originator is localpeer and nonce exists in local memory
 		switch msg.Type {
 		case PING:
-			fmt.Println(msg.OriginPeer.ID)
+			log.Info(msg.OriginPeer.ID)
 		case FIND_NODE:
-			fmt.Println(msg.OriginPeer.ID)
+			log.Info(msg.OriginPeer.ID)
 		default:
-			fmt.Println("Call type not implemented")
+			log.Info("Call type not implemented")
 		}
 	}
 }
