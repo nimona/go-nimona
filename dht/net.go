@@ -5,7 +5,7 @@ import (
 )
 
 type Net interface {
-	StartServer(func(net.Conn)) error
+	StartServer(address string, callback func(net.Conn)) error
 	SendMessage(msg Message, address string) (int, error)
 }
 
