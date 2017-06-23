@@ -41,7 +41,7 @@ func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 	if err == ErrPeerNotFound {
 		nc, err := uuid.NewUUID()
 		if err != nil {
-			log.WithField("error", err).Error("Failed to generate uuid")
+			log.WithError(err).Error("Failed to generate uuid")
 			return []Peer{}, err
 		}
 
@@ -55,7 +55,7 @@ func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 			for _, addr := range bootPeer.Address {
 				i, err := nd.nt.SendMessage(*msg, addr)
 				if err != nil {
-					log.WithField("error", err).Error("Failed to send message")
+					log.WithError(err).Error("Failed to send message")
 				}
 				log.Info("Sent message: ", i)
 			}
@@ -67,7 +67,7 @@ func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 		return <-result, nil
 	}
 	if err != nil {
-		log.WithField("error", err).Error("Failed to find peer")
+		log.WithError(err).Error("Failed to find peer")
 		return []Peer{}, err
 	}
 	return []Peer{peer}, nil
@@ -79,7 +79,7 @@ func (nd *DHTNode) handleConnection(conn net.Conn) {
 		buffer := make([]byte, 1024)
 		_, err := conn.Read(buffer)
 		if err != nil {
-			log.WithField("error", err).Error("Failed to read from comm")
+			log.WithError(err).Error("Failed to read from comm")
 			return
 		}
 
@@ -88,7 +88,7 @@ func (nd *DHTNode) handleConnection(conn net.Conn) {
 		msg := &Message{}
 		err = json.Unmarshal(buffer, msg)
 		if err != nil {
-			log.WithField("error", err).Error("Failed to unmarshall json")
+			log.WithError(err).Error("Failed to unmarshall json")
 		}
 
 		// Check if originator is localpeer and nonce exists in local memory
