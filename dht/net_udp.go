@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net"
 
+	"encoding/binary"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +51,12 @@ func (n *UDPNet) SendMessage(msg Message, addr string) (int, error) {
 		log.WithError(err).Error("Could not marshall json")
 		return 0, err
 	}
-	i, err := conn.Write([]byte(msgm))
+
+	buf := make([]byte, 1024)
+	ilen := binary.PutUvarint(buf, uint64(len(msgm)))
+	copy(buf[ilen:], msgm)
+
+	i, err := conn.Write(buf)
 	if err != nil {
 		log.WithError(err).Error("Could not write to conn")
 		return 0, err

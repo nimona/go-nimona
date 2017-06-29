@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"net"
 
@@ -51,6 +52,7 @@ func (nd *DHTNode) Find(id ID) ([]Peer, error) {
 			OriginPeer:  *nd.lp,
 			QueryPeerID: id,
 		}
+
 		for _, bootPeer := range nd.bps {
 			for _, addr := range bootPeer.Address {
 				i, err := nd.nt.SendMessage(*msg, addr)
@@ -86,7 +88,8 @@ func (nd *DHTNode) handleConnection(conn net.Conn) {
 		log.Info("Message received")
 
 		msg := &Message{}
-		err = json.Unmarshal(buffer, msg)
+		buflen, uvlen := binary.Uvarint(buffer)
+		err = json.Unmarshal(buffer[uvlen:uvlen+int(buflen)], msg)
 		if err != nil {
 			log.WithError(err).Error("Failed to unmarshall json")
 		}
@@ -94,9 +97,9 @@ func (nd *DHTNode) handleConnection(conn net.Conn) {
 		// Check if originator is localpeer and nonce exists in local memory
 		switch msg.Type {
 		case PING:
-			log.Info(msg.OriginPeer.ID)
+			log.WithField("Type", "PING").Info(msg.OriginPeer.ID)
 		case FIND_NODE:
-			log.Info(msg.OriginPeer.ID)
+			log.WithField("Type", "FIND_NODE").Info(msg.OriginPeer.ID)
 		default:
 			log.Info("Call type not implemented")
 		}
