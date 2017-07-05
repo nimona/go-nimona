@@ -32,6 +32,8 @@ func (n *UDPNet) StartServer(addr string, cb func(net.Conn)) error {
 	return nil
 }
 
+// TODO: func ReceiveMessage()
+
 func (n *UDPNet) SendMessage(msg Message, addr string) (int, error) {
 	saddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {

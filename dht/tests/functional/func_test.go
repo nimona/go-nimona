@@ -1,6 +1,7 @@
 package functionaltests
 
 import (
+	"context"
 	"testing"
 
 	dht "github.com/nimona/go-nimona-kad-dht"
@@ -32,7 +33,9 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 
 func TestServerSendReceiveMessage(t *testing.T) {
 	n1, _, _ := setupTest()
-	peers, err := n1.Find("a3")
+	ctx := context.Background()
+
+	peers, err := n1.Find(ctx, "a3")
 	if err != nil {
 		log.Error(err)
 		t.Fail()
