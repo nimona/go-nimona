@@ -5,4 +5,5 @@ type RoutingTable interface {
 	Remove(Peer) error
 	Update(Peer) error
 	Get(ID) (Peer, error)
+	GetPeerIDs() ([]ID, error)
 }
