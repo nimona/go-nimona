@@ -60,6 +60,16 @@ func (rt *RoutingTableSimple) Update(peer Peer) error {
 	return nil
 }
 
+func (rt *RoutingTableSimple) GetPeerIDs() ([]ID, error) {
+	rt.mx.Lock()
+	defer rt.mx.Unlock()
+	ids := make([]ID, len(rt.store))
+	for _, peer := range rt.store {
+		ids = append(ids, peer.ID)
+	}
+	return ids, nil
+}
+
 func NewSimpleRoutingTable() *RoutingTableSimple {
 	return &RoutingTableSimple{
 		store: make(map[ID]*Peer),
