@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"net"
+	"sort"
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -123,26 +124,6 @@ func (nd *DHTNode) findReceived(msg *Message) {
 	// find peers with smallest distance in local store and send them back
 }
 
-// findPeersNear accepts an ID and n and finds the n closest nodes to this id
-// in the routing table
-func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
-	peers := make([]*Peer, n)
-	ids, err := nd.rt.GetPeerIDs()
-	if err != nil {
-		log.WithError(err).Error("Failed to get peer ids from the routing table")
-		return peers, err
-	}
-
-	dists := make(map[ID][]int, len(ids))
-	for _, pid := range ids {
-		dists[pid] = Xor([]byte(id), []byte(pid))
-	}
-
-	//
-
-	return peers, nil
-}
-
 // Xor gets to byte arrays and returns and array of integers with the xor
 // for between the two equivalent bytes
 func Xor(a, b []byte) []int {
@@ -152,6 +133,7 @@ func Xor(a, b []byte) []int {
 	lenA := len(a)
 	lenB := len(b)
 
+	// Make both byte arrays have the same size
 	if lenA > lenB {
 		compA = a
 		compB = make([]byte, lenA)
@@ -169,4 +151,61 @@ func Xor(a, b []byte) []int {
 	}
 
 	return res
+}
+
+// distEntry is used to hold the distance between nodes
+type distEntry struct {
+	id   ID
+	dist []int
+}
+
+// lessIntArr compares two int array return true if a less than b
+func lessIntArr(a, b []int) bool {
+	for i := range a {
+		if a[i] > b[i] {
+			return false
+		}
+		if a[i] < b[i] {
+			return true
+		}
+	}
+
+	return true
+}
+
+// findPeersNear accepts an ID and n and finds the n closest nodes to this id
+// in the routing table
+func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
+	peers := make([]*Peer, n)
+
+	ids, err := nd.rt.GetPeerIDs()
+	if err != nil {
+		log.WithError(err).Error("Failed to get peer ids from the routing table")
+		return peers, err
+	}
+
+	// slice to hold the distances
+	dists := []*distEntry{}
+	for _, pid := range ids {
+		entry := &distEntry{
+			id:   pid,
+			dist: Xor([]byte(id), []byte(pid)),
+		}
+		dists = append(dists, entry)
+	}
+
+	// Sort the distances
+	sort.Slice(dists, func(i, j int) bool {
+		return lessIntArr(dists[i].dist, dists[j].dist)
+	})
+
+	// Append n the first n number of peers from the ids
+	for _, de := range dists[:n] {
+		p, err := nd.rt.Get(de.id)
+		if err != nil {
+			log.WithError(err).Error("ID: %s not found", id)
+		}
+		peers = append(peers, &p)
+	}
+	return peers, nil
 }
