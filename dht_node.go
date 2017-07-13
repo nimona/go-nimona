@@ -126,7 +126,7 @@ func (nd *DHTNode) findReceived(msg *Message) {
 
 // Xor gets to byte arrays and returns and array of integers with the xor
 // for between the two equivalent bytes
-func Xor(a, b []byte) []int {
+func xor(a, b []byte) []int {
 	var compA, compB []byte
 	var res = []int{}
 
@@ -176,7 +176,7 @@ func lessIntArr(a, b []int) bool {
 // findPeersNear accepts an ID and n and finds the n closest nodes to this id
 // in the routing table
 func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
-	peers := make([]*Peer, n)
+	peers := []*Peer{}
 
 	ids, err := nd.rt.GetPeerIDs()
 	if err != nil {
@@ -189,7 +189,7 @@ func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
 	for _, pid := range ids {
 		entry := &distEntry{
 			id:   pid,
-			dist: Xor([]byte(id), []byte(pid)),
+			dist: xor([]byte(id), []byte(pid)),
 		}
 		dists = append(dists, entry)
 	}
