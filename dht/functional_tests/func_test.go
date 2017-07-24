@@ -13,6 +13,7 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 	peer1 := &dht.Peer{dht.ID("a1"), []string{"127.0.0.1:8889"}}
 	peer2 := &dht.Peer{dht.ID("a2"), []string{"127.0.0.1:8890"}}
 	peer3 := &dht.Peer{dht.ID("a3"), []string{"127.0.0.1:8891"}}
+	peer5 := &dht.Peer{dht.ID("a5"), []string{"127.0.0.1:8893"}}
 
 	rt1 := dht.NewSimpleRoutingTable()
 	rt2 := dht.NewSimpleRoutingTable()
@@ -20,6 +21,8 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 
 	rt1.Add(*peer2)
 	rt2.Add(*peer1)
+	rt2.Add(*peer3)
+	rt2.Add(*peer5)
 	rt3.Add(*peer2)
 
 	node1 := dht.NewDHTNode([]*dht.Peer{peer2}, peer1, rt1, "127.0.0.1:8889")
@@ -31,11 +34,11 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 
 // TODO: Create a node factory
 
-func TestServerSendReceiveMessage(t *testing.T) {
+func TestSuccessFindNode(t *testing.T) {
 	n1, _, _ := setupTest()
 	ctx := context.Background()
 
-	peers, err := n1.Find(ctx, "a3")
+	peers, err := n1.Find(ctx, "a2")
 	if err != nil {
 		log.Error(err)
 		t.Fail()
@@ -46,3 +49,19 @@ func TestServerSendReceiveMessage(t *testing.T) {
 
 	log.Info(peers)
 }
+
+// func TestGetNearNodes(t *testing.T) {
+// 	n1, _, _ := setupTest()
+// 	ctx := context.Background()
+
+// 	peers, err := n1.Find(ctx, "a100")
+// 	if err != nil {
+// 		log.Error(err)
+// 		t.Fail()
+// 	}
+// 	if peers[0].ID == "" {
+// 		t.Fail()
+// 	}
+
+// 	log.Info(peers)
+// }
