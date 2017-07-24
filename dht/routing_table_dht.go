@@ -64,8 +64,10 @@ func (rt *RoutingTableSimple) GetPeerIDs() ([]ID, error) {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 	ids := make([]ID, len(rt.store))
+	i := 0
 	for _, peer := range rt.store {
-		ids = append(ids, peer.ID)
+		ids[i] = peer.ID
+		i++
 	}
 	return ids, nil
 }
