@@ -11,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const numPeersNear int = 3
+
 type DHTNode struct {
 	// bps are the Bootstrap Peers
 	bps []*Peer
@@ -34,7 +36,7 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, addr string) *DHT
 		lc:  make(map[string]chan []Peer),
 	}
 	log.WithField("address", addr).Info("Server starting...")
-	go nt.StartServer(addr, dhtNode.handleConnection)
+	go nt.StartServer(addr, dhtNode.connectionHandler)
 	return dhtNode
 }
 
@@ -76,6 +78,7 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) ([]Peer, error) {
 		result := make(chan []Peer)
 		nd.lc[nc.String()] = result
 		// timeout to wait for response
+		log.Info("Waiting for response")
 		return <-result, nil
 	}
 	if err != nil {
@@ -85,7 +88,7 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) ([]Peer, error) {
 	return []Peer{peer}, nil
 }
 
-func (nd *DHTNode) handleConnection(conn net.Conn) {
+func (nd *DHTNode) connectionHandler(conn net.Conn) {
 	for {
 		buffer := make([]byte, 1024)
 		_, err := conn.Read(buffer)
@@ -109,19 +112,45 @@ func (nd *DHTNode) handleConnection(conn net.Conn) {
 			log.WithField("Type", "PING").Info(msg.OriginPeer.ID)
 		case FIND_NODE:
 			log.WithField("Type", "FIND_NODE").Info(msg.OriginPeer.ID)
-			go nd.findReceived(msg)
+			go nd.findHandler(msg)
 		default:
 			log.Info("Call type not implemented")
 		}
 	}
 }
 
-func (nd *DHTNode) findReceived(msg *Message) {
-	// Check if local peer is the originator
-	// Check
+func (nd *DHTNode) findHandler(msg *Message) {
+	var peers []Peer
+	rPeers := []Peer{}
+	if msg.OriginPeer.ID == nd.lp.ID {
+		nd.lc[msg.Nonce] <- msg.Peers
+		return
+	}
 
-	// If local peer is not the originator
-	// find peers with smallest distance in local store and send them back
+	peer, err := nd.rt.Get(msg.QueryPeerID)
+	if err != nil {
+		log.Error("Failed to find node")
+	}
+
+	peers, err = nd.findPeersNear(msg.QueryPeerID, numPeersNear)
+	if err != nil {
+		log.WithField("Msg", msg).Error("Failed to find nodes near")
+	}
+	if peer.ID != "" && peer.Address[0] != "" {
+		rPeers = append(rPeers, peer)
+	} else {
+		rPeers = peers
+	}
+	nd.nt.SendMessage(
+		Message{
+			Type:        FIND_NODE,
+			Nonce:       msg.Nonce,
+			OriginPeer:  msg.OriginPeer,
+			QueryPeerID: msg.QueryPeerID,
+			Peers:       rPeers,
+		},
+		msg.OriginPeer.Address[0],
+	)
 }
 
 // Xor gets to byte arrays and returns and array of integers with the xor
@@ -175,8 +204,8 @@ func lessIntArr(a, b []int) bool {
 
 // findPeersNear accepts an ID and n and finds the n closest nodes to this id
 // in the routing table
-func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
-	peers := []*Peer{}
+func (nd *DHTNode) findPeersNear(id ID, n int) ([]Peer, error) {
+	peers := []Peer{}
 
 	ids, err := nd.rt.GetPeerIDs()
 	if err != nil {
@@ -185,27 +214,29 @@ func (nd *DHTNode) findPeersNear(id ID, n int) ([]*Peer, error) {
 	}
 
 	// slice to hold the distances
-	dists := []*distEntry{}
+	dists := []distEntry{}
 	for _, pid := range ids {
-		entry := &distEntry{
+		entry := distEntry{
 			id:   pid,
 			dist: xor([]byte(id), []byte(pid)),
 		}
 		dists = append(dists, entry)
 	}
-
 	// Sort the distances
 	sort.Slice(dists, func(i, j int) bool {
 		return lessIntArr(dists[i].dist, dists[j].dist)
 	})
 
+	if n > len(dists) {
+		n = len(dists)
+	}
 	// Append n the first n number of peers from the ids
 	for _, de := range dists[:n] {
 		p, err := nd.rt.Get(de.id)
 		if err != nil {
-			log.WithError(err).Error("ID: %s not found", id)
+			log.WithError(err).WithField("ID", de.id).Error("Peer not found")
 		}
-		peers = append(peers, &p)
+		peers = append(peers, p)
 	}
 	return peers, nil
 }
