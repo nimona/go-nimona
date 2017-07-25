@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/coreos/fleet/log"
 	dht "github.com/nimona/go-nimona-kad-dht"
-	log "github.com/sirupsen/logrus"
 )
 
 func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
@@ -22,7 +22,7 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 	rt1.Add(*peer2)
 	rt2.Add(*peer1)
 	rt2.Add(*peer3)
-	rt2.Add(*peer5)
+	rt3.Add(*peer5)
 	rt3.Add(*peer2)
 
 	node1 := dht.NewDHTNode([]*dht.Peer{peer2}, peer1, rt1, "127.0.0.1:8889")
@@ -38,30 +38,44 @@ func TestSuccessFindNode(t *testing.T) {
 	n1, _, _ := setupTest()
 	ctx := context.Background()
 
-	peers, err := n1.Find(ctx, "a2")
+	peer, err := n1.Find(ctx, "a5")
 	if err != nil {
 		log.Error(err)
 		t.Fail()
 	}
-	if peers[0].ID == "" {
+	if peer.ID == "" {
 		t.Fail()
 	}
 
-	log.Info(peers)
+	log.Info(peer)
 }
+
+// func TestSuccessFindNodeLocal(t *testing.T) {
+// 	n1, _, _ := setupTest()
+// 	ctx := context.Background()
+
+// 	peer, err := n1.Find(ctx, "a2")
+// 	if err != nil {
+// 		log.Error(err)
+// 		t.Fail()
+// 	}
+// 	if peer.ID == "" {
+// 		t.Fail()
+// 	}
+
+// 	log.Info(peer)
+// }
 
 // func TestGetNearNodes(t *testing.T) {
 // 	n1, _, _ := setupTest()
 // 	ctx := context.Background()
 
-// 	peers, err := n1.Find(ctx, "a100")
+// 	peer, err := n1.Find(ctx, "a100")
 // 	if err != nil {
 // 		log.Error(err)
 // 		t.Fail()
 // 	}
-// 	if peers[0].ID == "" {
+// 	if peer.ID == "" {
 // 		t.Fail()
 // 	}
-
-// 	log.Info(peers)
 // }
