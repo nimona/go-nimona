@@ -1,11 +1,7 @@
 package dht
 
-import (
-	"net"
-)
-
 type Net interface {
-	StartServer(address string, callback func(net.Conn)) error
+	StartServer(address string, receiveMessageCb func(Message)) error
 	SendMessage(msg Message, address string) (int, error)
 }
 

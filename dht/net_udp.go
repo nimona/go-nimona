@@ -12,7 +12,7 @@ import (
 type UDPNet struct {
 }
 
-func (n *UDPNet) StartServer(addr string, cb func(net.Conn)) error {
+func (n *UDPNet) StartServer(addr string, cb func(Message)) error {
 	srv, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		log.WithError(err).Error("Could not resolve server address")
@@ -27,12 +27,26 @@ func (n *UDPNet) StartServer(addr string, cb func(net.Conn)) error {
 	defer l.Close()
 
 	for {
-		cb(l)
+		buffer := make([]byte, 1024)
+		_, err := l.Read(buffer)
+		if err != nil {
+			log.WithError(err).Error("Failed to read from comm")
+			return err
+		}
+
+		log.Info("Message received")
+
+		msg := &Message{}
+		buflen, uvlen := binary.Uvarint(buffer)
+		err = json.Unmarshal(buffer[uvlen:uvlen+int(buflen)], msg)
+		if err != nil {
+			log.WithError(err).Error("Failed to unmarshall json")
+		}
+
+		cb(*msg)
 	}
 	return nil
 }
-
-// TODO: func ReceiveMessage()
 
 func (n *UDPNet) SendMessage(msg Message, addr string) (int, error) {
 	saddr, err := net.ResolveUDPAddr("udp", addr)

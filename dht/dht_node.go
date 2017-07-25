@@ -2,10 +2,8 @@ package dht
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/json"
-	"net"
 	"sort"
+	"sync"
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -24,10 +22,10 @@ type DHTNode struct {
 	net Net
 	// lc stores the nonces and the response channels
 	lc map[string]chan Peer
+	mt sync.RWMutex
 }
 
-func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, addr string) *DHTNode {
-	net := &UDPNet{}
+func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr string) *DHTNode {
 	dhtNode := &DHTNode{
 		bps:   bps,
 		lpeer: localPeer,
@@ -36,7 +34,7 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, addr string) *DHT
 		lc:    make(map[string]chan Peer),
 	}
 	log.WithField("address", addr).Info("Server starting...")
-	go net.StartServer(addr, dhtNode.connectionHandler)
+	go net.StartServer(addr, dhtNode.ReceiveMessage)
 	return dhtNode
 }
 
@@ -76,7 +74,9 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 		}
 
 		result := make(chan Peer)
+		nd.mt.Lock()
 		nd.lc[nc.String()] = result
+		nd.mt.Unlock()
 		// TODO: Add timeout to wait for response and send not found
 		// timeout in config
 		log.Info("Waiting for response")
@@ -89,36 +89,17 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 	return peer, nil
 }
 
-func (nd *DHTNode) connectionHandler(conn net.Conn) {
-	for {
-		buffer := make([]byte, 1024)
-		_, err := conn.Read(buffer)
-		if err != nil {
-			log.WithError(err).Error("Failed to read from comm")
-			return
-		}
-
-		log.Info("Message received")
-
-		msg := &Message{}
-		buflen, uvlen := binary.Uvarint(buffer)
-		err = json.Unmarshal(buffer[uvlen:uvlen+int(buflen)], msg)
-		if err != nil {
-			log.WithError(err).Error("Failed to unmarshall json")
-		}
-
-		// Check if originator is localpeer and nonce exists in local memory
-		// TODO: split handlers?
-		switch msg.Type {
-		case PING:
-			log.WithField("Type", "PING").Info(msg.OriginPeer.ID)
-		case FIND_NODE:
-			log.WithField("Type", "FIND_NODE").Info(msg.OriginPeer.ID)
-			go nd.findHandler(msg)
-		default:
-			log.Info("Call type not implemented")
-		}
+func (nd *DHTNode) ReceiveMessage(msg Message) {
+	switch msg.Type {
+	case PING:
+		log.WithField("Type", "PING").Info(msg.OriginPeer.ID)
+	case FIND_NODE:
+		log.WithField("Type", "FIND_NODE").Info(msg.OriginPeer.ID)
+		go nd.findHandler(&msg)
+	default:
+		log.Info("Call type not implemented")
 	}
+
 }
 
 func (nd *DHTNode) sendMsgPeer(msg *Message, peer *Peer) error {
@@ -138,13 +119,18 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	rPeers := []Peer{}
 	// Check if local peer is the origin peer in the message
 	if msg.OriginPeer.ID == nd.lpeer.ID {
+		nd.mt.RLock()
 		if nchan, ok := nd.lc[msg.Nonce]; ok {
+			defer nd.mt.RUnlock()
+
 			// Check if the requested peer is in the results
 			for _, p := range msg.Peers {
 				if msg.QueryPeerID == p.ID {
 					nchan <- p
 					// Delete response channel entry
+					nd.mt.Lock()
 					delete(nd.lc, msg.Nonce)
+					nd.mt.Unlock()
 					return
 				}
 			}

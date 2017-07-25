@@ -9,6 +9,9 @@ import (
 )
 
 func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
+	net1 := &dht.UDPNet{}
+	net2 := &dht.UDPNet{}
+	net3 := &dht.UDPNet{}
 	// Start bootstrap node
 	peer1 := &dht.Peer{dht.ID("a1"), []string{"127.0.0.1:8889"}}
 	peer2 := &dht.Peer{dht.ID("a2"), []string{"127.0.0.1:8890"}}
@@ -25,9 +28,9 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 	rt3.Add(*peer5)
 	rt3.Add(*peer2)
 
-	node1 := dht.NewDHTNode([]*dht.Peer{peer2}, peer1, rt1, "127.0.0.1:8889")
-	node2 := dht.NewDHTNode([]*dht.Peer{peer1}, peer2, rt2, "127.0.0.1:8890")
-	node3 := dht.NewDHTNode([]*dht.Peer{peer2}, peer3, rt3, "127.0.0.1:8891")
+	node1 := dht.NewDHTNode([]*dht.Peer{peer2}, peer1, rt1, net1, "127.0.0.1:8889")
+	node2 := dht.NewDHTNode([]*dht.Peer{peer1}, peer2, rt2, net2, "127.0.0.1:8890")
+	node3 := dht.NewDHTNode([]*dht.Peer{peer2}, peer3, rt3, net3, "127.0.0.1:8891")
 
 	return node1, node2, node3
 }
