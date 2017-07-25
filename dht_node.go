@@ -17,31 +17,31 @@ type DHTNode struct {
 	// bps are the Bootstrap Peers
 	bps []*Peer
 	// lp is the local Peer info
-	lp *Peer
+	lpeer *Peer
 	// rt is the routing table used
 	rt RoutingTable
-	// nt is the network interface used for comms
-	nt Net
+	// net is the network interface used for comms
+	net Net
 	// lc stores the nonces and the response channels
-	lc map[string]chan []Peer
+	lc map[string]chan Peer
 }
 
 func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, addr string) *DHTNode {
-	nt := &UDPNet{}
+	net := &UDPNet{}
 	dhtNode := &DHTNode{
-		bps: bps,
-		lp:  localPeer,
-		rt:  rt,
-		nt:  nt,
-		lc:  make(map[string]chan []Peer),
+		bps:   bps,
+		lpeer: localPeer,
+		rt:    rt,
+		net:   net,
+		lc:    make(map[string]chan Peer),
 	}
 	log.WithField("address", addr).Info("Server starting...")
-	go nt.StartServer(addr, dhtNode.connectionHandler)
+	go net.StartServer(addr, dhtNode.connectionHandler)
 	return dhtNode
 }
 
 // TODO: Switch to return channel
-func (nd *DHTNode) Find(ctx context.Context, id ID) ([]Peer, error) {
+func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 	// Search local Routing Table for node
 	peer, err := nd.rt.Get(id)
 	log.Info("Searching for peer with id: ", id)
@@ -50,13 +50,13 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) ([]Peer, error) {
 		nc, err := uuid.NewUUID()
 		if err != nil {
 			log.WithError(err).Error("Failed to generate uuid")
-			return []Peer{}, err
+			return Peer{}, err
 		}
 
 		msg := &Message{
 			Type:        FIND_NODE,
 			Nonce:       nc.String(),
-			OriginPeer:  *nd.lp,
+			OriginPeer:  *nd.lpeer,
 			QueryPeerID: id,
 		}
 
@@ -66,26 +66,27 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) ([]Peer, error) {
 		// If no peers found in local store
 		// send message to all bootstrap nodes
 		for _, bootPeer := range nd.bps {
-			for _, addr := range bootPeer.Address {
-				i, err := nd.nt.SendMessage(*msg, addr)
-				if err != nil {
-					log.WithError(err).Error("Failed to send message")
-				}
-				log.Info("Sent message: ", i)
+			err := nd.sendMsgPeer(msg, bootPeer)
+			if err != nil {
+				log.WithError(err).WithField(
+					"peer",
+					bootPeer.ID,
+				).Error("Failed to send message to peer")
 			}
 		}
 
-		result := make(chan []Peer)
+		result := make(chan Peer)
 		nd.lc[nc.String()] = result
-		// timeout to wait for response
+		// TODO: Add timeout to wait for response and send not found
+		// timeout in config
 		log.Info("Waiting for response")
 		return <-result, nil
 	}
 	if err != nil {
 		log.WithError(err).Error("Failed to find peer")
-		return []Peer{}, err
+		return Peer{}, err
 	}
-	return []Peer{peer}, nil
+	return peer, nil
 }
 
 func (nd *DHTNode) connectionHandler(conn net.Conn) {
@@ -107,6 +108,7 @@ func (nd *DHTNode) connectionHandler(conn net.Conn) {
 		}
 
 		// Check if originator is localpeer and nonce exists in local memory
+		// TODO: split handlers?
 		switch msg.Type {
 		case PING:
 			log.WithField("Type", "PING").Info(msg.OriginPeer.ID)
@@ -119,12 +121,50 @@ func (nd *DHTNode) connectionHandler(conn net.Conn) {
 	}
 }
 
+func (nd *DHTNode) sendMsgPeer(msg *Message, peer *Peer) error {
+	for _, addr := range peer.Address {
+		i, err := nd.net.SendMessage(*msg, addr)
+		if err != nil {
+			log.WithError(err).Error("Failed to send message")
+			break
+		}
+		log.Info("Sent message: ", i)
+	}
+	return nil
+}
+
 func (nd *DHTNode) findHandler(msg *Message) {
 	var peers []Peer
 	rPeers := []Peer{}
-	if msg.OriginPeer.ID == nd.lp.ID {
-		nd.lc[msg.Nonce] <- msg.Peers
-		return
+	// Check if local peer is the origin peer in the message
+	if msg.OriginPeer.ID == nd.lpeer.ID {
+		if nchan, ok := nd.lc[msg.Nonce]; ok {
+			// Check if the requested peer is in the results
+			for _, p := range msg.Peers {
+				if msg.QueryPeerID == p.ID {
+					nchan <- p
+					// Delete response channel entry
+					delete(nd.lc, msg.Nonce)
+					return
+				}
+			}
+
+			// Send the request to returned closest peers
+			peers := msg.Peers
+			msg.Peers = []Peer{}
+			for _, p := range peers {
+				err := nd.sendMsgPeer(msg, &p)
+				if err != nil {
+					if err != nil {
+						log.WithError(err).WithField(
+							"peer",
+							p.ID,
+						).Error("Failed to send message to peer")
+					}
+				}
+			}
+			return
+		}
 	}
 
 	peer, err := nd.rt.Get(msg.QueryPeerID)
@@ -141,7 +181,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	} else {
 		rPeers = peers
 	}
-	nd.nt.SendMessage(
+	nd.net.SendMessage(
 		Message{
 			Type:        FIND_NODE,
 			Nonce:       msg.Nonce,
