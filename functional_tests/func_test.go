@@ -48,29 +48,62 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 func TestSuccessFindNode(t *testing.T) {
 	n1, _, _ := setupTest()
 	ctx := context.Background()
+	var id1 dht.ID
+	id1 = "a5"
 
-	peer, err := n1.Find(ctx, "a5")
+	peer1, err := n1.Find(ctx, id1)
 	if err != nil {
 		log.Error(err)
 		t.Fail()
 	}
-	if peer.ID == "" {
+	if peer1.ID != id1 {
 		t.Fail()
 	}
 
-	log.Info(peer)
+	log.Info(peer1)
+}
+
+func TestFindAndReuseNode(t *testing.T) {
+	n1, _, _ := setupTest()
+	ctx := context.Background()
+	var id1 dht.ID
+	id1 = "a5"
+
+	peer1, err := n1.Find(ctx, id1)
+	if err != nil {
+		log.Error(err)
+		t.Fail()
+	}
+	if peer1.ID != id1 {
+		t.Fail()
+	}
+
+	log.Info(peer1)
+
+	peer2, err := n1.Find(ctx, id1)
+	if err != nil {
+		log.Error(err)
+		t.Fail()
+	}
+	if peer2.ID != id1 {
+		t.Fail()
+	}
+
+	log.Info(peer2)
 }
 
 func TestSuccessFindNodeLocal(t *testing.T) {
 	n1, _, _ := setupTest()
 	ctx := context.Background()
+	var id1 dht.ID
+	id1 = "a1"
 
-	peer, err := n1.Find(ctx, "a2")
+	peer, err := n1.Find(ctx, id1)
 	if err != nil {
 		log.Error(err)
 		t.Fail()
 	}
-	if peer.ID == "" {
+	if peer.ID != id1 {
 		t.Fail()
 	}
 

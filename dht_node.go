@@ -120,8 +120,12 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	// Check if local peer is the origin peer in the message
 	if msg.OriginPeer.ID == nd.lpeer.ID {
 		nd.mt.RLock()
+		defer nd.mt.RUnlock()
 		if nchan, ok := nd.lc[msg.Nonce]; ok {
-			defer nd.mt.RUnlock()
+			// Add peers to local routing table
+			for _, p := range msg.Peers {
+				nd.rt.Add(p)
+			}
 
 			// Check if the requested peer is in the results
 			for _, p := range msg.Peers {
