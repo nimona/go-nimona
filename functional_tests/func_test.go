@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"fmt"
+
 	"github.com/coreos/fleet/log"
 	dht "github.com/superdecimal/go-nimona-kad-dht"
 )
@@ -51,16 +53,16 @@ func TestSuccessFindNode(t *testing.T) {
 	var id1 dht.ID
 	id1 = "a5"
 
-	peer1, err := n1.Find(ctx, id1)
+	peer, err := n1.Find(ctx, id1)
 	if err != nil {
 		log.Error(err)
 		t.Fail()
 	}
-	if peer1.ID != id1 {
+	if peer.ID != id1 {
 		t.Fail()
 	}
 
-	log.Info(peer1)
+	fmt.Println(peer)
 }
 
 func TestFindAndReuseNode(t *testing.T) {
@@ -77,8 +79,7 @@ func TestFindAndReuseNode(t *testing.T) {
 	if peer1.ID != id1 {
 		t.Fail()
 	}
-
-	log.Info(peer1)
+	fmt.Println(peer1)
 
 	peer2, err := n1.Find(ctx, id1)
 	if err != nil {
@@ -88,8 +89,7 @@ func TestFindAndReuseNode(t *testing.T) {
 	if peer2.ID != id1 {
 		t.Fail()
 	}
-
-	log.Info(peer2)
+	fmt.Println(peer2)
 }
 
 func TestSuccessFindNodeLocal(t *testing.T) {
@@ -106,8 +106,7 @@ func TestSuccessFindNodeLocal(t *testing.T) {
 	if peer.ID != id1 {
 		t.Fail()
 	}
-
-	log.Info(peer)
+	fmt.Println(peer)
 }
 
 // func TestGetNearNodes(t *testing.T) {
