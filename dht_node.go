@@ -60,15 +60,25 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 
 		// Check peers in local store for distance
 		// send message to the X closest peers
+		lookupPeers, err := nd.findPeersNear(id, numPeersNear)
+		if err != nil {
+			log.WithError(err).Error("Failed find peers near")
+		}
+
+		if len(lookupPeers) == 0 {
+			for _, p := range nd.bps {
+				lookupPeers = append(lookupPeers, *p)
+			}
+		}
 
 		// If no peers found in local store
 		// send message to all bootstrap nodes
-		for _, bootPeer := range nd.bps {
-			err := nd.sendMsgPeer(msg, bootPeer)
+		for _, p := range lookupPeers {
+			err := nd.sendMsgPeer(msg, &p)
 			if err != nil {
 				log.WithError(err).WithField(
 					"peer",
-					bootPeer.ID,
+					p.ID,
 				).Error("Failed to send message to peer")
 			}
 		}

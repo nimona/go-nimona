@@ -20,7 +20,9 @@ func TestFindPeersNear(t *testing.T) {
 	rt.Add(*peer5)
 	rt.Add(*peer6)
 
-	node := NewDHTNode([]*Peer{peer2}, peer1, rt, "127.0.0.1:8889")
+	net := &UDPNet{}
+
+	node := NewDHTNode([]*Peer{peer2}, peer1, rt, net, "127.0.0.1:8889")
 	peers, err := node.findPeersNear(peer6.ID, 3)
 	if err != nil {
 		fmt.Println(err)
