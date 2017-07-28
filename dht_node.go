@@ -13,7 +13,6 @@ const numPeersNear int = 3
 
 type DHTNode struct {
 	// bps are the Bootstrap Peers
-	bps []*Peer
 	// lp is the local Peer info
 	lpeer *Peer
 	// rt is the routing table used
@@ -27,13 +26,18 @@ type DHTNode struct {
 
 func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr string) *DHTNode {
 	dhtNode := &DHTNode{
-		bps:   bps,
 		lpeer: localPeer,
 		rt:    rt,
 		net:   net,
 		lc:    make(map[string]chan Peer),
 	}
 	log.WithField("address", addr).Info("Server starting...")
+	for _, peer := range bps {
+		err := dhtNode.rt.Add(*peer)
+		if err != nil {
+			log.WithField("peer", *peer).Error("Cannot add peer to routing table")
+		}
+	}
 	go net.StartServer(addr, dhtNode.ReceiveMessage)
 	return dhtNode
 }
@@ -65,14 +69,6 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 			log.WithError(err).Error("Failed find peers near")
 		}
 
-		if len(lookupPeers) == 0 {
-			for _, p := range nd.bps {
-				lookupPeers = append(lookupPeers, *p)
-			}
-		}
-
-		// If no peers found in local store
-		// send message to all bootstrap nodes
 		for _, p := range lookupPeers {
 			err := nd.sendMsgPeer(msg, &p)
 			if err != nil {
