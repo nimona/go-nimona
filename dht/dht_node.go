@@ -35,10 +35,13 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr
 	for _, peer := range bps {
 		err := dhtNode.rt.Add(*peer)
 		if err != nil {
-			log.WithField("peer", *peer).Error("Cannot add peer to routing table")
+			log.WithField("error", err).Error("Failed to add peer to routing table")
 		}
+		ctx := context.Background()
+		go dhtNode.Find(ctx, peer.ID)
 	}
 	go net.StartServer(addr, dhtNode.ReceiveMessage)
+
 	return dhtNode
 }
 
@@ -83,10 +86,20 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 		nd.mt.Lock()
 		nd.lc[nc.String()] = result
 		nd.mt.Unlock()
+		resPeer := <-result
+		// Store result to routing table
+		// if it exists update it
+		err = nd.rt.Add(resPeer)
+		if err == ErrPeerAlreadyExists {
+			err = nd.rt.Update(resPeer)
+			if err != nil {
+				log.Error("Failed to update result peer")
+			}
+		}
 		// TODO: Add timeout to wait for response and send not found
 		// timeout in config
 		log.Info("Waiting for response")
-		return <-result, nil
+		return resPeer, nil
 	}
 	if err != nil {
 		log.WithError(err).Error("Failed to find peer")
