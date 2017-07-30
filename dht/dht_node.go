@@ -11,6 +11,13 @@ import (
 
 const numPeersNear int = 3
 
+type searchEntry struct {
+	id              ID
+	nonce           string
+	closestPeer     Peer
+	responseChannel chan Peer
+}
+
 type DHTNode struct {
 	// bps are the Bootstrap Peers
 	// lp is the local Peer info
@@ -20,16 +27,16 @@ type DHTNode struct {
 	// net is the network interface used for comms
 	net Net
 	// lc stores the nonces and the response channels
-	lc map[string]chan Peer
-	mt sync.RWMutex
+	searchStore map[string]*searchEntry
+	mt          sync.RWMutex
 }
 
 func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr string) *DHTNode {
 	dhtNode := &DHTNode{
-		lpeer: localPeer,
-		rt:    rt,
-		net:   net,
-		lc:    make(map[string]chan Peer),
+		lpeer:       localPeer,
+		rt:          rt,
+		net:         net,
+		searchStore: make(map[string]*searchEntry),
 	}
 	log.WithField("address", addr).Info("Server starting...")
 	for _, peer := range bps {
@@ -42,6 +49,7 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr
 	}
 	go net.StartServer(addr, dhtNode.ReceiveMessage)
 
+	// Refresh all peers in the routing table
 	return dhtNode
 }
 
@@ -82,11 +90,17 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 			}
 		}
 
-		result := make(chan Peer)
+		nonce := nc.String()
+		responseChannel := make(chan Peer)
+		se := &searchEntry{
+			id:              id,
+			nonce:           nonce,
+			responseChannel: responseChannel,
+		}
 		nd.mt.Lock()
-		nd.lc[nc.String()] = result
+		nd.searchStore[nonce] = se
 		nd.mt.Unlock()
-		resPeer := <-result
+		resPeer := <-responseChannel
 		// Store result to routing table
 		// if it exists update it
 		err = nd.rt.Add(resPeer)
@@ -140,7 +154,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	if msg.OriginPeer.ID == nd.lpeer.ID {
 		nd.mt.RLock()
 		defer nd.mt.RUnlock()
-		if nchan, ok := nd.lc[msg.Nonce]; ok {
+		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
 			// Add peers to local routing table
 			for _, p := range msg.Peers {
 				nd.rt.Add(p)
@@ -149,10 +163,10 @@ func (nd *DHTNode) findHandler(msg *Message) {
 			// Check if the requested peer is in the results
 			for _, p := range msg.Peers {
 				if msg.QueryPeerID == p.ID {
-					nchan <- p
+					searchEntry.responseChannel <- p
 					// Delete response channel entry
 					nd.mt.Lock()
-					delete(nd.lc, msg.Nonce)
+					delete(nd.searchStore, msg.Nonce)
 					nd.mt.Unlock()
 					return
 				}
