@@ -1,15 +1,19 @@
 package dht
 
-import "sync"
+import (
+	"sync"
+
+	net "github.com/nimona/go-nimona-net"
+)
 
 // RoutingTableSimple ...
 type RoutingTableSimple struct {
 	mx    sync.RWMutex
-	store map[ID]*Peer
+	store map[string]net.Peer
 }
 
 // Save ...
-func (rt *RoutingTableSimple) Save(peer Peer) error {
+func (rt *RoutingTableSimple) Save(peer net.Peer) error {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
@@ -17,13 +21,13 @@ func (rt *RoutingTableSimple) Save(peer Peer) error {
 	if _, ok := rt.store[peer.ID]; ok {
 		rt.store[peer.ID].Address = peer.Address
 	}
-	rt.store[peer.ID] = &peer
+	rt.store[peer.ID] = peer
 
 	return nil
 }
 
 // Remove ...
-func (rt *RoutingTableSimple) Remove(peer Peer) error {
+func (rt *RoutingTableSimple) Remove(peer net.Peer) error {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
@@ -36,22 +40,22 @@ func (rt *RoutingTableSimple) Remove(peer Peer) error {
 }
 
 // Get ...
-func (rt *RoutingTableSimple) Get(id ID) (Peer, error) {
+func (rt *RoutingTableSimple) Get(string string) (net.Peer, error) {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
-	pr, ok := rt.store[id]
+	pr, ok := rt.store[string]
 	if !ok {
-		return Peer{}, ErrPeerNotFound
+		return net.Peer{}, ErrPeerNotFound
 	}
 
-	return *pr, nil
+	return pr, nil
 }
 
-func (rt *RoutingTableSimple) GetPeerIDs() ([]ID, error) {
+func (rt *RoutingTableSimple) GetPeerIDs() ([]string, error) {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
-	ids := make([]ID, len(rt.store))
+	ids := make([]string, len(rt.store))
 	i := 0
 	for _, peer := range rt.store {
 		ids[i] = peer.ID
@@ -62,6 +66,6 @@ func (rt *RoutingTableSimple) GetPeerIDs() ([]ID, error) {
 
 func NewSimpleRoutingTable() *RoutingTableSimple {
 	return &RoutingTableSimple{
-		store: make(map[ID]*Peer),
+		store: make(map[string]net.Peer),
 	}
 }

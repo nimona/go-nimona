@@ -1,9 +1,13 @@
 package dht
 
-import "context"
+import (
+	"context"
+
+	net "github.com/nimona/go-nimona-net"
+)
 
 // DHT ..
 type DHT interface {
-	Find(context.Context, ID) (Peer, error)
-	Ping(context.Context, Peer) (Peer, error)
+	Find(context.Context, string) (net.Peer, error)
+	Ping(context.Context, net.Peer) (net.Peer, error)
 }
