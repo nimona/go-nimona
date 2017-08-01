@@ -1,8 +1,12 @@
 package dht
 
+import (
+	net "github.com/nimona/go-nimona-net"
+)
+
 type RoutingTable interface {
-	Save(Peer) error
-	Remove(Peer) error
-	Get(ID) (Peer, error)
-	GetPeerIDs() ([]ID, error)
+	Save(net.Peer) error
+	Remove(net.Peer) error
+	Get(string) (net.Peer, error)
+	GetPeerIDs() ([]string, error)
 }
