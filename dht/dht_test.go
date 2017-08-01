@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	logrus "github.com/sirupsen/logrus"
+	assert "github.com/stretchr/testify/assert"
 	suite "github.com/stretchr/testify/suite"
 
 	net "github.com/nimona/go-nimona-net"
@@ -18,7 +18,6 @@ type dhtTestSuite struct {
 }
 
 func TestExampleTestSuite(t *testing.T) {
-	// create peers
 	peer1 := net.Peer{ID: "a1", Addresses: []string{"0.0.0.0:21600"}}
 	peer2 := net.Peer{ID: "a2", Addresses: []string{"0.0.0.0:21601"}}
 	peer3 := net.Peer{ID: "a3", Addresses: []string{"0.0.0.0:21602"}}
@@ -26,19 +25,13 @@ func TestExampleTestSuite(t *testing.T) {
 	peer5 := net.Peer{ID: "a5", Addresses: []string{"0.0.0.0:21603"}}
 
 	net1, err := net.NewTCPNetwork(&peer1)
-	if err != nil {
-		logrus.Fatalf("Could not create net1, %+v", err)
-	}
+	assert.Nil(t, err)
 
-	net2, _ := net.NewTCPNetwork(&peer2)
-	if err != nil {
-		logrus.Fatalf("Could not create net1, %+v", err)
-	}
+	net2, err := net.NewTCPNetwork(&peer2)
+	assert.Nil(t, err)
 
-	net3, _ := net.NewTCPNetwork(&peer3)
-	if err != nil {
-		logrus.Fatalf("Could not create net1, %+v", err)
-	}
+	net3, err := net.NewTCPNetwork(&peer3)
+	assert.Nil(t, err)
 
 	rt1 := NewSimpleRoutingTable()
 	rt2 := NewSimpleRoutingTable()
