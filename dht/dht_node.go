@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	uuid "github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -142,19 +143,20 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 		nd.searchStore[nc.String()] = se
 		nd.mt.Unlock()
 
-		// TODO: If peer does not response in x amount of time remove it from the
-		// shortlist lookup peers. Create a goroutine to handle timeouts.
+		select {
+		case rp := <-responseChannel:
+			if err = nd.putPeer(rp); err != nil {
+				log.Error("Failed to update result peer")
+			}
+			return rp, nil
 
-		resPeer := <-se.responseChannel
-		// Store result to routing table
-		// if it exists update it
-		if err = nd.putPeer(resPeer); err != nil {
-			log.Error("Failed to update result peer")
+		case <-time.After(time.Second * 3):
+			return net.Peer{}, ErrPeerNotFound
+
+		case <-ctx.Done():
+			return net.Peer{}, ErrPeerNotFound // TODO Better error (context deadline exceeded)
 		}
-		// TODO: Add timeout to wait for response and send not found
-		// timeout in config
-		log.Info("Waiting for response")
-		return resPeer, nil
+
 	}
 	if err != nil {
 		log.WithError(err).Error("Failed to find peer")

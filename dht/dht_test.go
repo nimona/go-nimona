@@ -3,6 +3,7 @@ package dht
 import (
 	"context"
 	"testing"
+	"time"
 
 	assert "github.com/stretchr/testify/assert"
 	suite "github.com/stretchr/testify/suite"
@@ -78,4 +79,36 @@ func (suite *dhtTestSuite) TestFindNodeLocalSuccess() {
 	peer, err := suite.node2.Find(ctx, id)
 	suite.Nil(err)
 	suite.Equal(id, peer.ID)
+}
+
+func (suite *dhtTestSuite) TestFindNodeTimeout() {
+	// swallow cancelation  function to make sure we test timeout
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		time.Second,
+	)
+
+	id := "does-not-exist"
+
+	peer, err := suite.node2.Find(ctx, id)
+	suite.Equal(ErrPeerNotFound, err)
+	suite.Empty(peer.ID)
+}
+
+func (suite *dhtTestSuite) TestFindNodeCancelation() {
+	// swallow cancelation  function to make sure we test timeout
+	ctx, cf := context.WithCancel(
+		context.Background(),
+	)
+
+	go func() {
+		time.Sleep(time.Second)
+		cf()
+	}()
+
+	id := "does-not-exist"
+
+	peer, err := suite.node2.Find(ctx, id)
+	suite.Equal(ErrPeerNotFound, err)
+	suite.Empty(peer.ID)
 }
