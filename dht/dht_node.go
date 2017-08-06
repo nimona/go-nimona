@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	uuid "github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 
 	messagebus "github.com/nimona/go-nimona-messagebus"
 	net "github.com/nimona/go-nimona-net"
@@ -64,11 +65,40 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 	// add bootstrap nodes
 	for _, peer := range bps {
 		if err := dhtNode.putPeer(peer); err != nil {
-			log.WithField("error", err).Error("Failed to add peer to routing table")
+			logrus.WithField("error", err).Error("Failed to add peer to routing table")
 		}
-		ctx := context.Background()
-		go dhtNode.Find(ctx, peer.ID)
+		// ctx := context.Background()
+		// go dhtNode.Find(ctx, peer.ID)
 	}
+
+	// handle new network peers
+	nnet.RegisterPeerHandler(func(np net.Peer) error {
+		if np.ID == dhtNode.lpeer.ID {
+			dhtNode.lpeer.Addresses = []string{}
+			for _, addr := range np.Addresses {
+				dhtNode.lpeer.Addresses = append(dhtNode.lpeer.Addresses, addr)
+			}
+		}
+		logrus.WithField("np", np).Debugf("Handling incoming peer")
+		if err := rt.Save(np); err != nil {
+			logrus.WithError(err).Debugf("Could not update incoming peer")
+			return err
+		}
+		logrus.Debugf("Saved incoming peer")
+		return nil
+	})
+
+	go func() {
+		// TODO Wait for network
+		time.Sleep(time.Second * 5)
+		ctx, _ := context.WithTimeout(
+			context.Background(),
+			time.Second*5,
+		)
+		if _, err := dhtNode.Find(ctx, localPeer.ID); err != nil {
+			logrus.WithError(err).Warnf("Could not find peer %s on startup", localPeer.ID)
+		}
+	}()
 
 	// Refresh all peers in the routing table
 	return dhtNode, nil
@@ -82,10 +112,10 @@ func (nd *DHTNode) messageHandler(hash []byte, msg messagebus.Message) error {
 			return err
 		}
 		nd.putPeer(dhtMsg.OriginPeer)
-		// log.WithField("Type", "FIND_NODE").Info(msg.Payload.Creator)
-		go nd.findHandler(dhtMsg)
+		// logrus.WithField("Type", "FIND_NODE").Info(msg.Payload.Creator)
+		nd.findHandler(dhtMsg)
 	default:
-		log.Info("Call type not implemented")
+		logrus.Info("Call type not implemented")
 	}
 	return nil
 }
@@ -97,86 +127,105 @@ func (nd *DHTNode) Ping(context.Context, net.Peer) (net.Peer, error) {
 // TODO: Switch to return channel
 func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 	// Search local Routing Table for node
+	logrus.Info("Searching for peer with id: ", id)
 	peer, err := nd.rt.Get(id)
-	log.Info("Searching for peer with id: ", id)
 	// If node is not found locally send a message to nodes
-	if err == ErrPeerNotFound {
-		// Create the nonce id
-		nc, err := uuid.NewUUID()
-		if err != nil {
-			log.WithError(err).Error("Failed to generate uuid")
+	if err != nil {
+		if err != ErrPeerNotFound {
+			logrus.WithError(err).Error("Failed to find peer")
 			return net.Peer{}, err
 		}
-
-		msg := &Message{
-			OriginPeer:  nd.lpeer,
-			Nonce:       nc.String(),
-			QueryPeerID: id,
-		}
-
-		// Check peers in local store for distance
-		// send message to the X closest peers
-		lookupPeers, err := nd.findPeersNear(id, numPeersNear)
-		if err != nil {
-			log.WithError(err).Error("Failed find peers near")
-		}
-
-		nonce := nc.String()
-		responseChannel := make(chan net.Peer)
-		se := &searchEntry{
-			id:              id,
-			nonce:           nonce,
-			responseChannel: responseChannel,
-			closestPeer:     lookupPeers[0], // TODO Might not exist
-		}
-
-		for _, p := range lookupPeers {
-			err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
-			if err != nil {
-				log.WithError(err).WithField(
-					"peer",
-					p.ID,
-				).Error("Failed to send message to peer")
-			}
-		}
-		nd.mt.Lock()
-		nd.searchStore[nc.String()] = se
-		nd.mt.Unlock()
-
-		select {
-		case rp := <-responseChannel:
-			if err = nd.putPeer(rp); err != nil {
-				log.Error("Failed to update result peer")
-			}
-			return rp, nil
-
-		case <-time.After(time.Second * 3):
-			return net.Peer{}, ErrPeerNotFound
-
-		case <-ctx.Done():
-			return net.Peer{}, ErrPeerNotFound // TODO Better error (context deadline exceeded)
-		}
-
 	}
+
+	logrus.Debugf("Peer does not exist locally")
+	nc, err := uuid.NewUUID()
 	if err != nil {
-		log.WithError(err).Error("Failed to find peer")
+		logrus.WithError(err).Error("Failed to generate uuid")
 		return net.Peer{}, err
 	}
+
+	msg := &Message{
+		OriginPeer:  nd.lpeer,
+		Nonce:       nc.String(),
+		QueryPeerID: id,
+	}
+
+	logrus.Debugf("Getting nearest peers")
+	// Check peers in local store for distance
+	// send message to the X closest peers
+	lookupPeers, err := nd.findPeersNear(id, numPeersNear)
+	if err != nil {
+		logrus.WithError(err).Error("Failed find peers near")
+	}
+
+	logrus.WithField("peers", lookupPeers).Debugf("Asking nearest peers")
+
+	for _, p := range lookupPeers {
+		logrus.
+			WithField("peer", p.ID).
+			WithField("addr", p.Addresses[0]).
+			Infof("Asking peer for %s", id)
+		err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
+		if err != nil {
+			logrus.WithError(err).WithField(
+				"peer",
+				p.ID,
+			).Error("Failed to send message to peer")
+		}
+	}
+
+	nonce := nc.String()
+	responseChannel := make(chan net.Peer)
+	se := &searchEntry{
+		id:              id,
+		nonce:           nonce,
+		responseChannel: responseChannel,
+	}
+	nd.mt.Lock()
+	nd.searchStore[nonce] = se
+	nd.mt.Unlock()
+
+	select {
+	case rp := <-responseChannel:
+		logrus.WithField("rp", rp).Debugf("Found peer, returning")
+		if err = nd.putPeer(rp); err != nil {
+			logrus.Error("Failed to update result peer")
+		}
+		return rp, nil
+
+	case <-time.After(time.Second * 3):
+		logrus.Warnf("Time has passed")
+		return net.Peer{}, ErrPeerNotFound
+
+	case <-ctx.Done():
+		logrus.Warnf("CTX was done")
+		return net.Peer{}, ErrPeerNotFound // TODO Better error (context deadline exceeded)
+	}
+
+	fmt.Println("Peer existed locally")
 	return peer, nil
 }
 
 func (nd *DHTNode) putPeer(peer net.Peer) error {
-	log.Infof("Adding peer to network peer=%s", peer.ID)
-	if err := nd.net.PutPeer(peer); err != nil {
-		log.WithError(err).Warnf("Could not add peer to network")
-	}
+	logrus.Infof("Adding peer to network peer=%s", peer.ID)
+	// check if the peer already exists
+	ep, err := nd.rt.Get(peer.ID)
+	// update peer table
 	if err := nd.rt.Save(peer); err != nil {
 		return err
+	}
+	// add peer to network
+	if err := nd.net.PutPeer(peer); err != nil {
+		logrus.WithError(err).Warnf("Could not add peer to network")
 	}
 	return nil
 }
 
 func (nd *DHTNode) sendMsgPeer(msgType string, msg *Message, peerID string) error {
+	if peerID == nd.lpeer.ID {
+		return nil
+	}
+
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -195,30 +244,22 @@ func (nd *DHTNode) sendMsgPeer(msgType string, msg *Message, peerID string) erro
 func (nd *DHTNode) findHandler(msg *Message) {
 	peers := []net.Peer{}
 	rPeers := []net.Peer{}
-	fmt.Println(">", msg.OriginPeer.ID, nd.lpeer.ID)
 	// Check if local peer is the origin peer in the message
 	if msg.OriginPeer.ID == nd.lpeer.ID {
 		nd.mt.Lock()
 		defer nd.mt.Unlock()
-		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
-			// Add peers to local routing table
-			for _, p := range msg.Peers {
-				nd.putPeer(p) // TODO Handle error
-			}
 
+		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
 			// Check if the requested peer is in the results
 			for _, p := range msg.Peers {
 				nd.putPeer(p) // TODO Validate peer, handle error
-				fmt.Println("LFP", msg.QueryPeerID, p.ID)
 				if msg.QueryPeerID == p.ID {
-					fmt.Println("FOUND IT", p.ID)
+					fmt.Println("FOUND PEER", p.ID)
 					searchEntry.responseChannel <- p
-					// Delete response channel entry
 					delete(nd.searchStore, msg.Nonce)
 					return
 				}
 			}
-
 			// Send the request to returned closest peers
 			for _, p := range msg.Peers {
 				fmt.Println("ADDING", p.ID)
@@ -226,14 +267,13 @@ func (nd *DHTNode) findHandler(msg *Message) {
 				err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
 				if err != nil {
 					if err != nil {
-						log.WithError(err).WithField(
+						logrus.WithError(err).WithField(
 							"peer",
 							p.ID,
 						).Error("Failed to send message to peer")
 					}
 				}
 			}
-
 			return
 		}
 	}
@@ -243,14 +283,14 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	peer, err := nd.rt.Get(msg.QueryPeerID)
 	if err != nil {
 		// TODO Handle errors other than not found
-		// log.Error("Failed to find node")
+		// logrus.Error("Failed to find node")
 	}
 
 	peers, err = nd.findPeersNear(msg.QueryPeerID, numPeersNear)
 	if err != nil {
-		log.WithField("Msg", msg).Error("Failed to find nodes near")
+		logrus.WithField("Msg", msg).Error("Failed to find nodes near")
 	}
-	if peer.ID != "" && peer.Addresses[0] != "" {
+	if len(peer.Addresses) > 0 && peer.ID != "" {
 		rPeers = append(rPeers, peer)
 	} else {
 		rPeers = peers
@@ -321,7 +361,7 @@ func (nd *DHTNode) findPeersNear(id string, n int) ([]net.Peer, error) {
 
 	ids, err := nd.rt.GetPeerIDs()
 	if err != nil {
-		log.WithError(err).Error("Failed to get peer ids from the routing table")
+		logrus.WithError(err).Error("Failed to get peer ids from the routing table")
 		return peers, err
 	}
 
@@ -346,7 +386,7 @@ func (nd *DHTNode) findPeersNear(id string, n int) ([]net.Peer, error) {
 	for _, de := range dists[:n] {
 		p, err := nd.rt.Get(de.id)
 		if err != nil {
-			log.WithError(err).WithField("ID", de.id).Error("Peer not found")
+			logrus.WithError(err).WithField("ID", de.id).Error("Peer not found")
 		}
 		peers = append(peers, p)
 	}
