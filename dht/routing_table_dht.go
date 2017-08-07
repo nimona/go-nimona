@@ -8,13 +8,14 @@ type RoutingTableSimple struct {
 	store map[ID]*Peer
 }
 
-// Add ...
-func (rt *RoutingTableSimple) Add(peer Peer) error {
+// Save ...
+func (rt *RoutingTableSimple) Save(peer Peer) error {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
+	// If peer exists update address
 	if _, ok := rt.store[peer.ID]; ok {
-		return ErrPeerAlreadyExists
+		rt.store[peer.ID].Address = peer.Address
 	}
 	rt.store[peer.ID] = &peer
 
@@ -45,19 +46,6 @@ func (rt *RoutingTableSimple) Get(id ID) (Peer, error) {
 	}
 
 	return *pr, nil
-}
-
-// Update ...
-func (rt *RoutingTableSimple) Update(peer Peer) error {
-	rt.mx.Lock()
-	defer rt.mx.Unlock()
-
-	if _, ok := rt.store[peer.ID]; !ok {
-		return ErrPeerNotFound
-	}
-	rt.store[peer.ID] = &peer
-
-	return nil
 }
 
 func (rt *RoutingTableSimple) GetPeerIDs() ([]ID, error) {

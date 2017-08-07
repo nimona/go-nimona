@@ -14,11 +14,11 @@ func TestFindPeersNear(t *testing.T) {
 	peer6 := &Peer{ID("a6"), []string{"127.0.0.1:8861"}}
 
 	rt := NewSimpleRoutingTable()
-	rt.Add(*peer2)
-	rt.Add(*peer3)
-	rt.Add(*peer4)
-	rt.Add(*peer5)
-	rt.Add(*peer6)
+	rt.Save(*peer2)
+	rt.Save(*peer3)
+	rt.Save(*peer4)
+	rt.Save(*peer5)
+	rt.Save(*peer6)
 
 	net := &UDPNet{}
 

@@ -32,11 +32,11 @@ func setupTest() (*dht.DHTNode, *dht.DHTNode, *dht.DHTNode) {
 	rt2 := dht.NewSimpleRoutingTable()
 	rt3 := dht.NewSimpleRoutingTable()
 
-	rt1.Add(*peer2)
-	rt2.Add(*peer1)
-	rt2.Add(*peer3)
-	rt3.Add(*peer5)
-	rt3.Add(*peer2)
+	rt1.Save(*peer2)
+	rt2.Save(*peer1)
+	rt2.Save(*peer3)
+	rt3.Save(*peer5)
+	rt3.Save(*peer2)
 
 	node1 := dht.NewDHTNode([]*dht.Peer{peer2}, peer1, rt1, net1, peer1.Address[0])
 	node2 := dht.NewDHTNode([]*dht.Peer{peer1}, peer2, rt2, net2, peer2.Address[0])
