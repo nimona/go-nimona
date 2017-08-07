@@ -39,6 +39,7 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr
 		searchStore: make(map[string]*searchEntry),
 	}
 	log.WithField("address", addr).Info("Server starting...")
+	// Add bootstrap peers to routing table
 	for _, peer := range bps {
 		err := dhtNode.rt.Add(*peer)
 		if err != nil {
@@ -60,6 +61,7 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 	log.Info("Searching for peer with id: ", id)
 	// If node is not found locally send a message to nodes
 	if err == ErrPeerNotFound {
+		// Create the nonce id
 		nc, err := uuid.NewUUID()
 		if err != nil {
 			log.WithError(err).Error("Failed to generate uuid")
@@ -80,6 +82,13 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 			log.WithError(err).Error("Failed find peers near")
 		}
 
+		se := &searchEntry{
+			id:              id,
+			nonce:           nc.String(),
+			responseChannel: make(chan Peer),
+			closestPeer:     lookupPeers[0],
+		}
+
 		for _, p := range lookupPeers {
 			err := nd.sendMsgPeer(msg, &p)
 			if err != nil {
@@ -90,17 +99,14 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 			}
 		}
 
-		nonce := nc.String()
-		responseChannel := make(chan Peer)
-		se := &searchEntry{
-			id:              id,
-			nonce:           nonce,
-			responseChannel: responseChannel,
-		}
 		nd.mt.Lock()
-		nd.searchStore[nonce] = se
+		nd.searchStore[nc.String()] = se
 		nd.mt.Unlock()
-		resPeer := <-responseChannel
+
+		// TODO: If peer does not response in x amount of time remove it from the
+		// shortlist lookup peers. Create a goroutine to handle timeouts.
+
+		resPeer := <-se.responseChannel
 		// Store result to routing table
 		// if it exists update it
 		err = nd.rt.Add(resPeer)
@@ -148,7 +154,7 @@ func (nd *DHTNode) sendMsgPeer(msg *Message, peer *Peer) error {
 }
 
 func (nd *DHTNode) findHandler(msg *Message) {
-	var peers []Peer
+	peers := []Peer{}
 	rPeers := []Peer{}
 	// Check if local peer is the origin peer in the message
 	if msg.OriginPeer.ID == nd.lpeer.ID {
@@ -217,8 +223,9 @@ func (nd *DHTNode) findHandler(msg *Message) {
 // Xor gets to byte arrays and returns and array of integers with the xor
 // for between the two equivalent bytes
 func xor(a, b []byte) []int {
-	var compA, compB []byte
-	var res = []int{}
+	compA := []byte{}
+	compB := []byte{}
+	res := []int{}
 
 	lenA := len(a)
 	lenB := len(b)
