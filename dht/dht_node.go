@@ -152,8 +152,8 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	rPeers := []Peer{}
 	// Check if local peer is the origin peer in the message
 	if msg.OriginPeer.ID == nd.lpeer.ID {
-		nd.mt.RLock()
-		defer nd.mt.RUnlock()
+		nd.mt.Lock()
+		defer nd.mt.Unlock()
 		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
 			// Add peers to local routing table
 			for _, p := range msg.Peers {
@@ -165,9 +165,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 				if msg.QueryPeerID == p.ID {
 					searchEntry.responseChannel <- p
 					// Delete response channel entry
-					nd.mt.Lock()
 					delete(nd.searchStore, msg.Nonce)
-					nd.mt.Unlock()
 					return
 				}
 			}
