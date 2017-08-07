@@ -15,6 +15,7 @@ type searchEntry struct {
 	id              ID
 	nonce           string
 	closestPeer     Peer
+	shortlistPeers  []Peer
 	responseChannel chan Peer
 }
 
@@ -41,7 +42,7 @@ func NewDHTNode(bps []*Peer, localPeer *Peer, rt RoutingTable, net *UDPNet, addr
 	log.WithField("address", addr).Info("Server starting...")
 	// Add bootstrap peers to routing table
 	for _, peer := range bps {
-		err := dhtNode.rt.Add(*peer)
+		err := dhtNode.rt.Save(*peer)
 		if err != nil {
 			log.WithField("error", err).Error("Failed to add peer to routing table")
 		}
@@ -77,7 +78,7 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 
 		// Check peers in local store for distance
 		// send message to the X closest peers
-		lookupPeers, err := nd.findPeersNear(id, numPeersNear)
+		closestPeers, err := nd.findPeersNear(id, numPeersNear)
 		if err != nil {
 			log.WithError(err).Error("Failed find peers near")
 		}
@@ -86,10 +87,11 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 			id:              id,
 			nonce:           nc.String(),
 			responseChannel: make(chan Peer),
-			closestPeer:     lookupPeers[0],
+			closestPeer:     closestPeers[0],
+			shortlistPeers:  closestPeers,
 		}
 
-		for _, p := range lookupPeers {
+		for _, p := range se.shortlistPeers {
 			err := nd.sendMsgPeer(msg, &p)
 			if err != nil {
 				log.WithError(err).WithField(
@@ -108,13 +110,10 @@ func (nd *DHTNode) Find(ctx context.Context, id ID) (Peer, error) {
 
 		resPeer := <-se.responseChannel
 		// Store result to routing table
-		// if it exists update it
-		err = nd.rt.Add(resPeer)
-		if err == ErrPeerAlreadyExists {
-			err = nd.rt.Update(resPeer)
-			if err != nil {
-				log.Error("Failed to update result peer")
-			}
+		err = nd.rt.Save(resPeer)
+		if err != nil {
+			log.Error("Failed to save result peer")
+
 		}
 		// TODO: Add timeout to wait for response and send not found
 		// timeout in config
@@ -163,7 +162,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
 			// Add peers to local routing table
 			for _, p := range msg.Peers {
-				nd.rt.Add(p)
+				nd.rt.Save(p)
 			}
 
 			// Check if the requested peer is in the results
