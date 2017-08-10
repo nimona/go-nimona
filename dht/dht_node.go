@@ -73,15 +73,20 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 
 	// handle new network peers
 	nnet.RegisterPeerHandler(func(np net.Peer) error {
+		if len(np.Addresses) == 0 {
+			return nil
+		}
+
 		if np.ID == dhtNode.lpeer.ID {
 			dhtNode.lpeer.Addresses = []string{}
 			for _, addr := range np.Addresses {
 				dhtNode.lpeer.Addresses = append(dhtNode.lpeer.Addresses, addr)
 			}
 		}
+
 		logrus.WithField("np", np).Debugf("Handling incoming peer")
 		if err := rt.Save(np); err != nil {
-			logrus.WithError(err).Debugf("Could not update incoming peer")
+			logrus.WithError(err).Debugf("Could not add incoming peer")
 			return err
 		}
 		logrus.Debugf("Saved incoming peer")
@@ -90,7 +95,7 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 
 	go func() {
 		// TODO Wait for network
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 2)
 		ctx, _ := context.WithTimeout(
 			context.Background(),
 			time.Second*5,
@@ -163,7 +168,7 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 	for _, p := range lookupPeers {
 		logrus.
 			WithField("peer", p.ID).
-			WithField("addr", p.Addresses[0]).
+			WithField("addr", p.Addresses).
 			Infof("Asking peer for %s", id)
 		err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
 		if err != nil {
@@ -182,7 +187,7 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 		responseChannel: responseChannel,
 	}
 	nd.mt.Lock()
-	nd.searchStore[nonce] = se
+	nd.searchStore[nonce] = se // TODO Check if exists
 	nd.mt.Unlock()
 
 	select {
@@ -207,7 +212,11 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 }
 
 func (nd *DHTNode) putPeer(peer net.Peer) error {
-	logrus.Infof("Adding peer to network peer=%s", peer.ID)
+	if len(peer.Addresses) == 0 {
+		return nil
+	}
+
+	logrus.Infof("Adding peer to network peer=%v", peer)
 	// check if the peer already exists
 	ep, err := nd.rt.Get(peer.ID)
 	// update peer table
