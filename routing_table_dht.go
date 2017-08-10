@@ -19,7 +19,8 @@ func (rt *RoutingTableSimple) Save(peer net.Peer) error {
 
 	// If peer exists update address
 	if _, ok := rt.store[peer.ID]; ok {
-		rt.store[peer.ID].Address = peer.Address
+		op := rt.store[peer.ID]
+		op.Addresses = peer.Addresses
 	}
 	rt.store[peer.ID] = peer
 

@@ -207,7 +207,6 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 		return net.Peer{}, ErrPeerNotFound // TODO Better error (context deadline exceeded)
 	}
 
-	fmt.Println("Peer existed locally")
 	return peer, nil
 }
 
@@ -217,16 +216,18 @@ func (nd *DHTNode) putPeer(peer net.Peer) error {
 	}
 
 	logrus.Infof("Adding peer to network peer=%v", peer)
-	// check if the peer already exists
-	ep, err := nd.rt.Get(peer.ID)
+
 	// update peer table
 	if err := nd.rt.Save(peer); err != nil {
 		return err
 	}
+
 	// add peer to network
 	if err := nd.net.PutPeer(peer); err != nil {
 		logrus.WithError(err).Warnf("Could not add peer to network")
+		return err
 	}
+
 	return nil
 }
 
