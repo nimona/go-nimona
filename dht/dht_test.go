@@ -42,11 +42,11 @@ func TestExampleTestSuite(t *testing.T) {
 	net5, err := net.NewTCPNetwork(&peer5, 0)
 	assert.Nil(t, err)
 
-	rt1 := NewSimpleRoutingTable()
-	rt2 := NewSimpleRoutingTable()
-	rt3 := NewSimpleRoutingTable()
-	rt4 := NewSimpleRoutingTable()
-	rt5 := NewSimpleRoutingTable()
+	rt1 := NewSimpleRoutingTable(net1, peer1)
+	rt2 := NewSimpleRoutingTable(net2, peer2)
+	rt3 := NewSimpleRoutingTable(net3, peer3)
+	rt4 := NewSimpleRoutingTable(net4, peer4)
+	rt5 := NewSimpleRoutingTable(net5, peer5)
 
 	node1, _ := NewDHTNode([]net.Peer{}, peer1, rt1, net1)
 	node2, _ := NewDHTNode([]net.Peer{peer1}, peer2, rt2, net2)

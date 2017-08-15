@@ -71,28 +71,6 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 		// go dhtNode.Find(ctx, peer.ID)
 	}
 
-	// handle new network peers
-	nnet.RegisterPeerHandler(func(np net.Peer) error {
-		if len(np.Addresses) == 0 {
-			return nil
-		}
-
-		if np.ID == dhtNode.lpeer.ID {
-			dhtNode.lpeer.Addresses = []string{}
-			for _, addr := range np.Addresses {
-				dhtNode.lpeer.Addresses = append(dhtNode.lpeer.Addresses, addr)
-			}
-		}
-
-		logrus.WithField("np", np).Debugf("Handling incoming peer")
-		if err := rt.Save(np); err != nil {
-			logrus.WithError(err).Debugf("Could not add incoming peer")
-			return err
-		}
-		logrus.Debugf("Saved incoming peer")
-		return nil
-	})
-
 	go func() {
 		// TODO Wait for network
 		time.Sleep(time.Second * 2)
