@@ -8,5 +8,5 @@ type RoutingTable interface {
 	Save(net.Peer) error
 	Remove(net.Peer) error
 	Get(string) (net.Peer, error)
-	GetPeerIDs() ([]string, error)
+	FindPeersNear(string, int) ([]net.Peer, error)
 }

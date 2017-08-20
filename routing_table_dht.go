@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"sort"
 	"sync"
 
 	net "github.com/nimona/go-nimona-net"
@@ -55,7 +56,7 @@ func (rt *RoutingTableSimple) Get(string string) (net.Peer, error) {
 	return pr, nil
 }
 
-func (rt *RoutingTableSimple) GetPeerIDs() ([]string, error) {
+func (rt *RoutingTableSimple) getPeerIDs() ([]string, error) {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 	ids := make([]string, len(rt.store))
@@ -65,6 +66,45 @@ func (rt *RoutingTableSimple) GetPeerIDs() ([]string, error) {
 		i++
 	}
 	return ids, nil
+}
+
+// FindPeersNear accepts an ID and n and finds the n closest nodes to this id
+// in the routing table
+func (rt *RoutingTableSimple) FindPeersNear(id string, n int) ([]net.Peer, error) {
+	peers := []net.Peer{}
+
+	ids, err := rt.getPeerIDs()
+	if err != nil {
+		logrus.WithError(err).Error("Failed to get peer ids")
+		return peers, err
+	}
+
+	// slice to hold the distances
+	dists := []distEntry{}
+	for _, pid := range ids {
+		entry := distEntry{
+			id:   pid,
+			dist: xor([]byte(id), []byte(pid)),
+		}
+		dists = append(dists, entry)
+	}
+	// Sort the distances
+	sort.Slice(dists, func(i, j int) bool {
+		return lessIntArr(dists[i].dist, dists[j].dist)
+	})
+
+	if n > len(dists) {
+		n = len(dists)
+	}
+	// Append n the first n number of peers from the ids
+	for _, de := range dists[:n] {
+		p, err := rt.Get(de.id)
+		if err != nil {
+			logrus.WithError(err).WithField("ID", de.id).Error("Peer not found")
+		}
+		peers = append(peers, p)
+	}
+	return peers, nil
 }
 
 func NewSimpleRoutingTable(nnet net.Network, localPeer net.Peer) *RoutingTableSimple {
