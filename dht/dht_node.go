@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -21,14 +20,6 @@ const (
 	numPeersNear int = 3
 )
 
-type searchEntry struct {
-	id              string
-	nonce           string
-	closestPeer     net.Peer
-	shortlistPeers  []net.Peer
-	responseChannel chan net.Peer
-}
-
 type DHTNode struct {
 	// bps are the Bootstrap Peers
 	// lp is the local Peer info
@@ -38,8 +29,8 @@ type DHTNode struct {
 	net        net.Network // currently not used
 	messageBus messagebus.MessageBus
 	// lc stores the nonces and the response channels
-	searchStore map[string]*searchEntry
-	mt          sync.RWMutex
+	queryStore map[string]*query
+	mt         sync.RWMutex
 }
 
 func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Network) (*DHTNode, error) {
@@ -51,11 +42,11 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 
 	// create dht node
 	dhtNode := &DHTNode{
-		lpeer:       localPeer,
-		rt:          rt,
-		net:         nnet,
-		messageBus:  mb,
-		searchStore: make(map[string]*searchEntry),
+		lpeer:      localPeer,
+		rt:         rt,
+		net:        nnet,
+		messageBus: mb,
+		queryStore: make(map[string]*query),
 	}
 
 	if err := mb.HandleMessage(dhtNode.messageHandler); err != nil {
@@ -136,11 +127,10 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 	logrus.Debugf("Getting nearest peers")
 	// Check peers in local store for distance
 	// send message to the X closest peers
-	lookupPeers, err := nd.findPeersNear(id, numPeersNear)
+	lookupPeers, err := nd.rt.FindPeersNear(id, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Error("Failed find peers near")
 	}
-
 	logrus.WithField("peers", lookupPeers).Debugf("Asking nearest peers")
 
 	for _, p := range lookupPeers {
@@ -157,15 +147,22 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 		}
 	}
 
+	// Store the closest peer
+	closestPeer := net.Peer{}
+	if len(lookupPeers) > 0 {
+		closestPeer = lookupPeers[0]
+	}
+
 	nonce := nc.String()
 	responseChannel := make(chan net.Peer)
-	se := &searchEntry{
+	query := &query{
 		id:              id,
 		nonce:           nonce,
 		responseChannel: responseChannel,
+		closestPeer:     closestPeer,
 	}
 	nd.mt.Lock()
-	nd.searchStore[nonce] = se // TODO Check if exists
+	nd.queryStore[nonce] = query // TODO Check if exists
 	nd.mt.Unlock()
 
 	select {
@@ -237,21 +234,34 @@ func (nd *DHTNode) findHandler(msg *Message) {
 		nd.mt.Lock()
 		defer nd.mt.Unlock()
 
-		if searchEntry, ok := nd.searchStore[msg.Nonce]; ok {
+		if query, ok := nd.queryStore[msg.Nonce]; ok {
 			// Check if the requested peer is in the results
 			for _, p := range msg.Peers {
 				nd.putPeer(p) // TODO Validate peer, handle error
 				if msg.QueryPeerID == p.ID {
 					fmt.Println("FOUND PEER", p.ID)
-					searchEntry.responseChannel <- p
-					delete(nd.searchStore, msg.Nonce)
+					query.responseChannel <- p
+					// TODO: Return more than one
+					delete(nd.queryStore, msg.Nonce)
 					return
 				}
 			}
+			// loopClosestPeer := net.Peer{}
 			// Send the request to returned closest peers
 			for _, p := range msg.Peers {
 				fmt.Println("ADDING", p.ID)
-				nd.putPeer(p) // TODO Validate peer, handle error
+				// TODO Validate peer
+				if err := nd.putPeer(p); err != nil {
+					logrus.WithError(err).WithField(
+						"peer", p.ID,
+					).Error("Failed to store peer")
+				}
+				// Compare if the peer is closer that the current closest
+				if comparePeers(p.ID, nd.queryStore[msg.Nonce].closestPeer.ID,
+					nd.queryStore[msg.Nonce].id,
+				) == p.ID {
+					// loopClosestPeer = p
+				}
 				err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
 				if err != nil {
 					if err != nil {
@@ -274,7 +284,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 		// logrus.Error("Failed to find node")
 	}
 
-	peers, err = nd.findPeersNear(msg.QueryPeerID, numPeersNear)
+	peers, err = nd.rt.FindPeersNear(msg.QueryPeerID, numPeersNear)
 	if err != nil {
 		logrus.WithField("Msg", msg).Error("Failed to find nodes near")
 	}
@@ -290,93 +300,4 @@ func (nd *DHTNode) findHandler(msg *Message) {
 		Peers:       rPeers,
 	}
 	nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, sm, msg.OriginPeer.ID)
-}
-
-// Xor gets to byte arrays and returns and array of integers with the xor
-// for between the two equivalent bytes
-func xor(a, b []byte) []int {
-	compA := []byte{}
-	compB := []byte{}
-	res := []int{}
-
-	lenA := len(a)
-	lenB := len(b)
-
-	// Make both byte arrays have the same size
-	if lenA > lenB {
-		compA = a
-		compB = make([]byte, lenA)
-		// Need to leave leftmost bytes empty in order compare
-		// the equivalent bytes
-		copy(compB[lenA-lenB:], b)
-	} else {
-		compB = b
-		compA = make([]byte, lenB)
-		copy(compA[lenB-lenA:], a)
-	}
-
-	for i := range compA {
-		res = append(res, int(compA[i]^compB[i]))
-	}
-
-	return res
-}
-
-// distEntry is used to hold the distance between nodes
-type distEntry struct {
-	id   string
-	dist []int
-}
-
-// lessIntArr compares two int array return true if a less than b
-func lessIntArr(a, b []int) bool {
-	for i := range a {
-		if a[i] > b[i] {
-			return false
-		}
-		if a[i] < b[i] {
-			return true
-		}
-	}
-
-	return true
-}
-
-// findPeersNear accepts an ID and n and finds the n closest nodes to this id
-// in the routing table
-func (nd *DHTNode) findPeersNear(id string, n int) ([]net.Peer, error) {
-	peers := []net.Peer{}
-
-	ids, err := nd.rt.GetPeerIDs()
-	if err != nil {
-		logrus.WithError(err).Error("Failed to get peer ids from the routing table")
-		return peers, err
-	}
-
-	// slice to hold the distances
-	dists := []distEntry{}
-	for _, pid := range ids {
-		entry := distEntry{
-			id:   pid,
-			dist: xor([]byte(id), []byte(pid)),
-		}
-		dists = append(dists, entry)
-	}
-	// Sort the distances
-	sort.Slice(dists, func(i, j int) bool {
-		return lessIntArr(dists[i].dist, dists[j].dist)
-	})
-
-	if n > len(dists) {
-		n = len(dists)
-	}
-	// Append n the first n number of peers from the ids
-	for _, de := range dists[:n] {
-		p, err := nd.rt.Get(de.id)
-		if err != nil {
-			logrus.WithError(err).WithField("ID", de.id).Error("Peer not found")
-		}
-		peers = append(peers, p)
-	}
-	return peers, nil
 }
