@@ -16,44 +16,45 @@ import (
 )
 
 const (
-	protocolID       = "dht-kad/v1"
-	numPeersNear int = 3
+	protocolID = "dht-kad/v1"
 )
 
+// DHTNode is the struct that implements the dht protocol
 type DHTNode struct {
 	// bps are the Bootstrap Peers
-	// lp is the local Peer info
-	lpeer net.Peer
-	// rt is the routing table used
-	rt         RoutingTable
-	net        net.Network // currently not used
-	messageBus messagebus.MessageBus
-	// lc stores the nonces and the response channels
+	// localPeer is the Local Peer info
+	localPeer net.Peer
+	// routingtable is the Routing table used to hold peer data
+	routingtable RoutingTable
+	net          net.Network // currently not used
+	messageBus   messagebus.MessageBus
+	// queryStore holds the nonces and the response channels
 	queryStore map[string]*query
 	mt         sync.RWMutex
 }
 
-func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Network) (*DHTNode, error) {
+func NewDHTNode(bps []net.Peer, localPeer net.Peer, routingtable RoutingTable, nnet net.Network) (*DHTNode, error) {
 	// create messagebud
 	mb, err := messagebus.New(protocolID, nnet, localPeer)
 	if err != nil {
 		return nil, err
 	}
 
-	// create dht node
+	// Create DHT node
 	dhtNode := &DHTNode{
-		lpeer:      localPeer,
-		rt:         rt,
-		net:        nnet,
-		messageBus: mb,
-		queryStore: make(map[string]*query),
+		localPeer:    localPeer,
+		routingtable: routingtable,
+		net:          nnet,
+		messageBus:   mb,
+		queryStore:   make(map[string]*query),
 	}
 
+	// Register message bus, message handler
 	if err := mb.HandleMessage(dhtNode.messageHandler); err != nil {
 		return nil, err
 	}
 
-	// add bootstrap nodes
+	// Add bootstrap nodes
 	for _, peer := range bps {
 		if err := dhtNode.putPeer(peer); err != nil {
 			logrus.WithField("error", err).Error("Failed to add peer to routing table")
@@ -62,6 +63,8 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 		// go dhtNode.Find(ctx, peer.ID)
 	}
 
+	// Search for the local peer in the network
+	// TODO: Do we need a better way to announce local peer?
 	go func() {
 		// TODO Wait for network
 		time.Sleep(time.Second * 2)
@@ -70,7 +73,7 @@ func NewDHTNode(bps []net.Peer, localPeer net.Peer, rt RoutingTable, nnet net.Ne
 			time.Second*5,
 		)
 		if _, err := dhtNode.Find(ctx, localPeer.ID); err != nil {
-			logrus.WithError(err).Warnf("Could not find peer %s on startup", localPeer.ID)
+			logrus.WithError(err).Warnf("Could not find peer %s on staroutingtableup", localPeer.ID)
 		}
 	}()
 
@@ -102,7 +105,7 @@ func (nd *DHTNode) Ping(context.Context, net.Peer) (net.Peer, error) {
 func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 	// Search local Routing Table for node
 	logrus.Info("Searching for peer with id: ", id)
-	peer, err := nd.rt.Get(id)
+	peer, err := nd.routingtable.Get(id)
 	// If node is not found locally send a message to nodes
 	if err != nil {
 		if err != ErrPeerNotFound {
@@ -118,55 +121,22 @@ func (nd *DHTNode) Find(ctx context.Context, id string) (net.Peer, error) {
 		return net.Peer{}, err
 	}
 
-	msg := &Message{
-		OriginPeer:  nd.lpeer,
-		Nonce:       nc.String(),
-		QueryPeerID: id,
-	}
-
-	logrus.Debugf("Getting nearest peers")
-	// Check peers in local store for distance
-	// send message to the X closest peers
-	lookupPeers, err := nd.rt.FindPeersNear(id, numPeersNear)
-	if err != nil {
-		logrus.WithError(err).Error("Failed find peers near")
-	}
-	logrus.WithField("peers", lookupPeers).Debugf("Asking nearest peers")
-
-	for _, p := range lookupPeers {
-		logrus.
-			WithField("peer", p.ID).
-			WithField("addr", p.Addresses).
-			Infof("Asking peer for %s", id)
-		err := nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, msg, p.ID)
-		if err != nil {
-			logrus.WithError(err).WithField(
-				"peer",
-				p.ID,
-			).Error("Failed to send message to peer")
-		}
-	}
-
-	// Store the closest peer
-	closestPeer := net.Peer{}
-	if len(lookupPeers) > 0 {
-		closestPeer = lookupPeers[0]
-	}
-
 	nonce := nc.String()
-	responseChannel := make(chan net.Peer)
+	results := make(chan net.Peer)
 	query := &query{
-		id:              id,
-		nonce:           nonce,
-		responseChannel: responseChannel,
-		closestPeer:     closestPeer,
+		id:           id,
+		nonce:        nonce,
+		results:      results,
+		routingTable: nd.routingtable,
+		dht:          nd,
 	}
 	nd.mt.Lock()
 	nd.queryStore[nonce] = query // TODO Check if exists
 	nd.mt.Unlock()
 
+	query.Run(ctx)
 	select {
-	case rp := <-responseChannel:
+	case rp := <-results:
 		logrus.WithField("rp", rp).Debugf("Found peer, returning")
 		if err = nd.putPeer(rp); err != nil {
 			logrus.Error("Failed to update result peer")
@@ -193,7 +163,7 @@ func (nd *DHTNode) putPeer(peer net.Peer) error {
 	logrus.Infof("Adding peer to network peer=%v", peer)
 
 	// update peer table
-	if err := nd.rt.Save(peer); err != nil {
+	if err := nd.routingtable.Save(peer); err != nil {
 		return err
 	}
 
@@ -207,7 +177,7 @@ func (nd *DHTNode) putPeer(peer net.Peer) error {
 }
 
 func (nd *DHTNode) sendMsgPeer(msgType string, msg *Message, peerID string) error {
-	if peerID == nd.lpeer.ID {
+	if peerID == nd.localPeer.ID {
 		return nil
 	}
 
@@ -217,7 +187,7 @@ func (nd *DHTNode) sendMsgPeer(msgType string, msg *Message, peerID string) erro
 	}
 
 	pl := &messagebus.Payload{
-		Creator: nd.lpeer.ID,
+		Creator: nd.localPeer.ID,
 		Coded:   "json",
 		Type:    msgType,
 		Data:    data,
@@ -230,7 +200,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 	peers := []net.Peer{}
 	rPeers := []net.Peer{}
 	// Check if local peer is the origin peer in the message
-	if msg.OriginPeer.ID == nd.lpeer.ID {
+	if msg.OriginPeer.ID == nd.localPeer.ID {
 		nd.mt.Lock()
 		defer nd.mt.Unlock()
 
@@ -240,7 +210,7 @@ func (nd *DHTNode) findHandler(msg *Message) {
 				nd.putPeer(p) // TODO Validate peer, handle error
 				if msg.QueryPeerID == p.ID {
 					fmt.Println("FOUND PEER", p.ID)
-					query.responseChannel <- p
+					query.results <- p
 					// TODO: Return more than one
 					delete(nd.queryStore, msg.Nonce)
 					return
@@ -278,13 +248,13 @@ func (nd *DHTNode) findHandler(msg *Message) {
 
 	msg.Peers = []net.Peer{}
 
-	peer, err := nd.rt.Get(msg.QueryPeerID)
+	peer, err := nd.routingtable.Get(msg.QueryPeerID)
 	if err != nil {
 		// TODO Handle errors other than not found
 		// logrus.Error("Failed to find node")
 	}
 
-	peers, err = nd.rt.FindPeersNear(msg.QueryPeerID, numPeersNear)
+	peers, err = nd.routingtable.FindPeersNear(msg.QueryPeerID, numPeersNear)
 	if err != nil {
 		logrus.WithField("Msg", msg).Error("Failed to find nodes near")
 	}
@@ -300,4 +270,8 @@ func (nd *DHTNode) findHandler(msg *Message) {
 		Peers:       rPeers,
 	}
 	nd.sendMsgPeer(MESSAGE_TYPE_FIND_NODE, sm, msg.OriginPeer.ID)
+}
+
+func (nd *DHTNode) GetLocalPeer() net.Peer {
+	return nd.localPeer
 }
