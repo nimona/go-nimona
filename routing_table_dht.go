@@ -97,12 +97,19 @@ func (rt *RoutingTableSimple) FindPeersNear(id string, n int) ([]net.Peer, error
 		n = len(dists)
 	}
 	// Append n the first n number of peers from the ids
-	for _, de := range dists[:n] {
+	for _, de := range dists {
 		p, err := rt.Get(de.id)
 		if err != nil {
 			logrus.WithError(err).WithField("ID", de.id).Error("Peer not found")
 		}
+		if len(p.Addresses) == 0 {
+			continue
+		}
 		peers = append(peers, p)
+		n--
+		if n == 0 {
+			break
+		}
 	}
 	return peers, nil
 }
