@@ -2,6 +2,7 @@ package dht
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -27,19 +28,19 @@ func TestExampleTestSuite(t *testing.T) {
 	peer4 := net.Peer{ID: "a4", Addresses: []string{}}
 	peer5 := net.Peer{ID: "a5", Addresses: []string{}}
 
-	net1, err := net.NewTCPNetwork(&peer1, 0)
+	net1, err := net.NewNetwork(&peer1, 0)
 	assert.Nil(t, err)
 
-	net2, err := net.NewTCPNetwork(&peer2, 0)
+	net2, err := net.NewNetwork(&peer2, 0)
 	assert.Nil(t, err)
 
-	net3, err := net.NewTCPNetwork(&peer3, 0)
+	net3, err := net.NewNetwork(&peer3, 0)
 	assert.Nil(t, err)
 
-	net4, err := net.NewTCPNetwork(&peer4, 0)
+	net4, err := net.NewNetwork(&peer4, 0)
 	assert.Nil(t, err)
 
-	net5, err := net.NewTCPNetwork(&peer5, 0)
+	net5, err := net.NewNetwork(&peer5, 0)
 	assert.Nil(t, err)
 
 	rt1 := NewSimpleRoutingTable(net1, peer1)
@@ -70,20 +71,7 @@ func TestExampleTestSuite(t *testing.T) {
 func (suite *dhtTestSuite) TestFindSuccess() {
 	ctx := context.Background()
 	id := "a5"
-
-	peer, err := suite.node1.Find(ctx, id)
-	suite.Nil(err)
-	suite.Equal(id, peer.ID)
-
-	peer, err = suite.node1.Find(ctx, id)
-	suite.Nil(err)
-	suite.Equal(id, peer.ID)
-
-	peer, err = suite.node1.Find(ctx, id)
-	suite.Nil(err)
-	suite.Equal(id, peer.ID)
-
-	peer, err = suite.node1.Find(ctx, id)
+	peer, err := suite.node2.Find(ctx, id)
 	suite.Nil(err)
 	suite.Equal(id, peer.ID)
 }
@@ -95,6 +83,8 @@ func (suite *dhtTestSuite) TestFindNodeLocalSuccess() {
 	peer, err := suite.node2.Find(ctx, id)
 	suite.Nil(err)
 	suite.Equal(id, peer.ID)
+
+	fmt.Println("FOUND FUCKING PEER", peer)
 }
 
 func (suite *dhtTestSuite) TestFindNodeTimeout() {
