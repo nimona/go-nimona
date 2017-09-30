@@ -27,18 +27,21 @@ type DHTNode struct {
 	mt           sync.RWMutex
 }
 
-func NewDHTNode(bps []net.Peer, localPeer net.Peer, routingtable *RoutingTable, nnet net.Network) (*DHTNode, error) {
+func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
+	// create new routing table
+	rt := NewRoutingTable(nn, lp)
+
 	// create messagebud
-	mb, err := messagebus.New(protocolID, nnet)
+	mb, err := messagebus.New(protocolID, nn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create DHT node
 	nd := &DHTNode{
-		localPeer:    localPeer,
-		routingtable: routingtable,
-		net:          nnet,
+		localPeer:    lp,
+		routingtable: rt,
+		net:          nn,
 		messageBus:   mb,
 		queries:      map[string]*query{},
 	}
