@@ -20,14 +20,14 @@ const (
 // DHTNode is the struct that implements the dht protocol
 type DHTNode struct {
 	localPeer    net.Peer
-	routingtable RoutingTable
-	net          net.Network // currently not used
+	routingtable *RoutingTable
+	net          net.Network
 	messageBus   messagebus.MessageBus
 	queries      map[string]*query
 	mt           sync.RWMutex
 }
 
-func NewDHTNode(bps []net.Peer, localPeer net.Peer, routingtable RoutingTable, nnet net.Network) (*DHTNode, error) {
+func NewDHTNode(bps []net.Peer, localPeer net.Peer, routingtable *RoutingTable, nnet net.Network) (*DHTNode, error) {
 	// create messagebud
 	mb, err := messagebus.New(protocolID, nnet)
 	if err != nil {
@@ -162,7 +162,7 @@ func (nd *DHTNode) putPeer(peer net.Peer) error {
 	logrus.Infof("Adding peer to network peer=%v", peer)
 
 	// update peer table
-	if err := nd.routingtable.Save(peer); err != nil {
+	if err := nd.routingtable.Put(peer); err != nil {
 		return err
 	}
 
