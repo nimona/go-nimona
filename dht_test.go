@@ -43,17 +43,11 @@ func TestExampleTestSuite(t *testing.T) {
 	net5, err := net.NewNetwork(&peer5, 0)
 	assert.Nil(t, err)
 
-	rt1 := NewRoutingTable(net1, peer1)
-	rt2 := NewRoutingTable(net2, peer2)
-	rt3 := NewRoutingTable(net3, peer3)
-	rt4 := NewRoutingTable(net4, peer4)
-	rt5 := NewRoutingTable(net5, peer5)
-
-	node1, _ := NewDHTNode([]net.Peer{}, peer1, rt1, net1)
-	node2, _ := NewDHTNode([]net.Peer{peer1}, peer2, rt2, net2)
-	node3, _ := NewDHTNode([]net.Peer{peer1}, peer3, rt3, net3)
-	node4, _ := NewDHTNode([]net.Peer{peer1}, peer4, rt4, net4)
-	node5, _ := NewDHTNode([]net.Peer{peer1}, peer5, rt5, net5)
+	node1, _ := NewDHTNode([]net.Peer{}, peer1, net1)
+	node2, _ := NewDHTNode([]net.Peer{peer1}, peer2, net2)
+	node3, _ := NewDHTNode([]net.Peer{peer1}, peer3, net3)
+	node4, _ := NewDHTNode([]net.Peer{peer1}, peer4, net4)
+	node5, _ := NewDHTNode([]net.Peer{peer1}, peer5, net5)
 
 	dt := &dhtTestSuite{
 		node1: node1,
