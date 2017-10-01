@@ -4,24 +4,29 @@ import (
 	net "github.com/nimona/go-nimona-net"
 )
 
+// Message types
 const (
-	MESSAGE_TYPE_PING            string = "PING"
-	MESSAGE_TYPE_STORE                  = "STORE"
-	MESSAGE_TYPE_FIND_NODE_REQ          = "FIND_NODE_REQ"
-	MESSAGE_TYPE_FIND_NODE_RESP         = "FIND_NODE_RESP"
-	MESSAGE_TYPE_FIND_VALUE_REQ         = "FIND_VALUE_REQ"
-	MESSAGE_TYPE_FIND_VALUE_RESP        = "FIND_VALUE_RESP"
+	MessageTypePing string = "PING"
+	MessageTypePut         = "PUT"
+	MessageTypeGet         = "GET"
 )
 
-type findNodeRequest struct {
-	QueryID     string   `json:"n"`
-	OriginPeer  net.Peer `json:"op"`
-	QueryPeerID string   `json:"qp"`
+// Key prefixes
+const (
+	KeyPrefixPeer         string = "nimona/peer/"
+	KeyPrefixProvider            = "nimona/provider/"
+	KeyPrefixKeyValuePair        = "nimona/kv/"
+)
+
+type messageGet struct {
+	OriginPeer net.Peer `json:"p"`
+	QueryID    string   `json:"q"`
+	Key        string   `json:"k"`
 }
 
-type findNodeResponse struct {
-	QueryID     string     `json:"n"`
-	OriginPeer  net.Peer   `json:"op"`
-	QueryPeerID string     `json:"qp"`
-	Peers       []net.Peer `json:"rp"`
+type messagePut struct {
+	OriginPeer net.Peer `json:"p"`
+	QueryID    string   `json:"q"`
+	Key        string   `json:"k"`
+	Values     []string `json:"v"`
 }
