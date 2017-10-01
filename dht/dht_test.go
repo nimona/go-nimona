@@ -109,3 +109,20 @@ func (suite *dhtTestSuite) TestFindNodeCancelation() {
 	suite.Equal(ErrPeerNotFound, err)
 	suite.Empty(peer.ID)
 }
+
+func (suite *dhtTestSuite) TestFindKeySuccess() {
+	key := "some-key"
+	value := "some-value"
+	err := suite.node2.Put(context.Background(), key, value)
+	suite.Nil(err)
+
+	res, err := suite.node5.Get(context.Background(), key)
+	resValue := ""
+	select {
+	case <-time.After(time.Second * 5):
+	case v := <-res:
+		resValue = v
+	}
+	suite.Nil(err)
+	suite.Equal(value, resValue)
+}
