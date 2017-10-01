@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -62,21 +63,21 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	}
 
 	// start refresh worker
-	// ticker := time.NewTicker(15 * time.Second)
-	// quit := make(chan struct{})
+	ticker := time.NewTicker(15 * time.Second)
+	quit := make(chan struct{})
 	go func() {
 		// refresh for the first time
 		nd.refresh()
 		// and then just wait
-		// for {
-		// 	select {
-		// 	case <-ticker.C:
-		// 		nd.refresh()
-		// 	case <-quit:
-		// 		ticker.Stop()
-		// 		return
-		// 	}
-		// }
+		for {
+			select {
+			case <-ticker.C:
+				nd.refresh()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
 	}()
 
 	return nd, nil
