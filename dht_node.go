@@ -123,6 +123,31 @@ func (nd *DHTNode) messageHandler(hash []byte, msg messagebus.Message) error {
 	return nil
 }
 
+func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
+	logrus.Infof("Putting key %s", key)
+
+	// create a put msg
+	msgPut := &messagePut{
+		OriginPeer: nd.GetLocalPeer(),
+		Key:        key,
+		Values:     []string{value},
+	}
+	// find nearest peers
+	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, key, numPeersNear*10)
+	if err != nil {
+		logrus.WithError(err).Error("Put failed to find near peers")
+		return err
+	}
+	for _, cp := range cps {
+		// send message
+		if err := nd.sendMsgPeer(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
+			logrus.WithError(err).Warnf("Put could not send msg")
+		}
+	}
+
+	return nil
+}
+
 func (nd *DHTNode) Get(ctx context.Context, key string) (chan string, error) {
 	logrus.Infof("Searching for key %s", key)
 

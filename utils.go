@@ -93,9 +93,7 @@ func getProviderKey(key string) string {
 }
 
 func checkKey(key string) bool {
-	return strings.Contains(key, KeyPrefixKeyValuePair) ||
-		strings.Contains(key, KeyPrefixProvider) ||
-		strings.Contains(key, KeyPrefixPeer)
+	return true
 }
 
 func trimKey(key, prefix string) string {
