@@ -1,10 +1,16 @@
 package dht
 
-import "github.com/sirupsen/logrus"
+import (
+	"crypto/sha1"
+	"fmt"
+	"strings"
+
+	"github.com/sirupsen/logrus"
+)
 
 // distEntry is used to hold the distance between nodes
 type distEntry struct {
-	id   string
+	key  string
 	dist []int
 }
 
@@ -60,4 +66,62 @@ func comparePeers(a, b, targetPeer string) string {
 		return a
 	}
 	return b
+}
+
+func getPeerKey(key string) string {
+	if strings.Contains(key, KeyPrefixPeer) {
+		return key
+	}
+
+	return KeyPrefixPeer + key
+}
+
+func getPairKey(key string) string {
+	if strings.Contains(key, KeyPrefixKeyValuePair) {
+		return key
+	}
+
+	return KeyPrefixKeyValuePair + key
+}
+
+func getProviderKey(key string) string {
+	if strings.Contains(key, KeyPrefixProvider) {
+		return key
+	}
+
+	return KeyPrefixProvider + key
+}
+
+func checkKey(key string) bool {
+	return strings.Contains(key, KeyPrefixKeyValuePair) ||
+		strings.Contains(key, KeyPrefixProvider) ||
+		strings.Contains(key, KeyPrefixPeer)
+}
+
+func trimKey(key, prefix string) string {
+	return strings.Replace(key, prefix, "", 1)
+}
+
+func appendIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
+
+func hash(key string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(key))
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func in(k string, ar []string) bool {
+	for _, v := range ar {
+		if k == v {
+			return true
+		}
+	}
+	return false
 }

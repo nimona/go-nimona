@@ -8,6 +8,6 @@ import (
 
 // DHT ..
 type DHT interface {
-	Find(context.Context, string) (net.Peer, error)
-	Ping(context.Context, net.Peer) (net.Peer, error)
+	Get(ctx context.Context, key string) (chan string, error)
+	GetPeer(ctx context.Context, id string) (net.Peer, error)
 }
