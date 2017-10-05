@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	logrus "github.com/sirupsen/logrus"
 	assert "github.com/stretchr/testify/assert"
 	suite "github.com/stretchr/testify/suite"
 
@@ -21,6 +22,8 @@ type dhtTestSuite struct {
 }
 
 func TestExampleTestSuite(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
+
 	peer1 := net.Peer{ID: "a1", Addresses: []string{}}
 	peer2 := net.Peer{ID: "a2", Addresses: []string{}}
 	// peer3 := net.Peer{ID: "a3", Addresses: []string{}}
