@@ -1,8 +1,10 @@
 package dht
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -10,47 +12,48 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	messagebus "github.com/nimona/go-nimona-messagebus"
 	net "github.com/nimona/go-nimona-net"
 )
 
 const (
-	protocolID = "dht-kad/v1"
+	protocolID = "dht-kad/v2"
+	maxRetries = 3
 )
+
+type message struct {
+	Recipient string `json:"-"`
+	Type      string `json:"type"`
+	Payload   []byte `json:"payload"`
+	Retries   int    `json:"-"`
+}
 
 // DHTNode is the struct that implements the dht protocol
 type DHTNode struct {
-	localPeer  net.Peer
-	store      *Store
-	net        net.Network
-	messageBus messagebus.MessageBus
-	queries    map[string]*query
-	mt         sync.RWMutex
+	localPeer net.Peer
+	store     *Store
+	net       net.Network
+	messages  chan *message
+	queries   map[string]*query
+	streams   map[string]io.ReadWriteCloser
+	lock      sync.RWMutex
 }
 
 func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
-	// create new routing table
+	// create new kv store
 	st, _ := newStore()
-
-	// create messagebud
-	mb, err := messagebus.New(protocolID, nn)
-	if err != nil {
-		return nil, err
-	}
 
 	// Create DHT node
 	nd := &DHTNode{
-		localPeer:  lp,
-		store:      st,
-		net:        nn,
-		messageBus: mb,
-		queries:    map[string]*query{},
+		localPeer: lp,
+		store:     st,
+		net:       nn,
+		messages:  make(chan *message, 500),
+		streams:   map[string]io.ReadWriteCloser{},
+		queries:   map[string]*query{},
 	}
 
-	// Register message bus, message handler
-	if err := mb.HandleMessage(nd.messageHandler); err != nil {
-		return nil, err
-	}
+	// register stream handler
+	nd.net.RegisterStreamHandler(protocolID, nd.handleStream) // TODO(geoah) handle error?
 
 	// Add bootstrap nodes
 	for _, peer := range bps {
@@ -62,9 +65,11 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 		}
 	}
 
+	// TODO quit channel
+	quit := make(chan struct{})
+
 	// start refresh worker
 	ticker := time.NewTicker(15 * time.Second)
-	quit := make(chan struct{})
 	go func() {
 		// refresh for the first time
 		nd.refresh()
@@ -80,7 +85,87 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 		}
 	}()
 
+	// start messaging worker
+	go func() {
+		for msg := range nd.messages {
+			st, err := nd.getStream(msg.Recipient)
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not get stream for %s", msg.Recipient)
+				if msg.Retries < maxRetries {
+					msg.Retries++
+					nd.messages <- msg
+				}
+				continue
+			}
+			bs, err := json.Marshal(msg)
+			if err != nil {
+				logrus.WithError(err).Warnf("Could not marshal message for %s, unrecoverable", msg.Recipient)
+				continue
+			}
+			bs = append(bs, []byte("\n")...)
+			logrus.WithField("recipient", msg.Recipient).WithField("line", string(bs)).Debugf("sending line")
+			if _, err := st.Write(bs); err != nil {
+				logrus.WithError(err).Warnf("Could not write to stream for %s", msg.Recipient)
+				nd.lock.Lock()
+				if _, ok := nd.streams[msg.Recipient]; ok {
+					delete(nd.streams, msg.Recipient)
+				}
+				nd.lock.Unlock()
+				if msg.Retries < maxRetries {
+					msg.Retries++
+					nd.messages <- msg
+				}
+				continue
+			}
+		}
+	}()
+
 	return nd, nil
+}
+
+func (nd *DHTNode) getStream(peerID string) (io.ReadWriteCloser, error) {
+	nd.lock.Lock()
+	defer nd.lock.Unlock()
+
+	if stream, ok := nd.streams[peerID]; ok && stream != nil {
+		// TODO Check if stream is still ok
+		logrus.Debugf("Found stream for peer %s", peerID)
+		return stream, nil
+	}
+	addr := peerID + "/" + protocolID
+	logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
+	stream, err := nd.net.Dial(addr)
+	if err != nil {
+		return nil, err
+	}
+	logrus.Debugf("Created new stream for peer %s", peerID)
+	nd.streams[peerID] = stream
+	return stream, nil
+}
+
+func (nd *DHTNode) handleStream(protocolID string, stream io.ReadWriteCloser) error {
+	sr := bufio.NewReader(stream)
+	for {
+		// read line
+		line, err := sr.ReadString('\n')
+		if err != nil {
+			logrus.WithError(err).Errorf("Could not read")
+			return err // TODO(geoah) Return?
+		}
+		logrus.WithField("line", line).Debugf("handleStream got line")
+
+		// decode message
+		msg := &message{}
+		if err := json.Unmarshal([]byte(line), &msg); err != nil {
+			logrus.WithError(err).Warnf("Could not decode message")
+			return err
+		}
+
+		// process message
+		if err := nd.handleMessage(msg); err != nil {
+			logrus.WithError(err).Warnf("Could not process message")
+		}
+	}
 }
 
 func (nd *DHTNode) refresh() {
@@ -103,22 +188,22 @@ func (nd *DHTNode) refresh() {
 	}
 }
 
-func (nd *DHTNode) messageHandler(hash []byte, msg messagebus.Message) error {
-	switch msg.Payload.Type {
+func (nd *DHTNode) handleMessage(msg *message) error {
+	switch msg.Type {
 	case MessageTypeGet:
 		getMsg := &messageGet{}
-		if err := json.Unmarshal(msg.Payload.Data, getMsg); err != nil {
+		if err := json.Unmarshal(msg.Payload, getMsg); err != nil {
 			return err
 		}
 		nd.getHandler(getMsg)
 	case MessageTypePut:
 		putMsg := &messagePut{}
-		if err := json.Unmarshal(msg.Payload.Data, putMsg); err != nil {
+		if err := json.Unmarshal(msg.Payload, putMsg); err != nil {
 			return err
 		}
 		nd.putHandler(putMsg)
 	default:
-		logrus.Info("Call type not implemented")
+		logrus.WithField("type", msg.Type).Info("Call type not implemented")
 	}
 	return nil
 }
@@ -140,7 +225,7 @@ func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
 	}
 	for _, cp := range cps {
 		// send message
-		if err := nd.sendMsgPeer(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
+		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
 			logrus.WithError(err).Warnf("Put could not send msg")
 		}
 	}
@@ -164,9 +249,9 @@ func (nd *DHTNode) Get(ctx context.Context, key string) (chan string, error) {
 	}
 
 	// and store it
-	nd.mt.Lock()
+	nd.lock.Lock()
 	nd.queries[q.id] = q
-	nd.mt.Unlock()
+	nd.lock.Unlock()
 
 	// run query
 	q.Run(ctx)
@@ -201,24 +286,23 @@ func (nd *DHTNode) GetPeer(ctx context.Context, id string) (net.Peer, error) {
 	}, nil
 }
 
-func (nd *DHTNode) sendMsgPeer(msgType string, msg interface{}, peerID string) error {
+func (nd *DHTNode) sendMessage(msgType string, msg interface{}, peerID string) error {
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
 
-	data, err := json.Marshal(msg)
+	pl, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
-	pl := &messagebus.Payload{
-		Creator: nd.localPeer.ID,
-		Coded:   "json",
-		Type:    msgType,
-		Data:    data,
+	nd.messages <- &message{
+		Recipient: peerID,
+		Payload:   pl,
+		Type:      msgType,
 	}
 
-	return nd.messageBus.Send(pl, []string{peerID})
+	return nil
 }
 
 func (nd *DHTNode) getHandler(msg *messageGet) {
@@ -246,7 +330,7 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 			Values:     ks,
 		}
 		// send response
-		if err := nd.sendMsgPeer(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
+		if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
 			logrus.WithError(err).Warnf("getHandler could not send msg")
 		}
 	}
@@ -284,7 +368,7 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 			Values:     addrs,
 		}
 		// send response
-		if err := nd.sendMsgPeer(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
+		if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
 			logrus.WithError(err).Warnf("getHandler could not send msg")
 		}
 	}

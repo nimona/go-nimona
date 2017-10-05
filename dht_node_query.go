@@ -107,7 +107,7 @@ func (q *query) next() {
 		}
 		// ask peer
 		logrus.WithField("src", q.dht.GetLocalPeer().ID).WithField("dst", cp).WithField("queryKey", req.Key).WithField("id", q.id).WithField("cp", q.contactedPeers).Infof("Asking peer")
-		q.dht.sendMsgPeer(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
+		q.dht.sendMessage(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
 		// mark peer as contacted
 		q.contactedPeers = append(q.contactedPeers, cp)
 		// stop once we reached the limit
