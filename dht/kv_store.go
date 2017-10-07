@@ -142,7 +142,23 @@ func (s *Store) Wipe(key string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	s.pairs[key] = []*Pair{}
+	if _, ok := s.pairs[key]; !ok {
+		return nil
+	}
+
+	npr := []*Pair{}
+	for _, pr := range s.pairs[key] {
+		if pr.Persistent {
+			npr = append(npr, pr)
+		}
+	}
+
+	if len(npr) == 0 {
+		delete(s.pairs, key)
+		return nil
+	}
+
+	s.pairs[key] = npr
 	return nil
 }
 
