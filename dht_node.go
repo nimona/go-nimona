@@ -298,8 +298,6 @@ func (nd *DHTNode) sendMessage(msgType string, msg interface{}, peerID string) e
 		Type:      msgType,
 	}
 
-	// logrus.WithField("type", msgType).WithField("msg", msg).Errorf("sendMessage pushed")
-
 	return nil
 }
 
