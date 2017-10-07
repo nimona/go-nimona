@@ -32,7 +32,7 @@ func (q *query) Run(ctx context.Context) {
 		// send what we know about the key
 		if pair, err := q.dht.store.Get(q.key); err == nil {
 			// if so, return it
-			logger.Infof("Peer existed in local store")
+			logger.Infof("Value existed in local store")
 			for _, v := range pair {
 				q.results <- v
 			}
@@ -44,18 +44,26 @@ func (q *query) Run(ctx context.Context) {
 			case msg := <-q.incomingMessages:
 				logger.Infof("Processing incoming message")
 				// check if we found the node
+				persist := false
 				if msg.Key == q.key {
-					logger.WithField("key", q.key).Infof("Found peer")
+					logger.WithField("key", q.key).Infof("Found value")
+					// persist the things we asked about
+					persist = true
 					// send results
 					for _, v := range msg.Values {
 						q.results <- v
 					}
+				}
+				// store values we got
+				for _, val := range msg.Values {
+					q.dht.store.Put(msg.Key, val, persist)
 				}
 				// if pair is peer information consider it a closest peer
 				if strings.Contains(msg.Key, KeyPrefixPeer) {
 					// check if we got closer than before
 					if q.closestPeerID == "" {
 						q.closestPeerID = msg.Key
+						go q.next()
 					} else {
 						if comparePeers(q.closestPeerID, msg.Key, q.key) == msg.Key {
 							q.closestPeerID = msg.Key
@@ -86,7 +94,7 @@ func (q *query) next() {
 	defer q.lock.Unlock()
 
 	// find closest peers
-	cps, err := q.dht.store.FindKeysNearestTo(KeyPrefixPeer, q.key, numPeersNear*10)
+	cps, err := q.dht.store.FindKeysNearestTo(KeyPrefixPeer, q.key, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Error("Failed find peers near")
 		return
