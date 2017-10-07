@@ -9,7 +9,7 @@ import (
 	logrus "github.com/sirupsen/logrus"
 )
 
-const numPeersNear int = 3
+const numPeersNear int = 15
 
 type query struct {
 	id               string
