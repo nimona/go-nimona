@@ -17,7 +17,6 @@ import (
 
 const (
 	protocolID = "dht-kad/v2"
-	maxRetries = 3
 )
 
 type message struct {
@@ -69,7 +68,7 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	quit := make(chan struct{})
 
 	// start refresh worker
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	go func() {
 		// refresh for the first time
 		nd.refresh()
@@ -88,15 +87,13 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	// start messaging worker
 	go func() {
 		for msg := range nd.messages {
+			logrus.WithField("target", msg.Recipient).WithField("type", msg.Type).Debugf("Trying to send message to peer")
 			st, err := nd.getStream(msg.Recipient)
 			if err != nil {
 				logrus.WithError(err).Warnf("Could not get stream for %s", msg.Recipient)
-				if msg.Retries < maxRetries {
-					msg.Retries++
-					nd.messages <- msg
-				}
 				continue
 			}
+			logrus.WithField("target", msg.Recipient).Debugf("- Got stream")
 			bs, err := json.Marshal(msg)
 			if err != nil {
 				logrus.WithError(err).Warnf("Could not marshal message for %s, unrecoverable", msg.Recipient)
@@ -106,16 +103,9 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 			logrus.WithField("recipient", msg.Recipient).WithField("line", string(bs)).Debugf("sending line")
 			if _, err := st.Write(bs); err != nil {
 				logrus.WithError(err).Warnf("Could not write to stream for %s", msg.Recipient)
-				nd.lock.Lock()
 				if _, ok := nd.streams[msg.Recipient]; ok {
 					delete(nd.streams, msg.Recipient)
 				}
-				nd.lock.Unlock()
-				if msg.Retries < maxRetries {
-					msg.Retries++
-					nd.messages <- msg
-				}
-				continue
 			}
 		}
 	}()
@@ -124,9 +114,6 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 }
 
 func (nd *DHTNode) getStream(peerID string) (io.ReadWriteCloser, error) {
-	nd.lock.Lock()
-	defer nd.lock.Unlock()
-
 	if stream, ok := nd.streams[peerID]; ok && stream != nil {
 		// TODO Check if stream is still ok
 		logrus.Debugf("Found stream for peer %s", peerID)
@@ -189,6 +176,7 @@ func (nd *DHTNode) refresh() {
 }
 
 func (nd *DHTNode) handleMessage(msg *message) error {
+	logrus.WithField("payload", string(msg.Payload)).WithField("type", msg.Type).Infof("Trying to handle message")
 	switch msg.Type {
 	case MessageTypeGet:
 		getMsg := &messageGet{}
@@ -211,12 +199,18 @@ func (nd *DHTNode) handleMessage(msg *message) error {
 func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
 	logrus.Infof("Putting key %s", key)
 
+	// store this locally
+	if err := nd.store.Put(key, value, true); err != nil {
+		logrus.WithError(err).Error("Put failed to store value locally")
+	}
+
 	// create a put msg
 	msgPut := &messagePut{
 		OriginPeer: nd.GetLocalPeer(),
 		Key:        key,
 		Values:     []string{value},
 	}
+
 	// find nearest peers
 	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, key, numPeersNear*10)
 	if err != nil {
@@ -227,7 +221,9 @@ func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
 		// send message
 		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
 			logrus.WithError(err).Warnf("Put could not send msg")
+			continue
 		}
+		logrus.WithField("key", key).WithField("target", cp).Infof("Sent key to target")
 	}
 
 	return nil
@@ -302,11 +298,14 @@ func (nd *DHTNode) sendMessage(msgType string, msg interface{}, peerID string) e
 		Type:      msgType,
 	}
 
+	// logrus.WithField("type", msgType).WithField("msg", msg).Errorf("sendMessage pushed")
+
 	return nil
 }
 
 func (nd *DHTNode) getHandler(msg *messageGet) {
-	// origin peer is asking for a peer
+	// origin peer is asking for a value
+	logrus.WithField("origin", msg.OriginPeer.ID).WithField("key", msg.Key).Infof("Origin is asking for key")
 
 	// store info on origin peer
 	nd.storePeer(msg.OriginPeer, false)
@@ -318,8 +317,6 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 		logrus.WithField("msg", msg).Error("Failed to find nodes near")
 		return
 	}
-
-	logrus.Infof("%+v", nd.store.pairs)
 
 	// send them if we do
 	if len(ks) > 0 {
@@ -333,6 +330,9 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 		if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
 			logrus.WithError(err).Warnf("getHandler could not send msg")
 		}
+		logrus.WithField("key", msg.Key).Infof("getHandler told origin about the value")
+	} else {
+		logrus.WithField("key", msg.Key).Infof("getHandler does not know about this key")
 	}
 
 	// find peers nearest peers that might have it
@@ -342,16 +342,24 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 		return
 	}
 
+	logrus.WithField("cps", cps).Infof("Sending nearest peers")
+
 	// give up if there are no peers
 	if len(cps) == 0 {
+		logrus.WithField("key", msg.Key).Infof("getHandler does not know any near peers")
 		return
 	}
 
 	// send messages with closes peers
 	for _, cp := range cps {
 		cpid := trimKey(cp, KeyPrefixPeer)
-		// skil us and original peer
-		if cpid == msg.OriginPeer.ID || cpid == nd.GetLocalPeer().ID {
+		// skip us and original peer
+		if cpid == msg.OriginPeer.ID {
+			logrus.Debugf("getHandler skipping origin")
+			continue
+		}
+		if cpid == nd.GetLocalPeer().ID {
+			logrus.Debugf("getHandler skipping local")
 			continue
 		}
 		// get neighbor addresses
@@ -405,7 +413,7 @@ func (nd *DHTNode) putHandler(msg *messagePut) {
 }
 
 func (nd *DHTNode) gatherPeer(peerID string) (net.Peer, error) {
-	addrs, err := nd.store.Get(peerID)
+	addrs, err := nd.store.Get(getPeerKey(peerID))
 	if err != nil {
 		return net.Peer{}, err
 	}
@@ -439,4 +447,8 @@ func (nd *DHTNode) storePeer(peer net.Peer, persistent bool) error {
 
 func (nd *DHTNode) GetLocalPeer() net.Peer {
 	return nd.localPeer
+}
+
+func (nd *DHTNode) GetLocalPairs() (map[string][]*Pair, error) {
+	return nd.store.GetAll()
 }
