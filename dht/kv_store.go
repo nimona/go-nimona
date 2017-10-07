@@ -32,10 +32,6 @@ func (s *Store) Put(key, value string, persistent bool) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if key == "bootstrap.nimona.io" {
-		panic("WAT")
-	}
-
 	// make sure our partition exists
 	if _, ok := s.pairs[key]; !ok {
 		s.pairs[key] = []*Pair{}
