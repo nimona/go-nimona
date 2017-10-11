@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -88,54 +89,42 @@ func (s *Store) FindKeysNearestTo(prefix, tk string, n int) ([]string, error) {
 	// place to hold the results
 	rks := []string{}
 
-	for key := range s.pairs {
-		if !strings.HasPrefix(key, prefix) {
+	htk := hash(tk)
+
+	// slice to hold the distances
+	dists := []distEntry{}
+	for ik := range s.pairs {
+		// only keep correct prefixe
+		if !strings.HasPrefix(ik, prefix) {
 			continue
 		}
-		rks = append(rks, key)
-		if len(rks) == n {
+		// calculate distance
+		de := distEntry{
+			key:  ik,
+			dist: xor([]byte(htk), []byte(hash(ik))),
+		}
+		dists = append(dists, de)
+	}
+
+	// sort the distances
+	sort.Slice(dists, func(i, j int) bool {
+		return lessIntArr(dists[i].dist, dists[j].dist)
+	})
+
+	if n > len(dists) {
+		n = len(dists)
+	}
+
+	// append n the first n number of keys
+	for _, de := range dists {
+		rks = append(rks, de.key)
+		n--
+		if n == 0 {
 			break
 		}
 	}
 
 	return rks, nil
-
-	// htk := hash(tk)
-
-	// // slice to hold the distances
-	// dists := []distEntry{}
-	// for ik := range s.pairs {
-	// 	// only keep correct prefixe
-	// 	if !strings.HasPrefix(ik, prefix) {
-	// 		continue
-	// 	}
-	// 	// calculate distance
-	// 	de := distEntry{
-	// 		key:  ik,
-	// 		dist: xor([]byte(htk), []byte(hash(ik))),
-	// 	}
-	// 	dists = append(dists, de)
-	// }
-
-	// // sort the distances
-	// sort.Slice(dists, func(i, j int) bool {
-	// 	return lessIntArr(dists[i].dist, dists[j].dist)
-	// })
-
-	// if n > len(dists) {
-	// 	n = len(dists)
-	// }
-
-	// // append n the first n number of keys
-	// for _, de := range dists {
-	// 	rks = append(rks, de.key)
-	// 	n--
-	// 	if n == 0 {
-	// 		break
-	// 	}
-	// }
-
-	// return rks, nil
 }
 
 func (s *Store) Wipe(key string) error {
