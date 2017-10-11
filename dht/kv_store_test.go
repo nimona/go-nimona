@@ -6,7 +6,7 @@ import (
 	assert "github.com/stretchr/testify/assert"
 )
 
-func TestFindKeysNearestToNotEqual(t *testing.T) {
+func TestFindKeysNearestTo(t *testing.T) {
 	s, err := newStore()
 	assert.Nil(t, err)
 
@@ -22,5 +22,8 @@ func TestFindKeysNearestToNotEqual(t *testing.T) {
 	k2, err := s.FindKeysNearestTo(KeyPrefixPeer, KeyPrefixPeer+"a2", 1)
 	assert.Nil(t, err)
 
-	assert.NotEqual(t, k1, k2)
+	assert.NotEqual(t, k1[0], k2[0])
+	assert.Equal(t, trimKey(k1[0], KeyPrefixPeer), "a1")
+	assert.Equal(t, trimKey(k2[0], KeyPrefixPeer), "a2")
+
 }
