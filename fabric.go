@@ -145,6 +145,14 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 			break
 		}
 		if !hnd {
+			if len(conn.GetStack()) == 1 {
+				fmt.Println("Got last item in stack and have no negotiator, selecting and returning conn", prt)
+				// ask remote to select this protocol
+				if err := f.Select(conn, prt); err != nil {
+					return conn, err
+				}
+				return conn, nil
+			}
 			return nil, ErrNoSuchMiddleware
 		}
 	}
