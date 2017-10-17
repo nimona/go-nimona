@@ -18,8 +18,9 @@ func New() *Fabric {
 }
 
 type Fabric struct {
-	middleware []Middleware
-	transports []Transport
+	handlers    []Handler
+	negotiators []Negotiator
+	transports  []Transport
 }
 
 func (f *Fabric) AddTransport(tr Transport) error {
@@ -28,7 +29,28 @@ func (f *Fabric) AddTransport(tr Transport) error {
 }
 
 func (f *Fabric) AddMiddleware(md Middleware) error {
-	f.middleware = append(f.middleware, md)
+	if err := f.AddHandler(md); err != nil {
+		return err
+	}
+	return f.AddNegotiator(md)
+}
+
+func (f *Fabric) AddHandler(hn Handler) error {
+	f.handlers = append(f.handlers, hn)
+	return nil
+}
+
+func (f *Fabric) AddHandlerFunc(protocol string, hf HandlerFunc) error {
+	hn := &simpleHandler{
+		protocol: protocol,
+		handler:  hf,
+	}
+	f.handlers = append(f.handlers, hn)
+	return nil
+}
+
+func (f *Fabric) AddNegotiator(ng Negotiator) error {
+	f.negotiators = append(f.negotiators, ng)
 	return nil
 }
 
@@ -79,12 +101,25 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// go through the various middleware
 
 	// go through all the parts of the address that are left in the stack
+	// TODO figure out how to deal with the last item in the stack
+	// ^ this is a weird one.
+	// let's assume the client is dialing `tcp:127.0.0.1:3000/nimona:SERVER/ping`
+	// it will connect via TCP transport, will go through the `nimona` middlware,
+	// and then the connection should probably be returned to the called so it
+	// can use it.
+	// on the server's side it will end up on the `ping` handler which is fine.
+	// the issue is that if we do `for len(conn.GetStack()) > 1 {` it means
+	// that there is no way to have a negotiator be the last part of the stack.
+	// maybe it is better to allow the last part of the stack to be processed
+	// normally but simply not fail with ErrNoSuchMiddleware if a negotiator
+	// doesn't exist.
+	// both cases seem wrong though.
 	for len(conn.GetStack()) > 0 {
 		// get next part from the stack
 		prt := conn.GetStack()[0]
 		// go through all middleware to find what can negotiate for this part
 		hnd := false
-		for _, mid := range f.middleware {
+		for _, mid := range f.negotiators {
 			if !mid.CanNegotiate(prt) {
 				continue
 			}
@@ -185,7 +220,7 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 
 		// check if there is a middleware for this
 		hnd := false
-		for _, mid := range f.middleware {
+		for _, mid := range f.handlers {
 			if !mid.CanHandle(prot) {
 				continue
 			}
