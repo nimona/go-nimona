@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+const (
+	PingKey = "ping"
+)
+
 type PingMiddleware struct{}
 
 func (m *PingMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error) {
@@ -29,7 +33,12 @@ func (m *PingMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error) {
 	return conn, nil
 }
 
-func (m *PingMiddleware) Negotiate(ctx context.Context, conn Conn, param string) (Conn, error) {
+func (m *PingMiddleware) CanHandle(addr string) bool {
+	parts := addrSplit(addr)
+	return parts[0][0] == PingKey
+}
+
+func (m *PingMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, error) {
 	// we ping
 	fmt.Println("Ping.Negotiate: Writing ping")
 	if err := WriteToken(conn, []byte("ping")); err != nil {
@@ -51,4 +60,9 @@ func (m *PingMiddleware) Negotiate(ctx context.Context, conn Conn, param string)
 	conn.Close()
 
 	return conn, nil
+}
+
+func (m *PingMiddleware) CanNegotiate(addr string) bool {
+	parts := addrSplit(addr)
+	return parts[0][0] == PingKey
 }

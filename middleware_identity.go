@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+)
+
+const (
+	IdentityKey = "nimona"
 )
 
 type IdentityMiddleware struct {
@@ -36,12 +41,12 @@ func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error
 	// check if this is us
 	if string(requestID) != m.Local {
 		// TODO tell client this is not us
-		fmt.Println("Identity.Handle: Requested identity does not match our local")
+		fmt.Println("Identity.Handle: Requested identity does not match our local", string(requestID), m.Local)
 		return nil, errors.New("No such identity")
 	}
 
 	// tell client our identity
-	fmt.Println("Identity.Handle: Writing local id")
+	fmt.Println("Identity.Handle: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to client", err)
 		return nil, err
@@ -51,20 +56,26 @@ func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error
 	return conn, nil
 }
 
-func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn, param string) (Conn, error) {
+func (m *IdentityMiddleware) CanHandle(addr string) bool {
+	parts := addrSplit(addr)
+	return parts[0][0] == IdentityKey
+}
+
+func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, error) {
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
 
 	// tell the server who we are
-	fmt.Println("Identity.Negotiate: Writing local id")
+	fmt.Println("Identity.Negotiate: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to server", err)
 		return nil, err
 	}
 
 	// tell the server who we are looking for
-	fmt.Println("Identity.Negotiate: Writing requested id")
-	if err := WriteToken(conn, []byte(param)); err != nil {
+	reqID := strings.Split(conn.GetStack()[0], ":")[1]
+	fmt.Println("Identity.Negotiate: Writing requested id", reqID)
+	if err := WriteToken(conn, []byte(reqID)); err != nil {
 		fmt.Println("Could not write request id to server", err)
 		return nil, err
 	}
@@ -82,4 +93,9 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn, param str
 
 	// return connection as it was
 	return conn, nil
+}
+
+func (m *IdentityMiddleware) CanNegotiate(addr string) bool {
+	parts := addrSplit(addr)
+	return parts[0][0] == IdentityKey
 }

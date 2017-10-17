@@ -13,88 +13,105 @@ var (
 	ErrNoSuchMiddleware = errors.New("No such middleware")
 )
 
-func New(peerID string) *Fabric {
-	return &Fabric{
-		middleware: map[string]Middleware{
-			"nimona": &IdentityMiddleware{
-				Local: peerID,
-			},
-			"ping": &PingMiddleware{},
-		},
-		transports: map[string]Transport{},
-	}
+func New() *Fabric {
+	return &Fabric{}
 }
 
 type Fabric struct {
-	middleware map[string]Middleware
-	transports map[string]Transport
+	middleware []Middleware
+	transports []Transport
+}
+
+func (f *Fabric) AddTransport(tr Transport) error {
+	f.transports = append(f.transports, tr)
+	return nil
+}
+
+func (f *Fabric) AddMiddleware(md Middleware) error {
+	f.middleware = append(f.middleware, md)
+	return nil
 }
 
 func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// TODO validate the address
 
-	// split address into parts
-	aps := strings.Split(addr, "/")
+	// get the stack of middleware that we need to go through
+	// the connection should be considered successful once this array is empty
+	stack := strings.Split(addr, "/")
 
-	// first part should be the address we need to dial
-	// TODO or we might need to resolve it in case it's something like `peer:xxx`
-	tad := aps[0]
+	// somewhere to keep our connection
+	var conn Conn
 
-	// TODO for now we just care about tcp
-	if !strings.HasPrefix(tad, "tcp:") {
-		return nil, ErrNoTransport
+	// go through the various tranports
+	for _, trn := range f.transports {
+		if trn.CanDial(stack[0]) {
+			tcon, err := trn.DialContext(ctx, stack[0])
+			if err != nil {
+				// TODO log and handle error correctly
+				fmt.Println("Could not dial", stack[0], err)
+				continue
+			}
+			// if we managed to connect then wrap the plain net.Conn around
+			// our own Conn that adds Get and Set values for the various middlware
+			// TODO Move this into the transports maybe?
+			conn = wrapConn(tcon)
+		}
 	}
 
-	// TODO find and use correct transport, or go through all of them
-	// dial with transport
-	tcon, err := net.Dial("tcp", strings.Replace(tad, "tcp:", "", 1))
-	if err != nil {
-		fmt.Println("Could not connect to server", err)
-		return nil, err
+	// TODO this shouldn't fail yet, if transports fail, try all middleware to
+	// resolve the address, retry all transports, and then fail
+	if conn == nil {
+		return nil, errors.New("All transports failed")
 	}
 
-	// wrap the plain net.Conn around our own Conn that adds Get and Set values
-	// for the various middlware
-	// TODO Move this into the transports maybe?
-	conn := wrapConn(tcon)
+	// pop first part from stack since we successfully connected
+	stack = stack[1:]
+
+	// put the stack in the conn
+	for _, prt := range stack {
+		conn.PushStack(prt)
+	}
 
 	// TODO close connection when done if something errored
 	// defer go func() { if .. conn.Close() }()
 
-	// TODO address should be split into:
-	// * one transport
-	// * zero or more middleware
-	// * one protocol
-	// once we have the list of all these, we need to make sure that all
-	// middleware were executed successfully before returning the conn, or error
-
-	// assuming addr looked like `tcp:127.0.0.1:3000/nimona:peer-1/echo`
 	// once we are connected to the transport part we need to negotiate and
 	// go through the various middleware
 
-	// go through all middleware
-	for _, mad := range aps[1:] {
-		// find if we have middleware for them
-		pms := strings.Split(mad, ":")
-		mdn := pms[0]
-		mid, ok := f.middleware[mdn]
-		if !ok {
-			return conn, ErrNoSuchMiddleware
+	// go through all the parts of the address that are left in the stack
+	for len(conn.GetStack()) > 0 {
+		// get next part from the stack
+		prt := conn.GetStack()[0]
+		// go through all middleware to find what can negotiate for this part
+		hnd := false
+		for _, mid := range f.middleware {
+			if !mid.CanNegotiate(prt) {
+				continue
+			}
+			fmt.Println("Found mid to neg", mid)
+			// ask remote to select this middleware
+			// TODO should we be sending the whole part (`smth:param`) or
+			// just the type of it (`smth`)?
+			if err := f.Select(conn, prt); err != nil {
+				return conn, err
+			}
+			// and execute them
+			mcon, err := mid.Negotiate(ctx, conn)
+			if err != nil {
+				return conn, err
+			}
+			// finally replace our conn with the new returned conn
+			conn = mcon
+			// we handled this part of the stack
+			hnd = true
+			// pop item from stack
+			conn.PopStack()
+			// and move on
+			break
 		}
-
-		// ask remote to select this middleware
-		if err := f.Select(conn, mdn); err != nil {
-			return conn, err
+		if !hnd {
+			return nil, ErrNoSuchMiddleware
 		}
-
-		// and execute them
-		mcon, err := mid.Negotiate(ctx, conn, strings.Join(pms[1:], ":"))
-		if err != nil {
-			return conn, err
-		}
-
-		// finally replace our conn with the new returned conn
-		conn = mcon
 	}
 
 	return conn, nil
@@ -158,11 +175,8 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	// close the connection when we're done
 	defer conn.Close()
 
-	i := 0
 	// handle all middleware that we are being given
 	for {
-		fmt.Println("#", i)
-		i++
 		// get next protocol name
 		prot, err := f.HandleSelect(conn)
 		if err != nil {
@@ -170,19 +184,26 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 		}
 
 		// check if there is a middleware for this
-		mid, ok := f.middleware[prot]
-		if !ok {
+		hnd := false
+		for _, mid := range f.middleware {
+			if !mid.CanHandle(prot) {
+				continue
+			}
+			// execute middleware
+			mcon, err := mid.Handle(context.Background(), conn)
+			if err != nil {
+				return err
+			}
+			// we handled this part of the stack
+			hnd = true
+			// update connection
+			conn = mcon
+			// and move on
+			break
+		}
+		if !hnd {
 			return ErrNoSuchMiddleware
 		}
-
-		// execute middleware
-		mcon, err := mid.Handle(context.Background(), conn)
-		if err != nil {
-			fmt.Println(prot, "FAILED with ", err)
-			return err
-		}
-
-		conn = mcon
 	}
 
 	return nil

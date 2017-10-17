@@ -1,5 +1,11 @@
 package fabric
 
-type Transport interface{
-	Dial(addr string) (Conn, error)
+import (
+	"context"
+	"net"
+)
+
+type Transport interface {
+	DialContext(ctx context.Context, addr string) (net.Conn, error)
+	CanDial(addr string) bool
 }

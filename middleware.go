@@ -1,8 +1,20 @@
 package fabric
 
-import "context"
+import (
+	"context"
+)
+
+type Handler interface {
+	Handle(ctx context.Context, conn Conn) (newConn Conn, err error)
+	CanHandle(addr string) bool
+}
+
+type Negotiator interface {
+	Negotiate(ctx context.Context, conn Conn) (newConn Conn, err error)
+	CanNegotiate(addr string) bool
+}
 
 type Middleware interface {
-	Handle(ctx context.Context, conn Conn) (Conn, error)
-	Negotiate(ctx context.Context, conn Conn, param string) (Conn, error)
+	Handler
+	Negotiator
 }
