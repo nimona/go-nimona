@@ -235,7 +235,18 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 			// execute middleware
 			mcon, err := mid.Handle(context.Background(), conn)
 			if err != nil {
+				// TODO should we be closing the connection here?
+				conn.Close()
 				return err
+			}
+			// TODO find a way to figure out if the connection was closed
+			// if the handler didn't return a connection exit cleanly
+			if mcon == nil {
+				// but first try to close the connection
+				// TODO should we shallow the error?
+				// TODO what happens if connection is already closed?
+				conn.Close()
+				return nil
 			}
 			// we handled this part of the stack
 			hnd = true
