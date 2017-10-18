@@ -17,7 +17,7 @@ func main() {
 	}
 
 	f := fabric.New()
-	f.AddTransport(&fabric.TCP{})
+	f.AddTransport(fabric.NewTransportTCP())
 	f.AddMiddleware(&fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},

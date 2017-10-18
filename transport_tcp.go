@@ -8,11 +8,18 @@ import (
 )
 
 const (
-	TCPKey = "tcp"
+	transportPrefixTCP = "tcp:"
 )
 
+// NewTransportTCP returns a new TCP transport
+func NewTransportTCP() Transport {
+	return &TCP{}
+}
+
+// TCP transport
 type TCP struct{}
 
+// DialContext attemps to dial to the peer with the given addr
 func (t *TCP) DialContext(ctx context.Context, addr string) (net.Conn, error) {
 	prts := addrSplit(addr)
 	tcpa := strings.Join(prts[0][1:], ":")
@@ -25,7 +32,7 @@ func (t *TCP) DialContext(ctx context.Context, addr string) (net.Conn, error) {
 	return tcon, nil
 }
 
+// CanDial checks if we can dial to this addr
 func (t *TCP) CanDial(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == TCPKey
+	return strings.HasPrefix(addr, transportPrefixTCP)
 }
