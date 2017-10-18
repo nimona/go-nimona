@@ -25,7 +25,7 @@ func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
 
 	// we pong back
 	fmt.Println("Ping: Writing pong...")
-	if err := fabric.WriteToken(conn, []byte("pong")); err != nil {
+	if err := fabric.WriteToken(conn, []byte("PONG")); err != nil {
 		fmt.Println("Could not pong", err)
 		return nil, err
 	}

@@ -120,7 +120,6 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 			if !mid.CanNegotiate(prt) {
 				continue
 			}
-			fmt.Println("Found mid to neg", mid)
 			// ask remote to select this middleware
 			// TODO should we be sending the whole part (`smth:param`) or
 			// just the type of it (`smth`)?
