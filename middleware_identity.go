@@ -65,6 +65,13 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, er
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
 
+	// check that context contains the address part that we need to extract
+	// the remote id we are asking for
+	prt := ctx.Value(ContextKeyAddressPart).(string)
+	if prt == "" {
+		return nil, errors.New("Missing address part")
+	}
+
 	// tell the server who we are
 	fmt.Println("Identity.Negotiate: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
@@ -73,7 +80,7 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, er
 	}
 
 	// tell the server who we are looking for
-	reqID := strings.Split(conn.GetStack()[0], ":")[1]
+	reqID := strings.Split(prt, ":")[1]
 	fmt.Println("Identity.Negotiate: Writing requested id", reqID)
 	if err := WriteToken(conn, []byte(reqID)); err != nil {
 		fmt.Println("Could not write request id to server", err)

@@ -28,30 +28,6 @@ func (c *conn) SetValue(key string, val interface{}) error {
 	return nil
 }
 
-func (c *conn) GetStack() []string {
-	return c.stack
-}
-
-func (c *conn) PopStack() string {
-	if len(c.stack) == 0 {
-		return ""
-	}
-
-	part := c.stack[0]
-
-	if len(c.stack) == 1 {
-		c.stack = []string{}
-	} else {
-		c.stack = c.stack[1:]
-	}
-
-	return part
-}
-
-func (c *conn) PushStack(prt string) {
-	c.stack = append(c.stack, prt)
-}
-
 func wrapConn(c net.Conn) Conn {
 	return &conn{c, map[string]interface{}{}, []string{}}
 }
@@ -111,8 +87,4 @@ type Conn interface {
 
 	GetValue(key string) (interface{}, error)
 	SetValue(key string, value interface{}) error
-
-	GetStack() []string
-	PopStack() string
-	PushStack(string)
 }

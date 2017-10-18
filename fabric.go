@@ -11,6 +11,8 @@ import (
 var (
 	ErrNoTransport      = errors.New("Could not dial with available transports")
 	ErrNoSuchMiddleware = errors.New("No such middleware")
+
+	ContextKeyAddressPart = contextKey("addrpart")
 )
 
 func New() *Fabric {
@@ -89,11 +91,6 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// pop first part from stack since we successfully connected
 	stack = stack[1:]
 
-	// put the stack in the conn
-	for _, prt := range stack {
-		conn.PushStack(prt)
-	}
-
 	// TODO close connection when done if something errored
 	// defer go func() { if .. conn.Close() }()
 
@@ -108,15 +105,15 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// and then the connection should probably be returned to the called so it
 	// can use it.
 	// on the server's side it will end up on the `ping` handler which is fine.
-	// the issue is that if we do `for len(conn.GetStack()) > 1 {` it means
+	// the issue is that if we do `for len(stack) > 1 {` it means
 	// that there is no way to have a negotiator be the last part of the stack.
 	// maybe it is better to allow the last part of the stack to be processed
 	// normally but simply not fail with ErrNoSuchMiddleware if a negotiator
 	// doesn't exist.
 	// both cases seem wrong though.
-	for len(conn.GetStack()) > 0 {
+	for len(stack) > 0 {
 		// get next part from the stack
-		prt := conn.GetStack()[0]
+		prt := stack[0]
 		// go through all middleware to find what can negotiate for this part
 		hnd := false
 		for _, mid := range f.negotiators {
@@ -130,8 +127,11 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 			if err := f.Select(conn, prt); err != nil {
 				return conn, err
 			}
+			// add current part to context
+			// TODO address part is a very bad name, find better one to describe address parts
+			mctx := context.WithValue(ctx, ContextKeyAddressPart, prt)
 			// and execute them
-			mcon, err := mid.Negotiate(ctx, conn)
+			mcon, err := mid.Negotiate(mctx, conn)
 			if err != nil {
 				return conn, err
 			}
@@ -140,12 +140,12 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 			// we handled this part of the stack
 			hnd = true
 			// pop item from stack
-			conn.PopStack()
+			stack = stack[1:]
 			// and move on
 			break
 		}
 		if !hnd {
-			if len(conn.GetStack()) == 1 {
+			if len(stack) == 1 {
 				fmt.Println("Got last item in stack and have no negotiator, selecting and returning conn", prt)
 				// ask remote to select this protocol
 				if err := f.Select(conn, prt); err != nil {
