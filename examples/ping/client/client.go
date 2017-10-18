@@ -2,18 +2,32 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	fabric "github.com/nimona/go-nimona-fabric"
+	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
 
 func main() {
+	crt, err := ping.GenX509KeyPair()
+	if err != nil {
+		fmt.Println("Cert creation error", err)
+		return
+	}
+
 	f := fabric.New()
 	f.AddTransport(&fabric.TCP{})
+	f.AddMiddleware(&fabric.SecMiddleware{
+		Config: tls.Config{
+			Certificates:       []tls.Certificate{crt},
+			InsecureSkipVerify: true,
+		},
+	})
 	f.AddMiddleware(&fabric.IdentityMiddleware{Local: "CLIENT"})
 
 	// make a new connection to the the server's ping handler
-	conn, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/nimona:SERVER/ping")
+	conn, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/nimona:SERVER/ping")
 	if err != nil {
 		fmt.Println("Dial error", err)
 		return

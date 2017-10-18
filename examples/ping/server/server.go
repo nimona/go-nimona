@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	fabric "github.com/nimona/go-nimona-fabric"
+	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
 
 func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
@@ -35,9 +37,22 @@ func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
 }
 
 func main() {
+	crt, err := ping.GenX509KeyPair()
+	if err != nil {
+		fmt.Println("Cert creation error", err)
+		return
+	}
+
 	f := fabric.New()
 	f.AddTransport(&fabric.TCP{})
 	f.AddMiddleware(&fabric.IdentityMiddleware{Local: "SERVER"})
+	f.AddMiddleware(&fabric.SecMiddleware{
+		Config: tls.Config{
+			Certificates:       []tls.Certificate{crt},
+			InsecureSkipVerify: true,
+		},
+	})
 	f.AddHandlerFunc("ping", handler)
+	fmt.Println("Listening...")
 	f.Listen()
 }
