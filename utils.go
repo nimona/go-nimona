@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
-	"strings"
 	"io"
+	"strings"
 )
 
 func ReadToken(r io.Reader) ([]byte, error) {
@@ -40,7 +40,7 @@ func WriteToken(w io.Writer, bs []byte) error {
 	}
 
 	return bw.Flush()
-)
+}
 
 func addrSplit(addr string) [][]string {
 	parts := strings.Split(addr, "/")
