@@ -1,9 +1,21 @@
 # Nimona Fabric
 
-Fabric's primary goal is to make peer to peer networking a bit simpler.  
+Fabric is a networking library that provides some very opinionated features
+targeting mainly peer to peer and decentralized systems.  
 
-It allows resolving peer addresses, connecting via various protocols, 
-negotiating requested protocols, and other minor quality of life things.
+- Verbose network address notations that expose tranports, protocols, middleware, etc
+- Protocols multiplexing and negotiation over the same transport layer
+- Optional peer and service discovery
+- Optional routing connections through proxy peers
+
+That being said, there is nothing prohibiting its use in other applications, 
+eg microservices.  
+
+## Problem statement
+
+In peer to peer networks each peer is more or less unique.  
+Peers want or have to use different transport layers, different protocols,
+different encoding schemes etc.  
 
 The reasoning behind this is that different peers have different ways of being
 accessed. This usually ends up requiring both the clients and servers to have 
