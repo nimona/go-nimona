@@ -3,6 +3,7 @@ package fabric
 import (
 	"errors"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -11,9 +12,26 @@ var (
 )
 
 type conn struct {
-	net.Conn
+	conn   net.Conn
+	fabric *Fabric
 	values map[string]interface{}
 	stack  []string
+	index  int
+	lock   sync.Mutex
+}
+
+func (c *conn) popStack() string {
+	ci := c.index
+	if ci >= len(c.stack) {
+		return ""
+	}
+
+	c.index++
+	return c.stack[ci]
+}
+
+func (c *conn) remainingStack() []string {
+	return c.stack[c.index:]
 }
 
 func (c *conn) GetValue(key string) (interface{}, error) {
@@ -28,8 +46,17 @@ func (c *conn) SetValue(key string, val interface{}) error {
 	return nil
 }
 
-func wrapConn(c net.Conn) Conn {
-	return &conn{c, map[string]interface{}{}, []string{}}
+func (c *conn) Upgrade(nc net.Conn) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.conn = nc
+
+	return nil
+}
+
+func (c *conn) GetRawConn() (net.Conn, error) {
+	return c.conn, nil
 }
 
 // Conn is a generic stream-oriented network connection.
@@ -87,4 +114,52 @@ type Conn interface {
 
 	GetValue(key string) (interface{}, error)
 	SetValue(key string, value interface{}) error
+
+	Upgrade(net.Conn) error
+	GetRawConn() (net.Conn, error)
+}
+
+// Read implements the Conn Read method.
+func (c *conn) Read(b []byte) (int, error) {
+	return c.conn.Read(b)
+}
+
+// Write implements the Conn Write method.
+func (c *conn) Write(b []byte) (int, error) {
+	// fmt.Println("Write", string(b))
+	return c.conn.Write(b)
+}
+
+// Close closes the connection.
+func (c *conn) Close() error {
+	return c.conn.Close()
+}
+
+// LocalAddr returns the local network address.
+// The Addr returned is shared by all invocations of LocalAddr, so
+// do not modify it.
+func (c *conn) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote network address.
+// The Addr returned is shared by all invocations of RemoteAddr, so
+// do not modify it.
+func (c *conn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
+// SetDeadline implements the Conn SetDeadline method.
+func (c *conn) SetDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+
+// SetReadDeadline implements the Conn SetReadDeadline method.
+func (c *conn) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+
+// SetWriteDeadline implements the Conn SetWriteDeadline method.
+func (c *conn) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }

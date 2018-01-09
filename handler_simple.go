@@ -10,7 +10,7 @@ type simpleHandler struct {
 	handler  HandlerFunc
 }
 
-func (h *simpleHandler) Handle(ctx context.Context, conn Conn) (newConn Conn, err error) {
+func (h *simpleHandler) Handle(ctx context.Context, conn Conn) (err error) {
 	return h.handler(ctx, conn)
 }
 func (h *simpleHandler) CanHandle(addr string) bool {

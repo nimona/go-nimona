@@ -9,7 +9,7 @@ import (
 	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
 
-func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
+func handler(ctx context.Context, conn fabric.Conn) error {
 	// close connection when done
 	defer conn.Close()
 
@@ -18,7 +18,7 @@ func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
 	ping, err := fabric.ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote ping", err)
-		return nil, err
+		return err
 	}
 
 	fmt.Println("Ping: Read ping:", string(ping))
@@ -27,13 +27,13 @@ func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
 	fmt.Println("Ping: Writing pong...")
 	if err := fabric.WriteToken(conn, []byte("PONG")); err != nil {
 		fmt.Println("Could not pong", err)
-		return nil, err
+		return err
 	}
 
 	fmt.Println("Ping: Wrote pong")
 
 	// return connection as it was
-	return nil, nil
+	return nil
 }
 
 func main() {
