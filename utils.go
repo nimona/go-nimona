@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"strings"
-	"time"
 )
 
 func ReadToken(r io.Reader) ([]byte, error) {
@@ -31,7 +30,6 @@ func ReadToken(r io.Reader) ([]byte, error) {
 }
 
 func WriteToken(w io.Writer, bs []byte) error {
-	time.Sleep(time.Millisecond * 2000)
 	bw := bufio.NewWriter(w)
 	vb := make([]byte, 16)
 	n := binary.PutUvarint(vb, uint64(len(bs)+1))

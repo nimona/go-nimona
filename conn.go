@@ -126,7 +126,6 @@ func (c *conn) Read(b []byte) (int, error) {
 
 // Write implements the Conn Write method.
 func (c *conn) Write(b []byte) (int, error) {
-	// fmt.Println("Write", string(b))
 	return c.conn.Write(b)
 }
 
