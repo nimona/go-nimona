@@ -14,7 +14,12 @@ type SecMiddleware struct {
 }
 
 func (m *SecMiddleware) Handle(ctx context.Context, ucon Conn) error {
-	scon := tls.Server(ucon, &m.Config)
+	rc, err := ucon.GetRawConn()
+	if err != nil {
+		return err
+	}
+
+	scon := tls.Server(rc, &m.Config)
 	if err := scon.Handshake(); err != nil {
 		return err
 	}

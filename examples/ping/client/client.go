@@ -27,7 +27,7 @@ func main() {
 	f.AddMiddleware(&fabric.IdentityMiddleware{Local: "CLIENT"})
 
 	// make a new connection to the the server's ping handler
-	conn, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/nimona:SERVER/tls/ping")
+	conn, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/nimona:SERVER/ping")
 	if err != nil {
 		fmt.Println("Dial error", err)
 		return
