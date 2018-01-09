@@ -63,39 +63,17 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// the connection should be considered successful once this array is empty
 	stack := strings.Split(addr, "/")
 
-	// somewhere to keep our connection
-	var conn Conn
-
-	// go through the various tranports
-	for _, trn := range f.transports {
-		if trn.CanDial(stack[0]) {
-			tcon, err := trn.DialContext(ctx, stack[0])
-			if err != nil {
-				// TODO log and handle error correctly
-				fmt.Println("Could not dial", stack[0], err)
-				continue
-			}
-			// if we managed to connect then wrap the plain net.Conn around
-			// our own Conn that adds Get and Set values for the various middlware
-			// TODO Move this into the transports maybe?
-			conn = wrapConn(tcon)
-		}
-	}
-
-	// TODO this shouldn't fail yet, if transports fail, try all middleware to
-	// resolve the address, retry all transports, and then fail
-	if conn == nil {
-		return nil, errors.New("All transports failed")
-	}
-
-	// pop first part from stack since we successfully connected
-	stack = stack[1:]
-
 	// TODO close connection when done if something errored
 	// defer go func() { if .. conn.Close() }()
 
 	// once we are connected to the transport part we need to negotiate and
 	// go through the various middleware
+
+	conn := &conn{
+		fabric: f,
+		values: map[string]interface{}{},
+		stack:  stack,
+	}
 
 	// go through all the parts of the address that are left in the stack
 	// TODO figure out how to deal with the last item in the stack
@@ -104,62 +82,15 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	// it will connect via TCP transport, will go through the `nimona` middlware,
 	// and then the connection should probably be returned to the called so it
 	// can use it.
-	// on the server's side it will end up on the `ping` handler which is fine.
-	// the issue is that if we do `for len(stack) > 1 {` it means
-	// that there is no way to have a negotiator be the last part of the stack.
-	// maybe it is better to allow the last part of the stack to be processed
-	// normally but simply not fail with ErrNoSuchMiddleware if a negotiator
-	// doesn't exist.
-	// both cases seem wrong though.
-	for len(stack) > 0 {
-		// get next part from the stack
-		prt := stack[0]
-		// go through all middleware to find what can negotiate for this part
-		hnd := false
-		for _, mid := range f.negotiators {
-			if !mid.CanNegotiate(prt) {
-				continue
-			}
-			// ask remote to select this middleware
-			// TODO should we be sending the whole part (`smth:param`) or
-			// just the type of it (`smth`)?
-			if err := f.Select(conn, prt); err != nil {
-				return conn, err
-			}
-			// add current part to context
-			// TODO address part is a very bad name, find better one to describe address parts
-			mctx := context.WithValue(ctx, ContextKeyAddressPart, prt)
-			// and execute them
-			mcon, err := mid.Negotiate(mctx, conn)
-			if err != nil {
-				return conn, err
-			}
-			// finally replace our conn with the new returned conn
-			conn = mcon
-			// we handled this part of the stack
-			hnd = true
-			// pop item from stack
-			stack = stack[1:]
-			// and move on
-			break
-		}
-		if !hnd {
-			if len(stack) == 1 {
-				fmt.Println("Got last item in stack and have no negotiator, selecting and returning conn", prt)
-				// ask remote to select this protocol
-				if err := f.Select(conn, prt); err != nil {
-					return conn, err
-				}
-				return conn, nil
-			}
-			return nil, ErrNoSuchMiddleware
-		}
+	if err := f.Next(ctx, conn); err != nil {
+		fmt.Println("Error on conn.Next()", err)
+		return nil, err
 	}
 
 	return conn, nil
 }
 
-func (f *Fabric) Select(conn Conn, protocol string) error {
+func (f *Fabric) Select(conn net.Conn, protocol string) error {
 	// once connected we need to negotiate the second part, which is the is
 	// an identity middleware.
 	fmt.Println("Select: Writing protocol token")
@@ -176,7 +107,7 @@ func (f *Fabric) Select(conn Conn, protocol string) error {
 		return err
 	}
 
-	if string(resp) != "ok" {
+	if string(resp) != protocol {
 		return errors.New("Invalid selector response")
 	}
 
@@ -200,7 +131,11 @@ func (f *Fabric) Listen() error {
 			fmt.Println("Error accepting: ", err.Error())
 			return err
 		}
-		go f.handleRequest(conn)
+		go func(conn net.Conn) {
+			if err := f.handleRequest(conn); err != nil {
+				fmt.Println("Listen: Could not handle request. error:", err)
+			}
+		}(conn)
 	}
 	// }()
 	// return nil
@@ -209,21 +144,29 @@ func (f *Fabric) Listen() error {
 // Handles incoming requests.
 func (f *Fabric) handleRequest(tcon net.Conn) error {
 	// a client initiated a connection
-	fmt.Println("New incoming connection")
+	fmt.Println("handleRequest: New incoming connection")
 
 	// wrap net.Conn in Conn
-	conn := wrapConn(tcon)
+	c := &conn{
+		conn:   tcon,
+		fabric: f,
+		values: map[string]interface{}{},
+		stack:  []string{},
+	}
 
 	// close the connection when we're done
-	defer conn.Close()
+	defer c.Close()
 
 	// handle all middleware that we are being given
 	for {
+		fmt.Println("handleRequest: Waiting for next protocol")
 		// get next protocol name
-		prot, err := f.HandleSelect(conn)
+		prot, err := f.HandleSelect(c)
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("handleRequest: Got next protocol", prot)
 
 		// check if there is a middleware for this
 		hnd := false
@@ -232,34 +175,93 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 				continue
 			}
 			// execute middleware
-			mcon, err := mid.Handle(context.Background(), conn)
-			if err != nil {
+			if err := mid.Handle(context.Background(), c); err != nil {
 				// TODO should we be closing the connection here?
-				conn.Close()
+				c.Close()
 				return err
 			}
-			// TODO find a way to figure out if the connection was closed
-			// if the handler didn't return a connection exit cleanly
-			if mcon == nil {
-				// but first try to close the connection
-				// TODO should we shallow the error?
-				// TODO what happens if connection is already closed?
-				conn.Close()
-				return nil
-			}
-			// we handled this part of the stack
+			// mark as handled
+			fmt.Println("handleRequest: Handled protocol", prot)
 			hnd = true
-			// update connection
-			conn = mcon
 			// and move on
 			break
 		}
 		if !hnd {
+			fmt.Println("handleRequest: Could not handle", prot)
 			return ErrNoSuchMiddleware
 		}
 	}
 
 	return nil
+}
+
+func (f *Fabric) Next(ctx context.Context, c *conn) error {
+	// get next protocol
+	ns := c.popStack()
+	fmt.Println("Processing", ns)
+
+	// are we dont yet?
+	if ns == "" {
+		return nil
+	}
+
+	// go through the various tranports
+	for _, trn := range f.transports {
+		if trn.CanDial(ns) {
+			tcon, err := trn.DialContext(ctx, ns)
+			if err != nil {
+				// TODO log and handle error correctly
+				fmt.Println("Could not dial", ns, err)
+				continue
+			}
+			// if we managed to connect upgrade our connection
+			if err := c.Upgrade(tcon); err != nil {
+				return err
+			}
+			// move on
+			return f.Next(ctx, c)
+		}
+	}
+
+	// TODO this shouldn't fail yet, if transports fail, try all middleware to
+	// resolve the address, retry all transports, and then fail
+	// if conn == nil {
+	// 	return nil, errors.New("All transports failed")
+	// }
+
+	lc, err := c.GetRawConn()
+	if lc == nil || err != nil {
+		return errors.New("All transports failed")
+	}
+
+	// go through all middleware to find what can negotiate for this part
+	for _, mid := range f.negotiators {
+		if !mid.CanNegotiate(ns) {
+			continue
+		}
+		// ask remote to select this middleware
+		// TODO should we be sending the whole part (`smth:param`) or
+		// just the type of it (`smth`)?
+		fmt.Println("Selecting", ns)
+		if err := f.Select(lc, ns); err != nil {
+			return err
+		}
+		// add current part to context
+		// TODO address part is a very bad name, find better one to describe address parts
+		mctx := context.WithValue(ctx, ContextKeyAddressPart, ns)
+		// and execute them
+		if err := mid.Negotiate(mctx, c); err != nil {
+			return err
+		}
+		// and move on
+		return f.Next(ctx, c)
+	}
+
+	// ask remote to select this protocol
+	// TODO should we check if this is the last part of the addr?
+	// TODO what hapens if it's not?
+	fmt.Println("Got no negotiator, selecting", ns)
+	return f.Select(c, ns)
 }
 
 func (f *Fabric) HandleSelect(conn Conn) (string, error) {
@@ -273,10 +275,10 @@ func (f *Fabric) HandleSelect(conn Conn) (string, error) {
 	}
 
 	fmt.Println("HandleSelect: Read protocol token:", string(prot))
-	fmt.Println("HandleSelect: Writing ok")
+	fmt.Println("HandleSelect: Writing protocol as ack")
 
-	if err := WriteToken(conn, []byte("ok")); err != nil {
-		fmt.Println("Could not write identity response", err)
+	if err := WriteToken(conn, prot); err != nil {
+		fmt.Println("Could not write protocol ack", err)
 		return "", err
 	}
 

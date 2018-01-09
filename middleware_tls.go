@@ -13,14 +13,13 @@ type SecMiddleware struct {
 	Config tls.Config
 }
 
-func (m *SecMiddleware) Handle(ctx context.Context, ucon Conn) (Conn, error) {
+func (m *SecMiddleware) Handle(ctx context.Context, ucon Conn) error {
 	scon := tls.Server(ucon, &m.Config)
 	if err := scon.Handshake(); err != nil {
-		return nil, err
+		return err
 	}
 
-	conn := wrapConn(scon)
-	return conn, nil
+	return ucon.Upgrade(scon)
 }
 
 func (m *SecMiddleware) CanHandle(addr string) bool {
@@ -28,14 +27,18 @@ func (m *SecMiddleware) CanHandle(addr string) bool {
 	return parts[0][0] == SecKey
 }
 
-func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) (Conn, error) {
-	scon := tls.Client(ucon, &m.Config)
-	if err := scon.Handshake(); err != nil {
-		return nil, err
+func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
+	rc, err := ucon.GetRawConn()
+	if err != nil {
+		return err
 	}
 
-	conn := wrapConn(scon)
-	return conn, nil
+	scon := tls.Client(rc, &m.Config)
+	if err := scon.Handshake(); err != nil {
+		return err
+	}
+
+	return ucon.Upgrade(scon)
 }
 
 func (m *SecMiddleware) CanNegotiate(addr string) bool {

@@ -15,7 +15,7 @@ type IdentityMiddleware struct {
 	Local string
 }
 
-func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error) {
+func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) error {
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
 
@@ -24,36 +24,38 @@ func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) (Conn, error
 	remoteID, err := ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote clients's identity", err)
-		return nil, err
+		return err
 	}
+	fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
 
 	// store client's identity
-	conn.SetValue("identity_remote", remoteID)
+	conn.SetValue("identity_remote", string(remoteID))
 
 	// client will tell us who they are looking for
 	fmt.Println("Identity.Handle: Reading requested id")
 	requestID, err := ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read client's requested identity", err)
-		return nil, err
+		return err
 	}
+	fmt.Println("Identity.Handle: Read requested id:", string(requestID))
 
 	// check if this is us
 	if string(requestID) != m.Local {
 		// TODO tell client this is not us
 		fmt.Println("Identity.Handle: Requested identity does not match our local", string(requestID), m.Local)
-		return nil, errors.New("No such identity")
+		return errors.New("No such identity")
 	}
 
 	// tell client our identity
 	fmt.Println("Identity.Handle: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to client", err)
-		return nil, err
+		return err
 	}
+	fmt.Println("Identity.Handle: Wrote local id")
 
-	// return connection as it was
-	return conn, nil
+	return nil
 }
 
 func (m *IdentityMiddleware) CanHandle(addr string) bool {
@@ -61,7 +63,7 @@ func (m *IdentityMiddleware) CanHandle(addr string) bool {
 	return parts[0][0] == IdentityKey
 }
 
-func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, error) {
+func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
 
@@ -69,14 +71,14 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, er
 	// the remote id we are asking for
 	prt := ctx.Value(ContextKeyAddressPart).(string)
 	if prt == "" {
-		return nil, errors.New("Missing address part")
+		return errors.New("Missing address part")
 	}
 
 	// tell the server who we are
 	fmt.Println("Identity.Negotiate: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to server", err)
-		return nil, err
+		return err
 	}
 
 	// tell the server who we are looking for
@@ -84,7 +86,7 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, er
 	fmt.Println("Identity.Negotiate: Writing requested id", reqID)
 	if err := WriteToken(conn, []byte(reqID)); err != nil {
 		fmt.Println("Could not write request id to server", err)
-		return nil, err
+		return err
 	}
 
 	// server should now respond with their identity
@@ -92,14 +94,14 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, er
 	remoteID, err := ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote server's identity", err)
-		return nil, err
+		return err
 	}
+	fmt.Println("Identity.Negotiate: Read response:", string(remoteID))
 
 	// store server's identity
 	conn.SetValue("identity_remote", remoteID)
 
-	// return connection as it was
-	return conn, nil
+	return nil
 }
 
 func (m *IdentityMiddleware) CanNegotiate(addr string) bool {
