@@ -45,6 +45,7 @@ func main() {
 
 	f := fabric.New()
 	f.AddTransport(fabric.NewTransportTCP())
+	f.AddMiddleware(&fabric.YamuxMiddleware{})
 	f.AddMiddleware(&fabric.IdentityMiddleware{Local: "SERVER"})
 	f.AddMiddleware(&fabric.SecMiddleware{
 		Config: tls.Config{
