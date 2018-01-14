@@ -3,6 +3,7 @@ package fabric
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 )
 
 const (
@@ -13,18 +14,26 @@ type SecMiddleware struct {
 	Config tls.Config
 }
 
-func (m *SecMiddleware) Handle(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
+func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, ucon Conn) error {
+		fmt.Println("Going through sec")
+		rc, err := ucon.GetRawConn()
+		if err != nil {
+			return err
+		}
 
-	scon := tls.Server(rc, &m.Config)
-	if err := scon.Handshake(); err != nil {
-		return err
-	}
+		scon := tls.Server(rc, &m.Config)
+		if err := scon.Handshake(); err != nil {
+			return err
+		}
 
-	return ucon.Upgrade(scon)
+		if err := ucon.Upgrade(scon); err != nil {
+			return err
+		}
+
+		return f(ctx, ucon)
+	}
 }
 
 func (m *SecMiddleware) CanHandle(addr string) bool {

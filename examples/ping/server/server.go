@@ -10,6 +10,8 @@ import (
 )
 
 func handler(ctx context.Context, conn fabric.Conn) error {
+	fmt.Println("Going through ping")
+
 	// close connection when done
 	defer conn.Close()
 
@@ -43,17 +45,25 @@ func main() {
 		return
 	}
 
-	f := fabric.New()
-	f.AddTransport(fabric.NewTransportTCP())
-	f.AddMiddleware(&fabric.YamuxMiddleware{})
-	f.AddMiddleware(&fabric.IdentityMiddleware{Local: "SERVER"})
-	f.AddMiddleware(&fabric.SecMiddleware{
+	yamux := &fabric.YamuxMiddleware{}
+	nselect := &fabric.NimonaMiddleware{
+		Handlers: map[string]fabric.HandlerFunc{
+			"ping": handler,
+		},
+	}
+	// ident := &fabric.IdentityMiddleware{Local: "SERVER"}
+	security := &fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
 		},
-	})
-	f.AddHandlerFunc("ping", handler)
+	}
+
+	f := fabric.New()
+	f.AddTransport("tcp", fabric.NewTransportTCP())
+	f.AddHandlerFunc("tls/ping", fabric.BuildChain(handler, security))
+	f.AddHandlerFunc("tls/yamux/ping", fabric.BuildChain(handler, security, yamux))
+	f.AddHandlerFunc("tls/yamux/nimona:select/ping", fabric.BuildChain(handler, security, yamux, nselect))
 	fmt.Println("Listening...")
 	f.Listen()
 }

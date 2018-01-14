@@ -3,6 +3,7 @@ package fabric
 import (
 	"errors"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,6 +33,10 @@ func (c *conn) popStack() string {
 
 func (c *conn) remainingStack() []string {
 	return c.stack[c.index:]
+}
+
+func (c *conn) remainingStackString() string {
+	return strings.Join(c.stack[c.index:], "/")
 }
 
 func (c *conn) GetValue(key string) (interface{}, error) {

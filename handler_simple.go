@@ -10,9 +10,12 @@ type simpleHandler struct {
 	handler  HandlerFunc
 }
 
-func (h *simpleHandler) Handle(ctx context.Context, conn Conn) (err error) {
-	return h.handler(ctx, conn)
+func (h *simpleHandler) Wrap(f HandlerFunc) HandlerFunc {
+	return func(ctx context.Context, ucon Conn) error {
+		return h.handler(ctx, ucon)
+	}
 }
+
 func (h *simpleHandler) CanHandle(addr string) bool {
 	return strings.HasPrefix(addr, h.protocol)
 }

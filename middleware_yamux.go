@@ -12,23 +12,30 @@ const (
 
 type YamuxMiddleware struct{}
 
-func (m *YamuxMiddleware) Handle(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
+func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, ucon Conn) error {
+		rc, err := ucon.GetRawConn()
+		if err != nil {
+			return err
+		}
 
-	session, err := yamux.Server(rc, nil)
-	if err != nil {
-		return err
-	}
+		session, err := yamux.Server(rc, nil)
+		if err != nil {
+			return err
+		}
 
-	stream, err := session.Accept()
-	if err != nil {
-		return err
-	}
+		stream, err := session.Accept()
+		if err != nil {
+			return err
+		}
 
-	return ucon.Upgrade(stream)
+		if err := ucon.Upgrade(stream); err != nil {
+			return err
+		}
+
+		return f(ctx, ucon)
+	}
 }
 
 func (m *YamuxMiddleware) CanHandle(addr string) bool {

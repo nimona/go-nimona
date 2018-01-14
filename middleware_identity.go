@@ -15,47 +15,49 @@ type IdentityMiddleware struct {
 	Local string
 }
 
-func (m *IdentityMiddleware) Handle(ctx context.Context, conn Conn) error {
-	// store local identity to conn
-	conn.SetValue("identity_local", m.Local)
+func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, conn Conn) error {
+		conn.SetValue("identity_local", m.Local)
 
-	// client will tell us who they are
-	fmt.Println("Identity.Handle: Reading remote id")
-	remoteID, err := ReadToken(conn)
-	if err != nil {
-		fmt.Println("Could not read remote clients's identity", err)
-		return err
+		// client will tell us who they are
+		fmt.Println("Identity.Handle: Reading remote id")
+		remoteID, err := ReadToken(conn)
+		if err != nil {
+			fmt.Println("Could not read remote clients's identity", err)
+			return err
+		}
+		fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
+
+		// store client's identity
+		conn.SetValue("identity_remote", string(remoteID))
+
+		// client will tell us who they are looking for
+		fmt.Println("Identity.Handle: Reading requested id")
+		requestID, err := ReadToken(conn)
+		if err != nil {
+			fmt.Println("Could not read client's requested identity", err)
+			return err
+		}
+		fmt.Println("Identity.Handle: Read requested id:", string(requestID))
+
+		// check if this is us
+		if string(requestID) != m.Local {
+			// TODO tell client this is not us
+			fmt.Println("Identity.Handle: Requested identity does not match our local", string(requestID), m.Local)
+			return errors.New("No such identity")
+		}
+
+		// tell client our identity
+		fmt.Println("Identity.Handle: Writing local id", m.Local)
+		if err := WriteToken(conn, []byte(m.Local)); err != nil {
+			fmt.Println("Could not write local id to client", err)
+			return err
+		}
+		fmt.Println("Identity.Handle: Wrote local id")
+
+		return f(ctx, conn)
 	}
-	fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
-
-	// store client's identity
-	conn.SetValue("identity_remote", string(remoteID))
-
-	// client will tell us who they are looking for
-	fmt.Println("Identity.Handle: Reading requested id")
-	requestID, err := ReadToken(conn)
-	if err != nil {
-		fmt.Println("Could not read client's requested identity", err)
-		return err
-	}
-	fmt.Println("Identity.Handle: Read requested id:", string(requestID))
-
-	// check if this is us
-	if string(requestID) != m.Local {
-		// TODO tell client this is not us
-		fmt.Println("Identity.Handle: Requested identity does not match our local", string(requestID), m.Local)
-		return errors.New("No such identity")
-	}
-
-	// tell client our identity
-	fmt.Println("Identity.Handle: Writing local id", m.Local)
-	if err := WriteToken(conn, []byte(m.Local)); err != nil {
-		fmt.Println("Could not write local id to client", err)
-		return err
-	}
-	fmt.Println("Identity.Handle: Wrote local id")
-
-	return nil
 }
 
 func (m *IdentityMiddleware) CanHandle(addr string) bool {
