@@ -38,11 +38,6 @@ func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *YamuxMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == YamuxKey
-}
-
 func (m *YamuxMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
 	rc, err := ucon.GetRawConn()
 	if err != nil {
@@ -60,9 +55,4 @@ func (m *YamuxMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
 	}
 
 	return ucon.Upgrade(stream)
-}
-
-func (m *YamuxMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == YamuxKey
 }

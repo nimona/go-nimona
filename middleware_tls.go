@@ -36,11 +36,6 @@ func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *SecMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == SecKey
-}
-
 func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
 	rc, err := ucon.GetRawConn()
 	if err != nil {
@@ -53,9 +48,4 @@ func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
 	}
 
 	return ucon.Upgrade(scon)
-}
-
-func (m *SecMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == SecKey
 }

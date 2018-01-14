@@ -51,10 +51,6 @@ func (m *NimonaMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *NimonaMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == NimonaKey
-}
 func (m *NimonaMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	pr := "params"
 
@@ -90,9 +86,4 @@ func (m *NimonaMiddleware) verifyResponse(conn Conn, pr string) error {
 	}
 
 	return nil
-}
-
-func (m *NimonaMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == NimonaKey
 }

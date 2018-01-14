@@ -60,11 +60,6 @@ func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *IdentityMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == IdentityKey
-}
-
 func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
@@ -104,9 +99,4 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	conn.SetValue("identity_remote", remoteID)
 
 	return nil
-}
-
-func (m *IdentityMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == IdentityKey
 }
