@@ -55,32 +55,37 @@ func (m *NimonaMiddleware) CanHandle(addr string) bool {
 	parts := addrSplit(addr)
 	return parts[0][0] == NimonaKey
 }
+func (m *NimonaMiddleware) Negotiate(ctx context.Context, conn Conn) error {
+	pr := "params"
 
-func (m *NimonaMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
-	protocol := "params"
+	if err := m.sendRequest(conn, pr); err != nil {
+		return err
+	}
 
-	conn, err := ucon.GetRawConn()
+	return m.verifyResponse(conn, pr)
+}
+
+func (m *NimonaMiddleware) sendRequest(conn Conn, pr string) error {
+	rcon, err := conn.GetRawConn()
 	if err != nil {
 		return err
 	}
 
-	// once connected we need to negotiate the second part, which is the is
-	// an identity middleware.
-	fmt.Println("Select: Writing protocol token")
-	if err := WriteToken(conn, []byte(protocol)); err != nil {
-		fmt.Println("Could not write identity token", err)
-		return err
-	}
+	return WriteToken(rcon, []byte(pr))
+}
 
-	// server should now respond with an ok message
-	fmt.Println("Select: Reading response")
-	resp, err := ReadToken(conn)
+func (m *NimonaMiddleware) verifyResponse(conn Conn, pr string) error {
+	rcon, err := conn.GetRawConn()
 	if err != nil {
-		fmt.Println("Error reading ok response", err)
 		return err
 	}
 
-	if string(resp) != protocol {
+	resp, err := ReadToken(rcon)
+	if err != nil {
+		return err
+	}
+
+	if string(resp) != pr {
 		return errors.New("Invalid selector response")
 	}
 

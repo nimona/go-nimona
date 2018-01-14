@@ -12,6 +12,14 @@ var (
 	ErrNoSuchValue = errors.New("No such value")
 )
 
+func newConn(f *Fabric, stack []string) *conn {
+	return &conn{
+		fabric: f,
+		values: map[string]interface{}{},
+		stack:  stack,
+	}
+}
+
 type conn struct {
 	conn   net.Conn
 	fabric *Fabric
