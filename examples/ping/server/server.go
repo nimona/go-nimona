@@ -61,9 +61,9 @@ func main() {
 
 	f := fabric.New()
 	f.AddTransport("tcp", fabric.NewTransportTCP())
-	f.AddHandlerFunc("tls/ping", fabric.BuildChain(handler, security))
-	f.AddHandlerFunc("tls/yamux/ping", fabric.BuildChain(handler, security, yamux))
-	f.AddHandlerFunc("tls/yamux/nimona:select/ping", fabric.BuildChain(handler, security, yamux, nselect))
+	f.AddHandlerFunc("tls/ping", fabric.BuildChain(handler, security.Wrap))
+	f.AddHandlerFunc("tls/yamux/ping", fabric.BuildChain(handler, security.Wrap, yamux.Wrap))
+	f.AddHandlerFunc("tls/yamux/nimona:select/ping", fabric.BuildChain(handler, security.Wrap, yamux.Wrap, nselect.Wrap))
 	fmt.Println("Listening...")
 	f.Listen()
 }

@@ -6,7 +6,4 @@ import (
 
 type HandlerFunc func(ctx context.Context, conn Conn) (err error)
 
-type Handler interface {
-	Wrap(HandlerFunc) HandlerFunc
-	CanHandle(addr string) bool
-}
+type Wrapper func(HandlerFunc) HandlerFunc
