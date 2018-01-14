@@ -13,40 +13,27 @@ type SecMiddleware struct {
 	Config tls.Config
 }
 
-func (m *SecMiddleware) Handle(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
+func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		scon := tls.Server(c, &m.Config)
+		if err := scon.Handshake(); err != nil {
+			return err
+		}
 
-	scon := tls.Server(rc, &m.Config)
+		nc := newConnWrapper(scon, c.(*conn).remainingStack())
+
+		return f(ctx, nc)
+	}
+}
+
+func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+	scon := tls.Client(c, &m.Config)
 	if err := scon.Handshake(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return ucon.Upgrade(scon)
-}
+	nc := newConnWrapper(scon, c.(*conn).remainingStack())
 
-func (m *SecMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == SecKey
-}
-
-func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
-
-	scon := tls.Client(rc, &m.Config)
-	if err := scon.Handshake(); err != nil {
-		return err
-	}
-
-	return ucon.Upgrade(scon)
-}
-
-func (m *SecMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == SecKey
+	return nc, nil
 }

@@ -12,50 +12,37 @@ const (
 
 type YamuxMiddleware struct{}
 
-func (m *YamuxMiddleware) Handle(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
+func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		session, err := yamux.Server(c, nil)
+		if err != nil {
+			return err
+		}
 
-	session, err := yamux.Server(rc, nil)
-	if err != nil {
-		return err
-	}
+		stream, err := session.Accept()
+		if err != nil {
+			return err
+		}
 
-	stream, err := session.Accept()
-	if err != nil {
-		return err
-	}
+		nc := newConnWrapper(stream, c.(*conn).remainingStack())
 
-	return ucon.Upgrade(stream)
+		return f(ctx, nc)
+	}
 }
 
-func (m *YamuxMiddleware) CanHandle(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == YamuxKey
-}
-
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
+func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+	session, err := yamux.Client(c, nil)
 	if err != nil {
-		return err
-	}
-
-	session, err := yamux.Client(rc, nil)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	stream, err := session.Open()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return ucon.Upgrade(stream)
-}
+	nc := newConnWrapper(stream, c.(*conn).remainingStack())
 
-func (m *YamuxMiddleware) CanNegotiate(addr string) bool {
-	parts := addrSplit(addr)
-	return parts[0][0] == YamuxKey
+	return nc, nil
 }
