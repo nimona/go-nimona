@@ -18,14 +18,14 @@ var (
 func New() *Fabric {
 	return &Fabric{
 		transports:  map[string]Transport{},
-		negotiators: map[string]AddNegotiatorFunc{},
+		negotiators: map[string]NegotiatorFunc{},
 		routes:      map[string]HandlerFunc{},
 	}
 }
 
 type Fabric struct {
 	// handlers    []Handler
-	negotiators map[string]AddNegotiatorFunc
+	negotiators map[string]NegotiatorFunc
 	transports  map[string]Transport
 	routes      map[string]HandlerFunc
 }
@@ -40,7 +40,7 @@ func (f *Fabric) AddHandlerFunc(r string, hf HandlerFunc) error {
 	return nil
 }
 
-func (f *Fabric) AddNegotiatorFunc(n string, ng AddNegotiatorFunc) error {
+func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 	f.negotiators[n] = ng
 	return nil
 }
@@ -55,33 +55,26 @@ func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
 	}
 
 	// handshake
-	if err := f.handshake(c.(*conn)); err != nil {
+	if err := f.handshake(c); err != nil {
 		return nil, err
 	}
 
 	// go throught all the protocols that are defined in the address
-	if err := f.Next(ctx, c.(*conn)); err != nil {
+	if err := f.Next(ctx, c); err != nil {
 		return nil, err
 	}
 
 	return c, nil
 }
 
-func (f *Fabric) dialTransport(ctx context.Context, addr string) (Conn, error) {
-	// get the stack of middleware that we need to go through
-	// the connection should be considered successful once this array is empty
-	stack := strings.Split(addr, "/")
-
-	// create a new Conn that will be used to hold underlaying connections
-	// from transports, middleware, as well as information about the
-	// two parties.
-	c := newConn(f, stack)
-
-	// get next protocol
-	ns := c.popStack()
+func (f *Fabric) dialTransport(ctx context.Context, addr string) (*conn, error) {
+	st := strings.Split(addr, "/")
+	ns := st[0]
+	np := strings.Split(ns, ":")
+	pr := np[0]
 
 	// get protocol
-	tr, err := f.getTransport(ns)
+	tr, err := f.getTransport(pr)
 	if err != nil {
 		return nil, ErrNoTransport
 	}
@@ -92,10 +85,10 @@ func (f *Fabric) dialTransport(ctx context.Context, addr string) (Conn, error) {
 		return nil, errors.New("Could not dial")
 	}
 
-	// upgrade our connection
-	if err := c.Upgrade(tcon); err != nil {
-		return nil, err
-	}
+	// create a new Conn that will be used to hold underlaying connections
+	// from transports, middleware, as well as information about the
+	// two parties.
+	c := newConnWrapper(tcon, st[1:])
 
 	return c, nil
 }
@@ -124,15 +117,14 @@ func (f *Fabric) Listen() error {
 	// go func() {
 	l, err := net.Listen("tcp", "0.0.0.0:3000")
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
 		return err
 	}
+
 	defer l.Close()
 	for {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
 			return err
 		}
 		go func(conn net.Conn) {
@@ -156,12 +148,7 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	fmt.Println("handleRequest: New incoming connection")
 
 	// wrap net.Conn in Conn
-	c := &conn{
-		conn:   tcon,
-		fabric: f,
-		values: map[string]interface{}{},
-		stack:  []string{},
-	}
+	c := newConnWrapper(tcon, []string{})
 
 	// close the connection when we're done
 	defer c.Close()
@@ -180,48 +167,16 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 
 	ctx := context.Background()
 	return hf(ctx, c)
-
-	// handle all middleware that we are being given
-	// for {
-	// 	fmt.Println("handleRequest: Waiting for next protocol")
-	// 	// get next protocol name
-	// 	prot, err := f.HandleSelect(c)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	fmt.Println("handleRequest: Got next protocol", prot)
-
-	// 	// check if there is a middleware for this
-	// 	hnd := false
-	// 	for _, mid := range f.handlers {
-	// 		if !mid.CanHandle(prot) {
-	// 			continue
-	// 		}
-	// 		// execute middleware
-	// 		if err := mid.Handle(context.Background(), c); err != nil {
-	// 			// TODO should we be closing the connection here?
-	// 			c.Close()
-	// 			return err
-	// 		}
-	// 		// mark as handled
-	// 		fmt.Println("handleRequest: Handled protocol", prot)
-	// 		hnd = true
-	// 		// and move on
-	// 		break
-	// 	}
-	// 	if !hnd {
-	// 		fmt.Println("handleRequest: Could not handle", prot)
-	// 		return ErrNoSuchMiddleware
-	// 	}
-	// }
-
-	// return nil
 }
 
-func (f *Fabric) Next(ctx context.Context, c *conn) error {
+func (f *Fabric) Next(ctx context.Context, c Conn) error {
+	if c == nil {
+		// TODO is this an error?
+		return nil
+	}
+
 	// get next protocol
-	ns := c.popStack()
+	ns := c.(*conn).popStack()
 	fmt.Println("Processing", ns)
 
 	// get protocol
@@ -239,10 +194,11 @@ func (f *Fabric) Next(ctx context.Context, c *conn) error {
 	mctx := context.WithValue(ctx, ContextKeyAddressPart, ns)
 	// and execute them
 
-	if err := ng(mctx, c); err != nil {
+	nc, err := ng(mctx, c)
+	if err != nil {
 		return err
 	}
 
 	// and move on
-	return f.Next(ctx, c)
+	return f.Next(ctx, nc)
 }

@@ -3,7 +3,6 @@ package fabric
 import (
 	"context"
 	"errors"
-	"fmt"
 )
 
 const (
@@ -21,62 +20,41 @@ func (m *NimonaMiddleware) Handle(name string, f HandlerFunc) error {
 
 func (m *NimonaMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, ucon Conn) error {
-		conn, err := ucon.GetRawConn()
-		if err != nil {
-			return err
-		}
-
+	return func(ctx context.Context, c Conn) error {
 		// we need to negotiate what they need from us
-		fmt.Println("HandleSelect: Reading protocol token")
 		// read the next token, which is the request for the next middleware
-		prot, err := ReadToken(conn)
+		prot, err := ReadToken(c)
 		if err != nil {
-			fmt.Println("Could not read token", err)
 			return err
 		}
 
-		fmt.Println("HandleSelect: Read protocol token:", string(prot))
-		fmt.Println("HandleSelect: Writing protocol as ack")
-
-		if err := WriteToken(conn, prot); err != nil {
-			fmt.Println("Could not write protocol ack", err)
+		if err := WriteToken(c, prot); err != nil {
 			return err
 		}
 
 		// TODO could/should this f(ctx, ucon)?
 		hf := m.Handlers[string(prot)]
 
-		return hf(ctx, ucon)
+		return hf(ctx, c)
 	}
 }
 
-func (m *NimonaMiddleware) Negotiate(ctx context.Context, conn Conn) error {
+func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
 	pr := "params"
 
-	if err := m.sendRequest(conn, pr); err != nil {
-		return err
+	if err := WriteToken(c, []byte(pr)); err != nil {
+		return nil, err
 	}
 
-	return m.verifyResponse(conn, pr)
+	if err := m.verifyResponse(c, pr); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
-func (m *NimonaMiddleware) sendRequest(conn Conn, pr string) error {
-	rcon, err := conn.GetRawConn()
-	if err != nil {
-		return err
-	}
-
-	return WriteToken(rcon, []byte(pr))
-}
-
-func (m *NimonaMiddleware) verifyResponse(conn Conn, pr string) error {
-	rcon, err := conn.GetRawConn()
-	if err != nil {
-		return err
-	}
-
-	resp, err := ReadToken(rcon)
+func (m *NimonaMiddleware) verifyResponse(c Conn, pr string) error {
+	resp, err := ReadToken(c)
 	if err != nil {
 		return err
 	}

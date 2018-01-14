@@ -14,13 +14,8 @@ type YamuxMiddleware struct{}
 
 func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, ucon Conn) error {
-		rc, err := ucon.GetRawConn()
-		if err != nil {
-			return err
-		}
-
-		session, err := yamux.Server(rc, nil)
+	return func(ctx context.Context, c Conn) error {
+		session, err := yamux.Server(c, nil)
 		if err != nil {
 			return err
 		}
@@ -30,29 +25,24 @@ func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		if err := ucon.Upgrade(stream); err != nil {
-			return err
-		}
+		nc := newConnWrapper(stream, c.(*conn).remainingStack())
 
-		return f(ctx, ucon)
+		return f(ctx, nc)
 	}
 }
 
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
+func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+	session, err := yamux.Client(c, nil)
 	if err != nil {
-		return err
-	}
-
-	session, err := yamux.Client(rc, nil)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	stream, err := session.Open()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return ucon.Upgrade(stream)
+	nc := newConnWrapper(stream, c.(*conn).remainingStack())
+
+	return nc, nil
 }

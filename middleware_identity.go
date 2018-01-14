@@ -60,7 +60,7 @@ func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
+func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, error) {
 	// store local identity to conn
 	conn.SetValue("identity_local", m.Local)
 
@@ -68,14 +68,14 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	// the remote id we are asking for
 	prt := ctx.Value(ContextKeyAddressPart).(string)
 	if prt == "" {
-		return errors.New("Missing address part")
+		return nil, errors.New("Missing address part")
 	}
 
 	// tell the server who we are
 	fmt.Println("Identity.Negotiate: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to server", err)
-		return err
+		return nil, err
 	}
 
 	// tell the server who we are looking for
@@ -83,7 +83,7 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	fmt.Println("Identity.Negotiate: Writing requested id", reqID)
 	if err := WriteToken(conn, []byte(reqID)); err != nil {
 		fmt.Println("Could not write request id to server", err)
-		return err
+		return nil, err
 	}
 
 	// server should now respond with their identity
@@ -91,12 +91,12 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) error {
 	remoteID, err := ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote server's identity", err)
-		return err
+		return nil, err
 	}
 	fmt.Println("Identity.Negotiate: Read response:", string(remoteID))
 
 	// store server's identity
 	conn.SetValue("identity_remote", remoteID)
 
-	return nil
+	return conn, nil
 }

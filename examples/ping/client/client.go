@@ -11,7 +11,7 @@ import (
 
 type Ping struct{}
 
-func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (err error) {
+func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
 	// close conection when done
 	defer conn.Close()
 
@@ -19,7 +19,7 @@ func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (err error) {
 	fmt.Println("Ping: Writing ping...")
 	if err := fabric.WriteToken(conn, []byte("PING")); err != nil {
 		fmt.Println("Could not ping", err)
-		return err
+		return nil, err
 	}
 
 	fmt.Println("Ping: Wrote ping")
@@ -29,11 +29,11 @@ func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (err error) {
 	pong, err := fabric.ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote pong", err)
-		return err
+		return nil, err
 	}
 
 	fmt.Println("Ping: Read pong:", string(pong))
-	return nil
+	return nil, nil
 }
 
 func main() {

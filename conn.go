@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -12,21 +11,18 @@ var (
 	ErrNoSuchValue = errors.New("No such value")
 )
 
-func newConn(f *Fabric, stack []string) *conn {
+func newConnWrapper(c net.Conn, stack []string) *conn {
 	return &conn{
-		fabric: f,
-		values: map[string]interface{}{},
-		stack:  stack,
+		conn:  c,
+		stack: stack,
 	}
 }
 
 type conn struct {
 	conn   net.Conn
-	fabric *Fabric
 	values map[string]interface{}
 	stack  []string
 	index  int
-	lock   sync.Mutex
 }
 
 func (c *conn) popStack() string {
@@ -57,19 +53,6 @@ func (c *conn) GetValue(key string) (interface{}, error) {
 func (c *conn) SetValue(key string, val interface{}) error {
 	c.values[key] = val
 	return nil
-}
-
-func (c *conn) Upgrade(nc net.Conn) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	c.conn = nc
-
-	return nil
-}
-
-func (c *conn) GetRawConn() (net.Conn, error) {
-	return c.conn, nil
 }
 
 // Conn is a generic stream-oriented network connection.
@@ -127,9 +110,6 @@ type Conn interface {
 
 	GetValue(key string) (interface{}, error)
 	SetValue(key string, value interface{}) error
-
-	Upgrade(net.Conn) error
-	GetRawConn() (net.Conn, error)
 }
 
 // Read implements the Conn Read method.

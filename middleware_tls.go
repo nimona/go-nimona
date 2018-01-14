@@ -3,7 +3,6 @@ package fabric
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 )
 
 const (
@@ -16,36 +15,25 @@ type SecMiddleware struct {
 
 func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, ucon Conn) error {
-		fmt.Println("Going through sec")
-		rc, err := ucon.GetRawConn()
-		if err != nil {
-			return err
-		}
-
-		scon := tls.Server(rc, &m.Config)
+	return func(ctx context.Context, c Conn) error {
+		scon := tls.Server(c, &m.Config)
 		if err := scon.Handshake(); err != nil {
 			return err
 		}
 
-		if err := ucon.Upgrade(scon); err != nil {
-			return err
-		}
+		nc := newConnWrapper(scon, c.(*conn).remainingStack())
 
-		return f(ctx, ucon)
+		return f(ctx, nc)
 	}
 }
 
-func (m *SecMiddleware) Negotiate(ctx context.Context, ucon Conn) error {
-	rc, err := ucon.GetRawConn()
-	if err != nil {
-		return err
-	}
-
-	scon := tls.Client(rc, &m.Config)
+func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+	scon := tls.Client(c, &m.Config)
 	if err := scon.Handshake(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return ucon.Upgrade(scon)
+	nc := newConnWrapper(scon, c.(*conn).remainingStack())
+
+	return nc, nil
 }
