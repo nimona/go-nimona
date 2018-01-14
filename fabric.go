@@ -18,14 +18,14 @@ var (
 func New() *Fabric {
 	return &Fabric{
 		transports:  map[string]Transport{},
-		negotiators: map[string]Negotiator{},
+		negotiators: map[string]AddNegotiatorFunc{},
 		routes:      map[string]HandlerFunc{},
 	}
 }
 
 type Fabric struct {
 	// handlers    []Handler
-	negotiators map[string]Negotiator
+	negotiators map[string]AddNegotiatorFunc
 	transports  map[string]Transport
 	routes      map[string]HandlerFunc
 }
@@ -40,7 +40,7 @@ func (f *Fabric) AddHandlerFunc(r string, hf HandlerFunc) error {
 	return nil
 }
 
-func (f *Fabric) AddNegotiator(n string, ng Negotiator) error {
+func (f *Fabric) AddNegotiatorFunc(n string, ng AddNegotiatorFunc) error {
 	f.negotiators[n] = ng
 	return nil
 }
@@ -232,7 +232,7 @@ func (f *Fabric) Next(ctx context.Context, c *conn) error {
 	mctx := context.WithValue(ctx, ContextKeyAddressPart, ns)
 	// and execute them
 
-	if err := ng.Negotiate(mctx, c); err != nil {
+	if err := ng(mctx, c); err != nil {
 		return err
 	}
 

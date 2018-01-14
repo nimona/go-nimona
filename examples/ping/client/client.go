@@ -43,17 +43,23 @@ func main() {
 		return
 	}
 
-	f := fabric.New()
-	f.AddTransport("tcp", fabric.NewTransportTCP())
-	f.AddNegotiator("yamux", &fabric.YamuxMiddleware{})
-	f.AddNegotiator("tls", &fabric.SecMiddleware{
+	yamux := &fabric.YamuxMiddleware{}
+	// ident := &fabric.IdentityMiddleware{Local: "CLIENT"}
+	security := &fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
 		},
-	})
-	f.AddNegotiator("ping", &Ping{})
-	f.AddNegotiator("identity", &fabric.IdentityMiddleware{Local: "CLIENT"})
+	}
+
+	p := &Ping{}
+
+	f := fabric.New()
+	f.AddTransport("tcp", fabric.NewTransportTCP())
+	f.AddNegotiatorFunc("yamux", yamux.Negotiate)
+	f.AddNegotiatorFunc("tls", security.Negotiate)
+	f.AddNegotiatorFunc("ping", p.Negotiate)
+	// f.AddNegotiatorFunc("identity", ident.Negotiate)
 
 	// make a new connection to the the server's ping handler
 	if _, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/ping"); err != nil {
