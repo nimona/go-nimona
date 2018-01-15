@@ -25,7 +25,7 @@ func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		nc := newConnWrapper(stream, c.(*conn).remainingStack())
+		nc := newConnWrapper(stream)
 
 		return f(ctx, nc)
 	}
@@ -42,7 +42,7 @@ func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
 		return nil, err
 	}
 
-	nc := newConnWrapper(stream, c.(*conn).remainingStack())
+	nc := newConnWrapper(stream)
 
 	return nc, nil
 }

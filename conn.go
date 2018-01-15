@@ -3,7 +3,6 @@ package fabric
 import (
 	"errors"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -11,36 +10,16 @@ var (
 	ErrNoSuchValue = errors.New("No such value")
 )
 
-func newConnWrapper(c net.Conn, stack []string) *conn {
+func newConnWrapper(c net.Conn) *conn {
 	return &conn{
-		conn:  c,
-		stack: stack,
+		conn: c,
 	}
 }
 
 type conn struct {
 	conn   net.Conn
 	values map[string]interface{}
-	stack  []string
 	index  int
-}
-
-func (c *conn) popStack() string {
-	ci := c.index
-	if ci >= len(c.stack) {
-		return ""
-	}
-
-	c.index++
-	return c.stack[ci]
-}
-
-func (c *conn) remainingStack() []string {
-	return c.stack[c.index:]
-}
-
-func (c *conn) remainingStackString() string {
-	return strings.Join(c.stack[c.index:], "/")
 }
 
 func (c *conn) GetValue(key string) (interface{}, error) {
