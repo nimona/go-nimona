@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 
 	fabric "github.com/nimona/go-nimona-fabric"
@@ -15,8 +16,13 @@ func handler(ctx context.Context, conn fabric.Conn) error {
 	// close connection when done
 	defer conn.Close()
 
+	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
+	if !ok {
+		return errors.New("Could not find remote id")
+	}
+
 	// client pings
-	fmt.Println("Ping: Reading ping...")
+	fmt.Println("Ping: Reading ping from", rp)
 	ping, err := fabric.ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote ping", err)

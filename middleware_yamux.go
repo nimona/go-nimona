@@ -12,7 +12,7 @@ const (
 
 type YamuxMiddleware struct{}
 
-func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+func (m *YamuxMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		session, err := yamux.Server(c, nil)

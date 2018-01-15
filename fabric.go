@@ -11,8 +11,6 @@ import (
 var (
 	ErrNoTransport      = errors.New("Could not dial with available transports")
 	ErrNoSuchMiddleware = errors.New("No such middleware")
-
-	ContextKeyAddressPart = contextKey("addrpart")
 )
 
 func New() *Fabric {
@@ -188,13 +186,8 @@ func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) error {
 		return ErrNoSuchMiddleware // TODO Switch to err no negotiator
 	}
 
-	// add current part to context
-	// TODO address part is a very bad name, find better one to describe address parts
-	// TODO do we even still need context with values?
-	mctx := context.WithValue(ctx, ContextKeyAddressPart, ns)
-	// and execute them
-
-	nc, err := ng(mctx, c)
+	// execute negotiator
+	nc, err := ng(ctx, c)
 	if err != nil {
 		return err
 	}

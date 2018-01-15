@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 
 	fabric "github.com/nimona/go-nimona-fabric"
@@ -15,8 +16,13 @@ func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (fabric.Conn, er
 	// close conection when done
 	defer conn.Close()
 
+	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
+	if !ok {
+		return nil, errors.New("Could not find remote id")
+	}
+
 	// send ping
-	fmt.Println("Ping: Writing ping...")
+	fmt.Println("Ping: Writing ping to", rp)
 	if err := fabric.WriteToken(conn, []byte("PING")); err != nil {
 		fmt.Println("Could not ping", err)
 		return nil, err

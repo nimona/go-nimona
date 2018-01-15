@@ -13,7 +13,7 @@ type SecMiddleware struct {
 	Config tls.Config
 }
 
-func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+func (m *SecMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		scon := tls.Server(c, &m.Config)

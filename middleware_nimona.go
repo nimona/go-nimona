@@ -18,7 +18,7 @@ func (m *NimonaMiddleware) Handle(name string, f HandlerFunc) error {
 	return nil
 }
 
-func (m *NimonaMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+func (m *NimonaMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		// we need to negotiate what they need from us

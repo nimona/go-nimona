@@ -6,4 +6,4 @@ import (
 
 type HandlerFunc func(ctx context.Context, conn Conn) (err error)
 
-type Wrapper func(HandlerFunc) HandlerFunc
+type HandlerFuncWrapper func(HandlerFunc) HandlerFunc
