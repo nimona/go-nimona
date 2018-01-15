@@ -31,18 +31,18 @@ func (m *YamuxMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	session, err := yamux.Client(c, nil)
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	stream, err := session.Open()
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	nc := newConnWrapper(stream)
 
-	return nc, nil
+	return ctx, nc, nil
 }

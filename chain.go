@@ -5,7 +5,7 @@ package fabric
 type middleware func(HandlerFunc) HandlerFunc
 
 // BuildChain builds the middlware chain recursively, functions are first class
-func BuildChain(f HandlerFunc, m ...Wrapper) HandlerFunc {
+func BuildChain(f HandlerFunc, m ...HandlerFuncWrapper) HandlerFunc {
 	// if our chain is done, use the original handlerfunc
 	if len(m) == 0 {
 		return f

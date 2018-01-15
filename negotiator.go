@@ -4,4 +4,4 @@ import (
 	"context"
 )
 
-type NegotiatorFunc func(ctx context.Context, conn Conn) (Conn, error)
+type NegotiatorFunc func(ctx context.Context, conn Conn) (context.Context, Conn, error)

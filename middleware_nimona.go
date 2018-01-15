@@ -39,18 +39,18 @@ func (m *NimonaMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	pr := "params"
 
 	if err := WriteToken(c, []byte(pr)); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	if err := m.verifyResponse(c, pr); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
-	return c, nil
+	return ctx, c, nil
 }
 
 func (m *NimonaMiddleware) verifyResponse(c Conn, pr string) error {

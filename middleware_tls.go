@@ -27,13 +27,13 @@ func (m *SecMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	scon := tls.Client(c, &m.Config)
 	if err := scon.Handshake(); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	nc := newConnWrapper(scon)
 
-	return nc, nil
+	return ctx, nc, nil
 }
