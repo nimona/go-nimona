@@ -45,6 +45,8 @@ func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 	return nil
 }
 
+// DialContext will attempt to connect to the given address and go through the
+// various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (Conn, error) {
 	// TODO validate the address
 	addr := NewAddress(as)
@@ -166,6 +168,7 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	return hf(ctx, c)
 }
 
+// Next will process the next middleware in the given address recursively
 func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) error {
 	if c == nil {
 		// TODO is this an error?
