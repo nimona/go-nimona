@@ -13,18 +13,3 @@ eg microservices.
 
 For a rational as well as more information you might want to check out the
 [design document](https://github.com/nimona/nimona/blob/master/fabric.md).
-
-## Sample usage
-
-```golang
-    func handler(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
-        conn.Write([]byte("Hello!"))
-        conn.Close()
-        return nil, nil
-    }
-
-    f := fabric.New()
-    f.AddTransport(fabric.NewTransportTCP())
-    f.AddHandlerFunc("hello", handler)
-    f.Listen()
-```
