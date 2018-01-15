@@ -21,7 +21,7 @@ func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		nc := newConnWrapper(scon, c.(*conn).remainingStack())
+		nc := newConnWrapper(scon)
 
 		return f(ctx, nc)
 	}
@@ -33,7 +33,7 @@ func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
 		return nil, err
 	}
 
-	nc := newConnWrapper(scon, c.(*conn).remainingStack())
+	nc := newConnWrapper(scon)
 
 	return nc, nil
 }

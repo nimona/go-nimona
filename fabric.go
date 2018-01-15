@@ -45,31 +45,30 @@ func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 	return nil
 }
 
-func (f *Fabric) DialContext(ctx context.Context, addr string) (Conn, error) {
+func (f *Fabric) DialContext(ctx context.Context, as string) (Conn, error) {
 	// TODO validate the address
+	addr := NewAddress(as)
 
 	// figure out if the addr can be dialed and connect to the target
-	c, err := f.dialTransport(ctx, addr)
+	c, err := f.dialTransport(ctx, addr.Pop())
 	if err != nil {
 		return nil, err
 	}
 
 	// handshake
-	if err := f.handshake(c); err != nil {
+	if err := f.handshake(c, addr); err != nil {
 		return nil, err
 	}
 
 	// go throught all the protocols that are defined in the address
-	if err := f.Next(ctx, c); err != nil {
+	if err := f.Next(ctx, c, addr); err != nil {
 		return nil, err
 	}
 
 	return c, nil
 }
 
-func (f *Fabric) dialTransport(ctx context.Context, addr string) (*conn, error) {
-	st := strings.Split(addr, "/")
-	ns := st[0]
+func (f *Fabric) dialTransport(ctx context.Context, ns string) (*conn, error) {
 	np := strings.Split(ns, ":")
 	pr := np[0]
 
@@ -88,7 +87,7 @@ func (f *Fabric) dialTransport(ctx context.Context, addr string) (*conn, error) 
 	// create a new Conn that will be used to hold underlaying connections
 	// from transports, middleware, as well as information about the
 	// two parties.
-	c := newConnWrapper(tcon, st[1:])
+	c := newConnWrapper(tcon)
 
 	return c, nil
 }
@@ -106,9 +105,9 @@ func (f *Fabric) getTransport(ns string) (Transport, error) {
 	return tr, nil
 }
 
-func (f *Fabric) handshake(conn *conn) error {
-	hs := conn.remainingStackString() // TODO Add "STREAM" + ...
-	return WriteToken(conn, []byte(hs))
+func (f *Fabric) handshake(conn *conn, addr *Address) error {
+	rs := addr.RemainingString()
+	return WriteToken(conn, []byte(rs))
 }
 
 func (f *Fabric) Listen() error {
@@ -148,7 +147,7 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	fmt.Println("handleRequest: New incoming connection")
 
 	// wrap net.Conn in Conn
-	c := newConnWrapper(tcon, []string{})
+	c := newConnWrapper(tcon)
 
 	// close the connection when we're done
 	defer c.Close()
@@ -157,8 +156,6 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("Got rt:", string(rt))
 
 	hf, ok := f.routes[string(rt)]
 	if !ok {
@@ -169,14 +166,14 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	return hf(ctx, c)
 }
 
-func (f *Fabric) Next(ctx context.Context, c Conn) error {
+func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) error {
 	if c == nil {
 		// TODO is this an error?
 		return nil
 	}
 
 	// get next protocol
-	ns := c.(*conn).popStack()
+	ns := addr.Pop()
 	fmt.Println("Processing", ns)
 
 	// get protocol
@@ -200,5 +197,5 @@ func (f *Fabric) Next(ctx context.Context, c Conn) error {
 	}
 
 	// and move on
-	return f.Next(ctx, nc)
+	return f.Next(ctx, nc, addr)
 }
