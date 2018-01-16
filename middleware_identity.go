@@ -19,6 +19,7 @@ type IdentityMiddleware struct {
 	Local string
 }
 
+// HandlerWrapper is the middleware handler for the server
 func (m *IdentityMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, conn Conn) error {
@@ -48,6 +49,7 @@ func (m *IdentityMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	}
 }
 
+// Negotiate handles the client's side of the identity middleware
 func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
 	// store local identity to conn
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)

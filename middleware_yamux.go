@@ -6,12 +6,10 @@ import (
 	"github.com/hashicorp/yamux"
 )
 
-const (
-	YamuxKey = "yamux"
-)
-
+// YamuxMiddleware is a multiplexer middleware based on yamux
 type YamuxMiddleware struct{}
 
+// HandlerWrapper is the middleware handler for the server
 func (m *YamuxMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
@@ -31,6 +29,7 @@ func (m *YamuxMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	}
 }
 
+// Negotiate handles the client's side of the yamux middleware
 func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	session, err := yamux.Client(c, nil)
 	if err != nil {
