@@ -5,20 +5,13 @@ import (
 	"errors"
 )
 
-const (
-	NimonaKey = "nimona"
-)
-
+// NimonaMiddleware is the selector middleware
 type NimonaMiddleware struct {
 	Handlers map[string]HandlerFunc
 }
 
-func (m *NimonaMiddleware) Handle(name string, f HandlerFunc) error {
-	m.Handlers[name] = f
-	return nil
-}
-
-func (m *NimonaMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+// HandlerWrapper is the middleware handler for the server
+func (m *NimonaMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		// we need to negotiate what they need from us
@@ -39,18 +32,19 @@ func (m *NimonaMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+// Negotiate handles the client's side of the nimona middleware
+func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	pr := "params"
 
 	if err := WriteToken(c, []byte(pr)); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	if err := m.verifyResponse(c, pr); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
-	return c, nil
+	return ctx, c, nil
 }
 
 func (m *NimonaMiddleware) verifyResponse(c Conn, pr string) error {

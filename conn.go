@@ -1,18 +1,14 @@
 package fabric
 
 import (
-	"errors"
 	"net"
 	"time"
 )
 
-var (
-	ErrNoSuchValue = errors.New("No such value")
-)
-
 func newConnWrapper(c net.Conn) *conn {
 	return &conn{
-		conn: c,
+		conn:   c,
+		values: map[string]interface{}{},
 	}
 }
 
@@ -20,18 +16,6 @@ type conn struct {
 	conn   net.Conn
 	values map[string]interface{}
 	index  int
-}
-
-func (c *conn) GetValue(key string) (interface{}, error) {
-	if val, ok := c.values[key]; ok {
-		return val, nil
-	}
-	return nil, ErrNoSuchValue
-}
-
-func (c *conn) SetValue(key string, val interface{}) error {
-	c.values[key] = val
-	return nil
 }
 
 // Conn is a generic stream-oriented network connection.
@@ -86,9 +70,6 @@ type Conn interface {
 	// some of the data was successfully written.
 	// A zero value for t means Write will not time out.
 	SetWriteDeadline(t time.Time) error
-
-	GetValue(key string) (interface{}, error)
-	SetValue(key string, value interface{}) error
 }
 
 // Read implements the Conn Read method.

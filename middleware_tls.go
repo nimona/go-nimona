@@ -5,15 +5,13 @@ import (
 	"crypto/tls"
 )
 
-const (
-	SecKey = "tls"
-)
-
+// SecMiddleware is a TLS middlware
 type SecMiddleware struct {
 	Config tls.Config
 }
 
-func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+// HandlerWrapper is the middleware handler for the server
+func (m *SecMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		scon := tls.Server(c, &m.Config)
@@ -27,13 +25,14 @@ func (m *SecMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+// Negotiate handles the client's side of the tls middleware
+func (m *SecMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	scon := tls.Client(c, &m.Config)
 	if err := scon.Handshake(); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	nc := newConnWrapper(scon)
 
-	return nc, nil
+	return ctx, nc, nil
 }

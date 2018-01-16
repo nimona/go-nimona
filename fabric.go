@@ -11,8 +11,6 @@ import (
 var (
 	ErrNoTransport      = errors.New("Could not dial with available transports")
 	ErrNoSuchMiddleware = errors.New("No such middleware")
-
-	ContextKeyAddressPart = contextKey("addrpart")
 )
 
 func New() *Fabric {
@@ -47,27 +45,28 @@ func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) DialContext(ctx context.Context, as string) (Conn, error) {
+func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
 	// TODO validate the address
 	addr := NewAddress(as)
 
 	// figure out if the addr can be dialed and connect to the target
 	c, err := f.dialTransport(ctx, addr.Pop())
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	// handshake
 	if err := f.handshake(c, addr); err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	// go throught all the protocols that are defined in the address
-	if err := f.Next(ctx, c, addr); err != nil {
-		return nil, err
+	ctx, err = f.Next(ctx, c, addr)
+	if err != nil {
+		return ctx, nil, err
 	}
 
-	return c, nil
+	return ctx, c, nil
 }
 
 func (f *Fabric) dialTransport(ctx context.Context, ns string) (*conn, error) {
@@ -169,10 +168,10 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 }
 
 // Next will process the next middleware in the given address recursively
-func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) error {
+func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) (context.Context, error) {
 	if c == nil {
 		// TODO is this an error?
-		return nil
+		return ctx, nil
 	}
 
 	// get next protocol
@@ -185,20 +184,15 @@ func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) error {
 	// check if is negotiator
 	ng, ok := f.negotiators[pr]
 	if !ok {
-		return ErrNoSuchMiddleware // TODO Switch to err no negotiator
+		return ctx, ErrNoSuchMiddleware // TODO Switch to err no negotiator
 	}
 
-	// add current part to context
-	// TODO address part is a very bad name, find better one to describe address parts
-	// TODO do we even still need context with values?
-	mctx := context.WithValue(ctx, ContextKeyAddressPart, ns)
-	// and execute them
-
-	nc, err := ng(mctx, c)
+	// execute negotiator
+	nctx, nc, err := ng(ctx, c)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	// and move on
-	return f.Next(ctx, nc, addr)
+	return f.Next(nctx, nc, addr)
 }

@@ -6,13 +6,11 @@ import (
 	"github.com/hashicorp/yamux"
 )
 
-const (
-	YamuxKey = "yamux"
-)
-
+// YamuxMiddleware is a multiplexer middleware based on yamux
 type YamuxMiddleware struct{}
 
-func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+// HandlerWrapper is the middleware handler for the server
+func (m *YamuxMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		session, err := yamux.Server(c, nil)
@@ -31,18 +29,19 @@ func (m *YamuxMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (Conn, error) {
+// Negotiate handles the client's side of the yamux middleware
+func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	session, err := yamux.Client(c, nil)
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	stream, err := session.Open()
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	nc := newConnWrapper(stream)
 
-	return nc, nil
+	return ctx, nc, nil
 }

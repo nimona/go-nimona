@@ -3,23 +3,31 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 
 	fabric "github.com/nimona/go-nimona-fabric"
 	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
 
+// Ping is our example client, it simply sends a PING string and expects a PONG
 type Ping struct{}
 
-func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (fabric.Conn, error) {
+// Negotiate will be called after all the other middleware have been processed
+func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (context.Context, fabric.Conn, error) {
 	// close conection when done
 	defer conn.Close()
 
+	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
+	if !ok {
+		return ctx, nil, errors.New("Could not find remote id")
+	}
+
 	// send ping
-	fmt.Println("Ping: Writing ping...")
+	fmt.Println("Ping: Writing ping to", rp)
 	if err := fabric.WriteToken(conn, []byte("PING")); err != nil {
 		fmt.Println("Could not ping", err)
-		return nil, err
+		return ctx, nil, err
 	}
 
 	fmt.Println("Ping: Wrote ping")
@@ -29,11 +37,11 @@ func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (fabric.Conn, er
 	pong, err := fabric.ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote pong", err)
-		return nil, err
+		return ctx, nil, err
 	}
 
 	fmt.Println("Ping: Read pong:", string(pong))
-	return nil, nil
+	return ctx, nil, nil
 }
 
 func main() {
@@ -44,7 +52,7 @@ func main() {
 	}
 
 	yamux := &fabric.YamuxMiddleware{}
-	// ident := &fabric.IdentityMiddleware{Local: "CLIENT"}
+	ident := &fabric.IdentityMiddleware{Local: "CLIENT"}
 	security := &fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
@@ -59,10 +67,10 @@ func main() {
 	f.AddNegotiatorFunc("yamux", yamux.Negotiate)
 	f.AddNegotiatorFunc("tls", security.Negotiate)
 	f.AddNegotiatorFunc("ping", p.Negotiate)
-	// f.AddNegotiatorFunc("identity", ident.Negotiate)
+	f.AddNegotiatorFunc("identity", ident.Negotiate)
 
 	// make a new connection to the the server's ping handler
-	if _, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/ping"); err != nil {
+	if _, _, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/yamux/identity/ping"); err != nil {
 		fmt.Println("Dial error", err)
 		return
 	}

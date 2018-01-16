@@ -7,18 +7,23 @@ import (
 	"strings"
 )
 
-const (
-	IdentityKey = "nimona"
+var (
+	// ContextKeyLocalIdentity is the key of the local identity in contexts
+	ContextKeyLocalIdentity = contextKey("local_identity")
+	// ContextKeyRemoteIdentity is the key of the remote identity in contexts
+	ContextKeyRemoteIdentity = contextKey("remote_identity")
 )
 
+// IdentityMiddleware allows exchanging peer information
 type IdentityMiddleware struct {
 	Local string
 }
 
-func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
+// HandlerWrapper is the middleware handler for the server
+func (m *IdentityMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, conn Conn) error {
-		conn.SetValue("identity_local", m.Local)
+		ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 
 		// client will tell us who they are
 		fmt.Println("Identity.Handle: Reading remote id")
@@ -30,23 +35,7 @@ func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 		fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
 
 		// store client's identity
-		conn.SetValue("identity_remote", string(remoteID))
-
-		// client will tell us who they are looking for
-		fmt.Println("Identity.Handle: Reading requested id")
-		requestID, err := ReadToken(conn)
-		if err != nil {
-			fmt.Println("Could not read client's requested identity", err)
-			return err
-		}
-		fmt.Println("Identity.Handle: Read requested id:", string(requestID))
-
-		// check if this is us
-		if string(requestID) != m.Local {
-			// TODO tell client this is not us
-			fmt.Println("Identity.Handle: Requested identity does not match our local", string(requestID), m.Local)
-			return errors.New("No such identity")
-		}
+		ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
 
 		// tell client our identity
 		fmt.Println("Identity.Handle: Writing local id", m.Local)
@@ -60,43 +49,42 @@ func (m *IdentityMiddleware) Wrap(f HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (Conn, error) {
+// Negotiate handles the client's side of the identity middleware
+func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
 	// store local identity to conn
-	conn.SetValue("identity_local", m.Local)
+	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 
 	// check that context contains the address part that we need to extract
 	// the remote id we are asking for
-	prt := ctx.Value(ContextKeyAddressPart).(string)
-	if prt == "" {
-		return nil, errors.New("Missing address part")
-	}
+	prt := "identity:SERVER" // TODO find a way to get current address part
+	// prt := ctx.Value(ContextKeyAddressPart).(string)
+	// if prt == "" {
+	// 	return nil, errors.New("Missing address part")
+	// }
 
 	// tell the server who we are
-	fmt.Println("Identity.Negotiate: Writing local id", m.Local)
+	fmt.Println("Identity.NegotiatorWrapper: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		fmt.Println("Could not write local id to server", err)
-		return nil, err
-	}
-
-	// tell the server who we are looking for
-	reqID := strings.Split(prt, ":")[1]
-	fmt.Println("Identity.Negotiate: Writing requested id", reqID)
-	if err := WriteToken(conn, []byte(reqID)); err != nil {
-		fmt.Println("Could not write request id to server", err)
-		return nil, err
+		return ctx, nil, err
 	}
 
 	// server should now respond with their identity
-	fmt.Println("Identity.Negotiate: Reading response")
+	fmt.Println("Identity.NegotiatorWrapper: Reading response")
 	remoteID, err := ReadToken(conn)
 	if err != nil {
 		fmt.Println("Could not read remote server's identity", err)
-		return nil, err
+		return ctx, nil, err
 	}
-	fmt.Println("Identity.Negotiate: Read response:", string(remoteID))
+	fmt.Println("Identity.NegotiatorWrapper: Read response:", string(remoteID))
+
+	exid := strings.Split(prt, ":")[1]
+	if exid != string(remoteID) {
+		return ctx, nil, errors.New("Unexpected remote server")
+	}
 
 	// store server's identity
-	conn.SetValue("identity_remote", remoteID)
+	ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
 
-	return conn, nil
+	return ctx, conn, nil
 }
