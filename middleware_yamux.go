@@ -50,15 +50,15 @@ func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (context.Contex
 // the address that will be consumed.
 // This will only return true if the connection has been previously
 // established and the connection is still open.
-func (m *YamuxMiddleware) CanDial(addr Address) (bool, string, error) {
+func (m *YamuxMiddleware) CanDial(addr Address) (bool, error) {
 	as := addr.String()
 	for k := range m.sessions {
 		if strings.HasPrefix(as, k) {
-			return true, k, nil
+			return true, nil
 		}
 	}
 
-	return false, "", nil
+	return false, nil
 }
 
 // DialContext dials an address, assuming we have previously connected and
