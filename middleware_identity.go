@@ -19,34 +19,31 @@ type IdentityMiddleware struct {
 	Local string
 }
 
-// HandlerWrapper is the middleware handler for the server
-func (m *IdentityMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
-	// one time scope setup area for middleware
-	return func(ctx context.Context, conn Conn) error {
-		ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
+// Handle is the middleware handler for the server
+func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
+	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 
-		// client will tell us who they are
-		fmt.Println("Identity.Handle: Reading remote id")
-		remoteID, err := ReadToken(conn)
-		if err != nil {
-			fmt.Println("Could not read remote clients's identity", err)
-			return err
-		}
-		fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
-
-		// store client's identity
-		ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
-
-		// tell client our identity
-		fmt.Println("Identity.Handle: Writing local id", m.Local)
-		if err := WriteToken(conn, []byte(m.Local)); err != nil {
-			fmt.Println("Could not write local id to client", err)
-			return err
-		}
-		fmt.Println("Identity.Handle: Wrote local id")
-
-		return f(ctx, conn)
+	// client will tell us who they are
+	fmt.Println("Identity.Handle: Reading remote id")
+	remoteID, err := ReadToken(c)
+	if err != nil {
+		fmt.Println("Could not read remote clients's identity", err)
+		return nil, nil, err
 	}
+	fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
+
+	// store client's identity
+	ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
+
+	// tell client our identity
+	fmt.Println("Identity.Handle: Writing local id", m.Local)
+	if err := WriteToken(c, []byte(m.Local)); err != nil {
+		fmt.Println("Could not write local id to client", err)
+		return nil, nil, err
+	}
+	fmt.Println("Identity.Handle: Wrote local id")
+
+	return ctx, c, nil
 }
 
 // Negotiate handles the client's side of the identity middleware

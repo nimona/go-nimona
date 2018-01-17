@@ -10,38 +10,38 @@ import (
 	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
 
-func handler(ctx context.Context, conn fabric.Conn) error {
+func handler(ctx context.Context, c fabric.Conn) (context.Context, fabric.Conn, error) {
 	fmt.Println("Going through ping")
 
 	// close connection when done
-	defer conn.Close()
+	defer c.Close()
 
 	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
 	if !ok {
-		return errors.New("Could not find remote id")
+		return nil, nil, errors.New("Could not find remote id")
 	}
 
 	// client pings
 	fmt.Println("Ping: Reading ping from", rp)
-	ping, err := fabric.ReadToken(conn)
+	ping, err := fabric.ReadToken(c)
 	if err != nil {
 		fmt.Println("Could not read remote ping", err)
-		return err
+		return nil, nil, err
 	}
 
 	fmt.Println("Ping: Read ping:", string(ping))
 
 	// we pong back
 	fmt.Println("Ping: Writing pong...")
-	if err := fabric.WriteToken(conn, []byte("PONG")); err != nil {
+	if err := fabric.WriteToken(c, []byte("PONG")); err != nil {
 		fmt.Println("Could not pong", err)
-		return err
+		return nil, nil, err
 	}
 
 	fmt.Println("Ping: Wrote pong")
 
 	// return connection as it was
-	return nil
+	return nil, nil, nil
 }
 
 func main() {
@@ -52,12 +52,12 @@ func main() {
 	}
 
 	yamux := &fabric.YamuxMiddleware{}
-	// nselect := &fabric.NimonaMiddleware{
+	// nselect := &fabric.SelectMiddleware{
 	// 	Handlers: map[string]fabric.HandlerFunc{
 	// 		"ping": handler,
 	// 	},
 	// }
-	ident := &fabric.IdentityMiddleware{Local: "SERVER"}
+	identity := &fabric.IdentityMiddleware{Local: "SERVER"}
 	security := &fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
@@ -67,9 +67,10 @@ func main() {
 
 	f := fabric.New()
 	f.AddTransport("tcp", fabric.NewTransportTCP())
-	f.AddHandlerFunc("tls/ping", fabric.BuildChain(handler, security.HandlerWrapper))
-	f.AddHandlerFunc("tls/yamux/ping", fabric.BuildChain(handler, security.HandlerWrapper, yamux.HandlerWrapper))
-	f.AddHandlerFunc("tls/yamux/identity/ping", fabric.BuildChain(handler, security.HandlerWrapper, yamux.HandlerWrapper, ident.HandlerWrapper))
+	f.AddHandler("ping", handler)
+	f.AddHandler("tls", security.Handle)
+	f.AddHandler("yamux", yamux.Handle)
+	f.AddHandler("identity", identity.Handle)
 	fmt.Println("Listening...")
 	f.Listen()
 }

@@ -5,36 +5,38 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 )
 
 var (
 	ErrNoTransport      = errors.New("Could not dial with available transports")
 	ErrNoSuchMiddleware = errors.New("No such middleware")
+	ErrNoMoreProtocols  = errors.New("No more protocols")
 )
 
 func New() *Fabric {
 	return &Fabric{
-		transports:  map[string]Transport{},
+		transports:  []Transport{},
 		negotiators: map[string]NegotiatorFunc{},
-		routes:      map[string]HandlerFunc{},
+		handlers:    map[string]Handler{},
 	}
 }
 
+// Fabric manages transports, negotiators, and handlers, and deals with Dialing.
 type Fabric struct {
-	// handlers    []Handler
+	transports  []Transport
 	negotiators map[string]NegotiatorFunc
-	transports  map[string]Transport
-	routes      map[string]HandlerFunc
+	handlers    map[string]Handler
 }
 
+// AddTransport for dialing to the outside world
 func (f *Fabric) AddTransport(n string, tr Transport) error {
-	f.transports[n] = tr
+	f.transports = append(f.transports, tr)
 	return nil
 }
 
-func (f *Fabric) AddHandlerFunc(r string, hf HandlerFunc) error {
-	f.routes[r] = hf
+// AddHandler for server
+func (f *Fabric) AddHandler(r string, h Handler) error {
+	f.handlers[r] = h
 	return nil
 }
 
@@ -50,37 +52,40 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 	addr := NewAddress(as)
 
 	// figure out if the addr can be dialed and connect to the target
-	c, err := f.dialTransport(ctx, addr.Pop())
+	c, err := f.dialTransport(ctx, addr)
 	if err != nil {
 		return ctx, nil, err
 	}
+
+	// pop first itam
+	c.GetAddress().Pop()
 
 	// handshake
-	if err := f.handshake(c, addr); err != nil {
+	if err := f.handshake(c); err != nil {
 		return ctx, nil, err
 	}
 
-	// go throught all the protocols that are defined in the address
-	ctx, err = f.Next(ctx, c, addr)
-	if err != nil {
-		return ctx, nil, err
+	// go throught all the protocols
+	for {
+		ctx, c, err = f.Next(ctx, c)
+		if err != nil {
+			if err == ErrNoMoreProtocols {
+				return ctx, c, nil
+			}
+			return nil, nil, err
+		}
 	}
-
-	return ctx, c, nil
 }
 
-func (f *Fabric) dialTransport(ctx context.Context, ns string) (*conn, error) {
-	np := strings.Split(ns, ":")
-	pr := np[0]
-
-	// get protocol
-	tr, err := f.getTransport(pr)
+func (f *Fabric) dialTransport(ctx context.Context, addr Address) (Conn, error) {
+	// get transport
+	tr, err := f.getTransport(addr)
 	if err != nil {
 		return nil, ErrNoTransport
 	}
 
 	// dial
-	tcon, err := tr.DialContext(ctx, ns)
+	tcon, err := tr.DialContext(ctx, addr)
 	if err != nil {
 		return nil, errors.New("Could not dial")
 	}
@@ -88,27 +93,31 @@ func (f *Fabric) dialTransport(ctx context.Context, ns string) (*conn, error) {
 	// create a new Conn that will be used to hold underlaying connections
 	// from transports, middleware, as well as information about the
 	// two parties.
-	c := newConnWrapper(tcon)
+	c := newConnWrapper(tcon, &addr)
 
 	return c, nil
 }
 
-func (f *Fabric) getTransport(ns string) (Transport, error) {
-	// get protocol
-	pr := strings.Split(ns, ":")[0]
-
-	// check if is transport
-	tr, ok := f.transports[pr]
-	if !ok {
-		return nil, ErrNoTransport
+func (f *Fabric) getTransport(addr Address) (Transport, error) {
+	// find transport we can dial
+	// TODO figure out priorities, eg yamux should be more important than tcp
+	for _, tr := range f.transports {
+		cd, err := tr.CanDial(addr)
+		if err != nil {
+			return nil, err
+		}
+		if cd {
+			return tr, nil
+		}
 	}
 
-	return tr, nil
+	return nil, ErrNoTransport
 }
 
-func (f *Fabric) handshake(conn *conn, addr *Address) error {
-	rs := addr.RemainingString()
-	return WriteToken(conn, []byte(rs))
+func (f *Fabric) handshake(c Conn) error {
+	rs := c.GetAddress().RemainingString()
+	fmt.Println("Handshake:", rs)
+	return WriteToken(c, []byte(rs))
 }
 
 func (f *Fabric) Listen() error {
@@ -147,52 +156,84 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	// a client initiated a connection
 	fmt.Println("handleRequest: New incoming connection")
 
+	saddr, err := ReadToken(tcon)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Handshake:", string(saddr))
+
 	// wrap net.Conn in Conn
-	c := newConnWrapper(tcon)
+	addr := NewAddress(string(saddr))
+	c := newConnWrapper(tcon, &addr)
 
 	// close the connection when we're done
 	defer c.Close()
 
-	rt, err := ReadToken(tcon)
-	if err != nil {
-		return err
-	}
-
-	hf, ok := f.routes[string(rt)]
-	if !ok {
-		return ErrNoSuchMiddleware // TODO Cannot find route or something
-	}
-
+	// TODO get earlier context
 	ctx := context.Background()
-	return hf(ctx, c)
+
+	for {
+		if len(c.GetAddress().Remaining()) == 0 {
+			break
+		}
+
+		pr := c.GetAddress().CurrentProtocol()
+		fmt.Println("> Current:", pr)
+		hf, ok := f.handlers[pr]
+		if !ok {
+			return ErrNoSuchMiddleware
+		}
+
+		ctx, c, err = hf(ctx, c)
+		if err != nil {
+			return err
+		}
+
+		// TODO this is a weird check because of the ping handler that gets
+		// executed and returns nil instead of a conn, not sure what to do
+		// instead
+		if c == nil {
+			return nil
+		}
+
+		c.GetAddress().Pop()
+	}
+
+	return nil
 }
 
 // Next will process the next middleware in the given address recursively
-func (f *Fabric) Next(ctx context.Context, c Conn, addr *Address) (context.Context, error) {
-	if c == nil {
-		// TODO is this an error?
-		return ctx, nil
+func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error) {
+	addr := c.GetAddress()
+	if len(addr.Remaining()) == 0 {
+		return nil, nil, ErrNoMoreProtocols
 	}
 
-	// get next protocol
-	ns := addr.Pop()
-	fmt.Println("Processing", ns)
-
 	// get protocol
-	pr := strings.Split(ns, ":")[0]
+	pr := addr.CurrentProtocol()
 
 	// check if is negotiator
 	ng, ok := f.negotiators[pr]
 	if !ok {
-		return ctx, ErrNoSuchMiddleware // TODO Switch to err no negotiator
+		return nil, nil, ErrNoSuchMiddleware // TODO Switch to err no negotiator
 	}
 
 	// execute negotiator
 	nctx, nc, err := ng(ctx, c)
 	if err != nil {
-		return ctx, err
+		return nil, nil, err
 	}
 
+	// TODO this is a weird check because of the ping handler that gets
+	// executed and returns nil instead of a conn, not sure what to do
+	// instead
+	if nc == nil {
+		return nil, nil, errors.New("done")
+	}
+
+	// pop item from address
+	nc.GetAddress().Pop()
+
 	// and move on
-	return f.Next(nctx, nc, addr)
+	return nctx, nc, err
 }
