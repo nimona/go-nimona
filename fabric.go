@@ -154,13 +154,10 @@ func (f *Fabric) Listen() error {
 // Handles incoming requests.
 func (f *Fabric) handleRequest(tcon net.Conn) error {
 	// a client initiated a connection
-	fmt.Println("handleRequest: New incoming connection")
-
 	saddr, err := ReadToken(tcon)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Handshake:", string(saddr))
 
 	// wrap net.Conn in Conn
 	addr := NewAddress(string(saddr))
@@ -178,7 +175,6 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 		}
 
 		pr := c.GetAddress().CurrentProtocol()
-		fmt.Println("> Current:", pr)
 		hf, ok := f.handlers[pr]
 		if !ok {
 			return ErrNoSuchMiddleware
