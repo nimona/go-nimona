@@ -5,17 +5,16 @@ import (
 	"time"
 )
 
-func newConnWrapper(c net.Conn) *conn {
+func newConnWrapper(c net.Conn, addr *Address) Conn {
 	return &conn{
-		conn:   c,
-		values: map[string]interface{}{},
+		conn:    c,
+		address: addr,
 	}
 }
 
 type conn struct {
-	conn   net.Conn
-	values map[string]interface{}
-	index  int
+	conn    net.Conn
+	address *Address
 }
 
 // Conn is a generic stream-oriented network connection.
@@ -70,6 +69,8 @@ type Conn interface {
 	// some of the data was successfully written.
 	// A zero value for t means Write will not time out.
 	SetWriteDeadline(t time.Time) error
+
+	GetAddress() *Address
 }
 
 // Read implements the Conn Read method.
@@ -114,4 +115,8 @@ func (c *conn) SetReadDeadline(t time.Time) error {
 // SetWriteDeadline implements the Conn SetWriteDeadline method.
 func (c *conn) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
+}
+
+func (c *conn) GetAddress() *Address {
+	return c.address
 }

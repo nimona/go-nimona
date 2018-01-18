@@ -5,35 +5,33 @@ import (
 	"errors"
 )
 
-// NimonaMiddleware is the selector middleware
-type NimonaMiddleware struct {
-	Handlers map[string]HandlerFunc
+// SelectMiddleware is the selector middleware
+type SelectMiddleware struct {
+	Handlers map[string]Handler
 }
 
-// HandlerWrapper is the middleware handler for the server
-func (m *NimonaMiddleware) HandlerWrapper(f HandlerFunc) HandlerFunc {
-	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
-		// we need to negotiate what they need from us
-		// read the next token, which is the request for the next middleware
-		prot, err := ReadToken(c)
-		if err != nil {
-			return err
-		}
+// Handle is the middleware handler for the server
+func (m *SelectMiddleware) Handle(ctx context.Context, c Conn, addr Address) (context.Context, Conn, Address, error) {
+	// pop self from address
+	// ns := addr.Pop()
+	// pr := strings.Split(ns, ":")[1]
 
-		if err := WriteToken(c, prot); err != nil {
-			return err
-		}
-
-		// TODO could/should this f(ctx, ucon)?
-		hf := m.Handlers[string(prot)]
-
-		return hf(ctx, c)
+	// we need to negotiate what they need from us
+	// read the next token, which is the request for the next middleware
+	prot, err := ReadToken(c)
+	if err != nil {
+		return nil, nil, addr, err
 	}
+
+	if err := WriteToken(c, prot); err != nil {
+		return nil, nil, addr, err
+	}
+
+	return ctx, c, addr, nil
 }
 
 // Negotiate handles the client's side of the nimona middleware
-func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
+func (m *SelectMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	pr := "params"
 
 	if err := WriteToken(c, []byte(pr)); err != nil {
@@ -47,7 +45,7 @@ func (m *NimonaMiddleware) Negotiate(ctx context.Context, c Conn) (context.Conte
 	return ctx, c, nil
 }
 
-func (m *NimonaMiddleware) verifyResponse(c Conn, pr string) error {
+func (m *SelectMiddleware) verifyResponse(c Conn, pr string) error {
 	resp, err := ReadToken(c)
 	if err != nil {
 		return err
