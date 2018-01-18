@@ -202,16 +202,17 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	addr := c.GetAddress()
 	if len(addr.Remaining()) == 0 {
-		return nil, nil, ErrNoMoreProtocols
+		return ctx, c, ErrNoMoreProtocols
 	}
 
 	// get protocol
 	pr := addr.CurrentProtocol()
 
 	// check if is negotiator
+	// if we don't have it, just return to the user
 	ng, ok := f.negotiators[pr]
 	if !ok {
-		return nil, nil, ErrNoSuchMiddleware // TODO Switch to err no negotiator
+		return ctx, c, ErrNoMoreProtocols
 	}
 
 	// execute negotiator
