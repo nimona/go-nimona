@@ -13,6 +13,11 @@ func NewTransportTCP() Transport {
 // TCP transport
 type TCP struct{}
 
+// Name of the transport
+func (t *TCP) Name() string {
+	return "tcp"
+}
+
 // DialContext attemps to dial to the peer with the given addr
 func (t *TCP) DialContext(ctx context.Context, addr Address) (net.Conn, error) {
 	pr := addr.CurrentParams()
