@@ -13,6 +13,11 @@ type YamuxMiddleware struct {
 	sessions map[string]*yamux.Session
 }
 
+// Name of the middleware
+func (m *YamuxMiddleware) Name() string {
+	return "yamux"
+}
+
 // Handle is the middleware handler for the server
 func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	ses, err := yamux.Server(c, nil)

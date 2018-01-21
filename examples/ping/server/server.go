@@ -51,26 +51,30 @@ func main() {
 		return
 	}
 
+	//
+	// tls/select/relay/identity/ping
+	// tls/select/relay/identity/pong
+	//
+
 	yamux := &fabric.YamuxMiddleware{}
-	// nselect := &fabric.SelectMiddleware{
-	// 	Handlers: map[string]fabric.HandlerFunc{
-	// 		"ping": handler,
-	// 	},
-	// }
+	router := &fabric.RouterMiddleware{}
 	identity := &fabric.IdentityMiddleware{Local: "SERVER"}
-	security := &fabric.SecMiddleware{
+	tls := &fabric.SecMiddleware{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
 		},
 	}
 
-	f := fabric.New()
-	f.AddTransport("tcp", fabric.NewTransportTCP())
-	f.AddHandler("ping", handler)
-	f.AddHandler("tls", security.Handle)
-	f.AddHandler("yamux", yamux.Handle)
-	f.AddHandler("identity", identity.Handle)
+	f := fabric.New(tls, router)
+	f.AddTransport(fabric.NewTransportTCP())
+	f.AddMiddleware(yamux)
+	f.AddMiddleware(router)
+	f.AddMiddleware(identity)
+	f.AddMiddleware(tls)
+	f.AddHandlerFunc("ping", handler)
+
 	fmt.Println("Listening...")
+
 	f.Listen()
 }

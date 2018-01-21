@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 )
 
 var (
@@ -13,33 +14,58 @@ var (
 	ErrNoMoreProtocols  = errors.New("No more protocols")
 )
 
-func New() *Fabric {
+func New(ms ...Middleware) *Fabric {
+	bms := make([]string, len(ms))
+	for i, m := range ms {
+		bms[i] = m.Name()
+	}
 	return &Fabric{
+		base:        bms,
 		transports:  []Transport{},
 		negotiators: map[string]NegotiatorFunc{},
-		handlers:    map[string]Handler{},
+		handlers:    map[string]HandlerFunc{},
 	}
 }
 
 // Fabric manages transports, negotiators, and handlers, and deals with Dialing.
 type Fabric struct {
+	base        []string
 	transports  []Transport
 	negotiators map[string]NegotiatorFunc
-	handlers    map[string]Handler
+	handlers    map[string]HandlerFunc
 }
 
 // AddTransport for dialing to the outside world
-func (f *Fabric) AddTransport(n string, tr Transport) error {
+func (f *Fabric) AddTransport(tr Transport) error {
 	f.transports = append(f.transports, tr)
 	return nil
 }
 
+// AddMiddleware for both client and server
+func (f *Fabric) AddMiddleware(m Middleware) error {
+	if err := f.AddHandlerFunc(m.Name(), m.Handle); err != nil {
+		return err
+	}
+	return f.AddNegotiatorFunc(m.Name(), m.Negotiate)
+}
+
 // AddHandler for server
-func (f *Fabric) AddHandler(r string, h Handler) error {
+func (f *Fabric) AddHandler(m Handler) error {
+	return f.AddHandlerFunc(m.Name(), m.Handle)
+}
+
+// AddNegotiator for client
+func (f *Fabric) AddNegotiator(m Negotiator) error {
+	return f.AddNegotiatorFunc(m.Name(), m.Negotiate)
+}
+
+// AddHandlerFunc for server
+func (f *Fabric) AddHandlerFunc(r string, h HandlerFunc) error {
 	f.handlers[r] = h
 	return nil
 }
 
+// AddNegotiatorFunc for client
 func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 	f.negotiators[n] = ng
 	return nil
@@ -57,13 +83,8 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 		return ctx, nil, err
 	}
 
-	// pop first itam
+	// pop first item which should be the transport
 	c.GetAddress().Pop()
-
-	// handshake
-	if err := f.handshake(c); err != nil {
-		return ctx, nil, err
-	}
 
 	// go throught all the protocols
 	for {
@@ -114,12 +135,6 @@ func (f *Fabric) getTransport(addr Address) (Transport, error) {
 	return nil, ErrNoTransport
 }
 
-func (f *Fabric) handshake(c Conn) error {
-	rs := c.GetAddress().RemainingString()
-	fmt.Println("Handshake:", rs)
-	return WriteToken(c, []byte(rs))
-}
-
 func (f *Fabric) Listen() error {
 	// TODO replace with transport listens
 	// TODO handle re-listening on fail
@@ -153,14 +168,8 @@ func (f *Fabric) Listen() error {
 
 // Handles incoming requests.
 func (f *Fabric) handleRequest(tcon net.Conn) error {
-	// a client initiated a connection
-	saddr, err := ReadToken(tcon)
-	if err != nil {
-		return err
-	}
-
 	// wrap net.Conn in Conn
-	addr := NewAddress(string(saddr))
+	addr := NewAddress(strings.Join(f.base, "/"))
 	c := newConnWrapper(tcon, &addr)
 
 	// close the connection when we're done
@@ -180,6 +189,7 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 			return ErrNoSuchMiddleware
 		}
 
+		var err error
 		ctx, c, err = hf(ctx, c)
 		if err != nil {
 			return err
@@ -207,11 +217,13 @@ func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error
 
 	// get protocol
 	pr := addr.CurrentProtocol()
+	fmt.Println("f.Next: pr=", pr)
 
 	// check if is negotiator
 	// if we don't have it, just return to the user
 	ng, ok := f.negotiators[pr]
 	if !ok {
+		fmt.Println("f.Next: pr=", pr, "not found")
 		return ctx, c, ErrNoMoreProtocols
 	}
 

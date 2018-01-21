@@ -19,6 +19,11 @@ type IdentityMiddleware struct {
 	Local string
 }
 
+// Name of the middleware
+func (m *IdentityMiddleware) Name() string {
+	return "identity"
+}
+
 // Handle is the middleware handler for the server
 func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
