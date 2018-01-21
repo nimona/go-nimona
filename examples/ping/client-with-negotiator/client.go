@@ -79,6 +79,5 @@ func main() {
 	// make a new connection to the the server's ping handler
 	if _, _, err := f.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/router/identity/ping"); err != nil {
 		fmt.Println("Dial error", err)
-		return
 	}
 }

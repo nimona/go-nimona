@@ -14,6 +14,7 @@ var (
 	ErrNoMoreProtocols  = errors.New("No more protocols")
 )
 
+// New instance of fabric
 func New(ms ...Middleware) *Fabric {
 	bms := make([]string, len(ms))
 	for i, m := range ms {
