@@ -3,6 +3,7 @@ package fabric
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 )
 
 // SecMiddleware is a TLS middleware
@@ -13,6 +14,7 @@ type SecMiddleware struct {
 // Name of the middleware
 func (m *SecMiddleware) Name() string {
 	return "tls"
+}
 
 // Handle is the middleware handler for the server
 func (m *SecMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
