@@ -52,16 +52,19 @@ func (t *TCP) Listen(handler func(net.Conn) error) error {
 		if err != nil {
 			return err
 		}
-		go func(conn net.Conn) {
-			defer func() {
-				if err := conn.Close(); err != nil {
-					fmt.Println("Could not close conn", err)
-				}
-			}()
-			if err := handler(conn); err != nil {
-				fmt.Println("Listen: Could not handle request. error:", err)
-			}
-		}(conn)
+		go t.handleListen(conn, handler)
+	}
+}
+
+func (t *TCP) handleListen(conn net.Conn, handler func(net.Conn) error) {
+
+	defer func() {
+		if err := conn.Close(); err != nil {
+			fmt.Println("Could not close conn", err)
+		}
+	}()
+	if err := handler(conn); err != nil {
+		fmt.Println("Listen: Could not handle request. error:", err)
 	}
 }
 
