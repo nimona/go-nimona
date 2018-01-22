@@ -11,4 +11,5 @@ type Transport interface {
 	CanDial(addr Address) (bool, error)
 	Name() string
 	Listen(func(net.Conn) error) error
+	Address() string
 }

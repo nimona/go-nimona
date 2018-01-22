@@ -64,3 +64,8 @@ func (t *TCP) Listen(handler func(net.Conn) error) error {
 		}(conn)
 	}
 }
+
+// Address returns the address the transport is listening to
+func (t *TCP) Address() string {
+	return t.address
+}

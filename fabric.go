@@ -120,6 +120,16 @@ func (f *Fabric) dialTransport(ctx context.Context, addr Address) (Conn, error) 
 	return c, nil
 }
 
+// GetAddresses returns a list of addresses for all the current transports
+func (f *Fabric) GetAddresses() []string {
+	addresses := []string{}
+	for _, tr := range f.transports {
+		addresses = append(addresses, tr.Address())
+	}
+
+	return addresses
+}
+
 func (f *Fabric) getTransport(addr Address) (Transport, error) {
 	// find transport we can dial
 	// TODO figure out priorities, eg yamux should be more important than tcp
