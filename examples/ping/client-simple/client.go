@@ -27,7 +27,7 @@ func main() {
 	}
 
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP())
+	f.AddTransport(fabric.NewTransportTCP("0.0.0.0:3001"))
 	f.AddMiddleware(yamux)
 	f.AddMiddleware(router)
 	f.AddMiddleware(identity)
