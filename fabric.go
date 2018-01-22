@@ -139,32 +139,16 @@ func (f *Fabric) getTransport(addr Address) (Transport, error) {
 func (f *Fabric) Listen() error {
 	// TODO replace with transport listens
 	// TODO handle re-listening on fail
-	// go func() {
-	l, err := net.Listen("tcp", "0.0.0.0:3000")
-	if err != nil {
-		return err
-	}
 
-	defer l.Close()
-	for {
-		// Listen for an incoming connection.
-		conn, err := l.Accept()
+	// Iterate over available transports and start listening
+	for _, t := range f.transports {
+		err := t.Listen(f.handleRequest)
 		if err != nil {
 			return err
 		}
-		go func(conn net.Conn) {
-			defer func() {
-				if err := conn.Close(); err != nil {
-					fmt.Println("Could not close conn", err)
-				}
-			}()
-			if err := f.handleRequest(conn); err != nil {
-				fmt.Println("Listen: Could not handle request. error:", err)
-			}
-		}(conn)
+
 	}
-	// }()
-	// return nil
+	return nil
 }
 
 // Handles incoming requests.

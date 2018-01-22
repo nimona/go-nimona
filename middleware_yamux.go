@@ -19,7 +19,8 @@ func (m *YamuxMiddleware) Name() string {
 }
 
 // Handle is the middleware handler for the server
-func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
+func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (
+	context.Context, Conn, error) {
 	ses, err := yamux.Server(c, nil)
 	if err != nil {
 		return nil, nil, err
@@ -32,10 +33,12 @@ func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (context.Context, 
 
 	nc := newConnWrapper(str, c.GetAddress())
 	return ctx, nc, nil
+
 }
 
 // Negotiate handles the client's side of the yamux middleware
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
+func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (
+	context.Context, Conn, error) {
 
 	session, err := yamux.Client(c, nil)
 	if err != nil {
@@ -68,7 +71,8 @@ func (m *YamuxMiddleware) CanDial(addr Address) (bool, error) {
 
 // DialContext dials an address, assuming we have previously connected and
 // negotiated yamux.
-func (m *YamuxMiddleware) DialContext(ctx context.Context, addr string) (context.Context, Conn, error) {
+func (m *YamuxMiddleware) DialContext(ctx context.Context, addr string) (
+	context.Context, Conn, error) {
 	for k, ses := range m.sessions {
 		if strings.HasPrefix(addr, k) {
 			str, err := ses.Open()
