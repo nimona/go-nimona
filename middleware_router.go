@@ -26,17 +26,36 @@ func (m *RouterMiddleware) Handle(ctx context.Context, c Conn) (context.Context,
 		return nil, nil, err
 	}
 
+	pf := strings.Split(string(pr), " ")
+	if len(pf) != 2 {
+		return nil, nil, errors.New("invalid router command format")
+	}
+
+	cm := pf[0]
+	pm := pf[1]
+
+	switch cm {
+	case "SEL":
+		return m.handleGet(ctx, c, pm)
+	default:
+		c.Close()
+		return nil, nil, errors.New("invalid router command")
+	}
+
+}
+
+func (m *RouterMiddleware) handleGet(ctx context.Context, c Conn, pm string) (context.Context, Conn, error) {
 	addr := c.GetAddress()
 
-	fmt.Println("Router.Handle: pr=", string(pr))
+	fmt.Println("Router.Handle: pm=", pm)
 	fmt.Println("Router.Handle: stack=", addr.stack)
 
 	// TODO not sure about append, might wanna cut the stack up to our index
 	// and the append the new stack
-	addr.stack = append(addr.stack, strings.Split(string(pr), "/")[1:]...)
+	addr.stack = append(addr.stack, strings.Split(pm, "/")[1:]...)
 	fmt.Println("Router.Handle: stack=", addr.stack)
 
-	if err := WriteToken(c, pr); err != nil {
+	if err := WriteToken(c, []byte("ACK "+pm)); err != nil {
 		return nil, nil, err
 	}
 
@@ -48,11 +67,11 @@ func (m *RouterMiddleware) Negotiate(ctx context.Context, c Conn) (context.Conte
 	pr := c.GetAddress().RemainingString()
 	fmt.Println("Router.Negotiate: pr=", pr)
 
-	if err := WriteToken(c, []byte(pr)); err != nil {
+	if err := WriteToken(c, []byte("SEL "+pr)); err != nil {
 		return ctx, nil, err
 	}
 
-	if err := m.verifyResponse(c, pr); err != nil {
+	if err := m.verifyResponse(c, "ACK "+pr); err != nil {
 		return ctx, nil, err
 	}
 
