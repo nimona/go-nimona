@@ -3,8 +3,9 @@ package fabric
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -28,25 +29,27 @@ func (m *IdentityMiddleware) Name() string {
 func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 
+	lgr := Logger(ctx).With(
+		zap.Namespace("identity"),
+	)
+
 	// client will tell us who they are
-	fmt.Println("Identity.Handle: Reading remote id")
 	remoteID, err := ReadToken(c)
 	if err != nil {
-		fmt.Println("Could not read remote clients's identity", err)
+		lgr.Warn("Could not read remote id", zap.Error(err))
 		return nil, nil, err
 	}
-	fmt.Println("Identity.Handle: Read remote id:", string(remoteID))
+	lgr.Debug("Read remote id", zap.String("remote.id", string(remoteID)))
 
 	// store client's identity
 	ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
 
 	// tell client our identity
-	fmt.Println("Identity.Handle: Writing local id", m.Local)
 	if err := WriteToken(c, []byte(m.Local)); err != nil {
-		fmt.Println("Could not write local id to client", err)
+		lgr.Warn("Could not write local id", zap.Error(err))
 		return nil, nil, err
 	}
-	fmt.Println("Identity.Handle: Wrote local id")
+	lgr.Debug("Wrote local id")
 
 	return ctx, c, nil
 }
@@ -55,6 +58,9 @@ func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Contex
 func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
 	// store local identity to conn
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
+	lgr := Logger(ctx).With(
+		zap.Namespace("identity"),
+	)
 
 	// check that context contains the address part that we need to extract
 	// the remote id we are asking for
@@ -65,23 +71,22 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.
 	// }
 
 	// tell the server who we are
-	fmt.Println("Identity.NegotiatorWrapper: Writing local id", m.Local)
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
-		fmt.Println("Could not write local id to server", err)
+		lgr.Warn("Could not write local id", zap.Error(err))
 		return ctx, nil, err
 	}
 
 	// server should now respond with their identity
-	fmt.Println("Identity.NegotiatorWrapper: Reading response")
 	remoteID, err := ReadToken(conn)
 	if err != nil {
-		fmt.Println("Could not read remote server's identity", err)
+		lgr.Warn("Could not read remote id", zap.Error(err))
 		return ctx, nil, err
 	}
-	fmt.Println("Identity.NegotiatorWrapper: Read response:", string(remoteID))
+	lgr.Info("Read remote id", zap.String("remote.id", string(remoteID)))
 
 	exid := strings.Split(prt, ":")[1]
 	if exid != string(remoteID) {
+		lgr.Warn("Unexpected remote id", zap.String("remote.id", string(remoteID)))
 		return ctx, nil, errors.New("Unexpected remote server")
 	}
 
