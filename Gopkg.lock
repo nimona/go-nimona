@@ -7,9 +7,33 @@
   packages = ["."]
   revision = "683f49123a33db61abfb241b7ac5e4af4dc54d55"
 
+[[projects]]
+  name = "github.com/teris-io/shortid"
+  packages = ["."]
+  revision = "6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33"
+  version = "v1.0"
+
+[[projects]]
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  revision = "8474b86a5a6f79c443ce4b2992817ff32cf208b8"
+  version = "v1.3.1"
+
+[[projects]]
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "go.uber.org/zap"
+  packages = [".","buffer","internal/bufferpool","internal/color","internal/exit","zapcore"]
+  revision = "35aad584952c3e7020db7b839f6b102de6271f89"
+  version = "v1.7.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "16f6188ab8bd5d372e7e6cda30cf73302be2fc2b181fd268ee3869ca6f8a5999"
+  inputs-digest = "aa405b48c3a22f131bb8867fb2a8de4df914a827611b3a08c486f36af744a083"
   solver-name = "gps-cdcl"
   solver-version = 1
