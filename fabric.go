@@ -206,13 +206,17 @@ func (f *Fabric) handleRequest(ctx context.Context, tcon net.Conn) error {
 
 	for {
 		if len(c.GetAddress().Remaining()) == 0 {
+			lgr.Debug("Ran out of address parts; breaking")
 			break
 		}
 
 		pr := c.GetAddress().CurrentProtocol()
+		lgr.Debug("Handling next middleware.", zap.String("protocol", pr))
+
 		hf, ok := f.handlers[pr]
 		if !ok {
-			return ErrNoSuchMiddleware
+			lgr.Warn("Could not find middleware.", zap.String("protocol", pr))
+			return ErrInvalidMiddleware
 		}
 
 		var err error
@@ -243,14 +247,15 @@ func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error
 
 	// get protocol
 	pr := addr.CurrentProtocol()
-	fmt.Println("f.Next: pr=", pr)
+	lgr := Logger(ctx).With(zap.String("middleware", pr))
+	lgr.Debug("Negotiating next middleware.")
 
 	// check if is negotiator
 	// if we don't have it, just return to the user
 	ng, ok := f.negotiators[pr]
 	if !ok {
-		fmt.Println("f.Next: pr=", pr, "not found")
-		return ctx, c, ErrNoMoreProtocols
+		lgr.Warn("Middleware not found.")
+		return ctx, c, errNoMoreProtocols
 	}
 
 	// execute negotiator
@@ -263,6 +268,7 @@ func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error
 	// executed and returns nil instead of a conn, not sure what to do
 	// instead
 	if nc == nil {
+		lgr.Info("Middleware returned an empty connection.")
 		return nil, nil, errors.New("done")
 	}
 
