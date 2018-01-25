@@ -23,3 +23,10 @@
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/yamux"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/uber-go/zap"
+[[constraint]]
+  name = "github.com/teris-io/shortid"
+  version = "1.0.0"

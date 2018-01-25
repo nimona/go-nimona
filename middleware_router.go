@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 // RouterMiddleware is the selector middleware
@@ -19,12 +21,21 @@ func (m *RouterMiddleware) Name() string {
 
 // Handle is the middleware handler for the server
 func (m *RouterMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
+	addr := c.GetAddress()
+	lgr := Logger(ctx).With(
+		zap.Namespace("middleware:router"),
+		zap.String("addr.current", addr.Current()),
+		zap.String("addr.params", addr.CurrentParams()),
+	)
+	lgr.Debug("Reading token")
+
 	// we need to negotiate what they need from us
 	// read the next token, which is the request for the next middleware
 	pr, err := ReadToken(c)
 	if err != nil {
 		return nil, nil, err
 	}
+	lgr.Debug("Read token", zap.String("pr", string(pr)))
 
 	pf := strings.Split(string(pr), " ")
 	if len(pf) != 2 {
@@ -36,8 +47,10 @@ func (m *RouterMiddleware) Handle(ctx context.Context, c Conn) (context.Context,
 
 	switch cm {
 	case "SEL":
+		lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
 		return m.handleGet(ctx, c, pm)
 	default:
+		lgr.Debug("Invalid command", zap.String("cm", cm), zap.String("pm", pm))
 		c.Close()
 		return nil, nil, errors.New("invalid router command")
 	}
@@ -47,13 +60,9 @@ func (m *RouterMiddleware) Handle(ctx context.Context, c Conn) (context.Context,
 func (m *RouterMiddleware) handleGet(ctx context.Context, c Conn, pm string) (context.Context, Conn, error) {
 	addr := c.GetAddress()
 
-	fmt.Println("Router.Handle: pm=", pm)
-	fmt.Println("Router.Handle: stack=", addr.stack)
-
 	// TODO not sure about append, might wanna cut the stack up to our index
 	// and the append the new stack
 	addr.stack = append(addr.stack, strings.Split(pm, "/")[1:]...)
-	fmt.Println("Router.Handle: stack=", addr.stack)
 
 	if err := WriteToken(c, []byte("ACK "+pm)); err != nil {
 		return nil, nil, err

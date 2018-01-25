@@ -3,15 +3,24 @@ package fabric
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"strings"
+
+	zap "go.uber.org/zap"
 )
 
 var (
-	ErrNoTransport      = errors.New("Could not dial with available transports")
-	ErrNoSuchMiddleware = errors.New("No such middleware")
-	ErrNoMoreProtocols  = errors.New("No more protocols")
+	// ErrNoTransport for when there is no transport with which to dial the address
+	ErrNoTransport = errors.New("Could not dial with available transports")
+	// ErrInvalidMiddleware when our handler doesn't know about a middleware in the
+	ErrInvalidMiddleware = errors.New("No such middleware")
+	// errNoMoreProtocols when fabric cannot deal with any more
+	errNoMoreProtocols = errors.New("No more protocols")
+)
+
+var (
+	// ContextKeyRequestID attached to each request
+	ContextKeyRequestID = contextKey("request_id")
 )
 
 // New instance of fabric
@@ -20,12 +29,16 @@ func New(ms ...Middleware) *Fabric {
 	for i, m := range ms {
 		bms[i] = m.Name()
 	}
-	return &Fabric{
+	f := &Fabric{
 		base:        bms,
 		transports:  []Transport{},
 		negotiators: map[string]NegotiatorFunc{},
 		handlers:    map[string]HandlerFunc{},
 	}
+	for _, m := range ms {
+		f.AddMiddleware(m)
+	}
+	return f
 }
 
 // Fabric manages transports, negotiators, and handlers, and deals with Dialing.
@@ -75,6 +88,10 @@ func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
+	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
+	lgr := Logger(ctx)
+	lgr.Info("Dialing", zap.String("address", as))
+
 	// TODO validate the address
 	addr := NewAddress(as)
 
@@ -91,7 +108,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 	for {
 		ctx, c, err = f.Next(ctx, c)
 		if err != nil {
-			if err == ErrNoMoreProtocols {
+			if err == errNoMoreProtocols {
 				return ctx, c, nil
 			}
 			return nil, nil, err
@@ -146,23 +163,24 @@ func (f *Fabric) getTransport(addr Address) (Transport, error) {
 	return nil, ErrNoTransport
 }
 
-func (f *Fabric) Listen() error {
-	// TODO replace with transport listens
+// Listen on all transports
+func (f *Fabric) Listen(ctx context.Context) error {
 	// TODO handle re-listening on fail
-
 	// Iterate over available transports and start listening
 	for _, t := range f.transports {
-		err := t.Listen(f.handleRequest)
-		if err != nil {
+		Logger(ctx).Info("Listening on tranport.", zap.String("transport", t.Name()))
+		if err := t.Listen(ctx, f.handleRequest); err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
 
 // Handles incoming requests.
-func (f *Fabric) handleRequest(tcon net.Conn) error {
+func (f *Fabric) handleRequest(ctx context.Context, tcon net.Conn) error {
+	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
+	lgr := Logger(ctx)
+
 	// wrap net.Conn in Conn
 	addr := NewAddress(strings.Join(f.base, "/"))
 	c := newConnWrapper(tcon, &addr)
@@ -170,18 +188,19 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 	// close the connection when we're done
 	defer c.Close()
 
-	// TODO get earlier context
-	ctx := context.Background()
-
 	for {
 		if len(c.GetAddress().Remaining()) == 0 {
+			lgr.Debug("Ran out of address parts; breaking")
 			break
 		}
 
 		pr := c.GetAddress().CurrentProtocol()
+		lgr.Debug("Handling next middleware.", zap.String("protocol", pr))
+
 		hf, ok := f.handlers[pr]
 		if !ok {
-			return ErrNoSuchMiddleware
+			lgr.Warn("Could not find middleware.", zap.String("protocol", pr))
+			return ErrInvalidMiddleware
 		}
 
 		var err error
@@ -207,19 +226,20 @@ func (f *Fabric) handleRequest(tcon net.Conn) error {
 func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	addr := c.GetAddress()
 	if len(addr.Remaining()) == 0 {
-		return ctx, c, ErrNoMoreProtocols
+		return ctx, c, errNoMoreProtocols
 	}
 
 	// get protocol
 	pr := addr.CurrentProtocol()
-	fmt.Println("f.Next: pr=", pr)
+	lgr := Logger(ctx).With(zap.String("middleware", pr))
+	lgr.Debug("Negotiating next middleware.")
 
 	// check if is negotiator
 	// if we don't have it, just return to the user
 	ng, ok := f.negotiators[pr]
 	if !ok {
-		fmt.Println("f.Next: pr=", pr, "not found")
-		return ctx, c, ErrNoMoreProtocols
+		lgr.Warn("Middleware not found.")
+		return ctx, c, errNoMoreProtocols
 	}
 
 	// execute negotiator
@@ -232,6 +252,7 @@ func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error
 	// executed and returns nil instead of a conn, not sure what to do
 	// instead
 	if nc == nil {
+		lgr.Info("Middleware returned an empty connection.")
 		return nil, nil, errors.New("done")
 	}
 
