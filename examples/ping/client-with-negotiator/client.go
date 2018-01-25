@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
+
+	"go.uber.org/zap"
 
 	fabric "github.com/nimona/go-nimona-fabric"
 	ping "github.com/nimona/go-nimona-fabric/examples/ping"
@@ -20,33 +21,35 @@ func (p *Ping) Name() string {
 
 // Negotiate will be called after all the other middleware have been processed
 func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (context.Context, fabric.Conn, error) {
+	lgr := fabric.Logger(ctx).With(
+		zap.Namespace("ping"),
+	)
+
 	// close conection when done
 	defer conn.Close()
 
-	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
-	if !ok {
-		return ctx, nil, errors.New("Could not find remote id")
+	if rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string); ok {
+		lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 	}
 
 	// send ping
-	fmt.Println("Ping: Writing ping to", rp)
 	if err := fabric.WriteToken(conn, []byte("PING")); err != nil {
-		fmt.Println("Could not ping", err)
-		return ctx, nil, err
+		lgr.Error("Could not write token", zap.Error(err))
+		return nil, nil, err
 	}
 
-	fmt.Println("Ping: Wrote ping")
+	lgr.Info("Wrote token")
 
 	// get pong
-	fmt.Println("Ping: Reading pong...")
-	pong, err := fabric.ReadToken(conn)
+	token, err := fabric.ReadToken(conn)
 	if err != nil {
-		fmt.Println("Could not read remote pong", err)
-		return ctx, nil, err
+		lgr.Error("Could not read token", zap.Error(err))
+		return nil, nil, err
 	}
 
-	fmt.Println("Ping: Read pong:", string(pong))
-	return ctx, nil, nil
+	lgr.Info("Read token", zap.String("token", string(token)))
+
+	return nil, nil, nil
 }
 
 func main() {
@@ -69,7 +72,7 @@ func main() {
 	}
 
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP())
+	f.AddTransport(fabric.NewTransportTCP("0.0.0.0:3001"))
 	f.AddMiddleware(yamux)
 	f.AddMiddleware(router)
 	f.AddMiddleware(identity)

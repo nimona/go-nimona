@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	fabric "github.com/nimona/go-nimona-fabric"
 	ping "github.com/nimona/go-nimona-fabric/examples/ping"
 )
@@ -40,30 +42,31 @@ func main() {
 		return
 	}
 
+	lgr := fabric.Logger(ctx).With(
+		zap.Namespace("ping"),
+	)
+
 	// close conection when done
 	defer conn.Close()
 
-	rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string)
-	if !ok {
-		fmt.Println("Could not find remote id")
-		return
+	if rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string); ok {
+		lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 	}
 
 	// send ping
-	fmt.Println("Ping: Writing ping to", rp)
 	if err := fabric.WriteToken(conn, []byte("PING")); err != nil {
-		fmt.Println("Could not ping", err)
+		lgr.Error("Could not write token", zap.Error(err))
 		return
 	}
-	fmt.Println("Ping: Wrote ping")
+
+	lgr.Info("Wrote token")
 
 	// get pong
-	fmt.Println("Ping: Reading pong...")
-	pong, err := fabric.ReadToken(conn)
+	token, err := fabric.ReadToken(conn)
 	if err != nil {
-		fmt.Println("Could not read remote pong", err)
+		lgr.Error("Could not read token", zap.Error(err))
 		return
 	}
 
-	fmt.Println("Ping: Read pong:", string(pong))
+	lgr.Info("Read token", zap.String("token", string(token)))
 }
