@@ -6,7 +6,6 @@ import (
 	"net"
 	"strings"
 
-	shortid "github.com/teris-io/shortid"
 	zap "go.uber.org/zap"
 )
 
@@ -89,12 +88,7 @@ func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
-	rid, err := shortid.Generate()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ctx = context.WithValue(ctx, ContextKeyRequestID, rid)
+	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
 	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 
@@ -184,15 +178,8 @@ func (f *Fabric) Listen(ctx context.Context) error {
 
 // Handles incoming requests.
 func (f *Fabric) handleRequest(ctx context.Context, tcon net.Conn) error {
-	rid, err := shortid.Generate()
-	if err != nil {
-		return err
-	}
-
-	lgr := Logger(ctx).With(
-		zap.Namespace("handleRequest"),
-		zap.String("req.id", rid),
-	)
+	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
+	lgr := Logger(ctx)
 
 	// wrap net.Conn in Conn
 	addr := NewAddress(strings.Join(f.base, "/"))
@@ -200,9 +187,6 @@ func (f *Fabric) handleRequest(ctx context.Context, tcon net.Conn) error {
 
 	// close the connection when we're done
 	defer c.Close()
-
-	// TODO get earlier context
-	ctx = context.WithValue(ctx, ContextKeyRequestID, rid)
 
 	for {
 		if len(c.GetAddress().Remaining()) == 0 {

@@ -6,7 +6,14 @@ import (
 	"errors"
 	"io"
 	"strings"
+
+	shortid "github.com/teris-io/shortid"
 )
+
+func generateReqID() string {
+	rid, _ := shortid.Generate()
+	return rid
+}
 
 func ReadToken(r io.Reader) ([]byte, error) {
 	br := bufio.NewReader(r)
