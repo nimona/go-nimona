@@ -39,7 +39,7 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 }
 
 // Listen handles the transports
-func (t *TCP) Listen(handler func(net.Conn) error) error {
+func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
 	// TODO read the address from the struct
 	l, err := net.Listen("tcp", t.address)
 	if err != nil {
@@ -52,18 +52,17 @@ func (t *TCP) Listen(handler func(net.Conn) error) error {
 		if err != nil {
 			return err
 		}
-		go t.handleListen(conn, handler)
+		go t.handleListen(ctx, conn, handler)
 	}
 }
 
-func (t *TCP) handleListen(conn net.Conn, handler func(net.Conn) error) {
-
+func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
 	defer func() {
 		if err := conn.Close(); err != nil {
 			fmt.Println("Could not close conn", err)
 		}
 	}()
-	if err := handler(conn); err != nil {
+	if err := handler(ctx, conn); err != nil {
 		fmt.Println("Listen: Could not handle request. error:", err)
 	}
 }
