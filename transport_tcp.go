@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+
+	"go.uber.org/zap"
 )
 
 // NewTransportTCP returns a new TCP transport
@@ -46,14 +48,19 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 		return err
 	}
 
-	for {
-		// Listen for an incoming connection.
-		conn, err := l.Accept()
-		if err != nil {
-			return err
+	go func() {
+		for {
+			// Listen for an incoming connection.
+			conn, err := l.Accept()
+			if err != nil {
+				Logger(ctx).Error("Could not accept TCP connection", zap.Error(err))
+				continue
+			}
+			go t.handleListen(ctx, conn, handler)
 		}
-		go t.handleListen(ctx, conn, handler)
-	}
+	}()
+
+	return nil
 }
 
 func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
