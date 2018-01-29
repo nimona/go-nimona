@@ -12,27 +12,32 @@ import (
 func main() {
 	ctx := context.Background()
 
-	peerA, err := newPeer("0.0.0.0:3000", "PeerA")
+	peerA, err := newPeer(3001, 3002, "PeerA")
 	if err != nil {
 		log.Fatal("Could not create peer A", err)
 	}
 
 	peerA.Listen(ctx)
 
-	peerB, err := newPeer("0.0.0.0:3001", "PeerB")
+	peerB, err := newPeer(4001, 4002, "PeerB")
 	if err != nil {
 		log.Fatal("Could not create peer B", err)
 	}
 
 	peerB.Listen(ctx)
 
-	// make a new connection to the the server's ping handler
-	if _, _, err := peerB.DialContext(context.Background(), "tcp:127.0.0.1:3000/tls/router/ping"); err != nil {
+	// ping through ws
+	if _, _, err := peerB.DialContext(context.Background(), "ws:127.0.0.1:3002/tls/router/ping"); err != nil {
+		fmt.Println("Dial error", err)
+	}
+
+	// ping through tcp with identity
+	if _, _, err := peerB.DialContext(context.Background(), "tcp:127.0.0.1:3001/tls/router/identity/ping"); err != nil {
 		fmt.Println("Dial error", err)
 	}
 }
 
-func newPeer(host, peerID string) (*fabric.Fabric, error) {
+func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
 	crt, err := GenX509KeyPair()
 	if err != nil {
 		fmt.Println("Cert creation error", err)
@@ -51,7 +56,8 @@ func newPeer(host, peerID string) (*fabric.Fabric, error) {
 	ping := &Ping{}
 
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP(host))
+	f.AddTransport(fabric.NewTransportTCP(fmt.Sprintf("0.0.0.0:%d", tcpPort)))
+	f.AddTransport(fabric.NewTransportWebsocket(fmt.Sprintf("0.0.0.0:%d", wsPort)))
 
 	f.AddMiddleware(yamux)
 	f.AddMiddleware(identity)
