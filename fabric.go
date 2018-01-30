@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"reflect"
 	"strings"
 
 	zap "go.uber.org/zap"
@@ -168,7 +169,8 @@ func (f *Fabric) Listen(ctx context.Context) error {
 	// TODO handle re-listening on fail
 	// Iterate over available transports and start listening
 	for _, t := range f.transports {
-		Logger(ctx).Info("Listening on tranport.", zap.String("transport", t.Name()))
+		name := reflect.TypeOf(t).String()
+		Logger(ctx).Info("Listening on tranport.", zap.String("transport", name))
 		if err := t.Listen(ctx, f.handleRequest); err != nil {
 			return err
 		}
