@@ -2,8 +2,11 @@ package fabric
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 )
@@ -37,7 +40,29 @@ func (t *TCP) DialContext(ctx context.Context, addr Address) (
 
 // CanDial checks if address can be dialed by this transport
 func (t *TCP) CanDial(addr Address) (bool, error) {
-	return addr.CurrentProtocol() == "tcp", nil
+	if addr.CurrentProtocol() != "tcp" {
+		return false, nil
+	}
+
+	params := strings.Split(addr.CurrentParams(), ":")
+	if len(params) != 2 {
+		return false, errors.New("Invalid number of parameters")
+	}
+
+	if len(params[0]) == 0 {
+		return false, errors.New("Missing destination host/ip")
+	}
+
+	port, err := strconv.Atoi(params[1])
+	if err != nil {
+		return false, errors.New("Invalid port")
+	}
+
+	if port == 0 || port > 65535 {
+		return false, errors.New("Invalid port")
+	}
+
+	return true, nil
 }
 
 // Listen handles the transports
