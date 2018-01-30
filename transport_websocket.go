@@ -21,11 +21,6 @@ type Websocket struct {
 	address string
 }
 
-// Name of the transport
-func (t *Websocket) Name() string {
-	return "ws"
-}
-
 // CanDial checks if address can be dialed by this transport
 func (t *Websocket) CanDial(addr Address) (bool, error) {
 	return addr.CurrentProtocol() == "ws", nil
