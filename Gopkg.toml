@@ -25,8 +25,17 @@
   name = "github.com/hashicorp/yamux"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/uber-go/zap"
+  name = "github.com/stretchr/testify"
+  version = "1.2.0"
+
 [[constraint]]
   name = "github.com/teris-io/shortid"
   version = "1.0.0"
+
+[[constraint]]
+  name = "go.uber.org/zap"
+  version = "1.7.1"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"

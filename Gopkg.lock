@@ -2,10 +2,28 @@
 
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/yamux"
   packages = ["."]
   revision = "683f49123a33db61abfb241b7ac5e4af4dc54d55"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert","require","suite"]
+  revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/teris-io/shortid"
@@ -31,9 +49,15 @@
   revision = "35aad584952c3e7020db7b839f6b102de6271f89"
   version = "v1.7.1"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["websocket"]
+  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aa405b48c3a22f131bb8867fb2a8de4df914a827611b3a08c486f36af744a083"
+  inputs-digest = "70975c89f6cafd410303295a80a69201bf64f7f10b5c443d5626d3dc7510714d"
   solver-name = "gps-cdcl"
   solver-version = 1
