@@ -17,23 +17,31 @@ func main() {
 		log.Fatal("Could not create peer A", err)
 	}
 
-	peerA.Listen(ctx)
+	if err := peerA.Listen(ctx); err != nil {
+		log.Fatal("Could not listen for peer A", err)
+	}
 
 	peerB, err := newPeer(4001, 4002, "PeerB")
 	if err != nil {
 		log.Fatal("Could not create peer B", err)
 	}
 
-	peerB.Listen(ctx)
-
-	// ping through ws
-	if _, _, err := peerB.DialContext(context.Background(), "ws:127.0.0.1:3002/tls/router/ping"); err != nil {
-		fmt.Println("Dial error", err)
+	if err := peerB.Listen(ctx); err != nil {
+		log.Fatal("Could not listen for peer A", err)
 	}
 
-	// ping through tcp with identity
-	if _, _, err := peerB.DialContext(context.Background(), "tcp:127.0.0.1:3001/tls/router/identity/ping"); err != nil {
-		fmt.Println("Dial error", err)
+	addrsA := peerA.GetAddresses()
+	addrsB := peerB.GetAddresses()
+
+	log.Println("Peer A addresses:", addrsA)
+	log.Println("Peer B addresses:", addrsB)
+
+	for _, addr := range addrsA {
+		endpoint := addr + "/tls/router/ping"
+		log.Println("-------- Dialing", endpoint)
+		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
+			log.Fatal("Dial error", err)
+		}
 	}
 }
 
@@ -56,7 +64,7 @@ func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
 	ping := &Ping{}
 
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP(fmt.Sprintf("0.0.0.0:%d", tcpPort)))
+	f.AddTransport(fabric.NewTransportTCP("0.0.0.0", tcpPort))
 	f.AddTransport(fabric.NewTransportWebsocket(fmt.Sprintf("0.0.0.0:%d", wsPort)))
 
 	f.AddMiddleware(yamux)
