@@ -97,11 +97,6 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 }
 
 func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
-	defer func() {
-		if err := conn.Close(); err != nil {
-			fmt.Println("Could not close conn", err)
-		}
-	}()
 	if err := handler(ctx, conn); err != nil {
 		fmt.Println("Listen: Could not handle request. error:", err)
 	}
