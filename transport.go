@@ -11,5 +11,5 @@ type Transport interface {
 	CanDial(addr Address) (bool, error)
 	Name() string
 	Listen(context.Context, func(context.Context, net.Conn) error) error
-	Address() string
+	Addresses() []string
 }

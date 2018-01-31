@@ -12,13 +12,18 @@ import (
 )
 
 // NewTransportTCP returns a new TCP transport
-func NewTransportTCP(addr string) Transport {
-	return &TCP{address: addr}
+func NewTransportTCP(host string, port int) Transport {
+	return &TCP{
+		host: host,
+		port: port,
+	}
 }
 
 // TCP transport
 type TCP struct {
-	address string
+	host     string
+	port     int
+	listener net.Listener
 }
 
 // Name of the transport
@@ -68,15 +73,18 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 // Listen handles the transports
 func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
 	// TODO read the address from the struct
-	l, err := net.Listen("tcp", t.address)
+	addr := fmt.Sprintf("%s:%d", t.host, t.port)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 
+	t.listener = listener
+
 	go func() {
 		for {
 			// Listen for an incoming connection.
-			conn, err := l.Accept()
+			conn, err := listener.Accept()
 			if err != nil {
 				Logger(ctx).Error("Could not accept TCP connection", zap.Error(err))
 				continue
@@ -99,7 +107,17 @@ func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(cont
 	}
 }
 
-// Address returns the address the transport is listening to
-func (t *TCP) Address() string {
-	return t.address
+// Addresses returns the addresses the transport is listening to
+func (t *TCP) Addresses() []string {
+	port := t.listener.Addr().(*net.TCPAddr).Port
+	addrs, err := GetAddresses(port)
+	if err != nil {
+		return []string{}
+	}
+
+	for i, addr := range addrs {
+		addrs[i] = "tcp:" + addr
+	}
+
+	return addrs
 }

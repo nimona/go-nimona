@@ -63,7 +63,7 @@ func (t *Websocket) Listen(ctx context.Context, handler func(context.Context, ne
 	return nil
 }
 
-// Address returns the address the transport is listening to
-func (t *Websocket) Address() string {
-	return t.address
+// Addresses returns the address the transport is listening to
+func (t *Websocket) Addresses() []string {
+	return []string{"ws:" + t.address}
 }

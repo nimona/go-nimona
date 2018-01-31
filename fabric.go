@@ -141,7 +141,7 @@ func (f *Fabric) dialTransport(ctx context.Context, addr Address) (Conn, error) 
 func (f *Fabric) GetAddresses() []string {
 	addresses := []string{}
 	for _, tr := range f.transports {
-		addresses = append(addresses, tr.Address())
+		addresses = append(addresses, tr.Addresses()...)
 	}
 
 	return addresses
