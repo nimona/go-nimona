@@ -10,14 +10,12 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-
 	peerA, err := newPeer(0, 0, "PeerA")
 	if err != nil {
 		log.Fatal("Could not create peer A", err)
 	}
 
-	peerB,  err := newPeer(0, 0, "PeerB")
+	peerB, err := newPeer(0, 0, "PeerB")
 	if err != nil {
 		log.Fatal("Could not create peer B", err)
 	}
@@ -33,7 +31,8 @@ func main() {
 	}
 }
 
-func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric,  error) {
+func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
+	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {
 		fmt.Println("Cert creation error", err)
@@ -62,9 +61,9 @@ func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric,  error) {
 	f.AddHandlerFunc("ping", ping.Handle)
 	f.AddHandlerFunc("identity/ping", ping.Handle)
 
-	if err := peerA.Listen(ctx); err != nil {
+	if err := f.Listen(ctx); err != nil {
 		log.Fatal("Could not listen for peer A", err)
 	}
 
-	return f,  nil
+	return f, nil
 }
