@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	peerA, err := newPeer(0, 0, "PeerA")
+	peerA, err := newPeer("PeerA")
 	if err != nil {
 		log.Fatal("Could not create peer A", err)
 	}
 
-	peerB, err := newPeer(0, 0, "PeerB")
+	peerB, err := newPeer("PeerB")
 	if err != nil {
 		log.Fatal("Could not create peer B", err)
 	}
@@ -31,7 +31,7 @@ func main() {
 	}
 }
 
-func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
+func newPeer(peerID string) (*fabric.Fabric, error) {
 	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {
@@ -51,8 +51,8 @@ func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
 	ping := &Ping{}
 
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP("0.0.0.0", tcpPort))
-	f.AddTransport(fabric.NewTransportWebsocket(fmt.Sprintf("0.0.0.0:%d", wsPort)))
+	f.AddTransport(fabric.NewTransportTCP("0.0.0.0", 0))
+	f.AddTransport(fabric.NewTransportWebsocket("0.0.0.0", 0))
 
 	f.AddMiddleware(yamux)
 	f.AddMiddleware(identity)
