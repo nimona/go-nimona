@@ -24,8 +24,8 @@ func GetAddresses(port int) ([]string, error) {
 			continue
 		}
 		for _, iaddr := range iaddrs {
-			if isValidIP(iaddr) {
-				addrs = append(addrs, fmt.Sprintf("%s:%d", iaddr.String(), port))
+			if ip, valid := isValidIP(iaddr); valid {
+				addrs = append(addrs, fmt.Sprintf("%s:%d", ip, port))
 			}
 		}
 	}
@@ -33,7 +33,7 @@ func GetAddresses(port int) ([]string, error) {
 	return addrs, nil
 }
 
-func isValidIP(addr net.Addr) bool {
+func isValidIP(addr net.Addr) (string, bool) {
 	var ip net.IP
 	switch v := addr.(type) {
 	case *net.IPNet:
@@ -42,9 +42,9 @@ func isValidIP(addr net.Addr) bool {
 		ip = v.IP
 	}
 	if ip == nil || ip.IsLoopback() || isIPv6(ip.String()) {
-		return false
+		return "", false
 	}
-	return true
+	return ip.String(), true
 }
 
 func isIPv4(address string) bool {
