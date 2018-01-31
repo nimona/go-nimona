@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.8
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/nimona/go-nimona-fabric
     steps:
       - checkout
       - run: go get -u github.com/golang/dep/cmd/dep
