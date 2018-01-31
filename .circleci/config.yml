@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/nimona/go-nimona-fabric
+    steps:
+      - checkout
+      - run:
+          name: Run unit tests
+          command: go test *.go -v
