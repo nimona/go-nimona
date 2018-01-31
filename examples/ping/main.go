@@ -12,31 +12,19 @@ import (
 func main() {
 	ctx := context.Background()
 
-	peerA, err := newPeer(3001, 3002, "PeerA")
+	peerA, err := newPeer(0, 0, "PeerA")
 	if err != nil {
 		log.Fatal("Could not create peer A", err)
 	}
 
-	if err := peerA.Listen(ctx); err != nil {
-		log.Fatal("Could not listen for peer A", err)
-	}
-
-	peerB, err := newPeer(4001, 4002, "PeerB")
+	peerB,  err := newPeer(0, 0, "PeerB")
 	if err != nil {
 		log.Fatal("Could not create peer B", err)
 	}
 
-	if err := peerB.Listen(ctx); err != nil {
-		log.Fatal("Could not listen for peer A", err)
-	}
+	log.Println("Peer A address:", peerA.GetAddresses())
 
-	addrsA := peerA.GetAddresses()
-	addrsB := peerB.GetAddresses()
-
-	log.Println("Peer A addresses:", addrsA)
-	log.Println("Peer B addresses:", addrsB)
-
-	for _, addr := range addrsA {
+	for _, addr := range peerA.GetAddresses() {
 		endpoint := addr + "/tls/router/ping"
 		log.Println("-------- Dialing", endpoint)
 		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
@@ -45,7 +33,7 @@ func main() {
 	}
 }
 
-func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
+func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric,  error) {
 	crt, err := GenX509KeyPair()
 	if err != nil {
 		fmt.Println("Cert creation error", err)
@@ -74,5 +62,9 @@ func newPeer(tcpPort, wsPort int, peerID string) (*fabric.Fabric, error) {
 	f.AddHandlerFunc("ping", ping.Handle)
 	f.AddHandlerFunc("identity/ping", ping.Handle)
 
-	return f, nil
+	if err := peerA.Listen(ctx); err != nil {
+		log.Fatal("Could not listen for peer A", err)
+	}
+
+	return f,  nil
 }

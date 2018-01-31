@@ -8,25 +8,29 @@ import (
 
 // GetAddresses returns the addresses TCP can listen to on the local machine
 func GetAddresses(port int) ([]string, error) {
-	// add all addresses to peer
-	addrs := []string{}
-
 	// go through all ifs
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
 
-	// and find their addresses
-	for _, i := range ifaces {
-		iaddrs, err := i.Addrs()
+	// gather addresses of all ifs
+	ips := []net.Addr{}
+	for _, iface := range ifaces {
+		ifIPs, err := iface.Addrs()
 		if err != nil {
 			continue
 		}
-		for _, iaddr := range iaddrs {
-			if ip, valid := isValidIP(iaddr); valid {
-				addrs = append(addrs, fmt.Sprintf("%s:%d", ip, port))
-			}
+		ips = append(ips, ifIPs...)
+	}
+
+	// gather valid addresses
+	addrs := []string{}
+	for _, ip := range ips {
+		cleanIP, valid := isValidIP(ip)
+		if valid {
+			hostPort := fmt.Sprintf("%s:%d", cleanIP, port)
+			addrs = append(addrs, hostPort)
 		}
 	}
 

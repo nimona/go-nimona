@@ -55,11 +55,7 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 	}
 
 	port, err := strconv.Atoi(portString)
-	if err != nil {
-		return false, errors.New("Invalid port number")
-	}
-
-	if port == 0 || port > 65535 {
+	if err != nil || port == 0 || port > 65535 {
 		return false, errors.New("Invalid port number")
 	}
 
