@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/nimona/go-nimona-fabric.svg?style=svg)](https://circleci.com/gh/nimona/go-nimona-fabric)
+[![Maintainability](https://api.codeclimate.com/v1/badges/96aaae63697e543b9bc9/maintainability)](https://codeclimate.com/github/nimona/go-nimona-fabric/maintainability)
+
 # Nimona Fabric
 
 Fabric is an implementation of Nimona's network stack that provides some very
