@@ -64,7 +64,6 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 
 // Listen handles the transports
 func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
-	// TODO read the address from the struct
 	addr := fmt.Sprintf("%s:%d", t.host, t.port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
