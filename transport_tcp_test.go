@@ -21,7 +21,7 @@ func (suite *TransportTCPTestSuite) SetupTest() {
 }
 
 func (suite *TransportTCPTestSuite) TestCanDial() {
-	tcp := NewTransportTCP("0.0.0.0:3000")
+	tcp := NewTransportTCP("127.0.0.1", 0)
 
 	addrsValid := map[string]bool{
 		"http:something.com:80/ping": false,
@@ -65,13 +65,15 @@ func (suite *TransportTCPTestSuite) TestListenSuccess() {
 	}
 
 	ctx := context.Background()
-	// TODO use :0 once TCP supports .Addresses() correctly
-	tcps := NewTransportTCP("127.0.0.1:3000")
+	tcps := NewTransportTCP("0.0.0.0", 0)
 	err := tcps.Listen(ctx, handler)
 	suite.Assert().Nil(err)
 
-	tcpc := NewTransportTCP("127.0.0.1:3001")
-	conn, err := tcpc.DialContext(ctx, NewAddress("tcp:127.0.0.1:3000"))
+	addrs := tcps.Addresses()
+	suite.Assert().Len(addrs, 1)
+
+	tcpc := NewTransportTCP("0.0.0.0", 0)
+	conn, err := tcpc.DialContext(ctx, NewAddress(addrs[0]))
 
 	done := make(chan struct{})
 	go func() {
@@ -102,16 +104,18 @@ func (suite *TransportTCPTestSuite) TestListenMultipleSuccess() {
 	}
 
 	ctx := context.Background()
-	// TODO use :0 once TCP supports .Addresses() correctly
-	tcps := NewTransportTCP("127.0.0.1:4000")
+	tcps := NewTransportTCP("0.0.0.0", 0)
 	err := tcps.Listen(ctx, handler)
 	suite.Assert().Nil(err)
 
-	tcpc := NewTransportTCP("127.0.0.1:4001")
-	conn1, err1 := tcpc.DialContext(ctx, NewAddress("tcp:127.0.0.1:4000"))
-	conn2, err2 := tcpc.DialContext(ctx, NewAddress("tcp:127.0.0.1:4000"))
-	conn3, err3 := tcpc.DialContext(ctx, NewAddress("tcp:127.0.0.1:4000"))
-	conn4, err4 := tcpc.DialContext(ctx, NewAddress("tcp:127.0.0.1:4000"))
+	addrs := tcps.Addresses()
+	suite.Assert().Len(addrs, 1)
+
+	tcpc := NewTransportTCP("0.0.0.0", 0)
+	conn1, err1 := tcpc.DialContext(ctx, NewAddress(addrs[0]))
+	conn2, err2 := tcpc.DialContext(ctx, NewAddress(addrs[0]))
+	conn3, err3 := tcpc.DialContext(ctx, NewAddress(addrs[0]))
+	conn4, err4 := tcpc.DialContext(ctx, NewAddress(addrs[0]))
 
 	done := make(chan struct{})
 	go func() {
