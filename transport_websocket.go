@@ -2,9 +2,11 @@ package fabric
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
-	"strings"
+	"strconv"
 
 	"go.uber.org/zap"
 
@@ -12,18 +14,38 @@ import (
 )
 
 // NewTransportWebsocket returns a new Websocket transport
-func NewTransportWebsocket(addr string) Transport {
-	return &Websocket{address: addr}
+func NewTransportWebsocket(host string, port int) Transport {
+	return &Websocket{
+		host: host,
+		port: port,
+	}
 }
 
 // Websocket transport
 type Websocket struct {
-	address string
+	host     string
+	port     int
+	listener net.Listener
 }
 
 // CanDial checks if address can be dialed by this transport
 func (t *Websocket) CanDial(addr Address) (bool, error) {
-	return addr.CurrentProtocol() == "ws", nil
+	if addr.CurrentProtocol() != "ws" {
+		return false, nil
+	}
+
+	hostPort := addr.CurrentParams()
+	_, portString, err := net.SplitHostPort(hostPort)
+	if err != nil {
+		return false, err
+	}
+
+	port, err := strconv.Atoi(portString)
+	if err != nil || port == 0 || port > 65535 {
+		return false, errors.New("Invalid port number")
+	}
+
+	return true, nil
 }
 
 // DialContext attempts to dial to the peer with the given address
@@ -31,7 +53,9 @@ func (t *Websocket) DialContext(ctx context.Context, addr Address) (
 	net.Conn, error) {
 	pr := addr.CurrentParams()
 
-	tcon, err := websocket.Dial("ws://"+pr, "", "ws://"+strings.Split(t.address, ":")[0])
+	// TODO fix origin to use a real address
+	origin := fmt.Sprintf("ws://%s:%d", t.host, t.port)
+	tcon, err := websocket.Dial("ws://"+pr, "", origin)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +73,16 @@ func (t *Websocket) Listen(ctx context.Context, handler func(context.Context, ne
 		}
 	})
 
+	addr := fmt.Sprintf("%s:%d", t.host, t.port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	t.listener = listener
+
 	go func() {
-		if err := http.ListenAndServe(t.address, wsh); err != nil {
+		if err := http.Serve(listener, wsh); err != nil {
 			lgr.Error("Could not listen for ws connection", zap.Error(err))
 		}
 	}()
@@ -58,7 +90,17 @@ func (t *Websocket) Listen(ctx context.Context, handler func(context.Context, ne
 	return nil
 }
 
-// Address returns the address the transport is listening to
-func (t *Websocket) Address() string {
-	return t.address
+// Addresses returns the address the transport is listening to
+func (t *Websocket) Addresses() []string {
+	port := t.listener.Addr().(*net.TCPAddr).Port
+	addrs, err := GetAddresses(port)
+	if err != nil {
+		return []string{}
+	}
+
+	for i, addr := range addrs {
+		addrs[i] = "ws:" + addr
+	}
+
+	return addrs
 }
