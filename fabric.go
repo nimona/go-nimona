@@ -113,6 +113,10 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 			}
 			return nil, nil, err
 		}
+		// FIX(geoah) this asap, c = nil is insanely bad
+		if c == nil {
+			return nil, nil, nil
+		}
 	}
 }
 
@@ -253,7 +257,8 @@ func (f *Fabric) Next(ctx context.Context, c Conn) (context.Context, Conn, error
 	// instead
 	if nc == nil {
 		lgr.Info("Middleware returned an empty connection.")
-		return nil, nil, errors.New("done")
+		// FIX(geoah) this asap, c = nil is insanely bad, it makes no sense
+		return nil, nil, nil
 	}
 
 	// pop item from address
