@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -49,22 +48,19 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 		return false, nil
 	}
 
-	params := strings.Split(addr.CurrentParams(), ":")
-	if len(params) != 2 {
-		return false, errors.New("Invalid number of parameters")
-	}
-
-	if len(params[0]) == 0 {
-		return false, errors.New("Missing destination host/ip")
-	}
-
-	port, err := strconv.Atoi(params[1])
+	hostPort := addr.CurrentParams()
+	_, portString, err := net.SplitHostPort(hostPort)
 	if err != nil {
-		return false, errors.New("Invalid port")
+		return false, err
+	}
+
+	port, err := strconv.Atoi(portString)
+	if err != nil {
+		return false, errors.New("Invalid port number")
 	}
 
 	if port == 0 || port > 65535 {
-		return false, errors.New("Invalid port")
+		return false, errors.New("Invalid port number")
 	}
 
 	return true, nil

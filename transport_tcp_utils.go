@@ -24,28 +24,33 @@ func GetAddresses(port int) ([]string, error) {
 			continue
 		}
 		for _, iaddr := range iaddrs {
-			var ip net.IP
-			switch v := iaddr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
+			if isValidIP(iaddr) {
+				addrs = append(addrs, fmt.Sprintf("%s:%d", iaddr.String(), port))
 			}
-			if ip == nil || ip.IsLoopback() || IsIPv6(ip.String()) {
-				continue
-			}
-			addr := fmt.Sprintf("%s:%d", ip.String(), port)
-			addrs = append(addrs, addr)
 		}
 	}
 
 	return addrs, nil
 }
 
-func IsIPv4(address string) bool {
+func isValidIP(addr net.Addr) bool {
+	var ip net.IP
+	switch v := addr.(type) {
+	case *net.IPNet:
+		ip = v.IP
+	case *net.IPAddr:
+		ip = v.IP
+	}
+	if ip == nil || ip.IsLoopback() || isIPv6(ip.String()) {
+		return false
+	}
+	return true
+}
+
+func isIPv4(address string) bool {
 	return strings.Count(address, ":") < 2
 }
 
-func IsIPv6(address string) bool {
+func isIPv6(address string) bool {
 	return strings.Count(address, ":") >= 2
 }
