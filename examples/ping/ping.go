@@ -64,8 +64,7 @@ func (p *Ping) Handle(ctx context.Context, c fabric.Conn) (context.Context, fabr
 		lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 	}
 
-	// // client pings
-	// fmt.Println("Ping: Reading ping from", rp)
+	// remote peer pings
 	token, err := fabric.ReadToken(c)
 	if err != nil {
 		lgr.Error("Could not read token", zap.Error(err))
