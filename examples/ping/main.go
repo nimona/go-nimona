@@ -23,7 +23,7 @@ func main() {
 	log.Println("Peer A address:", peerA.GetAddresses())
 
 	for _, addr := range peerA.GetAddresses() {
-		endpoint := addr + "/tls/router/ping"
+		endpoint := addr + "/tls/router/identity/ping"
 		log.Println("-------- Dialing", endpoint)
 		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
 			log.Fatal("Dial error", err)
