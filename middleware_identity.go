@@ -3,7 +3,6 @@ package fabric
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -62,14 +61,6 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.
 		zap.Namespace("identity"),
 	)
 
-	// check that context contains the address part that we need to extract
-	// the remote id we are asking for
-	prt := "identity:SERVER" // TODO find a way to get current address part
-	// prt := ctx.Value(ContextKeyAddressPart).(string)
-	// if prt == "" {
-	// 	return nil, errors.New("Missing address part")
-	// }
-
 	// tell the server who we are
 	if err := WriteToken(conn, []byte(m.Local)); err != nil {
 		lgr.Warn("Could not write local id", zap.Error(err))
@@ -84,8 +75,10 @@ func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.
 	}
 	lgr.Info("Read remote id", zap.String("remote.id", string(remoteID)))
 
-	exid := strings.Split(prt, ":")[1]
-	if exid != string(remoteID) {
+	// if an identity has been provided as the first address parameter then
+	// we need to make sure that the other side matches.
+	addr := conn.GetAddress()
+	if len(addr.CurrentParams()) > 0 {
 		lgr.Warn("Unexpected remote id", zap.String("remote.id", string(remoteID)))
 		return ctx, nil, errors.New("Unexpected remote server")
 	}
