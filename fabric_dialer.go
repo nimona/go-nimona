@@ -20,7 +20,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 	// figure out if the addr can be dialed and connect to the target
 	c, err := f.dialTransport(ctx, addr)
 	if err != nil {
-		return ctx, nil, err
+		return nil, nil, err
 	}
 
 	// pop first item which should be the transport
