@@ -30,7 +30,7 @@ func (f *Fabric) Handle(curCtx context.Context, curConn net.Conn) error {
 		// if we don't have it, just return to the user
 		hf, ok := f.handlers[pr]
 		if !ok {
-			lgr.Warn("Negotiator not found.")
+			lgr.Warn("Handler not found.")
 			return ErrInvalidMiddleware
 		}
 
