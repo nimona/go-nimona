@@ -26,5 +26,7 @@ jobs:
           name: Run tests
           command: |
             ./cc-test-reporter before-build
-            go test -v -coverprofile=c.out $(go list | grep -v vendor)
+            go test -v -coverprofile=c-temp.out $(go list | grep -v vendor)
+            cat c-temp.out | grep -v _mock.go > c.out
+            rm c-temp.out
             ./cc-test-reporter after-build --coverage-input-type gocov --exit-code $?
