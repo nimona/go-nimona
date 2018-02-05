@@ -26,7 +26,7 @@ func main() {
 		endpoint := addr + "/tls/router/identity/ping"
 		log.Println("-------- Dialing", endpoint)
 		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
-			log.Fatal("Dial error", err)
+			log.Println("Dial error", err)
 		}
 	}
 }

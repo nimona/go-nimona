@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 
+	upnp "github.com/NebulousLabs/go-upnp"
 	"go.uber.org/zap"
 )
 
@@ -66,6 +68,16 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 	}
 
 	t.listener = listener
+
+	upr, err := upnp.Discover()
+	if err != nil {
+		log.Fatal("Router not found: ", err)
+	}
+
+	err = upr.Forward(uint16(t.port), "fabric")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	go func() {
 		for {
