@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"strings"
 
 	shortid "github.com/teris-io/shortid"
 )
@@ -15,6 +14,7 @@ func generateReqID() string {
 	return rid
 }
 
+// ReadToken that was written with WriteToken
 func ReadToken(r io.Reader) ([]byte, error) {
 	br := bufio.NewReader(r)
 	l, err := binary.ReadUvarint(br)
@@ -36,6 +36,7 @@ func ReadToken(r io.Reader) ([]byte, error) {
 
 }
 
+// WriteToken to an io.Writer, appending a linebreak after it
 func WriteToken(w io.Writer, bs []byte) error {
 	bw := bufio.NewWriter(w)
 	vb := make([]byte, 16)
@@ -47,21 +48,4 @@ func WriteToken(w io.Writer, bs []byte) error {
 	}
 
 	return bw.Flush()
-}
-
-func addrSplit(addr string) [][]string {
-	parts := strings.Split(addr, "/")
-	res := make([][]string, len(parts))
-	for i, part := range parts {
-		res[i] = strings.Split(part, ":")
-	}
-	return res
-}
-
-func addrJoin(res [][]string) string {
-	parts := make([]string, len(res))
-	for i, part := range res {
-		parts[i] = strings.Join(part, ":")
-	}
-	return strings.Join(parts, "/")
 }
