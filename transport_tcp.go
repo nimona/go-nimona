@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 
@@ -69,9 +68,9 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 	t.listener = listener
 
-	err = t.startExternal()
+	err = t.startExternal(ctx)
 	if err != nil {
-		log.Println("Could not open upnp port: ", err)
+		Logger(ctx).Error("Could not open upnp port: ", zap.Error(err))
 	}
 
 	go func() {
@@ -79,7 +78,8 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 			// Listen for an incoming connection.
 			conn, err := listener.Accept()
 			if err != nil {
-				Logger(ctx).Error("Could not accept TCP connection", zap.Error(err))
+				Logger(ctx).Error("Could not accept TCP connection",
+					zap.Error(err))
 				continue
 			}
 			go t.handleListen(ctx, conn, handler)
@@ -91,11 +91,12 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
 	if err := handler(ctx, conn); err != nil {
-		fmt.Println("Listen: Could not handle request. error:", err)
+		Logger(ctx).Error("Listen: Could not handle request",
+			zap.Error(err))
 	}
 }
 
-func (t *TCP) startExternal() error {
+func (t *TCP) startExternal(ctx context.Context) error {
 	upr, err := upnp.Discover()
 	if err != nil {
 		return err
@@ -113,7 +114,7 @@ func (t *TCP) startExternal() error {
 
 	err = upr.Clear(uint16(extPort))
 	if err != nil {
-		log.Println("Could not clear upnp: ", err)
+		Logger(ctx).Error("Could not clear upnp: ", zap.Error(err))
 	}
 
 	err = upr.Forward(uint16(extPort), "fabric")
