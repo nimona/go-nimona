@@ -113,7 +113,7 @@ func (t *TCP) startExternal() error {
 
 	err = upr.Clear(uint16(extPort))
 	if err != nil {
-		return err
+		log.Println("Could not clear upnp: ", err)
 	}
 
 	err = upr.Forward(uint16(extPort), "fabric")
