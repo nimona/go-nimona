@@ -69,14 +69,9 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 	t.listener = listener
 
-	upr, err := upnp.Discover()
+	err = t.startExternal()
 	if err != nil {
-		log.Fatal("Router not found: ", err)
-	}
-
-	err = upr.Forward(uint16(t.port), "fabric")
-	if err != nil {
-		log.Fatal(err)
+		log.Println("Could not open upnp port: ", err)
 	}
 
 	go func() {
@@ -98,6 +93,35 @@ func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(cont
 	if err := handler(ctx, conn); err != nil {
 		fmt.Println("Listen: Could not handle request. error:", err)
 	}
+}
+
+func (t *TCP) startExternal() error {
+	upr, err := upnp.Discover()
+	if err != nil {
+		return err
+	}
+
+	_, xpstr, err := net.SplitHostPort(t.listener.Addr().String())
+	if err != nil {
+		return err
+	}
+
+	extPort, err := strconv.ParseUint(xpstr, 10, 16)
+	if err != nil {
+		return err
+	}
+
+	err = upr.Clear(uint16(extPort))
+	if err != nil {
+		return err
+	}
+
+	err = upr.Forward(uint16(extPort), "fabric")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Addresses returns the addresses the transport is listening to
