@@ -70,7 +70,7 @@ func (suite *TransportTCPTestSuite) TestListenSuccess() {
 	suite.Assert().Nil(err)
 
 	addrs := tcps.Addresses()
-	suite.Assert().Len(addrs, 1)
+	suite.Assert().NotEmpty(addrs)
 
 	tcpc := NewTransportTCP("0.0.0.0", 0)
 	conn, err := tcpc.DialContext(ctx, NewAddress(addrs[0]))
@@ -109,7 +109,7 @@ func (suite *TransportTCPTestSuite) TestListenMultipleSuccess() {
 	suite.Assert().Nil(err)
 
 	addrs := tcps.Addresses()
-	suite.Assert().Len(addrs, 1)
+	suite.Assert().NotEmpty(addrs)
 
 	tcpc := NewTransportTCP("0.0.0.0", 0)
 	conn1, err1 := tcpc.DialContext(ctx, NewAddress(addrs[0]))
