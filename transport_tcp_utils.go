@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/NebulousLabs/go-upnp"
+	upnp "github.com/NebulousLabs/go-upnp"
 )
 
 // GetAddresses returns the addresses TCP can listen to on the local machine
@@ -40,11 +40,13 @@ func GetAddresses(port int) ([]string, error) {
 	upr, err := upnp.Discover()
 	if err != nil {
 		log.Println("Router not found: ", err)
+		return addrs, nil
 	}
 
 	ip, err := upr.ExternalIP()
 	if err != nil {
 		log.Println("External IP not found: ", err)
+		return addrs, nil
 	}
 
 	if ip != "" {
