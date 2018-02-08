@@ -2,8 +2,11 @@ package fabric
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
+
+	upnp "github.com/NebulousLabs/go-upnp"
 )
 
 // GetAddresses returns the addresses TCP can listen to on the local machine
@@ -32,6 +35,23 @@ func GetAddresses(port int) ([]string, error) {
 			hostPort := fmt.Sprintf("%s:%d", cleanIP, port)
 			addrs = append(addrs, hostPort)
 		}
+	}
+
+	upr, err := upnp.Discover()
+	if err != nil {
+		log.Println("Router not found: ", err)
+		return addrs, nil
+	}
+
+	ip, err := upr.ExternalIP()
+	if err != nil {
+		log.Println("External IP not found: ", err)
+		return addrs, nil
+	}
+
+	if ip != "" {
+		hostPort := fmt.Sprintf("%s:%d", ip, port)
+		addrs = append(addrs, hostPort)
 	}
 
 	return addrs, nil

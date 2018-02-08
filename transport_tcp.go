@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 
+	upnp "github.com/NebulousLabs/go-upnp"
 	"go.uber.org/zap"
 )
 
@@ -67,12 +68,18 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 	t.listener = listener
 
+	err = t.startExternal(ctx)
+	if err != nil {
+		Logger(ctx).Error("Could not open upnp port: ", zap.Error(err))
+	}
+
 	go func() {
 		for {
 			// Listen for an incoming connection.
 			conn, err := listener.Accept()
 			if err != nil {
-				Logger(ctx).Error("Could not accept TCP connection", zap.Error(err))
+				Logger(ctx).Error("Could not accept TCP connection",
+					zap.Error(err))
 				continue
 			}
 			go t.handleListen(ctx, conn, handler)
@@ -84,8 +91,38 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
 	if err := handler(ctx, conn); err != nil {
-		fmt.Println("Listen: Could not handle request. error:", err)
+		Logger(ctx).Error("Listen: Could not handle request",
+			zap.Error(err))
 	}
+}
+
+func (t *TCP) startExternal(ctx context.Context) error {
+	upr, err := upnp.Discover()
+	if err != nil {
+		return err
+	}
+
+	_, xpstr, err := net.SplitHostPort(t.listener.Addr().String())
+	if err != nil {
+		return err
+	}
+
+	extPort, err := strconv.ParseUint(xpstr, 10, 16)
+	if err != nil {
+		return err
+	}
+
+	err = upr.Clear(uint16(extPort))
+	if err != nil {
+		Logger(ctx).Error("Could not clear upnp: ", zap.Error(err))
+	}
+
+	err = upr.Forward(uint16(extPort), "fabric")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Addresses returns the addresses the transport is listening to
