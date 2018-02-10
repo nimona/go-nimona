@@ -85,7 +85,7 @@ func (suite *FabricHandlerTestSuite) TestHandleFail() {
 	mockConn := &MockConn{}
 	mockConn.On("GetAddress").Return(&addr)
 	retErr := suite.fabric.Handle(ctx, mockConn)
-	suite.Assert().Equal(ErrInvalidMiddleware, retErr)
+	suite.Assert().Equal(ErrInvalidProtocol, retErr)
 }
 
 func TestFabricHandlerTestSuite(t *testing.T) {

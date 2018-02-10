@@ -14,18 +14,18 @@ var (
 	ContextKeyRemoteIdentity = contextKey("remote_identity")
 )
 
-// IdentityMiddleware allows exchanging peer information
-type IdentityMiddleware struct {
+// IdentityProtocol allows exchanging peer information
+type IdentityProtocol struct {
 	Local string
 }
 
-// Name of the middleware
-func (m *IdentityMiddleware) Name() string {
+// Name of the protocol
+func (m *IdentityProtocol) Name() string {
 	return "identity"
 }
 
-// Handle is the middleware handler for the server
-func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
+// Handle is the protocol handler for the server
+func (m *IdentityProtocol) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 
 	lgr := Logger(ctx).With(
@@ -53,8 +53,8 @@ func (m *IdentityMiddleware) Handle(ctx context.Context, c Conn) (context.Contex
 	return ctx, c, nil
 }
 
-// Negotiate handles the client's side of the identity middleware
-func (m *IdentityMiddleware) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
+// Negotiate handles the client's side of the identity protocol
+func (m *IdentityProtocol) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
 	// store local identity to conn
 	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
 	lgr := Logger(ctx).With(

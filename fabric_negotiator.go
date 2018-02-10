@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Negotiate will process the next middleware in the given address recursively
+// Negotiate will process the next protocol in the given address recursively
 func (f *Fabric) Negotiate(curCtx context.Context, curConn Conn) (context.Context, Conn, error) {
 	// keep our conn and ctx
 	conn := curConn
@@ -22,7 +22,7 @@ func (f *Fabric) Negotiate(curCtx context.Context, curConn Conn) (context.Contex
 		// get protocol
 		pr := addr.CurrentProtocol()
 		lgr := Logger(ctx).With(zap.String("negotiator", pr))
-		lgr.Debug("Negotiating next middleware.")
+		lgr.Debug("Negotiating next protocol.")
 
 		// check if we have this negotiator
 		// if we don't have it, just return to the user

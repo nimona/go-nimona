@@ -7,8 +7,8 @@ import (
 var (
 	// ErrNoTransport for when there is no transport with which to dial the address
 	ErrNoTransport = errors.New("Could not dial with available transports")
-	// ErrInvalidMiddleware when our handler doesn't know about a middleware in the
-	ErrInvalidMiddleware = errors.New("No such middleware")
+	// ErrInvalidProtocol when our handler doesn't know about a protocol in the
+	ErrInvalidProtocol = errors.New("No such protocol")
 	// errNoMoreProtocols when fabric cannot deal with any more
 	errNoMoreProtocols = errors.New("No more protocols")
 )
@@ -19,7 +19,7 @@ var (
 )
 
 // New instance of fabric
-func New(ms ...Middleware) *Fabric {
+func New(ms ...Protocol) *Fabric {
 	bms := make([]string, len(ms))
 	for i, m := range ms {
 		bms[i] = m.Name()
@@ -31,7 +31,7 @@ func New(ms ...Middleware) *Fabric {
 		handlers:    map[string]HandlerFunc{},
 	}
 	for _, m := range ms {
-		f.AddMiddleware(m)
+		f.AddProtocol(m)
 	}
 	return f
 }
@@ -50,8 +50,8 @@ func (f *Fabric) AddTransport(tr Transport) error {
 	return nil
 }
 
-// AddMiddleware for both client and server
-func (f *Fabric) AddMiddleware(m Middleware) error {
+// AddProtocol for both client and server
+func (f *Fabric) AddProtocol(m Protocol) error {
 	if err := f.AddHandlerFunc(m.Name(), m.Handle); err != nil {
 		return err
 	}

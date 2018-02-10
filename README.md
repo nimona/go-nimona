@@ -9,7 +9,7 @@
 Fabric is an implementation of Nimona's network stack that provides some very
 opinionated features targeting mainly peer to peer and decentralized systems.  
 
-- Verbose network address notations that expose tranports, protocols, middleware, etc
+- Verbose network address notations that expose tranports, protocols, etc
 - Protocols multiplexing and negotiation over the same transport layer
 - Optional peer and service discovery
 - Optional routing connections through proxy peers

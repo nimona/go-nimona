@@ -43,7 +43,7 @@ func (f *Fabric) dialTransport(ctx context.Context, addr Address) (Conn, error) 
 	}
 
 	// create a new Conn that will be used to hold underlaying connections
-	// from transports, middleware, as well as information about the
+	// from transports, protocol, as well as information about the
 	// two parties.
 	c := newConnWrapper(tcon, &addr)
 

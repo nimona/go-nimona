@@ -16,7 +16,7 @@ func (p *Ping) Name() string {
 	return "ping"
 }
 
-// Negotiate will be called after all the other middleware have been processed
+// Negotiate will be called after all the other protocol have been processed
 func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (context.Context, fabric.Conn, error) {
 	lgr := fabric.Logger(ctx).With(
 		zap.Namespace("ping"),

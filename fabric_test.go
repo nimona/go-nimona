@@ -32,24 +32,24 @@ func (suite *FabricTestSuite) TestAddTransportSuccess() {
 	suite.Assert().Equal(transport2, suite.fabric.transports[1])
 }
 
-func (suite *FabricTestSuite) TestAddMiddlewareSuccess() {
-	name1 := "middleware1"
-	middleware1 := &MockMiddleware{}
-	middleware1.On("Name").Return(name1)
-	err := suite.fabric.AddMiddleware(middleware1)
+func (suite *FabricTestSuite) TestAddProtocolSuccess() {
+	name1 := "protocol1"
+	protocol1 := &MockProtocol{}
+	protocol1.On("Name").Return(name1)
+	err := suite.fabric.AddProtocol(protocol1)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.handlers, 1)
 	suite.Assert().Len(suite.fabric.negotiators, 1)
-	middleware1.AssertCalled(suite.T(), "Name")
+	protocol1.AssertCalled(suite.T(), "Name")
 
-	name2 := "middleware2"
-	middleware2 := &MockMiddleware{}
-	middleware2.On("Name").Return(name2)
-	err = suite.fabric.AddMiddleware(middleware2)
+	name2 := "protocol2"
+	protocol2 := &MockProtocol{}
+	protocol2.On("Name").Return(name2)
+	err = suite.fabric.AddProtocol(protocol2)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.handlers, 2)
 	suite.Assert().Len(suite.fabric.negotiators, 2)
-	middleware2.AssertCalled(suite.T(), "Name")
+	protocol2.AssertCalled(suite.T(), "Name")
 }
 
 func (suite *FabricTestSuite) TestAddHandlerSuccess() {

@@ -39,10 +39,10 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 		return nil, err
 	}
 
-	yamux := &fabric.YamuxMiddleware{}
-	router := &fabric.RouterMiddleware{}
-	identity := &fabric.IdentityMiddleware{Local: peerID}
-	tls := &fabric.SecMiddleware{
+	yamux := &fabric.YamuxProtocol{}
+	router := &fabric.RouterProtocol{}
+	identity := &fabric.IdentityProtocol{Local: peerID}
+	tls := &fabric.SecProtocol{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
@@ -54,9 +54,9 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	f.AddTransport(fabric.NewTransportTCP("0.0.0.0", 0))
 	f.AddTransport(fabric.NewTransportWebsocket("0.0.0.0", 0))
 
-	f.AddMiddleware(yamux)
-	f.AddMiddleware(identity)
-	f.AddMiddleware(ping)
+	f.AddProtocol(yamux)
+	f.AddProtocol(identity)
+	f.AddProtocol(ping)
 
 	f.AddHandlerFunc("ping", ping.Handle)
 	f.AddHandlerFunc("identity/ping", ping.Handle)

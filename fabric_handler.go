@@ -24,14 +24,14 @@ func (f *Fabric) Handle(curCtx context.Context, curConn net.Conn) error {
 		// get protocol
 		pr := addr.CurrentProtocol()
 		lgr := Logger(ctx).With(zap.String("handler", pr))
-		lgr.Debug("Handling next middleware.")
+		lgr.Debug("Handling next protocol.")
 
 		// check if we have this handler
 		// if we don't have it, just return to the user
 		hf, ok := f.handlers[pr]
 		if !ok {
 			lgr.Warn("Handler not found.")
-			return ErrInvalidMiddleware
+			return ErrInvalidProtocol
 		}
 
 		// execute handler
