@@ -26,11 +26,13 @@ func (f *Fabric) Negotiate(curCtx context.Context, curConn Conn) (context.Contex
 
 		// check if we have this negotiator
 		// if we don't have it, just return to the user
-		ng, ok := f.negotiators[pr]
+		spr, ok := f.protocols[pr]
 		if !ok {
 			lgr.Warn("Negotiator not found.")
 			return ctx, conn, errNoMoreProtocols
 		}
+
+		ng := spr.Negotiate
 
 		// execute negotiator
 		newCtx, newConn, err := ng(ctx, conn)

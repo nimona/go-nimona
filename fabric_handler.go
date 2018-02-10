@@ -28,11 +28,13 @@ func (f *Fabric) Handle(curCtx context.Context, curConn net.Conn) error {
 
 		// check if we have this handler
 		// if we don't have it, just return to the user
-		hf, ok := f.handlers[pr]
+		spr, ok := f.protocols[pr]
 		if !ok {
 			lgr.Warn("Handler not found.")
 			return ErrInvalidProtocol
 		}
+
+		hf := spr.Handle
 
 		// execute handler
 		newCtx, newConn, err := hf(ctx, conn)

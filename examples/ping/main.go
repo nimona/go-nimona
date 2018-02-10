@@ -23,7 +23,7 @@ func main() {
 	log.Println("Peer A address:", peerA.GetAddresses())
 
 	for _, addr := range peerA.GetAddresses() {
-		endpoint := addr + "/tls/router/identity/ping"
+		endpoint := addr + "/tls/router/ping"
 		log.Println("-------- Dialing", endpoint)
 		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
@@ -57,9 +57,6 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	f.AddProtocol(yamux)
 	f.AddProtocol(identity)
 	f.AddProtocol(ping)
-
-	f.AddHandlerFunc("ping", ping.Handle)
-	f.AddHandlerFunc("identity/ping", ping.Handle)
 
 	if err := f.Listen(ctx); err != nil {
 		log.Fatal("Could not listen for peer A", err)
