@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	// ErrNoSuchRoute when requests route does not exist
 	ErrNoSuchRoute = errors.New("No such route")
 )
 
@@ -19,7 +20,7 @@ type RouterProtocol struct {
 	routes   []string
 }
 
-//  NewRouter returns a new router protocol
+// NewRouter returns a new router protocol
 func NewRouter() *RouterProtocol {
 	return &RouterProtocol{
 		Handlers: map[string]Protocol{},
@@ -67,7 +68,6 @@ func (m *RouterProtocol) Handle(ctx context.Context, c Conn) (context.Context, C
 		c.Close()
 		return nil, nil, errors.New("invalid router command")
 	}
-
 }
 
 func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, pm string) (context.Context, Conn, error) {

@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	// ErrCouldNotDial when no transports are available or internal error occured
 	ErrCouldNotDial = errors.New("Could not dial")
 )
 
