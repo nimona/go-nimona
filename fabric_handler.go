@@ -13,7 +13,7 @@ func (f *Fabric) Handle(curCtx context.Context, curConn net.Conn) error {
 	// wrap net.Conn in Conn
 	curAddr := NewAddress(strings.Join(f.base, "/"))
 	conn := newConnWrapper(curConn, &curAddr)
-	ctx := context.WithValue(curCtx, ContextKeyRequestID, generateReqID())
+	ctx := context.WithValue(curCtx, RequestIDKey{}, generateReqID())
 
 	for {
 		addr := conn.GetAddress()

@@ -13,11 +13,6 @@ var (
 	errNoMoreProtocols = errors.New("No more protocols")
 )
 
-var (
-	// ContextKeyRequestID attached to each request
-	ContextKeyRequestID = contextKey("request_id")
-)
-
 // New instance of fabric
 func New(protocols ...Protocol) *Fabric {
 	baseAddress := make([]string, len(protocols))

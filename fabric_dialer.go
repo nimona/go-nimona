@@ -11,10 +11,13 @@ var (
 	ErrCouldNotDial = errors.New("Could not dial")
 )
 
+// RequestIDKey for context
+type RequestIDKey struct{}
+
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
-	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
+	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
 	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 

@@ -7,12 +7,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	// ContextKeyLocalIdentity is the key of the local identity in contexts
-	ContextKeyLocalIdentity = contextKey("local_identity")
-	// ContextKeyRemoteIdentity is the key of the remote identity in contexts
-	ContextKeyRemoteIdentity = contextKey("remote_identity")
-)
+// LocalIdentityKey for context
+type LocalIdentityKey struct{}
+
+// RemoteIdentityKey for context
+type RemoteIdentityKey struct{}
 
 // IdentityProtocol allows exchanging peer information
 type IdentityProtocol struct {
@@ -26,7 +25,7 @@ func (m *IdentityProtocol) Name() string {
 
 // Handle is the protocol handler for the server
 func (m *IdentityProtocol) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
-	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
+	ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
 
 	lgr := Logger(ctx).With(
 		zap.Namespace("identity"),
@@ -41,7 +40,7 @@ func (m *IdentityProtocol) Handle(ctx context.Context, c Conn) (context.Context,
 	lgr.Debug("Read remote id", zap.String("remote.id", string(remoteID)))
 
 	// store client's identity
-	ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
+	ctx = context.WithValue(ctx, RemoteIdentityKey{}, string(remoteID))
 
 	// tell client our identity
 	if err := WriteToken(c, []byte(m.Local)); err != nil {
@@ -56,7 +55,7 @@ func (m *IdentityProtocol) Handle(ctx context.Context, c Conn) (context.Context,
 // Negotiate handles the client's side of the identity protocol
 func (m *IdentityProtocol) Negotiate(ctx context.Context, conn Conn) (context.Context, Conn, error) {
 	// store local identity to conn
-	ctx = context.WithValue(ctx, ContextKeyLocalIdentity, m.Local)
+	ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
 	lgr := Logger(ctx).With(
 		zap.Namespace("identity"),
 	)
@@ -84,7 +83,7 @@ func (m *IdentityProtocol) Negotiate(ctx context.Context, conn Conn) (context.Co
 	}
 
 	// store server's identity
-	ctx = context.WithValue(ctx, ContextKeyRemoteIdentity, string(remoteID))
+	ctx = context.WithValue(ctx, RemoteIdentityKey{}, string(remoteID))
 
 	return ctx, conn, nil
 }
