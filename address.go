@@ -7,23 +7,20 @@ import (
 // NewAddress creates a new ADdress from a string address
 func NewAddress(a string) Address {
 	return Address{
-		original: a,
-		stack:    strings.Split(a, "/"),
-		index:    0,
+		stack: strings.Split(a, "/"),
+		index: 0,
 	}
 }
 
 // Address allows traversing and validating an address
 type Address struct {
-	original string
-	stack    []string
-	index    int
+	stack []string
+	index int
 }
 
 // String version of the full address
 func (a *Address) String() string {
-	// TODO strings.Join(a.stack, "/") maybe?
-	return a.original
+	return strings.Join(a.stack, "/")
 }
 
 // Reset the stack index
