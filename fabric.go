@@ -7,41 +7,34 @@ import (
 var (
 	// ErrNoTransport for when there is no transport with which to dial the address
 	ErrNoTransport = errors.New("Could not dial with available transports")
-	// ErrInvalidMiddleware when our handler doesn't know about a middleware in the
-	ErrInvalidMiddleware = errors.New("No such middleware")
+	// ErrInvalidProtocol when our handler doesn't know about a protocol in the
+	ErrInvalidProtocol = errors.New("No such protocol")
 	// errNoMoreProtocols when fabric cannot deal with any more
 	errNoMoreProtocols = errors.New("No more protocols")
 )
 
-var (
-	// ContextKeyRequestID attached to each request
-	ContextKeyRequestID = contextKey("request_id")
-)
-
 // New instance of fabric
-func New(ms ...Middleware) *Fabric {
-	bms := make([]string, len(ms))
-	for i, m := range ms {
-		bms[i] = m.Name()
+func New(protocols ...Protocol) *Fabric {
+	baseAddress := make([]string, len(protocols))
+	for i, protocol := range protocols {
+		baseAddress[i] = protocol.Name()
 	}
 	f := &Fabric{
-		base:        bms,
-		transports:  []Transport{},
-		negotiators: map[string]NegotiatorFunc{},
-		handlers:    map[string]HandlerFunc{},
+		base:       baseAddress,
+		transports: []Transport{},
+		protocols:  map[string]Protocol{},
 	}
-	for _, m := range ms {
-		f.AddMiddleware(m)
+	for _, m := range protocols {
+		f.AddProtocol(m)
 	}
 	return f
 }
 
-// Fabric manages transports, negotiators, and handlers, and deals with Dialing.
+// Fabric manages transports and protocols, and deals with Dialing.
 type Fabric struct {
-	base        []string
-	transports  []Transport
-	negotiators map[string]NegotiatorFunc
-	handlers    map[string]HandlerFunc
+	base       []string
+	transports []Transport
+	protocols  map[string]Protocol
 }
 
 // AddTransport for dialing to the outside world
@@ -50,33 +43,9 @@ func (f *Fabric) AddTransport(tr Transport) error {
 	return nil
 }
 
-// AddMiddleware for both client and server
-func (f *Fabric) AddMiddleware(m Middleware) error {
-	if err := f.AddHandlerFunc(m.Name(), m.Handle); err != nil {
-		return err
-	}
-	return f.AddNegotiatorFunc(m.Name(), m.Negotiate)
-}
-
-// AddHandler for server
-func (f *Fabric) AddHandler(m Handler) error {
-	return f.AddHandlerFunc(m.Name(), m.Handle)
-}
-
-// AddNegotiator for client
-func (f *Fabric) AddNegotiator(m Negotiator) error {
-	return f.AddNegotiatorFunc(m.Name(), m.Negotiate)
-}
-
-// AddHandlerFunc for server
-func (f *Fabric) AddHandlerFunc(r string, h HandlerFunc) error {
-	f.handlers[r] = h
-	return nil
-}
-
-// AddNegotiatorFunc for client
-func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
-	f.negotiators[n] = ng
+// AddProtocol for both client and server
+func (f *Fabric) AddProtocol(protocol Protocol) error {
+	f.protocols[protocol.Name()] = protocol
 	return nil
 }
 

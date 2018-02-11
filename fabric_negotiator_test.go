@@ -21,53 +21,51 @@ func (suite *FabricNegotiatorTestSuite) SetupTest() {
 }
 
 func (suite *FabricNegotiatorTestSuite) TestNegotiateSuccess() {
-	protocol := "foo"
+	protocolString := "foo"
 
-	negotiator := &MockNegotiator{}
-	negotiator.On("Name").Return(protocol)
-	err := suite.fabric.AddNegotiator(negotiator)
-	suite.Assert().Nil(err)
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return(protocolString)
+
+	suite.fabric = New(protocol)
 
 	ctx := context.Background()
-	addr := NewAddress(protocol)
+	addr := NewAddress(protocolString)
 	mockConn := &MockConn{}
 	mockConn.On("GetAddress").Return(&addr)
-	negotiator.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	protocol.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
 	retCtx, retConn, retErr := suite.fabric.Negotiate(ctx, mockConn)
 	suite.Assert().Equal(ctx, retCtx)
 	suite.Assert().Equal(mockConn, retConn)
 	suite.Assert().Nil(retErr)
 	suite.Assert().Equal(1, addr.index)
-	negotiator.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
+	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
 }
 
 func (suite *FabricNegotiatorTestSuite) TestNegotiateMultipleSuccess() {
-	protocolFoo := "foo"
-	protocolBar := "bar"
+	protocolFooString := "foo"
+	protocolBarString := "bar"
 
-	negotiatorFoo := &MockNegotiator{}
-	negotiatorFoo.On("Name").Return(protocolFoo)
-	err := suite.fabric.AddNegotiator(negotiatorFoo)
-	suite.Assert().Nil(err)
+	protocolFoo := &MockProtocol{}
+	protocolFoo.On("Name").Return(protocolFooString)
 
-	negotiatorBar := &MockNegotiator{}
-	negotiatorBar.On("Name").Return(protocolBar)
-	err = suite.fabric.AddNegotiator(negotiatorBar)
-	suite.Assert().Nil(err)
+	protocolBar := &MockProtocol{}
+	protocolBar.On("Name").Return(protocolBarString)
+
+	suite.fabric = New(protocolFoo, protocolBar)
 
 	ctx := context.Background()
-	addr := NewAddress(protocolFoo + "/" + protocolBar)
+	addr := NewAddress(protocolFooString + "/" + protocolBarString)
 	mockConn := &MockConn{}
 	mockConn.On("GetAddress").Return(&addr)
-	negotiatorFoo.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	negotiatorBar.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	protocolFoo.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	protocolBar.On("Negotiate", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
 	retCtx, retConn, retErr := suite.fabric.Negotiate(ctx, mockConn)
 	suite.Assert().Equal(ctx, retCtx)
 	suite.Assert().Equal(mockConn, retConn)
 	suite.Assert().Nil(retErr)
 	suite.Assert().Equal(2, addr.index)
-	negotiatorFoo.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
-	negotiatorBar.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
+	protocolFoo.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
+	protocolBar.AssertCalled(suite.T(), "Negotiate", mock.Anything, mock.Anything)
 }
 
 func (suite *FabricNegotiatorTestSuite) TestNegotiateEmptyFail() {
@@ -83,19 +81,19 @@ func (suite *FabricNegotiatorTestSuite) TestNegotiateEmptyFail() {
 }
 
 func (suite *FabricNegotiatorTestSuite) TestNegotiateFail() {
-	protocol := "foo"
+	protocolString := "foo"
 
-	negotiator := &MockNegotiator{}
-	negotiator.On("Name").Return(protocol)
-	err := suite.fabric.AddNegotiator(negotiator)
-	suite.Assert().Nil(err)
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return(protocolString)
+
+	suite.fabric = New(protocol)
 
 	ctx := context.Background()
-	addr := NewAddress(protocol)
+	addr := NewAddress(protocolString)
 	mockConn := &MockConn{}
 	mockConn.On("GetAddress").Return(&addr)
 	someErr := errors.New("some error")
-	negotiator.On("Negotiate", mock.Anything, mock.Anything).Return(nil, nil, someErr)
+	protocol.On("Negotiate", mock.Anything, mock.Anything).Return(nil, nil, someErr)
 	retCtx, retConn, retErr := suite.fabric.Negotiate(ctx, mockConn)
 	suite.Assert().Nil(retCtx)
 	suite.Assert().Nil(retConn)

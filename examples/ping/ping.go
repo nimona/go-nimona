@@ -11,12 +11,12 @@ import (
 // Ping is our example client, it simply sends a PING string and expects a PONG
 type Ping struct{}
 
-// Name of our negotiator
+// Name of our protocol
 func (p *Ping) Name() string {
 	return "ping"
 }
 
-// Negotiate will be called after all the other middleware have been processed
+// Negotiate will be called after all the other protocol have been processed
 func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (context.Context, fabric.Conn, error) {
 	lgr := fabric.Logger(ctx).With(
 		zap.Namespace("ping"),
@@ -25,7 +25,7 @@ func (p *Ping) Negotiate(ctx context.Context, conn fabric.Conn) (context.Context
 	// close conection when done
 	defer conn.Close()
 
-	if rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string); ok {
+	if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
 		lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 	}
 
@@ -60,7 +60,7 @@ func (p *Ping) Handle(ctx context.Context, c fabric.Conn) (context.Context, fabr
 	// close connection when done
 	defer c.Close()
 
-	if rp, ok := ctx.Value(fabric.ContextKeyRemoteIdentity).(string); ok {
+	if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
 		lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 	}
 

@@ -8,18 +8,18 @@ import (
 	"github.com/hashicorp/yamux"
 )
 
-// YamuxMiddleware is a multiplexer middleware based on yamux
-type YamuxMiddleware struct {
+// YamuxProtocol is a multiplexer protocol based on yamux
+type YamuxProtocol struct {
 	sessions map[string]*yamux.Session
 }
 
-// Name of the middleware
-func (m *YamuxMiddleware) Name() string {
+// Name of the protocol
+func (m *YamuxProtocol) Name() string {
 	return "yamux"
 }
 
-// Handle is the middleware handler for the server
-func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (
+// Handle is the protocol handler for the server
+func (m *YamuxProtocol) Handle(ctx context.Context, c Conn) (
 	context.Context, Conn, error) {
 	ses, err := yamux.Server(c, nil)
 	if err != nil {
@@ -36,8 +36,8 @@ func (m *YamuxMiddleware) Handle(ctx context.Context, c Conn) (
 
 }
 
-// Negotiate handles the client's side of the yamux middleware
-func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (
+// Negotiate handles the client's side of the yamux protocol
+func (m *YamuxProtocol) Negotiate(ctx context.Context, c Conn) (
 	context.Context, Conn, error) {
 
 	session, err := yamux.Client(c, nil)
@@ -58,7 +58,7 @@ func (m *YamuxMiddleware) Negotiate(ctx context.Context, c Conn) (
 // the address that will be consumed.
 // This will only return true if the connection has been previously
 // established and the connection is still open.
-func (m *YamuxMiddleware) CanDial(addr Address) (bool, error) {
+func (m *YamuxProtocol) CanDial(addr Address) (bool, error) {
 	as := addr.String()
 	for k := range m.sessions {
 		if strings.HasPrefix(as, k) {
@@ -71,7 +71,7 @@ func (m *YamuxMiddleware) CanDial(addr Address) (bool, error) {
 
 // DialContext dials an address, assuming we have previously connected and
 // negotiated yamux.
-func (m *YamuxMiddleware) DialContext(ctx context.Context, addr string) (
+func (m *YamuxProtocol) DialContext(ctx context.Context, addr string) (
 	context.Context, Conn, error) {
 	for k, ses := range m.sessions {
 		if strings.HasPrefix(addr, k) {

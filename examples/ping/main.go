@@ -39,10 +39,10 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 		return nil, err
 	}
 
-	yamux := &fabric.YamuxMiddleware{}
-	router := &fabric.RouterMiddleware{}
-	identity := &fabric.IdentityMiddleware{Local: peerID}
-	tls := &fabric.SecMiddleware{
+	yamux := &fabric.YamuxProtocol{}
+	router := fabric.NewRouter()
+	identity := &fabric.IdentityProtocol{Local: peerID}
+	tls := &fabric.SecProtocol{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
@@ -50,16 +50,20 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	}
 	ping := &Ping{}
 
+	tcp := fabric.NewTransportTCP("0.0.0.0", 0)
+	ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
+
 	f := fabric.New(tls, router)
-	f.AddTransport(fabric.NewTransportTCP("0.0.0.0", 0))
-	f.AddTransport(fabric.NewTransportWebsocket("0.0.0.0", 0))
 
-	f.AddMiddleware(yamux)
-	f.AddMiddleware(identity)
-	f.AddMiddleware(ping)
+	f.AddTransport(tcp)
+	f.AddTransport(ws)
 
-	f.AddHandlerFunc("ping", ping.Handle)
-	f.AddHandlerFunc("identity/ping", ping.Handle)
+	f.AddProtocol(yamux)
+	f.AddProtocol(identity)
+	f.AddProtocol(ping)
+
+	router.AddRoute(ping)
+	router.AddRoute(identity, ping)
 
 	if err := f.Listen(ctx); err != nil {
 		log.Fatal("Could not listen for peer A", err)

@@ -22,7 +22,6 @@ func (suite *AddressTestSuite) TestNewAddressSuccess() {
 		"foo",
 		"bar",
 	}, addr.stack)
-	suite.Assert().Equal(addrString, addr.original)
 	suite.Assert().Equal(0, addr.index)
 }
 
@@ -110,6 +109,14 @@ func (suite *AddressTestSuite) TestResetSuccess() {
 
 	addr.Reset()
 	suite.Assert().Equal(0, addr.index)
+}
+
+func (suite *AddressTestSuite) TestStringSuccess() {
+	addrString := "foo/bar"
+	addr := NewAddress(addrString)
+
+	retAddr := addr.String()
+	suite.Assert().Equal(addrString, retAddr)
 }
 
 func TestAddressTestSuite(t *testing.T) {

@@ -19,7 +19,7 @@ func init() {
 func Logger(ctx context.Context) *zap.Logger {
 	nl := baseLogger
 	if ctx != nil {
-		if rid, ok := ctx.Value(ContextKeyRequestID).(string); ok {
+		if rid, ok := ctx.Value(RequestIDKey{}).(string); ok {
 			nl = nl.With(zap.String("req.id", rid))
 		}
 	}

@@ -7,10 +7,18 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	// ErrCouldNotDial when no transports are available or internal error occured
+	ErrCouldNotDial = errors.New("Could not dial")
+)
+
+// RequestIDKey for context
+type RequestIDKey struct{}
+
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
-	ctx = context.WithValue(ctx, ContextKeyRequestID, generateReqID())
+	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
 	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 
@@ -39,11 +47,11 @@ func (f *Fabric) dialTransport(ctx context.Context, addr Address) (Conn, error) 
 	// dial
 	tcon, err := tr.DialContext(ctx, addr)
 	if err != nil {
-		return nil, errors.New("Could not dial")
+		return nil, ErrCouldNotDial
 	}
 
 	// create a new Conn that will be used to hold underlaying connections
-	// from transports, middleware, as well as information about the
+	// from transports, protocol, as well as information about the
 	// two parties.
 	c := newConnWrapper(tcon, &addr)
 
@@ -56,7 +64,8 @@ func (f *Fabric) getTransport(addr Address) (Transport, error) {
 	for _, tr := range f.transports {
 		cd, err := tr.CanDial(addr)
 		if err != nil {
-			return nil, err
+			// TODO should we error here?
+			return nil, ErrCouldNotDial
 		}
 		if cd {
 			return tr, nil
