@@ -15,14 +15,14 @@ var (
 
 // RouterProtocol is the selector protocol
 type RouterProtocol struct {
-	Handlers map[string]Handler
+	Handlers map[string]Protocol
 	routes   []string
 }
 
 //  NewRouter returns a new router protocol
 func NewRouter() *RouterProtocol {
 	return &RouterProtocol{
-		Handlers: map[string]Handler{},
+		Handlers: map[string]Protocol{},
 		routes:   []string{},
 	}
 }

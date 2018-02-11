@@ -21,10 +21,10 @@ func (f *Fabric) Negotiate(curCtx context.Context, curConn Conn) (context.Contex
 
 		// get protocol
 		pr := addr.CurrentProtocol()
-		lgr := Logger(ctx).With(zap.String("negotiator", pr))
+		lgr := Logger(ctx).With(zap.String("protocol", pr))
 		lgr.Debug("Negotiating next protocol.")
 
-		// check if we have this negotiator
+		// check if we have this protocol
 		// if we don't have it, just return to the user
 		spr, ok := f.protocols[pr]
 		if !ok {
@@ -34,7 +34,7 @@ func (f *Fabric) Negotiate(curCtx context.Context, curConn Conn) (context.Contex
 
 		ng := spr.Negotiate
 
-		// execute negotiator
+		// execute protocol
 		newCtx, newConn, err := ng(ctx, conn)
 		if err != nil {
 			return nil, nil, err

@@ -11,7 +11,7 @@ import (
 // Ping is our example client, it simply sends a PING string and expects a PONG
 type Ping struct{}
 
-// Name of our negotiator
+// Name of our protocol
 func (p *Ping) Name() string {
 	return "ping"
 }

@@ -2,7 +2,6 @@ package fabric
 
 // Basic imports
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -38,8 +37,7 @@ func (suite *FabricTestSuite) TestAddProtocolSuccess() {
 	protocol1.On("Name").Return(name1)
 	err := suite.fabric.AddProtocol(protocol1)
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 1)
-	suite.Assert().Len(suite.fabric.negotiators, 1)
+	suite.Assert().Len(suite.fabric.protocols, 1)
 	protocol1.AssertCalled(suite.T(), "Name")
 
 	name2 := "protocol2"
@@ -47,81 +45,8 @@ func (suite *FabricTestSuite) TestAddProtocolSuccess() {
 	protocol2.On("Name").Return(name2)
 	err = suite.fabric.AddProtocol(protocol2)
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 2)
-	suite.Assert().Len(suite.fabric.negotiators, 2)
+	suite.Assert().Len(suite.fabric.protocols, 2)
 	protocol2.AssertCalled(suite.T(), "Name")
-}
-
-func (suite *FabricTestSuite) TestAddHandlerSuccess() {
-	name1 := "handler1"
-	handler1 := &MockHandler{}
-	handler1.On("Name").Return(name1)
-	err := suite.fabric.AddHandler(handler1)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 1)
-	handler1.AssertCalled(suite.T(), "Name")
-
-	name2 := "handler2"
-	handler2 := &MockHandler{}
-	handler2.On("Name").Return(name2)
-	err = suite.fabric.AddHandler(handler2)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 2)
-	handler2.AssertCalled(suite.T(), "Name")
-}
-
-func (suite *FabricTestSuite) TestAddNegotiatorSuccess() {
-	name1 := "negotiator1"
-	negotiator1 := &MockNegotiator{}
-	negotiator1.On("Name").Return(name1)
-	err := suite.fabric.AddNegotiator(negotiator1)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.negotiators, 1)
-	negotiator1.AssertCalled(suite.T(), "Name")
-
-	name2 := "negotiator2"
-	negotiator2 := &MockNegotiator{}
-	negotiator2.On("Name").Return(name2)
-	err = suite.fabric.AddNegotiator(negotiator2)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.negotiators, 2)
-	negotiator2.AssertCalled(suite.T(), "Name")
-}
-
-func (suite *FabricTestSuite) TestAddHandlerFuncSuccess() {
-	name1 := "handler1"
-	handler1 := func(ctx context.Context, conn Conn) (context.Context, Conn, error) {
-		return context.Background(), &MockConn{}, nil
-	}
-	err := suite.fabric.AddHandlerFunc(name1, handler1)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 1)
-
-	name2 := "handler2"
-	handler2 := func(ctx context.Context, conn Conn) (context.Context, Conn, error) {
-		return context.Background(), &MockConn{}, nil
-	}
-	err = suite.fabric.AddHandlerFunc(name2, handler2)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.handlers, 2)
-}
-
-func (suite *FabricTestSuite) TestAddNegotiatorFuncSuccess() {
-	name1 := "negotiator1"
-	negotiator1 := func(ctx context.Context, conn Conn) (context.Context, Conn, error) {
-		return context.Background(), &MockConn{}, nil
-	}
-	err := suite.fabric.AddNegotiatorFunc(name1, negotiator1)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.negotiators, 1)
-
-	name2 := "negotiator2"
-	negotiator2 := func(ctx context.Context, conn Conn) (context.Context, Conn, error) {
-		return context.Background(), &MockConn{}, nil
-	}
-	err = suite.fabric.AddNegotiatorFunc(name2, negotiator2)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.negotiators, 2)
 }
 
 func (suite *FabricTestSuite) TestGetAddressesSuccess() {
