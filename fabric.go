@@ -54,28 +54,6 @@ func (f *Fabric) AddProtocol(protocol Protocol) error {
 	return nil
 }
 
-// // AddHandler for server
-// func (f *Fabric) AddHandler(m Handler) error {
-// 	return f.AddHandlerFunc(m.Name(), m.Handle)
-// }
-
-// // AddNegotiator for client
-// func (f *Fabric) AddNegotiator(m Negotiator) error {
-// 	return f.AddNegotiatorFunc(m.Name(), m.Negotiate)
-// }
-
-// // AddHandlerFunc for server
-// func (f *Fabric) AddHandlerFunc(r string, h HandlerFunc) error {
-// 	f.handlers[r] = h
-// 	return nil
-// }
-
-// // AddNegotiatorFunc for client
-// func (f *Fabric) AddNegotiatorFunc(n string, ng NegotiatorFunc) error {
-// 	f.negotiators[n] = ng
-// 	return nil
-// }
-
 // GetAddresses returns a list of addresses for all the current transports
 func (f *Fabric) GetAddresses() []string {
 	addresses := []string{}

@@ -9,9 +9,22 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	ErrNoSuchRoute = errors.New("No such route")
+)
+
 // RouterProtocol is the selector protocol
 type RouterProtocol struct {
 	Handlers map[string]Handler
+	routes   []string
+}
+
+//  NewRouter returns a new router protocol
+func NewRouter() *RouterProtocol {
+	return &RouterProtocol{
+		Handlers: map[string]Handler{},
+		routes:   []string{},
+	}
 }
 
 // Name of the protocol
@@ -60,9 +73,23 @@ func (m *RouterProtocol) Handle(ctx context.Context, c Conn) (context.Context, C
 func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, pm string) (context.Context, Conn, error) {
 	addr := c.GetAddress()
 
+	remainingAddr := strings.Split(pm, "/")[1:]
+	remainingAddrString := strings.Join(remainingAddr, "/")
+	validRoute := false
+	for _, route := range m.routes {
+		if strings.HasPrefix(route, remainingAddrString) {
+			validRoute = true
+			break
+		}
+	}
+
+	if !validRoute {
+		return ctx, c, ErrNoSuchRoute
+	}
+
 	// TODO not sure about append, might wanna cut the stack up to our index
 	// and the append the new stack
-	addr.stack = append(addr.stack, strings.Split(pm, "/")[1:]...)
+	addr.stack = append(addr.stack, remainingAddr...)
 
 	if err := WriteToken(c, []byte("ACK "+pm)); err != nil {
 		return nil, nil, err
@@ -97,5 +124,15 @@ func (m *RouterProtocol) verifyResponse(c Conn, pr string) error {
 		return errors.New("Invalid selector response")
 	}
 
+	return nil
+}
+
+// AddRoute adds an allowed route made up of protocols
+func (m *RouterProtocol) AddRoute(protocols ...Protocol) error {
+	protocolNames := []string{}
+	for _, protocol := range protocols {
+		protocolNames = append(protocolNames, protocol.Name())
+	}
+	m.routes = append(m.routes, strings.Join(protocolNames, "/"))
 	return nil
 }
