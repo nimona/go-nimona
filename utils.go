@@ -9,6 +9,11 @@ import (
 	shortid "github.com/teris-io/shortid"
 )
 
+var (
+	// ErrInvalidTokenLength for when reported token legth is incorrect
+	ErrInvalidTokenLength = errors.New("Invalid token length")
+)
+
 func generateReqID() string {
 	rid, _ := shortid.Generate()
 	return rid
@@ -29,7 +34,7 @@ func ReadToken(r io.Reader) ([]byte, error) {
 	}
 
 	if uint64(n) != l {
-		return nil, errors.New("Invalid token length")
+		return nil, ErrInvalidTokenLength
 	}
 
 	return b[:n-1], nil
