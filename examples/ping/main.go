@@ -23,7 +23,7 @@ func main() {
 	log.Println("Peer A address:", peerA.GetAddresses())
 
 	for _, addr := range peerA.GetAddresses() {
-		endpoint := addr + "/tls/router/identity/ping"
+		endpoint := addr + "/tls/yamux/router/identity/ping"
 		log.Println("-------- Dialing", endpoint)
 		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
@@ -39,7 +39,7 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 		return nil, err
 	}
 
-	yamux := &fabric.YamuxProtocol{}
+	yamux := fabric.NewYamux()
 	router := fabric.NewRouter()
 	identity := &fabric.IdentityProtocol{Local: peerID}
 	tls := &fabric.SecProtocol{
@@ -53,10 +53,10 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	tcp := fabric.NewTransportTCP("0.0.0.0", 0)
 	ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
 
-	f := fabric.New(tls, router)
+	f := fabric.New(tls, yamux, router)
 
-	f.AddTransport(tcp)
-	f.AddTransport(ws)
+	f.AddTransport(tcp, []fabric.Protocol{yamux, router})
+	f.AddTransport(ws, []fabric.Protocol{router})
 
 	f.AddProtocol(yamux)
 	f.AddProtocol(identity)
