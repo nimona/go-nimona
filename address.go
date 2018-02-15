@@ -5,8 +5,8 @@ import (
 )
 
 // NewAddress creates a new ADdress from a string address
-func NewAddress(a string) Address {
-	return Address{
+func NewAddress(a string) *Address {
+	return &Address{
 		stack: strings.Split(a, "/"),
 		index: 0,
 	}
@@ -66,6 +66,17 @@ func (a *Address) CurrentParams() string {
 func (a *Address) Remaining() []string {
 	// TODO index could be out of range
 	return a.stack[a.index:]
+}
+
+// RemainingProtocols returns the remaining protocols in the stack
+func (a *Address) RemainingProtocols() []string {
+	// TODO index could be out of range
+	prs := []string{}
+	for _, pr := range a.stack[a.index:] {
+		pas := strings.Split(pr, ":")
+		prs = append(prs, pas[0])
+	}
+	return prs
 }
 
 // RemainingString returns the remaining stack items as a string

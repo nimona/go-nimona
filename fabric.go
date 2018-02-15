@@ -1,6 +1,7 @@
 package fabric
 
 import (
+	"context"
 	"errors"
 )
 
@@ -14,33 +15,47 @@ var (
 )
 
 // New instance of fabric
-func New(protocols ...Protocol) *Fabric {
-	baseAddress := make([]string, len(protocols))
-	for i, protocol := range protocols {
-		baseAddress[i] = protocol.Name()
-	}
+func New(ctx context.Context) *Fabric {
 	f := &Fabric{
-		base:       baseAddress,
-		transports: []Transport{},
+		context:    ctx,
+		transports: []*transportWithProtocols{},
 		protocols:  map[string]Protocol{},
-	}
-	for _, m := range protocols {
-		f.AddProtocol(m)
 	}
 	return f
 }
 
 // Fabric manages transports and protocols, and deals with Dialing.
 type Fabric struct {
-	base       []string
-	transports []Transport
+	context    context.Context
+	transports []*transportWithProtocols
 	protocols  map[string]Protocol
 }
 
+type transportWithProtocols struct {
+	Transport Transport
+	Handler   HandlerFunc
+	// Negotiator    NegotiatorFunc
+	BaseProtocols []string
+}
+
 // AddTransport for dialing to the outside world
-func (f *Fabric) AddTransport(tr Transport) error {
+func (f *Fabric) AddTransport(transport Transport, protocols []Protocol) error {
+	protocolNames := []string{}
+	for _, pr := range protocols {
+		protocolNames = append(protocolNames, pr.Name())
+	}
+	hWrapper := &transportWrapper{
+		protocolNames: protocolNames,
+	}
+	hchain := append([]Protocol{hWrapper}, protocols...)
+	tr := &transportWithProtocols{
+		Transport: transport,
+		Handler:   handlerChain(hchain...),
+		// Negotiator:    negotiatorChain(protocols...),
+		BaseProtocols: []string{},
+	}
 	f.transports = append(f.transports, tr)
-	return nil
+	return transport.Listen(f.context, tr.Handler)
 }
 
 // AddProtocol for both client and server
@@ -53,7 +68,7 @@ func (f *Fabric) AddProtocol(protocol Protocol) error {
 func (f *Fabric) GetAddresses() []string {
 	addresses := []string{}
 	for _, tr := range f.transports {
-		addresses = append(addresses, tr.Addresses()...)
+		addresses = append(addresses, tr.Transport.Addresses()...)
 	}
 
 	return addresses

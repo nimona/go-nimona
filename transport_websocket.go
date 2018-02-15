@@ -29,7 +29,7 @@ type Websocket struct {
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *Websocket) CanDial(addr Address) (bool, error) {
+func (t *Websocket) CanDial(addr *Address) (bool, error) {
 	if addr.CurrentProtocol() != "ws" {
 		return false, nil
 	}
@@ -49,7 +49,7 @@ func (t *Websocket) CanDial(addr Address) (bool, error) {
 }
 
 // DialContext attempts to dial to the peer with the given address
-func (t *Websocket) DialContext(ctx context.Context, addr Address) (
+func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
 	context.Context, Conn, error) {
 	pr := addr.CurrentParams()
 
@@ -60,7 +60,7 @@ func (t *Websocket) DialContext(ctx context.Context, addr Address) (
 		return nil, nil, err
 	}
 
-	conn := newConnWrapper(tcon, &addr)
+	conn := newConnWrapper(tcon, addr)
 
 	return ctx, conn, nil
 }
@@ -71,7 +71,7 @@ func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
 
 	wsh := websocket.Handler(func(tcon *websocket.Conn) {
 		addr := NewAddress("") // TODO fix address
-		conn := newConnWrapper(tcon, &addr)
+		conn := newConnWrapper(tcon, addr)
 		if err := handler(ctx, conn); err != nil {
 			lgr.Error("Could not handle ws connection", zap.Error(err))
 		}

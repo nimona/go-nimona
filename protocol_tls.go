@@ -3,6 +3,7 @@ package fabric
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 )
 
 // SecProtocol is a TLS protocol
@@ -24,13 +25,17 @@ func (m *SecProtocol) Handle(fn HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		nc := newConnWrapper(scon, c.GetAddress())
+		addr := c.GetAddress()
+		addr.Pop()
+		fmt.Println("---- TLS HANDLE AFTER POP", addr.RemainingString())
+
+		nc := newConnWrapper(scon, addr)
 		return fn(ctx, nc)
 	}
 }
 
 // Negotiate handles the client's side of the tls protocol
-func (m *SecProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+func (m *SecProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		scon := tls.Client(c, &m.Config)
@@ -38,7 +43,11 @@ func (m *SecProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		nc := newConnWrapper(scon, c.GetAddress())
+		addr := c.GetAddress()
+		addr.Pop()
+		fmt.Println("---- TLS NEG AFTER POP", addr.RemainingString())
+
+		nc := newConnWrapper(scon, addr)
 		return fn(ctx, nc)
 	}
 }

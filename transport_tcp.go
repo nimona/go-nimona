@@ -27,21 +27,22 @@ type TCP struct {
 }
 
 // DialContext attemps to dial to the peer with the given addr
-func (t *TCP) DialContext(ctx context.Context, addr Address) (
-	context.Context, Conn, error) {
+func (t *TCP) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
 	pr := addr.CurrentParams()
 	tcon, err := net.Dial("tcp", pr)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	conn := newConnWrapper(tcon, &addr)
+	addr.Pop()
+
+	conn := newConnWrapper(tcon, addr)
 
 	return ctx, conn, nil
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *TCP) CanDial(addr Address) (bool, error) {
+func (t *TCP) CanDial(addr *Address) (bool, error) {
 	if addr.CurrentProtocol() != "tcp" {
 		return false, nil
 	}
@@ -80,7 +81,8 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 			// Listen for an incoming connection.
 			tcon, err := listener.Accept()
 			addr := NewAddress(addr)
-			conn := newConnWrapper(tcon, &addr)
+			addr.Pop()
+			conn := newConnWrapper(tcon, addr)
 			if err != nil {
 				Logger(ctx).Error("Could not accept TCP connection",
 					zap.Error(err))

@@ -51,12 +51,13 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		}
 		lgr.Debug("Wrote local id")
 
+		c.GetAddress().Pop()
 		return fn(ctx, c)
 	}
 }
 
 // Negotiate handles the client's side of the identity protocol
-func (m *IdentityProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		// store local identity to conn
@@ -87,6 +88,7 @@ func (m *IdentityProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
 			return errors.New("Unexpected remote server")
 		}
 
+		c.GetAddress().Pop()
 		// store server's identity
 		ctx = context.WithValue(ctx, RemoteIdentityKey{}, string(remoteID))
 

@@ -6,6 +6,7 @@ import (
 )
 
 func newConnWrapper(c net.Conn, addr *Address) Conn {
+	// TODO copy address
 	return &conn{
 		conn:    c,
 		address: addr,

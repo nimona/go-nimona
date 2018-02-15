@@ -17,14 +17,14 @@ var (
 // RouterProtocol is the selector protocol
 type RouterProtocol struct {
 	Handlers map[string]Protocol
-	routes   []string
+	routes   map[string][]Protocol
 }
 
 // NewRouter returns a new router protocol
 func NewRouter() *RouterProtocol {
 	return &RouterProtocol{
 		Handlers: map[string]Protocol{},
-		routes:   []string{},
+		routes:   map[string][]Protocol{},
 	}
 }
 
@@ -64,11 +64,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		switch cm {
 		case "SEL":
 			lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
-			ctx, conn, err := m.handleGet(ctx, c, pm)
-			if err != nil {
-				return err
-			}
-			return fn(ctx, conn)
+			return m.handleGet(ctx, c, pm)
 		default:
 			lgr.Debug("Invalid command", zap.String("cm", cm), zap.String("pm", pm))
 			c.Close()
@@ -77,38 +73,39 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, pm string) (context.Context, Conn, error) {
-	addr := c.GetAddress()
+func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrString string) error {
+	remainingAddr := strings.Split(remainingAddrString, "/")
 
-	remainingAddr := strings.Split(pm, "/")[1:]
-	remainingAddrString := strings.Join(remainingAddr, "/")
-	validRoute := false
-	for _, route := range m.routes {
+	validRoute := ""
+	for route := range m.routes {
 		if strings.HasPrefix(route, remainingAddrString) {
-			validRoute = true
+			validRoute = route
 			break
 		}
 	}
 
-	if !validRoute {
-		return ctx, c, ErrNoSuchRoute
+	if validRoute == "" {
+		return ErrNoSuchRoute
 	}
 
 	// TODO not sure about append, might wanna cut the stack up to our index
 	// and the append the new stack
+	addr := c.GetAddress()
 	addr.stack = append(addr.stack, remainingAddr...)
 
-	if err := WriteToken(c, []byte("ACK "+pm)); err != nil {
-		return nil, nil, err
+	if err := WriteToken(c, []byte("ACK "+remainingAddrString)); err != nil {
+		return err
 	}
 
-	return ctx, c, nil
+	chain := handlerChain(m.routes[validRoute]...)
+	return chain(ctx, c)
 }
 
 // Negotiate handles the client's side of the nimona protocol
-func (m *RouterProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
+		c.GetAddress().Pop()
 		pr := c.GetAddress().RemainingString()
 		fmt.Println("Router.Negotiate: pr=", pr)
 
@@ -119,6 +116,8 @@ func (m *RouterProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
 		if err := m.verifyResponse(c, "ACK "+pr); err != nil {
 			return err
 		}
+
+		c.GetAddress().Pop()
 
 		return fn(ctx, c)
 	}
@@ -143,6 +142,7 @@ func (m *RouterProtocol) AddRoute(protocols ...Protocol) error {
 	for _, protocol := range protocols {
 		protocolNames = append(protocolNames, protocol.Name())
 	}
-	m.routes = append(m.routes, strings.Join(protocolNames, "/"))
+	routeName := strings.Join(protocolNames, "/")
+	m.routes[routeName] = protocols
 	return nil
 }

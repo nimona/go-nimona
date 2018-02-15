@@ -44,21 +44,26 @@ func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 			return err
 		}
 
-		// addr := c.GetAddress()
-		// sessionAddr := strings.Join(addr.stack[:addr.index+1], "/")
-		// lgr.Info("Handle: Accepting yamux sessions", zap.String("address", sessionAddr))
+		addr := c.GetAddress()
+		addr.Pop()
+		sessionAddr := strings.Join(addr.stack[:addr.index+1], "/")
+		lgr.Info("Handle: Accepting yamux sessions", zap.String("address", sessionAddr))
 
-		// go func() {
-		// 	for {
-		// 		str, err := ses.Accept()
-		// 		if err != nil {
-		// 			lgr.Debug("Handle: Could not accept steam")
-		// 			return
-		// 		}
-		// 		nc := newConnWrapper(str, addr)
-		// 		go m.handler(ctx, nc)
-		// 	}
-		// }()
+		go func() {
+			for {
+				str, err := ses.Accept()
+				if err != nil {
+					lgr.Debug("Handle: Could not accept steam", zap.Error(err))
+					continue
+				}
+
+				nc := newConnWrapper(str, addr)
+				if err := fn(ctx, nc); err != nil {
+					lgr.Debug("Handle: Could not handle stream", zap.Error(err))
+					continue
+				}
+			}
+		}()
 
 		nc := newConnWrapper(str, c.GetAddress())
 		return fn(ctx, nc)
@@ -66,7 +71,7 @@ func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 }
 
 // Negotiate handles the client's side of the yamux protocol
-func (m *YamuxProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+func (m *YamuxProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		lgr := Logger(ctx)
@@ -82,6 +87,7 @@ func (m *YamuxProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
 		}
 
 		addr := c.GetAddress()
+		addr.Pop()
 		sessionAddr := strings.Join(addr.stack[:addr.index+1], "/")
 		lgr.Info("Negotiage: Storing yamux session", zap.String("address", sessionAddr))
 		m.sessions[sessionAddr] = session
@@ -95,7 +101,7 @@ func (m *YamuxProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
 // the address that will be consumed.
 // This will only return true if the connection has been previously
 // established and the connection is still open.
-func (m *YamuxProtocol) CanDial(addr Address) (bool, error) {
+func (m *YamuxProtocol) CanDial(addr *Address) (bool, error) {
 	as := addr.String()
 	for k := range m.sessions {
 		if strings.HasPrefix(as, k) {
@@ -108,7 +114,7 @@ func (m *YamuxProtocol) CanDial(addr Address) (bool, error) {
 
 // DialContext dials an address, assuming we have previously connected and
 // negotiated yamux.
-func (m *YamuxProtocol) DialContext(ctx context.Context, addr Address) (context.Context, Conn, error) {
+func (m *YamuxProtocol) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
 	lgr := Logger(ctx)
 	lgr.Info("DialContext with yamux", zap.String("address", addr.String()))
 	for k, ses := range m.sessions {
@@ -121,7 +127,7 @@ func (m *YamuxProtocol) DialContext(ctx context.Context, addr Address) (context.
 
 			parts := strings.Split(k, "/")
 			addr.index = len(parts) - 1
-			nc := newConnWrapper(str, &addr)
+			nc := newConnWrapper(str, addr)
 			return ctx, nc, nil
 		}
 	}
@@ -135,7 +141,7 @@ func (m *YamuxProtocol) Addresses() []string {
 }
 
 // Listen handles the transports
-func (m *YamuxProtocol) Listen(ctx context.Context, handler func(context.Context, Conn) error) error {
+func (m *YamuxProtocol) Listen(ctx context.Context, handler HandlerFunc) error {
 	m.handler = handler
 	return nil
 }
