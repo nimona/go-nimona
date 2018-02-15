@@ -28,14 +28,16 @@ type TCP struct {
 
 // DialContext attemps to dial to the peer with the given addr
 func (t *TCP) DialContext(ctx context.Context, addr Address) (
-	net.Conn, error) {
+	context.Context, Conn, error) {
 	pr := addr.CurrentParams()
 	tcon, err := net.Dial("tcp", pr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return tcon, nil
+	conn := newConnWrapper(tcon, &addr)
+
+	return ctx, conn, nil
 }
 
 // CanDial checks if address can be dialed by this transport
@@ -59,7 +61,7 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 }
 
 // Listen handles the transports
-func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
+func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 	addr := fmt.Sprintf("%s:%d", t.host, t.port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -76,7 +78,9 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 	go func() {
 		for {
 			// Listen for an incoming connection.
-			conn, err := listener.Accept()
+			tcon, err := listener.Accept()
+			addr := NewAddress(addr)
+			conn := newConnWrapper(tcon, &addr)
 			if err != nil {
 				Logger(ctx).Error("Could not accept TCP connection",
 					zap.Error(err))
@@ -89,7 +93,7 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 	return nil
 }
 
-func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
+func (t *TCP) handleListen(ctx context.Context, conn Conn, handler HandlerFunc) {
 	if err := handler(ctx, conn); err != nil {
 		Logger(ctx).Error("Listen: Could not handle request",
 			zap.Error(err))
@@ -114,7 +118,7 @@ func (t *TCP) startExternal(ctx context.Context) error {
 
 	err = upr.Clear(uint16(extPort))
 	if err != nil {
-		Logger(ctx).Error("Could not clear upnp: ", zap.Error(err))
+		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
 	err = upr.Forward(uint16(extPort), "fabric")
