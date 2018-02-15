@@ -34,39 +34,46 @@ func (m *RouterProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *RouterProtocol) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
-	addr := c.GetAddress()
-	lgr := Logger(ctx).With(
-		zap.Namespace("protocol:router"),
-		zap.String("addr.current", addr.Current()),
-		zap.String("addr.params", addr.CurrentParams()),
-	)
-	lgr.Debug("Reading token")
+func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		addr := c.GetAddress()
+		lgr := Logger(ctx).With(
+			zap.Namespace("protocol:router"),
+			zap.String("addr.current", addr.Current()),
+			zap.String("addr.params", addr.CurrentParams()),
+		)
+		lgr.Debug("Reading token")
 
-	// we need to negotiate what they need from us
-	// read the next token, which is the request for the next protocol
-	pr, err := ReadToken(c)
-	if err != nil {
-		return nil, nil, err
-	}
-	lgr.Debug("Read token", zap.String("pr", string(pr)))
+		// we need to negotiate what they need from us
+		// read the next token, which is the request for the next protocol
+		pr, err := ReadToken(c)
+		if err != nil {
+			return err
+		}
+		lgr.Debug("Read token", zap.String("pr", string(pr)))
 
-	pf := strings.Split(string(pr), " ")
-	if len(pf) != 2 {
-		return nil, nil, errors.New("invalid router command format")
-	}
+		pf := strings.Split(string(pr), " ")
+		if len(pf) != 2 {
+			return errors.New("invalid router command format")
+		}
 
-	cm := pf[0]
-	pm := pf[1]
+		cm := pf[0]
+		pm := pf[1]
 
-	switch cm {
-	case "SEL":
-		lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
-		return m.handleGet(ctx, c, pm)
-	default:
-		lgr.Debug("Invalid command", zap.String("cm", cm), zap.String("pm", pm))
-		c.Close()
-		return nil, nil, errors.New("invalid router command")
+		switch cm {
+		case "SEL":
+			lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
+			ctx, conn, err := m.handleGet(ctx, c, pm)
+			if err != nil {
+				return err
+			}
+			return fn(ctx, conn)
+		default:
+			lgr.Debug("Invalid command", zap.String("cm", cm), zap.String("pm", pm))
+			c.Close()
+			return errors.New("invalid router command")
+		}
 	}
 }
 
@@ -99,19 +106,22 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, pm string) (cont
 }
 
 // Negotiate handles the client's side of the nimona protocol
-func (m *RouterProtocol) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
-	pr := c.GetAddress().RemainingString()
-	fmt.Println("Router.Negotiate: pr=", pr)
+func (m *RouterProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		pr := c.GetAddress().RemainingString()
+		fmt.Println("Router.Negotiate: pr=", pr)
 
-	if err := WriteToken(c, []byte("SEL "+pr)); err != nil {
-		return ctx, nil, err
+		if err := WriteToken(c, []byte("SEL "+pr)); err != nil {
+			return err
+		}
+
+		if err := m.verifyResponse(c, "ACK "+pr); err != nil {
+			return err
+		}
+
+		return fn(ctx, c)
 	}
-
-	if err := m.verifyResponse(c, "ACK "+pr); err != nil {
-		return ctx, nil, err
-	}
-
-	return ctx, c, nil
 }
 
 func (m *RouterProtocol) verifyResponse(c Conn, pr string) error {

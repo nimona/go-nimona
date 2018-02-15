@@ -16,23 +16,29 @@ func (m *SecProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *SecProtocol) Handle(ctx context.Context, c Conn) (context.Context, Conn, error) {
-	scon := tls.Server(c, &m.Config)
-	if err := scon.Handshake(); err != nil {
-		return nil, nil, err
-	}
+func (m *SecProtocol) Handle(fn HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		scon := tls.Server(c, &m.Config)
+		if err := scon.Handshake(); err != nil {
+			return err
+		}
 
-	nc := newConnWrapper(scon, c.GetAddress())
-	return ctx, nc, nil
+		nc := newConnWrapper(scon, c.GetAddress())
+		return fn(ctx, nc)
+	}
 }
 
 // Negotiate handles the client's side of the tls protocol
-func (m *SecProtocol) Negotiate(ctx context.Context, c Conn) (context.Context, Conn, error) {
-	scon := tls.Client(c, &m.Config)
-	if err := scon.Handshake(); err != nil {
-		return ctx, nil, err
-	}
+func (m *SecProtocol) Negotiate(fn HandlerFunc) HandlerFunc {
+	// one time scope setup area for middleware
+	return func(ctx context.Context, c Conn) error {
+		scon := tls.Client(c, &m.Config)
+		if err := scon.Handshake(); err != nil {
+			return err
+		}
 
-	nc := newConnWrapper(scon, c.GetAddress())
-	return ctx, nc, nil
+		nc := newConnWrapper(scon, c.GetAddress())
+		return fn(ctx, nc)
+	}
 }
