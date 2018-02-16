@@ -26,8 +26,8 @@ func (suite *ConnTestSuite) SetupTest() {
 
 func (suite *ConnTestSuite) TestNewConnWrapper() {
 	addr := NewAddress("foo/bar")
-	cn := newConnWrapper(suite.mockConn, &addr).(*conn)
-	suite.Assert().Equal(&addr, cn.address)
+	cn := newConnWrapper(suite.mockConn, addr).(*conn)
+	suite.Assert().Equal(addr, cn.address)
 	suite.Assert().Equal(suite.mockConn, cn.conn)
 }
 
@@ -75,6 +75,15 @@ func (suite *ConnTestSuite) TestRemoteAddr() {
 	retAddr := suite.conn.RemoteAddr()
 	suite.Assert().Equal(addr, retAddr)
 	suite.mockConn.AssertCalled(suite.T(), "RemoteAddr")
+}
+
+func (suite *ConnTestSuite) TestReadDeadline() {
+	dl := time.Now()
+	err := errors.New("some-test")
+	suite.mockConn.On("SetDeadline", dl).Return(err)
+	retErr := suite.conn.SetDeadline(dl)
+	suite.Assert().Equal(err, retErr)
+	suite.mockConn.AssertCalled(suite.T(), "SetDeadline", dl)
 }
 
 func (suite *ConnTestSuite) TestSetReadDeadline() {
