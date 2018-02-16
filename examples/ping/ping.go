@@ -32,7 +32,7 @@ func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 		}
 
 		// send ping
-		if err := fabric.WriteToken(c, []byte("PING")); err != nil {
+		if err := c.WriteToken([]byte("PING")); err != nil {
 			lgr.Error("Could not write token", zap.Error(err))
 			return err
 		}
@@ -40,7 +40,7 @@ func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 		lgr.Info("Wrote token")
 
 		// get pong
-		token, err := fabric.ReadToken(c)
+		token, err := c.ReadToken()
 		if err != nil {
 			lgr.Error("Could not read token", zap.Error(err))
 			return err
@@ -70,7 +70,7 @@ func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
 		}
 
 		// remote peer pings
-		token, err := fabric.ReadToken(c)
+		token, err := c.ReadToken()
 		if err != nil {
 			lgr.Error("Could not read token", zap.Error(err))
 			return err
@@ -79,7 +79,7 @@ func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
 		lgr.Info("Read token", zap.String("token", string(token)))
 
 		// we pong back
-		if err := fabric.WriteToken(c, []byte("PONG")); err != nil {
+		if err := c.WriteToken([]byte("PONG")); err != nil {
 			lgr.Error("Could not write token", zap.Error(err))
 			return err
 		}

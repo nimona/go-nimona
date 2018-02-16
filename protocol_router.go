@@ -3,7 +3,6 @@ package fabric
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"go.uber.org/zap"
@@ -12,19 +11,19 @@ import (
 var (
 	// ErrNoSuchRoute when requests route does not exist
 	ErrNoSuchRoute = errors.New("No such route")
+	// ErrInvalidCommand when our router doesn't know about this command
+	ErrInvalidCommand = errors.New("Invalid command")
 )
 
 // RouterProtocol is the selector protocol
 type RouterProtocol struct {
-	Handlers map[string]Protocol
-	routes   map[string][]Protocol
+	routes map[string][]Protocol
 }
 
 // NewRouter returns a new router protocol
 func NewRouter() *RouterProtocol {
 	return &RouterProtocol{
-		Handlers: map[string]Protocol{},
-		routes:   map[string][]Protocol{},
+		routes: map[string][]Protocol{},
 	}
 }
 
@@ -47,7 +46,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 
 		// we need to negotiate what they need from us
 		// read the next token, which is the request for the next protocol
-		pr, err := ReadToken(c)
+		pr, err := c.ReadToken()
 		if err != nil {
 			return err
 		}
@@ -55,7 +54,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 
 		pf := strings.Split(string(pr), " ")
 		if len(pf) != 2 {
-			return errors.New("invalid router command format")
+			return ErrInvalidCommand
 		}
 
 		cm := pf[0]
@@ -68,7 +67,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		default:
 			lgr.Debug("Invalid command", zap.String("cm", cm), zap.String("pm", pm))
 			c.Close()
-			return errors.New("invalid router command")
+			return ErrInvalidCommand
 		}
 	}
 }
@@ -93,7 +92,7 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrStr
 	addr := c.GetAddress()
 	addr.stack = append(addr.stack, remainingAddr...)
 
-	if err := WriteToken(c, []byte("ACK "+remainingAddrString)); err != nil {
+	if err := c.WriteToken([]byte("ACK " + remainingAddrString)); err != nil {
 		return err
 	}
 
@@ -107,33 +106,23 @@ func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	return func(ctx context.Context, c Conn) error {
 		c.GetAddress().Pop()
 		pr := c.GetAddress().RemainingString()
-		fmt.Println("Router.Negotiate: pr=", pr)
-
-		if err := WriteToken(c, []byte("SEL "+pr)); err != nil {
+		if err := c.WriteToken([]byte("SEL " + pr)); err != nil {
 			return err
 		}
 
-		if err := m.verifyResponse(c, "ACK "+pr); err != nil {
+		resp, err := c.ReadToken()
+		if err != nil {
 			return err
+		}
+
+		if string(resp) != "ACK "+pr {
+			return errors.New("Invalid selector response")
 		}
 
 		c.GetAddress().Pop()
 
 		return fn(ctx, c)
 	}
-}
-
-func (m *RouterProtocol) verifyResponse(c Conn, pr string) error {
-	resp, err := ReadToken(c)
-	if err != nil {
-		return err
-	}
-
-	if string(resp) != pr {
-		return errors.New("Invalid selector response")
-	}
-
-	return nil
 }
 
 // AddRoute adds an allowed route made up of protocols

@@ -34,7 +34,7 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		)
 
 		// client will tell us who they are
-		remoteID, err := ReadToken(c)
+		remoteID, err := c.ReadToken()
 		if err != nil {
 			lgr.Warn("Could not read remote id", zap.Error(err))
 			return err
@@ -45,7 +45,7 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		ctx = context.WithValue(ctx, RemoteIdentityKey{}, string(remoteID))
 
 		// tell client our identity
-		if err := WriteToken(c, []byte(m.Local)); err != nil {
+		if err := c.WriteToken([]byte(m.Local)); err != nil {
 			lgr.Warn("Could not write local id", zap.Error(err))
 			return err
 		}
@@ -67,13 +67,13 @@ func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		)
 
 		// tell the server who we are
-		if err := WriteToken(c, []byte(m.Local)); err != nil {
+		if err := c.WriteToken([]byte(m.Local)); err != nil {
 			lgr.Warn("Could not write local id", zap.Error(err))
 			return err
 		}
 
 		// server should now respond with their identity
-		remoteID, err := ReadToken(c)
+		remoteID, err := c.ReadToken()
 		if err != nil {
 			lgr.Warn("Could not read remote id", zap.Error(err))
 			return err
