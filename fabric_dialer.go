@@ -64,7 +64,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) error {
 			lgr.Warn("Could not negotiate", zap.String("transport", trType), zap.Error(err))
 			continue
 		}
-		break
+		return nil
 	}
 
 	return ErrCouldNotDial
