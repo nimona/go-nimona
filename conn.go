@@ -72,6 +72,8 @@ type Conn interface {
 	SetWriteDeadline(t time.Time) error
 
 	GetAddress() *Address
+	ReadToken() ([]byte, error)
+	WriteToken(bs []byte) error
 }
 
 // Read implements the Conn Read method.
@@ -118,6 +120,17 @@ func (c *conn) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
 }
 
+// GetAddress for the connection
 func (c *conn) GetAddress() *Address {
 	return c.address
+}
+
+// ReadToken from conn's writer
+func (c *conn) ReadToken() ([]byte, error) {
+	return ReadToken(c.conn)
+}
+
+// WriteToken to conn's writer
+func (c *conn) WriteToken(bs []byte) error {
+	return WriteToken(c.conn, bs)
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -102,6 +103,23 @@ func (suite *ConnTestSuite) TestSetWriteDeadline() {
 	retErr := suite.conn.SetWriteDeadline(dl)
 	suite.Assert().Equal(err, retErr)
 	suite.mockConn.AssertCalled(suite.T(), "SetWriteDeadline", dl)
+}
+
+func (suite *ConnTestSuite) TestWriteToken() {
+	// TODO check what is written
+	err := errors.New("some-test")
+	suite.mockConn.On("Write", mock.Anything).Return(0, err)
+	retErr := suite.conn.WriteToken([]byte(""))
+	suite.Assert().Equal(err, retErr)
+}
+
+func (suite *ConnTestSuite) TestReadToken() {
+	// TODO check what is read
+	err := errors.New("some-test")
+	suite.mockConn.On("Read", mock.Anything).Return(0, err)
+	bs, retErr := suite.conn.ReadToken()
+	suite.Assert().Empty(bs)
+	suite.Assert().Equal(err, retErr)
 }
 
 func (suite *ConnTestSuite) TestGetAddress() {
