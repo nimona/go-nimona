@@ -3,6 +3,7 @@ package fabric
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.uber.org/zap"
 )
@@ -17,6 +18,11 @@ type RemoteIdentityKey struct{}
 type IdentityProtocol struct {
 	Local string
 }
+
+var (
+	// ErrUnexpectedRemote when remote doesn't match the one we were expecting
+	ErrUnexpectedRemote = errors.New("Unexpected remote")
+)
 
 // Name of the protocol
 func (m *IdentityProtocol) Name() string {
@@ -83,9 +89,12 @@ func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		// if an identity has been provided as the first address parameter then
 		// we need to make sure that the other side matches.
 		addr := c.GetAddress()
+		fmt.Println("!!", addr, addr.CurrentParams())
 		if len(addr.CurrentParams()) > 0 {
-			lgr.Warn("Unexpected remote id", zap.String("remote.id", string(remoteID)))
-			return errors.New("Unexpected remote server")
+			if addr.CurrentParams() != string(remoteID) {
+				lgr.Warn("Unexpected remote id", zap.String("remote.id", string(remoteID)))
+				return ErrUnexpectedRemote
+			}
 		}
 
 		c.GetAddress().Pop()
