@@ -16,6 +16,19 @@ func NewTransportTCP(host string, port int) Transport {
 	return &TCP{
 		host: host,
 		port: port,
+		upnp: nil,
+	}
+}
+
+// NewTransportTCPWithUPNP returns a new TCP transport
+func NewTransportTCPWithUPNP(host string, port int) Transport {
+	upnp, _ := upnp.Discover()
+	// TODO log error
+
+	return &TCP{
+		host: host,
+		port: port,
+		upnp: upnp,
 	}
 }
 
@@ -24,6 +37,7 @@ type TCP struct {
 	host     string
 	port     int
 	listener net.Listener
+	upnp     UPNP
 }
 
 // DialContext attemps to dial to the peer with the given addr
@@ -73,7 +87,7 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 
 	err = t.startExternal(ctx)
 	if err != nil {
-		Logger(ctx).Error("Could not open upnp port: ", zap.Error(err))
+		// Logger(ctx).Debug("Could not open upnp port: ", zap.Error(err))
 	}
 
 	go func() {
@@ -103,9 +117,8 @@ func (t *TCP) handleListen(ctx context.Context, conn Conn, handler HandlerFunc) 
 }
 
 func (t *TCP) startExternal(ctx context.Context) error {
-	upr, err := upnp.Discover()
-	if err != nil {
-		return err
+	if t.upnp == nil {
+		return nil
 	}
 
 	_, xpstr, err := net.SplitHostPort(t.listener.Addr().String())
@@ -118,12 +131,12 @@ func (t *TCP) startExternal(ctx context.Context) error {
 		return err
 	}
 
-	err = upr.Clear(uint16(extPort))
+	err = t.upnp.Clear(uint16(extPort))
 	if err != nil {
 		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
-	err = upr.Forward(uint16(extPort), "fabric")
+	err = t.upnp.Forward(uint16(extPort), "fabric")
 	if err != nil {
 		return err
 	}

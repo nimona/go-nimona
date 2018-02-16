@@ -17,11 +17,11 @@ type ProtocolTransportTestSuite struct {
 func (suite *ProtocolTransportTestSuite) SetupTest() {}
 
 func (suite *ProtocolTransportTestSuite) TestName() {
-	tls := &transportWrapper{
+	wrp := &transportWrapper{
 		protocolNames: []string{},
 	}
 
-	name := tls.Name()
+	name := wrp.Name()
 	suite.Assert().Equal("", name)
 }
 
