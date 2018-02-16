@@ -5,9 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	"go.uber.org/zap"
-
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 // YamuxProtocol is a multiplexer protocol based on yamux
@@ -49,24 +48,30 @@ func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		sessionAddr := strings.Join(addr.stack[:addr.index+1], "/")
 		lgr.Info("Handle: Accepting yamux sessions", zap.String("address", sessionAddr))
 
-		go func() {
-			for {
-				str, err := ses.Accept()
-				if err != nil {
-					lgr.Debug("Handle: Could not accept steam", zap.Error(err))
-					continue
-				}
-
-				nc := newConnWrapper(str, addr)
-				if err := fn(ctx, nc); err != nil {
-					lgr.Debug("Handle: Could not handle stream", zap.Error(err))
-					continue
-				}
-			}
-		}()
+		go m.accept(ctx, ses, addr, fn)
 
 		nc := newConnWrapper(str, c.GetAddress())
 		return fn(ctx, nc)
+	}
+}
+
+func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr *Address, fn HandlerFunc) {
+	lgr := Logger(ctx)
+	for {
+		str, err := session.Accept()
+		if err != nil {
+			lgr.Debug("Handle: Could not accept steam", zap.Error(err))
+			// TODO break?
+			break
+		}
+
+		// TODO copy addr
+		nc := newConnWrapper(str, addr)
+		if err := fn(ctx, nc); err != nil {
+			lgr.Debug("Handle: Could not handle stream", zap.Error(err))
+			// TODO break?
+			continue
+		}
 	}
 }
 

@@ -11,8 +11,10 @@ type Protocol interface {
 	Name() string
 }
 
+// HandlerFunc for protocol.Handle
 type HandlerFunc func(ctx context.Context, conn Conn) error
 
+// NegotiatorFunc for protocol.Negotiate
 type NegotiatorFunc func(ctx context.Context, conn Conn) error
 
 func handlerChain(fns ...Protocol) HandlerFunc {
