@@ -47,6 +47,15 @@ func (suite *AddressTestSuite) TestCurrentParamsSuccess() {
 	suite.Assert().Equal(0, addr.index)
 }
 
+func (suite *AddressTestSuite) TestCurrentParamsEmptySuccess() {
+	addrString := "foo"
+	addr := NewAddress(addrString)
+
+	params := addr.CurrentParams()
+	suite.Assert().Equal("", params)
+	suite.Assert().Equal(0, addr.index)
+}
+
 func (suite *AddressTestSuite) TestCurrentProtocolSuccess() {
 	addrString := "foo:bar"
 	addr := NewAddress(addrString)

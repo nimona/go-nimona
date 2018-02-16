@@ -105,7 +105,7 @@ func (c *conn) RemoteAddr() net.Addr {
 
 // SetDeadline implements the Conn SetDeadline method.
 func (c *conn) SetDeadline(t time.Time) error {
-	return c.conn.SetReadDeadline(t)
+	return c.conn.SetDeadline(t)
 }
 
 // SetReadDeadline implements the Conn SetReadDeadline method.
