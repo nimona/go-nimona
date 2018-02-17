@@ -60,6 +60,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		cm := pf[0]
 		pm := pf[1]
 
+		c.GetAddress().Pop()
 		switch cm {
 		case "SEL":
 			lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
