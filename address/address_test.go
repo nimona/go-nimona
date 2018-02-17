@@ -1,4 +1,4 @@
-package fabric
+package address
 
 // Basic imports
 import (

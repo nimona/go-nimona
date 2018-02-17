@@ -1,10 +1,10 @@
-package fabric
+package transport
 
 // Basic imports
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	suite "github.com/stretchr/testify/suite"
 )
 
 // TransportTCPTestSuite -

@@ -1,4 +1,4 @@
-package fabric
+package protocol
 
 // Basic imports
 import (
@@ -7,7 +7,10 @@ import (
 	"testing"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
+	suite "github.com/stretchr/testify/suite"
+
+	address "github.com/nimona/go-nimona-fabric/address"
+	conn "github.com/nimona/go-nimona-fabric/connection"
 )
 
 // ProtocolRouterTestSuite -
@@ -22,11 +25,11 @@ type ProtocolRouterTestSuite struct {
 func (suite *ProtocolRouterTestSuite) SetupTest() {
 	suite.nextProtocol = &MockProtocol{}
 	suite.nextProtocol.On("Name").Return("test")
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler HandlerFunc = func(ctx context.Context, c conn.Conn) error {
 		suite.handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator NegotiatorFunc = func(ctx context.Context, c conn.Conn) error {
 		suite.negotiatorCalled = true
 		return nil
 	}
@@ -75,8 +78,8 @@ func (suite *ProtocolRouterTestSuite) TestAddRoute() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleSuccess() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("SEL test"), nil)
 	mockConn.On("WriteToken", []byte("ACK test")).Return(nil)
@@ -90,8 +93,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleSuccess() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleReadTokenError() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("Error")
 	mockConn.On("ReadToken").Return([]byte(""), retErr)
@@ -106,8 +109,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleReadTokenError() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleWriteTokenError() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("Error")
 	mockConn.On("ReadToken").Return([]byte("SEL test"), nil)
@@ -122,8 +125,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleWriteTokenError() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommandJunk() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("asdf"), nil)
 	mockConn.On("Close").Return(nil)
@@ -137,8 +140,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommandJunk() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommand() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("ASD something"), nil)
 	mockConn.On("Close").Return(nil)
@@ -152,8 +155,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommand() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidRoute() {
-	addr := NewAddress("router/not-test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/not-test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("SEL not-test"), nil)
 	mockConn.On("WriteToken", []byte("ACK test")).Return(nil)
@@ -167,8 +170,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidRoute() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateSuccess() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("ACK test"), nil)
@@ -182,8 +185,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateSuccess() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateWriteTokenFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("error")
 	mockConn.On("WriteToken", []byte("SEL test")).Return(retErr)
@@ -198,8 +201,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateWriteTokenFails() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateReadTokenFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("error")
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
@@ -214,8 +217,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateReadTokenFails() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateInvalidResponseFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := address.NewAddress("router/test")
+	mockConn := &conn.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("ACK asdf"), nil)

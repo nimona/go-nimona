@@ -1,4 +1,4 @@
-package fabric
+package transport
 
 import (
 	"context"
@@ -8,9 +8,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+	websocket "golang.org/x/net/websocket"
 
-	"golang.org/x/net/websocket"
+	address "github.com/nimona/go-nimona-fabric/address"
+	conn "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
+	protocol "github.com/nimona/go-nimona-fabric/protocol"
 )
 
 // NewTransportWebsocket returns a new Websocket transport
@@ -29,7 +33,7 @@ type Websocket struct {
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *Websocket) CanDial(addr *Address) (bool, error) {
+func (t *Websocket) CanDial(addr *address.Address) (bool, error) {
 	if addr.CurrentProtocol() != "ws" {
 		return false, nil
 	}
@@ -49,8 +53,8 @@ func (t *Websocket) CanDial(addr *Address) (bool, error) {
 }
 
 // DialContext attempts to dial to the peer with the given address
-func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
-	context.Context, Conn, error) {
+func (t *Websocket) DialContext(ctx context.Context, addr *address.Address) (
+	context.Context, conn.Conn, error) {
 	pr := addr.CurrentParams()
 
 	// TODO fix origin to use a real address
@@ -61,17 +65,17 @@ func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
 	}
 
 	addr.Pop()
-	conn := newConnWrapper(tcon, addr)
+	conn := conn.NewConnWrapper(tcon, addr)
 	return ctx, conn, nil
 }
 
 // Listen starts listening for incoming connections
-func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
-	lgr := Logger(ctx)
+func (t *Websocket) Listen(ctx context.Context, handler protocol.HandlerFunc) error {
+	lgr := logging.Logger(ctx)
 
 	wsh := websocket.Handler(func(tcon *websocket.Conn) {
-		addr := NewAddress("") // TODO fix address
-		conn := newConnWrapper(tcon, addr)
+		addr := address.NewAddress("") // TODO fix address
+		conn := conn.NewConnWrapper(tcon, addr)
 		addr.Pop()
 		if err := handler(ctx, conn); err != nil {
 			lgr.Error("Could not handle ws connection", zap.Error(err))

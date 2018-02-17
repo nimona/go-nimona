@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	connection "github.com/nimona/go-nimona-fabric/connection"
 )
 
 type RelayProtocol struct {
-	connections map[string]Conn
+	connections map[string]connection.Conn
 	fabric      *Fabric
 }
 

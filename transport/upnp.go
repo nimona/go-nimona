@@ -1,4 +1,4 @@
-package fabric
+package transport
 
 // UPNP interface
 type UPNP interface {

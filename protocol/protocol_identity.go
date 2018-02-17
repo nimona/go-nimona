@@ -1,4 +1,4 @@
-package fabric
+package protocol
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
+
+	conn "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // LocalIdentityKey for context
@@ -32,10 +35,10 @@ func (m *IdentityProtocol) Name() string {
 // Handle is the protocol handler for the server
 func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c conn.Conn) error {
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
 
-		lgr := Logger(ctx).With(
+		lgr := logging.Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 
@@ -65,10 +68,10 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 // Negotiate handles the client's side of the identity protocol
 func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c conn.Conn) error {
 		// store local identity to conn
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
-		lgr := Logger(ctx).With(
+		lgr := logging.Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 

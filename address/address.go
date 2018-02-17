@@ -1,4 +1,4 @@
-package fabric
+package address
 
 import (
 	"strings"
@@ -39,6 +39,17 @@ func (a *Address) Pop() string {
 	return a.stack[ci]
 }
 
+// Rewind the stack to the previous item
+func (a *Address) Rewind() {
+	a.index--
+	return
+}
+
+// Append item to stack
+func (a *Address) Append(items ...string) {
+	a.stack = append(a.stack, items...)
+}
+
 // Current returns the current item
 func (a *Address) Current() string {
 	// TODO index could be out of range
@@ -60,6 +71,12 @@ func (a *Address) CurrentParams() string {
 	}
 
 	return strings.Join(pr[1:], ":")
+}
+
+// Processed returns the processed stack items
+func (a *Address) Processed() []string {
+	// TODO index could be out of range
+	return a.stack[:a.index]
 }
 
 // Remaining returns the remaining stack items

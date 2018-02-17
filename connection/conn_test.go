@@ -1,4 +1,4 @@
-package fabric
+package connection
 
 // Basic imports
 import (
@@ -8,7 +8,9 @@ import (
 	"time"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
+	suite "github.com/stretchr/testify/suite"
+
+	address "github.com/nimona/go-nimona-fabric/address"
 )
 
 // ConnTestSuite -
@@ -26,8 +28,8 @@ func (suite *ConnTestSuite) SetupTest() {
 }
 
 func (suite *ConnTestSuite) TestNewConnWrapper() {
-	addr := NewAddress("foo/bar")
-	cn := newConnWrapper(suite.mockConn, addr).(*conn)
+	addr := address.NewAddress("foo/bar")
+	cn := NewConnWrapper(suite.mockConn, addr).(*conn)
 	suite.Assert().Equal(addr, cn.address)
 	suite.Assert().Equal(suite.mockConn, cn.conn)
 }
@@ -123,7 +125,7 @@ func (suite *ConnTestSuite) TestReadToken() {
 }
 
 func (suite *ConnTestSuite) TestGetAddress() {
-	addr := &Address{}
+	addr := address.NewAddress("")
 	suite.conn.address = addr
 	retAddr := suite.conn.GetAddress()
 	suite.Assert().Equal(addr, retAddr)
