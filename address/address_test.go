@@ -95,6 +95,24 @@ func (suite *AddressTestSuite) TestRemainingSuccess() {
 	suite.Assert().Equal(1, addr.index)
 }
 
+func (suite *AddressTestSuite) TestProcessedSuccess() {
+	addrString := "foo/bar/more"
+	addr := NewAddress(addrString)
+
+	part := addr.Pop()
+	suite.Assert().Equal("foo", part)
+	suite.Assert().Equal(1, addr.index)
+
+	processed := addr.Processed()
+	suite.Assert().Equal([]string{"foo"}, processed)
+	suite.Assert().Equal(1, addr.index)
+
+	addr.Pop()
+	processed = addr.Processed()
+	suite.Assert().Equal([]string{"foo", "bar"}, processed)
+	suite.Assert().Equal(2, addr.index)
+}
+
 func (suite *AddressTestSuite) TestRemainingStringSuccess() {
 	addrString := "foo/bar/more"
 	addr := NewAddress(addrString)
