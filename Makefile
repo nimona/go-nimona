@@ -6,7 +6,7 @@ test-cover:
 	@rm coverage.txt || true
 	@rm coverage-temp.txt || true
 	$(foreach pkg,$(PACKAGES),\
-		go test -coverprofile=coverage-temp.txt -covermode=atomic -race $(pkg);\
+		go test -coverprofile=coverage-temp.txt -covermode=count -race $(pkg);\
 		tail -n +2 coverage-temp.txt | grep -v _mock >> coverage.txt;)
 	@rm coverage-temp.txt
 
