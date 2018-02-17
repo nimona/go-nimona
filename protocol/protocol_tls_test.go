@@ -1,4 +1,4 @@
-package fabric
+package protocol
 
 // Basic imports
 import (
@@ -12,20 +12,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
+	suite "github.com/stretchr/testify/suite"
 )
 
 // ProtocolTLSTestSuite -
 type ProtocolTLSTestSuite struct {
 	suite.Suite
-	fabric *Fabric
-	ctx    context.Context
-	cert   tls.Certificate
+	ctx  context.Context
+	cert tls.Certificate
 }
 
 func (suite *ProtocolTLSTestSuite) SetupTest() {
 	suite.ctx = context.Background()
-	suite.fabric = New(suite.ctx)
 	cert, err := suite.createCert()
 	suite.Assert().Nil(err)
 	suite.cert = cert
@@ -36,10 +34,6 @@ func (suite *ProtocolTLSTestSuite) TestName() {
 		Certificates:       []tls.Certificate{suite.cert},
 		InsecureSkipVerify: true,
 	}}
-
-	tlsErr := suite.fabric.AddProtocol(tls)
-	suite.Assert().Nil(tlsErr)
-	suite.Assert().Len(suite.fabric.protocols, 1)
 
 	name := tls.Name()
 	suite.Assert().Equal("tls", name)

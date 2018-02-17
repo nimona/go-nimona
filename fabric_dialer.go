@@ -5,7 +5,11 @@ import (
 	"errors"
 	"reflect"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	address "github.com/nimona/go-nimona-fabric/address"
+	logging "github.com/nimona/go-nimona-fabric/logging"
+	protocol "github.com/nimona/go-nimona-fabric/protocol"
 )
 
 var (
@@ -20,11 +24,11 @@ type RequestIDKey struct{}
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) error {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
-	lgr := Logger(ctx)
+	lgr := logging.Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 
 	// TODO validate the address
-	addr := NewAddress(as)
+	addr := address.NewAddress(as)
 
 	// find transport we can dial
 	// TODO figure out priorities, eg yamux should be more important than tcp
@@ -50,7 +54,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) error {
 		)
 
 		// create chain with remaining protocols
-		remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
+		remProtocols := make([]protocol.Protocol, len(newAddr.RemainingProtocols()))
 		for i, prName := range newAddr.RemainingProtocols() {
 			protocol, ok := f.protocols[prName]
 			if !ok {
@@ -59,7 +63,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) error {
 			}
 			remProtocols[i] = protocol
 		}
-		chain := negotiatorChain(remProtocols...)
+		chain := protocol.NegotiatorChain(remProtocols...)
 		if err := chain(newCtx, newConn); err != nil {
 			lgr.Warn("Could not negotiate", zap.String("transport", trType), zap.Error(err))
 			continue

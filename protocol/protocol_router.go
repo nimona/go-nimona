@@ -1,11 +1,14 @@
-package fabric
+package protocol
 
 import (
 	"context"
 	"errors"
 	"strings"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	conn "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 var (
@@ -35,9 +38,9 @@ func (m *RouterProtocol) Name() string {
 // Handle is the protocol handler for the server
 func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c conn.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := logging.Logger(ctx).With(
 			zap.Namespace("protocol:router"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -72,7 +75,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrString string) error {
+func (m *RouterProtocol) handleGet(ctx context.Context, c conn.Conn, remainingAddrString string) error {
 	remainingAddr := strings.Split(remainingAddrString, "/")
 
 	validRoute := ""
@@ -89,21 +92,20 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrStr
 
 	// TODO not sure about append, might wanna cut the stack up to our index
 	// and the append the new stack
-	addr := c.GetAddress()
-	addr.stack = append(addr.stack, remainingAddr...)
+	c.GetAddress().Append(remainingAddr...)
 
 	if err := c.WriteToken([]byte("ACK " + remainingAddrString)); err != nil {
 		return err
 	}
 
-	chain := handlerChain(m.routes[validRoute]...)
+	chain := HandlerChain(m.routes[validRoute]...)
 	return chain(ctx, c)
 }
 
 // Negotiate handles the client's side of the nimona protocol
 func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c conn.Conn) error {
 		c.GetAddress().Pop()
 		pr := c.GetAddress().RemainingString()
 		if err := c.WriteToken([]byte("SEL " + pr)); err != nil {

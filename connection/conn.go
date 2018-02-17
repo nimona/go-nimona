@@ -1,11 +1,14 @@
-package fabric
+package connection
 
 import (
 	"net"
 	"time"
+
+	address "github.com/nimona/go-nimona-fabric/address"
 )
 
-func newConnWrapper(c net.Conn, addr *Address) Conn {
+// NewConnWrapper wraps a simple net.Conn around a Conn with address
+func NewConnWrapper(c net.Conn, addr *address.Address) Conn {
 	// TODO copy address
 	return &conn{
 		conn:    c,
@@ -15,7 +18,7 @@ func newConnWrapper(c net.Conn, addr *Address) Conn {
 
 type conn struct {
 	conn    net.Conn
-	address *Address
+	address *address.Address
 }
 
 // Conn is a generic stream-oriented network connection.
@@ -71,7 +74,7 @@ type Conn interface {
 	// A zero value for t means Write will not time out.
 	SetWriteDeadline(t time.Time) error
 
-	GetAddress() *Address
+	GetAddress() *address.Address
 	ReadToken() ([]byte, error)
 	WriteToken(bs []byte) error
 }
@@ -121,7 +124,7 @@ func (c *conn) SetWriteDeadline(t time.Time) error {
 }
 
 // GetAddress for the connection
-func (c *conn) GetAddress() *Address {
+func (c *conn) GetAddress() *address.Address {
 	return c.address
 }
 

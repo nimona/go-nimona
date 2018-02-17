@@ -1,4 +1,4 @@
-package fabric
+package transport
 
 import (
 	"context"
@@ -8,7 +8,12 @@ import (
 	"strconv"
 
 	upnp "github.com/NebulousLabs/go-upnp"
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	address "github.com/nimona/go-nimona-fabric/address"
+	conn "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
+	protocol "github.com/nimona/go-nimona-fabric/protocol"
 )
 
 // NewTransportTCP returns a new TCP transport
@@ -41,7 +46,7 @@ type TCP struct {
 }
 
 // DialContext attemps to dial to the peer with the given addr
-func (t *TCP) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
+func (t *TCP) DialContext(ctx context.Context, addr *address.Address) (context.Context, conn.Conn, error) {
 	pr := addr.CurrentParams()
 	tcon, err := net.Dial("tcp", pr)
 	if err != nil {
@@ -50,13 +55,13 @@ func (t *TCP) DialContext(ctx context.Context, addr *Address) (context.Context, 
 
 	addr.Pop()
 
-	conn := newConnWrapper(tcon, addr)
+	c := conn.NewConnWrapper(tcon, addr)
 
-	return ctx, conn, nil
+	return ctx, c, nil
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *TCP) CanDial(addr *Address) (bool, error) {
+func (t *TCP) CanDial(addr *address.Address) (bool, error) {
 	if addr.CurrentProtocol() != "tcp" {
 		return false, nil
 	}
@@ -76,7 +81,7 @@ func (t *TCP) CanDial(addr *Address) (bool, error) {
 }
 
 // Listen handles the transports
-func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
+func (t *TCP) Listen(ctx context.Context, handler protocol.HandlerFunc) error {
 	addr := fmt.Sprintf("%s:%d", t.host, t.port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -94,24 +99,24 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 		for {
 			// Listen for an incoming connection.
 			tcon, err := listener.Accept()
-			addr := NewAddress(addr)
+			addr := address.NewAddress(addr)
 			addr.Pop()
-			conn := newConnWrapper(tcon, addr)
+			c := conn.NewConnWrapper(tcon, addr)
 			if err != nil {
-				Logger(ctx).Error("Could not accept TCP connection",
+				logging.Logger(ctx).Error("Could not accept TCP connection",
 					zap.Error(err))
 				continue
 			}
-			go t.handleListen(ctx, conn, handler)
+			go t.handleListen(ctx, c, handler)
 		}
 	}()
 
 	return nil
 }
 
-func (t *TCP) handleListen(ctx context.Context, conn Conn, handler HandlerFunc) {
+func (t *TCP) handleListen(ctx context.Context, conn conn.Conn, handler protocol.HandlerFunc) {
 	if err := handler(ctx, conn); err != nil {
-		Logger(ctx).Error("Listen: Could not handle request",
+		logging.Logger(ctx).Error("Listen: Could not handle request",
 			zap.Error(err))
 	}
 }
@@ -133,7 +138,7 @@ func (t *TCP) startExternal(ctx context.Context) error {
 
 	err = t.upnp.Clear(uint16(extPort))
 	if err != nil {
-		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
+		logging.Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
 	err = t.upnp.Forward(uint16(extPort), "fabric")

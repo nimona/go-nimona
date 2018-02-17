@@ -1,4 +1,4 @@
-package fabric
+package transport
 
 import mock "github.com/stretchr/testify/mock"
 
