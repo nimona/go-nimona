@@ -82,6 +82,17 @@ func (suite *AddressTestSuite) TestPopSuccess() {
 	suite.Assert().Equal(2, addr.index)
 }
 
+func (suite *AddressTestSuite) TestAppendSuccess() {
+	addrString := "foo"
+	addr := NewAddress(addrString)
+	suite.Assert().Len(addr.stack, 1)
+	suite.Assert().Equal(addr.stack[0], "foo")
+
+	addr.Append("bar")
+	suite.Assert().Len(addr.stack, 2)
+	suite.Assert().Equal(addr.stack[1], "bar")
+}
+
 func (suite *AddressTestSuite) TestRemainingSuccess() {
 	addrString := "foo/bar/more"
 	addr := NewAddress(addrString)
