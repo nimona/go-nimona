@@ -39,12 +39,6 @@ func (a *Address) Pop() string {
 	return a.stack[ci]
 }
 
-// Rewind the stack to the previous item
-func (a *Address) Rewind() {
-	a.index--
-	return
-}
-
 // Append item to stack
 func (a *Address) Append(items ...string) {
 	a.stack = append(a.stack, items...)
