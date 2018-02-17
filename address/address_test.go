@@ -137,6 +137,14 @@ func (suite *AddressTestSuite) TestRemainingStringSuccess() {
 	suite.Assert().Equal(1, addr.index)
 }
 
+func (suite *AddressTestSuite) TestRemainingProtocolsSuccess() {
+	addrString := "foo:param/bar:param/more:param"
+	addr := NewAddress(addrString)
+
+	remaining := addr.RemainingProtocols()
+	suite.Assert().Equal([]string{"foo", "bar", "more"}, remaining)
+}
+
 func (suite *AddressTestSuite) TestResetSuccess() {
 	addrString := "foo/bar"
 	addr := NewAddress(addrString)
