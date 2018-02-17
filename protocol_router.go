@@ -119,8 +119,6 @@ func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 			return errors.New("Invalid selector response")
 		}
 
-		c.GetAddress().Pop()
-
 		return fn(ctx, c)
 	}
 }
