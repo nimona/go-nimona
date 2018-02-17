@@ -3,10 +3,9 @@ PACKAGES = $(shell find ./ -type d -not -path '*/\.*' | egrep -v 'vendor|example
 
 test-cover:
 	@echo "mode: count" > coverage.txt
-	@rm coverage.txt || true
-	@rm coverage-temp.txt || true
+	@echo "mode: atomic" > coverage.txt
 	$(foreach pkg,$(PACKAGES),\
-		go test -coverprofile=coverage-temp.txt -covermode=count $(pkg);\
+		go test -coverprofile=coverage-temp.txt -covermode=atomic -race $(pkg);\
 		tail -n +2 coverage-temp.txt | grep -v _mock >> coverage.txt;)
 	@rm coverage-temp.txt
 
