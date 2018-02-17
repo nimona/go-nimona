@@ -147,14 +147,12 @@ func (t *TCP) startExternal(ctx context.Context) error {
 // Addresses returns the addresses the transport is listening to
 func (t *TCP) Addresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
-	addrs, err := GetAddresses(port)
-	if err != nil {
-		return []string{}
-	}
-
+	// TODO log errors
+	addrs, _ := GetLocalAddresses(port)
+	publicAddrs, _ := GetPublicAddresses(port, t.upnp)
+	addrs = append(addrs, publicAddrs...)
 	for i, addr := range addrs {
 		addrs[i] = "tcp:" + addr
 	}
-
 	return addrs
 }

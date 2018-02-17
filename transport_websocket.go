@@ -60,8 +60,8 @@ func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
 		return nil, nil, err
 	}
 
+	addr.Pop()
 	conn := newConnWrapper(tcon, addr)
-
 	return ctx, conn, nil
 }
 
@@ -72,6 +72,7 @@ func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
 	wsh := websocket.Handler(func(tcon *websocket.Conn) {
 		addr := NewAddress("") // TODO fix address
 		conn := newConnWrapper(tcon, addr)
+		addr.Pop()
 		if err := handler(ctx, conn); err != nil {
 			lgr.Error("Could not handle ws connection", zap.Error(err))
 		}
@@ -97,14 +98,12 @@ func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
 // Addresses returns the address the transport is listening to
 func (t *Websocket) Addresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
-	addrs, err := GetAddresses(port)
-	if err != nil {
-		return []string{}
-	}
-
+	// TODO log errors
+	addrs, _ := GetLocalAddresses(port)
+	// publicAddrs, _ := GetPublicAddresses(port, t.upnp)
+	// addrs = append(addrs, publicAddrs...)
 	for i, addr := range addrs {
 		addrs[i] = "ws:" + addr
 	}
-
 	return addrs
 }

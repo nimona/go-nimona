@@ -5,12 +5,10 @@ import (
 	"log"
 	"net"
 	"strings"
-
-	upnp "github.com/NebulousLabs/go-upnp"
 )
 
-// GetAddresses returns the addresses TCP can listen to on the local machine
-func GetAddresses(port int) ([]string, error) {
+// GetLocalAddresses returns the addresses TCP can listen to on the local machine
+func GetLocalAddresses(port int) ([]string, error) {
 	// go through all ifs
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -36,14 +34,17 @@ func GetAddresses(port int) ([]string, error) {
 			addrs = append(addrs, hostPort)
 		}
 	}
+	return addrs, nil
+}
 
-	upr, err := upnp.Discover()
-	if err != nil {
-		log.Println("Router not found: ", err)
+// GetPublicAddresses returns the addresses TCP can listen to on the local machine
+func GetPublicAddresses(port int, upnp UPNP) ([]string, error) {
+	addrs := []string{}
+	if upnp == nil {
 		return addrs, nil
 	}
 
-	ip, err := upr.ExternalIP()
+	ip, err := upnp.ExternalIP()
 	if err != nil {
 		log.Println("External IP not found: ", err)
 		return addrs, nil
@@ -53,7 +54,6 @@ func GetAddresses(port int) ([]string, error) {
 		hostPort := fmt.Sprintf("%s:%d", ip, port)
 		addrs = append(addrs, hostPort)
 	}
-
 	return addrs, nil
 }
 
