@@ -25,7 +25,5 @@ jobs:
       - run:
           name: Run tests
           command: |
-            go test -v -race -coverprofile=coverage-temp.txt -covermode=atomic $(go list | grep -v vendor)
-            cat coverage-temp.txt | grep -v _mock.go > coverage.txt
-            rm coverage-temp.txt
+            make test-cover
             bash <(curl -s https://codecov.io/bash)
