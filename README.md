@@ -1,5 +1,6 @@
 [![CircleCI](https://img.shields.io/circleci/project/github/nimona/go-nimona-fabric.svg?style=flat-square)](https://circleci.com/gh/nimona/go-nimona-fabric)
 [![Code Climate](https://img.shields.io/codeclimate/maintainability/nimona/go-nimona-fabric.svg?style=flat-square)](https://codeclimate.com/github/nimona/go-nimona-fabric/maintainability)
+[![Codecov](https://img.shields.io/codecov/c/github/nimona/go-nimona-fabric.svg)](https://codecov.io/gh/nimona/go-nimona-fabric)
 [![license](https://img.shields.io/github/license/nimona/go-nimona-fabric.svg?style=flat-square)](https://github.com/nimona/go-nimona-fabric/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/nimona/go-nimona-fabric.svg?style=flat-square)](https://github.com/nimona/go-nimona-fabric/issues)
 [![Waffle.io](https://img.shields.io/waffle/label/nimona/go-nimona-fabric/in%20progress.svg?style=flat-square)](https://waffle.io/nimona/go-nimona-fabric)
