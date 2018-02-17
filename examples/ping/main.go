@@ -56,13 +56,13 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	ping := &Ping{}
 
 	tcp := fabric.NewTransportTCP("0.0.0.0", 0)
-	ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
+	// ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
 
 	f := fabric.New(ctx)
 
 	f.AddTransport(yamux, []fabric.Protocol{router})
 	f.AddTransport(tcp, []fabric.Protocol{tls, yamux, router})
-	f.AddTransport(ws, []fabric.Protocol{tls, yamux, router})
+	// f.AddTransport(ws, []fabric.Protocol{tls, yamux, router})
 
 	f.AddProtocol(router)
 	f.AddProtocol(tls)
