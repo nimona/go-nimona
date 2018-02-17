@@ -2,6 +2,8 @@ package connection
 
 // Basic imports
 import (
+	"bufio"
+	"encoding/binary"
 	"errors"
 	"io"
 	"sync"
@@ -36,9 +38,25 @@ func (suite *UtilsTestSuite) TestReadWriteToken() {
 
 func (suite *UtilsTestSuite) TestWriteTokenError() {
 	reader, writter := io.Pipe()
+	payload := []byte("hello")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		_, err := ReadToken(reader)
+		suite.Assert().NotNil(err)
+		wg.Done()
+	}()
+
+	bw := bufio.NewWriter(writter)
+	vb := make([]byte, 16)
+	n := binary.PutUvarint(vb, uint64(len(payload)))
+	wb := append(vb[:n], payload[:2]...)
+	writter.Write(wb)
+	bw.Flush()
 	writter.CloseWithError(errors.New("error"))
-	_, err := ReadToken(reader)
-	suite.Assert().NotNil(err)
+	wg.Wait()
 }
 
 func TestUtilsTestSuite(t *testing.T) {
