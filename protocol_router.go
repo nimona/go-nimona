@@ -77,7 +77,7 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrStr
 
 	validRoute := ""
 	for route := range m.routes {
-		if strings.HasPrefix(route, remainingAddrString) {
+		if strings.HasPrefix(remainingAddrString, route) {
 			validRoute = route
 			break
 		}
