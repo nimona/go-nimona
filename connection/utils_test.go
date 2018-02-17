@@ -2,6 +2,7 @@ package connection
 
 // Basic imports
 import (
+	"errors"
 	"io"
 	"sync"
 	"testing"
@@ -12,9 +13,6 @@ import (
 // UtilsTestSuite -
 type UtilsTestSuite struct {
 	suite.Suite
-}
-
-func (suite *UtilsTestSuite) SetupTest() {
 }
 
 func (suite *UtilsTestSuite) TestReadWriteToken() {
@@ -34,6 +32,13 @@ func (suite *UtilsTestSuite) TestReadWriteToken() {
 	err := WriteToken(writter, payload)
 	suite.Assert().Nil(err)
 	wg.Wait()
+}
+
+func (suite *UtilsTestSuite) TestWriteTokenError() {
+	reader, writter := io.Pipe()
+	writter.CloseWithError(errors.New("error"))
+	_, err := ReadToken(reader)
+	suite.Assert().NotNil(err)
 }
 
 func TestUtilsTestSuite(t *testing.T) {
