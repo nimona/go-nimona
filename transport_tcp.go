@@ -16,6 +16,19 @@ func NewTransportTCP(host string, port int) Transport {
 	return &TCP{
 		host: host,
 		port: port,
+		upnp: nil,
+	}
+}
+
+// NewTransportTCPWithUPNP returns a new TCP transport
+func NewTransportTCPWithUPNP(host string, port int) Transport {
+	upnp, _ := upnp.Discover()
+	// TODO log error
+
+	return &TCP{
+		host: host,
+		port: port,
+		upnp: upnp,
 	}
 }
 
@@ -24,22 +37,26 @@ type TCP struct {
 	host     string
 	port     int
 	listener net.Listener
+	upnp     UPNP
 }
 
 // DialContext attemps to dial to the peer with the given addr
-func (t *TCP) DialContext(ctx context.Context, addr Address) (
-	net.Conn, error) {
+func (t *TCP) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
 	pr := addr.CurrentParams()
 	tcon, err := net.Dial("tcp", pr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return tcon, nil
+	addr.Pop()
+
+	conn := newConnWrapper(tcon, addr)
+
+	return ctx, conn, nil
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *TCP) CanDial(addr Address) (bool, error) {
+func (t *TCP) CanDial(addr *Address) (bool, error) {
 	if addr.CurrentProtocol() != "tcp" {
 		return false, nil
 	}
@@ -59,7 +76,7 @@ func (t *TCP) CanDial(addr Address) (bool, error) {
 }
 
 // Listen handles the transports
-func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
+func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 	addr := fmt.Sprintf("%s:%d", t.host, t.port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -70,13 +87,16 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 
 	err = t.startExternal(ctx)
 	if err != nil {
-		Logger(ctx).Error("Could not open upnp port: ", zap.Error(err))
+		// Logger(ctx).Debug("Could not open upnp port: ", zap.Error(err))
 	}
 
 	go func() {
 		for {
 			// Listen for an incoming connection.
-			conn, err := listener.Accept()
+			tcon, err := listener.Accept()
+			addr := NewAddress(addr)
+			addr.Pop()
+			conn := newConnWrapper(tcon, addr)
 			if err != nil {
 				Logger(ctx).Error("Could not accept TCP connection",
 					zap.Error(err))
@@ -89,7 +109,7 @@ func (t *TCP) Listen(ctx context.Context, handler func(context.Context, net.Conn
 	return nil
 }
 
-func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(context.Context, net.Conn) error) {
+func (t *TCP) handleListen(ctx context.Context, conn Conn, handler HandlerFunc) {
 	if err := handler(ctx, conn); err != nil {
 		Logger(ctx).Error("Listen: Could not handle request",
 			zap.Error(err))
@@ -97,9 +117,8 @@ func (t *TCP) handleListen(ctx context.Context, conn net.Conn, handler func(cont
 }
 
 func (t *TCP) startExternal(ctx context.Context) error {
-	upr, err := upnp.Discover()
-	if err != nil {
-		return err
+	if t.upnp == nil {
+		return nil
 	}
 
 	_, xpstr, err := net.SplitHostPort(t.listener.Addr().String())
@@ -112,12 +131,12 @@ func (t *TCP) startExternal(ctx context.Context) error {
 		return err
 	}
 
-	err = upr.Clear(uint16(extPort))
+	err = t.upnp.Clear(uint16(extPort))
 	if err != nil {
-		Logger(ctx).Error("Could not clear upnp: ", zap.Error(err))
+		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
-	err = upr.Forward(uint16(extPort), "fabric")
+	err = t.upnp.Forward(uint16(extPort), "fabric")
 	if err != nil {
 		return err
 	}
@@ -128,14 +147,12 @@ func (t *TCP) startExternal(ctx context.Context) error {
 // Addresses returns the addresses the transport is listening to
 func (t *TCP) Addresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
-	addrs, err := GetAddresses(port)
-	if err != nil {
-		return []string{}
-	}
-
+	// TODO log errors
+	addrs, _ := GetLocalAddresses(port)
+	publicAddrs, _ := GetPublicAddresses(port, t.upnp)
+	addrs = append(addrs, publicAddrs...)
 	for i, addr := range addrs {
 		addrs[i] = "tcp:" + addr
 	}
-
 	return addrs
 }

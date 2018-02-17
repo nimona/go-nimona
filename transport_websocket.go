@@ -29,7 +29,7 @@ type Websocket struct {
 }
 
 // CanDial checks if address can be dialed by this transport
-func (t *Websocket) CanDial(addr Address) (bool, error) {
+func (t *Websocket) CanDial(addr *Address) (bool, error) {
 	if addr.CurrentProtocol() != "ws" {
 		return false, nil
 	}
@@ -49,25 +49,30 @@ func (t *Websocket) CanDial(addr Address) (bool, error) {
 }
 
 // DialContext attempts to dial to the peer with the given address
-func (t *Websocket) DialContext(ctx context.Context, addr Address) (
-	net.Conn, error) {
+func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
+	context.Context, Conn, error) {
 	pr := addr.CurrentParams()
 
 	// TODO fix origin to use a real address
 	origin := fmt.Sprintf("ws://%s:%d", t.host, t.port)
 	tcon, err := websocket.Dial("ws://"+pr, "", origin)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return tcon, nil
+	addr.Pop()
+	conn := newConnWrapper(tcon, addr)
+	return ctx, conn, nil
 }
 
 // Listen starts listening for incoming connections
-func (t *Websocket) Listen(ctx context.Context, handler func(context.Context, net.Conn) error) error {
+func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
 	lgr := Logger(ctx)
 
-	wsh := websocket.Handler(func(conn *websocket.Conn) {
+	wsh := websocket.Handler(func(tcon *websocket.Conn) {
+		addr := NewAddress("") // TODO fix address
+		conn := newConnWrapper(tcon, addr)
+		addr.Pop()
 		if err := handler(ctx, conn); err != nil {
 			lgr.Error("Could not handle ws connection", zap.Error(err))
 		}
@@ -93,14 +98,12 @@ func (t *Websocket) Listen(ctx context.Context, handler func(context.Context, ne
 // Addresses returns the address the transport is listening to
 func (t *Websocket) Addresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
-	addrs, err := GetAddresses(port)
-	if err != nil {
-		return []string{}
-	}
-
+	// TODO log errors
+	addrs, _ := GetLocalAddresses(port)
+	// publicAddrs, _ := GetPublicAddresses(port, t.upnp)
+	// addrs = append(addrs, publicAddrs...)
 	for i, addr := range addrs {
 		addrs[i] = "ws:" + addr
 	}
-
 	return addrs
 }

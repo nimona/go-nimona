@@ -2,8 +2,10 @@ package fabric
 
 // Basic imports
 import (
+	"context"
 	"testing"
 
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -11,24 +13,28 @@ import (
 type FabricTestSuite struct {
 	suite.Suite
 	fabric *Fabric
+	ctx    context.Context
 }
 
 func (suite *FabricTestSuite) SetupTest() {
-	suite.fabric = New()
+	suite.ctx = context.Background()
+	suite.fabric = New(suite.ctx)
 }
 
 func (suite *FabricTestSuite) TestAddTransportSuccess() {
 	transport1 := &MockTransport{}
-	err := suite.fabric.AddTransport(transport1)
+	transport1.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	err := suite.fabric.AddTransport(transport1, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport1, suite.fabric.transports[0])
+	suite.Assert().Equal(transport1, suite.fabric.transports[0].Transport)
 
 	transport2 := &MockTransport{}
-	err = suite.fabric.AddTransport(transport2)
+	transport2.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	err = suite.fabric.AddTransport(transport2, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 2)
-	suite.Assert().Equal(transport2, suite.fabric.transports[1])
+	suite.Assert().Equal(transport2, suite.fabric.transports[1].Transport)
 }
 
 func (suite *FabricTestSuite) TestAddProtocolSuccess() {
@@ -56,10 +62,10 @@ func (suite *FabricTestSuite) TestGetAddressesSuccess() {
 		"tr1.addr2",
 	}
 	transport1.On("Addresses").Return(addresses1)
-	err := suite.fabric.AddTransport(transport1)
+	transport1.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	err := suite.fabric.AddTransport(transport1, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport1, suite.fabric.transports[0])
 
 	transport2 := &MockTransport{}
 	addresses2 := []string{
@@ -67,10 +73,10 @@ func (suite *FabricTestSuite) TestGetAddressesSuccess() {
 		"tr2.addr2",
 	}
 	transport2.On("Addresses").Return(addresses2)
-	err = suite.fabric.AddTransport(transport2)
+	transport2.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	err = suite.fabric.AddTransport(transport2, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 2)
-	suite.Assert().Equal(transport2, suite.fabric.transports[1])
 
 	addressesAll := append(addresses1, addresses2...)
 

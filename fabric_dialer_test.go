@@ -14,121 +14,196 @@ import (
 type FabricDialerTestSuite struct {
 	suite.Suite
 	fabric *Fabric
+	ctx    context.Context
 }
 
 func (suite *FabricDialerTestSuite) SetupTest() {
-	suite.fabric = New()
+	suite.ctx = context.Background()
+	suite.fabric = New(suite.ctx)
 }
 
 func (suite *FabricDialerTestSuite) TestDialContextSuccess() {
+	ctx := context.Background()
+
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return("test")
+	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	protocol.On("Handle", mock.Anything).Return(handler)
+	protocol.On("Negotiate", mock.Anything).Return(negotiator)
+	protErr := suite.fabric.AddProtocol(protocol)
+	suite.Assert().Nil(protErr)
+	suite.Assert().Len(suite.fabric.protocols, 1)
+
+	addrString := "test"
+	addr := NewAddress(addrString)
+	mockConn := &MockConn{}
+	mockConn.On("GetAddress").Return(addr)
+
 	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(true, nil)
+	transport.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	err := suite.fabric.AddTransport(transport, []Protocol{protocol})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
 
-	ctx := context.Background()
-	mockConn := &MockConn{}
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("DialContext", mock.Anything, addr).Return(mockConn, nil)
-	transport.On("CanDial", addr).Return(true, nil)
-	retCtx, retConn, retErr := suite.fabric.DialContext(ctx, addrString)
-	suite.Assert().NotNil(retCtx)
-	suite.Assert().Equal(mockConn, retConn.(*conn).conn)
+	retErr := suite.fabric.DialContext(ctx, addrString)
 	suite.Assert().Nil(retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
-	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, addr)
+	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
-func (suite *FabricDialerTestSuite) TestDialTransportSuccess() {
-	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
-
+func (suite *FabricDialerTestSuite) TestDialTransportCannotDial() {
 	ctx := context.Background()
+
+	addrString := "test"
+	addr := NewAddress(addrString)
 	mockConn := &MockConn{}
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("DialContext", mock.Anything, addr).Return(mockConn, nil)
-	transport.On("CanDial", addr).Return(true, nil)
-	retConn, retErr := suite.fabric.dialTransport(ctx, addr)
-	suite.Assert().Equal(mockConn, retConn.(*conn).conn)
-	suite.Assert().Nil(retErr)
-	transport.AssertCalled(suite.T(), "CanDial", addr)
-	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, addr)
-}
+	mockConn.On("GetAddress").Return(addr)
 
-func (suite *FabricDialerTestSuite) TestDialTransportFails() {
 	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(false, nil)
+	err := suite.fabric.AddTransport(transport, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
 
-	ctx := context.Background()
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("DialContext", mock.Anything, addr).Return(nil, errors.New("Random error"))
-	transport.On("CanDial", addr).Return(true, nil)
-	retConn, retErr := suite.fabric.dialTransport(ctx, addr)
-	suite.Assert().Nil(retConn)
+	retErr := suite.fabric.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
-	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, addr)
 }
 
-func (suite *FabricDialerTestSuite) TestGetTransportSuccess() {
+func (suite *FabricDialerTestSuite) TestDialTransportError() {
+	ctx := context.Background()
+
+	addrString := "test"
+	addr := NewAddress(addrString)
+	mockConn := &MockConn{}
+	mockConn.On("GetAddress").Return(addr)
+
 	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(false, errors.New("error"))
+	err := suite.fabric.AddTransport(transport, []Protocol{})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
 
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("CanDial", addr).Return(true, nil)
-	retTransport, retErr := suite.fabric.getTransport(addr)
-	suite.Assert().Equal(transport, retTransport)
-	suite.Assert().Nil(retErr)
-	transport.AssertCalled(suite.T(), "CanDial", addr)
-}
-
-func (suite *FabricDialerTestSuite) TestGetTransportError() {
-	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
-	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
-
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("CanDial", addr).Return(false, errors.New("Random error"))
-	retTransport, retErr := suite.fabric.getTransport(addr)
-	suite.Assert().Nil(retTransport)
+	retErr := suite.fabric.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 }
 
 func (suite *FabricDialerTestSuite) TestDialContextFails() {
+	ctx := context.Background()
+
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return("test")
+	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	protocol.On("Handle", mock.Anything).Return(handler)
+	protocol.On("Negotiate", mock.Anything).Return(negotiator)
+	protErr := suite.fabric.AddProtocol(protocol)
+	suite.Assert().Nil(protErr)
+	suite.Assert().Len(suite.fabric.protocols, 1)
+
+	addrString := "test"
+	addr := NewAddress(addrString)
+	mockConn := &MockConn{}
+	mockConn.On("GetAddress").Return(addr)
+
 	transport := &MockTransport{}
-	err := suite.fabric.AddTransport(transport)
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(true, nil)
+	transport.On("DialContext", mock.Anything, mock.Anything).Return(nil, nil, errors.New("error"))
+	err := suite.fabric.AddTransport(transport, []Protocol{protocol})
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
-	suite.Assert().Equal(transport, suite.fabric.transports[0])
 
-	ctx := context.Background()
-	addrString := "some-address"
-	addr := NewAddress(addrString)
-	transport.On("CanDial", addr).Return(false, nil)
-	retCtx, retConn, retErr := suite.fabric.DialContext(ctx, addrString)
-	suite.Assert().Nil(retCtx)
-	suite.Assert().Nil(retConn)
-	suite.Assert().NotNil(retErr)
+	retErr := suite.fabric.DialContext(ctx, addrString)
+	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
-	transport.AssertNumberOfCalls(suite.T(), "DialContext", 0)
+	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
+}
+
+func (suite *FabricDialerTestSuite) TestNegotiatorFails() {
+	ctx := context.Background()
+
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return("test")
+	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+		return errors.New("error")
+	}
+	protocol.On("Handle", mock.Anything).Return(handler)
+	protocol.On("Negotiate", mock.Anything).Return(negotiator)
+	protErr := suite.fabric.AddProtocol(protocol)
+	suite.Assert().Nil(protErr)
+	suite.Assert().Len(suite.fabric.protocols, 1)
+
+	addrString := "test"
+	addr := NewAddress(addrString)
+	mockConn := &MockConn{}
+	mockConn.On("GetAddress").Return(addr)
+
+	transport := &MockTransport{}
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(true, nil)
+	transport.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	err := suite.fabric.AddTransport(transport, []Protocol{protocol})
+	suite.Assert().Nil(err)
+	suite.Assert().Len(suite.fabric.transports, 1)
+
+	retErr := suite.fabric.DialContext(ctx, addrString)
+	suite.Assert().Equal(ErrCouldNotDial, retErr)
+	transport.AssertCalled(suite.T(), "CanDial", addr)
+	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
+}
+
+func (suite *FabricDialerTestSuite) TestInvalidProtocolFails() {
+	ctx := context.Background()
+
+	protocol := &MockProtocol{}
+	protocol.On("Name").Return("nope")
+	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+		return nil
+	}
+	protocol.On("Handle", mock.Anything).Return(handler)
+	protocol.On("Negotiate", mock.Anything).Return(negotiator)
+	protErr := suite.fabric.AddProtocol(protocol)
+	suite.Assert().Nil(protErr)
+	suite.Assert().Len(suite.fabric.protocols, 1)
+
+	addrString := "test"
+	addr := NewAddress(addrString)
+	mockConn := &MockConn{}
+	mockConn.On("GetAddress").Return(addr)
+
+	transport := &MockTransport{}
+	transport.On("Listen", mock.Anything, mock.Anything).Return(nil)
+	transport.On("CanDial", addr).Return(true, nil)
+	transport.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
+	err := suite.fabric.AddTransport(transport, []Protocol{protocol})
+	suite.Assert().Nil(err)
+	suite.Assert().Len(suite.fabric.transports, 1)
+
+	retErr := suite.fabric.DialContext(ctx, addrString)
+	suite.Assert().Equal(ErrInvalidProtocol, retErr)
+	transport.AssertCalled(suite.T(), "CanDial", addr)
+	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
 func TestFabricDialerTestSuite(t *testing.T) {

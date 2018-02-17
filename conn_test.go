@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,8 +27,8 @@ func (suite *ConnTestSuite) SetupTest() {
 
 func (suite *ConnTestSuite) TestNewConnWrapper() {
 	addr := NewAddress("foo/bar")
-	cn := newConnWrapper(suite.mockConn, &addr).(*conn)
-	suite.Assert().Equal(&addr, cn.address)
+	cn := newConnWrapper(suite.mockConn, addr).(*conn)
+	suite.Assert().Equal(addr, cn.address)
 	suite.Assert().Equal(suite.mockConn, cn.conn)
 }
 
@@ -77,6 +78,15 @@ func (suite *ConnTestSuite) TestRemoteAddr() {
 	suite.mockConn.AssertCalled(suite.T(), "RemoteAddr")
 }
 
+func (suite *ConnTestSuite) TestReadDeadline() {
+	dl := time.Now()
+	err := errors.New("some-test")
+	suite.mockConn.On("SetDeadline", dl).Return(err)
+	retErr := suite.conn.SetDeadline(dl)
+	suite.Assert().Equal(err, retErr)
+	suite.mockConn.AssertCalled(suite.T(), "SetDeadline", dl)
+}
+
 func (suite *ConnTestSuite) TestSetReadDeadline() {
 	dl := time.Now()
 	err := errors.New("some-test")
@@ -93,6 +103,23 @@ func (suite *ConnTestSuite) TestSetWriteDeadline() {
 	retErr := suite.conn.SetWriteDeadline(dl)
 	suite.Assert().Equal(err, retErr)
 	suite.mockConn.AssertCalled(suite.T(), "SetWriteDeadline", dl)
+}
+
+func (suite *ConnTestSuite) TestWriteToken() {
+	// TODO check what is written
+	err := errors.New("some-test")
+	suite.mockConn.On("Write", mock.Anything).Return(0, err)
+	retErr := suite.conn.WriteToken([]byte(""))
+	suite.Assert().Equal(err, retErr)
+}
+
+func (suite *ConnTestSuite) TestReadToken() {
+	// TODO check what is read
+	err := errors.New("some-test")
+	suite.mockConn.On("Read", mock.Anything).Return(0, err)
+	bs, retErr := suite.conn.ReadToken()
+	suite.Assert().Empty(bs)
+	suite.Assert().Equal(err, retErr)
 }
 
 func (suite *ConnTestSuite) TestGetAddress() {
