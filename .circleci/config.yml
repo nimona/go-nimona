@@ -29,5 +29,4 @@ jobs:
           name: Run tests
           command: |
             make test-cover
-            bash <(curl -s https://codecov.io/bash)
             goveralls -v -coverprofile=coverage.txt -service=circle-ci -repotoken=$COVERALLS_TOKEN
