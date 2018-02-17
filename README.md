@@ -19,4 +19,4 @@ That being said, there is nothing prohibiting its use in other applications,
 eg microservices.  
 
 For a rational as well as more information you might want to check out the
-[design document](https://github.com/nimona/nimona/blob/master/fabric.md).
+[design document](https://github.com/nimona/nimona/blob/master/network.md).
