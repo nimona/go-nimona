@@ -20,20 +20,34 @@ func main() {
 		log.Fatal("Could not create peer B", err)
 	}
 
+	peerC, err := newPeer("PeerC")
+	if err != nil {
+		log.Fatal("Could not create peer C", err)
+	}
+
 	log.Println("Peer A address:", peerA.GetAddresses())
 
 	for _, addr := range peerA.GetAddresses() {
-		endpoint := addr + "/tls/yamux/router/identity/ping"
+		endpoint := addr + "/tls/yamux/router/relay:keepalive"
 		log.Println("-------- Dialing", endpoint)
 		if err := peerB.CallContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
 		}
-		endpoint = addr + "/tls/yamux/router/ping"
-		log.Println("-------- SECOND Dial", endpoint)
-		if err := peerB.CallContext(context.Background(), endpoint); err != nil {
-			log.Println("Dial error", err)
-		}
+
+		// endpoint = addr + "/tls/yamux/router/ping"
+		// time.Sleep(5 * time.Second)
+		// log.Println("-------- SECOND Dial", endpoint)
+		// if err := peerB.CallContext(context.Background(), endpoint); err != nil {
+		// 	log.Println("Dial error", err)
+		// }
+
+		addrPeerB := peerB.GetAddresses()[0]
+		endpoint = addrPeerB + "/tls/yamux/router/relay:" + addr + "/tls/yamux/router/ping"
+		log.Println("-------- THIRD Dial", endpoint)
+		peerC.CallContext(context.Background(), endpoint)
+
 	}
+
 }
 
 func newPeer(peerID string) (*fabric.Fabric, error) {
@@ -60,6 +74,8 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 
 	f := fabric.New(ctx)
 
+	relay := fabric.NewRelayProtocol(f)
+
 	f.AddTransport(yamux, []fabric.Protocol{router})
 	f.AddTransport(tcp, []fabric.Protocol{tls, yamux, router})
 	// f.AddTransport(ws, []fabric.Protocol{tls, yamux, router})
@@ -69,7 +85,9 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	f.AddProtocol(yamux)
 	f.AddProtocol(identity)
 	f.AddProtocol(ping)
+	f.AddProtocol(relay)
 
+	router.AddRoute(relay)
 	router.AddRoute(ping)
 	router.AddRoute(identity, ping)
 

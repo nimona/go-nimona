@@ -2,6 +2,8 @@ package fabric
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -9,8 +11,15 @@ import (
 )
 
 type RelayProtocol struct {
+	connections map[string]Conn
+	fabric      *Fabric
 }
 
+func NewRelayProtocol(f *Fabric) *RelayProtocol {
+	return &RelayProtocol{
+		fabric: f,
+	}
+}
 func (m *RelayProtocol) Name() string {
 	return "relay"
 }
@@ -25,17 +34,45 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 			zap.String("addr.params", addr.CurrentParams()),
 		)
 
-		if strings.Contains(addr.CurrentParams(), "keepalive") {
-			for {
-				token, err := c.ReadToken()
-				if err != nil {
-					lgr.Error("Could not read token", zap.Error(err))
-					return err
-				}
-				lgr.Debug("Read relay ping", zap.String("token", string(token)))
+		lgr.Debug("Handling Relay")
 
-			}
+		// For param `keepalive` start listening for a token
+		if strings.Contains(addr.CurrentParams(), "keepalive") {
+			go func() {
+				for {
+					_, err := c.ReadToken()
+					if err != nil {
+						lgr.Error("Could not read token", zap.Error(err))
+					}
+					// lgr.Debug("Read relay ping", zap.String("token", string(token)))
+
+				}
+			}()
+			return nil
 		}
+
+		// Construct the server url
+		host := addr.CurrentParams()
+		addr.Pop()
+		url := fmt.Sprintf(
+			"%s/%s", host,
+			strings.Join(addr.RemainingProtocols(), "/"))
+
+		// Connect
+		ctx, cn, err := m.fabric.DialContext(ctx, url)
+		if err != nil {
+			lgr.Error("Could not Dial client", zap.Error(err))
+			return err
+		}
+
+		// Pipe
+		go func() {
+			err = m.pipe(ctx, cn, c)
+			if err != nil {
+				lgr.Error("Could not start pipe", zap.Error(err))
+			}
+
+		}()
 		return nil
 	}
 }
@@ -50,18 +87,44 @@ func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 			zap.String("addr.params", addr.CurrentParams()),
 		)
 
+		lgr.Debug("Negotiating Relay")
 		if strings.Contains(addr.CurrentParams(), "keepalive") {
-			for {
-				if err := c.WriteToken([]byte("PONG")); err != nil {
-					lgr.Error("Could not write token", zap.Error(err))
-					return err
+			go func() {
+				for {
+					time.Sleep(10 * time.Second)
+					if err := c.WriteToken([]byte("PONG")); err != nil {
+						lgr.Error("Could not write token", zap.Error(err))
+					}
+
+					// lgr.Debug("Wrote relay ping")
 				}
-
-				lgr.Debug("Wrote relay ping")
-				time.Sleep(5 * time.Second)
-			}
-
+			}()
+			return nil
 		}
-		return nil
+
+		addr.Pop()
+		return fn(ctx, c)
 	}
+}
+
+func (m *RelayProtocol) pipe(ctx context.Context,
+	a, b io.ReadWriteCloser) error {
+	lgr := Logger(ctx).With(
+		zap.Namespace("protocol:relay"),
+	)
+
+	lgr.Info("Piping")
+	done := make(chan error, 1)
+
+	cp := func(r, w io.ReadWriteCloser) {
+		n, err := io.Copy(r, w)
+		if err != nil {
+			lgr.Error("Failed to copy bytes", zap.Error(err))
+		}
+		lgr.Debug("Bytes written", zap.Int64("bytes", n))
+		done <- err
+	}
+	go cp(a, b)
+	go cp(b, a)
+	return <-done
 }
