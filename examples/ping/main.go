@@ -25,12 +25,12 @@ func main() {
 	for _, addr := range peerA.GetAddresses() {
 		endpoint := addr + "/tls/yamux/router/identity/ping"
 		log.Println("-------- Dialing", endpoint)
-		if err := peerB.DialContext(context.Background(), endpoint); err != nil {
+		if err := peerB.CallContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
 		}
 		endpoint = addr + "/tls/yamux/router/ping"
 		log.Println("-------- SECOND Dial", endpoint)
-		if err := peerB.DialContext(context.Background(), endpoint); err != nil {
+		if err := peerB.CallContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
 		}
 	}
