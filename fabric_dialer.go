@@ -18,7 +18,7 @@ type RequestIDKey struct{}
 
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) DialContext(ctx context.Context, as string) error {
+func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
 	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
@@ -43,29 +43,48 @@ func (f *Fabric) DialContext(ctx context.Context, as string) error {
 		}
 
 		newAddr := newConn.GetAddress()
-
 		lgr.Info("Dial complete, negotiating",
 			zap.String("address", newAddr.String()),
 			zap.String("address.Remaining", newAddr.RemainingString()),
 		)
-
-		// create chain with remaining protocols
-		remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
-		for i, prName := range newAddr.RemainingProtocols() {
-			protocol, ok := f.protocols[prName]
-			if !ok {
-				lgr.Debug("No such protocol", zap.String("protocol", prName))
-				return ErrInvalidProtocol
-			}
-			remProtocols[i] = protocol
-		}
-		chain := negotiatorChain(remProtocols...)
-		if err := chain(newCtx, newConn); err != nil {
-			lgr.Warn("Could not negotiate", zap.String("transport", trType), zap.Error(err))
-			continue
-		}
-		return nil
+		return newCtx, newConn, nil
 	}
 
-	return ErrCouldNotDial
+	return nil, nil, ErrCouldNotDial
+}
+
+// CallContext will attempt to connect to the given address and go through the
+// various middlware that it needs until the connection is fully established
+func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
+	lgr := Logger(ctx)
+	newCtx, newConn, err := f.DialContext(ctx, as)
+	if err != nil {
+		return err
+	}
+
+	newAddr := newConn.GetAddress()
+
+	lgr.Info("Dial complete, negotiating",
+		zap.String("address", newAddr.String()),
+		zap.String("address.Remaining", newAddr.RemainingString()),
+	)
+
+	// create chain with remaining protocols
+	remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
+	for i, prName := range newAddr.RemainingProtocols() {
+		protocol, ok := f.protocols[prName]
+		if !ok {
+			lgr.Debug("No such protocol", zap.String("protocol", prName))
+			return ErrInvalidProtocol
+		}
+		remProtocols[i] = protocol
+	}
+	remProtocols = append(remProtocols, extraProtocols...)
+	chain := negotiatorChain(remProtocols...)
+	if err := chain(newCtx, newConn); err != nil {
+		lgr.Warn("Could not negotiate", zap.Error(err))
+		return ErrCouldNotDial
+	}
+
+	return nil
 }

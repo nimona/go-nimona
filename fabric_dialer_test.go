@@ -52,7 +52,7 @@ func (suite *FabricDialerTestSuite) TestDialContextSuccess() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Nil(retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -73,7 +73,7 @@ func (suite *FabricDialerTestSuite) TestDialTransportCannotDial() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 }
@@ -93,7 +93,7 @@ func (suite *FabricDialerTestSuite) TestDialTransportError() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 }
@@ -128,7 +128,7 @@ func (suite *FabricDialerTestSuite) TestDialContextFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -164,7 +164,7 @@ func (suite *FabricDialerTestSuite) TestNegotiatorFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -200,7 +200,7 @@ func (suite *FabricDialerTestSuite) TestInvalidProtocolFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fabric.transports, 1)
 
-	retErr := suite.fabric.DialContext(ctx, addrString)
+	retErr := suite.fabric.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrInvalidProtocol, retErr)
 	transport.AssertCalled(suite.T(), "CanDial", addr)
 	transport.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
