@@ -11,6 +11,7 @@ import (
 	uuid "github.com/google/uuid"
 	logrus "github.com/sirupsen/logrus"
 
+	peer "github.com/nimona/go-nimona-fabric/peer"
 	dht "github.com/nimona/go-nimona-kad-dht"
 	net "github.com/nimona/go-nimona-net"
 )
@@ -34,7 +35,7 @@ func main() {
 	addrs, _ := net.GetAddresses(port)
 	addrs = append(addrs, fmt.Sprintf("tcp4:0.0.0.0:%d", port))
 
-	absp := []net.Peer{
+	absp := []peer.Peer{
 		{
 			ID: "bootstrap.nimona.io",
 			Addresses: []string{
@@ -43,7 +44,7 @@ func main() {
 		},
 	}
 	pid := uuid.New().String()
-	bsp := []net.Peer{}
+	bsp := []peer.Peer{}
 	if cpid := os.Getenv("PEER_ID"); cpid != "" {
 		pid = cpid
 		for _, pr := range absp {
@@ -57,7 +58,7 @@ func main() {
 		bsp = absp
 	}
 
-	pr := &net.Peer{
+	pr := &peer.Peer{
 		ID:        pid,
 		Addresses: addrs,
 	}

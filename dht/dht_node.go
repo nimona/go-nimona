@@ -13,11 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	net "github.com/nimona/go-nimona-net"
-)
-
-const (
-	protocolID = "dht-kad/v2"
+	fabric "github.com/nimona/go-nimona-fabric"
+	peer "github.com/nimona/go-nimona-fabric/peer"
 )
 
 type message struct {
@@ -29,16 +26,16 @@ type message struct {
 
 // DHTNode is the struct that implements the dht protocol
 type DHTNode struct {
-	localPeer net.Peer
+	localPeer peer.Peer
 	store     *Store
-	net       net.Network
+	fabric    *fabric.Fabric
 	messages  chan *message
 	queries   map[string]*query
 	streams   map[string]io.ReadWriteCloser
 	lock      sync.RWMutex
 }
 
-func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
+func NewDHTNode(bps []peer.Peer, lp peer.Peer, f *fabric.Fabric) (*DHTNode, error) {
 	// create new kv store
 	st, _ := newStore()
 
@@ -46,14 +43,11 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	nd := &DHTNode{
 		localPeer: lp,
 		store:     st,
-		net:       nn,
+		fabric:    f,
 		messages:  make(chan *message, 500),
 		streams:   map[string]io.ReadWriteCloser{},
 		queries:   map[string]*query{},
 	}
-
-	// register stream handler
-	nd.net.RegisterStreamHandler(protocolID, nd.handleStream) // TODO(geoah) handle error?
 
 	// Add bootstrap nodes
 	for _, peer := range bps {
@@ -120,23 +114,6 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	}()
 
 	return nd, nil
-}
-
-func (nd *DHTNode) getStream(peerID string) (io.ReadWriteCloser, error) {
-	if stream, ok := nd.streams[peerID]; ok && stream != nil {
-		// TODO Check if stream is still ok
-		logrus.Debugf("Found stream for peer %s", peerID)
-		return stream, nil
-	}
-	addr := peerID + "/" + protocolID
-	logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
-	stream, err := nd.net.Dial(addr)
-	if err != nil {
-		return nil, err
-	}
-	logrus.Debugf("Created new stream for peer %s", peerID)
-	nd.streams[peerID] = stream
-	return stream, nil
 }
 
 func (nd *DHTNode) handleStream(protocolID string, stream io.ReadWriteCloser) error {
@@ -284,11 +261,11 @@ func (nd *DHTNode) Get(ctx context.Context, key string) (chan string, error) {
 	return q.results, nil
 }
 
-func (nd *DHTNode) GetPeer(ctx context.Context, id string) (net.Peer, error) {
+func (nd *DHTNode) GetPeer(ctx context.Context, id string) (peer.Peer, error) {
 	// get peer key
 	res, err := nd.Get(ctx, getPeerKey(id))
 	if err != nil {
-		return net.Peer{}, err
+		return peer.Peer{}, err
 	}
 
 	// hold addresses
@@ -301,10 +278,10 @@ func (nd *DHTNode) GetPeer(ctx context.Context, id string) (net.Peer, error) {
 
 	// check addrs
 	if len(addrs) == 0 {
-		return net.Peer{}, ErrPeerNotFound
+		return peer.Peer{}, ErrPeerNotFound
 	}
 
-	return net.Peer{
+	return peer.Peer{
 		ID:        id,
 		Addresses: addrs,
 	}, nil
@@ -446,19 +423,19 @@ func (nd *DHTNode) putHandler(msg *messagePut) {
 	}
 }
 
-func (nd *DHTNode) gatherPeer(peerID string) (net.Peer, error) {
+func (nd *DHTNode) gatherPeer(peerID string) (peer.Peer, error) {
 	addrs, err := nd.store.Get(getPeerKey(peerID))
 	if err != nil {
-		return net.Peer{}, err
+		return peer.Peer{}, err
 	}
-	pr := net.Peer{
+	pr := peer.Peer{
 		ID:        peerID,
 		Addresses: addrs,
 	}
 	return pr, nil
 }
 
-func (nd *DHTNode) putPeer(peer net.Peer) error {
+func (nd *DHTNode) putPeer(peer peer.Peer) error {
 	logrus.Infof("Adding peer to network peer=%v", peer)
 	// add peer to network
 	if err := nd.net.PutPeer(peer); err != nil {
@@ -469,7 +446,7 @@ func (nd *DHTNode) putPeer(peer net.Peer) error {
 	return nil
 }
 
-func (nd *DHTNode) storePeer(peer net.Peer, persistent bool) error {
+func (nd *DHTNode) storePeer(peer peer.Peer, persistent bool) error {
 	for _, addr := range peer.Addresses {
 		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
 		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
@@ -479,7 +456,7 @@ func (nd *DHTNode) storePeer(peer net.Peer, persistent bool) error {
 	return nil
 }
 
-func (nd *DHTNode) GetLocalPeer() net.Peer {
+func (nd *DHTNode) GetLocalPeer() peer.Peer {
 	return nd.localPeer
 }
 

@@ -3,12 +3,11 @@ package dht
 import (
 	"context"
 
-	net "github.com/nimona/go-nimona-net"
+	peer "github.com/nimona/go-nimona-fabric/peer"
 )
 
-// DHT ..
 type DHT interface {
 	Get(ctx context.Context, key string) (chan string, error)
-	GetPeer(ctx context.Context, id string) (net.Peer, error)
+	GetPeer(ctx context.Context, id string) (peer.Peer, error)
 	GetLocalPairs() (map[string][]*Pair, error)
 }

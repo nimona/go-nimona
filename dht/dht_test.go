@@ -9,6 +9,7 @@ import (
 	assert "github.com/stretchr/testify/assert"
 	suite "github.com/stretchr/testify/suite"
 
+	peer "github.com/nimona/go-nimona-fabric/peer"
 	net "github.com/nimona/go-nimona-net"
 )
 
@@ -24,11 +25,11 @@ type dhtTestSuite struct {
 func TestExampleTestSuite(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 
-	peer1 := net.Peer{ID: "a1", Addresses: []string{}}
-	peer2 := net.Peer{ID: "a2", Addresses: []string{}}
-	// peer3 := net.Peer{ID: "a3", Addresses: []string{}}
-	// peer4 := net.Peer{ID: "a4", Addresses: []string{}}
-	peer5 := net.Peer{ID: "a5", Addresses: []string{}}
+	peer1 := peer.Peer{ID: "a1", Addresses: []string{}}
+	peer2 := peer.Peer{ID: "a2", Addresses: []string{}}
+	// peer3 := peer.Peer{ID: "a3", Addresses: []string{}}
+	// peer4 := peer.Peer{ID: "a4", Addresses: []string{}}
+	peer5 := peer.Peer{ID: "a5", Addresses: []string{}}
 
 	net1, err := net.NewNetwork(&peer1, 0)
 	assert.Nil(t, err)
@@ -45,11 +46,11 @@ func TestExampleTestSuite(t *testing.T) {
 	net5, err := net.NewNetwork(&peer5, 0)
 	assert.Nil(t, err)
 
-	node1, _ := NewDHTNode([]net.Peer{}, peer1, net1)
-	node2, _ := NewDHTNode([]net.Peer{peer1}, peer2, net2)
-	// node3, _ := NewDHTNode([]net.Peer{peer1}, peer3, net3)
-	// node4, _ := NewDHTNode([]net.Peer{peer1}, peer4, net4)
-	node5, _ := NewDHTNode([]net.Peer{peer1}, peer5, net5)
+	node1, _ := NewDHTNode([]peer.Peer{}, peer1, net1)
+	node2, _ := NewDHTNode([]peer.Peer{peer1}, peer2, net2)
+	// node3, _ := NewDHTNode([]peer.Peer{peer1}, peer3, net3)
+	// node4, _ := NewDHTNode([]peer.Peer{peer1}, peer4, net4)
+	node5, _ := NewDHTNode([]peer.Peer{peer1}, peer5, net5)
 
 	dt := &dhtTestSuite{
 		node1: node1,

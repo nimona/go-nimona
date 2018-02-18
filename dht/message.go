@@ -1,7 +1,7 @@
 package dht
 
 import (
-	net "github.com/nimona/go-nimona-net"
+	peer "github.com/nimona/go-nimona-fabric/peer"
 )
 
 // Message types
@@ -19,14 +19,14 @@ const (
 )
 
 type messageGet struct {
-	OriginPeer net.Peer `json:"p"`
-	QueryID    string   `json:"q"`
-	Key        string   `json:"k"`
+	OriginPeer peer.Peer `json:"p"`
+	QueryID    string    `json:"q"`
+	Key        string    `json:"k"`
 }
 
 type messagePut struct {
-	OriginPeer net.Peer `json:"p"`
-	QueryID    string   `json:"q"`
-	Key        string   `json:"k"`
-	Values     []string `json:"v"`
+	OriginPeer peer.Peer `json:"p"`
+	QueryID    string    `json:"q"`
+	Key        string    `json:"k"`
+	Values     []string  `json:"v"`
 }
