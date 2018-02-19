@@ -60,6 +60,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		cm := pf[0]
 		pm := pf[1]
 
+		c.GetAddress().Pop()
 		switch cm {
 		case "SEL":
 			lgr.Debug("Handling SEL", zap.String("cm", cm), zap.String("pm", pm))
@@ -77,7 +78,7 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrStr
 
 	validRoute := ""
 	for route := range m.routes {
-		if strings.HasPrefix(route, remainingAddrString) {
+		if strings.HasPrefix(remainingAddrString, route) {
 			validRoute = route
 			break
 		}
@@ -118,8 +119,6 @@ func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		if string(resp) != "ACK "+pr {
 			return errors.New("Invalid selector response")
 		}
-
-		c.GetAddress().Pop()
 
 		return fn(ctx, c)
 	}
