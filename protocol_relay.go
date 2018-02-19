@@ -2,7 +2,6 @@ package fabric
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -51,15 +50,11 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 			return nil
 		}
 
-		// Construct the server url
 		host := addr.CurrentParams()
 		addr.Pop()
-		url := fmt.Sprintf(
-			"%s/%s", host,
-			strings.Join(addr.RemainingProtocols(), "/"))
 
 		// Connect
-		ctx, cn, err := m.fabric.DialContext(ctx, url)
+		ctx, cn, err := m.fabric.DialContext(ctx, host)
 		if err != nil {
 			lgr.Error("Could not Dial client", zap.Error(err))
 			return err
