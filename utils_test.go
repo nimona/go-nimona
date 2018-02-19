@@ -2,8 +2,6 @@ package fabric
 
 // Basic imports
 import (
-	"io"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -17,23 +15,10 @@ type UtilsTestSuite struct {
 func (suite *UtilsTestSuite) SetupTest() {
 }
 
-func (suite *UtilsTestSuite) TestReadWriteToken() {
-	reader, writter := io.Pipe()
-	payload := []byte("hello")
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		retPayload, err := ReadToken(reader)
-		suite.Assert().Nil(err)
-		suite.Assert().Equal(payload, retPayload)
-		wg.Done()
-	}()
-
-	err := WriteToken(writter, payload)
-	suite.Assert().Nil(err)
-	wg.Wait()
+func (suite *UtilsTestSuite) TestGenerateReqID() {
+	id1 := generateReqID()
+	id2 := generateReqID()
+	suite.Assert().NotEqual(id1, id2)
 }
 
 func TestUtilsTestSuite(t *testing.T) {

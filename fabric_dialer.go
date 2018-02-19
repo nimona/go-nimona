@@ -5,7 +5,12 @@ import (
 	"errors"
 	"reflect"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	address "github.com/nimona/go-nimona-fabric/address"
+	connection "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
+	protocol "github.com/nimona/go-nimona-fabric/protocol"
 )
 
 var (
@@ -18,13 +23,13 @@ type RequestIDKey struct{}
 
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
+func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, connection.Conn, error) {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
-	lgr := Logger(ctx)
+	lgr := logging.Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 
 	// TODO validate the address
-	addr := NewAddress(as)
+	addr := address.NewAddress(as)
 
 	// find transport we can dial
 	// TODO figure out priorities, eg yamux should be more important than tcp
@@ -55,8 +60,8 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 
 // CallContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
-	lgr := Logger(ctx)
+func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...protocol.Protocol) error {
+	lgr := logging.Logger(ctx)
 	newCtx, newConn, err := f.DialContext(ctx, as)
 	if err != nil {
 		return err
@@ -70,7 +75,7 @@ func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...P
 	)
 
 	// create chain with remaining protocols
-	remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
+	remProtocols := make([]protocol.Protocol, len(newAddr.RemainingProtocols()))
 	for i, prName := range newAddr.RemainingProtocols() {
 		protocol, ok := f.protocols[prName]
 		if !ok {
@@ -80,7 +85,7 @@ func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...P
 		remProtocols[i] = protocol
 	}
 	remProtocols = append(remProtocols, extraProtocols...)
-	chain := negotiatorChain(remProtocols...)
+	chain := protocol.NegotiatorChain(remProtocols...)
 	if err := chain(newCtx, newConn); err != nil {
 		lgr.Warn("Could not negotiate", zap.Error(err))
 		return ErrCouldNotDial

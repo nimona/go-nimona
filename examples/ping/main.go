@@ -7,6 +7,8 @@ import (
 	"log"
 
 	fabric "github.com/nimona/go-nimona-fabric"
+	protocol "github.com/nimona/go-nimona-fabric/protocol"
+	transport "github.com/nimona/go-nimona-fabric/transport"
 )
 
 func main() {
@@ -58,10 +60,10 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 		return nil, err
 	}
 
-	yamux := fabric.NewYamux()
-	router := fabric.NewRouter()
-	identity := &fabric.IdentityProtocol{Local: peerID}
-	tls := &fabric.SecProtocol{
+	yamux := protocol.NewYamux()
+	router := protocol.NewRouter()
+	identity := &protocol.IdentityProtocol{Local: peerID}
+	tls := &protocol.SecProtocol{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
@@ -69,15 +71,15 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	}
 	ping := &Ping{}
 
-	tcp := fabric.NewTransportTCP("0.0.0.0", 0)
+	tcp := transport.NewTransportTCP("0.0.0.0", 0)
 	// ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
 
 	f := fabric.New(ctx)
 
-	relay := fabric.NewRelayProtocol(f)
+	relay := protocol.NewRelayProtocol(f)
 
-	f.AddTransport(yamux, []fabric.Protocol{router})
-	f.AddTransport(tcp, []fabric.Protocol{tls, yamux, router})
+	f.AddTransport(yamux, []protocol.Protocol{router})
+	f.AddTransport(tcp, []protocol.Protocol{tls, yamux, router})
 	// f.AddTransport(ws, []fabric.Protocol{tls, yamux, router})
 
 	f.AddProtocol(router)

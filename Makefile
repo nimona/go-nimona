@@ -1,20 +1,14 @@
-.PHONY: test-docker build-docker build-all build-all-latest release test-excoveralls
+PHONY: test-cover-html
+PACKAGES = $(shell find ./ -type d -not -path '*/\.*' | egrep -v 'vendor|examples')
 
-CC_REPORTER = cc-test-reporter
-GO = go
-GO_COV = gocov
+test-cover:
+	@echo "mode: count" > coverage.txt
+	@echo "mode: atomic" > coverage.txt
+	$(foreach pkg,$(PACKAGES),\
+		go test -coverprofile=coverage-temp.txt -covermode=atomic -race $(pkg);\
+		tail -n +2 coverage-temp.txt | grep -v _mock >> coverage.txt;)
+	@rm coverage-temp.txt
 
-test:
-	$(GO) test -v $($(GO) list | grep -v vendor)
-
-test-cover-report:
-	$(GO) test -v -coverprofile=c-temp.out $($(GO) list | grep -v vendor)
-	cat c-temp.out | grep -v _mock.go > c.out
-	rm c-temp.out
-	$(GO_COV) convert c.out | $(GO_COV) report
-	rm c.out
-
-test-cover-htlm:
-	$(GO) test -v -coverprofile=c-temp.out $($(GO) list | grep -v vendor)
-	cat c-temp.out | grep -v _mock.go > c.out
-	go tool cover -html=c.out
+test-cover-html:
+	@make test-cover
+	go tool cover -html=coverage.txt

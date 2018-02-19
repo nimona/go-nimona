@@ -15,6 +15,9 @@ jobs:
           name: Install gocov
           command: go get -u github.com/axw/gocov/gocov
       - run:
+          name: Install goveralls
+          command: go get -u github.com/mattn/goveralls
+      - run:
           name: Install dependencies
           command: dep ensure
       - run:
@@ -25,7 +28,5 @@ jobs:
       - run:
           name: Run tests
           command: |
-            go test -v -race -coverprofile=coverage-temp.txt -covermode=atomic $(go list | grep -v vendor)
-            cat coverage-temp.txt | grep -v _mock.go > coverage.txt
-            rm coverage-temp.txt
-            bash <(curl -s https://codecov.io/bash)
+            make test-cover
+            goveralls -v -coverprofile=coverage.txt -service=circle-ci -repotoken=$COVERALLS_TOKEN
