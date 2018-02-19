@@ -1,4 +1,4 @@
-package fabric
+package protocol
 
 import (
 	"context"
@@ -9,14 +9,15 @@ import (
 	zap "go.uber.org/zap"
 
 	connection "github.com/nimona/go-nimona-fabric/connection"
+	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 type RelayProtocol struct {
 	connections map[string]connection.Conn
-	fabric      *Fabric
+	fabric      Dialer
 }
 
-func NewRelayProtocol(f *Fabric) *RelayProtocol {
+func NewRelayProtocol(f Dialer) *RelayProtocol {
 	return &RelayProtocol{
 		fabric: f,
 	}
@@ -27,9 +28,9 @@ func (m *RelayProtocol) Name() string {
 
 // The server offering the relay part
 func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c connection.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := logging.Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -76,9 +77,9 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 
 // The client that wants to connect
 func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c connection.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := logging.Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -106,7 +107,7 @@ func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 
 func (m *RelayProtocol) pipe(ctx context.Context,
 	a, b io.ReadWriteCloser) error {
-	lgr := Logger(ctx).With(
+	lgr := logging.Logger(ctx).With(
 		zap.Namespace("protocol:relay"),
 	)
 

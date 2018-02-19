@@ -76,7 +76,7 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 
 	f := fabric.New(ctx)
 
-	relay := fabric.NewRelayProtocol(f)
+	relay := protocol.NewRelayProtocol(f)
 
 	f.AddTransport(yamux, []protocol.Protocol{router})
 	f.AddTransport(tcp, []protocol.Protocol{tls, yamux, router})
