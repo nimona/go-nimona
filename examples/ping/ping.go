@@ -5,9 +5,8 @@ import (
 
 	zap "go.uber.org/zap"
 
-	conn "github.com/nimona/go-nimona-fabric/connection"
+	fabric "github.com/nimona/go-nimona-fabric"
 	logging "github.com/nimona/go-nimona-fabric/logging"
-	protocol "github.com/nimona/go-nimona-fabric/protocol"
 )
 
 // Ping is our example client, it simply sends a PING string and expects a PONG
@@ -19,9 +18,9 @@ func (p *Ping) Name() string {
 }
 
 // Negotiate will be called after all the other protocol have been processed
-func (p *Ping) Negotiate(fn protocol.NegotiatorFunc) protocol.NegotiatorFunc {
+func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c conn.Conn) error {
+	return func(ctx context.Context, c fabric.Conn) error {
 		lgr := logging.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
@@ -29,7 +28,7 @@ func (p *Ping) Negotiate(fn protocol.NegotiatorFunc) protocol.NegotiatorFunc {
 		// close conection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(protocol.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 
@@ -55,9 +54,9 @@ func (p *Ping) Negotiate(fn protocol.NegotiatorFunc) protocol.NegotiatorFunc {
 }
 
 // Handle ping requests
-func (p *Ping) Handle(fn protocol.HandlerFunc) protocol.HandlerFunc {
+func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c conn.Conn) error {
+	return func(ctx context.Context, c fabric.Conn) error {
 		lgr := logging.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
@@ -67,7 +66,7 @@ func (p *Ping) Handle(fn protocol.HandlerFunc) protocol.HandlerFunc {
 		// close connection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(protocol.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 

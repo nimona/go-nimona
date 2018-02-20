@@ -3,9 +3,6 @@ package fabric
 import (
 	"context"
 	"errors"
-
-	protocol "github.com/nimona/go-nimona-fabric/protocol"
-	transport "github.com/nimona/go-nimona-fabric/transport"
 )
 
 var (
@@ -22,7 +19,7 @@ func New(ctx context.Context) *Fabric {
 	f := &Fabric{
 		context:    ctx,
 		transports: []*transportWithProtocols{},
-		protocols:  map[string]protocol.Protocol{},
+		protocols:  map[string]Protocol{},
 	}
 	return f
 }
@@ -31,27 +28,27 @@ func New(ctx context.Context) *Fabric {
 type Fabric struct {
 	context    context.Context
 	transports []*transportWithProtocols
-	protocols  map[string]protocol.Protocol
+	protocols  map[string]Protocol
 }
 
 type transportWithProtocols struct {
-	Transport transport.Transport
-	Handler   protocol.HandlerFunc
+	Transport Transport
+	Handler   HandlerFunc
 	// Negotiator    NegotiatorFunc
 	BaseProtocols []string
 }
 
 // AddTransport for dialing to the outside world
-func (f *Fabric) AddTransport(transport transport.Transport, protocols []protocol.Protocol) error {
+func (f *Fabric) AddTransport(transport Transport, protocols []Protocol) error {
 	protocolNames := []string{}
 	for _, pr := range protocols {
 		protocolNames = append(protocolNames, pr.Name())
 	}
-	hWrapper := protocol.NewTransportWrapper(protocolNames)
-	hchain := append([]protocol.Protocol{hWrapper}, protocols...)
+	hWrapper := NewTransportWrapper(protocolNames)
+	hchain := append([]Protocol{hWrapper}, protocols...)
 	tr := &transportWithProtocols{
 		Transport: transport,
-		Handler:   protocol.HandlerChain(hchain...),
+		Handler:   HandlerChain(hchain...),
 		// Negotiator:    negotiatorChain(protocols...),
 		BaseProtocols: []string{},
 	}
@@ -60,7 +57,7 @@ func (f *Fabric) AddTransport(transport transport.Transport, protocols []protoco
 }
 
 // AddProtocol for both client and server
-func (f *Fabric) AddProtocol(protocol protocol.Protocol) error {
+func (f *Fabric) AddProtocol(protocol Protocol) error {
 	f.protocols[protocol.Name()] = protocol
 	return nil
 }
