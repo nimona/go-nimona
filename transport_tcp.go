@@ -9,8 +9,6 @@ import (
 
 	upnp "github.com/NebulousLabs/go-upnp"
 	zap "go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // NewTransportTCP returns a new TCP transport
@@ -100,7 +98,7 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 			addr.Pop()
 			c := NewConnWrapper(tcon, addr)
 			if err != nil {
-				logging.Logger(ctx).Error("Could not accept TCP connection",
+				Logger(ctx).Error("Could not accept TCP connection",
 					zap.Error(err))
 				continue
 			}
@@ -113,7 +111,7 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 
 func (t *TCP) handleListen(ctx context.Context, conn Conn, handler HandlerFunc) {
 	if err := handler(ctx, conn); err != nil {
-		logging.Logger(ctx).Error("Listen: Could not handle request",
+		Logger(ctx).Error("Listen: Could not handle request",
 			zap.Error(err))
 	}
 }
@@ -135,7 +133,7 @@ func (t *TCP) startExternal(ctx context.Context) error {
 
 	err = t.upnp.Clear(uint16(extPort))
 	if err != nil {
-		logging.Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
+		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
 	err = t.upnp.Forward(uint16(extPort), "fabric")

@@ -10,8 +10,6 @@ import (
 
 	zap "go.uber.org/zap"
 	websocket "golang.org/x/net/websocket"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // NewTransportWebsocket returns a new Websocket transport
@@ -68,7 +66,7 @@ func (t *Websocket) DialContext(ctx context.Context, addr *Address) (
 
 // Listen starts listening for incoming connections
 func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
-	lgr := logging.Logger(ctx)
+	lgr := Logger(ctx)
 
 	wsh := websocket.Handler(func(tcon *websocket.Conn) {
 		addr := NewAddress("") // TODO fix address
