@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	zap "go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 var (
@@ -39,7 +37,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
 		addr := c.GetAddress()
-		lgr := logging.Logger(ctx).With(
+		lgr := Logger(ctx).With(
 			zap.Namespace("protocol:router"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),

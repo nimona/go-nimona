@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // LocalIdentityKey for context
@@ -37,7 +35,7 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	return func(ctx context.Context, c Conn) error {
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
 
-		lgr := logging.Logger(ctx).With(
+		lgr := Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 
@@ -70,7 +68,7 @@ func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	return func(ctx context.Context, c Conn) error {
 		// store local identity to conn
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
-		lgr := logging.Logger(ctx).With(
+		lgr := Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 

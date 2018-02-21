@@ -6,8 +6,6 @@ import (
 	"reflect"
 
 	zap "go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 var (
@@ -22,7 +20,7 @@ type RequestIDKey struct{}
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
-	lgr := logging.Logger(ctx)
+	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
 
 	// TODO validate the address
@@ -58,7 +56,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 // CallContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
-	lgr := logging.Logger(ctx)
+	lgr := Logger(ctx)
 	newCtx, newConn, err := f.DialContext(ctx, as)
 	if err != nil {
 		return err

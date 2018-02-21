@@ -7,8 +7,6 @@ import (
 	"time"
 
 	zap "go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 type RelayProtocol struct {
@@ -29,7 +27,7 @@ func (m *RelayProtocol) Name() string {
 func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	return func(ctx context.Context, c Conn) error {
 		addr := c.GetAddress()
-		lgr := logging.Logger(ctx).With(
+		lgr := Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -78,7 +76,7 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	return func(ctx context.Context, c Conn) error {
 		addr := c.GetAddress()
-		lgr := logging.Logger(ctx).With(
+		lgr := Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -106,7 +104,7 @@ func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 
 func (m *RelayProtocol) pipe(ctx context.Context,
 	a, b io.ReadWriteCloser) error {
-	lgr := logging.Logger(ctx).With(
+	lgr := Logger(ctx).With(
 		zap.Namespace("protocol:relay"),
 	)
 

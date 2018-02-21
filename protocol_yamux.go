@@ -7,8 +7,6 @@ import (
 
 	yamux "github.com/hashicorp/yamux"
 	zap "go.uber.org/zap"
-
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // YamuxProtocol is a multiplexer protocol based on yamux
@@ -33,7 +31,7 @@ func (m *YamuxProtocol) Name() string {
 func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
-		lgr := logging.Logger(ctx)
+		lgr := Logger(ctx)
 
 		ses, err := yamux.Server(c, nil)
 		if err != nil {
@@ -57,7 +55,7 @@ func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 }
 
 func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr *Address, fn HandlerFunc) {
-	lgr := logging.Logger(ctx)
+	lgr := Logger(ctx)
 	for {
 		str, err := session.Accept()
 		if err != nil {
@@ -80,7 +78,7 @@ func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr
 func (m *YamuxProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c Conn) error {
-		lgr := logging.Logger(ctx)
+		lgr := Logger(ctx)
 
 		session, err := yamux.Client(c, nil)
 		if err != nil {
@@ -121,7 +119,7 @@ func (m *YamuxProtocol) CanDial(addr *Address) (bool, error) {
 // DialContext dials an address, assuming we have previously connected and
 // negotiated yamux.
 func (m *YamuxProtocol) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
-	lgr := logging.Logger(ctx)
+	lgr := Logger(ctx)
 	lgr.Info("DialContext with yamux", zap.String("address", addr.String()))
 	for k, ses := range m.sessions {
 		if strings.HasPrefix(addr.String(), k) {
