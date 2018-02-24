@@ -6,7 +6,6 @@ import (
 	zap "go.uber.org/zap"
 
 	fabric "github.com/nimona/go-nimona-fabric"
-	logging "github.com/nimona/go-nimona-fabric/logging"
 )
 
 // Ping is our example client, it simply sends a PING string and expects a PONG
@@ -21,7 +20,7 @@ func (p *Ping) Name() string {
 func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c fabric.Conn) error {
-		lgr := logging.Logger(ctx).With(
+		lgr := fabric.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
@@ -57,7 +56,7 @@ func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c fabric.Conn) error {
-		lgr := logging.Logger(ctx).With(
+		lgr := fabric.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
