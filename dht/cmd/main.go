@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abiosoft/ishell"
 	uuid "github.com/google/uuid"
 	logrus "github.com/sirupsen/logrus"
+	ishell "gopkg.in/abiosoft/ishell.v2"
 
-	dht "github.com/nimona/go-nimona-kad-dht"
-	net "github.com/nimona/go-nimona-net"
+	fabric "github.com/nimona/go-nimona-fabric"
+	dht "github.com/nimona/go-nimona-fabric/dht"
 )
 
 func main() {
@@ -28,49 +28,37 @@ func main() {
 		port, _ = strconv.Atoi(eprt)
 	}
 
-	if port == 0 {
-		port = net.GetPort()
-	}
-	addrs, _ := net.GetAddresses(port)
-	addrs = append(addrs, fmt.Sprintf("tcp4:0.0.0.0:%d", port))
-
-	absp := []net.Peer{
-		{
-			ID: "bootstrap.nimona.io",
-			Addresses: []string{
-				"tcp4:bootstrap.nimona.io:26800",
-			},
+	absp := map[string][]string{
+		"bootstrap": []string{
+			"tcp:192.168.0.10:26800",
 		},
 	}
 	pid := uuid.New().String()
-	bsp := []net.Peer{}
+	bsp := map[string][]string{}
 	if cpid := os.Getenv("PEER_ID"); cpid != "" {
 		pid = cpid
-		for _, pr := range absp {
-			if cpid == pr.ID {
+		for prID, pr := range absp {
+			if cpid == prID {
 				logrus.Warnf("Skipping bootstrap peer %s", cpid)
 				continue
 			}
-			bsp = append(bsp, pr)
+			bsp[prID] = pr
 		}
 	} else {
 		bsp = absp
 	}
 
-	pr := &net.Peer{
-		ID:        pid,
-		Addresses: addrs,
-	}
+	ctx := context.Background()
+	nn := fabric.New(ctx)
 
-	nn, err := net.NewNetwork(pr, port)
-	if err != nil {
-		logrus.WithError(err).Fatalf("Could not get network")
-	}
-
-	dn, err := dht.NewDHTNode(bsp, *pr, nn)
+	dn, err := dht.NewDHT(bsp, pid, nn)
 	if err != nil {
 		logrus.WithError(err).Fatalf("Could not get dht")
 	}
+
+	tcp := fabric.NewTransportTCP("0.0.0.0", port)
+	nn.AddTransport(tcp, []fabric.Protocol{dn})
+	fmt.Println("Addresses: ", nn.GetAddresses())
 
 	shell := ishell.New()
 	shell.Println("Nimona DHT")

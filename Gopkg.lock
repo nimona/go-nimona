@@ -22,10 +22,33 @@
   revision = "29b680b06c82d044ebea91bf3069038eb562df2a"
 
 [[projects]]
+  name = "github.com/chzyer/readline"
+  packages = ["."]
+  revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "507f6050b8568533fb3f5504de8e5205fa62a114"
+  version = "v1.6.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/flynn-archive/go-shlex"
+  packages = ["."]
+  revision = "3f9db97f856818214da2e1057f8ad84803971cff"
+
+[[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
 
 [[projects]]
   branch = "master"
@@ -34,10 +57,68 @@
   revision = "683f49123a33db61abfb241b7ac5e4af4dc54d55"
 
 [[projects]]
+  name = "github.com/influxdata/influxdb"
+  packages = [
+    "client/v2",
+    "models",
+    "pkg/escape"
+  ]
+  revision = "60d27e6995558f38a39e90b35a92cbac080310a3"
+  version = "v1.4.3"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/multiformats/go-multistream"
+  packages = ["."]
+  revision = "1bc5dd803d20cf91d8ec905ac3580e3ea3c8c995"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nimona/go-nimona-net"
+  packages = ["."]
+  revision = "dd4fe56f4e5d29cc88feb70a1ffa390b0506bee0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nimona/go-telemetry"
+  packages = ["."]
+  revision = "d3e87eb4a52c54729bdb28bbabfa796705f9b868"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prestonTao/upnp"
+  packages = ["."]
+  revision = "f4370df5e1093d8987dfdb55a5d8fa23d72a26a6"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/stretchr/objx"
@@ -61,6 +142,12 @@
   packages = ["."]
   revision = "6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33"
   version = "v1.0"
+
+[[projects]]
+  name = "github.com/xtaci/smux"
+  packages = ["."]
+  revision = "ebec7ef2574b42a7088cd7751176483e0a27d458"
+  version = "v1.0.6"
 
 [[projects]]
   name = "go.uber.org/atomic"
@@ -90,7 +177,17 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["blake2b"]
+  packages = [
+    "blake2b",
+    "cast5",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
+    "ssh/terminal"
+  ]
   revision = "d9133f5469342136e669e85192a26056b587f503"
 
 [[projects]]
@@ -103,6 +200,15 @@
     "websocket"
   ]
   revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = [
+    "unix",
+    "windows"
+  ]
+  revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
 
 [[projects]]
   branch = "master"
@@ -128,9 +234,15 @@
   ]
   revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/abiosoft/ishell.v2"
+  packages = ["."]
+  revision = "a1085105335bd19f4101afe99e02948a0b41bf15"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eaf21f17e92856a83768c2702ba2ca3818acf0b447caff458a8e51c5d924eabe"
+  inputs-digest = "016b5b031411b052db5eacdf93e1205bd747173669c5eb0cad7bfc305d15a25f"
   solver-name = "gps-cdcl"
   solver-version = 1
