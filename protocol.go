@@ -22,7 +22,12 @@ func HandlerChain(fns ...Protocol) HandlerFunc {
 	if len(fns) == 0 {
 		return nil
 	}
-	return fns[0].Handle(HandlerChain(fns[1:cap(fns)]...))
+	for i, fn := range fns {
+		if fn != nil {
+			return fn.Handle(HandlerChain(fns[i+1 : cap(fns)]...))
+		}
+	}
+	return nil
 }
 
 // NegotiatorChain -
@@ -30,5 +35,10 @@ func NegotiatorChain(fns ...Protocol) NegotiatorFunc {
 	if len(fns) == 0 {
 		return nil
 	}
-	return fns[0].Negotiate(NegotiatorChain(fns[1:cap(fns)]...))
+	for i, fn := range fns {
+		if fn != nil {
+			return fn.Negotiate(NegotiatorChain(fns[i+1 : cap(fns)]...))
+		}
+	}
+	return nil
 }
