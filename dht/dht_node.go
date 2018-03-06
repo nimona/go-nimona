@@ -8,7 +8,8 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/nimona/go-nimona-fabric"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -27,65 +28,69 @@ type message struct {
 	Retries   int    `json:"-"`
 }
 
-// DHTNode is the struct that implements the dht protocol
-type DHTNode struct {
-	localPeer net.Peer
-	store     *Store
-	net       net.Network
-	messages  chan *message
-	queries   map[string]*query
-	streams   map[string]io.ReadWriteCloser
-	lock      sync.RWMutex
+// DHT is the struct that implements the dht protocol
+type DHT struct {
+	localPeer     *messagePeer
+	store         *Store
+	messages      chan *message
+	queries       map[string]*query
+	peerAddresses map[string][]string
+	lock          sync.RWMutex
+	net           *fabric.Fabric
 }
 
-func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
+func NewDHT(bps map[string][]string, localPeerID string, nn *fabric.Fabric) (*DHT, error) {
 	// create new kv store
 	st, _ := newStore()
 
 	// Create DHT node
-	nd := &DHTNode{
-		localPeer: lp,
-		store:     st,
-		net:       nn,
-		messages:  make(chan *message, 500),
-		streams:   map[string]io.ReadWriteCloser{},
-		queries:   map[string]*query{},
+	nd := &DHT{
+		localPeer: &messagePeer{
+			ID:        localPeerID,
+			Addresses: nn.GetAddresses(),
+		},
+		store:         st,
+		net:           nn,
+		messages:      make(chan *message, 500),
+		peerAddresses: bps,
+		queries:       map[string]*query{},
 	}
 
 	// register stream handler
-	nd.net.RegisterStreamHandler(protocolID, nd.handleStream) // TODO(geoah) handle error?
+	// nd.net.RegisterStreamHandler(protocolID, nd.handleStream) // TODO(geoah) handle error?
 
 	// Add bootstrap nodes
-	for _, peer := range bps {
-		if err := nd.storePeer(peer, true); err != nil {
-			logrus.WithField("error", err).Error("new could not store peer")
-		}
-		if err := nd.putPeer(peer); err != nil {
+	for peerID, addresses := range bps {
+		// if err := nd.storePeer(peer, true); err != nil {
+		// 	logrus.WithField("error", err).Error("new could not store peer")
+		// }
+		if err := nd.putPeer(peerID, addresses); err != nil {
 			logrus.WithField("error", err).Error("new could not put peer")
 		}
 	}
 
 	// TODO quit channel
-	quit := make(chan struct{})
+	// quit := make(chan struct{})
 
 	// start refresh worker
-	ticker := time.NewTicker(30 * time.Second)
-	go func() {
-		// refresh for the first time
-		nd.refresh()
-		// and then just wait
-		for {
-			select {
-			case <-ticker.C:
-				nd.refresh()
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	// ticker := time.NewTicker(30 * time.Second)
+	// go func() {
+	// 	// refresh for the first time
+	// 	nd.refresh()
+	// 	// and then just wait
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			nd.refresh()
+	// 		case <-quit:
+	// 			ticker.Stop()
+	// 			return
+	// 		}
+	// 	}
+	// }()
 
 	// start messaging worker
+	// TODO move this to a separate method
 	go func() {
 		for msg := range nd.messages {
 			logger := logrus.
@@ -111,9 +116,9 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 			logger.WithField("line", string(bs)).Debugf("sending line")
 			if _, err := st.Write(bs); err != nil {
 				logger.WithError(err).Warnf("Could not write to stream")
-				if _, ok := nd.streams[msg.Recipient]; ok {
-					delete(nd.streams, msg.Recipient)
-				}
+				// if _, ok := nd.streams[msg.Recipient]; ok {
+				// 	delete(nd.streams, msg.Recipient)
+				// }
 			}
 			logrus.Infof("Message sent")
 		}
@@ -122,24 +127,28 @@ func NewDHTNode(bps []net.Peer, lp net.Peer, nn net.Network) (*DHTNode, error) {
 	return nd, nil
 }
 
-func (nd *DHTNode) getStream(peerID string) (io.ReadWriteCloser, error) {
-	if stream, ok := nd.streams[peerID]; ok && stream != nil {
-		// TODO Check if stream is still ok
-		logrus.Debugf("Found stream for peer %s", peerID)
-		return stream, nil
-	}
-	addr := peerID + "/" + protocolID
-	logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
-	stream, err := nd.net.Dial(addr)
-	if err != nil {
-		return nil, err
-	}
-	logrus.Debugf("Created new stream for peer %s", peerID)
-	nd.streams[peerID] = stream
-	return stream, nil
+func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
+	// TODO re-introduce caching
+	ctx := context.Background()
+	_, c, err := nd.net.DialContext(ctx, nd.peerAddresses[peerID][0])
+	return c, err
+	// if stream, ok := nd.streams[peerID]; ok && stream != nil {
+	// 	// TODO Check if stream is still ok
+	// 	logrus.Debugf("Found stream for peer %s", peerID)
+	// 	return stream, nil
+	// }
+	// addr := peerID + "/" + protocolID
+	// logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
+	// stream, err := nd.net.Dial(addr)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// logrus.Debugf("Created new stream for peer %s", peerID)
+	// nd.streams[peerID] = stream
+	// return stream, nil
 }
 
-func (nd *DHTNode) handleStream(protocolID string, stream io.ReadWriteCloser) error {
+func (nd *DHT) handleStream(protocolID string, stream io.ReadWriteCloser) error {
 	sr := bufio.NewReader(stream)
 	for {
 		// read line
@@ -164,9 +173,9 @@ func (nd *DHTNode) handleStream(protocolID string, stream io.ReadWriteCloser) er
 	}
 }
 
-func (nd *DHTNode) refresh() {
+func (nd *DHT) refresh() {
 	logrus.Infof("Refreshing")
-	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, nd.GetLocalPeer().ID, numPeersNear)
+	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, nd.localPeer.ID, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Warnf("refresh could not get peers ids")
 		return
@@ -197,7 +206,7 @@ func (nd *DHTNode) refresh() {
 	}
 }
 
-func (nd *DHTNode) handleMessage(msg *message) error {
+func (nd *DHT) handleMessage(msg *message) error {
 	logrus.WithField("payload", string(msg.Payload)).WithField("type", msg.Type).Infof("Trying to handle message")
 	switch msg.Type {
 	case MessageTypeGet:
@@ -218,7 +227,7 @@ func (nd *DHTNode) handleMessage(msg *message) error {
 	return nil
 }
 
-func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
+func (nd *DHT) Put(ctx context.Context, key, value string) error {
 	logrus.Infof("Putting key %s", key)
 
 	// store this locally
@@ -229,10 +238,15 @@ func (nd *DHTNode) Put(ctx context.Context, key, value string) error {
 	return nd.sendPutMessage(key, value)
 }
 
-func (nd *DHTNode) sendPutMessage(key, value string) error {
+func (nd *DHT) sendPutMessage(key, value string) error {
+	// get fresh local peer addresses
+	localPeer := &messagePeer{
+		ID:        nd.localPeer.ID,
+		Addresses: nd.net.GetAddresses(),
+	}
 	// create a put msg
 	msgPut := &messagePut{
-		OriginPeer: nd.GetLocalPeer(),
+		OriginPeer: localPeer,
 		Key:        key,
 		Values:     []string{value},
 	}
@@ -243,6 +257,7 @@ func (nd *DHTNode) sendPutMessage(key, value string) error {
 		logrus.WithError(err).Error("Put failed to find near peers")
 		return err
 	}
+	fmt.Println("!!!", cps)
 	for _, cp := range cps {
 		// send message
 		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
@@ -255,7 +270,7 @@ func (nd *DHTNode) sendPutMessage(key, value string) error {
 	return nil
 }
 
-func (nd *DHTNode) Get(ctx context.Context, key string) (chan string, error) {
+func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
 	logrus.Infof("Searching for key %s", key)
 
 	// create query
@@ -284,11 +299,11 @@ func (nd *DHTNode) Get(ctx context.Context, key string) (chan string, error) {
 	return q.results, nil
 }
 
-func (nd *DHTNode) GetPeer(ctx context.Context, id string) (net.Peer, error) {
+func (nd *DHT) GetPeer(ctx context.Context, id string) ([]string, error) {
 	// get peer key
 	res, err := nd.Get(ctx, getPeerKey(id))
 	if err != nil {
-		return net.Peer{}, err
+		return nil, err
 	}
 
 	// hold addresses
@@ -301,16 +316,13 @@ func (nd *DHTNode) GetPeer(ctx context.Context, id string) (net.Peer, error) {
 
 	// check addrs
 	if len(addrs) == 0 {
-		return net.Peer{}, ErrPeerNotFound
+		return nil, ErrPeerNotFound
 	}
 
-	return net.Peer{
-		ID:        id,
-		Addresses: addrs,
-	}, nil
+	return addrs, nil
 }
 
-func (nd *DHTNode) sendMessage(msgType string, payload interface{}, peerID string) error {
+func (nd *DHT) sendMessage(msgType string, payload interface{}, peerID string) error {
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
@@ -329,7 +341,7 @@ func (nd *DHTNode) sendMessage(msgType string, payload interface{}, peerID strin
 	return nil
 }
 
-func (nd *DHTNode) getHandler(msg *messageGet) {
+func (nd *DHT) getHandler(msg *messageGet) {
 	// origin peer is asking for a value
 	logger := logrus.
 		WithField("origin", msg.OriginPeer.ID).
@@ -338,8 +350,8 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 	logger.Infof("Origin is asking for key")
 
 	// store info on origin peer
-	nd.storePeer(msg.OriginPeer, false)
-	nd.putPeer(msg.OriginPeer)
+	// nd.storePeer(msg.OriginPeer, false)
+	nd.putPeer(msg.OriginPeer.ID, msg.OriginPeer.Addresses)
 
 	// check if we have the value of the key
 	ks, err := nd.store.Get(msg.Key)
@@ -388,7 +400,8 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 			logger.Debugf("getHandler skipping origin")
 			continue
 		}
-		if cpid == nd.GetLocalPeer().ID {
+		// if cpid == nd.GetLocalPeer().ID {
+		if cpid == nd.localPeer.ID {
 			logger.Debugf("getHandler skipping local")
 			continue
 		}
@@ -412,7 +425,7 @@ func (nd *DHTNode) getHandler(msg *messageGet) {
 	}
 }
 
-func (nd *DHTNode) putHandler(msg *messagePut) {
+func (nd *DHT) putHandler(msg *messagePut) {
 	// A peer we asked is informing us of a peer
 	logger := logrus.
 		WithField("key", msg.Key).
@@ -434,42 +447,57 @@ func (nd *DHTNode) putHandler(msg *messagePut) {
 
 	// check if this is a peer
 	if strings.HasPrefix(msg.Key, KeyPrefixPeer) {
-		pr, err := nd.gatherPeer(strings.Replace(msg.Key, KeyPrefixPeer, "", 1))
-		if err != nil {
-			logger.WithError(err).Infof("putHandler could get pairs for putPeer")
+		peerID := strings.Replace(msg.Key, KeyPrefixPeer, "", 1)
+		// pr, err := nd.gatherPeer(strings.Replace(msg.Key, KeyPrefixPeer, "", 1))
+		// if err != nil {
+		// 	logger.WithError(err).Infof("putHandler could get pairs for putPeer")
+		// 	return
+		// }
+		if err := nd.putPeer(peerID, msg.Values); err != nil {
+			logger.WithError(err).Infof("putHandler could putPeer")
 			return
 		}
-		if err := nd.putPeer(pr); err != nil {
-			logger.WithError(err).Infof("putHandler could get putPeer")
-			return
-		}
+	}
+
+	if err := nd.putPeer(msg.OriginPeer.ID, msg.OriginPeer.Addresses); err != nil {
+		logger.WithError(err).Infof("putHandler could putPeer for origin")
+		return
 	}
 }
 
-func (nd *DHTNode) gatherPeer(peerID string) (net.Peer, error) {
-	addrs, err := nd.store.Get(getPeerKey(peerID))
-	if err != nil {
-		return net.Peer{}, err
-	}
-	pr := net.Peer{
-		ID:        peerID,
-		Addresses: addrs,
-	}
-	return pr, nil
-}
+// func (nd *DHT) gatherPeer(peerID string) (net.Peer, error) {
+// 	addrs, err := nd.store.Get(getPeerKey(peerID))
+// 	if err != nil {
+// 		return net.Peer{}, err
+// 	}
+// 	pr := net.Peer{
+// 		ID:        peerID,
+// 		Addresses: addrs,
+// 	}
+// 	return pr, nil
+// }
 
-func (nd *DHTNode) putPeer(peer net.Peer) error {
-	logrus.Infof("Adding peer to network peer=%v", peer)
+func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
+	if peerID == nd.localPeer.ID {
+		return nil
+	}
+	
+	logrus.Infof("Adding peer to network id=%s address=%v", peerID, peerAddresses)
 	// add peer to network
-	if err := nd.net.PutPeer(peer); err != nil {
-		logrus.WithError(err).Warnf("Could not add peer to network")
-		return err
+	nd.peerAddresses[peerID] = peerAddresses
+	for _, addr := range peerAddresses {
+		nd.store.Put(getPeerKey(peerID), addr, true)
 	}
-	logrus.Infof("PUT PEER %+v", peer)
+
+	// if err := nd.net.PutPeer(peer); err != nil {
+	// 	logrus.WithError(err).Warnf("Could not add peer to network")
+	// 	return err
+	// }
+	logrus.Infof("PUT PEER id=%s addrs=%v", peerID, peerAddresses)
 	return nil
 }
 
-func (nd *DHTNode) storePeer(peer net.Peer, persistent bool) error {
+func (nd *DHT) storePeer(peer net.Peer, persistent bool) error {
 	for _, addr := range peer.Addresses {
 		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
 		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
@@ -479,10 +507,10 @@ func (nd *DHTNode) storePeer(peer net.Peer, persistent bool) error {
 	return nil
 }
 
-func (nd *DHTNode) GetLocalPeer() net.Peer {
-	return nd.localPeer
-}
+// func (nd *DHT) GetLocalPeer() net.Peer {
+// 	return nd.localPeer
+// }
 
-func (nd *DHTNode) GetLocalPairs() (map[string][]*Pair, error) {
+func (nd *DHT) GetLocalPairs() (map[string][]*Pair, error) {
 	return nd.store.GetAll()
 }

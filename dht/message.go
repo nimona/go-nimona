@@ -1,9 +1,5 @@
 package dht
 
-import (
-	net "github.com/nimona/go-nimona-net"
-)
-
 // Message types
 const (
 	MessageTypePing string = "PING"
@@ -19,14 +15,19 @@ const (
 )
 
 type messageGet struct {
-	OriginPeer net.Peer `json:"p"`
-	QueryID    string   `json:"q"`
-	Key        string   `json:"k"`
+	OriginPeer *messagePeer `json:"p"`
+	QueryID    string       `json:"q"`
+	Key        string       `json:"k"`
+}
+
+type messagePeer struct {
+	ID        string   `json:"id"`
+	Addresses []string `json:"addresses"`
 }
 
 type messagePut struct {
-	OriginPeer net.Peer `json:"p"`
-	QueryID    string   `json:"q"`
-	Key        string   `json:"k"`
-	Values     []string `json:"v"`
+	OriginPeer *messagePeer `json:"p"`
+	QueryID    string       `json:"q"`
+	Key        string       `json:"k"`
+	Values     []string     `json:"v"`
 }

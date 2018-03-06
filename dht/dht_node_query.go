@@ -14,7 +14,7 @@ const numPeersNear int = 15
 type query struct {
 	id               string
 	key              string
-	dht              *DHTNode
+	dht              *DHT
 	closestPeerID    string
 	contactedPeers   []string
 	incomingMessages chan messagePut
@@ -102,7 +102,7 @@ func (q *query) next() {
 	// create request
 	req := messageGet{
 		QueryID:    q.id,
-		OriginPeer: q.dht.GetLocalPeer(),
+		OriginPeer: q.dht.localPeer,
 		Key:        q.key,
 	}
 	// keep track of how many we've sent to
@@ -114,7 +114,7 @@ func (q *query) next() {
 			continue
 		}
 		// ask peer
-		logrus.WithField("src", q.dht.GetLocalPeer().ID).WithField("dst", cp).WithField("queryKey", req.Key).WithField("id", q.id).WithField("cp", q.contactedPeers).Infof("Asking peer")
+		logrus.WithField("src", q.dht.localPeer.ID).WithField("dst", cp).WithField("queryKey", req.Key).WithField("id", q.id).WithField("cp", q.contactedPeers).Infof("Asking peer")
 		q.dht.sendMessage(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
 		// mark peer as contacted
 		q.contactedPeers = append(q.contactedPeers, cp)
