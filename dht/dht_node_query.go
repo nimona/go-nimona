@@ -2,7 +2,6 @@ package dht
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -100,14 +99,16 @@ func (q *query) next() {
 		logrus.WithError(err).Error("Failed find peers near")
 		return
 	}
-	fmt.Println("!!!!", q.dht.localPeer)
 	// create request
 	req := messageGet{
-		QueryID:    q.id,
-		OriginPeer: q.dht.localPeer,
-		Key:        q.key,
+		QueryID: q.id,
+		OriginPeer: &messagePeer{
+			ID: q.dht.localPeer.ID,
+			// TODO probably shouldn't be doing this
+			Addresses: q.dht.net.GetAddresses(),
+		},
+		Key: q.key,
 	}
-	req.OriginPeer.Addresses = q.dht.net.GetAddresses()
 	// keep track of how many we've sent to
 	sent := 0
 	// go through closest peers

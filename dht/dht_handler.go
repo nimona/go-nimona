@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 
-	fabric "github.com/nimona/go-nimona/net"
-	"github.com/sirupsen/logrus"
+	net "github.com/nimona/go-nimona/net"
+	logrus "github.com/sirupsen/logrus"
 )
 
 func (d *DHT) Name() string {
@@ -14,17 +14,17 @@ func (d *DHT) Name() string {
 }
 
 // Negotiate will be called after all the other protocol have been processed
-func (d *DHT) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
+func (d *DHT) Negotiate(fn net.NegotiatorFunc) net.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fabric.Conn) error {
+	return func(ctx context.Context, c net.Conn) error {
 		return nil
 	}
 }
 
 // Handle ping requests
-func (d *DHT) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
+func (d *DHT) Handle(fn net.HandlerFunc) net.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fabric.Conn) error {
+	return func(ctx context.Context, c net.Conn) error {
 		sr := bufio.NewReader(c)
 		for {
 			// read line

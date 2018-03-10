@@ -131,10 +131,11 @@ func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
 		logrus.Infof("peer has no addresses; peerID=%", peerID)
 		return nil, errors.New("peer has no addresses")
 	}
+	addr := nd.peerAddresses[peerID][0]
 
 	// TODO re-introduce caching
 	ctx := context.Background()
-	_, c, err := nd.net.DialContext(ctx, nd.peerAddresses[peerID][0])
+	_, c, err := nd.net.DialContext(ctx, addr)
 	return c, err
 	// if stream, ok := nd.streams[peerID]; ok && stream != nil {
 	// 	// TODO Check if stream is still ok
@@ -195,6 +196,7 @@ func (nd *DHT) refresh() {
 			// just swallow channel results
 		}
 	}
+
 	pairs, err := nd.store.GetAll()
 	if err != nil {
 		logrus.WithError(err).Warnf("refresh could not get all pairs")
@@ -243,16 +245,14 @@ func (nd *DHT) Put(ctx context.Context, key, value string) error {
 }
 
 func (nd *DHT) sendPutMessage(key, value string) error {
-	// get fresh local peer addresses
-	localPeer := &messagePeer{
-		ID:        nd.localPeer.ID,
-		Addresses: nd.net.GetAddresses(),
-	}
 	// create a put msg
 	msgPut := &messagePut{
-		OriginPeer: localPeer,
-		Key:        key,
-		Values:     []string{value},
+		OriginPeer: &messagePeer{
+			ID:        nd.localPeer.ID,
+			Addresses: nd.net.GetAddresses(),
+		},
+		Key:    key,
+		Values: []string{value},
 	}
 
 	// find nearest peers
