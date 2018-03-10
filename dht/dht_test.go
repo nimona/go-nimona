@@ -1,136 +1,114 @@
 package dht
 
-// import (
-// 	"context"
-// 	"testing"
-// 	"time"
+import (
+	"context"
+	"testing"
+	"time"
 
-// 	net "github.com/nimona/go-nimona-net"
-// 	"github.com/sirupsen/logrus"
-// 	assert "github.com/stretchr/testify/assert"
-// 	suite "github.com/stretchr/testify/suite"
-// )
+	logrus "github.com/sirupsen/logrus"
+	suite "github.com/stretchr/testify/suite"
 
-// type dhtTestSuite struct {
-// 	suite.Suite
-// 	node1 *DHT
-// 	node2 *DHT
-// 	node3 *DHT
-// 	node4 *DHT
-// 	node5 *DHT
-// }
+	net "github.com/nimona/go-nimona/net"
+)
 
-// func TestExampleTestSuite(t *testing.T) {
-// 	logrus.SetLevel(logrus.DebugLevel)
+type dhtTestSuite struct {
+	suite.Suite
+	node1 *DHT
+	node2 *DHT
+	node3 *DHT
+	node4 *DHT
+	node5 *DHT
+}
 
-// 	peer1 := map[string][]string{
-// 		"a1": []string{},
-// 	}
-// 	peer2 := map[string][]string{
-// 		"a2": []string{},
-// 	}
-// 	// peer3 := net.Peer{ID: "a3", Addresses: []string{}}
-// 	// peer4 := net.Peer{ID: "a4", Addresses: []string{}}
-// 	peer5 := map[string][]string{
-// 		"a5": []string{},
-// 	}
+func TestExampleTestSuite(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
 
-// 	net1, err := net.New(context.Background())
-// 	assert.Nil(t, err)
+	net1 := net.New(context.Background())
+	node1, _ := NewDHT(map[string][]string{}, "a1", net1)
+	net1.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node1})
 
-// 	net2, err := net.New(context.Background())
-// 	assert.Nil(t, err)
+	net2 := net.New(context.Background())
+	node2, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a2", net2)
+	net2.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node2})
 
-// 	// net3, err := net.NewNetwork(&peer3, 0)
-// 	// assert.Nil(t, err)
+	net5 := net.New(context.Background())
+	node5, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a5", net5)
+	net5.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node5})
 
-// 	// net4, err := net.NewNetwork(&peer4, 0)
-// 	// assert.Nil(t, err)
+	dt := &dhtTestSuite{
+		node1: node1,
+		node2: node2,
+		// node3: node3,
+		// node4: node4,
+		node5: node5,
+	}
 
-// 	net5, err := net.New(context.Background())
-// 	assert.Nil(t, err)
+	time.Sleep(time.Second * 5)
+	suite.Run(t, dt)
+}
 
-// 	node1, _ := NewDHT(map[string][]string{}, "a1", net1)
-// 	node2, _ := NewDHT([]net.Peer{peer1}, peer2, net2)
-// 	// node3, _ := NewDHT([]net.Peer{peer1}, peer3, net3)
-// 	// node4, _ := NewDHT([]net.Peer{peer1}, peer4, net4)
-// 	node5, _ := NewDHT([]net.Peer{peer1}, peer5, net5)
+func (suite *dhtTestSuite) TestFindSuccess() {
+	ctx := context.Background()
+	id := "a5"
+	addresses, err := suite.node2.GetPeer(ctx, id)
+	suite.Nil(err)
+	suite.NotEmpty(addresses)
+}
 
-// 	dt := &dhtTestSuite{
-// 		node1: node1,
-// 		node2: node2,
-// 		// node3: node3,
-// 		// node4: node4,
-// 		node5: node5,
-// 	}
+func (suite *dhtTestSuite) TestFindNodeLocalSuccess() {
+	ctx := context.Background()
+	id := "a1"
 
-// 	time.Sleep(time.Second * 5)
+	addresses, err := suite.node2.GetPeer(ctx, id)
+	suite.Nil(err)
+	suite.NotEmpty(addresses)
+}
 
-// 	suite.Run(t, dt)
-// }
+func (suite *dhtTestSuite) TestFindNodeTimeout() {
+	// swallow cancelation  function to make sure we test timeout
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		time.Second,
+	)
 
-// func (suite *dhtTestSuite) TestFindSuccess() {
-// 	ctx := context.Background()
-// 	id := "a5"
-// 	peer, err := suite.node2.GetPeer(ctx, id)
-// 	suite.Nil(err)
-// 	suite.Equal(id, peer.ID)
-// }
+	id := "does-not-exist"
 
-// func (suite *dhtTestSuite) TestFindNodeLocalSuccess() {
-// 	ctx := context.Background()
-// 	id := "a1"
+	addresses, err := suite.node2.GetPeer(ctx, id)
+	suite.Equal(ErrPeerNotFound, err)
+	suite.Empty(addresses)
+}
 
-// 	peer, err := suite.node2.GetPeer(ctx, id)
-// 	suite.Nil(err)
-// 	suite.Equal(id, peer.ID)
-// }
+func (suite *dhtTestSuite) TestFindNodeCancelation() {
+	// swallow cancelation  function to make sure we test timeout
+	ctx, cf := context.WithCancel(
+		context.Background(),
+	)
 
-// func (suite *dhtTestSuite) TestFindNodeTimeout() {
-// 	// swallow cancelation  function to make sure we test timeout
-// 	ctx, _ := context.WithTimeout(
-// 		context.Background(),
-// 		time.Second,
-// 	)
+	go func() {
+		time.Sleep(time.Second)
+		cf()
+	}()
 
-// 	id := "does-not-exist"
+	id := "does-not-exist"
 
-// 	peer, err := suite.node2.GetPeer(ctx, id)
-// 	suite.Equal(ErrPeerNotFound, err)
-// 	suite.Empty(peer.ID)
-// }
+	addresses, err := suite.node2.GetPeer(ctx, id)
+	suite.Equal(ErrPeerNotFound, err)
+	suite.Empty(addresses)
+}
 
-// func (suite *dhtTestSuite) TestFindNodeCancelation() {
-// 	// swallow cancelation  function to make sure we test timeout
-// 	ctx, cf := context.WithCancel(
-// 		context.Background(),
-// 	)
+func (suite *dhtTestSuite) TestFindKeySuccess() {
+	key := "some-key"
+	value := "some-value"
+	err := suite.node1.Put(context.Background(), key, value)
+	suite.Nil(err)
 
-// 	go func() {
-// 		time.Sleep(time.Second)
-// 		cf()
-// 	}()
-
-// 	id := "does-not-exist"
-
-// 	peer, err := suite.node2.GetPeer(ctx, id)
-// 	suite.Equal(ErrPeerNotFound, err)
-// 	suite.Empty(peer.ID)
-// }
-
-// func (suite *dhtTestSuite) TestFindKeySuccess() {
-// 	key := "some-key"
-// 	value := "some-value"
-// 	err := suite.node2.Put(context.Background(), key, value)
-// 	suite.Nil(err)
-
-// 	res, err := suite.node5.Get(context.Background(), key)
-// 	resValue := ""
-// 	select {
-// 	case <-time.After(time.Second * 5):
-// 	case v := <-res:
-// 		resValue = v
-// 	}
-// 	suite.Nil(err)
-// 	suite.Equal(value, resValue)
-// }
+	res, err := suite.node5.Get(context.Background(), key)
+	resValue := ""
+	select {
+	case <-time.After(time.Second * 5):
+	case v := <-res:
+		resValue = v
+	}
+	suite.Nil(err)
+	suite.Equal(value, resValue)
+}

@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/nimona/go-nimona/net"
 
@@ -68,24 +69,24 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 	}
 
 	// TODO quit channel
-	// quit := make(chan struct{})
+	quit := make(chan struct{})
 
 	// start refresh worker
-	// ticker := time.NewTicker(30 * time.Second)
-	// go func() {
-	// 	// refresh for the first time
-	// 	nd.refresh()
-	// 	// and then just wait
-	// 	for {
-	// 		select {
-	// 		case <-ticker.C:
-	// 			nd.refresh()
-	// 		case <-quit:
-	// 			ticker.Stop()
-	// 			return
-	// 		}
-	// 	}
-	// }()
+	ticker := time.NewTicker(30 * time.Second)
+	go func() {
+		// refresh for the first time
+		nd.refresh()
+		// and then just wait
+		for {
+			select {
+			case <-ticker.C:
+				nd.refresh()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	// start messaging worker
 	// TODO move this to a separate method
@@ -126,6 +127,11 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 }
 
 func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
+	if len(nd.peerAddresses[peerID]) == 0 {
+		logrus.Infof("peer has no addresses; peerID=%", peerID)
+		return nil, errors.New("peer has no addresses")
+	}
+
 	// TODO re-introduce caching
 	ctx := context.Background()
 	_, c, err := nd.net.DialContext(ctx, nd.peerAddresses[peerID][0])
@@ -255,7 +261,6 @@ func (nd *DHT) sendPutMessage(key, value string) error {
 		logrus.WithError(err).Error("Put failed to find near peers")
 		return err
 	}
-	fmt.Println("!!!", cps)
 	for _, cp := range cps {
 		// send message
 		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
@@ -282,8 +287,6 @@ func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
 		incomingMessages: make(chan messagePut, 100),
 		lock:             &sync.RWMutex{},
 	}
-
-	fmt.Println("------ query", q.id)
 
 	// and store it
 	nd.lock.Lock()
@@ -342,7 +345,8 @@ func (nd *DHT) sendMessage(msgType string, payload interface{}, peerID string) e
 func (nd *DHT) getHandler(msg *messageGet) {
 	// origin peer is asking for a value
 	logger := logrus.
-		WithField("origin", msg.OriginPeer.ID).
+		WithField("origin.id", msg.OriginPeer.ID).
+		WithField("origin.addresses", msg.OriginPeer.Addresses).
 		WithField("key", msg.Key).
 		WithField("query", msg.QueryID)
 	logger.Infof("Origin is asking for key")

@@ -2,6 +2,7 @@ package dht
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -99,12 +100,14 @@ func (q *query) next() {
 		logrus.WithError(err).Error("Failed find peers near")
 		return
 	}
+	fmt.Println("!!!!", q.dht.localPeer)
 	// create request
 	req := messageGet{
 		QueryID:    q.id,
 		OriginPeer: q.dht.localPeer,
 		Key:        q.key,
 	}
+	req.OriginPeer.Addresses = q.dht.net.GetAddresses()
 	// keep track of how many we've sent to
 	sent := 0
 	// go through closest peers
@@ -114,7 +117,12 @@ func (q *query) next() {
 			continue
 		}
 		// ask peer
-		logrus.WithField("src", q.dht.localPeer.ID).WithField("dst", cp).WithField("queryKey", req.Key).WithField("id", q.id).WithField("cp", q.contactedPeers).Infof("Asking peer")
+		logrus.WithField("src", q.dht.localPeer.ID).
+			WithField("dst", cp).
+			WithField("queryKey", req.Key).
+			WithField("id", q.id).
+			WithField("cp", q.contactedPeers).
+			Infof("Asking peer")
 		q.dht.sendMessage(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
 		// mark peer as contacted
 		q.contactedPeers = append(q.contactedPeers, cp)
