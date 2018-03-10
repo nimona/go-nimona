@@ -1,17 +1,24 @@
 package dht
 
-import (
-	suite "github.com/stretchr/testify/suite"
-)
+// import (
+// 	"context"
+// 	"testing"
+// 	"time"
 
-type dhtTestSuite struct {
-	suite.Suite
-	node1 *DHT
-	node2 *DHT
-	node3 *DHT
-	node4 *DHT
-	node5 *DHT
-}
+// 	net "github.com/nimona/go-nimona-net"
+// 	"github.com/sirupsen/logrus"
+// 	assert "github.com/stretchr/testify/assert"
+// 	suite "github.com/stretchr/testify/suite"
+// )
+
+// type dhtTestSuite struct {
+// 	suite.Suite
+// 	node1 *DHT
+// 	node2 *DHT
+// 	node3 *DHT
+// 	node4 *DHT
+// 	node5 *DHT
+// }
 
 // func TestExampleTestSuite(t *testing.T) {
 // 	logrus.SetLevel(logrus.DebugLevel)
@@ -28,10 +35,10 @@ type dhtTestSuite struct {
 // 		"a5": []string{},
 // 	}
 
-// 	net1, err := fabric.New(context.Background())
+// 	net1, err := net.New(context.Background())
 // 	assert.Nil(t, err)
 
-// 	net2, err := fabric.New(context.Background())
+// 	net2, err := net.New(context.Background())
 // 	assert.Nil(t, err)
 
 // 	// net3, err := net.NewNetwork(&peer3, 0)
@@ -40,7 +47,7 @@ type dhtTestSuite struct {
 // 	// net4, err := net.NewNetwork(&peer4, 0)
 // 	// assert.Nil(t, err)
 
-// 	net5, err := fabric.New(context.Background())
+// 	net5, err := net.New(context.Background())
 // 	assert.Nil(t, err)
 
 // 	node1, _ := NewDHT(map[string][]string{}, "a1", net1)

@@ -13,8 +13,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-
-	net "github.com/nimona/go-nimona-net"
 )
 
 const (
@@ -36,10 +34,10 @@ type DHT struct {
 	queries       map[string]*query
 	peerAddresses map[string][]string
 	lock          sync.RWMutex
-	net           *fabric.Fabric
+	net           net.Net
 }
 
-func NewDHT(bps map[string][]string, localPeerID string, nn *fabric.Fabric) (*DHT, error) {
+func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, error) {
 	// create new kv store
 	st, _ := newStore()
 
@@ -497,15 +495,15 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 	return nil
 }
 
-func (nd *DHT) storePeer(peer net.Peer, persistent bool) error {
-	for _, addr := range peer.Addresses {
-		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
-		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
-			logrus.WithError(err).WithField("peerID", peer.ID).Warnf("storePeer could not put peer")
-		}
-	}
-	return nil
-}
+// func (nd *DHT) storePeer(peer net.Peer, persistent bool) error {
+// 	for _, addr := range peer.Addresses {
+// 		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
+// 		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
+// 			logrus.WithError(err).WithField("peerID", peer.ID).Warnf("storePeer could not put peer")
+// 		}
+// 	}
+// 	return nil
+// }
 
 // func (nd *DHT) GetLocalPeer() net.Peer {
 // 	return nd.localPeer
