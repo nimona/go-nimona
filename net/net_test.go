@@ -12,13 +12,13 @@ import (
 // NetTestSuite -
 type NetTestSuite struct {
 	suite.Suite
-	fnet *Net
+	fnet *nnet
 	ctx  context.Context
 }
 
 func (suite *NetTestSuite) SetupTest() {
 	suite.ctx = context.Background()
-	suite.fnet = New(suite.ctx)
+	suite.fnet = New(suite.ctx).(*nnet)
 }
 
 func (suite *NetTestSuite) TestAddTransportSuccess() {
