@@ -5,7 +5,7 @@ jobs:
       - CC_TEST_REPORTER_ID: b8d82ff3ad05eb9444b7e60af870c06ac351f994cc95131a06db550c832fd1d8
     docker:
       - image: circleci/golang:1.8
-    working_directory: /go/src/github.com/nimona/go-nimona-fabric
+    working_directory: /go/src/github.com/nimona/go-nimona
     steps:
       - checkout
       - run:
