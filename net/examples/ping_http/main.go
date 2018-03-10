@@ -26,7 +26,7 @@ func main() {
 
 	for _, addr := range peerA.GetAddresses() {
 		endpoint := addr + "/tls/yamux/router/ping"
-		_, c, err := peerB.DialAndProcessWithContext(context.Background(), endpoint)
+		_, c, err := peerB.DialContext(context.Background(), endpoint)
 		if err != nil {
 			log.Fatal("Dial error", err)
 		}
@@ -35,7 +35,7 @@ func main() {
 
 }
 
-func newPeer(peerID string) (*fnet.Net, error) {
+func newPeer(peerID string) (fnet.Net, error) {
 	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {

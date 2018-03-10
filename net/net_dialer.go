@@ -43,94 +43,42 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		}
 
 		newAddr := newConn.GetAddress()
-		lgr.Info("Dial complete",
+
+		lgr.Info("Dial complete, negotiating",
 			zap.String("address", newAddr.String()),
+			zap.String("Remaining", newAddr.RemainingString()),
 		)
-		return newCtx, newConn, nil
+
+		// create chain with remaining protocols
+		remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
+		for i, prName := range newAddr.RemainingProtocols() {
+			protocol, ok := f.protocols[prName]
+			if !ok {
+				lgr.Debug("No such protocol", zap.String("protocol", prName))
+				return nil, nil, ErrInvalidProtocol
+			}
+			remProtocols[i] = protocol
+		}
+
+		var retCtx context.Context
+		var retConn Conn
+		retProtocol := &EmptyProtocol{
+			Negotiator: func(ctx context.Context, c Conn) error {
+				retCtx = ctx
+				retConn = c
+				return nil
+			},
+		}
+
+		remProtocols = append(remProtocols, retProtocol)
+		chain := NegotiatorChain(remProtocols...)
+		if err := chain(newCtx, newConn); err != nil {
+			lgr.Warn("Could not negotiate", zap.Error(err))
+			return nil, nil, ErrCouldNotDial
+		}
+
+		return retCtx, retConn, nil
 	}
 
 	return nil, nil, ErrCouldNotDial
-}
-
-// CallContext will attempt to connect to the given address and go through the
-// various middlware that it needs until the connection is fully established
-func (f *nnet) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
-	lgr := Logger(ctx)
-	newCtx, newConn, err := f.DialContext(ctx, as)
-	if err != nil {
-		return err
-	}
-
-	newAddr := newConn.GetAddress()
-
-	lgr.Info("Dial complete, negotiating",
-		zap.String("address", newAddr.String()),
-		zap.String("Remaining", newAddr.RemainingString()),
-	)
-
-	// create chain with remaining protocols
-	remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
-	for i, prName := range newAddr.RemainingProtocols() {
-		protocol, ok := f.protocols[prName]
-		if !ok {
-			lgr.Debug("No such protocol", zap.String("protocol", prName))
-			return ErrInvalidProtocol
-		}
-		remProtocols[i] = protocol
-	}
-	remProtocols = append(remProtocols, extraProtocols...)
-	chain := NegotiatorChain(remProtocols...)
-	if err := chain(newCtx, newConn); err != nil {
-		lgr.Warn("Could not negotiate", zap.Error(err))
-		return ErrCouldNotDial
-	}
-
-	return nil
-}
-
-// DialAndProcessWithContext dials and processes negotiators before returning the latest conn
-func (f *nnet) DialAndProcessWithContext(ctx context.Context, as string, extraProtocols ...Protocol) (context.Context, Conn, error) {
-	lgr := Logger(ctx)
-	newCtx, newConn, err := f.DialContext(ctx, as)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	newAddr := newConn.GetAddress()
-
-	lgr.Info("Dial complete, negotiating",
-		zap.String("address", newAddr.String()),
-		zap.String("Remaining", newAddr.RemainingString()),
-	)
-
-	// create chain with remaining protocols
-	remProtocols := make([]Protocol, len(newAddr.RemainingProtocols()))
-	for i, prName := range newAddr.RemainingProtocols() {
-		protocol, ok := f.protocols[prName]
-		if !ok {
-			lgr.Debug("No such protocol", zap.String("protocol", prName))
-			return nil, nil, ErrInvalidProtocol
-		}
-		remProtocols[i] = protocol
-	}
-
-	var retCtx context.Context
-	var retConn Conn
-	retProtocol := &EmptyProtocol{
-		Negotiator: func(ctx context.Context, c Conn) error {
-			retCtx = ctx
-			retConn = c
-			return nil
-		},
-	}
-
-	extraProtocols = append(extraProtocols, retProtocol)
-	remProtocols = append(remProtocols, extraProtocols...)
-	chain := NegotiatorChain(remProtocols...)
-	if err := chain(newCtx, newConn); err != nil {
-		lgr.Warn("Could not negotiate", zap.Error(err))
-		return nil, nil, ErrCouldNotDial
-	}
-
-	return retCtx, retConn, nil
 }

@@ -52,7 +52,7 @@ func (suite *NetDialerTestSuite) TestDialContextSuccess() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Nil(retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -73,7 +73,7 @@ func (suite *NetDialerTestSuite) TestDialTransportCannotDial() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 }
@@ -93,7 +93,7 @@ func (suite *NetDialerTestSuite) TestDialTransportError() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 }
@@ -128,7 +128,7 @@ func (suite *NetDialerTestSuite) TestDialContextFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -164,7 +164,7 @@ func (suite *NetDialerTestSuite) TestNegotiatorFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
@@ -200,7 +200,7 @@ func (suite *NetDialerTestSuite) TestInvalidProtocolFails() {
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fnet.CallContext(ctx, addrString)
+	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
 	suite.Assert().Equal(ErrInvalidProtocol, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)

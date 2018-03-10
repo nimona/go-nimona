@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"sync"
 )
 
 var (
@@ -20,8 +21,6 @@ type Net interface {
 	AddTransport(transport Transport, protocols []Protocol) error
 	AddProtocol(protocol Protocol) error
 	GetAddresses() []string
-	CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error
-	DialAndProcessWithContext(ctx context.Context, as string, extraProtocols ...Protocol) (context.Context, Conn, error)
 }
 
 // New instance of net
@@ -30,6 +29,7 @@ func New(ctx context.Context) Net {
 		context:    ctx,
 		transports: []*transportWithProtocols{},
 		protocols:  map[string]Protocol{},
+		lock:       &sync.Mutex{},
 	}
 	return f
 }
@@ -39,6 +39,7 @@ type nnet struct {
 	context    context.Context
 	transports []*transportWithProtocols
 	protocols  map[string]Protocol
+	lock       *sync.Mutex
 }
 
 type transportWithProtocols struct {
@@ -53,6 +54,9 @@ func (f *nnet) AddTransport(transport Transport, protocols []Protocol) error {
 	protocolNames := []string{}
 	for _, pr := range protocols {
 		protocolNames = append(protocolNames, pr.Name())
+		if err := f.AddProtocol(pr); err != nil {
+			return err
+		}
 	}
 	hWrapper := NewTransportWrapper(protocolNames)
 	hchain := append([]Protocol{hWrapper}, protocols...)
@@ -68,12 +72,17 @@ func (f *nnet) AddTransport(transport Transport, protocols []Protocol) error {
 
 // AddProtocol for both client and server
 func (f *nnet) AddProtocol(protocol Protocol) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	f.protocols[protocol.Name()] = protocol
 	return nil
 }
 
 // GetAddresses returns a list of addresses for all the current transports
 func (f *nnet) GetAddresses() []string {
+	// TODO use different lock
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	addresses := []string{}
 	for _, tr := range f.transports {
 		addresses = append(addresses, tr.Transport.Addresses()...)

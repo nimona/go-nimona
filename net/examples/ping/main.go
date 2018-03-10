@@ -30,22 +30,23 @@ func main() {
 	for _, addr := range peerA.GetAddresses() {
 		endpoint := addr + "/tls/yamux/router/relay:keepalive"
 		log.Println("-------- Dialing", endpoint)
-		if err := peerB.CallContext(context.Background(), endpoint); err != nil {
+		if _, _, err := peerB.DialContext(context.Background(), endpoint); err != nil {
 			log.Println("Dial error", err)
 		}
 
 		// endpoint = addr + "/tls/yamux/router/ping"
 		// time.Sleep(5 * time.Second)
 		// log.Println("-------- SECOND Dial", endpoint)
-		// if err := peerB.CallContext(context.Background(), endpoint); err != nil {
+		// if err := peerB.DialContext(context.Background(), endpoint); err != nil {
 		// 	log.Println("Dial error", err)
 		// }
 
 		addrPeerB := peerB.GetAddresses()[0]
 		endpoint = addrPeerB + "/tls/yamux/router/relay:" + addr + "/tls/yamux/router/ping"
 		log.Println("-------- THIRD Dial", endpoint)
-		peerC.CallContext(context.Background(), endpoint)
-
+		if _, _, err := peerC.DialContext(context.Background(), endpoint); err != nil {
+			log.Println("Dial error", err)
+		}
 	}
 }
 
@@ -79,9 +80,9 @@ func newPeer(peerID string) (fnet.Net, error) {
 	f.AddTransport(tcp, []fnet.Protocol{tls, yamux, router})
 	// f.AddTransport(ws, []fnet.Protocol{tls, yamux, router})
 
-	f.AddProtocol(router)
-	f.AddProtocol(tls)
-	f.AddProtocol(yamux)
+	// f.AddProtocol(router)
+	// f.AddProtocol(tls)
+	// f.AddProtocol(yamux)
 	f.AddProtocol(identity)
 	f.AddProtocol(ping)
 	f.AddProtocol(relay)
