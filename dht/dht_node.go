@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nimona/go-nimona-fabric"
+	"github.com/nimona/go-nimona/net"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -481,7 +481,7 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
-	
+
 	logrus.Infof("Adding peer to network id=%s address=%v", peerID, peerAddresses)
 	// add peer to network
 	nd.peerAddresses[peerID] = peerAddresses

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 
-	fabric "github.com/nimona/go-nimona-fabric"
+	fabric "github.com/nimona/go-nimona/net"
 	"github.com/sirupsen/logrus"
 )
 

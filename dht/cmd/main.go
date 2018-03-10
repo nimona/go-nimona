@@ -11,8 +11,8 @@ import (
 	logrus "github.com/sirupsen/logrus"
 	ishell "gopkg.in/abiosoft/ishell.v2"
 
-	fabric "github.com/nimona/go-nimona-fabric"
-	dht "github.com/nimona/go-nimona-fabric/dht"
+	fabric "github.com/nimona/go-nimona/net"
+	dht "github.com/nimona/go-nimona/net/dht"
 )
 
 func main() {
