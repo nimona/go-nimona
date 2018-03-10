@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"strings"

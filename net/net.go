@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"context"
@@ -10,13 +10,13 @@ var (
 	ErrNoTransport = errors.New("Could not dial with available transports")
 	// ErrInvalidProtocol when our handler doesn't know about a protocol in the
 	ErrInvalidProtocol = errors.New("No such protocol")
-	// errNoMoreProtocols when fabric cannot deal with any more
+	// errNoMoreProtocols when net cannot deal with any more protocols
 	errNoMoreProtocols = errors.New("No more protocols")
 )
 
-// New instance of fabric
-func New(ctx context.Context) *Fabric {
-	f := &Fabric{
+// New instance of net
+func New(ctx context.Context) Net {
+	f := &nnet{
 		context:    ctx,
 		transports: []*transportWithProtocols{},
 		protocols:  map[string]Protocol{},
@@ -24,8 +24,8 @@ func New(ctx context.Context) *Fabric {
 	return f
 }
 
-// Fabric manages transports and protocols, and deals with Dialing.
-type Fabric struct {
+// Net manages transports and protocols, and deals with Dialing.
+type nnet struct {
 	context    context.Context
 	transports []*transportWithProtocols
 	protocols  map[string]Protocol
@@ -39,7 +39,7 @@ type transportWithProtocols struct {
 }
 
 // AddTransport for dialing to the outside world
-func (f *Fabric) AddTransport(transport Transport, protocols []Protocol) error {
+func (f *nnet) AddTransport(transport Transport, protocols []Protocol) error {
 	protocolNames := []string{}
 	for _, pr := range protocols {
 		protocolNames = append(protocolNames, pr.Name())
@@ -57,13 +57,13 @@ func (f *Fabric) AddTransport(transport Transport, protocols []Protocol) error {
 }
 
 // AddProtocol for both client and server
-func (f *Fabric) AddProtocol(protocol Protocol) error {
+func (f *nnet) AddProtocol(protocol Protocol) error {
 	f.protocols[protocol.Name()] = protocol
 	return nil
 }
 
 // GetAddresses returns a list of addresses for all the current transports
-func (f *Fabric) GetAddresses() []string {
+func (f *nnet) GetAddresses() []string {
 	addresses := []string{}
 	for _, tr := range f.transports {
 		addresses = append(addresses, tr.Transport.Addresses()...)

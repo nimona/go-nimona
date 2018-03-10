@@ -1,4 +1,4 @@
-package fabric
+package net
 
 // Basic imports
 import (
@@ -10,19 +10,19 @@ import (
 	suite "github.com/stretchr/testify/suite"
 )
 
-// FabricDialerTestSuite -
-type FabricDialerTestSuite struct {
+// NetDialerTestSuite -
+type NetDialerTestSuite struct {
 	suite.Suite
-	fabric *Fabric
-	ctx    context.Context
+	fnet *Net
+	ctx  context.Context
 }
 
-func (suite *FabricDialerTestSuite) SetupTest() {
+func (suite *NetDialerTestSuite) SetupTest() {
 	suite.ctx = context.Background()
-	suite.fabric = New(suite.ctx)
+	suite.fnet = New(suite.ctx)
 }
 
-func (suite *FabricDialerTestSuite) TestDialContextSuccess() {
+func (suite *NetDialerTestSuite) TestDialContextSuccess() {
 	ctx := context.Background()
 
 	prot := &MockProtocol{}
@@ -35,9 +35,9 @@ func (suite *FabricDialerTestSuite) TestDialContextSuccess() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fabric.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocol(prot)
 	suite.Assert().Nil(protErr)
-	suite.Assert().Len(suite.fabric.protocols, 1)
+	suite.Assert().Len(suite.fnet.protocols, 1)
 
 	addrString := "test"
 	addr := NewAddress(addrString)
@@ -48,17 +48,17 @@ func (suite *FabricDialerTestSuite) TestDialContextSuccess() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fabric.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, []Protocol{prot})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Nil(retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
-func (suite *FabricDialerTestSuite) TestDialTransportCannotDial() {
+func (suite *NetDialerTestSuite) TestDialTransportCannotDial() {
 	ctx := context.Background()
 
 	addrString := "test"
@@ -69,16 +69,16 @@ func (suite *FabricDialerTestSuite) TestDialTransportCannotDial() {
 	tran := &MockTransport{}
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(false, nil)
-	err := suite.fabric.AddTransport(tran, []Protocol{})
+	err := suite.fnet.AddTransport(tran, []Protocol{})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 }
 
-func (suite *FabricDialerTestSuite) TestDialTransportError() {
+func (suite *NetDialerTestSuite) TestDialTransportError() {
 	ctx := context.Background()
 
 	addrString := "test"
@@ -89,16 +89,16 @@ func (suite *FabricDialerTestSuite) TestDialTransportError() {
 	tran := &MockTransport{}
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(false, errors.New("error"))
-	err := suite.fabric.AddTransport(tran, []Protocol{})
+	err := suite.fnet.AddTransport(tran, []Protocol{})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 }
 
-func (suite *FabricDialerTestSuite) TestDialContextFails() {
+func (suite *NetDialerTestSuite) TestDialContextFails() {
 	ctx := context.Background()
 
 	prot := &MockProtocol{}
@@ -111,9 +111,9 @@ func (suite *FabricDialerTestSuite) TestDialContextFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fabric.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocol(prot)
 	suite.Assert().Nil(protErr)
-	suite.Assert().Len(suite.fabric.protocols, 1)
+	suite.Assert().Len(suite.fnet.protocols, 1)
 
 	addrString := "test"
 	addr := NewAddress(addrString)
@@ -124,17 +124,17 @@ func (suite *FabricDialerTestSuite) TestDialContextFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(nil, nil, errors.New("error"))
-	err := suite.fabric.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, []Protocol{prot})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
-func (suite *FabricDialerTestSuite) TestNegotiatorFails() {
+func (suite *NetDialerTestSuite) TestNegotiatorFails() {
 	ctx := context.Background()
 
 	prot := &MockProtocol{}
@@ -147,9 +147,9 @@ func (suite *FabricDialerTestSuite) TestNegotiatorFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fabric.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocol(prot)
 	suite.Assert().Nil(protErr)
-	suite.Assert().Len(suite.fabric.protocols, 1)
+	suite.Assert().Len(suite.fnet.protocols, 1)
 
 	addrString := "test"
 	addr := NewAddress(addrString)
@@ -160,17 +160,17 @@ func (suite *FabricDialerTestSuite) TestNegotiatorFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fabric.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, []Protocol{prot})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrCouldNotDial, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
-func (suite *FabricDialerTestSuite) TestInvalidProtocolFails() {
+func (suite *NetDialerTestSuite) TestInvalidProtocolFails() {
 	ctx := context.Background()
 
 	prot := &MockProtocol{}
@@ -183,9 +183,9 @@ func (suite *FabricDialerTestSuite) TestInvalidProtocolFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fabric.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocol(prot)
 	suite.Assert().Nil(protErr)
-	suite.Assert().Len(suite.fabric.protocols, 1)
+	suite.Assert().Len(suite.fnet.protocols, 1)
 
 	addrString := "test"
 	addr := NewAddress(addrString)
@@ -196,16 +196,16 @@ func (suite *FabricDialerTestSuite) TestInvalidProtocolFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fabric.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, []Protocol{prot})
 	suite.Assert().Nil(err)
-	suite.Assert().Len(suite.fabric.transports, 1)
+	suite.Assert().Len(suite.fnet.transports, 1)
 
-	retErr := suite.fabric.CallContext(ctx, addrString)
+	retErr := suite.fnet.CallContext(ctx, addrString)
 	suite.Assert().Equal(ErrInvalidProtocol, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
 
-func TestFabricDialerTestSuite(t *testing.T) {
-	suite.Run(t, new(FabricDialerTestSuite))
+func TestNetDialerTestSuite(t *testing.T) {
+	suite.Run(t, new(NetDialerTestSuite))
 }

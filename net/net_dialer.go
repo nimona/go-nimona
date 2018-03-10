@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type RequestIDKey struct{}
 
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
+func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
 	lgr := Logger(ctx)
 	lgr.Info("Dialing", zap.String("address", as))
@@ -54,7 +54,7 @@ func (f *Fabric) DialContext(ctx context.Context, as string) (context.Context, C
 
 // CallContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
-func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
+func (f *nnet) CallContext(ctx context.Context, as string, extraProtocols ...Protocol) error {
 	lgr := Logger(ctx)
 	newCtx, newConn, err := f.DialContext(ctx, as)
 	if err != nil {
@@ -89,7 +89,7 @@ func (f *Fabric) CallContext(ctx context.Context, as string, extraProtocols ...P
 }
 
 // DialAndProcessWithContext dials and processes negotiators before returning the latest conn
-func (f *Fabric) DialAndProcessWithContext(ctx context.Context, as string, extraProtocols ...Protocol) (context.Context, Conn, error) {
+func (f *nnet) DialAndProcessWithContext(ctx context.Context, as string, extraProtocols ...Protocol) (context.Context, Conn, error) {
 	lgr := Logger(ctx)
 	newCtx, newConn, err := f.DialContext(ctx, as)
 	if err != nil {

@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 
 type RelayProtocol struct {
 	connections map[string]Conn
-	fabric      Network
+	net         Net
 }
 
-func NewRelayProtocol(f Network) *RelayProtocol {
+func NewRelayProtocol(f Net) *RelayProtocol {
 	return &RelayProtocol{
-		fabric: f,
+		net: f,
 	}
 }
 func (m *RelayProtocol) Name() string {
@@ -54,7 +54,7 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		addr.Pop()
 
 		// Connect
-		ctx, cn, err := m.fabric.DialContext(ctx, host)
+		ctx, cn, err := m.net.DialContext(ctx, host)
 		if err != nil {
 			lgr.Error("Could not Dial client", zap.Error(err))
 			return err

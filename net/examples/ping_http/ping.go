@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 
-	fabric "github.com/nimona/go-nimona-fabric"
+	fnet "github.com/nimona/go-nimona/net"
 )
 
 // Ping is our example client, it simply sends a PING string and expects a PONG
@@ -21,7 +21,7 @@ func (p *Ping) Name() string {
 
 // Negotiate will be called after all the other protocol have been processed
 func (p *Ping) Ping(c net.Conn) {
-	client, _ := fabric.NewHTTPClient(c)
+	client, _ := fnet.NewHTTPClient(c)
 	resp, err := client.Get("http://something/ping")
 	if err != nil {
 		log.Fatal("get err", err)
@@ -38,15 +38,15 @@ func (p *Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there hon")
 }
 
-func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
-	return func(ctx context.Context, c fabric.Conn) error {
+func (p *Ping) Negotiate(fn fnet.NegotiatorFunc) fnet.NegotiatorFunc {
+	return func(ctx context.Context, c fnet.Conn) error {
 		return fn(ctx, c)
 	}
 }
 
 // Handle ping requests
-func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
-	return func(ctx context.Context, c fabric.Conn) error {
-		return fabric.NewHTTPServer(c, p)
+func (p *Ping) Handle(fn fnet.HandlerFunc) fnet.HandlerFunc {
+	return func(ctx context.Context, c fnet.Conn) error {
+		return fnet.NewHTTPServer(c, p)
 	}
 }

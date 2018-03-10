@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"context"
@@ -136,7 +136,7 @@ func (t *TCP) startExternal(ctx context.Context) error {
 		Logger(ctx).Debug("Could not clear upnp: ", zap.Error(err))
 	}
 
-	err = t.upnp.Forward(uint16(extPort), "fabric")
+	err = t.upnp.Forward(uint16(extPort), "nimona-net")
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	fabric "github.com/nimona/go-nimona-fabric"
+	fnet "github.com/nimona/go-nimona/net"
 )
 
 func main() {
@@ -47,10 +47,9 @@ func main() {
 		peerC.CallContext(context.Background(), endpoint)
 
 	}
-
 }
 
-func newPeer(peerID string) (*fabric.Fabric, error) {
+func newPeer(peerID string) (fnet.Net, error) {
 	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {
@@ -58,10 +57,10 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 		return nil, err
 	}
 
-	yamux := fabric.NewYamux()
-	router := fabric.NewRouter()
-	identity := &fabric.IdentityProtocol{Local: peerID}
-	tls := &fabric.SecProtocol{
+	yamux := fnet.NewYamux()
+	router := fnet.NewRouter()
+	identity := &fnet.IdentityProtocol{Local: peerID}
+	tls := &fnet.SecProtocol{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
@@ -69,16 +68,16 @@ func newPeer(peerID string) (*fabric.Fabric, error) {
 	}
 	ping := &Ping{}
 
-	tcp := fabric.NewTransportTCP("0.0.0.0", 0)
-	// ws := fabric.NewTransportWebsocket("0.0.0.0", 0)
+	tcp := fnet.NewTransportTCP("0.0.0.0", 0)
+	// ws := fnet.NewTransportWebsocket("0.0.0.0", 0)
 
-	f := fabric.New(ctx)
+	f := fnet.New(ctx)
 
-	relay := fabric.NewRelayProtocol(f)
+	relay := fnet.NewRelayProtocol(f)
 
-	f.AddTransport(yamux, []fabric.Protocol{router})
-	f.AddTransport(tcp, []fabric.Protocol{tls, yamux, router})
-	// f.AddTransport(ws, []fabric.Protocol{tls, yamux, router})
+	f.AddTransport(yamux, []fnet.Protocol{router})
+	f.AddTransport(tcp, []fnet.Protocol{tls, yamux, router})
+	// f.AddTransport(ws, []fnet.Protocol{tls, yamux, router})
 
 	f.AddProtocol(router)
 	f.AddProtocol(tls)

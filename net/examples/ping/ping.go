@@ -5,7 +5,7 @@ import (
 
 	zap "go.uber.org/zap"
 
-	fabric "github.com/nimona/go-nimona-fabric"
+	fnet "github.com/nimona/go-nimona/net"
 )
 
 // Ping is our example client, it simply sends a PING string and expects a PONG
@@ -17,17 +17,17 @@ func (p *Ping) Name() string {
 }
 
 // Negotiate will be called after all the other protocol have been processed
-func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
+func (p *Ping) Negotiate(fn fnet.NegotiatorFunc) fnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fabric.Conn) error {
-		lgr := fabric.Logger(ctx).With(
+	return func(ctx context.Context, c fnet.Conn) error {
+		lgr := fnet.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
 		// close conection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(fnet.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 
@@ -53,10 +53,10 @@ func (p *Ping) Negotiate(fn fabric.NegotiatorFunc) fabric.NegotiatorFunc {
 }
 
 // Handle ping requests
-func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
+func (p *Ping) Handle(fn fnet.HandlerFunc) fnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fabric.Conn) error {
-		lgr := fabric.Logger(ctx).With(
+	return func(ctx context.Context, c fnet.Conn) error {
+		lgr := fnet.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
@@ -65,7 +65,7 @@ func (p *Ping) Handle(fn fabric.HandlerFunc) fabric.HandlerFunc {
 		// close connection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(fabric.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(fnet.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 

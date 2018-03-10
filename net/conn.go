@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import (
 	"net"
@@ -15,7 +15,7 @@ func NewConnWrapper(c net.Conn, addr *Address) Conn {
 }
 
 type conn struct {
-	network Network
+	network Net
 	conn    net.Conn
 	address *Address
 }

@@ -1,4 +1,4 @@
-package fabric
+package net
 
 import context "context"
 import mock "github.com/stretchr/testify/mock"
