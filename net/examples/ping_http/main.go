@@ -58,14 +58,14 @@ func newPeer(peerID string) (fnet.Net, error) {
 
 	f := fnet.New(ctx)
 
-	f.AddTransport(yamux, []fnet.Protocol{router})
-	f.AddTransport(tcp, []fnet.Protocol{tls, yamux, router})
+	f.AddTransport(yamux, router)
+	f.AddTransport(tcp, tls, yamux, router)
 
-	f.AddProtocol(router)
-	f.AddProtocol(tls)
-	f.AddProtocol(yamux)
-	f.AddProtocol(identity)
-	f.AddProtocol(ping)
+	f.AddProtocols(router)
+	f.AddProtocols(tls)
+	f.AddProtocols(yamux)
+	f.AddProtocols(identity)
+	f.AddProtocols(ping)
 
 	router.AddRoute(ping)
 

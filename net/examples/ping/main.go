@@ -76,16 +76,18 @@ func newPeer(peerID string) (fnet.Net, error) {
 
 	relay := fnet.NewRelayProtocol(f)
 
-	f.AddTransport(yamux, []fnet.Protocol{router})
-	f.AddTransport(tcp, []fnet.Protocol{tls, yamux, router})
+	f.AddTransport(yamux, router)
+	f.AddTransport(tcp, tls, yamux, router)
 	// f.AddTransport(ws, []fnet.Protocol{tls, yamux, router})
 
-	// f.AddProtocol(router)
-	// f.AddProtocol(tls)
-	// f.AddProtocol(yamux)
-	f.AddProtocol(identity)
-	f.AddProtocol(ping)
-	f.AddProtocol(relay)
+	f.AddProtocols(
+		router,
+		tls,
+		yamux,
+		identity,
+		ping,
+		relay,
+	)
 
 	router.AddRoute(relay)
 	router.AddRoute(ping)

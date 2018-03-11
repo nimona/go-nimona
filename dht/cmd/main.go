@@ -57,7 +57,7 @@ func main() {
 	}
 
 	tcp := nnet.NewTransportTCP("0.0.0.0", port)
-	nn.AddTransport(tcp, []nnet.Protocol{dn})
+	nn.AddTransport(tcp, dn)
 	fmt.Println("Addresses: ", nn.GetAddresses())
 
 	shell := ishell.New()

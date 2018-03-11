@@ -1,7 +1,6 @@
 package dht
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -137,45 +136,6 @@ func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
 	ctx := context.Background()
 	_, c, err := nd.net.DialContext(ctx, addr)
 	return c, err
-	// if stream, ok := nd.streams[peerID]; ok && stream != nil {
-	// 	// TODO Check if stream is still ok
-	// 	logrus.Debugf("Found stream for peer %s", peerID)
-	// 	return stream, nil
-	// }
-	// addr := peerID + "/" + protocolID
-	// logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
-	// stream, err := nd.net.Dial(addr)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// logrus.Debugf("Created new stream for peer %s", peerID)
-	// nd.streams[peerID] = stream
-	// return stream, nil
-}
-
-func (nd *DHT) handleStream(protocolID string, stream io.ReadWriteCloser) error {
-	sr := bufio.NewReader(stream)
-	for {
-		// read line
-		line, err := sr.ReadString('\n')
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not read")
-			return err // TODO(geoah) Return?
-		}
-		logrus.WithField("line", line).Debugf("handleStream got line")
-
-		// decode message
-		msg := &message{}
-		if err := json.Unmarshal([]byte(line), &msg); err != nil {
-			logrus.WithError(err).Warnf("Could not decode message")
-			return err
-		}
-
-		// process message
-		if err := nd.handleMessage(msg); err != nil {
-			logrus.WithError(err).Warnf("Could not process message")
-		}
-	}
 }
 
 func (nd *DHT) refresh() {
@@ -498,16 +458,6 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 	logrus.Infof("PUT PEER id=%s addrs=%v", peerID, peerAddresses)
 	return nil
 }
-
-// func (nd *DHT) storePeer(peer net.Peer, persistent bool) error {
-// 	for _, addr := range peer.Addresses {
-// 		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
-// 		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
-// 			logrus.WithError(err).WithField("peerID", peer.ID).Warnf("storePeer could not put peer")
-// 		}
-// 	}
-// 	return nil
-// }
 
 // func (nd *DHT) GetLocalPeer() net.Peer {
 // 	return nd.localPeer

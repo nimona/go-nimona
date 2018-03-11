@@ -25,15 +25,15 @@ func TestExampleTestSuite(t *testing.T) {
 
 	net1 := net.New(context.Background())
 	node1, _ := NewDHT(map[string][]string{}, "a1", net1)
-	net1.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node1})
+	net1.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node1)
 
 	net2 := net.New(context.Background())
 	node2, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a2", net2)
-	net2.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node2})
+	net2.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node2)
 
 	net5 := net.New(context.Background())
 	node5, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a5", net5)
-	net5.AddTransport(net.NewTransportTCP("0.0.0.0", 0), []net.Protocol{node5})
+	net5.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node5)
 
 	dt := &dhtTestSuite{
 		node1: node1,

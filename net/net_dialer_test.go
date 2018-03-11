@@ -35,7 +35,7 @@ func (suite *NetDialerTestSuite) TestDialContextSuccess() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fnet.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocols(prot)
 	suite.Assert().Nil(protErr)
 	suite.Assert().Len(suite.fnet.protocols, 1)
 
@@ -48,7 +48,7 @@ func (suite *NetDialerTestSuite) TestDialContextSuccess() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fnet.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, prot)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -69,7 +69,7 @@ func (suite *NetDialerTestSuite) TestDialTransportCannotDial() {
 	tran := &MockTransport{}
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(false, nil)
-	err := suite.fnet.AddTransport(tran, []Protocol{})
+	err := suite.fnet.AddTransport(tran)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -89,7 +89,7 @@ func (suite *NetDialerTestSuite) TestDialTransportError() {
 	tran := &MockTransport{}
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(false, errors.New("error"))
-	err := suite.fnet.AddTransport(tran, []Protocol{})
+	err := suite.fnet.AddTransport(tran)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -111,7 +111,7 @@ func (suite *NetDialerTestSuite) TestDialContextFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fnet.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocols(prot)
 	suite.Assert().Nil(protErr)
 	suite.Assert().Len(suite.fnet.protocols, 1)
 
@@ -124,7 +124,7 @@ func (suite *NetDialerTestSuite) TestDialContextFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(nil, nil, errors.New("error"))
-	err := suite.fnet.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, prot)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -147,7 +147,7 @@ func (suite *NetDialerTestSuite) TestNegotiatorFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fnet.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocols(prot)
 	suite.Assert().Nil(protErr)
 	suite.Assert().Len(suite.fnet.protocols, 1)
 
@@ -160,7 +160,7 @@ func (suite *NetDialerTestSuite) TestNegotiatorFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fnet.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, prot)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -183,7 +183,7 @@ func (suite *NetDialerTestSuite) TestInvalidProtocolFails() {
 	}
 	prot.On("Handle", mock.Anything).Return(handler)
 	prot.On("Negotiate", mock.Anything).Return(negotiator)
-	protErr := suite.fnet.AddProtocol(prot)
+	protErr := suite.fnet.AddProtocols(prot)
 	suite.Assert().Nil(protErr)
 	suite.Assert().Len(suite.fnet.protocols, 1)
 
@@ -196,7 +196,7 @@ func (suite *NetDialerTestSuite) TestInvalidProtocolFails() {
 	tran.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	tran.On("CanDial", addr).Return(true, nil)
 	tran.On("DialContext", mock.Anything, mock.Anything).Return(ctx, mockConn, nil)
-	err := suite.fnet.AddTransport(tran, []Protocol{prot})
+	err := suite.fnet.AddTransport(tran, prot)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 

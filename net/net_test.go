@@ -24,24 +24,24 @@ func (suite *NetTestSuite) SetupTest() {
 func (suite *NetTestSuite) TestAddTransportSuccess() {
 	transport1 := &MockTransport{}
 	transport1.On("Listen", mock.Anything, mock.Anything).Return(nil)
-	err := suite.fnet.AddTransport(transport1, []Protocol{})
+	err := suite.fnet.AddTransport(transport1)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 	suite.Assert().Equal(transport1, suite.fnet.transports[0].Transport)
 
 	transport2 := &MockTransport{}
 	transport2.On("Listen", mock.Anything, mock.Anything).Return(nil)
-	err = suite.fnet.AddTransport(transport2, []Protocol{})
+	err = suite.fnet.AddTransport(transport2)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 2)
 	suite.Assert().Equal(transport2, suite.fnet.transports[1].Transport)
 }
 
-func (suite *NetTestSuite) TestAddProtocolSuccess() {
+func (suite *NetTestSuite) TestAddProtocolsSuccess() {
 	name1 := "protocol1"
 	protocol1 := &MockProtocol{}
 	protocol1.On("Name").Return(name1)
-	err := suite.fnet.AddProtocol(protocol1)
+	err := suite.fnet.AddProtocols(protocol1)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.protocols, 1)
 	protocol1.AssertCalled(suite.T(), "Name")
@@ -49,7 +49,7 @@ func (suite *NetTestSuite) TestAddProtocolSuccess() {
 	name2 := "protocol2"
 	protocol2 := &MockProtocol{}
 	protocol2.On("Name").Return(name2)
-	err = suite.fnet.AddProtocol(protocol2)
+	err = suite.fnet.AddProtocols(protocol2)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.protocols, 2)
 	protocol2.AssertCalled(suite.T(), "Name")
@@ -63,7 +63,7 @@ func (suite *NetTestSuite) TestGetAddressesSuccess() {
 	}
 	transport1.On("Addresses").Return(addresses1)
 	transport1.On("Listen", mock.Anything, mock.Anything).Return(nil)
-	err := suite.fnet.AddTransport(transport1, []Protocol{})
+	err := suite.fnet.AddTransport(transport1)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 1)
 
@@ -74,7 +74,7 @@ func (suite *NetTestSuite) TestGetAddressesSuccess() {
 	}
 	transport2.On("Addresses").Return(addresses2)
 	transport2.On("Listen", mock.Anything, mock.Anything).Return(nil)
-	err = suite.fnet.AddTransport(transport2, []Protocol{})
+	err = suite.fnet.AddTransport(transport2)
 	suite.Assert().Nil(err)
 	suite.Assert().Len(suite.fnet.transports, 2)
 

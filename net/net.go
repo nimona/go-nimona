@@ -17,9 +17,9 @@ var (
 
 // Net is our network interface for net
 type Net interface {
-	DialContext(ctx context.Context, as string) (context.Context, Conn, error)
-	AddTransport(transport Transport, protocols []Protocol) error
-	AddProtocol(protocol Protocol) error
+	DialContext(ctx context.Context, address string) (context.Context, Conn, error)
+	AddTransport(transport Transport, protocols ...Protocol) error
+	AddProtocols(protocols ...Protocol) error
 	GetAddresses() []string
 }
 
@@ -43,38 +43,38 @@ type nnet struct {
 }
 
 type transportWithProtocols struct {
-	Transport Transport
-	Handler   HandlerFunc
-	// Negotiator    NegotiatorFunc
+	Transport     Transport
+	Handler       HandlerFunc
 	BaseProtocols []string
 }
 
 // AddTransport for dialing to the outside world
-func (f *nnet) AddTransport(transport Transport, protocols []Protocol) error {
+func (f *nnet) AddTransport(transport Transport, protocols ...Protocol) error {
 	protocolNames := []string{}
 	for _, pr := range protocols {
 		protocolNames = append(protocolNames, pr.Name())
-		if err := f.AddProtocol(pr); err != nil {
+		if err := f.AddProtocols(pr); err != nil {
 			return err
 		}
 	}
 	hWrapper := NewTransportWrapper(protocolNames)
 	hchain := append([]Protocol{hWrapper}, protocols...)
 	tr := &transportWithProtocols{
-		Transport: transport,
-		Handler:   HandlerChain(hchain...),
-		// Negotiator:    negotiatorChain(protocols...),
+		Transport:     transport,
+		Handler:       HandlerChain(hchain...),
 		BaseProtocols: []string{},
 	}
 	f.transports = append(f.transports, tr)
 	return transport.Listen(f.context, tr.Handler)
 }
 
-// AddProtocol for both client and server
-func (f *nnet) AddProtocol(protocol Protocol) error {
+// AddProtocols for both client and server
+func (f *nnet) AddProtocols(protocols ...Protocol) error {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	f.protocols[protocol.Name()] = protocol
+	for _, protocol := range protocols {
+		f.protocols[protocol.Name()] = protocol
+	}
 	return nil
 }
 
@@ -87,6 +87,5 @@ func (f *nnet) GetAddresses() []string {
 	for _, tr := range f.transports {
 		addresses = append(addresses, tr.Transport.Addresses()...)
 	}
-
 	return addresses
 }
