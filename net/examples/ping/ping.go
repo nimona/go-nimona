@@ -5,7 +5,8 @@ import (
 
 	zap "go.uber.org/zap"
 
-	fnet "github.com/nimona/go-nimona/net"
+	nnet "github.com/nimona/go-nimona/net"
+	prot "github.com/nimona/go-nimona/net/protocol"
 )
 
 // Ping is our example client, it simply sends a PING string and expects a PONG
@@ -17,17 +18,17 @@ func (p *Ping) Name() string {
 }
 
 // Negotiate will be called after all the other protocol have been processed
-func (p *Ping) Negotiate(fn fnet.NegotiatorFunc) fnet.NegotiatorFunc {
+func (p *Ping) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fnet.Conn) error {
-		lgr := fnet.Logger(ctx).With(
+	return func(ctx context.Context, c nnet.Conn) error {
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
 		// close conection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(fnet.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(prot.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 
@@ -53,10 +54,10 @@ func (p *Ping) Negotiate(fn fnet.NegotiatorFunc) fnet.NegotiatorFunc {
 }
 
 // Handle ping requests
-func (p *Ping) Handle(fn fnet.HandlerFunc) fnet.HandlerFunc {
+func (p *Ping) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c fnet.Conn) error {
-		lgr := fnet.Logger(ctx).With(
+	return func(ctx context.Context, c nnet.Conn) error {
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("ping"),
 		)
 
@@ -65,7 +66,7 @@ func (p *Ping) Handle(fn fnet.HandlerFunc) fnet.HandlerFunc {
 		// close connection when done
 		defer c.Close()
 
-		if rp, ok := ctx.Value(fnet.RemoteIdentityKey{}).(string); ok {
+		if rp, ok := ctx.Value(prot.RemoteIdentityKey{}).(string); ok {
 			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
 		}
 

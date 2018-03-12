@@ -1,4 +1,4 @@
-package net
+package protocol
 
 // Basic imports
 import (
@@ -8,6 +8,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 	suite "github.com/stretchr/testify/suite"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 // ProtocolIdentityTestSuite -
@@ -31,23 +33,23 @@ func (suite *ProtocolIdentityTestSuite) TestHandleSuccess() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("remote"), nil)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(nil)
@@ -65,15 +67,15 @@ func (suite *ProtocolIdentityTestSuite) TestHandleReadTokenFails() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
@@ -81,8 +83,8 @@ func (suite *ProtocolIdentityTestSuite) TestHandleReadTokenFails() {
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
 	retErr := errors.New("error")
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("remote"), retErr)
 	suite.Assert().Equal("identity", addr.CurrentProtocol())
@@ -99,23 +101,23 @@ func (suite *ProtocolIdentityTestSuite) TestHandleWriteTokenFails() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	retError := errors.New("error")
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("remote"), nil)
@@ -134,23 +136,23 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateSuccess() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("remote"), nil)
@@ -168,15 +170,15 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateReadTokenFails() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
@@ -184,8 +186,8 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateReadTokenFails() {
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
 	retErr := errors.New("error")
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("remote"), retErr)
@@ -203,23 +205,23 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateWriteTokenFails() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity")
+	mockConn := &nnet.MockConn{}
 	retError := errors.New("error")
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(retError)
@@ -237,23 +239,23 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateCheckRemote() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity:remote")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity:remote")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("remote"), nil)
@@ -271,23 +273,23 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateUnexpectedRemote() {
 		Local: "local",
 	}
 
-	protocol := &MockProtocol{}
+	protocol := &nnet.MockProtocol{}
 	protocol.On("Name").Return("identity")
 	handlerCalled := false
 	negotiatorCalled := false
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		negotiatorCalled = true
 		return nil
 	}
 	protocol.On("Handle", mock.Anything).Return(handler)
 	protocol.On("Negotiate", mock.Anything).Return(negotiator)
 
-	addr := NewAddress("identity:remote")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("identity:remote")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte(identity.Local)).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("not-remote"), nil)

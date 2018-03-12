@@ -1,4 +1,4 @@
-package net
+package protocol
 
 // Basic imports
 import (

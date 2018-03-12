@@ -1,4 +1,4 @@
-package net
+package protocol
 
 // Basic imports
 import (
@@ -8,25 +8,27 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 	suite "github.com/stretchr/testify/suite"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 // ProtocolRouterTestSuite -
 type ProtocolRouterTestSuite struct {
 	suite.Suite
 	router           *RouterProtocol
-	nextProtocol     *MockProtocol
+	nextProtocol     *nnet.MockProtocol
 	handlerCalled    bool
 	negotiatorCalled bool
 }
 
 func (suite *ProtocolRouterTestSuite) SetupTest() {
-	suite.nextProtocol = &MockProtocol{}
+	suite.nextProtocol = &nnet.MockProtocol{}
 	suite.nextProtocol.On("Name").Return("test")
-	var handler HandlerFunc = func(ctx context.Context, c Conn) error {
+	var handler nnet.HandlerFunc = func(ctx context.Context, c nnet.Conn) error {
 		suite.handlerCalled = true
 		return nil
 	}
-	var negotiator NegotiatorFunc = func(ctx context.Context, c Conn) error {
+	var negotiator nnet.NegotiatorFunc = func(ctx context.Context, c nnet.Conn) error {
 		suite.negotiatorCalled = true
 		return nil
 	}
@@ -36,8 +38,8 @@ func (suite *ProtocolRouterTestSuite) SetupTest() {
 	suite.handlerCalled = false
 	suite.negotiatorCalled = false
 	suite.router = &RouterProtocol{
-		routes: map[string][]Protocol{
-			"test": []Protocol{
+		routes: map[string][]nnet.Protocol{
+			"test": []nnet.Protocol{
 				suite.nextProtocol,
 			},
 		},
@@ -51,14 +53,14 @@ func (suite *ProtocolRouterTestSuite) TestName() {
 
 func (suite *ProtocolRouterTestSuite) TestNew() {
 	router := NewRouter()
-	suite.Assert().Equal(&RouterProtocol{routes: map[string][]Protocol{}}, router)
+	suite.Assert().Equal(&RouterProtocol{routes: map[string][]nnet.Protocol{}}, router)
 }
 
 func (suite *ProtocolRouterTestSuite) TestAddRoute() {
-	protocol1 := &MockProtocol{}
+	protocol1 := &nnet.MockProtocol{}
 	protocol1.On("Name").Return("test1")
 
-	protocol2 := &MockProtocol{}
+	protocol2 := &nnet.MockProtocol{}
 	protocol2.On("Name").Return("test2")
 
 	router := NewRouter()
@@ -75,8 +77,8 @@ func (suite *ProtocolRouterTestSuite) TestAddRoute() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleSuccess() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("SEL test"), nil)
 	mockConn.On("WriteToken", []byte("ACK test")).Return(nil)
@@ -90,8 +92,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleSuccess() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleReadTokenError() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("Error")
 	mockConn.On("ReadToken").Return([]byte(""), retErr)
@@ -106,8 +108,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleReadTokenError() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleWriteTokenError() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("Error")
 	mockConn.On("ReadToken").Return([]byte("SEL test"), nil)
@@ -122,8 +124,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleWriteTokenError() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommandJunk() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("asdf"), nil)
 	mockConn.On("Close").Return(nil)
@@ -137,8 +139,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommandJunk() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommand() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("ASD something"), nil)
 	mockConn.On("Close").Return(nil)
@@ -152,8 +154,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidCommand() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestHandleInvalidRoute() {
-	addr := NewAddress("router/not-test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/not-test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("ReadToken").Return([]byte("SEL not-test"), nil)
 	mockConn.On("WriteToken", []byte("ACK test")).Return(nil)
@@ -167,8 +169,8 @@ func (suite *ProtocolRouterTestSuite) TestHandleInvalidRoute() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateSuccess() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("ACK test"), nil)
@@ -182,8 +184,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateSuccess() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateWriteTokenFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("error")
 	mockConn.On("WriteToken", []byte("SEL test")).Return(retErr)
@@ -198,8 +200,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateWriteTokenFails() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateReadTokenFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	retErr := errors.New("error")
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
@@ -214,8 +216,8 @@ func (suite *ProtocolRouterTestSuite) TestNegotiateReadTokenFails() {
 }
 
 func (suite *ProtocolRouterTestSuite) TestNegotiateInvalidResponseFails() {
-	addr := NewAddress("router/test")
-	mockConn := &MockConn{}
+	addr := nnet.NewAddress("router/test")
+	mockConn := &nnet.MockConn{}
 	mockConn.On("GetAddress").Return(addr)
 	mockConn.On("WriteToken", []byte("SEL test")).Return(nil)
 	mockConn.On("ReadToken").Return([]byte("ACK asdf"), nil)

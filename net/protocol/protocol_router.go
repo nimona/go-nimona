@@ -1,4 +1,4 @@
-package net
+package protocol
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	zap "go.uber.org/zap"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 var (
@@ -17,13 +19,13 @@ var (
 
 // RouterProtocol is the selector protocol
 type RouterProtocol struct {
-	routes map[string][]Protocol
+	routes map[string][]nnet.Protocol
 }
 
 // NewRouter returns a new router protocol
 func NewRouter() *RouterProtocol {
 	return &RouterProtocol{
-		routes: map[string][]Protocol{},
+		routes: map[string][]nnet.Protocol{},
 	}
 }
 
@@ -33,11 +35,11 @@ func (m *RouterProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
+func (m *RouterProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("protocol:router"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -73,7 +75,7 @@ func (m *RouterProtocol) Handle(fn HandlerFunc) HandlerFunc {
 	}
 }
 
-func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrString string) error {
+func (m *RouterProtocol) handleGet(ctx context.Context, c nnet.Conn, remainingAddrString string) error {
 	remainingAddr := strings.Split(remainingAddrString, "/")
 
 	validRoute := ""
@@ -96,14 +98,14 @@ func (m *RouterProtocol) handleGet(ctx context.Context, c Conn, remainingAddrStr
 		return err
 	}
 
-	chain := HandlerChain(m.routes[validRoute]...)
+	chain := nnet.HandlerChain(m.routes[validRoute]...)
 	return chain(ctx, c)
 }
 
 // Negotiate handles the client's side of the nimona protocol
-func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
+func (m *RouterProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		c.GetAddress().Pop()
 		pr := c.GetAddress().RemainingString()
 		if err := c.WriteToken([]byte("SEL " + pr)); err != nil {
@@ -124,7 +126,7 @@ func (m *RouterProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 }
 
 // AddRoute adds an allowed route made up of protocols
-func (m *RouterProtocol) AddRoute(protocols ...Protocol) error {
+func (m *RouterProtocol) AddRoute(protocols ...nnet.Protocol) error {
 	protocolNames := []string{}
 	for _, protocol := range protocols {
 		protocolNames = append(protocolNames, protocol.Name())

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	fnet "github.com/nimona/go-nimona/net"
+	nnet "github.com/nimona/go-nimona/net"
+	prot "github.com/nimona/go-nimona/net/protocol"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func main() {
 	}
 }
 
-func newPeer(peerID string) (fnet.Net, error) {
+func newPeer(peerID string) (nnet.Net, error) {
 	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {
@@ -58,10 +59,10 @@ func newPeer(peerID string) (fnet.Net, error) {
 		return nil, err
 	}
 
-	yamux := fnet.NewYamux()
-	router := fnet.NewRouter()
-	identity := &fnet.IdentityProtocol{Local: peerID}
-	tls := &fnet.SecProtocol{
+	yamux := prot.NewYamux()
+	router := prot.NewRouter()
+	identity := &prot.IdentityProtocol{Local: peerID}
+	tls := &prot.SecProtocol{
 		Config: tls.Config{
 			Certificates:       []tls.Certificate{crt},
 			InsecureSkipVerify: true,
@@ -69,29 +70,17 @@ func newPeer(peerID string) (fnet.Net, error) {
 	}
 	ping := &Ping{}
 
-	tcp := fnet.NewTransportTCP("0.0.0.0", 0)
-	// ws := fnet.NewTransportWebsocket("0.0.0.0", 0)
+	tcp := nnet.NewTransportTCP("0.0.0.0", 0)
+	// ws := nnet.NewTransportWebsocket("0.0.0.0", 0)
 
-	f := fnet.New(ctx)
-
-	relay := fnet.NewRelayProtocol(f)
-
-	f.AddTransport(yamux, router)
-	f.AddTransport(tcp, tls, yamux, router)
-	// f.AddTransport(ws, []fnet.Protocol{tls, yamux, router})
-
-	f.AddProtocols(
-		router,
-		tls,
-		yamux,
-		identity,
-		ping,
-		relay,
-	)
-
+	nn := nnet.New(ctx)
+	relay := prot.NewRelayProtocol(nn)
+	nn.AddTransport(yamux, router)
+	nn.AddTransport(tcp, tls, yamux, router)
+	// nn.AddTransport(ws, []nnet.Protocol{tls, yamux, router})
+	nn.AddProtocols(router, tls, yamux, identity, ping, relay)
 	router.AddRoute(relay)
 	router.AddRoute(ping)
 	router.AddRoute(identity, ping)
-
-	return f, nil
+	return nn, nil
 }

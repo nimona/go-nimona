@@ -1,4 +1,4 @@
-package net
+package protocol
 
 import (
 	"context"
@@ -6,15 +6,16 @@ import (
 	"strings"
 	"time"
 
+	nnet "github.com/nimona/go-nimona/net"
 	zap "go.uber.org/zap"
 )
 
 type RelayProtocol struct {
-	connections map[string]Conn
-	net         Net
+	connections map[string]nnet.Conn
+	net         nnet.Net
 }
 
-func NewRelayProtocol(f Net) *RelayProtocol {
+func NewRelayProtocol(f nnet.Net) *RelayProtocol {
 	return &RelayProtocol{
 		net: f,
 	}
@@ -24,10 +25,10 @@ func (m *RelayProtocol) Name() string {
 }
 
 // The server offering the relay part
-func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
-	return func(ctx context.Context, c Conn) error {
+func (m *RelayProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
+	return func(ctx context.Context, c nnet.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -73,10 +74,10 @@ func (m *RelayProtocol) Handle(fn HandlerFunc) HandlerFunc {
 }
 
 // The client that wants to connect
-func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
-	return func(ctx context.Context, c Conn) error {
+func (m *RelayProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
+	return func(ctx context.Context, c nnet.Conn) error {
 		addr := c.GetAddress()
-		lgr := Logger(ctx).With(
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("protocol:relay"),
 			zap.String("addr.current", addr.Current()),
 			zap.String("addr.params", addr.CurrentParams()),
@@ -104,7 +105,7 @@ func (m *RelayProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 
 func (m *RelayProtocol) pipe(ctx context.Context,
 	a, b io.ReadWriteCloser) error {
-	lgr := Logger(ctx).With(
+	lgr := nnet.Logger(ctx).With(
 		zap.Namespace("protocol:relay"),
 	)
 
