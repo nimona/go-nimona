@@ -101,9 +101,13 @@ func (q *query) next() {
 	}
 	// create request
 	req := messageGet{
-		QueryID:    q.id,
-		OriginPeer: q.dht.localPeer,
-		Key:        q.key,
+		QueryID: q.id,
+		OriginPeer: &messagePeer{
+			ID: q.dht.localPeer.ID,
+			// TODO probably shouldn't be doing this
+			Addresses: q.dht.net.GetAddresses(),
+		},
+		Key: q.key,
 	}
 	// keep track of how many we've sent to
 	sent := 0
@@ -114,7 +118,12 @@ func (q *query) next() {
 			continue
 		}
 		// ask peer
-		logrus.WithField("src", q.dht.localPeer.ID).WithField("dst", cp).WithField("queryKey", req.Key).WithField("id", q.id).WithField("cp", q.contactedPeers).Infof("Asking peer")
+		logrus.WithField("src", q.dht.localPeer.ID).
+			WithField("dst", cp).
+			WithField("queryKey", req.Key).
+			WithField("id", q.id).
+			WithField("cp", q.contactedPeers).
+			Infof("Asking peer")
 		q.dht.sendMessage(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
 		// mark peer as contacted
 		q.contactedPeers = append(q.contactedPeers, cp)

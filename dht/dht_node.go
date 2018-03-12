@@ -1,20 +1,18 @@
 package dht
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/nimona/go-nimona-fabric"
+	"github.com/nimona/go-nimona/net"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-
-	net "github.com/nimona/go-nimona-net"
 )
 
 const (
@@ -36,10 +34,10 @@ type DHT struct {
 	queries       map[string]*query
 	peerAddresses map[string][]string
 	lock          sync.RWMutex
-	net           *fabric.Fabric
+	net           net.Net
 }
 
-func NewDHT(bps map[string][]string, localPeerID string, nn *fabric.Fabric) (*DHT, error) {
+func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, error) {
 	// create new kv store
 	st, _ := newStore()
 
@@ -70,24 +68,24 @@ func NewDHT(bps map[string][]string, localPeerID string, nn *fabric.Fabric) (*DH
 	}
 
 	// TODO quit channel
-	// quit := make(chan struct{})
+	quit := make(chan struct{})
 
 	// start refresh worker
-	// ticker := time.NewTicker(30 * time.Second)
-	// go func() {
-	// 	// refresh for the first time
-	// 	nd.refresh()
-	// 	// and then just wait
-	// 	for {
-	// 		select {
-	// 		case <-ticker.C:
-	// 			nd.refresh()
-	// 		case <-quit:
-	// 			ticker.Stop()
-	// 			return
-	// 		}
-	// 	}
-	// }()
+	ticker := time.NewTicker(30 * time.Second)
+	go func() {
+		// refresh for the first time
+		nd.refresh()
+		// and then just wait
+		for {
+			select {
+			case <-ticker.C:
+				nd.refresh()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	// start messaging worker
 	// TODO move this to a separate method
@@ -128,49 +126,16 @@ func NewDHT(bps map[string][]string, localPeerID string, nn *fabric.Fabric) (*DH
 }
 
 func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
+	if len(nd.peerAddresses[peerID]) == 0 {
+		logrus.Infof("peer has no addresses; peerID=%", peerID)
+		return nil, errors.New("peer has no addresses")
+	}
+	addr := nd.peerAddresses[peerID][0]
+
 	// TODO re-introduce caching
 	ctx := context.Background()
-	_, c, err := nd.net.DialContext(ctx, nd.peerAddresses[peerID][0])
+	_, c, err := nd.net.DialContext(ctx, addr)
 	return c, err
-	// if stream, ok := nd.streams[peerID]; ok && stream != nil {
-	// 	// TODO Check if stream is still ok
-	// 	logrus.Debugf("Found stream for peer %s", peerID)
-	// 	return stream, nil
-	// }
-	// addr := peerID + "/" + protocolID
-	// logrus.WithField("addr", addr).Infof("Dialing peer for messabus.getStream")
-	// stream, err := nd.net.Dial(addr)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// logrus.Debugf("Created new stream for peer %s", peerID)
-	// nd.streams[peerID] = stream
-	// return stream, nil
-}
-
-func (nd *DHT) handleStream(protocolID string, stream io.ReadWriteCloser) error {
-	sr := bufio.NewReader(stream)
-	for {
-		// read line
-		line, err := sr.ReadString('\n')
-		if err != nil {
-			logrus.WithError(err).Errorf("Could not read")
-			return err // TODO(geoah) Return?
-		}
-		logrus.WithField("line", line).Debugf("handleStream got line")
-
-		// decode message
-		msg := &message{}
-		if err := json.Unmarshal([]byte(line), &msg); err != nil {
-			logrus.WithError(err).Warnf("Could not decode message")
-			return err
-		}
-
-		// process message
-		if err := nd.handleMessage(msg); err != nil {
-			logrus.WithError(err).Warnf("Could not process message")
-		}
-	}
 }
 
 func (nd *DHT) refresh() {
@@ -191,6 +156,7 @@ func (nd *DHT) refresh() {
 			// just swallow channel results
 		}
 	}
+
 	pairs, err := nd.store.GetAll()
 	if err != nil {
 		logrus.WithError(err).Warnf("refresh could not get all pairs")
@@ -239,16 +205,14 @@ func (nd *DHT) Put(ctx context.Context, key, value string) error {
 }
 
 func (nd *DHT) sendPutMessage(key, value string) error {
-	// get fresh local peer addresses
-	localPeer := &messagePeer{
-		ID:        nd.localPeer.ID,
-		Addresses: nd.net.GetAddresses(),
-	}
 	// create a put msg
 	msgPut := &messagePut{
-		OriginPeer: localPeer,
-		Key:        key,
-		Values:     []string{value},
+		OriginPeer: &messagePeer{
+			ID:        nd.localPeer.ID,
+			Addresses: nd.net.GetAddresses(),
+		},
+		Key:    key,
+		Values: []string{value},
 	}
 
 	// find nearest peers
@@ -257,7 +221,6 @@ func (nd *DHT) sendPutMessage(key, value string) error {
 		logrus.WithError(err).Error("Put failed to find near peers")
 		return err
 	}
-	fmt.Println("!!!", cps)
 	for _, cp := range cps {
 		// send message
 		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
@@ -284,8 +247,6 @@ func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
 		incomingMessages: make(chan messagePut, 100),
 		lock:             &sync.RWMutex{},
 	}
-
-	fmt.Println("------ query", q.id)
 
 	// and store it
 	nd.lock.Lock()
@@ -344,7 +305,8 @@ func (nd *DHT) sendMessage(msgType string, payload interface{}, peerID string) e
 func (nd *DHT) getHandler(msg *messageGet) {
 	// origin peer is asking for a value
 	logger := logrus.
-		WithField("origin", msg.OriginPeer.ID).
+		WithField("origin.id", msg.OriginPeer.ID).
+		WithField("origin.addresses", msg.OriginPeer.Addresses).
 		WithField("key", msg.Key).
 		WithField("query", msg.QueryID)
 	logger.Infof("Origin is asking for key")
@@ -481,7 +443,7 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
-	
+
 	logrus.Infof("Adding peer to network id=%s address=%v", peerID, peerAddresses)
 	// add peer to network
 	nd.peerAddresses[peerID] = peerAddresses
@@ -494,16 +456,6 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 	// 	return err
 	// }
 	logrus.Infof("PUT PEER id=%s addrs=%v", peerID, peerAddresses)
-	return nil
-}
-
-func (nd *DHT) storePeer(peer net.Peer, persistent bool) error {
-	for _, addr := range peer.Addresses {
-		logrus.WithField("k", getPeerKey(peer.ID)).WithField("v", addr).Infof("Adding peer addresses to kv")
-		if err := nd.store.Put(getPeerKey(peer.ID), addr, persistent); err != nil {
-			logrus.WithError(err).WithField("peerID", peer.ID).Warnf("storePeer could not put peer")
-		}
-	}
 	return nil
 }
 

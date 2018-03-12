@@ -11,8 +11,8 @@ import (
 	logrus "github.com/sirupsen/logrus"
 	ishell "gopkg.in/abiosoft/ishell.v2"
 
-	fabric "github.com/nimona/go-nimona-fabric"
-	dht "github.com/nimona/go-nimona-fabric/dht"
+	dht "github.com/nimona/go-nimona/dht"
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 func main() {
@@ -49,15 +49,15 @@ func main() {
 	}
 
 	ctx := context.Background()
-	nn := fabric.New(ctx)
+	nn := nnet.New(ctx)
 
 	dn, err := dht.NewDHT(bsp, pid, nn)
 	if err != nil {
 		logrus.WithError(err).Fatalf("Could not get dht")
 	}
 
-	tcp := fabric.NewTransportTCP("0.0.0.0", port)
-	nn.AddTransport(tcp, []fabric.Protocol{dn})
+	tcp := nnet.NewTransportTCP("0.0.0.0", port)
+	nn.AddTransport(tcp, dn)
 	fmt.Println("Addresses: ", nn.GetAddresses())
 
 	shell := ishell.New()
