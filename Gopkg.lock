@@ -69,6 +69,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mohae/deepcopy"
+  packages = ["."]
+  revision = "c48cc78d482608239f6c4c92a4abd87eb8761c90"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -190,6 +196,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7d8b61adadfe000980dd11c0d151f1d4a01fc63c14dbeff49308212dc5103105"
+  inputs-digest = "7937d50b4458aa38137e48d8d23d48725f800e93f321a1ba38f8723881b7597a"
   solver-name = "gps-cdcl"
   solver-version = 1

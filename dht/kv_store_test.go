@@ -53,7 +53,7 @@ func TestGet(t *testing.T) {
 	value := "v1"
 	persistent := false
 
-	p := &Pair{
+	p := Pair{
 		Key:        key,
 		Value:      value,
 		Persistent: persistent,
@@ -74,7 +74,7 @@ func TestWipe(t *testing.T) {
 	value := "v1"
 	persistent := false
 
-	p := &Pair{
+	p := Pair{
 		Key:        key,
 		Value:      value,
 		Persistent: persistent,
@@ -94,7 +94,7 @@ func TestGetAll(t *testing.T) {
 	key1 := "k1"
 	value1 := "v1"
 	persistent1 := false
-	p1 := &Pair{
+	p1 := Pair{
 		Key:        key1,
 		Value:      value1,
 		Persistent: persistent1,
@@ -104,7 +104,7 @@ func TestGetAll(t *testing.T) {
 	key2 := "k2"
 	value2 := "v2"
 	persistent2 := false
-	p2 := &Pair{
+	p2 := Pair{
 		Key:        key2,
 		Value:      value2,
 		Persistent: persistent2,
