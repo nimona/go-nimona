@@ -1,11 +1,13 @@
-package net
+package protocol
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	"go.uber.org/zap"
+	zap "go.uber.org/zap"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 // LocalIdentityKey for context
@@ -30,12 +32,12 @@ func (m *IdentityProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
+func (m *IdentityProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
 
-		lgr := Logger(ctx).With(
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 
@@ -63,12 +65,12 @@ func (m *IdentityProtocol) Handle(fn HandlerFunc) HandlerFunc {
 }
 
 // Negotiate handles the client's side of the identity protocol
-func (m *IdentityProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
+func (m *IdentityProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		// store local identity to conn
 		ctx = context.WithValue(ctx, LocalIdentityKey{}, m.Local)
-		lgr := Logger(ctx).With(
+		lgr := nnet.Logger(ctx).With(
 			zap.Namespace("identity"),
 		)
 

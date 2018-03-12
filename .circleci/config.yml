@@ -1,8 +1,6 @@
 version: 2
 jobs:
   build:
-    environment:
-      - CC_TEST_REPORTER_ID: b8d82ff3ad05eb9444b7e60af870c06ac351f994cc95131a06db550c832fd1d8
     docker:
       - image: circleci/golang:1.8
     working_directory: /go/src/github.com/nimona/go-nimona
@@ -20,11 +18,6 @@ jobs:
       - run:
           name: Install dependencies
           command: dep ensure
-      - run:
-          name: Setup Code Climate test-reporter
-          command: |
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-            chmod +x ./cc-test-reporter
       - run:
           name: Run tests
           command: |

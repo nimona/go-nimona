@@ -50,10 +50,12 @@ type transportWithProtocols struct {
 
 // AddTransport for dialing to the outside world
 func (f *nnet) AddTransport(transport Transport, protocols ...Protocol) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	protocolNames := []string{}
 	for _, pr := range protocols {
 		protocolNames = append(protocolNames, pr.Name())
-		if err := f.AddProtocols(pr); err != nil {
+		if err := f.addProtocols(pr); err != nil {
 			return err
 		}
 	}
@@ -72,6 +74,11 @@ func (f *nnet) AddTransport(transport Transport, protocols ...Protocol) error {
 func (f *nnet) AddProtocols(protocols ...Protocol) error {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+	return f.addProtocols(protocols...)
+}
+
+// addProtocols without locking for internal use
+func (f *nnet) addProtocols(protocols ...Protocol) error {
 	for _, protocol := range protocols {
 		f.protocols[protocol.Name()] = protocol
 	}

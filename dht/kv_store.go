@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mohae/deepcopy"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,13 +18,13 @@ type Pair struct {
 }
 
 type Store struct {
-	pairs map[string][]*Pair
+	pairs map[string][]Pair
 	lock  *sync.RWMutex
 }
 
 func newStore() (*Store, error) {
 	s := &Store{
-		pairs: map[string][]*Pair{},
+		pairs: map[string][]Pair{},
 		lock:  &sync.RWMutex{},
 	}
 	return s, nil
@@ -35,7 +36,7 @@ func (s *Store) Put(key, value string, persistent bool) error {
 
 	// make sure our partition exists
 	if _, ok := s.pairs[key]; !ok {
-		s.pairs[key] = []*Pair{}
+		s.pairs[key] = []Pair{}
 	}
 
 	// check if the pair already exists
@@ -48,7 +49,7 @@ func (s *Store) Put(key, value string, persistent bool) error {
 	}
 
 	// else add it
-	pair := &Pair{
+	pair := Pair{
 		Key:        key,
 		Value:      value,
 		LastPut:    time.Now(),
@@ -135,7 +136,7 @@ func (s *Store) Wipe(key string) error {
 		return nil
 	}
 
-	npr := []*Pair{}
+	npr := []Pair{}
 	for _, pr := range s.pairs[key] {
 		if pr.Persistent {
 			npr = append(npr, pr)
@@ -151,9 +152,9 @@ func (s *Store) Wipe(key string) error {
 	return nil
 }
 
-func (s *Store) GetAll() (map[string][]*Pair, error) {
+func (s *Store) GetAll() (map[string][]Pair, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	return s.pairs, nil
+	return deepcopy.Copy(s.pairs).(map[string][]Pair), nil
 }

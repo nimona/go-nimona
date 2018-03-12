@@ -1,4 +1,4 @@
-package net
+package protocol
 
 import (
 	"context"
@@ -7,12 +7,14 @@ import (
 
 	yamux "github.com/hashicorp/yamux"
 	zap "go.uber.org/zap"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 // YamuxProtocol is a multiplexer protocol based on yamux
 type YamuxProtocol struct {
 	sessions map[string]*yamux.Session
-	handler  func(context.Context, Conn) error
+	handler  func(context.Context, nnet.Conn) error
 }
 
 // NewYamux returns a new yamus protocol and transport
@@ -28,10 +30,10 @@ func (m *YamuxProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
+func (m *YamuxProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
-		lgr := Logger(ctx)
+	return func(ctx context.Context, c nnet.Conn) error {
+		lgr := nnet.Logger(ctx)
 
 		ses, err := yamux.Server(c, nil)
 		if err != nil {
@@ -49,13 +51,13 @@ func (m *YamuxProtocol) Handle(fn HandlerFunc) HandlerFunc {
 
 		go m.accept(ctx, ses, addr, fn)
 
-		nc := NewConnWrapper(str, c.GetAddress())
+		nc := nnet.NewConnWrapper(str, c.GetAddress())
 		return fn(ctx, nc)
 	}
 }
 
-func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr *Address, fn HandlerFunc) {
-	lgr := Logger(ctx)
+func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr *nnet.Address, fn nnet.HandlerFunc) {
+	lgr := nnet.Logger(ctx)
 	for {
 		str, err := session.Accept()
 		if err != nil {
@@ -65,7 +67,7 @@ func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr
 		}
 
 		// TODO copy addr
-		nc := NewConnWrapper(str, addr)
+		nc := nnet.NewConnWrapper(str, addr)
 		if err := fn(ctx, nc); err != nil {
 			lgr.Debug("Handle: Could not handle stream", zap.Error(err))
 			// TODO break?
@@ -75,10 +77,10 @@ func (m *YamuxProtocol) accept(ctx context.Context, session *yamux.Session, addr
 }
 
 // Negotiate handles the client's side of the yamux protocol
-func (m *YamuxProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
+func (m *YamuxProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
-		lgr := Logger(ctx)
+	return func(ctx context.Context, c nnet.Conn) error {
+		lgr := nnet.Logger(ctx)
 
 		session, err := yamux.Client(c, nil)
 		if err != nil {
@@ -96,7 +98,7 @@ func (m *YamuxProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		lgr.Info("Negotiage: Storing yamux session", zap.String("address", sessionAddr))
 		m.sessions[sessionAddr] = session
 
-		nc := NewConnWrapper(str, c.GetAddress())
+		nc := nnet.NewConnWrapper(str, c.GetAddress())
 		return fn(ctx, nc)
 	}
 }
@@ -105,7 +107,7 @@ func (m *YamuxProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 // the address that will be consumed.
 // This will only return true if the connection has been previously
 // established and the connection is still open.
-func (m *YamuxProtocol) CanDial(addr *Address) (bool, error) {
+func (m *YamuxProtocol) CanDial(addr *nnet.Address) (bool, error) {
 	as := addr.String()
 	for k := range m.sessions {
 		if strings.HasPrefix(as, k) {
@@ -118,8 +120,8 @@ func (m *YamuxProtocol) CanDial(addr *Address) (bool, error) {
 
 // DialContext dials an address, assuming we have previously connected and
 // negotiated yamux.
-func (m *YamuxProtocol) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
-	lgr := Logger(ctx)
+func (m *YamuxProtocol) DialContext(ctx context.Context, addr *nnet.Address) (context.Context, nnet.Conn, error) {
+	lgr := nnet.Logger(ctx)
 	lgr.Info("DialContext with yamux", zap.String("address", addr.String()))
 	for k, ses := range m.sessions {
 		if strings.HasPrefix(addr.String(), k) {
@@ -133,7 +135,7 @@ func (m *YamuxProtocol) DialContext(ctx context.Context, addr *Address) (context
 			for i := 0; i < len(parts); i++ {
 				addr.Pop()
 			}
-			nc := NewConnWrapper(str, addr)
+			nc := nnet.NewConnWrapper(str, addr)
 			return ctx, nc, nil
 		}
 	}
@@ -147,7 +149,7 @@ func (m *YamuxProtocol) Addresses() []string {
 }
 
 // Listen handles the transports
-func (m *YamuxProtocol) Listen(ctx context.Context, handler HandlerFunc) error {
+func (m *YamuxProtocol) Listen(ctx context.Context, handler nnet.HandlerFunc) error {
 	m.handler = handler
 	return nil
 }

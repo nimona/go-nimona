@@ -15,10 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	protocolID = "dht-kad/v2"
-)
-
 type message struct {
 	Recipient string `json:"-"`
 	Type      string `json:"type"`
@@ -28,13 +24,14 @@ type message struct {
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	localPeer     *messagePeer
-	store         *Store
-	messages      chan *message
-	queries       map[string]*query
-	peerAddresses map[string][]string
-	lock          sync.RWMutex
-	net           net.Net
+	localPeer         *messagePeer
+	store             *Store
+	messages          chan *message
+	queries           map[string]*query
+	peerAddressesLock sync.RWMutex
+	peerAddresses     map[string][]string
+	lock              sync.RWMutex
+	net               net.Net
 }
 
 func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, error) {
@@ -54,14 +51,8 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 		queries:       map[string]*query{},
 	}
 
-	// register stream handler
-	// nd.net.RegisterStreamHandler(protocolID, nd.handleStream) // TODO(geoah) handle error?
-
 	// Add bootstrap nodes
 	for peerID, addresses := range bps {
-		// if err := nd.storePeer(peer, true); err != nil {
-		// 	logrus.WithField("error", err).Error("new could not store peer")
-		// }
 		if err := nd.putPeer(peerID, addresses); err != nil {
 			logrus.WithField("error", err).Error("new could not put peer")
 		}
@@ -126,6 +117,9 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 }
 
 func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
+	nd.peerAddressesLock.RLock()
+	defer nd.peerAddressesLock.RUnlock()
+
 	if len(nd.peerAddresses[peerID]) == 0 {
 		logrus.Infof("peer has no addresses; peerID=%", peerID)
 		return nil, errors.New("peer has no addresses")
@@ -312,7 +306,6 @@ func (nd *DHT) getHandler(msg *messageGet) {
 	logger.Infof("Origin is asking for key")
 
 	// store info on origin peer
-	// nd.storePeer(msg.OriginPeer, false)
 	nd.putPeer(msg.OriginPeer.ID, msg.OriginPeer.Addresses)
 
 	// check if we have the value of the key
@@ -410,11 +403,6 @@ func (nd *DHT) putHandler(msg *messagePut) {
 	// check if this is a peer
 	if strings.HasPrefix(msg.Key, KeyPrefixPeer) {
 		peerID := strings.Replace(msg.Key, KeyPrefixPeer, "", 1)
-		// pr, err := nd.gatherPeer(strings.Replace(msg.Key, KeyPrefixPeer, "", 1))
-		// if err != nil {
-		// 	logger.WithError(err).Infof("putHandler could get pairs for putPeer")
-		// 	return
-		// }
 		if err := nd.putPeer(peerID, msg.Values); err != nil {
 			logger.WithError(err).Infof("putHandler could putPeer")
 			return
@@ -427,19 +415,10 @@ func (nd *DHT) putHandler(msg *messagePut) {
 	}
 }
 
-// func (nd *DHT) gatherPeer(peerID string) (net.Peer, error) {
-// 	addrs, err := nd.store.Get(getPeerKey(peerID))
-// 	if err != nil {
-// 		return net.Peer{}, err
-// 	}
-// 	pr := net.Peer{
-// 		ID:        peerID,
-// 		Addresses: addrs,
-// 	}
-// 	return pr, nil
-// }
-
 func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
+	nd.peerAddressesLock.Lock()
+	defer nd.peerAddressesLock.Unlock()
+
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
@@ -451,18 +430,10 @@ func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
 		nd.store.Put(getPeerKey(peerID), addr, true)
 	}
 
-	// if err := nd.net.PutPeer(peer); err != nil {
-	// 	logrus.WithError(err).Warnf("Could not add peer to network")
-	// 	return err
-	// }
 	logrus.Infof("PUT PEER id=%s addrs=%v", peerID, peerAddresses)
 	return nil
 }
 
-// func (nd *DHT) GetLocalPeer() net.Peer {
-// 	return nd.localPeer
-// }
-
-func (nd *DHT) GetLocalPairs() (map[string][]*Pair, error) {
+func (nd *DHT) GetLocalPairs() (map[string][]Pair, error) {
 	return nd.store.GetAll()
 }

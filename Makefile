@@ -2,7 +2,6 @@ PHONY: test-cover-html
 PACKAGES = $(shell find ./ -type d -not -path '*/\.*' | egrep -v 'vendor|examples')
 
 test-cover:
-	@echo "mode: count" > coverage.txt
 	@echo "mode: atomic" > coverage.txt
 	$(foreach pkg,$(PACKAGES),\
 		go test -coverprofile=coverage-temp.txt -covermode=atomic -race $(pkg);\

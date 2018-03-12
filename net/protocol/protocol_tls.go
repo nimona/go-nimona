@@ -1,9 +1,11 @@
-package net
+package protocol
 
 import (
 	"context"
 	"crypto/tls"
 	"fmt"
+
+	nnet "github.com/nimona/go-nimona/net"
 )
 
 // SecProtocol is a TLS protocol
@@ -17,9 +19,9 @@ func (m *SecProtocol) Name() string {
 }
 
 // Handle is the protocol handler for the server
-func (m *SecProtocol) Handle(fn HandlerFunc) HandlerFunc {
+func (m *SecProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		scon := tls.Server(c, &m.Config)
 		if err := scon.Handshake(); err != nil {
 			return err
@@ -29,15 +31,15 @@ func (m *SecProtocol) Handle(fn HandlerFunc) HandlerFunc {
 		addr.Pop()
 		fmt.Println("---- TLS HANDLE AFTER POP", addr.RemainingString())
 
-		nc := NewConnWrapper(scon, addr)
+		nc := nnet.NewConnWrapper(scon, addr)
 		return fn(ctx, nc)
 	}
 }
 
 // Negotiate handles the client's side of the tls protocol
-func (m *SecProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
+func (m *SecProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 	// one time scope setup area for middleware
-	return func(ctx context.Context, c Conn) error {
+	return func(ctx context.Context, c nnet.Conn) error {
 		scon := tls.Client(c, &m.Config)
 		if err := scon.Handshake(); err != nil {
 			return err
@@ -46,7 +48,7 @@ func (m *SecProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		addr := c.GetAddress()
 		addr.Pop()
 
-		nc := NewConnWrapper(scon, addr)
+		nc := nnet.NewConnWrapper(scon, addr)
 		return fn(ctx, nc)
 	}
 }

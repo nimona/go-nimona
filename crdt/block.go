@@ -1,1 +1,0 @@
-	Signature string     `json:"signature"`
