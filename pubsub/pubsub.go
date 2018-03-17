@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"regexp"
 	"sync"
 )
 
@@ -12,24 +13,26 @@ type PubSub interface {
 
 type pubSub struct {
 	sync.RWMutex
-	subscriptions map[string]map[chan interface{}]bool
-	channelSize   int
+	subscriptionTopicMatches map[string]*regexp.Regexp
+	subscriptions            map[string]map[chan interface{}]bool
+	channelSize              int
 }
 
 func (ps *pubSub) Publish(msg interface{}, topics ...string) error {
 	ps.RLock()
 	defer ps.RUnlock()
 
-	for _, topic := range topics {
-		subscriptions, ok := ps.subscriptions[topic]
-		if !ok {
-			continue
-		}
-		for ch, active := range subscriptions {
-			if !active {
+	for subscribedTopic, subscriptionChs := range ps.subscriptions {
+		topicMatch := ps.subscriptionTopicMatches[subscribedTopic]
+		for _, topic := range topics {
+			if !topicMatch.MatchString(topic) {
 				continue
 			}
-			ch <- msg
+			for subscriptionCh, ok := range subscriptionChs {
+				if ok {
+					subscriptionCh <- msg
+				}
+			}
 		}
 	}
 	return nil
@@ -41,6 +44,11 @@ func (ps *pubSub) Subscribe(topics ...string) (chan interface{}, error) {
 
 	ch := make(chan interface{}, ps.channelSize)
 	for _, topic := range topics {
+		topicMatch, err := regexp.Compile(topic)
+		if err != nil {
+			return nil, err
+		}
+		ps.subscriptionTopicMatches[topic] = topicMatch
 		subscriptions, ok := ps.subscriptions[topic]
 		if !ok {
 			ps.subscriptions[topic] = map[chan interface{}]bool{}
