@@ -2,10 +2,10 @@ package dht
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/nimona/go-nimona/net"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -14,11 +14,12 @@ const numPeersNear int = 15
 type query struct {
 	id               string
 	key              string
+	labels           map[string]string
 	dht              *DHT
 	closestPeerID    string
 	contactedPeers   []string
 	incomingMessages chan messagePut
-	results          chan string
+	results          chan net.Record
 	lock             *sync.RWMutex
 }
 
@@ -30,11 +31,11 @@ func (q *query) Run(ctx context.Context) {
 		// defer close(q.results)
 
 		// send what we know about the key
-		if pair, err := q.dht.store.Get(q.key); err == nil {
+		if pairs, err := q.dht.store.Filter(q.key, q.labels); err == nil {
 			// if so, return it
 			logger.Infof("Value existed in local store")
-			for _, v := range pair {
-				q.results <- v
+			for _, pair := range pairs {
+				q.results <- pair
 			}
 		}
 
@@ -45,21 +46,22 @@ func (q *query) Run(ctx context.Context) {
 				logger.Infof("Processing incoming message")
 				// check if we found the node
 				persist := false
+				pair := Pair{
+					Key:    msg.Key,
+					Value:  msg.Value,
+					Labels: msg.Labels,
+				}
 				if msg.Key == q.key {
 					logger.WithField("key", q.key).Infof("Found value")
 					// persist the things we asked about
 					persist = true
 					// send results
-					for _, v := range msg.Values {
-						q.results <- v
-					}
+					q.results <- pair
 				}
 				// store values we got
-				for _, val := range msg.Values {
-					q.dht.store.Put(msg.Key, val, persist)
-				}
+				q.dht.store.Put(msg.Key, msg.Value, msg.Labels, persist)
 				// if pair is peer information consider it a closest peer
-				if strings.Contains(msg.Key, KeyPrefixPeer) {
+				if pair.GetLabel("protocol") == "peer" {
 					// check if we got closer than before
 					if q.closestPeerID == "" {
 						q.closestPeerID = msg.Key
@@ -94,7 +96,7 @@ func (q *query) next() {
 	defer q.lock.Unlock()
 
 	// find closest peers
-	cps, err := q.dht.store.FindKeysNearestTo(KeyPrefixPeer, q.key, numPeersNear)
+	cps, err := q.dht.store.FindPeersNearestTo(q.key, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Error("Failed find peers near")
 		return
@@ -107,7 +109,8 @@ func (q *query) next() {
 			// TODO probably shouldn't be doing this
 			Addresses: q.dht.net.GetAddresses(),
 		},
-		Key: q.key,
+		Key:    q.key,
+		Labels: q.labels,
 	}
 	// keep track of how many we've sent to
 	sent := 0
@@ -124,7 +127,7 @@ func (q *query) next() {
 			WithField("id", q.id).
 			WithField("cp", q.contactedPeers).
 			Infof("Asking peer")
-		q.dht.sendMessage(MessageTypeGet, req, trimKey(cp, KeyPrefixPeer))
+		q.dht.sendMessage(MessageTypeGet, req, cp)
 		// mark peer as contacted
 		q.contactedPeers = append(q.contactedPeers, cp)
 		// stop once we reached the limit

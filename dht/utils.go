@@ -3,7 +3,6 @@ package dht
 import (
 	"crypto/sha1"
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -66,38 +65,6 @@ func comparePeers(a, b, targetPeer string) string {
 		return a
 	}
 	return b
-}
-
-func getPeerKey(key string) string {
-	if strings.Contains(key, KeyPrefixPeer) {
-		return key
-	}
-
-	return KeyPrefixPeer + key
-}
-
-func getPairKey(key string) string {
-	if strings.Contains(key, KeyPrefixKeyValuePair) {
-		return key
-	}
-
-	return KeyPrefixKeyValuePair + key
-}
-
-func getProviderKey(key string) string {
-	if strings.Contains(key, KeyPrefixProvider) {
-		return key
-	}
-
-	return KeyPrefixProvider + key
-}
-
-func checkKey(key string) bool {
-	return true
-}
-
-func trimKey(key, prefix string) string {
-	return strings.Replace(key, prefix, "", 1)
 }
 
 func appendIfMissing(slice []string, i string) []string {

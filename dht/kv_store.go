@@ -1,8 +1,8 @@
 package dht
 
 import (
+	"reflect"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -11,10 +11,27 @@ import (
 )
 
 type Pair struct {
-	Key        string    `json:"k"`
-	Value      string    `json:"v"`
-	LastPut    time.Time `json:"lp"`
-	Persistent bool      `json:"i"`
+	Key        string            `json:"k"`
+	Value      string            `json:"v"`
+	Labels     map[string]string `json:"l"`
+	LastPut    time.Time         `json:"lp"`
+	Persistent bool              `json:"i"`
+}
+
+func (p Pair) GetKey() string {
+	return p.Key
+}
+
+func (p Pair) GetValue() string {
+	return p.Value
+}
+
+func (p Pair) GetLabels() map[string]string {
+	return p.Labels
+}
+
+func (p Pair) GetLabel(key string) string {
+	return p.Labels[key]
 }
 
 type Store struct {
@@ -30,7 +47,7 @@ func newStore() (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) Put(key, value string, persistent bool) error {
+func (s *Store) Put(key, value string, labels map[string]string, persistent bool) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -41,7 +58,7 @@ func (s *Store) Put(key, value string, persistent bool) error {
 
 	// check if the pair already exists
 	for _, pair := range s.pairs[key] {
-		if pair.Value == value {
+		if pair.Value == value && reflect.DeepEqual(pair.Labels, labels) {
 			// and if it does update it
 			pair.LastPut = time.Now()
 			return nil
@@ -52,6 +69,7 @@ func (s *Store) Put(key, value string, persistent bool) error {
 	pair := Pair{
 		Key:        key,
 		Value:      value,
+		Labels:     labels,
 		LastPut:    time.Now(),
 		Persistent: persistent,
 	}
@@ -60,30 +78,64 @@ func (s *Store) Put(key, value string, persistent bool) error {
 	return nil
 }
 
-func (s *Store) Get(key string) ([]string, error) {
+func (s *Store) Get(key string) ([]Pair, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
+
+	rpairs := []Pair{}
 
 	// check if our partition exists
 	pairs, ok := s.pairs[key]
 	if !ok {
 		logrus.WithField("key", key).Debugf("store.Get new partition")
-		return []string{}, nil
+		return rpairs, nil
 	}
 
 	// get call values
-	vs := []string{}
 	for _, pair := range pairs {
-		vs = append(vs, pair.Value)
+		rpairs = append(rpairs, pair)
 	}
 
-	logrus.WithField("vs", vs).WithField("key", key).Debugf("store.Get")
+	logrus.WithField("pairs", rpairs).WithField("key", key).Debugf("store.Get")
 
-	return vs, nil
+	return rpairs, nil
 }
 
-// FindKeysNearestTo returns an array of n keys closest to the given key by xor distance
-func (s *Store) FindKeysNearestTo(prefix, tk string, n int) ([]string, error) {
+// TODO filter only supports a single label for now
+func (s *Store) Filter(key string, labels map[string]string) ([]Pair, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	rpairs := []Pair{}
+
+	// check if our partition exists
+	pairs, ok := s.pairs[key]
+	if !ok {
+		logrus.WithField("key", key).Debugf("store.Get new partition")
+		return rpairs, nil
+	}
+
+	// get call values
+	for _, pair := range pairs {
+		if len(labels) == 0 {
+			rpairs = append(rpairs, pair)
+			continue
+		}
+		for key, value := range labels {
+			if pair.Labels[key] == value {
+				rpairs = append(rpairs, pair)
+				break
+			}
+		}
+	}
+
+	logrus.WithField("pairs", rpairs).WithField("key", key).Debugf("store.Get")
+
+	return rpairs, nil
+}
+
+// FindPeersNearestTo returns an array of n peers closest to the given key by xor distance
+func (s *Store) FindPeersNearestTo(tk string, n int) ([]string, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -94,17 +146,28 @@ func (s *Store) FindKeysNearestTo(prefix, tk string, n int) ([]string, error) {
 
 	// slice to hold the distances
 	dists := []distEntry{}
-	for ik := range s.pairs {
-		// only keep correct prefixe
-		if !strings.HasPrefix(ik, prefix) {
-			continue
+	for ik, pairs := range s.pairs {
+		for _, pair := range pairs {
+			// only keep correct prefixe
+			if pair.GetLabel("protocol") != "peer" {
+				continue
+			}
+			// calculate distance
+			de := distEntry{
+				key:  ik,
+				dist: xor([]byte(htk), []byte(hash(ik))),
+			}
+			exists := false
+			for _, ee := range dists {
+				if ee.key == pair.Key {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				dists = append(dists, de)
+			}
 		}
-		// calculate distance
-		de := distEntry{
-			key:  ik,
-			dist: xor([]byte(htk), []byte(hash(ik))),
-		}
-		dists = append(dists, de)
 	}
 
 	// sort the distances

@@ -7,17 +7,11 @@ const (
 	MessageTypeGet         = "GET"
 )
 
-// Key prefixes
-const (
-	KeyPrefixPeer         string = "nimona/peer/"
-	KeyPrefixProvider            = "nimona/provider/"
-	KeyPrefixKeyValuePair        = "nimona/kv/"
-)
-
 type messageGet struct {
-	OriginPeer *messagePeer `json:"p"`
-	QueryID    string       `json:"q"`
-	Key        string       `json:"k"`
+	OriginPeer *messagePeer      `json:"p"`
+	QueryID    string            `json:"q"`
+	Key        string            `json:"k"`
+	Labels     map[string]string `json:"l"`
 }
 
 type messagePeer struct {
@@ -26,8 +20,9 @@ type messagePeer struct {
 }
 
 type messagePut struct {
-	OriginPeer *messagePeer `json:"p"`
-	QueryID    string       `json:"q"`
-	Key        string       `json:"k"`
-	Values     []string     `json:"v"`
+	OriginPeer *messagePeer      `json:"p"`
+	QueryID    string            `json:"q"`
+	Key        string            `json:"k"`
+	Value      string            `json:"v"`
+	Labels     map[string]string `json:"l"`
 }
