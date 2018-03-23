@@ -3,7 +3,19 @@ package pubsub
 import (
 	"regexp"
 	"sync"
+
+	"github.com/nimona/go-nimona/net"
 )
+
+// type Registry struct {
+// 	subscriptions map[string]chan interface{}
+// }
+
+// func (r *Registry) Subscribe(peerID string, topics ...string) error {
+// 	if ch, ok :=r.subscriptions[peerID]; ok {
+
+// 	}
+// }
 
 type PubSub interface {
 	Publish(msg interface{}, topics ...string) error
@@ -16,6 +28,28 @@ type pubSub struct {
 	subscriptionTopicMatches map[string]*regexp.Regexp
 	subscriptions            map[string]map[chan interface{}]bool
 	channelSize              int
+
+	net net.Net
+	// streams []net.Conn
+}
+
+func NewPubSub(nn net.Net) (PubSub, error) {
+	ps := &pubSub{
+		subscriptionTopicMatches: map[string]*regexp.Regexp{},
+		subscriptions:            map[string]map[chan interface{}]bool{},
+		channelSize:              100,
+		net:                      nn,
+	}
+
+	// go func() {
+	// 	ch, _ := ps.Subscribe("(.*)")
+	// 	for {
+	// 		msg := <-ch
+
+	// 	}
+	// }()
+
+	return ps, nil
 }
 
 func (ps *pubSub) Publish(msg interface{}, topics ...string) error {
@@ -67,9 +101,8 @@ func (ps *pubSub) Unsubscribe(ch chan interface{}) error {
 		if _, ok := subscriptions[ch]; !ok {
 			continue
 		}
-
 		close(ch)
-		subscriptions[ch] = false
+		delete(subscriptions, ch)
 	}
 	return nil
 }
