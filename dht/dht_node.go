@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/nimona/go-nimona/net"
 
@@ -24,14 +23,12 @@ type message struct {
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	localPeer         *messagePeer
-	store             *Store
-	messages          chan *message
-	queries           map[string]*query
-	peerAddressesLock sync.RWMutex
-	peerAddresses     map[string][]string
-	lock              sync.RWMutex
-	net               net.Net
+	localPeer *messagePeer
+	store     *Store
+	messages  chan *message
+	queries   map[string]*query
+	lock      sync.RWMutex
+	net       net.Net
 }
 
 func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, error) {
@@ -44,11 +41,10 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 			ID:        localPeerID,
 			Addresses: nn.GetAddresses(),
 		},
-		store:         st,
-		net:           nn,
-		messages:      make(chan *message, 500),
-		peerAddresses: bps,
-		queries:       map[string]*query{},
+		store:    st,
+		net:      nn,
+		messages: make(chan *message, 500),
+		queries:  map[string]*query{},
 	}
 
 	// Add bootstrap nodes
@@ -59,24 +55,24 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 	}
 
 	// TODO quit channel
-	quit := make(chan struct{})
+	// quit := make(chan struct{})
 
-	// start refresh worker
-	ticker := time.NewTicker(30 * time.Second)
-	go func() {
-		// refresh for the first time
-		nd.refresh()
-		// and then just wait
-		for {
-			select {
-			case <-ticker.C:
-				nd.refresh()
-			case <-quit:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	// // start refresh worker
+	// ticker := time.NewTicker(30 * time.Second)
+	// go func() {
+	// 	// refresh for the first time
+	// 	nd.refresh()
+	// 	// and then just wait
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			nd.refresh()
+	// 		case <-quit:
+	// 			ticker.Stop()
+	// 			return
+	// 		}
+	// 	}
+	// }()
 
 	// start messaging worker
 	// TODO move this to a separate method
@@ -117,24 +113,25 @@ func NewDHT(bps map[string][]string, localPeerID string, nn net.Net) (*DHT, erro
 }
 
 func (nd *DHT) getStream(peerID string) (io.ReadWriteCloser, error) {
-	nd.peerAddressesLock.RLock()
-	defer nd.peerAddressesLock.RUnlock()
-
-	if len(nd.peerAddresses[peerID]) == 0 {
-		logrus.Infof("peer has no addresses; peerID=%", peerID)
-		return nil, errors.New("peer has no addresses")
+	peers, err := nd.store.Filter(peerID, map[string]string{"protocol": "peer"})
+	if err != nil {
+		return nil, err
 	}
-	addr := nd.peerAddresses[peerID][0]
 
+	if len(peers) == 0 {
+		return nil, errors.New("no such peer")
+	}
+
+	peer := peers[0]
 	// TODO re-introduce caching
 	ctx := context.Background()
-	_, c, err := nd.net.DialContext(ctx, addr)
+	_, c, err := nd.net.DialContext(ctx, peer.Value)
 	return c, err
 }
 
 func (nd *DHT) refresh() {
 	logrus.Infof("Refreshing")
-	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, nd.localPeer.ID, numPeersNear)
+	cps, err := nd.store.FindPeersNearestTo(nd.localPeer.ID, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Warnf("refresh could not get peers ids")
 		return
@@ -160,7 +157,7 @@ func (nd *DHT) refresh() {
 	for _, prs := range pairs {
 		for _, pr := range prs {
 			if pr.Persistent {
-				nd.sendPutMessage(pr.Key, pr.Value)
+				nd.sendPutMessage(pr.Key, pr.Value, pr.Labels)
 			}
 		}
 	}
@@ -183,22 +180,23 @@ func (nd *DHT) handleMessage(msg *message) error {
 		nd.putHandler(putMsg)
 	default:
 		logrus.WithField("type", msg.Type).Info("Call type not implemented")
+		return nil
 	}
 	return nil
 }
 
-func (nd *DHT) Put(ctx context.Context, key, value string) error {
+func (nd *DHT) Put(ctx context.Context, key, value string, labels map[string]string) error {
 	logrus.Infof("Putting key %s", key)
 
 	// store this locally
-	if err := nd.store.Put(key, value, true); err != nil {
+	if err := nd.store.Put(key, value, labels, true); err != nil {
 		logrus.WithError(err).Error("Put failed to store value locally")
 	}
 
-	return nd.sendPutMessage(key, value)
+	return nd.sendPutMessage(key, value, labels)
 }
 
-func (nd *DHT) sendPutMessage(key, value string) error {
+func (nd *DHT) sendPutMessage(key, value string, labels map[string]string) error {
 	// create a put msg
 	msgPut := &messagePut{
 		OriginPeer: &messagePeer{
@@ -206,18 +204,22 @@ func (nd *DHT) sendPutMessage(key, value string) error {
 			Addresses: nd.net.GetAddresses(),
 		},
 		Key:    key,
-		Values: []string{value},
+		Value:  value,
+		Labels: labels,
 	}
 
 	// find nearest peers
-	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, key, numPeersNear*10)
+	cps, err := nd.store.FindPeersNearestTo(key, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Error("Put failed to find near peers")
 		return err
 	}
+
+	fmt.Println("_____ nearest peers", cps)
+
 	for _, cp := range cps {
 		// send message
-		if err := nd.sendMessage(MessageTypePut, msgPut, trimKey(cp, KeyPrefixPeer)); err != nil {
+		if err := nd.sendMessage(MessageTypePut, msgPut, cp); err != nil {
 			logrus.WithError(err).Warnf("Put could not send msg")
 			continue
 		}
@@ -227,7 +229,7 @@ func (nd *DHT) sendPutMessage(key, value string) error {
 	return nil
 }
 
-func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
+func (nd *DHT) Get(ctx context.Context, key string) (chan net.Record, error) {
 	logrus.Infof("Searching for key %s", key)
 
 	// create query
@@ -236,8 +238,9 @@ func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
 		id:               uuid.New().String(),
 		dht:              nd,
 		key:              key,
+		labels:           map[string]string{},
 		contactedPeers:   []string{},
-		results:          make(chan string, 100),
+		results:          make(chan net.Record, 100),
 		incomingMessages: make(chan messagePut, 100),
 		lock:             &sync.RWMutex{},
 	}
@@ -254,28 +257,55 @@ func (nd *DHT) Get(ctx context.Context, key string) (chan string, error) {
 	return q.results, nil
 }
 
-func (nd *DHT) GetPeer(ctx context.Context, id string) ([]string, error) {
-	// get peer key
-	res, err := nd.Get(ctx, getPeerKey(id))
-	if err != nil {
-		return nil, err
+func (nd *DHT) Filter(ctx context.Context, key string, labels map[string]string) (chan net.Record, error) {
+	logrus.Infof("Searching for key %s", key)
+
+	// create query
+	// TODO query needs the context
+	q := &query{
+		id:               uuid.New().String(),
+		dht:              nd,
+		key:              key,
+		contactedPeers:   []string{},
+		results:          make(chan net.Record, 100),
+		incomingMessages: make(chan messagePut, 100),
+		lock:             &sync.RWMutex{},
 	}
 
-	// hold addresses
-	addrs := []string{}
+	// and store it
+	nd.lock.Lock()
+	nd.queries[q.id] = q
+	nd.lock.Unlock()
 
-	// go through results and create addresses array
-	for addr := range res {
-		addrs = appendIfMissing(addrs, addr)
-	}
+	// run query
+	q.Run(ctx)
 
-	// check addrs
-	if len(addrs) == 0 {
-		return nil, ErrPeerNotFound
-	}
-
-	return addrs, nil
+	// return results channel
+	return q.results, nil
 }
+
+// func (nd *DHT) GetPeer(ctx context.Context, id string) ([]string, error) {
+// 	// get peer key
+// 	res, err := nd.Get(ctx, getPeerKey(id))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// hold addresses
+// 	addrs := []string{}
+
+// 	// go through results and create addresses array
+// 	for addr := range res {
+// 		addrs = appendIfMissing(addrs, addr)
+// 	}
+
+// 	// check addrs
+// 	if len(addrs) == 0 {
+// 		return nil, ErrPeerNotFound
+// 	}
+
+// 	return addrs, nil
+// }
 
 func (nd *DHT) sendMessage(msgType string, payload interface{}, peerID string) error {
 	if peerID == nd.localPeer.ID {
@@ -309,31 +339,34 @@ func (nd *DHT) getHandler(msg *messageGet) {
 	nd.putPeer(msg.OriginPeer.ID, msg.OriginPeer.Addresses)
 
 	// check if we have the value of the key
-	ks, err := nd.store.Get(msg.Key)
+	pairs, err := nd.store.Get(msg.Key)
 	if err != nil {
 		logger.Error("Failed to find nodes near")
 		return
 	}
 
 	// send them if we do
-	if len(ks) > 0 {
-		msgPut := &messagePut{
-			QueryID:    msg.QueryID,
-			OriginPeer: msg.OriginPeer,
-			Key:        msg.Key,
-			Values:     ks,
+	if len(pairs) > 0 {
+		for _, pair := range pairs {
+			msgPut := &messagePut{
+				QueryID:    msg.QueryID,
+				OriginPeer: msg.OriginPeer,
+				Key:        msg.Key,
+				Value:      pair.Value,
+				Labels:     pair.Labels,
+			}
+			// send response
+			if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
+				logger.WithError(err).Warnf("getHandler could not send msg")
+			}
 		}
-		// send response
-		if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
-			logger.WithError(err).Warnf("getHandler could not send msg")
-		}
-		logger.Infof("getHandler told origin about the value")
+		logger.Infof("getHandler told origin about the values we knew")
 	} else {
 		logger.Infof("getHandler does not know about this key")
 	}
 
 	// find peers nearest peers that might have it
-	cps, err := nd.store.FindKeysNearestTo(KeyPrefixPeer, msg.Key, numPeersNear)
+	cps, err := nd.store.FindPeersNearestTo(msg.Key, numPeersNear)
 	if err != nil {
 		logger.WithError(err).Error("getHandler could not find nearest peers")
 		return
@@ -349,14 +382,12 @@ func (nd *DHT) getHandler(msg *messageGet) {
 
 	// send messages with closes peers
 	for _, cp := range cps {
-		cpid := trimKey(cp, KeyPrefixPeer)
 		// skip us and original peer
-		if cpid == msg.OriginPeer.ID {
+		if cp == msg.OriginPeer.ID {
 			logger.Debugf("getHandler skipping origin")
 			continue
 		}
-		// if cpid == nd.GetLocalPeer().ID {
-		if cpid == nd.localPeer.ID {
+		if cp == nd.localPeer.ID {
 			logger.Debugf("getHandler skipping local")
 			continue
 		}
@@ -367,15 +398,20 @@ func (nd *DHT) getHandler(msg *messageGet) {
 			continue
 		}
 		// create a response
-		msgPut := &messagePut{
-			QueryID:    msg.QueryID,
-			OriginPeer: msg.OriginPeer,
-			Key:        cp,
-			Values:     addrs,
-		}
-		// send response
-		if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
-			logger.WithError(err).Warnf("getHandler could not send msg")
+		for _, addr := range addrs {
+			msgPut := &messagePut{
+				QueryID:    msg.QueryID,
+				OriginPeer: msg.OriginPeer,
+				Key:        cp,
+				Value:      addr.Value,
+				Labels: map[string]string{
+					"protocol": "peer",
+				},
+			}
+			// send response
+			if err := nd.sendMessage(MessageTypePut, msgPut, msg.OriginPeer.ID); err != nil {
+				logger.WithError(err).Warnf("getHandler could not send msg")
+			}
 		}
 	}
 }
@@ -394,20 +430,7 @@ func (nd *DHT) putHandler(msg *messagePut) {
 	}
 
 	// add values to our store
-	if checkKey(msg.Key) {
-		for _, v := range msg.Values {
-			nd.store.Put(msg.Key, v, false)
-		}
-	}
-
-	// check if this is a peer
-	if strings.HasPrefix(msg.Key, KeyPrefixPeer) {
-		peerID := strings.Replace(msg.Key, KeyPrefixPeer, "", 1)
-		if err := nd.putPeer(peerID, msg.Values); err != nil {
-			logger.WithError(err).Infof("putHandler could putPeer")
-			return
-		}
-	}
+	nd.store.Put(msg.Key, msg.Value, msg.Labels, false)
 
 	if err := nd.putPeer(msg.OriginPeer.ID, msg.OriginPeer.Addresses); err != nil {
 		logger.WithError(err).Infof("putHandler could putPeer for origin")
@@ -416,18 +439,17 @@ func (nd *DHT) putHandler(msg *messagePut) {
 }
 
 func (nd *DHT) putPeer(peerID string, peerAddresses []string) error {
-	nd.peerAddressesLock.Lock()
-	defer nd.peerAddressesLock.Unlock()
-
 	if peerID == nd.localPeer.ID {
 		return nil
 	}
 
+	labels := map[string]string{
+		"protocol": "peer",
+	}
+
 	logrus.Infof("Adding peer to network id=%s address=%v", peerID, peerAddresses)
-	// add peer to network
-	nd.peerAddresses[peerID] = peerAddresses
 	for _, addr := range peerAddresses {
-		nd.store.Put(getPeerKey(peerID), addr, true)
+		nd.store.Put(peerID, addr, labels, true)
 	}
 
 	logrus.Infof("PUT PEER id=%s addrs=%v", peerID, peerAddresses)

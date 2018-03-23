@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"io"
 
 	net "github.com/nimona/go-nimona/net"
 	logrus "github.com/sirupsen/logrus"
@@ -30,6 +31,9 @@ func (d *DHT) Handle(fn net.HandlerFunc) net.HandlerFunc {
 			// read line
 			line, err := sr.ReadString('\n')
 			if err != nil {
+				if err == io.EOF {
+					return nil // TODO(geoah) is this safe?
+				}
 				logrus.WithError(err).Errorf("Could not read")
 				return err // TODO(geoah) Return?
 			}
@@ -44,7 +48,7 @@ func (d *DHT) Handle(fn net.HandlerFunc) net.HandlerFunc {
 
 			// process message
 			if err := d.handleMessage(msg); err != nil {
-				// logrus.WithError(err).Warnf("Could not process message")
+				logrus.WithError(err).Warnf("Could not process message")
 			}
 		}
 		// return nil
