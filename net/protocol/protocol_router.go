@@ -135,3 +135,11 @@ func (m *RouterProtocol) AddRoute(protocols ...nnet.Protocol) error {
 	m.routes[routeName] = protocols
 	return nil
 }
+
+func (s *RouterProtocol) GetAddresses() []string {
+	addresses := []string{}
+	for route := range s.routes {
+		addresses = append(addresses, s.Name()+"/"+route)
+	}
+	return addresses
+}

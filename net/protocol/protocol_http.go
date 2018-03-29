@@ -45,3 +45,7 @@ func (s *httpConnListener) Close() error {
 func (s *httpConnListener) Addr() net.Addr {
 	return s.conn.LocalAddr()
 }
+
+func (s *httpConnListener) GetAddresses() []string {
+	return []string{}
+}

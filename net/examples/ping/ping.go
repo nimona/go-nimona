@@ -29,7 +29,7 @@ func (p *Ping) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 		defer c.Close()
 
 		if rp, ok := ctx.Value(prot.RemoteIdentityKey{}).(string); ok {
-			lgr.Info("Context contains remote id", zap.String("remote.id", rp))
+			lgr.Debug("Context contains remote id", zap.String("remote.id", rp))
 		}
 
 		// send ping
@@ -38,7 +38,7 @@ func (p *Ping) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 			return err
 		}
 
-		lgr.Info("Wrote token")
+		lgr.Debug("Wrote token")
 
 		// get pong
 		token, err := c.ReadToken()
@@ -47,7 +47,7 @@ func (p *Ping) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 			return err
 		}
 
-		lgr.Info("Read token", zap.String("token", string(token)))
+		lgr.Debug("Read token", zap.String("token", string(token)))
 
 		return nil
 	}

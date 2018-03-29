@@ -89,7 +89,6 @@ func (t *TCP) Listen(ctx context.Context, handler HandlerFunc) error {
 	if err != nil {
 		// Logger(ctx).Debug("Could not open upnp port: ", zap.Error(err))
 	}
-
 	go func() {
 		for {
 			// Listen for an incoming connection.

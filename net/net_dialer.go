@@ -21,7 +21,7 @@ type RequestIDKey struct{}
 func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
 	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
 	lgr := Logger(ctx)
-	lgr.Info("Dialing", zap.String("address", as))
+	lgr.Debug("Dialing", zap.String("address", as))
 
 	// TODO validate the address
 	addr := NewAddress(as)
@@ -35,7 +35,7 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		// dial transport
 		var err error
 		trType := reflect.TypeOf(tr.Transport).String()
-		lgr.Info("Attempting to dial", zap.String("transport", trType))
+		lgr.Debug("Attempting to dial", zap.String("transport", trType))
 		newCtx, newConn, err := tr.Transport.DialContext(ctx, addr)
 		if err != nil {
 			lgr.Warn("Could not dial", zap.String("transport", trType), zap.Error(err))
@@ -44,7 +44,7 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 
 		newAddr := newConn.GetAddress()
 
-		lgr.Info("Dial complete, negotiating",
+		lgr.Debug("Dial complete, negotiating",
 			zap.String("address", newAddr.String()),
 			zap.String("Remaining", newAddr.RemainingString()),
 		)

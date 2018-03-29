@@ -32,7 +32,6 @@ func (p *Ping) Ping(c net.Conn) {
 	if err != nil {
 		log.Fatal("get read err", err)
 	}
-	fmt.Println("get", resp.StatusCode, string(body))
 }
 
 func (p *Ping) ServeHTTP(w http.ResponseWriter, r *http.Request) {

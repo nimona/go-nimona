@@ -47,7 +47,7 @@ func (m *YamuxProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 
 		addr := c.GetAddress()
 		addr.Pop()
-		lgr.Info("Handle: Accepting yamux sessions")
+		lgr.Debug("Handle: Accepting yamux sessions")
 
 		go m.accept(ctx, ses, addr, fn)
 
@@ -95,7 +95,7 @@ func (m *YamuxProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 		addr := c.GetAddress()
 		addr.Pop()
 		sessionAddr := strings.Join(addr.Processed(), "/")
-		lgr.Info("Negotiage: Storing yamux session", zap.String("address", sessionAddr))
+		lgr.Debug("Negotiage: Storing yamux session", zap.String("address", sessionAddr))
 		m.sessions[sessionAddr] = session
 
 		nc := nnet.NewConnWrapper(str, c.GetAddress())
@@ -122,10 +122,10 @@ func (m *YamuxProtocol) CanDial(addr *nnet.Address) (bool, error) {
 // negotiated yamux.
 func (m *YamuxProtocol) DialContext(ctx context.Context, addr *nnet.Address) (context.Context, nnet.Conn, error) {
 	lgr := nnet.Logger(ctx)
-	lgr.Info("DialContext with yamux", zap.String("address", addr.String()))
+	lgr.Debug("DialContext with yamux", zap.String("address", addr.String()))
 	for k, ses := range m.sessions {
 		if strings.HasPrefix(addr.String(), k) {
-			lgr.Info("Found yamux session", zap.String("address", k))
+			lgr.Debug("Found yamux session", zap.String("address", k))
 			str, err := ses.Open()
 			if err != nil {
 				return nil, nil, err
@@ -143,13 +143,12 @@ func (m *YamuxProtocol) DialContext(ctx context.Context, addr *nnet.Address) (co
 	return nil, nil, errors.New("No such connection already open")
 }
 
-// Addresses returns the addresses the transport is listening to
-func (m *YamuxProtocol) Addresses() []string {
-	return []string{}
-}
-
 // Listen handles the transports
 func (m *YamuxProtocol) Listen(ctx context.Context, handler nnet.HandlerFunc) error {
 	m.handler = handler
 	return nil
+}
+
+func (s *YamuxProtocol) GetAddresses() []string {
+	return []string{}
 }

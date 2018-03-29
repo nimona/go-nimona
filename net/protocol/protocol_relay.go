@@ -109,7 +109,7 @@ func (m *RelayProtocol) pipe(ctx context.Context,
 		zap.Namespace("protocol:relay"),
 	)
 
-	lgr.Info("Piping")
+	lgr.Debug("Piping")
 	done := make(chan error, 1)
 
 	cp := func(r, w io.ReadWriteCloser) {
@@ -123,4 +123,7 @@ func (m *RelayProtocol) pipe(ctx context.Context,
 	go cp(a, b)
 	go cp(b, a)
 	return <-done
+}
+func (s *RelayProtocol) GetAddresses() []string {
+	return []string{}
 }
