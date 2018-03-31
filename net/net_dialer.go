@@ -19,7 +19,9 @@ type RequestIDKey struct{}
 // DialContext will attempt to connect to the given address and go through the
 // various middlware that it needs until the connection is fully established
 func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Conn, error) {
-	ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
+	if val := ctx.Value(RequestIDKey{}); val != nil {
+		ctx = context.WithValue(ctx, RequestIDKey{}, generateReqID())
+	}
 	lgr := Logger(ctx)
 	lgr.Debug("Dialing", zap.String("address", as))
 
