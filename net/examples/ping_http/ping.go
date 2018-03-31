@@ -28,8 +28,7 @@ func (p *Ping) Ping(c net.Conn) {
 		log.Fatal("get err", err)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	if _, err := ioutil.ReadAll(resp.Body); err != nil {
 		log.Fatal("get read err", err)
 	}
 }
@@ -49,4 +48,8 @@ func (p *Ping) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 	return func(ctx context.Context, c nnet.Conn) error {
 		return prot.NewHTTPServer(c, p)
 	}
+}
+
+func (p *Ping) GetAddresses() []string {
+	return []string{}
 }

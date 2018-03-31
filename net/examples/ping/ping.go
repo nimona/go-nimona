@@ -91,3 +91,7 @@ func (p *Ping) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 		return nil
 	}
 }
+
+func (p *Ping) GetAddresses() []string {
+	return []string{}
+}

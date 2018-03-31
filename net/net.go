@@ -94,7 +94,7 @@ func (f *nnet) GetAddresses() []string {
 	defer f.lock.Unlock()
 	addresses := []string{}
 	for _, tr := range f.transports {
-		addresses = append(addresses, tr.Transport.Addresses()...)
+		addresses = append(addresses, tr.Transport.GetAddresses()...)
 	}
 	return addresses
 }
@@ -107,7 +107,7 @@ func (f *nnet) GetProtocols() map[string][]string {
 	protocols := map[string][]string{}
 	for _, tr := range f.transports {
 		// go through all tranports
-		for _, transportAddress := range tr.Transport.Addresses() {
+		for _, transportAddress := range tr.Transport.GetAddresses() {
 			// check if they have any protocols
 			if len(tr.BaseProtocols) == 0 {
 				continue

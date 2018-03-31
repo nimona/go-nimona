@@ -66,7 +66,7 @@ package net
 // }
 
 // // Addresses returns the addresses the transport is listening to
-// func (t *PeerTransport) Addresses() []string {
+// func (t *PeerTransport) GetAddresses() []string {
 // 	// TODO return peer address
 // 	return []string{
 // 		"peer:" + t.peerID,

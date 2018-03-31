@@ -65,7 +65,7 @@ type TransportTCPTestSuite struct {
 // 	err := tcps.Listen(ctx, handler)
 // 	suite.Assert().Nil(err)
 
-// 	addrs := tcps.Addresses()
+// 	addrs := tcps.GetAddresses()
 // 	suite.Assert().NotEmpty(addrs)
 
 // 	tcpc := NewTransportTCP("0.0.0.0", 0)
@@ -104,7 +104,7 @@ type TransportTCPTestSuite struct {
 // 	err := tcps.Listen(ctx, handler)
 // 	suite.Assert().Nil(err)
 
-// 	addrs := tcps.Addresses()
+// 	addrs := tcps.GetAddresses()
 // 	suite.Assert().NotEmpty(addrs)
 
 // 	tcpc := NewTransportTCP("0.0.0.0", 0)

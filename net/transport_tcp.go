@@ -144,7 +144,7 @@ func (t *TCP) startExternal(ctx context.Context) error {
 }
 
 // Addresses returns the addresses the transport is listening to
-func (t *TCP) Addresses() []string {
+func (t *TCP) GetAddresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
 	// TODO log errors
 	addrs, _ := GetLocalAddresses(port)
