@@ -48,7 +48,7 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 		logger:                   net.Logger(ctx).Named("messenger"),
 	}
 
-	messages, err := ms.Subscribe("messaging:.*")
+	messages, err := ms.Subscribe("message:.*")
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 
 	go func() {
 		for msg := range m.incomingQueue {
-			if err := ms.Publish(msg, msg.Type); err != nil {
+			if err := ms.Publish(msg, msg.Topic); err != nil {
 				m.logger.Warn("could not publish incoming message", zap.Error(err))
 			}
 		}

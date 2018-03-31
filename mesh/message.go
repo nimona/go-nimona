@@ -21,7 +21,7 @@ type Message struct {
 	Nonce     string
 	Sender    string
 	Recipient string
-	Type      string
+	Topic     string
 	Codec     string
 	Payload   []byte
 	Checksum  []byte
@@ -33,7 +33,7 @@ func (m Message) String() string {
 		Version   int         `json:"Version,omitempty"`
 		Sender    string      `json:"Sender,omitempty"`
 		Recipient string      `json:"Recipient,omitempty"`
-		Type      string      `json:"Type,omitempty"`
+		Topic     string      `json:"Topic,omitempty"`
 		Codec     string      `json:"Codec,omitempty"`
 		Payload   interface{} `json:"Payload,omitempty"`
 		Checksum  string      `json:"Checksum,omitempty"`
@@ -44,7 +44,7 @@ func (m Message) String() string {
 		Version:   m.Version,
 		Sender:    m.Sender,
 		Recipient: m.Recipient,
-		Type:      m.Type,
+		Topic:     m.Topic,
 		Codec:     m.Codec,
 		Payload:   string(m.Payload),
 		Checksum:  fmt.Sprintf("%x", m.Checksum),
