@@ -27,7 +27,7 @@ jobs:
           command: |
             mkdir -p $CIRCLE_TEST_REPORTS
             mkdir -p $CIRCLE_ARTIFACTS
-            govendor test -race -v -coverprofile=$CIRCLE_ARTIFACTS/profile.out +local | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
+            go test -race -v -coverprofile=$CIRCLE_ARTIFACTS/profile.out +local | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
             sed -i "/_mock/d" $CIRCLE_ARTIFACTS/profile.out
       - run:
           name: Upload to coveralls
