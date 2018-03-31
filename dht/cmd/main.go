@@ -2,63 +2,54 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
-	"strconv"
 	"strings"
 
-	uuid "github.com/google/uuid"
-	logrus "github.com/sirupsen/logrus"
-	ishell "gopkg.in/abiosoft/ishell.v2"
+	"github.com/nimona/go-nimona/dht"
+	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/net/protocol"
 
-	dht "github.com/nimona/go-nimona/dht"
-	nnet "github.com/nimona/go-nimona/net"
+	ishell "gopkg.in/abiosoft/ishell.v2"
 )
 
 func main() {
-	ll := logrus.ErrorLevel
-	if ell, err := logrus.ParseLevel(os.Getenv("DEBUG")); err == nil {
-		ll = ell
+	peerID := os.Getenv("PEER_ID")
+	if peerID == "" {
+		log.Fatal("Missing PEER_ID")
 	}
-	logrus.SetLevel(ll)
 
+	bs := []string{}
 	port := 0
-	eprt := os.Getenv("PORT")
-	if eprt != "" {
-		port, _ = strconv.Atoi(eprt)
-	}
 
-	absp := map[string][]string{
-		"bootstrap": []string{
-			"tcp:192.168.0.10:26800",
-		},
-	}
-	pid := uuid.New().String()
-	bsp := map[string][]string{}
-	if cpid := os.Getenv("PEER_ID"); cpid != "" {
-		pid = cpid
-		for prID, pr := range absp {
-			if cpid == prID {
-				logrus.Warnf("Skipping bootstrap peer %s", cpid)
-				continue
-			}
-			bsp[prID] = pr
-		}
+	if peerID == "bootstrap" {
+		port = 26801
 	} else {
-		bsp = absp
+		bs = append(bs, "tcp:localhost:26801/router/messaging")
 	}
 
 	ctx := context.Background()
-	nn := nnet.New(ctx)
+	tcp := net.NewTransportTCPWithUPNP("0.0.0.0", port)
 
-	dn, err := dht.NewDHT(bsp, pid, nn)
-	if err != nil {
-		logrus.WithError(err).Fatalf("Could not get dht")
+	nn := net.New(ctx)
+	rt := protocol.NewRouter()
+
+	ps, _ := mesh.NewPubSub()
+	rg, _ := mesh.NewRegisty(peerID, ps)
+	ms, _ := mesh.NewMesh(nn, ps, rg)
+	mg, _ := mesh.NewMessenger(ms)
+	ds, _ := dht.NewDHT(ps, peerID, bs...)
+
+	nn.AddProtocols(mg)
+
+	rt.AddRoute(mg)
+
+	nn.AddTransport(tcp, rt)
+
+	if peerID == "bootstrap" {
+		// ds.Put(ctx, "a", "a", map[string]string{})
 	}
-
-	tcp := nnet.NewTransportTCP("0.0.0.0", port)
-	nn.AddTransport(tcp, dn)
-	fmt.Println("Addresses: ", nn.GetAddresses())
 
 	shell := ishell.New()
 	shell.Println("Nimona DHT")
@@ -77,7 +68,7 @@ func main() {
 
 			key := c.Args[0]
 			ctx := context.Background()
-			rs, err := dn.Get(ctx, key)
+			rs, err := ds.Get(ctx, key)
 			if err != nil {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
@@ -85,7 +76,7 @@ func main() {
 			c.ProgressBar().Indeterminate(true)
 			c.ProgressBar().Start()
 			for rv := range rs {
-				c.Println("  - " + rv)
+				c.Println("  - " + rv.GetValue())
 			}
 			c.ProgressBar().Stop()
 		},
@@ -107,7 +98,7 @@ func main() {
 			key := c.Args[0]
 			val := strings.Join(c.Args[1:], " ")
 			ctx := context.Background()
-			if err := dn.Put(ctx, key, val); err != nil {
+			if err := ds.Put(ctx, key, val, map[string]string{}); err != nil {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
@@ -122,11 +113,11 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := dn.GetLocalPairs()
+			ps, _ := ds.GetLocalPairs()
 			for key, vals := range ps {
 				c.Println("* " + key)
 				for _, val := range vals {
-					c.Println("  - " + val.Value)
+					c.Printf("  - %s (%#v)\n", val.GetValue(), val.GetLabels())
 				}
 			}
 		},
