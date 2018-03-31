@@ -4,22 +4,31 @@ jobs:
     docker:
       - image: circleci/golang:1.10
     working_directory: /go/src/github.com/nimona/go-nimona
+    environment:
+      CIRCLE_TEST_REPORTS: /tmp/test-reports
+      CIRCLE_ARTIFACTS: /tmp/artifacts
     steps:
       - checkout
       - run:
-          name: Install dep
-          command: go get -u github.com/golang/dep/cmd/dep
-      - run:
-          name: Install gocov
-          command: go get -u github.com/axw/gocov/gocov
-      - run:
-          name: Install goveralls
-          command: go get -u github.com/mattn/goveralls
+          name: Install tools
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            go get -u github.com/axw/gocov/gocov
+            go get -u github.com/mattn/goveralls
+            go get -u github.com/jstemmer/go-junit-report
       - run:
           name: Install dependencies
           command: dep ensure
       - run:
+          name: Build everything
+          command: go build -v ./...
+      - run:
           name: Run tests
           command: |
-            make test-cover
-            goveralls -v -coverprofile=coverage.txt -service=circle-ci -repotoken=$COVERALLS_TOKEN
+            mkdir -p $CIRCLE_TEST_REPORTS
+            mkdir -p $CIRCLE_ARTIFACTS
+            govendor test -race -v -coverprofile=$CIRCLE_ARTIFACTS/profile.out +local | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
+            sed -i "/_mock/d" $CIRCLE_ARTIFACTS/profile.out
+      - run:
+          name: Upload to coveralls
+          command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
