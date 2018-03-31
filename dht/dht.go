@@ -40,7 +40,7 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 		}
 	}
 
-	messages, _ := ps.Subscribe("messaging:dht:.*")
+	messages, _ := ps.Subscribe("messaging:.*")
 	go func() {
 		for omsg := range messages {
 			msg, ok := omsg.(mesh.Message)
@@ -114,7 +114,7 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 
 func (nd *DHT) handleMessage(msg mesh.Message) error {
 	logrus.Info("Got message", msg.String())
-	switch msg.Type {
+	switch msg.Topic {
 	case MessageTypeGet:
 		getMsg := &messageGet{}
 		if err := json.Unmarshal(msg.Payload, getMsg); err != nil {
@@ -128,7 +128,7 @@ func (nd *DHT) handleMessage(msg mesh.Message) error {
 		}
 		nd.putHandler(putMsg)
 	default:
-		logrus.WithField("type", msg.Type).Warn("Call type not implemented")
+		logrus.WithField("msg.Topic", msg.Topic).Warn("Topic not known")
 		return nil
 	}
 	return nil
@@ -242,14 +242,14 @@ func (nd *DHT) sendMessage(msgType string, event interface{}, peerID string) err
 		Recipient: peerID,
 		Sender:    nd.peerID,
 		Payload:   pl,
-		Type:      msgType,
+		Topic:     msgType,
 		Codec:     "json",
 		Nonce:     mesh.RandStringBytesMaskImprSrc(8),
 	}
 
 	logrus.Info("Publishing message", msg.String())
 
-	if err := nd.pubsub.Publish(msg, msgType); err != nil {
+	if err := nd.pubsub.Publish(msg, "message:send"); err != nil {
 		return err
 	}
 
