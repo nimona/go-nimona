@@ -148,8 +148,7 @@ func (s *Store) FindPeersNearestTo(tk string, n int) ([]string, error) {
 	dists := []distEntry{}
 	for ik, pairs := range s.pairs {
 		for _, pair := range pairs {
-			// only keep correct prefixe
-			if pair.GetLabel("protocol") != "peer" {
+			if pair.GetLabel("protocol") != "messaging" {
 				continue
 			}
 			// calculate distance

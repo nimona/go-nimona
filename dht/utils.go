@@ -58,7 +58,7 @@ func lessIntArr(a, b []int) bool {
 }
 
 func comparePeers(a, b, targetPeer string) string {
-	logrus.Infof("A: %s B: %s TARGET: %s", a, b, targetPeer)
+	logrus.Debug("A: %s B: %s TARGET: %s", a, b, targetPeer)
 	distA := xor([]byte(a), []byte(targetPeer))
 	distB := xor([]byte(b), []byte(targetPeer))
 	if lessIntArr(distA, distB) {

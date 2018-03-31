@@ -2,27 +2,22 @@ package dht
 
 // Message types
 const (
-	MessageTypePing string = "PING"
-	MessageTypePut         = "PUT"
-	MessageTypeGet         = "GET"
+	MessageTypePing string = "messaging:dht:action:ping"
+	MessageTypePut         = "messaging:dht:action:put"
+	MessageTypeGet         = "messaging:dht:action:get"
 )
 
 type messageGet struct {
-	OriginPeer *messagePeer      `json:"p"`
-	QueryID    string            `json:"q"`
-	Key        string            `json:"k"`
-	Labels     map[string]string `json:"l"`
-}
-
-type messagePeer struct {
-	ID        string   `json:"id"`
-	Addresses []string `json:"addresses"`
+	OriginPeerID string            `json:"p"`
+	QueryID      string            `json:"q"`
+	Key          string            `json:"k"`
+	Labels       map[string]string `json:"l"`
 }
 
 type messagePut struct {
-	OriginPeer *messagePeer      `json:"p"`
-	QueryID    string            `json:"q"`
-	Key        string            `json:"k"`
-	Value      string            `json:"v"`
-	Labels     map[string]string `json:"l"`
+	OriginPeerID string            `json:"p"`
+	QueryID      string            `json:"q"`
+	Key          string            `json:"k"`
+	Value        string            `json:"v"`
+	Labels       map[string]string `json:"l"`
 }
