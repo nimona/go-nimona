@@ -40,3 +40,8 @@ func (m *TransportWrapper) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 func (m *TransportWrapper) Name() string {
 	return ""
 }
+
+// GetAddresses
+func (m *TransportWrapper) GetAddresses() []string {
+	return []string{}
+}

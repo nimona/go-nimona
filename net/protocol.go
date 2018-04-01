@@ -9,6 +9,7 @@ type Protocol interface {
 	Handle(HandlerFunc) HandlerFunc
 	Negotiate(NegotiatorFunc) NegotiatorFunc
 	Name() string
+	GetAddresses() []string
 }
 
 // HandlerFunc for Handle

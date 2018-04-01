@@ -3,7 +3,6 @@ package protocol
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	zap "go.uber.org/zap"
 
@@ -86,12 +85,11 @@ func (m *IdentityProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc
 			lgr.Warn("Could not read remote id", zap.Error(err))
 			return err
 		}
-		lgr.Info("Read remote id", zap.String("remote.id", string(remoteID)))
+		lgr.Debug("Read remote id", zap.String("remote.id", string(remoteID)))
 
 		// if an identity has been provided as the first address parameter then
 		// we need to make sure that the other side matches.
 		addr := c.GetAddress()
-		fmt.Println("!!", addr, addr.CurrentParams())
 		if len(addr.CurrentParams()) > 0 {
 			if addr.CurrentParams() != string(remoteID) {
 				lgr.Warn("Unexpected remote id", zap.String("remote.id", string(remoteID)))
@@ -105,4 +103,8 @@ func (m *IdentityProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc
 
 		return fn(ctx, c)
 	}
+}
+
+func (s *IdentityProtocol) GetAddresses() []string {
+	return []string{}
 }

@@ -3,7 +3,6 @@ package protocol
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 
 	nnet "github.com/nimona/go-nimona/net"
 )
@@ -29,7 +28,6 @@ func (m *SecProtocol) Handle(fn nnet.HandlerFunc) nnet.HandlerFunc {
 
 		addr := c.GetAddress()
 		addr.Pop()
-		fmt.Println("---- TLS HANDLE AFTER POP", addr.RemainingString())
 
 		nc := nnet.NewConnWrapper(scon, addr)
 		return fn(ctx, nc)
@@ -51,4 +49,8 @@ func (m *SecProtocol) Negotiate(fn nnet.NegotiatorFunc) nnet.NegotiatorFunc {
 		nc := nnet.NewConnWrapper(scon, addr)
 		return fn(ctx, nc)
 	}
+}
+
+func (s *SecProtocol) GetAddresses() []string {
+	return []string{}
 }

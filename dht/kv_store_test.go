@@ -11,21 +11,21 @@ func TestFindKeysNearestTo(t *testing.T) {
 	s, err := newStore()
 	assert.Nil(t, err)
 
-	s.Put(KeyPrefixPeer+"a1", "0.0.0.0", true)
-	s.Put(KeyPrefixPeer+"a2", "0.0.0.1", true)
-	s.Put(KeyPrefixPeer+"a3", "0.0.0.3", true)
-	s.Put(KeyPrefixPeer+"a4", "0.0.0.4", true)
-	s.Put(KeyPrefixPeer+"a5", "0.0.0.5", true)
+	s.Put("a1", "0.0.0.0", map[string]string{}, true)
+	s.Put("a2", "0.0.0.1", map[string]string{}, true)
+	s.Put("p1", "0.0.0.3", map[string]string{"protocol": "messaging"}, true)
+	s.Put("p2", "0.0.0.4", map[string]string{"protocol": "messaging"}, true)
+	s.Put("p3", "0.0.0.5", map[string]string{"protocol": "messaging"}, true)
 
-	k1, err := s.FindKeysNearestTo(KeyPrefixPeer, KeyPrefixPeer+"a1", 1)
+	k1, err := s.FindPeersNearestTo("p1", 1)
 	assert.Nil(t, err)
 
-	k2, err := s.FindKeysNearestTo(KeyPrefixPeer, KeyPrefixPeer+"a2", 1)
+	k2, err := s.FindPeersNearestTo("ff", 1)
 	assert.Nil(t, err)
 
 	assert.NotEqual(t, k1[0], k2[0])
-	assert.Equal(t, trimKey(k1[0], KeyPrefixPeer), "a1")
-	assert.Equal(t, trimKey(k2[0], KeyPrefixPeer), "a2")
+	assert.Equal(t, "p1", k1[0])
+	assert.Equal(t, "p3", k2[0])
 
 }
 
@@ -37,7 +37,7 @@ func TestPut(t *testing.T) {
 	value := "v1"
 	persistent := false
 
-	err = s.Put(key, value, persistent)
+	err = s.Put(key, value, map[string]string{}, persistent)
 	assert.Nil(t, err)
 
 	assert.NotEmpty(t, s.pairs[key])
@@ -63,7 +63,7 @@ func TestGet(t *testing.T) {
 
 	pairs, err := s.Get(key)
 	assert.Nil(t, err)
-	assert.Equal(t, pairs[0], value)
+	assert.Equal(t, value, pairs[0].GetValue())
 }
 
 func TestWipe(t *testing.T) {

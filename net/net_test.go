@@ -61,7 +61,7 @@ func (suite *NetTestSuite) TestGetAddressesSuccess() {
 		"tr1.addr1",
 		"tr1.addr2",
 	}
-	transport1.On("Addresses").Return(addresses1)
+	transport1.On("GetAddresses").Return(addresses1)
 	transport1.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	err := suite.fnet.AddTransport(transport1)
 	suite.Assert().Nil(err)
@@ -72,7 +72,7 @@ func (suite *NetTestSuite) TestGetAddressesSuccess() {
 		"tr2.addr1",
 		"tr2.addr2",
 	}
-	transport2.On("Addresses").Return(addresses2)
+	transport2.On("GetAddresses").Return(addresses2)
 	transport2.On("Listen", mock.Anything, mock.Anything).Return(nil)
 	err = suite.fnet.AddTransport(transport2)
 	suite.Assert().Nil(err)

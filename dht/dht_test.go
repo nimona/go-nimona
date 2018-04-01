@@ -2,113 +2,141 @@ package dht
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
-	logrus "github.com/sirupsen/logrus"
-	suite "github.com/stretchr/testify/suite"
+	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/mutation"
 
-	net "github.com/nimona/go-nimona/net"
+	"github.com/stretchr/testify/mock"
+	suite "github.com/stretchr/testify/suite"
 )
 
 type dhtTestSuite struct {
 	suite.Suite
-	node1 *DHT
-	node2 *DHT
-	node3 *DHT
-	node4 *DHT
-	node5 *DHT
+	mockMesh   *mesh.MockMesh
+	mockPubSub *mesh.MockPubSub
+	messages   chan interface{}
+	peers      chan interface{}
+	dht        *DHT
 }
 
-func TestExampleTestSuite(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
-
-	net1 := net.New(context.Background())
-	node1, _ := NewDHT(map[string][]string{}, "a1", net1)
-	net1.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node1)
-
-	net2 := net.New(context.Background())
-	node2, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a2", net2)
-	net2.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node2)
-
-	net5 := net.New(context.Background())
-	node5, _ := NewDHT(map[string][]string{"a1": net1.GetAddresses()}, "a5", net5)
-	net5.AddTransport(net.NewTransportTCP("0.0.0.0", 0), node5)
-
-	dt := &dhtTestSuite{
-		node1: node1,
-		node2: node2,
-		// node3: node3,
-		// node4: node4,
-		node5: node5,
+func (suite *dhtTestSuite) SetupTest() {
+	suite.mockMesh = &mesh.MockMesh{}
+	suite.mockPubSub = &mesh.MockPubSub{}
+	suite.messages = make(chan interface{}, 10)
+	suite.peers = make(chan interface{}, 10)
+	suite.mockPubSub.On("Subscribe", "message:.*").Return(suite.messages, nil)
+	suite.mockPubSub.On("Subscribe", "peer:.*").Return(suite.peers, nil)
+	bootstrapMutation := mutation.PeerProtocolDiscovered{
+		PeerID:          "bootstrap",
+		ProtocolName:    "messaging",
+		ProtocolAddress: "bootstrap-address",
+		Pinned:          true,
 	}
-
-	time.Sleep(time.Second * 5)
-	suite.Run(t, dt)
+	suite.mockPubSub.On("Publish", bootstrapMutation, mutation.PeerProtocolDiscoveredTopic).Return(nil)
+	suite.dht, _ = NewDHT(suite.mockPubSub, "local-peer", "bootstrap-address")
 }
 
-func (suite *dhtTestSuite) TestFindSuccess() {
+func (suite *dhtTestSuite) TestFilterSuccess() {
 	ctx := context.Background()
-	id := "a5"
-	addresses, err := suite.node2.GetPeer(ctx, id)
-	suite.Nil(err)
-	suite.NotEmpty(addresses)
-}
-
-func (suite *dhtTestSuite) TestFindNodeLocalSuccess() {
-	ctx := context.Background()
-	id := "a1"
-
-	addresses, err := suite.node2.GetPeer(ctx, id)
-	suite.Nil(err)
-	suite.NotEmpty(addresses)
-}
-
-func (suite *dhtTestSuite) TestFindNodeTimeout() {
-	// swallow cancelation  function to make sure we test timeout
-	ctx, _ := context.WithTimeout(
-		context.Background(),
-		time.Second,
-	)
-
-	id := "does-not-exist"
-
-	addresses, err := suite.node2.GetPeer(ctx, id)
-	suite.Equal(ErrPeerNotFound, err)
-	suite.Empty(addresses)
-}
-
-func (suite *dhtTestSuite) TestFindNodeCancelation() {
-	// swallow cancelation  function to make sure we test timeout
-	ctx, cf := context.WithCancel(
-		context.Background(),
-	)
-
-	go func() {
-		time.Sleep(time.Second)
-		cf()
-	}()
-
-	id := "does-not-exist"
-
-	addresses, err := suite.node2.GetPeer(ctx, id)
-	suite.Equal(ErrPeerNotFound, err)
-	suite.Empty(addresses)
-}
-
-func (suite *dhtTestSuite) TestFindKeySuccess() {
-	key := "some-key"
-	value := "some-value"
-	err := suite.node1.Put(context.Background(), key, value)
-	suite.Nil(err)
-
-	res, err := suite.node5.Get(context.Background(), key)
-	resValue := ""
-	select {
-	case <-time.After(time.Second * 5):
-	case v := <-res:
-		resValue = v
+	key := "a"
+	value := "b"
+	labels := map[string]string{
+		"c": "d",
+		"e": "f",
 	}
+	payload := &messageGet{
+		OriginPeerID: "local-peer",
+		Key:          key,
+		Labels:       labels,
+	}
+	expMessage := mesh.Message{
+		Recipient: "bootstrap",
+		Sender:    "local-peer",
+		Payload:   nil,
+		Topic:     MessageTypeGet,
+		Codec:     "json",
+	}
+	suite.mockPubSub.
+		On("Publish", mock.AnythingOfType("mesh.Message"), "message:send").
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			// get the parts of the message that are variabls
+			reqPublishedMessage := args.Get(0).(mesh.Message)
+			expMessage.Nonce = reqPublishedMessage.Nonce
+			// get the parts of the payload that are variabls
+			reqPayload := &messageGet{}
+			json.Unmarshal(reqPublishedMessage.Payload, &reqPayload)
+			payload.QueryID = reqPayload.QueryID
+			pbs, _ := json.Marshal(payload)
+			expMessage.Payload = pbs
+			// check message
+			suite.Assert().Equal(expMessage, reqPublishedMessage)
+			// publish a PUT message with the expected outcome
+			retPayload := &messagePut{
+				OriginPeerID: "some-peer",
+				QueryID:      reqPayload.QueryID,
+				Key:          "a",
+				Value:        "b",
+				Labels:       labels,
+			}
+			rpbs, _ := json.Marshal(retPayload)
+			retPublishMessage := mesh.Message{
+				Recipient: "local-peer",
+				Sender:    "some-peer",
+				Payload:   rpbs,
+				Topic:     MessageTypePut,
+				Codec:     "json",
+			}
+			suite.messages <- retPublishMessage
+		})
+
+	res, err := suite.dht.Filter(ctx, key, labels)
+	time.Sleep(time.Second)
 	suite.Nil(err)
-	suite.Equal(value, resValue)
+	suite.NotEmpty(res)
+	retVal := <-res
+	suite.Equal(value, retVal.GetValue())
+}
+
+func (suite *dhtTestSuite) TestPutSuccess() {
+	ctx := context.Background()
+	key := "a"
+	value := "b"
+	labels := map[string]string{
+		"c": "d",
+		"e": "f",
+	}
+	payload := &messagePut{
+		OriginPeerID: "local-peer",
+		Key:          key,
+		Value:        value,
+		Labels:       labels,
+	}
+	pbs, _ := json.Marshal(payload)
+	expMessage := mesh.Message{
+		Recipient: "bootstrap",
+		Sender:    "local-peer",
+		Payload:   pbs,
+		Topic:     MessageTypePut,
+		Codec:     "json",
+	}
+	suite.mockPubSub.
+		On("Publish", mock.AnythingOfType("mesh.Message"), "message:send").
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			// get the parts of the message that are variabls
+			reqPublishedMessage := args.Get(0).(mesh.Message)
+			expMessage.Nonce = reqPublishedMessage.Nonce
+			suite.Assert().Equal(expMessage, reqPublishedMessage)
+		})
+
+	err := suite.dht.Put(ctx, key, value, labels)
+	suite.Nil(err)
+}
+
+func TestDHTTestSuite(t *testing.T) {
+	suite.Run(t, new(dhtTestSuite))
 }

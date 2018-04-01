@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"log"
 
 	nnet "github.com/nimona/go-nimona/net"
@@ -55,7 +54,6 @@ func newPeer(peerID string) (nnet.Net, error) {
 	ctx := context.Background()
 	crt, err := GenX509KeyPair()
 	if err != nil {
-		fmt.Println("Cert creation error", err)
 		return nil, err
 	}
 

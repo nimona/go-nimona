@@ -9,7 +9,7 @@ type MockTransport struct {
 }
 
 // Addresses provides a mock function with given fields:
-func (_m *MockTransport) Addresses() []string {
+func (_m *MockTransport) GetAddresses() []string {
 	ret := _m.Called()
 
 	var r0 []string

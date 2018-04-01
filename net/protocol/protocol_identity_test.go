@@ -59,6 +59,7 @@ func (suite *ProtocolIdentityTestSuite) TestHandleSuccess() {
 	err := identity.Handle(protocol.Handle(nil))(ctx, mockConn)
 	suite.Assert().Nil(err)
 	protocol.AssertCalled(suite.T(), "Handle", mock.Anything)
+	suite.Assert().False(negotiatorCalled)
 	suite.Assert().True(handlerCalled)
 }
 
@@ -93,6 +94,7 @@ func (suite *ProtocolIdentityTestSuite) TestHandleReadTokenFails() {
 	err := identity.Handle(protocol.Handle(nil))(ctx, mockConn)
 	suite.Assert().Equal(retErr, err)
 	protocol.AssertCalled(suite.T(), "Handle", mock.Anything)
+	suite.Assert().False(negotiatorCalled)
 	suite.Assert().False(handlerCalled)
 }
 
@@ -129,6 +131,7 @@ func (suite *ProtocolIdentityTestSuite) TestHandleWriteTokenFails() {
 	suite.Assert().Equal(retError, err)
 	protocol.AssertCalled(suite.T(), "Handle", mock.Anything)
 	suite.Assert().False(handlerCalled)
+	suite.Assert().False(negotiatorCalled)
 }
 
 func (suite *ProtocolIdentityTestSuite) TestNegotiateSuccess() {
@@ -163,6 +166,7 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateSuccess() {
 	suite.Assert().Nil(err)
 	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything)
 	suite.Assert().True(negotiatorCalled)
+	suite.Assert().False(handlerCalled)
 }
 
 func (suite *ProtocolIdentityTestSuite) TestNegotiateReadTokenFails() {
@@ -197,6 +201,7 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateReadTokenFails() {
 	err := identity.Negotiate(protocol.Negotiate(nil))(ctx, mockConn)
 	suite.Assert().Equal(retErr, err)
 	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything)
+	suite.Assert().False(negotiatorCalled)
 	suite.Assert().False(handlerCalled)
 }
 
@@ -231,6 +236,7 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateWriteTokenFails() {
 	err := identity.Negotiate(protocol.Negotiate(nil))(ctx, mockConn)
 	suite.Assert().Equal(retError, err)
 	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything)
+	suite.Assert().False(negotiatorCalled)
 	suite.Assert().False(handlerCalled)
 }
 
@@ -266,6 +272,7 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateCheckRemote() {
 	suite.Assert().Nil(err)
 	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything)
 	suite.Assert().True(negotiatorCalled)
+	suite.Assert().False(handlerCalled)
 }
 
 func (suite *ProtocolIdentityTestSuite) TestNegotiateUnexpectedRemote() {
@@ -299,6 +306,7 @@ func (suite *ProtocolIdentityTestSuite) TestNegotiateUnexpectedRemote() {
 	err := identity.Negotiate(protocol.Negotiate(nil))(ctx, mockConn)
 	suite.Assert().Equal(ErrUnexpectedRemote, err)
 	protocol.AssertCalled(suite.T(), "Negotiate", mock.Anything)
+	suite.Assert().False(handlerCalled)
 	suite.Assert().False(negotiatorCalled)
 }
 

@@ -95,7 +95,7 @@ func (t *Websocket) Listen(ctx context.Context, handler HandlerFunc) error {
 }
 
 // Addresses returns the address the transport is listening to
-func (t *Websocket) Addresses() []string {
+func (t *Websocket) GetAddresses() []string {
 	port := t.listener.Addr().(*net.TCPAddr).Port
 	// TODO log errors
 	addrs, _ := GetLocalAddresses(port)

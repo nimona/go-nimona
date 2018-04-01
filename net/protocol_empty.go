@@ -36,3 +36,7 @@ func (m *EmptyProtocol) Negotiate(fn NegotiatorFunc) NegotiatorFunc {
 		return m.Negotiator(ctx, c)
 	}
 }
+
+func (s *EmptyProtocol) GetAddresses() []string {
+	return []string{}
+}

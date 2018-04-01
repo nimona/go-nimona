@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 )
 
@@ -21,6 +22,7 @@ type Net interface {
 	AddTransport(transport Transport, protocols ...Protocol) error
 	AddProtocols(protocols ...Protocol) error
 	GetAddresses() []string
+	GetProtocols() map[string][]string
 }
 
 // New instance of net
@@ -64,7 +66,7 @@ func (f *nnet) AddTransport(transport Transport, protocols ...Protocol) error {
 	tr := &transportWithProtocols{
 		Transport:     transport,
 		Handler:       HandlerChain(hchain...),
-		BaseProtocols: []string{},
+		BaseProtocols: protocolNames,
 	}
 	f.transports = append(f.transports, tr)
 	return transport.Listen(f.context, tr.Handler)
@@ -92,7 +94,59 @@ func (f *nnet) GetAddresses() []string {
 	defer f.lock.Unlock()
 	addresses := []string{}
 	for _, tr := range f.transports {
-		addresses = append(addresses, tr.Transport.Addresses()...)
+		addresses = append(addresses, tr.Transport.GetAddresses()...)
 	}
 	return addresses
+}
+
+// GetAddresses returns a list of addresses for all the current transports
+func (f *nnet) GetProtocols() map[string][]string {
+	// TODO use different lock
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	protocols := map[string][]string{}
+	for _, tr := range f.transports {
+		// go through all tranports
+		for _, transportAddress := range tr.Transport.GetAddresses() {
+			// check if they have any protocols
+			if len(tr.BaseProtocols) == 0 {
+				continue
+			}
+			// gather addresses from all protocols
+			protocolAddresses := []string{}
+			for _, protocolName := range tr.BaseProtocols {
+				// add all protocol addresses
+				protocol := f.protocols[protocolName]
+				protocolAddresses = joinStringMatrix(protocolAddresses, protocol.GetAddresses())
+			}
+			// find the last part
+			for _, protocolAddress := range protocolAddresses {
+				parts := strings.Split(protocolAddress, "/")
+				lastPart := parts[len(parts)-1]
+				if _, ok := protocols[lastPart]; !ok {
+					protocols[lastPart] = []string{}
+				}
+				fullAddress := transportAddress + "/" + protocolAddress
+				protocols[lastPart] = append(protocols[lastPart], fullAddress)
+			}
+
+		}
+	}
+	return protocols
+}
+
+func joinStringMatrix(a, b []string) []string {
+	r := []string{}
+	if len(a) == 0 {
+		return b
+	}
+	if len(b) == 0 {
+		return a
+	}
+	for _, ia := range a {
+		for _, ib := range b {
+			r = append(r, strings.Join([]string{ia, ib}, "/"))
+		}
+	}
+	return r
 }
