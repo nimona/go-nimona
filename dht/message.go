@@ -2,9 +2,9 @@ package dht
 
 // Message types
 const (
-	MessageTypePing string = "messaging:dht:action:ping"
-	MessageTypePut         = "messaging:dht:action:put"
-	MessageTypeGet         = "messaging:dht:action:get"
+	MessageTypePing string = "dht:action:ping"
+	MessageTypePut         = "dht:action:put"
+	MessageTypeGet         = "dht:action:get"
 )
 
 type messageGet struct {

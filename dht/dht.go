@@ -40,7 +40,7 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 		}
 	}
 
-	messages, _ := ps.Subscribe("messaging:.*")
+	messages, _ := ps.Subscribe("message:.*")
 	go func() {
 		for omsg := range messages {
 			msg, ok := omsg.(mesh.Message)
@@ -177,28 +177,7 @@ func (nd *DHT) sendPutMessage(peerID, key, value string, labels map[string]strin
 }
 
 func (nd *DHT) Get(ctx context.Context, key string) (chan net.Record, error) {
-	logrus.Debug("Searching for key %s", key)
-
-	// create query
-	// TODO query needs the context
-	q := &query{
-		id:               uuid.New().String(),
-		dht:              nd,
-		key:              key,
-		labels:           map[string]string{},
-		contactedPeers:   sync.Map{},
-		results:          make(chan net.Record, 100),
-		incomingMessages: make(chan messagePut, 100),
-	}
-
-	// and store it
-	nd.queries.Store(q.id, q)
-
-	// run query
-	q.Run(ctx)
-
-	// return results channel
-	return q.results, nil
+	return nd.Filter(ctx, key, map[string]string{})
 }
 
 func (nd *DHT) Filter(ctx context.Context, key string, labels map[string]string) (chan net.Record, error) {
@@ -210,7 +189,7 @@ func (nd *DHT) Filter(ctx context.Context, key string, labels map[string]string)
 		id:               uuid.New().String(),
 		dht:              nd,
 		key:              key,
-		labels:           map[string]string{},
+		labels:           labels,
 		contactedPeers:   sync.Map{},
 		results:          make(chan net.Record, 100),
 		incomingMessages: make(chan messagePut, 100),
