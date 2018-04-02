@@ -77,6 +77,7 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 
 	go func() {
 		for msg := range m.incomingQueue {
+			m.logger.Info("messenger.IncomingLoop", zap.String("message", msg.String()))
 			if err := ms.Publish(msg, msg.Topic); err != nil {
 				m.logger.Warn("could not publish incoming message", zap.Error(err))
 			}
@@ -85,8 +86,9 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 
 	go func() {
 		for msg := range m.outgoingQueue {
-			m.logger.Debug("Attempting to write message", zap.String("peerID", msg.Recipient))
 			nctx := context.WithValue(ctx, net.RequestIDKey{}, msg.Nonce)
+			logger := m.logger.With(zap.String("req.id", msg.Nonce))
+			logger.Info("Attempting to write message", zap.String("peerID", msg.Recipient))
 			_, conn, err := m.mesh.Dial(nctx, msg.Recipient, messagingProtocolName)
 			if err != nil {
 				m.logger.Warn("could not dial to peer", zap.Error(err))

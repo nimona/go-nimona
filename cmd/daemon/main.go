@@ -30,7 +30,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	tcp := net.NewTransportTCPWithUPNP("0.0.0.0", port)
+	tcp := net.NewTransportTCP("0.0.0.0", port)
 
 	nn := net.New(ctx)
 	rt := protocol.NewRouter()
@@ -106,7 +106,7 @@ func main() {
 		Help: "put a value on the dht",
 	})
 
-	// handle put
+	// handle list
 	shell.AddCmd(&ishell.Cmd{
 		Name: "list",
 		Func: func(c *ishell.Context) {
@@ -118,6 +118,27 @@ func main() {
 				c.Println("* " + key)
 				for _, val := range vals {
 					c.Printf("  - %s (%#v)\n", val.GetValue(), val.GetLabels())
+				}
+			}
+		},
+		Help: "list all values stored in our local dht",
+	})
+
+	// handle peers
+	shell.AddCmd(&ishell.Cmd{
+		Name: "peers",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			ps, _ := rg.GetAllPeerInfo(ctx)
+			for _, peer := range ps {
+				c.Println("* " + peer.ID)
+				for name, addresses := range peer.Protocols {
+					c.Printf("  - %s\n", name)
+					for _, address := range addresses {
+						c.Printf("     - %s\n", address)
+					}
 				}
 			}
 		},

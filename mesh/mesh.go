@@ -31,20 +31,19 @@ func NewMesh(nnet net.Net, ps PubSub, registry Registry) (Mesh, error) {
 	}
 
 	go func() {
-		for {
-			localPeerID := registry.GetLocalPeerInfo().ID
-			for protocolName, protocols := range nnet.GetProtocols() {
-				for _, protocolAddress := range protocols {
-					msg := mutation.PeerProtocolDiscovered{
-						PeerID:          localPeerID,
-						ProtocolName:    protocolName,
-						ProtocolAddress: protocolAddress,
-						Pinned:          true,
-					}
-					ps.Publish(msg, mutation.PeerProtocolDiscoveredTopic)
+		// TODO(geoah) quick hack as sometimes on startup this wasn't triggered fast enough, need to debug why
+		time.Sleep(time.Second)
+		localPeerID := registry.GetLocalPeerInfo().ID
+		for protocolName, protocols := range nnet.GetProtocols() {
+			for _, protocolAddress := range protocols {
+				msg := mutation.PeerProtocolDiscovered{
+					PeerID:          localPeerID,
+					ProtocolName:    protocolName,
+					ProtocolAddress: protocolAddress,
+					Pinned:          true,
 				}
+				ps.Publish(msg, mutation.PeerProtocolDiscoveredTopic)
 			}
-			time.Sleep(time.Second * 30)
 		}
 	}()
 
@@ -95,4 +94,8 @@ func (m *mesh) GetLocalPeerInfo() PeerInfo {
 
 func (m *mesh) GetPeerInfo(ctx context.Context, peerID string) (PeerInfo, error) {
 	return m.registry.GetPeerInfo(ctx, peerID)
+}
+
+func (m *mesh) GetAllPeerInfo(ctx context.Context) ([]PeerInfo, error) {
+	return m.registry.GetAllPeerInfo(ctx)
 }
