@@ -32,20 +32,20 @@ func main() {
 	ctx := context.Background()
 	tcp := net.NewTransportTCP("0.0.0.0", port)
 
-	nn := net.New(ctx)
-	rt := protocol.NewRouter()
+	net := net.New(ctx)
+	rtr := protocol.NewRouter()
 
-	ps, _ := mesh.NewPubSub()
-	rg, _ := mesh.NewRegisty(peerID, ps)
-	ms, _ := mesh.NewMesh(nn, ps, rg)
-	mg, _ := mesh.NewMessenger(ms)
-	ds, _ := dht.NewDHT(ps, peerID, bs...)
+	psb, _ := mesh.NewPubSub()
+	reg, _ := mesh.NewRegisty(peerID, psb)
+	msh, _ := mesh.NewMesh(net, psb, reg)
+	msg, _ := mesh.NewMessenger(msh)
+	dht, _ := dht.NewDHT(psb, peerID, bs...)
 
-	nn.AddProtocols(mg)
+	net.AddProtocols(msg)
 
-	rt.AddRoute(mg)
+	rtr.AddRoute(msg)
 
-	nn.AddTransport(tcp, rt)
+	net.AddTransport(tcp, rtr)
 
 	if peerID == "bootstrap" {
 		// ds.Put(ctx, "a", "a", map[string]string{})
@@ -68,7 +68,7 @@ func main() {
 
 			key := c.Args[0]
 			ctx := context.Background()
-			rs, err := ds.Get(ctx, key)
+			rs, err := dht.Get(ctx, key)
 			if err != nil {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
@@ -98,7 +98,7 @@ func main() {
 			key := c.Args[0]
 			val := strings.Join(c.Args[1:], " ")
 			ctx := context.Background()
-			if err := ds.Put(ctx, key, val, map[string]string{}); err != nil {
+			if err := dht.Put(ctx, key, val, map[string]string{}); err != nil {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
@@ -113,7 +113,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := ds.GetLocalPairs()
+			ps, _ := dht.GetLocalPairs()
 			for key, vals := range ps {
 				c.Println("* " + key)
 				for _, val := range vals {
@@ -131,7 +131,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := rg.GetAllPeerInfo(ctx)
+			ps, _ := reg.GetAllPeerInfo(ctx)
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
 				for name, addresses := range peer.Protocols {
