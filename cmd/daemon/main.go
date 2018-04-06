@@ -35,11 +35,11 @@ func main() {
 	net := net.New(ctx)
 	rtr := protocol.NewRouter()
 
-	psb, _ := mesh.NewPubSub()
-	reg, _ := mesh.NewRegisty(peerID, psb)
-	msh, _ := mesh.NewMesh(net, psb, reg)
+	pbs, _ := mesh.NewPubSub()
+	reg, _ := mesh.NewRegisty(peerID, pbs)
+	msh, _ := mesh.NewMesh(net, pbs, reg)
 	msg, _ := mesh.NewMessenger(msh)
-	dht, _ := dht.NewDHT(psb, peerID, bs...)
+	dht, _ := dht.NewDHT(pbs, peerID, bs...)
 
 	net.AddProtocols(msg)
 

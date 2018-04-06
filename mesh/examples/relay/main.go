@@ -19,19 +19,22 @@ func main() {
 	}
 
 	bsp := []string{}
+	rls := []string{}
 	port := 0
 
 	if peerID == "bootstrap" {
 		port = 26801
 	} else {
-		bsp = append(bsp, "tcp:localhost:26801/router/messaging")
+		rls = append(rls, "tcp:localhost:26801/yamux/router/relay")
+		bsp = append(bsp, "tcp:localhost:26801/yamux/router/messaging")
 	}
 
 	ctx := context.Background()
 	tcp := net.NewTransportTCP("0.0.0.0", port)
 
 	net := net.New(ctx)
-	rtr := protocol.NewRouter()
+	rly := protocol.NewRelayProtocol(net, rls)
+	mux := protocol.NewYamux()
 
 	pbs, _ := mesh.NewPubSub()
 	reg, _ := mesh.NewRegisty(peerID, pbs)
@@ -40,10 +43,22 @@ func main() {
 	dht.NewDHT(pbs, peerID, bsp...)
 
 	net.AddProtocols(msg)
+	net.AddProtocols(rly)
+	net.AddProtocols(mux)
 
+	rtr := protocol.NewRouter()
 	rtr.AddRoute(msg)
+	rtr.AddRoute(rly)
 
-	net.AddTransport(tcp, rtr)
+	net.AddTransport(mux, rtr)
+	net.AddTransport(tcp, mux, rtr)
+
+	for protocol, protocolAddresses := range net.GetProtocols() {
+		fmt.Printf("%s:\n", protocol)
+		for _, protocolAddress := range protocolAddresses {
+			fmt.Printf("  - %s\n", protocolAddress)
+		}
+	}
 
 	messages, _ := pbs.Subscribe(".*")
 	for message := range messages {
