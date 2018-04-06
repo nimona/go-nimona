@@ -11,13 +11,15 @@ import (
 )
 
 type RelayProtocol struct {
-	connections map[string]nnet.Conn
-	net         nnet.Net
+	connections    map[string]nnet.Conn
+	net            nnet.Net
+	relayAddresses []string
 }
 
-func NewRelayProtocol(f nnet.Net) *RelayProtocol {
+func NewRelayProtocol(f nnet.Net, relayAddresses []string) *RelayProtocol {
 	return &RelayProtocol{
-		net: f,
+		net:            f,
+		relayAddresses: relayAddresses,
 	}
 }
 func (m *RelayProtocol) Name() string {
@@ -124,6 +126,7 @@ func (m *RelayProtocol) pipe(ctx context.Context,
 	go cp(b, a)
 	return <-done
 }
+
 func (s *RelayProtocol) GetAddresses() []string {
-	return []string{}
+	return s.relayAddresses
 }
