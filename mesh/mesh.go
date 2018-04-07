@@ -72,7 +72,7 @@ func (m *mesh) Dial(ctx context.Context, peerID, protocol string) (context.Conte
 		return nctx, ncon, nil
 	}
 
-	logger.Warn("mesh.Dial-failed")
+	logger.Info("mesh.Dial-failed")
 	return nil, nil, errors.New("all addresses failed to dial")
 }
 

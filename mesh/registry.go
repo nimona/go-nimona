@@ -73,7 +73,6 @@ type registry struct {
 	protocols sync.Map
 	localPeer PeerInfo
 	incoming  chan interface{}
-	// protocols []*peerInfoProtocol
 }
 
 func (reg *registry) GetLocalPeerInfo() PeerInfo {

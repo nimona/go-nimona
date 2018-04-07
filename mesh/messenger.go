@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"regexp"
 
 	"go.uber.org/zap"
 
@@ -28,10 +27,6 @@ type messenger struct {
 	incomingQueue chan Message
 	outgoingQueue chan Message
 
-	subscriptionTopicMatches map[string]*regexp.Regexp
-	subscriptions            map[string]map[chan interface{}]bool
-	channelSize              int
-
 	logger *zap.Logger
 }
 
@@ -39,13 +34,10 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 	ctx := context.Background()
 
 	m := &messenger{
-		mesh:                     ms,
-		incomingQueue:            make(chan Message, 100),
-		outgoingQueue:            make(chan Message, 100),
-		subscriptionTopicMatches: map[string]*regexp.Regexp{},
-		subscriptions:            map[string]map[chan interface{}]bool{},
-		channelSize:              100,
-		logger:                   net.Logger(ctx).Named("messenger"),
+		mesh:          ms,
+		incomingQueue: make(chan Message, 100),
+		outgoingQueue: make(chan Message, 100),
+		logger:        net.Logger(ctx).Named("messenger"),
 	}
 
 	messages, err := ms.Subscribe("message:.*")
