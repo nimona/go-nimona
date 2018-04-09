@@ -7,17 +7,17 @@ import (
 	zapcore "go.uber.org/zap/zapcore"
 )
 
-var baseLogger *zap.Logger
+var DefaultLogger *zap.Logger
 
 func init() {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	baseLogger, _ = config.Build()
+	DefaultLogger, _ = config.Build()
 }
 
 // Logger returns a zap logger with as much context as possible
 func Logger(ctx context.Context) *zap.Logger {
-	nl := baseLogger
+	nl := DefaultLogger
 	if ctx != nil {
 		if rid, ok := ctx.Value(RequestIDKey{}).(string); ok {
 			nl = nl.With(zap.String("req.id", rid))

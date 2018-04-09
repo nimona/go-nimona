@@ -40,7 +40,7 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		lgr.Debug("Attempting to dial", zap.String("transport", trType))
 		newCtx, newConn, err := tr.Transport.DialContext(ctx, addr)
 		if err != nil {
-			lgr.Warn("Could not dial", zap.String("transport", trType), zap.Error(err))
+			lgr.Info("Could not dial", zap.String("transport", trType), zap.Error(err))
 			continue
 		}
 

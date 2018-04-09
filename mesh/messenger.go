@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"regexp"
 
 	"go.uber.org/zap"
 
@@ -28,10 +27,6 @@ type messenger struct {
 	incomingQueue chan Message
 	outgoingQueue chan Message
 
-	subscriptionTopicMatches map[string]*regexp.Regexp
-	subscriptions            map[string]map[chan interface{}]bool
-	channelSize              int
-
 	logger *zap.Logger
 }
 
@@ -39,13 +34,10 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 	ctx := context.Background()
 
 	m := &messenger{
-		mesh:                     ms,
-		incomingQueue:            make(chan Message, 100),
-		outgoingQueue:            make(chan Message, 100),
-		subscriptionTopicMatches: map[string]*regexp.Regexp{},
-		subscriptions:            map[string]map[chan interface{}]bool{},
-		channelSize:              100,
-		logger:                   net.Logger(ctx).Named("messenger"),
+		mesh:          ms,
+		incomingQueue: make(chan Message, 100),
+		outgoingQueue: make(chan Message, 100),
+		logger:        net.Logger(ctx).Named("messenger"),
 	}
 
 	messages, err := ms.Subscribe("message:.*")
@@ -77,6 +69,7 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 
 	go func() {
 		for msg := range m.incomingQueue {
+			m.logger.Info("messenger.IncomingLoop", zap.String("message", msg.String()))
 			if err := ms.Publish(msg, msg.Topic); err != nil {
 				m.logger.Warn("could not publish incoming message", zap.Error(err))
 			}
@@ -85,8 +78,9 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 
 	go func() {
 		for msg := range m.outgoingQueue {
-			m.logger.Debug("Attempting to write message", zap.String("peerID", msg.Recipient))
 			nctx := context.WithValue(ctx, net.RequestIDKey{}, msg.Nonce)
+			logger := m.logger.With(zap.String("req.id", msg.Nonce))
+			logger.Info("Attempting to write message", zap.String("peerID", msg.Recipient))
 			_, conn, err := m.mesh.Dial(nctx, msg.Recipient, messagingProtocolName)
 			if err != nil {
 				m.logger.Warn("could not dial to peer", zap.Error(err))

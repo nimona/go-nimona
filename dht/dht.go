@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -16,22 +17,24 @@ import (
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	peerID  string
-	store   *Store
-	queries sync.Map
-	pubsub  mesh.PubSub
+	peerID         string
+	store          *Store
+	queries        sync.Map
+	pubsub         mesh.PubSub
+	refreshBuckets bool
 }
 
-func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, error) {
+func NewDHT(ps mesh.PubSub, peerID string, refreshBuckets bool, bootstrapAddresses ...string) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
-		peerID:  peerID,
-		store:   store,
-		pubsub:  ps,
-		queries: sync.Map{},
+		peerID:         peerID,
+		store:          store,
+		pubsub:         ps,
+		queries:        sync.Map{},
+		refreshBuckets: refreshBuckets,
 	}
 
 	for _, address := range bootstrapAddresses {
@@ -40,7 +43,7 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 		}
 	}
 
-	messages, _ := ps.Subscribe("message:.*")
+	messages, _ := ps.Subscribe("dht:.*")
 	go func() {
 		for omsg := range messages {
 			msg, ok := omsg.(mesh.Message)
@@ -78,39 +81,50 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 		}
 	}()
 
+	go func() {
+		for {
+			nd.refresh()
+			time.Sleep(time.Second * 15)
+		}
+	}()
+
 	return nd, nil
 }
 
-// func (nd *DHT) refresh() {
-// 	cps, err := nd.store.FindPeersNearestTo(nd.peerID, numPeersNear)
-// 	if err != nil {
-// 		logrus.WithError(err).Warnf("refresh could not get peers ids")
-// 		return
-// 	}
+func (nd *DHT) refresh() {
+	if !nd.refreshBuckets {
+		return
+	}
 
-// 	localPeerAddresses, err := nd.store.Get(nd.peerID)
-// 	if err != nil {
-// 		return
-// 	}
+	cps, err := nd.store.FindPeersNearestTo(nd.peerID, numPeersNear)
+	if err != nil {
+		logrus.WithError(err).Warnf("refresh could not get peers ids")
+		return
+	}
 
-// 	logrus.Debugf("Refreshing with %v", cps)
-// 	ctx := context.Background()
-// 	for _, cp := range cps {
-// 		for _, addr := range localPeerAddresses {
-// 			if err := nd.sendPutMessage(cp, nd.peerID, addr.GetValue(), addr.GetLabels()); err != nil {
-// 				fmt.Println("could not send own address on refresh", err)
-// 			}
-// 		}
-// 		res, err := nd.Get(ctx, cp)
-// 		if err != nil {
-// 			logrus.WithError(err).WithField("peerID", cps).Warnf("refresh could not get for peer")
-// 			continue
-// 		}
-// 		for range res {
-// 			// just swallow channel results
-// 		}
-// 	}
-// }
+	localPeerAddresses, err := nd.store.Get(nd.peerID)
+	if err != nil {
+		return
+	}
+
+	logrus.Debugf("Refreshing with %v", cps)
+	ctx := context.Background()
+	for _, cp := range cps {
+		for _, addr := range localPeerAddresses {
+			if err := nd.sendPutMessage(cp, nd.peerID, addr.GetValue(), addr.GetLabels()); err != nil {
+				fmt.Println("could not send own address on refresh", err)
+			}
+		}
+		res, err := nd.Get(ctx, cp)
+		if err != nil {
+			logrus.WithError(err).WithField("peerID", cps).Warnf("refresh could not get for peer")
+			continue
+		}
+		for range res {
+			// just swallow channel results
+		}
+	}
+}
 
 func (nd *DHT) handleMessage(msg mesh.Message) error {
 	logrus.Info("Got message", msg.String())

@@ -72,7 +72,7 @@ func newPeer(peerID string) (nnet.Net, error) {
 	// ws := nnet.NewTransportWebsocket("0.0.0.0", 0)
 
 	nn := nnet.New(ctx)
-	relay := prot.NewRelayProtocol(nn)
+	relay := prot.NewRelayProtocol(nn, []string{})
 	nn.AddTransport(yamux, router)
 	nn.AddTransport(tcp, tls, yamux, router)
 	// nn.AddTransport(ws, []nnet.Protocol{tls, yamux, router})
