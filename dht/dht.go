@@ -24,7 +24,7 @@ type DHT struct {
 	refreshBuckets bool
 }
 
-func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, error) {
+func NewDHT(ps mesh.PubSub, peerID string, refreshBuckets bool, bootstrapAddresses ...string) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -34,7 +34,7 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 		store:          store,
 		pubsub:         ps,
 		queries:        sync.Map{},
-		refreshBuckets: true,
+		refreshBuckets: refreshBuckets,
 	}
 
 	for _, address := range bootstrapAddresses {

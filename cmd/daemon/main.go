@@ -39,7 +39,7 @@ func main() {
 	reg, _ := mesh.NewRegisty(peerID, pbs)
 	msh, _ := mesh.NewMesh(net, pbs, reg)
 	msg, _ := mesh.NewMessenger(msh)
-	dht, _ := dht.NewDHT(pbs, peerID, bs...)
+	dht, _ := dht.NewDHT(pbs, peerID, true, bs...)
 
 	net.AddProtocols(msg)
 

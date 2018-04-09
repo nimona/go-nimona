@@ -36,8 +36,7 @@ func (suite *dhtTestSuite) SetupTest() {
 		Pinned:          true,
 	}
 	suite.mockPubSub.On("Publish", bootstrapMutation, mutation.PeerProtocolDiscoveredTopic).Return(nil)
-	suite.dht, _ = NewDHT(suite.mockPubSub, "local-peer", "bootstrap-address")
-	suite.dht.refreshBuckets = false
+	suite.dht, _ = NewDHT(suite.mockPubSub, "local-peer", false, "bootstrap-address")
 }
 
 func (suite *dhtTestSuite) TestFilterSuccess() {
