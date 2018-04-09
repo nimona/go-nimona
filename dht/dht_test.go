@@ -27,7 +27,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	suite.mockPubSub = &mesh.MockPubSub{}
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.mockPubSub.On("Subscribe", "message:.*").Return(suite.messages, nil)
+	suite.mockPubSub.On("Subscribe", "dht:.*").Return(suite.messages, nil)
 	suite.mockPubSub.On("Subscribe", "peer:.*").Return(suite.peers, nil)
 	bootstrapMutation := mutation.PeerProtocolDiscovered{
 		PeerID:          "bootstrap",
@@ -37,6 +37,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	}
 	suite.mockPubSub.On("Publish", bootstrapMutation, mutation.PeerProtocolDiscoveredTopic).Return(nil)
 	suite.dht, _ = NewDHT(suite.mockPubSub, "local-peer", "bootstrap-address")
+	suite.dht.refreshBuckets = false
 }
 
 func (suite *dhtTestSuite) TestFilterSuccess() {

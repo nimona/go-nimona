@@ -17,10 +17,11 @@ import (
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	peerID  string
-	store   *Store
-	queries sync.Map
-	pubsub  mesh.PubSub
+	peerID         string
+	store          *Store
+	queries        sync.Map
+	pubsub         mesh.PubSub
+	refreshBuckets bool
 }
 
 func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, error) {
@@ -29,10 +30,11 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 
 	// Create DHT node
 	nd := &DHT{
-		peerID:  peerID,
-		store:   store,
-		pubsub:  ps,
-		queries: sync.Map{},
+		peerID:         peerID,
+		store:          store,
+		pubsub:         ps,
+		queries:        sync.Map{},
+		refreshBuckets: true,
 	}
 
 	for _, address := range bootstrapAddresses {
@@ -90,6 +92,10 @@ func NewDHT(ps mesh.PubSub, peerID string, bootstrapAddresses ...string) (*DHT, 
 }
 
 func (nd *DHT) refresh() {
+	if !nd.refreshBuckets {
+		return
+	}
+
 	cps, err := nd.store.FindPeersNearestTo(nd.peerID, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Warnf("refresh could not get peers ids")
