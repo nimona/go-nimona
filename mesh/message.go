@@ -6,15 +6,6 @@ import (
 	"strings"
 )
 
-// type Message interface {
-// 	GetVersion() int
-// 	GetSender() string
-// 	GetRecipient() string
-// 	GetTopics() []string
-// 	GetPayload() []byte
-// 	GetChecksum() []byte
-// }
-
 // Message for our wire protocol
 type Message struct {
 	Version   int
@@ -30,14 +21,14 @@ type Message struct {
 
 func (m Message) String() string {
 	type prettyMessage struct {
-		Version   int         `json:"Version,omitempty"`
-		Sender    string      `json:"Sender,omitempty"`
-		Recipient string      `json:"Recipient,omitempty"`
-		Topic     string      `json:"Topic,omitempty"`
-		Codec     string      `json:"Codec,omitempty"`
-		Payload   interface{} `json:"Payload,omitempty"`
-		Checksum  string      `json:"Checksum,omitempty"`
-		Signature string      `json:"Signature,omitempty"`
+		Version   int         `json:"version,omitempty"`
+		Sender    string      `json:"sender,omitempty"`
+		Recipient string      `json:"recipient,omitempty"`
+		Topic     string      `json:"topic,omitempty"`
+		Codec     string      `json:"codec,omitempty"`
+		Payload   interface{} `json:"payload,omitempty"`
+		Checksum  string      `json:"checksum,omitempty"`
+		Signature string      `json:"signature,omitempty"`
 	}
 
 	pm := &prettyMessage{

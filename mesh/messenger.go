@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 
 	"go.uber.org/zap"
 
@@ -14,27 +16,21 @@ const (
 	messagingProtocolName = "messaging"
 )
 
-type Messenger interface {
-	net.Protocol
-	// Publish(msg Message) error
-	// Subscribe(topic string) (chan Message, error)
-	// Unsubscribe(chan Message) error
-}
-
 type messenger struct {
-	mesh Mesh
-
+	mesh          Mesh
+	streams       map[string]io.ReadWriteCloser
 	incomingQueue chan Message
 	outgoingQueue chan Message
 
 	logger *zap.Logger
 }
 
-func NewMessenger(ms Mesh) (Messenger, error) {
+func NewMessenger(ms Mesh) (net.Protocol, error) {
 	ctx := context.Background()
 
 	m := &messenger{
 		mesh:          ms,
+		streams:       map[string]io.ReadWriteCloser{},
 		incomingQueue: make(chan Message, 100),
 		outgoingQueue: make(chan Message, 100),
 		logger:        net.Logger(ctx).Named("messenger"),
@@ -80,25 +76,14 @@ func NewMessenger(ms Mesh) (Messenger, error) {
 		for msg := range m.outgoingQueue {
 			nctx := context.WithValue(ctx, net.RequestIDKey{}, msg.Nonce)
 			logger := m.logger.With(zap.String("req.id", msg.Nonce))
-			logger.Info("Attempting to write message", zap.String("peerID", msg.Recipient))
-			_, conn, err := m.mesh.Dial(nctx, msg.Recipient, messagingProtocolName)
-			if err != nil {
-				m.logger.Warn("could not dial to peer", zap.Error(err))
-				continue
+			for attempt := 0; attempt < 3; attempt++ {
+				if err := m.sendMessage(nctx, msg); err != nil {
+					logger.Warn("could not send message to peer", zap.Error(err))
+					continue
+				}
+				break
 			}
-
-			b, err := json.Marshal(msg)
-			if err != nil {
-				m.logger.Warn("could not marshal outgoing message", zap.Error(err))
-				continue
-			}
-
-			b = append(b, '\n')
-			if _, err := conn.Write(b); err != nil {
-				m.logger.Warn("could write outgoing message", zap.Error(err))
-			}
-
-			m.logger.Debug("Wrote message", zap.String("peerID", msg.Recipient))
+			logger.Info("sent message", zap.String("peerID", msg.Recipient))
 		}
 	}()
 
@@ -137,4 +122,45 @@ func (m *messenger) Name() string {
 
 func (m *messenger) GetAddresses() []string {
 	return []string{m.Name()}
+}
+
+func (m *messenger) sendMessage(ctx context.Context, msg Message) error {
+	peerID := msg.Recipient
+
+	logger := net.Logger(ctx).With(zap.String("peerID", peerID))
+
+	stream, ok := m.streams[peerID]
+	if !ok || stream == nil {
+		_, conn, err := m.mesh.Dial(ctx, peerID, messagingProtocolName)
+		if err != nil {
+			m.logger.Warn("could not dial to peer", zap.Error(err))
+			return err
+		}
+
+		logger.Debug("Created new stream")
+
+		m.streams[peerID] = conn
+		stream = conn
+		return nil
+	}
+
+	logger.Info("Attempting to write message")
+	b, err := json.Marshal(msg)
+	if err != nil {
+		m.logger.Warn("could not marshal outgoing message", zap.Error(err))
+		return err
+	}
+
+	b = append(b, '\n')
+	if n, err := stream.Write(b); err != nil {
+		m.logger.Warn("could not write outgoing message", zap.Error(err))
+		delete(m.streams, peerID)
+		stream.Close()
+		return err
+	} else {
+		fmt.Println("!!!!! n", n)
+	}
+
+	m.logger.Debug("Wrote message", zap.String("peerID", msg.Recipient))
+	return nil
 }

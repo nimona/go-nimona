@@ -27,17 +27,15 @@ func ReadToken(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 
-	return b[:n-1], nil
-
+	return b[:n], nil
 }
 
 // WriteToken to an io.Writer, appending a linebreak after it
 func WriteToken(w io.Writer, bs []byte) error {
 	bw := bufio.NewWriter(w)
-	vb := make([]byte, 16)
-	n := binary.PutUvarint(vb, uint64(len(bs)+1))
+	vb := make([]byte, 10)
+	n := binary.PutUvarint(vb, uint64(len(bs)))
 	wb := append(vb[:n], bs...)
-	wb = append(wb, '\n')
 	if _, err := w.Write(wb); err != nil {
 		return err
 	}
