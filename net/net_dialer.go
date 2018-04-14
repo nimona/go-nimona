@@ -11,6 +11,9 @@ import (
 var (
 	// ErrCouldNotDial when no transports are available or internal error occured
 	ErrCouldNotDial = errors.New("Could not dial")
+
+	// ErrNoSuchTransport when requested transport is not available on our net
+	ErrNoSuchTransport = errors.New("No such transport")
 )
 
 // RequestIDKey for context
@@ -82,5 +85,5 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		return retCtx, retConn, nil
 	}
 
-	return nil, nil, ErrCouldNotDial
+	return nil, nil, ErrNoSuchTransport
 }
