@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/net"
@@ -38,6 +39,7 @@ func main() {
 	msh, _ := mesh.NewMesh(net, pbs, reg)
 	msg, _ := mesh.NewMessenger(msh)
 	dht.NewDHT(pbs, peerID, true, bsp...)
+	blx.NewBlockExchange(pbs)
 
 	net.AddProtocols(msg)
 
