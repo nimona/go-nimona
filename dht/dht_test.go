@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"github.com/nimona/go-nimona/wire"
 	"context"
 	"encoding/json"
 	"testing"
@@ -17,6 +18,7 @@ type dhtTestSuite struct {
 	suite.Suite
 	mockMesh   *mesh.MockMesh
 	mockPubSub *mesh.MockPubSub
+	wire *wire.Wire
 	messages   chan interface{}
 	peers      chan interface{}
 	dht        *DHT
@@ -27,6 +29,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	suite.mockPubSub = &mesh.MockPubSub{}
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
+	suite.wire = wire.NewWire(suite.mockMesh, suite.Mock)
 	suite.mockPubSub.On("Subscribe", "dht:.*").Return(suite.messages, nil)
 	suite.mockPubSub.On("Subscribe", "peer:.*").Return(suite.peers, nil)
 	bootstrapMutation := mutation.PeerProtocolDiscovered{
@@ -56,7 +59,7 @@ func (suite *dhtTestSuite) TestFilterSuccess() {
 		Recipient: "bootstrap",
 		Sender:    "local-peer",
 		Payload:   nil,
-		Topic:     MessageTypeGet,
+		Topic:     PayloadTypeGet,
 		Codec:     "json",
 	}
 	suite.mockPubSub.
@@ -87,7 +90,7 @@ func (suite *dhtTestSuite) TestFilterSuccess() {
 				Recipient: "local-peer",
 				Sender:    "some-peer",
 				Payload:   rpbs,
-				Topic:     MessageTypePut,
+				Topic:     PayloadTypePut,
 				Codec:     "json",
 			}
 			suite.messages <- retPublishMessage
@@ -120,7 +123,7 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 		Recipient: "bootstrap",
 		Sender:    "local-peer",
 		Payload:   pbs,
-		Topic:     MessageTypePut,
+		Topic:     PayloadTypePut,
 		Codec:     "json",
 	}
 	suite.mockPubSub.
