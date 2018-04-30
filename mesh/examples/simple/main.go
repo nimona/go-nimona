@@ -10,6 +10,7 @@ import (
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/net/protocol"
+	"github.com/nimona/go-nimona/wire"
 )
 
 func main() {
@@ -18,13 +19,13 @@ func main() {
 		log.Fatal("Missing PEER_ID")
 	}
 
-	bsp := []string{}
+	bs := []string{}
 	port := 0
 
 	if peerID == "bootstrap" {
 		port = 26801
 	} else {
-		bsp = append(bsp, "tcp:localhost:26801/router/messaging")
+		bs = append(bs, "tcp:localhost:26801/router/wire")
 	}
 
 	ctx := context.Background()
@@ -36,12 +37,12 @@ func main() {
 	pbs, _ := mesh.NewPubSub()
 	reg, _ := mesh.NewRegisty(peerID, pbs)
 	msh, _ := mesh.NewMesh(net, pbs, reg)
-	msg, _ := mesh.NewMessenger(msh)
-	dht.NewDHT(pbs, peerID, true, bsp...)
+	wre, _ := wire.NewWire(msh, reg)
+	dht.NewDHT(wre, reg, peerID, true, bs...)
 
-	net.AddProtocols(msg)
+	net.AddProtocols(wre)
 
-	rtr.AddRoute(msg)
+	rtr.AddRoute(wre)
 
 	net.AddTransport(tcp, rtr)
 
