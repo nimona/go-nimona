@@ -10,6 +10,7 @@ import (
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/net/protocol"
+	"github.com/nimona/go-nimona/wire"
 
 	ishell "gopkg.in/abiosoft/ishell.v2"
 )
@@ -32,7 +33,7 @@ func main() {
 	if peerID == "bootstrap" {
 		port = 26801
 	} else {
-		bs = append(bs, "tcp:localhost:26801/router/messaging")
+		bs = append(bs, "tcp:localhost:26801/router/wire")
 	}
 
 	ctx := context.Background()
@@ -44,12 +45,12 @@ func main() {
 	pbs, _ := mesh.NewPubSub()
 	reg, _ := mesh.NewRegisty(peerID, pbs)
 	msh, _ := mesh.NewMesh(net, pbs, reg)
-	msg, _ := mesh.NewMessenger(msh)
-	dht, _ := dht.NewDHT(pbs, peerID, true, bs...)
+	wre, _ := wire.NewWire(msh, reg)
+	dht, _ := dht.NewDHT(wre, reg, peerID, true, bs...)
 
-	net.AddProtocols(msg)
+	net.AddProtocols(wre)
 
-	rtr.AddRoute(msg)
+	rtr.AddRoute(wre)
 
 	net.AddTransport(tcp, rtr)
 
@@ -79,12 +80,7 @@ func main() {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
-			c.ProgressBar().Indeterminate(true)
-			c.ProgressBar().Start()
-			for rv := range rs {
-				c.Println("  - " + rv.GetValue())
-			}
-			c.ProgressBar().Stop()
+			c.Printf(" - %s", rs)
 		},
 		Help: "get a value from the dht",
 	})
@@ -112,22 +108,37 @@ func main() {
 		Help: "put a value on the dht",
 	})
 
-	// handle list
+	// handle providers
 	shell.AddCmd(&ishell.Cmd{
-		Name: "list",
+		Name: "providers",
 		Func: func(c *ishell.Context) {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := dht.GetLocalPairs()
+			ps, _ := dht.GetAllProviders()
 			for key, vals := range ps {
 				c.Println("* " + key)
 				for _, val := range vals {
-					c.Printf("  - %s (%#v)\n", val.GetValue(), val.GetLabels())
+					c.Printf("  - %s\n", val)
 				}
 			}
 		},
-		Help: "list all values stored in our local dht",
+		Help: "list all providers stored in our local dht",
+	})
+
+	// handle values
+	shell.AddCmd(&ishell.Cmd{
+		Name: "values",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			ps, _ := dht.GetAllValues()
+			for key, val := range ps {
+				c.Printf("* %s: %s\n", key, val)
+			}
+		},
+		Help: "list all providers stored in our local dht",
 	})
 
 	// handle peers
@@ -137,7 +148,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := reg.GetAllPeerInfo(ctx)
+			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
 				for name, addresses := range peer.Protocols {
