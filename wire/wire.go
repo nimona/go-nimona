@@ -25,7 +25,13 @@ const (
 
 var messagingProtocolVersionCanon = semver.New(messagingProtocolVersion)
 
-type Wire struct {
+type Wire interface {
+	net.Protocol
+	HandleExtensionEvents(extension string, h EventHandler) error
+	Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error
+}
+
+type wire struct {
 	mesh     mesh.Mesh
 	registry mesh.Registry
 	streams  map[string]io.ReadWriteCloser
@@ -33,21 +39,21 @@ type Wire struct {
 	logger   *zap.Logger
 }
 
-func NewWire(ms mesh.Mesh, reg mesh.Registry) (*Wire, error) {
+func NewWire(ms mesh.Mesh, reg mesh.Registry) (Wire, error) {
 	ctx := context.Background()
 
-	m := &Wire{
+	m := &wire{
 		mesh:     ms,
 		registry: reg,
 		streams:  map[string]io.ReadWriteCloser{},
 		handlers: map[string]EventHandler{},
-		logger:   net.Logger(ctx).Named("Wire"),
+		logger:   net.Logger(ctx).Named("wire"),
 	}
 
 	return m, nil
 }
 
-func (m *Wire) HandleExtensionEvents(extension string, h EventHandler) error {
+func (m *wire) HandleExtensionEvents(extension string, h EventHandler) error {
 	if _, ok := m.handlers[extension]; ok {
 		return errors.New("There already is a handler registered for this extension")
 	}
@@ -56,7 +62,7 @@ func (m *Wire) HandleExtensionEvents(extension string, h EventHandler) error {
 }
 
 // Negotiate will be called after all the other protocol have been processed
-func (m *Wire) Negotiate(fn net.NegotiatorFunc) net.NegotiatorFunc {
+func (m *wire) Negotiate(fn net.NegotiatorFunc) net.NegotiatorFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c net.Conn) error {
 		return fn(ctx, c)
@@ -64,7 +70,7 @@ func (m *Wire) Negotiate(fn net.NegotiatorFunc) net.NegotiatorFunc {
 }
 
 // Handle adds the base protocols for transports
-func (m *Wire) Handle(fn net.HandlerFunc) net.HandlerFunc {
+func (m *wire) Handle(fn net.HandlerFunc) net.HandlerFunc {
 	// one time scope setup area for middleware
 	return func(ctx context.Context, c net.Conn) error {
 		scanner := bufio.NewScanner(c)
@@ -76,7 +82,7 @@ func (m *Wire) Handle(fn net.HandlerFunc) net.HandlerFunc {
 	}
 }
 
-func (m *Wire) Process(ctx context.Context, bs []byte) error {
+func (m *wire) Process(ctx context.Context, bs []byte) error {
 	msg := &Message{}
 	if err := json.Unmarshal(bs, &msg); err != nil {
 		return err
@@ -114,7 +120,7 @@ func (m *Wire) Process(ctx context.Context, bs []byte) error {
 	return nil
 }
 
-func (m *Wire) Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error {
+func (m *wire) Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error {
 	if len(to) == 0 {
 		return nil
 	}
@@ -145,15 +151,15 @@ func (m *Wire) Send(ctx context.Context, extention, payloadType string, payload 
 	return nil
 }
 
-func (m *Wire) Name() string {
+func (m *wire) Name() string {
 	return messagingProtocolName
 }
 
-func (m *Wire) GetAddresses() []string {
+func (m *wire) GetAddresses() []string {
 	return []string{m.Name()}
 }
 
-func (m *Wire) sendMessage(ctx context.Context, msg *Message) error {
+func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
 	logger := m.logger.With(zap.String("peerID", msg.To))
 	stream, ok := m.streams[msg.To]
 	if !ok || stream == nil {

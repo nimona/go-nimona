@@ -21,13 +21,13 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	wire           *wire.Wire
+	wire           wire.Wire
 	registry       mesh.Registry
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(wr *wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, bootstrapAddresses ...string) (*DHT, error) {
+func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, bootstrapAddresses ...string) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -259,7 +259,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]string, error) {
 	return rks, nil
 }
 
-func (nd *DHT) Put(ctx context.Context, key, value string, labels map[string]string) error {
+func (nd *DHT) Put(ctx context.Context, key, value string) error {
 	if err := nd.store.PutValue(key, value); err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (nd *DHT) Put(ctx context.Context, key, value string, labels map[string]str
 		ClosestPeers: closestPeers,
 	}
 
-	return nd.wire.Send(ctx, wireExtention, PayloadTypePutPeerInfo, resp, closestPeers)
+	return nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, closestPeers)
 }
 
 func (nd *DHT) Get(ctx context.Context, key string) (string, error) {
@@ -285,6 +285,150 @@ func (nd *DHT) Get(ctx context.Context, key string) (string, error) {
 	return nd.store.GetValue(key)
 }
 
+// func (nd *DHT) getHandler(msg *messageGet) {
+// 	// origin peer is asking for a value
+// 	logger := logrus.
+// 		WithField("origin.id", msg.OriginPeerID).
+// 		WithField("key", msg.Key).
+// 		WithField("query", msg.QueryID)
+// 	logger.Debugf("Origin is asking for key")
+
+// 	// check if we have the value of the key
+// 	pairs, err := nd.store.Get(msg.Key)
+// 	if err != nil {
+// 		logger.Error("Failed to find nodes near")
+// 		return
+// 	}
+
+// 	// send them if we do
+// 	if len(pairs) > 0 {
+// 		for _, pair := range pairs {
+// 			msgPut := &messagePut{
+// 				QueryID:      msg.QueryID,
+// 				OriginPeerID: msg.OriginPeerID,
+// 				Key:          msg.Key,
+// 				Value:        pair.Value,
+// 				Labels:       pair.Labels,
+// 			}
+// 			// send response
+
+// 			if err := nd.wire.Send(
+// 				context.Background(),
+// 				"dht",
+// 				PayloadTypePut,
+// 				msgPut,
+// 				[]string{msg.OriginPeerID},
+// 			); err != nil {
+// 				logger.WithError(err).Warnf("getHandler could not send msg")
+// 			}
+// 		}
+// 		logger.Debugf("getHandler told origin about the values we knew")
+// 	} else {
+// 		logger.Debugf("getHandler does not know about this key")
+// 	}
+
+// 	// find peers nearest peers that might have it
+// 	cps, err := nd.store.FindPeersNearestTo(msg.Key, numPeersNear)
+// 	if err != nil {
+// 		logger.WithError(err).Error("getHandler could not find nearest peers")
+// 		return
+// 	}
+
+// 	logger.WithField("cps", cps).Debugf("Sending nearest peers")
+
+// 	// give up if there are no peers
+// 	if len(cps) == 0 {
+// 		logger.Debugf("getHandler does not know any near peers")
+// 		return
+// 	}
+
+// 	// send messages with closes peers
+// 	for _, cp := range cps {
+// 		// skip us and original peer
+// 		if cp == msg.OriginPeerID {
+// 			logger.Debugf("getHandler skipping origin")
+// 			continue
+// 		}
+// 		if cp == nd.peerID {
+// 			logger.Debugf("getHandler skipping local")
+// 			continue
+// 		}
+// 		// get neighbor addresses
+// 		addrs, err := nd.store.Get(cp)
+// 		if err != nil {
+// 			logger.WithError(err).Warnf("getHandler could not get addrs")
+// 			continue
+// 		}
+// 		// create a response
+// 		for _, addr := range addrs {
+// 			msgPut := &messagePut{
+// 				QueryID:      msg.QueryID,
+// 				OriginPeerID: msg.OriginPeerID,
+// 				Key:          cp,
+// 				Value:        addr.Value,
+// 				Labels: map[string]string{
+// 					"protocol": "messaging",
+// 				},
+// 			}
+// 			// send response
+// 			if err := nd.wire.Send(
+// 				context.Background(),
+// 				"dht",
+// 				PayloadTypePut,
+// 				msgPut,
+// 				[]string{msg.OriginPeerID},
+// 			); err != nil {
+// 				logger.WithError(err).Warnf("getHandler could not send msg")
+// 			}
+// 		}
+// 	}
+// }
+
+// func (nd *DHT) putHandler(msg *messagePut) {
+// 	// A peer we asked is informing us of a peer
+// 	logger := logrus.
+// 		WithField("key", msg.Key).
+// 		WithField("query", msg.QueryID).
+// 		WithField("origin", msg.OriginPeerID)
+// 	logger.Debugf("Got response")
+
+// 	// check if this still a valid query
+// 	if q, ok := nd.queries.Load(msg.QueryID); ok {
+// 		q.(*query).incomingMessages <- *msg
+// 	}
+
+// 	// TODO(geoah) lazy
+// 	// add values to our store
+// 	if msg.Labels["protocol"] != "" {
+// 		nd.putPeerAddress(msg.Key, msg.Labels["protocol"], msg.Value, false)
+// 	} else {
+// 		nd.store.Put(msg.Key, msg.Value, msg.Labels, false)
+// 	}
+// }
+
+// func (nd *DHT) putPeerAddress(peerID string, protocolName, protocolAddress string, pinned bool) error {
+// 	if peerID == nd.peerID {
+// 		return nil
+// 	}
+
+// 	labels := map[string]string{
+// 		"protocol": protocolName,
+// 	}
+
+// 	logrus.Debugf("Adding peer to network id=%s protocol=%s address=%v", peerID, protocolName, protocolAddress)
+// 	if err := nd.store.Put(peerID, protocolAddress, labels, true); err != nil {
+// 		return err
+// 	}
+
+// 	// nd.pubsub.Publish(mutation.PeerProtocolDiscovered{
+// 	// 	PeerID:          peerID,
+// 	// 	ProtocolName:    protocolName,
+// 	// 	ProtocolAddress: protocolAddress,
+// 	// 	Pinned:          pinned,
+// 	// }, mutation.PeerProtocolDiscoveredTopic)
+
+// 	return nil
+// }
 
 func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 	return nd.store.GetAllProviders()
