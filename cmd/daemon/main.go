@@ -94,7 +94,7 @@ func main() {
 			key := c.Args[0]
 			val := strings.Join(c.Args[1:], " ")
 			ctx := context.Background()
-			if err := dht.Put(ctx, key, val, map[string]string{}); err != nil {
+			if err := dht.Put(ctx, key, val); err != nil {
 				c.Printf("Could not get %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
