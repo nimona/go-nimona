@@ -12,7 +12,7 @@
             "remotePath": "",
             "port": 2345,
             "host": "127.0.0.1",
-            "program": "${workspaceRoot}/mesh/examples/simple/main.go",
+            "program": "${workspaceRoot}/cmd/daemon/main.go",
             "env": {
                 "PEER_ID": "bootstrap",
             },
