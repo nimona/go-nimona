@@ -60,33 +60,9 @@ func main() {
 	shell := ishell.New()
 	shell.Printf("Nimona DHT (%s)\n", version)
 
-	// handle get
-	shell.AddCmd(&ishell.Cmd{
-		Name: "get",
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) == 0 {
-				c.Println("Missing key")
-				return
-			}
-
-			key := c.Args[0]
-			ctx := context.Background()
-			rs, err := dht.Get(ctx, key)
-			if err != nil {
-				c.Printf("Could not get %s\n", key)
-				c.Printf("Error: %s\n", err)
-			}
-			c.Printf(" - %s", rs)
-		},
-		Help: "get a value from the dht",
-	})
-
-	// handle put
-	shell.AddCmd(&ishell.Cmd{
-		Name: "put",
+	putValue := &ishell.Cmd{
+		Name:    "values",
+		Aliases: []string{"value"},
 		Func: func(c *ishell.Context) {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
@@ -99,17 +75,89 @@ func main() {
 			key := c.Args[0]
 			val := strings.Join(c.Args[1:], " ")
 			ctx := context.Background()
-			if err := dht.Put(ctx, key, val); err != nil {
-				c.Printf("Could not get %s\n", key)
+			if err := dht.PutValue(ctx, key, val); err != nil {
+				c.Printf("Could not put key %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
 		},
 		Help: "put a value on the dht",
-	})
+	}
 
-	// handle providers
-	shell.AddCmd(&ishell.Cmd{
-		Name: "providers",
+	putProvider := &ishell.Cmd{
+		Name:    "providers",
+		Aliases: []string{"provider"},
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 1 {
+				c.Println("Missing providing key")
+				return
+			}
+
+			key := c.Args[0]
+			ctx := context.Background()
+			if err := dht.PutProviders(ctx, key); err != nil {
+				c.Printf("Could not put key %s\n", key)
+				c.Printf("Error: %s\n", err)
+			}
+		},
+		Help: "announce a provided key on the dht",
+	}
+
+	getValue := &ishell.Cmd{
+		Name:    "values",
+		Aliases: []string{"value"},
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) == 0 {
+				c.Println("Missing key")
+				return
+			}
+
+			key := c.Args[0]
+			ctx := context.Background()
+			rs, err := dht.GetValue(ctx, key)
+			if err != nil {
+				c.Printf("Could not get %s\n", key)
+				c.Printf("Error: %s\n", err)
+			}
+			if rs != "" {
+				c.Printf(" - %s\n", rs)
+			}
+		},
+		Help: "get a value from the dht",
+	}
+
+	getProvider := &ishell.Cmd{
+		Name:    "providers",
+		Aliases: []string{"provider"},
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) == 0 {
+				c.Println("Missing key")
+				return
+			}
+
+			key := c.Args[0]
+			ctx := context.Background()
+			rs, err := dht.GetValue(ctx, key)
+			if err != nil {
+				c.Printf("Could not get providers for key %s\n", key)
+				c.Printf("Error: %s\n", err)
+			}
+			c.Printf(" - %s", rs)
+		},
+		Help: "get peers providing a value from the dht",
+	}
+
+	listProviders := &ishell.Cmd{
+		Name:    "providers",
+		Aliases: []string{"provider"},
 		Func: func(c *ishell.Context) {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
@@ -123,11 +171,11 @@ func main() {
 			}
 		},
 		Help: "list all providers stored in our local dht",
-	})
+	}
 
-	// handle values
-	shell.AddCmd(&ishell.Cmd{
-		Name: "values",
+	listValues := &ishell.Cmd{
+		Name:    "values",
+		Aliases: []string{"value"},
 		Func: func(c *ishell.Context) {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
@@ -138,11 +186,11 @@ func main() {
 			}
 		},
 		Help: "list all providers stored in our local dht",
-	})
+	}
 
-	// handle peers
-	shell.AddCmd(&ishell.Cmd{
-		Name: "peers",
+	listPeers := &ishell.Cmd{
+		Name:    "peers",
+		Aliases: []string{"peer"},
 		Func: func(c *ishell.Context) {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
@@ -159,7 +207,39 @@ func main() {
 			}
 		},
 		Help: "list all values stored in our local dht",
-	})
+	}
+
+	get := &ishell.Cmd{
+		Name: "get",
+		Help: "get resource",
+	}
+
+	get.AddCmd(getValue)
+	get.AddCmd(getProvider)
+	// get.AddCmd(getPeer)
+
+	put := &ishell.Cmd{
+		Name: "put",
+		Help: "put resource",
+	}
+
+	put.AddCmd(putValue)
+	put.AddCmd(putProvider)
+	// put.AddCmd(putPeer)
+
+	list := &ishell.Cmd{
+		Name:    "list",
+		Aliases: []string{"l", "ls"},
+		Help:    "list cached resources",
+	}
+
+	list.AddCmd(listValues)
+	list.AddCmd(listProviders)
+	list.AddCmd(listPeers)
+
+	shell.AddCmd(get)
+	shell.AddCmd(put)
+	shell.AddCmd(list)
 
 	// when started with "exit" as first argument, assume non-interactive execution
 	if len(os.Args) > 1 && os.Args[1] == "exit" {
