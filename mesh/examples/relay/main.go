@@ -59,9 +59,4 @@ func main() {
 			fmt.Printf("  - %s\n", protocolAddress)
 		}
 	}
-
-	messages, _ := pbs.Subscribe(".*")
-	for message := range messages {
-		fmt.Printf("> Got new message %#v\n", message)
-	}
 }
