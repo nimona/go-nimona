@@ -52,35 +52,42 @@ func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, 
 
 	wr.HandleExtensionEvents("dht", nd.handleMessage)
 
-	go func() {
-		time.Sleep(time.Second)
-		for {
-			nd.refresh()
-			time.Sleep(time.Second * 15)
-		}
-	}()
-
+	go nd.refresh()
 	return nd, nil
 }
 
 func (nd *DHT) refresh() {
-	peerInfo := nd.registry.GetLocalPeerInfo()
-	cps, err := nd.FindPeersClosestTo(peerInfo.ID, closestPeersToReturn)
-	if err != nil {
-		logrus.WithError(err).Warnf("refresh could not get peers ids")
-		return
+	// TODO our init process is a bit messed up and registry doesn't know
+	// about the peer's protocols instantly
+	for len(nd.registry.GetLocalPeerInfo().Protocols) == 0 {
+		time.Sleep(time.Millisecond * 250)
 	}
+	for {
+		peerInfo := nd.registry.GetLocalPeerInfo()
+		cps, err := nd.FindPeersClosestTo(peerInfo.ID, closestPeersToReturn)
+		if err != nil {
+			logrus.WithError(err).Warnf("refresh could not get peers ids")
+			return
+		}
 
-	resp := messagePutPeerInfo{
-		PeerID:   peerInfo.ID,
-		PeerInfo: *peerInfo,
+		resp := messageGetPeerInfo{
+			SenderPeerInfo: *peerInfo,
+			PeerID:         peerInfo.ID,
+		}
+		ctx := context.Background()
+		nd.wire.Send(ctx, wireExtention, PayloadTypeGetPeerInfo, resp, cps)
+		time.Sleep(time.Second * 15)
 	}
-	ctx := context.Background()
-	nd.wire.Send(ctx, wireExtention, PayloadTypePutPeerInfo, resp, cps)
 }
 
 func (nd *DHT) handleMessage(message *wire.Message) error {
-	logrus.Info("Got message", message.String())
+	// logrus.Info("Got message", message.String())
+
+	senderPeerInfo := &messageSenderPeerInfo{}
+	if err := message.DecodePayload(senderPeerInfo); err == nil {
+		nd.registry.PutPeerInfo(&senderPeerInfo.SenderPeerInfo)
+	}
+
 	switch message.PayloadType {
 	case PayloadTypeGetPeerInfo:
 		nd.handleGetPeerInfo(message)
@@ -114,10 +121,11 @@ func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	resp := messagePutPeerInfo{
-		RequestID:    payload.RequestID,
-		PeerID:       payload.PeerID,
-		PeerInfo:     *peerInfo,
-		ClosestPeers: closestPeers,
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		RequestID:      payload.RequestID,
+		PeerID:         payload.PeerID,
+		PeerInfo:       *peerInfo,
+		ClosestPeers:   closestPeers,
 	}
 
 	ctx := context.Background()
@@ -147,10 +155,11 @@ func (nd *DHT) handleGetProviders(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutProviders{
-		RequestID:    payload.RequestID,
-		Key:          payload.Key,
-		PeerIDs:      providers,
-		ClosestPeers: closestPeers,
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		RequestID:      payload.RequestID,
+		Key:            payload.Key,
+		PeerIDs:        providers,
+		ClosestPeers:   closestPeers,
 	}
 
 	ctx := context.Background()
@@ -179,10 +188,11 @@ func (nd *DHT) handleGetValue(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutValue{
-		RequestID:    payload.RequestID,
-		Key:          payload.Key,
-		Value:        value,
-		ClosestPeers: closestPeers,
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		RequestID:      payload.RequestID,
+		Key:            payload.Key,
+		Value:          value,
+		ClosestPeers:   closestPeers,
 	}
 
 	ctx := context.Background()
@@ -259,30 +269,60 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]string, error) {
 	return rks, nil
 }
 
-func (nd *DHT) Put(ctx context.Context, key, value string) error {
+func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 	if err := nd.store.PutValue(key, value); err != nil {
 		return err
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	resp := messagePutValue{
-		Key:          key,
-		Value:        value,
-		ClosestPeers: closestPeers,
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		Key:            key,
+		Value:          value,
 	}
 
 	return nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, closestPeers)
 }
 
-func (nd *DHT) Get(ctx context.Context, key string) (string, error) {
+func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	req := messageGetValue{
-		RequestID: mesh.RandStringBytesMaskImprSrc(8),
-		Key:       key,
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		RequestID:      mesh.RandStringBytesMaskImprSrc(8),
+		Key:            key,
 	}
 
 	nd.wire.Send(ctx, wireExtention, PayloadTypeGetValue, req, closestPeers)
 	return nd.store.GetValue(key)
+}
+
+// TODO Find a better name for this
+func (nd *DHT) PutProviders(ctx context.Context, key string) error {
+	localPeerID := nd.registry.GetLocalPeerInfo().ID
+	if err := nd.store.PutProvider(key, localPeerID); err != nil {
+		return err
+	}
+
+	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
+	resp := messagePutProviders{
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		Key:            key,
+		PeerIDs:        []string{localPeerID},
+	}
+
+	return nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, closestPeers)
+}
+
+func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
+	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
+	req := messageGetProviders{
+		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		RequestID:      mesh.RandStringBytesMaskImprSrc(8),
+		Key:            key,
+	}
+
+	nd.wire.Send(ctx, wireExtention, PayloadTypeGetProviders, req, closestPeers)
+	return nd.store.GetProviders(key)
 }
 
 // func (nd *DHT) getHandler(msg *messageGet) {

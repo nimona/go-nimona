@@ -48,6 +48,10 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 		return ErrCannotPutLocalPeerInfo
 	}
 
+	if peerInfo.ID == "" || len(peerInfo.Protocols) == 0 {
+		return nil
+	}
+
 	reg.peers[peerInfo.ID] = peerInfo
 	return nil
 }

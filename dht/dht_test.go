@@ -37,17 +37,20 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 	key := "a"
 	value := "b"
 	payload := messagePutValue{
-		Key:          "a",
-		Value:        "b",
-		ClosestPeers: []string{"bootstrap"},
+		SenderPeerInfo: mesh.PeerInfo{
+			ID:        "local-peer",
+			Protocols: map[string][]string{},
+		},
+		Key:   "a",
+		Value: "b",
 	}
 	to := []string{"bootstrap"}
 	suite.wire.On("Send", mock.Anything, "dht", "put-value", payload, to).Return(nil)
-	err := suite.dht.Put(ctx, key, value)
+	err := suite.dht.PutValue(ctx, key, value)
 	suite.NoError(err)
 
 	suite.wire.On("Send", mock.Anything, "dht", "get-value", mock.Anything, to).Return(nil)
-	retValue, err := suite.dht.Get(ctx, key)
+	retValue, err := suite.dht.GetValue(ctx, key)
 	suite.NoError(err)
 	suite.Equal(value, retValue)
 }
