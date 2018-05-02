@@ -1,4 +1,4 @@
-package mesh
+package pubsub
 
 import (
 	"regexp"

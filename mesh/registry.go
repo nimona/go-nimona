@@ -26,7 +26,7 @@ type Registry interface {
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
-func NewRegisty(peerID string, ps PubSub) (Registry, error) {
+func NewRegisty(peerID string) (Registry, error) {
 	reg := &registry{
 		localPeer: &PeerInfo{
 			ID:        peerID,

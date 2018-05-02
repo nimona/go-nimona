@@ -14,21 +14,19 @@ import (
 
 type dhtTestSuite struct {
 	suite.Suite
-	mockMesh   *mesh.MockMesh
-	mockPubSub *mesh.MockPubSub
-	registry   mesh.Registry
-	wire       *wire.MockWire
-	messages   chan interface{}
-	peers      chan interface{}
-	dht        *DHT
+	mockMesh *mesh.MockMesh
+	registry mesh.Registry
+	wire     *wire.MockWire
+	messages chan interface{}
+	peers    chan interface{}
+	dht      *DHT
 }
 
 func (suite *dhtTestSuite) SetupTest() {
 	suite.mockMesh = &mesh.MockMesh{}
-	suite.mockPubSub = &mesh.MockPubSub{}
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry, _ = mesh.NewRegisty("local-peer", suite.mockPubSub)
+	suite.registry, _ = mesh.NewRegisty("local-peer")
 	suite.wire = &wire.MockWire{}
 	suite.wire.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
 	suite.dht, _ = NewDHT(suite.wire, suite.registry, "local-peer", false, "bootstrap-address")

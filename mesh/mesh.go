@@ -19,7 +19,7 @@ type mesh struct {
 	registry Registry
 }
 
-func NewMesh(nnet net.Net, ps PubSub, registry Registry) (Mesh, error) {
+func NewMesh(nnet net.Net, registry Registry) (Mesh, error) {
 	m := &mesh{
 		net:      nnet,
 		registry: registry,

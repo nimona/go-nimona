@@ -37,9 +37,8 @@ func main() {
 	rly := protocol.NewRelayProtocol(net, rls)
 	mux := protocol.NewYamux()
 
-	pbs, _ := mesh.NewPubSub()
-	reg, _ := mesh.NewRegisty(peerID, pbs)
-	msh, _ := mesh.NewMesh(net, pbs, reg)
+	reg, _ := mesh.NewRegisty(peerID)
+	msh, _ := mesh.NewMesh(net, reg)
 	wre, _ := wire.NewWire(msh, reg)
 	dht.NewDHT(wre, reg, peerID, true, bsp...)
 

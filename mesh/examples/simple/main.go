@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -34,9 +33,8 @@ func main() {
 	net := net.New(ctx)
 	rtr := protocol.NewRouter()
 
-	pbs, _ := mesh.NewPubSub()
-	reg, _ := mesh.NewRegisty(peerID, pbs)
-	msh, _ := mesh.NewMesh(net, pbs, reg)
+	reg, _ := mesh.NewRegisty(peerID)
+	msh, _ := mesh.NewMesh(net, reg)
 	wre, _ := wire.NewWire(msh, reg)
 	dht.NewDHT(wre, reg, peerID, true, bs...)
 
@@ -45,9 +43,4 @@ func main() {
 	rtr.AddRoute(wre)
 
 	net.AddTransport(tcp, rtr)
-
-	messages, _ := pbs.Subscribe(".*")
-	for message := range messages {
-		fmt.Printf("> Got new message %#v\n", message)
-	}
 }
