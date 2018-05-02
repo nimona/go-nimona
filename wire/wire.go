@@ -175,7 +175,6 @@ func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
 
 		m.streams[msg.To] = conn
 		stream = conn
-		return nil
 	}
 
 	logger.Info("Attempting to write message")
