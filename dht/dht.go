@@ -86,7 +86,7 @@ func (nd *DHT) refresh() {
 		ctx := context.Background()
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
 		nd.wire.Send(ctx, wireExtention, PayloadTypeGetPeerInfo, resp, peerIDs)
-		time.Sleep(time.Second * 999)
+		time.Sleep(time.Second * 30)
 	}
 }
 
