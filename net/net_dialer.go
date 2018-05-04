@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"time"
 
 	zap "go.uber.org/zap"
 )
@@ -39,9 +40,11 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		}
 		// dial transport
 		var err error
+		tctx, cf := context.WithTimeout(ctx, time.Second*3)
 		trType := reflect.TypeOf(tr.Transport).String()
 		lgr.Debug("Attempting to dial", zap.String("transport", trType))
-		newCtx, newConn, err := tr.Transport.DialContext(ctx, addr)
+		newCtx, newConn, err := tr.Transport.DialContext(tctx, addr)
+		defer cf()
 		if err != nil {
 			lgr.Info("Could not dial", zap.String("transport", trType), zap.Error(err))
 			continue
@@ -60,7 +63,7 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 			protocol, ok := f.protocols[prName]
 			if !ok {
 				lgr.Debug("No such protocol", zap.String("protocol", prName))
-				return nil, nil, ErrInvalidProtocol
+				continue
 			}
 			remProtocols[i] = protocol
 		}
@@ -79,7 +82,7 @@ func (f *nnet) DialContext(ctx context.Context, as string) (context.Context, Con
 		chain := NegotiatorChain(remProtocols...)
 		if err := chain(newCtx, newConn); err != nil {
 			lgr.Warn("Could not negotiate", zap.Error(err))
-			return nil, nil, ErrCouldNotDial
+			continue
 		}
 
 		return retCtx, retConn, nil

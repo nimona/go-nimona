@@ -19,10 +19,6 @@ const (
 	PayloadTypePutValue = "put-value"
 )
 
-// User A on Peer 1 is looking to talk to User b on any peer with protocol X
-// GetProviders users/b, which returns peers 20 and 21
-// GetPeerInfo 20, GetPeerInfo21
-
 type messageSenderPeerInfo struct {
 	SenderPeerInfo mesh.PeerInfo `json:"sender_peer_info"`
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	upnp "github.com/NebulousLabs/go-upnp"
 	zap "go.uber.org/zap"
@@ -43,7 +44,8 @@ type TCP struct {
 // DialContext attemps to dial to the peer with the given addr
 func (t *TCP) DialContext(ctx context.Context, addr *Address) (context.Context, Conn, error) {
 	pr := addr.CurrentParams()
-	tcon, err := net.Dial("tcp", pr)
+	d := net.Dialer{Timeout: time.Second * 5}
+	tcon, err := d.DialContext(ctx, "tcp", pr)
 	if err != nil {
 		return nil, nil, err
 	}
