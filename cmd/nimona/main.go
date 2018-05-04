@@ -47,10 +47,10 @@ func main() {
 		bsp = bootstrapPeerIDs
 	}
 
-	if useUPNP, _ := strconv.ParseBool(os.Getenv("UPNP")); useUPNP {
-		tcp = net.NewTransportTCPWithUPNP("0.0.0.0", port)
-	} else {
+	if skipUPNP, _ := strconv.ParseBool(os.Getenv("SKIP_UPNP")); skipUPNP {
 		tcp = net.NewTransportTCP("0.0.0.0", port)
+	} else {
+		tcp = net.NewTransportTCPWithUPNP("0.0.0.0", port)
 	}
 
 	ctx := context.Background()
