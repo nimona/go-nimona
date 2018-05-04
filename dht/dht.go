@@ -50,7 +50,7 @@ func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, 
 
 	for _, peerID := range bootstrapPeerIDs {
 		nd.registry.PutPeerInfo(&mesh.PeerInfo{
-			ID: "bootstrap",
+			ID: peerID,
 			Protocols: map[string][]string{
 				"wire": []string{
 					fmt.Sprintf("tcp:%s:26801/yamux/router/wire", peerID),
