@@ -73,7 +73,7 @@ func (nd *DHT) refresh() {
 	}
 	for {
 		peerInfo := nd.registry.GetLocalPeerInfo()
-		cps, err := nd.FindPeersClosestTo(peerInfo.ID, closestPeersToReturn)
+		closestPeers, err := nd.FindPeersClosestTo(peerInfo.ID, closestPeersToReturn)
 		if err != nil {
 			logrus.WithError(err).Warnf("refresh could not get peers ids")
 			return
@@ -84,7 +84,8 @@ func (nd *DHT) refresh() {
 			PeerID:         peerInfo.ID,
 		}
 		ctx := context.Background()
-		nd.wire.Send(ctx, wireExtention, PayloadTypeGetPeerInfo, resp, cps)
+		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
+		nd.wire.Send(ctx, wireExtention, PayloadTypeGetPeerInfo, resp, peerIDs)
 		time.Sleep(time.Second * 999)
 	}
 }
@@ -148,8 +149,9 @@ func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
 		return
 	}
 
-	if err := nd.registry.PutPeerInfo(&payload.PeerInfo); err != nil {
-		return
+	nd.registry.PutPeerInfo(&payload.PeerInfo)
+	for _, peerInfo := range payload.ClosestPeers {
+		nd.registry.PutPeerInfo(peerInfo)
 	}
 
 	if payload.RequestID == "" {
@@ -193,6 +195,10 @@ func (nd *DHT) handlePutProviders(message *wire.Message) {
 	payload := &messagePutProviders{}
 	if err := message.DecodePayload(payload); err != nil {
 		return
+	}
+
+	for _, peerInfo := range payload.ClosestPeers {
+		nd.registry.PutPeerInfo(peerInfo)
 	}
 
 	if err := nd.store.PutProvider(payload.Key, payload.PeerIDs...); err != nil {
@@ -239,6 +245,10 @@ func (nd *DHT) handlePutValue(message *wire.Message) {
 		return
 	}
 
+	for _, peerInfo := range payload.ClosestPeers {
+		nd.registry.PutPeerInfo(peerInfo)
+	}
+
 	if err := nd.store.PutValue(payload.Key, payload.Value); err != nil {
 		return
 	}
@@ -256,33 +266,26 @@ func (nd *DHT) handlePutValue(message *wire.Message) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]string, error) {
+func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*mesh.PeerInfo, error) {
 	// place to hold the results
-	rks := []string{}
+	rks := []*mesh.PeerInfo{}
 
 	htk := hash(tk)
 
 	peerInfos, _ := nd.registry.GetAllPeerInfo()
-	peerIDs := []string{}
-	for _, peerInfo := range peerInfos {
-		// remove self
-		if nd.peerID == peerInfo.ID {
-			continue
-		}
-		peerIDs = append(peerIDs, peerInfo.ID)
-	}
 
 	// slice to hold the distances
 	dists := []distEntry{}
-	for _, ik := range peerIDs {
+	for _, peerInfo := range peerInfos {
 		// calculate distance
 		de := distEntry{
-			key:  ik,
-			dist: xor([]byte(htk), []byte(hash(ik))),
+			key:      peerInfo.ID,
+			dist:     xor([]byte(htk), []byte(hash(peerInfo.ID))),
+			peerInfo: peerInfo,
 		}
 		exists := false
 		for _, ee := range dists {
-			if ee.key == ik {
+			if ee.key == peerInfo.ID {
 				exists = true
 				break
 			}
@@ -303,7 +306,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]string, error) {
 
 	// append n the first n number of keys
 	for _, de := range dists {
-		rks = append(rks, de.key)
+		rks = append(rks, de.peerInfo)
 		n--
 		if n == 0 {
 			break
@@ -351,7 +354,8 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 		Value:          value,
 	}
 
-	return nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, closestPeers)
+	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
+	return nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, closestPeerIDs)
 }
 
 func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
@@ -398,7 +402,8 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 		PeerIDs:        []string{localPeerID},
 	}
 
-	return nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, closestPeers)
+	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
+	return nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, closestPeerIDs)
 }
 
 func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
@@ -438,4 +443,12 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 
 func (nd *DHT) GetAllValues() (map[string]string, error) {
 	return nd.store.GetAllValues()
+}
+
+func getPeerIDsFromPeerInfos(peerInfos []*mesh.PeerInfo) []string {
+	peerIDs := []string{}
+	for _, peerInfo := range peerInfos {
+		peerIDs = append(peerIDs, peerInfo.ID)
+	}
+	return peerIDs
 }

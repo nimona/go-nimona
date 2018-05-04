@@ -42,11 +42,11 @@ type messageGetPeerInfo struct {
 }
 
 type messagePutPeerInfo struct {
-	SenderPeerInfo mesh.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
-	PeerInfo       mesh.PeerInfo `json:"peer_info"`
-	ClosestPeers   []string      `json:"closest_peers"`
+	SenderPeerInfo mesh.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string           `json:"request_id,omitempty"`
+	PeerID         string           `json:"peer_id"`
+	PeerInfo       mesh.PeerInfo    `json:"peer_info"`
+	ClosestPeers   []*mesh.PeerInfo `json:"closest_peers"`
 }
 
 type messageGetProviders struct {
@@ -56,11 +56,11 @@ type messageGetProviders struct {
 }
 
 type messagePutProviders struct {
-	SenderPeerInfo mesh.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
-	PeerIDs        []string      `json:"peer_ids"`
-	ClosestPeers   []string      `json:"closest_peers"`
+	SenderPeerInfo mesh.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string           `json:"request_id,omitempty"`
+	Key            string           `json:"key"`
+	PeerIDs        []string         `json:"peer_ids"`
+	ClosestPeers   []*mesh.PeerInfo `json:"closest_peers"`
 }
 
 type messageGetValue struct {
@@ -70,9 +70,9 @@ type messageGetValue struct {
 }
 
 type messagePutValue struct {
-	SenderPeerInfo mesh.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
-	Value          string        `json:"value"`
-	ClosestPeers   []string      `json:"closest_peers"`
+	SenderPeerInfo mesh.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string           `json:"request_id,omitempty"`
+	Key            string           `json:"key"`
+	Value          string           `json:"value"`
+	ClosestPeers   []*mesh.PeerInfo `json:"closest_peers"`
 }

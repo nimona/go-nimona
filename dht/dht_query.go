@@ -105,13 +105,13 @@ func (q *query) next() {
 	}
 
 	peersToAsk := []string{}
-	for _, peerID := range closestPeers {
+	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
-		if _, ok := q.contactedPeers.Load(peerID); ok {
+		if _, ok := q.contactedPeers.Load(peerInfo.ID); ok {
 			continue
 		}
-		peersToAsk = append(peersToAsk, peerID)
-		q.contactedPeers.Store(peerID, true)
+		peersToAsk = append(peersToAsk, peerInfo.ID)
+		q.contactedPeers.Store(peerInfo.ID, true)
 	}
 
 	var payloadType string
