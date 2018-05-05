@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/net"
@@ -65,6 +66,7 @@ func main() {
 	msh, _ := mesh.NewMesh(net, reg)
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg, peerID, true, bsp...)
+	blx, _ := blx.NewBlockExchange(pbs)
 
 	net.AddProtocols(rly)
 	net.AddProtocols(mux)
@@ -321,6 +323,40 @@ func main() {
 	shell.AddCmd(get)
 	shell.AddCmd(put)
 	shell.AddCmd(list)
+
+	block := &ishell.Cmd{
+		Name: "block",
+		Help: "send blocks to peers",
+	}
+
+	blockFile := &ishell.Cmd{
+		Name: "file",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 2 {
+				c.Println("Peer and file missing")
+				return
+			}
+
+			toPeer := c.Args[0]
+			file := c.Args[1]
+
+			f, err := os.Open(file)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			blx.Send(toPeer, peerID, f,
+				map[string][]byte{})
+		},
+		Help: "send a file to another peer",
+	}
+
+	block.AddCmd(blockFile)
+	shell.AddCmd(block)
 
 	// when started with "exit" as first argument, assume non-interactive execution
 	if len(os.Args) > 1 && os.Args[1] == "exit" {

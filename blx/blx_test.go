@@ -1,9 +1,14 @@
 package blx
 
 import (
+	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/mutation"
 	"github.com/stretchr/testify/mock"
+
 	suite "github.com/stretchr/testify/suite"
 )
 
@@ -35,6 +40,15 @@ func (suite *blxTestSuite) TestReceiveMessage() {
 		On("Publish", mock.AnythingOfType("mesh.Message"), "message:send").
 		Return(nil).
 		Run(func(args mock.Arguments) {
-
+			reqPublishedMessage := args.Get(0).(mesh.Message)
+			spew.Println(reqPublishedMessage)
 		})
+
+	err := suite.blx.Send("test02", "test01",
+		[]byte("test"), map[string][]byte{})
+	suite.NoError(err)
+}
+
+func TestRunBlxTestSuite(t *testing.T) {
+	suite.Run(t, new(blxTestSuite))
 }
