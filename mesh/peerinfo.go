@@ -6,16 +6,16 @@ import (
 )
 
 type PeerInfo struct {
-	ID        string
-	Protocols map[string][]string
+	ID        string              `json:"id"`
+	Protocols map[string][]string `json:"protocols"`
 }
 
 type peerInfoProtocol struct {
-	PeerID      string
-	Name        string
-	Address     string
-	LastUpdated time.Time
-	Pinned      bool
+	PeerID      string    `json:"peer_id"`
+	Name        string    `json:"name"`
+	Address     string    `json:"address"`
+	LastUpdated time.Time `json:"last_updated,omitempty"`
+	Pinned      bool      `json:"pinned,omitempty"`
 }
 
 // TODO maybe a better or just faster hash function?
