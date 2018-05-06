@@ -144,7 +144,7 @@ func (m *wire) Send(ctx context.Context, extention, payloadType string, payload 
 			To:          recipient,
 		}
 		if err := m.sendMessage(ctx, event); err != nil {
-			return err
+			// TODO Log error
 		}
 	}
 
