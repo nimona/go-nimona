@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -14,7 +15,9 @@ import (
 	"github.com/nimona/go-nimona/net/protocol"
 	"github.com/nimona/go-nimona/wire"
 
-	ishell "gopkg.in/abiosoft/ishell.v2"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"gopkg.in/abiosoft/ishell.v2"
 )
 
 var bootstrapPeerIDs = []string{
@@ -25,6 +28,11 @@ func main() {
 	peerID := os.Getenv("PEER_ID")
 	if peerID == "" {
 		log.Fatal("Missing PEER_ID")
+	}
+
+	httpPort := "26880"
+	if nhp := os.Getenv("HTTP_PORT"); nhp != "" {
+		httpPort = nhp
 	}
 
 	bsp := []string{}
@@ -67,6 +75,41 @@ func main() {
 
 	net.AddTransport(mux, rtr)
 	net.AddTransport(tcp, mux, rtr)
+
+	router := gin.Default()
+	router.Use(cors.Default())
+	local := router.Group("/api/v1/local")
+	local.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, reg.GetLocalPeerInfo())
+	})
+	peers := router.Group("/api/v1/peers")
+	peers.GET("/", func(c *gin.Context) {
+		peers, err := reg.GetAllPeerInfo()
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, peers)
+	})
+	values := router.Group("/api/v1/values")
+	values.GET("/", func(c *gin.Context) {
+		values, err := dht.GetAllValues()
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, values)
+	})
+	providers := router.Group("/api/v1/providers")
+	providers.GET("/", func(c *gin.Context) {
+		providers, err := dht.GetAllProviders()
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, providers)
+	})
+	go router.Run(":" + httpPort)
 
 	shell := ishell.New()
 	shell.Println("Nimona DHT")
