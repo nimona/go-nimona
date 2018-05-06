@@ -2,98 +2,85 @@ package blx
 
 import (
 	"bufio"
+	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io"
 
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/wire"
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	wireExtention = "blx"
+)
+
 type blockExchange struct {
-	pubSub           mesh.PubSub
+	wire             wire.Wire
 	storage          Storage
 	transferedBlocks chan *Block
 }
 
-func NewBlockExchange(ps mesh.PubSub) (*blockExchange, error) {
-
-	// Subscribe to blx events
-	messages, err := ps.Subscribe("blx:.*")
-	if err != nil {
-		return nil, nil
-	}
-
-	be := blockExchange{
-		pubSub:           ps,
+func NewBlockExchange(wr wire.Wire) (*blockExchange, error) {
+	blx := &blockExchange{
+		wire:             wr,
 		storage:          newMemoryStore(),
 		transferedBlocks: make(chan *Block),
 	}
 
-	go func() {
-		// Handle incoming message
-		for omsg := range messages {
-			msg, ok := omsg.(mesh.Message)
-			if !ok {
-				continue
-			}
+	wr.HandleExtensionEvents("blx", blx.handleMessage)
 
-			logrus.Infof("Incoming message ====> ", msg.String())
-
-			switch msg.Topic {
-			case MessageTypeRequest:
-				br := BlockRequest{}
-				json.Unmarshal(msg.Payload, &br)
-				// bl, err := be.storage.Get(br.Key)
-				// if err != nil {
-
-				// }
-				// be.Send(msg.Sender, msg.Recipient, bytes.NewReader(bl.Data), bl.Meta)
-			case MessageTypeTransfer:
-				bl := Block{}
-				json.Unmarshal(msg.Payload, &bl)
-				be.transferedBlocks <- &bl
-
-			}
-		}
-	}()
-
-	return &be, nil
+	return blx, nil
 }
 
-func (b *blockExchange) Get(key string, recipient,
-	sender string) (*Block, error) {
-	blr := BlockRequest{
+func (blx *blockExchange) handleMessage(message *wire.Message) error {
+	switch message.PayloadType {
+	case PayloadTypeTransferBlock:
+		blx.handleTransferBlock(message)
+	case PayloadTypeRequestBlock:
+		blx.handleRequestBlock(message)
+	default:
+		logrus.WithField("message.PayloadType", message.PayloadType).Warn("Payload type not known")
+		return nil
+	}
+	return nil
+}
+
+func (blx *blockExchange) handleTransferBlock(message *wire.Message) {
+	payload := &payloadTransferBlock{}
+	if err := message.DecodePayload(payload); err != nil {
+		return
+	}
+
+	blx.transferedBlocks <- payload.Block
+}
+
+func (blx *blockExchange) handleRequestBlock(message *wire.Message) {
+	payload := &payloadTransferRequestBlock{}
+	if err := message.DecodePayload(payload); err != nil {
+		return
+	}
+
+	// TODO handle block request
+}
+
+func (blx *blockExchange) Get(key string, recipient string) (*payloadTransferBlock, error) {
+	req := &payloadTransferRequestBlock{
 		Key: key,
 	}
 
-	blrm, err := json.Marshal(blr)
-	if err != nil {
-		return nil, err
-	}
+	ctx := context.Background()
+	blx.wire.Send(ctx, wireExtention, PayloadTypeRequestBlock, req, []string{recipient})
 
-	msg := mesh.Message{
-		Recipient: recipient,
-		Sender:    sender,
-		Payload:   blrm,
-		Topic:     MessageTypeRequest,
-		Codec:     "json",
-		Nonce:     mesh.RandStringBytesMaskImprSrc(8),
-	}
-
-	if err := b.pubSub.Publish(msg, "message:send"); err != nil {
-		return nil, err
-	}
+	// TODO wait to get block and return
 
 	return nil, nil
 }
 
-func (b *blockExchange) Send(recipient, sender string, r io.Reader,
-	meta map[string][]byte) error {
+func (blx *blockExchange) Send(recipient string, r io.Reader, meta map[string][]byte) error {
 
 	data := make([]byte, 16000, 16000)
-	hs := b.hash(r)
+	hs := blx.hash(r)
 	fmt.Println("------> ", hs)
 
 	bf := bufio.NewReader(r)
@@ -104,33 +91,19 @@ func (b *blockExchange) Send(recipient, sender string, r io.Reader,
 			return err
 		}
 
-		bl := Block{
+		block := &Block{
 			Key:  hs,
 			Meta: meta,
 			Data: data,
 		}
-
-		b.storage.Store(bl.Key, &bl)
-
-		blm, err := json.Marshal(bl)
-		if err != nil {
-			return err
+		resp := payloadTransferBlock{
+			Block: block,
 		}
 
-		msg := mesh.Message{
-			Recipient: recipient,
-			Sender:    sender,
-			Payload:   blm,
-			Topic:     MessageTypeTransfer,
-			Codec:     "json",
-			Nonce:     mesh.RandStringBytesMaskImprSrc(8),
-		}
+		blx.storage.Store(block.Key, block)
 
-		// logrus.Info("Publishing message", msg.String())
-
-		if err := b.pubSub.Publish(msg, "message:send"); err != nil {
-			return err
-		}
+		ctx := context.Background()
+		blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp, []string{recipient})
 	}
 
 	return nil
