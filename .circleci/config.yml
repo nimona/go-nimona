@@ -20,9 +20,6 @@ jobs:
           name: Install dependencies
           command: dep ensure
       - run:
-          name: Build everything
-          command: go build -v ./...
-      - run:
           name: Run tests
           command: |
             mkdir -p /tmp/test-reports/core
@@ -36,6 +33,9 @@ jobs:
           command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
       - store_test_results:
           path: /tmp/test-reports
+      - run:
+          name: Ensure code actually builds
+          command: make build
   release:
     docker:
       - image: circleci/golang:1.10
