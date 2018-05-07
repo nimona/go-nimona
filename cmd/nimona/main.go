@@ -14,6 +14,12 @@ import (
 	ishell "gopkg.in/abiosoft/ishell.v2"
 )
 
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
 func main() {
 	peerID := os.Getenv("PEER_ID")
 	if peerID == "" {
@@ -52,7 +58,7 @@ func main() {
 	}
 
 	shell := ishell.New()
-	shell.Println("Nimona DHT")
+	shell.Printf("Nimona DHT (%s)\n", version)
 
 	// handle get
 	shell.AddCmd(&ishell.Cmd{

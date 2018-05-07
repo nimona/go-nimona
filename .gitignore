@@ -13,5 +13,8 @@ debug
 *.out
 *.txt
 
+# build directories
+bin/*
+
 # Vendor
 vendor
