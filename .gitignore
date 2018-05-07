@@ -15,6 +15,7 @@ debug
 
 # build directories
 bin/*
+dist/*
 
 # Vendor
 vendor

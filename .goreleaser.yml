@@ -1,0 +1,36 @@
+project_name: nimona
+builds:
+  - main: cmd/nimona/main.go
+    binary: nimona
+    flags: -a
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - freebsd
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm
+    goarm:
+      - 6
+      - 7
+archive:
+  name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
+    }}v{{ .Arm }}{{ end }}'
+  format: tar.gz
+  wrap_in_directory: true
+  format_overrides:
+    - goos: windows
+      format: zip
+before:
+  hooks:
+    - make clean
+git:
+  short_hash: true
+snapshot:
+  name_template: dev-{{.Commit}}
+release:
+  draft: true
