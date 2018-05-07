@@ -36,3 +36,46 @@ jobs:
           command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
       - store_test_results:
           path: /tmp/test-reports
+  release:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/nimona/go-nimona
+    steps:
+      - checkout
+      - run:
+          name: Install tools
+          command: |
+            curl -L https://github.com/golang/dep/raw/master/install.sh | sh
+            go get github.com/goreleaser/goreleaser
+      - run:
+          name: Install dependencies
+          command: dep ensure
+      - run:
+          name: Run goreleaser
+          command: goreleaser
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /^[0-9]+(\.[0-9]+)*/
+  build-and-release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*/
