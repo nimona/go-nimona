@@ -165,7 +165,7 @@ func (suite *NetDialerTestSuite) TestNegotiatorFails() {
 	suite.Assert().Len(suite.fnet.transports, 1)
 
 	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
-	suite.Assert().Equal(ErrCouldNotDial, retErr)
+	suite.Assert().Equal(ErrNoSuchTransport, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
@@ -201,7 +201,7 @@ func (suite *NetDialerTestSuite) TestInvalidProtocolFails() {
 	suite.Assert().Len(suite.fnet.transports, 1)
 
 	_, _, retErr := suite.fnet.DialContext(ctx, addrString)
-	suite.Assert().Equal(ErrInvalidProtocol, retErr)
+	suite.Assert().Equal(nil, retErr)
 	tran.AssertCalled(suite.T(), "CanDial", addr)
 	tran.AssertCalled(suite.T(), "DialContext", mock.Anything, mock.Anything)
 }
