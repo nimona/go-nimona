@@ -29,7 +29,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	suite.registry, _ = mesh.NewRegisty("local-peer")
 	suite.wire = &wire.MockWire{}
 	suite.wire.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
-	suite.dht, _ = NewDHT(suite.wire, suite.registry, "local-peer", false, "bootstrap-address")
+	suite.dht, _ = NewDHT(suite.wire, suite.registry, "local-peer", false, "bootstrap")
 }
 
 func (suite *dhtTestSuite) TestPutSuccess() {
@@ -45,11 +45,11 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 		Value: "b",
 	}
 	to := []string{"bootstrap"}
-	suite.wire.On("Send", mock.Anything, "dht", "put-value", payload, to).Return(nil)
+	suite.wire.On("Send", mock.Anything, "dht", PayloadTypePutValue, payload, to).Return(nil)
 	err := suite.dht.PutValue(ctx, key, value)
 	suite.NoError(err)
 
-	suite.wire.On("Send", mock.Anything, "dht", "get-value", mock.Anything, to).Return(nil)
+	suite.wire.On("Send", mock.Anything, "dht", PayloadTypeGetValue, mock.Anything, to).Return(nil)
 	retValue, err := suite.dht.GetValue(ctx, key)
 	suite.NoError(err)
 	suite.Equal(value, retValue)

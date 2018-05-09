@@ -47,9 +47,11 @@ func (q *query) Run(ctx context.Context) {
 				}
 			}
 		case ValueQuery:
-			if value, err := q.dht.store.GetValue(q.key); err != nil {
-				q.outgoingMessages <- value
+			value, err := q.dht.store.GetValue(q.key)
+			if err != nil {
+				break
 			}
+			q.outgoingMessages <- value
 		}
 
 		// and now, wait for something to happen
