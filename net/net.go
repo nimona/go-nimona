@@ -8,8 +8,6 @@ import (
 )
 
 var (
-	// ErrNoTransport for when there is no transport with which to dial the address
-	ErrNoTransport = errors.New("Could not dial with available transports")
 	// ErrInvalidProtocol when our handler doesn't know about a protocol in the
 	ErrInvalidProtocol = errors.New("No such protocol")
 	// errNoMoreProtocols when net cannot deal with any more protocols

@@ -4,13 +4,15 @@ import (
 	"crypto/sha1"
 	"fmt"
 
+	"github.com/nimona/go-nimona/mesh"
 	"github.com/sirupsen/logrus"
 )
 
 // distEntry is used to hold the distance between nodes
 type distEntry struct {
-	key  string
-	dist []int
+	key      string
+	dist     []int
+	peerInfo *mesh.PeerInfo
 }
 
 // Xor gets to byte arrays and returns and array of integers with the xor

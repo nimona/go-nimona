@@ -5,21 +5,28 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nimona/go-nimona/net"
 	logrus "github.com/sirupsen/logrus"
 )
 
 const numPeersNear int = 15
 
+type QueryType int
+
+const (
+	PeerInfoQuery QueryType = iota
+	ProviderQuery
+	ValueQuery
+)
+
 type query struct {
+	dht              *DHT
 	id               string
 	key              string
-	labels           map[string]string
-	dht              *DHT
+	queryType        QueryType
 	closestPeerID    string
 	contactedPeers   sync.Map
-	incomingMessages chan messagePut
-	results          chan net.Record
+	incomingMessages chan interface{}
+	outgoingMessages chan interface{}
 	// lock             *sync.RWMutex
 }
 
@@ -27,63 +34,49 @@ func (q *query) Run(ctx context.Context) {
 	logger := logrus.WithField("resp", q.key)
 
 	go func() {
-		// close channel once we are done
-		// defer close(q.results)
-
 		// send what we know about the key
-		if pairs, err := q.dht.store.Filter(q.key, q.labels); err == nil {
-			// if so, return it
-			if len(pairs) > 0 {
-				logger.Debug("Value existed in local store")
-				for _, pair := range pairs {
-					q.results <- pair
+		switch q.queryType {
+		case PeerInfoQuery:
+			if peerInfo, err := q.dht.registry.GetPeerInfo(q.key); err != nil {
+				q.outgoingMessages <- peerInfo
+			}
+		case ProviderQuery:
+			if providers, err := q.dht.store.GetProviders(q.key); err != nil {
+				for _, provider := range providers {
+					q.outgoingMessages <- provider
 				}
 			}
+		case ValueQuery:
+			value, err := q.dht.store.GetValue(q.key)
+			if err != nil {
+				break
+			}
+			q.outgoingMessages <- value
 		}
 
-		// wait for something to happen
+		// and now, wait for something to happen
 		for {
 			select {
-			case msg := <-q.incomingMessages:
+			case incomingMessage := <-q.incomingMessages:
 				logger.Debug("Processing incoming message")
-				// check if we found the node
-				persist := false
-				pair := Pair{
-					Key:    msg.Key,
-					Value:  msg.Value,
-					Labels: msg.Labels,
-				}
-				if msg.Key == q.key {
-					logger.WithField("key", q.key).Debug("Found value")
-					// persist the things we asked about
-					persist = true
-					// send results
-					q.results <- pair
-				}
-				// store values we got
-				q.dht.store.Put(msg.Key, msg.Value, msg.Labels, persist)
-				// if pair is peer information consider it a closest peer
-				if pair.GetLabel("protocol") == "peer" {
-					// check if we got closer than before
-					if q.closestPeerID == "" {
-						q.closestPeerID = msg.Key
-						go q.next()
-					} else {
-						if comparePeers(q.closestPeerID, msg.Key, q.key) == msg.Key {
-							q.closestPeerID = msg.Key
-							go q.next()
-						}
-					}
+				switch message := incomingMessage.(type) {
+				case *messagePutPeerInfo:
+					q.outgoingMessages <- &message.PeerInfo
+					q.nextIfCloser(message.PeerID)
+				case *messagePutProviders:
+					q.outgoingMessages <- message.PeerIDs
+					q.nextIfCloser(message.SenderPeerInfo.ID)
+				case *messagePutValue:
+					q.outgoingMessages <- message.Value
+					q.nextIfCloser(message.SenderPeerInfo.ID)
 				}
 
-			case <-time.After(time.Second * 5):
-				logrus.Warnf("Time has passed")
-				close(q.results)
+			case <-time.After(maxQueryTime):
+				close(q.outgoingMessages)
 				return
 
 			case <-ctx.Done():
-				logrus.Warnf("CTX was done")
-				close(q.results)
+				close(q.outgoingMessages)
 				return
 			}
 		}
@@ -93,43 +86,65 @@ func (q *query) Run(ctx context.Context) {
 	go q.next()
 }
 
+func (q *query) nextIfCloser(newPeerID string) {
+	if q.closestPeerID == "" {
+		q.closestPeerID = newPeerID
+		q.next()
+	} else {
+		if comparePeers(q.closestPeerID, newPeerID, q.key) == newPeerID {
+			q.closestPeerID = newPeerID
+			q.next()
+		}
+	}
+}
+
 func (q *query) next() {
 	// find closest peers
-	cps, err := q.dht.store.FindPeersNearestTo(q.key, numPeersNear)
+	closestPeers, err := q.dht.FindPeersClosestTo(q.key, numPeersNear)
 	if err != nil {
 		logrus.WithError(err).Error("Failed find peers near")
 		return
 	}
 
-	// create request
-	req := messageGet{
-		QueryID:      q.id,
-		OriginPeerID: q.dht.peerID,
-		Key:          q.key,
-		Labels:       q.labels,
-	}
-	// keep track of how many we've sent to
-	sent := 0
-	// go through closest peers
-	for _, cp := range cps {
+	peersToAsk := []string{}
+	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
-		if _, ok := q.contactedPeers.Load(cp); ok {
+		if _, ok := q.contactedPeers.Load(peerInfo.ID); ok {
 			continue
 		}
-		// ask peer
-		logrus.WithField("src", q.dht.peerID).
-			WithField("dst", cp).
-			WithField("queryKey", req.Key).
-			WithField("id", q.id).
-			WithField("cp", q.contactedPeers).
-			Infof("Asking peer")
-		q.dht.sendMessage(MessageTypeGet, req, cp)
-		// mark peer as contacted
-		q.contactedPeers.Store(cp, true)
-		// stop once we reached the limit
-		sent++
-		if sent >= numPeersNear {
-			return
-		}
+		peersToAsk = append(peersToAsk, peerInfo.ID)
+		q.contactedPeers.Store(peerInfo.ID, true)
 	}
+
+	var payloadType string
+	var req interface{}
+
+	switch q.queryType {
+	case PeerInfoQuery:
+		payloadType = PayloadTypeGetPeerInfo
+		req = messageGetPeerInfo{
+			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			RequestID:      q.id,
+			PeerID:         q.key,
+		}
+	case ProviderQuery:
+		payloadType = PayloadTypeGetProviders
+		req = messageGetProviders{
+			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			RequestID:      q.id,
+			Key:            q.key,
+		}
+	case ValueQuery:
+		payloadType = PayloadTypeGetValue
+		req = messageGetValue{
+			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			RequestID:      q.id,
+			Key:            q.key,
+		}
+	default:
+		return
+	}
+
+	ctx := context.Background()
+	q.dht.wire.Send(ctx, wireExtention, payloadType, req, peersToAsk)
 }

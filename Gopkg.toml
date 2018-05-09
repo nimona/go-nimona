@@ -21,3 +21,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/mohae/deepcopy"
+
+[[constraint]]
+  name = "github.com/coreos/go-semver"
+  version = "0.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jinzhu/copier"

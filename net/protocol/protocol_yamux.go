@@ -150,5 +150,5 @@ func (m *YamuxProtocol) Listen(ctx context.Context, handler nnet.HandlerFunc) er
 }
 
 func (s *YamuxProtocol) GetAddresses() []string {
-	return []string{}
+	return []string{"yamux"}
 }

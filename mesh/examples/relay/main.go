@@ -10,6 +10,7 @@ import (
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/net/protocol"
+	"github.com/nimona/go-nimona/wire"
 )
 
 func main() {
@@ -36,18 +37,17 @@ func main() {
 	rly := protocol.NewRelayProtocol(net, rls)
 	mux := protocol.NewYamux()
 
-	pbs, _ := mesh.NewPubSub()
-	reg, _ := mesh.NewRegisty(peerID, pbs)
-	msh, _ := mesh.NewMesh(net, pbs, reg)
-	msg, _ := mesh.NewMessenger(msh)
-	dht.NewDHT(pbs, peerID, true, bsp...)
+	reg, _ := mesh.NewRegisty(peerID)
+	msh, _ := mesh.NewMesh(net, reg)
+	wre, _ := wire.NewWire(msh, reg)
+	dht.NewDHT(wre, reg, peerID, true, bsp...)
 
-	net.AddProtocols(msg)
+	net.AddProtocols(wre)
 	net.AddProtocols(rly)
 	net.AddProtocols(mux)
 
 	rtr := protocol.NewRouter()
-	rtr.AddRoute(msg)
+	rtr.AddRoute(wre)
 	rtr.AddRoute(rly)
 
 	net.AddTransport(mux, rtr)
@@ -58,10 +58,5 @@ func main() {
 		for _, protocolAddress := range protocolAddresses {
 			fmt.Printf("  - %s\n", protocolAddress)
 		}
-	}
-
-	messages, _ := pbs.Subscribe(".*")
-	for message := range messages {
-		fmt.Printf("> Got new message %#v\n", message)
 	}
 }
