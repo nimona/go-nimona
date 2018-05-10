@@ -51,10 +51,8 @@ func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, 
 	for _, peerID := range bootstrapPeerIDs {
 		nd.registry.PutPeerInfo(&mesh.PeerInfo{
 			ID: peerID,
-			Protocols: map[string][]string{
-				"wire": []string{
-					fmt.Sprintf("tcp:%s:26801/yamux/router/wire", peerID),
-				},
+			Addresses: []string{
+				fmt.Sprintf("tcp:%s:26801", peerID),
 			},
 		})
 	}
@@ -68,7 +66,7 @@ func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, 
 func (nd *DHT) refresh() {
 	// TODO our init process is a bit messed up and registry doesn't know
 	// about the peer's protocols instantly
-	for len(nd.registry.GetLocalPeerInfo().Protocols) == 0 {
+	for len(nd.registry.GetLocalPeerInfo().Addresses) == 0 {
 		time.Sleep(time.Millisecond * 250)
 	}
 	for {

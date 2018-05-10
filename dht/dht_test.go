@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/wire"
 
-	"github.com/nimona/go-nimona/mesh"
-
 	"github.com/stretchr/testify/mock"
-	suite "github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/suite"
 )
 
 type dhtTestSuite struct {
@@ -26,7 +25,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	suite.mockMesh = &mesh.MockMesh{}
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry, _ = mesh.NewRegisty("local-peer")
+	suite.registry = mesh.NewRegisty("local-peer")
 	suite.wire = &wire.MockWire{}
 	suite.wire.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
 	suite.dht, _ = NewDHT(suite.wire, suite.registry, "local-peer", false, "bootstrap")
@@ -39,7 +38,7 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 	payload := messagePutValue{
 		SenderPeerInfo: mesh.PeerInfo{
 			ID:        "local-peer",
-			Protocols: map[string][]string{},
+			Addresses: []string{},
 		},
 		Key:   "a",
 		Value: "b",
