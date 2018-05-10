@@ -26,16 +26,16 @@ type Registry interface {
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
-func NewRegisty(peerID string) (Registry, error) {
+func NewRegisty(peerID string) Registry {
 	reg := &registry{
 		localPeer: &PeerInfo{
 			ID:        peerID,
-			Protocols: map[string][]string{},
+			Addresses: []string{},
 		},
 		peers: map[string]*PeerInfo{},
 	}
 
-	return reg, nil
+	return reg
 }
 
 type registry struct {
@@ -48,7 +48,7 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 		return ErrCannotPutLocalPeerInfo
 	}
 
-	if peerInfo.ID == "" || len(peerInfo.Protocols) == 0 {
+	if peerInfo.ID == "" || len(peerInfo.Addresses) == 0 {
 		return nil
 	}
 
