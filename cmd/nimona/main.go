@@ -11,8 +11,6 @@ import (
 
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
-	"github.com/nimona/go-nimona/net"
-	"github.com/nimona/go-nimona/net/protocol"
 	"github.com/nimona/go-nimona/wire"
 
 	"github.com/gin-contrib/cors"
@@ -36,51 +34,31 @@ func main() {
 		log.Fatal("Missing PEER_ID")
 	}
 
+	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
+
 	httpPort := "26880"
 	if nhp := os.Getenv("HTTP_PORT"); nhp != "" {
 		httpPort = nhp
 	}
 
 	bsp := []string{}
-	rls := []string{}
-	port := 0
+	// rls := []string{}
 
 	bootstrap := isBootstrap(peerID)
 
-	var tcp net.Transport
 	if bootstrap {
 		fmt.Println("Starting as bootstrap node")
-		port = 26801
 	} else {
 		bsp = bootstrapPeerIDs
 	}
 
-	if skipUPNP, _ := strconv.ParseBool(os.Getenv("SKIP_UPNP")); skipUPNP {
-		tcp = net.NewTransportTCP("0.0.0.0", port)
-	} else {
-		tcp = net.NewTransportTCPWithUPNP("0.0.0.0", port)
-	}
+	reg := mesh.NewRegisty(peerID)
+	msh := mesh.New(reg)
 
-	ctx := context.Background()
-	net := net.New(ctx)
-	rtr := protocol.NewRouter()
+	msh.Listen(fmt.Sprintf(":%d", port))
 
-	rly := protocol.NewRelayProtocol(net, rls)
-	mux := protocol.NewYamux()
-	reg, _ := mesh.NewRegisty(peerID)
-	msh, _ := mesh.NewMesh(net, reg)
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg, peerID, true, bsp...)
-
-	net.AddProtocols(rly)
-	net.AddProtocols(mux)
-	net.AddProtocols(wre)
-
-	rtr.AddRoute(wre)
-	// rtr.AddRoute(rly)
-
-	net.AddTransport(mux, rtr)
-	net.AddTransport(tcp, mux, rtr)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -266,11 +244,8 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
-				for name, addresses := range peer.Protocols {
-					c.Printf("  - %s\n", name)
-					for _, address := range addresses {
-						c.Printf("     - %s\n", address)
-					}
+				for _, address := range peer.Addresses {
+					c.Printf("     - %s\n", address)
 				}
 			}
 		},
@@ -285,11 +260,8 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
-			for name, addresses := range peer.Protocols {
-				c.Printf("  - %s\n", name)
-				for _, address := range addresses {
-					c.Printf("     - %s\n", address)
-				}
+			for _, address := range peer.Addresses {
+				c.Printf("     - %s\n", address)
 			}
 		},
 		Help: "list protocols for local peer",
