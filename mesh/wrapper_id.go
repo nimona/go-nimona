@@ -5,8 +5,7 @@ import (
 	"net"
 )
 
-type ID struct {
-}
+type ID struct{}
 
 func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 	fmt.Println("> ID")

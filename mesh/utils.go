@@ -77,26 +77,6 @@ func GetLocalAddresses(port int) ([]string, error) {
 	return addrs, nil
 }
 
-// GetPublicAddresses returns the addresses TCP can listen to on the local machine
-// func GetPublicAddresses(port int, upnp UPNP) ([]string, error) {
-// 	addrs := []string{}
-// 	if upnp == nil {
-// 		return addrs, nil
-// 	}
-
-// 	ip, err := upnp.ExternalIP()
-// 	if err != nil {
-// 		log.Println("External IP not found: ", err)
-// 		return addrs, nil
-// 	}
-
-// 	if ip != "" {
-// 		hostPort := fmt.Sprintf("%s:%d", ip, port)
-// 		addrs = append(addrs, hostPort)
-// 	}
-// 	return addrs, nil
-// }
-
 func isValidIP(addr net.Addr) (string, bool) {
 	var ip net.IP
 	switch v := addr.(type) {
