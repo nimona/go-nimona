@@ -239,6 +239,7 @@ func (n *Net) HandleSelection(conn net.Conn) (net.Conn, error) {
 		if reusableConn, ok := newConn.(*reusableConn); ok {
 			go reusableConn.Accepted(n.accepted)
 			// TODO lock
+			// TODO check if remote addr is indeed a peer id
 			fmt.Println("server storing reusable")
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
 		}

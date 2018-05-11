@@ -26,8 +26,9 @@ func (c *reusableConn) Accepted(accepted chan net.Conn) error {
 	for {
 		conn, err := c.acceptConnFn()
 		if err != nil {
-			// TODO should we return?
-			continue
+			// TODO should we be closing and returning?
+			c.Close()
+			return err
 		}
 		accepted <- conn
 	}
