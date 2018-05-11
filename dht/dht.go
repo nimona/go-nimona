@@ -3,7 +3,6 @@ package dht
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -34,32 +33,22 @@ type DHT struct {
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, bootstrapPeerIDs ...string) (*DHT, error) {
+func NewDHT(wr wire.Wire, pr mesh.Registry) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
-		peerID:         peerID,
-		store:          store,
-		wire:           wr,
-		registry:       pr,
-		queries:        sync.Map{},
-		refreshBuckets: refreshBuckets,
-	}
-
-	for _, peerID := range bootstrapPeerIDs {
-		nd.registry.PutPeerInfo(&mesh.PeerInfo{
-			ID: peerID,
-			Addresses: []string{
-				fmt.Sprintf("tcp:%s:26801", peerID),
-			},
-		})
+		store:    store,
+		wire:     wr,
+		registry: pr,
+		queries:  sync.Map{},
 	}
 
 	wr.HandleExtensionEvents("dht", nd.handleMessage)
 
 	go nd.refresh()
+
 	return nd, nil
 }
 
