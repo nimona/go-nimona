@@ -26,9 +26,15 @@ func (suite *dhtTestSuite) SetupTest() {
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
 	suite.registry = mesh.NewRegisty("local-peer")
+	suite.registry.PutPeerInfo(&mesh.PeerInfo{
+		ID: "bootstrap",
+		Addresses: []string{
+			"localhost",
+		},
+	})
 	suite.wire = &wire.MockWire{}
 	suite.wire.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
-	suite.dht, _ = NewDHT(suite.wire, suite.registry, "local-peer", false, "bootstrap")
+	suite.dht, _ = NewDHT(suite.wire, suite.registry)
 }
 
 func (suite *dhtTestSuite) TestPutSuccess() {
