@@ -1,10 +1,15 @@
 package mesh
 
 import (
-	context "context"
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
+	"strings"
+	"time"
+
+	"github.com/emersion/go-upnp-igd"
 )
 
 var (
@@ -49,8 +54,10 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 	}
 	if conn == nil {
 		for _, addr := range peerInfo.Addresses {
-			fmt.Println("dial dialing new conn")
-			newConn, err := net.Dial("tcp", addr)
+			addr = strings.Replace(addr, "tcp:", "", 1)
+			fmt.Println("dial dialing new conn to", addr)
+			dialer := net.Dialer{Timeout: time.Second * 5}
+			newConn, err := dialer.DialContext(ctx, "tcp", addr)
 			if err != nil {
 				// TODO blacklist address for a bit
 				// TODO hold error maybe?
@@ -75,6 +82,9 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 
 	finalConn, err := n.Select(conn, commands...)
 	if err != nil {
+		if err := conn.Close(); err != nil {
+			fmt.Println("could not close connection after failure to select")
+		}
 		return nil, err
 	}
 
@@ -120,8 +130,30 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-
+	port := tcpListener.Addr().(*net.TCPAddr).Port
 	addresses := GetAddresses(tcpListener)
+
+	devices := make(chan igd.Device)
+	go func() {
+		for device := range devices {
+			externalAddress, err := device.GetExternalIPAddress()
+			if err != nil {
+				fmt.Println("could not get external ip")
+				continue
+			}
+			desc := "nimona"
+			ttl := time.Hour * 24 * 365
+			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
+				fmt.Println("could not add port mapping", err)
+			} else {
+				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
+			}
+		}
+	}()
+
+	if err := igd.Discover(devices, 5*time.Second); err != nil {
+		log.Println("could not discover devices")
+	}
 
 	n.registry.PutLocalPeerInfo(&PeerInfo{
 		ID:        n.registry.GetLocalPeerInfo().ID,

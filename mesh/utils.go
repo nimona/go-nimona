@@ -39,13 +39,11 @@ func RandStringBytesMaskImprSrc(n int) string {
 func GetAddresses(l net.Listener) []string {
 	port := l.Addr().(*net.TCPAddr).Port
 	// TODO log errors
+	network := strings.ToLower(l.Addr().Network())
 	addrs, _ := GetLocalAddresses(port)
-	// TODO add public addresses
-	// publicAddrs, _ := GetPublicAddresses(port, t.upnp)
-	// addrs = append(addrs, publicAddrs...)
-	// for i, addr := range addrs {
-	// 	addrs[i] = "tcp:" + addr
-	// }
+	for i, addr := range addrs {
+		addrs[i] = fmt.Sprintf("%s:%s", network, addr)
+	}
 	return addrs
 }
 

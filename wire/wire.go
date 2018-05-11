@@ -156,7 +156,7 @@ func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
 	if !ok || stream == nil {
 		conn, err := m.mesh.Dial(ctx, msg.To, messagingProtocolName)
 		if err != nil {
-			m.logger.Warn("could not dial to peer",
+			m.logger.Info("could not dial to peer",
 				zap.Error(err),
 				zap.String("peerID", msg.To),
 				zap.Error(err),
