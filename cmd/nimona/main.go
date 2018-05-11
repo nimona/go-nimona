@@ -24,8 +24,13 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerIDs = []string{
-	"andromeda.nimona.io",
+var bootstrapPeerInfos = []mesh.PeerInfo{
+	mesh.PeerInfo{
+		ID: "andromeda.nimona.io",
+		Addresses: []string{
+			"tcp:andromeda.nimona.io:26800",
+		},
+	},
 }
 
 func main() {
@@ -41,24 +46,19 @@ func main() {
 		httpPort = nhp
 	}
 
-	bsp := []string{}
-	// rls := []string{}
-
-	bootstrap := isBootstrap(peerID)
-
-	if bootstrap {
-		fmt.Println("Starting as bootstrap node")
-	} else {
-		bsp = bootstrapPeerIDs
-	}
-
 	reg := mesh.NewRegisty(peerID)
 	msh := mesh.New(reg)
+
+	for _, peerInfo := range bootstrapPeerInfos {
+		reg.PutPeerInfo(&peerInfo)
+	}
 
 	msh.Listen(fmt.Sprintf(":%d", port))
 
 	wre, _ := wire.NewWire(msh, reg)
-	dht, _ := dht.NewDHT(wre, reg, peerID, true, bsp...)
+	dht, _ := dht.NewDHT(wre, reg)
+
+	msh.RegisterHandler("wire", wre)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -309,13 +309,4 @@ func main() {
 		// teardown
 		shell.Close()
 	}
-}
-
-func isBootstrap(peerID string) bool {
-	for _, bpi := range bootstrapPeerIDs {
-		if bpi == peerID {
-			return true
-		}
-	}
-	return false
 }
