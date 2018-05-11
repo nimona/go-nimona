@@ -37,6 +37,11 @@ func New(registry Registry) *Net {
 	}
 }
 
+func (n *Net) RegisterHandler(protocol string, handler Handler) error {
+	n.handlers[protocol] = handler
+	return nil
+}
+
 func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.Conn, error) {
 	peerInfo, err := n.registry.GetPeerInfo(peerID)
 	if err != nil {
