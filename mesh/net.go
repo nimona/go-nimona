@@ -85,6 +85,7 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 		return nil, ErrAllAddressesFailed
 	}
 
+	commands = append([]string{"id", "yamux"}, commands...)
 	finalConn, err := n.Select(conn, commands...)
 	if err != nil {
 		if err := conn.Close(); err != nil {
@@ -241,12 +242,6 @@ func (n *Net) HandleSelection(conn net.Conn) (net.Conn, error) {
 			fmt.Println("server storing reusable")
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
 		}
-		// TODO missing peerID to reuse conn
-		// TODO maybe use a switch
-		// if reusableConn, ok := newConn.(ReusableConn); ok {
-		// 	// TODO lock
-		// 	n.reusable[peerID] = reusableConn
-		// }
 		conn = newConn
 	}
 }
