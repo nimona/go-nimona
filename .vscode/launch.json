@@ -14,10 +14,21 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/daemon/main.go",
             "env": {
-                "PEER_ID": "bootstrap",
+                "PEER_ID": "decimal",
             },
             "args": [],
             "showLog": true
+        },
+        {
+            "name": "Remote",
+            "type": "go",
+            "request": "launch",
+            "mode": "remote",
+            "remotePath": "${workspaceRoot}/cmd/daemon/main.go",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceRoot}",
+            "env": {}
         }
     ]
 }

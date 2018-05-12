@@ -6,9 +6,15 @@ const (
 )
 
 type Block struct {
-	Key  string            `json:"key,omitempty"`
-	Data []byte            `json:"data,omitempty"`
-	Meta map[string][]byte `json:"meta,omitempty"`
+	Key    string            `json:"key"`
+	Meta   map[string][]byte `json:"meta,omitempty"`
+	Chunks []Chunk           `json:"chunks"`
+}
+
+type Chunk struct {
+	BlockKey string `json:"block_key"`
+	ChunkKey string `json:"chunck_key"`
+	Data     []byte `json:"data"`
 }
 
 type payloadTransferBlock struct {

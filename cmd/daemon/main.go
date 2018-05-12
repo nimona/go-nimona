@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -66,7 +67,7 @@ func main() {
 	msh, _ := mesh.NewMesh(net, reg)
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg, peerID, true, bsp...)
-	blx, _ := blx.NewBlockExchange(pbs)
+	blx, _ := blx.NewBlockExchange(wre)
 
 	net.AddProtocols(rly)
 	net.AddProtocols(mux)
@@ -348,9 +349,22 @@ func main() {
 				c.Println(err)
 				return
 			}
+			c.Println("open")
 
-			blx.Send(toPeer, peerID, f,
+			data, err := ioutil.ReadAll(f)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			c.Println("read")
+
+			err = blx.Send(toPeer, data,
 				map[string][]byte{})
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			c.Println("Done")
 		},
 		Help: "send a file to another peer",
 	}
