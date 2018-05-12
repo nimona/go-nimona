@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,16 +27,17 @@ type Net struct {
 }
 
 func New(registry Registry) *Net {
-	return &Net{
+	n := &Net{
 		registry: registry,
 		close:    make(chan bool),
 		accepted: make(chan net.Conn),
 		reusable: map[string]*reusableConn{},
-		handlers: map[string]Handler{
-			"id":    &ID{},
-			"yamux": &Yamux{},
-		},
+		handlers: map[string]Handler{},
 	}
+	n.RegisterHandler("id", &ID{})
+	n.RegisterHandler("yamux", &Yamux{})
+	n.RegisterHandler("relay", &Relay{n})
+	return n
 }
 
 func (n *Net) RegisterHandler(protocol string, handler Handler) error {
@@ -43,6 +46,7 @@ func (n *Net) RegisterHandler(protocol string, handler Handler) error {
 }
 
 func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.Conn, error) {
+	// fmt.Println("Dial()ing ", peerID)
 	peerInfo, err := n.registry.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
@@ -53,31 +57,54 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 		if err != nil {
 			// TODO remove reusable conn
 		} else {
-			fmt.Println("dial reusing conn")
+			// fmt.Println("dial reusing conn")
 			conn = newConn
 		}
 	}
 	if conn == nil {
 		for _, addr := range peerInfo.Addresses {
-			addr = strings.Replace(addr, "tcp:", "", 1)
-			fmt.Println("dial dialing new conn to", addr)
-			dialer := net.Dialer{Timeout: time.Second * 5}
-			newConn, err := dialer.DialContext(ctx, "tcp", addr)
-			if err != nil {
-				// TODO blacklist address for a bit
-				// TODO hold error maybe?
-				// return nil, err
-				continue
+			if strings.HasPrefix(addr, "relay:") {
+				relayID := strings.Replace(addr, "relay:", "", 1)
+				// fmt.Println("dialing the relay")
+				relayConn, err := n.Dial(ctx, relayID)
+				if err != nil {
+					// TODO blacklist address for a bit
+					// TODO hold error maybe?
+					// return nil, err
+					continue
+				}
+				localAddress := peerAddress{
+					network: "tcp",
+					peerID:  n.registry.GetLocalPeerInfo().ID,
+				}
+				remoteAddress := peerAddress{
+					network: "tcp",
+					peerID:  peerID,
+				}
+				conn = NewAddressableConn(relayConn, localAddress, remoteAddress)
+				commands = append([]string{"relay"}, commands...)
+			} else {
+				addr = strings.Replace(addr, "tcp:", "", 1)
+				// fmt.Println("dial dialing new conn to", addr)
+				dialer := net.Dialer{Timeout: time.Second * 5}
+				newConn, err := dialer.DialContext(ctx, "tcp", addr)
+				if err != nil {
+					// TODO blacklist address for a bit
+					// TODO hold error maybe?
+					// return nil, err
+					continue
+				}
+				localAddress := peerAddress{
+					network: "tcp",
+					peerID:  n.registry.GetLocalPeerInfo().ID,
+				}
+				remoteAddress := peerAddress{
+					network: "tcp",
+					peerID:  peerID,
+				}
+				conn = NewAddressableConn(newConn, localAddress, remoteAddress)
+				commands = append([]string{"id", "yamux"}, commands...)
 			}
-			localAddress := peerAddress{
-				network: "tcp",
-				peerID:  n.registry.GetLocalPeerInfo().ID,
-			}
-			remoteAddress := peerAddress{
-				network: "tcp",
-				peerID:  peerID,
-			}
-			conn = NewAddressableConn(newConn, localAddress, remoteAddress)
 			break
 		}
 	}
@@ -85,12 +112,12 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 		return nil, ErrAllAddressesFailed
 	}
 
-	commands = append([]string{"id", "yamux"}, commands...)
 	finalConn, err := n.Select(conn, commands...)
 	if err != nil {
 		if err := conn.Close(); err != nil {
 			fmt.Println("could not close connection after failure to select")
 		}
+		fmt.Println("error selecting", err)
 		return nil, err
 	}
 
@@ -106,7 +133,7 @@ func (n *Net) Select(conn net.Conn, commands ...string) (net.Conn, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Dialer got token %s for command %s\n", string(token), command)
+		// fmt.Printf("Dialer got token %s for command %s\n", string(token), command)
 		if string(token) != "ok" {
 			return nil, errors.New("unexpected token response")
 		}
@@ -122,7 +149,7 @@ func (n *Net) Select(conn net.Conn, commands ...string) (net.Conn, error) {
 		if reusableConn, ok := newConn.(*reusableConn); ok {
 			go reusableConn.Accepted(n.accepted)
 			// TODO lock
-			fmt.Println("client storing reusable")
+			// fmt.Println("client storing reusable")
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
 		}
 		conn = newConn
@@ -141,7 +168,16 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 
 	devices := make(chan igd.Device)
 	go func() {
+
 		for device := range devices {
+			upnp := true
+			upnpFlag := os.Getenv("UPNP")
+			if upnpFlag != "" {
+				upnp, _ = strconv.ParseBool(upnpFlag)
+			}
+			if !upnp {
+				continue
+			}
 			externalAddress, err := device.GetExternalIPAddress()
 			if err != nil {
 				fmt.Println("could not get external ip")
@@ -161,6 +197,8 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 		log.Println("could not discover devices")
 	}
 
+	addresses = append(addresses, "relay:andromeda.nimona.io")
+	
 	n.registry.PutLocalPeerInfo(&PeerInfo{
 		ID:        n.registry.GetLocalPeerInfo().ID,
 		Addresses: addresses,
@@ -178,7 +216,7 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 	go func() {
 		closed = true
 		<-n.close
-		fmt.Println("Closing")
+		// fmt.Println("Closing")
 		tcpListener.Close()
 	}()
 
@@ -220,7 +258,7 @@ func (n *Net) HandleSelection(conn net.Conn) (net.Conn, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("selection handler got token", string(token))
+		// fmt.Println("selection handler got token", string(token))
 		handler, ok := n.handlers[string(token)]
 		if !ok {
 			if err := WriteToken(conn, []byte("error")); err != nil {
@@ -240,7 +278,7 @@ func (n *Net) HandleSelection(conn net.Conn) (net.Conn, error) {
 			go reusableConn.Accepted(n.accepted)
 			// TODO lock
 			// TODO check if remote addr is indeed a peer id
-			fmt.Println("server storing reusable")
+			// fmt.Println("server storing reusable")
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
 		}
 		conn = newConn
