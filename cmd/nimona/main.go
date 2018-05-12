@@ -60,6 +60,11 @@ func main() {
 
 	msh.RegisterHandler("wire", wre)
 
+	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
+		fmt.Printf("___ Got message from %s: %s\n", event.From, string(event.Payload))
+		return nil
+	})
+
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
@@ -267,6 +272,21 @@ func main() {
 		Help: "list protocols for local peer",
 	}
 
+	send := &ishell.Cmd{
+		Name: "send",
+		Func: func(c *ishell.Context) {
+			if len(c.Args) < 2 {
+				c.Println("Missing peer id or message")
+				return
+			}
+			ctx := context.Background()
+			msg := strings.Join(c.Args[1:], " ")
+			to := []string{c.Args[0]}
+			wre.Send(ctx, "msg", "msg", msg, to)
+		},
+		Help: "list protocols for local peer",
+	}
+
 	get := &ishell.Cmd{
 		Name: "get",
 		Help: "get resource",
@@ -299,6 +319,7 @@ func main() {
 	shell.AddCmd(get)
 	shell.AddCmd(put)
 	shell.AddCmd(list)
+	shell.AddCmd(send)
 
 	// when started with "exit" as first argument, assume non-interactive execution
 	if len(os.Args) > 1 && os.Args[1] == "exit" {
