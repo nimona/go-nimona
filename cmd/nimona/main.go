@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/wire"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"gopkg.in/abiosoft/ishell.v2"
 )
 
@@ -41,11 +39,6 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	httpPort := "26880"
-	if nhp := os.Getenv("HTTP_PORT"); nhp != "" {
-		httpPort = nhp
-	}
-
 	reg := mesh.NewRegisty(peerID)
 	msh := mesh.New(reg)
 
@@ -65,40 +58,13 @@ func main() {
 		return nil
 	})
 
-	router := gin.Default()
-	router.Use(cors.Default())
-	local := router.Group("/api/v1/local")
-	local.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, reg.GetLocalPeerInfo())
-	})
-	peers := router.Group("/api/v1/peers")
-	peers.GET("/", func(c *gin.Context) {
-		peers, err := reg.GetAllPeerInfo()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, peers)
-	})
-	values := router.Group("/api/v1/values")
-	values.GET("/", func(c *gin.Context) {
-		values, err := dht.GetAllValues()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, values)
-	})
-	providers := router.Group("/api/v1/providers")
-	providers.GET("/", func(c *gin.Context) {
-		providers, err := dht.GetAllProviders()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, providers)
-	})
-	go router.Run(":" + httpPort)
+	httpPort := "26880"
+	if nhp := os.Getenv("HTTP_PORT"); nhp != "" {
+		httpPort = nhp
+	}
+	httpAddress := ":" + httpPort
+	api := api.New(reg, dht)
+	go api.Serve(httpAddress)
 
 	shell := ishell.New()
 	shell.Printf("Nimona DHT (%s)\n", version)
