@@ -1,0 +1,94 @@
+<!doctype html>
+<html ng-app="demo">
+  <head>
+    <title>Nimona</title>
+    <link rel="stylesheet" href="./css/photon.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script src="index.js"></script>
+  </head>
+
+  <body ng-controller="Hello">
+    <div class="window">
+      
+      <header class="toolbar toolbar-header">
+        <h1 class="title">Nimona</h1>
+        <div class="toolbar-actions">
+          <div class="btn-group">
+            <button class="btn btn-default" ng-class="{active: page == 'local' || !page}" ng-click="page = 'local'" title="Local Peer">
+              <span class="icon icon-info-circled"></span>
+            </button>
+            <button class="btn btn-default" ng-class="{active: page == 'peers'}" ng-click="page = 'peers'" title="Peers">
+              <span class="icon icon-network"pan>
+            </button>
+            <button class="btn btn-default" ng-class="{active: page == 'values'}" ng-click="page = 'values'" title="Values">
+              <span class="icon icon-archive"pan>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="window-content" ng-show="page == 'local' || !page">
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Peer ID</td>
+              <td>{{ local.id }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="window-content" ng-show="page == 'peers'">
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th>Peers</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="peer in peers">
+              <td>{{ peer.id }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="window-content" ng-show="page == 'values'">
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="(key, value) in values">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="toolbar toolbar-footer">
+        <div class="toolbar-actions">
+          <button class="btn btn-default">
+            Quit
+          </button>
+      
+          <button class="btn btn-positive pull-right">
+            Running
+          </button>
+        </div>
+      </footer>
+
+    </div>
+  </body>
+
+</html>

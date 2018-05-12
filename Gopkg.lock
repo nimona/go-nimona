@@ -3,23 +3,30 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/NebulousLabs/fastrand"
+  name = "github.com/asticode/go-astilectron"
   packages = ["."]
-  revision = "60b615657d85339c105efb2170327a2d948d4b17"
+  revision = "dadc8983d828a6a8da4e97f254a4d4585b7ec148"
 
 [[projects]]
   branch = "master"
-  name = "github.com/NebulousLabs/go-upnp"
+  name = "github.com/asticode/go-astilog"
+  packages = ["."]
+  revision = "48409865148a0f397641b786ff35158bba19c48f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/asticode/go-astitools"
   packages = [
-    ".",
-    "goupnp",
-    "goupnp/dcps/internetgateway1",
-    "goupnp/httpu",
-    "goupnp/scpd",
-    "goupnp/soap",
-    "goupnp/ssdp"
+    "archive",
+    "context",
+    "exec",
+    "http",
+    "io",
+    "os",
+    "regexp",
+    "url"
   ]
-  revision = "29b680b06c82d044ebea91bf3069038eb562df2a"
+  revision = "703905c0a93e64daf1742aec1f82b5ea103ff177"
 
 [[projects]]
   name = "github.com/chzyer/readline"
@@ -97,6 +104,12 @@
   revision = "7e38e58719c33e0d44d585c4ab477a30f8cb82dd"
 
 [[projects]]
+  name = "github.com/julienschmidt/httprouter"
+  packages = ["."]
+  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
+  version = "v1.1"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -113,6 +126,12 @@
   name = "github.com/mohae/deepcopy"
   packages = ["."]
   revision = "c48cc78d482608239f6c4c92a4abd87eb8761c90"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -142,12 +161,6 @@
   ]
   revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
   version = "v1.2.0"
-
-[[projects]]
-  name = "github.com/teris-io/shortid"
-  packages = ["."]
-  revision = "6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33"
-  version = "v1.0"
 
 [[projects]]
   name = "github.com/ugorji/go"
@@ -183,22 +196,8 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "blake2b",
-    "ssh/terminal"
-  ]
+  packages = ["ssh/terminal"]
   revision = "d9133f5469342136e669e85192a26056b587f503"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset",
-    "websocket"
-  ]
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
   branch = "master"
@@ -208,30 +207,6 @@
     "windows"
   ]
   revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr"
-  ]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
   branch = "v2"
@@ -254,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5077373be1ac3f55bedfc1cad66a5ea4d93e813b977c4accf42551bf2b58b7cf"
+  inputs-digest = "c7ff1f0f441ac2714e060010ab05f46ec93e62746bafb2456641549a736e2c9f"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,7 +10,7 @@ import (
 )
 
 type API struct {
-	router *gin.Engine
+	Router *gin.Engine
 }
 
 func New(reg mesh.Registry, dht *dht.DHT) *API {
@@ -48,10 +48,10 @@ func New(reg mesh.Registry, dht *dht.DHT) *API {
 		c.JSON(http.StatusOK, providers)
 	})
 	return &API{
-		router: router,
+		Router: router,
 	}
 }
 
 func (api *API) Serve(address string) error {
-	return api.router.Run(address)
+	return api.Router.Run(address)
 }
