@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/nimona/go-nimona/api"
+	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/wire"
@@ -50,6 +52,7 @@ func main() {
 
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg)
+	blx, _ := blx.NewBlockExchange(wre)
 
 	msh.RegisterHandler("wire", wre)
 
@@ -253,6 +256,50 @@ func main() {
 		Help: "list protocols for local peer",
 	}
 
+	block := &ishell.Cmd{
+		Name: "block",
+		Help: "send blocks to peers",
+	}
+
+	blockFile := &ishell.Cmd{
+		Name: "file",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 2 {
+				c.Println("Peer and file missing")
+				return
+			}
+
+			toPeer := c.Args[0]
+			file := c.Args[1]
+
+			f, err := os.Open(file)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			data, err := ioutil.ReadAll(f)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			hsh, n, err := blx.Send(toPeer, data,
+				map[string][]byte{})
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
+		},
+		Help: "send a file to another peer",
+	}
+
+	block.AddCmd(blockFile)
+
 	get := &ishell.Cmd{
 		Name: "get",
 		Help: "get resource",
@@ -282,6 +329,7 @@ func main() {
 	list.AddCmd(listPeers)
 	list.AddCmd(listLocal)
 
+	shell.AddCmd(block)
 	shell.AddCmd(get)
 	shell.AddCmd(put)
 	shell.AddCmd(list)
