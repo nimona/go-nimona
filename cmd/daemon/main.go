@@ -349,22 +349,20 @@ func main() {
 				c.Println(err)
 				return
 			}
-			c.Println("open")
 
 			data, err := ioutil.ReadAll(f)
 			if err != nil {
 				c.Println(err)
 				return
 			}
-			c.Println("read")
 
-			err = blx.Send(toPeer, data,
+			hsh, n, err := blx.Send(toPeer, data,
 				map[string][]byte{})
 			if err != nil {
 				c.Println(err)
 				return
 			}
-			c.Println("Done")
+			c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
 		},
 		Help: "send a file to another peer",
 	}

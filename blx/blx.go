@@ -1,8 +1,6 @@
 package blx
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -88,56 +86,34 @@ func (blx *blockExchange) Get(key string, recipient string) (
 }
 
 func (blx *blockExchange) Send(recipient string, data []byte,
-	meta map[string][]byte) error {
+	meta map[string][]byte) (string, int, error) {
 
 	hs := blx.hash(data)
-	fmt.Println("------> ", hs)
 
-	bf := bufio.NewReader(bytes.NewReader(data))
-
-	for {
-		// Reads until EOF
-		rd := make([]byte, 4096, 4096)
-		n, err := bf.Read(rd)
-		if err != nil {
-			return err
-		}
-
-		chunck := Chunk{
-			BlockKey: hs,
-			ChunkKey: blx.hash(rd),
-			Data:     rd,
-		}
-
-		block := &Block{
-			Key:  hs,
-			Meta: meta,
-			Chunks: []Chunk{
-				chunck,
-			},
-		}
-
-		resp := payloadTransferBlock{
-			Block: block,
-		}
-		fmt.Println(n)
-		blx.storage.Store(block.Key, block)
-
-		ctx := context.Background()
-		err = blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-			[]string{recipient})
-		if err != nil {
-			return err
-		}
+	block := Block{
+		Key:  hs,
+		Meta: meta,
+		Data: data,
 	}
 
-	return nil
+	resp := payloadTransferBlock{
+		Block: &block,
+	}
+
+	// blx.storage.Store(block.Key, block)
+
+	ctx := context.Background()
+	err := blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
+		[]string{recipient})
+	if err != nil {
+		return "", 0, err
+	}
+
+	return hs, len(data), nil
 }
 
 func (b *blockExchange) hash(data []byte) string {
-	// br := bufio.NewReader(r)
 	h := sha256.New()
-
 	h.Write(data)
 
 	return string(hex.EncodeToString(h.Sum(nil)))
