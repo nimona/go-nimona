@@ -1,14 +1,13 @@
 package mesh
 
 import (
-	"fmt"
 	"net"
 )
 
 type ID struct{}
 
 func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
-	fmt.Println("> ID")
+	// fmt.Println("> ID")
 	localPeerID := conn.LocalAddr().String()
 	if err := WriteToken(conn, []byte(localPeerID)); err != nil {
 		return nil, err
@@ -30,7 +29,7 @@ func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 }
 
 func (id *ID) Handle(conn net.Conn) (net.Conn, error) {
-	fmt.Println("< ID")
+	// fmt.Println("< ID")
 	remotePeerID, err := ReadToken(conn)
 	if err != nil {
 		return nil, err

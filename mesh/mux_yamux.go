@@ -1,7 +1,6 @@
 package mesh
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/hashicorp/yamux"
@@ -10,7 +9,7 @@ import (
 type Yamux struct{}
 
 func (mux *Yamux) Initiate(conn net.Conn) (net.Conn, error) {
-	fmt.Println("> YAMUX")
+	// fmt.Println("> YAMUX")
 
 	session, err := yamux.Client(conn, nil)
 	if err != nil {
@@ -46,7 +45,7 @@ func (mux *Yamux) Initiate(conn net.Conn) (net.Conn, error) {
 }
 
 func (mux *Yamux) Handle(conn net.Conn) (net.Conn, error) {
-	fmt.Println("< YAMUX")
+	// fmt.Println("< YAMUX")
 
 	session, err := yamux.Server(conn, nil)
 	if err != nil {
