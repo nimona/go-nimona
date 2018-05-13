@@ -5,6 +5,11 @@ const (
 	PayloadTypeRequestBlock         = "request-block"
 )
 
+const (
+	StatusOK = iota
+	StatusNotFound
+)
+
 type Block struct {
 	Key  string            `json:"key"`
 	Meta map[string][]byte `json:"meta,omitempty"`
@@ -12,9 +17,13 @@ type Block struct {
 }
 
 type payloadTransferBlock struct {
-	Block *Block `json:"block,omitempty"`
+	Status int    `json: status`
+	Nonce  string `json: nonce`
+	Block  *Block `json:"block,omitempty"`
 }
 
 type payloadTransferRequestBlock struct {
-	Key string `json:"key,omitempty"`
+	Nonce    string `json: nonce`
+	Key      string `json:"key,omitempty"`
+	response chan interface{}
 }
