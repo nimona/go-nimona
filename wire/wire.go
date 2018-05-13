@@ -1,7 +1,6 @@
 package wire
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -65,10 +64,13 @@ func (m *wire) Initiate(conn net.Conn) (net.Conn, error) {
 }
 
 func (m *wire) Handle(conn net.Conn) (net.Conn, error) {
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		line := scanner.Text()
-		m.Process([]byte(line))
+	for {
+		line, err := mesh.ReadToken(conn)
+		if err != nil {
+			// TODO close?
+			return nil, err
+		}
+		m.Process(line)
 	}
 	return conn, nil
 }
@@ -116,25 +118,20 @@ func (m *wire) Send(ctx context.Context, extention, payloadType string, payload 
 		return nil
 	}
 
-	bs, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
 	for _, recipient := range to {
 		if recipient == "" {
 			continue
 		}
-		event := &Message{
+		msg := &messageOut{
 			Version:     *messagingProtocolVersionCanon,
 			Codec:       messagingProtocolCodecJSON,
 			Extension:   extention,
 			PayloadType: payloadType,
-			Payload:     bs,
+			Payload:     payload,
 			From:        m.registry.GetLocalPeerInfo().ID,
 			To:          recipient,
 		}
-		if err := m.sendMessage(ctx, event); err != nil {
+		if err := m.sendMessage(ctx, msg); err != nil {
 			// TODO Log error
 		}
 	}
@@ -150,7 +147,7 @@ func (m *wire) GetAddresses() []string {
 	return []string{m.Name()}
 }
 
-func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
+func (m *wire) sendMessage(ctx context.Context, msg *messageOut) error {
 	logger := m.logger.With(zap.String("peerID", msg.To))
 	stream, ok := m.streams[msg.To]
 	if !ok || stream == nil {
@@ -175,8 +172,7 @@ func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
 		return err
 	}
 
-	b = append(b, '\n')
-	if _, err := stream.Write(b); err != nil {
+	if err := mesh.WriteToken(stream, b); err != nil {
 		m.logger.Warn("could not write outgoing message", zap.Error(err))
 		delete(m.streams, msg.To)
 		stream.Close()

@@ -29,7 +29,7 @@ func WriteToken(w io.Writer, bs []byte) error {
 	vb := make([]byte, 10)
 	n := binary.PutUvarint(vb, uint64(len(bs)))
 	wb := append(vb[:n], bs...)
-	if _, err := w.Write(wb); err != nil {
+	if _, err := bw.Write(wb); err != nil {
 		return err
 	}
 
