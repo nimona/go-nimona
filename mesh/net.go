@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/emersion/go-upnp-igd"
@@ -19,11 +20,12 @@ var (
 )
 
 type Net struct {
-	registry Registry
-	accepted chan net.Conn
-	reusable map[string]*reusableConn
-	handlers map[string]Handler
-	close    chan bool
+	registry     Registry
+	accepted     chan net.Conn
+	reusableLock sync.RWMutex
+	reusable     map[string]*reusableConn
+	handlers     map[string]Handler
+	close        chan bool
 }
 
 func New(registry Registry) *Net {
@@ -52,6 +54,8 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 		return nil, err
 	}
 	var conn net.Conn
+
+	n.reusableLock.RLock()
 	if reusableConn, ok := n.reusable[peerID]; ok {
 		newConn, err := reusableConn.NewConn()
 		if err != nil {
@@ -61,6 +65,7 @@ func (n *Net) Dial(ctx context.Context, peerID string, commands ...string) (net.
 			conn = newConn
 		}
 	}
+	n.reusableLock.RUnlock()
 	if conn == nil {
 		for _, addr := range peerInfo.Addresses {
 			if strings.HasPrefix(addr, "relay:") {
@@ -150,7 +155,9 @@ func (n *Net) Select(conn net.Conn, commands ...string) (net.Conn, error) {
 			go reusableConn.Accepted(n.accepted)
 			// TODO lock
 			// fmt.Println("client storing reusable")
+			n.reusableLock.Lock()
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
+			n.reusableLock.Unlock()
 		}
 		conn = newConn
 	}
@@ -164,11 +171,12 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 		return nil, "", err
 	}
 	port := tcpListener.Addr().(*net.TCPAddr).Port
+
+	lock := sync.Mutex{}
 	addresses := GetAddresses(tcpListener)
 
 	devices := make(chan igd.Device)
 	go func() {
-
 		for device := range devices {
 			upnp := true
 			upnpFlag := os.Getenv("UPNP")
@@ -188,7 +196,9 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				fmt.Println("could not add port mapping", err)
 			} else {
+				lock.Lock()
 				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
+				lock.Unlock()
 			}
 		}
 	}()
@@ -197,8 +207,10 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 		log.Println("could not discover devices")
 	}
 
+	lock.Lock()
 	addresses = append(addresses, "relay:andromeda.nimona.io")
-	
+	lock.Unlock()
+
 	n.registry.PutLocalPeerInfo(&PeerInfo{
 		ID:        n.registry.GetLocalPeerInfo().ID,
 		Addresses: addresses,
@@ -279,7 +291,9 @@ func (n *Net) HandleSelection(conn net.Conn) (net.Conn, error) {
 			// TODO lock
 			// TODO check if remote addr is indeed a peer id
 			// fmt.Println("server storing reusable")
+			n.reusableLock.Lock()
 			n.reusable[conn.RemoteAddr().String()] = reusableConn
+			n.reusableLock.Unlock()
 		}
 		conn = newConn
 	}
