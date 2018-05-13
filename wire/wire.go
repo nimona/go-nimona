@@ -1,18 +1,16 @@
 package wire
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 
 	"github.com/coreos/go-semver/semver"
-
 	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/mesh"
-	"github.com/nimona/go-nimona/net"
 )
 
 type EventHandler func(event *Message) error
@@ -26,7 +24,7 @@ const (
 var messagingProtocolVersionCanon = semver.New(messagingProtocolVersion)
 
 type Wire interface {
-	net.Protocol
+	mesh.Handler
 	HandleExtensionEvents(extension string, h EventHandler) error
 	Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error
 }
@@ -47,7 +45,7 @@ func NewWire(ms mesh.Mesh, reg mesh.Registry) (Wire, error) {
 		registry: reg,
 		streams:  map[string]io.ReadWriteCloser{},
 		handlers: map[string]EventHandler{},
-		logger:   net.Logger(ctx).Named("wire"),
+		logger:   mesh.Logger(ctx).Named("wire"),
 	}
 
 	return m, nil
@@ -61,28 +59,23 @@ func (m *wire) HandleExtensionEvents(extension string, h EventHandler) error {
 	return nil
 }
 
-// Negotiate will be called after all the other protocol have been processed
-func (m *wire) Negotiate(fn net.NegotiatorFunc) net.NegotiatorFunc {
-	// one time scope setup area for middleware
-	return func(ctx context.Context, c net.Conn) error {
-		return fn(ctx, c)
-	}
+func (m *wire) Initiate(conn net.Conn) (net.Conn, error) {
+	return conn, nil
 }
 
-// Handle adds the base protocols for transports
-func (m *wire) Handle(fn net.HandlerFunc) net.HandlerFunc {
-	// one time scope setup area for middleware
-	return func(ctx context.Context, c net.Conn) error {
-		scanner := bufio.NewScanner(c)
-		for scanner.Scan() {
-			line := scanner.Text()
-			m.Process(ctx, []byte(line))
+func (m *wire) Handle(conn net.Conn) (net.Conn, error) {
+	for {
+		line, err := mesh.ReadToken(conn)
+		if err != nil {
+			// TODO close?
+			return nil, err
 		}
-		return nil
+		m.Process(line)
 	}
+	return conn, nil
 }
 
-func (m *wire) Process(ctx context.Context, bs []byte) error {
+func (m *wire) Process(bs []byte) error {
 	msg := &Message{}
 	if err := json.Unmarshal(bs, &msg); err != nil {
 		return err
@@ -125,25 +118,20 @@ func (m *wire) Send(ctx context.Context, extention, payloadType string, payload 
 		return nil
 	}
 
-	bs, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
 	for _, recipient := range to {
 		if recipient == "" {
 			continue
 		}
-		event := &Message{
+		msg := &messageOut{
 			Version:     *messagingProtocolVersionCanon,
 			Codec:       messagingProtocolCodecJSON,
 			Extension:   extention,
 			PayloadType: payloadType,
-			Payload:     bs,
+			Payload:     payload,
 			From:        m.registry.GetLocalPeerInfo().ID,
 			To:          recipient,
 		}
-		if err := m.sendMessage(ctx, event); err != nil {
+		if err := m.sendMessage(ctx, msg); err != nil {
 			// TODO Log error
 		}
 	}
@@ -159,13 +147,13 @@ func (m *wire) GetAddresses() []string {
 	return []string{m.Name()}
 }
 
-func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
+func (m *wire) sendMessage(ctx context.Context, msg *messageOut) error {
 	logger := m.logger.With(zap.String("peerID", msg.To))
 	stream, ok := m.streams[msg.To]
 	if !ok || stream == nil {
-		_, conn, err := m.mesh.Dial(ctx, msg.To, messagingProtocolName)
+		conn, err := m.mesh.Dial(ctx, msg.To, messagingProtocolName)
 		if err != nil {
-			m.logger.Warn("could not dial to peer",
+			m.logger.Info("could not dial to peer",
 				zap.Error(err),
 				zap.String("peerID", msg.To),
 				zap.Error(err),
@@ -184,8 +172,7 @@ func (m *wire) sendMessage(ctx context.Context, msg *Message) error {
 		return err
 	}
 
-	b = append(b, '\n')
-	if _, err := stream.Write(b); err != nil {
+	if err := mesh.WriteToken(stream, b); err != nil {
 		m.logger.Warn("could not write outgoing message", zap.Error(err))
 		delete(m.streams, msg.To)
 		stream.Close()

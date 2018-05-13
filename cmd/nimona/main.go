@@ -4,19 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
-	"github.com/nimona/go-nimona/net"
-	"github.com/nimona/go-nimona/net/protocol"
 	"github.com/nimona/go-nimona/wire"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"gopkg.in/abiosoft/ishell.v2"
 )
 
@@ -26,8 +22,13 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerIDs = []string{
-	"andromeda.nimona.io",
+var bootstrapPeerInfos = []mesh.PeerInfo{
+	mesh.PeerInfo{
+		ID: "andromeda.nimona.io",
+		Addresses: []string{
+			"tcp:andromeda.nimona.io:26800",
+		},
+	},
 }
 
 func main() {
@@ -36,86 +37,34 @@ func main() {
 		log.Fatal("Missing PEER_ID")
 	}
 
+	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
+
+	reg := mesh.NewRegisty(peerID)
+	msh := mesh.New(reg)
+
+	for _, peerInfo := range bootstrapPeerInfos {
+		reg.PutPeerInfo(&peerInfo)
+	}
+
+	msh.Listen(fmt.Sprintf(":%d", port))
+
+	wre, _ := wire.NewWire(msh, reg)
+	dht, _ := dht.NewDHT(wre, reg)
+
+	msh.RegisterHandler("wire", wre)
+
+	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
+		fmt.Printf("___ Got message from %s: %s\n", event.From, string(event.Payload))
+		return nil
+	})
+
 	httpPort := "26880"
 	if nhp := os.Getenv("HTTP_PORT"); nhp != "" {
 		httpPort = nhp
 	}
-
-	bsp := []string{}
-	rls := []string{}
-	port := 0
-
-	bootstrap := isBootstrap(peerID)
-
-	var tcp net.Transport
-	if bootstrap {
-		fmt.Println("Starting as bootstrap node")
-		port = 26801
-	} else {
-		bsp = bootstrapPeerIDs
-	}
-
-	if skipUPNP, _ := strconv.ParseBool(os.Getenv("SKIP_UPNP")); skipUPNP {
-		tcp = net.NewTransportTCP("0.0.0.0", port)
-	} else {
-		tcp = net.NewTransportTCPWithUPNP("0.0.0.0", port)
-	}
-
-	ctx := context.Background()
-	net := net.New(ctx)
-	rtr := protocol.NewRouter()
-
-	rly := protocol.NewRelayProtocol(net, rls)
-	mux := protocol.NewYamux()
-	reg, _ := mesh.NewRegisty(peerID)
-	msh, _ := mesh.NewMesh(net, reg)
-	wre, _ := wire.NewWire(msh, reg)
-	dht, _ := dht.NewDHT(wre, reg, peerID, true, bsp...)
-
-	net.AddProtocols(rly)
-	net.AddProtocols(mux)
-	net.AddProtocols(wre)
-
-	rtr.AddRoute(wre)
-	// rtr.AddRoute(rly)
-
-	net.AddTransport(mux, rtr)
-	net.AddTransport(tcp, mux, rtr)
-
-	router := gin.Default()
-	router.Use(cors.Default())
-	local := router.Group("/api/v1/local")
-	local.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, reg.GetLocalPeerInfo())
-	})
-	peers := router.Group("/api/v1/peers")
-	peers.GET("/", func(c *gin.Context) {
-		peers, err := reg.GetAllPeerInfo()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, peers)
-	})
-	values := router.Group("/api/v1/values")
-	values.GET("/", func(c *gin.Context) {
-		values, err := dht.GetAllValues()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, values)
-	})
-	providers := router.Group("/api/v1/providers")
-	providers.GET("/", func(c *gin.Context) {
-		providers, err := dht.GetAllProviders()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, providers)
-	})
-	go router.Run(":" + httpPort)
+	httpAddress := ":" + httpPort
+	api := api.New(reg, dht)
+	go api.Serve(httpAddress)
 
 	shell := ishell.New()
 	shell.Printf("Nimona DHT (%s)\n", version)
@@ -266,11 +215,8 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
-				for name, addresses := range peer.Protocols {
-					c.Printf("  - %s\n", name)
-					for _, address := range addresses {
-						c.Printf("     - %s\n", address)
-					}
+				for _, address := range peer.Addresses {
+					c.Printf("     - %s\n", address)
 				}
 			}
 		},
@@ -285,12 +231,24 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
-			for name, addresses := range peer.Protocols {
-				c.Printf("  - %s\n", name)
-				for _, address := range addresses {
-					c.Printf("     - %s\n", address)
-				}
+			for _, address := range peer.Addresses {
+				c.Printf("     - %s\n", address)
 			}
+		},
+		Help: "list protocols for local peer",
+	}
+
+	send := &ishell.Cmd{
+		Name: "send",
+		Func: func(c *ishell.Context) {
+			if len(c.Args) < 2 {
+				c.Println("Missing peer id or message")
+				return
+			}
+			ctx := context.Background()
+			msg := strings.Join(c.Args[1:], " ")
+			to := []string{c.Args[0]}
+			wre.Send(ctx, "msg", "msg", msg, to)
 		},
 		Help: "list protocols for local peer",
 	}
@@ -327,6 +285,7 @@ func main() {
 	shell.AddCmd(get)
 	shell.AddCmd(put)
 	shell.AddCmd(list)
+	shell.AddCmd(send)
 
 	// when started with "exit" as first argument, assume non-interactive execution
 	if len(os.Args) > 1 && os.Args[1] == "exit" {
@@ -337,13 +296,4 @@ func main() {
 		// teardown
 		shell.Close()
 	}
-}
-
-func isBootstrap(peerID string) bool {
-	for _, bpi := range bootstrapPeerIDs {
-		if bpi == peerID {
-			return true
-		}
-	}
-	return false
 }

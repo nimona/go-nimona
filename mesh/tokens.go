@@ -1,17 +1,10 @@
-package net
+package mesh
 
 import (
 	"bufio"
 	"encoding/binary"
 	"io"
-
-	shortid "github.com/teris-io/shortid"
 )
-
-func generateReqID() string {
-	rid, _ := shortid.Generate()
-	return rid
-}
 
 // ReadToken that was written with WriteToken
 func ReadToken(r io.Reader) ([]byte, error) {
@@ -36,7 +29,7 @@ func WriteToken(w io.Writer, bs []byte) error {
 	vb := make([]byte, 10)
 	n := binary.PutUvarint(vb, uint64(len(bs)))
 	wb := append(vb[:n], bs...)
-	if _, err := w.Write(wb); err != nil {
+	if _, err := bw.Write(wb); err != nil {
 		return err
 	}
 

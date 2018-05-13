@@ -1,4 +1,4 @@
-package net
+package mesh
 
 import (
 	"context"
@@ -30,10 +30,11 @@ func init() {
 // Logger returns a zap logger with as much context as possible
 func Logger(ctx context.Context) *zap.Logger {
 	nl := DefaultLogger
-	if ctx != nil {
-		if rid, ok := ctx.Value(RequestIDKey{}).(string); ok {
-			nl = nl.With(zap.String("req.id", rid))
-		}
-	}
+	// TODO add request id
+	// if ctx != nil {
+	// 	if rid, ok := ctx.Value(RequestIDKey{}).(string); ok {
+	// 		nl = nl.With(zap.String("req.id", rid))
+	// 	}
+	// }
 	return nl
 }

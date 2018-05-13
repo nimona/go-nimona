@@ -39,6 +39,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/emersion/go-upnp-igd"
+  packages = ["."]
+  revision = "6fb51d2a2a533cabb08119a9d05fe3f6b4c513f3"
+
+[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
   revision = "507f6050b8568533fb3f5504de8e5205fa62a114"

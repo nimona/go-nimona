@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -26,29 +27,32 @@ type Registry interface {
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
-func NewRegisty(peerID string) (Registry, error) {
+func NewRegisty(peerID string) Registry {
 	reg := &registry{
 		localPeer: &PeerInfo{
 			ID:        peerID,
-			Protocols: map[string][]string{},
+			Addresses: []string{},
 		},
 		peers: map[string]*PeerInfo{},
 	}
 
-	return reg, nil
+	return reg
 }
 
 type registry struct {
+	sync.RWMutex
 	peers     map[string]*PeerInfo
 	localPeer *PeerInfo
 }
 
 func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
+	reg.Lock()
+	defer reg.Unlock()
 	if reg.localPeer.ID == peerInfo.ID {
 		return ErrCannotPutLocalPeerInfo
 	}
 
-	if peerInfo.ID == "" || len(peerInfo.Protocols) == 0 {
+	if peerInfo.ID == "" || len(peerInfo.Addresses) == 0 {
 		return nil
 	}
 
@@ -57,17 +61,23 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 }
 
 func (reg *registry) GetLocalPeerInfo() *PeerInfo {
+	reg.RLock()
+	defer reg.RUnlock()
 	newPeerInfo := &PeerInfo{}
 	copier.Copy(newPeerInfo, reg.localPeer)
 	return newPeerInfo
 }
 
 func (reg *registry) PutLocalPeerInfo(peerInfo *PeerInfo) error {
+	reg.Lock()
+	defer reg.Unlock()
 	reg.localPeer = peerInfo
 	return nil
 }
 
 func (reg *registry) GetPeerInfo(peerID string) (*PeerInfo, error) {
+	reg.RLock()
+	defer reg.RUnlock()
 	peerInfo, ok := reg.peers[peerID]
 	if !ok {
 		return nil, ErrNotKnown
@@ -79,6 +89,8 @@ func (reg *registry) GetPeerInfo(peerID string) (*PeerInfo, error) {
 }
 
 func (reg *registry) GetAllPeerInfo() ([]*PeerInfo, error) {
+	reg.RLock()
+	defer reg.RUnlock()
 	newPeerInfos := []*PeerInfo{}
 	for _, peerInfo := range reg.peers {
 		newPeerInfo := &PeerInfo{}

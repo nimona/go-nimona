@@ -3,7 +3,6 @@ package dht
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -34,41 +33,29 @@ type DHT struct {
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pr mesh.Registry, peerID string, refreshBuckets bool, bootstrapPeerIDs ...string) (*DHT, error) {
+func NewDHT(wr wire.Wire, pr mesh.Registry) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
-		peerID:         peerID,
-		store:          store,
-		wire:           wr,
-		registry:       pr,
-		queries:        sync.Map{},
-		refreshBuckets: refreshBuckets,
-	}
-
-	for _, peerID := range bootstrapPeerIDs {
-		nd.registry.PutPeerInfo(&mesh.PeerInfo{
-			ID: peerID,
-			Protocols: map[string][]string{
-				"wire": []string{
-					fmt.Sprintf("tcp:%s:26801/yamux/router/wire", peerID),
-				},
-			},
-		})
+		store:    store,
+		wire:     wr,
+		registry: pr,
+		queries:  sync.Map{},
 	}
 
 	wr.HandleExtensionEvents("dht", nd.handleMessage)
 
 	go nd.refresh()
+
 	return nd, nil
 }
 
 func (nd *DHT) refresh() {
 	// TODO our init process is a bit messed up and registry doesn't know
 	// about the peer's protocols instantly
-	for len(nd.registry.GetLocalPeerInfo().Protocols) == 0 {
+	for len(nd.registry.GetLocalPeerInfo().Addresses) == 0 {
 		time.Sleep(time.Millisecond * 250)
 	}
 	for {
