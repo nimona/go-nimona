@@ -175,6 +175,37 @@ func main() {
 		Help: "get peers providing a value from the dht",
 	}
 
+	getBlock := &ishell.Cmd{
+		Name:    "blocks",
+		Aliases: []string{"block"},
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 1 {
+				c.Println("Missing key peer")
+				return
+			}
+
+			peer := ""
+
+			if len(c.Args) == 2 {
+				peer = c.Args[1]
+			}
+
+			blockHash := c.Args[0]
+
+			block, err := blx.Get(blockHash, peer)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			c.Printf("Received block of %d bytes length\n", len(block.Data))
+		},
+		Help: "get peers providing a value from the dht",
+	}
+
 	listProviders := &ishell.Cmd{
 		Name:    "providers",
 		Aliases: []string{"provider"},
@@ -307,6 +338,7 @@ func main() {
 
 	get.AddCmd(getValue)
 	get.AddCmd(getProvider)
+	get.AddCmd(getBlock)
 	// get.AddCmd(getPeer)
 
 	put := &ishell.Cmd{
