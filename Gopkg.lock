@@ -2,26 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/NebulousLabs/fastrand"
-  packages = ["."]
-  revision = "60b615657d85339c105efb2170327a2d948d4b17"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/NebulousLabs/go-upnp"
-  packages = [
-    ".",
-    "goupnp",
-    "goupnp/dcps/internetgateway1",
-    "goupnp/httpu",
-    "goupnp/scpd",
-    "goupnp/soap",
-    "goupnp/ssdp"
-  ]
-  revision = "29b680b06c82d044ebea91bf3069038eb562df2a"
-
-[[projects]]
   name = "github.com/chzyer/readline"
   packages = ["."]
   revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
@@ -121,6 +101,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
@@ -142,12 +128,6 @@
   ]
   revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
   version = "v1.2.0"
-
-[[projects]]
-  name = "github.com/teris-io/shortid"
-  packages = ["."]
-  revision = "6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33"
-  version = "v1.0"
 
 [[projects]]
   name = "github.com/ugorji/go"
@@ -183,22 +163,8 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "blake2b",
-    "ssh/terminal"
-  ]
+  packages = ["ssh/terminal"]
   revision = "d9133f5469342136e669e85192a26056b587f503"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset",
-    "websocket"
-  ]
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
   branch = "master"
@@ -208,30 +174,6 @@
     "windows"
   ]
   revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr"
-  ]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
   branch = "v2"
@@ -254,6 +196,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5077373be1ac3f55bedfc1cad66a5ea4d93e813b977c4accf42551bf2b58b7cf"
+  inputs-digest = "94eb6b10130fece05501446725bc0c1e6829c93d5d5be9ebe47f8400926cd1e1"
   solver-name = "gps-cdcl"
   solver-version = 1

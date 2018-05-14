@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/nimona/go-nimona/api"
+	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/mesh"
 	"github.com/nimona/go-nimona/wire"
@@ -50,6 +52,7 @@ func main() {
 
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg)
+	blx, _ := blx.NewBlockExchange(wre)
 
 	msh.RegisterHandler("wire", wre)
 
@@ -172,6 +175,37 @@ func main() {
 		Help: "get peers providing a value from the dht",
 	}
 
+	getBlock := &ishell.Cmd{
+		Name:    "blocks",
+		Aliases: []string{"block"},
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 1 {
+				c.Println("Missing key peer")
+				return
+			}
+
+			peer := ""
+
+			if len(c.Args) == 2 {
+				peer = c.Args[1]
+			}
+
+			blockHash := c.Args[0]
+
+			block, err := blx.Get(blockHash, peer)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			c.Printf("Received block of %d bytes length\n", len(block.Data))
+		},
+		Help: "get peers providing a value from the dht",
+	}
+
 	listProviders := &ishell.Cmd{
 		Name:    "providers",
 		Aliases: []string{"provider"},
@@ -223,6 +257,24 @@ func main() {
 		Help: "list all peers stored in our local dht",
 	}
 
+	listBlocks := &ishell.Cmd{
+		Name: "blocks",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			blocks, err := blx.GetLocalBlocks()
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			for _, block := range blocks {
+				c.Printf("     - %s\n", *block)
+			}
+		},
+		Help: "list all blocks in local storage",
+	}
+
 	listLocal := &ishell.Cmd{
 		Name: "local",
 		Func: func(c *ishell.Context) {
@@ -253,6 +305,50 @@ func main() {
 		Help: "list protocols for local peer",
 	}
 
+	block := &ishell.Cmd{
+		Name: "block",
+		Help: "send blocks to peers",
+	}
+
+	blockFile := &ishell.Cmd{
+		Name: "file",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			if len(c.Args) < 2 {
+				c.Println("Peer and file missing")
+				return
+			}
+
+			toPeer := c.Args[0]
+			file := c.Args[1]
+
+			f, err := os.Open(file)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			data, err := ioutil.ReadAll(f)
+			if err != nil {
+				c.Println(err)
+				return
+			}
+
+			hsh, n, err := blx.Send(toPeer, data,
+				map[string][]byte{})
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
+		},
+		Help: "send a file to another peer",
+	}
+
+	block.AddCmd(blockFile)
+
 	get := &ishell.Cmd{
 		Name: "get",
 		Help: "get resource",
@@ -260,6 +356,7 @@ func main() {
 
 	get.AddCmd(getValue)
 	get.AddCmd(getProvider)
+	get.AddCmd(getBlock)
 	// get.AddCmd(getPeer)
 
 	put := &ishell.Cmd{
@@ -281,7 +378,9 @@ func main() {
 	list.AddCmd(listProviders)
 	list.AddCmd(listPeers)
 	list.AddCmd(listLocal)
+	list.AddCmd(listBlocks)
 
+	shell.AddCmd(block)
 	shell.AddCmd(get)
 	shell.AddCmd(put)
 	shell.AddCmd(list)

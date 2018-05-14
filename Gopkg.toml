@@ -7,16 +7,8 @@
   version = "1.2.0"
 
 [[constraint]]
-  name = "github.com/teris-io/shortid"
-  version = "1.0.0"
-
-[[constraint]]
   name = "go.uber.org/zap"
   version = "1.7.1"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
 
 [[constraint]]
   branch = "master"
@@ -29,3 +21,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/jinzhu/copier"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.2.0"
