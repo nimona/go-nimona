@@ -2,8 +2,6 @@ package mesh
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
@@ -42,7 +40,7 @@ func LoadOrCreatePrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
 	if keyExists {
 		// load the private key
 		var errLoadingKey error
-		privateKey, errLoadingKey = loadPrivateKey(keyPath)
+		privateKey, errLoadingKey = ethcrypto.LoadECDSA(keyPath)
 		if errLoadingKey != nil {
 			return nil, errLoadingKey
 		}
@@ -50,22 +48,17 @@ func LoadOrCreatePrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
 		log.Printf("* Key path does not exist, creating a key and storing it in '%s'\n", keyPath)
 		// generate key pair if we have not been given one
 		var errGeneratingPrivateKey error
-		privateKey, errGeneratingPrivateKey = generatePrivateKey()
+		privateKey, errGeneratingPrivateKey = ethcrypto.GenerateKey()
 		if errGeneratingPrivateKey != nil {
 			return nil, errGeneratingPrivateKey
 		}
 	}
 
 	if keyExists == false {
-		storePrivateKey(privateKey, keyPath)
+		ethcrypto.SaveECDSA(keyPath, privateKey)
 	}
 
 	return privateKey, nil
-}
-
-func generatePrivateKey() (*ecdsa.PrivateKey, error) {
-	pubkeyCurve := elliptic.P521()                     //see http://golang.org/pkg/crypto/elliptic/#P521
-	return ecdsa.GenerateKey(pubkeyCurve, rand.Reader) // this generates a public & private key pair
 }
 
 func storePrivateKey(privateKey *ecdsa.PrivateKey, keyPath string) error {
@@ -107,8 +100,9 @@ func loadPrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
 }
 
 func Thumbprint(key *ecdsa.PrivateKey) string {
+	pk := key.PublicKey
 	h := sha1.New()
-	ms := ethcrypto.FromECDSAPub(key.Public())
+	ms := ethcrypto.FromECDSAPub(&pk)
 	h.Write(ms)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)

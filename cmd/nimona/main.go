@@ -37,8 +37,12 @@ var bootstrapPeerInfos = []mesh.PeerInfo{
 
 func main() {
 	usr, _ := user.Current()
-	keyPath := path.Join(usr.HomeDir, ".nimona", ".key.pem")
+	configPath := path.Join(usr.HomeDir, ".nimona")
+	if err := os.MkdirAll(configPath, 0777); err != nil {
+		log.Fatal("could not create config dir", err)
+	}
 
+	keyPath := path.Join(configPath, "key")
 	privateKey, err := mesh.LoadOrCreatePrivateKey(keyPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
