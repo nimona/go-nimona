@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
+	"path"
 	"strconv"
 	"strings"
 
@@ -34,14 +36,17 @@ var bootstrapPeerInfos = []mesh.PeerInfo{
 }
 
 func main() {
-	peerID := os.Getenv("PEER_ID")
-	if peerID == "" {
-		log.Fatal("Missing PEER_ID")
+	usr, _ := user.Current()
+	keyPath := path.Join(usr.HomeDir, ".nimona", ".key.pem")
+
+	privateKey, err := mesh.LoadOrCreatePrivateKey(keyPath)
+	if err != nil {
+		log.Fatal("could not load key", err)
 	}
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty(peerID)
+	reg := mesh.NewRegisty(privateKey)
 	msh := mesh.New(reg)
 
 	for _, peerInfo := range bootstrapPeerInfos {

@@ -1,6 +1,7 @@
 package mesh
 
 import (
+	"crypto/ecdsa"
 	"errors"
 	"sync"
 	"time"
@@ -27,7 +28,8 @@ type Registry interface {
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
-func NewRegisty(peerID string) Registry {
+func NewRegisty(key *ecdsa.PrivateKey) Registry {
+	peerID := Thumbprint(key)
 	reg := &registry{
 		localPeer: &PeerInfo{
 			ID:        peerID,

@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/btcsuite/btcd"
+  packages = ["btcec"]
+  revision = "675abc5df3c5531bc741b56a765e35623459da6d"
+
+[[projects]]
   name = "github.com/chzyer/readline"
   packages = ["."]
   revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
@@ -23,6 +29,20 @@
   name = "github.com/emersion/go-upnp-igd"
   packages = ["."]
   revision = "6fb51d2a2a533cabb08119a9d05fe3f6b4c513f3"
+
+[[projects]]
+  name = "github.com/ethereum/go-ethereum"
+  packages = [
+    "common",
+    "common/hexutil",
+    "common/math",
+    "crypto",
+    "crypto/secp256k1",
+    "crypto/sha3",
+    "rlp"
+  ]
+  revision = "2688dab48c9b8ae71b8d95c7678817eaa17f2b53"
+  version = "v1.8.8"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -190,6 +210,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e03c55dd9311af0cf69e5a1a94f161850cb76218d97310c75eeb125ac9056caa"
+  inputs-digest = "32180aa2be7cb5af5e0914688f0ff7a6ce76c0069b79a9c727ba500e942ef831"
   solver-name = "gps-cdcl"
   solver-version = 1
