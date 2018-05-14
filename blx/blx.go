@@ -5,9 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"sync"
-	"time"
 
 	"github.com/nimona/go-nimona/wire"
 	uuid "github.com/satori/go.uuid"
@@ -45,9 +43,15 @@ func NewBlockExchange(wr wire.Wire) (*blockExchange, error) {
 func (blx *blockExchange) handleMessage(message *wire.Message) error {
 	switch message.PayloadType {
 	case PayloadTypeTransferBlock:
-		blx.handleTransferBlock(message)
+		err := blx.handleTransferBlock(message)
+		if err != nil {
+			return err
+		}
 	case PayloadTypeRequestBlock:
-		blx.handleRequestBlock(message)
+		err := blx.handleRequestBlock(message)
+		if err != nil {
+			return err
+		}
 	default:
 		logrus.WithField("message.PayloadType", message.PayloadType).
 			Warn("Payload type not known")
@@ -57,42 +61,35 @@ func (blx *blockExchange) handleMessage(message *wire.Message) error {
 }
 
 func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
-	fmt.Println("Handle transfer")
 	payload := &payloadTransferBlock{}
 	if err := message.DecodePayload(payload); err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	if payload.Block != nil {
 		err := blx.storage.Store(payload.Block.Key, payload.Block)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 	}
 
 	// Check if nonce exists in local registry
 	value, ok := blx.getRequests.Load(payload.Nonce)
-	if ok == false {
+	if !ok {
 		return nil
 	}
 
-	fmt.Println(value)
-
-	req, ok := value.(payloadTransferRequestBlock)
-	if ok == false {
+	req, ok := value.(*payloadTransferRequestBlock)
+	if !ok {
 		return ErrInvalidRequest
 	}
 
-	// TODO is this shit blocking?
 	req.response <- payload
 
 	return nil
 }
 
 func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
-	fmt.Println("Handle request")
 	payload := &payloadTransferRequestBlock{}
 	if err := message.DecodePayload(payload); err != nil {
 		return err
@@ -155,26 +152,22 @@ func (blx *blockExchange) Get(key string, recipient string) (
 		return nil, err
 	}
 
-	fmt.Println("Request sent")
-	// TODO not receiving in the channel
-	select {
-	case <-req.response:
-		fmt.Println("Received")
-		// resp, ok := response.(payloadTransferBlock)
-		// if !ok {
-		// 	return nil, ErrInvalidBlock
-		// }
-		// if resp.Status != StatusOK {
-		// 	return nil, ErrNotFound
-		// }
+	for {
+		select {
+		case response := <-req.response:
+			resp, ok := response.(*payloadTransferBlock)
+			if !ok {
+				return nil, ErrInvalidBlock
+			}
+			if resp.Status != StatusOK {
+				return nil, ErrNotFound
+			}
 
-		// return resp.Block, nil
-		return nil, nil
+			return resp.Block, nil
 
-	case <-time.After(5 * time.Second):
-		return nil, ErrNotFound
-	case <-ctx.Done():
-		return nil, ErrNotFound
+		case <-ctx.Done():
+			return nil, ErrNotFound
+		}
 	}
 	return nil, ErrNotFound
 }
