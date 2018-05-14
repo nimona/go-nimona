@@ -6,7 +6,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 
 	"github.com/nimona/go-nimona/mesh"
-	"github.com/nimona/go-nimona/mutation"
 	"github.com/stretchr/testify/mock"
 
 	suite "github.com/stretchr/testify/suite"
