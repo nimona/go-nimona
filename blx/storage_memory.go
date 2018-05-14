@@ -1,35 +1,37 @@
 package blx
 
-import "encoding/json"
-
 type memoryStore struct {
-	data map[string][]byte
+	data map[string]*Block
 }
 
 func newMemoryStore() *memoryStore {
 	return &memoryStore{
-		data: map[string][]byte{},
+		data: map[string]*Block{},
 	}
 }
-func (m *memoryStore) Store(key string, bl *Block) error {
-	d, err := json.Marshal(*bl)
-	if err != nil {
-		return err
-	}
-	m.data[key] = d
+func (m *memoryStore) Store(key string, block *Block) error {
+	m.data[key] = block
 
 	return nil
 }
 
 func (m *memoryStore) Get(key string) (*Block, error) {
-	if bl, ok := m.data[key]; ok {
-		block := Block{}
-		err := json.Unmarshal(bl, &block)
-		if err != nil {
-			return nil, err
-		}
-
-		return &block, nil
+	block, ok := m.data[key]
+	if !ok {
+		return nil, ErrNotFound
 	}
-	return nil, ErrNotFound
+
+	return block, nil
+}
+
+func (m *memoryStore) List() ([]*string, error) {
+	results := make([]*string, 0, 0)
+	for k, _ := range m.data {
+		results = append(results, &k)
+	}
+
+	if len(results) == 0 {
+		return []*string{}, ErrEmpty
+	}
+	return results, nil
 }

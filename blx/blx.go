@@ -190,7 +190,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 		Block: &block,
 	}
 
-	// blx.storage.Store(block.Key, &block)
+	blx.storage.Store(block.Key, &block)
 
 	ctx := context.Background()
 	err := blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
@@ -200,6 +200,10 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	}
 
 	return hs, len(data), nil
+}
+
+func (blx *blockExchange) GetLocalBlocks() ([]*string, error) {
+	return blx.storage.List()
 }
 
 func (b *blockExchange) hash(data []byte) string {

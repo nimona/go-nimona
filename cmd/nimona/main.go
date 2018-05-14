@@ -257,6 +257,24 @@ func main() {
 		Help: "list all peers stored in our local dht",
 	}
 
+	listBlocks := &ishell.Cmd{
+		Name: "blocks",
+		Func: func(c *ishell.Context) {
+			c.ShowPrompt(false)
+			defer c.ShowPrompt(true)
+
+			blocks, err := blx.GetLocalBlocks()
+			if err != nil {
+				c.Println(err)
+				return
+			}
+			for _, block := range blocks {
+				c.Printf("     - %s\n", *block)
+			}
+		},
+		Help: "list all blocks in local storage",
+	}
+
 	listLocal := &ishell.Cmd{
 		Name: "local",
 		Func: func(c *ishell.Context) {
@@ -360,6 +378,7 @@ func main() {
 	list.AddCmd(listProviders)
 	list.AddCmd(listPeers)
 	list.AddCmd(listLocal)
+	list.AddCmd(listBlocks)
 
 	shell.AddCmd(block)
 	shell.AddCmd(get)
