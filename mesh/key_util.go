@@ -2,8 +2,11 @@ package mesh
 
 import (
 	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"log"
+	"math/big"
 	"os"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -42,4 +45,29 @@ func EncodePublicKey(pk ecdsa.PublicKey) []byte {
 
 func IDFromPublicKey(pk ecdsa.PublicKey) string {
 	return ethcrypto.PubkeyToAddress(pk).String()
+}
+
+func Sign(k *ecdsa.PrivateKey, b []byte) ([]byte, error) {
+	digest := sha256.Sum256(b)
+	r, s, err := ecdsa.Sign(rand.Reader, k, digest[:])
+	if err != nil {
+		return nil, err
+	}
+
+	params := k.Curve.Params()
+	curveOrderByteSize := params.P.BitLen() / 8
+	rBytes, sBytes := r.Bytes(), s.Bytes()
+	signature := make([]byte, curveOrderByteSize*2)
+	copy(signature[curveOrderByteSize-len(rBytes):], rBytes)
+	copy(signature[curveOrderByteSize*2-len(sBytes):], sBytes)
+	return signature, nil
+}
+
+func Verify(pk *ecdsa.PublicKey, b []byte, sn []byte) (bool, error) {
+	digest := sha256.Sum256(b)
+	curveOrderByteSize := pk.Curve.Params().P.BitLen() / 8
+	r, s := new(big.Int), new(big.Int)
+	r.SetBytes(sn[:curveOrderByteSize])
+	s.SetBytes(sn[curveOrderByteSize:])
+	return ecdsa.Verify(pk, digest[:], r, s), nil
 }

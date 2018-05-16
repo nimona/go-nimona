@@ -24,19 +24,22 @@ type Registry interface {
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
 	PutPeerInfo(*PeerInfo) error
+	GetPrivateKey() *ecdsa.PrivateKey
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
 func NewRegisty(key *ecdsa.PrivateKey) Registry {
-	peerID := IDFromPublicKey(key.PublicKey)
+	lp := &PeerInfo{
+		ID:        IDFromPublicKey(key.PublicKey),
+		Addresses: []string{},
+		PublicKey: EncodePublicKey(key.PublicKey),
+	}
+	lp.Signature, _ = Sign(key, lp.MarshalWithoutSignature())
 	reg := &registry{
-		localPeer: &PeerInfo{
-			ID:        peerID,
-			Addresses: []string{},
-			PublicKey: EncodePublicKey(key.PublicKey),
-		},
-		peers: map[string]*PeerInfo{},
+		localPeer: lp,
+		peers:     map[string]*PeerInfo{},
+		key:       key,
 	}
 
 	return reg
@@ -46,6 +49,11 @@ type registry struct {
 	sync.RWMutex
 	peers     map[string]*PeerInfo
 	localPeer *PeerInfo
+	key       *ecdsa.PrivateKey
+}
+
+func (reg *registry) GetPrivateKey() *ecdsa.PrivateKey {
+	return reg.key
 }
 
 func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {

@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 )
 
@@ -11,11 +12,7 @@ type ID struct {
 
 func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 	// fmt.Println("> ID")
-	localPeerInfoBs, err := json.Marshal(id.registry.GetLocalPeerInfo())
-	if err != nil {
-		// TODO close conn?
-		return nil, err
-	}
+	localPeerInfoBs := id.registry.GetLocalPeerInfo().Marshal()
 	if err := WriteToken(conn, localPeerInfoBs); err != nil {
 		return nil, err
 	}
@@ -27,6 +24,9 @@ func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 	if err := json.Unmarshal(remotePeerInfoBs, &remotePeerInfo); err != nil {
 		// TODO close conn?
 		return nil, err
+	}
+	if !remotePeerInfo.IsValid() {
+		return nil, errors.New("invalid peer info")
 	}
 	localAddress := peerAddress{
 		network: conn.LocalAddr().Network(),
@@ -51,11 +51,10 @@ func (id *ID) Handle(conn net.Conn) (net.Conn, error) {
 		// TODO close conn?
 		return nil, err
 	}
-	localPeerInfoBs, err := json.Marshal(id.registry.GetLocalPeerInfo())
-	if err != nil {
-		// TODO close conn?
-		return nil, err
+	if !remotePeerInfo.IsValid() {
+		return nil, errors.New("invalid peer info")
 	}
+	localPeerInfoBs := id.registry.GetLocalPeerInfo().Marshal()
 	if err := WriteToken(conn, localPeerInfoBs); err != nil {
 		return nil, err
 	}

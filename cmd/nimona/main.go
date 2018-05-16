@@ -258,9 +258,11 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
-				c.Printf("     - public key: %x\n", peer.PublicKey)
+				c.Printf("  - public key: %x\n", peer.PublicKey)
+				c.Printf("  - signature: %x\n", peer.Signature)
+				c.Printf("  - addresses:\n")
 				for _, address := range peer.Addresses {
-					c.Printf("     - address: %s\n", address)
+					c.Printf("     - %s\n", address)
 				}
 			}
 		},
@@ -293,9 +295,11 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
-			c.Printf("     - public key: %x\n", peer.PublicKey)
+			c.Printf("  - public key: %x\n", peer.PublicKey)
+			c.Printf("  - signature: %x\n", peer.Signature)
+			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
-				c.Printf("     - address: %s\n", address)
+				c.Printf("     - %s\n", address)
 			}
 		},
 		Help: "list protocols for local peer",

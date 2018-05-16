@@ -212,11 +212,13 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 	lock.Unlock()
 
 	// TODO replace this with something like n.registry.GetLocalPeerInfo().SetAddresses()
-	n.registry.PutLocalPeerInfo(&PeerInfo{
+	lp := &PeerInfo{
 		ID:        n.registry.GetLocalPeerInfo().ID,
 		Addresses: addresses,
 		PublicKey: n.registry.GetLocalPeerInfo().PublicKey,
-	})
+	}
+	lp.Signature, _ = Sign(n.registry.GetPrivateKey(), lp.MarshalWithoutSignature())
+	n.registry.PutLocalPeerInfo(lp)
 
 	go func() {
 		for {
