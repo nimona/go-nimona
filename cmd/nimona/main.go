@@ -28,7 +28,7 @@ var (
 
 var bootstrapPeerInfos = []mesh.PeerInfo{
 	mesh.PeerInfo{
-		ID: "andromeda.nimona.io",
+		ID: "0x4F63B74a46Bf61F4194022E4DD9F64d958f1663d",
 		Addresses: []string{
 			"tcp:andromeda.nimona.io:26800",
 		},
@@ -258,8 +258,9 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
+				c.Printf("     - public key: %x\n", peer.PublicKey)
 				for _, address := range peer.Addresses {
-					c.Printf("     - %s\n", address)
+					c.Printf("     - address: %s\n", address)
 				}
 			}
 		},
@@ -292,8 +293,9 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
+			c.Printf("     - public key: %x\n", peer.PublicKey)
 			for _, address := range peer.Addresses {
-				c.Printf("     - %s\n", address)
+				c.Printf("     - address: %s\n", address)
 			}
 		},
 		Help: "list protocols for local peer",
