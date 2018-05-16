@@ -7,8 +7,9 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/nimona/go-nimona/mesh"
+
 	"github.com/nimona/go-nimona/wire"
-	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -122,7 +123,7 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 
 func (blx *blockExchange) Get(key string, recipient string) (
 	*Block, error) {
-	nonce := uuid.NewV4().String()
+	nonce := mesh.RandStringBytesMaskImprSrc(8)
 
 	req := &payloadTransferRequestBlock{
 		Nonce:    nonce,
@@ -183,7 +184,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 		Data: data,
 	}
 
-	nonce := uuid.NewV4().String()
+	nonce := mesh.RandStringBytesMaskImprSrc(8)
 
 	resp := payloadTransferBlock{
 		Nonce: nonce,
