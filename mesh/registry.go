@@ -29,11 +29,12 @@ type Registry interface {
 }
 
 func NewRegisty(key *ecdsa.PrivateKey) Registry {
-	peerID := Thumbprint(key)
+	peerID := IDFromPublicKey(key.PublicKey)
 	reg := &registry{
 		localPeer: &PeerInfo{
 			ID:        peerID,
 			Addresses: []string{},
+			PublicKey: EncodePublicKey(key.PublicKey),
 		},
 		peers: map[string]*PeerInfo{},
 	}

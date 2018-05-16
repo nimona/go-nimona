@@ -20,12 +20,12 @@ func TestNet(t *testing.T) {
 
 	tempFile1 := path.Join(tempDir, "key1")
 	key1, err := LoadOrCreatePrivateKey(tempFile1)
-	localPeerID := Thumbprint(key1)
+	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
 	tempFile2 := path.Join(tempDir, "key2")
 	key2, err := LoadOrCreatePrivateKey(tempFile2)
-	remotePeerID := Thumbprint(key2)
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
@@ -90,12 +90,12 @@ func TestReusableNet(t *testing.T) {
 
 	tempFile1 := path.Join(tempDir, "key1")
 	key1, err := LoadOrCreatePrivateKey(tempFile1)
-	localPeerID := Thumbprint(key1)
+	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
 	tempFile2 := path.Join(tempDir, "key2")
 	key2, err := LoadOrCreatePrivateKey(tempFile2)
-	remotePeerID := Thumbprint(key2)
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
@@ -160,12 +160,12 @@ func TestReusableRedialNet(t *testing.T) {
 
 	tempFile1 := path.Join(tempDir, "key1")
 	key1, err := LoadOrCreatePrivateKey(tempFile1)
-	localPeerID := Thumbprint(key1)
+	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
 	tempFile2 := path.Join(tempDir, "key2")
 	key2, err := LoadOrCreatePrivateKey(tempFile2)
-	remotePeerID := Thumbprint(key2)
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
@@ -244,12 +244,12 @@ func TestReusableRedialRemoteNet(t *testing.T) {
 
 	tempFile1 := path.Join(tempDir, "key1")
 	key1, err := LoadOrCreatePrivateKey(tempFile1)
-	localPeerID := Thumbprint(key1)
+	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
 	tempFile2 := path.Join(tempDir, "key2")
 	key2, err := LoadOrCreatePrivateKey(tempFile2)
-	remotePeerID := Thumbprint(key2)
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
 	ctx := context.Background()
