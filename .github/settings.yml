@@ -1,0 +1,52 @@
+repository:
+  name: go-nimona
+  description: Peer to peer networking library
+  homepage: https://nimona.io/
+  private: false
+  has_issues: true
+  has_wiki: false
+  has_downloads: true
+  default_branch: master
+  allow_squash_merge: false
+  allow_merge_commit: true
+  allow_rebase_merge: false
+
+labels:
+  - name: Good first issue
+    color: 7057ff
+  - name: Priority: Critical
+    color: ee0701
+  - name: Priority: High
+    color: d93f0b
+  - name: Priority: Low
+    color: 0e8a16
+  - name: Priority: Medium
+    color: fbca04
+  - name: Status: Abandoned
+    color: 000000
+  - name: Status: Available
+    color: c2e0c6
+    oldname: to do
+  - name: Status: Blocked
+    color: ee0701
+  - name: Status: In Progress
+    color: cccccc
+  - name: Status: On Hold
+    color: e99695
+  - name: Status: Proposal
+    color: d4c5f9
+  - name: Status: Review 
+    color: fbca04
+  - name: Type: Bug
+    color: ee0701
+    oldname: bug
+  - name: Type: Documentation
+    color: 5319e7
+  - name: Type: Enhancement
+    color: 1d76db
+    oldname: enchancement
+  - name: Type: Maintenance
+    color: fbca04
+  - name: Type: Question
+    color: cc317c
+    oldname: question    
