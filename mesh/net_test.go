@@ -3,9 +3,7 @@ package mesh
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
-	"path"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -15,16 +13,11 @@ import (
 )
 
 func TestNet(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "nimona")
-	assert.NoError(t, err)
-
-	tempFile1 := path.Join(tempDir, "key1")
-	key1, err := LoadOrCreatePrivateKey(tempFile1)
+	key1, err := CreatePrivateKey()
 	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
-	tempFile2 := path.Join(tempDir, "key2")
-	key2, err := LoadOrCreatePrivateKey(tempFile2)
+	key2, err := CreatePrivateKey()
 	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
@@ -85,16 +78,11 @@ func TestNet(t *testing.T) {
 }
 
 func TestReusableNet(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "nimona")
-	assert.NoError(t, err)
-
-	tempFile1 := path.Join(tempDir, "key1")
-	key1, err := LoadOrCreatePrivateKey(tempFile1)
+	key1, err := CreatePrivateKey()
 	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
-	tempFile2 := path.Join(tempDir, "key2")
-	key2, err := LoadOrCreatePrivateKey(tempFile2)
+	key2, err := CreatePrivateKey()
 	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
@@ -155,16 +143,11 @@ func TestReusableNet(t *testing.T) {
 }
 
 func TestReusableRedialNet(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "nimona")
-	assert.NoError(t, err)
-
-	tempFile1 := path.Join(tempDir, "key1")
-	key1, err := LoadOrCreatePrivateKey(tempFile1)
+	key1, err := CreatePrivateKey()
 	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
-	tempFile2 := path.Join(tempDir, "key2")
-	key2, err := LoadOrCreatePrivateKey(tempFile2)
+	key2, err := CreatePrivateKey()
 	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 
@@ -239,16 +222,11 @@ func TestReusableRedialNet(t *testing.T) {
 }
 
 func TestReusableRedialRemoteNet(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "nimona")
-	assert.NoError(t, err)
-
-	tempFile1 := path.Join(tempDir, "key1")
-	key1, err := LoadOrCreatePrivateKey(tempFile1)
+	key1, err := CreatePrivateKey()
 	localPeerID := IDFromPublicKey(key1.PublicKey)
 	assert.NoError(t, err)
 
-	tempFile2 := path.Join(tempDir, "key2")
-	key2, err := LoadOrCreatePrivateKey(tempFile2)
+	key2, err := CreatePrivateKey()
 	remotePeerID := IDFromPublicKey(key2.PublicKey)
 	assert.NoError(t, err)
 

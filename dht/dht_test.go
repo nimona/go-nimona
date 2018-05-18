@@ -2,8 +2,6 @@ package dht
 
 import (
 	"context"
-	"io/ioutil"
-	"path"
 	"testing"
 
 	"github.com/nimona/go-nimona/mesh"
@@ -25,12 +23,8 @@ type dhtTestSuite struct {
 }
 
 func (suite *dhtTestSuite) SetupTest() {
-	tempDir, err := ioutil.TempDir("", "nimona")
-	suite.NoError(err)
-
-	tempFile1 := path.Join(tempDir, "key1")
-	key1, err := mesh.LoadOrCreatePrivateKey(tempFile1)
-	suite.peerID = mesh.Thumbprint(key1)
+	key1, err := mesh.CreatePrivateKey()
+	suite.peerID = mesh.IDFromPublicKey(key1.PublicKey)
 	suite.NoError(err)
 
 	suite.mockMesh = &mesh.MockMesh{}
@@ -53,12 +47,9 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 	key := "a"
 	value := "b"
 	payload := messagePutValue{
-		SenderPeerInfo: mesh.PeerInfo{
-			ID:        suite.peerID,
-			Addresses: []string{},
-		},
-		Key:   "a",
-		Value: "b",
+		SenderPeerInfo: *suite.registry.GetLocalPeerInfo(),
+		Key:            "a",
+		Value:          "b",
 	}
 	to := []string{"bootstrap"}
 	suite.wire.On("Send", mock.Anything, "dht", PayloadTypePutValue, payload, to).Return(nil)

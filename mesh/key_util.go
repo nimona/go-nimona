@@ -22,7 +22,7 @@ func LoadOrCreatePrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
 	}
 
 	log.Printf("* Key path does not exist, creating new key in '%s'\n", keyPath)
-	privateKey, err := ethcrypto.GenerateKey()
+	privateKey, err := CreatePrivateKey()
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +32,10 @@ func LoadOrCreatePrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
 	}
 
 	return privateKey, nil
+}
+
+func CreatePrivateKey() (*ecdsa.PrivateKey, error) {
+	return ethcrypto.GenerateKey()
 }
 
 func DecocdePublicKey(bs []byte) *ecdsa.PublicKey {
