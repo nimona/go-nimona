@@ -17,13 +17,13 @@ type Block struct {
 }
 
 type payloadTransferBlock struct {
-	Status int    `json: status`
-	Nonce  string `json: nonce`
+	Status int    `json:"status"`
+	Nonce  string `json:"nonce"`
 	Block  *Block `json:"block,omitempty"`
 }
 
 type payloadTransferRequestBlock struct {
-	Nonce    string `json: nonce`
+	Nonce    string `json:"nonce"`
 	Key      string `json:"key,omitempty"`
 	response chan interface{}
 }
