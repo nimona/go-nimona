@@ -44,7 +44,7 @@ labels:
     color: 5319e7
   - name: "Type: Enhancement"
     color: 1d76db
-    oldname: enchancement
+    oldname: enhancement
   - name: "Type: Maintenance"
     color: fbca04
   - name: "Type: Question"
