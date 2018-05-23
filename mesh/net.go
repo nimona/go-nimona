@@ -36,7 +36,7 @@ func New(registry Registry) *Net {
 		reusable: map[string]*reusableConn{},
 		handlers: map[string]Handler{},
 	}
-	n.RegisterHandler("id", &ID{})
+	n.RegisterHandler("id", &ID{registry})
 	n.RegisterHandler("yamux", &Yamux{})
 	n.RegisterHandler("relay", &Relay{n})
 	return n
@@ -211,10 +211,14 @@ func (n *Net) Listen(addr string) (Listener, string, error) {
 	addresses = append(addresses, "relay:andromeda.nimona.io")
 	lock.Unlock()
 
-	n.registry.PutLocalPeerInfo(&PeerInfo{
+	// TODO replace this with something like n.registry.GetLocalPeerInfo().SetAddresses()
+	lp := &PeerInfo{
 		ID:        n.registry.GetLocalPeerInfo().ID,
 		Addresses: addresses,
-	})
+		PublicKey: n.registry.GetLocalPeerInfo().PublicKey,
+	}
+	lp.Signature, _ = Sign(n.registry.GetPrivateKey(), lp.MarshalWithoutSignature())
+	n.registry.PutLocalPeerInfo(lp)
 
 	go func() {
 		for {

@@ -13,7 +13,7 @@ PACKAGES = $(shell find . -type d -not -path '*/\.*' | egrep -v 'vendor|examples
 
 $(BINARY): $(SOURCES)
 	cd cmd/${NAME} \
-		&& CGO_ENABLED=0 go build -a -o ../../${BINARY} -ldflags \ "\
+		&& go build -a -o ../../${BINARY} -ldflags \ "\
 			-s -w \
 			-X main.version=${VERSION} \
 			-X main.commit=${COMMIT} \

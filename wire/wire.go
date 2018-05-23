@@ -26,7 +26,7 @@ var messagingProtocolVersionCanon = semver.New(messagingProtocolVersion)
 type Wire interface {
 	mesh.Handler
 	HandleExtensionEvents(extension string, h EventHandler) error
-	Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error
+	Send(ctx context.Context, extension, payloadType string, payload interface{}, to []string) error
 }
 
 type wire struct {
@@ -84,7 +84,7 @@ func (m *wire) Process(bs []byte) error {
 	hn, ok := m.handlers[msg.Extension]
 	if !ok {
 		m.logger.Info(
-			"No handler registered for extention",
+			"No handler registered for extension",
 			zap.String("extension", msg.Extension),
 		)
 		return errors.New("no handler")
@@ -113,7 +113,7 @@ func (m *wire) Process(bs []byte) error {
 	return nil
 }
 
-func (m *wire) Send(ctx context.Context, extention, payloadType string, payload interface{}, to []string) error {
+func (m *wire) Send(ctx context.Context, extension, payloadType string, payload interface{}, to []string) error {
 	if len(to) == 0 {
 		return nil
 	}
@@ -125,7 +125,7 @@ func (m *wire) Send(ctx context.Context, extention, payloadType string, payload 
 		msg := &messageOut{
 			Version:     *messagingProtocolVersionCanon,
 			Codec:       messagingProtocolCodecJSON,
-			Extension:   extention,
+			Extension:   extension,
 			PayloadType: payloadType,
 			Payload:     payload,
 			From:        m.registry.GetLocalPeerInfo().ID,

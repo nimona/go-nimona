@@ -70,13 +70,13 @@ func (_m *MockWire) Initiate(_a0 net.Conn) (net.Conn, error) {
 	return r0, r1
 }
 
-// Send provides a mock function with given fields: ctx, extention, payloadType, payload, to
-func (_m *MockWire) Send(ctx context.Context, extention string, payloadType string, payload interface{}, to []string) error {
-	ret := _m.Called(ctx, extention, payloadType, payload, to)
+// Send provides a mock function with given fields: ctx, extension, payloadType, payload, to
+func (_m *MockWire) Send(ctx context.Context, extension string, payloadType string, payload interface{}, to []string) error {
+	ret := _m.Called(ctx, extension, payloadType, payload, to)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, interface{}, []string) error); ok {
-		r0 = rf(ctx, extention, payloadType, payload, to)
+		r0 = rf(ctx, extension, payloadType, payload, to)
 	} else {
 		r0 = ret.Error(0)
 	}

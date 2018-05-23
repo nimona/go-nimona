@@ -1,20 +1,32 @@
 package mesh
 
 import (
+	"encoding/json"
+	"errors"
 	"net"
 )
 
-type ID struct{}
+type ID struct {
+	registry Registry
+}
 
 func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 	// fmt.Println("> ID")
-	localPeerID := conn.LocalAddr().String()
-	if err := WriteToken(conn, []byte(localPeerID)); err != nil {
+	localPeerInfoBs := id.registry.GetLocalPeerInfo().Marshal()
+	if err := WriteToken(conn, localPeerInfoBs); err != nil {
 		return nil, err
 	}
-	remotePeerID, err := ReadToken(conn)
+	remotePeerInfoBs, err := ReadToken(conn)
 	if err != nil {
 		return nil, err
+	}
+	remotePeerInfo := &PeerInfo{}
+	if err := json.Unmarshal(remotePeerInfoBs, &remotePeerInfo); err != nil {
+		// TODO close conn?
+		return nil, err
+	}
+	if !remotePeerInfo.IsValid() {
+		return nil, errors.New("invalid peer info")
 	}
 	localAddress := peerAddress{
 		network: conn.LocalAddr().Network(),
@@ -22,7 +34,7 @@ func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 	}
 	remoteAddress := peerAddress{
 		network: conn.RemoteAddr().Network(),
-		peerID:  string(remotePeerID),
+		peerID:  remotePeerInfo.ID,
 	}
 	newConn := NewAddressableConn(conn, localAddress, remoteAddress)
 	return newConn, nil
@@ -30,12 +42,20 @@ func (id *ID) Initiate(conn net.Conn) (net.Conn, error) {
 
 func (id *ID) Handle(conn net.Conn) (net.Conn, error) {
 	// fmt.Println("< ID")
-	remotePeerID, err := ReadToken(conn)
+	remotePeerInfoBs, err := ReadToken(conn)
 	if err != nil {
 		return nil, err
 	}
-	localPeerID := conn.LocalAddr().String()
-	if err := WriteToken(conn, []byte(localPeerID)); err != nil {
+	remotePeerInfo := &PeerInfo{}
+	if err := json.Unmarshal(remotePeerInfoBs, &remotePeerInfo); err != nil {
+		// TODO close conn?
+		return nil, err
+	}
+	if !remotePeerInfo.IsValid() {
+		return nil, errors.New("invalid peer info")
+	}
+	localPeerInfoBs := id.registry.GetLocalPeerInfo().Marshal()
+	if err := WriteToken(conn, localPeerInfoBs); err != nil {
 		return nil, err
 	}
 	localAddress := peerAddress{
@@ -44,7 +64,7 @@ func (id *ID) Handle(conn net.Conn) (net.Conn, error) {
 	}
 	remoteAddress := peerAddress{
 		network: conn.RemoteAddr().Network(),
-		peerID:  string(remotePeerID),
+		peerID:  remotePeerInfo.ID,
 	}
 	newConn := NewAddressableConn(conn, localAddress, remoteAddress)
 	return newConn, nil

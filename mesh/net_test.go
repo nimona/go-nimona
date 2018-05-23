@@ -13,6 +13,14 @@ import (
 )
 
 func TestNet(t *testing.T) {
+	key1, err := CreatePrivateKey()
+	localPeerID := IDFromPublicKey(key1.PublicKey)
+	assert.NoError(t, err)
+
+	key2, err := CreatePrivateKey()
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
+	assert.NoError(t, err)
+
 	ctx := context.Background()
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -22,7 +30,7 @@ func TestNet(t *testing.T) {
 	handler := func(conn net.Conn) net.Conn {
 		peerID := conn.LocalAddr().String()
 		fmt.Println("hit handler, local address", peerID)
-		if peerID == "local" {
+		if peerID == localPeerID {
 			localHandled = true
 		} else {
 			remoteHandled = true
@@ -31,13 +39,13 @@ func TestNet(t *testing.T) {
 		return conn
 	}
 
-	localRegistry := NewRegisty("local")
+	localRegistry := NewRegisty(key1)
 	localHandler := &MockHandler{}
 	localHandler.On("Initiate", mock.Anything).Return(handler, nil)
 	localNet := New(localRegistry)
 	localNet.handlers["hi"] = localHandler
 
-	remoteRegistry := NewRegisty("remote")
+	remoteRegistry := NewRegisty(key2)
 	remoteHandler := &MockHandler{}
 	remoteHandler.On("Handle", mock.Anything).Return(handler, nil)
 	remoteNet := New(remoteRegistry)
@@ -49,18 +57,18 @@ func TestNet(t *testing.T) {
 	assert.NoError(t, remoteListenErr)
 
 	localRegistry.PutPeerInfo(&PeerInfo{
-		ID:        "remote",
+		ID:        remotePeerID,
 		Addresses: []string{remoteAddr},
 	})
 
-	conn, err := localNet.Dial(ctx, "remote", "hi")
+	conn, err := localNet.Dial(ctx, remotePeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
 	wg.Wait()
 
-	assert.Equal(t, "local", conn.LocalAddr().String())
-	assert.Equal(t, "remote", conn.RemoteAddr().String())
+	assert.Equal(t, localPeerID, conn.LocalAddr().String())
+	assert.Equal(t, remotePeerID, conn.RemoteAddr().String())
 
 	assert.True(t, localHandled)
 	assert.True(t, remoteHandled)
@@ -70,6 +78,14 @@ func TestNet(t *testing.T) {
 }
 
 func TestReusableNet(t *testing.T) {
+	key1, err := CreatePrivateKey()
+	localPeerID := IDFromPublicKey(key1.PublicKey)
+	assert.NoError(t, err)
+
+	key2, err := CreatePrivateKey()
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
+	assert.NoError(t, err)
+
 	ctx := context.Background()
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -79,7 +95,7 @@ func TestReusableNet(t *testing.T) {
 	handler := func(conn net.Conn) net.Conn {
 		peerID := conn.LocalAddr().String()
 		fmt.Println("hit handler, local address", peerID)
-		if peerID == "local" {
+		if peerID == localPeerID {
 			localHandled = true
 		} else {
 			remoteHandled = true
@@ -88,13 +104,13 @@ func TestReusableNet(t *testing.T) {
 		return conn
 	}
 
-	localRegistry := NewRegisty("local")
+	localRegistry := NewRegisty(key1)
 	localHandler := &MockHandler{}
 	localHandler.On("Initiate", mock.Anything).Return(handler, nil)
 	localNet := New(localRegistry)
 	localNet.handlers["hi"] = localHandler
 
-	remoteRegistry := NewRegisty("remote")
+	remoteRegistry := NewRegisty(key2)
 	remoteHandler := &MockHandler{}
 	remoteHandler.On("Handle", mock.Anything).Return(handler, nil)
 	remoteNet := New(remoteRegistry)
@@ -106,18 +122,18 @@ func TestReusableNet(t *testing.T) {
 	assert.NoError(t, remoteListenErr)
 
 	localRegistry.PutPeerInfo(&PeerInfo{
-		ID:        "remote",
+		ID:        remotePeerID,
 		Addresses: []string{remoteAddr},
 	})
 
-	conn, err := localNet.Dial(ctx, "remote", "hi")
+	conn, err := localNet.Dial(ctx, remotePeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
 	wg.Wait()
 
-	assert.Equal(t, "local", conn.LocalAddr().String())
-	assert.Equal(t, "remote", conn.RemoteAddr().String())
+	assert.Equal(t, localPeerID, conn.LocalAddr().String())
+	assert.Equal(t, remotePeerID, conn.RemoteAddr().String())
 
 	assert.True(t, localHandled)
 	assert.True(t, remoteHandled)
@@ -127,6 +143,14 @@ func TestReusableNet(t *testing.T) {
 }
 
 func TestReusableRedialNet(t *testing.T) {
+	key1, err := CreatePrivateKey()
+	localPeerID := IDFromPublicKey(key1.PublicKey)
+	assert.NoError(t, err)
+
+	key2, err := CreatePrivateKey()
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
+	assert.NoError(t, err)
+
 	ctx := context.Background()
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -137,7 +161,7 @@ func TestReusableRedialNet(t *testing.T) {
 	handler := func(conn net.Conn) net.Conn {
 		peerID := conn.LocalAddr().String()
 		fmt.Println("hit handler, local address", peerID)
-		if peerID == "local" {
+		if peerID == localPeerID {
 			fmt.Println("> HI")
 			atomic.AddInt32(&localHandled, 1)
 		} else {
@@ -148,13 +172,13 @@ func TestReusableRedialNet(t *testing.T) {
 		return conn
 	}
 
-	localRegistry := NewRegisty("local")
+	localRegistry := NewRegisty(key1)
 	localHandler := &MockHandler{}
 	localHandler.On("Initiate", mock.Anything).Return(handler, nil)
 	localNet := New(localRegistry)
 	localNet.handlers["hi"] = localHandler
 
-	remoteRegistry := NewRegisty("remote")
+	remoteRegistry := NewRegisty(key2)
 	remoteHandler := &MockHandler{}
 	remoteHandler.On("Handle", mock.Anything).Return(handler, nil)
 	remoteNet := New(remoteRegistry)
@@ -166,24 +190,24 @@ func TestReusableRedialNet(t *testing.T) {
 	assert.NoError(t, remoteListenErr)
 
 	localRegistry.PutPeerInfo(&PeerInfo{
-		ID:        "remote",
+		ID:        remotePeerID,
 		Addresses: []string{remoteAddr},
 	})
 
-	conn, err := localNet.Dial(ctx, "remote", "hi")
+	conn, err := localNet.Dial(ctx, remotePeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
 	wg.Wait()
 	wg.Add(2)
 
-	assert.Equal(t, "local", conn.LocalAddr().String())
-	assert.Equal(t, "remote", conn.RemoteAddr().String())
+	assert.Equal(t, localPeerID, conn.LocalAddr().String())
+	assert.Equal(t, remotePeerID, conn.RemoteAddr().String())
 
 	assert.Equal(t, 1, int(localHandled))
 	assert.Equal(t, 1, int(remoteHandled))
 
-	conn, err = localNet.Dial(ctx, "remote", "hi")
+	conn, err = localNet.Dial(ctx, remotePeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
@@ -198,6 +222,14 @@ func TestReusableRedialNet(t *testing.T) {
 }
 
 func TestReusableRedialRemoteNet(t *testing.T) {
+	key1, err := CreatePrivateKey()
+	localPeerID := IDFromPublicKey(key1.PublicKey)
+	assert.NoError(t, err)
+
+	key2, err := CreatePrivateKey()
+	remotePeerID := IDFromPublicKey(key2.PublicKey)
+	assert.NoError(t, err)
+
 	ctx := context.Background()
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -208,7 +240,7 @@ func TestReusableRedialRemoteNet(t *testing.T) {
 	handler := func(conn net.Conn) net.Conn {
 		peerID := conn.LocalAddr().String()
 		fmt.Println("hit handler, local address", peerID)
-		if peerID == "local" {
+		if peerID == localPeerID {
 			fmt.Println("> HI")
 			atomic.AddInt32(&localHandled, 1)
 		} else {
@@ -219,14 +251,14 @@ func TestReusableRedialRemoteNet(t *testing.T) {
 		return conn
 	}
 
-	localRegistry := NewRegisty("local")
+	localRegistry := NewRegisty(key1)
 	localHandler := &MockHandler{}
 	localHandler.On("Initiate", mock.Anything).Return(handler, nil)
 	localHandler.On("Handle", mock.Anything).Return(handler, nil)
 	localNet := New(localRegistry)
 	localNet.handlers["hi"] = localHandler
 
-	remoteRegistry := NewRegisty("remote")
+	remoteRegistry := NewRegisty(key2)
 	remoteHandler := &MockHandler{}
 	remoteHandler.On("Handle", mock.Anything).Return(handler, nil)
 	remoteHandler.On("Initiate", mock.Anything).Return(handler, nil)
@@ -239,29 +271,29 @@ func TestReusableRedialRemoteNet(t *testing.T) {
 	assert.NoError(t, remoteListenErr)
 
 	remoteRegistry.PutPeerInfo(&PeerInfo{
-		ID:        "local",
+		ID:        localPeerID,
 		Addresses: []string{localAddr},
 	})
 
 	localRegistry.PutPeerInfo(&PeerInfo{
-		ID:        "remote",
+		ID:        remotePeerID,
 		Addresses: []string{remoteAddr},
 	})
 
-	conn, err := localNet.Dial(ctx, "remote", "hi")
+	conn, err := localNet.Dial(ctx, remotePeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 
 	wg.Wait()
 	wg.Add(2)
 
-	assert.Equal(t, "local", conn.LocalAddr().String())
-	assert.Equal(t, "remote", conn.RemoteAddr().String())
+	assert.Equal(t, localPeerID, conn.LocalAddr().String())
+	assert.Equal(t, remotePeerID, conn.RemoteAddr().String())
 
 	assert.Equal(t, 1, int(localHandled))
 	assert.Equal(t, 1, int(remoteHandled))
 
-	conn, err = remoteNet.Dial(ctx, "local", "hi")
+	conn, err = remoteNet.Dial(ctx, localPeerID, "hi")
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 

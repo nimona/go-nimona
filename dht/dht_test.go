@@ -16,16 +16,21 @@ type dhtTestSuite struct {
 	mockMesh *mesh.MockMesh
 	registry mesh.Registry
 	wire     *wire.MockWire
+	peerID   string
 	messages chan interface{}
 	peers    chan interface{}
 	dht      *DHT
 }
 
 func (suite *dhtTestSuite) SetupTest() {
+	key1, err := mesh.CreatePrivateKey()
+	suite.peerID = mesh.IDFromPublicKey(key1.PublicKey)
+	suite.NoError(err)
+
 	suite.mockMesh = &mesh.MockMesh{}
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry = mesh.NewRegisty("local-peer")
+	suite.registry = mesh.NewRegisty(key1)
 	suite.registry.PutPeerInfo(&mesh.PeerInfo{
 		ID: "bootstrap",
 		Addresses: []string{
@@ -42,12 +47,9 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 	key := "a"
 	value := "b"
 	payload := messagePutValue{
-		SenderPeerInfo: mesh.PeerInfo{
-			ID:        "local-peer",
-			Addresses: []string{},
-		},
-		Key:   "a",
-		Value: "b",
+		SenderPeerInfo: *suite.registry.GetLocalPeerInfo(),
+		Key:            "a",
+		Value:          "b",
 	}
 	to := []string{"bootstrap"}
 	suite.wire.On("Send", mock.Anything, "dht", PayloadTypePutValue, payload, to).Return(nil)

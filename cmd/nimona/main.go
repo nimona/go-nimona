@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
+	"path"
 	"strconv"
 	"strings"
 
@@ -26,7 +28,7 @@ var (
 
 var bootstrapPeerInfos = []mesh.PeerInfo{
 	mesh.PeerInfo{
-		ID: "andromeda.nimona.io",
+		ID: "0x4F63B74a46Bf61F4194022E4DD9F64d958f1663d",
 		Addresses: []string{
 			"tcp:andromeda.nimona.io:26800",
 		},
@@ -34,14 +36,21 @@ var bootstrapPeerInfos = []mesh.PeerInfo{
 }
 
 func main() {
-	peerID := os.Getenv("PEER_ID")
-	if peerID == "" {
-		log.Fatal("Missing PEER_ID")
+	usr, _ := user.Current()
+	configPath := path.Join(usr.HomeDir, ".nimona")
+	if err := os.MkdirAll(configPath, 0777); err != nil {
+		log.Fatal("could not create config dir", err)
+	}
+
+	keyPath := path.Join(configPath, "key")
+	privateKey, err := mesh.LoadOrCreatePrivateKey(keyPath)
+	if err != nil {
+		log.Fatal("could not load key", err)
 	}
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty(peerID)
+	reg := mesh.NewRegisty(privateKey)
 	msh := mesh.New(reg)
 
 	for _, peerInfo := range bootstrapPeerInfos {
@@ -249,6 +258,9 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
+				c.Printf("  - public key: %x\n", peer.PublicKey)
+				c.Printf("  - signature: %x\n", peer.Signature)
+				c.Printf("  - addresses:\n")
 				for _, address := range peer.Addresses {
 					c.Printf("     - %s\n", address)
 				}
@@ -283,6 +295,9 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
+			c.Printf("  - public key: %x\n", peer.PublicKey)
+			c.Printf("  - signature: %x\n", peer.Signature)
+			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
 				c.Printf("     - %s\n", address)
 			}
