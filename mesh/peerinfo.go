@@ -48,6 +48,7 @@ func (pi *PeerInfo) MarshalWithoutSignature() []byte {
 }
 
 func (pi *PeerInfo) IsValid() bool {
+	// TODO Fix IsValis
 	// pk := DecocdePublicKey(pi.PublicKey)
 	// if IDFromPublicKey(*pk) != pi.ID {
 	// 	return false

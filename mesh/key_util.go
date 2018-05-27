@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+// TODO Move into address book
 var Keyring = basic.NewKeyring()
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
