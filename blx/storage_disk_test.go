@@ -16,7 +16,7 @@ func cleanup(path, key string) {
 func TestStoreBlockSuccess(t *testing.T) {
 	path := os.TempDir()
 
-	ds := newDiskStorage(path)
+	ds := NewDiskStorage(path)
 
 	meta := make(map[string][]byte)
 	meta["TestMetaKey"] = []byte("TestMetaValue")
@@ -42,7 +42,7 @@ func TestStoreBlockSuccess(t *testing.T) {
 func TestStoreBlockExists(t *testing.T) {
 	path := os.TempDir()
 
-	ds := newDiskStorage(path)
+	ds := NewDiskStorage(path)
 
 	meta := make(map[string][]byte)
 	meta["TestMetaKey"] = []byte("TestMetaValue")
@@ -66,7 +66,7 @@ func TestStoreBlockExists(t *testing.T) {
 func TestGetSuccess(t *testing.T) {
 	path := os.TempDir()
 
-	ds := newDiskStorage(path)
+	ds := NewDiskStorage(path)
 
 	meta := make(map[string][]byte)
 	meta["TestMetaKey"] = []byte("TestMetaValue")
@@ -92,7 +92,7 @@ func TestGetSuccess(t *testing.T) {
 func TestGetFail(t *testing.T) {
 	path := os.TempDir()
 
-	ds := newDiskStorage(path)
+	ds := NewDiskStorage(path)
 
 	key := "TestKey2"
 
@@ -104,7 +104,7 @@ func TestGetFail(t *testing.T) {
 func TestListSuccess(t *testing.T) {
 	path := os.TempDir()
 
-	ds := newDiskStorage(path)
+	ds := NewDiskStorage(path)
 
 	meta := make(map[string][]byte)
 	meta["TestMetaKey"] = []byte("TestMetaValue")

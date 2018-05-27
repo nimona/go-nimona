@@ -17,7 +17,7 @@ const (
 	metaExt        = ".meta"
 )
 
-func newDiskStorage(path string) *diskStorage {
+func NewDiskStorage(path string) *diskStorage {
 	return &diskStorage{
 		path: path,
 	}

@@ -59,9 +59,12 @@ func main() {
 
 	msh.Listen(fmt.Sprintf(":%d", port))
 
+	storagePath := path.Join(configPath, "storage")
+
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg)
-	blx, _ := blx.NewBlockExchange(wre)
+	dpr := blx.NewDiskStorage(storagePath)
+	blx, _ := blx.NewBlockExchange(wre, dpr)
 
 	msh.RegisterHandler("wire", wre)
 

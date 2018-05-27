@@ -29,10 +29,10 @@ type blockExchange struct {
 	getRequests sync.Map
 }
 
-func NewBlockExchange(wr wire.Wire) (*blockExchange, error) {
+func NewBlockExchange(wr wire.Wire, pr Storage) (*blockExchange, error) {
 	blx := &blockExchange{
 		wire:        wr,
-		storage:     newMemoryStore(),
+		storage:     pr,
 		getRequests: sync.Map{},
 	}
 

@@ -4,7 +4,7 @@ type memoryStore struct {
 	data map[string]*Block
 }
 
-func newMemoryStore() *memoryStore {
+func NewMemoryStore() *memoryStore {
 	return &memoryStore{
 		data: map[string]*Block{},
 	}
