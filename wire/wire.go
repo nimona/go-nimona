@@ -1,51 +1,61 @@
 package wire
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"os"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
-	"github.com/coreos/go-semver/semver"
+	igd "github.com/emersion/go-upnp-igd"
+	"github.com/keybase/saltpack"
+	"github.com/keybase/saltpack/basic"
 	"go.uber.org/zap"
 
+	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/mesh"
+)
+
+var (
+	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
 )
 
 type EventHandler func(event *Message) error
 
-const (
-	messagingProtocolName      = "wire"
-	messagingProtocolVersion   = "0.1.0"
-	messagingProtocolCodecJSON = "json"
-)
-
-var messagingProtocolVersionCanon = semver.New(messagingProtocolVersion)
-
 type Wire interface {
-	mesh.Handler
 	HandleExtensionEvents(extension string, h EventHandler) error
 	Send(ctx context.Context, extension, payloadType string, payload interface{}, to []string) error
+	Listen(addr string) (net.Listener, string, error)
 }
 
 type wire struct {
-	mesh     mesh.Mesh
+	accepted chan net.Conn
+	close    chan bool
+	keyring  *basic.Keyring
 	registry mesh.Registry
 	streams  map[string]io.ReadWriteCloser
 	handlers map[string]EventHandler
 	logger   *zap.Logger
 }
 
-func NewWire(ms mesh.Mesh, reg mesh.Registry) (Wire, error) {
+func NewWire(reg mesh.Registry) (Wire, error) {
 	ctx := context.Background()
 
 	m := &wire{
-		mesh:     ms,
+		accepted: make(chan net.Conn),
+		close:    make(chan bool),
+		keyring:  mesh.Keyring,
 		registry: reg,
 		streams:  map[string]io.ReadWriteCloser{},
 		handlers: map[string]EventHandler{},
-		logger:   mesh.Logger(ctx).Named("wire"),
+		logger:   log.Logger(ctx).Named("wire"),
 	}
 
 	return m, nil
@@ -59,25 +69,50 @@ func (m *wire) HandleExtensionEvents(extension string, h EventHandler) error {
 	return nil
 }
 
-func (m *wire) Initiate(conn net.Conn) (net.Conn, error) {
-	return conn, nil
-}
-
-func (m *wire) Handle(conn net.Conn) (net.Conn, error) {
-	for {
-		line, err := mesh.ReadToken(conn)
-		if err != nil {
-			// TODO close?
-			return nil, err
+func (m *wire) Handle(conn net.Conn) error {
+	m.logger.Debug("Handling new connection")
+	handshakeComplete := false
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		line := scanner.Text()
+		m.logger.Debug("Got line", zap.String("line", line))
+		if !handshakeComplete {
+			remotePeerID, err := m.ProcessHandshake(line)
+			if err != nil {
+				fmt.Println("Could not process handshake", err)
+				return err
+			}
+			// TODO Lock
+			m.streams[remotePeerID] = conn
+			handshakeComplete = true
+			continue
 		}
-		m.Process(line)
+		if err := m.Process(line); err != nil {
+			m.logger.Debug("Could not process line", zap.Error(err))
+			// return err
+		}
 	}
-	return conn, nil
+
+	return nil
 }
 
-func (m *wire) Process(bs []byte) error {
-	msg := &Message{}
-	if err := json.Unmarshal(bs, &msg); err != nil {
+func (m *wire) ProcessHandshake(encryptedBody string) (string, error) {
+	msg, err := m.DecodeMessage(encryptedBody)
+	if err != nil {
+		return "", err
+	}
+
+	handshake := &handshakeMessage{}
+	if err := msg.DecodePayload(&handshake); err != nil {
+		return "", err
+	}
+
+	return handshake.PeerID, nil
+}
+
+func (m *wire) Process(encryptedBody string) error {
+	msg, err := m.DecodeMessage(encryptedBody)
+	if err != nil {
 		return err
 	}
 
@@ -88,16 +123,6 @@ func (m *wire) Process(bs []byte) error {
 			zap.String("extension", msg.Extension),
 		)
 		return errors.New("no handler")
-	}
-
-	if err := json.Unmarshal(bs, &msg); err != nil {
-		m.logger.Info(
-			"Could not unmarshal  into type",
-			zap.String("extension", msg.Extension),
-			zap.String("payload_type", msg.PayloadType),
-			zap.Error(err),
-		)
-		return errors.New("could not unmarshal into type")
 	}
 
 	if err := hn(msg); err != nil {
@@ -113,72 +138,273 @@ func (m *wire) Process(bs []byte) error {
 	return nil
 }
 
-func (m *wire) Send(ctx context.Context, extension, payloadType string, payload interface{}, to []string) error {
-	if len(to) == 0 {
+func (m *wire) DecodeMessage(encryptedBody string) (*Message, error) {
+	mki, body, _, err := saltpack.Dearmor62DecryptOpen(saltpack.CheckKnownMajorVersion, encryptedBody, m.keyring)
+	if err != nil {
+		if err == saltpack.ErrNoDecryptionKey {
+			fmt.Println("NAMED", mki.NamedReceivers)
+			fmt.Println("RECIE", mki.ReceiverKey)
+			if len(mki.NamedReceivers) > 0 {
+				for _, receiver := range mki.NamedReceivers {
+					recipientID := fmt.Sprintf("%x", receiver)
+					fmt.Println("Trying to FW message to", recipientID)
+					ctx := context.Background() // TODO Fix context
+					if fwErr := m.sendMessage(ctx, encryptedBody+"\n", recipientID); fwErr != nil {
+						fmt.Println("Could not relay message", fwErr)
+						return nil, fwErr // TODO Should this return an error?
+					}
+				}
+			}
+			return nil, errors.New("Message was not for us")
+		}
+		return nil, err
+	}
+
+	msg := &Message{}
+	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+		m.logger.Info(
+			"Could not unmarshal  into type",
+			zap.String("extension", msg.Extension),
+			zap.String("payload_type", msg.PayloadType),
+			zap.Error(err),
+		)
+		return nil, errors.New("could not unmarshal into type")
+	}
+
+	return msg, nil
+}
+
+func (m *wire) Send(ctx context.Context, extension, payloadType string, payload interface{}, recipients []string) error {
+	if len(recipients) == 0 {
 		return nil
 	}
 
-	for _, recipient := range to {
-		if recipient == "" {
-			continue
-		}
-		msg := &messageOut{
-			Version:     *messagingProtocolVersionCanon,
-			Codec:       messagingProtocolCodecJSON,
-			Extension:   extension,
-			PayloadType: payloadType,
-			Payload:     payload,
-			From:        m.registry.GetLocalPeerInfo().ID,
-			To:          recipient,
-		}
-		if err := m.sendMessage(ctx, msg); err != nil {
-			// TODO Log error
-		}
-	}
-
-	return nil
-}
-
-func (m *wire) Name() string {
-	return messagingProtocolName
-}
-
-func (m *wire) GetAddresses() []string {
-	return []string{m.Name()}
-}
-
-func (m *wire) sendMessage(ctx context.Context, msg *messageOut) error {
-	logger := m.logger.With(zap.String("peerID", msg.To))
-	stream, ok := m.streams[msg.To]
-	if !ok || stream == nil {
-		conn, err := m.mesh.Dial(ctx, msg.To, messagingProtocolName)
+	pks := []saltpack.BoxPublicKey{}
+	for _, rec := range recipients {
+		pi, err := m.registry.GetPeerInfo(rec)
 		if err != nil {
-			m.logger.Info("could not dial to peer",
-				zap.Error(err),
-				zap.String("peerID", msg.To),
-				zap.Error(err),
-			)
 			return err
 		}
-
-		m.streams[msg.To] = conn
-		stream = conn
+		pks = append(pks, pi.GetPublicKey())
 	}
 
-	logger.Info("Attempting to write message")
-	b, err := json.Marshal(msg)
+	msg := &messageOut{
+		Extension:   extension,
+		PayloadType: payloadType,
+		Payload:     payload,
+	}
+
+	encodedMsg, err := json.Marshal(msg)
 	if err != nil {
-		m.logger.Warn("could not marshal outgoing message", zap.Error(err))
 		return err
 	}
 
-	if err := mesh.WriteToken(stream, b); err != nil {
-		m.logger.Warn("could not write outgoing message", zap.Error(err))
-		delete(m.streams, msg.To)
+	fmt.Println("Sending message", string(encodedMsg))
+
+	sk := m.registry.GetLocalPeerInfo().GetSecretKey()
+	ecryptedMsg, err := saltpack.EncryptArmor62Seal(saltpack.CurrentVersion(), encodedMsg, sk, pks, "WIRE")
+	if err != nil {
+		return err
+	}
+
+	for _, rec := range recipients {
+		if err := m.sendMessage(ctx, ecryptedMsg, rec); err != nil {
+			fmt.Println("Could not send to peer", rec, err)
+		}
+	}
+	return nil
+}
+
+func (m *wire) sendMessage(ctx context.Context, msg string, recipient string) error {
+	logger := m.logger.With(zap.String("peerID", recipient))
+
+	peerInfo, err := m.registry.GetPeerInfo(recipient)
+	if err != nil {
+		return err
+	}
+
+	stream, ok := m.streams[recipient]
+	if !ok || stream == nil {
+		conn, err := m.Dial(ctx, recipient)
+		if err != nil {
+			logger.Info("could not dial to peer, attempting to relay", zap.Error(err))
+			// return err
+			for _, address := range peerInfo.Addresses {
+				if strings.HasPrefix(address, "relay:") {
+					relayPeerID := strings.Replace(address, "relay:", "", 1)
+					logger.Info("trying to relay message", zap.String("relay", relayPeerID))
+					if relErr := m.sendMessage(ctx, msg, relayPeerID); relErr != nil {
+						logger.Info("could not FW to relay", zap.Error(relErr))
+						continue
+					}
+					logger.Info("relayed message via", zap.String("relay", relayPeerID))
+					return nil
+				}
+			}
+			logger.Info("could not dial to peer, failed to relay", zap.Error(err))
+			return err
+		}
+
+		m.streams[recipient] = conn
+		stream = conn
+		handshake := &handshakeMessage{
+			PeerID: m.registry.GetLocalPeerInfo().ID,
+		}
+		if err := m.Send(ctx, "wire", "handshake", handshake, []string{recipient}); err != nil {
+			// TODO close and remove stream
+			return err
+		}
+	}
+
+	if _, err := stream.Write([]byte(msg)); err != nil {
+		// TODO Lock
+		logger.Warn("could not write outgoing message", zap.Error(err))
+		delete(m.streams, recipient)
 		stream.Close()
 		return err
 	}
 
-	m.logger.Debug("Wrote message", zap.String("peerID", msg.To))
+	logger.Debug("Wrote message")
 	return nil
+}
+
+func (n *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
+	fmt.Println("Dial()ing ", peerID)
+	peerInfo, err := n.registry.GetPeerInfo(peerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// addresses := peerInfo.Addresses
+	// for _, address := range addresses {
+	// 	if strings.HasPrefix(address, "relay:") {
+	// 		relayPeerID := strings.Replace(address, "relay:", "", 1)
+	// 		relayPeer, err := n.registry.GetPeerInfo(relayPeerID)
+	// 		if err != nil {
+	// 			continue
+	// 		}
+	// 		addresses = append(addresses, relayPeer.Addresses...)
+	// 	}
+	// }
+
+	var conn net.Conn
+	for _, addr := range peerInfo.Addresses {
+		if !strings.HasPrefix(addr, "tcp:") {
+			continue
+		}
+		addr = strings.Replace(addr, "tcp:", "", 1)
+		// fmt.Println("dial dialing new conn to", addr)
+		dialer := net.Dialer{Timeout: time.Second * 5}
+		newConn, err := dialer.DialContext(ctx, "tcp", addr)
+		if err != nil {
+			// TODO blacklist address for a bit
+			// TODO hold error maybe?
+			// return nil, err
+			fmt.Println("Coult not dial addr", addr, err)
+			continue
+		}
+		conn = newConn
+		break
+	}
+	if conn == nil {
+		return nil, ErrAllAddressesFailed
+	}
+
+	n.accepted <- conn
+
+	// handshake so the other side knows who we are
+
+	if err != nil {
+		if err := conn.Close(); err != nil {
+			fmt.Println("could not close connection after failure to select")
+		}
+		fmt.Println("error selecting", err)
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// TODO do we need to return a listener?
+func (n *wire) Listen(addr string) (net.Listener, string, error) {
+	tcpListener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, "", err
+	}
+	port := tcpListener.Addr().(*net.TCPAddr).Port
+
+	lock := sync.Mutex{}
+	addresses := GetAddresses(tcpListener)
+
+	devices := make(chan igd.Device)
+	go func() {
+		for device := range devices {
+			upnp := true
+			upnpFlag := os.Getenv("UPNP")
+			if upnpFlag != "" {
+				upnp, _ = strconv.ParseBool(upnpFlag)
+			}
+			if !upnp {
+				continue
+			}
+			externalAddress, err := device.GetExternalIPAddress()
+			if err != nil {
+				fmt.Println("could not get external ip")
+				continue
+			}
+			desc := "nimona"
+			ttl := time.Hour * 24 * 365
+			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
+				fmt.Println("could not add port mapping", err)
+			} else {
+				lock.Lock()
+				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
+				lock.Unlock()
+			}
+		}
+	}()
+
+	if err := igd.Discover(devices, 5*time.Second); err != nil {
+		fmt.Println("could not discover devices")
+	}
+
+	addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
+	n.registry.GetLocalPeerInfo().UpdateAddresses(addresses)
+
+	go func() {
+		for {
+			conn := <-n.accepted
+			go n.Handle(conn)
+		}
+	}()
+
+	closed := false
+
+	go func() {
+		closed = true
+		<-n.close
+		// fmt.Println("Closing")
+		tcpListener.Close()
+	}()
+
+	go func() {
+		for {
+			conn, err := tcpListener.Accept()
+			if err != nil {
+				if closed {
+					return
+				}
+				fmt.Println("Error accepting: ", err.Error())
+				// TODO check conn is still alive and return
+				return
+			}
+			n.accepted <- conn
+		}
+	}()
+
+	return nil, tcpListener.Addr().String(), nil
 }

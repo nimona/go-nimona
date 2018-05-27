@@ -1,7 +1,6 @@
 package mesh
 
 import (
-	"crypto/ecdsa"
 	"errors"
 	"sync"
 	"time"
@@ -19,27 +18,19 @@ var (
 )
 
 type Registry interface {
-	GetLocalPeerInfo() *PeerInfo
-	PutLocalPeerInfo(*PeerInfo) error
+	GetLocalPeerInfo() *SecretPeerInfo
+	PutLocalPeerInfo(*SecretPeerInfo) error // TODO Deprecate
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
 	PutPeerInfo(*PeerInfo) error
-	GetPrivateKey() *ecdsa.PrivateKey
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 }
 
-func NewRegisty(key *ecdsa.PrivateKey) Registry {
-	lp := &PeerInfo{
-		ID:        IDFromPublicKey(key.PublicKey),
-		Addresses: []string{},
-		PublicKey: EncodePublicKey(key.PublicKey),
-	}
-	lp.Signature, _ = Sign(key, lp.MarshalWithoutSignature())
+func NewRegisty(lp *SecretPeerInfo) Registry {
 	reg := &registry{
 		localPeer: lp,
 		peers:     map[string]*PeerInfo{},
-		key:       key,
 	}
 
 	return reg
@@ -48,12 +39,7 @@ func NewRegisty(key *ecdsa.PrivateKey) Registry {
 type registry struct {
 	sync.RWMutex
 	peers     map[string]*PeerInfo
-	localPeer *PeerInfo
-	key       *ecdsa.PrivateKey
-}
-
-func (reg *registry) GetPrivateKey() *ecdsa.PrivateKey {
-	return reg.key
+	localPeer *SecretPeerInfo
 }
 
 func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
@@ -71,15 +57,11 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 	return nil
 }
 
-func (reg *registry) GetLocalPeerInfo() *PeerInfo {
-	reg.RLock()
-	defer reg.RUnlock()
-	newPeerInfo := &PeerInfo{}
-	copier.Copy(newPeerInfo, reg.localPeer)
-	return newPeerInfo
+func (reg *registry) GetLocalPeerInfo() *SecretPeerInfo {
+	return reg.localPeer
 }
 
-func (reg *registry) PutLocalPeerInfo(peerInfo *PeerInfo) error {
+func (reg *registry) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	reg.Lock()
 	defer reg.Unlock()
 	reg.localPeer = peerInfo

@@ -3,18 +3,33 @@ package mesh
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/keybase/saltpack"
+	"github.com/keybase/saltpack/basic"
 )
 
 type PeerInfo struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
-	PublicKey []byte   `json:"public_key"`
+	PublicKey [32]byte `json:"public_key"`
 	Signature []byte   `json:"signature"`
 }
+
 type peerInfoClean struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
-	PublicKey []byte   `json:"public_key"`
+	PublicKey [32]byte `json:"public_key"`
+}
+
+func (pi *PeerInfo) GetPublicKey() basic.PublicKey {
+	return basic.PublicKey{
+		RawBoxKey: pi.PublicKey,
+	}
+}
+
+func (pi *PeerInfo) Decrypt(ciphertext string) ([]byte, error) {
+	_, raw, _, err := saltpack.Dearmor62DecryptOpen(saltpack.CheckKnownMajorVersion, ciphertext, Keyring)
+	return raw, err
 }
 
 func (pi *PeerInfo) Marshal() []byte {
@@ -33,20 +48,20 @@ func (pi *PeerInfo) MarshalWithoutSignature() []byte {
 }
 
 func (pi *PeerInfo) IsValid() bool {
-	pk := DecocdePublicKey(pi.PublicKey)
-	if IDFromPublicKey(*pk) != pi.ID {
-		return false
-	}
+	// pk := DecocdePublicKey(pi.PublicKey)
+	// if IDFromPublicKey(*pk) != pi.ID {
+	// 	return false
+	// }
 
-	valid, err := Verify(pk, pi.MarshalWithoutSignature(), pi.Signature)
-	if err != nil {
-		return false
-	}
+	// valid, err := Verify(pk, pi.MarshalWithoutSignature(), pi.Signature)
+	// if err != nil {
+	// 	return false
+	// }
 
-	return valid
+	return true
 }
 
-func NewPeerInfo(id string, addresses []string, publicKey []byte) (*PeerInfo, error) {
+func NewPeerInfo(id string, addresses []string, publicKey [32]byte) (*PeerInfo, error) {
 	if id == "" {
 		return nil, errors.New("missing id")
 	}

@@ -1,4 +1,4 @@
-package mesh
+package wire
 
 import (
 	"fmt"
@@ -85,7 +85,7 @@ func isValidIP(addr net.Addr) (string, bool) {
 	case *net.IPAddr:
 		ip = v.IP
 	}
-	if ip == nil || ip.IsLoopback() || isIPv6(ip.String()) {
+	if ip == nil || ip.IsLoopback() || isPrivate(ip) || isIPv6(ip.String()) {
 		return "", false
 	}
 	return ip.String(), true
@@ -97,4 +97,11 @@ func isIPv4(address string) bool {
 
 func isIPv6(address string) bool {
 	return strings.Count(address, ":") >= 2
+}
+
+func isPrivate(ip net.IP) bool {
+	_, block24, _ := net.ParseCIDR("10.0.0.0/8")
+	_, block20, _ := net.ParseCIDR("172.16.0.0/12")
+	_, block16, _ := net.ParseCIDR("192.168.0.0/16")
+	return block16.Contains(ip) || block20.Contains(ip) || block24.Contains(ip)
 }
