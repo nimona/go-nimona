@@ -30,12 +30,17 @@ type BlockExchange interface {
 	Send(recipient string, data []byte,
 		meta map[string][]byte) (string, int, error)
 	GetLocalBlocks() ([]*string, error)
+	Subscribe(fn subscriptionCb) (string, error)
+	Unsubscribe(id string)
 }
 
+type subscriptionCb func(string)
+
 type blockExchange struct {
-	wire        wire.Wire
-	storage     Storage
-	getRequests sync.Map
+	wire          wire.Wire
+	storage       Storage
+	getRequests   sync.Map
+	subscriptions sync.Map
 }
 
 // NewBlockExchange get Wire and a Storage as parameters and returns a new
@@ -80,6 +85,8 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 
 	if payload.Block != nil {
 		err := blx.storage.Store(payload.Block.Key, payload.Block)
+		blx.publish(payload.Block.Key)
+
 		if err != nil {
 			return err
 		}
@@ -134,6 +141,7 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 
 func (blx *blockExchange) Get(key string, recipient string) (
 	*Block, error) {
+	// TODO remember to remove nonce
 	nonce := mesh.RandStringBytesMaskImprSrc(8)
 
 	req := &payloadTransferRequestBlock{
@@ -203,6 +211,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	}
 
 	blx.storage.Store(block.Key, &block)
+	blx.publish(block.Key)
 
 	ctx := context.Background()
 	err := blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
@@ -216,6 +225,30 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 
 func (blx *blockExchange) GetLocalBlocks() ([]*string, error) {
 	return blx.storage.List()
+}
+
+// Subscribe registers a function to be called when an event happens
+// returns the id for the registration
+func (blx *blockExchange) Subscribe(fn subscriptionCb) (string, error) {
+	id := mesh.RandStringBytesMaskImprSrc(8)
+	blx.subscriptions.Store(id, fn)
+	return id, nil
+}
+
+// Unsubscribe unregisters the id
+func (blx *blockExchange) Unsubscribe(id string) {
+	blx.subscriptions.Delete(id)
+}
+func (blx *blockExchange) publish(newKey string) {
+	blx.subscriptions.Range(func(k, v interface{}) bool {
+		f, ok := v.(subscriptionCb)
+		if !ok {
+			return false
+		}
+
+		f(newKey)
+		return true
+	})
 }
 
 func (b *blockExchange) hash(data []byte) string {
