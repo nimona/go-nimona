@@ -66,6 +66,21 @@ func main() {
 	dpr := blx.NewDiskStorage(storagePath)
 	blx, _ := blx.NewBlockExchange(wre, dpr)
 
+	// Announce blocks on init and on new blocks
+	go func() {
+		blockKeys, _ := blx.GetLocalBlocks()
+
+		for _, bk := range blockKeys {
+			// TODO Check errors
+			dht.PutProviders(context.Background(), *bk)
+		}
+
+		// TODO Store the unsubscribe key
+		blx.Subscribe(func(key string) {
+			dht.PutProviders(context.Background(), key)
+		})
+	}()
+
 	msh.RegisterHandler("wire", wre)
 
 	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
