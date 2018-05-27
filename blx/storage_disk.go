@@ -19,7 +19,7 @@ const (
 
 // NewDiskStorage creates a new diskStorage struct with the given path
 // the files that will be generated from this struct are stored in the path
-func NewDiskStorage(path string) *diskStorage {
+func NewDiskStorage(path string) Storage {
 	return &diskStorage{
 		path: path,
 	}

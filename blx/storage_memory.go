@@ -5,7 +5,7 @@ type memoryStore struct {
 }
 
 // NewMemoryStore creates a new in memory store
-func NewMemoryStore() *memoryStore {
+func NewMemoryStore() Storage {
 	return &memoryStore{
 		data: map[string]*Block{},
 	}
