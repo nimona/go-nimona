@@ -20,6 +20,8 @@ const (
 // NewDiskStorage creates a new diskStorage struct with the given path
 // the files that will be generated from this struct are stored in the path
 func NewDiskStorage(path string) Storage {
+	os.MkdirAll(path, os.ModePerm)
+
 	return &diskStorage{
 		path: path,
 	}
