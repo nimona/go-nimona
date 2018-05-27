@@ -23,6 +23,13 @@ var (
 	ErrInvalidRequest = errors.New("Invalid request")
 )
 
+type BlockExchange interface {
+	Get(key string, recipient string) (*Block, error)
+	Send(recipient string, data []byte,
+		meta map[string][]byte) (string, int, error)
+	GetLocalBlocks() ([]*string, error)
+}
+
 type blockExchange struct {
 	wire        wire.Wire
 	storage     Storage
@@ -32,7 +39,7 @@ type blockExchange struct {
 // NewBlockExchange get Wire and a Storage as parameters and returns a new
 // block exchange protocol. This enables the transfer and storage of
 // blocks between peers.
-func NewBlockExchange(wr wire.Wire, pr Storage) (*blockExchange, error) {
+func NewBlockExchange(wr wire.Wire, pr Storage) (BlockExchange, error) {
 	blx := &blockExchange{
 		wire:        wr,
 		storage:     pr,
