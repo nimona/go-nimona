@@ -17,6 +17,8 @@ const (
 	metaExt        = ".meta"
 )
 
+// NewDiskStorage creates a new diskStorage struct with the given path
+// the files that will be generated from this struct are stored in the path
 func NewDiskStorage(path string) *diskStorage {
 	return &diskStorage{
 		path: path,

@@ -29,6 +29,9 @@ type blockExchange struct {
 	getRequests sync.Map
 }
 
+// NewBlockExchange get Wire and a Storage as parameters and returns a new
+// block exchange protocol. This enables the transfer and storage of
+// blocks between peers.
 func NewBlockExchange(wr wire.Wire, pr Storage) (*blockExchange, error) {
 	blx := &blockExchange{
 		wire:        wr,

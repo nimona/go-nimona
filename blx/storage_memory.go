@@ -4,6 +4,7 @@ type memoryStore struct {
 	data map[string]*Block
 }
 
+// NewMemoryStore creates a new in memory store
 func NewMemoryStore() *memoryStore {
 	return &memoryStore{
 		data: map[string]*Block{},
