@@ -59,9 +59,27 @@ func main() {
 
 	msh.Listen(fmt.Sprintf(":%d", port))
 
+	storagePath := path.Join(configPath, "storage")
+
 	wre, _ := wire.NewWire(msh, reg)
 	dht, _ := dht.NewDHT(wre, reg)
-	blx, _ := blx.NewBlockExchange(wre)
+	dpr := blx.NewDiskStorage(storagePath)
+	blx, _ := blx.NewBlockExchange(wre, dpr)
+
+	// Announce blocks on init and on new blocks
+	go func() {
+		blockKeys, _ := blx.GetLocalBlocks()
+
+		for _, bk := range blockKeys {
+			// TODO Check errors
+			dht.PutProviders(context.Background(), bk)
+		}
+
+		// TODO Store the unsubscribe key
+		blx.Subscribe(func(key string) {
+			dht.PutProviders(context.Background(), key)
+		})
+	}()
 
 	msh.RegisterHandler("wire", wre)
 
@@ -281,7 +299,7 @@ func main() {
 				return
 			}
 			for _, block := range blocks {
-				c.Printf("     - %s\n", *block)
+				c.Printf("     - %s\n", block)
 			}
 		},
 		Help: "list all blocks in local storage",
@@ -351,8 +369,12 @@ func main() {
 				return
 			}
 
-			hsh, n, err := blx.Send(toPeer, data,
-				map[string][]byte{})
+			// TODO store filename in a meta
+			meta := map[string][]byte{}
+
+			meta["filename"] = []byte(f.Name())
+
+			hsh, n, err := blx.Send(toPeer, data, meta)
 			if err != nil {
 				c.Println(err)
 				return
