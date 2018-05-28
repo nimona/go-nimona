@@ -18,12 +18,12 @@ func TestStoreBlockSuccess(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	meta := make(map[string][]byte)
-	meta["TestMetaKey"] = []byte("TestMetaValue")
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
 	block := Block{
 		Key:  "TestKey1",
-		Meta: meta,
+		Meta: Meta{Values: values},
 		Data: []byte("TestData"),
 	}
 
@@ -44,12 +44,12 @@ func TestStoreBlockExists(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	meta := make(map[string][]byte)
-	meta["TestMetaKey"] = []byte("TestMetaValue")
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
 	block := Block{
 		Key:  "TestKey1",
-		Meta: meta,
+		Meta: Meta{Values: values},
 		Data: []byte("TestData"),
 	}
 
@@ -68,12 +68,12 @@ func TestGetSuccess(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	meta := make(map[string][]byte)
-	meta["TestMetaKey"] = []byte("TestMetaValue")
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
 	block := Block{
 		Key:  "TestKey1",
-		Meta: meta,
+		Meta: Meta{Values: values},
 		Data: []byte("TestData"),
 	}
 
@@ -106,12 +106,12 @@ func TestListSuccess(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	meta := make(map[string][]byte)
-	meta["TestMetaKey"] = []byte("TestMetaValue")
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
 	block := Block{
 		Key:  "TestKey1",
-		Meta: meta,
+		Meta: Meta{Values: values},
 		Data: []byte("TestData"),
 	}
 
@@ -120,7 +120,7 @@ func TestListSuccess(t *testing.T) {
 
 	list, err := ds.List()
 	assert.NoError(t, err)
-	assert.Equal(t, block.Key, *list[0])
+	assert.Equal(t, block.Key, list[0])
 
 	cleanup(path, block.Key)
 }
