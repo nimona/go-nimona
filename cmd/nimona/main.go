@@ -369,8 +369,12 @@ func main() {
 				return
 			}
 
-			hsh, n, err := blx.Send(toPeer, data,
-				map[string][]byte{})
+			// TODO store filename in a meta
+			meta := map[string][]byte{}
+
+			meta["filename"] = []byte(f.Name())
+
+			hsh, n, err := blx.Send(toPeer, data, meta)
 			if err != nil {
 				c.Println(err)
 				return

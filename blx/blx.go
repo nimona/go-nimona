@@ -193,13 +193,13 @@ func (blx *blockExchange) Get(key string, recipient string) (
 }
 
 func (blx *blockExchange) Send(recipient string, data []byte,
-	meta map[string][]byte) (string, int, error) {
+	values map[string][]byte) (string, int, error) {
 
 	hs := blx.hash(data)
 
 	block := Block{
 		Key:  hs,
-		Meta: meta,
+		Meta: Meta{Values: values},
 		Data: data,
 	}
 

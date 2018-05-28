@@ -1,7 +1,7 @@
 package blx
 
 import (
-	"encoding/gob"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -64,10 +64,9 @@ func (d *diskStorage) Store(key string, block *Block) error {
 
 	defer mf.Close()
 
-	// Create an encoder to store the meta map
-	enc := gob.NewEncoder(mf)
+	enc := json.NewEncoder(mf)
 	if err := enc.Encode(block.Meta); err != nil {
-		return nil
+		return err
 	}
 
 	mf.Sync()
@@ -104,9 +103,9 @@ func (d *diskStorage) Get(key string) (*Block, error) {
 
 	defer mf.Close()
 
-	meta := make(map[string][]byte)
+	meta := Meta{}
 
-	dec := gob.NewDecoder(mf)
+	dec := json.NewDecoder(mf)
 	if err := dec.Decode(&meta); err != nil {
 		return nil, err
 	}
