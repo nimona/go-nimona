@@ -25,14 +25,14 @@ func (m *memoryStore) Get(key string) (*Block, error) {
 	return block, nil
 }
 
-func (m *memoryStore) List() ([]*string, error) {
-	results := make([]*string, 0, 0)
+func (m *memoryStore) List() ([]string, error) {
+	results := make([]string, 0, 0)
 	for k, _ := range m.data {
-		results = append(results, &k)
+		results = append(results, k)
 	}
 
 	if len(results) == 0 {
-		return []*string{}, ErrEmpty
+		return []string{}, ErrEmpty
 	}
 	return results, nil
 }

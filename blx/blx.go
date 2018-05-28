@@ -29,7 +29,7 @@ type BlockExchange interface {
 	Get(key string, recipient string) (*Block, error)
 	Send(recipient string, data []byte,
 		meta map[string][]byte) (string, int, error)
-	GetLocalBlocks() ([]*string, error)
+	GetLocalBlocks() ([]string, error)
 	Subscribe(fn subscriptionCb) (string, error)
 	Unsubscribe(id string)
 }
@@ -223,7 +223,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	return hs, len(data), nil
 }
 
-func (blx *blockExchange) GetLocalBlocks() ([]*string, error) {
+func (blx *blockExchange) GetLocalBlocks() ([]string, error) {
 	return blx.storage.List()
 }
 

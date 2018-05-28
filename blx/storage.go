@@ -11,5 +11,5 @@ var (
 type Storage interface {
 	Store(string, *Block) error
 	Get(string) (*Block, error)
-	List() ([]*string, error)
+	List() ([]string, error)
 }

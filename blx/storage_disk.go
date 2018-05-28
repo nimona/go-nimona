@@ -119,8 +119,8 @@ func (d *diskStorage) Get(key string) (*Block, error) {
 }
 
 // List returns a list of all the block hashes that exist as files
-func (d *diskStorage) List() ([]*string, error) {
-	results := make([]*string, 0, 0)
+func (d *diskStorage) List() ([]string, error) {
+	results := make([]string, 0, 0)
 
 	files, err := ioutil.ReadDir(d.path)
 	if err != nil {
@@ -138,10 +138,10 @@ func (d *diskStorage) List() ([]*string, error) {
 			df := filepath.Join(d.path, key+dataExt)
 			_, err = os.Stat(df)
 			if err != nil {
-				break
+				continue
 			}
 
-			results = append(results, &key)
+			results = append(results, key)
 		}
 	}
 

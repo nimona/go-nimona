@@ -72,7 +72,7 @@ func main() {
 
 		for _, bk := range blockKeys {
 			// TODO Check errors
-			dht.PutProviders(context.Background(), *bk)
+			dht.PutProviders(context.Background(), bk)
 		}
 
 		// TODO Store the unsubscribe key
@@ -299,7 +299,7 @@ func main() {
 				return
 			}
 			for _, block := range blocks {
-				c.Printf("     - %s\n", *block)
+				c.Printf("     - %s\n", block)
 			}
 		},
 		Help: "list all blocks in local storage",
