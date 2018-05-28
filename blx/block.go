@@ -10,10 +10,12 @@ const (
 	StatusNotFound
 )
 
+// Meta is a struct that holds metadata for the specific block
 type Meta struct {
 	Values map[string][]byte `json:"values,omitempty"`
 }
 
+// Block is the base struct for data transmission and storage
 type Block struct {
 	Key  string `json:"key"`
 	Meta Meta   `json:"meta"`
