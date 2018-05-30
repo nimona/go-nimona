@@ -67,6 +67,8 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 		return nil
 	}
 
+	peerInfo.UpdatedAt = time.Now()
+
 	reg.peers[peerInfo.ID] = peerInfo
 	return nil
 }
@@ -78,6 +80,7 @@ func (reg *registry) GetLocalPeerInfo() *SecretPeerInfo {
 func (reg *registry) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	reg.Lock()
 	defer reg.Unlock()
+	peerInfo.UpdatedAt = time.Now()
 	reg.localPeer = peerInfo
 	return nil
 }
