@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"errors"
+	"time"
 
 	"github.com/keybase/saltpack"
 	"github.com/keybase/saltpack/basic"
@@ -9,10 +10,14 @@ import (
 
 // PeerInfo holds the information wire needs to connect to a remote peer
 type PeerInfo struct {
-	ID        string   `json:"id"`
-	Addresses []string `json:"addresses"`
-	PublicKey [32]byte `json:"public_key"`
-	Signature []byte   `json:"signature"`
+	ID              string    `json:"id"`
+	Addresses       []string  `json:"addresses"`
+	PublicKey       [32]byte  `json:"public_key"`
+	Signature       []byte    `json:"signature"`
+	Status          Status    `json:"status"`
+	CreatedAt       time.Time `json:"create_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	LastConnectedAt time.Time `json:"last_connected_at"`
 }
 
 type peerInfoClean struct {
@@ -52,6 +57,8 @@ func NewPeerInfo(id string, addresses []string, publicKey [32]byte) (*PeerInfo, 
 		ID:        id,
 		Addresses: addresses,
 		PublicKey: publicKey,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if !pi.IsValid() {
