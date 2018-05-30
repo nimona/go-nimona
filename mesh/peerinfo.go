@@ -3,13 +3,27 @@ package mesh
 import (
 	"encoding/json"
 	"errors"
+	"time"
+)
+
+type Status int
+
+const (
+	Connected Status = iota
+	NotConnected
+	CanConnect
+	ErrConnecting
 )
 
 type PeerInfo struct {
-	ID        string   `json:"id"`
-	Addresses []string `json:"addresses"`
-	PublicKey []byte   `json:"public_key"`
-	Signature []byte   `json:"signature"`
+	ID              string    `json:"id"`
+	Addresses       []string  `json:"addresses"`
+	PublicKey       []byte    `json:"public_key"`
+	Signature       []byte    `json:"signature"`
+	Status          Status    `json:"status"`
+	CreatedAt       time.Time `json:"create_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	LastConnectedAt time.Time `json:"last_connected_at"`
 }
 type peerInfoClean struct {
 	ID        string   `json:"id"`
@@ -63,6 +77,8 @@ func NewPeerInfo(id string, addresses []string, publicKey []byte) (*PeerInfo, er
 		ID:        id,
 		Addresses: addresses,
 		PublicKey: publicKey,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if !pi.IsValid() {
