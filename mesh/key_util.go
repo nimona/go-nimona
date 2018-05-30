@@ -53,6 +53,21 @@ func LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
 	return pi, nil
 }
 
+func CreateNewPeer() (*SecretPeerInfo, error) {
+	pub, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretPeerInfo{
+		PeerInfo: PeerInfo{
+			Addresses: []string{},
+			PublicKey: *pub,
+		},
+		SecretKey: *priv,
+	}, nil
+}
+
 // LoadSecretPeerInfo from a JSON encoded file
 func LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
 	raw, err := ioutil.ReadFile(path)

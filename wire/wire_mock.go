@@ -10,29 +10,6 @@ type MockWire struct {
 	mock.Mock
 }
 
-// Handle provides a mock function with given fields: _a0
-func (_m *MockWire) Handle(_a0 net.Conn) (net.Conn, error) {
-	ret := _m.Called(_a0)
-
-	var r0 net.Conn
-	if rf, ok := ret.Get(0).(func(net.Conn) net.Conn); ok {
-		r0 = rf(_a0)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(net.Conn)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(net.Conn) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // HandleExtensionEvents provides a mock function with given fields: extension, h
 func (_m *MockWire) HandleExtensionEvents(extension string, h EventHandler) error {
 	ret := _m.Called(extension, h)
@@ -47,27 +24,34 @@ func (_m *MockWire) HandleExtensionEvents(extension string, h EventHandler) erro
 	return r0
 }
 
-// Initiate provides a mock function with given fields: _a0
-func (_m *MockWire) Initiate(_a0 net.Conn) (net.Conn, error) {
-	ret := _m.Called(_a0)
+// Listen provides a mock function with given fields: addr
+func (_m *MockWire) Listen(addr string) (net.Listener, string, error) {
+	ret := _m.Called(addr)
 
-	var r0 net.Conn
-	if rf, ok := ret.Get(0).(func(net.Conn) net.Conn); ok {
-		r0 = rf(_a0)
+	var r0 net.Listener
+	if rf, ok := ret.Get(0).(func(string) net.Listener); ok {
+		r0 = rf(addr)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(net.Conn)
+			r0 = ret.Get(0).(net.Listener)
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(net.Conn) error); ok {
-		r1 = rf(_a0)
+	var r1 string
+	if rf, ok := ret.Get(1).(func(string) string); ok {
+		r1 = rf(addr)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(string)
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(addr)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // Send provides a mock function with given fields: ctx, extension, payloadType, payload, to
