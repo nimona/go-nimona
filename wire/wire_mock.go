@@ -54,13 +54,34 @@ func (_m *MockWire) Listen(addr string) (net.Listener, string, error) {
 	return r0, r1, r2
 }
 
-// Send provides a mock function with given fields: ctx, extension, payloadType, payload, to
-func (_m *MockWire) Send(ctx context.Context, extension string, payloadType string, payload interface{}, to []string) error {
-	ret := _m.Called(ctx, extension, payloadType, payload, to)
+// Pack provides a mock function with given fields: saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients
+func (_m *MockWire) Pack(saltpacked bool, extension string, payloadType string, payload interface{}, recipient string, hideSender bool, hideRecipients bool) (string, error) {
+	ret := _m.Called(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(bool, string, string, interface{}, string, bool, bool) string); ok {
+		r0 = rf(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(bool, string, string, interface{}, string, bool, bool) error); ok {
+		r1 = rf(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Send provides a mock function with given fields: ctx, extension, payloadType, payload, recipients
+func (_m *MockWire) Send(ctx context.Context, extension string, payloadType string, payload interface{}, recipients []string) error {
+	ret := _m.Called(ctx, extension, payloadType, payload, recipients)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, interface{}, []string) error); ok {
-		r0 = rf(ctx, extension, payloadType, payload, to)
+		r0 = rf(ctx, extension, payloadType, payload, recipients)
 	} else {
 		r0 = ret.Error(0)
 	}
