@@ -1,12 +1,12 @@
 package wire
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -36,8 +36,8 @@ type Wire interface {
 	HandleExtensionEvents(extension string, h EventHandler) error
 	Send(ctx context.Context, extension, payloadType string,
 		payload interface{}, recipients []string) error
-	Pack(saltpacked bool, extension, payloadType string, payload interface{},
-		recipient string, hideSender, hideRecipients bool) (string, error)
+	Pack(extension, payloadType string, payload interface{},
+		recipient string, hideSender, hideRecipients bool) ([]byte, error)
 	Listen(addr string) (net.Listener, string, error)
 }
 
@@ -46,7 +46,7 @@ type wire struct {
 	close    chan bool
 	keyring  *basic.Keyring
 	registry mesh.Registry
-	streams  map[string]io.ReadWriteCloser
+	streams  sync.Map
 	handlers map[string]EventHandler
 	logger   *zap.Logger
 }
@@ -58,9 +58,9 @@ func NewWire(reg mesh.Registry) (Wire, error) {
 	w := &wire{
 		accepted: make(chan net.Conn),
 		close:    make(chan bool),
-		keyring:  mesh.Keyring,
+		keyring:  reg.GetKeyring(),
 		registry: reg,
-		streams:  map[string]io.ReadWriteCloser{},
+		// streams:  map[string]io.ReadWriteCloser{},
 		handlers: map[string]EventHandler{},
 		logger:   log.Logger(ctx).Named("wire"),
 	}
@@ -79,30 +79,59 @@ func (w *wire) HandleExtensionEvents(extension string, h EventHandler) error {
 func (w *wire) Handle(conn net.Conn) error {
 	w.logger.Debug("handling new connection")
 	handshakeComplete := false
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		line := scanner.Text()
+
+	for {
+		message, err := ReadMessage(conn)
+		if err != nil {
+			w.logger.Error("could not read line", zap.Error(err))
+			conn.Close()
+			w.streams.Range(func(k, v interface{}) bool {
+				if v.(net.Conn) == conn {
+					w.streams.Delete(k)
+					return false
+				}
+				return true
+			})
+			return err
+		}
 		if !handshakeComplete {
-			remotePeerID, err := w.ProcessHandshake(line)
+			remotePeerID, err := w.ProcessHandshake(message)
 			if err != nil {
 				w.logger.Error("could not handle handlshake", zap.Error(err))
+				// TODO should we close this?
+				conn.Close()
+				w.streams.Range(func(k, v interface{}) bool {
+					if v.(net.Conn) == conn {
+						w.streams.Delete(k)
+						return false
+					}
+					return true
+				})
 				return err
 			}
-			// TODO Lock
-			w.streams[remotePeerID] = conn
+			w.streams.Store(remotePeerID, conn)
 			handshakeComplete = true
 			continue
 		}
-		if err := w.Process(line); err != nil {
-			w.logger.Error("could not process line", zap.Error(err), zap.String("line", line))
+		if err := w.Process(message); err != nil {
+			// w.logger.Error("could not process line", zap.Error(err))
 			// TODO should we return err?
+			conn.Close()
+			w.streams.Range(func(k, v interface{}) bool {
+				if v.(net.Conn) == conn {
+					w.streams.Delete(k)
+					return false
+				}
+				return true
+			})
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (w *wire) ProcessHandshake(encryptedBody string) (string, error) {
+func (w *wire) ProcessHandshake(encryptedBody []byte) (string, error) {
 	msg, err := w.DecodeMessage(encryptedBody)
 	if err != nil {
 		return "", err
@@ -116,7 +145,7 @@ func (w *wire) ProcessHandshake(encryptedBody string) (string, error) {
 	return handshake.PeerID, nil
 }
 
-func (w *wire) Process(encryptedBody string) error {
+func (w *wire) Process(encryptedBody []byte) error {
 	msg, err := w.DecodeMessage(encryptedBody)
 	if err != nil {
 		return err
@@ -144,16 +173,18 @@ func (w *wire) Process(encryptedBody string) error {
 	return nil
 }
 
-func (w *wire) DecodeMessage(encryptedBody string) (*Message, error) {
-	mki, body, _, err := saltpack.Dearmor62DecryptOpen(saltpack.CheckKnownMajorVersion, encryptedBody, w.keyring)
+func (w *wire) DecodeMessage(encryptedBody []byte) (*Message, error) {
+	// mki, body, _, err := saltpack.Dearmor62DecryptOpen(saltpack.CheckKnownMajorVersion, encryptedBody, w.keyring)
+	r := bytes.NewReader(encryptedBody)
+	mki, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
 	if err != nil {
 		if err == saltpack.ErrNoDecryptionKey {
 			if len(mki.NamedReceivers) > 0 {
 				for _, receiver := range mki.NamedReceivers {
 					recipientID := fmt.Sprintf("%x", receiver)
 					ctx := context.Background() // TODO Fix context
-					if fwErr := w.sendMessage(ctx, encryptedBody+"\n", recipientID); fwErr != nil {
-						w.logger.Error("could not relay message", zap.Error(fwErr))
+					if fwErr := w.sendMessage(ctx, []byte(encryptedBody), recipientID); fwErr != nil {
+						w.logger.Error("could not relay message to "+recipientID+" i am "+w.registry.GetLocalPeerInfo().ID, zap.Error(fwErr))
 						return nil, fwErr // TODO Should we return an error eventually?
 					}
 				}
@@ -161,6 +192,11 @@ func (w *wire) DecodeMessage(encryptedBody string) (*Message, error) {
 			return nil, errors.New("Message was not for us")
 		}
 		return nil, err
+	}
+
+	body, errRead := ioutil.ReadAll(pr)
+	if errRead != nil {
+		return nil, errRead
 	}
 
 	msg := &Message{}
@@ -184,16 +220,16 @@ func (w *wire) DecodeMessage(encryptedBody string) (*Message, error) {
 func (w *wire) Send(ctx context.Context, extension, payloadType string, payload interface{}, recipients []string) error {
 	for _, recipient := range recipients {
 		// TODO deal with error
-		w.SendOne(ctx, extension, payloadType, payload, recipient)
+		if err := w.SendOne(ctx, extension, payloadType, payload, recipient); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (w *wire) SendOne(ctx context.Context, extension, payloadType string, payload interface{}, recipient string) error {
-	saltpacked := true
-
 	// create message for recipient
-	msg, err := w.Pack(saltpacked, extension, payloadType, payload, recipient, true, true)
+	msg, err := w.Pack(extension, payloadType, payload, recipient, true, true)
 	if err != nil {
 		return err
 	}
@@ -226,7 +262,7 @@ func (w *wire) SendOne(ctx context.Context, extension, payloadType string, paylo
 	}
 
 	// so, we need to create message for recipient, but not anonymous
-	msg, err = w.Pack(saltpacked, extension, payloadType, payload, recipient, false, false)
+	msg, err = w.Pack(extension, payloadType, payload, recipient, false, false)
 	if err != nil {
 		w.logger.Debug("could not pack message for relay", zap.Error(err))
 		return err
@@ -246,12 +282,13 @@ func (w *wire) SendOne(ctx context.Context, extension, payloadType string, paylo
 	return ErrAllAddressesFailed
 }
 
-func (w *wire) Pack(saltpacked bool, extension, payloadType string,
-	payload interface{}, recipient string, hideSender, hideRecipients bool) (string, error) {
+// Pack a message into something we can send
+func (w *wire) Pack(extension, payloadType string, payload interface{},
+	recipient string, hideSender, hideRecipients bool) ([]byte, error) {
 	pks := []saltpack.BoxPublicKey{}
 	pi, err := w.registry.GetPeerInfo(recipient)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if hideRecipients {
 		pks = append(pks, &HiddenPublicKey{pi.GetPublicKey()})
@@ -259,31 +296,14 @@ func (w *wire) Pack(saltpacked bool, extension, payloadType string,
 		pks = append(pks, pi.GetPublicKey())
 	}
 
-	var out interface{}
-
-	msg := &messageOut{
+	out := &messageOut{
 		Extension:   extension,
 		PayloadType: payloadType,
 		Payload:     payload,
 	}
-
-	if !saltpacked {
-		out = map[string]interface{}{
-			"to":      recipient,
-			"from":    w.registry.GetLocalPeerInfo().ID,
-			"payload": msg,
-		}
-	} else {
-		out = msg
-	}
-
 	encodedMsg, err := json.Marshal(out)
 	if err != nil {
-		return "", err
-	}
-
-	if !saltpacked {
-		return string(encodedMsg), nil
+		return nil, err
 	}
 
 	var sk saltpack.BoxSecretKey
@@ -291,19 +311,42 @@ func (w *wire) Pack(saltpacked bool, extension, payloadType string,
 	if hideSender {
 		sk = &HiddenSecretKey{sk}
 	}
-	ecryptedMsg, err := saltpack.EncryptArmor62Seal(saltpack.CurrentVersion(), encodedMsg, sk, pks, "WIRE")
+
+	xpi := w.registry.GetLocalPeerInfo()
+	// sender := xpi.GetSigningSecretKey()
+
+	var ciphertext bytes.Buffer
+	rw, err := saltpack.NewEncryptStream(saltpack.CurrentVersion(), &ciphertext, xpi.GetSecretKey(), pks)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return ecryptedMsg, nil
+	if _, err := rw.Write(encodedMsg); err != nil {
+		return nil, err
+	}
+
+	if err := rw.Close(); err != nil {
+		return nil, err
+	}
+	// plainsink, err := saltpack.NewSigncryptSealStream(&ciphertext, w.keyring, sender, pks, arg.SymmetricReceivers)
+
+	// ecryptedMsg, err := saltpack.EncryptArmor62Seal(saltpack.CurrentVersion(), encodedMsg, sk, pks, "WIRE")
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return []byte(ecryptedMsg), nil
+
+	return ciphertext.Bytes(), nil
 }
 
-func (w *wire) sendMessage(ctx context.Context, msg string, recipient string) error {
+func (w *wire) sendMessage(ctx context.Context, msg []byte, recipient string) error {
 	logger := w.logger.With(zap.String("peerID", recipient))
-
-	conn, ok := w.streams[recipient]
-	if !ok || conn == nil {
+	var conn net.Conn
+	storedConn, ok := w.streams.Load(recipient)
+	if ok {
+		conn = storedConn.(net.Conn)
+	} else {
 		var err error
 		conn, err = w.Dial(ctx, recipient)
 		if err != nil {
@@ -312,11 +355,10 @@ func (w *wire) sendMessage(ctx context.Context, msg string, recipient string) er
 		}
 	}
 
-	if _, err := conn.Write([]byte(msg)); err != nil {
-		// TODO Lock
+	if err := WriteMessage(conn, []byte(msg)); err != nil {
 		logger.Warn("could not write outgoing message", zap.Error(err))
-		delete(w.streams, recipient)
 		conn.Close()
+		w.streams.Delete(recipient)
 		return err
 	}
 
@@ -324,6 +366,7 @@ func (w *wire) sendMessage(ctx context.Context, msg string, recipient string) er
 	return nil
 }
 
+// Dial to a peer and return a net.Conn
 func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	logger := w.logger.With(zap.String("peer_id", peerID))
 	peerInfo, err := w.registry.GetPeerInfo(peerID)
@@ -356,7 +399,7 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	w.accepted <- conn
 
 	// handshake so the other side knows who we are
-	w.streams[peerID] = conn
+	w.streams.Store(peerID, conn)
 	handshake := &handshakeMessage{
 		PeerID: w.registry.GetLocalPeerInfo().ID,
 	}
@@ -370,6 +413,7 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	return conn, nil
 }
 
+// Listen on an address
 // TODO do we need to return a listener?
 func (w *wire) Listen(addr string) (net.Listener, string, error) {
 	tcpListener, err := net.Listen("tcp", addr)

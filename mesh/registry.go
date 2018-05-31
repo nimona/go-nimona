@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keybase/saltpack/basic"
+
 	"github.com/jinzhu/copier"
 )
 
@@ -25,12 +27,17 @@ type Registry interface {
 	PutPeerInfo(*PeerInfo) error
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
+	LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error)
+	CreateNewPeer() (*SecretPeerInfo, error)
+	LoadSecretPeerInfo(path string) (*SecretPeerInfo, error)
+	StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error
+	GetKeyring() *basic.Keyring
 }
 
-func NewRegisty(lp *SecretPeerInfo) Registry {
+func NewRegisty() Registry {
 	reg := &registry{
-		localPeer: lp,
-		peers:     map[string]*PeerInfo{},
+		peers:   map[string]*PeerInfo{},
+		keyring: basic.NewKeyring(),
 	}
 
 	return reg
@@ -40,6 +47,11 @@ type registry struct {
 	sync.RWMutex
 	peers     map[string]*PeerInfo
 	localPeer *SecretPeerInfo
+	keyring   *basic.Keyring
+}
+
+func (reg *registry) GetKeyring() *basic.Keyring {
+	return reg.keyring
 }
 
 func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {

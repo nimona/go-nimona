@@ -9,27 +9,28 @@ import (
 	"log"
 	"os"
 
-	"github.com/keybase/saltpack/basic"
-
+	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
 )
 
-// TODO Move into address book
-var Keyring = basic.NewKeyring()
-
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
-func LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
+func (reg *registry) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
 	if path == "" {
 		return nil, errors.New("missing key path")
 	}
 
 	if _, err := os.Stat(path); err == nil {
-		return LoadSecretPeerInfo(path)
+		return reg.LoadSecretPeerInfo(path)
 	}
 
 	log.Printf("* Key path does not exist, creating new key in '%s'\n", path)
 
-	pub, priv, err := box.GenerateKey(rand.Reader)
+	_, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, signingSecret, err := GenerateSigningKey()
 	if err != nil {
 		return nil, err
 	}
@@ -39,37 +40,44 @@ func LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
 			Addresses: []string{},
 			PublicKey: *pub,
 		},
-		SecretKey: *priv,
+		SecretKey:        *priv, // TODO Is this needed?
+		SigningSecretKey: *signingSecret,
 	}
 
 	pi.ID = fmt.Sprintf("%x", pi.GetPublicKey().ToKID())
 
-	Keyring.ImportBoxKey(pub, priv)
+	reg.keyring.ImportBoxKey(pub, priv)
 
-	if err := StoreSecretPeerInfo(pi, path); err != nil {
+	if err := reg.StoreSecretPeerInfo(pi, path); err != nil {
 		return nil, err
 	}
 
 	return pi, nil
 }
 
-func CreateNewPeer() (*SecretPeerInfo, error) {
+func (reg *registry) CreateNewPeer() (*SecretPeerInfo, error) {
 	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SecretPeerInfo{
+	reg.keyring.ImportBoxKey(pub, priv)
+
+	spi := &SecretPeerInfo{
 		PeerInfo: PeerInfo{
 			Addresses: []string{},
 			PublicKey: *pub,
 		},
 		SecretKey: *priv,
-	}, nil
+	}
+
+	spi.ID = fmt.Sprintf("%x", spi.GetPublicKey().ToKID())
+
+	return spi, nil
 }
 
 // LoadSecretPeerInfo from a JSON encoded file
-func LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
+func (reg *registry) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -80,17 +88,38 @@ func LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
 		return nil, err
 	}
 
-	Keyring.ImportBoxKey(&pi.PublicKey, &pi.SecretKey)
+	reg.keyring.ImportBoxKey(&pi.PublicKey, &pi.SecretKey)
 
 	return pi, nil
 }
 
 // StoreSecretPeerInfo to a JSON encoded file
-func StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
+func (reg *registry) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
 	raw, err := json.Marshal(pi)
 	if err != nil {
 		return err
 	}
 
 	return ioutil.WriteFile(path, raw, 0644)
+}
+
+func GenerateSigningKey() (*[32]byte, *[64]byte, error) {
+	pub, sec, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(pub) != ed25519.PublicKeySize {
+		panic("unexpected public key size")
+	}
+	var pubArray [ed25519.PublicKeySize]byte
+	copy(pubArray[:], pub)
+
+	if len(sec) != ed25519.PrivateKeySize {
+		panic("unexpected private key size")
+	}
+	var privArray [ed25519.PrivateKeySize]byte
+	copy(privArray[:], sec)
+
+	return &pubArray, &privArray, nil
 }

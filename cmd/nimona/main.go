@@ -53,14 +53,17 @@ func main() {
 	}
 
 	keyPath := path.Join(configPath, "peer.json")
-	spi, err := mesh.LoadOrCreateLocalPeerInfo(keyPath)
-	if err != nil {
-		log.Fatal("could not load key", err)
-	}
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty(spi)
+	reg := mesh.NewRegisty()
+	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
+	if err != nil {
+		log.Fatal("could not load key", err)
+	}
+	if err := reg.PutLocalPeerInfo(spi); err != nil {
+		log.Fatal("could not put local peer")
+	}
 
 	for _, peerInfo := range bootstrapPeerInfos {
 		reg.PutPeerInfo(&peerInfo)

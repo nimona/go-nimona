@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/keybase/saltpack"
+
 	"github.com/keybase/saltpack/basic"
 )
 
@@ -21,15 +22,14 @@ type peerInfoClean struct {
 	PublicKey [32]byte `json:"public_key"`
 }
 
-func (pi *PeerInfo) GetPublicKey() basic.PublicKey {
+func (pi *PeerInfo) GetPublicKey() saltpack.BoxPublicKey {
 	return basic.PublicKey{
 		RawBoxKey: pi.PublicKey,
 	}
 }
 
-func (pi *PeerInfo) Decrypt(ciphertext string) ([]byte, error) {
-	_, raw, _, err := saltpack.Dearmor62DecryptOpen(saltpack.CheckKnownMajorVersion, ciphertext, Keyring)
-	return raw, err
+func (pi *PeerInfo) GetSigningPublicKey() basic.SigningPublicKey {
+	return basic.NewSigningPublicKey(&pi.PublicKey)
 }
 
 func (pi *PeerInfo) Marshal() []byte {
