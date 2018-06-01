@@ -54,20 +54,22 @@ func (_m *MockWire) Listen(addr string) (net.Listener, string, error) {
 	return r0, r1, r2
 }
 
-// Pack provides a mock function with given fields: saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients
-func (_m *MockWire) Pack(saltpacked bool, extension string, payloadType string, payload interface{}, recipient string, hideSender bool, hideRecipients bool) (string, error) {
-	ret := _m.Called(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+// Pack provides a mock function with given fields: extension, payloadType, payload, recipient, hideSender, hideRecipients
+func (_m *MockWire) Pack(extension string, payloadType string, payload interface{}, recipient string, hideSender bool, hideRecipients bool) ([]byte, error) {
+	ret := _m.Called(extension, payloadType, payload, recipient, hideSender, hideRecipients)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(bool, string, string, interface{}, string, bool, bool) string); ok {
-		r0 = rf(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+	var r0 []byte
+	if rf, ok := ret.Get(0).(func(string, string, interface{}, string, bool, bool) []byte); ok {
+		r0 = rf(extension, payloadType, payload, recipient, hideSender, hideRecipients)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(bool, string, string, interface{}, string, bool, bool) error); ok {
-		r1 = rf(saltpacked, extension, payloadType, payload, recipient, hideSender, hideRecipients)
+	if rf, ok := ret.Get(1).(func(string, string, interface{}, string, bool, bool) error); ok {
+		r1 = rf(extension, payloadType, payload, recipient, hideSender, hideRecipients)
 	} else {
 		r1 = ret.Error(1)
 	}
