@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message pmessage {
+  string extention = 1;
+  string payload_type = 2;
+  bytes payload = 3;
+}
