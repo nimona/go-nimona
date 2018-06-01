@@ -229,7 +229,7 @@ func (blx *blockExchange) GetLocalBlocks() ([]string, error) {
 // Subscribe registers a function to be called when an event happens
 // returns the id for the registration
 func (blx *blockExchange) Subscribe(fn subscriptionCb) (string, error) {
-	id := mesh.RandStringBytesMaskImprSrc(8)
+	id := wire.RandStringBytesMaskImprSrc(8)
 	blx.subscriptions.Store(id, fn)
 	return id, nil
 }
