@@ -22,12 +22,11 @@ type dhtTestSuite struct {
 }
 
 func (suite *dhtTestSuite) SetupTest() {
-	peer1, err := mesh.CreateNewPeer()
-	suite.NoError(err)
-
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry = mesh.NewRegisty(peer1)
+	suite.registry = mesh.NewRegisty()
+	peer1, _ := suite.registry.CreateNewPeer()
+	suite.registry.PutLocalPeerInfo(peer1)
 	suite.registry.PutPeerInfo(&mesh.PeerInfo{
 		ID: "bootstrap",
 		Addresses: []string{
