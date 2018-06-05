@@ -34,6 +34,8 @@ type Registry interface {
 	GetKeyring() *basic.Keyring
 }
 
+// NewRegisty creates a new registry with an empty keyring
+// TODO Rename to AddressBook
 func NewRegisty() Registry {
 	reg := &registry{
 		peers:   map[string]*PeerInfo{},

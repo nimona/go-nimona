@@ -48,6 +48,7 @@ func (reg *registry) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, er
 	return pi, nil
 }
 
+// CreateNewPeer with a new generated key, mostly used for testing
 func (reg *registry) CreateNewPeer() (*SecretPeerInfo, error) {
 	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
