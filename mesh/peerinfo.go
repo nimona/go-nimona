@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/keybase/saltpack"
-
 	"github.com/keybase/saltpack/basic"
 )
 

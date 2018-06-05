@@ -24,12 +24,7 @@ func (reg *registry) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, er
 
 	log.Printf("* Key path does not exist, creating new key in '%s'\n", path)
 
-	_, priv, err := box.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	pub, signingSecret, err := GenerateSigningKey()
+	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +34,7 @@ func (reg *registry) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, er
 			Addresses: []string{},
 			PublicKey: *pub,
 		},
-		SecretKey:        *priv, // TODO Is this needed?
-		SigningSecretKey: *signingSecret,
+		SecretKey: *priv,
 	}
 
 	pi.ID = fmt.Sprintf("%x", pi.GetPublicKey().ToKID())

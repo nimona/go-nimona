@@ -12,18 +12,12 @@ import (
 type SecretPeerInfo struct {
 	sync.RWMutex
 	PeerInfo
-	SecretKey        [32]byte `json:"secret_key"`
-	SigningSecretKey [64]byte `json:"signing_secret_key"`
+	SecretKey [32]byte `json:"secret_key"`
 }
 
 // GetSecretKey returns a saltpack SecretKey
 func (pi *SecretPeerInfo) GetSecretKey() saltpack.BoxSecretKey {
 	return basic.NewSecretKey(&pi.PublicKey, &pi.SecretKey)
-}
-
-// GetSecretKey returns the secret key
-func (pi *SecretPeerInfo) GetSecretKey() basic.SigningSecretKey {
-	return basic.NewSigningSecretKey(&pi.PublicKey, &pi.SigningSecretKey)
 }
 
 // UpdateAddresses to allow updating peer addresess
