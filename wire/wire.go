@@ -28,7 +28,7 @@ import (
 var (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
 	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
-
+	// ErrNotForUs message is not meant for us
 	ErrNotForUs = errors.New("message not for us")
 )
 
@@ -317,6 +317,7 @@ func (w *wire) SendOne(ctx context.Context, extension, payloadType string, paylo
 // Pack a message into something we can send
 func (w *wire) Pack(extension, payloadType string, payload interface{},
 	recipient string, hideSender, hideRecipients bool) ([]byte, error) {
+	hideRecipients = false
 	pks := []saltpack.BoxPublicKey{}
 	pi, err := w.registry.GetPeerInfo(recipient)
 	if err != nil {
@@ -353,7 +354,23 @@ func (w *wire) Pack(extension, payloadType string, payload interface{},
 
 	xpi := w.registry.GetLocalPeerInfo()
 
-	// sender := xpi.GetSigningSecretKey()
+	if bb, ok := payload.([]byte); ok {
+		var ciphertext bytes.Buffer
+		rw, err := saltpack.NewEncryptStream(saltpack.CurrentVersion(), &ciphertext, xpi.GetSecretKey(), pks)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err := rw.Write(bb); err != nil {
+			return nil, err
+		}
+
+		if err := rw.Close(); err != nil {
+			return nil, err
+		}
+		fmt.Printf("%d, %d\n", len(bb), len(ciphertext.Bytes()))
+	}
+	// sender := xpi.GetSecretKey()
 
 	var ciphertext bytes.Buffer
 	rw, err := saltpack.NewEncryptStream(saltpack.CurrentVersion(), &ciphertext, xpi.GetSecretKey(), pks)

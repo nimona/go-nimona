@@ -4,33 +4,38 @@ import (
 	"sync"
 )
 
+// Kmutex is a key based mutex, allowing us to lock/unlock specific keys
 type Kmutex struct {
-	m *sync.Map
+	*sync.Map
 }
 
+// NewKmutex creates a new Kmutex
 func NewKmutex() Kmutex {
-	m := sync.Map{}
-	return Kmutex{&m}
+	return Kmutex{
+		&sync.Map{},
+	}
 }
 
-func (s Kmutex) Unlock(key interface{}) {
-	l, exist := s.m.Load(key)
+// Unlock a key
+func (km *Kmutex) Unlock(key interface{}) {
+	imutex, exist := km.Load(key)
 	if !exist {
 		panic("kmutex: unlock of unlocked mutex")
 	}
-	l_ := l.(*sync.Mutex)
-	s.m.Delete(key)
-	l_.Unlock()
+	mutex := imutex.(*sync.Mutex)
+	km.Delete(key)
+	mutex.Unlock()
 }
 
-func (s Kmutex) Lock(key interface{}) {
-	m := sync.Mutex{}
-	m_, _ := s.m.LoadOrStore(key, &m)
-	mm := m_.(*sync.Mutex)
-	mm.Lock()
-	if mm != &m {
-		mm.Unlock()
-		s.Lock(key)
+// Lock a key
+func (km *Kmutex) Lock(key interface{}) {
+	nmutex := &sync.Mutex{}
+	imutex, _ := km.LoadOrStore(key, nmutex)
+	mutex := imutex.(*sync.Mutex)
+	mutex.Lock()
+	if mutex != nmutex {
+		mutex.Unlock()
+		km.Lock(key)
 		return
 	}
 	return

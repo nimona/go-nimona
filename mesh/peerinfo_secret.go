@@ -21,7 +21,8 @@ func (pi *SecretPeerInfo) GetSecretKey() saltpack.BoxSecretKey {
 	return basic.NewSecretKey(&pi.PublicKey, &pi.SecretKey)
 }
 
-func (pi *SecretPeerInfo) GetSigningSecretKey() basic.SigningSecretKey {
+// GetSecretKey returns the secret key
+func (pi *SecretPeerInfo) GetSecretKey() basic.SigningSecretKey {
 	return basic.NewSigningSecretKey(&pi.PublicKey, &pi.SigningSecretKey)
 }
 

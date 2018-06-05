@@ -4,6 +4,8 @@ import (
 	"github.com/keybase/saltpack"
 )
 
+// HiddenSecretKey that wraps BoxPublicKey to hide the key when used in
+// saltpack's encrypt method.
 type HiddenSecretKey struct {
 	SecretKey saltpack.BoxSecretKey
 }

@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
 )
 
@@ -101,25 +100,4 @@ func (reg *registry) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error 
 	}
 
 	return ioutil.WriteFile(path, raw, 0644)
-}
-
-func GenerateSigningKey() (*[32]byte, *[64]byte, error) {
-	pub, sec, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if len(pub) != ed25519.PublicKeySize {
-		panic("unexpected public key size")
-	}
-	var pubArray [ed25519.PublicKeySize]byte
-	copy(pubArray[:], pub)
-
-	if len(sec) != ed25519.PrivateKeySize {
-		panic("unexpected private key size")
-	}
-	var privArray [ed25519.PrivateKeySize]byte
-	copy(privArray[:], sec)
-
-	return &pubArray, &privArray, nil
 }
