@@ -33,7 +33,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	p2s.Addresses = []string{"tcp:127.0.0.1:32012"}
 	r1.PutPeerInfo(&p2s)
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second)
 
 	payload := map[string]string{
 		"foo": "bar",
@@ -63,7 +63,8 @@ func (suite *wireTestSuite) newPeer(port int) (*mesh.SecretPeerInfo, Wire, mesh.
 	reg.PutLocalPeerInfo(spi)
 
 	for _, peerInfo := range suite.bootstrapPeerInfos {
-		reg.PutPeerInfo(&peerInfo)
+		err := reg.PutPeerInfo(&peerInfo)
+		suite.NoError(err)
 	}
 
 	wre, _ := NewWire(reg)

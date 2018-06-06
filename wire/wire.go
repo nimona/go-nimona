@@ -106,29 +106,27 @@ func (w *wire) Close(peerID string, conn net.Conn) {
 }
 
 func (w *wire) HandleIncoming(conn net.Conn) error {
-	w.logger.Debug("handling new incoming connection")
-	// handshakeComplete := false
+	w.logger.Debug("handling new incoming connection", zap.String("remote", conn.RemoteAddr().String()))
 	remotePeerID := ""
 
 	envelopes := make(chan *Envelope, 10)
 
 	go func() {
 		for envelope := range envelopes {
-			// if !handshakeComplete {
-			// 	receivedPeerID, err := w.ProcessHandshake(envelope.Message)
-			// 	if err != nil {
-			// 		w.logger.Error("could not handle handlshake", zap.Error(err))
-			// 		w.Close(remotePeerID, conn)
-			// 		// return err
-			// 	}
-			// 	remotePeerID = receivedPeerID
-			// 	w.streams.Store(remotePeerID, conn)
-			// 	handshakeComplete = true
-			// 	continue
-			// }
 			message, err := w.DecodeMessage(envelope)
 			if err != nil {
 				w.logger.Error("could not get message from envelope", zap.Error(err))
+				continue
+			}
+			// TODO make sure this only happens once
+			if message.Extension == "wire" && message.PayloadType == "handshake" {
+				handshake := &handshakeMessage{}
+				if err := message.DecodePayload(handshake); err != nil {
+					w.logger.Error("could not decode handshake", zap.Error(err))
+					continue
+				}
+				remotePeerID = handshake.PeerID
+				w.streams.Store(remotePeerID, conn)
 				continue
 			}
 			if err := w.Process(message); err != nil {
@@ -155,19 +153,17 @@ func (w *wire) HandleIncoming(conn net.Conn) error {
 		if err := envelopeDecoder.Decode(&envelope); err != nil {
 			// if err != io.EOF {
 			w.logger.Error("could not read envelope", zap.Error(err))
-			// 	w.Close(remotePeerID, conn)
+			w.Close(remotePeerID, conn)
 			// }
-			// return err
-			continue
+			return err
+			// continue
 		}
 		envelopes <- envelope
 	}
-
-	return nil
 }
 
 func (w *wire) HandleOutgoing(conn net.Conn) error {
-	w.logger.Debug("handling new outgoing connection")
+	w.logger.Debug("handling new outgoing connection", zap.String("remote", conn.RemoteAddr().String()))
 
 	envelopes := make(chan *Envelope, 10)
 
@@ -180,7 +176,6 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 				continue
 			}
 			if err := w.Process(message); err != nil {
-				// w.logger.Error("could not process line", zap.Error(err))
 				// TODO should we return err?
 				w.logger.Error("could not process message", zap.Error(err))
 				w.Close("", conn)
@@ -203,15 +198,12 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 		if err := envelopeDecoder.Decode(&envelope); err != nil {
 			// if err != io.EOF {
 			w.logger.Error("could not read envelope", zap.Error(err))
-			// 	w.Close(remotePeerID, conn)
 			// }
-			// return err
-			continue
+			w.Close("", conn)
+			return err
 		}
 		envelopes <- envelope
 	}
-
-	return nil
 }
 
 func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
@@ -220,18 +212,23 @@ func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
 
 	// decrypt message
 	r := bytes.NewReader(envelope.Message)
-	_, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
+	mki, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
 	if err != nil {
 		if err == saltpack.ErrNoDecryptionKey {
-			// if len(mki.NamedReceivers) > 0 {
-			// 	for _, receiver := range mki.NamedReceivers {
-			// 		recipientID := fmt.Sprintf("%x", receiver)
-			// 		ctx := context.Background() // TODO Fix context
-			// 		if fwErr := w.sendMessage(ctx, encodedEnvelope, recipientID); fwErr != nil {
-			// 			w.logger.Error("could not relay message", zap.Error(fwErr))
-			// 		}
-			// 	}
-			// }
+			if len(mki.NamedReceivers) > 0 {
+				for _, receiver := range mki.NamedReceivers {
+					recipientID := fmt.Sprintf("%x", receiver)
+					ctx := context.Background() // TODO Fix context
+					encodedEnvelope := []byte{}
+					envelopeEncoder := codec.NewEncoderBytes(&encodedEnvelope, msgpackHandler)
+					if err := envelopeEncoder.Encode(envelope); err != nil {
+						return nil, err
+					}
+					if fwErr := w.writeEnvelope(ctx, encodedEnvelope, recipientID); fwErr != nil {
+						w.logger.Error("could not relay message", zap.Error(fwErr))
+					}
+				}
+			}
 			return nil, ErrNotForUs
 		}
 		return nil, err
@@ -251,20 +248,6 @@ func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
 
 	return message, nil
 }
-
-// func (w *wire) ProcessHandshake(encryptedBody []byte) (string, error) {
-// 	msg, err := w.DecodeMessage(encryptedBody)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	handshake := &handshakeMessage{}
-// 	if err := msg.DecodePayload(&handshake); err != nil {
-// 		return "", err
-// 	}
-
-// 	return handshake.PeerID, nil
-// }
 
 func (w *wire) Process(message *Message) error {
 	hn, ok := w.handlers[message.Extension]
