@@ -169,7 +169,6 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 
 	go func() {
 		for envelope := range envelopes {
-			fmt.Println("ENV", envelope)
 			message, err := w.DecodeMessage(envelope)
 			if err != nil {
 				w.logger.Error("could not get message from envelope", zap.Error(err))
@@ -424,11 +423,13 @@ func (w *wire) Pack(extension, payloadType string, payload interface{},
 }
 
 func (w *wire) writeEnvelope(ctx context.Context, encodedEnvelope []byte, peerID string) error {
+	w.logger.Debug("getting conn to write envelope", zap.String("peer_id", peerID))
 	conn, err := w.GetOrDial(ctx, peerID)
 	if err != nil {
 		return err
 	}
 
+	w.logger.Debug("writing envelope", zap.String("peer_id", peerID))
 	if _, err := conn.Write(encodedEnvelope); err != nil {
 		w.Close(peerID, conn)
 		return err
@@ -438,6 +439,7 @@ func (w *wire) writeEnvelope(ctx context.Context, encodedEnvelope []byte, peerID
 }
 
 func (w *wire) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
+	w.logger.Debug("getting conn", zap.String("peer_id", peerID))
 	if peerID == "" {
 		return nil, errors.New("missing peer id")
 	}
@@ -450,6 +452,7 @@ func (w *wire) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
 	// w.streamLock.Lock(peerID)
 	// defer w.streamLock.Unlock(peerID)
 
+	w.logger.Debug("dialing peer", zap.String("peer_id", peerID))
 	newConn, err := w.Dial(ctx, peerID)
 	if err != nil {
 		return nil, err
@@ -489,21 +492,25 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	// handle outgoing connections
 	w.outgoing <- conn
 
-	// handshake so the other side knows who we are
+	// store conn for reuse
 	w.streams.Store(peerID, conn)
-	// handshake := &handshakeMessage{
-	// 	PeerID: w.registry.GetLocalPeerInfo().ID,
-	// }
 
-	// msg, err := w.Pack("wire", "handshake", handshake, peerID, false, false)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	w.logger.Debug("writing handshake")
 
-	// if _, err := conn.Write(msg); err != nil {
-	// 	w.Close(peerID, conn)
-	// 	return nil, err
-	// }
+	// handshake so the other side knows who we are
+	handshake := &handshakeMessage{
+		PeerID: w.registry.GetLocalPeerInfo().ID,
+	}
+
+	msg, err := w.Pack("wire", "handshake", handshake, peerID, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := conn.Write(msg); err != nil {
+		w.Close(peerID, conn)
+		return nil, err
+	}
 
 	// TODO(superdecimal) Mark peer as connectable directly
 
@@ -582,8 +589,10 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 	}()
 
 	go func() {
+		w.logger.Debug("accepting connections", zap.String("address", tcpListener.Addr().String()))
 		for {
 			conn, err := tcpListener.Accept()
+			w.logger.Debug("connection accepted")
 			if err != nil {
 				if closed {
 					return
@@ -596,5 +605,5 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 		}
 	}()
 
-	return nil, tcpListener.Addr().String(), nil
+	return tcpListener, tcpListener.Addr().String(), nil
 }

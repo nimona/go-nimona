@@ -63,7 +63,7 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 		return ErrCannotPutLocalPeerInfo
 	}
 
-	if peerInfo.ID == "" || len(peerInfo.Addresses) == 0 {
+	if peerInfo.ID == "" {
 		return nil
 	}
 
