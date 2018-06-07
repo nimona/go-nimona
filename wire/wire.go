@@ -45,15 +45,16 @@ type Wire interface {
 }
 
 type wire struct {
-	incoming   chan net.Conn
-	outgoing   chan net.Conn
-	close      chan bool
-	keyring    *basic.Keyring
-	registry   mesh.Registry
-	streams    sync.Map
-	handlers   map[string]EventHandler
-	logger     *zap.Logger
-	streamLock utils.Kmutex
+	incoming     chan net.Conn
+	outgoing     chan net.Conn
+	close        chan bool
+	keyring      *basic.Keyring
+	registry     mesh.Registry
+	streams      sync.Map
+	handlers     map[string]EventHandler
+	handlersLock sync.RWMutex
+	logger       *zap.Logger
+	streamLock   utils.Kmutex
 }
 
 // NewWire creates a new wire protocol based on a registry
@@ -76,6 +77,8 @@ func NewWire(reg mesh.Registry) (Wire, error) {
 }
 
 func (w *wire) HandleExtensionEvents(extension string, h EventHandler) error {
+	w.handlersLock.Lock()
+	defer w.handlersLock.Unlock()
 	if _, ok := w.handlers[extension]; ok {
 		return errors.New("There already is a handler registered for this extension")
 	}
@@ -278,7 +281,11 @@ func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
 	return message, nil
 }
 
+// Process incoming message
+// TODO Process from channel, don't call directly so we don't have to lock handlers
 func (w *wire) Process(message *Message) error {
+	w.handlersLock.RLock()
+	defer w.handlersLock.RUnlock()
 	hn, ok := w.handlers[message.Extension]
 	if !ok {
 		w.logger.Info(
@@ -303,18 +310,18 @@ func (w *wire) Process(message *Message) error {
 
 // Unpack an encoded envelope into a message
 // TODO Unpack is not currently used, remove?
-func (w *wire) Unpack(encodedEnvelope []byte) (*Message, error) {
-	// decode envelope
-	envelope := &Envelope{}
-	msgpackHandler := new(codec.MsgpackHandle)
-	msgpackHandler.RawToString = false
-	envelopeDecoder := codec.NewDecoderBytes(encodedEnvelope, msgpackHandler)
-	if err := envelopeDecoder.Decode(&envelope); err != nil {
-		return nil, err
-	}
+// func (w *wire) Unpack(encodedEnvelope []byte) (*Message, error) {
+// 	// decode envelope
+// 	envelope := &Envelope{}
+// 	msgpackHandler := new(codec.MsgpackHandle)
+// 	msgpackHandler.RawToString = false
+// 	envelopeDecoder := codec.NewDecoderBytes(encodedEnvelope, msgpackHandler)
+// 	if err := envelopeDecoder.Decode(&envelope); err != nil {
+// 		return nil, err
+// 	}
 
-	return w.DecodeMessage(envelope)
-}
+// 	return w.DecodeMessage(envelope)
+// }
 
 func (w *wire) Send(ctx context.Context, extension, payloadType string, payload interface{}, recipients []string) error {
 	for _, recipient := range recipients {
