@@ -123,21 +123,21 @@ func (q *query) next() {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
 		req = messageGetPeerInfo{
-			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
 		req = messageGetProviders{
-			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
 		req = messageGetValue{
-			SenderPeerInfo: *q.dht.registry.GetLocalPeerInfo(),
+			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}

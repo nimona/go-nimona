@@ -29,7 +29,8 @@ type payloadTransferBlock struct {
 }
 
 type payloadTransferRequestBlock struct {
-	Nonce    string `json:"nonce"`
-	Key      string `json:"key,omitempty"`
-	response chan interface{}
+	RequestingPeerID string `json:"req_peer_id"`
+	Nonce            string `json:"nonce"`
+	Key              string `json:"key,omitempty"`
+	response         chan interface{}
 }

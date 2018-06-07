@@ -67,7 +67,7 @@ func (nd *DHT) refresh() {
 		}
 
 		resp := messageGetPeerInfo{
-			SenderPeerInfo: *peerInfo,
+			SenderPeerInfo: peerInfo.ToPeerInfo(),
 			PeerID:         peerInfo.ID,
 		}
 		ctx := context.Background()
@@ -118,7 +118,7 @@ func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	resp := messagePutPeerInfo{
-		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		PeerID:         payload.PeerID,
 		PeerInfo:       *peerInfo,
@@ -126,7 +126,7 @@ func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
 	}
 
 	ctx := context.Background()
-	to := []string{message.From}
+	to := []string{payload.SenderPeerInfo.ID}
 	nd.wire.Send(ctx, wireExtention, PayloadTypePutPeerInfo, resp, to)
 }
 
@@ -166,7 +166,7 @@ func (nd *DHT) handleGetProviders(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutProviders{
-		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		PeerIDs:        providers,
@@ -174,7 +174,7 @@ func (nd *DHT) handleGetProviders(message *wire.Message) {
 	}
 
 	ctx := context.Background()
-	to := []string{message.From}
+	to := []string{payload.SenderPeerInfo.ID}
 	nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, to)
 }
 
@@ -214,7 +214,7 @@ func (nd *DHT) handleGetValue(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutValue{
-		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		Value:          value,
@@ -222,7 +222,7 @@ func (nd *DHT) handleGetValue(message *wire.Message) {
 	}
 
 	ctx := context.Background()
-	to := []string{message.From}
+	to := []string{payload.SenderPeerInfo.ID}
 	nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, to)
 }
 
@@ -306,7 +306,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*mesh.PeerInfo, error) {
 func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*mesh.PeerInfo, error) {
 	q := &query{
 		dht:              nd,
-		id:               mesh.RandStringBytesMaskImprSrc(8),
+		id:               wire.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        PeerInfoQuery,
 		incomingMessages: make(chan interface{}),
@@ -336,7 +336,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	resp := messagePutValue{
-		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
 		Key:            key,
 		Value:          value,
 	}
@@ -348,7 +348,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 	q := &query{
 		dht:              nd,
-		id:               mesh.RandStringBytesMaskImprSrc(8),
+		id:               wire.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ValueQuery,
 		incomingMessages: make(chan interface{}),
@@ -384,7 +384,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	resp := messagePutProviders{
-		SenderPeerInfo: *nd.registry.GetLocalPeerInfo(),
+		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
 		Key:            key,
 		PeerIDs:        []string{localPeerID},
 	}
@@ -396,7 +396,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 	q := &query{
 		dht:              nd,
-		id:               mesh.RandStringBytesMaskImprSrc(8),
+		id:               wire.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
 		incomingMessages: make(chan interface{}),

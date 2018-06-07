@@ -3,7 +3,7 @@ package dht
 import (
 	"sync"
 
-	"github.com/mohae/deepcopy"
+	"github.com/jinzhu/copier"
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,16 +84,26 @@ func (s *Store) Wipe(key string) error {
 	return nil
 }
 
+// GetAllProviders returns all providers and the values they are providing
 func (s *Store) GetAllProviders() (map[string][]string, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	return deepcopy.Copy(s.providers).(map[string][]string), nil
+	providers := map[string][]string{}
+	if err := copier.Copy(s.providers, providers); err != nil {
+		return nil, err
+	}
+	return providers, nil
 }
 
+// GetAllValues returns all the key value pairs we know about
 func (s *Store) GetAllValues() (map[string]string, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	return deepcopy.Copy(s.values).(map[string]string), nil
+	values := map[string]string{}
+	if err := copier.Copy(s.values, values); err != nil {
+		return nil, err
+	}
+	return values, nil
 }

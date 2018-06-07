@@ -28,40 +28,50 @@ var (
 
 var bootstrapPeerInfos = []mesh.PeerInfo{
 	mesh.PeerInfo{
-		ID: "0x4F63B74a46Bf61F4194022E4DD9F64d958f1663d",
+		ID: "7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562",
 		Addresses: []string{
-			"tcp:andromeda.nimona.io:26800",
+			"tcp:andromeda.nimona.io:26801",
+		},
+		PublicKey: [32]byte{
+			119, 48, 183, 62, 52, 174, 46, 58, 217, 34, 53, 174, 252, 126,
+			224, 54, 103, 54, 96, 47, 150, 120, 94, 111, 53, 232, 183, 16,
+			146, 59, 69, 98,
 		},
 	},
 }
 
 func main() {
-	usr, _ := user.Current()
-	configPath := path.Join(usr.HomeDir, ".nimona")
+	configPath := os.Getenv("NIMONA_PATH")
+
+	if configPath == "" {
+		usr, _ := user.Current()
+		configPath = path.Join(usr.HomeDir, ".nimona")
+	}
+
 	if err := os.MkdirAll(configPath, 0777); err != nil {
 		log.Fatal("could not create config dir", err)
 	}
 
-	keyPath := path.Join(configPath, "key")
-	privateKey, err := mesh.LoadOrCreatePrivateKey(keyPath)
-	if err != nil {
-		log.Fatal("could not load key", err)
-	}
+	keyPath := path.Join(configPath, "peer.json")
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty(privateKey)
-	msh := mesh.New(reg)
+	reg := mesh.NewRegisty()
+	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
+	if err != nil {
+		log.Fatal("could not load key", err)
+	}
+	if err := reg.PutLocalPeerInfo(spi); err != nil {
+		log.Fatal("could not put local peer")
+	}
 
 	for _, peerInfo := range bootstrapPeerInfos {
 		reg.PutPeerInfo(&peerInfo)
 	}
 
-	msh.Listen(fmt.Sprintf(":%d", port))
-
 	storagePath := path.Join(configPath, "storage")
 
-	wre, _ := wire.NewWire(msh, reg)
+	wre, _ := wire.NewWire(reg)
 	dht, _ := dht.NewDHT(wre, reg)
 	dpr := blx.NewDiskStorage(storagePath)
 	blx, _ := blx.NewBlockExchange(wre, dpr)
@@ -81,10 +91,10 @@ func main() {
 		})
 	}()
 
-	msh.RegisterHandler("wire", wre)
+	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
 
 	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
-		fmt.Printf("___ Got message from %s: %s\n", event.From, string(event.Payload))
+		fmt.Printf("___ Got message %s\n", string(event.Payload))
 		return nil
 	})
 
@@ -333,7 +343,9 @@ func main() {
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			wre.Send(ctx, "msg", "msg", msg, to)
+			if err := wre.Send(ctx, "msg", "msg", msg, to); err != nil {
+				c.Println("Could not send message", err)
+			}
 		},
 		Help: "list protocols for local peer",
 	}

@@ -7,8 +7,6 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/nimona/go-nimona/mesh"
-
 	"github.com/nimona/go-nimona/wire"
 	"github.com/sirupsen/logrus"
 )
@@ -131,7 +129,7 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 
 	ctx := context.Background()
 	err = blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-		[]string{message.From})
+		[]string{payload.RequestingPeerID})
 	if err != nil {
 		return err
 	}
@@ -142,12 +140,13 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 func (blx *blockExchange) Get(key string, recipient string) (
 	*Block, error) {
 	// TODO remember to remove nonce
-	nonce := mesh.RandStringBytesMaskImprSrc(8)
+	nonce := wire.RandStringBytesMaskImprSrc(8)
 
 	req := &payloadTransferRequestBlock{
-		Nonce:    nonce,
-		Key:      key,
-		response: make(chan interface{}, 1),
+		RequestingPeerID: "MISSING-REQUEST-PEER-ID", // TODO Missing requesting peer id
+		Nonce:            nonce,
+		Key:              key,
+		response:         make(chan interface{}, 1),
 	}
 
 	// Check local storage for block
@@ -203,7 +202,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 		Data: data,
 	}
 
-	nonce := mesh.RandStringBytesMaskImprSrc(8)
+	nonce := wire.RandStringBytesMaskImprSrc(8)
 
 	resp := payloadTransferBlock{
 		Nonce: nonce,
@@ -230,7 +229,7 @@ func (blx *blockExchange) GetLocalBlocks() ([]string, error) {
 // Subscribe registers a function to be called when an event happens
 // returns the id for the registration
 func (blx *blockExchange) Subscribe(fn subscriptionCb) (string, error) {
-	id := mesh.RandStringBytesMaskImprSrc(8)
+	id := wire.RandStringBytesMaskImprSrc(8)
 	blx.subscriptions.Store(id, fn)
 	return id, nil
 }

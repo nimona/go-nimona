@@ -1,77 +1,98 @@
 package mesh
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
-	"crypto/sha256"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
-	"math/big"
 	"os"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/crypto/nacl/box"
 )
 
-func LoadOrCreatePrivateKey(keyPath string) (*ecdsa.PrivateKey, error) {
-	if keyPath == "" {
+// LoadOrCreateLocalPeerInfo from/to a JSON encoded file
+func (reg *registry) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
+	if path == "" {
 		return nil, errors.New("missing key path")
 	}
 
-	if _, err := os.Stat(keyPath); err == nil {
-		return ethcrypto.LoadECDSA(keyPath)
+	if _, err := os.Stat(path); err == nil {
+		return reg.LoadSecretPeerInfo(path)
 	}
 
-	log.Printf("* Key path does not exist, creating new key in '%s'\n", keyPath)
-	privateKey, err := CreatePrivateKey()
+	log.Printf("* Key path does not exist, creating new key in '%s'\n", path)
+
+	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ethcrypto.SaveECDSA(keyPath, privateKey); err != nil {
+	pi := &SecretPeerInfo{
+		PeerInfo: PeerInfo{
+			Addresses: []string{},
+			PublicKey: *pub,
+		},
+		SecretKey: *priv,
+	}
+
+	pi.ID = fmt.Sprintf("%x", pi.GetPublicKey().ToKID())
+
+	reg.keyring.ImportBoxKey(pub, priv)
+
+	if err := reg.StoreSecretPeerInfo(pi, path); err != nil {
 		return nil, err
 	}
 
-	return privateKey, nil
+	return pi, nil
 }
 
-func CreatePrivateKey() (*ecdsa.PrivateKey, error) {
-	return ethcrypto.GenerateKey()
-}
-
-func DecocdePublicKey(bs []byte) *ecdsa.PublicKey {
-	pk := ethcrypto.ToECDSAPub(bs)
-	return pk
-}
-
-func EncodePublicKey(pk ecdsa.PublicKey) []byte {
-	return ethcrypto.FromECDSAPub(&pk)
-}
-
-func IDFromPublicKey(pk ecdsa.PublicKey) string {
-	return ethcrypto.PubkeyToAddress(pk).String()
-}
-
-func Sign(k *ecdsa.PrivateKey, b []byte) ([]byte, error) {
-	digest := sha256.Sum256(b)
-	r, s, err := ecdsa.Sign(rand.Reader, k, digest[:])
+// CreateNewPeer with a new generated key, mostly used for testing
+func (reg *registry) CreateNewPeer() (*SecretPeerInfo, error) {
+	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	params := k.Curve.Params()
-	curveOrderByteSize := params.P.BitLen() / 8
-	rBytes, sBytes := r.Bytes(), s.Bytes()
-	signature := make([]byte, curveOrderByteSize*2)
-	copy(signature[curveOrderByteSize-len(rBytes):], rBytes)
-	copy(signature[curveOrderByteSize*2-len(sBytes):], sBytes)
-	return signature, nil
+	reg.keyring.ImportBoxKey(pub, priv)
+
+	spi := &SecretPeerInfo{
+		PeerInfo: PeerInfo{
+			Addresses: []string{},
+			PublicKey: *pub,
+		},
+		SecretKey: *priv,
+	}
+
+	spi.ID = fmt.Sprintf("%x", spi.GetPublicKey().ToKID())
+
+	return spi, nil
 }
 
-func Verify(pk *ecdsa.PublicKey, b []byte, sn []byte) (bool, error) {
-	digest := sha256.Sum256(b)
-	curveOrderByteSize := pk.Curve.Params().P.BitLen() / 8
-	r, s := new(big.Int), new(big.Int)
-	r.SetBytes(sn[:curveOrderByteSize])
-	s.SetBytes(sn[curveOrderByteSize:])
-	return ecdsa.Verify(pk, digest[:], r, s), nil
+// LoadSecretPeerInfo from a JSON encoded file
+func (reg *registry) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	pi := &SecretPeerInfo{}
+	if err := json.Unmarshal(raw, &pi); err != nil {
+		return nil, err
+	}
+
+	reg.keyring.ImportBoxKey(&pi.PublicKey, &pi.SecretKey)
+
+	return pi, nil
+}
+
+// StoreSecretPeerInfo to a JSON encoded file
+func (reg *registry) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
+	raw, err := json.Marshal(pi)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path, raw, 0644)
 }

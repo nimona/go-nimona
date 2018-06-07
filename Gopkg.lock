@@ -3,20 +3,15 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/btcsuite/btcd"
-  packages = ["btcec"]
-  revision = "675abc5df3c5531bc741b56a765e35623459da6d"
-
-[[projects]]
-  name = "github.com/chzyer/readline"
+  name = "github.com/abiosoft/readline"
   packages = ["."]
-  revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
+  revision = "155bce2042db95a783081fab225e74dd879055b0"
 
 [[projects]]
-  name = "github.com/coreos/go-semver"
-  packages = ["semver"]
-  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
-  version = "v0.2.0"
+  branch = "master"
+  name = "github.com/codahale/hdrhistogram"
+  packages = ["."]
+  revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -31,24 +26,10 @@
   revision = "6fb51d2a2a533cabb08119a9d05fe3f6b4c513f3"
 
 [[projects]]
-  name = "github.com/ethereum/go-ethereum"
-  packages = [
-    "common",
-    "common/hexutil",
-    "common/math",
-    "crypto",
-    "crypto/secp256k1",
-    "crypto/sha3",
-    "rlp"
-  ]
-  revision = "2688dab48c9b8ae71b8d95c7678817eaa17f2b53"
-  version = "v1.8.8"
-
-[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
-  revision = "507f6050b8568533fb3f5504de8e5205fa62a114"
-  version = "v1.6.0"
+  revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
+  version = "v1.5.0"
 
 [[projects]]
   branch = "master"
@@ -86,33 +67,35 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/hashicorp/yamux"
-  packages = ["."]
-  revision = "683f49123a33db61abfb241b7ac5e4af4dc54d55"
-
-[[projects]]
-  branch = "master"
   name = "github.com/jinzhu/copier"
   packages = ["."]
   revision = "7e38e58719c33e0d44d585c4ab477a30f8cb82dd"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/keybase/go-codec"
+  packages = ["codec"]
+  revision = "73210629e9f31ec8745db957708cbcc344c6f173"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/keybase/saltpack"
+  packages = [
+    ".",
+    "basic",
+    "encoding/basex"
+  ]
+  revision = "eb0d09297d14271564bffb1bef39d0b29978132e"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
+  revision = "5411d3eea5978e6cdc258b30de592b60df6aba96"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
-  version = "v0.0.3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/mohae/deepcopy"
-  packages = ["."]
-  revision = "c48cc78d482608239f6c4c92a4abd87eb8761c90"
+  revision = "57fdcb988a5c543893cc61bce354a6e24ab70022"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -123,8 +106,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   name = "github.com/stretchr/objx"
@@ -140,20 +123,31 @@
     "require",
     "suite"
   ]
-  revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
-  version = "v1.2.0"
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tylertreat/bench"
+  packages = ["."]
+  revision = "eb938b1b5e35aa6937565aa805d4da9c1fbde7b3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tylertreat/hdrhistogram-writer"
+  packages = ["."]
+  revision = "73b8d31ba571535864ea87c5c3df0361b90a3350"
 
 [[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
-  version = "v1.1.1"
+  revision = "c88ee250d0221a57af388746f5cf03768c21d6e2"
 
 [[projects]]
   name = "go.uber.org/atomic"
   packages = ["."]
-  revision = "8474b86a5a6f79c443ce4b2992817ff32cf208b8"
-  version = "v1.3.1"
+  revision = "4e336646b2ef9fc6e47be8e21594178f98e5ebcf"
+  version = "v1.2.0"
 
 [[projects]]
   name = "go.uber.org/multierr"
@@ -171,14 +165,29 @@
     "internal/exit",
     "zapcore"
   ]
-  revision = "35aad584952c3e7020db7b839f6b102de6271f89"
-  version = "v1.7.1"
+  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
-  revision = "d9133f5469342136e669e85192a26056b587f503"
+  packages = [
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "nacl/box",
+    "nacl/secretbox",
+    "poly1305",
+    "salsa20/salsa",
+    "ssh/terminal"
+  ]
+  revision = "b47b1587369238182299fe4dad77d05b8b461e06"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
   branch = "master"
@@ -187,29 +196,34 @@
     "unix",
     "windows"
   ]
-  revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
+  revision = "9527bec2660bd847c050fda93a0f0c6dee0800bb"
 
 [[projects]]
-  branch = "v2"
+  branch = "master"
+  name = "golang.org/x/time"
+  packages = ["rate"]
+  revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
+
+[[projects]]
   name = "gopkg.in/abiosoft/ishell.v2"
   packages = ["."]
-  revision = "42a9bbfa0017d7243b50b8f542076ef3d5e7da6c"
+  revision = "0a6b1640e32638dd433ee7e57ec325a7bdd79561"
+  version = "v2.0.0"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
-  revision = "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
-  version = "v8.18.2"
+  revision = "5f57d2222ad794d0dffb07e664ea05e2ee07d60c"
+  version = "v8.18.1"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "a5b47d31c556af34a302ce5d659e6fea44d90de0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "32180aa2be7cb5af5e0914688f0ff7a6ce76c0069b79a9c727ba500e942ef831"
+  inputs-digest = "6f951c0a884bbe2da64777f605342d61b4631323dfa9e752c5ea7f4b4419af3d"
   solver-name = "gps-cdcl"
   solver-version = 1

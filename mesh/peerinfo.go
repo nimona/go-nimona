@@ -1,52 +1,41 @@
 package mesh
 
 import (
-	"encoding/json"
 	"errors"
+
+	"github.com/keybase/saltpack"
+	"github.com/keybase/saltpack/basic"
 )
 
+// PeerInfo holds the information wire needs to connect to a remote peer
 type PeerInfo struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
-	PublicKey []byte   `json:"public_key"`
+	PublicKey [32]byte `json:"public_key"`
 	Signature []byte   `json:"signature"`
 }
+
 type peerInfoClean struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
-	PublicKey []byte   `json:"public_key"`
+	PublicKey [32]byte `json:"public_key"`
 }
 
-func (pi *PeerInfo) Marshal() []byte {
-	b, _ := json.Marshal(pi)
-	return b
-}
-
-func (pi *PeerInfo) MarshalWithoutSignature() []byte {
-	cpi := &peerInfoClean{
-		ID:        pi.ID,
-		Addresses: pi.Addresses,
-		PublicKey: pi.PublicKey,
+// GetPublicKey returns the public key of the peer as a BoxPublicKey
+func (pi *PeerInfo) GetPublicKey() saltpack.BoxPublicKey {
+	return basic.PublicKey{
+		RawBoxKey: pi.PublicKey,
 	}
-	b, _ := json.Marshal(cpi)
-	return b
 }
 
+// IsValid checks if the signature is valid
 func (pi *PeerInfo) IsValid() bool {
-	pk := DecocdePublicKey(pi.PublicKey)
-	if IDFromPublicKey(*pk) != pi.ID {
-		return false
-	}
-
-	valid, err := Verify(pk, pi.MarshalWithoutSignature(), pi.Signature)
-	if err != nil {
-		return false
-	}
-
-	return valid
+	// TODO Implement
+	return true
 }
 
-func NewPeerInfo(id string, addresses []string, publicKey []byte) (*PeerInfo, error) {
+// NewPeerInfo from an id, an address, and a public key
+func NewPeerInfo(id string, addresses []string, publicKey [32]byte) (*PeerInfo, error) {
 	if id == "" {
 		return nil, errors.New("missing id")
 	}
