@@ -115,6 +115,12 @@ func (w *wire) HandleIncoming(conn net.Conn) error {
 		for envelope := range envelopes {
 			message, err := w.DecodeMessage(envelope)
 			if err != nil {
+				if err == ErrNotForUs {
+					if err := w.ForwardEnvelope(envelope); err != nil {
+						w.logger.Error("could not relay envelope", zap.Error(err))
+					}
+					continue
+				}
 				w.logger.Error("could not get message from envelope", zap.Error(err))
 				continue
 			}
@@ -171,6 +177,12 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 		for envelope := range envelopes {
 			message, err := w.DecodeMessage(envelope)
 			if err != nil {
+				if err == ErrNotForUs {
+					if err := w.ForwardEnvelope(envelope); err != nil {
+						w.logger.Error("could not relay envelope", zap.Error(err))
+					}
+					continue
+				}
 				w.logger.Error("could not get message from envelope", zap.Error(err))
 				continue
 			}
@@ -205,29 +217,47 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 	}
 }
 
+func (w *wire) ForwardEnvelope(envelope *Envelope) error {
+	msgpackHandler := new(codec.MsgpackHandle)
+	msgpackHandler.RawToString = false
+
+	// decrypt message
+	r := bytes.NewReader(envelope.Message)
+	mki, _, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
+	if err != nil {
+		if err == saltpack.ErrNoDecryptionKey {
+			if len(mki.NamedReceivers) == 0 {
+				return errors.New("no recipients")
+			}
+			for _, receiver := range mki.NamedReceivers {
+				recipientID := fmt.Sprintf("%x", receiver)
+				ctx := context.Background() // TODO Fix context
+				encodedEnvelope := []byte{}
+				envelopeEncoder := codec.NewEncoderBytes(&encodedEnvelope, msgpackHandler)
+				if err := envelopeEncoder.Encode(envelope); err != nil {
+					return err
+				}
+				if err := w.writeEnvelope(ctx, encodedEnvelope, recipientID); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		return err
+	}
+
+	return errors.New("message is meant for us, no need to forward")
+}
+
 func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
 	msgpackHandler := new(codec.MsgpackHandle)
 	msgpackHandler.RawToString = false
 
 	// decrypt message
 	r := bytes.NewReader(envelope.Message)
-	mki, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
+	_, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
 	if err != nil {
 		if err == saltpack.ErrNoDecryptionKey {
-			if len(mki.NamedReceivers) > 0 {
-				for _, receiver := range mki.NamedReceivers {
-					recipientID := fmt.Sprintf("%x", receiver)
-					ctx := context.Background() // TODO Fix context
-					encodedEnvelope := []byte{}
-					envelopeEncoder := codec.NewEncoderBytes(&encodedEnvelope, msgpackHandler)
-					if err := envelopeEncoder.Encode(envelope); err != nil {
-						return nil, err
-					}
-					if fwErr := w.writeEnvelope(ctx, encodedEnvelope, recipientID); fwErr != nil {
-						w.logger.Error("could not relay message", zap.Error(fwErr))
-					}
-				}
-			}
 			return nil, ErrNotForUs
 		}
 		return nil, err
@@ -271,6 +301,8 @@ func (w *wire) Process(message *Message) error {
 	return nil
 }
 
+// Unpack an encoded envelope into a message
+// TODO Unpack is not currently used, remove?
 func (w *wire) Unpack(encodedEnvelope []byte) (*Message, error) {
 	// decode envelope
 	envelope := &Envelope{}
