@@ -19,7 +19,7 @@ var (
 	peerInfoExpireAfter = time.Hour * 1
 )
 
-type Registry interface {
+type AddressBook interface {
 	GetLocalPeerInfo() *SecretPeerInfo
 	PutLocalPeerInfo(*SecretPeerInfo) error // TODO Deprecate
 	GetPeerInfo(peerID string) (*PeerInfo, error)
@@ -34,10 +34,9 @@ type Registry interface {
 	GetKeyring() *basic.Keyring
 }
 
-// NewRegisty creates a new registry with an empty keyring
-// TODO Rename to AddressBook
-func NewRegisty() Registry {
-	reg := &registry{
+// NewAddressBook creates a new addressBook with an empty keyring
+func NewAddressBook() AddressBook {
+	reg := &addressBook{
 		peers:   map[string]*PeerInfo{},
 		keyring: basic.NewKeyring(),
 	}
@@ -45,18 +44,18 @@ func NewRegisty() Registry {
 	return reg
 }
 
-type registry struct {
+type addressBook struct {
 	sync.RWMutex
 	peers     map[string]*PeerInfo
 	localPeer *SecretPeerInfo
 	keyring   *basic.Keyring
 }
 
-func (reg *registry) GetKeyring() *basic.Keyring {
+func (reg *addressBook) GetKeyring() *basic.Keyring {
 	return reg.keyring
 }
 
-func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
+func (reg *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 	reg.Lock()
 	defer reg.Unlock()
 	if reg.localPeer.ID == peerInfo.ID {
@@ -73,11 +72,11 @@ func (reg *registry) PutPeerInfo(peerInfo *PeerInfo) error {
 	return nil
 }
 
-func (reg *registry) GetLocalPeerInfo() *SecretPeerInfo {
+func (reg *addressBook) GetLocalPeerInfo() *SecretPeerInfo {
 	return reg.localPeer
 }
 
-func (reg *registry) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
+func (reg *addressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	reg.Lock()
 	defer reg.Unlock()
 	peerInfo.UpdatedAt = time.Now()
@@ -85,7 +84,7 @@ func (reg *registry) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	return nil
 }
 
-func (reg *registry) GetPeerInfo(peerID string) (*PeerInfo, error) {
+func (reg *addressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
 	reg.RLock()
 	defer reg.RUnlock()
 	peerInfo, ok := reg.peers[peerID]
@@ -98,7 +97,7 @@ func (reg *registry) GetPeerInfo(peerID string) (*PeerInfo, error) {
 	return newPeerInfo, nil
 }
 
-func (reg *registry) GetAllPeerInfo() ([]*PeerInfo, error) {
+func (reg *addressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
 	reg.RLock()
 	defer reg.RUnlock()
 	newPeerInfos := []*PeerInfo{}

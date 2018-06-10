@@ -28,21 +28,21 @@ type DHT struct {
 	peerID         string
 	store          *Store
 	wire           wire.Wire
-	registry       peer.Registry
+	addressBook    peer.AddressBook
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pr peer.Registry) (*DHT, error) {
+func NewDHT(wr wire.Wire, pr peer.AddressBook) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
-		store:    store,
-		wire:     wr,
-		registry: pr,
-		queries:  sync.Map{},
+		store:       store,
+		wire:        wr,
+		addressBook: pr,
+		queries:     sync.Map{},
 	}
 
 	wr.HandleExtensionEvents("dht", nd.handleMessage)
@@ -53,13 +53,13 @@ func NewDHT(wr wire.Wire, pr peer.Registry) (*DHT, error) {
 }
 
 func (nd *DHT) refresh() {
-	// TODO our init process is a bit messed up and registry doesn't know
+	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
-	for len(nd.registry.GetLocalPeerInfo().Addresses) == 0 {
+	for len(nd.addressBook.GetLocalPeerInfo().Addresses) == 0 {
 		time.Sleep(time.Millisecond * 250)
 	}
 	for {
-		peerInfo := nd.registry.GetLocalPeerInfo()
+		peerInfo := nd.addressBook.GetLocalPeerInfo()
 		closestPeers, err := nd.FindPeersClosestTo(peerInfo.ID, closestPeersToReturn)
 		if err != nil {
 			logrus.WithError(err).Warnf("refresh could not get peers ids")
@@ -82,7 +82,7 @@ func (nd *DHT) handleMessage(message *wire.Message) error {
 
 	senderPeerInfo := &messageSenderPeerInfo{}
 	if err := message.DecodePayload(senderPeerInfo); err == nil {
-		nd.registry.PutPeerInfo(&senderPeerInfo.SenderPeerInfo)
+		nd.addressBook.PutPeerInfo(&senderPeerInfo.SenderPeerInfo)
 	}
 
 	switch message.PayloadType {
@@ -111,14 +111,14 @@ func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
 		return
 	}
 
-	peerInfo, err := nd.registry.GetPeerInfo(payload.PeerID)
+	peerInfo, err := nd.addressBook.GetPeerInfo(payload.PeerID)
 	if err != nil {
 		return
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	resp := messagePutPeerInfo{
-		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		PeerID:         payload.PeerID,
 		PeerInfo:       *peerInfo,
@@ -136,9 +136,9 @@ func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
 		return
 	}
 
-	nd.registry.PutPeerInfo(&payload.PeerInfo)
+	nd.addressBook.PutPeerInfo(&payload.PeerInfo)
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.registry.PutPeerInfo(peerInfo)
+		nd.addressBook.PutPeerInfo(peerInfo)
 	}
 
 	if payload.RequestID == "" {
@@ -166,7 +166,7 @@ func (nd *DHT) handleGetProviders(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutProviders{
-		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		PeerIDs:        providers,
@@ -185,7 +185,7 @@ func (nd *DHT) handlePutProviders(message *wire.Message) {
 	}
 
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.registry.PutPeerInfo(peerInfo)
+		nd.addressBook.PutPeerInfo(peerInfo)
 	}
 
 	if err := nd.store.PutProvider(payload.Key, payload.PeerIDs...); err != nil {
@@ -214,7 +214,7 @@ func (nd *DHT) handleGetValue(message *wire.Message) {
 
 	closestPeers, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	resp := messagePutValue{
-		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		Value:          value,
@@ -233,7 +233,7 @@ func (nd *DHT) handlePutValue(message *wire.Message) {
 	}
 
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.registry.PutPeerInfo(peerInfo)
+		nd.addressBook.PutPeerInfo(peerInfo)
 	}
 
 	if err := nd.store.PutValue(payload.Key, payload.Value); err != nil {
@@ -259,7 +259,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 
 	htk := hash(tk)
 
-	peerInfos, _ := nd.registry.GetAllPeerInfo()
+	peerInfos, _ := nd.addressBook.GetAllPeerInfo()
 
 	// slice to hold the distances
 	dists := []distEntry{}
@@ -336,7 +336,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	resp := messagePutValue{
-		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		Key:            key,
 		Value:          value,
 	}
@@ -377,14 +377,14 @@ func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
-	localPeerID := nd.registry.GetLocalPeerInfo().ID
+	localPeerID := nd.addressBook.GetLocalPeerInfo().ID
 	if err := nd.store.PutProvider(key, localPeerID); err != nil {
 		return err
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	resp := messagePutProviders{
-		SenderPeerInfo: nd.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		Key:            key,
 		PeerIDs:        []string{localPeerID},
 	}

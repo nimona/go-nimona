@@ -13,16 +13,16 @@ type API struct {
 	router *gin.Engine
 }
 
-func New(reg peer.Registry, dht *dht.DHT) *API {
+func New(adbook peer.AddressBook, dht *dht.DHT) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
 	local.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, reg.GetLocalPeerInfo())
+		c.JSON(http.StatusOK, adbook.GetLocalPeerInfo())
 	})
 	peers := router.Group("/api/v1/peers")
 	peers.GET("/", func(c *gin.Context) {
-		peers, err := reg.GetAllPeerInfo()
+		peers, err := adbook.GetAllPeerInfo()
 		if err != nil {
 			c.AbortWithError(500, err)
 			return

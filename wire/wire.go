@@ -49,7 +49,7 @@ type wire struct {
 	outgoing     chan net.Conn
 	close        chan bool
 	keyring      *basic.Keyring
-	registry     peer.Registry
+	addressBook  peer.AddressBook
 	streams      sync.Map
 	handlers     map[string]EventHandler
 	handlersLock sync.RWMutex
@@ -57,16 +57,16 @@ type wire struct {
 	streamLock   utils.Kmutex
 }
 
-// NewWire creates a new wire protocol based on a registry
-func NewWire(reg peer.Registry) (Wire, error) {
+// NewWire creates a new wire protocol based on a addressBook
+func NewWire(adbook peer.AddressBook) (Wire, error) {
 	ctx := context.Background()
 
 	w := &wire{
-		incoming: make(chan net.Conn),
-		outgoing: make(chan net.Conn),
-		close:    make(chan bool),
-		keyring:  reg.GetKeyring(),
-		registry: reg,
+		incoming:    make(chan net.Conn),
+		outgoing:    make(chan net.Conn),
+		close:       make(chan bool),
+		keyring:     adbook.GetKeyring(),
+		addressBook: adbook,
 		// streams:  map[string]io.ReadWriteCloser{},
 		handlers:   map[string]EventHandler{},
 		logger:     log.Logger(ctx).Named("wire"),
@@ -354,7 +354,7 @@ func (w *wire) SendOne(ctx context.Context, extension, payloadType string, paylo
 	}
 
 	// else, try to find a relay peer and send it to them
-	pi, err := w.registry.GetPeerInfo(peerID)
+	pi, err := w.addressBook.GetPeerInfo(peerID)
 	if err != nil {
 		logger.Debug("could not get relay for recipient", zap.Error(err))
 		return err
@@ -396,9 +396,9 @@ func (w *wire) SendOne(ctx context.Context, extension, payloadType string, paylo
 // Pack a message into something we can send
 func (w *wire) Pack(extension, payloadType string, payload interface{},
 	recipient string, hideSender, hideRecipients bool) ([]byte, error) {
-	xpi := w.registry.GetLocalPeerInfo()
+	xpi := w.addressBook.GetLocalPeerInfo()
 	pks := []saltpack.BoxPublicKey{}
-	pi, err := w.registry.GetPeerInfo(recipient)
+	pi, err := w.addressBook.GetPeerInfo(recipient)
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +428,7 @@ func (w *wire) Pack(extension, payloadType string, payload interface{},
 	}
 
 	var sk saltpack.BoxSecretKey
-	sk = w.registry.GetLocalPeerInfo().GetSecretKey()
+	sk = w.addressBook.GetLocalPeerInfo().GetSecretKey()
 	if hideSender {
 		sk = &HiddenSecretKey{sk}
 	}
@@ -503,7 +503,7 @@ func (w *wire) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
 
 // Dial to a peer and return a net.Conn
 func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
-	peerInfo, err := w.registry.GetPeerInfo(peerID)
+	peerInfo, err := w.addressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +538,7 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 
 	// handshake so the other side knows who we are
 	handshake := &handshakeMessage{
-		PeerID: w.registry.GetLocalPeerInfo().ID,
+		PeerID: w.addressBook.GetLocalPeerInfo().ID,
 	}
 
 	msg, err := w.Pack("wire", "handshake", handshake, peerID, false, false)
@@ -601,7 +601,7 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 	}
 
 	addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
-	w.registry.GetLocalPeerInfo().UpdateAddresses(addresses)
+	w.addressBook.GetLocalPeerInfo().UpdateAddresses(addresses)
 
 	go func() {
 		for {

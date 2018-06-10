@@ -37,7 +37,7 @@ func (q *query) Run(ctx context.Context) {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
-			if peerInfo, err := q.dht.registry.GetPeerInfo(q.key); err != nil {
+			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err != nil {
 				q.outgoingMessages <- peerInfo
 			}
 		case ProviderQuery:
@@ -123,21 +123,21 @@ func (q *query) next() {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
 		req = messageGetPeerInfo{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
 		req = messageGetProviders{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
 		req = messageGetValue{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
