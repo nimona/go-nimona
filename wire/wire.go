@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/log"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/utils"
 )
 
@@ -49,7 +49,7 @@ type wire struct {
 	outgoing     chan net.Conn
 	close        chan bool
 	keyring      *basic.Keyring
-	registry     mesh.Registry
+	registry     peer.Registry
 	streams      sync.Map
 	handlers     map[string]EventHandler
 	handlersLock sync.RWMutex
@@ -58,7 +58,7 @@ type wire struct {
 }
 
 // NewWire creates a new wire protocol based on a registry
-func NewWire(reg mesh.Registry) (Wire, error) {
+func NewWire(reg peer.Registry) (Wire, error) {
 	ctx := context.Background()
 
 	w := &wire{

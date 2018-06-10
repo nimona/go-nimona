@@ -14,7 +14,7 @@ import (
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 
 	"gopkg.in/abiosoft/ishell.v2"
@@ -26,8 +26,8 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfos = []mesh.PeerInfo{
-	mesh.PeerInfo{
+var bootstrapPeerInfos = []peer.PeerInfo{
+	peer.PeerInfo{
 		ID: "7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562",
 		Addresses: []string{
 			"tcp:andromeda.nimona.io:26801",
@@ -56,7 +56,7 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty()
+	reg := peer.NewRegisty()
 	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
 	if err != nil {
 		log.Fatal("could not load key", err)

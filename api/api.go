@@ -6,14 +6,14 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 )
 
 type API struct {
 	router *gin.Engine
 }
 
-func New(reg mesh.Registry, dht *dht.DHT) *API {
+func New(reg peer.Registry, dht *dht.DHT) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")

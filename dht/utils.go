@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,7 +12,7 @@ import (
 type distEntry struct {
 	key      string
 	dist     []int
-	peerInfo *mesh.PeerInfo
+	peerInfo *peer.PeerInfo
 }
 
 // Xor gets to byte arrays and returns and array of integers with the xor

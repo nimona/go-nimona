@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 )
 
@@ -28,12 +28,12 @@ type DHT struct {
 	peerID         string
 	store          *Store
 	wire           wire.Wire
-	registry       mesh.Registry
+	registry       peer.Registry
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pr mesh.Registry) (*DHT, error) {
+func NewDHT(wr wire.Wire, pr peer.Registry) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -253,9 +253,9 @@ func (nd *DHT) handlePutValue(message *wire.Message) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*mesh.PeerInfo, error) {
+func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 	// place to hold the results
-	rks := []*mesh.PeerInfo{}
+	rks := []*peer.PeerInfo{}
 
 	htk := hash(tk)
 
@@ -303,7 +303,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*mesh.PeerInfo, error) {
 	return rks, nil
 }
 
-func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*mesh.PeerInfo, error) {
+func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*peer.PeerInfo, error) {
 	q := &query{
 		dht:              nd,
 		id:               wire.RandStringBytesMaskImprSrc(8),
@@ -320,7 +320,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*mesh.PeerInfo, err
 	for {
 		select {
 		case value := <-q.outgoingMessages:
-			return value.(*mesh.PeerInfo), nil
+			return value.(*peer.PeerInfo), nil
 		case <-time.After(maxQueryTime):
 			return nil, ErrNotFound
 		case <-ctx.Done():
@@ -432,7 +432,7 @@ func (nd *DHT) GetAllValues() (map[string]string, error) {
 	return nd.store.GetAllValues()
 }
 
-func getPeerIDsFromPeerInfos(peerInfos []*mesh.PeerInfo) []string {
+func getPeerIDsFromPeerInfos(peerInfos []*peer.PeerInfo) []string {
 	peerIDs := []string{}
 	for _, peerInfo := range peerInfos {
 		peerIDs = append(peerIDs, peerInfo.ID)

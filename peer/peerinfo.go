@@ -1,4 +1,4 @@
-package mesh
+package peer
 
 import (
 	"errors"
@@ -14,7 +14,6 @@ type PeerInfo struct {
 	Addresses       []string  `json:"addresses"`
 	PublicKey       [32]byte  `json:"public_key"`
 	Signature       []byte    `json:"signature"`
-	Status          Status    `json:"status"`
 	CreatedAt       time.Time `json:"create_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	LastConnectedAt time.Time `json:"last_connected_at"`
