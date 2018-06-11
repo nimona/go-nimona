@@ -7,14 +7,14 @@ import (
 
 	"github.com/tylertreat/bench"
 
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 )
 
 // WireRequesterFactory implements RequesterFactory for our wire
 type WireRequesterFactory struct {
 	wire      wire.Wire
-	recipient mesh.PeerInfo
+	recipient peer.PeerInfo
 	bytes     int
 }
 
@@ -30,7 +30,7 @@ func (w *WireRequesterFactory) GetRequester(uint64) bench.Requester {
 // wireRequester implements Requester by making sending a message to a peer
 type wireRequester struct {
 	wire      wire.Wire
-	recipient mesh.PeerInfo
+	recipient peer.PeerInfo
 	bytes     int
 	payload   []byte
 }

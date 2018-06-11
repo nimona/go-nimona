@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 )
 
 type wireTestSuite struct {
 	suite.Suite
-	bootstrapPeerInfos []mesh.PeerInfo
+	bootstrapPeerInfos []peer.PeerInfo
 }
 
 func (suite *wireTestSuite) SetupTest() {
-	suite.bootstrapPeerInfos = []mesh.PeerInfo{}
+	suite.bootstrapPeerInfos = []peer.PeerInfo{}
 }
 
 func (suite *wireTestSuite) TestSendSuccess() {
@@ -157,8 +157,8 @@ func (suite *wireTestSuite) TestRelayedSendSuccess() {
 	suite.True(w2MessageHandled)
 }
 
-func (suite *wireTestSuite) newPeer() (int, *mesh.SecretPeerInfo, wire.Wire, mesh.Registry) {
-	reg := mesh.NewRegisty()
+func (suite *wireTestSuite) newPeer() (int, *peer.SecretPeerInfo, wire.Wire, peer.Registry) {
+	reg := peer.NewRegisty()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 

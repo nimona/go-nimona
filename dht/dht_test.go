@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 
 	"github.com/stretchr/testify/mock"
@@ -13,7 +13,7 @@ import (
 
 type dhtTestSuite struct {
 	suite.Suite
-	registry mesh.Registry
+	registry peer.Registry
 	wire     *wire.MockWire
 	peerID   string
 	messages chan interface{}
@@ -24,10 +24,10 @@ type dhtTestSuite struct {
 func (suite *dhtTestSuite) SetupTest() {
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry = mesh.NewRegisty()
+	suite.registry = peer.NewRegisty()
 	peer1, _ := suite.registry.CreateNewPeer()
 	suite.registry.PutLocalPeerInfo(peer1)
-	suite.registry.PutPeerInfo(&mesh.PeerInfo{
+	suite.registry.PutPeerInfo(&peer.PeerInfo{
 		ID: "bootstrap",
 		Addresses: []string{
 			"localhost",

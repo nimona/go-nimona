@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/wire"
 )
 
-var bootstrapPeerInfos = []mesh.PeerInfo{
-	// mesh.PeerInfo{
+var bootstrapPeerInfos = []peer.PeerInfo{
+	// peer.PeerInfo{
 	// 	ID: "7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562",
 	// 	Addresses: []string{
 	// 		"tcp:andromeda.nimona.io:26801",
@@ -58,8 +58,8 @@ func main() {
 	fmt.Printf("Wrote %d kb in %d ms\n", total/1000, elapsed.Nanoseconds()/int64(time.Millisecond))
 }
 
-func newPeer(port int) (*mesh.SecretPeerInfo, wire.Wire, mesh.Registry) {
-	reg := mesh.NewRegisty()
+func newPeer(port int) (*peer.SecretPeerInfo, wire.Wire, peer.Registry) {
+	reg := peer.NewRegisty()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 
