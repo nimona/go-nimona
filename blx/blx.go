@@ -90,7 +90,7 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 		}
 	}
 
-	// Check if nonce exists in local registry
+	// Check if nonce exists in local addressBook
 	value, ok := blx.getRequests.Load(payload.Nonce)
 	if !ok {
 		return nil

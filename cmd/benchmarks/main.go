@@ -50,8 +50,8 @@ func main() {
 	summary.GenerateLatencyDistribution(nil, "wire.txt")
 }
 
-func newPeer(port int) (*peer.SecretPeerInfo, wire.Wire, peer.Registry) {
-	reg := peer.NewRegisty()
+func newPeer(port int) (*peer.SecretPeerInfo, wire.Wire, peer.AddressBook) {
+	reg := peer.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 

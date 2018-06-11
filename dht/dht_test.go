@@ -13,21 +13,21 @@ import (
 
 type dhtTestSuite struct {
 	suite.Suite
-	registry peer.Registry
-	wire     *wire.MockWire
-	peerID   string
-	messages chan interface{}
-	peers    chan interface{}
-	dht      *DHT
+	addressBook peer.AddressBook
+	wire        *wire.MockWire
+	peerID      string
+	messages    chan interface{}
+	peers       chan interface{}
+	dht         *DHT
 }
 
 func (suite *dhtTestSuite) SetupTest() {
 	suite.messages = make(chan interface{}, 10)
 	suite.peers = make(chan interface{}, 10)
-	suite.registry = peer.NewRegisty()
-	peer1, _ := suite.registry.CreateNewPeer()
-	suite.registry.PutLocalPeerInfo(peer1)
-	suite.registry.PutPeerInfo(&peer.PeerInfo{
+	suite.addressBook = peer.NewRegisty()
+	peer1, _ := suite.addressBook.CreateNewPeer()
+	suite.addressBook.PutLocalPeerInfo(peer1)
+	suite.addressBook.PutPeerInfo(&peer.PeerInfo{
 		ID: "bootstrap",
 		Addresses: []string{
 			"localhost",
@@ -35,7 +35,7 @@ func (suite *dhtTestSuite) SetupTest() {
 	})
 	suite.wire = &wire.MockWire{}
 	suite.wire.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
-	suite.dht, _ = NewDHT(suite.wire, suite.registry)
+	suite.dht, _ = NewDHT(suite.wire, suite.addressBook)
 }
 
 func (suite *dhtTestSuite) TestPutSuccess() {
@@ -43,7 +43,7 @@ func (suite *dhtTestSuite) TestPutSuccess() {
 	key := "a"
 	value := "b"
 	payload := messagePutValue{
-		SenderPeerInfo: suite.registry.GetLocalPeerInfo().ToPeerInfo(),
+		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().ToPeerInfo(),
 		Key:            "a",
 		Value:          "b",
 	}

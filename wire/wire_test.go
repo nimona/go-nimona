@@ -157,8 +157,8 @@ func (suite *wireTestSuite) TestRelayedSendSuccess() {
 	suite.True(w2MessageHandled)
 }
 
-func (suite *wireTestSuite) newPeer() (int, *peer.SecretPeerInfo, wire.Wire, peer.Registry) {
-	reg := peer.NewRegisty()
+func (suite *wireTestSuite) newPeer() (int, *peer.SecretPeerInfo, wire.Wire, peer.AddressBook) {
+	reg := peer.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 

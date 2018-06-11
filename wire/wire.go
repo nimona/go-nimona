@@ -58,15 +58,15 @@ type wire struct {
 }
 
 // NewWire creates a new wire protocol based on a addressBook
-func NewWire(adbook peer.AddressBook) (Wire, error) {
+func NewWire(addressBook peer.AddressBook) (Wire, error) {
 	ctx := context.Background()
 
 	w := &wire{
 		incoming:    make(chan net.Conn),
 		outgoing:    make(chan net.Conn),
 		close:       make(chan bool),
-		keyring:     adbook.GetKeyring(),
-		addressBook: adbook,
+		keyring:     addressBook.GetKeyring(),
+		addressBook: addressBook,
 		// streams:  map[string]io.ReadWriteCloser{},
 		handlers:   map[string]EventHandler{},
 		logger:     log.Logger(ctx).Named("wire"),
