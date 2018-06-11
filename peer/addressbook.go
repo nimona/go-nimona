@@ -25,6 +25,7 @@ type AddressBook interface {
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
 	PutPeerInfo(*PeerInfo) error
+	PutPeerStatus(peerID, address string, status *Status) error
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 	LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error)
@@ -34,31 +35,42 @@ type AddressBook interface {
 	GetKeyring() *basic.Keyring
 }
 
+// Status represents the connection state of a peer
+type Status int
+
+const (
+	NotConnected Status = iota
+	Connected
+	CanConnect
+	ErrorConnecting
+)
+
 // NewAddressBook creates a new addressBook with an empty keyring
 func NewAddressBook() AddressBook {
-	reg := &addressBook{
+	adb := &addressBook{
 		peers:   map[string]*PeerInfo{},
 		keyring: basic.NewKeyring(),
 	}
 
-	return reg
+	return adb
 }
 
 type addressBook struct {
 	sync.RWMutex
-	peers     map[string]*PeerInfo
-	localPeer *SecretPeerInfo
-	keyring   *basic.Keyring
+	peers      map[string]*PeerInfo
+	peerStatus map[string]map[string]*Status
+	localPeer  *SecretPeerInfo
+	keyring    *basic.Keyring
 }
 
-func (reg *addressBook) GetKeyring() *basic.Keyring {
-	return reg.keyring
+func (adb *addressBook) GetKeyring() *basic.Keyring {
+	return adb.keyring
 }
 
-func (reg *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
-	reg.Lock()
-	defer reg.Unlock()
-	if reg.localPeer.ID == peerInfo.ID {
+func (adb *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
+	adb.Lock()
+	defer adb.Unlock()
+	if adb.localPeer.ID == peerInfo.ID {
 		return ErrCannotPutLocalPeerInfo
 	}
 
@@ -68,26 +80,34 @@ func (reg *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 
 	peerInfo.UpdatedAt = time.Now()
 
-	reg.peers[peerInfo.ID] = peerInfo
+	adb.peers[peerInfo.ID] = peerInfo
 	return nil
 }
 
-func (reg *addressBook) GetLocalPeerInfo() *SecretPeerInfo {
-	return reg.localPeer
+func (adb *addressBook) GetLocalPeerInfo() *SecretPeerInfo {
+	return adb.localPeer
 }
 
-func (reg *addressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
-	reg.Lock()
-	defer reg.Unlock()
+func (adb *addressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
+	adb.Lock()
+	defer adb.Unlock()
 	peerInfo.UpdatedAt = time.Now()
-	reg.localPeer = peerInfo
+	adb.localPeer = peerInfo
 	return nil
 }
 
-func (reg *addressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
-	reg.RLock()
-	defer reg.RUnlock()
-	peerInfo, ok := reg.peers[peerID]
+func (adb *addressBook) PutPeerStatus(peerID, address string,
+	status *Status) error {
+	adb.Lock()
+	defer adb.Unlock()
+	adb.peerStatus[peerID][address] = status
+	return nil
+}
+
+func (adb *addressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
+	adb.RLock()
+	defer adb.RUnlock()
+	peerInfo, ok := adb.peers[peerID]
 	if !ok {
 		return nil, ErrNotKnown
 	}
@@ -97,11 +117,11 @@ func (reg *addressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
 	return newPeerInfo, nil
 }
 
-func (reg *addressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
-	reg.RLock()
-	defer reg.RUnlock()
+func (adb *addressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
+	adb.RLock()
+	defer adb.RUnlock()
 	newPeerInfos := []*PeerInfo{}
-	for _, peerInfo := range reg.peers {
+	for _, peerInfo := range adb.peers {
 		newPeerInfo := &PeerInfo{}
 		copier.Copy(newPeerInfo, peerInfo)
 		newPeerInfos = append(newPeerInfos, newPeerInfo)
