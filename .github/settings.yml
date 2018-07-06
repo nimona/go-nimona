@@ -13,40 +13,43 @@ repository:
 
 labels:
   - name: "Good first issue"
+    color: 0e8a16
+  - name: "Help wanted"
     color: 7057ff
   - name: "Priority: Critical"
-    color: ee0701
+    color: b60205
   - name: "Priority: High"
     color: d93f0b
   - name: "Priority: Low"
-    color: 0e8a16
+    color: efe12a
   - name: "Priority: Medium"
-    color: fbca04
+    color: efbd2a
   - name: "Status: Abandoned"
     color: 000000
   - name: "Status: Available"
-    color: c2e0c6
+    color: caef2a
     oldname: to do
   - name: "Status: Blocked"
     color: ee0701
   - name: "Status: In Progress"
-    color: cccccc
-  - name: "Status: On Hold"
-    color: e99695
-  - name: "Status: Proposal"
-    color: d4c5f9
-  - name: "Status: Review "
     color: fbca04
+  - name: "Status: In Review"
+    color: c41173
+    oldname: review
+  - name: "Status: On Hold"
+    color: cccccc
+  - name: "Status: Proposal"
+    color: e03e9d
   - name: "Type: Bug"
-    color: ee0701
+    color: e99695
     oldname: bug
   - name: "Type: Documentation"
-    color: 5319e7
+    color: d4c5f9
   - name: "Type: Enhancement"
-    color: 1d76db
+    color: bfd4f2
     oldname: enhancement
   - name: "Type: Maintenance"
-    color: fbca04
+    color: c5def5
   - name: "Type: Question"
-    color: cc317c
+    color: c2e0c6
     oldname: question
