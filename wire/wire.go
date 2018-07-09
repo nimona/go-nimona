@@ -611,28 +611,21 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 		w.addressBook.PutLocalPeerInfo(localPeerInfo)
 	}()
 
-	go func() {
-		for {
-			conn := <-w.incoming
-			go w.HandleIncoming(conn)
-		}
-	}()
-
-	go func() {
-		for {
-			conn := <-w.outgoing
-			go w.HandleOutgoing(conn)
-		}
-	}()
-
 	closed := false
 
 	go func() {
-		closed = true
-		<-w.close
-		// TODO do we need to do something here?
-		w.logger.Debug("connection closed")
-		tcpListener.Close()
+		for {
+			select {
+			case conn := <-w.incoming:
+				go w.HandleIncoming(conn)
+			case conn := <-w.outgoing:
+				go w.HandleOutgoing(conn)
+			case <-w.close:
+				closed = true
+				w.logger.Debug("connection closed")
+				tcpListener.Close()
+			}
+		}
 	}()
 
 	go func() {
