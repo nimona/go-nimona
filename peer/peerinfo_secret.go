@@ -1,8 +1,6 @@
 package peer
 
 import (
-	"sync"
-
 	"github.com/keybase/saltpack"
 
 	"github.com/keybase/saltpack/basic"
@@ -10,7 +8,6 @@ import (
 
 // SecretPeerInfo is a PeerInfo with an additional SecretKey
 type SecretPeerInfo struct {
-	sync.RWMutex
 	PeerInfo
 	SecretKey [32]byte `json:"secret_key"`
 }
@@ -18,14 +15,6 @@ type SecretPeerInfo struct {
 // GetSecretKey returns a saltpack SecretKey
 func (pi *SecretPeerInfo) GetSecretKey() saltpack.BoxSecretKey {
 	return basic.NewSecretKey(&pi.PublicKey, &pi.SecretKey)
-}
-
-// UpdateAddresses to allow updating peer addresess
-// TODO Consider moving to address book
-func (pi *SecretPeerInfo) UpdateAddresses(addresses []string) {
-	pi.Lock()
-	pi.Addresses = addresses
-	pi.Unlock()
 }
 
 // ToPeerInfo returns a PeerInfo struct

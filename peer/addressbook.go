@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/keybase/saltpack/basic"
 )
 
@@ -16,7 +17,7 @@ var (
 
 type PeerManager interface {
 	GetLocalPeerInfo() *SecretPeerInfo
-	PutLocalPeerInfo(*SecretPeerInfo) error // TODO Deprecate
+	PutLocalPeerInfo(*SecretPeerInfo) error
 
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
@@ -82,14 +83,20 @@ func (adb *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 }
 
 func (adb *AddressBook) GetLocalPeerInfo() *SecretPeerInfo {
-	return adb.localPeer
+	adb.localPeerLock.RLock()
+	newSecretPeerInfo := &SecretPeerInfo{}
+	copier.Copy(newSecretPeerInfo, adb.localPeer)
+	adb.localPeerLock.RUnlock()
+	return newSecretPeerInfo
 }
 
 func (adb *AddressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	adb.localPeerLock.Lock()
-	defer adb.localPeerLock.Unlock()
-	peerInfo.UpdatedAt = time.Now()
-	adb.localPeer = peerInfo
+	newSecretPeerInfo := &SecretPeerInfo{}
+	copier.Copy(newSecretPeerInfo, peerInfo)
+	newSecretPeerInfo.UpdatedAt = time.Now()
+	adb.localPeer = newSecretPeerInfo
+	adb.localPeerLock.Unlock()
 	return nil
 }
 

@@ -67,10 +67,9 @@ func NewWire(addressBook peer.PeerManager) (Wire, error) {
 		close:       make(chan bool),
 		keyring:     addressBook.GetKeyring(),
 		addressBook: addressBook,
-		// streams:  map[string]io.ReadWriteCloser{},
-		handlers:   map[string]EventHandler{},
-		logger:     log.Logger(ctx).Named("wire"),
-		streamLock: utils.NewKmutex(),
+		handlers:    map[string]EventHandler{},
+		logger:      log.Logger(ctx).Named("wire"),
+		streamLock:  utils.NewKmutex(),
 	}
 
 	return w, nil
@@ -565,9 +564,7 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 	}
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 
-	lock := sync.Mutex{}
-	addresses := GetAddresses(tcpListener)
-
+	newAddresses := make(chan string, 100)
 	devices := make(chan igd.Device)
 	go func() {
 		for device := range devices {
@@ -589,19 +586,30 @@ func (w *wire) Listen(addr string) (net.Listener, string, error) {
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				w.logger.Error("could not add port mapping", zap.Error(err))
 			} else {
-				lock.Lock()
-				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
-				lock.Unlock()
+				newAddresses <- fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port)
 			}
 		}
+		close(newAddresses)
 	}()
 
-	if err := igd.Discover(devices, 5*time.Second); err != nil {
-		w.logger.Error("could not discover devices", zap.Error(err))
-	}
+	go func() {
+		if err := igd.Discover(devices, 5*time.Second); err != nil {
+			close(newAddresses)
+			w.logger.Error("could not discover devices", zap.Error(err))
+		}
 
-	addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
-	w.addressBook.GetLocalPeerInfo().UpdateAddresses(addresses)
+		addresses := GetAddresses(tcpListener)
+		for newAddress := range newAddresses {
+			addresses = append(addresses, newAddress)
+		}
+
+		// TODO Replace with actual relay peer ids
+		addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
+
+		localPeerInfo := w.addressBook.GetLocalPeerInfo()
+		localPeerInfo.Addresses = addresses
+		w.addressBook.PutLocalPeerInfo(localPeerInfo)
+	}()
 
 	go func() {
 		for {
