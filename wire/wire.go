@@ -49,7 +49,7 @@ type wire struct {
 	outgoing     chan net.Conn
 	close        chan bool
 	keyring      *basic.Keyring
-	addressBook  peer.AddressBook
+	addressBook  peer.PeerManager
 	streams      sync.Map
 	handlers     map[string]EventHandler
 	handlersLock sync.RWMutex
@@ -58,7 +58,7 @@ type wire struct {
 }
 
 // NewWire creates a new wire protocol based on a addressBook
-func NewWire(addressBook peer.AddressBook) (Wire, error) {
+func NewWire(addressBook peer.PeerManager) (Wire, error) {
 	ctx := context.Background()
 
 	w := &wire{

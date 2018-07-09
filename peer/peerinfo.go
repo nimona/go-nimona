@@ -11,6 +11,7 @@ import (
 // PeerInfo holds the information wire needs to connect to a remote peer
 type PeerInfo struct {
 	ID              string    `json:"id"`
+	Version         int       `json:"version"`
 	Addresses       []string  `json:"addresses"`
 	PublicKey       [32]byte  `json:"public_key"`
 	Signature       []byte    `json:"signature"`

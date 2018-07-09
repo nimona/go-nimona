@@ -13,7 +13,7 @@ import (
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
-func (reg *addressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
+func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
 	if path == "" {
 		return nil, errors.New("missing key path")
 	}
@@ -49,7 +49,7 @@ func (reg *addressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo,
 }
 
 // CreateNewPeer with a new generated key, mostly used for testing
-func (reg *addressBook) CreateNewPeer() (*SecretPeerInfo, error) {
+func (reg *AddressBook) CreateNewPeer() (*SecretPeerInfo, error) {
 	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (reg *addressBook) CreateNewPeer() (*SecretPeerInfo, error) {
 }
 
 // LoadSecretPeerInfo from a JSON encoded file
-func (reg *addressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
+func (reg *AddressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (reg *addressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error)
 }
 
 // StoreSecretPeerInfo to a JSON encoded file
-func (reg *addressBook) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
+func (reg *AddressBook) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
 	raw, err := json.Marshal(pi)
 	if err != nil {
 		return err

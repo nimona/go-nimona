@@ -28,12 +28,12 @@ type DHT struct {
 	peerID         string
 	store          *Store
 	wire           wire.Wire
-	addressBook    peer.AddressBook
+	addressBook    peer.PeerManager
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pr peer.AddressBook) (*DHT, error) {
+func NewDHT(wr wire.Wire, pm peer.PeerManager) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -41,7 +41,7 @@ func NewDHT(wr wire.Wire, pr peer.AddressBook) (*DHT, error) {
 	nd := &DHT{
 		store:       store,
 		wire:        wr,
-		addressBook: pr,
+		addressBook: pm,
 		queries:     sync.Map{},
 	}
 

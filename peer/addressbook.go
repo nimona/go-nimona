@@ -6,26 +6,25 @@ import (
 	"time"
 
 	"github.com/keybase/saltpack/basic"
-
-	"github.com/jinzhu/copier"
 )
 
 var (
-	ErrNotKnown               = errors.New("not found")
 	ErrCannotPutLocalPeerInfo = errors.New("cannot put local peer info")
-)
 
-var (
 	peerInfoExpireAfter = time.Hour * 1
 )
 
-type AddressBook interface {
+type PeerManager interface {
 	GetLocalPeerInfo() *SecretPeerInfo
 	PutLocalPeerInfo(*SecretPeerInfo) error // TODO Deprecate
+
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
 	PutPeerInfo(*PeerInfo) error
-	PutPeerStatus(peerID, address string, status *Status) error
+
+	PutPeerStatus(peerID string, status Status)
+	GetPeerStatus(peerID string) Status
+
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
 	LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error)
@@ -45,31 +44,31 @@ const (
 	ErrorConnecting
 )
 
-// NewAddressBook creates a new addressBook with an empty keyring
-func NewAddressBook() AddressBook {
-	adb := &addressBook{
-		peers:   map[string]*PeerInfo{},
-		keyring: basic.NewKeyring(),
+// NewAddressBook creates a new AddressBook with an empty keyring
+func NewAddressBook() *AddressBook {
+	adb := &AddressBook{
+		identities: &IdentityCollection{},
+		peers:      &PeerInfoCollection{},
+		keyring:    basic.NewKeyring(),
 	}
 
 	return adb
 }
 
-type addressBook struct {
-	sync.RWMutex
-	peers      map[string]*PeerInfo
-	peerStatus map[string]map[string]*Status
-	localPeer  *SecretPeerInfo
-	keyring    *basic.Keyring
+type AddressBook struct {
+	identities    *IdentityCollection
+	peers         *PeerInfoCollection
+	peerStatus    sync.Map
+	localPeerLock sync.RWMutex
+	localPeer     *SecretPeerInfo
+	keyring       *basic.Keyring
 }
 
-func (adb *addressBook) GetKeyring() *basic.Keyring {
+func (adb *AddressBook) GetKeyring() *basic.Keyring {
 	return adb.keyring
 }
 
-func (adb *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
-	adb.Lock()
-	defer adb.Unlock()
+func (adb *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 	if adb.localPeer.ID == peerInfo.ID {
 		return ErrCannotPutLocalPeerInfo
 	}
@@ -79,52 +78,38 @@ func (adb *addressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 	}
 
 	peerInfo.UpdatedAt = time.Now()
-
-	adb.peers[peerInfo.ID] = peerInfo
-	return nil
+	return adb.peers.Put(peerInfo)
 }
 
-func (adb *addressBook) GetLocalPeerInfo() *SecretPeerInfo {
+func (adb *AddressBook) GetLocalPeerInfo() *SecretPeerInfo {
 	return adb.localPeer
 }
 
-func (adb *addressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
-	adb.Lock()
-	defer adb.Unlock()
+func (adb *AddressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
+	adb.localPeerLock.Lock()
+	defer adb.localPeerLock.Unlock()
 	peerInfo.UpdatedAt = time.Now()
 	adb.localPeer = peerInfo
 	return nil
 }
 
-func (adb *addressBook) PutPeerStatus(peerID, address string,
-	status *Status) error {
-	adb.Lock()
-	defer adb.Unlock()
-	adb.peerStatus[peerID][address] = status
-	return nil
+func (adb *AddressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
+	return adb.peers.Get(peerID)
 }
 
-func (adb *addressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
-	adb.RLock()
-	defer adb.RUnlock()
-	peerInfo, ok := adb.peers[peerID]
+func (adb *AddressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
+	return adb.peers.All()
+}
+
+func (adb *AddressBook) PutPeerStatus(peerID string, status Status) {
+	adb.peerStatus.Store(peerID, status)
+}
+
+func (adb *AddressBook) GetPeerStatus(peerID string) Status {
+	status, ok := adb.peerStatus.Load(peerID)
 	if !ok {
-		return nil, ErrNotKnown
+		return NotConnected
 	}
 
-	newPeerInfo := &PeerInfo{}
-	copier.Copy(newPeerInfo, peerInfo)
-	return newPeerInfo, nil
-}
-
-func (adb *addressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
-	adb.RLock()
-	defer adb.RUnlock()
-	newPeerInfos := []*PeerInfo{}
-	for _, peerInfo := range adb.peers {
-		newPeerInfo := &PeerInfo{}
-		copier.Copy(newPeerInfo, peerInfo)
-		newPeerInfos = append(newPeerInfos, newPeerInfo)
-	}
-	return newPeerInfos, nil
+	return status.(Status)
 }

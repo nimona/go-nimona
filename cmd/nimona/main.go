@@ -56,7 +56,7 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := peer.NewRegisty()
+	reg := peer.NewAddressBook()
 	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
