@@ -8,6 +8,7 @@ import (
 )
 
 type Store struct {
+	// TODO replace with async maps
 	values    map[string]string
 	providers map[string][]string
 	lock      *sync.RWMutex
@@ -102,7 +103,7 @@ func (s *Store) GetAllValues() (map[string]string, error) {
 	defer s.lock.Unlock()
 
 	values := map[string]string{}
-	if err := copier.Copy(s.values, values); err != nil {
+	if err := copier.Copy(&values, s.values); err != nil {
 		return nil, err
 	}
 	return values, nil

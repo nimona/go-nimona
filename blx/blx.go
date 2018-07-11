@@ -56,7 +56,8 @@ func NewBlockExchange(wr wire.Wire, pr Storage) (BlockExchange, error) {
 }
 
 func (blx *blockExchange) handleMessage(message *wire.Message) error {
-	switch message.PayloadType {
+	contentType := message.Headers.ContentType
+	switch contentType {
 	case PayloadTypeTransferBlock:
 		err := blx.handleTransferBlock(message)
 		if err != nil {
@@ -68,7 +69,7 @@ func (blx *blockExchange) handleMessage(message *wire.Message) error {
 			return err
 		}
 	default:
-		logrus.WithField("message.PayloadType", message.PayloadType).
+		logrus.WithField("message.PayloadType", contentType).
 			Warn("Payload type not known")
 		return nil
 	}
@@ -106,9 +107,9 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 	return nil
 }
 
-func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
+func (blx *blockExchange) handleRequestBlock(incMessage *wire.Message) error {
 	payload := &payloadTransferRequestBlock{}
-	if err := message.DecodePayload(payload); err != nil {
+	if err := incMessage.DecodePayload(payload); err != nil {
 		return err
 	}
 
@@ -128,9 +129,13 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 	}
 
 	ctx := context.Background()
-	err = blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-		[]string{payload.RequestingPeerID})
+	message, err := wire.NewMessage(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
 	if err != nil {
+		logrus.WithError(err).Warnf("blx.handleRequestBlock could not create message")
+		return err
+	}
+	if err := blx.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send message")
 		return err
 	}
 
@@ -165,9 +170,13 @@ func (blx *blockExchange) Get(key string, recipient string) (
 
 	// Request block
 	ctx := context.Background()
-	err = blx.wire.Send(ctx, wireExtention, PayloadTypeRequestBlock,
-		req, []string{recipient})
+	message, err := wire.NewMessage(PayloadTypeRequestBlock, []string{recipient}, req)
 	if err != nil {
+		logrus.WithError(err).Warnf("blx.Get could not create message")
+		return nil, err
+	}
+	if err := blx.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("blx.Get could not send message")
 		return nil, err
 	}
 
@@ -213,9 +222,13 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	blx.publish(block.Key)
 
 	ctx := context.Background()
-	err := blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-		[]string{recipient})
+	message, err := wire.NewMessage(PayloadTypeTransferBlock, []string{recipient}, resp)
 	if err != nil {
+		logrus.WithError(err).Warnf("blx.Send could not create message")
+		return "", 0, err
+	}
+	if err := blx.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("blx.Send could not send message")
 		return "", 0, err
 	}
 

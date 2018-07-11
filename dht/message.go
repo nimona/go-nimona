@@ -6,17 +6,17 @@ import (
 
 // Message types
 const (
-	PayloadTypePing string = "ping"
-	PayloadTypePong        = "pong"
+	PayloadTypePing string = "dht.ping"
+	PayloadTypePong        = "dht.pong"
 
-	PayloadTypeGetPeerInfo = "get-peer-info"
-	PayloadTypePutPeerInfo = "put-peer-info"
+	PayloadTypeGetPeerInfo = "dht.get-peer-info"
+	PayloadTypePutPeerInfo = "dht.put-peer-info"
 
-	PayloadTypeGetProviders = "get-providers"
-	PayloadTypePutProviders = "put-providers"
+	PayloadTypeGetProviders = "dht.get-providers"
+	PayloadTypePutProviders = "dht.put-providers"
 
-	PayloadTypeGetValue = "get-value"
-	PayloadTypePutValue = "put-value"
+	PayloadTypeGetValue = "dht.get-value"
+	PayloadTypePutValue = "dht.put-value"
 )
 
 type messageSenderPeerInfo struct {

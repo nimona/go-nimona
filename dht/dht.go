@@ -72,7 +72,15 @@ func (nd *DHT) refresh() {
 		}
 		ctx := context.Background()
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
-		nd.wire.Send(ctx, wireExtention, PayloadTypeGetPeerInfo, resp, peerIDs)
+		message, err := wire.NewMessage(PayloadTypeGetPeerInfo, peerIDs, resp)
+		if err != nil {
+			logrus.WithError(err).Warnf("refresh could not create message")
+			return
+		}
+		if err := nd.wire.Send(ctx, message); err != nil {
+			logrus.WithError(err).Warnf("refresh could not send message")
+			return
+		}
 		time.Sleep(time.Second * 30)
 	}
 }
@@ -85,7 +93,8 @@ func (nd *DHT) handleMessage(message *wire.Message) error {
 		nd.addressBook.PutPeerInfo(&senderPeerInfo.SenderPeerInfo)
 	}
 
-	switch message.PayloadType {
+	contentType := message.Headers.ContentType
+	switch contentType {
 	case PayloadTypeGetPeerInfo:
 		nd.handleGetPeerInfo(message)
 	case PayloadTypePutPeerInfo:
@@ -99,15 +108,15 @@ func (nd *DHT) handleMessage(message *wire.Message) error {
 	case PayloadTypePutValue:
 		nd.handlePutValue(message)
 	default:
-		logrus.WithField("message.PayloadType", message.PayloadType).Warn("Payload type not known")
+		logrus.WithField("message.PayloadType", contentType).Warn("Payload type not known")
 		return nil
 	}
 	return nil
 }
 
-func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
+func (nd *DHT) handleGetPeerInfo(incMessage *wire.Message) {
 	payload := &messageGetPeerInfo{}
-	if err := message.DecodePayload(payload); err != nil {
+	if err := incMessage.DecodePayload(payload); err != nil {
 		return
 	}
 
@@ -127,7 +136,15 @@ func (nd *DHT) handleGetPeerInfo(message *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	nd.wire.Send(ctx, wireExtention, PayloadTypePutPeerInfo, resp, to)
+	message, err := wire.NewMessage(PayloadTypePutPeerInfo, to, resp)
+	if err != nil {
+		logrus.WithError(err).Warnf("handleGetPeerInfo could not create message")
+		return
+	}
+	if err := nd.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("handleGetPeerInfo could not send message")
+		return
+	}
 }
 
 func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
@@ -153,9 +170,9 @@ func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
 	q.(*query).incomingMessages <- payload
 }
 
-func (nd *DHT) handleGetProviders(message *wire.Message) {
+func (nd *DHT) handleGetProviders(incMessage *wire.Message) {
 	payload := &messageGetProviders{}
-	if err := message.DecodePayload(payload); err != nil {
+	if err := incMessage.DecodePayload(payload); err != nil {
 		return
 	}
 
@@ -175,7 +192,15 @@ func (nd *DHT) handleGetProviders(message *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, to)
+	message, err := wire.NewMessage(PayloadTypePutProviders, to, resp)
+	if err != nil {
+		logrus.WithError(err).Warnf("handleGetProviders could not create message")
+		return
+	}
+	if err := nd.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("handleGetProviders could not send message")
+		return
+	}
 }
 
 func (nd *DHT) handlePutProviders(message *wire.Message) {
@@ -204,9 +229,9 @@ func (nd *DHT) handlePutProviders(message *wire.Message) {
 	q.(*query).incomingMessages <- payload
 }
 
-func (nd *DHT) handleGetValue(message *wire.Message) {
+func (nd *DHT) handleGetValue(incMessage *wire.Message) {
 	payload := &messageGetValue{}
-	if err := message.DecodePayload(payload); err != nil {
+	if err := incMessage.DecodePayload(payload); err != nil {
 		return
 	}
 
@@ -223,10 +248,19 @@ func (nd *DHT) handleGetValue(message *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, to)
+	message, err := wire.NewMessage(PayloadTypePutValue, to, resp)
+	if err != nil {
+		logrus.WithError(err).Warnf("handleGetValue could not create message")
+		return
+	}
+	if err := nd.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("handleGetValue could not send message")
+		return
+	}
 }
 
 func (nd *DHT) handlePutValue(message *wire.Message) {
+	// TODO handle and log errors
 	payload := &messagePutValue{}
 	if err := message.DecodePayload(payload); err != nil {
 		return
@@ -342,7 +376,17 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	return nd.wire.Send(ctx, wireExtention, PayloadTypePutValue, resp, closestPeerIDs)
+	message, err := wire.NewMessage(PayloadTypePutValue, closestPeerIDs, resp)
+	if err != nil {
+		logrus.WithError(err).Warnf("PutValue could not create message")
+		return err
+	}
+	if err := nd.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("PutValue could not send message")
+		return err
+	}
+
+	return nil
 }
 
 func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
@@ -390,7 +434,17 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	return nd.wire.Send(ctx, wireExtention, PayloadTypePutProviders, resp, closestPeerIDs)
+	message, err := wire.NewMessage(PayloadTypePutProviders, closestPeerIDs, resp)
+	if err != nil {
+		logrus.WithError(err).Warnf("PutProviders could not create message")
+		return err
+	}
+	if err := nd.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("PutProviders could not send message")
+		return err
+	}
+
+	return nil
 }
 
 func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {

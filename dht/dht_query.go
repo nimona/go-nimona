@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nimona/go-nimona/wire"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -146,5 +147,13 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	q.dht.wire.Send(ctx, wireExtention, payloadType, req, peersToAsk)
+	message, err := wire.NewMessage(payloadType, peersToAsk, req)
+	if err != nil {
+		logrus.WithError(err).Warnf("dht.next could not create message")
+		return
+	}
+	if err := q.dht.wire.Send(ctx, message); err != nil {
+		logrus.WithError(err).Warnf("dht.next could not send message")
+		return
+	}
 }

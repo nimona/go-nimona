@@ -1,20 +1,23 @@
 package peer
 
 import (
-	"github.com/keybase/saltpack"
-
-	"github.com/keybase/saltpack/basic"
+	"crypto/rsa"
+	"crypto/x509"
 )
 
 // SecretPeerInfo is a PeerInfo with an additional SecretKey
 type SecretPeerInfo struct {
 	PeerInfo
-	SecretKey [32]byte `json:"secret_key"`
+	SecretKey []byte `json:"secret_key"`
 }
 
 // GetSecretKey returns a saltpack SecretKey
-func (pi *SecretPeerInfo) GetSecretKey() saltpack.BoxSecretKey {
-	return basic.NewSecretKey(&pi.PublicKey, &pi.SecretKey)
+func (pi *SecretPeerInfo) GetSecretKey() *rsa.PrivateKey {
+	privateKey, err := x509.ParsePKCS1PrivateKey(pi.SecretKey)
+	if err != nil {
+		panic("could not get secret for local peer, err=" + err.Error())
+	}
+	return privateKey
 }
 
 // ToPeerInfo returns a PeerInfo struct

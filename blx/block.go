@@ -1,8 +1,8 @@
 package blx
 
 const (
-	PayloadTypeTransferBlock string = "transfer-block"
-	PayloadTypeRequestBlock         = "request-block"
+	PayloadTypeTransferBlock string = "blx.transfer-block"
+	PayloadTypeRequestBlock         = "blx.request-block"
 )
 
 const (

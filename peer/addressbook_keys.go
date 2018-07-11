@@ -1,15 +1,17 @@
 package peer
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-
-	"golang.org/x/crypto/nacl/box"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
@@ -24,22 +26,29 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo,
 
 	log.Printf("* Key path does not exist, creating new key in '%s'\n", path)
 
-	pub, priv, err := box.GenerateKey(rand.Reader)
+	signingKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	pi := &SecretPeerInfo{
-		PeerInfo: PeerInfo{
-			Addresses: []string{},
-			PublicKey: *pub,
-		},
-		SecretKey: *priv,
+	privateKeyBytes, _ := x509.MarshalECPrivateKey(signingKey)
+	publicKeyBytes, _ := x509.MarshalPKIXPublicKey(&signingKey.PublicKey)
+
+	id := &LocalIdentity{
+		ID:         fmt.Sprintf("N0x%x", publicKeyBytes),
+		Version:    0,
+		PrivateKey: privateKeyBytes,
+		PublicKey:  publicKeyBytes,
+		Peers:      &PeerInfoCollection{},
 	}
 
-	pi.ID = fmt.Sprintf("%x", pi.GetPublicKey().ToKID())
+	idBytes, _ := json.MarshalIndent(id, "", "  ")
+	fmt.Println(string(idBytes))
 
-	reg.keyring.ImportBoxKey(pub, priv)
+	pi, err := reg.CreateNewPeer()
+	if err != nil {
+		return nil, err
+	}
 
 	if err := reg.StoreSecretPeerInfo(pi, path); err != nil {
 		return nil, err
@@ -50,24 +59,24 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo,
 
 // CreateNewPeer with a new generated key, mostly used for testing
 func (reg *AddressBook) CreateNewPeer() (*SecretPeerInfo, error) {
-	pub, priv, err := box.GenerateKey(rand.Reader)
+	peerPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}
 
-	reg.keyring.ImportBoxKey(pub, priv)
+	peerPrivateKeyBytes := x509.MarshalPKCS1PrivateKey(peerPrivateKey)
+	peerPublicKeyBytes := x509.MarshalPKCS1PublicKey(&peerPrivateKey.PublicKey)
 
-	spi := &SecretPeerInfo{
+	pi := &SecretPeerInfo{
 		PeerInfo: PeerInfo{
+			ID:        fmt.Sprintf("P0x%x", peerPublicKeyBytes),
 			Addresses: []string{},
-			PublicKey: *pub,
+			PublicKey: peerPublicKeyBytes,
 		},
-		SecretKey: *priv,
+		SecretKey: peerPrivateKeyBytes,
 	}
 
-	spi.ID = fmt.Sprintf("%x", spi.GetPublicKey().ToKID())
-
-	return spi, nil
+	return pi, nil
 }
 
 // LoadSecretPeerInfo from a JSON encoded file
@@ -81,8 +90,6 @@ func (reg *AddressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error)
 	if err := json.Unmarshal(raw, &pi); err != nil {
 		return nil, err
 	}
-
-	reg.keyring.ImportBoxKey(&pi.PublicKey, &pi.SecretKey)
 
 	return pi, nil
 }
