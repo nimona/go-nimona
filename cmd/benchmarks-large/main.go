@@ -57,7 +57,7 @@ func main() {
 	fmt.Printf("Wrote %d kb in %d ms\n", total/1000, elapsed.Nanoseconds()/int64(time.Millisecond))
 }
 
-func newPeer(port int) (*net.SecretPeerInfo, net.Wire, net.AddressBook) {
+func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 	reg := net.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)

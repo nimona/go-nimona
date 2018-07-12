@@ -35,15 +35,15 @@ type BlockExchange interface {
 type subscriptionCb func(string)
 
 type blockExchange struct {
-	net           net.Wire
+	net           net.Messenger
 	storage       Storage
 	getRequests   sync.Map
 	subscriptions sync.Map
 }
 
-// NewBlockExchange get Wire and a Storage as parameters and returns a new
+// NewBlockExchange get Messenger and a Storage as parameters and returns a new
 // block exchange protocol.
-func NewBlockExchange(n net.Wire, pr Storage) (BlockExchange, error) {
+func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 	blx := &blockExchange{
 		net:         n,
 		storage:     pr,

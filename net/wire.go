@@ -48,15 +48,15 @@ var (
 // EventHandler for net.HandleExtensionEvents
 type EventHandler func(event *Message) error
 
-// Wire interface for mocking wire
-type Wire interface {
+// Messenger interface for mocking messenger
+type Messenger interface {
 	HandleExtensionEvents(extension string, h EventHandler) error
 	Send(ctx context.Context, message *Message) error
 	// Pack(payloadType string, payload interface{}, recipient string) ([]byte, error)
 	Listen(addr string) (net.Listener, string, error)
 }
 
-type wire struct {
+type messenger struct {
 	incoming     chan net.Conn
 	outgoing     chan net.Conn
 	close        chan bool
@@ -68,24 +68,24 @@ type wire struct {
 	streamLock   utils.Kmutex
 }
 
-// NewWire creates a new wire protocol based on a addressBook
-func NewWire(addressBook PeerManager) (Wire, error) {
+// NewWire creates a new messenger protocol based on a addressBook
+func NewWire(addressBook PeerManager) (Messenger, error) {
 	ctx := context.Background()
 
-	w := &wire{
+	w := &messenger{
 		incoming:    make(chan net.Conn),
 		outgoing:    make(chan net.Conn),
 		close:       make(chan bool),
 		addressBook: addressBook,
 		handlers:    map[string]EventHandler{},
-		logger:      log.Logger(ctx).Named("wire"),
+		logger:      log.Logger(ctx).Named("messenger"),
 		streamLock:  utils.NewKmutex(),
 	}
 
 	return w, nil
 }
 
-func (w *wire) HandleExtensionEvents(extension string, h EventHandler) error {
+func (w *messenger) HandleExtensionEvents(extension string, h EventHandler) error {
 	w.handlersLock.Lock()
 	defer w.handlersLock.Unlock()
 	if _, ok := w.handlers[extension]; ok {
@@ -95,7 +95,7 @@ func (w *wire) HandleExtensionEvents(extension string, h EventHandler) error {
 	return nil
 }
 
-func (w *wire) Close(peerID string, conn net.Conn) {
+func (w *messenger) Close(peerID string, conn net.Conn) {
 	// ctx := context.Background()
 
 	if conn != nil {
@@ -117,7 +117,7 @@ func (w *wire) Close(peerID string, conn net.Conn) {
 	// }
 }
 
-func (w *wire) HandleIncoming(conn net.Conn) error {
+func (w *messenger) HandleIncoming(conn net.Conn) error {
 	w.logger.Debug("handling new incoming connection", zap.String("remote", conn.RemoteAddr().String()))
 	remotePeerID := ""
 
@@ -181,7 +181,7 @@ func (w *wire) HandleIncoming(conn net.Conn) error {
 	}
 }
 
-func (w *wire) HandleOutgoing(conn net.Conn) error {
+func (w *messenger) HandleOutgoing(conn net.Conn) error {
 	w.logger.Debug("handling new outgoing connection", zap.String("remote", conn.RemoteAddr().String()))
 
 	messages := make(chan *Message, 100)
@@ -226,7 +226,7 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 	}
 }
 
-// func (w *wire) ForwardMessage(message *Message) error {
+// func (w *messenger) ForwardMessage(message *Message) error {
 // 	messageDecoder := codec.NewDecoder(conn, &codec.CborHandle{})
 
 // 	// decrypt message
@@ -257,7 +257,7 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 // 	return errors.New("message is meant for us, no need to forward")
 // }
 
-// func (w *wire) DecodeMessage(envelope *Envelope) (*Message, error) {
+// func (w *messenger) DecodeMessage(envelope *Envelope) (*Message, error) {
 // 	msgpackHandler := new(codec.MsgpackHandle)
 // 	msgpackHandler.RawToString = false
 
@@ -288,7 +288,7 @@ func (w *wire) HandleOutgoing(conn net.Conn) error {
 
 // Process incoming message
 // TODO Process from channel, don't call directly so we don't have to lock handlers
-func (w *wire) Process(message *Message) error {
+func (w *messenger) Process(message *Message) error {
 	w.handlersLock.RLock()
 	defer w.handlersLock.RUnlock()
 	contentType := message.Headers.ContentType
@@ -325,7 +325,7 @@ func (w *wire) Process(message *Message) error {
 
 // Unpack an encoded envelope into a message
 // TODO Unpack is not currently used, remove?
-// func (w *wire) Unpack(encodedEnvelope []byte) (*Message, error) {
+// func (w *messenger) Unpack(encodedEnvelope []byte) (*Message, error) {
 // 	// decode envelope
 // 	envelope := &Envelope{}
 // 	msgpackHandler := new(codec.MsgpackHandle)
@@ -338,7 +338,7 @@ func (w *wire) Process(message *Message) error {
 // 	return w.DecodeMessage(envelope)
 // }
 
-func (w *wire) Send(ctx context.Context, message *Message) error {
+func (w *messenger) Send(ctx context.Context, message *Message) error {
 	for _, recipient := range message.Headers.Recipients {
 		// TODO deal with error
 		if err := w.SendOne(ctx, message, recipient); err != nil {
@@ -349,7 +349,7 @@ func (w *wire) Send(ctx context.Context, message *Message) error {
 	return nil
 }
 
-func (w *wire) SendOne(ctx context.Context, message *Message, recipient string) error {
+func (w *messenger) SendOne(ctx context.Context, message *Message, recipient string) error {
 	logger := w.logger.With(zap.String("peerID", recipient))
 	logger.Debug("sending message", zap.String("contentType", message.Headers.ContentType))
 
@@ -417,7 +417,7 @@ func (w *wire) SendOne(ctx context.Context, message *Message, recipient string) 
 }
 
 // Pack a message into something we can send
-// func (w *wire) Pack(contentType string, payload interface{}, recipient string) ([]byte, error) {
+// func (w *messenger) Pack(contentType string, payload interface{}, recipient string) ([]byte, error) {
 // 	lpi := w.addressBook.GetLocalPeerInfo()
 
 // 	message := &Message{}
@@ -472,7 +472,7 @@ func (w *wire) SendOne(ctx context.Context, message *Message, recipient string) 
 // 	return messageBytes, nil
 // }
 
-func (w *wire) writeMessage(ctx context.Context, message *Message, rw io.ReadWriter) error {
+func (w *messenger) writeMessage(ctx context.Context, message *Message, rw io.ReadWriter) error {
 	signer := w.addressBook.GetLocalPeerInfo()
 
 	if !message.IsSigned() {
@@ -493,7 +493,7 @@ func (w *wire) writeMessage(ctx context.Context, message *Message, rw io.ReadWri
 	return nil
 }
 
-func (w *wire) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
+func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
 	w.logger.Debug("getting conn", zap.String("peer_id", peerID))
 	if peerID == "" {
 		return nil, errors.New("missing peer id")
@@ -518,7 +518,7 @@ func (w *wire) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
 }
 
 // Dial to a peer and return a net.Conn
-func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
+func (w *messenger) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	peerInfo, err := w.addressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
@@ -580,7 +580,7 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (w *wire) Listen(addr string) (net.Listener, string, error) {
+func (w *messenger) Listen(addr string) (net.Listener, string, error) {
 	tcpListener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, "", err

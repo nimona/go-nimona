@@ -10,9 +10,9 @@ import (
 	"github.com/nimona/go-nimona/net"
 )
 
-// WireRequesterFactory implements RequesterFactory for our wire
+// WireRequesterFactory implements RequesterFactory for our messenger
 type WireRequesterFactory struct {
-	wire      net.Wire
+	messenger net.Messenger
 	recipient net.PeerInfo
 	bytes     int
 }
@@ -20,7 +20,7 @@ type WireRequesterFactory struct {
 // GetRequester returns a new Requester, called for each Benchmark connection.
 func (w *WireRequesterFactory) GetRequester(uint64) bench.Requester {
 	return &wireRequester{
-		wire:      w.wire,
+		messenger: w.messenger,
 		recipient: w.recipient,
 		bytes:     w.bytes,
 	}
@@ -28,7 +28,7 @@ func (w *WireRequesterFactory) GetRequester(uint64) bench.Requester {
 
 // wireRequester implements Requester by making sending a message to a peer
 type wireRequester struct {
-	wire      net.Wire
+	messenger net.Messenger
 	recipient net.PeerInfo
 	bytes     int
 	payload   []byte

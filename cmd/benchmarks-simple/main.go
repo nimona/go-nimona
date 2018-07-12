@@ -58,7 +58,7 @@ func main() {
 
 }
 
-func newPeer(port int) (*net.SecretPeerInfo, net.Wire, net.AddressBook) {
+func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 	reg := net.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)

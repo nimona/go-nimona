@@ -13,7 +13,7 @@ import (
 type dhtTestSuite struct {
 	suite.Suite
 	addressBook net.AddressBook
-	wire        *net.MockWire
+	messenger   *net.MockWire
 	peerID      string
 	messages    chan interface{}
 	peers       chan interface{}
@@ -32,9 +32,9 @@ func (suite *dhtTestSuite) SetupTest() {
 			"localhost",
 		},
 	})
-	suite.wire = &net.MockWire{}
+	suite.messenger = &net.MockWire{}
 	suite.net.On("HandleExtensionEvents", mock.Anything, mock.Anything).Return(nil)
-	suite.dht, _ = NewDHT(suite.wire, suite.addressBook)
+	suite.dht, _ = NewDHT(suite.messenger, suite.addressBook)
 }
 
 func (suite *dhtTestSuite) TestPutSuccess() {

@@ -26,13 +26,13 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	net            net.Wire
+	net            net.Messenger
 	addressBook    net.PeerManager
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(n net.Wire, pm net.PeerManager) (*DHT, error) {
+func NewDHT(n net.Messenger, pm net.PeerManager) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 

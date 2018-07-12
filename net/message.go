@@ -30,7 +30,7 @@ type Headers struct {
 	Signer      []byte
 }
 
-// Message for exchanging data via the wire
+// Message for exchanging data via the messenger
 type Message struct {
 	Version   int
 	Headers   Headers

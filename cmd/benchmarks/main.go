@@ -34,7 +34,7 @@ func main() {
 	r1.PutPeerInfo(&p2s)
 
 	r := &WireRequesterFactory{
-		wire:      w2,
+		messenger: w2,
 		recipient: p1.ToPeerInfo(),
 		bytes:     100000000,
 	}
@@ -49,7 +49,7 @@ func main() {
 	summary.GenerateLatencyDistribution(nil, "net.txt")
 }
 
-func newPeer(port int) (*net.SecretPeerInfo, net.Wire, net.AddressBook) {
+func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 	reg := net.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
