@@ -17,7 +17,7 @@ var (
 )
 
 const (
-	wireExtention        = "dht"
+	messengerExtention   = "dht"
 	closestPeersToReturn = 8
 	maxQueryTime         = time.Second * 5
 )

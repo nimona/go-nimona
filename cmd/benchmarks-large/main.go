@@ -66,7 +66,7 @@ func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 		reg.PutPeerInfo(&peerInfo)
 	}
 
-	wre, _ := net.NewWire(reg)
+	wre, _ := net.NewMessenger(reg)
 	dht.NewDHT(wre, reg)
 
 	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))

@@ -87,7 +87,7 @@ func main() {
 
 	storagePath := path.Join(configPath, "storage")
 
-	n, _ := net.NewWire(reg)
+	n, _ := net.NewMessenger(reg)
 	dht, _ := dht.NewDHT(n, reg)
 	dpr := blx.NewDiskStorage(storagePath)
 	blx, _ := blx.NewBlockExchange(n, dpr)

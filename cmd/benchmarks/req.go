@@ -10,24 +10,24 @@ import (
 	"github.com/nimona/go-nimona/net"
 )
 
-// WireRequesterFactory implements RequesterFactory for our messenger
-type WireRequesterFactory struct {
+// MessengerRequesterFactory implements RequesterFactory for our messenger
+type MessengerRequesterFactory struct {
 	messenger net.Messenger
 	recipient net.PeerInfo
 	bytes     int
 }
 
 // GetRequester returns a new Requester, called for each Benchmark connection.
-func (w *WireRequesterFactory) GetRequester(uint64) bench.Requester {
-	return &wireRequester{
+func (w *MessengerRequesterFactory) GetRequester(uint64) bench.Requester {
+	return &messengerRequester{
 		messenger: w.messenger,
 		recipient: w.recipient,
 		bytes:     w.bytes,
 	}
 }
 
-// wireRequester implements Requester by making sending a message to a peer
-type wireRequester struct {
+// messengerRequester implements Requester by making sending a message to a peer
+type messengerRequester struct {
 	messenger net.Messenger
 	recipient net.PeerInfo
 	bytes     int
@@ -35,7 +35,7 @@ type wireRequester struct {
 }
 
 // Setup prepares the Requester for benchmarking.
-func (w *wireRequester) Setup() error {
+func (w *messengerRequester) Setup() error {
 	w.payload = make([]byte, w.bytes)
 	if _, err := rand.Read(w.payload); err != nil {
 		return err
@@ -44,7 +44,7 @@ func (w *wireRequester) Setup() error {
 }
 
 // Request performs a synchronous request to the system under test.
-func (w *wireRequester) Request() error {
+func (w *messengerRequester) Request() error {
 	ctx := context.Background()
 	recipient := w.recipient.ID
 	err := w.net.Send(ctx, "foo", "bar", w.payload, []string{recipient})
@@ -55,6 +55,6 @@ func (w *wireRequester) Request() error {
 }
 
 // Teardown is called upon benchmark completion.
-func (w *wireRequester) Teardown() error {
+func (w *messengerRequester) Teardown() error {
 	return nil
 }

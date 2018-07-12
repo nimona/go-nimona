@@ -15,16 +15,16 @@ package net_test
 // 	"github.com/nimona/go-nimona/net"
 // )
 
-// type wireTestSuite struct {
+// type messengerTestSuite struct {
 // 	suite.Suite
 // 	bootstrapPeerInfos []PeerInfo
 // }
 
-// func (suite *wireTestSuite) SetupTest() {
+// func (suite *messengerTestSuite) SetupTest() {
 // 	suite.bootstrapPeerInfos = []PeerInfo{}
 // }
 
-// func (suite *wireTestSuite) TestSendSuccess() {
+// func (suite *messengerTestSuite) TestSendSuccess() {
 // 	port1, p1, w1, r1 := suite.newPeer()
 // 	_, p2, w2, r2 := suite.newPeer()
 
@@ -84,7 +84,7 @@ package net_test
 // 	suite.True(w2MessageHandled)
 // }
 
-// func (suite *wireTestSuite) TestRelayedSendSuccess() {
+// func (suite *messengerTestSuite) TestRelayedSendSuccess() {
 // 	portR, pR, wR, rR := suite.newPeer()
 // 	pRs := pR.ToPeerInfo()
 // 	pRs.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", portR)}
@@ -157,7 +157,7 @@ package net_test
 // 	suite.True(w2MessageHandled)
 // }
 
-// func (suite *wireTestSuite) newPeer() (int, *SecretPeerInfo, net.Messenger, AddressBook) {
+// func (suite *messengerTestSuite) newPeer() (int, *SecretPeerInfo, net.Messenger, AddressBook) {
 // 	reg := NewAddressBook()
 // 	spi, _ := reg.CreateNewPeer()
 // 	reg.PutLocalPeerInfo(spi)
@@ -167,13 +167,13 @@ package net_test
 // 		suite.NoError(err)
 // 	}
 
-// 	wre, _ := net.NewWire(reg)
+// 	wre, _ := net.NewMessenger(reg)
 // 	listener, _, lErr := wre.Listen(fmt.Sprintf("0.0.0.0:%d", 0))
 // 	suite.NoError(lErr)
 // 	port := listener.Addr().(*net.TCPAddr).Port
 // 	return port, spi, wre, reg
 // }
 
-// func TestWireTestSuite(t *testing.T) {
-// 	suite.Run(t, new(wireTestSuite))
+// func TestMessengerTestSuite(t *testing.T) {
+// 	suite.Run(t, new(messengerTestSuite))
 // }

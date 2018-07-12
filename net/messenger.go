@@ -27,24 +27,6 @@ var (
 	ErrNotForUs = errors.New("message not for us")
 )
 
-// const SignMessageCBORTag = 98
-
-// // GetCOSEHandle returns a codec.CborHandle with an extension
-// // registered for COSE SignMessage as CBOR tag 98
-// func GetCOSEHandle() (h *codec.CborHandle) {
-// 	h = new(codec.CborHandle)
-// 	h.IndefiniteLength = false // no streaming
-// 	h.Canonical = true         // sort map keys
-// 	h.SignedInteger = true
-
-// 	var cExt cose.Ext
-// 	h.SetInterfaceExt(reflect.TypeOf(&Message{}), SignMessageCBORTag, cExt)
-// 	return h
-// }
-
-// var coseHandler = GetCOSEHandle()
-// var coseHandler = cose.GetCOSEHandle()
-
 // EventHandler for net.HandleExtensionEvents
 type EventHandler func(event *Message) error
 
@@ -52,7 +34,6 @@ type EventHandler func(event *Message) error
 type Messenger interface {
 	HandleExtensionEvents(extension string, h EventHandler) error
 	Send(ctx context.Context, message *Message) error
-	// Pack(payloadType string, payload interface{}, recipient string) ([]byte, error)
 	Listen(addr string) (net.Listener, string, error)
 }
 
@@ -68,8 +49,8 @@ type messenger struct {
 	streamLock   utils.Kmutex
 }
 
-// NewWire creates a new messenger protocol based on a addressBook
-func NewWire(addressBook PeerManager) (Messenger, error) {
+// NewMessenger creates a new messenger protocol based on a addressBook
+func NewMessenger(addressBook PeerManager) (Messenger, error) {
 	ctx := context.Background()
 
 	w := &messenger{
@@ -96,12 +77,9 @@ func (w *messenger) HandleExtensionEvents(extension string, h EventHandler) erro
 }
 
 func (w *messenger) Close(peerID string, conn net.Conn) {
-	// ctx := context.Background()
-
 	if conn != nil {
 		conn.Close()
 	}
-
 	w.streams.Range(func(k, v interface{}) bool {
 		if k.(string) == peerID {
 			w.streams.Delete(k)
@@ -111,10 +89,6 @@ func (w *messenger) Close(peerID string, conn net.Conn) {
 		}
 		return true
 	})
-
-	// if peerID != "" {
-	// 	go w.GetOrDial(ctx, peerID)
-	// }
 }
 
 func (w *messenger) HandleIncoming(conn net.Conn) error {
@@ -137,7 +111,7 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			// 	continue
 			// }
 			// TODO make sure this only happens once
-			if message.Headers.ContentType == "handshake" {
+			if message.Headers.ContentType == "net.handshake" {
 				handshake := &handshakeMessage{}
 				if err := message.DecodePayload(handshake); err != nil {
 					w.logger.Error("could not decode handshake", zap.Error(err))
@@ -257,35 +231,6 @@ func (w *messenger) HandleOutgoing(conn net.Conn) error {
 // 	return errors.New("message is meant for us, no need to forward")
 // }
 
-// func (w *messenger) DecodeMessage(envelope *Envelope) (*Message, error) {
-// 	msgpackHandler := new(codec.MsgpackHandle)
-// 	msgpackHandler.RawToString = false
-
-// 	// decrypt message
-// 	r := bytes.NewReader(envelope.Message)
-// 	_, pr, err := saltpack.NewDecryptStream(saltpack.SingleVersionValidator(saltpack.CurrentVersion()), r, w.keyring)
-// 	if err != nil {
-// 		if err == saltpack.ErrNoDecryptionKey {
-// 			return nil, ErrNotForUs
-// 		}
-// 		return nil, err
-// 	}
-
-// 	body, errRead := ioutil.ReadAll(pr)
-// 	if errRead != nil {
-// 		return nil, errRead
-// 	}
-
-// 	// decode message
-// 	message := &Message{}
-// 	messageDecoder := codec.NewDecoderBytes(body, msgpackHandler)
-// 	if err := messageDecoder.Decode(message); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return message, nil
-// }
-
 // Process incoming message
 // TODO Process from channel, don't call directly so we don't have to lock handlers
 func (w *messenger) Process(message *Message) error {
@@ -323,26 +268,11 @@ func (w *messenger) Process(message *Message) error {
 	return nil
 }
 
-// Unpack an encoded envelope into a message
-// TODO Unpack is not currently used, remove?
-// func (w *messenger) Unpack(encodedEnvelope []byte) (*Message, error) {
-// 	// decode envelope
-// 	envelope := &Envelope{}
-// 	msgpackHandler := new(codec.MsgpackHandle)
-// 	msgpackHandler.RawToString = false
-// 	envelopeDecoder := codec.NewDecoderBytes(encodedEnvelope, msgpackHandler)
-// 	if err := envelopeDecoder.Decode(&envelope); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return w.DecodeMessage(envelope)
-// }
-
 func (w *messenger) Send(ctx context.Context, message *Message) error {
 	for _, recipient := range message.Headers.Recipients {
 		// TODO deal with error
 		if err := w.SendOne(ctx, message, recipient); err != nil {
-			fmt.Println("ERR SENDING", err)
+			// TODO log error
 			return err
 		}
 	}
@@ -355,12 +285,6 @@ func (w *messenger) SendOne(ctx context.Context, message *Message, recipient str
 
 	w.streamLock.Lock(recipient)
 	defer w.streamLock.Unlock(recipient)
-
-	// create message for recipient
-	// encodedMessage, err := w.Pack(contentType, payload, recipient)
-	// if err != nil {
-	// 	return err
-	// }
 
 	w.logger.Debug("getting conn to write message", zap.String("recipient", recipient))
 	conn, err := w.GetOrDial(ctx, recipient)
@@ -376,101 +300,8 @@ func (w *messenger) SendOne(ctx context.Context, message *Message, recipient str
 		return nil
 	}
 
-	// else, try to find a relay peer and send it to them
-	// pi, err := w.addressBook.GetPeerInfo(peerID)
-	// if err != nil {
-	// 	logger.Debug("could not get relay for recipient", zap.Error(err))
-	// 	return err
-	// }
-
-	// // go through the addresses and find any relays
-	// relayIDs := []string{}
-	// for _, address := range pi.Addresses {
-	// 	if strings.HasPrefix(address, "relay:") {
-	// 		relayIDs = append(relayIDs, strings.Replace(address, "relay:", "", 1))
-	// 	}
-	// }
-
-	// // if no relays found, fail
-	// if len(relayIDs) == 0 {
-	// 	return ErrAllAddressesFailed
-	// }
-
-	// // so, we need to create message for recipient, but not anonymous
-	// encodedMessage, err = w.Pack(contentType, payload, peerID)
-	// if err != nil {
-	// 	logger.Debug("could not pack message for relay", zap.Error(err))
-	// 	return err
-	// }
-
-	// // go through the relays and send the message
-	// for _, relayID := range relayIDs {
-	// 	if err := w.writeMessage(ctx, encodedMessage, relayID); err != nil {
-	// 		logger.Debug("could not send to relay", zap.Error(err))
-	// 	} else {
-	// 		return nil
-	// 	}
-	// }
-
-	// else fail
 	return ErrAllAddressesFailed
 }
-
-// Pack a message into something we can send
-// func (w *messenger) Pack(contentType string, payload interface{}, recipient string) ([]byte, error) {
-// 	lpi := w.addressBook.GetLocalPeerInfo()
-
-// 	message := &Message{}
-// 	message.Headers.ContentType = contentType
-// 	message.Headers.Recipients = []string{recipient}
-// 	if err := message.EncodePayload(payload); err != nil {
-// 		return nil, err
-// 	}
-
-// 	messageBytes, err := Sign(message, lpi)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	// payloadBytes := []byte{}
-// 	// enc := codec.NewEncoderBytes(&payloadBytes, &codec.CborHandle{})
-// 	// if err := enc.Encode(payload); err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	// // TODO get correct alg
-// 	// signer, err := cose.NewSignerFromKey(cose.PS256, lpi.GetSecretKey())
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	// sig := cose.NewSignature()
-// 	// // sig.Headers.Unprotected["kid"] = 1
-// 	// sig.Headers.Protected["content-type"] = contentType
-// 	// sig.Headers.Protected["alg"] = "PS256"
-// 	// sig.Headers.Protected["recipients"] = []string{recipient}
-
-// 	// create a message
-// 	// external := []byte("") // optional external data see https://tools.ietf.org/html/rfc8152#section-4.3
-
-// 	// msg := cose.NewSignMessage()
-// 	// msg.Payload = payloadBytes
-// 	// msg.AddSignature(sig)
-// 	// msg.Headers.Protected["foo"] = "bar"
-
-// 	// err = msg.Sign(rand.Reader, nil, []cose.Signer{*signer})
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	// msgBytes := []byte{}
-// 	// coseEnc := codec.NewEncoderBytes(&msgBytes, coseHandler)
-// 	// if err := coseEnc.Encode(msg); err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	return messageBytes, nil
-// }
 
 func (w *messenger) writeMessage(ctx context.Context, message *Message, rw io.ReadWriter) error {
 	signer := w.addressBook.GetLocalPeerInfo()
@@ -503,9 +334,6 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	if ok {
 		return existingConn.(net.Conn), nil
 	}
-
-	// w.streamLock.Lock(peerID)
-	// defer w.streamLock.Unlock(peerID)
 
 	w.logger.Debug("dialing peer", zap.String("peer_id", peerID))
 	newConn, err := w.Dial(ctx, peerID)

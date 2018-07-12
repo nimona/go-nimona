@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	wireExtention = "blx"
+	messengerExtention = "blx"
 )
 
 var (
@@ -50,7 +50,7 @@ func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 		getRequests: sync.Map{},
 	}
 
-	n.HandleExtensionEvents(wireExtention, blx.handleMessage)
+	n.HandleExtensionEvents(messengerExtention, blx.handleMessage)
 
 	return blx, nil
 }

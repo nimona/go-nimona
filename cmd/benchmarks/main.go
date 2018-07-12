@@ -33,7 +33,7 @@ func main() {
 	p2s.Addresses = []string{"tcp:127.0.0.1:32000"}
 	r1.PutPeerInfo(&p2s)
 
-	r := &WireRequesterFactory{
+	r := &MessengerRequesterFactory{
 		messenger: w2,
 		recipient: p1.ToPeerInfo(),
 		bytes:     100000000,
@@ -58,7 +58,7 @@ func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 		reg.PutPeerInfo(&peerInfo)
 	}
 
-	wre, _ := net.NewWire(reg)
+	wre, _ := net.NewMessenger(reg)
 	dht.NewDHT(wre, reg)
 
 	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
