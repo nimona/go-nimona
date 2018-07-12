@@ -1,4 +1,4 @@
-package wire
+package net
 
 import (
 	"crypto"
@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/nimona/go-nimona/peer"
 	"github.com/ugorji/go/codec"
 )
 
@@ -62,7 +61,7 @@ func getMessageDigest(message *Message) ([]byte, error) {
 	return digestHash[:], nil
 }
 
-func (message *Message) Sign(signerPeerInfo *peer.SecretPeerInfo) error {
+func (message *Message) Sign(signerPeerInfo *SecretPeerInfo) error {
 	message.Headers.Signer = signerPeerInfo.PublicKey
 	digest, err := getMessageDigest(message)
 	if err != nil {

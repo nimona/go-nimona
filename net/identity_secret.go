@@ -1,4 +1,4 @@
-package peer
+package net
 
 type SecretIdentity struct {
 	ID         string              `json:"id"`

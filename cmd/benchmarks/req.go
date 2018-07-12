@@ -7,14 +7,13 @@ import (
 
 	"github.com/tylertreat/bench"
 
-	"github.com/nimona/go-nimona/peer"
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 )
 
 // WireRequesterFactory implements RequesterFactory for our wire
 type WireRequesterFactory struct {
-	wire      wire.Wire
-	recipient peer.PeerInfo
+	wire      net.Wire
+	recipient net.PeerInfo
 	bytes     int
 }
 
@@ -29,8 +28,8 @@ func (w *WireRequesterFactory) GetRequester(uint64) bench.Requester {
 
 // wireRequester implements Requester by making sending a message to a peer
 type wireRequester struct {
-	wire      wire.Wire
-	recipient peer.PeerInfo
+	wire      net.Wire
+	recipient net.PeerInfo
 	bytes     int
 	payload   []byte
 }
@@ -48,7 +47,7 @@ func (w *wireRequester) Setup() error {
 func (w *wireRequester) Request() error {
 	ctx := context.Background()
 	recipient := w.recipient.ID
-	err := w.wire.Send(ctx, "foo", "bar", w.payload, []string{recipient})
+	err := w.net.Send(ctx, "foo", "bar", w.payload, []string{recipient})
 	if err != nil {
 		fmt.Println("could not send message, error:", err)
 	}

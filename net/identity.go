@@ -1,4 +1,4 @@
-package peer
+package net
 
 type Identity struct {
 	ID        string              `json:"id"`

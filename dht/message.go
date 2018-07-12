@@ -1,7 +1,7 @@
 package dht
 
 import (
-	"github.com/nimona/go-nimona/peer"
+	"github.com/nimona/go-nimona/net"
 )
 
 // Message types
@@ -20,59 +20,59 @@ const (
 )
 
 type messageSenderPeerInfo struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
 }
 
 type messagePing struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	PeerID         string       `json:"peer_id"`
 }
 
 type messagePong struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	PeerID         string       `json:"peer_id"`
 }
 
 type messageGetPeerInfo struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	PeerID         string       `json:"peer_id"`
 }
 
 type messagePutPeerInfo struct {
-	SenderPeerInfo peer.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string           `json:"request_id,omitempty"`
-	PeerID         string           `json:"peer_id"`
-	PeerInfo       peer.PeerInfo    `json:"peer_info"`
-	ClosestPeers   []*peer.PeerInfo `json:"closest_peers"`
+	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string          `json:"request_id,omitempty"`
+	PeerID         string          `json:"peer_id"`
+	PeerInfo       net.PeerInfo    `json:"peer_info"`
+	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
 }
 
 type messageGetProviders struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	Key            string       `json:"key"`
 }
 
 type messagePutProviders struct {
-	SenderPeerInfo peer.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string           `json:"request_id,omitempty"`
-	Key            string           `json:"key"`
-	PeerIDs        []string         `json:"peer_ids"`
-	ClosestPeers   []*peer.PeerInfo `json:"closest_peers"`
+	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string          `json:"request_id,omitempty"`
+	Key            string          `json:"key"`
+	PeerIDs        []string        `json:"peer_ids"`
+	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
 }
 
 type messageGetValue struct {
-	SenderPeerInfo peer.PeerInfo `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
+	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	Key            string       `json:"key"`
 }
 
 type messagePutValue struct {
-	SenderPeerInfo peer.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string           `json:"request_id,omitempty"`
-	Key            string           `json:"key"`
-	Value          string           `json:"value"`
-	ClosestPeers   []*peer.PeerInfo `json:"closest_peers"`
+	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
+	RequestID      string          `json:"request_id,omitempty"`
+	Key            string          `json:"key"`
+	Value          string          `json:"value"`
+	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
 }

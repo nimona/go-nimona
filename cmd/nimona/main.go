@@ -14,8 +14,7 @@ import (
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/peer"
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 
 	"gopkg.in/abiosoft/ishell.v2"
 )
@@ -26,8 +25,8 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfos = []peer.PeerInfo{
-	peer.PeerInfo{
+var bootstrapPeerInfos = []net.PeerInfo{
+	net.PeerInfo{
 		ID: "P0x3082010a028201010098156fb69d71d06dfd27f1d41541c25e1687e909ff4fd9fe07b7e3041079e19e5ee79b95264ff4eb9c43c6573dd6a83cacb80515801163736d06d17d0cea7a5f2e76992dd4bcdb37b61e01cbcaae9f53c04699f3b95cbef5628d7a9520e244980a0299dcddb458be4fc1bb0e8aed81b890133e7cd28a88a3ba61edada4917af024b1a2eb3ce6a41e7c08ea3a39fecfc1d82fb126189bf5f20e134dbafa03ba6313faca2ea11a30a106039858a37d93e327b3c98b01ba9a46df9bc0d2147edf3cfbfec8641a5eea3448ad30fb34405c85c867f655bb72e2897fd5f5b74c84459ae43200adaa1b4c39e9434587835ed4ad8fc01b1e7785fc8d0f15ee76e60083e10203010001",
 		Addresses: []string{
 			"tcp:andromeda.nimona.io:21013",
@@ -69,11 +68,11 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	keyPath := path.Join(configPath, "peer.json")
+	keyPath := path.Join(configPath, "net.json")
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := peer.NewAddressBook()
+	reg := net.NewAddressBook()
 	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
@@ -88,10 +87,10 @@ func main() {
 
 	storagePath := path.Join(configPath, "storage")
 
-	wre, _ := wire.NewWire(reg)
-	dht, _ := dht.NewDHT(wre, reg)
+	n, _ := net.NewWire(reg)
+	dht, _ := dht.NewDHT(n, reg)
 	dpr := blx.NewDiskStorage(storagePath)
-	blx, _ := blx.NewBlockExchange(wre, dpr)
+	blx, _ := blx.NewBlockExchange(n, dpr)
 
 	// Announce blocks on init and on new blocks
 	go func() {
@@ -108,9 +107,9 @@ func main() {
 		})
 	}()
 
-	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
+	n.Listen(fmt.Sprintf("0.0.0.0:%d", port))
 
-	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
+	n.HandleExtensionEvents("msg", func(event *net.Message) error {
 		fmt.Printf("___ Got message %s\n", string(event.Payload))
 		return nil
 	})
@@ -360,12 +359,12 @@ func main() {
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			message, err := wire.NewMessage("msg.msg", to, msg)
+			message, err := net.NewMessage("msg.msg", to, msg)
 			if err != nil {
 				c.Println("Could not create message", err)
 				return
 			}
-			if err := wre.Send(ctx, message); err != nil {
+			if err := n.Send(ctx, message); err != nil {
 				c.Println("Could not send message", err)
 				return
 			}

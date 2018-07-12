@@ -8,12 +8,11 @@ import (
 	"time"
 
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/peer"
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 )
 
-var bootstrapPeerInfos = []peer.PeerInfo{
-	// peer.PeerInfo{
+var bootstrapPeerInfos = []net.PeerInfo{
+	// net.PeerInfo{
 	// 	ID: "7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562",
 	// 	Addresses: []string{
 	// 		"tcp:andromeda.nimona.io:26801",
@@ -59,8 +58,8 @@ func main() {
 
 }
 
-func newPeer(port int) (*peer.SecretPeerInfo, wire.Wire, peer.AddressBook) {
-	reg := peer.NewAddressBook()
+func newPeer(port int) (*net.SecretPeerInfo, net.Wire, net.AddressBook) {
+	reg := net.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 
@@ -68,12 +67,12 @@ func newPeer(port int) (*peer.SecretPeerInfo, wire.Wire, peer.AddressBook) {
 		reg.PutPeerInfo(&peerInfo)
 	}
 
-	wre, _ := wire.NewWire(reg)
+	wre, _ := net.NewWire(reg)
 	dht.NewDHT(wre, reg)
 
 	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
 
-	wre.HandleExtensionEvents("foo", func(event *wire.Message) error {
+	wre.HandleExtensionEvents("foo", func(event *net.Message) error {
 		// fmt.Printf("___ Got message %s\n", string(event.Payload))
 		return nil
 	})

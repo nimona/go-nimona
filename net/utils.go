@@ -1,4 +1,4 @@
-package wire
+package net
 
 import (
 	"fmt"

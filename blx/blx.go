@@ -7,7 +7,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +35,7 @@ type BlockExchange interface {
 type subscriptionCb func(string)
 
 type blockExchange struct {
-	wire          wire.Wire
+	net           net.Wire
 	storage       Storage
 	getRequests   sync.Map
 	subscriptions sync.Map
@@ -43,19 +43,19 @@ type blockExchange struct {
 
 // NewBlockExchange get Wire and a Storage as parameters and returns a new
 // block exchange protocol.
-func NewBlockExchange(wr wire.Wire, pr Storage) (BlockExchange, error) {
+func NewBlockExchange(n net.Wire, pr Storage) (BlockExchange, error) {
 	blx := &blockExchange{
-		wire:        wr,
+		net:         n,
 		storage:     pr,
 		getRequests: sync.Map{},
 	}
 
-	wr.HandleExtensionEvents(wireExtention, blx.handleMessage)
+	n.HandleExtensionEvents(wireExtention, blx.handleMessage)
 
 	return blx, nil
 }
 
-func (blx *blockExchange) handleMessage(message *wire.Message) error {
+func (blx *blockExchange) handleMessage(message *net.Message) error {
 	contentType := message.Headers.ContentType
 	switch contentType {
 	case PayloadTypeTransferBlock:
@@ -76,7 +76,7 @@ func (blx *blockExchange) handleMessage(message *wire.Message) error {
 	return nil
 }
 
-func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
+func (blx *blockExchange) handleTransferBlock(message *net.Message) error {
 	payload := &payloadTransferBlock{}
 	if err := message.DecodePayload(payload); err != nil {
 		return err
@@ -107,7 +107,7 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 	return nil
 }
 
-func (blx *blockExchange) handleRequestBlock(incMessage *wire.Message) error {
+func (blx *blockExchange) handleRequestBlock(incMessage *net.Message) error {
 	payload := &payloadTransferRequestBlock{}
 	if err := incMessage.DecodePayload(payload); err != nil {
 		return err
@@ -129,12 +129,12 @@ func (blx *blockExchange) handleRequestBlock(incMessage *wire.Message) error {
 	}
 
 	ctx := context.Background()
-	message, err := wire.NewMessage(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
+	message, err := net.NewMessage(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("blx.handleRequestBlock could not create message")
 		return err
 	}
-	if err := blx.wire.Send(ctx, message); err != nil {
+	if err := blx.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send message")
 		return err
 	}
@@ -145,7 +145,7 @@ func (blx *blockExchange) handleRequestBlock(incMessage *wire.Message) error {
 func (blx *blockExchange) Get(key string, recipient string) (
 	*Block, error) {
 	// TODO remember to remove nonce
-	nonce := wire.RandStringBytesMaskImprSrc(8)
+	nonce := net.RandStringBytesMaskImprSrc(8)
 
 	req := &payloadTransferRequestBlock{
 		RequestingPeerID: "MISSING-REQUEST-PEER-ID", // TODO Missing requesting peer id
@@ -170,12 +170,12 @@ func (blx *blockExchange) Get(key string, recipient string) (
 
 	// Request block
 	ctx := context.Background()
-	message, err := wire.NewMessage(PayloadTypeRequestBlock, []string{recipient}, req)
+	message, err := net.NewMessage(PayloadTypeRequestBlock, []string{recipient}, req)
 	if err != nil {
 		logrus.WithError(err).Warnf("blx.Get could not create message")
 		return nil, err
 	}
-	if err := blx.wire.Send(ctx, message); err != nil {
+	if err := blx.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("blx.Get could not send message")
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 		Data: data,
 	}
 
-	nonce := wire.RandStringBytesMaskImprSrc(8)
+	nonce := net.RandStringBytesMaskImprSrc(8)
 
 	resp := payloadTransferBlock{
 		Nonce: nonce,
@@ -222,12 +222,12 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	blx.publish(block.Key)
 
 	ctx := context.Background()
-	message, err := wire.NewMessage(PayloadTypeTransferBlock, []string{recipient}, resp)
+	message, err := net.NewMessage(PayloadTypeTransferBlock, []string{recipient}, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("blx.Send could not create message")
 		return "", 0, err
 	}
-	if err := blx.wire.Send(ctx, message); err != nil {
+	if err := blx.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("blx.Send could not send message")
 		return "", 0, err
 	}
@@ -242,7 +242,7 @@ func (blx *blockExchange) GetLocalBlocks() ([]string, error) {
 // Subscribe registers a function to be called when an event happens
 // returns the id for the registration
 func (blx *blockExchange) Subscribe(fn subscriptionCb) (string, error) {
-	id := wire.RandStringBytesMaskImprSrc(8)
+	id := net.RandStringBytesMaskImprSrc(8)
 	blx.subscriptions.Store(id, fn)
 	return id, nil
 }

@@ -1,4 +1,4 @@
-package wire_test
+package net_test
 
 // import (
 // 	"context"
@@ -11,17 +11,17 @@ package wire_test
 // 	"github.com/stretchr/testify/suite"
 
 // 	"github.com/nimona/go-nimona/dht"
-// 	"github.com/nimona/go-nimona/peer"
-// 	"github.com/nimona/go-nimona/wire"
+// 	"github.com/nimona/go-nimona/net"
+// 	"github.com/nimona/go-nimona/net"
 // )
 
 // type wireTestSuite struct {
 // 	suite.Suite
-// 	bootstrapPeerInfos []peer.PeerInfo
+// 	bootstrapPeerInfos []PeerInfo
 // }
 
 // func (suite *wireTestSuite) SetupTest() {
-// 	suite.bootstrapPeerInfos = []peer.PeerInfo{}
+// 	suite.bootstrapPeerInfos = []PeerInfo{}
 // }
 
 // func (suite *wireTestSuite) TestSendSuccess() {
@@ -48,7 +48,7 @@ package wire_test
 // 	w1MessageHandled := false
 // 	w2MessageHandled := false
 
-// 	w1.HandleExtensionEvents("foo", func(message *wire.Message) error {
+// 	w1.HandleExtensionEvents("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -58,7 +58,7 @@ package wire_test
 // 		return nil
 // 	})
 
-// 	w2.HandleExtensionEvents("foo", func(message *wire.Message) error {
+// 	w2.HandleExtensionEvents("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -121,7 +121,7 @@ package wire_test
 // 	w1MessageHandled := false
 // 	w2MessageHandled := false
 
-// 	w1.HandleExtensionEvents("foo", func(message *wire.Message) error {
+// 	w1.HandleExtensionEvents("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -131,7 +131,7 @@ package wire_test
 // 		return nil
 // 	})
 
-// 	w2.HandleExtensionEvents("foo", func(message *wire.Message) error {
+// 	w2.HandleExtensionEvents("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -157,8 +157,8 @@ package wire_test
 // 	suite.True(w2MessageHandled)
 // }
 
-// func (suite *wireTestSuite) newPeer() (int, *peer.SecretPeerInfo, wire.Wire, peer.AddressBook) {
-// 	reg := peer.NewAddressBook()
+// func (suite *wireTestSuite) newPeer() (int, *SecretPeerInfo, net.Wire, AddressBook) {
+// 	reg := NewAddressBook()
 // 	spi, _ := reg.CreateNewPeer()
 // 	reg.PutLocalPeerInfo(spi)
 
@@ -167,7 +167,7 @@ package wire_test
 // 		suite.NoError(err)
 // 	}
 
-// 	wre, _ := wire.NewWire(reg)
+// 	wre, _ := net.NewWire(reg)
 // 	listener, _, lErr := wre.Listen(fmt.Sprintf("0.0.0.0:%d", 0))
 // 	suite.NoError(lErr)
 // 	port := listener.Addr().(*net.TCPAddr).Port

@@ -1,4 +1,4 @@
-package wire
+package net
 
 import (
 	"context"
@@ -17,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/log"
-	"github.com/nimona/go-nimona/peer"
 	"github.com/nimona/go-nimona/utils"
 )
 
@@ -46,7 +45,7 @@ var (
 // var coseHandler = GetCOSEHandle()
 // var coseHandler = cose.GetCOSEHandle()
 
-// EventHandler for wire.HandleExtensionEvents
+// EventHandler for net.HandleExtensionEvents
 type EventHandler func(event *Message) error
 
 // Wire interface for mocking wire
@@ -61,7 +60,7 @@ type wire struct {
 	incoming     chan net.Conn
 	outgoing     chan net.Conn
 	close        chan bool
-	addressBook  peer.PeerManager
+	addressBook  PeerManager
 	streams      sync.Map
 	handlers     map[string]EventHandler
 	handlersLock sync.RWMutex
@@ -70,7 +69,7 @@ type wire struct {
 }
 
 // NewWire creates a new wire protocol based on a addressBook
-func NewWire(addressBook peer.PeerManager) (Wire, error) {
+func NewWire(addressBook PeerManager) (Wire, error) {
 	ctx := context.Background()
 
 	w := &wire{
@@ -562,7 +561,7 @@ func (w *wire) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 
 	handshakeMessage := &Message{
 		Headers: Headers{
-			ContentType: "wire.handshake",
+			ContentType: "net.handshake",
 			Recipients:  []string{peerID},
 		},
 	}

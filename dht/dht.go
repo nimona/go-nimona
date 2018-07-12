@@ -9,8 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/nimona/go-nimona/peer"
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 )
 
 var (
@@ -27,25 +26,25 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	wire           wire.Wire
-	addressBook    peer.PeerManager
+	net            net.Wire
+	addressBook    net.PeerManager
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(wr wire.Wire, pm peer.PeerManager) (*DHT, error) {
+func NewDHT(n net.Wire, pm net.PeerManager) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
 		store:       store,
-		wire:        wr,
+		net:         n,
 		addressBook: pm,
 		queries:     sync.Map{},
 	}
 
-	wr.HandleExtensionEvents("dht", nd.handleMessage)
+	n.HandleExtensionEvents("dht", nd.handleMessage)
 
 	go nd.refresh()
 
@@ -72,12 +71,12 @@ func (nd *DHT) refresh() {
 		}
 		ctx := context.Background()
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
-		message, err := wire.NewMessage(PayloadTypeGetPeerInfo, peerIDs, resp)
+		message, err := net.NewMessage(PayloadTypeGetPeerInfo, peerIDs, resp)
 		if err != nil {
 			logrus.WithError(err).Warnf("refresh could not create message")
 			return
 		}
-		if err := nd.wire.Send(ctx, message); err != nil {
+		if err := nd.net.Send(ctx, message); err != nil {
 			logrus.WithError(err).Warnf("refresh could not send message")
 			return
 		}
@@ -85,7 +84,7 @@ func (nd *DHT) refresh() {
 	}
 }
 
-func (nd *DHT) handleMessage(message *wire.Message) error {
+func (nd *DHT) handleMessage(message *net.Message) error {
 	// logrus.Debug("Got message", message.String())
 
 	senderPeerInfo := &messageSenderPeerInfo{}
@@ -114,7 +113,7 @@ func (nd *DHT) handleMessage(message *wire.Message) error {
 	return nil
 }
 
-func (nd *DHT) handleGetPeerInfo(incMessage *wire.Message) {
+func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
 	payload := &messageGetPeerInfo{}
 	if err := incMessage.DecodePayload(payload); err != nil {
 		return
@@ -136,18 +135,18 @@ func (nd *DHT) handleGetPeerInfo(incMessage *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	message, err := wire.NewMessage(PayloadTypePutPeerInfo, to, resp)
+	message, err := net.NewMessage(PayloadTypePutPeerInfo, to, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not create message")
 		return
 	}
-	if err := nd.wire.Send(ctx, message); err != nil {
+	if err := nd.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not send message")
 		return
 	}
 }
 
-func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
+func (nd *DHT) handlePutPeerInfo(message *net.Message) {
 	payload := &messagePutPeerInfo{}
 	if err := message.DecodePayload(payload); err != nil {
 		return
@@ -170,7 +169,7 @@ func (nd *DHT) handlePutPeerInfo(message *wire.Message) {
 	q.(*query).incomingMessages <- payload
 }
 
-func (nd *DHT) handleGetProviders(incMessage *wire.Message) {
+func (nd *DHT) handleGetProviders(incMessage *net.Message) {
 	payload := &messageGetProviders{}
 	if err := incMessage.DecodePayload(payload); err != nil {
 		return
@@ -192,18 +191,18 @@ func (nd *DHT) handleGetProviders(incMessage *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	message, err := wire.NewMessage(PayloadTypePutProviders, to, resp)
+	message, err := net.NewMessage(PayloadTypePutProviders, to, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("handleGetProviders could not create message")
 		return
 	}
-	if err := nd.wire.Send(ctx, message); err != nil {
+	if err := nd.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetProviders could not send message")
 		return
 	}
 }
 
-func (nd *DHT) handlePutProviders(message *wire.Message) {
+func (nd *DHT) handlePutProviders(message *net.Message) {
 	payload := &messagePutProviders{}
 	if err := message.DecodePayload(payload); err != nil {
 		return
@@ -229,7 +228,7 @@ func (nd *DHT) handlePutProviders(message *wire.Message) {
 	q.(*query).incomingMessages <- payload
 }
 
-func (nd *DHT) handleGetValue(incMessage *wire.Message) {
+func (nd *DHT) handleGetValue(incMessage *net.Message) {
 	payload := &messageGetValue{}
 	if err := incMessage.DecodePayload(payload); err != nil {
 		return
@@ -248,18 +247,18 @@ func (nd *DHT) handleGetValue(incMessage *wire.Message) {
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.ID}
-	message, err := wire.NewMessage(PayloadTypePutValue, to, resp)
+	message, err := net.NewMessage(PayloadTypePutValue, to, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("handleGetValue could not create message")
 		return
 	}
-	if err := nd.wire.Send(ctx, message); err != nil {
+	if err := nd.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetValue could not send message")
 		return
 	}
 }
 
-func (nd *DHT) handlePutValue(message *wire.Message) {
+func (nd *DHT) handlePutValue(message *net.Message) {
 	// TODO handle and log errors
 	payload := &messagePutValue{}
 	if err := message.DecodePayload(payload); err != nil {
@@ -287,9 +286,9 @@ func (nd *DHT) handlePutValue(message *wire.Message) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
+func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*net.PeerInfo, error) {
 	// place to hold the results
-	rks := []*peer.PeerInfo{}
+	rks := []*net.PeerInfo{}
 
 	htk := hash(tk)
 
@@ -337,10 +336,10 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 	return rks, nil
 }
 
-func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*peer.PeerInfo, error) {
+func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*net.PeerInfo, error) {
 	q := &query{
 		dht:              nd,
-		id:               wire.RandStringBytesMaskImprSrc(8),
+		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        PeerInfoQuery,
 		incomingMessages: make(chan interface{}),
@@ -354,7 +353,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*peer.PeerInfo, err
 	for {
 		select {
 		case value := <-q.outgoingMessages:
-			return value.(*peer.PeerInfo), nil
+			return value.(*net.PeerInfo), nil
 		case <-time.After(maxQueryTime):
 			return nil, ErrNotFound
 		case <-ctx.Done():
@@ -376,12 +375,12 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	message, err := wire.NewMessage(PayloadTypePutValue, closestPeerIDs, resp)
+	message, err := net.NewMessage(PayloadTypePutValue, closestPeerIDs, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("PutValue could not create message")
 		return err
 	}
-	if err := nd.wire.Send(ctx, message); err != nil {
+	if err := nd.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("PutValue could not send message")
 		return err
 	}
@@ -392,7 +391,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 	q := &query{
 		dht:              nd,
-		id:               wire.RandStringBytesMaskImprSrc(8),
+		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ValueQuery,
 		incomingMessages: make(chan interface{}),
@@ -434,12 +433,12 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	message, err := wire.NewMessage(PayloadTypePutProviders, closestPeerIDs, resp)
+	message, err := net.NewMessage(PayloadTypePutProviders, closestPeerIDs, resp)
 	if err != nil {
 		logrus.WithError(err).Warnf("PutProviders could not create message")
 		return err
 	}
-	if err := nd.wire.Send(ctx, message); err != nil {
+	if err := nd.net.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("PutProviders could not send message")
 		return err
 	}
@@ -450,7 +449,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 	q := &query{
 		dht:              nd,
-		id:               wire.RandStringBytesMaskImprSrc(8),
+		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
 		incomingMessages: make(chan interface{}),
@@ -486,7 +485,7 @@ func (nd *DHT) GetAllValues() (map[string]string, error) {
 	return nd.store.GetAllValues()
 }
 
-func getPeerIDsFromPeerInfos(peerInfos []*peer.PeerInfo) []string {
+func getPeerIDsFromPeerInfos(peerInfos []*net.PeerInfo) []string {
 	peerIDs := []string{}
 	for _, peerInfo := range peerInfos {
 		peerIDs = append(peerIDs, peerInfo.ID)
