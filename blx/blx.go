@@ -50,7 +50,7 @@ func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 		getRequests: sync.Map{},
 	}
 
-	n.HandleExtensionEvents(messengerExtention, blx.handleMessage)
+	n.Handle(messengerExtention, blx.handleMessage)
 
 	return blx, nil
 }

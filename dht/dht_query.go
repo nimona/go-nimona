@@ -28,7 +28,6 @@ type query struct {
 	contactedPeers   sync.Map
 	incomingMessages chan interface{}
 	outgoingMessages chan interface{}
-	// lock             *sync.RWMutex
 }
 
 func (q *query) Run(ctx context.Context) {
@@ -152,7 +151,7 @@ func (q *query) next() {
 		logrus.WithError(err).Warnf("dht.next could not create message")
 		return
 	}
-	if err := q.dht.net.Send(ctx, message); err != nil {
+	if err := q.dht.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("dht.next could not send message")
 		return
 	}

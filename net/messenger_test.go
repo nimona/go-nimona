@@ -46,7 +46,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	w1MessageHandled := false
 	w2MessageHandled := false
 
-	w1.HandleExtensionEvents("foo", func(message *nnet.Message) error {
+	w1.Handle("foo", func(message *nnet.Message) error {
 		decPayload := map[string]string{}
 		err := message.DecodePayload(&decPayload)
 		suite.NoError(err)
@@ -56,7 +56,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 		return nil
 	})
 
-	w2.HandleExtensionEvents("foo", func(message *nnet.Message) error {
+	w2.Handle("foo", func(message *nnet.Message) error {
 		decPayload := map[string]string{}
 		err := message.DecodePayload(&decPayload)
 		suite.NoError(err)
@@ -123,7 +123,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 // 	w1MessageHandled := false
 // 	w2MessageHandled := false
 
-// 	w1.HandleExtensionEvents("foo", func(message *nnet.Message) error {
+// 	w1.Handle("foo", func(message *nnet.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -133,7 +133,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 // 		return nil
 // 	})
 
-// 	w2.HandleExtensionEvents("foo", func(message *nnet.Message) error {
+// 	w2.Handle("foo", func(message *nnet.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -174,7 +174,7 @@ func (suite *wireTestSuite) newPeer() (int, *nnet.SecretPeerInfo, nnet.Messenger
 	}
 
 	wre, _ := nnet.NewMessenger(reg)
-	listener, _, lErr := wre.Listen(fmt.Sprintf("0.0.0.0:%d", 0))
+	listener, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)
 	port := listener.Addr().(*net.TCPAddr).Port
 	return port, spi, wre, reg

@@ -68,7 +68,7 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	keyPath := path.Join(configPath, "net.json")
+	keyPath := path.Join(configPath, "identity.json")
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
@@ -107,9 +107,9 @@ func main() {
 		})
 	}()
 
-	n.Listen(fmt.Sprintf("0.0.0.0:%d", port))
+	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.HandleExtensionEvents("msg", func(event *net.Message) error {
+	n.Handle("msg", func(event *net.Message) error {
 		fmt.Printf("___ Got message %s\n", string(event.Payload))
 		return nil
 	})

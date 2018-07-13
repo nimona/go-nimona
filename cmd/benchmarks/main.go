@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -61,9 +62,9 @@ func newPeer(port int) (*net.SecretPeerInfo, net.Messenger, net.AddressBook) {
 	wre, _ := net.NewMessenger(reg)
 	dht.NewDHT(wre, reg)
 
-	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
+	wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	wre.HandleExtensionEvents("foo", func(event *net.Message) error {
+	wre.Handle("foo", func(event *net.Message) error {
 		// fmt.Printf("___ Got message %s\n", string(event.Payload))
 		return nil
 	})

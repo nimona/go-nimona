@@ -26,25 +26,25 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	net            net.Messenger
+	messenger      net.Messenger
 	addressBook    net.PeerManager
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-func NewDHT(n net.Messenger, pm net.PeerManager) (*DHT, error) {
+func NewDHT(messenger net.Messenger, pm net.PeerManager) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
 		store:       store,
-		net:         n,
+		messenger:   messenger,
 		addressBook: pm,
 		queries:     sync.Map{},
 	}
 
-	n.HandleExtensionEvents("dht", nd.handleMessage)
+	messenger.Handle("dht", nd.handleMessage)
 
 	go nd.refresh()
 
@@ -76,7 +76,7 @@ func (nd *DHT) refresh() {
 			logrus.WithError(err).Warnf("refresh could not create message")
 			return
 		}
-		if err := nd.net.Send(ctx, message); err != nil {
+		if err := nd.messenger.Send(ctx, message); err != nil {
 			logrus.WithError(err).Warnf("refresh could not send message")
 			return
 		}
@@ -140,7 +140,7 @@ func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not create message")
 		return
 	}
-	if err := nd.net.Send(ctx, message); err != nil {
+	if err := nd.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not send message")
 		return
 	}
@@ -196,7 +196,7 @@ func (nd *DHT) handleGetProviders(incMessage *net.Message) {
 		logrus.WithError(err).Warnf("handleGetProviders could not create message")
 		return
 	}
-	if err := nd.net.Send(ctx, message); err != nil {
+	if err := nd.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetProviders could not send message")
 		return
 	}
@@ -252,7 +252,7 @@ func (nd *DHT) handleGetValue(incMessage *net.Message) {
 		logrus.WithError(err).Warnf("handleGetValue could not create message")
 		return
 	}
-	if err := nd.net.Send(ctx, message); err != nil {
+	if err := nd.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("handleGetValue could not send message")
 		return
 	}
@@ -380,7 +380,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 		logrus.WithError(err).Warnf("PutValue could not create message")
 		return err
 	}
-	if err := nd.net.Send(ctx, message); err != nil {
+	if err := nd.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("PutValue could not send message")
 		return err
 	}
@@ -438,7 +438,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 		logrus.WithError(err).Warnf("PutProviders could not create message")
 		return err
 	}
-	if err := nd.net.Send(ctx, message); err != nil {
+	if err := nd.messenger.Send(ctx, message); err != nil {
 		logrus.WithError(err).Warnf("PutProviders could not send message")
 		return err
 	}

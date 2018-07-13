@@ -48,7 +48,7 @@ package net_test
 // 	w1MessageHandled := false
 // 	w2MessageHandled := false
 
-// 	w1.HandleExtensionEvents("foo", func(message *net.Message) error {
+// 	w1.Handle("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -58,7 +58,7 @@ package net_test
 // 		return nil
 // 	})
 
-// 	w2.HandleExtensionEvents("foo", func(message *net.Message) error {
+// 	w2.Handle("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -121,7 +121,7 @@ package net_test
 // 	w1MessageHandled := false
 // 	w2MessageHandled := false
 
-// 	w1.HandleExtensionEvents("foo", func(message *net.Message) error {
+// 	w1.Handle("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -131,7 +131,7 @@ package net_test
 // 		return nil
 // 	})
 
-// 	w2.HandleExtensionEvents("foo", func(message *net.Message) error {
+// 	w2.Handle("foo", func(message *net.Message) error {
 // 		decPayload := map[string]string{}
 // 		err := message.DecodePayload(&decPayload)
 // 		suite.NoError(err)

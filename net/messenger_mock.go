@@ -13,13 +13,13 @@ type MockMessenger struct {
 	mock.Mock
 }
 
-// HandleExtensionEvents provides a mock function with given fields: extension, h
-func (_m *MockMessenger) HandleExtensionEvents(extension string, h EventHandler) error {
-	ret := _m.Called(extension, h)
+// Handle provides a mock function with given fields: contentType, h
+func (_m *MockMessenger) Handle(contentType string, h MessageHandler) error {
+	ret := _m.Called(contentType, h)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, EventHandler) error); ok {
-		r0 = rf(extension, h)
+	if rf, ok := ret.Get(0).(func(string, MessageHandler) error); ok {
+		r0 = rf(contentType, h)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -27,34 +27,27 @@ func (_m *MockMessenger) HandleExtensionEvents(extension string, h EventHandler)
 	return r0
 }
 
-// Listen provides a mock function with given fields: addr
-func (_m *MockMessenger) Listen(addr string) (net.Listener, string, error) {
-	ret := _m.Called(addr)
+// Listen provides a mock function with given fields: ctx, addrress
+func (_m *MockMessenger) Listen(ctx context.Context, addrress string) (net.Listener, error) {
+	ret := _m.Called(ctx, addrress)
 
 	var r0 net.Listener
-	if rf, ok := ret.Get(0).(func(string) net.Listener); ok {
-		r0 = rf(addr)
+	if rf, ok := ret.Get(0).(func(context.Context, string) net.Listener); ok {
+		r0 = rf(ctx, addrress)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(net.Listener)
 		}
 	}
 
-	var r1 string
-	if rf, ok := ret.Get(1).(func(string) string); ok {
-		r1 = rf(addr)
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, addrress)
 	} else {
-		r1 = ret.Get(1).(string)
+		r1 = ret.Error(1)
 	}
 
-	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(addr)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // Send provides a mock function with given fields: ctx, message

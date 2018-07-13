@@ -10,12 +10,12 @@ type MockMessenger struct {
 	mock.Mock
 }
 
-// HandleExtensionEvents provides a mock function with given fields: extension, h
-func (_m *MockMessenger) HandleExtensionEvents(extension string, h EventHandler) error {
+// Handle provides a mock function with given fields: extension, h
+func (_m *MockMessenger) Handle(extension string, h MessageHandler) error {
 	ret := _m.Called(extension, h)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, EventHandler) error); ok {
+	if rf, ok := ret.Get(0).(func(string, MessageHandler) error); ok {
 		r0 = rf(extension, h)
 	} else {
 		r0 = ret.Error(0)

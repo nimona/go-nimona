@@ -3,16 +3,11 @@ package net
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 
-	igd "github.com/emersion/go-upnp-igd"
 	"github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
@@ -27,52 +22,63 @@ var (
 	ErrNotForUs = errors.New("message not for us")
 )
 
-// EventHandler for net.HandleExtensionEvents
-type EventHandler func(event *Message) error
+// MessageHandler to handle incoming messages
+type MessageHandler func(event *Message) error
 
 // Messenger interface for mocking messenger
 type Messenger interface {
-	HandleExtensionEvents(extension string, h EventHandler) error
+	Handle(contentType string, h MessageHandler) error
 	Send(ctx context.Context, message *Message) error
-	Listen(addr string) (net.Listener, string, error)
+	Listen(ctx context.Context, addrress string) (net.Listener, error)
 }
 
 type messenger struct {
-	incoming     chan net.Conn
-	outgoing     chan net.Conn
-	close        chan bool
-	addressBook  PeerManager
+	network  Networker
+	listener net.Listener
+
+	addressBook PeerManager
+
+	incoming chan net.Conn
+	outgoing chan net.Conn
+	close    chan bool
+
 	streams      sync.Map
-	handlers     map[string]EventHandler
+	handlers     map[string]MessageHandler
 	handlersLock sync.RWMutex
 	logger       *zap.Logger
 	streamLock   utils.Kmutex
 }
 
-// NewMessenger creates a new messenger protocol based on a addressBook
-func NewMessenger(addressBook PeerManager) (Messenger, error) {
+// NewMessenger creates a messenger on a given network
+func NewMessenger(addressBook *AddressBook) (Messenger, error) {
 	ctx := context.Background()
 
-	w := &messenger{
+	network, err := NewNetwork(addressBook)
+	if err != nil {
+		return nil, err
+	}
+
+	m := &messenger{
+		network:     network,
+		addressBook: addressBook,
 		incoming:    make(chan net.Conn),
 		outgoing:    make(chan net.Conn),
 		close:       make(chan bool),
-		addressBook: addressBook,
-		handlers:    map[string]EventHandler{},
+		handlers:    map[string]MessageHandler{},
 		logger:      log.Logger(ctx).Named("messenger"),
 		streamLock:  utils.NewKmutex(),
 	}
 
-	return w, nil
+	return m, nil
 }
 
-func (w *messenger) HandleExtensionEvents(extension string, h EventHandler) error {
+func (w *messenger) Handle(contentType string, h MessageHandler) error {
 	w.handlersLock.Lock()
 	defer w.handlersLock.Unlock()
-	if _, ok := w.handlers[extension]; ok {
-		return errors.New("There already is a handler registered for this extension")
+	if _, ok := w.handlers[contentType]; ok {
+		return errors.New("There already is a handler registered for this contentType")
 	}
-	w.handlers[extension] = h
+	w.handlers[contentType] = h
 	return nil
 }
 
@@ -237,7 +243,7 @@ func (w *messenger) Process(message *Message) error {
 	w.handlersLock.RLock()
 	defer w.handlersLock.RUnlock()
 	contentType := message.Headers.ContentType
-	var handler EventHandler
+	var handler MessageHandler
 	ok := false
 	for handlerContentType, hn := range w.handlers {
 		if !strings.HasPrefix(contentType, handlerContentType) {
@@ -250,7 +256,7 @@ func (w *messenger) Process(message *Message) error {
 
 	if !ok {
 		w.logger.Info(
-			"No handler registered for extension",
+			"No handler registered for contentType",
 			zap.String("contentType", contentType),
 		)
 		return nil
@@ -336,41 +342,9 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	}
 
 	w.logger.Debug("dialing peer", zap.String("peer_id", peerID))
-	newConn, err := w.Dial(ctx, peerID)
+	conn, err := w.network.Dial(ctx, peerID)
 	if err != nil {
 		return nil, err
-	}
-
-	w.streams.Store(peerID, newConn)
-	return newConn, nil
-}
-
-// Dial to a peer and return a net.Conn
-func (w *messenger) Dial(ctx context.Context, peerID string) (net.Conn, error) {
-	peerInfo, err := w.addressBook.GetPeerInfo(peerID)
-	if err != nil {
-		return nil, err
-	}
-
-	var conn net.Conn
-	for _, addr := range peerInfo.Addresses {
-		if !strings.HasPrefix(addr, "tcp:") {
-			continue
-		}
-		addr = strings.Replace(addr, "tcp:", "", 1)
-		dialer := net.Dialer{Timeout: time.Second * 5}
-		newConn, err := dialer.DialContext(ctx, "tcp", addr)
-		if err != nil {
-			// TODO(superdecimal) Address can be black-listed maybe?
-			continue
-		}
-		conn = newConn
-		break
-	}
-
-	if conn == nil {
-		// TODO(superdecimal) Mark peer as non-connectable directly
-		return nil, ErrAllAddressesFailed
 	}
 
 	// TODO move after handshake
@@ -408,60 +382,13 @@ func (w *messenger) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (w *messenger) Listen(addr string) (net.Listener, string, error) {
-	tcpListener, err := net.Listen("tcp", addr)
+func (w *messenger) Listen(ctx context.Context, addr string) (net.Listener, error) {
+	listener, err := w.network.Listen(ctx, addr)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	port := tcpListener.Addr().(*net.TCPAddr).Port
 
-	newAddresses := make(chan string, 100)
-	devices := make(chan igd.Device)
-	go func() {
-		for device := range devices {
-			upnp := true
-			upnpFlag := os.Getenv("UPNP")
-			if upnpFlag != "" {
-				upnp, _ = strconv.ParseBool(upnpFlag)
-			}
-			if !upnp {
-				continue
-			}
-			externalAddress, err := device.GetExternalIPAddress()
-			if err != nil {
-				w.logger.Error("could not get external ip", zap.Error(err))
-				continue
-			}
-			desc := "nimona"
-			ttl := time.Hour * 24 * 365
-			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
-				w.logger.Error("could not add port mapping", zap.Error(err))
-			} else {
-				newAddresses <- fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port)
-			}
-		}
-		close(newAddresses)
-	}()
-
-	go func() {
-		if err := igd.Discover(devices, 5*time.Second); err != nil {
-			close(newAddresses)
-			w.logger.Error("could not discover devices", zap.Error(err))
-		}
-
-		addresses := GetAddresses(tcpListener)
-		for newAddress := range newAddresses {
-			addresses = append(addresses, newAddress)
-		}
-
-		// TODO Replace with actual relay peer ids
-		addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
-
-		localPeerInfo := w.addressBook.GetLocalPeerInfo()
-		localPeerInfo.Addresses = addresses
-		w.addressBook.PutLocalPeerInfo(localPeerInfo)
-	}()
-
+	w.listener = listener
 	closed := false
 
 	go func() {
@@ -474,15 +401,15 @@ func (w *messenger) Listen(addr string) (net.Listener, string, error) {
 			case <-w.close:
 				closed = true
 				w.logger.Debug("connection closed")
-				tcpListener.Close()
+				listener.Close()
 			}
 		}
 	}()
 
 	go func() {
-		w.logger.Debug("accepting connections", zap.String("address", tcpListener.Addr().String()))
+		w.logger.Debug("accepting connections", zap.String("address", listener.Addr().String()))
 		for {
-			conn, err := tcpListener.Accept()
+			conn, err := listener.Accept()
 			w.logger.Debug("connection accepted")
 			if err != nil {
 				if closed {
@@ -496,5 +423,5 @@ func (w *messenger) Listen(addr string) (net.Listener, string, error) {
 		}
 	}()
 
-	return tcpListener, tcpListener.Addr().String(), nil
+	return listener, nil
 }
