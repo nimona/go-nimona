@@ -9,9 +9,15 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/codahale/hdrhistogram"
+  name = "github.com/apisit/btckeygenie"
+  packages = ["btckey"]
+  revision = "1e5743502b0023502563046cc84e5307f50bf772"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/apisit/rfc6979"
   packages = ["."]
-  revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
+  revision = "6a90f24967ebb1aa57b22f74a13dbb3faad8cf3d"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -100,12 +106,6 @@
   version = "v0.0.3"
 
 [[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -135,28 +135,16 @@
   version = "v1.2.2"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/tylertreat/bench"
-  packages = ["."]
-  revision = "eb938b1b5e35aa6937565aa805d4da9c1fbde7b3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/tylertreat/hdrhistogram-writer"
-  packages = ["."]
-  revision = "73b8d31ba571535864ea87c5c3df0361b90a3350"
-
-[[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
   version = "v1.1.1"
 
 [[projects]]
-  name = "go.mozilla.org/cose"
-  packages = ["."]
-  revision = "527d043e1e5e36c6802268b308b9529d7c076275"
-  version = "v1"
+  branch = "master"
+  name = "github.com/vsergeev/btckeygenie"
+  packages = ["btckey"]
+  revision = "413cbe3261adadbc974cecdbb4ea0b86c813c1a0"
 
 [[projects]]
   name = "go.uber.org/atomic"
@@ -194,16 +182,11 @@
     "nacl/box",
     "nacl/secretbox",
     "poly1305",
+    "ripemd160",
     "salsa20/salsa",
     "ssh/terminal"
   ]
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "6a8eb5e2b1816b30aa88d7e3ecf9eb7c4559d9e6"
 
 [[projects]]
   branch = "master"
@@ -213,12 +196,6 @@
     "windows"
   ]
   revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/time"
-  packages = ["rate"]
-  revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
 
 [[projects]]
   name = "gopkg.in/abiosoft/ishell.v2"
@@ -241,6 +218,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e27965d87b03886a587012592c841b7dfb4842e05a79239f1d6723bb395c1c02"
+  inputs-digest = "22e9447e0e0e0ba9fba41efff750a65ee1608e6f9841c032d42b2b13cc120cc8"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -49,7 +49,6 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 		dialer := net.Dialer{Timeout: time.Second * 5}
 		newConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
-			// TODO(superdecimal) Address can be black-listed maybe?
 			continue
 		}
 		conn = newConn
@@ -57,7 +56,7 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	}
 
 	if conn == nil {
-		// TODO(superdecimal) Mark peer as non-connectable directly
+		n.AddressBook.PutPeerStatus(peerID, ErrorConnecting)
 		return nil, ErrAllAddressesFailed
 	}
 

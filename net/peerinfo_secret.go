@@ -1,31 +1,18 @@
 package net
 
-import (
-	"crypto/rsa"
-	"crypto/x509"
-)
-
-// SecretPeerInfo is a PeerInfo with an additional SecretKey
+// SecretPeerInfo is a PeerInfo with an additional PrivateKey
 type SecretPeerInfo struct {
-	PeerInfo
-	SecretKey []byte `json:"secret_key"`
+	ID         string   `json:"id"`
+	PrivateKey string   `json:"private_key"`
+	Addresses  []string `json:"addresses"`
 }
 
-// GetSecretKey returns a saltpack SecretKey
-func (pi *SecretPeerInfo) GetSecretKey() *rsa.PrivateKey {
-	privateKey, err := x509.ParsePKCS1PrivateKey(pi.SecretKey)
-	if err != nil {
-		panic("could not get secret for local peer, err=" + err.Error())
-	}
-	return privateKey
-}
-
-// ToPeerInfo returns a PeerInfo struct
-func (pi *SecretPeerInfo) ToPeerInfo() PeerInfo {
-	return PeerInfo{
-		ID:        pi.ID,
+// Message returns a signed Message
+func (pi *SecretPeerInfo) Message() *Message {
+	// TODO content type
+	message, _ := NewMessage(PeerInfoContentType, nil, &PeerInfoPayload{
 		Addresses: pi.Addresses,
-		PublicKey: pi.PublicKey,
-		Signature: pi.Signature,
-	}
+	})
+	message.Sign(pi)
+	return message
 }

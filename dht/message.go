@@ -4,6 +4,20 @@ import (
 	"github.com/nimona/go-nimona/net"
 )
 
+func init() {
+	net.RegisterContentType(PayloadTypePing, MessagePing{})
+	net.RegisterContentType(PayloadTypePong, MessagePong{})
+
+	net.RegisterContentType(PayloadTypeGetPeerInfo, &MessageGetPeerInfo{})
+	net.RegisterContentType(PayloadTypePutPeerInfo, &MessagePutPeerInfoFromMessage{})
+
+	net.RegisterContentType(PayloadTypeGetProviders, MessageGetProviders{})
+	net.RegisterContentType(PayloadTypePutProviders, MessagePutProviders{})
+
+	net.RegisterContentType(PayloadTypeGetValue, MessageGetValue{})
+	net.RegisterContentType(PayloadTypePutValue, MessagePutValue{})
+}
+
 // Message types
 const (
 	PayloadTypePing string = "dht.ping"
@@ -19,60 +33,55 @@ const (
 	PayloadTypePutValue = "dht.put-value"
 )
 
-type messageSenderPeerInfo struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
-}
-
-type messagePing struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+type MessagePing struct {
+	SenderPeerInfo *net.Message `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type messagePong struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+type MessagePong struct {
+	SenderPeerInfo *net.Message `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type messageGetPeerInfo struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+type MessageGetPeerInfo struct {
+	SenderPeerInfo *net.Message `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type messagePutPeerInfo struct {
-	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	PeerID         string          `json:"peer_id"`
-	PeerInfo       net.PeerInfo    `json:"peer_info"`
-	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
+type MessagePutPeerInfoFromMessage struct {
+	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+	RequestID      string         `json:"request_id,omitempty"`
+	PeerInfo       *net.Message   `json:"peer_info"`
+	ClosestPeers   []*net.Message `json:"closest_peers"`
 }
 
-type messageGetProviders struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+type MessageGetProviders struct {
+	SenderPeerInfo *net.Message `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	Key            string       `json:"key"`
 }
 
-type messagePutProviders struct {
-	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	PeerIDs        []string        `json:"peer_ids"`
-	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
+type MessagePutProviders struct {
+	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+	RequestID      string         `json:"request_id,omitempty"`
+	Key            string         `json:"key"`
+	PeerIDs        []string       `json:"peer_ids"`
+	ClosestPeers   []*net.Message `json:"closest_peers"`
 }
 
-type messageGetValue struct {
-	SenderPeerInfo net.PeerInfo `json:"sender_peer_info"`
+type MessageGetValue struct {
+	SenderPeerInfo *net.Message `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	Key            string       `json:"key"`
 }
 
-type messagePutValue struct {
-	SenderPeerInfo net.PeerInfo    `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	Value          string          `json:"value"`
-	ClosestPeers   []*net.PeerInfo `json:"closest_peers"`
+type MessagePutValue struct {
+	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+	RequestID      string         `json:"request_id,omitempty"`
+	Key            string         `json:"key"`
+	Value          string         `json:"value"`
+	ClosestPeers   []*net.Message `json:"closest_peers"`
 }

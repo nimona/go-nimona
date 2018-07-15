@@ -26,7 +26,7 @@ package dht
 // 	suite.addressBook = net.NewAddressBook()
 // 	peer1, _ := suite.addressBook.CreateNewPeer()
 // 	suite.addressBook.PutLocalPeerInfo(peer1)
-// 	suite.addressBook.PutPeerInfo(&net.PeerInfo{
+// 	suite.addressBook.PutPeerInfoFromMessage(&net.PeerInfo{
 // 		ID: "bootstrap",
 // 		Addresses: []string{
 // 			"localhost",
@@ -41,8 +41,8 @@ package dht
 // 	ctx := context.Background()
 // 	key := "a"
 // 	value := "b"
-// 	payload := messagePutValue{
-// 		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().ToPeerInfo(),
+// 	payload := MessagePutValue{
+// 		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().Message(),
 // 		Key:            "a",
 // 		Value:          "b",
 // 	}

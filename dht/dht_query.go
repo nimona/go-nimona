@@ -60,15 +60,15 @@ func (q *query) Run(ctx context.Context) {
 			case incomingMessage := <-q.incomingMessages:
 				logger.Debug("Processing incoming message")
 				switch message := incomingMessage.(type) {
-				case *messagePutPeerInfo:
+				case *MessagePutPeerInfoFromMessage:
 					q.outgoingMessages <- &message.PeerInfo
-					q.nextIfCloser(message.PeerID)
-				case *messagePutProviders:
+					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
+				case *MessagePutProviders:
 					q.outgoingMessages <- message.PeerIDs
-					q.nextIfCloser(message.SenderPeerInfo.ID)
-				case *messagePutValue:
+					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
+				case *MessagePutValue:
 					q.outgoingMessages <- message.Value
-					q.nextIfCloser(message.SenderPeerInfo.ID)
+					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
 				}
 
 			case <-time.After(maxQueryTime):
@@ -122,22 +122,22 @@ func (q *query) next() {
 	switch q.queryType {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
-		req = messageGetPeerInfo{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
+		req = &MessageGetPeerInfo{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
-		req = messageGetProviders{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
+		req = &MessageGetProviders{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
-		req = messageGetValue{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().ToPeerInfo(),
+		req = &MessageGetValue{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}

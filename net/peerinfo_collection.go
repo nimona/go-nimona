@@ -39,8 +39,9 @@ func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 }
 
 func (c *PeerInfoCollection) Put(peerInfo *PeerInfo) error {
-	newPeerInfo := &PeerInfo{}
-	copier.Copy(newPeerInfo, peerInfo)
-	c.peers.Store(newPeerInfo.ID, newPeerInfo)
+	// newPeerInfo := &PeerInfo{}
+	// copier.Copy(newPeerInfo, peerInfo)
+	// c.peers.Store(newPeerInfo.ID, newPeerInfo)
+	c.peers.Store(peerInfo.ID, peerInfo)
 	return nil
 }

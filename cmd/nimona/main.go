@@ -25,38 +25,37 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfos = []net.PeerInfo{
-	net.PeerInfo{
-		ID: "P0x3082010a028201010098156fb69d71d06dfd27f1d41541c25e1687e909ff4fd9fe07b7e3041079e19e5ee79b95264ff4eb9c43c6573dd6a83cacb80515801163736d06d17d0cea7a5f2e76992dd4bcdb37b61e01cbcaae9f53c04699f3b95cbef5628d7a9520e244980a0299dcddb458be4fc1bb0e8aed81b890133e7cd28a88a3ba61edada4917af024b1a2eb3ce6a41e7c08ea3a39fecfc1d82fb126189bf5f20e134dbafa03ba6313faca2ea11a30a106039858a37d93e327b3c98b01ba9a46df9bc0d2147edf3cfbfec8641a5eea3448ad30fb34405c85c867f655bb72e2897fd5f5b74c84459ae43200adaa1b4c39e9434587835ed4ad8fc01b1e7785fc8d0f15ee76e60083e10203010001",
-		Addresses: []string{
-			"tcp:andromeda.nimona.io:21013",
+var bootstrapPeerInfoMessages = []*net.Message{
+	&net.Message{
+		Headers: net.Headers{
+			Signer:      "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
+			ContentType: "peer.info",
 		},
-		PublicKey: []byte{
-			48, 130, 1, 10, 2, 130, 1, 1, 0, 152, 21, 111, 182, 157, 113,
-			208, 109, 253, 39, 241, 212, 21, 65, 194, 94, 22, 135, 233, 9,
-			255, 79, 217, 254, 7, 183, 227, 4, 16, 121, 225, 158, 94, 231,
-			155, 149, 38, 79, 244, 235, 156, 67, 198, 87, 61, 214, 168, 60,
-			172, 184, 5, 21, 128, 17, 99, 115, 109, 6, 209, 125, 12, 234,
-			122, 95, 46, 118, 153, 45, 212, 188, 219, 55, 182, 30, 1, 203,
-			202, 174, 159, 83, 192, 70, 153, 243, 185, 92, 190, 245, 98,
-			141, 122, 149, 32, 226, 68, 152, 10, 2, 153, 220, 221, 180, 88,
-			190, 79, 193, 187, 14, 138, 237, 129, 184, 144, 19, 62, 124,
-			210, 138, 136, 163, 186, 97, 237, 173, 164, 145, 122, 240, 36,
-			177, 162, 235, 60, 230, 164, 30, 124, 8, 234, 58, 57, 254, 207,
-			193, 216, 47, 177, 38, 24, 155, 245, 242, 14, 19, 77, 186, 250,
-			3, 186, 99, 19, 250, 202, 46, 161, 26, 48, 161, 6, 3, 152, 88,
-			163, 125, 147, 227, 39, 179, 201, 139, 1, 186, 154, 70, 223,
-			155, 192, 210, 20, 126, 223, 60, 251, 254, 200, 100, 26, 94,
-			234, 52, 72, 173, 48, 251, 52, 64, 92, 133, 200, 103, 246, 85,
-			187, 114, 226, 137, 127, 213, 245, 183, 76, 132, 69, 154, 228,
-			50, 0, 173, 170, 27, 76, 57, 233, 67, 69, 135, 131, 94, 212, 173,
-			143, 192, 27, 30, 119, 133, 252, 141, 15, 21, 238, 118, 230, 0,
-			131, 225, 2, 3, 1, 0, 1,
+		Payload: &net.PeerInfoPayload{
+			Addresses: []string{
+				"tcp:andromeda.nimona.io:21013",
+			},
+		},
+		Signature: []byte{
+			120, 40, 197, 101, 40, 15, 190, 182, 117, 173, 162, 230, 49, 255,
+			128, 7, 34, 119, 134, 63, 197, 29, 247, 122, 227, 150, 218, 90,
+			38, 30, 146, 142, 134, 133, 148, 80, 110, 3, 171, 228, 234, 4,
+			236, 245, 141, 35, 95, 59, 49, 103, 202, 153, 144, 145, 196, 123,
+			89, 200, 227, 121, 28, 58, 86, 133,
 		},
 	},
 }
 
+type Hello struct {
+	Body string
+}
+
+func init() {
+	net.RegisterContentType("demo.hello", Hello{})
+}
+
 func main() {
+
 	configPath := os.Getenv("NIMONA_PATH")
 
 	if configPath == "" {
@@ -68,12 +67,10 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	keyPath := path.Join(configPath, "identity.json")
-
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
 	reg := net.NewAddressBook()
-	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
+	spi, err := reg.LoadOrCreateLocalPeerInfo(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
@@ -81,9 +78,28 @@ func main() {
 		log.Fatal("could not put local peer")
 	}
 
-	for _, peerInfo := range bootstrapPeerInfos {
-		reg.PutPeerInfo(&peerInfo)
+	for _, peerInfoMessage := range bootstrapPeerInfoMessages {
+		reg.PutPeerInfoFromMessage(peerInfoMessage)
 	}
+
+	// bMMMMM := &net.Message{
+	// 	Headers: net.Headers{
+	// 		Signer:      spi.ID,
+	// 		ContentType: net.PeerInfoContentType,
+	// 	},
+	// 	Payload: &net.PeerInfoPayload{
+	// 		Addresses: []string{
+	// 			"tcp:andromeda.nimona.io:21013",
+	// 		},
+	// 	},
+	// }
+
+	// if err := bMMMMM.Sign(spi); err != nil {
+	// 	panic(err)
+	// }
+
+	// b, _ := json.MarshalIndent(bMMMMM, "", "  ")
+	// fmt.Println(string(b))
 
 	storagePath := path.Join(configPath, "storage")
 
@@ -109,8 +125,9 @@ func main() {
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("msg", func(event *net.Message) error {
-		fmt.Printf("___ Got message %s\n", string(event.Payload))
+	n.Handle("demo", func(message *net.Message) error {
+		payload := message.Payload.(Hello)
+		fmt.Printf("___ Got message %s\n", payload.Body)
 		return nil
 	})
 
@@ -302,8 +319,6 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
-				c.Printf("  - public key: %x\n", peer.PublicKey)
-				c.Printf("  - signature: %x\n", peer.Signature)
 				c.Printf("  - addresses:\n")
 				for _, address := range peer.Addresses {
 					c.Printf("     - %s\n", address)
@@ -339,8 +354,6 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
-			c.Printf("  - public key: %x\n", peer.PublicKey)
-			c.Printf("  - signature: %x\n", peer.Signature)
 			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
 				c.Printf("     - %s\n", address)
@@ -359,7 +372,7 @@ func main() {
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			message, err := net.NewMessage("msg.msg", to, msg)
+			message, err := net.NewMessage("demo.hello", to, &Hello{msg})
 			if err != nil {
 				c.Println("Could not create message", err)
 				return

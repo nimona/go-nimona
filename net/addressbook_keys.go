@@ -1,17 +1,18 @@
 package net
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+
+	"github.com/apisit/btckeygenie/btckey"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
@@ -20,37 +21,36 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo,
 		return nil, errors.New("missing key path")
 	}
 
-	if _, err := os.Stat(path); err == nil {
-		return reg.LoadSecretPeerInfo(path)
+	idPath := filepath.Join(path, "identity.json")
+	peerPath := filepath.Join(path, "peer.json")
+
+	if _, err := os.Stat(peerPath); err == nil {
+		return reg.LoadSecretPeerInfo(peerPath)
 	}
 
-	log.Printf("* Key path does not exist, creating new key in '%s'\n", path)
+	log.Printf("* Configs do not exist, creating new ones.")
 
-	signingKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	signingKey, err := btckey.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	privateKeyBytes, _ := x509.MarshalECPrivateKey(signingKey)
-	publicKeyBytes, _ := x509.MarshalPKIXPublicKey(&signingKey.PublicKey)
-
-	id := &LocalIdentity{
-		ID:         fmt.Sprintf("N0x%x", publicKeyBytes),
-		Version:    0,
-		PrivateKey: privateKeyBytes,
-		PublicKey:  publicKeyBytes,
+	id := &PrivateIdentity{
+		ID:         fmt.Sprintf("00x%x", signingKey.PublicKey.ToBytes()),
+		PrivateKey: fmt.Sprintf("00x%x", signingKey.ToBytes()),
 		Peers:      &PeerInfoCollection{},
 	}
 
-	idBytes, _ := json.MarshalIndent(id, "", "  ")
-	fmt.Println(string(idBytes))
+	if err := reg.StorePrivateIdentity(id, idPath); err != nil {
+		return nil, err
+	}
 
 	pi, err := reg.CreateNewPeer()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := reg.StoreSecretPeerInfo(pi, path); err != nil {
+	if err := reg.StoreSecretPeerInfo(pi, peerPath); err != nil {
 		return nil, err
 	}
 
@@ -59,21 +59,14 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo,
 
 // CreateNewPeer with a new generated key, mostly used for testing
 func (reg *AddressBook) CreateNewPeer() (*SecretPeerInfo, error) {
-	peerPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	peerSigningKey, err := btckey.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	peerPrivateKeyBytes := x509.MarshalPKCS1PrivateKey(peerPrivateKey)
-	peerPublicKeyBytes := x509.MarshalPKCS1PublicKey(&peerPrivateKey.PublicKey)
-
 	pi := &SecretPeerInfo{
-		PeerInfo: PeerInfo{
-			ID:        fmt.Sprintf("P0x%x", peerPublicKeyBytes),
-			Addresses: []string{},
-			PublicKey: peerPublicKeyBytes,
-		},
-		SecretKey: peerPrivateKeyBytes,
+		ID:         fmt.Sprintf("01x%x", peerSigningKey.PublicKey.ToBytes()),
+		PrivateKey: fmt.Sprintf("01x%x", peerSigningKey.ToBytes()),
 	}
 
 	return pi, nil
@@ -94,12 +87,38 @@ func (reg *AddressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error)
 	return pi, nil
 }
 
-// StoreSecretPeerInfo to a JSON encoded file
-func (reg *AddressBook) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
-	raw, err := json.Marshal(pi)
+// StorePrivateIdentity to a JSON encoded file
+func (reg *AddressBook) StorePrivateIdentity(pi *PrivateIdentity, path string) error {
+	raw, err := json.MarshalIndent(pi, "", "    ")
 	if err != nil {
 		return err
 	}
 
 	return ioutil.WriteFile(path, raw, 0644)
+}
+
+// StoreSecretPeerInfo to a JSON encoded file
+func (reg *AddressBook) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
+	raw, err := json.MarshalIndent(pi, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path, raw, 0644)
+}
+
+func Sign(data []byte, privateKey string) ([]byte, error) {
+	return btckey.Sign(data, privateKey[3:])
+}
+
+func Verify(id string, data, signature []byte) error {
+	digest := sha256.Sum256(data)
+	publicKeyBytes, _ := hex.DecodeString(id[3:])
+	publicKey := btckey.PublicKey{}
+	publicKey.FromBytes(publicKeyBytes)
+	ok := btckey.Verify(publicKeyBytes, signature, digest[:])
+	if !ok {
+		return errors.New("signature")
+	}
+	return nil
 }

@@ -170,8 +170,8 @@ func (_m *MockAddressBook) PutLocalPeerInfo(_a0 *SecretPeerInfo) error {
 	return r0
 }
 
-// PutPeerInfo provides a mock function with given fields: _a0
-func (_m *MockAddressBook) PutPeerInfo(_a0 *PeerInfo) error {
+// PutPeerInfoFromMessage provides a mock function with given fields: _a0
+func (_m *MockAddressBook) PutPeerInfoFromMessage(_a0 *PeerInfo) error {
 	ret := _m.Called(_a0)
 
 	var r0 error

@@ -2,7 +2,9 @@ package net
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -14,6 +16,10 @@ import (
 	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/utils"
 )
+
+func init() {
+	RegisterContentType("net.handshake", HandshakeMessage{})
+}
 
 var (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
@@ -28,7 +34,7 @@ type MessageHandler func(event *Message) error
 // Messenger interface for mocking messenger
 type Messenger interface {
 	Handle(contentType string, h MessageHandler) error
-	Send(ctx context.Context, message *Message) error
+	Send(ctx context.Context, message *Message, recipients ...string) error
 	Listen(ctx context.Context, addrress string) (net.Listener, error)
 }
 
@@ -118,13 +124,15 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			// }
 			// TODO make sure this only happens once
 			if message.Headers.ContentType == "net.handshake" {
-				handshake := &handshakeMessage{}
-				if err := message.DecodePayload(handshake); err != nil {
-					w.logger.Error("could not decode handshake", zap.Error(err))
+				payload, ok := message.Payload.(*HandshakeMessage)
+				if !ok {
 					continue
 				}
-				remotePeerID = handshake.PeerID
-				w.streams.Store(remotePeerID, conn)
+				if err := w.addressBook.PutPeerInfoFromMessage(payload.PeerInfo); err != nil {
+					// TODO handle error
+					continue
+				}
+				w.streams.Store(message.Headers.Signer, conn)
 				continue
 			}
 			if err := w.Process(message); err != nil {
@@ -141,6 +149,8 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 
 	messageDecoder := codec.NewDecoder(conn, &codec.CborHandle{})
 
+	defer w.Close(remotePeerID, conn)
+
 	for {
 		// timeoutDuration := time.Minute
 		// conn.SetReadDeadline(time.Now().Add(timeoutDuration))
@@ -148,16 +158,34 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 		if err := messageDecoder.Decode(message); err != nil {
 			// if err != io.EOF {
 			w.logger.Error("could not read message", zap.Error(err))
-			w.Close(remotePeerID, conn)
 			// }
+			fmt.Println("3")
 			return err
 			// continue
 		}
-		if err := message.Verify(); err != nil {
-			w.logger.Warn("could not verify message", zap.Error(err))
-			continue
+
+		fmt.Println("DECC")
+
+		mm, err := Marshal(message)
+		if err != nil {
+			fmt.Println("4")
+			return err
 		}
-		messages <- message
+
+		mo, err := Unmarshal(mm)
+		if err != nil {
+			fmt.Println("5")
+			return err
+		}
+
+		// TODO fix verification
+		// b, err := json.MarshalIndent(mo, "", "  ")
+		// fmt.Println("MSG", string(b), err)
+		// if err := message.Verify(); err != nil {
+		// 	w.logger.Warn("could not verify message", zap.Error(err))
+		// 	continue
+		// }
+		messages <- mo
 	}
 }
 
@@ -274,18 +302,31 @@ func (w *messenger) Process(message *Message) error {
 	return nil
 }
 
-func (w *messenger) Send(ctx context.Context, message *Message) error {
-	for _, recipient := range message.Headers.Recipients {
+func (w *messenger) Send(ctx context.Context, message *Message, recipients ...string) error {
+	signer := w.addressBook.GetLocalPeerInfo()
+
+	if !message.IsSigned() {
+		if err := message.Sign(signer); err != nil {
+			return err
+		}
+	}
+
+	if len(recipients) == 0 {
+		recipients = message.Headers.Recipients
+	}
+
+	for _, recipient := range recipients {
 		// TODO deal with error
-		if err := w.SendOne(ctx, message, recipient); err != nil {
+		if err := w.sendOne(ctx, message, recipient); err != nil {
 			// TODO log error
 			return err
 		}
 	}
+
 	return nil
 }
 
-func (w *messenger) SendOne(ctx context.Context, message *Message, recipient string) error {
+func (w *messenger) sendOne(ctx context.Context, message *Message, recipient string) error {
 	logger := w.logger.With(zap.String("peerID", recipient))
 	logger.Debug("sending message", zap.String("contentType", message.Headers.ContentType))
 
@@ -298,6 +339,7 @@ func (w *messenger) SendOne(ctx context.Context, message *Message, recipient str
 		return err
 	}
 
+	// TODO this seems messy
 	// try to send the message directly to the recipient
 	if err := w.writeMessage(ctx, message, conn); err != nil {
 		w.Close(recipient, conn)
@@ -317,6 +359,9 @@ func (w *messenger) writeMessage(ctx context.Context, message *Message, rw io.Re
 			return err
 		}
 	}
+
+	b, _ := json.MarshalIndent(message, "", "  ")
+	fmt.Println("message", string(b))
 
 	messageBytes, err := Marshal(message)
 	if err != nil {
@@ -357,25 +402,30 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	w.logger.Debug("writing handshake")
 
 	// handshake so the other side knows who we are
-	handshake := &handshakeMessage{
-		PeerID: w.addressBook.GetLocalPeerInfo().ID,
-	}
-
+	signer := w.addressBook.GetLocalPeerInfo()
 	handshakeMessage := &Message{
 		Headers: Headers{
 			ContentType: "net.handshake",
 			Recipients:  []string{peerID},
 		},
+		Payload: &HandshakeMessage{
+			PeerInfo: w.addressBook.GetLocalPeerInfo().Message(),
+		},
 	}
-	if err := handshakeMessage.EncodePayload(handshake); err != nil {
+
+	// TODO move someplace common with send()
+	if err := handshakeMessage.Sign(signer); err != nil {
 		return nil, err
 	}
+
+	b, _ := json.MarshalIndent(handshakeMessage, "", "  ")
+	fmt.Println("HandshakeMessage", string(b))
 
 	if err := w.writeMessage(ctx, handshakeMessage, conn); err != nil {
 		return nil, err
 	}
 
-	// TODO(superdecimal) Mark peer as connectable directly
+	w.addressBook.PutPeerStatus(peerID, Connected)
 
 	return conn, nil
 }
@@ -388,16 +438,21 @@ func (w *messenger) Listen(ctx context.Context, addr string) (net.Listener, erro
 		return nil, err
 	}
 
-	w.listener = listener
 	closed := false
 
 	go func() {
 		for {
 			select {
 			case conn := <-w.incoming:
-				go w.HandleIncoming(conn)
+				go func() {
+					err := w.HandleIncoming(conn)
+					fmt.Println("failed to HandleIncoming()", err)
+				}()
 			case conn := <-w.outgoing:
-				go w.HandleOutgoing(conn)
+				go func() {
+					err := w.HandleOutgoing(conn)
+					fmt.Println("failed to HandleOutgoing()", err)
+				}()
 			case <-w.close:
 				closed = true
 				w.logger.Debug("connection closed")

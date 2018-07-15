@@ -2,6 +2,7 @@ package net
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -21,7 +22,7 @@ type PeerManager interface {
 
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
-	PutPeerInfo(*PeerInfo) error
+	PutPeerInfoFromMessage(*Message) error
 
 	PutPeerStatus(peerID string, status Status)
 	GetPeerStatus(peerID string) Status
@@ -59,6 +60,7 @@ func NewAddressBook() *AddressBook {
 type AddressBook struct {
 	identities    *IdentityCollection
 	peers         *PeerInfoCollection
+	peerMessages  sync.Map
 	peerStatus    sync.Map
 	localPeerLock sync.RWMutex
 	localPeer     *SecretPeerInfo
@@ -69,16 +71,34 @@ func (adb *AddressBook) GetKeyring() *basic.Keyring {
 	return adb.keyring
 }
 
-func (adb *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
-	if adb.localPeer.ID == peerInfo.ID {
-		return ErrCannotPutLocalPeerInfo
-	}
-
-	if peerInfo.ID == "" {
+func (adb *AddressBook) PutPeerInfoFromMessage(message *Message) error {
+	if adb.localPeer.ID == message.Headers.Signer {
 		return nil
 	}
 
-	peerInfo.UpdatedAt = time.Now()
+	pip := &PeerInfoPayload{}
+	if err := message.DecodePayload(pip); err != nil {
+		fmt.Println("ASDFSDF", err)
+		return err
+	}
+
+	// TODO verify message?
+
+	// TODO check if existing is the same
+
+	// TODO reset connectivity and dates
+
+	// payload, ok := message.Payload.(*PeerInfoPayload)
+	// if !ok {
+	// 	return errors.New("invalid payload type, expected PeerInfoPayload, got " + reflect.TypeOf(payload).String())
+	// }
+
+	peerInfo := &PeerInfo{
+		ID:        message.Headers.Signer,
+		Addresses: pip.Addresses, // payload.Addresses,
+		Message:   message,
+	}
+
 	return adb.peers.Put(peerInfo)
 }
 
@@ -94,7 +114,6 @@ func (adb *AddressBook) PutLocalPeerInfo(peerInfo *SecretPeerInfo) error {
 	adb.localPeerLock.Lock()
 	newSecretPeerInfo := &SecretPeerInfo{}
 	copier.Copy(newSecretPeerInfo, peerInfo)
-	newSecretPeerInfo.UpdatedAt = time.Now()
 	adb.localPeer = newSecretPeerInfo
 	adb.localPeerLock.Unlock()
 	return nil
