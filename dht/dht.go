@@ -66,7 +66,7 @@ func (nd *DHT) refresh() {
 			return
 		}
 
-		resp := &MessageGetPeerInfo{
+		resp := MessageGetPeerInfo{
 			SenderPeerInfo: peerInfo.Message(),
 			PeerID:         peerInfo.ID,
 		}
@@ -112,7 +112,7 @@ func (nd *DHT) handleMessage(message *net.Message) error {
 }
 
 func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(*MessageGetPeerInfo)
+	payload, ok := incMessage.Payload.(MessageGetPeerInfo)
 	if !ok {
 		logrus.Warn("expected MessageGetPeerInfo, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -124,7 +124,7 @@ func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
 	peerInfo, _ := nd.addressBook.GetPeerInfo(payload.PeerID)
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := &MessagePutPeerInfoFromMessage{
+	resp := MessagePutPeerInfoFromMessage{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
 		RequestID:      payload.RequestID,
 		ClosestPeers:   closestMessages,
@@ -147,7 +147,7 @@ func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
 }
 
 func (nd *DHT) handlePutPeerInfoFromMessage(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(*MessagePutPeerInfoFromMessage)
+	payload, ok := incMessage.Payload.(MessagePutPeerInfoFromMessage)
 	if !ok {
 		logrus.Warn("expected MessagePutPeerInfoFromMessage, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -173,7 +173,7 @@ func (nd *DHT) handlePutPeerInfoFromMessage(incMessage *net.Message) {
 }
 
 func (nd *DHT) handleGetProviders(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(*MessageGetProviders)
+	payload, ok := incMessage.Payload.(MessageGetProviders)
 	if !ok {
 		logrus.Warn("expected MessageGetProviders, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -189,7 +189,7 @@ func (nd *DHT) handleGetProviders(incMessage *net.Message) {
 
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := &MessagePutProviders{
+	resp := MessagePutProviders{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
@@ -211,7 +211,7 @@ func (nd *DHT) handleGetProviders(incMessage *net.Message) {
 }
 
 func (nd *DHT) handlePutProviders(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(*MessagePutProviders)
+	payload, ok := incMessage.Payload.(MessagePutProviders)
 	if !ok {
 		logrus.Warn("expected MessagePutProviders, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -241,7 +241,7 @@ func (nd *DHT) handlePutProviders(incMessage *net.Message) {
 }
 
 func (nd *DHT) handleGetValue(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(*MessageGetValue)
+	payload, ok := incMessage.Payload.(MessageGetValue)
 	if !ok {
 		logrus.Warn("expected MessageGetValue, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -254,7 +254,7 @@ func (nd *DHT) handleGetValue(incMessage *net.Message) {
 
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := &MessagePutValue{
+	resp := MessagePutValue{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
@@ -277,7 +277,7 @@ func (nd *DHT) handleGetValue(incMessage *net.Message) {
 
 func (nd *DHT) handlePutValue(incMessage *net.Message) {
 	// TODO handle and log errors
-	payload, ok := incMessage.Payload.(*MessagePutValue)
+	payload, ok := incMessage.Payload.(MessagePutValue)
 	if !ok {
 		logrus.Warn("expected MessagePutValue, got ", reflect.TypeOf(incMessage.Payload))
 		return
@@ -374,7 +374,9 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*net.PeerInfo, erro
 	for {
 		select {
 		case value := <-q.outgoingMessages:
-			return value.(*net.PeerInfo), nil
+			message := value.(*net.Message)
+			nd.addressBook.PutPeerInfoFromMessage(message)
+			return nd.addressBook.GetPeerInfo(message.Headers.Signer)
 		case <-time.After(maxQueryTime):
 			return nil, ErrNotFound
 		case <-ctx.Done():
@@ -389,7 +391,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
-	resp := &MessagePutValue{
+	resp := MessagePutValue{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
 		Key:            key,
 		Value:          value,
@@ -447,7 +449,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
-	resp := &MessagePutProviders{
+	resp := MessagePutProviders{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
 		Key:            key,
 		PeerIDs:        []string{localPeerID},

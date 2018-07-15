@@ -8,8 +8,8 @@ func init() {
 	net.RegisterContentType(PayloadTypePing, MessagePing{})
 	net.RegisterContentType(PayloadTypePong, MessagePong{})
 
-	net.RegisterContentType(PayloadTypeGetPeerInfo, &MessageGetPeerInfo{})
-	net.RegisterContentType(PayloadTypePutPeerInfo, &MessagePutPeerInfoFromMessage{})
+	net.RegisterContentType(PayloadTypeGetPeerInfo, MessageGetPeerInfo{})
+	net.RegisterContentType(PayloadTypePutPeerInfo, MessagePutPeerInfoFromMessage{})
 
 	net.RegisterContentType(PayloadTypeGetProviders, MessageGetProviders{})
 	net.RegisterContentType(PayloadTypePutProviders, MessagePutProviders{})

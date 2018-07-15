@@ -124,7 +124,7 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			// }
 			// TODO make sure this only happens once
 			if message.Headers.ContentType == "net.handshake" {
-				payload, ok := message.Payload.(*HandshakeMessage)
+				payload, ok := message.Payload.(HandshakeMessage)
 				if !ok {
 					continue
 				}
@@ -178,6 +178,9 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			return err
 		}
 
+		b, _ := json.MarshalIndent(message, "", "  ")
+		fmt.Println("received message", string(b))
+
 		// TODO fix verification
 		// b, err := json.MarshalIndent(mo, "", "  ")
 		// fmt.Println("MSG", string(b), err)
@@ -230,7 +233,23 @@ func (w *messenger) HandleOutgoing(conn net.Conn) error {
 			w.Close("", conn)
 			return err
 		}
-		messages <- message
+		fmt.Println("DECC")
+
+		mm, err := Marshal(message)
+		if err != nil {
+			fmt.Println("4")
+			return err
+		}
+
+		mo, err := Unmarshal(mm)
+		if err != nil {
+			fmt.Println("5")
+			return err
+		}
+
+		b, _ := json.MarshalIndent(message, "", "  ")
+		fmt.Println("received message", string(b))
+		messages <- mo
 	}
 }
 
@@ -361,7 +380,7 @@ func (w *messenger) writeMessage(ctx context.Context, message *Message, rw io.Re
 	}
 
 	b, _ := json.MarshalIndent(message, "", "  ")
-	fmt.Println("message", string(b))
+	fmt.Println("sending message", string(b))
 
 	messageBytes, err := Marshal(message)
 	if err != nil {
@@ -408,7 +427,7 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 			ContentType: "net.handshake",
 			Recipients:  []string{peerID},
 		},
-		Payload: &HandshakeMessage{
+		Payload: HandshakeMessage{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Message(),
 		},
 	}

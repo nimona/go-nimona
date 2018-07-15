@@ -31,7 +31,7 @@ var bootstrapPeerInfoMessages = []*net.Message{
 			Signer:      "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
 			ContentType: "peer.info",
 		},
-		Payload: &net.PeerInfoPayload{
+		Payload: net.PeerInfoPayload{
 			Addresses: []string{
 				"tcp:andromeda.nimona.io:21013",
 			},
@@ -87,7 +87,7 @@ func main() {
 	// 		Signer:      spi.ID,
 	// 		ContentType: net.PeerInfoContentType,
 	// 	},
-	// 	Payload: &net.PeerInfoPayload{
+	// 	Payload: net.PeerInfoPayload{
 	// 		Addresses: []string{
 	// 			"tcp:andromeda.nimona.io:21013",
 	// 		},

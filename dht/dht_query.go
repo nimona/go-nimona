@@ -61,7 +61,7 @@ func (q *query) Run(ctx context.Context) {
 				logger.Debug("Processing incoming message")
 				switch message := incomingMessage.(type) {
 				case *MessagePutPeerInfoFromMessage:
-					q.outgoingMessages <- &message.PeerInfo
+					q.outgoingMessages <- message.PeerInfo
 					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
 				case *MessagePutProviders:
 					q.outgoingMessages <- message.PeerIDs
@@ -122,21 +122,21 @@ func (q *query) next() {
 	switch q.queryType {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
-		req = &MessageGetPeerInfo{
+		req = MessageGetPeerInfo{
 			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
-		req = &MessageGetProviders{
+		req = MessageGetProviders{
 			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
-		req = &MessageGetValue{
+		req = MessageGetValue{
 			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
 			RequestID:      q.id,
 			Key:            q.key,

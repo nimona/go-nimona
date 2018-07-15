@@ -88,7 +88,7 @@ func (adb *AddressBook) PutPeerInfoFromMessage(message *Message) error {
 
 	// TODO reset connectivity and dates
 
-	// payload, ok := message.Payload.(*PeerInfoPayload)
+	// payload, ok := message.Payload.(PeerInfoPayload)
 	// if !ok {
 	// 	return errors.New("invalid payload type, expected PeerInfoPayload, got " + reflect.TypeOf(payload).String())
 	// }

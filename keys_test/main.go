@@ -57,8 +57,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(b.Payload.(*Dummy).String)
-	fmt.Println(b.Payload.(*Dummy).NestedStruct[1].Int)
+	fmt.Println(b.Payload.(Dummy).String)
+	fmt.Println(b.Payload.(Dummy).NestedStruct[1].Int)
 
 	// c
 	c := &net.Message{}
@@ -68,8 +68,8 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(b.Payload.(*Dummy).String)
-	fmt.Println(b.Payload.(*Dummy).NestedStruct[1].Int)
+	fmt.Println(b.Payload.(Dummy).String)
+	fmt.Println(b.Payload.(Dummy).NestedStruct[1].Int)
 
 	// d
 	d := &Dummy{}
