@@ -2,7 +2,6 @@ package net
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -78,7 +77,6 @@ func (adb *AddressBook) PutPeerInfoFromMessage(message *Message) error {
 
 	pip := &PeerInfoPayload{}
 	if err := message.DecodePayload(pip); err != nil {
-		fmt.Println("ASDFSDF", err)
 		return err
 	}
 

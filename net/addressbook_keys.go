@@ -118,7 +118,7 @@ func Verify(id string, data, signature []byte) error {
 	publicKey.FromBytes(publicKeyBytes)
 	ok := btckey.Verify(publicKeyBytes, signature, digest[:])
 	if !ok {
-		return errors.New("signature")
+		return errors.New("could not verify signature")
 	}
 	return nil
 }

@@ -27,9 +27,9 @@ var (
 
 var bootstrapPeerInfoMessages = []*net.Message{
 	&net.Message{
+		Type: "peer.info",
 		Headers: net.Headers{
-			Signer:      "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
-			ContentType: "peer.info",
+			Signer: "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
 		},
 		Payload: net.PeerInfoPayload{
 			Addresses: []string{
@@ -37,11 +37,11 @@ var bootstrapPeerInfoMessages = []*net.Message{
 			},
 		},
 		Signature: []byte{
-			120, 40, 197, 101, 40, 15, 190, 182, 117, 173, 162, 230, 49, 255,
-			128, 7, 34, 119, 134, 63, 197, 29, 247, 122, 227, 150, 218, 90,
-			38, 30, 146, 142, 134, 133, 148, 80, 110, 3, 171, 228, 234, 4,
-			236, 245, 141, 35, 95, 59, 49, 103, 202, 153, 144, 145, 196, 123,
-			89, 200, 227, 121, 28, 58, 86, 133,
+			63, 75, 91, 132, 252, 236, 211, 254, 9, 245, 64, 255, 216, 226,
+			222, 153, 41, 203, 66, 233, 19, 218, 225, 212, 133, 166, 128,
+			93, 115, 28, 85, 1, 87, 219, 10, 223, 126, 26, 134, 96, 56, 86,
+			223, 238, 113, 120, 165, 25, 103, 185, 231, 232, 204, 227, 48,
+			122, 80, 185, 205, 86, 0, 110, 94, 59,
 		},
 	},
 }
@@ -82,24 +82,19 @@ func main() {
 		reg.PutPeerInfoFromMessage(peerInfoMessage)
 	}
 
-	// bMMMMM := &net.Message{
-	// 	Headers: net.Headers{
-	// 		Signer:      spi.ID,
-	// 		ContentType: net.PeerInfoContentType,
-	// 	},
+	// mmmm := &net.Message{
+	// 	Type: "peer.info",
 	// 	Payload: net.PeerInfoPayload{
 	// 		Addresses: []string{
 	// 			"tcp:andromeda.nimona.io:21013",
 	// 		},
 	// 	},
 	// }
-
-	// if err := bMMMMM.Sign(spi); err != nil {
-	// 	panic(err)
-	// }
-
-	// b, _ := json.MarshalIndent(bMMMMM, "", "  ")
-	// fmt.Println(string(b))
+	// mmmm.Sign(spi)
+	// bbb, _ := json.MarshalIndent(mmmm, "", "  ")
+	// fmt.Println(string(bbb))
+	// fmt.Println(mmmm.Signature)
+	// os.Exit(1)
 
 	storagePath := path.Join(configPath, "storage")
 

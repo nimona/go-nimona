@@ -123,7 +123,7 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			// 	continue
 			// }
 			// TODO make sure this only happens once
-			if message.Headers.ContentType == "net.handshake" {
+			if message.Type == "net.handshake" {
 				payload, ok := message.Payload.(HandshakeMessage)
 				if !ok {
 					continue
@@ -159,35 +159,25 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 			// if err != io.EOF {
 			w.logger.Error("could not read message", zap.Error(err))
 			// }
-			fmt.Println("3")
 			return err
 			// continue
 		}
 
-		fmt.Println("DECC")
-
 		mm, err := Marshal(message)
 		if err != nil {
-			fmt.Println("4")
 			return err
 		}
 
 		mo, err := Unmarshal(mm)
 		if err != nil {
-			fmt.Println("5")
 			return err
 		}
 
-		b, _ := json.MarshalIndent(message, "", "  ")
-		fmt.Println("received message", string(b))
+		if err := message.Verify(); err != nil {
+			w.logger.Warn("could not verify message", zap.Error(err))
+			continue
+		}
 
-		// TODO fix verification
-		// b, err := json.MarshalIndent(mo, "", "  ")
-		// fmt.Println("MSG", string(b), err)
-		// if err := message.Verify(); err != nil {
-		// 	w.logger.Warn("could not verify message", zap.Error(err))
-		// 	continue
-		// }
 		messages <- mo
 	}
 }
@@ -233,22 +223,22 @@ func (w *messenger) HandleOutgoing(conn net.Conn) error {
 			w.Close("", conn)
 			return err
 		}
-		fmt.Println("DECC")
 
 		mm, err := Marshal(message)
 		if err != nil {
-			fmt.Println("4")
 			return err
 		}
 
 		mo, err := Unmarshal(mm)
 		if err != nil {
-			fmt.Println("5")
 			return err
 		}
 
-		b, _ := json.MarshalIndent(message, "", "  ")
-		fmt.Println("received message", string(b))
+		if err := message.Verify(); err != nil {
+			w.logger.Warn("could not verify message", zap.Error(err))
+			continue
+		}
+
 		messages <- mo
 	}
 }
@@ -289,7 +279,7 @@ func (w *messenger) HandleOutgoing(conn net.Conn) error {
 func (w *messenger) Process(message *Message) error {
 	w.handlersLock.RLock()
 	defer w.handlersLock.RUnlock()
-	contentType := message.Headers.ContentType
+	contentType := message.Type
 	var handler MessageHandler
 	ok := false
 	for handlerContentType, hn := range w.handlers {
@@ -347,7 +337,7 @@ func (w *messenger) Send(ctx context.Context, message *Message, recipients ...st
 
 func (w *messenger) sendOne(ctx context.Context, message *Message, recipient string) error {
 	logger := w.logger.With(zap.String("peerID", recipient))
-	logger.Debug("sending message", zap.String("contentType", message.Headers.ContentType))
+	logger.Debug("sending message", zap.String("contentType", message.Type))
 
 	w.streamLock.Lock(recipient)
 	defer w.streamLock.Unlock(recipient)
@@ -423,9 +413,9 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	// handshake so the other side knows who we are
 	signer := w.addressBook.GetLocalPeerInfo()
 	handshakeMessage := &Message{
+		Type: "net.handshake",
 		Headers: Headers{
-			ContentType: "net.handshake",
-			Recipients:  []string{peerID},
+			Recipients: []string{peerID},
 		},
 		Payload: HandshakeMessage{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Message(),

@@ -1,16 +1,15 @@
 package net
 
 import (
-	"fmt"
-
 	"github.com/ugorji/go/codec"
 )
 
 func NewMessage(contentType string, recipients []string, payload interface{}) (*Message, error) {
 	message := &Message{
+		Version: 0,
+		Type:    contentType,
 		Headers: Headers{
-			ContentType: contentType,
-			Recipients:  recipients,
+			Recipients: recipients,
 		},
 		Payload: payload,
 	}
@@ -18,17 +17,17 @@ func NewMessage(contentType string, recipients []string, payload interface{}) (*
 }
 
 type Headers struct {
-	ContentType string
-	Recipients  []string
-	Signer      string
+	Recipients []string `json:"recipients,omitempty"`
+	Signer     string   `json:"signer,omitempty"`
 }
 
 // Message for exchanging data via the messenger
 type Message struct {
-	Version   int
-	Headers   Headers
-	Payload   interface{}
-	Signature []byte
+	Version   uint        `json:"version"`
+	Type      string      `json:"@type"`
+	Headers   Headers     `json:"headers,omitempty"`
+	Payload   interface{} `json:"payload,omitempty"`
+	Signature []byte      `json:"signature,omitempty"`
 }
 
 func (message *Message) IsSigned() bool {
@@ -39,6 +38,7 @@ func (message *Message) IsSigned() bool {
 func getMessageDigest(message *Message) ([]byte, error) {
 	digest := []interface{}{
 		message.Version,
+		message.Type,
 		message.Headers,
 		message.Payload,
 	}
@@ -48,11 +48,6 @@ func getMessageDigest(message *Message) ([]byte, error) {
 		return nil, err
 	}
 
-	// digestHash := sha512.Sum512(digestBytes)
-	// fmt.Printf("DIGEST: %x\n", digestHash[:])
-	// asdfsdf, _ := json.MarshalIndent(digest, "", "  ")
-	// fmt.Println(string(asdfsdf))
-	// return digestHash[:], nil
 	return digestBytes, nil
 }
 
@@ -95,12 +90,10 @@ func Unmarshal(b []byte) (*Message, error) {
 	m := &Message{}
 	dec := codec.NewDecoderBytes(b, &codec.CborHandle{})
 	if err := dec.Decode(m); err != nil {
-		fmt.Println("5a")
 		return nil, err
 	}
-	ct := GetContentType(m.Headers.ContentType)
+	ct := GetContentType(m.Type)
 	if err := m.DecodePayload(&ct); err != nil {
-		fmt.Println("5b")
 		return nil, err
 	}
 	m.Payload = ct
@@ -112,26 +105,9 @@ func Unmarshal(b []byte) (*Message, error) {
 func (h *Message) DecodePayload(r interface{}) error {
 	enc, err := Marshal(h.Payload)
 	if err != nil {
-		fmt.Println("5c")
 		return err
 	}
 
 	dec := codec.NewDecoderBytes(enc, &codec.CborHandle{})
 	return dec.Decode(r)
-
-	// dec := codec.NewDecoderBytes(h.Payload, &codec.CborHandle{})
-	// return dec.Decode(r)
-	// return nil
 }
-
-// // EncodePayload encodes the given value using the message's codec, and stores
-// // the result in the message's payload.
-// func (h *Message) EncodePayload(r interface{}) error {
-// 	// payloadBytes := []byte{}
-// 	// enc := codec.NewEncoderBytes(&payloadBytes, &codec.CborHandle{})
-// 	// if err := enc.Encode(r); err != nil {
-// 	// 	return err
-// 	// }
-// 	// h.Payload = payloadBytes
-// 	return nil
-// }

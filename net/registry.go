@@ -1,7 +1,6 @@
 package net
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 )
@@ -33,7 +32,6 @@ func (r *Registry) Get(contentType string) interface{} {
 	r.lock.RLock()
 	t, ok := r.types[contentType]
 	if !ok {
-		fmt.Println("could not find", contentType)
 		return map[string]interface{}{}
 	}
 	v := reflect.New(t).Elem()

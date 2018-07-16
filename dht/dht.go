@@ -90,7 +90,7 @@ func (nd *DHT) handleMessage(message *net.Message) error {
 	// if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
 	// 	logrus.WithError(err).Info("could not put sender peer info")
 	// }
-	contentType := message.Headers.ContentType
+	contentType := message.Type
 	switch contentType {
 	case PayloadTypeGetPeerInfo:
 		nd.handleGetPeerInfo(message)

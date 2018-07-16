@@ -56,7 +56,7 @@ func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 }
 
 func (blx *blockExchange) handleMessage(message *net.Message) error {
-	contentType := message.Headers.ContentType
+	contentType := message.Type
 	switch contentType {
 	case PayloadTypeTransferBlock:
 		err := blx.handleTransferBlock(message)
