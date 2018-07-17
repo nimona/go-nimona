@@ -152,15 +152,10 @@ func (w *messenger) HandleIncoming(conn net.Conn) error {
 	defer w.Close(remotePeerID, conn)
 
 	for {
-		// timeoutDuration := time.Minute
-		// conn.SetReadDeadline(time.Now().Add(timeoutDuration))
 		message := &Message{}
 		if err := messageDecoder.Decode(message); err != nil {
-			// if err != io.EOF {
 			w.logger.Error("could not read message", zap.Error(err))
-			// }
 			return err
-			// continue
 		}
 
 		mm, err := Marshal(message)
