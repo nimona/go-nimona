@@ -1,6 +1,9 @@
 package net
 
 import (
+	"encoding/json"
+	"reflect"
+
 	"github.com/ugorji/go/codec"
 )
 
@@ -28,6 +31,25 @@ type Message struct {
 	Headers   Headers     `json:"headers,omitempty"`
 	Payload   interface{} `json:"payload,omitempty"`
 	Signature []byte      `json:"signature,omitempty"`
+}
+
+func (message *Message) CodecDecodeSelf(dec *codec.Decoder) {
+	dec.MustDecode(&message.Version)
+	dec.MustDecode(&message.Type)
+	message.Payload = GetContentType(message.Type)
+	dec.MustDecode(&message.Payload)
+	dec.MustDecode(&message.Headers)
+	dec.MustDecode(&message.Payload)
+	dec.MustDecode(&message.Signature)
+}
+
+func (message *Message) CodecEncodeSelf(enc *codec.Encoder) {
+	enc.MustEncode(&message.Version)
+	enc.MustEncode(&message.Type)
+	enc.MustEncode(&message.Payload)
+	enc.MustEncode(&message.Headers)
+	enc.MustEncode(&message.Payload)
+	enc.MustEncode(&message.Signature)
 }
 
 func (message *Message) IsSigned() bool {
@@ -78,7 +100,7 @@ func (message *Message) Verify() error {
 
 func Marshal(o interface{}) ([]byte, error) {
 	b := []byte{}
-	enc := codec.NewEncoderBytes(&b, &codec.CborHandle{})
+	enc := codec.NewEncoderBytes(&b, getCborHandler())
 	if err := enc.Encode(o); err != nil {
 		return nil, err
 	}
@@ -88,15 +110,12 @@ func Marshal(o interface{}) ([]byte, error) {
 
 func Unmarshal(b []byte) (*Message, error) {
 	m := &Message{}
-	dec := codec.NewDecoderBytes(b, &codec.CborHandle{})
+	dec := codec.NewDecoderBytes(b, getCborHandler())
+
 	if err := dec.Decode(m); err != nil {
 		return nil, err
 	}
-	ct := GetContentType(m.Type)
-	if err := m.DecodePayload(&ct); err != nil {
-		return nil, err
-	}
-	m.Payload = ct
+
 	return m, nil
 }
 
@@ -108,6 +127,22 @@ func (h *Message) DecodePayload(r interface{}) error {
 		return err
 	}
 
-	dec := codec.NewDecoderBytes(enc, &codec.CborHandle{})
+	dec := codec.NewDecoderBytes(enc, getCborHandler())
 	return dec.Decode(r)
+}
+
+func PrettifyMessage(message *Message) string {
+	b, err := json.MarshalIndent(message, "", "  ")
+	if err != nil {
+		return "[cannot marshal, " + err.Error() + "]"
+	}
+
+	return string(b)
+}
+
+func getCborHandler() codec.Handle {
+	ch := &codec.CborHandle{}
+	ch.Canonical = true
+	ch.MapType = reflect.TypeOf(map[string]interface{}(nil))
+	return ch
 }

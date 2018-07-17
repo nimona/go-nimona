@@ -75,10 +75,7 @@ func (adb *AddressBook) PutPeerInfoFromMessage(message *Message) error {
 		return nil
 	}
 
-	pip := &PeerInfoPayload{}
-	if err := message.DecodePayload(pip); err != nil {
-		return err
-	}
+	pip := message.Payload.(PeerInfoPayload)
 
 	// TODO verify message?
 
