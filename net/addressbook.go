@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-	"github.com/keybase/saltpack/basic"
 )
 
 var (
@@ -32,7 +31,6 @@ type PeerManager interface {
 	CreateNewPeer() (*SecretPeerInfo, error)
 	LoadSecretPeerInfo(path string) (*SecretPeerInfo, error)
 	StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error
-	GetKeyring() *basic.Keyring
 }
 
 // Status represents the connection state of a peer
@@ -45,12 +43,11 @@ const (
 	ErrorConnecting
 )
 
-// NewAddressBook creates a new AddressBook with an empty keyring
+// NewAddressBook creates a new AddressBook
 func NewAddressBook() *AddressBook {
 	adb := &AddressBook{
 		identities: &IdentityCollection{},
 		peers:      &PeerInfoCollection{},
-		keyring:    basic.NewKeyring(),
 	}
 
 	return adb
@@ -63,11 +60,6 @@ type AddressBook struct {
 	peerStatus    sync.Map
 	localPeerLock sync.RWMutex
 	localPeer     *SecretPeerInfo
-	keyring       *basic.Keyring
-}
-
-func (adb *AddressBook) GetKeyring() *basic.Keyring {
-	return adb.keyring
 }
 
 func (adb *AddressBook) PutPeerInfoFromMessage(message *Message) error {
