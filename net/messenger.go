@@ -16,23 +16,23 @@ import (
 )
 
 func init() {
-	RegisterContentType("net.handshake", HandshakeMessage{})
+	RegisterContentType("net.handshake", HandshakeEnvelope{})
 }
 
 var (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
 	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
-	// ErrNotForUs message is not meant for us
-	ErrNotForUs = errors.New("message not for us")
+	// ErrNotForUs envelope is not meant for us
+	ErrNotForUs = errors.New("envelope not for us")
 )
 
-// MessageHandler to handle incoming messages
-type MessageHandler func(event *Message) error
+// EnvelopeHandler to handle incoming envelopes
+type EnvelopeHandler func(event *Envelope) error
 
 // Messenger interface for mocking messenger
 type Messenger interface {
-	Handle(contentType string, h MessageHandler) error
-	Send(ctx context.Context, message *Message, recipients ...string) error
+	Handle(contentType string, h EnvelopeHandler) error
+	Send(ctx context.Context, envelope *Envelope, recipients ...string) error
 	Listen(ctx context.Context, addrress string) (net.Listener, error)
 }
 
@@ -44,11 +44,11 @@ type messenger struct {
 
 	incoming chan net.Conn
 	outgoing chan net.Conn
-	messages chan *Message
+	envelopes chan *Envelope
 	close    chan bool
 
 	streams  sync.Map
-	handlers map[string]MessageHandler
+	handlers map[string]EnvelopeHandler
 	// handlersLock sync.RWMutex
 	logger     *zap.Logger
 	streamLock utils.Kmutex
@@ -69,10 +69,10 @@ func NewMessenger(addressBook *AddressBook) (Messenger, error) {
 
 		incoming: make(chan net.Conn),
 		outgoing: make(chan net.Conn),
-		messages: make(chan *Message, 100),
+		envelopes: make(chan *Envelope, 100),
 		close:    make(chan bool),
 
-		handlers:   map[string]MessageHandler{},
+		handlers:   map[string]EnvelopeHandler{},
 		logger:     log.Logger(ctx).Named("messenger"),
 		streamLock: utils.NewKmutex(),
 	}
@@ -80,7 +80,7 @@ func NewMessenger(addressBook *AddressBook) (Messenger, error) {
 	return m, nil
 }
 
-func (w *messenger) Handle(contentType string, h MessageHandler) error {
+func (w *messenger) Handle(contentType string, h EnvelopeHandler) error {
 	if _, ok := w.handlers[contentType]; ok {
 		return errors.New("There already is a handler registered for this contentType")
 	}
@@ -106,37 +106,37 @@ func (w *messenger) Close(peerID string, conn net.Conn) {
 func (w *messenger) HandleConnection(conn net.Conn) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteAddr().String()))
 
-	messageDecoder := codec.NewDecoder(conn, getCborHandler())
+	envelopeDecoder := codec.NewDecoder(conn, getCborHandler())
 	for {
-		message := &Message{}
-		if err := messageDecoder.Decode(message); err != nil {
-			w.logger.Error("could not read message", zap.Error(err))
+		envelope := &Envelope{}
+		if err := envelopeDecoder.Decode(envelope); err != nil {
+			w.logger.Error("could not read envelope", zap.Error(err))
 			w.Close("", conn)
 			return err
 		}
 
-		w.logger.Debug("handling message", zap.Any("message", message))
+		w.logger.Debug("handling envelope", zap.Any("envelope", envelope))
 
-		if err := message.Verify(); err != nil {
-			w.logger.Warn("could not verify message", zap.Error(err))
+		if err := envelope.Verify(); err != nil {
+			w.logger.Warn("could not verify envelope", zap.Error(err))
 			return err
 		}
 
-		if message.Type == "net.handshake" {
-			payload, ok := message.Payload.(HandshakeMessage)
+		if envelope.Type == "net.handshake" {
+			payload, ok := envelope.Payload.(HandshakeEnvelope)
 			if !ok {
 				continue
 			}
-			if err := w.addressBook.PutPeerInfoFromMessage(payload.PeerInfo); err != nil {
+			if err := w.addressBook.PutPeerInfoFromEnvelope(payload.PeerInfo); err != nil {
 				// TODO handle error
 				continue
 			}
-			w.streams.Store(message.Headers.Signer, conn)
+			w.streams.Store(envelope.Headers.Signer, conn)
 			continue
 		}
 
-		contentType := message.Type
-		var handler MessageHandler
+		contentType := envelope.Type
+		var handler EnvelopeHandler
 		ok := false
 		for handlerContentType, hn := range w.handlers {
 			if !strings.HasPrefix(contentType, handlerContentType) {
@@ -155,7 +155,7 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 			return nil
 		}
 
-		if err := handler(message); err != nil {
+		if err := handler(envelope); err != nil {
 			w.logger.Info(
 				"Could not handle event",
 				zap.String("contentType", contentType),
@@ -166,15 +166,15 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 	}
 }
 
-// Process incoming message
-func (w *messenger) Process(message *Message) error {
-	if err := message.Verify(); err != nil {
-		w.logger.Warn("could not verify message", zap.Error(err))
+// Process incoming envelope
+func (w *messenger) Process(envelope *Envelope) error {
+	if err := envelope.Verify(); err != nil {
+		w.logger.Warn("could not verify envelope", zap.Error(err))
 		return err
 	}
 
-	contentType := message.Type
-	var handler MessageHandler
+	contentType := envelope.Type
+	var handler EnvelopeHandler
 	ok := false
 	for handlerContentType, hn := range w.handlers {
 		if !strings.HasPrefix(contentType, handlerContentType) {
@@ -193,7 +193,7 @@ func (w *messenger) Process(message *Message) error {
 		return nil
 	}
 
-	if err := handler(message); err != nil {
+	if err := handler(envelope); err != nil {
 		w.logger.Info(
 			"Could not handle event",
 			zap.String("contentType", contentType),
@@ -205,22 +205,22 @@ func (w *messenger) Process(message *Message) error {
 	return nil
 }
 
-func (w *messenger) Send(ctx context.Context, message *Message, recipients ...string) error {
+func (w *messenger) Send(ctx context.Context, envelope *Envelope, recipients ...string) error {
 	signer := w.addressBook.GetLocalPeerInfo()
 
-	if !message.IsSigned() {
-		if err := message.Sign(signer); err != nil {
+	if !envelope.IsSigned() {
+		if err := envelope.Sign(signer); err != nil {
 			return err
 		}
 	}
 
 	if len(recipients) == 0 {
-		recipients = message.Headers.Recipients
+		recipients = envelope.Headers.Recipients
 	}
 
 	for _, recipient := range recipients {
 		// TODO deal with error
-		if err := w.sendOne(ctx, message, recipient); err != nil {
+		if err := w.sendOne(ctx, envelope, recipient); err != nil {
 			// TODO log error
 			return err
 		}
@@ -229,21 +229,21 @@ func (w *messenger) Send(ctx context.Context, message *Message, recipients ...st
 	return nil
 }
 
-func (w *messenger) sendOne(ctx context.Context, message *Message, recipient string) error {
+func (w *messenger) sendOne(ctx context.Context, envelope *Envelope, recipient string) error {
 	logger := w.logger.With(zap.String("peerID", recipient))
 
 	w.streamLock.Lock(recipient)
 	defer w.streamLock.Unlock(recipient)
 
-	w.logger.Debug("getting conn to write message", zap.String("recipient", recipient))
+	w.logger.Debug("getting conn to write envelope", zap.String("recipient", recipient))
 	conn, err := w.GetOrDial(ctx, recipient)
 	if err != nil {
 		return err
 	}
 
 	// TODO this seems messy
-	// try to send the message directly to the recipient
-	if err := w.writeMessage(ctx, message, conn); err != nil {
+	// try to send the envelope directly to the recipient
+	if err := w.writeEnvelope(ctx, envelope, conn); err != nil {
 		w.Close(recipient, conn)
 		logger.Debug("could not send directly to recipient", zap.Error(err))
 	} else {
@@ -253,25 +253,25 @@ func (w *messenger) sendOne(ctx context.Context, message *Message, recipient str
 	return ErrAllAddressesFailed
 }
 
-func (w *messenger) writeMessage(ctx context.Context, message *Message, rw io.ReadWriter) error {
+func (w *messenger) writeEnvelope(ctx context.Context, envelope *Envelope, rw io.ReadWriter) error {
 	signer := w.addressBook.GetLocalPeerInfo()
 
-	if !message.IsSigned() {
-		if err := message.Sign(signer); err != nil {
+	if !envelope.IsSigned() {
+		if err := envelope.Sign(signer); err != nil {
 			return err
 		}
 	}
 
-	messageBytes, err := Marshal(message)
+	envelopeBytes, err := Marshal(envelope)
 	if err != nil {
 		return err
 	}
 
-	if _, err := rw.Write(messageBytes); err != nil {
+	if _, err := rw.Write(envelopeBytes); err != nil {
 		return err
 	}
 
-	w.logger.Debug("writing message", zap.Any("message", message))
+	w.logger.Debug("writing envelope", zap.Any("envelope", envelope))
 
 	return nil
 }
@@ -304,22 +304,22 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 
 	// handshake so the other side knows who we are
 	signer := w.addressBook.GetLocalPeerInfo()
-	handshakeMessage := &Message{
+	handshakeEnvelope := &Envelope{
 		Type: "net.handshake",
 		Headers: Headers{
 			Recipients: []string{peerID},
 		},
-		Payload: HandshakeMessage{
-			PeerInfo: w.addressBook.GetLocalPeerInfo().Message(),
+		Payload: HandshakeEnvelope{
+			PeerInfo: w.addressBook.GetLocalPeerInfo().Envelope(),
 		},
 	}
 
 	// TODO move someplace common with send()
-	if err := handshakeMessage.Sign(signer); err != nil {
+	if err := handshakeEnvelope.Sign(signer); err != nil {
 		return nil, err
 	}
 
-	if err := w.writeMessage(ctx, handshakeMessage, conn); err != nil {
+	if err := w.writeEnvelope(ctx, handshakeEnvelope, conn); err != nil {
 		return nil, err
 	}
 
@@ -341,20 +341,20 @@ func (w *messenger) Listen(ctx context.Context, addr string) (net.Listener, erro
 	go func() {
 		for {
 			select {
-			case message := <-w.messages:
-				if err := w.Process(message); err != nil {
-					w.logger.Warn("failed to process message", zap.Error(err))
+			case envelope := <-w.envelopes:
+				if err := w.Process(envelope); err != nil {
+					w.logger.Warn("failed to process envelope", zap.Error(err))
 				}
 			case conn := <-w.incoming:
 				go func() {
 					if err := w.HandleConnection(conn); err != nil {
-						w.logger.Warn("failed to handle message", zap.Error(err))
+						w.logger.Warn("failed to handle envelope", zap.Error(err))
 					}
 				}()
 			case conn := <-w.outgoing:
 				go func() {
 					if err := w.HandleConnection(conn); err != nil {
-						w.logger.Warn("failed to handle message", zap.Error(err))
+						w.logger.Warn("failed to handle envelope", zap.Error(err))
 					}
 				}()
 			case <-w.close:

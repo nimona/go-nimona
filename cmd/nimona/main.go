@@ -25,8 +25,8 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfoMessages = []*net.Message{
-	&net.Message{
+var bootstrapPeerInfoEnvelopes = []*net.Envelope{
+	&net.Envelope{
 		Type: "peer.info",
 		Headers: net.Headers{
 			Signer: "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
@@ -78,11 +78,11 @@ func main() {
 		log.Fatal("could not put local peer")
 	}
 
-	for _, peerInfoMessage := range bootstrapPeerInfoMessages {
-		reg.PutPeerInfoFromMessage(peerInfoMessage)
+	for _, peerInfoEnvelope := range bootstrapPeerInfoEnvelopes {
+		reg.PutPeerInfoFromEnvelope(peerInfoEnvelope)
 	}
 
-	// mmmm := &net.Message{
+	// mmmm := &net.Envelope{
 	// 	Type: "peer.info",
 	// 	Payload: net.PeerInfoPayload{
 	// 		Addresses: []string{
@@ -120,9 +120,9 @@ func main() {
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(message *net.Message) error {
-		payload := message.Payload.(Hello)
-		fmt.Printf("___ Got message %s\n", payload.Body)
+	n.Handle("demo", func(envelope *net.Envelope) error {
+		payload := envelope.Payload.(Hello)
+		fmt.Printf("___ Got envelope %s\n", payload.Body)
 		return nil
 	})
 
@@ -361,19 +361,19 @@ func main() {
 		Name: "send",
 		Func: func(c *ishell.Context) {
 			if len(c.Args) < 2 {
-				c.Println("Missing peer id or message")
+				c.Println("Missing peer id or envelope")
 				return
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			message, err := net.NewMessage("demo.hello", to, &Hello{msg})
+			envelope, err := net.NewEnvelope("demo.hello", to, &Hello{msg})
 			if err != nil {
-				c.Println("Could not create message", err)
+				c.Println("Could not create envelope", err)
 				return
 			}
-			if err := n.Send(ctx, message); err != nil {
-				c.Println("Could not send message", err)
+			if err := n.Send(ctx, envelope); err != nil {
+				c.Println("Could not send envelope", err)
 				return
 			}
 		},

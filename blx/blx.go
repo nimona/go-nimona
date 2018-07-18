@@ -50,35 +50,35 @@ func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 		getRequests: sync.Map{},
 	}
 
-	n.Handle(messengerExtention, blx.handleMessage)
+	n.Handle(messengerExtention, blx.handleEnvelope)
 
 	return blx, nil
 }
 
-func (blx *blockExchange) handleMessage(message *net.Message) error {
-	contentType := message.Type
+func (blx *blockExchange) handleEnvelope(envelope *net.Envelope) error {
+	contentType := envelope.Type
 	switch contentType {
 	case PayloadTypeTransferBlock:
-		err := blx.handleTransferBlock(message)
+		err := blx.handleTransferBlock(envelope)
 		if err != nil {
 			return err
 		}
 	case PayloadTypeRequestBlock:
-		err := blx.handleRequestBlock(message)
+		err := blx.handleRequestBlock(envelope)
 		if err != nil {
 			return err
 		}
 	default:
-		logrus.WithField("message.PayloadType", contentType).
+		logrus.WithField("envelope.PayloadType", contentType).
 			Warn("Payload type not known")
 		return nil
 	}
 	return nil
 }
 
-func (blx *blockExchange) handleTransferBlock(message *net.Message) error {
+func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
 	payload := &payloadTransferBlock{}
-	if err := message.DecodePayload(payload); err != nil {
+	if err := envelope.DecodePayload(payload); err != nil {
 		return err
 	}
 
@@ -107,9 +107,9 @@ func (blx *blockExchange) handleTransferBlock(message *net.Message) error {
 	return nil
 }
 
-func (blx *blockExchange) handleRequestBlock(incMessage *net.Message) error {
+func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
 	payload := &payloadTransferRequestBlock{}
-	if err := incMessage.DecodePayload(payload); err != nil {
+	if err := incEnvelope.DecodePayload(payload); err != nil {
 		return err
 	}
 
@@ -129,13 +129,13 @@ func (blx *blockExchange) handleRequestBlock(incMessage *net.Message) error {
 	}
 
 	ctx := context.Background()
-	message, err := net.NewMessage(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
+	envelope, err := net.NewEnvelope(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("blx.handleRequestBlock could not create message")
+		logrus.WithError(err).Warnf("blx.handleRequestBlock could not create envelope")
 		return err
 	}
-	if err := blx.net.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send message")
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send envelope")
 		return err
 	}
 
@@ -170,13 +170,13 @@ func (blx *blockExchange) Get(key string, recipient string) (
 
 	// Request block
 	ctx := context.Background()
-	message, err := net.NewMessage(PayloadTypeRequestBlock, []string{recipient}, req)
+	envelope, err := net.NewEnvelope(PayloadTypeRequestBlock, []string{recipient}, req)
 	if err != nil {
-		logrus.WithError(err).Warnf("blx.Get could not create message")
+		logrus.WithError(err).Warnf("blx.Get could not create envelope")
 		return nil, err
 	}
-	if err := blx.net.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("blx.Get could not send message")
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.Get could not send envelope")
 		return nil, err
 	}
 
@@ -222,13 +222,13 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	blx.publish(block.Key)
 
 	ctx := context.Background()
-	message, err := net.NewMessage(PayloadTypeTransferBlock, []string{recipient}, resp)
+	envelope, err := net.NewEnvelope(PayloadTypeTransferBlock, []string{recipient}, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("blx.Send could not create message")
+		logrus.WithError(err).Warnf("blx.Send could not create envelope")
 		return "", 0, err
 	}
-	if err := blx.net.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("blx.Send could not send message")
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.Send could not send envelope")
 		return "", 0, err
 	}
 

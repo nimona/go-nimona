@@ -1,5 +1,5 @@
 package net
 
-type HandshakeMessage struct {
-	PeerInfo *Message `json:"peer_info"`
+type HandshakeEnvelope struct {
+	PeerInfo *Envelope `json:"peer_info"`
 }

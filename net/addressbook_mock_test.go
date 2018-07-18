@@ -9,15 +9,15 @@ type MockAddressBook struct {
 }
 
 // CreateNewPeer provides a mock function with given fields:
-func (_m *MockAddressBook) CreateNewPeer() (*SecretPeerInfo, error) {
+func (_m *MockAddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 	ret := _m.Called()
 
-	var r0 *SecretPeerInfo
-	if rf, ok := ret.Get(0).(func() *SecretPeerInfo); ok {
+	var r0 *PrivatePeerInfo
+	if rf, ok := ret.Get(0).(func() *PrivatePeerInfo); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*SecretPeerInfo)
+			r0 = ret.Get(0).(*PrivatePeerInfo)
 		}
 	}
 
@@ -55,15 +55,15 @@ func (_m *MockAddressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
 }
 
 // GetLocalPeerInfo provides a mock function with given fields:
-func (_m *MockAddressBook) GetLocalPeerInfo() *SecretPeerInfo {
+func (_m *MockAddressBook) GetLocalPeerInfo() *PrivatePeerInfo {
 	ret := _m.Called()
 
-	var r0 *SecretPeerInfo
-	if rf, ok := ret.Get(0).(func() *SecretPeerInfo); ok {
+	var r0 *PrivatePeerInfo
+	if rf, ok := ret.Get(0).(func() *PrivatePeerInfo); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*SecretPeerInfo)
+			r0 = ret.Get(0).(*PrivatePeerInfo)
 		}
 	}
 
@@ -94,15 +94,15 @@ func (_m *MockAddressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
 }
 
 // LoadOrCreateLocalPeerInfo provides a mock function with given fields: path
-func (_m *MockAddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerInfo, error) {
+func (_m *MockAddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error) {
 	ret := _m.Called(path)
 
-	var r0 *SecretPeerInfo
-	if rf, ok := ret.Get(0).(func(string) *SecretPeerInfo); ok {
+	var r0 *PrivatePeerInfo
+	if rf, ok := ret.Get(0).(func(string) *PrivatePeerInfo); ok {
 		r0 = rf(path)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*SecretPeerInfo)
+			r0 = ret.Get(0).(*PrivatePeerInfo)
 		}
 	}
 
@@ -116,16 +116,16 @@ func (_m *MockAddressBook) LoadOrCreateLocalPeerInfo(path string) (*SecretPeerIn
 	return r0, r1
 }
 
-// LoadSecretPeerInfo provides a mock function with given fields: path
-func (_m *MockAddressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, error) {
+// LoadPrivatePeerInfo provides a mock function with given fields: path
+func (_m *MockAddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error) {
 	ret := _m.Called(path)
 
-	var r0 *SecretPeerInfo
-	if rf, ok := ret.Get(0).(func(string) *SecretPeerInfo); ok {
+	var r0 *PrivatePeerInfo
+	if rf, ok := ret.Get(0).(func(string) *PrivatePeerInfo); ok {
 		r0 = rf(path)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*SecretPeerInfo)
+			r0 = ret.Get(0).(*PrivatePeerInfo)
 		}
 	}
 
@@ -140,11 +140,11 @@ func (_m *MockAddressBook) LoadSecretPeerInfo(path string) (*SecretPeerInfo, err
 }
 
 // PutLocalPeerInfo provides a mock function with given fields: _a0
-func (_m *MockAddressBook) PutLocalPeerInfo(_a0 *SecretPeerInfo) error {
+func (_m *MockAddressBook) PutLocalPeerInfo(_a0 *PrivatePeerInfo) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*SecretPeerInfo) error); ok {
+	if rf, ok := ret.Get(0).(func(*PrivatePeerInfo) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
@@ -153,8 +153,8 @@ func (_m *MockAddressBook) PutLocalPeerInfo(_a0 *SecretPeerInfo) error {
 	return r0
 }
 
-// PutPeerInfoFromMessage provides a mock function with given fields: _a0
-func (_m *MockAddressBook) PutPeerInfoFromMessage(_a0 *PeerInfo) error {
+// PutPeerInfoFromEnvelope provides a mock function with given fields: _a0
+func (_m *MockAddressBook) PutPeerInfoFromEnvelope(_a0 *PeerInfo) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
@@ -167,12 +167,12 @@ func (_m *MockAddressBook) PutPeerInfoFromMessage(_a0 *PeerInfo) error {
 	return r0
 }
 
-// StoreSecretPeerInfo provides a mock function with given fields: pi, path
-func (_m *MockAddressBook) StoreSecretPeerInfo(pi *SecretPeerInfo, path string) error {
+// StorePrivatePeerInfo provides a mock function with given fields: pi, path
+func (_m *MockAddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error {
 	ret := _m.Called(pi, path)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*SecretPeerInfo, string) error); ok {
+	if rf, ok := ret.Get(0).(func(*PrivatePeerInfo, string) error); ok {
 		r0 = rf(pi, path)
 	} else {
 		r0 = ret.Error(0)

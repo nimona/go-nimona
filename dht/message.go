@@ -5,20 +5,20 @@ import (
 )
 
 func init() {
-	net.RegisterContentType(PayloadTypePing, MessagePing{})
-	net.RegisterContentType(PayloadTypePong, MessagePong{})
+	net.RegisterContentType(PayloadTypePing, EnvelopePing{})
+	net.RegisterContentType(PayloadTypePong, EnvelopePong{})
 
-	net.RegisterContentType(PayloadTypeGetPeerInfo, MessageGetPeerInfo{})
-	net.RegisterContentType(PayloadTypePutPeerInfo, MessagePutPeerInfoFromMessage{})
+	net.RegisterContentType(PayloadTypeGetPeerInfo, EnvelopeGetPeerInfo{})
+	net.RegisterContentType(PayloadTypePutPeerInfo, EnvelopePutPeerInfoFromEnvelope{})
 
-	net.RegisterContentType(PayloadTypeGetProviders, MessageGetProviders{})
-	net.RegisterContentType(PayloadTypePutProviders, MessagePutProviders{})
+	net.RegisterContentType(PayloadTypeGetProviders, EnvelopeGetProviders{})
+	net.RegisterContentType(PayloadTypePutProviders, EnvelopePutProviders{})
 
-	net.RegisterContentType(PayloadTypeGetValue, MessageGetValue{})
-	net.RegisterContentType(PayloadTypePutValue, MessagePutValue{})
+	net.RegisterContentType(PayloadTypeGetValue, EnvelopeGetValue{})
+	net.RegisterContentType(PayloadTypePutValue, EnvelopePutValue{})
 }
 
-// Message types
+// Envelope types
 const (
 	PayloadTypePing string = "dht.ping"
 	PayloadTypePong        = "dht.pong"
@@ -33,55 +33,55 @@ const (
 	PayloadTypePutValue = "dht.put-value"
 )
 
-type MessagePing struct {
-	SenderPeerInfo *net.Message `json:"sender_peer_info"`
+type EnvelopePing struct {
+	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type MessagePong struct {
-	SenderPeerInfo *net.Message `json:"sender_peer_info"`
+type EnvelopePong struct {
+	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type MessageGetPeerInfo struct {
-	SenderPeerInfo *net.Message `json:"sender_peer_info"`
+type EnvelopeGetPeerInfo struct {
+	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	PeerID         string       `json:"peer_id"`
 }
 
-type MessagePutPeerInfoFromMessage struct {
-	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+type EnvelopePutPeerInfoFromEnvelope struct {
+	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
 	RequestID      string         `json:"request_id,omitempty"`
-	PeerInfo       *net.Message   `json:"peer_info"`
-	ClosestPeers   []*net.Message `json:"closest_peers"`
+	PeerInfo       *net.Envelope   `json:"peer_info"`
+	ClosestPeers   []*net.Envelope `json:"closest_peers"`
 }
 
-type MessageGetProviders struct {
-	SenderPeerInfo *net.Message `json:"sender_peer_info"`
+type EnvelopeGetProviders struct {
+	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	Key            string       `json:"key"`
 }
 
-type MessagePutProviders struct {
-	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+type EnvelopePutProviders struct {
+	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
 	RequestID      string         `json:"request_id,omitempty"`
 	Key            string         `json:"key"`
 	PeerIDs        []string       `json:"peer_ids"`
-	ClosestPeers   []*net.Message `json:"closest_peers"`
+	ClosestPeers   []*net.Envelope `json:"closest_peers"`
 }
 
-type MessageGetValue struct {
-	SenderPeerInfo *net.Message `json:"sender_peer_info"`
+type EnvelopeGetValue struct {
+	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
 	RequestID      string       `json:"request_id,omitempty"`
 	Key            string       `json:"key"`
 }
 
-type MessagePutValue struct {
-	SenderPeerInfo *net.Message   `json:"sender_peer_info"`
+type EnvelopePutValue struct {
+	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
 	RequestID      string         `json:"request_id,omitempty"`
 	Key            string         `json:"key"`
 	Value          string         `json:"value"`
-	ClosestPeers   []*net.Message `json:"closest_peers"`
+	ClosestPeers   []*net.Envelope `json:"closest_peers"`
 }

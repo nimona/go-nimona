@@ -14,11 +14,11 @@ type MockMessenger struct {
 }
 
 // Handle provides a mock function with given fields: contentType, h
-func (_m *MockMessenger) Handle(contentType string, h MessageHandler) error {
+func (_m *MockMessenger) Handle(contentType string, h EnvelopeHandler) error {
 	ret := _m.Called(contentType, h)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, MessageHandler) error); ok {
+	if rf, ok := ret.Get(0).(func(string, EnvelopeHandler) error); ok {
 		r0 = rf(contentType, h)
 	} else {
 		r0 = ret.Error(0)
@@ -50,13 +50,13 @@ func (_m *MockMessenger) Listen(ctx context.Context, addrress string) (net.Liste
 	return r0, r1
 }
 
-// Send provides a mock function with given fields: ctx, message
-func (_m *MockMessenger) Send(ctx context.Context, message *Message) error {
-	ret := _m.Called(ctx, message)
+// Send provides a mock function with given fields: ctx, envelope
+func (_m *MockMessenger) Send(ctx context.Context, envelope *Envelope) error {
+	ret := _m.Called(ctx, envelope)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Message) error); ok {
-		r0 = rf(ctx, message)
+	if rf, ok := ret.Get(0).(func(context.Context, *Envelope) error); ok {
+		r0 = rf(ctx, envelope)
 	} else {
 		r0 = ret.Error(0)
 	}

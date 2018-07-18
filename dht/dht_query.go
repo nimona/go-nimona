@@ -26,8 +26,8 @@ type query struct {
 	queryType        QueryType
 	closestPeerID    string
 	contactedPeers   sync.Map
-	incomingMessages chan interface{}
-	outgoingMessages chan interface{}
+	incomingEnvelopes chan interface{}
+	outgoingEnvelopes chan interface{}
 }
 
 func (q *query) Run(ctx context.Context) {
@@ -38,12 +38,12 @@ func (q *query) Run(ctx context.Context) {
 		switch q.queryType {
 		case PeerInfoQuery:
 			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err != nil {
-				q.outgoingMessages <- peerInfo
+				q.outgoingEnvelopes <- peerInfo
 			}
 		case ProviderQuery:
 			if providers, err := q.dht.store.GetProviders(q.key); err != nil {
 				for _, provider := range providers {
-					q.outgoingMessages <- provider
+					q.outgoingEnvelopes <- provider
 				}
 			}
 		case ValueQuery:
@@ -51,32 +51,32 @@ func (q *query) Run(ctx context.Context) {
 			if err != nil {
 				break
 			}
-			q.outgoingMessages <- value
+			q.outgoingEnvelopes <- value
 		}
 
 		// and now, wait for something to happen
 		for {
 			select {
-			case incomingMessage := <-q.incomingMessages:
-				logger.Debug("Processing incoming message")
-				switch message := incomingMessage.(type) {
-				case *MessagePutPeerInfoFromMessage:
-					q.outgoingMessages <- message.PeerInfo
-					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
-				case *MessagePutProviders:
-					q.outgoingMessages <- message.PeerIDs
-					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
-				case *MessagePutValue:
-					q.outgoingMessages <- message.Value
-					q.nextIfCloser(message.SenderPeerInfo.Headers.Signer)
+			case incomingEnvelope := <-q.incomingEnvelopes:
+				logger.Debug("Processing incoming envelope")
+				switch envelope := incomingEnvelope.(type) {
+				case *EnvelopePutPeerInfoFromEnvelope:
+					q.outgoingEnvelopes <- envelope.PeerInfo
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
+				case *EnvelopePutProviders:
+					q.outgoingEnvelopes <- envelope.PeerIDs
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
+				case *EnvelopePutValue:
+					q.outgoingEnvelopes <- envelope.Value
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
 				}
 
 			case <-time.After(maxQueryTime):
-				close(q.outgoingMessages)
+				close(q.outgoingEnvelopes)
 				return
 
 			case <-ctx.Done():
-				close(q.outgoingMessages)
+				close(q.outgoingEnvelopes)
 				return
 			}
 		}
@@ -122,22 +122,22 @@ func (q *query) next() {
 	switch q.queryType {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
-		req = MessageGetPeerInfo{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
+		req = EnvelopeGetPeerInfo{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
-		req = MessageGetProviders{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
+		req = EnvelopeGetProviders{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
-		req = MessageGetValue{
-			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Message(),
+		req = EnvelopeGetValue{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
@@ -146,13 +146,13 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	message, err := net.NewMessage(payloadType, peersToAsk, req)
+	envelope, err := net.NewEnvelope(payloadType, peersToAsk, req)
 	if err != nil {
-		logrus.WithError(err).Warnf("dht.next could not create message")
+		logrus.WithError(err).Warnf("dht.next could not create envelope")
 		return
 	}
-	if err := q.dht.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("dht.next could not send message")
+	if err := q.dht.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("dht.next could not send envelope")
 		return
 	}
 }

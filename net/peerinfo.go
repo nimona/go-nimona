@@ -20,5 +20,5 @@ type PeerInfo struct {
 	// UpdatedAt       time.Time `json:"updated_at"`
 	// LastConnectedAt time.Time `json:"last_connected_at"`
 
-	Message *Message `json:"message"`
+	Envelope *Envelope `json:"envelope"`
 }

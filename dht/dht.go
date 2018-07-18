@@ -45,7 +45,7 @@ func NewDHT(messenger net.Messenger, pm net.PeerManager) (*DHT, error) {
 		queries:     sync.Map{},
 	}
 
-	messenger.Handle("dht", nd.handleMessage)
+	messenger.Handle("dht", nd.handleEnvelope)
 
 	go nd.refresh()
 
@@ -66,98 +66,98 @@ func (nd *DHT) refresh() {
 			return
 		}
 
-		resp := MessageGetPeerInfo{
-			SenderPeerInfo: peerInfo.Message(),
+		resp := EnvelopeGetPeerInfo{
+			SenderPeerInfo: peerInfo.Envelope(),
 			PeerID:         peerInfo.ID,
 		}
 		ctx := context.Background()
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
-		message, err := net.NewMessage(PayloadTypeGetPeerInfo, peerIDs, resp)
+		envelope, err := net.NewEnvelope(PayloadTypeGetPeerInfo, peerIDs, resp)
 		if err != nil {
-			logrus.WithError(err).Warnf("refresh could not create message")
+			logrus.WithError(err).Warnf("refresh could not create envelope")
 			return
 		}
-		if err := nd.messenger.Send(ctx, message); err != nil {
-			logrus.WithError(err).Warnf("refresh could not send message")
+		if err := nd.messenger.Send(ctx, envelope); err != nil {
+			logrus.WithError(err).Warnf("refresh could not send envelope")
 			return
 		}
 		time.Sleep(time.Second * 30)
 	}
 }
 
-func (nd *DHT) handleMessage(message *net.Message) error {
-	// logrus.Debug("Got message", message.String())
-	// if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+func (nd *DHT) handleEnvelope(envelope *net.Envelope) error {
+	// logrus.Debug("Got envelope", envelope.String())
+	// if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 	// 	logrus.WithError(err).Info("could not put sender peer info")
 	// }
-	contentType := message.Type
+	contentType := envelope.Type
 	switch contentType {
 	case PayloadTypeGetPeerInfo:
-		nd.handleGetPeerInfo(message)
+		nd.handleGetPeerInfo(envelope)
 	case PayloadTypePutPeerInfo:
-		nd.handlePutPeerInfoFromMessage(message)
+		nd.handlePutPeerInfoFromEnvelope(envelope)
 	case PayloadTypeGetProviders:
-		nd.handleGetProviders(message)
+		nd.handleGetProviders(envelope)
 	case PayloadTypePutProviders:
-		nd.handlePutProviders(message)
+		nd.handlePutProviders(envelope)
 	case PayloadTypeGetValue:
-		nd.handleGetValue(message)
+		nd.handleGetValue(envelope)
 	case PayloadTypePutValue:
-		nd.handlePutValue(message)
+		nd.handlePutValue(envelope)
 	default:
-		logrus.WithField("message.PayloadType", contentType).Warn("Payload type not known")
+		logrus.WithField("envelope.PayloadType", contentType).Warn("Payload type not known")
 		return nil
 	}
 	return nil
 }
 
-func (nd *DHT) handleGetPeerInfo(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(MessageGetPeerInfo)
+func (nd *DHT) handleGetPeerInfo(incEnvelope *net.Envelope) {
+	payload, ok := incEnvelope.Payload.(EnvelopeGetPeerInfo)
 	if !ok {
-		logrus.Warn("expected MessageGetPeerInfo, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopeGetPeerInfo, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
 	peerInfo, _ := nd.addressBook.GetPeerInfo(payload.PeerID)
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
-	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := MessagePutPeerInfoFromMessage{
-		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
+	closestEnvelopes := getEnvelopesFromPeerInfos(closestPeerInfos)
+	resp := EnvelopePutPeerInfoFromEnvelope{
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		RequestID:      payload.RequestID,
-		ClosestPeers:   closestMessages,
+		ClosestPeers:   closestEnvelopes,
 	}
 	if peerInfo != nil {
-		resp.PeerInfo = peerInfo.Message
+		resp.PeerInfo = peerInfo.Envelope
 	}
 
 	ctx := context.Background()
-	to := []string{incMessage.Headers.Signer}
-	message, err := net.NewMessage(PayloadTypePutPeerInfo, to, resp)
+	to := []string{incEnvelope.Headers.Signer}
+	envelope, err := net.NewEnvelope(PayloadTypePutPeerInfo, to, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("handleGetPeerInfo could not create message")
+		logrus.WithError(err).Warnf("handleGetPeerInfo could not create envelope")
 		return
 	}
-	if err := nd.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("handleGetPeerInfo could not send message")
+	if err := nd.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("handleGetPeerInfo could not send envelope")
 		return
 	}
 }
 
-func (nd *DHT) handlePutPeerInfoFromMessage(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(MessagePutPeerInfoFromMessage)
+func (nd *DHT) handlePutPeerInfoFromEnvelope(incEnvelope *net.Envelope) {
+	payload, ok := incEnvelope.Payload.(EnvelopePutPeerInfoFromEnvelope)
 	if !ok {
-		logrus.Warn("expected MessagePutPeerInfoFromMessage, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopePutPeerInfoFromEnvelope, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.addressBook.PutPeerInfoFromMessage(peerInfo)
+		nd.addressBook.PutPeerInfoFromEnvelope(peerInfo)
 	}
 
 	if payload.RequestID == "" {
@@ -169,16 +169,16 @@ func (nd *DHT) handlePutPeerInfoFromMessage(incMessage *net.Message) {
 		return
 	}
 
-	q.(*query).incomingMessages <- payload
+	q.(*query).incomingEnvelopes <- payload
 }
 
-func (nd *DHT) handleGetProviders(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(MessageGetProviders)
+func (nd *DHT) handleGetProviders(incEnvelope *net.Envelope) {
+	payload, ok := incEnvelope.Payload.(EnvelopeGetProviders)
 	if !ok {
-		logrus.Warn("expected MessageGetProviders, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopeGetProviders, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
@@ -188,40 +188,40 @@ func (nd *DHT) handleGetProviders(incMessage *net.Message) {
 	}
 
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
-	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := MessagePutProviders{
-		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
+	closestEnvelopes := getEnvelopesFromPeerInfos(closestPeerInfos)
+	resp := EnvelopePutProviders{
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		PeerIDs:        providers,
-		ClosestPeers:   closestMessages,
+		ClosestPeers:   closestEnvelopes,
 	}
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.Headers.Signer}
-	message, err := net.NewMessage(PayloadTypePutProviders, to, resp)
+	envelope, err := net.NewEnvelope(PayloadTypePutProviders, to, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("handleGetProviders could not create message")
+		logrus.WithError(err).Warnf("handleGetProviders could not create envelope")
 		return
 	}
-	if err := nd.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("handleGetProviders could not send message")
+	if err := nd.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("handleGetProviders could not send envelope")
 		return
 	}
 }
 
-func (nd *DHT) handlePutProviders(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(MessagePutProviders)
+func (nd *DHT) handlePutProviders(incEnvelope *net.Envelope) {
+	payload, ok := incEnvelope.Payload.(EnvelopePutProviders)
 	if !ok {
-		logrus.Warn("expected MessagePutProviders, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopePutProviders, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.addressBook.PutPeerInfoFromMessage(peerInfo)
+		nd.addressBook.PutPeerInfoFromEnvelope(peerInfo)
 	}
 
 	if err := nd.store.PutProvider(payload.Key, payload.PeerIDs...); err != nil {
@@ -237,57 +237,57 @@ func (nd *DHT) handlePutProviders(incMessage *net.Message) {
 		return
 	}
 
-	q.(*query).incomingMessages <- payload
+	q.(*query).incomingEnvelopes <- payload
 }
 
-func (nd *DHT) handleGetValue(incMessage *net.Message) {
-	payload, ok := incMessage.Payload.(MessageGetValue)
+func (nd *DHT) handleGetValue(incEnvelope *net.Envelope) {
+	payload, ok := incEnvelope.Payload.(EnvelopeGetValue)
 	if !ok {
-		logrus.Warn("expected MessageGetValue, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopeGetValue, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
 	value, _ := nd.store.GetValue(payload.Key)
 
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
-	closestMessages := getMessagesFromPeerInfos(closestPeerInfos)
-	resp := MessagePutValue{
-		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
+	closestEnvelopes := getEnvelopesFromPeerInfos(closestPeerInfos)
+	resp := EnvelopePutValue{
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		Value:          value,
-		ClosestPeers:   closestMessages,
+		ClosestPeers:   closestEnvelopes,
 	}
 
 	ctx := context.Background()
 	to := []string{payload.SenderPeerInfo.Headers.Signer}
-	message, err := net.NewMessage(PayloadTypePutValue, to, resp)
+	envelope, err := net.NewEnvelope(PayloadTypePutValue, to, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("handleGetValue could not create message")
+		logrus.WithError(err).Warnf("handleGetValue could not create envelope")
 		return
 	}
-	if err := nd.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("handleGetValue could not send message")
+	if err := nd.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("handleGetValue could not send envelope")
 		return
 	}
 }
 
-func (nd *DHT) handlePutValue(incMessage *net.Message) {
+func (nd *DHT) handlePutValue(incEnvelope *net.Envelope) {
 	// TODO handle and log errors
-	payload, ok := incMessage.Payload.(MessagePutValue)
+	payload, ok := incEnvelope.Payload.(EnvelopePutValue)
 	if !ok {
-		logrus.Warn("expected MessagePutValue, got ", reflect.TypeOf(incMessage.Payload))
+		logrus.Warn("expected EnvelopePutValue, got ", reflect.TypeOf(incEnvelope.Payload))
 		return
 	}
-	if err := nd.addressBook.PutPeerInfoFromMessage(payload.SenderPeerInfo); err != nil {
+	if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 		logrus.WithError(err).Info("could not put sender peer info")
 	}
 
 	for _, peerInfo := range payload.ClosestPeers {
-		nd.addressBook.PutPeerInfoFromMessage(peerInfo)
+		nd.addressBook.PutPeerInfoFromEnvelope(peerInfo)
 	}
 
 	if err := nd.store.PutValue(payload.Key, payload.Value); err != nil {
@@ -303,7 +303,7 @@ func (nd *DHT) handlePutValue(incMessage *net.Message) {
 		return
 	}
 
-	q.(*query).incomingMessages <- payload
+	q.(*query).incomingEnvelopes <- payload
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
@@ -363,8 +363,8 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*net.PeerInfo, erro
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        PeerInfoQuery,
-		incomingMessages: make(chan interface{}),
-		outgoingMessages: make(chan interface{}),
+		incomingEnvelopes: make(chan interface{}),
+		outgoingEnvelopes: make(chan interface{}),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -373,10 +373,10 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*net.PeerInfo, erro
 
 	for {
 		select {
-		case value := <-q.outgoingMessages:
-			message := value.(*net.Message)
-			nd.addressBook.PutPeerInfoFromMessage(message)
-			return nd.addressBook.GetPeerInfo(message.Headers.Signer)
+		case value := <-q.outgoingEnvelopes:
+			envelope := value.(*net.Envelope)
+			nd.addressBook.PutPeerInfoFromEnvelope(envelope)
+			return nd.addressBook.GetPeerInfo(envelope.Headers.Signer)
 		case <-time.After(maxQueryTime):
 			return nil, ErrNotFound
 		case <-ctx.Done():
@@ -391,20 +391,20 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
-	resp := MessagePutValue{
-		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
+	resp := EnvelopePutValue{
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		Key:            key,
 		Value:          value,
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	message, err := net.NewMessage(PayloadTypePutValue, closestPeerIDs, resp)
+	envelope, err := net.NewEnvelope(PayloadTypePutValue, closestPeerIDs, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("PutValue could not create message")
+		logrus.WithError(err).Warnf("PutValue could not create envelope")
 		return err
 	}
-	if err := nd.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("PutValue could not send message")
+	if err := nd.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("PutValue could not send envelope")
 		return err
 	}
 
@@ -417,8 +417,8 @@ func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ValueQuery,
-		incomingMessages: make(chan interface{}),
-		outgoingMessages: make(chan interface{}),
+		incomingEnvelopes: make(chan interface{}),
+		outgoingEnvelopes: make(chan interface{}),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -427,7 +427,7 @@ func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 
 	for {
 		select {
-		case value := <-q.outgoingMessages:
+		case value := <-q.outgoingEnvelopes:
 			valueStr, ok := value.(string)
 			if !ok {
 				continue
@@ -449,20 +449,20 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	}
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
-	resp := MessagePutProviders{
-		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Message(),
+	resp := EnvelopePutProviders{
+		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		Key:            key,
 		PeerIDs:        []string{localPeerID},
 	}
 
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	message, err := net.NewMessage(PayloadTypePutProviders, closestPeerIDs, resp)
+	envelope, err := net.NewEnvelope(PayloadTypePutProviders, closestPeerIDs, resp)
 	if err != nil {
-		logrus.WithError(err).Warnf("PutProviders could not create message")
+		logrus.WithError(err).Warnf("PutProviders could not create envelope")
 		return err
 	}
-	if err := nd.messenger.Send(ctx, message); err != nil {
-		logrus.WithError(err).Warnf("PutProviders could not send message")
+	if err := nd.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("PutProviders could not send envelope")
 		return err
 	}
 
@@ -475,8 +475,8 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
-		incomingMessages: make(chan interface{}),
-		outgoingMessages: make(chan interface{}),
+		incomingEnvelopes: make(chan interface{}),
+		outgoingEnvelopes: make(chan interface{}),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -486,7 +486,7 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 	providers := []string{}
 	for {
 		select {
-		case values := <-q.outgoingMessages:
+		case values := <-q.outgoingEnvelopes:
 			valuesStr, ok := values.([]string)
 			if !ok {
 				continue
@@ -516,10 +516,10 @@ func getPeerIDsFromPeerInfos(peerInfos []*net.PeerInfo) []string {
 	return peerIDs
 }
 
-func getMessagesFromPeerInfos(peerInfos []*net.PeerInfo) []*net.Message {
-	messages := []*net.Message{}
+func getEnvelopesFromPeerInfos(peerInfos []*net.PeerInfo) []*net.Envelope {
+	envelopes := []*net.Envelope{}
 	for _, peerInfo := range peerInfos {
-		messages = append(messages, peerInfo.Message)
+		envelopes = append(envelopes, peerInfo.Envelope)
 	}
-	return messages
+	return envelopes
 }

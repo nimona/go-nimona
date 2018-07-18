@@ -15,11 +15,11 @@ import (
 
 type wireTestSuite struct {
 	suite.Suite
-	bootstrapPeerInfos []*nnet.Message
+	bootstrapPeerInfos []*nnet.Envelope
 }
 
 func (suite *wireTestSuite) SetupTest() {
-	suite.bootstrapPeerInfos = []*nnet.Message{}
+	suite.bootstrapPeerInfos = []*nnet.Envelope{}
 }
 
 type DummyPayload struct {
@@ -31,8 +31,8 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	_, p2, w2, r2 := suite.newPeer()
 
 	p1.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", port1)}
-	r2.PutPeerInfoFromMessage(p1.Message())
-	r1.PutPeerInfoFromMessage(p2.Message())
+	r2.PutPeerInfoFromEnvelope(p1.Envelope())
+	r1.PutPeerInfoFromEnvelope(p2.Envelope())
 
 	nnet.RegisterContentType("foo.bar", &DummyPayload{})
 
@@ -45,63 +45,63 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	w1MessageHandled := false
-	w2MessageHandled := false
+	w1EnvelopeHandled := false
+	w2EnvelopeHandled := false
 
-	w1.Handle("foo", func(message *nnet.Message) error {
-		suite.Equal(payload.Foo, message.Payload.(*DummyPayload).Foo)
-		w1MessageHandled = true
+	w1.Handle("foo", func(envelope *nnet.Envelope) error {
+		suite.Equal(payload.Foo, envelope.Payload.(*DummyPayload).Foo)
+		w1EnvelopeHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(message *nnet.Message) error {
-		suite.Equal(payload.Foo, message.Payload.(*DummyPayload).Foo)
-		w2MessageHandled = true
+	w2.Handle("foo", func(envelope *nnet.Envelope) error {
+		suite.Equal(payload.Foo, envelope.Payload.(*DummyPayload).Foo)
+		w2EnvelopeHandled = true
 		wg.Done()
 		return nil
 	})
 
 	ctx := context.Background()
 
-	message, err := nnet.NewMessage("foo.bar", []string{p1.ID}, payload)
+	envelope, err := nnet.NewEnvelope("foo.bar", []string{p1.ID}, payload)
 	suite.NoError(err)
-	err = w2.Send(ctx, message)
+	err = w2.Send(ctx, envelope)
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
 
-	message, err = nnet.NewMessage("foo.bar", []string{p2.ID}, payload)
+	envelope, err = nnet.NewEnvelope("foo.bar", []string{p2.ID}, payload)
 	suite.NoError(err)
-	err = w1.Send(ctx, message)
+	err = w1.Send(ctx, envelope)
 	suite.NoError(err)
 
 	wg.Wait()
 
-	suite.True(w1MessageHandled)
-	suite.True(w2MessageHandled)
+	suite.True(w1EnvelopeHandled)
+	suite.True(w2EnvelopeHandled)
 }
 
 // func (suite *wireTestSuite) TestRelayedSendSuccess() {
 // 	portR, pR, wR, rR := suite.newPeer()
-// 	pRs := pR.Message()
+// 	pRs := pR.Envelope()
 // 	pRs.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", portR)}
 
 // 	_, p1, w1, r1 := suite.newPeer()
 // 	_, p2, w2, r2 := suite.newPeer()
 
-// 	r1.PutPeerInfoFromMessage(&pRs)
-// 	r2.PutPeerInfoFromMessage(&pRs)
+// 	r1.PutPeerInfoFromEnvelope(&pRs)
+// 	r2.PutPeerInfoFromEnvelope(&pRs)
 
-// 	p1s := p1.Message()
+// 	p1s := p1.Envelope()
 // 	p1s.Addresses = []string{"relay:" + pRs.ID}
-// 	rR.PutPeerInfoFromMessage(&p1s)
-// 	r2.PutPeerInfoFromMessage(&p1s)
+// 	rR.PutPeerInfoFromEnvelope(&p1s)
+// 	r2.PutPeerInfoFromEnvelope(&p1s)
 
-// 	p2s := p2.Message()
+// 	p2s := p2.Envelope()
 // 	p2s.Addresses = []string{"relay:" + pRs.ID}
-// 	rR.PutPeerInfoFromMessage(&p2s)
-// 	r1.PutPeerInfoFromMessage(&p2s)
+// 	rR.PutPeerInfoFromEnvelope(&p2s)
+// 	r1.PutPeerInfoFromEnvelope(&p2s)
 
 // 	dht.NewDHT(wR, rR)
 // 	dht.NewDHT(w1, r1)
@@ -116,56 +116,56 @@ func (suite *wireTestSuite) TestSendSuccess() {
 // 	wg := sync.WaitGroup{}
 // 	wg.Add(2)
 
-// 	w1MessageHandled := false
-// 	w2MessageHandled := false
+// 	w1EnvelopeHandled := false
+// 	w2EnvelopeHandled := false
 
-// 	w1.Handle("foo", func(message *nnet.Message) error {
+// 	w1.Handle("foo", func(envelope *nnet.Envelope) error {
 // 		decPayload := map[string]string{}
-// 		err := message.DecodePayload(&decPayload)
+// 		err := envelope.DecodePayload(&decPayload)
 // 		suite.NoError(err)
 // 		suite.Equal(payload, decPayload)
-// 		w1MessageHandled = true
+// 		w1EnvelopeHandled = true
 // 		wg.Done()
 // 		return nil
 // 	})
 
-// 	w2.Handle("foo", func(message *nnet.Message) error {
+// 	w2.Handle("foo", func(envelope *nnet.Envelope) error {
 // 		decPayload := map[string]string{}
-// 		err := message.DecodePayload(&decPayload)
+// 		err := envelope.DecodePayload(&decPayload)
 // 		suite.NoError(err)
 // 		suite.Equal(payload, decPayload)
-// 		w2MessageHandled = true
+// 		w2EnvelopeHandled = true
 // 		wg.Done()
 // 		return nil
 // 	})
 
 // 	ctx := context.Background()
 
-// 	message, err := nnet.NewMessage("foo.bar", []string{p1.ID}, payload)
+// 	envelope, err := nnet.NewEnvelope("foo.bar", []string{p1.ID}, payload)
 // 	suite.NoError(err)
-// 	err = w2.Send(ctx, message)
+// 	err = w2.Send(ctx, envelope)
 // 	suite.NoError(err)
 
 // 	time.Sleep(time.Second)
 
-// 	message, err = nnet.NewMessage("foo.bar", []string{p2.ID}, payload)
+// 	envelope, err = nnet.NewEnvelope("foo.bar", []string{p2.ID}, payload)
 // 	suite.NoError(err)
-// 	err = w1.Send(ctx, message)
+// 	err = w1.Send(ctx, envelope)
 // 	suite.NoError(err)
 
 // 	wg.Wait()
 
-// 	suite.True(w1MessageHandled)
-// 	suite.True(w2MessageHandled)
+// 	suite.True(w1EnvelopeHandled)
+// 	suite.True(w2EnvelopeHandled)
 // }
 
-func (suite *wireTestSuite) newPeer() (int, *nnet.SecretPeerInfo, nnet.Messenger, *nnet.AddressBook) {
+func (suite *wireTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Messenger, *nnet.AddressBook) {
 	reg := nnet.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
 
 	for _, peerInfo := range suite.bootstrapPeerInfos {
-		err := reg.PutPeerInfoFromMessage(peerInfo)
+		err := reg.PutPeerInfoFromEnvelope(peerInfo)
 		suite.NoError(err)
 	}
 

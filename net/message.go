@@ -7,8 +7,8 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-func NewMessage(contentType string, recipients []string, payload interface{}) (*Message, error) {
-	message := &Message{
+func NewEnvelope(contentType string, recipients []string, payload interface{}) (*Envelope, error) {
+	envelope := &Envelope{
 		Version: 0,
 		Type:    contentType,
 		Headers: Headers{
@@ -16,7 +16,7 @@ func NewMessage(contentType string, recipients []string, payload interface{}) (*
 		},
 		Payload: payload,
 	}
-	return message, nil
+	return envelope, nil
 }
 
 type Headers struct {
@@ -24,8 +24,8 @@ type Headers struct {
 	Signer     string   `json:"signer,omitempty"`
 }
 
-// Message for exchanging data via the messenger
-type Message struct {
+// Envelope for exchanging data via the messenger
+type Envelope struct {
 	Version   uint        `json:"version"`
 	Type      string      `json:"@type"`
 	Headers   Headers     `json:"headers,omitempty"`
@@ -33,36 +33,36 @@ type Message struct {
 	Signature []byte      `json:"signature,omitempty"`
 }
 
-func (message *Message) CodecDecodeSelf(dec *codec.Decoder) {
-	dec.MustDecode(&message.Version)
-	dec.MustDecode(&message.Type)
-	message.Payload = GetContentType(message.Type)
-	dec.MustDecode(&message.Payload)
-	dec.MustDecode(&message.Headers)
-	dec.MustDecode(&message.Payload)
-	dec.MustDecode(&message.Signature)
+func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
+	dec.MustDecode(&envelope.Version)
+	dec.MustDecode(&envelope.Type)
+	envelope.Payload = GetContentType(envelope.Type)
+	dec.MustDecode(&envelope.Payload)
+	dec.MustDecode(&envelope.Headers)
+	dec.MustDecode(&envelope.Payload)
+	dec.MustDecode(&envelope.Signature)
 }
 
-func (message *Message) CodecEncodeSelf(enc *codec.Encoder) {
-	enc.MustEncode(&message.Version)
-	enc.MustEncode(&message.Type)
-	enc.MustEncode(&message.Payload)
-	enc.MustEncode(&message.Headers)
-	enc.MustEncode(&message.Payload)
-	enc.MustEncode(&message.Signature)
+func (envelope *Envelope) CodecEncodeSelf(enc *codec.Encoder) {
+	enc.MustEncode(&envelope.Version)
+	enc.MustEncode(&envelope.Type)
+	enc.MustEncode(&envelope.Payload)
+	enc.MustEncode(&envelope.Headers)
+	enc.MustEncode(&envelope.Payload)
+	enc.MustEncode(&envelope.Signature)
 }
 
-func (message *Message) IsSigned() bool {
-	// TODO make this part of the message and digest?
-	return message.Signature != nil && len(message.Signature) > 0
+func (envelope *Envelope) IsSigned() bool {
+	// TODO make this part of the envelope and digest?
+	return envelope.Signature != nil && len(envelope.Signature) > 0
 }
 
-func getMessageDigest(message *Message) ([]byte, error) {
+func getEnvelopeDigest(envelope *Envelope) ([]byte, error) {
 	digest := []interface{}{
-		message.Version,
-		message.Type,
-		message.Headers,
-		message.Payload,
+		envelope.Version,
+		envelope.Type,
+		envelope.Headers,
+		envelope.Payload,
 	}
 
 	digestBytes, err := Marshal(digest)
@@ -73,9 +73,9 @@ func getMessageDigest(message *Message) ([]byte, error) {
 	return digestBytes, nil
 }
 
-func (message *Message) Sign(signerPeerInfo *SecretPeerInfo) error {
-	message.Headers.Signer = signerPeerInfo.ID
-	digest, err := getMessageDigest(message)
+func (envelope *Envelope) Sign(signerPeerInfo *PrivatePeerInfo) error {
+	envelope.Headers.Signer = signerPeerInfo.ID
+	digest, err := getEnvelopeDigest(envelope)
 	if err != nil {
 		return err
 	}
@@ -85,17 +85,17 @@ func (message *Message) Sign(signerPeerInfo *SecretPeerInfo) error {
 		return err
 	}
 
-	message.Signature = signature
+	envelope.Signature = signature
 	return nil
 }
 
-func (message *Message) Verify() error {
-	digest, err := getMessageDigest(message)
+func (envelope *Envelope) Verify() error {
+	digest, err := getEnvelopeDigest(envelope)
 	if err != nil {
 		return err
 	}
 
-	return Verify(message.Headers.Signer, digest, message.Signature)
+	return Verify(envelope.Headers.Signer, digest, envelope.Signature)
 }
 
 func Marshal(o interface{}) ([]byte, error) {
@@ -108,8 +108,8 @@ func Marshal(o interface{}) ([]byte, error) {
 	return b, nil
 }
 
-func Unmarshal(b []byte) (*Message, error) {
-	m := &Message{}
+func Unmarshal(b []byte) (*Envelope, error) {
+	m := &Envelope{}
 	dec := codec.NewDecoderBytes(b, getCborHandler())
 
 	if err := dec.Decode(m); err != nil {
@@ -119,9 +119,9 @@ func Unmarshal(b []byte) (*Message, error) {
 	return m, nil
 }
 
-// DecodePayload decodes the message's payload according to the coded,
+// DecodePayload decodes the envelope's payload according to the coded,
 // and stores the result in the value pointed to by r.
-func (h *Message) DecodePayload(r interface{}) error {
+func (h *Envelope) DecodePayload(r interface{}) error {
 	enc, err := Marshal(h.Payload)
 	if err != nil {
 		return err
@@ -131,8 +131,8 @@ func (h *Message) DecodePayload(r interface{}) error {
 	return dec.Decode(r)
 }
 
-func PrettifyMessage(message *Message) string {
-	b, err := json.MarshalIndent(message, "", "  ")
+func PrettifyEnvelope(envelope *Envelope) string {
+	b, err := json.MarshalIndent(envelope, "", "  ")
 	if err != nil {
 		return "[cannot marshal, " + err.Error() + "]"
 	}

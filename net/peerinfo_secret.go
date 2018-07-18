@@ -1,18 +1,18 @@
 package net
 
-// SecretPeerInfo is a PeerInfo with an additional PrivateKey
-type SecretPeerInfo struct {
+// PrivatePeerInfo is a PeerInfo with an additional PrivateKey
+type PrivatePeerInfo struct {
 	ID         string   `json:"id"`
 	PrivateKey string   `json:"private_key"`
 	Addresses  []string `json:"addresses"`
 }
 
-// Message returns a signed Message
-func (pi *SecretPeerInfo) Message() *Message {
+// Envelope returns a signed Envelope
+func (pi *PrivatePeerInfo) Envelope() *Envelope {
 	// TODO content type
-	message, _ := NewMessage(PeerInfoContentType, nil, &PeerInfoPayload{
+	envelope, _ := NewEnvelope(PeerInfoContentType, nil, &PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
-	message.Sign(pi)
-	return message
+	envelope.Sign(pi)
+	return envelope
 }
