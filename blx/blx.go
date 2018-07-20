@@ -77,7 +77,7 @@ func (blx *blockExchange) handleEnvelope(envelope *net.Envelope) error {
 }
 
 func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
-	payload := &payloadTransferBlock{}
+	payload := &PayloadTransferBlock{}
 	if err := envelope.DecodePayload(payload); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
 		return nil
 	}
 
-	req, ok := value.(*payloadTransferRequestBlock)
+	req, ok := value.(*PayloadRequestBlock)
 	if !ok {
 		return ErrInvalidRequest
 	}
@@ -108,7 +108,7 @@ func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
 }
 
 func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
-	payload := &payloadTransferRequestBlock{}
+	payload := &PayloadRequestBlock{}
 	if err := incEnvelope.DecodePayload(payload); err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
 		status = StatusNotFound
 	}
 
-	resp := payloadTransferBlock{
+	resp := PayloadTransferBlock{
 		Nonce:  payload.Nonce,
 		Block:  pblock,
 		Status: status,
@@ -147,7 +147,7 @@ func (blx *blockExchange) Get(key string, recipient string) (
 	// TODO remember to remove nonce
 	nonce := net.RandStringBytesMaskImprSrc(8)
 
-	req := &payloadTransferRequestBlock{
+	req := &PayloadRequestBlock{
 		RequestingPeerID: "MISSING-REQUEST-PEER-ID", // TODO Missing requesting peer id
 		Nonce:            nonce,
 		Key:              key,
@@ -183,7 +183,7 @@ func (blx *blockExchange) Get(key string, recipient string) (
 	for {
 		select {
 		case response := <-req.response:
-			resp, ok := response.(*payloadTransferBlock)
+			resp, ok := response.(*PayloadTransferBlock)
 			if !ok {
 				return nil, ErrInvalidBlock
 			}
@@ -213,7 +213,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 
 	nonce := net.RandStringBytesMaskImprSrc(8)
 
-	resp := payloadTransferBlock{
+	resp := PayloadTransferBlock{
 		Nonce: nonce,
 		Block: &block,
 	}

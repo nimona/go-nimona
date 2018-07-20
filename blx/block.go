@@ -1,8 +1,10 @@
 package blx
 
 const (
+	// PayloadTypeTransferBlock type for PayloadTransferBlock
 	PayloadTypeTransferBlock string = "blx.transfer-block"
-	PayloadTypeRequestBlock         = "blx.request-block"
+	// PayloadTypeRequestBlock type for PayloadRequestBlock
+	PayloadTypeRequestBlock = "blx.request-block"
 )
 
 const (
@@ -22,13 +24,13 @@ type Block struct {
 	Data []byte `json:"data"`
 }
 
-type payloadTransferBlock struct {
+type PayloadTransferBlock struct {
 	Status int    `json:"status"`
 	Nonce  string `json:"nonce"`
 	Block  *Block `json:"block,omitempty"`
 }
 
-type payloadTransferRequestBlock struct {
+type PayloadRequestBlock struct {
 	RequestingPeerID string `json:"req_peer_id"`
 	Nonce            string `json:"nonce"`
 	Key              string `json:"key,omitempty"`
