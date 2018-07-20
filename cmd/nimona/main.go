@@ -371,11 +371,7 @@ func main() {
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			envelope, err := net.NewEnvelope("demo.hello", to, &Hello{msg})
-			if err != nil {
-				c.Println("Could not create envelope", err)
-				return
-			}
+			envelope := net.NewEnvelope("demo.hello", to, &Hello{msg})
 			if err := n.Send(ctx, envelope); err != nil {
 				c.Println("Could not send envelope", err)
 				return
