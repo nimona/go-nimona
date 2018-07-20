@@ -11,11 +11,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nimona/go-nimona/telemetry"
+
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 
 	"gopkg.in/abiosoft/ishell.v2"
 )
@@ -26,21 +27,39 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfos = []mesh.PeerInfo{
-	mesh.PeerInfo{
-		ID: "7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562",
-		Addresses: []string{
-			"tcp:andromeda.nimona.io:26801",
+var bootstrapPeerInfoEnvelopes = []*net.Envelope{
+	&net.Envelope{
+		Type: "peer.info",
+		Headers: net.Headers{
+			Signer: "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
 		},
-		PublicKey: [32]byte{
-			119, 48, 183, 62, 52, 174, 46, 58, 217, 34, 53, 174, 252, 126,
-			224, 54, 103, 54, 96, 47, 150, 120, 94, 111, 53, 232, 183, 16,
-			146, 59, 69, 98,
+		Payload: net.PeerInfoPayload{
+			Addresses: []string{
+				"tcp:andromeda.nimona.io:21013",
+			},
+		},
+		Signature: []byte{
+			63, 75, 91, 132, 252, 236, 211, 254, 9, 245, 64, 255, 216, 226,
+			222, 153, 41, 203, 66, 233, 19, 218, 225, 212, 133, 166, 128,
+			93, 115, 28, 85, 1, 87, 219, 10, 223, 126, 26, 134, 96, 56, 86,
+			223, 238, 113, 120, 165, 25, 103, 185, 231, 232, 204, 227, 48,
+			122, 80, 185, 205, 86, 0, 110, 94, 59,
 		},
 	},
 }
 
+// Hello payload
+type Hello struct {
+	Body string
+}
+
+func init() {
+	telemetry.SetupKeenCollector()
+	net.RegisterContentType("demo.hello", Hello{})
+}
+
 func main() {
+
 	configPath := os.Getenv("NIMONA_PATH")
 
 	if configPath == "" {
@@ -52,12 +71,10 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	keyPath := path.Join(configPath, "peer.json")
-
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := mesh.NewRegisty()
-	spi, err := reg.LoadOrCreateLocalPeerInfo(keyPath)
+	reg := net.NewAddressBook()
+	spi, err := reg.LoadOrCreateLocalPeerInfo(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
@@ -65,16 +82,30 @@ func main() {
 		log.Fatal("could not put local peer")
 	}
 
-	for _, peerInfo := range bootstrapPeerInfos {
-		reg.PutPeerInfo(&peerInfo)
+	for _, peerInfoEnvelope := range bootstrapPeerInfoEnvelopes {
+		reg.PutPeerInfoFromEnvelope(peerInfoEnvelope)
 	}
+
+	// mmmm := &net.Envelope{
+	// 	Type: "peer.info",
+	// 	Payload: net.PeerInfoPayload{
+	// 		Addresses: []string{
+	// 			"tcp:andromeda.nimona.io:21013",
+	// 		},
+	// 	},
+	// }
+	// mmmm.Sign(spi)
+	// bbb, _ := json.MarshalIndent(mmmm, "", "  ")
+	// fmt.Println(string(bbb))
+	// fmt.Println(mmmm.Signature)
+	// os.Exit(1)
 
 	storagePath := path.Join(configPath, "storage")
 
-	wre, _ := wire.NewWire(reg)
-	dht, _ := dht.NewDHT(wre, reg)
+	n, _ := net.NewMessenger(reg)
+	dht, _ := dht.NewDHT(n, reg)
 	dpr := blx.NewDiskStorage(storagePath)
-	blx, _ := blx.NewBlockExchange(wre, dpr)
+	blx, _ := blx.NewBlockExchange(n, dpr)
 
 	// Announce blocks on init and on new blocks
 	go func() {
@@ -91,10 +122,11 @@ func main() {
 		})
 	}()
 
-	wre.Listen(fmt.Sprintf("0.0.0.0:%d", port))
+	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	wre.HandleExtensionEvents("msg", func(event *wire.Message) error {
-		fmt.Printf("___ Got message %s\n", string(event.Payload))
+	n.Handle("demo", func(envelope *net.Envelope) error {
+		payload := envelope.Payload.(Hello)
+		fmt.Printf("___ Got envelope %s\n", payload.Body)
 		return nil
 	})
 
@@ -286,8 +318,6 @@ func main() {
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.ID)
-				c.Printf("  - public key: %x\n", peer.PublicKey)
-				c.Printf("  - signature: %x\n", peer.Signature)
 				c.Printf("  - addresses:\n")
 				for _, address := range peer.Addresses {
 					c.Printf("     - %s\n", address)
@@ -323,8 +353,6 @@ func main() {
 
 			peer := reg.GetLocalPeerInfo()
 			c.Println("* " + peer.ID)
-			c.Printf("  - public key: %x\n", peer.PublicKey)
-			c.Printf("  - signature: %x\n", peer.Signature)
 			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
 				c.Printf("     - %s\n", address)
@@ -337,14 +365,16 @@ func main() {
 		Name: "send",
 		Func: func(c *ishell.Context) {
 			if len(c.Args) < 2 {
-				c.Println("Missing peer id or message")
+				c.Println("Missing peer id or envelope")
 				return
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			if err := wre.Send(ctx, "msg", "msg", msg, to); err != nil {
-				c.Println("Could not send message", err)
+			envelope := net.NewEnvelope("demo.hello", to, &Hello{msg})
+			if err := n.Send(ctx, envelope); err != nil {
+				c.Println("Could not send envelope", err)
+				return
 			}
 		},
 		Help: "list protocols for local peer",

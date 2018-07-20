@@ -5,24 +5,25 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/mesh"
+	"github.com/nimona/go-nimona/net"
 )
 
 type API struct {
 	router *gin.Engine
 }
 
-func New(reg mesh.Registry, dht *dht.DHT) *API {
+func New(addressBook net.PeerManager, dht *dht.DHT) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
 	local.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, reg.GetLocalPeerInfo())
+		c.JSON(http.StatusOK, addressBook.GetLocalPeerInfo())
 	})
 	peers := router.Group("/api/v1/peers")
 	peers.GET("/", func(c *gin.Context) {
-		peers, err := reg.GetAllPeerInfo()
+		peers, err := addressBook.GetAllPeerInfo()
 		if err != nil {
 			c.AbortWithError(500, err)
 			return

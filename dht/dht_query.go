@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nimona/go-nimona/net"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -19,15 +20,14 @@ const (
 )
 
 type query struct {
-	dht              *DHT
-	id               string
-	key              string
-	queryType        QueryType
-	closestPeerID    string
-	contactedPeers   sync.Map
-	incomingMessages chan interface{}
-	outgoingMessages chan interface{}
-	// lock             *sync.RWMutex
+	dht               *DHT
+	id                string
+	key               string
+	queryType         QueryType
+	closestPeerID     string
+	contactedPeers    sync.Map
+	incomingEnvelopes chan interface{}
+	outgoingEnvelopes chan interface{}
 }
 
 func (q *query) Run(ctx context.Context) {
@@ -37,13 +37,13 @@ func (q *query) Run(ctx context.Context) {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
-			if peerInfo, err := q.dht.registry.GetPeerInfo(q.key); err != nil {
-				q.outgoingMessages <- peerInfo
+			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err != nil {
+				q.outgoingEnvelopes <- peerInfo
 			}
 		case ProviderQuery:
 			if providers, err := q.dht.store.GetProviders(q.key); err != nil {
 				for _, provider := range providers {
-					q.outgoingMessages <- provider
+					q.outgoingEnvelopes <- provider
 				}
 			}
 		case ValueQuery:
@@ -51,32 +51,32 @@ func (q *query) Run(ctx context.Context) {
 			if err != nil {
 				break
 			}
-			q.outgoingMessages <- value
+			q.outgoingEnvelopes <- value
 		}
 
 		// and now, wait for something to happen
 		for {
 			select {
-			case incomingMessage := <-q.incomingMessages:
-				logger.Debug("Processing incoming message")
-				switch message := incomingMessage.(type) {
-				case *messagePutPeerInfo:
-					q.outgoingMessages <- &message.PeerInfo
-					q.nextIfCloser(message.PeerID)
-				case *messagePutProviders:
-					q.outgoingMessages <- message.PeerIDs
-					q.nextIfCloser(message.SenderPeerInfo.ID)
-				case *messagePutValue:
-					q.outgoingMessages <- message.Value
-					q.nextIfCloser(message.SenderPeerInfo.ID)
+			case incomingEnvelope := <-q.incomingEnvelopes:
+				logger.Debug("Processing incoming envelope")
+				switch envelope := incomingEnvelope.(type) {
+				case *EnvelopePutPeerInfoFromEnvelope:
+					q.outgoingEnvelopes <- envelope.PeerInfo
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
+				case *EnvelopePutProviders:
+					q.outgoingEnvelopes <- envelope.PeerIDs
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
+				case *EnvelopePutValue:
+					q.outgoingEnvelopes <- envelope.Value
+					q.nextIfCloser(envelope.SenderPeerInfo.Headers.Signer)
 				}
 
 			case <-time.After(maxQueryTime):
-				close(q.outgoingMessages)
+				close(q.outgoingEnvelopes)
 				return
 
 			case <-ctx.Done():
-				close(q.outgoingMessages)
+				close(q.outgoingEnvelopes)
 				return
 			}
 		}
@@ -122,22 +122,22 @@ func (q *query) next() {
 	switch q.queryType {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
-		req = messageGetPeerInfo{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+		req = EnvelopeGetPeerInfo{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			PeerID:         q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
-		req = messageGetProviders{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+		req = EnvelopeGetProviders{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
 	case ValueQuery:
 		payloadType = PayloadTypeGetValue
-		req = messageGetValue{
-			SenderPeerInfo: q.dht.registry.GetLocalPeerInfo().ToPeerInfo(),
+		req = EnvelopeGetValue{
+			SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Envelope(),
 			RequestID:      q.id,
 			Key:            q.key,
 		}
@@ -146,5 +146,9 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	q.dht.wire.Send(ctx, wireExtention, payloadType, req, peersToAsk)
+	envelope := net.NewEnvelope(payloadType, peersToAsk, req)
+	if err := q.dht.messenger.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("dht.next could not send envelope")
+		return
+	}
 }

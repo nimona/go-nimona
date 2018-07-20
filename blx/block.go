@@ -1,13 +1,26 @@
 package blx
 
-const (
-	PayloadTypeTransferBlock string = "transfer-block"
-	PayloadTypeRequestBlock         = "request-block"
+import (
+	"github.com/nimona/go-nimona/net"
 )
 
 const (
-	StatusOK = iota
-	StatusNotFound
+	// PayloadTypeTransferBlock type for PayloadTransferBlock
+	PayloadTypeTransferBlock string = "blx.transfer-block"
+	// PayloadTypeRequestBlock type for PayloadRequestBlock
+	PayloadTypeRequestBlock = "blx.request-block"
+)
+
+func init() {
+	net.RegisterContentType(PayloadTypeTransferBlock, PayloadTransferBlock{})
+	net.RegisterContentType(PayloadTypeRequestBlock, PayloadRequestBlock{})
+}
+
+const (
+	// StatusOK when block exists and is healthy
+	StatusOK = "ok"
+	// StatusNotFound when a block does not exist
+	StatusNotFound = "not-found"
 )
 
 // Meta is a struct that holds metadata for the specific block
@@ -22,13 +35,15 @@ type Block struct {
 	Data []byte `json:"data"`
 }
 
-type payloadTransferBlock struct {
-	Status int    `json:"status"`
+// PayloadTransferBlock payload for PayloadTypeTransferBlock
+type PayloadTransferBlock struct {
+	Status string `json:"status"`
 	Nonce  string `json:"nonce"`
 	Block  *Block `json:"block,omitempty"`
 }
 
-type payloadTransferRequestBlock struct {
+// PayloadRequestBlock payload for PayloadTypeRequestBlock
+type PayloadRequestBlock struct {
 	RequestingPeerID string `json:"req_peer_id"`
 	Nonce            string `json:"nonce"`
 	Key              string `json:"key,omitempty"`

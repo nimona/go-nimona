@@ -7,12 +7,12 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/nimona/go-nimona/wire"
+	"github.com/nimona/go-nimona/net"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	wireExtention = "blx"
+	messengerExtention = "blx"
 )
 
 var (
@@ -35,52 +35,49 @@ type BlockExchange interface {
 type subscriptionCb func(string)
 
 type blockExchange struct {
-	wire          wire.Wire
+	net           net.Messenger
 	storage       Storage
 	getRequests   sync.Map
 	subscriptions sync.Map
 }
 
-// NewBlockExchange get Wire and a Storage as parameters and returns a new
+// NewBlockExchange get Messenger and a Storage as parameters and returns a new
 // block exchange protocol.
-func NewBlockExchange(wr wire.Wire, pr Storage) (BlockExchange, error) {
+func NewBlockExchange(n net.Messenger, pr Storage) (BlockExchange, error) {
 	blx := &blockExchange{
-		wire:        wr,
+		net:         n,
 		storage:     pr,
 		getRequests: sync.Map{},
 	}
 
-	wr.HandleExtensionEvents(wireExtention, blx.handleMessage)
+	n.Handle(messengerExtention, blx.handleEnvelope)
 
 	return blx, nil
 }
 
-func (blx *blockExchange) handleMessage(message *wire.Message) error {
-	switch message.PayloadType {
+func (blx *blockExchange) handleEnvelope(envelope *net.Envelope) error {
+	contentType := envelope.Type
+	switch contentType {
 	case PayloadTypeTransferBlock:
-		err := blx.handleTransferBlock(message)
+		err := blx.handleTransferBlock(envelope)
 		if err != nil {
 			return err
 		}
 	case PayloadTypeRequestBlock:
-		err := blx.handleRequestBlock(message)
+		err := blx.handleRequestBlock(envelope)
 		if err != nil {
 			return err
 		}
 	default:
-		logrus.WithField("message.PayloadType", message.PayloadType).
+		logrus.WithField("envelope.PayloadType", contentType).
 			Warn("Payload type not known")
 		return nil
 	}
 	return nil
 }
 
-func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
-	payload := &payloadTransferBlock{}
-	if err := message.DecodePayload(payload); err != nil {
-		return err
-	}
-
+func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
+	payload := envelope.Payload.(PayloadTransferBlock)
 	if payload.Block != nil {
 		err := blx.storage.Store(payload.Block.Key, payload.Block)
 		blx.publish(payload.Block.Key)
@@ -90,13 +87,13 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 		}
 	}
 
-	// Check if nonce exists in local registry
+	// Check if nonce exists in local addressBook
 	value, ok := blx.getRequests.Load(payload.Nonce)
 	if !ok {
 		return nil
 	}
 
-	req, ok := value.(*payloadTransferRequestBlock)
+	req, ok := value.(*PayloadRequestBlock)
 	if !ok {
 		return ErrInvalidRequest
 	}
@@ -106,12 +103,8 @@ func (blx *blockExchange) handleTransferBlock(message *wire.Message) error {
 	return nil
 }
 
-func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
-	payload := &payloadTransferRequestBlock{}
-	if err := message.DecodePayload(payload); err != nil {
-		return err
-	}
-
+func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
+	payload := incEnvelope.Payload.(PayloadRequestBlock)
 	status := StatusOK
 
 	// TODO handle block request
@@ -121,16 +114,16 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 		status = StatusNotFound
 	}
 
-	resp := payloadTransferBlock{
+	resp := PayloadTransferBlock{
 		Nonce:  payload.Nonce,
 		Block:  pblock,
 		Status: status,
 	}
 
 	ctx := context.Background()
-	err = blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-		[]string{payload.RequestingPeerID})
-	if err != nil {
+	envelope := net.NewEnvelope(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send envelope")
 		return err
 	}
 
@@ -140,9 +133,9 @@ func (blx *blockExchange) handleRequestBlock(message *wire.Message) error {
 func (blx *blockExchange) Get(key string, recipient string) (
 	*Block, error) {
 	// TODO remember to remove nonce
-	nonce := wire.RandStringBytesMaskImprSrc(8)
+	nonce := net.RandStringBytesMaskImprSrc(8)
 
-	req := &payloadTransferRequestBlock{
+	req := &PayloadRequestBlock{
 		RequestingPeerID: "MISSING-REQUEST-PEER-ID", // TODO Missing requesting peer id
 		Nonce:            nonce,
 		Key:              key,
@@ -165,16 +158,16 @@ func (blx *blockExchange) Get(key string, recipient string) (
 
 	// Request block
 	ctx := context.Background()
-	err = blx.wire.Send(ctx, wireExtention, PayloadTypeRequestBlock,
-		req, []string{recipient})
-	if err != nil {
+	envelope := net.NewEnvelope(PayloadTypeRequestBlock, []string{recipient}, req)
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.Get could not send envelope")
 		return nil, err
 	}
 
 	for {
 		select {
 		case response := <-req.response:
-			resp, ok := response.(*payloadTransferBlock)
+			resp, ok := response.(*PayloadTransferBlock)
 			if !ok {
 				return nil, ErrInvalidBlock
 			}
@@ -202,9 +195,9 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 		Data: data,
 	}
 
-	nonce := wire.RandStringBytesMaskImprSrc(8)
+	nonce := net.RandStringBytesMaskImprSrc(8)
 
-	resp := payloadTransferBlock{
+	resp := PayloadTransferBlock{
 		Nonce: nonce,
 		Block: &block,
 	}
@@ -213,9 +206,9 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	blx.publish(block.Key)
 
 	ctx := context.Background()
-	err := blx.wire.Send(ctx, wireExtention, PayloadTypeTransferBlock, resp,
-		[]string{recipient})
-	if err != nil {
+	envelope := net.NewEnvelope(PayloadTypeTransferBlock, []string{recipient}, resp)
+	if err := blx.net.Send(ctx, envelope); err != nil {
+		logrus.WithError(err).Warnf("blx.Send could not send envelope")
 		return "", 0, err
 	}
 
@@ -229,7 +222,7 @@ func (blx *blockExchange) GetLocalBlocks() ([]string, error) {
 // Subscribe registers a function to be called when an event happens
 // returns the id for the registration
 func (blx *blockExchange) Subscribe(fn subscriptionCb) (string, error) {
-	id := wire.RandStringBytesMaskImprSrc(8)
+	id := net.RandStringBytesMaskImprSrc(8)
 	blx.subscriptions.Store(id, fn)
 	return id, nil
 }

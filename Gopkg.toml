@@ -38,16 +38,8 @@
   version = "1.2.0"
 
 [[constraint]]
-  name = "github.com/golang/protobuf"
-  version = "1.1.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/jinzhu/copier"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/keybase/saltpack"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
@@ -58,16 +50,8 @@
   version = "1.2.1"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/tylertreat/bench"
-
-[[constraint]]
   name = "go.uber.org/zap"
   version = "1.8.0"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/crypto"
 
 [[constraint]]
   name = "gopkg.in/abiosoft/ishell.v2"
