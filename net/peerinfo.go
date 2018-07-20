@@ -19,9 +19,6 @@ func init() {
 type PeerInfo struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
-	// Status    Status   `json:"-"`
-	// UpdatedAt       time.Time `json:"updated_at"`
-	// LastConnectedAt time.Time `json:"last_connected_at"`
 
 	Envelope *Envelope `json:"envelope"`
 }

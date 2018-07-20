@@ -56,7 +56,6 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	}
 
 	if conn == nil {
-		n.AddressBook.PutPeerStatus(peerID, ErrorConnecting)
 		return nil, ErrAllAddressesFailed
 	}
 

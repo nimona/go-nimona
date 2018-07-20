@@ -1,9 +1,13 @@
 package net
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/jinzhu/copier"
+	"go.uber.org/zap"
+
+	"github.com/nimona/go-nimona/logger"
 )
 
 // PeerManager provides an interface for mocking our AddressBook
@@ -26,20 +30,28 @@ type PeerManager interface {
 	StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error
 }
 
+type peerStatus struct {
+	Status         Status
+	FailedAttempts int
+}
+
 // Status represents the connection state of a peer
-type Status int
+type Status string
 
 const (
-	// NotConnected when we have not tried yet connecting to the peer
-	NotConnected Status = iota
-	// Connected when we are currently connected to this peer
-	Connected
-	// CanConnect when we have connected previously to this peer but
+	// StatusNew when we just received this peer and have not tried connecting
+	// to it
+	StatusNew Status = "new"
+	// StatusConnecting when we have not tried yet connecting to the peer
+	StatusConnecting = "connecting"
+	// StatusConnected when we are currently connected to this peer
+	StatusConnected = "connected"
+	// StatusCanConnect when we have connected previously to this peer but
 	// disconnected without an error
-	CanConnect
-	// ErrorConnecting when we failed to connect, or a connection failed with
+	StatusCanConnect = "can-connect"
+	// StatusError when we failed to connect, or a connection failed with
 	// an error
-	ErrorConnecting
+	StatusError = "error"
 )
 
 // NewAddressBook creates a new AddressBook
@@ -56,7 +68,6 @@ func NewAddressBook() *AddressBook {
 type AddressBook struct {
 	identities    *IdentityCollection
 	peers         *PeerInfoCollection
-	peerEnvelopes sync.Map
 	peerStatus    sync.Map
 	localPeerLock sync.RWMutex
 	localPeer     *PrivatePeerInfo
@@ -68,22 +79,22 @@ func (ab *AddressBook) PutPeerInfoFromEnvelope(envelope *Envelope) error {
 		return nil
 	}
 
-	pip := envelope.Payload.(PeerInfoPayload)
+	ep := envelope.Payload.(PeerInfoPayload)
 
 	// TODO verify envelope?
 
-	// TODO check if existing is the same
+	exPeer, err := ab.GetPeerInfo(envelope.Headers.Signer)
+	if err == nil && exPeer != nil {
+		if fmt.Sprintf("%x", exPeer.Envelope.Signature) == fmt.Sprintf("%x", envelope.Signature) {
+			return nil
+		}
+	}
 
-	// TODO reset connectivity and dates
-
-	// payload, ok := envelope.Payload.(PeerInfoPayload)
-	// if !ok {
-	// 	return errors.New("invalid payload type, expected PeerInfoPayload, got " + reflect.TypeOf(payload).String())
-	// }
+	ab.PutPeerStatus(envelope.Headers.Signer, StatusNew)
 
 	peerInfo := &PeerInfo{
 		ID:        envelope.Headers.Signer,
-		Addresses: pip.Addresses, // payload.Addresses,
+		Addresses: ep.Addresses,
 		Envelope:  envelope,
 	}
 
@@ -120,7 +131,41 @@ func (ab *AddressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
 }
 
 // PutPeerStatus updates a peer's status
+// TODO Add timestamps for status changes to help with error checks
+// Peer statuses are a bit hacky now:
+// * From StatusNew we can only go to StatusConnecting
+// * From StatusError we can only go to New and Connected
 func (ab *AddressBook) PutPeerStatus(peerID string, status Status) {
+	rawStatus, ok := ab.peerStatus.Load(peerID)
+	curStatus := StatusNew
+	if ok {
+		curStatus = rawStatus.(Status)
+	}
+
+	if curStatus == StatusError && status == StatusError {
+		// TODO too harsh, find another way to remove peers
+		ab.peerStatus.Delete(peerID)
+		ab.peers.peers.Delete(peerID)
+		logger.Info("Removing peer", zap.String("peerID", peerID))
+		return
+	}
+
+	if curStatus == status {
+		return
+	}
+
+	if curStatus == StatusNew && status != StatusConnecting {
+		// not a valid sequence of events
+		return
+	}
+
+	if curStatus == StatusError && (status != StatusNew && status != StatusConnected) {
+		// from error we cannot go to anything other than new or connected
+		// this is a hack until we introduce timestamps for statuses
+		return
+	}
+
+	logger.Info("Updating peer status", zap.String("curStatus", curStatus), zap.String("newStatus", status))
 	ab.peerStatus.Store(peerID, status)
 }
 
@@ -128,7 +173,7 @@ func (ab *AddressBook) PutPeerStatus(peerID string, status Status) {
 func (ab *AddressBook) GetPeerStatus(peerID string) Status {
 	status, ok := ab.peerStatus.Load(peerID)
 	if !ok {
-		return NotConnected
+		return StatusConnecting
 	}
 
 	return status.(Status)

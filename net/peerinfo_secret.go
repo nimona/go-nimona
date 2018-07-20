@@ -10,7 +10,7 @@ type PrivatePeerInfo struct {
 // Envelope returns a signed Envelope
 func (pi *PrivatePeerInfo) Envelope() *Envelope {
 	// TODO content type
-	envelope, _ := NewEnvelope(PeerInfoContentType, nil, PeerInfoPayload{
+	envelope := NewEnvelope(PeerInfoContentType, nil, PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
 	envelope.Sign(pi)

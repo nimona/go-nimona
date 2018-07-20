@@ -121,11 +121,7 @@ func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
 	}
 
 	ctx := context.Background()
-	envelope, err := net.NewEnvelope(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
-	if err != nil {
-		logrus.WithError(err).Warnf("blx.handleRequestBlock could not create envelope")
-		return err
-	}
+	envelope := net.NewEnvelope(PayloadTypeTransferBlock, []string{payload.RequestingPeerID}, resp)
 	if err := blx.net.Send(ctx, envelope); err != nil {
 		logrus.WithError(err).Warnf("blx.handleRequestBlock could not send envelope")
 		return err
@@ -162,11 +158,7 @@ func (blx *blockExchange) Get(key string, recipient string) (
 
 	// Request block
 	ctx := context.Background()
-	envelope, err := net.NewEnvelope(PayloadTypeRequestBlock, []string{recipient}, req)
-	if err != nil {
-		logrus.WithError(err).Warnf("blx.Get could not create envelope")
-		return nil, err
-	}
+	envelope := net.NewEnvelope(PayloadTypeRequestBlock, []string{recipient}, req)
 	if err := blx.net.Send(ctx, envelope); err != nil {
 		logrus.WithError(err).Warnf("blx.Get could not send envelope")
 		return nil, err
@@ -214,11 +206,7 @@ func (blx *blockExchange) Send(recipient string, data []byte,
 	blx.publish(block.Key)
 
 	ctx := context.Background()
-	envelope, err := net.NewEnvelope(PayloadTypeTransferBlock, []string{recipient}, resp)
-	if err != nil {
-		logrus.WithError(err).Warnf("blx.Send could not create envelope")
-		return "", 0, err
-	}
+	envelope := net.NewEnvelope(PayloadTypeTransferBlock, []string{recipient}, resp)
 	if err := blx.net.Send(ctx, envelope); err != nil {
 		logrus.WithError(err).Warnf("blx.Send could not send envelope")
 		return "", 0, err

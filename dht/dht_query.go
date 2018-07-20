@@ -20,12 +20,12 @@ const (
 )
 
 type query struct {
-	dht              *DHT
-	id               string
-	key              string
-	queryType        QueryType
-	closestPeerID    string
-	contactedPeers   sync.Map
+	dht               *DHT
+	id                string
+	key               string
+	queryType         QueryType
+	closestPeerID     string
+	contactedPeers    sync.Map
 	incomingEnvelopes chan interface{}
 	outgoingEnvelopes chan interface{}
 }
@@ -146,11 +146,7 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	envelope, err := net.NewEnvelope(payloadType, peersToAsk, req)
-	if err != nil {
-		logrus.WithError(err).Warnf("dht.next could not create envelope")
-		return
-	}
+	envelope := net.NewEnvelope(payloadType, peersToAsk, req)
 	if err := q.dht.messenger.Send(ctx, envelope); err != nil {
 		logrus.WithError(err).Warnf("dht.next could not send envelope")
 		return

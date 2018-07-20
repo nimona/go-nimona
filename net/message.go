@@ -7,7 +7,7 @@ import (
 )
 
 // NewEnvelope is a helper function for creating Envelopes
-func NewEnvelope(contentType string, recipients []string, payload interface{}) (*Envelope, error) {
+func NewEnvelope(contentType string, recipients []string, payload interface{}) *Envelope {
 	envelope := &Envelope{
 		Version: 0,
 		Type:    contentType,
@@ -16,7 +16,7 @@ func NewEnvelope(contentType string, recipients []string, payload interface{}) (
 		},
 		Payload: payload,
 	}
-	return envelope, nil
+	return envelope
 }
 
 // Headers for Envelope

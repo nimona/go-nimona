@@ -118,6 +118,7 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 		w.logger.Debug("handling envelope", zap.Any("envelope", envelope))
 
 		if err := envelope.Verify(); err != nil {
+			w.Close("", conn)
 			w.logger.Warn("could not verify envelope", zap.Error(err))
 			return err
 		}
@@ -303,12 +304,16 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 
 	existingConn, ok := w.streams.Load(peerID)
 	if ok {
+		w.addressBook.PutPeerStatus(peerID, StatusConnected)
 		return existingConn.(net.Conn), nil
 	}
 
 	w.logger.Debug("dialing peer", zap.String("peer_id", peerID))
+	w.addressBook.PutPeerStatus(peerID, StatusConnecting)
 	conn, err := w.network.Dial(ctx, peerID)
 	if err != nil {
+		w.addressBook.PutPeerStatus(peerID, StatusError)
+		w.Close(peerID, conn)
 		return nil, err
 	}
 
@@ -335,15 +340,18 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 
 	// TODO move someplace common with send()
 	if err := handshakeEnvelope.Sign(signer); err != nil {
+		w.addressBook.PutPeerStatus(peerID, StatusError)
+		w.Close(peerID, conn)
 		return nil, err
 	}
 
 	if err := w.writeEnvelope(ctx, handshakeEnvelope, conn); err != nil {
+		w.addressBook.PutPeerStatus(peerID, StatusError)
+		w.Close(peerID, conn)
 		return nil, err
 	}
 
-	w.addressBook.PutPeerStatus(peerID, Connected)
-
+	w.addressBook.PutPeerStatus(peerID, StatusConnected)
 	return conn, nil
 }
 
