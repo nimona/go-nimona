@@ -48,6 +48,7 @@ var bootstrapPeerInfoEnvelopes = []*net.Envelope{
 	},
 }
 
+// Hello payload
 type Hello struct {
 	Body string
 }

@@ -33,6 +33,7 @@ type DHT struct {
 	refreshBuckets bool
 }
 
+// NewDHT returns a new DHT from a messenger and peer manager
 func NewDHT(messenger net.Messenger, pm net.PeerManager) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
@@ -357,12 +358,13 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*net.PeerInfo, error) {
 	return rks, nil
 }
 
-func (nd *DHT) GetPeerInfo(ctx context.Context, key string) (*net.PeerInfo, error) {
+// GetPeerInfo returns a peer's info from their id
+func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*net.PeerInfo, error) {
 	q := &query{
-		dht:              nd,
-		id:               net.RandStringBytesMaskImprSrc(8),
-		key:              key,
-		queryType:        PeerInfoQuery,
+		dht:               nd,
+		id:                net.RandStringBytesMaskImprSrc(8),
+		key:               id,
+		queryType:         PeerInfoQuery,
 		incomingEnvelopes: make(chan interface{}),
 		outgoingEnvelopes: make(chan interface{}),
 	}
@@ -413,10 +415,10 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 
 func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 	q := &query{
-		dht:              nd,
-		id:               net.RandStringBytesMaskImprSrc(8),
-		key:              key,
-		queryType:        ValueQuery,
+		dht:               nd,
+		id:                net.RandStringBytesMaskImprSrc(8),
+		key:               key,
+		queryType:         ValueQuery,
 		incomingEnvelopes: make(chan interface{}),
 		outgoingEnvelopes: make(chan interface{}),
 	}
@@ -471,10 +473,10 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 
 func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 	q := &query{
-		dht:              nd,
-		id:               net.RandStringBytesMaskImprSrc(8),
-		key:              key,
-		queryType:        ProviderQuery,
+		dht:               nd,
+		id:                net.RandStringBytesMaskImprSrc(8),
+		key:               key,
+		queryType:         ProviderQuery,
 		incomingEnvelopes: make(chan interface{}),
 		outgoingEnvelopes: make(chan interface{}),
 	}
