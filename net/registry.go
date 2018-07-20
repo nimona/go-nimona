@@ -33,7 +33,7 @@ func (r *Registry) Register(contentType string, content interface{}) {
 	r.lock.Unlock()
 }
 
-// GetContentType returns a content type's structure
+// Get returns a content type's structure
 func (r *Registry) Get(contentType string) interface{} {
 	r.lock.RLock()
 	t, ok := r.types[contentType]

@@ -1,19 +1,12 @@
 package net
 
 import (
-	"errors"
 	"sync"
-	"time"
 
 	"github.com/jinzhu/copier"
 )
 
-var (
-	ErrCannotPutLocalPeerInfo = errors.New("cannot put local peer info")
-
-	peerInfoExpireAfter = time.Hour * 1
-)
-
+// PeerManager provides an interface for mocking our AddressBook
 type PeerManager interface {
 	GetLocalPeerInfo() *PrivatePeerInfo
 	PutLocalPeerInfo(*PrivatePeerInfo) error
@@ -37,9 +30,15 @@ type PeerManager interface {
 type Status int
 
 const (
+	// NotConnected when we have not tried yet connecting to the peer
 	NotConnected Status = iota
+	// Connected when we are currently connected to this peer
 	Connected
+	// CanConnect when we have connected previously to this peer but
+	// disconnected without an error
 	CanConnect
+	// ErrorConnecting when we failed to connect, or a connection failed with
+	// an error
 	ErrorConnecting
 )
 
@@ -53,6 +52,7 @@ func NewAddressBook() *AddressBook {
 	return ab
 }
 
+// AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
 	identities    *IdentityCollection
 	peers         *PeerInfoCollection
@@ -62,6 +62,7 @@ type AddressBook struct {
 	localPeer     *PrivatePeerInfo
 }
 
+// PutPeerInfoFromEnvelope stores an envelope with a peer payload
 func (ab *AddressBook) PutPeerInfoFromEnvelope(envelope *Envelope) error {
 	if ab.localPeer.ID == envelope.Headers.Signer {
 		return nil
@@ -89,6 +90,7 @@ func (ab *AddressBook) PutPeerInfoFromEnvelope(envelope *Envelope) error {
 	return ab.peers.Put(peerInfo)
 }
 
+// GetLocalPeerInfo returns our private peer info
 func (ab *AddressBook) GetLocalPeerInfo() *PrivatePeerInfo {
 	ab.localPeerLock.RLock()
 	newPrivatePeerInfo := &PrivatePeerInfo{}
@@ -97,6 +99,7 @@ func (ab *AddressBook) GetLocalPeerInfo() *PrivatePeerInfo {
 	return newPrivatePeerInfo
 }
 
+// PutLocalPeerInfo puts our local peer info
 func (ab *AddressBook) PutLocalPeerInfo(peerInfo *PrivatePeerInfo) error {
 	ab.localPeerLock.Lock()
 	newPrivatePeerInfo := &PrivatePeerInfo{}
@@ -106,18 +109,22 @@ func (ab *AddressBook) PutLocalPeerInfo(peerInfo *PrivatePeerInfo) error {
 	return nil
 }
 
+// GetPeerInfo returns a peer info from its id
 func (ab *AddressBook) GetPeerInfo(peerID string) (*PeerInfo, error) {
 	return ab.peers.Get(peerID)
 }
 
+// GetAllPeerInfo returns all know peer infos
 func (ab *AddressBook) GetAllPeerInfo() ([]*PeerInfo, error) {
 	return ab.peers.All()
 }
 
+// PutPeerStatus updates a peer's status
 func (ab *AddressBook) PutPeerStatus(peerID string, status Status) {
 	ab.peerStatus.Store(peerID, status)
 }
 
+// GetPeerStatus returns a peer's status
 func (ab *AddressBook) GetPeerStatus(peerID string) Status {
 	status, ok := ab.peerStatus.Load(peerID)
 	if !ok {

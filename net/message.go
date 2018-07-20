@@ -34,7 +34,7 @@ type Envelope struct {
 	Signature []byte      `json:"signature,omitempty"`
 }
 
-// CodecEncodeSelf helper for cbor unmarshaling
+// CodecDecodeSelf helper for cbor unmarshaling
 func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
 	dec.MustDecode(&envelope.Version)
 	dec.MustDecode(&envelope.Type)
@@ -129,8 +129,8 @@ func Unmarshal(b []byte) (*Envelope, error) {
 
 // DecodePayload decodes the envelope's payload according to the coded,
 // and stores the result in the value pointed to by r.
-func (h *Envelope) DecodePayload(r interface{}) error {
-	enc, err := Marshal(h.Payload)
+func (envelope *Envelope) DecodePayload(r interface{}) error {
+	enc, err := Marshal(envelope.Payload)
 	if err != nil {
 		return err
 	}
