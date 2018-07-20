@@ -13,12 +13,12 @@ import (
 	nnet "github.com/nimona/go-nimona/net"
 )
 
-type wireTestSuite struct {
+type messengerTestSuite struct {
 	suite.Suite
 	bootstrapPeerInfos []*nnet.Envelope
 }
 
-func (suite *wireTestSuite) SetupTest() {
+func (suite *messengerTestSuite) SetupTest() {
 	suite.bootstrapPeerInfos = []*nnet.Envelope{}
 }
 
@@ -26,7 +26,7 @@ type DummyPayload struct {
 	Foo string
 }
 
-func (suite *wireTestSuite) TestSendSuccess() {
+func (suite *messengerTestSuite) TestSendSuccess() {
 	port1, p1, w1, r1 := suite.newPeer()
 	_, p2, w2, r2 := suite.newPeer()
 
@@ -34,11 +34,11 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	r2.PutPeerInfoFromEnvelope(p1.Envelope())
 	r1.PutPeerInfoFromEnvelope(p2.Envelope())
 
-	nnet.RegisterContentType("foo.bar", &DummyPayload{})
+	nnet.RegisterContentType("foo.bar", DummyPayload{})
 
 	time.Sleep(time.Second)
 
-	payload := &DummyPayload{
+	payload := DummyPayload{
 		Foo: "bar",
 	}
 
@@ -49,14 +49,14 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	w2EnvelopeHandled := false
 
 	w1.Handle("foo", func(envelope *nnet.Envelope) error {
-		suite.Equal(payload.Foo, envelope.Payload.(*DummyPayload).Foo)
+		suite.Equal(payload.Foo, envelope.Payload.(DummyPayload).Foo)
 		w1EnvelopeHandled = true
 		wg.Done()
 		return nil
 	})
 
 	w2.Handle("foo", func(envelope *nnet.Envelope) error {
-		suite.Equal(payload.Foo, envelope.Payload.(*DummyPayload).Foo)
+		suite.Equal(payload.Foo, envelope.Payload.(DummyPayload).Foo)
 		w2EnvelopeHandled = true
 		wg.Done()
 		return nil
@@ -82,7 +82,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 	suite.True(w2EnvelopeHandled)
 }
 
-// func (suite *wireTestSuite) TestRelayedSendSuccess() {
+// func (suite *messengerTestSuite) TestRelayedSendSuccess() {
 // 	portR, pR, wR, rR := suite.newPeer()
 // 	pRs := pR.Envelope()
 // 	pRs.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", portR)}
@@ -159,7 +159,7 @@ func (suite *wireTestSuite) TestSendSuccess() {
 // 	suite.True(w2EnvelopeHandled)
 // }
 
-func (suite *wireTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Messenger, *nnet.AddressBook) {
+func (suite *messengerTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Messenger, *nnet.AddressBook) {
 	reg := nnet.NewAddressBook()
 	spi, _ := reg.CreateNewPeer()
 	reg.PutLocalPeerInfo(spi)
@@ -176,6 +176,6 @@ func (suite *wireTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Messenge
 	return port, spi, wre, reg
 }
 
-func TestWireTestSuite(t *testing.T) {
-	suite.Run(t, new(wireTestSuite))
+func TestMessengerTestSuite(t *testing.T) {
+	suite.Run(t, new(messengerTestSuite))
 }
