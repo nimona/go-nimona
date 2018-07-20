@@ -127,18 +127,6 @@ func Unmarshal(b []byte) (*Envelope, error) {
 	return m, nil
 }
 
-// DecodePayload decodes the envelope's payload according to the coded,
-// and stores the result in the value pointed to by r.
-func (envelope *Envelope) DecodePayload(r interface{}) error {
-	enc, err := Marshal(envelope.Payload)
-	if err != nil {
-		return err
-	}
-
-	dec := codec.NewDecoderBytes(enc, getCborHandler())
-	return dec.Decode(r)
-}
-
 func getCborHandler() codec.Handle {
 	ch := &codec.CborHandle{}
 	ch.Canonical = true

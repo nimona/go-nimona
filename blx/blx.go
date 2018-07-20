@@ -77,11 +77,7 @@ func (blx *blockExchange) handleEnvelope(envelope *net.Envelope) error {
 }
 
 func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
-	payload := &PayloadTransferBlock{}
-	if err := envelope.DecodePayload(payload); err != nil {
-		return err
-	}
-
+	payload := envelope.Payload.(PayloadTransferBlock)
 	if payload.Block != nil {
 		err := blx.storage.Store(payload.Block.Key, payload.Block)
 		blx.publish(payload.Block.Key)
@@ -108,11 +104,7 @@ func (blx *blockExchange) handleTransferBlock(envelope *net.Envelope) error {
 }
 
 func (blx *blockExchange) handleRequestBlock(incEnvelope *net.Envelope) error {
-	payload := &PayloadRequestBlock{}
-	if err := incEnvelope.DecodePayload(payload); err != nil {
-		return err
-	}
-
+	payload := incEnvelope.Payload.(PayloadRequestBlock)
 	status := StatusOK
 
 	// TODO handle block request
