@@ -42,10 +42,10 @@ type messenger struct {
 
 	addressBook PeerManager
 
-	incoming chan net.Conn
-	outgoing chan net.Conn
+	incoming  chan net.Conn
+	outgoing  chan net.Conn
 	envelopes chan *Envelope
-	close    chan bool
+	close     chan bool
 
 	streams  sync.Map
 	handlers map[string]EnvelopeHandler
@@ -67,10 +67,10 @@ func NewMessenger(addressBook *AddressBook) (Messenger, error) {
 		network:     network,
 		addressBook: addressBook,
 
-		incoming: make(chan net.Conn),
-		outgoing: make(chan net.Conn),
+		incoming:  make(chan net.Conn),
+		outgoing:  make(chan net.Conn),
 		envelopes: make(chan *Envelope, 100),
-		close:    make(chan bool),
+		close:     make(chan bool),
 
 		handlers:   map[string]EnvelopeHandler{},
 		logger:     log.Logger(ctx).Named("messenger"),
@@ -173,6 +173,16 @@ func (w *messenger) Process(envelope *Envelope) error {
 		return err
 	}
 
+	eb, _ := Marshal(envelope)
+	tb, _ := Marshal(envelope.Payload)
+	SendEnvelopeEvent(
+		false,
+		envelope.Type,
+		len(envelope.Headers.Recipients),
+		len(tb),
+		len(eb),
+	)
+
 	contentType := envelope.Type
 	var handler EnvelopeHandler
 	ok := false
@@ -270,6 +280,15 @@ func (w *messenger) writeEnvelope(ctx context.Context, envelope *Envelope, rw io
 	if _, err := rw.Write(envelopeBytes); err != nil {
 		return err
 	}
+
+	tb, _ := Marshal(envelope.Payload)
+	SendEnvelopeEvent(
+		true,
+		envelope.Type,
+		len(envelope.Headers.Recipients),
+		len(tb),
+		len(envelopeBytes),
+	)
 
 	w.logger.Debug("writing envelope", zap.Any("envelope", envelope))
 

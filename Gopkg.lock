@@ -78,22 +78,6 @@
   revision = "7e38e58719c33e0d44d585c4ab477a30f8cb82dd"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/keybase/go-codec"
-  packages = ["codec"]
-  revision = "73210629e9f31ec8745db957708cbcc344c6f173"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/keybase/saltpack"
-  packages = [
-    ".",
-    "basic",
-    "encoding/basex"
-  ]
-  revision = "eb0d09297d14271564bffb1bef39d0b29978132e"
-
-[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -141,12 +125,6 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/vsergeev/btckeygenie"
-  packages = ["btckey"]
-  revision = "413cbe3261adadbc974cecdbb4ea0b86c813c1a0"
-
-[[projects]]
   name = "go.uber.org/atomic"
   packages = ["."]
   revision = "1ea20fb1cbb1cc08cbd0d913a96dead89aa18289"
@@ -175,15 +153,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
-    "curve25519",
-    "ed25519",
-    "ed25519/internal/edwards25519",
-    "internal/subtle",
-    "nacl/box",
-    "nacl/secretbox",
-    "poly1305",
     "ripemd160",
-    "salsa20/salsa",
     "ssh/terminal"
   ]
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
@@ -210,6 +180,12 @@
   version = "v8.18.2"
 
 [[projects]]
+  branch = "v0"
+  name = "gopkg.in/inconshreveable/go-keen.v0"
+  packages = ["."]
+  revision = "abddc16d5dc65ffcb78438e043e628d7f4664735"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -218,6 +194,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "22e9447e0e0e0ba9fba41efff750a65ee1608e6f9841c032d42b2b13cc120cc8"
+  inputs-digest = "439d3ceddeac5c459ac9b6b8a4e1ef249101db718e5505ef1454885263cc7104"
   solver-name = "gps-cdcl"
   solver-version = 1

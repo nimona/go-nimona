@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nimona/go-nimona/telemetry"
+
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
@@ -51,6 +53,7 @@ type Hello struct {
 }
 
 func init() {
+	telemetry.SetupKeenCollector()
 	net.RegisterContentType("demo.hello", Hello{})
 }
 
