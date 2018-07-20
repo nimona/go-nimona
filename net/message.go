@@ -1,12 +1,12 @@
 package net
 
 import (
-	"encoding/json"
 	"reflect"
 
 	"github.com/ugorji/go/codec"
 )
 
+// NewEnvelope is a helper function for creating Envelopes
 func NewEnvelope(contentType string, recipients []string, payload interface{}) (*Envelope, error) {
 	envelope := &Envelope{
 		Version: 0,
@@ -19,6 +19,7 @@ func NewEnvelope(contentType string, recipients []string, payload interface{}) (
 	return envelope, nil
 }
 
+// Headers for Envelope
 type Headers struct {
 	Recipients []string `json:"recipients,omitempty"`
 	Signer     string   `json:"signer,omitempty"`
@@ -33,6 +34,7 @@ type Envelope struct {
 	Signature []byte      `json:"signature,omitempty"`
 }
 
+// CodecEncodeSelf helper for cbor unmarshaling
 func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
 	dec.MustDecode(&envelope.Version)
 	dec.MustDecode(&envelope.Type)
@@ -43,6 +45,7 @@ func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
 	dec.MustDecode(&envelope.Signature)
 }
 
+// CodecEncodeSelf helper for cbor marshaling
 func (envelope *Envelope) CodecEncodeSelf(enc *codec.Encoder) {
 	enc.MustEncode(&envelope.Version)
 	enc.MustEncode(&envelope.Type)
@@ -52,6 +55,7 @@ func (envelope *Envelope) CodecEncodeSelf(enc *codec.Encoder) {
 	enc.MustEncode(&envelope.Signature)
 }
 
+// IsSigned checks if the envelope is signed
 func (envelope *Envelope) IsSigned() bool {
 	// TODO make this part of the envelope and digest?
 	return envelope.Signature != nil && len(envelope.Signature) > 0
@@ -73,6 +77,7 @@ func getEnvelopeDigest(envelope *Envelope) ([]byte, error) {
 	return digestBytes, nil
 }
 
+// Sign envelope given a private peer info
 func (envelope *Envelope) Sign(signerPeerInfo *PrivatePeerInfo) error {
 	envelope.Headers.Signer = signerPeerInfo.ID
 	digest, err := getEnvelopeDigest(envelope)
@@ -89,6 +94,7 @@ func (envelope *Envelope) Sign(signerPeerInfo *PrivatePeerInfo) error {
 	return nil
 }
 
+// Verify envelope's signature
 func (envelope *Envelope) Verify() error {
 	digest, err := getEnvelopeDigest(envelope)
 	if err != nil {
@@ -98,6 +104,7 @@ func (envelope *Envelope) Verify() error {
 	return Verify(envelope.Headers.Signer, digest, envelope.Signature)
 }
 
+// Marshal into cbor
 func Marshal(o interface{}) ([]byte, error) {
 	b := []byte{}
 	enc := codec.NewEncoderBytes(&b, getCborHandler())
@@ -108,6 +115,7 @@ func Marshal(o interface{}) ([]byte, error) {
 	return b, nil
 }
 
+// Unmarshal from cbor
 func Unmarshal(b []byte) (*Envelope, error) {
 	m := &Envelope{}
 	dec := codec.NewDecoderBytes(b, getCborHandler())
@@ -129,15 +137,6 @@ func (h *Envelope) DecodePayload(r interface{}) error {
 
 	dec := codec.NewDecoderBytes(enc, getCborHandler())
 	return dec.Decode(r)
-}
-
-func PrettifyEnvelope(envelope *Envelope) string {
-	b, err := json.MarshalIndent(envelope, "", "  ")
-	if err != nil {
-		return "[cannot marshal, " + err.Error() + "]"
-	}
-
-	return string(b)
 }
 
 func getCborHandler() codec.Handle {

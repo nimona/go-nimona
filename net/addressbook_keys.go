@@ -107,15 +107,17 @@ func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) e
 	return ioutil.WriteFile(path, raw, 0644)
 }
 
+// Sign data given private key in its prefixed and compressed format
 func Sign(data []byte, privateKey string) ([]byte, error) {
+	// TODO check private key format
 	return btckey.Sign(data, privateKey[3:])
 }
 
-func Verify(id string, data, signature []byte) error {
+// Verify the signature of some data given a public key in its prefixed and
+// compressed format
+func Verify(publicKey string, data, signature []byte) error {
 	digest := sha256.Sum256(data)
-	publicKeyBytes, _ := hex.DecodeString(id[3:])
-	publicKey := btckey.PublicKey{}
-	publicKey.FromBytes(publicKeyBytes)
+	publicKeyBytes, _ := hex.DecodeString(publicKey[3:])
 	ok := btckey.Verify(publicKeyBytes, signature, digest[:])
 	if !ok {
 		return errors.New("could not verify signature")

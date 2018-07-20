@@ -1,9 +1,12 @@
 package net
 
 const (
+	// PeerInfoContentType is the content type for PeerInfoPayload
+	// TODO Needs better name
 	PeerInfoContentType = "peer.info"
 )
 
+// PeerInfoPayload content structure for PeerInfoContentType
 type PeerInfoPayload struct {
 	Addresses []string `json:"addresses"`
 }

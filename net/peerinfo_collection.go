@@ -8,13 +8,17 @@ import (
 )
 
 var (
+	// ErrNotFound is returned wheh a requqested item in the collection does
+	// not exist
 	ErrNotFound = errors.New("not found")
 )
 
+// PeerInfoCollection allows concurrent access to peerinfos
 type PeerInfoCollection struct {
 	peers sync.Map
 }
 
+// All returns all items in the collection
 func (c *PeerInfoCollection) All() ([]*PeerInfo, error) {
 	peers := []*PeerInfo{}
 	c.peers.Range(func(k, v interface{}) bool {
@@ -27,6 +31,7 @@ func (c *PeerInfoCollection) All() ([]*PeerInfo, error) {
 	return peers, nil
 }
 
+// Get retuns a single item from the collection given its id
 func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 	peerInfo, ok := c.peers.Load(peerID)
 	if !ok || peerInfo == nil {
@@ -38,6 +43,7 @@ func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 	return newPeerInfo, nil
 }
 
+// Put adds or overwrites an item in the collection
 func (c *PeerInfoCollection) Put(peerInfo *PeerInfo) error {
 	// newPeerInfo := &PeerInfo{}
 	// copier.Copy(newPeerInfo, peerInfo)
