@@ -7,7 +7,7 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
-	"github.com/nimona/go-nimona/logger"
+	"github.com/nimona/go-nimona/log"
 )
 
 // PeerManager provides an interface for mocking our AddressBook
@@ -146,7 +146,7 @@ func (ab *AddressBook) PutPeerStatus(peerID string, status Status) {
 		// TODO too harsh, find another way to remove peers
 		ab.peerStatus.Delete(peerID)
 		ab.peers.peers.Delete(peerID)
-		logger.Info("Removing peer", zap.String("peerID", peerID))
+		log.DefaultLogger.Info("Removing peer", zap.String("peerID", peerID))
 		return
 	}
 
@@ -165,7 +165,9 @@ func (ab *AddressBook) PutPeerStatus(peerID string, status Status) {
 		return
 	}
 
-	logger.Info("Updating peer status", zap.String("curStatus", curStatus), zap.String("newStatus", status))
+	log.DefaultLogger.Info("Updating peer status",
+		zap.String("curStatus", string(curStatus)),
+		zap.String("newStatus", string(status)))
 	ab.peerStatus.Store(peerID, status)
 }
 
