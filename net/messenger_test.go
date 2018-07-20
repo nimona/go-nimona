@@ -65,7 +65,7 @@ func (suite *messengerTestSuite) TestSendSuccess() {
 	ctx := context.Background()
 
 	envelope := nnet.NewEnvelope("foo.bar", []string{p1.ID}, payload)
-	err = w2.Send(ctx, envelope)
+	err := w2.Send(ctx, envelope)
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
