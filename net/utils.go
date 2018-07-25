@@ -6,6 +6,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/mr-tron/base58/base58"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -104,4 +106,14 @@ func isPrivate(ip net.IP) bool {
 	_, block20, _ := net.ParseCIDR("172.16.0.0/12")
 	_, block16, _ := net.ParseCIDR("192.168.0.0/16")
 	return block16.Contains(ip) || block20.Contains(ip) || block24.Contains(ip)
+}
+
+// Base58Encode encodes a byte slice b into a base-58 encoded string.
+func Base58Encode(b []byte) (s string) {
+	return base58.Encode(b)
+}
+
+// Base58Decode decodes a base-58 encoded string into a byte slice b.
+func Base58Decode(s string) (b []byte, err error) {
+	return base58.Decode(s)
 }

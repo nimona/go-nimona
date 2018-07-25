@@ -1,6 +1,8 @@
 package net
 
 import (
+	"crypto/sha256"
+	"errors"
 	"reflect"
 
 	"github.com/ugorji/go/codec"
@@ -8,27 +10,54 @@ import (
 
 // NewEnvelope is a helper function for creating Envelopes
 func NewEnvelope(contentType string, recipients []string, payload interface{}) *Envelope {
+	// TODO do we need to add the owner on the policy as well?
 	envelope := &Envelope{
 		Version: 0,
-		Type:    contentType,
 		Headers: Headers{
-			Recipients: recipients,
+			Type: contentType,
 		},
 		Payload: payload,
+	}
+	subjects := []string{}
+	for _, recipient := range recipients {
+		// TODO verify valid subject
+		if recipient != "" {
+			subjects = append(subjects, recipient)
+		}
+	}
+	if len(subjects) > 0 {
+		envelope.Headers.Policies = []Policy{
+			Policy{
+				Description: "policy for recipients",
+				Subjects:    subjects,
+				Actions:     []string{"read"},
+				Effect:      "allow",
+			},
+		}
 	}
 	return envelope
 }
 
+// Policy for Envelope
+type Policy struct {
+	Description string   `json:"description,omitempty"`
+	Subjects    []string `json:"subjects"`
+	Actions     []string `json:"actions"`
+	Effect      string   `json:"effect"`
+}
+
 // Headers for Envelope
 type Headers struct {
-	Recipients []string `json:"recipients,omitempty"`
-	Signer     string   `json:"signer,omitempty"`
+	ID       string   `json:"@id,omitempty"`
+	Type     string   `json:"@type"`
+	Parent   string   `json:"parent_id,omitempty"`
+	Policies []Policy `json:"policies,omitempty"`
+	Signer   string   `json:"signer,omitempty"`
 }
 
 // Envelope for exchanging data via the messenger
 type Envelope struct {
 	Version   uint        `json:"version"`
-	Type      string      `json:"@type"`
 	Headers   Headers     `json:"headers,omitempty"`
 	Payload   interface{} `json:"payload,omitempty"`
 	Signature []byte      `json:"signature,omitempty"`
@@ -37,10 +66,8 @@ type Envelope struct {
 // CodecDecodeSelf helper for cbor unmarshaling
 func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
 	dec.MustDecode(&envelope.Version)
-	dec.MustDecode(&envelope.Type)
-	envelope.Payload = GetContentType(envelope.Type)
-	dec.MustDecode(&envelope.Payload)
 	dec.MustDecode(&envelope.Headers)
+	envelope.Payload = GetContentType(envelope.Headers.Type)
 	dec.MustDecode(&envelope.Payload)
 	dec.MustDecode(&envelope.Signature)
 }
@@ -48,8 +75,6 @@ func (envelope *Envelope) CodecDecodeSelf(dec *codec.Decoder) {
 // CodecEncodeSelf helper for cbor marshaling
 func (envelope *Envelope) CodecEncodeSelf(enc *codec.Encoder) {
 	enc.MustEncode(&envelope.Version)
-	enc.MustEncode(&envelope.Type)
-	enc.MustEncode(&envelope.Payload)
 	enc.MustEncode(&envelope.Headers)
 	enc.MustEncode(&envelope.Payload)
 	enc.MustEncode(&envelope.Signature)
@@ -61,11 +86,22 @@ func (envelope *Envelope) IsSigned() bool {
 	return envelope.Signature != nil && len(envelope.Signature) > 0
 }
 
-func getEnvelopeDigest(envelope *Envelope) ([]byte, error) {
+// GetRecipientsFromEnvelopePolicies returns the subjects from all the policies
+// of the envelope
+func GetRecipientsFromEnvelopePolicies(envelope *Envelope) []string {
+	recipients := []string{}
+	for _, policy := range envelope.Headers.Policies {
+		recipients = append(recipients, policy.Subjects...)
+	}
+	return recipients
+}
+
+func getSignatureDigest(envelope *Envelope) ([]byte, error) {
+	headers := envelope.Headers
+	headers.ID = ""
 	digest := []interface{}{
-		envelope.Version,
-		envelope.Type,
-		envelope.Headers,
+		// envelope.Version,
+		headers,
 		envelope.Payload,
 	}
 
@@ -77,15 +113,65 @@ func getEnvelopeDigest(envelope *Envelope) ([]byte, error) {
 	return digestBytes, nil
 }
 
-// Sign envelope given a private peer info
-func (envelope *Envelope) Sign(signerPeerInfo *PrivatePeerInfo) error {
-	envelope.Headers.Signer = signerPeerInfo.ID
-	digest, err := getEnvelopeDigest(envelope)
+// SetID sets the id of the envelope
+func SetID(envelope *Envelope) error {
+	id, err := ID(envelope)
 	if err != nil {
 		return err
 	}
 
-	signature, err := Sign(digest, signerPeerInfo.PrivateKey)
+	envelope.Headers.ID = id
+	return nil
+}
+
+// ID calculated the id for the envelope
+func ID(envelope *Envelope) (string, error) {
+	digest, err := getIdetifierDigest(envelope)
+	if err != nil {
+		return "", err
+	}
+
+	idBytes := sha256.Sum256(digest)
+	id := Base58Encode(idBytes[:])
+	return "30x" + id, nil
+}
+
+func getIdetifierDigest(envelope *Envelope) ([]byte, error) {
+	headers := envelope.Headers
+	headers.ID = ""
+	digest := []interface{}{
+		// envelope.Version,
+		headers,
+		envelope.Payload,
+	}
+
+	digestBytes, err := Marshal(digest)
+	if err != nil {
+		return nil, err
+	}
+
+	return digestBytes, nil
+}
+
+// SetSigner sets the signer's id on the envelope
+func SetSigner(envelope *Envelope, signerPeerInfo *PrivatePeerInfo) {
+	envelope.Headers.Signer = signerPeerInfo.ID
+}
+
+// Sign envelope given a private peer info
+// TODO signer should already be set in the envelope, so maybe we can get
+// the keys from the address book?
+func Sign(envelope *Envelope, signerPeerInfo *PrivatePeerInfo) error {
+	if envelope.Headers.Signer == "" {
+		return errors.New("no sigher specified")
+	}
+
+	digest, err := getSignatureDigest(envelope)
+	if err != nil {
+		return err
+	}
+
+	signature, err := SignData(digest, signerPeerInfo.PrivateKey)
 	if err != nil {
 		return err
 	}
@@ -96,7 +182,7 @@ func (envelope *Envelope) Sign(signerPeerInfo *PrivatePeerInfo) error {
 
 // Verify envelope's signature
 func (envelope *Envelope) Verify() error {
-	digest, err := getEnvelopeDigest(envelope)
+	digest, err := getSignatureDigest(envelope)
 	if err != nil {
 		return err
 	}

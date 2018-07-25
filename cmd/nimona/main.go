@@ -11,14 +11,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nimona/go-nimona/telemetry"
+	"encoding/base64"
+
+	"gopkg.in/abiosoft/ishell.v2"
 
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/net"
-
-	"gopkg.in/abiosoft/ishell.v2"
 )
 
 var (
@@ -27,24 +27,27 @@ var (
 	date    = "unknown"
 )
 
+func base64ToBytes(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 var bootstrapPeerInfoEnvelopes = []*net.Envelope{
 	&net.Envelope{
-		Type: "peer.info",
 		Headers: net.Headers{
-			Signer: "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
+			// ID:"30xDFpt2JF25bWPp8uhcs2dFA2JwbiVoYwitBGGd6cgo8Z9",
+			Type:   "peer.info",
+			Signer: "01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1",
 		},
 		Payload: net.PeerInfoPayload{
 			Addresses: []string{
 				"tcp:andromeda.nimona.io:21013",
 			},
 		},
-		Signature: []byte{
-			63, 75, 91, 132, 252, 236, 211, 254, 9, 245, 64, 255, 216, 226,
-			222, 153, 41, 203, 66, 233, 19, 218, 225, 212, 133, 166, 128,
-			93, 115, 28, 85, 1, 87, 219, 10, 223, 126, 26, 134, 96, 56, 86,
-			223, 238, 113, 120, 165, 25, 103, 185, 231, 232, 204, 227, 48,
-			122, 80, 185, 205, 86, 0, 110, 94, 59,
-		},
+		Signature: base64ToBytes("f11x6QJxieRgP36Z8PX8tPuj/7IolQSsZR9HWxahS4vPNbryzrvTmrkDqo6Df11oi5D0QBW/P+pJnoknohwK9w=="),
 	},
 }
 
@@ -54,7 +57,7 @@ type Hello struct {
 }
 
 func init() {
-	telemetry.SetupKeenCollector()
+	// telemetry.SetupKeenCollector()
 	net.RegisterContentType("demo.hello", Hello{})
 }
 

@@ -123,7 +123,7 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 			return err
 		}
 
-		if envelope.Type == "net.handshake" {
+		if envelope.Headers.Type == "net.handshake" {
 			payload, ok := envelope.Payload.(HandshakeEnvelope)
 			if !ok {
 				continue
@@ -136,7 +136,7 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 			continue
 		}
 
-		contentType := envelope.Type
+		contentType := envelope.Headers.Type
 		var handler EnvelopeHandler
 		ok := false
 		for handlerContentType, hn := range w.handlers {
@@ -178,13 +178,13 @@ func (w *messenger) Process(envelope *Envelope) error {
 	tb, _ := Marshal(envelope.Payload)
 	SendEnvelopeEvent(
 		false,
-		envelope.Type,
-		len(envelope.Headers.Recipients),
+		envelope.Headers.Type,
+		len(GetRecipientsFromEnvelopePolicies(envelope)),
 		len(tb),
 		len(eb),
 	)
 
-	contentType := envelope.Type
+	contentType := envelope.Headers.Type
 	var handler EnvelopeHandler
 	ok := false
 	for handlerContentType, hn := range w.handlers {
@@ -217,23 +217,13 @@ func (w *messenger) Process(envelope *Envelope) error {
 }
 
 func (w *messenger) Send(ctx context.Context, envelope *Envelope, recipients ...string) error {
-	signer := w.addressBook.GetLocalPeerInfo()
-
-	if !envelope.IsSigned() {
-		if err := envelope.Sign(signer); err != nil {
-			return err
-		}
-	}
-
-	if len(recipients) == 0 {
-		recipients = envelope.Headers.Recipients
-	}
-
+	// TODO do we need to send this to the policy recipients as well?
+	recipients = append(recipients, GetRecipientsFromEnvelopePolicies(envelope)...)
 	for _, recipient := range recipients {
 		// TODO deal with error
 		if err := w.sendOne(ctx, envelope, recipient); err != nil {
-			// TODO log error
-			return err
+			w.logger.Warn("could not send envelope", zap.Error(err), zap.String("recipient", recipient))
+			continue
 		}
 	}
 
@@ -268,9 +258,14 @@ func (w *messenger) writeEnvelope(ctx context.Context, envelope *Envelope, rw io
 	signer := w.addressBook.GetLocalPeerInfo()
 
 	if !envelope.IsSigned() {
-		if err := envelope.Sign(signer); err != nil {
+		SetSigner(envelope, signer)
+		if err := Sign(envelope, signer); err != nil {
 			return err
 		}
+	}
+
+	if err := SetID(envelope); err != nil {
+		return err
 	}
 
 	envelopeBytes, err := Marshal(envelope)
@@ -285,8 +280,8 @@ func (w *messenger) writeEnvelope(ctx context.Context, envelope *Envelope, rw io
 	tb, _ := Marshal(envelope.Payload)
 	SendEnvelopeEvent(
 		true,
-		envelope.Type,
-		len(envelope.Headers.Recipients),
+		envelope.Headers.Type,
+		len(GetRecipientsFromEnvelopePolicies(envelope)),
 		len(tb),
 		len(envelopeBytes),
 	)
@@ -327,23 +322,13 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	w.logger.Debug("writing handshake")
 
 	// handshake so the other side knows who we are
-	signer := w.addressBook.GetLocalPeerInfo()
-	handshakeEnvelope := &Envelope{
-		Type: "net.handshake",
-		Headers: Headers{
-			Recipients: []string{peerID},
-		},
-		Payload: HandshakeEnvelope{
+	handshakeEnvelope := NewEnvelope(
+		"net.handshake",
+		[]string{peerID},
+		HandshakeEnvelope{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Envelope(),
 		},
-	}
-
-	// TODO move someplace common with send()
-	if err := handshakeEnvelope.Sign(signer); err != nil {
-		w.addressBook.PutPeerStatus(peerID, StatusError)
-		w.Close(peerID, conn)
-		return nil, err
-	}
+	)
 
 	if err := w.writeEnvelope(ctx, handshakeEnvelope, conn); err != nil {
 		w.addressBook.PutPeerStatus(peerID, StatusError)

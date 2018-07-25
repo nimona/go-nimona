@@ -3,7 +3,6 @@ package net
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,8 +35,8 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo
 	}
 
 	id := &PrivateIdentity{
-		ID:         fmt.Sprintf("00x%x", signingKey.PublicKey.ToBytes()),
-		PrivateKey: fmt.Sprintf("00x%x", signingKey.ToBytes()),
+		ID:         fmt.Sprintf("00x%s", Base58Encode(signingKey.PublicKey.ToBytes())),
+		PrivateKey: fmt.Sprintf("00x%s", Base58Encode(signingKey.ToBytes())),
 		Peers:      &PeerInfoCollection{},
 	}
 
@@ -65,8 +64,8 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 	}
 
 	pi := &PrivatePeerInfo{
-		ID:         fmt.Sprintf("01x%x", peerSigningKey.PublicKey.ToBytes()),
-		PrivateKey: fmt.Sprintf("01x%x", peerSigningKey.ToBytes()),
+		ID:         fmt.Sprintf("01x%s", Base58Encode(peerSigningKey.PublicKey.ToBytes())),
+		PrivateKey: fmt.Sprintf("01x%s", Base58Encode(peerSigningKey.ToBytes())),
 	}
 
 	return pi, nil
@@ -107,17 +106,24 @@ func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) e
 	return ioutil.WriteFile(path, raw, 0644)
 }
 
-// Sign data given private key in its prefixed and compressed format
-func Sign(data []byte, privateKey string) ([]byte, error) {
+// SignData given some bytes and a private key in its prefixed and compressed format
+func SignData(data []byte, privateKey string) ([]byte, error) {
 	// TODO check private key format
-	return btckey.Sign(data, privateKey[3:])
+	key, err := Base58Decode(privateKey[3:])
+	if err != nil {
+		return nil, err
+	}
+	return btckey.Sign(data, fmt.Sprintf("%x", key))
 }
 
 // Verify the signature of some data given a public key in its prefixed and
 // compressed format
 func Verify(publicKey string, data, signature []byte) error {
 	digest := sha256.Sum256(data)
-	publicKeyBytes, _ := hex.DecodeString(publicKey[3:])
+	publicKeyBytes, err := Base58Decode(publicKey[3:])
+	if err != nil {
+		return err
+	}
 	ok := btckey.Verify(publicKeyBytes, signature, digest[:])
 	if !ok {
 		return errors.New("could not verify signature")

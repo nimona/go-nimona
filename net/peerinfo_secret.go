@@ -13,6 +13,8 @@ func (pi *PrivatePeerInfo) Envelope() *Envelope {
 	envelope := NewEnvelope(PeerInfoContentType, nil, PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
-	envelope.Sign(pi)
+	SetSigner(envelope, pi)
+	Sign(envelope, pi)
+	SetID(envelope)
 	return envelope
 }

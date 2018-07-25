@@ -76,7 +76,7 @@ func (nd *DHT) refresh() {
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
 		envelope := net.NewEnvelope(PayloadTypeGetPeerInfo, peerIDs, resp)
 		if err := nd.messenger.Send(ctx, envelope); err != nil {
-			logrus.WithError(err).Warnf("refresh could not send envelope")
+			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send envelope")
 		}
 		time.Sleep(time.Second * 30)
 	}
@@ -87,7 +87,7 @@ func (nd *DHT) handleEnvelope(envelope *net.Envelope) error {
 	// if err := nd.addressBook.PutPeerInfoFromEnvelope(payload.SenderPeerInfo); err != nil {
 	// 	logrus.WithError(err).Info("could not put sender peer info")
 	// }
-	contentType := envelope.Type
+	contentType := envelope.Headers.Type
 	switch contentType {
 	case PayloadTypeGetPeerInfo:
 		nd.handleGetPeerInfo(envelope)
@@ -124,7 +124,7 @@ func (nd *DHT) handleGetPeerInfo(incEnvelope *net.Envelope) {
 	resp := EnvelopePutPeerInfoFromEnvelope{
 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Envelope(),
 		RequestID:      payload.RequestID,
-		ClosestPeers:   closestEnvelopes,
+		ClosestPeers:   closestOrNil(closestEnvelopes),
 	}
 	if peerInfo != nil {
 		resp.PeerInfo = peerInfo.Envelope
@@ -187,7 +187,7 @@ func (nd *DHT) handleGetProviders(incEnvelope *net.Envelope) {
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		PeerIDs:        providers,
-		ClosestPeers:   closestEnvelopes,
+		ClosestPeers:   closestOrNil(closestEnvelopes),
 	}
 
 	ctx := context.Background()
@@ -248,7 +248,7 @@ func (nd *DHT) handleGetValue(incEnvelope *net.Envelope) {
 		RequestID:      payload.RequestID,
 		Key:            payload.Key,
 		Value:          value,
-		ClosestPeers:   closestEnvelopes,
+		ClosestPeers:   closestOrNil(closestEnvelopes),
 	}
 
 	ctx := context.Background()
@@ -500,4 +500,12 @@ func getEnvelopesFromPeerInfos(peerInfos []*net.PeerInfo) []*net.Envelope {
 		envelopes = append(envelopes, peerInfo.Envelope)
 	}
 	return envelopes
+}
+
+func closestOrNil(c []*net.Envelope) []*net.Envelope {
+	if len(c) == 0 {
+		return nil
+	}
+
+	return c
 }
