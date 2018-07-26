@@ -7,14 +7,15 @@ type PrivatePeerInfo struct {
 	Addresses  []string `json:"addresses"`
 }
 
-// Envelope returns a signed Envelope
-func (pi *PrivatePeerInfo) Envelope() *Envelope {
+// Block returns a signed Block
+func (pi *PrivatePeerInfo) Block() *Block {
 	// TODO content type
-	envelope := NewEnvelope(PeerInfoContentType, nil, PeerInfoPayload{
+	block := NewBlock(PeerInfoContentType, PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
-	SetSigner(envelope, pi)
-	Sign(envelope, pi)
-	SetID(envelope)
-	return envelope
+	block.Metadata.Ephemeral = true
+	SetSigner(block, pi)
+	Sign(block, pi)
+	SetID(block)
+	return block
 }

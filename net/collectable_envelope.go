@@ -1,20 +1,20 @@
 package net
 
-// EnvelopeEvent for reporting envelope metrics
-type EnvelopeEvent struct {
+// BlockEvent for reporting block metrics
+type BlockEvent struct {
 	Outgoing     bool
 	ContentType  string
 	Recipients   int
 	PayloadSize  int
-	EnvelopeSize int
+	BlockSize int
 }
 
 // Collection returns the name of the collection for this event
-func (e *EnvelopeEvent) Collection() string {
-	return "envelopes"
+func (e *BlockEvent) Collection() string {
+	return "blocks"
 }
 
 // Type returns the content type for this event
-func (e *EnvelopeEvent) Type() string {
-	return "nimona.telemetry.envelope"
+func (e *BlockEvent) Type() string {
+	return "nimona.telemetry.block"
 }

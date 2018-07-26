@@ -5,23 +5,26 @@ import (
 )
 
 func init() {
-	net.RegisterContentType(PayloadTypePing, EnvelopePing{})
-	net.RegisterContentType(PayloadTypePong, EnvelopePong{})
+	net.RegisterContentType(PayloadTypePing, BlockPing{})
+	net.RegisterContentType(PayloadTypePong, BlockPong{})
 
-	net.RegisterContentType(PayloadTypeGetPeerInfo, EnvelopeGetPeerInfo{})
-	net.RegisterContentType(PayloadTypePutPeerInfo, EnvelopePutPeerInfoFromEnvelope{})
+	net.RegisterContentType(PayloadTypeGetPeerInfo, BlockGetPeerInfo{})
+	net.RegisterContentType(PayloadTypePutPeerInfo, BlockPutPeerInfoFromBlock{})
 
-	net.RegisterContentType(PayloadTypeGetProviders, EnvelopeGetProviders{})
-	net.RegisterContentType(PayloadTypePutProviders, EnvelopePutProviders{})
+	net.RegisterContentType(PayloadProviderType, PayloadProvider{})
+	net.RegisterContentType(PayloadTypeGetProviders, BlockGetProviders{})
+	net.RegisterContentType(PayloadTypePutProviders, BlockPutProviders{})
 
-	net.RegisterContentType(PayloadTypeGetValue, EnvelopeGetValue{})
-	net.RegisterContentType(PayloadTypePutValue, EnvelopePutValue{})
+	net.RegisterContentType(PayloadTypeGetValue, BlockGetValue{})
+	net.RegisterContentType(PayloadTypePutValue, BlockPutValue{})
 }
 
-// Envelope types
+// Block types
 const (
-	PayloadTypePing string = "dht.ping"
-	PayloadTypePong        = "dht.pong"
+	PayloadProviderType = "dht.provider"
+
+	PayloadTypePing = "dht.ping"
+	PayloadTypePong = "dht.pong"
 
 	PayloadTypeGetPeerInfo = "dht.get-peer-info"
 	PayloadTypePutPeerInfo = "dht.put-peer-info"
@@ -33,63 +36,67 @@ const (
 	PayloadTypePutValue = "dht.put-value"
 )
 
-// EnvelopePing payload
-type EnvelopePing struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+// BlockPing payload
+type BlockPing struct {
+	// SenderPeerInfo *net.Block `json:"sender_peer_info"`
+	RequestID string `json:"request_id,omitempty"`
+	PeerID    string `json:"peer_id"`
 }
 
-// EnvelopePong payload
-type EnvelopePong struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+// BlockPong payload
+type BlockPong struct {
+	// SenderPeerInfo *net.Block `json:"sender_peer_info"`
+	RequestID string `json:"request_id,omitempty"`
+	PeerID    string `json:"peer_id"`
 }
 
-// EnvelopeGetPeerInfo payload
-type EnvelopeGetPeerInfo struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+// BlockGetPeerInfo payload
+type BlockGetPeerInfo struct {
+	// SenderPeerInfo *net.Block `json:"sender_peer_info"`
+	RequestID string `json:"request_id,omitempty"`
+	PeerID    string `json:"peer_id"`
 }
 
-// EnvelopePutPeerInfoFromEnvelope payload
-type EnvelopePutPeerInfoFromEnvelope struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	PeerInfo       *net.Envelope   `json:"peer_info"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
+// BlockPutPeerInfoFromBlock payload
+type BlockPutPeerInfoFromBlock struct {
+	// SenderPeerInfo *net.Block   `json:"sender_peer_info"`
+	RequestID    string       `json:"request_id,omitempty"`
+	Peer         *net.Block   `json:"peer"`
+	ClosestPeers []*net.Block `json:"closest_peers"`
 }
 
-// EnvelopeGetProviders payload
-type EnvelopeGetProviders struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
+// BlockGetProviders payload
+type BlockGetProviders struct {
+	// SenderPeerInfo *net.Block `json:"sender_peer_info"`
+	RequestID string `json:"request_id,omitempty"`
+	Key       string `json:"key"`
 }
 
-// EnvelopePutProviders payload
-type EnvelopePutProviders struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	PeerIDs        []string        `json:"peer_ids"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
+// BlockPutProviders payload
+type BlockPutProviders struct {
+	// SenderPeerInfo *net.Block   `json:"sender_peer_info"`
+	RequestID    string       `json:"request_id,omitempty"`
+	Key          string       `json:"key"`
+	Providers    []*net.Block `json:"providers"`
+	ClosestPeers []*net.Block `json:"closest_peers"`
 }
 
-// EnvelopeGetValue payload
-type EnvelopeGetValue struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
+// BlockGetValue payload
+type BlockGetValue struct {
+	SenderPeerInfo *net.Block `json:"sender_peer_info"`
+	RequestID      string     `json:"request_id,omitempty"`
+	Key            string     `json:"key"`
 }
 
-// EnvelopePutValue payload
-type EnvelopePutValue struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	Value          string          `json:"value"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
+// BlockPutValue payload
+type BlockPutValue struct {
+	SenderPeerInfo *net.Block   `json:"sender_peer_info"`
+	RequestID      string       `json:"request_id,omitempty"`
+	Key            string       `json:"key"`
+	Value          string       `json:"value"`
+	ClosestPeers   []*net.Block `json:"closest_peers"`
+}
+
+type PayloadProvider struct {
+	BlockIDs []string `json:"blockIDs"`
 }

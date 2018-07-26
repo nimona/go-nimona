@@ -15,18 +15,18 @@ package dht
 // 	addressBook *net.AddressBook
 // 	messenger   *net.MockMessenger
 // 	peerID      string
-// 	envelopes    chan interface{}
+// 	blocks    chan interface{}
 // 	peers       chan interface{}
 // 	dht         *DHT
 // }
 
 // func (suite *dhtTestSuite) SetupTest() {
-// 	suite.envelopes = make(chan interface{}, 10)
+// 	suite.blocks = make(chan interface{}, 10)
 // 	suite.peers = make(chan interface{}, 10)
 // 	suite.addressBook = net.NewAddressBook()
 // 	peer1, _ := suite.addressBook.CreateNewPeer()
 // 	suite.addressBook.PutLocalPeerInfo(peer1)
-// 	suite.addressBook.PutPeerInfoFromEnvelope(&net.PeerInfo{
+// 	suite.addressBook.PutPeerInfoFromBlock(&net.PeerInfo{
 // 		ID: "bootstrap",
 // 		Addresses: []string{
 // 			"localhost",
@@ -41,15 +41,15 @@ package dht
 // 	ctx := context.Background()
 // 	key := "a"
 // 	value := "b"
-// 	payload := EnvelopePutValue{
-// 		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().Envelope(),
+// 	payload := BlockPutValue{
+// 		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().Block(),
 // 		Key:            "a",
 // 		Value:          "b",
 // 	}
 // 	to := []string{"bootstrap"}
-// 	envelope, err := net.NewEnvelope(PayloadTypePutValue, to, payload)
+// 	block, err := net.NewBlock(PayloadTypePutValue, to, payload)
 // 	suite.NoError(err)
-// 	suite.messenger.On("Send", PayloadTypePutValue, envelope).Return(nil)
+// 	suite.messenger.On("Send", PayloadTypePutValue, block).Return(nil)
 // 	err = suite.dht.PutValue(ctx, key, value)
 // 	suite.NoError(err)
 

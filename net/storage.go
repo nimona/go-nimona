@@ -1,11 +1,11 @@
-package blx
+package net
 
 import "errors"
 
 var (
-	ErrNotFound = errors.New("Not Found")
-	ErrEmpty    = errors.New("Empty")
-	ErrExists   = errors.New("Already Exists")
+	// ErrNotFound = errors.New("Not Found")
+	ErrEmpty  = errors.New("Empty")
+	ErrExists = errors.New("Already Exists")
 )
 
 type Storage interface {

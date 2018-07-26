@@ -3,7 +3,6 @@ package net_test
 // import (
 // 	"context"
 // 	"fmt"
-// 	"net"
 // 	"sync"
 // 	"testing"
 // 	"time"

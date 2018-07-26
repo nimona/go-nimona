@@ -20,5 +20,5 @@ type PeerInfo struct {
 	ID        string   `json:"id"`
 	Addresses []string `json:"addresses"`
 
-	Envelope *Envelope `json:"envelope"`
+	Block *Block `json:"block"`
 }

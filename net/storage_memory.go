@@ -1,4 +1,4 @@
-package blx
+package net
 
 type memoryStore struct {
 	data map[string]*Block

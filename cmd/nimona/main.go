@@ -3,20 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"encoding/base64"
 
 	"gopkg.in/abiosoft/ishell.v2"
 
 	"github.com/nimona/go-nimona/api"
-	"github.com/nimona/go-nimona/blx"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/net"
 )
@@ -35,10 +34,10 @@ func base64ToBytes(s string) []byte {
 	return b
 }
 
-var bootstrapPeerInfoEnvelopes = []*net.Envelope{
-	&net.Envelope{
-		Headers: net.Headers{
-			// ID:"30xDFpt2JF25bWPp8uhcs2dFA2JwbiVoYwitBGGd6cgo8Z9",
+var bootstrapPeerInfoBlocks = []*net.Block{
+	&net.Block{
+		Metadata: net.Metadata{
+			ID:     "30xDFpt2JF25bWPp8uhcs2dFA2JwbiVoYwitBGGd6cgo8Z9",
 			Type:   "peer.info",
 			Signer: "01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1",
 		},
@@ -85,11 +84,11 @@ func main() {
 		log.Fatal("could not put local peer")
 	}
 
-	for _, peerInfoEnvelope := range bootstrapPeerInfoEnvelopes {
-		reg.PutPeerInfoFromEnvelope(peerInfoEnvelope)
+	for _, peerInfoBlock := range bootstrapPeerInfoBlocks {
+		reg.PutPeerInfoFromBlock(peerInfoBlock)
 	}
 
-	// mmmm := &net.Envelope{
+	// mmmm := &net.Block{
 	// 	Type: "peer.info",
 	// 	Payload: net.PeerInfoPayload{
 	// 		Addresses: []string{
@@ -105,31 +104,33 @@ func main() {
 
 	storagePath := path.Join(configPath, "storage")
 
-	n, _ := net.NewMessenger(reg)
+	dpr := net.NewDiskStorage(storagePath)
+	n, _ := net.NewMessenger(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
-	dpr := blx.NewDiskStorage(storagePath)
-	blx, _ := blx.NewBlockExchange(n, dpr)
+	n.RegisterDiscoverer(dht)
+
+	// blx, _ := net.NewBlockExchange(n, dpr)
 
 	// Announce blocks on init and on new blocks
-	go func() {
-		blockKeys, _ := blx.GetLocalBlocks()
+	// go func() {
+	// 	blockKeys, _ := blx.GetLocalBlocks()
 
-		for _, bk := range blockKeys {
-			// TODO Check errors
-			dht.PutProviders(context.Background(), bk)
-		}
+	// 	for _, bk := range blockKeys {
+	// 		// TODO Check errors
+	// 		dht.PutProviders(context.Background(), bk)
+	// 	}
 
-		// TODO Store the unsubscribe key
-		blx.Subscribe(func(key string) {
-			dht.PutProviders(context.Background(), key)
-		})
-	}()
+	// 	// TODO Store the unsubscribe key
+	// 	blx.Subscribe(func(key string) {
+	// 		dht.PutProviders(context.Background(), key)
+	// 	})
+	// }()
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(envelope *net.Envelope) error {
-		payload := envelope.Payload.(Hello)
-		fmt.Printf("___ Got envelope %s\n", payload.Body)
+	n.Handle("demo", func(block *net.Block) error {
+		payload := block.Payload.(Hello)
+		fmt.Printf("___ Got block %s\n", payload.Body)
 		return nil
 	})
 
@@ -255,25 +256,20 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			if len(c.Args) < 1 {
-				c.Println("Missing key peer")
+				c.Println("Missing block id")
 				return
 			}
 
-			peer := ""
+			ctx, cf := context.WithTimeout(context.Background(), time.Second*10)
+			defer cf()
 
-			if len(c.Args) == 2 {
-				peer = c.Args[1]
-			}
-
-			blockHash := c.Args[0]
-
-			block, err := blx.Get(blockHash, peer)
+			block, err := n.Get(ctx, c.Args[0])
 			if err != nil {
 				c.Println(err)
 				return
 			}
 
-			c.Printf("Received block of %d bytes length\n", len(block.Data))
+			c.Printf("Received block %#v\n", block)
 		},
 		Help: "get peers providing a value from the dht",
 	}
@@ -336,7 +332,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			blocks, err := blx.GetLocalBlocks()
+			blocks, err := n.GetLocalBlocks()
 			if err != nil {
 				c.Println(err)
 				return
@@ -368,15 +364,15 @@ func main() {
 		Name: "send",
 		Func: func(c *ishell.Context) {
 			if len(c.Args) < 2 {
-				c.Println("Missing peer id or envelope")
+				c.Println("Missing peer id or block")
 				return
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			envelope := net.NewEnvelope("demo.hello", to, &Hello{msg})
-			if err := n.Send(ctx, envelope); err != nil {
-				c.Println("Could not send envelope", err)
+			block := net.NewBlock("demo.hello", &Hello{msg}, to...)
+			if err := n.Send(ctx, block, to...); err != nil {
+				c.Println("Could not send block", err)
 				return
 			}
 		},
@@ -388,48 +384,48 @@ func main() {
 		Help: "send blocks to peers",
 	}
 
-	blockFile := &ishell.Cmd{
-		Name: "file",
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
+	// blockFile := &ishell.Cmd{
+	// 	Name: "file",
+	// 	Func: func(c *ishell.Context) {
+	// 		c.ShowPrompt(false)
+	// 		defer c.ShowPrompt(true)
 
-			if len(c.Args) < 2 {
-				c.Println("Peer and file missing")
-				return
-			}
+	// 		if len(c.Args) < 2 {
+	// 			c.Println("Peer and file missing")
+	// 			return
+	// 		}
 
-			toPeer := c.Args[0]
-			file := c.Args[1]
+	// 		toPeer := c.Args[0]
+	// 		file := c.Args[1]
 
-			f, err := os.Open(file)
-			if err != nil {
-				c.Println(err)
-				return
-			}
+	// 		f, err := os.Open(file)
+	// 		if err != nil {
+	// 			c.Println(err)
+	// 			return
+	// 		}
 
-			data, err := ioutil.ReadAll(f)
-			if err != nil {
-				c.Println(err)
-				return
-			}
+	// 		data, err := ioutil.ReadAll(f)
+	// 		if err != nil {
+	// 			c.Println(err)
+	// 			return
+	// 		}
 
-			// TODO store filename in a meta
-			meta := map[string][]byte{}
+	// 		// TODO store filename in a meta
+	// 		meta := map[string][]byte{}
 
-			meta["filename"] = []byte(f.Name())
+	// 		meta["filename"] = []byte(f.Name())
 
-			hsh, n, err := blx.Send(toPeer, data, meta)
-			if err != nil {
-				c.Println(err)
-				return
-			}
-			c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
-		},
-		Help: "send a file to another peer",
-	}
+	// 		hsh, n, err := n.Send(toPeer, data, meta)
+	// 		if err != nil {
+	// 			c.Println(err)
+	// 			return
+	// 		}
+	// 		c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
+	// 	},
+	// 	Help: "send a file to another peer",
+	// }
 
-	block.AddCmd(blockFile)
+	// block.AddCmd(blockFile)
 
 	get := &ishell.Cmd{
 		Name: "get",

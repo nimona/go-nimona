@@ -1,6 +1,7 @@
 package net
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -17,13 +18,13 @@ type PeerManager interface {
 
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
-	PutPeerInfoFromEnvelope(*Envelope) error
+	PutPeerInfoFromBlock(*Block) error
 
 	PutPeerStatus(peerID string, status Status)
 	GetPeerStatus(peerID string) Status
 
 	// Resolve(ctx context.Context, peerID string) (string, error)
-	// Discover(ctx context.Context, peerID, protocol string) ([]net.Address, error)
+	// Discover(ctx context.Context, peerID, protocol string) ([]Address, error)
 	LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error)
 	CreateNewPeer() (*PrivatePeerInfo, error)
 	LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error)
@@ -73,29 +74,33 @@ type AddressBook struct {
 	localPeer     *PrivatePeerInfo
 }
 
-// PutPeerInfoFromEnvelope stores an envelope with a peer payload
-func (ab *AddressBook) PutPeerInfoFromEnvelope(envelope *Envelope) error {
-	if ab.localPeer.ID == envelope.Headers.Signer {
+// PutPeerInfoFromBlock stores an block with a peer payload
+func (ab *AddressBook) PutPeerInfoFromBlock(block *Block) error {
+	if ab.localPeer.ID == block.Metadata.Signer {
 		return nil
 	}
 
-	ep := envelope.Payload.(PeerInfoPayload)
+	ep := block.Payload.(PeerInfoPayload)
 
-	// TODO verify envelope?
+	// TODO verify block?
 
-	exPeer, err := ab.GetPeerInfo(envelope.Headers.Signer)
+	if len(ep.Addresses) == 0 {
+		return errors.New("missing addresses")
+	}
+
+	exPeer, err := ab.GetPeerInfo(block.Metadata.Signer)
 	if err == nil && exPeer != nil {
-		if fmt.Sprintf("%x", exPeer.Envelope.Signature) == fmt.Sprintf("%x", envelope.Signature) {
+		if fmt.Sprintf("%x", exPeer.Block.Signature) == fmt.Sprintf("%x", block.Signature) {
 			return nil
 		}
 	}
 
-	ab.PutPeerStatus(envelope.Headers.Signer, StatusNew)
+	ab.PutPeerStatus(block.Metadata.Signer, StatusNew)
 
 	peerInfo := &PeerInfo{
-		ID:        envelope.Headers.Signer,
+		ID:        block.Metadata.Signer,
 		Addresses: ep.Addresses,
-		Envelope:  envelope,
+		Block:     block,
 	}
 
 	return ab.peers.Put(peerInfo)
@@ -112,6 +117,9 @@ func (ab *AddressBook) GetLocalPeerInfo() *PrivatePeerInfo {
 
 // PutLocalPeerInfo puts our local peer info
 func (ab *AddressBook) PutLocalPeerInfo(peerInfo *PrivatePeerInfo) error {
+	// if len(peerInfo.Addresses) == 0 {
+	// 	return errors.New("missing addresses")
+	// }
 	ab.localPeerLock.Lock()
 	newPrivatePeerInfo := &PrivatePeerInfo{}
 	copier.Copy(newPrivatePeerInfo, peerInfo)

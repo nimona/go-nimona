@@ -153,8 +153,8 @@ func (_m *MockAddressBook) PutLocalPeerInfo(_a0 *PrivatePeerInfo) error {
 	return r0
 }
 
-// PutPeerInfoFromEnvelope provides a mock function with given fields: _a0
-func (_m *MockAddressBook) PutPeerInfoFromEnvelope(_a0 *PeerInfo) error {
+// PutPeerInfoFromBlock provides a mock function with given fields: _a0
+func (_m *MockAddressBook) PutPeerInfoFromBlock(_a0 *PeerInfo) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
