@@ -75,13 +75,9 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := net.NewAddressBook()
-	spi, err := reg.LoadOrCreateLocalPeerInfo(configPath)
+	reg, err := net.NewAddressBook(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
-	}
-	if err := reg.PutLocalPeerInfo(spi); err != nil {
-		log.Fatal("could not put local peer")
 	}
 
 	for _, peerInfoBlock := range bootstrapPeerInfoBlocks {

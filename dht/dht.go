@@ -74,14 +74,13 @@ func (nd *DHT) refresh() {
 		}
 		ctx := context.Background()
 		peerIDs := getPeerIDsFromPeerInfos(closestPeers)
-		selfBlock := net.NewBlock(PayloadTypePutPeerInfo, BlockPutPeerInfoFromBlock{
+		selfBlock := net.NewEphemeralBlock(PayloadTypePutPeerInfo, BlockPutPeerInfoFromBlock{
 			Peer: nd.addressBook.GetLocalPeerInfo().Block(),
 		})
 		if err := nd.messenger.Send(ctx, selfBlock, peerIDs...); err != nil {
 			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
 		}
-		block := net.NewBlock(PayloadTypeGetPeerInfo, resp)
-		block.Metadata.Ephemeral = true
+		block := net.NewEphemeralBlock(PayloadTypeGetPeerInfo, resp)
 		if err := nd.messenger.Send(ctx, block, peerIDs...); err != nil {
 			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
 		}
@@ -139,8 +138,7 @@ func (nd *DHT) handleGetPeerInfo(incBlock *net.Block) {
 
 	ctx := context.Background()
 	to := []string{incBlock.Metadata.Signer}
-	block := net.NewBlock(PayloadTypePutPeerInfo, resp)
-	block.Metadata.Ephemeral = true
+	block := net.NewEphemeralBlock(PayloadTypePutPeerInfo, resp)
 	if err := nd.messenger.Send(ctx, block, to...); err != nil {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not send block")
 		return
@@ -201,8 +199,7 @@ func (nd *DHT) handleGetProviders(incBlock *net.Block) {
 
 	ctx := context.Background()
 	to := []string{incBlock.Metadata.Signer}
-	block := net.NewBlock(PayloadTypePutProviders, resp)
-	block.Metadata.Ephemeral = true
+	block := net.NewEphemeralBlock(PayloadTypePutProviders, resp)
 	if err := nd.messenger.Send(ctx, block, to...); err != nil {
 		logrus.WithError(err).Warnf("handleGetProviders could not send block")
 		return
@@ -439,12 +436,12 @@ func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
 
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
-	providerBlock := net.NewBlock(PayloadProviderType, PayloadProvider{
+	providerBlock := net.NewEphemeralBlock(PayloadProviderType, PayloadProvider{
 		BlockIDs: []string{key},
 	})
-	providerBlock.Metadata.Ephemeral = true
-	net.Sign(providerBlock, nd.addressBook.GetLocalPeerInfo())
-	net.SetID(providerBlock)
+
+	signer := nd.addressBook.GetLocalPeerInfo()
+	net.Sign(providerBlock, signer)
 
 	// localPeerID := nd.addressBook.GetLocalPeerInfo().ID
 	if err := nd.store.PutProvider(providerBlock); err != nil {
@@ -459,9 +456,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 		},
 	}
 
-	block := net.NewBlock(PayloadTypePutProviders, putProviderPayload)
-	block.Metadata.Ephemeral = true
-
+	block := net.NewEphemeralBlock(PayloadTypePutProviders, putProviderPayload)
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
 	if err := nd.messenger.Send(ctx, block, closestPeerIDs...); err != nil {

@@ -100,24 +100,24 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 		close(newAddresses)
 	}()
 
-	go func() {
-		if err := igd.Discover(devices, 5*time.Second); err != nil {
-			close(newAddresses)
-			logger.Error("could not discover devices", zap.Error(err))
-		}
+	// go func() {
+	if err := igd.Discover(devices, 2*time.Second); err != nil {
+		close(newAddresses)
+		logger.Error("could not discover devices", zap.Error(err))
+	}
 
-		addresses := GetAddresses(tcpListener)
-		for newAddress := range newAddresses {
-			addresses = append(addresses, newAddress)
-		}
+	addresses := GetAddresses(tcpListener)
+	for newAddress := range newAddresses {
+		addresses = append(addresses, newAddress)
+	}
 
-		// TODO Replace with actual relay peer ids
-		addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
+	// TODO Replace with actual relay peer ids
+	addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
 
-		localPeerInfo := n.AddressBook.GetLocalPeerInfo()
-		localPeerInfo.Addresses = addresses
-		n.AddressBook.PutLocalPeerInfo(localPeerInfo)
-	}()
+	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
+	localPeerInfo.Addresses = addresses
+	n.AddressBook.PutLocalPeerInfo(localPeerInfo)
+	// }()
 
 	return tcpListener, nil
 }

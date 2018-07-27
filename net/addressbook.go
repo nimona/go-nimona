@@ -25,10 +25,10 @@ type PeerManager interface {
 
 	// Resolve(ctx context.Context, peerID string) (string, error)
 	// Discover(ctx context.Context, peerID, protocol string) ([]Address, error)
-	LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error)
+	// LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error)
 	CreateNewPeer() (*PrivatePeerInfo, error)
-	LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error)
-	StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error
+	// LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error)
+	// StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error
 }
 
 type peerStatus struct {
@@ -56,13 +56,22 @@ const (
 )
 
 // NewAddressBook creates a new AddressBook
-func NewAddressBook() *AddressBook {
+func NewAddressBook(configPath string) (*AddressBook, error) {
 	ab := &AddressBook{
 		identities: &IdentityCollection{},
 		peers:      &PeerInfoCollection{},
 	}
 
-	return ab
+	spi, err := ab.LoadOrCreateLocalPeerInfo(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ab.PutLocalPeerInfo(spi); err != nil {
+		return nil, err
+	}
+
+	return ab, nil
 }
 
 // AddressBook holds our private peer as well as all known remote peers

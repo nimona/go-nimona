@@ -123,17 +123,27 @@ func NewMessenger(addressBook *AddressBook, storage Storage) (Messenger, error) 
 		getRequests: sync.Map{},
 	}
 
-	localID := w.addressBook.GetLocalPeerInfo().ID
+	signer := w.addressBook.GetLocalPeerInfo()
 
 	go func() {
 		for block := range w.outgoingBlocks {
-			if localID == block.recipient {
+			if signer.ID == block.recipient {
 				continue
+			}
+
+			if block.block.Metadata.Signer == "" || block.block.Metadata.Signer == signer.ID {
+				SetSigner(block.block, signer)
+				if err := Sign(block.block, signer); err != nil {
+					// TODO log eror
+				}
+				if err := SetID(block.block); err != nil {
+					// TODO log error
+				}
 			}
 
 			// TODO log error and reconsider the async
 			// TODO also maybe we need to verify it or something?
-			if block.block.Metadata.ID != "" {
+			if block.block.Metadata.ID != "" && !block.block.Metadata.Ephemeral {
 				go w.storage.Store(block.block.Metadata.ID, block.block)
 			}
 
@@ -375,8 +385,7 @@ func (w *messenger) Get(ctx context.Context, id string) (*Block, error) {
 	}
 
 	// Request block
-	wrapper := NewBlock(PayloadTypeRequestBlock, req)
-	wrapper.Metadata.Ephemeral = true
+	wrapper := NewEphemeralBlock(PayloadTypeRequestBlock, req)
 	if err := w.Send(ctx, wrapper, providers...); err != nil {
 		w.logger.Warn("blx.Get could not send block", zap.Error(err))
 		return nil, err
@@ -447,19 +456,6 @@ func (w *messenger) GetLocalBlocks() ([]string, error) {
 // }
 
 func (w *messenger) writeBlock(ctx context.Context, block *Block, rw io.ReadWriter) error {
-	signer := w.addressBook.GetLocalPeerInfo()
-
-	if !block.IsSigned() {
-		SetSigner(block, signer)
-		if err := Sign(block, signer); err != nil {
-			return err
-		}
-	}
-
-	if err := SetID(block); err != nil {
-		return err
-	}
-
 	if os.Getenv("DEBUG_BLOCKS") != "" {
 		fmt.Println("> ---------- out block / start")
 		b, _ := json.MarshalIndent(block, "> ", "  ")
@@ -521,14 +517,22 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 	w.logger.Debug("writing handshake")
 
 	// handshake so the other side knows who we are
-	handshakeBlock := NewBlock(
+	handshakeBlock := NewEphemeralBlock(
 		"handshake",
 		HandshakeBlock{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Block(),
 		},
 		peerID,
 	)
-	handshakeBlock.Metadata.Ephemeral = true
+	signer := w.addressBook.GetLocalPeerInfo()
+	SetSigner(handshakeBlock, signer)
+	if err := Sign(handshakeBlock, signer); err != nil {
+		return nil, err
+	}
+
+	if err := SetID(handshakeBlock); err != nil {
+		return nil, err
+	}
 
 	if err := w.writeBlock(ctx, handshakeBlock, conn); err != nil {
 		w.addressBook.PutPeerStatus(peerID, StatusError)

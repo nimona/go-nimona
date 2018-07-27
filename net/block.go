@@ -7,6 +7,12 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+func NewEphemeralBlock(contentType string, payload interface{}, recipients ...string) *Block {
+	block := NewBlock(contentType, payload, recipients...)
+	block.Metadata.Ephemeral = true
+	return block
+}
+
 // NewBlock is a helper function for creating Blocks
 func NewBlock(contentType string, payload interface{}, recipients ...string) *Block {
 	// TODO do we need to add the owner on the policy as well?
@@ -197,11 +203,16 @@ func Sign(block *Block, signerPeerInfo *PrivatePeerInfo) error {
 	}
 
 	block.Signature = signature
-	return nil
+
+	return SetID(block)
 }
 
 // Verify block's signature
 func (block *Block) Verify() error {
+	if len(block.Signature) == 0 {
+		return nil
+	}
+
 	digest, err := getSignatureDigest(block)
 	if err != nil {
 		return err

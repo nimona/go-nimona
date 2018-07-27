@@ -151,8 +151,7 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	block := net.NewBlock(payloadType, req)
-	block.Metadata.Ephemeral = true
+	block := net.NewEphemeralBlock(payloadType, req)
 	if err := q.dht.messenger.Send(ctx, block, peersToAsk...); err != nil {
 		logrus.WithError(err).Warnf("dht.next could not send block")
 		return
