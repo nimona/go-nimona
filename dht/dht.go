@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	exchangeExtention   = "dht"
+	exchangeExtention    = "dht"
 	closestPeersToReturn = 8
 	maxQueryTime         = time.Second * 5
 )
@@ -27,7 +27,7 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	exchange      net.Exchange
+	exchange       net.Exchange
 	addressBook    net.AddressBooker
 	queries        sync.Map
 	refreshBuckets bool
@@ -41,7 +41,7 @@ func NewDHT(exchange net.Exchange, pm net.AddressBooker) (*DHT, error) {
 	// Create DHT node
 	nd := &DHT{
 		store:       store,
-		exchange:   exchange,
+		exchange:    exchange,
 		addressBook: pm,
 		queries:     sync.Map{},
 	}
@@ -69,7 +69,6 @@ func (nd *DHT) refresh() {
 		}
 
 		resp := BlockGetPeerInfo{
-			// SenderPeerInfo: peerInfo.Block(),
 			PeerID: peerInfo.ID,
 		}
 		ctx := context.Background()
@@ -89,10 +88,6 @@ func (nd *DHT) refresh() {
 }
 
 func (nd *DHT) handleBlock(block *net.Block) error {
-	// logrus.Debug("Got block", block.String())
-	// if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-	// 	logrus.WithError(err).Info("could not put sender peer info")
-	// }
 	contentType := block.Metadata.Type
 	switch contentType {
 	case PayloadTypeGetPeerInfo:
@@ -103,10 +98,6 @@ func (nd *DHT) handleBlock(block *net.Block) error {
 		nd.handleGetProviders(block)
 	case PayloadTypePutProviders:
 		nd.handlePutProviders(block)
-	// case PayloadTypeGetValue:
-	// 	nd.handleGetValue(block)
-	// case PayloadTypePutValue:
-	// 	nd.handlePutValue(block)
 	default:
 		logrus.WithField("block.PayloadType", contentType).Warn("Payload type not known")
 		return nil
@@ -120,15 +111,11 @@ func (nd *DHT) handleGetPeerInfo(incBlock *net.Block) {
 		logrus.Warn("expected BlockGetPeerInfo, got ", reflect.TypeOf(incBlock.Payload))
 		return
 	}
-	// if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-	// 	logrus.WithError(err).Info("could not put sender peer info")
-	// }
 
 	peerInfo, _ := nd.addressBook.GetPeerInfo(payload.PeerID)
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	closestBlocks := getBlocksFromPeerInfos(closestPeerInfos)
 	resp := BlockPutPeerInfoFromBlock{
-		// SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Block(),
 		RequestID:    payload.RequestID,
 		ClosestPeers: blocksOrNil(closestBlocks),
 	}
@@ -151,9 +138,6 @@ func (nd *DHT) handlePutPeerInfoFromBlock(incBlock *net.Block) {
 		logrus.Warn("expected BlockPutPeerInfoFromBlock, got ", reflect.TypeOf(incBlock.Payload))
 		return
 	}
-	// if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-	// 	logrus.WithError(err).Info("could not put sender peer info")
-	// }
 
 	for _, peerInfo := range payload.ClosestPeers {
 		nd.addressBook.PutPeerInfoFromBlock(peerInfo)
@@ -177,9 +161,6 @@ func (nd *DHT) handleGetProviders(incBlock *net.Block) {
 		logrus.Warn("expected BlockGetProviders, got ", reflect.TypeOf(incBlock.Payload))
 		return
 	}
-	// if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-	// 	logrus.WithError(err).Info("could not put sender peer info")
-	// }
 
 	providers, err := nd.store.GetProviders(payload.Key)
 	if err != nil {
@@ -190,7 +171,6 @@ func (nd *DHT) handleGetProviders(incBlock *net.Block) {
 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	closestBlocks := getBlocksFromPeerInfos(closestPeerInfos)
 	resp := BlockPutProviders{
-		// SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Block(),
 		RequestID:    payload.RequestID,
 		Key:          payload.Key,
 		Providers:    blocksOrNil(providers),
@@ -212,9 +192,6 @@ func (nd *DHT) handlePutProviders(incBlock *net.Block) {
 		logrus.Warn("expected BlockPutProviders, got ", reflect.TypeOf(incBlock.Payload))
 		return
 	}
-	// if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-	// 	logrus.WithError(err).Info("could not put sender peer info")
-	// }
 
 	for _, peerInfo := range payload.ClosestPeers {
 		nd.addressBook.PutPeerInfoFromBlock(peerInfo)
@@ -237,68 +214,6 @@ func (nd *DHT) handlePutProviders(incBlock *net.Block) {
 
 	q.(*query).incomingBlocks <- payload
 }
-
-// func (nd *DHT) handleGetValue(incBlock *net.Block) {
-// 	payload, ok := incBlock.Payload.(BlockGetValue)
-// 	if !ok {
-// 		logrus.Warn("expected BlockGetValue, got ", reflect.TypeOf(incBlock.Payload))
-// 		return
-// 	}
-// 	if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-// 		logrus.WithError(err).Info("could not put sender peer info")
-// 	}
-
-// 	value, _ := nd.store.GetValue(payload.Key)
-
-// 	closestPeerInfos, _ := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
-// 	closestBlocks := getBlocksFromPeerInfos(closestPeerInfos)
-// 	resp := BlockPutValue{
-// 		SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Block(),
-// 		RequestID:      payload.RequestID,
-// 		Key:            payload.Key,
-// 		Value:          value,
-// 		ClosestPeers:   blocksOrNil(closestBlocks),
-// 	}
-
-// 	ctx := context.Background()
-// 	to := []string{payload.SenderPeerInfo.Metadata.Signer}
-// 	block := net.NewBlock(PayloadTypePutValue, to, resp)
-// 	if err := nd.exchange.Send(ctx, block); err != nil {
-// 		logrus.WithError(err).Warnf("handleGetValue could not send block")
-// 		return
-// 	}
-// }
-
-// func (nd *DHT) handlePutValue(incBlock *net.Block) {
-// 	// TODO handle and log errors
-// 	payload, ok := incBlock.Payload.(BlockPutValue)
-// 	if !ok {
-// 		logrus.Warn("expected BlockPutValue, got ", reflect.TypeOf(incBlock.Payload))
-// 		return
-// 	}
-// 	if err := nd.addressBook.PutPeerInfoFromBlock(payload.SenderPeerInfo); err != nil {
-// 		logrus.WithError(err).Info("could not put sender peer info")
-// 	}
-
-// 	for _, peerInfo := range payload.ClosestPeers {
-// 		nd.addressBook.PutPeerInfoFromBlock(peerInfo)
-// 	}
-
-// 	if err := nd.store.PutValue(payload.Key, payload.Value); err != nil {
-// 		return
-// 	}
-
-// 	if payload.RequestID == "" {
-// 		return
-// 	}
-
-// 	q, exists := nd.queries.Load(payload.RequestID)
-// 	if !exists {
-// 		return
-// 	}
-
-// 	q.(*query).incomingBlocks <- payload
-// }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
 func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*net.PeerInfo, error) {
@@ -380,60 +295,6 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*net.PeerInfo, error
 	}
 }
 
-func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
-	// if err := nd.store.PutValue(key, value); err != nil {
-	// 	return err
-	// }
-
-	// closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
-	// resp := BlockPutValue{
-	// 	SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Block(),
-	// 	Key:            key,
-	// 	Value:          value,
-	// }
-
-	// closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	// block := net.NewBlock(PayloadTypePutValue, closestPeerIDs, resp)
-	// if err := nd.exchange.Send(ctx, block); err != nil {
-	// 	logrus.WithError(err).Warnf("PutValue could not send block")
-	// 	return err
-	// }
-
-	return nil
-}
-
-func (nd *DHT) GetValue(ctx context.Context, key string) (string, error) {
-	// q := &query{
-	// 	dht:            nd,
-	// 	id:             net.RandStringBytesMaskImprSrc(8),
-	// 	key:            key,
-	// 	queryType:      ValueQuery,
-	// 	incomingBlocks: make(chan interface{}),
-	// 	outgoingBlocks: make(chan interface{}),
-	// }
-
-	// nd.queries.Store(q.id, q)
-
-	// go q.Run(ctx)
-
-	// for {
-	// 	select {
-	// 	case value := <-q.outgoingBlocks:
-	// 		valueStr, ok := value.(string)
-	// 		if !ok {
-	// 			continue
-	// 		}
-	// 		return valueStr, nil
-	// 	case <-time.After(maxQueryTime):
-	// 		return "", ErrNotFound
-	// 	case <-ctx.Done():
-	// 		return "", ErrNotFound
-	// 	}
-	// }
-
-	return "", ErrNotFound
-}
-
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	providerBlock := net.NewEphemeralBlock(PayloadProviderType, PayloadProvider{
@@ -443,13 +304,11 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	signer := nd.addressBook.GetLocalPeerInfo()
 	net.Sign(providerBlock, signer)
 
-	// localPeerID := nd.addressBook.GetLocalPeerInfo().ID
 	if err := nd.store.PutProvider(providerBlock); err != nil {
 		return err
 	}
 
 	putProviderPayload := BlockPutProviders{
-		// SenderPeerInfo: nd.addressBook.GetLocalPeerInfo().Block(),
 		Key: key,
 		Providers: []*net.Block{
 			providerBlock,
@@ -518,11 +377,6 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 		}
 	}
 	return providers, nil
-}
-
-func (nd *DHT) GetAllValues() (map[string]string, error) {
-	// return nd.store.GetAllValues()
-	return nil, nil
 }
 
 func getPeerIDsFromPeerInfos(peerInfos []*net.PeerInfo) []string {

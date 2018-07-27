@@ -50,7 +50,6 @@ type exchange struct {
 	addressBook AddressBooker
 	discovery   Discoverer
 
-	// incomingBlocks chan *Block
 	outgoingBlocks chan outBlock
 	incoming       chan net.Conn
 	outgoing       chan net.Conn
@@ -95,7 +94,6 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 		network:     network,
 		addressBook: addressBook,
 
-		// incomingBlocks: make(chan *Block, 100),
 		outgoingBlocks: make(chan outBlock, 100),
 		incoming:       make(chan net.Conn),
 		outgoing:       make(chan net.Conn),
@@ -114,8 +112,11 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 	go func() {
 		for block := range w.outgoingBlocks {
 			if signer.ID == block.recipient {
+				w.logger.Info("cannot send block to self")
 				continue
 			}
+
+			fmt.Println("__")
 
 			if block.block.Metadata.Signer == "" || block.block.Metadata.Signer == signer.ID {
 				SetSigner(block.block, signer)
@@ -389,14 +390,6 @@ func (w *exchange) Get(ctx context.Context, id string) (*Block, error) {
 }
 
 func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string) error {
-	// TODO do this async or after sending?
-	if !block.Metadata.Ephemeral && block.Metadata.ID != "" {
-		if err := w.storage.Store(block.Metadata.ID, block); err != nil {
-			if err != ErrExists {
-				w.logger.Warn("could not write block", zap.Error(err))
-			}
-		}
-	}
 	// TODO do we need to send this to the policy recipients as well?
 	recipients = append(recipients, GetRecipientsFromBlockPolicies(block)...)
 	for _, recipient := range recipients {
@@ -416,30 +409,6 @@ func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string)
 func (w *exchange) GetLocalBlocks() ([]string, error) {
 	return w.storage.List()
 }
-
-// func (w *exchange) sendOne(ctx context.Context, block *Block, recipient string) error {
-// 	logger := w.logger.With(zap.String("peerID", recipient))
-
-// 	w.streamLock.Lock(recipient)
-// 	defer w.streamLock.Unlock(recipient)
-
-// 	w.logger.Debug("getting conn to write block", zap.String("recipient", recipient))
-// 	conn, err := w.GetOrDial(ctx, recipient)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// TODO this seems messy
-// 	// try to send the block directly to the recipient
-// 	if err := w.writeBlock(ctx, block, conn); err != nil {
-// 		w.Close(recipient, conn)
-// 		logger.Debug("could not send directly to recipient", zap.Error(err))
-// 	} else {
-// 		return nil
-// 	}
-
-// 	return ErrAllAddressesFailed
-// }
 
 func (w *exchange) writeBlock(ctx context.Context, block *Block, rw io.ReadWriter) error {
 	if os.Getenv("DEBUG_BLOCKS") != "" {
@@ -543,10 +512,6 @@ func (w *exchange) Listen(ctx context.Context, addr string) (net.Listener, error
 	go func() {
 		for {
 			select {
-			// case block := <-w.incomingBlocks:
-			// 	if err := w.Process(block, nil); err != nil {
-			// 		w.logger.Warn("failed to process block", zap.Error(err))
-			// 	}
 			case conn := <-w.incoming:
 				go func() {
 					if err := w.HandleConnection(conn); err != nil {

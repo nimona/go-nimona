@@ -16,7 +16,6 @@ type QueryType int
 const (
 	PeerInfoQuery QueryType = iota
 	ProviderQuery
-	ValueQuery
 )
 
 type query struct {
@@ -44,12 +43,6 @@ func (q *query) Run(ctx context.Context) {
 					q.outgoingBlocks <- provider
 				}
 			}
-		case ValueQuery:
-			value, err := q.dht.store.GetValue(q.key)
-			if err != nil {
-				break
-			}
-			q.outgoingBlocks <- value
 		}
 
 		// and now, wait for something to happen
@@ -71,9 +64,6 @@ func (q *query) Run(ctx context.Context) {
 						}
 					}
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
-				case BlockPutValue:
-					// 	q.outgoingBlocks <- block.Value
-					//  q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
 			case <-time.After(maxQueryTime):
@@ -96,8 +86,18 @@ func (q *query) nextIfCloser(newPeerID string) {
 		q.closestPeerID = newPeerID
 		q.next()
 	} else {
-		if comparePeers(q.closestPeerID, newPeerID, q.key) == newPeerID {
-			q.closestPeerID = newPeerID
+		// find closest peer
+		closestPeers, err := q.dht.FindPeersClosestTo(q.key, 1)
+		if err != nil {
+			// TODO log error
+			return
+		}
+		if len(closestPeers) == 0 {
+			return
+		}
+		closestPeerID := closestPeers[0].ID
+		if comparePeers(q.closestPeerID, closestPeerID, q.key) == closestPeerID {
+			q.closestPeerID = closestPeerID
 			q.next()
 		}
 	}
@@ -128,21 +128,12 @@ func (q *query) next() {
 	case PeerInfoQuery:
 		payloadType = PayloadTypeGetPeerInfo
 		req = BlockGetPeerInfo{
-			// SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Block(),
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
 	case ProviderQuery:
 		payloadType = PayloadTypeGetProviders
 		req = BlockGetProviders{
-			// SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Block(),
-			RequestID: q.id,
-			Key:       q.key,
-		}
-	case ValueQuery:
-		payloadType = PayloadTypeGetValue
-		req = BlockGetValue{
-			// SenderPeerInfo: q.dht.addressBook.GetLocalPeerInfo().Block(),
 			RequestID: q.id,
 			Key:       q.key,
 		}

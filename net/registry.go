@@ -6,7 +6,7 @@ import (
 )
 
 var registry = &Registry{
-	types: map[string]reflect.Type{},
+	types: sync.Map{},
 }
 
 // RegisterContentType registers types and content on a default registry
@@ -22,25 +22,21 @@ func GetContentType(contentType string) interface{} {
 
 // Registry holds content types and their structures
 type Registry struct {
-	lock  sync.RWMutex
-	types map[string]reflect.Type
+	types sync.Map
 }
 
 // Register a content type and its structure
 func (r *Registry) Register(contentType string, content interface{}) {
-	r.lock.Lock()
-	r.types[contentType] = reflect.TypeOf(content)
-	r.lock.Unlock()
+	r.types.Store(contentType, reflect.TypeOf(content))
 }
 
 // Get returns a content type's structure
 func (r *Registry) Get(contentType string) interface{} {
-	r.lock.RLock()
-	t, ok := r.types[contentType]
+	t, ok := r.types.Load(contentType)
 	if !ok {
 		return map[string]interface{}{}
 	}
-	v := reflect.New(t).Elem()
-	r.lock.RUnlock()
+
+	v := reflect.New(t.(reflect.Type)).Elem()
 	return v.Interface()
 }

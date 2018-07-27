@@ -34,7 +34,7 @@ type Network struct {
 
 // Dial to a peer and return a net.Conn or error
 func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
-	// logger := log.Logger(ctx).Named("network")
+	logger := log.Logger(ctx).Named("network")
 	peerInfo, err := n.AddressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
@@ -56,6 +56,7 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	}
 
 	if conn == nil {
+		logger.Debug("all addresses failed", zap.Strings("addresses", peerInfo.Addresses))
 		return nil, ErrAllAddressesFailed
 	}
 

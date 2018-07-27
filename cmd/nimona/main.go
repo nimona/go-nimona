@@ -84,43 +84,12 @@ func main() {
 		reg.PutPeerInfoFromBlock(peerInfoBlock)
 	}
 
-	// mmmm := &net.Block{
-	// 	Type: "peer.info",
-	// 	Payload: net.PeerInfoPayload{
-	// 		Addresses: []string{
-	// 			"tcp:andromeda.nimona.io:21013",
-	// 		},
-	// 	},
-	// }
-	// mmmm.Sign(spi)
-	// bbb, _ := json.MarshalIndent(mmmm, "", "  ")
-	// fmt.Println(string(bbb))
-	// fmt.Println(mmmm.Signature)
-	// os.Exit(1)
-
 	storagePath := path.Join(configPath, "storage")
 
 	dpr := net.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
 	n.RegisterDiscoverer(dht)
-
-	// blx, _ := net.NewBlockExchange(n, dpr)
-
-	// Announce blocks on init and on new blocks
-	// go func() {
-	// 	blockKeys, _ := blx.GetLocalBlocks()
-
-	// 	for _, bk := range blockKeys {
-	// 		// TODO Check errors
-	// 		dht.PutProviders(context.Background(), bk)
-	// 	}
-
-	// 	// TODO Store the unsubscribe key
-	// 	blx.Subscribe(func(key string) {
-	// 		dht.PutProviders(context.Background(), key)
-	// 	})
-	// }()
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
@@ -141,29 +110,6 @@ func main() {
 	shell := ishell.New()
 	shell.Printf("Nimona DHT (%s)\n", version)
 
-	putValue := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) < 2 {
-				c.Println("Missing key and value")
-				return
-			}
-
-			key := c.Args[0]
-			val := strings.Join(c.Args[1:], " ")
-			ctx := context.Background()
-			if err := dht.PutValue(ctx, key, val); err != nil {
-				c.Printf("Could not put key %s\n", key)
-				c.Printf("Error: %s\n", err)
-			}
-		},
-		Help: "put a value on the dht",
-	}
-
 	putProvider := &ishell.Cmd{
 		Name:    "providers",
 		Aliases: []string{"provider"},
@@ -183,35 +129,6 @@ func main() {
 			}
 		},
 		Help: "announce a provided key on the dht",
-	}
-
-	getValue := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) == 0 {
-				c.Println("Missing key")
-				return
-			}
-			c.ProgressBar().Indeterminate(true)
-			c.ProgressBar().Start()
-			key := c.Args[0]
-			ctx := context.Background()
-			rs, err := dht.GetValue(ctx, key)
-			c.Println("")
-			if err != nil {
-				c.Printf("Could not get %s\n", key)
-				c.Printf("Error: %s\n", err)
-			}
-			if rs != "" {
-				c.Printf(" - %s\n", rs)
-			}
-			c.ProgressBar().Stop()
-		},
-		Help: "get a value from the dht",
 	}
 
 	getProvider := &ishell.Cmd{
@@ -283,21 +200,6 @@ func main() {
 				for _, val := range vals {
 					c.Printf("  - %s\n", val)
 				}
-			}
-		},
-		Help: "list all providers stored in our local dht",
-	}
-
-	listValues := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			ps, _ := dht.GetAllValues()
-			for key, val := range ps {
-				c.Printf("* %s: %s\n", key, val)
 			}
 		},
 		Help: "list all providers stored in our local dht",
@@ -380,67 +282,20 @@ func main() {
 		Help: "send blocks to peers",
 	}
 
-	// blockFile := &ishell.Cmd{
-	// 	Name: "file",
-	// 	Func: func(c *ishell.Context) {
-	// 		c.ShowPrompt(false)
-	// 		defer c.ShowPrompt(true)
-
-	// 		if len(c.Args) < 2 {
-	// 			c.Println("Peer and file missing")
-	// 			return
-	// 		}
-
-	// 		toPeer := c.Args[0]
-	// 		file := c.Args[1]
-
-	// 		f, err := os.Open(file)
-	// 		if err != nil {
-	// 			c.Println(err)
-	// 			return
-	// 		}
-
-	// 		data, err := ioutil.ReadAll(f)
-	// 		if err != nil {
-	// 			c.Println(err)
-	// 			return
-	// 		}
-
-	// 		// TODO store filename in a meta
-	// 		meta := map[string][]byte{}
-
-	// 		meta["filename"] = []byte(f.Name())
-
-	// 		hsh, n, err := n.Send(toPeer, data, meta)
-	// 		if err != nil {
-	// 			c.Println(err)
-	// 			return
-	// 		}
-	// 		c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
-	// 	},
-	// 	Help: "send a file to another peer",
-	// }
-
-	// block.AddCmd(blockFile)
-
 	get := &ishell.Cmd{
 		Name: "get",
 		Help: "get resource",
 	}
 
-	get.AddCmd(getValue)
 	get.AddCmd(getProvider)
 	get.AddCmd(getBlock)
-	// get.AddCmd(getPeer)
 
 	put := &ishell.Cmd{
 		Name: "put",
 		Help: "put resource",
 	}
 
-	put.AddCmd(putValue)
 	put.AddCmd(putProvider)
-	// put.AddCmd(putPeer)
 
 	list := &ishell.Cmd{
 		Name:    "list",
@@ -448,7 +303,6 @@ func main() {
 		Help:    "list cached resources",
 	}
 
-	list.AddCmd(listValues)
 	list.AddCmd(listProviders)
 	list.AddCmd(listPeers)
 	list.AddCmd(listLocal)

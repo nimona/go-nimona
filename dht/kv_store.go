@@ -45,37 +45,10 @@ func (s *Store) GetProviders(blockID string) ([]*net.Block, error) {
 	return blocks, nil
 }
 
-func (s *Store) PutValue(block *net.Block) error {
-	// TODO verify payload type
-	s.values.Store(block.Metadata.ID, block)
-	return nil
-}
-
-func (s *Store) GetValue(key string) (string, error) {
-	v, ok := s.values.Load(key)
-	if !ok {
-		return "", ErrNotFound
-	}
-
-	return v.(string), nil
-}
-
 // GetAllProviders returns all providers and the values they are providing
 func (s *Store) GetAllProviders() ([]*net.Block, error) {
 	blocks := []*net.Block{}
 	s.providers.Range(func(k, v interface{}) bool {
-		block := v.(*net.Block)
-		blocks = append(blocks, block)
-		return true
-	})
-
-	return blocks, nil
-}
-
-// GetAllValues returns all the key value pairs we know about
-func (s *Store) GetAllValues() ([]*net.Block, error) {
-	blocks := []*net.Block{}
-	s.values.Range(func(k, v interface{}) bool {
 		block := v.(*net.Block)
 		blocks = append(blocks, block)
 		return true

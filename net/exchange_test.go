@@ -17,11 +17,6 @@ import (
 
 type exchangeTestSuite struct {
 	suite.Suite
-	bootstrapPeerInfos []*nnet.Block
-}
-
-func (suite *exchangeTestSuite) SetupTest() {
-	suite.bootstrapPeerInfos = []*nnet.Block{}
 }
 
 type DummyPayload struct {
@@ -29,10 +24,9 @@ type DummyPayload struct {
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
-	port1, p1, w1, r1 := suite.newPeer()
+	_, p1, w1, r1 := suite.newPeer()
 	_, p2, w2, r2 := suite.newPeer()
 
-	p1.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", port1)}
 	r2.PutPeerInfoFromBlock(p1.Block())
 	r1.PutPeerInfoFromBlock(p2.Block())
 
@@ -162,18 +156,15 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 func (suite *exchangeTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Exchange, *nnet.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
 	ab, _ := nnet.NewAddressBook(td)
-	// spi, _ := ab.CreateNewPeer()
-	// reg.PutLocalPeerInfo(spi)
-	for _, peerInfo := range suite.bootstrapPeerInfos {
-		err := ab.PutPeerInfoFromBlock(peerInfo)
-		suite.NoError(err)
-	}
 	storagePath := path.Join(td, "storage")
 	dpr := nnet.NewDiskStorage(storagePath)
 	wre, _ := nnet.NewExchange(ab, dpr)
 	listener, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)
 	port := listener.Addr().(*net.TCPAddr).Port
+	lpi := ab.GetLocalPeerInfo()
+	lpi.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", port)}
+	ab.PutLocalPeerInfo(lpi)
 	return port, ab.GetLocalPeerInfo(), wre, ab
 }
 
