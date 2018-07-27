@@ -11,8 +11,8 @@ import (
 	"github.com/nimona/go-nimona/log"
 )
 
-// PeerManager provides an interface for mocking our AddressBook
-type PeerManager interface {
+// AddressBooker provides an interface for mocking our AddressBook
+type AddressBooker interface {
 	GetLocalPeerInfo() *PrivatePeerInfo
 	PutLocalPeerInfo(*PrivatePeerInfo) error
 

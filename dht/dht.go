@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	messengerExtention   = "dht"
+	exchangeExtention   = "dht"
 	closestPeersToReturn = 8
 	maxQueryTime         = time.Second * 5
 )
@@ -27,26 +27,26 @@ const (
 type DHT struct {
 	peerID         string
 	store          *Store
-	messenger      net.Messenger
-	addressBook    net.PeerManager
+	exchange      net.Exchange
+	addressBook    net.AddressBooker
 	queries        sync.Map
 	refreshBuckets bool
 }
 
-// NewDHT returns a new DHT from a messenger and peer manager
-func NewDHT(messenger net.Messenger, pm net.PeerManager) (*DHT, error) {
+// NewDHT returns a new DHT from a exchange and peer manager
+func NewDHT(exchange net.Exchange, pm net.AddressBooker) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
 	// Create DHT node
 	nd := &DHT{
 		store:       store,
-		messenger:   messenger,
+		exchange:   exchange,
 		addressBook: pm,
 		queries:     sync.Map{},
 	}
 
-	messenger.Handle("dht", nd.handleBlock)
+	exchange.Handle("dht", nd.handleBlock)
 
 	go nd.refresh()
 
@@ -77,11 +77,11 @@ func (nd *DHT) refresh() {
 		selfBlock := net.NewEphemeralBlock(PayloadTypePutPeerInfo, BlockPutPeerInfoFromBlock{
 			Peer: nd.addressBook.GetLocalPeerInfo().Block(),
 		})
-		if err := nd.messenger.Send(ctx, selfBlock, peerIDs...); err != nil {
+		if err := nd.exchange.Send(ctx, selfBlock, peerIDs...); err != nil {
 			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
 		}
 		block := net.NewEphemeralBlock(PayloadTypeGetPeerInfo, resp)
-		if err := nd.messenger.Send(ctx, block, peerIDs...); err != nil {
+		if err := nd.exchange.Send(ctx, block, peerIDs...); err != nil {
 			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
 		}
 		time.Sleep(time.Second * 30)
@@ -139,7 +139,7 @@ func (nd *DHT) handleGetPeerInfo(incBlock *net.Block) {
 	ctx := context.Background()
 	to := []string{incBlock.Metadata.Signer}
 	block := net.NewEphemeralBlock(PayloadTypePutPeerInfo, resp)
-	if err := nd.messenger.Send(ctx, block, to...); err != nil {
+	if err := nd.exchange.Send(ctx, block, to...); err != nil {
 		logrus.WithError(err).Warnf("handleGetPeerInfo could not send block")
 		return
 	}
@@ -200,7 +200,7 @@ func (nd *DHT) handleGetProviders(incBlock *net.Block) {
 	ctx := context.Background()
 	to := []string{incBlock.Metadata.Signer}
 	block := net.NewEphemeralBlock(PayloadTypePutProviders, resp)
-	if err := nd.messenger.Send(ctx, block, to...); err != nil {
+	if err := nd.exchange.Send(ctx, block, to...); err != nil {
 		logrus.WithError(err).Warnf("handleGetProviders could not send block")
 		return
 	}
@@ -263,7 +263,7 @@ func (nd *DHT) handlePutProviders(incBlock *net.Block) {
 // 	ctx := context.Background()
 // 	to := []string{payload.SenderPeerInfo.Metadata.Signer}
 // 	block := net.NewBlock(PayloadTypePutValue, to, resp)
-// 	if err := nd.messenger.Send(ctx, block); err != nil {
+// 	if err := nd.exchange.Send(ctx, block); err != nil {
 // 		logrus.WithError(err).Warnf("handleGetValue could not send block")
 // 		return
 // 	}
@@ -394,7 +394,7 @@ func (nd *DHT) PutValue(ctx context.Context, key, value string) error {
 
 	// closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
 	// block := net.NewBlock(PayloadTypePutValue, closestPeerIDs, resp)
-	// if err := nd.messenger.Send(ctx, block); err != nil {
+	// if err := nd.exchange.Send(ctx, block); err != nil {
 	// 	logrus.WithError(err).Warnf("PutValue could not send block")
 	// 	return err
 	// }
@@ -459,7 +459,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	block := net.NewEphemeralBlock(PayloadTypePutProviders, putProviderPayload)
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
-	if err := nd.messenger.Send(ctx, block, closestPeerIDs...); err != nil {
+	if err := nd.exchange.Send(ctx, block, closestPeerIDs...); err != nil {
 		logrus.WithError(err).Warnf("PutProviders could not send block")
 		return err
 	}

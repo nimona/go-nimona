@@ -21,7 +21,7 @@ type Networker interface {
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(AddressBook PeerManager) (*Network, error) {
+func NewNetwork(AddressBook AddressBooker) (*Network, error) {
 	return &Network{
 		AddressBook: AddressBook,
 	}, nil
@@ -29,7 +29,7 @@ func NewNetwork(AddressBook PeerManager) (*Network, error) {
 
 // Network allows dialing and listening for p2p connections
 type Network struct {
-	AddressBook PeerManager
+	AddressBook AddressBooker
 }
 
 // Dial to a peer and return a net.Conn or error

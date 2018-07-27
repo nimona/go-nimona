@@ -61,7 +61,7 @@ type Metadata struct {
 	Signer    string   `json:"signer,omitempty"`
 }
 
-// Block for exchanging data via the messenger
+// Block for exchanging data via the exchange
 type Block struct {
 	Version   uint              `json:"version"`
 	Headers   map[string]string `json:"headers,omitempty"`

@@ -25,20 +25,6 @@ var (
 	ErrInvalidRequest = errors.New("Invalid request")
 )
 
-const (
-	TypeHandshake = "handshake"
-	// PayloadTypeTransferBlock type for PayloadTransferBlock
-	// PayloadTypeTransferBlock = "blx.transfer-block"
-	// PayloadTypeRequestBlock type for PayloadRequestBlock
-	PayloadTypeRequestBlock = "blx.request-block"
-)
-
-func init() {
-	RegisterContentType(TypeHandshake, HandshakeBlock{})
-	// RegisterContentType(PayloadTypeTransferBlock, PayloadTransferBlock{})
-	RegisterContentType(PayloadTypeRequestBlock, PayloadRequestBlock{})
-}
-
 var (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
 	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
@@ -49,8 +35,8 @@ var (
 // BlockHandler to handle incoming blocks
 type BlockHandler func(event *Block) error
 
-// Messenger interface for mocking messenger
-type Messenger interface {
+// Exchange interface for mocking exchange
+type Exchange interface {
 	Get(ctx context.Context, id string) (*Block, error)
 	GetLocalBlocks() ([]string, error)
 	Handle(contentType string, h BlockHandler) error
@@ -59,9 +45,9 @@ type Messenger interface {
 	RegisterDiscoverer(discovery Discoverer)
 }
 
-type messenger struct {
+type exchange struct {
 	network     Networker
-	addressBook PeerManager
+	addressBook AddressBooker
 	discovery   Discoverer
 
 	// incomingBlocks chan *Block
@@ -96,8 +82,8 @@ type handler struct {
 	handler     BlockHandler
 }
 
-// NewMessenger creates a messenger on a given network
-func NewMessenger(addressBook *AddressBook, storage Storage) (Messenger, error) {
+// NewExchange creates a exchange on a given network
+func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 	ctx := context.Background()
 
 	network, err := NewNetwork(addressBook)
@@ -105,7 +91,7 @@ func NewMessenger(addressBook *AddressBook, storage Storage) (Messenger, error) 
 		return nil, err
 	}
 
-	w := &messenger{
+	w := &exchange{
 		network:     network,
 		addressBook: addressBook,
 
@@ -116,7 +102,7 @@ func NewMessenger(addressBook *AddressBook, storage Storage) (Messenger, error) 
 		close:          make(chan bool),
 
 		handlers:   []handler{},
-		logger:     log.Logger(ctx).Named("messenger"),
+		logger:     log.Logger(ctx).Named("exchange"),
 		streamLock: utils.NewKmutex(),
 
 		storage:     storage,
@@ -172,7 +158,7 @@ func NewMessenger(addressBook *AddressBook, storage Storage) (Messenger, error) 
 	return w, nil
 }
 
-func (w *messenger) RegisterDiscoverer(discovery Discoverer) {
+func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	w.discovery = discovery
 
 	ctx := context.Background()
@@ -195,7 +181,7 @@ func (w *messenger) RegisterDiscoverer(discovery Discoverer) {
 	}()
 }
 
-func (w *messenger) Handle(contentType string, h BlockHandler) error {
+func (w *exchange) Handle(contentType string, h BlockHandler) error {
 	w.handlers = append(w.handlers, handler{
 		contentType: contentType,
 		handler:     h,
@@ -203,7 +189,7 @@ func (w *messenger) Handle(contentType string, h BlockHandler) error {
 	return nil
 }
 
-func (w *messenger) Close(peerID string, conn net.Conn) {
+func (w *exchange) Close(peerID string, conn net.Conn) {
 	if conn != nil {
 		conn.Close()
 	}
@@ -218,7 +204,7 @@ func (w *messenger) Close(peerID string, conn net.Conn) {
 	})
 }
 
-func (w *messenger) HandleConnection(conn net.Conn) error {
+func (w *exchange) HandleConnection(conn net.Conn) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteAddr().String()))
 
 	blockDecoder := codec.NewDecoder(conn, getCborHandler())
@@ -238,7 +224,7 @@ func (w *messenger) HandleConnection(conn net.Conn) error {
 }
 
 // Process incoming block
-func (w *messenger) Process(block *Block, conn net.Conn) error {
+func (w *exchange) Process(block *Block, conn net.Conn) error {
 	if err := block.Verify(); err != nil {
 		w.logger.Warn("could not verify block", zap.Error(err))
 		return err
@@ -329,7 +315,7 @@ func (w *messenger) Process(block *Block, conn net.Conn) error {
 	return nil
 }
 
-func (w *messenger) handleTransferBlock(block *Block) error {
+func (w *exchange) handleTransferBlock(block *Block) error {
 	// Check if nonce exists in local addressBook
 	value, ok := w.getRequests.Load(block.GetHeader("requestID"))
 	if !ok {
@@ -346,7 +332,7 @@ func (w *messenger) handleTransferBlock(block *Block) error {
 	return nil
 }
 
-func (w *messenger) handleRequestBlock(incBlock *Block) error {
+func (w *exchange) handleRequestBlock(incBlock *Block) error {
 	payload := incBlock.Payload.(PayloadRequestBlock)
 	block, err := w.storage.Get(payload.ID)
 	if err != nil {
@@ -363,7 +349,7 @@ func (w *messenger) handleRequestBlock(incBlock *Block) error {
 	return nil
 }
 
-func (w *messenger) Get(ctx context.Context, id string) (*Block, error) {
+func (w *exchange) Get(ctx context.Context, id string) (*Block, error) {
 	// Check local storage for block
 	if block, err := w.storage.Get(id); err == nil {
 		return block, nil
@@ -402,7 +388,7 @@ func (w *messenger) Get(ctx context.Context, id string) (*Block, error) {
 	}
 }
 
-func (w *messenger) Send(ctx context.Context, block *Block, recipients ...string) error {
+func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string) error {
 	// TODO do this async or after sending?
 	if !block.Metadata.Ephemeral && block.Metadata.ID != "" {
 		if err := w.storage.Store(block.Metadata.ID, block); err != nil {
@@ -427,11 +413,11 @@ func (w *messenger) Send(ctx context.Context, block *Block, recipients ...string
 	return nil
 }
 
-func (w *messenger) GetLocalBlocks() ([]string, error) {
+func (w *exchange) GetLocalBlocks() ([]string, error) {
 	return w.storage.List()
 }
 
-// func (w *messenger) sendOne(ctx context.Context, block *Block, recipient string) error {
+// func (w *exchange) sendOne(ctx context.Context, block *Block, recipient string) error {
 // 	logger := w.logger.With(zap.String("peerID", recipient))
 
 // 	w.streamLock.Lock(recipient)
@@ -455,7 +441,7 @@ func (w *messenger) GetLocalBlocks() ([]string, error) {
 // 	return ErrAllAddressesFailed
 // }
 
-func (w *messenger) writeBlock(ctx context.Context, block *Block, rw io.ReadWriter) error {
+func (w *exchange) writeBlock(ctx context.Context, block *Block, rw io.ReadWriter) error {
 	if os.Getenv("DEBUG_BLOCKS") != "" {
 		fmt.Println("> ---------- out block / start")
 		b, _ := json.MarshalIndent(block, "> ", "  ")
@@ -486,7 +472,7 @@ func (w *messenger) writeBlock(ctx context.Context, block *Block, rw io.ReadWrit
 	return nil
 }
 
-func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
+func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
 	w.logger.Debug("getting conn", zap.String("peer_id", peerID))
 	if peerID == "" {
 		return nil, errors.New("missing peer id")
@@ -546,11 +532,7 @@ func (w *messenger) GetOrDial(ctx context.Context, peerID string) (net.Conn, err
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (w *messenger) Listen(ctx context.Context, addr string) (net.Listener, error) {
-	if w.discovery == nil {
-		return nil, errors.New("missing discoverer")
-	}
-
+func (w *exchange) Listen(ctx context.Context, addr string) (net.Listener, error) {
 	listener, err := w.network.Listen(ctx, addr)
 	if err != nil {
 		return nil, err

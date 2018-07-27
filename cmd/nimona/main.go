@@ -101,7 +101,7 @@ func main() {
 	storagePath := path.Join(configPath, "storage")
 
 	dpr := net.NewDiskStorage(storagePath)
-	n, _ := net.NewMessenger(reg, dpr)
+	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
 	n.RegisterDiscoverer(dht)
 
