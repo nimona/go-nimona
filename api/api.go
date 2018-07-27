@@ -14,7 +14,7 @@ type API struct {
 	router *gin.Engine
 }
 
-func New(addressBook net.PeerManager, dht *dht.DHT) *API {
+func New(addressBook net.AddressBooker, dht *dht.DHT) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
