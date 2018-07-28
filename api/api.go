@@ -14,7 +14,7 @@ type API struct {
 	router *gin.Engine
 }
 
-func New(addressBook net.AddressBooker, dht *dht.DHT) *API {
+func New(addressBook net.AddressBooker, dht *dht.DHT, bls net.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
@@ -30,15 +30,6 @@ func New(addressBook net.AddressBooker, dht *dht.DHT) *API {
 		}
 		c.JSON(http.StatusOK, peers)
 	})
-	values := router.Group("/api/v1/values")
-	values.GET("/", func(c *gin.Context) {
-		values, err := dht.GetAllValues()
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, values)
-	})
 	providers := router.Group("/api/v1/providers")
 	providers.GET("/", func(c *gin.Context) {
 		providers, err := dht.GetAllProviders()
@@ -47,6 +38,37 @@ func New(addressBook net.AddressBooker, dht *dht.DHT) *API {
 			return
 		}
 		c.JSON(http.StatusOK, providers)
+	})
+	blocks := router.Group("/api/v1/blocks")
+	blocks.GET("/", func(c *gin.Context) {
+		blockIDs, err := bls.List()
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		blocks := []*net.Block{}
+		for _, blockID := range blockIDs {
+			block, err := bls.Get(blockID)
+			if err != nil {
+				c.AbortWithError(500, err)
+				return
+			}
+			blocks = append(blocks, block)
+		}
+		c.JSON(http.StatusOK, blocks)
+	})
+	blocks.GET("/:blockID", func(c *gin.Context) {
+		blockID := c.Param("blockID")
+		block, err := bls.Get(blockID)
+		if err != nil {
+			if err == net.ErrNotFound {
+				c.AbortWithError(404, err)
+				return
+			}
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, block)
 	})
 	return &API{
 		router: router,

@@ -104,7 +104,7 @@ func main() {
 		httpPort = nhp
 	}
 	httpAddress := ":" + httpPort
-	api := api.New(reg, dht)
+	api := api.New(reg, dht, dpr)
 	go api.Serve(httpAddress)
 
 	shell := ishell.New()
