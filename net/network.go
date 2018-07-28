@@ -34,7 +34,6 @@ type Network struct {
 
 // Dial to a peer and return a net.Conn or error
 func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
-	logger := log.Logger(ctx).Named("network")
 	peerInfo, err := n.AddressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
@@ -56,7 +55,6 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	}
 
 	if conn == nil {
-		logger.Debug("all addresses failed", zap.Strings("addresses", peerInfo.Addresses))
 		return nil, ErrAllAddressesFailed
 	}
 
@@ -113,7 +111,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 	}
 
 	// TODO Replace with actual relay peer ids
-	addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
+	addresses = append(addresses, "relay:01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1")
 
 	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
 	localPeerInfo.Addresses = addresses
