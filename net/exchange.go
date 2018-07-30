@@ -141,6 +141,8 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 					w.Close(block.recipient, conn)
 					logger.Debug("could not write to recipient", zap.Error(err), zap.String("recipient", block.recipient))
 				} else {
+					// update peer status
+					w.addressBook.PutPeerStatus(block.recipient, StatusConnected)
 					continue
 				}
 			}
@@ -165,9 +167,16 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 			// try to send the block directly to the recipient
 			if err := w.writeBlock(ctx, fwBlock, conn); err != nil {
 				// TODO better handling of connection errors
+				// TODO this is a bad close, id is of recipient, conn is of relay
 				w.Close(block.recipient, conn)
 				logger.Debug("could not write to relay", zap.Error(err), zap.String("recipient", block.recipient))
+				// update peer status
+				w.addressBook.PutPeerStatus(block.recipient, StatusError)
+				continue
 			}
+
+			// update peer status
+			w.addressBook.PutPeerStatus(block.recipient, StatusCanConnect)
 		}
 	}()
 
