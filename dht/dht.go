@@ -49,6 +49,7 @@ func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
 	}
 
 	exchange.Handle("dht", nd.handleBlock)
+	exchange.Handle(peers.PeerInfoType, nd.handleBlock)
 
 	go nd.refresh()
 
@@ -99,7 +100,7 @@ func (nd *DHT) handleBlock(block *blocks.Block) error {
 	switch contentType {
 	case PeerInfoRequestType:
 		nd.handlePeerInfoRequest(block)
-	case peers.PeerInfoContentType:
+	case peers.PeerInfoType:
 		nd.handlePeerInfo(block)
 	case ProviderRequestType:
 		nd.handleProviderRequest(block)
@@ -138,7 +139,7 @@ func (nd *DHT) handlePeerInfoRequest(incBlock *blocks.Block) {
 }
 
 func (nd *DHT) handlePeerInfo(incBlock *blocks.Block) {
-	payload, ok := incBlock.Payload.(peers.PeerInfo)
+	payload, ok := incBlock.Payload.(peers.PeerInfoPayload)
 	if !ok {
 		logrus.Warn("expected PeerInfo, got ", reflect.TypeOf(incBlock.Payload))
 		return

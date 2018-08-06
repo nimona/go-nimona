@@ -3,18 +3,18 @@ package peers
 import "github.com/nimona/go-nimona/blocks"
 
 const (
-	// PeerInfoContentType is the content type for PeerInfoPayload
+	// PeerInfoType is the content type for PeerInfoPayload
 	// TODO Needs better name
-	PeerInfoContentType = "peer.info"
+	PeerInfoType = "peer.info"
 )
 
-// PeerInfoPayload content structure for PeerInfoContentType
+// PeerInfoPayload content structure for PeerInfoType
 type PeerInfoPayload struct {
 	Addresses []string `json:"addresses"`
 }
 
 func init() {
-	blocks.RegisterContentType(PeerInfoContentType, PeerInfoPayload{})
+	blocks.RegisterContentType(PeerInfoType, PeerInfoPayload{})
 }
 
 // PeerInfo holds the information exchange needs to connect to a remote peer

@@ -332,32 +332,17 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 		return nil
 	}
 
-	var blockHandler BlockHandler
-	ok := false
 	for _, handler := range w.handlers {
-		if !strings.HasPrefix(contentType, handler.contentType) {
-			continue
+		if strings.HasPrefix(contentType, handler.contentType) {
+			if err := handler.handler(block); err != nil {
+				w.logger.Info(
+					"Could not handle event",
+					zap.String("contentType", contentType),
+					zap.Error(err),
+				)
+				return err
+			}
 		}
-		ok = true
-		blockHandler = handler.handler
-		break
-	}
-
-	if !ok {
-		w.logger.Info(
-			"No handler registered for contentType",
-			zap.String("contentType", contentType),
-		)
-		return nil
-	}
-
-	if err := blockHandler(block); err != nil {
-		w.logger.Info(
-			"Could not handle event",
-			zap.String("contentType", contentType),
-			zap.Error(err),
-		)
-		return err
 	}
 
 	return nil

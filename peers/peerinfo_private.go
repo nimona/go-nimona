@@ -14,7 +14,7 @@ type PrivatePeerInfo struct {
 // Block returns a signed Block
 func (pi *PrivatePeerInfo) Block() *blocks.Block {
 	// TODO content type
-	block := blocks.NewEphemeralBlock(PeerInfoContentType, PeerInfoPayload{
+	block := blocks.NewEphemeralBlock(PeerInfoType, PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
 	block.Metadata.Ephemeral = true
