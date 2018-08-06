@@ -7,6 +7,9 @@ jobs:
     environment:
       CIRCLE_TEST_REPORTS: /tmp/test-reports
       CIRCLE_ARTIFACTS: /tmp/artifacts
+      UPNP: false
+      DEBUG_BLOCKS: true
+      LOG_LEVEL: debug
     steps:
       - checkout
       - run:
