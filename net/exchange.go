@@ -50,10 +50,10 @@ type exchange struct {
 	addressBook AddressBooker
 	discovery   Discoverer
 
-	outgoingBlocks chan outBlock
-	incoming       chan net.Conn
-	outgoing       chan net.Conn
-	close          chan bool
+	outgoingPayloads chan outBlock
+	incoming         chan net.Conn
+	outgoing         chan net.Conn
+	close            chan bool
 
 	streams    sync.Map
 	handlers   []handler
@@ -94,10 +94,10 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 		network:     network,
 		addressBook: addressBook,
 
-		outgoingBlocks: make(chan outBlock, 100),
-		incoming:       make(chan net.Conn),
-		outgoing:       make(chan net.Conn),
-		close:          make(chan bool),
+		outgoingPayloads: make(chan outBlock, 100),
+		incoming:         make(chan net.Conn),
+		outgoing:         make(chan net.Conn),
+		close:            make(chan bool),
 
 		handlers:   []handler{},
 		logger:     log.Logger(ctx).Named("exchange"),
@@ -110,7 +110,7 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 	signer := w.addressBook.GetLocalPeerInfo()
 
 	go func() {
-		for block := range w.outgoingBlocks {
+		for block := range w.outgoingPayloads {
 			if signer.ID == block.recipient {
 				w.logger.Info("cannot send block to self")
 				continue
@@ -292,7 +292,7 @@ func (w *exchange) Process(block *Block, conn net.Conn) error {
 	switch payload := block.Payload.(type) {
 	case PayloadForwarded:
 		w.logger.Info("got forwarded message", zap.String("recipient", payload.RecipientID))
-		w.outgoingBlocks <- outBlock{
+		w.outgoingPayloads <- outBlock{
 			recipient: payload.RecipientID,
 			block:     payload.Block,
 		}
@@ -421,7 +421,7 @@ func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string)
 	// recipients = append(recipients, GetRecipientsFromBlockPolicies(block)...)
 	for _, recipient := range recipients {
 		// TODO right now there is no way to error on this, do we have to?
-		w.outgoingBlocks <- outBlock{
+		w.outgoingPayloads <- outBlock{
 			recipient: recipient,
 			block:     block,
 		}

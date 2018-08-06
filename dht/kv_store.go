@@ -32,7 +32,7 @@ func (s *Store) GetProviders(blockID string) ([]*net.Block, error) {
 	blocks := []*net.Block{}
 	s.providers.Range(func(k, v interface{}) bool {
 		block := v.(*net.Block)
-		payload := block.Payload.(PayloadProvider)
+		payload := block.Payload.(Provider)
 		for _, id := range payload.BlockIDs {
 			if id == blockID {
 				blocks = append(blocks, block)

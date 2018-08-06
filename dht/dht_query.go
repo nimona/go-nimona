@@ -19,14 +19,14 @@ const (
 )
 
 type query struct {
-	dht            *DHT
-	id             string
-	key            string
-	queryType      QueryType
-	closestPeerID  string
-	contactedPeers sync.Map
-	incomingBlocks chan interface{}
-	outgoingBlocks chan interface{}
+	dht              *DHT
+	id               string
+	key              string
+	queryType        QueryType
+	closestPeerID    string
+	contactedPeers   sync.Map
+	incomingPayloads chan interface{}
+	outgoingPayloads chan interface{}
 }
 
 func (q *query) Run(ctx context.Context) {
@@ -35,12 +35,12 @@ func (q *query) Run(ctx context.Context) {
 		switch q.queryType {
 		case PeerInfoQuery:
 			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err != nil {
-				q.outgoingBlocks <- peerInfo
+				q.outgoingPayloads <- peerInfo
 			}
 		case ProviderQuery:
 			if providers, err := q.dht.store.GetProviders(q.key); err != nil {
 				for _, provider := range providers {
-					q.outgoingBlocks <- provider
+					q.outgoingPayloads <- provider
 				}
 			}
 		}
@@ -48,30 +48,28 @@ func (q *query) Run(ctx context.Context) {
 		// and now, wait for something to happen
 		for {
 			select {
-			case incomingBlock := <-q.incomingBlocks:
-				switch block := incomingBlock.(type) {
-				case BlockPutPeerInfoFromBlock:
-					q.outgoingBlocks <- block.Peer
+			case incomingPayload := <-q.incomingPayloads:
+				switch payload := incomingPayload.(type) {
+				case net.PeerInfo:
+					q.outgoingPayloads <- payload
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
-				case BlockPutProviders:
+				case Provider:
 					// TODO check if id is in payload.BlockIDs
-					for _, provider := range block.Providers {
-						for _, blockID := range provider.Payload.(PayloadProvider).BlockIDs {
-							if blockID == q.key {
-								q.outgoingBlocks <- provider
-								break
-							}
+					for _, blockID := range payload.BlockIDs {
+						if blockID == q.key {
+							q.outgoingPayloads <- payload
+							break
 						}
 					}
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
 			case <-time.After(maxQueryTime):
-				close(q.outgoingBlocks)
+				close(q.outgoingPayloads)
 				return
 
 			case <-ctx.Done():
-				close(q.outgoingBlocks)
+				close(q.outgoingPayloads)
 				return
 			}
 		}
@@ -126,14 +124,14 @@ func (q *query) next() {
 
 	switch q.queryType {
 	case PeerInfoQuery:
-		payloadType = PayloadTypeGetPeerInfo
-		req = BlockGetPeerInfo{
+		payloadType = PeerInfoRequestType
+		req = PeerInfoRequest{
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
 	case ProviderQuery:
-		payloadType = PayloadTypeGetProviders
-		req = BlockGetProviders{
+		payloadType = ProviderRequestType
+		req = ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
 		}
