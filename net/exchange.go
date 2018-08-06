@@ -15,7 +15,10 @@ import (
 	"github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/log"
+	"github.com/nimona/go-nimona/peers"
+	"github.com/nimona/go-nimona/storage"
 	"github.com/nimona/go-nimona/utils"
 )
 
@@ -28,26 +31,30 @@ var (
 var (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
 	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
+	// ErrNoAddresses for when a peer has no addresses
+	ErrNoAddresses = errors.New("no addresses")
 	// ErrNotForUs block is not meant for us
 	ErrNotForUs = errors.New("block not for us")
 )
 
 // BlockHandler to handle incoming blocks
-type BlockHandler func(event *Block) error
+type BlockHandler func(event *blocks.Block) error
 
 // Exchange interface for mocking exchange
 type Exchange interface {
-	Get(ctx context.Context, id string) (*Block, error)
+	Get(ctx context.Context, id string) (*blocks.Block, error)
 	GetLocalBlocks() ([]string, error)
 	Handle(contentType string, h BlockHandler) error
-	Send(ctx context.Context, block *Block, recipients ...string) error
+	Send(ctx context.Context, block *blocks.Block, recipients ...string) error
 	Listen(ctx context.Context, addrress string) (net.Listener, error)
 	RegisterDiscoverer(discovery Discoverer)
+	Verify(block *blocks.Block) error
+	Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerInfo) error
 }
 
 type exchange struct {
 	network     Networker
-	addressBook AddressBooker
+	addressBook *peers.AddressBook
 	discovery   Discoverer
 
 	outgoingPayloads chan outBlock
@@ -60,20 +67,20 @@ type exchange struct {
 	logger     *zap.Logger
 	streamLock utils.Kmutex
 
-	storage       Storage
+	store         storage.Storage
 	getRequests   sync.Map
 	subscriptions sync.Map
 }
 
 type outBlock struct {
 	recipient string
-	block     *Block
+	block     *blocks.Block
 }
 
 type incBlock struct {
 	peerID string
 	conn   net.Conn
-	block  *Block
+	block  *blocks.Block
 }
 
 type handler struct {
@@ -82,7 +89,7 @@ type handler struct {
 }
 
 // NewExchange creates a exchange on a given network
-func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
+func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchange, error) {
 	ctx := context.Background()
 
 	network, err := NewNetwork(addressBook)
@@ -103,7 +110,7 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 		logger:     log.Logger(ctx).Named("exchange"),
 		streamLock: utils.NewKmutex(),
 
-		storage:     storage,
+		store:       store,
 		getRequests: sync.Map{},
 	}
 
@@ -117,15 +124,23 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 			}
 
 			if block.block.Metadata.Signer == "" || block.block.Metadata.Signer == signer.ID {
-				if err := Sign(block.block, signer); err != nil {
+				if err := w.Sign(block.block, signer); err != nil {
 					// TODO log eror
 				}
 			}
 
 			// TODO log error and reconsider the async
 			// TODO also maybe we need to verify it or something?
-			if block.block.Metadata.ID != "" && !block.block.Metadata.Ephemeral {
-				go w.storage.Store(block.block.Metadata.ID, block.block)
+
+			blockID, err := block.block.ID()
+			if err != nil {
+				// TODO log error
+				// return err
+				continue
+			}
+
+			if !block.block.Metadata.Ephemeral {
+				go w.store.Store(blockID, block.block)
 			}
 
 			logger := w.logger.With(zap.String("peerID", block.recipient))
@@ -142,7 +157,7 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 					logger.Debug("could not write to recipient", zap.Error(err), zap.String("recipient", block.recipient))
 				} else {
 					// update peer status
-					w.addressBook.PutPeerStatus(block.recipient, StatusConnected)
+					w.addressBook.PutPeerStatus(block.recipient, peers.StatusConnected)
 					continue
 				}
 			}
@@ -155,11 +170,11 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 			}
 
 			// create forwarded block
-			fwBlock := NewEphemeralBlock(TypeForwarded, PayloadForwarded{
+			fwBlock := blocks.NewEphemeralBlock(TypeForwarded, PayloadForwarded{
 				RecipientID: block.recipient,
 				Block:       block.block,
 			})
-			if err := Sign(fwBlock, signer); err != nil {
+			if err := w.Sign(fwBlock, signer); err != nil {
 				// TODO log eror
 				continue
 			}
@@ -171,12 +186,12 @@ func NewExchange(addressBook *AddressBook, storage Storage) (Exchange, error) {
 				w.Close(block.recipient, conn)
 				logger.Debug("could not write to relay", zap.Error(err), zap.String("recipient", block.recipient))
 				// update peer status
-				w.addressBook.PutPeerStatus(block.recipient, StatusError)
+				w.addressBook.PutPeerStatus(block.recipient, peers.StatusError)
 				continue
 			}
 
 			// update peer status
-			w.addressBook.PutPeerStatus(block.recipient, StatusCanConnect)
+			w.addressBook.PutPeerStatus(block.recipient, peers.StatusCanConnect)
 		}
 	}()
 
@@ -189,7 +204,7 @@ func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	ctx := context.Background()
 	go func() {
 		for {
-			blocks, err := w.storage.List()
+			blocks, err := w.store.List()
 			if err != nil {
 				time.Sleep(time.Second * 10)
 				continue
@@ -232,9 +247,9 @@ func (w *exchange) Close(peerID string, conn net.Conn) {
 func (w *exchange) HandleConnection(conn net.Conn) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteAddr().String()))
 
-	blockDecoder := codec.NewDecoder(conn, getCborHandler())
+	blockDecoder := codec.NewDecoder(conn, blocks.CborHandler())
 	for {
-		block := &Block{}
+		block := &blocks.Block{}
 		if err := blockDecoder.Decode(block); err != nil {
 			w.logger.Error("could not read block", zap.Error(err))
 			w.Close("", conn)
@@ -249,18 +264,18 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 }
 
 // Process incoming block
-func (w *exchange) Process(block *Block, conn net.Conn) error {
-	if err := block.Verify(); err != nil {
+func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
+	if err := w.Verify(block); err != nil {
 		w.logger.Warn("could not verify block", zap.Error(err))
 		return err
 	}
 
-	eb, _ := Marshal(block)
-	tb, _ := Marshal(block.Payload)
+	eb, _ := blocks.Marshal(block)
+	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		false,
 		block.Metadata.Type,
-		len(GetRecipientsFromBlockPolicies(block)),
+		0, // len(GetRecipientsFromBlockPolicies(block)),
 		len(tb),
 		len(eb),
 	)
@@ -272,9 +287,14 @@ func (w *exchange) Process(block *Block, conn net.Conn) error {
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	if !block.Metadata.Ephemeral && block.Metadata.ID != "" {
-		if err := w.storage.Store(block.Metadata.ID, block); err != nil {
-			if err != ErrExists {
+	blockID, err := block.ID()
+	if err != nil {
+		return err
+	}
+
+	if !block.Metadata.Ephemeral {
+		if err := w.store.Store(blockID, block); err != nil {
+			if err != storage.ErrExists {
 				w.logger.Warn("could not write block", zap.Error(err))
 			}
 		}
@@ -298,7 +318,7 @@ func (w *exchange) Process(block *Block, conn net.Conn) error {
 		}
 		return nil
 
-	case PayloadRequestBlock:
+	case BlockRequest:
 		if err := w.handleRequestBlock(block); err != nil {
 			w.logger.Warn("could not handle request block", zap.Error(err))
 		}
@@ -343,14 +363,14 @@ func (w *exchange) Process(block *Block, conn net.Conn) error {
 	return nil
 }
 
-func (w *exchange) handleTransferBlock(block *Block) error {
+func (w *exchange) handleTransferBlock(block *blocks.Block) error {
 	// Check if nonce exists in local addressBook
 	value, ok := w.getRequests.Load(block.GetHeader("requestID"))
 	if !ok {
 		return nil
 	}
 
-	req, ok := value.(*PayloadRequestBlock)
+	req, ok := value.(*BlockRequest)
 	if !ok {
 		return ErrInvalidRequest
 	}
@@ -360,9 +380,9 @@ func (w *exchange) handleTransferBlock(block *Block) error {
 	return nil
 }
 
-func (w *exchange) handleRequestBlock(incBlock *Block) error {
-	payload := incBlock.Payload.(PayloadRequestBlock)
-	block, err := w.storage.Get(payload.ID)
+func (w *exchange) handleRequestBlock(incBlock *blocks.Block) error {
+	payload := incBlock.Payload.(BlockRequest)
+	block, err := w.store.Get(payload.ID)
 	if err != nil {
 		return err
 	}
@@ -377,16 +397,16 @@ func (w *exchange) handleRequestBlock(incBlock *Block) error {
 	return nil
 }
 
-func (w *exchange) Get(ctx context.Context, id string) (*Block, error) {
+func (w *exchange) Get(ctx context.Context, id string) (*blocks.Block, error) {
 	// Check local storage for block
-	if block, err := w.storage.Get(id); err == nil {
+	if block, err := w.store.Get(id); err == nil {
 		return block, nil
 	}
 
-	req := &PayloadRequestBlock{
+	req := &BlockRequest{
 		RequestID: RandStringBytesMaskImprSrc(8),
 		ID:        id,
-		response:  make(chan *Block),
+		response:  make(chan *blocks.Block),
 	}
 
 	defer close(req.response)
@@ -395,11 +415,11 @@ func (w *exchange) Get(ctx context.Context, id string) (*Block, error) {
 
 	providers, err := w.discovery.GetProviders(ctx, id)
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 
 	// Request block
-	wrapper := NewEphemeralBlock(PayloadTypeRequestBlock, req)
+	wrapper := blocks.NewEphemeralBlock(BlockRequestType, req)
 	if err := w.Send(ctx, wrapper, providers...); err != nil {
 		w.logger.Warn("blx.Get could not send block", zap.Error(err))
 		return nil, err
@@ -411,12 +431,12 @@ func (w *exchange) Get(ctx context.Context, id string) (*Block, error) {
 			return block, nil
 
 		case <-ctx.Done():
-			return nil, ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 	}
 }
 
-func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string) error {
+func (w *exchange) Send(ctx context.Context, block *blocks.Block, recipients ...string) error {
 	// TODO do we need to send this to the policy recipients as well?
 	// recipients = append(recipients, GetRecipientsFromBlockPolicies(block)...)
 	for _, recipient := range recipients {
@@ -431,10 +451,10 @@ func (w *exchange) Send(ctx context.Context, block *Block, recipients ...string)
 }
 
 func (w *exchange) GetLocalBlocks() ([]string, error) {
-	return w.storage.List()
+	return w.store.List()
 }
 
-func (w *exchange) writeBlock(ctx context.Context, block *Block, rw io.ReadWriter) error {
+func (w *exchange) writeBlock(ctx context.Context, block *blocks.Block, rw io.ReadWriter) error {
 	if os.Getenv("DEBUG_BLOCKS") != "" {
 		fmt.Println("> ---------- out block / start")
 		b, _ := json.MarshalIndent(block, "> ", "  ")
@@ -442,7 +462,7 @@ func (w *exchange) writeBlock(ctx context.Context, block *Block, rw io.ReadWrite
 		fmt.Println("> ---------- out block / end")
 	}
 
-	blockBytes, err := Marshal(block)
+	blockBytes, err := blocks.Marshal(block)
 	if err != nil {
 		return err
 	}
@@ -451,11 +471,11 @@ func (w *exchange) writeBlock(ctx context.Context, block *Block, rw io.ReadWrite
 		return err
 	}
 
-	tb, _ := Marshal(block.Payload)
+	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		true,
 		block.Metadata.Type,
-		len(GetRecipientsFromBlockPolicies(block)),
+		0, // len(GetRecipientsFromBlockPolicies(block)),
 		len(tb),
 		len(blockBytes),
 	)
@@ -514,7 +534,7 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 	w.logger.Debug("writing handshake")
 
 	// handshake so the other side knows who we are
-	handshakeBlock := NewEphemeralBlock(
+	handshakeBlock := blocks.NewEphemeralBlock(
 		"handshake",
 		HandshakeBlock{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Block(),
@@ -522,12 +542,7 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 		peerID,
 	)
 	signer := w.addressBook.GetLocalPeerInfo()
-	SetSigner(handshakeBlock, signer)
-	if err := Sign(handshakeBlock, signer); err != nil {
-		return nil, err
-	}
-
-	if err := SetID(handshakeBlock); err != nil {
+	if err := w.Sign(handshakeBlock, signer); err != nil {
 		return nil, err
 	}
 
@@ -590,4 +605,37 @@ func (w *exchange) Listen(ctx context.Context, addr string) (net.Listener, error
 	}()
 
 	return listener, nil
+}
+
+// Sign block given a private peer info
+// TODO signer should already be set in the block, so maybe we can get
+// the keys from the address book?
+func (w *exchange) Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerInfo) error {
+	block.Metadata.Signer = signerPeerInfo.ID
+	digest, err := blocks.GetSignatureDigest(block)
+	if err != nil {
+		return err
+	}
+
+	signature, err := peers.SignData(digest, signerPeerInfo.PrivateKey)
+	if err != nil {
+		return err
+	}
+
+	block.Signature = signature
+	return nil
+}
+
+// Verify block's signature
+func (w *exchange) Verify(block *blocks.Block) error {
+	if len(block.Signature) == 0 {
+		return nil
+	}
+
+	digest, err := blocks.GetSignatureDigest(block)
+	if err != nil {
+		return err
+	}
+
+	return peers.Verify(block.Metadata.Signer, digest, block.Signature)
 }

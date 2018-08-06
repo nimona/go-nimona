@@ -3,7 +3,7 @@ package dht
 import (
 	"sync"
 
-	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/blocks"
 )
 
 type Store struct {
@@ -22,37 +22,37 @@ func newStore() (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) PutProvider(block *net.Block) error {
+func (s *Store) PutProvider(block *blocks.Block) error {
 	// TODO verify payload type
-	s.providers.Store(block.Metadata.ID, block)
+	s.providers.Store(block.ID(), block)
 	return nil
 }
 
-func (s *Store) GetProviders(blockID string) ([]*net.Block, error) {
-	blocks := []*net.Block{}
+func (s *Store) GetProviders(blockID string) ([]*blocks.Block, error) {
+	bls := []*blocks.Block{}
 	s.providers.Range(func(k, v interface{}) bool {
-		block := v.(*net.Block)
+		block := v.(*blocks.Block)
 		payload := block.Payload.(Provider)
 		for _, id := range payload.BlockIDs {
 			if id == blockID {
-				blocks = append(blocks, block)
+				bls = append(bls, block)
 				break
 			}
 		}
 		return true
 	})
 
-	return blocks, nil
+	return bls, nil
 }
 
 // GetAllProviders returns all providers and the values they are providing
-func (s *Store) GetAllProviders() ([]*net.Block, error) {
-	blocks := []*net.Block{}
+func (s *Store) GetAllProviders() ([]*blocks.Block, error) {
+	bls := []*blocks.Block{}
 	s.providers.Range(func(k, v interface{}) bool {
-		block := v.(*net.Block)
-		blocks = append(blocks, block)
+		block := v.(*blocks.Block)
+		bls = append(bls, block)
 		return true
 	})
 
-	return blocks, nil
+	return bls, nil
 }

@@ -10,8 +10,10 @@ import (
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
-	"github.com/nimona/go-nimona/log"
 	"go.uber.org/zap"
+
+	"github.com/nimona/go-nimona/log"
+	"github.com/nimona/go-nimona/peers"
 )
 
 // Networker interface for mocking Network
@@ -21,7 +23,7 @@ type Networker interface {
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(AddressBook AddressBooker) (*Network, error) {
+func NewNetwork(AddressBook peers.AddressBooker) (*Network, error) {
 	return &Network{
 		AddressBook: AddressBook,
 	}, nil
@@ -29,14 +31,19 @@ func NewNetwork(AddressBook AddressBooker) (*Network, error) {
 
 // Network allows dialing and listening for p2p connections
 type Network struct {
-	AddressBook AddressBooker
+	AddressBook peers.AddressBooker
 }
 
 // Dial to a peer and return a net.Conn or error
 func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
+	logger := log.Logger(ctx)
 	peerInfo, err := n.AddressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(peerInfo.Addresses) == 0 {
+		return nil, ErrNoAddresses
 	}
 
 	var conn net.Conn
@@ -46,6 +53,7 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 		}
 		addr = strings.Replace(addr, "tcp:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second * 5}
+		logger.Debug("dialing", zap.String("address", addr))
 		newConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			continue

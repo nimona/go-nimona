@@ -5,6 +5,7 @@ import (
 	context "context"
 	"net"
 
+	blocks "github.com/nimona/go-nimona/blocks"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -14,15 +15,15 @@ type MockExchange struct {
 }
 
 // Get provides a mock function with given fields: ctx, id
-func (_m *MockExchange) Get(ctx context.Context, id string) (*Block, error) {
+func (_m *MockExchange) Get(ctx context.Context, id string) (*blocks.Block, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 *Block
-	if rf, ok := ret.Get(0).(func(context.Context, string) *Block); ok {
+	var r0 *blocks.Block
+	if rf, ok := ret.Get(0).(func(context.Context, string) *blocks.Block); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Block)
+			r0 = ret.Get(0).(*blocks.Block)
 		}
 	}
 
@@ -102,7 +103,7 @@ func (_m *MockExchange) RegisterDiscoverer(discovery Discoverer) {
 }
 
 // Send provides a mock function with given fields: ctx, block, recipients
-func (_m *MockExchange) Send(ctx context.Context, block *Block, recipients ...string) error {
+func (_m *MockExchange) Send(ctx context.Context, block *blocks.Block, recipients ...string) error {
 	_va := make([]interface{}, len(recipients))
 	for _i := range recipients {
 		_va[_i] = recipients[_i]
@@ -113,7 +114,7 @@ func (_m *MockExchange) Send(ctx context.Context, block *Block, recipients ...st
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *Block, ...string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *blocks.Block, ...string) error); ok {
 		r0 = rf(ctx, block, recipients...)
 	} else {
 		r0 = ret.Error(0)

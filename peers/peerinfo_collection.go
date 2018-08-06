@@ -1,4 +1,4 @@
-package net
+package peers
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 var (
 	// ErrNotFound is returned wheh a requqested item in the collection does
 	// not exist
-	ErrNotFound = errors.New("not found")
+	ErrNotFound = errors.New("peer not found")
 )
 
 // PeerInfoCollection allows concurrent access to peerinfos
@@ -45,9 +45,6 @@ func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 
 // Put adds or overwrites an item in the collection
 func (c *PeerInfoCollection) Put(peerInfo *PeerInfo) error {
-	// newPeerInfo := &PeerInfo{}
-	// copier.Copy(newPeerInfo, peerInfo)
-	// c.peers.Store(newPeerInfo.ID, newPeerInfo)
 	c.peers.Store(peerInfo.ID, peerInfo)
 	return nil
 }

@@ -1,22 +1,24 @@
-package net
+package storage
+
+import "github.com/nimona/go-nimona/blocks"
 
 type memoryStore struct {
-	data map[string]*Block
+	data map[string]*blocks.Block
 }
 
 // NewMemoryStore creates a new in memory store
 func NewMemoryStore() Storage {
 	return &memoryStore{
-		data: map[string]*Block{},
+		data: map[string]*blocks.Block{},
 	}
 }
-func (m *memoryStore) Store(key string, block *Block) error {
+func (m *memoryStore) Store(key string, block *blocks.Block) error {
 	m.data[key] = block
 
 	return nil
 }
 
-func (m *memoryStore) Get(key string) (*Block, error) {
+func (m *memoryStore) Get(key string) (*blocks.Block, error) {
 	block, ok := m.data[key]
 	if !ok {
 		return nil, ErrNotFound

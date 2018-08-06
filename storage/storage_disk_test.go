@@ -1,4 +1,4 @@
-package net
+package storage
 
 import (
 	"io/ioutil"
@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,19 +19,19 @@ func TestStoreBlockSuccess(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	block := NewBlock("test", map[string]interface{}{
+	block := blocks.NewBlock("test", map[string]interface{}{
 		"foo": "bar",
 	})
-	err := SetID(block)
+	blockID, err := block.ID()
 	assert.NoError(t, err)
 
-	err = ds.Store(block.Metadata.ID, block)
+	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(path, block.Metadata.ID+dataExt))
+	_, err = os.Stat(filepath.Join(path, block.ID()+dataExt))
 	assert.NoError(t, err)
 
-	cleanup(path, block.Metadata.ID)
+	cleanup(path, block.ID())
 
 }
 
@@ -42,20 +43,20 @@ func TestStoreBlockExists(t *testing.T) {
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
 
-	block := NewBlock("test", map[string]interface{}{
+	block := blocks.NewBlock("test", map[string]interface{}{
 		"foo": "bar",
 	})
-	err := SetID(block)
+	blockID, err := block.ID()
 	assert.NoError(t, err)
 
-	err = ds.Store(block.Metadata.ID, block)
+	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	err = ds.Store(block.Metadata.ID, block)
+	err = ds.Store(block.ID(), block)
 	assert.Error(t, err)
 	assert.EqualError(t, ErrExists, err.Error())
 
-	cleanup(path, block.Metadata.ID)
+	cleanup(path, block.ID())
 }
 
 func TestGetSuccess(t *testing.T) {
@@ -66,22 +67,22 @@ func TestGetSuccess(t *testing.T) {
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
 
-	block := NewBlock("test", map[string]interface{}{
+	block := blocks.NewBlock("test", map[string]interface{}{
 		"foo": "bar",
 	})
-	err := SetID(block)
+	blockID, err := block.ID()
 	assert.NoError(t, err)
 
-	err = ds.Store(block.Metadata.ID, block)
+	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	b, err := ds.Get(block.Metadata.ID)
+	b, err := ds.Get(block.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, block.Metadata.ID, b.Metadata.ID)
+	assert.Equal(t, block.ID(), b.ID())
 	assert.Equal(t, block.Payload, b.Payload)
 	assert.Equal(t, block.Metadata, b.Metadata)
 
-	cleanup(path, block.Metadata.ID)
+	cleanup(path, block.ID())
 }
 
 func TestGetFail(t *testing.T) {
@@ -101,18 +102,18 @@ func TestListSuccess(t *testing.T) {
 
 	ds := NewDiskStorage(path)
 
-	block := NewBlock("test", map[string]interface{}{
+	block := blocks.NewBlock("test", map[string]interface{}{
 		"foo": "bar",
 	})
-	err := SetID(block)
+	blockID, err := block.ID()
 	assert.NoError(t, err)
 
-	err = ds.Store(block.Metadata.ID, block)
+	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
 	list, err := ds.List()
 	assert.NoError(t, err)
-	assert.Equal(t, block.Metadata.ID, list[0])
+	assert.Equal(t, block.ID(), list[0])
 
-	cleanup(path, block.Metadata.ID)
+	cleanup(path, block.ID())
 }

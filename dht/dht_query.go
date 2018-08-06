@@ -5,7 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/peers"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +51,7 @@ func (q *query) Run(ctx context.Context) {
 			select {
 			case incomingPayload := <-q.incomingPayloads:
 				switch payload := incomingPayload.(type) {
-				case net.PeerInfo:
+				case peers.PeerInfo:
 					q.outgoingPayloads <- payload
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				case Provider:
@@ -140,7 +141,7 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	block := net.NewEphemeralBlock(payloadType, req)
+	block := blocks.NewEphemeralBlock(payloadType, req)
 	if err := q.dht.exchange.Send(ctx, block, peersToAsk...); err != nil {
 		logrus.WithError(err).Warnf("dht.next could not send block")
 		return

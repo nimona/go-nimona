@@ -16,8 +16,11 @@ import (
 	"gopkg.in/abiosoft/ishell.v2"
 
 	"github.com/nimona/go-nimona/api"
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/peers"
+	"github.com/nimona/go-nimona/storage"
 )
 
 var (
@@ -34,14 +37,14 @@ func base64ToBytes(s string) []byte {
 	return b
 }
 
-var bootstrapPeerInfoBlocks = []*net.Block{
-	&net.Block{
-		Metadata: net.Metadata{
+var bootstrapPeerInfoBlocks = []*blocks.Block{
+	&blocks.Block{
+		Metadata: blocks.Metadata{
 			ID:     "30xDFpt2JF25bWPp8uhcs2dFA2JwbiVoYwitBGGd6cgo8Z9",
 			Type:   "peer.info",
 			Signer: "01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1",
 		},
-		Payload: net.PeerInfoPayload{
+		Payload: peers.PeerInfoPayload{
 			Addresses: []string{
 				"tcp:andromeda.nimona.io:21013",
 			},
@@ -57,7 +60,7 @@ type Hello struct {
 
 func init() {
 	// telemetry.SetupKeenCollector()
-	net.RegisterContentType("demo.hello", Hello{})
+	blocks.RegisterContentType("demo.hello", Hello{})
 }
 
 func main() {
@@ -75,7 +78,7 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg, err := net.NewAddressBook(configPath)
+	reg, err := peers.NewAddressBook(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
@@ -86,14 +89,14 @@ func main() {
 
 	storagePath := path.Join(configPath, "storage")
 
-	dpr := net.NewDiskStorage(storagePath)
+	dpr := storage.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
 	n.RegisterDiscoverer(dht)
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(block *net.Block) error {
+	n.Handle("demo", func(block *blocks.Block) error {
 		payload := block.Payload.(Hello)
 		fmt.Printf("___ Got block %s\n", payload.Body)
 		return nil
@@ -268,7 +271,7 @@ func main() {
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			block := net.NewBlock("demo.hello", &Hello{msg}, to...)
+			block := blocks.NewBlock("demo.hello", &Hello{msg}, to...)
 			if err := n.Send(ctx, block, to...); err != nil {
 				c.Println("Could not send block", err)
 				return

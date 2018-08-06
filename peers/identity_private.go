@@ -1,4 +1,4 @@
-package net
+package peers
 
 // PrivateIdentity holds the information for a private (local) identity
 type PrivateIdentity struct {

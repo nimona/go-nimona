@@ -6,15 +6,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/peers"
+	"github.com/nimona/go-nimona/storage"
 )
 
 type API struct {
 	router *gin.Engine
 }
 
-func New(addressBook net.AddressBooker, dht *dht.DHT, bls net.Storage) *API {
+func New(addressBook peers.AddressBooker, dht *dht.DHT, bls storage.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	local := router.Group("/api/v1/local")
@@ -39,29 +41,29 @@ func New(addressBook net.AddressBooker, dht *dht.DHT, bls net.Storage) *API {
 		}
 		c.JSON(http.StatusOK, providers)
 	})
-	blocks := router.Group("/api/v1/blocks")
-	blocks.GET("/", func(c *gin.Context) {
+	blocksEnd := router.Group("/api/v1/blocks")
+	blocksEnd.GET("/", func(c *gin.Context) {
 		blockIDs, err := bls.List()
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
-		blocks := []*net.Block{}
+		bs := []*blocks.Block{}
 		for _, blockID := range blockIDs {
 			block, err := bls.Get(blockID)
 			if err != nil {
 				c.AbortWithError(500, err)
 				return
 			}
-			blocks = append(blocks, block)
+			bs = append(bs, block)
 		}
-		c.JSON(http.StatusOK, blocks)
+		c.JSON(http.StatusOK, bs)
 	})
-	blocks.GET("/:blockID", func(c *gin.Context) {
+	blocksEnd.GET("/:blockID", func(c *gin.Context) {
 		blockID := c.Param("blockID")
 		block, err := bls.Get(blockID)
 		if err != nil {
-			if err == net.ErrNotFound {
+			if err == storage.ErrNotFound {
 				c.AbortWithError(404, err)
 				return
 			}

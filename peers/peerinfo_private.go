@@ -1,4 +1,8 @@
-package net
+package peers
+
+import (
+	"github.com/nimona/go-nimona/blocks"
+)
 
 // PrivatePeerInfo is a PeerInfo with an additional PrivateKey
 type PrivatePeerInfo struct {
@@ -8,14 +12,12 @@ type PrivatePeerInfo struct {
 }
 
 // Block returns a signed Block
-func (pi *PrivatePeerInfo) Block() *Block {
+func (pi *PrivatePeerInfo) Block() *blocks.Block {
 	// TODO content type
-	block := NewEphemeralBlock(PeerInfoContentType, PeerInfoPayload{
+	block := blocks.NewEphemeralBlock(PeerInfoContentType, PeerInfoPayload{
 		Addresses: pi.Addresses,
 	})
 	block.Metadata.Ephemeral = true
-	SetSigner(block, pi)
-	Sign(block, pi)
-	SetID(block)
+	block.Metadata.Signer = pi.ID
 	return block
 }

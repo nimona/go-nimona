@@ -1,4 +1,4 @@
-package net
+package peers
 
 import (
 	"crypto/rand"
@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/apisit/btckeygenie/btckey"
+	"github.com/nimona/go-nimona/blocks"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
@@ -35,8 +36,9 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo
 	}
 
 	id := &PrivateIdentity{
-		ID:         fmt.Sprintf("00x%s", Base58Encode(signingKey.PublicKey.ToBytes())),
-		PrivateKey: fmt.Sprintf("00x%s", Base58Encode(signingKey.ToBytes())),
+		// TODO wrap this up in a function?
+		ID:         fmt.Sprintf("00x%s", blocks.Base58Encode(signingKey.PublicKey.ToBytes())),
+		PrivateKey: fmt.Sprintf("00x%s", blocks.Base58Encode(signingKey.ToBytes())),
 		Peers:      &PeerInfoCollection{},
 	}
 
@@ -64,8 +66,8 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 	}
 
 	pi := &PrivatePeerInfo{
-		ID:         fmt.Sprintf("01x%s", Base58Encode(peerSigningKey.PublicKey.ToBytes())),
-		PrivateKey: fmt.Sprintf("01x%s", Base58Encode(peerSigningKey.ToBytes())),
+		ID:         fmt.Sprintf("01x%s", blocks.Base58Encode(peerSigningKey.PublicKey.ToBytes())),
+		PrivateKey: fmt.Sprintf("01x%s", blocks.Base58Encode(peerSigningKey.ToBytes())),
 	}
 
 	return pi, nil
@@ -109,7 +111,7 @@ func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) e
 // SignData given some bytes and a private key in its prefixed and compressed format
 func SignData(data []byte, privateKey string) ([]byte, error) {
 	// TODO check private key format
-	key, err := Base58Decode(privateKey[3:])
+	key, err := blocks.Base58Decode(privateKey[3:])
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +122,7 @@ func SignData(data []byte, privateKey string) ([]byte, error) {
 // compressed format
 func Verify(publicKey string, data, signature []byte) error {
 	digest := sha256.Sum256(data)
-	publicKeyBytes, err := Base58Decode(publicKey[3:])
+	publicKeyBytes, err := blocks.Base58Decode(publicKey[3:])
 	if err != nil {
 		return err
 	}

@@ -12,7 +12,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	blocks "github.com/nimona/go-nimona/blocks"
 	nnet "github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/peers"
+	storage "github.com/nimona/go-nimona/storage"
 )
 
 type exchangeTestSuite struct {
@@ -27,10 +30,12 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	_, p1, w1, r1 := suite.newPeer()
 	_, p2, w2, r2 := suite.newPeer()
 
-	r2.PutPeerInfoFromBlock(p1.Block())
-	r1.PutPeerInfoFromBlock(p2.Block())
+	err := r2.PutPeerInfoFromBlock(p1.Block())
+	suite.NoError(err)
+	err = r1.PutPeerInfoFromBlock(p2.Block())
+	suite.NoError(err)
 
-	nnet.RegisterContentType("foo.bar", DummyPayload{})
+	blocks.RegisterContentType("foo.bar", DummyPayload{})
 
 	time.Sleep(time.Second)
 
@@ -44,14 +49,14 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("foo", func(block *nnet.Block) error {
+	w1.Handle("foo", func(block *blocks.Block) error {
 		suite.Equal(payload.Foo, block.Payload.(DummyPayload).Foo)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(block *nnet.Block) error {
+	w2.Handle("foo", func(block *blocks.Block) error {
 		suite.Equal(payload.Foo, block.Payload.(DummyPayload).Foo)
 		w2BlockHandled = true
 		wg.Done()
@@ -60,13 +65,13 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 
 	ctx := context.Background()
 
-	block := nnet.NewBlock("foo.bar", payload)
-	err := w2.Send(ctx, block, p1.ID)
+	block := blocks.NewBlock("foo.bar", payload)
+	err = w2.Send(ctx, block, p1.ID)
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
 
-	block = nnet.NewBlock("foo.bar", payload)
+	block = blocks.NewBlock("foo.bar", payload)
 	err = w1.Send(ctx, block, p2.ID)
 	suite.NoError(err)
 
@@ -113,7 +118,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	w1BlockHandled := false
 // 	w2BlockHandled := false
 
-// 	w1.Handle("foo", func(block *nnet.Block) error {
+// 	w1.Handle("foo", func(block *nblocks.Block) error {
 // 		decPayload := map[string]string{}
 // 		err := block.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -123,7 +128,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 		return nil
 // 	})
 
-// 	w2.Handle("foo", func(block *nnet.Block) error {
+// 	w2.Handle("foo", func(block *nblocks.Block) error {
 // 		decPayload := map[string]string{}
 // 		err := block.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -153,11 +158,11 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	suite.True(w2BlockHandled)
 // }
 
-func (suite *exchangeTestSuite) newPeer() (int, *nnet.PrivatePeerInfo, nnet.Exchange, *nnet.AddressBook) {
+func (suite *exchangeTestSuite) newPeer() (int, *peers.PrivatePeerInfo, nnet.Exchange, *peers.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
-	ab, _ := nnet.NewAddressBook(td)
+	ab, _ := peers.NewAddressBook(td)
 	storagePath := path.Join(td, "storage")
-	dpr := nnet.NewDiskStorage(storagePath)
+	dpr := storage.NewDiskStorage(storagePath)
 	wre, _ := nnet.NewExchange(ab, dpr)
 	listener, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)

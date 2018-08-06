@@ -1,13 +1,11 @@
 package dht
 
-import (
-	"github.com/nimona/go-nimona/net"
-)
+import "github.com/nimona/go-nimona/blocks"
 
 func init() {
-	net.RegisterContentType(ProviderType, Provider{})
-	net.RegisterContentType(PeerInfoRequestType, PeerInfoRequest{})
-	net.RegisterContentType(ProviderRequestType, ProviderRequest{})
+	blocks.RegisterContentType(ProviderType, Provider{})
+	blocks.RegisterContentType(PeerInfoRequestType, PeerInfoRequest{})
+	blocks.RegisterContentType(ProviderRequestType, ProviderRequest{})
 }
 
 // Block types

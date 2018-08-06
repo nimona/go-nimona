@@ -10,7 +10,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/peers"
 )
 
 var (
@@ -28,13 +30,13 @@ type DHT struct {
 	peerID         string
 	store          *Store
 	exchange       net.Exchange
-	addressBook    net.AddressBooker
+	addressBook    *peers.AddressBook
 	queries        sync.Map
 	refreshBuckets bool
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
-func NewDHT(exchange net.Exchange, pm net.AddressBooker) (*DHT, error) {
+func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -82,7 +84,7 @@ func (nd *DHT) refresh() {
 		resp := PeerInfoRequest{
 			PeerID: peerInfo.ID,
 		}
-		block := net.NewEphemeralBlock(PeerInfoRequestType, resp)
+		block := blocks.NewEphemeralBlock(PeerInfoRequestType, resp)
 		if err := nd.exchange.Send(ctx, block, peerIDs...); err != nil {
 			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
 		}
@@ -92,12 +94,12 @@ func (nd *DHT) refresh() {
 	}
 }
 
-func (nd *DHT) handleBlock(block *net.Block) error {
+func (nd *DHT) handleBlock(block *blocks.Block) error {
 	contentType := block.Metadata.Type
 	switch contentType {
 	case PeerInfoRequestType:
 		nd.handlePeerInfoRequest(block)
-	case net.PeerInfoContentType:
+	case peers.PeerInfoContentType:
 		nd.handlePeerInfo(block)
 	case ProviderRequestType:
 		nd.handleProviderRequest(block)
@@ -110,7 +112,7 @@ func (nd *DHT) handleBlock(block *net.Block) error {
 	return nil
 }
 
-func (nd *DHT) handlePeerInfoRequest(incBlock *net.Block) {
+func (nd *DHT) handlePeerInfoRequest(incBlock *blocks.Block) {
 	ctx := context.Background()
 	payload, ok := incBlock.Payload.(PeerInfoRequest)
 	if !ok {
@@ -135,8 +137,8 @@ func (nd *DHT) handlePeerInfoRequest(incBlock *net.Block) {
 	}
 }
 
-func (nd *DHT) handlePeerInfo(incBlock *net.Block) {
-	payload, ok := incBlock.Payload.(net.PeerInfo)
+func (nd *DHT) handlePeerInfo(incBlock *blocks.Block) {
+	payload, ok := incBlock.Payload.(peers.PeerInfo)
 	if !ok {
 		logrus.Warn("expected PeerInfo, got ", reflect.TypeOf(incBlock.Payload))
 		return
@@ -157,7 +159,7 @@ func (nd *DHT) handlePeerInfo(incBlock *net.Block) {
 	q.(*query).incomingPayloads <- payload
 }
 
-func (nd *DHT) handleProviderRequest(incBlock *net.Block) {
+func (nd *DHT) handleProviderRequest(incBlock *blocks.Block) {
 	ctx := context.Background()
 	payload, ok := incBlock.Payload.(ProviderRequest)
 	if !ok {
@@ -187,7 +189,7 @@ func (nd *DHT) handleProviderRequest(incBlock *net.Block) {
 	}
 }
 
-func (nd *DHT) handleProvider(incBlock *net.Block) {
+func (nd *DHT) handleProvider(incBlock *blocks.Block) {
 	payload, ok := incBlock.Payload.(Provider)
 	if !ok {
 		logrus.Warn("expected Provider, got ", reflect.TypeOf(incBlock.Payload))
@@ -212,9 +214,9 @@ func (nd *DHT) handleProvider(incBlock *net.Block) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*net.PeerInfo, error) {
+func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
 	// place to hold the results
-	rks := []*net.PeerInfo{}
+	rks := []*peers.PeerInfo{}
 
 	htk := hash(tk)
 
@@ -263,7 +265,7 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*net.PeerInfo, error) {
 }
 
 // GetPeerInfo returns a peer's info from their id
-func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*net.PeerInfo, error) {
+func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, error) {
 	q := &query{
 		dht:              nd,
 		id:               net.RandStringBytesMaskImprSrc(8),
@@ -280,7 +282,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*net.PeerInfo, error
 	for {
 		select {
 		case value := <-q.outgoingPayloads:
-			block := value.(*net.Block)
+			block := value.(*blocks.Block)
 			nd.addressBook.PutPeerInfoFromBlock(block)
 			return nd.addressBook.GetPeerInfo(block.Metadata.Signer)
 		case <-time.After(maxQueryTime):
@@ -293,18 +295,18 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*net.PeerInfo, error
 
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
-	providerBlock := net.NewEphemeralBlock(ProviderType, Provider{
+	providerBlock := blocks.NewEphemeralBlock(ProviderType, Provider{
 		BlockIDs: []string{key},
 	})
 
 	signer := nd.addressBook.GetLocalPeerInfo()
-	net.Sign(providerBlock, signer)
+	nd.exchange.Sign(providerBlock, signer)
 
 	if err := nd.store.PutProvider(providerBlock); err != nil {
 		return err
 	}
 
-	block := net.NewEphemeralBlock(ProviderType, providerBlock)
+	block := blocks.NewEphemeralBlock(ProviderType, providerBlock)
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
 	if err := nd.exchange.Send(ctx, block, closestPeerIDs...); err != nil {
@@ -337,7 +339,7 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
 			if incBlock == nil {
 				continue
 			}
-			block := incBlock.(*net.Block)
+			block := incBlock.(*blocks.Block)
 			// TODO do we need to check payload and id?
 			// payload := block.Payload.(Provider)
 			providers = append(providers, block.Metadata.Signer)
@@ -368,7 +370,7 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 	return providers, nil
 }
 
-func getPeerIDsFromPeerInfos(peerInfos []*net.PeerInfo) []string {
+func getPeerIDsFromPeerInfos(peerInfos []*peers.PeerInfo) []string {
 	peerIDs := []string{}
 	for _, peerInfo := range peerInfos {
 		peerIDs = append(peerIDs, peerInfo.ID)
@@ -376,15 +378,15 @@ func getPeerIDsFromPeerInfos(peerInfos []*net.PeerInfo) []string {
 	return peerIDs
 }
 
-func getBlocksFromPeerInfos(peerInfos []*net.PeerInfo) []*net.Block {
-	blocks := []*net.Block{}
+func getBlocksFromPeerInfos(peerInfos []*peers.PeerInfo) []*blocks.Block {
+	blocks := []*blocks.Block{}
 	for _, peerInfo := range peerInfos {
 		blocks = append(blocks, peerInfo.Block)
 	}
 	return blocks
 }
 
-func blocksOrNil(c []*net.Block) []*net.Block {
+func blocksOrNil(c []*blocks.Block) []*blocks.Block {
 	if len(c) == 0 {
 		return nil
 	}

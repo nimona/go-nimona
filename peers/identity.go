@@ -1,4 +1,4 @@
-package net
+package peers
 
 // Identity is a public identity
 type Identity struct {

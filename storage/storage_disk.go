@@ -1,10 +1,12 @@
-package net
+package storage
 
 import (
 	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/nimona/go-nimona/blocks"
 )
 
 // diskStorage stores the block in a file
@@ -30,9 +32,13 @@ func NewDiskStorage(path string) Storage {
 // Store saves the block in two files one for the metadata and one for
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
-func (d *diskStorage) Store(key string, block *Block) error {
-	dataFilePath := filepath.Join(d.path, block.Metadata.ID+dataExt)
-	// metaFilePath := filepath.Join(d.path, block.Metadata.ID+metaExt)
+func (d *diskStorage) Store(key string, block *blocks.Block) error {
+	blockID, err := block.ID()
+	if err != nil {
+		return err
+	}
+	dataFilePath := filepath.Join(d.path, blockID+dataExt)
+	// metaFilePath := filepath.Join(d.path, block.ID()+metaExt)
 
 	dataFileFound := false
 	// metaFileFound := false
@@ -51,7 +57,7 @@ func (d *diskStorage) Store(key string, block *Block) error {
 		return ErrExists
 	}
 
-	b, err := Marshal(block)
+	b, err := blocks.Marshal(block)
 	if err != nil {
 		return err
 	}
@@ -79,7 +85,7 @@ func (d *diskStorage) Store(key string, block *Block) error {
 	return nil
 }
 
-func (d *diskStorage) Get(key string) (*Block, error) {
+func (d *diskStorage) Get(key string) (*blocks.Block, error) {
 	// metaFilePath := filepath.Join(d.path, key+metaExt)
 	dataFilePath := filepath.Join(d.path, key+dataExt)
 
@@ -114,7 +120,7 @@ func (d *diskStorage) Get(key string) (*Block, error) {
 	// 	return nil, err
 	// }
 
-	block, err := Unmarshal(b)
+	block, err := blocks.Unmarshal(b)
 	if err != nil {
 		return nil, errors.New("could not unmarshal file") // err
 	}

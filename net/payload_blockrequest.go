@@ -1,16 +1,20 @@
 package net
 
+import (
+	blocks "github.com/nimona/go-nimona/blocks"
+)
+
 const (
-	PayloadTypeRequestBlock = "blx.request-block"
+	BlockRequestType = "blx.request-block"
 )
 
 func init() {
-	RegisterContentType(PayloadTypeRequestBlock, PayloadRequestBlock{})
+	blocks.RegisterContentType(BlockRequestType, BlockRequest{})
 }
 
-// PayloadRequestBlock payload for PayloadTypeRequestBlock
-type PayloadRequestBlock struct {
+// BlockRequest payload for BlockRequestType
+type BlockRequest struct {
 	RequestID string `json:"requestID"`
 	ID        string `json:"id"`
-	response  chan *Block
+	response  chan *blocks.Block
 }

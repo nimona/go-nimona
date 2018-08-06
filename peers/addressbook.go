@@ -1,4 +1,4 @@
-package net
+package peers
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/log"
 )
 
@@ -18,7 +19,7 @@ type AddressBooker interface {
 
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
-	PutPeerInfoFromBlock(*Block) error
+	PutPeerInfoFromBlock(*blocks.Block) error
 
 	PutPeerStatus(peerID string, status Status)
 	GetPeerStatus(peerID string) Status
@@ -84,7 +85,7 @@ type AddressBook struct {
 }
 
 // PutPeerInfoFromBlock stores an block with a peer payload
-func (ab *AddressBook) PutPeerInfoFromBlock(block *Block) error {
+func (ab *AddressBook) PutPeerInfoFromBlock(block *blocks.Block) error {
 	if ab.localPeer.ID == block.Metadata.Signer {
 		return nil
 	}

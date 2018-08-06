@@ -28,7 +28,7 @@ package dht
 // 	suite.addressBook, _ = net.NewAddressBook(td)
 // 	peer1, _ := suite.addressBook.CreateNewPeer()
 // 	suite.addressBook.PutLocalPeerInfo(peer1)
-// 	bootstrapBlock := net.NewEphemeralBlock("peer.info", &net.PeerInfo{
+// 	bootstrapBlock := blocks.NewEphemeralBlock("peer.info", &peers.PeerInfo{
 // 		ID: "bootstrap",
 // 		Addresses: []string{
 // 			"localhost",
@@ -46,12 +46,12 @@ package dht
 // 	key := "a"
 // 	payload := BlockPutProviders{
 // 		Key: "a",
-// 		Providers: []*net.Block{
+// 		Providers: []*blocks.Block{
 // 			suite.addressBook.GetLocalPeerInfo().Block(),
 // 		},
 // 	}
 // 	to := "bootstrap"
-// 	block := net.NewEphemeralBlock(PayloadTypePutValue, payload)
+// 	block := blocks.NewEphemeralBlock(PayloadTypePutValue, payload)
 // 	suite.exchange.On("Send", PayloadTypePutValue, block, to).Return(nil)
 // 	err := suite.dht.PutProviders(ctx, key)
 // 	suite.NoError(err)
