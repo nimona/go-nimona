@@ -28,15 +28,16 @@ func TestStoreBlockSuccess(t *testing.T) {
 	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(path, block.ID()+dataExt))
+	blockID, err = block.ID()
+	assert.NoError(t, err)
+	_, err = os.Stat(filepath.Join(path, blockID+dataExt))
 	assert.NoError(t, err)
 
-	cleanup(path, block.ID())
-
+	cleanup(path, blockID)
 }
 
 func TestStoreBlockExists(t *testing.T) {
-	path := os.TempDir()
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
 	ds := NewDiskStorage(path)
 
@@ -49,18 +50,21 @@ func TestStoreBlockExists(t *testing.T) {
 	blockID, err := block.ID()
 	assert.NoError(t, err)
 
+	blockID, err = block.ID()
+	assert.NoError(t, err)
+
 	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	err = ds.Store(block.ID(), block)
+	err = ds.Store(blockID, block)
 	assert.Error(t, err)
 	assert.EqualError(t, ErrExists, err.Error())
 
-	cleanup(path, block.ID())
+	cleanup(path, blockID)
 }
 
 func TestGetSuccess(t *testing.T) {
-	path := os.TempDir()
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
 	ds := NewDiskStorage(path)
 
@@ -76,17 +80,20 @@ func TestGetSuccess(t *testing.T) {
 	err = ds.Store(blockID, block)
 	assert.NoError(t, err)
 
-	b, err := ds.Get(block.ID())
+	bID, err := block.ID()
 	assert.NoError(t, err)
-	assert.Equal(t, block.ID(), b.ID())
+
+	b, err := ds.Get(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, blockID, bID)
 	assert.Equal(t, block.Payload, b.Payload)
 	assert.Equal(t, block.Metadata, b.Metadata)
 
-	cleanup(path, block.ID())
+	cleanup(path, blockID)
 }
 
 func TestGetFail(t *testing.T) {
-	path := os.TempDir()
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
 	ds := NewDiskStorage(path)
 
@@ -98,7 +105,7 @@ func TestGetFail(t *testing.T) {
 }
 
 func TestListSuccess(t *testing.T) {
-	path := os.TempDir()
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
 	ds := NewDiskStorage(path)
 
@@ -113,7 +120,9 @@ func TestListSuccess(t *testing.T) {
 
 	list, err := ds.List()
 	assert.NoError(t, err)
-	assert.Equal(t, block.ID(), list[0])
+	blockID, err = block.ID()
+	assert.NoError(t, err)
+	assert.Equal(t, blockID, list[0])
 
-	cleanup(path, block.ID())
+	cleanup(path, blockID)
 }

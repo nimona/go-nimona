@@ -24,7 +24,11 @@ func newStore() (*Store, error) {
 
 func (s *Store) PutProvider(block *blocks.Block) error {
 	// TODO verify payload type
-	s.providers.Store(block.ID(), block)
+	blockID, err := block.ID()
+	if err != nil {
+		return err
+	}
+	s.providers.Store(blockID, block)
 	return nil
 }
 
