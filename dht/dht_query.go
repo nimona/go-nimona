@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/peers"
 	logrus "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 const numPeersNear int = 15
@@ -20,28 +22,37 @@ const (
 )
 
 type query struct {
-	dht              *DHT
-	id               string
-	key              string
-	queryType        QueryType
-	closestPeerID    string
-	contactedPeers   sync.Map
-	incomingPayloads chan interface{}
-	outgoingPayloads chan interface{}
+	dht            *DHT
+	id             string
+	key            string
+	queryType      QueryType
+	closestPeerID  string
+	contactedPeers sync.Map
+	incomingBlocks chan *blocks.Block
+	outgoingBlocks chan *blocks.Block
 }
 
 func (q *query) Run(ctx context.Context) {
+	logger := log.Logger(ctx)
 	go func() {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
-			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err != nil {
-				q.outgoingPayloads <- peerInfo
+			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err == nil {
+				if peerInfo == nil {
+					logger.Warn("got nil peerInfo", zap.String("requestID", q.key))
+					break
+				}
+				q.outgoingBlocks <- peerInfo.Block
 			}
 		case ProviderQuery:
-			if providers, err := q.dht.store.GetProviders(q.key); err != nil {
+			if providers, err := q.dht.store.GetProviders(q.key); err == nil {
 				for _, provider := range providers {
-					q.outgoingPayloads <- provider
+					if provider == nil {
+						logger.Warn("got nil provider", zap.String("requestID", q.key))
+						continue
+					}
+					q.outgoingBlocks <- provider
 				}
 			}
 		}
@@ -49,16 +60,17 @@ func (q *query) Run(ctx context.Context) {
 		// and now, wait for something to happen
 		for {
 			select {
-			case incomingPayload := <-q.incomingPayloads:
-				switch payload := incomingPayload.(type) {
+			case incBlock := <-q.incomingBlocks:
+				incPayload := incBlock.Payload
+				switch payload := incPayload.(type) {
 				case peers.PeerInfo:
-					q.outgoingPayloads <- payload
+					q.outgoingBlocks <- incBlock
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				case Provider:
 					// TODO check if id is in payload.BlockIDs
 					for _, blockID := range payload.BlockIDs {
 						if blockID == q.key {
-							q.outgoingPayloads <- payload
+							q.outgoingBlocks <- incBlock
 							break
 						}
 					}
@@ -66,11 +78,11 @@ func (q *query) Run(ctx context.Context) {
 				}
 
 			case <-time.After(maxQueryTime):
-				close(q.outgoingPayloads)
+				close(q.outgoingBlocks)
 				return
 
 			case <-ctx.Done():
-				close(q.outgoingPayloads)
+				close(q.outgoingBlocks)
 				return
 			}
 		}
@@ -142,6 +154,7 @@ func (q *query) next() {
 
 	ctx := context.Background()
 	block := blocks.NewEphemeralBlock(payloadType, req)
+	block.SetHeader("requestID", q.id)
 	if err := q.dht.exchange.Send(ctx, block, peersToAsk...); err != nil {
 		logrus.WithError(err).Warnf("dht.next could not send block")
 		return

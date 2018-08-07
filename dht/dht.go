@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/peers"
 )
@@ -22,7 +24,7 @@ var (
 const (
 	exchangeExtention    = "dht"
 	closestPeersToReturn = 8
-	maxQueryTime         = time.Second * 5
+	maxQueryTime         = time.Second
 )
 
 // DHT is the struct that implements the dht protocol
@@ -82,13 +84,7 @@ func (nd *DHT) refresh() {
 		}
 
 		// HACK lookup our own peer info just so we can populate our peer table
-		resp := PeerInfoRequest{
-			PeerID: peerInfo.ID,
-		}
-		block := blocks.NewEphemeralBlock(PeerInfoRequestType, resp)
-		if err := nd.exchange.Send(ctx, block, peerIDs...); err != nil {
-			logrus.WithError(err).WithField("peer_ids", peerIDs).Warnf("refresh could not send block")
-		}
+		nd.GetPeerInfo(ctx, peerInfo.ID)
 
 		// sleep for a bit
 		time.Sleep(time.Second * 30)
@@ -139,12 +135,7 @@ func (nd *DHT) handlePeerInfoRequest(incBlock *blocks.Block) {
 }
 
 func (nd *DHT) handlePeerInfo(incBlock *blocks.Block) {
-	payload, ok := incBlock.Payload.(peers.PeerInfoPayload)
-	if !ok {
-		logrus.Warn("expected PeerInfo, got ", reflect.TypeOf(incBlock.Payload))
-		return
-	}
-
+	// TODO handle error
 	nd.addressBook.PutPeerInfoFromBlock(incBlock)
 
 	rID := incBlock.GetHeader("requestID")
@@ -157,25 +148,30 @@ func (nd *DHT) handlePeerInfo(incBlock *blocks.Block) {
 		return
 	}
 
-	q.(*query).incomingPayloads <- payload
+	q.(*query).incomingBlocks <- incBlock
 }
 
 func (nd *DHT) handleProviderRequest(incBlock *blocks.Block) {
 	ctx := context.Background()
+	logger := log.Logger(ctx)
 	payload, ok := incBlock.Payload.(ProviderRequest)
 	if !ok {
-		logrus.Warn("expected ProviderRequest, got ", reflect.TypeOf(incBlock.Payload))
+		logger.Warn("expected ProviderRequest", zap.String("actualType", reflect.TypeOf(incBlock.Payload).String()))
 		return
 	}
 
 	providerBlocks, err := nd.store.GetProviders(payload.Key)
 	if err != nil {
+		logger.Debug("could not get providers from local store", zap.Error(err))
 		// TODO handle and log error
 		return
 	}
 
 	for _, providerBlock := range providerBlocks {
-		nd.exchange.Send(ctx, providerBlock, incBlock.Metadata.Signer)
+		cProviderBlock := blocks.Copy(providerBlock)
+		cProviderBlock.SetHeader("requestID", payload.RequestID)
+		logger.Debug("found provider block", zap.String("blockID", blocks.BestEffortID(providerBlock)))
+		nd.exchange.Send(ctx, cProviderBlock, incBlock.Metadata.Signer)
 		// TODO handle and log error
 	}
 
@@ -183,22 +179,27 @@ func (nd *DHT) handleProviderRequest(incBlock *blocks.Block) {
 	closestBlocks := getBlocksFromPeerInfos(closestPeerInfos)
 
 	for _, block := range closestBlocks {
-		if err := nd.exchange.Send(ctx, block, incBlock.Metadata.Signer); err != nil {
-			logrus.WithError(err).Warnf("handleProviderRequest could not send block")
+		cBlock := blocks.Copy(block)
+		cBlock.SetHeader("requestID", payload.RequestID)
+		logger.Debug("sending provider block", zap.String("blockID", blocks.BestEffortID(cBlock)))
+		if err := nd.exchange.Send(ctx, cBlock, incBlock.Metadata.Signer); err != nil {
+			logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 			return
 		}
 	}
 }
 
 func (nd *DHT) handleProvider(incBlock *blocks.Block) {
-	payload, ok := incBlock.Payload.(Provider)
-	if !ok {
-		logrus.Warn("expected Provider, got ", reflect.TypeOf(incBlock.Payload))
-		return
-	}
+	ctx := context.Background()
+	logger := log.Logger(ctx)
+
+	logger.Debug("handling provider",
+		zap.String("blockID", blocks.BestEffortID(incBlock)),
+		zap.String("requestID", incBlock.GetHeader("requestID")))
 
 	if err := nd.store.PutProvider(incBlock); err != nil {
-		// TODO log and handle error
+		logger.Debug("could not store provider", zap.Error(err))
+		// TODO handle error
 	}
 
 	rID := incBlock.GetHeader("requestID")
@@ -211,7 +212,7 @@ func (nd *DHT) handleProvider(incBlock *blocks.Block) {
 		return
 	}
 
-	q.(*query).incomingPayloads <- payload
+	q.(*query).incomingBlocks <- incBlock
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
@@ -268,12 +269,12 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
 // GetPeerInfo returns a peer's info from their id
 func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, error) {
 	q := &query{
-		dht:              nd,
-		id:               net.RandStringBytesMaskImprSrc(8),
-		key:              id,
-		queryType:        PeerInfoQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		dht:            nd,
+		id:             net.RandStringBytesMaskImprSrc(8),
+		key:            id,
+		queryType:      PeerInfoQuery,
+		incomingBlocks: make(chan *blocks.Block),
+		outgoingBlocks: make(chan *blocks.Block),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -282,10 +283,10 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 
 	for {
 		select {
-		case value := <-q.outgoingPayloads:
-			block := value.(*blocks.Block)
-			nd.addressBook.PutPeerInfoFromBlock(block)
-			return nd.addressBook.GetPeerInfo(block.Metadata.Signer)
+		case incBlock := <-q.outgoingBlocks:
+			// TODO handle error
+			nd.addressBook.PutPeerInfoFromBlock(incBlock)
+			return nd.addressBook.GetPeerInfo(incBlock.Metadata.Signer)
 		case <-time.After(maxQueryTime):
 			return nil, ErrNotFound
 		case <-ctx.Done():
@@ -296,18 +297,17 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
-	providerBlock := blocks.NewEphemeralBlock(ProviderType, Provider{
+	block := blocks.NewEphemeralBlock(ProviderType, Provider{
 		BlockIDs: []string{key},
 	})
 
 	signer := nd.addressBook.GetLocalPeerInfo()
-	nd.exchange.Sign(providerBlock, signer)
+	nd.exchange.Sign(block, signer)
 
-	if err := nd.store.PutProvider(providerBlock); err != nil {
+	if err := nd.store.PutProvider(block); err != nil {
 		return err
 	}
 
-	block := blocks.NewEphemeralBlock(ProviderType, providerBlock)
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	closestPeerIDs := getPeerIDsFromPeerInfos(closestPeers)
 	if err := nd.exchange.Send(ctx, block, closestPeerIDs...); err != nil {
@@ -318,38 +318,43 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	return nil
 }
 
-func (nd *DHT) GetProviders(ctx context.Context, key string) ([]string, error) {
+// GetProviders will look for peers that provide a key
+func (nd *DHT) GetProviders(ctx context.Context, key string) (chan string, error) {
 	q := &query{
-		dht:              nd,
-		id:               net.RandStringBytesMaskImprSrc(8),
-		key:              key,
-		queryType:        ProviderQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		dht:            nd,
+		id:             net.RandStringBytesMaskImprSrc(8),
+		key:            key,
+		queryType:      ProviderQuery,
+		incomingBlocks: make(chan *blocks.Block),
+		outgoingBlocks: make(chan *blocks.Block),
 	}
 
 	nd.queries.Store(q.id, q)
 
 	go q.Run(ctx)
 
-	providers := []string{}
-	for {
-		select {
-		case incBlock := <-q.outgoingPayloads:
-			// TODO figure out why this might be nil
-			if incBlock == nil {
-				continue
+	out := make(chan string, 1)
+	go func(q *query, out chan string) {
+		defer close(out)
+		for {
+			select {
+			case incBlock := <-q.outgoingBlocks:
+				if incBlock == nil {
+					// TODO
+					log.DefaultLogger.Error("inc block should not be nil",
+						zap.Stack("strack"))
+				}
+				// TODO do we need to check payload and id?
+				out <- incBlock.Metadata.Signer
+			case <-time.After(maxQueryTime):
+				return
+			case <-ctx.Done():
+				return
 			}
-			block := incBlock.(*blocks.Block)
-			// TODO do we need to check payload and id?
-			// payload := block.Payload.(Provider)
-			providers = append(providers, block.Metadata.Signer)
-		case <-time.After(maxQueryTime):
-			return providers, nil
-		case <-ctx.Done():
-			return providers, nil
 		}
-	}
+	}(q, out)
+
+	return out, nil
 }
 
 func (nd *DHT) GetAllProviders() (map[string][]string, error) {

@@ -86,10 +86,6 @@ type AddressBook struct {
 
 // PutPeerInfoFromBlock stores an block with a peer payload
 func (ab *AddressBook) PutPeerInfoFromBlock(block *blocks.Block) error {
-	if ab.localPeer.ID == block.Metadata.Signer {
-		return nil
-	}
-
 	ep := block.Payload.(PeerInfoPayload)
 
 	// TODO verify block?

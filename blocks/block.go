@@ -17,7 +17,6 @@ func NewEphemeralBlock(contentType string, payload interface{}, recipients ...st
 func NewBlock(contentType string, payload interface{}, recipients ...string) *Block {
 	// TODO do we need to add the owner on the policy as well?
 	block := &Block{
-		Version: 0,
 		Metadata: Metadata{
 			Type: contentType,
 		},
@@ -128,9 +127,7 @@ func GetRecipientsFromBlockPolicies(block *Block) []string {
 
 func GetSignatureDigest(block *Block) ([]byte, error) {
 	meta := block.Metadata
-	// meta.ID = ""
 	digest := []interface{}{
-		// block.Version,
 		meta,
 		block.Payload,
 	}
@@ -145,7 +142,7 @@ func GetSignatureDigest(block *Block) ([]byte, error) {
 
 // ID calculated the id for the block
 func ID(block *Block) (string, error) {
-	digest, err := getIdetifierDigest(block)
+	digest, err := GetSignatureDigest(block)
 	if err != nil {
 		return "", err
 	}
@@ -153,23 +150,6 @@ func ID(block *Block) (string, error) {
 	idBytes := sha256.Sum256(digest)
 	id := Base58Encode(idBytes[:])
 	return "30x" + id, nil
-}
-
-func getIdetifierDigest(block *Block) ([]byte, error) {
-	meta := block.Metadata
-	// meta.ID = ""
-	digest := []interface{}{
-		// block.Version,
-		meta,
-		block.Payload,
-	}
-
-	digestBytes, err := Marshal(digest)
-	if err != nil {
-		return nil, err
-	}
-
-	return digestBytes, nil
 }
 
 // Marshal into cbor
@@ -195,9 +175,28 @@ func Unmarshal(b []byte) (*Block, error) {
 	return m, nil
 }
 
+// CborHandler for un/marshaling blocks
 func CborHandler() codec.Handle {
 	ch := &codec.CborHandle{}
 	ch.Canonical = true
 	ch.MapType = reflect.TypeOf(map[string]interface{}(nil))
 	return ch
+}
+
+// BestEffortID returns an error-free ID
+// TODO can we instead of this, make ID "error free"?
+func BestEffortID(block *Block) string {
+	blockID, _ := block.ID()
+	if blockID == "" {
+		return "<invalid-block-id>"
+	}
+
+	return blockID
+}
+
+// Copy a block
+func Copy(block *Block) *Block {
+	b, _ := Marshal(block)
+	newBlock, _ := Unmarshal(b)
+	return newBlock
 }

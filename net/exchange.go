@@ -57,10 +57,10 @@ type exchange struct {
 	addressBook *peers.AddressBook
 	discovery   Discoverer
 
-	outgoingPayloads chan outBlock
-	incoming         chan net.Conn
-	outgoing         chan net.Conn
-	close            chan bool
+	outgoingBlocks chan outBlock
+	incoming       chan net.Conn
+	outgoing       chan net.Conn
+	close          chan bool
 
 	streams    sync.Map
 	handlers   []handler
@@ -101,10 +101,10 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 		network:     network,
 		addressBook: addressBook,
 
-		outgoingPayloads: make(chan outBlock, 100),
-		incoming:         make(chan net.Conn),
-		outgoing:         make(chan net.Conn),
-		close:            make(chan bool),
+		outgoingBlocks: make(chan outBlock, 100),
+		incoming:       make(chan net.Conn),
+		outgoing:       make(chan net.Conn),
+		close:          make(chan bool),
 
 		handlers:   []handler{},
 		logger:     log.Logger(ctx).Named("exchange"),
@@ -117,9 +117,10 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 	signer := w.addressBook.GetLocalPeerInfo()
 
 	go func() {
-		for block := range w.outgoingPayloads {
+		for block := range w.outgoingBlocks {
 			if signer.ID == block.recipient {
-				w.logger.Info("cannot send block to self")
+				w.logger.Info("cannot send block to self",
+					zap.String("blockID", blocks.BestEffortID(block.block)))
 				continue
 			}
 
@@ -312,7 +313,7 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 	switch payload := block.Payload.(type) {
 	case PayloadForwarded:
 		w.logger.Info("got forwarded message", zap.String("recipient", payload.RecipientID))
-		w.outgoingPayloads <- outBlock{
+		w.outgoingBlocks <- outBlock{
 			recipient: payload.RecipientID,
 			block:     payload.Block,
 		}
@@ -398,17 +399,20 @@ func (w *exchange) Get(ctx context.Context, id string) (*blocks.Block, error) {
 
 	w.getRequests.Store(req.RequestID, req)
 
-	providers, err := w.discovery.GetProviders(ctx, id)
-	if err != nil {
-		return nil, storage.ErrNotFound
-	}
+	go func() {
+		providers, err := w.discovery.GetProviders(ctx, id)
+		if err != nil {
+			// TODO log err
+			return
+		}
 
-	// Request block
-	wrapper := blocks.NewEphemeralBlock(BlockRequestType, req)
-	if err := w.Send(ctx, wrapper, providers...); err != nil {
-		w.logger.Warn("blx.Get could not send block", zap.Error(err))
-		return nil, err
-	}
+		reqBlock := blocks.NewEphemeralBlock(BlockRequestType, req)
+		for provider := range providers {
+			if err := w.Send(ctx, reqBlock, provider); err != nil {
+				w.logger.Warn("blx.Get could not send req block", zap.Error(err))
+			}
+		}
+	}()
 
 	for {
 		select {
@@ -426,7 +430,7 @@ func (w *exchange) Send(ctx context.Context, block *blocks.Block, recipients ...
 	// recipients = append(recipients, GetRecipientsFromBlockPolicies(block)...)
 	for _, recipient := range recipients {
 		// TODO right now there is no way to error on this, do we have to?
-		w.outgoingPayloads <- outBlock{
+		w.outgoingBlocks <- outBlock{
 			recipient: recipient,
 			block:     block,
 		}

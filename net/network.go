@@ -52,7 +52,7 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 			continue
 		}
 		addr = strings.Replace(addr, "tcp:", "", 1)
-		dialer := net.Dialer{Timeout: time.Second * 5}
+		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
 		newConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {

@@ -154,8 +154,12 @@ func main() {
 				c.Printf("Could not get providers for key %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
+			providers := []string{}
+			for provider := range rs {
+				providers = append(providers, provider)
+			}
 			c.Println("* " + key)
-			for _, peerID := range rs {
+			for _, peerID := range providers {
 				c.Printf("  - %s\n", peerID)
 			}
 			c.ProgressBar().Stop()

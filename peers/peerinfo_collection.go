@@ -39,7 +39,10 @@ func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 	}
 
 	newPeerInfo := &PeerInfo{}
-	copier.Copy(newPeerInfo, peerInfo.(*PeerInfo))
+	if err := copier.Copy(&newPeerInfo, peerInfo.(*PeerInfo)); err != nil {
+		return nil, err
+	}
+
 	return newPeerInfo, nil
 }
 
