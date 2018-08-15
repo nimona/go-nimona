@@ -10,12 +10,28 @@
   revision = "155bce2042db95a783081fab225e74dd879055b0"
 
 [[projects]]
-  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
+  branch = "master"
+  digest = "1:3f3c3b04ada64f3c9413be5f80b8291c55f0ae9a3593b7bf207cbc156ae3e0cb"
+  name = "github.com/apisit/btckeygenie"
+  packages = ["btckey"]
+  pruneopts = "UT"
+  revision = "1e5743502b0023502563046cc84e5307f50bf772"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6a4c3eb799262645ef273acaf96bf25545682b05a4830759fa91ddf6e6bbe05a"
+  name = "github.com/apisit/rfc6979"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6a90f24967ebb1aa57b22f74a13dbb3faad8cf3d"
+
+[[projects]]
+  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
-  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
-  version = "v1.1.1"
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -58,7 +74,7 @@
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
 
 [[projects]]
-  digest = "1:d5083934eb25e45d17f72ffa86cae3814f4a9d6c073c4f16b64147169b245606"
+  digest = "1:489e108f21464371ebf9cb5c30b1eceb07c6dd772dff073919267493dd9d04ea"
   name = "github.com/gin-gonic/gin"
   packages = [
     ".",
@@ -77,6 +93,31 @@
   pruneopts = "UT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
+    "render",
+  ]
+  pruneopts = "UT"
+  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
+  version = "v1.2"
+
+[[projects]]
+  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  pruneopts = "UT"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:18f8bac7ae238f1d06b347d40fea2a37d029e11ddeac57163182a08c780955f2"
+  name = "github.com/influxdata/influxdb"
+  packages = [
+    "client/v2",
+    "models",
+    "pkg/escape",
+  ]
+  pruneopts = "UT"
+  revision = "5766854b95ae86cccf6cc8ffe4c5bb9eacc994b8"
+  version = "v1.6.1"
 
 [[projects]]
   branch = "master"
@@ -223,30 +264,30 @@
     "zapcore",
   ]
   pruneopts = "UT"
-  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
-  version = "v1.9.1"
+  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:2e1733bde491e422f3c9cf7bf8b4cb3d11c867ad3017fec8897923f6106a3a51"
+  digest = "1:9c2ed66f474408b23cdc4a845f0236897f7b826bf1c4b19eab6e90df998905cb"
   name = "golang.org/x/crypto"
   packages = [
-    "sha3",
+    "ripemd160",
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
-  digest = "1:48774faa158e9eaee1ba45aad66434bb0345927b43756a24d4fe4c44ad79e307"
+  digest = "1:3364d01296ce7eeca363e3d530ae63a2092d6f8efb85fb3d101e8f6d7de83452"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
+  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [[projects]]
   digest = "1:d19cfbbf2e7dad7c6faba60dc7700d6b7d6ff3d3c9477a8e44c32a9eaf3cd907"
@@ -284,13 +325,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/apisit/btckeygenie/btckey",
     "github.com/emersion/go-upnp-igd",
     "github.com/gin-contrib/cors",
     "github.com/gin-gonic/gin",
+    "github.com/influxdata/influxdb/client/v2",
     "github.com/jinzhu/copier",
-    "github.com/mr-tron/base58/base58",
-    "github.com/pkg/errors",
-    "github.com/pkg/profile",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
@@ -298,7 +338,10 @@
     "github.com/ugorji/go/codec",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
+<<<<<<< HEAD
     "golang.org/x/crypto/sha3",
+=======
+>>>>>>> Add timeout in telemetry
     "gopkg.in/abiosoft/ishell.v2",
     "gopkg.in/inconshreveable/go-keen.v0",
   ]

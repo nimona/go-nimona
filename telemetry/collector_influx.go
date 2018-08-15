@@ -3,6 +3,9 @@ package telemetry
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	"context"
 
 	"github.com/influxdata/influxdb/client/v2"
 )
@@ -29,13 +32,15 @@ func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 
 	input := make(chan Collectable)
 
+	// TODO search for database if not there create it?
+
 	ic := &InfluxCollector{
 		client: c,
 		lock:   &sync.RWMutex{},
 		input:  input,
 	}
 
-	go ic.processor(input)
+	go ic.processor(context.Background(), input)
 
 	return ic, nil
 }
@@ -45,19 +50,30 @@ func (ic *InfluxCollector) Collect(event Collectable) error {
 	return nil
 }
 
-func (ic *InfluxCollector) processor(input <-chan Collectable) {
+func (ic *InfluxCollector) processor(ctx context.Context,
+	input <-chan Collectable) {
 	// Size of the write batch
 	batchSize := 1000
 	batchConfig := client.BatchPointsConfig{
-		Database:  databaseName,
-		Precision: "s",
+		Database: databaseName,
 	}
+
 	// Create a new point batch
 	bp, err := client.NewBatchPoints(batchConfig)
 	if err != nil {
 		// TODO handle error
 		// close channel
 	}
+
+	timeout := make(chan bool)
+
+	// Goroutine that send timeout signal every xx ms
+	go func(timeout chan bool) {
+		for {
+			time.Sleep(1000 * time.Millisecond)
+			timeout <- true
+		}
+	}(timeout)
 
 	for {
 		select {
@@ -67,9 +83,25 @@ func (ic *InfluxCollector) processor(input <-chan Collectable) {
 				event.Measurements())
 			if err != nil {
 				// TODO log error
+				fmt.Println(err)
 			}
 			bp.AddPoint(pt)
-			fmt.Print(pt)
+		case <-timeout:
+			err := ic.client.Write(bp)
+			if err != nil {
+				// TODO log error
+				fmt.Println(err)
+			}
+			fmt.Println("Wrote points from timeout: ", len(bp.Points()))
+			bp, _ = client.NewBatchPoints(batchConfig)
+		case <-ctx.Done():
+			err := ic.client.Write(bp)
+			if err != nil {
+				// TODO log error
+				fmt.Println(err)
+			}
+			break
+			// TODO dump write
 		}
 
 		if len(bp.Points()) >= batchSize {
@@ -78,8 +110,7 @@ func (ic *InfluxCollector) processor(input <-chan Collectable) {
 				// TODO log error
 				fmt.Println(err)
 			}
-
-			fmt.Println("sent")
+			fmt.Println("Wrote points from size: ", len(bp.Points()))
 
 			bp, _ = client.NewBatchPoints(batchConfig)
 			// TODO check error

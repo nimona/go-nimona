@@ -9,10 +9,10 @@ import (
 
 func TestCollectSuccess(t *testing.T) {
 	ic, err := telemetry.NewInfluxCollector(
-		"asdf", "asdf", "http://localhost:8086")
+		"root", "", "http://localhost:8086")
 	assert.NoError(t, err)
 
-	for i := 0; i <= 10000; i++ {
+	for i := 0; i <= 2000; i++ {
 		ic.Collect(&telemetry.ConnectionEvent{Outgoing: true})
 	}
 
