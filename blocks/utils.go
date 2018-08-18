@@ -19,6 +19,7 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
+// RandStringBytesMaskImprSrc returns a random string given a length
 func RandStringBytesMaskImprSrc(n int) string {
 	b := make([]byte, n)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!

@@ -23,6 +23,7 @@ func (pi *PrivatePeerInfo) Block() *blocks.Block {
 	return block
 }
 
+// GetPrivateKey returns the private key
 func (pi *PrivatePeerInfo) GetPrivateKey() keys.Key {
 	sk, err := keys.KeyFromEncodedBlock(pi.PrivateKey)
 	if err != nil {
@@ -32,6 +33,7 @@ func (pi *PrivatePeerInfo) GetPrivateKey() keys.Key {
 	return sk
 }
 
+// GetPublicKey returns the public key
 func (pi *PrivatePeerInfo) GetPublicKey() keys.Key {
 	pk, err := keys.KeyFromEncodedBlock(pi.ID)
 	if err != nil {

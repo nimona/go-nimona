@@ -16,6 +16,7 @@ type API struct {
 	router *gin.Engine
 }
 
+// New HTTP API
 func New(addressBook peers.AddressBooker, dht *dht.DHT, bls storage.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())

@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	// BlockRequestType is the type of a BlockRequest Block
 	BlockRequestType = "blx.request-block"
 )
 

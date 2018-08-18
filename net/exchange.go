@@ -24,8 +24,7 @@ import (
 )
 
 var (
-	// ErrMissingPeer    = errors.New("Peer ID missing")
-	// ErrInvalidBlock   = errors.New("Invalid Block")
+	// ErrInvalidRequest when received an invalid request block
 	ErrInvalidRequest = errors.New("Invalid request")
 )
 
@@ -325,7 +324,7 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 			w.logger.Warn("could not handle request block", zap.Error(err))
 		}
 
-	case HandshakeBlock:
+	case HandshakePayload:
 		if err := w.addressBook.PutPeerInfoFromBlock(payload.PeerInfo); err != nil {
 			return err
 		}
@@ -524,19 +523,19 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 	w.logger.Debug("writing handshake")
 
 	// handshake so the other side knows who we are
-	handshakeBlock := blocks.NewEphemeralBlock(
+	HandshakePayload := blocks.NewEphemeralBlock(
 		"handshake",
-		HandshakeBlock{
+		HandshakePayload{
 			PeerInfo: w.addressBook.GetLocalPeerInfo().Block(),
 		},
 		peerID,
 	)
 	signer := w.addressBook.GetLocalPeerInfo()
-	if err := w.Sign(handshakeBlock, signer); err != nil {
+	if err := w.Sign(HandshakePayload, signer); err != nil {
 		return nil, err
 	}
 
-	if err := w.writeBlock(ctx, handshakeBlock, conn); err != nil {
+	if err := w.writeBlock(ctx, HandshakePayload, conn); err != nil {
 		w.Close(peerID, conn)
 		return nil, err
 	}

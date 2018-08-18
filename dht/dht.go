@@ -295,6 +295,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 	}
 }
 
+// PutProviders adds a key of something we provide
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	block := blocks.NewEphemeralBlock(ProviderType, Provider{

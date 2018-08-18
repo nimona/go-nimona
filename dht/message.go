@@ -28,6 +28,7 @@ type ProviderRequest struct {
 	Key       string `json:"key"`
 }
 
+// Provider payload
 type Provider struct {
 	BlockIDs []string `json:"blockIDs"`
 }

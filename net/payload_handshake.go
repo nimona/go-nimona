@@ -5,14 +5,15 @@ import (
 )
 
 const (
+	// TypeHandshake is the type of HandshakePayload Block
 	TypeHandshake = "handshake"
 )
 
 func init() {
-	blocks.RegisterContentType(TypeHandshake, HandshakeBlock{})
+	blocks.RegisterContentType(TypeHandshake, HandshakePayload{})
 }
 
-// HandshakeBlock content structure for Handshake content type
-type HandshakeBlock struct {
+// HandshakePayload content structure for Handshake content type
+type HandshakePayload struct {
 	PeerInfo *blocks.Block `json:"peer_info"`
 }

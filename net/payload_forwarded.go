@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	// TypeForwarded is the type of PayloadForwarded Blocks
 	TypeForwarded = "nimona.forwarded"
 )
 

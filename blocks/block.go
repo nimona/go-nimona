@@ -6,13 +6,14 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+// NewEphemeralBlock is a helper function for creating ephemeral Blocks.
 func NewEphemeralBlock(contentType string, payload interface{}, recipients ...string) *Block {
 	block := NewBlock(contentType, payload, recipients...)
 	block.Metadata.Ephemeral = true
 	return block
 }
 
-// NewBlock is a helper function for creating Blocks
+// NewBlock is a helper function for creating Blocks.
 func NewBlock(contentType string, payload interface{}, recipients ...string) *Block {
 	// TODO do we need to add the owner on the policy as well?
 	block := &Block{
