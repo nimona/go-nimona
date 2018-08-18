@@ -121,12 +121,12 @@ func toThinBlock(block *Block) *_block {
 		Type:      block.Type,
 		Headers:   block.Headers,
 		Signature: block.Signature,
+		Metadata:  nil,
 		Payload:   block.Payload,
 	}
-	if block.Type != "" ||
-		block.Metadata.Parent != "" ||
+	if block.Metadata.Parent != "" ||
 		block.Metadata.Ephemeral != false ||
-		len(block.Metadata.Policies) == 0 ||
+		len(block.Metadata.Policies) > 0 ||
 		block.Metadata.Signer != "" {
 		p.Metadata = &block.Metadata
 	}

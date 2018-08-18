@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/keys"
 	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/peers"
 	"github.com/nimona/go-nimona/storage"
@@ -606,7 +607,7 @@ func (w *exchange) Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerIn
 		return err
 	}
 
-	signature, err := peers.SignData(digest, signerPeerInfo.PrivateKey)
+	signature, err := peers.SignData(digest, signerPeerInfo.GetPrivateKey())
 	if err != nil {
 		return err
 	}
@@ -626,5 +627,10 @@ func (w *exchange) Verify(block *blocks.Block) error {
 		return err
 	}
 
-	return peers.Verify(block.Metadata.Signer, digest, block.Signature)
+	key, err := keys.KeyFromEncodedBlock(block.Metadata.Signer)
+	if err != nil {
+		return err
+	}
+
+	return peers.Verify(key, digest, block.Signature)
 }

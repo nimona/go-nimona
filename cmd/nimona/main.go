@@ -41,14 +41,14 @@ var bootstrapPeerInfoBlocks = []*blocks.Block{
 	&blocks.Block{
 		Type: "peer.info",
 		Metadata: blocks.Metadata{
-			Signer: "01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1",
+			Signer: "49HRH8tmsYLyb1JFnYo4mxw1Awuw6fzoaDhdt3U6JYRsLThRhZ2Pkc7s4M12RRRkq7wB8MKyAw1zyHzGwrCbx9LyEekwuYPsk1e2PGLGUdBbKfnmGRbX2P35mW4h6oBLGnnjXU3FLNErDGM6",
 		},
 		Payload: peers.PeerInfoPayload{
 			Addresses: []string{
-				"tcp:andromeda.nimona.io:21013",
+				"tcp:bootstrap.nimona.io:21013",
 			},
 		},
-		Signature: base64ToBytes("f11x6QJxieRgP36Z8PX8tPuj/7IolQSsZR9HWxahS4vPNbryzrvTmrkDqo6Df11oi5D0QBW/P+pJnoknohwK9w=="),
+		Signature: base64ToBytes("RfuK7y/BOPRXvvTyLfotpvqpjZ5F77NgKIK4+LgkiFc07G6wlOr5CL1aLkJ/R9Y0J474PI3yg4+SuZVAvWeOCg=="),
 	},
 }
 
