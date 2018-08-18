@@ -112,17 +112,19 @@ func (block *Block) CodecDecodeSelf(dec *codec.Decoder) {
 
 // CodecEncodeSelf helper for cbor marshaling
 func (block *Block) CodecEncodeSelf(enc *codec.Encoder) {
-	p := toThinBlock(block)
+	p := toThinBlock(block, true)
 	enc.MustEncode(p)
 }
 
-func toThinBlock(block *Block) *_block {
+func toThinBlock(block *Block, headers bool) *_block {
 	p := &_block{
 		Type:      block.Type,
-		Headers:   block.Headers,
 		Signature: block.Signature,
 		Metadata:  nil,
 		Payload:   block.Payload,
+	}
+	if headers {
+		p.Headers = block.Headers
 	}
 	if block.Metadata.Parent != "" ||
 		block.Metadata.Ephemeral != false ||
@@ -155,15 +157,11 @@ func GetRecipientsFromBlockPolicies(block *Block) []string {
 	return recipients
 }
 
-// TODO Out of date, needs to catch up with selfer _block structure usage
+// GetSignatureDigest returns a marshaled version of the block, without
+// the header part. Used for consistent hash/ID.
 func GetSignatureDigest(block *Block) ([]byte, error) {
-	meta := block.Metadata
-	digest := []interface{}{
-		meta,
-		block.Payload,
-	}
-
-	digestBytes, err := Marshal(digest)
+	cleanBlock := toThinBlock(block, false)
+	digestBytes, err := Marshal(cleanBlock)
 	if err != nil {
 		return nil, err
 	}
