@@ -3,146 +3,191 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
   name = "github.com/abiosoft/readline"
   packages = ["."]
+  pruneopts = "UT"
   revision = "155bce2042db95a783081fab225e74dd879055b0"
 
 [[projects]]
   branch = "master"
+  digest = "1:3f3c3b04ada64f3c9413be5f80b8291c55f0ae9a3593b7bf207cbc156ae3e0cb"
   name = "github.com/apisit/btckeygenie"
   packages = ["btckey"]
+  pruneopts = "UT"
   revision = "1e5743502b0023502563046cc84e5307f50bf772"
 
 [[projects]]
   branch = "master"
+  digest = "1:6a4c3eb799262645ef273acaf96bf25545682b05a4830759fa91ddf6e6bbe05a"
   name = "github.com/apisit/rfc6979"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6a90f24967ebb1aa57b22f74a13dbb3faad8cf3d"
 
 [[projects]]
+  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = "UT"
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:73ce7cd73bf041d37aa6ffc540ff1c27f0e443b4db269bd0204649358c73a193"
   name = "github.com/emersion/go-upnp-igd"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6fb51d2a2a533cabb08119a9d05fe3f6b4c513f3"
 
 [[projects]]
+  digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
   name = "github.com/fatih/color"
   packages = ["."]
+  pruneopts = "UT"
   revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
   version = "v1.7.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:50a46ab1d5edbbdd55125b4d37f1bf503d0807c26461f9ad7b358d6006641d09"
   name = "github.com/flynn-archive/go-shlex"
   packages = ["."]
+  pruneopts = "UT"
   revision = "3f9db97f856818214da2e1057f8ad84803971cff"
 
 [[projects]]
+  digest = "1:2b59aca2665ff804f6606c8829eaee133ddd3aefbc841014660d961b0034f888"
   name = "github.com/gin-contrib/cors"
   packages = ["."]
+  pruneopts = "UT"
   revision = "cf4846e6a636a76237a28d9286f163c132e841bc"
   version = "v1.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:36fe9527deed01d2a317617e59304eb2c4ce9f8a24115bcc5c2e37b3aee5bae4"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
+  pruneopts = "UT"
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
 
 [[projects]]
+  digest = "1:489e108f21464371ebf9cb5c30b1eceb07c6dd772dff073919267493dd9d04ea"
   name = "github.com/gin-gonic/gin"
   packages = [
     ".",
     "binding",
-    "render"
+    "render",
   ]
+  pruneopts = "UT"
   revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
   version = "v1.2"
 
 [[projects]]
+  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
+  pruneopts = "UT"
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:5c3444689562053b027ef3b96372e306adbe0d7d109b6cdd48d01eb80f8bab14"
   name = "github.com/jinzhu/copier"
   packages = ["."]
+  pruneopts = "UT"
   revision = "7e38e58719c33e0d44d585c4ab477a30f8cb82dd"
 
 [[projects]]
+  digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
+  pruneopts = "UT"
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
   version = "v0.0.9"
 
 [[projects]]
+  digest = "1:d4d17353dbd05cb52a2a52b7fe1771883b682806f68db442b436294926bbfafb"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
+  pruneopts = "UT"
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
 
 [[projects]]
   branch = "master"
+  digest = "1:b9b9f43a8a410d633e6547f89e830926741070941f2243d4d3a0bb154f565c9e"
   name = "github.com/mr-tron/base58"
   packages = ["base58"]
+  pruneopts = "UT"
   revision = "4df4dc6e86a912614d09719d10cad427b087cbfb"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:9e9193aa51197513b3abcb108970d831fbcf40ef96aa845c4f03276e1fa316d2"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
+  pruneopts = "UT"
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
   version = "v1.0.5"
 
 [[projects]]
+  digest = "1:ac83cf90d08b63ad5f7e020ef480d319ae890c208f8524622a2f3136e2686b02"
   name = "github.com/stretchr/objx"
   packages = ["."]
+  pruneopts = "UT"
   revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
   version = "v0.1.1"
 
 [[projects]]
+  digest = "1:ffae6a0390594c05dc5ba534c385229e883508f17f6da257624913fd9aaa4d21"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "mock",
     "require",
-    "suite"
+    "suite",
   ]
+  pruneopts = "UT"
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
 [[projects]]
+  digest = "1:03aa6e485e528acb119fb32901cf99582c380225fc7d5a02758e08b180cb56c3"
   name = "github.com/ugorji/go"
   packages = ["codec"]
+  pruneopts = "UT"
   revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:3c1a69cdae3501bf75e76d0d86dc6f2b0a7421bc205c0cb7b96b19eed464a34d"
   name = "go.uber.org/atomic"
   packages = ["."]
+  pruneopts = "UT"
   revision = "1ea20fb1cbb1cc08cbd0d913a96dead89aa18289"
   version = "v1.3.2"
 
 [[projects]]
+  digest = "1:60bf2a5e347af463c42ed31a493d817f8a72f102543060ed992754e689805d1a"
   name = "go.uber.org/multierr"
   packages = ["."]
+  pruneopts = "UT"
   revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:9580b1b079114140ade8cec957685344d14f00119e0241f6b369633cb346eeb3"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -150,56 +195,87 @@
     "internal/bufferpool",
     "internal/color",
     "internal/exit",
-    "zapcore"
+    "zapcore",
   ]
+  pruneopts = "UT"
   revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
   version = "v1.8.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:8e692f19d9cd9b8df337d976815df9fd041c36377e3951780ad325509a7166ff"
   name = "golang.org/x/crypto"
   packages = [
     "ripemd160",
-    "ssh/terminal"
+    "sha3",
+    "ssh/terminal",
   ]
+  pruneopts = "UT"
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
+  digest = "1:3364d01296ce7eeca363e3d530ae63a2092d6f8efb85fb3d101e8f6d7de83452"
   name = "golang.org/x/sys"
   packages = [
     "unix",
-    "windows"
+    "windows",
   ]
+  pruneopts = "UT"
   revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [[projects]]
+  digest = "1:d19cfbbf2e7dad7c6faba60dc7700d6b7d6ff3d3c9477a8e44c32a9eaf3cd907"
   name = "gopkg.in/abiosoft/ishell.v2"
   packages = ["."]
+  pruneopts = "UT"
   revision = "0a6b1640e32638dd433ee7e57ec325a7bdd79561"
   version = "v2.0.0"
 
 [[projects]]
+  digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
+  pruneopts = "UT"
   revision = "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
   version = "v8.18.2"
 
 [[projects]]
   branch = "v0"
+  digest = "1:4d6b67c70667177ea83524ee86cec0ac52c0d9d1141befc20f2472a274ef2187"
   name = "gopkg.in/inconshreveable/go-keen.v0"
   packages = ["."]
+  pruneopts = "UT"
   revision = "abddc16d5dc65ffcb78438e043e628d7f4664735"
 
 [[projects]]
+  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
+  pruneopts = "UT"
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5cba370c20245bcf3638fb6bea54b1d5c37f303cc019dcfac97fb1bfdc9035e"
+  input-imports = [
+    "github.com/apisit/btckeygenie/btckey",
+    "github.com/emersion/go-upnp-igd",
+    "github.com/gin-contrib/cors",
+    "github.com/gin-gonic/gin",
+    "github.com/jinzhu/copier",
+    "github.com/mr-tron/base58/base58",
+    "github.com/sirupsen/logrus",
+    "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/mock",
+    "github.com/stretchr/testify/suite",
+    "github.com/ugorji/go/codec",
+    "go.uber.org/zap",
+    "go.uber.org/zap/zapcore",
+    "golang.org/x/crypto/sha3",
+    "gopkg.in/abiosoft/ishell.v2",
+    "gopkg.in/inconshreveable/go-keen.v0",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

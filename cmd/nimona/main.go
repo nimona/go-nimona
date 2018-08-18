@@ -39,8 +39,8 @@ func base64ToBytes(s string) []byte {
 
 var bootstrapPeerInfoBlocks = []*blocks.Block{
 	&blocks.Block{
+		Type: "peer.info",
 		Metadata: blocks.Metadata{
-			Type:   "peer.info",
 			Signer: "01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1",
 		},
 		Payload: peers.PeerInfoPayload{

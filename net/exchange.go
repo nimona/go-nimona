@@ -266,6 +266,13 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 
 // Process incoming block
 func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
+	if os.Getenv("DEBUG_BLOCKS") != "" {
+		fmt.Println("< ---------- inc block / start")
+		b, _ := json.MarshalIndent(block, "< ", "  ")
+		fmt.Println(string(b))
+		fmt.Println("< ---------- inc block / end")
+	}
+
 	if err := w.Verify(block); err != nil {
 		w.logger.Warn("could not verify block", zap.Error(err))
 		return err
@@ -275,18 +282,11 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		false,
-		block.Metadata.Type,
+		block.Type,
 		0, // len(GetRecipientsFromBlockPolicies(block)),
 		len(tb),
 		len(eb),
 	)
-
-	if os.Getenv("DEBUG_BLOCKS") != "" {
-		fmt.Println("< ---------- inc block / start")
-		b, _ := json.MarshalIndent(block, "< ", "  ")
-		fmt.Println(string(b))
-		fmt.Println("< ---------- inc block / end")
-	}
 
 	blockID, err := block.ID()
 	if err != nil {
@@ -301,7 +301,7 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 		}
 	}
 
-	contentType := block.Metadata.Type
+	contentType := block.Type
 
 	if block.GetHeader("requestID") != "" {
 		if err := w.handleTransferBlock(block); err != nil {
@@ -463,7 +463,7 @@ func (w *exchange) writeBlock(ctx context.Context, block *blocks.Block, rw io.Re
 	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		true,
-		block.Metadata.Type,
+		block.Type,
 		0, // len(GetRecipientsFromBlockPolicies(block)),
 		len(tb),
 		len(blockBytes),

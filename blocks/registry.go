@@ -34,7 +34,7 @@ func (r *Registry) Register(contentType string, content interface{}) {
 func (r *Registry) Get(contentType string) interface{} {
 	t, ok := r.types.Load(contentType)
 	if !ok {
-		return map[string]interface{}{}
+		return nil
 	}
 
 	v := reflect.New(t.(reflect.Type)).Elem()

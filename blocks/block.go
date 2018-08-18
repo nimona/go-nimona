@@ -1,7 +1,6 @@
 package blocks
 
 import (
-	"crypto/sha256"
 	"reflect"
 
 	"github.com/ugorji/go/codec"
@@ -17,9 +16,7 @@ func NewEphemeralBlock(contentType string, payload interface{}, recipients ...st
 func NewBlock(contentType string, payload interface{}, recipients ...string) *Block {
 	// TODO do we need to add the owner on the policy as well?
 	block := &Block{
-		Metadata: Metadata{
-			Type: contentType,
-		},
+		Type:    contentType,
 		Payload: payload,
 	}
 	subjects := []string{}
@@ -52,9 +49,7 @@ type Policy struct {
 
 // Metadata for Block
 type Metadata struct {
-	// ID        string   `json:"@id,omitempty"`
-	Type      string   `json:"@type"`
-	Parent    string   `json:"parent_id,omitempty"`
+	Parent    string   `json:"parentID,omitempty"`
 	Ephemeral bool     `json:"ephemeral,omitempty"`
 	Policies  []Policy `json:"policies,omitempty"`
 	Signer    string   `json:"signer,omitempty"`
@@ -62,11 +57,19 @@ type Metadata struct {
 
 // Block for exchanging data via the exchange
 type Block struct {
-	Version   uint              `json:"version"`
+	Type      string            `json:"type,omitempty"`
 	Headers   map[string]string `json:"headers,omitempty"`
 	Metadata  Metadata          `json:"metadata,omitempty"`
 	Payload   interface{}       `json:"payload,omitempty"`
 	Signature []byte            `json:"signature,omitempty"`
+}
+
+type _block struct {
+	Type      string            `json:"type,omitempty"`
+	Headers   map[string]string `json:"head,omitempty"`
+	Metadata  *Metadata         `json:"meta,omitempty"`
+	Signature []byte            `json:"sign,omitempty"`
+	Payload   interface{}       `json:"data,omitempty"`
 }
 
 // SetHeader pair in block
@@ -87,21 +90,48 @@ func (block *Block) GetHeader(k string) string {
 
 // CodecDecodeSelf helper for cbor unmarshaling
 func (block *Block) CodecDecodeSelf(dec *codec.Decoder) {
-	dec.MustDecode(&block.Version)
-	dec.MustDecode(&block.Metadata)
-	block.Payload = GetContentType(block.Metadata.Type)
-	dec.MustDecode(&block.Payload)
-	dec.MustDecode(&block.Signature)
-	dec.MustDecode(&block.Headers)
+	b := &_block{}
+	dec.MustDecode(b)
+
+	var payload interface{}
+	if p := GetContentType(b.Type); p != nil {
+		payload = p
+	}
+
+	block.Type = b.Type
+	block.Headers = b.Headers
+	if b.Metadata != nil {
+		block.Metadata = *b.Metadata
+	}
+	block.Signature = b.Signature
+
+	pb, _ := Marshal(b.Payload)
+	Unmarshal(pb, &payload)
+	block.Payload = payload
 }
 
 // CodecEncodeSelf helper for cbor marshaling
 func (block *Block) CodecEncodeSelf(enc *codec.Encoder) {
-	enc.MustEncode(&block.Version)
-	enc.MustEncode(&block.Metadata)
-	enc.MustEncode(&block.Payload)
-	enc.MustEncode(&block.Signature)
-	enc.MustEncode(&block.Headers)
+	p := toThinBlock(block)
+	enc.MustEncode(p)
+}
+
+func toThinBlock(block *Block) *_block {
+	p := &_block{
+		Type:      block.Type,
+		Headers:   block.Headers,
+		Signature: block.Signature,
+		Payload:   block.Payload,
+	}
+	if block.Type != "" ||
+		block.Metadata.Parent != "" ||
+		block.Metadata.Ephemeral != false ||
+		len(block.Metadata.Policies) == 0 ||
+		block.Metadata.Signer != "" {
+		p.Metadata = &block.Metadata
+	}
+
+	return p
 }
 
 // IsSigned checks if the block is signed
@@ -125,6 +155,7 @@ func GetRecipientsFromBlockPolicies(block *Block) []string {
 	return recipients
 }
 
+// TODO Out of date, needs to catch up with selfer _block structure usage
 func GetSignatureDigest(block *Block) ([]byte, error) {
 	meta := block.Metadata
 	digest := []interface{}{
@@ -147,9 +178,7 @@ func ID(block *Block) (string, error) {
 		return "", err
 	}
 
-	idBytes := sha256.Sum256(digest)
-	id := Base58Encode(idBytes[:])
-	return "30x" + id, nil
+	return SumSha3(digest)
 }
 
 // Marshal into cbor
@@ -164,19 +193,17 @@ func Marshal(o interface{}) ([]byte, error) {
 }
 
 // Unmarshal from cbor
-func Unmarshal(b []byte) (*Block, error) {
-	m := &Block{}
+func Unmarshal(b []byte, v interface{}) error {
 	dec := codec.NewDecoderBytes(b, CborHandler())
-
-	if err := dec.Decode(m); err != nil {
-		return nil, err
+	if err := dec.Decode(v); err != nil {
+		return err
 	}
 
-	return m, nil
+	return nil
 }
 
 // CborHandler for un/marshaling blocks
-func CborHandler() codec.Handle {
+func CborHandler() *codec.CborHandle {
 	ch := &codec.CborHandle{}
 	ch.Canonical = true
 	ch.MapType = reflect.TypeOf(map[string]interface{}(nil))
@@ -196,7 +223,8 @@ func BestEffortID(block *Block) string {
 
 // Copy a block
 func Copy(block *Block) *Block {
+	v := &Block{}
 	b, _ := Marshal(block)
-	newBlock, _ := Unmarshal(b)
-	return newBlock
+	Unmarshal(b, v)
+	return v
 }

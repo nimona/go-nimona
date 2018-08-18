@@ -92,7 +92,7 @@ func (nd *DHT) refresh() {
 }
 
 func (nd *DHT) handleBlock(block *blocks.Block) error {
-	contentType := block.Metadata.Type
+	contentType := block.Type
 	switch contentType {
 	case PeerInfoRequestType:
 		nd.handlePeerInfoRequest(block)

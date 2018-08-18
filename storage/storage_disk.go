@@ -120,8 +120,8 @@ func (d *diskStorage) Get(key string) (*blocks.Block, error) {
 	// 	return nil, err
 	// }
 
-	block, err := blocks.Unmarshal(b)
-	if err != nil {
+	block := &blocks.Block{}
+	if err := blocks.Unmarshal(b, &block); err != nil {
 		return nil, errors.New("could not unmarshal file") // err
 	}
 
