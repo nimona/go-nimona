@@ -2,6 +2,7 @@ package dht
 
 // import (
 // 	"context"
+// 	"io/ioutil"
 // 	"testing"
 
 // 	"github.com/nimona/go-nimona/net"
@@ -13,50 +14,52 @@ package dht
 // type dhtTestSuite struct {
 // 	suite.Suite
 // 	addressBook *net.AddressBook
-// 	messenger   *net.MockMessenger
+// 	exchange    *net.MockExchange
 // 	peerID      string
-// 	envelopes    chan interface{}
+// 	blocks      chan interface{}
 // 	peers       chan interface{}
 // 	dht         *DHT
 // }
 
 // func (suite *dhtTestSuite) SetupTest() {
-// 	suite.envelopes = make(chan interface{}, 10)
+// 	suite.blocks = make(chan interface{}, 10)
 // 	suite.peers = make(chan interface{}, 10)
-// 	suite.addressBook = net.NewAddressBook()
+// 	td, _ := ioutil.TempDir("", "nimona-test-dht")
+// 	suite.addressBook, _ = net.NewAddressBook(td)
 // 	peer1, _ := suite.addressBook.CreateNewPeer()
 // 	suite.addressBook.PutLocalPeerInfo(peer1)
-// 	suite.addressBook.PutPeerInfoFromEnvelope(&net.PeerInfo{
+// 	bootstrapBlock := blocks.NewEphemeralBlock("peer.info", &peers.PeerInfo{
 // 		ID: "bootstrap",
 // 		Addresses: []string{
 // 			"localhost",
 // 		},
 // 	})
-// 	suite.messenger = &net.MockMessenger{}
-// 	suite.messenger.On("Handle", mock.Anything, mock.Anything).Return(nil)
-// 	suite.dht, _ = NewDHT(suite.messenger, suite.addressBook)
+// 	net.SetSigner(bootstrapBlock, suite.addressBook.GetLocalPeerInfo())
+// 	suite.addressBook.PutPeerInfoFromBlock(bootstrapBlock)
+// 	suite.exchange = &net.MockExchange{}
+// 	suite.exchange.On("Handle", mock.Anything, mock.Anything).Return(nil)
+// 	suite.dht, _ = NewDHT(suite.exchange, suite.addressBook)
 // }
 
 // func (suite *dhtTestSuite) TestPutSuccess() {
 // 	ctx := context.Background()
 // 	key := "a"
-// 	value := "b"
-// 	payload := EnvelopePutValue{
-// 		SenderPeerInfo: suite.addressBook.GetLocalPeerInfo().Envelope(),
-// 		Key:            "a",
-// 		Value:          "b",
+// 	payload := BlockPutProviders{
+// 		Key: "a",
+// 		Providers: []*blocks.Block{
+// 			suite.addressBook.GetLocalPeerInfo().Block(),
+// 		},
 // 	}
-// 	to := []string{"bootstrap"}
-// 	envelope, err := net.NewEnvelope(PayloadTypePutValue, to, payload)
-// 	suite.NoError(err)
-// 	suite.messenger.On("Send", PayloadTypePutValue, envelope).Return(nil)
-// 	err = suite.dht.PutValue(ctx, key, value)
+// 	to := "bootstrap"
+// 	block := blocks.NewEphemeralBlock(PayloadTypePutValue, payload)
+// 	suite.exchange.On("Send", PayloadTypePutValue, block, to).Return(nil)
+// 	err := suite.dht.PutProviders(ctx, key)
 // 	suite.NoError(err)
 
-// 	suite.messenger.On("Send", PayloadTypeGetValue, mock.Anything).Return(nil)
-// 	retValue, err := suite.dht.GetValue(ctx, key)
+// 	suite.exchange.On("Send", PayloadTypeGetValue, mock.Anything).Return(nil)
+// 	retValue, err := suite.dht.GetProviders(ctx, key)
 // 	suite.NoError(err)
-// 	suite.Equal(value, retValue)
+// 	suite.Equal([]string{"bootstrap"}, retValue)
 // }
 
 // func TestDHTTestSuite(t *testing.T) {

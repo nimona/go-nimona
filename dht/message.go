@@ -1,95 +1,34 @@
 package dht
 
-import (
-	"github.com/nimona/go-nimona/net"
-)
+import "github.com/nimona/go-nimona/blocks"
 
 func init() {
-	net.RegisterContentType(PayloadTypePing, EnvelopePing{})
-	net.RegisterContentType(PayloadTypePong, EnvelopePong{})
-
-	net.RegisterContentType(PayloadTypeGetPeerInfo, EnvelopeGetPeerInfo{})
-	net.RegisterContentType(PayloadTypePutPeerInfo, EnvelopePutPeerInfoFromEnvelope{})
-
-	net.RegisterContentType(PayloadTypeGetProviders, EnvelopeGetProviders{})
-	net.RegisterContentType(PayloadTypePutProviders, EnvelopePutProviders{})
-
-	net.RegisterContentType(PayloadTypeGetValue, EnvelopeGetValue{})
-	net.RegisterContentType(PayloadTypePutValue, EnvelopePutValue{})
+	blocks.RegisterContentType(ProviderType, Provider{})
+	blocks.RegisterContentType(PeerInfoRequestType, PeerInfoRequest{})
+	blocks.RegisterContentType(ProviderRequestType, ProviderRequest{})
 }
 
-// Envelope types
+// Block types
 const (
-	PayloadTypePing string = "dht.ping"
-	PayloadTypePong        = "dht.pong"
+	ProviderType = "dht.provider"
 
-	PayloadTypeGetPeerInfo = "dht.get-peer-info"
-	PayloadTypePutPeerInfo = "dht.put-peer-info"
-
-	PayloadTypeGetProviders = "dht.get-providers"
-	PayloadTypePutProviders = "dht.put-providers"
-
-	PayloadTypeGetValue = "dht.get-value"
-	PayloadTypePutValue = "dht.put-value"
+	PeerInfoRequestType = "dht.get-peer-info"
+	ProviderRequestType = "dht.get-providers"
 )
 
-// EnvelopePing payload
-type EnvelopePing struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+// PeerInfoRequest payload
+type PeerInfoRequest struct {
+	RequestID string `json:"request_id,omitempty"`
+	PeerID    string `json:"peer_id"`
 }
 
-// EnvelopePong payload
-type EnvelopePong struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
+// ProviderRequest payload
+type ProviderRequest struct {
+	RequestID string `json:"request_id,omitempty"`
+	Key       string `json:"key"`
 }
 
-// EnvelopeGetPeerInfo payload
-type EnvelopeGetPeerInfo struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	PeerID         string        `json:"peer_id"`
-}
-
-// EnvelopePutPeerInfoFromEnvelope payload
-type EnvelopePutPeerInfoFromEnvelope struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	PeerInfo       *net.Envelope   `json:"peer_info"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
-}
-
-// EnvelopeGetProviders payload
-type EnvelopeGetProviders struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
-}
-
-// EnvelopePutProviders payload
-type EnvelopePutProviders struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	PeerIDs        []string        `json:"peer_ids"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
-}
-
-// EnvelopeGetValue payload
-type EnvelopeGetValue struct {
-	SenderPeerInfo *net.Envelope `json:"sender_peer_info"`
-	RequestID      string        `json:"request_id,omitempty"`
-	Key            string        `json:"key"`
-}
-
-// EnvelopePutValue payload
-type EnvelopePutValue struct {
-	SenderPeerInfo *net.Envelope   `json:"sender_peer_info"`
-	RequestID      string          `json:"request_id,omitempty"`
-	Key            string          `json:"key"`
-	Value          string          `json:"value"`
-	ClosestPeers   []*net.Envelope `json:"closest_peers"`
+// Provider payload
+type Provider struct {
+	BlockIDs []string `json:"blockIDs"`
 }

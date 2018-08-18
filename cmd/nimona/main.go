@@ -3,22 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/nimona/go-nimona/telemetry"
-
-	"github.com/nimona/go-nimona/api"
-	"github.com/nimona/go-nimona/blx"
-	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/net"
+	"encoding/base64"
 
 	"gopkg.in/abiosoft/ishell.v2"
+
+	"github.com/nimona/go-nimona/api"
+	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/dht"
+	"github.com/nimona/go-nimona/net"
+	"github.com/nimona/go-nimona/peers"
+	"github.com/nimona/go-nimona/storage"
 )
 
 var (
@@ -27,24 +29,26 @@ var (
 	date    = "unknown"
 )
 
-var bootstrapPeerInfoEnvelopes = []*net.Envelope{
-	&net.Envelope{
+func base64ToBytes(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+var bootstrapPeerInfoBlocks = []*blocks.Block{
+	&blocks.Block{
 		Type: "peer.info",
-		Headers: net.Headers{
-			Signer: "01x035de8adad618206455f6b7c2ca4fd943faabcba12ae6fea9d6204760d4d6216ff",
+		Metadata: blocks.Metadata{
+			Signer: "49HRH8tmsYLyb1JFnYo4mxw1Awuw6fzoaDhdt3U6JYRsLThRhZ2Pkc7s4M12RRRkq7wB8MKyAw1zyHzGwrCbx9LyEekwuYPsk1e2PGLGUdBbKfnmGRbX2P35mW4h6oBLGnnjXU3FLNErDGM6",
 		},
-		Payload: net.PeerInfoPayload{
+		Payload: peers.PeerInfoPayload{
 			Addresses: []string{
-				"tcp:andromeda.nimona.io:21013",
+				"tcp:bootstrap.nimona.io:21013",
 			},
 		},
-		Signature: []byte{
-			63, 75, 91, 132, 252, 236, 211, 254, 9, 245, 64, 255, 216, 226,
-			222, 153, 41, 203, 66, 233, 19, 218, 225, 212, 133, 166, 128,
-			93, 115, 28, 85, 1, 87, 219, 10, 223, 126, 26, 134, 96, 56, 86,
-			223, 238, 113, 120, 165, 25, 103, 185, 231, 232, 204, 227, 48,
-			122, 80, 185, 205, 86, 0, 110, 94, 59,
-		},
+		Signature: base64ToBytes("RfuK7y/BOPRXvvTyLfotpvqpjZ5F77NgKIK4+LgkiFc07G6wlOr5CL1aLkJ/R9Y0J474PI3yg4+SuZVAvWeOCg=="),
 	},
 }
 
@@ -54,8 +58,8 @@ type Hello struct {
 }
 
 func init() {
-	telemetry.SetupKeenCollector()
-	net.RegisterContentType("demo.hello", Hello{})
+	// telemetry.SetupKeenCollector()
+	blocks.RegisterContentType("demo.hello", Hello{})
 }
 
 func main() {
@@ -73,60 +77,27 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	reg := net.NewAddressBook()
-	spi, err := reg.LoadOrCreateLocalPeerInfo(configPath)
+	reg, err := peers.NewAddressBook(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
-	if err := reg.PutLocalPeerInfo(spi); err != nil {
-		log.Fatal("could not put local peer")
-	}
 
-	for _, peerInfoEnvelope := range bootstrapPeerInfoEnvelopes {
-		reg.PutPeerInfoFromEnvelope(peerInfoEnvelope)
+	for _, peerInfoBlock := range bootstrapPeerInfoBlocks {
+		reg.PutPeerInfoFromBlock(peerInfoBlock)
 	}
-
-	// mmmm := &net.Envelope{
-	// 	Type: "peer.info",
-	// 	Payload: net.PeerInfoPayload{
-	// 		Addresses: []string{
-	// 			"tcp:andromeda.nimona.io:21013",
-	// 		},
-	// 	},
-	// }
-	// mmmm.Sign(spi)
-	// bbb, _ := json.MarshalIndent(mmmm, "", "  ")
-	// fmt.Println(string(bbb))
-	// fmt.Println(mmmm.Signature)
-	// os.Exit(1)
 
 	storagePath := path.Join(configPath, "storage")
 
-	n, _ := net.NewMessenger(reg)
+	dpr := storage.NewDiskStorage(storagePath)
+	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
-	dpr := blx.NewDiskStorage(storagePath)
-	blx, _ := blx.NewBlockExchange(n, dpr)
-
-	// Announce blocks on init and on new blocks
-	go func() {
-		blockKeys, _ := blx.GetLocalBlocks()
-
-		for _, bk := range blockKeys {
-			// TODO Check errors
-			dht.PutProviders(context.Background(), bk)
-		}
-
-		// TODO Store the unsubscribe key
-		blx.Subscribe(func(key string) {
-			dht.PutProviders(context.Background(), key)
-		})
-	}()
+	n.RegisterDiscoverer(dht)
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(envelope *net.Envelope) error {
-		payload := envelope.Payload.(Hello)
-		fmt.Printf("___ Got envelope %s\n", payload.Body)
+	n.Handle("demo", func(block *blocks.Block) error {
+		payload := block.Payload.(Hello)
+		fmt.Printf("___ Got block %s\n", payload.Body)
 		return nil
 	})
 
@@ -135,34 +106,11 @@ func main() {
 		httpPort = nhp
 	}
 	httpAddress := ":" + httpPort
-	api := api.New(reg, dht)
+	api := api.New(reg, dht, dpr)
 	go api.Serve(httpAddress)
 
 	shell := ishell.New()
 	shell.Printf("Nimona DHT (%s)\n", version)
-
-	putValue := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) < 2 {
-				c.Println("Missing key and value")
-				return
-			}
-
-			key := c.Args[0]
-			val := strings.Join(c.Args[1:], " ")
-			ctx := context.Background()
-			if err := dht.PutValue(ctx, key, val); err != nil {
-				c.Printf("Could not put key %s\n", key)
-				c.Printf("Error: %s\n", err)
-			}
-		},
-		Help: "put a value on the dht",
-	}
 
 	putProvider := &ishell.Cmd{
 		Name:    "providers",
@@ -183,35 +131,6 @@ func main() {
 			}
 		},
 		Help: "announce a provided key on the dht",
-	}
-
-	getValue := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) == 0 {
-				c.Println("Missing key")
-				return
-			}
-			c.ProgressBar().Indeterminate(true)
-			c.ProgressBar().Start()
-			key := c.Args[0]
-			ctx := context.Background()
-			rs, err := dht.GetValue(ctx, key)
-			c.Println("")
-			if err != nil {
-				c.Printf("Could not get %s\n", key)
-				c.Printf("Error: %s\n", err)
-			}
-			if rs != "" {
-				c.Printf(" - %s\n", rs)
-			}
-			c.ProgressBar().Stop()
-		},
-		Help: "get a value from the dht",
 	}
 
 	getProvider := &ishell.Cmd{
@@ -235,8 +154,12 @@ func main() {
 				c.Printf("Could not get providers for key %s\n", key)
 				c.Printf("Error: %s\n", err)
 			}
+			providers := []string{}
+			for provider := range rs {
+				providers = append(providers, provider)
+			}
 			c.Println("* " + key)
-			for _, peerID := range rs {
+			for _, peerID := range providers {
 				c.Printf("  - %s\n", peerID)
 			}
 			c.ProgressBar().Stop()
@@ -252,25 +175,20 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			if len(c.Args) < 1 {
-				c.Println("Missing key peer")
+				c.Println("Missing block id")
 				return
 			}
 
-			peer := ""
+			ctx, cf := context.WithTimeout(context.Background(), time.Second*10)
+			defer cf()
 
-			if len(c.Args) == 2 {
-				peer = c.Args[1]
-			}
-
-			blockHash := c.Args[0]
-
-			block, err := blx.Get(blockHash, peer)
+			block, err := n.Get(ctx, c.Args[0])
 			if err != nil {
 				c.Println(err)
 				return
 			}
 
-			c.Printf("Received block of %d bytes length\n", len(block.Data))
+			c.Printf("Received block %#v\n", block)
 		},
 		Help: "get peers providing a value from the dht",
 	}
@@ -288,21 +206,6 @@ func main() {
 				for _, val := range vals {
 					c.Printf("  - %s\n", val)
 				}
-			}
-		},
-		Help: "list all providers stored in our local dht",
-	}
-
-	listValues := &ishell.Cmd{
-		Name:    "values",
-		Aliases: []string{"value"},
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			ps, _ := dht.GetAllValues()
-			for key, val := range ps {
-				c.Printf("* %s: %s\n", key, val)
 			}
 		},
 		Help: "list all providers stored in our local dht",
@@ -333,7 +236,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			blocks, err := blx.GetLocalBlocks()
+			blocks, err := n.GetLocalBlocks()
 			if err != nil {
 				c.Println(err)
 				return
@@ -365,15 +268,15 @@ func main() {
 		Name: "send",
 		Func: func(c *ishell.Context) {
 			if len(c.Args) < 2 {
-				c.Println("Missing peer id or envelope")
+				c.Println("Missing peer id or block")
 				return
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
 			to := []string{c.Args[0]}
-			envelope := net.NewEnvelope("demo.hello", to, &Hello{msg})
-			if err := n.Send(ctx, envelope); err != nil {
-				c.Println("Could not send envelope", err)
+			block := blocks.NewBlock("demo.hello", &Hello{msg}, to...)
+			if err := n.Send(ctx, block, to...); err != nil {
+				c.Println("Could not send block", err)
 				return
 			}
 		},
@@ -385,67 +288,20 @@ func main() {
 		Help: "send blocks to peers",
 	}
 
-	blockFile := &ishell.Cmd{
-		Name: "file",
-		Func: func(c *ishell.Context) {
-			c.ShowPrompt(false)
-			defer c.ShowPrompt(true)
-
-			if len(c.Args) < 2 {
-				c.Println("Peer and file missing")
-				return
-			}
-
-			toPeer := c.Args[0]
-			file := c.Args[1]
-
-			f, err := os.Open(file)
-			if err != nil {
-				c.Println(err)
-				return
-			}
-
-			data, err := ioutil.ReadAll(f)
-			if err != nil {
-				c.Println(err)
-				return
-			}
-
-			// TODO store filename in a meta
-			meta := map[string][]byte{}
-
-			meta["filename"] = []byte(f.Name())
-
-			hsh, n, err := blx.Send(toPeer, data, meta)
-			if err != nil {
-				c.Println(err)
-				return
-			}
-			c.Printf("Sent block with %d bytes and hash: %s\n", n, hsh)
-		},
-		Help: "send a file to another peer",
-	}
-
-	block.AddCmd(blockFile)
-
 	get := &ishell.Cmd{
 		Name: "get",
 		Help: "get resource",
 	}
 
-	get.AddCmd(getValue)
 	get.AddCmd(getProvider)
 	get.AddCmd(getBlock)
-	// get.AddCmd(getPeer)
 
 	put := &ishell.Cmd{
 		Name: "put",
 		Help: "put resource",
 	}
 
-	put.AddCmd(putValue)
 	put.AddCmd(putProvider)
-	// put.AddCmd(putPeer)
 
 	list := &ishell.Cmd{
 		Name:    "list",
@@ -453,7 +309,6 @@ func main() {
 		Help:    "list cached resources",
 	}
 
-	list.AddCmd(listValues)
 	list.AddCmd(listProviders)
 	list.AddCmd(listPeers)
 	list.AddCmd(listLocal)

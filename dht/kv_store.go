@@ -3,108 +3,60 @@ package dht
 import (
 	"sync"
 
-	"github.com/jinzhu/copier"
-	"github.com/sirupsen/logrus"
+	"github.com/nimona/go-nimona/blocks"
 )
 
 type Store struct {
 	// TODO replace with async maps
-	values    map[string]string
-	providers map[string][]string
-	lock      *sync.RWMutex
+	values    sync.Map
+	providers sync.Map
+	lock      sync.RWMutex
 }
 
 func newStore() (*Store, error) {
 	s := &Store{
-		values:    map[string]string{},
-		providers: map[string][]string{},
-		lock:      &sync.RWMutex{},
+		values:    sync.Map{},
+		providers: sync.Map{},
+		lock:      sync.RWMutex{},
 	}
 	return s, nil
 }
 
-func (s *Store) PutProvider(key string, providers ...string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	// make sure our partition exists
-	if _, ok := s.providers[key]; !ok {
-		s.providers[key] = []string{}
+func (s *Store) PutProvider(block *blocks.Block) error {
+	// TODO verify payload type
+	blockID, err := block.ID()
+	if err != nil {
+		return err
 	}
+	s.providers.Store(blockID, block)
+	return nil
+}
 
-	for _, provider := range providers {
-		// check if the pair already exists
-		for _, existingProvider := range s.providers[key] {
-			if existingProvider == provider {
-				continue
+func (s *Store) GetProviders(blockID string) ([]*blocks.Block, error) {
+	bls := []*blocks.Block{}
+	s.providers.Range(func(k, v interface{}) bool {
+		block := v.(*blocks.Block)
+		payload := block.Payload.(Provider)
+		for _, id := range payload.BlockIDs {
+			if id == blockID {
+				bls = append(bls, block)
+				break
 			}
 		}
-		// else add it
-		s.providers[key] = append(s.providers[key], provider)
-	}
+		return true
+	})
 
-	return nil
-}
-
-func (s *Store) GetProviders(key string) ([]string, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	// check if our partition exists
-	providers, ok := s.providers[key]
-	if !ok {
-		logrus.WithField("key", key).Debugf("store.Get new partition")
-		return []string{}, nil
-	}
-
-	logrus.WithField("providers", providers).WithField("key", key).Debugf("store.Get")
-	return providers, nil
-}
-
-func (s *Store) PutValue(key string, value string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.values[key] = value
-	return nil
-}
-
-func (s *Store) GetValue(key string) (string, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return s.values[key], nil
-}
-
-func (s *Store) Wipe(key string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.providers = map[string][]string{}
-
-	return nil
+	return bls, nil
 }
 
 // GetAllProviders returns all providers and the values they are providing
-func (s *Store) GetAllProviders() (map[string][]string, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+func (s *Store) GetAllProviders() ([]*blocks.Block, error) {
+	bls := []*blocks.Block{}
+	s.providers.Range(func(k, v interface{}) bool {
+		block := v.(*blocks.Block)
+		bls = append(bls, block)
+		return true
+	})
 
-	providers := map[string][]string{}
-	if err := copier.Copy(s.providers, providers); err != nil {
-		return nil, err
-	}
-	return providers, nil
-}
-
-// GetAllValues returns all the key value pairs we know about
-func (s *Store) GetAllValues() (map[string]string, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	values := map[string]string{}
-	if err := copier.Copy(&values, s.values); err != nil {
-		return nil, err
-	}
-	return values, nil
+	return bls, nil
 }

@@ -3,12 +3,13 @@ package net
 import (
 	"fmt"
 
+	blocks "github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/telemetry"
 )
 
 func init() {
-	RegisterContentType("nimona.telemetry.connection", ConnectionEvent{})
-	RegisterContentType("nimona.telemetry.envelope", EnvelopeEvent{})
+	blocks.RegisterContentType("nimona.telemetry.connection", ConnectionEvent{})
+	blocks.RegisterContentType("nimona.telemetry.block", BlockEvent{})
 }
 
 // SendEvent sends an event
@@ -30,13 +31,13 @@ func SendConnectionEvent(outgoing bool) {
 	})
 }
 
-// SendEnvelopeEvent sends a connection event
-func SendEnvelopeEvent(outgoing bool, contentType string, recipients, payloadSize, envelopeSize int) {
-	SendEvent(&EnvelopeEvent{
-		Outgoing:     outgoing,
-		ContentType:  contentType,
-		Recipients:   recipients,
-		PayloadSize:  payloadSize,
-		EnvelopeSize: envelopeSize,
+// SendBlockEvent sends a connection event
+func SendBlockEvent(outgoing bool, contentType string, recipients, payloadSize, blockSize int) {
+	SendEvent(&BlockEvent{
+		Outgoing:    outgoing,
+		ContentType: contentType,
+		Recipients:  recipients,
+		PayloadSize: payloadSize,
+		BlockSize:   blockSize,
 	})
 }

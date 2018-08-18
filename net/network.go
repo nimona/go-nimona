@@ -10,8 +10,10 @@ import (
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
-	"github.com/nimona/go-nimona/log"
 	"go.uber.org/zap"
+
+	"github.com/nimona/go-nimona/log"
+	"github.com/nimona/go-nimona/peers"
 )
 
 // Networker interface for mocking Network
@@ -21,7 +23,7 @@ type Networker interface {
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(AddressBook PeerManager) (*Network, error) {
+func NewNetwork(AddressBook peers.AddressBooker) (*Network, error) {
 	return &Network{
 		AddressBook: AddressBook,
 	}, nil
@@ -29,15 +31,19 @@ func NewNetwork(AddressBook PeerManager) (*Network, error) {
 
 // Network allows dialing and listening for p2p connections
 type Network struct {
-	AddressBook PeerManager
+	AddressBook peers.AddressBooker
 }
 
 // Dial to a peer and return a net.Conn or error
 func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
-	// logger := log.Logger(ctx).Named("network")
+	logger := log.Logger(ctx)
 	peerInfo, err := n.AddressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(peerInfo.Addresses) == 0 {
+		return nil, ErrNoAddresses
 	}
 
 	var conn net.Conn
@@ -46,7 +52,8 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 			continue
 		}
 		addr = strings.Replace(addr, "tcp:", "", 1)
-		dialer := net.Dialer{Timeout: time.Second * 5}
+		dialer := net.Dialer{Timeout: time.Second}
+		logger.Debug("dialing", zap.String("address", addr))
 		newConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			continue
@@ -100,24 +107,24 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 		close(newAddresses)
 	}()
 
-	go func() {
-		if err := igd.Discover(devices, 5*time.Second); err != nil {
-			close(newAddresses)
-			logger.Error("could not discover devices", zap.Error(err))
-		}
+	// go func() {
+	if err := igd.Discover(devices, 2*time.Second); err != nil {
+		close(newAddresses)
+		logger.Error("could not discover devices", zap.Error(err))
+	}
 
-		addresses := GetAddresses(tcpListener)
-		for newAddress := range newAddresses {
-			addresses = append(addresses, newAddress)
-		}
+	addresses := GetAddresses(tcpListener)
+	for newAddress := range newAddresses {
+		addresses = append(addresses, newAddress)
+	}
 
-		// TODO Replace with actual relay peer ids
-		addresses = append(addresses, "relay:7730b73e34ae2e3ad92235aefc7ee0366736602f96785e6f35e8b710923b4562")
+	// TODO Replace with actual relay peer ids
+	addresses = append(addresses, "relay:01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1")
 
-		localPeerInfo := n.AddressBook.GetLocalPeerInfo()
-		localPeerInfo.Addresses = addresses
-		n.AddressBook.PutLocalPeerInfo(localPeerInfo)
-	}()
+	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
+	localPeerInfo.Addresses = addresses
+	n.AddressBook.PutLocalPeerInfo(localPeerInfo)
+	// }()
 
 	return tcpListener, nil
 }
