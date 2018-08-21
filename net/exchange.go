@@ -19,6 +19,7 @@ import (
 	"github.com/nimona/go-nimona/keys"
 	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/peers"
+	"github.com/nimona/go-nimona/signatures"
 	"github.com/nimona/go-nimona/storage"
 	"github.com/nimona/go-nimona/utils"
 )
@@ -279,12 +280,11 @@ func (w *exchange) Process(block *blocks.Block, conn net.Conn) error {
 	}
 
 	eb, _ := blocks.Marshal(block)
-	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		false,
 		block.Type,
 		0, // len(GetRecipientsFromBlockPolicies(block)),
-		len(tb),
+		0, // TODO fix payload size
 		len(eb),
 	)
 
@@ -460,12 +460,11 @@ func (w *exchange) writeBlock(ctx context.Context, block *blocks.Block, rw io.Re
 		return err
 	}
 
-	tb, _ := blocks.Marshal(block.Payload)
 	SendBlockEvent(
 		true,
 		block.Type,
 		0, // len(GetRecipientsFromBlockPolicies(block)),
-		len(tb),
+		0, // TODO fix payload size
 		len(blockBytes),
 	)
 
@@ -601,12 +600,17 @@ func (w *exchange) Listen(ctx context.Context, addr string) (net.Listener, error
 // the keys from the address book?
 func (w *exchange) Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerInfo) error {
 	block.Metadata.Signer = signerPeerInfo.ID
-	digest, err := blocks.GetSignatureDigest(block)
+	digest, err := blocks.MarshalClean(block)
 	if err != nil {
 		return err
 	}
 
-	signature, err := peers.SignData(digest, signerPeerInfo.GetPrivateKey())
+	key := signerPeerInfo.GetPrivateKey()
+	signature, err := signatures.Sign(
+		key,
+		signatures.ES256,
+		digest,
+	)
 	if err != nil {
 		return err
 	}
@@ -621,7 +625,7 @@ func (w *exchange) Verify(block *blocks.Block) error {
 		return nil
 	}
 
-	digest, err := blocks.GetSignatureDigest(block)
+	digest, err := blocks.MarshalClean(block)
 	if err != nil {
 		return err
 	}
@@ -631,5 +635,5 @@ func (w *exchange) Verify(block *blocks.Block) error {
 		return err
 	}
 
-	return peers.Verify(key, digest, block.Signature)
+	return signatures.Verify(key, digest, block.Signature)
 }

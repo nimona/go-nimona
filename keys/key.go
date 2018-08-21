@@ -16,7 +16,7 @@ type Key interface {
 	// RSA types would create *rsa.PublicKey or *rsa.PrivateKey,
 	// EC types would create *ecdsa.PublicKey or *ecdsa.PrivateKey,
 	// and OctetSeq types create a []byte key.
-	Materialize() (interface{}, error)
+	Materialize() interface{}
 
 	// Marshal returns a CBOR encoded blocks.Block with the indicated
 	// hashing algorithm, according to JWK (RFC 7638)
@@ -62,8 +62,8 @@ func KeyFromEncodedBlock(id string) (Key, error) {
 		return nil, err
 	}
 
-	block := &blocks.Block{}
-	if err := blocks.Unmarshal(b, block); err != nil {
+	block, err := blocks.Unmarshal(b)
+	if err != nil {
 		return nil, err
 	}
 

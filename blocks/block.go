@@ -106,8 +106,10 @@ func (block *Block) CodecDecodeSelf(dec *codec.Decoder) {
 	}
 	block.Signature = b.Signature
 
-	pb, _ := Marshal(b.Payload)
-	Unmarshal(pb, &payload)
+	// TODO handle errors
+	pb, _ := marshal(b.Payload)
+	// TODO handle errors
+	unmarshal(pb, &payload)
 	block.Payload = payload
 }
 
@@ -160,21 +162,31 @@ func GetRecipientsFromBlockPolicies(block *Block) []string {
 	return recipients
 }
 
-// GetSignatureDigest returns a marshaled version of the block, without
-// headers and signature. Used for consistent hash/ID.
-func GetSignatureDigest(block *Block) ([]byte, error) {
-	cleanBlock := toThinBlock(block, false, false)
-	digestBytes, err := Marshal(cleanBlock)
+// Marshal returns a marshaled version of the block.
+func Marshal(block *Block) ([]byte, error) {
+	bytes, err := marshal(block)
 	if err != nil {
 		return nil, err
 	}
 
-	return digestBytes, nil
+	return bytes, nil
+}
+
+// MarshalClean returns a marshaled version of the block, without
+// headers and signature. Used for consistent hash/ID.
+func MarshalClean(block *Block) ([]byte, error) {
+	cleanBlock := toThinBlock(block, false, false)
+	bytes, err := marshal(cleanBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
 
 // ID calculated the id for the block
 func ID(block *Block) (string, error) {
-	digest, err := GetSignatureDigest(block)
+	digest, err := MarshalClean(block)
 	if err != nil {
 		return "", err
 	}
@@ -182,8 +194,8 @@ func ID(block *Block) (string, error) {
 	return SumSha3(digest)
 }
 
-// Marshal into cbor
-func Marshal(o interface{}) ([]byte, error) {
+// marshal anything into cbor
+func marshal(o interface{}) ([]byte, error) {
 	b := []byte{}
 	enc := codec.NewEncoderBytes(&b, CborHandler())
 	if err := enc.Encode(o); err != nil {
@@ -193,14 +205,25 @@ func Marshal(o interface{}) ([]byte, error) {
 	return b, nil
 }
 
-// Unmarshal from cbor
-func Unmarshal(b []byte, v interface{}) error {
+// unmarshal anything from cbor
+func unmarshal(b []byte, v interface{}) error {
 	dec := codec.NewDecoderBytes(b, CborHandler())
 	if err := dec.Decode(v); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// Unmarshal block from cbor
+func Unmarshal(b []byte) (*Block, error) {
+	block := &Block{}
+	dec := codec.NewDecoderBytes(b, CborHandler())
+	if err := dec.Decode(block); err != nil {
+		return nil, err
+	}
+
+	return block, nil
 }
 
 // CborHandler for un/marshaling blocks
@@ -224,8 +247,8 @@ func BestEffortID(block *Block) string {
 
 // Copy a block
 func Copy(block *Block) *Block {
-	v := &Block{}
-	b, _ := Marshal(block)
-	Unmarshal(b, v)
-	return v
+	// TODO handle errors
+	v, _ := Marshal(block)
+	b, _ := Unmarshal(v)
+	return b
 }

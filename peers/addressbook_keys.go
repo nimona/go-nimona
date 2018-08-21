@@ -4,16 +4,13 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
-	"math/big"
 	"os"
 	"path/filepath"
 
-	"github.com/apisit/rfc6979"
 	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/keys"
 )
@@ -109,56 +106,4 @@ func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) e
 	}
 
 	return ioutil.WriteFile(path, raw, 0644)
-}
-
-// SignData given some bytes and a private key in its prefixed and compressed format
-func SignData(data []byte, key keys.Key) ([]byte, error) {
-	mKey, err := key.Materialize()
-	if err != nil {
-		return nil, err
-	}
-
-	pKey, ok := mKey.(*ecdsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("only ecdsa keys are currently supported")
-	}
-
-	digest := sha256.Sum256(data)
-	r, s, err := rfc6979.SignECDSA(pKey, digest[:], sha256.New)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO replace signature with proper Block-based signature.
-	params := pKey.Curve.Params()
-	curveOrderByteSize := params.P.BitLen() / 8
-	rBytes, sBytes := r.Bytes(), s.Bytes()
-	signature := make([]byte, curveOrderByteSize*2)
-	copy(signature[curveOrderByteSize-len(rBytes):], rBytes)
-	copy(signature[curveOrderByteSize*2-len(sBytes):], sBytes)
-
-	return signature, nil
-}
-
-// Verify the signature of some data given a public key in its prefixed and
-// compressed format
-func Verify(key keys.Key, data, signature []byte) error {
-	mKey, err := key.Materialize()
-	if err != nil {
-		return err
-	}
-
-	pKey, ok := mKey.(*ecdsa.PublicKey)
-	if !ok {
-		return errors.New("only ecdsa keys are currently supported")
-	}
-
-	digest := sha256.Sum256(data)
-	rBytes := new(big.Int).SetBytes(signature[0:32])
-	sBytes := new(big.Int).SetBytes(signature[32:64])
-	if ok := ecdsa.Verify(pKey, digest[:], rBytes, sBytes); !ok {
-		return errors.New("could not verify signature")
-	}
-
-	return nil
 }

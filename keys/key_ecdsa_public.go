@@ -14,8 +14,8 @@ type ECDSAPublicKey struct {
 }
 
 // Materialize returns the EC-DSA public key represented by this JWK
-func (k ECDSAPublicKey) Materialize() (interface{}, error) {
-	return k.key, nil
+func (k ECDSAPublicKey) Materialize() interface{} {
+	return k.key
 }
 
 // Marshal into an encoded blocks.Block
