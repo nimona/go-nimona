@@ -12,14 +12,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ugorji/go/codec"
+	cbor "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
 	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/keys"
+	"github.com/nimona/go-nimona/codec"
 	"github.com/nimona/go-nimona/log"
 	"github.com/nimona/go-nimona/peers"
-	"github.com/nimona/go-nimona/signatures"
 	"github.com/nimona/go-nimona/storage"
 	"github.com/nimona/go-nimona/utils"
 )
@@ -249,7 +248,7 @@ func (w *exchange) Close(peerID string, conn net.Conn) {
 func (w *exchange) HandleConnection(conn net.Conn) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteAddr().String()))
 
-	blockDecoder := codec.NewDecoder(conn, blocks.CborHandler())
+	blockDecoder := cbor.NewDecoder(conn, codec.CborHandler())
 	for {
 		block := &blocks.Block{}
 		if err := blockDecoder.Decode(block); err != nil {
@@ -606,11 +605,7 @@ func (w *exchange) Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerIn
 	}
 
 	key := signerPeerInfo.GetPrivateKey()
-	signature, err := signatures.Sign(
-		key,
-		signatures.ES256,
-		digest,
-	)
+	signature, err := blocks.NewSignature(key, blocks.ES256, digest)
 	if err != nil {
 		return err
 	}
@@ -621,7 +616,7 @@ func (w *exchange) Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerIn
 
 // Verify block's signature
 func (w *exchange) Verify(block *blocks.Block) error {
-	if len(block.Signature) == 0 {
+	if block.Signature != nil {
 		return nil
 	}
 
@@ -630,10 +625,10 @@ func (w *exchange) Verify(block *blocks.Block) error {
 		return err
 	}
 
-	key, err := keys.KeyFromEncodedBlock(block.Metadata.Signer)
+	key, err := blocks.KeyFromEncodedBlock(block.Metadata.Signer)
 	if err != nil {
 		return err
 	}
 
-	return signatures.Verify(key, digest, block.Signature)
+	return blocks.Verify(key, digest, block.Signature)
 }

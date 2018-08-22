@@ -2,7 +2,6 @@ package peers
 
 import (
 	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/keys"
 )
 
 // PrivatePeerInfo is a PeerInfo with an additional PrivateKey
@@ -24,8 +23,8 @@ func (pi *PrivatePeerInfo) Block() *blocks.Block {
 }
 
 // GetPrivateKey returns the private key
-func (pi *PrivatePeerInfo) GetPrivateKey() keys.Key {
-	sk, err := keys.KeyFromEncodedBlock(pi.PrivateKey)
+func (pi *PrivatePeerInfo) GetPrivateKey() blocks.Key {
+	sk, err := blocks.KeyFromEncodedBlock(pi.PrivateKey)
 	if err != nil {
 		panic(err)
 	}
@@ -34,8 +33,8 @@ func (pi *PrivatePeerInfo) GetPrivateKey() keys.Key {
 }
 
 // GetPublicKey returns the public key
-func (pi *PrivatePeerInfo) GetPublicKey() keys.Key {
-	pk, err := keys.KeyFromEncodedBlock(pi.ID)
+func (pi *PrivatePeerInfo) GetPublicKey() blocks.Key {
+	pk, err := blocks.KeyFromEncodedBlock(pi.ID)
 	if err != nil {
 		panic(err)
 	}

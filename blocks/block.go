@@ -1,9 +1,8 @@
 package blocks
 
 import (
-	"reflect"
-
-	"github.com/ugorji/go/codec"
+	"github.com/nimona/go-nimona/codec"
+	cbor "github.com/ugorji/go/codec"
 )
 
 // NewEphemeralBlock is a helper function for creating ephemeral Blocks.
@@ -62,15 +61,15 @@ type Block struct {
 	Headers   map[string]string `json:"headers,omitempty"`
 	Metadata  Metadata          `json:"metadata,omitempty"`
 	Payload   interface{}       `json:"payload,omitempty"`
-	Signature []byte            `json:"signature,omitempty"`
+	Signature *Signature        `json:"signature,omitempty"`
 }
 
 type _block struct {
 	Type      string            `json:"type,omitempty"`
 	Headers   map[string]string `json:"head,omitempty"`
 	Metadata  *Metadata         `json:"meta,omitempty"`
-	Signature []byte            `json:"sign,omitempty"`
 	Payload   interface{}       `json:"data,omitempty"`
+	Signature *Signature        `json:"sign,omitempty"`
 }
 
 // SetHeader pair in block
@@ -90,7 +89,7 @@ func (block *Block) GetHeader(k string) string {
 }
 
 // CodecDecodeSelf helper for cbor unmarshaling
-func (block *Block) CodecDecodeSelf(dec *codec.Decoder) {
+func (block *Block) CodecDecodeSelf(dec *cbor.Decoder) {
 	b := &_block{}
 	dec.MustDecode(b)
 
@@ -107,14 +106,14 @@ func (block *Block) CodecDecodeSelf(dec *codec.Decoder) {
 	block.Signature = b.Signature
 
 	// TODO handle errors
-	pb, _ := marshal(b.Payload)
+	pb, _ := codec.Marshal(b.Payload)
 	// TODO handle errors
-	unmarshal(pb, &payload)
+	codec.Unmarshal(pb, &payload)
 	block.Payload = payload
 }
 
 // CodecEncodeSelf helper for cbor marshaling
-func (block *Block) CodecEncodeSelf(enc *codec.Encoder) {
+func (block *Block) CodecEncodeSelf(enc *cbor.Encoder) {
 	p := toThinBlock(block, true, true)
 	enc.MustEncode(p)
 }
@@ -144,7 +143,7 @@ func toThinBlock(block *Block, headers, signature bool) *_block {
 // IsSigned checks if the block is signed
 func (block *Block) IsSigned() bool {
 	// TODO make this part of the block and digest?
-	return block.Signature != nil && len(block.Signature) > 0
+	return block.Signature != nil
 }
 
 // ID calculated the id for the block
@@ -164,7 +163,7 @@ func GetRecipientsFromBlockPolicies(block *Block) []string {
 
 // Marshal returns a marshaled version of the block.
 func Marshal(block *Block) ([]byte, error) {
-	bytes, err := marshal(block)
+	bytes, err := codec.Marshal(block)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +175,7 @@ func Marshal(block *Block) ([]byte, error) {
 // headers and signature. Used for consistent hash/ID.
 func MarshalClean(block *Block) ([]byte, error) {
 	cleanBlock := toThinBlock(block, false, false)
-	bytes, err := marshal(cleanBlock)
+	bytes, err := codec.Marshal(cleanBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -194,44 +193,15 @@ func ID(block *Block) (string, error) {
 	return SumSha3(digest)
 }
 
-// marshal anything into cbor
-func marshal(o interface{}) ([]byte, error) {
-	b := []byte{}
-	enc := codec.NewEncoderBytes(&b, CborHandler())
-	if err := enc.Encode(o); err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-// unmarshal anything from cbor
-func unmarshal(b []byte, v interface{}) error {
-	dec := codec.NewDecoderBytes(b, CborHandler())
-	if err := dec.Decode(v); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Unmarshal block from cbor
 func Unmarshal(b []byte) (*Block, error) {
 	block := &Block{}
-	dec := codec.NewDecoderBytes(b, CborHandler())
+	dec := cbor.NewDecoderBytes(b, codec.CborHandler())
 	if err := dec.Decode(block); err != nil {
 		return nil, err
 	}
 
 	return block, nil
-}
-
-// CborHandler for un/marshaling blocks
-func CborHandler() *codec.CborHandle {
-	ch := &codec.CborHandle{}
-	ch.Canonical = true
-	ch.MapType = reflect.TypeOf(map[string]interface{}(nil))
-	return ch
 }
 
 // BestEffortID returns an error-free ID

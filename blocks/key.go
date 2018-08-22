@@ -1,11 +1,10 @@
-package keys
+package blocks
 
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"math/big"
 
-	"github.com/nimona/go-nimona/blocks"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +17,7 @@ type Key interface {
 	// and OctetSeq types create a []byte key.
 	Materialize() interface{}
 
-	// Marshal returns a CBOR encoded blocks.Block with the indicated
+	// Marshal returns a CBOR encoded Block with the indicated
 	// hashing algorithm, according to JWK (RFC 7638)
 	Marshal() ([]byte, error)
 }
@@ -45,24 +44,24 @@ func New(key interface{}) (Key, error) {
 	}
 }
 
-// KeyFromBlock returns a Key from a blocks.Block of type key.
-func KeyFromBlock(k *blocks.Block) (Key, error) {
+// KeyFromBlock returns a Key from a Block of type key.
+func KeyFromBlock(k *Block) (Key, error) {
 	if k.Type != "key" {
-		return nil, errors.New("invalid blocks.Block type")
+		return nil, errors.New("invalid Block type")
 	}
 
-	h := k.Payload.(Headers)
+	h := k.Payload.(KeyHeaders)
 	return KeyFromHeaders(&h)
 }
 
 // KeyFromEncodedBlock returns a Key from an ID string.
 func KeyFromEncodedBlock(id string) (Key, error) {
-	b, err := blocks.Base58Decode(id)
+	b, err := Base58Decode(id)
 	if err != nil {
 		return nil, err
 	}
 
-	block, err := blocks.Unmarshal(b)
+	block, err := Unmarshal(b)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +70,7 @@ func KeyFromEncodedBlock(id string) (Key, error) {
 }
 
 // KeyFromHeaders returns a Key from a Key Headers.
-func KeyFromHeaders(h *Headers) (Key, error) {
+func KeyFromHeaders(h *KeyHeaders) (Key, error) {
 	var curve elliptic.Curve
 	switch h.Curve {
 	case P256:

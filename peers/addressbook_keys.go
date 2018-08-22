@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 
 	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/keys"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
@@ -49,7 +48,7 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 		return nil, err
 	}
 
-	sk, err := keys.New(peerSigningKey)
+	sk, err := blocks.New(peerSigningKey)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,7 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 		return nil, err
 	}
 
-	pk, err := keys.New(&peerSigningKey.PublicKey)
+	pk, err := blocks.New(&peerSigningKey.PublicKey)
 	mpk, err := pk.Marshal()
 	if err != nil {
 		return nil, err

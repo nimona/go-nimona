@@ -1,15 +1,13 @@
-package keys
+package blocks
 
 import (
 	"crypto/ecdsa"
 	"errors"
-
-	"github.com/nimona/go-nimona/blocks"
 )
 
 // ECDSAPublicKey is a type of CWK generated from ECDSA public keys
 type ECDSAPublicKey struct {
-	headers *Headers
+	headers *KeyHeaders
 	key     *ecdsa.PublicKey
 }
 
@@ -18,13 +16,13 @@ func (k ECDSAPublicKey) Materialize() interface{} {
 	return k.key
 }
 
-// Marshal into an encoded blocks.Block
+// Marshal into an encoded Block
 func (k ECDSAPublicKey) Marshal() (buf []byte, err error) {
-	b := &blocks.Block{
+	b := &Block{
 		Type:    "key",
 		Payload: k.headers,
 	}
-	return blocks.Marshal(b)
+	return Marshal(b)
 }
 
 func newECDSAPublicKey(key *ecdsa.PublicKey) (*ECDSAPublicKey, error) {
@@ -33,7 +31,7 @@ func newECDSAPublicKey(key *ecdsa.PublicKey) (*ECDSAPublicKey, error) {
 	}
 
 	return &ECDSAPublicKey{
-		headers: &Headers{
+		headers: &KeyHeaders{
 			KeyType: EC,
 			Curve:   key.Curve.Params().Name,
 			X:       key.X.Bytes(),

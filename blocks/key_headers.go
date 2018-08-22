@@ -1,15 +1,11 @@
-package keys
-
-import (
-	"github.com/nimona/go-nimona/blocks"
-)
+package blocks
 
 func init() {
-	blocks.RegisterContentType("key", Headers{})
+	RegisterContentType("key", KeyHeaders{})
 }
 
-// Headers for CWK
-type Headers struct {
+// KeyHeaders for CWK
+type KeyHeaders struct {
 	Algorithm              string `json:"alg,omitempty"`
 	KeyID                  string `json:"kid,omitempty"`
 	KeyType                string `json:"kty,omitempty"`

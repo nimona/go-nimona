@@ -1,4 +1,4 @@
-package keys
+package blocks
 
 // Supported values for KeyType
 const (

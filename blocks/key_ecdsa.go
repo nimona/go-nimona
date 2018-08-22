@@ -1,4 +1,4 @@
-package keys
+package blocks
 
 const (
 	// P256 curve
