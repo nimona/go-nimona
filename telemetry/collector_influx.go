@@ -14,6 +14,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
+// InfluxCollector implements the Collector interface with a InlfuxDB storage
 type InfluxCollector struct {
 	client      client.Client
 	input       chan Collectable
@@ -26,6 +27,8 @@ type InfluxCollector struct {
 
 const databaseName = "nimona_metrics"
 
+// NewInfluxCollector connects to an inlfuxdb, starts listenings for
+// Collectables and returns a Collector
 func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     addr,
@@ -63,6 +66,7 @@ func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 	return ic, nil
 }
 
+// Collect send any collectable event to the db
 func (ic *InfluxCollector) Collect(event Collectable) error {
 	ic.input <- event
 	return nil

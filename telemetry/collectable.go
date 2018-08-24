@@ -17,10 +17,12 @@ type ConnectionEvent struct {
 	Outgoing bool
 }
 
+// Collection returns the string representation of the structure
 func (cl *ConnectionEvent) Collection() string {
 	return connectionEventCollection
 }
 
+// Measurements returns a map with all the metrics for the event
 func (cl *ConnectionEvent) Measurements() map[string]interface{} {
 
 	return map[string]interface{}{
@@ -38,10 +40,12 @@ type EnvelopeEvent struct {
 	EnvelopeSize int
 }
 
+// Collection returns the string representation of the structure
 func (cl *EnvelopeEvent) Collection() string {
 	return envelopeEventCollection
 }
 
+// Measurements returns a map with all the metrics for the event
 func (cl *EnvelopeEvent) Measurements() map[string]interface{} {
 
 	return map[string]interface{}{
