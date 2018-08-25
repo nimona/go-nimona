@@ -26,7 +26,7 @@ func SendEvent(event telemetry.Collectable) {
 
 // SendConnectionEvent sends a connection event
 func SendConnectionEvent(outgoing bool) {
-	SendEvent(&ConnectionEvent{
+	SendEvent(&telemetry.ConnectionEvent{
 		Outgoing: outgoing,
 	})
 }

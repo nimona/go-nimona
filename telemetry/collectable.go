@@ -7,8 +7,8 @@ type Collectable interface {
 }
 
 const (
-	connectionEventCollection = "ConnectionEvent"
-	envelopeEventCollection   = "EnvelopeEvent"
+	connectionEventCollection = "nimona.telemetry.connection"
+	envelopeEventCollection   = "nimona.telemetry.envelope"
 )
 
 // ConnectionEvent for reporting connection info
@@ -18,15 +18,15 @@ type ConnectionEvent struct {
 }
 
 // Collection returns the string representation of the structure
-func (cl *ConnectionEvent) Collection() string {
+func (ce *ConnectionEvent) Collection() string {
 	return connectionEventCollection
 }
 
 // Measurements returns a map with all the metrics for the event
-func (cl *ConnectionEvent) Measurements() map[string]interface{} {
+func (ce *ConnectionEvent) Measurements() map[string]interface{} {
 
 	return map[string]interface{}{
-		"outgoing": cl.Outgoing,
+		"outgoing": ce.Outgoing,
 	}
 }
 
@@ -41,18 +41,18 @@ type EnvelopeEvent struct {
 }
 
 // Collection returns the string representation of the structure
-func (cl *EnvelopeEvent) Collection() string {
+func (ee *EnvelopeEvent) Collection() string {
 	return envelopeEventCollection
 }
 
 // Measurements returns a map with all the metrics for the event
-func (cl *EnvelopeEvent) Measurements() map[string]interface{} {
+func (ee *EnvelopeEvent) Measurements() map[string]interface{} {
 
 	return map[string]interface{}{
-		"outgoing":      cl.Outgoing,
-		"content_type":  cl.ContentType,
-		"recipients":    cl.Recipients,
-		"payload_size":  cl.PayloadSize,
-		"envelope_size": cl.EnvelopeSize,
+		"outgoing":      ee.Outgoing,
+		"content_type":  ee.ContentType,
+		"recipients":    ee.Recipients,
+		"payload_size":  ee.PayloadSize,
+		"envelope_size": ee.EnvelopeSize,
 	}
 }
