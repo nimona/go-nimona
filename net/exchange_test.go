@@ -50,14 +50,14 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w2BlockHandled := false
 
 	w1.Handle("foo", func(block *blocks.Block) error {
-		suite.Equal(payload.Foo, block.Payload.(DummyPayload).Foo)
+		suite.Equal(payload.Foo, block.Payload.(*DummyPayload).Foo)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
 	w2.Handle("foo", func(block *blocks.Block) error {
-		suite.Equal(payload.Foo, block.Payload.(DummyPayload).Foo)
+		suite.Equal(payload.Foo, block.Payload.(*DummyPayload).Foo)
 		w2BlockHandled = true
 		wg.Done()
 		return nil

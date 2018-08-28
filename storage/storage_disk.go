@@ -32,8 +32,8 @@ func NewDiskStorage(path string) Storage {
 // Store saves the block in two files one for the metadata and one for
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
-func (d *diskStorage) Store(key string, block *blocks.Block) error {
-	blockID, err := block.ID()
+func (d *diskStorage) Store(key string, block []byte) error {
+	blockID, err := blocks.SumSha3(block)
 	if err != nil {
 		return err
 	}
@@ -57,13 +57,8 @@ func (d *diskStorage) Store(key string, block *blocks.Block) error {
 		return ErrExists
 	}
 
-	b, err := blocks.Marshal(block)
-	if err != nil {
-		return err
-	}
-
 	// Write the data in a file
-	if err := ioutil.WriteFile(dataFilePath, b, 0644); err != nil {
+	if err := ioutil.WriteFile(dataFilePath, block, 0644); err != nil {
 		return err
 	}
 
@@ -85,7 +80,7 @@ func (d *diskStorage) Store(key string, block *blocks.Block) error {
 	return nil
 }
 
-func (d *diskStorage) Get(key string) (*blocks.Block, error) {
+func (d *diskStorage) Get(key string) ([]byte, error) {
 	// metaFilePath := filepath.Join(d.path, key+metaExt)
 	dataFilePath := filepath.Join(d.path, key+dataExt)
 
@@ -105,6 +100,8 @@ func (d *diskStorage) Get(key string) (*blocks.Block, error) {
 		return nil, errors.New("could not read file")
 	}
 
+	return b, nil
+
 	// Read meta from the meta file
 	// mf, err := os.Open(metaFilePath)
 	// if err != nil {
@@ -120,12 +117,13 @@ func (d *diskStorage) Get(key string) (*blocks.Block, error) {
 	// 	return nil, err
 	// }
 
-	block, err := blocks.Unmarshal(b)
-	if err != nil {
-		return nil, errors.New("could not unmarshal file") // err
-	}
+	// TODO Add block unmarhsaling
+	// block, err := blocks.Unmarshal(b)
+	// if err != nil {
+	// 	return nil, errors.New("could not unmarshal file") // err
+	// }
 
-	return block, nil
+	// return block, nil
 
 	// return &Block{
 	// 	Key:  key,

@@ -5,16 +5,16 @@ import (
 )
 
 const (
-	// TypeForwarded is the type of PayloadForwarded Blocks
-	TypeForwarded = "nimona.forwarded"
+	// ForwardRequestType is the type of ForwardRequest Blocks
+	ForwardRequestType = "nimona.forwarded"
 )
 
 func init() {
-	blocks.RegisterContentType(TypeForwarded, PayloadForwarded{})
+	blocks.RegisterContentType(ForwardRequestType, ForwardRequest{})
 }
 
-// PayloadForwarded is the payload for proxied blocks
-type PayloadForwarded struct {
-	RecipientID string        `json:"recipientID"`
-	Block       *blocks.Block `json:"block"`
+// ForwardRequest is the payload for proxied blocks
+type ForwardRequest struct {
+	Recipient *blocks.Key `json:"recipient"`
+	Block     []byte      `json:"block"`
 }

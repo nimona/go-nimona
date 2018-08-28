@@ -14,10 +14,18 @@ func RegisterContentType(contentType string, content interface{}) {
 	registry.Register(contentType, content)
 }
 
-// GetContentType returns a content type's structure from a default registry
-// TODO Bad function name
-func GetContentType(contentType string) interface{} {
-	return registry.Get(contentType)
+// // GetContentType returns a content type's structure from a default registry
+// // TODO Bad function name
+// func GetContentType(contentType string) interface{} {
+// 	return registry.Get(contentType)
+// }
+
+func GetFromType(t reflect.Type) string {
+	return registry.GetFromType(t)
+}
+
+func GetType(contentType string) reflect.Type {
+	return registry.GetType(contentType)
 }
 
 // Registry holds content types and their structures
@@ -30,13 +38,30 @@ func (r *Registry) Register(contentType string, content interface{}) {
 	r.types.Store(contentType, reflect.TypeOf(content))
 }
 
-// Get returns a content type's structure
-func (r *Registry) Get(contentType string) interface{} {
+// // Get returns a content type's structure
+// func (r *Registry) Get(contentType string) interface{} {
+// 	t, ok := r.types.Load(contentType)
+// 	if !ok {
+// 		return nil
+// 	}
+// 	return reflect.New(t.(reflect.Type)).Elem().Interface()
+// }
+
+func (r *Registry) GetType(contentType string) reflect.Type {
 	t, ok := r.types.Load(contentType)
 	if !ok {
 		return nil
 	}
+	return t.(reflect.Type)
+}
 
-	v := reflect.New(t.(reflect.Type)).Elem()
-	return v.Interface()
+func (r *Registry) GetFromType(t reflect.Type) string {
+	var rt string
+	r.types.Range(func(k, v interface{}) bool {
+		if v.(reflect.Type).String() == t.String() {
+			rt = k.(string)
+		}
+		return true
+	})
+	return rt
 }

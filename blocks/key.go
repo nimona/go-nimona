@@ -8,71 +8,81 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Supported values for KeyType
+const (
+	EC             = "EC"  // Elliptic Curve
+	InvalidKeyType = ""    // Invalid KeyType
+	OctetSeq       = "oct" // Octet sequence (used to represent symmetric keys)
+	RSA            = "RSA" // RSA
+)
+
+const (
+	// P256 curve
+	P256 string = "P-256"
+	// P384 curve
+	P384 string = "P-384"
+	// P521 curve
+	P521 string = "P-521"
+)
+
+func init() {
+	RegisterContentType("key", Key{})
+}
+
 // Key defines the minimal interface for each of the
 // key types.
-type Key interface {
-	// Materialize creates the corresponding key. For example,
-	// RSA types would create *rsa.PublicKey or *rsa.PrivateKey,
-	// EC types would create *ecdsa.PublicKey or *ecdsa.PrivateKey,
-	// and OctetSeq types create a []byte key.
-	Materialize() interface{}
-
-	// Marshal returns a CBOR encoded Block with the indicated
-	// hashing algorithm, according to JWK (RFC 7638)
-	Marshal() ([]byte, error)
+type Key struct {
+	Algorithm              string `nimona:"alg,omitempty" json:"alg,omitempty"`
+	KeyID                  string `nimona:"kid,omitempty" json:"kid,omitempty"`
+	KeyType                string `nimona:"kty,omitempty" json:"kty,omitempty"`
+	KeyUsage               string `nimona:"use,omitempty" json:"use,omitempty"`
+	KeyOps                 string `nimona:"key_ops,omitempty" json:"key_ops,omitempty"`
+	X509CertChain          string `nimona:"x5c,omitempty" json:"x5c,omitempty"`
+	X509CertThumbprint     string `nimona:"x5t,omitempty" json:"x5t,omitempty"`
+	X509CertThumbprintS256 string `nimona:"x5tS256,omitempty" json:"x5tS256,omitempty"`
+	X509URL                string `nimona:"x5u,omitempty" json:"x5u,omitempty"`
+	Curve                  string `nimona:"crv,omitempty" json:"crv,omitempty"`
+	X                      []byte `nimona:"x,omitempty" json:"x,omitempty"`
+	Y                      []byte `nimona:"y,omitempty" json:"y,omitempty"`
+	D                      []byte `nimona:"d,omitempty" json:"d,omitempty"`
+	key                    interface{}
 }
 
-// New creates a Key from the given key.
-func New(key interface{}) (Key, error) {
-	if key == nil {
-		return nil, errors.New("missing key")
-	}
-
-	switch v := key.(type) {
-	// case *rsa.PrivateKey:
-	// 	return newRSAPrivateKey(v)
-	// case *rsa.PublicKey:
-	// 	return newRSAPublicKey(v)
-	case *ecdsa.PrivateKey:
-		return newECDSAPrivateKey(v)
-	case *ecdsa.PublicKey:
-		return newECDSAPublicKey(v)
-	// case []byte:
-	// 	return newSymmetricKey(v)
-	default:
-		return nil, errors.Errorf(`invalid key type %T`, key)
-	}
+func (b *Key) MarshalBlock() ([]byte, error) {
+	return Marshal(b)
 }
 
-// KeyFromBlock returns a Key from a Block of type key.
-func KeyFromBlock(k *Block) (Key, error) {
-	if k.Type != "key" {
-		return nil, errors.New("invalid Block type")
-	}
-
-	h := k.Payload.(KeyHeaders)
-	return KeyFromHeaders(&h)
+func (b *Key) UnmarshalBlock(bytes []byte) error {
+	return UnmarshalInto(bytes, b)
 }
 
-// KeyFromEncodedBlock returns a Key from an ID string.
-func KeyFromEncodedBlock(id string) (Key, error) {
-	b, err := Base58Decode(id)
+func (k *Key) Thumbprint() string {
+	b, err := k.MarshalBlock()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	block, err := Unmarshal(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return KeyFromBlock(block)
+	return Base58Encode(b)
 }
 
-// KeyFromHeaders returns a Key from a Key Headers.
-func KeyFromHeaders(h *KeyHeaders) (Key, error) {
+// GetPublicKey returns the public key
+func (k *Key) GetPublicKey() *Key {
+	if len(k.D) == 0 {
+		return k
+	}
+
+	pk := k.Materialize().(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey)
+	bpk, err := NewKey(pk)
+	if err != nil {
+		panic(err)
+	}
+
+	return bpk
+}
+
+func (k *Key) Materialize() interface{} {
+	// TODO cache on k.key
 	var curve elliptic.Curve
-	switch h.Curve {
+	switch k.Curve {
 	case P256:
 		curve = elliptic.P256()
 	case P384:
@@ -80,36 +90,67 @@ func KeyFromHeaders(h *KeyHeaders) (Key, error) {
 	case P521:
 		curve = elliptic.P521()
 	default:
-		return nil, errors.Errorf(`invalid curve name %s`, h.Curve)
+		panic("invalid curve name " + k.Curve)
+		// return nil, errors.Errorf(`invalid curve name %s`, h.Curve)
 	}
 
-	var key Key
-	switch h.KeyType {
+	var key interface{}
+	switch k.KeyType {
 	case EC:
-		if len(h.D) > 0 {
-			key = &ECDSAPrivateKey{
-				headers: h,
-				key: &ecdsa.PrivateKey{
-					PublicKey: ecdsa.PublicKey{
-						Curve: curve,
-						X:     bigIntFromBytes(h.X),
-						Y:     bigIntFromBytes(h.Y),
-					},
-					D: bigIntFromBytes(h.D),
+		if len(k.D) > 0 {
+			key = &ecdsa.PrivateKey{
+				PublicKey: ecdsa.PublicKey{
+					Curve: curve,
+					X:     bigIntFromBytes(k.X),
+					Y:     bigIntFromBytes(k.Y),
 				},
+				D: bigIntFromBytes(k.D),
 			}
 		} else {
-			key = &ECDSAPublicKey{
-				headers: h,
-				key: &ecdsa.PublicKey{
-					Curve: curve,
-					X:     bigIntFromBytes(h.X),
-					Y:     bigIntFromBytes(h.Y),
-				},
+			key = &ecdsa.PublicKey{
+				Curve: curve,
+				X:     bigIntFromBytes(k.X),
+				Y:     bigIntFromBytes(k.Y),
 			}
 		}
 	default:
-		return nil, errors.Errorf(`invalid kty %s`, h.KeyType)
+		panic("invalid kty")
+		// return nil, errors.Errorf(`invalid kty %s`, h.KeyType)
+	}
+
+	return key
+}
+
+// NewKey creates a Key from the given key.
+func NewKey(k interface{}) (*Key, error) {
+	if k == nil {
+		return nil, errors.New("missing key")
+	}
+
+	key := &Key{
+		key: k,
+	}
+
+	switch v := k.(type) {
+	// case *rsa.PrivateKey:
+	// 	return newRSAPrivateKey(v)
+	// case *rsa.PublicKey:
+	// 	return newRSAPublicKey(v)
+	case *ecdsa.PrivateKey:
+		key.KeyType = EC
+		key.Curve = v.Curve.Params().Name
+		key.X = v.X.Bytes()
+		key.Y = v.Y.Bytes()
+		key.D = v.D.Bytes()
+	case *ecdsa.PublicKey:
+		key.KeyType = EC
+		key.Curve = v.Curve.Params().Name
+		key.X = v.X.Bytes()
+		key.Y = v.Y.Bytes()
+	// case []byte:
+	// 	return newSymmetricKey(v)
+	default:
+		return nil, errors.Errorf(`invalid key type %T`, key)
 	}
 
 	return key, nil

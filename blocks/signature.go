@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"math/big"
 )
 
 var (
@@ -47,18 +46,38 @@ func (v Algorithm) String() string {
 	return string(v)
 }
 
-type Signature struct {
-	Key       Key
-	Alg       Algorithm
-	Signature []byte
+func init() {
+	RegisterContentType("signature", Signature{})
 }
 
-// New returns a signature given some bytes and a private key
-func NewSignature(key Key, alg Algorithm, data []byte) (*Signature, error) {
+type Signature struct {
+	Key       *Key      `nimona:"key" json:"key"`
+	Alg       Algorithm `nimona:"alg" json:"alg"`
+	Signature []byte    `nimona:"sig" json:"signature"`
+}
+
+// func (b *Signature) MarshalBlock() ([]byte, error) {
+// 	return Marshal(b)
+// }
+
+// func (b *Signature) UnmarshalBlock(bytes []byte) error {
+// 	return UnmarshalInto(bytes, b)
+// }
+
+// NewSignature returns a signature given some bytes and a private key
+func NewSignature(key *Key, alg Algorithm, digest []byte) (*Signature, error) {
+	if key == nil {
+		return nil, errors.New("missing key")
+	}
+
 	mKey := key.Materialize()
+	if mKey == nil {
+		return nil, errors.New("could not materialize")
+	}
+
 	pKey, ok := mKey.(*ecdsa.PrivateKey)
 	if !ok {
-		return nil, errors.New("only ecdsa keys are currently supported")
+		return nil, errors.New("only ecdsa private keys are currently supported")
 	}
 
 	if alg != ES256 {
@@ -66,8 +85,8 @@ func NewSignature(key Key, alg Algorithm, data []byte) (*Signature, error) {
 	}
 
 	// TODO implement more algorithms
-	digest := sha256.Sum256(data)
-	r, s, err := ecdsa.Sign(rand.Reader, pKey, digest[:])
+	hash := sha256.Sum256(digest)
+	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash[:])
 	if err != nil {
 		return nil, err
 	}
@@ -79,33 +98,61 @@ func NewSignature(key Key, alg Algorithm, data []byte) (*Signature, error) {
 	copy(signature[curveOrderByteSize-len(rBytes):], rBytes)
 	copy(signature[curveOrderByteSize*2-len(sBytes):], sBytes)
 
+	fmt.Println("___________ D", Base58Encode(digest))
+	fmt.Println("___________ H", Base58Encode(hash[:]))
+	fmt.Println("___________ R", Base58Encode(rBytes))
+	fmt.Println("___________ S", Base58Encode(sBytes))
+
 	return &Signature{
-		Key:       key,
+		Key:       key.GetPublicKey(),
 		Alg:       alg,
 		Signature: signature,
 	}, nil
 }
 
-// Verify the signature of some data given a public
-func Verify(signature *Signature, data []byte) error {
-	mKey := signature.Key.Materialize()
-	pKey, ok := mKey.(*ecdsa.PublicKey)
-	if !ok {
-		return errors.New("only ecdsa public keys are currently supported")
-	}
+// // Verify block
+// func Verify(block *Block) error {
+// 	b := &Block{
+// 		Type:     block.Type,
+// 		Metadata: block.Metadata,
+// 		Payload:  block.Payload,
+// 	}
 
-	// TODO implement more algorithms
-	if signature.Alg != ES256 {
-		return ErrAlgorithNotImplemented
-	}
+// 	digest, err := MarshalBlock(b)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	digest := sha256.Sum256(data)
-	rBytes := new(big.Int).SetBytes(signature.Signature[0:32])
-	sBytes := new(big.Int).SetBytes(signature.Signature[32:64])
-	fmt.Printf("___ %x %x %x", signature, rBytes, sBytes)
-	if ok := ecdsa.Verify(pKey, digest[:], rBytes, sBytes); !ok {
-		return ErrCouldNotVerify
-	}
+// 	si, err := Unmarshal(block.Signature)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	signature := si.(*Signature)
+
+// 	mKey := signature.Key.Materialize()
+// 	pKey, ok := mKey.(*ecdsa.PublicKey)
+// 	if !ok {
+// 		return errors.New("only ecdsa public keys are currently supported")
+// 	}
+
+// 	// TODO implement more algorithms
+// 	if signature.Alg != ES256 {
+// 		return ErrAlgorithNotImplemented
+// 	}
+
+// 	hash := sha256.Sum256(digest)
+// 	rBytes := new(big.Int).SetBytes(signature.Signature[0:32])
+// 	sBytes := new(big.Int).SetBytes(signature.Signature[32:64])
+
+// 	fmt.Println("___________ D", Base58Encode(digest))
+// 	fmt.Println("___________ H", Base58Encode(hash[:]))
+// 	fmt.Println("___________ R", Base58Encode(signature.Signature[0:32]))
+// 	fmt.Println("___________ S", Base58Encode(signature.Signature[32:64]))
+
+// 	if ok := ecdsa.Verify(pKey, hash[:], rBytes, sBytes); !ok {
+// 		return ErrCouldNotVerify
+// 	}
+
+// 	return nil
+// }

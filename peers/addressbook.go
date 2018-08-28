@@ -8,7 +8,6 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
-	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/log"
 )
 
@@ -19,7 +18,7 @@ type AddressBooker interface {
 
 	GetPeerInfo(peerID string) (*PeerInfo, error)
 	GetAllPeerInfo() ([]*PeerInfo, error)
-	PutPeerInfoFromBlock(*blocks.Block) error
+	PutPeerInfo(*PeerInfo) error
 
 	PutPeerStatus(peerID string, status Status)
 	GetPeerStatus(peerID string) Status
@@ -59,8 +58,7 @@ const (
 // NewAddressBook creates a new AddressBook
 func NewAddressBook(configPath string) (*AddressBook, error) {
 	ab := &AddressBook{
-		identities: &IdentityCollection{},
-		peers:      &PeerInfoCollection{},
+		peers: &PeerInfoCollection{},
 	}
 
 	spi, err := ab.LoadOrCreateLocalPeerInfo(configPath)
@@ -77,7 +75,6 @@ func NewAddressBook(configPath string) (*AddressBook, error) {
 
 // AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
-	identities    *IdentityCollection
 	peers         *PeerInfoCollection
 	peerStatus    sync.Map
 	localPeerLock sync.RWMutex
@@ -85,30 +82,24 @@ type AddressBook struct {
 }
 
 // PutPeerInfoFromBlock stores an block with a peer payload
-func (ab *AddressBook) PutPeerInfoFromBlock(block *blocks.Block) error {
-	ep := block.Payload.(PeerInfoPayload)
-
-	// TODO verify block?
-
-	if len(ep.Addresses) == 0 {
+func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
+	if len(peerInfo.Addresses) == 0 {
 		return errors.New("missing addresses")
 	}
 
-	exPeer, err := ab.GetPeerInfo(block.Metadata.Signer)
+	if peerInfo.Thumbprint() == ab.GetLocalPeerInfo().GetPeerInfo().Thumbprint() {
+		return nil
+	}
+
+	peerThumbprint := peerInfo.Thumbprint()
+	exPeer, err := ab.GetPeerInfo(peerThumbprint)
 	if err == nil && exPeer != nil {
-		if fmt.Sprintf("%x", exPeer.Block.Signature) == fmt.Sprintf("%x", block.Signature) {
+		if fmt.Sprintf("%x", exPeer.Signature) == fmt.Sprintf("%x", peerInfo.Signature) {
 			return nil
 		}
 	}
 
-	ab.PutPeerStatus(block.Metadata.Signer, StatusNew)
-
-	peerInfo := &PeerInfo{
-		ID:        block.Metadata.Signer,
-		Addresses: ep.Addresses,
-		Block:     block,
-	}
-
+	ab.PutPeerStatus(peerThumbprint, StatusNew)
 	return ab.peers.Put(peerInfo)
 }
 

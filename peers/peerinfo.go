@@ -3,24 +3,34 @@ package peers
 import "github.com/nimona/go-nimona/blocks"
 
 const (
-	// PeerInfoType is the content type for PeerInfoPayload
+	// PeerInfoType is the content type for PeerInfo
 	// TODO Needs better name
 	PeerInfoType = "peer.info"
 )
 
-// PeerInfoPayload content structure for PeerInfoType
-type PeerInfoPayload struct {
-	Addresses []string `json:"addresses"`
-}
-
 func init() {
-	blocks.RegisterContentType(PeerInfoType, PeerInfoPayload{})
+	blocks.RegisterContentType(PeerInfoType, PeerInfo{})
 }
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
-	ID        string   `json:"id"`
-	Addresses []string `json:"addresses"`
+	Addresses []string          `nimona:"addresses" json:"addresses"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	signWith  *blocks.Key
+}
 
-	Block *blocks.Block `json:"block"`
+func (pi *PeerInfo) Thumbprint() string {
+	return pi.Signature.Key.Thumbprint()
+}
+
+func (pi *PeerInfo) MarshalBlock() ([]byte, error) {
+	if pi.signWith != nil {
+		return blocks.Marshal(pi, blocks.SignWith(pi.signWith))
+	}
+
+	return blocks.Marshal(pi)
+}
+
+func (pi *PeerInfo) UnmarshalBlock(bytes []byte) error {
+	return blocks.UnmarshalInto(bytes, pi)
 }

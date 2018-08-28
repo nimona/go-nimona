@@ -21,7 +21,7 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo
 	}
 
 	// idPath := filepath.Join(path, "identity.json")
-	peerPath := filepath.Join(path, "peer.json")
+	peerPath := filepath.Join(path, "config.json")
 
 	if _, err := os.Stat(peerPath); err == nil {
 		return reg.LoadPrivatePeerInfo(peerPath)
@@ -48,61 +48,67 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 		return nil, err
 	}
 
-	sk, err := blocks.New(peerSigningKey)
+	sk, err := blocks.NewKey(peerSigningKey)
 	if err != nil {
 		return nil, err
 	}
 
-	msk, err := sk.Marshal()
-	if err != nil {
-		return nil, err
-	}
+	// msk, err := sk.MarshalBinary()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	pk, err := blocks.New(&peerSigningKey.PublicKey)
-	mpk, err := pk.Marshal()
-	if err != nil {
-		return nil, err
-	}
+	// pk, err := blocks.New(&peerSigningKey.PublicKey)
+	// mpk, err := pk.MarshalBinary()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	pi := &PrivatePeerInfo{
-		ID:         blocks.Base58Encode(mpk),
-		PrivateKey: blocks.Base58Encode(msk),
+		Key:       sk,
+		Addresses: []string{},
 	}
 
 	return pi, nil
+}
+
+type config struct {
+	Key string `json:"key"`
 }
 
 // LoadPrivatePeerInfo from a JSON encoded file
 func (reg *AddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error) {
-	raw, err := ioutil.ReadFile(path)
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	pi := &PrivatePeerInfo{}
-	if err := json.Unmarshal(raw, &pi); err != nil {
+	cfg := config{}
+	if err := json.Unmarshal(bytes, &cfg); err != nil {
 		return nil, err
+	}
+
+	keyBytes, err := blocks.Base58Decode(cfg.Key)
+	if err != nil {
+		return nil, err
+	}
+	keyi, err := blocks.Unmarshal(keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	key := keyi.(*blocks.Key)
+	pi := &PrivatePeerInfo{
+		Key: key,
 	}
 
 	return pi, nil
 }
 
-// StorePrivateIdentity to a JSON encoded file
-func (reg *AddressBook) StorePrivateIdentity(pi *PrivateIdentity, path string) error {
-	raw, err := json.MarshalIndent(pi, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(path, raw, 0644)
-}
-
 // StorePrivatePeerInfo to a JSON encoded file
 func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error {
-	raw, err := json.MarshalIndent(pi, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(path, raw, 0644)
+	key, _ := blocks.MarshalBase58(*pi.Key)
+	cfg := config{Key: key}
+	bc, _ := json.MarshalIndent(cfg, "", "  ")
+	return ioutil.WriteFile(path, bc, 0644)
 }
