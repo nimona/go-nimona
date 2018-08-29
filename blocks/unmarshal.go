@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/ugorji/go/codec"
@@ -77,11 +76,6 @@ func Unmarshal(b []byte, opts ...UnmarshalOption) (interface{}, error) {
 		rBytes := new(big.Int).SetBytes(signature.Signature[0:32])
 		sBytes := new(big.Int).SetBytes(signature.Signature[32:64])
 
-		fmt.Println("___________ D", Base58Encode(digest))
-		fmt.Println("___________ H", Base58Encode(hash[:]))
-		fmt.Println("___________ R", Base58Encode(signature.Signature[0:32]))
-		fmt.Println("___________ S", Base58Encode(signature.Signature[32:64]))
-
 		if ok := ecdsa.Verify(pKey, hash[:], rBytes, sBytes); !ok {
 			return nil, ErrCouldNotVerify
 		}
@@ -98,21 +92,7 @@ func Unmarshal(b []byte, opts ...UnmarshalOption) (interface{}, error) {
 		return nil, err
 	}
 
-	// spew.Dump(o.Payload)
-
-	// var p interface{}
-	// if cp := GetContentType(tb.Type); cp != nil {
-	// 	p = cp
-	// } else {
-	// 	p = map[string]interface{}{}
-	// }
-
 	t := GetType(tb.Type)
-	// pt := reflect.PtrTo(t)
-	// v := reflect.New(pt).Elem().Interface()
-	// rv := reflect.ValueOf(&v).Elem()
-	// rvt := rv.Elem().Type().Elem()
-	// rv.Set(reflect.New(rvt))
 	v := TypeToPtrInterface(t)
 
 	DecodeInto(o, v)

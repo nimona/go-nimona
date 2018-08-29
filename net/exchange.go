@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	cbor "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
@@ -189,24 +190,24 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	w.discovery = discovery
 
-	// ctx := context.Background()
-	// go func() {
-	// 	for {
-	// 		blocks, err := w.store.List()
-	// 		if err != nil {
-	// 			time.Sleep(time.Second * 10)
-	// 			continue
-	// 		}
+	ctx := context.Background()
+	go func() {
+		for {
+			blocks, err := w.store.List()
+			if err != nil {
+				time.Sleep(time.Second * 10)
+				continue
+			}
 
-	// 		for _, block := range blocks {
-	// 			if err := w.discovery.PutProviders(ctx, block); err != nil {
-	// 				w.logger.Warn("could not announce provider for block", zap.String("id", block))
-	// 			}
-	// 		}
+			for _, block := range blocks {
+				if err := w.discovery.PutProviders(ctx, block); err != nil {
+					w.logger.Warn("could not announce provider for block", zap.String("id", block))
+				}
+			}
 
-	// 		time.Sleep(time.Second * 30)
-	// 	}
-	// }()
+			time.Sleep(time.Second * 30)
+		}
+	}()
 }
 
 func (w *exchange) Handle(contentType string, h BlockHandler) error {
@@ -255,9 +256,6 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 			panic(err)
 		}
 
-		// fix payload
-		// blocks.Decode(block)
-
 		if err := w.process(v.(*blocks.Block), conn); err != nil {
 			w.Close("", conn)
 			return err
@@ -274,11 +272,6 @@ func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
 		fmt.Println(string(b))
 		fmt.Println("< ---------- inc block / end")
 	}
-
-	// if err := blocks.Verify(block); err != nil {
-	// 	w.logger.Warn("could not verify block", zap.Error(err))
-	// 	return err
-	// }
 
 	eb, _ := blocks.Marshal(block)
 	SendBlockEvent(
@@ -457,12 +450,11 @@ func (w *exchange) GetLocalBlocks() ([]string, error) {
 }
 
 func (w *exchange) writeBlock(ctx context.Context, bytes []byte, rw io.ReadWriter) error {
-	fmt.Println("WRITING BYTES", blocks.Base58Encode(bytes))
 	if _, err := rw.Write(bytes); err != nil {
 		return err
 	}
 
-	w.logger.Debug("writing block")
+	w.logger.Debug("writing block", zap.String("bytes", blocks.Base58Encode(bytes)))
 
 	return nil
 }
@@ -520,14 +512,6 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 	handshake := HandshakePayload{
 		PeerInfo: w.addressBook.GetLocalPeerInfo().GetPeerInfo(),
 	}
-
-	// handshakeBlock := blocks.Encode(handshake)
-	// if err := blocks.Sign(handshakeBlock, w.addressBook.GetLocalPeerInfo().Key); err != nil {
-	// 	panic(err)
-	// 	return nil, err
-	// }
-
-	fmt.Println("++++++", handshake.PeerInfo.Signature.Alg, blocks.Base58Encode(handshake.PeerInfo.Signature.Signature))
 
 	signer := w.addressBook.GetLocalPeerInfo().Key
 	handshakeBytes, err := blocks.Marshal(handshake, blocks.SignWith(signer))

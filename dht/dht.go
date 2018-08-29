@@ -186,7 +186,7 @@ func (nd *DHT) handleProvider(payload *Provider) {
 	// zap.String("blockID", blocks.BestEffortID(incBlock)),
 	// zap.String("requestID", incBlock.GetHeader("requestID")))
 
-	if err := nd.store.PutProvider(*payload); err != nil {
+	if err := nd.store.PutProvider(payload); err != nil {
 		logger.Debug("could not store provider", zap.Error(err))
 		// TODO handle error
 	}
@@ -290,7 +290,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 // PutProviders adds a key of something we provide
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
-	provider := Provider{
+	provider := &Provider{
 		BlockIDs: []string{key},
 	}
 	signer := nd.addressBook.GetLocalPeerInfo().Key
@@ -356,6 +356,9 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 		for _, blockID := range provider.BlockIDs {
 			if _, ok := allProviders[blockID]; !ok {
 				allProviders[blockID] = []string{}
+			}
+			if provider.Signature == nil {
+				continue
 			}
 			allProviders[blockID] = append(allProviders[blockID], provider.Signature.Key.Thumbprint())
 		}

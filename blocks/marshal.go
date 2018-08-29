@@ -63,23 +63,6 @@ func MarshalBlock(block *Block, opts ...MarshalOption) ([]byte, error) {
 		}
 	}
 
-	// TODO not sure this is needed any more
-	// this conversion is needed in order to avoid an endless loop when Encode
-	// is being called from the Block's CodecEncodeSelf method, as MarshalBlock
-	// also uses the same cbor Marshaler that end up calling CodecEncodeSelf.
-	// b := struct {
-	// 	Type      string            `nimona:"type,omitempty" json:"type,omitempty"`
-	// 	Headers   map[string]string `nimona:"headers,omitempty" json:"headers,omitempty"`
-	// 	Metadata  *Metadata         `nimona:"metadata,omitempty" json:"metadata,omitempty"`
-	// 	Payload   interface{}       `nimona:"payload,omitempty" json:"payload,omitempty"`
-	// 	Signature []byte            `nimona:"signature,omitempty" json:"signature,omitempty"`
-	// }{
-	// 	Type:      block.Type,
-	// 	Headers:   block.Headers,
-	// 	Metadata:  block.Metadata,
-	// 	Payload:   block.Payload,
-	// 	Signature: block.Signature,
-	// }
 	bytes := []byte{}
 	enc := codec.NewEncoderBytes(&bytes, CborHandler())
 	if err := enc.Encode(block); err != nil {
@@ -88,85 +71,6 @@ func MarshalBlock(block *Block, opts ...MarshalOption) ([]byte, error) {
 
 	return bytes, nil
 }
-
-// func Unmarshal(b []byte) (interface{}, error) {
-// 	tb := &Block{}
-// 	dec := codec.NewDecoderBytes(b, CborHandler())
-// 	if err := dec.Decode(tb); err != nil {
-// 		return nil, err
-// 	}
-
-// 	signatureBytes := tb.Signature
-// 	tb.Signature = nil
-
-// 	// verify
-// 	digest, err := getDigest(tb)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	si, err := Unmarshal(signatureBytes)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	signature := si.(*Signature)
-// 	mKey := signature.Key.Materialize()
-// 	pKey, ok := mKey.(*ecdsa.PublicKey)
-// 	if !ok {
-// 		return nil, errors.New("only ecdsa public keys are currently supported")
-// 	}
-
-// 	// TODO implement more algorithms
-// 	if signature.Alg != ES256 {
-// 		return nil, ErrAlgorithNotImplemented
-// 	}
-
-// 	hash := sha256.Sum256(digest)
-// 	rBytes := new(big.Int).SetBytes(signature.Signature[0:32])
-// 	sBytes := new(big.Int).SetBytes(signature.Signature[32:64])
-
-// 	fmt.Println("___________ D", Base58Encode(digest))
-// 	fmt.Println("___________ H", Base58Encode(hash[:]))
-// 	fmt.Println("___________ R", Base58Encode(signature.Signature[0:32]))
-// 	fmt.Println("___________ S", Base58Encode(signature.Signature[32:64]))
-
-// 	if ok := ecdsa.Verify(pKey, hash[:], rBytes, sBytes); !ok {
-// 		return nil, ErrCouldNotVerify
-// 	}
-
-// 	// unmarshal
-// 	o := &Block{
-// 		Type:    tb.Type,
-// 		Payload: map[string]interface{}{},
-// 	}
-
-// 	dec = codec.NewDecoderBytes(b, CborHandler())
-// 	if err := dec.Decode(o); err != nil {
-// 		return nil, err
-// 	}
-
-// 	// spew.Dump(o.Payload)
-
-// 	// var p interface{}
-// 	// if cp := GetContentType(tb.Type); cp != nil {
-// 	// 	p = cp
-// 	// } else {
-// 	// 	p = map[string]interface{}{}
-// 	// }
-
-// 	t := GetType(tb.Type)
-// 	// pt := reflect.PtrTo(t)
-// 	// v := reflect.New(pt).Elem().Interface()
-// 	// rv := reflect.ValueOf(&v).Elem()
-// 	// rvt := rv.Elem().Type().Elem()
-// 	// rv.Set(reflect.New(rvt))
-// 	v := TypeToPtrInterface(t)
-
-// 	DecodeInto(o, v)
-
-// 	return v, nil
-// }
 
 // TODO make both encode and decode accept both ptrs and structs
 
@@ -189,19 +93,6 @@ func TypeToInterface(t reflect.Type) interface{} {
 	rv.Set(reflect.New(rvt))
 	return v
 }
-
-// // UnmarshalInto something from cbor
-// func UnmarshalInto(b []byte, p interface{}) error {
-// 	block := &Block{}
-// 	dec := codec.NewDecoderBytes(b, CborHandler())
-// 	if err := dec.Decode(block); err != nil {
-// 		return err
-// 	}
-
-// 	DecodeInto(block, p)
-
-// 	return nil
-// }
 
 // CborHandler for un/marshaling blocks
 func CborHandler() *codec.CborHandle {

@@ -2,7 +2,6 @@ package peers
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 
 	"github.com/nimona/go-nimona/blocks"
 )
@@ -24,9 +23,9 @@ func (pi *PrivatePeerInfo) GetPeerInfo() *PeerInfo {
 		signWith:  pi.Key,
 	}
 	// HACK to add signature, we should only be signing this when it changes
+	// TODO(geoah) not sure if this is needed any more, I think it is
 	b, _ := blocks.Marshal(ppi, blocks.SignWith(pi.Key))
 	uppi, _ := blocks.Unmarshal(b)
-	fmt.Println(">>>>>>>>>>>>>>", uppi.(*PeerInfo).Signature.Alg)
 	return uppi.(*PeerInfo)
 }
 
@@ -34,14 +33,6 @@ func (pi *PrivatePeerInfo) GetPeerInfo() *PeerInfo {
 func (pi *PrivatePeerInfo) GetPrivateKey() *blocks.Key {
 	return pi.Key
 }
-
-// func (pi *PrivatePeerInfo) MarshalBlock() ([]byte, error) {
-// 	return blocks.Marshal(pi, blocks.SignWith(pi.Key))
-// }
-
-// func (pi *PrivatePeerInfo) UnmarshalBlock(bytes []byte) error {
-// 	return blocks.UnmarshalInto(bytes, pi)
-// }
 
 // GetPublicKey returns the public key
 func (pi *PrivatePeerInfo) GetPublicKey() *blocks.Key {

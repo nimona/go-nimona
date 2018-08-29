@@ -22,7 +22,7 @@ func newStore() (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) PutProvider(provider Provider) error {
+func (s *Store) PutProvider(provider *Provider) error {
 	// TODO verify payload type
 	b, _ := blocks.Marshal(provider)
 	h, _ := blocks.SumSha3(b)
@@ -30,10 +30,10 @@ func (s *Store) PutProvider(provider Provider) error {
 	return nil
 }
 
-func (s *Store) GetProviders(key string) ([]Provider, error) {
-	providers := []Provider{}
+func (s *Store) GetProviders(key string) ([]*Provider, error) {
+	providers := []*Provider{}
 	s.providers.Range(func(k, v interface{}) bool {
-		provider := v.(Provider)
+		provider := v.(*Provider)
 		for _, id := range provider.BlockIDs {
 			if id == key {
 				providers = append(providers, provider)
@@ -47,10 +47,10 @@ func (s *Store) GetProviders(key string) ([]Provider, error) {
 }
 
 // GetAllProviders returns all providers and the values they are providing
-func (s *Store) GetAllProviders() ([]Provider, error) {
-	providers := []Provider{}
+func (s *Store) GetAllProviders() ([]*Provider, error) {
+	providers := []*Provider{}
 	s.providers.Range(func(k, v interface{}) bool {
-		providers = append(providers, v.(Provider))
+		providers = append(providers, v.(*Provider))
 		return true
 	})
 

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 )
 
 var (
@@ -98,61 +97,9 @@ func NewSignature(key *Key, alg Algorithm, digest []byte) (*Signature, error) {
 	copy(signature[curveOrderByteSize-len(rBytes):], rBytes)
 	copy(signature[curveOrderByteSize*2-len(sBytes):], sBytes)
 
-	fmt.Println("___________ D", Base58Encode(digest))
-	fmt.Println("___________ H", Base58Encode(hash[:]))
-	fmt.Println("___________ R", Base58Encode(rBytes))
-	fmt.Println("___________ S", Base58Encode(sBytes))
-
 	return &Signature{
 		Key:       key.GetPublicKey(),
 		Alg:       alg,
 		Signature: signature,
 	}, nil
 }
-
-// // Verify block
-// func Verify(block *Block) error {
-// 	b := &Block{
-// 		Type:     block.Type,
-// 		Metadata: block.Metadata,
-// 		Payload:  block.Payload,
-// 	}
-
-// 	digest, err := MarshalBlock(b)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	si, err := Unmarshal(block.Signature)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	signature := si.(*Signature)
-
-// 	mKey := signature.Key.Materialize()
-// 	pKey, ok := mKey.(*ecdsa.PublicKey)
-// 	if !ok {
-// 		return errors.New("only ecdsa public keys are currently supported")
-// 	}
-
-// 	// TODO implement more algorithms
-// 	if signature.Alg != ES256 {
-// 		return ErrAlgorithNotImplemented
-// 	}
-
-// 	hash := sha256.Sum256(digest)
-// 	rBytes := new(big.Int).SetBytes(signature.Signature[0:32])
-// 	sBytes := new(big.Int).SetBytes(signature.Signature[32:64])
-
-// 	fmt.Println("___________ D", Base58Encode(digest))
-// 	fmt.Println("___________ H", Base58Encode(hash[:]))
-// 	fmt.Println("___________ R", Base58Encode(signature.Signature[0:32]))
-// 	fmt.Println("___________ S", Base58Encode(signature.Signature[32:64]))
-
-// 	if ok := ecdsa.Verify(pKey, hash[:], rBytes, sBytes); !ok {
-// 		return ErrCouldNotVerify
-// 	}
-
-// 	return nil
-// }

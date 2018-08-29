@@ -1,9 +1,5 @@
 package blocks
 
-import (
-	"fmt"
-)
-
 // TODO should sign return?
 func Sign(block *Block, key *Key) error {
 	digest, err := getDigest(block)
@@ -22,9 +18,6 @@ func Sign(block *Block, key *Key) error {
 	}
 
 	block.Signature = bs
-
-	fmt.Println("SIGNED IT WITH", Base58Encode(block.Signature))
-
 	return nil
 }
 
@@ -34,9 +27,6 @@ func getDigest(block *Block) ([]byte, error) {
 		Metadata: block.Metadata,
 		Payload:  block.Payload,
 	}
-
-	// x, _ := json.MarshalIndent(b, "", "  ")
-	// fmt.Println(string(x))
 
 	digest, err := MarshalBlock(b)
 	if err != nil {
