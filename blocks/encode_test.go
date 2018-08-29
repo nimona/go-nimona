@@ -147,7 +147,7 @@ func TestEncodeBlock(t *testing.T) {
 
 	eb := &Block{
 		Type:      "a-type",
-		Signature: quickBase58Decode("952dJcyEyxSbDRYD6Wv7Yqs9h8JnH3H36xXUQ2kiZ1LMUfgf3Xtb372"),
+		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
 		Payload: map[string]interface{}{
 			"a": "a-value",
 		},
