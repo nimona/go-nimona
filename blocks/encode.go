@@ -95,7 +95,21 @@ func (s *Struct) Fill() {
 			continue
 		}
 
+		if tagOpts.Has("header") {
+			if val.Interface().(string) == "" {
+				continue
+			}
+			if block.Headers == nil {
+				block.Headers = map[string]string{}
+			}
+			block.Headers[tagName] = val.Interface().(string)
+			continue
+		}
+
 		if tagOpts.Has("parent") {
+			if val.Interface().(string) == "" {
+				continue
+			}
 			if block.Metadata == nil {
 				block.Metadata = &Metadata{}
 			}

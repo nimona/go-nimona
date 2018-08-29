@@ -137,12 +137,14 @@ func TestEncodeBlock(t *testing.T) {
 		A string     `nimona:"a"`
 		T string     `nimona:",type"`
 		S *Signature `nimona:",signature"`
+		X string     `nimona:"x-h,header"`
 	}{
 		A: "a-value",
 		T: "a-type",
 		S: &Signature{
 			Alg: "a-alg",
 		},
+		X: "x-header",
 	}
 
 	eb := &Block{
@@ -150,6 +152,31 @@ func TestEncodeBlock(t *testing.T) {
 		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
 		Payload: map[string]interface{}{
 			"a": "a-value",
+		},
+		Headers: map[string]string{
+			"x-h": "x-header",
+		},
+	}
+
+	b := New(s).Block()
+	assert.Equal(t, eb, b)
+}
+
+func TestEncodeBlockMeta(t *testing.T) {
+	s := struct {
+		A      string `nimona:"a"`
+		Parent string `nimona:",parent"`
+	}{
+		A:      "a-value",
+		Parent: "p",
+	}
+
+	eb := &Block{
+		Payload: map[string]interface{}{
+			"a": "a-value",
+		},
+		Metadata: &Metadata{
+			Parent: "p",
 		},
 	}
 

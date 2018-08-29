@@ -31,7 +31,6 @@ func DecodeInto(b *Block, r interface{}) {
 
 // Decode block and its payload into user-specified struct
 func (s *Struct) Decode() {
-	block := s.block
 	payload := s.block.Payload.(map[string]interface{})
 
 	cfg := &mapstructure.DecoderConfig{
@@ -85,6 +84,16 @@ func (s *Struct) Decode() {
 			name = tagName
 		}
 
+		if tagOpts.Has("header") {
+			v, ok := s.block.Headers[tagName]
+			if !ok {
+				continue
+			}
+			vval := reflect.ValueOf(v)
+			val.Set(vval)
+			continue
+		}
+
 		if tagOpts.Has("signature") {
 			sig := &Signature{}
 			err := UnmarshalInto(s.block.Signature, sig)
@@ -97,10 +106,14 @@ func (s *Struct) Decode() {
 		}
 
 		if tagOpts.Has("parent") {
-			if block.Metadata == nil {
-				block.Metadata = &Metadata{}
+			if s.block.Metadata == nil {
+				continue
 			}
-			block.Metadata.Parent = val.Interface().(string)
+			if s.block.Metadata.Parent == "" {
+				continue
+			}
+			vval := reflect.ValueOf(s.block.Metadata.Parent)
+			val.Set(vval)
 			continue
 		}
 
