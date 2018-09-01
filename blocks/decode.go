@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"reflect"
+	"unicode"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -78,6 +79,10 @@ func (s *Struct) Decode() {
 	for _, field := range fields {
 		name := field.Name
 		val := s.value.FieldByName(name)
+
+		if unicode.IsLower(rune(name[0])) {
+			continue
+		}
 
 		tagName, tagOpts := parseTag(field.Tag.Get(s.TagName))
 		if tagName != "" {

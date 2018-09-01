@@ -60,6 +60,7 @@ func (q *query) Run(ctx context.Context) {
 				switch payload := incPayload.(type) {
 				case *peers.PeerInfo:
 					q.outgoingPayloads <- payload
+					// TODO next doesn't work
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				case *Provider:
 					// TODO check if id is in payload.BlockIDs
@@ -69,6 +70,7 @@ func (q *query) Run(ctx context.Context) {
 							break
 						}
 					}
+					// TODO next doesn't work
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
@@ -127,18 +129,14 @@ func (q *query) next() {
 		q.contactedPeers.Store(peerInfo.Thumbprint(), true)
 	}
 
-	// var payloadType string
 	var req interface{}
-
 	switch q.queryType {
 	case PeerInfoQuery:
-		// payloadType = PeerInfoRequestType
 		req = PeerInfoRequest{
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
 	case ProviderQuery:
-		// payloadType = ProviderRequestType
 		req = ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
@@ -149,8 +147,6 @@ func (q *query) next() {
 
 	ctx := context.Background()
 	signer := q.dht.addressBook.GetLocalPeerInfo().Key
-	// block := blocks.NewEphemeralBlock(payloadType, req)
-	// block.SetHeader("requestID", q.id)
 	for _, peer := range peersToAsk {
 		if err := q.dht.exchange.Send(ctx, req, peer, blocks.SignWith(signer)); err != nil {
 			panic(err)

@@ -47,7 +47,7 @@ type Hello struct {
 
 func init() {
 	// telemetry.SetupKeenCollector()
-	blocks.RegisterContentType("demo.hello", Hello{})
+	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
 }
 
 func decodeSignature(sig string) *blocks.Signature {
@@ -176,7 +176,7 @@ func main() {
 			}
 			providers := []string{}
 			for provider := range rs {
-				providers = append(providers, provider)
+				providers = append(providers, provider.Thumbprint())
 			}
 			c.Println("* " + key)
 			for _, peerID := range providers {
@@ -299,7 +299,7 @@ func main() {
 				return
 			}
 			signer := reg.GetLocalPeerInfo().Key
-			if err := n.Send(ctx, Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
+			if err := n.Send(ctx, &Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return
 			}

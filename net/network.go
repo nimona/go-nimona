@@ -118,8 +118,12 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 		addresses = append(addresses, newAddress)
 	}
 
+	logger.Info("Started listening", zap.Strings("addresses", addresses))
+
 	// TODO Replace with actual relay peer ids
-	addresses = append(addresses, "relay:01x2Adrt7msBM2ZBW16s9SbJcnnqwG8UQme9VTcka5s7T9Z1")
+	if rp := os.Getenv("RELAY"); rp != "" {
+		addresses = append(addresses, "relay:"+rp)
+	}
 
 	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
 	localPeerInfo.Addresses = addresses

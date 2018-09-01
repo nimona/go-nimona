@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ugorji/go/codec"
@@ -92,8 +93,15 @@ func Unmarshal(b []byte, opts ...UnmarshalOption) (interface{}, error) {
 		return nil, err
 	}
 
+	var v interface{}
+	v = map[string]interface{}{}
+
 	t := GetType(tb.Type)
-	v := TypeToPtrInterface(t)
+	if t != nil {
+		v = TypeToPtrInterface(t)
+	} else {
+		fmt.Println("COULD NOT FIND TYPE FOR", tb.Type, Base58Encode(b))
+	}
 
 	DecodeInto(o, v)
 

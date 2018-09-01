@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 
+	"github.com/nimona/go-nimona/blocks"
 	"github.com/nimona/go-nimona/peers"
 )
 
@@ -13,7 +14,7 @@ type Discoverer interface {
 	// PutProviders adds a key of something we provide
 	PutProviders(ctx context.Context, key string) error
 	// GetProviders returns Peer IDs that provide a key
-	GetProviders(ctx context.Context, key string) (chan string, error)
+	GetProviders(ctx context.Context, key string) (chan *blocks.Key, error)
 	// GetAllProviders returns all local known providers and the keys they provide
 	GetAllProviders() (map[string][]string, error)
 }

@@ -26,8 +26,9 @@ func ParseMarshalOptions(opts ...MarshalOption) *MarshalOptions {
 }
 
 type MarshalOptions struct {
-	Key  *Key
-	Sign bool
+	Key         *Key
+	Sign        bool
+	SkipHeaders bool
 }
 
 type MarshalOption func(*MarshalOptions)
@@ -36,6 +37,11 @@ func SignWith(key *Key) MarshalOption {
 	return func(opts *MarshalOptions) {
 		opts.Key = key
 		opts.Sign = true
+	}
+}
+func SkipHeaders() MarshalOption {
+	return func(opts *MarshalOptions) {
+		opts.SkipHeaders = true
 	}
 }
 
@@ -56,6 +62,10 @@ func Marshal(p interface{}, opts ...MarshalOption) ([]byte, error) {
 
 func MarshalBlock(block *Block, opts ...MarshalOption) ([]byte, error) {
 	options := ParseMarshalOptions(opts...)
+
+	if options.SkipHeaders {
+		block.Headers = nil
+	}
 
 	if options.Sign && options.Key != nil {
 		if err := Sign(block, options.Key); err != nil {

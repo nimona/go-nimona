@@ -14,6 +14,7 @@ func init() {
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
+	RequestID string            `nimona:"requestID,header" json:"-"`
 	Addresses []string          `nimona:"addresses" json:"addresses"`
 	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 	signWith  *blocks.Key

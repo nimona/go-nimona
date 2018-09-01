@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"path"
 	"sync"
 	"testing"
@@ -23,23 +22,24 @@ type exchangeTestSuite struct {
 }
 
 type DummyPayload struct {
-	Foo string
+	Foo       string            `nimona:"foo"`
+	Signature *blocks.Signature `nimona:",signature"`
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
 	_, p1, w1, r1 := suite.newPeer()
 	_, p2, w2, r2 := suite.newPeer()
 
-	err := r2.PutPeerInfoFromBlock(p1.Block())
+	err := r2.PutPeerInfo(p1.GetPeerInfo())
 	suite.NoError(err)
-	err = r1.PutPeerInfoFromBlock(p2.Block())
+	err = r1.PutPeerInfo(p2.GetPeerInfo())
 	suite.NoError(err)
 
-	blocks.RegisterContentType("foo.bar", DummyPayload{})
+	blocks.RegisterContentType("foo", DummyPayload{})
 
 	time.Sleep(time.Second)
 
-	payload := DummyPayload{
+	exPayload := &DummyPayload{
 		Foo: "bar",
 	}
 
@@ -49,15 +49,15 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("foo", func(block *blocks.Block) error {
-		suite.Equal(payload.Foo, block.Payload.(*DummyPayload).Foo)
+	w1.Handle("foo", func(payload interface{}) error {
+		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(block *blocks.Block) error {
-		suite.Equal(payload.Foo, block.Payload.(*DummyPayload).Foo)
+	w2.Handle("foo", func(payload interface{}) error {
+		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w2BlockHandled = true
 		wg.Done()
 		return nil
@@ -65,14 +65,13 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 
 	ctx := context.Background()
 
-	block := blocks.NewBlock("foo.bar", payload)
-	err = w2.Send(ctx, block, p1.ID)
+	err = w2.Send(ctx, exPayload, p1.GetPublicKey(), blocks.SignWith(p2.Key))
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
 
-	block = blocks.NewBlock("foo.bar", payload)
-	err = w1.Send(ctx, block, p2.ID)
+	// TODO should be able to send not signed
+	err = w1.Send(ctx, exPayload, p2.GetPublicKey(), blocks.SignWith(p1.Key))
 	suite.NoError(err)
 
 	wg.Wait()
@@ -164,13 +163,9 @@ func (suite *exchangeTestSuite) newPeer() (int, *peers.PrivatePeerInfo, nnet.Exc
 	storagePath := path.Join(td, "storage")
 	dpr := storage.NewDiskStorage(storagePath)
 	wre, _ := nnet.NewExchange(ab, dpr)
-	listener, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
+	_, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)
-	port := listener.Addr().(*net.TCPAddr).Port
-	lpi := ab.GetLocalPeerInfo()
-	lpi.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", port)}
-	ab.PutLocalPeerInfo(lpi)
-	return port, ab.GetLocalPeerInfo(), wre, ab
+	return 0, ab.GetLocalPeerInfo(), wre, ab
 }
 
 func TestExchangeTestSuite(t *testing.T) {

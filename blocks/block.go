@@ -48,31 +48,21 @@ func NewBlock(contentType string, payload interface{}, recipients ...*Key) *Bloc
 	return block
 }
 
-// // SetHeader pair in block
-// func (block *Block) SetHeader(k, v string) {
-// 	if block.Headers == nil {
-// 		block.Headers = map[string]string{}
-// 	}
-// 	block.Headers[k] = v
-// }
-
-// // GetHeader by key
-// func (block *Block) GetHeader(k string) string {
-// 	if block.Headers == nil {
-// 		return ""
-// 	}
-// 	return block.Headers[k]
-// }
-
-// // IsSigned checks if the block is signed
-// func (block *Block) IsSigned() bool {
-// 	// TODO make this part of the block and digest?
-// 	return block.Signature != nil
-// }
-
 // ID calculated the id for the block
 func (block *Block) ID() string {
-	b, _ := Marshal(block)
-	hash, _ := SumSha3(b)
-	return hash
+	return ID(block.Payload)
+}
+
+func ID(payload interface{}) string {
+	bytes, err := Marshal(payload, SkipHeaders())
+	if err != nil {
+		panic(err)
+	}
+
+	hash, err := SumSha3(bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(hash)
 }

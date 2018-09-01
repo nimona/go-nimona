@@ -5,13 +5,40 @@ import (
 	"sync"
 )
 
+func ParseRegistryOptions(opts ...RegistryOption) *RegistryOptions {
+	options := &RegistryOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+	return options
+}
+
+type RegistryOptions struct {
+	Persist bool
+}
+
+type RegistryOption func(*RegistryOptions)
+
+func Persist() RegistryOption {
+	return func(opts *RegistryOptions) {
+		opts.Persist = true
+	}
+}
+
 var registry = &Registry{
-	types: sync.Map{},
+	types:   sync.Map{},
+	persist: sync.Map{},
 }
 
 // RegisterContentType registers types and content on a default registry
-func RegisterContentType(contentType string, content interface{}) {
+func RegisterContentType(contentType string, content interface{}, opts ...RegistryOption) {
 	registry.Register(contentType, content)
+	registry.persist.Store(contentType, true)
+}
+
+func ShouldPersist(contentType string) bool {
+	_, ok := registry.persist.Load(contentType)
+	return ok
 }
 
 // // GetContentType returns a content type's structure from a default registry
@@ -30,11 +57,13 @@ func GetType(contentType string) reflect.Type {
 
 // Registry holds content types and their structures
 type Registry struct {
-	types sync.Map
+	types   sync.Map
+	persist sync.Map
 }
 
 // Register a content type and its structure
-func (r *Registry) Register(contentType string, content interface{}) {
+func (r *Registry) Register(contentType string, content interface{}, opts ...RegistryOption) {
+	// options := ParseRegistryOptions(opts...)
 	r.types.Store(contentType, reflect.TypeOf(content))
 }
 

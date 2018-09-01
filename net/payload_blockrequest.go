@@ -15,7 +15,8 @@ func init() {
 
 // BlockRequest payload for BlockRequestType
 type BlockRequest struct {
-	RequestID string `json:"requestID"`
-	ID        string `json:"id"`
-	response  chan *blocks.Block
+	RequestID string            `nimona:"requestID,header" json:"requestID"`
+	ID        string            `nimona:"id" json:"id"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	response  chan interface{}
 }

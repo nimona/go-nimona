@@ -131,17 +131,17 @@ func (nd *DHT) handlePeerInfo(payload *peers.PeerInfo) {
 	nd.addressBook.PutPeerInfo(payload)
 
 	// TODO headers
-	// rID := incBlock.GetHeader("requestID")
-	// if rID == "" {
-	// 	return
-	// }
+	rID := payload.RequestID
+	if rID == "" {
+		return
+	}
 
-	// q, exists := nd.queries.Load(rID)
-	// if !exists {
-	// 	return
-	// }
+	q, exists := nd.queries.Load(rID)
+	if !exists {
+		return
+	}
 
-	// q.(*query).incomingPayloads <- incBlock
+	q.(*query).incomingPayloads <- payload
 }
 
 func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
@@ -159,7 +159,7 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 	for _, provider := range providers {
 		copy := Provider{}
 		copier.Copy(&copy, &provider)
-		// cProviderBlock.SetHeader("requestID", payload.RequestID)
+		copy.RequestID = payload.RequestID
 		logger.Debug("found provider block")
 		nd.exchange.Send(ctx, copy, payload.Signature.Key, blocks.SignWith(signer))
 		// TODO handle and log error
@@ -169,8 +169,8 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 	for _, peerInfo := range closestPeerInfos {
 		copy := peers.PeerInfo{}
 		copier.Copy(&copy, &peerInfo)
-		// cBlock.SetHeader("requestID", payload.RequestID)
-		// logger.Debug("sending provider block", zap.String("blockID", blocks.BestEffortID(cBlock)))
+		copy.RequestID = payload.RequestID
+		logger.Debug("sending provider block", zap.String("blockID", blocks.ID(copy)))
 		if err := nd.exchange.Send(ctx, copy, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 			logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 			return
@@ -182,26 +182,26 @@ func (nd *DHT) handleProvider(payload *Provider) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
-	// logger.Debug("handling provider",
-	// zap.String("blockID", blocks.BestEffortID(incBlock)),
-	// zap.String("requestID", incBlock.GetHeader("requestID")))
+	logger.Debug("handling provider",
+		zap.String("blockID", blocks.ID(payload)),
+		zap.String("requestID", payload.RequestID))
 
 	if err := nd.store.PutProvider(payload); err != nil {
 		logger.Debug("could not store provider", zap.Error(err))
 		// TODO handle error
 	}
 
-	// rID := incBlock.GetHeader("requestID")
-	// if rID == "" {
-	// 	return
-	// }
+	rID := payload.RequestID
+	if rID == "" {
+		return
+	}
 
-	// q, exists := nd.queries.Load(rID)
-	// if !exists {
-	// 	return
-	// }
+	q, exists := nd.queries.Load(rID)
+	if !exists {
+		return
+	}
 
-	// q.(*query).incomingPayloads <- incBlock
+	q.(*query).incomingPayloads <- payload
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
@@ -309,7 +309,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 }
 
 // GetProviders will look for peers that provide a key
-func (nd *DHT) GetProviders(ctx context.Context, key string) (chan string, error) {
+func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *blocks.Key, error) {
 	q := &query{
 		dht:              nd,
 		id:               net.RandStringBytesMaskImprSrc(8),
@@ -323,16 +323,16 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan string, error
 
 	go q.Run(ctx)
 
-	out := make(chan string, 1)
-	go func(q *query, out chan string) {
+	out := make(chan *blocks.Key, 1)
+	go func(q *query, out chan *blocks.Key) {
 		defer close(out)
 		for {
 			select {
 			case payload := <-q.outgoingPayloads:
 				switch v := payload.(type) {
-				case Provider:
+				case *Provider:
 					// TODO do we need to check payload and id?
-					out <- v.Signature.Key.Thumbprint()
+					out <- v.Signature.Key
 				}
 			case <-time.After(maxQueryTime):
 				return
@@ -364,28 +364,4 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 		}
 	}
 	return allProviders, nil
-}
-
-// func getPeerIDsFromPeerInfos(peerInfos []*peers.PeerInfo) []string {
-// 	peerIDs := []string{}
-// 	for _, peerInfo := range peerInfos {
-// 		peerIDs = append(peerIDs, peerInfo.Thumbprint())
-// 	}
-// 	return peerIDs
-// }
-
-// func getBlocksFromPeerInfos(peerInfos []*peers.PeerInfo) []*blocks.Block {
-// 	blocks := []*blocks.Block{}
-// 	for _, peerInfo := range peerInfos {
-// 		blocks = append(blocks, peerInfo.Block)
-// 	}
-// 	return blocks
-// }
-
-func blocksOrNil(c []*blocks.Block) []*blocks.Block {
-	if len(c) == 0 {
-		return nil
-	}
-
-	return c
 }

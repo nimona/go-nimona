@@ -43,7 +43,7 @@ type BlockHandler func(o interface{}) error
 
 // Exchange interface for mocking exchange
 type Exchange interface {
-	Get(ctx context.Context, id string) (*blocks.Block, error)
+	Get(ctx context.Context, id string) (interface{}, error)
 	GetLocalBlocks() ([]string, error)
 	Handle(contentType string, h BlockHandler) error
 	Send(ctx context.Context, o interface{}, recipient *blocks.Key, opts ...blocks.MarshalOption) error
@@ -128,8 +128,6 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 			// TODO log error and reconsider the async
 			// TODO also maybe we need to verify it or something?
 
-			blockID, _ := blocks.SumSha3(block.bytes)
-			go w.store.Store(blockID, block.bytes)
 			logger := w.logger.With(zap.String("peerID", recipientThumbPrint))
 
 			// try to send the block directly to the recipient
@@ -250,13 +248,7 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 		if err := enc.Encode(block); err != nil {
 			panic(err)
 		}
-
-		v, err := blocks.Unmarshal(blockBytes, blocks.Verify(), blocks.ReturnBlock())
-		if err != nil {
-			panic(err)
-		}
-
-		if err := w.process(v.(*blocks.Block), conn); err != nil {
+		if err := w.process(blockBytes, conn); err != nil {
 			w.Close("", conn)
 			return err
 		}
@@ -264,7 +256,15 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 }
 
 // Process incoming block
-func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
+func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
+	ib, err := blocks.Unmarshal(blockBytes, blocks.Verify(), blocks.ReturnBlock())
+	if err != nil {
+		fmt.Println("could not unm", blocks.Base58Encode(blockBytes))
+		panic(err)
+	}
+
+	block := ib.(*blocks.Block)
+
 	if os.Getenv("DEBUG_BLOCKS") != "" {
 		fmt.Println("Processing type", block.Type, "as", reflect.TypeOf(block.Payload))
 		fmt.Println("< ---------- inc block / start")
@@ -273,33 +273,25 @@ func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	eb, _ := blocks.Marshal(block)
 	SendBlockEvent(
 		false,
 		block.Type,
 		0, // len(GetRecipientsFromBlockPolicies(block)),
 		0, // TODO fix payload size
-		len(eb),
+		len(blockBytes),
 	)
 
 	blockID := block.ID()
-	// if !block.Metadata.Ephemeral {
-	if err := w.store.Store(blockID, eb); err != nil {
-		if err != storage.ErrExists {
-			w.logger.Warn("could not write block", zap.Error(err))
+	if blocks.ShouldPersist(block.Type) {
+		if err := w.store.Store(blockID, blockBytes); err != nil {
+			if err != storage.ErrExists {
+				w.logger.Warn("could not write block", zap.Error(err))
+			}
 		}
 	}
-	// }
-
-	contentType := block.Type
-
-	// if block.GetHeader("requestID") != "" {
-	// 	if err := w.handleTransferBlock(block); err != nil {
-	// 		w.logger.Warn("could not handle transfer block", zap.Error(err))
-	// 	}
-	// }
 
 	// TODO convert these into proper handlers
+	contentType := block.Type
 	switch payload := block.Payload.(type) {
 	case *ForwardRequest:
 		w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
@@ -310,7 +302,12 @@ func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
 		return nil
 
 	case *BlockRequest:
-		if err := w.handleRequestBlock(block); err != nil {
+		if err := w.handleRequestBlock(payload); err != nil {
+			w.logger.Warn("could not handle request block", zap.Error(err))
+		}
+
+	case *BlockResponse:
+		if err := w.handleBlockResponse(payload); err != nil {
 			w.logger.Warn("could not handle request block", zap.Error(err))
 		}
 
@@ -339,83 +336,91 @@ func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
 	return nil
 }
 
-func (w *exchange) handleTransferBlock(block *blocks.Block) error {
+func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
 	// Check if nonce exists in local addressBook
-	// value, ok := w.getRequests.Load(block.GetHeader("requestID"))
-	// if !ok {
-	// 	return nil
-	// }
+	value, ok := w.getRequests.Load(payload.RequestID)
+	if !ok {
+		return nil
+	}
 
-	// req, ok := value.(*BlockRequest)
-	// if !ok {
-	// 	return ErrInvalidRequest
-	// }
+	req, ok := value.(*BlockRequest)
+	if !ok {
+		return ErrInvalidRequest
+	}
 
-	// req.response <- block
+	block, err := blocks.Unmarshal(payload.Block)
+	if err != nil {
+		panic(err)
+		return err
+	}
 
-	return nil
-}
-
-func (w *exchange) handleRequestBlock(incBlock *blocks.Block) error {
-	// payload := incBlock.Payload.(*BlockRequest)
-	// blockBytes, err := w.store.Get(payload.ID)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// reqBlock, _ := blocks.Decode()
-
-	// // TODO check if policy allows requested to retrieve the block
-	// reqBlock.SetHeader("requestID", payload.RequestID)
-	// if err := w.Send(context.Background(), block, incBlock.Signature.Key.Thumbprint()); err != nil {
-	// 	w.logger.Warn("blx.handleRequestBlock could not send block", zap.Error(err))
-	// 	return err
-	// }
+	req.response <- block
 
 	return nil
 }
 
-func (w *exchange) Get(ctx context.Context, id string) (*blocks.Block, error) {
-	// // Check local storage for block
-	// if block, err := w.store.Get(id); err == nil {
-	// 	return block, nil
-	// }
+func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
+	blockBytes, err := w.store.Get(payload.ID)
+	if err != nil {
+		return err
+	}
 
-	// req := &BlockRequest{
-	// 	RequestID: RandStringBytesMaskImprSrc(8),
-	// 	ID:        id,
-	// 	response:  make(chan *blocks.Block),
-	// }
+	// TODO check if policy allows requested to retrieve the block
 
-	// defer close(req.response)
+	resp := &BlockResponse{
+		RequestID: payload.RequestID,
+		Block:     blockBytes,
+	}
 
-	// w.getRequests.Store(req.RequestID, req)
+	signer := w.addressBook.GetLocalPeerInfo().Key
+	if err := w.Send(context.Background(), resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
+		w.logger.Warn("blx.handleRequestBlock could not send block", zap.Error(err))
+		return err
+	}
 
-	// go func() {
-	// 	providers, err := w.discovery.GetProviders(ctx, id)
-	// 	if err != nil {
-	// 		// TODO log err
-	// 		return
-	// 	}
+	return nil
+}
 
-	// 	reqBlock := blocks.NewEphemeralBlock(BlockRequestType, req)
-	// 	for provider := range providers {
-	// 		if err := w.Send(ctx, reqBlock, provider); err != nil {
-	// 			w.logger.Warn("blx.Get could not send req block", zap.Error(err))
-	// 		}
-	// 	}
-	// }()
+func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
+	// Check local storage for block
+	if blockBytes, err := w.store.Get(id); err == nil {
+		return blocks.Unmarshal(blockBytes)
+	}
 
-	// for {
-	// 	select {
-	// 	case block := <-req.response:
-	// 		return block, nil
+	req := &BlockRequest{
+		RequestID: RandStringBytesMaskImprSrc(8),
+		ID:        id,
+		response:  make(chan interface{}),
+	}
 
-	// 	case <-ctx.Done():
-	// 		return nil, storage.ErrNotFound
-	// 	}
-	// }
-	return nil, nil
+	defer close(req.response)
+
+	w.getRequests.Store(req.RequestID, req)
+	signer := w.addressBook.GetLocalPeerInfo().Key
+
+	go func() {
+		providers, err := w.discovery.GetProviders(ctx, id)
+		if err != nil {
+			// TODO log err
+			return
+		}
+
+		for provider := range providers {
+			if err := w.Send(ctx, req, provider, blocks.SignWith(signer)); err != nil {
+				w.logger.Warn("blx.Get could not send req block", zap.Error(err))
+			}
+		}
+	}()
+
+	for {
+		select {
+		case payload := <-req.response:
+			return payload, nil
+
+		case <-ctx.Done():
+			return nil, storage.ErrNotFound
+		}
+	}
 }
 
 func (w *exchange) Send(ctx context.Context, o interface{}, recipient *blocks.Key, opts ...blocks.MarshalOption) error {
@@ -434,6 +439,11 @@ func (w *exchange) Send(ctx context.Context, o interface{}, recipient *blocks.Ke
 		b, _ := json.MarshalIndent(o, "> ", "  ")
 		fmt.Print(string(b))
 		fmt.Println(" ---------- out block / end")
+	}
+
+	if blocks.ShouldPersist(blocks.GetFromType(reflect.TypeOf(o))) {
+		blockID, _ := blocks.SumSha3(bytes)
+		w.store.Store(blockID, bytes)
 	}
 
 	// TODO right now there is no way to error on this, do we have to?
@@ -481,7 +491,7 @@ func (w *exchange) getOrDialRelay(ctx context.Context, peerID string) (net.Conn,
 }
 
 func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, error) {
-	w.logger.Debug("getting conn", zap.String("peer_id", peerID))
+	w.logger.Debug("looking for existing connection", zap.String("peer_id", peerID))
 	if peerID == "" {
 		return nil, errors.New("missing peer id")
 	}
@@ -491,7 +501,6 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 		return existingConn.(net.Conn), nil
 	}
 
-	w.logger.Debug("dialing peer", zap.String("peer_id", peerID))
 	conn, err := w.network.Dial(ctx, peerID)
 	if err != nil {
 		w.Close(peerID, conn)

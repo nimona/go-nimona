@@ -20,7 +20,8 @@ const (
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string            `nimona:",header:requestID" json:"requestID,omitempty"`
+	ID        string            `nimona:",id" json:"id"`
+	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
 	PeerID    string            `nimona:"peerID" json:"peerID"`
 	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
@@ -34,6 +35,7 @@ type ProviderRequest struct {
 
 // Provider payload
 type Provider struct {
-	BlockIDs  []string          `json:"blockIDs"`
+	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
+	BlockIDs  []string          `nimona:"blockIDs" json:"blockIDs"`
 	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
