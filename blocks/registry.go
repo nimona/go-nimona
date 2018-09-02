@@ -32,20 +32,13 @@ var registry = &Registry{
 
 // RegisterContentType registers types and content on a default registry
 func RegisterContentType(contentType string, content interface{}, opts ...RegistryOption) {
-	registry.Register(contentType, content)
-	registry.persist.Store(contentType, true)
+	registry.Register(contentType, content, opts...)
 }
 
 func ShouldPersist(contentType string) bool {
 	_, ok := registry.persist.Load(contentType)
 	return ok
 }
-
-// // GetContentType returns a content type's structure from a default registry
-// // TODO Bad function name
-// func GetContentType(contentType string) interface{} {
-// 	return registry.Get(contentType)
-// }
 
 func GetFromType(t reflect.Type) string {
 	return registry.GetFromType(t)
@@ -63,18 +56,12 @@ type Registry struct {
 
 // Register a content type and its structure
 func (r *Registry) Register(contentType string, content interface{}, opts ...RegistryOption) {
-	// options := ParseRegistryOptions(opts...)
+	options := ParseRegistryOptions(opts...)
 	r.types.Store(contentType, reflect.TypeOf(content))
+	if options.Persist {
+		registry.persist.Store(contentType, true)
+	}
 }
-
-// // Get returns a content type's structure
-// func (r *Registry) Get(contentType string) interface{} {
-// 	t, ok := r.types.Load(contentType)
-// 	if !ok {
-// 		return nil
-// 	}
-// 	return reflect.New(t.(reflect.Type)).Elem().Interface()
-// }
 
 func (r *Registry) GetType(contentType string) reflect.Type {
 	t, ok := r.types.Load(contentType)

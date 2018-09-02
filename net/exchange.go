@@ -347,13 +347,18 @@ func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
 		return ErrInvalidRequest
 	}
 
-	block, err := blocks.Unmarshal(payload.Block)
+	block, err := blocks.Unmarshal(payload.Block, blocks.ReturnBlock())
 	if err != nil {
 		panic(err)
 		return err
 	}
 
-	req.response <- block
+	if blocks.ShouldPersist(block.(*blocks.Block).Type) {
+		blockID, _ := blocks.SumSha3(payload.Block)
+		w.store.Store(blockID, payload.Block)
+	}
+
+	req.response <- block.(*blocks.Block).Payload
 
 	return nil
 }
@@ -392,7 +397,10 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 		response:  make(chan interface{}),
 	}
 
-	defer close(req.response)
+	defer func() {
+		w.getRequests.Delete(req.RequestID)
+		close(req.response)
+	}()
 
 	w.getRequests.Store(req.RequestID, req)
 	signer := w.addressBook.GetLocalPeerInfo().Key
