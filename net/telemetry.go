@@ -8,8 +8,10 @@ import (
 )
 
 func init() {
-	blocks.RegisterContentType("nimona.telemetry.connection", ConnectionEvent{})
-	blocks.RegisterContentType("nimona.telemetry.block", BlockEvent{})
+	blocks.RegisterContentType("nimona.telemetry.connection",
+		telemetry.ConnectionEvent{})
+	blocks.RegisterContentType("nimona.telemetry.block",
+		telemetry.BlockEvent{})
 }
 
 // SendEvent sends an event
@@ -33,7 +35,7 @@ func SendConnectionEvent(outgoing bool) {
 
 // SendBlockEvent sends a connection event
 func SendBlockEvent(outgoing bool, contentType string, recipients, payloadSize, blockSize int) {
-	SendEvent(&BlockEvent{
+	SendEvent(&telemetry.BlockEvent{
 		Outgoing:    outgoing,
 		ContentType: contentType,
 		Recipients:  recipients,
