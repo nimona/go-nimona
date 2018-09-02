@@ -10,22 +10,6 @@
   revision = "155bce2042db95a783081fab225e74dd879055b0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:3f3c3b04ada64f3c9413be5f80b8291c55f0ae9a3593b7bf207cbc156ae3e0cb"
-  name = "github.com/apisit/btckeygenie"
-  packages = ["btckey"]
-  pruneopts = "UT"
-  revision = "1e5743502b0023502563046cc84e5307f50bf772"
-
-[[projects]]
-  branch = "master"
-  digest = "1:6a4c3eb799262645ef273acaf96bf25545682b05a4830759fa91ddf6e6bbe05a"
-  name = "github.com/apisit/rfc6979"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "6a90f24967ebb1aa57b22f74a13dbb3faad8cf3d"
-
-[[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -74,7 +58,7 @@
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
 
 [[projects]]
-  digest = "1:489e108f21464371ebf9cb5c30b1eceb07c6dd772dff073919267493dd9d04ea"
+  digest = "1:d5083934eb25e45d17f72ffa86cae3814f4a9d6c073c4f16b64147169b245606"
   name = "github.com/gin-gonic/gin"
   packages = [
     ".",
@@ -85,19 +69,6 @@
   pruneopts = "UT"
   revision = "b869fe1415e4b9eb52f247441830d502aece2d4d"
   version = "v1.3.0"
-
-[[projects]]
-  digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  pruneopts = "UT"
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
-    "render",
-  ]
-  pruneopts = "UT"
-  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
-  version = "v1.2"
 
 [[projects]]
   digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
@@ -152,6 +123,14 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:645110e089152bd0f4a011a2648fbb0e4df5977be73ca605781157ac297f50c4"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -182,14 +161,6 @@
   pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  digest = "1:cfa0d7741863a0e1d30e0ccdd4b48a96a471cdb47892303de8b92c3713af3e77"
-  name = "github.com/pkg/profile"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5b67d428864e92711fcbd2f8629456121a56d91f"
-  version = "v1.2.1"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -253,7 +224,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:c52caf7bd44f92e54627a31b85baf06a68333a196b3d8d241480a774733dcf8b"
+  digest = "1:9580b1b079114140ade8cec957685344d14f00119e0241f6b369633cb346eeb3"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -269,10 +240,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9c2ed66f474408b23cdc4a845f0236897f7b826bf1c4b19eab6e90df998905cb"
+  digest = "1:2e1733bde491e422f3c9cf7bf8b4cb3d11c867ad3017fec8897923f6106a3a51"
   name = "golang.org/x/crypto"
   packages = [
-    "ripemd160",
+    "sha3",
     "ssh/terminal",
   ]
   pruneopts = "UT"
@@ -325,12 +296,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/apisit/btckeygenie/btckey",
     "github.com/emersion/go-upnp-igd",
     "github.com/gin-contrib/cors",
     "github.com/gin-gonic/gin",
     "github.com/influxdata/influxdb/client/v2",
     "github.com/jinzhu/copier",
+    "github.com/mitchellh/mapstructure",
+    "github.com/mr-tron/base58/base58",
+    "github.com/pkg/errors",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
@@ -338,10 +311,7 @@
     "github.com/ugorji/go/codec",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
-<<<<<<< HEAD
     "golang.org/x/crypto/sha3",
-=======
->>>>>>> Add timeout in telemetry
     "gopkg.in/abiosoft/ishell.v2",
     "gopkg.in/inconshreveable/go-keen.v0",
   ]
