@@ -14,7 +14,6 @@ import (
 
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/codec"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/peers"
@@ -75,20 +74,6 @@ type Hello struct {
 func init() {
 	// telemetry.SetupKeenCollector()
 	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
-}
-
-func decodeSignature(sig string) *blocks.Signature {
-	bytes, err := blocks.Base58Decode(sig)
-	if err != nil {
-		panic(err)
-	}
-
-	signature := &blocks.Signature{}
-	if err := codec.Unmarshal(bytes, signature); err != nil {
-		panic(err)
-	}
-
-	return signature
 }
 
 func main() {
