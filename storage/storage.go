@@ -2,8 +2,6 @@ package storage
 
 import (
 	"errors"
-
-	"github.com/nimona/go-nimona/blocks"
 )
 
 var (
@@ -13,7 +11,7 @@ var (
 )
 
 type Storage interface {
-	Store(string, *blocks.Block) error
-	Get(string) (*blocks.Block, error)
+	Store(string, []byte) error
+	Get(string) ([]byte, error)
 	List() ([]string, error)
 }

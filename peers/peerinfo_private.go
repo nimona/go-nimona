@@ -1,44 +1,45 @@
 package peers
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/keys"
 )
 
 // PrivatePeerInfo is a PeerInfo with an additional PrivateKey
 type PrivatePeerInfo struct {
-	ID         string   `json:"id"`
-	PrivateKey string   `json:"private_key"`
-	Addresses  []string `json:"-"`
+	Key       *blocks.Key       `nimona:"-" json:"key"`
+	Addresses []string          `nimona:"addresses" json:"-"`
+	Signature *blocks.Signature `nimona:",signature" json:"-"`
 }
 
-// Block returns a signed Block
-func (pi *PrivatePeerInfo) Block() *blocks.Block {
-	// TODO content type
-	block := blocks.NewEphemeralBlock(PeerInfoType, PeerInfoPayload{
+func (pi *PrivatePeerInfo) Thumbprint() string {
+	return pi.GetPeerInfo().Thumbprint()
+}
+
+func (pi *PrivatePeerInfo) GetPeerInfo() *PeerInfo {
+	ppi := &PeerInfo{
 		Addresses: pi.Addresses,
-	})
-	block.Metadata.Ephemeral = true
-	block.Metadata.Signer = pi.ID
-	return block
+		signWith:  pi.Key,
+	}
+	// HACK to add signature, we should only be signing this when it changes
+	// TODO(geoah) not sure if this is needed any more, I think it is
+	b, _ := blocks.Marshal(ppi, blocks.SignWith(pi.Key))
+	uppi, _ := blocks.Unmarshal(b)
+	return uppi.(*PeerInfo)
 }
 
 // GetPrivateKey returns the private key
-func (pi *PrivatePeerInfo) GetPrivateKey() keys.Key {
-	sk, err := keys.KeyFromEncodedBlock(pi.PrivateKey)
-	if err != nil {
-		panic(err)
-	}
-
-	return sk
+func (pi *PrivatePeerInfo) GetPrivateKey() *blocks.Key {
+	return pi.Key
 }
 
 // GetPublicKey returns the public key
-func (pi *PrivatePeerInfo) GetPublicKey() keys.Key {
-	pk, err := keys.KeyFromEncodedBlock(pi.ID)
+func (pi *PrivatePeerInfo) GetPublicKey() *blocks.Key {
+	pk := pi.Key.Materialize().(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey)
+	bpk, err := blocks.NewKey(pk)
 	if err != nil {
 		panic(err)
 	}
-
-	return pk
+	return bpk
 }

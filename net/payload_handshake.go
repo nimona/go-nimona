@@ -1,7 +1,8 @@
 package net
 
 import (
-	blocks "github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/peers"
 )
 
 const (
@@ -15,5 +16,6 @@ func init() {
 
 // HandshakePayload content structure for Handshake content type
 type HandshakePayload struct {
-	PeerInfo *blocks.Block `json:"peer_info"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	PeerInfo  *peers.PeerInfo   `nimona:"peerInfo" json:"peerInfo"`
 }

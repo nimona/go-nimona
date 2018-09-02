@@ -5,30 +5,55 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "run-node1",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "remotePath": "",
             "port": 2345,
             "host": "127.0.0.1",
-            "program": "${workspaceRoot}/cmd/daemon/main.go",
+            "program": "${workspaceRoot}/cmd/nimona/main.go",
             "env": {
-                "PEER_ID": "decimal",
+                "PORT": "0",
+                "HTTP_PORT": "0",
+                "LOG_LEVEL": "DEBUG",
+                "DEBUG_BLOCKS": "true",
+                "NIMONA_PATH": "/Users/geoah/.nimona-node1",
             },
             "args": [],
             "showLog": true
         },
         {
-            "name": "Remote",
+            "name": "run-bootstrap",
             "type": "go",
             "request": "launch",
-            "mode": "remote",
-            "remotePath": "${workspaceRoot}/cmd/daemon/main.go",
+            "mode": "debug",
+            "remotePath": "",
             "port": 2345,
             "host": "127.0.0.1",
-            "program": "${workspaceRoot}",
-            "env": {}
+            "program": "${workspaceRoot}/cmd/nimona/main.go",
+            "env": {
+                "PORT": "21013",
+                "HTTP_PORT": "0",
+                "LOG_LEVEL": "DEBUG",
+                "DEBUG_BLOCKS": "true",
+                "NIMONA_PATH": "/Users/geoah/.nimona-bootstrap",
+            },
+            "args": [],
+            "showLog": true
+        },
+        {
+            "name": "enc",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceRoot}/cmd/enc/main.go",
+            "env": {},
+            "args": [],
+            "showLog": true
         }
     ]
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -88,7 +89,13 @@ func isValidIP(addr net.Addr) (string, bool) {
 	case *net.IPAddr:
 		ip = v.IP
 	}
-	if ip == nil || ip.IsLoopback() || isPrivate(ip) || isIPv6(ip.String()) {
+	if ip == nil {
+		return "", false
+	}
+	if os.Getenv("BIND_LOCAL") == "" && (ip.IsLoopback() || isPrivate(ip)) {
+		return "", false
+	}
+	if os.Getenv("BIND_IPV6") == "" && isIPv6(ip.String()) {
 		return "", false
 	}
 	return ip.String(), true

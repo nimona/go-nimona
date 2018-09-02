@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/nimona/go-nimona/peers"
-	"github.com/sirupsen/logrus"
 )
 
 // distEntry is used to hold the distance between nodes
@@ -60,7 +59,6 @@ func lessIntArr(a, b []int) bool {
 }
 
 func comparePeers(a, b, targetPeer string) string {
-	logrus.Debug("A: %s B: %s TARGET: %s", a, b, targetPeer)
 	distA := xor([]byte(a), []byte(targetPeer))
 	distB := xor([]byte(b), []byte(targetPeer))
 	if lessIntArr(distA, distB) {

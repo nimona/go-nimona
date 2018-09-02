@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -11,22 +12,24 @@ import (
 	"strings"
 	"time"
 
-	"encoding/base64"
-
-	"gopkg.in/abiosoft/ishell.v2"
-
 	"github.com/nimona/go-nimona/api"
 	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/codec"
 	"github.com/nimona/go-nimona/dht"
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/peers"
 	"github.com/nimona/go-nimona/storage"
+	ishell "gopkg.in/abiosoft/ishell.v2"
 )
 
 var (
 	version = "dev"
 	commit  = "unknown"
 	date    = "unknown"
+
+	bootstrapPeerInfos = []string{
+		"WUvH4xVzmVzstkzrrE6jv5F6usGHWGwfWR3euPvM4w5WRzjpL2LjxVSzJEvkVzW7zJE2aDgUtoKwAYP6rBmJSpiYEs1zZFL6rR6LQUpf9M45EHTZqK2AFQSMgDxyRrFweZ7QDqU64uSGr1s7ZRKhbzPHBz8HrTSczH7E5kHaLF3aqAHkK4PaHM3yAaTnzj2Tz7QC4GADzBAopFXGzptdZmwdBE9inZX8amJNptkvjGtSKW4FyaafuTbUCsuFaWweiXfNy1hVVdiKBdc4uz19B6ZN4HSnvQE1a9yw62v9gPr2ULFwU5pXPd3KDr3UFBEAsj4idJQjVxg7wckrdsceB5TqMYRx8JSQHr3spbVXC1ZZUx2SsBWLqzLFjzHsb374upxBkaiA",
+	}
 )
 
 func base64ToBytes(s string) []byte {
@@ -37,21 +40,6 @@ func base64ToBytes(s string) []byte {
 	return b
 }
 
-var bootstrapPeerInfoBlocks = []*blocks.Block{
-	&blocks.Block{
-		Type: "peer.info",
-		Metadata: blocks.Metadata{
-			Signer: "49HRH8tmsYLyb1JFnYo4mxw1Awuw6fzoaDhdt3U6JYRsLThRhZ2Pkc7s4M12RRRkq7wB8MKyAw1zyHzGwrCbx9LyEekwuYPsk1e2PGLGUdBbKfnmGRbX2P35mW4h6oBLGnnjXU3FLNErDGM6",
-		},
-		Payload: peers.PeerInfoPayload{
-			Addresses: []string{
-				"tcp:bootstrap.nimona.io:21013",
-			},
-		},
-		Signature: base64ToBytes("RfuK7y/BOPRXvvTyLfotpvqpjZ5F77NgKIK4+LgkiFc07G6wlOr5CL1aLkJ/R9Y0J474PI3yg4+SuZVAvWeOCg=="),
-	},
-}
-
 // Hello payload
 type Hello struct {
 	Body string
@@ -59,11 +47,24 @@ type Hello struct {
 
 func init() {
 	// telemetry.SetupKeenCollector()
-	blocks.RegisterContentType("demo.hello", Hello{})
+	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
+}
+
+func decodeSignature(sig string) *blocks.Signature {
+	bytes, err := blocks.Base58Decode(sig)
+	if err != nil {
+		panic(err)
+	}
+
+	signature := &blocks.Signature{}
+	if err := codec.Unmarshal(bytes, signature); err != nil {
+		panic(err)
+	}
+
+	return signature
 }
 
 func main() {
-
 	configPath := os.Getenv("NIMONA_PATH")
 
 	if configPath == "" {
@@ -75,15 +76,35 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
-
 	reg, err := peers.NewAddressBook(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
 
-	for _, peerInfoBlock := range bootstrapPeerInfoBlocks {
-		reg.PutPeerInfoFromBlock(peerInfoBlock)
+	// lp := reg.GetLocalPeerInfo()
+	// pp := lp.GetPeerInfo()
+	// pp.Addresses = []string{
+	// 	"tcp:localhost:21013",
+	// }
+	// b := blocks.Encode(*pp)
+	// if err := blocks.Sign(b, lp.Key); err != nil {
+	// 	panic(err)
+	// }
+	// bs, _ := blocks.MarshalBlock(b)
+	// fmt.Println(blocks.Base58Encode(bs))
+	// os.Exit(9237)
+
+	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
+
+	for _, peerInfoB58 := range bootstrapPeerInfos {
+		peerInfoBytes, _ := blocks.Base58Decode(peerInfoB58)
+		peerInfo, err := blocks.Unmarshal(peerInfoBytes)
+		if err != nil {
+			panic(err)
+		}
+		if err := reg.PutPeerInfo(peerInfo.(*peers.PeerInfo)); err != nil {
+			log.Fatal("could not put bootstrap peer", err)
+		}
 	}
 
 	storagePath := path.Join(configPath, "storage")
@@ -95,9 +116,8 @@ func main() {
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(block *blocks.Block) error {
-		payload := block.Payload.(Hello)
-		fmt.Printf("___ Got block %s\n", payload.Body)
+	n.Handle("demo", func(payload interface{}) error {
+		fmt.Printf("___ Got block %s\n", payload.(*Hello).Body)
 		return nil
 	})
 
@@ -156,7 +176,7 @@ func main() {
 			}
 			providers := []string{}
 			for provider := range rs {
-				providers = append(providers, provider)
+				providers = append(providers, provider.Thumbprint())
 			}
 			c.Println("* " + key)
 			for _, peerID := range providers {
@@ -220,7 +240,7 @@ func main() {
 
 			ps, _ := reg.GetAllPeerInfo()
 			for _, peer := range ps {
-				c.Println("* " + peer.ID)
+				c.Println("* " + peer.Thumbprint())
 				c.Printf("  - addresses:\n")
 				for _, address := range peer.Addresses {
 					c.Printf("     - %s\n", address)
@@ -255,7 +275,7 @@ func main() {
 			defer c.ShowPrompt(true)
 
 			peer := reg.GetLocalPeerInfo()
-			c.Println("* " + peer.ID)
+			c.Println("* " + peer.Thumbprint())
 			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
 				c.Printf("     - %s\n", address)
@@ -273,9 +293,13 @@ func main() {
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
-			to := []string{c.Args[0]}
-			block := blocks.NewBlock("demo.hello", &Hello{msg}, to...)
-			if err := n.Send(ctx, block, to...); err != nil {
+			peer, err := reg.GetPeerInfo(c.Args[0])
+			if err != nil {
+				c.Println("Could not get peer")
+				return
+			}
+			signer := reg.GetLocalPeerInfo().Key
+			if err := n.Send(ctx, &Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return
 			}

@@ -22,41 +22,37 @@ func newStore() (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) PutProvider(block *blocks.Block) error {
+func (s *Store) PutProvider(provider *Provider) error {
 	// TODO verify payload type
-	blockID, err := block.ID()
-	if err != nil {
-		return err
-	}
-	s.providers.Store(blockID, block)
+	b, _ := blocks.Marshal(provider)
+	h, _ := blocks.SumSha3(b)
+	s.providers.Store(h, provider)
 	return nil
 }
 
-func (s *Store) GetProviders(blockID string) ([]*blocks.Block, error) {
-	bls := []*blocks.Block{}
+func (s *Store) GetProviders(key string) ([]*Provider, error) {
+	providers := []*Provider{}
 	s.providers.Range(func(k, v interface{}) bool {
-		block := v.(*blocks.Block)
-		payload := block.Payload.(Provider)
-		for _, id := range payload.BlockIDs {
-			if id == blockID {
-				bls = append(bls, block)
+		provider := v.(*Provider)
+		for _, id := range provider.BlockIDs {
+			if id == key {
+				providers = append(providers, provider)
 				break
 			}
 		}
 		return true
 	})
 
-	return bls, nil
+	return providers, nil
 }
 
 // GetAllProviders returns all providers and the values they are providing
-func (s *Store) GetAllProviders() ([]*blocks.Block, error) {
-	bls := []*blocks.Block{}
+func (s *Store) GetAllProviders() ([]*Provider, error) {
+	providers := []*Provider{}
 	s.providers.Range(func(k, v interface{}) bool {
-		block := v.(*blocks.Block)
-		bls = append(bls, block)
+		providers = append(providers, v.(*Provider))
 		return true
 	})
 
-	return bls, nil
+	return providers, nil
 }

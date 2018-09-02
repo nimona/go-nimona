@@ -10,6 +10,7 @@ jobs:
       UPNP: false
       DEBUG_BLOCKS: true
       LOG_LEVEL: debug
+      BIND_LOCAL: true
     steps:
       - checkout
       - run:

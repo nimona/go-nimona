@@ -1,6 +1,8 @@
 package dht
 
-import "github.com/nimona/go-nimona/blocks"
+import (
+	"github.com/nimona/go-nimona/blocks"
+)
 
 func init() {
 	blocks.RegisterContentType(ProviderType, Provider{})
@@ -18,17 +20,22 @@ const (
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string `json:"request_id,omitempty"`
-	PeerID    string `json:"peer_id"`
+	ID        string            `nimona:",id" json:"id"`
+	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
+	PeerID    string            `nimona:"peerID" json:"peerID"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
 
 // ProviderRequest payload
 type ProviderRequest struct {
-	RequestID string `json:"request_id,omitempty"`
-	Key       string `json:"key"`
+	RequestID string            `nimona:"requestID" json:"requestID,omitempty"`
+	Key       string            `nimona:"key" json:"key"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
 
 // Provider payload
 type Provider struct {
-	BlockIDs []string `json:"blockIDs"`
+	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
+	BlockIDs  []string          `nimona:"blockIDs" json:"blockIDs"`
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
