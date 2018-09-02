@@ -79,18 +79,23 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 		return nil, err
 	}
 	port := tcpListener.Addr().(*net.TCPAddr).Port
-	newAddresses := make(chan string, 100)
-	devices := make(chan igd.Device)
-	go func() {
+	logger.Info("Listening and service nimona", zap.Int("port", port))
+	addresses := GetAddresses(tcpListener)
+	devices := make(chan igd.Device, 10)
+
+	upnp := true
+	upnpFlag := os.Getenv("UPNP")
+	if upnpFlag != "" {
+		upnp, _ = strconv.ParseBool(upnpFlag)
+	}
+	if upnp {
+		logger.Info("Trying to find external IP and open port")
+		go func() {
+			if err := igd.Discover(devices, 2*time.Second); err != nil {
+				logger.Error("could not discover devices", zap.Error(err))
+			}
+		}()
 		for device := range devices {
-			upnp := true
-			upnpFlag := os.Getenv("UPNP")
-			if upnpFlag != "" {
-				upnp, _ = strconv.ParseBool(upnpFlag)
-			}
-			if !upnp {
-				continue
-			}
 			externalAddress, err := device.GetExternalIPAddress()
 			if err != nil {
 				logger.Error("could not get external ip", zap.Error(err))
@@ -101,21 +106,9 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				logger.Error("could not add port mapping", zap.Error(err))
 			} else {
-				newAddresses <- fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port)
+				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
 			}
 		}
-		close(newAddresses)
-	}()
-
-	// go func() {
-	if err := igd.Discover(devices, 2*time.Second); err != nil {
-		close(newAddresses)
-		logger.Error("could not discover devices", zap.Error(err))
-	}
-
-	addresses := GetAddresses(tcpListener)
-	for newAddress := range newAddresses {
-		addresses = append(addresses, newAddress)
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
@@ -128,7 +121,6 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
 	localPeerInfo.Addresses = addresses
 	n.AddressBook.PutLocalPeerInfo(localPeerInfo)
-	// }()
 
 	return tcpListener, nil
 }

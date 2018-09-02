@@ -1,21 +1,23 @@
 package peers
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/nimona/go-nimona/blocks"
+	"github.com/nimona/go-nimona/log"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
 func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error) {
+	ctx := context.Background()
 	if path == "" {
 		return nil, errors.New("missing key path")
 	}
@@ -27,7 +29,8 @@ func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo
 		return reg.LoadPrivatePeerInfo(peerPath)
 	}
 
-	log.Printf("* Configs do not exist, creating new ones.")
+	logger := log.Logger(ctx)
+	logger.Info("* Configs do not exist, creating new ones.")
 
 	pi, err := reg.CreateNewPeer()
 	if err != nil {
@@ -52,17 +55,6 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// msk, err := sk.MarshalBinary()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// pk, err := blocks.New(&peerSigningKey.PublicKey)
-	// mpk, err := pk.MarshalBinary()
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	pi := &PrivatePeerInfo{
 		Key:       sk,

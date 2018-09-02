@@ -84,7 +84,6 @@ type AddressBook struct {
 // PutPeerInfoFromBlock stores an block with a peer payload
 func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 	if len(peerInfo.Addresses) == 0 {
-		panic("no addr")
 		return errors.New("missing addresses")
 	}
 
