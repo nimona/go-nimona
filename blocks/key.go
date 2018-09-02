@@ -48,20 +48,28 @@ type Key struct {
 	key                    interface{}
 }
 
-func (b *Key) MarshalBlock() ([]byte, error) {
-	return Marshal(b)
+func (b *Key) MarshalBlock() (string, error) {
+	bytes, err := Marshal(b)
+	if err != nil {
+		return "", err
+	}
+	return Base58Encode(bytes), nil
 }
 
-func (b *Key) UnmarshalBlock(bytes []byte) error {
+func (b *Key) UnmarshalBlock(b58bytes string) error {
+	bytes, err := Base58Decode(b58bytes)
+	if err != nil {
+		return err
+	}
 	return UnmarshalInto(bytes, b)
 }
 
 func (k *Key) Thumbprint() string {
-	b, err := k.MarshalBlock()
+	t, err := k.MarshalBlock()
 	if err != nil {
 		panic(err)
 	}
-	return Base58Encode(b)
+	return t
 }
 
 // GetPublicKey returns the public key

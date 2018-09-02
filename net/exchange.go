@@ -259,7 +259,6 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 	ib, err := blocks.Unmarshal(blockBytes, blocks.Verify(), blocks.ReturnBlock())
 	if err != nil {
-		fmt.Println("could not unm", blocks.Base58Encode(blockBytes))
 		panic(err)
 	}
 

@@ -24,14 +24,26 @@ func (pi *PeerInfo) Thumbprint() string {
 	return pi.Signature.Key.Thumbprint()
 }
 
-func (pi *PeerInfo) MarshalBlock() ([]byte, error) {
+func (pi *PeerInfo) MarshalBlock() (string, error) {
+	var bytes []byte
+	var err error
 	if pi.signWith != nil {
-		return blocks.Marshal(pi, blocks.SignWith(pi.signWith))
+		bytes, err = blocks.Marshal(pi, blocks.SignWith(pi.signWith))
+	} else {
+		bytes, err = blocks.Marshal(pi)
+	}
+	if err != nil {
+		return "", err
 	}
 
-	return blocks.Marshal(pi)
+	return blocks.Base58Encode(bytes), nil
+
 }
 
-func (pi *PeerInfo) UnmarshalBlock(bytes []byte) error {
+func (pi *PeerInfo) UnmarshalBlock(b58bytes string) error {
+	bytes, err := blocks.Base58Decode(b58bytes)
+	if err != nil {
+		return err
+	}
 	return blocks.UnmarshalInto(bytes, pi)
 }

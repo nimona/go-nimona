@@ -39,21 +39,17 @@ func TestSignatureMarshaling(t *testing.T) {
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, m["signature"].([]uint8))
-	assert.NotEmpty(t, m["signature"].([]uint8))
+	assert.NotEmpty(t, m["signature"].(string))
 	assert.Equal(t, m["type"], "peer.info")
 	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[0], "a-1")
 	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[1], "a-2")
 
 	// test block's signature
-	bi := m["signature"].([]uint8)
-	b = make([]byte, len(bi))
-	for i, v := range bi {
-		b[i] = v
-	}
-
+	bi := m["signature"].(string)
+	bbi, err := blocks.Base58Decode(bi)
+	assert.NoError(t, err)
 	m = map[string]interface{}{}
-	d = codec.NewDecoderBytes(b, blocks.CborHandler())
+	d = codec.NewDecoderBytes(bbi, blocks.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
@@ -61,14 +57,10 @@ func TestSignatureMarshaling(t *testing.T) {
 	assert.Equal(t, m["payload"].(map[string]interface{})["alg"], "ES256")
 
 	// test signature's key
-	bi = m["payload"].(map[string]interface{})["key"].([]uint8)
-	b = make([]byte, len(bi))
-	for i, v := range bi {
-		b[i] = v
-	}
-
+	bi = m["payload"].(map[string]interface{})["key"].(string)
+	bbi, err = blocks.Base58Decode(bi)
 	m = map[string]interface{}{}
-	d = codec.NewDecoderBytes(b, blocks.CborHandler())
+	d = codec.NewDecoderBytes(bbi, blocks.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
@@ -103,8 +95,7 @@ func TestSignatureVerification(t *testing.T) {
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, m["signature"].([]uint8))
-	assert.NotEmpty(t, m["signature"].([]uint8))
+	assert.NotEmpty(t, m["signature"].(string))
 	assert.Equal(t, m["type"], "peer.info")
 	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[0], "a-1")
 	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[1], "a-2")

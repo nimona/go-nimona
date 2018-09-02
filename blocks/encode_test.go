@@ -97,13 +97,16 @@ type bMarshallable struct {
 	BB int    `nimona:"bb"`
 }
 
-func (b *bMarshallable) MarshalBlock() ([]byte, error) {
-	// return Marshal(b)
-	return []byte{1, 2, 3}, nil
+func (b *bMarshallable) MarshalBlock() (string, error) {
+	return Base58Encode([]byte{1, 2, 3}), nil
 }
 
-func (b *bMarshallable) UnmarshalBlock(bytes []byte) error {
-	return UnmarshalInto(bytes, b)
+func (b *bMarshallable) UnmarshalBlock(b58bytes string) error {
+	bytes, err := Base58Decode(b58bytes)
+	if err != nil {
+		return err
+	}
+	return UnmarshalInto(bytes, bytes)
 }
 
 func TestEncodeMapNestedMarshaler(t *testing.T) {
@@ -124,7 +127,7 @@ func TestEncodeMapNestedMarshaler(t *testing.T) {
 
 	es := map[string]interface{}{
 		"a": "a-value",
-		"b": []byte{1, 2, 3},
+		"b": Base58Encode([]byte{1, 2, 3}),
 		"c": 12,
 		"d": []byte{1, 2, 3},
 	}
@@ -149,7 +152,7 @@ func TestEncodeBlock(t *testing.T) {
 
 	eb := &Block{
 		Type:      "a-type",
-		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
+		Signature: "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
 		Payload: map[string]interface{}{
 			"a": "a-value",
 		},

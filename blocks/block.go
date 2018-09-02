@@ -25,7 +25,7 @@ type Block struct {
 	Headers   map[string]string `nimona:"headers,omitempty" json:"headers,omitempty"`
 	Metadata  *Metadata         `nimona:"metadata,omitempty" json:"metadata,omitempty"`
 	Payload   interface{}       `nimona:"payload,omitempty" json:"payload,omitempty"`
-	Signature []byte            `nimona:"signature,omitempty" json:"signature,omitempty"`
+	Signature string            `nimona:"signature,omitempty" json:"signature,omitempty"`
 }
 
 // NewBlock is a helper function for creating Blocks.

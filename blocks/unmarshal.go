@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/ugorji/go/codec"
@@ -46,11 +45,13 @@ func Unmarshal(b []byte, opts ...UnmarshalOption) (interface{}, error) {
 		return nil, err
 	}
 
-	signatureBytes := tb.Signature
-	tb.Signature = nil
-
 	// verify
 	if options.Verify {
+		signatureBytes, err := Base58Decode(tb.Signature)
+		if err != nil {
+			return nil, err
+		}
+
 		digest, err := getDigest(tb)
 		if err != nil {
 			return nil, err
@@ -100,7 +101,7 @@ func Unmarshal(b []byte, opts ...UnmarshalOption) (interface{}, error) {
 	if t != nil {
 		v = TypeToPtrInterface(t)
 	} else {
-		fmt.Println("COULD NOT FIND TYPE FOR", tb.Type, Base58Encode(b))
+		panic("missing type")
 	}
 
 	DecodeInto(o, v)
