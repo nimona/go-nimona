@@ -140,14 +140,14 @@ func TestEncodeBlock(t *testing.T) {
 		A string     `nimona:"a"`
 		T string     `nimona:",type"`
 		S *Signature `nimona:",signature"`
-		X string     `nimona:"x-h,header"`
+		// X string     `nimona:"x-h,header"`
 	}{
 		A: "a-value",
 		T: "a-type",
 		S: &Signature{
 			Alg: "a-alg",
 		},
-		X: "x-header",
+		// X: "x-header",
 	}
 
 	eb := &Block{
@@ -156,9 +156,9 @@ func TestEncodeBlock(t *testing.T) {
 		Payload: map[string]interface{}{
 			"a": "a-value",
 		},
-		Headers: map[string]string{
-			"x-h": "x-header",
-		},
+		// Headers: map[string]string{
+		// 	"x-h": "x-header",
+		// },
 	}
 
 	b := New(s).Block()

@@ -10,7 +10,7 @@ type Policy struct {
 	Effect      string   `nimona:"effect" json:"effect"`
 }
 
-type Headers struct{}
+// type Headers struct{}
 
 // Metadata for Block
 type Metadata struct {
@@ -21,11 +21,10 @@ type Metadata struct {
 
 // Block for exchanging data via the exchange
 type Block struct {
-	Type      string            `nimona:"type,omitempty" json:"type,omitempty"`
-	Headers   map[string]string `nimona:"headers,omitempty" json:"headers,omitempty"`
-	Metadata  *Metadata         `nimona:"metadata,omitempty" json:"metadata,omitempty"`
-	Payload   interface{}       `nimona:"payload,omitempty" json:"payload,omitempty"`
-	Signature string            `nimona:"signature,omitempty" json:"signature,omitempty"`
+	Type      string      `nimona:"type,omitempty" json:"type,omitempty"`
+	Metadata  *Metadata   `nimona:"metadata,omitempty" json:"metadata,omitempty"`
+	Payload   interface{} `nimona:"payload,omitempty" json:"payload,omitempty"`
+	Signature string      `nimona:"signature,omitempty" json:"signature,omitempty"`
 }
 
 // NewBlock is a helper function for creating Blocks.
@@ -54,7 +53,7 @@ func (block *Block) ID() string {
 }
 
 func ID(payload interface{}) string {
-	bytes, err := Marshal(payload, SkipHeaders())
+	bytes, err := Marshal(payload) //, SkipHeaders())
 	if err != nil {
 		panic(err)
 	}

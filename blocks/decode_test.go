@@ -14,8 +14,8 @@ type aPayload struct {
 	T string      `nimona:",type"`
 	S *Signature  `nimona:",signature"`
 	E *Signature  `nimona:"e"`
-	X string      `nimona:"x-h,header"`
-	P string      `nimona:",parent"`
+	// X string      `nimona:"x-h,header"`
+	P string `nimona:",parent"`
 }
 
 type bPayload struct {
@@ -34,9 +34,9 @@ func TestDecode(t *testing.T) {
 				"bb": 1212,
 			},
 		},
-		Headers: map[string]string{
-			"x-h": "x-header",
-		},
+		// Headers: map[string]string{
+		// 	"x-h": "x-header",
+		// },
 	}
 
 	es := &aPayload{
@@ -49,7 +49,7 @@ func TestDecode(t *testing.T) {
 		S: &Signature{
 			Alg: "a-alg",
 		},
-		X: "x-header",
+		// X: "x-header",
 	}
 
 	s := &aPayload{
@@ -70,9 +70,9 @@ func TestDecodeMetadata(t *testing.T) {
 				"bb": 1212,
 			},
 		},
-		Headers: map[string]string{
-			"x-h": "x-header",
-		},
+		// Headers: map[string]string{
+		// 	"x-h": "x-header",
+		// },
 		Metadata: &Metadata{
 			Parent: "p",
 		},
@@ -88,7 +88,7 @@ func TestDecodeMetadata(t *testing.T) {
 		S: &Signature{
 			Alg: "a-alg",
 		},
-		X: "x-header",
+		// X: "x-header",
 		P: "p",
 	}
 

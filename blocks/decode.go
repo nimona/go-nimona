@@ -93,15 +93,15 @@ func (s *Struct) Decode() {
 			name = tagName
 		}
 
-		if tagOpts.Has("header") {
-			v, ok := s.block.Headers[tagName]
-			if !ok {
-				continue
-			}
-			vval := reflect.ValueOf(v)
-			val.Set(vval)
-			continue
-		}
+		// if tagOpts.Has("header") {
+		// 	v, ok := s.block.Headers[tagName]
+		// 	if !ok {
+		// 		continue
+		// 	}
+		// 	vval := reflect.ValueOf(v)
+		// 	val.Set(vval)
+		// 	continue
+		// }
 
 		if tagOpts.Has("signature") {
 			if s.block.Signature == "" {
