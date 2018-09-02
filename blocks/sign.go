@@ -17,7 +17,7 @@ func Sign(block *Block, key *Key) error {
 		return err
 	}
 
-	block.Signature = bs
+	block.Signature = Base58Encode(bs)
 	return nil
 }
 

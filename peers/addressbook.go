@@ -92,7 +92,6 @@ func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 		return nil
 	}
 
-	fmt.Println("_ADDDDDDING PEEER", peerInfo.Thumbprint(), peerInfo)
 	peerThumbprint := peerInfo.Thumbprint()
 	exPeer, err := ab.GetPeerInfo(peerThumbprint)
 	if err == nil && exPeer != nil {

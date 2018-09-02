@@ -26,7 +26,7 @@ type bPayload struct {
 func TestDecode(t *testing.T) {
 	b := &Block{
 		Type:      "a-type",
-		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
+		Signature: "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
 		Payload: map[string]interface{}{
 			"a": "a-value",
 			"b": map[string]interface{}{
@@ -62,7 +62,7 @@ func TestDecode(t *testing.T) {
 func TestDecodeMetadata(t *testing.T) {
 	b := &Block{
 		Type:      "a-type",
-		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
+		Signature: "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
 		Payload: map[string]interface{}{
 			"a": "a-value",
 			"b": map[string]interface{}{
@@ -103,15 +103,15 @@ func TestDecodeMetadata(t *testing.T) {
 func TestDecodeNestedMarshaler(t *testing.T) {
 	b := &Block{
 		Type:      "a-type",
-		Signature: quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
+		Signature: "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
 		Payload: map[string]interface{}{
 			"a": "a-value",
 			"b": map[string]interface{}{
 				"aa": "aa-value",
 				"bb": 1212,
 			},
-			"s": quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
-			"e": quickBase58Decode("952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x"),
+			"s": "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
+			"e": "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
 		},
 	}
 

@@ -55,13 +55,21 @@ type Signature struct {
 	Signature []byte    `nimona:"sig" json:"signature"`
 }
 
-// func (b *Signature) MarshalBlock() ([]byte, error) {
-// 	return Marshal(b)
-// }
+func (s *Signature) MarshalBlock() (string, error) {
+	bytes, err := Marshal(s)
+	if err != nil {
+		return "", err
+	}
+	return Base58Encode(bytes), nil
+}
 
-// func (b *Signature) UnmarshalBlock(bytes []byte) error {
-// 	return UnmarshalInto(bytes, b)
-// }
+func (s *Signature) UnmarshalBlock(b58bytes string) error {
+	bytes, err := Base58Decode(b58bytes)
+	if err != nil {
+		return err
+	}
+	return UnmarshalInto(bytes, s)
+}
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(key *Key, alg Algorithm, digest []byte) (*Signature, error) {

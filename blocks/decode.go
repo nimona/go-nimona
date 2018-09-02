@@ -45,20 +45,24 @@ func (s *Struct) Decode() {
 				return nil, nil
 			}
 			// TODO don't think the signature and key cases are needed any more
-			if from.Kind() == reflect.Slice && to == reflect.TypeOf(&Signature{}) {
-				s := &Signature{}
-				err := UnmarshalInto(v.([]byte), s)
-				return s, err
-			}
-			if from.Kind() == reflect.Slice && to == reflect.TypeOf(&Key{}) {
-				s := &Key{}
-				err := UnmarshalInto(v.([]byte), s)
-				return s, err
-			}
-			if from.Kind() == reflect.Slice && to.Implements(marshalerType) {
+			// if from.Kind() == reflect.Slice && to == reflect.TypeOf(&Signature{}) {
+			// 	s := &Signature{}
+			// 	err := UnmarshalInto(v.([]byte), s)
+			// 	return s, err
+			// }
+			// if from.Kind() == reflect.Slice && to == reflect.TypeOf(&Key{}) {
+			// 	s := &Key{}
+			// 	err := UnmarshalInto(v.([]byte), s)
+			// 	return s, err
+			// }
+			if from.Kind() == reflect.String && to.Implements(unmarshalerType) {
 				s := TypeToInterface(to)
-				err := UnmarshalInto(v.([]byte), s)
-				return s, err
+				err := s.(Unmarshaler).UnmarshalBlock(v.(string))
+				// err := UnmarshalInto(v.(string), s)
+				if err != nil {
+					panic(err)
+				}
+				return s, nil
 			}
 			return v, nil
 		},
@@ -100,9 +104,15 @@ func (s *Struct) Decode() {
 		}
 
 		if tagOpts.Has("signature") {
-			sig := &Signature{}
-			err := UnmarshalInto(s.block.Signature, sig)
+			if s.block.Signature == "" {
+				continue
+			}
+			sigBytes, err := Base58Decode(s.block.Signature)
 			if err != nil {
+				panic(err)
+			}
+			sig := &Signature{}
+			if err := UnmarshalInto(sigBytes, sig); err != nil {
 				panic(err)
 			}
 			vval := reflect.ValueOf(sig)

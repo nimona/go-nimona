@@ -81,19 +81,6 @@ func main() {
 		log.Fatal("could not load key", err)
 	}
 
-	// lp := reg.GetLocalPeerInfo()
-	// pp := lp.GetPeerInfo()
-	// pp.Addresses = []string{
-	// 	"tcp:localhost:21013",
-	// }
-	// b := blocks.Encode(*pp)
-	// if err := blocks.Sign(b, lp.Key); err != nil {
-	// 	panic(err)
-	// }
-	// bs, _ := blocks.MarshalBlock(b)
-	// fmt.Println(blocks.Base58Encode(bs))
-	// os.Exit(9237)
-
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
 	for _, peerInfoB58 := range bootstrapPeerInfos {

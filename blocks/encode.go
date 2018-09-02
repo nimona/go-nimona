@@ -91,7 +91,7 @@ func (s *Struct) Fill() {
 			if err != nil {
 				panic(err)
 			}
-			block.Signature = sig
+			block.Signature = Base58Encode(sig)
 			continue
 		}
 
