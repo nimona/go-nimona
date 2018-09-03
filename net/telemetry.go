@@ -34,7 +34,8 @@ func SendConnectionEvent(outgoing bool) {
 }
 
 // SendBlockEvent sends a connection event
-func SendBlockEvent(outgoing bool, contentType string, recipients, payloadSize, blockSize int) {
+func SendBlockEvent(outgoing bool, contentType string, recipients,
+	payloadSize, blockSize int) {
 	SendEvent(&telemetry.BlockEvent{
 		Outgoing:    outgoing,
 		ContentType: contentType,

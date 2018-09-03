@@ -272,13 +272,15 @@ func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	SendBlockEvent(
-		false,
-		block.Type,
-		0, // len(GetRecipientsFromBlockPolicies(block)),
-		0, // TODO fix payload size
-		len(blockBytes),
-	)
+	if os.Getenv("TELEMETRY") == "client" {
+		SendBlockEvent(
+			false,
+			block.Type,
+			0, // len(GetRecipientsFromBlockPolicies(block)),
+			0, // TODO fix payload size
+			len(blockBytes),
+		)
+	}
 
 	blockID := block.ID()
 	if blocks.ShouldPersist(block.Type) {

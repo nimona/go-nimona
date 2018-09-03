@@ -18,6 +18,7 @@ import (
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/peers"
 	"github.com/nimona/go-nimona/storage"
+	"github.com/nimona/go-nimona/telemetry"
 	ishell "gopkg.in/abiosoft/ishell.v2"
 )
 
@@ -72,7 +73,21 @@ type Hello struct {
 }
 
 func init() {
-	// telemetry.SetupKeenCollector()
+	// Check if the telemetry flags are set and start the collector
+	if os.Getenv("TELEMETRY") == "server" {
+		user := os.Getenv("TELEMETRY_SERVER_USER")
+		pass := os.Getenv("TELEMETRY_SERVER_PASS")
+		addr := os.Getenv("TELEMETRY_SERVER_ADDRESS")
+
+		if user != "" || addr != "" {
+			collector, err := telemetry.NewInfluxCollector(user, pass, addr)
+			if err != nil {
+				log.Println("Failed to connect to inlfux", err)
+			}
+			telemetry.DefaultCollector = collector
+		}
+	}
+
 	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
 }
 
