@@ -61,11 +61,11 @@ func (_m *MockExchange) GetLocalBlocks() ([]string, error) {
 }
 
 // Handle provides a mock function with given fields: contentType, h
-func (_m *MockExchange) Handle(contentType string, h BlockHandler) error {
+func (_m *MockExchange) Handle(contentType string, h func(o interface{}) error) error {
 	ret := _m.Called(contentType, h)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, BlockHandler) error); ok {
+	if rf, ok := ret.Get(0).(func(string, func(o interface{}) error) error); ok {
 		r0 = rf(contentType, h)
 	} else {
 		r0 = ret.Error(0)
