@@ -1,5 +1,7 @@
 package telemetry
 
+import "github.com/nimona/go-nimona/blocks"
+
 // Collectable for metric events
 type Collectable interface {
 	Collection() string
@@ -14,7 +16,8 @@ const (
 // ConnectionEvent for reporting connection info
 type ConnectionEvent struct {
 	// Event attributes
-	Outgoing bool
+	Outgoing  bool
+	Signature *blocks.Signature `nimona:",signature" json:"signature"`
 }
 
 // Collection returns the string representation of the structure
@@ -38,6 +41,7 @@ type BlockEvent struct {
 	Recipients  int
 	PayloadSize int
 	BlockSize   int
+	Signature   *blocks.Signature `nimona:",signature" json:"signature"`
 }
 
 // Collection returns the string representation of the structure
