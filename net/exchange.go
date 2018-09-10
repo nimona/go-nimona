@@ -270,13 +270,13 @@ func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 	}
 
 	if os.Getenv("TELEMETRY") == "client" {
-		// SendBlockEvent(
-		// 	false,
-		// 	block.Type,
-		// 	0, // len(GetRecipientsFromBlockPolicies(block)),
-		// 	0, // TODO fix payload size
-		// 	len(blockBytes),
-		// )
+		SendBlockEvent(
+			false,
+			block.Type,
+			0, // len(GetRecipientsFromBlockPolicies(block)),
+			0, // TODO fix payload size
+			len(blockBytes),
+		)
 	}
 
 	blockID := block.ID()
