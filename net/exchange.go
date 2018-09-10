@@ -38,14 +38,11 @@ var (
 	ErrNotForUs = errors.New("block not for us")
 )
 
-// BlockHandler to handle incoming blocks
-type BlockHandler func(o interface{}) error
-
 // Exchange interface for mocking exchange
 type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
 	GetLocalBlocks() ([]string, error)
-	Handle(contentType string, h BlockHandler) error
+	Handle(contentType string, h func(o interface{}) error) error
 	Send(ctx context.Context, o interface{}, recipient *blocks.Key, opts ...blocks.MarshalOption) error
 	Listen(ctx context.Context, addrress string) (net.Listener, error)
 	RegisterDiscoverer(discovery Discoverer)
@@ -86,7 +83,7 @@ type incBlock struct {
 
 type handler struct {
 	contentType string
-	handler     BlockHandler
+	handler     func(o interface{}) error
 }
 
 // NewExchange creates a exchange on a given network
@@ -208,7 +205,7 @@ func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	}()
 }
 
-func (w *exchange) Handle(contentType string, h BlockHandler) error {
+func (w *exchange) Handle(contentType string, h func(o interface{}) error) error {
 	w.handlers = append(w.handlers, handler{
 		contentType: contentType,
 		handler:     h,
@@ -272,13 +269,15 @@ func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	SendBlockEvent(
-		false,
-		block.Type,
-		0, // len(GetRecipientsFromBlockPolicies(block)),
-		0, // TODO fix payload size
-		len(blockBytes),
-	)
+	if os.Getenv("TELEMETRY") == "client" {
+		SendBlockEvent(
+			false,
+			block.Type,
+			0, // len(GetRecipientsFromBlockPolicies(block)),
+			0, // TODO fix payload size
+			len(blockBytes),
+		)
+	}
 
 	blockID := block.ID()
 	if blocks.ShouldPersist(block.Type) {

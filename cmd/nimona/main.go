@@ -18,6 +18,7 @@ import (
 	"github.com/nimona/go-nimona/net"
 	"github.com/nimona/go-nimona/peers"
 	"github.com/nimona/go-nimona/storage"
+	"github.com/nimona/go-nimona/telemetry"
 	ishell "gopkg.in/abiosoft/ishell.v2"
 )
 
@@ -72,11 +73,11 @@ type Hello struct {
 }
 
 func init() {
-	// telemetry.SetupKeenCollector()
 	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
 }
 
 func main() {
+
 	configPath := os.Getenv("NIMONA_PATH")
 
 	if configPath == "" {
@@ -95,6 +96,8 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
+	bootstrapPeer := &peers.PeerInfo{}
+
 	for _, peerInfoB58 := range bootstrapPeerInfos {
 		peerInfoBytes, _ := blocks.Base58Decode(peerInfoB58)
 		peerInfo, err := blocks.Unmarshal(peerInfoBytes)
@@ -104,6 +107,7 @@ func main() {
 		if err := reg.PutPeerInfo(peerInfo.(*peers.PeerInfo)); err != nil {
 			log.Fatal("could not put bootstrap peer", err)
 		}
+		bootstrapPeer = peerInfo.(*peers.PeerInfo)
 	}
 
 	storagePath := path.Join(configPath, "storage")
@@ -111,6 +115,9 @@ func main() {
 	dpr := storage.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
+	telemetry.NewTelemetry(n, reg.GetLocalPeerInfo().Key,
+		bootstrapPeer.Signature.Key)
+
 	n.RegisterDiscoverer(dht)
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
