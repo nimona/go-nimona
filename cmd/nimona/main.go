@@ -78,23 +78,6 @@ func init() {
 
 func main() {
 
-	var collector telemetry.Collector
-
-	// Check if the telemetry flags are set and start the collector
-	if os.Getenv("TELEMETRY") == "server" {
-		user := os.Getenv("TELEMETRY_SERVER_USER")
-		pass := os.Getenv("TELEMETRY_SERVER_PASS")
-		addr := os.Getenv("TELEMETRY_SERVER_ADDRESS")
-
-		if user != "" || addr != "" {
-			col, err := telemetry.NewInfluxCollector(user, pass, addr)
-			if err != nil {
-				log.Println("Failed to connect to inlfux", err)
-			}
-			collector = col
-		}
-	}
-
 	configPath := os.Getenv("NIMONA_PATH")
 
 	if configPath == "" {
@@ -132,8 +115,8 @@ func main() {
 	dpr := storage.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(reg, dpr)
 	dht, _ := dht.NewDHT(n, reg)
-	telemetry.NewTelemetry(n, collector,
-		reg.GetLocalPeerInfo().Key, bootstrapPeer.Signature.Key)
+	telemetry.NewTelemetry(n, reg.GetLocalPeerInfo().Key,
+		bootstrapPeer.Signature.Key)
 
 	n.RegisterDiscoverer(dht)
 
