@@ -15,7 +15,7 @@ type Collectable interface {
 // ConnectionEvent for reporting connection info
 type ConnectionEvent struct {
 	// Event attributes
-	Outgoing  bool
+	Direction string            `json:"direction"`
 	Signature *crypto.Signature `json:"-"`
 }
 
@@ -48,18 +48,16 @@ func (ce *ConnectionEvent) Collection() string {
 // Measurements returns a map with all the metrics for the event
 func (ce *ConnectionEvent) Measurements() map[string]interface{} {
 	return map[string]interface{}{
-		"outgoing": ce.Outgoing,
+		"direction": ce.Direction,
 	}
 }
 
 // BlockEvent for reporting block metrics
 type BlockEvent struct {
 	// Event attributes
-	Outgoing    bool
-	ContentType string
-	Recipients  int
-	PayloadSize int
-	BlockSize   int
+	Direction   string            `json:"direction"`
+	ContentType string            `json:"contentType"`
+	BlockSize   int               `json:"size"`
 	Signature   *crypto.Signature `json:"-"`
 }
 
@@ -91,12 +89,9 @@ func (ee *BlockEvent) Collection() string {
 
 // Measurements returns a map with all the metrics for the event
 func (ee *BlockEvent) Measurements() map[string]interface{} {
-
 	return map[string]interface{}{
-		"outgoing":     ee.Outgoing,
+		"direction":    ee.Direction,
 		"content_type": ee.ContentType,
-		"recipients":   ee.Recipients,
-		"payload_size": ee.PayloadSize,
 		"block_size":   ee.BlockSize,
 	}
 }

@@ -271,15 +271,11 @@ func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	if os.Getenv("TELEMETRY") == "client" {
-		SendBlockEvent(
-			false,
-			block.Type,
-			0, // len(GetRecipientsFromBlockPolicies(block)),
-			0, // TODO fix payload size
-			len(blockBytes),
-		)
-	}
+	SendBlockEvent(
+		"incoming",
+		block.Type,
+		len(blockBytes),
+	)
 
 	blockID := block.ID()
 	if blocks.ShouldPersist(block.Type) {
@@ -451,6 +447,12 @@ func (w *exchange) Send(ctx context.Context, o blocks.Typed, recipient *crypto.K
 		fmt.Print(string(b))
 		fmt.Println(" ---------- out block / end")
 	}
+
+	SendBlockEvent(
+		"outgoing",
+		o.GetType(),
+		len(bytes),
+	)
 
 	if blocks.ShouldPersist(blocks.GetFromType(reflect.TypeOf(o))) {
 		blockID, _ := blocks.SumSha3(bytes)

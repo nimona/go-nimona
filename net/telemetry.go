@@ -3,6 +3,8 @@ package net
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"nimona.io/go/telemetry"
 )
@@ -21,19 +23,26 @@ func SendEvent(event telemetry.Collectable) {
 
 // SendConnectionEvent sends a connection event
 func SendConnectionEvent(outgoing bool) {
+	direction := "incoming"
+	if outgoing {
+		direction = "outgoing"
+	}
 	telemetry.SendEvent(context.Background(), &telemetry.ConnectionEvent{
-		Outgoing: outgoing,
+		Direction: direction,
 	})
 }
 
 // SendBlockEvent sends a connection event
-func SendBlockEvent(outgoing bool, contentType string, recipients,
-	payloadSize, blockSize int) {
+func SendBlockEvent(direction string, contentType string, blockSize int) {
+	if os.Getenv("TELEMETRY") != "client" {
+		return
+	}
+	if strings.Contains(contentType, "telemetry") {
+		return
+	}
 	telemetry.SendEvent(context.Background(), &telemetry.BlockEvent{
-		Outgoing:    outgoing,
+		Direction:   direction,
 		ContentType: contentType,
-		Recipients:  recipients,
-		PayloadSize: payloadSize,
 		BlockSize:   blockSize,
 	})
 }
