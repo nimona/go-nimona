@@ -2,9 +2,22 @@ package net
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/nimona/go-nimona/telemetry"
+	"nimona.io/go/telemetry"
 )
+
+// SendEvent sends an event
+func SendEvent(event telemetry.Collectable) {
+	if telemetry.DefaultCollector == nil {
+		return
+	}
+	// TODO Wrap or extend event with version and other static information
+	// TODO properly log error
+	if err := telemetry.DefaultCollector.Collect(event); err != nil {
+		fmt.Println("telemetry error", err)
+	}
+}
 
 // SendConnectionEvent sends a connection event
 func SendConnectionEvent(outgoing bool) {

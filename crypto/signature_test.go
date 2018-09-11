@@ -1,4 +1,4 @@
-package blocks_test
+package crypto_test
 
 import (
 	"crypto/ecdsa"
@@ -6,11 +6,14 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/nimona/go-nimona/blocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/ugorji/go/codec"
+	ucodec "github.com/ugorji/go/codec"
 
-	"github.com/nimona/go-nimona/peers"
+	"nimona.io/go/base58"
+	"nimona.io/go/blocks"
+	"nimona.io/go/codec"
+	"nimona.io/go/crypto"
+	"nimona.io/go/peers"
 )
 
 func TestSignatureMarshaling(t *testing.T) {
@@ -18,7 +21,7 @@ func TestSignatureMarshaling(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, sk)
 
-	k, err := blocks.NewKey(sk)
+	k, err := crypto.NewKey(sk)
 	assert.NoError(t, err)
 	assert.NotNil(t, sk)
 
@@ -29,44 +32,44 @@ func TestSignatureMarshaling(t *testing.T) {
 		},
 	}
 
-	b, err := blocks.Marshal(p, blocks.SignWith(k))
+	b, err := blocks.PackEncode(p, blocks.SignWith(k))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, b)
 
 	// test block
 	m := map[string]interface{}{}
-	d := codec.NewDecoderBytes(b, blocks.CborHandler())
+	d := ucodec.NewDecoderBytes(b, codec.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, m["signature"].(string))
-	assert.Equal(t, m["type"], "peer.info")
-	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[0], "a-1")
-	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[1], "a-2")
+	assert.Equal(t, "peer.info", m["type"])
+	assert.Equal(t, "a-1", m["payload"].(map[string]interface{})["addresses"].([]interface{})[0])
+	assert.Equal(t, "a-2", m["payload"].(map[string]interface{})["addresses"].([]interface{})[1])
 
 	// test block's signature
 	bi := m["signature"].(string)
-	bbi, err := blocks.Base58Decode(bi)
+	bbi, err := base58.Decode(bi)
 	assert.NoError(t, err)
 	m = map[string]interface{}{}
-	d = codec.NewDecoderBytes(bbi, blocks.CborHandler())
+	d = ucodec.NewDecoderBytes(bbi, codec.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.Equal(t, m["type"], "signature")
-	assert.Equal(t, m["payload"].(map[string]interface{})["alg"], "ES256")
+	assert.Equal(t, "signature", m["type"])
+	assert.Equal(t, "ES256", m["payload"].(map[string]interface{})["alg"])
 
 	// test signature's key
 	bi = m["payload"].(map[string]interface{})["key"].(string)
-	bbi, err = blocks.Base58Decode(bi)
+	bbi, err = base58.Decode(bi)
 	m = map[string]interface{}{}
-	d = codec.NewDecoderBytes(bbi, blocks.CborHandler())
+	d = ucodec.NewDecoderBytes(bbi, codec.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.Equal(t, m["type"], "key")
-	assert.Equal(t, m["payload"].(map[string]interface{})["crv"], "P-256")
-	assert.Equal(t, m["payload"].(map[string]interface{})["kty"], "EC")
+	assert.Equal(t, "key", m["type"])
+	assert.Equal(t, "P-256", m["payload"].(map[string]interface{})["crv"])
+	assert.Equal(t, "EC", m["payload"].(map[string]interface{})["kty"])
 }
 
 func TestSignatureVerification(t *testing.T) {
@@ -74,7 +77,7 @@ func TestSignatureVerification(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, sk)
 
-	k, err := blocks.NewKey(sk)
+	k, err := crypto.NewKey(sk)
 	assert.NoError(t, err)
 	assert.NotNil(t, sk)
 
@@ -85,23 +88,23 @@ func TestSignatureVerification(t *testing.T) {
 		},
 	}
 
-	b, err := blocks.Marshal(p, blocks.SignWith(k))
+	b, err := blocks.PackEncode(p, blocks.SignWith(k))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, b)
 
 	// test block
 	m := map[string]interface{}{}
-	d := codec.NewDecoderBytes(b, blocks.CborHandler())
+	d := ucodec.NewDecoderBytes(b, codec.CborHandler())
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
 	assert.NotEmpty(t, m["signature"].(string))
-	assert.Equal(t, m["type"], "peer.info")
-	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[0], "a-1")
-	assert.Equal(t, m["payload"].(map[string]interface{})["addresses"].([]interface{})[1], "a-2")
+	assert.Equal(t, "peer.info", m["type"])
+	assert.Equal(t, "a-1", m["payload"].(map[string]interface{})["addresses"].([]interface{})[0])
+	assert.Equal(t, "a-2", m["payload"].(map[string]interface{})["addresses"].([]interface{})[1])
 
 	// test verification
-	s, err := blocks.Unmarshal(b, blocks.Verify())
+	s, err := blocks.UnpackDecode(b, blocks.Verify())
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
 }

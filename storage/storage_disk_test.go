@@ -6,7 +6,7 @@ package storage
 // 	"path/filepath"
 // 	"testing"
 
-// 	"github.com/nimona/go-nimona/blocks"
+// 	"nimona.io/go/blocks"
 // 	"github.com/stretchr/testify/assert"
 // )
 

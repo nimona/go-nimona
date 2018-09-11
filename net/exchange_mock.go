@@ -5,7 +5,7 @@ import (
 	context "context"
 	"net"
 
-	blocks "github.com/nimona/go-nimona/blocks"
+	blocks "nimona.io/go/blocks"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -30,29 +30,6 @@ func (_m *MockExchange) Get(ctx context.Context, id string) (*blocks.Block, erro
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetLocalBlocks provides a mock function with given fields:
-func (_m *MockExchange) GetLocalBlocks() ([]string, error) {
-	ret := _m.Called()
-
-	var r0 []string
-	if rf, ok := ret.Get(0).(func() []string); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}

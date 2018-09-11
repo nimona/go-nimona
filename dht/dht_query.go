@@ -3,13 +3,14 @@ package dht
 import (
 	"context"
 	"sync"
-	"time"
 
-	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/log"
-	"github.com/nimona/go-nimona/peers"
 	logrus "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
+
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	"nimona.io/go/log"
+	"nimona.io/go/peers"
 )
 
 const numPeersNear int = 15
@@ -74,9 +75,9 @@ func (q *query) Run(ctx context.Context) {
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
-			case <-time.After(maxQueryTime):
-				close(q.outgoingPayloads)
-				return
+			// case <-time.After(maxQueryTime):
+			// 	close(q.outgoingPayloads)
+			// 	return
 
 			case <-ctx.Done():
 				close(q.outgoingPayloads)
@@ -119,7 +120,7 @@ func (q *query) next() {
 		return
 	}
 
-	peersToAsk := []*blocks.Key{}
+	peersToAsk := []*crypto.Key{}
 	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
 		if _, ok := q.contactedPeers.Load(peerInfo.Thumbprint()); ok {
@@ -132,12 +133,12 @@ func (q *query) next() {
 	var req interface{}
 	switch q.queryType {
 	case PeerInfoQuery:
-		req = PeerInfoRequest{
+		req = &PeerInfoRequest{
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
 	case ProviderQuery:
-		req = ProviderRequest{
+		req = &ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
 		}
@@ -148,7 +149,7 @@ func (q *query) next() {
 	ctx := context.Background()
 	signer := q.dht.addressBook.GetLocalPeerInfo().Key
 	for _, peer := range peersToAsk {
-		if err := q.dht.exchange.Send(ctx, req, peer, blocks.SignWith(signer)); err != nil {
+		if err := q.dht.exchange.Send(ctx, req.(blocks.Typed), peer, blocks.SignWith(signer)); err != nil {
 			panic(err)
 		}
 	}

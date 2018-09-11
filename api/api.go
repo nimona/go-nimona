@@ -4,9 +4,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/peers"
-	"github.com/nimona/go-nimona/storage"
+	"nimona.io/go/dht"
+	"nimona.io/go/peers"
+	"nimona.io/go/storage"
 )
 
 type API struct {

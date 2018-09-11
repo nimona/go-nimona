@@ -1,20 +1,38 @@
 package net
 
 import (
-	blocks "github.com/nimona/go-nimona/blocks"
-)
-
-const (
-	// ForwardRequestType is the type of ForwardRequest Blocks
-	ForwardRequestType = "nimona.forwarded"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
 )
 
 func init() {
-	blocks.RegisterContentType(ForwardRequestType, ForwardRequest{})
+	blocks.RegisterContentType(&ForwardRequest{})
 }
 
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
-	Recipient *blocks.Key `json:"recipient"`
-	Block     []byte      `json:"block"`
+	Recipient *crypto.Key       `json:"recipient"`
+	Block     []byte            `json:"block"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (r *ForwardRequest) GetType() string {
+	return "nimona.forwarded"
+}
+
+func (r *ForwardRequest) GetSignature() *crypto.Signature {
+	return r.Signature
+}
+
+func (r *ForwardRequest) SetSignature(s *crypto.Signature) {
+	r.Signature = s
+}
+
+func (r *ForwardRequest) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (r *ForwardRequest) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }

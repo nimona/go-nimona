@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
-	"github.com/nimona/go-nimona/log"
+	"nimona.io/go/log"
 )
 
 // AddressBooker provides an interface for mocking our AddressBook

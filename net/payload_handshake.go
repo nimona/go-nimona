@@ -1,21 +1,38 @@
 package net
 
 import (
-	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/peers"
-)
-
-const (
-	// TypeHandshake is the type of HandshakePayload Block
-	TypeHandshake = "handshake"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	"nimona.io/go/peers"
 )
 
 func init() {
-	blocks.RegisterContentType(TypeHandshake, HandshakePayload{})
+	blocks.RegisterContentType(&HandshakePayload{})
 }
 
 // HandshakePayload content structure for Handshake content type
 type HandshakePayload struct {
-	Signature *blocks.Signature `nimona:",signature" json:"signature"`
-	PeerInfo  *peers.PeerInfo   `nimona:"peerInfo" json:"peerInfo"`
+	PeerInfo  *peers.PeerInfo   `json:"peerInfo"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (r *HandshakePayload) GetType() string {
+	return "handshake"
+}
+
+func (r *HandshakePayload) GetSignature() *crypto.Signature {
+	return r.Signature
+}
+
+func (r *HandshakePayload) SetSignature(s *crypto.Signature) {
+	r.Signature = s
+}
+
+func (r *HandshakePayload) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (r *HandshakePayload) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }

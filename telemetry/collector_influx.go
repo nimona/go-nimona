@@ -1,17 +1,15 @@
 package telemetry
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/nimona/go-nimona/log"
-
+	"github.com/influxdata/influxdb/client/v2"
 	"go.uber.org/zap"
 
-	"context"
-
-	"github.com/influxdata/influxdb/client/v2"
+	"nimona.io/go/log"
 )
 
 // InfluxCollector implements the Collector interface with a InlfuxDB storage

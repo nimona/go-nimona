@@ -1,10 +1,12 @@
-package blocks
+package crypto
 
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"math/big"
 
+	"nimona.io/go/base58"
+	"nimona.io/go/codec"
 	"github.com/pkg/errors"
 )
 
@@ -25,43 +27,77 @@ const (
 	P521 string = "P-521"
 )
 
-func init() {
-	RegisterContentType("key", Key{})
-}
-
 // Key defines the minimal interface for each of the
 // key types.
 type Key struct {
-	Algorithm              string `nimona:"alg,omitempty" json:"alg,omitempty"`
-	KeyID                  string `nimona:"kid,omitempty" json:"kid,omitempty"`
-	KeyType                string `nimona:"kty,omitempty" json:"kty,omitempty"`
-	KeyUsage               string `nimona:"use,omitempty" json:"use,omitempty"`
-	KeyOps                 string `nimona:"key_ops,omitempty" json:"key_ops,omitempty"`
-	X509CertChain          string `nimona:"x5c,omitempty" json:"x5c,omitempty"`
-	X509CertThumbprint     string `nimona:"x5t,omitempty" json:"x5t,omitempty"`
-	X509CertThumbprintS256 string `nimona:"x5tS256,omitempty" json:"x5tS256,omitempty"`
-	X509URL                string `nimona:"x5u,omitempty" json:"x5u,omitempty"`
-	Curve                  string `nimona:"crv,omitempty" json:"crv,omitempty"`
-	X                      []byte `nimona:"x,omitempty" json:"x,omitempty"`
-	Y                      []byte `nimona:"y,omitempty" json:"y,omitempty"`
-	D                      []byte `nimona:"d,omitempty" json:"d,omitempty"`
+	Algorithm              string `json:"alg,omitempty"`
+	KeyID                  string `json:"kid,omitempty"`
+	KeyType                string `json:"kty,omitempty"`
+	KeyUsage               string `json:"use,omitempty"`
+	KeyOps                 string `json:"key_ops,omitempty"`
+	X509CertChain          string `json:"x5c,omitempty"`
+	X509CertThumbprint     string `json:"x5t,omitempty"`
+	X509CertThumbprintS256 string `json:"x5tS256,omitempty"`
+	X509URL                string `json:"x5u,omitempty"`
+	Curve                  string `json:"crv,omitempty"`
+	X                      []byte `json:"x,omitempty"`
+	Y                      []byte `json:"y,omitempty"`
+	D                      []byte `json:"d,omitempty"`
 	key                    interface{}
 }
 
+func (b *Key) GetType() string {
+	return "key"
+}
+
+func (k *Key) GetSignature() *Signature {
+	// no signature
+	return nil
+}
+
+func (k *Key) SetSignature(s *Signature) {
+	// no signature
+}
+
+func (k *Key) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (k *Key) SetAnnotations(a map[string]interface{}) {
+	// no annotations
+}
+
 func (b *Key) MarshalBlock() (string, error) {
-	bytes, err := Marshal(b)
+	block := map[string]interface{}{
+		"type":    "key",
+		"payload": b,
+	}
+
+	bytes, err := codec.Marshal(block)
 	if err != nil {
 		return "", err
 	}
-	return Base58Encode(bytes), nil
+
+	return base58.Encode(bytes), nil
 }
 
 func (b *Key) UnmarshalBlock(b58bytes string) error {
-	bytes, err := Base58Decode(b58bytes)
+	bytes, err := base58.Decode(b58bytes)
 	if err != nil {
 		return err
 	}
-	return UnmarshalInto(bytes, b)
+
+	block := map[string]interface{}{
+		"type":    "key",
+		"payload": b,
+	}
+
+	if err := codec.Unmarshal(bytes, &block); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (k *Key) Thumbprint() string {

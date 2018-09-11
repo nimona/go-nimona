@@ -12,8 +12,8 @@ import (
 	igd "github.com/emersion/go-upnp-igd"
 	"go.uber.org/zap"
 
-	"github.com/nimona/go-nimona/log"
-	"github.com/nimona/go-nimona/peers"
+	"nimona.io/go/log"
+	"nimona.io/go/peers"
 )
 
 // Networker interface for mocking Network

@@ -7,25 +7,28 @@ import (
 	"os/user"
 	"path"
 
-	"github.com/nimona/go-nimona/peers"
+	"nimona.io/go/blocks"
+
+	"nimona.io/go/peers"
 )
 
 func main() {
 	names := []string{
-		"andromeda",
-		"borealis",
-		"cassiopeia",
-		"draco",
-		"eridanus",
-		"fornax",
-		"gemini",
-		"hydra",
-		"indus",
-		"lacerta",
-		"mensa",
-		"norma",
-		"orion",
-		"pyxis",
+		// "andromeda",
+		// "borealis",
+		// "cassiopeia",
+		// "draco",
+		// "eridanus",
+		// "fornax",
+		// "gemini",
+		// "hydra",
+		// "indus",
+		// "lacerta",
+		// "mensa",
+		// "norma",
+		// "orion",
+		// "pyxis",
+		"local",
 	}
 	for _, name := range names {
 		configPath := "bootstraps/" + name
@@ -46,9 +49,10 @@ func main() {
 
 		pi := reg.GetLocalPeerInfo()
 		pi.Addresses = []string{
-			"tcp:" + name + ".nimona.io:21013",
+			// "tcp:" + name + ".nimona.io:21013",
+			"tcp:localhost:21013",
 		}
-		pp, _ := pi.GetPeerInfo().MarshalBlock()
+		pp, _ := blocks.PackEncodeBase58(pi.GetPeerInfo())
 		fmt.Printf(`// %s.nimona.io
 // "%s",
 `, name, pp)
