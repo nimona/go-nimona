@@ -1,10 +1,13 @@
-package blocks
+package crypto
 
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+
+	"nimona.io/go/base58"
+	"nimona.io/go/codec"
 )
 
 var (
@@ -14,9 +17,6 @@ var (
 	// ErrAlgorithNotImplemented is returned when the algorithm specified
 	// has not been implemented
 	ErrAlgorithNotImplemented = errors.New("algorithm not implemented")
-	// ErrCouldNotVerify is returned when the signature doesn't matches the
-	// given key
-	ErrCouldNotVerify = errors.New("could not verify signature")
 )
 
 // Algorithm for Signature
@@ -45,30 +45,91 @@ func (v Algorithm) String() string {
 	return string(v)
 }
 
-func init() {
-	RegisterContentType("signature", Signature{})
+type Signature struct {
+	Key       *Key      `json:"key"`
+	Alg       Algorithm `json:"alg"`
+	Signature []byte    `json:"signature"`
 }
 
-type Signature struct {
-	Key       *Key      `nimona:"key" json:"key"`
-	Alg       Algorithm `nimona:"alg" json:"alg"`
-	Signature []byte    `nimona:"sig" json:"signature"`
+func (s *Signature) GetType() string {
+	return "signature"
+}
+
+func (s *Signature) GetSignature() *Signature {
+	// no signature
+	// TODO this is a bit ironic :P
+	return nil
+}
+
+func (s *Signature) SetSignature(*Signature) {
+	// no signature
+}
+
+func (s *Signature) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (s *Signature) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }
 
 func (s *Signature) MarshalBlock() (string, error) {
-	bytes, err := Marshal(s)
+	key := ""
+	if s.Key != nil {
+		k, err := s.Key.MarshalBlock()
+		if err != nil {
+			return "", err
+		}
+		key = k
+	}
+
+	block := map[string]interface{}{
+		"type": "signature",
+		"payload": map[string]interface{}{
+			"key": key,
+			"alg": s.Alg,
+			"sig": s.Signature,
+		},
+	}
+
+	bytes, err := codec.Marshal(block)
 	if err != nil {
 		return "", err
 	}
-	return Base58Encode(bytes), nil
+
+	return base58.Encode(bytes), nil
 }
 
 func (s *Signature) UnmarshalBlock(b58bytes string) error {
-	bytes, err := Base58Decode(b58bytes)
+	bytes, err := base58.Decode(b58bytes)
 	if err != nil {
 		return err
 	}
-	return UnmarshalInto(bytes, s)
+
+	block := map[string]interface{}{}
+	if err := codec.Unmarshal(bytes, &block); err != nil {
+		return err
+	}
+
+	// HACK too many hacks, make a decoder
+	payload := block["payload"].(map[string]interface{})
+	if ab, ok := payload["alg"]; ok && ab != nil {
+		s.Alg = Algorithm(ab.(string))
+	}
+	if sb, ok := payload["sig"]; ok && sb != nil {
+		s.Signature = sb.([]byte)
+	}
+
+	key, ok := payload["key"].(string)
+	if ok && key != "" {
+		s.Key = &Key{}
+		if err := s.Key.UnmarshalBlock(key); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // NewSignature returns a signature given some bytes and a private key

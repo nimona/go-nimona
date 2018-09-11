@@ -31,8 +31,8 @@ var registry = &Registry{
 }
 
 // RegisterContentType registers types and content on a default registry
-func RegisterContentType(contentType string, content interface{}, opts ...RegistryOption) {
-	registry.Register(contentType, content, opts...)
+func RegisterContentType(content Typed, opts ...RegistryOption) {
+	registry.Register(content.GetType(), content, opts...)
 }
 
 func ShouldPersist(contentType string) bool {

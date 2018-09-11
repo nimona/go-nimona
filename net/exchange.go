@@ -13,15 +13,18 @@ import (
 	"sync"
 	"time"
 
-	cbor "github.com/ugorji/go/codec"
+	"github.com/gobwas/glob"
+	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
-	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/codec"
-	"github.com/nimona/go-nimona/log"
-	"github.com/nimona/go-nimona/peers"
-	"github.com/nimona/go-nimona/storage"
-	"github.com/nimona/go-nimona/utils"
+	"nimona.io/go/base58"
+	"nimona.io/go/blocks"
+	"nimona.io/go/codec"
+	"nimona.io/go/crypto"
+	"nimona.io/go/log"
+	"nimona.io/go/peers"
+	"nimona.io/go/storage"
+	"nimona.io/go/utils"
 )
 
 var (
@@ -41,13 +44,10 @@ var (
 // Exchange interface for mocking exchange
 type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
-	GetLocalBlocks() ([]string, error)
-	Handle(contentType string, h func(o interface{}) error) error
-	Send(ctx context.Context, o interface{}, recipient *blocks.Key, opts ...blocks.MarshalOption) error
+	Handle(contentType string, h func(o blocks.Typed) error) error
+	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error
 	Listen(ctx context.Context, addrress string) (net.Listener, error)
 	RegisterDiscoverer(discovery Discoverer)
-	// Verify(block *blocks.Block) error
-	// Sign(block *blocks.Block, signerPeerInfo *peers.PrivatePeerInfo) error
 }
 
 type exchange struct {
@@ -71,7 +71,7 @@ type exchange struct {
 }
 
 type outBlock struct {
-	recipient *blocks.Key
+	recipient *crypto.Key
 	bytes     []byte
 }
 
@@ -82,8 +82,8 @@ type incBlock struct {
 }
 
 type handler struct {
-	contentType string
-	handler     func(o interface{}) error
+	contentType glob.Glob
+	handler     func(o blocks.Typed) error
 }
 
 // NewExchange creates a exchange on a given network
@@ -152,12 +152,12 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 			}
 
 			// create forwarded block
-			fw := ForwardRequest{
+			fw := &ForwardRequest{
 				Recipient: block.recipient,
 				Block:     block.bytes,
 			}
 
-			fwb, err := blocks.Marshal(fw, blocks.SignWith(self.Key))
+			fwb, err := blocks.PackEncode(fw, blocks.SignWith(self.Key))
 			if err != nil {
 				panic(err)
 				continue
@@ -205,9 +205,13 @@ func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	}()
 }
 
-func (w *exchange) Handle(contentType string, h func(o interface{}) error) error {
+func (w *exchange) Handle(typePatern string, h func(o blocks.Typed) error) error {
+	g, err := glob.Compile(typePatern, '.', '/', '#')
+	if err != nil {
+		return err
+	}
 	w.handlers = append(w.handlers, handler{
-		contentType: contentType,
+		contentType: g,
 		handler:     h,
 	})
 	return nil
@@ -231,21 +235,16 @@ func (w *exchange) Close(peerID string, conn net.Conn) {
 func (w *exchange) HandleConnection(conn net.Conn) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteAddr().String()))
 
-	blockDecoder := cbor.NewDecoder(conn, codec.CborHandler())
+	pDecoder := ucodec.NewDecoder(conn, codec.CborHandler())
 	for {
-		block := map[string]interface{}{}
-		if err := blockDecoder.Decode(&block); err != nil {
+		p := &blocks.Block{}
+		if err := pDecoder.Decode(&p); err != nil {
 			w.logger.Error("could not read block", zap.Error(err))
 			w.Close("", conn)
 			return err
 		}
 
-		blockBytes := []byte{}
-		enc := cbor.NewEncoderBytes(&blockBytes, blocks.CborHandler())
-		if err := enc.Encode(block); err != nil {
-			panic(err)
-		}
-		if err := w.process(blockBytes, conn); err != nil {
+		if err := w.process(p, conn); err != nil {
 			w.Close("", conn)
 			return err
 		}
@@ -253,31 +252,30 @@ func (w *exchange) HandleConnection(conn net.Conn) error {
 }
 
 // Process incoming block
-func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
-	ib, err := blocks.Unmarshal(blockBytes, blocks.Verify(), blocks.ReturnBlock())
+func (w *exchange) process(block *blocks.Block, conn net.Conn) error {
+	blockBytes, err := blocks.Encode(block)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	block := ib.(*blocks.Block)
+	payload, err := blocks.Unpack(block, blocks.Verify())
+	if err != nil {
+		return err
+	}
 
 	if os.Getenv("DEBUG_BLOCKS") != "" {
-		fmt.Println("Processing type", block.Type, "as", reflect.TypeOf(block.Payload))
+		fmt.Println("Processing type", block.Type)
 		fmt.Println("< ---------- inc block / start")
 		b, _ := json.MarshalIndent(block, "< ", "  ")
 		fmt.Println(string(b))
 		fmt.Println("< ---------- inc block / end")
 	}
 
-	if os.Getenv("TELEMETRY") == "client" {
-		SendBlockEvent(
-			false,
-			block.Type,
-			0, // len(GetRecipientsFromBlockPolicies(block)),
-			0, // TODO fix payload size
-			len(blockBytes),
-		)
-	}
+	SendBlockEvent(
+		"incoming",
+		block.Type,
+		len(blockBytes),
+	)
 
 	blockID := block.ID()
 	if blocks.ShouldPersist(block.Type) {
@@ -290,7 +288,7 @@ func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 
 	// TODO convert these into proper handlers
 	contentType := block.Type
-	switch payload := block.Payload.(type) {
+	switch payload := payload.(type) {
 	case *ForwardRequest:
 		w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
 		w.outgoingPayloads <- outBlock{
@@ -319,14 +317,13 @@ func (w *exchange) process(blockBytes []byte, conn net.Conn) error {
 	}
 
 	for _, handler := range w.handlers {
-		if strings.HasPrefix(contentType, handler.contentType) {
-			if err := handler.handler(block.Payload); err != nil {
+		if handler.contentType.Match(contentType) {
+			if err := handler.handler(payload); err != nil {
 				w.logger.Info(
 					"Could not handle event",
 					zap.String("contentType", contentType),
 					zap.Error(err),
 				)
-				return err
 			}
 		}
 	}
@@ -346,19 +343,23 @@ func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
 		return ErrInvalidRequest
 	}
 
-	block, err := blocks.Unmarshal(payload.Block, blocks.ReturnBlock())
+	block, err := blocks.Decode(payload.Block)
 	if err != nil {
 		panic(err)
 		return err
 	}
 
-	if blocks.ShouldPersist(block.(*blocks.Block).Type) {
+	if blocks.ShouldPersist(block.Type) {
 		blockID, _ := blocks.SumSha3(payload.Block)
 		w.store.Store(blockID, payload.Block)
 	}
 
-	req.response <- block.(*blocks.Block).Payload
+	p, err := blocks.Unpack(block)
+	if err != nil {
+		return err
+	}
 
+	req.response <- p
 	return nil
 }
 
@@ -387,7 +388,7 @@ func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
 func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	// Check local storage for block
 	if blockBytes, err := w.store.Get(id); err == nil {
-		return blocks.Unmarshal(blockBytes)
+		return blocks.UnpackDecode(blockBytes)
 	}
 
 	req := &BlockRequest{
@@ -429,13 +430,13 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	}
 }
 
-func (w *exchange) Send(ctx context.Context, o interface{}, recipient *blocks.Key, opts ...blocks.MarshalOption) error {
+func (w *exchange) Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error {
 	// b := blocks.Encode(o)
 	// if err := blocks.Sign(b, w.addressBook.GetLocalPeerInfo().Key); err != nil {
 	// 	return err
 	// }
 
-	bytes, err := blocks.Marshal(o, opts...)
+	bytes, err := blocks.PackEncode(o, opts...)
 	if err != nil {
 		return err
 	}
@@ -446,6 +447,12 @@ func (w *exchange) Send(ctx context.Context, o interface{}, recipient *blocks.Ke
 		fmt.Print(string(b))
 		fmt.Println(" ---------- out block / end")
 	}
+
+	SendBlockEvent(
+		"outgoing",
+		o.GetType(),
+		len(bytes),
+	)
 
 	if blocks.ShouldPersist(blocks.GetFromType(reflect.TypeOf(o))) {
 		blockID, _ := blocks.SumSha3(bytes)
@@ -461,17 +468,12 @@ func (w *exchange) Send(ctx context.Context, o interface{}, recipient *blocks.Ke
 	return nil
 }
 
-func (w *exchange) GetLocalBlocks() ([]string, error) {
-	return w.store.List()
-}
-
 func (w *exchange) writeBlock(ctx context.Context, bytes []byte, rw io.ReadWriter) error {
 	if _, err := rw.Write(bytes); err != nil {
 		return err
 	}
 
-	w.logger.Debug("writing block", zap.String("bytes", blocks.Base58Encode(bytes)))
-
+	w.logger.Debug("writing block", zap.String("bytes", base58.Encode(bytes)))
 	return nil
 }
 
@@ -524,12 +526,12 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 
 	// handshake so the other side knows who we are
 	// TODO can't ths use Send()?
-	handshake := HandshakePayload{
+	handshake := &HandshakePayload{
 		PeerInfo: w.addressBook.GetLocalPeerInfo().GetPeerInfo(),
 	}
 
 	signer := w.addressBook.GetLocalPeerInfo().Key
-	handshakeBytes, err := blocks.Marshal(handshake, blocks.SignWith(signer))
+	handshakeBytes, err := blocks.PackEncode(handshake, blocks.SignWith(signer))
 	if err != nil {
 		panic(err)
 		return nil, err

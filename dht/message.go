@@ -1,41 +1,154 @@
 package dht
 
 import (
-	"github.com/nimona/go-nimona/blocks"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	"nimona.io/go/peers"
 )
 
 func init() {
-	blocks.RegisterContentType(ProviderType, Provider{})
-	blocks.RegisterContentType(PeerInfoRequestType, PeerInfoRequest{})
-	blocks.RegisterContentType(ProviderRequestType, ProviderRequest{})
+	blocks.RegisterContentType(&Provider{})
+	blocks.RegisterContentType(&PeerInfoRequest{})
+	blocks.RegisterContentType(&PeerInfoResponse{})
+	blocks.RegisterContentType(&ProviderRequest{})
+	blocks.RegisterContentType(&ProviderResponse{})
 }
-
-// Block types
-const (
-	ProviderType = "dht.provider"
-
-	PeerInfoRequestType = "dht.get-peer-info"
-	ProviderRequestType = "dht.get-providers"
-)
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	ID        string            `nimona:",id" json:"id"`
-	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
-	PeerID    string            `nimona:"peerID" json:"peerID"`
-	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	RequestID string            `json:"requestID,omitempty"`
+	PeerID    string            `json:"peerID"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (p *PeerInfoRequest) GetType() string {
+	return "dht.provider"
+}
+
+func (p *PeerInfoRequest) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *PeerInfoRequest) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *PeerInfoRequest) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *PeerInfoRequest) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }
 
 // ProviderRequest payload
 type ProviderRequest struct {
-	RequestID string            `nimona:"requestID" json:"requestID,omitempty"`
-	Key       string            `nimona:"key" json:"key"`
-	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	RequestID string            `json:"requestID,omitempty"`
+	Key       string            `json:"key"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (p *ProviderRequest) GetType() string {
+	return "dht.peer-info-request"
+}
+
+func (p *ProviderRequest) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *ProviderRequest) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *ProviderRequest) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *ProviderRequest) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }
 
 // Provider payload
 type Provider struct {
-	RequestID string            `nimona:"requestID,header" json:"requestID,omitempty"`
-	BlockIDs  []string          `nimona:"blockIDs" json:"blockIDs"`
-	Signature *blocks.Signature `nimona:",signature" json:"signature"`
+	BlockIDs  []string          `json:"blockIDs"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (p *Provider) GetType() string {
+	return "dht.peer-info-response"
+}
+
+func (p *Provider) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *Provider) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *Provider) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *Provider) SetAnnotations(a map[string]interface{}) {
+	// no annotations
+}
+
+type PeerInfoResponse struct {
+	RequestID    string            `json:"requestID,omitempty"`
+	PeerInfo     *peers.PeerInfo   `json:"peerInfo,omitempty"`
+	ClosestPeers []*peers.PeerInfo `json:"closestPeers,omitempty"`
+	Signature    *crypto.Signature `json:"-"`
+}
+
+func (p *PeerInfoResponse) GetType() string {
+	return "dht.provider-request"
+}
+
+func (p *PeerInfoResponse) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *PeerInfoResponse) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *PeerInfoResponse) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *PeerInfoResponse) SetAnnotations(a map[string]interface{}) {
+	// no annotations
+}
+
+type ProviderResponse struct {
+	RequestID    string            `json:"requestID,omitempty"`
+	Providers    []*Provider       `json:"providers,omitempty"`
+	ClosestPeers []*peers.PeerInfo `json:"closestPeers,omitempty"`
+	Signature    *crypto.Signature `json:"-"`
+}
+
+func (p *ProviderResponse) GetType() string {
+	return "dht.provider-response"
+}
+
+func (p *ProviderResponse) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *ProviderResponse) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *ProviderResponse) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *ProviderResponse) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }

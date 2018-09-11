@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nimona/go-nimona/blocks"
+	"nimona.io/go/blocks"
 )
 
 // diskStorage stores the block in a file

@@ -12,14 +12,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nimona/go-nimona/api"
-	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/dht"
-	"github.com/nimona/go-nimona/net"
-	"github.com/nimona/go-nimona/peers"
-	"github.com/nimona/go-nimona/storage"
-	"github.com/nimona/go-nimona/telemetry"
+	"github.com/pkg/profile"
 	ishell "gopkg.in/abiosoft/ishell.v2"
+
+	"nimona.io/go/api"
+	"nimona.io/go/base58"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	"nimona.io/go/dht"
+	"nimona.io/go/net"
+	"nimona.io/go/peers"
+	"nimona.io/go/storage"
+	"nimona.io/go/telemetry"
 )
 
 var (
@@ -28,6 +32,8 @@ var (
 	date    = "unknown"
 
 	bootstrapPeerInfos = []string{
+		// local
+		// "AqApsfMu1VFWK1uVct5C8Vm1vBa91vBiyQHwrXpfNv78HZhLH5mzaFWDMHvBDkcBMKFZYQUyW9cqRA5srxzr4oFTvmd1gMfWCdwqS6kcLfjYPqdNtu5xnnWkWcjan7DcvFQrzcikPQ1y8XWudTAooUDNyGm2vTfY8HuyfngsmJWCkUoA8Br2WBcWaZTaj8TPSNznHUUAA1qDp47ZBt4VY7kgctA3f6QpLykQG4no4gDJSZpYRafP1hPKBegCKfhRavm22MrAZ7Si5xuXc1voVMTMstnSgK72cFqPaS6YWFP8Ayggoh2oGmfAPjbHAyQXvqdf92SuBzJMjAXd6Re238bL1AfuKP6PS7SyAYExLuMcfJzrDL6ndAz9wv49eXWzveCxmsh9zqhdzUX2JWTnNdyM5PFTJ2Uxn8xT9ipiZ7tGT6WAVD9NaWUDU6sZYZNpZywagwvCu4QZLi1tdGv3zB2bbcD15dZ6gWDQbHuVFHtDz6H3WkMPdmgX6vUHucvv2QBEMLRsAERQcDUKoFJpandb4ZPaTFt65Bga8P4973hTJBkDCButEuF1k4W2Jof9r6",
 		// andromeda.nimona.io
 		"Bm4FgCNTzLnaa6qtF6NoAhvpUNa7Q64D1sVKwvvAWPQPaWV2pSUDhbQnLcvX2Ur4NDJJDm1ZGwJuumUrZw9TqurC2GSsK2X4qLddZKaWLqPh823DnPN78r6EEKyJZAqXBSX9p1mKZbYqfAdUhjJczaYGy65jPb7vj5UCBVTqCUquB6q83hHJbDk2K1V6JGGSFqQzYGBE6M5Aw9ipVNdmSHZ8tY8isjV9tS5eV84g83LPBYVwahzVWLiqPYvo1KaTv9jAkqZyCo6WGVzLTckXTPP1MqwuAK8r9S8MecXnGqHypPj71QTpgiAHfBx4qWogZDgkPYarVpDuWXnuL9vGj5oEh5xab5uyMhVie7TXx2hxyttpkNHDNYWh16uADMhNedAwGKnQrWQnEH7uCBZp5wewHwbfzjN4FtgafdqpbnJPTiGyeGipWyBHhgWndcemEaiypwqcuciAQ8TSoxKA5B4JfKQ6q58yn465arepfxE5HtjmzAztjYSSKcz8SKXTCbPcLUjmpqRt4bCFXJ7UHo7Kxi5ETm324EmBRsdR5hjL5nLcxgRfPqvAjL39JrAtCd9hiXyenmzVSGNNJ",
 		// borealis.nimona.io
@@ -56,6 +62,8 @@ var (
 		// "2eNMjRLSSQkXHPv9Sih7b1k3vNVF4BFHPSnYBbVJRjTFzpzaMVnpdsKzYyTSm5YKiz28WueSTM3hfWoKmtrnkyJv4BXDGswuUTprcM69n35jSa2fFdvJFL63JBX41hxQBdfV5rxRnpfcuNbrRR8hved5Ad5QwYn8CEX1ZxUkQB4cbXyqoq2Q12yAvGR1ipZbc4jUKPYw4p4P8cXrerbXv9Ur3ExgPKTYkBfe6AE62SR7Mqb2fkf6TegMH4cH8MrTHteUuXq6ZqA8v4guYgdDDfNvDzjGEaNnUwC926t23PLxATVi3NAaL2wARzdWnp7KzutuPp9kykNSmyxEEpnnCeBBCeqoMKUT9KDTwtZCNyToJPq2EQZMvp9TTG5n2MEabhs8hb7eYXkV8v5wJb24e9KZhyMzTnX1NeLcFgVNQfDeqyEizZAsb36QyCdkBdBbThV2yqBVLN7F7YGSkUksMZV8EcpTdfuXKVHFKFekZGFuSJHEMJQj91ChKGyuqbVgxHnxHMsYgpja9Ps8j41jEiBcRDRyAVAR2gU9eMBwSFyLpJLq1k2U3bMQGNXCZvAZC6DQvpzGE78i",
 		// pyxis.nimona.io
 		// "2eNMjRLSSQkXHPv9Sih7b1k3vNVF4BFHPSnYBbWJjfztib2k1RiYbekckLURUZE4sfCb99NWBa1ngyMmxSnkXC2Mamv2LDsK8vDYTRQrdMbyF9cQU9eqRCsG9wUcHWzHvA1SNP9QX9YtDeANyt9F1NiMewRDgaNd86pZsRyEJQVxcgv1p6SyVHEcpQbYM7VxkdJJQsXqU718D2kqUZpZNgw1379dp2zhyfc6FX9EXanXWLEe6AC12y9AbTxVSGtQkrhkRVtuxUbcBTSyuD1zdu2nEwGRTQFCTtC7myLWHRhQCiy1XYKTQTZw8qRzNGpmuLRYi6xETwzw1wWu4c7iLTirKkfxLk2UJ1aDLokvhPdWtLsjdWDQdVPrLVkSNwburHJz1Sm5rsdjFowfXy5KdzBCTtSF2u2Ab8ECmBGhrf5e6NuzALXBgDdVhGyaVvoij5Z6mpp7hnKjTCG9aabeQncWiA4T5pZvB8BPjBQgpg16qP9b4eYvJQC86i2KyQjXWFCWrBsaSi2Vjo1NrMysWnQBTLV5UDE8cpeDSAjeHQvznfEugmPGr6kpYZf5TGftAD1ptEtA39NE",
+		// stats.nimona.io
+		"2DQbyaTKWKoPAfvq3nzBRUyAFzH7Zf6mFroa9Hr6EBKvcgDKXSxbEk4njcxmsxzsKfeHiPM45qwZ8hZp6eMY4URu1eJzwxhqQYuPYhYEXyyvXtE9eiDnXcv5Cq6GCAPf4phSp47Zz7QVzcsrZMQmKAewaQRWgbaPKU9Nymg5rPAuneMDa8eBbMnWYHkiRWCXJE5xdudvdVBteZ6BcqWh6Mbe5h8rZevmrzPxBhxQUonKDFCHApihkdWJ7wzb9umBzPMinH4GEa3mp6TNGeLUz3g7Sutk4B3D7E2dtTZxvZQVdJFXz5HrNPBdCSZxbqQMgT8Rje9pvqGx7i6kZdyiAFMWjaZUZYSShezFvQvbCxTiTL4dCgfPEqiMXMavxobq4SjFw92sEJwhPWKwf8atUU1Jw8j3UpMgUtcCdYEaSBQm21oSzEFFYn8Ucs1UDn3tRBbJqCDPQwpqRf7cR7Ujo7ApxKwQXw5nmZKfxbAqma2XGiQFySrxhE9yzPv7DK3FLdL1R6TPJPzNMXoZoWBQqfV9YCofyvWYzrieeYQdpvhjSP8QuqWypaYeEVpMGUUpSfVymgR5hQthFvDS1sGoCgn",
 	}
 )
 
@@ -69,14 +77,37 @@ func base64ToBytes(s string) []byte {
 
 // Hello payload
 type Hello struct {
-	Body string
+	Body      string            `json:"body"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (h *Hello) GetType() string {
+	return "demo.hello"
+}
+
+func (h *Hello) GetSignature() *crypto.Signature {
+	return h.Signature
+}
+
+func (h *Hello) SetSignature(s *crypto.Signature) {
+	h.Signature = s
+}
+
+func (h *Hello) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (h *Hello) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }
 
 func init() {
-	blocks.RegisterContentType("demo.hello", Hello{}, blocks.Persist())
+	blocks.RegisterContentType(&Hello{}, blocks.Persist())
 }
 
 func main() {
+	defer profile.Start(profile.MemProfile).Stop()
 
 	configPath := os.Getenv("NIMONA_PATH")
 
@@ -97,10 +128,9 @@ func main() {
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
 	bootstrapPeer := &peers.PeerInfo{}
-
 	for _, peerInfoB58 := range bootstrapPeerInfos {
-		peerInfoBytes, _ := blocks.Base58Decode(peerInfoB58)
-		peerInfo, err := blocks.Unmarshal(peerInfoBytes)
+		peerInfoBytes, _ := base58.Decode(peerInfoB58)
+		peerInfo, err := blocks.UnpackDecode(peerInfoBytes)
 		if err != nil {
 			panic(err)
 		}
@@ -122,7 +152,7 @@ func main() {
 
 	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
-	n.Handle("demo", func(payload interface{}) error {
+	n.Handle("demo.hello", func(payload blocks.Typed) error {
 		fmt.Printf("___ Got block %s\n", payload.(*Hello).Body)
 		return nil
 	})
@@ -262,7 +292,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			blocks, err := n.GetLocalBlocks()
+			blocks, err := dpr.List()
 			if err != nil {
 				c.Println(err)
 				return

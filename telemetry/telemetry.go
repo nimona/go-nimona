@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 
-	blocks "github.com/nimona/go-nimona/blocks"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
 )
 
 type Exchanger interface {
-	Send(ctx context.Context, o interface{}, recipient *blocks.Key,
-		opts ...blocks.MarshalOption) error
-	Handle(contentType string, h func(o interface{}) error) error
+	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key,
+		opts ...blocks.PackOption) error
+	Handle(contentType string, h func(o blocks.Typed) error) error
 }
 
 const connectionEventType = "nimona.telemetry.connection"
@@ -23,8 +24,8 @@ var DefaultClient *metrics
 type metrics struct {
 	exchange      Exchanger
 	colletor      Collector
-	localPeer     *blocks.Key
-	bootstrapPeer *blocks.Key
+	localPeer     *crypto.Key
+	bootstrapPeer *crypto.Key
 }
 
 func init() {
@@ -45,11 +46,11 @@ func init() {
 	}
 }
 
-func NewTelemetry(exchange Exchanger, localPeer *blocks.Key,
-	bootstrapPeer *blocks.Key) error {
+func NewTelemetry(exchange Exchanger, localPeer *crypto.Key,
+	bootstrapPeer *crypto.Key) error {
 	// Register the two basic types
-	blocks.RegisterContentType(connectionEventType, ConnectionEvent{})
-	blocks.RegisterContentType(blockEventType, BlockEvent{})
+	blocks.RegisterContentType(&ConnectionEvent{})
+	blocks.RegisterContentType(&BlockEvent{})
 
 	// create the default client
 	DefaultClient = &metrics{
@@ -83,7 +84,7 @@ func (t *metrics) SendEvent(ctx context.Context,
 		event, t.bootstrapPeer, blocks.SignWith(t.localPeer))
 }
 
-func (t *metrics) handleBlock(payload interface{}) error {
+func (t *metrics) handleBlock(payload blocks.Typed) error {
 	switch v := payload.(type) {
 	case *ConnectionEvent:
 		t.colletor.Collect(v)

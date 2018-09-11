@@ -7,12 +7,14 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/nimona/go-nimona/blocks"
-	"github.com/nimona/go-nimona/log"
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	"nimona.io/go/log"
 )
 
 // LoadOrCreateLocalPeerInfo from/to a JSON encoded file
@@ -51,7 +53,7 @@ func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 		return nil, err
 	}
 
-	sk, err := blocks.NewKey(peerSigningKey)
+	sk, err := crypto.NewKey(peerSigningKey)
 	if err != nil {
 		return nil, err
 	}
@@ -79,17 +81,13 @@ func (reg *AddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, erro
 	if err := json.Unmarshal(bytes, &cfg); err != nil {
 		return nil, err
 	}
-
-	keyBytes, err := blocks.Base58Decode(cfg.Key)
-	if err != nil {
-		return nil, err
-	}
-	keyi, err := blocks.Unmarshal(keyBytes)
+	fmt.Println(cfg.Key)
+	keyi, err := blocks.UnpackDecodeBase58(cfg.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	key := keyi.(*blocks.Key)
+	key := keyi.(*crypto.Key)
 	pi := &PrivatePeerInfo{
 		Key: key,
 	}
@@ -99,8 +97,13 @@ func (reg *AddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, erro
 
 // StorePrivatePeerInfo to a JSON encoded file
 func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error {
-	key, _ := blocks.MarshalBase58(*pi.Key)
-	cfg := config{Key: key}
+	ks, err := blocks.PackEncodeBase58(pi.Key)
+	if err != nil {
+		return err
+	}
+	cfg := config{
+		Key: ks,
+	}
 	bc, _ := json.MarshalIndent(cfg, "", "  ")
 	return ioutil.WriteFile(path, bc, 0644)
 }

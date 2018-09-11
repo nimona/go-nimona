@@ -5,7 +5,7 @@ package dht
 // 	"io/ioutil"
 // 	"testing"
 
-// 	"github.com/nimona/go-nimona/net"
+// 	"nimona.io/go/net"
 
 // 	"github.com/stretchr/testify/mock"
 // 	"github.com/stretchr/testify/suite"

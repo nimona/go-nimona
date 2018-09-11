@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 
-	"github.com/nimona/go-nimona/peers"
+	"nimona.io/go/peers"
 )
 
 // distEntry is used to hold the distance between nodes

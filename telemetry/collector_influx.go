@@ -1,17 +1,15 @@
 package telemetry
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/nimona/go-nimona/log"
-
+	"github.com/influxdata/influxdb/client/v2"
 	"go.uber.org/zap"
 
-	"context"
-
-	"github.com/influxdata/influxdb/client/v2"
+	"nimona.io/go/log"
 )
 
 // InfluxCollector implements the Collector interface with a InlfuxDB storage
@@ -25,7 +23,7 @@ type InfluxCollector struct {
 	batchConfig client.BatchPointsConfig
 }
 
-const databaseName = "nimona_metrics"
+const databaseName = "metrics"
 
 // NewInfluxCollector connects to an inlfuxdb, starts listenings for
 // Collectables and returns a Collector
@@ -96,25 +94,40 @@ func (ic *InfluxCollector) processor(ctx context.Context,
 		select {
 		case event := <-input:
 			tags := map[string]string{}
-			pt, err := client.NewPoint(event.Collection(), tags,
-				event.Measurements())
+			fields := map[string]interface{}{}
+			for k, v := range event.Measurements() {
+				switch k {
+				case "direction", "content_type":
+					sv, ok := v.(string)
+					if !ok {
+						continue
+					}
+					tags[k] = sv
+				default:
+					fields[k] = v
+				}
+			}
+			pt, err := client.NewPoint(event.Collection(), tags, fields)
 			if err != nil {
 				ic.logger.Error("Failed to create point", zap.Error(err))
 			}
 			bp.AddPoint(pt)
 		case <-timeout:
-			if err := ic.writePoints(bp); err != nil {
+			bp, err = ic.writePoints(bp)
+			if err != nil {
 				ic.logger.Error("Failed to write points", zap.Error(err))
 			}
 		case <-ctx.Done():
-			if err := ic.writePoints(bp); err != nil {
+			bp, err = ic.writePoints(bp)
+			if err != nil {
 				ic.logger.Error("Failed to write points", zap.Error(err))
 			}
 			break
 		}
 
 		if len(bp.Points()) >= ic.batchSize {
-			if err := ic.writePoints(bp); err != nil {
+			bp, err = ic.writePoints(bp)
+			if err != nil {
 				ic.logger.Error("Failed to write points", zap.Error(err))
 			}
 		}
@@ -133,12 +146,8 @@ func (ic *InfluxCollector) createDB(db string) error {
 	return nil
 }
 
-func (ic *InfluxCollector) writePoints(bp client.BatchPoints) error {
+func (ic *InfluxCollector) writePoints(bp client.BatchPoints) (client.BatchPoints, error) {
+	nbp, _ := client.NewBatchPoints(ic.batchConfig)
 	err := ic.client.Write(bp)
-	if err != nil {
-		return err
-	}
-
-	bp, _ = client.NewBatchPoints(ic.batchConfig)
-	return nil
+	return nbp, err
 }

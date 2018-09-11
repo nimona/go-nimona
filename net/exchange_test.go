@@ -11,10 +11,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	blocks "github.com/nimona/go-nimona/blocks"
-	nnet "github.com/nimona/go-nimona/net"
-	"github.com/nimona/go-nimona/peers"
-	storage "github.com/nimona/go-nimona/storage"
+	blocks "nimona.io/go/blocks"
+	"nimona.io/go/crypto"
+	nnet "nimona.io/go/net"
+	"nimona.io/go/peers"
+	storage "nimona.io/go/storage"
 )
 
 type exchangeTestSuite struct {
@@ -22,8 +23,29 @@ type exchangeTestSuite struct {
 }
 
 type DummyPayload struct {
-	Foo       string            `nimona:"foo"`
-	Signature *blocks.Signature `nimona:",signature"`
+	Foo       string            `json:"foo"`
+	Signature *crypto.Signature `json:"-"`
+}
+
+func (p *DummyPayload) GetType() string {
+	return "foo"
+}
+
+func (p *DummyPayload) GetSignature() *crypto.Signature {
+	return p.Signature
+}
+
+func (p *DummyPayload) SetSignature(s *crypto.Signature) {
+	p.Signature = s
+}
+
+func (p *DummyPayload) GetAnnotations() map[string]interface{} {
+	// no annotations
+	return map[string]interface{}{}
+}
+
+func (p *DummyPayload) SetAnnotations(a map[string]interface{}) {
+	// no annotations
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
@@ -35,7 +57,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	err = r1.PutPeerInfo(p2.GetPeerInfo())
 	suite.NoError(err)
 
-	blocks.RegisterContentType("foo", DummyPayload{})
+	blocks.RegisterContentType(&DummyPayload{})
 
 	time.Sleep(time.Second)
 
@@ -49,14 +71,14 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("foo", func(payload interface{}) error {
+	w1.Handle("foo", func(payload blocks.Typed) error {
 		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(payload interface{}) error {
+	w2.Handle("foo", func(payload blocks.Typed) error {
 		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w2BlockHandled = true
 		wg.Done()

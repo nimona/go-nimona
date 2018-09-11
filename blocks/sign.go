@@ -1,34 +1,51 @@
 package blocks
 
-// TODO should sign return?
-func Sign(block *Block, key *Key) error {
-	digest, err := getDigest(block)
+import (
+	"nimona.io/go/codec"
+	"nimona.io/go/crypto"
+)
+
+func Signature(v Typed, key *crypto.Key) (*crypto.Signature, error) {
+	p, err := Pack(v, SignWith(key))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	signature, err := NewSignature(key, ES256, digest)
+	ps := p.Signature
+	s, err := UnpackDecodeBase58(ps)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	bs, err := Marshal(signature)
-	if err != nil {
-		return err
-	}
-
-	block.Signature = Base58Encode(bs)
-	return nil
+	return s.(*crypto.Signature), nil
 }
 
-func getDigest(block *Block) ([]byte, error) {
-	b := &Block{
-		Type:     block.Type,
-		Metadata: block.Metadata,
-		Payload:  block.Payload,
+func signPacked(p *Block, key *crypto.Key) (string, error) {
+	digest, err := getDigest(p)
+	if err != nil {
+		return "", err
 	}
 
-	digest, err := MarshalBlock(b)
+	signature, err := crypto.NewSignature(key, crypto.ES256, digest)
+	if err != nil {
+		return "", err
+	}
+
+	bs, err := PackEncodeBase58(signature)
+	if err != nil {
+		return "", err
+	}
+
+	return bs, nil
+}
+
+func getDigest(p *Block) ([]byte, error) {
+	b := &Block{
+		Type:    p.Type,
+		Payload: p.Payload,
+	}
+
+	digest, err := codec.Marshal(b)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,6 @@
 package storage
 
-// import "github.com/nimona/go-nimona/blocks"
+// import "nimona.io/go/blocks"
 
 // type memoryStore struct {
 // 	data map[string]*blocks.Block
