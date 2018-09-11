@@ -71,14 +71,14 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("foo", func(payload interface{}) error {
+	w1.Handle("foo", func(payload blocks.Typed) error {
 		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(payload interface{}) error {
+	w2.Handle("foo", func(payload blocks.Typed) error {
 		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
 		w2BlockHandled = true
 		wg.Done()
