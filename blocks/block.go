@@ -30,7 +30,24 @@ type Block struct {
 	Type        string                 `json:"type,omitempty"`
 	Annotations map[string]interface{} `json:"annotations,omitempty"`
 	Payload     map[string]interface{} `json:"payload,omitempty"`
-	Signature   string                 `json:"signature,omitempty"`
+	Signature   map[string]interface{} `json:"signature,omitempty"`
+}
+
+func (block *Block) Map() map[string]interface{} {
+	m := map[string]interface{}{}
+	if block.Annotations != nil {
+		m["annotations"] = block.Annotations
+	}
+	if block.Payload != nil {
+		m["payload"] = block.Payload
+	}
+	if block.Signature != nil {
+		m["signature"] = block.Signature
+	}
+	if block.Type != "" {
+		m["type"] = block.Type
+	}
+	return m
 }
 
 // ID calculated the id for the block

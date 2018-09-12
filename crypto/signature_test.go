@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	ucodec "github.com/ugorji/go/codec"
 
-	"nimona.io/go/base58"
 	"nimona.io/go/blocks"
 	"nimona.io/go/codec"
 	"nimona.io/go/crypto"
@@ -42,31 +41,18 @@ func TestSignatureMarshaling(t *testing.T) {
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, m["signature"].(string))
+	assert.NotNil(t, m["signature"].(map[string]interface{}))
 	assert.Equal(t, "peer.info", m["type"])
 	assert.Equal(t, "a-1", m["payload"].(map[string]interface{})["addresses"].([]interface{})[0])
 	assert.Equal(t, "a-2", m["payload"].(map[string]interface{})["addresses"].([]interface{})[1])
 
 	// test block's signature
-	bi := m["signature"].(string)
-	bbi, err := base58.Decode(bi)
-	assert.NoError(t, err)
-	m = map[string]interface{}{}
-	d = ucodec.NewDecoderBytes(bbi, codec.CborHandler())
-	err = d.Decode(&m)
-	assert.NoError(t, err)
-
+	m = m["signature"].(map[string]interface{})
 	assert.Equal(t, "signature", m["type"])
 	assert.Equal(t, "ES256", m["payload"].(map[string]interface{})["alg"])
 
 	// test signature's key
-	bi = m["payload"].(map[string]interface{})["key"].(string)
-	bbi, err = base58.Decode(bi)
-	m = map[string]interface{}{}
-	d = ucodec.NewDecoderBytes(bbi, codec.CborHandler())
-	err = d.Decode(&m)
-	assert.NoError(t, err)
-
+	m = m["payload"].(map[string]interface{})["key"].(map[string]interface{})
 	assert.Equal(t, "key", m["type"])
 	assert.Equal(t, "P-256", m["payload"].(map[string]interface{})["crv"])
 	assert.Equal(t, "EC", m["payload"].(map[string]interface{})["kty"])
@@ -98,7 +84,7 @@ func TestSignatureVerification(t *testing.T) {
 	err = d.Decode(&m)
 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, m["signature"].(string))
+	assert.NotNil(t, m["signature"].(map[string]interface{}))
 	assert.Equal(t, "peer.info", m["type"])
 	assert.Equal(t, "a-1", m["payload"].(map[string]interface{})["addresses"].([]interface{})[0])
 	assert.Equal(t, "a-2", m["payload"].(map[string]interface{})["addresses"].([]interface{})[1])

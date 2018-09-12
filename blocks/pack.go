@@ -42,8 +42,8 @@ func Encode(p *Block) ([]byte, error) {
 // Pack gets something Typed and converts it into a Block
 func Pack(v Typed, opts ...PackOption) (*Block, error) {
 	// HACK we currently always base58 encode nested blocks
-	opts = append(opts, EncodeNestedBase58())
-	opts = append(opts, EncodeNested())
+	// opts = append(opts, EncodeNestedBase58())
+	// opts = append(opts, EncodeNested())
 
 	o := ParsePackOptions(opts...)
 	if o.Sign && o.Key != nil {
@@ -53,7 +53,8 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 	if t == "" {
 		return nil, errors.New("empty type")
 	}
-	p, err := toMap(v, tagName, opts...)
+	// p, err := packMap(v, tagName, opts...)
+	p, err := packMap(v, tagName)
 	if err != nil {
 		return nil, err
 	}
@@ -61,26 +62,31 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 		Type:    t,
 		Payload: p,
 	}
-	if o.Sign && o.Key != nil {
-		sig, err := signPacked(b, o.Key)
+	s := v.GetSignature()
+	if s == nil && o.Sign && o.Key != nil {
+		var err error
+		s, err = signPacked(b, o.Key)
 		if err != nil {
 			return nil, err
 		}
-		b.Signature = sig
-	} else if s := v.GetSignature(); s != nil {
-		ss, err := PackEncodeBase58(s)
+	}
+	if s != nil {
+		ps, err := packMap(s, tagName)
 		if err != nil {
 			return nil, err
 		}
-		b.Signature = ss
+		b.Signature = map[string]interface{}{
+			"payload": ps,
+			"type":    "signature",
+		}
 	}
 	return b, nil
 }
 
 // TODO support nested structs etc
 // TODO support for ,omitempty
-func toMap(in interface{}, tag string, opts ...PackOption) (map[string]interface{}, error) {
-	o := ParsePackOptions(opts...)
+func packMap(in interface{}, tag string, opts ...PackOption) (map[string]interface{}, error) {
+	// o := ParsePackOptions(opts...)
 
 	out := make(map[string]interface{})
 
@@ -116,20 +122,21 @@ func toMap(in interface{}, tag string, opts ...PackOption) (map[string]interface
 				if v.Field(i).IsNil() {
 					continue
 				}
-				var nv interface{}
-				var err error
+				// var nv interface{}
+				// var err error
 				iv := v.Field(i).Interface()
-				if o.EncodeNestedBase58 {
-					nv, err = PackEncodeBase58(iv.(Typed), opts...)
-				} else if o.EncodeNested {
-					nv, err = PackEncode(iv.(Typed), opts...)
-				} else {
-					nv, err = Pack(iv.(Typed), opts...)
-				}
+				// if o.EncodeNestedBase58 {
+				// 	nv, err = PackEncodeBase58(iv.(Typed), opts...)
+				// } else if o.EncodeNested {
+				// 	nv, err = PackEncode(iv.(Typed), opts...)
+				// } else {
+				nv, err := Pack(iv.(Typed))
+				// nv, err = Pack(iv.(Typed), opts...)
+				// }
 				if err != nil {
 					return nil, err
 				}
-				out[tagName] = nv
+				out[tagName] = nv.Map()
 				continue
 			}
 			// else set key of map to value in struct field
