@@ -3,8 +3,8 @@ package blocks
 import (
 	"testing"
 
-	"nimona.io/go/crypto"
 	"github.com/stretchr/testify/assert"
+	"nimona.io/go/crypto"
 )
 
 func init() {
@@ -104,7 +104,13 @@ func TestPackNestedTyped(t *testing.T) {
 		Type: "a",
 		Payload: map[string]interface{}{
 			"a": "a-value",
-			"b": "HCsVC4MT3AwJMXPUoHfMgQSG6GbaMDMJxpueaBFFbD6YVqF7",
+			"b": map[string]interface{}{
+				"payload": map[string]interface{}{
+					"aa": "aa-value",
+					"bb": 1234,
+				},
+				"type": "b",
+			},
 			"c": 12,
 			"d": []byte{1, 2, 3},
 		},
@@ -126,7 +132,7 @@ func TestPackEncodeNestedTyped(t *testing.T) {
 		D: []byte{1, 2, 3},
 	}
 
-	ep := "2Jn7th59YMCscZggcVxGbpBVEboF4QdP2JBj9CkPJP3j7FqKC6736z6iHPFvWBop9kccPgyQ6523qXwZtcMk727eJhEhrXG4t54gkz3z4YaZYWwv6GALbcZRz"
+	ep := "BafYRz7KhUdXVegjc94yBfMew2hJZPT2mPu2pYwGXAYLL7VXik45E9b3MbtFLLDTyYMcjcvoHPVbL61eD8hP5uyxXDN9ssEqZSdN"
 
 	p, err := PackEncodeBase58(s)
 	assert.NoError(t, err)
