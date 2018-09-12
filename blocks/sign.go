@@ -1,18 +1,28 @@
 package blocks
 
 import (
+	"errors"
+
 	"nimona.io/go/codec"
 	"nimona.io/go/crypto"
 )
 
-func Signature(v Typed, key *crypto.Key) (*crypto.Signature, error) {
+func Sign(v Typed, key *crypto.Key) (*crypto.Signature, error) {
 	p, err := Pack(v, SignWith(key))
 	if err != nil {
 		return nil, err
 	}
 
-	ps := p.Signature
-	s, err := UnpackDecodeBase58(ps)
+	if p.Signature == nil {
+		return nil, errors.New("no signature")
+	}
+
+	bs, err := blockMapToBlock(p.Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := Unpack(bs)
 	if err != nil {
 		return nil, err
 	}
@@ -20,23 +30,18 @@ func Signature(v Typed, key *crypto.Key) (*crypto.Signature, error) {
 	return s.(*crypto.Signature), nil
 }
 
-func signPacked(p *Block, key *crypto.Key) (string, error) {
+func signPacked(p *Block, key *crypto.Key) (*crypto.Signature, error) {
 	digest, err := getDigest(p)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	signature, err := crypto.NewSignature(key, crypto.ES256, digest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	bs, err := PackEncodeBase58(signature)
-	if err != nil {
-		return "", err
-	}
-
-	return bs, nil
+	return signature, nil
 }
 
 func getDigest(p *Block) ([]byte, error) {

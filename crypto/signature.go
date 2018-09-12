@@ -48,7 +48,7 @@ func (v Algorithm) String() string {
 type Signature struct {
 	Key       *Key      `json:"key"`
 	Alg       Algorithm `json:"alg"`
-	Signature []byte    `json:"signature"`
+	Signature []byte    `json:"sig"`
 }
 
 func (s *Signature) GetType() string {
