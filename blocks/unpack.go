@@ -62,27 +62,43 @@ func Unpack(p *Block, opts ...UnpackOption) (Typed, error) {
 	return v.(Typed), nil
 }
 
+func blockMapToBlock(m map[string]interface{}) (*Block, error) {
+	b := &Block{}
+	md := &mapstructure.DecoderConfig{
+		TagName:          tagName,
+		ZeroFields:       false,
+		WeaklyTypedInput: true,
+		ErrorUnused:      false,
+		Result:           b,
+	}
+	d, err := mapstructure.NewDecoder(md)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Decode(m); err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
 // UnpackInto unpacks a Block into a given Typed
 func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 	o := ParseUnpackOptions(opts...)
-	if o.Verify {
-		if p.Signature == "" {
-			return nil
-		}
+	if o.Verify && p.Signature != nil {
 		// TODO verify signature
 		d, err := getDigest(p)
 		if err != nil {
 			return err
 		}
-		si, err := UnpackDecodeBase58(p.Signature)
+		bs, err := blockMapToBlock(p.Signature)
 		if err != nil {
 			return err
 		}
-		s, ok := si.(*crypto.Signature)
-		if !ok {
-			return errors.New("invalid signature")
+		s, err := Unpack(bs)
+		if err != nil {
+			return err
 		}
-		if err := crypto.Verify(s, d); err != nil {
+		if err := crypto.Verify(s.(*crypto.Signature), d); err != nil {
 			return err
 		}
 	}
@@ -93,26 +109,30 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 		ErrorUnused:      false,
 		Result:           v,
 		DecodeHook: func(from reflect.Type, to reflect.Type, v interface{}) (interface{}, error) {
-			if from.Kind() == reflect.String && to.Implements(typedType) {
-				iv, err := UnpackDecodeBase58(v.(string), opts...)
-				if err != nil {
-					return nil, err
-				}
-				return iv, nil
-			}
-			if from.Kind() == reflect.Slice && to.Implements(typedType) {
-				iv, err := UnpackDecode(v.([]byte), opts...)
-				if err != nil {
-					return nil, err
-				}
-				return iv, nil
-			}
+			// if from.Kind() == reflect.String && to.Implements(typedType) {
+			// 	iv, err := UnpackDecodeBase58(v.(string), opts...)
+			// 	if err != nil {
+			// 		return nil, err
+			// 	}
+			// 	return iv, nil
+			// }
+			// if from.Kind() == reflect.Slice && to.Implements(typedType) {
+			// 	iv, err := UnpackDecode(v.([]byte), opts...)
+			// 	if err != nil {
+			// 		return nil, err
+			// 	}
+			// 	return iv, nil
+			// }
 			if from.Kind() == reflect.Map && to.Implements(typedType) {
-				// TODO convert map into block and unpack
-				// if err := UnpackInto(v.(map[string]interface{}), s, opts...); err != nil {
-				// 	return v, err
-				// }
-				return TypeToInterface(to), nil
+				b, err := blockMapToBlock(v.(map[string]interface{}))
+				if err != nil {
+					return nil, err
+				}
+				t, err := Unpack(b)
+				if err != nil {
+					return nil, err
+				}
+				return t, nil
 			}
 			return v, nil
 		},
@@ -124,12 +144,16 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 	if err := d.Decode(p.Payload); err != nil {
 		return err
 	}
-	if ss := p.Signature; ss != "" {
-		s, err := UnpackDecodeBase58(ss)
+	if p.Signature != nil {
+		// TODO deduplicate code
+		bs, err := blockMapToBlock(p.Signature)
 		if err != nil {
 			return err
 		}
-		// TODO check type
+		s, err := Unpack(bs)
+		if err != nil {
+			return err
+		}
 		v.SetSignature(s.(*crypto.Signature))
 	}
 	return nil

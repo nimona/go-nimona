@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -81,7 +80,6 @@ func (reg *AddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, erro
 	if err := json.Unmarshal(bytes, &cfg); err != nil {
 		return nil, err
 	}
-	fmt.Println(cfg.Key)
 	keyi, err := blocks.UnpackDecodeBase58(cfg.Key)
 	if err != nil {
 		return nil, err

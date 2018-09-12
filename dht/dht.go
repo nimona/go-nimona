@@ -298,7 +298,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 		BlockIDs: []string{key},
 	}
 	signer := nd.addressBook.GetLocalPeerInfo().Key
-	sig, err := blocks.Signature(provider, signer)
+	sig, err := blocks.Sign(provider, signer)
 	if err != nil {
 		return err
 	}

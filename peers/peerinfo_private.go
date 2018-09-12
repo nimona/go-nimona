@@ -22,7 +22,7 @@ func (pi *PrivatePeerInfo) GetPeerInfo() *PeerInfo {
 		Addresses: pi.Addresses,
 	}
 
-	sig, err := blocks.Signature(ppi, pi.Key)
+	sig, err := blocks.Sign(ppi, pi.Key)
 	if err != nil {
 		panic(err)
 	}
