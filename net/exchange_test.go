@@ -49,12 +49,12 @@ func (p *DummyPayload) SetAnnotations(a map[string]interface{}) {
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
-	_, p1, w1, r1 := suite.newPeer()
-	_, p2, w2, r2 := suite.newPeer()
+	_, p1, k1, w1, r1 := suite.newPeer()
+	_, p2, k2, w2, r2 := suite.newPeer()
 
-	err := r2.PutPeerInfo(p1.GetPeerInfo())
+	err := r2.PutPeerInfo(p1)
 	suite.NoError(err)
-	err = r1.PutPeerInfo(p2.GetPeerInfo())
+	err = r1.PutPeerInfo(p2)
 	suite.NoError(err)
 
 	blocks.RegisterContentType(&DummyPayload{})
@@ -87,13 +87,13 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, exPayload, p1.GetPublicKey(), blocks.SignWith(p2.Key))
+	err = w2.Send(ctx, exPayload, p1.Signature.Key, blocks.SignWith(k2))
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	err = w1.Send(ctx, exPayload, p2.GetPublicKey(), blocks.SignWith(p1.Key))
+	err = w1.Send(ctx, exPayload, p2.Signature.Key, blocks.SignWith(k1))
 	suite.NoError(err)
 
 	wg.Wait()
@@ -179,7 +179,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	suite.True(w2BlockHandled)
 // }
 
-func (suite *exchangeTestSuite) newPeer() (int, *peers.PrivatePeerInfo, nnet.Exchange, *peers.AddressBook) {
+func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *crypto.Key, nnet.Exchange, *peers.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
 	ab, _ := peers.NewAddressBook(td)
 	storagePath := path.Join(td, "storage")
@@ -187,7 +187,7 @@ func (suite *exchangeTestSuite) newPeer() (int, *peers.PrivatePeerInfo, nnet.Exc
 	wre, _ := nnet.NewExchange(ab, dpr)
 	_, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)
-	return 0, ab.GetLocalPeerInfo(), wre, ab
+	return 0, ab.GetLocalPeerInfo(), ab.GetPeerKey(), wre, ab
 }
 
 func TestExchangeTestSuite(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,92 +15,75 @@ import (
 	"nimona.io/go/log"
 )
 
-// LoadOrCreateLocalPeerInfo from/to a JSON encoded file
-func (reg *AddressBook) LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error) {
+// loadConfig signing key from/to a JSON encoded file
+func (ab *AddressBook) loadConfig(configPath string) error {
 	ctx := context.Background()
-	if path == "" {
-		return nil, errors.New("missing key path")
-	}
-
-	// idPath := filepath.Join(path, "identity.json")
-	peerPath := filepath.Join(path, "config.json")
-
+	peerPath := filepath.Join(configPath, "config.json")
 	if _, err := os.Stat(peerPath); err == nil {
-		return reg.LoadPrivatePeerInfo(peerPath)
+		cfg, err := loadConfig(peerPath)
+		if err != nil {
+			return err
+		}
+		keyi, err := blocks.UnpackDecodeBase58(cfg.Key)
+		if err != nil {
+			return err
+		}
+		ab.localKey = keyi.(*crypto.Key)
+		return nil
 	}
 
 	logger := log.Logger(ctx)
 	logger.Info("* Configs do not exist, creating new ones.")
 
-	pi, err := reg.CreateNewPeer()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := reg.StorePrivatePeerInfo(pi, peerPath); err != nil {
-		return nil, err
-	}
-
-	return pi, nil
-}
-
-// CreateNewPeer with a new generated key, mostly used for testing
-func (reg *AddressBook) CreateNewPeer() (*PrivatePeerInfo, error) {
 	peerSigningKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sk, err := crypto.NewKey(peerSigningKey)
+	localKey, err := crypto.NewKey(peerSigningKey)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	pi := &PrivatePeerInfo{
-		Key:       sk,
-		Addresses: []string{},
+	ab.localKey = localKey
+
+	ks, err := blocks.PackEncodeBase58(localKey)
+	if err != nil {
+		return err
 	}
 
-	return pi, nil
+	cfg := &config{
+		Key: ks,
+	}
+
+	if err := storeConfig(cfg, peerPath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type config struct {
 	Key string `json:"key"`
 }
 
-// LoadPrivatePeerInfo from a JSON encoded file
-func (reg *AddressBook) LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error) {
+// loadConfig from a JSON encoded file
+func loadConfig(path string) (*config, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := config{}
-	if err := json.Unmarshal(bytes, &cfg); err != nil {
-		return nil, err
-	}
-	keyi, err := blocks.UnpackDecodeBase58(cfg.Key)
-	if err != nil {
+	cfg := &config{}
+	if err := json.Unmarshal(bytes, cfg); err != nil {
 		return nil, err
 	}
 
-	key := keyi.(*crypto.Key)
-	pi := &PrivatePeerInfo{
-		Key: key,
-	}
-
-	return pi, nil
+	return cfg, nil
 }
 
-// StorePrivatePeerInfo to a JSON encoded file
-func (reg *AddressBook) StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error {
-	ks, err := blocks.PackEncodeBase58(pi.Key)
-	if err != nil {
-		return err
-	}
-	cfg := config{
-		Key: ks,
-	}
+// storeConfig to a JSON encoded file
+func storeConfig(cfg *config, path string) error {
 	bc, _ := json.MarshalIndent(cfg, "", "  ")
 	return ioutil.WriteFile(path, bc, 0644)
 }

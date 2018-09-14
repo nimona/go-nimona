@@ -147,7 +147,7 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	signer := q.dht.addressBook.GetLocalPeerInfo().Key
+	signer := q.dht.addressBook.GetPeerKey()
 	for _, peer := range peersToAsk {
 		if err := q.dht.exchange.Send(ctx, req.(blocks.Typed), peer, blocks.SignWith(signer)); err != nil {
 			panic(err)

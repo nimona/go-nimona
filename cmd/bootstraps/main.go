@@ -53,7 +53,7 @@ func main() {
 			"tcp:" + name + ".nimona.io:21013",
 			// "tcp:localhost:21013",
 		}
-		pp, _ := blocks.PackEncodeBase58(pi.GetPeerInfo())
+		pp, _ := blocks.PackEncodeBase58(pi)
 		fmt.Printf(`// %s.nimona.io
 // "%s",
 `, name, pp)

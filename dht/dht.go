@@ -63,11 +63,13 @@ func (nd *DHT) refresh() {
 	// TODO this will be replaced when we introduce bucketing
 	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
-	for len(nd.addressBook.GetLocalPeerInfo().Addresses) == 0 {
-		time.Sleep(time.Millisecond * 250)
-	}
 	for {
 		peerInfo := nd.addressBook.GetLocalPeerInfo()
+		if len(peerInfo.Addresses) == 0 {
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
 		closestPeers, err := nd.FindPeersClosestTo(peerInfo.Thumbprint(), closestPeersToReturn)
 		if err != nil {
 			logrus.WithError(err).Warnf("refresh could not get peers ids")
@@ -77,7 +79,7 @@ func (nd *DHT) refresh() {
 
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
-			if err := nd.exchange.Send(ctx, peerInfo.GetPeerInfo(), closestPeer.Signature.Key); err != nil {
+			if err := nd.exchange.Send(ctx, peerInfo, closestPeer.Signature.Key); err != nil {
 				panic(err)
 			}
 		}
@@ -127,7 +129,7 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetLocalPeerInfo().Key
+	signer := nd.addressBook.GetPeerKey()
 	if err := nd.exchange.Send(ctx, resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
@@ -170,7 +172,7 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetLocalPeerInfo().Key
+	signer := nd.addressBook.GetPeerKey()
 	if err := nd.exchange.Send(ctx, resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
@@ -297,7 +299,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	provider := &Provider{
 		BlockIDs: []string{key},
 	}
-	signer := nd.addressBook.GetLocalPeerInfo().Key
+	signer := nd.addressBook.GetPeerKey()
 	sig, err := blocks.Sign(provider, signer)
 	if err != nil {
 		return err
