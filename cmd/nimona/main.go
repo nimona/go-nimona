@@ -121,7 +121,7 @@ func main() {
 		log.Fatal("could not create config dir", err)
 	}
 
-	reg, err := peers.NewAddressBook(configPath)
+	addressBook, err := peers.NewAddressBook(configPath)
 	if err != nil {
 		log.Fatal("could not load key", err)
 	}
@@ -135,18 +135,19 @@ func main() {
 		if err != nil {
 			log.Fatal("could not unpack bootstrap node", err.Error())
 		}
-		if err := reg.PutPeerInfo(peerInfo.(*peers.PeerInfo)); err != nil {
+		if err := addressBook.PutPeerInfo(peerInfo.(*peers.PeerInfo)); err != nil {
 			log.Fatal("could not put bootstrap peer", err)
 		}
 		bootstrapPeer = peerInfo.(*peers.PeerInfo)
+		addressBook.AddLocalPeerRelay(bootstrapPeer.Thumbprint())
 	}
 
 	storagePath := path.Join(configPath, "storage")
 
 	dpr := storage.NewDiskStorage(storagePath)
-	n, _ := net.NewExchange(reg, dpr)
-	dht, _ := dht.NewDHT(n, reg)
-	telemetry.NewTelemetry(n, reg.GetLocalPeerInfo().Key,
+	n, _ := net.NewExchange(addressBook, dpr)
+	dht, _ := dht.NewDHT(n, addressBook)
+	telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
 		bootstrapPeer.Signature.Key)
 
 	n.RegisterDiscoverer(dht)
@@ -163,7 +164,7 @@ func main() {
 		httpPort = nhp
 	}
 	httpAddress := ":" + httpPort
-	api := api.New(reg, dht, dpr)
+	api := api.New(addressBook, dht, dpr)
 	go api.Serve(httpAddress)
 
 	shell := ishell.New()
@@ -275,7 +276,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			ps, _ := reg.GetAllPeerInfo()
+			ps, _ := addressBook.GetAllPeerInfo()
 			for _, peer := range ps {
 				c.Println("* " + peer.Thumbprint())
 				c.Printf("  - addresses:\n")
@@ -311,7 +312,7 @@ func main() {
 			c.ShowPrompt(false)
 			defer c.ShowPrompt(true)
 
-			peer := reg.GetLocalPeerInfo()
+			peer := addressBook.GetLocalPeerInfo()
 			c.Println("* " + peer.Thumbprint())
 			c.Printf("  - addresses:\n")
 			for _, address := range peer.Addresses {
@@ -330,12 +331,12 @@ func main() {
 			}
 			ctx := context.Background()
 			msg := strings.Join(c.Args[1:], " ")
-			peer, err := reg.GetPeerInfo(c.Args[0])
+			peer, err := addressBook.GetPeerInfo(c.Args[0])
 			if err != nil {
 				c.Println("Could not get peer")
 				return
 			}
-			signer := reg.GetLocalPeerInfo().Key
+			signer := addressBook.GetLocalPeerKey()
 			if err := n.Send(ctx, &Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return

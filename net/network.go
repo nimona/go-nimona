@@ -23,21 +23,21 @@ type Networker interface {
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(AddressBook peers.AddressBooker) (*Network, error) {
+func NewNetwork(addressBook *peers.AddressBook) (*Network, error) {
 	return &Network{
-		AddressBook: AddressBook,
+		addressBook: addressBook,
 	}, nil
 }
 
 // Network allows dialing and listening for p2p connections
 type Network struct {
-	AddressBook peers.AddressBooker
+	addressBook *peers.AddressBook
 }
 
 // Dial to a peer and return a net.Conn or error
 func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 	logger := log.Logger(ctx)
-	peerInfo, err := n.AddressBook.GetPeerInfo(peerID)
+	peerInfo, err := n.addressBook.GetPeerInfo(peerID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,15 +112,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
-
-	// TODO Replace with actual relay peer ids
-	if rp := os.Getenv("RELAY"); rp != "" {
-		addresses = append(addresses, "relay:"+rp)
-	}
-
-	localPeerInfo := n.AddressBook.GetLocalPeerInfo()
-	localPeerInfo.Addresses = addresses
-	n.AddressBook.PutLocalPeerInfo(localPeerInfo)
+	n.addressBook.AddLocalPeerAddress(addresses...)
 
 	return tcpListener, nil
 }

@@ -14,7 +14,7 @@ type API struct {
 }
 
 // New HTTP API
-func New(addressBook peers.AddressBooker, dht *dht.DHT, bls storage.Storage) *API {
+func New(addressBook *peers.AddressBook, dht *dht.DHT, bls storage.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	// local := router.Group("/api/v1/local")

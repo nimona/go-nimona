@@ -3,33 +3,15 @@ package peers
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
-	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 
+	"nimona.io/go/blocks"
+	"nimona.io/go/crypto"
 	"nimona.io/go/log"
 )
-
-// AddressBooker provides an interface for mocking our AddressBook
-type AddressBooker interface {
-	GetLocalPeerInfo() *PrivatePeerInfo
-	PutLocalPeerInfo(*PrivatePeerInfo) error
-
-	GetPeerInfo(peerID string) (*PeerInfo, error)
-	GetAllPeerInfo() ([]*PeerInfo, error)
-	PutPeerInfo(*PeerInfo) error
-
-	PutPeerStatus(peerID string, status Status)
-	GetPeerStatus(peerID string) Status
-
-	// Resolve(ctx context.Context, peerID string) (string, error)
-	// Discover(ctx context.Context, peerID, protocol string) ([]Address, error)
-	// LoadOrCreateLocalPeerInfo(path string) (*PrivatePeerInfo, error)
-	CreateNewPeer() (*PrivatePeerInfo, error)
-	// LoadPrivatePeerInfo(path string) (*PrivatePeerInfo, error)
-	// StorePrivatePeerInfo(pi *PrivatePeerInfo, path string) error
-}
 
 type peerStatus struct {
 	Status         Status
@@ -58,15 +40,12 @@ const (
 // NewAddressBook creates a new AddressBook
 func NewAddressBook(configPath string) (*AddressBook, error) {
 	ab := &AddressBook{
-		peers: &PeerInfoCollection{},
+		peers:          &PeerInfoCollection{},
+		localAddresses: sync.Map{},
+		localRelays:    sync.Map{},
 	}
 
-	spi, err := ab.LoadOrCreateLocalPeerInfo(configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := ab.PutLocalPeerInfo(spi); err != nil {
+	if err := ab.loadConfig(configPath); err != nil {
 		return nil, err
 	}
 
@@ -75,19 +54,25 @@ func NewAddressBook(configPath string) (*AddressBook, error) {
 
 // AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
-	peers         *PeerInfoCollection
-	peerStatus    sync.Map
-	localPeerLock sync.RWMutex
-	localPeer     *PrivatePeerInfo
+	localKey       *crypto.Key
+	localAddresses sync.Map
+	localRelays    sync.Map
+	peers          *PeerInfoCollection
+	peerStatus     sync.Map
 }
 
-// PutPeerInfoFromBlock stores an block with a peer payload
+// GetLocalPeerKey returns the local peer's key
+func (ab *AddressBook) GetLocalPeerKey() *crypto.Key {
+	return ab.localKey
+}
+
+// PutPeerInfo stores an block with a peer payload
 func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 	if len(peerInfo.Addresses) == 0 {
 		return errors.New("missing addresses")
 	}
 
-	if peerInfo.Thumbprint() == ab.GetLocalPeerInfo().GetPeerInfo().Thumbprint() {
+	if peerInfo.Thumbprint() == ab.GetLocalPeerInfo().Thumbprint() {
 		return nil
 	}
 
@@ -104,25 +89,21 @@ func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 }
 
 // GetLocalPeerInfo returns our private peer info
-func (ab *AddressBook) GetLocalPeerInfo() *PrivatePeerInfo {
-	ab.localPeerLock.RLock()
-	newPrivatePeerInfo := &PrivatePeerInfo{}
-	copier.Copy(newPrivatePeerInfo, ab.localPeer)
-	ab.localPeerLock.RUnlock()
-	return newPrivatePeerInfo
-}
+func (ab *AddressBook) GetLocalPeerInfo() *PeerInfo {
+	addresses := ab.GetLocalPeerAddresses()
+	addresses = append(addresses, ab.GetLocalPeerRelays()...)
 
-// PutLocalPeerInfo puts our local peer info
-func (ab *AddressBook) PutLocalPeerInfo(peerInfo *PrivatePeerInfo) error {
-	// if len(peerInfo.Addresses) == 0 {
-	// 	return errors.New("missing addresses")
-	// }
-	ab.localPeerLock.Lock()
-	newPrivatePeerInfo := &PrivatePeerInfo{}
-	copier.Copy(newPrivatePeerInfo, peerInfo)
-	ab.localPeer = newPrivatePeerInfo
-	ab.localPeerLock.Unlock()
-	return nil
+	pi := &PeerInfo{
+		Addresses: addresses,
+	}
+
+	sig, err := blocks.Sign(pi, ab.GetLocalPeerKey())
+	if err != nil {
+		panic(err)
+	}
+
+	pi.Signature = sig
+	return pi
 }
 
 // GetPeerInfo returns a peer info from its id
@@ -184,4 +165,49 @@ func (ab *AddressBook) GetPeerStatus(peerID string) Status {
 	}
 
 	return status.(Status)
+}
+
+// AddLocalPeerAddress for local peer
+func (ab *AddressBook) AddLocalPeerAddress(addresses ...string) error {
+	for _, address := range addresses {
+		ab.localAddresses.Store(address, true)
+	}
+	return nil
+}
+
+// RemoveLocalPeerAddress for local peer
+func (ab *AddressBook) RemoveLocalPeerAddress(addr string) error {
+	ab.localAddresses.Delete(addr)
+	return nil
+}
+
+// GetLocalPeerAddresses for local peer
+func (ab *AddressBook) GetLocalPeerAddresses() []string {
+	addresses := []string{}
+	ab.localAddresses.Range(func(key, value interface{}) bool {
+		addresses = append(addresses, key.(string))
+		return true
+	})
+	return addresses
+}
+
+// AddLocalPeerRelay for local peer
+func (ab *AddressBook) AddLocalPeerRelay(relayPeers ...string) error {
+	for _, relayPeer := range relayPeers {
+		relayPeer = strings.Replace(relayPeer, "relay:", "", 1)
+		relayPeer = "relay:" + relayPeer
+		ab.localRelays.Store(relayPeer, true)
+	}
+	return nil
+}
+
+// GetLocalPeerRelays for peer
+func (ab *AddressBook) GetLocalPeerRelays() []string {
+	relays := []string{}
+	ab.localRelays.Range(func(key, value interface{}) bool {
+		relays = append(relays, key.(string))
+		return true
+	})
+
+	return relays
 }
