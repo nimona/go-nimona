@@ -50,7 +50,7 @@ func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
 		queries:     sync.Map{},
 	}
 
-	exchange.Handle("dht", nd.handleBlock)
+	exchange.Handle("dht.**", nd.handleBlock)
 	exchange.Handle("peer.info", nd.handleBlock)
 
 	go nd.refresh()
@@ -129,7 +129,7 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetPeerKey()
+	signer := nd.addressBook.GetLocalPeerKey()
 	if err := nd.exchange.Send(ctx, resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
@@ -172,7 +172,7 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetPeerKey()
+	signer := nd.addressBook.GetLocalPeerKey()
 	if err := nd.exchange.Send(ctx, resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
@@ -299,7 +299,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	provider := &Provider{
 		BlockIDs: []string{key},
 	}
-	signer := nd.addressBook.GetPeerKey()
+	signer := nd.addressBook.GetLocalPeerKey()
 	sig, err := blocks.Sign(provider, signer)
 	if err != nil {
 		return err

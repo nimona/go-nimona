@@ -42,15 +42,15 @@ func GetAddresses(l net.Listener) []string {
 	port := l.Addr().(*net.TCPAddr).Port
 	// TODO log errors
 	network := strings.ToLower(l.Addr().Network())
-	addrs, _ := GetLocalAddresses(port)
+	addrs, _ := GetLocalPeerAddresses(port)
 	for i, addr := range addrs {
 		addrs[i] = fmt.Sprintf("%s:%s", network, addr)
 	}
 	return addrs
 }
 
-// GetLocalAddresses returns the addresses TCP can listen to on the local machine
-func GetLocalAddresses(port int) ([]string, error) {
+// GetLocalPeerAddresses returns the addresses TCP can listen to on the local machine
+func GetLocalPeerAddresses(port int) ([]string, error) {
 	// go through all ifs
 	ifaces, err := net.Interfaces()
 	if err != nil {

@@ -13,25 +13,6 @@ import (
 	"nimona.io/go/log"
 )
 
-// AddressBooker provides an interface for mocking our AddressBook
-// type AddressBooker interface {
-// 	GetPeerInfo(peerID string) (*PeerInfo, error)
-// 	GetAllPeerInfo() ([]*PeerInfo, error)
-// 	PutPeerInfo(*PeerInfo) error
-
-// 	PutPeerStatus(peerID string, status Status)
-// 	GetPeerStatus(peerID string) Status
-
-// 	GetPeerKey() *crypto.Key
-// 	GetLocalPeerInfo() (*PeerInfo, error)
-
-// 	AddAddress(addr string) error
-// 	RemoveAddress(addr string) error
-// 	GetAddresses() []string
-// 	AddRelay(relayPeer string) error
-// 	GetRelays() []string
-// }
-
 type peerStatus struct {
 	Status         Status
 	FailedAttempts int
@@ -80,8 +61,8 @@ type AddressBook struct {
 	peerStatus     sync.Map
 }
 
-// GetPeerKey returns the local peer's key
-func (ab *AddressBook) GetPeerKey() *crypto.Key {
+// GetLocalPeerKey returns the local peer's key
+func (ab *AddressBook) GetLocalPeerKey() *crypto.Key {
 	return ab.localKey
 }
 
@@ -109,14 +90,14 @@ func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 
 // GetLocalPeerInfo returns our private peer info
 func (ab *AddressBook) GetLocalPeerInfo() *PeerInfo {
-	addresses := ab.GetLocalAddresses()
-	addresses = append(addresses, ab.GetLocalRelays()...)
+	addresses := ab.GetLocalPeerAddresses()
+	addresses = append(addresses, ab.GetLocalPeerRelays()...)
 
 	pi := &PeerInfo{
 		Addresses: addresses,
 	}
 
-	sig, err := blocks.Sign(pi, ab.GetPeerKey())
+	sig, err := blocks.Sign(pi, ab.GetLocalPeerKey())
 	if err != nil {
 		panic(err)
 	}
@@ -186,22 +167,22 @@ func (ab *AddressBook) GetPeerStatus(peerID string) Status {
 	return status.(Status)
 }
 
-// AddAddress for local peer
-func (ab *AddressBook) AddAddress(addresses ...string) error {
+// AddLocalPeerAddress for local peer
+func (ab *AddressBook) AddLocalPeerAddress(addresses ...string) error {
 	for _, address := range addresses {
 		ab.localAddresses.Store(address, true)
 	}
 	return nil
 }
 
-// RemoveAddress for local peer
-func (ab *AddressBook) RemoveAddress(addr string) error {
+// RemoveLocalPeerAddress for local peer
+func (ab *AddressBook) RemoveLocalPeerAddress(addr string) error {
 	ab.localAddresses.Delete(addr)
 	return nil
 }
 
-// GetLocalAddresses for local peer
-func (ab *AddressBook) GetLocalAddresses() []string {
+// GetLocalPeerAddresses for local peer
+func (ab *AddressBook) GetLocalPeerAddresses() []string {
 	addresses := []string{}
 	ab.localAddresses.Range(func(key, value interface{}) bool {
 		addresses = append(addresses, key.(string))
@@ -210,8 +191,8 @@ func (ab *AddressBook) GetLocalAddresses() []string {
 	return addresses
 }
 
-// AddRelay for local peer
-func (ab *AddressBook) AddRelay(relayPeers ...string) error {
+// AddLocalPeerRelay for local peer
+func (ab *AddressBook) AddLocalPeerRelay(relayPeers ...string) error {
 	for _, relayPeer := range relayPeers {
 		relayPeer = strings.Replace(relayPeer, "relay:", "", 1)
 		relayPeer = "relay:" + relayPeer
@@ -220,8 +201,8 @@ func (ab *AddressBook) AddRelay(relayPeers ...string) error {
 	return nil
 }
 
-// GetLocalRelays for peer
-func (ab *AddressBook) GetLocalRelays() []string {
+// GetLocalPeerRelays for peer
+func (ab *AddressBook) GetLocalPeerRelays() []string {
 	relays := []string{}
 	ab.localRelays.Range(func(key, value interface{}) bool {
 		relays = append(relays, key.(string))

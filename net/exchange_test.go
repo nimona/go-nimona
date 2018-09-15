@@ -187,7 +187,7 @@ func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *crypto.Key, nn
 	wre, _ := nnet.NewExchange(ab, dpr)
 	_, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
 	suite.NoError(lErr)
-	return 0, ab.GetLocalPeerInfo(), ab.GetPeerKey(), wre, ab
+	return 0, ab.GetLocalPeerInfo(), ab.GetLocalPeerKey(), wre, ab
 }
 
 func TestExchangeTestSuite(t *testing.T) {

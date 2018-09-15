@@ -139,7 +139,7 @@ func main() {
 			log.Fatal("could not put bootstrap peer", err)
 		}
 		bootstrapPeer = peerInfo.(*peers.PeerInfo)
-		addressBook.AddRelay(bootstrapPeer.Thumbprint())
+		addressBook.AddLocalPeerRelay(bootstrapPeer.Thumbprint())
 	}
 
 	storagePath := path.Join(configPath, "storage")
@@ -147,7 +147,7 @@ func main() {
 	dpr := storage.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(addressBook, dpr)
 	dht, _ := dht.NewDHT(n, addressBook)
-	telemetry.NewTelemetry(n, addressBook.GetPeerKey(),
+	telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
 		bootstrapPeer.Signature.Key)
 
 	n.RegisterDiscoverer(dht)
@@ -336,7 +336,7 @@ func main() {
 				c.Println("Could not get peer")
 				return
 			}
-			signer := addressBook.GetPeerKey()
+			signer := addressBook.GetLocalPeerKey()
 			if err := n.Send(ctx, &Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return

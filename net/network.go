@@ -112,7 +112,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
-	n.addressBook.AddAddress(addresses...)
+	n.addressBook.AddLocalPeerAddress(addresses...)
 
 	return tcpListener, nil
 }

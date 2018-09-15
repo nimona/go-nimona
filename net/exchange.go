@@ -113,7 +113,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage) (Exchang
 	}
 
 	self := w.addressBook.GetLocalPeerInfo()
-	key := w.addressBook.GetPeerKey()
+	key := w.addressBook.GetLocalPeerKey()
 
 	go func() {
 		for block := range w.outgoingPayloads {
@@ -377,7 +377,7 @@ func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
 		Block:     blockBytes,
 	}
 
-	signer := w.addressBook.GetPeerKey()
+	signer := w.addressBook.GetLocalPeerKey()
 	if err := w.Send(context.Background(), resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
 		w.logger.Warn("blx.handleRequestBlock could not send block", zap.Error(err))
 		return err
@@ -404,7 +404,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	}()
 
 	w.getRequests.Store(req.RequestID, req)
-	signer := w.addressBook.GetPeerKey()
+	signer := w.addressBook.GetLocalPeerKey()
 
 	go func() {
 		providers, err := w.discovery.GetProviders(ctx, id)
@@ -531,7 +531,7 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (net.Conn, erro
 		PeerInfo: w.addressBook.GetLocalPeerInfo(),
 	}
 
-	signer := w.addressBook.GetPeerKey()
+	signer := w.addressBook.GetLocalPeerKey()
 	handshakeBytes, err := blocks.PackEncode(handshake, blocks.SignWith(signer))
 	if err != nil {
 		panic(err)
