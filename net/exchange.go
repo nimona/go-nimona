@@ -443,8 +443,9 @@ func (w *exchange) Send(ctx context.Context, o blocks.Typed, recipient *crypto.K
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") != "" {
+		om, _ := blocks.MapTyped(o)
 		fmt.Print("> ---------- out block / start ")
-		b, _ := json.MarshalIndent(o, "> ", "  ")
+		b, _ := json.MarshalIndent(om, "> ", "  ")
 		fmt.Print(string(b))
 		fmt.Println(" ---------- out block / end")
 	}

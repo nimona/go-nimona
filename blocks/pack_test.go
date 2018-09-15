@@ -13,10 +13,11 @@ func init() {
 }
 
 type TestPackStructA struct {
-	A string           `json:"a"`
-	B *TestPackStructB `json:"b"`
-	C int              `json:"c"`
-	D []byte           `json:"d"`
+	A  string             `json:"a"`
+	B  *TestPackStructB   `json:"b"`
+	BS []*TestPackStructB `json:"bs"`
+	C  int                `json:"c"`
+	D  []byte             `json:"d"`
 }
 
 func (t *TestPackStructA) GetType() string {
@@ -139,54 +140,49 @@ func TestPackEncodeNestedTyped(t *testing.T) {
 	assert.Equal(t, ep, p)
 }
 
-// func TestEncodeBlock(t *testing.T) {
-// 	s := struct {
-// 		A string                `json:"a"`
-// 		T string                `json:",type"`
-// 		S *crypto.Signature `json:"-"`
-// 		// X string     `json:"x-h,header"`
-// 	}{
-// 		A: "a-value",
-// 		T: "a-type",
-// 		S: &crypto.Signature{
-// 			Alg: "a-alg",
-// 		},
-// 		// X: "x-header",
-// 	}
+func TestPackEncodeNestedSliceTyped(t *testing.T) {
+	s := &TestPackStructA{
+		A: "a-value",
+		BS: []*TestPackStructB{
+			&TestPackStructB{
+				AA: "aa-value-1",
+				BB: 1,
+			},
+			&TestPackStructB{
+				AA: "aa-value-2",
+				BB: 2,
+			},
+		},
+		C: 12,
+		D: []byte{1, 2, 3},
+	}
 
-// 	eb := &Block{
-// 		Type:      "a-type",
-// 		Signature: "952dJcyEyxSbDRYD6WtMeFmxqBJ3FqaCvGv9NKcFeMTgh996UAya42x",
-// 		Payload: map[string]interface{}{
-// 			"a": "a-value",
-// 		},
-// 		// Headers: map[string]string{
-// 		// 	"x-h": "x-header",
-// 		// },
-// 	}
+	ep := &Block{
+		Type: "a",
+		Payload: map[string]interface{}{
+			"a": "a-value",
+			"bs": []interface{}{
+				map[string]interface{}{
+					"payload": map[string]interface{}{
+						"aa": "aa-value-1",
+						"bb": 1,
+					},
+					"type": "b",
+				},
+				map[string]interface{}{
+					"payload": map[string]interface{}{
+						"aa": "aa-value-2",
+						"bb": 2,
+					},
+					"type": "b",
+				},
+			},
+			"c": 12,
+			"d": []byte{1, 2, 3},
+		},
+	}
 
-// 	b := New(s).Block()
-// 	assert.Equal(t, eb, b)
-// }
-
-// func TestEncodeBlockMeta(t *testing.T) {
-// 	s := struct {
-// 		A      string `json:"a"`
-// 		Parent string `json:",parent"`
-// 	}{
-// 		A:      "a-value",
-// 		Parent: "p",
-// 	}
-
-// 	eb := &Block{
-// 		Payload: map[string]interface{}{
-// 			"a": "a-value",
-// 		},
-// 		Metadata: &Metadata{
-// 			Parent: "p",
-// 		},
-// 	}
-
-// 	b := New(s).Block()
-// 	assert.Equal(t, eb, b)
-// }
+	p, err := Pack(s)
+	assert.NoError(t, err)
+	assert.Equal(t, ep, p)
+}

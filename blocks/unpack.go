@@ -65,7 +65,7 @@ func Unpack(p *Block, opts ...UnpackOption) (Typed, error) {
 func blockMapToBlock(m map[string]interface{}) (*Block, error) {
 	b := &Block{}
 	md := &mapstructure.DecoderConfig{
-		TagName:          tagName,
+		TagName:          defaultTag,
 		ZeroFields:       false,
 		WeaklyTypedInput: true,
 		ErrorUnused:      false,
@@ -103,7 +103,7 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 		}
 	}
 	md := &mapstructure.DecoderConfig{
-		TagName:          tagName,
+		TagName:          defaultTag,
 		ZeroFields:       false,
 		WeaklyTypedInput: true,
 		ErrorUnused:      false,

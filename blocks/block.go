@@ -7,7 +7,7 @@ func init() {
 	RegisterContentType(&crypto.Signature{})
 }
 
-const tagName = "json"
+const defaultTag = "json"
 
 // Policy for Block
 type Policy struct {
