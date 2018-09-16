@@ -41,10 +41,6 @@ func Encode(p *Block) ([]byte, error) {
 
 // Pack gets something Typed and converts it into a Block
 func Pack(v Typed, opts ...PackOption) (*Block, error) {
-	// HACK we currently always base58 encode nested blocks
-	// opts = append(opts, EncodeNestedBase58())
-	// opts = append(opts, EncodeNested())
-
 	o := ParsePackOptions(opts...)
 	if o.Sign && o.Key != nil {
 		opts = append(opts, SignWith(nil))
@@ -56,6 +52,9 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 	b := &Block{
 		Type:    m["type"].(string),
 		Payload: m["payload"].(map[string]interface{}),
+	}
+	if _, ok := m["signature"]; ok {
+		b.Signature = m["signature"].(map[string]interface{})
 	}
 	if o.Sign && o.Key != nil {
 		s, err := signPacked(b, o.Key)
@@ -72,7 +71,7 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 }
 
 // MapTyped gets a Typed and converts it into a Map
-func MapTyped(v Typed, opts ...PackOption) (map[string]interface{}, error) {
+func MapTyped(v Typed) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	t := v.GetType()
 	if t == "" {
@@ -86,22 +85,16 @@ func MapTyped(v Typed, opts ...PackOption) (map[string]interface{}, error) {
 	m["payload"] = p
 	s := v.GetSignature()
 	if s != nil {
-		ps, err := Map(s)
+		ps, err := MapTyped(s)
 		if err != nil {
 			return nil, err
 		}
-		m["signature"] = map[string]interface{}{
-			"payload": ps,
-			"type":    "signature",
-		}
+		m["signature"] = ps
 	}
 	return m, nil
 }
 
-// TODO support nested structs etc
-func MapStruct(in interface{}, opts ...PackOption) (map[string]interface{}, error) {
-	// o := ParsePackOptions(opts...)
-
+func MapStruct(in interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 
 	v := reflect.ValueOf(in)
