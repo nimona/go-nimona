@@ -3,8 +3,6 @@ package net
 import (
 	"context"
 	"errors"
-	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +36,6 @@ type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
 	Handle(contentType string, h func(o blocks.Typed) error) error
 	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error
-	// Listen(ctx context.Context, addrress string) (net.Listener, error)
 	RegisterDiscoverer(discovery Discoverer)
 }
 
@@ -48,7 +45,8 @@ type exchange struct {
 	manager     *ConnectionManager
 	discovery   Discoverer
 
-	outgoingPayloads chan outBlock
+	outgoingPayloads chan *outBlock
+	incomingPayloads chan *incBlock
 
 	handlers   []handler
 	logger     *zap.Logger
@@ -68,9 +66,8 @@ type outBlock struct {
 }
 
 type incBlock struct {
-	peerID  string
-	conn    net.Conn
-	payload []byte
+	conn  *Connection
+	typed blocks.Typed
 }
 
 type handler struct {
@@ -92,10 +89,8 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		addressBook: addressBook,
 		manager:     &ConnectionManager{},
 
-		outgoingPayloads: make(chan outBlock, 100),
-		// incomingConnections: make(chan *Connection),
-		// outgoingConnections: make(chan *Connection),
-		// close: make(chan bool),
+		outgoingPayloads: make(chan *outBlock, 10),
+		incomingPayloads: make(chan *incBlock, 10),
 
 		handlers:   []handler{},
 		logger:     log.Logger(ctx).Named("exchange"),
@@ -106,12 +101,6 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 	}
 
 	self := w.addressBook.GetLocalPeerInfo()
-	// key := w.addressBook.GetLocalPeerKey()
-
-	// if _, err := w.Listen(ctx, address); err != nil {
-	// 	return nil, err
-	// }
-
 	incomingConnections, err := w.network.Listen(ctx, address)
 	if err != nil {
 		return nil, err
@@ -119,45 +108,59 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 
 	go func() {
 		for {
-			select {
-			case conn := <-incomingConnections:
+			conn := <-incomingConnections
+			go func(conn *Connection) {
 				w.manager.Add(conn)
-				go func(conn *Connection) {
-					if err := w.HandleConnection(conn); err != nil {
-						w.logger.Warn("failed to handle block", zap.Error(err))
-					}
-				}(conn)
-			case block := <-w.outgoingPayloads:
-				recipientThumbPrint := block.recipient.Thumbprint()
-				if self.Thumbprint() == recipientThumbPrint {
-					w.logger.Info("cannot send block to self")
-					block.err <- errors.New("cannot send block to self")
-					continue
+				if err := w.HandleConnection(conn); err != nil {
+					w.logger.Warn("failed to handle block", zap.Error(err))
 				}
+			}(conn)
+		}
+	}()
 
-				logger := w.logger.With(zap.String("peerID", recipientThumbPrint))
-
-				// try to send the block directly to the recipient
-				logger.Debug("getting conn to write block")
-				conn, err := w.GetOrDial(ctx, recipientThumbPrint)
-				if err != nil {
-					logger.Debug("could not get conn to recipient", zap.Error(err))
-					block.err <- err
-					continue
+	go func() {
+		for {
+			block := <-w.incomingPayloads
+			go func(block *incBlock) {
+				if err := w.process(block.typed, block.conn); err != nil {
+					w.logger.Error("getting conn to write block", zap.Error(err))
 				}
+			}(block)
+		}
+	}()
 
-				if err := Write(block.typed, conn, block.opts...); err != nil {
-					w.manager.Close(recipientThumbPrint)
-					logger.Debug("could not write to recipient", zap.Error(err))
-					block.err <- err
-					continue
-				}
-
-				// update peer status
-				w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusConnected)
-				block.err <- nil
+	go func() {
+		for {
+			block := <-w.outgoingPayloads
+			recipientThumbPrint := block.recipient.Thumbprint()
+			if self.Thumbprint() == recipientThumbPrint {
+				w.logger.Info("cannot send block to self")
+				block.err <- errors.New("cannot send block to self")
 				continue
 			}
+
+			logger := w.logger.With(zap.String("peerID", recipientThumbPrint))
+
+			// try to send the block directly to the recipient
+			logger.Debug("getting conn to write block")
+			conn, err := w.GetOrDial(ctx, recipientThumbPrint)
+			if err != nil {
+				logger.Debug("could not get conn to recipient", zap.Error(err))
+				block.err <- err
+				continue
+			}
+
+			if err := Write(block.typed, conn, block.opts...); err != nil {
+				w.manager.Close(recipientThumbPrint)
+				logger.Debug("could not write to recipient", zap.Error(err))
+				block.err <- err
+				continue
+			}
+
+			// update peer status
+			w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusConnected)
+			block.err <- nil
+			continue
 		}
 	}()
 
@@ -207,10 +210,9 @@ func (w *exchange) HandleConnection(conn *Connection) error {
 			return err
 		}
 
-		if err := w.process(typed, conn); err != nil {
-			w.logger.Error("could not process block", zap.Error(err))
-			w.manager.Close(conn.RemoteID)
-			return err
+		w.incomingPayloads <- &incBlock{
+			conn:  conn,
+			typed: typed,
 		}
 	}
 }
@@ -221,13 +223,13 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 
 	// TODO convert these into proper handlers
 	switch payload := typed.(type) {
-	// case *ForwardRequest:
-	// 	w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
-	// 	w.outgoingPayloads <- outBlock{
-	// 		recipient: payload.Recipient,
-	// 		typed:     payload.Block,
-	// 	}
-	// 	return nil
+	case *ForwardRequest:
+		w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
+		w.outgoingPayloads <- &outBlock{
+			recipient: payload.Recipient,
+			typed:     payload.Typed,
+		}
+		return nil
 
 	case *BlockRequest:
 		if err := w.handleRequestBlock(payload); err != nil {
@@ -374,8 +376,7 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 
 	cerr := make(chan error)
 
-	// TODO right now there is no way to error on this, do we have to?
-	w.outgoingPayloads <- outBlock{
+	w.outgoingPayloads <- &outBlock{
 		context:   ctx,
 		recipient: recipient,
 		typed:     typed,
@@ -383,73 +384,55 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 		opts:      opts,
 	}
 
+	var sErr error
 	select {
 	case err := <-cerr:
-		return err
+		sErr = err
 	case <-time.After(time.Second * 5):
-		return errors.New("giving up, timing out")
+		sErr = errors.New("giving up, timing out")
 	}
-}
 
-func (w *exchange) forward(ctx context.Context) error {
+	return sErr
 
-	// // else try to send message via their relay addresses
-	// conn, err = w.getOrDialRelay(ctx, recipientThumbPrint)
-	// if err != nil {
-	// 	logger.Debug("could not get conn to recipient's relay", zap.Error(err))
-	// 	block.err <- errors.New("could not get conn to recipient's relay")
-	// 	continue
+	// TODO fix forwarding
+
+	// if sErr == nil {
+	// 	fmt.Println("---------------- sErr", sErr)
+	// 	return nil
 	// }
 
-	// // create forwarded block
+	// // try to send message via their relay addresses
+	// peerID := recipient.Thumbprint()
+	// peer, err := w.addressBook.GetPeerInfo(peerID)
+	// if err != nil {
+	// 	return ErrAllAddressesFailed
+	// }
+
+	// // we unpack this because of the Send opts that might have signed this
+	// fwTyped, err := blocks.UnpackDecode(bytes)
+	// if err != nil {
+	// 	return err
+	// }
+
 	// fw := &ForwardRequest{
-	// 	Recipient: block.recipient,
-	// 	Block:     block.bytes,
+	// 	Recipient: recipient,
+	// 	Typed:     fwTyped,
 	// }
 
-	// fwb, err := blocks.PackEncode(fw, blocks.SignWith(key))
-	// if err != nil {
-	// 	block.err <- err
-	// 	continue
+	// for _, address := range peer.Addresses {
+	// 	if strings.HasPrefix(address, "relay:") {
+	// 		relayPeerID := strings.Replace(address, "relay:", "", 1)
+	// 		relayPeer, err := w.addressBook.GetPeerInfo(relayPeerID)
+	// 		if err != nil {
+	// 			continue
+	// 		}
+	// 		if err := w.Send(ctx, fw, relayPeer.Signature.Key); err == nil {
+	// 			return nil
+	// 		}
+	// 	}
 	// }
 
-	// // try to send the block directly to the recipient
-	// if err := w.writeBlock(ctx, fwb, conn); err != nil {
-	// 	// TODO better handling of connection errors
-	// 	// TODO this is a bad close, id is of recipient, conn is of relay
-	// 	w.Close(recipientThumbPrint, conn)
-	// 	logger.Debug("could not write to relay", zap.Error(err))
-	// 	// update peer status
-	// 	w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusError)
-	// 	block.err <- err
-	// 	continue
-	// }
-
-	// // update peer status
-	// w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusCanConnect)
-	// block.err <- nil
-	return nil
-}
-
-func (w *exchange) getOrDialRelay(ctx context.Context, peerID string) (*Connection, error) {
-	peer, err := w.addressBook.GetPeerInfo(peerID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, address := range peer.Addresses {
-		// TODO better check
-		if strings.HasPrefix(address, "relay:") {
-			relayPeerID := strings.Replace(address, "relay:", "", 1)
-			conn, err := w.GetOrDial(ctx, relayPeerID)
-			if err != nil {
-				continue
-			}
-			return conn, nil
-		}
-	}
-
-	return nil, ErrAllAddressesFailed
+	// return ErrAllAddressesFailed
 }
 
 func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, error) {
@@ -466,7 +449,7 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, e
 
 	conn, err := w.network.Dial(ctx, peerID)
 	if err != nil {
-		w.manager.Close(peerID)
+		// w.manager.Close(peerID)
 		return nil, err
 	}
 

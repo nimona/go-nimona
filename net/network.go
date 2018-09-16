@@ -11,13 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/codec"
-
 	igd "github.com/emersion/go-upnp-igd"
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
+	"nimona.io/go/blocks"
+	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
 )
@@ -155,11 +154,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 		for {
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
-				// if closed {
-				// 	return
-				// }
-				// w.logger.Error("could not accept", zap.Error(err))
-				// TODO check conn is still alive and return
+				log.DefaultLogger.Warn("could not accept connection", zap.Error(err))
 				return
 			}
 
@@ -170,7 +165,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 
 			typedSyn, err := Read(conn)
 			if err != nil {
-				fmt.Println("____ waiting for syn failed", err)
+				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
 				continue
 			}
 
@@ -179,23 +174,22 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 				Nonce: nonce,
 			}
 			if err := Write(synAck, conn, blocks.SignWith(signer)); err != nil {
-				fmt.Println("____ sending for syn-ack failed", err)
+				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
 				continue
 			}
 
 			typedAck, err := Read(conn)
 			if err != nil {
-				fmt.Println("____ waiting for ack failed", err)
+				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
 				continue
 			}
 
 			if typedAck.(*HandshakeAck).Nonce != nonce {
-				fmt.Println("____ validating syn to ack nonce failed")
+				log.DefaultLogger.Warn("validating syn to ack nonce failed")
 				continue
 			}
 
 			conn.RemoteID = typedAck.GetSignature().Key.Thumbprint()
-
 			cconn <- conn
 		}
 	}()
@@ -216,7 +210,7 @@ func Write(v blocks.Typed, conn *Connection, opts ...blocks.PackOption) error {
 		return err
 	}
 	if os.Getenv("DEBUG_BLOCKS") != "" {
-		b, _ := json.MarshalIndent(p, "> ", "  ")
+		b, _ := json.MarshalIndent(p, "", "  ")
 		log.DefaultLogger.Debug(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
 
