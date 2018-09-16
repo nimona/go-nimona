@@ -108,7 +108,7 @@ func init() {
 }
 
 func main() {
-	defer profile.Start(profile.MemProfile).Stop()
+	// defer profile.Start(profile.MemProfile).Stop()
 
 	configPath := os.Getenv("NIMONA_PATH")
 
@@ -128,31 +128,37 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	bootstrapPeer := &peers.PeerInfo{}
-	for _, peerInfoB58 := range bootstrapPeerInfos {
-		peerInfoBytes, _ := base58.Decode(peerInfoB58)
-		peerInfo, err := blocks.UnpackDecode(peerInfoBytes)
+	// statsBootstrapPeer := &peers.PeerInfo{}
+	for _, bootstrapPeer := range bootstrapPeerInfos {
+		peerInfoBytes, _ := base58.Decode(bootstrapPeer.key)
+		typedPeerInfo, err := blocks.UnpackDecode(peerInfoBytes)
 		if err != nil {
 			log.Fatal("could not unpack bootstrap node", err.Error())
 		}
-		if err := addressBook.PutPeerInfo(peerInfo.(*peers.PeerInfo)); err != nil {
+		peerInfo := typedPeerInfo.(*peers.PeerInfo)
+		if err := addressBook.PutPeerInfo(peerInfo); err != nil {
 			log.Fatal("could not put bootstrap peer", err)
 		}
-		bootstrapPeer = peerInfo.(*peers.PeerInfo)
-		addressBook.AddLocalPeerRelay(bootstrapPeer.Thumbprint())
+		// if bootstrapPeer.alias == "stats.nimona.io" {
+		// 	statsBootstrapPeer = peerInfo
+		// }
+		if os.Getenv("RELAY") != "false" {
+			addressBook.AddLocalPeerRelay(peerInfo.Thumbprint())
+		}
+		addressBook.SetAlias(peerInfo.Signature.Key, bootstrapPeer.alias)
 	}
 
 	storagePath := path.Join(configPath, "storage")
 
 	dpr := storage.NewDiskStorage(storagePath)
-	n, _ := net.NewExchange(addressBook, dpr)
+	n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", port))
 	dht, _ := dht.NewDHT(n, addressBook)
-	telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
-		bootstrapPeer.Signature.Key)
+	// telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
+	// 	statsBootstrapPeer.Signature.Key)
 
 	n.RegisterDiscoverer(dht)
 
-	n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
+	// n.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", port))
 
 	n.Handle("demo.hello", func(payload blocks.Typed) error {
 		fmt.Printf("___ Got block %s\n", payload.(*Hello).Body)

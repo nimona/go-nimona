@@ -2,6 +2,8 @@ package net
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -9,7 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/go/blocks"
+	"nimona.io/go/codec"
+
 	igd "github.com/emersion/go-upnp-igd"
+	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
 	"nimona.io/go/log"
@@ -18,8 +24,8 @@ import (
 
 // Networker interface for mocking Network
 type Networker interface {
-	Dial(ctx context.Context, peerID string) (net.Conn, error)
-	Listen(ctx context.Context, addrress string) (net.Listener, error)
+	Dial(ctx context.Context, peerID string) (*Connection, error)
+	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 }
 
 // NewNetwork creates a new p2p network using an address book
@@ -35,7 +41,7 @@ type Network struct {
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
+func (n *Network) Dial(ctx context.Context, peerID string) (*Connection, error) {
 	logger := log.Logger(ctx)
 	peerInfo, err := n.addressBook.GetPeerInfo(peerID)
 	if err != nil {
@@ -46,7 +52,7 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 		return nil, ErrNoAddresses
 	}
 
-	var conn net.Conn
+	var tcpConn net.Conn
 	for _, addr := range peerInfo.Addresses {
 		if !strings.HasPrefix(addr, "tcp:") {
 			continue
@@ -54,25 +60,54 @@ func (n *Network) Dial(ctx context.Context, peerID string) (net.Conn, error) {
 		addr = strings.Replace(addr, "tcp:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
-		newConn, err := dialer.DialContext(ctx, "tcp", addr)
+		newTcpConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			continue
 		}
-		conn = newConn
+		tcpConn = newTcpConn
 		break
 	}
 
-	if conn == nil {
+	if tcpConn == nil {
 		return nil, ErrAllAddressesFailed
 	}
 
-	return conn, nil
+	conn := &Connection{
+		Conn:     tcpConn,
+		RemoteID: peerID,
+	}
 
+	signer := n.addressBook.GetLocalPeerKey()
+	nonce := RandStringBytesMaskImprSrc(8)
+	syn := &HandshakeSyn{
+		Nonce: nonce,
+	}
+	if err := Write(syn, conn, blocks.SignWith(signer)); err != nil {
+		return nil, err
+	}
+
+	typedSynAck, err := Read(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if typedSynAck.(*HandshakeSynAck).Nonce != nonce {
+		return nil, errors.New("invalid handhshake.syn-ack")
+	}
+
+	ack := &HandshakeAck{
+		Nonce: nonce,
+	}
+	if err := Write(ack, conn, blocks.SignWith(signer)); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error) {
+func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, error) {
 	logger := log.Logger(ctx).Named("network")
 	tcpListener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -114,5 +149,94 @@ func (n *Network) Listen(ctx context.Context, addr string) (net.Listener, error)
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
 	n.addressBook.AddLocalPeerAddress(addresses...)
 
-	return tcpListener, nil
+	cconn := make(chan *Connection)
+	go func() {
+		signer := n.addressBook.GetLocalPeerKey()
+		for {
+			tcpConn, err := tcpListener.Accept()
+			if err != nil {
+				// if closed {
+				// 	return
+				// }
+				// w.logger.Error("could not accept", zap.Error(err))
+				// TODO check conn is still alive and return
+				return
+			}
+
+			conn := &Connection{
+				Conn:     tcpConn,
+				RemoteID: "unknown: handshaking",
+			}
+
+			typedSyn, err := Read(conn)
+			if err != nil {
+				fmt.Println("____ waiting for syn failed", err)
+				continue
+			}
+
+			nonce := typedSyn.(*HandshakeSyn).Nonce
+			synAck := &HandshakeSynAck{
+				Nonce: nonce,
+			}
+			if err := Write(synAck, conn, blocks.SignWith(signer)); err != nil {
+				fmt.Println("____ sending for syn-ack failed", err)
+				continue
+			}
+
+			typedAck, err := Read(conn)
+			if err != nil {
+				fmt.Println("____ waiting for ack failed", err)
+				continue
+			}
+
+			if typedAck.(*HandshakeAck).Nonce != nonce {
+				fmt.Println("____ validating syn to ack nonce failed")
+				continue
+			}
+
+			conn.RemoteID = typedAck.GetSignature().Key.Thumbprint()
+
+			cconn <- conn
+		}
+	}()
+
+	return cconn, nil
+}
+
+func Write(v blocks.Typed, conn *Connection, opts ...blocks.PackOption) error {
+	p, err := blocks.Pack(v, opts...)
+	if err != nil {
+		return err
+	}
+	b, err := blocks.Encode(p)
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Conn.Write(b); err != nil {
+		return err
+	}
+	if os.Getenv("DEBUG_BLOCKS") != "" {
+		b, _ := json.MarshalIndent(p, "> ", "  ")
+		log.DefaultLogger.Debug(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
+	}
+
+	return nil
+}
+
+func Read(conn *Connection) (blocks.Typed, error) {
+	pDecoder := ucodec.NewDecoder(conn.Conn, codec.CborHandler())
+	p := &blocks.Block{}
+	if err := pDecoder.Decode(&p); err != nil {
+		return nil, err
+	}
+	v, err := blocks.Unpack(p)
+	if err != nil {
+		return nil, err
+	}
+	if os.Getenv("DEBUG_BLOCKS") != "" {
+		m, _ := blocks.Pack(v)
+		b, _ := json.MarshalIndent(m, "", "  ")
+		log.DefaultLogger.Debug(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+	}
+	return v, nil
 }

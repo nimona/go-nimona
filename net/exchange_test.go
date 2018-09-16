@@ -11,11 +11,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	blocks "nimona.io/go/blocks"
+	"nimona.io/go/blocks"
 	"nimona.io/go/crypto"
-	nnet "nimona.io/go/net"
+	"nimona.io/go/net"
 	"nimona.io/go/peers"
-	storage "nimona.io/go/storage"
+	"nimona.io/go/storage"
 )
 
 type exchangeTestSuite struct {
@@ -49,7 +49,7 @@ func (p *DummyPayload) SetAnnotations(a map[string]interface{}) {
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
-	_, p1, k1, w1, r1 := suite.newPeer()
+	_, p1, _, w1, r1 := suite.newPeer()
 	_, p2, k2, w2, r2 := suite.newPeer()
 
 	err := r2.PutPeerInfo(p1)
@@ -93,7 +93,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	err = w1.Send(ctx, exPayload, p2.Signature.Key, blocks.SignWith(k1))
+	err = w1.Send(ctx, exPayload, p2.Signature.Key)
 	suite.NoError(err)
 
 	wg.Wait()
@@ -161,14 +161,14 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 
 // 	ctx := context.Background()
 
-// 	block, err := nnet.NewBlock("foo.bar", []string{p1.ID}, payload)
+// 	block, err := net.NewBlock("foo.bar", []string{p1.ID}, payload)
 // 	suite.NoError(err)
 // 	err = w2.Send(ctx, block)
 // 	suite.NoError(err)
 
 // 	time.Sleep(time.Second)
 
-// 	block, err = nnet.NewBlock("foo.bar", []string{p2.ID}, payload)
+// 	block, err = net.NewBlock("foo.bar", []string{p2.ID}, payload)
 // 	suite.NoError(err)
 // 	err = w1.Send(ctx, block)
 // 	suite.NoError(err)
@@ -179,14 +179,13 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	suite.True(w2BlockHandled)
 // }
 
-func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *crypto.Key, nnet.Exchange, *peers.AddressBook) {
+func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *crypto.Key, net.Exchange, *peers.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
 	ab, _ := peers.NewAddressBook(td)
 	storagePath := path.Join(td, "storage")
 	dpr := storage.NewDiskStorage(storagePath)
-	wre, _ := nnet.NewExchange(ab, dpr)
-	_, lErr := wre.Listen(context.Background(), fmt.Sprintf("0.0.0.0:%d", 0))
-	suite.NoError(lErr)
+	wre, err := net.NewExchange(ab, dpr, fmt.Sprintf("0.0.0.0:%d", 0))
+	suite.NoError(err)
 	return 0, ab.GetLocalPeerInfo(), ab.GetLocalPeerKey(), wre, ab
 }
 
