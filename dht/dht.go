@@ -287,8 +287,8 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              id,
 		queryType:        PeerInfoQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		incomingPayloads: make(chan interface{}, 10),
+		outgoingPayloads: make(chan interface{}, 10),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -345,8 +345,8 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Key, 
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		incomingPayloads: make(chan interface{}, 10),
+		outgoingPayloads: make(chan interface{}, 10),
 	}
 
 	nd.queries.Store(q.id, q)

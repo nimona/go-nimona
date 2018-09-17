@@ -66,7 +66,7 @@ func (r *Registry) Register(contentType string, content interface{}, opts ...Reg
 func (r *Registry) GetType(contentType string) reflect.Type {
 	t, ok := r.types.Load(contentType)
 	if !ok {
-		return nil
+		return unknownType
 	}
 	return t.(reflect.Type)
 }

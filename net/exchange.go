@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,7 +124,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 			block := <-w.incomingPayloads
 			go func(block *incBlock) {
 				if err := w.process(block.typed, block.conn); err != nil {
-					w.logger.Error("getting conn to write block", zap.Error(err))
+					w.logger.Error("getting processing block", zap.Error(err))
 				}
 			}(block)
 		}
@@ -143,7 +144,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 
 			// try to send the block directly to the recipient
 			logger.Debug("getting conn to write block")
-			conn, err := w.GetOrDial(ctx, recipientThumbPrint)
+			conn, err := w.GetOrDial(block.context, recipientThumbPrint)
 			if err != nil {
 				logger.Debug("could not get conn to recipient", zap.Error(err))
 				block.err <- err
@@ -225,11 +226,16 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 	switch payload := typed.(type) {
 	case *ForwardRequest:
 		w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
+		cerr := make(chan error, 1)
+		ctx, cf := context.WithTimeout(context.Background(), time.Second)
+		defer cf()
 		w.outgoingPayloads <- &outBlock{
+			context:   ctx,
 			recipient: payload.Recipient,
 			typed:     payload.Typed,
+			err:       cerr,
 		}
-		return nil
+		return <-cerr
 
 	case *BlockRequest:
 		if err := w.handleRequestBlock(payload); err != nil {
@@ -243,15 +249,17 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 	}
 
 	contentType := typed.GetType()
-	for _, handler := range w.handlers {
-		if handler.contentType.Match(contentType) {
-			if err := handler.handler(typed); err != nil {
-				w.logger.Info(
-					"Could not handle event",
-					zap.String("contentType", contentType),
-					zap.Error(err),
-				)
-			}
+	for _, h := range w.handlers {
+		if h.contentType.Match(contentType) {
+			go func(h handler, typed blocks.Typed) {
+				if err := h.handler(typed); err != nil {
+					w.logger.Info(
+						"Could not handle event",
+						zap.String("contentType", contentType),
+						zap.Error(err),
+					)
+				}
+			}(h, typed)
 		}
 	}
 
@@ -321,7 +329,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	req := &BlockRequest{
 		RequestID: RandStringBytesMaskImprSrc(8),
 		ID:        id,
-		response:  make(chan interface{}),
+		response:  make(chan interface{}, 10),
 	}
 
 	defer func() {
@@ -363,19 +371,12 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 		return err
 	}
 
-	SendBlockEvent(
-		"outgoing",
-		typed.GetType(),
-		len(bytes),
-	)
-
 	if blocks.ShouldPersist(typed.GetType()) {
 		blockID, _ := blocks.SumSha3(bytes)
 		w.store.Store(blockID, bytes)
 	}
 
-	cerr := make(chan error)
-
+	cerr := make(chan error, 1)
 	w.outgoingPayloads <- &outBlock{
 		context:   ctx,
 		recipient: recipient,
@@ -383,56 +384,53 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 		err:       cerr,
 		opts:      opts,
 	}
-
-	var sErr error
-	select {
-	case err := <-cerr:
-		sErr = err
-	case <-time.After(time.Second * 5):
-		sErr = errors.New("giving up, timing out")
+	if err := <-cerr; err == nil {
+		return nil
 	}
 
-	return sErr
+	// try to send message via their relay addresses
+	peerID := recipient.Thumbprint()
+	peer, err := w.addressBook.GetPeerInfo(peerID)
+	if err != nil {
+		return err
+	}
 
-	// TODO fix forwarding
+	// we unpack this because of the Send opts that might have signed this
+	fwTyped, err := blocks.UnpackDecode(bytes)
+	if err != nil {
+		return err
+	}
 
-	// if sErr == nil {
-	// 	fmt.Println("---------------- sErr", sErr)
-	// 	return nil
-	// }
+	fw := &ForwardRequest{
+		Recipient: recipient,
+		Typed:     fwTyped,
+	}
 
-	// // try to send message via their relay addresses
-	// peerID := recipient.Thumbprint()
-	// peer, err := w.addressBook.GetPeerInfo(peerID)
-	// if err != nil {
-	// 	return ErrAllAddressesFailed
-	// }
+	for _, address := range peer.Addresses {
+		if strings.HasPrefix(address, "relay:") {
+			relayPeerID := strings.Replace(address, "relay:", "", 1)
+			if w.addressBook.GetLocalPeerInfo().Thumbprint() == relayPeerID {
+				continue
+			}
+			relayPeer, err := w.addressBook.GetPeerInfo(relayPeerID)
+			if err != nil {
+				continue
+			}
+			cerr := make(chan error, 1)
+			w.outgoingPayloads <- &outBlock{
+				context:   ctx,
+				recipient: relayPeer.Signature.Key,
+				typed:     fw,
+				err:       cerr,
+				opts:      opts,
+			}
+			if err := <-cerr; err == nil {
+				return nil
+			}
+		}
+	}
 
-	// // we unpack this because of the Send opts that might have signed this
-	// fwTyped, err := blocks.UnpackDecode(bytes)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// fw := &ForwardRequest{
-	// 	Recipient: recipient,
-	// 	Typed:     fwTyped,
-	// }
-
-	// for _, address := range peer.Addresses {
-	// 	if strings.HasPrefix(address, "relay:") {
-	// 		relayPeerID := strings.Replace(address, "relay:", "", 1)
-	// 		relayPeer, err := w.addressBook.GetPeerInfo(relayPeerID)
-	// 		if err != nil {
-	// 			continue
-	// 		}
-	// 		if err := w.Send(ctx, fw, relayPeer.Signature.Key); err == nil {
-	// 			return nil
-	// 		}
-	// 	}
-	// }
-
-	// return ErrAllAddressesFailed
+	return ErrAllAddressesFailed
 }
 
 func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, error) {

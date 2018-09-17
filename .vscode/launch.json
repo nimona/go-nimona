@@ -18,7 +18,8 @@
                 "HTTP_PORT": "0",
                 "LOG_LEVEL": "DEBUG",
                 "DEBUG_BLOCKS": "true",
-                "NIMONA_PATH": "/Users/geoah/.nimona-node1",
+                "BIND_LOCAL": "true",
+                "NIMONA_PATH": ".configs/node1",
             },
             "args": [],
             "showLog": true
@@ -33,11 +34,12 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/nimona/main.go",
             "env": {
-                "PORT": "21013",
+                "PORT": "0",
                 "HTTP_PORT": "0",
                 "LOG_LEVEL": "DEBUG",
                 "DEBUG_BLOCKS": "true",
-                "NIMONA_PATH": "${workspaceRoot}/cmd/bootstrap/bootstraps/local",
+                "BIND_LOCAL": "true",
+                "NIMONA_PATH": ".configs/bootstrap",
             },
             "args": [],
             "showLog": true
@@ -51,7 +53,15 @@
             "port": 2345,
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/enc/main.go",
-            "env": {},
+            "env": {
+            "UPNP": "false",
+                "PORT": "0",
+                "HTTP_PORT": "0",
+                "LOG_LEVEL": "DEBUG",
+                "DEBUG_BLOCKS": "true",
+                "BIND_LOCAL": "true",
+                "NIMONA_PATH": ".configs/test",
+            },
             "args": [],
             "showLog": true
         }

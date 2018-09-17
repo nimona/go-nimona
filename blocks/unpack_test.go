@@ -78,3 +78,25 @@ func TestUnpackDecodeNestedTyped(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ev, v)
 }
+
+func TestUnpackUnknown(t *testing.T) {
+	p := &Block{
+		Type: "x",
+		Payload: map[string]interface{}{
+			"a": "a-value",
+			"b": 1,
+		},
+	}
+
+	ev := &Unknown{
+		Type: "x",
+		Payload: map[string]interface{}{
+			"a": "a-value",
+			"b": 1,
+		},
+	}
+
+	v, err := Unpack(p)
+	assert.NoError(t, err)
+	assert.Equal(t, ev, v)
+}

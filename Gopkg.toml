@@ -42,8 +42,8 @@
   name = "github.com/jinzhu/copier"
 
 [[constraint]]
-  name = "github.com/sirupsen/logrus"
-  version = "1.0.5"
+  branch = "master"
+  name = "github.com/ugorji/go"
 
 [[constraint]]
   name = "github.com/stretchr/testify"

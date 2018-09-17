@@ -140,7 +140,7 @@ func TestPackEncodeNestedTyped(t *testing.T) {
 	assert.Equal(t, ep, p)
 }
 
-func TestPackEncodeNestedSliceTyped(t *testing.T) {
+func TestPackNestedSliceTyped(t *testing.T) {
 	s := &TestPackStructA{
 		A: "a-value",
 		BS: []*TestPackStructB{
@@ -179,6 +179,28 @@ func TestPackEncodeNestedSliceTyped(t *testing.T) {
 			},
 			"c": 12,
 			"d": []byte{1, 2, 3},
+		},
+	}
+
+	p, err := Pack(s)
+	assert.NoError(t, err)
+	assert.Equal(t, ep, p)
+}
+
+func TestPackUnknown(t *testing.T) {
+	s := &Unknown{
+		Type: "x",
+		Payload: map[string]interface{}{
+			"a": "a-value",
+			"b": 1,
+		},
+	}
+
+	ep := &Block{
+		Type: "x",
+		Payload: map[string]interface{}{
+			"a": "a-value",
+			"b": 1,
 		},
 	}
 

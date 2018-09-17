@@ -52,9 +52,6 @@ func Unpack(p *Block, opts ...UnpackOption) (Typed, error) {
 		return nil, errors.New("missing type")
 	}
 	t := GetType(ts)
-	if t == nil {
-		panic("missing type")
-	}
 	v := TypeToInterface(t).(Typed)
 	if err := UnpackInto(p, v); err != nil {
 		return nil, err
@@ -101,6 +98,10 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 		if err := crypto.Verify(s.(*crypto.Signature), d); err != nil {
 			return err
 		}
+	}
+	if reflect.TypeOf(v) == unknownType {
+		v.(*Unknown).Type = p.Type
+		v.(*Unknown).Payload = p.Payload
 	}
 	md := &mapstructure.DecoderConfig{
 		TagName:          defaultTag,

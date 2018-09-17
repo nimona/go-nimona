@@ -12,6 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/pkg/profile"
 	ishell "gopkg.in/abiosoft/ishell.v2"
 
@@ -144,7 +147,10 @@ func init() {
 }
 
 func main() {
-	defer profile.Start(profile.MemProfile).Stop()
+	if os.Getenv("ENV") == "dev" {
+		defer profile.Start(profile.MemProfile).Stop()
+		go http.ListenAndServe(":1234", nil)
+	}
 
 	configPath := os.Getenv("NIMONA_PATH")
 
@@ -204,7 +210,7 @@ func main() {
 		httpPort = nhp
 	}
 	httpAddress := ":" + httpPort
-	api := api.New(addressBook, dht, dpr)
+	api := api.New(addressBook, dht, n, dpr)
 	go api.Serve(httpAddress)
 
 	shell := ishell.New()

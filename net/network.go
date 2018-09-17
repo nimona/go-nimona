@@ -148,7 +148,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
 	n.addressBook.AddLocalPeerAddress(addresses...)
 
-	cconn := make(chan *Connection)
+	cconn := make(chan *Connection, 10)
 	go func() {
 		signer := n.addressBook.GetLocalPeerKey()
 		for {
@@ -198,6 +198,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 }
 
 func Write(v blocks.Typed, conn *Connection, opts ...blocks.PackOption) error {
+	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
 	p, err := blocks.Pack(v, opts...)
 	if err != nil {
 		return err
@@ -209,11 +210,15 @@ func Write(v blocks.Typed, conn *Connection, opts ...blocks.PackOption) error {
 	if _, err := conn.Conn.Write(b); err != nil {
 		return err
 	}
-	if os.Getenv("DEBUG_BLOCKS") != "" {
+	SendBlockEvent(
+		"incoming",
+		v.GetType(),
+		len(b),
+	)
+	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(p, "", "  ")
-		log.DefaultLogger.Debug(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
+		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
-
 	return nil
 }
 
@@ -227,10 +232,15 @@ func Read(conn *Connection) (blocks.Typed, error) {
 	if err != nil {
 		return nil, err
 	}
-	if os.Getenv("DEBUG_BLOCKS") != "" {
+	SendBlockEvent(
+		"incoming",
+		v.GetType(),
+		pDecoder.NumBytesRead(),
+	)
+	if os.Getenv("DEBUG_BLOCKS") != "true" {
 		m, _ := blocks.Pack(v)
 		b, _ := json.MarshalIndent(m, "", "  ")
-		log.DefaultLogger.Debug(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
 	return v, nil
 }

@@ -57,7 +57,7 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 		b.Signature = m["signature"].(map[string]interface{})
 	}
 	if o.Sign && o.Key != nil {
-		s, err := signPacked(b, o.Key)
+		s, err := SignPacked(b, o.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -118,6 +118,24 @@ func MapStruct(in interface{}) (map[string]interface{}, error) {
 			fv := v.Field(i)
 			if !fv.IsValid() || tagOpts.Has("omitempty") && isEmptyValue(fv) {
 				continue
+			}
+			if tagOpts.Has("payload") {
+				if fv.Kind() == reflect.Struct {
+					m, err := MapStruct(fv.Interface())
+					if err != nil {
+						panic(err)
+					}
+					for k, v := range m {
+						out[k] = v
+					}
+					continue
+				} else if fv.Kind() == reflect.Map {
+					m := fv.Interface().(map[string]interface{})
+					for k, v := range m {
+						out[k] = v
+					}
+					continue
+				}
 			}
 			mv, err := Map(fv.Interface())
 			if err != nil {
