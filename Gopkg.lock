@@ -96,6 +96,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
   digest = "1:18f8bac7ae238f1d06b347d40fea2a37d029e11ddeac57163182a08c780955f2"
   name = "github.com/influxdata/influxdb"
   packages = [
@@ -311,6 +319,7 @@
     "github.com/gin-contrib/cors",
     "github.com/gin-gonic/gin",
     "github.com/gobwas/glob",
+    "github.com/gorilla/websocket",
     "github.com/influxdata/influxdb/client/v2",
     "github.com/jinzhu/copier",
     "github.com/mitchellh/mapstructure",

@@ -35,7 +35,7 @@ var (
 // Exchange interface for mocking exchange
 type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
-	Handle(contentType string, h func(o blocks.Typed) error) error
+	Handle(contentType string, h func(o blocks.Typed) error) (func(), error)
 	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error
 	RegisterDiscoverer(discovery Discoverer)
 }
@@ -49,7 +49,7 @@ type exchange struct {
 	outgoingPayloads chan *outBlock
 	incomingPayloads chan *incBlock
 
-	handlers   []handler
+	handlers   sync.Map
 	logger     *zap.Logger
 	streamLock utils.Kmutex
 
@@ -93,7 +93,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		outgoingPayloads: make(chan *outBlock, 10),
 		incomingPayloads: make(chan *incBlock, 10),
 
-		handlers:   []handler{},
+		handlers:   sync.Map{},
 		logger:     log.Logger(ctx).Named("exchange"),
 		streamLock: utils.NewKmutex(),
 
@@ -190,16 +190,20 @@ func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	}()
 }
 
-func (w *exchange) Handle(typePatern string, h func(o blocks.Typed) error) error {
+func (w *exchange) Handle(typePatern string, h func(o blocks.Typed) error) (func(), error) {
 	g, err := glob.Compile(typePatern, '.', '/', '#')
 	if err != nil {
-		return err
+		return nil, err
 	}
-	w.handlers = append(w.handlers, handler{
+	hID := RandStringBytesMaskImprSrc(8)
+	w.handlers.Store(hID, &handler{
 		contentType: g,
 		handler:     h,
 	})
-	return nil
+	r := func() {
+		w.handlers.Delete(hID)
+	}
+	return r, nil
 }
 
 func (w *exchange) HandleConnection(conn *Connection) error {
@@ -249,9 +253,10 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 	}
 
 	contentType := typed.GetType()
-	for _, h := range w.handlers {
+	w.handlers.Range(func(k, v interface{}) bool {
+		h := v.(*handler)
 		if h.contentType.Match(contentType) {
-			go func(h handler, typed blocks.Typed) {
+			go func(h *handler, typed blocks.Typed) {
 				if err := h.handler(typed); err != nil {
 					w.logger.Info(
 						"Could not handle event",
@@ -261,7 +266,8 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 				}
 			}(h, typed)
 		}
-	}
+		return true
+	})
 
 	return nil
 }
