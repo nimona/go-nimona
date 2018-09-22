@@ -252,6 +252,12 @@ func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
 		}
 	}
 
+	if blocks.ShouldPersist(typed.GetType()) {
+		b, _ := blocks.PackEncode(typed)
+		blockID := blocks.ID(typed)
+		w.store.Store(blockID, b)
+	}
+
 	contentType := typed.GetType()
 	w.handlers.Range(func(k, v interface{}) bool {
 		h := v.(*handler)
