@@ -190,18 +190,13 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			for {
 				select {
 				case v := <-incoming:
-					p, err := blocks.MapTyped(v)
+					m, err := mapTyped(v)
 					if err != nil {
 						// TODO handle error
-						logger.Error("could not parse incoming block", zap.Error(err))
 						continue
 					}
-					if v.GetSignature() != nil {
-						p["sender"] = v.GetSignature().Key.Thumbprint()
-						delete(p, "signature")
-					}
 					// TODO handle error
-					conn.WriteJSON(p)
+					conn.WriteJSON(m)
 
 				case r := <-outgoing:
 					k, err := blocks.UnpackDecodeBase58(r.Recipient)

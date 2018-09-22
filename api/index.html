@@ -240,8 +240,8 @@
         c.onmessage = function(msg){
           var block = JSON.parse(msg.data);
           messagesList.innerHTML = '<li class="received">' +
-          '<div><span>Message:</span>' + block.payload.body + '</div>' +
-          '<div><span>From:</span><a href="#" class="from" data-key="' + block.sender + '">' + block.sender + '</a></div>' +
+						'<div><span>Message:</span>' + block.payload.body + '</div>' +
+						'<div><span>From:</span><a href="#" class="from" data-key="' + block.owner + '">' + block.owner + '</a></div>' +
           '</li>' + messagesList.innerHTML
         }
       }
