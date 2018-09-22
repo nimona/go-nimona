@@ -193,7 +193,7 @@
     </div>
 
     <script>
-      url = 'ws://localhost:26880/api/v1/streams/demo.hello';
+      url = 'ws://'+location.hostname+(location.port ? ':'+location.port: '')+'/api/v1/streams/demo.hello';
 
       window.onload = function() {
         var form = document.getElementById('message-form');

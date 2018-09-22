@@ -41,7 +41,13 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 
 	local := router.Group("/api/v1/local")
 	local.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, addressBook.GetLocalPeerInfo())
+		v := addressBook.GetLocalPeerInfo()
+		m, err := mapTyped(v)
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, m)
 	})
 
 	peers := router.Group("/api/v1/peers")
@@ -51,7 +57,16 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		c.JSON(http.StatusOK, peers)
+		ms := []map[string]interface{}{}
+		for _, v := range peers {
+			m, err := mapTyped(v)
+			if err != nil {
+				c.AbortWithError(500, err)
+				return
+			}
+			ms = append(ms, m)
+		}
+		c.JSON(http.StatusOK, ms)
 	})
 
 	providers := router.Group("/api/v1/providers")
@@ -73,18 +88,20 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 		}
 		ms := []map[string]interface{}{}
 		for _, blockID := range blockIDs {
-			bytes, err := bls.Get(blockID)
+			block, err := bls.Get(blockID)
 			if err != nil {
 				c.AbortWithError(500, err)
 				return
 			}
-			typed, err := blocks.UnpackDecode(bytes)
+			v, err := blocks.UnpackDecode(block)
 			if err != nil {
-				continue
+				c.AbortWithError(500, err)
+				return
 			}
-			m, err := blocks.MapTyped(typed)
+			m, err := mapTyped(v)
 			if err != nil {
-				continue
+				c.AbortWithError(500, err)
+				return
 			}
 			ms = append(ms, m)
 		}
@@ -101,7 +118,17 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		c.JSON(http.StatusOK, block)
+		v, err := blocks.UnpackDecode(block)
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		m, err := mapTyped(v)
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.JSON(http.StatusOK, m)
 	})
 	blocksEnd.POST("/", func(c *gin.Context) {
 		body := &blockReq{}
@@ -155,6 +182,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 
 		ctx := context.Background()
 		logger := log.Logger(ctx).Named("api")
+		signer := addressBook.GetLocalPeerKey()
 		incoming := make(chan blocks.Typed, 100)
 		outgoing := make(chan *blockReq, 100)
 
@@ -187,7 +215,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 						Annotations: r.Annotations,
 						Payload:     r.Payload,
 					}
-					if err := exchange.Send(ctx, v, k.(*crypto.Key)); err != nil {
+					if err := exchange.Send(ctx, v, k.(*crypto.Key), blocks.SignWith(signer)); err != nil {
 						logger.Error("could not send outgoing block", zap.Error(err))
 						// TODO send error message to ws
 						continue
@@ -241,4 +269,15 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 // Serve HTTP API
 func (api *API) Serve(address string) error {
 	return api.router.Run(address)
+}
+
+func mapTyped(v blocks.Typed) (map[string]interface{}, error) {
+	m, err := blocks.MapTyped(v)
+	if err != nil {
+		return nil, err
+	}
+	m["owner"] = v.GetSignature().Key.Thumbprint()
+	m["id"] = blocks.ID(v)
+	delete(m, "signature")
+	return m, nil
 }

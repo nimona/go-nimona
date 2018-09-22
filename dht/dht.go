@@ -331,7 +331,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := nd.exchange.Send(ctx, provider, closestPeer.Signature.Key, blocks.SignWith(signer)); err != nil {
-			logger.Error("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
+			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 		}
 	}
 
