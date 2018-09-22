@@ -271,7 +271,9 @@ func mapTyped(v blocks.Typed) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	m["owner"] = v.GetSignature().Key.Thumbprint()
+	if s := v.GetSignature(); s != nil {
+		m["owner"] = v.GetSignature().Key.Thumbprint()
+	}
 	m["id"] = blocks.ID(v)
 	delete(m, "signature")
 	return m, nil
