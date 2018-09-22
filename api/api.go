@@ -233,7 +233,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
-				logger.Error("could not read outgoing block", zap.Error(err))
+				logger.Error("could not read from ws", zap.Error(err))
 				continue
 			}
 			fmt.Println("got", string(msg))
