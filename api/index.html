@@ -1,0 +1,251 @@
+<html>
+  <head>
+    <style>
+      *, *:before, *:after {
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
+      html {
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 100%;
+        background: #333;
+      }
+
+      #page-wrapper {
+        width: 650px;
+        background: #FFF;
+        padding: 1em;
+        margin: 1em auto;
+        border-top: 5px solid #69c773;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      #status {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+
+      .open {
+        color: green;
+      }
+
+      .closed {
+        color: red;
+      }
+
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 0.95rem;
+      }
+
+      ul li {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #EEE;
+      }
+
+      ul li:first-child {
+        border-top: 1px solid #EEE;
+      }
+
+      ul li div:nth-child(2) {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      ul li span {
+        display: inline-block;
+        width: 90px;
+        font-weight: bold;
+        color: #999;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .sent {
+        background-color: #F7F7F7;
+      }
+
+      #message-form {
+        margin-top: 1.5rem;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 1px solid #D9D9D9;
+        border-radius: 3px;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1);
+        min-height: 100px;
+        margin-bottom: 1rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 1px solid #D9D9D9;
+        border-radius: 3px;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+
+      button {
+        display: inline-block;
+        border-radius: 3px;
+        border: none;
+        font-size: 0.9rem;
+        padding: 0.6rem 1em;
+        color: white;
+        margin: 0 0.25rem;
+        text-align: center;
+        background: #BABABA;
+        border-bottom: 1px solid #999;
+      }
+
+      button[type="submit"] {
+        background: #86b32d;
+        border-bottom: 1px solid #5d7d1f;
+      }
+
+      button:hover {
+        opacity: 0.75;
+        cursor: pointer;
+      }
+
+      a {
+        font-family: monospace;
+        text-decoration: none;
+        color: 86b32d;
+      }
+
+      pre {
+        background-color: ghostwhite;
+        border: 1px solid silver;
+        padding: 10px 20px;
+        margin: 20px;
+      }
+
+      .json-key {
+        color: brown;
+      }
+
+      .json-value {
+        color: navy;
+      }
+
+      .json-string {
+        color: olive;
+      }
+    </style>
+    <script>
+      // pretty printing from http://jsfiddle.net/unLSJ/
+      if (!library)
+        var library = {};
+
+      library.json = {
+        replacer: function(match, pIndent, pKey, pVal, pEnd) {
+            var key = '<span class=json-key>';
+            var val = '<span class=json-value>';
+            var str = '<span class=json-string>';
+            var r = pIndent || '';
+            if (pKey)
+              r = r + key + pKey.replace(/[": ]/g, '') + '</span>: ';
+            if (pVal)
+              r = r + (pVal[0] == '"' ? str : val) + pVal + '</span>';
+            return r + (pEnd || '');
+            },
+        prettyPrint: function(obj) {
+            var jsonLine = /^( *)("[\w]+": )?("[^"]*"|[\w.+-]*)?([,[{])?$/mg;
+            return JSON.stringify(obj, null, 3)
+              .replace(/&/g, '&amp;').replace(/\\"/g, '&quot;')
+              .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+              .replace(jsonLine, library.json.replacer);
+            }
+        };
+    </script>
+  </head>
+
+  <body>
+    <div id="page-wrapper">
+      <h3>Nimona websocker example</h3>
+      <div id="status">Connecting...</div>
+
+      <form id="message-form" action="#" method="post">
+        <textarea id="message" placeholder="Write your message here..." required></textarea>
+        <input id="recipient" placeholder="Recipient's key" required />
+        <button type="submit">Send Message</button>
+      </form>
+
+      <ul id="messages"></ul>
+    </div>
+
+    <script>
+      url = 'ws://localhost:26880/api/v1/streams/demo.hello';
+
+      window.onload = function() {
+        var form = document.getElementById('message-form');
+        var messageField = document.getElementById('message');
+        var recipientField = document.getElementById('recipient');
+        var messagesList = document.getElementById('messages');
+        var socketStatus = document.getElementById('status');
+
+        document.querySelector('body').addEventListener('click', function(e) {
+          if (e.target.className.toLowerCase() === 'from') {
+            recipientField.value = e.target.dataset.key;
+          }
+        });
+
+        c = new WebSocket(url);
+        c.onopen = function(event) {
+          socketStatus.innerHTML = 'Connected to: ' + event.currentTarget.url;
+          socketStatus.className = 'open';
+        };
+
+        form.onsubmit = function(e) {
+          e.preventDefault();
+          var body = messageField.value;
+          var recipient = recipientField.value;
+          var block = {
+            type: "demo.hello",
+            payload: {
+              body: body,
+            },
+            recipient: recipient,
+          }
+          messagesList.innerHTML = '<li class="received">' +
+          '<div><span>Message:</span>' + block.payload.body + '</div>' +
+          '<div><span>To:</span><a href="#" class="from" data-key="' + block.recipient + '">' + block.recipient + '</a></div>' +
+          '</li>' + messagesList.innerHTML
+          c.send(JSON.stringify(block));
+          return false;
+        };
+
+        c.onerror = function(error) {
+          console.error('WebSocket Error: ' + error);
+        };
+
+        c.onmessage = function(msg){
+          var block = JSON.parse(msg.data);
+          messagesList.innerHTML = '<li class="received">' +
+          '<div><span>Message:</span>' + block.payload.body + '</div>' +
+          '<div><span>From:</span><a href="#" class="from" data-key="' + block.sender + '">' + block.sender + '</a></div>' +
+          '</li>' + messagesList.innerHTML
+        }
+      }
+
+    </script>
+
+  </body>
+</html>
