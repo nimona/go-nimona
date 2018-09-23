@@ -378,6 +378,21 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 }
 
 func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error {
+	annotations := typed.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]interface{}{}
+	}
+	annotations["policies"] = []*blocks.Policy{
+		&blocks.Policy{
+			Subjects: []string{
+				recipient.Thumbprint(),
+			},
+			Actions: []string{"read"},
+			Effect:  "allow",
+		},
+	}
+	typed.SetAnnotations(annotations)
+
 	bytes, err := blocks.PackEncode(typed, opts...)
 	if err != nil {
 		return err

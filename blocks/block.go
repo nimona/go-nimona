@@ -11,10 +11,10 @@ const defaultTag = "json"
 
 // Policy for Block
 type Policy struct {
-	Description string        `json:"description,omitempty"`
-	Subjects    []*crypto.Key `json:"subjects"`
-	Actions     []string      `json:"actions"`
-	Effect      string        `json:"effect"`
+	Description string   `json:"description,omitempty"`
+	Subjects    []string `json:"subjects"`
+	Actions     []string `json:"actions"`
+	Effect      string   `json:"effect"`
 }
 
 // type Headers struct{}

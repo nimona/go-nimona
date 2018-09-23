@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 
 	"nimona.io/go/blocks"
 	"nimona.io/go/crypto"
@@ -255,7 +255,6 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 				logger.Error("could not read from ws", zap.Error(err))
 				continue
 			}
-			fmt.Println("got", string(msg))
 			r := &blockReq{}
 			if err := json.Unmarshal(msg, r); err != nil {
 				logger.Error("could not unmarshal outgoing block", zap.Error(err))
@@ -299,7 +298,17 @@ func mapTyped(v blocks.Typed, localKey string) (map[string]interface{}, error) {
 			m["direction"] = "incoming"
 		}
 	}
+	ann := v.GetAnnotations()
+	recipients := []string{}
+	if ann != nil {
+		annotations := &blocks.Annotations{}
+		mapstructure.Decode(ann, &annotations)
+		for _, policy := range annotations.Policies {
+			recipients = append(recipients, policy.Subjects...)
+		}
+	}
 	m["id"] = blocks.ID(v)
+	m["recipients"] = recipients
 	delete(m, "signature")
 	return m, nil
 }

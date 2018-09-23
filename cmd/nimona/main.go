@@ -117,9 +117,10 @@ func base64ToBytes(s string) []byte {
 
 // Message payload
 type Message struct {
-	Body         string            `json:"body"`
-	SentDatetime string            `json:"dt_sent"`
-	Signature    *crypto.Signature `json:"-"`
+	Body         string                 `json:"body"`
+	SentDatetime string                 `json:"dt_sent"`
+	Annotations  map[string]interface{} `json:"-"`
+	Signature    *crypto.Signature      `json:"-"`
 }
 
 func (h *Message) GetType() string {
@@ -135,12 +136,11 @@ func (h *Message) SetSignature(s *crypto.Signature) {
 }
 
 func (h *Message) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
+	return h.Annotations
 }
 
 func (h *Message) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+	h.Annotations = a
 }
 
 func init() {

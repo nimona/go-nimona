@@ -139,7 +139,7 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 
 	signer := nd.addressBook.GetLocalPeerKey()
 	if err := nd.exchange.Send(ctx, resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
-		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
+		logger.Debug("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
 }

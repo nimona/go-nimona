@@ -102,6 +102,7 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 	if reflect.TypeOf(v) == unknownType {
 		v.(*Unknown).Type = p.Type
 		v.(*Unknown).Payload = p.Payload
+		v.(*Unknown).Annotations = p.Annotations
 	}
 	md := &mapstructure.DecoderConfig{
 		TagName:          defaultTag,
@@ -144,6 +145,9 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 	}
 	if err := d.Decode(p.Payload); err != nil {
 		return err
+	}
+	if p.Annotations != nil {
+		v.SetAnnotations(p.Annotations)
 	}
 	if p.Signature != nil {
 		// TODO deduplicate code
