@@ -30,7 +30,7 @@ func Sign(v Typed, key *crypto.Key) (*crypto.Signature, error) {
 	return s.(*crypto.Signature), nil
 }
 
-func signPacked(p *Block, key *crypto.Key) (*crypto.Signature, error) {
+func SignPacked(p *Block, key *crypto.Key) (*crypto.Signature, error) {
 	digest, err := getDigest(p)
 	if err != nil {
 		return nil, err

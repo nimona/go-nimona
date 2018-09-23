@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 
 	"nimona.io/go/blocks"
@@ -60,6 +59,7 @@ func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
 
 func (nd *DHT) refresh() {
 	ctx := context.Background()
+	logger := log.Logger(ctx)
 	// TODO this will be replaced when we introduce bucketing
 	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
@@ -72,7 +72,7 @@ func (nd *DHT) refresh() {
 
 		closestPeers, err := nd.FindPeersClosestTo(peerInfo.Thumbprint(), closestPeersToReturn)
 		if err != nil {
-			logrus.WithError(err).Warnf("refresh could not get peers ids")
+			logger.Warn("refresh could not get peers ids", zap.Error(err))
 			time.Sleep(time.Second * 10)
 			continue
 		}
@@ -80,7 +80,7 @@ func (nd *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := nd.exchange.Send(ctx, peerInfo, closestPeer.Signature.Key); err != nil {
-				panic(err)
+				logger.Error("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 			}
 		}
 
@@ -102,10 +102,18 @@ func (nd *DHT) handleBlock(payload blocks.Typed) error {
 		nd.handleProviderRequest(v)
 	case *ProviderResponse:
 		nd.handleProviderResponse(v)
+	case *peers.PeerInfo:
+		nd.handlePeerInfo(v)
 	default:
 		return nil
 	}
 	return nil
+}
+
+func (nd *DHT) handlePeerInfo(payload *peers.PeerInfo) {
+	if err := nd.addressBook.PutPeerInfo(payload); err != nil {
+		log.Logger(context.Background()).Error("could not handle peer info", zap.Error(err))
+	}
 }
 
 func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
@@ -137,6 +145,20 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 }
 
 func (nd *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
+	ctx := context.Background()
+	logger := log.Logger(ctx)
+	for _, pi := range payload.ClosestPeers {
+		if err := nd.addressBook.PutPeerInfo(pi); err != nil {
+			logger.Error("could not handle closest peer from peerinfo response", zap.Error(err))
+		}
+	}
+
+	if payload.PeerInfo != nil {
+		if err := nd.addressBook.PutPeerInfo(payload.PeerInfo); err != nil {
+			logger.Error("could not handle peer info from peerinfo response", zap.Error(err))
+		}
+	}
+
 	rID := payload.RequestID
 	if rID == "" {
 		return
@@ -265,8 +287,8 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              id,
 		queryType:        PeerInfoQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		incomingPayloads: make(chan interface{}, 10),
+		outgoingPayloads: make(chan interface{}, 10),
 	}
 
 	nd.queries.Store(q.id, q)
@@ -279,14 +301,10 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 	for {
 		select {
 		case payload := <-q.outgoingPayloads:
-			// TODO handle error
 			switch v := payload.(type) {
 			case *peers.PeerInfo:
-				nd.addressBook.PutPeerInfo(v)
-				return nd.addressBook.GetPeerInfo(v.Thumbprint())
+				return v, nil
 			}
-		// case <-time.After(maxQueryTime):
-		// 	return nil, ErrNotFound
 		case <-ctx.Done():
 			return nil, ErrNotFound
 		}
@@ -296,6 +314,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 // PutProviders adds a key of something we provide
 // TODO Find a better name for this
 func (nd *DHT) PutProviders(ctx context.Context, key string) error {
+	logger := log.Logger(ctx)
 	provider := &Provider{
 		BlockIDs: []string{key},
 	}
@@ -312,7 +331,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := nd.exchange.Send(ctx, provider, closestPeer.Signature.Key, blocks.SignWith(signer)); err != nil {
-			panic(err)
+			logger.Error("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 		}
 	}
 
@@ -326,8 +345,8 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Key, 
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
-		incomingPayloads: make(chan interface{}),
-		outgoingPayloads: make(chan interface{}),
+		incomingPayloads: make(chan interface{}, 10),
+		outgoingPayloads: make(chan interface{}, 10),
 	}
 
 	nd.queries.Store(q.id, q)

@@ -52,9 +52,6 @@ func Unpack(p *Block, opts ...UnpackOption) (Typed, error) {
 		return nil, errors.New("missing type")
 	}
 	t := GetType(ts)
-	if t == nil {
-		panic("missing type")
-	}
 	v := TypeToInterface(t).(Typed)
 	if err := UnpackInto(p, v); err != nil {
 		return nil, err
@@ -65,7 +62,7 @@ func Unpack(p *Block, opts ...UnpackOption) (Typed, error) {
 func blockMapToBlock(m map[string]interface{}) (*Block, error) {
 	b := &Block{}
 	md := &mapstructure.DecoderConfig{
-		TagName:          tagName,
+		TagName:          defaultTag,
 		ZeroFields:       false,
 		WeaklyTypedInput: true,
 		ErrorUnused:      false,
@@ -102,8 +99,12 @@ func UnpackInto(p *Block, v Typed, opts ...UnpackOption) error {
 			return err
 		}
 	}
+	if reflect.TypeOf(v) == unknownType {
+		v.(*Unknown).Type = p.Type
+		v.(*Unknown).Payload = p.Payload
+	}
 	md := &mapstructure.DecoderConfig{
-		TagName:          tagName,
+		TagName:          defaultTag,
 		ZeroFields:       false,
 		WeaklyTypedInput: true,
 		ErrorUnused:      false,

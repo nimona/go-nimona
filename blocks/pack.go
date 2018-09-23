@@ -41,62 +41,65 @@ func Encode(p *Block) ([]byte, error) {
 
 // Pack gets something Typed and converts it into a Block
 func Pack(v Typed, opts ...PackOption) (*Block, error) {
-	// HACK we currently always base58 encode nested blocks
-	// opts = append(opts, EncodeNestedBase58())
-	// opts = append(opts, EncodeNested())
-
 	o := ParsePackOptions(opts...)
 	if o.Sign && o.Key != nil {
 		opts = append(opts, SignWith(nil))
 	}
-	t := v.GetType()
-	if t == "" {
-		return nil, errors.New("empty type")
-	}
-	// p, err := packMap(v, tagName, opts...)
-	p, err := packMap(v, tagName)
+	m, err := MapTyped(v)
 	if err != nil {
 		return nil, err
 	}
 	b := &Block{
-		Type:    t,
-		Payload: p,
+		Type:    m["type"].(string),
+		Payload: m["payload"].(map[string]interface{}),
 	}
-	s := v.GetSignature()
-	if s == nil && o.Sign && o.Key != nil {
-		var err error
-		s, err = signPacked(b, o.Key)
+	if _, ok := m["signature"]; ok {
+		b.Signature = m["signature"].(map[string]interface{})
+	}
+	if o.Sign && o.Key != nil {
+		s, err := SignPacked(b, o.Key)
 		if err != nil {
 			return nil, err
 		}
-	}
-	if s != nil {
-		ps, err := packMap(s, tagName)
+		ps, err := MapTyped(s)
 		if err != nil {
 			return nil, err
 		}
-		b.Signature = map[string]interface{}{
-			"payload": ps,
-			"type":    "signature",
-		}
+		b.Signature = ps
 	}
 	return b, nil
 }
 
-// TODO support nested structs etc
-// TODO support for ,omitempty
-func packMap(in interface{}, tag string, opts ...PackOption) (map[string]interface{}, error) {
-	// o := ParsePackOptions(opts...)
+// MapTyped gets a Typed and converts it into a Map
+func MapTyped(v Typed) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	t := v.GetType()
+	if t == "" {
+		return nil, errors.New("empty type")
+	}
+	m["type"] = t
+	p, err := MapStruct(v)
+	if err != nil {
+		return nil, err
+	}
+	m["payload"] = p
+	s := v.GetSignature()
+	if s != nil {
+		ps, err := MapTyped(s)
+		if err != nil {
+			return nil, err
+		}
+		m["signature"] = ps
+	}
+	return m, nil
+}
 
+func MapStruct(in interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 
 	v := reflect.ValueOf(in)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
-	}
-
-	if !v.IsValid() {
-		return nil, nil
 	}
 
 	// we only accept structs
@@ -106,9 +109,8 @@ func packMap(in interface{}, tag string, opts ...PackOption) (map[string]interfa
 
 	typ := v.Type()
 	for i := 0; i < v.NumField(); i++ {
-		// gets us a StructField
 		fi := typ.Field(i)
-		if tagv := fi.Tag.Get(tag); tagv != "" {
+		if tagv := fi.Tag.Get(defaultTag); tagv != "" {
 			tagName, tagOpts := parseTag(tagv)
 			if tagName == "-" {
 				continue
@@ -117,33 +119,87 @@ func packMap(in interface{}, tag string, opts ...PackOption) (map[string]interfa
 			if !fv.IsValid() || tagOpts.Has("omitempty") && isEmptyValue(fv) {
 				continue
 			}
-			// if implements Typed, pack it
-			if reflect.TypeOf(fv.Interface()).Implements(typedType) {
-				if v.Field(i).IsNil() {
+			if tagOpts.Has("payload") {
+				if fv.Kind() == reflect.Struct {
+					m, err := MapStruct(fv.Interface())
+					if err != nil {
+						panic(err)
+					}
+					for k, v := range m {
+						out[k] = v
+					}
+					continue
+				} else if fv.Kind() == reflect.Map {
+					m := fv.Interface().(map[string]interface{})
+					for k, v := range m {
+						out[k] = v
+					}
 					continue
 				}
-				// var nv interface{}
-				// var err error
-				iv := v.Field(i).Interface()
-				// if o.EncodeNestedBase58 {
-				// 	nv, err = PackEncodeBase58(iv.(Typed), opts...)
-				// } else if o.EncodeNested {
-				// 	nv, err = PackEncode(iv.(Typed), opts...)
-				// } else {
-				nv, err := Pack(iv.(Typed))
-				// nv, err = Pack(iv.(Typed), opts...)
-				// }
-				if err != nil {
-					return nil, err
-				}
-				out[tagName] = nv.Map()
+			}
+			mv, err := Map(fv.Interface())
+			if err != nil {
+				panic(err)
+			}
+			if mv == nil {
 				continue
 			}
-			// else set key of map to value in struct field
-			out[tagName] = v.Field(i).Interface()
+			out[tagName] = mv
 		}
 	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+
 	return out, nil
+}
+
+func Map(in interface{}) (interface{}, error) {
+	v := reflect.ValueOf(in)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if !v.IsValid() {
+		return nil, nil
+	}
+
+	if isEmptyValue(v) {
+		return nil, nil
+	}
+
+	// if isEmptyValue(v) {
+	// 	return nil, nil
+	// }
+
+	if reflect.TypeOf(in).Implements(typedType) {
+		return MapTyped(in.(Typed))
+	}
+
+	if v.Kind() == reflect.Struct {
+		return MapStruct(v.Interface())
+	}
+
+	if v.Kind() == reflect.Slice {
+		sType := reflect.TypeOf(in).Elem().Kind()
+		if sType == reflect.Ptr {
+			sType = reflect.TypeOf(in).Elem().Elem().Kind()
+		}
+		if sType != reflect.Struct {
+			return in, nil
+		}
+		sv := []interface{}{}
+		for i := 0; i < v.Len(); i++ {
+			pv, err := Map(v.Index(i).Interface())
+			if err != nil {
+				panic(err)
+			}
+			sv = append(sv, pv)
+		}
+		return sv, nil
+	}
+
+	return v.Interface(), nil
 }
 
 func isEmptyValue(v reflect.Value) bool {

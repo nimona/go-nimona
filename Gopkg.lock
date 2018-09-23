@@ -104,8 +104,8 @@
     "pkg/escape",
   ]
   pruneopts = "UT"
-  revision = "7adf7f9d14ef38517d4bb19301b7f8d9a26d19dd"
-  version = "v1.6.2"
+  revision = "389de31c961831de0a9f4172173337d4a6193909"
+  version = "v1.6.3"
 
 [[projects]]
   branch = "master"
@@ -196,14 +196,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:d867dfa6751c8d7a435821ad3b736310c2ed68945d05b50fb9d23aee0540c8cc"
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
-
-[[projects]]
   digest = "1:ac83cf90d08b63ad5f7e020ef480d319ae890c208f8524622a2f3136e2686b02"
   name = "github.com/stretchr/objx"
   packages = ["."]
@@ -225,12 +217,12 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:03aa6e485e528acb119fb32901cf99582c380225fc7d5a02758e08b180cb56c3"
+  branch = "master"
+  digest = "1:ba321cf9a010d56190c186289ef67280f7a86d3175d66ac4502a104e1f458f2b"
   name = "github.com/ugorji/go"
   packages = ["codec"]
   pruneopts = "UT"
-  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
-  version = "v1.1.1"
+  revision = "e253f1f20942cb6dc505e504e8bbba4b7f434cb2"
 
 [[projects]]
   digest = "1:3c1a69cdae3501bf75e76d0d86dc6f2b0a7421bc205c0cb7b96b19eed464a34d"
@@ -265,23 +257,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2e1733bde491e422f3c9cf7bf8b4cb3d11c867ad3017fec8897923f6106a3a51"
+  digest = "1:e7a1ce56dc2fd57e2e1fe88c984583e8345d24a27068a47b134a2f2fd0e095a2"
   name = "golang.org/x/crypto"
-  packages = [
-    "sha3",
-    "ssh/terminal",
-  ]
+  packages = ["sha3"]
   pruneopts = "UT"
   revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
-  digest = "1:374fc90fcb026e9a367e3fad29e988e5dd944b68ca3f24a184d77abc5307dda4"
+  digest = "1:6eb2645d74b43d9c87b51947df39f7c668a4f422cd512053f7f6f75bfaad0197"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows",
-  ]
+  packages = ["unix"]
   pruneopts = "UT"
   revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
@@ -331,7 +317,6 @@
     "github.com/mr-tron/base58/base58",
     "github.com/pkg/errors",
     "github.com/pkg/profile",
-    "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
     "github.com/stretchr/testify/suite",

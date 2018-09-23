@@ -37,7 +37,7 @@ func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 		return nil, err
 	}
 
-	input := make(chan Collectable)
+	input := make(chan Collectable, 10)
 
 	ic := &InfluxCollector{
 		client: c,
@@ -80,7 +80,7 @@ func (ic *InfluxCollector) processor(ctx context.Context,
 		return
 	}
 
-	timeout := make(chan bool)
+	timeout := make(chan bool, 1)
 
 	// Goroutine that send timeout signal every xx ms
 	go func(timeout chan bool) {

@@ -12,7 +12,7 @@ func init() {
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
 	Recipient *crypto.Key       `json:"recipient"`
-	Block     []byte            `json:"block"`
+	Typed     blocks.Typed      `json:"data"`
 	Signature *crypto.Signature `json:"-"`
 }
 

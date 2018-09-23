@@ -59,9 +59,11 @@ type AddressBook struct {
 	localRelays    sync.Map
 	peers          *PeerInfoCollection
 	peerStatus     sync.Map
+	aliases        sync.Map
 }
 
 // GetLocalPeerKey returns the local peer's key
+// TODO make this an attribute, is there any reason for this to be a method?
 func (ab *AddressBook) GetLocalPeerKey() *crypto.Key {
 	return ab.localKey
 }
@@ -89,6 +91,7 @@ func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 }
 
 // GetLocalPeerInfo returns our private peer info
+// TODO make this an attribute, is there any reason for this to be a method?
 func (ab *AddressBook) GetLocalPeerInfo() *PeerInfo {
 	addresses := ab.GetLocalPeerAddresses()
 	addresses = append(addresses, ab.GetLocalPeerRelays()...)
@@ -210,4 +213,16 @@ func (ab *AddressBook) GetLocalPeerRelays() []string {
 	})
 
 	return relays
+}
+
+func (ab *AddressBook) SetAlias(k *crypto.Key, v string) {
+	ab.aliases.Store(k, v)
+}
+
+func (ab *AddressBook) GetAlias(k *crypto.Key) string {
+	v, ok := ab.aliases.Load(k)
+	if !ok {
+		return k.Thumbprint()
+	}
+	return v.(string)
 }

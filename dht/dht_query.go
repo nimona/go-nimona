@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	logrus "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 
 	"nimona.io/go/blocks"
@@ -31,17 +30,18 @@ type query struct {
 	contactedPeers   sync.Map
 	incomingPayloads chan interface{}
 	outgoingPayloads chan interface{}
+	logger           *zap.Logger
 }
 
 func (q *query) Run(ctx context.Context) {
-	logger := log.Logger(ctx)
+	q.logger = log.Logger(ctx)
 	go func() {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
 			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err == nil {
 				if peerInfo == nil {
-					logger.Warn("got nil peerInfo", zap.String("requestID", q.key))
+					q.logger.Warn("got nil peerInfo", zap.String("requestID", q.key))
 					break
 				}
 				q.outgoingPayloads <- peerInfo
@@ -116,7 +116,7 @@ func (q *query) next() {
 	// find closest peers
 	closestPeers, err := q.dht.FindPeersClosestTo(q.key, numPeersNear)
 	if err != nil {
-		logrus.WithError(err).Error("Failed find peers near")
+		q.logger.Warn("Failed find peers near", zap.Error(err))
 		return
 	}
 
@@ -147,10 +147,11 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
+	logger := log.Logger(ctx)
 	signer := q.dht.addressBook.GetLocalPeerKey()
 	for _, peer := range peersToAsk {
 		if err := q.dht.exchange.Send(ctx, req.(blocks.Typed), peer, blocks.SignWith(signer)); err != nil {
-			panic(err)
+			logger.Error("query next could not send", zap.Error(err), zap.String("peerID", peer.Thumbprint()))
 		}
 	}
 }

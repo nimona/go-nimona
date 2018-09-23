@@ -6,6 +6,7 @@ package dht
 // 	"testing"
 
 // 	"nimona.io/go/net"
+// 	"nimona.io/go/peers"
 
 // 	"github.com/stretchr/testify/mock"
 // 	"github.com/stretchr/testify/suite"
@@ -13,7 +14,7 @@ package dht
 
 // type dhtTestSuite struct {
 // 	suite.Suite
-// 	addressBook *net.AddressBook
+// 	addressBook *peers.AddressBook
 // 	exchange    *net.MockExchange
 // 	peerID      string
 // 	blocks      chan interface{}
@@ -25,7 +26,7 @@ package dht
 // 	suite.blocks = make(chan interface{}, 10)
 // 	suite.peers = make(chan interface{}, 10)
 // 	td, _ := ioutil.TempDir("", "nimona-test-dht")
-// 	suite.addressBook, _ = net.NewAddressBook(td)
+// 	suite.addressBook, _ = peers.NewAddressBook(td)
 // 	peer1, _ := suite.addressBook.CreateNewPeer()
 // 	suite.addressBook.PutLocalPeerInfo(peer1)
 // 	bootstrapBlock := blocks.NewEphemeralBlock("peer.info", &peers.PeerInfo{

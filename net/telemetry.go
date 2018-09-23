@@ -40,7 +40,7 @@ func SendBlockEvent(direction string, contentType string, blockSize int) {
 	if strings.Contains(contentType, "telemetry") {
 		return
 	}
-	telemetry.SendEvent(context.Background(), &telemetry.BlockEvent{
+	go telemetry.SendEvent(context.Background(), &telemetry.BlockEvent{
 		Direction:   direction,
 		ContentType: contentType,
 		BlockSize:   blockSize,

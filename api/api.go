@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"nimona.io/go/dht"
+	nnet "nimona.io/go/net"
 	"nimona.io/go/peers"
 	"nimona.io/go/storage"
 )
@@ -14,7 +15,7 @@ type API struct {
 }
 
 // New HTTP API
-func New(addressBook *peers.AddressBook, dht *dht.DHT, bls storage.Storage) *API {
+func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, bls storage.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 	// local := router.Group("/api/v1/local")
