@@ -172,6 +172,9 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 		var wsupgrader = websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
 		}
 
 		conn, err := wsupgrader.Upgrade(c.Writer, c.Request, nil)
