@@ -193,7 +193,7 @@
     </div>
 
     <script>
-      url = 'ws://'+location.hostname+(location.port ? ':'+location.port: '')+'/api/v1/streams/demo.hello';
+      url = 'ws://'+location.hostname+(location.port ? ':'+location.port: '')+'/api/v1/streams/nimona.io/message';
 
       window.onload = function() {
         var form = document.getElementById('message-form');
@@ -219,16 +219,16 @@
           var body = messageField.value;
           var recipient = recipientField.value;
           var block = {
-            type: "demo.hello",
+            type: "nimona.io/message",
             payload: {
               body: body,
             },
             recipient: recipient,
           }
-          messagesList.innerHTML = '<li class="received">' +
-          '<div><span>Message:</span>' + block.payload.body + '</div>' +
-          '<div><span>To:</span><a href="#" class="from" data-key="' + block.recipient + '">' + block.recipient + '</a></div>' +
-          '</li>' + messagesList.innerHTML
+          // messagesList.innerHTML = '<li class="received">' +
+          // '<div><span>Message:</span>' + block.payload.body + '</div>' +
+          // '<div><span>To:</span><a href="#" class="from" data-key="' + block.recipient + '">' + block.recipient + '</a></div>' +
+          // '</li>' + messagesList.innerHTML
           c.send(JSON.stringify(block));
           return false;
         };

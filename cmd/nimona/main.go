@@ -115,35 +115,36 @@ func base64ToBytes(s string) []byte {
 	return b
 }
 
-// Hello payload
-type Hello struct {
-	Body      string            `json:"body"`
-	Signature *crypto.Signature `json:"-"`
+// Message payload
+type Message struct {
+	Body         string            `json:"body"`
+	SentDatetime string            `json:"dt_sent"`
+	Signature    *crypto.Signature `json:"-"`
 }
 
-func (h *Hello) GetType() string {
-	return "demo.hello"
+func (h *Message) GetType() string {
+	return "nimona.io/message"
 }
 
-func (h *Hello) GetSignature() *crypto.Signature {
+func (h *Message) GetSignature() *crypto.Signature {
 	return h.Signature
 }
 
-func (h *Hello) SetSignature(s *crypto.Signature) {
+func (h *Message) SetSignature(s *crypto.Signature) {
 	h.Signature = s
 }
 
-func (h *Hello) GetAnnotations() map[string]interface{} {
+func (h *Message) GetAnnotations() map[string]interface{} {
 	// no annotations
 	return map[string]interface{}{}
 }
 
-func (h *Hello) SetAnnotations(a map[string]interface{}) {
+func (h *Message) SetAnnotations(a map[string]interface{}) {
 	// no annotations
 }
 
 func init() {
-	blocks.RegisterContentType(&Hello{}, blocks.Persist())
+	blocks.RegisterContentType(&Message{}, blocks.Persist())
 }
 
 func main() {
@@ -200,8 +201,8 @@ func main() {
 
 	n.RegisterDiscoverer(dht)
 
-	n.Handle("demo.hello", func(payload blocks.Typed) error {
-		fmt.Printf("___ Got block %s\n", payload.(*Hello).Body)
+	n.Handle("nimona.io/message", func(payload blocks.Typed) error {
+		fmt.Printf("___ Got block %s\n", payload.(*Message).Body)
 		return nil
 	})
 
@@ -376,14 +377,18 @@ func main() {
 				return
 			}
 			ctx := context.Background()
-			msg := strings.Join(c.Args[1:], " ")
+			body := strings.Join(c.Args[1:], " ")
 			peer, err := addressBook.GetPeerInfo(c.Args[0])
 			if err != nil {
 				c.Println("Could not get peer")
 				return
 			}
+			msg := &Message{
+				Body:         body,
+				SentDatetime: time.Now().UTC().Format(time.RFC3339),
+			}
 			signer := addressBook.GetLocalPeerKey()
-			if err := n.Send(ctx, &Hello{Body: msg}, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
+			if err := n.Send(ctx, msg, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return
 			}

@@ -39,10 +39,12 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 	router := gin.Default()
 	router.Use(cors.Default())
 
+	localKey := addressBook.GetLocalPeerInfo().Thumbprint()
+
 	local := router.Group("/api/v1/local")
 	local.GET("/", func(c *gin.Context) {
 		v := addressBook.GetLocalPeerInfo()
-		m, err := mapTyped(v)
+		m, err := mapTyped(v, localKey)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -59,7 +61,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 		}
 		ms := []map[string]interface{}{}
 		for _, v := range peers {
-			m, err := mapTyped(v)
+			m, err := mapTyped(v, localKey)
 			if err != nil {
 				c.AbortWithError(500, err)
 				return
@@ -98,7 +100,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 				c.AbortWithError(500, err)
 				return
 			}
-			m, err := mapTyped(v)
+			m, err := mapTyped(v, localKey)
 			if err != nil {
 				c.AbortWithError(500, err)
 				return
@@ -123,7 +125,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		m, err := mapTyped(v)
+		m, err := mapTyped(v, localKey)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -166,8 +168,15 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 	})
 
 	streamsEnd := router.Group("/api/v1/streams")
-	streamsEnd.GET("/:pattern", func(c *gin.Context) {
+	streamsEnd.GET("/:ns/*pattern", func(c *gin.Context) {
+		ns := c.Param("ns")
 		pattern := c.Param("pattern")
+
+		if pattern != "" {
+			pattern = ns + pattern
+		} else {
+			pattern = ns
+		}
 
 		var wsupgrader = websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -193,7 +202,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			for {
 				select {
 				case v := <-incoming:
-					m, err := mapTyped(v)
+					m, err := mapTyped(v, localKey)
 					if err != nil {
 						// TODO handle error
 						continue
@@ -213,11 +222,18 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 						Annotations: r.Annotations,
 						Payload:     r.Payload,
 					}
-					if err := exchange.Send(ctx, v, k.(*crypto.Key), blocks.SignWith(signer)); err != nil {
-						logger.Error("could not send outgoing block", zap.Error(err))
-						// TODO send error message to ws
+					m, err := mapTyped(v, localKey)
+					if err != nil {
+						// TODO handle error
 						continue
 					}
+					m["status"] = "ok"
+					if err := exchange.Send(ctx, v, k.(*crypto.Key), blocks.SignWith(signer)); err != nil {
+						logger.Error("could not send outgoing block", zap.Error(err))
+						m["status"] = "error"
+					}
+					// TODO handle error
+					conn.WriteJSON(m)
 				}
 			}
 		}()
@@ -269,13 +285,19 @@ func (api *API) Serve(address string) error {
 	return api.router.Run(address)
 }
 
-func mapTyped(v blocks.Typed) (map[string]interface{}, error) {
+func mapTyped(v blocks.Typed, localKey string) (map[string]interface{}, error) {
 	m, err := blocks.MapTyped(v)
 	if err != nil {
 		return nil, err
 	}
 	if s := v.GetSignature(); s != nil {
-		m["owner"] = v.GetSignature().Key.Thumbprint()
+		signer := v.GetSignature().Key.Thumbprint()
+		m["owner"] = signer
+		if signer == localKey {
+			m["direction"] = "outgoing"
+		} else {
+			m["direction"] = "incoming"
+		}
 	}
 	m["id"] = blocks.ID(v)
 	delete(m, "signature")
