@@ -6,26 +6,25 @@ import (
 	"log"
 	"os"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/primitives"
 )
 
 type Exchanger interface {
-	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key,
-		opts ...blocks.PackOption) error
-	Handle(contentType string, h func(o blocks.Typed) error) (func(), error)
+	Send(ctx context.Context, o *primitives.Block, recipient *primitives.Key,
+		opts ...primitives.SendOption) error
+	Handle(contentType string, h func(o *primitives.Block) error) (func(), error)
 }
 
-const connectionEventType = "nimona.telemetry.connection"
-const blockEventType = "nimona.telemetry.block"
+const connectionEventType = "nimona.io/telemetry.connection"
+const blockEventType = "nimona.io/telemetry.block"
 
 var DefaultClient *metrics
 
 type metrics struct {
 	exchange      Exchanger
 	colletor      Collector
-	localPeer     *crypto.Key
-	bootstrapPeer *crypto.Key
+	localPeer     *primitives.Key
+	bootstrapPeer *primitives.Key
 }
 
 func init() {
@@ -46,11 +45,8 @@ func init() {
 	}
 }
 
-func NewTelemetry(exchange Exchanger, localPeer *crypto.Key,
-	bootstrapPeer *crypto.Key) error {
-	// Register the two basic types
-	blocks.RegisterContentType(&ConnectionEvent{})
-	blocks.RegisterContentType(&BlockEvent{})
+func NewTelemetry(exchange Exchanger, localPeer *primitives.Key,
+	bootstrapPeer *primitives.Key) error {
 
 	// create the default client
 	DefaultClient = &metrics{
@@ -81,15 +77,19 @@ func SendEvent(ctx context.Context, event Collectable) error {
 func (t *metrics) SendEvent(ctx context.Context,
 	event Collectable) error {
 	return t.exchange.Send(ctx,
-		event, t.bootstrapPeer, blocks.SignWith(t.localPeer))
+		event.Block(), t.bootstrapPeer, primitives.SignWith(t.localPeer))
 }
 
-func (t *metrics) handleBlock(payload blocks.Typed) error {
-	switch v := payload.(type) {
-	case *ConnectionEvent:
-		t.colletor.Collect(v)
-	case *BlockEvent:
-		t.colletor.Collect(v)
+func (t *metrics) handleBlock(block *primitives.Block) error {
+	switch block.Type {
+	case connectionEventType:
+		event := &ConnectionEvent{}
+		event.FromBlock(block)
+		t.colletor.Collect(event)
+	case blockEventType:
+		event := &BlockEvent{}
+		event.FromBlock(block)
+		t.colletor.Collect(event)
 	}
 
 	return nil

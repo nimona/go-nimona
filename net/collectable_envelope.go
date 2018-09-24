@@ -1,6 +1,6 @@
 package net
 
-import "nimona.io/go/crypto"
+import "nimona.io/go/primitives"
 
 // BlockEvent for reporting block metrics
 type BlockEvent struct {
@@ -21,12 +21,12 @@ func (e *BlockEvent) GetType() string {
 	return "nimona.telemetry.block"
 }
 
-func (e *BlockEvent) GetSignature() *crypto.Signature {
+func (e *BlockEvent) GetSignature() *primitives.Signature {
 	// no signature
 	return nil
 }
 
-func (e *BlockEvent) SetSignature(s *crypto.Signature) {
+func (e *BlockEvent) SetSignature(s *primitives.Signature) {
 	// no signature
 }
 

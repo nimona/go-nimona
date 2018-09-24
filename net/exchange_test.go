@@ -11,41 +11,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
 	"nimona.io/go/net"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
 
 type exchangeTestSuite struct {
 	suite.Suite
-}
-
-type DummyPayload struct {
-	Foo       string            `json:"foo"`
-	Signature *crypto.Signature `json:"-"`
-}
-
-func (p *DummyPayload) GetType() string {
-	return "foo"
-}
-
-func (p *DummyPayload) GetSignature() *crypto.Signature {
-	return p.Signature
-}
-
-func (p *DummyPayload) SetSignature(s *crypto.Signature) {
-	p.Signature = s
-}
-
-func (p *DummyPayload) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (p *DummyPayload) SetAnnotations(a map[string]interface{}) {
-	// no annotations
 }
 
 func (suite *exchangeTestSuite) TestSendSuccess() {
@@ -57,12 +30,20 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	err = r1.PutPeerInfo(p2)
 	suite.NoError(err)
 
-	blocks.RegisterContentType(&DummyPayload{})
-
 	time.Sleep(time.Second)
 
-	exPayload := &DummyPayload{
-		Foo: "bar",
+	exPayload1 := &primitives.Block{
+		Type: "test.nimona.io/dummy",
+		Payload: map[string]interface{}{
+			"foo": "bar1",
+		},
+	}
+
+	exPayload2 := &primitives.Block{
+		Type: "test.nimona.io/dummy",
+		Payload: map[string]interface{}{
+			"foo": "bar2",
+		},
 	}
 
 	wg := sync.WaitGroup{}
@@ -71,15 +52,18 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("foo", func(payload blocks.Typed) error {
-		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
+	w1.Handle("test.nimona.io/dummy", func(block *primitives.Block) error {
+		suite.Equal(k2.GetPublicKey().Thumbprint(), block.Signature.Key.Thumbprint())
+		block.Signature = nil
+		exPayload1.Signature = nil
+		suite.Equal(exPayload1, block)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("foo", func(payload blocks.Typed) error {
-		suite.Equal(exPayload.Foo, payload.(*DummyPayload).Foo)
+	w2.Handle("test.nimona.**", func(block *primitives.Block) error {
+		suite.Equal(exPayload2, block)
 		w2BlockHandled = true
 		wg.Done()
 		return nil
@@ -87,13 +71,13 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, exPayload, p1.Signature.Key, blocks.SignWith(k2))
+	err = w2.Send(ctx, exPayload1, p1.Signature.Key, primitives.SignWith(k2))
 	suite.NoError(err)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	err = w1.Send(ctx, exPayload, p2.Signature.Key)
+	err = w1.Send(ctx, exPayload2, p2.Signature.Key)
 	suite.NoError(err)
 
 	wg.Wait()
@@ -139,7 +123,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	w1BlockHandled := false
 // 	w2BlockHandled := false
 
-// 	w1.Handle("foo", func(block *nblocks.Block) error {
+// 	w1.Handle("foo", func(block *nprimitives.Block) error {
 // 		decPayload := map[string]string{}
 // 		err := block.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -149,7 +133,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 		return nil
 // 	})
 
-// 	w2.Handle("foo", func(block *nblocks.Block) error {
+// 	w2.Handle("foo", func(block *nprimitives.Block) error {
 // 		decPayload := map[string]string{}
 // 		err := block.DecodePayload(&decPayload)
 // 		suite.NoError(err)
@@ -179,7 +163,7 @@ func (suite *exchangeTestSuite) TestSendSuccess() {
 // 	suite.True(w2BlockHandled)
 // }
 
-func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *crypto.Key, net.Exchange, *peers.AddressBook) {
+func (suite *exchangeTestSuite) newPeer() (int, *peers.PeerInfo, *primitives.Key, net.Exchange, *peers.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
 	ab, _ := peers.NewAddressBook(td)
 	storagePath := path.Join(td, "storage")

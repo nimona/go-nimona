@@ -1,37 +1,26 @@
 package dht
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&Provider{})
-}
 
 // Provider payload
 type Provider struct {
-	BlockIDs  []string          `json:"blockIDs"`
-	Signature *crypto.Signature `json:"-"`
+	BlockIDs  []string              `json:"blockIDs"`
+	Signature *primitives.Signature `json:"-"`
 }
 
-func (p *Provider) GetType() string {
-	return "dht.provider"
+func (p *Provider) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/dht.provider",
+		Payload: map[string]interface{}{
+			"blockIDs": p.BlockIDs,
+		},
+		Signature: p.Signature,
+	}
 }
 
-func (p *Provider) GetSignature() *crypto.Signature {
-	return p.Signature
-}
-
-func (p *Provider) SetSignature(s *crypto.Signature) {
-	p.Signature = s
-}
-
-func (p *Provider) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (p *Provider) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+func (p *Provider) FromBlock(block *primitives.Block) {
+	p.BlockIDs = block.Payload["blockIDs"].([]string)
+	p.Signature = block.Signature
 }

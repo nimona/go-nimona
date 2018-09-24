@@ -1,38 +1,51 @@
 package net
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/base58"
+	"nimona.io/go/codec"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&ForwardRequest{})
-}
 
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
-	Recipient *crypto.Key       `json:"recipient"`
-	Typed     blocks.Typed      `json:"data"`
-	Signature *crypto.Signature `json:"-"`
+	Recipient *primitives.Key
+	FwBlock   *primitives.Block
+	Signature *primitives.Signature
 }
 
-func (r *ForwardRequest) GetType() string {
-	return "nimona.forwarded"
+func (r *ForwardRequest) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/block.forward.request",
+		Payload: map[string]interface{}{
+			"recipient": r.Recipient.Block(),
+			"block":     r.Block,
+		},
+		Annotations: &primitives.Annotations{
+			Policies: []primitives.Policy{
+				primitives.Policy{
+					Subjects: []string{
+						r.Recipient.Thumbprint(),
+					},
+					Actions: []string{"read"},
+					Effect:  "allow",
+				},
+			},
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (r *ForwardRequest) GetSignature() *crypto.Signature {
-	return r.Signature
-}
+func (r *ForwardRequest) FromBlock(block *primitives.Block) {
+	// TODO(geoah) this won't work
+	r.FwBlock = block.Payload["block"].(*primitives.Block)
+	r.Signature = block.Signature
 
-func (r *ForwardRequest) SetSignature(s *crypto.Signature) {
-	r.Signature = s
-}
-
-func (r *ForwardRequest) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (r *ForwardRequest) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+	key := &primitives.Key{}
+	subject := block.Annotations.Policies[0].Subjects[0]
+	subjectBytes, err := base58.Decode(subject)
+	if err != nil {
+		return
+	}
+	codec.Unmarshal(subjectBytes, key)
+	r.Recipient = key
 }

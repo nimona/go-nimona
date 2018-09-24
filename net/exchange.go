@@ -10,10 +10,10 @@ import (
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 	"nimona.io/go/utils"
 )
@@ -35,8 +35,8 @@ var (
 // Exchange interface for mocking exchange
 type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
-	Handle(contentType string, h func(o blocks.Typed) error) (func(), error)
-	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error
+	Handle(contentType string, h func(o *primitives.Block) error) (func(), error)
+	Send(ctx context.Context, o *primitives.Block, recipient *primitives.Key, opts ...primitives.SendOption) error
 	RegisterDiscoverer(discovery Discoverer)
 }
 
@@ -60,20 +60,20 @@ type exchange struct {
 
 type outBlock struct {
 	context   context.Context
-	recipient *crypto.Key
-	opts      []blocks.PackOption
-	typed     blocks.Typed
+	recipient *primitives.Key
+	opts      []primitives.SendOption
+	block     *primitives.Block
 	err       chan error
 }
 
 type incBlock struct {
 	conn  *Connection
-	typed blocks.Typed
+	typed *primitives.Block
 }
 
 type handler struct {
 	contentType glob.Glob
-	handler     func(o blocks.Typed) error
+	handler     func(o *primitives.Block) error
 }
 
 // NewExchange creates a exchange on a given network
@@ -151,7 +151,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 				continue
 			}
 
-			if err := Write(block.typed, conn, block.opts...); err != nil {
+			if err := Write(block.block, conn, block.opts...); err != nil {
 				w.manager.Close(recipientThumbPrint)
 				logger.Debug("could not write to recipient", zap.Error(err))
 				block.err <- err
@@ -190,7 +190,7 @@ func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
 	}()
 }
 
-func (w *exchange) Handle(typePatern string, h func(o blocks.Typed) error) (func(), error) {
+func (w *exchange) Handle(typePatern string, h func(o *primitives.Block) error) (func(), error) {
 	g, err := glob.Compile(typePatern, '.', '/', '#')
 	if err != nil {
 		return nil, err
@@ -223,54 +223,53 @@ func (w *exchange) HandleConnection(conn *Connection) error {
 }
 
 // Process incoming block
-func (w *exchange) process(typed blocks.Typed, conn *Connection) error {
+func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 	// TODO verify signature
 
 	// TODO convert these into proper handlers
-	switch payload := typed.(type) {
-	case *ForwardRequest:
-		w.logger.Info("got forwarded message", zap.String("recipient", payload.Recipient.Thumbprint()))
+	switch block.Type {
+	case "nimona.io/block.forward.request":
+		req := &ForwardRequest{}
+		req.FromBlock(block)
+		w.logger.Info("got forwarded message", zap.String("recipient", req.Recipient.Thumbprint()))
 		cerr := make(chan error, 1)
 		ctx, cf := context.WithTimeout(context.Background(), time.Second)
 		defer cf()
 		w.outgoingPayloads <- &outBlock{
 			context:   ctx,
-			recipient: payload.Recipient,
-			typed:     payload.Typed,
+			recipient: req.Recipient,
+			block:     req.FwBlock,
 			err:       cerr,
 		}
 		return <-cerr
 
-	case *BlockRequest:
-		if err := w.handleRequestBlock(payload); err != nil {
+	case "nimona.io/block.request":
+		req := &BlockRequest{}
+		req.FromBlock(block)
+		if err := w.handleBlockRequest(req); err != nil {
 			w.logger.Warn("could not handle request block", zap.Error(err))
 		}
 
-	case *BlockResponse:
-		if err := w.handleBlockResponse(payload); err != nil {
+	case "nimona.io/block.response":
+		res := &BlockResponse{}
+		res.FromBlock(block)
+		if err := w.handleBlockResponse(res); err != nil {
 			w.logger.Warn("could not handle request block", zap.Error(err))
 		}
 	}
 
-	if blocks.ShouldPersist(typed.GetType()) {
-		b, _ := blocks.PackEncode(typed)
-		blockID := blocks.ID(typed)
-		w.store.Store(blockID, b)
-	}
-
-	contentType := typed.GetType()
 	w.handlers.Range(func(k, v interface{}) bool {
 		h := v.(*handler)
-		if h.contentType.Match(contentType) {
-			go func(h *handler, typed blocks.Typed) {
-				if err := h.handler(typed); err != nil {
+		if h.contentType.Match(block.Type) {
+			go func(h *handler, block *primitives.Block) {
+				if err := h.handler(block); err != nil {
 					w.logger.Info(
 						"Could not handle event",
-						zap.String("contentType", contentType),
+						zap.String("contentType", block.Type),
 						zap.Error(err),
 					)
 				}
-			}(h, typed)
+			}(h, block)
 		}
 		return true
 	})
@@ -290,27 +289,11 @@ func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
 		return ErrInvalidRequest
 	}
 
-	block, err := blocks.Decode(payload.Block)
-	if err != nil {
-		panic(err)
-		return err
-	}
-
-	if blocks.ShouldPersist(block.Type) {
-		blockID, _ := blocks.SumSha3(payload.Block)
-		w.store.Store(blockID, payload.Block)
-	}
-
-	p, err := blocks.Unpack(block)
-	if err != nil {
-		return err
-	}
-
-	req.response <- p
+	req.response <- payload.Block
 	return nil
 }
 
-func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
+func (w *exchange) handleBlockRequest(payload *BlockRequest) error {
 	blockBytes, err := w.store.Get(payload.ID)
 	if err != nil {
 		return err
@@ -318,14 +301,19 @@ func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
 
 	// TODO check if policy allows requested to retrieve the block
 
+	block := &primitives.Block{}
+	if err := codec.Unmarshal(blockBytes, blockBytes); err != nil {
+		return err
+	}
+
 	resp := &BlockResponse{
-		RequestID: payload.RequestID,
-		Block:     blockBytes,
+		RequestID:      payload.RequestID,
+		RequestedBlock: block,
 	}
 
 	signer := w.addressBook.GetLocalPeerKey()
-	if err := w.Send(context.Background(), resp, payload.Signature.Key, blocks.SignWith(signer)); err != nil {
-		w.logger.Warn("blx.handleRequestBlock could not send block", zap.Error(err))
+	if err := w.Send(context.Background(), resp.Block(), payload.Sender, primitives.SignWith(signer)); err != nil {
+		w.logger.Warn("blx.handleBlockRequest could not send block", zap.Error(err))
 		return err
 	}
 
@@ -335,7 +323,11 @@ func (w *exchange) handleRequestBlock(payload *BlockRequest) error {
 func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	// Check local storage for block
 	if blockBytes, err := w.store.Get(id); err == nil {
-		return blocks.UnpackDecode(blockBytes)
+		block := &primitives.Block{}
+		if err := codec.Unmarshal(blockBytes, blockBytes); err != nil {
+			return nil, err
+		}
+		return block, nil
 	}
 
 	req := &BlockRequest{
@@ -360,7 +352,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 		}
 
 		for provider := range providers {
-			if err := w.Send(ctx, req, provider, blocks.SignWith(signer)); err != nil {
+			if err := w.Send(ctx, req.Block(), provider, primitives.SignWith(signer)); err != nil {
 				w.logger.Warn("blx.Get could not send req block", zap.Error(err))
 			}
 		}
@@ -377,37 +369,25 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	}
 }
 
-func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *crypto.Key, opts ...blocks.PackOption) error {
-	annotations := typed.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]interface{}{}
-	}
-	annotations["policies"] = []*blocks.Policy{
-		&blocks.Policy{
-			Subjects: []string{
-				recipient.Thumbprint(),
-			},
-			Actions: []string{"read"},
-			Effect:  "allow",
-		},
-	}
-	typed.SetAnnotations(annotations)
+func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient *primitives.Key, opts ...primitives.SendOption) error {
+	cfg := primitives.ParseSendOptions(opts...)
 
-	bytes, err := blocks.PackEncode(typed, opts...)
-	if err != nil {
-		return err
-	}
+	// if primitives.ShouldPersist(typed.GetType()) {
+	// 	blockID, _ := primitives.SumSha3(bytes)
+	// 	w.store.Store(blockID, bytes)
+	// }
 
-	if blocks.ShouldPersist(typed.GetType()) {
-		blockID, _ := blocks.SumSha3(bytes)
-		w.store.Store(blockID, bytes)
+	if cfg.Sign && cfg.Key != nil && block.Signature == nil {
+		if err := primitives.Sign(block, cfg.Key); err != nil {
+			return err
+		}
 	}
 
 	cerr := make(chan error, 1)
 	w.outgoingPayloads <- &outBlock{
 		context:   ctx,
 		recipient: recipient,
-		typed:     typed,
+		block:     block,
 		err:       cerr,
 		opts:      opts,
 	}
@@ -423,14 +403,15 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 	}
 
 	// we unpack this because of the Send opts that might have signed this
-	fwTyped, err := blocks.UnpackDecode(bytes)
-	if err != nil {
-		return err
-	}
+	// fwTyped, err := primitives.UnpackDecode(bytes)
+	// if err != nil {
+	// 	return err
+	// }
 
+	// TODO(geoah) make sure fw block is signed
 	fw := &ForwardRequest{
 		Recipient: recipient,
-		Typed:     fwTyped,
+		FwBlock:   block,
 	}
 
 	for _, address := range peer.Addresses {
@@ -447,7 +428,7 @@ func (w *exchange) Send(ctx context.Context, typed blocks.Typed, recipient *cryp
 			w.outgoingPayloads <- &outBlock{
 				context:   ctx,
 				recipient: relayPeer.Signature.Key,
-				typed:     fw,
+				block:     fw.Block(),
 				err:       cerr,
 				opts:      opts,
 			}

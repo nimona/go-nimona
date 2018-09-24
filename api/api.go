@@ -11,14 +11,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/mitchellh/mapstructure"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/codec"
 	"nimona.io/go/dht"
 	"nimona.io/go/log"
 	nnet "nimona.io/go/net"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
 
@@ -44,12 +43,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 	local := router.Group("/api/v1/local")
 	local.GET("/", func(c *gin.Context) {
 		v := addressBook.GetLocalPeerInfo()
-		m, err := mapTyped(v, localKey)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		c.JSON(http.StatusOK, m)
+		c.JSON(http.StatusOK, v.Block())
 	})
 
 	peers := router.Group("/api/v1/peers")
@@ -59,14 +53,9 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		ms := []map[string]interface{}{}
+		ms := []*primitives.Block{}
 		for _, v := range peers {
-			m, err := mapTyped(v, localKey)
-			if err != nil {
-				c.AbortWithError(500, err)
-				return
-			}
-			ms = append(ms, m)
+			ms = append(ms, v.Block())
 		}
 		c.JSON(http.StatusOK, ms)
 	})
@@ -88,30 +77,22 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		ms := []map[string]interface{}{}
+		ms := []*primitives.Block{}
 		for _, blockID := range blockIDs {
-			block, err := bls.Get(blockID)
+			b, err := bls.Get(blockID)
 			if err != nil {
 				c.AbortWithError(500, err)
 				return
 			}
-			v, err := blocks.UnpackDecode(block)
-			if err != nil {
-				c.AbortWithError(500, err)
-				return
-			}
-			m, err := mapTyped(v, localKey)
-			if err != nil {
-				c.AbortWithError(500, err)
-				return
-			}
+			m := &primitives.Block{}
+			codec.Unmarshal(b, m)
 			ms = append(ms, m)
 		}
 		c.JSON(http.StatusOK, ms)
 	})
 	blocksEnd.GET("/:blockID", func(c *gin.Context) {
 		blockID := c.Param("blockID")
-		block, err := bls.Get(blockID)
+		b, err := bls.Get(blockID)
 		if err != nil {
 			if err == storage.ErrNotFound {
 				c.AbortWithError(404, err)
@@ -120,46 +101,38 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			c.AbortWithError(500, err)
 			return
 		}
-		v, err := blocks.UnpackDecode(block)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		m, err := mapTyped(v, localKey)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
+		m := &primitives.Block{}
+		codec.Unmarshal(b, m)
 		c.JSON(http.StatusOK, m)
 	})
 	blocksEnd.POST("/", func(c *gin.Context) {
-		body := &blockReq{}
-		if err := c.BindJSON(body); err != nil {
+		req := &blockReq{}
+		if err := c.BindJSON(req); err != nil {
 			c.AbortWithError(400, err)
 			return
 		}
 
-		if body.Recipient == "" {
+		if req.Recipient == "" {
 			c.AbortWithError(400, errors.New("missing recipient"))
 			return
 		}
 
-		typedKey, err := blocks.UnpackDecodeBase58(body.Recipient)
+		keyBlock, err := primitives.BlockFromBase58(req.Recipient)
 		if err != nil {
-			c.AbortWithError(400, errors.New("invalid recipient"))
+			c.AbortWithError(400, errors.New("invalid recipient key"))
 			return
 		}
+		key := &primitives.Key{}
+		key.FromBlock(keyBlock)
 
-		recipientKey := typedKey.(*crypto.Key)
-
-		unknown := &blocks.Unknown{
-			Type:        body.Type,
-			Payload:     body.Payload,
-			Annotations: body.Annotations,
+		block := &primitives.Block{
+			Type:    req.Type,
+			Payload: req.Payload,
 		}
+
 		ctx := context.Background()
 		signer := addressBook.GetLocalPeerKey()
-		if err := exchange.Send(ctx, unknown, recipientKey, blocks.SignWith(signer)); err != nil {
+		if err := exchange.Send(ctx, block, key, primitives.SignWith(signer)); err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
@@ -195,14 +168,14 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 		ctx := context.Background()
 		logger := log.Logger(ctx).Named("api")
 		signer := addressBook.GetLocalPeerKey()
-		incoming := make(chan blocks.Typed, 100)
+		incoming := make(chan *primitives.Block, 100)
 		outgoing := make(chan *blockReq, 100)
 
 		go func() {
 			for {
 				select {
 				case v := <-incoming:
-					m, err := mapTyped(v, localKey)
+					m, err := mapBlock(v, localKey)
 					if err != nil {
 						// TODO handle error
 						continue
@@ -211,24 +184,23 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 					conn.WriteJSON(m)
 
 				case r := <-outgoing:
-					k, err := blocks.UnpackDecodeBase58(r.Recipient)
+					keyBlock, err := primitives.BlockFromBase58(r.Recipient)
 					if err != nil {
-						// TODO send error message to ws
-						logger.Error("could not parse outgoing block", zap.Error(err))
-						continue
+						return
 					}
-					v := &blocks.Unknown{
-						Type:        r.Type,
-						Annotations: r.Annotations,
-						Payload:     r.Payload,
+					key := &primitives.Key{}
+					key.FromBlock(keyBlock)
+					v := &primitives.Block{
+						Type:    r.Type,
+						Payload: r.Payload,
 					}
-					m, err := mapTyped(v, localKey)
+					m, err := mapBlock(v, localKey)
 					if err != nil {
 						// TODO handle error
 						continue
 					}
 					m["status"] = "ok"
-					if err := exchange.Send(ctx, v, k.(*crypto.Key), blocks.SignWith(signer)); err != nil {
+					if err := exchange.Send(ctx, v, key, primitives.SignWith(signer)); err != nil {
 						logger.Error("could not send outgoing block", zap.Error(err))
 						m["status"] = "error"
 					}
@@ -238,7 +210,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 			}
 		}()
 
-		hr, err := exchange.Handle(pattern, func(v blocks.Typed) error {
+		hr, err := exchange.Handle(pattern, func(v *primitives.Block) error {
 			incoming <- v
 			return nil
 		})
@@ -284,30 +256,28 @@ func (api *API) Serve(address string) error {
 	return api.router.Run(address)
 }
 
-func mapTyped(v blocks.Typed, localKey string) (map[string]interface{}, error) {
-	m, err := blocks.MapTyped(v)
-	if err != nil {
-		return nil, err
+func mapBlock(v *primitives.Block, localKey string) (map[string]interface{}, error) {
+	m := map[string]interface{}{
+		"type":        v.Type,
+		"payload":     v.Payload,
+		"annotations": v.Annotations,
 	}
-	if s := v.GetSignature(); s != nil {
-		signer := v.GetSignature().Key.Thumbprint()
-		m["owner"] = signer
-		if signer == localKey {
+	if s := v.Signature; s != nil {
+		m["signature"] = v.Signature.Block()
+		m["owner"] = v.Signature.Key.Thumbprint()
+		if v.Signature.Key.Thumbprint() == localKey {
 			m["direction"] = "outgoing"
 		} else {
 			m["direction"] = "incoming"
 		}
 	}
-	ann := v.GetAnnotations()
 	recipients := []string{}
-	if ann != nil {
-		annotations := &blocks.Annotations{}
-		mapstructure.Decode(ann, &annotations)
-		for _, policy := range annotations.Policies {
+	if v.Annotations != nil {
+		for _, policy := range v.Annotations.Policies {
 			recipients = append(recipients, policy.Subjects...)
 		}
 	}
-	m["id"] = blocks.ID(v)
+	m["id"] = primitives.ID(v)
 	m["recipients"] = recipients
 	delete(m, "signature")
 	return m, nil

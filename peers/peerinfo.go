@@ -1,39 +1,29 @@
 package peers
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"github.com/mitchellh/mapstructure"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&PeerInfo{})
-}
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
-	Addresses []string          `json:"addresses"`
-	Signature *crypto.Signature `json:"-"`
+	Addresses []string `mapstructure:"addresses"`
+	Signature *primitives.Signature
 }
 
-func (pi *PeerInfo) GetType() string {
-	return "peer.info"
+func (pi *PeerInfo) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/peer.info",
+		Payload: map[string]interface{}{
+			"addresses": pi.Addresses,
+		},
+		Signature: pi.Signature,
+	}
 }
 
-func (pi *PeerInfo) GetSignature() *crypto.Signature {
-	return pi.Signature
-}
-
-func (pi *PeerInfo) SetSignature(s *crypto.Signature) {
-	pi.Signature = s
-}
-
-func (pi *PeerInfo) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (pi *PeerInfo) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+func (pi *PeerInfo) FromBlock(block *primitives.Block) {
+	mapstructure.Decode(block.Payload, pi)
+	pi.Signature = block.Signature
 }
 
 func (pi *PeerInfo) Thumbprint() string {
