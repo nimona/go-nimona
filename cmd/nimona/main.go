@@ -24,6 +24,7 @@ import (
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
+	"nimona.io/go/telemetry"
 )
 
 type bootstrapPeer struct {
@@ -97,10 +98,10 @@ var (
 		// 	alias: "pyxis.nimona.io",
 		// 	key:   "ki2pmv2fq8AWoqLruGH484CGze7RJkY3TRb7UWvN6GFsty9vCjjcpqt4jTVbxDvzMLSwY297FFKbmpaZE9X6qrBzjGuV6vD8c7QTGzzEExfT7aUa6yhytiGiti22HdWAWeAvLnnsmMHT66FD2AbjX4dMBJaubNPUUxpxSNSqKSKZPkLK3uHrfKyrSFwP58uVTyby4wKx7ZszVx8Q7y4bvDBCQGwQ8x5nQY5f87hgsGivHufPL3ZgGd1hDPFh6cGLvSKvCRoMgMSYYD5B66HXSH8iNpDQjMmrMcXSgigV9U94s1fQ89seZqDUJ57aRe1fsX4vVJNj1Rx2XqKztAqaRoqr4T6qcKYnbm9j2BMxnxQDP5wHkB5qM2WEovpPeCWXgQkQjfDVKZnn",
 		// },
-		// &bootstrapPeer{
-		// 	alias: "stats.nimona.io",
-		// 	key:   "ki2pmv2fq8AWoqLruGH484CGze7RJkY3TRb7UYFsBgoXDpx8MZD3BaSZG4KD7cbmdghvoyEf9U9d6HPzVTsfinFwVpRhwnyDSw51tVW3vCKnscjdVDBXrkSCwKb97qkSLz31NGgpkgSWYDNNmN48hAePKgk4zVhbzGmBs27s8nWz1eai8TFqqhyoFUMRy5yD5TsqEJy43LqtVsWHhbi6bEQYZFSLc11wbqFkpFt5dmAqQ25dza7jhPXrQx6g1oCD2S5P8qzrd5cxs3iw6pDJMXemFLzeCJRrWrnCasnJGR2rRHjU3yXZrqzSv9RZS7tvbQvjYhH8n2jaaUr6SmSdnSLEUhuer8MzgVy9oUEPqPFv6c4QVEaBbh7tojNjtX2R7B3mmwj6L4ge",
-		// },
+		&bootstrapPeer{
+			alias: "stats.nimona.io",
+			key:   "ki2pmv2fq8AWoqLruGH484CGze7RJkY3TRb7UYFsBgoXDpx8MZD3BaSZG4KD7cbmdghvoyEf9U9d6HPzVTsfinFwVpRhwnyDSw51tVW3vCKnscjdVDBXrkSCwKb97qkSLz31NGgpkgSWYDNNmN48hAePKgk4zVhbzGmBs27s8nWz1eai8TFqqhyoFUMRy5yD5TsqEJy43LqtVsWHhbi6bEQYZFSLc11wbqFkpFt5dmAqQ25dza7jhPXrQx6g1oCD2S5P8qzrd5cxs3iw6pDJMXemFLzeCJRrWrnCasnJGR2rRHjU3yXZrqzSv9RZS7tvbQvjYhH8n2jaaUr6SmSdnSLEUhuer8MzgVy9oUEPqPFv6c4QVEaBbh7tojNjtX2R7B3mmwj6L4ge",
+		},
 	}
 )
 
@@ -167,7 +168,7 @@ func main() {
 
 	port, _ := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
 
-	// statsBootstrapPeer := &peers.PeerInfo{}
+	statsBootstrapPeer := &peers.PeerInfo{}
 	for _, bootstrapPeer := range bootstrapPeerInfos {
 		peerInfoBlock, err := primitives.BlockFromBase58(bootstrapPeer.key)
 		if err != nil {
@@ -178,9 +179,9 @@ func main() {
 		if err := addressBook.PutPeerInfo(peerInfo); err != nil {
 			log.Fatal("could not put bootstrap peer", err)
 		}
-		// if bootstrapPeer.alias == "stats.nimona.io" {
-		// 	statsBootstrapPeer = peerInfo
-		// }
+		if bootstrapPeer.alias == "stats.nimona.io" {
+			statsBootstrapPeer = peerInfo
+		}
 		if os.Getenv("RELAY") != "false" {
 			addressBook.AddLocalPeerRelay(peerInfo.Thumbprint())
 		}
@@ -192,8 +193,8 @@ func main() {
 	dpr := storage.NewDiskStorage(storagePath)
 	n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", port))
 	dht, _ := dht.NewDHT(n, addressBook)
-	// telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
-	// 	statsBootstrapPeer.Signature.Key)
+	telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
+		statsBootstrapPeer.Signature.Key)
 
 	n.RegisterDiscoverer(dht)
 
