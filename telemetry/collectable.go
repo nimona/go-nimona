@@ -54,7 +54,7 @@ type BlockEvent struct {
 }
 
 func (ee *BlockEvent) FromBlock(block *primitives.Block) {
-	ee.BlockSize = block.Payload["size"].(int)
+	ee.BlockSize = int(block.Payload["size"].(uint64))
 	ee.Direction = block.Payload["direction"].(string)
 	ee.ContentType = block.Payload["contentType"].(string)
 

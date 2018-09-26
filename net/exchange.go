@@ -262,6 +262,11 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 		h := v.(*handler)
 		if h.contentType.Match(block.Type) {
 			go func(h *handler, block *primitives.Block) {
+				defer func() {
+					if r := recover(); r != nil {
+						w.logger.Error("Recovered while handling", zap.Any("r", r))
+					}
+				}()
 				if err := h.handler(block); err != nil {
 					w.logger.Info(
 						"Could not handle event",
