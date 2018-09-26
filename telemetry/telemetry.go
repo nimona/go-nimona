@@ -13,7 +13,7 @@ import (
 type Exchanger interface {
 	Send(ctx context.Context, o blocks.Typed, recipient *crypto.Key,
 		opts ...blocks.PackOption) error
-	Handle(contentType string, h func(o blocks.Typed) error) error
+	Handle(contentType string, h func(o blocks.Typed) error) (func(), error)
 }
 
 const connectionEventType = "nimona.telemetry.connection"

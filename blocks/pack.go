@@ -53,6 +53,9 @@ func Pack(v Typed, opts ...PackOption) (*Block, error) {
 		Type:    m["type"].(string),
 		Payload: m["payload"].(map[string]interface{}),
 	}
+	if _, ok := m["annotations"]; ok {
+		b.Annotations = m["annotations"].(map[string]interface{})
+	}
 	if _, ok := m["signature"]; ok {
 		b.Signature = m["signature"].(map[string]interface{})
 	}
@@ -91,6 +94,7 @@ func MapTyped(v Typed) (map[string]interface{}, error) {
 		}
 		m["signature"] = ps
 	}
+	m["annotations"] = v.GetAnnotations()
 	return m, nil
 }
 
