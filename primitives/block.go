@@ -61,6 +61,14 @@ func ID(v *Block) string {
 	return string(hash)
 }
 
+func (block *Block) Digest() ([]byte, error) {
+	return getDigest(block)
+}
+
+func Digest(v *Block) ([]byte, error) {
+	return getDigest(v)
+}
+
 func BlockFromMap(m map[string]interface{}) *Block {
 	block := &Block{}
 	mapstructure.Decode(m, block)

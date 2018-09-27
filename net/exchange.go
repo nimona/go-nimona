@@ -3,6 +3,7 @@ package net
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -123,6 +124,11 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		for {
 			block := <-w.incomingPayloads
 			go func(block *incBlock) {
+				defer func() {
+					if r := recover(); r != nil {
+						w.logger.Error("Recovered while processing", zap.Any("r", r))
+					}
+				}()
 				if err := w.process(block.typed, block.conn); err != nil {
 					w.logger.Error("getting processing block", zap.Error(err))
 				}
@@ -133,6 +139,12 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 	go func() {
 		for {
 			block := <-w.outgoingPayloads
+			if block.recipient == nil {
+				w.logger.Info("missing recipient")
+				block.err <- errors.New("missing recipient")
+				continue
+			}
+
 			recipientThumbPrint := block.recipient.Thumbprint()
 			if self.Thumbprint() == recipientThumbPrint {
 				w.logger.Info("cannot send block to self")
@@ -258,7 +270,9 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 		}
 	}
 
-	w.handlers.Range(func(k, v interface{}) bool {
+	hp := 0
+	w.handlers.Range(func(_, v interface{}) bool {
+		hp++
 		h := v.(*handler)
 		if h.contentType.Match(block.Type) {
 			go func(h *handler, block *primitives.Block) {
@@ -278,6 +292,15 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 		}
 		return true
 	})
+
+	if hp == 0 {
+		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+		fmt.Println("+++++ NO HANDLERS ++++++++++++++++++++++++++++++++++++++")
+		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+		fmt.Println("+++++", block.Type)
+		fmt.Println("+++++", block.Payload)
+		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+	}
 
 	return nil
 }

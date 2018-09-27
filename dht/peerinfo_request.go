@@ -6,9 +6,9 @@ import (
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string                `json:"requestID,omitempty"`
-	PeerID    string                `json:"peerID"`
-	Signature *primitives.Signature `json:"-"`
+	RequestID string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
+	PeerID    string                `json:"peerID" mapstructure:"peerID"`
+	Signature *primitives.Signature `json:"-" mapstructure:"-"`
 }
 
 func (r *PeerInfoRequest) Block() *primitives.Block {

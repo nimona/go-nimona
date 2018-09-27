@@ -49,23 +49,13 @@ type Key struct {
 }
 
 func (b *Key) Block() *Block {
+	payload := map[string]interface{}{}
+	if err := mapstructure.Decode(*b, &payload); err != nil {
+		panic(err)
+	}
 	return &Block{
-		Type: "nimona.io/key",
-		Payload: map[string]interface{}{
-			"alg":     b.Algorithm,
-			"kid":     b.KeyID,
-			"kty":     b.KeyType,
-			"use":     b.KeyUsage,
-			"key_ops": b.KeyOps,
-			"x5c":     b.X509CertChain,
-			"x5t":     b.X509CertThumbprint,
-			"x5tS256": b.X509CertThumbprintS256,
-			"x5u":     b.X509URL,
-			"crv":     b.Curve,
-			"x":       b.X,
-			"y":       b.Y,
-			"d":       b.D,
-		},
+		Type:    "nimona.io/key",
+		Payload: payload,
 	}
 }
 

@@ -1,14 +1,15 @@
 package dht
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/primitives"
 )
 
 // ProviderRequest payload
 type ProviderRequest struct {
-	RequestID string                `json:"requestID,omitempty"`
-	Key       string                `json:"key"`
-	Signature *primitives.Signature `json:"-"`
+	RequestID string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
+	Key       string                `json:"key" mapstructure:"key"`
+	Signature *primitives.Signature `json:"signature" mapstructure:"-"`
 }
 
 func (r *ProviderRequest) Block() *primitives.Block {
@@ -23,7 +24,6 @@ func (r *ProviderRequest) Block() *primitives.Block {
 }
 
 func (r *ProviderRequest) FromBlock(block *primitives.Block) {
-	r.RequestID = block.Payload["requestID"].(string)
-	r.Key = block.Payload["key"].(string)
+	mapstructure.Decode(block.Payload, r)
 	r.Signature = block.Signature
 }

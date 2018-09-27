@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
 )
@@ -29,20 +30,28 @@ func (r *PeerInfoResponse) Block() *primitives.Block {
 }
 
 func (r *PeerInfoResponse) FromBlock(block *primitives.Block) {
-	r.RequestID = block.Payload["requestID"].(string)
-	r.PeerInfo = &peers.PeerInfo{}
-	if peerInfoMap, ok := block.Payload["peerInfo"].(map[string]interface{}); ok {
-		peerInfoBlock := primitives.BlockFromMap(peerInfoMap)
-		r.PeerInfo.FromBlock(peerInfoBlock)
+	t := &struct {
+		RequestID    string              `mapstructure:"requestID,omitempty"`
+		PeerInfo     *primitives.Block   `mapstructure:"peerInfo,omitempty"`
+		ClosestPeers []*primitives.Block `mapstructure:"closestPeers,omitempty"`
+	}{}
+
+	mapstructure.Decode(block.Payload, t)
+
+	if t.PeerInfo != nil {
+		r.PeerInfo = &peers.PeerInfo{}
+		r.PeerInfo.FromBlock(t.PeerInfo)
 	}
-	if closestPeersMap, ok := block.Payload["closestPeers"].([]map[string]interface{}); ok {
+
+	if len(t.ClosestPeers) > 0 {
 		r.ClosestPeers = []*peers.PeerInfo{}
-		for _, closestPeerMap := range closestPeersMap {
-			closestPeerBlock := primitives.BlockFromMap(closestPeerMap)
-			closestPeer := &peers.PeerInfo{}
-			closestPeer.FromBlock(closestPeerBlock)
-			r.ClosestPeers = append(r.ClosestPeers, closestPeer)
+		for _, pb := range t.ClosestPeers {
+			pi := &peers.PeerInfo{}
+			pi.FromBlock(pb)
+			r.ClosestPeers = append(r.ClosestPeers, pi)
 		}
 	}
+
+	r.RequestID = t.RequestID
 	r.Signature = block.Signature
 }

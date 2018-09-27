@@ -1,8 +1,7 @@
 package net
 
 import (
-	"nimona.io/go/base58"
-	"nimona.io/go/codec"
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/primitives"
 )
 
@@ -20,32 +19,20 @@ func (r *ForwardRequest) Block() *primitives.Block {
 			"recipient": r.Recipient.Block(),
 			"block":     r.Block,
 		},
-		Annotations: &primitives.Annotations{
-			Policies: []primitives.Policy{
-				primitives.Policy{
-					Subjects: []string{
-						r.Recipient.Thumbprint(),
-					},
-					Actions: []string{"read"},
-					Effect:  "allow",
-				},
-			},
-		},
 		Signature: r.Signature,
 	}
 }
 
 func (r *ForwardRequest) FromBlock(block *primitives.Block) {
-	// TODO(geoah) this won't work
-	r.FwBlock = block.Payload["block"].(*primitives.Block)
-	r.Signature = block.Signature
+	t := &struct {
+		Recipient *primitives.Block `mapstructure:"recipient,omitempty"`
+		FwBlock   *primitives.Block `mapstructure:"block,omitempty"`
+	}{}
 
-	key := &primitives.Key{}
-	subject := block.Annotations.Policies[0].Subjects[0]
-	subjectBytes, err := base58.Decode(subject)
-	if err != nil {
-		return
+	mapstructure.Decode(block.Payload, t)
+
+	if t.Recipient != nil {
+		r.Recipient = &primitives.Key{}
+		r.Recipient.FromBlock(t.Recipient)
 	}
-	codec.Unmarshal(subjectBytes, key)
-	r.Recipient = key
 }

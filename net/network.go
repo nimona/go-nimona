@@ -237,6 +237,25 @@ func Read(conn *Connection) (*primitives.Block, error) {
 	if err := pDecoder.Decode(&p); err != nil {
 		return nil, err
 	}
+
+	d, err := p.Digest()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Signature != nil {
+		if err := primitives.Verify(p.Signature, d); err != nil {
+			return nil, err
+		}
+	} else {
+		fmt.Println("--------------------------------------------------------")
+		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
+		fmt.Println("--------------------------------------------------------")
+		fmt.Println("-----", p.Type)
+		fmt.Println("-----", p.Payload)
+		fmt.Println("--------------------------------------------------------")
+	}
+
 	SendBlockEvent(
 		"incoming",
 		p.Type,
