@@ -54,7 +54,7 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 
 	ab.localKey = localKey
 
-	keyBytes, err := codec.Marshal(localKey)
+	keyBytes, err := codec.Marshal(localKey.Block())
 	if err != nil {
 		return err
 	}
