@@ -9,18 +9,18 @@ const defaultTag = "json"
 
 // Policy for Block
 type Policy struct {
-	Description string   `json:"description,omitempty"`
-	Subjects    []string `json:"subjects"`
-	Actions     []string `json:"actions"`
-	Effect      string   `json:"effect"`
+	Description string   `json:"description,omitempty" structs:"description,omitempty" mapstructure:"description,omitempty"`
+	Subjects    []string `json:"subjects" structs:"subjects" mapstructure:"subjects"`
+	Actions     []string `json:"actions" structs:"actions" mapstructure:"actions"`
+	Effect      string   `json:"effect" structs:"effect" mapstructure:"effect"`
 }
 
 // type Headers struct{}
 
 // Annotations for Block
 type Annotations struct {
-	Parent   string   `json:"parentID,omitempty"`
-	Policies []Policy `json:"policies,omitempty"`
+	Parent   string   `json:"parentID,omitempty" structs:"parentID,omitempty" mapstructure:"parentID,omitempty"`
+	Policies []Policy `json:"policies,omitempty" structs:"policies,omitempty" mapstructure:"policies,omitempty"`
 }
 
 // Block for exchanging data via the exchange

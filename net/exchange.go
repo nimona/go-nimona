@@ -129,7 +129,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 					}
 				}()
 				if err := w.process(block.typed, block.conn); err != nil {
-					w.logger.Error("getting processing block", zap.Error(err))
+					w.logger.Error("processing block", zap.Error(err))
 				}
 			}(block)
 		}
@@ -299,6 +299,12 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 		fmt.Println("+++++", block.Type)
 		fmt.Println("+++++", block.Payload)
 		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+	} else {
+		if shouldPersist(block.Type) {
+			bytes, _ := primitives.Marshal(block)
+			blockID, _ := primitives.SumSha3(bytes)
+			w.store.Store(blockID, bytes)
+		}
 	}
 
 	return nil
@@ -399,15 +405,16 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient *primitives.Key, opts ...primitives.SendOption) error {
 	cfg := primitives.ParseSendOptions(opts...)
 
-	// if primitives.ShouldPersist(typed.GetType()) {
-	// 	blockID, _ := primitives.SumSha3(bytes)
-	// 	w.store.Store(blockID, bytes)
-	// }
-
 	if cfg.Sign && cfg.Key != nil && block.Signature == nil {
 		if err := primitives.Sign(block, cfg.Key); err != nil {
 			return err
 		}
+	}
+
+	if shouldPersist(block.Type) {
+		bytes, _ := primitives.Marshal(block)
+		blockID, _ := primitives.SumSha3(bytes)
+		w.store.Store(blockID, bytes)
 	}
 
 	cerr := make(chan error, 1)
@@ -495,4 +502,13 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, e
 	w.manager.Add(conn)
 
 	return conn, nil
+}
+
+func shouldPersist(t string) bool {
+	if strings.HasPrefix(t, "nimona.io/dht") ||
+		strings.HasPrefix(t, "nimona.io/telemetry") ||
+		strings.HasPrefix(t, "nimona.io/handshake") {
+		return false
+	}
+	return true
 }

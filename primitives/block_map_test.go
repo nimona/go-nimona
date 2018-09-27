@@ -11,6 +11,15 @@ import (
 func TestBlockToMap(t *testing.T) {
 	b := &Block{
 		Type: "type",
+		Annotations: &Annotations{
+			Policies: []Policy{
+				Policy{
+					Subjects: []string{"recipient1"},
+					Actions:  []string{"read"},
+					Effect:   "allow",
+				},
+			},
+		},
 		Payload: map[string]interface{}{
 			"foo": "bar",
 		},
@@ -24,6 +33,19 @@ func TestBlockToMap(t *testing.T) {
 
 	em := map[string]interface{}{
 		"type": "type",
+		"annotations": map[string]interface{}{
+			"policies": []interface{}{
+				map[string]interface{}{
+					"subjects": []string{
+						"recipient1",
+					},
+					"actions": []string{
+						"read",
+					},
+					"effect": "allow",
+				},
+			},
+		},
 		"payload": map[string]interface{}{
 			"foo": "bar",
 		},

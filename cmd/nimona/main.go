@@ -382,6 +382,7 @@ func main() {
 			}
 			msg := &Message{
 				Body:         body,
+				Recipient:    peer.Thumbprint(),
 				SentDatetime: time.Now().UTC().Format(time.RFC3339),
 			}
 			signer := addressBook.GetLocalPeerKey()

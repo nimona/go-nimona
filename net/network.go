@@ -17,7 +17,6 @@ import (
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
-	"nimona.io/go/base58"
 	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
@@ -215,18 +214,26 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 
 func Write(p *primitives.Block, conn *Connection, opts ...primitives.SendOption) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
+	if p == nil {
+		log.DefaultLogger.Error("block for fw cannot be nil")
+		return errors.New("missing block")
+	}
+
 	b, err := primitives.Marshal(p)
 	if err != nil {
 		return err
 	}
+
 	if _, err := conn.Conn.Write(b); err != nil {
 		return err
 	}
+
 	SendBlockEvent(
 		"incoming",
 		p.Type,
 		len(b),
 	)
+
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(primitives.BlockToMap(p), "", "  ")
 		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
@@ -250,8 +257,8 @@ func Read(conn *Connection) (*primitives.Block, error) {
 		}
 	}()
 
-	bs, _ := codec.Marshal(m)
-	fmt.Println(">>>>>>>> INC", base58.Encode(bs))
+	// bs, _ := codec.Marshal(m)
+	// fmt.Println(">>>>>>>> INC", base58.Encode(bs))
 
 	p := primitives.BlockFromMap(m)
 	d, err := p.Digest()
