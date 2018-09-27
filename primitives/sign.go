@@ -1,9 +1,5 @@
 package primitives
 
-import (
-	"nimona.io/go/codec"
-)
-
 func Sign(p *Block, key *Key) error {
 	digest, err := getDigest(p)
 	if err != nil {
@@ -27,7 +23,7 @@ func getDigest(p *Block) ([]byte, error) {
 		Payload:     p.Payload,
 	}
 
-	digest, err := codec.Marshal(b)
+	digest, err := Marshal(b)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/base58"
-	"nimona.io/go/codec"
 
 	"github.com/pkg/errors"
 )
@@ -63,7 +62,7 @@ func (b *Key) FromBlock(block *Block) {
 }
 
 func (k *Key) Thumbprint() string {
-	b, _ := codec.Marshal(k.Block())
+	b, _ := Marshal(k.Block())
 	return base58.Encode(b)
 }
 
