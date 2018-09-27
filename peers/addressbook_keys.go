@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"nimona.io/go/base58"
-	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/primitives"
 )
@@ -30,8 +29,8 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 			return err
 		}
 		key := &primitives.Key{}
-		keyBlock := &primitives.Block{}
-		if err := codec.Unmarshal(keyBytes, keyBlock); err != nil {
+		keyBlock, err := primitives.Unmarshal(keyBytes)
+		if err != nil {
 			return err
 		}
 		key.FromBlock(keyBlock)
@@ -54,7 +53,7 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 
 	ab.localKey = localKey
 
-	keyBytes, err := codec.Marshal(localKey.Block())
+	keyBytes, err := primitives.Marshal(localKey.Block())
 	if err != nil {
 		return err
 	}

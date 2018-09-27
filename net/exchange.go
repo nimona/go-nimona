@@ -11,7 +11,6 @@ import (
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
 
-	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
@@ -329,8 +328,8 @@ func (w *exchange) handleBlockRequest(payload *BlockRequest) error {
 
 	// TODO check if policy allows requested to retrieve the block
 
-	block := &primitives.Block{}
-	if err := codec.Unmarshal(blockBytes, blockBytes); err != nil {
+	block, err := primitives.Unmarshal(blockBytes)
+	if err != nil {
 		return err
 	}
 
@@ -351,8 +350,8 @@ func (w *exchange) handleBlockRequest(payload *BlockRequest) error {
 func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	// Check local storage for block
 	if blockBytes, err := w.store.Get(id); err == nil {
-		block := &primitives.Block{}
-		if err := codec.Unmarshal(blockBytes, blockBytes); err != nil {
+		block, err := primitives.Unmarshal(blockBytes)
+		if err != nil {
 			return nil, err
 		}
 		return block, nil

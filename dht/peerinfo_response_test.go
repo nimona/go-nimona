@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/codec"
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
 )
@@ -35,10 +34,10 @@ func TestPeerInfoResponseBlock(t *testing.T) {
 	}
 
 	b := ep.Block()
-	bs, _ := codec.Marshal(b)
+	bs, _ := primitives.Marshal(b)
 
 	b2 := &primitives.Block{}
-	codec.Unmarshal(bs, b2)
+	primitives.Unmarshal(bs, b2)
 
 	p := &PeerInfoResponse{}
 	p.FromBlock(b2)

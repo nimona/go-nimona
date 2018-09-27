@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/codec"
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
 )
@@ -16,12 +15,24 @@ func TestProviderResponseBlock(t *testing.T) {
 			"p1-addr1",
 			"p1-addr2",
 		},
+		Signature: &primitives.Signature{
+			Key: &primitives.Key{
+				Algorithm: "key-alg",
+			},
+			Alg: "sig-alg",
+		},
 	}
 
 	p2 := &peers.PeerInfo{
 		Addresses: []string{
 			"p2-addr1",
 			"p2-addr2",
+		},
+		Signature: &primitives.Signature{
+			Key: &primitives.Key{
+				Algorithm: "key-alg",
+			},
+			Alg: "sig-alg",
 		},
 	}
 
@@ -52,10 +63,10 @@ func TestProviderResponseBlock(t *testing.T) {
 	}
 
 	b := ep.Block()
-	bs, _ := codec.Marshal(b)
+	bs, _ := primitives.Marshal(b)
 
 	b2 := &primitives.Block{}
-	codec.Unmarshal(bs, b2)
+	primitives.Unmarshal(bs, b2)
 
 	p := &ProviderResponse{}
 	p.FromBlock(b2)

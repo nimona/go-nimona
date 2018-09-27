@@ -8,7 +8,6 @@ import (
 	"path"
 
 	"nimona.io/go/base58"
-	"nimona.io/go/codec"
 	"nimona.io/go/peers"
 )
 
@@ -53,7 +52,7 @@ func main() {
 			// "tcp:" + name + ".nimona.io:21013",
 			"tcp:localhost:21013",
 		}
-		b, _ := codec.Marshal(pi.Block())
+		b, _ := primitives.Marshal(pi.Block())
 		pp := base58.Encode(b)
 		fmt.Printf(`// %s.nimona.io
 // "%s",

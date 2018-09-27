@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"nimona.io/go/codec"
 	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
@@ -31,8 +30,11 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 			c.AbortWithError(500, err)
 			return
 		}
-		m := &primitives.Block{}
-		codec.Unmarshal(b, m)
+		m, err := primitives.Unmarshal(b)
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
 		ms = append(ms, api.mapBlock(m))
 	}
 	c.JSON(http.StatusOK, ms)
@@ -49,8 +51,11 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	m := &primitives.Block{}
-	codec.Unmarshal(b, m)
+	m, err := primitives.Unmarshal(b)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
 	c.JSON(http.StatusOK, api.mapBlock(m))
 }
 

@@ -11,10 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	igd "github.com/emersion/go-upnp-igd"
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
+	"nimona.io/go/base58"
 	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
@@ -212,7 +215,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 
 func Write(p *primitives.Block, conn *Connection, opts ...primitives.SendOption) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
-	b, err := codec.Marshal(p)
+	b, err := primitives.Marshal(p)
 	if err != nil {
 		return err
 	}
@@ -225,19 +228,32 @@ func Write(p *primitives.Block, conn *Connection, opts ...primitives.SendOption)
 		len(b),
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(p, "", "  ")
+		b, _ := json.MarshalIndent(primitives.BlockToMap(p), "", "  ")
 		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
 	return nil
 }
 
 func Read(conn *Connection) (*primitives.Block, error) {
+	logger := log.DefaultLogger
+
 	pDecoder := ucodec.NewDecoder(conn.Conn, codec.CborHandler())
-	p := &primitives.Block{}
-	if err := pDecoder.Decode(&p); err != nil {
+	m := map[string]interface{}{}
+	if err := pDecoder.Decode(&m); err != nil {
 		return nil, err
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			spew.Dump(m)
+			logger.Error("Recovered while processing", zap.Any("r", r))
+		}
+	}()
+
+	bs, _ := codec.Marshal(m)
+	fmt.Println(">>>>>>>> INC", base58.Encode(bs))
+
+	p := primitives.BlockFromMap(m)
 	d, err := p.Digest()
 	if err != nil {
 		return nil, err
@@ -264,7 +280,7 @@ func Read(conn *Connection) (*primitives.Block, error) {
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		// m, _ := primitives.Pack(v)
 		b, _ := json.MarshalIndent(p, "", "  ")
-		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
 	return p, nil
 }

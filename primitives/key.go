@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"math/big"
 
+	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/base58"
 	"nimona.io/go/codec"
@@ -49,13 +50,11 @@ type Key struct {
 }
 
 func (b *Key) Block() *Block {
-	payload := map[string]interface{}{}
-	if err := mapstructure.Decode(*b, &payload); err != nil {
-		panic(err)
-	}
+	s := structs.New(b)
+	s.TagName = "mapstructure"
 	return &Block{
 		Type:    "nimona.io/key",
-		Payload: payload,
+		Payload: s.Map(),
 	}
 }
 

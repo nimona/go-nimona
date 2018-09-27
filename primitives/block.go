@@ -1,7 +1,6 @@
 package primitives
 
 import (
-	"github.com/mitchellh/mapstructure"
 	"nimona.io/go/base58"
 	"nimona.io/go/codec"
 )
@@ -26,10 +25,10 @@ type Annotations struct {
 
 // Block for exchanging data via the exchange
 type Block struct {
-	Type        string                 `json:"type,omitempty"`
-	Annotations *Annotations           `json:"annotations,omitempty"`
-	Payload     map[string]interface{} `json:"payload,omitempty"`
-	Signature   *Signature             `json:"signature,omitempty"`
+	Type        string                 `json:"type,omitempty" mapstructure:"type,omitempty"`
+	Annotations *Annotations           `json:"annotations,omitempty" mapstructure:"annotations,omitempty"`
+	Payload     map[string]interface{} `json:"payload,omitempty" mapstructure:"payload,omitempty"`
+	Signature   *Signature             `json:"signature,omitempty" mapstructure:"signature,omitempty"`
 }
 
 // ID calculated the id for the block
@@ -69,13 +68,6 @@ func Digest(v *Block) ([]byte, error) {
 	return getDigest(v)
 }
 
-func BlockFromMap(m map[string]interface{}) *Block {
-	block := &Block{}
-	mapstructure.Decode(m, block)
-	// TODO(geoah) error
-	return block
-}
-
 func BlockFromBase58(s string) (*Block, error) {
 	b, err := base58.Decode(s)
 	if err != nil {
@@ -83,10 +75,10 @@ func BlockFromBase58(s string) (*Block, error) {
 	}
 
 	tmpBlock := &struct {
-		Type        string                 `json:"type,omitempty"`
-		Annotations *Annotations           `json:"annotations,omitempty"`
-		Payload     map[string]interface{} `json:"payload,omitempty"`
-		Signature   map[string]interface{} `json:"signature,omitempty"`
+		Type        string                 `json:"type,omitempty" mapstructure:"type,omitempty"`
+		Annotations *Annotations           `json:"annotations,omitempty" mapstructure:"annotations,omitempty"`
+		Payload     map[string]interface{} `json:"payload,omitempty" mapstructure:"payload,omitempty"`
+		Signature   map[string]interface{} `json:"signature,omitempty" mapstructure:"signature,omitempty"`
 	}{}
 
 	if err := codec.Unmarshal(b, tmpBlock); err != nil {

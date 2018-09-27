@@ -5,6 +5,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/fatih/structs"
 )
 
 var (
@@ -35,27 +39,35 @@ const (
 )
 
 type Signature struct {
-	Key       *Key   `json:"key"`
-	Alg       string `json:"alg"`
-	Signature []byte `json:"sig"`
+	Key       *Key   `json:"key" mapstructure:"-"`
+	Alg       string `json:"alg" mapstructure:"alg,omitempty"`
+	Signature []byte `json:"sig" mapstructure:"sig,omitempty"`
 }
 
 func (s *Signature) Block() *Block {
+	p := structs.New(s)
+	p.TagName = "mapstructure"
+	m := p.Map()
+	m["key"] = BlockToMap(s.Key.Block())
 	return &Block{
-		Type: "nimona.io/signature",
-		Payload: map[string]interface{}{
-			"key": s.Key.Block(),
-			"alg": s.Alg,
-			"sig": s.Signature,
-		},
+		Type:    "nimona.io/signature",
+		Payload: m,
 	}
 }
 
 func (s *Signature) FromBlock(block *Block) {
-	s.Signature = block.Payload["sig"].([]byte)
-	s.Alg = block.Payload["alg"].(string)
+	p := struct {
+		Key       map[string]interface{} `json:"key" mapstructure:"key,omitempty"`
+		Alg       string                 `json:"alg" mapstructure:"alg,omitempty"`
+		Signature []byte                 `json:"sig" mapstructure:"sig,omitempty"`
+	}{}
+	if err := mapstructure.Decode(block.Payload, &p); err != nil {
+		panic(err)
+	}
+	s.Alg = p.Alg
+	s.Signature = p.Signature
 	s.Key = &Key{}
-	s.Key.FromBlock(BlockFromMap(block.Payload["key"].(map[string]interface{})))
+	s.Key.FromBlock(BlockFromMap(p.Key))
 }
 
 // NewSignature returns a signature given some bytes and a private key
