@@ -14,13 +14,13 @@ type ProviderResponse struct {
 }
 
 func (r *ProviderResponse) Block() *primitives.Block {
-	closestPeers := []*primitives.Block{}
+	closestPeers := []map[string]interface{}{}
 	for _, cp := range r.ClosestPeers {
-		closestPeers = append(closestPeers, cp.Block())
+		closestPeers = append(closestPeers, primitives.BlockToMap(cp.Block()))
 	}
-	providers := []*primitives.Block{}
+	providers := []map[string]interface{}{}
 	for _, p := range r.Providers {
-		providers = append(providers, p.Block())
+		providers = append(providers, primitives.BlockToMap(p.Block()))
 	}
 	return &primitives.Block{
 		Type: "nimona.io/dht.provider.response",
@@ -35,10 +35,10 @@ func (r *ProviderResponse) Block() *primitives.Block {
 
 func (r *ProviderResponse) FromBlock(block *primitives.Block) {
 	t := &struct {
-		RequestID    string              `mapstructure:"requestID,omitempty"`
-		PeerInfo     *primitives.Block   `mapstructure:"peerInfo,omitempty"`
-		Providers    []*primitives.Block `mapstructure:"providers,omitempty"`
-		ClosestPeers []*primitives.Block `mapstructure:"closestPeers,omitempty"`
+		RequestID    string                   `mapstructure:"requestID,omitempty"`
+		PeerInfo     *primitives.Block        `mapstructure:"peerInfo,omitempty"`
+		Providers    []map[string]interface{} `mapstructure:"providers,omitempty"`
+		ClosestPeers []map[string]interface{} `mapstructure:"closestPeers,omitempty"`
 	}{}
 
 	mapstructure.Decode(block.Payload, t)
@@ -47,7 +47,7 @@ func (r *ProviderResponse) FromBlock(block *primitives.Block) {
 		r.Providers = []*Provider{}
 		for _, pb := range t.Providers {
 			pi := &Provider{}
-			pi.FromBlock(pb)
+			pi.FromBlock(primitives.BlockFromMap(pb))
 			r.Providers = append(r.Providers, pi)
 		}
 	}
@@ -56,7 +56,7 @@ func (r *ProviderResponse) FromBlock(block *primitives.Block) {
 		r.ClosestPeers = []*peers.PeerInfo{}
 		for _, pb := range t.ClosestPeers {
 			pi := &peers.PeerInfo{}
-			pi.FromBlock(pb)
+			pi.FromBlock(primitives.BlockFromMap(pb))
 			r.ClosestPeers = append(r.ClosestPeers, pi)
 		}
 	}

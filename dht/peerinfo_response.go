@@ -14,15 +14,15 @@ type PeerInfoResponse struct {
 }
 
 func (r *PeerInfoResponse) Block() *primitives.Block {
-	closestPeers := []*primitives.Block{}
+	closestPeers := []map[string]interface{}{}
 	for _, cp := range r.ClosestPeers {
-		closestPeers = append(closestPeers, cp.Block())
+		closestPeers = append(closestPeers, primitives.BlockToMap(cp.Block()))
 	}
 	return &primitives.Block{
 		Type: "nimona.io/dht.peer-info.response",
 		Payload: map[string]interface{}{
 			"requestID":    r.RequestID,
-			"peerInfo":     r.PeerInfo.Block(),
+			"peerInfo":     primitives.BlockToMap(r.PeerInfo.Block()),
 			"closestPeers": closestPeers,
 		},
 		Signature: r.Signature,
@@ -31,23 +31,24 @@ func (r *PeerInfoResponse) Block() *primitives.Block {
 
 func (r *PeerInfoResponse) FromBlock(block *primitives.Block) {
 	t := &struct {
-		RequestID    string              `mapstructure:"requestID,omitempty"`
-		PeerInfo     *primitives.Block   `mapstructure:"peerInfo,omitempty"`
-		ClosestPeers []*primitives.Block `mapstructure:"closestPeers,omitempty"`
+		RequestID    string                   `mapstructure:"requestID,omitempty"`
+		PeerInfo     map[string]interface{}   `mapstructure:"peerInfo,omitempty"`
+		ClosestPeers []map[string]interface{} `mapstructure:"closestPeers,omitempty"`
 	}{}
 
 	mapstructure.Decode(block.Payload, t)
 
 	if t.PeerInfo != nil {
 		r.PeerInfo = &peers.PeerInfo{}
-		r.PeerInfo.FromBlock(t.PeerInfo)
+		r.PeerInfo.FromBlock(primitives.BlockFromMap(t.PeerInfo))
 	}
 
 	if len(t.ClosestPeers) > 0 {
 		r.ClosestPeers = []*peers.PeerInfo{}
 		for _, pb := range t.ClosestPeers {
 			pi := &peers.PeerInfo{}
-			pi.FromBlock(pb)
+			ppb := primitives.BlockFromMap(pb)
+			pi.FromBlock(ppb)
 			r.ClosestPeers = append(r.ClosestPeers, pi)
 		}
 	}

@@ -15,12 +15,24 @@ func TestPeerInfoResponseBlock(t *testing.T) {
 			"p1-addr1",
 			"p1-addr2",
 		},
+		Signature: &primitives.Signature{
+			Key: &primitives.Key{
+				Algorithm: "key-alg",
+			},
+			Alg: "sig-alg",
+		},
 	}
 
 	p2 := &peers.PeerInfo{
 		Addresses: []string{
 			"p2-addr1",
 			"p2-addr2",
+		},
+		Signature: &primitives.Signature{
+			Key: &primitives.Key{
+				Algorithm: "key-alg",
+			},
+			Alg: "sig-alg",
 		},
 	}
 
@@ -31,13 +43,19 @@ func TestPeerInfoResponseBlock(t *testing.T) {
 			p1,
 			p2,
 		},
+		Signature: &primitives.Signature{
+			Key: &primitives.Key{
+				Algorithm: "key-alg",
+			},
+			Alg: "sig-alg",
+		},
 	}
 
 	b := ep.Block()
 	bs, _ := primitives.Marshal(b)
 
-	b2 := &primitives.Block{}
-	primitives.Unmarshal(bs, b2)
+	b2, err := primitives.Unmarshal(bs)
+	assert.NoError(t, err)
 
 	p := &PeerInfoResponse{}
 	p.FromBlock(b2)

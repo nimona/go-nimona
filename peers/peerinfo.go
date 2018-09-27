@@ -22,7 +22,9 @@ func (pi *PeerInfo) Block() *primitives.Block {
 }
 
 func (pi *PeerInfo) FromBlock(block *primitives.Block) {
-	mapstructure.Decode(block.Payload, pi)
+	if err := mapstructure.Decode(block.Payload, pi); err != nil {
+		panic(err)
+	}
 	pi.Signature = block.Signature
 }
 
