@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/go/base58"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 )
 
 func main() {
