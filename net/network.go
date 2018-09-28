@@ -245,49 +245,44 @@ func Read(conn *Connection) (*primitives.Block, error) {
 	logger := log.DefaultLogger
 
 	pDecoder := ucodec.NewDecoder(conn.Conn, codec.CborHandler())
-	m := map[string]interface{}{}
-	if err := pDecoder.Decode(&m); err != nil {
+	b := &primitives.Block{}
+	if err := pDecoder.Decode(&b); err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			spew.Dump(m)
+			spew.Dump(b)
 			logger.Error("Recovered while processing", zap.Any("r", r))
 		}
 	}()
 
-	// bs, _ := codec.Marshal(m)
-	// fmt.Println(">>>>>>>> INC", base58.Encode(bs))
-
-	p := primitives.BlockFromMap(m)
-	d, err := p.Digest()
+	d, err := b.Digest()
 	if err != nil {
 		return nil, err
 	}
 
-	if p.Signature != nil {
-		if err := primitives.Verify(p.Signature, d); err != nil {
+	if b.Signature != nil {
+		if err := primitives.Verify(b.Signature, d); err != nil {
 			return nil, err
 		}
 	} else {
 		fmt.Println("--------------------------------------------------------")
 		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
 		fmt.Println("--------------------------------------------------------")
-		fmt.Println("-----", p.Type)
-		fmt.Println("-----", p.Payload)
+		fmt.Println("-----", b.Type)
+		fmt.Println("-----", b.Payload)
 		fmt.Println("--------------------------------------------------------")
 	}
 
 	SendBlockEvent(
 		"incoming",
-		p.Type,
+		b.Type,
 		pDecoder.NumBytesRead(),
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		// m, _ := primitives.Pack(v)
-		b, _ := json.MarshalIndent(p, "", "  ")
-		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		bs, _ := json.MarshalIndent(primitives.BlockToMap(b), "", "  ")
+		logger.Info(string(bs), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
-	return p, nil
+	return b, nil
 }

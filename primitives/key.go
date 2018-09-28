@@ -7,9 +7,10 @@ import (
 
 	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"
-	"nimona.io/go/base58"
+	ucodec "github.com/ugorji/go/codec"
 
 	"github.com/pkg/errors"
+	"nimona.io/go/base58"
 )
 
 // Supported values for KeyType
@@ -59,6 +60,19 @@ func (b *Key) Block() *Block {
 
 func (b *Key) FromBlock(block *Block) {
 	mapstructure.Decode(block.Payload, b)
+}
+
+// CodecDecodeSelf helper for cbor unmarshaling
+func (k *Key) CodecDecodeSelf(dec *ucodec.Decoder) {
+	b := &Block{}
+	dec.MustDecode(b)
+	k.FromBlock(b)
+}
+
+// CodecEncodeSelf helper for cbor marshaling
+func (k *Key) CodecEncodeSelf(enc *ucodec.Encoder) {
+	b := k.Block()
+	enc.MustEncode(b)
 }
 
 func (k *Key) Thumbprint() string {

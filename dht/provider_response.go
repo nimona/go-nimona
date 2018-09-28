@@ -14,20 +14,12 @@ type ProviderResponse struct {
 }
 
 func (r *ProviderResponse) Block() *primitives.Block {
-	closestPeers := []map[string]interface{}{}
-	for _, cp := range r.ClosestPeers {
-		closestPeers = append(closestPeers, primitives.BlockToMap(cp.Block()))
-	}
-	providers := []map[string]interface{}{}
-	for _, p := range r.Providers {
-		providers = append(providers, primitives.BlockToMap(p.Block()))
-	}
 	return &primitives.Block{
 		Type: "nimona.io/dht.provider.response",
 		Payload: map[string]interface{}{
 			"requestID":    r.RequestID,
-			"providers":    providers,
-			"closestPeers": closestPeers,
+			"providers":    r.Providers,
+			"closestPeers": r.ClosestPeers,
 		},
 		Signature: r.Signature,
 	}

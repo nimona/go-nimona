@@ -2,6 +2,7 @@ package dht
 
 import (
 	"github.com/mitchellh/mapstructure"
+
 	"nimona.io/go/peers"
 	"nimona.io/go/primitives"
 )
@@ -14,16 +15,12 @@ type PeerInfoResponse struct {
 }
 
 func (r *PeerInfoResponse) Block() *primitives.Block {
-	closestPeers := []map[string]interface{}{}
-	for _, cp := range r.ClosestPeers {
-		closestPeers = append(closestPeers, primitives.BlockToMap(cp.Block()))
-	}
 	return &primitives.Block{
 		Type: "nimona.io/dht.peer-info.response",
 		Payload: map[string]interface{}{
 			"requestID":    r.RequestID,
-			"peerInfo":     primitives.BlockToMap(r.PeerInfo.Block()),
-			"closestPeers": closestPeers,
+			"peerInfo":     r.PeerInfo,
+			"closestPeers": r.ClosestPeers,
 		},
 		Signature: r.Signature,
 	}

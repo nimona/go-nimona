@@ -3,8 +3,6 @@ package primitives
 import (
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,10 +34,10 @@ func TestBlockToMap(t *testing.T) {
 		"annotations": map[string]interface{}{
 			"policies": []interface{}{
 				map[string]interface{}{
-					"subjects": []string{
+					"subjects": []interface{}{
 						"recipient1",
 					},
-					"actions": []string{
+					"actions": []interface{}{
 						"read",
 					},
 					"effect": "allow",
@@ -64,7 +62,6 @@ func TestBlockToMap(t *testing.T) {
 	}
 
 	m := BlockToMap(b)
-	spew.Dump(m)
 	assert.Equal(t, em, m)
 }
 
@@ -102,6 +99,5 @@ func TestBlockFromMap(t *testing.T) {
 	}
 
 	b := BlockFromMap(m)
-	spew.Dump(b)
 	assert.Equal(t, eb, b)
 }

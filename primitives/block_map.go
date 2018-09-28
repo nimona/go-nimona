@@ -1,50 +1,29 @@
 package primitives
 
 import (
-	"github.com/fatih/structs"
-	"github.com/mitchellh/mapstructure"
+	"nimona.io/go/codec"
 )
 
-func BlockToMap(block *Block) map[string]interface{} {
-	t := struct {
-		Type        string                 `json:"type,omitempty" mapstructure:"type,omitempty"`
-		Annotations *Annotations           `json:"annotations,omitempty" mapstructure:"annotations,omitempty"`
-		Payload     map[string]interface{} `json:"payload,omitempty" mapstructure:"payload,omitempty"`
-		Signature   map[string]interface{} `json:"signature,omitempty" mapstructure:"signature,omitempty"`
-	}{
-		Type:        block.Type,
-		Annotations: block.Annotations,
-		Payload:     block.Payload,
+func BlockToMap(b *Block) map[string]interface{} {
+	bs, err := codec.Marshal(b)
+	if err != nil {
+		panic(err)
 	}
-	if block.Signature != nil {
-		t.Signature = BlockToMap(block.Signature.Block())
+	m := map[string]interface{}{}
+	if err := codec.Unmarshal(bs, &m); err != nil {
+		panic(err)
 	}
-	s := structs.New(t)
-	s.TagName = "mapstructure"
-	m := s.Map()
 	return m
 }
 
 func BlockFromMap(m map[string]interface{}) *Block {
-	t := struct {
-		Type        string                 `json:"type,omitempty" mapstructure:"type,omitempty"`
-		Annotations *Annotations           `json:"annotations,omitempty" mapstructure:"annotations,omitempty"`
-		Payload     map[string]interface{} `json:"payload,omitempty" mapstructure:"payload,omitempty"`
-		Signature   map[string]interface{} `json:"signature,omitempty" mapstructure:"signature,omitempty"`
-	}{}
-	if err := mapstructure.Decode(m, &t); err != nil {
+	bs, err := codec.Marshal(m)
+	if err != nil {
 		panic(err)
 	}
-	b := &Block{
-		Type:        t.Type,
-		Annotations: t.Annotations,
-		Payload:     t.Payload,
+	b := &Block{}
+	if err := codec.Unmarshal(bs, b); err != nil {
+		panic(err)
 	}
-	if t.Signature != nil {
-		b.Signature = &Signature{}
-		sigBlock := BlockFromMap(t.Signature)
-		b.Signature.FromBlock(sigBlock)
-	}
-	// TODO(geoah) error
 	return b
 }

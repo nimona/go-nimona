@@ -6,9 +6,9 @@ import (
 	"crypto/sha256"
 	"errors"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/fatih/structs"
+	"github.com/mitchellh/mapstructure"
+	ucodec "github.com/ugorji/go/codec"
 )
 
 var (
@@ -26,7 +26,7 @@ const (
 	ES384            = "ES384" // ECDSA using P-384 and SHA-384
 	ES512            = "ES512" // ECDSA using P-521 and SHA-512
 	HS256            = "HS256" // HMAC using SHA-256
-	HS384            = "HS384" // HMAC using SHA-384
+	HS384            = "HS384" // HMACj using SHA-384
 	HS512            = "HS512" // HMAC using SHA-512
 	InvalidAlgorithm = ""      // Invalid Algorithm
 	NoSignature      = "none"  // No signature
@@ -48,7 +48,7 @@ func (s *Signature) Block() *Block {
 	p := structs.New(s)
 	p.TagName = "mapstructure"
 	m := p.Map()
-	m["key"] = BlockToMap(s.Key.Block())
+	m["key"] = s.Key
 	return &Block{
 		Type:    "nimona.io/signature",
 		Payload: m,
@@ -57,9 +57,9 @@ func (s *Signature) Block() *Block {
 
 func (s *Signature) FromBlock(block *Block) {
 	p := struct {
-		Key       map[string]interface{} `json:"key" mapstructure:"key,omitempty"`
-		Alg       string                 `json:"alg" mapstructure:"alg,omitempty"`
-		Signature []byte                 `json:"sig" mapstructure:"sig,omitempty"`
+		Key       *Block `json:"key" mapstructure:"key,omitempty"`
+		Alg       string `json:"alg" mapstructure:"alg,omitempty"`
+		Signature []byte `json:"sig" mapstructure:"sig,omitempty"`
 	}{}
 	if err := mapstructure.Decode(block.Payload, &p); err != nil {
 		panic(err)
@@ -67,7 +67,20 @@ func (s *Signature) FromBlock(block *Block) {
 	s.Alg = p.Alg
 	s.Signature = p.Signature
 	s.Key = &Key{}
-	s.Key.FromBlock(BlockFromMap(p.Key))
+	s.Key.FromBlock(p.Key)
+}
+
+// CodecDecodeSelf helper for cbor unmarshaling
+func (s *Signature) CodecDecodeSelf(dec *ucodec.Decoder) {
+	b := &Block{}
+	dec.MustDecode(b)
+	s.FromBlock(b)
+}
+
+// CodecEncodeSelf helper for cbor marshaling
+func (s *Signature) CodecEncodeSelf(enc *ucodec.Encoder) {
+	b := s.Block()
+	enc.MustEncode(b)
 }
 
 // NewSignature returns a signature given some bytes and a private key

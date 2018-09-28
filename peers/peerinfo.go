@@ -2,6 +2,8 @@ package peers
 
 import (
 	"github.com/mitchellh/mapstructure"
+	ucodec "github.com/ugorji/go/codec"
+
 	"nimona.io/go/primitives"
 )
 
@@ -26,6 +28,19 @@ func (pi *PeerInfo) FromBlock(block *primitives.Block) {
 		panic(err)
 	}
 	pi.Signature = block.Signature
+}
+
+// CodecDecodeSelf helper for cbor unmarshaling
+func (pi *PeerInfo) CodecDecodeSelf(dec *ucodec.Decoder) {
+	b := &primitives.Block{}
+	dec.MustDecode(b)
+	pi.FromBlock(b)
+}
+
+// CodecEncodeSelf helper for cbor marshaling
+func (pi *PeerInfo) CodecEncodeSelf(enc *ucodec.Encoder) {
+	b := pi.Block()
+	enc.MustEncode(b)
 }
 
 func (pi *PeerInfo) Thumbprint() string {
