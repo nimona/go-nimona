@@ -1,34 +1,25 @@
 package net
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/primitives"
 )
 
-func init() {
-	blocks.RegisterContentType(&HandshakeSynAck{})
-}
-
 type HandshakeSynAck struct {
-	Nonce     string            `json:"nonce"`
-	Signature *crypto.Signature `json:"-"`
+	Nonce     string                `json:"nonce"`
+	Signature *primitives.Signature `json:"-"`
 }
 
-func (r *HandshakeSynAck) GetType() string {
-	return "handshake.syn-ack"
+func (r *HandshakeSynAck) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/handshake.syn-ack",
+		Payload: map[string]interface{}{
+			"nonce": r.Nonce,
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (r *HandshakeSynAck) GetSignature() *crypto.Signature {
-	return r.Signature
-}
-
-func (r *HandshakeSynAck) SetSignature(s *crypto.Signature) {
-	r.Signature = s
-}
-
-func (r *HandshakeSynAck) GetAnnotations() map[string]interface{} {
-	return map[string]interface{}{}
-}
-
-func (r *HandshakeSynAck) SetAnnotations(a map[string]interface{}) {
+func (r *HandshakeSynAck) FromBlock(block *primitives.Block) {
+	r.Nonce = block.Payload["nonce"].(string)
+	r.Signature = block.Signature
 }

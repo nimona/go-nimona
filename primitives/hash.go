@@ -1,4 +1,4 @@
-package blocks
+package primitives
 
 import (
 	"golang.org/x/crypto/sha3"

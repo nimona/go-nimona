@@ -19,12 +19,10 @@ import (
 	ishell "gopkg.in/abiosoft/ishell.v2"
 
 	"nimona.io/go/api"
-	"nimona.io/go/base58"
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
 	"nimona.io/go/net"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 	"nimona.io/go/telemetry"
 )
@@ -117,34 +115,33 @@ func base64ToBytes(s string) []byte {
 
 // Message payload
 type Message struct {
-	Body         string                 `json:"body"`
-	SentDatetime string                 `json:"dt_sent"`
-	Annotations  map[string]interface{} `json:"-"`
-	Signature    *crypto.Signature      `json:"-"`
+	Body         string `json:"body"`
+	SentDatetime string `json:"dt_sent"`
+	Recipient    string
+	// Annotations  map[string]interface{} `json:"-"`
+	// Signature *primitives.Signature `json:"-"`
 }
 
-func (h *Message) GetType() string {
-	return "nimona.io/message"
-}
-
-func (h *Message) GetSignature() *crypto.Signature {
-	return h.Signature
-}
-
-func (h *Message) SetSignature(s *crypto.Signature) {
-	h.Signature = s
-}
-
-func (h *Message) GetAnnotations() map[string]interface{} {
-	return h.Annotations
-}
-
-func (h *Message) SetAnnotations(a map[string]interface{}) {
-	h.Annotations = a
-}
-
-func init() {
-	blocks.RegisterContentType(&Message{}, blocks.Persist())
+func (h *Message) Block() *primitives.Block {
+	// TODO(geoah) sign
+	return &primitives.Block{
+		Type: "nimona.io/message",
+		Payload: map[string]interface{}{
+			"body":    h.Body,
+			"dt_sent": h.SentDatetime,
+		},
+		Annotations: &primitives.Annotations{
+			Policies: []primitives.Policy{
+				primitives.Policy{
+					Subjects: []string{
+						h.Recipient,
+					},
+					Actions: []string{"read"},
+					Effect:  "allow",
+				},
+			},
+		},
+	}
 }
 
 func main() {
@@ -173,12 +170,12 @@ func main() {
 
 	statsBootstrapPeer := &peers.PeerInfo{}
 	for _, bootstrapPeer := range bootstrapPeerInfos {
-		peerInfoBytes, _ := base58.Decode(bootstrapPeer.key)
-		typedPeerInfo, err := blocks.UnpackDecode(peerInfoBytes)
+		peerInfoBlock, err := primitives.BlockFromBase58(bootstrapPeer.key)
 		if err != nil {
 			log.Fatal("could not unpack bootstrap node", err.Error())
 		}
-		peerInfo := typedPeerInfo.(*peers.PeerInfo)
+		peerInfo := &peers.PeerInfo{}
+		peerInfo.FromBlock(peerInfoBlock)
 		if err := addressBook.PutPeerInfo(peerInfo); err != nil {
 			log.Fatal("could not put bootstrap peer", err)
 		}
@@ -201,8 +198,8 @@ func main() {
 
 	n.RegisterDiscoverer(dht)
 
-	n.Handle("nimona.io/message", func(payload blocks.Typed) error {
-		fmt.Printf("___ Got block %s\n", payload.(*Message).Body)
+	n.Handle("nimona.io/message", func(block *primitives.Block) error {
+		fmt.Printf("___ Got block %s\n", block)
 		return nil
 	})
 
@@ -385,10 +382,11 @@ func main() {
 			}
 			msg := &Message{
 				Body:         body,
+				Recipient:    peer.Thumbprint(),
 				SentDatetime: time.Now().UTC().Format(time.RFC3339),
 			}
 			signer := addressBook.GetLocalPeerKey()
-			if err := n.Send(ctx, msg, peer.Signature.Key, blocks.SignWith(signer)); err != nil {
+			if err := n.Send(ctx, msg.Block(), peer.Signature.Key, primitives.SignWith(signer)); err != nil {
 				c.Println("Could not send block", err)
 				return
 			}

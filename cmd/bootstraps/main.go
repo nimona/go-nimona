@@ -7,14 +7,14 @@ import (
 	"os/user"
 	"path"
 
-	"nimona.io/go/blocks"
-
+	"nimona.io/go/base58"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 )
 
 func main() {
 	names := []string{
-		"stats",
+		// "stats",
 		// "andromeda",
 		// "borealis",
 		// "cassiopeia",
@@ -29,7 +29,7 @@ func main() {
 		// "norma",
 		// "orion",
 		// "pyxis",
-		// "local",
+		"local",
 	}
 	for _, name := range names {
 		configPath := "bootstraps/" + name
@@ -50,10 +50,11 @@ func main() {
 
 		pi := reg.GetLocalPeerInfo()
 		pi.Addresses = []string{
-			"tcp:" + name + ".nimona.io:21013",
-			// "tcp:localhost:21013",
+			// "tcp:" + name + ".nimona.io:21013",
+			"tcp:localhost:21013",
 		}
-		pp, _ := blocks.PackEncodeBase58(pi)
+		b, _ := primitives.Marshal(pi.Block())
+		pp := base58.Encode(b)
 		fmt.Printf(`// %s.nimona.io
 // "%s",
 `, name, pp)

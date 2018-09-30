@@ -1,13 +1,16 @@
-package crypto
+package primitives
 
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"math/big"
 
-	"nimona.io/go/base58"
-	"nimona.io/go/codec"
+	"github.com/fatih/structs"
+	"github.com/mitchellh/mapstructure"
+	ucodec "github.com/ugorji/go/codec"
+
 	"github.com/pkg/errors"
+	"nimona.io/go/base58"
 )
 
 // Supported values for KeyType
@@ -30,82 +33,51 @@ const (
 // Key defines the minimal interface for each of the
 // key types.
 type Key struct {
-	Algorithm              string `json:"alg,omitempty"`
-	KeyID                  string `json:"kid,omitempty"`
-	KeyType                string `json:"kty,omitempty"`
-	KeyUsage               string `json:"use,omitempty"`
-	KeyOps                 string `json:"key_ops,omitempty"`
-	X509CertChain          string `json:"x5c,omitempty"`
-	X509CertThumbprint     string `json:"x5t,omitempty"`
-	X509CertThumbprintS256 string `json:"x5tS256,omitempty"`
-	X509URL                string `json:"x5u,omitempty"`
-	Curve                  string `json:"crv,omitempty"`
-	X                      []byte `json:"x,omitempty"`
-	Y                      []byte `json:"y,omitempty"`
-	D                      []byte `json:"d,omitempty"`
+	Algorithm              string `json:"alg,omitempty" mapstructure:"alg,omitempty"`
+	KeyID                  string `json:"kid,omitempty" mapstructure:"kid,omitempty"`
+	KeyType                string `json:"kty,omitempty" mapstructure:"kty,omitempty"`
+	KeyUsage               string `json:"use,omitempty" mapstructure:"use,omitempty"`
+	KeyOps                 string `json:"key_ops,omitempty" mapstructure:"key_ops,omitempty"`
+	X509CertChain          string `json:"x5c,omitempty" mapstructure:"x5c,omitempty"`
+	X509CertThumbprint     string `json:"x5t,omitempty" mapstructure:"x5t,omitempty"`
+	X509CertThumbprintS256 string `json:"x5tS256,omitempty" mapstructure:"x5tS256,omitempty"`
+	X509URL                string `json:"x5u,omitempty" mapstructure:"x5u,omitempty"`
+	Curve                  string `json:"crv,omitempty" mapstructure:"crv,omitempty"`
+	X                      []byte `json:"x,omitempty" mapstructure:"x,omitempty"`
+	Y                      []byte `json:"y,omitempty" mapstructure:"y,omitempty"`
+	D                      []byte `json:"d,omitempty" mapstructure:"d,omitempty"`
 	key                    interface{}
 }
 
-func (b *Key) GetType() string {
-	return "key"
-}
-
-func (k *Key) GetSignature() *Signature {
-	// no signature
-	return nil
-}
-
-func (k *Key) SetSignature(s *Signature) {
-	// no signature
-}
-
-func (k *Key) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (k *Key) SetAnnotations(a map[string]interface{}) {
-	// no annotations
-}
-
-func (b *Key) MarshalBlock() (string, error) {
-	block := map[string]interface{}{
-		"type":    "key",
-		"payload": b,
+func (b *Key) Block() *Block {
+	s := structs.New(b)
+	s.TagName = "mapstructure"
+	return &Block{
+		Type:    "nimona.io/key",
+		Payload: s.Map(),
 	}
-
-	bytes, err := codec.Marshal(block)
-	if err != nil {
-		return "", err
-	}
-
-	return base58.Encode(bytes), nil
 }
 
-func (b *Key) UnmarshalBlock(b58bytes string) error {
-	bytes, err := base58.Decode(b58bytes)
-	if err != nil {
-		return err
-	}
+func (b *Key) FromBlock(block *Block) {
+	mapstructure.Decode(block.Payload, b)
+}
 
-	block := map[string]interface{}{
-		"type":    "key",
-		"payload": b,
-	}
+// CodecDecodeSelf helper for cbor unmarshaling
+func (k *Key) CodecDecodeSelf(dec *ucodec.Decoder) {
+	b := &Block{}
+	dec.MustDecode(b)
+	k.FromBlock(b)
+}
 
-	if err := codec.Unmarshal(bytes, &block); err != nil {
-		return err
-	}
-
-	return nil
+// CodecEncodeSelf helper for cbor marshaling
+func (k *Key) CodecEncodeSelf(enc *ucodec.Encoder) {
+	b := k.Block()
+	enc.MustEncode(b)
 }
 
 func (k *Key) Thumbprint() string {
-	t, err := k.MarshalBlock()
-	if err != nil {
-		panic(err)
-	}
-	return t
+	b, _ := Marshal(k.Block())
+	return base58.Encode(b)
 }
 
 // GetPublicKey returns the public key

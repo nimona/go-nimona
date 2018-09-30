@@ -1,39 +1,55 @@
 package dht
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"github.com/mitchellh/mapstructure"
+
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 )
 
-func init() {
-	blocks.RegisterContentType(&PeerInfoResponse{})
-}
-
 type PeerInfoResponse struct {
-	RequestID    string            `json:"requestID,omitempty"`
-	PeerInfo     *peers.PeerInfo   `json:"peerInfo,omitempty"`
-	ClosestPeers []*peers.PeerInfo `json:"closestPeers,omitempty"`
-	Signature    *crypto.Signature `json:"-"`
+	RequestID    string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
+	PeerInfo     *peers.PeerInfo       `json:"peerInfo,omitempty" mapstructure:"peerInfo,omitempty"`
+	ClosestPeers []*peers.PeerInfo     `json:"closestPeers,omitempty" mapstructure:"closestPeers,omitempty"`
+	Signature    *primitives.Signature `json:"-"`
 }
 
-func (p *PeerInfoResponse) GetType() string {
-	return "dht.peerinfo.response"
+func (r *PeerInfoResponse) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/dht.peer-info.response",
+		Payload: map[string]interface{}{
+			"requestID":    r.RequestID,
+			"peerInfo":     r.PeerInfo,
+			"closestPeers": r.ClosestPeers,
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (p *PeerInfoResponse) GetSignature() *crypto.Signature {
-	return p.Signature
-}
+func (r *PeerInfoResponse) FromBlock(block *primitives.Block) {
+	t := &struct {
+		RequestID    string                   `mapstructure:"requestID,omitempty"`
+		PeerInfo     map[string]interface{}   `mapstructure:"peerInfo,omitempty"`
+		ClosestPeers []map[string]interface{} `mapstructure:"closestPeers,omitempty"`
+	}{}
 
-func (p *PeerInfoResponse) SetSignature(s *crypto.Signature) {
-	p.Signature = s
-}
+	mapstructure.Decode(block.Payload, t)
 
-func (p *PeerInfoResponse) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
+	if t.PeerInfo != nil {
+		r.PeerInfo = &peers.PeerInfo{}
+		r.PeerInfo.FromBlock(primitives.BlockFromMap(t.PeerInfo))
+	}
 
-func (p *PeerInfoResponse) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+	if len(t.ClosestPeers) > 0 {
+		r.ClosestPeers = []*peers.PeerInfo{}
+		for _, pb := range t.ClosestPeers {
+			pi := &peers.PeerInfo{}
+			ppb := primitives.BlockFromMap(pb)
+			pi.FromBlock(ppb)
+			r.ClosestPeers = append(r.ClosestPeers, pi)
+		}
+	}
+
+	r.RequestID = t.RequestID
+	r.Signature = block.Signature
 }

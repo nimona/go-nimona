@@ -1,38 +1,30 @@
 package net
 
 import (
-	blocks "nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&BlockResponse{})
-}
 
 // BlockResponse -
 type BlockResponse struct {
-	RequestID string            `json:"requestID"`
-	Block     []byte            `json:"block"`
-	Signature *crypto.Signature `json:"-"`
+	RequestID      string
+	RequestedBlock *primitives.Block
+	Signature      *primitives.Signature
+	Sender         *primitives.Key
 }
 
-func (r *BlockResponse) GetType() string {
-	return "blx.response"
+func (r *BlockResponse) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/block.response",
+		Payload: map[string]interface{}{
+			"requestID": r.RequestID,
+			"block":     r.RequestedBlock,
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (r *BlockResponse) GetSignature() *crypto.Signature {
-	return r.Signature
-}
-
-func (r *BlockResponse) SetSignature(s *crypto.Signature) {
-	r.Signature = s
-}
-
-func (r *BlockResponse) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (r *BlockResponse) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+func (r *BlockResponse) FromBlock(block *primitives.Block) {
+	r.RequestID = block.Payload["requestID"].(string)
+	r.RequestedBlock = block.Payload["block"].(*primitives.Block)
+	r.Signature = block.Signature
 }

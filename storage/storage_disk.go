@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"nimona.io/go/blocks"
+	"nimona.io/go/primitives"
 )
 
 // diskStorage stores the block in a file
@@ -16,7 +16,6 @@ type diskStorage struct {
 
 const (
 	dataExt string = ".data"
-	// metaExt        = ".meta"
 )
 
 // NewDiskStorage creates a new diskStorage struct with the given path
@@ -33,26 +32,19 @@ func NewDiskStorage(path string) Storage {
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
 func (d *diskStorage) Store(key string, block []byte) error {
-	blockID, err := blocks.SumSha3(block)
+	blockID, err := primitives.SumSha3(block)
 	if err != nil {
 		return err
 	}
 	dataFilePath := filepath.Join(d.path, blockID+dataExt)
-	// metaFilePath := filepath.Join(d.path, block.ID()+metaExt)
 
 	dataFileFound := false
-	// metaFileFound := false
 
 	// Check if both files exist otherwise overwrite them
 	if _, err := os.Stat(dataFilePath); err == nil {
 		dataFileFound = true
 	}
 
-	// if _, err := os.Stat(metaFilePath); err == nil {
-	// 	metaFileFound = true
-	// }
-
-	// if dataFileFound && metaFileFound {
 	if dataFileFound {
 		return ErrExists
 	}
@@ -62,33 +54,12 @@ func (d *diskStorage) Store(key string, block []byte) error {
 		return err
 	}
 
-	// Write the meta in a file
-	// mf, err := os.Create(metaFilePath)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// defer mf.Close()
-
-	// enc := json.NewEncoder(mf)
-	// if err := enc.Encode(block); err != nil {
-	// 	return err
-	// }
-
-	// mf.Sync()
-
 	return nil
 }
 
 func (d *diskStorage) Get(key string) ([]byte, error) {
 	// metaFilePath := filepath.Join(d.path, key+metaExt)
 	dataFilePath := filepath.Join(d.path, key+dataExt)
-
-	// Check if both meta and data files exist
-	// _, err := os.Stat(metaFilePath)
-	// if err != nil {
-	// 	return nil, ErrNotFound
-	// }
 
 	if _, err := os.Stat(dataFilePath); err != nil {
 		return nil, ErrNotFound
@@ -102,34 +73,6 @@ func (d *diskStorage) Get(key string) ([]byte, error) {
 
 	return b, nil
 
-	// Read meta from the meta file
-	// mf, err := os.Open(metaFilePath)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// defer mf.Close()
-
-	// meta := Meta{}
-
-	// dec := json.NewDecoder(mf)
-	// if err := dec.Decode(&meta); err != nil {
-	// 	return nil, err
-	// }
-
-	// TODO Add block unmarhsaling
-	// block, err := blocks.Unmarshal(b)
-	// if err != nil {
-	// 	return nil, errors.New("could not unmarshal file") // err
-	// }
-
-	// return block, nil
-
-	// return &Block{
-	// 	Key:  key,
-	// 	Meta: meta,
-	// 	Data: data,
-	// }, nil
 }
 
 // List returns a list of all the block hashes that exist as files
@@ -148,13 +91,6 @@ func (d *diskStorage) List() ([]string, error) {
 
 		if ext == dataExt {
 			key := name[0 : len(name)-len(ext)]
-			// Check if the datafile for this key exists
-			// df := filepath.Join(d.path, key+dataExt)
-			// _, err = os.Stat(df)
-			// if err != nil {
-			// 	continue
-			// }
-
 			results = append(results, key)
 		}
 	}

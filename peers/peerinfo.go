@@ -1,39 +1,46 @@
 package peers
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
-)
+	"github.com/mitchellh/mapstructure"
+	ucodec "github.com/ugorji/go/codec"
 
-func init() {
-	blocks.RegisterContentType(&PeerInfo{})
-}
+	"nimona.io/go/primitives"
+)
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
-	Addresses []string          `json:"addresses"`
-	Signature *crypto.Signature `json:"-"`
+	Addresses []string `mapstructure:"addresses"`
+	Signature *primitives.Signature
 }
 
-func (pi *PeerInfo) GetType() string {
-	return "peer.info"
+func (pi *PeerInfo) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/peer.info",
+		Payload: map[string]interface{}{
+			"addresses": pi.Addresses,
+		},
+		Signature: pi.Signature,
+	}
 }
 
-func (pi *PeerInfo) GetSignature() *crypto.Signature {
-	return pi.Signature
+func (pi *PeerInfo) FromBlock(block *primitives.Block) {
+	if err := mapstructure.Decode(block.Payload, pi); err != nil {
+		panic(err)
+	}
+	pi.Signature = block.Signature
 }
 
-func (pi *PeerInfo) SetSignature(s *crypto.Signature) {
-	pi.Signature = s
+// CodecDecodeSelf helper for cbor unmarshaling
+func (pi *PeerInfo) CodecDecodeSelf(dec *ucodec.Decoder) {
+	b := &primitives.Block{}
+	dec.MustDecode(b)
+	pi.FromBlock(b)
 }
 
-func (pi *PeerInfo) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (pi *PeerInfo) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+// CodecEncodeSelf helper for cbor marshaling
+func (pi *PeerInfo) CodecEncodeSelf(enc *ucodec.Encoder) {
+	b := pi.Block()
+	enc.MustEncode(b)
 }
 
 func (pi *PeerInfo) Thumbprint() string {

@@ -6,10 +6,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
+	"nimona.io/go/primitives"
 )
 
 const numPeersNear int = 15
@@ -120,7 +119,7 @@ func (q *query) next() {
 		return
 	}
 
-	peersToAsk := []*crypto.Key{}
+	peersToAsk := []*primitives.Key{}
 	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
 		if _, ok := q.contactedPeers.Load(peerInfo.Thumbprint()); ok {
@@ -130,18 +129,20 @@ func (q *query) next() {
 		q.contactedPeers.Store(peerInfo.Thumbprint(), true)
 	}
 
-	var req interface{}
+	block := &primitives.Block{}
 	switch q.queryType {
 	case PeerInfoQuery:
-		req = &PeerInfoRequest{
+		req := &PeerInfoRequest{
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
+		block = req.Block()
 	case ProviderQuery:
-		req = &ProviderRequest{
+		req := &ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
 		}
+		block = req.Block()
 	default:
 		return
 	}
@@ -150,7 +151,7 @@ func (q *query) next() {
 	logger := log.Logger(ctx)
 	signer := q.dht.addressBook.GetLocalPeerKey()
 	for _, peer := range peersToAsk {
-		if err := q.dht.exchange.Send(ctx, req.(blocks.Typed), peer, blocks.SignWith(signer)); err != nil {
+		if err := q.dht.exchange.Send(ctx, block, peer, primitives.SignWith(signer)); err != nil {
 			logger.Debug("query next could not send", zap.Error(err), zap.String("peerID", peer.Thumbprint()))
 		}
 	}

@@ -3,7 +3,7 @@ package dht
 import (
 	"sync"
 
-	"nimona.io/go/blocks"
+	"nimona.io/go/primitives"
 )
 
 type Store struct {
@@ -24,8 +24,8 @@ func newStore() (*Store, error) {
 
 func (s *Store) PutProvider(provider *Provider) error {
 	// TODO verify payload type
-	b, _ := blocks.PackEncode(provider)
-	h, _ := blocks.SumSha3(b)
+	b, _ := primitives.Marshal(provider.Block())
+	h, _ := primitives.SumSha3(b)
 	s.providers.Store(h, provider)
 	return nil
 }

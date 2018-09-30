@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/base58"
 	"nimona.io/go/log"
+	"nimona.io/go/primitives"
 )
 
 // loadConfig signing key from/to a JSON encoded file
@@ -24,11 +24,17 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 		if err != nil {
 			return err
 		}
-		keyi, err := blocks.UnpackDecodeBase58(cfg.Key)
+		keyBytes, err := base58.Decode(cfg.Key)
 		if err != nil {
 			return err
 		}
-		ab.localKey = keyi.(*crypto.Key)
+		key := &primitives.Key{}
+		keyBlock, err := primitives.Unmarshal(keyBytes)
+		if err != nil {
+			return err
+		}
+		key.FromBlock(keyBlock)
+		ab.localKey = key
 		return nil
 	}
 
@@ -40,20 +46,20 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 		return err
 	}
 
-	localKey, err := crypto.NewKey(peerSigningKey)
+	localKey, err := primitives.NewKey(peerSigningKey)
 	if err != nil {
 		return err
 	}
 
 	ab.localKey = localKey
 
-	ks, err := blocks.PackEncodeBase58(localKey)
+	keyBytes, err := primitives.Marshal(localKey.Block())
 	if err != nil {
 		return err
 	}
 
 	cfg := &config{
-		Key: ks,
+		Key: base58.Encode(keyBytes),
 	}
 
 	if err := storeConfig(cfg, peerPath); err != nil {

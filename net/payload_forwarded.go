@@ -1,38 +1,38 @@
 package net
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"github.com/mitchellh/mapstructure"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&ForwardRequest{})
-}
 
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
-	Recipient *crypto.Key       `json:"recipient"`
-	Typed     blocks.Typed      `json:"data"`
-	Signature *crypto.Signature `json:"-"`
+	Recipient *primitives.Key
+	FwBlock   *primitives.Block
+	Signature *primitives.Signature
 }
 
-func (r *ForwardRequest) GetType() string {
-	return "nimona.forwarded"
+func (r *ForwardRequest) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/block.forward.request",
+		Payload: map[string]interface{}{
+			"recipient": r.Recipient.Block(),
+			"block":     r.Block,
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (r *ForwardRequest) GetSignature() *crypto.Signature {
-	return r.Signature
-}
+func (r *ForwardRequest) FromBlock(block *primitives.Block) {
+	t := &struct {
+		Recipient *primitives.Block `mapstructure:"recipient,omitempty"`
+		FwBlock   *primitives.Block `mapstructure:"block,omitempty"`
+	}{}
 
-func (r *ForwardRequest) SetSignature(s *crypto.Signature) {
-	r.Signature = s
-}
+	mapstructure.Decode(block.Payload, t)
 
-func (r *ForwardRequest) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (r *ForwardRequest) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+	if t.Recipient != nil {
+		r.Recipient = &primitives.Key{}
+		r.Recipient.FromBlock(t.Recipient)
+	}
 }

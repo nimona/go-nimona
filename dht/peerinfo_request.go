@@ -1,38 +1,29 @@
 package dht
 
 import (
-	"nimona.io/go/blocks"
-	"nimona.io/go/crypto"
+	"nimona.io/go/primitives"
 )
-
-func init() {
-	blocks.RegisterContentType(&PeerInfoRequest{})
-}
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string            `json:"requestID,omitempty"`
-	PeerID    string            `json:"peerID"`
-	Signature *crypto.Signature `json:"-"`
+	RequestID string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
+	PeerID    string                `json:"peerID" mapstructure:"peerID"`
+	Signature *primitives.Signature `json:"-" mapstructure:"-"`
 }
 
-func (p *PeerInfoRequest) GetType() string {
-	return "dht.peerinfo.request"
+func (r *PeerInfoRequest) Block() *primitives.Block {
+	return &primitives.Block{
+		Type: "nimona.io/dht.peer-info.request",
+		Payload: map[string]interface{}{
+			"requestID": r.RequestID,
+			"peerID":    r.PeerID,
+		},
+		Signature: r.Signature,
+	}
 }
 
-func (p *PeerInfoRequest) GetSignature() *crypto.Signature {
-	return p.Signature
-}
-
-func (p *PeerInfoRequest) SetSignature(s *crypto.Signature) {
-	p.Signature = s
-}
-
-func (p *PeerInfoRequest) GetAnnotations() map[string]interface{} {
-	// no annotations
-	return map[string]interface{}{}
-}
-
-func (p *PeerInfoRequest) SetAnnotations(a map[string]interface{}) {
-	// no annotations
+func (r *PeerInfoRequest) FromBlock(block *primitives.Block) {
+	r.RequestID = block.Payload["requestID"].(string)
+	r.PeerID = block.Payload["peerID"].(string)
+	r.Signature = block.Signature
 }
