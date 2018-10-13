@@ -12,5 +12,6 @@ func (api *API) HandleGetProviders(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	c.JSON(http.StatusOK, providers)
+	// TODO return actuall provider blocks, or remove endpoint
+	c.Render(http.StatusOK, Renderer(c, providers))
 }

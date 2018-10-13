@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"nimona.io/go/primitives"
 )
 
 // diskStorage stores the block in a file
@@ -32,11 +30,7 @@ func NewDiskStorage(path string) Storage {
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
 func (d *diskStorage) Store(key string, block []byte) error {
-	blockID, err := primitives.SumSha3(block)
-	if err != nil {
-		return err
-	}
-	dataFilePath := filepath.Join(d.path, blockID+dataExt)
+	dataFilePath := filepath.Join(d.path, key+dataExt)
 
 	dataFileFound := false
 

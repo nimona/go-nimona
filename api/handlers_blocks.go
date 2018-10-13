@@ -10,7 +10,7 @@ import (
 	"nimona.io/go/storage"
 )
 
-type blockReq struct {
+type BlockRequest struct {
 	Type        string                 `json:"type,omitempty"`
 	Annotations map[string]interface{} `json:"annotations,omitempty"`
 	Payload     map[string]interface{} `json:"payload,omitempty"`
@@ -23,7 +23,7 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	ms := []map[string]interface{}{}
+	ms := []interface{}{}
 	for _, blockID := range blockIDs {
 		b, err := api.blockStore.Get(blockID)
 		if err != nil {
@@ -37,11 +37,14 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 		}
 		ms = append(ms, api.mapBlock(m))
 	}
-	c.JSON(http.StatusOK, ms)
+	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
 func (api *API) HandleGetBlock(c *gin.Context) {
 	blockID := c.Param("blockID")
+	if blockID == "" {
+		c.AbortWithError(400, errors.New("missing block id"))
+	}
 	b, err := api.blockStore.Get(blockID)
 	if err != nil {
 		if err == storage.ErrNotFound {
@@ -56,11 +59,12 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	c.JSON(http.StatusOK, api.mapBlock(m))
+	ms := api.mapBlock(m)
+	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
 func (api *API) HandlePostBlock(c *gin.Context) {
-	req := &blockReq{}
+	req := &BlockRequest{}
 	if err := c.BindJSON(req); err != nil {
 		c.AbortWithError(400, err)
 		return
@@ -91,5 +95,5 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.Render(http.StatusOK, Renderer(c, nil))
 }

@@ -88,6 +88,5 @@ func (api *API) mapBlock(v *primitives.Block) map[string]interface{} {
 	}
 	m["id"] = primitives.ID(v)
 	m["recipients"] = recipients
-	delete(m, "signature")
 	return m
 }

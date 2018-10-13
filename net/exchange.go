@@ -302,8 +302,7 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 	} else {
 		if shouldPersist(block.Type) {
 			bytes, _ := primitives.Marshal(block)
-			blockID, _ := primitives.SumSha3(bytes)
-			w.store.Store(blockID, bytes)
+			w.store.Store(block.ID(), bytes)
 		}
 	}
 
@@ -413,8 +412,7 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient 
 
 	if shouldPersist(block.Type) {
 		bytes, _ := primitives.Marshal(block)
-		blockID, _ := primitives.SumSha3(bytes)
-		w.store.Store(blockID, bytes)
+		w.store.Store(block.ID(), bytes)
 	}
 
 	cerr := make(chan error, 1)
