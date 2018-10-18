@@ -16,5 +16,16 @@ func (api *API) HandleGetPeers(c *gin.Context) {
 	for _, v := range peers {
 		ms = append(ms, api.mapBlock(v.Block()))
 	}
-	c.JSON(http.StatusOK, ms)
+	c.Render(http.StatusOK, Renderer(c, ms))
+}
+
+func (api *API) HandleGetPeer(c *gin.Context) {
+	peerID := c.Param("peerID")
+	m, err := api.addressBook.GetPeerInfo(peerID)
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	ms := api.mapBlock(m.Block())
+	c.Render(http.StatusOK, Renderer(c, ms))
 }

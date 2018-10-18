@@ -3,11 +3,15 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"nimona.io/go/codec"
 	"nimona.io/go/log"
 	"nimona.io/go/primitives"
 )
@@ -20,6 +24,21 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		pattern = ns + pattern
 	} else {
 		pattern = ns
+	}
+
+	write := func(conn *websocket.Conn, data interface{}) error {
+		contentType := strings.ToLower(c.ContentType())
+		if strings.Contains(contentType, "cbor") {
+			bs, err := codec.Marshal(data)
+			if err != nil {
+				return err
+			}
+			if err := conn.WriteMessage(2, bs); err != nil {
+				return err
+			}
+		}
+
+		return conn.WriteJSON(data)
 	}
 
 	var wsupgrader = websocket.Upgrader{
@@ -40,14 +59,14 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	logger := log.Logger(ctx).Named("api")
 	signer := api.addressBook.GetLocalPeerKey()
 	incoming := make(chan *primitives.Block, 100)
-	outgoing := make(chan *blockReq, 100)
+	outgoing := make(chan *BlockRequest, 100)
 
 	go func() {
 		for {
 			select {
 			case v := <-incoming:
 				m := api.mapBlock(v)
-				conn.WriteJSON(m)
+				write(conn, m)
 
 			case r := <-outgoing:
 				keyBlock, err := primitives.BlockFromBase58(r.Recipient)
@@ -80,11 +99,11 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 					m["status"] = "error"
 				}
 				// TODO handle error
-				conn.WriteJSON(m)
+				write(conn, m)
 			}
 		}
 	}()
-
+	fmt.Println(pattern, pattern, pattern, pattern, pattern, pattern, pattern)
 	hr, err := api.exchange.Handle(pattern, func(v *primitives.Block) error {
 		incoming <- v
 		return nil
@@ -99,10 +118,13 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			logger.Error("could not read from ws", zap.Error(err))
+			if err == io.EOF {
+				continue
+			}
+			logger.Warn("could not read from ws", zap.Error(err))
 			continue
 		}
-		r := &blockReq{}
+		r := &BlockRequest{}
 		if err := json.Unmarshal(msg, r); err != nil {
 			logger.Error("could not unmarshal outgoing block", zap.Error(err))
 			continue

@@ -40,6 +40,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 
 	peers := router.Group("/api/v1/peers")
 	peers.GET("/", api.HandleGetPeers)
+	peers.GET("/:peerID", api.HandleGetPeer)
 
 	providers := router.Group("/api/v1/providers")
 	providers.GET("/", api.HandleGetProviders)
@@ -88,6 +89,5 @@ func (api *API) mapBlock(v *primitives.Block) map[string]interface{} {
 	}
 	m["id"] = primitives.ID(v)
 	m["recipients"] = recipients
-	delete(m, "signature")
 	return m
 }
