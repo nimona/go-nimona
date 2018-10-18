@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
-  name = "github.com/abiosoft/readline"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "155bce2042db95a783081fab225e74dd879055b0"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -26,28 +18,12 @@
   revision = "6fb51d2a2a533cabb08119a9d05fe3f6b4c513f3"
 
 [[projects]]
-  digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
-  name = "github.com/fatih/color"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
-  version = "v1.7.0"
-
-[[projects]]
   digest = "1:ca82a3b99694824c627573c2a76d0e49719b4a9c02d1d85a2ac91f1c1f52ab9b"
   name = "github.com/fatih/structs"
   packages = ["."]
   pruneopts = "UT"
   revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
   version = "v1.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:50a46ab1d5edbbdd55125b4d37f1bf503d0807c26461f9ad7b358d6006641d09"
-  name = "github.com/flynn-archive/go-shlex"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3f9db97f856818214da2e1057f8ad84803971cff"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -189,14 +165,6 @@
   pruneopts = "UT"
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
   version = "v1.8.0"
-
-[[projects]]
-  digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
 
 [[projects]]
   digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
@@ -438,14 +406,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:d19cfbbf2e7dad7c6faba60dc7700d6b7d6ff3d3c9477a8e44c32a9eaf3cd907"
-  name = "gopkg.in/abiosoft/ishell.v2"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0a6b1640e32638dd433ee7e57ec325a7bdd79561"
-  version = "v2.0.0"
-
-[[projects]]
   digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
@@ -497,7 +457,6 @@
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
     "golang.org/x/crypto/sha3",
-    "gopkg.in/abiosoft/ishell.v2",
     "gopkg.in/inconshreveable/go-keen.v0",
   ]
   solver-name = "gps-cdcl"
