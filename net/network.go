@@ -63,8 +63,9 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 			if err == nil {
 				return conn, nil
 			}
-
 		}
+
+		return nil, ErrAllAddressesFailed
 
 	case "tcp":
 		addr := strings.Replace(address, "tcp:", "", 1)
@@ -112,7 +113,9 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 
 		// store who is on the other side - peer id
 		conn.RemoteID = synAck.Signature.Key.Thumbprint()
-		n.addressBook.PutPeerInfo(synAck.PeerInfo)
+		if err := n.addressBook.PutPeerInfo(synAck.PeerInfo); err != nil {
+			log.DefaultLogger.Panic("could not add remote peer", zap.Error(err))
+		}
 
 		ack := &HandshakeAck{
 			Nonce: nonce,
@@ -205,7 +208,9 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			nonce := syn.Nonce
 
 			// store the peer on the other side
-			n.addressBook.PutPeerInfo(syn.PeerInfo)
+			if err := n.addressBook.PutPeerInfo(syn.PeerInfo); err != nil {
+				log.DefaultLogger.Panic("could not add remote peer", zap.Error(err))
+			}
 
 			synAck := &HandshakeSynAck{
 				Nonce:    nonce,

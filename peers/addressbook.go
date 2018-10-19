@@ -1,7 +1,6 @@
 package peers
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -69,10 +68,6 @@ func (ab *AddressBook) GetLocalPeerKey() *primitives.Key {
 
 // PutPeerInfo stores an block with a peer payload
 func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
-	if len(peerInfo.Addresses) == 0 {
-		return errors.New("missing addresses")
-	}
-
 	if peerInfo.Thumbprint() == ab.GetLocalPeerInfo().Thumbprint() {
 		return nil
 	}

@@ -110,7 +110,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		for {
 			conn := <-incomingConnections
 			go func(conn *Connection) {
-				w.manager.Add(conn)
+				w.manager.Add("peer:"+conn.RemoteID, conn)
 				if err := w.HandleConnection(conn); err != nil {
 					w.logger.Warn("failed to handle block", zap.Error(err))
 				}
@@ -476,21 +476,21 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, address st
 	return ErrAllAddressesFailed
 }
 
-func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, error) {
-	w.logger.Debug("looking for existing connection", zap.String("peer_id", peerID))
-	if peerID == "" {
-		return nil, errors.New("missing peer id")
+func (w *exchange) GetOrDial(ctx context.Context, address string) (*Connection, error) {
+	w.logger.Debug("looking for existing connection", zap.String("address", address))
+	if address == "" {
+		return nil, errors.New("missing address")
 	}
 
-	existingConn, err := w.manager.Get(peerID)
+	existingConn, err := w.manager.Get(address)
 	if err == nil {
-		w.logger.Debug("found existing connection", zap.String("peerID", peerID))
+		w.logger.Debug("found existing connection", zap.String("address", address))
 		return existingConn, nil
 	}
 
-	conn, err := w.network.Dial(ctx, peerID)
+	conn, err := w.network.Dial(ctx, address)
 	if err != nil {
-		// w.manager.Close(peerID)
+		// w.manager.Close(address)
 		return nil, err
 	}
 
@@ -500,7 +500,7 @@ func (w *exchange) GetOrDial(ctx context.Context, peerID string) (*Connection, e
 		}
 	}()
 
-	w.manager.Add(conn)
+	w.manager.Add(address, conn)
 
 	return conn, nil
 }
