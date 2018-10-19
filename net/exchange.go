@@ -36,7 +36,7 @@ var (
 type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
 	Handle(contentType string, h func(o *primitives.Block) error) (func(), error)
-	Send(ctx context.Context, o *primitives.Block, recipient *primitives.Key, opts ...primitives.SendOption) error
+	Send(ctx context.Context, o *primitives.Block, address string, opts ...primitives.SendOption) error
 	RegisterDiscoverer(discovery Discoverer)
 }
 
@@ -60,7 +60,7 @@ type exchange struct {
 
 type outBlock struct {
 	context   context.Context
-	recipient *primitives.Key
+	recipient string
 	opts      []primitives.SendOption
 	block     *primitives.Block
 	err       chan error
@@ -101,7 +101,6 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		getRequests: sync.Map{},
 	}
 
-	self := w.addressBook.GetLocalPeerInfo()
 	incomingConnections, err := w.network.Listen(ctx, address)
 	if err != nil {
 		return nil, err
@@ -138,39 +137,33 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 	go func() {
 		for {
 			block := <-w.outgoingPayloads
-			if block.recipient == nil {
+			if block.recipient == "" {
 				w.logger.Info("missing recipient")
 				block.err <- errors.New("missing recipient")
 				continue
 			}
 
-			recipientThumbPrint := block.recipient.Thumbprint()
-			if self.Thumbprint() == recipientThumbPrint {
-				w.logger.Info("cannot send block to self")
-				block.err <- errors.New("cannot send block to self")
-				continue
-			}
-
-			logger := w.logger.With(zap.String("peerID", recipientThumbPrint))
+			logger := w.logger.With(zap.String("recipient", block.recipient))
 
 			// try to send the block directly to the recipient
 			logger.Debug("getting conn to write block")
-			conn, err := w.GetOrDial(block.context, recipientThumbPrint)
+			conn, err := w.GetOrDial(block.context, block.recipient)
 			if err != nil {
 				logger.Debug("could not get conn to recipient", zap.Error(err))
 				block.err <- err
 				continue
 			}
 
-			if err := Write(block.block, conn, block.opts...); err != nil {
-				w.manager.Close(recipientThumbPrint)
+			if err := Write(block.block, conn); err != nil {
+				w.manager.Close(block.recipient)
 				logger.Debug("could not write to recipient", zap.Error(err))
 				block.err <- err
 				continue
 			}
 
 			// update peer status
-			w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusConnected)
+			// TODO(geoah) fix status -- not that we are using this
+			// w.addressBook.PutPeerStatus(recipientThumbPrint, peers.StatusConnected)
 			block.err <- nil
 			continue
 		}
@@ -242,7 +235,7 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 	case "nimona.io/block.forward.request":
 		req := &ForwardRequest{}
 		req.FromBlock(block)
-		w.logger.Info("got forwarded message", zap.String("recipient", req.Recipient.Thumbprint()))
+		w.logger.Info("got forwarded message", zap.String("recipient", req.Recipient))
 		cerr := make(chan error, 1)
 		ctx, cf := context.WithTimeout(context.Background(), time.Second)
 		defer cf()
@@ -344,7 +337,8 @@ func (w *exchange) handleBlockRequest(payload *BlockRequest) error {
 	}
 
 	signer := w.addressBook.GetLocalPeerKey()
-	if err := w.Send(context.Background(), resp.Block(), payload.Sender, primitives.SignWith(signer)); err != nil {
+	addr := "peer:" + payload.Sender.Thumbprint()
+	if err := w.Send(context.Background(), resp.Block(), addr, primitives.SignWith(signer)); err != nil {
 		w.logger.Warn("blx.handleBlockRequest could not send block", zap.Error(err))
 		return err
 	}
@@ -374,21 +368,22 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	}()
 
 	w.getRequests.Store(req.RequestID, req)
-	signer := w.addressBook.GetLocalPeerKey()
+	// signer := w.addressBook.GetLocalPeerKey()
 
-	go func() {
-		providers, err := w.discovery.GetProviders(ctx, id)
-		if err != nil {
-			// TODO log err
-			return
-		}
+	// go func() {
+	// 	providers, err := w.discovery.GetProviders(ctx, id)
+	// 	if err != nil {
+	// 		// TODO log err
+	// 		return
+	// 	}
 
-		for provider := range providers {
-			if err := w.Send(ctx, req.Block(), provider, primitives.SignWith(signer)); err != nil {
-				w.logger.Warn("blx.Get could not send req block", zap.Error(err))
-			}
-		}
-	}()
+	// 	for provider := range providers {
+	// 		addr := "peer:" + provider.Thumbprint()
+	// 		if err := w.Send(ctx, req.Block(), addr, primitives.SignWith(signer)); err != nil {
+	// 			w.logger.Warn("blx.Get could not send req block", zap.Error(err))
+	// 		}
+	// 	}
+	// }()
 
 	for {
 		select {
@@ -401,7 +396,9 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	}
 }
 
-func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient *primitives.Key, opts ...primitives.SendOption) error {
+func (w *exchange) Send(ctx context.Context, block *primitives.Block, address string,
+	opts ...primitives.SendOption) error {
+
 	cfg := primitives.ParseSendOptions(opts...)
 
 	if cfg.Sign && cfg.Key != nil && block.Signature == nil {
@@ -418,7 +415,7 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient 
 	cerr := make(chan error, 1)
 	w.outgoingPayloads <- &outBlock{
 		context:   ctx,
-		recipient: recipient,
+		recipient: address,
 		block:     block,
 		err:       cerr,
 		opts:      opts,
@@ -427,9 +424,15 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient 
 		return nil
 	}
 
+	recipient := ""
+	if strings.HasPrefix(address, "peer:") {
+		recipient = strings.Replace(address, "peer:", "", 1)
+	} else {
+		return ErrAllAddressesFailed
+	}
+
 	// try to send message via their relay addresses
-	peerID := recipient.Thumbprint()
-	peer, err := w.addressBook.GetPeerInfo(peerID)
+	peer, err := w.addressBook.GetPeerInfo(recipient)
 	if err != nil {
 		return err
 	}
@@ -442,7 +445,7 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient 
 
 	// TODO(geoah) make sure fw block is signed
 	fw := &ForwardRequest{
-		Recipient: recipient,
+		Recipient: address,
 		FwBlock:   block,
 	}
 
@@ -459,7 +462,7 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, recipient 
 			cerr := make(chan error, 1)
 			w.outgoingPayloads <- &outBlock{
 				context:   ctx,
-				recipient: relayPeer.Signature.Key,
+				recipient: "peer:" + relayPeer.Signature.Key.Thumbprint(),
 				block:     fw.Block(),
 				err:       cerr,
 				opts:      opts,

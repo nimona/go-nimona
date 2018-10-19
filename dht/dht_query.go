@@ -151,7 +151,8 @@ func (q *query) next() {
 	logger := log.Logger(ctx)
 	signer := q.dht.addressBook.GetLocalPeerKey()
 	for _, peer := range peersToAsk {
-		if err := q.dht.exchange.Send(ctx, block, peer, primitives.SignWith(signer)); err != nil {
+		addr := "peer:" + peer.Thumbprint()
+		if err := q.dht.exchange.Send(ctx, block, addr, primitives.SignWith(signer)); err != nil {
 			logger.Debug("query next could not send", zap.Error(err), zap.String("peerID", peer.Thumbprint()))
 		}
 	}

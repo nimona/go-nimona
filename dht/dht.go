@@ -36,7 +36,7 @@ type DHT struct {
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
-func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
+func NewDHT(exchange net.Exchange, pm *peers.AddressBook, addresses []string) (*DHT, error) {
 	// create new kv store
 	store, _ := newStore()
 
@@ -50,6 +50,19 @@ func NewDHT(exchange net.Exchange, pm *peers.AddressBook) (*DHT, error) {
 
 	exchange.Handle("nimona.io/dht.**", nd.handleBlock)
 	exchange.Handle("nimona.io/peer.info", nd.handleBlock)
+
+	lk := pm.GetLocalPeerKey()
+	for _, addr := range addresses {
+		ctx := context.Background()
+		req := &PeerInfoRequest{
+			RequestID: net.RandStringBytesMaskImprSrc(8),
+			PeerID:    lk.Thumbprint(),
+		}
+		reqBlock := req.Block()
+		if err := exchange.Send(ctx, reqBlock, addr, primitives.SignWith(lk)); err != nil {
+			log.Logger(ctx).Warn("could not send to bootstrap", zap.String("addr", addr), zap.Error(err))
+		}
+	}
 
 	go nd.refresh()
 
@@ -78,7 +91,7 @@ func (nd *DHT) refresh() {
 
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
-			if err := nd.exchange.Send(ctx, peerInfo.Block(), closestPeer.Signature.Key); err != nil {
+			if err := nd.exchange.Send(ctx, peerInfo.Block(), closestPeer.Address()); err != nil {
 				logger.Error("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 			}
 		}
@@ -147,7 +160,8 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	}
 
 	signer := nd.addressBook.GetLocalPeerKey()
-	if err := nd.exchange.Send(ctx, resp.Block(), payload.Signature.Key, primitives.SignWith(signer)); err != nil {
+	addr := "peer:" + payload.Signature.Key.Thumbprint()
+	if err := nd.exchange.Send(ctx, resp.Block(), addr, primitives.SignWith(signer)); err != nil {
 		logger.Debug("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
@@ -204,7 +218,8 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 	}
 
 	signer := nd.addressBook.GetLocalPeerKey()
-	if err := nd.exchange.Send(ctx, resp.Block(), payload.Signature.Key, primitives.SignWith(signer)); err != nil {
+	addr := "peer:" + payload.Signature.Key.Thumbprint()
+	if err := nd.exchange.Send(ctx, resp.Block(), addr, primitives.SignWith(signer)); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
@@ -335,7 +350,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
-		if err := nd.exchange.Send(ctx, provider.Block(), closestPeer.Signature.Key, primitives.SignWith(signer)); err != nil {
+		if err := nd.exchange.Send(ctx, provider.Block(), closestPeer.Address(), primitives.SignWith(signer)); err != nil {
 			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 		}
 	}

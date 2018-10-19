@@ -7,7 +7,7 @@ import (
 
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
-	Recipient *primitives.Key
+	Recipient string // address
 	FwBlock   *primitives.Block
 	Signature *primitives.Signature
 }
@@ -16,7 +16,7 @@ func (r *ForwardRequest) Block() *primitives.Block {
 	return &primitives.Block{
 		Type: "nimona.io/block.forward.request",
 		Payload: map[string]interface{}{
-			"recipient": r.Recipient.Block(),
+			"recipient": r.Recipient,
 			"block":     r.Block,
 		},
 		Signature: r.Signature,
@@ -25,14 +25,9 @@ func (r *ForwardRequest) Block() *primitives.Block {
 
 func (r *ForwardRequest) FromBlock(block *primitives.Block) {
 	t := &struct {
-		Recipient *primitives.Block `mapstructure:"recipient,omitempty"`
+		Recipient string            `mapstructure:"recipient,omitempty"`
 		FwBlock   *primitives.Block `mapstructure:"block,omitempty"`
 	}{}
 
 	mapstructure.Decode(block.Payload, t)
-
-	if t.Recipient != nil {
-		r.Recipient = &primitives.Key{}
-		r.Recipient.FromBlock(t.Recipient)
-	}
 }

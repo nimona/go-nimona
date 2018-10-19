@@ -25,7 +25,7 @@ import (
 
 // Networker interface for mocking Network
 type Networker interface {
-	Dial(ctx context.Context, peerID string) (*Connection, error)
+	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 }
 
@@ -42,74 +42,93 @@ type Network struct {
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *Network) Dial(ctx context.Context, peerID string) (*Connection, error) {
+func (n *Network) Dial(ctx context.Context, address string) (*Connection, error) {
 	logger := log.Logger(ctx)
-	peerInfo, err := n.addressBook.GetPeerInfo(peerID)
-	if err != nil {
-		return nil, err
-	}
 
-	if len(peerInfo.Addresses) == 0 {
-		return nil, ErrNoAddresses
-	}
-
-	var tcpConn net.Conn
-	for _, addr := range peerInfo.Addresses {
-		if !strings.HasPrefix(addr, "tcp:") {
-			continue
+	addressType := strings.Split(address, ":")[0]
+	switch addressType {
+	case "peer":
+		peerID := strings.Replace(address, "peer:", "", 1)
+		peerInfo, err := n.addressBook.GetPeerInfo(peerID)
+		if err != nil {
+			return nil, err
 		}
-		addr = strings.Replace(addr, "tcp:", "", 1)
+
+		if len(peerInfo.Addresses) == 0 {
+			return nil, ErrNoAddresses
+		}
+
+		for _, addr := range peerInfo.Addresses {
+			conn, err := n.Dial(ctx, addr)
+			if err == nil {
+				return conn, nil
+			}
+
+		}
+
+	case "tcp":
+		addr := strings.Replace(address, "tcp:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
-		newTcpConn, err := dialer.DialContext(ctx, "tcp", addr)
+		tcpConn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
-			continue
+			return nil, err
 		}
-		tcpConn = newTcpConn
-		break
+
+		if tcpConn == nil {
+			return nil, ErrAllAddressesFailed
+		}
+
+		conn := &Connection{
+			Conn:     tcpConn,
+			RemoteID: "", // we don't really know who the other side is
+		}
+
+		signer := n.addressBook.GetLocalPeerKey()
+		nonce := RandStringBytesMaskImprSrc(8)
+		syn := &HandshakeSyn{
+			Nonce:    nonce,
+			PeerInfo: n.addressBook.GetLocalPeerInfo(),
+		}
+		synBlock := syn.Block()
+		if err := primitives.Sign(synBlock, signer); err != nil {
+			return nil, err
+		}
+
+		if err := Write(synBlock, conn); err != nil {
+			return nil, err
+		}
+
+		blockSynAck, err := Read(conn)
+		if err != nil {
+			return nil, err
+		}
+
+		synAck := &HandshakeSynAck{}
+		synAck.FromBlock(blockSynAck)
+		if synAck.Nonce != nonce {
+			return nil, errors.New("invalid handhshake.syn-ack")
+		}
+
+		// store who is on the other side - peer id
+		conn.RemoteID = synAck.Signature.Key.Thumbprint()
+		n.addressBook.PutPeerInfo(synAck.PeerInfo)
+
+		ack := &HandshakeAck{
+			Nonce: nonce,
+		}
+		ackBlock := ack.Block()
+		if err := primitives.Sign(ackBlock, signer); err != nil {
+			return nil, err
+		}
+		if err := Write(ackBlock, conn); err != nil {
+			return nil, err
+		}
+
+		return conn, nil
 	}
 
-	if tcpConn == nil {
-		return nil, ErrAllAddressesFailed
-	}
-
-	conn := &Connection{
-		Conn:     tcpConn,
-		RemoteID: peerID,
-	}
-
-	signer := n.addressBook.GetLocalPeerKey()
-	nonce := RandStringBytesMaskImprSrc(8)
-	syn := &HandshakeSyn{
-		Nonce: nonce,
-	}
-	if err := Write(syn.Block(), conn, primitives.SignWith(signer)); err != nil {
-		return nil, err
-	}
-
-	blockSynAck, err := Read(conn)
-	if err != nil {
-		return nil, err
-	}
-
-	synAck := &HandshakeSynAck{}
-	synAck.FromBlock(blockSynAck)
-	if synAck.Nonce != nonce {
-		return nil, errors.New("invalid handhshake.syn-ack")
-	}
-
-	ack := &HandshakeAck{
-		Nonce: nonce,
-	}
-	ackBlock := ack.Block()
-	if err := primitives.Sign(ackBlock, signer); err != nil {
-		return nil, err
-	}
-	if err := Write(ackBlock, conn, primitives.SignWith(signer)); err != nil {
-		return nil, err
-	}
-
-	return conn, nil
+	return nil, ErrNoAddresses
 }
 
 // Listen on an address
@@ -163,6 +182,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
 				log.DefaultLogger.Warn("could not accept connection", zap.Error(err))
+				// TODO close conn?
 				return
 			}
 
@@ -174,6 +194,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			blockSyn, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
+				// TODO close conn?
 				continue
 			}
 
@@ -183,17 +204,29 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			syn.FromBlock(blockSyn)
 			nonce := syn.Nonce
 
+			// store the peer on the other side
+			n.addressBook.PutPeerInfo(syn.PeerInfo)
+
 			synAck := &HandshakeSynAck{
-				Nonce: nonce,
+				Nonce:    nonce,
+				PeerInfo: n.addressBook.GetLocalPeerInfo(),
 			}
-			if err := Write(synAck.Block(), conn, primitives.SignWith(signer)); err != nil {
+			synAckBlock := synAck.Block()
+			if err := primitives.Sign(synAckBlock, signer); err != nil {
+				log.DefaultLogger.Warn("could not sigh for syn ack block", zap.Error(err))
+				// TODO close conn?
+				continue
+			}
+			if err := Write(synAckBlock, conn); err != nil {
 				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
+				// TODO close conn?
 				continue
 			}
 
 			blockAck, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
+				// TODO close conn?
 				continue
 			}
 
@@ -201,6 +234,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			ack.FromBlock(blockAck)
 			if ack.Nonce != nonce {
 				log.DefaultLogger.Warn("validating syn to ack nonce failed")
+				// TODO close conn?
 				continue
 			}
 
@@ -212,7 +246,7 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 	return cconn, nil
 }
 
-func Write(p *primitives.Block, conn *Connection, opts ...primitives.SendOption) error {
+func Write(p *primitives.Block, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
 	if p == nil {
 		log.DefaultLogger.Error("block for fw cannot be nil")

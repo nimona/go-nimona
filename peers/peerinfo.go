@@ -46,3 +46,7 @@ func (pi *PeerInfo) CodecEncodeSelf(enc *ucodec.Encoder) {
 func (pi *PeerInfo) Thumbprint() string {
 	return pi.Signature.Key.Thumbprint()
 }
+
+func (pi *PeerInfo) Address() string {
+	return "peer:" + pi.Signature.Key.Thumbprint()
+}

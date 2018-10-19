@@ -12,7 +12,6 @@ import (
 	"nimona.io/go/dht"
 	"nimona.io/go/net"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 	"nimona.io/go/telemetry"
 )
@@ -23,6 +22,24 @@ var (
 	daemonAPIPort        int
 	daemonEnableRelaying bool
 	daemonEnableMetrics  bool
+
+	bootstrapAddresses = []string{
+		"tcp:andromeda.nimona.io:21013",
+		// "tcp:borealis.nimona.io:21013",
+		// "tcp:cassiopeia.nimona.io:21013",
+		// "tcp:draco.nimona.io:21013",
+		// "tcp:eridanus.nimona.io:21013",
+		// "tcp:fornax.nimona.io:21013",
+		// "tcp:gemini.nimona.io:21013",
+		// "tcp:hydra.nimona.io:21013",
+		// "tcp:indus.nimona.io:21013",
+		// "tcp:lacerta.nimona.io:21013",
+		// "tcp:mensa.nimona.io:21013",
+		// "tcp:norma.nimona.io:21013",
+		// "tcp:orion.nimona.io:21013",
+		// "tcp:pyxis.nimona.io:21013",
+		"tcp:stats.nimona.io:21013",
+	}
 )
 
 // daemonCmd represents the daemon command
@@ -45,33 +62,11 @@ var daemonCmd = &cobra.Command{
 			return errors.Wrap(err, "could not load key")
 		}
 
-		statsBootstrapPeer := &peers.PeerInfo{}
-		for _, bootstrapPeer := range bootstrapPeerInfos {
-			peerInfoBlock, err := primitives.BlockFromBase58(bootstrapPeer.key)
-			if err != nil {
-				return errors.Wrap(err, "could not unpack bootstrap node")
-			}
-			peerInfo := &peers.PeerInfo{}
-			peerInfo.FromBlock(peerInfoBlock)
-			if err := addressBook.PutPeerInfo(peerInfo); err != nil {
-				return errors.Wrap(err, "could not put bootstrap peer")
-			}
-			if bootstrapPeer.alias == "stats.nimona.io" {
-				statsBootstrapPeer = peerInfo
-			}
-			if daemonEnableRelaying {
-				addressBook.AddLocalPeerRelay(peerInfo.Thumbprint())
-			}
-			addressBook.SetAlias(peerInfo.Signature.Key, bootstrapPeer.alias)
-		}
-
 		storagePath := path.Join(daemonConfigPath, "storage")
-
 		dpr := storage.NewDiskStorage(storagePath)
 		n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
-		dht, _ := dht.NewDHT(n, addressBook)
-		telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(),
-			statsBootstrapPeer.Signature.Key)
+		dht, _ := dht.NewDHT(n, addressBook, bootstrapAddresses)
+		telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(), "tcp:stats.nimona.io:21013")
 
 		n.RegisterDiscoverer(dht)
 
@@ -110,5 +105,12 @@ func init() {
 		"metrics",
 		false,
 		"enable sending anonymous metrics",
+	)
+
+	daemonCmd.PersistentFlags().StringSliceVar(
+		&bootstrapAddresses,
+		"bootstraps",
+		bootstrapAddresses,
+		"bootstrap addresses",
 	)
 }

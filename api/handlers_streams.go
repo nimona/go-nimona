@@ -94,7 +94,8 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				}
 				m := api.mapBlock(v)
 				m["status"] = "ok"
-				if err := api.exchange.Send(ctx, v, key, primitives.SignWith(signer)); err != nil {
+				addr := "peer:" + key.Thumbprint()
+				if err := api.exchange.Send(ctx, v, addr, primitives.SignWith(signer)); err != nil {
 					logger.Error("could not send outgoing block", zap.Error(err))
 					m["status"] = "error"
 				}
