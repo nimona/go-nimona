@@ -173,25 +173,8 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 }
 
 func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
+	// TODO race?
 	w.discovery = discovery
-	ctx := context.Background()
-	go func() {
-		for {
-			blocks, err := w.store.List()
-			if err != nil {
-				time.Sleep(time.Second * 10)
-				continue
-			}
-
-			for _, block := range blocks {
-				if err := w.discovery.PutProviders(ctx, block); err != nil {
-					w.logger.Warn("could not announce provider for block", zap.String("id", block))
-				}
-			}
-
-			time.Sleep(time.Second * 30)
-		}
-	}()
 }
 
 func (w *exchange) Handle(typePatern string, h func(o *primitives.Block) error) (func(), error) {
