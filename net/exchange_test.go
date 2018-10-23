@@ -67,13 +67,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, exPayload1, p1.Signature.Key, primitives.SignWith(k2))
+	err = w2.Send(ctx, exPayload1, "peer:"+p1.Signature.Key.Thumbprint(), primitives.SignWith(k2))
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	err = w1.Send(ctx, exPayload2, p2.Signature.Key)
+	err = w1.Send(ctx, exPayload2, "peer:"+p2.Signature.Key.Thumbprint())
 	assert.NoError(t, err)
 
 	wg.Wait()

@@ -9,9 +9,9 @@ type ConnectionManager struct {
 	connections sync.Map // key string, value *Connection
 }
 
-func (cm *ConnectionManager) Add(conn *Connection) {
+func (cm *ConnectionManager) Add(address string, conn *Connection) {
 	// cm.Close(conn.RemoteID)
-	cm.connections.Store(conn.RemoteID, conn)
+	cm.connections.Store(address, conn)
 }
 
 func (cm *ConnectionManager) Get(remoteID string) (*Connection, error) {

@@ -10,7 +10,7 @@ import (
 )
 
 type Exchanger interface {
-	Send(ctx context.Context, o *primitives.Block, recipient *primitives.Key,
+	Send(ctx context.Context, o *primitives.Block, address string,
 		opts ...primitives.SendOption) error
 	Handle(contentType string, h func(o *primitives.Block) error) (func(), error)
 }
@@ -21,10 +21,10 @@ const blockEventType = "nimona.io/telemetry.block"
 var DefaultClient *metrics
 
 type metrics struct {
-	exchange      Exchanger
-	colletor      Collector
-	localPeer     *primitives.Key
-	bootstrapPeer *primitives.Key
+	exchange     Exchanger
+	colletor     Collector
+	localPeer    *primitives.Key
+	statsAddress string
 }
 
 func init() {
@@ -46,14 +46,14 @@ func init() {
 }
 
 func NewTelemetry(exchange Exchanger, localPeer *primitives.Key,
-	bootstrapPeer *primitives.Key) error {
+	statsAddress string) error {
 
 	// create the default client
 	DefaultClient = &metrics{
-		exchange:      exchange,
-		colletor:      DefaultCollector,
-		localPeer:     localPeer,
-		bootstrapPeer: bootstrapPeer,
+		exchange:     exchange,
+		colletor:     DefaultCollector,
+		localPeer:    localPeer,
+		statsAddress: statsAddress,
 	}
 
 	// Register handler only on server
@@ -77,7 +77,7 @@ func SendEvent(ctx context.Context, event Collectable) error {
 func (t *metrics) SendEvent(ctx context.Context,
 	event Collectable) error {
 	return t.exchange.Send(ctx,
-		event.Block(), t.bootstrapPeer, primitives.SignWith(t.localPeer))
+		event.Block(), t.statsAddress, primitives.SignWith(t.localPeer))
 }
 
 func (t *metrics) handleBlock(block *primitives.Block) error {
