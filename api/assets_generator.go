@@ -12,7 +12,7 @@ import (
 func main() {
 	err := vfsgen.Generate(api.Assets, vfsgen.Options{
 		PackageName:  "api",
-		BuildTags:    "release",
+		BuildTags:    "!dev",
 		VariableName: "Assets",
 	})
 	if err != nil {

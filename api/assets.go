@@ -1,4 +1,4 @@
-// +build !release
+// +build dev
 
 package api
 
