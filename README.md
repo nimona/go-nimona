@@ -5,7 +5,15 @@
 
 # Nimona
 
+Nimona’s main goal is to provide a number of layers/components to help with the challenges presented when dealing with decentralized and peer to peer applications.
+
+## Architecture
+
+For a technical overview, please refer to the [documentation introduction](https://nimona.io).
+
 ## Development
+
+### Installation
 
 Assuming you have a working [Go environment] with Go 1.10 or higher:
 
