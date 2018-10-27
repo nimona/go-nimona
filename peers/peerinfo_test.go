@@ -1,4 +1,4 @@
-package peers
+package peers // import "nimona.io/go/peers"
 
 import (
 	"testing"

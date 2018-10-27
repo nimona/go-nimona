@@ -1,4 +1,4 @@
-package net_test
+package net_test // import "nimona.io/go/net"
 
 import (
 	"context"

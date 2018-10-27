@@ -1,4 +1,4 @@
-package utils
+package utils // import "nimona.io/go/utils"
 
 import (
 	"sync"

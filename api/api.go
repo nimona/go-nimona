@@ -1,4 +1,4 @@
-package api
+package api // import "nimona.io/go/api"
 
 import (
 	"github.com/gin-contrib/cors"

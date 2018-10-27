@@ -1,4 +1,4 @@
-package telemetry
+package telemetry // import "nimona.io/go/telemetry"
 
 import (
 	"time"

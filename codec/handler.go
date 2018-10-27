@@ -1,4 +1,4 @@
-package codec
+package codec // import "nimona.io/go/codec"
 
 import (
 	"reflect"

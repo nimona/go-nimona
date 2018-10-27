@@ -1,4 +1,4 @@
-package net
+package net // import "nimona.io/go/net"
 
 import (
 	"context"

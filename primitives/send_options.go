@@ -1,4 +1,4 @@
-package primitives
+package primitives // import "nimona.io/go/primitives"
 
 func ParseSendOptions(opts ...SendOption) *SendOptions {
 	options := &SendOptions{}

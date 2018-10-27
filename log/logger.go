@@ -1,4 +1,4 @@
-package log
+package log // import "nimona.io/go/log"
 
 import (
 	"context"

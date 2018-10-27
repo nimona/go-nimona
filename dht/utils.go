@@ -1,4 +1,4 @@
-package dht
+package dht // import "nimona.io/go/dht"
 
 import (
 	"crypto/sha1"

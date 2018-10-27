@@ -1,6 +1,6 @@
 // +build dev
 
-package api
+package api // import "nimona.io/go/api"
 
 import "net/http"
 

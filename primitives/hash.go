@@ -1,4 +1,4 @@
-package primitives
+package primitives // import "nimona.io/go/primitives"
 
 import (
 	"golang.org/x/crypto/sha3"

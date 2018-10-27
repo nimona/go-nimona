@@ -1,4 +1,4 @@
-package primitives
+package primitives // import "nimona.io/go/primitives"
 
 import (
 	ucodec "github.com/ugorji/go/codec"

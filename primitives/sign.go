@@ -1,4 +1,4 @@
-package primitives
+package primitives // import "nimona.io/go/primitives"
 
 func Sign(p *Block, key *Key) error {
 	digest, err := getDigest(p)

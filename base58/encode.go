@@ -1,4 +1,4 @@
-package base58
+package base58 // import "nimona.io/go/base58"
 
 import "github.com/mr-tron/base58/base58"
 
