@@ -20,10 +20,11 @@ var (
 	commit  = "unknown"
 	date    = "unknown"
 
-	env        string
-	cfgFile    string
-	apiAddress string
-	returnRaw  bool
+	env              string
+	cfgFile          string
+	apiAddress       string
+	announceHostname string
+	returnRaw        bool
 
 	restClient *resty.Client
 )
@@ -71,6 +72,13 @@ func init() {
 		"api",
 		"http://localhost:8030/api/v1",
 		"api address",
+	)
+
+	rootCmd.PersistentFlags().StringVar(
+		&announceHostname,
+		"announce-hostname",
+		"",
+		"set and announce local dns address",
 	)
 
 	rootCmd.PersistentFlags().StringVar(

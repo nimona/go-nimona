@@ -49,6 +49,10 @@ func GetAddresses(l net.Listener) []string {
 	return addrs
 }
 
+func fmtAddress(address string, port int) string {
+	return fmt.Sprintf("tcp:%s:%d", address, port)
+}
+
 // GetLocalPeerAddresses returns the addresses TCP can listen to on the local machine
 func GetLocalPeerAddresses(port int) ([]string, error) {
 	// go through all ifs

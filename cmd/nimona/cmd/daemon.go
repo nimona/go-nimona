@@ -64,6 +64,8 @@ var daemonCmd = &cobra.Command{
 			return errors.Wrap(err, "could not load key")
 		}
 
+		addressBook.LocalHostname = announceHostname
+
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
 		n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))

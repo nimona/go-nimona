@@ -136,9 +136,9 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, error) {
+func (n *Network) Listen(ctx context.Context, address string) (chan *Connection, error) {
 	logger := log.Logger(ctx).Named("network")
-	tcpListener, err := net.Listen("tcp", addr)
+	tcpListener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
 	}
@@ -170,9 +170,13 @@ func (n *Network) Listen(ctx context.Context, addr string) (chan *Connection, er
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				logger.Error("could not add port mapping", zap.Error(err))
 			} else {
-				addresses = append(addresses, fmt.Sprintf("tcp:%s:%d", externalAddress.String(), port))
+				addresses = append(addresses, fmtAddress(externalAddress.String(), port))
 			}
 		}
+	}
+
+	if n.addressBook.LocalHostname != "" {
+		addresses = append(addresses, fmtAddress(n.addressBook.LocalHostname, port))
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
