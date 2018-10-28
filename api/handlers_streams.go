@@ -120,8 +120,20 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			if err == io.EOF {
-				continue
+				logger.Debug("ws conn is dead", zap.Error(err))
+				return
 			}
+
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				logger.Debug("ws conn closed", zap.Error(err))
+				return
+			}
+
+			if websocket.IsUnexpectedCloseError(err) {
+				logger.Warn("ws conn closed with unexpected error", zap.Error(err))
+				return
+			}
+
 			logger.Warn("could not read from ws", zap.Error(err))
 			continue
 		}
