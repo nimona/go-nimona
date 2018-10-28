@@ -53,6 +53,7 @@ func NewAddressBook(configPath string) (*AddressBook, error) {
 // AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
 	localKey       *primitives.Key
+	LocalHostname   string
 	localAddresses sync.Map
 	localRelays    sync.Map
 	peers          *PeerInfoCollection
