@@ -11,6 +11,8 @@ import (
 	"nimona.io/go/storage"
 )
 
+//go:generate go run assets_generator.go
+
 // API for HTTP
 type API struct {
 	router      *gin.Engine
@@ -53,10 +55,7 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 	streamsEnd := router.Group("/api/v1/streams")
 	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
 
-	router.LoadHTMLFiles("./api/index.html")
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
-	})
+	router.Use(ServeFs("/", Assets))
 
 	return api
 }
