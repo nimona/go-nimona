@@ -56,9 +56,6 @@ func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, b
 	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
 
 	router.Use(ServeFs("/", Assets))
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
-	})
 
 	return api
 }
