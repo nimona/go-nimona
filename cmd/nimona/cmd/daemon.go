@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"path"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
 	"nimona.io/go/api"
 	"nimona.io/go/dht"
 	"nimona.io/go/net"
@@ -70,8 +72,22 @@ var daemonCmd = &cobra.Command{
 
 		n.RegisterDiscoverer(dht)
 
+		peerAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
+		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
+
+		log.Println("Started daemon.")
+		log.Println("* Peer key:", addressBook.GetLocalPeerKey().Thumbprint())
+		peerAddresses := addressBook.GetLocalPeerAddresses()
+		if len(peerAddresses) > 0 {
+			log.Println("* Peer addresses:")
+			for _, addr := range addressBook.GetLocalPeerAddresses() {
+				log.Println("  *", addr)
+			}
+		}
+		log.Println("* HTTP API address:", apiAddress)
+
 		api := api.New(addressBook, dht, n, dpr)
-		err = api.Serve(fmt.Sprintf("0.0.0.0:%d", daemonAPIPort))
+		err = api.Serve(peerAddress)
 		return errors.Wrap(err, "http server stopped")
 	},
 }

@@ -1,0 +1,11 @@
+# Treat all files as binary, with no git magic updating line endings.
+# Windows users contributing to Go will need to use a modern version of git and
+# editors capable of LF line endings.
+
+* -text
+
+# Dockerfile and some other things that are not linted by gofmt get their line
+# endings explicitely specified.
+
+Dockerfile text eol=lf
+Makefile text eol=lf

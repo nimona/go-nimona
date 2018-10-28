@@ -19,7 +19,6 @@ FROM alpine:3.8
 WORKDIR /app
 
 COPY --from=builder /go/src/nimona.io/go/bin/nimona /app/
-COPY --from=builder /go/src/nimona.io/go/api/index.html /app/api/
 
 ENTRYPOINT ["./nimona"]
 CMD ["daemon"]
