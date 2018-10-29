@@ -8,10 +8,18 @@ import (
 	ucodec "github.com/ugorji/go/codec"
 )
 
+// MandatePolicy for Block
+type MandatePolicy struct {
+	Description string   `json:"description,omitempty" structs:"description,omitempty" mapstructure:"description,omitempty"`
+	Resources   []string `json:"resources" structs:"resources" mapstructure:"resources"`
+	Actions     []string `json:"actions" structs:"actions" mapstructure:"actions"`
+	Effect      string   `json:"effect" structs:"effect" mapstructure:"effect"`
+}
+
 type Mandate struct {
-	Subject   *Key       `json:"subject" mapstructure:"-"`
-	Policy    Policy     `json:"policy" mapstructure:"policy,omitempty"`
-	Signature *Signature `json:"-" mapstructure:"-"`
+	Subject   *Key          `json:"subject" mapstructure:"-"`
+	Policy    MandatePolicy `json:"policy" mapstructure:"policy,omitempty"`
+	Signature *Signature    `json:"-" mapstructure:"-"`
 }
 
 func (s *Mandate) Block() *Block {
@@ -28,8 +36,8 @@ func (s *Mandate) Block() *Block {
 
 func (s *Mandate) FromBlock(block *Block) {
 	p := struct {
-		Subject *Block `json:"subject" mapstructure:"subject,omitempty"`
-		Policy  Policy `json:"policy" mapstructure:"policy,omitempty"`
+		Subject *Block        `json:"subject" mapstructure:"subject,omitempty"`
+		Policy  MandatePolicy `json:"policy" mapstructure:"policy,omitempty"`
 	}{}
 	if err := mapstructure.Decode(block.Payload, &p); err != nil {
 		panic(err)
@@ -55,7 +63,7 @@ func (s *Mandate) CodecEncodeSelf(enc *ucodec.Encoder) {
 
 // NewMandate returns a signed mandate given an authority key, a subject key,
 // and a policy
-func NewMandate(authority, subject *Key, policy Policy) (*Mandate, error) {
+func NewMandate(authority, subject *Key, policy MandatePolicy) (*Mandate, error) {
 	if authority == nil {
 		return nil, errors.New("missing authority")
 	}

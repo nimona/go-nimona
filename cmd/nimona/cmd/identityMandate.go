@@ -44,10 +44,10 @@ var identityMandateCmd = &cobra.Command{
 		mandate, err := primitives.NewMandate(
 			identityKey,
 			peerKey,
-			primitives.Policy{
-				Subjects: identityMandateResources,
-				Actions:  identityMandateActions,
-				Effect:   identityMandateEffect,
+			primitives.MandatePolicy{
+				Resources: identityMandateResources,
+				Actions:   identityMandateActions,
+				Effect:    identityMandateEffect,
 			},
 		)
 		if err != nil {
