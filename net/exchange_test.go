@@ -67,7 +67,7 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, exPayload1, "peer:"+p1.Signature.Key.Thumbprint(), primitives.SignWith(k2))
+	err = w2.Send(ctx, exPayload1, "peer:"+p1.Signature.Key.Thumbprint(), primitives.SendOptionSign())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)

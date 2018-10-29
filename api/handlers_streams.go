@@ -57,7 +57,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 
 	ctx := context.Background()
 	logger := log.Logger(ctx).Named("api")
-	signer := api.addressBook.GetLocalPeerKey()
 	incoming := make(chan *primitives.Block, 100)
 	outgoing := make(chan *BlockRequest, 100)
 
@@ -95,7 +94,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				m := api.mapBlock(v)
 				m["status"] = "ok"
 				addr := "peer:" + key.Thumbprint()
-				if err := api.exchange.Send(ctx, v, addr, primitives.SignWith(signer)); err != nil {
+				if err := api.exchange.Send(ctx, v, addr, primitives.SendOptionSign()); err != nil {
 					logger.Error("could not send outgoing block", zap.Error(err))
 					m["status"] = "error"
 				}

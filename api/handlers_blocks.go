@@ -89,9 +89,8 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 	}
 
 	ctx := context.Background()
-	signer := api.addressBook.GetLocalPeerKey()
 	addr := "peer:" + key.Thumbprint()
-	if err := api.exchange.Send(ctx, block, addr, primitives.SignWith(signer)); err != nil {
+	if err := api.exchange.Send(ctx, block, addr, primitives.SendOptionSign()); err != nil {
 		c.AbortWithError(500, err)
 		return
 	}

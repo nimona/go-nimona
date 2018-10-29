@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -9,6 +10,10 @@ import (
 
 	"nimona.io/go/log"
 	"nimona.io/go/primitives"
+)
+
+var (
+	ErrNoMandate = errors.New("no mandate")
 )
 
 type peerStatus struct {
@@ -52,8 +57,10 @@ func NewAddressBook(configPath string) (*AddressBook, error) {
 
 // AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
-	localKey       *primitives.Key
-	LocalHostname   string
+	localKey      *primitives.Key
+	LocalHostname string
+	Mandate       *primitives.Mandate
+
 	localAddresses sync.Map
 	localRelays    sync.Map
 	peers          *PeerInfoCollection
@@ -65,6 +72,27 @@ type AddressBook struct {
 // TODO make this an attribute, is there any reason for this to be a method?
 func (ab *AddressBook) GetLocalPeerKey() *primitives.Key {
 	return ab.localKey
+}
+
+// RegisterMandate created for the local peer
+func (ab *AddressBook) RegisterMandate(mandate *primitives.Mandate) error {
+	// TODO race condition
+	ab.Mandate = mandate
+	return nil
+}
+
+func (ab *AddressBook) Sign(block *primitives.Block) error {
+	return primitives.Sign(block, ab.localKey)
+}
+
+func (ab *AddressBook) SignWithMandate(block *primitives.Block) error {
+	// TODO race condition
+	if ab.Mandate == nil {
+		return ErrNoMandate
+	}
+
+	block.Mandate = ab.Mandate
+	return ab.Sign(block)
 }
 
 // PutPeerInfo stores an block with a peer payload

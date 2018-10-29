@@ -9,15 +9,20 @@ func ParseSendOptions(opts ...SendOption) *SendOptions {
 }
 
 type SendOptions struct {
-	Key  *Key
-	Sign bool
+	Sign            bool
+	SignWithMandate bool
 }
 
 type SendOption func(*SendOptions)
 
-func SignWith(key *Key) SendOption {
+func SendOptionSignWithMandate() SendOption {
 	return func(opts *SendOptions) {
-		opts.Key = key
+		opts.SignWithMandate = true
+	}
+}
+
+func SendOptionSign() SendOption {
+	return func(opts *SendOptions) {
 		opts.Sign = true
 	}
 }

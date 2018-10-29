@@ -77,7 +77,7 @@ func SendEvent(ctx context.Context, event Collectable) error {
 func (t *metrics) SendEvent(ctx context.Context,
 	event Collectable) error {
 	return t.exchange.Send(ctx,
-		event.Block(), t.statsAddress, primitives.SignWith(t.localPeer))
+		event.Block(), t.statsAddress, primitives.SendOptionSign())
 }
 
 func (t *metrics) handleBlock(block *primitives.Block) error {

@@ -28,6 +28,7 @@ type Block struct {
 	Type        string                 `json:"type,omitempty" mapstructure:"type,omitempty"`
 	Annotations *Annotations           `json:"annotations,omitempty" mapstructure:"annotations,omitempty"`
 	Payload     map[string]interface{} `json:"payload,omitempty" mapstructure:"payload,omitempty"`
+	Mandate     *Mandate               `json:"mandate,omitempty" mapstructure:"mandate,omitempty"`
 	Signature   *Signature             `json:"signature,omitempty" mapstructure:"signature,omitempty"`
 }
 

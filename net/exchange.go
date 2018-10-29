@@ -276,7 +276,7 @@ func (w *exchange) process(block *primitives.Block, conn *Connection) error {
 		fmt.Println("+++++", block.Payload)
 		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 	} else {
-		if shouldPersist(block.Type) {
+		if shouldPersist(block) {
 			bytes, _ := primitives.Marshal(block)
 			w.store.Store(block.ID(), bytes)
 		}
@@ -319,9 +319,8 @@ func (w *exchange) handleBlockRequest(payload *BlockRequest) error {
 		RequestedBlock: block,
 	}
 
-	signer := w.addressBook.GetLocalPeerKey()
 	addr := "peer:" + payload.Sender.Thumbprint()
-	if err := w.Send(context.Background(), resp.Block(), addr, primitives.SignWith(signer)); err != nil {
+	if err := w.Send(context.Background(), resp.Block(), addr, primitives.SendOptionSign()); err != nil {
 		w.logger.Warn("blx.handleBlockRequest could not send block", zap.Error(err))
 		return err
 	}
@@ -362,7 +361,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 
 	// 	for provider := range providers {
 	// 		addr := "peer:" + provider.Thumbprint()
-	// 		if err := w.Send(ctx, req.Block(), addr, primitives.SignWith(signer)); err != nil {
+	// 		if err := w.Send(ctx, req.Block(), addr, primitives.SendOptionSign()); err != nil {
 	// 			w.logger.Warn("blx.Get could not send req block", zap.Error(err))
 	// 		}
 	// 	}
@@ -384,13 +383,18 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, address st
 
 	cfg := primitives.ParseSendOptions(opts...)
 
-	if cfg.Sign && cfg.Key != nil && block.Signature == nil {
-		if err := primitives.Sign(block, cfg.Key); err != nil {
+	// TODO should we always sign if sender told us to?
+	if cfg.SignWithMandate && block.Signature == nil {
+		if err := w.addressBook.SignWithMandate(block); err != nil {
+			return err
+		}
+	} else if cfg.Sign && block.Signature == nil {
+		if err := w.addressBook.Sign(block); err != nil {
 			return err
 		}
 	}
 
-	if shouldPersist(block.Type) {
+	if shouldPersist(block) {
 		bytes, _ := primitives.Marshal(block)
 		w.store.Store(block.ID(), bytes)
 	}
@@ -488,11 +492,6 @@ func (w *exchange) GetOrDial(ctx context.Context, address string) (*Connection, 
 	return conn, nil
 }
 
-func shouldPersist(t string) bool {
-	if strings.HasPrefix(t, "nimona.io/dht") ||
-		strings.HasPrefix(t, "nimona.io/telemetry") ||
-		strings.HasPrefix(t, "nimona.io/handshake") {
-		return false
-	}
-	return true
+func shouldPersist(block *primitives.Block) bool {
+	return block.Mandate != nil
 }

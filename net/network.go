@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-
 	igd "github.com/emersion/go-upnp-igd"
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"

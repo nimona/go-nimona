@@ -71,9 +71,9 @@ func (api *API) mapBlock(v *primitives.Block) map[string]interface{} {
 		"payload":     v.Payload,
 		"annotations": v.Annotations,
 	}
-	if s := v.Signature; s != nil {
+	if s := v.Mandate; s != nil {
 		m["signature"] = v.Signature.Block()
-		m["owner"] = v.Signature.Key.Thumbprint()
+		m["owner"] = v.Mandate.Signature.Key.Thumbprint()
 		if v.Signature.Key.Thumbprint() == api.localKey {
 			m["direction"] = "outgoing"
 		} else {
