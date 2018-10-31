@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/spf13/cobra"
 	"nimona.io/go/cmd/nimona/cmd/providers"
 )
@@ -11,6 +12,13 @@ var (
 	hostname       string
 	token          string
 	sshFingerprint string
+	size           string
+	region         string
+)
+
+var (
+	// ErrNoPlatform returned when no platform has been provided
+	ErrNoPlatform = errors.New("missing platform")
 )
 
 // daemonInstallCmd represents the daemon command
@@ -19,16 +27,21 @@ var daemonInstallCmd = &cobra.Command{
 	Short: "Install a peer as a daemon in a remote provider",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if platform == "" {
-			return errors.New("no platform defined")
-		}
-		if token == "" {
-			return errors.New("missing platform token")
-		}
+		switch platform {
+		case "do":
+			dop, err := providers.NewDigitalocean(token)
+			if err != nil {
+				return err
+			}
 
-		dop := providers.NewDigitalocean(token)
-
-		dop.NewInstance("test")
+			ip, err := dop.NewInstance(hostname, sshFingerprint, size, region)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Server created. IP: %s\n", ip)
+		case "":
+			return ErrNoPlatform
+		}
 
 		return nil
 	},
@@ -57,8 +70,20 @@ func init() {
 	)
 	daemonInstallCmd.PersistentFlags().StringVar(
 		&sshFingerprint,
-		"sshFingerprint",
+		"ssh-fingerprint",
 		"",
-		"sshFingerprint",
+		"ssh fingerprint",
+	)
+	daemonInstallCmd.PersistentFlags().StringVar(
+		&size,
+		"size",
+		"",
+		"instance size",
+	)
+	daemonInstallCmd.PersistentFlags().StringVar(
+		&region,
+		"region",
+		"",
+		"instance region",
 	)
 }
