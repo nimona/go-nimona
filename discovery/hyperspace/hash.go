@@ -1,6 +1,7 @@
 package hyperspace
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/spaolacci/murmur3"
@@ -20,4 +21,16 @@ func Hash(b []byte) int32 {
 	p := float64(v-murmurMin) / float64(murmurMax-murmurMin)
 	s := p*float64(scaledMax-scaledMin) + float64(scaledMin)
 	return int32(s)
+}
+
+// HashChunked spilts input in chunks and hashes them individually
+// TODO(geoah) Rewrite, most likely wrong as well
+func HashChunked(prefix string, o []byte) []int {
+	i := []int{}
+	var b int32
+	for j, c := range chunk(o, 4) {
+		b = Hash([]byte(fmt.Sprintf("%s_%d_%s", prefix, j, string(c))))
+		i = append(i, int(b))
+	}
+	return i
 }

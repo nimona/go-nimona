@@ -222,7 +222,7 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	s := NewStore()
 
 	cs := []*PeerCapabilities{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		cs = append(cs, &PeerCapabilities{
 			// IdentityKey: uuid.NewV4().String(),
 			Resources: []string{
@@ -230,13 +230,21 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 			},
 			ContentIDs: []string{
 				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
 			},
 		})
 	}
 
 	s.Add(cs...)
 
-	for _, c := range cs[:1000] {
+	for _, c := range cs {
 		q := &PeerCapabilities{
 			ContentIDs: []string{
 				c.ContentIDs[0],
@@ -247,31 +255,31 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	}
 }
 
-// func TestStoreMultipleContentsPerPeerQueryOne(t *testing.T) {
-// 	s := NewStore()
+func TestStoreMultipleContentsPerPeerQueryOne(t *testing.T) {
+	s := NewStore()
 
-// 	cs := []*PeerCapabilities{}
-// 	for i := 0; i < 5000; i++ {
-// 		cs = append(cs, &PeerCapabilities{
-// 			IdentityKey: uuid.NewV4().String(),
-// 			ContentIDs: []string{
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 				uuid.NewV4().String(),
-// 			},
-// 		})
-// 	}
+	cs := []*PeerCapabilities{}
+	for i := 0; i < 1000; i++ {
+		cs = append(cs, &PeerCapabilities{
+			IdentityKey: uuid.NewV4().String(),
+			ContentIDs: []string{
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+				uuid.NewV4().String(),
+			},
+		})
+	}
 
-// 	s.Add(cs...)
+	s.Add(cs...)
 
-// 	for _, q := range cs[:1000] {
-// 		rs := s.FindClosest(q)
-// 		assert.Equal(t, q, rs[0])
-// 	}
-// }
+	for _, q := range cs[:100] {
+		rs := s.FindClosest(q)
+		assert.Equal(t, q, rs[0])
+	}
+}

@@ -24,13 +24,16 @@ func (s *Store) Add(cs ...*PeerCapabilities) {
 	for _, c := range cs {
 		v := Vectorise(c)
 		s.peers[v] = c
-		fmt.Println("Adding", c, "as", v)
 	}
 }
 
 // FindClosest returns peers that closest resemble the query
 func (s *Store) FindClosest(q *PeerCapabilities) []*PeerCapabilities {
 	qv := Vectorise(q)
+
+	fmt.Println("-------- looking for", q)
+	fmt.Println("looking for", q)
+	fmt.Println("query vector", qv)
 
 	type kv struct {
 		distance         float64
@@ -41,16 +44,21 @@ func (s *Store) FindClosest(q *PeerCapabilities) []*PeerCapabilities {
 	r := []kv{}
 	for v, c := range s.peers {
 		d := CosineSimilarity(qv, v)
+		// d := SimpleSimilarity(qv, v)
 		r = append(r, kv{
 			distance:         d,
 			vector:           v,
 			peerCapabilities: c,
 		})
+		fmt.Println("--- distance from", v, "is", d)
 	}
 
 	sort.Slice(r, func(i, j int) bool {
 		return r[i].distance > r[j].distance
 	})
+
+	fmt.Println("first result is", r[0].peerCapabilities)
+	fmt.Println("first result vector is", r[0].vector)
 
 	rs := []*PeerCapabilities{}
 	for i, c := range r {

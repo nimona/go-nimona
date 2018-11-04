@@ -7,7 +7,11 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	v := "foo"
+	v := "0"
 	b := Hash([]byte(v))
-	assert.Equal(t, int32(289), b)
+	assert.Equal(t, int32(246), b)
+
+	v = "c_0_0"
+	b = Hash([]byte(v))
+	assert.Equal(t, int32(203), b)
 }
