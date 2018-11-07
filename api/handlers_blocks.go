@@ -14,7 +14,7 @@ type BlockRequest struct {
 	Type        string                 `json:"type,omitempty"`
 	Annotations map[string]interface{} `json:"annotations,omitempty"`
 	Payload     map[string]interface{} `json:"payload,omitempty"`
-	Recipient   string                 `json:"recipient"`
+	Recipients  []string               `json:"recipients"`
 }
 
 func (api *API) HandleGetBlocks(c *gin.Context) {
@@ -70,30 +70,38 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 		return
 	}
 
-	if req.Recipient == "" {
-		c.AbortWithError(400, errors.New("missing recipient"))
+	if len(req.Recipients) == 0 {
+		c.AbortWithError(400, errors.New("missing recipients"))
 		return
 	}
-
-	keyBlock, err := primitives.BlockFromBase58(req.Recipient)
-	if err != nil {
-		c.AbortWithError(400, errors.New("invalid recipient key"))
-		return
-	}
-	key := &primitives.Key{}
-	key.FromBlock(keyBlock)
 
 	block := &primitives.Block{
-		Type:    req.Type,
+		Type: req.Type,
+		Annotations: &primitives.Annotations{
+			Policies: []primitives.Policy{
+				primitives.Policy{
+					Subjects: req.Recipients,
+					Actions:  []string{"read"},
+					Effect:   "allow",
+				},
+			},
+		},
 		Payload: req.Payload,
 	}
 
-	ctx := context.Background()
 	signer := api.addressBook.GetLocalPeerKey()
-	addr := "peer:" + key.Thumbprint()
-	if err := api.exchange.Send(ctx, block, addr, primitives.SignWith(signer)); err != nil {
+	if err := primitives.Sign(block, signer); err != nil {
 		c.AbortWithError(500, err)
 		return
+	}
+
+	ctx := context.Background()
+	for _, recipient := range req.Recipients {
+		addr := "peer:" + recipient
+		if err := api.exchange.Send(ctx, block, addr); err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
 	}
 
 	c.Render(http.StatusOK, Renderer(c, nil))
