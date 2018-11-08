@@ -92,7 +92,7 @@ func (nd *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := nd.exchange.Send(ctx, peerInfo.Block(), closestPeer.Address()); err != nil {
-				logger.Error("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
+				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 			}
 		}
 

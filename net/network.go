@@ -48,6 +48,7 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
+		logger.Debug("dialing peer", zap.String("peer", address))
 		peerID := strings.Replace(address, "peer:", "", 1)
 		peerInfo, err := n.addressBook.GetPeerInfo(peerID)
 		if err != nil {
@@ -129,6 +130,8 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 		}
 
 		return conn, nil
+	default:
+		logger.Info("not sure how to dial", zap.String("address", address), zap.String("type", addressType))
 	}
 
 	return nil, ErrNoAddresses
@@ -146,6 +149,10 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 	logger.Info("Listening and service nimona", zap.Int("port", port))
 	addresses := GetAddresses(tcpListener)
 	devices := make(chan igd.Device, 10)
+
+	if n.addressBook.LocalHostname != "" {
+		addresses = append(addresses, fmtAddress(n.addressBook.LocalHostname, port))
+	}
 
 	upnp := true
 	upnpFlag := os.Getenv("UPNP")
@@ -173,10 +180,6 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 				addresses = append(addresses, fmtAddress(externalAddress.String(), port))
 			}
 		}
-	}
-
-	if n.addressBook.LocalHostname != "" {
-		addresses = append(addresses, fmtAddress(n.addressBook.LocalHostname, port))
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
