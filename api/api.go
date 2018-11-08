@@ -11,7 +11,7 @@ import (
 	"nimona.io/go/storage"
 )
 
-//go:generate go run assets_generator.go
+//go:generate go run -tags=dev assets_generator.go
 
 // API for HTTP
 type API struct {

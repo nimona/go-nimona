@@ -407,14 +407,12 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, address st
 		return nil
 	}
 
-	recipient := ""
-	if strings.HasPrefix(address, "peer:") {
-		recipient = strings.Replace(address, "peer:", "", 1)
-	} else {
+	// if recipient is a peer, we might have some relay addresses
+	if !strings.HasPrefix(address, "peer:") {
 		return ErrAllAddressesFailed
 	}
 
-	// try to send message via their relay addresses
+	recipient := strings.Replace(address, "peer:", "", 1)
 	peer, err := w.addressBook.GetPeerInfo(recipient)
 	if err != nil {
 		return err
@@ -434,18 +432,16 @@ func (w *exchange) Send(ctx context.Context, block *primitives.Block, address st
 
 	for _, address := range peer.Addresses {
 		if strings.HasPrefix(address, "relay:") {
-			relayPeerID := strings.Replace(address, "relay:", "", 1)
-			if w.addressBook.GetLocalPeerInfo().Thumbprint() == relayPeerID {
-				continue
-			}
-			relayPeer, err := w.addressBook.GetPeerInfo(relayPeerID)
-			if err != nil {
+			w.logger.Debug("found relay address", zap.String("peer", recipient), zap.String("address", address))
+			relayAddress := strings.Replace(address, "relay:", "", 1)
+			// TODO this is an ugly hack
+			if w.addressBook.GetLocalPeerInfo().Thumbprint() == relayAddress {
 				continue
 			}
 			cerr := make(chan error, 1)
 			w.outgoingPayloads <- &outBlock{
 				context:   ctx,
-				recipient: "peer:" + relayPeer.Signature.Key.Thumbprint(),
+				recipient: relayAddress,
 				block:     fw.Block(),
 				err:       cerr,
 				opts:      opts,

@@ -40,7 +40,7 @@ var (
 		// "tcp:norma.nimona.io:21013",
 		// "tcp:orion.nimona.io:21013",
 		// "tcp:pyxis.nimona.io:21013",
-		"tcp:stats.nimona.io:21013",
+		// "tcp:stats.nimona.io:21013",
 	}
 )
 
@@ -66,6 +66,10 @@ var daemonCmd = &cobra.Command{
 
 		addressBook.LocalHostname = announceHostname
 
+		if daemonEnableRelaying {
+			addressBook.AddLocalPeerRelay(bootstrapAddresses...)
+		}
+
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
 		n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
@@ -78,7 +82,7 @@ var daemonCmd = &cobra.Command{
 		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
 		log.Println("Started daemon.")
-		log.Println("* Peer key:", addressBook.GetLocalPeerKey().Thumbprint())
+		log.Println("* Peer key:", addressBook.GetLocalPeerInfo().Thumbprint())
 		peerAddresses := addressBook.GetLocalPeerAddresses()
 		if len(peerAddresses) > 0 {
 			log.Println("* Peer addresses:")
@@ -113,8 +117,8 @@ func init() {
 
 	daemonCmd.PersistentFlags().BoolVar(
 		&daemonEnableRelaying,
-		"relaying",
-		false,
+		"relay",
+		true,
 		"enable relaying through bootstrap peers",
 	)
 

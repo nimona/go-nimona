@@ -53,7 +53,7 @@ func NewAddressBook(configPath string) (*AddressBook, error) {
 // AddressBook holds our private peer as well as all known remote peers
 type AddressBook struct {
 	localKey       *primitives.Key
-	LocalHostname   string
+	LocalHostname  string
 	localAddresses sync.Map
 	localRelays    sync.Map
 	peers          *PeerInfoCollection
@@ -89,7 +89,6 @@ func (ab *AddressBook) PutPeerInfo(peerInfo *PeerInfo) error {
 // TODO make this an attribute, is there any reason for this to be a method?
 func (ab *AddressBook) GetLocalPeerInfo() *PeerInfo {
 	addresses := ab.GetLocalPeerAddresses()
-	addresses = append(addresses, ab.GetLocalPeerRelays()...)
 
 	pi := &PeerInfo{
 		Addresses: addresses,
@@ -186,6 +185,7 @@ func (ab *AddressBook) GetLocalPeerAddresses() []string {
 		addresses = append(addresses, key.(string))
 		return true
 	})
+	addresses = append(addresses, ab.GetLocalPeerRelays()...)
 	return addresses
 }
 

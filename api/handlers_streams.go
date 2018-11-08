@@ -69,20 +69,12 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				write(conn, m)
 
 			case r := <-outgoing:
-				keyBlock, err := primitives.BlockFromBase58(r.Recipient)
-				if err != nil {
-					return
-				}
-				key := &primitives.Key{}
-				key.FromBlock(keyBlock)
 				v := &primitives.Block{
 					Type: r.Type,
 					Annotations: &primitives.Annotations{
 						Policies: []primitives.Policy{
 							primitives.Policy{
-								Subjects: []string{
-									r.Recipient,
-								},
+								Subjects: r.Recipients,
 								Actions: []string{
 									"read",
 								},
@@ -94,13 +86,22 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				}
 				m := api.mapBlock(v)
 				m["status"] = "ok"
-				addr := "peer:" + key.Thumbprint()
-				if err := api.exchange.Send(ctx, v, addr, primitives.SignWith(signer)); err != nil {
-					logger.Error("could not send outgoing block", zap.Error(err))
-					m["status"] = "error"
+				if err := primitives.Sign(v, signer); err != nil {
+					logger.Error("could not sign outgoing block", zap.Error(err))
+					m["status"] = "error signing block"
+					// TODO handle error
+					write(conn, m)
+					continue
 				}
-				// TODO handle error
-				write(conn, m)
+				for _, recipient := range r.Recipients {
+					addr := "peer:" + recipient
+					if err := api.exchange.Send(ctx, v, addr); err != nil {
+						logger.Error("could not send outgoing block", zap.Error(err))
+						m["status"] = "error sending block"
+					}
+					// TODO handle error
+					write(conn, m)
+				}
 			}
 		}
 	}()
@@ -142,9 +143,9 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			logger.Error("could not unmarshal outgoing block", zap.Error(err))
 			continue
 		}
-		if r.Type == "" || r.Recipient == "" {
+		if r.Type == "" || len(r.Recipients) == 0 {
 			// TODO send error message to ws
-			logger.Error("outgoing block missing type or recipient")
+			logger.Error("outgoing block missing type or recipients")
 			continue
 		}
 		outgoing <- r
