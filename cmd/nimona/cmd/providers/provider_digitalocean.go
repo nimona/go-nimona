@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -51,6 +52,13 @@ func (t *tokenSource) Token() (*oauth2.Token, error) {
 	}
 	return token, nil
 }
+
+var (
+	// ErrNewinstanceTimeout is returned when NewInstances times out
+	// while waiting for the instance to start
+	ErrNewinstanceTimeout = errors.New(
+		"timeout while waiting for new instance, please check manually")
+)
 
 // NewDigitalocean creates a new DigitalOcean Provider
 func NewDigitalocean(token string) (Provider, error) {
@@ -125,7 +133,7 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 
 		wn++
 		time.Sleep(2 * time.Second)
-
 	}
 
+	return "", ErrNewinstanceTimeout
 }
