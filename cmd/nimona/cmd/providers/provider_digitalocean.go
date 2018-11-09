@@ -31,7 +31,7 @@ const (
           ExecStartPre=-/usr/bin/docker stop nimona
           ExecStartPre=-/usr/bin/docker rm nimona
           ExecStartPre=/usr/bin/docker pull nimona/nimona:latest
-          ExecStart=/usr/bin/docker run --name nimona --rm -p 21013:21013 nimona/nimona daemon --port=21013 --api-port=8080 --announce-hostname=%s
+          ExecStart=/usr/bin/docker run --name nimona --rm -p 21013:21013 nimona/nimona daemon --port=21013 --api-port=8080 %s
           
           [Install]
           WantedBy=multi-user.target`
@@ -89,6 +89,11 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 		region = "lon1"
 	}
 
+	userData := fmt.Sprintf(cloudInit, "")
+	if name != "" {
+		userData = fmt.Sprintf(cloudInit, "--announce-hostname="+name)
+	}
+
 	ctx := context.Background()
 	createRequest := &godo.DropletCreateRequest{
 		Name:   name,
@@ -100,7 +105,7 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 		SSHKeys: []godo.DropletCreateSSHKey{godo.DropletCreateSSHKey{
 			Fingerprint: sshFingerprint,
 		}},
-		UserData: fmt.Sprintf(cloudInit, name),
+		UserData: userData,
 	}
 
 	// Create server
