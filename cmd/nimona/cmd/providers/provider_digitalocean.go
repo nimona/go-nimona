@@ -101,6 +101,8 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 		return "", err
 	}
 
+	wn := 0
+
 	// Wait for the API to return an IP
 	for {
 		d, _, err := dp.client.Droplets.Get(ctx, drop.ID)
@@ -116,7 +118,13 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 			return ip, nil
 		}
 
+		if wn == 60 {
+			break
+		}
+
+		wn++
 		time.Sleep(2 * time.Second)
+
 	}
 
 }
