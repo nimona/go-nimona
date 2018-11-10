@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/digitalocean/godo"
@@ -58,6 +59,8 @@ var (
 	// while waiting for the instance to start
 	ErrNewinstanceTimeout = errors.New(
 		"timeout while waiting for new instance, please check manually")
+	// ErrInvalidName is returned when a domain cannot be split in two parts
+	ErrInvalidName = errors.New("invalid name for domain")
 )
 
 // NewDigitalocean creates a new DigitalOcean Provider
@@ -141,4 +144,85 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 	}
 
 	return "", ErrNewinstanceTimeout
+}
+
+func (dp *DigitalOceanProvider) UpdateDomain(ctx context.Context,
+	name, ip string) error {
+
+	ds := strings.SplitN(name, ".", 2)
+	if len(ds) != 2 {
+		return ErrInvalidName
+	}
+
+	userSubdomain := ds[0]
+	userDomain := ds[1]
+
+	list, _, err := dp.client.Domains.List(ctx, &godo.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	domainFound := false
+	fullPathFound := false
+	record := godo.DomainRecord{}
+
+	for _, domain := range list {
+		if domain.Name == userDomain {
+			domainFound = true
+			break
+		}
+	}
+
+	if !domainFound {
+		_, _, err := dp.client.Domains.Create(ctx,
+			&godo.DomainCreateRequest{
+				Name: userDomain,
+			})
+		if err != nil {
+			return err
+		}
+	}
+
+	if domainFound {
+		recs, _, err := dp.client.Domains.Records(ctx, userDomain,
+			&godo.ListOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, rec := range recs {
+			if rec.Name == userSubdomain {
+				fullPathFound = true
+				record = rec
+			}
+		}
+	}
+
+	fmt.Println(fullPathFound)
+
+	if !fullPathFound {
+		_, _, err := dp.client.Domains.CreateRecord(ctx, userDomain,
+			&godo.DomainRecordEditRequest{
+				Name: userSubdomain,
+				Data: ip,
+				Type: "A",
+			})
+		if err != nil {
+			return err
+		}
+	}
+
+	if fullPathFound {
+		_, _, err := dp.client.Domains.EditRecord(ctx, userDomain, record.ID,
+			&godo.DomainRecordEditRequest{
+				Name: userSubdomain,
+				Data: ip,
+				Type: "A",
+			})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 
 	"github.com/spf13/cobra"
@@ -34,11 +35,24 @@ var daemonInstallCmd = &cobra.Command{
 				return err
 			}
 
+			cmd.Printf("Starting server: %s\n", hostname)
+
 			ip, err := dop.NewInstance(hostname, sshFingerprint, size, region)
 			if err != nil {
 				return err
 			}
+
 			cmd.Printf("Server created. IP: %s\n", ip)
+
+			cmd.Printf("Updating domain: %s with ip: %s\n", hostname, ip)
+
+			err = dop.UpdateDomain(context.Background(),
+				hostname, ip)
+			if err != nil {
+				return err
+			}
+			cmd.Println("Domain updated")
+
 		case "":
 			return ErrNoPlatform
 		}
