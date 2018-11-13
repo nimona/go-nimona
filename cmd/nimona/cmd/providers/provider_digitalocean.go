@@ -95,8 +95,9 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 	userData := fmt.Sprintf(cloudInit, "")
 	if name != "" {
 		userData = fmt.Sprintf(cloudInit, "--announce-hostname="+name)
+	} else {
+		name = fmt.Sprintf("nimona-%d", time.Now().Unix())
 	}
-
 	ctx := context.Background()
 	createRequest := &godo.DropletCreateRequest{
 		Name:   name,
