@@ -198,8 +198,6 @@ func (dp *DigitalOceanProvider) UpdateDomain(ctx context.Context,
 		}
 	}
 
-	fmt.Println(fullPathFound)
-
 	if !fullPathFound {
 		_, _, err := dp.client.Domains.CreateRecord(ctx, userDomain,
 			&godo.DomainRecordEditRequest{

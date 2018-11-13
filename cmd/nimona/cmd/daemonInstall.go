@@ -44,6 +44,11 @@ var daemonInstallCmd = &cobra.Command{
 
 			cmd.Printf("Server created. IP: %s\n", ip)
 
+			// If hostname specified create domain entry
+			if hostname == "" {
+				return nil
+			}
+
 			cmd.Printf("Updating domain: %s with ip: %s\n", hostname, ip)
 
 			err = dop.UpdateDomain(context.Background(),
