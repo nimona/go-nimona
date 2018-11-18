@@ -53,10 +53,6 @@
   name = "go.uber.org/zap"
   version = "1.8.0"
 
-[[constraint]]
-  name = "gopkg.in/abiosoft/ishell.v2"
-  version = "2.0.0"
-
 [prune]
   go-tests = true
   unused-packages = true

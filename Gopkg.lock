@@ -10,6 +10,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:4e575774903bfe2f3c06bae7c153dd548ac34167956cfb63959906e31b3e0592"
+  name = "github.com/digitalocean/godo"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d29fc3d82041712620b923e8330eddb8a364840b"
+  version = "v1.6.0"
+
+[[projects]]
   branch = "master"
   digest = "1:73ce7cd73bf041d37aa6ffc540ff1c27f0e443b4db269bd0204649358c73a193"
   name = "github.com/emersion/go-upnp-igd"
@@ -48,14 +56,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
-
-[[projects]]
-  branch = "master"
-  digest = "1:2b0df69b0d482719446858d567d12f4565d1908ff563db27250cb2cde7f461ec"
-  name = "github.com/gin-contrib/static"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "8cbcdde04781ade853025b0ff7001aaf0ed06150"
 
 [[projects]]
   digest = "1:d5083934eb25e45d17f72ffa86cae3814f4a9d6c073c4f16b64147169b245606"
@@ -102,6 +102,14 @@
   pruneopts = "UT"
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  pruneopts = "UT"
+  revision = "44c6ddd0a2342c386950e880b658017258da92fc"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
@@ -342,6 +350,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:595e123593925253dd02152777ddb8cd42300c4f61e783e163b053802547c47c"
+  name = "github.com/tent/http-link-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ac974c61c2f990f4115b119354b5e0b47550e888"
+
+[[projects]]
+  branch = "master"
   digest = "1:ba321cf9a010d56190c186289ef67280f7a86d3175d66ac4502a104e1f458f2b"
   name = "github.com/ugorji/go"
   packages = ["codec"]
@@ -389,14 +405,27 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a412caf33b5d3c7938c28e1e745c10664bd180277b73ab3b34c0c467886f9969"
+  digest = "1:33b9d71d1dde2106309484a388eb7ba53cd1f67014e34a71f7b3dbc20bd186e5"
   name = "golang.org/x/net"
   packages = [
+    "context",
+    "context/ctxhttp",
     "idna",
     "publicsuffix",
   ]
   pruneopts = "UT"
   revision = "49bb7cea24b1df9410e1712aa6433dae904ff66a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1bce229fad01cbad9bd00e70ca32afff25ac2cea3dd710d50f88c967c1c3df65"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = "UT"
+  revision = "9dcd33a902f40452422c2367fefcb95b54f9f8f8"
 
 [[projects]]
   branch = "master"
@@ -430,6 +459,22 @@
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:6247f76e55a1e1a5c19a81e2d4b4dff6730461eeb5bbb0a16dd4a8ec8637ee93"
+  name = "google.golang.org/appengine"
+  packages = [
+    "internal",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "urlfetch",
+  ]
+  pruneopts = "UT"
+  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
@@ -458,10 +503,10 @@
   analyzer-version = 1
   input-imports = [
     "github.com/davecgh/go-spew/spew",
+    "github.com/digitalocean/godo",
     "github.com/emersion/go-upnp-igd",
     "github.com/fatih/structs",
     "github.com/gin-contrib/cors",
-    "github.com/gin-contrib/static",
     "github.com/gin-gonic/gin",
     "github.com/gin-gonic/gin/render",
     "github.com/go-resty/resty",
@@ -483,6 +528,7 @@
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
     "golang.org/x/crypto/sha3",
+    "golang.org/x/oauth2",
     "gopkg.in/inconshreveable/go-keen.v0",
   ]
   solver-name = "gps-cdcl"
