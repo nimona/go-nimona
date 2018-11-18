@@ -24,7 +24,6 @@ const (
           Description=nimona
           After=docker.service
           Requires=docker.service
-          After=docker.redis.service
           
           [Service]
           TimeoutStartSec=0
