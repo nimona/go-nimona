@@ -2,6 +2,7 @@
 [![Coveralls Image]](https://coveralls.io/github/nimona/go-nimona)
 [![License Image]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 [![Issues Image]](https://waffle.io/nimona/go-nimona)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona?ref=badge_shield)
 
 # Nimona
 
@@ -54,3 +55,7 @@ nimona daemon install --platform do --token <> --ssh-fingerprint <> --hostname <
 [Issues Image]: https://img.shields.io/waffle/label/nimona/go-nimona/in%20progress.svg?style=flat-square
 
 [Go environment]: https://golang.org/doc/install
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona?ref=badge_large)
