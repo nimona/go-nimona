@@ -6,16 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/storage"
 )
-
-type BlockRequest struct {
-	Type        string                 `json:"type,omitempty"`
-	Annotations map[string]interface{} `json:"annotations,omitempty"`
-	Payload     map[string]interface{} `json:"payload,omitempty"`
-	Recipients  []string               `json:"recipients"`
-}
 
 func (api *API) HandleGetBlocks(c *gin.Context) {
 	blockIDs, err := api.blockStore.List()
@@ -30,7 +24,7 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 			c.AbortWithError(500, err)
 			return
 		}
-		m, err := primitives.Unmarshal(b)
+		m, err := encoding.Unmarshal(b)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -54,7 +48,7 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	m, err := primitives.Unmarshal(b)
+	m, err := encoding.Unmarshal(b)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -64,41 +58,37 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 }
 
 func (api *API) HandlePostBlock(c *gin.Context) {
-	req := &BlockRequest{}
+	req := map[string]interface{}{}
 	if err := c.BindJSON(req); err != nil {
 		c.AbortWithError(400, err)
 		return
 	}
 
-	if len(req.Recipients) == 0 {
+	// TODO(geoah) better way to require recipients?
+	// TODO(geoah) helper function for getting subjects
+	subjects := []string{}
+	if ps, ok := req["@ann.policy.subjects"]; ok {
+		if subs, ok := ps.([]string); ok {
+			subjects = subs
+		}
+	}
+	if len(subjects) == 0 {
 		c.AbortWithError(400, errors.New("missing recipients"))
 		return
 	}
 
-	block := &primitives.Block{
-		Type: req.Type,
-		Annotations: &primitives.Annotations{
-			Policies: []primitives.Policy{
-				primitives.Policy{
-					Subjects: req.Recipients,
-					Actions:  []string{"read"},
-					Effect:   "allow",
-				},
-			},
-		},
-		Payload: req.Payload,
-	}
-
 	signer := api.addressBook.GetLocalPeerKey()
-	if err := primitives.Sign(block, signer); err != nil {
-		c.AbortWithError(500, err)
+	o := encoding.NewObjectFromMap(req)
+	so, err := crypto.Sign(o, signer)
+	if err != nil {
+		c.AbortWithError(500, errors.New("could not sign object"))
 		return
 	}
 
 	ctx := context.Background()
-	for _, recipient := range req.Recipients {
+	for _, recipient := range subjects {
 		addr := "peer:" + recipient
-		if err := api.exchange.Send(ctx, block, addr); err != nil {
+		if err := api.exchange.Send(ctx, so, addr); err != nil {
 			c.AbortWithError(500, err)
 			return
 		}

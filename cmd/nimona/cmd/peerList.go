@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
-	"nimona.io/go/codec"
+
+	"nimona.io/go/encoding"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 )
 
 // peerListCmd represents the peerList command
@@ -21,13 +21,13 @@ var peerListCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		blocks := []*primitives.Block{}
-		if err := codec.Unmarshal(body, &blocks); err != nil {
+		ms := []*peers.PeerInfo{}
+		if err := encoding.UnmarshalSimple(body, &ms); err != nil {
 			return err
 		}
 
 		if returnRaw {
-			bs, err := json.MarshalIndent(blocks, "", "  ")
+			bs, err := json.MarshalIndent(ms, "", "  ")
 			if err != nil {
 				return err
 			}
@@ -36,10 +36,7 @@ var peerListCmd = &cobra.Command{
 			return nil
 		}
 
-		for _, block := range blocks {
-			peer := &peers.PeerInfo{}
-			peer.FromBlock(block)
-
+		for _, peer := range ms {
 			cmd.Println("peer:")
 			cmd.Println("  id:", peer.Thumbprint())
 			cmd.Println("  addresses:", peer.Addresses)

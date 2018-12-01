@@ -1,52 +1,29 @@
 package peers
 
 import (
-	"github.com/mitchellh/mapstructure"
-	ucodec "github.com/ugorji/go/codec"
-
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 )
+
+//go:generate go run nimona.io/go/cmd/objectify -schema /peer -type PeerInfo -out peerinfo_generated.go
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
-	Addresses []string `mapstructure:"addresses"`
-	Signature *primitives.Signature
+	RawObject    *encoding.Object  `json:"@"`
+	Addresses    []string          `json:"addresses"`
+	AuthorityKey *crypto.Key       `json:"@authority"`
+	SignerKey    *crypto.Key       `json:"@signer"`
+	Signature    *crypto.Signature `json:"@sig:O"`
 }
 
-func (pi *PeerInfo) Block() *primitives.Block {
-	return &primitives.Block{
-		Type: "nimona.io/peer.info",
-		Payload: map[string]interface{}{
-			"addresses": pi.Addresses,
-		},
-		Signature: pi.Signature,
-	}
-}
-
-func (pi *PeerInfo) FromBlock(block *primitives.Block) {
-	if err := mapstructure.Decode(block.Payload, pi); err != nil {
-		panic(err)
-	}
-	pi.Signature = block.Signature
-}
-
-// CodecDecodeSelf helper for cbor unmarshaling
-func (pi *PeerInfo) CodecDecodeSelf(dec *ucodec.Decoder) {
-	b := &primitives.Block{}
-	dec.MustDecode(b)
-	pi.FromBlock(b)
-}
-
-// CodecEncodeSelf helper for cbor marshaling
-func (pi *PeerInfo) CodecEncodeSelf(enc *ucodec.Encoder) {
-	b := pi.Block()
-	enc.MustEncode(b)
-}
-
+// Thumbprint of peer
+// TODO rename to ID() or PeerID()?
+// TODO(geoah) should this return the authority or the subject's id?
 func (pi *PeerInfo) Thumbprint() string {
-	return pi.Signature.Key.Thumbprint()
+	return pi.SignerKey.HashBase58()
 }
 
+// Address of the peer
 func (pi *PeerInfo) Address() string {
-	return "peer:" + pi.Signature.Key.Thumbprint()
+	return "peer:" + pi.Thumbprint()
 }

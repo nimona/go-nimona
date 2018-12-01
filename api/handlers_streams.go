@@ -11,9 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"nimona.io/go/codec"
+
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
-	"nimona.io/go/primitives"
 )
 
 func (api *API) HandleGetStreams(c *gin.Context) {
@@ -29,7 +30,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	write := func(conn *websocket.Conn, data interface{}) error {
 		contentType := strings.ToLower(c.ContentType())
 		if strings.Contains(contentType, "cbor") {
-			bs, err := codec.Marshal(data)
+			bs, err := encoding.MarshalSimple(data)
 			if err != nil {
 				return err
 			}
@@ -58,8 +59,8 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	ctx := context.Background()
 	logger := log.Logger(ctx).Named("api")
 	signer := api.addressBook.GetLocalPeerKey()
-	incoming := make(chan *primitives.Block, 100)
-	outgoing := make(chan *BlockRequest, 100)
+	incoming := make(chan *encoding.Object, 100)
+	outgoing := make(chan *encoding.Object, 100)
 
 	go func() {
 		for {
@@ -68,46 +69,44 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				m := api.mapBlock(v)
 				write(conn, m)
 
-			case r := <-outgoing:
-				v := &primitives.Block{
-					Type: r.Type,
-					Annotations: &primitives.Annotations{
-						Policies: []primitives.Policy{
-							primitives.Policy{
-								Subjects: r.Recipients,
-								Actions: []string{
-									"read",
-								},
-								Effect: "allow",
-							},
-						},
-					},
-					Payload: r.Payload,
-				}
-				m := api.mapBlock(v)
-				m["status"] = "ok"
-				if err := primitives.Sign(v, signer); err != nil {
+			case req := <-outgoing:
+				singedReq, err := crypto.Sign(req, signer)
+				if err != nil {
 					logger.Error("could not sign outgoing block", zap.Error(err))
-					m["status"] = "error signing block"
+					// resp["status"] = "error signing block"
 					// TODO handle error
-					write(conn, m)
+					write(conn, req)
 					continue
 				}
-				for _, recipient := range r.Recipients {
+				// TODO(geoah) better way to require recipients?
+				// TODO(geoah) helper function for getting subjects
+				subjects := []string{}
+				// if ps, ok := req["@ann.policy.subjects"]; ok {
+				// 	if subs, ok := ps.([]string); ok {
+				// 		subjects = subs
+				// 	}
+				// }
+				if len(subjects) == 0 {
+					// TODO handle error
+					// req["status"] = "no subjects"
+					write(conn, req)
+					continue
+				}
+				for _, recipient := range subjects {
 					addr := "peer:" + recipient
-					if err := api.exchange.Send(ctx, v, addr); err != nil {
+					if err := api.exchange.Send(ctx, singedReq, addr); err != nil {
 						logger.Error("could not send outgoing block", zap.Error(err))
-						m["status"] = "error sending block"
+						// req["status"] = "error sending block"
 					}
 					// TODO handle error
-					write(conn, m)
+					write(conn, req)
 				}
 			}
 		}
 	}()
 	fmt.Println(pattern, pattern, pattern, pattern, pattern, pattern, pattern)
-	hr, err := api.exchange.Handle(pattern, func(v *primitives.Block) error {
-		incoming <- v
+	hr, err := api.exchange.Handle(pattern, func(o *encoding.Object) error {
+		incoming <- o
 		return nil
 	})
 	if err != nil {
@@ -138,16 +137,12 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			logger.Warn("could not read from ws", zap.Error(err))
 			continue
 		}
-		r := &BlockRequest{}
-		if err := json.Unmarshal(msg, r); err != nil {
+		m := map[string]interface{}{}
+		if err := json.Unmarshal(msg, &m); err != nil {
 			logger.Error("could not unmarshal outgoing block", zap.Error(err))
 			continue
 		}
-		if r.Type == "" || len(r.Recipients) == 0 {
-			// TODO send error message to ws
-			logger.Error("outgoing block missing type or recipients")
-			continue
-		}
-		outgoing <- r
+		o := encoding.NewObjectFromMap(m)
+		outgoing <- o
 	}
 }

@@ -6,7 +6,7 @@ package storage
 // 	"path/filepath"
 // 	"testing"
 
-// 	"nimona.io/go/primitives"
+// 	"nimona.io/go/crypto"
 // 	"github.com/stretchr/testify/assert"
 // )
 
@@ -19,7 +19,7 @@ package storage
 
 // 	ds := NewDiskStorage(path)
 
-// 	block := primitives.NewBlock("test", map[string]interface{}{
+// 	block := crypto.NewBlock("test", map[string]interface{}{
 // 		"foo": "bar",
 // 	})
 // 	blockID, err := block.ID()
@@ -44,7 +44,7 @@ package storage
 // 	values := make(map[string][]byte)
 // 	values["TestMetaKey"] = []byte("TestMetaValue")
 
-// 	block := primitives.NewBlock("test", map[string]interface{}{
+// 	block := crypto.NewBlock("test", map[string]interface{}{
 // 		"foo": "bar",
 // 	})
 // 	blockID, err := block.ID()
@@ -71,7 +71,7 @@ package storage
 // 	values := make(map[string][]byte)
 // 	values["TestMetaKey"] = []byte("TestMetaValue")
 
-// 	block := primitives.NewBlock("test", map[string]interface{}{
+// 	block := crypto.NewBlock("test", map[string]interface{}{
 // 		"foo": "bar",
 // 	})
 // 	blockID, err := block.ID()
@@ -109,7 +109,7 @@ package storage
 
 // 	ds := NewDiskStorage(path)
 
-// 	block := primitives.NewBlock("test", map[string]interface{}{
+// 	block := crypto.NewBlock("test", map[string]interface{}{
 // 		"foo": "bar",
 // 	})
 // 	blockID, err := block.ID()

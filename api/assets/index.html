@@ -220,12 +220,15 @@
         var body = messageField.value;
         var recipients = [recipientField.value];
         var block = {
-          type: "nimona.io/message",
-          payload: {
-            body: body,
-            timestamp: (new Date()).toISOString()
+          "@ctx": "nimona.io/message",
+          "@pol": {
+            "@ctx": "/policy",
+            "subjects": subjects,
+            "actions": ["read"],
+            "effect": "allow"
           },
-          recipients: recipients,
+          "body": body,
+          "timestamp": (new Date()).toISOString()
         }
         c.send(JSON.stringify(block));
         return false;
@@ -240,12 +243,12 @@
         console.log(block)
         if (!!block.owner) {
           messagesList.innerHTML = '<li class="received">' +
-            '<div><span>Message:</span>' + block.payload.body + '</div>' +
+            '<div><span>Message:</span>' + block.body + '</div>' +
             '<div><span>From:</span><a href="#" class="from" data-key="' + block.owner + '">' + block.owner + '</a></div>' +
             '</li>' + messagesList.innerHTML
         } else {
           messagesList.innerHTML = '<li class="received">' +
-            '<div><span>Message:</span>' + block.payload.body + '</div>' +
+            '<div><span>Message:</span>' + block.body + '</div>' +
             '<div><span>To:</span><a href="#" class="from" data-key="' + block.recipients[0] + '">' + block.recipients[0] + '</a></div>' +
             '</li>' + messagesList.innerHTML
         }

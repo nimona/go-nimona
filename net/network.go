@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -17,10 +16,10 @@ import (
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
-	"nimona.io/go/codec"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 )
 
 // Networker interface for mocking Network
@@ -92,28 +91,31 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 			Nonce:    nonce,
 			PeerInfo: n.addressBook.GetLocalPeerInfo(),
 		}
-		synBlock := syn.Block()
-		if err := primitives.Sign(synBlock, signer); err != nil {
+		signedSyn, err := crypto.Sign(syn.ToObject(), signer)
+		if err != nil {
 			return nil, err
 		}
 
-		if err := Write(synBlock, conn); err != nil {
+		if err := Write(signedSyn, conn); err != nil {
 			return nil, err
 		}
 
-		blockSynAck, err := Read(conn)
+		synAckObj, err := Read(conn)
 		if err != nil {
 			return nil, err
 		}
 
 		synAck := &HandshakeSynAck{}
-		synAck.FromBlock(blockSynAck)
+		if err := synAck.FromObject(synAckObj); err != nil {
+			return nil, err
+		}
+
 		if synAck.Nonce != nonce {
 			return nil, errors.New("invalid handhshake.syn-ack")
 		}
 
 		// store who is on the other side - peer id
-		conn.RemoteID = synAck.Signature.Key.Thumbprint()
+		conn.RemoteID = synAck.RawObject.GetSignerKey().HashBase58()
 		if err := n.addressBook.PutPeerInfo(synAck.PeerInfo); err != nil {
 			log.DefaultLogger.Panic("could not add remote peer", zap.Error(err))
 		}
@@ -121,11 +123,12 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 		ack := &HandshakeAck{
 			Nonce: nonce,
 		}
-		ackBlock := ack.Block()
-		if err := primitives.Sign(ackBlock, signer); err != nil {
+		signedAck, err := crypto.Sign(ack.ToObject(), signer)
+		if err != nil {
 			return nil, err
 		}
-		if err := Write(ackBlock, conn); err != nil {
+
+		if err := Write(signedAck, conn); err != nil {
 			return nil, err
 		}
 
@@ -201,18 +204,18 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 				RemoteID: "unknown: handshaking",
 			}
 
-			blockSyn, err := Read(conn)
+			synObj, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			// TODO check type
-
 			syn := &HandshakeSyn{}
-			syn.FromBlock(blockSyn)
-			nonce := syn.Nonce
+			if err := syn.FromObject(synObj); err != nil {
+				// TODO close conn?
+				continue
+			}
 
 			// store the peer on the other side
 			if err := n.addressBook.PutPeerInfo(syn.PeerInfo); err != nil {
@@ -220,37 +223,41 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 
 			synAck := &HandshakeSynAck{
-				Nonce:    nonce,
+				Nonce:    syn.Nonce,
 				PeerInfo: n.addressBook.GetLocalPeerInfo(),
 			}
-			synAckBlock := synAck.Block()
-			if err := primitives.Sign(synAckBlock, signer); err != nil {
+			singedSynAck, err := crypto.Sign(synAck.ToObject(), signer)
+			if err != nil {
 				log.DefaultLogger.Warn("could not sigh for syn ack block", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
-			if err := Write(synAckBlock, conn); err != nil {
+			if err := Write(singedSynAck, conn); err != nil {
 				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			blockAck, err := Read(conn)
+			ackObj, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			ack := &HandshakeAck{}
-			ack.FromBlock(blockAck)
-			if ack.Nonce != nonce {
+			ack := &HandshakeSynAck{}
+			if err := ack.FromObject(ackObj); err != nil {
+				// TODO close conn?
+				continue
+			}
+
+			if ack.Nonce != syn.Nonce {
 				log.DefaultLogger.Warn("validating syn to ack nonce failed")
 				// TODO close conn?
 				continue
 			}
 
-			conn.RemoteID = ack.Signature.Key.Thumbprint()
+			conn.RemoteID = ack.RawObject.GetSignerKey().HashBase58()
 			cconn <- conn
 		}
 	}()
@@ -258,16 +265,21 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 	return cconn, nil
 }
 
-func Write(p *primitives.Block, conn *Connection) error {
+func Write(o *encoding.Object, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
-	if p == nil {
+	if o == nil {
 		log.DefaultLogger.Error("block for fw cannot be nil")
 		return errors.New("missing block")
 	}
 
-	b, err := primitives.Marshal(p)
+	b, err := encoding.Marshal(o)
 	if err != nil {
 		return err
+	}
+
+	if os.Getenv("DEBUG_BLOCKS") == "true" {
+		b, _ := json.MarshalIndent(o.Map(), "", "  ")
+		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
 
 	if _, err := conn.Conn.Write(b); err != nil {
@@ -275,60 +287,57 @@ func Write(p *primitives.Block, conn *Connection) error {
 	}
 
 	SendBlockEvent(
-		"incoming",
-		p.Type,
+		"outgoing",
+		o.GetType(),
 		len(b),
 	)
 
-	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(primitives.BlockToMap(p), "", "  ")
-		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
-	}
 	return nil
 }
 
-func Read(conn *Connection) (*primitives.Block, error) {
+func Read(conn *Connection) (*encoding.Object, error) {
 	logger := log.DefaultLogger
 
-	pDecoder := ucodec.NewDecoder(conn.Conn, codec.CborHandler())
-	b := &primitives.Block{}
-	if err := pDecoder.Decode(&b); err != nil {
+	pDecoder := ucodec.NewDecoder(conn.Conn, encoding.RawCborHandler())
+	r := &ucodec.Raw{}
+	if err := pDecoder.Decode(r); err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			spew.Dump(b)
+			spew.Dump(r)
 			logger.Error("Recovered while processing", zap.Any("r", r))
 		}
 	}()
 
-	d, err := b.Digest()
+	o, err := encoding.NewObjectFromBytes([]byte(*r))
 	if err != nil {
 		return nil, err
 	}
 
-	if b.Signature != nil {
-		if err := primitives.Verify(b.Signature, d); err != nil {
-			return nil, err
-		}
-	} else {
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("-----", b.Type)
-		fmt.Println("-----", b.Payload)
-		fmt.Println("--------------------------------------------------------")
-	}
+	// TODO(geoah) fix sig
+	// if b.Signature != nil {
+	// 	if err := crypto.Verify(b.Signature, d); err != nil {
+	// 		return nil, err
+	// 	}
+	// } else {
+	// 	fmt.Println("--------------------------------------------------------")
+	// 	fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
+	// 	fmt.Println("--------------------------------------------------------")
+	// 	fmt.Println("-----", b.Type)
+	// 	fmt.Println("-----", b.Payload)
+	// 	fmt.Println("--------------------------------------------------------")
+	// }
 
 	SendBlockEvent(
 		"incoming",
-		b.Type,
+		o.GetType(),
 		pDecoder.NumBytesRead(),
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		bs, _ := json.MarshalIndent(primitives.BlockToMap(b), "", "  ")
-		logger.Info(string(bs), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		b, _ := json.MarshalIndent(o.Map(), "", "  ")
+		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
-	return b, nil
+	return o, nil
 }

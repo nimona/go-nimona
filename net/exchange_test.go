@@ -11,13 +11,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/net"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
 
 func TestSendSuccess(t *testing.T) {
+
 	_, p1, _, w1, r1 := newPeer(t)
 	_, p2, k2, w2, r2 := newPeer(t)
 
@@ -28,19 +30,17 @@ func TestSendSuccess(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	exPayload1 := &primitives.Block{
-		Type: "test.nimona.io/dummy",
-		Payload: map[string]interface{}{
-			"foo": "bar1",
-		},
+	em1 := map[string]interface{}{
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
+	eo1 := encoding.NewObjectFromMap(em1)
 
-	exPayload2 := &primitives.Block{
-		Type: "test.nimona.io/dummy",
-		Payload: map[string]interface{}{
-			"foo": "bar2",
-		},
+	em2 := map[string]interface{}{
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
+	eo2 := encoding.NewObjectFromMap(em2)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -48,18 +48,24 @@ func TestSendSuccess(t *testing.T) {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	w1.Handle("test.nimona.io/dummy", func(block *primitives.Block) error {
-		assert.Equal(t, k2.GetPublicKey().Thumbprint(), block.Signature.Key.Thumbprint())
-		assert.Equal(t, exPayload1.Type, block.Type)
-		assert.Equal(t, exPayload1.Annotations, block.Annotations)
-		assert.Equal(t, exPayload1.Payload, block.Payload)
+	seo1, err := crypto.Sign(eo1, k2)
+	assert.NoError(t, err)
+
+	w1.Handle("test/msg", func(o *encoding.Object) error {
+		// assert.Equal(t, k2.GetPublicKey().Thumbprint(), block.Signature.Key.Thumbprint())
+		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
+		// assert.Equal(t, exPayload1.Signature.Signature, block.(*TestMessage).Signature.Signature)
+		// assert.Equal(t, exPayload1.Signature.Key.Curve, block.(*TestMessage).Signature.Key.Curve)
 		w1BlockHandled = true
 		wg.Done()
 		return nil
 	})
 
-	w2.Handle("test.nimona.**", func(block *primitives.Block) error {
-		assert.Equal(t, exPayload2, block)
+	w2.Handle("tes**", func(o *encoding.Object) error {
+		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
+		// assert.Equal(t, exPayload2.Body, block.(*TestMessage).Body)
+		// assert.Nil(t, block.(*TestMessage).Signature.Signature)
+
 		w2BlockHandled = true
 		wg.Done()
 		return nil
@@ -67,13 +73,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, exPayload1, "peer:"+p1.Signature.Key.Thumbprint(), primitives.SignWith(k2))
+	err = w2.Send(ctx, seo1, "peer:"+p1.SignerKey.HashBase58())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	err = w1.Send(ctx, exPayload2, "peer:"+p2.Signature.Key.Thumbprint())
+	err = w1.Send(ctx, eo2, "peer:"+p2.SignerKey.HashBase58())
 	assert.NoError(t, err)
 
 	wg.Wait()
@@ -84,7 +90,7 @@ func TestSendSuccess(t *testing.T) {
 
 // func (assert *exchangeTestSuite)t,  TestRelayedSendSuccess() {
 // 	portR, pR, wR, rR := assert.newPeer(t, )
-// 	pRs := pR.Block()
+// 	pRs := pR
 // 	pRs.Addresses = []string{fmt.Sprintf("tcp:127.0.0.1:%d", portR)}
 
 // 	_, p1, w1, r1 := assert.newPeer(t, )
@@ -93,12 +99,12 @@ func TestSendSuccess(t *testing.T) {
 // 	r1.PutPeerInfoFromBlock(&pRs)
 // 	r2.PutPeerInfoFromBlock(&pRs)
 
-// 	p1s := p1.Block()
+// 	p1s := p1
 // 	p1s.Addresses = []string{"relay:" + pRs.ID}
 // 	rR.PutPeerInfoFromBlock(&p1s)
 // 	r2.PutPeerInfoFromBlock(&p1s)
 
-// 	p2s := p2.Block()
+// 	p2s := p2
 // 	p2s.Addresses = []string{"relay:" + pRs.ID}
 // 	rR.PutPeerInfoFromBlock(&p2s)
 // 	r1.PutPeerInfoFromBlock(&p2s)
@@ -159,7 +165,7 @@ func TestSendSuccess(t *testing.T) {
 // 	assert.True(t, w2BlockHandled)
 // }
 
-func newPeer(t *testing.T) (int, *peers.PeerInfo, *primitives.Key, net.Exchange, *peers.AddressBook) {
+func newPeer(t *testing.T) (int, *peers.PeerInfo, *crypto.Key, net.Exchange, *peers.AddressBook) {
 	td, _ := ioutil.TempDir("", "nimona-test-net")
 	ab, _ := peers.NewAddressBook(td)
 	storagePath := path.Join(td, "storage")

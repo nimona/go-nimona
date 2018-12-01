@@ -5,9 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"nimona.io/go/dht"
+	"nimona.io/go/encoding"
 	nnet "nimona.io/go/net"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
 
@@ -65,28 +65,29 @@ func (api *API) Serve(address string) error {
 	return api.router.Run(address)
 }
 
-func (api *API) mapBlock(v *primitives.Block) map[string]interface{} {
-	m := map[string]interface{}{
-		"type":        v.Type,
-		"payload":     v.Payload,
-		"annotations": v.Annotations,
-	}
-	if s := v.Signature; s != nil {
-		m["signature"] = v.Signature.Block()
-		m["owner"] = v.Signature.Key.Thumbprint()
-		if v.Signature.Key.Thumbprint() == api.localKey {
-			m["direction"] = "outgoing"
-		} else {
-			m["direction"] = "incoming"
-		}
-	}
-	recipients := []string{}
-	if v.Annotations != nil {
-		for _, policy := range v.Annotations.Policies {
-			recipients = append(recipients, policy.Subjects...)
-		}
-	}
-	m["id"] = primitives.ID(v)
-	m["recipients"] = recipients
-	return m
+func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
+	return o.Map()
+
+	// 	"type":        v.Type,
+	// 	"payload":     v.Payload,
+	// 	"annotations": v.Annotations,
+	// }
+	// if s := v.Signature; s != nil {
+	// 	m["signature"] = v.Signature
+	// 	m["owner"] = v.Signature.Key.Thumbprint()
+	// 	if v.Signature.Key.Thumbprint() == api.localKey {
+	// 		m["direction"] = "outgoing"
+	// 	} else {
+	// 		m["direction"] = "incoming"
+	// 	}
+	// }
+	// recipients := []string{}
+	// if v.Annotations != nil {
+	// 	for _, policy := range v.Annotations.Policies {
+	// 		recipients = append(recipients, policy.Subjects...)
+	// 	}
+	// }
+	// m["id"] = crypto.ID(v)
+	// m["recipients"] = recipients
+	// return m
 }

@@ -6,13 +6,15 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"nimona.io/go/base58"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
-	"nimona.io/go/primitives"
 )
 
 // loadConfig signing key from/to a JSON encoded file
@@ -28,13 +30,14 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 		if err != nil {
 			return err
 		}
-		key := &primitives.Key{}
-		keyBlock, err := primitives.Unmarshal(keyBytes)
+		o, err := encoding.Unmarshal(keyBytes)
 		if err != nil {
 			return err
 		}
-		key.FromBlock(keyBlock)
-		ab.localKey = key
+		ab.localKey = &crypto.Key{}
+		if err := o.Unmarshal(ab.localKey); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -46,14 +49,14 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 		return err
 	}
 
-	localKey, err := primitives.NewKey(peerSigningKey)
+	localKey, err := crypto.NewKey(peerSigningKey)
 	if err != nil {
 		return err
 	}
 
 	ab.localKey = localKey
 
-	keyBytes, err := primitives.Marshal(localKey.Block())
+	keyBytes, err := encoding.Marshal(localKey.ToObject())
 	if err != nil {
 		return err
 	}
@@ -90,6 +93,7 @@ func loadConfig(path string) (*config, error) {
 
 // storeConfig to a JSON encoded file
 func storeConfig(cfg *config, path string) error {
+	fmt.Println("____", cfg, path)
 	bc, _ := json.MarshalIndent(cfg, "", "  ")
 	return ioutil.WriteFile(path, bc, 0644)
 }
