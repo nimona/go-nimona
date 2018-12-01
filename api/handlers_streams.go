@@ -70,8 +70,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				write(conn, m)
 
 			case req := <-outgoing:
-				singedReq, err := crypto.Sign(req, signer)
-				if err != nil {
+				if err := crypto.Sign(req, signer); err != nil {
 					logger.Error("could not sign outgoing block", zap.Error(err))
 					// resp["status"] = "error signing block"
 					// TODO handle error
@@ -94,7 +93,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				}
 				for _, recipient := range subjects {
 					addr := "peer:" + recipient
-					if err := api.exchange.Send(ctx, singedReq, addr); err != nil {
+					if err := api.exchange.Send(ctx, req, addr); err != nil {
 						logger.Error("could not send outgoing block", zap.Error(err))
 						// req["status"] = "error sending block"
 					}

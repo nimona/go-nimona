@@ -15,8 +15,8 @@ func (s Mandate) ToMap() map[string]interface{} {
 		"description:s": s.Description,
 		"effect:s":      s.Effect,
 	}
-	if s.Authority != nil {
-		m["authority:O"] = s.Authority.ToMap()
+	if s.Signer != nil {
+		m["@signer:O"] = s.Signer.ToMap()
 	}
 	if s.Subject != nil {
 		m["subject:O"] = s.Subject.ToMap()
@@ -40,13 +40,13 @@ func (s Mandate) ToObject() *encoding.Object {
 
 // FromMap populates the struct from a f12n compatible map
 func (s *Mandate) FromMap(m map[string]interface{}) error {
-	if v, ok := m["authority:O"].(map[string]interface{}); ok {
-		s.Authority = &Key{}
-		if err := s.Authority.FromMap(v); err != nil {
+	if v, ok := m["@signer:O"].(map[string]interface{}); ok {
+		s.Signer = &Key{}
+		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["authority:O"].(*Key); ok {
-		s.Authority = v
+	} else if v, ok := m["@signer:O"].(*Key); ok {
+		s.Signer = v
 	}
 	if v, ok := m["subject:O"].(map[string]interface{}); ok {
 		s.Subject = &Key{}

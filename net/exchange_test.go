@@ -51,19 +51,19 @@ func TestSendSuccess(t *testing.T) {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	seo1, err := crypto.Sign(eo1, k2)
+	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
 	w1.Handle("test/msg", func(o *encoding.Object) error {
-		assert.Equal(t, seo1.GetRaw("body"), o.GetRaw("body"))
-		assert.NotNil(t, seo1.GetSignerKey())
+		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
+		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t, seo1.GetSignerKey(), o.GetSignerKey())
-		assert.Equal(t, seo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
-		assert.NotNil(t, seo1.GetSignature())
+		assert.Equal(t, eo1.GetSignerKey(), o.GetSignerKey())
+		assert.Equal(t, eo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
+		assert.NotNil(t, eo1.GetSignature())
 		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t, seo1.GetSignature(), o.GetSignature())
-		assert.Equal(t, seo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
+		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
+		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
 		w1BlockHandled = true
 		wg.Done()
 		return nil
@@ -83,7 +83,7 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = w2.Send(ctx, seo1, "peer:"+p1.SignerKey.HashBase58())
+	err = w2.Send(ctx, eo1, "peer:"+p1.SignerKey.HashBase58())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)

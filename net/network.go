@@ -91,12 +91,12 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 			Nonce:    nonce,
 			PeerInfo: n.addressBook.GetLocalPeerInfo(),
 		}
-		signedSyn, err := crypto.Sign(syn.ToObject(), signer)
-		if err != nil {
+		so := syn.ToObject()
+		if err := crypto.Sign(so, signer); err != nil {
 			return nil, err
 		}
 
-		if err := Write(signedSyn, conn); err != nil {
+		if err := Write(so, conn); err != nil {
 			return nil, err
 		}
 
@@ -123,12 +123,12 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 		ack := &HandshakeAck{
 			Nonce: nonce,
 		}
-		signedAck, err := crypto.Sign(ack.ToObject(), signer)
-		if err != nil {
+		ao := ack.ToObject()
+		if err := crypto.Sign(ao, signer); err != nil {
 			return nil, err
 		}
 
-		if err := Write(signedAck, conn); err != nil {
+		if err := Write(ao, conn); err != nil {
 			return nil, err
 		}
 
@@ -226,13 +226,13 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 				Nonce:    syn.Nonce,
 				PeerInfo: n.addressBook.GetLocalPeerInfo(),
 			}
-			singedSynAck, err := crypto.Sign(synAck.ToObject(), signer)
-			if err != nil {
+			sao := synAck.ToObject()
+			if err := crypto.Sign(sao, signer); err != nil {
 				log.DefaultLogger.Warn("could not sigh for syn ack block", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
-			if err := Write(singedSynAck, conn); err != nil {
+			if err := Write(sao, conn); err != nil {
 				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
 				// TODO close conn?
 				continue

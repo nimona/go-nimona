@@ -17,6 +17,10 @@ func ObjectHash(o *Object) ([]byte, error) {
 	b := []byte{}
 	ks := []string{}
 	for k := range m {
+		// TODO(geoah) is there a better way of doing this?
+		if k == "@sig:O" {
+			continue
+		}
 		ks = append(ks, k)
 	}
 	sort.Strings(ks)
@@ -29,7 +33,8 @@ func ObjectHash(o *Object) ([]byte, error) {
 		b = append(b, hv...)
 		x[k] = hv
 	}
-	return hash(HintMap, b), nil
+	h := hash(HintMap, b)
+	return h, nil
 }
 
 func hash(p string, b []byte) []byte {
@@ -72,7 +77,6 @@ func hashValue(o interface{}) []byte {
 		if err != nil {
 			panic("hashing error: " + err.Error())
 		}
-		fmt.Printf("nested hash: %x\n", h)
 		return h
 	case reflect.Float32, reflect.Float64:
 		nf, err := floatNormalize(v.Float())

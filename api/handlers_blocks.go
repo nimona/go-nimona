@@ -79,8 +79,7 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 
 	signer := api.addressBook.GetLocalPeerKey()
 	o := encoding.NewObjectFromMap(req)
-	so, err := crypto.Sign(o, signer)
-	if err != nil {
+	if err := crypto.Sign(o, signer); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object"))
 		return
 	}
@@ -88,7 +87,7 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 	ctx := context.Background()
 	for _, recipient := range subjects {
 		addr := "peer:" + recipient
-		if err := api.exchange.Send(ctx, so, addr); err != nil {
+		if err := api.exchange.Send(ctx, o, addr); err != nil {
 			c.AbortWithError(500, err)
 			return
 		}

@@ -9,7 +9,7 @@ import (
 // Mandate to give authority to a aubject to perform certain actions on the
 // authority's behalf
 type Mandate struct {
-	Authority   *Key       `json:"authority"`
+	Signer      *Key       `json:"@signer:O"`
 	Subject     *Key       `json:"subject"`
 	Description string     `json:"description"`
 	Resources   []string   `json:"resources"`
@@ -30,7 +30,7 @@ func NewMandate(authority, subject *Key, description string, resources, actions 
 	}
 
 	m := &Mandate{
-		Authority:   authority,
+		Signer:      authority,
 		Subject:     subject,
 		Description: description,
 		Resources:   resources,
@@ -38,15 +38,14 @@ func NewMandate(authority, subject *Key, description string, resources, actions 
 		Effect:      effect,
 	}
 
-	// o, err := encoding.NewObjectFromStruct(m)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	o := m.ToObject()
+	if err := Sign(o, authority); err != nil {
+		return nil, err
+	}
 
-	// s, err := Sign(o, authority)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if err := m.FromObject(o); err != nil {
+		return nil, err
+	}
 
 	return m, nil
 }

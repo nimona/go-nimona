@@ -67,12 +67,12 @@ func NewDHT(exchange net.Exchange, pm *peers.AddressBook, addresses []string) (*
 			RequestID: net.RandStringBytesMaskImprSrc(8),
 			PeerID:    lk.RawObject.HashBase58(),
 		}
-		signedReq, err := crypto.Sign(req.ToObject(), lk)
-		if err != nil {
+		so := req.ToObject()
+		if err := crypto.Sign(so, lk); err != nil {
 			// TODO log error
 			continue
 		}
-		if err := exchange.Send(ctx, signedReq, addr); err != nil {
+		if err := exchange.Send(ctx, so, addr); err != nil {
 			log.Logger(ctx).Warn("could not send to bootstrap", zap.String("addr", addr), zap.Error(err))
 		}
 	}
@@ -183,13 +183,13 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	}
 
 	signer := nd.addressBook.GetLocalPeerKey()
-	signedResp, err := crypto.Sign(resp.ToObject(), signer)
-	if err != nil {
+	so := resp.ToObject()
+	if err := crypto.Sign(so, signer); err != nil {
 		// TODO log error
 		return
 	}
 	addr := "peer:" + payload.RawObject.HashBase58()
-	if err := nd.exchange.Send(ctx, signedResp, addr); err != nil {
+	if err := nd.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
@@ -247,12 +247,12 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 
 	signer := nd.addressBook.GetLocalPeerKey()
 	addr := "peer:" + payload.Signer.HashBase58()
-	signedResp, err := crypto.Sign(resp.ToObject(), signer)
-	if err != nil {
+	so := resp.ToObject()
+	if err := crypto.Sign(so, signer); err != nil {
 		// TODO log error
 		return
 	}
-	if err := nd.exchange.Send(ctx, signedResp, addr); err != nil {
+	if err := nd.exchange.Send(ctx, so, addr); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
@@ -372,8 +372,8 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 		BlockIDs: []string{key},
 	}
 	signer := nd.addressBook.GetLocalPeerKey()
-	signedProvider, err := crypto.Sign(provider.ToObject(), signer)
-	if err != nil {
+	so := provider.ToObject()
+	if err := crypto.Sign(so, signer); err != nil {
 		return err
 	}
 	if err := nd.store.PutProvider(provider); err != nil {
@@ -382,7 +382,7 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 
 	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
-		if err := nd.exchange.Send(ctx, signedProvider, closestPeer.Address()); err != nil {
+		if err := nd.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
 			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
 		}
 	}

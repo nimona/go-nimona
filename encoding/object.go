@@ -1,8 +1,6 @@
 package encoding
 
 import (
-	"fmt"
-
 	"nimona.io/go/base58"
 )
 
@@ -148,7 +146,6 @@ func (o Object) GetRaw(lk string) interface{} {
 
 // SetRaw -
 func (o Object) SetRaw(k string, v interface{}) {
-	// add type hint if not already set
 	et := getFullType(k)
 	if et == "" {
 		k += ":" + GetHintFromType(v)
@@ -160,57 +157,13 @@ func (o Object) SetRaw(k string, v interface{}) {
 		}
 	}
 
-	// add the attribute in the data map
-	o[k] = v
-
-	// check if this is a magic attribute and set it
-	ck := getCleanKeyName(k)
-	switch ck {
-	case "@ctx":
-		t, ok := v.(string)
-		if !ok {
-			panic(fmt.Errorf("invalid type %T for @ctx", v))
-		}
-		o["@ctx:s"] = t
-	case "@policy:O":
-		if oi, ok := v.(*Object); ok {
-			o["@policy:O"] = oi
-		} else if oi, ok := v.(objectable); ok {
-			o["@policy:O"] = oi.ToObject()
-		} else if m, ok := v.(map[string]interface{}); ok {
-			o["@policy:O"] = NewObjectFromMap(m)
-		} else {
-			panic(fmt.Errorf("invalid type %T for @policy", v))
-		}
-	case "@authority:O":
-		if oi, ok := v.(*Object); ok {
-			o["@authority:O"] = oi
-		} else if oi, ok := v.(objectable); ok {
-			o["@authority:O"] = oi.ToObject()
-		} else if m, ok := v.(map[string]interface{}); ok {
-			o["@authority:O"] = NewObjectFromMap(m)
-		} else {
-			panic(fmt.Errorf("invalid type %T for @authority", v))
-		}
-	case "@signer:O":
-		if oi, ok := v.(*Object); ok {
-			o["@signer:O"] = oi
-		} else if oi, ok := v.(objectable); ok {
-			o["@signer:O"] = oi.ToObject()
-		} else if m, ok := v.(map[string]interface{}); ok {
-			o["@signer:O"] = NewObjectFromMap(m)
-		} else {
-			panic(fmt.Errorf("invalid type %T for @signer", v))
-		}
-	case "@sig:O":
-		if oi, ok := v.(*Object); ok {
-			o["@sig:O"] = oi
-		} else if oi, ok := v.(objectable); ok {
-			o["@sig:O"] = oi.ToObject()
-		} else if m, ok := v.(map[string]interface{}); ok {
-			o["@sig:O"] = NewObjectFromMap(m)
-		} else {
-			panic(fmt.Errorf("invalid type %T for @sig", v))
-		}
+	if oi, ok := v.(*Object); ok {
+		o[k] = oi
+	} else if oi, ok := v.(objectable); ok {
+		o[k] = oi.ToObject()
+	} else if m, ok := v.(map[string]interface{}); ok {
+		o[k] = NewObjectFromMap(m)
+	} else {
+		o[k] = v
 	}
 }

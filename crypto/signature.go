@@ -28,8 +28,6 @@ const (
 
 // Signature block (container), currently supports only ES256
 type Signature struct {
-	RawObject *encoding.Object `json:"-"`
-
 	Alg string `json:"alg"`
 	R   []byte `json:"r"`
 	S   []byte `json:"s"`
@@ -92,7 +90,7 @@ func NewSignature(key *Key, alg string, o *encoding.Object) (*Signature, error) 
 		return nil, ErrAlgorithNotImplemented
 	}
 
-	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash[:])
+	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash)
 	if err != nil {
 		return nil, err
 	}

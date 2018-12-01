@@ -139,13 +139,15 @@ func (q *query) next() {
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
-		o, err = crypto.Sign(req.ToObject(), signer)
+		o = req.ToObject()
+		err = crypto.Sign(o, signer)
 	case ProviderQuery:
 		req := &ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
 		}
-		o, err = crypto.Sign(req.ToObject(), signer)
+		o = req.ToObject()
+		err = crypto.Sign(o, signer)
 	default:
 		return
 	}

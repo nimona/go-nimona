@@ -108,12 +108,12 @@ func (ab *AddressBook) GetLocalPeerInfo() *PeerInfo {
 		Addresses: addresses,
 	}
 
-	spo, err := crypto.Sign(p.ToObject(), ab.GetLocalPeerKey())
-	if err != nil {
+	po := p.ToObject()
+	if err := crypto.Sign(po, ab.GetLocalPeerKey()); err != nil {
 		panic(err)
 	}
 
-	if err := p.FromObject(spo); err != nil {
+	if err := p.FromObject(po); err != nil {
 		panic(err)
 	}
 

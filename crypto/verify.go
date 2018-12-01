@@ -2,9 +2,12 @@ package crypto
 
 import (
 	"crypto/ecdsa"
-	"crypto/sha256"
-	"errors"
+	"fmt"
 	"math/big"
+
+	"github.com/pkg/errors"
+
+	"nimona.io/go/encoding"
 )
 
 var (
@@ -13,20 +16,53 @@ var (
 	ErrCouldNotVerify = errors.New("could not verify signature")
 )
 
-// Verify signature given the signer's key and payload digest
-func Verify(sig *Signature, key *Key, digest []byte) error {
-	mKey := key.Materialize()
-	pKey, ok := mKey.(*ecdsa.PublicKey)
-	if !ok {
-		return errors.New("only ecdsa public keys are currently supported")
+// Verify object given the signer's key
+func Verify(o *encoding.Object) error {
+	if o == nil {
+		return errors.New("missing object")
 	}
 
-	hash := sha256.Sum256(digest)
-	r := new(big.Int).SetBytes(sig.R)
-	s := new(big.Int).SetBytes(sig.S)
+	so := o.GetSignature()
+	if so == nil {
+		return errors.New("missing signature")
+	}
 
-	if ok := ecdsa.Verify(pKey, hash[:], r, s); !ok {
-		return ErrCouldNotVerify
+	ko := o.GetSignerKey()
+	if so == nil {
+		return errors.New("missing signer key")
+	}
+
+	sig := &Signature{}
+	if err := sig.FromObject(so); err != nil {
+		return err
+	}
+
+	key := &Key{}
+	if err := key.FromObject(ko); err != nil {
+		return err
+	}
+
+	hash, err := encoding.ObjectHash(o)
+	if err != nil {
+		return err
+	}
+
+	switch k := key.Materialize().(type) {
+	case *ecdsa.PublicKey:
+		r := new(big.Int).SetBytes(sig.R)
+		s := new(big.Int).SetBytes(sig.S)
+		if ok := ecdsa.Verify(k, hash, r, s); !ok {
+			return ErrCouldNotVerify
+		}
+	case *ecdsa.PrivateKey:
+		r := new(big.Int).SetBytes(sig.R)
+		s := new(big.Int).SetBytes(sig.S)
+		pk := k.Public().(*ecdsa.PublicKey)
+		if ok := ecdsa.Verify(pk, hash, r, s); !ok {
+			return ErrCouldNotVerify
+		}
+	default:
+		return fmt.Errorf("verify does not support %T keys", k)
 	}
 
 	return nil
