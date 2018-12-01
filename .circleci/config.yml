@@ -32,9 +32,9 @@ jobs:
             sed -i "/_mock/d" $CIRCLE_ARTIFACTS/profile.out
             sed -i "/examples/d" $CIRCLE_ARTIFACTS/profile.out
             sed -i "/main/d" $CIRCLE_ARTIFACTS/profile.out
-      - run:
-          name: Upload to coveralls
-          command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
+      # - run:
+      #     name: Upload to coveralls
+      #     command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
       - store_test_results:
           path: /tmp/test-reports
       - run:
@@ -42,7 +42,7 @@ jobs:
           command: make build
   release:
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.11
     working_directory: /go/src/nimona.io/go
     steps:
       - checkout
