@@ -48,19 +48,6 @@ type Key struct {
 	RawObject *encoding.Object `json:"@"`
 }
 
-// NewKeyFromObject returns a key from an object
-func NewKeyFromObject(o *encoding.Object) (*Key, error) {
-	// TODO check type?
-	p := &Key{}
-	if err := o.Unmarshal(p); err != nil {
-		return nil, err
-	}
-
-	p.RawObject = o
-
-	return p, nil
-}
-
 // Hash of the key
 func (k *Key) Hash() []byte {
 	return k.ToObject().Hash()

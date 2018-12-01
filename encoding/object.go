@@ -34,25 +34,6 @@ func NewObjectFromBytes(b []byte) (*Object, error) {
 	return o, nil
 }
 
-// NewObjectFromStruct returns an object from a struct
-// func NewObjectFromStruct(v interface{}) (*Object, error) {
-// 	b, err := MarshalSimple(v)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	o, err := NewObjectFromBytes(b)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if vt, ok := v.(Typed); ok {
-// 		o.SetType(vt.Type())
-// 	}
-
-// 	return o, nil
-// }
-
 // NewObject returns an object from a map
 func NewObject() *Object {
 	o := &Object{
@@ -229,17 +210,4 @@ func (o *Object) SetRaw(k string, v interface{}) {
 			panic(fmt.Errorf("invalid type %T for @sig", v))
 		}
 	}
-}
-
-// Unmarshal the object into a given interface
-func (o *Object) Unmarshal(v interface{}) error {
-	if o.bytes == nil || len(o.bytes) == 0 {
-		b, err := MarshalSimple(o.data)
-		if err != nil {
-			return err
-		}
-		o.bytes = b
-	}
-
-	return UnmarshalSimple(o.bytes, v)
 }

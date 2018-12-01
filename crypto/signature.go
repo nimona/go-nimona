@@ -35,19 +35,6 @@ type Signature struct {
 	S   []byte `json:"s"`
 }
 
-// NewSignatureFromObject returns a signature from an object
-func NewSignatureFromObject(o *encoding.Object) (*Signature, error) {
-	// TODO check type?
-	p := &Signature{}
-	if err := o.Unmarshal(p); err != nil {
-		return nil, err
-	}
-
-	p.RawObject = o
-
-	return p, nil
-}
-
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(key *Key, alg string, o *encoding.Object) (*Signature, error) {
 	if key == nil {

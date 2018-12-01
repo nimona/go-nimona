@@ -35,10 +35,7 @@ func (ab *AddressBook) loadConfig(configPath string) error {
 			return err
 		}
 		ab.localKey = &crypto.Key{}
-		if err := o.Unmarshal(ab.localKey); err != nil {
-			return err
-		}
-		return nil
+		return ab.localKey.FromObject(o)
 	}
 
 	logger := log.Logger(ctx)
