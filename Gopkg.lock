@@ -494,14 +494,6 @@
   version = "v8.18.2"
 
 [[projects]]
-  branch = "v0"
-  digest = "1:4d6b67c70667177ea83524ee86cec0ac52c0d9d1141befc20f2472a274ef2187"
-  name = "gopkg.in/inconshreveable/go-keen.v0"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "abddc16d5dc65ffcb78438e043e628d7f4664735"
-
-[[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -540,7 +532,6 @@
     "golang.org/x/tools/go/buildutil",
     "golang.org/x/tools/go/loader",
     "golang.org/x/tools/imports",
-    "gopkg.in/inconshreveable/go-keen.v0",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
