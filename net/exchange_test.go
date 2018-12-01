@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"sync"
 	"testing"
@@ -19,6 +20,8 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
+	os.Setenv("BIND_LOCAL", "true")
+	os.Setenv("UPNP", "false")
 
 	_, p1, _, w1, r1 := newPeer(t)
 	_, p2, k2, w2, r2 := newPeer(t)
@@ -52,10 +55,15 @@ func TestSendSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	w1.Handle("test/msg", func(o *encoding.Object) error {
-		// assert.Equal(t, k2.GetPublicKey().Thumbprint(), block.Signature.Key.Thumbprint())
-		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
-		// assert.Equal(t, exPayload1.Signature.Signature, block.(*TestMessage).Signature.Signature)
-		// assert.Equal(t, exPayload1.Signature.Key.Curve, block.(*TestMessage).Signature.Key.Curve)
+		assert.Equal(t, seo1.GetRaw("body"), o.GetRaw("body"))
+		assert.NotNil(t, seo1.GetSignerKey())
+		assert.NotNil(t, o.GetSignerKey())
+		assert.Equal(t, seo1.GetSignerKey(), o.GetSignerKey())
+		assert.Equal(t, seo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
+		assert.NotNil(t, seo1.GetSignature())
+		assert.NotNil(t, o.GetSignature())
+		assert.Equal(t, seo1.GetSignature(), o.GetSignature())
+		assert.Equal(t, seo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
 		w1BlockHandled = true
 		wg.Done()
 		return nil
@@ -63,8 +71,10 @@ func TestSendSuccess(t *testing.T) {
 
 	w2.Handle("tes**", func(o *encoding.Object) error {
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
-		// assert.Equal(t, exPayload2.Body, block.(*TestMessage).Body)
-		// assert.Nil(t, block.(*TestMessage).Signature.Signature)
+		assert.Nil(t, eo2.GetSignature())
+		assert.Nil(t, o.GetSignature())
+		assert.Nil(t, eo2.GetSignerKey())
+		assert.Nil(t, o.GetSignerKey())
 
 		w2BlockHandled = true
 		wg.Done()
