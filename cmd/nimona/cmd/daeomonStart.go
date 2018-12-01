@@ -77,7 +77,9 @@ var daemonStartCmd = &cobra.Command{
 		if daemonEnableRelaying {
 			if len(bootstrapAddresses) > 0 {
 				cmd.Println("Relaying enabled, using bootstrap nodes")
-				addressBook.AddLocalPeerRelay(bootstrapAddresses...)
+				if err := addressBook.AddLocalPeerRelay(bootstrapAddresses...); err != nil {
+					// TODO handle error
+				}
 			} else {
 				cmd.Println("Relaying not enabled, no bootstrap nodes provided")
 			}

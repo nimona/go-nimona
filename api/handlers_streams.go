@@ -67,15 +67,19 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			select {
 			case v := <-incoming:
 				m := api.mapBlock(v)
-				write(conn, m)
+				if err := write(conn, m); err != nil {
+					// TODO handle error
+					continue
+				}
 
 			case req := <-outgoing:
 				if err := crypto.Sign(req, signer); err != nil {
 					logger.Error("could not sign outgoing block", zap.Error(err))
 					// resp["status"] = "error signing block"
-					// TODO handle error
-					write(conn, req)
-					continue
+					if err := write(conn, req); err != nil {
+						// TODO handle error
+						continue
+					}
 				}
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
@@ -88,7 +92,9 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				if len(subjects) == 0 {
 					// TODO handle error
 					// req["status"] = "no subjects"
-					write(conn, req)
+					if err := write(conn, req); err != nil {
+						// TODO handle error
+					}
 					continue
 				}
 				for _, recipient := range subjects {
@@ -98,7 +104,10 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 						// req["status"] = "error sending block"
 					}
 					// TODO handle error
-					write(conn, req)
+					if err := write(conn, req); err != nil {
+						// TODO handle error
+						continue
+					}
 				}
 			}
 		}

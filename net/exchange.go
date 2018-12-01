@@ -272,7 +272,9 @@ func (w *exchange) process(o *encoding.Object, conn *Connection) error {
 	} else {
 		if shouldPersist(ct) {
 			bytes, _ := encoding.Marshal(o)
-			w.store.Store(o.HashBase58(), bytes)
+			if err := w.store.Store(o.HashBase58(), bytes); err != nil {
+				// TODO handle error
+			}
 		}
 	}
 

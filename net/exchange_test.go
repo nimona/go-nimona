@@ -54,7 +54,7 @@ func TestSendSuccess(t *testing.T) {
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
-	w1.Handle("test/msg", func(o *encoding.Object) error {
+	_, err = w1.Handle("test/msg", func(o *encoding.Object) error {
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
@@ -68,8 +68,9 @@ func TestSendSuccess(t *testing.T) {
 		wg.Done()
 		return nil
 	})
+	assert.NoError(t, err)
 
-	w2.Handle("tes**", func(o *encoding.Object) error {
+	_, err = w2.Handle("tes**", func(o *encoding.Object) error {
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -80,6 +81,7 @@ func TestSendSuccess(t *testing.T) {
 		wg.Done()
 		return nil
 	})
+	assert.NoError(t, err)
 
 	ctx := context.Background()
 

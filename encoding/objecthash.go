@@ -39,8 +39,12 @@ func ObjectHash(o *Object) ([]byte, error) {
 
 func hash(p string, b []byte) []byte {
 	h := sha256.New()
-	h.Write([]byte(p))
-	h.Write(b)
+	if _, err := h.Write([]byte(p)); err != nil {
+		panic(err)
+	}
+	if _, err := h.Write(b); err != nil {
+		panic(err)
+	}
 	return h.Sum(nil)
 }
 
@@ -79,7 +83,7 @@ func hashValue(o interface{}) []byte {
 		}
 		return h
 	case reflect.Float32, reflect.Float64:
-		nf, err := floatNormalize(v.Float())
+		nf, err := hashFloat(v.Float())
 		if err != nil {
 			panic(err)
 		}
@@ -148,7 +152,6 @@ func floatNormalize(originalFloat float64) (s string, err error) {
 		}
 		f *= 2
 	}
-	fmt.Println(">>>>>", originalFloat, s)
 	return
 }
 

@@ -7,6 +7,6 @@ import (
 // ForwardRequest is the payload for proxied blocks
 type ForwardRequest struct {
 	Recipient string            `json:"recipient"` // address
-	FwBlock   interface{}       `json:"recipient"`
+	FwBlock   interface{}       `json:"fwBlock"`
 	Signature *crypto.Signature `json:"@sig:O"`
 }
