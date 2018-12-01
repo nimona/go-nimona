@@ -12,23 +12,23 @@ import (
 
 // ToMap returns a map compatible with f12n
 func (s ProviderResponse) ToMap() map[string]interface{} {
-	sProviders := []map[string]interface{}{}
-	for _, v := range s.Providers {
-		sProviders = append(sProviders, v.ToMap())
-	}
-	sClosestPeers := []map[string]interface{}{}
-	for _, v := range s.ClosestPeers {
-		sClosestPeers = append(sClosestPeers, v.ToMap())
-	}
 	m := map[string]interface{}{
 		"@ctx:s":      "nimona.io/dht/provider.response",
 		"requestID:s": s.RequestID,
 	}
 	if s.Providers != nil {
-		m["providers:A<O>"] = s.Providers.ToMap()
+		sProviders := []map[string]interface{}{}
+		for _, v := range s.Providers {
+			sProviders = append(sProviders, v.ToMap())
+		}
+		m["providers:A<O>"] = sProviders
 	}
 	if s.ClosestPeers != nil {
-		m["closestPeers:A<O>"] = s.ClosestPeers.ToMap()
+		sClosestPeers := []map[string]interface{}{}
+		for _, v := range s.ClosestPeers {
+			sClosestPeers = append(sClosestPeers, v.ToMap())
+		}
+		m["closestPeers:A<O>"] = sClosestPeers
 	}
 	if s.Signer != nil {
 		m["@signer:O"] = s.Signer.ToMap()

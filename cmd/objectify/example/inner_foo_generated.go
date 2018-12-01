@@ -10,10 +10,6 @@ import (
 
 // ToMap returns a map compatible with f12n
 func (s InnerFoo) ToMap() map[string]interface{} {
-	sMoreInnerFoos := []map[string]interface{}{}
-	for _, v := range s.MoreInnerFoos {
-		sMoreInnerFoos = append(sMoreInnerFoos, v.ToMap())
-	}
 	m := map[string]interface{}{
 		"@ctx:s":      "test/inn",
 		"inner_bar:s": s.InnerBar,
@@ -30,7 +26,11 @@ func (s InnerFoo) ToMap() map[string]interface{} {
 		"f64:f":       s.F64,
 	}
 	if s.MoreInnerFoos != nil {
-		m["inner_foos:A<O>"] = s.MoreInnerFoos.ToMap()
+		sMoreInnerFoos := []map[string]interface{}{}
+		for _, v := range s.MoreInnerFoos {
+			sMoreInnerFoos = append(sMoreInnerFoos, v.ToMap())
+		}
+		m["inner_foos:A<O>"] = sMoreInnerFoos
 	}
 	if s.Ai8 != nil {
 		m["ai8:A<i>"] = s.Ai8

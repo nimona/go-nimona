@@ -12,10 +12,6 @@ import (
 
 // ToMap returns a map compatible with f12n
 func (s PeerInfoResponse) ToMap() map[string]interface{} {
-	sClosestPeers := []map[string]interface{}{}
-	for _, v := range s.ClosestPeers {
-		sClosestPeers = append(sClosestPeers, v.ToMap())
-	}
 	m := map[string]interface{}{
 		"@ctx:s":      "nimona.io/dht/peerinfo.response",
 		"requestID:s": s.RequestID,
@@ -24,7 +20,11 @@ func (s PeerInfoResponse) ToMap() map[string]interface{} {
 		m["peerInfo:O"] = s.PeerInfo.ToMap()
 	}
 	if s.ClosestPeers != nil {
-		m["closestPeers:A<O>"] = s.ClosestPeers.ToMap()
+		sClosestPeers := []map[string]interface{}{}
+		for _, v := range s.ClosestPeers {
+			sClosestPeers = append(sClosestPeers, v.ToMap())
+		}
+		m["closestPeers:A<O>"] = sClosestPeers
 	}
 	if s.Signer != nil {
 		m["@signer:O"] = s.Signer.ToMap()

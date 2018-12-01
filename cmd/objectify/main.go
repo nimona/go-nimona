@@ -205,21 +205,11 @@ import (
 
 // ToMap returns a map compatible with f12n
 func (s {{ .StructName }}) ToMap() map[string]interface{} {
-	{{- range .StructFields }}
-	{{- if and .IsObject .IsSlice }}
-	s{{ .Name }} := []map[string]interface{}{}
-	for _, v := range s.{{ .Name }} {
-		s{{ .Name }} = append(s{{ .Name }}, v.ToMap())
-	}
-	{{- end }}
-	{{- end }}
 	m := map[string]interface{}{
 		"@ctx:s": "{{ .Schema }}",
 		{{- range .StructFields }}
 		{{- if eq .Tag "@" }}
 		{{- else if .CanBeNil }}
-		{{- else if and .IsObject .IsSlice }}
-		"{{ .Tag }}:{{ .Hint }}": s{{ .Name }},
 		{{- else if .IsObject }}
 		"{{ .Tag }}:{{ .Hint }}": s.{{ .Name }}.ToMap(),
 		{{- else }}
@@ -231,7 +221,13 @@ func (s {{ .StructName }}) ToMap() map[string]interface{} {
 	{{- if eq .Tag "@" }}
 	{{- else if .CanBeNil }}
 	if s.{{ .Name }} != nil {
-		{{- if .IsObject }}
+		{{- if and .IsObject .IsSlice }}
+		s{{ .Name }} := []map[string]interface{}{}
+		for _, v := range s.{{ .Name }} {
+			s{{ .Name }} = append(s{{ .Name }}, v.ToMap())
+		}
+		m["{{ .Tag }}:{{ .Hint }}"] = s{{ .Name }}
+		{{- else if .IsObject }}
 		m["{{ .Tag }}:{{ .Hint }}"] = s.{{ .Name }}.ToMap()
 		{{- else }}
 		m["{{ .Tag }}:{{ .Hint }}"] = s.{{ .Name }}
