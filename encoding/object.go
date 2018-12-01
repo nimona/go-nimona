@@ -13,13 +13,13 @@ type Typed interface {
 
 // Object for everything f12n
 type Object struct {
-	data      map[string]interface{}
-	bytes     []byte
-	ctx       string
-	policy    *Object
-	authority *Object
-	signer    *Object
-	signature *Object
+	data map[string]interface{}
+	// bytes []byte
+	// ctx       string
+	// policy    *Object
+	// authority *Object
+	// signer    *Object
+	// signature *Object
 }
 
 // NewObjectFromBytes returns an object from a cbor byte stream
@@ -30,7 +30,7 @@ func NewObjectFromBytes(b []byte) (*Object, error) {
 	}
 
 	o := NewObjectFromMap(m)
-	o.bytes = b
+	// o.bytes = b
 	return o, nil
 }
 
@@ -82,7 +82,10 @@ func (o *Object) Map() map[string]interface{} {
 
 // GetType returns the object's type
 func (o *Object) GetType() string {
-	return o.ctx
+	if v, ok := o.GetRaw("@ctx:s").(string); ok {
+		return v
+	}
+	return ""
 }
 
 // SetType sets the object's type
@@ -92,7 +95,10 @@ func (o *Object) SetType(v string) {
 
 // GetSignature returns the object's signature, or nil
 func (o *Object) GetSignature() *Object {
-	return o.signature
+	if v, ok := o.GetRaw("@sig:O").(*Object); ok {
+		return v
+	}
+	return nil
 }
 
 // SetSignature sets the object's signature
@@ -102,7 +108,10 @@ func (o *Object) SetSignature(v *Object) {
 
 // GetAuthorityKey returns the object's creator, or nil
 func (o *Object) GetAuthorityKey() *Object {
-	return o.authority
+	if v, ok := o.GetRaw("@authority:O").(*Object); ok {
+		return v
+	}
+	return nil
 }
 
 // SetAuthorityKey sets the object's creator
@@ -112,7 +121,10 @@ func (o *Object) SetAuthorityKey(v *Object) {
 
 // GetSignerKey returns the object's signer, or nil
 func (o *Object) GetSignerKey() *Object {
-	return o.signer
+	if v, ok := o.GetRaw("@signer:O").(*Object); ok {
+		return v
+	}
+	return nil
 }
 
 // SetSignerKey sets the object's signer
@@ -122,7 +134,10 @@ func (o *Object) SetSignerKey(v *Object) {
 
 // GetPolicy returns the object's policy, or nil
 func (o *Object) GetPolicy() *Object {
-	return o.policy
+	if v, ok := o.GetRaw("@policy:O").(*Object); ok {
+		return v
+	}
+	return nil
 }
 
 // SetPolicy sets the object's policy
@@ -168,44 +183,44 @@ func (o *Object) SetRaw(k string, v interface{}) {
 		if !ok {
 			panic(fmt.Errorf("invalid type %T for @ctx", v))
 		}
-		o.ctx = t
-	case "@policy":
+		o.data["@ctx:s"] = t
+	case "@policy:O":
 		if oi, ok := v.(*Object); ok {
-			o.policy = oi
+			o.data["@policy:O"] = oi
 		} else if oi, ok := v.(objectable); ok {
-			o.policy = oi.ToObject()
+			o.data["@policy:O"] = oi.ToObject()
 		} else if m, ok := v.(map[string]interface{}); ok {
-			o.policy = NewObjectFromMap(m)
+			o.data["@policy:O"] = NewObjectFromMap(m)
 		} else {
 			panic(fmt.Errorf("invalid type %T for @policy", v))
 		}
-	case "@authority":
+	case "@authority:O":
 		if oi, ok := v.(*Object); ok {
-			o.authority = oi
+			o.data["@authority:O"] = oi
 		} else if oi, ok := v.(objectable); ok {
-			o.authority = oi.ToObject()
+			o.data["@authority:O"] = oi.ToObject()
 		} else if m, ok := v.(map[string]interface{}); ok {
-			o.authority = NewObjectFromMap(m)
+			o.data["@authority:O"] = NewObjectFromMap(m)
 		} else {
 			panic(fmt.Errorf("invalid type %T for @authority", v))
 		}
-	case "@signer":
+	case "@signer:O":
 		if oi, ok := v.(*Object); ok {
-			o.signer = oi
+			o.data["@signer:O"] = oi
 		} else if oi, ok := v.(objectable); ok {
-			o.signer = oi.ToObject()
+			o.data["@signer:O"] = oi.ToObject()
 		} else if m, ok := v.(map[string]interface{}); ok {
-			o.signer = NewObjectFromMap(m)
+			o.data["@signer:O"] = NewObjectFromMap(m)
 		} else {
 			panic(fmt.Errorf("invalid type %T for @signer", v))
 		}
 	case "@sig:O":
 		if oi, ok := v.(*Object); ok {
-			o.signature = oi
+			o.data["@sig:O"] = oi
 		} else if oi, ok := v.(objectable); ok {
-			o.signature = oi.ToObject()
+			o.data["@sig:O"] = oi.ToObject()
 		} else if m, ok := v.(map[string]interface{}); ok {
-			o.signature = NewObjectFromMap(m)
+			o.data["@sig:O"] = NewObjectFromMap(m)
 		} else {
 			panic(fmt.Errorf("invalid type %T for @sig", v))
 		}
