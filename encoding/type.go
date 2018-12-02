@@ -98,7 +98,8 @@ func GetHintFromType(o interface{}) string {
 		// case reflect.Ptr:
 		// 	return getTypeHint(v.Interface())
 	}
-	return ""
+	// TODO again, insane hack
+	return HintMap
 	// panic("hint: unsupported type " + v.String() + " -- " + fmt.Sprintf("%#v", v))
 }
 

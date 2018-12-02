@@ -9,5 +9,5 @@ type BlockResponse struct {
 	RequestID      string            `json:"requestID"`
 	RequestedBlock interface{}       `json:"requestedBlock"`
 	Sender         *crypto.Key       `json:"sender"`
-	Signature      *crypto.Signature `json:"@sig:O"`
+	Signature      *crypto.Signature `json:"@signature"`
 }

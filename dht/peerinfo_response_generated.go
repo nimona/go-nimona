@@ -17,23 +17,23 @@ func (s PeerInfoResponse) ToMap() map[string]interface{} {
 		"requestID:s": s.RequestID,
 	}
 	if s.PeerInfo != nil {
-		m["peerInfo:O"] = s.PeerInfo.ToMap()
+		m["peerInfo:o"] = s.PeerInfo.ToMap()
 	}
 	if s.ClosestPeers != nil {
 		sClosestPeers := []map[string]interface{}{}
 		for _, v := range s.ClosestPeers {
 			sClosestPeers = append(sClosestPeers, v.ToMap())
 		}
-		m["closestPeers:A<O>"] = sClosestPeers
+		m["closestPeers:a<o>"] = sClosestPeers
 	}
 	if s.Signer != nil {
-		m["@signer:O"] = s.Signer.ToMap()
+		m["@signer:o"] = s.Signer.ToMap()
 	}
 	if s.Authority != nil {
-		m["@authority:O"] = s.Authority.ToMap()
+		m["@authority:o"] = s.Authority.ToMap()
 	}
 	if s.Signature != nil {
-		m["@sig:O"] = s.Signature.ToMap()
+		m["@signature:o"] = s.Signature.ToMap()
 	}
 	return m
 }
@@ -48,16 +48,16 @@ func (s *PeerInfoResponse) FromMap(m map[string]interface{}) error {
 	if v, ok := m["requestID:s"].(string); ok {
 		s.RequestID = v
 	}
-	if v, ok := m["peerInfo:O"].(map[string]interface{}); ok {
+	if v, ok := m["peerInfo:o"].(map[string]interface{}); ok {
 		s.PeerInfo = &peers.PeerInfo{}
 		if err := s.PeerInfo.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["peerInfo:O"].(*peers.PeerInfo); ok {
+	} else if v, ok := m["peerInfo:o"].(*peers.PeerInfo); ok {
 		s.PeerInfo = v
 	}
 	s.ClosestPeers = []*peers.PeerInfo{}
-	if ss, ok := m["closestPeers:A<O>"].([]interface{}); ok {
+	if ss, ok := m["closestPeers:a<o>"].([]interface{}); ok {
 		for _, si := range ss {
 			if v, ok := si.(map[string]interface{}); ok {
 				sClosestPeers := &peers.PeerInfo{}
@@ -65,34 +65,34 @@ func (s *PeerInfoResponse) FromMap(m map[string]interface{}) error {
 					return err
 				}
 				s.ClosestPeers = append(s.ClosestPeers, sClosestPeers)
-			} else if v, ok := m["closestPeers:A<O>"].(*peers.PeerInfo); ok {
+			} else if v, ok := m["closestPeers:a<o>"].(*peers.PeerInfo); ok {
 				s.ClosestPeers = append(s.ClosestPeers, v)
 			}
 		}
 	}
 	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@signer:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
 		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@signer:O"].(*crypto.Key); ok {
+	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
 		s.Signer = v
 	}
-	if v, ok := m["@authority:O"].(map[string]interface{}); ok {
+	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
 		s.Authority = &crypto.Key{}
 		if err := s.Authority.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@authority:O"].(*crypto.Key); ok {
+	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
 		s.Authority = v
 	}
-	if v, ok := m["@sig:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@sig:O"].(*crypto.Signature); ok {
+	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

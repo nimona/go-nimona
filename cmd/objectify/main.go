@@ -20,6 +20,7 @@ import (
 	"golang.org/x/tools/go/buildutil"
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/imports"
+	"nimona.io/go/encoding"
 )
 
 var (
@@ -162,7 +163,7 @@ func (gen *Generator) process() (code []byte, err error) {
 			panic(fmt.Errorf("existing hint of %s for field %s does not match infered %s", vf.Hint, vf.Name, hint))
 		}
 
-		if strings.Contains(vf.Hint, "O") {
+		if strings.Contains(vf.Hint, "o") {
 			vf.IsObject = true
 		}
 
@@ -434,34 +435,34 @@ func toLowerFirst(s string) string {
 
 func getHint(t types.Type) string {
 	if t.String() == "[]byte" {
-		return "d"
+		return encoding.HintBytes
 	}
 	switch v := t.(type) {
 	case *types.Basic:
 		switch v.Kind() {
 		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return "i"
+			return encoding.HintInt
 		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64:
-			return "i"
+			return encoding.HintUint
 		case types.Float32, types.Float64:
-			return "f"
+			return encoding.HintFloat
 		case types.String:
-			return "s"
+			return encoding.HintString
 		}
 	case *types.Array:
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return "A<" + ss + ">"
+			return encoding.HintArray + "<" + ss + ">"
 		}
 	case *types.Slice:
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return "A<" + ss + ">"
+			return encoding.HintArray + "<" + ss + ">"
 		}
 	case *types.Struct:
-		return "O"
+		return encoding.HintMap
 	case *types.Pointer:
 		st := v.Elem()
 		return getHint(st)
@@ -469,10 +470,10 @@ func getHint(t types.Type) string {
 	case *types.Signature:
 	case *types.Interface:
 	case *types.Map:
-		return "O"
+		return encoding.HintMap
 	case *types.Chan:
 	case *types.Named:
 	}
 	// TODO(geoah) insane hack/assumption
-	return "O"
+	return encoding.HintMap
 }

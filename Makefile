@@ -33,8 +33,14 @@ clean:
 	if [ -f ${BINARY} ]; then rm ${BINARY}; fi
 	if [ -d ${BIN_DIR} ]; then rmdir ${BIN_DIR}; fi
 
+.PHONY: test
+test:
+	@make test-cover
+
 .PHONY: test-cover
 test-cover:
+	export UPNP=false
+	export BIND_LOCAL=true
 	@echo "mode: atomic" > coverage.txt
 	$(foreach pkg,$(PACKAGES),\
 		go test -coverprofile=coverage-temp.txt -covermode=atomic -race $(pkg);\

@@ -17,13 +17,13 @@ func (s ProviderRequest) ToMap() map[string]interface{} {
 		"key:s":       s.Key,
 	}
 	if s.Signer != nil {
-		m["@signer:O"] = s.Signer.ToMap()
+		m["@signer:o"] = s.Signer.ToMap()
 	}
 	if s.Authority != nil {
-		m["@authority:O"] = s.Authority.ToMap()
+		m["@authority:o"] = s.Authority.ToMap()
 	}
 	if s.Signature != nil {
-		m["@sig:O"] = s.Signature.ToMap()
+		m["@signature:o"] = s.Signature.ToMap()
 	}
 	return m
 }
@@ -42,28 +42,28 @@ func (s *ProviderRequest) FromMap(m map[string]interface{}) error {
 		s.Key = v
 	}
 	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@signer:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
 		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@signer:O"].(*crypto.Key); ok {
+	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
 		s.Signer = v
 	}
-	if v, ok := m["@authority:O"].(map[string]interface{}); ok {
+	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
 		s.Authority = &crypto.Key{}
 		if err := s.Authority.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@authority:O"].(*crypto.Key); ok {
+	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
 		s.Authority = v
 	}
-	if v, ok := m["@sig:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@sig:O"].(*crypto.Signature); ok {
+	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

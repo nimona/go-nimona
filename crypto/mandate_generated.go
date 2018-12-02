@@ -16,19 +16,19 @@ func (s Mandate) ToMap() map[string]interface{} {
 		"effect:s":      s.Effect,
 	}
 	if s.Signer != nil {
-		m["@signer:O"] = s.Signer.ToMap()
+		m["@signer:o"] = s.Signer.ToMap()
 	}
 	if s.Subject != nil {
-		m["subject:O"] = s.Subject.ToMap()
+		m["subject:o"] = s.Subject.ToMap()
 	}
 	if s.Resources != nil {
-		m["resources:A<s>"] = s.Resources
+		m["resources:a<s>"] = s.Resources
 	}
 	if s.Actions != nil {
-		m["actions:A<s>"] = s.Actions
+		m["actions:a<s>"] = s.Actions
 	}
 	if s.Signature != nil {
-		m["@sig:O"] = s.Signature.ToMap()
+		m["@signature:o"] = s.Signature.ToMap()
 	}
 	return m
 }
@@ -40,40 +40,40 @@ func (s Mandate) ToObject() *encoding.Object {
 
 // FromMap populates the struct from a f12n compatible map
 func (s *Mandate) FromMap(m map[string]interface{}) error {
-	if v, ok := m["@signer:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
 		s.Signer = &Key{}
 		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@signer:O"].(*Key); ok {
+	} else if v, ok := m["@signer:o"].(*Key); ok {
 		s.Signer = v
 	}
-	if v, ok := m["subject:O"].(map[string]interface{}); ok {
+	if v, ok := m["subject:o"].(map[string]interface{}); ok {
 		s.Subject = &Key{}
 		if err := s.Subject.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["subject:O"].(*Key); ok {
+	} else if v, ok := m["subject:o"].(*Key); ok {
 		s.Subject = v
 	}
 	if v, ok := m["description:s"].(string); ok {
 		s.Description = v
 	}
-	if v, ok := m["resources:A<s>"].([]string); ok {
+	if v, ok := m["resources:a<s>"].([]string); ok {
 		s.Resources = v
 	}
-	if v, ok := m["actions:A<s>"].([]string); ok {
+	if v, ok := m["actions:a<s>"].([]string); ok {
 		s.Actions = v
 	}
 	if v, ok := m["effect:s"].(string); ok {
 		s.Effect = v
 	}
-	if v, ok := m["@sig:O"].(map[string]interface{}); ok {
+	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["@sig:O"].(*Signature); ok {
+	} else if v, ok := m["@signature:o"].(*Signature); ok {
 		s.Signature = v
 	}
 	return nil

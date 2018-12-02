@@ -18,10 +18,10 @@ func (s InnerFoo) ToMap() map[string]interface{} {
 		"i16:i":       s.I16,
 		"i32:i":       s.I32,
 		"i64:i":       s.I64,
-		"u:i":         s.U,
-		"u8:i":        s.U8,
-		"u16:i":       s.U16,
-		"u32:i":       s.U32,
+		"u:u":         s.U,
+		"u8:u":        s.U8,
+		"u16:u":       s.U16,
+		"u32:u":       s.U32,
 		"f32:f":       s.F32,
 		"f64:f":       s.F64,
 	}
@@ -30,31 +30,31 @@ func (s InnerFoo) ToMap() map[string]interface{} {
 		for _, v := range s.MoreInnerFoos {
 			sMoreInnerFoos = append(sMoreInnerFoos, v.ToMap())
 		}
-		m["inner_foos:A<O>"] = sMoreInnerFoos
+		m["inner_foos:a<o>"] = sMoreInnerFoos
 	}
 	if s.Ai8 != nil {
-		m["ai8:A<i>"] = s.Ai8
+		m["ai8:a<i>"] = s.Ai8
 	}
 	if s.Ai16 != nil {
-		m["ai16:A<i>"] = s.Ai16
+		m["ai16:a<i>"] = s.Ai16
 	}
 	if s.Ai32 != nil {
-		m["ai32:A<i>"] = s.Ai32
+		m["ai32:a<i>"] = s.Ai32
 	}
 	if s.Ai64 != nil {
-		m["ai64:A<i>"] = s.Ai64
+		m["ai64:a<i>"] = s.Ai64
 	}
 	if s.Au16 != nil {
-		m["au16:A<i>"] = s.Au16
+		m["au16:a<u>"] = s.Au16
 	}
 	if s.Au32 != nil {
-		m["au32:A<i>"] = s.Au32
+		m["au32:a<u>"] = s.Au32
 	}
 	if s.Af32 != nil {
-		m["af32:A<f>"] = s.Af32
+		m["af32:a<f>"] = s.Af32
 	}
 	if s.Af64 != nil {
-		m["af64:A<f>"] = s.Af64
+		m["af64:a<f>"] = s.Af64
 	}
 	return m
 }
@@ -70,7 +70,7 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 		s.InnerBar = v
 	}
 	s.MoreInnerFoos = []*InnerFoo{}
-	if ss, ok := m["inner_foos:A<O>"].([]interface{}); ok {
+	if ss, ok := m["inner_foos:a<o>"].([]interface{}); ok {
 		for _, si := range ss {
 			if v, ok := si.(map[string]interface{}); ok {
 				sMoreInnerFoos := &InnerFoo{}
@@ -78,7 +78,7 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 					return err
 				}
 				s.MoreInnerFoos = append(s.MoreInnerFoos, sMoreInnerFoos)
-			} else if v, ok := m["inner_foos:A<O>"].(*InnerFoo); ok {
+			} else if v, ok := m["inner_foos:a<o>"].(*InnerFoo); ok {
 				s.MoreInnerFoos = append(s.MoreInnerFoos, v)
 			}
 		}
@@ -98,16 +98,16 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 	if v, ok := m["i64:i"].(int64); ok {
 		s.I64 = v
 	}
-	if v, ok := m["u:i"].(uint); ok {
+	if v, ok := m["u:u"].(uint); ok {
 		s.U = v
 	}
-	if v, ok := m["u8:i"].(uint8); ok {
+	if v, ok := m["u8:u"].(uint8); ok {
 		s.U8 = v
 	}
-	if v, ok := m["u16:i"].(uint16); ok {
+	if v, ok := m["u16:u"].(uint16); ok {
 		s.U16 = v
 	}
-	if v, ok := m["u32:i"].(uint32); ok {
+	if v, ok := m["u32:u"].(uint32); ok {
 		s.U32 = v
 	}
 	if v, ok := m["f32:f"].(float32); ok {
@@ -116,28 +116,28 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 	if v, ok := m["f64:f"].(float64); ok {
 		s.F64 = v
 	}
-	if v, ok := m["ai8:A<i>"].([]int8); ok {
+	if v, ok := m["ai8:a<i>"].([]int8); ok {
 		s.Ai8 = v
 	}
-	if v, ok := m["ai16:A<i>"].([]int16); ok {
+	if v, ok := m["ai16:a<i>"].([]int16); ok {
 		s.Ai16 = v
 	}
-	if v, ok := m["ai32:A<i>"].([]int32); ok {
+	if v, ok := m["ai32:a<i>"].([]int32); ok {
 		s.Ai32 = v
 	}
-	if v, ok := m["ai64:A<i>"].([]int64); ok {
+	if v, ok := m["ai64:a<i>"].([]int64); ok {
 		s.Ai64 = v
 	}
-	if v, ok := m["au16:A<i>"].([]uint16); ok {
+	if v, ok := m["au16:a<u>"].([]uint16); ok {
 		s.Au16 = v
 	}
-	if v, ok := m["au32:A<i>"].([]uint32); ok {
+	if v, ok := m["au32:a<u>"].([]uint32); ok {
 		s.Au32 = v
 	}
-	if v, ok := m["af32:A<f>"].([]float32); ok {
+	if v, ok := m["af32:a<f>"].([]float32); ok {
 		s.Af32 = v
 	}
-	if v, ok := m["af64:A<f>"].([]float64); ok {
+	if v, ok := m["af64:a<f>"].([]float64); ok {
 		s.Af64 = v
 	}
 	return nil

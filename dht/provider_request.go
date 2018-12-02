@@ -15,5 +15,5 @@ type ProviderRequest struct {
 	RawObject *encoding.Object  `json:"@"`
 	Signer    *crypto.Key       `json:"@signer"`
 	Authority *crypto.Key       `json:"@authority"`
-	Signature *crypto.Signature `json:"@sig:O"`
+	Signature *crypto.Signature `json:"@signature"`
 }

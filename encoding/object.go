@@ -68,7 +68,7 @@ func (o Object) Map() map[string]interface{} {
 
 // GetType returns the object's type
 func (o Object) GetType() string {
-	if v, ok := o.GetRaw("@ctx:s").(string); ok {
+	if v, ok := o.GetRaw("@ctx").(string); ok {
 		return v
 	}
 	return ""
@@ -76,12 +76,12 @@ func (o Object) GetType() string {
 
 // SetType sets the object's type
 func (o Object) SetType(v string) {
-	o.SetRaw("@ctx:s", v)
+	o.SetRaw("@ctx", v)
 }
 
 // GetSignature returns the object's signature, or nil
 func (o Object) GetSignature() *Object {
-	if v, ok := o.GetRaw("@sig:O").(*Object); ok {
+	if v, ok := o.GetRaw("@signature").(*Object); ok {
 		return v
 	}
 	return nil
@@ -89,12 +89,12 @@ func (o Object) GetSignature() *Object {
 
 // SetSignature sets the object's signature
 func (o Object) SetSignature(v *Object) {
-	o.SetRaw("@sig:O", v)
+	o.SetRaw("@signature", v)
 }
 
 // GetAuthorityKey returns the object's creator, or nil
 func (o Object) GetAuthorityKey() *Object {
-	if v, ok := o.GetRaw("@authority:O").(*Object); ok {
+	if v, ok := o.GetRaw("@authority").(*Object); ok {
 		return v
 	}
 	return nil
@@ -102,12 +102,12 @@ func (o Object) GetAuthorityKey() *Object {
 
 // SetAuthorityKey sets the object's creator
 func (o Object) SetAuthorityKey(v *Object) {
-	o.SetRaw("@authority:O", v)
+	o.SetRaw("@authority", v)
 }
 
 // GetSignerKey returns the object's signer, or nil
 func (o Object) GetSignerKey() *Object {
-	if v, ok := o.GetRaw("@signer:O").(*Object); ok {
+	if v, ok := o.GetRaw("@signer").(*Object); ok {
 		return v
 	}
 	return nil
@@ -115,12 +115,12 @@ func (o Object) GetSignerKey() *Object {
 
 // SetSignerKey sets the object's signer
 func (o Object) SetSignerKey(v *Object) {
-	o.SetRaw("@signer:O", v)
+	o.SetRaw("@signer", v)
 }
 
 // GetPolicy returns the object's policy, or nil
 func (o Object) GetPolicy() *Object {
-	if v, ok := o.GetRaw("@policy:O").(*Object); ok {
+	if v, ok := o.GetRaw("@policy").(*Object); ok {
 		return v
 	}
 	return nil
@@ -128,7 +128,7 @@ func (o Object) GetPolicy() *Object {
 
 // SetPolicy sets the object's policy
 func (o Object) SetPolicy(v *Object) {
-	o.SetRaw("@policy:O", v)
+	o.SetRaw("@policy", v)
 }
 
 // GetRaw -
@@ -152,8 +152,9 @@ func (o Object) SetRaw(k string, v interface{}) {
 	}
 
 	if mv, ok := v.(map[string]interface{}); ok {
-		if t, ok := mv["@ctx:s"]; ok && t != "" {
-			v = NewObjectFromMap(mv)
+		tv := NewObjectFromMap(mv)
+		if tv.GetType() != "" {
+			v = tv
 		}
 	}
 

@@ -13,7 +13,7 @@ type PeerInfo struct {
 	Addresses    []string          `json:"addresses"`
 	AuthorityKey *crypto.Key       `json:"@authority"`
 	SignerKey    *crypto.Key       `json:"@signer"`
-	Signature    *crypto.Signature `json:"@sig:O"`
+	Signature    *crypto.Signature `json:"@signature"`
 }
 
 // Thumbprint of peer

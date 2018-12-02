@@ -2,7 +2,7 @@ package encoding
 
 const (
 	// HintArray hints the type for Arrays
-	HintArray = "A"
+	HintArray = "a"
 	// HintBool hints the type for Bools
 	HintBool = "b"
 	// HintBytes hints the type for Bytess
@@ -12,7 +12,7 @@ const (
 	// HintInt hints the type for Ints
 	HintInt = "i"
 	// HintMap hints the type for Maps
-	HintMap = "O"
+	HintMap = "o"
 	// HintNil hints the type for Nils
 	HintNil = "n"
 	// HintString hints the type for Strings

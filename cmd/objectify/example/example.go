@@ -6,7 +6,7 @@ import "nimona.io/go/encoding"
 //go:generate go run nimona.io/go/cmd/objectify -schema test/foo -type Foo -out foo_generated.go
 
 type InnerFoo struct {
-	InnerBar      string      `fluffy:"inner_bar:s"`
+	InnerBar      string      `fluffy:"inner_bar"`
 	MoreInnerFoos []*InnerFoo `json:"inner_foos"`
 	I             int
 	I8            int8
@@ -35,8 +35,8 @@ type InnerFoo struct {
 
 type Foo struct {
 	RawObject *encoding.Object `fluffy:"@"`
-	Bar       string           `fluffy:"bar:s"`
+	Bar       string           `fluffy:"bar"`
 	Bars      []string         `fluffys:"bars"`
-	InnerFoo  *InnerFoo        `fluffy:"inner_foo:O,object"`
-	InnerFoos []*InnerFoo      `fluffy:"inner_foos:A<O>"`
+	InnerFoo  *InnerFoo        `fluffy:"inner_foo"`
+	InnerFoos []*InnerFoo      `fluffy:"inner_foos"`
 }

@@ -16,7 +16,7 @@ func (s HandshakeSynAck) ToMap() map[string]interface{} {
 		"nonce:s": s.Nonce,
 	}
 	if s.PeerInfo != nil {
-		m["peerInfo:O"] = s.PeerInfo.ToMap()
+		m["peerInfo:o"] = s.PeerInfo.ToMap()
 	}
 	return m
 }
@@ -32,12 +32,12 @@ func (s *HandshakeSynAck) FromMap(m map[string]interface{}) error {
 	if v, ok := m["nonce:s"].(string); ok {
 		s.Nonce = v
 	}
-	if v, ok := m["peerInfo:O"].(map[string]interface{}); ok {
+	if v, ok := m["peerInfo:o"].(map[string]interface{}); ok {
 		s.PeerInfo = &peers.PeerInfo{}
 		if err := s.PeerInfo.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["peerInfo:O"].(*peers.PeerInfo); ok {
+	} else if v, ok := m["peerInfo:o"].(*peers.PeerInfo); ok {
 		s.PeerInfo = v
 	}
 	return nil

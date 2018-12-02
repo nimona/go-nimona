@@ -39,7 +39,7 @@ func TestTypeHint(t *testing.T) {
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 		},
-		"O": map[string]interface{}{
+		"o": map[string]interface{}{
 			"s": "foo",
 			"u": uint64(12),
 		},
@@ -72,37 +72,37 @@ func TestTypeHint(t *testing.T) {
 		"u32:u":     uint32(math.MaxUint32),
 		"f32:f":     float32(math.MaxFloat32),
 		"f64:f":     float64(math.MaxFloat64),
-		"Ai8:A<i>":  []int8{math.MaxInt8, math.MaxInt8 - 1},
-		"Ai16:A<i>": []int16{math.MaxInt16, math.MaxInt16 - 1},
-		"Ai32:A<i>": []int32{math.MaxInt32, math.MaxInt32 - 1},
-		"Ai64:A<i>": []int64{math.MaxInt64, math.MaxInt64 - 1},
-		// "Au8:A<u>":  []uint8{math.MaxUint8, math.MaxUint8 - 1},
-		"Au16:A<u>": []uint16{math.MaxUint16, math.MaxUint16 - 1},
-		"Au32:A<u>": []uint32{math.MaxUint32, math.MaxUint32 - 1},
-		"Af32:A<f>": []float32{math.MaxFloat32, math.MaxFloat32 - 1},
-		"Af64:A<f>": []float64{math.MaxFloat64, math.MaxFloat64 - 1},
-		"AAi:A<A<i>>": [][]int{
+		"Ai8:a<i>":  []int8{math.MaxInt8, math.MaxInt8 - 1},
+		"Ai16:a<i>": []int16{math.MaxInt16, math.MaxInt16 - 1},
+		"Ai32:a<i>": []int32{math.MaxInt32, math.MaxInt32 - 1},
+		"Ai64:a<i>": []int64{math.MaxInt64, math.MaxInt64 - 1},
+		// "Au8:a<u>":  []uint8{math.MaxUint8, math.MaxUint8 - 1},
+		"Au16:a<u>": []uint16{math.MaxUint16, math.MaxUint16 - 1},
+		"Au32:a<u>": []uint32{math.MaxUint32, math.MaxUint32 - 1},
+		"Af32:a<f>": []float32{math.MaxFloat32, math.MaxFloat32 - 1},
+		"Af64:a<f>": []float64{math.MaxFloat64, math.MaxFloat64 - 1},
+		"AAi:a<a<i>>": [][]int{
 			[]int{1, 2},
 			[]int{3, 4},
 		},
-		"AAf:A<A<f>>": [][]float32{
+		"AAf:a<a<f>>": [][]float32{
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 		},
-		"O:O": map[string]interface{}{
+		"o:o": map[string]interface{}{
 			"s:s": "foo",
 			"u:u": uint64(12),
 		},
-		// "AO:A<O>": []map[string]interface{}{
+		// "AO:a<o>": []map[string]interface{}{
 		// 	map[string]interface{}{
-		// 		"s:s": "foo",
-		// 		"u:u": uint64(12),
+		// 		"s": "foo",
+		// 		"u": uint64(12),
 		// 	},
 		// },
-		// "AO2:A<O>": []interface{}{
+		// "AO2:a<o>": []interface{}{
 		// 	map[string]interface{}{
-		// 		"s:s": "foo",
-		// 		"u:u": uint64(12),
+		// 		"s": "foo",
+		// 		"u": uint64(12),
 		// 	},
 		// },
 		"bool:b": true,

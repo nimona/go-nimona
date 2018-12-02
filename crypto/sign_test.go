@@ -4,9 +4,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"nimona.io/go/base58"
 	"nimona.io/go/encoding"
 )
 
@@ -20,8 +22,8 @@ func TestSignAndVerify(t *testing.T) {
 	assert.NotNil(t, subjectKey)
 
 	m := map[string]interface{}{
-		"@ctx:s": "test/signed",
-		"foo":    "bar",
+		"@ctx": "test/signed",
+		"foo":  "bar",
 	}
 
 	eo := encoding.NewObjectFromMap(m)
@@ -36,9 +38,12 @@ func TestSignAndVerify(t *testing.T) {
 	err = Verify(eo)
 	assert.NoError(t, err)
 
-	eo.SetRaw("something-new:s", "some-new-value")
+	eo.SetRaw("something-new", "some-new-value")
 	err = Verify(eo)
 	assert.Error(t, err)
+
+	b, _ := encoding.Marshal(eo)
+	fmt.Println(base58.Encode(b))
 }
 
 func TestSignWithMandate(t *testing.T) {

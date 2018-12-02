@@ -9,13 +9,13 @@ import (
 // Mandate to give authority to a aubject to perform certain actions on the
 // authority's behalf
 type Mandate struct {
-	Signer      *Key       `json:"@signer:O"`
+	Signer      *Key       `json:"@signer"`
 	Subject     *Key       `json:"subject"`
 	Description string     `json:"description"`
 	Resources   []string   `json:"resources"`
 	Actions     []string   `json:"actions"`
 	Effect      string     `json:"effect"`
-	Signature   *Signature `json:"@sig:O"`
+	Signature   *Signature `json:"@signature"`
 }
 
 // NewMandate returns a signed mandate given an authority key, a subject key,

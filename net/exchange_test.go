@@ -34,14 +34,14 @@ func TestSendSuccess(t *testing.T) {
 	time.Sleep(time.Second)
 
 	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
-		"body:s": "bar1",
+		"@ctx": "test/msg",
+		"body": "bar1",
 	}
 	eo1 := encoding.NewObjectFromMap(em1)
 
 	em2 := map[string]interface{}{
-		"@ctx:s": "test/msg",
-		"body:s": "bar1",
+		"@ctx": "test/msg",
+		"body": "bar1",
 	}
 	eo2 := encoding.NewObjectFromMap(em2)
 

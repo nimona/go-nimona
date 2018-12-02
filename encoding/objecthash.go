@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // ObjectHash consistently hashes a map.
@@ -13,12 +14,16 @@ import (
 // as TJSON instead.
 // TODO add redaction
 func ObjectHash(o *Object) ([]byte, error) {
+	return objecthash(o, true)
+}
+
+func objecthash(o *Object, skipSig bool) ([]byte, error) {
 	m := o.Map()
 	b := []byte{}
 	ks := []string{}
 	for k := range m {
 		// TODO(geoah) is there a better way of doing this?
-		if k == "@sig:O" {
+		if skipSig && strings.HasPrefix(k, "@signature") {
 			continue
 		}
 		ks = append(ks, k)
@@ -77,7 +82,7 @@ func hashValue(o interface{}) []byte {
 			panic("hashing only supports map[string]interface{}")
 		}
 		o := NewObjectFromMap(m)
-		h, err := ObjectHash(o)
+		h, err := objecthash(o, false)
 		if err != nil {
 			panic("hashing error: " + err.Error())
 		}

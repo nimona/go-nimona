@@ -10,7 +10,7 @@ import (
 
 func TestObjectHash(t *testing.T) {
 	v := map[string]interface{}{
-		"str": "foo",
+		"str:s": "foo",
 	}
 
 	kh := hash(HintString, []byte("str:s"))
@@ -26,18 +26,16 @@ func TestObjectHash(t *testing.T) {
 
 func TestObjectHashDocs(t *testing.T) {
 	v := map[string]interface{}{
-		"some-string:s": "bar",
-		"nested-object:o": map[string]interface{}{
-			"unsigned-number-one:u": 1,
-			"array-of-ints:a<i>":    []int{-1, 0, 1},
+		"some-string": "bar",
+		"nested-object": map[string]interface{}{
+			"unsigned-number-one": 1,
+			"array-of-ints:a<i>":  []int{-1, 0, 1},
 		},
 	}
 
 	o := NewObjectFromMap(v)
-	h, err := ObjectHash(o)
+	_, err := ObjectHash(o)
 	assert.NoError(t, err)
-
-	fmt.Printf("%x", h)
 }
 
 func TestLongObjectHash(t *testing.T) {
