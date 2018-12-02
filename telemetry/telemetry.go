@@ -10,6 +10,11 @@ import (
 	"nimona.io/go/encoding"
 )
 
+var (
+	typeConnectionEvent = (ConnectionEvent{}).GetType()
+	typeBlockEvent      = (BlockEvent{}).GetType()
+)
+
 type Exchanger interface {
 	Send(ctx context.Context, o *encoding.Object, address string) error
 	Handle(contentType string, h func(o *encoding.Object) error) (func(), error)
@@ -79,12 +84,20 @@ func (t *metrics) SendEvent(ctx context.Context, event Collectable) error {
 }
 
 func (t *metrics) handleBlock(o *encoding.Object) error {
-	// switch o.GetType() {
-	// case *ConnectionEvent:
-	// 	t.colletor.Collect(v)
-	// case *BlockEvent:
-	// 	t.colletor.Collect(v)
-	// }
+	switch o.GetType() {
+	case typeConnectionEvent:
+		v := &ConnectionEvent{}
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		t.colletor.Collect(v)
+	case typeBlockEvent:
+		v := &BlockEvent{}
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		t.colletor.Collect(v)
+	}
 
 	return nil
 }
