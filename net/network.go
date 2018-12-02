@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -316,19 +317,18 @@ func Read(conn *Connection) (*encoding.Object, error) {
 		return nil, err
 	}
 
-	// TODO(geoah) fix sig
-	// if b.Signature != nil {
-	// 	if err := crypto.Verify(b.Signature, d); err != nil {
-	// 		return nil, err
-	// 	}
-	// } else {
-	// 	fmt.Println("--------------------------------------------------------")
-	// 	fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
-	// 	fmt.Println("--------------------------------------------------------")
-	// 	fmt.Println("-----", b.Type)
-	// 	fmt.Println("-----", b.Payload)
-	// 	fmt.Println("--------------------------------------------------------")
-	// }
+	if o.GetSignature() != nil {
+		if err := crypto.Verify(o); err != nil {
+			return nil, err
+		}
+	} else {
+		fmt.Println("--------------------------------------------------------")
+		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
+		fmt.Println("--------------------------------------------------------")
+		fmt.Println("-----", o.GetType())
+		fmt.Println("-----", o)
+		fmt.Println("--------------------------------------------------------")
+	}
 
 	SendBlockEvent(
 		"incoming",
