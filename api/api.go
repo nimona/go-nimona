@@ -1,6 +1,9 @@
 package api
 
 import (
+	"net/http"
+	"syscall"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -22,6 +25,7 @@ type API struct {
 	dht        *dht.DHT
 	blockStore storage.Storage
 	localKey   string
+	token      string
 
 	version   string
 	commit    string
@@ -30,7 +34,7 @@ type API struct {
 
 // New HTTP API
 func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
-	bls storage.Storage, version, commit, buildDate string) *API {
+	bls storage.Storage, version, commit, buildDate, token string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 
@@ -44,10 +48,13 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 		version:    version,
 		commit:     commit,
 		buildDate:  buildDate,
+		token:      token,
 	}
 
 	router.Group("/api/v1/")
 	router.GET("/version", api.HandleVersion)
+
+	router.Use(api.TokenAuth())
 
 	local := router.Group("/api/v1/local")
 	local.GET("/", api.HandleGetLocal)
@@ -67,6 +74,8 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 	streamsEnd := router.Group("/api/v1/streams")
 	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
 
+	router.POST("/api/v1/stop", api.Stop)
+
 	router.Use(ServeFs("/", Assets))
 
 	return api
@@ -75,6 +84,12 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 // Serve HTTP API
 func (api *API) Serve(address string) error {
 	return api.router.Run(address)
+}
+
+func (api *API) Stop(c *gin.Context) {
+	c.Status(http.StatusOK)
+
+	syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 }
 
 func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
