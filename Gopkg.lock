@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:55388fd080150b9a072912f97b1f5891eb0b50df43401f8b75fb4273d3fec9fc"
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
+  version = "v1.4.2"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -176,6 +184,19 @@
   pruneopts = "UT"
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
   version = "v1.1.5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:19776767e34ab4def5b55714b3d67ac45d8f9a0d1cf6fa50b3b5920b3b38ff5c"
+  name = "github.com/magefile/mage"
+  packages = [
+    "mage",
+    "mg",
+    "parse",
+    "sh",
+  ]
+  pruneopts = "UT"
+  revision = "f89c4cb2c65c2e8ce24a4d9b5b03fa9b8eea5a14"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -505,6 +526,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Masterminds/semver",
     "github.com/davecgh/go-spew/spew",
     "github.com/digitalocean/godo",
     "github.com/emersion/go-upnp-igd",
@@ -516,6 +538,8 @@
     "github.com/gorilla/websocket",
     "github.com/influxdata/influxdb/client/v2",
     "github.com/jinzhu/copier",
+    "github.com/magefile/mage/mage",
+    "github.com/magefile/mage/sh",
     "github.com/mitchellh/go-homedir",
     "github.com/mr-tron/base58/base58",
     "github.com/pkg/errors",
