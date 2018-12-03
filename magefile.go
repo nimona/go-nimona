@@ -13,7 +13,7 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Test runs all tests
+// Test runs all tests with coverage
 func Test() error {
 	fmt.Println("Running tests")
 
@@ -24,14 +24,30 @@ func Test() error {
 		"UPNP":         "false",
 	}
 
-	args := []string{
+	testArgs := []string{
 		"test",
 		"-v",
+		"-race",
+		"-covermode=atomic",
+		"-coverprofile=coverage.out",
 		"./...",
 	}
 
-	_, err := sh.Exec(env, os.Stdout, os.Stderr, "go", args...)
-	return err
+	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", testArgs...); err != nil {
+		return err
+	}
+
+	coverArgs := []string{
+		"tool",
+		"cover",
+		"-func=coverage.out",
+	}
+
+	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", coverArgs...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Build builds all main packages
