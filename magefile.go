@@ -13,43 +13,6 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Test runs all tests with coverage
-func Test() error {
-	fmt.Println("Running tests")
-
-	env := map[string]string{
-		"LOG_LEVEL":    "debug",
-		"DEBUG_BLOCKS": "true",
-		"BIND_LOCAL":   "true",
-		"UPNP":         "false",
-	}
-
-	testArgs := []string{
-		"test",
-		"-v",
-		"-race",
-		"-covermode=atomic",
-		"-coverprofile=coverage.out",
-		"./...",
-	}
-
-	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", testArgs...); err != nil {
-		return err
-	}
-
-	coverArgs := []string{
-		"tool",
-		"cover",
-		"-func=coverage.out",
-	}
-
-	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", coverArgs...); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Build builds all main packages
 func Build() error {
 	getPackages := func() ([]string, error) {
@@ -112,6 +75,50 @@ func Build() error {
 		if err := sh.Run("go", args...); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Generate runs go generate
+func Generate() error {
+	fmt.Println("Running go generate")
+	_, err := sh.Exec(nil, os.Stdout, os.Stderr, "go", "generate", "./...")
+	return err
+}
+
+// Test runs all tests with coverage
+func Test() error {
+	fmt.Println("Running tests")
+
+	env := map[string]string{
+		"LOG_LEVEL":    "debug",
+		"DEBUG_BLOCKS": "true",
+		"BIND_LOCAL":   "true",
+		"UPNP":         "false",
+	}
+
+	testArgs := []string{
+		"test",
+		"-v",
+		"-race",
+		"-covermode=atomic",
+		"-coverprofile=coverage.out",
+		"./...",
+	}
+
+	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", testArgs...); err != nil {
+		return err
+	}
+
+	coverArgs := []string{
+		"tool",
+		"cover",
+		"-func=coverage.out",
+	}
+
+	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", coverArgs...); err != nil {
+		return err
 	}
 
 	return nil
