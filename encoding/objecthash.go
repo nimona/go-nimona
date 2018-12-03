@@ -106,60 +106,12 @@ func hashValue(o interface{}) []byte {
 	panic("hash: unsupported type " + v.String() + " -- " + fmt.Sprintf("%#v", o))
 }
 
-// from https://github.com/benlaurie/objecthash/blob/c7d617cadf0865f370d65cc82796c2e05506d26a/go/objecthash/objecthash.go#L115
-func floatNormalize(originalFloat float64) (s string, err error) {
-	// s = fmt.Sprintf("%b", originalFloat)
-	// fmt.Println(">>>>>", originalFloat, s)
-	// return
-
-	// Special case 0
-	// Note that if we allowed f to end up > .5 or == 0, we'd get the same thing.
-	if originalFloat == 0 {
-		return "+0:", nil
-	}
-
-	// sign
-	f := originalFloat
-	s = `+`
-	if f < 0 {
-		s = `-`
-		f = -f
-	}
-
-	// exponent
-	e := 0
-	for f > 1 {
-		f /= 2
-		e++
-	}
-	for f <= .5 {
-		f *= 2
-		e--
-	}
-	s += fmt.Sprintf("%d:", e)
-
-	// mantissa
-	if f > 1 || f <= .5 {
-		return "", fmt.Errorf("Could not normalize float: %f", originalFloat)
-	}
-	for f != 0 {
-		if f >= 1 {
-			s += `1`
-			f--
-		} else {
-			s += `0`
-		}
-		if f >= 1 {
-			return "", fmt.Errorf("Could not normalize float: %f", originalFloat)
-		}
-		if len(s) >= 1000 {
-			return "", fmt.Errorf("Could not normalize float: %f", originalFloat)
-		}
-		f *= 2
-	}
-	return
-}
-
+// replacing ben's implementation with something less custom, based on:
+// * https://github.com/benlaurie/objecthash
+// * https://play.golang.org/p/3xraud43pi
+// examples of same results in other languages
+// * ruby: `[7.30363941192626953125].pack('G').unpack('B*').first`
+// * js: `http://weitz.de/ieee`
 func hashFloat(f float64) ([]byte, error) {
 	nf := ""
 	switch {
@@ -170,11 +122,7 @@ func hashFloat(f float64) ([]byte, error) {
 	case math.IsNaN(f):
 		nf = "NaN"
 	default:
-		var err error
-		nf, err = floatNormalize(f)
-		if err != nil {
-			return nil, err
-		}
+		nf = fmt.Sprintf("%x", math.Float64bits(f))
 	}
 
 	return hash(HintFloat, []byte(nf)), nil
