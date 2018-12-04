@@ -18,7 +18,7 @@ func ObjectHash(o *Object) ([]byte, error) {
 }
 
 func objecthash(o *Object, skipSig bool) ([]byte, error) {
-	m := o.Map()
+	m := o.ToMap()
 	b := []byte{}
 	ks := []string{}
 	for k := range m {

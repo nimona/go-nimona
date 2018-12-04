@@ -66,7 +66,7 @@ func (api *API) Serve(address string) error {
 }
 
 func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
-	return o.Map()
+	return o.ToMap()
 
 	// 	"type":        v.Type,
 	// 	"payload":     v.Payload,

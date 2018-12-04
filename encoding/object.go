@@ -36,10 +36,12 @@ func NewObjectFromMap(m map[string]interface{}) *Object {
 }
 
 // FromMap inits the object from a map
-func (o Object) FromMap(m map[string]interface{}) {
+func (o *Object) FromMap(m map[string]interface{}) error {
+	// TODO figure out what should error here
 	for k, v := range m {
 		o.SetRaw(k, v)
 	}
+	return nil
 }
 
 // Hash returns the object's hash
@@ -52,13 +54,13 @@ func (o Object) HashBase58() string {
 	return base58.Encode(Hash(&o))
 }
 
-// Map returns the object as a map
-func (o Object) Map() map[string]interface{} {
+// ToMap returns the object as a map
+func (o Object) ToMap() map[string]interface{} {
 	m := map[string]interface{}{}
 	for k, v := range o {
 		// TODO check the type hint first maybe?
 		if o, ok := v.(*Object); ok {
-			m[k] = o.Map()
+			m[k] = o.ToMap()
 		} else {
 			m[k] = v
 		}

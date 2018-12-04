@@ -45,7 +45,7 @@ func (s *HandshakeSynAck) FromMap(m map[string]interface{}) error {
 
 // FromObject populates the struct from a f12n object
 func (s *HandshakeSynAck) FromObject(o *encoding.Object) error {
-	return s.FromMap(o.Map())
+	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type

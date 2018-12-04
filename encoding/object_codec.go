@@ -13,6 +13,6 @@ func (o *Object) CodecDecodeSelf(dec *ucodec.Decoder) {
 
 // CodecEncodeSelf helper for cbor/json marshaling
 func (o *Object) CodecEncodeSelf(enc *ucodec.Encoder) {
-	m := o.Map()
+	m := o.ToMap()
 	enc.MustEncode(m)
 }

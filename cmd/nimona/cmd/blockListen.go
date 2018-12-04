@@ -46,7 +46,7 @@ var blockListenCmd = &cobra.Command{
 			}
 
 			if returnRaw {
-				bs, err := json.MarshalIndent(o.Map(), "", "  ")
+				bs, err := json.MarshalIndent(o.ToMap(), "", "  ")
 				if err != nil {
 					return err
 				}
@@ -57,7 +57,7 @@ var blockListenCmd = &cobra.Command{
 
 			cmd.Println("block:")
 			cmd.Println("  _id:", o.HashBase58())
-			for k, v := range o.Map() {
+			for k, v := range o.ToMap() {
 				cmd.Printf("  %s: %v\n", k, v)
 			}
 			cmd.Println("")

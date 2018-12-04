@@ -279,7 +279,7 @@ func Write(o *encoding.Object, conn *Connection) error {
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.Map(), "", "  ")
+		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
 
@@ -336,7 +336,7 @@ func Read(conn *Connection) (*encoding.Object, error) {
 		pDecoder.NumBytesRead(),
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.Map(), "", "  ")
+		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
 	return o, nil
