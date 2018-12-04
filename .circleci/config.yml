@@ -20,6 +20,7 @@ jobs:
             go get -u github.com/axw/gocov/gocov
             go get -u github.com/mattn/goveralls
             go get -u github.com/jstemmer/go-junit-report
+            go get -u -d github.com/magefile/mage
       - run:
           name: Install dependencies
           command: dep ensure
@@ -39,7 +40,7 @@ jobs:
           path: /tmp/test-reports
       - run:
           name: Ensure code actually builds
-          command: make build
+          command: mage build
   release:
     docker:
       - image: circleci/golang:1.11
