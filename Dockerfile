@@ -11,7 +11,7 @@ RUN dep ensure --vendor-only
 
 ADD . .
 
-RUN mage build
+RUN go run mage.go build
 
 
 FROM alpine:3.8
