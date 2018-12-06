@@ -43,7 +43,7 @@ var peerLocalCmd = &cobra.Command{
 		}
 
 		cmd.Println("peer:")
-		cmd.Println("  id:", peer.Thumbprint())
+		cmd.Println("  id:", peer.HashBase58())
 		cmd.Println("  addresses:", peer.Addresses)
 		cmd.Println("")
 		return nil

@@ -3,7 +3,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,7 +109,32 @@ func Test() error {
 		"./...",
 	}
 
+	fmt.Println("Cleaning up coverage file for generated files")
+
 	if _, err := sh.Exec(env, os.Stdout, os.Stderr, "go", testArgs...); err != nil {
+		return err
+	}
+
+	coverFile, err := os.Open("coverage.out")
+	if err != nil {
+		return err
+	}
+
+	newLines := []string{}
+	scanner := bufio.NewScanner(coverFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "_generated.go") || strings.Contains(line, "_mock.go") {
+			continue
+		}
+		newLines = append(newLines, line)
+	}
+
+	coverFile.Close()
+
+	output := strings.Join(newLines, "\n")
+	err = ioutil.WriteFile("coverage.out", []byte(output), 0644)
+	if err != nil {
 		return err
 	}
 

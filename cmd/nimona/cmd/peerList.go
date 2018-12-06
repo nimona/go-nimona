@@ -38,7 +38,7 @@ var peerListCmd = &cobra.Command{
 
 		for _, peer := range ms {
 			cmd.Println("peer:")
-			cmd.Println("  id:", peer.Thumbprint())
+			cmd.Println("  id:", peer.HashBase58())
 			cmd.Println("  addresses:", peer.Addresses)
 			cmd.Println("")
 		}

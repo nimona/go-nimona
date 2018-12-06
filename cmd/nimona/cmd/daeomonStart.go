@@ -5,14 +5,15 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"nimona.io/go/api"
+	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
 	"nimona.io/go/net"
-	"nimona.io/go/peers"
 	"nimona.io/go/storage"
 	"nimona.io/go/telemetry"
 )
@@ -58,9 +59,14 @@ var daemonStartCmd = &cobra.Command{
 			return errors.Wrap(err, "could not create config dir")
 		}
 
-		addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// if err != nil {
+		// 	return errors.Wrap(err, "could not load key")
+		// }
+
+		k, err := crypto.LoadKey(filepath.Join(daemonConfigPath, "key.cbor"))
 		if err != nil {
-			return errors.Wrap(err, "could not load key")
+			return errors.Wrap(err, "could not load or create peer key")
 		}
 
 		if len(bootstrapAddresses) > 0 {
@@ -72,38 +78,44 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("No bootstrap nodes provided")
 		}
 
-		addressBook.LocalHostname = announceHostname
-
-		if daemonEnableRelaying {
-			if len(bootstrapAddresses) > 0 {
-				cmd.Println("Relaying enabled, using bootstrap nodes")
-				if err := addressBook.AddLocalPeerRelay(bootstrapAddresses...); err != nil {
-					// TODO handle error
-				}
-			} else {
-				cmd.Println("Relaying not enabled, no bootstrap nodes provided")
-			}
-		} else {
-			cmd.Println("Relaying not enabled")
+		n, err := net.NewNetwork(k, announceHostname)
+		if err != nil {
+			return err
 		}
+
+		// TODO(geoah) add relaying
+		// if daemonEnableRelaying {
+		// 	if len(bootstrapAddresses) > 0 {
+		// 		cmd.Println("Relaying enabled, using bootstrap nodes")
+		// 		if err := addressBook.AddLocalPeerRelay(bootstrapAddresses...); err != nil {
+		// 			// TODO handle error
+		// 		}
+		// 	} else {
+		// 		cmd.Println("Relaying not enabled, no bootstrap nodes provided")
+		// 	}
+		// } else {
+		// 	cmd.Println("Relaying not enabled")
+		// }
 
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
-		n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
-		dht, _ := dht.NewDHT(n, addressBook, bootstrapAddresses)
-		telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(), "tcp:stats.nimona.io:21013")
+		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
+		dht, _ := dht.NewDHT(k, n, x, bootstrapAddresses)
+		telemetry.NewTelemetry(x, k, "tcp:stats.nimona.io:21013")
 
-		n.RegisterDiscoverer(dht)
+		if err := n.Resolver().AddProvider(dht); err != nil {
+			return err
+		}
 
 		peerAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
 		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
 		cmd.Println("Started daemon")
-		cmd.Println("* Peer keys:\n  *", addressBook.GetLocalPeerInfo().Thumbprint())
-		peerAddresses := addressBook.GetLocalPeerAddresses()
+		cmd.Println("* Peer keys:\n  *", k.HashBase58())
+		peerAddresses := n.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")
 		if len(peerAddresses) > 0 {
-			for _, addr := range addressBook.GetLocalPeerAddresses() {
+			for _, addr := range peerAddress {
 				cmd.Println("  *", addr)
 			}
 		} else {
@@ -111,7 +123,7 @@ var daemonStartCmd = &cobra.Command{
 		}
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		api := api.New(addressBook, dht, n, dpr)
+		api := api.New(k, n, x, dht, dpr)
 		err = api.Serve(peerAddress)
 		return errors.Wrap(err, "http server stopped")
 	},

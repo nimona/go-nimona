@@ -58,7 +58,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 
 	ctx := context.Background()
 	logger := log.Logger(ctx).Named("api")
-	signer := api.addressBook.GetLocalPeerKey()
 	incoming := make(chan *encoding.Object, 100)
 	outgoing := make(chan *encoding.Object, 100)
 
@@ -73,7 +72,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				}
 
 			case req := <-outgoing:
-				if err := crypto.Sign(req, signer); err != nil {
+				if err := crypto.Sign(req, api.key); err != nil {
 					logger.Error("could not sign outgoing block", zap.Error(err))
 					// resp["status"] = "error signing block"
 					if err := write(conn, req); err != nil {

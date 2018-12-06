@@ -4,10 +4,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
 	"nimona.io/go/encoding"
 	nnet "nimona.io/go/net"
-	"nimona.io/go/peers"
 	"nimona.io/go/storage"
 )
 
@@ -15,26 +15,27 @@ import (
 
 // API for HTTP
 type API struct {
-	router      *gin.Engine
-	addressBook *peers.AddressBook
-	dht         *dht.DHT
-	blockStore  storage.Storage
-	exchange    nnet.Exchange
-	localKey    string
+	router     *gin.Engine
+	key        *crypto.Key
+	net        nnet.Network
+	exchange   nnet.Exchange
+	dht        *dht.DHT
+	blockStore storage.Storage
+	localKey   string
 }
 
 // New HTTP API
-func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, bls storage.Storage) *API {
+func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT, bls storage.Storage) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	api := &API{
-		router:      router,
-		addressBook: addressBook,
-		dht:         dht,
-		blockStore:  bls,
-		exchange:    exchange,
-		localKey:    addressBook.GetLocalPeerInfo().Thumbprint(),
+		router:     router,
+		key:        k,
+		net:        n,
+		exchange:   x,
+		dht:        dht,
+		blockStore: bls,
 	}
 
 	local := router.Group("/api/v1/local")
@@ -74,8 +75,8 @@ func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
 	// }
 	// if s := v.Signature; s != nil {
 	// 	m["signature"] = v.Signature
-	// 	m["owner"] = v.Signature.Key.Thumbprint()
-	// 	if v.Signature.Key.Thumbprint() == api.localKey {
+	// 	m["owner"] = v.Signature.Key.HashBase58()
+	// 	if v.Signature.Key.HashBase58() == api.localKey {
 	// 		m["direction"] = "outgoing"
 	// 	} else {
 	// 		m["direction"] = "incoming"

@@ -5,6 +5,7 @@
 package net
 
 import (
+	"nimona.io/go/crypto"
 	"nimona.io/go/encoding"
 	"nimona.io/go/peers"
 )
@@ -18,6 +19,12 @@ func (s HandshakeSynAck) ToMap() map[string]interface{} {
 	if s.PeerInfo != nil {
 		m["peerInfo:o"] = s.PeerInfo.ToMap()
 	}
+	if s.Signer != nil {
+		m["@signer:o"] = s.Signer.ToMap()
+	}
+	if s.Signature != nil {
+		m["@signature:o"] = s.Signature.ToMap()
+	}
 	return m
 }
 
@@ -28,7 +35,6 @@ func (s HandshakeSynAck) ToObject() *encoding.Object {
 
 // FromMap populates the struct from a f12n compatible map
 func (s *HandshakeSynAck) FromMap(m map[string]interface{}) error {
-	s.RawObject = encoding.NewObjectFromMap(m)
 	if v, ok := m["nonce:s"].(string); ok {
 		s.Nonce = v
 	}
@@ -39,6 +45,22 @@ func (s *HandshakeSynAck) FromMap(m map[string]interface{}) error {
 		}
 	} else if v, ok := m["peerInfo:o"].(*peers.PeerInfo); ok {
 		s.PeerInfo = v
+	}
+	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+		s.Signer = &crypto.Key{}
+		if err := s.Signer.FromMap(v); err != nil {
+			return err
+		}
+	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
+	}
+	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+		s.Signature = &crypto.Signature{}
+		if err := s.Signature.FromMap(v); err != nil {
+			return err
+		}
+	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
 	}
 	return nil
 }

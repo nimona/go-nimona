@@ -2,19 +2,18 @@ package net
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"nimona.io/go/crypto"
 	"nimona.io/go/encoding"
 	"nimona.io/go/log"
-	"nimona.io/go/peers"
 	"nimona.io/go/storage"
 	"nimona.io/go/utils"
 )
@@ -38,14 +37,12 @@ type Exchange interface {
 	Get(ctx context.Context, id string) (interface{}, error)
 	Handle(contentType string, h func(o *encoding.Object) error) (func(), error)
 	Send(ctx context.Context, o *encoding.Object, address string) error
-	RegisterDiscoverer(discovery Discoverer)
 }
 
 type exchange struct {
-	network     Networker
-	addressBook *peers.AddressBook
-	manager     *ConnectionManager
-	discovery   Discoverer
+	key     *crypto.Key
+	net     Network
+	manager *ConnectionManager
 
 	outgoingPayloads chan *outBlock
 	incomingPayloads chan *incBlock
@@ -77,18 +74,13 @@ type handler struct {
 }
 
 // NewExchange creates a exchange on a given network
-func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address string) (Exchange, error) {
+func NewExchange(key *crypto.Key, net Network, store storage.Storage, address string) (Exchange, error) {
 	ctx := context.Background()
 
-	network, err := NewNetwork(addressBook)
-	if err != nil {
-		return nil, err
-	}
-
 	w := &exchange{
-		network:     network,
-		addressBook: addressBook,
-		manager:     &ConnectionManager{},
+		key:     key,
+		net:     net,
+		manager: &ConnectionManager{},
 
 		outgoingPayloads: make(chan *outBlock, 10),
 		incomingPayloads: make(chan *incBlock, 10),
@@ -101,7 +93,7 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 		getRequests: sync.Map{},
 	}
 
-	incomingConnections, err := w.network.Listen(ctx, address)
+	incomingConnections, err := w.net.Listen(ctx, address)
 	if err != nil {
 		return nil, err
 	}
@@ -170,11 +162,6 @@ func NewExchange(addressBook *peers.AddressBook, store storage.Storage, address 
 	}()
 
 	return w, nil
-}
-
-func (w *exchange) RegisterDiscoverer(discovery Discoverer) {
-	// TODO race?
-	w.discovery = discovery
 }
 
 func (w *exchange) Handle(typePatern string, h func(o *encoding.Object) error) (func(), error) {
@@ -335,7 +322,7 @@ func (w *exchange) handleBlockRequest(req *BlockRequest) error {
 	}
 
 	o := resp.ToObject()
-	if err := crypto.Sign(o, w.addressBook.GetLocalPeerKey()); err != nil {
+	if err := crypto.Sign(o, w.key); err != nil {
 		return err
 	}
 
@@ -380,7 +367,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	// 	}
 
 	// 	for provider := range providers {
-	// 		addr := "peer:" + provider.Thumbprint()
+	// 		addr := "peer:" + provider.HashBase58()
 	// 		if err := w.Send(ctx, req, addr, crypto.SignWith(signer)); err != nil {
 	// 			w.logger.Warn("blx.Get could not send req block", zap.Error(err))
 	// 		}
@@ -421,7 +408,7 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 	}
 
 	recipient := strings.Replace(address, "peer:", "", 1)
-	peer, err := w.addressBook.GetPeerInfo(recipient)
+	peer, err := w.net.Resolver().Resolve(recipient)
 	if err != nil {
 		return err
 	}
@@ -432,8 +419,10 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 		FwBlock:   o,
 	}
 
+	lk := w.key
+	lh := lk.HashBase58()
 	fwo := fw.ToObject()
-	if err := crypto.Sign(fwo, w.addressBook.GetLocalPeerKey()); err != nil {
+	if err := crypto.Sign(fwo, lk); err != nil {
 		return err
 	}
 
@@ -442,7 +431,7 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 			w.logger.Debug("found relay address", zap.String("peer", recipient), zap.String("address", address))
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
-			if w.addressBook.GetLocalPeerInfo().Thumbprint() == relayAddress {
+			if strings.Contains(address, lh) {
 				continue
 			}
 			cerr := make(chan error, 1)
@@ -473,10 +462,10 @@ func (w *exchange) GetOrDial(ctx context.Context, address string) (*Connection, 
 		return existingConn, nil
 	}
 
-	conn, err := w.network.Dial(ctx, address)
+	conn, err := w.net.Dial(ctx, address)
 	if err != nil {
 		// w.manager.Close(address)
-		return nil, err
+		return nil, errors.Wrap(err, "dial failed")
 	}
 
 	go func() {

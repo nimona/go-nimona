@@ -1,9 +1,11 @@
-package net
+package dht
 
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -12,17 +14,39 @@ import (
 
 	"nimona.io/go/crypto"
 	"nimona.io/go/encoding"
+	"nimona.io/go/net"
+	"nimona.io/go/storage"
 )
 
 func TestSendSuccess(t *testing.T) {
 	os.Setenv("BIND_LOCAL", "true")
 	os.Setenv("UPNP", "false")
 
-	n1, x1 := newPeer(t)
-	n2, x2 := newPeer(t)
+	k0, n0, x0 := newPeer(t)
+	k1, n1, x1 := newPeer(t)
+	k2, n2, x2 := newPeer(t)
 
-	n1.Resolver().Add(n2.GetPeerInfo())
-	n2.Resolver().Add(n1.GetPeerInfo())
+	d0, err := NewDHT(k0, n0, x0, []string{})
+	assert.NoError(t, err)
+
+	err = n0.Resolver().AddProvider(d0)
+	assert.NoError(t, err)
+
+	ba := []string{}
+	ba = append(ba, n1.GetPeerInfo().Addresses...)
+	ba = append(ba, n2.GetPeerInfo().Addresses...)
+
+	d1, err := NewDHT(k1, n1, x1, ba)
+	assert.NoError(t, err)
+
+	err = n1.Resolver().AddProvider(d1)
+	assert.NoError(t, err)
+
+	d2, err := NewDHT(k2, n2, x2, ba)
+	assert.NoError(t, err)
+
+	err = n2.Resolver().AddProvider(d2)
+	assert.NoError(t, err)
 
 	em1 := map[string]interface{}{
 		"@ctx": "test/msg",
@@ -42,11 +66,10 @@ func TestSendSuccess(t *testing.T) {
 	w1BlockHandled := false
 	w2BlockHandled := false
 
-	err := crypto.Sign(eo1, n2.key)
+	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
 	_, err = x1.Handle("test/msg", func(o *encoding.Object) error {
-		fmt.Println("___ a")
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
@@ -63,7 +86,6 @@ func TestSendSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = x2.Handle("tes**", func(o *encoding.Object) error {
-		fmt.Println("___ b")
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -78,23 +100,38 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	fmt.Println("___ 1")
-
-	errS1 := x2.Send(ctx, eo1, "peer:"+n1.key.HashBase58())
-	assert.NoError(t, errS1)
-
-	fmt.Println("___ 2")
+	err = x2.Send(ctx, eo1, "peer:"+k1.HashBase58())
+	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, "peer:"+n2.key.HashBase58())
-	assert.NoError(t, errS2)
+	err = x1.Send(ctx, eo2, "peer:"+k2.HashBase58())
+	assert.NoError(t, err)
 
-	if errS1 == nil && errS2 == nil {
-		wg.Wait()
-	}
+	wg.Wait()
 
 	assert.True(t, w1BlockHandled)
 	assert.True(t, w2BlockHandled)
+}
+
+func newPeer(t *testing.T) (*crypto.Key, net.Network, net.Exchange) {
+	tp, err := ioutil.TempDir("", "nimona-test-dht")
+	assert.NoError(t, err)
+
+	kp := filepath.Join(tp, "key.cbor")
+	sp := filepath.Join(tp, "objects")
+
+	pk, err := crypto.LoadKey(kp)
+	assert.NoError(t, err)
+
+	ds := storage.NewDiskStorage(sp)
+
+	n, err := net.NewNetwork(pk, "")
+	assert.NoError(t, err)
+
+	x, err := net.NewExchange(pk, n, ds, fmt.Sprintf("127.0.0.1:%d", 0))
+	assert.NoError(t, err)
+
+	return pk, n, x
 }

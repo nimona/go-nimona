@@ -77,9 +77,8 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 		return
 	}
 
-	signer := api.addressBook.GetLocalPeerKey()
 	o := encoding.NewObjectFromMap(req)
-	if err := crypto.Sign(o, signer); err != nil {
+	if err := crypto.Sign(o, api.key); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object"))
 		return
 	}

@@ -23,6 +23,9 @@ func objecthash(o *Object, skipSig bool) ([]byte, error) {
 	ks := []string{}
 	for k := range m {
 		// TODO(geoah) is there a better way of doing this?
+		if k == "@" {
+			continue
+		}
 		if skipSig && strings.HasPrefix(k, "@signature") {
 			continue
 		}
