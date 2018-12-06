@@ -46,7 +46,7 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 		buildDate:  buildDate,
 	}
 
-	router.Group("/")
+	router.Group("/api/v1/")
 	router.GET("/version", api.HandleVersion)
 
 	local := router.Group("/api/v1/local")
