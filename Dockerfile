@@ -11,14 +11,12 @@ RUN dep ensure --vendor-only
 
 ADD . .
 
-RUN make build
+RUN mage build
 
 
 FROM alpine:3.8
 
-WORKDIR /app
-
-COPY --from=builder /go/src/nimona.io/go/bin/nimona /app/
+COPY --from=builder /go/src/nimona.io/go/bin/* /
 
 ENTRYPOINT ["./nimona"]
 CMD ["daemon"]

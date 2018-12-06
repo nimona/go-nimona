@@ -26,9 +26,9 @@ var (
 	daemonEnableMetrics  bool
 
 	bootstrapAddresses = []string{
-		"tcp:andromeda.nimona.io:21013",
+		// "tcp:andromeda.nimona.io:21013",
 		// "tcp:borealis.nimona.io:21013",
-		// "tcp:cassiopeia.nimona.io:21013",
+		"tcp:cassiopeia.nimona.io:21013",
 		// "tcp:draco.nimona.io:21013",
 		// "tcp:eridanus.nimona.io:21013",
 		// "tcp:fornax.nimona.io:21013",
@@ -123,7 +123,7 @@ var daemonStartCmd = &cobra.Command{
 		}
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		api := api.New(k, n, x, dht, dpr)
+		api := api.New(k, n, x, dht, dpr, Version, Commit, Date)
 		err = api.Serve(peerAddress)
 		return errors.Wrap(err, "http server stopped")
 	},

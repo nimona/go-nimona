@@ -22,10 +22,15 @@ type API struct {
 	dht        *dht.DHT
 	blockStore storage.Storage
 	localKey   string
+
+	version   string
+	commit    string
+	buildDate string
 }
 
 // New HTTP API
-func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT, bls storage.Storage) *API {
+func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
+	bls storage.Storage, version, commit, buildDate string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 
@@ -36,7 +41,13 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT, bls stora
 		exchange:   x,
 		dht:        dht,
 		blockStore: bls,
+		version:    version,
+		commit:     commit,
+		buildDate:  buildDate,
 	}
+
+	router.Group("/")
+	router.GET("/version", api.HandleVersion)
 
 	local := router.Group("/api/v1/local")
 	local.GET("/", api.HandleGetLocal)
