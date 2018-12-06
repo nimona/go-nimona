@@ -32,8 +32,8 @@ const (
           Restart=always
           ExecStartPre=-/usr/bin/docker stop nimona
           ExecStartPre=-/usr/bin/docker rm nimona
-          ExecStartPre=/usr/bin/docker pull nimona/nimona:{{ .docker.tag}}
-          ExecStart=/usr/bin/docker run --name nimona --rm -p 21013:21013  -p 8080:8080 nimona/nimona daemon --port=21013 --api-port=8080 --announce-hostname={{ .hostname }}
+          ExecStartPre=/usr/bin/docker pull quay.io/nimona/nimona:{{ .docker.tag}}
+          ExecStart=/usr/bin/docker run --name nimona --rm -p 21013:21013  -p 8080:8080 nimona/nimona daemon start --port=21013 --api-port=8080 --announce-hostname={{ .hostname }}
 
           [Install]
           WantedBy=multi-user.target`
