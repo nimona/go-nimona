@@ -41,8 +41,13 @@ func (s *Foo) FromMap(m map[string]interface{}) error {
 	if v, ok := m["bar:s"].(string); ok {
 		s.Bar = v
 	}
-	if v, ok := m["bars:a<s>"].([]string); ok {
-		s.Bars = v
+	s.Bars = []string{}
+	if ss, ok := m["bars:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.Bars = append(s.Bars, v)
+			}
+		}
 	}
 	if v, ok := m["inner_foo:o"].(map[string]interface{}); ok {
 		s.InnerFoo = &InnerFoo{}
@@ -55,14 +60,14 @@ func (s *Foo) FromMap(m map[string]interface{}) error {
 	s.InnerFoos = []*InnerFoo{}
 	if ss, ok := m["inner_foos:a<o>"].([]interface{}); ok {
 		for _, si := range ss {
-			if v, ok := si.(map[string]interface{}); ok {
+			if v, ok := si.(*InnerFoo); ok {
+				s.InnerFoos = append(s.InnerFoos, v)
+			} else if v, ok := si.(map[string]interface{}); ok {
 				sInnerFoos := &InnerFoo{}
 				if err := sInnerFoos.FromMap(v); err != nil {
 					return err
 				}
 				s.InnerFoos = append(s.InnerFoos, sInnerFoos)
-			} else if v, ok := m["inner_foos:a<o>"].(*InnerFoo); ok {
-				s.InnerFoos = append(s.InnerFoos, v)
 			}
 		}
 	}

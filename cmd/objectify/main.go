@@ -69,15 +69,18 @@ type Values struct {
 }
 
 type Field struct {
-	Skip     bool
-	Name     string
-	Tag      string
-	TypePtr  string
-	Type     string
-	Hint     string
-	IsObject bool
-	IsSlice  bool
-	CanBeNil bool
+	Skip        bool
+	Name        string
+	Tag         string
+	TypePtr     string
+	ElemTypePtr string
+	Type        string
+	ElemType    string
+	Hint        string
+	IsBasic     bool
+	IsObject    bool
+	IsSlice     bool
+	CanBeNil    bool
 }
 
 func (gen *Generator) process() (code []byte, err error) {
@@ -181,9 +184,17 @@ func (gen *Generator) process() (code []byte, err error) {
 		if fi, ok := f.Type().(*types.Slice); ok {
 			vf.IsSlice = true
 			vf.CanBeNil = true
+
+			etp, _ := getPackageAndType(fi.Elem().String(), pkg.Path(), false)
+			vf.ElemType = etp
+
+			etp, _ = getPackageAndType(fi.Elem().String(), pkg.Path(), true)
+			vf.ElemTypePtr = tp
+
 			if _, ok := fi.Elem().(*types.Basic); ok && vf.IsSlice {
 				vf.Type = "[]" + vf.Type
 				vf.TypePtr = "[]" + vf.TypePtr
+				vf.IsBasic = true
 			}
 
 		}
@@ -252,19 +263,21 @@ func (s *{{ .StructName }}) FromMap(m map[string]interface{}) error {
 	{{- range .StructFields }}
 	{{- if eq .Tag "@" }}
 	s.{{ .Name }} = encoding.NewObjectFromMap(m)
-	{{- else if and .IsObject .IsSlice }}
-	s.{{ .Name }} = []{{ .TypePtr }}{}
+	{{- else if .IsSlice }}
+	s.{{ .Name }} = []{{ .ElemType }}{}
 	if ss, ok := m["{{ .Tag }}:{{ .Hint }}"].([]interface{}); ok {
 		for _, si := range ss {
-			if v, ok := si.(map[string]interface{}); ok {
-				s{{ .Name }} := {{ .Type }}{}
+			if v, ok := si.({{ .ElemType }}); ok {
+				s.{{ .Name }} = append(s.{{ .Name }}, v)
+			}
+			{{- if not .IsBasic }} else if v, ok := si.(map[string]interface{}); ok {
+				s{{ .Name }} := {{ .ElemTypePtr }}{}
 				if err := s{{ .Name }}.FromMap(v); err != nil {
 					return err
 				}
 				s.{{ .Name }} = append(s.{{ .Name }}, s{{ .Name }})
-			} else if v, ok := m["{{ .Tag }}:{{ .Hint }}"].({{ .TypePtr }}); ok {
-				s.{{ .Name }} = append(s.{{ .Name }}, v)
 			}
+			{{- end }}
 		}
 	}
 	{{- else if .IsObject }}
