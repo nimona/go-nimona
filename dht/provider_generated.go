@@ -36,16 +36,30 @@ func (s Provider) ToObject() *encoding.Object {
 
 // FromMap populates the struct from a f12n compatible map
 func (s *Provider) FromMap(m map[string]interface{}) error {
+	s.BlockIDs = []string{}
+	if ss, ok := m["blockIDs:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.BlockIDs = append(s.BlockIDs, v)
+			}
+		}
+	}
 	if v, ok := m["blockIDs:a<s>"].([]string); ok {
 		s.BlockIDs = v
 	}
 	s.RawObject = encoding.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*encoding.Object); ok {
+		s.RawObject = v
+	}
 	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
 		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
+	}
+	if v, ok := m["@signer:o"].(*crypto.Key); ok {
 		s.Signer = v
 	}
 	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
@@ -56,12 +70,18 @@ func (s *Provider) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
 		s.Authority = v
 	}
+	if v, ok := m["@authority:o"].(*crypto.Key); ok {
+		s.Authority = v
+	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
+	}
+	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

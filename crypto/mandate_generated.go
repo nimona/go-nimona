@@ -48,6 +48,9 @@ func (s *Mandate) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["@signer:o"].(*Key); ok {
 		s.Signer = v
 	}
+	if v, ok := m["@signer:o"].(*Key); ok {
+		s.Signer = v
+	}
 	if v, ok := m["subject:o"].(map[string]interface{}); ok {
 		s.Subject = &Key{}
 		if err := s.Subject.FromMap(v); err != nil {
@@ -56,11 +59,30 @@ func (s *Mandate) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["subject:o"].(*Key); ok {
 		s.Subject = v
 	}
+	if v, ok := m["subject:o"].(*Key); ok {
+		s.Subject = v
+	}
 	if v, ok := m["description:s"].(string); ok {
 		s.Description = v
 	}
+	s.Resources = []string{}
+	if ss, ok := m["resources:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.Resources = append(s.Resources, v)
+			}
+		}
+	}
 	if v, ok := m["resources:a<s>"].([]string); ok {
 		s.Resources = v
+	}
+	s.Actions = []string{}
+	if ss, ok := m["actions:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.Actions = append(s.Actions, v)
+			}
+		}
 	}
 	if v, ok := m["actions:a<s>"].([]string); ok {
 		s.Actions = v
@@ -74,6 +96,9 @@ func (s *Mandate) FromMap(m map[string]interface{}) error {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*Signature); ok {
+		s.Signature = v
+	}
+	if v, ok := m["@signature:o"].(*Signature); ok {
 		s.Signature = v
 	}
 	return nil

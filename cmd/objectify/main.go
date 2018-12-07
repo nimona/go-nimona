@@ -191,10 +191,13 @@ func (gen *Generator) process() (code []byte, err error) {
 			etp, _ = getPackageAndType(fi.Elem().String(), pkg.Path(), true)
 			vf.ElemTypePtr = tp
 
-			if _, ok := fi.Elem().(*types.Basic); ok && vf.IsSlice {
+			if _, ok := fi.Elem().(*types.Basic); ok {
+				vf.IsBasic = true
+			}
+
+			if vf.IsSlice {
 				vf.Type = "[]" + vf.Type
 				vf.TypePtr = "[]" + vf.TypePtr
-				vf.IsBasic = true
 			}
 
 		}
@@ -289,11 +292,10 @@ func (s *{{ .StructName }}) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["{{ .Tag }}:{{ .Hint }}"].({{ .TypePtr }}); ok {
 		s.{{ .Name }} = v
 	}
-	{{- else }}
+	{{- end }}
 	if v, ok := m["{{ .Tag }}:{{ .Hint }}"].({{ .TypePtr }}); ok {
 		s.{{ .Name }} = v
 	}
-	{{- end }}
 	{{- end }}
 	return nil
 }

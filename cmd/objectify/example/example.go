@@ -7,6 +7,7 @@ import "nimona.io/go/encoding"
 
 type InnerFoo struct {
 	InnerBar      string      `fluffy:"inner_bar"`
+	InnerBars     []string    `fluffy:"inner_bars"`
 	MoreInnerFoos []*InnerFoo `json:"inner_foos"`
 	I             int
 	I8            int8

@@ -30,8 +30,24 @@ func (s *Policy) FromMap(m map[string]interface{}) error {
 	if v, ok := m["description:s"].(string); ok {
 		s.Description = v
 	}
+	s.Subjects = []string{}
+	if ss, ok := m["subjects:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.Subjects = append(s.Subjects, v)
+			}
+		}
+	}
 	if v, ok := m["subjects:a<s>"].([]string); ok {
 		s.Subjects = v
+	}
+	s.Actions = []string{}
+	if ss, ok := m["actions:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.Actions = append(s.Actions, v)
+			}
+		}
 	}
 	if v, ok := m["actions:a<s>"].([]string); ok {
 		s.Actions = v

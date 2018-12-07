@@ -29,6 +29,9 @@ func (s HandshakeSyn) ToObject() *encoding.Object {
 // FromMap populates the struct from a f12n compatible map
 func (s *HandshakeSyn) FromMap(m map[string]interface{}) error {
 	s.RawObject = encoding.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*encoding.Object); ok {
+		s.RawObject = v
+	}
 	if v, ok := m["nonce:s"].(string); ok {
 		s.Nonce = v
 	}
@@ -38,6 +41,9 @@ func (s *HandshakeSyn) FromMap(m map[string]interface{}) error {
 			return err
 		}
 	} else if v, ok := m["peerInfo:o"].(*peers.PeerInfo); ok {
+		s.PeerInfo = v
+	}
+	if v, ok := m["peerInfo:o"].(*peers.PeerInfo); ok {
 		s.PeerInfo = v
 	}
 	return nil

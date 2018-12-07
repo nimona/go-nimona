@@ -42,12 +42,18 @@ func (s *HandshakeAck) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
 		s.Signer = v
 	}
+	if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
+	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
+	}
+	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

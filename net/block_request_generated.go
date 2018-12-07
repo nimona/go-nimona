@@ -46,12 +46,18 @@ func (s *BlockRequest) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
+	if v, ok := m["signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
+	}
 	if v, ok := m["sender:o"].(map[string]interface{}); ok {
 		s.Sender = &crypto.Key{}
 		if err := s.Sender.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["sender:o"].(*crypto.Key); ok {
+		s.Sender = v
+	}
+	if v, ok := m["sender:o"].(*crypto.Key); ok {
 		s.Sender = v
 	}
 	return nil

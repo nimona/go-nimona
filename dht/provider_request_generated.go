@@ -42,12 +42,18 @@ func (s *ProviderRequest) FromMap(m map[string]interface{}) error {
 		s.Key = v
 	}
 	s.RawObject = encoding.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*encoding.Object); ok {
+		s.RawObject = v
+	}
 	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
 		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
+	}
+	if v, ok := m["@signer:o"].(*crypto.Key); ok {
 		s.Signer = v
 	}
 	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
@@ -58,12 +64,18 @@ func (s *ProviderRequest) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
 		s.Authority = v
 	}
+	if v, ok := m["@authority:o"].(*crypto.Key); ok {
+		s.Authority = v
+	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
+	}
+	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

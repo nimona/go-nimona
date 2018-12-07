@@ -45,6 +45,9 @@ func (s *BlockResponse) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["requestedBlock:o"].(*encoding.Object); ok {
 		s.RequestedBlock = v
 	}
+	if v, ok := m["requestedBlock:o"].(*encoding.Object); ok {
+		s.RequestedBlock = v
+	}
 	if v, ok := m["sender:o"].(map[string]interface{}); ok {
 		s.Sender = &crypto.Key{}
 		if err := s.Sender.FromMap(v); err != nil {
@@ -53,12 +56,18 @@ func (s *BlockResponse) FromMap(m map[string]interface{}) error {
 	} else if v, ok := m["sender:o"].(*crypto.Key); ok {
 		s.Sender = v
 	}
+	if v, ok := m["sender:o"].(*crypto.Key); ok {
+		s.Sender = v
+	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
+		s.Signature = v
+	}
+	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
 	return nil

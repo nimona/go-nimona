@@ -33,8 +33,24 @@ func (s *Signature) FromMap(m map[string]interface{}) error {
 	if v, ok := m["alg:s"].(string); ok {
 		s.Alg = v
 	}
+	s.R = []byte{}
+	if ss, ok := m["r:d"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(byte); ok {
+				s.R = append(s.R, v)
+			}
+		}
+	}
 	if v, ok := m["r:d"].([]byte); ok {
 		s.R = v
+	}
+	s.S = []byte{}
+	if ss, ok := m["s:d"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(byte); ok {
+				s.S = append(s.S, v)
+			}
+		}
 	}
 	if v, ok := m["s:d"].([]byte); ok {
 		s.S = v

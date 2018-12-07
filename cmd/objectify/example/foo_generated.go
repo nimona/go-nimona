@@ -38,6 +38,9 @@ func (s Foo) ToObject() *encoding.Object {
 // FromMap populates the struct from a f12n compatible map
 func (s *Foo) FromMap(m map[string]interface{}) error {
 	s.RawObject = encoding.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*encoding.Object); ok {
+		s.RawObject = v
+	}
 	if v, ok := m["bar:s"].(string); ok {
 		s.Bar = v
 	}
@@ -49,12 +52,18 @@ func (s *Foo) FromMap(m map[string]interface{}) error {
 			}
 		}
 	}
+	if v, ok := m["bars:a<s>"].([]string); ok {
+		s.Bars = v
+	}
 	if v, ok := m["inner_foo:o"].(map[string]interface{}); ok {
 		s.InnerFoo = &InnerFoo{}
 		if err := s.InnerFoo.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["inner_foo:o"].(*InnerFoo); ok {
+		s.InnerFoo = v
+	}
+	if v, ok := m["inner_foo:o"].(*InnerFoo); ok {
 		s.InnerFoo = v
 	}
 	s.InnerFoos = []*InnerFoo{}
@@ -70,6 +79,9 @@ func (s *Foo) FromMap(m map[string]interface{}) error {
 				s.InnerFoos = append(s.InnerFoos, sInnerFoos)
 			}
 		}
+	}
+	if v, ok := m["inner_foos:a<o>"].([]*InnerFoo); ok {
+		s.InnerFoos = v
 	}
 	return nil
 }

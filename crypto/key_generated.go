@@ -72,16 +72,43 @@ func (s *Key) FromMap(m map[string]interface{}) error {
 	if v, ok := m["crv:s"].(string); ok {
 		s.Curve = v
 	}
+	s.X = []byte{}
+	if ss, ok := m["x:d"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(byte); ok {
+				s.X = append(s.X, v)
+			}
+		}
+	}
 	if v, ok := m["x:d"].([]byte); ok {
 		s.X = v
 	}
+	s.Y = []byte{}
+	if ss, ok := m["y:d"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(byte); ok {
+				s.Y = append(s.Y, v)
+			}
+		}
+	}
 	if v, ok := m["y:d"].([]byte); ok {
 		s.Y = v
+	}
+	s.D = []byte{}
+	if ss, ok := m["d:d"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(byte); ok {
+				s.D = append(s.D, v)
+			}
+		}
 	}
 	if v, ok := m["d:d"].([]byte); ok {
 		s.D = v
 	}
 	s.RawObject = encoding.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*encoding.Object); ok {
+		s.RawObject = v
+	}
 	return nil
 }
 

@@ -25,6 +25,9 @@ func (s InnerFoo) ToMap() map[string]interface{} {
 		"f32:f":       s.F32,
 		"f64:f":       s.F64,
 	}
+	if s.InnerBars != nil {
+		m["inner_bars:a<s>"] = s.InnerBars
+	}
 	if s.MoreInnerFoos != nil {
 		sMoreInnerFoos := []map[string]interface{}{}
 		for _, v := range s.MoreInnerFoos {
@@ -69,19 +72,33 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 	if v, ok := m["inner_bar:s"].(string); ok {
 		s.InnerBar = v
 	}
+	s.InnerBars = []string{}
+	if ss, ok := m["inner_bars:a<s>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(string); ok {
+				s.InnerBars = append(s.InnerBars, v)
+			}
+		}
+	}
+	if v, ok := m["inner_bars:a<s>"].([]string); ok {
+		s.InnerBars = v
+	}
 	s.MoreInnerFoos = []*InnerFoo{}
 	if ss, ok := m["inner_foos:a<o>"].([]interface{}); ok {
 		for _, si := range ss {
-			if v, ok := si.(map[string]interface{}); ok {
+			if v, ok := si.(*InnerFoo); ok {
+				s.MoreInnerFoos = append(s.MoreInnerFoos, v)
+			} else if v, ok := si.(map[string]interface{}); ok {
 				sMoreInnerFoos := &InnerFoo{}
 				if err := sMoreInnerFoos.FromMap(v); err != nil {
 					return err
 				}
 				s.MoreInnerFoos = append(s.MoreInnerFoos, sMoreInnerFoos)
-			} else if v, ok := m["inner_foos:a<o>"].(*InnerFoo); ok {
-				s.MoreInnerFoos = append(s.MoreInnerFoos, v)
 			}
 		}
+	}
+	if v, ok := m["inner_foos:a<o>"].([]*InnerFoo); ok {
+		s.MoreInnerFoos = v
 	}
 	if v, ok := m["i:i"].(int); ok {
 		s.I = v
@@ -116,26 +133,90 @@ func (s *InnerFoo) FromMap(m map[string]interface{}) error {
 	if v, ok := m["f64:f"].(float64); ok {
 		s.F64 = v
 	}
+	s.Ai8 = []int8{}
+	if ss, ok := m["ai8:a<i>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(int8); ok {
+				s.Ai8 = append(s.Ai8, v)
+			}
+		}
+	}
 	if v, ok := m["ai8:a<i>"].([]int8); ok {
 		s.Ai8 = v
+	}
+	s.Ai16 = []int16{}
+	if ss, ok := m["ai16:a<i>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(int16); ok {
+				s.Ai16 = append(s.Ai16, v)
+			}
+		}
 	}
 	if v, ok := m["ai16:a<i>"].([]int16); ok {
 		s.Ai16 = v
 	}
+	s.Ai32 = []int32{}
+	if ss, ok := m["ai32:a<i>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(int32); ok {
+				s.Ai32 = append(s.Ai32, v)
+			}
+		}
+	}
 	if v, ok := m["ai32:a<i>"].([]int32); ok {
 		s.Ai32 = v
+	}
+	s.Ai64 = []int64{}
+	if ss, ok := m["ai64:a<i>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(int64); ok {
+				s.Ai64 = append(s.Ai64, v)
+			}
+		}
 	}
 	if v, ok := m["ai64:a<i>"].([]int64); ok {
 		s.Ai64 = v
 	}
+	s.Au16 = []uint16{}
+	if ss, ok := m["au16:a<u>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(uint16); ok {
+				s.Au16 = append(s.Au16, v)
+			}
+		}
+	}
 	if v, ok := m["au16:a<u>"].([]uint16); ok {
 		s.Au16 = v
+	}
+	s.Au32 = []uint32{}
+	if ss, ok := m["au32:a<u>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(uint32); ok {
+				s.Au32 = append(s.Au32, v)
+			}
+		}
 	}
 	if v, ok := m["au32:a<u>"].([]uint32); ok {
 		s.Au32 = v
 	}
+	s.Af32 = []float32{}
+	if ss, ok := m["af32:a<f>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(float32); ok {
+				s.Af32 = append(s.Af32, v)
+			}
+		}
+	}
 	if v, ok := m["af32:a<f>"].([]float32); ok {
 		s.Af32 = v
+	}
+	s.Af64 = []float64{}
+	if ss, ok := m["af64:a<f>"].([]interface{}); ok {
+		for _, si := range ss {
+			if v, ok := si.(float64); ok {
+				s.Af64 = append(s.Af64, v)
+			}
+		}
 	}
 	if v, ok := m["af64:a<f>"].([]float64); ok {
 		s.Af64 = v
