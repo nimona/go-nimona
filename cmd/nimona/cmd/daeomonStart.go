@@ -107,7 +107,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		peerAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
+		netAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
 		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
 		cmd.Println("Started daemon")
@@ -115,7 +115,7 @@ var daemonStartCmd = &cobra.Command{
 		peerAddresses := n.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")
 		if len(peerAddresses) > 0 {
-			for _, addr := range peerAddress {
+			for _, addr := range peerAddresses {
 				cmd.Println("  *", addr)
 			}
 		} else {
@@ -124,7 +124,7 @@ var daemonStartCmd = &cobra.Command{
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
 		api := api.New(k, n, x, dht, dpr, Version, Commit, Date)
-		err = api.Serve(peerAddress)
+		err = api.Serve(netAddress)
 		return errors.Wrap(err, "http server stopped")
 	},
 }

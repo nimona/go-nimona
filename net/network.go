@@ -372,9 +372,6 @@ func (n *network) addAddress(addrs ...string) {
 // GetPeerInfo returns the local peer info
 func (n *network) GetPeerInfo() *peers.PeerInfo {
 	addrs := []string{}
-	if n.hostname != "" {
-		addrs = append(addrs, n.hostname)
-	}
 	n.addressesLock.RLock()
 	addrs = append(addrs, n.addresses...)
 	n.addressesLock.RUnlock()
