@@ -64,27 +64,31 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 		return
 	}
 
-	// TODO(geoah) better way to require recipients?
-	// TODO(geoah) helper function for getting subjects
-	subjects := []string{}
-	if ps, ok := req["@ann.policy.subjects"]; ok {
-		if subs, ok := ps.([]string); ok {
-			subjects = subs
-		}
+	o := encoding.NewObjectFromMap(req)
+	op := o.GetPolicy()
+	if op == nil {
+		c.AbortWithError(400, errors.New("missing policy"))
+		return
 	}
-	if len(subjects) == 0 {
+
+	p := &encoding.Policy{}
+	if err := p.FromObject(op); err != nil {
+		c.AbortWithError(400, errors.New("invalid policy"))
+		return
+	}
+
+	if len(p.Subjects) == 0 {
 		c.AbortWithError(400, errors.New("missing recipients"))
 		return
 	}
 
-	o := encoding.NewObjectFromMap(req)
 	if err := crypto.Sign(o, api.key); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object"))
 		return
 	}
 
 	ctx := context.Background()
-	for _, recipient := range subjects {
+	for _, recipient := range p.Subjects {
 		addr := "peer:" + recipient
 		if err := api.exchange.Send(ctx, o, addr); err != nil {
 			c.AbortWithError(500, err)

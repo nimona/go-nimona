@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -101,9 +102,11 @@ func (gen *Generator) process() (code []byte, err error) {
 		StructName:   gen.Type,
 		StructFields: []*Field{},
 		Schema:       *schema,
-		Imports: map[string]bool{
-			"nimona.io/go/encoding": true,
-		},
+		Imports:      map[string]bool{},
+	}
+
+	if pkg.Name() != "encoding" {
+		values.Imports["nimona.io/go/encoding"] = true
 	}
 
 	fmt.Printf("Objectifying %s.%s\n", values.Package, gen.Type)
@@ -302,8 +305,17 @@ func (s {{ .StructName }}) GetType() string {
 		panic(err)
 	}
 
-	err = t.Execute(f, values)
-	if err != nil {
+	out := bytes.NewBuffer([]byte{})
+	if err := t.Execute(out, values); err != nil {
+		panic(err)
+	}
+
+	if values.Package == "encoding" {
+		sout := strings.Replace(string(out.Bytes()), "encoding.", "", -1)
+		out = bytes.NewBuffer([]byte(sout))
+	}
+
+	if _, err := f.Write(out.Bytes()); err != nil {
 		panic(err)
 	}
 

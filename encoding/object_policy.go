@@ -1,5 +1,7 @@
 package encoding
 
+//go:generate go run nimona.io/go/cmd/objectify -schema /policy -type Policy -out policy_generated.go
+
 // Policy for object
 type Policy struct {
 	Description string   `json:"description,omitempty"`
