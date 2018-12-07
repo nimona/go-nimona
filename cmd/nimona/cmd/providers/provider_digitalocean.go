@@ -101,7 +101,7 @@ func (dp *DigitalOceanProvider) NewInstance(dockerTag, hostname,
 		"docker": map[string]interface{}{
 			"tag": dockerTag,
 		},
-		"hostname": "",
+		"hostname": hostname,
 	}
 
 	t, err := template.New("user-data").Parse(cloudInit)
