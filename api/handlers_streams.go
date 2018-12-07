@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -74,8 +76,8 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			case req := <-outgoing:
 				if err := crypto.Sign(req, api.key); err != nil {
 					logger.Error("could not sign outgoing block", zap.Error(err))
-					// resp["status"] = "error signing block"
-					if err := write(conn, req); err != nil {
+					req.SetRaw("_status", "error signing block")
+					if err := write(conn, api.mapBlock(req)); err != nil {
 						// TODO handle error
 						continue
 					}
@@ -83,15 +85,20 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
 				subjects := []string{}
-				// if ps, ok := req["@ann.policy.subjects"]; ok {
-				// 	if subs, ok := ps.([]string); ok {
-				// 		subjects = subs
-				// 	}
-				// }
+				spew.Dump(req.GetRaw("_recipients"))
+				if ps := req.GetRaw("_recipients"); ps != nil {
+					if subsi, ok := ps.([]interface{}); ok {
+						for _, subi := range subsi {
+							if sub, ok := subi.(string); ok {
+								subjects = append(subjects, sub)
+							}
+						}
+					}
+				}
 				if len(subjects) == 0 {
 					// TODO handle error
-					// req["status"] = "no subjects"
-					if err := write(conn, req); err != nil {
+					req.SetRaw("_status", "no subjects")
+					if err := write(conn, api.mapBlock(req)); err != nil {
 						// TODO handle error
 					}
 					continue
@@ -100,10 +107,10 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 					addr := "peer:" + recipient
 					if err := api.exchange.Send(ctx, req, addr); err != nil {
 						logger.Error("could not send outgoing block", zap.Error(err))
-						// req["status"] = "error sending block"
+						req.SetRaw("_status", "error sending block")
 					}
 					// TODO handle error
-					if err := write(conn, req); err != nil {
+					if err := write(conn, api.mapBlock(req)); err != nil {
 						// TODO handle error
 						continue
 					}

@@ -78,28 +78,30 @@ func (api *API) Serve(address string) error {
 }
 
 func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
-	return o.ToMap()
+	m := o.ToMap()
 
-	// 	"type":        v.Type,
-	// 	"payload":     v.Payload,
-	// 	"annotations": v.Annotations,
-	// }
-	// if s := v.Signature; s != nil {
-	// 	m["signature"] = v.Signature
-	// 	m["owner"] = v.Signature.Key.HashBase58()
-	// 	if v.Signature.Key.HashBase58() == api.localKey {
-	// 		m["direction"] = "outgoing"
-	// 	} else {
-	// 		m["direction"] = "incoming"
-	// 	}
-	// }
-	// recipients := []string{}
-	// if v.Annotations != nil {
-	// 	for _, policy := range v.Annotations.Policies {
-	// 		recipients = append(recipients, policy.Subjects...)
-	// 	}
-	// }
-	// m["id"] = crypto.ID(v)
-	// m["recipients"] = recipients
-	// return m
+	m["_hash"] = o.HashBase58()
+
+	if signer := o.GetSignerKey(); signer != nil {
+		if api.localKey == signer.HashBase58() {
+			m["_direction"] = "outgoing"
+		} else {
+			m["_direction"] = "incoming"
+		}
+	}
+
+	recipients := []string{}
+	if op := o.GetPolicy(); op != nil {
+		p := &encoding.Policy{}
+		p.FromObject(op)
+		recipients = append(recipients, p.Subjects...)
+	}
+	m["_recipients"] = recipients
+
+	um, err := encoding.UntypeMap(m)
+	if err != nil {
+		panic(err)
+	}
+
+	return um
 }

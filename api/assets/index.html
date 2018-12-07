@@ -227,6 +227,7 @@
             "actions": ["read"],
             "effect": "allow"
           },
+          "_recipients": recipients,
           "body": body,
           "timestamp": (new Date()).toISOString()
         }
@@ -249,7 +250,7 @@
         } else {
           messagesList.innerHTML = '<li class="received">' +
             '<div><span>Message:</span>' + object.body + '</div>' +
-            '<div><span>To:</span><a href="#" class="from" data-key="' + object.recipients[0] + '">' + object.recipients[0] + '</a></div>' +
+            '<div><span>To:</span><a href="#" class="from" data-key="' + object._recipients[0] + '">' + object._recipients[0] + '</a></div>' +
             '</li>' + messagesList.innerHTML
         }
       }
