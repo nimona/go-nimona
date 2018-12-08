@@ -30,8 +30,7 @@ func NewMandate(authority, subject *Key, description string, resources, actions 
 	}
 
 	m := &Mandate{
-		Signer:      authority,
-		Subject:     subject,
+		Subject:     subject.GetPublicKey(),
 		Description: description,
 		Resources:   resources,
 		Actions:     actions,

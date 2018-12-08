@@ -35,8 +35,11 @@ func objecthash(o *Object, skipSig bool) ([]byte, error) {
 	x := map[string]interface{}{}
 	for _, k := range ks {
 		v := m[k]
-		hk := hash(HintString, []byte(k))
 		hv := hashValue(v)
+		if hv == nil {
+			continue
+		}
+		hk := hash(HintString, []byte(k))
 		b = append(b, hk...)
 		b = append(b, hv...)
 		x[k] = hv
@@ -61,8 +64,12 @@ func hashValue(o interface{}) []byte {
 	t := reflect.TypeOf(o)
 	switch t.Kind() {
 	case reflect.Invalid: // nil
-		return hash(HintNil, []byte{})
+		// return hash(HintNil, []byte{})
+		return nil
 	case reflect.Slice, reflect.Array:
+		if v.Len() == 0 {
+			return nil
+		}
 		if t.Elem() == reflect.TypeOf(byte(0)) {
 			return hash(HintBytes, o.([]byte))
 		}
@@ -76,6 +83,9 @@ func hashValue(o interface{}) []byte {
 		}
 		return hash(HintArray, b)
 	case reflect.String:
+		if o.(string) == "" {
+			return nil
+		}
 		return hash(HintString, []byte(o.(string)))
 	case reflect.Struct:
 		panic("structs are not currently supported")
@@ -83,6 +93,9 @@ func hashValue(o interface{}) []byte {
 		m, ok := o.(map[string]interface{})
 		if !ok {
 			panic("hashing only supports map[string]interface{}")
+		}
+		if len(m) == 0 {
+			return nil
 		}
 		o := NewObjectFromMap(m)
 		h, err := objecthash(o, false)
