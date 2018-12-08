@@ -26,6 +26,12 @@ func TestSendSuccess(t *testing.T) {
 	k1, n1, x1 := newPeer(t)
 	k2, n2, x2 := newPeer(t)
 
+	fmt.Printf("\n\n\n\n-----------------------------\n")
+	fmt.Println("k0:", k0.GetPublicKey().HashBase58())
+	fmt.Println("k1:", k1.GetPublicKey().HashBase58())
+	fmt.Println("k2:", k2.GetPublicKey().HashBase58())
+	fmt.Printf("-----------------------------\n\n\n\n")
+
 	d0, err := NewDHT(k0, n0, x0, []string{})
 	assert.NoError(t, err)
 
@@ -98,15 +104,19 @@ func TestSendSuccess(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	ctx := context.Background()
+	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
+	defer cf()
 
-	err = x2.Send(ctx, eo1, "peer:"+k1.HashBase58())
+	err = x2.Send(ctx, eo1, "peer:"+k1.GetPublicKey().HashBase58())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
+	ctx2, cf2 := context.WithTimeout(context.Background(), time.Second*5)
+	defer cf2()
+
 	// TODO should be able to send not signed
-	err = x1.Send(ctx, eo2, "peer:"+k2.HashBase58())
+	err = x1.Send(ctx2, eo2, "peer:"+k2.GetPublicKey().HashBase58())
 	assert.NoError(t, err)
 
 	wg.Wait()

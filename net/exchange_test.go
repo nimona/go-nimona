@@ -14,8 +14,6 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
-	os.Setenv("LOG_LEVEL", "DEBUG")
-	os.Setenv("DEBUG_BLOCKS", "true")
 	os.Setenv("BIND_LOCAL", "true")
 	os.Setenv("UPNP", "false")
 

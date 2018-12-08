@@ -7,10 +7,33 @@ import (
 	"nimona.io/go/peers"
 )
 
+// resolverOptions is the complete options structure for the resolver
+type resolverOptions struct {
+	Local bool
+}
+
+// ResolverOption is the type for our functional options
+type ResolverOption func(*resolverOptions)
+
+// Local forces the resolver to only look at its cache
+func Local() ResolverOption {
+	return func(opts *resolverOptions) {
+		opts.Local = true
+	}
+}
+
+func parseSendOptions(opts ...ResolverOption) *resolverOptions {
+	options := &resolverOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+	return options
+}
+
 // Resolver interface
 type Resolver interface {
 	AddProvider(provider ResolverProvider) error
-	Resolve(key string) (*peers.PeerInfo, error)
+	Resolve(key string, options ...ResolverOption) (*peers.PeerInfo, error)
 	Add(v *peers.PeerInfo)
 	// AddPersistent(v *peers.PeerInfo)
 }
@@ -39,15 +62,18 @@ type resolver struct {
 }
 
 // Resolve goes through the given providers until one returns something
-func (r *resolver) Resolve(key string) (*peers.PeerInfo, error) {
-	r.providersLock.RLock()
-	for _, p := range r.providers {
-		if res, err := p.Resolve(key); err == nil {
-			r.providersLock.RUnlock()
-			return res, nil
+func (r *resolver) Resolve(key string, opts ...ResolverOption) (*peers.PeerInfo, error) {
+	cfg := parseSendOptions(opts...)
+	if !cfg.Local {
+		r.providersLock.RLock()
+		for _, p := range r.providers {
+			if res, err := p.Resolve(key); err == nil {
+				r.providersLock.RUnlock()
+				return res, nil
+			}
 		}
+		r.providersLock.RUnlock()
 	}
-	r.providersLock.RUnlock()
 	r.cacheLock.RLock()
 	defer r.cacheLock.RUnlock()
 	if res, ok := r.cacheTemp[key]; ok {

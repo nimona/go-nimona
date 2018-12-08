@@ -3,6 +3,7 @@ package dht
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -70,7 +71,7 @@ func NewDHT(key *crypto.Key, network net.Network, exchange net.Exchange,
 		ctx := context.Background()
 		req := &PeerInfoRequest{
 			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    key.HashBase58(),
+			PeerID:    key.GetPublicKey().HashBase58(),
 		}
 		so := req.ToObject()
 		if err := crypto.Sign(so, key); err != nil {
@@ -172,10 +173,15 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
-	peerInfo, err := r.peerStore.Get(payload.PeerID)
-	if err != nil {
+	peerInfo, _ := r.peerStore.Get(payload.PeerID)
+	// TODO handle and log error
+
+	if peerInfo == nil {
+		peerInfo, _ = r.net.Resolver().Resolve(payload.PeerID, net.Local())
 		// TODO handle and log error
 	}
+
+	fmt.Println(">>>>>>>>>>>>> ", payload.PeerID, peerInfo)
 
 	closestPeerInfos, err := r.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	if err != nil {
