@@ -2,7 +2,6 @@ package net
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -15,6 +14,8 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("DEBUG_BLOCKS", "true")
 	os.Setenv("BIND_LOCAL", "true")
 	os.Setenv("UPNP", "false")
 
@@ -46,7 +47,6 @@ func TestSendSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = x1.Handle("test/msg", func(o *encoding.Object) error {
-		fmt.Println("___ a")
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
@@ -63,7 +63,6 @@ func TestSendSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = x2.Handle("tes**", func(o *encoding.Object) error {
-		fmt.Println("___ b")
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -78,17 +77,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	fmt.Println("___ 1")
-
-	errS1 := x2.Send(ctx, eo1, "peer:"+n1.key.HashBase58())
+	errS1 := x2.Send(ctx, eo1, "peer:"+n1.key.GetPublicKey().HashBase58())
 	assert.NoError(t, errS1)
-
-	fmt.Println("___ 2")
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, "peer:"+n2.key.HashBase58())
+	errS2 := x1.Send(ctx, eo2, "peer:"+n2.key.GetPublicKey().HashBase58())
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
