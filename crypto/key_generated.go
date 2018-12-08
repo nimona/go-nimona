@@ -105,10 +105,6 @@ func (s *Key) FromMap(m map[string]interface{}) error {
 	if v, ok := m["d:d"].([]byte); ok {
 		s.D = v
 	}
-	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@:o"].(*encoding.Object); ok {
-		s.RawObject = v
-	}
 	return nil
 }
 

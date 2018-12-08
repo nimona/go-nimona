@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/pkg/errors"
-	"nimona.io/go/encoding"
 )
 
 // Supported values for KeyType
@@ -45,7 +44,7 @@ type Key struct {
 	Y                      []byte `json:"y,omitempty"`
 	D                      []byte `json:"d,omitempty"`
 
-	RawObject *encoding.Object `json:"@"`
+	// RawObject *encoding.Object `json:"@"`
 }
 
 // Hash of the key

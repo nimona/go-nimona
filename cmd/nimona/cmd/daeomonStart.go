@@ -111,7 +111,8 @@ var daemonStartCmd = &cobra.Command{
 		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
 		cmd.Println("Started daemon")
-		cmd.Println("* Peer key:\n  *", k.GetPublicKey().HashBase58())
+		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
+		cmd.Println("* Peer public key hash:\n  *", k.GetPublicKey().HashBase58())
 		peerAddresses := n.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")
 		if len(peerAddresses) > 0 {
