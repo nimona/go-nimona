@@ -67,7 +67,7 @@ func (r *resolver) Resolve(key string, opts ...ResolverOption) (*peers.PeerInfo,
 	if !cfg.Local {
 		r.providersLock.RLock()
 		for _, p := range r.providers {
-			if res, err := p.Resolve(key); err == nil {
+			if res, err := p.Resolve(key); err == nil && res != nil {
 				r.providersLock.RUnlock()
 				return res, nil
 			}
@@ -76,10 +76,10 @@ func (r *resolver) Resolve(key string, opts ...ResolverOption) (*peers.PeerInfo,
 	}
 	r.cacheLock.RLock()
 	defer r.cacheLock.RUnlock()
-	if res, ok := r.cacheTemp[key]; ok {
+	if res, ok := r.cacheTemp[key]; ok && res != nil {
 		return res, nil
 	}
-	if res, ok := r.cachePersistent[key]; ok {
+	if res, ok := r.cachePersistent[key]; ok && res != nil {
 		return res, nil
 	}
 	return nil, errors.New("could not resolve")

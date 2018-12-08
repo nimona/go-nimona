@@ -3,6 +3,7 @@ package dht
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -75,9 +76,9 @@ func (q *query) Run(ctx context.Context) {
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
-			// case <-time.After(maxQueryTime):
-			// 	close(q.outgoingPayloads)
-			// 	return
+			case <-time.After(maxQueryTime):
+				close(q.outgoingPayloads)
+				return
 
 			case <-ctx.Done():
 				close(q.outgoingPayloads)
@@ -161,7 +162,7 @@ func (q *query) next() {
 	for _, peer := range peersToAsk {
 		addr := "peer:" + peer.HashBase58()
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Debug("query next could not send", zap.Error(err), zap.String("peerID", peer.HashBase58()))
+			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.HashBase58()))
 		}
 	}
 }

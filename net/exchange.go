@@ -402,15 +402,27 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 		return nil
 	}
 
+	// TODO(geoah) Why is this only handling peers?
+
 	// if recipient is a peer, we might have some relay addresses
 	if !strings.HasPrefix(address, "peer:") {
 		return ErrAllAddressesFailed
 	}
 
 	recipient := strings.Replace(address, "peer:", "", 1)
+	if recipient == w.key.GetPublicKey().HashBase58() {
+		// TODO(geoah) error or nil?
+		return errors.New("cannot send obj to self")
+	}
+
 	peer, err := w.net.Resolver().Resolve(recipient)
 	if err != nil {
 		return err
+	}
+
+	fmt.Println("________________", recipient, peer)
+	if peer == nil {
+		w.logger.Warn("wtf")
 	}
 
 	// TODO(geoah) make sure fw block is signed

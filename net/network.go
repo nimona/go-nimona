@@ -65,8 +65,11 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		logger.Debug("dialing peer", zap.String("peer", address))
 		peerID := strings.Replace(address, "peer:", "", 1)
+		if peerID == n.key.GetPublicKey().HashBase58() {
+			return nil, errors.New("cannot dial our own peer")
+		}
+		logger.Debug("dialing peer", zap.String("peer", address))
 		peerInfo, err := n.Resolver().Resolve(peerID)
 		if err != nil {
 			return nil, err

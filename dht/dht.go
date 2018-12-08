@@ -3,7 +3,6 @@ package dht
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -181,8 +180,6 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		// TODO handle and log error
 	}
 
-	fmt.Println(">>>>>>>>>>>>> ", payload.PeerID, peerInfo)
-
 	closestPeerInfos, err := r.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	if err != nil {
 		logger.Debug("could not get providers from local store", zap.Error(err))
@@ -346,6 +343,7 @@ func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
 
 // Resolve returns a peer's info from their id
 func (r *DHT) Resolve(key string) (*peers.PeerInfo, error) {
+	log.DefaultLogger.Warn("=========== trying to resolve key " + key)
 	ctx := context.Background()
 	return r.GetPeerInfo(ctx, key)
 }
