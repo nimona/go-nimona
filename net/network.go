@@ -3,6 +3,8 @@ package net
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -89,10 +91,13 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		return nil, ErrAllAddressesFailed
 
 	case "tcp":
+		config := tls.Config{
+			InsecureSkipVerify: true,
+		}
 		addr := strings.Replace(address, "tcp:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
-		tcpConn, err := dialer.DialContext(ctx, "tcp", addr)
+		tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
 		if err != nil {
 			return nil, err
 		}
@@ -162,10 +167,23 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 // TODO do we need to return a listener?
 func (n *network) Listen(ctx context.Context, address string) (chan *Connection, error) {
 	logger := log.Logger(ctx).Named("network")
-	tcpListener, err := net.Listen("tcp", address)
+	cert, err := crypto.GenerateCertificate(n.key)
 	if err != nil {
 		return nil, err
 	}
+
+	now := time.Now()
+	config := tls.Config{
+		Certificates: []tls.Certificate{*cert},
+	}
+	config.NextProtos = []string{"nimona/1"} // TODO(geoah) is this of any actual use?
+	config.Time = func() time.Time { return now }
+	config.Rand = rand.Reader
+	tcpListener, err := tls.Listen("tcp", address, &config)
+	if err != nil {
+		return nil, err
+	}
+
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 	logger.Info("Listening and service nimona", zap.Int("port", port))
 	addresses := GetAddresses(tcpListener)
