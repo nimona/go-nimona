@@ -133,6 +133,13 @@ var daemonStartCmd = &cobra.Command{
 func init() {
 	daemon.AddCommand(daemonStartCmd)
 
+	daemonStartCmd.PersistentFlags().StringVar(
+		&daemonConfigPath,
+		"config-path",
+		"",
+		"daemon config path",
+	)
+
 	daemonStartCmd.PersistentFlags().IntVar(
 		&daemonPort,
 		"port",
