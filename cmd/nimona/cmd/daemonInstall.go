@@ -10,6 +10,7 @@ import (
 
 var (
 	platform       string
+	dockerTag      string
 	hostname       string
 	token          string
 	sshFingerprint string
@@ -37,7 +38,7 @@ var daemonInstallCmd = &cobra.Command{
 
 			cmd.Printf("Starting server: %s\n", hostname)
 
-			ip, err := dop.NewInstance(hostname, sshFingerprint, size, region)
+			ip, err := dop.NewInstance(dockerTag, hostname, sshFingerprint, size, region)
 			if err != nil {
 				return err
 			}
@@ -72,7 +73,7 @@ func init() {
 	daemonInstallCmd.PersistentFlags().StringVar(
 		&platform,
 		"platform",
-		"",
+		"do",
 		"target platform",
 	)
 	daemonInstallCmd.PersistentFlags().StringVar(
@@ -80,6 +81,12 @@ func init() {
 		"hostname",
 		"",
 		"peer hostname",
+	)
+	daemonInstallCmd.PersistentFlags().StringVar(
+		&dockerTag,
+		"docker-tag",
+		"",
+		"docker tag",
 	)
 	daemonInstallCmd.PersistentFlags().StringVar(
 		&token,

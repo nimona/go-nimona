@@ -4,10 +4,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
+	"nimona.io/go/encoding"
 	nnet "nimona.io/go/net"
-	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 	"nimona.io/go/storage"
 )
 
@@ -15,27 +15,39 @@ import (
 
 // API for HTTP
 type API struct {
-	router      *gin.Engine
-	addressBook *peers.AddressBook
-	dht         *dht.DHT
-	blockStore  storage.Storage
-	exchange    nnet.Exchange
-	localKey    string
+	router     *gin.Engine
+	key        *crypto.Key
+	net        nnet.Network
+	exchange   nnet.Exchange
+	dht        *dht.DHT
+	blockStore storage.Storage
+	localKey   string
+
+	version   string
+	commit    string
+	buildDate string
 }
 
 // New HTTP API
-func New(addressBook *peers.AddressBook, dht *dht.DHT, exchange nnet.Exchange, bls storage.Storage) *API {
+func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
+	bls storage.Storage, version, commit, buildDate string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	api := &API{
-		router:      router,
-		addressBook: addressBook,
-		dht:         dht,
-		blockStore:  bls,
-		exchange:    exchange,
-		localKey:    addressBook.GetLocalPeerInfo().Thumbprint(),
+		router:     router,
+		key:        k,
+		net:        n,
+		exchange:   x,
+		dht:        dht,
+		blockStore: bls,
+		version:    version,
+		commit:     commit,
+		buildDate:  buildDate,
 	}
+
+	router.Group("/api/v1/")
+	router.GET("/version", api.HandleVersion)
 
 	local := router.Group("/api/v1/local")
 	local.GET("/", api.HandleGetLocal)
@@ -65,28 +77,31 @@ func (api *API) Serve(address string) error {
 	return api.router.Run(address)
 }
 
-func (api *API) mapBlock(v *primitives.Block) map[string]interface{} {
-	m := map[string]interface{}{
-		"type":        v.Type,
-		"payload":     v.Payload,
-		"annotations": v.Annotations,
-	}
-	if s := v.Signature; s != nil {
-		m["signature"] = v.Signature.Block()
-		m["owner"] = v.Signature.Key.Thumbprint()
-		if v.Signature.Key.Thumbprint() == api.localKey {
-			m["direction"] = "outgoing"
+func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
+	m := o.ToMap()
+
+	m["_hash"] = o.HashBase58()
+
+	if signer := o.GetSignerKey(); signer != nil {
+		if api.localKey == signer.HashBase58() {
+			m["_direction"] = "outgoing"
 		} else {
-			m["direction"] = "incoming"
+			m["_direction"] = "incoming"
 		}
 	}
+
 	recipients := []string{}
-	if v.Annotations != nil {
-		for _, policy := range v.Annotations.Policies {
-			recipients = append(recipients, policy.Subjects...)
-		}
+	if op := o.GetPolicy(); op != nil {
+		p := &encoding.Policy{}
+		p.FromObject(op)
+		recipients = append(recipients, p.Subjects...)
 	}
-	m["id"] = primitives.ID(v)
-	m["recipients"] = recipients
-	return m
+	m["_recipients"] = recipients
+
+	um, err := encoding.UntypeMap(m)
+	if err != nil {
+		panic(err)
+	}
+
+	return um
 }

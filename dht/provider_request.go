@@ -1,29 +1,19 @@
 package dht
 
 import (
-	"github.com/mitchellh/mapstructure"
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 )
+
+//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/provider.request -type ProviderRequest -out provider_request_generated.go
 
 // ProviderRequest payload
 type ProviderRequest struct {
-	RequestID string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
-	Key       string                `json:"key" mapstructure:"key"`
-	Signature *primitives.Signature `json:"signature" mapstructure:"-"`
-}
+	RequestID string `json:"requestID,omitempty"`
+	Key       string `json:"key"`
 
-func (r *ProviderRequest) Block() *primitives.Block {
-	return &primitives.Block{
-		Type: "nimona.io/dht.provider.request",
-		Payload: map[string]interface{}{
-			"requestID": r.RequestID,
-			"key":       r.Key,
-		},
-		Signature: r.Signature,
-	}
-}
-
-func (r *ProviderRequest) FromBlock(block *primitives.Block) {
-	mapstructure.Decode(block.Payload, r)
-	r.Signature = block.Signature
+	RawObject *encoding.Object  `json:"@"`
+	Signer    *crypto.Key       `json:"@signer"`
+	Authority *crypto.Key       `json:"@authority"`
+	Signature *crypto.Signature `json:"@signature"`
 }

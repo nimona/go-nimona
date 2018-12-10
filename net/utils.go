@@ -42,6 +42,9 @@ func GetAddresses(l net.Listener) []string {
 	port := l.Addr().(*net.TCPAddr).Port
 	// TODO log errors
 	network := strings.ToLower(l.Addr().Network())
+	if network == "tcp" {
+		network = "tcps"
+	}
 	addrs, _ := GetLocalPeerAddresses(port)
 	for i, addr := range addrs {
 		addrs[i] = fmt.Sprintf("%s:%s", network, addr)

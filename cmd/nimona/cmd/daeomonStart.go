@@ -2,18 +2,18 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"nimona.io/go/api"
+	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
 	"nimona.io/go/net"
-	"nimona.io/go/peers"
 	"nimona.io/go/storage"
 	"nimona.io/go/telemetry"
 )
@@ -26,21 +26,21 @@ var (
 	daemonEnableMetrics  bool
 
 	bootstrapAddresses = []string{
-		"tcp:andromeda.nimona.io:21013",
-		// "tcp:borealis.nimona.io:21013",
-		// "tcp:cassiopeia.nimona.io:21013",
-		// "tcp:draco.nimona.io:21013",
-		// "tcp:eridanus.nimona.io:21013",
-		// "tcp:fornax.nimona.io:21013",
-		// "tcp:gemini.nimona.io:21013",
-		// "tcp:hydra.nimona.io:21013",
-		// "tcp:indus.nimona.io:21013",
-		// "tcp:lacerta.nimona.io:21013",
-		// "tcp:mensa.nimona.io:21013",
-		// "tcp:norma.nimona.io:21013",
-		// "tcp:orion.nimona.io:21013",
-		// "tcp:pyxis.nimona.io:21013",
-		// "tcp:stats.nimona.io:21013",
+		// "tcps:andromeda.nimona.io:21013",
+		// "tcps:borealis.nimona.io:21013",
+		"tcps:cassiopeia.nimona.io:21013",
+		// "tcps:draco.nimona.io:21013",
+		// "tcps:eridanus.nimona.io:21013",
+		// "tcps:fornax.nimona.io:21013",
+		// "tcps:gemini.nimona.io:21013",
+		// "tcps:hydra.nimona.io:21013",
+		// "tcps:indus.nimona.io:21013",
+		// "tcps:lacerta.nimona.io:21013",
+		// "tcps:mensa.nimona.io:21013",
+		// "tcps:norma.nimona.io:21013",
+		// "tcps:orion.nimona.io:21013",
+		// "tcps:pyxis.nimona.io:21013",
+		// "tcps:stats.nimona.io:21013",
 	}
 )
 
@@ -59,47 +59,86 @@ var daemonStartCmd = &cobra.Command{
 			return errors.Wrap(err, "could not create config dir")
 		}
 
-		addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// if err != nil {
+		// 	return errors.Wrap(err, "could not load key")
+		// }
+
+		k, err := crypto.LoadKey(filepath.Join(daemonConfigPath, "key.cbor"))
 		if err != nil {
-			return errors.Wrap(err, "could not load key")
+			return errors.Wrap(err, "could not load or create peer key")
 		}
 
-		addressBook.LocalHostname = announceHostname
-
-		if daemonEnableRelaying {
-			addressBook.AddLocalPeerRelay(bootstrapAddresses...)
+		if len(bootstrapAddresses) > 0 {
+			cmd.Println("Adding bootstrap nodes")
+			for _, v := range bootstrapAddresses {
+				cmd.Println("  *", v)
+			}
+		} else {
+			cmd.Println("No bootstrap nodes provided")
 		}
+
+		n, err := net.NewNetwork(k, announceHostname)
+		if err != nil {
+			return err
+		}
+
+		// TODO(geoah) add relaying
+		// if daemonEnableRelaying {
+		// 	if len(bootstrapAddresses) > 0 {
+		// 		cmd.Println("Relaying enabled, using bootstrap nodes")
+		// 		if err := addressBook.AddLocalPeerRelay(bootstrapAddresses...); err != nil {
+		// 			// TODO handle error
+		// 		}
+		// 	} else {
+		// 		cmd.Println("Relaying not enabled, no bootstrap nodes provided")
+		// 	}
+		// } else {
+		// 	cmd.Println("Relaying not enabled")
+		// }
 
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
-		n, _ := net.NewExchange(addressBook, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
-		dht, _ := dht.NewDHT(n, addressBook, bootstrapAddresses)
-		telemetry.NewTelemetry(n, addressBook.GetLocalPeerKey(), "tcp:stats.nimona.io:21013")
+		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
+		dht, _ := dht.NewDHT(k, n, x, bootstrapAddresses)
+		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
-		n.RegisterDiscoverer(dht)
+		if err := n.Resolver().AddProvider(dht); err != nil {
+			return err
+		}
 
-		peerAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
+		netAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
 		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
-		log.Println("Started daemon.")
-		log.Println("* Peer key:", addressBook.GetLocalPeerInfo().Thumbprint())
-		peerAddresses := addressBook.GetLocalPeerAddresses()
+		cmd.Println("Started daemon")
+		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
+		cmd.Println("* Peer public key hash:\n  *", k.GetPublicKey().HashBase58())
+		peerAddresses := n.GetPeerInfo().Addresses
+		cmd.Println("* Peer addresses:")
 		if len(peerAddresses) > 0 {
-			log.Println("* Peer addresses:")
-			for _, addr := range addressBook.GetLocalPeerAddresses() {
-				log.Println("  *", addr)
+			for _, addr := range peerAddresses {
+				cmd.Println("  *", addr)
 			}
+		} else {
+			cmd.Println("  * No addresses available")
 		}
-		log.Println("* HTTP API address:", apiAddress)
+		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		api := api.New(addressBook, dht, n, dpr)
-		err = api.Serve(peerAddress)
+		api := api.New(k, n, x, dht, dpr, Version, Commit, Date)
+		err = api.Serve(netAddress)
 		return errors.Wrap(err, "http server stopped")
 	},
 }
 
 func init() {
 	daemon.AddCommand(daemonStartCmd)
+
+	daemonStartCmd.PersistentFlags().StringVar(
+		&daemonConfigPath,
+		"config-path",
+		"",
+		"daemon config path",
+	)
 
 	daemonStartCmd.PersistentFlags().IntVar(
 		&daemonPort,

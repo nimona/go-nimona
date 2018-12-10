@@ -3,12 +3,14 @@ package dht
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 )
 
 const numPeersNear int = 15
@@ -38,7 +40,7 @@ func (q *query) Run(ctx context.Context) {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
-			if peerInfo, err := q.dht.addressBook.GetPeerInfo(q.key); err == nil {
+			if peerInfo, err := q.dht.peerStore.Get(q.key); err == nil {
 				if peerInfo == nil {
 					q.logger.Warn("got nil peerInfo", zap.String("requestID", q.key))
 					break
@@ -74,9 +76,9 @@ func (q *query) Run(ctx context.Context) {
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
 				}
 
-			// case <-time.After(maxQueryTime):
-			// 	close(q.outgoingPayloads)
-			// 	return
+			case <-time.After(maxQueryTime):
+				close(q.outgoingPayloads)
+				return
 
 			case <-ctx.Done():
 				close(q.outgoingPayloads)
@@ -103,7 +105,7 @@ func (q *query) nextIfCloser(newPeerID string) {
 		if len(closestPeers) == 0 {
 			return
 		}
-		closestPeerID := closestPeers[0].Thumbprint()
+		closestPeerID := closestPeers[0].HashBase58()
 		if comparePeers(q.closestPeerID, closestPeerID, q.key) == closestPeerID {
 			q.closestPeerID = closestPeerID
 			q.next()
@@ -119,41 +121,48 @@ func (q *query) next() {
 		return
 	}
 
-	peersToAsk := []*primitives.Key{}
+	peersToAsk := []*crypto.Key{}
 	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
-		if _, ok := q.contactedPeers.Load(peerInfo.Thumbprint()); ok {
+		if _, ok := q.contactedPeers.Load(peerInfo.HashBase58()); ok {
 			continue
 		}
-		peersToAsk = append(peersToAsk, peerInfo.Signature.Key)
-		q.contactedPeers.Store(peerInfo.Thumbprint(), true)
+		peersToAsk = append(peersToAsk, peerInfo.SignerKey)
+		q.contactedPeers.Store(peerInfo.HashBase58(), true)
 	}
 
-	block := &primitives.Block{}
+	signer := q.dht.key
+
+	var o *encoding.Object
 	switch q.queryType {
 	case PeerInfoQuery:
 		req := &PeerInfoRequest{
 			RequestID: q.id,
 			PeerID:    q.key,
 		}
-		block = req.Block()
+		o = req.ToObject()
+		err = crypto.Sign(o, signer)
 	case ProviderQuery:
 		req := &ProviderRequest{
 			RequestID: q.id,
 			Key:       q.key,
 		}
-		block = req.Block()
+		o = req.ToObject()
+		err = crypto.Sign(o, signer)
 	default:
+		return
+	}
+
+	if err != nil {
 		return
 	}
 
 	ctx := context.Background()
 	logger := log.Logger(ctx)
-	signer := q.dht.addressBook.GetLocalPeerKey()
 	for _, peer := range peersToAsk {
-		addr := "peer:" + peer.Thumbprint()
-		if err := q.dht.exchange.Send(ctx, block, addr, primitives.SignWith(signer)); err != nil {
-			logger.Debug("query next could not send", zap.Error(err), zap.String("peerID", peer.Thumbprint()))
+		addr := "peer:" + peer.HashBase58()
+		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
+			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.HashBase58()))
 		}
 	}
 }

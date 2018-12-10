@@ -27,6 +27,10 @@
 
 [[constraint]]
   branch = "master"
+  name = "github.com/magefile/mage"
+
+[[constraint]]
+  branch = "master"
   name = "github.com/emersion/go-upnp-igd"
 
 [[constraint]]

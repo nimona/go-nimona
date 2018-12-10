@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	version = "dev"
-	commit  = "unknown"
-	date    = "unknown"
+	Version = "dev"
+	Commit  = "unknown"
+	Date    = "unknown"
 
 	env              string
 	cfgFile          string

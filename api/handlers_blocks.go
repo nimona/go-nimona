@@ -6,16 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/storage"
 )
-
-type BlockRequest struct {
-	Type        string                 `json:"type,omitempty"`
-	Annotations map[string]interface{} `json:"annotations,omitempty"`
-	Payload     map[string]interface{} `json:"payload,omitempty"`
-	Recipients  []string               `json:"recipients"`
-}
 
 func (api *API) HandleGetBlocks(c *gin.Context) {
 	blockIDs, err := api.blockStore.List()
@@ -30,7 +24,7 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 			c.AbortWithError(500, err)
 			return
 		}
-		m, err := primitives.Unmarshal(b)
+		m, err := encoding.Unmarshal(b)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -54,7 +48,7 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	m, err := primitives.Unmarshal(b)
+	m, err := encoding.Unmarshal(b)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
@@ -64,41 +58,39 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 }
 
 func (api *API) HandlePostBlock(c *gin.Context) {
-	req := &BlockRequest{}
+	req := map[string]interface{}{}
 	if err := c.BindJSON(req); err != nil {
 		c.AbortWithError(400, err)
 		return
 	}
 
-	if len(req.Recipients) == 0 {
+	o := encoding.NewObjectFromMap(req)
+	op := o.GetPolicy()
+	if op == nil {
+		c.AbortWithError(400, errors.New("missing policy"))
+		return
+	}
+
+	p := &encoding.Policy{}
+	if err := p.FromObject(op); err != nil {
+		c.AbortWithError(400, errors.New("invalid policy"))
+		return
+	}
+
+	if len(p.Subjects) == 0 {
 		c.AbortWithError(400, errors.New("missing recipients"))
 		return
 	}
 
-	block := &primitives.Block{
-		Type: req.Type,
-		Annotations: &primitives.Annotations{
-			Policies: []primitives.Policy{
-				primitives.Policy{
-					Subjects: req.Recipients,
-					Actions:  []string{"read"},
-					Effect:   "allow",
-				},
-			},
-		},
-		Payload: req.Payload,
-	}
-
-	signer := api.addressBook.GetLocalPeerKey()
-	if err := primitives.Sign(block, signer); err != nil {
-		c.AbortWithError(500, err)
+	if err := crypto.Sign(o, api.key); err != nil {
+		c.AbortWithError(500, errors.New("could not sign object"))
 		return
 	}
 
 	ctx := context.Background()
-	for _, recipient := range req.Recipients {
+	for _, recipient := range p.Subjects {
 		addr := "peer:" + recipient
-		if err := api.exchange.Send(ctx, block, addr); err != nil {
+		if err := api.exchange.Send(ctx, o, addr); err != nil {
 			c.AbortWithError(500, err)
 			return
 		}

@@ -9,10 +9,11 @@ import (
 
 	"go.uber.org/zap"
 
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
 	"nimona.io/go/net"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 )
 
 var (
@@ -20,69 +21,88 @@ var (
 )
 
 const (
-	exchangeExtention    = "dht"
 	closestPeersToReturn = 8
 	maxQueryTime         = 2 * time.Second
+)
+
+var (
+	typePeerInfoRequest  = PeerInfoRequest{}.GetType()
+	typePeerInfoResponse = PeerInfoResponse{}.GetType()
+	typeProviderRequest  = ProviderRequest{}.GetType()
+	typeProviderResponse = ProviderResponse{}.GetType()
+	typePeerInfo         = peers.PeerInfo{}.GetType()
 )
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
 	peerID         string
 	store          *Store
+	peerStore      *peers.PeerInfoCollection
+	net            net.Network
 	exchange       net.Exchange
-	addressBook    *peers.AddressBook
 	queries        sync.Map
+	key            *crypto.Key
 	refreshBuckets bool
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
-func NewDHT(exchange net.Exchange, pm *peers.AddressBook, addresses []string) (*DHT, error) {
-	// create new kv store
+func NewDHT(key *crypto.Key, network net.Network, exchange net.Exchange,
+	bootstrapAddresses []string) (*DHT, error) {
+
+	// create new kv store for storing providers
 	store, _ := newStore()
 
 	// Create DHT node
-	nd := &DHT{
-		store:       store,
-		exchange:    exchange,
-		addressBook: pm,
-		queries:     sync.Map{},
+	r := &DHT{
+		net:       network,
+		store:     store,
+		exchange:  exchange,
+		queries:   sync.Map{},
+		key:       key,
+		peerStore: &peers.PeerInfoCollection{},
 	}
 
-	exchange.Handle("nimona.io/dht.**", nd.handleBlock)
-	exchange.Handle("nimona.io/peer.info", nd.handleBlock)
+	exchange.Handle("nimona.io/dht/**", r.handleBlock)
+	exchange.Handle("/peer", r.handleBlock)
 
-	lk := pm.GetLocalPeerKey()
-	for _, addr := range addresses {
+	// connect to the bootstrap addresses to get their peer infos
+	for _, addr := range bootstrapAddresses {
 		ctx := context.Background()
 		req := &PeerInfoRequest{
 			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    lk.Thumbprint(),
+			PeerID:    key.GetPublicKey().HashBase58(),
 		}
-		reqBlock := req.Block()
-		if err := exchange.Send(ctx, reqBlock, addr, primitives.SignWith(lk)); err != nil {
+		so := req.ToObject()
+		if err := crypto.Sign(so, key); err != nil {
+			// TODO log error
+			continue
+		}
+		if err := exchange.Send(ctx, so, addr); err != nil {
 			log.Logger(ctx).Warn("could not send to bootstrap", zap.String("addr", addr), zap.Error(err))
 		}
 	}
 
-	go nd.refresh()
+	// start refresh process
+	// TODO(geoah) enable or replace
+	// go r.refresh()
 
-	return nd, nil
+	return r, nil
 }
 
-func (nd *DHT) refresh() {
+func (r *DHT) refresh() {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	// TODO this will be replaced when we introduce bucketing
 	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
 	for {
-		peerInfo := nd.addressBook.GetLocalPeerInfo()
+		peerInfo := r.net.GetPeerInfo()
 		if len(peerInfo.Addresses) == 0 {
 			time.Sleep(time.Second * 10)
 			continue
 		}
 
-		closestPeers, err := nd.FindPeersClosestTo(peerInfo.Thumbprint(), closestPeersToReturn)
+		closestPeers, err := r.FindPeersClosestTo(peerInfo.HashBase58(), closestPeersToReturn)
 		if err != nil {
 			logger.Warn("refresh could not get peers ids", zap.Error(err))
 			time.Sleep(time.Second * 10)
@@ -91,63 +111,76 @@ func (nd *DHT) refresh() {
 
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
-			if err := nd.exchange.Send(ctx, peerInfo.Block(), closestPeer.Address()); err != nil {
-				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
+			if err := r.exchange.Send(ctx, peerInfo.ToObject(), closestPeer.Address()); err != nil {
+				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.HashBase58()))
 			}
 		}
 
 		// HACK lookup our own peer info just so we can populate our peer table
-		nd.GetPeerInfo(ctx, peerInfo.Thumbprint())
+		r.GetPeerInfo(ctx, peerInfo.HashBase58())
 
 		// sleep for a bit
 		time.Sleep(time.Second * 30)
 	}
 }
 
-func (nd *DHT) handleBlock(block *primitives.Block) error {
-	switch block.Type {
-	case "nimona.io/dht.peer-info.request":
+func (r *DHT) handleBlock(o *encoding.Object) error {
+	switch o.GetType() {
+	case typePeerInfoRequest:
 		v := &PeerInfoRequest{}
-		v.FromBlock(block)
-		nd.handlePeerInfoRequest(v)
-	case "nimona.io/dht.peer-info.response":
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		r.handlePeerInfoRequest(v)
+	case typePeerInfoResponse:
 		v := &PeerInfoResponse{}
-		v.FromBlock(block)
-		nd.handlePeerInfoResponse(v)
-	case "nimona.io/dht.provider.request":
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		r.handlePeerInfoResponse(v)
+	case typeProviderRequest:
 		v := &ProviderRequest{}
-		v.FromBlock(block)
-		nd.handleProviderRequest(v)
-	case "nimona.io/dht.":
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		r.handleProviderRequest(v)
+	case typeProviderResponse:
 		v := &ProviderResponse{}
-		v.FromBlock(block)
-		nd.handleProviderResponse(v)
-	case "nimona.io/peer.info":
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		r.handleProviderResponse(v)
+	case typePeerInfo:
 		v := &peers.PeerInfo{}
-		v.FromBlock(block)
-		nd.handlePeerInfo(v)
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		r.handlePeerInfo(v)
 	default:
 		return nil
 	}
 	return nil
 }
 
-func (nd *DHT) handlePeerInfo(payload *peers.PeerInfo) {
-	if err := nd.addressBook.PutPeerInfo(payload); err != nil {
+func (r *DHT) handlePeerInfo(payload *peers.PeerInfo) {
+	if err := r.peerStore.Put(payload); err != nil {
 		log.Logger(context.Background()).Error("could not handle peer info", zap.Error(err))
 	}
 }
 
-func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
+func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
-	peerInfo, err := nd.addressBook.GetPeerInfo(payload.PeerID)
-	if err != nil {
+	peerInfo, _ := r.peerStore.Get(payload.PeerID)
+	// TODO handle and log error
+
+	if peerInfo == nil {
+		peerInfo, _ = r.net.Resolver().Resolve(payload.PeerID, net.Local())
 		// TODO handle and log error
 	}
 
-	closestPeerInfos, err := nd.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
+	closestPeerInfos, err := r.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
 	if err != nil {
 		logger.Debug("could not get providers from local store", zap.Error(err))
 		// TODO handle and log error
@@ -159,25 +192,29 @@ func (nd *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetLocalPeerKey()
-	addr := "peer:" + payload.Signature.Key.Thumbprint()
-	if err := nd.exchange.Send(ctx, resp.Block(), addr, primitives.SignWith(signer)); err != nil {
+	so := resp.ToObject()
+	if err := crypto.Sign(so, r.key); err != nil {
+		// TODO log error
+		return
+	}
+	addr := "peer:" + payload.Signer.HashBase58()
+	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
 }
 
-func (nd *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
+func (r *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	for _, pi := range payload.ClosestPeers {
-		if err := nd.addressBook.PutPeerInfo(pi); err != nil {
+		if err := r.peerStore.Put(pi); err != nil {
 			logger.Error("could not handle closest peer from peerinfo response", zap.Error(err))
 		}
 	}
 
 	if payload.PeerInfo != nil {
-		if err := nd.addressBook.PutPeerInfo(payload.PeerInfo); err != nil {
+		if err := r.peerStore.Put(payload.PeerInfo); err != nil {
 			logger.Error("could not handle peer info from peerinfo response", zap.Error(err))
 		}
 	}
@@ -187,7 +224,7 @@ func (nd *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 		return
 	}
 
-	q, exists := nd.queries.Load(rID)
+	q, exists := r.queries.Load(rID)
 	if !exists {
 		return
 	}
@@ -195,17 +232,17 @@ func (nd *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 	q.(*query).incomingPayloads <- payload.PeerInfo
 }
 
-func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
+func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
-	providers, err := nd.store.GetProviders(payload.Key)
+	providers, err := r.store.GetProviders(payload.Key)
 	if err != nil {
 		logger.Debug("could not get providers from local store", zap.Error(err))
 		// TODO handle and log error
 	}
 
-	closestPeerInfos, err := nd.FindPeersClosestTo(payload.Key, closestPeersToReturn)
+	closestPeerInfos, err := r.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	if err != nil {
 		logger.Debug("could not get providers from local store", zap.Error(err))
 		// TODO handle and log error
@@ -217,20 +254,24 @@ func (nd *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	signer := nd.addressBook.GetLocalPeerKey()
-	addr := "peer:" + payload.Signature.Key.Thumbprint()
-	if err := nd.exchange.Send(ctx, resp.Block(), addr, primitives.SignWith(signer)); err != nil {
+	addr := "peer:" + payload.Signer.HashBase58()
+	so := resp.ToObject()
+	if err := crypto.Sign(so, r.key); err != nil {
+		// TODO log error
+		return
+	}
+	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
 		return
 	}
 }
 
-func (nd *DHT) handleProviderResponse(payload *ProviderResponse) {
+func (r *DHT) handleProviderResponse(payload *ProviderResponse) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
 	for _, provider := range payload.Providers {
-		if err := nd.store.PutProvider(provider); err != nil {
+		if err := r.store.PutProvider(provider); err != nil {
 			logger.Debug("could not store provider", zap.Error(err))
 			// TODO handle error
 		}
@@ -241,7 +282,7 @@ func (nd *DHT) handleProviderResponse(payload *ProviderResponse) {
 		return
 	}
 
-	q, exists := nd.queries.Load(rID)
+	q, exists := r.queries.Load(rID)
 	if !exists {
 		return
 	}
@@ -250,17 +291,17 @@ func (nd *DHT) handleProviderResponse(payload *ProviderResponse) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
+func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
 	// place to hold the results
 	rks := []*peers.PeerInfo{}
 
 	htk := hash(tk)
 
-	peerInfos, _ := nd.addressBook.GetAllPeerInfo()
+	peerInfos, _ := r.peerStore.All()
 	// slice to hold the distances
 	dists := []distEntry{}
 	for _, peerInfo := range peerInfos {
-		peerInfoThumbprint := peerInfo.Thumbprint()
+		peerInfoThumbprint := peerInfo.HashBase58()
 		// calculate distance
 		de := distEntry{
 			key:      peerInfoThumbprint,
@@ -300,10 +341,17 @@ func (nd *DHT) FindPeersClosestTo(tk string, n int) ([]*peers.PeerInfo, error) {
 	return rks, nil
 }
 
+// Resolve returns a peer's info from their id
+func (r *DHT) Resolve(key string) (*peers.PeerInfo, error) {
+	log.DefaultLogger.Warn("=========== trying to resolve key " + key)
+	ctx := context.Background()
+	return r.GetPeerInfo(ctx, key)
+}
+
 // GetPeerInfo returns a peer's info from their id
-func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, error) {
+func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, error) {
 	q := &query{
-		dht:              nd,
+		dht:              r,
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              id,
 		queryType:        PeerInfoQuery,
@@ -311,7 +359,7 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 		outgoingPayloads: make(chan interface{}, 10),
 	}
 
-	nd.queries.Store(q.id, q)
+	r.queries.Store(q.id, q)
 
 	ctx, cf := context.WithTimeout(ctx, maxQueryTime)
 	defer cf()
@@ -333,25 +381,23 @@ func (nd *DHT) GetPeerInfo(ctx context.Context, id string) (*peers.PeerInfo, err
 
 // PutProviders adds a key of something we provide
 // TODO Find a better name for this
-func (nd *DHT) PutProviders(ctx context.Context, key string) error {
+func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	logger := log.Logger(ctx)
 	provider := &Provider{
 		BlockIDs: []string{key},
 	}
-	signer := nd.addressBook.GetLocalPeerKey()
-	providerBlock := provider.Block()
-	if err := primitives.Sign(providerBlock, signer); err != nil {
+	so := provider.ToObject()
+	if err := crypto.Sign(so, r.key); err != nil {
 		return err
 	}
-	provider.Signature = providerBlock.Signature
-	if err := nd.store.PutProvider(provider); err != nil {
+	if err := r.store.PutProvider(provider); err != nil {
 		return err
 	}
 
-	closestPeers, _ := nd.FindPeersClosestTo(key, closestPeersToReturn)
+	closestPeers, _ := r.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
-		if err := nd.exchange.Send(ctx, provider.Block(), closestPeer.Address(), primitives.SignWith(signer)); err != nil {
-			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Thumbprint()))
+		if err := r.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
+			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.HashBase58()))
 		}
 	}
 
@@ -359,9 +405,9 @@ func (nd *DHT) PutProviders(ctx context.Context, key string) error {
 }
 
 // GetProviders will look for peers that provide a key
-func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *primitives.Key, error) {
+func (r *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Key, error) {
 	q := &query{
-		dht:              nd,
+		dht:              r,
 		id:               net.RandStringBytesMaskImprSrc(8),
 		key:              key,
 		queryType:        ProviderQuery,
@@ -369,12 +415,12 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *primitives.K
 		outgoingPayloads: make(chan interface{}, 10),
 	}
 
-	nd.queries.Store(q.id, q)
+	r.queries.Store(q.id, q)
 
 	go q.Run(ctx)
 
-	out := make(chan *primitives.Key, 1)
-	go func(q *query, out chan *primitives.Key) {
+	out := make(chan *crypto.Key, 1)
+	go func(q *query, out chan *crypto.Key) {
 		defer close(out)
 		for {
 			select {
@@ -382,8 +428,7 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *primitives.K
 				switch v := payload.(type) {
 				case *Provider:
 					// TODO do we need to check payload and id?
-					// TODO Provider is not signed -- we don't seem to be storing the signature
-					out <- v.Signature.Key
+					out <- v.Signer
 				}
 			case <-time.After(maxQueryTime):
 				return
@@ -396,9 +441,9 @@ func (nd *DHT) GetProviders(ctx context.Context, key string) (chan *primitives.K
 	return out, nil
 }
 
-func (nd *DHT) GetAllProviders() (map[string][]string, error) {
+func (r *DHT) GetAllProviders() (map[string][]string, error) {
 	allProviders := map[string][]string{}
-	providers, err := nd.store.GetAllProviders()
+	providers, err := r.store.GetAllProviders()
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +456,7 @@ func (nd *DHT) GetAllProviders() (map[string][]string, error) {
 			if provider.Signature == nil {
 				continue
 			}
-			allProviders[blockID] = append(allProviders[blockID], provider.Signature.Key.Thumbprint())
+			allProviders[blockID] = append(allProviders[blockID], provider.Signer.HashBase58())
 		}
 	}
 	return allProviders, nil

@@ -1,42 +1,18 @@
 package dht
 
 import (
-	"github.com/mitchellh/mapstructure"
-	ucodec "github.com/ugorji/go/codec"
-
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 )
+
+//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/provider -type Provider -out provider_generated.go
 
 // Provider payload
 type Provider struct {
-	BlockIDs  []string              `json:"blockIDs" mapstructure:"blockIDs"`
-	Signature *primitives.Signature `json:"-"`
-}
+	BlockIDs []string `json:"blockIDs"`
 
-func (p *Provider) Block() *primitives.Block {
-	return &primitives.Block{
-		Type: "nimona.io/dht.provider",
-		Payload: map[string]interface{}{
-			"blockIDs": p.BlockIDs,
-		},
-		Signature: p.Signature,
-	}
-}
-
-func (p *Provider) FromBlock(block *primitives.Block) {
-	mapstructure.Decode(block.Payload, p)
-	p.Signature = block.Signature
-}
-
-// CodecDecodeSelf helper for cbor unmarshaling
-func (p *Provider) CodecDecodeSelf(dec *ucodec.Decoder) {
-	b := &primitives.Block{}
-	dec.MustDecode(b)
-	p.FromBlock(b)
-}
-
-// CodecEncodeSelf helper for cbor marshaling
-func (p *Provider) CodecEncodeSelf(enc *ucodec.Encoder) {
-	b := p.Block()
-	enc.MustEncode(b)
+	RawObject *encoding.Object  `json:"@"`
+	Signer    *crypto.Key       `json:"@signer"`
+	Authority *crypto.Key       `json:"@authority"`
+	Signature *crypto.Signature `json:"@signature"`
 }

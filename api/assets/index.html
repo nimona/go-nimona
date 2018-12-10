@@ -219,15 +219,19 @@
         e.preventDefault();
         var body = messageField.value;
         var recipients = [recipientField.value];
-        var block = {
-          type: "nimona.io/message",
-          payload: {
-            body: body,
-            timestamp: (new Date()).toISOString()
+        var object = {
+          "@ctx": "nimona.io/message",
+          "@policy": {
+            "@ctx": "/policy",
+            "subjects": recipients,
+            "actions": ["read"],
+            "effect": "allow"
           },
-          recipients: recipients,
+          "_recipients": recipients,
+          "body": body,
+          "timestamp": (new Date()).toISOString()
         }
-        c.send(JSON.stringify(block));
+        c.send(JSON.stringify(object));
         return false;
       };
 
@@ -236,17 +240,17 @@
       };
 
       c.onmessage = function (msg) {
-        var block = JSON.parse(msg.data);
-        console.log(block)
-        if (!!block.owner) {
+        var object = JSON.parse(msg.data);
+        console.log(object)
+        if (!!object.owner) {
           messagesList.innerHTML = '<li class="received">' +
-            '<div><span>Message:</span>' + block.payload.body + '</div>' +
-            '<div><span>From:</span><a href="#" class="from" data-key="' + block.owner + '">' + block.owner + '</a></div>' +
+            '<div><span>Message:</span>' + object.body + '</div>' +
+            '<div><span>From:</span><a href="#" class="from" data-key="' + object.owner + '">' + object.owner + '</a></div>' +
             '</li>' + messagesList.innerHTML
         } else {
           messagesList.innerHTML = '<li class="received">' +
-            '<div><span>Message:</span>' + block.payload.body + '</div>' +
-            '<div><span>To:</span><a href="#" class="from" data-key="' + block.recipients[0] + '">' + block.recipients[0] + '</a></div>' +
+            '<div><span>Message:</span>' + object.body + '</div>' +
+            '<div><span>To:</span><a href="#" class="from" data-key="' + object._recipients[0] + '">' + object._recipients[0] + '</a></div>' +
             '</li>' + messagesList.innerHTML
         }
       }

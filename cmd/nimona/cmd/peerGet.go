@@ -3,11 +3,10 @@ package cmd
 import (
 	"encoding/json"
 
-	"nimona.io/go/peers"
-
 	"github.com/spf13/cobra"
-	"nimona.io/go/codec"
-	"nimona.io/go/primitives"
+
+	"nimona.io/go/encoding"
+	"nimona.io/go/peers"
 )
 
 // peerGetCmd represents the peerGet command
@@ -23,13 +22,18 @@ var peerGetCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		block := &primitives.Block{}
-		if err := codec.Unmarshal(body, block); err != nil {
+		o, err := encoding.NewObjectFromBytes(body)
+		if err != nil {
+			return err
+		}
+
+		peer := &peers.PeerInfo{}
+		if err := peer.FromObject(o); err != nil {
 			return err
 		}
 
 		if returnRaw {
-			bs, err := json.MarshalIndent(block, "", "  ")
+			bs, err := json.MarshalIndent(peer, "", "  ")
 			if err != nil {
 				return err
 			}
@@ -38,11 +42,8 @@ var peerGetCmd = &cobra.Command{
 			return nil
 		}
 
-		peer := &peers.PeerInfo{}
-		peer.FromBlock(block)
-
 		cmd.Println("peer:")
-		cmd.Println("  id:", peer.Thumbprint())
+		cmd.Println("  id:", peer.HashBase58())
 		cmd.Println("  addresses:", peer.Addresses)
 		cmd.Println("")
 		return nil

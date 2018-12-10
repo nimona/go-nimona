@@ -1,9 +1,11 @@
 package providers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"strings"
 	"time"
 
@@ -24,15 +26,29 @@ const (
           Description=nimona
           After=docker.service
           Requires=docker.service
-          
+
           [Service]
           TimeoutStartSec=0
           Restart=always
+          ExecStartPre=/usr/bin/mkdir /etc/nimona
+          ExecStartPre=/usr/bin/chown core:core /etc/nimona
           ExecStartPre=-/usr/bin/docker stop nimona
           ExecStartPre=-/usr/bin/docker rm nimona
-          ExecStartPre=/usr/bin/docker pull nimona/nimona:latest
-          ExecStart=/usr/bin/docker run --name nimona --rm -p 21013:21013  -p 8080:8080 nimona/nimona daemon start --port=21013 --api-port=8080 %s
-          
+          ExecStartPre=/usr/bin/docker pull quay.io/nimona/nimona:{{ .docker.tag}}
+          ExecStart=/usr/bin/docker run --rm \
+            --name nimona \
+            --user 500:500 \
+            -v /etc/nimona:/etc/nimona \
+            -e LOG_LEVEL=INFO \
+            -p 21013:21013 \
+            -p 8080:8080 \
+            quay.io/nimona/nimona:{{ .docker.tag }} \
+            daemon start \
+            --port 21013 \
+            --api-port 8080 \
+            --config-path /etc/nimona \
+            --announce-hostname {{ .hostname }}
+
           [Install]
           WantedBy=multi-user.target`
 )
@@ -81,8 +97,8 @@ func NewDigitalocean(token string) (Provider, error) {
 }
 
 // NewInstance creates a new DO Droplet
-func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
-	size, region string) (string, error) {
+func (dp *DigitalOceanProvider) NewInstance(dockerTag, hostname,
+	sshFingerprint, size, region string) (string, error) {
 	if size == "" {
 		size = "s-1vcpu-1gb"
 	}
@@ -91,15 +107,32 @@ func (dp *DigitalOceanProvider) NewInstance(name, sshFingerprint,
 		region = "lon1"
 	}
 
-	userData := fmt.Sprintf(cloudInit, "")
-	if name != "" {
-		userData = fmt.Sprintf(cloudInit, "--announce-hostname="+name)
-	} else {
-		name = fmt.Sprintf("nimona-%d", time.Now().Unix())
+	if hostname == "" {
+		hostname = fmt.Sprintf("nimona-%d", time.Now().Unix())
 	}
+
+	values := map[string]interface{}{
+		"docker": map[string]interface{}{
+			"tag": dockerTag,
+		},
+		"hostname": hostname,
+	}
+
+	t, err := template.New("user-data").Parse(cloudInit)
+	if err != nil {
+		return "", err
+	}
+
+	var tpl bytes.Buffer
+	if err := t.Execute(&tpl, values); err != nil {
+		return "", err
+	}
+
+	userData := tpl.String()
+
 	ctx := context.Background()
 	createRequest := &godo.DropletCreateRequest{
-		Name:   name,
+		Name:   hostname,
 		Region: region,
 		Size:   size,
 		Image: godo.DropletCreateImage{

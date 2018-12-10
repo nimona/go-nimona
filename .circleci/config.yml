@@ -2,15 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.11
     working_directory: /go/src/nimona.io/go
-    environment:
-      CIRCLE_TEST_REPORTS: /tmp/test-reports
-      CIRCLE_ARTIFACTS: /tmp/artifacts
-      UPNP: false
-      DEBUG_BLOCKS: true
-      LOG_LEVEL: debug
-      BIND_LOCAL: true
     steps:
       - checkout
       - run:
@@ -20,29 +13,19 @@ jobs:
             go get -u github.com/axw/gocov/gocov
             go get -u github.com/mattn/goveralls
             go get -u github.com/jstemmer/go-junit-report
+            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run:
           name: Install dependencies
-          command: dep ensure
+          command: dep ensure -vendor-only
       - run:
           name: Run tests
-          command: |
-            mkdir -p /tmp/test-reports/core
-            mkdir -p $CIRCLE_ARTIFACTS
-            go test ./... -race -v -coverprofile=$CIRCLE_ARTIFACTS/profile.out | go-junit-report > /tmp/test-reports/core/junit.xml
-            sed -i "/_mock/d" $CIRCLE_ARTIFACTS/profile.out
-            sed -i "/examples/d" $CIRCLE_ARTIFACTS/profile.out
-            sed -i "/main/d" $CIRCLE_ARTIFACTS/profile.out
-      - run:
-          name: Upload to coveralls
-          command: goveralls -coverprofile=$CIRCLE_ARTIFACTS/profile.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-      - store_test_results:
-          path: /tmp/test-reports
+          command: go run mage.go test
       - run:
           name: Ensure code actually builds
-          command: make build
+          command: go run mage.go build
   release:
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.11
     working_directory: /go/src/nimona.io/go
     steps:
       - checkout

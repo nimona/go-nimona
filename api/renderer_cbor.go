@@ -3,9 +3,8 @@ package api
 import (
 	"net/http"
 
-	"nimona.io/go/primitives"
-
 	"github.com/ugorji/go/codec"
+	"nimona.io/go/encoding"
 )
 
 // Cbor contains the given interface object.
@@ -28,7 +27,7 @@ func (r Cbor) Render(w http.ResponseWriter) error {
 // WriteCbor writes Cbor ContentType and encodes the given interface object.
 func WriteCbor(w http.ResponseWriter, obj interface{}) error {
 	writeContentType(w, cborContentType)
-	return codec.NewEncoder(w, primitives.CborHandler()).Encode(obj)
+	return codec.NewEncoder(w, encoding.CborHandler()).Encode(obj)
 }
 
 func writeContentType(w http.ResponseWriter, value []string) {

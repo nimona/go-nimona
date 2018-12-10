@@ -1,29 +1,19 @@
 package dht
 
 import (
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 )
+
+//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -out peerinfo_request_generated.go
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string                `json:"requestID,omitempty" mapstructure:"requestID,omitempty"`
-	PeerID    string                `json:"peerID" mapstructure:"peerID"`
-	Signature *primitives.Signature `json:"-" mapstructure:"-"`
-}
+	RequestID string `json:"requestID,omitempty"`
+	PeerID    string `json:"peerID"`
 
-func (r *PeerInfoRequest) Block() *primitives.Block {
-	return &primitives.Block{
-		Type: "nimona.io/dht.peer-info.request",
-		Payload: map[string]interface{}{
-			"requestID": r.RequestID,
-			"peerID":    r.PeerID,
-		},
-		Signature: r.Signature,
-	}
-}
-
-func (r *PeerInfoRequest) FromBlock(block *primitives.Block) {
-	r.RequestID = block.Payload["requestID"].(string)
-	r.PeerID = block.Payload["peerID"].(string)
-	r.Signature = block.Signature
+	RawObject *encoding.Object  `json:"@"`
+	Signer    *crypto.Key       `json:"@signer"`
+	Authority *crypto.Key       `json:"@authority"`
+	Signature *crypto.Signature `json:"@signature"`
 }
