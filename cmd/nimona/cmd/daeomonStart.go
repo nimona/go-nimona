@@ -26,21 +26,21 @@ var (
 	daemonEnableMetrics  bool
 
 	bootstrapAddresses = []string{
-		// "tcp:andromeda.nimona.io:21013",
-		// "tcp:borealis.nimona.io:21013",
-		"tcp:cassiopeia.nimona.io:21013",
-		// "tcp:draco.nimona.io:21013",
-		// "tcp:eridanus.nimona.io:21013",
-		// "tcp:fornax.nimona.io:21013",
-		// "tcp:gemini.nimona.io:21013",
-		// "tcp:hydra.nimona.io:21013",
-		// "tcp:indus.nimona.io:21013",
-		// "tcp:lacerta.nimona.io:21013",
-		// "tcp:mensa.nimona.io:21013",
-		// "tcp:norma.nimona.io:21013",
-		// "tcp:orion.nimona.io:21013",
-		// "tcp:pyxis.nimona.io:21013",
-		// "tcp:stats.nimona.io:21013",
+		// "tcps:andromeda.nimona.io:21013",
+		// "tcps:borealis.nimona.io:21013",
+		"tcps:cassiopeia.nimona.io:21013",
+		// "tcps:draco.nimona.io:21013",
+		// "tcps:eridanus.nimona.io:21013",
+		// "tcps:fornax.nimona.io:21013",
+		// "tcps:gemini.nimona.io:21013",
+		// "tcps:hydra.nimona.io:21013",
+		// "tcps:indus.nimona.io:21013",
+		// "tcps:lacerta.nimona.io:21013",
+		// "tcps:mensa.nimona.io:21013",
+		// "tcps:norma.nimona.io:21013",
+		// "tcps:orion.nimona.io:21013",
+		// "tcps:pyxis.nimona.io:21013",
+		// "tcps:stats.nimona.io:21013",
 	}
 )
 
@@ -101,7 +101,7 @@ var daemonStartCmd = &cobra.Command{
 		dpr := storage.NewDiskStorage(storagePath)
 		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
 		dht, _ := dht.NewDHT(k, n, x, bootstrapAddresses)
-		telemetry.NewTelemetry(x, k, "tcp:stats.nimona.io:21013")
+		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
 		if err := n.Resolver().AddProvider(dht); err != nil {
 			return err

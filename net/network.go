@@ -90,11 +90,11 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 
 		return nil, ErrAllAddressesFailed
 
-	case "tcp":
+	case "tcps":
 		config := tls.Config{
 			InsecureSkipVerify: true,
 		}
-		addr := strings.Replace(address, "tcp:", "", 1)
+		addr := strings.Replace(address, "tcps:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
 		tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
