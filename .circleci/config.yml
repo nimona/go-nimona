@@ -1,26 +1,15 @@
 version: 2
-base: &base
-  docker:
-    - image: circleci/golang:1.11
-  working_directory: /go/src/nimona.io/go
-steps:
-  - &checkout checkout 
-  - &tools run:
-      name: Install tools
-      command: |
-        go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-        go get -u github.com/goreleaser/goreleaser
-  - &deps run:
-      name: Install deps
-      command: |
-        go mod download
-        go mod vendor
 jobs:
   build:
-    <<: *base
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/nimona.io/go
     steps:
-      - *checkout
-      - *tools
+      - checkout 
+      - run:
+          name: Install tools
+          command: |
+            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run:
           name: Run tests
           command: make test
@@ -28,10 +17,15 @@ jobs:
           name: Ensure code actually builds
           command: make build
   release:
-    <<: *base
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/nimona.io/go
     steps:
-      - *checkout
-      - *tools
+      - checkout 
+      - run:
+          name: Install tools
+          command: |
+            go get -u github.com/goreleaser/goreleaser
       - run:
           name: Run goreleaser
           command: goreleaser
