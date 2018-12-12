@@ -5,11 +5,13 @@ jobs:
       - image: circleci/golang:1.11
     working_directory: /go/src/nimona.io/go
     steps:
-      - checkout 
+      - checkout
       - run:
           name: Install tools
-          command: |
-            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+          command: make tools
+      - run:
+          name: Install dependencies
+          command: make deps
       - run:
           name: Run tests
           command: make test
@@ -21,11 +23,13 @@ jobs:
       - image: circleci/golang:1.11
     working_directory: /go/src/nimona.io/go
     steps:
-      - checkout 
+      - checkout
       - run:
           name: Install tools
-          command: |
-            go get -u github.com/goreleaser/goreleaser
+          command: make tools
+      - run:
+          name: Install dependencies
+          command: make deps
       - run:
           name: Run goreleaser
           command: goreleaser

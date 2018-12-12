@@ -22,3 +22,7 @@ lint:
 .PHONY: test
 test:
 	@$(NMAKE) test
+
+.PHONY: tools
+tools:
+	@$(NMAKE) tools
