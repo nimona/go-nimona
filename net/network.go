@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	igd "github.com/emersion/go-upnp-igd"
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
@@ -342,7 +341,6 @@ func Read(conn *Connection) (*encoding.Object, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			spew.Dump(r)
 			logger.Error("Recovered while processing", zap.Any("r", r))
 		}
 	}()

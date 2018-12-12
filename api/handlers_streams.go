@@ -3,12 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -85,7 +82,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
 				subjects := []string{}
-				spew.Dump(req.GetRaw("_recipients"))
 				if ps := req.GetRaw("_recipients"); ps != nil {
 					if subsi, ok := ps.([]interface{}); ok {
 						for _, subi := range subsi {
@@ -118,7 +114,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			}
 		}
 	}()
-	fmt.Println(pattern, pattern, pattern, pattern, pattern, pattern, pattern)
 	hr, err := api.exchange.Handle(pattern, func(o *encoding.Object) error {
 		incoming <- o
 		return nil

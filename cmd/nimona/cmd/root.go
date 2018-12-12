@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty"
+	"gopkg.in/resty.v1"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
