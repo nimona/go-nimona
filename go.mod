@@ -1,8 +1,10 @@
 module nimona.io/go
 
 require (
+	github.com/Masterminds/semver v1.4.2
 	github.com/digitalocean/godo v1.7.2
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
+	github.com/fatih/color v1.7.0
 	github.com/gin-contrib/cors v0.0.0-20181206035131-7c641a7a7dc5
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.3.0
@@ -12,12 +14,15 @@ require (
 	github.com/influxdata/platform v0.0.0-20181212005937-da7e0f615a0f // indirect
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/json-iterator/go v1.1.5 // indirect
+	github.com/magefile/mage v1.8.0 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mr-tron/base58 v1.1.0
 	github.com/pkg/errors v0.8.0
 	github.com/pkg/profile v1.2.1
+	github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371 // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.2.2
