@@ -11,7 +11,7 @@ import (
 var lintCmd = &cobra.Command{
 	Use: "lint",
 	Aliases: []string{
-		"t",
+		"l",
 	},
 	Short: "run lints",
 	Long:  "",

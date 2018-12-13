@@ -7,6 +7,10 @@ export GO111MODULE=on
 build:
 	@$(NMAKE) build
 
+.PHONY: cleanup
+cleanup:
+	@$(NMAKE) cleanup
+
 .PHONY: deps
 deps:
 	@$(NMAKE) deps
