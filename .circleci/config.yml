@@ -1,17 +1,27 @@
 version: 2
+base: &base
+  docker:
+    - image: circleci/golang:1.11
+  working_directory: /go/src/nimona.io/go
+steps:
+  - &checkout
+    checkout 
+  - &tools
+    run:
+      name: Install tools
+      command: make tools
+  - &deps run:
+      name: Install deps
+      command: make deps
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/nimona.io/go
+    <<: *base
     steps:
-      - checkout
+      - *checkout
+      - *tools
       - run:
-          name: Install tools
-          command: make tools
-      - run:
-          name: Install dependencies
-          command: make deps
+          name: Run linters
+          command: make lint || true
       - run:
           name: Run tests
           command: make test
@@ -19,17 +29,10 @@ jobs:
           name: Ensure code actually builds
           command: make build
   release:
-    docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/nimona.io/go
+    <<: *base
     steps:
-      - checkout
-      - run:
-          name: Install tools
-          command: make tools
-      - run:
-          name: Install dependencies
-          command: make deps
+      - *checkout
+      - *tools
       - run:
           name: Run goreleaser
           command: goreleaser
