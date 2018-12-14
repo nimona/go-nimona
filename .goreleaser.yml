@@ -25,10 +25,8 @@ archive:
       format: zip
 before:
   hooks:
-    - make clean
-git:
-  short_hash: true
+    - make cleanup
 snapshot:
-  name_template: dev-{{.Commit}}
+  name_template: dev-{{.ShortCommit}}
 release:
   draft: true
