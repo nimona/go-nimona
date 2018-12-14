@@ -55,20 +55,22 @@ var buildCmd = &cobra.Command{
 			return err
 		}
 
+		tagged := false
+		if _, err := exec(env, "git", []string{"describe", "--exact-match"}); err == nil {
+			tagged = true
+		}
+
 		currentGitTag = strings.TrimSpace(currentGitTag)
 		version, err := semver.NewVersion(currentGitTag)
 		if err != nil {
 			return err
 		}
 
-		extraInfo("* current version %s", version.String())
+		extraInfo("* current version v%s", version.String())
 
 		newSemVersion := version.IncPatch()
-		newVersion := newSemVersion.String()
+		newVersion := "v" + newSemVersion.String()
 
-		extraInfo("* new version %s", newVersion)
-
-		info("Trying to find current commit sha")
 		commit, err := exec(env, "git", []string{"show", `--format="%h"`, "--no-patch"})
 		if err != nil {
 			return err
@@ -78,11 +80,14 @@ var buildCmd = &cobra.Command{
 
 		extraInfo("* current commit %s", commit)
 
-		now := time.Now().UTC().Format(time.RFC3339)
+		if !tagged {
+			newVersion += "-dev+" + commit
+		}
+		extraInfo("* new version %s", newVersion)
 
 		info("Building packages")
-		ldflags := `-s -w -X main.Version=v%s -X main.Commit=%s -X main.Date=%s`
-		ldflags = fmt.Sprintf(ldflags, newVersion, strings.Trim(commit, `"`), now)
+		ldflags := `-s -w -X main.Version=%s -X main.Commit=%s -X main.Date=%s`
+		ldflags = fmt.Sprintf(ldflags, newVersion, strings.Trim(commit, `"`), time.Now().UTC().Format(time.RFC3339))
 		for _, pkg := range pkgs {
 			_, bn := filepath.Split(pkg)
 			args := []string{
