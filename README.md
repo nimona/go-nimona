@@ -17,7 +17,7 @@ Nimona requires go 1.11 with go modules enabled; if clone repository inside your
 ```
 git clone https://github.com/nimona/go-nimona.git go-nimona
 cd go-nimona
-go run github.com/nimona/go-nimona/cmd/nimona
+go run ./cmd/nimona
 ```
 
 ### Installation in Provider
