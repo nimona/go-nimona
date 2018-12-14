@@ -4,6 +4,7 @@ builds:
     binary: nimona
     flags: 
       - -a
+      - -mod=vendor
       - -tags=releaser
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
