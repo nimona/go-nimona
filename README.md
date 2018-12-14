@@ -1,5 +1,4 @@
 [![CircleCI Image]](https://circleci.com/gh/nimona/go-nimona)
-[![Coveralls Image]](https://coveralls.io/github/nimona/go-nimona)
 [![License Image]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 [![Issues Image]](https://waffle.io/nimona/go-nimona)
 
@@ -13,20 +12,13 @@ For a technical overview, please refer to the [documentation introduction](https
 
 ## Development
 
-### Installation from Source
-
-Assuming you have a working [Go environment] with Go 1.10 or higher:
+Nimona requires go 1.11 with go modules enabled; if clone repository inside your `GOPATH` you'll have to set `GO111MODULE=on` or simply use the makefile that will set it for you.
 
 ```
-go get -d nimona.io/go
-cd $GOPATH/src/nimona.io/go
-dep ensure 
+git clone https://github.com/nimona/go-nimona.git go-nimona
+cd go-nimona
+go run github.com/nimona/go-nimona/cmd/nimona
 ```
-
-### Running
-
-You can either `go install nimona.io/go/cmd/nimona` or run it from 
-source every time with `go run nimona.io/go/cmd/nimona`.
 
 ### Installation in Provider
 
