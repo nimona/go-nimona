@@ -2,7 +2,11 @@ project_name: nimona
 builds:
   - main: cmd/nimona/main.go
     binary: nimona
-    flags: -a
+    flags: 
+      - -a
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
     goos:
       - darwin
       - freebsd
