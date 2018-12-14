@@ -2,6 +2,8 @@ project_name: nimona
 builds:
   - main: cmd/nimona/main.go
     binary: nimona
+    env:
+      - GO111MODULE=on
     flags: 
       - -a
       - -mod=vendor
