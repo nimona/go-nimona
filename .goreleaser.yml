@@ -15,7 +15,6 @@ builds:
     goarch:
       - amd64
       - 386
-      - arm
     goarm:
       - 6
       - 7
