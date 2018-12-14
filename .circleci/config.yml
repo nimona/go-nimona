@@ -35,7 +35,7 @@ jobs:
       - *tools
       - run:
           name: Run goreleaser
-          command: goreleaser
+          command: goreleaser --skip-validate --rm-dist
 workflows:
   version: 2
   build:
