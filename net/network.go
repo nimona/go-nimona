@@ -25,6 +25,14 @@ import (
 	"nimona.io/go/peers"
 )
 
+var (
+	useUPNP = false
+)
+
+func init() {
+	useUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
+}
+
 // Network interface
 type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
@@ -34,7 +42,7 @@ type Network interface {
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(key *crypto.Key, hostname string) (Network, error) {
+func NewNetwork(key *crypto.Key, hostname string, relayAddresses []string) (Network, error) {
 	if key == nil {
 		return nil, errors.New("missing key")
 	}
@@ -44,19 +52,21 @@ func NewNetwork(key *crypto.Key, hostname string) (Network, error) {
 	}
 
 	return &network{
-		key:      key,
-		resolver: NewResolver(),
-		hostname: hostname,
+		key:            key,
+		resolver:       NewResolver(),
+		hostname:       hostname,
+		relayAddresses: relayAddresses,
 	}, nil
 }
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	key           *crypto.Key
-	resolver      Resolver
-	hostname      string
-	addressesLock sync.RWMutex
-	addresses     []string
+	key            *crypto.Key
+	resolver       Resolver
+	hostname       string
+	addressesLock  sync.RWMutex
+	addresses      []string
+	relayAddresses []string
 }
 
 // Dial to a peer and return a net.Conn or error
@@ -192,12 +202,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 		addresses = append(addresses, fmtAddress(n.hostname, port))
 	}
 
-	upnp := true
-	upnpFlag := os.Getenv("UPNP")
-	if upnpFlag != "" {
-		upnp, _ = strconv.ParseBool(upnpFlag)
-	}
-	if upnp {
+	if useUPNP {
 		logger.Info("Trying to find external IP and open port")
 		go func() {
 			if err := igd.Discover(devices, 2*time.Second); err != nil {
@@ -222,6 +227,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
 	n.addAddress(addresses...)
+	n.addAddress(n.relayAddresses...)
 
 	cconn := make(chan *Connection, 10)
 	go func() {

@@ -19,11 +19,12 @@ import (
 )
 
 var (
-	daemonConfigPath     string
-	daemonPort           int
-	daemonAPIPort        int
-	daemonEnableRelaying bool
-	daemonEnableMetrics  bool
+	daemonConfigPath    string
+	daemonPort          int
+	daemonAPIPort       int
+	daemonEnableMetrics bool
+
+	relayAddresses []string
 
 	bootstrapAddresses = []string{
 		// "tcps:andromeda.nimona.io:21013",
@@ -78,24 +79,10 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("No bootstrap nodes provided")
 		}
 
-		n, err := net.NewNetwork(k, announceHostname)
+		n, err := net.NewNetwork(k, announceHostname, relayAddresses)
 		if err != nil {
 			return err
 		}
-
-		// TODO(geoah) add relaying
-		// if daemonEnableRelaying {
-		// 	if len(bootstrapAddresses) > 0 {
-		// 		cmd.Println("Relaying enabled, using bootstrap nodes")
-		// 		if err := addressBook.AddLocalPeerRelay(bootstrapAddresses...); err != nil {
-		// 			// TODO handle error
-		// 		}
-		// 	} else {
-		// 		cmd.Println("Relaying not enabled, no bootstrap nodes provided")
-		// 	}
-		// } else {
-		// 	cmd.Println("Relaying not enabled")
-		// }
 
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
@@ -155,13 +142,6 @@ func init() {
 	)
 
 	daemonStartCmd.PersistentFlags().BoolVar(
-		&daemonEnableRelaying,
-		"relay",
-		true,
-		"enable relaying through bootstrap peers",
-	)
-
-	daemonStartCmd.PersistentFlags().BoolVar(
 		&daemonEnableMetrics,
 		"metrics",
 		false,
@@ -173,5 +153,12 @@ func init() {
 		"bootstraps",
 		bootstrapAddresses,
 		"bootstrap addresses",
+	)
+
+	daemonStartCmd.PersistentFlags().StringSliceVar(
+		&relayAddresses,
+		"relay-addresses",
+		relayAddresses,
+		"relay addresses",
 	)
 }

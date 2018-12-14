@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,7 +17,16 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var src = rand.NewSource(time.Now().UnixNano())
+var (
+	src       = rand.NewSource(time.Now().UnixNano())
+	bindLocal = false
+	bindIpv6  = false
+)
+
+func init() {
+	bindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
+	bindIpv6, _ = strconv.ParseBool(os.Getenv("BIND_IPV6"))
+}
 
 // RandStringBytesMaskImprSrc returns a random string given a length
 func RandStringBytesMaskImprSrc(n int) string {
@@ -97,10 +107,10 @@ func isValidIP(addr net.Addr) (string, bool) {
 	if ip == nil {
 		return "", false
 	}
-	if os.Getenv("BIND_LOCAL") == "" && (ip.IsLoopback() || isPrivate(ip)) {
+	if !bindLocal && (ip.IsLoopback() || isPrivate(ip)) {
 		return "", false
 	}
-	if os.Getenv("BIND_IPV6") == "" && isIPv6(ip.String()) {
+	if !bindIpv6 && isIPv6(ip.String()) {
 		return "", false
 	}
 	return ip.String(), true

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -19,9 +18,6 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
-	os.Setenv("BIND_LOCAL", "true")
-	os.Setenv("UPNP", "false")
-
 	k0, n0, x0 := newPeer(t)
 	k1, n1, x1 := newPeer(t)
 	k2, n2, x2 := newPeer(t)
@@ -137,10 +133,10 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, net.Exchange) {
 
 	ds := storage.NewDiskStorage(sp)
 
-	n, err := net.NewNetwork(pk, "")
+	n, err := net.NewNetwork(pk, "", []string{})
 	assert.NoError(t, err)
 
-	x, err := net.NewExchange(pk, n, ds, fmt.Sprintf("127.0.0.1:%d", 0))
+	x, err := net.NewExchange(pk, n, ds, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
 
 	return pk, n, x
