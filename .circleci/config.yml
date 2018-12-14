@@ -1,42 +1,38 @@
 version: 2
+base: &base
+  docker:
+    - image: circleci/golang:1.11
+  working_directory: /go/src/nimona.io/go
+steps:
+  - &checkout
+    checkout 
+  - &tools
+    run:
+      name: Install tools
+      command: make tools
+  - &deps run:
+      name: Install deps
+      command: make deps
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/nimona.io/go
+    <<: *base
     steps:
-      - checkout
+      - *checkout
+      - *tools
       - run:
-          name: Install tools
-          command: |
-            curl -L https://github.com/golang/dep/raw/master/install.sh | sh
-            go get -u github.com/axw/gocov/gocov
-            go get -u github.com/mattn/goveralls
-            go get -u github.com/jstemmer/go-junit-report
-            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-      - run:
-          name: Install dependencies
-          command: dep ensure -vendor-only
+          name: Run linters
+          command: make lint || true
       - run:
           name: Run tests
-          command: go run mage.go test
+          command: make test
       - run:
           name: Ensure code actually builds
-          command: go run mage.go build
+          command: make build
   release:
-    docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/nimona.io/go
+    <<: *base
     steps:
-      - checkout
-      - run:
-          name: Install tools
-          command: |
-            curl -L https://github.com/golang/dep/raw/master/install.sh | sh
-            go get github.com/goreleaser/goreleaser
-      - run:
-          name: Install dependencies
-          command: dep ensure
+      - *checkout
+      - *tools
       - run:
           name: Run goreleaser
           command: goreleaser

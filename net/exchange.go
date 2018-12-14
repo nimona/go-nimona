@@ -420,7 +420,6 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 		return err
 	}
 
-	fmt.Println("________________", recipient, peer)
 	if peer == nil {
 		w.logger.Warn("wtf")
 	}
