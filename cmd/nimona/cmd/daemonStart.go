@@ -25,7 +25,7 @@ var (
 	daemonAPIPort        int
 	daemonEnableRelaying bool
 	daemonEnableMetrics  bool
-	apiToken             string
+	daemonToken          string
 
 	relayAddresses []string
 
@@ -114,7 +114,7 @@ var daemonStartCmd = &cobra.Command{
 		}
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		a := api.New(k, n, x, dht, dpr, Version, Commit, Date, apiToken)
+		a := api.New(k, n, x, dht, dpr, Version, Commit, Date, daemonToken)
 
 		go func() {
 			if err := a.Serve(netAddress); err != nil {
@@ -174,9 +174,9 @@ func init() {
 	)
 
 	daemonStartCmd.PersistentFlags().StringVar(
-		&apiToken,
-		"api-token",
-		apiToken,
-		"api token",
+		&daemonToken,
+		"daemon-token",
+		daemonToken,
+		"daemon token",
 	)
 }
