@@ -10,7 +10,8 @@ steps:
     run:
       name: Install tools
       command: make tools
-  - &deps run:
+  - &deps
+    run:
       name: Install deps
       command: make deps
 jobs:
@@ -18,6 +19,7 @@ jobs:
     <<: *base
     steps:
       - *checkout
+      - *deps
       - *tools
       - run:
           name: Run linters
@@ -28,10 +30,14 @@ jobs:
       - run:
           name: Ensure code actually builds
           command: make build
+      - run:
+          name: Gorelease
+          command: goreleaser --skip-validate --rm-dist --skip-publish
   release:
     <<: *base
     steps:
       - *checkout
+      - *deps
       - *tools
       - run:
           name: Run goreleaser

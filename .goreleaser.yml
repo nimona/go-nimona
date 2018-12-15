@@ -1,6 +1,6 @@
 project_name: nimona
 builds:
-  - main: cmd/nimona/main.go
+  - main: cmd/nimona
     binary: nimona
     env:
       - GO111MODULE=on
@@ -29,9 +29,6 @@ archive:
   format_overrides:
     - goos: windows
       format: zip
-before:
-  hooks:
-    - make cleanup
 snapshot:
   name_template: dev-{{.ShortCommit}}
 release:
