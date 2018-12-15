@@ -28,10 +28,10 @@ jobs:
           name: Run tests
           command: make test
       - run:
-          name: Ensure code actually builds
+          name: Ensure all binaries actually build
           command: make build
       - run:
-          name: Gorelease
+          name: Test goreleaser
           command: goreleaser --skip-validate --rm-dist --skip-publish
   release:
     <<: *base
