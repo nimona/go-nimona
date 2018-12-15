@@ -16,7 +16,14 @@ var generateCmd = &cobra.Command{
 	Short: "generate",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Running go generate")
-		return execPipe(nil, "go", []string{"generate", "./..."}, os.Stdout, os.Stderr)
+
+		genArgs := []string{
+			"generate",
+			"-mod=vendor",
+			"./...",
+		}
+
+		return execPipe(nil, "go", genArgs, os.Stdout, os.Stderr)
 	},
 }
 
