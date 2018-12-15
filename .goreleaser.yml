@@ -1,9 +1,12 @@
 project_name: nimona
 builds:
-  - main: cmd/nimona/main.go
+  - main: ./cmd/nimona
     binary: nimona
+    env:
+      - GO111MODULE=on
     flags: 
       - -a
+      - -mod=vendor
       - -tags=releaser
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
@@ -15,7 +18,6 @@ builds:
     goarch:
       - amd64
       - 386
-      - arm
     goarm:
       - 6
       - 7
@@ -27,9 +29,6 @@ archive:
   format_overrides:
     - goos: windows
       format: zip
-before:
-  hooks:
-    - make cleanup
 snapshot:
   name_template: dev-{{.ShortCommit}}
 release:

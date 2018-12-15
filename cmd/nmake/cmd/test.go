@@ -30,6 +30,7 @@ var testCmd = &cobra.Command{
 
 		testArgs := []string{
 			"test",
+			"-mod=vendor",
 			"-v",
 			"-race",
 			"-covermode=atomic",
