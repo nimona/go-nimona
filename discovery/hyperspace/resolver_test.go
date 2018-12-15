@@ -1,4 +1,4 @@
-package dht
+package hyperspace
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"nimona.io/go/storage"
 )
 
-func TestSendSuccess(t *testing.T) {
+func TestResolver(t *testing.T) {
 	k0, n0, x0 := newPeer(t)
 	k1, n1, x1 := newPeer(t)
 	k2, n2, x2 := newPeer(t)
@@ -28,7 +28,7 @@ func TestSendSuccess(t *testing.T) {
 	fmt.Println("k2:", k2.GetPublicKey().HashBase58())
 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	d0, err := NewDHT(k0, n0, x0, []string{})
+	d0, err := NewResolver(k0, n0, x0, []string{})
 	assert.NoError(t, err)
 
 	err = n0.Resolver().AddProvider(d0)
@@ -38,13 +38,13 @@ func TestSendSuccess(t *testing.T) {
 	ba = append(ba, n1.GetPeerInfo().Addresses...)
 	ba = append(ba, n2.GetPeerInfo().Addresses...)
 
-	d1, err := NewDHT(k1, n1, x1, ba)
+	d1, err := NewResolver(k1, n1, x1, ba)
 	assert.NoError(t, err)
 
 	err = n1.Resolver().AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDHT(k2, n2, x2, ba)
+	d2, err := NewResolver(k2, n2, x2, ba)
 	assert.NoError(t, err)
 
 	err = n2.Resolver().AddProvider(d2)

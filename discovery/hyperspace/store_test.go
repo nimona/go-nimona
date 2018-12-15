@@ -1,37 +1,42 @@
 package hyperspace
 
 import (
+	"crypto/rand"
 	"testing"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+
+	"nimona.io/go/base58"
+	"nimona.io/go/crypto"
+	"nimona.io/go/peers"
 )
 
 func TestStoreSimpleQuery(t *testing.T) {
 	s := NewStore()
 
-	cs := []*PeerCapabilities{
-		&PeerCapabilities{
-			IdentityKey: "1",
+	cs := []*peers.PeerInfo{
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
 		},
-		&PeerCapabilities{
-			IdentityKey: "2",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
 		},
-		&PeerCapabilities{
-			IdentityKey: "3",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
 		},
-		&PeerCapabilities{
-			IdentityKey: "4",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
 		},
-		&PeerCapabilities{
-			IdentityKey: "5",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
 		},
 	}
 
 	s.Add(cs...)
 
 	for _, q := range cs {
-		rs := s.FindClosest(q)
+		rs := s.FindClosest(getPeerInfoRequest(q))
 		assert.Equal(t, q, rs[0])
 	}
 }
@@ -39,54 +44,54 @@ func TestStoreSimpleQuery(t *testing.T) {
 func TestStoreSimpleQueryWithNoise(t *testing.T) {
 	s := NewStore()
 
-	cs := []*PeerCapabilities{
-		&PeerCapabilities{
-			IdentityKey: "1",
-			PeerKey:     "A",
+	cs := []*peers.PeerInfo{
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "2",
-			PeerKey:     "A",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "3",
-			PeerKey:     "A",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "4",
-			PeerKey:     "A",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "5",
-			PeerKey:     "A",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
@@ -95,65 +100,65 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			IdentityKey: c.IdentityKey,
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 		}
 		rs := s.FindClosest(q)
-		assert.Equal(t, c, rs[0])
+		assert.Equal(t, c.AuthorityKey.HashBase58(), rs[0].AuthorityKey.HashBase58())
 	}
 }
 
 func TestStoreComplexQuery(t *testing.T) {
 	s := NewStore()
 
-	cs := []*PeerCapabilities{
-		&PeerCapabilities{
-			IdentityKey: "1",
-			PeerKey:     "A",
+	cs := []*peers.PeerInfo{
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "2",
-			PeerKey:     "A",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"not-foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"not-bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "3",
-			PeerKey:     "B",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"not-foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "4",
-			PeerKey:     "B",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"not-bar",
 			},
 		},
-		&PeerCapabilities{
-			IdentityKey: "5",
-			PeerKey:     "B",
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 			Protocols: []string{
 				"very-not-foo",
 			},
-			Resources: []string{
+			ContentTypes: []string{
 				"very-not-bar",
 			},
 		},
@@ -162,35 +167,35 @@ func TestStoreComplexQuery(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			IdentityKey: c.IdentityKey,
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
 	}
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			Protocols: c.Protocols,
-			Resources: c.Resources,
+		q := &peers.PeerInfoRequest{
+			Protocols:    c.Protocols,
+			ContentTypes: c.ContentTypes,
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
 	}
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			PeerKey:   c.PeerKey,
-			Resources: c.Resources,
+		q := &peers.PeerInfoRequest{
+			SignerKeyHash: c.SignerKey.HashBase58(),
+			ContentTypes:  c.ContentTypes,
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
 	}
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			IdentityKey: c.IdentityKey,
-			Resources:   c.Resources,
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
+			ContentTypes:     c.ContentTypes,
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
@@ -199,19 +204,19 @@ func TestStoreComplexQuery(t *testing.T) {
 	// best effort
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			IdentityKey: c.IdentityKey,
-			Resources:   []string{"not here"},
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
+			ContentTypes:     []string{"not here"},
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
 	}
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
-			IdentityKey: c.IdentityKey,
-			Protocols:   c.Protocols,
-			Resources:   []string{"not here"},
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
+			Protocols:        c.Protocols,
+			ContentTypes:     []string{"not here"},
 		}
 		rs := s.FindClosest(q)
 		assert.Equal(t, c, rs[0])
@@ -221,11 +226,11 @@ func TestStoreComplexQuery(t *testing.T) {
 func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	s := NewStore()
 
-	cs := []*PeerCapabilities{}
+	cs := []*peers.PeerInfo{}
 	for i := 0; i < 100; i++ {
-		cs = append(cs, &PeerCapabilities{
-			// IdentityKey: uuid.NewV4().String(),
-			Resources: []string{
+		cs = append(cs, &peers.PeerInfo{
+			// AuthorityKey: getRandKey(),
+			ContentTypes: []string{
 				"foo",
 			},
 			ContentIDs: []string{
@@ -245,7 +250,7 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &PeerCapabilities{
+		q := &peers.PeerInfoRequest{
 			ContentIDs: []string{
 				c.ContentIDs[0],
 			},
@@ -255,31 +260,56 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	}
 }
 
-func TestStoreMultipleContentsPerPeerQueryOne(t *testing.T) {
+func TestStoreManyPeers(t *testing.T) {
+	testMultiplePeersMultipleContent(t, 10000, 100, 10)
+}
+
+func TestStoreManyContentIDs(t *testing.T) {
+	testMultiplePeersMultipleContent(t, 100, 10000, 10)
+}
+
+func TestStoreManyPeersManyContentIDs(t *testing.T) {
+	testMultiplePeersMultipleContent(t, 1000, 1000, 100)
+}
+
+func testMultiplePeersMultipleContent(t *testing.T, nPeers, nContent, nCheck int) {
+	if nCheck > nPeers {
+		panic("cannot check more than what peers have")
+	}
+
 	s := NewStore()
-
-	cs := []*PeerCapabilities{}
-	for i := 0; i < 1000; i++ {
-		cs = append(cs, &PeerCapabilities{
-			IdentityKey: uuid.NewV4().String(),
+	checkIDs := make([]string, nPeers)
+	for i := 0; i < nPeers; i++ {
+		cIDs := make([]string, nContent)
+		for j := range cIDs {
+			cIDs[j] = base58.Encode(getRandBytes(32))
+		}
+		checkIDs[i] = cIDs[0]
+		c := &peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			ContentIDs:   cIDs,
+		}
+		s.Add(c)
+	}
+	for _, cID := range checkIDs[:nCheck] {
+		q := &peers.PeerInfoRequest{
 			ContentIDs: []string{
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
+				cID,
 			},
-		})
-	}
-
-	s.Add(cs...)
-
-	for _, q := range cs[:100] {
+		}
 		rs := s.FindClosest(q)
-		assert.Equal(t, q, rs[0])
+		assert.Equal(t, q.ContentIDs[0], rs[0].ContentIDs[0])
 	}
+}
+
+func getRandKey() *crypto.Key {
+	return &crypto.Key{
+		X: getRandBytes(32),
+	}
+}
+
+func getRandBytes(n int) []byte {
+	b := make([]byte, n)
+	rand.Read(b)
+	return b
 }

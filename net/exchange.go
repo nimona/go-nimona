@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/go/peers"
+
 	"github.com/gobwas/glob"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -415,7 +417,10 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 		return errors.New("cannot send obj to self")
 	}
 
-	peer, err := w.net.Resolver().Resolve(recipient)
+	q := &peers.PeerInfoRequest{
+		SignerKeyHash: recipient,
+	}
+	peer, err := w.net.Resolver().Resolve(q)
 	if err != nil {
 		return err
 	}

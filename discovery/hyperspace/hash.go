@@ -11,7 +11,7 @@ const (
 	murmurMin = uint32(0)
 	murmurMax = uint32(math.MaxUint32)
 	scaledMin = uint32(0)
-	scaledMax = uint32(300)
+	scaledMax = uint32(250 * 1000)
 )
 
 // Hash finds the bucket of a given byte slice between scaleMin and scaleMax
