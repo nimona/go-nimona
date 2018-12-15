@@ -11,7 +11,9 @@ var toolsCmd = &cobra.Command{
 	Use:   "tools",
 	Short: "tools",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env := []string{}
+		env := []string{
+			"GO111MODULE=off",
+		}
 
 		tools := []string{
 			"github.com/goreleaser/goreleaser",

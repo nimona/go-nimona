@@ -1,8 +1,10 @@
 module nimona.io/go
 
 require (
+	github.com/Masterminds/semver v1.4.2
 	github.com/digitalocean/godo v1.7.2
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
+	github.com/fatih/color v1.7.0
 	github.com/gin-contrib/cors v0.0.0-20181206035131-7c641a7a7dc5
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.3.0
