@@ -1,6 +1,6 @@
 project_name: nimona
 builds:
-  - main: cmd/nimona
+  - main: ./cmd/nimona
     binary: nimona
     env:
       - GO111MODULE=on
