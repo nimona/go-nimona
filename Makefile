@@ -30,3 +30,7 @@ test:
 .PHONY: tools
 tools:
 	@$(NMAKE) tools
+
+.PHONY: run
+run:
+	@$(DAEMN)
