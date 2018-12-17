@@ -1,11 +1,17 @@
 package api
 
 import (
+	"context"
+
 	"net/http"
+	"os"
 	"syscall"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
+	"nimona.io/go/log"
 
 	"nimona.io/go/crypto"
 	"nimona.io/go/dht"
@@ -87,9 +93,23 @@ func (api *API) Serve(address string) error {
 }
 
 func (api *API) Stop(c *gin.Context) {
+	ctx := context.Background()
+	logger := log.Logger(ctx).Named("api")
+
 	c.Status(http.StatusOK)
 
-	syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		logger.Error("Failed to find process", zap.Error(err))
+		return
+	}
+
+	if err := p.Signal(syscall.SIGTERM); err != nil {
+		logger.Error("Failed kill process", zap.Error(err))
+
+		return
+	}
+
 }
 
 func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {
