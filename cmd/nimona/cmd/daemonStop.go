@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"syscall"
-
 	"github.com/spf13/cobra"
 )
 
@@ -11,13 +9,11 @@ var daemonStopCmd = &cobra.Command{
 	Short: "Stop a daemon",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
-
-		return nil
+		_, err := restClient.R().Post("/api/v1/stop")
+		return err
 	},
 }
 
 func init() {
-	daemon.AddCommand()
+	daemon.AddCommand(daemonStopCmd)
 }
