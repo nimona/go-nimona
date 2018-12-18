@@ -3,25 +3,31 @@ workflow "Lint, test, & build" {
   resolves = ["Build"]
 }
 
-action "Tools" {
+action "Deps" {
   uses = "./.github/actions/golang"
-  args = ["make", "tools"]
+  args = ["deps"]
+}
+
+action "Tools" {
+  needs = ["Deps"]
+  uses = "./.github/actions/golang"
+  args = ["tools"]
 }
 
 action "Lint" {
   needs = ["Tools"]
   uses = "./.github/actions/golang"
-  args = ["make", "lint"]
+  args = ["lint"]
 }
 
 action "Test" {
   needs = ["Lint"]
   uses = "./.github/actions/golang"
-  args = ["make", "test"]
+  args = ["test"]
 }
 
 action "Build" {
   needs = ["Test"]
   uses = "./.github/actions/golang"
-  args = ["make", "build"]
+  args = ["build"]
 }
