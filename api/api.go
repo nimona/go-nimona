@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"net/http"
-	"os"
-	"syscall"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -33,9 +31,11 @@ type API struct {
 	localKey   string
 	token      string
 
-	version   string
-	commit    string
-	buildDate string
+	version      string
+	commit       string
+	buildDate    string
+	gracefulStop chan bool
+	srv          *http.Server
 }
 
 // New HTTP API
@@ -45,16 +45,17 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 	router.Use(cors.Default())
 
 	api := &API{
-		router:     router,
-		key:        k,
-		net:        n,
-		exchange:   x,
-		dht:        dht,
-		blockStore: bls,
-		version:    version,
-		commit:     commit,
-		buildDate:  buildDate,
-		token:      token,
+		router:       router,
+		key:          k,
+		net:          n,
+		exchange:     x,
+		dht:          dht,
+		blockStore:   bls,
+		version:      version,
+		commit:       commit,
+		buildDate:    buildDate,
+		token:        token,
+		gracefulStop: make(chan bool),
 	}
 
 	router.Group("/api/v1/")
@@ -89,27 +90,37 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 
 // Serve HTTP API
 func (api *API) Serve(address string) error {
-	return api.router.Run(address)
-}
-
-func (api *API) Stop(c *gin.Context) {
 	ctx := context.Background()
 	logger := log.Logger(ctx).Named("api")
 
+	api.srv = &http.Server{
+		Addr:    address,
+		Handler: api.router,
+	}
+
+	go func() {
+		if err := api.srv.ListenAndServe(); err != nil &&
+			err != http.ErrServerClosed {
+			logger.Error("Error serving", zap.Error(err))
+		}
+	}()
+
+	<-api.gracefulStop
+
+	if err := api.srv.Shutdown(ctx); err != nil {
+		logger.Error("Failed to shutdown", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (api *API) Stop(c *gin.Context) {
 	c.Status(http.StatusOK)
 
-	p, err := os.FindProcess(os.Getpid())
-	if err != nil {
-		logger.Error("Failed to find process", zap.Error(err))
-		return
-	}
-
-	if err := p.Signal(syscall.SIGTERM); err != nil {
-		logger.Error("Failed kill process", zap.Error(err))
-
-		return
-	}
-
+	go func() {
+		api.gracefulStop <- true
+	}()
+	return
 }
 
 func (api *API) mapBlock(o *encoding.Object) map[string]interface{} {

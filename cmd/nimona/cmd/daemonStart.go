@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/user"
 	"path"
@@ -116,15 +115,7 @@ var daemonStartCmd = &cobra.Command{
 
 		a := api.New(k, n, x, dht, dpr, Version, Commit, Date, daemonToken)
 
-		go func() {
-			if err := a.Serve(netAddress); err != nil {
-				log.Fatal("Server stoping, error:", err)
-			}
-		}()
-
-		api.Wait()
-
-		return errors.Wrap(err, "http server stopped")
+		return a.Serve(netAddress)
 	},
 }
 
