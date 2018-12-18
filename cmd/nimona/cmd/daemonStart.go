@@ -19,10 +19,12 @@ import (
 )
 
 var (
-	daemonConfigPath    string
-	daemonPort          int
-	daemonAPIPort       int
-	daemonEnableMetrics bool
+	daemonConfigPath     string
+	daemonPort           int
+	daemonAPIPort        int
+	daemonEnableRelaying bool
+	daemonEnableMetrics  bool
+	daemonToken          string
 
 	relayAddresses []string
 
@@ -111,9 +113,9 @@ var daemonStartCmd = &cobra.Command{
 		}
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		api := api.New(k, n, x, dht, dpr, Version, Commit, Date)
-		err = api.Serve(netAddress)
-		return errors.Wrap(err, "http server stopped")
+		a := api.New(k, n, x, dht, dpr, Version, Commit, Date, daemonToken)
+
+		return a.Serve(netAddress)
 	},
 }
 
@@ -160,5 +162,12 @@ func init() {
 		"relay-addresses",
 		relayAddresses,
 		"relay addresses",
+	)
+
+	daemonStartCmd.PersistentFlags().StringVar(
+		&daemonToken,
+		"daemon-token",
+		daemonToken,
+		"daemon token",
 	)
 }
