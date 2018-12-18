@@ -1,6 +1,6 @@
 workflow "Lint, test, & build" {
   on = "push"
-  resolves = ["Push"]
+  resolves = ["Build"]
 }
 
 action "Tools" {
