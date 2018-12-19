@@ -5,7 +5,7 @@ workflow "Lint, test, & build" {
 
 action "Install Dependencies" {
   uses = "./.github/actions/golang"
-  args = ["make", "deps"]
+  args = ["deps"]
   env = {
     GOPATH = "/github/home"
   }
