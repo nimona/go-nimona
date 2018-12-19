@@ -3,19 +3,39 @@ workflow "Lint, test, & build" {
   resolves = ["Push Container"]
 }
 
+action "Install Dependencies" {
+  uses = "./.github/actions/golang"
+  args = ["make", "deps"]
+  env = {
+    GOPATH = "/github/home"
+  }
+}
+
 action "Run Linters" {
+  needs = ["Install Dependencies"]
   uses = "./.github/actions/golang"
   args = ["lint"]
+  env = {
+    GOPATH = "/github/home"
+  }
 }
 
 action "Run Tests" {
+  needs = ["Install Dependencies"]
   uses = "./.github/actions/golang"
   args = ["test"]
+  env = {
+    GOPATH = "/github/home"
+  }
 }
 
 action "Build Binaries" {
+  needs = ["Install Dependencies"]
   uses = "./.github/actions/golang"
   args = ["build"]
+  env = {
+    GOPATH = "/github/home"
+  }
 }
 
 action "Build Container" {
