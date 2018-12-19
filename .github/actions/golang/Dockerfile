@@ -9,6 +9,7 @@ LABEL "com.github.actions.color"="green-dark"
 LABEL "com.github.actions.name"="Nimona lint, test, and build"
 LABEL "com.github.actions.description"="This is an Action to lint and test nimona."
 
+RUN "which go"
 RUN "go get -u github.com/goreleaser/goreleaser"
 RUN "go get -u github.com/golangci/golangci-lint/cmd/golangci-lint"
 
