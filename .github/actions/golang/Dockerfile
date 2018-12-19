@@ -9,4 +9,7 @@ LABEL "com.github.actions.color"="green-dark"
 LABEL "com.github.actions.name"="Nimona lint, test, and build"
 LABEL "com.github.actions.description"="This is an Action to lint and test nimona."
 
+RUN "make deps"
+RUN "make tools"
+
 ENTRYPOINT ["make"]
