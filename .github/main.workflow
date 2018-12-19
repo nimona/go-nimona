@@ -14,7 +14,7 @@ action "Install Dependencies" {
 action "Run Linters" {
   needs = ["Install Dependencies"]
   uses = "./.github/actions/golang"
-  args = ["tools", "&&", "make", "lint"]
+  args = ["tools-and-lint"]
   env = {
     GOPATH = "/github/home"
   }
