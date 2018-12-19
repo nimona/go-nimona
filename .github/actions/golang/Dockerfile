@@ -1,4 +1,4 @@
-FROM golang:1.11
+FROM golang:1.11.4
 
 LABEL "name"="Nimona lint, test, and build"
 LABEL "maintainer"="George Antoniadis <george@noodles.gr>"
