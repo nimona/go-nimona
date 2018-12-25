@@ -92,7 +92,6 @@ var buildCmd = &cobra.Command{
 			_, bn := filepath.Split(pkg)
 			args := []string{
 				"build",
-				"-mod=vendor",
 				"-tags=release",
 				"-a",
 				"-ldflags",

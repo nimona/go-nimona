@@ -17,13 +17,10 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Running go generate")
 
-		env := []string{
-			"GOFLAGS=-mod=vendor",
-		}
+		env := []string{}
 
 		genArgs := []string{
 			"generate",
-			"-mod=vendor",
 			"./...",
 		}
 
