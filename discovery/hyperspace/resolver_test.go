@@ -23,30 +23,25 @@ func TestResolver(t *testing.T) {
 	k2, n2, x2 := newPeer(t)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:", k0.GetPublicKey().HashBase58())
-	fmt.Println("k1:", k1.GetPublicKey().HashBase58())
-	fmt.Println("k2:", k2.GetPublicKey().HashBase58())
+	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), n0.GetPeerInfo().Addresses)
+	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), n1.GetPeerInfo().Addresses)
+	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), n2.GetPeerInfo().Addresses)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
 	d0, err := NewResolver(k0, n0, x0, []string{})
 	assert.NoError(t, err)
-
 	err = n0.Resolver().AddProvider(d0)
 	assert.NoError(t, err)
 
-	ba := []string{}
-	ba = append(ba, n1.GetPeerInfo().Addresses...)
-	ba = append(ba, n2.GetPeerInfo().Addresses...)
+	ba := n0.GetPeerInfo().Addresses
 
 	d1, err := NewResolver(k1, n1, x1, ba)
 	assert.NoError(t, err)
-
 	err = n1.Resolver().AddProvider(d1)
 	assert.NoError(t, err)
 
 	d2, err := NewResolver(k2, n2, x2, ba)
 	assert.NoError(t, err)
-
 	err = n2.Resolver().AddProvider(d2)
 	assert.NoError(t, err)
 
@@ -122,7 +117,7 @@ func TestResolver(t *testing.T) {
 }
 
 func newPeer(t *testing.T) (*crypto.Key, net.Network, net.Exchange) {
-	tp, err := ioutil.TempDir("", "nimona-test-dht")
+	tp, err := ioutil.TempDir("", "nimona-test-resolver")
 	assert.NoError(t, err)
 
 	kp := filepath.Join(tp, "key.cbor")

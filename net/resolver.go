@@ -33,7 +33,7 @@ func parseSendOptions(opts ...ResolverOption) *resolverOptions {
 // Resolver interface
 type Resolver interface {
 	AddProvider(provider ResolverProvider) error
-	Resolve(q *peers.PeerInfoRequest, options ...ResolverOption) (*peers.PeerInfo, error)
+	Resolve(q *peers.PeerInfoRequest, options ...ResolverOption) ([]*peers.PeerInfo, error)
 	Add(v *peers.PeerInfo)
 	// AddPersistent(v *peers.PeerInfo)
 }
@@ -62,7 +62,7 @@ type resolver struct {
 }
 
 // Resolve goes through the given providers until one returns something
-func (r *resolver) Resolve(q *peers.PeerInfoRequest, opts ...ResolverOption) (*peers.PeerInfo, error) {
+func (r *resolver) Resolve(q *peers.PeerInfoRequest, opts ...ResolverOption) ([]*peers.PeerInfo, error) {
 	cfg := parseSendOptions(opts...)
 	if !cfg.Local {
 		r.providersLock.RLock()
@@ -83,11 +83,11 @@ func (r *resolver) Resolve(q *peers.PeerInfoRequest, opts ...ResolverOption) (*p
 	r.cacheLock.RLock()
 	defer r.cacheLock.RUnlock()
 	if res, ok := r.cacheTemp[q.SignerKeyHash]; ok && res != nil {
-		return res, nil
+		return []*peers.PeerInfo{res}, nil
 	}
 
 	if res, ok := r.cachePersistent[q.SignerKeyHash]; ok && res != nil {
-		return res, nil
+		return []*peers.PeerInfo{res}, nil
 	}
 
 	return nil, errors.New("could not resolve")

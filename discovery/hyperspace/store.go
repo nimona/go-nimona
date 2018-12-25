@@ -2,34 +2,49 @@ package hyperspace
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/james-bowman/sparse"
 
 	"nimona.io/go/peers"
 )
 
+type storeValue struct {
+	vector   *sparse.Vector
+	peerInfo *peers.PeerInfo
+}
+
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		peers: map[*sparse.Vector]*peers.PeerInfo{},
+		peers: map[string]*storeValue{},
 	}
 }
 
 // Store holds peer capabilities with their vectors
 type Store struct {
-	peers map[*sparse.Vector]*peers.PeerInfo
+	lock  sync.RWMutex
+	peers map[string]*storeValue
 }
 
 // Add peer capabilities to store
 func (s *Store) Add(cs ...*peers.PeerInfo) {
+	s.lock.Lock()
 	for _, c := range cs {
 		v := Vectorise(getPeerInfoRequest(c))
-		s.peers[v] = c
+		s.peers[c.SignerKey.HashBase58()] = &storeValue{
+			vector:   v,
+			peerInfo: c,
+		}
 	}
+	s.lock.Unlock()
 }
 
 // FindClosest returns peers that closest resemble the query
 func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	qv := Vectorise(q)
 
 	// fmt.Println("-------- looking for", q)
@@ -43,13 +58,13 @@ func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
 	}
 
 	r := []kv{}
-	for v, c := range s.peers {
-		d := CosineSimilarity(qv, v)
+	for _, v := range s.peers {
+		d := CosineSimilarity(qv, v.vector)
 		// d := SimpleSimilarity(qv, v)
 		r = append(r, kv{
 			distance:  d,
-			vector:    v,
-			peerInfos: c,
+			vector:    v.vector,
+			peerInfos: v.peerInfo,
 		})
 		// fmt.Println("--- distance from", v, "is", d)
 	}
@@ -70,4 +85,24 @@ func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
 	}
 
 	return rs
+}
+
+// FindExact returns peers that match query authority or peer
+func (s *Store) FindExact(q *peers.PeerInfoRequest) []*peers.PeerInfo {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	ps := []*peers.PeerInfo{}
+	for _, v := range s.peers {
+		p := v.peerInfo
+		if q.AuthorityKeyHash != "" && q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
+			ps = append(ps, p)
+			continue
+		}
+		if q.SignerKeyHash != "" && q.SignerKeyHash == p.SignerKey.HashBase58() {
+			ps = append(ps, p)
+			continue
+		}
+	}
+	return ps
 }

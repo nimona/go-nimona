@@ -18,18 +18,23 @@ func TestStoreSimpleQuery(t *testing.T) {
 	cs := []*peers.PeerInfo{
 		&peers.PeerInfo{
 			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 		},
 		&peers.PeerInfo{
 			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 		},
 		&peers.PeerInfo{
 			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 		},
 		&peers.PeerInfo{
 			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 		},
 		&peers.PeerInfo{
 			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
 		},
 	}
 
@@ -38,6 +43,43 @@ func TestStoreSimpleQuery(t *testing.T) {
 	for _, q := range cs {
 		rs := s.FindClosest(getPeerInfoRequest(q))
 		assert.Equal(t, q, rs[0])
+	}
+}
+
+func TestStoreFindExact(t *testing.T) {
+	s := NewStore()
+
+	cs := []*peers.PeerInfo{
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
+		},
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
+		},
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
+		},
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
+		},
+		&peers.PeerInfo{
+			AuthorityKey: getRandKey(),
+			SignerKey:    getRandKey(),
+		},
+	}
+
+	s.Add(cs...)
+
+	for _, c := range cs {
+		q := &peers.PeerInfoRequest{
+			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
+		}
+		rs := s.FindClosest(q)
+		assert.Equal(t, c.AuthorityKey.HashBase58(), rs[0].AuthorityKey.HashBase58())
 	}
 }
 
@@ -244,6 +286,7 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 				uuid.NewV4().String(),
 				uuid.NewV4().String(),
 			},
+			SignerKey: getRandKey(),
 		})
 	}
 
@@ -260,17 +303,24 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	}
 }
 
-func TestStoreManyPeers(t *testing.T) {
-	testMultiplePeersMultipleContent(t, 10000, 100, 10)
+func TestStoreLowNumbers(t *testing.T) {
+	testMultiplePeersMultipleContent(t, 100, 100, 10)
 }
 
-func TestStoreManyContentIDs(t *testing.T) {
-	testMultiplePeersMultipleContent(t, 100, 10000, 10)
-}
+// func TestStoreManyPeers(t *testing.T) {
+// 	testMultiplePeersMultipleContent(t, 10000, 100, 10)
+// }
 
-func TestStoreManyPeersManyContentIDs(t *testing.T) {
-	testMultiplePeersMultipleContent(t, 1000, 1000, 100)
-}
+// func TestStoreManyContentIDs(t *testing.T) {
+// 	testMultiplePeersMultipleContent(t, 100, 10000, 10)
+// }
+
+// func TestStoreManyPeersManyContentIDs(t *testing.T) {
+// 	if testing.Short() {
+// 		t.Skip("skipping annoyingly long 1000x1000 store test in short mode")
+// 	}
+// 	testMultiplePeersMultipleContent(t, 1000, 1000, 100)
+// }
 
 func testMultiplePeersMultipleContent(t *testing.T, nPeers, nContent, nCheck int) {
 	if nCheck > nPeers {
@@ -286,6 +336,7 @@ func testMultiplePeersMultipleContent(t *testing.T, nPeers, nContent, nCheck int
 		}
 		checkIDs[i] = cIDs[0]
 		c := &peers.PeerInfo{
+			SignerKey:    getRandKey(),
 			AuthorityKey: getRandKey(),
 			ContentIDs:   cIDs,
 		}
