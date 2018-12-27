@@ -6,13 +6,18 @@ import (
 	"log"
 	"os"
 
-	"nimona.io/go/primitives"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
+)
+
+var (
+	typeConnectionEvent = (ConnectionEvent{}).GetType()
+	typeBlockEvent      = (BlockEvent{}).GetType()
 )
 
 type Exchanger interface {
-	Send(ctx context.Context, o *primitives.Block, address string,
-		opts ...primitives.SendOption) error
-	Handle(contentType string, h func(o *primitives.Block) error) (func(), error)
+	Send(ctx context.Context, o *encoding.Object, address string) error
+	Handle(contentType string, h func(o *encoding.Object) error) (func(), error)
 }
 
 const connectionEventType = "nimona.io/telemetry.connection"
@@ -23,7 +28,7 @@ var DefaultClient *metrics
 type metrics struct {
 	exchange     Exchanger
 	colletor     Collector
-	localPeer    *primitives.Key
+	localPeer    *crypto.Key
 	statsAddress string
 }
 
@@ -45,7 +50,7 @@ func init() {
 	}
 }
 
-func NewTelemetry(exchange Exchanger, localPeer *primitives.Key,
+func NewTelemetry(exchange Exchanger, localPeer *crypto.Key,
 	statsAddress string) error {
 
 	// create the default client
@@ -74,22 +79,24 @@ func SendEvent(ctx context.Context, event Collectable) error {
 	return DefaultClient.SendEvent(ctx, event)
 }
 
-func (t *metrics) SendEvent(ctx context.Context,
-	event Collectable) error {
-	return t.exchange.Send(ctx,
-		event.Block(), t.statsAddress, primitives.SignWith(t.localPeer))
+func (t *metrics) SendEvent(ctx context.Context, event Collectable) error {
+	return t.exchange.Send(ctx, event.ToObject(), t.statsAddress)
 }
 
-func (t *metrics) handleBlock(block *primitives.Block) error {
-	switch block.Type {
-	case connectionEventType:
-		event := &ConnectionEvent{}
-		event.FromBlock(block)
-		t.colletor.Collect(event)
-	case blockEventType:
-		event := &BlockEvent{}
-		event.FromBlock(block)
-		t.colletor.Collect(event)
+func (t *metrics) handleBlock(o *encoding.Object) error {
+	switch o.GetType() {
+	case typeConnectionEvent:
+		v := &ConnectionEvent{}
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		t.colletor.Collect(v)
+	case typeBlockEvent:
+		v := &BlockEvent{}
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		t.colletor.Collect(v)
 	}
 
 	return nil

@@ -2,6 +2,9 @@ package net
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,57 +12,89 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/davecgh/go-spew/spew"
 
 	igd "github.com/emersion/go-upnp-igd"
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
-	"nimona.io/go/codec"
+	"nimona.io/go/crypto"
+	"nimona.io/go/encoding"
 	"nimona.io/go/log"
 	"nimona.io/go/peers"
-	"nimona.io/go/primitives"
 )
 
-// Networker interface for mocking Network
-type Networker interface {
+var (
+	useUPNP = false
+)
+
+func init() {
+	useUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
+}
+
+// Network interface
+type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
+	GetPeerInfo() *peers.PeerInfo
+	Resolver() Resolver
 }
 
 // NewNetwork creates a new p2p network using an address book
-func NewNetwork(addressBook *peers.AddressBook) (*Network, error) {
-	return &Network{
-		addressBook: addressBook,
+func NewNetwork(key *crypto.Key, hostname string, relayAddresses []string) (Network, error) {
+	if key == nil {
+		return nil, errors.New("missing key")
+	}
+
+	if _, ok := key.Materialize().(*ecdsa.PrivateKey); !ok {
+		return nil, errors.New("network currently requires an ecdsa private key")
+	}
+
+	return &network{
+		key:            key,
+		resolver:       NewResolver(),
+		hostname:       hostname,
+		relayAddresses: relayAddresses,
 	}, nil
 }
 
-// Network allows dialing and listening for p2p connections
-type Network struct {
-	addressBook *peers.AddressBook
+// network allows dialing and listening for p2p connections
+type network struct {
+	key            *crypto.Key
+	resolver       Resolver
+	hostname       string
+	addressesLock  sync.RWMutex
+	addresses      []string
+	relayAddresses []string
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *Network) Dial(ctx context.Context, address string) (*Connection, error) {
+func (n *network) Dial(ctx context.Context, address string) (*Connection, error) {
 	logger := log.Logger(ctx)
 
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		logger.Debug("dialing peer", zap.String("peer", address))
 		peerID := strings.Replace(address, "peer:", "", 1)
-		peerInfo, err := n.addressBook.GetPeerInfo(peerID)
+		if peerID == n.key.GetPublicKey().HashBase58() {
+			return nil, errors.New("cannot dial our own peer")
+		}
+		logger.Debug("dialing peer", zap.String("peer", address))
+		q := &peers.PeerInfoRequest{
+			SignerKeyHash: peerID,
+		}
+		ps, err := n.Resolver().Resolve(q)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(peerInfo.Addresses) == 0 {
+		if len(ps) == 0 || len(ps[0].Addresses) == 0 {
 			return nil, ErrNoAddresses
 		}
 
-		for _, addr := range peerInfo.Addresses {
+		// TODO we should probably try all results
+		for _, addr := range ps[0].Addresses {
 			conn, err := n.Dial(ctx, addr)
 			if err == nil {
 				return conn, nil
@@ -68,11 +103,14 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 
 		return nil, ErrAllAddressesFailed
 
-	case "tcp":
-		addr := strings.Replace(address, "tcp:", "", 1)
+	case "tcps":
+		config := tls.Config{
+			InsecureSkipVerify: true,
+		}
+		addr := strings.Replace(address, "tcps:", "", 1)
 		dialer := net.Dialer{Timeout: time.Second}
 		logger.Debug("dialing", zap.String("address", addr))
-		tcpConn, err := dialer.DialContext(ctx, "tcp", addr)
+		tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
 		if err != nil {
 			return nil, err
 		}
@@ -86,46 +124,47 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 			RemoteID: "", // we don't really know who the other side is
 		}
 
-		signer := n.addressBook.GetLocalPeerKey()
 		nonce := RandStringBytesMaskImprSrc(8)
 		syn := &HandshakeSyn{
 			Nonce:    nonce,
-			PeerInfo: n.addressBook.GetLocalPeerInfo(),
+			PeerInfo: n.GetPeerInfo(),
 		}
-		synBlock := syn.Block()
-		if err := primitives.Sign(synBlock, signer); err != nil {
+		so := syn.ToObject()
+		if err := crypto.Sign(so, n.key); err != nil {
 			return nil, err
 		}
 
-		if err := Write(synBlock, conn); err != nil {
+		if err := Write(so, conn); err != nil {
 			return nil, err
 		}
 
-		blockSynAck, err := Read(conn)
+		synAckObj, err := Read(conn)
 		if err != nil {
 			return nil, err
 		}
 
 		synAck := &HandshakeSynAck{}
-		synAck.FromBlock(blockSynAck)
+		if err := synAck.FromObject(synAckObj); err != nil {
+			return nil, err
+		}
+
 		if synAck.Nonce != nonce {
 			return nil, errors.New("invalid handhshake.syn-ack")
 		}
 
 		// store who is on the other side - peer id
-		conn.RemoteID = synAck.Signature.Key.Thumbprint()
-		if err := n.addressBook.PutPeerInfo(synAck.PeerInfo); err != nil {
-			log.DefaultLogger.Panic("could not add remote peer", zap.Error(err))
-		}
+		conn.RemoteID = synAck.Signer.HashBase58()
+		n.Resolver().Add(synAck.PeerInfo)
 
 		ack := &HandshakeAck{
 			Nonce: nonce,
 		}
-		ackBlock := ack.Block()
-		if err := primitives.Sign(ackBlock, signer); err != nil {
+		ao := ack.ToObject()
+		if err := crypto.Sign(ao, n.key); err != nil {
 			return nil, err
 		}
-		if err := Write(ackBlock, conn); err != nil {
+
+		if err := Write(ao, conn); err != nil {
 			return nil, err
 		}
 
@@ -139,27 +178,35 @@ func (n *Network) Dial(ctx context.Context, address string) (*Connection, error)
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (n *Network) Listen(ctx context.Context, address string) (chan *Connection, error) {
+func (n *network) Listen(ctx context.Context, address string) (chan *Connection, error) {
 	logger := log.Logger(ctx).Named("network")
-	tcpListener, err := net.Listen("tcp", address)
+	cert, err := crypto.GenerateCertificate(n.key)
 	if err != nil {
 		return nil, err
 	}
+
+	now := time.Now()
+	config := tls.Config{
+		Certificates: []tls.Certificate{*cert},
+	}
+	config.NextProtos = []string{"nimona/1"} // TODO(geoah) is this of any actual use?
+	config.Time = func() time.Time { return now }
+	config.Rand = rand.Reader
+	tcpListener, err := tls.Listen("tcp", address, &config)
+	if err != nil {
+		return nil, err
+	}
+
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 	logger.Info("Listening and service nimona", zap.Int("port", port))
 	addresses := GetAddresses(tcpListener)
 	devices := make(chan igd.Device, 10)
 
-	if n.addressBook.LocalHostname != "" {
-		addresses = append(addresses, fmtAddress(n.addressBook.LocalHostname, port))
+	if n.hostname != "" {
+		addresses = append(addresses, fmtAddress(n.hostname, port))
 	}
 
-	upnp := true
-	upnpFlag := os.Getenv("UPNP")
-	if upnpFlag != "" {
-		upnp, _ = strconv.ParseBool(upnpFlag)
-	}
-	if upnp {
+	if useUPNP {
 		logger.Info("Trying to find external IP and open port")
 		go func() {
 			if err := igd.Discover(devices, 2*time.Second); err != nil {
@@ -183,11 +230,12 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
-	n.addressBook.AddLocalPeerAddress(addresses...)
+	n.addAddress(addresses...)
+	n.addAddress(n.relayAddresses...)
 
 	cconn := make(chan *Connection, 10)
 	go func() {
-		signer := n.addressBook.GetLocalPeerKey()
+
 		for {
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
@@ -201,56 +249,60 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 				RemoteID: "unknown: handshaking",
 			}
 
-			blockSyn, err := Read(conn)
+			synObj, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			// TODO check type
-
 			syn := &HandshakeSyn{}
-			syn.FromBlock(blockSyn)
-			nonce := syn.Nonce
-
-			// store the peer on the other side
-			if err := n.addressBook.PutPeerInfo(syn.PeerInfo); err != nil {
-				log.DefaultLogger.Panic("could not add remote peer", zap.Error(err))
-			}
-
-			synAck := &HandshakeSynAck{
-				Nonce:    nonce,
-				PeerInfo: n.addressBook.GetLocalPeerInfo(),
-			}
-			synAckBlock := synAck.Block()
-			if err := primitives.Sign(synAckBlock, signer); err != nil {
-				log.DefaultLogger.Warn("could not sigh for syn ack block", zap.Error(err))
+			if err := syn.FromObject(synObj); err != nil {
+				log.DefaultLogger.Warn("could not convert obj to syn")
 				// TODO close conn?
 				continue
 			}
-			if err := Write(synAckBlock, conn); err != nil {
+
+			// store the remote peer
+			n.Resolver().Add(syn.PeerInfo)
+
+			synAck := &HandshakeSynAck{
+				Nonce:    syn.Nonce,
+				PeerInfo: n.GetPeerInfo(),
+			}
+			sao := synAck.ToObject()
+			if err := crypto.Sign(sao, n.key); err != nil {
+				log.DefaultLogger.Warn("could not sign for syn ack block", zap.Error(err))
+				// TODO close conn?
+				continue
+			}
+			if err := Write(sao, conn); err != nil {
 				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			blockAck, err := Read(conn)
+			ackObj, err := Read(conn)
 			if err != nil {
 				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
 
-			ack := &HandshakeAck{}
-			ack.FromBlock(blockAck)
-			if ack.Nonce != nonce {
+			ack := &HandshakeSynAck{}
+			if err := ack.FromObject(ackObj); err != nil {
+				// TODO close conn?
+				log.DefaultLogger.Warn("could not convert obj to syn ack")
+				continue
+			}
+
+			if ack.Nonce != syn.Nonce {
 				log.DefaultLogger.Warn("validating syn to ack nonce failed")
 				// TODO close conn?
 				continue
 			}
 
-			conn.RemoteID = ack.Signature.Key.Thumbprint()
+			conn.RemoteID = ack.Signer.HashBase58()
 			cconn <- conn
 		}
 	}()
@@ -258,16 +310,21 @@ func (n *Network) Listen(ctx context.Context, address string) (chan *Connection,
 	return cconn, nil
 }
 
-func Write(p *primitives.Block, conn *Connection) error {
+func Write(o *encoding.Object, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
-	if p == nil {
+	if o == nil {
 		log.DefaultLogger.Error("block for fw cannot be nil")
 		return errors.New("missing block")
 	}
 
-	b, err := primitives.Marshal(p)
+	b, err := encoding.Marshal(o)
 	if err != nil {
 		return err
+	}
+
+	if os.Getenv("DEBUG_BLOCKS") == "true" {
+		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
+		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
 	}
 
 	if _, err := conn.Conn.Write(b); err != nil {
@@ -275,60 +332,87 @@ func Write(p *primitives.Block, conn *Connection) error {
 	}
 
 	SendBlockEvent(
-		"incoming",
-		p.Type,
+		"outgoing",
+		o.GetType(),
 		len(b),
 	)
 
-	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(primitives.BlockToMap(p), "", "  ")
-		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
-	}
 	return nil
 }
 
-func Read(conn *Connection) (*primitives.Block, error) {
+func Read(conn *Connection) (*encoding.Object, error) {
 	logger := log.DefaultLogger
 
-	pDecoder := ucodec.NewDecoder(conn.Conn, codec.CborHandler())
-	b := &primitives.Block{}
-	if err := pDecoder.Decode(&b); err != nil {
+	pDecoder := ucodec.NewDecoder(conn.Conn, encoding.RawCborHandler())
+	r := &ucodec.Raw{}
+	if err := pDecoder.Decode(r); err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			spew.Dump(b)
 			logger.Error("Recovered while processing", zap.Any("r", r))
 		}
 	}()
 
-	d, err := b.Digest()
+	o, err := encoding.NewObjectFromBytes([]byte(*r))
 	if err != nil {
 		return nil, err
 	}
 
-	if b.Signature != nil {
-		if err := primitives.Verify(b.Signature, d); err != nil {
+	if o.GetSignature() != nil {
+		if err := crypto.Verify(o); err != nil {
 			return nil, err
 		}
 	} else {
 		fmt.Println("--------------------------------------------------------")
 		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
 		fmt.Println("--------------------------------------------------------")
-		fmt.Println("-----", b.Type)
-		fmt.Println("-----", b.Payload)
+		fmt.Println("-----", o.GetType())
+		fmt.Println("-----", o)
 		fmt.Println("--------------------------------------------------------")
 	}
 
 	SendBlockEvent(
 		"incoming",
-		b.Type,
+		o.GetType(),
 		pDecoder.NumBytesRead(),
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		bs, _ := json.MarshalIndent(primitives.BlockToMap(b), "", "  ")
-		logger.Info(string(bs), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
+		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
 	}
-	return b, nil
+	return o, nil
+}
+
+func (n *network) Resolver() Resolver {
+	return n.resolver
+}
+
+func (n *network) addAddress(addrs ...string) {
+	n.addressesLock.Lock()
+	if n.addresses == nil {
+		n.addresses = []string{}
+	}
+	n.addresses = append(n.addresses, addrs...)
+	n.addressesLock.Unlock()
+}
+
+// GetPeerInfo returns the local peer info
+func (n *network) GetPeerInfo() *peers.PeerInfo {
+	addrs := []string{}
+	n.addressesLock.RLock()
+	addrs = append(addrs, n.addresses...)
+	n.addressesLock.RUnlock()
+	// TODO cache peer info and reuse
+	p := &peers.PeerInfo{
+		Addresses: addrs,
+		SignerKey: n.key.GetPublicKey(),
+	}
+	o := p.ToObject()
+	if err := crypto.Sign(o, n.key); err != nil {
+		panic(err)
+	}
+	p.FromObject(o)
+	return p
 }

@@ -1,0 +1,35 @@
+{
+    "go.buildOnSave": "package",
+    "go.buildTags": "dev",
+    "go.coverOnSave": true,
+    "go.coverOnSingleTest": true,
+    "go.coverOnTestPackage": true,
+    "go.formatTool": "goformat",
+    "go.lintTool": "golangci-lint",
+    "go.vetOnSave": "off",
+    "go.testFlags": [
+        "-v",
+        "-race",
+        "-failfast",
+        "-parallel 2"
+    ],
+    "go.testEnvVars": {
+        "BIND_LOCAL": "true",
+        "GO111MODULE": "on"
+    },
+    "terminal.integrated.env.osx": {
+        "BIND_LOCAL": "true",
+        "GO111MODULE": "on"
+    },
+    "terminal.integrated.env.windows": {
+        "BIND_LOCAL": "true",
+        "GO111MODULE": "on"
+    },
+    "terminal.integrated.env.linux": {
+        "BIND_LOCAL": "true",
+        "GO111MODULE": "on"
+    },
+    "editor.rulers": [
+        80,
+    ],
+}

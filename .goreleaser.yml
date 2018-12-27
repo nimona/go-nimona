@@ -1,8 +1,15 @@
 project_name: nimona
 builds:
-  - main: cmd/nimona/main.go
+  - main: ./cmd/nimona
     binary: nimona
-    flags: -a
+    env:
+      - GO111MODULE=on
+    flags: 
+      - -a
+      - -mod=vendor
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
     goos:
       - darwin
       - freebsd
@@ -11,7 +18,6 @@ builds:
     goarch:
       - amd64
       - 386
-      - arm
     goarm:
       - 6
       - 7
@@ -23,12 +29,7 @@ archive:
   format_overrides:
     - goos: windows
       format: zip
-before:
-  hooks:
-    - make clean
-git:
-  short_hash: true
 snapshot:
-  name_template: dev-{{.Commit}}
+  name_template: dev-{{.ShortCommit}}
 release:
   draft: true

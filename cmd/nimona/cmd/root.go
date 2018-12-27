@@ -8,21 +8,22 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	resty "gopkg.in/resty.v1"
 )
 
 var (
-	version = "dev"
-	commit  = "unknown"
-	date    = "unknown"
+	Version = "dev"
+	Commit  = "unknown"
+	Date    = "unknown"
 
 	env              string
 	cfgFile          string
 	apiAddress       string
+	apiToken         string
 	announceHostname string
 	returnRaw        bool
 
@@ -38,6 +39,7 @@ var rootCmd = &cobra.Command{
 			SetHostURL(apiAddress).
 			SetTimeout(10*time.Second).
 			SetHeader("Content-Type", "application/cbor").
+			SetHeader("Authorization", apiToken).
 			SetContentLength(true).
 			SetRESTMode().
 			SetRedirectPolicy(resty.FlexibleRedirectPolicy(5))
@@ -72,6 +74,13 @@ func init() {
 		"api",
 		"http://localhost:8030/api/v1",
 		"api address",
+	)
+
+	rootCmd.PersistentFlags().StringVar(
+		&apiToken,
+		"api-token",
+		"",
+		"api token",
 	)
 
 	rootCmd.PersistentFlags().StringVar(
