@@ -11,9 +11,9 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/log"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/log"
 )
 
 func (api *API) HandleGetStreams(c *gin.Context) {

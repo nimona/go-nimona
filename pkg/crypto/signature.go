@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/encoding"
 )
 
 var (
@@ -24,7 +24,7 @@ const (
 	AlgorithmObjectHash = "OH_ES256"
 )
 
-//go:generate go run nimona.io/go/generators/objectify -schema /signature -type Signature -out signature_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /signature -type Signature -out signature_generated.go
 
 // Signature block (container), currently supports only ES256
 type Signature struct {

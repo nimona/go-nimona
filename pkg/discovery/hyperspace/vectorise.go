@@ -3,7 +3,7 @@ package hyperspace
 import (
 	"github.com/james-bowman/sparse"
 
-	"nimona.io/go/peers"
+	"nimona.io/pkg/peers"
 )
 
 // Vectorise returns a sparse vector from a PeerInfoRequest

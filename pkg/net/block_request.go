@@ -1,10 +1,10 @@
 package net
 
 import (
-	"nimona.io/go/crypto"
+	"nimona.io/pkg/crypto"
 )
 
-//go:generate go run nimona.io/go/generators/objectify -schema /block-request -type BlockRequest -out block_request_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /block-request -type BlockRequest -out block_request_generated.go
 
 // BlockRequest payload for BlockRequestType
 type BlockRequest struct {

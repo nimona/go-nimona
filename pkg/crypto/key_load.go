@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"nimona.io/go/encoding"
-	"nimona.io/go/log"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/log"
 )
 
 // LoadKey returns a key from a file if it exists, else will create it

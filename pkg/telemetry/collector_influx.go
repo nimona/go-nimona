@@ -9,7 +9,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"go.uber.org/zap"
 
-	"nimona.io/go/log"
+	"nimona.io/pkg/log"
 )
 
 // InfluxCollector implements the Collector interface with a InlfuxDB storage

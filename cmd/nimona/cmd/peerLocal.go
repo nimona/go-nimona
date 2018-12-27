@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"nimona.io/go/encoding"
-	"nimona.io/go/peers"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/peers"
 )
 
 // peerLocalCmd represents the peerLocal command

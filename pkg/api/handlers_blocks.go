@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/storage"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/storage"
 )
 
 func (api *API) HandleGetBlocks(c *gin.Context) {

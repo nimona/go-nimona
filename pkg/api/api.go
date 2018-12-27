@@ -9,15 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"nimona.io/go/log"
+	"nimona.io/pkg/log"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	nnet "nimona.io/go/net"
-	"nimona.io/go/storage"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	nnet "nimona.io/pkg/net"
+	"nimona.io/pkg/storage"
 )
 
-//go:generate go run vfsgendev -source="nimona.io/go/api".Assets
+//go:generate go run vfsgendev -source="nimona.io/pkg/api".Assets
 
 // API for HTTP
 type API struct {

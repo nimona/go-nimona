@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ugorji/go/codec"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/encoding"
 )
 
 // Cbor contains the given interface object.

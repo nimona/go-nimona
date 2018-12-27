@@ -7,17 +7,17 @@ import (
 	"sync"
 	"time"
 
-	"nimona.io/go/peers"
+	"nimona.io/pkg/peers"
 
 	"github.com/gobwas/glob"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/log"
-	"nimona.io/go/storage"
-	"nimona.io/go/utils"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/log"
+	"nimona.io/pkg/storage"
+	"nimona.io/pkg/utils"
 )
 
 var (

@@ -7,9 +7,9 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/base58"
-	"nimona.io/go/crypto"
-	"nimona.io/go/peers"
+	"nimona.io/pkg/base58"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peers"
 )
 
 func TestStoreSimpleQuery(t *testing.T) {

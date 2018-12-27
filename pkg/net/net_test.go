@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"nimona.io/go/peers"
+	"nimona.io/pkg/peers"
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/storage"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/storage"
 )
 
 func TestNetResolver(t *testing.T) {

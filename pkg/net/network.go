@@ -19,10 +19,10 @@ import (
 	ucodec "github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/log"
-	"nimona.io/go/peers"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/log"
+	"nimona.io/pkg/peers"
 )
 
 var (

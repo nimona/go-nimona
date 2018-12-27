@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/encoding"
 )
 
 var (

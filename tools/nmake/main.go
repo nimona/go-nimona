@@ -1,6 +1,6 @@
 package main
 
-import "nimona.io/go/cmd/nmake/cmd"
+import "nimona.io/tools/nmake/cmd"
 
 var (
 	Version = "dev"

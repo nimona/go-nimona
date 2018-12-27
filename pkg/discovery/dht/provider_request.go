@@ -1,11 +1,11 @@
 package dht
 
 import (
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/provider.request -type ProviderRequest -out provider_request_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider.request -type ProviderRequest -out provider_request_generated.go
 
 // ProviderRequest payload
 type ProviderRequest struct {

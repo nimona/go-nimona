@@ -1,7 +1,8 @@
-NMAKE = go run nimona.io/go/cmd/nmake
-DAEMN = go run nimona.io/go/cmd/nimona
+NMAKE = go run nimona.io/tools/nmake
+DAEMN = go run nimona.io/cmd/nimona
 
 export GO111MODULE=on
+export GOFLAGS=-mod=vendor
 
 .PHONY: build
 build:

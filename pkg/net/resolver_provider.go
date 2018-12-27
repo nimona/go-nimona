@@ -1,6 +1,6 @@
 package net
 
-import "nimona.io/go/peers"
+import "nimona.io/pkg/peers"
 
 // ResolverProvider defines the interface for a resolver provider, eg our DHT
 type ResolverProvider interface {

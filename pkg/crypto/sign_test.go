@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/go/base58"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/base58"
+	"nimona.io/pkg/encoding"
 )
 
 func TestSignAndVerify(t *testing.T) {

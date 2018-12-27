@@ -16,7 +16,7 @@ RUN go run mage.go build
 
 FROM alpine:3.8
 
-COPY --from=builder /go/src/nimona.io/go/bin/* /
+COPY --from=builder /go/src/nimona.io/pkg/bin/* /
 
 ENTRYPOINT ["./nimona"]
 CMD ["daemon"]

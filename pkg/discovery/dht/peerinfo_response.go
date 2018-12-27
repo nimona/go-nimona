@@ -1,12 +1,12 @@
 package dht
 
 import (
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/peers"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/peers"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/peerinfo.response -type PeerInfoResponse -out peerinfo_response_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/peerinfo.response -type PeerInfoResponse -out peerinfo_response_generated.go
 
 type PeerInfoResponse struct {
 	RequestID    string            `json:"requestID,omitempty"`

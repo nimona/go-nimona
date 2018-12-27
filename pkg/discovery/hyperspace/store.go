@@ -6,7 +6,7 @@ import (
 
 	"github.com/james-bowman/sparse"
 
-	"nimona.io/go/peers"
+	"nimona.io/pkg/peers"
 )
 
 type storeValue struct {

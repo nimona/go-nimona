@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/encoding"
 )
 
 func TestKeyMaterialize(t *testing.T) {

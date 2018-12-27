@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"nimona.io/go/peers"
+	"nimona.io/pkg/peers"
 )
 
 // resolverOptions is the complete options structure for the resolver

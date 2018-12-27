@@ -1,11 +1,11 @@
 package dht
 
 import (
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -out peerinfo_request_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -out peerinfo_request_generated.go
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {

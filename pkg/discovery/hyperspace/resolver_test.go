@@ -11,10 +11,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
-	"nimona.io/go/net"
-	"nimona.io/go/storage"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/net"
+	"nimona.io/pkg/storage"
 )
 
 func TestResolver(t *testing.T) {

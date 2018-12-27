@@ -1,10 +1,10 @@
 package peers
 
 import (
-	"nimona.io/go/crypto"
+	"nimona.io/pkg/crypto"
 )
 
-//go:generate go run nimona.io/go/generators/objectify -schema /peer -type PeerInfo -out peerinfo_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /peer -type PeerInfo -out peerinfo_generated.go
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {

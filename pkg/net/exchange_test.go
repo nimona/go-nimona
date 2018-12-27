@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/encoding"
 )
 
 func TestSendSuccess(t *testing.T) {

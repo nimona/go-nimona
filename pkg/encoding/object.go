@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	"nimona.io/go/base58"
+	"nimona.io/pkg/base58"
 )
 
 // Typed interface

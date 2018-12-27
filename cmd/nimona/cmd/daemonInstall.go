@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
-	"nimona.io/go/cmd/nimona/cmd/providers"
+	"nimona.io/cmd/nimona/cmd/providers"
 )
 
 var (

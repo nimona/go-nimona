@@ -1,6 +1,6 @@
 package crypto
 
-import "nimona.io/go/encoding"
+import "nimona.io/pkg/encoding"
 
 // Sign any block (container) with given key and return a signature block (container)
 func Sign(o *encoding.Object, key *Key) error {
