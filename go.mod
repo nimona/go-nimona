@@ -36,5 +36,5 @@ require (
 	golang.org/x/tools v0.0.0-20181220024903-92cdcd90bf52
 	gonum.org/v1/gonum v0.0.0-20181121035319-3f7ecaa7e8ca
 	gopkg.in/resty.v1 v1.10.3
-	nimona.io/go v0.2.1
+	nimona.io/go v0.2.1 // indirect
 )
