@@ -1,9 +1,9 @@
 package example
 
-import "nimona.io/go/encoding"
+import "nimona.io/pkg/encoding"
 
-//go:generate go run nimona.io/go/generators/objectify -schema test/inn -type InnerFoo -out inner_foo_generated.go
-//go:generate go run nimona.io/go/generators/objectify -schema test/foo -type Foo -out foo_generated.go
+//go:generate go run nimona.io/tools/objectify -schema test/inn -type InnerFoo -in example.go -out inner_foo_generated.go
+//go:generate go run nimona.io/tools/objectify -schema test/foo -type Foo -in example.go -out foo_generated.go
 
 type InnerFoo struct {
 	InnerBar      string      `fluffy:"inner_bar"`

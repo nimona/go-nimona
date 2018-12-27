@@ -6,7 +6,7 @@ import (
 	"nimona.io/pkg/peers"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider.response -type ProviderResponse -out provider_response_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider.response -type ProviderResponse -in provider_response.go -out provider_response_generated.go
 
 type ProviderResponse struct {
 	RequestID    string            `json:"requestID,omitempty"`

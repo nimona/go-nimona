@@ -4,7 +4,7 @@ import (
 	"nimona.io/pkg/crypto"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /block-request -type BlockRequest -out block_request_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /block-request -type BlockRequest -in block_request.go -out block_request_generated.go
 
 // BlockRequest payload for BlockRequestType
 type BlockRequest struct {

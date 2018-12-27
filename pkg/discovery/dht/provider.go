@@ -5,7 +5,7 @@ import (
 	"nimona.io/pkg/encoding"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider -type Provider -out provider_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider -type Provider -in provider.go -out provider_generated.go
 
 // Provider payload
 type Provider struct {

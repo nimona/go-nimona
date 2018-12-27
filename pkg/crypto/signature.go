@@ -24,7 +24,7 @@ const (
 	AlgorithmObjectHash = "OH_ES256"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /signature -type Signature -out signature_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /signature -type Signature -in signature.go -out signature_generated.go
 
 // Signature block (container), currently supports only ES256
 type Signature struct {

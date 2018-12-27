@@ -476,6 +476,7 @@ honnef.co/go/tools v0.0.0-20181108184350-ae8f1f9103cc/go.mod h1:rf3lG4BRIbNafJWh
 labix.org/v2/mgo v0.0.0-20140701140051-000000000287/go.mod h1:Lg7AYkt1uXJoR9oeSZ3W/8IXLdvOfIITgZnommstyz4=
 launchpad.net/gocheck v0.0.0-20140225173054-000000000087/go.mod h1:hj7XX3B/0A+80Vse0e+BUHsHMTEhd0O4cpUHr/e/BUM=
 nimona.io/go v0.2.1 h1:Vr2blJZl6mndEHecA84dq7y1IEo0cb3jRrKTdeuXI5I=
+nimona.io/go v0.2.1/go.mod h1:IAzYqFUcUylfocYlu7SiVtCnSvb4ewZspG2fEX/FVXI=
 sourcegraph.com/sourcegraph/go-diff v0.0.0-20171119081133-3f415a150aec h1:wAAdENPXC7bE1oxY4VqSDdhaA+XQ8TgQHsZMMnrXjEk=
 sourcegraph.com/sourcegraph/go-diff v0.0.0-20171119081133-3f415a150aec/go.mod h1:R09mWeb9JcPbO+A3cYDc11xjz0wp6r9+KnqdqROAoRU=
 sourcegraph.com/sqs/pbtypes v0.0.0-20160107090929-4d1b9dc7ffc3 h1:hXy8YsgVLDz5mlngKhNHQhAsAGrSp3dlXZN4b0/4UUI=

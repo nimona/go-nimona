@@ -5,7 +5,7 @@ import (
 	"nimona.io/pkg/encoding"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -out peerinfo_request_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -in peerinfo_request.go -out peerinfo_request_generated.go
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {

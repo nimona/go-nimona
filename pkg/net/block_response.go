@@ -5,7 +5,7 @@ import (
 	"nimona.io/pkg/encoding"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /block-response -type BlockResponse -out block_response_generated.go
+//go:generate go run nimona.io/tools/objectify -schema /block-response -type BlockResponse -in block_response.go -out block_response_generated.go
 
 // BlockResponse -
 type BlockResponse struct {
