@@ -5,7 +5,7 @@ import (
 	"nimona.io/go/peers"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /handshake.syn -type HandshakeSyn -out handshake_syn_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /handshake.syn -type HandshakeSyn -out handshake_syn_generated.go
 
 type HandshakeSyn struct {
 	RawObject *encoding.Object `json:"@"`

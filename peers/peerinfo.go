@@ -2,15 +2,16 @@ package peers
 
 import (
 	"nimona.io/go/crypto"
-	"nimona.io/go/encoding"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /peer -type PeerInfo -out peerinfo_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /peer -type PeerInfo -out peerinfo_generated.go
 
 // PeerInfo holds the information exchange needs to connect to a remote peer
 type PeerInfo struct {
-	RawObject    *encoding.Object  `json:"@"`
 	Addresses    []string          `json:"addresses"`
+	Protocols    []string          `json:"protocols"`
+	ContentIDs   []string          `json:"contentIDs"`
+	ContentTypes []string          `json:"contentTypes"`
 	AuthorityKey *crypto.Key       `json:"@authority"`
 	SignerKey    *crypto.Key       `json:"@signer"`
 	Signature    *crypto.Signature `json:"@signature"`

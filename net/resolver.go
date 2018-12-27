@@ -33,7 +33,7 @@ func parseSendOptions(opts ...ResolverOption) *resolverOptions {
 // Resolver interface
 type Resolver interface {
 	AddProvider(provider ResolverProvider) error
-	Resolve(key string, options ...ResolverOption) (*peers.PeerInfo, error)
+	Resolve(q *peers.PeerInfoRequest, options ...ResolverOption) ([]*peers.PeerInfo, error)
 	Add(v *peers.PeerInfo)
 	// AddPersistent(v *peers.PeerInfo)
 }
@@ -62,26 +62,34 @@ type resolver struct {
 }
 
 // Resolve goes through the given providers until one returns something
-func (r *resolver) Resolve(key string, opts ...ResolverOption) (*peers.PeerInfo, error) {
+func (r *resolver) Resolve(q *peers.PeerInfoRequest, opts ...ResolverOption) ([]*peers.PeerInfo, error) {
 	cfg := parseSendOptions(opts...)
 	if !cfg.Local {
 		r.providersLock.RLock()
 		for _, p := range r.providers {
-			if res, err := p.Resolve(key); err == nil && res != nil {
+			if res, err := p.Resolve(q); err == nil && res != nil {
 				r.providersLock.RUnlock()
 				return res, nil
 			}
 		}
 		r.providersLock.RUnlock()
 	}
+
+	// we only cache peer infos by their peer id
+	if q.SignerKeyHash == "" {
+		return nil, errors.New("could not resolve")
+	}
+
 	r.cacheLock.RLock()
 	defer r.cacheLock.RUnlock()
-	if res, ok := r.cacheTemp[key]; ok && res != nil {
-		return res, nil
+	if res, ok := r.cacheTemp[q.SignerKeyHash]; ok && res != nil {
+		return []*peers.PeerInfo{res}, nil
 	}
-	if res, ok := r.cachePersistent[key]; ok && res != nil {
-		return res, nil
+
+	if res, ok := r.cachePersistent[q.SignerKeyHash]; ok && res != nil {
+		return []*peers.PeerInfo{res}, nil
 	}
+
 	return nil, errors.New("could not resolve")
 }
 

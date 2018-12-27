@@ -81,16 +81,20 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 			return nil, errors.New("cannot dial our own peer")
 		}
 		logger.Debug("dialing peer", zap.String("peer", address))
-		peerInfo, err := n.Resolver().Resolve(peerID)
+		q := &peers.PeerInfoRequest{
+			SignerKeyHash: peerID,
+		}
+		ps, err := n.Resolver().Resolve(q)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(peerInfo.Addresses) == 0 {
+		if len(ps) == 0 || len(ps[0].Addresses) == 0 {
 			return nil, ErrNoAddresses
 		}
 
-		for _, addr := range peerInfo.Addresses {
+		// TODO we should probably try all results
+		for _, addr := range ps[0].Addresses {
 			conn, err := n.Dial(ctx, addr)
 			if err == nil {
 				return conn, nil

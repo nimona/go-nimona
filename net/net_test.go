@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"nimona.io/go/peers"
+
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/go/crypto"
@@ -19,12 +21,16 @@ func TestNetResolver(t *testing.T) {
 	n1.Resolver().Add(n2.GetPeerInfo())
 	n2.Resolver().Add(n1.GetPeerInfo())
 
-	p2, err := n1.Resolver().Resolve(n2.key.GetPublicKey().HashBase58())
+	q1 := &peers.PeerInfoRequest{SignerKeyHash: n2.key.GetPublicKey().HashBase58()}
+	ps2, err := n1.Resolver().Resolve(q1)
+	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.GetPublicKey(), p2.SignerKey)
 	assert.Equal(t, n2.key.GetPublicKey().HashBase58(), p2.SignerKey.GetPublicKey().HashBase58())
 
-	p1, err := n2.Resolver().Resolve(n1.key.GetPublicKey().HashBase58())
+	q2 := &peers.PeerInfoRequest{SignerKeyHash: n1.key.GetPublicKey().HashBase58()}
+	ps1, err := n2.Resolver().Resolve(q2)
+	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.GetPublicKey(), p1.SignerKey)
 	assert.Equal(t, n1.key.GetPublicKey().HashBase58(), p1.SignerKey.HashBase58())

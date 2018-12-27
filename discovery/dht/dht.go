@@ -176,7 +176,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	// TODO handle and log error
 
 	if peerInfo == nil {
-		peerInfo, _ = r.net.Resolver().Resolve(payload.PeerID, net.Local())
+		// peerInfo, _ = r.net.Resolver().Resolve(payload.PeerID, net.Local())
 		// TODO handle and log error
 	}
 

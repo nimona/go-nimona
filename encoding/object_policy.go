@@ -1,6 +1,6 @@
 package encoding
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /policy -type Policy -out policy_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /policy -type Policy -out policy_generated.go
 
 // Policy for object
 type Policy struct {

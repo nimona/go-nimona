@@ -73,11 +73,6 @@ func (_m *MockExchange) Listen(ctx context.Context, addrress string) (net.Listen
 	return r0, r1
 }
 
-// RegisterDiscoverer provides a mock function with given fields: discovery
-func (_m *MockExchange) RegisterDiscoverer(discovery Discoverer) {
-	_m.Called(discovery)
-}
-
 // Send provides a mock function with given fields: ctx, block, recipients
 func (_m *MockExchange) Send(ctx context.Context, block interface{}, recipients ...string) error {
 	_va := make([]interface{}, len(recipients))

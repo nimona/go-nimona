@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/go/peers"
+
 	"github.com/gobwas/glob"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -181,6 +183,10 @@ func (w *exchange) Handle(typePatern string, h func(o *encoding.Object) error) (
 }
 
 func (w *exchange) HandleConnection(conn *Connection) error {
+	if err := Write(w.net.GetPeerInfo().ToObject(), conn); err != nil {
+		return err
+	}
+
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteID))
 	for {
 		// TODO use decoder
@@ -415,14 +421,19 @@ func (w *exchange) Send(ctx context.Context, o *encoding.Object, address string)
 		return errors.New("cannot send obj to self")
 	}
 
-	peer, err := w.net.Resolver().Resolve(recipient)
+	q := &peers.PeerInfoRequest{
+		SignerKeyHash: recipient,
+	}
+	peers, err := w.net.Resolver().Resolve(q)
 	if err != nil {
 		return err
 	}
 
-	if peer == nil {
-		w.logger.Warn("wtf")
+	if len(peers) == 0 {
+		return ErrNoAddresses
 	}
+
+	peer := peers[0]
 
 	// TODO(geoah) make sure fw block is signed
 	fw := &BlockForwardRequest{

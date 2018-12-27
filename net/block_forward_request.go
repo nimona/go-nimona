@@ -5,7 +5,7 @@ import (
 	"nimona.io/go/encoding"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /block-forward-request -type BlockForwardRequest -out block_forward_request_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /block-forward-request -type BlockForwardRequest -out block_forward_request_generated.go
 
 // BlockForwardRequest is the payload for proxied blocks
 type BlockForwardRequest struct {

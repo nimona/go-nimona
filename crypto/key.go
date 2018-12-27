@@ -25,7 +25,7 @@ const (
 	P521 string = "P-521"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /key -type Key -out key_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /key -type Key -out key_generated.go
 
 // Key defines the minimal interface for each of the
 // key types.

@@ -12,7 +12,7 @@ import (
 
 	"nimona.io/go/api"
 	"nimona.io/go/crypto"
-	"nimona.io/go/dht"
+	"nimona.io/go/discovery/hyperspace"
 	"nimona.io/go/net"
 	"nimona.io/go/storage"
 	"nimona.io/go/telemetry"
@@ -89,10 +89,10 @@ var daemonStartCmd = &cobra.Command{
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
 		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
-		dht, _ := dht.NewDHT(k, n, x, bootstrapAddresses)
+		hsr, _ := hyperspace.NewResolver(k, n, x, bootstrapAddresses)
 		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
-		if err := n.Resolver().AddProvider(dht); err != nil {
+		if err := n.Resolver().AddProvider(hsr); err != nil {
 			return err
 		}
 
@@ -113,8 +113,7 @@ var daemonStartCmd = &cobra.Command{
 		}
 		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		a := api.New(k, n, x, dht, dpr, Version, Commit, Date, daemonToken)
-
+		a := api.New(k, n, x, dpr, Version, Commit, Date, daemonToken)
 		return a.Serve(netAddress)
 	},
 }
