@@ -5,7 +5,7 @@ import (
 	"nimona.io/go/peers"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /handshake.syn-ack -type HandshakeSynAck -out handshake_syn_ack_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /handshake.syn-ack -type HandshakeSynAck -out handshake_syn_ack_generated.go
 
 // HandshakeSynAck is the response in the second leg of our net handshake
 type HandshakeSynAck struct {

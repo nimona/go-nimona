@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-//go:generate go run nimona.io/go/cmd/objectify -schema /mandate -type Mandate -out mandate_generated.go
+//go:generate go run nimona.io/go/generators/objectify -schema /mandate -type Mandate -out mandate_generated.go
 
 // Mandate to give authority to a aubject to perform certain actions on the
 // authority's behalf

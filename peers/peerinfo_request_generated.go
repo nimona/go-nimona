@@ -10,12 +10,11 @@ import (
 )
 
 // ToMap returns a map compatible with f12n
-func (s PeerInfo) ToMap() map[string]interface{} {
+func (s PeerInfoRequest) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
-		"@ctx:s": "/peer",
-	}
-	if s.Addresses != nil {
-		m["addresses:a<s>"] = s.Addresses
+		"@ctx:s":      "/peer.request",
+		"authority:s": s.AuthorityKeyHash,
+		"signer:s":    s.SignerKeyHash,
 	}
 	if s.Protocols != nil {
 		m["protocols:a<s>"] = s.Protocols
@@ -26,35 +25,30 @@ func (s PeerInfo) ToMap() map[string]interface{} {
 	if s.ContentTypes != nil {
 		m["contentTypes:a<s>"] = s.ContentTypes
 	}
-	if s.AuthorityKey != nil {
-		m["@authority:o"] = s.AuthorityKey.ToMap()
+	if s.RequesterAuthorityKey != nil {
+		m["@authority:o"] = s.RequesterAuthorityKey.ToMap()
 	}
-	if s.SignerKey != nil {
-		m["@signer:o"] = s.SignerKey.ToMap()
+	if s.RequesterSignerKey != nil {
+		m["@signer:o"] = s.RequesterSignerKey.ToMap()
 	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
+	if s.RequestSignature != nil {
+		m["@signature:o"] = s.RequestSignature.ToMap()
 	}
 	return m
 }
 
 // ToObject returns a f12n object
-func (s PeerInfo) ToObject() *encoding.Object {
+func (s PeerInfoRequest) ToObject() *encoding.Object {
 	return encoding.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
-func (s *PeerInfo) FromMap(m map[string]interface{}) error {
-	s.Addresses = []string{}
-	if ss, ok := m["addresses:a<s>"].([]interface{}); ok {
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.Addresses = append(s.Addresses, v)
-			}
-		}
+func (s *PeerInfoRequest) FromMap(m map[string]interface{}) error {
+	if v, ok := m["authority:s"].(string); ok {
+		s.AuthorityKeyHash = v
 	}
-	if v, ok := m["addresses:a<s>"].([]string); ok {
-		s.Addresses = v
+	if v, ok := m["signer:s"].(string); ok {
+		s.SignerKeyHash = v
 	}
 	s.Protocols = []string{}
 	if ss, ok := m["protocols:a<s>"].([]interface{}); ok {
@@ -90,47 +84,47 @@ func (s *PeerInfo) FromMap(m map[string]interface{}) error {
 		s.ContentTypes = v
 	}
 	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
-		s.AuthorityKey = &crypto.Key{}
-		if err := s.AuthorityKey.FromMap(v); err != nil {
+		s.RequesterAuthorityKey = &crypto.Key{}
+		if err := s.RequesterAuthorityKey.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.AuthorityKey = v
+		s.RequesterAuthorityKey = v
 	}
 	if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.AuthorityKey = v
+		s.RequesterAuthorityKey = v
 	}
 	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
-		s.SignerKey = &crypto.Key{}
-		if err := s.SignerKey.FromMap(v); err != nil {
+		s.RequesterSignerKey = &crypto.Key{}
+		if err := s.RequesterSignerKey.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.SignerKey = v
+		s.RequesterSignerKey = v
 	}
 	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.SignerKey = v
+		s.RequesterSignerKey = v
 	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
+		s.RequestSignature = &crypto.Signature{}
+		if err := s.RequestSignature.FromMap(v); err != nil {
 			return err
 		}
 	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
+		s.RequestSignature = v
 	}
 	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
+		s.RequestSignature = v
 	}
 	return nil
 }
 
 // FromObject populates the struct from a f12n object
-func (s *PeerInfo) FromObject(o *encoding.Object) error {
+func (s *PeerInfoRequest) FromObject(o *encoding.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
-func (s PeerInfo) GetType() string {
-	return "/peer"
+func (s PeerInfoRequest) GetType() string {
+	return "/peer.request"
 }

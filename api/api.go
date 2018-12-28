@@ -12,13 +12,12 @@ import (
 	"nimona.io/go/log"
 
 	"nimona.io/go/crypto"
-	"nimona.io/go/dht"
 	"nimona.io/go/encoding"
 	nnet "nimona.io/go/net"
 	"nimona.io/go/storage"
 )
 
-//go:generate go run -tags=dev assets_generator.go
+//go:generate go run vfsgendev -source="nimona.io/go/api".Assets
 
 // API for HTTP
 type API struct {
@@ -26,7 +25,6 @@ type API struct {
 	key        *crypto.Key
 	net        nnet.Network
 	exchange   nnet.Exchange
-	dht        *dht.DHT
 	blockStore storage.Storage
 	localKey   string
 	token      string
@@ -39,7 +37,7 @@ type API struct {
 }
 
 // New HTTP API
-func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
+func New(k *crypto.Key, n nnet.Network, x nnet.Exchange,
 	bls storage.Storage, version, commit, buildDate, token string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -49,7 +47,6 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 		key:          k,
 		net:          n,
 		exchange:     x,
-		dht:          dht,
 		blockStore:   bls,
 		version:      version,
 		commit:       commit,
@@ -69,9 +66,6 @@ func New(k *crypto.Key, n nnet.Network, x nnet.Exchange, dht *dht.DHT,
 	peers := router.Group("/api/v1/peers")
 	peers.GET("/", api.HandleGetPeers)
 	peers.GET("/:peerID", api.HandleGetPeer)
-
-	providers := router.Group("/api/v1/providers")
-	providers.GET("/", api.HandleGetProviders)
 
 	blocksEnd := router.Group("/api/v1/blocks")
 	blocksEnd.GET("/", api.HandleGetBlocks)
