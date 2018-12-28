@@ -39,7 +39,6 @@ action "Build Binaries" {
 }
 
 action "Build Container" {
-  needs = ["Run Tests", "Run Linters", "Build Binaries"]
   uses = "./.github/actions/docker"
   secrets = ["DOCKER_IMAGE"]
   args = ["build", "Dockerfile"]
@@ -52,7 +51,7 @@ action "Login Dockerhub" {
 }
 
 action "Push Container" {
-  needs = ["Login Dockerhub"]
+  needs = ["Login Dockerhub", "Run Tests", "Run Linters", "Build Binaries"]
   uses = "./.github/actions/docker"
   secrets = ["DOCKER_IMAGE"]
   args = "push"
