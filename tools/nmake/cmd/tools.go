@@ -24,7 +24,7 @@ var toolsCmd = &cobra.Command{
 		info("Installing tools")
 		for _, tool := range tools {
 			extraInfo("* %s", tool)
-			if err := execPipe(env, "go", []string{"get", "-u", tool}, os.Stdout, os.Stderr); err != nil {
+			if err := execPipe(env, "go", []string{"get", tool}, os.Stdout, os.Stderr); err != nil {
 				return err
 			}
 		}
