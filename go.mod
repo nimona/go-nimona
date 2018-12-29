@@ -8,10 +8,9 @@ require (
 	github.com/gin-contrib/cors v0.0.0-20181206035131-7c641a7a7dc5
 	github.com/gin-gonic/gin v1.3.0
 	github.com/gobwas/glob v0.2.3
-	github.com/golangci/golangci-lint v1.12.5
+	github.com/golangci/golangci-lint v1.12.5 // indirect
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
 	github.com/gonum/internal v0.0.0-20181124074243-f884aa714029 // indirect
-	github.com/goreleaser/goreleaser v0.94.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/influxdata/influxdb v1.7.2
 	github.com/james-bowman/sparse v0.0.0-20181210231719-7f40cd8d8b55
@@ -25,7 +24,7 @@ require (
 	github.com/pkg/profile v1.2.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371 // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
+	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1

@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	useVendor bool
+)
+
 // buildCmd represents the daemon command
 var buildCmd = &cobra.Command{
 	Use: "build",
@@ -34,6 +38,9 @@ var buildCmd = &cobra.Command{
 		}
 
 		env := []string{}
+		if useVendor {
+			env = append(env, "GOFLAGS=-mod=vendor")
+		}
 
 		info("Trying to find packages to build")
 		pkgs, err := getPackages()
@@ -111,5 +118,7 @@ var buildCmd = &cobra.Command{
 }
 
 func init() {
+	buildCmd.PersistentFlags().BoolVar(&useVendor, "vendor", false, "use -mod=vendor")
+
 	rootCmd.AddCommand(buildCmd)
 }

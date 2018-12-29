@@ -1,9 +1,24 @@
 FROM golang:1.11.4 AS builder
+
 WORKDIR /src/nimona.io
+
 ADD . .
-RUN go run nimona.io/tools/nmake build
+
+RUN ls -lah .
+
+ENV CGO_ENABLED=0
+ENV GOFLAGS=-mod=vendor
+
+RUN go run nimona.io/tools/nmake build --vendor=true
+RUN cp -r ./bin /bin
+
+###
 
 FROM alpine:3.8
-COPY --from=builder /src/nimona.io/bin/* /
-ENTRYPOINT ["./nimona"]
+
+COPY --from=builder /bin/* /
+
+RUN ls -lah /
+
+ENTRYPOINT ["/nimona"]
 CMD ["daemon"]
