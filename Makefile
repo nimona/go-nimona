@@ -32,8 +32,8 @@ tools:
 	@$(NMAKE) tools
 
 .PHONY: tools-and-lint
-lint: tools
-	@$(NMAKE) lint
+tools-and-lint: tools
+	-@$(NMAKE) lint
 
 .PHONY: run
 run:

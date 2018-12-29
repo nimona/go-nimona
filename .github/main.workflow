@@ -1,59 +1,91 @@
 workflow "Lint, test, & build" {
   on = "push"
-  resolves = ["Push Container"]
+  resolves = [
+    # "go-lint",
+    "go-test",
+    "go-build",
+    # "docker-push",
+  ]
 }
 
-action "Install Dependencies" {
+action "deps" {
   uses = "./.github/actions/golang"
-  args = ["deps"]
+  args = [
+    "deps",
+  ]
   env = {
     GOPATH = "/github/home"
   }
 }
 
-action "Run Linters" {
-  needs = ["Install Dependencies"]
+# action "go-lint" {
+#   needs = [
+#     "deps",
+#   ]
+#   uses = "./.github/actions/golang"
+#   args = [
+#     "lint",
+#   ]
+#   env = {
+#     GOPATH = "/github/home"
+#   }
+# }
+
+action "go-test" {
+  needs = [
+    "deps",
+  ]
   uses = "./.github/actions/golang"
-  args = ["tools-and-lint"]
+  args = [
+    "test",
+  ]
   env = {
     GOPATH = "/github/home"
   }
 }
 
-action "Run Tests" {
-  needs = ["Install Dependencies"]
+action "go-build" {
+  needs = [
+    "deps",
+  ]
   uses = "./.github/actions/golang"
-  args = ["test"]
+  args = [
+    "build",
+  ]
   env = {
     GOPATH = "/github/home"
   }
 }
 
-action "Build Binaries" {
-  needs = ["Install Dependencies"]
-  uses = "./.github/actions/golang"
-  args = ["build"]
-  env = {
-    GOPATH = "/github/home"
-  }
-}
+# action "docker-build" {
+#   needs = [
+#     "deps",
+#   ]
+#   uses = "actions/docker/cli@master"
+#   args = "build -t nimona/nimona-dev ."
+#   env = {
+#     GOPATH = "/github/home"
+#   }
+# }
 
-action "Build Container" {
-  needs = ["Run Tests", "Run Linters", "Build Binaries"]
-  uses = "./.github/actions/docker"
-  secrets = ["DOCKER_IMAGE"]
-  args = ["build", "Dockerfile"]
-}
+# action "docker-login" {
+#   needs = [
+#     "docker-build",
+#   ]
+#   uses = "actions/docker/login@master"
+#   secrets = [
+#     "DOCKER_USERNAME",
+#     "DOCKER_PASSWORD",
+#   ]
+# }
 
-action "Login Dockerhub" {
-  needs = ["Build Container"]
-  uses = "actions/docker/login@master"
-  secrets = ["DOCKER_USERNAME", "DOCKER_PASSWORD"]
-}
-
-action "Push Container" {
-  needs = ["Login Dockerhub"]
-  uses = "./.github/actions/docker"
-  secrets = ["DOCKER_IMAGE"]
-  args = "push"
-}
+# action "docker-push" {
+#   needs = [
+#     "docker-login",
+#     "go-test",
+#     "go-lint",
+#     "go-build",
+#   ]
+#   uses = "actions/docker/cli@master"
+#   args = "push nimona/nimona-dev"
+# }

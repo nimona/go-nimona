@@ -10,6 +10,15 @@ steps:
     run:
       name: Install tools
       command: make tools
+  - &cache-restore
+    restore_cache:
+      keys:
+        - go-mod-v1-{{ checksum "go.sum" }}
+  - &cache-save
+    save_cache:
+      key: go-mod-v1-{{ checksum "go.sum" }}
+      paths:
+        - "/go/pkg/mod"
   - &deps
     run:
       name: Install deps
@@ -19,11 +28,12 @@ jobs:
     <<: *base
     steps:
       - *checkout
+      - *cache-restore
       - *deps
       - *tools
-      - run:
-          name: Run linters
-          command: make lint || true
+      # - run:
+      #     name: Run linters
+      #     command: make lint || true
       - run:
           name: Run tests
           command: make test
@@ -33,10 +43,12 @@ jobs:
       - run:
           name: Test goreleaser
           command: goreleaser --skip-validate --rm-dist --skip-publish
+      - *cache-save
   release:
     <<: *base
     steps:
       - *checkout
+      - *cache-restore
       - *deps
       - *tools
       - run:

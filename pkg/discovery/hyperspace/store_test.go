@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"testing"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/base58"
@@ -16,23 +15,23 @@ func TestStoreSimpleQuery(t *testing.T) {
 	s := NewStore()
 
 	cs := []*peers.PeerInfo{
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
@@ -50,23 +49,23 @@ func TestStoreFindExact(t *testing.T) {
 	s := NewStore()
 
 	cs := []*peers.PeerInfo{
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 		},
@@ -87,7 +86,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 	s := NewStore()
 
 	cs := []*peers.PeerInfo{
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -97,7 +96,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -107,7 +106,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -117,7 +116,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -127,7 +126,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -154,7 +153,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	s := NewStore()
 
 	cs := []*peers.PeerInfo{
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -164,7 +163,7 @@ func TestStoreComplexQuery(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -174,7 +173,7 @@ func TestStoreComplexQuery(t *testing.T) {
 				"not-bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -184,7 +183,7 @@ func TestStoreComplexQuery(t *testing.T) {
 				"bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -194,7 +193,7 @@ func TestStoreComplexQuery(t *testing.T) {
 				"not-bar",
 			},
 		},
-		&peers.PeerInfo{
+		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
 			Protocols: []string{
@@ -276,15 +275,15 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 				"foo",
 			},
 			ContentIDs: []string{
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
-				uuid.NewV4().String(),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
+				base58.Encode(getRandBytes(32)),
 			},
 			SignerKey: getRandKey(),
 		})
@@ -292,7 +291,7 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 
 	s.Add(cs...)
 
-	for _, c := range cs {
+	for _, c := range cs[:10] {
 		q := &peers.PeerInfoRequest{
 			ContentIDs: []string{
 				c.ContentIDs[0],

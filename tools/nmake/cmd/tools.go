@@ -11,9 +11,7 @@ var toolsCmd = &cobra.Command{
 	Use:   "tools",
 	Short: "tools",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env := []string{
-			"GO111MODULE=off",
-		}
+		env := []string{}
 
 		tools := []string{
 			"github.com/goreleaser/goreleaser",
@@ -24,7 +22,7 @@ var toolsCmd = &cobra.Command{
 		info("Installing tools")
 		for _, tool := range tools {
 			extraInfo("* %s", tool)
-			if err := execPipe(env, "go", []string{"get", tool}, os.Stdout, os.Stderr); err != nil {
+			if err := execPipe(env, "go", []string{"install", tool}, os.Stdout, os.Stderr); err != nil {
 				return err
 			}
 		}
