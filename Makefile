@@ -19,9 +19,17 @@ deps:
 generate:
 	@$(NMAKE) generate
 
+.PHONY: install
+install:
+	@$(NMAKE) install
+
 .PHONY: lint
 lint:
 	@$(NMAKE) lint
+
+.PHONY: run
+run:
+	@$(DAEMN)
 
 .PHONY: test
 test:
@@ -34,7 +42,3 @@ tools:
 .PHONY: tools-and-lint
 tools-and-lint: tools
 	-@$(NMAKE) lint
-
-.PHONY: run
-run:
-	@$(DAEMN)
