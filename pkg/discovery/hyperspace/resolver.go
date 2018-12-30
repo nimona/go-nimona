@@ -101,7 +101,7 @@ func (r *Resolver) LookupPeerInfo(ctx context.Context, q *peers.PeerInfoRequest)
 	}
 	ps := r.store.FindClosest(q)
 	for _, p := range ps {
-		r.exchange.Send(ctx, o, "peers:"+p.SignerKey.HashBase58())
+		r.exchange.Send(ctx, o, "peer:"+p.SignerKey.HashBase58())
 	}
 	return nil
 }
