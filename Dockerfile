@@ -7,9 +7,8 @@ ADD . .
 RUN ls -lah .
 
 ENV CGO_ENABLED=0
-ENV GOFLAGS=-mod=vendor
 
-RUN go run nimona.io/tools/nmake build --vendor=true
+RUN go run nimona.io/tools/nmake build
 RUN cp -r ./bin /bin
 
 ###
