@@ -164,7 +164,7 @@ linters-settings:
 
 linters:
   enable:
-    - megacheck
+    # - megacheck
     - govet
   enable-all: false
   disable:

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"nimona.io/go/cmd/nimona/cmd"
+	"nimona.io/cmd/nimona/cmd"
 )
 
 var (

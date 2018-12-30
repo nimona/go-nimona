@@ -10,12 +10,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"nimona.io/go/api"
-	"nimona.io/go/crypto"
-	"nimona.io/go/discovery/hyperspace"
-	"nimona.io/go/net"
-	"nimona.io/go/storage"
-	"nimona.io/go/telemetry"
+	"nimona.io/pkg/api"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery/hyperspace"
+	"nimona.io/pkg/net"
+	"nimona.io/pkg/storage"
+	"nimona.io/pkg/telemetry"
 )
 
 var (

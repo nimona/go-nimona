@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 
-	"nimona.io/go/encoding"
+	"nimona.io/pkg/encoding"
 )
 
 // blockListenCmd represents the blockListen command

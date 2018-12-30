@@ -1,22 +1,23 @@
-FROM golang:1.11-alpine AS builder
+FROM golang:1.11.4 AS builder
 
-RUN apk -U add curl git build-base
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
-WORKDIR /go/src/nimona.io/go
-
-COPY Gopkg.lock .
-COPY Gopkg.toml .
-RUN dep ensure --vendor-only
+WORKDIR /src/nimona.io
 
 ADD . .
 
-RUN go run mage.go build
+RUN ls -lah .
 
+ENV CGO_ENABLED=0
+
+RUN go run nimona.io/tools/nmake build
+RUN cp -r ./bin /bin
+
+###
 
 FROM alpine:3.8
 
-COPY --from=builder /go/src/nimona.io/go/bin/* /
+COPY --from=builder /bin/* /
 
-ENTRYPOINT ["./nimona"]
+RUN ls -lah /
+
+ENTRYPOINT ["/nimona"]
 CMD ["daemon"]
