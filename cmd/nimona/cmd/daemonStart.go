@@ -24,7 +24,6 @@ var (
 	daemonPort             int
 	daemonAPIPort          int
 	daemonAnnounceHostname string
-	daemonEnableRelaying   bool
 	daemonEnableMetrics    bool
 	daemonToken            string
 
@@ -98,10 +97,19 @@ var daemonStartCmd = &cobra.Command{
 
 		storagePath := path.Join(dataDir, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
+
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
 		x, err := net.NewExchange(k, n, dpr, bind)
-		hsr, _ := hyperspace.NewResolver(k, n, x, bootstrapAddresses)
-		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
+		if err != nil {
+			return err
+		}
+
+		hsr, err := hyperspace.NewResolver(k, n, x, bootstrapAddresses)
+		if err != nil {
+			return err
+		}
+
+		_ = telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
 		if err := n.Resolver().AddProvider(hsr); err != nil {
 			return err
@@ -142,7 +150,7 @@ func init() {
 		"",
 		"daemon data directory",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.data_dir",
 		daemonStartCmd.PersistentFlags().Lookup("data-dir"),
 	)
@@ -154,7 +162,7 @@ func init() {
 		0,
 		"peer port",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.port",
 		daemonStartCmd.PersistentFlags().Lookup("port"),
 	)
@@ -166,7 +174,7 @@ func init() {
 		daemonToken,
 		"daemon token",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.token",
 		daemonStartCmd.PersistentFlags().Lookup("token"),
 	)
@@ -177,7 +185,7 @@ func init() {
 		"",
 		"set and announce local dns address",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.announce_hostname",
 		daemonStartCmd.PersistentFlags().Lookup("announce-hostname"),
 	)
@@ -188,7 +196,7 @@ func init() {
 		8030,
 		"api port",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.api_port",
 		daemonStartCmd.PersistentFlags().Lookup("api-port"),
 	)
@@ -200,7 +208,7 @@ func init() {
 		false,
 		"enable sending anonymous metrics",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.metrics",
 		daemonStartCmd.PersistentFlags().Lookup("metrics"),
 	)
@@ -211,7 +219,7 @@ func init() {
 		daemonBootstrapAddresses,
 		"bootstrap addresses",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.bootstraps",
 		daemonStartCmd.PersistentFlags().Lookup("bootstraps"),
 	)
@@ -222,7 +230,7 @@ func init() {
 		daemonRelayAddresses,
 		"relay addresses",
 	)
-	viper.BindPFlag(
+	_ = viper.BindPFlag(
 		"daemon.relays",
 		daemonStartCmd.PersistentFlags().Lookup("relays"),
 	)
