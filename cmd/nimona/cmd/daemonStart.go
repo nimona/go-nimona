@@ -133,7 +133,7 @@ var daemonStartCmd = &cobra.Command{
 }
 
 func init() {
-	daemon.AddCommand(daemonStartCmd)
+	daemonCmd.AddCommand(daemonStartCmd)
 
 	daemonStartCmd.PersistentFlags().StringVarP(
 		&daemonDataDir,

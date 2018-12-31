@@ -5,7 +5,7 @@ import (
 )
 
 // daemon represents the daemon command
-var daemon = &cobra.Command{
+var daemonCmd = &cobra.Command{
 	Use: "daemon",
 	Aliases: []string{
 		"daemons",
@@ -15,5 +15,5 @@ var daemon = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(daemon)
+	rootCmd.AddCommand(daemonCmd)
 }
