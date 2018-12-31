@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"nimona.io/pkg/api"
 	"nimona.io/pkg/crypto"
@@ -19,16 +20,17 @@ import (
 )
 
 var (
-	daemonConfigPath     string
-	daemonPort           int
-	daemonAPIPort        int
-	daemonEnableRelaying bool
-	daemonEnableMetrics  bool
-	daemonToken          string
+	daemonDataDir          string
+	daemonPort             int
+	daemonAPIPort          int
+	daemonAnnounceHostname string
+	daemonEnableRelaying   bool
+	daemonEnableMetrics    bool
+	daemonToken            string
 
-	relayAddresses []string
+	daemonRelayAddresses []string
 
-	bootstrapAddresses = []string{
+	daemonBootstrapAddresses = []string{
 		// "tcps:andromeda.nimona.io:21013",
 		// "tcps:borealis.nimona.io:21013",
 		"tcps:cassiopeia.nimona.io:21013",
@@ -53,21 +55,25 @@ var daemonStartCmd = &cobra.Command{
 	Short: "Start a peer as a daemon",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if daemonConfigPath == "" {
+		dataDir := viper.GetString("daemon.data_dir")
+		bootstrapAddresses := viper.GetStringSlice("daemon.bootstraps")
+		relayAddresses := viper.GetStringSlice("daemon.relays")
+
+		if dataDir == "" {
 			usr, _ := user.Current()
-			daemonConfigPath = path.Join(usr.HomeDir, ".nimona")
+			dataDir = path.Join(usr.HomeDir, ".nimona")
 		}
 
-		if err := os.MkdirAll(daemonConfigPath, 0777); err != nil {
+		if err := os.MkdirAll(dataDir, 0777); err != nil {
 			return errors.Wrap(err, "could not create config dir")
 		}
 
-		// addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// addressBook, err := peers.NewAddressBook(dataDir)
 		// if err != nil {
-		// 	return errors.Wrap(err, "could not load key")
+		//		return errors.Wrap(err, "could not load key")
 		// }
 
-		k, err := crypto.LoadKey(filepath.Join(daemonConfigPath, "key.cbor"))
+		k, err := crypto.LoadKey(filepath.Join(dataDir, "key.cbor"))
 		if err != nil {
 			return errors.Wrap(err, "could not load or create peer key")
 		}
@@ -81,23 +87,25 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("No bootstrap nodes provided")
 		}
 
-		n, err := net.NewNetwork(k, announceHostname, relayAddresses)
+		n, err := net.NewNetwork(
+			k,
+			viper.GetString("daemon.announce_hostname"),
+			relayAddresses,
+		)
 		if err != nil {
 			return err
 		}
 
-		storagePath := path.Join(daemonConfigPath, "storage")
+		storagePath := path.Join(dataDir, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
-		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
+		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
+		x, err := net.NewExchange(k, n, dpr, bind)
 		hsr, _ := hyperspace.NewResolver(k, n, x, bootstrapAddresses)
 		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
 		if err := n.Resolver().AddProvider(hsr); err != nil {
 			return err
 		}
-
-		netAddress := fmt.Sprintf("0.0.0.0:%d", daemonAPIPort)
-		apiAddress := fmt.Sprintf("http://localhost:%d", daemonAPIPort)
 
 		cmd.Println("Started daemon")
 		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
@@ -111,28 +119,67 @@ var daemonStartCmd = &cobra.Command{
 		} else {
 			cmd.Println("  * No addresses available")
 		}
-		cmd.Println("* HTTP API address:\n  *", apiAddress)
 
-		a := api.New(k, n, x, dpr, Version, Commit, Date, daemonToken)
-		return a.Serve(netAddress)
+		apiServer := api.New(
+			k, n, x, dpr,
+			Version, Commit, Date,
+			viper.GetString("daemon.token"),
+		)
+
+		apiPort := viper.GetInt("daemon.api_port")
+		cmd.Printf("* HTTP API address:\n  * http://localhost:%d\n", apiPort)
+		return apiServer.Serve(fmt.Sprintf("0.0.0.0:%d", apiPort))
 	},
 }
 
 func init() {
 	daemon.AddCommand(daemonStartCmd)
 
-	daemonStartCmd.PersistentFlags().StringVar(
-		&daemonConfigPath,
-		"config-path",
+	daemonStartCmd.PersistentFlags().StringVarP(
+		&daemonDataDir,
+		"data-dir",
+		"d",
 		"",
-		"daemon config path",
+		"daemon data directory",
+	)
+	viper.BindPFlag(
+		"daemon.data_dir",
+		daemonStartCmd.PersistentFlags().Lookup("data-dir"),
 	)
 
-	daemonStartCmd.PersistentFlags().IntVar(
+	daemonStartCmd.PersistentFlags().IntVarP(
 		&daemonPort,
 		"port",
+		"p",
 		0,
 		"peer port",
+	)
+	viper.BindPFlag(
+		"daemon.port",
+		daemonStartCmd.PersistentFlags().Lookup("port"),
+	)
+
+	daemonStartCmd.PersistentFlags().StringVarP(
+		&daemonToken,
+		"token",
+		"t",
+		daemonToken,
+		"daemon token",
+	)
+	viper.BindPFlag(
+		"daemon.token",
+		daemonStartCmd.PersistentFlags().Lookup("token"),
+	)
+
+	daemonStartCmd.PersistentFlags().StringVar(
+		&daemonAnnounceHostname,
+		"announce-hostname",
+		"",
+		"set and announce local dns address",
+	)
+	viper.BindPFlag(
+		"daemon.announce_hostname",
+		daemonStartCmd.PersistentFlags().Lookup("announce-hostname"),
 	)
 
 	daemonStartCmd.PersistentFlags().IntVar(
@@ -141,32 +188,42 @@ func init() {
 		8030,
 		"api port",
 	)
+	viper.BindPFlag(
+		"daemon.api_port",
+		daemonStartCmd.PersistentFlags().Lookup("api-port"),
+	)
 
-	daemonStartCmd.PersistentFlags().BoolVar(
+	daemonStartCmd.PersistentFlags().BoolVarP(
 		&daemonEnableMetrics,
 		"metrics",
+		"m",
 		false,
 		"enable sending anonymous metrics",
 	)
+	viper.BindPFlag(
+		"daemon.metrics",
+		daemonStartCmd.PersistentFlags().Lookup("metrics"),
+	)
 
 	daemonStartCmd.PersistentFlags().StringSliceVar(
-		&bootstrapAddresses,
+		&daemonBootstrapAddresses,
 		"bootstraps",
-		bootstrapAddresses,
+		daemonBootstrapAddresses,
 		"bootstrap addresses",
 	)
-
-	daemonStartCmd.PersistentFlags().StringSliceVar(
-		&relayAddresses,
-		"relay-addresses",
-		relayAddresses,
-		"relay addresses",
+	viper.BindPFlag(
+		"daemon.bootstraps",
+		daemonStartCmd.PersistentFlags().Lookup("bootstraps"),
 	)
 
-	daemonStartCmd.PersistentFlags().StringVar(
-		&daemonToken,
-		"daemon-token",
-		daemonToken,
-		"daemon token",
+	daemonStartCmd.PersistentFlags().StringSliceVar(
+		&daemonRelayAddresses,
+		"relays",
+		daemonRelayAddresses,
+		"relay addresses",
+	)
+	viper.BindPFlag(
+		"daemon.relays",
+		daemonStartCmd.PersistentFlags().Lookup("relays"),
 	)
 }

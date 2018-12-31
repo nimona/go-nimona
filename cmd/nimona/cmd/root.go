@@ -20,12 +20,11 @@ var (
 	Commit  = "unknown"
 	Date    = "unknown"
 
-	env              string
-	cfgFile          string
-	apiAddress       string
-	apiToken         string
-	announceHostname string
-	returnRaw        bool
+	env        string
+	cfgFile    string
+	apiAddress string
+	apiToken   string
+	returnRaw  bool
 
 	restClient *resty.Client
 )
@@ -92,13 +91,6 @@ func init() {
 		"api token",
 	)
 	viper.BindPFlag("api_token", rootCmd.PersistentFlags().Lookup("api-token"))
-
-	rootCmd.PersistentFlags().StringVar(
-		&announceHostname,
-		"announce-hostname",
-		"",
-		"set and announce local dns address",
-	)
 
 	rootCmd.PersistentFlags().StringVarP(
 		&env,
