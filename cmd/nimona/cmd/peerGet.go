@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
@@ -32,7 +33,7 @@ var peerGetCmd = &cobra.Command{
 			return err
 		}
 
-		if returnRaw {
+		if viper.GetBool("raw") {
 			bs, err := json.MarshalIndent(peer, "", "  ")
 			if err != nil {
 				return err
