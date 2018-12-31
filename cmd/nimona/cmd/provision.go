@@ -23,10 +23,10 @@ var (
 	ErrNoPlatform = errors.New("missing platform")
 )
 
-// daemonInstallCmd represents the daemon command
-var daemonInstallCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install a peer as a daemon in a remote provider",
+// provisionCmd represents the daemon command
+var provisionCmd = &cobra.Command{
+	Use:   "provision",
+	Short: "Provision a daemon peer on a remote provider",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		switch platform {
@@ -68,45 +68,45 @@ var daemonInstallCmd = &cobra.Command{
 }
 
 func init() {
-	daemon.AddCommand(daemonInstallCmd)
+	rootCmd.AddCommand(provisionCmd)
 
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&platform,
 		"platform",
 		"do",
 		"target platform",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&hostname,
 		"hostname",
 		"",
 		"peer hostname",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&dockerTag,
 		"docker-tag",
 		"",
 		"docker tag",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&token,
 		"token",
 		"",
 		"platform access token",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&sshFingerprint,
 		"ssh-fingerprint",
 		"",
 		"ssh fingerprint",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&size,
 		"size",
 		"",
 		"instance size",
 	)
-	daemonInstallCmd.PersistentFlags().StringVar(
+	provisionCmd.PersistentFlags().StringVar(
 		&region,
 		"region",
 		"",
