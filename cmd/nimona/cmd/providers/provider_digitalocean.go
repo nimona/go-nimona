@@ -124,7 +124,7 @@ func (dp *DigitalOceanProvider) NewInstance(dockerTag, hostname,
 	}
 
 	var tpl bytes.Buffer
-	if err := t.Execute(&tpl, values); err != nil {
+	if err = t.Execute(&tpl, values); err != nil {
 		return "", err
 	}
 
@@ -138,15 +138,14 @@ func (dp *DigitalOceanProvider) NewInstance(dockerTag, hostname,
 		Image: godo.DropletCreateImage{
 			Slug: "coreos-stable",
 		},
-		SSHKeys: []godo.DropletCreateSSHKey{godo.DropletCreateSSHKey{
+		SSHKeys: []godo.DropletCreateSSHKey{{
 			Fingerprint: sshFingerprint,
 		}},
 		UserData: userData,
 	}
 
 	// Create server
-	drop, _, err := dp.client.Droplets.Create(
-		ctx, createRequest)
+	drop, _, err := dp.client.Droplets.Create(ctx, createRequest)
 	if err != nil {
 		return "", err
 	}
