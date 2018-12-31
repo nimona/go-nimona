@@ -69,6 +69,14 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.PersistentFlags().StringVarP(
+		&cfgFile,
+		"config",
+		"c",
+		"",
+		"config file  (default is .nimona.yaml or .nimona.json in $HOME)",
+	)
+
 	rootCmd.PersistentFlags().StringVar(
 		&apiAddress,
 		"api",
@@ -97,13 +105,6 @@ func init() {
 		"environment; used for debugging",
 	)
 
-	rootCmd.PersistentFlags().StringVar(
-		&cfgFile,
-		"config",
-		"",
-		"config file",
-	)
-
 	rootCmd.PersistentFlags().BoolVar(
 		&returnRaw,
 		"raw",
@@ -130,7 +131,9 @@ func initConfig() {
 		viper.SetConfigName(".nimona")
 	}
 
+	viper.SetEnvPrefix("NIMONA")
 	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
