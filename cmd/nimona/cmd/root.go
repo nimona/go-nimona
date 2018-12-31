@@ -36,15 +36,15 @@ var rootCmd = &cobra.Command{
 	Long:  "",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		restClient = resty.New().
-			SetHostURL(apiAddress).
+			SetHostURL(viper.GetString("api")).
 			SetTimeout(10*time.Second).
 			SetHeader("Content-Type", "application/cbor").
-			SetHeader("Authorization", apiToken).
+			SetHeader("Authorization", viper.GetString("api_token")).
 			SetContentLength(true).
 			SetRESTMode().
 			SetRedirectPolicy(resty.FlexibleRedirectPolicy(5))
 
-		if strings.ToLower(env) == "dev" {
+		if strings.ToLower(viper.GetString("env")) == "dev" {
 			fmt.Println("Running in development mode, this will be very verbose")
 			defer profile.Start(profile.MemProfile).Stop()
 			go http.ListenAndServe(":1234", nil)
@@ -83,6 +83,7 @@ func init() {
 		"http://localhost:8030/api/v1",
 		"api address",
 	)
+	viper.BindPFlag("api", rootCmd.PersistentFlags().Lookup("api"))
 
 	rootCmd.PersistentFlags().StringVar(
 		&apiToken,
@@ -90,6 +91,7 @@ func init() {
 		"",
 		"api token",
 	)
+	viper.BindPFlag("api_token", rootCmd.PersistentFlags().Lookup("api-token"))
 
 	rootCmd.PersistentFlags().StringVar(
 		&announceHostname,
@@ -98,12 +100,14 @@ func init() {
 		"set and announce local dns address",
 	)
 
-	rootCmd.PersistentFlags().StringVar(
+	rootCmd.PersistentFlags().StringVarP(
 		&env,
 		"env",
+		"e",
 		"PROD",
 		"environment; used for debugging",
 	)
+	viper.BindPFlag("env", rootCmd.PersistentFlags().Lookup("env"))
 
 	rootCmd.PersistentFlags().BoolVar(
 		&returnRaw,
@@ -111,6 +115,7 @@ func init() {
 		false,
 		"return raw response",
 	)
+	viper.BindPFlag("raw", rootCmd.PersistentFlags().Lookup("raw"))
 }
 
 // initConfig reads in config file and ENV variables if set.

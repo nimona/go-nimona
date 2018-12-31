@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"nimona.io/pkg/encoding"
 )
@@ -18,7 +19,7 @@ var blockListenCmd = &cobra.Command{
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		url := apiAddress + "/streams/" + args[0]
+		url := viper.GetString("api") + "/streams/" + args[0]
 		url = strings.Replace(url, "http", "ws", 1)
 		dialer := websocket.DefaultDialer
 		headers := http.Header{}
@@ -45,7 +46,7 @@ var blockListenCmd = &cobra.Command{
 				return err
 			}
 
-			if returnRaw {
+			if viper.GetBool("raw") {
 				bs, err := json.MarshalIndent(o.ToMap(), "", "  ")
 				if err != nil {
 					return err

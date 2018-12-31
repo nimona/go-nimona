@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"nimona.io/pkg/encoding"
 )
@@ -26,7 +27,7 @@ var blockGetCmd = &cobra.Command{
 			return err
 		}
 
-		if returnRaw {
+		if viper.GetBool("raw") {
 			bs, err := json.MarshalIndent(o.ToMap(), "", "  ")
 			if err != nil {
 				return err
