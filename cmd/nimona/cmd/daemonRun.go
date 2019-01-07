@@ -49,9 +49,9 @@ var (
 )
 
 // daemonStartCmd represents the daemon command
-var daemonStartCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start a peer as a daemon",
+var daemonRunCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Run a peer in the foreground",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dataDir := viper.GetString("daemon.data_dir")
@@ -141,9 +141,9 @@ var daemonStartCmd = &cobra.Command{
 }
 
 func init() {
-	daemonCmd.AddCommand(daemonStartCmd)
+	daemonCmd.AddCommand(daemonRunCmd)
 
-	daemonStartCmd.PersistentFlags().StringVarP(
+	daemonRunCmd.PersistentFlags().StringVarP(
 		&daemonDataDir,
 		"data-dir",
 		"d",
@@ -152,10 +152,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.data_dir",
-		daemonStartCmd.PersistentFlags().Lookup("data-dir"),
+		daemonRunCmd.PersistentFlags().Lookup("data-dir"),
 	)
 
-	daemonStartCmd.PersistentFlags().IntVarP(
+	daemonRunCmd.PersistentFlags().IntVarP(
 		&daemonPort,
 		"port",
 		"p",
@@ -164,10 +164,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.port",
-		daemonStartCmd.PersistentFlags().Lookup("port"),
+		daemonRunCmd.PersistentFlags().Lookup("port"),
 	)
 
-	daemonStartCmd.PersistentFlags().StringVarP(
+	daemonRunCmd.PersistentFlags().StringVarP(
 		&daemonToken,
 		"token",
 		"t",
@@ -176,10 +176,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.token",
-		daemonStartCmd.PersistentFlags().Lookup("token"),
+		daemonRunCmd.PersistentFlags().Lookup("token"),
 	)
 
-	daemonStartCmd.PersistentFlags().StringVar(
+	daemonRunCmd.PersistentFlags().StringVar(
 		&daemonAnnounceHostname,
 		"announce-hostname",
 		"",
@@ -187,10 +187,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.announce_hostname",
-		daemonStartCmd.PersistentFlags().Lookup("announce-hostname"),
+		daemonRunCmd.PersistentFlags().Lookup("announce-hostname"),
 	)
 
-	daemonStartCmd.PersistentFlags().IntVar(
+	daemonRunCmd.PersistentFlags().IntVar(
 		&daemonAPIPort,
 		"api-port",
 		8030,
@@ -198,10 +198,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.api_port",
-		daemonStartCmd.PersistentFlags().Lookup("api-port"),
+		daemonRunCmd.PersistentFlags().Lookup("api-port"),
 	)
 
-	daemonStartCmd.PersistentFlags().BoolVarP(
+	daemonRunCmd.PersistentFlags().BoolVarP(
 		&daemonEnableMetrics,
 		"metrics",
 		"m",
@@ -210,10 +210,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.metrics",
-		daemonStartCmd.PersistentFlags().Lookup("metrics"),
+		daemonRunCmd.PersistentFlags().Lookup("metrics"),
 	)
 
-	daemonStartCmd.PersistentFlags().StringSliceVar(
+	daemonRunCmd.PersistentFlags().StringSliceVar(
 		&daemonBootstrapAddresses,
 		"bootstraps",
 		daemonBootstrapAddresses,
@@ -221,10 +221,10 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.bootstraps",
-		daemonStartCmd.PersistentFlags().Lookup("bootstraps"),
+		daemonRunCmd.PersistentFlags().Lookup("bootstraps"),
 	)
 
-	daemonStartCmd.PersistentFlags().StringSliceVar(
+	daemonRunCmd.PersistentFlags().StringSliceVar(
 		&daemonRelayAddresses,
 		"relays",
 		daemonRelayAddresses,
@@ -232,6 +232,6 @@ func init() {
 	)
 	_ = viper.BindPFlag(
 		"daemon.relays",
-		daemonStartCmd.PersistentFlags().Lookup("relays"),
+		daemonRunCmd.PersistentFlags().Lookup("relays"),
 	)
 }
