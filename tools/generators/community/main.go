@@ -13,7 +13,7 @@ import (
 
 const (
 	headerTemplateFile  = "ro-header.tpl"
-	groupReadmeTemplate = "wg-readme.tpl"
+	groupReadmeTemplate = "sig-readme.tpl"
 	cmReadmeTemplate    = "cm-readme.tpl"
 
 	groupReadmeFile = "README.md"
