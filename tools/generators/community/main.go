@@ -21,7 +21,7 @@ const (
 
 	cmDir          = "community"
 	templateDir    = "tools/generators/community/templates"
-	groupsYamlFile = "community/wgs.yaml"
+	groupsYamlFile = "community/groups.yaml"
 )
 
 // Person -
@@ -64,7 +64,7 @@ type Group struct {
 	Dir         string
 	Description string
 	Label       string
-	Chairs      []Person
+	Leads       []Person
 	Subprojects []Subproject
 	Roadmaps    []Roadmap
 }

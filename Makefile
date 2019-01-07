@@ -12,8 +12,8 @@ build:
 cleanup:
 	@$(NMAKE) cleanup
 
-.PHONY: community
-community:
+.PHONY: community-docs
+community-docs:
 	@$(CMMNT)
 
 .PHONY: deps

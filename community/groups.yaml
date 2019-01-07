@@ -1,0 +1,130 @@
+- name: Operations
+  label: sig-ops
+  description: Standards, Operations, Tooling
+  leads:
+  - name: Jim Myhrberg
+    github: jimeh
+  subprojects:
+  - name: standards
+  - name: processes
+  - name: tooling
+  - name: testing
+  roadmaps:
+  - name: 2019/Q1
+    description: ...
+    subprojects:
+    - name: standards
+      tasks:
+      - name: add linting/vetting
+      - name: add standards documentation (code/test/version-control)
+    - name: processes
+      tasks:
+      - name: add CI process and workflows for development and releases
+      - name: add CD process and workflows for bootstrap peers
+    - name: tooling
+      tasks:
+      - name: refactor all tools to cobra
+      - name: add update option to provisioner
+    - name: testing
+      tasks:
+      - name: add network simulator
+    - name: housekeeping
+      tasks:
+      - name: refactor nimona cli to unify configs
+      - name: refactor logger, or replace with an in-house one
+- name: Network
+  label: sig-net
+  description: Networking, Transport, Discovery, Relaying, etc. 
+  leads:
+  - name: Paris Goudas
+    github: superdecimal
+  subprojects:
+  - name: transports
+  - name: exchange
+  - name: discovery
+  - name: mandates
+  - name: security
+  roadmaps:
+  - name: 2019/Q1
+    description: ...
+    subprojects:
+    - name: transports
+      tasks:
+      - name: refactor network to support dynamically added dialers and listeners
+      - name: refactor network to allow listening for network events (serving, opened, closed)
+      - name: refactor TCPS to use mutual TLS instead of our custom handshake
+    - name: discovery
+      tasks:
+      - name: rename resolvers to discoverers
+      - name: dht - refactor to make compatible with discoverers or remove
+      - name: hyperspace - finalize hyperspace specification, add persistence
+    - name: security
+      tasks:
+      - name: split crypto.key into public/private
+    - name: mandates
+      tasks:
+      - name: add and finalise mandate specification
+      - name: define mandate signing ux and protocol
+- name: Objects
+  label: sig-obj
+  description: Everything around objects.
+  leads:
+  - name: George Antoniadis
+    github: geoah
+  subprojects:
+  - name: object typing
+  - name: object hashing
+  - name: object schemas
+  - name: object mutations
+  - name: object exchange
+  roadmaps:
+  - name: 2019/Q1
+    description: ...
+    subprojects:
+    - name: object typing
+      tasks:
+      - name: add support for referencing and redaction
+      - name: add support for skipping attributes
+    - name: object hashing
+      tasks:
+      - name: refactor hash to be object based
+      - name: validate that hashing is consistent across languages
+    - name: object schemas
+      tasks:
+      - name: add schema specification
+      - name: add struct generation from schema
+      - name: add object validator from schema
+      - name: add schema registry
+      - name: create schemas for known types
+    - name: object mutations
+      tasks:
+      - name: add mutation specifications
+      - name: add state aggregator
+      - name: add state store
+      - name: add state api
+    - name: object exchange
+      tasks:
+      - name: consider renaming the package
+      - name: add mutation synchronization protocol for exchange
+      - name: move exchange outside of the net package
+      - name: refactor Send() to accept an address instead of a key
+- name: Application Development
+  label: sig-app
+  description: Application development, prototypes, and apis.
+  leads:
+  - name: Alex Reis
+    github: alexmreis
+  subprojects:
+  - name: prototypes
+  - name: apis
+  roadmaps:
+  - name: 2019/Q1
+    description: ...
+    subprojects:
+    - name: api
+      tasks:
+      - name: design and document http and ws api for objects and mutations
+    - name: prototypes
+      tasks:
+      - name: wrap up the first version of the messenger app
+      - name: spec and implement the file sharing app

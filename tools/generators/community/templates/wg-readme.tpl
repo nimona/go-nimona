@@ -1,10 +1,10 @@
 {{- template "header" }}
-# {{.Name}} Working Group
+# {{.Name}}
 {{ .Description }}
-{{ if .Chairs }}
-### Chairs
-The Chairs of the WG run operations and processes governing the WG.
-{{ range .Chairs }}
+{{ if .Leads }}
+### Leads
+The leads run operations and processes governing each group.
+{{ range .Leads }}
 - {{.Name}} (**[@{{.GitHub}}](https://github.com/{{.GitHub}})**)
 {{- end }}
 {{- end }}
@@ -12,7 +12,7 @@ The Chairs of the WG run operations and processes governing the WG.
 {{- if .Subprojects }}
 ## Subprojects
 
-The following subprojects are owned by wg-{{.Label}}:
+The following subprojects are owned by {{ .Label }}:
 
 {{- range .Subprojects }}
 - **{{.Name}}**
