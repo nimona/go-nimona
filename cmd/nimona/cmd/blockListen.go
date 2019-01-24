@@ -40,7 +40,7 @@ var blockListenCmd = &cobra.Command{
 				continue
 			}
 
-			o, err := object.NewObjectFromBytes(body)
+			o, err := object.FromBytes(body)
 			if err != nil {
 				return err
 			}

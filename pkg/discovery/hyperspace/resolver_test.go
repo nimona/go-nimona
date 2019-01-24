@@ -50,13 +50,13 @@ func TestDiscoverer(t *testing.T) {
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo1 := object.NewObjectFromMap(em1)
+	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo2 := object.NewObjectFromMap(em2)
+	eo2 := object.FromMap(em2)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)

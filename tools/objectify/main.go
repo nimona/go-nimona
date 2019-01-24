@@ -256,14 +256,14 @@ func (s {{ .StructName }}) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s {{ .StructName }}) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
 func (s *{{ .StructName }}) FromMap(m map[string]interface{}) error {
 	{{- range .StructFields }}
 	{{- if eq .Tag "@" }}
-	s.{{ .Name }} = object.NewObjectFromMap(m)
+	s.{{ .Name }} = object.FromMap(m)
 	{{- else if .IsSlice }}
 	s.{{ .Name }} = []{{ .ElemType }}{}
 	if ss, ok := m["{{ .Tag }}:{{ .Hint }}"].([]interface{}); ok {

@@ -40,7 +40,7 @@ func (s PeerInfoResponse) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s PeerInfoResponse) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -76,7 +76,7 @@ func (s *PeerInfoResponse) FromMap(m map[string]interface{}) error {
 	if v, ok := m["closestPeers:a<o>"].([]*peer.PeerInfo); ok {
 		s.ClosestPeers = v
 	}
-	s.RawObject = object.NewObjectFromMap(m)
+	s.RawObject = object.FromMap(m)
 	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}

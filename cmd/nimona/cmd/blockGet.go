@@ -21,7 +21,7 @@ var blockGetCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		o, err := object.NewObjectFromBytes(body)
+		o, err := object.FromBytes(body)
 		if err != nil {
 			return err
 		}

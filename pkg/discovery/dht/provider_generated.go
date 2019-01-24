@@ -31,7 +31,7 @@ func (s Provider) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s Provider) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -47,7 +47,7 @@ func (s *Provider) FromMap(m map[string]interface{}) error {
 	if v, ok := m["blockIDs:a<s>"].([]string); ok {
 		s.BlockIDs = v
 	}
-	s.RawObject = object.NewObjectFromMap(m)
+	s.RawObject = object.FromMap(m)
 	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}
