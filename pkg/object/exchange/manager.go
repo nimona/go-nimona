@@ -1,0 +1,34 @@
+package exchange
+
+import (
+	"errors"
+	"sync"
+
+	"nimona.io/pkg/net"
+)
+
+type ConnectionManager struct {
+	connections sync.Map // key string, value *Connection
+}
+
+func (cm *ConnectionManager) Add(address string, conn *net.Connection) {
+	// cm.Close(conn.RemoteID)
+	cm.connections.Store(address, conn)
+}
+
+func (cm *ConnectionManager) Get(remoteID string) (*net.Connection, error) {
+	existingConn, ok := cm.connections.Load(remoteID)
+	if !ok {
+		return nil, errors.New("no stored connection")
+	}
+	return existingConn.(*net.Connection), nil
+}
+
+func (cm *ConnectionManager) Close(peerID string) {
+	existingConn, ok := cm.connections.Load(peerID)
+	if !ok {
+		return
+	}
+	existingConn.(*net.Connection).Conn.Close()
+	cm.connections.Delete(peerID)
+}

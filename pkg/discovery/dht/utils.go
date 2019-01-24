@@ -4,14 +4,14 @@ import (
 	"crypto/sha1"
 	"fmt"
 
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
 )
 
 // distEntry is used to hold the distance between nodes
 type distEntry struct {
 	key      string
 	dist     []int
-	peerInfo *peers.PeerInfo
+	peerInfo *peer.PeerInfo
 }
 
 // Xor gets to byte arrays and returns and array of integers with the xor

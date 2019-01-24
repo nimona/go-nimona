@@ -5,7 +5,7 @@
 package example
 
 import (
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n
@@ -31,14 +31,14 @@ func (s Foo) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s Foo) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s Foo) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
 func (s *Foo) FromMap(m map[string]interface{}) error {
-	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@:o"].(*encoding.Object); ok {
+	s.RawObject = object.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}
 	if v, ok := m["bar:s"].(string); ok {
@@ -87,7 +87,7 @@ func (s *Foo) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Foo) FromObject(o *encoding.Object) error {
+func (s *Foo) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 

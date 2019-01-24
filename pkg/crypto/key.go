@@ -44,7 +44,7 @@ type Key struct {
 	Y                      []byte `json:"y,omitempty"`
 	D                      []byte `json:"d,omitempty"`
 
-	// RawObject *encoding.Object `json:"@"`
+	// RawObject *object.Object `json:"@"`
 }
 
 // Hash of the key

@@ -6,7 +6,7 @@ package net
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n
@@ -25,8 +25,8 @@ func (s HandshakeAck) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s HandshakeAck) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s HandshakeAck) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -60,7 +60,7 @@ func (s *HandshakeAck) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *HandshakeAck) FromObject(o *encoding.Object) error {
+func (s *HandshakeAck) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 

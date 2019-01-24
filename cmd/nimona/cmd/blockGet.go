@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // blockGetCmd represents the blockGet command
@@ -21,7 +21,7 @@ var blockGetCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		o, err := encoding.NewObjectFromBytes(body)
+		o, err := object.NewObjectFromBytes(body)
 		if err != nil {
 			return err
 		}

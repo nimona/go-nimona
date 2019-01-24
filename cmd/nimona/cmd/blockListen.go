@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // blockListenCmd represents the blockListen command
@@ -40,7 +40,7 @@ var blockListenCmd = &cobra.Command{
 				continue
 			}
 
-			o, err := encoding.NewObjectFromBytes(body)
+			o, err := object.NewObjectFromBytes(body)
 			if err != nil {
 				return err
 			}

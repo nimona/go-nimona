@@ -17,7 +17,7 @@ var blockListCmd = &cobra.Command{
 
 		// body := resp.Body()
 		// blocks := []map[string]interface{}{}
-		// if err := encoding.UnmarshalInto(body, &blocks); err != nil {
+		// if err := object.UnmarshalInto(body, &blocks); err != nil {
 		// 	return err
 		// }
 

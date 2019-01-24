@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"nimona.io/pkg/telemetry"
+	"nimona.io/internal/telemetry"
 )
 
 // SendEvent sends an event

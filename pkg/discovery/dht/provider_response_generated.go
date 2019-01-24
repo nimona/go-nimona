@@ -6,8 +6,8 @@ package dht
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n
@@ -43,8 +43,8 @@ func (s ProviderResponse) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s ProviderResponse) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s ProviderResponse) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -69,13 +69,13 @@ func (s *ProviderResponse) FromMap(m map[string]interface{}) error {
 	if v, ok := m["providers:a<o>"].([]*Provider); ok {
 		s.Providers = v
 	}
-	s.ClosestPeers = []*peers.PeerInfo{}
+	s.ClosestPeers = []*peer.PeerInfo{}
 	if ss, ok := m["closestPeers:a<o>"].([]interface{}); ok {
 		for _, si := range ss {
-			if v, ok := si.(*peers.PeerInfo); ok {
+			if v, ok := si.(*peer.PeerInfo); ok {
 				s.ClosestPeers = append(s.ClosestPeers, v)
 			} else if v, ok := si.(map[string]interface{}); ok {
-				sClosestPeers := &peers.PeerInfo{}
+				sClosestPeers := &peer.PeerInfo{}
 				if err := sClosestPeers.FromMap(v); err != nil {
 					return err
 				}
@@ -83,11 +83,11 @@ func (s *ProviderResponse) FromMap(m map[string]interface{}) error {
 			}
 		}
 	}
-	if v, ok := m["closestPeers:a<o>"].([]*peers.PeerInfo); ok {
+	if v, ok := m["closestPeers:a<o>"].([]*peer.PeerInfo); ok {
 		s.ClosestPeers = v
 	}
-	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@:o"].(*encoding.Object); ok {
+	s.RawObject = object.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}
 	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
@@ -127,7 +127,7 @@ func (s *ProviderResponse) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ProviderResponse) FromObject(o *encoding.Object) error {
+func (s *ProviderResponse) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 

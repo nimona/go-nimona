@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/pkg/base58"
-	"nimona.io/pkg/encoding"
+	"nimona.io/internal/encoding/base58"
+	"nimona.io/pkg/object"
 )
 
 func TestSignAndVerify(t *testing.T) {
@@ -26,7 +26,7 @@ func TestSignAndVerify(t *testing.T) {
 		"foo":  "bar",
 	}
 
-	eo := encoding.NewObjectFromMap(m)
+	eo := object.NewObjectFromMap(m)
 	assert.NotNil(t, eo)
 
 	err = Sign(eo, subjectKey)
@@ -42,7 +42,7 @@ func TestSignAndVerify(t *testing.T) {
 	err = Verify(eo)
 	assert.Error(t, err)
 
-	b, _ := encoding.Marshal(eo)
+	b, _ := object.Marshal(eo)
 	fmt.Println(base58.Encode(b))
 }
 
