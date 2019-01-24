@@ -40,7 +40,7 @@ func (s PeerInfo) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s PeerInfo) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map

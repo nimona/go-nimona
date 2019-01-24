@@ -97,7 +97,7 @@ func hashValue(o interface{}) []byte {
 		if len(m) == 0 {
 			return nil
 		}
-		o := NewObjectFromMap(m)
+		o := FromMap(m)
 		h, err := objecthash(o, false)
 		if err != nil {
 			panic("hashing error: " + err.Error())

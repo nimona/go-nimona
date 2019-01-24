@@ -3,34 +3,29 @@ package object
 import (
 	"nimona.io/internal/encoding/base58"
 )
-
-// Typed interface
-type Typed interface {
-	Type() string
-}
-
+ 
 // Object for everything f12n
 type Object map[string]interface{}
 
-// NewObjectFromBytes returns an object from a cbor byte stream
-func NewObjectFromBytes(b []byte) (*Object, error) {
+// FromBytes returns an object from a cbor byte stream
+func FromBytes(b []byte) (*Object, error) {
 	m := map[string]interface{}{}
 	if err := UnmarshalSimple(b, &m); err != nil {
 		return nil, err
 	}
 
-	o := NewObjectFromMap(m)
+	o := FromMap(m)
 	return o, nil
 }
 
-// NewObject returns an object from a map
-func NewObject() *Object {
+// New returns an object from a map
+func New() *Object {
 	return &Object{}
 }
 
-// NewObjectFromMap returns an object from a map
-func NewObjectFromMap(m map[string]interface{}) *Object {
-	o := NewObject()
+// FromMap returns an object from a map
+func FromMap(m map[string]interface{}) *Object {
+	o := New()
 	o.FromMap(m)
 	return o
 }
@@ -154,7 +149,7 @@ func (o Object) SetRaw(k string, v interface{}) {
 	}
 
 	if mv, ok := v.(map[string]interface{}); ok {
-		tv := NewObjectFromMap(mv)
+		tv := FromMap(mv)
 		if tv.GetType() != "" {
 			v = tv
 		}
@@ -165,7 +160,7 @@ func (o Object) SetRaw(k string, v interface{}) {
 	} else if oi, ok := v.(objectable); ok {
 		o[k] = oi.ToObject()
 	} else if m, ok := v.(map[string]interface{}); ok {
-		o[k] = NewObjectFromMap(m)
+		o[k] = FromMap(m)
 	} else {
 		o[k] = v
 	}

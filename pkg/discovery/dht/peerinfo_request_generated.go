@@ -30,7 +30,7 @@ func (s PeerInfoRequest) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s PeerInfoRequest) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -41,7 +41,7 @@ func (s *PeerInfoRequest) FromMap(m map[string]interface{}) error {
 	if v, ok := m["peerID:s"].(string); ok {
 		s.PeerID = v
 	}
-	s.RawObject = object.NewObjectFromMap(m)
+	s.RawObject = object.FromMap(m)
 	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}

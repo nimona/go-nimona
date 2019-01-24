@@ -28,13 +28,13 @@ func TestSendSuccess(t *testing.T) {
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo1 := object.NewObjectFromMap(em1)
+	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo2 := object.NewObjectFromMap(em2)
+	eo2 := object.FromMap(em2)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -117,7 +117,7 @@ func TestSendRelay(t *testing.T) {
 	// init connection from n1 to n0
 	err := x1.Send(
 		context.Background(),
-		object.NewObjectFromMap(map[string]interface{}{"foo": "bar"}),
+		object.FromMap(map[string]interface{}{"foo": "bar"}),
 		n0.GetPeerInfo().Addresses[0],
 	)
 	assert.NoError(t, err)
@@ -125,7 +125,7 @@ func TestSendRelay(t *testing.T) {
 	// init connection from n2 to n0
 	err = x2.Send(
 		context.Background(),
-		object.NewObjectFromMap(map[string]interface{}{"foo": "bar"}),
+		object.FromMap(map[string]interface{}{"foo": "bar"}),
 		n0.GetPeerInfo().Addresses[0],
 	)
 	assert.NoError(t, err)
@@ -135,13 +135,13 @@ func TestSendRelay(t *testing.T) {
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo1 := object.NewObjectFromMap(em1)
+	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
-	eo2 := object.NewObjectFromMap(em2)
+	eo2 := object.FromMap(em2)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)

@@ -64,7 +64,7 @@ func (api *API) HandlePostBlock(c *gin.Context) {
 		return
 	}
 
-	o := object.NewObjectFromMap(req)
+	o := object.FromMap(req)
 	op := o.GetPolicy()
 	if op == nil {
 		c.AbortWithError(400, errors.New("missing policy"))

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 // peerGetCmd represents the peerGet command
@@ -22,7 +22,7 @@ var peerGetCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		o, err := object.NewObjectFromBytes(body)
+		o, err := object.FromBytes(body)
 		if err != nil {
 			return err
 		}

@@ -56,7 +56,7 @@ func NewSignature(key *Key, alg string, o *object.Object) (*Signature, error) {
 
 	switch alg {
 	// case AlgorithmES256:
-	// 	o, err := object.NewObjectFromStruct(v)
+	// 	o, err := object.NewFromStruct(v)
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}

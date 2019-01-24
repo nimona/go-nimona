@@ -26,7 +26,7 @@ func TestSignAndVerify(t *testing.T) {
 		"foo":  "bar",
 	}
 
-	eo := object.NewObjectFromMap(m)
+	eo := object.FromMap(m)
 	assert.NotNil(t, eo)
 
 	err = Sign(eo, subjectKey)

@@ -151,7 +151,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			logger.Error("could not unmarshal outgoing block", zap.Error(err))
 			continue
 		}
-		o := object.NewObjectFromMap(m)
+		o := object.FromMap(m)
 		outgoing <- o
 	}
 }

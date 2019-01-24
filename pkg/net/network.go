@@ -356,7 +356,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}()
 
-	o, err := object.NewObjectFromBytes([]byte(*r))
+	o, err := object.FromBytes([]byte(*r))
 	if err != nil {
 		return nil, err
 	}

@@ -23,12 +23,12 @@ func (s HandshakeSyn) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s HandshakeSyn) ToObject() *object.Object {
-	return object.NewObjectFromMap(s.ToMap())
+	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
 func (s *HandshakeSyn) FromMap(m map[string]interface{}) error {
-	s.RawObject = object.NewObjectFromMap(m)
+	s.RawObject = object.FromMap(m)
 	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}
