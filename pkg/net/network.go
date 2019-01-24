@@ -16,33 +16,34 @@ import (
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
-	ucodec "github.com/ugorji/go/codec"
+	"github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
+	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/log"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 var (
-	useUPNP = false
+	UseUPNP = false
 )
 
 func init() {
-	useUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
+	UseUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
 }
 
 // Network interface
 type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
-	GetPeerInfo() *peers.PeerInfo
-	Resolver() Resolver
+	GetPeerInfo() *peer.PeerInfo
+	Discoverer() discovery.Discoverer
 }
 
-// NewNetwork creates a new p2p network using an address book
-func NewNetwork(key *crypto.Key, hostname string, relayAddresses []string) (Network, error) {
+// New creates a new p2p network using an address book
+func New(key *crypto.Key, hostname string, relayAddresses []string) (Network, error) {
 	if key == nil {
 		return nil, errors.New("missing key")
 	}
@@ -53,7 +54,7 @@ func NewNetwork(key *crypto.Key, hostname string, relayAddresses []string) (Netw
 
 	return &network{
 		key:            key,
-		resolver:       NewResolver(),
+		discoverer:     discovery.NewDiscoverer(),
 		hostname:       hostname,
 		relayAddresses: relayAddresses,
 	}, nil
@@ -62,7 +63,7 @@ func NewNetwork(key *crypto.Key, hostname string, relayAddresses []string) (Netw
 // network allows dialing and listening for p2p connections
 type network struct {
 	key            *crypto.Key
-	resolver       Resolver
+	discoverer     discovery.Discoverer
 	hostname       string
 	addressesLock  sync.RWMutex
 	addresses      []string
@@ -81,10 +82,10 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 			return nil, errors.New("cannot dial our own peer")
 		}
 		logger.Debug("dialing peer", zap.String("peer", address))
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			SignerKeyHash: peerID,
 		}
-		ps, err := n.Resolver().Resolve(q)
+		ps, err := n.Discoverer().Resolve(q)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +155,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 
 		// store who is on the other side - peer id
 		conn.RemoteID = synAck.Signer.HashBase58()
-		n.Resolver().Add(synAck.PeerInfo)
+		n.Discoverer().Add(synAck.PeerInfo)
 
 		ack := &HandshakeAck{
 			Nonce: nonce,
@@ -206,7 +207,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 		addresses = append(addresses, fmtAddress(n.hostname, port))
 	}
 
-	if useUPNP {
+	if UseUPNP {
 		logger.Info("Trying to find external IP and open port")
 		go func() {
 			if err := igd.Discover(devices, 2*time.Second); err != nil {
@@ -264,7 +265,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 
 			// store the remote peer
-			n.Resolver().Add(syn.PeerInfo)
+			n.Discoverer().Add(syn.PeerInfo)
 
 			synAck := &HandshakeSynAck{
 				Nonce:    syn.Nonce,
@@ -310,14 +311,14 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 	return cconn, nil
 }
 
-func Write(o *encoding.Object, conn *Connection) error {
+func Write(o *object.Object, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
 	if o == nil {
 		log.DefaultLogger.Error("block for fw cannot be nil")
 		return errors.New("missing block")
 	}
 
-	b, err := encoding.Marshal(o)
+	b, err := object.Marshal(o)
 	if err != nil {
 		return err
 	}
@@ -340,11 +341,11 @@ func Write(o *encoding.Object, conn *Connection) error {
 	return nil
 }
 
-func Read(conn *Connection) (*encoding.Object, error) {
+func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
-	pDecoder := ucodec.NewDecoder(conn.Conn, encoding.RawCborHandler())
-	r := &ucodec.Raw{}
+	pDecoder := codec.NewDecoder(conn.Conn, object.RawCborHandler())
+	r := &codec.Raw{}
 	if err := pDecoder.Decode(r); err != nil {
 		return nil, err
 	}
@@ -355,7 +356,7 @@ func Read(conn *Connection) (*encoding.Object, error) {
 		}
 	}()
 
-	o, err := encoding.NewObjectFromBytes([]byte(*r))
+	o, err := object.NewObjectFromBytes([]byte(*r))
 	if err != nil {
 		return nil, err
 	}
@@ -385,8 +386,8 @@ func Read(conn *Connection) (*encoding.Object, error) {
 	return o, nil
 }
 
-func (n *network) Resolver() Resolver {
-	return n.resolver
+func (n *network) Discoverer() discovery.Discoverer {
+	return n.discoverer
 }
 
 func (n *network) addAddress(addrs ...string) {
@@ -399,13 +400,13 @@ func (n *network) addAddress(addrs ...string) {
 }
 
 // GetPeerInfo returns the local peer info
-func (n *network) GetPeerInfo() *peers.PeerInfo {
+func (n *network) GetPeerInfo() *peer.PeerInfo {
 	addrs := []string{}
 	n.addressesLock.RLock()
 	addrs = append(addrs, n.addresses...)
 	n.addressesLock.RUnlock()
 	// TODO cache peer info and reuse
-	p := &peers.PeerInfo{
+	p := &peer.PeerInfo{
 		Addresses: addrs,
 		SignerKey: n.key.GetPublicKey(),
 	}

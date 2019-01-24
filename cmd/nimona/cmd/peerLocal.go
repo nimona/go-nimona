@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/net/peer"
 )
 
 // peerLocalCmd represents the peerLocal command
@@ -22,12 +22,12 @@ var peerLocalCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		o, err := encoding.NewObjectFromBytes(body)
+		o, err := object.NewObjectFromBytes(body)
 		if err != nil {
 			return err
 		}
 
-		peer := &peers.PeerInfo{}
+		peer := &peer.PeerInfo{}
 		if err := peer.FromObject(o); err != nil {
 			return err
 		}

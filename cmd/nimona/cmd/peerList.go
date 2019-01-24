@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/net/peer"
 )
 
 // peerListCmd represents the peerList command
@@ -21,8 +21,8 @@ var peerListCmd = &cobra.Command{
 		}
 
 		body := resp.Body()
-		ms := []*peers.PeerInfo{}
-		if err := encoding.UnmarshalSimple(body, &ms); err != nil {
+		ms := []*peer.PeerInfo{}
+		if err := object.UnmarshalSimple(body, &ms); err != nil {
 			return err
 		}
 

@@ -6,7 +6,7 @@ package dht
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n
@@ -29,8 +29,8 @@ func (s PeerInfoRequest) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s PeerInfoRequest) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s PeerInfoRequest) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -41,8 +41,8 @@ func (s *PeerInfoRequest) FromMap(m map[string]interface{}) error {
 	if v, ok := m["peerID:s"].(string); ok {
 		s.PeerID = v
 	}
-	s.RawObject = encoding.NewObjectFromMap(m)
-	if v, ok := m["@:o"].(*encoding.Object); ok {
+	s.RawObject = object.NewObjectFromMap(m)
+	if v, ok := m["@:o"].(*object.Object); ok {
 		s.RawObject = v
 	}
 	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
@@ -82,7 +82,7 @@ func (s *PeerInfoRequest) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *PeerInfoRequest) FromObject(o *encoding.Object) error {
+func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 

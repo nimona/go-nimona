@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 var (
@@ -34,7 +34,7 @@ type Signature struct {
 }
 
 // NewSignature returns a signature given some bytes and a private key
-func NewSignature(key *Key, alg string, o *encoding.Object) (*Signature, error) {
+func NewSignature(key *Key, alg string, o *object.Object) (*Signature, error) {
 	if key == nil {
 		return nil, errors.New("missing key")
 	}
@@ -56,25 +56,25 @@ func NewSignature(key *Key, alg string, o *encoding.Object) (*Signature, error) 
 
 	switch alg {
 	// case AlgorithmES256:
-	// 	o, err := encoding.NewObjectFromStruct(v)
+	// 	o, err := object.NewObjectFromStruct(v)
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}
 
-	// 	b, err := encoding.Marshal(o)
+	// 	b, err := object.Marshal(o)
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}
 
 	// 	m := map[string]interface{}{}
-	// 	if err := encoding.UnmarshalSimple(b, &m); err != nil {
+	// 	if err := object.UnmarshalSimple(b, &m); err != nil {
 	// 		return nil, err
 	// 	}
 
 	// 	// TODO replace ES256 with OH that should deal with removing the @sig
 	// 	delete(m, "@signature")
 
-	// 	b, err = encoding.Marshal(m)
+	// 	b, err = object.Marshal(m)
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}
@@ -82,7 +82,7 @@ func NewSignature(key *Key, alg string, o *encoding.Object) (*Signature, error) 
 	// 	h := sha256.Sum256(b)
 	// 	hash = h[:]
 	case AlgorithmObjectHash:
-		hash, err = encoding.ObjectHash(o)
+		hash, err = object.ObjectHash(o)
 		if err != nil {
 			return nil, err
 		}

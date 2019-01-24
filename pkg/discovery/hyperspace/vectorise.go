@@ -3,11 +3,11 @@ package hyperspace
 import (
 	"github.com/james-bowman/sparse"
 
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
 )
 
 // Vectorise returns a sparse vector from a PeerInfoRequest
-func Vectorise(q *peers.PeerInfoRequest) *sparse.Vector {
+func Vectorise(q *peer.PeerInfoRequest) *sparse.Vector {
 	i := []int{}
 	if q.AuthorityKeyHash != "" {
 		i = append(i, HashChunked("ak", []byte(q.AuthorityKeyHash))...)
@@ -38,8 +38,8 @@ func Vectorise(q *peers.PeerInfoRequest) *sparse.Vector {
 	return v
 }
 
-func getPeerInfoRequest(p *peers.PeerInfo) *peers.PeerInfoRequest {
-	q := &peers.PeerInfoRequest{
+func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
+	q := &peer.PeerInfoRequest{
 		Protocols:    p.Protocols,
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,

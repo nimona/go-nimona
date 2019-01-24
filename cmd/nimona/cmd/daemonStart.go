@@ -10,12 +10,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"nimona.io/pkg/api"
+	"nimona.io/internal/api"
+	"nimona.io/internal/telemetry"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/storage"
-	"nimona.io/pkg/telemetry"
 )
 
 var (
@@ -62,7 +63,7 @@ var daemonStartCmd = &cobra.Command{
 			return errors.Wrap(err, "could not create config dir")
 		}
 
-		// addressBook, err := peers.NewAddressBook(daemonConfigPath)
+		// addressBook, err := peer.NewAddressBook(daemonConfigPath)
 		// if err != nil {
 		// 	return errors.Wrap(err, "could not load key")
 		// }
@@ -81,18 +82,18 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("No bootstrap nodes provided")
 		}
 
-		n, err := net.NewNetwork(k, announceHostname, relayAddresses)
+		n, err := net.New(k, announceHostname, relayAddresses)
 		if err != nil {
 			return err
 		}
 
 		storagePath := path.Join(daemonConfigPath, "storage")
 		dpr := storage.NewDiskStorage(storagePath)
-		x, err := net.NewExchange(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
-		hsr, _ := hyperspace.NewResolver(k, n, x, bootstrapAddresses)
+		x, err := exchange.New(k, n, dpr, fmt.Sprintf("0.0.0.0:%d", daemonPort))
+		hsr, _ := hyperspace.NewDiscoverer(k, n, x, bootstrapAddresses)
 		telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
-		if err := n.Resolver().AddProvider(hsr); err != nil {
+		if err := n.Discoverer().AddProvider(hsr); err != nil {
 			return err
 		}
 

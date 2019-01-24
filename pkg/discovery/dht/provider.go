@@ -2,7 +2,7 @@ package dht
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 //go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/provider -type Provider -in provider.go -out provider_generated.go
@@ -11,7 +11,7 @@ import (
 type Provider struct {
 	BlockIDs []string `json:"blockIDs"`
 
-	RawObject *encoding.Object  `json:"@"`
+	RawObject *object.Object  `json:"@"`
 	Signer    *crypto.Key       `json:"@signer"`
 	Authority *crypto.Key       `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`

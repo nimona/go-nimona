@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/imports"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 var (
@@ -107,7 +107,7 @@ func (gen *Generator) process() (code []byte, err error) {
 	}
 
 	if pkg.Name != "encoding" {
-		values.Imports["nimona.io/pkg/encoding"] = true
+		values.Imports["nimona.io/pkg/object"] = true
 	}
 
 	fmt.Printf("Objectifying %s.%s\n", values.Package, gen.Type)
@@ -255,15 +255,15 @@ func (s {{ .StructName }}) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s {{ .StructName }}) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s {{ .StructName }}) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
 func (s *{{ .StructName }}) FromMap(m map[string]interface{}) error {
 	{{- range .StructFields }}
 	{{- if eq .Tag "@" }}
-	s.{{ .Name }} = encoding.NewObjectFromMap(m)
+	s.{{ .Name }} = object.NewObjectFromMap(m)
 	{{- else if .IsSlice }}
 	s.{{ .Name }} = []{{ .ElemType }}{}
 	if ss, ok := m["{{ .Tag }}:{{ .Hint }}"].([]interface{}); ok {
@@ -299,7 +299,7 @@ func (s *{{ .StructName }}) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *{{ .StructName }}) FromObject(o *encoding.Object) error {
+func (s *{{ .StructName }}) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
@@ -324,7 +324,7 @@ func (s {{ .StructName }}) GetType() string {
 	}
 
 	if values.Package == "encoding" {
-		sout := strings.Replace(string(out.Bytes()), "encoding.", "", -1)
+		sout := strings.Replace(string(out.Bytes()), "object.", "", -1)
 		out = bytes.NewBuffer([]byte(sout))
 	}
 
@@ -451,34 +451,34 @@ func toLowerFirst(s string) string {
 
 func getHint(t types.Type) string {
 	if t.String() == "[]byte" {
-		return encoding.HintBytes
+		return object.HintBytes
 	}
 	switch v := t.(type) {
 	case *types.Basic:
 		switch v.Kind() {
 		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return encoding.HintInt
+			return object.HintInt
 		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64:
-			return encoding.HintUint
+			return object.HintUint
 		case types.Float32, types.Float64:
-			return encoding.HintFloat
+			return object.HintFloat
 		case types.String:
-			return encoding.HintString
+			return object.HintString
 		}
 	case *types.Array:
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return encoding.HintArray + "<" + ss + ">"
+			return object.HintArray + "<" + ss + ">"
 		}
 	case *types.Slice:
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return encoding.HintArray + "<" + ss + ">"
+			return object.HintArray + "<" + ss + ">"
 		}
 	case *types.Struct:
-		return encoding.HintMap
+		return object.HintMap
 	case *types.Pointer:
 		st := v.Elem()
 		return getHint(st)
@@ -486,10 +486,10 @@ func getHint(t types.Type) string {
 	case *types.Signature:
 	case *types.Interface:
 	case *types.Map:
-		return encoding.HintMap
+		return object.HintMap
 	case *types.Chan:
 	case *types.Named:
 	}
 	// TODO(geoah) insane hack/assumption
-	return encoding.HintMap
+	return object.HintMap
 }

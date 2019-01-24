@@ -6,12 +6,12 @@ import (
 
 	"github.com/james-bowman/sparse"
 
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
 )
 
 type storeValue struct {
 	vector   *sparse.Vector
-	peerInfo *peers.PeerInfo
+	peerInfo *peer.PeerInfo
 }
 
 // NewStore retuns empty store
@@ -28,7 +28,7 @@ type Store struct {
 }
 
 // Add peer capabilities to store
-func (s *Store) Add(cs ...*peers.PeerInfo) {
+func (s *Store) Add(cs ...*peer.PeerInfo) {
 	s.lock.Lock()
 	for _, c := range cs {
 		v := Vectorise(getPeerInfoRequest(c))
@@ -41,7 +41,7 @@ func (s *Store) Add(cs ...*peers.PeerInfo) {
 }
 
 // FindClosest returns peers that closest resemble the query
-func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
+func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
@@ -54,7 +54,7 @@ func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
 	type kv struct {
 		distance  float64
 		vector    *sparse.Vector
-		peerInfos *peers.PeerInfo
+		peerInfos *peer.PeerInfo
 	}
 
 	r := []kv{}
@@ -76,7 +76,7 @@ func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
 	// fmt.Println("first result is", r[0].peerInfos)
 	// fmt.Println("first result vector is", r[0].vector)
 
-	rs := []*peers.PeerInfo{}
+	rs := []*peer.PeerInfo{}
 	for i, c := range r {
 		rs = append(rs, c.peerInfos)
 		if i > 10 {
@@ -88,11 +88,11 @@ func (s *Store) FindClosest(q *peers.PeerInfoRequest) []*peers.PeerInfo {
 }
 
 // FindExact returns peers that match query authority or peer
-func (s *Store) FindExact(q *peers.PeerInfoRequest) []*peers.PeerInfo {
+func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	ps := []*peers.PeerInfo{}
+	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
 		if q.AuthorityKeyHash != "" && q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {

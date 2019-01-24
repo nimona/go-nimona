@@ -6,15 +6,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/pkg/base58"
+	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
 )
 
 func TestStoreSimpleQuery(t *testing.T) {
 	s := NewStore()
 
-	cs := []*peers.PeerInfo{
+	cs := []*peer.PeerInfo{
 		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
@@ -48,7 +48,7 @@ func TestStoreSimpleQuery(t *testing.T) {
 func TestStoreFindExact(t *testing.T) {
 	s := NewStore()
 
-	cs := []*peers.PeerInfo{
+	cs := []*peer.PeerInfo{
 		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
@@ -74,7 +74,7 @@ func TestStoreFindExact(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 		}
 		rs := s.FindClosest(q)
@@ -85,7 +85,7 @@ func TestStoreFindExact(t *testing.T) {
 func TestStoreSimpleQueryWithNoise(t *testing.T) {
 	s := NewStore()
 
-	cs := []*peers.PeerInfo{
+	cs := []*peer.PeerInfo{
 		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
@@ -141,7 +141,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 		}
 		rs := s.FindClosest(q)
@@ -152,7 +152,7 @@ func TestStoreSimpleQueryWithNoise(t *testing.T) {
 func TestStoreComplexQuery(t *testing.T) {
 	s := NewStore()
 
-	cs := []*peers.PeerInfo{
+	cs := []*peer.PeerInfo{
 		{
 			AuthorityKey: getRandKey(),
 			SignerKey:    getRandKey(),
@@ -208,7 +208,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 		}
 		rs := s.FindClosest(q)
@@ -216,7 +216,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	}
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			Protocols:    c.Protocols,
 			ContentTypes: c.ContentTypes,
 		}
@@ -225,7 +225,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	}
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			SignerKeyHash: c.SignerKey.HashBase58(),
 			ContentTypes:  c.ContentTypes,
 		}
@@ -234,7 +234,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	}
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 			ContentTypes:     c.ContentTypes,
 		}
@@ -245,7 +245,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	// best effort
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 			ContentTypes:     []string{"not here"},
 		}
@@ -254,7 +254,7 @@ func TestStoreComplexQuery(t *testing.T) {
 	}
 
 	for _, c := range cs {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			AuthorityKeyHash: c.AuthorityKey.HashBase58(),
 			Protocols:        c.Protocols,
 			ContentTypes:     []string{"not here"},
@@ -267,9 +267,9 @@ func TestStoreComplexQuery(t *testing.T) {
 func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	s := NewStore()
 
-	cs := []*peers.PeerInfo{}
+	cs := []*peer.PeerInfo{}
 	for i := 0; i < 100; i++ {
-		cs = append(cs, &peers.PeerInfo{
+		cs = append(cs, &peer.PeerInfo{
 			// AuthorityKey: getRandKey(),
 			ContentTypes: []string{
 				"foo",
@@ -292,7 +292,7 @@ func TestStoreSingleContentPerPeerQueryOne(t *testing.T) {
 	s.Add(cs...)
 
 	for _, c := range cs[:10] {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			ContentIDs: []string{
 				c.ContentIDs[0],
 			},
@@ -334,7 +334,7 @@ func testMultiplePeersMultipleContent(t *testing.T, nPeers, nContent, nCheck int
 			cIDs[j] = base58.Encode(getRandBytes(32))
 		}
 		checkIDs[i] = cIDs[0]
-		c := &peers.PeerInfo{
+		c := &peer.PeerInfo{
 			SignerKey:    getRandKey(),
 			AuthorityKey: getRandKey(),
 			ContentIDs:   cIDs,
@@ -342,7 +342,7 @@ func testMultiplePeersMultipleContent(t *testing.T, nPeers, nContent, nCheck int
 		s.Add(c)
 	}
 	for _, cID := range checkIDs[:nCheck] {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			ContentIDs: []string{
 				cID,
 			},

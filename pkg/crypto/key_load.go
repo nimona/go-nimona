@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/log"
+	"nimona.io/internal/log"
+	"nimona.io/pkg/object"
 )
 
 // LoadKey returns a key from a file if it exists, else will create it
@@ -22,7 +22,7 @@ func LoadKey(keyPath string) (*Key, error) {
 			return nil, errors.Wrap(err, "could not read key file")
 		}
 
-		o, err := encoding.Unmarshal(bytes)
+		o, err := object.Unmarshal(bytes)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not unmarshal key file")
 		}
@@ -53,7 +53,7 @@ func LoadKey(keyPath string) (*Key, error) {
 		return nil, err
 	}
 
-	keyBytes, err := encoding.Marshal(key.ToObject())
+	keyBytes, err := object.Marshal(key.ToObject())
 	if err != nil {
 		return nil, err
 	}

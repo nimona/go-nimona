@@ -6,38 +6,39 @@ import (
 
 	"go.uber.org/zap"
 
+	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/exchange"
 )
 
 var (
-	typePeerInfoRequest = peers.PeerInfoRequest{}.GetType()
-	typePeerInfo        = peers.PeerInfo{}.GetType()
+	typePeerInfoRequest = peer.PeerInfoRequest{}.GetType()
+	typePeerInfo        = peer.PeerInfo{}.GetType()
 )
 
-// Resolver hyperspace
-type Resolver struct {
+// Discoverer hyperspace
+type Discoverer struct {
 	store    *Store
 	key      *crypto.Key
 	net      net.Network
-	exchange net.Exchange
+	exchange exchange.Exchange
 }
 
-// NewResolver returns a new hyperspace resolver
-func NewResolver(key *crypto.Key, network net.Network, exchange net.Exchange,
-	bootstrapAddresses []string) (*Resolver, error) {
+// NewDiscoverer returns a new hyperspace discoverer
+func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
+	bootstrapAddresses []string) (*Discoverer, error) {
 
-	r := &Resolver{
+	r := &Discoverer{
 		store:    NewStore(),
 		key:      key,
 		net:      network,
-		exchange: exchange,
+		exchange: exc,
 	}
 
-	exchange.Handle("/peer**", r.handleBlock)
+	exc.Handle("/peer**", r.handleBlock)
 
 	r.store.Add(network.GetPeerInfo())
 	r.bootstrap(bootstrapAddresses)
@@ -46,7 +47,7 @@ func NewResolver(key *crypto.Key, network net.Network, exchange net.Exchange,
 }
 
 // Resolve finds and returns the closest peers to a query
-func (r *Resolver) Resolve(q *peers.PeerInfoRequest) ([]*peers.PeerInfo, error) {
+func (r *Discoverer) Resolve(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
 	ctx := context.Background()
 	eps := r.store.FindExact(q)
 	go r.LookupPeerInfo(ctx, q)
@@ -57,16 +58,16 @@ func (r *Resolver) Resolve(q *peers.PeerInfoRequest) ([]*peers.PeerInfo, error) 
 	return ps, nil
 }
 
-func (r *Resolver) handleBlock(o *encoding.Object) error {
+func (r *Discoverer) handleBlock(o *object.Object) error {
 	switch o.GetType() {
 	case typePeerInfoRequest:
-		v := &peers.PeerInfoRequest{}
+		v := &peer.PeerInfoRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		r.handlePeerInfoRequest(v)
 	case typePeerInfo:
-		v := &peers.PeerInfo{}
+		v := &peer.PeerInfo{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -75,11 +76,11 @@ func (r *Resolver) handleBlock(o *encoding.Object) error {
 	return nil
 }
 
-func (r *Resolver) handlePeerInfo(p *peers.PeerInfo) {
+func (r *Discoverer) handlePeerInfo(p *peer.PeerInfo) {
 	r.store.Add(p)
 }
 
-func (r *Resolver) handlePeerInfoRequest(q *peers.PeerInfoRequest) {
+func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	eps := r.store.FindExact(q)
@@ -94,7 +95,7 @@ func (r *Resolver) handlePeerInfoRequest(q *peers.PeerInfoRequest) {
 }
 
 // LookupPeerInfo does a network lookup given a query
-func (r *Resolver) LookupPeerInfo(ctx context.Context, q *peers.PeerInfoRequest) error {
+func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest) error {
 	o := q.ToObject()
 	if err := crypto.Sign(o, r.key); err != nil {
 		return err
@@ -106,11 +107,11 @@ func (r *Resolver) LookupPeerInfo(ctx context.Context, q *peers.PeerInfoRequest)
 	return nil
 }
 
-func (r *Resolver) bootstrap(bootstrapAddresses []string) error {
+func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	for _, addr := range bootstrapAddresses {
-		q := &peers.PeerInfoRequest{
+		q := &peer.PeerInfoRequest{
 			SignerKeyHash: r.key.GetPublicKey().HashBase58(),
 		}
 		o := q.ToObject()

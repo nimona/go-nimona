@@ -7,10 +7,10 @@ import (
 
 	"go.uber.org/zap"
 
+	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
-	"nimona.io/pkg/log"
-	"nimona.io/pkg/peers"
+	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 const numPeersNear int = 15
@@ -60,7 +60,7 @@ func (q *query) Run(ctx context.Context) {
 			select {
 			case incPayload := <-q.incomingPayloads:
 				switch payload := incPayload.(type) {
-				case *peers.PeerInfo:
+				case *peer.PeerInfo:
 					q.outgoingPayloads <- payload
 					// TODO next doesn't work
 					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
@@ -133,7 +133,7 @@ func (q *query) next() {
 
 	signer := q.dht.key
 
-	var o *encoding.Object
+	var o *object.Object
 	switch q.queryType {
 	case PeerInfoQuery:
 		req := &PeerInfoRequest{

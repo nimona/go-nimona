@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 func TestKeyMaterialize(t *testing.T) {
@@ -32,9 +32,9 @@ func TestKeyHash(t *testing.T) {
 	epkh := key.GetPublicKey().ToObject().HashBase58()
 	assert.NotEqual(t, eskh, epkh)
 
-	pkb, err := encoding.Marshal(key.ToObject())
+	pkb, err := object.Marshal(key.ToObject())
 	assert.NoError(t, err)
-	nok, err := encoding.Unmarshal(pkb)
+	nok, err := object.Unmarshal(pkb)
 	assert.NoError(t, err)
 	nk := &Key{}
 	nk.FromObject(nok)

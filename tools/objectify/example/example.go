@@ -1,6 +1,6 @@
 package example
 
-import "nimona.io/pkg/encoding"
+import "nimona.io/pkg/object"
 
 //go:generate go run nimona.io/tools/objectify -schema test/inn -type InnerFoo -in example.go -out inner_foo_generated.go
 //go:generate go run nimona.io/tools/objectify -schema test/foo -type Foo -in example.go -out foo_generated.go
@@ -35,7 +35,7 @@ type InnerFoo struct {
 }
 
 type Foo struct {
-	RawObject *encoding.Object `fluffy:"@"`
+	RawObject *object.Object `fluffy:"@"`
 	Bar       string           `fluffy:"bar"`
 	Bars      []string         `fluffys:"bars"`
 	InnerFoo  *InnerFoo        `fluffy:"inner_foo"`

@@ -5,7 +5,7 @@
 package crypto
 
 import (
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n
@@ -24,8 +24,8 @@ func (s Signature) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s Signature) ToObject() *encoding.Object {
-	return encoding.NewObjectFromMap(s.ToMap())
+func (s Signature) ToObject() *object.Object {
+	return object.NewObjectFromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -59,7 +59,7 @@ func (s *Signature) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Signature) FromObject(o *encoding.Object) error {
+func (s *Signature) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 

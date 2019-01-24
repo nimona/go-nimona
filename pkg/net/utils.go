@@ -19,12 +19,12 @@ const (
 
 var (
 	src       = rand.NewSource(time.Now().UnixNano())
-	bindLocal = false
-	bindIpv6  = false
+	BindLocal = false // TODO(geoah) refactor to remove global
+	bindIpv6  = false // TODO(geoah) refactor to remove global
 )
 
 func init() {
-	bindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
+	BindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
 	bindIpv6, _ = strconv.ParseBool(os.Getenv("BIND_IPV6"))
 }
 
@@ -107,7 +107,7 @@ func isValidIP(addr net.Addr) (string, bool) {
 	if ip == nil {
 		return "", false
 	}
-	if !bindLocal && (ip.IsLoopback() || isPrivate(ip)) {
+	if !BindLocal && (ip.IsLoopback() || isPrivate(ip)) {
 		return "", false
 	}
 	if !bindIpv6 && isIPv6(ip.String()) {

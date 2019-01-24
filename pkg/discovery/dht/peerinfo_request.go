@@ -2,7 +2,7 @@ package dht
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 //go:generate go run nimona.io/tools/objectify -schema nimona.io/dht/peerinfo.request -type PeerInfoRequest -in peerinfo_request.go -out peerinfo_request_generated.go
@@ -12,7 +12,7 @@ type PeerInfoRequest struct {
 	RequestID string `json:"requestID,omitempty"`
 	PeerID    string `json:"peerID"`
 
-	RawObject *encoding.Object  `json:"@"`
+	RawObject *object.Object  `json:"@"`
 	Signer    *crypto.Key       `json:"@signer"`
 	Authority *crypto.Key       `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`

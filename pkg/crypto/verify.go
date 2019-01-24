@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"nimona.io/pkg/encoding"
+	"nimona.io/pkg/object"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 )
 
 // Verify object given the signer's key
-func Verify(o *encoding.Object) error {
+func Verify(o *object.Object) error {
 	if o == nil {
 		return errors.New("missing object")
 	}
@@ -42,7 +42,7 @@ func Verify(o *encoding.Object) error {
 		return err
 	}
 
-	hash, err := encoding.ObjectHash(o)
+	hash, err := object.ObjectHash(o)
 	if err != nil {
 		return err
 	}

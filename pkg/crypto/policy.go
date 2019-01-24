@@ -9,13 +9,13 @@ type Policy struct {
 }
 
 // func ID(v interface{}) string {
-// 	d, err := encoding.Marshal(v)
+// 	d, err := object.Marshal(v)
 // 	if err != nil {
 // 		panic(err)
 // 	}
 
 // 	h := NewSha3(d)
-// 	b, err := encoding.Marshal(h)
+// 	b, err := object.Marshal(h)
 // 	if err != nil {
 // 		panic(err)
 // 	}
