@@ -9,12 +9,10 @@ workflow "Lint, test, & build" {
 }
 
 action "deps" {
-  uses = "./.github/actions/golang"
-  args = [
-    "deps",
-  ]
+  uses = "docker://golang:latest"
+  runs = "make deps"
   env = {
-    GOPATH = "/github/home"
+    GOPATH = "/github/workspace/.go"
   }
 }
 
@@ -22,12 +20,12 @@ action "deps" {
 #   needs = [
 #     "deps",
 #   ]
-#   uses = "./.github/actions/golang"
+#   uses = "docker://golang:latest"
 #   args = [
 #     "lint",
 #   ]
 #   env = {
-#     GOPATH = "/github/home"
+#     GOPATH = "/github/workspace/.go"
 #   }
 # }
 
@@ -35,12 +33,10 @@ action "go-test" {
   needs = [
     "deps",
   ]
-  uses = "./.github/actions/golang"
-  args = [
-    "test",
-  ]
+  uses = "docker://golang:latest"
+  runs = "make test"
   env = {
-    GOPATH = "/github/home"
+    GOPATH = "/github/workspace/.go"
   }
 }
 
@@ -48,12 +44,10 @@ action "go-build" {
   needs = [
     "deps",
   ]
-  uses = "./.github/actions/golang"
-  args = [
-    "build",
-  ]
+  uses = "docker://golang:latest"
+  runs = "make build"
   env = {
-    GOPATH = "/github/home"
+    GOPATH = "/github/workspace/.go"
   }
 }
 
@@ -64,7 +58,7 @@ action "go-build" {
 #   uses = "actions/docker/cli@master"
 #   args = "build -t nimona/nimona-dev ."
 #   env = {
-#     GOPATH = "/github/home"
+#     GOPATH = "/github/workspace/.go"
 #   }
 # }
 
