@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/storage"
 )
 
@@ -99,7 +100,7 @@ var daemonStartCmd = &cobra.Command{
 		dpr := storage.NewDiskStorage(storagePath)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
-		x, err := net.NewExchange(k, n, dpr, bind)
+		x, err := exchange.New(k, n, dpr, bind)
 		if err != nil {
 			return err
 		}
