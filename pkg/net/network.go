@@ -85,7 +85,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		q := &peer.PeerInfoRequest{
 			SignerKeyHash: peerID,
 		}
-		ps, err := n.Discoverer().Resolve(q)
+		ps, err := n.Discoverer().Discover(q)
 		if err != nil {
 			return nil, err
 		}

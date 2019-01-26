@@ -33,7 +33,7 @@ func parseSendOptions(opts ...DiscovererOption) *discovererOptions {
 // Discoverer interface
 type Discoverer interface {
 	AddProvider(provider Provider) error
-	Resolve(q *peer.PeerInfoRequest, options ...DiscovererOption) ([]*peer.PeerInfo, error)
+	Discover(q *peer.PeerInfoRequest, options ...DiscovererOption) ([]*peer.PeerInfo, error)
 	Add(v *peer.PeerInfo)
 	// AddPersistent(v *peer.PeerInfo)
 }
@@ -61,13 +61,13 @@ type discoverer struct {
 	cachePersistent map[string]*peer.PeerInfo
 }
 
-// Resolve goes through the given providers until one returns something
-func (r *discoverer) Resolve(q *peer.PeerInfoRequest, opts ...DiscovererOption) ([]*peer.PeerInfo, error) {
+// Discover goes through the given providers until one returns something
+func (r *discoverer) Discover(q *peer.PeerInfoRequest, opts ...DiscovererOption) ([]*peer.PeerInfo, error) {
 	cfg := parseSendOptions(opts...)
 	if !cfg.Local {
 		r.providersLock.RLock()
 		for _, p := range r.providers {
-			if res, err := p.Resolve(q); err == nil && res != nil {
+			if res, err := p.Discover(q); err == nil && res != nil {
 				r.providersLock.RUnlock()
 				return res, nil
 			}

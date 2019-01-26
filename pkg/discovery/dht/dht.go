@@ -177,7 +177,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	// TODO handle and log error
 
 	if peerInfo == nil {
-		// peerInfo, _ = r.net.Discoverer().Resolve(payload.PeerID, net.Local())
+		// peerInfo, _ = r.net.Discoverer().Discover(payload.PeerID, net.Local())
 		// TODO handle and log error
 	}
 
@@ -342,8 +342,8 @@ func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 	return rks, nil
 }
 
-// Resolve returns a peer's info from their id
-func (r *DHT) Resolve(key string) (*peer.PeerInfo, error) {
+// Discover returns a peer's info from their id
+func (r *DHT) Discover(key string) (*peer.PeerInfo, error) {
 	log.DefaultLogger.Warn("=========== trying to resolve key " + key)
 	ctx := context.Background()
 	return r.GetPeerInfo(ctx, key)

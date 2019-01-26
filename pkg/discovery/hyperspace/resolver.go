@@ -46,8 +46,8 @@ func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
 	return r, nil
 }
 
-// Resolve finds and returns the closest peers to a query
-func (r *Discoverer) Resolve(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
+// Discover finds and returns the closest peers to a query
+func (r *Discoverer) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
 	ctx := context.Background()
 	eps := r.store.FindExact(q)
 	go r.LookupPeerInfo(ctx, q)
