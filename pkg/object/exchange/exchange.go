@@ -436,9 +436,15 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 		}
 
 		return nil
+
+	default:
+		if err := w.sendDirectlyToPeer(ctx, o, address); err != nil {
+			return net.ErrAllAddressesFailed
+		}
+
 	}
 
-	return net.ErrAllAddressesFailed
+	return nil
 }
 
 func (w *exchange) sendDirectlyToPeer(ctx context.Context, o *object.Object, address string) error {
