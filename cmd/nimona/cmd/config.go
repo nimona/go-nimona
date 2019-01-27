@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -38,7 +38,14 @@ func (c *Config) Update(cfgFile string) error {
 		return errors.Wrap(err, "could not marshal config")
 	}
 
-	if err := ioutil.WriteFile(cfgFile, configBytes, 0644); err != nil {
+	configFile, err := os.OpenFile(cfgFile, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return errors.Wrap(err, "could not open config")
+	}
+
+	defer configFile.Close()
+
+	if _, err := configFile.Write(configBytes); err != nil {
 		return errors.Wrap(err, "could not write config")
 	}
 
