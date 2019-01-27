@@ -6,8 +6,8 @@ import (
 
 //go:generate go run nimona.io/tools/objectify -schema /mandate -type Mandate -in mandate.go -out mandate_generated.go
 
-// Mandate to give authority to a aubject to perform certain actions on the
-// authority's behalf
+// Mandate to give signer to a aubject to perform certain actions on the
+// signer's behalf
 type Mandate struct {
 	Signer      *Key       `json:"@signer"`
 	Subject     *Key       `json:"subject"`
@@ -18,11 +18,11 @@ type Mandate struct {
 	Signature   *Signature `json:"@signature"`
 }
 
-// NewMandate returns a signed mandate given an authority key, a subject key,
+// NewMandate returns a signed mandate given a signer key, a subject key,
 // and a policy
-func NewMandate(authority, subject *Key, description string, resources, actions []string, effect string) (*Mandate, error) {
-	if authority == nil {
-		return nil, errors.New("missing authority")
+func NewMandate(signer, subject *Key, description string, resources, actions []string, effect string) (*Mandate, error) {
+	if signer == nil {
+		return nil, errors.New("missing signer")
 	}
 
 	if subject == nil {
@@ -38,7 +38,7 @@ func NewMandate(authority, subject *Key, description string, resources, actions 
 	}
 
 	o := m.ToObject()
-	if err := Sign(o, authority); err != nil {
+	if err := Sign(o, signer); err != nil {
 		return nil, err
 	}
 

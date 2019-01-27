@@ -21,11 +21,11 @@ var blockListCmd = &cobra.Command{
 		// 	return err
 		// }
 
-		// if returnRaw {
 		// 	bs, err := json.MarshalIndent(blocks, "", "  ")
 		// 	if err != nil {
 		// 		return err
 		// 	}
+		// if viper.GetBool("raw") {
 
 		// 	cmd.Println(string(bs))
 		// 	return nil

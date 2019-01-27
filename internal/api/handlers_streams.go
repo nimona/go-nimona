@@ -100,9 +100,15 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 					continue
 				}
 				for _, recipient := range subjects {
-					addr := "peer:" + recipient
+					addr := recipient
+					// TODO(geoah) Rephrase ui and api and remove
+					if !strings.Contains(addr, ":") {
+						addr = "peer:" + recipient
+					}
 					if err := api.exchange.Send(ctx, req, addr); err != nil {
-						logger.Error("could not send outgoing block", zap.Error(err))
+						logger.Error("could not send outgoing block",
+							zap.Error(err),
+							zap.String("addr", addr))
 						req.SetRaw("_status", "error sending block")
 					}
 					// TODO handle error

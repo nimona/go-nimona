@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -20,14 +24,15 @@ var (
 	Commit  = "unknown"
 	Date    = "unknown"
 
-	env              string
-	cfgFile          string
-	apiAddress       string
-	apiToken         string
-	announceHostname string
-	returnRaw        bool
+	env        string
+	cfgFile    string
+	apiAddress string
+	apiToken   string
+	returnRaw  bool
 
 	restClient *resty.Client
+
+	config = &Config{}
 )
 
 var rootCmd = &cobra.Command{
@@ -36,15 +41,15 @@ var rootCmd = &cobra.Command{
 	Long:  "",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		restClient = resty.New().
-			SetHostURL(apiAddress).
+			SetHostURL(viper.GetString("api")).
 			SetTimeout(10*time.Second).
 			SetHeader("Content-Type", "application/cbor").
-			SetHeader("Authorization", apiToken).
+			SetHeader("Authorization", viper.GetString("api_token")).
 			SetContentLength(true).
 			SetRESTMode().
 			SetRedirectPolicy(resty.FlexibleRedirectPolicy(5))
 
-		if strings.ToLower(env) == "dev" {
+		if strings.ToLower(viper.GetString("env")) == "dev" {
 			fmt.Println("Running in development mode, this will be very verbose")
 			defer profile.Start(profile.MemProfile).Stop()
 			go http.ListenAndServe(":1234", nil)
@@ -69,12 +74,21 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.PersistentFlags().StringVarP(
+		&cfgFile,
+		"config",
+		"c",
+		"",
+		"config file  (default is .nimona.yaml or .nimona.json in $HOME)",
+	)
+
 	rootCmd.PersistentFlags().StringVar(
 		&apiAddress,
 		"api",
 		"http://localhost:8030/api/v1",
 		"api address",
 	)
+	viper.BindPFlag("api", rootCmd.PersistentFlags().Lookup("api"))
 
 	rootCmd.PersistentFlags().StringVar(
 		&apiToken,
@@ -82,27 +96,16 @@ func init() {
 		"",
 		"api token",
 	)
+	viper.BindPFlag("api_token", rootCmd.PersistentFlags().Lookup("api-token"))
 
-	rootCmd.PersistentFlags().StringVar(
-		&announceHostname,
-		"announce-hostname",
-		"",
-		"set and announce local dns address",
-	)
-
-	rootCmd.PersistentFlags().StringVar(
+	rootCmd.PersistentFlags().StringVarP(
 		&env,
 		"env",
+		"e",
 		"PROD",
 		"environment; used for debugging",
 	)
-
-	rootCmd.PersistentFlags().StringVar(
-		&cfgFile,
-		"config",
-		"",
-		"config file",
-	)
+	viper.BindPFlag("env", rootCmd.PersistentFlags().Lookup("env"))
 
 	rootCmd.PersistentFlags().BoolVar(
 		&returnRaw,
@@ -110,31 +113,40 @@ func init() {
 		false,
 		"return raw response",
 	)
+	viper.BindPFlag("raw", rootCmd.PersistentFlags().Lookup("raw"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
+	if cfgFile == "" {
 		home, err := homedir.Dir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".nimona" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".nimona")
+		cfgFile = path.Join(home, ".nimona", "config.json")
 	}
 
+	viper.SetConfigFile(cfgFile)
+	viper.SetConfigType("json")
+	viper.SetEnvPrefix("NIMONA")
 	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
-	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		jsonFile, err := os.Open(cfgFile)
+		if err != nil {
+			log.Fatal("could not read config")
+		}
+		defer jsonFile.Close() // nolint
+		jsonBytes, _ := ioutil.ReadAll(jsonFile)
+		// NOTE(geoah): do not use viper.Unmarshal as it doesn't obey the json
+		// tags, but instead requires the mapstructure tag.
+		if err := json.Unmarshal(jsonBytes, config); err != nil {
+			log.Fatal("could not unmarshal config", err)
+		}
 	}
 }
 

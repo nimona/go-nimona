@@ -95,11 +95,13 @@ func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		if q.AuthorityKeyHash != "" && q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
+		if q.AuthorityKeyHash != "" && p.AuthorityKey != nil &&
+			q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
 			ps = append(ps, p)
 			continue
 		}
-		if q.SignerKeyHash != "" && q.SignerKeyHash == p.SignerKey.HashBase58() {
+		if q.SignerKeyHash != "" && p.SignerKey != nil &&
+			q.SignerKeyHash == p.SignerKey.HashBase58() {
 			ps = append(ps, p)
 			continue
 		}
