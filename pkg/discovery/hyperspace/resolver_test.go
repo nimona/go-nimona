@@ -121,10 +121,9 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange) {
 	tp, err := ioutil.TempDir("", "nimona-test-discoverer")
 	assert.NoError(t, err)
 
-	kp := filepath.Join(tp, "key.cbor")
 	sp := filepath.Join(tp, "objects")
 
-	pk, err := crypto.LoadKey(kp)
+	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
 	ds := storage.NewDiskStorage(sp)

@@ -1,8 +1,6 @@
 package net
 
 import (
-	"io/ioutil"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,12 +32,7 @@ func TestNetDiscoverer(t *testing.T) {
 }
 
 func newPeer(t *testing.T, relayAddress string) (*crypto.Key, *network) {
-	tp, err := ioutil.TempDir("", "nimona-test-net")
-	assert.NoError(t, err)
-
-	kp := filepath.Join(tp, "key.cbor")
-
-	pk, err := crypto.LoadKey(kp)
+	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
 	relayAddresses := []string{}

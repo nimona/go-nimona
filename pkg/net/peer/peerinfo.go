@@ -15,6 +15,7 @@ type PeerInfo struct {
 	AuthorityKey *crypto.Key       `json:"@authority"`
 	SignerKey    *crypto.Key       `json:"@signer"`
 	Signature    *crypto.Signature `json:"@signature"`
+	Mandate      *crypto.Mandate   `json:"@mandate"`
 }
 
 // HashBase58 of peer

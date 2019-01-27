@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -13,7 +12,6 @@ import (
 
 	"nimona.io/internal/api"
 	"nimona.io/internal/telemetry"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/exchange"
@@ -21,6 +19,9 @@ import (
 )
 
 var (
+	daemonPeerKey     string
+	daemonIdentityKey string
+
 	daemonDataDir          string
 	daemonPort             int
 	daemonAPIPort          int
@@ -68,16 +69,6 @@ var daemonStartCmd = &cobra.Command{
 			return errors.Wrap(err, "could not create config dir")
 		}
 
-		// addressBook, err := peer.NewAddressBook(daemonConfigPath)
-		// if err != nil {
-		//		return errors.Wrap(err, "could not load key")
-		// }
-
-		k, err := crypto.LoadKey(filepath.Join(dataDir, "key.cbor"))
-		if err != nil {
-			return errors.Wrap(err, "could not load or create peer key")
-		}
-
 		if len(bootstrapAddresses) > 0 {
 			cmd.Println("Adding bootstrap nodes")
 			for _, v := range bootstrapAddresses {
@@ -86,6 +77,8 @@ var daemonStartCmd = &cobra.Command{
 		} else {
 			cmd.Println("No bootstrap nodes provided")
 		}
+
+		k := config.Daemon.PeerKey
 
 		n, err := net.New(
 			k,

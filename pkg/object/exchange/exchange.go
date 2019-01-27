@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	// ErrInvalidRequest when received an invalid request block
+	// ErrInvalidRequest when received an invalid request object
 	ErrInvalidRequest = errors.New("Invalid request")
 )
 
@@ -37,8 +37,8 @@ type exchange struct {
 	net     net.Network
 	manager *ConnectionManager
 
-	outgoingPayloads chan *outBlock
-	incomingPayloads chan *incBlock
+	outgoing chan *outgoingObject
+	incoming chan *incomingObject
 
 	handlers   sync.Map
 	logger     *zap.Logger
@@ -49,16 +49,16 @@ type exchange struct {
 	subscriptions sync.Map
 }
 
-type outBlock struct {
+type outgoingObject struct {
 	context   context.Context
 	recipient string
-	block     *object.Object
+	object    *object.Object
 	err       chan error
 }
 
-type incBlock struct {
-	conn  *net.Connection
-	typed *object.Object
+type incomingObject struct {
+	conn   *net.Connection
+	object *object.Object
 }
 
 type handler struct {
@@ -75,8 +75,8 @@ func New(key *crypto.Key, n net.Network, store storage.Storage, address string) 
 		net:     n,
 		manager: &ConnectionManager{},
 
-		outgoingPayloads: make(chan *outBlock, 10),
-		incomingPayloads: make(chan *incBlock, 10),
+		outgoing: make(chan *outgoingObject, 10),
+		incoming: make(chan *incomingObject, 10),
 
 		handlers:   sync.Map{},
 		logger:     log.Logger(ctx).Named("exchange"),
@@ -97,7 +97,7 @@ func New(key *crypto.Key, n net.Network, store storage.Storage, address string) 
 			go func(conn *net.Connection) {
 				w.manager.Add("peer:"+conn.RemoteID, conn)
 				if err := w.HandleConnection(conn); err != nil {
-					w.logger.Warn("failed to handle block", zap.Error(err))
+					w.logger.Warn("failed to handle object", zap.Error(err))
 				}
 			}(conn)
 		}
@@ -105,51 +105,51 @@ func New(key *crypto.Key, n net.Network, store storage.Storage, address string) 
 
 	go func() {
 		for {
-			block := <-w.incomingPayloads
-			go func(block *incBlock) {
+			object := <-w.incoming
+			go func(object *incomingObject) {
 				defer func() {
 					if r := recover(); r != nil {
 						w.logger.Error("Recovered while processing", zap.Any("r", r))
 					}
 				}()
-				if err := w.process(block.typed, block.conn); err != nil {
-					w.logger.Error("processing block", zap.Error(err))
+				if err := w.process(object.object, object.conn); err != nil {
+					w.logger.Error("processing object", zap.Error(err))
 				}
-			}(block)
+			}(object)
 		}
 	}()
 
 	go func() {
 		for {
-			block := <-w.outgoingPayloads
-			if block.recipient == "" {
+			object := <-w.outgoing
+			if object.recipient == "" {
 				w.logger.Info("missing recipient")
-				block.err <- errors.New("missing recipient")
+				object.err <- errors.New("missing recipient")
 				continue
 			}
 
-			logger := w.logger.With(zap.String("recipient", block.recipient))
+			logger := w.logger.With(zap.String("recipient", object.recipient))
 
-			// try to send the block directly to the recipient
-			logger.Debug("getting conn to write block")
-			conn, err := w.GetOrDial(block.context, block.recipient)
+			// try to send the object directly to the recipient
+			logger.Debug("getting conn to write object")
+			conn, err := w.GetOrDial(object.context, object.recipient)
 			if err != nil {
 				logger.Debug("could not get conn to recipient", zap.Error(err))
-				block.err <- err
+				object.err <- err
 				continue
 			}
 
-			if err := net.Write(block.block, conn); err != nil {
-				w.manager.Close(block.recipient)
+			if err := net.Write(object.object, conn); err != nil {
+				w.manager.Close(object.recipient)
 				logger.Debug("could not write to recipient", zap.Error(err))
-				block.err <- err
+				object.err <- err
 				continue
 			}
 
 			// update peer status
 			// TODO(geoah) fix status -- not that we are using this
 			// w.addressBook.PutPeerStatus(recipientThumbPrint, peer.StatusConnected)
-			block.err <- nil
+			object.err <- nil
 			continue
 		}
 	}()
@@ -181,14 +181,14 @@ func (w *exchange) HandleConnection(conn *net.Connection) error {
 	w.logger.Debug("handling new connection", zap.String("remote", conn.RemoteID))
 	for {
 		// TODO use decoder
-		typed, err := net.Read(conn)
+		object, err := net.Read(conn)
 		if err != nil {
 			return err
 		}
 
-		w.incomingPayloads <- &incBlock{
-			conn:  conn,
-			typed: typed,
+		w.incoming <- &incomingObject{
+			conn:   conn,
+			object: object,
 		}
 	}
 }
@@ -199,7 +199,7 @@ var (
 	typeBlockResponse       = BlockResponse{}.GetType()
 )
 
-// Process incoming block
+// Process incoming object
 func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 	// TODO verify signature
 	// TODO convert these into proper handlers
@@ -213,10 +213,10 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 		cerr := make(chan error, 1)
 		ctx, cf := context.WithTimeout(context.Background(), time.Second)
 		defer cf()
-		w.outgoingPayloads <- &outBlock{
+		w.outgoing <- &outgoingObject{
 			context:   ctx,
 			recipient: v.Recipient,
-			block:     v.FwBlock,
+			object:    v.FwBlock,
 			err:       cerr,
 		}
 		return <-cerr
@@ -227,7 +227,7 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 			return err
 		}
 		if err := w.handleBlockRequest(v); err != nil {
-			w.logger.Warn("could not handle request block", zap.Error(err))
+			w.logger.Warn("could not handle request object", zap.Error(err))
 		}
 
 	case typeBlockResponse:
@@ -236,7 +236,7 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 			return err
 		}
 		if err := w.handleBlockResponse(v); err != nil {
-			w.logger.Warn("could not handle request block", zap.Error(err))
+			w.logger.Warn("could not handle request object", zap.Error(err))
 		}
 	}
 
@@ -247,7 +247,7 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 		hp++
 		h := v.(*handler)
 		if h.contentType.Match(ct) {
-			go func(h *handler, block interface{}) {
+			go func(h *handler, object interface{}) {
 				defer func() {
 					if r := recover(); r != nil {
 						w.logger.Error("Recovered while handling", zap.Any("r", r))
@@ -301,14 +301,14 @@ func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
 }
 
 func (w *exchange) handleBlockRequest(req *BlockRequest) error {
-	blockBytes, err := w.store.Get(req.ID)
+	objectBytes, err := w.store.Get(req.ID)
 	if err != nil {
 		return err
 	}
 
-	// TODO check if policy allows requested to retrieve the block
+	// TODO check if policy allows requested to retrieve the object
 
-	v, err := object.Unmarshal(blockBytes)
+	v, err := object.Unmarshal(objectBytes)
 	if err != nil {
 		return err
 	}
@@ -325,7 +325,7 @@ func (w *exchange) handleBlockRequest(req *BlockRequest) error {
 
 	addr := "peer:" + req.Sender.HashBase58()
 	if err := w.Send(context.Background(), o, addr); err != nil {
-		w.logger.Warn("blx.handleBlockRequest could not send block", zap.Error(err))
+		w.logger.Warn("blx.handleBlockRequest could not send object", zap.Error(err))
 		return err
 	}
 
@@ -333,13 +333,13 @@ func (w *exchange) handleBlockRequest(req *BlockRequest) error {
 }
 
 func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
-	// Check local storage for block
-	if blockBytes, err := w.store.Get(id); err == nil {
-		block, err := object.Unmarshal(blockBytes)
+	// Check local storage for object
+	if objectBytes, err := w.store.Get(id); err == nil {
+		object, err := object.Unmarshal(objectBytes)
 		if err != nil {
 			return nil, err
 		}
-		return block, nil
+		return object, nil
 	}
 
 	req := &BlockRequest{
@@ -366,7 +366,7 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 	// 	for provider := range providers {
 	// 		addr := "peer:" + provider.HashBase58()
 	// 		if err := w.Send(ctx, req, addr, crypto.SignWith(signer)); err != nil {
-	// 			w.logger.Warn("blx.Get could not send req block", zap.Error(err))
+	// 			w.logger.Warn("blx.Get could not send req object", zap.Error(err))
 	// 		}
 	// 	}
 	// }()
@@ -383,24 +383,80 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 }
 
 func (w *exchange) Send(ctx context.Context, o *object.Object, address string) error {
+	logger := log.Logger(ctx)
+
 	if shouldPersist(o.GetType()) {
 		bytes, _ := object.Marshal(o)
 		w.store.Store(o.HashBase58(), bytes)
 	}
 
+	switch getAddressType(address) {
+	case "peer":
+		if err := w.sendDirectlyToPeer(ctx, o, address); err == nil {
+			return nil
+		}
+
+		if err := w.sendViaRelayToPeer(ctx, o, address); err == nil {
+			return nil
+		}
+
+		return net.ErrAllAddressesFailed
+
+	case "identity":
+		val, err := getAddressValue(address)
+		if err != nil {
+			return err
+		}
+
+		// TODO(geoah): Look for the correct object type as well
+		req := &peer.PeerInfoRequest{
+			AuthorityKeyHash: val,
+		}
+		peers, err := w.net.Discoverer().Discover(req)
+		if err != nil {
+			return errors.New("discovery didn't yield any results for identity")
+		}
+
+		failed := 0
+		for _, peer := range peers {
+			if err := w.sendDirectlyToPeer(ctx, o, peer.Address()); err == nil {
+				continue
+			}
+
+			if err := w.sendViaRelayToPeer(ctx, o, peer.Address()); err == nil {
+				continue
+			}
+
+			logger.Info("could not send to peer", zap.String("addr", address))
+			failed++
+		}
+
+		if failed == len(peers) {
+			return errors.New("sending failed for all peers")
+		}
+
+		return nil
+	}
+
+	return net.ErrAllAddressesFailed
+}
+
+func (w *exchange) sendDirectlyToPeer(ctx context.Context, o *object.Object, address string) error {
 	cerr := make(chan error, 1)
-	w.outgoingPayloads <- &outBlock{
+	w.outgoing <- &outgoingObject{
 		context:   ctx,
 		recipient: address,
-		block:     o,
+		object:    o,
 		err:       cerr,
 	}
 	if err := <-cerr; err == nil {
 		return nil
 	}
 
-	// TODO(geoah) Why is this only handling peers?
+	return net.ErrAllAddressesFailed
+}
 
+func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, address string) error {
 	// if recipient is a peer, we might have some relay addresses
 	if !strings.HasPrefix(address, "peer:") {
 		return net.ErrAllAddressesFailed
@@ -415,7 +471,7 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 	q := &peer.PeerInfoRequest{
 		SignerKeyHash: recipient,
 	}
-	peers, err := w.net.Discoverer().Resolve(q)
+	peers, err := w.net.Discoverer().Discover(q)
 	if err != nil {
 		return err
 	}
@@ -426,7 +482,7 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 
 	peer := peers[0]
 
-	// TODO(geoah) make sure fw block is signed
+	// TODO(geoah) make sure fw object is signed
 	fw := &BlockForwardRequest{
 		Recipient: address,
 		FwBlock:   o,
@@ -448,10 +504,10 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 				continue
 			}
 			cerr := make(chan error, 1)
-			w.outgoingPayloads <- &outBlock{
+			w.outgoing <- &outgoingObject{
 				context:   ctx,
 				recipient: relayAddress,
-				block:     fwo,
+				object:    fwo,
 				err:       cerr,
 			}
 			if err := <-cerr; err == nil {
@@ -462,7 +518,6 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 
 	return net.ErrAllAddressesFailed
 }
-
 func (w *exchange) GetOrDial(ctx context.Context, address string) (*net.Connection, error) {
 	w.logger.Debug("looking for existing connection", zap.String("address", address))
 	if address == "" {
@@ -483,7 +538,7 @@ func (w *exchange) GetOrDial(ctx context.Context, address string) (*net.Connecti
 
 	go func() {
 		if err := w.HandleConnection(conn); err != nil {
-			w.logger.Warn("failed to handle block", zap.Error(err))
+			w.logger.Warn("failed to handle object", zap.Error(err))
 		}
 	}()
 
@@ -499,4 +554,16 @@ func shouldPersist(t string) bool {
 		return false
 	}
 	return true
+}
+
+func getAddressType(addr string) string {
+	return strings.Split(addr, ":")[0]
+}
+
+func getAddressValue(addr string) (string, error) {
+	ps := strings.Split(addr, ":")
+	if len(ps) != 1 {
+		return "", errors.New("invalid address")
+	}
+	return ps[1], nil
 }
