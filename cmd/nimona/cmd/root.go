@@ -7,12 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/user"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,6 +25,7 @@ var (
 	Date    = "unknown"
 
 	env        string
+	dataDir    string
 	cfgFile    string
 	apiAddress string
 	apiToken   string
@@ -114,18 +115,32 @@ func init() {
 		"return raw response",
 	)
 	viper.BindPFlag("raw", rootCmd.PersistentFlags().Lookup("raw"))
+
+	rootCmd.PersistentFlags().StringVar(
+		&dataDir,
+		"data-dir",
+		"",
+		"data directory",
+	)
+	_ = viper.BindPFlag(
+		"data_dir",
+		rootCmd.PersistentFlags().Lookup("data-dir"),
+	)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile == "" {
-		home, err := homedir.Dir()
+	if dataDir == "" {
+		usr, err := user.Current()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		dataDir = path.Join(usr.HomeDir, ".nimona")
+	}
 
-		cfgFile = path.Join(home, ".nimona", "config.json")
+	if cfgFile == "" {
+		cfgFile = path.Join(dataDir, "config.json")
 	}
 
 	viper.SetConfigFile(cfgFile)
