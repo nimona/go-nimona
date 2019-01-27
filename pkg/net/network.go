@@ -38,8 +38,10 @@ func init() {
 type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
-	GetPeerInfo() *peer.PeerInfo
 	Discoverer() discovery.Discoverer
+
+	GetPeerInfo() *peer.PeerInfo
+	AttachMandate(m *crypto.Mandate) error
 }
 
 // New creates a new p2p network using an address book
@@ -68,6 +70,7 @@ type network struct {
 	addressesLock  sync.RWMutex
 	addresses      []string
 	relayAddresses []string
+	mandate        *crypto.Mandate
 }
 
 // Dial to a peer and return a net.Conn or error
@@ -310,6 +313,13 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 
 	return cconn, nil
 }
+func (n *network) AttachMandate(m *crypto.Mandate) error {
+	// TODO(geoah): Check if our peer key is the mandate's subject
+	n.addressesLock.Lock()
+	n.mandate = m
+	n.addressesLock.Unlock()
+	return nil
+}
 
 func Write(o *object.Object, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
@@ -409,6 +419,10 @@ func (n *network) GetPeerInfo() *peer.PeerInfo {
 	p := &peer.PeerInfo{
 		Addresses: addrs,
 		SignerKey: n.key.GetPublicKey(),
+	}
+	if n.mandate != nil {
+		p.AuthorityKey = n.mandate.Signer
+		p.Mandate = n.mandate
 	}
 	o := p.ToObject()
 	if err := crypto.Sign(o, n.key); err != nil {

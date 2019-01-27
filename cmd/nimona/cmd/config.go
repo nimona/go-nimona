@@ -16,14 +16,15 @@ type APIConfig struct {
 }
 
 type DaemonConfig struct {
-	AnnounceHostname   string      `json:"hostname,omitempty"`
-	BootstrapAddresses []string    `json:"bootstrap_addresses,omitempty"`
-	EnableMetrics      bool        `json:"metrics,omitempty"`
-	IdentityKey        *crypto.Key `json:"identity_key,omitempty"`
-	ObjectPath         string      `json:"object_path,omitempty"`
-	PeerKey            *crypto.Key `json:"peer_key,omitempty"`
-	Port               int         `json:"port,omitempty"`
-	RelayAddresses     []string    `json:"relay_addresses,omitempty"`
+	AnnounceHostname   string          `json:"hostname,omitempty"`
+	BootstrapAddresses []string        `json:"bootstrap_addresses,omitempty"`
+	EnableMetrics      bool            `json:"metrics,omitempty"`
+	IdentityKey        *crypto.Key     `json:"identity_key,omitempty"`
+	Mandate            *crypto.Mandate `json:"mandate,omitempty"`
+	ObjectPath         string          `json:"object_path,omitempty"`
+	PeerKey            *crypto.Key     `json:"peer_key,omitempty"`
+	Port               int             `json:"port,omitempty"`
+	RelayAddresses     []string        `json:"relay_addresses,omitempty"`
 }
 
 type Config struct {
