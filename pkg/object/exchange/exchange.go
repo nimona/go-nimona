@@ -392,13 +392,17 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 
 	switch getAddressType(address) {
 	case "peer":
-		if err := w.sendDirectlyToPeer(ctx, o, address); err == nil {
+		err := w.sendDirectlyToPeer(ctx, o, address)
+		if err == nil {
 			return nil
 		}
+		logger.Debug("could not send directly to peer", zap.Error(err))
 
-		if err := w.sendViaRelayToPeer(ctx, o, address); err == nil {
+		err = w.sendViaRelayToPeer(ctx, o, address)
+		if err == nil {
 			return nil
 		}
+		logger.Debug("could not via relay to peer", zap.Error(err))
 
 		return net.ErrAllAddressesFailed
 
@@ -416,6 +420,11 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 		if err != nil {
 			return errors.New("discovery didn't yield any results for identity")
 		}
+
+		logger.Debug("sending object to identity",
+			zap.Int("peers", len(peers)),
+			zap.String("address", address),
+		)
 
 		failed := 0
 		for _, peer := range peers {
@@ -439,7 +448,7 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 
 	default:
 		if err := w.sendDirectlyToPeer(ctx, o, address); err != nil {
-			return net.ErrAllAddressesFailed
+			return errors.New("sending directly to address failed")
 		}
 
 	}
@@ -455,11 +464,7 @@ func (w *exchange) sendDirectlyToPeer(ctx context.Context, o *object.Object, add
 		object:    o,
 		err:       cerr,
 	}
-	if err := <-cerr; err == nil {
-		return nil
-	}
-
-	return net.ErrAllAddressesFailed
+	return <-cerr
 }
 
 func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, address string) error {
@@ -568,7 +573,7 @@ func getAddressType(addr string) string {
 
 func getAddressValue(addr string) (string, error) {
 	ps := strings.Split(addr, ":")
-	if len(ps) != 1 {
+	if len(ps) != 2 {
 		return "", errors.New("invalid address")
 	}
 	return ps[1], nil

@@ -50,12 +50,16 @@ func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
 func (r *Discoverer) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
 	ctx := context.Background()
 	eps := r.store.FindExact(q)
+	if len(eps) > 0 {
+		return eps, nil
+	}
 	go r.LookupPeerInfo(ctx, q)
 	// TODO(geoah) use dht-like queries instead of a delay
 	time.Sleep(time.Second)
-	cps := r.store.FindClosest(q)
-	ps := append(eps, cps...)
-	return ps, nil
+	// cps := r.store.FindClosest(q)
+	// ps := append(eps, cps...)
+	eps = r.store.FindExact(q)
+	return eps, nil
 }
 
 func (r *Discoverer) handleBlock(o *object.Object) error {

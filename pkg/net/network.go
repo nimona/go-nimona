@@ -411,19 +411,19 @@ func (n *network) addAddress(addrs ...string) {
 
 // GetPeerInfo returns the local peer info
 func (n *network) GetPeerInfo() *peer.PeerInfo {
-	addrs := []string{}
-	n.addressesLock.RLock()
-	addrs = append(addrs, n.addresses...)
-	n.addressesLock.RUnlock()
 	// TODO cache peer info and reuse
 	p := &peer.PeerInfo{
-		Addresses: addrs,
 		SignerKey: n.key.GetPublicKey(),
 	}
+
+	n.addressesLock.RLock()
+	p.Addresses = n.addresses
 	if n.mandate != nil {
 		p.AuthorityKey = n.mandate.Signer
 		p.Mandate = n.mandate
 	}
+	n.addressesLock.RUnlock()
+
 	o := p.ToObject()
 	if err := crypto.Sign(o, n.key); err != nil {
 		panic(err)

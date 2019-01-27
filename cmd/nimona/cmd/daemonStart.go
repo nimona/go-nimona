@@ -113,7 +113,13 @@ var daemonStartCmd = &cobra.Command{
 		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
 		cmd.Println("* Peer public key hash:\n  *", k.GetPublicKey().HashBase58())
 		if config.Daemon.IdentityKey != nil {
+			if config.Daemon.Mandate == nil {
+				return errors.New("missing mandate for identity")
+			}
 			ik := config.Daemon.IdentityKey
+			if err := n.AttachMandate(config.Daemon.Mandate); err != nil {
+				return errors.Wrap(err, "could not attach mandate to network")
+			}
 			cmd.Println("* Identity private key hash:\n  *", ik.HashBase58())
 			cmd.Println("* Identity public key hash:\n  *", ik.GetPublicKey().HashBase58())
 		}

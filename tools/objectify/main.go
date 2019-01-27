@@ -23,7 +23,7 @@ import (
 
 var (
 	schema   = flag.String("schema", "", "schema for struct")
-	input   = flag.String("in", "", "input file")
+	input    = flag.String("in", "", "input file")
 	output   = flag.String("out", "-", "output file (default is stdout)")
 	typename = flag.String("type", "", "type to generate methods for")
 )
@@ -34,8 +34,8 @@ func init() {
 
 func main() {
 	gen := Generator{
-		InputFile:  *input,
-		Type: *typename,
+		InputFile: *input,
+		Type:      *typename,
 	}
 
 	code, err := gen.process()
@@ -51,10 +51,10 @@ func main() {
 }
 
 type Generator struct {
-	InputFile      string
-	Type     string
-	Importer types.Importer
-	FileSet  *token.FileSet
+	InputFile string
+	Type      string
+	Importer  types.Importer
+	FileSet   *token.FileSet
 }
 
 type Values struct {
@@ -91,7 +91,6 @@ func (gen *Generator) process() (code []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 
 	typ, err := lookupStructType(pkg.Types.Scope(), gen.Type)
 	if err != nil {
@@ -345,18 +344,18 @@ func (s {{ .StructName }}) GetType() string {
 }
 
 func (gen *Generator) loadPackage() (*packages.Package, error) {
-	pattern :="file="+ gen.InputFile
+	pattern := "file=" + gen.InputFile
 	lcfg := &packages.Config{
 		Mode: packages.LoadAllSyntax,
-		Fset:                gen.FileSet,
-		Env:os.Environ(),
+		Fset: gen.FileSet,
+		Env:  os.Environ(),
 	}
 	pkgs, err := packages.Load(lcfg, pattern)
 	if err != nil {
 		return nil, err
 	}
-	if len(pkgs)==0{
-		return nil,errors.New("no files found")
+	if len(pkgs) == 0 {
+		return nil, errors.New("no files found")
 	}
 	return pkgs[0], nil
 }

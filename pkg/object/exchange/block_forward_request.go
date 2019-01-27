@@ -10,6 +10,6 @@ import (
 // BlockForwardRequest is the payload for proxied blocks
 type BlockForwardRequest struct {
 	Recipient string            `json:"recipient"` // address
-	FwBlock   *object.Object  `json:"fwBlock"`
+	FwBlock   *object.Object    `json:"fwBlock"`
 	Signature *crypto.Signature `json:"@signature"`
 }

@@ -1,6 +1,8 @@
 package peer
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/crypto"
 )
 
@@ -28,4 +30,19 @@ func (pi *PeerInfo) HashBase58() string {
 // Address of the peer
 func (pi *PeerInfo) Address() string {
 	return "peer:" + pi.HashBase58()
+}
+
+// String to allow pretty printing peers
+func (p *PeerInfo) String() string {
+	apub := ""
+	if p.AuthorityKey != nil {
+		apub = p.AuthorityKey.HashBase58()
+	}
+	ppub := p.SignerKey.HashBase58()
+	return fmt.Sprintf(
+		"(apub: %s; ppub: %s; addrs: %v)",
+		apub,
+		ppub,
+		p.Addresses,
+	)
 }

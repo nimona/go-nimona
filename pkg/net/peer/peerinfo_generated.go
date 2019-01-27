@@ -35,6 +35,9 @@ func (s PeerInfo) ToMap() map[string]interface{} {
 	if s.Signature != nil {
 		m["@signature:o"] = s.Signature.ToMap()
 	}
+	if s.Mandate != nil {
+		m["@mandate:o"] = s.Mandate.ToMap()
+	}
 	return m
 }
 
@@ -121,6 +124,17 @@ func (s *PeerInfo) FromMap(m map[string]interface{}) error {
 	}
 	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
+	}
+	if v, ok := m["@mandate:o"].(map[string]interface{}); ok {
+		s.Mandate = &crypto.Mandate{}
+		if err := s.Mandate.FromMap(v); err != nil {
+			return err
+		}
+	} else if v, ok := m["@mandate:o"].(*crypto.Mandate); ok {
+		s.Mandate = v
+	}
+	if v, ok := m["@mandate:o"].(*crypto.Mandate); ok {
+		s.Mandate = v
 	}
 	return nil
 }
