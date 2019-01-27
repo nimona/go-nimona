@@ -35,7 +35,7 @@ const (
           ExecStartPre=-/usr/bin/docker stop nimona
           ExecStartPre=-/usr/bin/docker rm nimona
           ExecStartPre=-/usr/bin/docker pull quay.io/nimona/nimona:{{ .docker.tag}}
-          ExecStartPre-=/usr/bin/docker run --rm \
+          ExecStartPre=-/usr/bin/docker run --rm \
             --name nimona \
             --user 500:500 \
             -v /etc/nimona:/etc/nimona \
