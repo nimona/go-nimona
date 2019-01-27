@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/user"
-	"path"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -22,7 +20,6 @@ var (
 	daemonPeerKey     string
 	daemonIdentityKey string
 
-	daemonDataDir          string
 	daemonPort             int
 	daemonAPIPort          int
 	daemonAnnounceHostname string
@@ -56,17 +53,15 @@ var daemonStartCmd = &cobra.Command{
 	Short: "Start a peer as a daemon",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dataDir := viper.GetString("daemon.data_dir")
 		bootstrapAddresses := viper.GetStringSlice("daemon.bootstraps")
 		relayAddresses := viper.GetStringSlice("daemon.relays")
 
-		if dataDir == "" {
-			usr, _ := user.Current()
-			dataDir = path.Join(usr.HomeDir, ".nimona")
+		if config.Daemon.PeerKey == nil {
+			return errors.New("daemon not configured, please run 'daemon init'")
 		}
 
-		if err := os.MkdirAll(dataDir, 0777); err != nil {
-			return errors.Wrap(err, "could not create config dir")
+		if err := os.MkdirAll(config.Daemon.ObjectPath, 0777); err != nil {
+			return errors.Wrap(err, "could not create objects dir")
 		}
 
 		if len(bootstrapAddresses) > 0 {
@@ -89,8 +84,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		storagePath := path.Join(dataDir, "storage")
-		dpr := storage.NewDiskStorage(storagePath)
+		dpr := storage.NewDiskStorage(config.Daemon.ObjectPath)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
 		x, err := exchange.New(k, n, dpr, bind)
@@ -147,18 +141,6 @@ var daemonStartCmd = &cobra.Command{
 
 func init() {
 	daemonCmd.AddCommand(daemonStartCmd)
-
-	daemonStartCmd.PersistentFlags().StringVarP(
-		&daemonDataDir,
-		"data-dir",
-		"d",
-		"",
-		"daemon data directory",
-	)
-	_ = viper.BindPFlag(
-		"daemon.data_dir",
-		daemonStartCmd.PersistentFlags().Lookup("data-dir"),
-	)
 
 	daemonStartCmd.PersistentFlags().IntVarP(
 		&daemonPort,

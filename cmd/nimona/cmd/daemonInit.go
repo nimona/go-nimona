@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"os"
-	"os/user"
 	"path"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"nimona.io/pkg/crypto"
 )
@@ -18,11 +16,8 @@ var daemonInitCmd = &cobra.Command{
 	Short: "Initialize new peer",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dataDir := viper.GetString("daemon.data_dir")
-
-		if dataDir == "" {
-			usr, _ := user.Current()
-			dataDir = path.Join(usr.HomeDir, ".nimona")
+		if _, err := os.Stat(cfgFile); err == nil {
+			return errors.New("daemon already initialized")
 		}
 
 		if err := os.MkdirAll(dataDir, 0777); err != nil {
@@ -33,11 +28,6 @@ var daemonInitCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "could not generate peer key")
 		}
-
-		// identityKey, err := crypto.GenerateKey()
-		// if err != nil {
-		// 	return errors.Wrap(err, "could not generate identity key")
-		// }
 
 		config := &Config{
 			Daemon: DaemonConfig{

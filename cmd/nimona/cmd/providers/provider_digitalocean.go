@@ -30,11 +30,18 @@ const (
           [Service]
           TimeoutStartSec=0
           Restart=always
-          ExecStartPre=/usr/bin/mkdir /etc/nimona
-          ExecStartPre=/usr/bin/chown core:core /etc/nimona
+          ExecStartPre=-/usr/bin/mkdir /etc/nimona
+          ExecStartPre=-/usr/bin/chown core:core /etc/nimona
           ExecStartPre=-/usr/bin/docker stop nimona
           ExecStartPre=-/usr/bin/docker rm nimona
-          ExecStartPre=/usr/bin/docker pull quay.io/nimona/nimona:{{ .docker.tag}}
+          ExecStartPre=-/usr/bin/docker pull quay.io/nimona/nimona:{{ .docker.tag}}
+          ExecStartPre=-/usr/bin/docker run --rm \
+            --name nimona \
+            --user 500:500 \
+            -v /etc/nimona:/etc/nimona \
+            quay.io/nimona/nimona:{{ .docker.tag }} \
+            daemon init \
+            --data-dir /etc/nimona
           ExecStart=/usr/bin/docker run --rm \
             --name nimona \
             --user 500:500 \
@@ -44,9 +51,9 @@ const (
             -p 8080:8080 \
             quay.io/nimona/nimona:{{ .docker.tag }} \
             daemon start \
+            --data-dir /etc/nimona \
             --port 21013 \
             --api-port 8080 \
-            --config-path /etc/nimona \
             --announce-hostname {{ .hostname }}
 
           [Install]
