@@ -124,8 +124,8 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		}
 
 		conn := &Connection{
-			Conn:     tcpConn,
-			RemoteID: "", // we don't really know who the other side is
+			Conn:       tcpConn,
+			RemotePeer: nil, // we don't really know who the other side is
 		}
 
 		nonce := RandStringBytesMaskImprSrc(8)
@@ -156,8 +156,8 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 			return nil, errors.New("invalid handhshake.syn-ack")
 		}
 
-		// store who is on the other side - peer id
-		conn.RemoteID = synAck.Signer.HashBase58()
+		// store who is on the other side
+		conn.RemotePeer = synAck.PeerInfo
 		n.Discoverer().Add(synAck.PeerInfo)
 
 		ack := &HandshakeAck{
@@ -249,8 +249,8 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 
 			conn := &Connection{
-				Conn:     tcpConn,
-				RemoteID: "unknown: handshaking",
+				Conn:       tcpConn,
+				RemotePeer: nil,
 			}
 
 			synObj, err := Read(conn)
@@ -306,7 +306,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 				continue
 			}
 
-			conn.RemoteID = ack.Signer.HashBase58()
+			conn.RemotePeer = ack.PeerInfo
 			cconn <- conn
 		}
 	}()
@@ -335,7 +335,11 @@ func Write(o *object.Object, conn *Connection) error {
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
-		log.DefaultLogger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "outgoing"))
+		log.DefaultLogger.Info(
+			string(b),
+			zap.String("remote_peer_hash", conn.RemotePeer.HashBase58()),
+			zap.String("direction", "outgoing"),
+		)
 	}
 
 	if _, err := conn.Conn.Write(b); err != nil {
@@ -391,7 +395,11 @@ func Read(conn *Connection) (*object.Object, error) {
 	)
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
-		logger.Info(string(b), zap.String("remoteID", conn.RemoteID), zap.String("direction", "incoming"))
+		logger.Info(
+			string(b),
+			zap.String("remote_peer_hash", conn.RemotePeer.HashBase58()),
+			zap.String("direction", "incoming"),
+		)
 	}
 	return o, nil
 }

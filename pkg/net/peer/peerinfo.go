@@ -24,6 +24,9 @@ type PeerInfo struct {
 // TODO rename to ID() or PeerID()?
 // TODO(geoah) should this return the authority or the subject's id?
 func (pi *PeerInfo) HashBase58() string {
+	if pi == nil {
+		return ""
+	}
 	return pi.SignerKey.HashBase58()
 }
 
