@@ -84,6 +84,16 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
+		ik := config.Daemon.IdentityKey
+		if ik != nil {
+			if config.Daemon.Mandate == nil {
+				return errors.New("missing mandate for identity")
+			}
+			if err := n.AttachMandate(config.Daemon.Mandate); err != nil {
+				return errors.Wrap(err, "could not attach mandate to network")
+			}
+		}
+
 		dpr := storage.NewDiskStorage(config.Daemon.ObjectPath)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
@@ -106,14 +116,7 @@ var daemonStartCmd = &cobra.Command{
 		cmd.Println("Started daemon")
 		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
 		cmd.Println("* Peer public key hash:\n  *", k.GetPublicKey().HashBase58())
-		if config.Daemon.IdentityKey != nil {
-			if config.Daemon.Mandate == nil {
-				return errors.New("missing mandate for identity")
-			}
-			ik := config.Daemon.IdentityKey
-			if err := n.AttachMandate(config.Daemon.Mandate); err != nil {
-				return errors.Wrap(err, "could not attach mandate to network")
-			}
+		if ik != nil {
 			cmd.Println("* Identity private key hash:\n  *", ik.HashBase58())
 			cmd.Println("* Identity public key hash:\n  *", ik.GetPublicKey().HashBase58())
 		}

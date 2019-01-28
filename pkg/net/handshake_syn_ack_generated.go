@@ -6,8 +6,8 @@ package net
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 // ToMap returns a map compatible with f12n

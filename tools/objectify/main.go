@@ -105,7 +105,7 @@ func (gen *Generator) process() (code []byte, err error) {
 		Imports:      map[string]bool{},
 	}
 
-	if pkg.Name != "encoding" {
+	if pkg.PkgPath != "object" {
 		values.Imports["nimona.io/pkg/object"] = true
 	}
 
@@ -322,7 +322,7 @@ func (s {{ .StructName }}) GetType() string {
 		panic(err)
 	}
 
-	if values.Package == "encoding" {
+	if values.Package == "object" {
 		sout := strings.Replace(string(out.Bytes()), "object.", "", -1)
 		out = bytes.NewBuffer([]byte(sout))
 	}
@@ -423,11 +423,16 @@ func getPackageAndType(t, pkg string, deref bool) (string, string) {
 		t = t[1:]
 	}
 
-	ct := strings.Replace(t, pkg, "", 1)
+	ct := t // strings.Replace(t, pkg, "", 1)
 	ts := strings.Split(ct, ".")
 	tpkg := strings.Join(ts[:len(ts)-1], ".")
-	ts = strings.Split(ct, "/")
-	tt := ts[len(ts)-1]
+	tx := strings.Split(ct, "/")
+	tt := tx[len(tx)-1]
+
+	if tpkg == pkg {
+		tpkg = ""
+		tt = ts[len(ts)-1]
+	}
 
 	tt = strings.TrimLeft(tt, ".")
 
