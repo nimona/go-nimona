@@ -1,128 +1,106 @@
 package storage
 
-// import (
-// 	"io/ioutil"
-// 	"os"
-// 	"path/filepath"
-// 	"testing"
+import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"testing"
 
-// 	"nimona.io/pkg/crypto"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/stretchr/testify/assert"
+)
 
-// func cleanup(path, key string) {
-// 	os.Remove(filepath.Join(path, key+dataExt))
-// }
+func cleanup(path, key string) {
+	os.Remove(filepath.Join(path, key+dataExt))
+}
 
-// func TestStoreBlockSuccess(t *testing.T) {
-// 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+func TestStoreObjectSuccess(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-// 	ds := NewDiskStorage(path)
+	ds := NewDiskStorage(path)
 
-// 	block := crypto.NewBlock("test", map[string]interface{}{
-// 		"foo": "bar",
-// 	})
-// 	blockID, err := block.ID()
-// 	assert.NoError(t, err)
+	value := []byte("bar")
+	key := "foo"
 
-// 	err = ds.Store(blockID, block)
-// 	assert.NoError(t, err)
+	err := ds.Store(key, value)
+	assert.NoError(t, err)
 
-// 	blockID, err = block.ID()
-// 	assert.NoError(t, err)
-// 	_, err = os.Stat(filepath.Join(path, blockID+dataExt))
-// 	assert.NoError(t, err)
+	key = "foo"
+	_, err = os.Stat(filepath.Join(path, key+dataExt))
+	assert.NoError(t, err)
 
-// 	cleanup(path, blockID)
-// }
+	cleanup(path, key)
+}
 
-// func TestStoreBlockExists(t *testing.T) {
-// 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+func TestStoreObjectExists(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-// 	ds := NewDiskStorage(path)
+	ds := NewDiskStorage(path)
 
-// 	values := make(map[string][]byte)
-// 	values["TestMetaKey"] = []byte("TestMetaValue")
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
-// 	block := crypto.NewBlock("test", map[string]interface{}{
-// 		"foo": "bar",
-// 	})
-// 	blockID, err := block.ID()
-// 	assert.NoError(t, err)
+	value := []byte("bar")
+	key := "foo"
 
-// 	blockID, err = block.ID()
-// 	assert.NoError(t, err)
+	err := ds.Store(key, value)
+	assert.NoError(t, err)
 
-// 	err = ds.Store(blockID, block)
-// 	assert.NoError(t, err)
+	err = ds.Store(key, value)
+	assert.Error(t, err)
+	assert.EqualError(t, ErrExists, err.Error())
 
-// 	err = ds.Store(blockID, block)
-// 	assert.Error(t, err)
-// 	assert.EqualError(t, ErrExists, err.Error())
+	cleanup(path, key)
+}
 
-// 	cleanup(path, blockID)
-// }
+func TestGetSuccess(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-// func TestGetSuccess(t *testing.T) {
-// 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+	ds := NewDiskStorage(path)
 
-// 	ds := NewDiskStorage(path)
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
 
-// 	values := make(map[string][]byte)
-// 	values["TestMetaKey"] = []byte("TestMetaValue")
+	value := []byte("bar")
+	key := "foo"
 
-// 	block := crypto.NewBlock("test", map[string]interface{}{
-// 		"foo": "bar",
-// 	})
-// 	blockID, err := block.ID()
-// 	assert.NoError(t, err)
+	err := ds.Store(key, value)
+	assert.NoError(t, err)
 
-// 	err = ds.Store(blockID, block)
-// 	assert.NoError(t, err)
+	bID := "foo"
+	b, err := ds.Get(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, key, bID)
+	assert.Equal(t, value, b)
 
-// 	bID, err := block.ID()
-// 	assert.NoError(t, err)
+	cleanup(path, key)
+}
 
-// 	b, err := ds.Get(bID)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, blockID, bID)
-// 	assert.Equal(t, block.Payload, b.Payload)
-// 	assert.Equal(t, block.Metadata, b.Metadata)
+func TestGetFail(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-// 	cleanup(path, blockID)
-// }
+	ds := NewDiskStorage(path)
 
-// func TestGetFail(t *testing.T) {
-// 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+	key := "TestKey2"
 
-// 	ds := NewDiskStorage(path)
+	_, err := ds.Get(key)
+	assert.Error(t, err)
+	assert.EqualError(t, ErrNotFound, err.Error())
+}
 
-// 	key := "TestKey2"
+func TestListSuccess(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-// 	_, err := ds.Get(key)
-// 	assert.Error(t, err)
-// 	assert.EqualError(t, ErrNotFound, err.Error())
-// }
+	ds := NewDiskStorage(path)
 
-// func TestListSuccess(t *testing.T) {
-// 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+	value := []byte("bar")
+	key := "foo"
 
-// 	ds := NewDiskStorage(path)
+	err := ds.Store(key, value)
+	assert.NoError(t, err)
 
-// 	block := crypto.NewBlock("test", map[string]interface{}{
-// 		"foo": "bar",
-// 	})
-// 	blockID, err := block.ID()
-// 	assert.NoError(t, err)
+	list, err := ds.List()
+	assert.NoError(t, err)
+	assert.Equal(t, key, list[0])
 
-// 	err = ds.Store(blockID, block)
-// 	assert.NoError(t, err)
-
-// 	list, err := ds.List()
-// 	assert.NoError(t, err)
-// 	blockID, err = block.ID()
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, blockID, list[0])
-
-// 	cleanup(path, blockID)
-// }
+	cleanup(path, key)
+}
