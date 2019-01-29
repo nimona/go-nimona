@@ -11,15 +11,15 @@ import (
 	"nimona.io/pkg/storage"
 )
 
-func (api *API) HandleGetBlocks(c *gin.Context) {
-	blockIDs, err := api.blockStore.List()
+func (api *API) HandleGetObjects(c *gin.Context) {
+	objectIDs, err := api.objectStore.List()
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 	ms := []interface{}{}
-	for _, blockID := range blockIDs {
-		b, err := api.blockStore.Get(blockID)
+	for _, objectID := range objectIDs {
+		b, err := api.objectStore.Get(objectID)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -29,17 +29,17 @@ func (api *API) HandleGetBlocks(c *gin.Context) {
 			c.AbortWithError(500, err)
 			return
 		}
-		ms = append(ms, api.mapBlock(m))
+		ms = append(ms, api.mapObject(m))
 	}
 	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
-func (api *API) HandleGetBlock(c *gin.Context) {
-	blockID := c.Param("blockID")
-	if blockID == "" {
-		c.AbortWithError(400, errors.New("missing block id"))
+func (api *API) HandleGetObject(c *gin.Context) {
+	objectID := c.Param("objectID")
+	if objectID == "" {
+		c.AbortWithError(400, errors.New("missing object id"))
 	}
-	b, err := api.blockStore.Get(blockID)
+	b, err := api.objectStore.Get(objectID)
 	if err != nil {
 		if err == storage.ErrNotFound {
 			c.AbortWithError(404, err)
@@ -53,11 +53,11 @@ func (api *API) HandleGetBlock(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	ms := api.mapBlock(m)
+	ms := api.mapObject(m)
 	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
-func (api *API) HandlePostBlock(c *gin.Context) {
+func (api *API) HandlePostObject(c *gin.Context) {
 	req := map[string]interface{}{}
 	if err := c.BindJSON(req); err != nil {
 		c.AbortWithError(400, err)

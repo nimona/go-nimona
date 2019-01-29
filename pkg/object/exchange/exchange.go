@@ -27,7 +27,7 @@ var (
 
 // Exchange interface for mocking exchange
 type Exchange interface {
-	Get(ctx context.Context, id string) (interface{}, error)
+	Get(ctx context.Context, id string) (*object.Object, error)
 	Handle(contentType string, h func(o *object.Object) error) (func(), error)
 	Send(ctx context.Context, o *object.Object, address string) error
 }
@@ -198,9 +198,9 @@ func (w *exchange) HandleConnection(conn *net.Connection) error {
 }
 
 var (
-	typeBlockForwardRequest = BlockForwardRequest{}.GetType()
-	typeBlockRequest        = BlockRequest{}.GetType()
-	typeBlockResponse       = BlockResponse{}.GetType()
+	typeObjectForwardRequest = ObjectForwardRequest{}.GetType()
+	typeObjectRequest        = ObjectRequest{}.GetType()
+	typeObjectResponse       = ObjectResponse{}.GetType()
 )
 
 // Process incoming object
@@ -208,8 +208,8 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 	// TODO verify signature
 	// TODO convert these into proper handlers
 	switch o.GetType() {
-	case typeBlockForwardRequest:
-		v := &BlockForwardRequest{}
+	case typeObjectForwardRequest:
+		v := &ObjectForwardRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -220,26 +220,26 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
 			recipient: v.Recipient,
-			object:    v.FwBlock,
+			object:    v.FwObject,
 			err:       cerr,
 		}
 		return <-cerr
 
-	case typeBlockRequest:
-		v := &BlockRequest{}
+	case typeObjectRequest:
+		v := &ObjectRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		if err := w.handleBlockRequest(v); err != nil {
+		if err := w.handleObjectRequest(v); err != nil {
 			w.logger.Warn("could not handle request object", zap.Error(err))
 		}
 
-	case typeBlockResponse:
-		v := &BlockResponse{}
+	case typeObjectResponse:
+		v := &ObjectResponse{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		if err := w.handleBlockResponse(v); err != nil {
+		if err := w.handleObjectResponse(v); err != nil {
 			w.logger.Warn("could not handle request object", zap.Error(err))
 		}
 	}
@@ -288,23 +288,23 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 	return nil
 }
 
-func (w *exchange) handleBlockResponse(payload *BlockResponse) error {
+func (w *exchange) handleObjectResponse(payload *ObjectResponse) error {
 	// Check if nonce exists in local addressBook
 	value, ok := w.getRequests.Load(payload.RequestID)
 	if !ok {
 		return nil
 	}
 
-	req, ok := value.(*BlockRequest)
+	req, ok := value.(*ObjectRequest)
 	if !ok {
 		return ErrInvalidRequest
 	}
 
-	req.response <- payload.RequestedBlock
+	req.response <- payload.RequestedObject
 	return nil
 }
 
-func (w *exchange) handleBlockRequest(req *BlockRequest) error {
+func (w *exchange) handleObjectRequest(req *ObjectRequest) error {
 	objectBytes, err := w.store.Get(req.ID)
 	if err != nil {
 		return err
@@ -317,9 +317,9 @@ func (w *exchange) handleBlockRequest(req *BlockRequest) error {
 		return err
 	}
 
-	resp := &BlockResponse{
-		RequestID:      req.RequestID,
-		RequestedBlock: v,
+	resp := &ObjectResponse{
+		RequestID:       req.RequestID,
+		RequestedObject: v,
 	}
 
 	o := resp.ToObject()
@@ -327,16 +327,16 @@ func (w *exchange) handleBlockRequest(req *BlockRequest) error {
 		return err
 	}
 
-	addr := "peer:" + req.Sender.HashBase58()
+	addr := "peer:" + req.Signer.HashBase58()
 	if err := w.Send(context.Background(), o, addr); err != nil {
-		w.logger.Warn("blx.handleBlockRequest could not send object", zap.Error(err))
+		w.logger.Warn("blx.handleObjectRequest could not send object", zap.Error(err))
 		return err
 	}
 
 	return nil
 }
 
-func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
+func (w *exchange) Get(ctx context.Context, id string) (*object.Object, error) {
 	// Check local storage for object
 	if objectBytes, err := w.store.Get(id); err == nil {
 		object, err := object.Unmarshal(objectBytes)
@@ -346,10 +346,10 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 		return object, nil
 	}
 
-	req := &BlockRequest{
+	req := &ObjectRequest{
 		RequestID: net.RandStringBytesMaskImprSrc(8),
 		ID:        id,
-		response:  make(chan interface{}, 10),
+		response:  make(chan *object.Object, 10),
 	}
 
 	defer func() {
@@ -357,26 +357,41 @@ func (w *exchange) Get(ctx context.Context, id string) (interface{}, error) {
 		close(req.response)
 	}()
 
+	errFailed := make(chan error, 1)
+
 	w.getRequests.Store(req.RequestID, req)
-	// signer := w.addressBook.GetLocalPeerKey()
 
-	// go func() {
-	// 	providers, err := w.discovery.GetProviders(ctx, id)
-	// 	if err != nil {
-	// 		// TODO log err
-	// 		return
-	// 	}
+	go func() {
+		q := &peer.PeerInfoRequest{
+			ContentIDs: []string{
+				id,
+			},
+		}
+		ps, err := w.net.Discoverer().Discover(q)
+		if err != nil {
+			// TODO log err
+			return
+		}
 
-	// 	for provider := range providers {
-	// 		addr := "peer:" + provider.HashBase58()
-	// 		if err := w.Send(ctx, req, addr, crypto.SignWith(signer)); err != nil {
-	// 			w.logger.Warn("blx.Get could not send req object", zap.Error(err))
-	// 		}
-	// 	}
-	// }()
+		reqObj := req.ToObject()
+		if err := crypto.Sign(reqObj, w.key); err != nil {
+			errFailed <- err
+			return
+		}
+
+		for _, p := range ps {
+			addr := p.Address()
+			if err := w.Send(ctx, reqObj, addr); err != nil {
+				w.logger.Warn("blx.Get could not send req object", zap.Error(err))
+			}
+		}
+	}()
 
 	for {
 		select {
+		case err := <-errFailed:
+			return nil, err
+
 		case payload := <-req.response:
 			return payload, nil
 
@@ -498,9 +513,9 @@ func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, add
 	peer := peers[0]
 
 	// TODO(geoah) make sure fw object is signed
-	fw := &BlockForwardRequest{
+	fw := &ObjectForwardRequest{
 		Recipient: address,
-		FwBlock:   o,
+		FwObject:  o,
 	}
 
 	lk := w.key
@@ -565,6 +580,7 @@ func (w *exchange) GetOrDial(ctx context.Context, address string) (*net.Connecti
 func shouldPersist(t string) bool {
 	if strings.Contains(t, "nimona.io/dht") ||
 		strings.HasPrefix(t, "nimona.io/telemetry") ||
+		strings.HasPrefix(t, "/object-") ||
 		strings.HasPrefix(t, "/handshake") {
 		return false
 	}

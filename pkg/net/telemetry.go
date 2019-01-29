@@ -32,17 +32,17 @@ func SendConnectionEvent(outgoing bool) {
 	})
 }
 
-// SendBlockEvent sends a connection event
-func SendBlockEvent(direction string, contentType string, blockSize int) {
+// SendObjectEvent sends a connection event
+func SendObjectEvent(direction string, contentType string, objectSize int) {
 	if os.Getenv("TELEMETRY") != "client" {
 		return
 	}
 	if strings.Contains(contentType, "telemetry") {
 		return
 	}
-	go telemetry.SendEvent(context.Background(), &telemetry.BlockEvent{
+	go telemetry.SendEvent(context.Background(), &telemetry.ObjectEvent{
 		Direction:   direction,
 		ContentType: contentType,
-		BlockSize:   blockSize,
+		ObjectSize:  objectSize,
 	})
 }

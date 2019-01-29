@@ -12,10 +12,10 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// blockListenCmd represents the blockListen command
-var blockListenCmd = &cobra.Command{
+// objectListenCmd represents the objectListen command
+var objectListenCmd = &cobra.Command{
 	Use:   "listen",
-	Short: "Listen for new incoming blocks matching a pattern",
+	Short: "Listen for new incoming objects matching a pattern",
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -56,7 +56,7 @@ var blockListenCmd = &cobra.Command{
 				continue
 			}
 
-			cmd.Println("block:")
+			cmd.Println("object:")
 			cmd.Println("  _id:", o.HashBase58())
 			for k, v := range o.ToMap() {
 				cmd.Printf("  %s: %v\n", k, v)
@@ -67,5 +67,5 @@ var blockListenCmd = &cobra.Command{
 }
 
 func init() {
-	blockCmd.AddCommand(blockListenCmd)
+	objectCmd.AddCommand(objectListenCmd)
 }

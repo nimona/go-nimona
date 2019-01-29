@@ -63,8 +63,8 @@ func NewDHT(key *crypto.Key, network net.Network, exchange exchange.Exchange,
 		peerStore: &peer.PeerInfoCollection{},
 	}
 
-	exchange.Handle("nimona.io/dht/**", r.handleBlock)
-	exchange.Handle("/peer", r.handleBlock)
+	exchange.Handle("nimona.io/dht/**", r.handleObject)
+	exchange.Handle("/peer", r.handleObject)
 
 	// connect to the bootstrap addresses to get their peer infos
 	for _, addr := range bootstrapAddresses {
@@ -125,7 +125,7 @@ func (r *DHT) refresh() {
 	}
 }
 
-func (r *DHT) handleBlock(o *object.Object) error {
+func (r *DHT) handleObject(o *object.Object) error {
 	switch o.GetType() {
 	case typePeerInfoRequest:
 		v := &PeerInfoRequest{}
@@ -200,7 +200,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 	}
 	addr := "peer:" + payload.Signer.HashBase58()
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
-		logger.Debug("handleProviderRequest could not send block", zap.Error(err))
+		logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		return
 	}
 }
@@ -262,7 +262,7 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
 		return
 	}
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
-		logger.Warn("handleProviderRequest could not send block", zap.Error(err))
+		logger.Warn("handleProviderRequest could not send object", zap.Error(err))
 		return
 	}
 }
@@ -385,7 +385,7 @@ func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*peer.PeerInfo, error
 func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	logger := log.Logger(ctx)
 	provider := &Provider{
-		BlockIDs: []string{key},
+		ObjectIDs: []string{key},
 	}
 	so := provider.ToObject()
 	if err := crypto.Sign(so, r.key); err != nil {
@@ -450,14 +450,14 @@ func (r *DHT) GetAllProviders() (map[string][]string, error) {
 	}
 
 	for _, provider := range providers {
-		for _, blockID := range provider.BlockIDs {
-			if _, ok := allProviders[blockID]; !ok {
-				allProviders[blockID] = []string{}
+		for _, objectID := range provider.ObjectIDs {
+			if _, ok := allProviders[objectID]; !ok {
+				allProviders[objectID] = []string{}
 			}
 			if provider.Signature == nil {
 				continue
 			}
-			allProviders[blockID] = append(allProviders[blockID], provider.Signer.HashBase58())
+			allProviders[objectID] = append(allProviders[objectID], provider.Signer.HashBase58())
 		}
 	}
 	return allProviders, nil

@@ -73,20 +73,20 @@ func (_m *MockExchange) Listen(ctx context.Context, addrress string) (net.Listen
 	return r0, r1
 }
 
-// Send provides a mock function with given fields: ctx, block, recipients
-func (_m *MockExchange) Send(ctx context.Context, block interface{}, recipients ...string) error {
+// Send provides a mock function with given fields: ctx, object, recipients
+func (_m *MockExchange) Send(ctx context.Context, object interface{}, recipients ...string) error {
 	_va := make([]interface{}, len(recipients))
 	for _i := range recipients {
 		_va[_i] = recipients[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, ctx, block)
+	_ca = append(_ca, ctx, object)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, interface{}, ...string) error); ok {
-		r0 = rf(ctx, block, recipients...)
+		r0 = rf(ctx, object, recipients...)
 	} else {
 		r0 = ret.Error(0)
 	}

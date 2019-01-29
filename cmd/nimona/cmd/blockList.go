@@ -4,24 +4,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// blockListCmd represents the blockList command
-var blockListCmd = &cobra.Command{
+// objectListCmd represents the objectList command
+var objectListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all known blocks",
+	Short: "List all known objects",
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// resp, err := restClient.R().Get("/blocks")
+		// resp, err := restClient.R().Get("/objects")
 		// if err != nil {
 		// 	return err
 		// }
 
 		// body := resp.Body()
-		// blocks := []map[string]interface{}{}
-		// if err := object.UnmarshalInto(body, &blocks); err != nil {
+		// objects := []map[string]interface{}{}
+		// if err := object.UnmarshalInto(body, &objects); err != nil {
 		// 	return err
 		// }
 
-		// 	bs, err := json.MarshalIndent(blocks, "", "  ")
+		// 	bs, err := json.MarshalIndent(objects, "", "  ")
 		// 	if err != nil {
 		// 		return err
 		// 	}
@@ -31,10 +31,10 @@ var blockListCmd = &cobra.Command{
 		// 	return nil
 		// }
 
-		// for _, block := range blocks {
-		// 	cmd.Println("block:")
-		// 	cmd.Println("  _id:", crypto.ID(block))
-		// 	for k, v := range block {
+		// for _, object := range objects {
+		// 	cmd.Println("object:")
+		// 	cmd.Println("  _id:", crypto.ID(object))
+		// 	for k, v := range object {
 		// 		cmd.Printf("  %s: %v\n", k, v)
 		// 	}
 		// 	cmd.Println("")
@@ -44,5 +44,5 @@ var blockListCmd = &cobra.Command{
 }
 
 func init() {
-	blockCmd.AddCommand(blockListCmd)
+	objectCmd.AddCommand(objectListCmd)
 }

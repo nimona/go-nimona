@@ -14,8 +14,8 @@ func (s Provider) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
 		"@ctx:s": "nimona.io/dht/provider",
 	}
-	if s.BlockIDs != nil {
-		m["blockIDs:a<s>"] = s.BlockIDs
+	if s.ObjectIDs != nil {
+		m["objectIDs:a<s>"] = s.ObjectIDs
 	}
 	if s.Signer != nil {
 		m["@signer:o"] = s.Signer.ToMap()
@@ -36,16 +36,16 @@ func (s Provider) ToObject() *object.Object {
 
 // FromMap populates the struct from a f12n compatible map
 func (s *Provider) FromMap(m map[string]interface{}) error {
-	s.BlockIDs = []string{}
-	if ss, ok := m["blockIDs:a<s>"].([]interface{}); ok {
+	s.ObjectIDs = []string{}
+	if ss, ok := m["objectIDs:a<s>"].([]interface{}); ok {
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
-				s.BlockIDs = append(s.BlockIDs, v)
+				s.ObjectIDs = append(s.ObjectIDs, v)
 			}
 		}
 	}
-	if v, ok := m["blockIDs:a<s>"].([]string); ok {
-		s.BlockIDs = v
+	if v, ok := m["objectIDs:a<s>"].([]string); ok {
+		s.ObjectIDs = v
 	}
 	s.RawObject = object.FromMap(m)
 	if v, ok := m["@:o"].(*object.Object); ok {

@@ -277,7 +277,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 			sao := synAck.ToObject()
 			if err := crypto.Sign(sao, n.key); err != nil {
-				log.DefaultLogger.Warn("could not sign for syn ack block", zap.Error(err))
+				log.DefaultLogger.Warn("could not sign for syn ack object", zap.Error(err))
 				// TODO close conn?
 				continue
 			}
@@ -324,8 +324,8 @@ func (n *network) AttachMandate(m *crypto.Mandate) error {
 func Write(o *object.Object, conn *Connection) error {
 	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
 	if o == nil {
-		log.DefaultLogger.Error("block for fw cannot be nil")
-		return errors.New("missing block")
+		log.DefaultLogger.Error("object for fw cannot be nil")
+		return errors.New("missing object")
 	}
 
 	b, err := object.Marshal(o)
@@ -351,7 +351,7 @@ func Write(o *object.Object, conn *Connection) error {
 		return err
 	}
 
-	SendBlockEvent(
+	SendObjectEvent(
 		"outgoing",
 		o.GetType(),
 		len(b),
@@ -398,7 +398,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		fmt.Println("--------------------------------------------------------")
 	}
 
-	SendBlockEvent(
+	SendObjectEvent(
 		"incoming",
 		o.GetType(),
 		pDecoder.NumBytesRead(),

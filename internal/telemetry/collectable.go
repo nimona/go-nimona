@@ -29,27 +29,27 @@ func (ce *ConnectionEvent) Measurements() map[string]interface{} {
 	}
 }
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/telemetry/block -type BlockEvent -in collectable.go -out event_block_generated.go
+//go:generate go run nimona.io/tools/objectify -schema nimona.io/telemetry/object -type ObjectEvent -in collectable.go -out event_object_generated.go
 
-// BlockEvent for reporting block metrics
-type BlockEvent struct {
+// ObjectEvent for reporting object metrics
+type ObjectEvent struct {
 	// Event attributes
 	Direction   string `json:"direction"`
 	ContentType string `json:"contentType"`
-	BlockSize   int    `json:"size"`
+	ObjectSize  int    `json:"size"`
 	// Signature   *crypto.Signature `json:"-"`
 }
 
 // Collection returns the string representation of the structure
-func (ee *BlockEvent) Collection() string {
-	return "nimona.io/telemetry.block"
+func (ee *ObjectEvent) Collection() string {
+	return "nimona.io/telemetry.object"
 }
 
 // Measurements returns a map with all the metrics for the event
-func (ee *BlockEvent) Measurements() map[string]interface{} {
+func (ee *ObjectEvent) Measurements() map[string]interface{} {
 	return map[string]interface{}{
 		"direction":    ee.Direction,
 		"content_type": ee.ContentType,
-		"block_size":   ee.BlockSize,
+		"object_size":   ee.ObjectSize,
 	}
 }

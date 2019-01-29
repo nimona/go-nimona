@@ -10,13 +10,13 @@ import (
 )
 
 // ToMap returns a map compatible with f12n
-func (s BlockForwardRequest) ToMap() map[string]interface{} {
+func (s ObjectForwardRequest) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
-		"@ctx:s":      "/block-forward-request",
+		"@ctx:s":      "/object-forward-request",
 		"recipient:s": s.Recipient,
 	}
-	if s.FwBlock != nil {
-		m["fwBlock:o"] = s.FwBlock.ToMap()
+	if s.FwObject != nil {
+		m["fwObject:o"] = s.FwObject.ToMap()
 	}
 	if s.Signature != nil {
 		m["@signature:o"] = s.Signature.ToMap()
@@ -25,25 +25,25 @@ func (s BlockForwardRequest) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s BlockForwardRequest) ToObject() *object.Object {
+func (s ObjectForwardRequest) ToObject() *object.Object {
 	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
-func (s *BlockForwardRequest) FromMap(m map[string]interface{}) error {
+func (s *ObjectForwardRequest) FromMap(m map[string]interface{}) error {
 	if v, ok := m["recipient:s"].(string); ok {
 		s.Recipient = v
 	}
-	if v, ok := m["fwBlock:o"].(map[string]interface{}); ok {
-		s.FwBlock = &object.Object{}
-		if err := s.FwBlock.FromMap(v); err != nil {
+	if v, ok := m["fwObject:o"].(map[string]interface{}); ok {
+		s.FwObject = &object.Object{}
+		if err := s.FwObject.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["fwBlock:o"].(*object.Object); ok {
-		s.FwBlock = v
+	} else if v, ok := m["fwObject:o"].(*object.Object); ok {
+		s.FwObject = v
 	}
-	if v, ok := m["fwBlock:o"].(*object.Object); ok {
-		s.FwBlock = v
+	if v, ok := m["fwObject:o"].(*object.Object); ok {
+		s.FwObject = v
 	}
 	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
@@ -60,11 +60,11 @@ func (s *BlockForwardRequest) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *BlockForwardRequest) FromObject(o *object.Object) error {
+func (s *ObjectForwardRequest) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
-func (s BlockForwardRequest) GetType() string {
-	return "/block-forward-request"
+func (s ObjectForwardRequest) GetType() string {
+	return "/object-forward-request"
 }

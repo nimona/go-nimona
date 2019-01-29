@@ -9,14 +9,14 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// blockGetCmd represents the blockGet command
-var blockGetCmd = &cobra.Command{
+// objectGetCmd represents the objectGet command
+var objectGetCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get a block by its ID",
+	Short: "Get a object by its ID",
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		resp, err := restClient.R().Get("/blocks/" + args[0])
+		resp, err := restClient.R().Get("/objects/" + args[0])
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ var blockGetCmd = &cobra.Command{
 			return nil
 		}
 
-		cmd.Println("block:")
+		cmd.Println("object:")
 		cmd.Println("  _id:", o.HashBase58())
 		for k, v := range o.ToMap() {
 			cmd.Printf("  %s: %v\n", k, v)
@@ -48,5 +48,5 @@ var blockGetCmd = &cobra.Command{
 }
 
 func init() {
-	blockCmd.AddCommand(blockGetCmd)
+	objectCmd.AddCommand(objectGetCmd)
 }

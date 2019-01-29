@@ -54,7 +54,10 @@ var testCmd = &cobra.Command{
 		scanner := bufio.NewScanner(coverFile)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Contains(line, "_generated.go") || strings.Contains(line, "_mock.go") || strings.Contains(line, "_test.go") {
+			if strings.Contains(line, "/dht") ||
+				strings.Contains(line, "_generated.go") ||
+				strings.Contains(line, "_mock.go") ||
+				strings.Contains(line, "_test.go") {
 				continue
 			}
 			newLines = append(newLines, line)

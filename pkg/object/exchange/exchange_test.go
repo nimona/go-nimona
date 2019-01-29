@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery/mocks"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/storage"
 )
@@ -39,8 +41,8 @@ func TestSendSuccess(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	w1BlockHandled := false
-	w2BlockHandled := false
+	w1ObjectHandled := false
+	w2ObjectHandled := false
 
 	err := crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
@@ -55,7 +57,7 @@ func TestSendSuccess(t *testing.T) {
 		assert.NotNil(t, o.GetSignature())
 		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
 		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
-		w1BlockHandled = true
+		w1ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -68,7 +70,7 @@ func TestSendSuccess(t *testing.T) {
 		assert.Nil(t, eo2.GetSignerKey())
 		assert.Nil(t, o.GetSignerKey())
 
-		w2BlockHandled = true
+		w2ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -89,8 +91,83 @@ func TestSendSuccess(t *testing.T) {
 		wg.Wait()
 	}
 
-	assert.True(t, w1BlockHandled)
-	assert.True(t, w2BlockHandled)
+	assert.True(t, w1ObjectHandled)
+	assert.True(t, w2ObjectHandled)
+}
+
+func TestGetLocalSuccess(t *testing.T) {
+	k1, _, x1 := newPeer(t, "")
+
+	em1 := map[string]interface{}{
+		"@ctx": "test/msg",
+		"body": "bar1",
+	}
+	eo1 := object.FromMap(em1)
+
+	err := crypto.Sign(eo1, k1)
+	assert.NoError(t, err)
+
+	eo1b, _ := object.Marshal(eo1)
+	err = x1.store.Store(eo1.HashBase58(), eo1b)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+
+	o1, err := x1.Get(ctx, eo1.HashBase58())
+	assert.NoError(t, err)
+	assert.Equal(t, eo1, o1)
+}
+
+func TestGetSuccess(t *testing.T) {
+	k1, n1, x1 := newPeer(t, "")
+	_, n2, x2 := newPeer(t, "")
+
+	n1.Discoverer().Add(n2.GetPeerInfo())
+	n2.Discoverer().Add(n1.GetPeerInfo())
+
+	mp2 := &mocks.Provider{}
+	err := n2.Discoverer().AddProvider(mp2)
+	assert.NoError(t, err)
+
+	em1 := map[string]interface{}{
+		"@ctx": "test/msg",
+		"body": "bar1",
+	}
+	eo1 := object.FromMap(em1)
+
+	err = crypto.Sign(eo1, k1)
+	assert.NoError(t, err)
+
+	eo1b, _ := object.Marshal(eo1)
+	err = x1.store.Store(eo1.HashBase58(), eo1b)
+	assert.NoError(t, err)
+
+	mp2.On("Discover", &peer.PeerInfoRequest{
+		ContentIDs: []string{
+			eo1.HashBase58(),
+		},
+	}).Return([]*peer.PeerInfo{
+		n1.GetPeerInfo(),
+	}, nil)
+
+	mp2.On("Discover", &peer.PeerInfoRequest{
+		SignerKeyHash: n1.GetPeerInfo().HashBase58(),
+	}).Return([]*peer.PeerInfo{
+		n1.GetPeerInfo(),
+	}, nil)
+
+	p1 := n1.GetPeerInfo()
+	p1.ContentIDs = []string{
+		eo1.HashBase58(),
+	}
+
+	n1.Discoverer().Add(n2.GetPeerInfo())
+	n2.Discoverer().Add(p1)
+
+	ctx := context.Background()
+	o1, err := x2.Get(ctx, eo1.HashBase58())
+	assert.NoError(t, err)
+	assert.Equal(t, eo1, o1)
 }
 
 func TestSendRelay(t *testing.T) {
@@ -146,8 +223,8 @@ func TestSendRelay(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	w1BlockHandled := false
-	w2BlockHandled := false
+	w1ObjectHandled := false
+	w2ObjectHandled := false
 
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
@@ -162,7 +239,7 @@ func TestSendRelay(t *testing.T) {
 		assert.NotNil(t, o.GetSignature())
 		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
 		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
-		w1BlockHandled = true
+		w1ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -175,7 +252,7 @@ func TestSendRelay(t *testing.T) {
 		assert.Nil(t, eo2.GetSignerKey())
 		assert.Nil(t, o.GetSignerKey())
 
-		w2BlockHandled = true
+		w2ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -198,8 +275,8 @@ func TestSendRelay(t *testing.T) {
 
 	wg.Wait()
 
-	assert.True(t, w1BlockHandled)
-	assert.True(t, w2BlockHandled)
+	assert.True(t, w1ObjectHandled)
+	assert.True(t, w2ObjectHandled)
 }
 
 func newPeer(t *testing.T, relayAddress string) (*crypto.Key, net.Network, *exchange) {

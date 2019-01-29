@@ -1,6 +1,6 @@
 package crypto
 
-// Policy for Block
+// Policy for Object
 type Policy struct {
 	Description string   `json:"description,omitempty"`
 	Subjects    []string `json:"subjects,omitempty"`

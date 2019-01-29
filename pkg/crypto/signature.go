@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	// ErrInvalidBlockType is returned when the signature being verified
-	// is not an encoded block of type "signature".
-	ErrInvalidBlockType = errors.New("invalid block type")
+	// ErrInvalidObjectType is returned when the signature being verified
+	// is not an encoded object of type "signature".
+	ErrInvalidObjectType = errors.New("invalid object type")
 	// ErrAlgorithNotImplemented is returned when the algorithm specified
 	// has not been implemented
 	ErrAlgorithNotImplemented = errors.New("algorithm not implemented")
@@ -26,7 +26,7 @@ const (
 
 //go:generate go run nimona.io/tools/objectify -schema /signature -type Signature -in signature.go -out signature_generated.go
 
-// Signature block (container), currently supports only ES256
+// Signature object (container), currently supports only ES256
 type Signature struct {
 	Alg string `json:"alg"`
 	R   []byte `json:"r"`
