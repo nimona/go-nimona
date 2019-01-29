@@ -2,17 +2,15 @@ package api
 
 import (
 	"context"
-
 	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-
 	"nimona.io/internal/log"
 
 	"nimona.io/pkg/crypto"
-	nnet "nimona.io/pkg/net"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/storage"
@@ -24,7 +22,7 @@ import (
 type API struct {
 	router      *gin.Engine
 	key         *crypto.Key
-	net         nnet.Network
+	net         net.Network
 	exchange    exchange.Exchange
 	objectStore storage.Storage
 	localKey    string
@@ -38,7 +36,7 @@ type API struct {
 }
 
 // New HTTP API
-func New(k *crypto.Key, n nnet.Network, x exchange.Exchange,
+func New(k *crypto.Key, n net.Network, x exchange.Exchange,
 	bls storage.Storage, version, commit, buildDate, token string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -49,6 +47,7 @@ func New(k *crypto.Key, n nnet.Network, x exchange.Exchange,
 		net:          n,
 		exchange:     x,
 		objectStore:  bls,
+		localKey:     n.GetPeerInfo().HashBase58(),
 		version:      version,
 		commit:       commit,
 		buildDate:    buildDate,
@@ -124,10 +123,18 @@ func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	m["_hash"] = o.HashBase58()
 
 	if signer := o.GetSignerKey(); signer != nil {
+		m["_signer"] = o.GetSignerKey().HashBase58()
 		if api.localKey == signer.HashBase58() {
 			m["_direction"] = "outgoing"
 		} else {
 			m["_direction"] = "incoming"
+		}
+	}
+
+	if mandateObj := o.GetMandate(); mandateObj != nil {
+		mandate := &crypto.Mandate{}
+		if err := mandate.FromObject(mandateObj); err == nil {
+			m["_authority"] = "identity:" + mandate.Signer.HashBase58()
 		}
 	}
 

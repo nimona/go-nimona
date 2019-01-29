@@ -242,13 +242,17 @@
       c.onmessage = function (msg) {
         var object = JSON.parse(msg.data);
         console.log(object)
-        if (!!object.owner) {
+        if (object._direction === 'incoming') {
+          let address = 'peer:' + object._signer
+          if (object._authority) {
+            address = 'identity:' + object._authority
+          }
           messagesList.innerHTML = '<li class="received">' +
             '<div><span>Message:</span>' + object.body + '</div>' +
-            '<div><span>From:</span><a href="#" class="from" data-key="' + object.owner + '">' + object.owner + '</a></div>' +
+            '<div><span>From:</span><a href="#" class="from" data-key="' + (object._authority || object._signer) + '">' + object._authority + '</a></div>' +
             '</li>' + messagesList.innerHTML
         } else {
-          messagesList.innerHTML = '<li class="received">' +
+          messagesList.innerHTML = '<li class="sent">' +
             '<div><span>Message:</span>' + object.body + '</div>' +
             '<div><span>To:</span><a href="#" class="from" data-key="' + object._recipients[0] + '">' + object._recipients[0] + '</a></div>' +
             '</li>' + messagesList.innerHTML

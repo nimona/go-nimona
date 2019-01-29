@@ -102,6 +102,19 @@ func (o Object) SetAuthorityKey(v *Object) {
 	o.SetRaw("@authority", v)
 }
 
+// GetMandate returns the object's mandate, or nil
+func (o Object) GetMandate() *Object {
+	if v, ok := o.GetRaw("@mandate").(*Object); ok {
+		return v
+	}
+	return nil
+}
+
+// SetMandate sets the object's mandate
+func (o Object) SetMandate(v *Object) {
+	o.SetRaw("@mandate", v)
+}
+
 // GetSignerKey returns the object's signer, or nil
 func (o Object) GetSignerKey() *Object {
 	if v, ok := o.GetRaw("@signer").(*Object); ok {
