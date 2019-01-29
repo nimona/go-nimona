@@ -95,7 +95,8 @@ func New(key *crypto.Key, n net.Network, store storage.Storage, address string) 
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
-				w.manager.Add(conn.RemotePeer.Address(), conn)
+				address := "peer:" + conn.RemotePeerKey.HashBase58()
+				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
 					w.logger.Warn("failed to handle object", zap.Error(err))
 				}
@@ -180,7 +181,7 @@ func (w *exchange) HandleConnection(conn *net.Connection) error {
 
 	w.logger.Debug(
 		"handling new connection",
-		zap.String("remote", conn.RemotePeer.HashBase58()),
+		zap.String("remote", "peer:"+conn.RemotePeerKey.HashBase58()),
 	)
 	for {
 		// TODO use decoder

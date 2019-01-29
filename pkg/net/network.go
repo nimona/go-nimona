@@ -124,8 +124,8 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		}
 
 		conn := &Connection{
-			Conn:       tcpConn,
-			RemotePeer: nil, // we don't really know who the other side is
+			Conn:          tcpConn,
+			RemotePeerKey: nil, // we don't really know who the other side is
 		}
 
 		nonce := RandStringBytesMaskImprSrc(8)
@@ -157,7 +157,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		}
 
 		// store who is on the other side
-		conn.RemotePeer = synAck.PeerInfo
+		conn.RemotePeerKey = synAck.PeerInfo.SignerKey
 		n.Discoverer().Add(synAck.PeerInfo)
 
 		ack := &HandshakeAck{
@@ -249,8 +249,8 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 
 			conn := &Connection{
-				Conn:       tcpConn,
-				RemotePeer: nil,
+				Conn:          tcpConn,
+				RemotePeerKey: nil,
 			}
 
 			synObj, err := Read(conn)
@@ -268,6 +268,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			}
 
 			// store the remote peer
+			conn.RemotePeerKey = syn.PeerInfo.SignerKey
 			n.Discoverer().Add(syn.PeerInfo)
 
 			synAck := &HandshakeSynAck{
@@ -293,7 +294,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 				continue
 			}
 
-			ack := &HandshakeSynAck{}
+			ack := &HandshakeAck{}
 			if err := ack.FromObject(ackObj); err != nil {
 				// TODO close conn?
 				log.DefaultLogger.Warn("could not convert obj to syn ack")
@@ -306,7 +307,6 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 				continue
 			}
 
-			conn.RemotePeer = ack.PeerInfo
 			cconn <- conn
 		}
 	}()
@@ -333,11 +333,16 @@ func Write(o *object.Object, conn *Connection) error {
 		return err
 	}
 
+	ra := ""
+	if conn.RemotePeerKey != nil {
+		ra = conn.RemotePeerKey.HashBase58()
+	}
+
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		log.DefaultLogger.Info(
 			string(b),
-			zap.String("remote_peer_hash", conn.RemotePeer.HashBase58()),
+			zap.String("remote_peer_hash", ra),
 			zap.String("direction", "outgoing"),
 		)
 	}
@@ -375,6 +380,11 @@ func Read(conn *Connection) (*object.Object, error) {
 		return nil, err
 	}
 
+	ra := ""
+	if conn.RemotePeerKey != nil {
+		ra = conn.RemotePeerKey.HashBase58()
+	}
+
 	if o.GetSignature() != nil {
 		if err := crypto.Verify(o); err != nil {
 			return nil, err
@@ -397,7 +407,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		logger.Info(
 			string(b),
-			zap.String("remote_peer_hash", conn.RemotePeer.HashBase58()),
+			zap.String("remote_peer_hash", ra),
 			zap.String("direction", "incoming"),
 		)
 	}
