@@ -12,14 +12,14 @@ import (
 )
 
 func (api *API) HandleGetObjects(c *gin.Context) {
-	objectIDs, err := api.objectStore.List()
+	objectHashs, err := api.objectStore.List()
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
 	ms := []interface{}{}
-	for _, objectID := range objectIDs {
-		b, err := api.objectStore.Get(objectID)
+	for _, objectHash := range objectHashs {
+		b, err := api.objectStore.Get(objectHash)
 		if err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -35,11 +35,11 @@ func (api *API) HandleGetObjects(c *gin.Context) {
 }
 
 func (api *API) HandleGetObject(c *gin.Context) {
-	objectID := c.Param("objectID")
-	if objectID == "" {
-		c.AbortWithError(400, errors.New("missing object id"))
+	objectHash := c.Param("objectHash")
+	if objectHash == "" {
+		c.AbortWithError(400, errors.New("missing object hash"))
 	}
-	b, err := api.objectStore.Get(objectID)
+	b, err := api.objectStore.Get(objectHash)
 	if err != nil {
 		if err == storage.ErrNotFound {
 			c.AbortWithError(404, err)
