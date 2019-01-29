@@ -18,7 +18,7 @@ import (
 	"nimona.io/pkg/storage"
 )
 
-//go:generate go run github.com/shurcooL/vfsgen/cmd/vfsgendev -source="nimona.io/internal/api".Assets
+//go:generate go run -tags=dev nimona.io/tools/nmake vfsgen
 
 // API for HTTP
 type API struct {
