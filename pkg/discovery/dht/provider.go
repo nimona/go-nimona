@@ -9,9 +9,9 @@ import (
 
 // Provider payload
 type Provider struct {
-	BlockIDs []string `json:"blockIDs"`
+	ObjectIDs []string `json:"objectIDs"`
 
-	RawObject *object.Object  `json:"@"`
+	RawObject *object.Object    `json:"@"`
 	Signer    *crypto.Key       `json:"@signer"`
 	Authority *crypto.Key       `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`

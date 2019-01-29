@@ -18,17 +18,17 @@ import (
 	"nimona.io/pkg/storage"
 )
 
-//go:generate go run vfsgendev -source="nimona.io/internal/api".Assets
+//go:generate go run -tags=dev nimona.io/tools/nmake vfsgen
 
 // API for HTTP
 type API struct {
-	router     *gin.Engine
-	key        *crypto.Key
-	net        nnet.Network
-	exchange   exchange.Exchange
-	blockStore storage.Storage
-	localKey   string
-	token      string
+	router      *gin.Engine
+	key         *crypto.Key
+	net         nnet.Network
+	exchange    exchange.Exchange
+	objectStore storage.Storage
+	localKey    string
+	token       string
 
 	version      string
 	commit       string
@@ -48,7 +48,7 @@ func New(k *crypto.Key, n nnet.Network, x exchange.Exchange,
 		key:          k,
 		net:          n,
 		exchange:     x,
-		blockStore:   bls,
+		objectStore:  bls,
 		version:      version,
 		commit:       commit,
 		buildDate:    buildDate,
@@ -68,10 +68,10 @@ func New(k *crypto.Key, n nnet.Network, x exchange.Exchange,
 	peers.GET("/", api.HandleGetPeers)
 	peers.GET("/:peerID", api.HandleGetPeer)
 
-	blocksEnd := router.Group("/api/v1/blocks")
-	blocksEnd.GET("/", api.HandleGetBlocks)
-	blocksEnd.GET("/:blockID", api.HandleGetBlock)
-	blocksEnd.POST("/", api.HandlePostBlock)
+	objectsEnd := router.Group("/api/v1/objects")
+	objectsEnd.GET("/", api.HandleGetObjects)
+	objectsEnd.GET("/:objectID", api.HandleGetObject)
+	objectsEnd.POST("/", api.HandlePostObject)
 
 	streamsEnd := router.Group("/api/v1/streams")
 	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
@@ -118,7 +118,7 @@ func (api *API) Stop(c *gin.Context) {
 	return
 }
 
-func (api *API) mapBlock(o *object.Object) map[string]interface{} {
+func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	m := o.ToMap()
 
 	m["_hash"] = o.HashBase58()

@@ -16,7 +16,8 @@ var toolsCmd = &cobra.Command{
 		tools := []string{
 			"github.com/goreleaser/goreleaser",
 			"github.com/golangci/golangci-lint/cmd/golangci-lint",
-			"github.com/shurcooL/vfsgen",
+			"github.com/shurcooL/vfsgen/cmd/vfsgendev",
+			"github.com/vektra/mockery/cmd/mockery",
 		}
 
 		info("Installing tools")

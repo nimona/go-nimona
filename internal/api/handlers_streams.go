@@ -64,7 +64,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		for {
 			select {
 			case v := <-incoming:
-				m := api.mapBlock(v)
+				m := api.mapObject(v)
 				if err := write(conn, m); err != nil {
 					// TODO handle error
 					continue
@@ -72,9 +72,9 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 
 			case req := <-outgoing:
 				if err := crypto.Sign(req, api.key); err != nil {
-					logger.Error("could not sign outgoing block", zap.Error(err))
-					req.SetRaw("_status", "error signing block")
-					if err := write(conn, api.mapBlock(req)); err != nil {
+					logger.Error("could not sign outgoing object", zap.Error(err))
+					req.SetRaw("_status", "error signing object")
+					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 						continue
 					}
@@ -94,7 +94,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				if len(subjects) == 0 {
 					// TODO handle error
 					req.SetRaw("_status", "no subjects")
-					if err := write(conn, api.mapBlock(req)); err != nil {
+					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 					}
 					continue
@@ -106,13 +106,13 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 						addr = "peer:" + recipient
 					}
 					if err := api.exchange.Send(ctx, req, addr); err != nil {
-						logger.Error("could not send outgoing block",
+						logger.Error("could not send outgoing object",
 							zap.Error(err),
 							zap.String("addr", addr))
-						req.SetRaw("_status", "error sending block")
+						req.SetRaw("_status", "error sending object")
 					}
 					// TODO handle error
-					if err := write(conn, api.mapBlock(req)); err != nil {
+					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 						continue
 					}
@@ -154,7 +154,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		}
 		m := map[string]interface{}{}
 		if err := json.Unmarshal(msg, &m); err != nil {
-			logger.Error("could not unmarshal outgoing block", zap.Error(err))
+			logger.Error("could not unmarshal outgoing object", zap.Error(err))
 			continue
 		}
 		o := object.FromMap(m)

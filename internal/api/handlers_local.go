@@ -7,6 +7,6 @@ import (
 )
 
 func (api *API) HandleGetLocal(c *gin.Context) {
-	ms := api.mapBlock(api.net.GetPeerInfo().ToObject())
+	ms := api.mapObject(api.net.GetPeerInfo().ToObject())
 	c.Render(http.StatusOK, Renderer(c, ms))
 }

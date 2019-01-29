@@ -3,7 +3,7 @@ package object
 import (
 	"nimona.io/internal/encoding/base58"
 )
- 
+
 // Object for everything f12n
 type Object map[string]interface{}
 
@@ -126,6 +126,19 @@ func (o Object) GetPolicy() *Object {
 // SetPolicy sets the object's policy
 func (o Object) SetPolicy(v *Object) {
 	o.SetRaw("@policy", v)
+}
+
+// GetParents returns the object's parent refs
+func (o Object) GetParents() []string {
+	if v, ok := o.GetRaw("@parents").([]string); ok {
+		return v
+	}
+	return nil
+}
+
+// SetParents sets the object's parents
+func (o Object) SetParents(v []string) {
+	o.SetRaw("@parents", v)
 }
 
 // GetRaw -

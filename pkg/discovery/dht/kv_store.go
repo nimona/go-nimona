@@ -31,7 +31,7 @@ func (s *Store) GetProviders(key string) ([]*Provider, error) {
 	providers := []*Provider{}
 	s.providers.Range(func(k, v interface{}) bool {
 		provider := v.(*Provider)
-		for _, id := range provider.BlockIDs {
+		for _, id := range provider.ObjectIDs {
 			if id == key {
 				providers = append(providers, provider)
 				break

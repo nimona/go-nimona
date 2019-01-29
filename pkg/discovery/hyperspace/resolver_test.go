@@ -61,8 +61,8 @@ func TestDiscoverer(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	w1BlockHandled := false
-	w2BlockHandled := false
+	w1ObjectHandled := false
+	w2ObjectHandled := false
 
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
@@ -77,7 +77,7 @@ func TestDiscoverer(t *testing.T) {
 		assert.NotNil(t, o.GetSignature())
 		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
 		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
-		w1BlockHandled = true
+		w1ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -90,7 +90,7 @@ func TestDiscoverer(t *testing.T) {
 		assert.Nil(t, eo2.GetSignerKey())
 		assert.Nil(t, o.GetSignerKey())
 
-		w2BlockHandled = true
+		w2ObjectHandled = true
 		wg.Done()
 		return nil
 	})
@@ -113,8 +113,8 @@ func TestDiscoverer(t *testing.T) {
 
 	wg.Wait()
 
-	assert.True(t, w1BlockHandled)
-	assert.True(t, w2BlockHandled)
+	assert.True(t, w1ObjectHandled)
+	assert.True(t, w2ObjectHandled)
 }
 
 func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange) {

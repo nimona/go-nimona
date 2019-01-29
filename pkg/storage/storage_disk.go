@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// diskStorage stores the block in a file
+// diskStorage stores the object in a file
 type diskStorage struct {
 	path string
 }
@@ -26,10 +26,10 @@ func NewDiskStorage(path string) Storage {
 	}
 }
 
-// Store saves the block in two files one for the metadata and one for
+// Store saves the object in two files one for the metadata and one for
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
-func (d *diskStorage) Store(key string, block []byte) error {
+func (d *diskStorage) Store(key string, object []byte) error {
 	dataFilePath := filepath.Join(d.path, key+dataExt)
 
 	dataFileFound := false
@@ -44,7 +44,7 @@ func (d *diskStorage) Store(key string, block []byte) error {
 	}
 
 	// Write the data in a file
-	if err := ioutil.WriteFile(dataFilePath, block, 0644); err != nil {
+	if err := ioutil.WriteFile(dataFilePath, object, 0644); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func (d *diskStorage) Get(key string) ([]byte, error) {
 
 }
 
-// List returns a list of all the block hashes that exist as files
+// List returns a list of all the object hashes that exist as files
 func (d *diskStorage) List() ([]string, error) {
 	results := make([]string, 0, 0)
 
@@ -78,7 +78,7 @@ func (d *diskStorage) List() ([]string, error) {
 		return nil, err
 	}
 
-	// Range over all the files in the path for blocks
+	// Range over all the files in the path for objects
 	for _, f := range files {
 		name := f.Name()
 		ext := filepath.Ext(name)

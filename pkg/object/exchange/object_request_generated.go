@@ -10,65 +10,65 @@ import (
 )
 
 // ToMap returns a map compatible with f12n
-func (s BlockRequest) ToMap() map[string]interface{} {
+func (s ObjectRequest) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
-		"@ctx:s":      "/block-request",
+		"@ctx:s":      "/object-request",
 		"requestID:s": s.RequestID,
 		"id:s":        s.ID,
 	}
 	if s.Signature != nil {
-		m["signature:o"] = s.Signature.ToMap()
+		m["@signature:o"] = s.Signature.ToMap()
 	}
-	if s.Sender != nil {
-		m["sender:o"] = s.Sender.ToMap()
+	if s.Signer != nil {
+		m["@signer:o"] = s.Signer.ToMap()
 	}
 	return m
 }
 
 // ToObject returns a f12n object
-func (s BlockRequest) ToObject() *object.Object {
+func (s ObjectRequest) ToObject() *object.Object {
 	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
-func (s *BlockRequest) FromMap(m map[string]interface{}) error {
+func (s *ObjectRequest) FromMap(m map[string]interface{}) error {
 	if v, ok := m["requestID:s"].(string); ok {
 		s.RequestID = v
 	}
 	if v, ok := m["id:s"].(string); ok {
 		s.ID = v
 	}
-	if v, ok := m["signature:o"].(map[string]interface{}); ok {
+	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
 		if err := s.Signature.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["signature:o"].(*crypto.Signature); ok {
+	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
-	if v, ok := m["signature:o"].(*crypto.Signature); ok {
+	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
 		s.Signature = v
 	}
-	if v, ok := m["sender:o"].(map[string]interface{}); ok {
-		s.Sender = &crypto.Key{}
-		if err := s.Sender.FromMap(v); err != nil {
+	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+		s.Signer = &crypto.Key{}
+		if err := s.Signer.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["sender:o"].(*crypto.Key); ok {
-		s.Sender = v
+	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
 	}
-	if v, ok := m["sender:o"].(*crypto.Key); ok {
-		s.Sender = v
+	if v, ok := m["@signer:o"].(*crypto.Key); ok {
+		s.Signer = v
 	}
 	return nil
 }
 
 // FromObject populates the struct from a f12n object
-func (s *BlockRequest) FromObject(o *object.Object) error {
+func (s *ObjectRequest) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
-func (s BlockRequest) GetType() string {
-	return "/block-request"
+func (s ObjectRequest) GetType() string {
+	return "/object-request"
 }

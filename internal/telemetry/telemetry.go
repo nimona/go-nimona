@@ -12,7 +12,7 @@ import (
 
 var (
 	typeConnectionEvent = (ConnectionEvent{}).GetType()
-	typeBlockEvent      = (BlockEvent{}).GetType()
+	typeObjectEvent     = (ObjectEvent{}).GetType()
 )
 
 type Exchanger interface {
@@ -21,7 +21,7 @@ type Exchanger interface {
 }
 
 const connectionEventType = "nimona.io/telemetry.connection"
-const blockEventType = "nimona.io/telemetry.block"
+const objectEventType = "nimona.io/telemetry.object"
 
 var DefaultClient *metrics
 
@@ -65,8 +65,8 @@ func NewTelemetry(exchange Exchanger, localPeer *crypto.Key,
 	// check the env var
 	// TODO is this actually nil at some point?
 	if DefaultClient.colletor != nil {
-		exchange.Handle(connectionEventType, DefaultClient.handleBlock)
-		exchange.Handle(blockEventType, DefaultClient.handleBlock)
+		exchange.Handle(connectionEventType, DefaultClient.handleObject)
+		exchange.Handle(objectEventType, DefaultClient.handleObject)
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func (t *metrics) SendEvent(ctx context.Context, event Collectable) error {
 	return t.exchange.Send(ctx, event.ToObject(), t.statsAddress)
 }
 
-func (t *metrics) handleBlock(o *object.Object) error {
+func (t *metrics) handleObject(o *object.Object) error {
 	switch o.GetType() {
 	case typeConnectionEvent:
 		v := &ConnectionEvent{}
@@ -91,8 +91,8 @@ func (t *metrics) handleBlock(o *object.Object) error {
 			return err
 		}
 		t.colletor.Collect(v)
-	case typeBlockEvent:
-		v := &BlockEvent{}
+	case typeObjectEvent:
+		v := &ObjectEvent{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}

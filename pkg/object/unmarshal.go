@@ -4,7 +4,7 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-// Unmarshal a cbor encoded block (container) into a registered type, or map
+// Unmarshal a cbor encoded object (container) into a registered type, or map
 func Unmarshal(b []byte) (*Object, error) {
 	o := New()
 	dec := codec.NewDecoderBytes(b, CborHandler())

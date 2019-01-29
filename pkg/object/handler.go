@@ -6,7 +6,7 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-// CborHandler for un/marshaling blocks
+// CborHandler for un/marshaling objects
 func CborHandler() *codec.CborHandle {
 	ch := &codec.CborHandle{}
 	ch.Canonical = true
@@ -16,7 +16,7 @@ func CborHandler() *codec.CborHandle {
 	return ch
 }
 
-// RawCborHandler for un/marshaling raw blocks
+// RawCborHandler for un/marshaling raw objects
 func RawCborHandler() *codec.CborHandle {
 	ch := CborHandler()
 	ch.Raw = true

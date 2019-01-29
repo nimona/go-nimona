@@ -63,17 +63,17 @@ func (q *query) Run(ctx context.Context) {
 				case *peer.PeerInfo:
 					q.outgoingPayloads <- payload
 					// TODO next doesn't work
-					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
+					// q.nextIfCloser(object.SenderPeerInfo.Metadata.Signer)
 				case *Provider:
-					// TODO check if id is in payload.BlockIDs
-					for _, blockID := range payload.BlockIDs {
-						if blockID == q.key {
+					// TODO check if id is in payload.ObjectIDs
+					for _, objectID := range payload.ObjectIDs {
+						if objectID == q.key {
 							q.outgoingPayloads <- payload
 							break
 						}
 					}
 					// TODO next doesn't work
-					// q.nextIfCloser(block.SenderPeerInfo.Metadata.Signer)
+					// q.nextIfCloser(object.SenderPeerInfo.Metadata.Signer)
 				}
 
 			case <-time.After(maxQueryTime):

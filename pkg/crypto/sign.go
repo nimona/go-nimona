@@ -2,7 +2,7 @@ package crypto
 
 import "nimona.io/pkg/object"
 
-// Sign any block (container) with given key and return a signature block (container)
+// Sign any object (container) with given key and return a signature object (container)
 func Sign(o *object.Object, key *Key) error {
 	o.SetSignerKey(key.GetPublicKey().ToObject())
 

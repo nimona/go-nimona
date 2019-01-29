@@ -10,13 +10,13 @@ import (
 )
 
 // ToMap returns a map compatible with f12n
-func (s BlockResponse) ToMap() map[string]interface{} {
+func (s ObjectResponse) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
-		"@ctx:s":      "/block-response",
+		"@ctx:s":      "/object-response",
 		"requestID:s": s.RequestID,
 	}
-	if s.RequestedBlock != nil {
-		m["requestedBlock:o"] = s.RequestedBlock.ToMap()
+	if s.RequestedObject != nil {
+		m["requestedObject:o"] = s.RequestedObject.ToMap()
 	}
 	if s.Sender != nil {
 		m["sender:o"] = s.Sender.ToMap()
@@ -28,25 +28,25 @@ func (s BlockResponse) ToMap() map[string]interface{} {
 }
 
 // ToObject returns a f12n object
-func (s BlockResponse) ToObject() *object.Object {
+func (s ObjectResponse) ToObject() *object.Object {
 	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
-func (s *BlockResponse) FromMap(m map[string]interface{}) error {
+func (s *ObjectResponse) FromMap(m map[string]interface{}) error {
 	if v, ok := m["requestID:s"].(string); ok {
 		s.RequestID = v
 	}
-	if v, ok := m["requestedBlock:o"].(map[string]interface{}); ok {
-		s.RequestedBlock = &object.Object{}
-		if err := s.RequestedBlock.FromMap(v); err != nil {
+	if v, ok := m["requestedObject:o"].(map[string]interface{}); ok {
+		s.RequestedObject = &object.Object{}
+		if err := s.RequestedObject.FromMap(v); err != nil {
 			return err
 		}
-	} else if v, ok := m["requestedBlock:o"].(*object.Object); ok {
-		s.RequestedBlock = v
+	} else if v, ok := m["requestedObject:o"].(*object.Object); ok {
+		s.RequestedObject = v
 	}
-	if v, ok := m["requestedBlock:o"].(*object.Object); ok {
-		s.RequestedBlock = v
+	if v, ok := m["requestedObject:o"].(*object.Object); ok {
+		s.RequestedObject = v
 	}
 	if v, ok := m["sender:o"].(map[string]interface{}); ok {
 		s.Sender = &crypto.Key{}
@@ -74,11 +74,11 @@ func (s *BlockResponse) FromMap(m map[string]interface{}) error {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *BlockResponse) FromObject(o *object.Object) error {
+func (s *ObjectResponse) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
-func (s BlockResponse) GetType() string {
-	return "/block-response"
+func (s ObjectResponse) GetType() string {
+	return "/object-response"
 }

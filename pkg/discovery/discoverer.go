@@ -7,6 +7,9 @@ import (
 	"nimona.io/pkg/net/peer"
 )
 
+// nolint: lll
+//go:generate go run github.com/vektra/mockery/cmd/mockery -name Discoverer -case underscore
+
 // discovererOptions is the complete options structure for the discoverer
 type discovererOptions struct {
 	Local bool
@@ -49,7 +52,7 @@ func NewDiscoverer() Discoverer {
 	}
 }
 
-// discoverer wrapps multiple providers to allow resolving peer keys to peer infos
+// discoverer wraps multiple providers to allow resolving peer keys to peer infos
 // TODO consider allowing the discoverer to accept an interface, and select
 // the provider based on the input's type. This would require registering
 // providers with the inputs they accept.

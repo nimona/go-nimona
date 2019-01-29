@@ -4,16 +4,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// blockCmd represents the block command
-var blockCmd = &cobra.Command{
-	Use: "block",
+// objectCmd represents the object command
+var objectCmd = &cobra.Command{
+	Use: "object",
 	Aliases: []string{
-		"blocks",
+		"objects",
 	},
-	Short: "Block commands",
+	Short: "Object commands",
 	Long:  "",
 }
 
 func init() {
-	rootCmd.AddCommand(blockCmd)
+	rootCmd.AddCommand(objectCmd)
 }

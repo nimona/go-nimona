@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// blockSendCmd represents the blockSend command
-var blockSendCmd = &cobra.Command{
+// objectSendCmd represents the objectSend command
+var objectSendCmd = &cobra.Command{
 	Use:   "send",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -17,20 +17,20 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("blockSend called")
+		fmt.Println("objectSend called")
 	},
 }
 
 func init() {
-	blockCmd.AddCommand(blockSendCmd)
+	objectCmd.AddCommand(objectSendCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// blockSendCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// objectSendCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// blockSendCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// objectSendCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -38,7 +38,7 @@ func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
 		exchange: exc,
 	}
 
-	exc.Handle("/peer**", r.handleBlock)
+	exc.Handle("/peer**", r.handleObject)
 
 	r.store.Add(network.GetPeerInfo())
 	r.bootstrap(bootstrapAddresses)
@@ -62,7 +62,7 @@ func (r *Discoverer) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error)
 	return eps, nil
 }
 
-func (r *Discoverer) handleBlock(o *object.Object) error {
+func (r *Discoverer) handleObject(o *object.Object) error {
 	switch o.GetType() {
 	case typePeerInfoRequest:
 		v := &peer.PeerInfoRequest{}
@@ -93,7 +93,7 @@ func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest) {
 	for _, p := range ps {
 		addr := "peer:" + q.RequesterSignerKey.HashBase58()
 		if err := r.exchange.Send(ctx, p.ToObject(), addr); err != nil {
-			logger.Debug("handleProviderRequest could not send block", zap.Error(err))
+			logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		}
 	}
 }

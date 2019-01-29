@@ -9,23 +9,23 @@ import (
 )
 
 // ToMap returns a map compatible with f12n
-func (s BlockEvent) ToMap() map[string]interface{} {
+func (s ObjectEvent) ToMap() map[string]interface{} {
 	m := map[string]interface{}{
-		"@ctx:s":        "nimona.io/telemetry/block",
+		"@ctx:s":        "nimona.io/telemetry/object",
 		"direction:s":   s.Direction,
 		"contentType:s": s.ContentType,
-		"size:i":        s.BlockSize,
+		"size:i":        s.ObjectSize,
 	}
 	return m
 }
 
 // ToObject returns a f12n object
-func (s BlockEvent) ToObject() *object.Object {
+func (s ObjectEvent) ToObject() *object.Object {
 	return object.FromMap(s.ToMap())
 }
 
 // FromMap populates the struct from a f12n compatible map
-func (s *BlockEvent) FromMap(m map[string]interface{}) error {
+func (s *ObjectEvent) FromMap(m map[string]interface{}) error {
 	if v, ok := m["direction:s"].(string); ok {
 		s.Direction = v
 	}
@@ -33,17 +33,17 @@ func (s *BlockEvent) FromMap(m map[string]interface{}) error {
 		s.ContentType = v
 	}
 	if v, ok := m["size:i"].(int); ok {
-		s.BlockSize = v
+		s.ObjectSize = v
 	}
 	return nil
 }
 
 // FromObject populates the struct from a f12n object
-func (s *BlockEvent) FromObject(o *object.Object) error {
+func (s *ObjectEvent) FromObject(o *object.Object) error {
 	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
-func (s BlockEvent) GetType() string {
-	return "nimona.io/telemetry/block"
+func (s ObjectEvent) GetType() string {
+	return "nimona.io/telemetry/object"
 }
