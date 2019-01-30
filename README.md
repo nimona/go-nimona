@@ -12,22 +12,40 @@ For a technical overview, please refer to the [documentation introduction](https
 
 ## Development
 
-Nimona requires go 1.11 with go modules enabled.
+### Requirements
+
+- Go 1.11.x with modules enabled
+- Make
+
+### Getting Started
 
 ```
 git clone https://github.com/nimona/go-nimona.git go-nimona
 cd go-nimona
-make install
+make deps
 ```
+
+### Process / Workflow
+
+Nimona is developed using [Git Common-Flow](https://commonflow.org/), which is
+essentially [GitHub Flow](http://scottchacon.com/2011/08/31/github-flow.html)
+with the addition of versioned releases, and optional release branches.
+
+In addition to the Common-Flow spec, contributors are also highly encouraged to
+[sign commits](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).
+
+## Usage
 
 ### Installation in Provider
 
 You can install the daemon in a supported provider.
+
 ```
 nimona daemon install --platform do --token <> --ssh-fingerprint <> --hostname <>
 ```
 
 #### Supported Flags
+
 * **--platform** the provider to be used for the deployment
 * **--hostname** the hostname that nimona will use, if defined the dns will also be updated
 * **--token** the access token required to authenticate with the provider
@@ -36,6 +54,7 @@ nimona daemon install --platform do --token <> --ssh-fingerprint <> --hostname <
 * **--region** region that the server will be deployed, default *lon1*
 
 #### Suppored Providers
+
 * do - DigitalOcean
 
 #### Commands
@@ -46,3 +65,4 @@ nimona daemon install --platform do --token <> --ssh-fingerprint <> --hostname <
 [Issues Image]: https://img.shields.io/waffle/label/nimona/go-nimona/in%20progress.svg?style=flat-square
 
 [Go environment]: https://golang.org/doc/install
+
