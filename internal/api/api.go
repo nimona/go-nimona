@@ -118,7 +118,7 @@ func (api *API) Stop(c *gin.Context) {
 }
 
 func (api *API) mapObject(o *object.Object) map[string]interface{} {
-	m := o.ToMap()
+	m := o.ToPlainMap()
 
 	m["_hash"] = o.HashBase58()
 
@@ -146,10 +146,5 @@ func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	}
 	m["_recipients"] = recipients
 
-	um, err := object.UntypeMap(m)
-	if err != nil {
-		panic(err)
-	}
-
-	return um
+	return m
 }

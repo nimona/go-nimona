@@ -159,7 +159,7 @@ func (gen *Generator) process() (code []byte, err error) {
 
 		// vf.Type = removePackageFromType(f.Type().String())
 
-		hint := getHint(f.Type())
+		hint := getHint(f.Type()).String()
 		if vf.Hint == "" {
 			vf.Hint = hint
 		} else if vf.Hint != hint {
@@ -453,9 +453,9 @@ func toLowerFirst(s string) string {
 	return s
 }
 
-func getHint(t types.Type) string {
+func getHint(t types.Type) object.TypeHint {
 	if t.String() == "[]byte" {
-		return object.HintBytes
+		return object.HintData
 	}
 	switch v := t.(type) {
 	case *types.Basic:

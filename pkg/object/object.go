@@ -1,13 +1,35 @@
 package object
 
 import (
+	"strings"
+
 	"nimona.io/internal/encoding/base58"
 )
 
-// Object for everything f12n
-type Object map[string]interface{}
+type (
+	// Member
+	Member struct {
+		Name     string
+		Value    interface{}
+		TypeHint TypeHint
+	}
+
+	// Object for everything f12n
+	Object struct {
+		Members map[string]*Member
+	}
+)
+
+// HintedName returns the member's name and hint
+func (m *Member) HintedName() string {
+	if m.TypeHint == HintUndefined {
+		return m.Name
+	}
+	return m.Name + ":" + string(m.TypeHint)
+}
 
 // FromBytes returns an object from a cbor byte stream
+// TODO: Remove and move to a generic codec
 func FromBytes(b []byte) (*Object, error) {
 	m := map[string]interface{}{}
 	if err := UnmarshalSimple(b, &m); err != nil {
@@ -20,7 +42,9 @@ func FromBytes(b []byte) (*Object, error) {
 
 // New returns an object from a map
 func New() *Object {
-	return &Object{}
+	return &Object{
+		Members: map[string]*Member{},
+	}
 }
 
 // FromMap returns an object from a map
@@ -51,16 +75,30 @@ func (o Object) HashBase58() string {
 
 // ToMap returns the object as a map
 func (o Object) ToMap() map[string]interface{} {
-	m := map[string]interface{}{}
-	for k, v := range o {
+	r := map[string]interface{}{}
+	for _, m := range o.Members {
 		// TODO check the type hint first maybe?
-		if o, ok := v.(*Object); ok {
-			m[k] = o.ToMap()
+		if io, ok := m.Value.(*Object); ok {
+			r[m.HintedName()] = io.ToMap()
 		} else {
-			m[k] = v
+			r[m.HintedName()] = m.Value
 		}
 	}
-	return m
+	return r
+}
+
+// ToPlainMap returns the object as a map, without adding type hints on the keys
+func (o Object) ToPlainMap() map[string]interface{} {
+	r := map[string]interface{}{}
+	for _, m := range o.Members {
+		// TODO check the type hint first maybe?
+		if io, ok := m.Value.(*Object); ok {
+			r[m.Name] = io.ToMap()
+		} else {
+			r[m.Name] = m.Value
+		}
+	}
+	return r
 }
 
 // GetType returns the object's type
@@ -156,11 +194,9 @@ func (o Object) SetParents(v []string) {
 
 // GetRaw -
 func (o Object) GetRaw(lk string) interface{} {
-	// TODO(geoah) do we need to verify type if k has hint?
-	lk = getCleanKeyName(lk)
-	for k, v := range o {
-		if getCleanKeyName(k) == lk {
-			return v
+	for _, m := range o.Members {
+		if m.Name == lk {
+			return m.Value
 		}
 	}
 
@@ -168,11 +204,13 @@ func (o Object) GetRaw(lk string) interface{} {
 }
 
 // SetRaw -
-func (o Object) SetRaw(k string, v interface{}) {
-	et := getFullType(k)
-	if et == "" {
-		k += ":" + GetHintFromType(v)
+func (o *Object) SetRaw(n string, v interface{}) {
+	ct := ""
+	np := strings.Split(n, ":")
+	if len(np) > 1 {
+		ct = np[1]
 	}
+	n = np[0]
 
 	if mv, ok := v.(map[string]interface{}); ok {
 		tv := FromMap(mv)
@@ -181,13 +219,32 @@ func (o Object) SetRaw(k string, v interface{}) {
 		}
 	}
 
+	var nv interface{}
 	if oi, ok := v.(*Object); ok {
-		o[k] = oi
+		nv = oi
 	} else if oi, ok := v.(objectable); ok {
-		o[k] = oi.ToObject()
+		nv = oi.ToObject()
 	} else if m, ok := v.(map[string]interface{}); ok {
-		o[k] = FromMap(m)
+		nv = FromMap(m)
 	} else {
-		o[k] = v
+		nv = v
 	}
+
+	t := DeduceTypeHint(v)
+	if ct != "" && ct != string(t) {
+		// TODO: should we error or something if the given type hint does not
+		// match the actual?
+	}
+
+	m := &Member{
+		Name:     n,
+		Value:    nv,
+		TypeHint: t,
+	}
+
+	if o.Members == nil {
+		o.Members = map[string]*Member{}
+	}
+
+	o.Members[m.Name] = m
 }
