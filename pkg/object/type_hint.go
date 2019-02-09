@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -106,8 +105,6 @@ func DeduceTypeHint(o interface{}) TypeHint {
 	case reflect.Bool:
 		return HintBool
 	}
-
-	fmt.Println("___________ COULD NOT DEDUCE", o) // TODO LOG
 
 	return HintUndefined
 }
