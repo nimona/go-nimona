@@ -115,7 +115,7 @@ func TestGetLocalSuccess(t *testing.T) {
 
 	o1, err := x1.Get(ctx, eo1.HashBase58())
 	assert.NoError(t, err)
-	assert.Equal(t, eo1, o1)
+	compareObjects(t, eo1, o1)
 }
 
 func TestGetSuccess(t *testing.T) {
@@ -167,7 +167,7 @@ func TestGetSuccess(t *testing.T) {
 	ctx := context.Background()
 	o1, err := x2.Get(ctx, eo1.HashBase58())
 	assert.NoError(t, err)
-	assert.Equal(t, eo1, o1)
+	compareObjects(t, eo1, o1)
 }
 
 func TestSendRelay(t *testing.T) {
@@ -301,4 +301,10 @@ func newPeer(t *testing.T, relayAddress string) (*crypto.Key, net.Network, *exch
 	assert.NoError(t, err)
 
 	return pk, n, x.(*exchange)
+}
+
+func compareObjects(t *testing.T, expected, actual *object.Object) {
+	for m := range expected.Members {
+		assert.Equal(t, expected.GetRaw(m), actual.GetRaw(m))
+	}
 }

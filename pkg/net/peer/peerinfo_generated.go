@@ -9,142 +9,111 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s PeerInfo) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s": "/peer",
-	}
-	if s.Addresses != nil {
-		m["addresses:a<s>"] = s.Addresses
-	}
-	if s.Protocols != nil {
-		m["protocols:a<s>"] = s.Protocols
-	}
-	if s.ContentIDs != nil {
-		m["contentIDs:a<s>"] = s.ContentIDs
-	}
-	if s.ContentTypes != nil {
-		m["contentTypes:a<s>"] = s.ContentTypes
-	}
-	if s.AuthorityKey != nil {
-		m["@authority:o"] = s.AuthorityKey.ToMap()
-	}
-	if s.SignerKey != nil {
-		m["@signer:o"] = s.SignerKey.ToMap()
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	if s.Mandate != nil {
-		m["@mandate:o"] = s.Mandate.ToMap()
-	}
-	return m
-}
+const (
+	PeerInfoType = "/peer"
+)
 
 // ToObject returns a f12n object
 func (s PeerInfo) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(PeerInfoType)
+	if len(s.Addresses) > 0 {
+		o.SetRaw("addresses", s.Addresses)
+	}
+	if len(s.Protocols) > 0 {
+		o.SetRaw("protocols", s.Protocols)
+	}
+	if len(s.ContentIDs) > 0 {
+		o.SetRaw("contentIDs", s.ContentIDs)
+	}
+	if len(s.ContentTypes) > 0 {
+		o.SetRaw("contentTypes", s.ContentTypes)
+	}
+	if s.AuthorityKey != nil {
+		o.SetRaw("@authority", s.AuthorityKey)
+	}
+	if s.SignerKey != nil {
+		o.SetRaw("@signer", s.SignerKey)
+	}
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
+	}
+	if s.Mandate != nil {
+		o.SetRaw("@mandate", s.Mandate)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *PeerInfo) FromMap(m map[string]interface{}) error {
-	s.Addresses = []string{}
-	if ss, ok := m["addresses:a<s>"].([]interface{}); ok {
+// FromObject populates the struct from a f12n object
+func (s *PeerInfo) FromObject(o *object.Object) error {
+	if ss, ok := o.GetRaw("addresses").([]string); ok {
+		s.Addresses = ss
+	} else if ss, ok := o.GetRaw("addresses").([]interface{}); ok {
+		s.Addresses = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Addresses = append(s.Addresses, v)
 			}
 		}
 	}
-	if v, ok := m["addresses:a<s>"].([]string); ok {
-		s.Addresses = v
-	}
-	s.Protocols = []string{}
-	if ss, ok := m["protocols:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("protocols").([]string); ok {
+		s.Protocols = ss
+	} else if ss, ok := o.GetRaw("protocols").([]interface{}); ok {
+		s.Protocols = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Protocols = append(s.Protocols, v)
 			}
 		}
 	}
-	if v, ok := m["protocols:a<s>"].([]string); ok {
-		s.Protocols = v
-	}
-	s.ContentIDs = []string{}
-	if ss, ok := m["contentIDs:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("contentIDs").([]string); ok {
+		s.ContentIDs = ss
+	} else if ss, ok := o.GetRaw("contentIDs").([]interface{}); ok {
+		s.ContentIDs = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.ContentIDs = append(s.ContentIDs, v)
 			}
 		}
 	}
-	if v, ok := m["contentIDs:a<s>"].([]string); ok {
-		s.ContentIDs = v
-	}
-	s.ContentTypes = []string{}
-	if ss, ok := m["contentTypes:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("contentTypes").([]string); ok {
+		s.ContentTypes = ss
+	} else if ss, ok := o.GetRaw("contentTypes").([]interface{}); ok {
+		s.ContentTypes = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.ContentTypes = append(s.ContentTypes, v)
 			}
 		}
 	}
-	if v, ok := m["contentTypes:a<s>"].([]string); ok {
-		s.ContentTypes = v
-	}
-	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
+		s.AuthorityKey = v
+	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
 		s.AuthorityKey = &crypto.Key{}
-		if err := s.AuthorityKey.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.AuthorityKey = v
+		s.AuthorityKey.FromObject(v)
 	}
-	if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.AuthorityKey = v
-	}
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+		s.SignerKey = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
 		s.SignerKey = &crypto.Key{}
-		if err := s.SignerKey.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.SignerKey = v
+		s.SignerKey.FromObject(v)
 	}
-	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.SignerKey = v
-	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
 		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
+		s.Signature.FromObject(v)
 	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@mandate:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@mandate").(*crypto.Mandate); ok {
+		s.Mandate = v
+	} else if v, ok := o.GetRaw("@mandate").(*object.Object); ok {
 		s.Mandate = &crypto.Mandate{}
-		if err := s.Mandate.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@mandate:o"].(*crypto.Mandate); ok {
-		s.Mandate = v
-	}
-	if v, ok := m["@mandate:o"].(*crypto.Mandate); ok {
-		s.Mandate = v
+		s.Mandate.FromObject(v)
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *PeerInfo) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s PeerInfo) GetType() string {
-	return "/peer"
+	return PeerInfoType
 }

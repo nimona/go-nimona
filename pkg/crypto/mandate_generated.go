@@ -8,108 +8,88 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s Mandate) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":        "/mandate",
-		"description:s": s.Description,
-		"effect:s":      s.Effect,
-	}
-	if s.Signer != nil {
-		m["@signer:o"] = s.Signer.ToMap()
-	}
-	if s.Subject != nil {
-		m["subject:o"] = s.Subject.ToMap()
-	}
-	if s.Resources != nil {
-		m["resources:a<s>"] = s.Resources
-	}
-	if s.Actions != nil {
-		m["actions:a<s>"] = s.Actions
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	return m
-}
+const (
+	MandateType = "/mandate"
+)
 
 // ToObject returns a f12n object
 func (s Mandate) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(MandateType)
+	if s.Signer != nil {
+		o.SetRaw("@signer", s.Signer)
+	}
+	if s.Subject != nil {
+		o.SetRaw("subject", s.Subject)
+	}
+	if s.Description != "" {
+		o.SetRaw("description", s.Description)
+	}
+	if len(s.Resources) > 0 {
+		o.SetRaw("resources", s.Resources)
+	}
+	if len(s.Actions) > 0 {
+		o.SetRaw("actions", s.Actions)
+	}
+	if s.Effect != "" {
+		o.SetRaw("effect", s.Effect)
+	}
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Mandate) FromMap(m map[string]interface{}) error {
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+// FromObject populates the struct from a f12n object
+func (s *Mandate) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("@signer").(*Key); ok {
+		s.Signer = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
 		s.Signer = &Key{}
-		if err := s.Signer.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*Key); ok {
-		s.Signer = v
+		s.Signer.FromObject(v)
 	}
-	if v, ok := m["@signer:o"].(*Key); ok {
-		s.Signer = v
-	}
-	if v, ok := m["subject:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("subject").(*Key); ok {
+		s.Subject = v
+	} else if v, ok := o.GetRaw("subject").(*object.Object); ok {
 		s.Subject = &Key{}
-		if err := s.Subject.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["subject:o"].(*Key); ok {
-		s.Subject = v
+		s.Subject.FromObject(v)
 	}
-	if v, ok := m["subject:o"].(*Key); ok {
-		s.Subject = v
-	}
-	if v, ok := m["description:s"].(string); ok {
+	if v, ok := o.GetRaw("description").(string); ok {
 		s.Description = v
 	}
-	s.Resources = []string{}
-	if ss, ok := m["resources:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("resources").([]string); ok {
+		s.Resources = ss
+	} else if ss, ok := o.GetRaw("resources").([]interface{}); ok {
+		s.Resources = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Resources = append(s.Resources, v)
 			}
 		}
 	}
-	if v, ok := m["resources:a<s>"].([]string); ok {
-		s.Resources = v
-	}
-	s.Actions = []string{}
-	if ss, ok := m["actions:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("actions").([]string); ok {
+		s.Actions = ss
+	} else if ss, ok := o.GetRaw("actions").([]interface{}); ok {
+		s.Actions = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Actions = append(s.Actions, v)
 			}
 		}
 	}
-	if v, ok := m["actions:a<s>"].([]string); ok {
-		s.Actions = v
-	}
-	if v, ok := m["effect:s"].(string); ok {
+	if v, ok := o.GetRaw("effect").(string); ok {
 		s.Effect = v
 	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signature").(*Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
 		s.Signature = &Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@signature:o"].(*Signature); ok {
-		s.Signature = v
+		s.Signature.FromObject(v)
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *Mandate) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s Mandate) GetType() string {
-	return "/mandate"
+	return MandateType
 }
