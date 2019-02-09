@@ -16,7 +16,7 @@ func TestObjectHash(t *testing.T) {
 	kh := hash(HintString, []byte("str:s"))
 	vh := hash(HintString, []byte("foo"))
 	ob := append(kh, vh...)
-	oh := hash(HintMap, ob)
+	oh := hash(HintObject, ob)
 
 	o := FromMap(v)
 	h, err := ObjectHash(o)

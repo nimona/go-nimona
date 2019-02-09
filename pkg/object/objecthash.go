@@ -44,7 +44,7 @@ func objecthash(o *Object, skipSig bool) ([]byte, error) {
 		b = append(b, hv...)
 		x[k] = hv
 	}
-	h := hash(HintMap, b)
+	h := hash(HintObject, b)
 	return h, nil
 }
 

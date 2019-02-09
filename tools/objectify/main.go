@@ -226,7 +226,7 @@ func (s {{ .StructName }}) ToMap() map[string]interface{} {
 		{{- if eq .Tag "@" }}
 		{{- else if .CanBeNil }}
 		{{- else if .IsObject }}
-		"{{ .Tag }}:{{ .Hint }}": s.{{ .Name }}.ToMap(),
+		"{{ .Tag }}:{{ .Hint }}": s.{{ .Name }}.ToObject(),
 		{{- else }}
 		"{{ .Tag }}:{{ .Hint }}": s.{{ .Name }},
 		{{- end }}
@@ -255,7 +255,38 @@ func (s {{ .StructName }}) ToMap() map[string]interface{} {
 
 // ToObject returns a f12n object
 func (s {{ .StructName }}) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType("{{ .Schema }}")
+
+	{{- range .StructFields }}
+	{{- if eq .Tag "@" }}
+	{{- else if eq .Hint "s" }}
+	if s.{{ .Name }} != "" {
+		o.SetRaw("{{ .Tag }}", s.{{ .Name }})
+	}
+	{{- else if .IsSlice }}
+	if len(s.{{ .Name }}) > 0 {
+		o.SetRaw("{{ .Tag }}", s.{{ .Name }})
+	}
+	{{- else if .CanBeNil }}
+	if s.{{ .Name }} != nil {
+		{{- if and .IsObject .IsSlice }}
+		s{{ .Name }} := []map[string]interface{}{}
+		for _, v := range s.{{ .Name }} {
+			s{{ .Name }} = append(s{{ .Name }}, v.ToMap())
+		}
+		o.SetRaw("{{ .Tag }}", s{{ .Name }})
+		{{- else if .IsObject }}
+		o.SetRaw("{{ .Tag }}", s.{{ .Name }})
+		{{- else }}
+		o.SetRaw("{{ .Tag }}", s.{{ .Name }})
+		{{- end }}
+	}
+	{{- else }}
+	o.SetRaw("{{ .Tag }}", s.{{ .Name }})
+	{{- end }}
+	{{- end }}
+	return o
 }
 
 // FromMap populates the struct from a f12n compatible map
@@ -482,7 +513,7 @@ func getHint(t types.Type) object.TypeHint {
 			return object.HintArray + "<" + ss + ">"
 		}
 	case *types.Struct:
-		return object.HintMap
+		return object.HintObject
 	case *types.Pointer:
 		st := v.Elem()
 		return getHint(st)
@@ -490,10 +521,10 @@ func getHint(t types.Type) object.TypeHint {
 	case *types.Signature:
 	case *types.Interface:
 	case *types.Map:
-		return object.HintMap
+		return object.HintObject
 	case *types.Chan:
 	case *types.Named:
 	}
 	// TODO(geoah) insane hack/assumption
-	return object.HintMap
+	return object.HintObject
 }
