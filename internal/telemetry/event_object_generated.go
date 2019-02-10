@@ -8,42 +8,39 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s ObjectEvent) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":        "nimona.io/telemetry/object",
-		"direction:s":   s.Direction,
-		"contentType:s": s.ContentType,
-		"size:i":        s.ObjectSize,
-	}
-	return m
-}
+const (
+	ObjectEventType = "nimona.io/telemetry/object"
+)
 
 // ToObject returns a f12n object
 func (s ObjectEvent) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(ObjectEventType)
+	if s.Direction != "" {
+		o.SetRaw("direction", s.Direction)
+	}
+	if s.ContentType != "" {
+		o.SetRaw("contentType", s.ContentType)
+	}
+	o.SetRaw("size", s.ObjectSize)
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *ObjectEvent) FromMap(m map[string]interface{}) error {
-	if v, ok := m["direction:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *ObjectEvent) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("direction").(string); ok {
 		s.Direction = v
 	}
-	if v, ok := m["contentType:s"].(string); ok {
+	if v, ok := o.GetRaw("contentType").(string); ok {
 		s.ContentType = v
 	}
-	if v, ok := m["size:i"].(int); ok {
+	if v, ok := o.GetRaw("size").(int); ok {
 		s.ObjectSize = v
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *ObjectEvent) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s ObjectEvent) GetType() string {
-	return "nimona.io/telemetry/object"
+	return ObjectEventType
 }

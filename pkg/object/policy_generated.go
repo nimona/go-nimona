@@ -4,66 +4,61 @@
 
 package object
 
-// ToMap returns a map compatible with f12n
-func (s Policy) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":        "/policy",
-		"description:s": s.Description,
-		"effect:s":      s.Effect,
-	}
-	if s.Subjects != nil {
-		m["subjects:a<s>"] = s.Subjects
-	}
-	if s.Actions != nil {
-		m["actions:a<s>"] = s.Actions
-	}
-	return m
-}
+const (
+	PolicyType = "/policy"
+)
 
 // ToObject returns a f12n object
 func (s Policy) ToObject() *Object {
-	return FromMap(s.ToMap())
+	o := New()
+	o.SetType(PolicyType)
+	if s.Description != "" {
+		o.SetRaw("description", s.Description)
+	}
+	if len(s.Subjects) > 0 {
+		o.SetRaw("subjects", s.Subjects)
+	}
+	if len(s.Actions) > 0 {
+		o.SetRaw("actions", s.Actions)
+	}
+	if s.Effect != "" {
+		o.SetRaw("effect", s.Effect)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Policy) FromMap(m map[string]interface{}) error {
-	if v, ok := m["description:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *Policy) FromObject(o *Object) error {
+	if v, ok := o.GetRaw("description").(string); ok {
 		s.Description = v
 	}
-	s.Subjects = []string{}
-	if ss, ok := m["subjects:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("subjects").([]string); ok {
+		s.Subjects = ss
+	} else if ss, ok := o.GetRaw("subjects").([]interface{}); ok {
+		s.Subjects = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Subjects = append(s.Subjects, v)
 			}
 		}
 	}
-	if v, ok := m["subjects:a<s>"].([]string); ok {
-		s.Subjects = v
-	}
-	s.Actions = []string{}
-	if ss, ok := m["actions:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("actions").([]string); ok {
+		s.Actions = ss
+	} else if ss, ok := o.GetRaw("actions").([]interface{}); ok {
+		s.Actions = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Actions = append(s.Actions, v)
 			}
 		}
 	}
-	if v, ok := m["actions:a<s>"].([]string); ok {
-		s.Actions = v
-	}
-	if v, ok := m["effect:s"].(string); ok {
+	if v, ok := o.GetRaw("effect").(string); ok {
 		s.Effect = v
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *Policy) FromObject(o *Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s Policy) GetType() string {
-	return "/policy"
+	return PolicyType
 }

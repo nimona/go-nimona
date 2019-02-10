@@ -8,34 +8,29 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s ConnectionEvent) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":      "nimona.io/telemetry/connection",
-		"direction:s": s.Direction,
-	}
-	return m
-}
+const (
+	ConnectionEventType = "nimona.io/telemetry/connection"
+)
 
 // ToObject returns a f12n object
 func (s ConnectionEvent) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(ConnectionEventType)
+	if s.Direction != "" {
+		o.SetRaw("direction", s.Direction)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *ConnectionEvent) FromMap(m map[string]interface{}) error {
-	if v, ok := m["direction:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *ConnectionEvent) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("direction").(string); ok {
 		s.Direction = v
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *ConnectionEvent) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s ConnectionEvent) GetType() string {
-	return "nimona.io/telemetry/connection"
+	return ConnectionEventType
 }

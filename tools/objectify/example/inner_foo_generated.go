@@ -8,228 +8,209 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s InnerFoo) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":      "test/inn",
-		"inner_bar:s": s.InnerBar,
-		"i:i":         s.I,
-		"i8:i":        s.I8,
-		"i16:i":       s.I16,
-		"i32:i":       s.I32,
-		"i64:i":       s.I64,
-		"u:u":         s.U,
-		"u8:u":        s.U8,
-		"u16:u":       s.U16,
-		"u32:u":       s.U32,
-		"f32:f":       s.F32,
-		"f64:f":       s.F64,
-	}
-	if s.InnerBars != nil {
-		m["inner_bars:a<s>"] = s.InnerBars
-	}
-	if s.MoreInnerFoos != nil {
-		sMoreInnerFoos := []map[string]interface{}{}
-		for _, v := range s.MoreInnerFoos {
-			sMoreInnerFoos = append(sMoreInnerFoos, v.ToMap())
-		}
-		m["inner_foos:a<o>"] = sMoreInnerFoos
-	}
-	if s.Ai8 != nil {
-		m["ai8:a<i>"] = s.Ai8
-	}
-	if s.Ai16 != nil {
-		m["ai16:a<i>"] = s.Ai16
-	}
-	if s.Ai32 != nil {
-		m["ai32:a<i>"] = s.Ai32
-	}
-	if s.Ai64 != nil {
-		m["ai64:a<i>"] = s.Ai64
-	}
-	if s.Au16 != nil {
-		m["au16:a<u>"] = s.Au16
-	}
-	if s.Au32 != nil {
-		m["au32:a<u>"] = s.Au32
-	}
-	if s.Af32 != nil {
-		m["af32:a<f>"] = s.Af32
-	}
-	if s.Af64 != nil {
-		m["af64:a<f>"] = s.Af64
-	}
-	return m
-}
+const (
+	InnerFooType = "test/inn"
+)
 
 // ToObject returns a f12n object
 func (s InnerFoo) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(InnerFooType)
+	if s.InnerBar != "" {
+		o.SetRaw("inner_bar", s.InnerBar)
+	}
+	if len(s.InnerBars) > 0 {
+		o.SetRaw("inner_bars", s.InnerBars)
+	}
+	if len(s.MoreInnerFoos) > 0 {
+		o.SetRaw("inner_foos", s.MoreInnerFoos)
+	}
+	o.SetRaw("i", s.I)
+	o.SetRaw("i8", s.I8)
+	o.SetRaw("i16", s.I16)
+	o.SetRaw("i32", s.I32)
+	o.SetRaw("i64", s.I64)
+	o.SetRaw("u", s.U)
+	o.SetRaw("u8", s.U8)
+	o.SetRaw("u16", s.U16)
+	o.SetRaw("u32", s.U32)
+	o.SetRaw("f32", s.F32)
+	o.SetRaw("f64", s.F64)
+	if len(s.Ai8) > 0 {
+		o.SetRaw("ai8", s.Ai8)
+	}
+	if len(s.Ai16) > 0 {
+		o.SetRaw("ai16", s.Ai16)
+	}
+	if len(s.Ai32) > 0 {
+		o.SetRaw("ai32", s.Ai32)
+	}
+	if len(s.Ai64) > 0 {
+		o.SetRaw("ai64", s.Ai64)
+	}
+	if len(s.Au16) > 0 {
+		o.SetRaw("au16", s.Au16)
+	}
+	if len(s.Au32) > 0 {
+		o.SetRaw("au32", s.Au32)
+	}
+	if len(s.Af32) > 0 {
+		o.SetRaw("af32", s.Af32)
+	}
+	if len(s.Af64) > 0 {
+		o.SetRaw("af64", s.Af64)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *InnerFoo) FromMap(m map[string]interface{}) error {
-	if v, ok := m["inner_bar:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *InnerFoo) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("inner_bar").(string); ok {
 		s.InnerBar = v
 	}
-	s.InnerBars = []string{}
-	if ss, ok := m["inner_bars:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("inner_bars").([]string); ok {
+		s.InnerBars = ss
+	} else if ss, ok := o.GetRaw("inner_bars").([]interface{}); ok {
+		s.InnerBars = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.InnerBars = append(s.InnerBars, v)
 			}
 		}
 	}
-	if v, ok := m["inner_bars:a<s>"].([]string); ok {
-		s.InnerBars = v
-	}
-	s.MoreInnerFoos = []*InnerFoo{}
-	if ss, ok := m["inner_foos:a<o>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("inner_foos").([]*InnerFoo); ok {
+		s.MoreInnerFoos = ss
+	} else if ss, ok := o.GetRaw("inner_foos").([]interface{}); ok {
+		s.MoreInnerFoos = []*InnerFoo{}
 		for _, si := range ss {
 			if v, ok := si.(*InnerFoo); ok {
 				s.MoreInnerFoos = append(s.MoreInnerFoos, v)
-			} else if v, ok := si.(map[string]interface{}); ok {
+			} else if v, ok := si.(*object.Object); ok {
 				sMoreInnerFoos := &InnerFoo{}
-				if err := sMoreInnerFoos.FromMap(v); err != nil {
+				if err := sMoreInnerFoos.FromObject(v); err != nil {
 					return err
 				}
 				s.MoreInnerFoos = append(s.MoreInnerFoos, sMoreInnerFoos)
 			}
 		}
 	}
-	if v, ok := m["inner_foos:a<o>"].([]*InnerFoo); ok {
-		s.MoreInnerFoos = v
-	}
-	if v, ok := m["i:i"].(int); ok {
+	if v, ok := o.GetRaw("i").(int); ok {
 		s.I = v
 	}
-	if v, ok := m["i8:i"].(int8); ok {
+	if v, ok := o.GetRaw("i8").(int8); ok {
 		s.I8 = v
 	}
-	if v, ok := m["i16:i"].(int16); ok {
+	if v, ok := o.GetRaw("i16").(int16); ok {
 		s.I16 = v
 	}
-	if v, ok := m["i32:i"].(int32); ok {
+	if v, ok := o.GetRaw("i32").(int32); ok {
 		s.I32 = v
 	}
-	if v, ok := m["i64:i"].(int64); ok {
+	if v, ok := o.GetRaw("i64").(int64); ok {
 		s.I64 = v
 	}
-	if v, ok := m["u:u"].(uint); ok {
+	if v, ok := o.GetRaw("u").(uint); ok {
 		s.U = v
 	}
-	if v, ok := m["u8:u"].(uint8); ok {
+	if v, ok := o.GetRaw("u8").(uint8); ok {
 		s.U8 = v
 	}
-	if v, ok := m["u16:u"].(uint16); ok {
+	if v, ok := o.GetRaw("u16").(uint16); ok {
 		s.U16 = v
 	}
-	if v, ok := m["u32:u"].(uint32); ok {
+	if v, ok := o.GetRaw("u32").(uint32); ok {
 		s.U32 = v
 	}
-	if v, ok := m["f32:f"].(float32); ok {
+	if v, ok := o.GetRaw("f32").(float32); ok {
 		s.F32 = v
 	}
-	if v, ok := m["f64:f"].(float64); ok {
+	if v, ok := o.GetRaw("f64").(float64); ok {
 		s.F64 = v
 	}
-	s.Ai8 = []int8{}
-	if ss, ok := m["ai8:a<i>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("ai8").([]int8); ok {
+		s.Ai8 = ss
+	} else if ss, ok := o.GetRaw("ai8").([]interface{}); ok {
+		s.Ai8 = []int8{}
 		for _, si := range ss {
 			if v, ok := si.(int8); ok {
 				s.Ai8 = append(s.Ai8, v)
 			}
 		}
 	}
-	if v, ok := m["ai8:a<i>"].([]int8); ok {
-		s.Ai8 = v
-	}
-	s.Ai16 = []int16{}
-	if ss, ok := m["ai16:a<i>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("ai16").([]int16); ok {
+		s.Ai16 = ss
+	} else if ss, ok := o.GetRaw("ai16").([]interface{}); ok {
+		s.Ai16 = []int16{}
 		for _, si := range ss {
 			if v, ok := si.(int16); ok {
 				s.Ai16 = append(s.Ai16, v)
 			}
 		}
 	}
-	if v, ok := m["ai16:a<i>"].([]int16); ok {
-		s.Ai16 = v
-	}
-	s.Ai32 = []int32{}
-	if ss, ok := m["ai32:a<i>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("ai32").([]int32); ok {
+		s.Ai32 = ss
+	} else if ss, ok := o.GetRaw("ai32").([]interface{}); ok {
+		s.Ai32 = []int32{}
 		for _, si := range ss {
 			if v, ok := si.(int32); ok {
 				s.Ai32 = append(s.Ai32, v)
 			}
 		}
 	}
-	if v, ok := m["ai32:a<i>"].([]int32); ok {
-		s.Ai32 = v
-	}
-	s.Ai64 = []int64{}
-	if ss, ok := m["ai64:a<i>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("ai64").([]int64); ok {
+		s.Ai64 = ss
+	} else if ss, ok := o.GetRaw("ai64").([]interface{}); ok {
+		s.Ai64 = []int64{}
 		for _, si := range ss {
 			if v, ok := si.(int64); ok {
 				s.Ai64 = append(s.Ai64, v)
 			}
 		}
 	}
-	if v, ok := m["ai64:a<i>"].([]int64); ok {
-		s.Ai64 = v
-	}
-	s.Au16 = []uint16{}
-	if ss, ok := m["au16:a<u>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("au16").([]uint16); ok {
+		s.Au16 = ss
+	} else if ss, ok := o.GetRaw("au16").([]interface{}); ok {
+		s.Au16 = []uint16{}
 		for _, si := range ss {
 			if v, ok := si.(uint16); ok {
 				s.Au16 = append(s.Au16, v)
 			}
 		}
 	}
-	if v, ok := m["au16:a<u>"].([]uint16); ok {
-		s.Au16 = v
-	}
-	s.Au32 = []uint32{}
-	if ss, ok := m["au32:a<u>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("au32").([]uint32); ok {
+		s.Au32 = ss
+	} else if ss, ok := o.GetRaw("au32").([]interface{}); ok {
+		s.Au32 = []uint32{}
 		for _, si := range ss {
 			if v, ok := si.(uint32); ok {
 				s.Au32 = append(s.Au32, v)
 			}
 		}
 	}
-	if v, ok := m["au32:a<u>"].([]uint32); ok {
-		s.Au32 = v
-	}
-	s.Af32 = []float32{}
-	if ss, ok := m["af32:a<f>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("af32").([]float32); ok {
+		s.Af32 = ss
+	} else if ss, ok := o.GetRaw("af32").([]interface{}); ok {
+		s.Af32 = []float32{}
 		for _, si := range ss {
 			if v, ok := si.(float32); ok {
 				s.Af32 = append(s.Af32, v)
 			}
 		}
 	}
-	if v, ok := m["af32:a<f>"].([]float32); ok {
-		s.Af32 = v
-	}
-	s.Af64 = []float64{}
-	if ss, ok := m["af64:a<f>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("af64").([]float64); ok {
+		s.Af64 = ss
+	} else if ss, ok := o.GetRaw("af64").([]interface{}); ok {
+		s.Af64 = []float64{}
 		for _, si := range ss {
 			if v, ok := si.(float64); ok {
 				s.Af64 = append(s.Af64, v)
 			}
 		}
 	}
-	if v, ok := m["af64:a<f>"].([]float64); ok {
-		s.Af64 = v
-	}
 	return nil
-}
-
-// FromObject populates the struct from a f12n object
-func (s *InnerFoo) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
 func (s InnerFoo) GetType() string {
-	return "test/inn"
+	return InnerFooType
 }

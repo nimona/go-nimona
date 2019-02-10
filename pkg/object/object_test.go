@@ -37,7 +37,7 @@ func TestObjectMethods(t *testing.T) {
 	assert.Equal(t, m["@mandate"], o.GetRaw("@mandate"))
 	assert.Equal(t, m["@parents"], o.GetRaw("@parents"))
 
-	n := &Object{}
+	n := New()
 
 	n.SetRaw("@ctx", m["@ctx"])
 	n.SetRaw("@signature", m["@signature"])
@@ -55,7 +55,7 @@ func TestObjectMethods(t *testing.T) {
 	assert.Equal(t, m["@mandate"], n.GetRaw("@mandate"))
 	assert.Equal(t, m["@parents"], n.GetRaw("@parents"))
 
-	e := &Object{}
+	e := New()
 
 	e.SetType(o.GetType())
 	e.SetSignature(o.GetSignature())

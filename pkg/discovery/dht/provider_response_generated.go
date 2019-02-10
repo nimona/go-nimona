@@ -10,128 +10,95 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s ProviderResponse) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":      "nimona.io/dht/provider.response",
-		"requestID:s": s.RequestID,
-	}
-	if s.Providers != nil {
-		sProviders := []map[string]interface{}{}
-		for _, v := range s.Providers {
-			sProviders = append(sProviders, v.ToMap())
-		}
-		m["providers:a<o>"] = sProviders
-	}
-	if s.ClosestPeers != nil {
-		sClosestPeers := []map[string]interface{}{}
-		for _, v := range s.ClosestPeers {
-			sClosestPeers = append(sClosestPeers, v.ToMap())
-		}
-		m["closestPeers:a<o>"] = sClosestPeers
-	}
-	if s.Signer != nil {
-		m["@signer:o"] = s.Signer.ToMap()
-	}
-	if s.Authority != nil {
-		m["@authority:o"] = s.Authority.ToMap()
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	return m
-}
+const (
+	ProviderResponseType = "nimona.io/dht/provider.response"
+)
 
 // ToObject returns a f12n object
 func (s ProviderResponse) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(ProviderResponseType)
+	if s.RequestID != "" {
+		o.SetRaw("requestID", s.RequestID)
+	}
+	if len(s.Providers) > 0 {
+		o.SetRaw("providers", s.Providers)
+	}
+	if len(s.ClosestPeers) > 0 {
+		o.SetRaw("closestPeers", s.ClosestPeers)
+	}
+	if s.Signer != nil {
+		o.SetRaw("@signer", s.Signer)
+	}
+	if s.Authority != nil {
+		o.SetRaw("@authority", s.Authority)
+	}
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *ProviderResponse) FromMap(m map[string]interface{}) error {
-	if v, ok := m["requestID:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *ProviderResponse) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("requestID").(string); ok {
 		s.RequestID = v
 	}
-	s.Providers = []*Provider{}
-	if ss, ok := m["providers:a<o>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("providers").([]*Provider); ok {
+		s.Providers = ss
+	} else if ss, ok := o.GetRaw("providers").([]interface{}); ok {
+		s.Providers = []*Provider{}
 		for _, si := range ss {
 			if v, ok := si.(*Provider); ok {
 				s.Providers = append(s.Providers, v)
-			} else if v, ok := si.(map[string]interface{}); ok {
+			} else if v, ok := si.(*object.Object); ok {
 				sProviders := &Provider{}
-				if err := sProviders.FromMap(v); err != nil {
+				if err := sProviders.FromObject(v); err != nil {
 					return err
 				}
 				s.Providers = append(s.Providers, sProviders)
 			}
 		}
 	}
-	if v, ok := m["providers:a<o>"].([]*Provider); ok {
-		s.Providers = v
-	}
-	s.ClosestPeers = []*peer.PeerInfo{}
-	if ss, ok := m["closestPeers:a<o>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("closestPeers").([]*peer.PeerInfo); ok {
+		s.ClosestPeers = ss
+	} else if ss, ok := o.GetRaw("closestPeers").([]interface{}); ok {
+		s.ClosestPeers = []*peer.PeerInfo{}
 		for _, si := range ss {
 			if v, ok := si.(*peer.PeerInfo); ok {
 				s.ClosestPeers = append(s.ClosestPeers, v)
-			} else if v, ok := si.(map[string]interface{}); ok {
+			} else if v, ok := si.(*object.Object); ok {
 				sClosestPeers := &peer.PeerInfo{}
-				if err := sClosestPeers.FromMap(v); err != nil {
+				if err := sClosestPeers.FromObject(v); err != nil {
 					return err
 				}
 				s.ClosestPeers = append(s.ClosestPeers, sClosestPeers)
 			}
 		}
 	}
-	if v, ok := m["closestPeers:a<o>"].([]*peer.PeerInfo); ok {
-		s.ClosestPeers = v
-	}
-	s.RawObject = object.FromMap(m)
-	if v, ok := m["@:o"].(*object.Object); ok {
-		s.RawObject = v
-	}
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+	s.RawObject = o
+	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+		s.Signer = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
 		s.Signer = &crypto.Key{}
-		if err := s.Signer.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
+		s.Signer.FromObject(v)
 	}
-	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
-	}
-	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
+		s.Authority = v
+	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
 		s.Authority = &crypto.Key{}
-		if err := s.Authority.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.Authority = v
+		s.Authority.FromObject(v)
 	}
-	if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.Authority = v
-	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
 		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
+		s.Signature.FromObject(v)
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *ProviderResponse) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s ProviderResponse) GetType() string {
-	return "nimona.io/dht/provider.response"
+	return ProviderResponseType
 }

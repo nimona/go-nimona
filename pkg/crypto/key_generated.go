@@ -8,112 +8,122 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s Key) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":    "/key",
-		"alg:s":     s.Algorithm,
-		"kid:s":     s.KeyID,
-		"kty:s":     s.KeyType,
-		"use:s":     s.KeyUsage,
-		"key_ops:s": s.KeyOps,
-		"x5c:s":     s.X509CertChain,
-		"x5t:s":     s.X509CertThumbprint,
-		"x5tS256:s": s.X509CertThumbprintS256,
-		"x5u:s":     s.X509URL,
-		"crv:s":     s.Curve,
-	}
-	if s.X != nil {
-		m["x:d"] = s.X
-	}
-	if s.Y != nil {
-		m["y:d"] = s.Y
-	}
-	if s.D != nil {
-		m["d:d"] = s.D
-	}
-	return m
-}
+const (
+	KeyType = "/key"
+)
 
 // ToObject returns a f12n object
 func (s Key) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(KeyType)
+	if s.Algorithm != "" {
+		o.SetRaw("alg", s.Algorithm)
+	}
+	if s.KeyID != "" {
+		o.SetRaw("kid", s.KeyID)
+	}
+	if s.KeyType != "" {
+		o.SetRaw("kty", s.KeyType)
+	}
+	if s.KeyUsage != "" {
+		o.SetRaw("use", s.KeyUsage)
+	}
+	if s.KeyOps != "" {
+		o.SetRaw("key_ops", s.KeyOps)
+	}
+	if s.X509CertChain != "" {
+		o.SetRaw("x5c", s.X509CertChain)
+	}
+	if s.X509CertThumbprint != "" {
+		o.SetRaw("x5t", s.X509CertThumbprint)
+	}
+	if s.X509CertThumbprintS256 != "" {
+		o.SetRaw("x5tS256", s.X509CertThumbprintS256)
+	}
+	if s.X509URL != "" {
+		o.SetRaw("x5u", s.X509URL)
+	}
+	if s.Curve != "" {
+		o.SetRaw("crv", s.Curve)
+	}
+	if len(s.X) > 0 {
+		o.SetRaw("x", s.X)
+	}
+	if len(s.Y) > 0 {
+		o.SetRaw("y", s.Y)
+	}
+	if len(s.D) > 0 {
+		o.SetRaw("d", s.D)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Key) FromMap(m map[string]interface{}) error {
-	if v, ok := m["alg:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *Key) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("alg").(string); ok {
 		s.Algorithm = v
 	}
-	if v, ok := m["kid:s"].(string); ok {
+	if v, ok := o.GetRaw("kid").(string); ok {
 		s.KeyID = v
 	}
-	if v, ok := m["kty:s"].(string); ok {
+	if v, ok := o.GetRaw("kty").(string); ok {
 		s.KeyType = v
 	}
-	if v, ok := m["use:s"].(string); ok {
+	if v, ok := o.GetRaw("use").(string); ok {
 		s.KeyUsage = v
 	}
-	if v, ok := m["key_ops:s"].(string); ok {
+	if v, ok := o.GetRaw("key_ops").(string); ok {
 		s.KeyOps = v
 	}
-	if v, ok := m["x5c:s"].(string); ok {
+	if v, ok := o.GetRaw("x5c").(string); ok {
 		s.X509CertChain = v
 	}
-	if v, ok := m["x5t:s"].(string); ok {
+	if v, ok := o.GetRaw("x5t").(string); ok {
 		s.X509CertThumbprint = v
 	}
-	if v, ok := m["x5tS256:s"].(string); ok {
+	if v, ok := o.GetRaw("x5tS256").(string); ok {
 		s.X509CertThumbprintS256 = v
 	}
-	if v, ok := m["x5u:s"].(string); ok {
+	if v, ok := o.GetRaw("x5u").(string); ok {
 		s.X509URL = v
 	}
-	if v, ok := m["crv:s"].(string); ok {
+	if v, ok := o.GetRaw("crv").(string); ok {
 		s.Curve = v
 	}
-	s.X = []byte{}
-	if ss, ok := m["x:d"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("x").([]byte); ok {
+		s.X = ss
+	} else if ss, ok := o.GetRaw("x").([]interface{}); ok {
+		s.X = []byte{}
 		for _, si := range ss {
 			if v, ok := si.(byte); ok {
 				s.X = append(s.X, v)
 			}
 		}
 	}
-	if v, ok := m["x:d"].([]byte); ok {
-		s.X = v
-	}
-	s.Y = []byte{}
-	if ss, ok := m["y:d"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("y").([]byte); ok {
+		s.Y = ss
+	} else if ss, ok := o.GetRaw("y").([]interface{}); ok {
+		s.Y = []byte{}
 		for _, si := range ss {
 			if v, ok := si.(byte); ok {
 				s.Y = append(s.Y, v)
 			}
 		}
 	}
-	if v, ok := m["y:d"].([]byte); ok {
-		s.Y = v
-	}
-	s.D = []byte{}
-	if ss, ok := m["d:d"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("d").([]byte); ok {
+		s.D = ss
+	} else if ss, ok := o.GetRaw("d").([]interface{}); ok {
+		s.D = []byte{}
 		for _, si := range ss {
 			if v, ok := si.(byte); ok {
 				s.D = append(s.D, v)
 			}
 		}
 	}
-	if v, ok := m["d:d"].([]byte); ok {
-		s.D = v
-	}
 	return nil
-}
-
-// FromObject populates the struct from a f12n object
-func (s *Key) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
 func (s Key) GetType() string {
-	return "/key"
+	return KeyType
 }

@@ -8,62 +8,55 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s Signature) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s": "/signature",
-		"alg:s":  s.Alg,
-	}
-	if s.R != nil {
-		m["r:d"] = s.R
-	}
-	if s.S != nil {
-		m["s:d"] = s.S
-	}
-	return m
-}
+const (
+	SignatureType = "/signature"
+)
 
 // ToObject returns a f12n object
 func (s Signature) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(SignatureType)
+	if s.Alg != "" {
+		o.SetRaw("alg", s.Alg)
+	}
+	if len(s.R) > 0 {
+		o.SetRaw("r", s.R)
+	}
+	if len(s.S) > 0 {
+		o.SetRaw("s", s.S)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Signature) FromMap(m map[string]interface{}) error {
-	if v, ok := m["alg:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *Signature) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("alg").(string); ok {
 		s.Alg = v
 	}
-	s.R = []byte{}
-	if ss, ok := m["r:d"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("r").([]byte); ok {
+		s.R = ss
+	} else if ss, ok := o.GetRaw("r").([]interface{}); ok {
+		s.R = []byte{}
 		for _, si := range ss {
 			if v, ok := si.(byte); ok {
 				s.R = append(s.R, v)
 			}
 		}
 	}
-	if v, ok := m["r:d"].([]byte); ok {
-		s.R = v
-	}
-	s.S = []byte{}
-	if ss, ok := m["s:d"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("s").([]byte); ok {
+		s.S = ss
+	} else if ss, ok := o.GetRaw("s").([]interface{}); ok {
+		s.S = []byte{}
 		for _, si := range ss {
 			if v, ok := si.(byte); ok {
 				s.S = append(s.S, v)
 			}
 		}
 	}
-	if v, ok := m["s:d"].([]byte); ok {
-		s.S = v
-	}
 	return nil
-}
-
-// FromObject populates the struct from a f12n object
-func (s *Signature) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
 func (s Signature) GetType() string {
-	return "/signature"
+	return SignatureType
 }

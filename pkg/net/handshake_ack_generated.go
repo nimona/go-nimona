@@ -9,62 +9,47 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s HandshakeAck) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":  "/handshake.ack",
-		"nonce:s": s.Nonce,
-	}
-	if s.Signer != nil {
-		m["@signer:o"] = s.Signer.ToMap()
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	return m
-}
+const (
+	HandshakeAckType = "/handshake.ack"
+)
 
 // ToObject returns a f12n object
 func (s HandshakeAck) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
-}
-
-// FromMap populates the struct from a f12n compatible map
-func (s *HandshakeAck) FromMap(m map[string]interface{}) error {
-	if v, ok := m["nonce:s"].(string); ok {
-		s.Nonce = v
+	o := object.New()
+	o.SetType(HandshakeAckType)
+	if s.Nonce != "" {
+		o.SetRaw("nonce", s.Nonce)
 	}
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
-		s.Signer = &crypto.Key{}
-		if err := s.Signer.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
+	if s.Signer != nil {
+		o.SetRaw("@signer", s.Signer)
 	}
-	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
 	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	return nil
+	return o
 }
 
 // FromObject populates the struct from a f12n object
 func (s *HandshakeAck) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
+	if v, ok := o.GetRaw("nonce").(string); ok {
+		s.Nonce = v
+	}
+	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+		s.Signer = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+		s.Signer = &crypto.Key{}
+		s.Signer.FromObject(v)
+	}
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+		s.Signature = &crypto.Signature{}
+		s.Signature.FromObject(v)
+	}
+	return nil
 }
 
 // GetType returns the object's type
 func (s HandshakeAck) GetType() string {
-	return "/handshake.ack"
+	return HandshakeAckType
 }
