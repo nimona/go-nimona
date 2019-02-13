@@ -38,25 +38,25 @@ func init() {
 type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
-	Discoverer() discovery.Discoverer
 
 	GetPeerInfo() *peer.PeerInfo
 	AttachMandate(m *crypto.Mandate) error
 }
 
 // New creates a new p2p network using an address book
-func New(key *crypto.Key, hostname string, relayAddresses []string) (Network, error) {
+func New(key *crypto.Key, hostname string, relayAddresses []string,
+	discover discovery.Discoverer) (Network, error) {
 	if key == nil {
-		return nil, errors.New("missing key")
+		return nil, ErrMissingKey
 	}
 
 	if _, ok := key.Materialize().(*ecdsa.PrivateKey); !ok {
-		return nil, errors.New("network currently requires an ecdsa private key")
+		return nil, ErrECDSAPrivateKeyRequired
 	}
 
 	return &network{
 		key:            key,
-		discoverer:     discovery.NewDiscoverer(),
+		discoverer:     discover,
 		hostname:       hostname,
 		relayAddresses: relayAddresses,
 	}, nil
@@ -88,7 +88,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 		q := &peer.PeerInfoRequest{
 			SignerKeyHash: peerID,
 		}
-		ps, err := n.Discoverer().Discover(q)
+		ps, err := n.discoverer.Discover(q)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +158,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 
 		// store who is on the other side
 		conn.RemotePeerKey = synAck.PeerInfo.SignerKey
-		n.Discoverer().Add(synAck.PeerInfo)
+		n.discoverer.Add(synAck.PeerInfo)
 
 		ack := &HandshakeAck{
 			Nonce: nonce,
@@ -269,7 +269,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 
 			// store the remote peer
 			conn.RemotePeerKey = syn.PeerInfo.SignerKey
-			n.Discoverer().Add(syn.PeerInfo)
+			n.discoverer.Add(syn.PeerInfo)
 
 			synAck := &HandshakeSynAck{
 				Nonce:    syn.Nonce,
@@ -412,10 +412,6 @@ func Read(conn *Connection) (*object.Object, error) {
 		)
 	}
 	return o, nil
-}
-
-func (n *network) Discoverer() discovery.Discoverer {
-	return n.discoverer
 }
 
 func (n *network) addAddress(addrs ...string) {
