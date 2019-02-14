@@ -27,7 +27,7 @@ The following subprojects are owned by sig-net:
 - transports
   - [ ] refactor network to support dynamically added dialers and listeners
   - [ ] refactor network to allow listening for network events (serving, opened, closed)
-  - [ ] refactor TCPS to use mutual TLS instead of our custom handshake
+  - [ ] consider refactoring TCPS to use mutual TLS instead of our custom handshake
 - discovery
   - [ ] rename resolvers to discoverers
   - [ ] dht - refactor to make compatible with discoverers or remove

@@ -9,29 +9,30 @@
   - name: processes
   - name: tooling
   - name: testing
+  - name: libraries
   roadmaps:
   - name: 2019/Q1
     description: ...
     subprojects:
     - name: standards
       tasks:
-      - name: add linting/vetting
+      - name: improve linting/vetting
       - name: add standards documentation (code/test/version-control)
     - name: processes
       tasks:
-      - name: add CI process and workflows for development and releases
+      - name: improve CI process and workflows for development and releases
       - name: add CD process and workflows for bootstrap peers
     - name: tooling
       tasks:
-      - name: refactor all tools to cobra
-      - name: add update option to provisioner
+      - name: improve provisioner
     - name: testing
       tasks:
       - name: add network simulator
-    - name: housekeeping
+    - name: libraries
       tasks:
-      - name: refactor nimona cli to unify configs
-      - name: refactor logger, or replace with an in-house one
+      - name: add logging library
+      - name: add configuration library
+      - name: add base58 library
 
 - name: Network
   label: sig-net
@@ -53,7 +54,7 @@
       tasks:
       - name: refactor network to support dynamically added dialers and listeners
       - name: refactor network to allow listening for network events (serving, opened, closed)
-      - name: refactor TCPS to use mutual TLS instead of our custom handshake
+      - name: consider refactoring TCPS to use mutual TLS instead of our custom handshake
     - name: discovery
       tasks:
       - name: rename resolvers to discoverers

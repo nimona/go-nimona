@@ -19,21 +19,22 @@ The following subprojects are owned by sig-ops:
 - **processes**
 - **tooling**
 - **testing**
+- **libraries**
 
 ## Roadmaps
 
 ### 2019/Q1
 - standards
-  - [ ] add linting/vetting
+  - [ ] improve linting/vetting
   - [ ] add standards documentation (code/test/version-control)
 - processes
-  - [ ] add CI process and workflows for development and releases
+  - [ ] improve CI process and workflows for development and releases
   - [ ] add CD process and workflows for bootstrap peers
 - tooling
-  - [ ] refactor all tools to cobra
-  - [ ] add update option to provisioner
+  - [ ] improve provisioner
 - testing
   - [ ] add network simulator
-- housekeeping
-  - [ ] refactor nimona cli to unify configs
-  - [ ] refactor logger, or replace with an in-house one
+- libraries
+  - [ ] add logging library
+  - [ ] add configuration library
+  - [ ] add base58 library

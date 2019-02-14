@@ -19,6 +19,7 @@ __Subprojects:__
   - processes
   - tooling
   - testing
+  - libraries
 
 # [Network](sig-net/README.md)
 
