@@ -8,7 +8,7 @@
 
 __Leads:__
 {{- range .Leads }}
-  - {{ .Name }}
+  - {{ .Name }}  (**[@{{ .GitHub }}](https://github.com/{{ .GitHub }})**)
 {{- end }}
 
 __Subprojects:__
