@@ -44,11 +44,11 @@ func objecthash(o *Object, skipSig bool) ([]byte, error) {
 		b = append(b, hv...)
 		x[k] = hv
 	}
-	h := hash(HintMap, b)
+	h := hash(HintObject, b)
 	return h, nil
 }
 
-func hash(p string, b []byte) []byte {
+func hash(p TypeHint, b []byte) []byte {
 	h := sha256.New()
 	if _, err := h.Write([]byte(p)); err != nil {
 		panic(err)
@@ -71,7 +71,7 @@ func hashValue(o interface{}) []byte {
 			return nil
 		}
 		if t.Elem() == reflect.TypeOf(byte(0)) {
-			return hash(HintBytes, o.([]byte))
+			return hash(HintData, o.([]byte))
 		}
 		vs := []interface{}{}
 		for i := 0; i < v.Len(); i++ {

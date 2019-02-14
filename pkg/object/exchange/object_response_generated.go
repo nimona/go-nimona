@@ -9,76 +9,53 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s ObjectResponse) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":      "/object-response",
-		"requestID:s": s.RequestID,
-	}
-	if s.RequestedObject != nil {
-		m["requestedObject:o"] = s.RequestedObject.ToMap()
-	}
-	if s.Sender != nil {
-		m["sender:o"] = s.Sender.ToMap()
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	return m
-}
+const (
+	ObjectResponseType = "/object-response"
+)
 
 // ToObject returns a f12n object
 func (s ObjectResponse) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
-}
-
-// FromMap populates the struct from a f12n compatible map
-func (s *ObjectResponse) FromMap(m map[string]interface{}) error {
-	if v, ok := m["requestID:s"].(string); ok {
-		s.RequestID = v
+	o := object.New()
+	o.SetType(ObjectResponseType)
+	if s.RequestID != "" {
+		o.SetRaw("requestID", s.RequestID)
 	}
-	if v, ok := m["requestedObject:o"].(map[string]interface{}); ok {
-		s.RequestedObject = &object.Object{}
-		if err := s.RequestedObject.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["requestedObject:o"].(*object.Object); ok {
-		s.RequestedObject = v
+	if s.RequestedObject != nil {
+		o.SetRaw("requestedObject", s.RequestedObject)
 	}
-	if v, ok := m["requestedObject:o"].(*object.Object); ok {
-		s.RequestedObject = v
+	if s.Sender != nil {
+		o.SetRaw("sender", s.Sender)
 	}
-	if v, ok := m["sender:o"].(map[string]interface{}); ok {
-		s.Sender = &crypto.Key{}
-		if err := s.Sender.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["sender:o"].(*crypto.Key); ok {
-		s.Sender = v
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
 	}
-	if v, ok := m["sender:o"].(*crypto.Key); ok {
-		s.Sender = v
-	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	return nil
+	return o
 }
 
 // FromObject populates the struct from a f12n object
 func (s *ObjectResponse) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
+	if v, ok := o.GetRaw("requestID").(string); ok {
+		s.RequestID = v
+	}
+	if v, ok := o.GetRaw("requestedObject").(*object.Object); ok {
+		s.RequestedObject = v
+	}
+	if v, ok := o.GetRaw("sender").(*crypto.Key); ok {
+		s.Sender = v
+	} else if v, ok := o.GetRaw("sender").(*object.Object); ok {
+		s.Sender = &crypto.Key{}
+		s.Sender.FromObject(v)
+	}
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+		s.Signature = &crypto.Signature{}
+		s.Signature.FromObject(v)
+	}
+	return nil
 }
 
 // GetType returns the object's type
 func (s ObjectResponse) GetType() string {
-	return "/object-response"
+	return ObjectResponseType
 }

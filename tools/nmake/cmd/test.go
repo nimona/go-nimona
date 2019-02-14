@@ -36,6 +36,7 @@ var testCmd = &cobra.Command{
 			"-parallel=4",
 			"-covermode=atomic",
 			"-coverprofile=coverage.out",
+			"-timeout=3m", // github actions is REALLY slow
 			"./...",
 		}
 

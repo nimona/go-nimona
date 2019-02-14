@@ -9,90 +9,64 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s Provider) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/dht/provider",
-	}
-	if s.ObjectIDs != nil {
-		m["objectIDs:a<s>"] = s.ObjectIDs
-	}
-	if s.Signer != nil {
-		m["@signer:o"] = s.Signer.ToMap()
-	}
-	if s.Authority != nil {
-		m["@authority:o"] = s.Authority.ToMap()
-	}
-	if s.Signature != nil {
-		m["@signature:o"] = s.Signature.ToMap()
-	}
-	return m
-}
+const (
+	ProviderType = "nimona.io/dht/provider"
+)
 
 // ToObject returns a f12n object
 func (s Provider) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(ProviderType)
+	if len(s.ObjectIDs) > 0 {
+		o.SetRaw("objectIDs", s.ObjectIDs)
+	}
+	if s.Signer != nil {
+		o.SetRaw("@signer", s.Signer)
+	}
+	if s.Authority != nil {
+		o.SetRaw("@authority", s.Authority)
+	}
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Provider) FromMap(m map[string]interface{}) error {
-	s.ObjectIDs = []string{}
-	if ss, ok := m["objectIDs:a<s>"].([]interface{}); ok {
+// FromObject populates the struct from a f12n object
+func (s *Provider) FromObject(o *object.Object) error {
+	if ss, ok := o.GetRaw("objectIDs").([]string); ok {
+		s.ObjectIDs = ss
+	} else if ss, ok := o.GetRaw("objectIDs").([]interface{}); ok {
+		s.ObjectIDs = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.ObjectIDs = append(s.ObjectIDs, v)
 			}
 		}
 	}
-	if v, ok := m["objectIDs:a<s>"].([]string); ok {
-		s.ObjectIDs = v
-	}
-	s.RawObject = object.FromMap(m)
-	if v, ok := m["@:o"].(*object.Object); ok {
-		s.RawObject = v
-	}
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+	s.RawObject = o
+	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+		s.Signer = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
 		s.Signer = &crypto.Key{}
-		if err := s.Signer.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
+		s.Signer.FromObject(v)
 	}
-	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.Signer = v
-	}
-	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
+		s.Authority = v
+	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
 		s.Authority = &crypto.Key{}
-		if err := s.Authority.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.Authority = v
+		s.Authority.FromObject(v)
 	}
-	if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.Authority = v
-	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
 		s.Signature = &crypto.Signature{}
-		if err := s.Signature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
-	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.Signature = v
+		s.Signature.FromObject(v)
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *Provider) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s Provider) GetType() string {
-	return "nimona.io/dht/provider"
+	return ProviderType
 }

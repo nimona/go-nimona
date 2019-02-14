@@ -8,90 +8,71 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s Foo) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s": "test/foo",
-		"bar:s":  s.Bar,
-	}
-	if s.Bars != nil {
-		m["bars:a<s>"] = s.Bars
-	}
-	if s.InnerFoo != nil {
-		m["inner_foo:o"] = s.InnerFoo.ToMap()
-	}
-	if s.InnerFoos != nil {
-		sInnerFoos := []map[string]interface{}{}
-		for _, v := range s.InnerFoos {
-			sInnerFoos = append(sInnerFoos, v.ToMap())
-		}
-		m["inner_foos:a<o>"] = sInnerFoos
-	}
-	return m
-}
+const (
+	FooType = "test/foo"
+)
 
 // ToObject returns a f12n object
 func (s Foo) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(FooType)
+	if s.Bar != "" {
+		o.SetRaw("bar", s.Bar)
+	}
+	if len(s.Bars) > 0 {
+		o.SetRaw("bars", s.Bars)
+	}
+	if s.InnerFoo != nil {
+		o.SetRaw("inner_foo", s.InnerFoo)
+	}
+	if len(s.InnerFoos) > 0 {
+		o.SetRaw("inner_foos", s.InnerFoos)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *Foo) FromMap(m map[string]interface{}) error {
-	s.RawObject = object.FromMap(m)
-	if v, ok := m["@:o"].(*object.Object); ok {
-		s.RawObject = v
-	}
-	if v, ok := m["bar:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *Foo) FromObject(o *object.Object) error {
+	s.RawObject = o
+	if v, ok := o.GetRaw("bar").(string); ok {
 		s.Bar = v
 	}
-	s.Bars = []string{}
-	if ss, ok := m["bars:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("bars").([]string); ok {
+		s.Bars = ss
+	} else if ss, ok := o.GetRaw("bars").([]interface{}); ok {
+		s.Bars = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Bars = append(s.Bars, v)
 			}
 		}
 	}
-	if v, ok := m["bars:a<s>"].([]string); ok {
-		s.Bars = v
-	}
-	if v, ok := m["inner_foo:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("inner_foo").(*InnerFoo); ok {
+		s.InnerFoo = v
+	} else if v, ok := o.GetRaw("inner_foo").(*object.Object); ok {
 		s.InnerFoo = &InnerFoo{}
-		if err := s.InnerFoo.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["inner_foo:o"].(*InnerFoo); ok {
-		s.InnerFoo = v
+		s.InnerFoo.FromObject(v)
 	}
-	if v, ok := m["inner_foo:o"].(*InnerFoo); ok {
-		s.InnerFoo = v
-	}
-	s.InnerFoos = []*InnerFoo{}
-	if ss, ok := m["inner_foos:a<o>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("inner_foos").([]*InnerFoo); ok {
+		s.InnerFoos = ss
+	} else if ss, ok := o.GetRaw("inner_foos").([]interface{}); ok {
+		s.InnerFoos = []*InnerFoo{}
 		for _, si := range ss {
 			if v, ok := si.(*InnerFoo); ok {
 				s.InnerFoos = append(s.InnerFoos, v)
-			} else if v, ok := si.(map[string]interface{}); ok {
+			} else if v, ok := si.(*object.Object); ok {
 				sInnerFoos := &InnerFoo{}
-				if err := sInnerFoos.FromMap(v); err != nil {
+				if err := sInnerFoos.FromObject(v); err != nil {
 					return err
 				}
 				s.InnerFoos = append(s.InnerFoos, sInnerFoos)
 			}
 		}
 	}
-	if v, ok := m["inner_foos:a<o>"].([]*InnerFoo); ok {
-		s.InnerFoos = v
-	}
 	return nil
-}
-
-// FromObject populates the struct from a f12n object
-func (s *Foo) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
 }
 
 // GetType returns the object's type
 func (s Foo) GetType() string {
-	return "test/foo"
+	return FooType
 }

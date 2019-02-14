@@ -9,122 +9,101 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// ToMap returns a map compatible with f12n
-func (s PeerInfoRequest) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"@ctx:s":      "/peer.request",
-		"authority:s": s.AuthorityKeyHash,
-		"signer:s":    s.SignerKeyHash,
-	}
-	if s.Protocols != nil {
-		m["protocols:a<s>"] = s.Protocols
-	}
-	if s.ContentIDs != nil {
-		m["contentIDs:a<s>"] = s.ContentIDs
-	}
-	if s.ContentTypes != nil {
-		m["contentTypes:a<s>"] = s.ContentTypes
-	}
-	if s.RequesterAuthorityKey != nil {
-		m["@authority:o"] = s.RequesterAuthorityKey.ToMap()
-	}
-	if s.RequesterSignerKey != nil {
-		m["@signer:o"] = s.RequesterSignerKey.ToMap()
-	}
-	if s.RequestSignature != nil {
-		m["@signature:o"] = s.RequestSignature.ToMap()
-	}
-	return m
-}
+const (
+	PeerInfoRequestType = "/peer.request"
+)
 
 // ToObject returns a f12n object
 func (s PeerInfoRequest) ToObject() *object.Object {
-	return object.FromMap(s.ToMap())
+	o := object.New()
+	o.SetType(PeerInfoRequestType)
+	if s.AuthorityKeyHash != "" {
+		o.SetRaw("authority", s.AuthorityKeyHash)
+	}
+	if s.SignerKeyHash != "" {
+		o.SetRaw("signer", s.SignerKeyHash)
+	}
+	if len(s.Protocols) > 0 {
+		o.SetRaw("protocols", s.Protocols)
+	}
+	if len(s.ContentIDs) > 0 {
+		o.SetRaw("contentIDs", s.ContentIDs)
+	}
+	if len(s.ContentTypes) > 0 {
+		o.SetRaw("contentTypes", s.ContentTypes)
+	}
+	if s.RequesterAuthorityKey != nil {
+		o.SetRaw("@authority", s.RequesterAuthorityKey)
+	}
+	if s.RequesterSignerKey != nil {
+		o.SetRaw("@signer", s.RequesterSignerKey)
+	}
+	if s.RequestSignature != nil {
+		o.SetRaw("@signature", s.RequestSignature)
+	}
+	return o
 }
 
-// FromMap populates the struct from a f12n compatible map
-func (s *PeerInfoRequest) FromMap(m map[string]interface{}) error {
-	if v, ok := m["authority:s"].(string); ok {
+// FromObject populates the struct from a f12n object
+func (s *PeerInfoRequest) FromObject(o *object.Object) error {
+	if v, ok := o.GetRaw("authority").(string); ok {
 		s.AuthorityKeyHash = v
 	}
-	if v, ok := m["signer:s"].(string); ok {
+	if v, ok := o.GetRaw("signer").(string); ok {
 		s.SignerKeyHash = v
 	}
-	s.Protocols = []string{}
-	if ss, ok := m["protocols:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("protocols").([]string); ok {
+		s.Protocols = ss
+	} else if ss, ok := o.GetRaw("protocols").([]interface{}); ok {
+		s.Protocols = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.Protocols = append(s.Protocols, v)
 			}
 		}
 	}
-	if v, ok := m["protocols:a<s>"].([]string); ok {
-		s.Protocols = v
-	}
-	s.ContentIDs = []string{}
-	if ss, ok := m["contentIDs:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("contentIDs").([]string); ok {
+		s.ContentIDs = ss
+	} else if ss, ok := o.GetRaw("contentIDs").([]interface{}); ok {
+		s.ContentIDs = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.ContentIDs = append(s.ContentIDs, v)
 			}
 		}
 	}
-	if v, ok := m["contentIDs:a<s>"].([]string); ok {
-		s.ContentIDs = v
-	}
-	s.ContentTypes = []string{}
-	if ss, ok := m["contentTypes:a<s>"].([]interface{}); ok {
+	if ss, ok := o.GetRaw("contentTypes").([]string); ok {
+		s.ContentTypes = ss
+	} else if ss, ok := o.GetRaw("contentTypes").([]interface{}); ok {
+		s.ContentTypes = []string{}
 		for _, si := range ss {
 			if v, ok := si.(string); ok {
 				s.ContentTypes = append(s.ContentTypes, v)
 			}
 		}
 	}
-	if v, ok := m["contentTypes:a<s>"].([]string); ok {
-		s.ContentTypes = v
-	}
-	if v, ok := m["@authority:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
+		s.RequesterAuthorityKey = v
+	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
 		s.RequesterAuthorityKey = &crypto.Key{}
-		if err := s.RequesterAuthorityKey.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.RequesterAuthorityKey = v
+		s.RequesterAuthorityKey.FromObject(v)
 	}
-	if v, ok := m["@authority:o"].(*crypto.Key); ok {
-		s.RequesterAuthorityKey = v
-	}
-	if v, ok := m["@signer:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+		s.RequesterSignerKey = v
+	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
 		s.RequesterSignerKey = &crypto.Key{}
-		if err := s.RequesterSignerKey.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.RequesterSignerKey = v
+		s.RequesterSignerKey.FromObject(v)
 	}
-	if v, ok := m["@signer:o"].(*crypto.Key); ok {
-		s.RequesterSignerKey = v
-	}
-	if v, ok := m["@signature:o"].(map[string]interface{}); ok {
+	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+		s.RequestSignature = v
+	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
 		s.RequestSignature = &crypto.Signature{}
-		if err := s.RequestSignature.FromMap(v); err != nil {
-			return err
-		}
-	} else if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.RequestSignature = v
-	}
-	if v, ok := m["@signature:o"].(*crypto.Signature); ok {
-		s.RequestSignature = v
+		s.RequestSignature.FromObject(v)
 	}
 	return nil
 }
 
-// FromObject populates the struct from a f12n object
-func (s *PeerInfoRequest) FromObject(o *object.Object) error {
-	return s.FromMap(o.ToMap())
-}
-
 // GetType returns the object's type
 func (s PeerInfoRequest) GetType() string {
-	return "/peer.request"
+	return PeerInfoRequestType
 }
