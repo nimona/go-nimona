@@ -1,5 +1,6 @@
 NMAKE = go run nimona.io/tools/nmake
 DAEMN = go run nimona.io/cmd/nimona
+CMMNT = go run nimona.io/tools/generators/community
 
 export GO111MODULE=on
 
@@ -10,6 +11,10 @@ build:
 .PHONY: cleanup
 cleanup:
 	@$(NMAKE) cleanup
+
+.PHONY: community-docs
+community-docs:
+	@$(CMMNT)
 
 .PHONY: deps
 deps:
