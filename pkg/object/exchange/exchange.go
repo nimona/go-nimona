@@ -14,6 +14,7 @@ import (
 	"nimona.io/internal/log"
 	nsync "nimona.io/internal/sync"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
@@ -33,9 +34,10 @@ type Exchange interface {
 }
 
 type exchange struct {
-	key     *crypto.Key
-	net     net.Network
-	manager *ConnectionManager
+	key      *crypto.Key
+	net      net.Network
+	manager  *ConnectionManager
+	discover discovery.Discoverer
 
 	outgoing chan *outgoingObject
 	incoming chan *incomingObject
@@ -67,13 +69,15 @@ type handler struct {
 }
 
 // New creates a exchange on a given network
-func New(key *crypto.Key, n net.Network, store storage.Storage, address string) (Exchange, error) {
+func New(key *crypto.Key, n net.Network, store storage.Storage,
+	discover discovery.Discoverer, address string) (Exchange, error) {
 	ctx := context.Background()
 
 	w := &exchange{
-		key:     key,
-		net:     n,
-		manager: &ConnectionManager{},
+		key:      key,
+		net:      n,
+		manager:  &ConnectionManager{},
+		discover: discover,
 
 		outgoing: make(chan *outgoingObject, 10),
 		incoming: make(chan *incomingObject, 10),
@@ -367,7 +371,7 @@ func (w *exchange) Get(ctx context.Context, id string) (*object.Object, error) {
 				id,
 			},
 		}
-		ps, err := w.net.Discoverer().Discover(q)
+		ps, err := w.discover.Discover(q)
 		if err != nil {
 			// TODO log err
 			return
@@ -435,7 +439,7 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 		req := &peer.PeerInfoRequest{
 			AuthorityKeyHash: val,
 		}
-		peers, err := w.net.Discoverer().Discover(req)
+		peers, err := w.discover.Discover(req)
 		if err != nil {
 			return errors.New("discovery didn't yield any results for identity")
 		}
@@ -501,7 +505,7 @@ func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, add
 	q := &peer.PeerInfoRequest{
 		SignerKeyHash: recipient,
 	}
-	peers, err := w.net.Discoverer().Discover(q)
+	peers, err := w.discover.Discover(q)
 	if err != nil {
 		return err
 	}

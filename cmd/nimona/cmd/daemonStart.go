@@ -10,6 +10,7 @@ import (
 
 	"nimona.io/internal/api"
 	"nimona.io/internal/telemetry"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/exchange"
@@ -73,12 +74,15 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("No bootstrap nodes provided")
 		}
 
+		dis := discovery.NewDiscoverer()
+
 		k := config.Daemon.PeerKey
 
 		n, err := net.New(
 			k,
 			viper.GetString("daemon.announce_hostname"),
 			relayAddresses,
+			dis,
 		)
 		if err != nil {
 			return err
@@ -97,7 +101,7 @@ var daemonStartCmd = &cobra.Command{
 		dpr := storage.NewDiskStorage(config.Daemon.ObjectPath)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
-		x, err := exchange.New(k, n, dpr, bind)
+		x, err := exchange.New(k, n, dpr, dis, bind)
 		if err != nil {
 			return err
 		}
@@ -109,7 +113,7 @@ var daemonStartCmd = &cobra.Command{
 
 		_ = telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
-		if err := n.Discoverer().AddProvider(hsr); err != nil {
+		if err := dis.AddProvider(hsr); err != nil {
 			return err
 		}
 

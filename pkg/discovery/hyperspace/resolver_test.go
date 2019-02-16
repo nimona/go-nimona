@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
@@ -19,9 +20,9 @@ import (
 )
 
 func TestDiscoverer(t *testing.T) {
-	k0, n0, x0 := newPeer(t)
-	k1, n1, x1 := newPeer(t)
-	k2, n2, x2 := newPeer(t)
+	k0, n0, x0, disc0 := newPeer(t)
+	k1, n1, x1, disc1 := newPeer(t)
+	k2, n2, x2, disc2 := newPeer(t)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
 	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), n0.GetPeerInfo().Addresses)
@@ -31,19 +32,19 @@ func TestDiscoverer(t *testing.T) {
 
 	d0, err := NewDiscoverer(k0, n0, x0, []string{})
 	assert.NoError(t, err)
-	err = n0.Discoverer().AddProvider(d0)
+	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := n0.GetPeerInfo().Addresses
 
 	d1, err := NewDiscoverer(k1, n1, x1, ba)
 	assert.NoError(t, err)
-	err = n1.Discoverer().AddProvider(d1)
+	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
 	d2, err := NewDiscoverer(k2, n2, x2, ba)
 	assert.NoError(t, err)
-	err = n2.Discoverer().AddProvider(d2)
+	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
 	em1 := map[string]interface{}{
@@ -117,7 +118,8 @@ func TestDiscoverer(t *testing.T) {
 	assert.True(t, w2ObjectHandled)
 }
 
-func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange) {
+func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
+	discovery.Discoverer) {
 	tp, err := ioutil.TempDir("", "nimona-test-discoverer")
 	assert.NoError(t, err)
 
@@ -126,13 +128,14 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
+	disc := discovery.NewDiscoverer()
 	ds := storage.NewDiskStorage(sp)
 
-	n, err := net.New(pk, "", []string{})
+	n, err := net.New(pk, "", []string{}, disc)
 	assert.NoError(t, err)
 
-	x, err := exchange.New(pk, n, ds, fmt.Sprintf("0.0.0.0:%d", 0))
+	x, err := exchange.New(pk, n, ds, disc, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
 
-	return pk, n, x
+	return pk, n, x, disc
 }
