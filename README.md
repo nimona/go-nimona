@@ -1,6 +1,5 @@
 [![CircleCI Image]](https://circleci.com/gh/nimona/go-nimona)
 [![License Image]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
-[![Issues Image]](https://waffle.io/nimona/go-nimona)
 
 # Nimona
 
@@ -33,3 +32,14 @@ with the addition of versioned releases, and optional release branches.
 
 In addition to the Common-Flow spec, contributors are also highly encouraged to
 [sign commits](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).
+
+
+<!-- Links -->
+
+[Go environment]: https://golang.org/doc/install
+
+<!-- Badge images -->
+
+[CircleCI Image]: https://img.shields.io/circleci/project/github/nimona/go-nimona.svg?style=flat
+[License Image]: https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat
+
