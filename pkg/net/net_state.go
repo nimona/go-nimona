@@ -16,14 +16,13 @@ type NetState interface {
 }
 
 type LocalInfo struct {
-	key            *crypto.Key
-	mandate        *crypto.Mandate
-	addressesLock  sync.RWMutex
-	addresses      []string
-	relayAddresses []string
+	key           *crypto.Key
+	mandate       *crypto.Mandate
+	addressesLock sync.RWMutex
+	addresses     []string
 }
 
-func NewLocalInfo(key *crypto.Key, relayAddresses []string) (
+func NewLocalInfo(key *crypto.Key) (
 	NetState, error) {
 	if key == nil {
 		return nil, ErrMissingKey
@@ -34,8 +33,7 @@ func NewLocalInfo(key *crypto.Key, relayAddresses []string) (
 	}
 
 	return &LocalInfo{
-		key:            key,
-		relayAddresses: relayAddresses,
+		key: key,
 	}, nil
 }
 
