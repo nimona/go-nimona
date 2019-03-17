@@ -74,107 +74,20 @@ type network struct {
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *network) Dial(ctx context.Context, address string) (*Connection, error) {
+func (n *network) Dial(ctx context.Context, address string) (
+	*Connection, error) {
 	logger := log.Logger(ctx)
 
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		peerID := strings.Replace(address, "peer:", "", 1)
-		if peerID == n.key.GetPublicKey().HashBase58() {
-			return nil, errors.New("cannot dial our own peer")
-		}
-		logger.Debug("dialing peer", zap.String("peer", address))
-		q := &peer.PeerInfoRequest{
-			SignerKeyHash: peerID,
-		}
-		ps, err := n.discoverer.Discover(q)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(ps) == 0 || len(ps[0].Addresses) == 0 {
-			return nil, ErrNoAddresses
-		}
-
-		// TODO we should probably try all results
-		for _, addr := range ps[0].Addresses {
-			conn, err := n.Dial(ctx, addr)
-			if err == nil {
-				return conn, nil
-			}
-		}
-
-		return nil, ErrAllAddressesFailed
-
+		return n.dialPeer(ctx, address)
 	case "tcps":
-		config := tls.Config{
-			InsecureSkipVerify: true,
-		}
-		addr := strings.Replace(address, "tcps:", "", 1)
-		dialer := net.Dialer{Timeout: time.Second}
-		logger.Debug("dialing", zap.String("address", addr))
-		tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
-		if err != nil {
-			return nil, err
-		}
-
-		if tcpConn == nil {
-			return nil, ErrAllAddressesFailed
-		}
-
-		conn := &Connection{
-			Conn:          tcpConn,
-			RemotePeerKey: nil, // we don't really know who the other side is
-		}
-
-		nonce := RandStringBytesMaskImprSrc(8)
-		syn := &HandshakeSyn{
-			Nonce:    nonce,
-			PeerInfo: n.GetPeerInfo(),
-		}
-		so := syn.ToObject()
-		if err := crypto.Sign(so, n.key); err != nil {
-			return nil, err
-		}
-
-		if err := Write(so, conn); err != nil {
-			return nil, err
-		}
-
-		synAckObj, err := Read(conn)
-		if err != nil {
-			return nil, err
-		}
-
-		synAck := &HandshakeSynAck{}
-		if err := synAck.FromObject(synAckObj); err != nil {
-			return nil, err
-		}
-
-		if synAck.Nonce != nonce {
-			return nil, errors.New("invalid handhshake.syn-ack")
-		}
-
-		// store who is on the other side
-		conn.RemotePeerKey = synAck.PeerInfo.SignerKey
-		n.discoverer.Add(synAck.PeerInfo)
-
-		ack := &HandshakeAck{
-			Nonce: nonce,
-		}
-		ao := ack.ToObject()
-		if err := crypto.Sign(ao, n.key); err != nil {
-			return nil, err
-		}
-
-		if err := Write(ao, conn); err != nil {
-			return nil, err
-		}
-
-		return conn, nil
+		return n.dialAddress(ctx, address)
 	default:
-		logger.Info("not sure how to dial", zap.String("address", address), zap.String("type", addressType))
+		logger.Info("not sure how to dial",
+			zap.String("address", address),
+			zap.String("type", addressType))
 	}
 
 	return nil, ErrNoAddresses
@@ -444,4 +357,108 @@ func (n *network) GetPeerInfo() *peer.PeerInfo {
 	}
 	p.FromObject(o)
 	return p
+}
+
+func (n *network) dialPeer(ctx context.Context, address string) (
+	*Connection, error) {
+	logger := log.Logger(ctx)
+
+	peerID := strings.Replace(address, "peer:", "", 1)
+	if peerID == n.key.GetPublicKey().HashBase58() {
+		return nil, errors.New("cannot dial our own peer")
+	}
+	logger.Debug("dialing peer", zap.String("peer", address))
+	q := &peer.PeerInfoRequest{
+		SignerKeyHash: peerID,
+	}
+	ps, err := n.discoverer.Discover(q)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ps) == 0 || len(ps[0].Addresses) == 0 {
+		return nil, ErrNoAddresses
+	}
+
+	// TODO we should probably try all results
+	for _, addr := range ps[0].Addresses {
+		conn, err := n.Dial(ctx, addr)
+		if err == nil {
+			return conn, nil
+		}
+	}
+
+	return nil, ErrAllAddressesFailed
+
+}
+
+func (n *network) dialAddress(ctx context.Context, address string) (
+	*Connection, error) {
+
+	// find dialer
+	// execute middleware
+	config := tls.Config{
+		InsecureSkipVerify: true,
+	}
+	addr := strings.Replace(address, "tcps:", "", 1)
+	dialer := net.Dialer{Timeout: time.Second}
+	tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	if tcpConn == nil {
+		return nil, ErrAllAddressesFailed
+	}
+
+	conn := &Connection{
+		Conn:          tcpConn,
+		RemotePeerKey: nil, // we don't really know who the other side is
+	}
+
+	nonce := RandStringBytesMaskImprSrc(8)
+	syn := &HandshakeSyn{
+		Nonce:    nonce,
+		PeerInfo: n.GetPeerInfo(),
+	}
+	so := syn.ToObject()
+	if err := crypto.Sign(so, n.key); err != nil {
+		return nil, err
+	}
+
+	if err := Write(so, conn); err != nil {
+		return nil, err
+	}
+
+	synAckObj, err := Read(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	synAck := &HandshakeSynAck{}
+	if err := synAck.FromObject(synAckObj); err != nil {
+		return nil, err
+	}
+
+	if synAck.Nonce != nonce {
+		return nil, errors.New("invalid handhshake.syn-ack")
+	}
+
+	// store who is on the other side
+	conn.RemotePeerKey = synAck.PeerInfo.SignerKey
+	n.discoverer.Add(synAck.PeerInfo)
+
+	ack := &HandshakeAck{
+		Nonce: nonce,
+	}
+	ao := ack.ToObject()
+	if err := crypto.Sign(ao, n.key); err != nil {
+		return nil, err
+	}
+
+	if err := Write(ao, conn); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
