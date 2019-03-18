@@ -78,12 +78,13 @@ var daemonStartCmd = &cobra.Command{
 
 		k := config.Daemon.PeerKey
 
+		li, err := net.NewLocalInfo(k)
+		if err != nil {
+			return err
+		}
+
 		n, err := net.New(
-			k,
-			viper.GetString("daemon.announce_hostname"),
-			relayAddresses,
-			dis,
-		)
+			viper.GetString("daemon.announce_hostname"), dis, li, relayAddresses)
 		if err != nil {
 			return err
 		}

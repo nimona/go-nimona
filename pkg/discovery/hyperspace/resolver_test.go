@@ -130,8 +130,10 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 
 	disc := discovery.NewDiscoverer()
 	ds := storage.NewDiskStorage(sp)
+	state, err := net.NewLocalInfo(pk)
+	assert.NoError(t, err)
 
-	n, err := net.New(pk, "", []string{}, disc)
+	n, err := net.New("host", disc, state, []string{})
 	assert.NoError(t, err)
 
 	x, err := exchange.New(pk, n, ds, disc, fmt.Sprintf("0.0.0.0:%d", 0))
