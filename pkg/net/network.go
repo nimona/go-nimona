@@ -35,6 +35,7 @@ type Network interface {
 
 	GetPeerInfo() *peer.PeerInfo
 	AttachMandate(m *crypto.Mandate) error
+	AddMiddleware(handler MiddlewareHandler)
 }
 
 // New creates a new p2p network using an address book
@@ -45,6 +46,7 @@ func New(hostname string, discover discovery.Discoverer, local NetState,
 		discoverer:     discover,
 		hostname:       hostname,
 		relayAddresses: relayAddresses,
+		middleware:     []MiddlewareHandler{},
 		local:          local,
 	}, nil
 }
@@ -56,6 +58,11 @@ type network struct {
 	transports     map[string]Transport
 	relayAddresses []string
 	local          NetState
+	middleware     []MiddlewareHandler
+}
+
+func (n *network) AddMiddleware(handler MiddlewareHandler) {
+	n.middleware = append(n.middleware, handler)
 }
 
 // Dial to a peer and return a net.Conn or error
@@ -141,7 +148,8 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 		for {
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
-				log.DefaultLogger.Warn("could not accept connection", zap.Error(err))
+				log.DefaultLogger.Warn(
+					"could not accept connection", zap.Error(err))
 				// TODO close conn?
 				return
 			}
@@ -149,60 +157,15 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			conn := &Connection{
 				Conn:          tcpConn,
 				RemotePeerKey: nil,
+				IsIncoming:    true,
 			}
 
-			synObj, err := Read(conn)
+			for _, mh := range n.middleware {
+				conn, err = mh(ctx, conn)
 			if err != nil {
-				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
-				// TODO close conn?
-				continue
+					log.DefaultLogger.Error(
+						"middleware failure", zap.Error((err)))
 			}
-
-			syn := &HandshakeSyn{}
-			if err := syn.FromObject(synObj); err != nil {
-				log.DefaultLogger.Warn("could not convert obj to syn")
-				// TODO close conn?
-				continue
-			}
-
-			// store the remote peer
-			conn.RemotePeerKey = syn.PeerInfo.SignerKey
-			n.discoverer.Add(syn.PeerInfo)
-
-			synAck := &HandshakeSynAck{
-				Nonce:    syn.Nonce,
-				PeerInfo: n.GetPeerInfo(),
-			}
-			sao := synAck.ToObject()
-			if err := crypto.Sign(sao, n.local.GetPeerKey()); err != nil {
-				log.DefaultLogger.Warn("could not sign for syn ack object", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-			if err := Write(sao, conn); err != nil {
-				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-
-			ackObj, err := Read(conn)
-			if err != nil {
-				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-
-			ack := &HandshakeAck{}
-			if err := ack.FromObject(ackObj); err != nil {
-				// TODO close conn?
-				log.DefaultLogger.Warn("could not convert obj to syn ack")
-				continue
-			}
-
-			if ack.Nonce != syn.Nonce {
-				log.DefaultLogger.Warn("validating syn to ack nonce failed")
-				// TODO close conn?
-				continue
 			}
 
 			cconn <- conn
@@ -265,6 +228,7 @@ func (n *network) dialAddress(ctx context.Context, address string) (
 	}
 	addr := strings.Replace(address, "tcps:", "", 1)
 	dialer := net.Dialer{Timeout: time.Second}
+
 	tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
 	if err != nil {
 		return nil, err
@@ -277,50 +241,14 @@ func (n *network) dialAddress(ctx context.Context, address string) (
 	conn := &Connection{
 		Conn:          tcpConn,
 		RemotePeerKey: nil, // we don't really know who the other side is
+		IsOutgoing:    true,
 	}
 
-	nonce := RandStringBytesMaskImprSrc(8)
-	syn := &HandshakeSyn{
-		Nonce:    nonce,
-		PeerInfo: n.GetPeerInfo(),
-	}
-	so := syn.ToObject()
-	if err := crypto.Sign(so, n.local.GetPeerKey()); err != nil {
-		return nil, err
-	}
-
-	if err := Write(so, conn); err != nil {
-		return nil, err
-	}
-
-	synAckObj, err := Read(conn)
+	for _, mh := range n.middleware {
+		conn, err = mh(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
-
-	synAck := &HandshakeSynAck{}
-	if err := synAck.FromObject(synAckObj); err != nil {
-		return nil, err
-	}
-
-	if synAck.Nonce != nonce {
-		return nil, errors.New("invalid handhshake.syn-ack")
-	}
-
-	// store who is on the other side
-	conn.RemotePeerKey = synAck.PeerInfo.SignerKey
-	n.discoverer.Add(synAck.PeerInfo)
-
-	ack := &HandshakeAck{
-		Nonce: nonce,
-	}
-	ao := ack.ToObject()
-	if err := crypto.Sign(ao, n.local.GetPeerKey()); err != nil {
-		return nil, err
-	}
-
-	if err := Write(ao, conn); err != nil {
-		return nil, err
 	}
 
 	return conn, nil
