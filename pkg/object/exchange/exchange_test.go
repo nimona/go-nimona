@@ -13,6 +13,8 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/middleware/handshake"
+
 	"nimona.io/pkg/discovery/mocks"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
@@ -308,8 +310,15 @@ func newPeer(t *testing.T, relayAddress string,
 	if relayAddress != "" {
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
-	n, err := net.New(pk, "", relayAddresses, discover)
+
+	li, err := net.NewLocalInfo(pk)
 	assert.NoError(t, err)
+
+	n, err := net.New("", discover, li, relayAddresses)
+	assert.NoError(t, err)
+
+	hsm := handshake.New(li, discover)
+	n.AddMiddleware(hsm.Handle())
 
 	x, err := New(pk, n, ds, discover, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)

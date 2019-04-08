@@ -13,6 +13,7 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
@@ -135,6 +136,9 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 
 	n, err := net.New("host", disc, state, []string{})
 	assert.NoError(t, err)
+
+	hsm := handshake.New(state, disc)
+	n.AddMiddleware(hsm.Handle())
 
 	x, err := exchange.New(pk, n, ds, disc, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)

@@ -12,6 +12,7 @@ import (
 	"nimona.io/internal/telemetry"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
+	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/storage"
@@ -88,6 +89,10 @@ var daemonStartCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		hsm := handshake.New(li, dis)
+
+		n.AddMiddleware(hsm.Handle())
 
 		ik := config.Daemon.IdentityKey
 		if ik != nil {

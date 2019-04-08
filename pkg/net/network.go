@@ -55,7 +55,6 @@ func New(hostname string, discover discovery.Discoverer, local NetState,
 type network struct {
 	discoverer     discovery.Discoverer
 	hostname       string
-	transports     map[string]Transport
 	relayAddresses []string
 	local          NetState
 	middleware     []MiddlewareHandler
