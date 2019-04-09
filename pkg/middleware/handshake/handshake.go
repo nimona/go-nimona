@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"

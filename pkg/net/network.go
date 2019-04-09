@@ -245,9 +245,9 @@ func (n *network) dialAddress(ctx context.Context, address string) (
 
 	for _, mh := range n.middleware {
 		conn, err = mh(ctx, conn)
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return conn, nil

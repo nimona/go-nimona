@@ -13,9 +13,8 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/middleware/handshake"
-
 	"nimona.io/pkg/discovery/mocks"
+	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
