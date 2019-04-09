@@ -240,7 +240,6 @@ func (n *network) dialAddress(ctx context.Context, address string) (
 	conn := &Connection{
 		Conn:          tcpConn,
 		RemotePeerKey: nil, // we don't really know who the other side is
-		IsOutgoing:    true,
 	}
 
 	for _, mh := range n.middleware {

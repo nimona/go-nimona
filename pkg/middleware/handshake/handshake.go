@@ -32,14 +32,7 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 		if conn.IsIncoming {
 			return hs.handleIncoming(ctx, conn)
 		}
-
-		if conn.IsOutgoing {
-			return hs.handleOutgoing(ctx, conn)
-		}
-
-		// TODO error failed handle connection
-		return nil, nil
-
+		return hs.handleOutgoing(ctx, conn)
 	}
 }
 
