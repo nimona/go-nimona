@@ -39,7 +39,7 @@ type Network interface {
 }
 
 // New creates a new p2p network using an address book
-func New(hostname string, discover discovery.Discoverer, local NetState,
+func New(hostname string, discover discovery.Discoverer, local *LocalInfo,
 	relayAddresses []string) (Network, error) {
 
 	return &network{
@@ -56,7 +56,7 @@ type network struct {
 	discoverer     discovery.Discoverer
 	hostname       string
 	relayAddresses []string
-	local          NetState
+	local          *LocalInfo
 	middleware     []MiddlewareHandler
 }
 

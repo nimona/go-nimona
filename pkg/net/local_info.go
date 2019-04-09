@@ -8,13 +8,6 @@ import (
 	"nimona.io/pkg/net/peer"
 )
 
-type NetState interface {
-	AttachMandate(m *crypto.Mandate) error
-	AddAddress(addrs ...string)
-	GetPeerInfo() *peer.PeerInfo
-	GetPeerKey() *crypto.Key
-}
-
 type LocalInfo struct {
 	key           *crypto.Key
 	mandate       *crypto.Mandate
@@ -23,7 +16,7 @@ type LocalInfo struct {
 }
 
 func NewLocalInfo(key *crypto.Key) (
-	NetState, error) {
+	*LocalInfo, error) {
 	if key == nil {
 		return nil, ErrMissingKey
 	}

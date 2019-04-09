@@ -11,7 +11,7 @@ import (
 )
 
 // NewHandshake ...
-func New(local net.NetState, discoverer discovery.Discoverer) net.Middleware {
+func New(local *net.LocalInfo, discoverer discovery.Discoverer) net.Middleware {
 	return &Handshake{
 		local:      local,
 		discoverer: discoverer,
@@ -21,7 +21,7 @@ func New(local net.NetState, discoverer discovery.Discoverer) net.Middleware {
 // Handshake ..
 type Handshake struct {
 	discoverer discovery.Discoverer
-	local      net.NetState
+	local      *net.LocalInfo
 }
 
 // TODO needs to be able to handle both server and client interactions

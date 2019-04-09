@@ -42,7 +42,7 @@ func TestNetDiscoverer(t *testing.T) {
 }
 
 func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.Key, *network, NetState) {
+	*crypto.Key, *network, *LocalInfo) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
@@ -51,9 +51,9 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
 
-	state, err := NewLocalInfo(pk)
-	n, err := New("", discover, state, relayAddresses)
+	localInfo, err := NewLocalInfo(pk)
+	n, err := New("", discover, localInfo, relayAddresses)
 	assert.NoError(t, err)
 
-	return pk, n.(*network), state
+	return pk, n.(*network), localInfo
 }
