@@ -61,7 +61,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	outgoing := make(chan *object.Object, 100)
 
 	var mandateObj *object.Object
-	if mandate := api.net.GetPeerInfo().Mandate; mandate != nil {
+	if mandate := api.local.GetPeerInfo().Mandate; mandate != nil {
 		mandateObj = mandate.ToObject()
 	}
 

@@ -21,29 +21,29 @@ import (
 )
 
 func TestDiscoverer(t *testing.T) {
-	k0, n0, x0, disc0 := newPeer(t)
-	k1, n1, x1, disc1 := newPeer(t)
-	k2, n2, x2, disc2 := newPeer(t)
+	k0, n0, x0, disc0, l0 := newPeer(t)
+	k1, n1, x1, disc1, l1 := newPeer(t)
+	k2, n2, x2, disc2, l2 := newPeer(t)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), n0.GetPeerInfo().Addresses)
-	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), n1.GetPeerInfo().Addresses)
-	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), n2.GetPeerInfo().Addresses)
+	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), l0.GetPeerInfo().Addresses)
+	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), l1.GetPeerInfo().Addresses)
+	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), l2.GetPeerInfo().Addresses)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	d0, err := NewDiscoverer(k0, n0, x0, []string{})
+	d0, err := NewDiscoverer(k0, n0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
-	ba := n0.GetPeerInfo().Addresses
+	ba := l0.GetPeerInfo().Addresses
 
-	d1, err := NewDiscoverer(k1, n1, x1, ba)
+	d1, err := NewDiscoverer(k1, n1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDiscoverer(k2, n2, x2, ba)
+	d2, err := NewDiscoverer(k2, n2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
@@ -120,7 +120,7 @@ func TestDiscoverer(t *testing.T) {
 }
 
 func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
-	discovery.Discoverer) {
+	discovery.Discoverer, *net.LocalInfo) {
 	tp, err := ioutil.TempDir("", "nimona-test-discoverer")
 	assert.NoError(t, err)
 
@@ -131,17 +131,17 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 
 	disc := discovery.NewDiscoverer()
 	ds := storage.NewDiskStorage(sp)
-	state, err := net.NewLocalInfo(pk)
+	local, err := net.NewLocalInfo(pk)
 	assert.NoError(t, err)
 
-	n, err := net.New("host", disc, state, []string{})
+	n, err := net.New("host", disc, local, []string{})
 	assert.NoError(t, err)
 
-	hsm := handshake.New(state, disc)
+	hsm := handshake.New(local, disc)
 	n.AddMiddleware(hsm.Handle())
 
-	x, err := exchange.New(pk, n, ds, disc, fmt.Sprintf("0.0.0.0:%d", 0))
+	x, err := exchange.New(pk, n, ds, disc, local, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
 
-	return pk, n, x, disc
+	return pk, n, x, disc, local
 }

@@ -25,22 +25,24 @@ type Discoverer struct {
 	key      *crypto.Key
 	net      net.Network
 	exchange exchange.Exchange
+	local    *net.LocalInfo
 }
 
 // NewDiscoverer returns a new hyperspace discoverer
 func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
-	bootstrapAddresses []string) (*Discoverer, error) {
+	local *net.LocalInfo, bootstrapAddresses []string) (*Discoverer, error) {
 
 	r := &Discoverer{
 		store:    NewStore(),
 		key:      key,
 		net:      network,
+		local:    local,
 		exchange: exc,
 	}
 
 	exc.Handle("/peer**", r.handleObject)
 
-	r.store.Add(network.GetPeerInfo())
+	r.store.Add(local.GetPeerInfo())
 	r.bootstrap(bootstrapAddresses)
 
 	return r, nil
@@ -125,7 +127,7 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 		if err := r.exchange.Send(ctx, o, addr); err != nil {
 			logger.Debug("bootstrap could not send request", zap.Error(err))
 		}
-		if err := r.exchange.Send(ctx, r.net.GetPeerInfo().ToObject(), addr); err != nil {
+		if err := r.exchange.Send(ctx, r.local.GetPeerInfo().ToObject(), addr); err != nil {
 			logger.Debug("bootstrap could not send self", zap.Error(err))
 		}
 	}

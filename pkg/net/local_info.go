@@ -26,7 +26,8 @@ func NewLocalInfo(key *crypto.Key) (
 	}
 
 	return &LocalInfo{
-		key: key,
+		key:       key,
+		addresses: []string{},
 	}, nil
 }
 

@@ -33,8 +33,6 @@ type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 
-	GetPeerInfo() *peer.PeerInfo
-	AttachMandate(m *crypto.Mandate) error
 	AddMiddleware(handler MiddlewareHandler)
 }
 
@@ -172,16 +170,6 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 	}()
 
 	return cconn, nil
-}
-
-// GetPeerInfo returns the local peer info
-func (n *network) GetPeerInfo() *peer.PeerInfo {
-	// TODO cache peer info and reuse
-	return n.local.GetPeerInfo()
-}
-
-func (n *network) AttachMandate(m *crypto.Mandate) error {
-	return n.local.AttachMandate(m)
 }
 
 func (n *network) dialPeer(ctx context.Context, address string) (

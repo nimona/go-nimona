@@ -14,30 +14,30 @@ func TestNetDiscoverer(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
-	_, n1, nst1 := newPeer(t, "", disc1)
-	_, n2, nst2 := newPeer(t, "", disc2)
+	_, _, l1 := newPeer(t, "", disc1)
+	_, _, l2 := newPeer(t, "", disc2)
 
-	disc1.Add(n2.GetPeerInfo())
-	disc2.Add(n1.GetPeerInfo())
+	disc1.Add(l2.GetPeerInfo())
+	disc2.Add(l1.GetPeerInfo())
 
 	q1 := &peer.PeerInfoRequest{
-		SignerKeyHash: nst2.GetPeerKey().GetPublicKey().HashBase58()}
+		SignerKeyHash: l2.GetPeerKey().GetPublicKey().HashBase58()}
 	ps2, err := disc1.Discover(q1)
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.GetPublicKey(), p2.SignerKey)
 	assert.Equal(t,
-		nst2.GetPeerKey().GetPublicKey().HashBase58(),
+		l2.GetPeerKey().GetPublicKey().HashBase58(),
 		p2.SignerKey.GetPublicKey().HashBase58())
 
 	q2 := &peer.PeerInfoRequest{
-		SignerKeyHash: nst1.GetPeerKey().GetPublicKey().HashBase58()}
+		SignerKeyHash: l1.GetPeerKey().GetPublicKey().HashBase58()}
 	ps1, err := disc2.Discover(q2)
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.GetPublicKey(), p1.SignerKey)
 	assert.Equal(t,
-		nst1.GetPeerKey().GetPublicKey().HashBase58(),
+		l1.GetPeerKey().GetPublicKey().HashBase58(),
 		p1.SignerKey.HashBase58())
 }
 
