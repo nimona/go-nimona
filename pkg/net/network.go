@@ -74,7 +74,7 @@ func (n *network) Dial(ctx context.Context, address string) (
 	case "peer":
 		return n.dialPeer(ctx, address)
 	case "tcps":
-		return n.dialAddress(ctx, address)
+		return n.dialTCP(ctx, address)
 	default:
 		logger.Info("not sure how to dial",
 			zap.String("address", address),
@@ -217,7 +217,7 @@ func (n *network) dialPeer(ctx context.Context, address string) (
 
 }
 
-func (n *network) dialAddress(ctx context.Context, address string) (
+func (n *network) dialTCP(ctx context.Context, address string) (
 	*Connection, error) {
 
 	// find dialer
