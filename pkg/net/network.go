@@ -147,8 +147,7 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 			if err != nil {
 				log.DefaultLogger.Warn(
 					"could not accept connection", zap.Error(err))
-				// TODO close conn?
-				return
+				continue
 			}
 
 			conn := &Connection{
@@ -159,10 +158,13 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 
 			for _, mh := range n.middleware {
 				conn, err = mh(ctx, conn)
-			if err != nil {
+				if err != nil {
 					log.DefaultLogger.Error(
 						"middleware failure", zap.Error((err)))
-			}
+
+					tcpConn.Close()
+					break
+				}
 			}
 
 			cconn <- conn
