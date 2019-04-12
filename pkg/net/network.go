@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
@@ -46,6 +47,7 @@ func New(hostname string, discover discovery.Discoverer, local *LocalInfo,
 		relayAddresses: relayAddresses,
 		middleware:     []MiddlewareHandler{},
 		local:          local,
+		midLock:        &sync.RWMutex{},
 	}, nil
 }
 
@@ -55,10 +57,13 @@ type network struct {
 	hostname       string
 	relayAddresses []string
 	local          *LocalInfo
+	midLock        *sync.RWMutex
 	middleware     []MiddlewareHandler
 }
 
 func (n *network) AddMiddleware(handler MiddlewareHandler) {
+	n.midLock.Lock()
+	defer n.midLock.Unlock()
 	n.middleware = append(n.middleware, handler)
 }
 
@@ -156,6 +161,8 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 				IsIncoming:    true,
 			}
 
+			n.midLock.RLock()
+			failed := false
 			for _, mh := range n.middleware {
 				conn, err = mh(ctx, conn)
 				if err != nil {
@@ -163,11 +170,15 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 						"middleware failure", zap.Error((err)))
 
 					tcpConn.Close()
+					failed = true
 					break
 				}
 			}
+			n.midLock.RUnlock()
 
-			cconn <- conn
+			if !failed {
+				cconn <- conn
+			}
 		}
 	}()
 
