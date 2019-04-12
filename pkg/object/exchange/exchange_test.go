@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
+	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
@@ -24,11 +25,11 @@ func TestSendSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
-	k1, n1, x1 := newPeer(t, "", disc1)
-	k2, n2, x2 := newPeer(t, "", disc2)
+	k1, _, x1, l1 := newPeer(t, "", disc1)
+	k2, _, x2, l2 := newPeer(t, "", disc2)
 
-	disc1.Add(n2.GetPeerInfo())
-	disc2.Add(n1.GetPeerInfo())
+	disc1.Add(l2.GetPeerInfo())
+	disc2.Add(l1.GetPeerInfo())
 
 	em1 := map[string]interface{}{
 		"@ctx": "test/msg",
@@ -102,7 +103,7 @@ func TestSendSuccess(t *testing.T) {
 func TestGetLocalSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 
-	k1, _, x1 := newPeer(t, "", disc1)
+	k1, _, x1, _ := newPeer(t, "", disc1)
 
 	em1 := map[string]interface{}{
 		"@ctx": "test/msg",
@@ -128,11 +129,11 @@ func TestGetSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
-	k1, n1, x1 := newPeer(t, "", disc1)
-	_, n2, x2 := newPeer(t, "", disc2)
+	k1, _, x1, l1 := newPeer(t, "", disc1)
+	_, _, x2, l2 := newPeer(t, "", disc2)
 
-	disc1.Add(n2.GetPeerInfo())
-	disc2.Add(n1.GetPeerInfo())
+	disc1.Add(l2.GetPeerInfo())
+	disc2.Add(l1.GetPeerInfo())
 
 	mp2 := &mocks.Provider{}
 	err := disc2.AddProvider(mp2)
@@ -156,21 +157,21 @@ func TestGetSuccess(t *testing.T) {
 			eo1.HashBase58(),
 		},
 	}).Return([]*peer.PeerInfo{
-		n1.GetPeerInfo(),
+		l1.GetPeerInfo(),
 	}, nil)
 
 	mp2.On("Discover", &peer.PeerInfoRequest{
-		SignerKeyHash: n1.GetPeerInfo().HashBase58(),
+		SignerKeyHash: l1.GetPeerInfo().HashBase58(),
 	}).Return([]*peer.PeerInfo{
-		n1.GetPeerInfo(),
+		l1.GetPeerInfo(),
 	}, nil)
 
-	p1 := n1.GetPeerInfo()
+	p1 := l1.GetPeerInfo()
 	p1.ContentIDs = []string{
 		eo1.HashBase58(),
 	}
 
-	disc1.Add(n2.GetPeerInfo())
+	disc1.Add(l2.GetPeerInfo())
 	disc1.Add(p1)
 
 	ctx := context.Background()
@@ -186,29 +187,29 @@ func TestSendRelay(t *testing.T) {
 	disc3 := discovery.NewDiscoverer()
 
 	net.BindLocal = true
-	k0, n0, _ := newPeer(t, "", disc1)
+	k0, _, _, l0 := newPeer(t, "", disc1)
 
 	// disable binding to local addresses
 	net.BindLocal = false
-	k1, n1, x1 := newPeer(t, "relay:"+n0.GetPeerInfo().Addresses[0], disc2)
-	k2, n2, x2 := newPeer(t, "relay:"+n0.GetPeerInfo().Addresses[0], disc3)
+	k1, _, x1, l1 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc2)
+	k2, _, x2, l2 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc3)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), n0.GetPeerInfo().Addresses)
-	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), n1.GetPeerInfo().Addresses)
-	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), n2.GetPeerInfo().Addresses)
+	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), l0.GetPeerInfo().Addresses)
+	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), l1.GetPeerInfo().Addresses)
+	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), l2.GetPeerInfo().Addresses)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	disc1.Add(n1.GetPeerInfo())
-	disc1.Add(n2.GetPeerInfo())
-	disc2.Add(n2.GetPeerInfo())
-	disc3.Add(n1.GetPeerInfo())
+	disc1.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetPeerInfo())
+	disc2.Add(l2.GetPeerInfo())
+	disc3.Add(l1.GetPeerInfo())
 
 	// init connection from n1 to n0
 	err := x1.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		n0.GetPeerInfo().Addresses[0],
+		l0.GetPeerInfo().Addresses[0],
 	)
 	assert.NoError(t, err)
 
@@ -216,7 +217,7 @@ func TestSendRelay(t *testing.T) {
 	err = x2.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		n0.GetPeerInfo().Addresses[0],
+		l0.GetPeerInfo().Addresses[0],
 	)
 	assert.NoError(t, err)
 
@@ -292,8 +293,8 @@ func TestSendRelay(t *testing.T) {
 	assert.True(t, w2ObjectHandled)
 }
 
-func newPeer(t *testing.T, relayAddress string,
-	discover discovery.Discoverer) (*crypto.Key, net.Network, *exchange) {
+func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
+	*crypto.Key, net.Network, *exchange, *net.LocalInfo) {
 	tp, err := ioutil.TempDir("", "nimona-test-net")
 	assert.NoError(t, err)
 
@@ -308,13 +309,20 @@ func newPeer(t *testing.T, relayAddress string,
 	if relayAddress != "" {
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
-	n, err := net.New(pk, "", relayAddresses, discover)
+
+	li, err := net.NewLocalInfo(pk)
 	assert.NoError(t, err)
 
-	x, err := New(pk, n, ds, discover, fmt.Sprintf("0.0.0.0:%d", 0))
+	n, err := net.New("", discover, li, relayAddresses)
 	assert.NoError(t, err)
 
-	return pk, n, x.(*exchange)
+	hsm := handshake.New(li, discover)
+	n.AddMiddleware(hsm.Handle())
+
+	x, err := New(pk, n, ds, discover, li, fmt.Sprintf("0.0.0.0:%d", 0))
+	assert.NoError(t, err)
+
+	return pk, n, x.(*exchange), li
 }
 
 func compareObjects(t *testing.T, expected, actual *object.Object) {

@@ -2,23 +2,27 @@
 
 // +build !generate
 
-package net
+package handshake
 
 import (
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
 const (
-	HandshakeAckType = "/handshake.ack"
+	SynAckType = "/handshake.syn-ack"
 )
 
 // ToObject returns a f12n object
-func (s HandshakeAck) ToObject() *object.Object {
+func (s SynAck) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(HandshakeAckType)
+	o.SetType(SynAckType)
 	if s.Nonce != "" {
 		o.SetRaw("nonce", s.Nonce)
+	}
+	if s.PeerInfo != nil {
+		o.SetRaw("peerInfo", s.PeerInfo)
 	}
 	if s.Signer != nil {
 		o.SetRaw("@signer", s.Signer)
@@ -30,9 +34,15 @@ func (s HandshakeAck) ToObject() *object.Object {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *HandshakeAck) FromObject(o *object.Object) error {
+func (s *SynAck) FromObject(o *object.Object) error {
 	if v, ok := o.GetRaw("nonce").(string); ok {
 		s.Nonce = v
+	}
+	if v, ok := o.GetRaw("peerInfo").(*peer.PeerInfo); ok {
+		s.PeerInfo = v
+	} else if v, ok := o.GetRaw("peerInfo").(*object.Object); ok {
+		s.PeerInfo = &peer.PeerInfo{}
+		s.PeerInfo.FromObject(v)
 	}
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.Signer = v
@@ -50,6 +60,6 @@ func (s *HandshakeAck) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s HandshakeAck) GetType() string {
-	return HandshakeAckType
+func (s SynAck) GetType() string {
+	return SynAckType
 }

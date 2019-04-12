@@ -2,12 +2,9 @@ package net
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -16,14 +13,12 @@ import (
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
-	"github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net/peer"
-	"nimona.io/pkg/object"
 )
 
 var (
@@ -39,142 +34,54 @@ type Network interface {
 	Dial(ctx context.Context, address string) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 
-	GetPeerInfo() *peer.PeerInfo
-	AttachMandate(m *crypto.Mandate) error
+	AddMiddleware(handler MiddlewareHandler)
 }
 
 // New creates a new p2p network using an address book
-func New(key *crypto.Key, hostname string, relayAddresses []string,
-	discover discovery.Discoverer) (Network, error) {
-	if key == nil {
-		return nil, ErrMissingKey
-	}
-
-	if _, ok := key.Materialize().(*ecdsa.PrivateKey); !ok {
-		return nil, ErrECDSAPrivateKeyRequired
-	}
+func New(hostname string, discover discovery.Discoverer, local *LocalInfo,
+	relayAddresses []string) (Network, error) {
 
 	return &network{
-		key:            key,
 		discoverer:     discover,
 		hostname:       hostname,
 		relayAddresses: relayAddresses,
+		middleware:     []MiddlewareHandler{},
+		local:          local,
+		midLock:        &sync.RWMutex{},
 	}, nil
 }
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	key            *crypto.Key
 	discoverer     discovery.Discoverer
 	hostname       string
-	addressesLock  sync.RWMutex
-	addresses      []string
 	relayAddresses []string
-	mandate        *crypto.Mandate
+	local          *LocalInfo
+	midLock        *sync.RWMutex
+	middleware     []MiddlewareHandler
+}
+
+func (n *network) AddMiddleware(handler MiddlewareHandler) {
+	n.midLock.Lock()
+	defer n.midLock.Unlock()
+	n.middleware = append(n.middleware, handler)
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *network) Dial(ctx context.Context, address string) (*Connection, error) {
+func (n *network) Dial(ctx context.Context, address string) (
+	*Connection, error) {
 	logger := log.Logger(ctx)
 
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		peerID := strings.Replace(address, "peer:", "", 1)
-		if peerID == n.key.GetPublicKey().HashBase58() {
-			return nil, errors.New("cannot dial our own peer")
-		}
-		logger.Debug("dialing peer", zap.String("peer", address))
-		q := &peer.PeerInfoRequest{
-			SignerKeyHash: peerID,
-		}
-		ps, err := n.discoverer.Discover(q)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(ps) == 0 || len(ps[0].Addresses) == 0 {
-			return nil, ErrNoAddresses
-		}
-
-		// TODO we should probably try all results
-		for _, addr := range ps[0].Addresses {
-			conn, err := n.Dial(ctx, addr)
-			if err == nil {
-				return conn, nil
-			}
-		}
-
-		return nil, ErrAllAddressesFailed
-
+		return n.dialPeer(ctx, address)
 	case "tcps":
-		config := tls.Config{
-			InsecureSkipVerify: true,
-		}
-		addr := strings.Replace(address, "tcps:", "", 1)
-		dialer := net.Dialer{Timeout: time.Second}
-		logger.Debug("dialing", zap.String("address", addr))
-		tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
-		if err != nil {
-			return nil, err
-		}
-
-		if tcpConn == nil {
-			return nil, ErrAllAddressesFailed
-		}
-
-		conn := &Connection{
-			Conn:          tcpConn,
-			RemotePeerKey: nil, // we don't really know who the other side is
-		}
-
-		nonce := RandStringBytesMaskImprSrc(8)
-		syn := &HandshakeSyn{
-			Nonce:    nonce,
-			PeerInfo: n.GetPeerInfo(),
-		}
-		so := syn.ToObject()
-		if err := crypto.Sign(so, n.key); err != nil {
-			return nil, err
-		}
-
-		if err := Write(so, conn); err != nil {
-			return nil, err
-		}
-
-		synAckObj, err := Read(conn)
-		if err != nil {
-			return nil, err
-		}
-
-		synAck := &HandshakeSynAck{}
-		if err := synAck.FromObject(synAckObj); err != nil {
-			return nil, err
-		}
-
-		if synAck.Nonce != nonce {
-			return nil, errors.New("invalid handhshake.syn-ack")
-		}
-
-		// store who is on the other side
-		conn.RemotePeerKey = synAck.PeerInfo.SignerKey
-		n.discoverer.Add(synAck.PeerInfo)
-
-		ack := &HandshakeAck{
-			Nonce: nonce,
-		}
-		ao := ack.ToObject()
-		if err := crypto.Sign(ao, n.key); err != nil {
-			return nil, err
-		}
-
-		if err := Write(ao, conn); err != nil {
-			return nil, err
-		}
-
-		return conn, nil
+		return n.dialTCP(ctx, address)
 	default:
-		logger.Info("not sure how to dial", zap.String("address", address), zap.String("type", addressType))
+		logger.Info("not sure how to dial",
+			zap.String("address", address),
+			zap.String("type", addressType))
 	}
 
 	return nil, ErrNoAddresses
@@ -184,7 +91,7 @@ func (n *network) Dial(ctx context.Context, address string) (*Connection, error)
 // TODO do we need to return a listener?
 func (n *network) Listen(ctx context.Context, address string) (chan *Connection, error) {
 	logger := log.Logger(ctx).Named("network")
-	cert, err := crypto.GenerateCertificate(n.key)
+	cert, err := crypto.GenerateCertificate(n.local.GetPeerKey())
 	if err != nil {
 		return nil, err
 	}
@@ -234,8 +141,8 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 	}
 
 	logger.Info("Started listening", zap.Strings("addresses", addresses))
-	n.addAddress(addresses...)
-	n.addAddress(n.relayAddresses...)
+	n.local.AddAddress(addresses...)
+	n.local.AddAddress(n.relayAddresses...)
 
 	cconn := make(chan *Connection, 10)
 	go func() {
@@ -243,205 +150,105 @@ func (n *network) Listen(ctx context.Context, address string) (chan *Connection,
 		for {
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
-				log.DefaultLogger.Warn("could not accept connection", zap.Error(err))
-				// TODO close conn?
-				return
+				log.DefaultLogger.Warn(
+					"could not accept connection", zap.Error(err))
+				continue
 			}
 
 			conn := &Connection{
 				Conn:          tcpConn,
 				RemotePeerKey: nil,
+				IsIncoming:    true,
 			}
 
-			synObj, err := Read(conn)
-			if err != nil {
-				log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
+			n.midLock.RLock()
+			failed := false
+			for _, mh := range n.middleware {
+				conn, err = mh(ctx, conn)
+				if err != nil {
+					log.DefaultLogger.Error(
+						"middleware failure", zap.Error((err)))
 
-			syn := &HandshakeSyn{}
-			if err := syn.FromObject(synObj); err != nil {
-				log.DefaultLogger.Warn("could not convert obj to syn")
-				// TODO close conn?
-				continue
+					tcpConn.Close()
+					failed = true
+					break
+				}
 			}
+			n.midLock.RUnlock()
 
-			// store the remote peer
-			conn.RemotePeerKey = syn.PeerInfo.SignerKey
-			n.discoverer.Add(syn.PeerInfo)
-
-			synAck := &HandshakeSynAck{
-				Nonce:    syn.Nonce,
-				PeerInfo: n.GetPeerInfo(),
+			if !failed {
+				cconn <- conn
 			}
-			sao := synAck.ToObject()
-			if err := crypto.Sign(sao, n.key); err != nil {
-				log.DefaultLogger.Warn("could not sign for syn ack object", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-			if err := Write(sao, conn); err != nil {
-				log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-
-			ackObj, err := Read(conn)
-			if err != nil {
-				log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
-				// TODO close conn?
-				continue
-			}
-
-			ack := &HandshakeAck{}
-			if err := ack.FromObject(ackObj); err != nil {
-				// TODO close conn?
-				log.DefaultLogger.Warn("could not convert obj to syn ack")
-				continue
-			}
-
-			if ack.Nonce != syn.Nonce {
-				log.DefaultLogger.Warn("validating syn to ack nonce failed")
-				// TODO close conn?
-				continue
-			}
-
-			cconn <- conn
 		}
 	}()
 
 	return cconn, nil
 }
-func (n *network) AttachMandate(m *crypto.Mandate) error {
-	// TODO(geoah): Check if our peer key is the mandate's subject
-	n.addressesLock.Lock()
-	n.mandate = m
-	n.addressesLock.Unlock()
-	return nil
-}
 
-func Write(o *object.Object, conn *Connection) error {
-	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
-	if o == nil {
-		log.DefaultLogger.Error("object for fw cannot be nil")
-		return errors.New("missing object")
+func (n *network) dialPeer(ctx context.Context, address string) (
+	*Connection, error) {
+	logger := log.Logger(ctx)
+
+	peerID := strings.Replace(address, "peer:", "", 1)
+	if peerID == n.local.GetPeerKey().GetPublicKey().HashBase58() {
+		return nil, errors.New("cannot dial our own peer")
 	}
-
-	b, err := object.Marshal(o)
+	logger.Debug("dialing peer", zap.String("peer", address))
+	q := &peer.PeerInfoRequest{
+		SignerKeyHash: peerID,
+	}
+	ps, err := n.discoverer.Discover(q)
 	if err != nil {
-		return err
-	}
-
-	ra := ""
-	if conn.RemotePeerKey != nil {
-		ra = conn.RemotePeerKey.HashBase58()
-	}
-
-	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
-		log.DefaultLogger.Info(
-			string(b),
-			zap.String("remote_peer_hash", ra),
-			zap.String("direction", "outgoing"),
-		)
-	}
-
-	if _, err := conn.Conn.Write(b); err != nil {
-		return err
-	}
-
-	SendObjectEvent(
-		"outgoing",
-		o.GetType(),
-		len(b),
-	)
-
-	return nil
-}
-
-func Read(conn *Connection) (*object.Object, error) {
-	logger := log.DefaultLogger
-
-	pDecoder := codec.NewDecoder(conn.Conn, object.RawCborHandler())
-	r := &codec.Raw{}
-	if err := pDecoder.Decode(r); err != nil {
 		return nil, err
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("Recovered while processing", zap.Any("r", r))
+	if len(ps) == 0 || len(ps[0].Addresses) == 0 {
+		return nil, ErrNoAddresses
+	}
+
+	// TODO we should probably try all results
+	for _, addr := range ps[0].Addresses {
+		conn, err := n.Dial(ctx, addr)
+		if err == nil {
+			return conn, nil
 		}
-	}()
+	}
 
-	o, err := object.FromBytes([]byte(*r))
+	return nil, ErrAllAddressesFailed
+
+}
+
+func (n *network) dialTCP(ctx context.Context, address string) (
+	*Connection, error) {
+
+	// find dialer
+	// execute middleware
+	config := tls.Config{
+		InsecureSkipVerify: true,
+	}
+	addr := strings.Replace(address, "tcps:", "", 1)
+	dialer := net.Dialer{Timeout: time.Second}
+
+	tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
 	if err != nil {
 		return nil, err
 	}
 
-	ra := ""
-	if conn.RemotePeerKey != nil {
-		ra = conn.RemotePeerKey.HashBase58()
+	if tcpConn == nil {
+		return nil, ErrAllAddressesFailed
 	}
 
-	if o.GetSignature() != nil {
-		if err := crypto.Verify(o); err != nil {
+	conn := &Connection{
+		Conn:          tcpConn,
+		RemotePeerKey: nil, // we don't really know who the other side is
+	}
+
+	for _, mh := range n.middleware {
+		conn, err = mh(ctx, conn)
+		if err != nil {
 			return nil, err
 		}
-	} else {
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("-----", o.GetType())
-		fmt.Println("-----", o)
-		fmt.Println("--------------------------------------------------------")
 	}
 
-	SendObjectEvent(
-		"incoming",
-		o.GetType(),
-		pDecoder.NumBytesRead(),
-	)
-	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
-		logger.Info(
-			string(b),
-			zap.String("remote_peer_hash", ra),
-			zap.String("direction", "incoming"),
-		)
-	}
-	return o, nil
-}
-
-func (n *network) addAddress(addrs ...string) {
-	n.addressesLock.Lock()
-	if n.addresses == nil {
-		n.addresses = []string{}
-	}
-	n.addresses = append(n.addresses, addrs...)
-	n.addressesLock.Unlock()
-}
-
-// GetPeerInfo returns the local peer info
-func (n *network) GetPeerInfo() *peer.PeerInfo {
-	// TODO cache peer info and reuse
-	p := &peer.PeerInfo{
-		SignerKey: n.key.GetPublicKey(),
-	}
-
-	n.addressesLock.RLock()
-	p.Addresses = n.addresses
-	if n.mandate != nil {
-		p.AuthorityKey = n.mandate.Signer
-		p.Mandate = n.mandate
-	}
-	n.addressesLock.RUnlock()
-
-	o := p.ToObject()
-	if err := crypto.Sign(o, n.key); err != nil {
-		panic(err)
-	}
-	p.FromObject(o)
-	return p
+	return conn, nil
 }

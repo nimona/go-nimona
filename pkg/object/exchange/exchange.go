@@ -38,6 +38,7 @@ type exchange struct {
 	net      net.Network
 	manager  *ConnectionManager
 	discover discovery.Discoverer
+	local    *net.LocalInfo
 
 	outgoing chan *outgoingObject
 	incoming chan *incomingObject
@@ -70,7 +71,8 @@ type handler struct {
 
 // New creates a exchange on a given network
 func New(key *crypto.Key, n net.Network, store storage.Storage,
-	discover discovery.Discoverer, address string) (Exchange, error) {
+	discover discovery.Discoverer, localInfo *net.LocalInfo,
+	address string) (Exchange, error) {
 	ctx := context.Background()
 
 	w := &exchange{
@@ -78,6 +80,7 @@ func New(key *crypto.Key, n net.Network, store storage.Storage,
 		net:      n,
 		manager:  &ConnectionManager{},
 		discover: discover,
+		local:    localInfo,
 
 		outgoing: make(chan *outgoingObject, 10),
 		incoming: make(chan *incomingObject, 10),
@@ -179,7 +182,7 @@ func (w *exchange) Handle(typePatern string, h func(o *object.Object) error) (fu
 }
 
 func (w *exchange) HandleConnection(conn *net.Connection) error {
-	if err := net.Write(w.net.GetPeerInfo().ToObject(), conn); err != nil {
+	if err := net.Write(w.local.GetPeerInfo().ToObject(), conn); err != nil {
 		return err
 	}
 

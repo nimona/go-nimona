@@ -12,6 +12,7 @@ import (
 	"nimona.io/internal/telemetry"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
+	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/storage"
@@ -78,22 +79,27 @@ var daemonStartCmd = &cobra.Command{
 
 		k := config.Daemon.PeerKey
 
-		n, err := net.New(
-			k,
-			viper.GetString("daemon.announce_hostname"),
-			relayAddresses,
-			dis,
-		)
+		li, err := net.NewLocalInfo(k)
 		if err != nil {
 			return err
 		}
+
+		n, err := net.New(
+			viper.GetString("daemon.announce_hostname"), dis, li, relayAddresses)
+		if err != nil {
+			return err
+		}
+
+		hsm := handshake.New(li, dis)
+
+		n.AddMiddleware(hsm.Handle())
 
 		ik := config.Daemon.IdentityKey
 		if ik != nil {
 			if config.Daemon.Mandate == nil {
 				return errors.New("missing mandate for identity")
 			}
-			if err := n.AttachMandate(config.Daemon.Mandate); err != nil {
+			if err := li.AttachMandate(config.Daemon.Mandate); err != nil {
 				return errors.Wrap(err, "could not attach mandate to network")
 			}
 		}
@@ -101,12 +107,12 @@ var daemonStartCmd = &cobra.Command{
 		dpr := storage.NewDiskStorage(config.Daemon.ObjectPath)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
-		x, err := exchange.New(k, n, dpr, dis, bind)
+		x, err := exchange.New(k, n, dpr, dis, li, bind)
 		if err != nil {
 			return err
 		}
 
-		hsr, err := hyperspace.NewDiscoverer(k, n, x, bootstrapAddresses)
+		hsr, err := hyperspace.NewDiscoverer(k, n, x, li, bootstrapAddresses)
 		if err != nil {
 			return err
 		}
@@ -124,7 +130,7 @@ var daemonStartCmd = &cobra.Command{
 			cmd.Println("* Identity private key hash:\n  *", ik.HashBase58())
 			cmd.Println("* Identity public key hash:\n  *", ik.GetPublicKey().HashBase58())
 		}
-		peerAddresses := n.GetPeerInfo().Addresses
+		peerAddresses := li.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")
 		if len(peerAddresses) > 0 {
 			for _, addr := range peerAddresses {
@@ -135,7 +141,7 @@ var daemonStartCmd = &cobra.Command{
 		}
 
 		apiServer := api.New(
-			k, n, x, dpr,
+			k, n, x, li, dpr,
 			Version, Commit, Date,
 			viper.GetString("daemon.token"),
 		)

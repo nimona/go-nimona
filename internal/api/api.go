@@ -25,6 +25,7 @@ type API struct {
 	net         net.Network
 	exchange    exchange.Exchange
 	objectStore storage.Storage
+	local       *net.LocalInfo
 	localKey    string
 	token       string
 
@@ -36,7 +37,7 @@ type API struct {
 }
 
 // New HTTP API
-func New(k *crypto.Key, n net.Network, x exchange.Exchange,
+func New(k *crypto.Key, n net.Network, x exchange.Exchange, linf *net.LocalInfo,
 	bls storage.Storage, version, commit, buildDate, token string) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -47,7 +48,8 @@ func New(k *crypto.Key, n net.Network, x exchange.Exchange,
 		net:          n,
 		exchange:     x,
 		objectStore:  bls,
-		localKey:     n.GetPeerInfo().HashBase58(),
+		localKey:     linf.GetPeerInfo().HashBase58(),
+		local:        linf,
 		version:      version,
 		commit:       commit,
 		buildDate:    buildDate,

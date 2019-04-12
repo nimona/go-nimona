@@ -43,12 +43,13 @@ type DHT struct {
 	exchange       exchange.Exchange
 	queries        sync.Map
 	key            *crypto.Key
+	local          *net.LocalInfo
 	refreshBuckets bool
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
 func NewDHT(key *crypto.Key, network net.Network, exchange exchange.Exchange,
-	bootstrapAddresses []string) (*DHT, error) {
+	local *net.LocalInfo, bootstrapAddresses []string) (*DHT, error) {
 
 	// create new kv store for storing providers
 	store, _ := newStore()
@@ -61,6 +62,7 @@ func NewDHT(key *crypto.Key, network net.Network, exchange exchange.Exchange,
 		queries:   sync.Map{},
 		key:       key,
 		peerStore: &peer.PeerInfoCollection{},
+		local:     local,
 	}
 
 	exchange.Handle("nimona.io/dht/**", r.handleObject)
@@ -97,7 +99,7 @@ func (r *DHT) refresh() {
 	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
 	for {
-		peerInfo := r.net.GetPeerInfo()
+		peerInfo := r.local.GetPeerInfo()
 		if len(peerInfo.Addresses) == 0 {
 			time.Sleep(time.Second * 10)
 			continue

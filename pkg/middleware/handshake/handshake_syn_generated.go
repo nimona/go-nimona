@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package net
+package handshake
 
 import (
 	"nimona.io/pkg/net/peer"
@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	HandshakeSynType = "/handshake.syn"
+	SynType = "/handshake.syn"
 )
 
 // ToObject returns a f12n object
-func (s HandshakeSyn) ToObject() *object.Object {
+func (s Syn) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(HandshakeSynType)
+	o.SetType(SynType)
 	if s.Nonce != "" {
 		o.SetRaw("nonce", s.Nonce)
 	}
@@ -27,7 +27,7 @@ func (s HandshakeSyn) ToObject() *object.Object {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *HandshakeSyn) FromObject(o *object.Object) error {
+func (s *Syn) FromObject(o *object.Object) error {
 	s.RawObject = o
 	if v, ok := o.GetRaw("nonce").(string); ok {
 		s.Nonce = v
@@ -42,6 +42,6 @@ func (s *HandshakeSyn) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s HandshakeSyn) GetType() string {
-	return HandshakeSynType
+func (s Syn) GetType() string {
+	return SynType
 }
