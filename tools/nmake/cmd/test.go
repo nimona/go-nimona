@@ -22,8 +22,9 @@ var testCmd = &cobra.Command{
 		fmt.Println("Running tests")
 
 		env := []string{
-			"LOG_LEVEL=debug",
-			"DEBUG_BLOCKS=true",
+			"GORACE=history_size=7",
+			"LOG_LEVEL=error",
+			"DEBUG_BLOCKS=false",
 			"BIND_LOCAL=true",
 			"UPNP=false",
 		}
@@ -36,7 +37,7 @@ var testCmd = &cobra.Command{
 			"-parallel=4",
 			"-covermode=atomic",
 			"-coverprofile=coverage.out",
-			"-timeout=3m", // github actions is REALLY slow
+			"-timeout=5m", // github actions is REALLY REALLY slow
 			"./...",
 		}
 
