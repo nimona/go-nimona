@@ -5,6 +5,7 @@
 package crypto
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/object"
 )
 
@@ -40,52 +41,73 @@ func (s Mandate) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForMandate(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *Mandate) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForMandate
 	if v, ok := o.GetRaw("@signer").(*Key); ok {
 		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
 		s.Signer = &Key{}
-		s.Signer.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("subject").(*Key); ok {
 		s.Subject = v
-	} else if v, ok := o.GetRaw("subject").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("subject").(map[string]interface{}); ok {
 		s.Subject = &Key{}
-		s.Subject.FromObject(v)
-	}
-	if v, ok := o.GetRaw("description").(string); ok {
-		s.Description = v
-	}
-	if ss, ok := o.GetRaw("resources").([]string); ok {
-		s.Resources = ss
-	} else if ss, ok := o.GetRaw("resources").([]interface{}); ok {
-		s.Resources = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.Resources = append(s.Resources, v)
-			}
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
 		}
+		s.Subject.FromObject(o)
 	}
-	if ss, ok := o.GetRaw("actions").([]string); ok {
-		s.Actions = ss
-	} else if ss, ok := o.GetRaw("actions").([]interface{}); ok {
-		s.Actions = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.Actions = append(s.Actions, v)
-			}
-		}
+	if err := atoa(o.GetRaw("description"), &s.Description); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("effect").(string); ok {
-		s.Effect = v
+	if err := atoa(o.GetRaw("resources"), &s.Resources); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("actions"), &s.Actions); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("effect"), &s.Effect); err != nil {
+		return err
 	}
 	if v, ok := o.GetRaw("@signature").(*Signature); ok {
 		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.Signature = &Signature{}
-		s.Signature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
+
 	return nil
 }
 

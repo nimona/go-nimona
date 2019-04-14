@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package dht
+package dag
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -11,24 +11,18 @@ import (
 )
 
 const (
-	ProviderRequestType = "nimona.io/dht/provider.request"
+	ObjectGraphRequestType = "/object-graph-request"
 )
 
 // ToObject returns a f12n object
-func (s ProviderRequest) ToObject() *object.Object {
+func (s ObjectGraphRequest) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(ProviderRequestType)
-	if s.RequestID != "" {
-		o.SetRaw("requestID", s.RequestID)
-	}
-	if s.Key != "" {
-		o.SetRaw("key", s.Key)
+	o.SetType(ObjectGraphRequestType)
+	if len(s.Selector) > 0 {
+		o.SetRaw("selector", s.Selector)
 	}
 	if s.Signer != nil {
 		o.SetRaw("@signer", s.Signer)
-	}
-	if s.Authority != nil {
-		o.SetRaw("@authority", s.Authority)
 	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
@@ -36,7 +30,7 @@ func (s ProviderRequest) ToObject() *object.Object {
 	return o
 }
 
-func anythingToAnythingForProviderRequest(
+func anythingToAnythingForObjectGraphRequest(
 	from interface{},
 	to interface{},
 ) error {
@@ -58,15 +52,11 @@ func anythingToAnythingForProviderRequest(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ProviderRequest) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForProviderRequest
-	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
+func (s *ObjectGraphRequest) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForObjectGraphRequest
+	if err := atoa(o.GetRaw("selector"), &s.Selector); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("key"), &s.Key); err != nil {
-		return err
-	}
-	s.RawObject = o
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.Signer = v
 	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
@@ -76,16 +66,6 @@ func (s *ProviderRequest) FromObject(o *object.Object) error {
 			return err
 		}
 		s.Signer.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
-		s.Authority = v
-	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
-		s.Authority = &crypto.Key{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Authority.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v
@@ -102,6 +82,6 @@ func (s *ProviderRequest) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s ProviderRequest) GetType() string {
-	return ProviderRequestType
+func (s ObjectGraphRequest) GetType() string {
+	return ObjectGraphRequestType
 }

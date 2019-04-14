@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package crypto
+package mutation
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -10,26 +10,23 @@ import (
 )
 
 const (
-	SignatureType = "/signature"
+	MutationType = "/object.mutation"
 )
 
 // ToObject returns a f12n object
-func (s Signature) ToObject() *object.Object {
+func (s Mutation) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(SignatureType)
-	if s.Alg != "" {
-		o.SetRaw("alg", s.Alg)
+	o.SetType(MutationType)
+	if len(s.Operations) > 0 {
+		o.SetRaw("ops", s.Operations)
 	}
-	if len(s.R) > 0 {
-		o.SetRaw("r", s.R)
-	}
-	if len(s.S) > 0 {
-		o.SetRaw("s", s.S)
+	if len(s.Parents) > 0 {
+		o.SetRaw("@parents", s.Parents)
 	}
 	return o
 }
 
-func anythingToAnythingForSignature(
+func anythingToAnythingForMutation(
 	from interface{},
 	to interface{},
 ) error {
@@ -51,15 +48,12 @@ func anythingToAnythingForSignature(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Signature) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForSignature
-	if err := atoa(o.GetRaw("alg"), &s.Alg); err != nil {
+func (s *Mutation) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForMutation
+	if err := atoa(o.GetRaw("ops"), &s.Operations); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("r"), &s.R); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("s"), &s.S); err != nil {
+	if err := atoa(o.GetRaw("@parents"), &s.Parents); err != nil {
 		return err
 	}
 
@@ -67,6 +61,6 @@ func (s *Signature) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s Signature) GetType() string {
-	return SignatureType
+func (s Mutation) GetType() string {
+	return MutationType
 }

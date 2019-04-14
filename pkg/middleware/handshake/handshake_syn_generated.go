@@ -5,6 +5,7 @@
 package handshake
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
@@ -26,18 +27,45 @@ func (s Syn) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForSyn(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *Syn) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForSyn
 	s.RawObject = o
-	if v, ok := o.GetRaw("nonce").(string); ok {
-		s.Nonce = v
+	if err := atoa(o.GetRaw("nonce"), &s.Nonce); err != nil {
+		return err
 	}
 	if v, ok := o.GetRaw("peerInfo").(*peer.PeerInfo); ok {
 		s.PeerInfo = v
-	} else if v, ok := o.GetRaw("peerInfo").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("peerInfo").(map[string]interface{}); ok {
 		s.PeerInfo = &peer.PeerInfo{}
-		s.PeerInfo.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.PeerInfo.FromObject(o)
 	}
+
 	return nil
 }
 

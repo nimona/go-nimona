@@ -5,6 +5,7 @@
 package peer
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
@@ -44,62 +45,76 @@ func (s PeerInfoRequest) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForPeerInfoRequest(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *PeerInfoRequest) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("authority").(string); ok {
-		s.AuthorityKeyHash = v
+	atoa := anythingToAnythingForPeerInfoRequest
+	if err := atoa(o.GetRaw("authority"), &s.AuthorityKeyHash); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("signer").(string); ok {
-		s.SignerKeyHash = v
+	if err := atoa(o.GetRaw("signer"), &s.SignerKeyHash); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("protocols").([]string); ok {
-		s.Protocols = ss
-	} else if ss, ok := o.GetRaw("protocols").([]interface{}); ok {
-		s.Protocols = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.Protocols = append(s.Protocols, v)
-			}
-		}
+	if err := atoa(o.GetRaw("protocols"), &s.Protocols); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("contentIDs").([]string); ok {
-		s.ContentIDs = ss
-	} else if ss, ok := o.GetRaw("contentIDs").([]interface{}); ok {
-		s.ContentIDs = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.ContentIDs = append(s.ContentIDs, v)
-			}
-		}
+	if err := atoa(o.GetRaw("contentIDs"), &s.ContentIDs); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("contentTypes").([]string); ok {
-		s.ContentTypes = ss
-	} else if ss, ok := o.GetRaw("contentTypes").([]interface{}); ok {
-		s.ContentTypes = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.ContentTypes = append(s.ContentTypes, v)
-			}
-		}
+	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
+		return err
 	}
 	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
 		s.RequesterAuthorityKey = v
-	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
 		s.RequesterAuthorityKey = &crypto.Key{}
-		s.RequesterAuthorityKey.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.RequesterAuthorityKey.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.RequesterSignerKey = v
-	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
 		s.RequesterSignerKey = &crypto.Key{}
-		s.RequesterSignerKey.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.RequesterSignerKey.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.RequestSignature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.RequestSignature = &crypto.Signature{}
-		s.RequestSignature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.RequestSignature.FromObject(o)
 	}
+
 	return nil
 }
 

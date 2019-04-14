@@ -5,6 +5,7 @@
 package handshake
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
@@ -29,23 +30,54 @@ func (s Ack) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForAck(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *Ack) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("nonce").(string); ok {
-		s.Nonce = v
+	atoa := anythingToAnythingForAck
+	if err := atoa(o.GetRaw("nonce"), &s.Nonce); err != nil {
+		return err
 	}
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
-		s.Signer.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
-		s.Signature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
+
 	return nil
 }
 

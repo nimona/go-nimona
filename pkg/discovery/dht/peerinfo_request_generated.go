@@ -5,6 +5,7 @@
 package dht
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
@@ -35,33 +36,68 @@ func (s PeerInfoRequest) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForPeerInfoRequest(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *PeerInfoRequest) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("requestID").(string); ok {
-		s.RequestID = v
+	atoa := anythingToAnythingForPeerInfoRequest
+	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("peerID").(string); ok {
-		s.PeerID = v
+	if err := atoa(o.GetRaw("peerID"), &s.PeerID); err != nil {
+		return err
 	}
 	s.RawObject = o
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
-		s.Signer.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
 		s.Authority = v
-	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
 		s.Authority = &crypto.Key{}
-		s.Authority.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Authority.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
-		s.Signature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
+
 	return nil
 }
 
