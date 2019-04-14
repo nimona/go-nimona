@@ -5,16 +5,10 @@ import (
 )
 
 type (
-	// Context augments the context.Context interface with addition methods
-	// to allow to retrieve the extra attributes our wrapper context holds
-	Context interface {
-		stdcontext.Context
-		Method() string
-		Arguments() map[string]interface{}
-		CorrelationID() string
-	}
-	// context wraps context.Context allowing adding tracing information instead
-	// of using the Values.
+	// Context that matches std context
+	Context stdcontext.Context
+	// context wraps stdcontext.Context allowing adding tracing information
+	// instead of using the Values.
 	context struct {
 		stdcontext.Context
 		method        string
@@ -22,6 +16,20 @@ type (
 		correlationID string
 	}
 )
+
+// Background context wrapper
+func Background() *context {
+	return New(stdcontext.Background())
+}
+
+// A CancelFunc tells an operation to abandon its work
+type CancelFunc func()
+
+// WithCancel returns a copy of parent with a new Done channel
+func WithCancel(ctx stdcontext.Context) (*context, CancelFunc) {
+	cctx, cf := stdcontext.WithCancel(ctx)
+	return New(cctx), CancelFunc(cf)
+}
 
 // Method returns the context's method
 func (ctx *context) Method() string {
@@ -38,8 +46,8 @@ func (ctx *context) CorrelationID() string {
 	return ctx.correlationID
 }
 
-// New constructs a new Context from a parent Context and Options
-func New(parent stdcontext.Context, opts ...Option) Context {
+// New constructs a new *context from a parent Context and Options
+func New(parent stdcontext.Context, opts ...Option) *context {
 	ctx := &context{
 		Context:   parent,
 		arguments: map[string]interface{}{},
