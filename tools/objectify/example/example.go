@@ -2,12 +2,15 @@ package example
 
 import "nimona.io/pkg/object"
 
+// nolint
 //go:generate go run nimona.io/tools/objectify -schema test/inn -type InnerFoo -in example.go -out inner_foo_generated.go
 //go:generate go run nimona.io/tools/objectify -schema test/foo -type Foo -in example.go -out foo_generated.go
 
+// InnerFoo -
+// nolint
 type InnerFoo struct {
-	InnerBar      string      `fluffy:"inner_bar"`
-	InnerBars     []string    `fluffy:"inner_bars"`
+	InnerBar      string      `json:"inner_bar"`
+	InnerBars     []string    `json:"inner_bars"`
 	MoreInnerFoos []*InnerFoo `json:"inner_foos"`
 	I             int
 	I8            int8
@@ -28,16 +31,20 @@ type InnerFoo struct {
 	Au32          []uint32
 	Af32          []float32
 	Af64          []float64
-	// AAi           [][]int
-	// AAf           [][]float32
+	AAi           [][]int
+	AAf           [][]float32
+	AAs           [][]string
 	// O             map[string]interface{}
-	// B             bool
+	B bool
 }
 
+// Foo -
 type Foo struct {
-	RawObject *object.Object `fluffy:"@"`
-	Bar       string           `fluffy:"bar"`
-	Bars      []string         `fluffys:"bars"`
-	InnerFoo  *InnerFoo        `fluffy:"inner_foo"`
-	InnerFoos []*InnerFoo      `fluffy:"inner_foos"`
+	// RawObject *object.Object   `json:"@"`
+	Bar       string           `json:"bar"`
+	Bars      []string         `json:"bars"`
+	InnerFoo  *InnerFoo        `json:"inner_foo"`
+	InnerFoos []*InnerFoo      `json:"inner_foos"`
+	Object    *object.Object   `json:"object"`
+	Objects   []*object.Object `json:"objects"`
 }
