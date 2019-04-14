@@ -1,7 +1,7 @@
 package object
 
 import (
-	"fmt"
+	"encoding/json"
 	"math"
 	"testing"
 
@@ -40,43 +40,64 @@ func TestObjectHashDocs(t *testing.T) {
 
 func TestLongObjectHash(t *testing.T) {
 	v := map[string]interface{}{
-		"i":    int(math.MaxInt32),
-		"i8":   int8(math.MaxInt8),
-		"i16":  int16(math.MaxInt16),
-		"i32":  int32(math.MaxInt32),
-		"i64":  int64(math.MaxInt64),
-		"u":    uint(math.MaxUint32),
-		"u8":   uint8(math.MaxUint8),
-		"u16":  uint16(math.MaxUint16),
-		"u32":  uint32(math.MaxUint32),
-		"f32":  float32(math.MaxFloat32),
-		"f64":  float64(math.MaxFloat64),
-		"Ai8":  []int8{math.MaxInt8, math.MaxInt8 - 1},
-		"Ai16": []int16{math.MaxInt16, math.MaxInt16 - 1},
-		"Ai32": []int32{math.MaxInt32, math.MaxInt32 - 1},
-		"Ai64": []int64{math.MaxInt64, math.MaxInt64 - 1},
-		"Au16": []uint16{math.MaxUint16, math.MaxUint16 - 1},
-		"Au32": []uint32{math.MaxUint32, math.MaxUint32 - 1},
-		"Af32": []float32{math.MaxFloat32, math.MaxFloat32 - 1},
-		"Af64": []float64{math.MaxFloat64, math.MaxFloat64 - 1},
-		"AAi": [][]int{
+		"i:i":       int(math.MaxInt32),
+		"i8:i":      int8(math.MaxInt8),
+		"i16:i":     int16(math.MaxInt16),
+		"i32:i":     int32(math.MaxInt32),
+		"i64:i":     int64(math.MaxInt64),
+		"u:u":       uint(math.MaxUint32),
+		"u8:u":      uint8(math.MaxUint8),
+		"u16:u":     uint16(math.MaxUint16),
+		"u32:u":     uint32(math.MaxUint32),
+		"f32:f":     float32(math.MaxFloat32),
+		"f64:f":     float64(math.MaxFloat64),
+		"Ai8:a<i>":  []int8{math.MaxInt8, math.MaxInt8 - 1},
+		"Ai16:a<i>": []int16{math.MaxInt16, math.MaxInt16 - 1},
+		"Ai32:a<i>": []int32{math.MaxInt32, math.MaxInt32 - 1},
+		"Ai64:a<i>": []int64{math.MaxInt64, math.MaxInt64 - 1},
+		"Au16:a<u>": []uint16{math.MaxUint16, math.MaxUint16 - 1},
+		"Au32:a<u>": []uint32{math.MaxUint32, math.MaxUint32 - 1},
+		"Af32:a<f>": []float32{math.MaxFloat32, math.MaxFloat32 - 1},
+		"Af64:a<f>": []float64{math.MaxFloat64, math.MaxFloat64 - 1},
+		"AAi:a<a<i>>": [][]int{
 			[]int{1, 2},
 			[]int{3, 4},
 		},
-		"AAf": [][]float32{
+		"AAf:a<a<f>>": [][]float32{
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 			[]float32{math.MaxFloat32, math.MaxFloat32 - 1},
 		},
-		"O": map[string]interface{}{
-			"s": "foo",
-			"u": uint64(12),
+		"O:o": map[string]interface{}{
+			"s:s": "foo",
+			"u:u": uint64(12),
 		},
-		"bool": true,
+		"bool:b": true,
+	}
+
+	o := FromMap(v)
+	_, err := ObjectHash(o)
+	assert.NoError(t, err)
+}
+
+func TestLongObjectHashInterfaces(t *testing.T) {
+	v := map[string]interface{}{
+		"I:i":     1,
+		"Ai:a<i>": []interface{}{1, 2},
+		"S:s":     "a",
+		"As:a<s>": []interface{}{"a", "b"},
 	}
 
 	o := FromMap(v)
 	h, err := ObjectHash(o)
 	assert.NoError(t, err)
 
-	fmt.Printf("% x", h)
+	b := `{"I:i":1,"Ai:a\u003ci\u003e":[1,2],"S:s":"a","As:a\u003cs\u003e":["a","b"]}` // nolint
+	nv := map[string]interface{}{}
+	json.Unmarshal([]byte(b), &nv) // nolint
+
+	no := FromMap(nv)
+	nh, err := ObjectHash(no)
+	assert.NoError(t, err)
+
+	assert.Equal(t, h, nh)
 }
