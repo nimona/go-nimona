@@ -88,6 +88,11 @@ func (o Object) HashBase58() string {
 	return base58.Encode(Hash(&o))
 }
 
+// CompactHash returns the object's hash in its (not really) compact format
+func (o Object) CompactHash() string {
+	return "&" + base58.Encode(Hash(&o)) + ".b.oh/v1"
+}
+
 // ToMap returns the object as a map
 func (o Object) ToMap() map[string]interface{} {
 	r := map[string]interface{}{}
