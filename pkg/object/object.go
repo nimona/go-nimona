@@ -1,17 +1,26 @@
 package object
 
 import (
+	"encoding/json"
+	"fmt"
+	"reflect"
 	"strings"
+
+	"github.com/fatih/structs"
 
 	"nimona.io/internal/encoding/base58"
 )
 
+func init() {
+	structs.DefaultTagName = "json"
+}
+
 type (
-	// Member
+	// Member -
 	Member struct {
 		Name     string
 		Value    interface{}
-		TypeHint TypeHint
+		TypeHint string
 	}
 
 	// Object for everything f12n
@@ -22,10 +31,10 @@ type (
 
 // HintedName returns the member's name and hint
 func (m *Member) HintedName() string {
-	if m.TypeHint == HintUndefined {
+	if m.TypeHint == HintUndefined.String() {
 		return m.Name
 	}
-	return m.Name + ":" + string(m.TypeHint)
+	return m.Name + ":" + m.TypeHint
 }
 
 // FromBytes returns an object from a cbor byte stream
@@ -61,6 +70,12 @@ func (o *Object) FromMap(m map[string]interface{}) error {
 		o.SetRaw(k, v)
 	}
 	return nil
+}
+
+// ToObject simply returns a copy of the object
+// This is mostly a hack for generated objects
+func (o *Object) ToObject() *Object {
+	return o.Copy()
 }
 
 // Hash returns the object's hash
@@ -116,10 +131,16 @@ func (o Object) SetType(v string) {
 
 // GetSignature returns the object's signature, or nil
 func (o Object) GetSignature() *Object {
-	if v, ok := o.GetRaw("@signature").(*Object); ok {
-		return v
+	v, ok := o.GetRaw("@signature").(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return nil
+	vo := &Object{}
+	err := vo.FromMap(v)
+	if err != nil {
+		return nil
+	}
+	return vo
 }
 
 // SetSignature sets the object's signature
@@ -129,10 +150,16 @@ func (o Object) SetSignature(v *Object) {
 
 // GetAuthorityKey returns the object's creator, or nil
 func (o Object) GetAuthorityKey() *Object {
-	if v, ok := o.GetRaw("@authority").(*Object); ok {
-		return v
+	v, ok := o.GetRaw("@authority").(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return nil
+	vo := &Object{}
+	err := vo.FromMap(v)
+	if err != nil {
+		return nil
+	}
+	return vo
 }
 
 // SetAuthorityKey sets the object's creator
@@ -142,10 +169,16 @@ func (o Object) SetAuthorityKey(v *Object) {
 
 // GetMandate returns the object's mandate, or nil
 func (o Object) GetMandate() *Object {
-	if v, ok := o.GetRaw("@mandate").(*Object); ok {
-		return v
+	v, ok := o.GetRaw("@mandate").(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return nil
+	vo := &Object{}
+	err := vo.FromMap(v)
+	if err != nil {
+		return nil
+	}
+	return vo
 }
 
 // SetMandate sets the object's mandate
@@ -155,10 +188,16 @@ func (o Object) SetMandate(v *Object) {
 
 // GetSignerKey returns the object's signer, or nil
 func (o Object) GetSignerKey() *Object {
-	if v, ok := o.GetRaw("@signer").(*Object); ok {
-		return v
+	v, ok := o.GetRaw("@signer").(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return nil
+	vo := &Object{}
+	err := vo.FromMap(v)
+	if err != nil {
+		return nil
+	}
+	return vo
 }
 
 // SetSignerKey sets the object's signer
@@ -168,10 +207,16 @@ func (o Object) SetSignerKey(v *Object) {
 
 // GetPolicy returns the object's policy, or nil
 func (o Object) GetPolicy() *Object {
-	if v, ok := o.GetRaw("@policy").(*Object); ok {
-		return v
+	v, ok := o.GetRaw("@policy").(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return nil
+	vo := &Object{}
+	err := vo.FromMap(v)
+	if err != nil {
+		return nil
+	}
+	return vo
 }
 
 // SetPolicy sets the object's policy
@@ -181,8 +226,20 @@ func (o Object) SetPolicy(v *Object) {
 
 // GetParents returns the object's parent refs
 func (o Object) GetParents() []string {
+	// TODO can we use mapstructure or something else to do this?
 	if v, ok := o.GetRaw("@parents").([]string); ok {
 		return v
+	}
+	if v, ok := o.GetRaw("@parents").([]interface{}); ok {
+		parents := []string{}
+		for _, p := range v {
+			ps, ok := p.(string)
+			if !ok {
+				continue
+			}
+			parents = append(parents, ps)
+		}
+		return parents
 	}
 	return nil
 }
@@ -203,6 +260,36 @@ func (o Object) GetRaw(lk string) interface{} {
 	return nil
 }
 
+func raw(v interface{}) (nv interface{}) {
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Slice:
+		rv := reflect.ValueOf(v)
+		// TODO this captures more than it really should, not sure if we even
+		// need it any more
+		ns := []interface{}{}
+		for i := 0; i < rv.Len(); i++ {
+			ns = append(ns, raw(rv.Index(i).Interface()))
+		}
+		nv = ns
+	case reflect.Struct:
+		if oi, ok := v.(Object); ok {
+			nv = oi.ToMap()
+		} else if oi, ok := v.(objectable); ok {
+			nv = oi.ToObject().ToMap()
+		} else if m, ok := v.(map[string]interface{}); ok {
+			// TODO waste of resources, just used to make sure nested maps are typed
+			nv = FromMap(m).ToMap()
+		} else {
+			nv = structs.Map(v)
+		}
+	case reflect.Ptr:
+		nv = raw(reflect.ValueOf(v).Elem().Interface())
+	default:
+		nv = v
+	}
+	return nv
+}
+
 // SetRaw -
 func (o *Object) SetRaw(n string, v interface{}) {
 	ct := ""
@@ -212,26 +299,12 @@ func (o *Object) SetRaw(n string, v interface{}) {
 	}
 	n = np[0]
 
-	if mv, ok := v.(map[string]interface{}); ok {
-		tv := FromMap(mv)
-		if tv.GetType() != "" {
-			v = tv
-		}
-	}
-
-	var nv interface{}
-	if oi, ok := v.(*Object); ok {
-		nv = oi
-	} else if oi, ok := v.(objectable); ok {
-		nv = oi.ToObject()
-	} else if m, ok := v.(map[string]interface{}); ok {
-		nv = FromMap(m)
-	} else {
-		nv = v
-	}
+	nv := raw(v)
 
 	t := DeduceTypeHint(v)
-	if ct != "" && ct != string(t) {
+	if ct == "" {
+		ct = string(t)
+	} else if ct != "" && ct != string(t) {
 		// TODO: should we error or something if the given type hint does not
 		// match the actual?
 	}
@@ -239,7 +312,7 @@ func (o *Object) SetRaw(n string, v interface{}) {
 	m := &Member{
 		Name:     n,
 		Value:    nv,
-		TypeHint: t,
+		TypeHint: ct,
 	}
 
 	if o.Members == nil {
@@ -247,4 +320,31 @@ func (o *Object) SetRaw(n string, v interface{}) {
 	}
 
 	o.Members[m.Name] = m
+}
+
+func (o *Object) Compact() (string, error) {
+	j, err := json.Marshal(o.ToMap())
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(
+		"*%s.json",
+		base58.Encode(j),
+	), nil
+}
+
+// Copy creates a copy of the original object
+func (o *Object) Copy() *Object {
+	return Copy(o)
+}
+
+// Copy object
+func Copy(f *Object) *Object {
+	t := &Object{}
+	err := t.FromMap(f.ToMap())
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

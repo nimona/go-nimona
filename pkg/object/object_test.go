@@ -1,6 +1,7 @@
 package object
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,52 +9,52 @@ import (
 
 func TestObjectMethods(t *testing.T) {
 	m := map[string]interface{}{
-		"@ctx": "ctx-value",
-		"@signature": FromMap(map[string]interface{}{
-			"@ctx": "-signature",
-		}),
-		"@authority": FromMap(map[string]interface{}{
-			"@ctx": "-authority",
-		}),
-		"@signer": FromMap(map[string]interface{}{
-			"@ctx": "-signer",
-		}),
-		"@policy": FromMap(map[string]interface{}{
-			"@ctx": "-policy",
-		}),
-		"@mandate": FromMap(map[string]interface{}{
-			"@ctx": "-mandate",
-		}),
-		"@parents": []string{"parents-value"},
+		"@ctx:s": "ctx-value",
+		"@signature:o": map[string]interface{}{
+			"@ctx:s": "-signature",
+		},
+		"@authority:o": map[string]interface{}{
+			"@ctx:s": "-authority",
+		},
+		"@signer:o": map[string]interface{}{
+			"@ctx:s": "-signer",
+		},
+		"@policy:o": map[string]interface{}{
+			"@ctx:s": "-policy",
+		},
+		"@mandate:o": map[string]interface{}{
+			"@ctx:s": "-mandate",
+		},
+		"@parents:a<s>": []string{"parent-value"},
 	}
 
 	o := FromMap(m)
 
-	assert.Equal(t, m["@ctx"], o.GetRaw("@ctx"))
-	assert.Equal(t, m["@signature"], o.GetRaw("@signature"))
-	assert.Equal(t, m["@authority"], o.GetRaw("@authority"))
-	assert.Equal(t, m["@signer"], o.GetRaw("@signer"))
-	assert.Equal(t, m["@policy"], o.GetRaw("@policy"))
-	assert.Equal(t, m["@mandate"], o.GetRaw("@mandate"))
-	assert.Equal(t, m["@parents"], o.GetRaw("@parents"))
+	assert.Equal(t, jp(m["@ctx:s"]), jp(o.GetRaw("@ctx")))
+	assert.Equal(t, jp(m["@signature:o"]), jp(o.GetRaw("@signature")))
+	assert.Equal(t, jp(m["@authority:o"]), jp(o.GetRaw("@authority")))
+	assert.Equal(t, jp(m["@signer:o"]), jp(o.GetRaw("@signer")))
+	assert.Equal(t, jp(m["@policy:o"]), jp(o.GetRaw("@policy")))
+	assert.Equal(t, jp(m["@mandate:o"]), jp(o.GetRaw("@mandate")))
+	assert.Equal(t, jp(m["@parents:a<s>"]), jp(o.GetRaw("@parents")))
 
 	n := New()
 
-	n.SetRaw("@ctx", m["@ctx"])
-	n.SetRaw("@signature", m["@signature"])
-	n.SetRaw("@authority", m["@authority"])
-	n.SetRaw("@signer", m["@signer"])
-	n.SetRaw("@policy", m["@policy"])
-	n.SetRaw("@mandate", m["@mandate"])
-	n.SetRaw("@parents", m["@parents"])
+	n.SetRaw("@ctx", m["@ctx:s"])
+	n.SetRaw("@signature", m["@signature:o"])
+	n.SetRaw("@authority", m["@authority:o"])
+	n.SetRaw("@signer", m["@signer:o"])
+	n.SetRaw("@policy", m["@policy:o"])
+	n.SetRaw("@mandate", m["@mandate:o"])
+	n.SetRaw("@parents", m["@parents:a<s>"])
 
-	assert.Equal(t, m["@ctx"], n.GetRaw("@ctx"))
-	assert.Equal(t, m["@signature"], n.GetRaw("@signature"))
-	assert.Equal(t, m["@authority"], n.GetRaw("@authority"))
-	assert.Equal(t, m["@signer"], n.GetRaw("@signer"))
-	assert.Equal(t, m["@policy"], n.GetRaw("@policy"))
-	assert.Equal(t, m["@mandate"], n.GetRaw("@mandate"))
-	assert.Equal(t, m["@parents"], n.GetRaw("@parents"))
+	assert.Equal(t, jp(m["@ctx:s"]), jp(n.GetRaw("@ctx")))
+	assert.Equal(t, jp(m["@signature:o"]), jp(n.GetRaw("@signature")))
+	assert.Equal(t, jp(m["@authority:o"]), jp(n.GetRaw("@authority")))
+	assert.Equal(t, jp(m["@signer:o"]), jp(n.GetRaw("@signer")))
+	assert.Equal(t, jp(m["@policy:o"]), jp(n.GetRaw("@policy")))
+	assert.Equal(t, jp(m["@mandate:o"]), jp(n.GetRaw("@mandate")))
+	assert.Equal(t, jp(m["@parents:a<s>"]), jp(n.GetRaw("@parents")))
 
 	e := New()
 
@@ -73,11 +74,18 @@ func TestObjectMethods(t *testing.T) {
 	assert.NotNil(t, e.GetRaw("@mandate"))
 	assert.NotNil(t, e.GetRaw("@parents"))
 
-	assert.Equal(t, m["@ctx"], e.GetRaw("@ctx"))
-	assert.Equal(t, m["@signature"], e.GetRaw("@signature"))
-	assert.Equal(t, m["@authority"], e.GetRaw("@authority"))
-	assert.Equal(t, m["@signer"], e.GetRaw("@signer"))
-	assert.Equal(t, m["@policy"], e.GetRaw("@policy"))
-	assert.Equal(t, m["@mandate"], e.GetRaw("@mandate"))
-	assert.Equal(t, m["@parents"], e.GetRaw("@parents"))
+	assert.Equal(t, jp(m["@ctx:s"]), jp(e.GetRaw("@ctx")))
+	assert.Equal(t, jp(m["@signature:o"]), jp(e.GetRaw("@signature")))
+	assert.Equal(t, jp(m["@authority:o"]), jp(e.GetRaw("@authority")))
+	assert.Equal(t, jp(m["@signer:o"]), jp(e.GetRaw("@signer")))
+	assert.Equal(t, jp(m["@policy:o"]), jp(e.GetRaw("@policy")))
+	assert.Equal(t, jp(m["@mandate:o"]), jp(e.GetRaw("@mandate")))
+	assert.Equal(t, jp(m["@parents:a<s>"]), jp(e.GetRaw("@parents")))
+}
+
+// jp is a lazy approach to comparing the mess that is unmarshaling json when
+// dealing with numbers
+func jp(v interface{}) string {
+	b, _ := json.MarshalIndent(v, "", "  ") // nolint
+	return string(b)
 }
