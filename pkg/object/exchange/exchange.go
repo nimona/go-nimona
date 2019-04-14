@@ -2,77 +2,120 @@ package exchange
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gobwas/glob"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
-	nsync "nimona.io/internal/sync"
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/storage"
+)
+
+const (
+	// ObjectRequestID object attribute
+	ObjectRequestID = "_reqID"
 )
 
 var (
 	// ErrInvalidRequest when received an invalid request object
-	ErrInvalidRequest = errors.New("Invalid request")
+	ErrInvalidRequest = errors.New("invalid request")
 )
 
-// Exchange interface for mocking exchange
-type Exchange interface {
-	Get(ctx context.Context, id string) (*object.Object, error)
-	Handle(contentType string, h func(o *object.Object) error) (func(), error)
-	Send(ctx context.Context, o *object.Object, address string) error
-}
+// nolint: lll
+//go:generate go run github.com/vektra/mockery/cmd/mockery -case underscore -inpkg -name Exchange
+//go:generate go run github.com/cheekybits/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
+//go:generate go run github.com/cheekybits/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
 
-type exchange struct {
-	key      *crypto.Key
-	net      net.Network
-	manager  *ConnectionManager
-	discover discovery.Discoverer
-	local    *net.LocalInfo
+type (
+	// Exchange interface for mocking exchange
+	Exchange interface {
+		Request(
+			ctx context.Context,
+			objectHash string,
+			address string,
+			options ...Option,
+		) error
+		Handle(
+			contentTypeGlob string,
+			handler func(object *Envelope) error,
+		) (
+			cancelationFunc func(),
+			err error,
+		)
+		Send(
+			ctx context.Context,
+			object *object.Object,
+			address string,
+			options ...Option,
+		) error
+	}
+	// echange implements an Exchange
+	exchange struct {
+		key      *crypto.Key
+		net      net.Network
+		manager  *ConnectionManager
+		discover discovery.Discoverer
+		local    *net.LocalInfo
 
-	outgoing chan *outgoingObject
-	incoming chan *incomingObject
+		outgoing chan *outgoingObject
+		incoming chan *incomingObject
 
-	handlers   sync.Map
-	logger     *zap.Logger
-	streamLock nsync.Kmutex
+		handlers sync.Map
+		logger   *zap.Logger
 
-	store         storage.Storage
-	getRequests   sync.Map
-	subscriptions sync.Map
-}
-
-type outgoingObject struct {
-	context   context.Context
-	recipient string
-	object    *object.Object
-	err       chan error
-}
-
-type incomingObject struct {
-	conn   *net.Connection
-	object *object.Object
-}
-
-type handler struct {
-	contentType glob.Glob
-	handler     func(o *object.Object) error
-}
+		store        graph.Store
+		getRequests  *StringObjectRequestSyncMap
+		sendRequests *StringSendRequestSyncMap
+	}
+	// Options (mostly) for Send()
+	Options struct {
+		RequestID string
+		Response  chan *Envelope
+	}
+	Option      func(*Options)
+	sendRequest struct {
+		out chan *Envelope
+	}
+	// outgoingObject holds an object that is about to be sent
+	outgoingObject struct {
+		context   context.Context
+		recipient string
+		object    *object.Object
+		err       chan error
+	}
+	// incomingObject holds an object that has just been received
+	incomingObject struct {
+		conn   *net.Connection
+		object *object.Object
+	}
+	// handler is used for keeping track of handlers and what content
+	// types they want to receive
+	handler struct {
+		contentType glob.Glob
+		handler     func(o *Envelope) error
+	}
+)
 
 // New creates a exchange on a given network
-func New(key *crypto.Key, n net.Network, store storage.Storage,
-	discover discovery.Discoverer, localInfo *net.LocalInfo,
-	address string) (Exchange, error) {
+func New(
+	key *crypto.Key,
+	n net.Network,
+	store graph.Store,
+	discover discovery.Discoverer,
+	localInfo *net.LocalInfo,
+	address string,
+) (
+	Exchange,
+	error,
+) {
 	ctx := context.Background()
 
 	w := &exchange{
@@ -85,14 +128,16 @@ func New(key *crypto.Key, n net.Network, store storage.Storage,
 		outgoing: make(chan *outgoingObject, 10),
 		incoming: make(chan *incomingObject, 10),
 
-		handlers:   sync.Map{},
-		logger:     log.Logger(ctx).Named("exchange"),
-		streamLock: nsync.NewKmutex(),
+		handlers: sync.Map{},
+		logger:   log.Logger(ctx).Named("exchange"),
 
-		store:       store,
-		getRequests: sync.Map{},
+		store:        store,
+		getRequests:  NewStringObjectRequestSyncMap(),
+		sendRequests: NewStringSendRequestSyncMap(),
 	}
 
+	// TODO(superdecimal) we should probably remove .Listen() from here, net
+	// should have a function that accepts a connection handler or something.
 	incomingConnections, err := w.net.Listen(ctx, address)
 	if err != nil {
 		return nil, err
@@ -140,7 +185,7 @@ func New(key *crypto.Key, n net.Network, store storage.Storage,
 
 			// try to send the object directly to the recipient
 			logger.Debug("getting conn to write object")
-			conn, err := w.GetOrDial(object.context, object.recipient)
+			conn, err := w.getOrDial(object.context, object.recipient)
 			if err != nil {
 				logger.Debug("could not get conn to recipient", zap.Error(err))
 				object.err <- err
@@ -165,7 +210,27 @@ func New(key *crypto.Key, n net.Network, store storage.Storage,
 	return w, nil
 }
 
-func (w *exchange) Handle(typePatern string, h func(o *object.Object) error) (func(), error) {
+// Request an object given its hash from an address
+func (w *exchange) Request(
+	ctx context.Context,
+	hash string,
+	address string,
+	options ...Option,
+) error {
+	req := &ObjectRequest{
+		ObjectHash: hash,
+	}
+	return w.Send(ctx, req.ToObject(), address, options...)
+}
+
+// Handle allows registering a callback function to handle incoming objects
+func (w *exchange) Handle(
+	typePatern string,
+	h func(o *Envelope) error,
+) (
+	func(),
+	error,
+) {
 	g, err := glob.Compile(typePatern, '.', '/', '#')
 	if err != nil {
 		return nil, err
@@ -181,11 +246,9 @@ func (w *exchange) Handle(typePatern string, h func(o *object.Object) error) (fu
 	return r, nil
 }
 
-func (w *exchange) HandleConnection(conn *net.Connection) error {
-	if err := net.Write(w.local.GetPeerInfo().ToObject(), conn); err != nil {
-		return err
-	}
-
+func (w *exchange) HandleConnection(
+	conn *net.Connection,
+) error {
 	w.logger.Debug(
 		"handling new connection",
 		zap.String("remote", "peer:"+conn.RemotePeerKey.HashBase58()),
@@ -204,18 +267,64 @@ func (w *exchange) HandleConnection(conn *net.Connection) error {
 	}
 }
 
-var (
-	typeObjectForwardRequest = ObjectForwardRequest{}.GetType()
-	typeObjectRequest        = ObjectRequest{}.GetType()
-	typeObjectResponse       = ObjectResponse{}.GetType()
-)
-
 // Process incoming object
-func (w *exchange) process(o *object.Object, conn *net.Connection) error {
+func (w *exchange) process(
+	o *object.Object,
+	conn *net.Connection,
+) error {
+	reqID := ""
+	if id, ok := o.GetRaw(ObjectRequestID).(string); ok {
+		reqID = id
+	}
+
+	logger := w.logger.With(
+		zap.String("local_peer", w.key.GetPublicKey().HashBase58()),
+		zap.String("remote_peer", conn.RemotePeerKey.HashBase58()),
+		zap.String("request_id", reqID),
+	)
+
+	logger.Info("processing object")
+
 	// TODO verify signature
-	// TODO convert these into proper handlers
 	switch o.GetType() {
-	case typeObjectForwardRequest:
+	case ObjectRequestType:
+		req := &ObjectRequest{}
+		if err := req.FromObject(o); err != nil {
+			return err
+		}
+		logger = logger.With(
+			zap.String("requested_hash", req.ObjectHash),
+			zap.String("recipient", conn.RemotePeerKey.HashBase58()),
+		)
+		logger.Info("got object request")
+		res, err := w.store.Get(req.ObjectHash)
+		if err != nil {
+			return errors.Wrap(
+				errors.Error("could not retrieve object"),
+				err,
+			)
+		}
+		if reqID != "" {
+			res.SetRaw(ObjectRequestID, reqID)
+		}
+		cerr := make(chan error, 1)
+		ctx, cf := context.WithTimeout(context.Background(), time.Second)
+		defer cf()
+		w.outgoing <- &outgoingObject{
+			context:   ctx,
+			recipient: "peer:" + conn.RemotePeerKey.HashBase58(),
+			object:    res,
+			err:       cerr,
+		}
+		err = <-cerr
+		if err != nil {
+			logger.Warn("could not send response", zap.Error(err))
+		} else {
+			logger.Info("sent response")
+		}
+		return err
+
+	case ObjectForwardRequestType:
 		v := &ObjectForwardRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
@@ -231,189 +340,89 @@ func (w *exchange) process(o *object.Object, conn *net.Connection) error {
 			err:       cerr,
 		}
 		return <-cerr
+	}
 
-	case typeObjectRequest:
-		v := &ObjectRequest{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		if err := w.handleObjectRequest(v); err != nil {
-			w.logger.Warn("could not handle request object", zap.Error(err))
-		}
-
-	case typeObjectResponse:
-		v := &ObjectResponse{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		if err := w.handleObjectResponse(v); err != nil {
-			w.logger.Warn("could not handle request object", zap.Error(err))
+	// check if this is in response to a Send() WithResponse()
+	if rid := o.GetRaw(ObjectRequestID); rid != nil {
+		logger.Info("got object with request id, returning to req channel")
+		if rs, ok := w.sendRequests.Get(rid.(string)); ok {
+			rs.out <- &Envelope{
+				Sender:  conn.RemotePeerKey,
+				Payload: o,
+			}
 		}
 	}
 
 	ct := o.GetType()
 
-	hp := 0
 	w.handlers.Range(func(_, v interface{}) bool {
-		hp++
 		h := v.(*handler)
-		if h.contentType.Match(ct) {
-			go func(h *handler, object interface{}) {
-				defer func() {
-					if r := recover(); r != nil {
-						w.logger.Error("Recovered while handling", zap.Any("r", r))
-					}
-				}()
-				if err := h.handler(o); err != nil {
-					w.logger.Info(
-						"Could not handle event",
-						zap.String("contentType", ct),
-						zap.Error(err),
-					)
-				}
-			}(h, o)
+		if !h.contentType.Match(ct) {
+			return true
 		}
+		go func(h *handler, object interface{}) {
+			defer func() {
+				if r := recover(); r != nil {
+					w.logger.Error("Recovered while handling", zap.Any("r", r))
+				}
+			}()
+			if err := h.handler(&Envelope{
+				Sender:  conn.RemotePeerKey,
+				Payload: o,
+			}); err != nil {
+				w.logger.Info(
+					"Could not handle event",
+					zap.String("contentType", ct),
+					zap.Error(err),
+				)
+			}
+		}(h, o)
 		return true
 	})
 
-	if hp == 0 {
-		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-		fmt.Println("+++++ NO HANDLERS ++++++++++++++++++++++++++++++++++++++")
-		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-		fmt.Println("+++++", ct)
-		fmt.Println("+++++", o)
-		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-	} else {
-		if shouldPersist(ct) {
-			bytes, _ := object.Marshal(o)
-			if err := w.store.Store(o.HashBase58(), bytes); err != nil {
-				// TODO handle error
-			}
-		}
-	}
-
 	return nil
 }
 
-func (w *exchange) handleObjectResponse(payload *ObjectResponse) error {
-	// Check if nonce exists in local addressBook
-	value, ok := w.getRequests.Load(payload.RequestID)
-	if !ok {
-		return nil
+// WithResponse will send any responses to the object being sent on the given
+// channel.
+// WARNING: the channel MUST NOT be closed before the context has either timed
+// out, or been canceled.
+func WithResponse(reqID string, out chan *Envelope) Option {
+	if reqID == "" {
+		reqID = net.RandStringBytesMaskImprSrc(12)
 	}
-
-	req, ok := value.(*ObjectRequest)
-	if !ok {
-		return ErrInvalidRequest
-	}
-
-	req.response <- payload.RequestedObject
-	return nil
-}
-
-func (w *exchange) handleObjectRequest(req *ObjectRequest) error {
-	objectBytes, err := w.store.Get(req.ID)
-	if err != nil {
-		return err
-	}
-
-	// TODO check if policy allows requested to retrieve the object
-
-	v, err := object.Unmarshal(objectBytes)
-	if err != nil {
-		return err
-	}
-
-	resp := &ObjectResponse{
-		RequestID:       req.RequestID,
-		RequestedObject: v,
-	}
-
-	o := resp.ToObject()
-	if err := crypto.Sign(o, w.key); err != nil {
-		return err
-	}
-
-	addr := "peer:" + req.Signer.HashBase58()
-	if err := w.Send(context.Background(), o, addr); err != nil {
-		w.logger.Warn("blx.handleObjectRequest could not send object", zap.Error(err))
-		return err
-	}
-
-	return nil
-}
-
-func (w *exchange) Get(ctx context.Context, id string) (*object.Object, error) {
-	// Check local storage for object
-	if objectBytes, err := w.store.Get(id); err == nil {
-		object, err := object.Unmarshal(objectBytes)
-		if err != nil {
-			return nil, err
-		}
-		return object, nil
-	}
-
-	req := &ObjectRequest{
-		RequestID: net.RandStringBytesMaskImprSrc(8),
-		ID:        id,
-		response:  make(chan *object.Object, 10),
-	}
-
-	defer func() {
-		w.getRequests.Delete(req.RequestID)
-		close(req.response)
-	}()
-
-	errFailed := make(chan error, 1)
-
-	w.getRequests.Store(req.RequestID, req)
-
-	go func() {
-		q := &peer.PeerInfoRequest{
-			ContentIDs: []string{
-				id,
-			},
-		}
-		ps, err := w.discover.Discover(q)
-		if err != nil {
-			// TODO log err
-			return
-		}
-
-		reqObj := req.ToObject()
-		if err := crypto.Sign(reqObj, w.key); err != nil {
-			errFailed <- err
-			return
-		}
-
-		for _, p := range ps {
-			addr := p.Address()
-			if err := w.Send(ctx, reqObj, addr); err != nil {
-				w.logger.Warn("blx.Get could not send req object", zap.Error(err))
-			}
-		}
-	}()
-
-	for {
-		select {
-		case err := <-errFailed:
-			return nil, err
-
-		case payload := <-req.response:
-			return payload, nil
-
-		case <-ctx.Done():
-			return nil, storage.ErrNotFound
-		}
+	return func(opt *Options) {
+		opt.RequestID = reqID
+		opt.Response = out
 	}
 }
 
-func (w *exchange) Send(ctx context.Context, o *object.Object, address string) error {
+// Send an object to an address
+func (w *exchange) Send(
+	ctx context.Context,
+	o *object.Object,
+	address string,
+	options ...Option,
+) error {
 	logger := log.Logger(ctx)
 
-	if shouldPersist(o.GetType()) {
-		bytes, _ := object.Marshal(o)
-		w.store.Store(o.HashBase58(), bytes)
+	opts := &Options{}
+	for _, option := range options {
+		option(opts)
+	}
+
+	if opts.RequestID != "" {
+		o.SetRaw(ObjectRequestID, opts.RequestID)
+		sr := &sendRequest{
+			out: opts.Response,
+		}
+		w.sendRequests.Put(opts.RequestID, sr)
+		go func() {
+			select {
+			case <-ctx.Done():
+				w.sendRequests.Delete(opts.RequestID)
+			}
+		}()
 	}
 
 	switch getAddressType(address) {
@@ -482,7 +491,11 @@ func (w *exchange) Send(ctx context.Context, o *object.Object, address string) e
 	return nil
 }
 
-func (w *exchange) sendDirectlyToPeer(ctx context.Context, o *object.Object, address string) error {
+func (w *exchange) sendDirectlyToPeer(
+	ctx context.Context,
+	o *object.Object,
+	address string,
+) error {
 	cerr := make(chan error, 1)
 	w.outgoing <- &outgoingObject{
 		context:   ctx,
@@ -493,7 +506,11 @@ func (w *exchange) sendDirectlyToPeer(ctx context.Context, o *object.Object, add
 	return <-cerr
 }
 
-func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, address string) error {
+func (w *exchange) sendViaRelayToPeer(
+	ctx context.Context,
+	o *object.Object,
+	address string,
+) error {
 	// if recipient is a peer, we might have some relay addresses
 	if !strings.HasPrefix(address, "peer:") {
 		return net.ErrAllAddressesFailed
@@ -534,7 +551,11 @@ func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, add
 
 	for _, address := range peer.Addresses {
 		if strings.HasPrefix(address, "relay:") {
-			w.logger.Debug("found relay address", zap.String("peer", recipient), zap.String("address", address))
+			w.logger.
+				Debug("found relay address",
+					zap.String("peer", recipient),
+					zap.String("address", address),
+				)
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
 			if strings.Contains(address, lh) {
@@ -555,22 +576,34 @@ func (w *exchange) sendViaRelayToPeer(ctx context.Context, o *object.Object, add
 
 	return net.ErrAllAddressesFailed
 }
-func (w *exchange) GetOrDial(ctx context.Context, address string) (*net.Connection, error) {
-	w.logger.Debug("looking for existing connection", zap.String("address", address))
+
+func (w *exchange) getOrDial(
+	ctx context.Context,
+	address string,
+) (
+	*net.Connection,
+	error,
+) {
+	w.logger.
+		Debug("looking for existing connection",
+			zap.String("address", address),
+		)
 	if address == "" {
 		return nil, errors.New("missing address")
 	}
 
 	existingConn, err := w.manager.Get(address)
 	if err == nil {
-		w.logger.Debug("found existing connection", zap.String("address", address))
+		w.logger.Debug("found existing connection",
+			zap.String("address", address),
+		)
 		return existingConn, nil
 	}
 
 	conn, err := w.net.Dial(ctx, address)
 	if err != nil {
 		// w.manager.Close(address)
-		return nil, errors.Wrap(err, "dial failed")
+		return nil, errors.Wrap(err, errors.New("dialing failed"))
 	}
 
 	go func() {
@@ -582,16 +615,6 @@ func (w *exchange) GetOrDial(ctx context.Context, address string) (*net.Connecti
 	w.manager.Add(address, conn)
 
 	return conn, nil
-}
-
-func shouldPersist(t string) bool {
-	if strings.Contains(t, "nimona.io/dht") ||
-		strings.HasPrefix(t, "nimona.io/telemetry") ||
-		strings.HasPrefix(t, "/object-") ||
-		strings.HasPrefix(t, "/handshake") {
-		return false
-	}
-	return true
 }
 
 func getAddressType(addr string) string {

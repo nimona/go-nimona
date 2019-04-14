@@ -7,27 +7,33 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"nimona.io/internal/log"
 
+	"nimona.io/internal/log"
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/aggregate"
+	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/object/exchange"
-	"nimona.io/pkg/storage"
 )
 
 //go:generate go run -tags=dev nimona.io/tools/nmake vfsgen
 
 // API for HTTP
 type API struct {
-	router      *gin.Engine
-	key         *crypto.Key
-	net         net.Network
-	exchange    exchange.Exchange
-	objectStore storage.Storage
+	router   *gin.Engine
+	key      *crypto.Key
+	net      net.Network
+	exchange exchange.Exchange
+
+	objectStore graph.Store
+	dag         dag.Manager
+	agg         aggregate.Manager
 	local       *net.LocalInfo
-	localKey    string
-	token       string
+
+	localKey string
+	token    string
 
 	version      string
 	commit       string
@@ -37,19 +43,35 @@ type API struct {
 }
 
 // New HTTP API
-func New(k *crypto.Key, n net.Network, x exchange.Exchange, linf *net.LocalInfo,
-	bls storage.Storage, version, commit, buildDate, token string) *API {
+func New(
+	k *crypto.Key,
+	n net.Network,
+	x exchange.Exchange,
+	linf *net.LocalInfo,
+	bls graph.Store,
+	dag dag.Manager,
+	agg aggregate.Manager,
+	version string,
+	commit string,
+	buildDate string,
+	token string,
+) *API {
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	api := &API{
-		router:       router,
-		key:          k,
-		net:          n,
-		exchange:     x,
-		objectStore:  bls,
-		localKey:     linf.GetPeerInfo().HashBase58(),
-		local:        linf,
+		router:      router,
+		key:         k,
+		net:         n,
+		exchange:    x,
+		objectStore: bls,
+
+		dag: dag,
+		agg: agg,
+
+		localKey: linf.GetPeerInfo().HashBase58(),
+		local:    linf,
+
 		version:      version,
 		commit:       commit,
 		buildDate:    buildDate,

@@ -6,32 +6,35 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/storage"
 )
 
 func (api *API) HandleGetObjects(c *gin.Context) {
-	objectHashs, err := api.objectStore.List()
-	if err != nil {
-		c.AbortWithError(500, err)
-		return
-	}
-	ms := []interface{}{}
-	for _, objectHash := range objectHashs {
-		b, err := api.objectStore.Get(objectHash)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		m, err := object.Unmarshal(b)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-		ms = append(ms, api.mapObject(m))
-	}
-	c.Render(http.StatusOK, Renderer(c, ms))
+	// TODO this will be replaced by manager.Subscribe()
+	// objectHashs, err := api.objectStore.List()
+	// if err != nil {
+	// 	c.AbortWithError(500, err)
+	// 	return
+	// }
+	// ms := []interface{}{}
+	// for _, objectHash := range objectHashs {
+	// 	b, err := api.objectStore.Get(objectHash)
+	// 	if err != nil {
+	// 		c.AbortWithError(500, err)
+	// 		return
+	// 	}
+	// 	m, err := object.Unmarshal(b)
+	// 	if err != nil {
+	// 		c.AbortWithError(500, err)
+	// 		return
+	// 	}
+	// 	ms = append(ms, api.mapObject(m))
+	// }
+	// c.Render(http.StatusOK, Renderer(c, ms))
+	c.Render(http.StatusNotImplemented, nil)
 }
 
 func (api *API) HandleGetObject(c *gin.Context) {
@@ -39,21 +42,16 @@ func (api *API) HandleGetObject(c *gin.Context) {
 	if objectHash == "" {
 		c.AbortWithError(400, errors.New("missing object hash"))
 	}
-	b, err := api.objectStore.Get(objectHash)
+	o, err := api.objectStore.Get(objectHash)
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if err == kv.ErrNotFound {
 			c.AbortWithError(404, err)
 			return
 		}
 		c.AbortWithError(500, err)
 		return
 	}
-	m, err := object.Unmarshal(b)
-	if err != nil {
-		c.AbortWithError(500, err)
-		return
-	}
-	ms := api.mapObject(m)
+	ms := api.mapObject(o)
 	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
