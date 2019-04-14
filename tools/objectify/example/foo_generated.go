@@ -5,6 +5,7 @@
 package example
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/object"
 )
 
@@ -28,47 +29,66 @@ func (s Foo) ToObject() *object.Object {
 	if len(s.InnerFoos) > 0 {
 		o.SetRaw("inner_foos", s.InnerFoos)
 	}
+	if s.Object != nil {
+		o.SetRaw("object", s.Object)
+	}
+	if len(s.Objects) > 0 {
+		o.SetRaw("objects", s.Objects)
+	}
 	return o
+}
+
+func anythingToAnythingForFoo(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FromObject populates the struct from a f12n object
 func (s *Foo) FromObject(o *object.Object) error {
-	s.RawObject = o
-	if v, ok := o.GetRaw("bar").(string); ok {
-		s.Bar = v
+	atoa := anythingToAnythingForFoo
+	if err := atoa(o.GetRaw("bar"), &s.Bar); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("bars").([]string); ok {
-		s.Bars = ss
-	} else if ss, ok := o.GetRaw("bars").([]interface{}); ok {
-		s.Bars = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.Bars = append(s.Bars, v)
-			}
-		}
+	if err := atoa(o.GetRaw("bars"), &s.Bars); err != nil {
+		return err
 	}
 	if v, ok := o.GetRaw("inner_foo").(*InnerFoo); ok {
 		s.InnerFoo = v
-	} else if v, ok := o.GetRaw("inner_foo").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("inner_foo").(map[string]interface{}); ok {
 		s.InnerFoo = &InnerFoo{}
-		s.InnerFoo.FromObject(v)
-	}
-	if ss, ok := o.GetRaw("inner_foos").([]*InnerFoo); ok {
-		s.InnerFoos = ss
-	} else if ss, ok := o.GetRaw("inner_foos").([]interface{}); ok {
-		s.InnerFoos = []*InnerFoo{}
-		for _, si := range ss {
-			if v, ok := si.(*InnerFoo); ok {
-				s.InnerFoos = append(s.InnerFoos, v)
-			} else if v, ok := si.(*object.Object); ok {
-				sInnerFoos := &InnerFoo{}
-				if err := sInnerFoos.FromObject(v); err != nil {
-					return err
-				}
-				s.InnerFoos = append(s.InnerFoos, sInnerFoos)
-			}
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
 		}
+		s.InnerFoo.FromObject(o)
 	}
+	if err := atoa(o.GetRaw("inner_foos"), &s.InnerFoos); err != nil {
+		return err
+	}
+	if v, ok := o.GetRaw("object").(map[string]interface{}); ok {
+		s.Object = &object.Object{}
+		s.Object.FromMap(v)
+	}
+	if err := atoa(o.GetRaw("objects"), &s.Objects); err != nil {
+		return err
+	}
+
 	return nil
 }
 

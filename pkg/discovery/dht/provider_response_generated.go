@@ -5,8 +5,8 @@
 package dht
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -39,62 +39,71 @@ func (s ProviderResponse) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForProviderResponse(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *ProviderResponse) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("requestID").(string); ok {
-		s.RequestID = v
+	atoa := anythingToAnythingForProviderResponse
+	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("providers").([]*Provider); ok {
-		s.Providers = ss
-	} else if ss, ok := o.GetRaw("providers").([]interface{}); ok {
-		s.Providers = []*Provider{}
-		for _, si := range ss {
-			if v, ok := si.(*Provider); ok {
-				s.Providers = append(s.Providers, v)
-			} else if v, ok := si.(*object.Object); ok {
-				sProviders := &Provider{}
-				if err := sProviders.FromObject(v); err != nil {
-					return err
-				}
-				s.Providers = append(s.Providers, sProviders)
-			}
-		}
+	if err := atoa(o.GetRaw("providers"), &s.Providers); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("closestPeers").([]*peer.PeerInfo); ok {
-		s.ClosestPeers = ss
-	} else if ss, ok := o.GetRaw("closestPeers").([]interface{}); ok {
-		s.ClosestPeers = []*peer.PeerInfo{}
-		for _, si := range ss {
-			if v, ok := si.(*peer.PeerInfo); ok {
-				s.ClosestPeers = append(s.ClosestPeers, v)
-			} else if v, ok := si.(*object.Object); ok {
-				sClosestPeers := &peer.PeerInfo{}
-				if err := sClosestPeers.FromObject(v); err != nil {
-					return err
-				}
-				s.ClosestPeers = append(s.ClosestPeers, sClosestPeers)
-			}
-		}
+	if err := atoa(o.GetRaw("closestPeers"), &s.ClosestPeers); err != nil {
+		return err
 	}
 	s.RawObject = o
 	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
 		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
 		s.Signer = &crypto.Key{}
-		s.Signer.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
 		s.Authority = v
-	} else if v, ok := o.GetRaw("@authority").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
 		s.Authority = &crypto.Key{}
-		s.Authority.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Authority.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
-		s.Signature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
+
 	return nil
 }
 

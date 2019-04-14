@@ -5,6 +5,7 @@
 package crypto
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/object"
 )
 
@@ -58,68 +59,70 @@ func (s Key) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForKey(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *Key) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("alg").(string); ok {
-		s.Algorithm = v
+	atoa := anythingToAnythingForKey
+	if err := atoa(o.GetRaw("alg"), &s.Algorithm); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("kid").(string); ok {
-		s.KeyID = v
+	if err := atoa(o.GetRaw("kid"), &s.KeyID); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("kty").(string); ok {
-		s.KeyType = v
+	if err := atoa(o.GetRaw("kty"), &s.KeyType); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("use").(string); ok {
-		s.KeyUsage = v
+	if err := atoa(o.GetRaw("use"), &s.KeyUsage); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("key_ops").(string); ok {
-		s.KeyOps = v
+	if err := atoa(o.GetRaw("key_ops"), &s.KeyOps); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("x5c").(string); ok {
-		s.X509CertChain = v
+	if err := atoa(o.GetRaw("x5c"), &s.X509CertChain); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("x5t").(string); ok {
-		s.X509CertThumbprint = v
+	if err := atoa(o.GetRaw("x5t"), &s.X509CertThumbprint); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("x5tS256").(string); ok {
-		s.X509CertThumbprintS256 = v
+	if err := atoa(o.GetRaw("x5tS256"), &s.X509CertThumbprintS256); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("x5u").(string); ok {
-		s.X509URL = v
+	if err := atoa(o.GetRaw("x5u"), &s.X509URL); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("crv").(string); ok {
-		s.Curve = v
+	if err := atoa(o.GetRaw("crv"), &s.Curve); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("x").([]byte); ok {
-		s.X = ss
-	} else if ss, ok := o.GetRaw("x").([]interface{}); ok {
-		s.X = []byte{}
-		for _, si := range ss {
-			if v, ok := si.(byte); ok {
-				s.X = append(s.X, v)
-			}
-		}
+	if err := atoa(o.GetRaw("x"), &s.X); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("y").([]byte); ok {
-		s.Y = ss
-	} else if ss, ok := o.GetRaw("y").([]interface{}); ok {
-		s.Y = []byte{}
-		for _, si := range ss {
-			if v, ok := si.(byte); ok {
-				s.Y = append(s.Y, v)
-			}
-		}
+	if err := atoa(o.GetRaw("y"), &s.Y); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("d").([]byte); ok {
-		s.D = ss
-	} else if ss, ok := o.GetRaw("d").([]interface{}); ok {
-		s.D = []byte{}
-		for _, si := range ss {
-			if v, ok := si.(byte); ok {
-				s.D = append(s.D, v)
-			}
-		}
+	if err := atoa(o.GetRaw("d"), &s.D); err != nil {
+		return err
 	}
+
 	return nil
 }
 

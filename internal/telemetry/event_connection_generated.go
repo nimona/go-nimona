@@ -5,6 +5,7 @@
 package telemetry
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/object"
 )
 
@@ -22,11 +23,34 @@ func (s ConnectionEvent) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForConnectionEvent(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *ConnectionEvent) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("direction").(string); ok {
-		s.Direction = v
+	atoa := anythingToAnythingForConnectionEvent
+	if err := atoa(o.GetRaw("direction"), &s.Direction); err != nil {
+		return err
 	}
+
 	return nil
 }
 

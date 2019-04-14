@@ -5,6 +5,7 @@
 package example
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/object"
 )
 
@@ -60,153 +61,122 @@ func (s InnerFoo) ToObject() *object.Object {
 	if len(s.Af64) > 0 {
 		o.SetRaw("af64", s.Af64)
 	}
+	if len(s.AAi) > 0 {
+		o.SetRaw("aAi", s.AAi)
+	}
+	if len(s.AAf) > 0 {
+		o.SetRaw("aAf", s.AAf)
+	}
+	if len(s.AAs) > 0 {
+		o.SetRaw("aAs", s.AAs)
+	}
+	o.SetRaw("b", s.B)
 	return o
+}
+
+func anythingToAnythingForInnerFoo(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FromObject populates the struct from a f12n object
 func (s *InnerFoo) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("inner_bar").(string); ok {
-		s.InnerBar = v
+	atoa := anythingToAnythingForInnerFoo
+	if err := atoa(o.GetRaw("inner_bar"), &s.InnerBar); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("inner_bars").([]string); ok {
-		s.InnerBars = ss
-	} else if ss, ok := o.GetRaw("inner_bars").([]interface{}); ok {
-		s.InnerBars = []string{}
-		for _, si := range ss {
-			if v, ok := si.(string); ok {
-				s.InnerBars = append(s.InnerBars, v)
-			}
-		}
+	if err := atoa(o.GetRaw("inner_bars"), &s.InnerBars); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("inner_foos").([]*InnerFoo); ok {
-		s.MoreInnerFoos = ss
-	} else if ss, ok := o.GetRaw("inner_foos").([]interface{}); ok {
-		s.MoreInnerFoos = []*InnerFoo{}
-		for _, si := range ss {
-			if v, ok := si.(*InnerFoo); ok {
-				s.MoreInnerFoos = append(s.MoreInnerFoos, v)
-			} else if v, ok := si.(*object.Object); ok {
-				sMoreInnerFoos := &InnerFoo{}
-				if err := sMoreInnerFoos.FromObject(v); err != nil {
-					return err
-				}
-				s.MoreInnerFoos = append(s.MoreInnerFoos, sMoreInnerFoos)
-			}
-		}
+	if err := atoa(o.GetRaw("inner_foos"), &s.MoreInnerFoos); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("i").(int); ok {
-		s.I = v
+	if err := atoa(o.GetRaw("i"), &s.I); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("i8").(int8); ok {
-		s.I8 = v
+	if err := atoa(o.GetRaw("i8"), &s.I8); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("i16").(int16); ok {
-		s.I16 = v
+	if err := atoa(o.GetRaw("i16"), &s.I16); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("i32").(int32); ok {
-		s.I32 = v
+	if err := atoa(o.GetRaw("i32"), &s.I32); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("i64").(int64); ok {
-		s.I64 = v
+	if err := atoa(o.GetRaw("i64"), &s.I64); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("u").(uint); ok {
-		s.U = v
+	if err := atoa(o.GetRaw("u"), &s.U); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("u8").(uint8); ok {
-		s.U8 = v
+	if err := atoa(o.GetRaw("u8"), &s.U8); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("u16").(uint16); ok {
-		s.U16 = v
+	if err := atoa(o.GetRaw("u16"), &s.U16); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("u32").(uint32); ok {
-		s.U32 = v
+	if err := atoa(o.GetRaw("u32"), &s.U32); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("f32").(float32); ok {
-		s.F32 = v
+	if err := atoa(o.GetRaw("f32"), &s.F32); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("f64").(float64); ok {
-		s.F64 = v
+	if err := atoa(o.GetRaw("f64"), &s.F64); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("ai8").([]int8); ok {
-		s.Ai8 = ss
-	} else if ss, ok := o.GetRaw("ai8").([]interface{}); ok {
-		s.Ai8 = []int8{}
-		for _, si := range ss {
-			if v, ok := si.(int8); ok {
-				s.Ai8 = append(s.Ai8, v)
-			}
-		}
+	if err := atoa(o.GetRaw("ai8"), &s.Ai8); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("ai16").([]int16); ok {
-		s.Ai16 = ss
-	} else if ss, ok := o.GetRaw("ai16").([]interface{}); ok {
-		s.Ai16 = []int16{}
-		for _, si := range ss {
-			if v, ok := si.(int16); ok {
-				s.Ai16 = append(s.Ai16, v)
-			}
-		}
+	if err := atoa(o.GetRaw("ai16"), &s.Ai16); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("ai32").([]int32); ok {
-		s.Ai32 = ss
-	} else if ss, ok := o.GetRaw("ai32").([]interface{}); ok {
-		s.Ai32 = []int32{}
-		for _, si := range ss {
-			if v, ok := si.(int32); ok {
-				s.Ai32 = append(s.Ai32, v)
-			}
-		}
+	if err := atoa(o.GetRaw("ai32"), &s.Ai32); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("ai64").([]int64); ok {
-		s.Ai64 = ss
-	} else if ss, ok := o.GetRaw("ai64").([]interface{}); ok {
-		s.Ai64 = []int64{}
-		for _, si := range ss {
-			if v, ok := si.(int64); ok {
-				s.Ai64 = append(s.Ai64, v)
-			}
-		}
+	if err := atoa(o.GetRaw("ai64"), &s.Ai64); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("au16").([]uint16); ok {
-		s.Au16 = ss
-	} else if ss, ok := o.GetRaw("au16").([]interface{}); ok {
-		s.Au16 = []uint16{}
-		for _, si := range ss {
-			if v, ok := si.(uint16); ok {
-				s.Au16 = append(s.Au16, v)
-			}
-		}
+	if err := atoa(o.GetRaw("au16"), &s.Au16); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("au32").([]uint32); ok {
-		s.Au32 = ss
-	} else if ss, ok := o.GetRaw("au32").([]interface{}); ok {
-		s.Au32 = []uint32{}
-		for _, si := range ss {
-			if v, ok := si.(uint32); ok {
-				s.Au32 = append(s.Au32, v)
-			}
-		}
+	if err := atoa(o.GetRaw("au32"), &s.Au32); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("af32").([]float32); ok {
-		s.Af32 = ss
-	} else if ss, ok := o.GetRaw("af32").([]interface{}); ok {
-		s.Af32 = []float32{}
-		for _, si := range ss {
-			if v, ok := si.(float32); ok {
-				s.Af32 = append(s.Af32, v)
-			}
-		}
+	if err := atoa(o.GetRaw("af32"), &s.Af32); err != nil {
+		return err
 	}
-	if ss, ok := o.GetRaw("af64").([]float64); ok {
-		s.Af64 = ss
-	} else if ss, ok := o.GetRaw("af64").([]interface{}); ok {
-		s.Af64 = []float64{}
-		for _, si := range ss {
-			if v, ok := si.(float64); ok {
-				s.Af64 = append(s.Af64, v)
-			}
-		}
+	if err := atoa(o.GetRaw("af64"), &s.Af64); err != nil {
+		return err
 	}
+	if err := atoa(o.GetRaw("aAi"), &s.AAi); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("aAf"), &s.AAf); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("aAs"), &s.AAs); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("b"), &s.B); err != nil {
+		return err
+	}
+
 	return nil
 }
 

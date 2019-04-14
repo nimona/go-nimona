@@ -5,6 +5,7 @@
 package exchange
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
@@ -29,20 +30,48 @@ func (s ObjectForwardRequest) ToObject() *object.Object {
 	return o
 }
 
+func anythingToAnythingForObjectForwardRequest(
+	from interface{},
+	to interface{},
+) error {
+	config := &mapstructure.DecoderConfig{
+		Result:  to,
+		TagName: "json",
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(from); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // FromObject populates the struct from a f12n object
 func (s *ObjectForwardRequest) FromObject(o *object.Object) error {
-	if v, ok := o.GetRaw("recipient").(string); ok {
-		s.Recipient = v
+	atoa := anythingToAnythingForObjectForwardRequest
+	if err := atoa(o.GetRaw("recipient"), &s.Recipient); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("fwObject").(*object.Object); ok {
-		s.FwObject = v
+	if v, ok := o.GetRaw("fwObject").(map[string]interface{}); ok {
+		s.FwObject = &object.Object{}
+		s.FwObject.FromMap(v)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(*object.Object); ok {
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
 		s.Signature = &crypto.Signature{}
-		s.Signature.FromObject(v)
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
+
 	return nil
 }
 
