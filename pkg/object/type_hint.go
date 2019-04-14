@@ -52,7 +52,15 @@ func GetTypeHint(t string) TypeHint {
 
 // DeduceTypeHint returns a TypeHint from a given value
 func DeduceTypeHint(o interface{}) TypeHint {
+	if o == nil {
+		panic(o)
+		return HintUndefined
+	}
+
 	t := reflect.TypeOf(o)
+	if t == nil {
+		return HintUndefined
+	}
 
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
