@@ -4,18 +4,23 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cayleygraph/cayley"
+	cayleyGraph "github.com/cayleygraph/cayley/graph"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	_ "github.com/cayleygraph/cayley/graph/kv/bolt" // required for cayley
+
 	"nimona.io/internal/api"
-	"nimona.io/internal/telemetry"
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object/aggregate"
+	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/object/exchange"
-	"nimona.io/pkg/storage"
 )
 
 var (
@@ -106,10 +111,30 @@ var daemonStartCmd = &cobra.Command{
 			}
 		}
 
-		dpr := storage.NewDiskStorage(config.Daemon.ObjectPath)
+		err = cayleyGraph.InitQuadStore("bolt", config.Daemon.ObjectPath, nil)
+		if err != nil {
+			return errors.Wrap(err, "could not init quad store")
+		}
+
+		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)
+		if err != nil {
+			return errors.Wrap(err, "could not init graph store")
+		}
+
+		dpr := graph.NewCayley(gs)
 
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
 		x, err := exchange.New(k, n, dpr, dis, li, bind)
+		if err != nil {
+			return err
+		}
+
+		dag, err := dag.New(dpr, x, nil)
+		if err != nil {
+			return err
+		}
+
+		agg, err := aggregate.New(dpr, x, dag)
 		if err != nil {
 			return err
 		}
@@ -119,7 +144,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		_ = telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
+		// _ = telemetry.NewTelemetry(x, k, "tcps:stats.nimona.io:21013")
 
 		if err := dis.AddProvider(hsr); err != nil {
 			return err
@@ -143,8 +168,16 @@ var daemonStartCmd = &cobra.Command{
 		}
 
 		apiServer := api.New(
-			k, n, x, li, dpr,
-			Version, Commit, Date,
+			k,
+			n,
+			x,
+			li,
+			dpr,
+			dag,
+			agg,
+			Version,
+			Commit,
+			Date,
 			viper.GetString("daemon.token"),
 		)
 
