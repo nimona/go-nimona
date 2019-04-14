@@ -13,7 +13,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
 
@@ -127,7 +126,8 @@ func (r *DHT) refresh() {
 	}
 }
 
-func (r *DHT) handleObject(o *object.Object) error {
+func (r *DHT) handleObject(e *exchange.Envelope) error {
+	o := e.Payload
 	switch o.GetType() {
 	case typePeerInfoRequest:
 		v := &PeerInfoRequest{}

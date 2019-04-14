@@ -2,22 +2,21 @@ package hyperspace
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
-	"nimona.io/pkg/storage"
 )
 
 func TestDiscoverer(t *testing.T) {
@@ -69,15 +68,16 @@ func TestDiscoverer(t *testing.T) {
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
-	_, err = x1.Handle("test/msg", func(o *object.Object) error {
+	_, err = x1.Handle("test/msg", func(e *exchange.Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t, eo1.GetSignerKey(), o.GetSignerKey())
+		assert.Equal(t, jp(eo1.GetSignerKey().ToMap()), jp(o.GetSignerKey().ToMap()))
 		assert.Equal(t, eo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
 		assert.NotNil(t, eo1.GetSignature())
 		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
+		assert.Equal(t, jp(eo1.GetSignature().ToMap()), jp(o.GetSignature().ToMap()))
 		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
 		w1ObjectHandled = true
 		wg.Done()
@@ -85,7 +85,8 @@ func TestDiscoverer(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	_, err = x2.Handle("tes**", func(o *object.Object) error {
+	_, err = x2.Handle("tes**", func(e *exchange.Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -121,16 +122,12 @@ func TestDiscoverer(t *testing.T) {
 
 func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 	discovery.Discoverer, *net.LocalInfo) {
-	tp, err := ioutil.TempDir("", "nimona-test-discoverer")
-	assert.NoError(t, err)
-
-	sp := filepath.Join(tp, "objects")
 
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
 	disc := discovery.NewDiscoverer()
-	ds := storage.NewDiskStorage(sp)
+	ds, err := graph.NewCayleyWithTempStore()
 	local, err := net.NewLocalInfo("host", pk)
 	assert.NoError(t, err)
 
@@ -146,4 +143,11 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 	assert.NoError(t, err)
 
 	return pk, n, x, disc, local
+}
+
+// jp is a lazy approach to comparing the mess that is unmarshaling json when
+// dealing with numbers
+func jp(v interface{}) string {
+	b, _ := json.MarshalIndent(v, "", "  ") // nolint
+	return string(b)
 }

@@ -10,7 +10,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
 
@@ -64,7 +63,8 @@ func (r *Discoverer) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error)
 	return eps, nil
 }
 
-func (r *Discoverer) handleObject(o *object.Object) error {
+func (r *Discoverer) handleObject(e *exchange.Envelope) error {
+	o := e.Payload
 	switch o.GetType() {
 	case typePeerInfoRequest:
 		v := &peer.PeerInfoRequest{}

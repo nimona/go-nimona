@@ -2,31 +2,28 @@ package exchange
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/storage"
 )
 
 func TestSendSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
-	k1, _, x1, l1 := newPeer(t, "", disc1)
-	k2, _, x2, l2 := newPeer(t, "", disc2)
+	k1, _, x1, _, l1 := newPeer(t, "", disc1)
+	k2, _, x2, _, l2 := newPeer(t, "", disc2)
 
 	disc1.Add(l2.GetPeerInfo())
 	disc2.Add(l1.GetPeerInfo())
@@ -52,23 +49,34 @@ func TestSendSuccess(t *testing.T) {
 	err := crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
-	_, err = x1.Handle("test/msg", func(o *object.Object) error {
+	// nolint: dupl
+	_, err = x1.Handle("test/msg", func(e *Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t, eo1.GetSignerKey(), o.GetSignerKey())
-		assert.Equal(t, eo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
+		assert.Equal(t,
+			jp(eo1.GetSignerKey().ToMap()),
+			jp(o.GetSignerKey().ToMap()),
+		)
+		assert.Equal(t,
+			eo1.GetSignerKey().HashBase58(),
+			o.GetSignerKey().HashBase58(),
+		)
 		assert.NotNil(t, eo1.GetSignature())
 		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
-		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
+		assert.Equal(t,
+			jp(eo1.GetSignature().ToMap()),
+			jp(o.GetSignature().ToMap()),
+		)
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
 	})
 	assert.NoError(t, err)
 
-	_, err = x2.Handle("tes**", func(o *object.Object) error {
+	_, err = x2.Handle("tes**", func(e *Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -100,37 +108,12 @@ func TestSendSuccess(t *testing.T) {
 	assert.True(t, w2ObjectHandled)
 }
 
-func TestGetLocalSuccess(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-
-	k1, _, x1, _ := newPeer(t, "", disc1)
-
-	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
-	}
-	eo1 := object.FromMap(em1)
-
-	err := crypto.Sign(eo1, k1)
-	assert.NoError(t, err)
-
-	eo1b, _ := object.Marshal(eo1)
-	err = x1.store.Store(eo1.HashBase58(), eo1b)
-	assert.NoError(t, err)
-
-	ctx := context.Background()
-
-	o1, err := x1.Get(ctx, eo1.HashBase58())
-	assert.NoError(t, err)
-	compareObjects(t, eo1, o1)
-}
-
-func TestGetSuccess(t *testing.T) {
+func TestSendWithResponseSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
-	k1, _, x1, l1 := newPeer(t, "", disc1)
-	_, _, x2, l2 := newPeer(t, "", disc2)
+	k1, _, x1, _, l1 := newPeer(t, "", disc1)
+	k2, _, x2, _, l2 := newPeer(t, "", disc2)
 
 	disc1.Add(l2.GetPeerInfo())
 	disc2.Add(l1.GetPeerInfo())
@@ -139,45 +122,101 @@ func TestGetSuccess(t *testing.T) {
 	err := disc2.AddProvider(mp2)
 	assert.NoError(t, err)
 
+	// send object with request id
 	em1 := map[string]interface{}{
 		"@ctx": "test/msg",
 		"body": "bar1",
 	}
 	eo1 := object.FromMap(em1)
-
 	err = crypto.Sign(eo1, k1)
 	assert.NoError(t, err)
 
-	eo1b, _ := object.Marshal(eo1)
-	err = x1.store.Store(eo1.HashBase58(), eo1b)
+	out := make(chan *Envelope, 1)
+
+	ctx, _ := context.WithDeadline(
+		context.Background(),
+		time.Now().Add(time.Second*3),
+	)
+	err = x2.Send(
+		ctx,
+		eo1,
+		l1.GetPeerInfo().Addresses[0],
+		WithResponse("foo", out),
+	)
 	assert.NoError(t, err)
 
-	mp2.On("Discover", &peer.PeerInfoRequest{
-		ContentIDs: []string{
-			eo1.HashBase58(),
-		},
-	}).Return([]*peer.PeerInfo{
-		l1.GetPeerInfo(),
-	}, nil)
+	// send object in response with the same request id
 
-	mp2.On("Discover", &peer.PeerInfoRequest{
-		SignerKeyHash: l1.GetPeerInfo().HashBase58(),
-	}).Return([]*peer.PeerInfo{
-		l1.GetPeerInfo(),
-	}, nil)
-
-	p1 := l1.GetPeerInfo()
-	p1.ContentIDs = []string{
-		eo1.HashBase58(),
+	em2 := map[string]interface{}{
+		"@ctx":          "test/msg",
+		"body":          "bar2",
+		ObjectRequestID: "foo",
 	}
+	eo2 := object.FromMap(em2)
+	err = crypto.Sign(eo2, k2)
+	assert.NoError(t, err)
+
+	err = x1.Send(
+		ctx,
+		eo2,
+		l2.GetPeerInfo().Addresses[0],
+	)
+	assert.NoError(t, err)
+
+	select {
+	case <-ctx.Done():
+		t.Log("did not receive response in time")
+		t.FailNow()
+	case o2r := <-out:
+		compareObjects(t, eo2, o2r.Payload)
+	}
+}
+
+func TestRequestSuccess(t *testing.T) {
+	disc1 := discovery.NewDiscoverer()
+	disc2 := discovery.NewDiscoverer()
+
+	_, _, x1, _, l1 := newPeer(t, "", disc1)
+	_, _, _, d2, l2 := newPeer(t, "", disc2)
 
 	disc1.Add(l2.GetPeerInfo())
-	disc1.Add(p1)
+	disc2.Add(l1.GetPeerInfo())
 
-	ctx := context.Background()
-	o1, err := x2.Get(ctx, eo1.HashBase58())
+	mp2 := &mocks.Provider{}
+	err := disc2.AddProvider(mp2)
 	assert.NoError(t, err)
-	compareObjects(t, eo1, o1)
+
+	// add an object to n2's store
+	em1 := map[string]interface{}{
+		"@ctx": "test/msg",
+		"body": "bar1",
+	}
+	eo1 := object.FromMap(em1)
+	err = d2.Put(eo1)
+	assert.NoError(t, err)
+
+	// request object, with req id
+	out := make(chan *Envelope, 1)
+	ctx, _ := context.WithDeadline(
+		context.Background(),
+		time.Now().Add(time.Second*3),
+	)
+	err = x1.Request(
+		ctx,
+		eo1.HashBase58(),
+		l2.GetPeerInfo().Addresses[0],
+		WithResponse("foo", out),
+	)
+	assert.NoError(t, err)
+
+	// check if we got back the expected obj
+	select {
+	case <-ctx.Done():
+		t.Log("did not receive response in time")
+		t.FailNow()
+	case o1r := <-out:
+		compareObjects(t, eo1, o1r.Payload)
+	}
 }
 
 func TestSendRelay(t *testing.T) {
@@ -187,17 +226,26 @@ func TestSendRelay(t *testing.T) {
 	disc3 := discovery.NewDiscoverer()
 
 	net.BindLocal = true
-	k0, _, _, l0 := newPeer(t, "", disc1)
+	k0, _, _, _, l0 := newPeer(t, "", disc1)
 
 	// disable binding to local addresses
 	net.BindLocal = false
-	k1, _, x1, l1 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc2)
-	k2, _, x2, l2 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc3)
+	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc2)
+	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc3)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), l0.GetPeerInfo().Addresses)
-	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), l1.GetPeerInfo().Addresses)
-	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), l2.GetPeerInfo().Addresses)
+	fmt.Println("k0:",
+		k0.GetPublicKey().HashBase58(),
+		l0.GetPeerInfo().Addresses,
+	)
+	fmt.Println("k1:",
+		k1.GetPublicKey().HashBase58(),
+		l1.GetPeerInfo().Addresses,
+	)
+	fmt.Println("k2:",
+		k2.GetPublicKey().HashBase58(),
+		l2.GetPeerInfo().Addresses,
+	)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
 	disc1.Add(l1.GetPeerInfo())
@@ -243,23 +291,34 @@ func TestSendRelay(t *testing.T) {
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
-	_, err = x1.Handle("test/msg", func(o *object.Object) error {
+	// nolint: dupl
+	_, err = x1.Handle("test/msg", func(e *Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
 		assert.NotNil(t, eo1.GetSignerKey())
 		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t, eo1.GetSignerKey(), o.GetSignerKey())
-		assert.Equal(t, eo1.GetSignerKey().HashBase58(), o.GetSignerKey().HashBase58())
+		assert.Equal(t,
+			jp(eo1.GetSignerKey().ToMap()),
+			jp(o.GetSignerKey().ToMap()),
+		)
+		assert.Equal(t,
+			eo1.GetSignerKey().HashBase58(),
+			o.GetSignerKey().HashBase58(),
+		)
 		assert.NotNil(t, eo1.GetSignature())
 		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t, eo1.GetSignature(), o.GetSignature())
-		assert.Equal(t, eo1.GetSignature().HashBase58(), o.GetSignature().HashBase58())
+		assert.Equal(t,
+			jp(eo1.GetSignature().ToMap()),
+			jp(o.GetSignature().ToMap()),
+		)
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
 	})
 	assert.NoError(t, err)
 
-	_, err = x2.Handle("tes**", func(o *object.Object) error {
+	_, err = x2.Handle("tes**", func(e *Envelope) error {
+		o := e.Payload
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
 		assert.Nil(t, eo2.GetSignature())
 		assert.Nil(t, o.GetSignature())
@@ -293,17 +352,22 @@ func TestSendRelay(t *testing.T) {
 	assert.True(t, w2ObjectHandled)
 }
 
-func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.Key, net.Network, *exchange, *net.LocalInfo) {
-	tp, err := ioutil.TempDir("", "nimona-test-net")
-	assert.NoError(t, err)
-
-	sp := filepath.Join(tp, "objects")
-
+func newPeer(
+	t *testing.T,
+	relayAddress string,
+	discover discovery.Discoverer,
+) (
+	*crypto.Key,
+	net.Network,
+	*exchange,
+	graph.Store,
+	*net.LocalInfo,
+) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	ds := storage.NewDiskStorage(sp)
+	ds, err := graph.NewCayleyWithTempStore()
+	assert.NoError(t, err)
 
 	relayAddresses := []string{}
 	if relayAddress != "" {
@@ -324,11 +388,18 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 	x, err := New(pk, n, ds, discover, li, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
 
-	return pk, n, x.(*exchange), li
+	return pk, n, x.(*exchange), ds, li
 }
 
 func compareObjects(t *testing.T, expected, actual *object.Object) {
 	for m := range expected.Members {
-		assert.Equal(t, expected.GetRaw(m), actual.GetRaw(m))
+		assert.Equal(t, jp(expected.GetRaw(m)), jp(actual.GetRaw(m)))
 	}
+}
+
+// jp is a lazy approach to comparing the mess that is unmarshaling json when
+// dealing with numbers
+func jp(v interface{}) string {
+	b, _ := json.MarshalIndent(v, "", "  ") // nolint
+	return string(b)
 }

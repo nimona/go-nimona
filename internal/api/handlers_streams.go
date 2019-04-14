@@ -14,6 +14,7 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/exchange"
 )
 
 func (api *API) HandleGetStreams(c *gin.Context) {
@@ -128,8 +129,8 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 			}
 		}
 	}()
-	hr, err := api.exchange.Handle(pattern, func(o *object.Object) error {
-		incoming <- o
+	hr, err := api.exchange.Handle(pattern, func(e *exchange.Envelope) error {
+		incoming <- e.Payload
 		return nil
 	})
 	if err != nil {
