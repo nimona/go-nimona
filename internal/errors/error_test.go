@@ -32,4 +32,6 @@ func TestWrap(t *testing.T) {
 
 	err = stderrors.New("d")
 	assert.Nil(t, errors.Unwrap(err))
+
+	assert.False(t, errors.CausedBy(nil, errors.New("something")))
 }

@@ -1,8 +1,9 @@
 package errors
 
 type (
-	// Error augments the error interface with helpers for our wrapped errors
-	Error interface {
+	Error string
+	// iError augments the error interface with helpers for our wrapped errors
+	iError interface {
 		error
 		Cause() error
 		Latest() error
@@ -20,12 +21,17 @@ type (
 	}
 )
 
-// Error prints the message error, appended with the underlying cause
+// Error prints the error's message
+func (e Error) Error() string {
+	return string(e)
+}
+
+// iError prints the message error, appended with the underlying cause
 func (e fError) Error() string {
 	return e.message
 }
 
-// Error prints the message error, appended with the underlying cause
+// iError prints the message error, appended with the underlying cause
 func (e wError) Error() string {
 	if e.cause == nil {
 		return e.error.Error()
@@ -70,6 +76,9 @@ func Unwrap(err error) error {
 
 // CausedBy checks if an error was caused by another
 func CausedBy(err, cause error) bool {
+	if err == nil {
+		return false
+	}
 	if err == cause {
 		return true
 	}
