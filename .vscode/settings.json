@@ -5,7 +5,11 @@
     "go.coverOnSingleTest": true,
     "go.coverOnTestPackage": true,
     "go.formatTool": "goimports",
-    "go.lintTool": "golangci-lint",
+    "go.lintTool":"golangci-lint",
+    "go.lintOnSave": "package",
+    "go.lintFlags": [
+      "--fast"
+    ],
     "go.vetOnSave": "off",
     "go.testFlags": [
         "-v",
