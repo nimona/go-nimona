@@ -63,7 +63,11 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 
 	l.addressesLock.RLock()
 	// TODO Check all the transports for addresses
-	p.Addresses = l.addresses
+	addresses := make([]string, len(l.addresses))
+	for i, a := range l.addresses {
+		addresses[i] = a
+	}
+	p.Addresses = addresses
 	if l.mandate != nil {
 		p.AuthorityKey = l.mandate.Signer
 		p.Mandate = l.mandate
