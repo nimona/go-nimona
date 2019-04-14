@@ -131,14 +131,16 @@ func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
 
 	disc := discovery.NewDiscoverer()
 	ds := storage.NewDiskStorage(sp)
-	local, err := net.NewLocalInfo(pk)
+	local, err := net.NewLocalInfo("host", pk)
 	assert.NoError(t, err)
 
-	n, err := net.New("host", disc, local, []string{})
+	n, err := net.New(disc, local)
 	assert.NoError(t, err)
 
+	tcp := net.NewTCPTransport(local, []string{})
 	hsm := handshake.New(local, disc)
 	n.AddMiddleware(hsm.Handle())
+	n.AddTransport("tcps", tcp)
 
 	x, err := exchange.New(pk, n, ds, disc, local, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
