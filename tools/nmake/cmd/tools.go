@@ -14,6 +14,8 @@ var toolsCmd = &cobra.Command{
 		env := []string{}
 
 		tools := []string{
+			"github.com/cheekybits/genny",
+			"github.com/golangci/golangci-lint/cmd/golangci-lint",
 			"github.com/goreleaser/goreleaser",
 			"github.com/golangci/golangci-lint/cmd/golangci-lint",
 			"github.com/shurcooL/vfsgen/cmd/vfsgendev",
@@ -23,7 +25,16 @@ var toolsCmd = &cobra.Command{
 		info("Installing tools")
 		for _, tool := range tools {
 			extraInfo("* %s", tool)
-			if err := execPipe(env, "go", []string{"install", tool}, os.Stdout, os.Stderr); err != nil {
+			if err := execPipe(
+				env,
+				"go",
+				[]string{
+					"install",
+					tool,
+				},
+				os.Stdout,
+				os.Stderr,
+			); err != nil {
 				return err
 			}
 		}
