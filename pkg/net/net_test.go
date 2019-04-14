@@ -133,9 +133,12 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
 
-	localInfo, err := NewLocalInfo(pk)
-	n, err := New("", discover, localInfo, relayAddresses)
+	localInfo, err := NewLocalInfo("", pk)
+	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
+
+	tcpTr := NewTCPTransport(localInfo, relayAddresses)
+	n.AddTransport("tcps", tcpTr)
 
 	return pk, n.(*network), localInfo
 }
@@ -146,6 +149,6 @@ type fakeMid struct {
 func (fm *fakeMid) Handle() MiddlewareHandler {
 	return func(ctx context.Context,
 		conn *Connection) (*Connection, error) {
-		return nil, errors.New("what?")
+		return conn, errors.New("what?")
 	}
 }

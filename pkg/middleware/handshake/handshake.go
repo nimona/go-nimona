@@ -116,7 +116,8 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	sao := synAck.ToObject()
 	if err := crypto.Sign(sao, hs.local.GetPeerKey()); err != nil {
-		log.DefaultLogger.Warn("could not sign for syn ack object", zap.Error(err))
+		log.DefaultLogger.Warn(
+			"could not sign for syn ack object", zap.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
