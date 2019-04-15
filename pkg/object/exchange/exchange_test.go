@@ -310,14 +310,16 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
 
-	li, err := net.NewLocalInfo(pk)
+	li, err := net.NewLocalInfo("", pk)
 	assert.NoError(t, err)
 
-	n, err := net.New("", discover, li, relayAddresses)
+	n, err := net.New(discover, li)
 	assert.NoError(t, err)
 
 	hsm := handshake.New(li, discover)
+	tcp := net.NewTCPTransport(li, relayAddresses)
 	n.AddMiddleware(hsm.Handle())
+	n.AddTransport("tcps", tcp)
 
 	x, err := New(pk, n, ds, discover, li, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)

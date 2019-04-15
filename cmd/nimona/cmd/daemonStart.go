@@ -79,20 +79,22 @@ var daemonStartCmd = &cobra.Command{
 
 		k := config.Daemon.PeerKey
 
-		li, err := net.NewLocalInfo(k)
+		li, err := net.NewLocalInfo(
+			viper.GetString("daemon.announce_hostname"), k)
 		if err != nil {
 			return err
 		}
 
-		n, err := net.New(
-			viper.GetString("daemon.announce_hostname"), dis, li, relayAddresses)
+		n, err := net.New(dis, li)
 		if err != nil {
 			return err
 		}
 
+		tcp := net.NewTCPTransport(li, relayAddresses)
 		hsm := handshake.New(li, dis)
 
 		n.AddMiddleware(hsm.Handle())
+		n.AddTransport("tcps", tcp)
 
 		ik := config.Daemon.IdentityKey
 		if ik != nil {

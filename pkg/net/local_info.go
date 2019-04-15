@@ -9,13 +9,14 @@ import (
 )
 
 type LocalInfo struct {
+	hostname      string
 	key           *crypto.Key
 	mandate       *crypto.Mandate
 	addressesLock sync.RWMutex
 	addresses     []string
 }
 
-func NewLocalInfo(key *crypto.Key) (
+func NewLocalInfo(hostname string, key *crypto.Key) (
 	*LocalInfo, error) {
 	if key == nil {
 		return nil, ErrMissingKey
@@ -26,6 +27,7 @@ func NewLocalInfo(key *crypto.Key) (
 	}
 
 	return &LocalInfo{
+		hostname:  hostname,
 		key:       key,
 		addresses: []string{},
 	}, nil
@@ -74,4 +76,8 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	}
 	p.FromObject(o)
 	return p
+}
+
+func (l *LocalInfo) GetHostname() string {
+	return l.hostname
 }

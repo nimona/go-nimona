@@ -2,21 +2,15 @@ package net
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/tls"
 	"errors"
-	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
-	igd "github.com/emersion/go-upnp-igd"
 	"go.uber.org/zap"
 
 	"nimona.io/internal/log"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net/peer"
 )
@@ -35,30 +29,28 @@ type Network interface {
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 
 	AddMiddleware(handler MiddlewareHandler)
+	AddTransport(tag string, tsp Transport)
 }
 
 // New creates a new p2p network using an address book
-func New(hostname string, discover discovery.Discoverer, local *LocalInfo,
-	relayAddresses []string) (Network, error) {
+func New(discover discovery.Discoverer, local *LocalInfo) (Network, error) {
 
 	return &network{
-		discoverer:     discover,
-		hostname:       hostname,
-		relayAddresses: relayAddresses,
-		middleware:     []MiddlewareHandler{},
-		local:          local,
-		midLock:        &sync.RWMutex{},
+		discoverer: discover,
+		middleware: []MiddlewareHandler{},
+		local:      local,
+		midLock:    &sync.RWMutex{},
+		transports: &sync.Map{},
 	}, nil
 }
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	discoverer     discovery.Discoverer
-	hostname       string
-	relayAddresses []string
-	local          *LocalInfo
-	midLock        *sync.RWMutex
-	middleware     []MiddlewareHandler
+	discoverer discovery.Discoverer
+	local      *LocalInfo
+	midLock    *sync.RWMutex
+	transports *sync.Map
+	middleware []MiddlewareHandler
 }
 
 func (n *network) AddMiddleware(handler MiddlewareHandler) {
@@ -67,120 +59,94 @@ func (n *network) AddMiddleware(handler MiddlewareHandler) {
 	n.middleware = append(n.middleware, handler)
 }
 
+func (n *network) AddTransport(tag string, tsp Transport) {
+	n.transports.Store(tag, tsp)
+}
+
 // Dial to a peer and return a net.Conn or error
 func (n *network) Dial(ctx context.Context, address string) (
 	*Connection, error) {
 	logger := log.Logger(ctx)
 
+	var conn *Connection
+	var err error
+
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		return n.dialPeer(ctx, address)
-	case "tcps":
-		return n.dialTCP(ctx, address)
+		conn, err = n.dialPeer(ctx, address)
 	default:
-		logger.Info("not sure how to dial",
-			zap.String("address", address),
-			zap.String("type", addressType))
+		t, ok := n.transports.Load(addressType)
+		if !ok {
+			logger.Info("not sure how to dial",
+				zap.String("address", address),
+				zap.String("type", addressType))
+			return nil, ErrNoAddresses
+		}
+
+		trsp := t.(Transport)
+
+		conn, err = trsp.Dial(ctx, address)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, mh := range n.middleware {
+			conn, err = mh(ctx, conn)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, ErrNoAddresses
+	return conn, nil
 }
 
 // Listen on an address
 // TODO do we need to return a listener?
-func (n *network) Listen(ctx context.Context, address string) (chan *Connection, error) {
-	logger := log.Logger(ctx).Named("network")
-	cert, err := crypto.GenerateCertificate(n.local.GetPeerKey())
-	if err != nil {
-		return nil, err
-	}
-
-	now := time.Now()
-	config := tls.Config{
-		Certificates: []tls.Certificate{*cert},
-	}
-	config.NextProtos = []string{"nimona/1"} // TODO(geoah) is this of any actual use?
-	config.Time = func() time.Time { return now }
-	config.Rand = rand.Reader
-	tcpListener, err := tls.Listen("tcp", address, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	port := tcpListener.Addr().(*net.TCPAddr).Port
-	logger.Info("Listening and service nimona", zap.Int("port", port))
-	addresses := GetAddresses(tcpListener)
-	devices := make(chan igd.Device, 10)
-
-	if n.hostname != "" {
-		addresses = append(addresses, fmtAddress(n.hostname, port))
-	}
-
-	if UseUPNP {
-		logger.Info("Trying to find external IP and open port")
-		go func() {
-			if err := igd.Discover(devices, 2*time.Second); err != nil {
-				logger.Error("could not discover devices", zap.Error(err))
-			}
-		}()
-		for device := range devices {
-			externalAddress, err := device.GetExternalIPAddress()
-			if err != nil {
-				logger.Error("could not get external ip", zap.Error(err))
-				continue
-			}
-			desc := "nimona"
-			ttl := time.Hour * 24 * 365
-			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
-				logger.Error("could not add port mapping", zap.Error(err))
-			} else {
-				addresses = append(addresses, fmtAddress(externalAddress.String(), port))
-			}
-		}
-	}
-
-	logger.Info("Started listening", zap.Strings("addresses", addresses))
-	n.local.AddAddress(addresses...)
-	n.local.AddAddress(n.relayAddresses...)
+func (n *network) Listen(ctx context.Context, address string) (
+	chan *Connection, error) {
 
 	cconn := make(chan *Connection, 10)
-	go func() {
 
-		for {
-			tcpConn, err := tcpListener.Accept()
-			if err != nil {
-				log.DefaultLogger.Warn(
-					"could not accept connection", zap.Error(err))
-				continue
-			}
+	n.transports.Range(func(key, value interface{}) bool {
+		tsp := value.(Transport)
+		chConn, err := tsp.Listen(ctx, address)
+		if err != nil {
+			// TODO log
+			return true
+		}
+		go func() {
+			for {
+				conn := <-chConn
+				n.midLock.RLock()
+				failed := false
 
-			conn := &Connection{
-				Conn:          tcpConn,
-				RemotePeerKey: nil,
-				IsIncoming:    true,
-			}
+				for _, mh := range n.middleware {
+					conn, err = mh(ctx, conn)
+					if err != nil {
+						log.DefaultLogger.Error(
+							"middleware failure", zap.Error((err)))
 
-			n.midLock.RLock()
-			failed := false
-			for _, mh := range n.middleware {
-				conn, err = mh(ctx, conn)
-				if err != nil {
-					log.DefaultLogger.Error(
-						"middleware failure", zap.Error((err)))
+						if conn != nil {
+							conn.Conn.Close()
+						}
+						failed = true
+						break
+					}
+				}
+				n.midLock.RUnlock()
 
-					tcpConn.Close()
-					failed = true
-					break
+				if !failed {
+					cconn <- conn
 				}
 			}
-			n.midLock.RUnlock()
-
-			if !failed {
-				cconn <- conn
-			}
-		}
-	}()
+		}()
+		return true
+	})
 
 	return cconn, nil
 }
@@ -216,39 +182,4 @@ func (n *network) dialPeer(ctx context.Context, address string) (
 
 	return nil, ErrAllAddressesFailed
 
-}
-
-func (n *network) dialTCP(ctx context.Context, address string) (
-	*Connection, error) {
-
-	// find dialer
-	// execute middleware
-	config := tls.Config{
-		InsecureSkipVerify: true,
-	}
-	addr := strings.Replace(address, "tcps:", "", 1)
-	dialer := net.Dialer{Timeout: time.Second}
-
-	tcpConn, err := tls.DialWithDialer(&dialer, "tcp", addr, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	if tcpConn == nil {
-		return nil, ErrAllAddressesFailed
-	}
-
-	conn := &Connection{
-		Conn:          tcpConn,
-		RemotePeerKey: nil, // we don't really know who the other side is
-	}
-
-	for _, mh := range n.middleware {
-		conn, err = mh(ctx, conn)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return conn, nil
 }
