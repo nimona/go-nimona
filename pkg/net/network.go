@@ -91,16 +91,15 @@ func (n *network) Dial(ctx context.Context, address string) (
 			return nil, err
 		}
 
+		for _, mh := range n.middleware {
+			conn, err = mh(ctx, conn)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	if err != nil {
 		return nil, err
-	}
-
-	for _, mh := range n.middleware {
-		conn, err = mh(ctx, conn)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return conn, nil
@@ -118,32 +117,35 @@ func (n *network) Listen(ctx context.Context, address string) (
 		chConn, err := tsp.Listen(ctx, address)
 		if err != nil {
 			// TODO log
+			return true
 		}
 		go func() {
-			conn := <-chConn
-			n.midLock.RLock()
-			failed := false
+			for {
+				conn := <-chConn
+				n.midLock.RLock()
+				failed := false
 
-			for _, mh := range n.middleware {
-				conn, err = mh(ctx, conn)
-				if err != nil {
-					log.DefaultLogger.Error(
-						"middleware failure", zap.Error((err)))
+				for _, mh := range n.middleware {
+					conn, err = mh(ctx, conn)
+					if err != nil {
+						log.DefaultLogger.Error(
+							"middleware failure", zap.Error((err)))
 
-					if conn != nil {
-						conn.Conn.Close()
+						if conn != nil {
+							conn.Conn.Close()
+						}
+						failed = true
+						break
 					}
-					failed = true
-					break
+				}
+				n.midLock.RUnlock()
+
+				if !failed {
+					cconn <- conn
 				}
 			}
-			n.midLock.RUnlock()
-
-			if !failed {
-				cconn <- conn
-			}
 		}()
-		return false
+		return true
 	})
 
 	return cconn, nil
