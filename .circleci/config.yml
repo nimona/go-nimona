@@ -1,7 +1,7 @@
 version: 2
 base: &base
   docker:
-    - image: circleci/golang:1.11
+    - image: circleci/golang:1.12
   working_directory: /go/src/nimona.io/go
 steps:
   - &checkout
