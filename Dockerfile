@@ -1,4 +1,4 @@
-FROM golang:1.11.4 AS builder
+FROM golang:1.12.4 AS builder
 
 WORKDIR /src/nimona.io
 
@@ -13,7 +13,7 @@ RUN cp -r ./bin /bin
 
 ###
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 COPY --from=builder /bin/* /
 
