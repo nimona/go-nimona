@@ -174,7 +174,11 @@ func (s *Cayley) Graph(hash string) ([]*object.Object, error) {
 		os = append(os, o)
 	}
 
-	return os, err
+	if len(os) == 0 {
+		return nil, ErrNotFound
+	}
+
+	return os, nil
 }
 
 // Get returns an object given its hash
