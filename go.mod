@@ -19,7 +19,7 @@ require (
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/gobwas/glob v0.2.3
-	github.com/golangci/golangci-lint v1.16.0
+	github.com/golangci/golangci-lint v1.16.1-0.20190402065613-de1d1ad903cd
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
 	github.com/gonum/internal v0.0.0-20181124074243-f884aa714029 // indirect
 	github.com/goreleaser/goreleaser v0.106.0
@@ -31,8 +31,6 @@ require (
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mr-tron/base58 v1.1.1
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0
@@ -53,13 +51,9 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190419101437-9f3314589c9a // indirect
 	golang.org/x/tools v0.0.0-20190419101437-4796d4bd3df0
 	gonum.org/v1/gonum v0.0.0-20181121035319-3f7ecaa7e8ca
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0 // indirect
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.2.2
 )
 
-replace (
-	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
-	github.com/ugorji/go/codec v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
-)
+replace github.com/ugorji/go/codec v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
