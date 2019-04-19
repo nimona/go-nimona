@@ -47,3 +47,18 @@ tools:
 .PHONY: tools-and-lint
 tools-and-lint: tools
 	-@$(NMAKE) lint
+
+.PHONY: local-bootstrap
+local-bootstrap: deps
+	-go run nimona.io/cmd/nimona daemon init --data-dir=.local/bootstrap
+	-go run nimona.io/cmd/nimona daemon start start --data-dir=.local/bootstrap --port=8010 --api-port=8810 --bootstraps=
+
+.PHONY: local-peer-one
+local-peer-one: deps
+	-go run nimona.io/cmd/nimona daemon init --data-dir=.local/peer-one
+	-go run nimona.io/cmd/nimona daemon start start --data-dir=.local/peer-one --port=8001 --api-port=8801 --bootstraps=tcps:localhost:8010
+
+.PHONY: local-peer-two
+local-peer-two: deps
+	-go run nimona.io/cmd/nimona daemon init --data-dir=.local/peer-two
+	-go run nimona.io/cmd/nimona daemon start start --data-dir=.local/peer-two --port=8002 --api-port=8802 --bootstraps=tcps:localhost:8010
