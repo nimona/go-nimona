@@ -77,8 +77,9 @@ type (
 	}
 	// Options (mostly) for Send()
 	Options struct {
-		RequestID string
-		Response  chan *Envelope
+		ResponseID string
+		RequestID  string
+		Response   chan *Envelope
 	}
 	Option      func(*Options)
 	sendRequest struct {
@@ -281,6 +282,7 @@ func (w *exchange) process(
 		zap.String("local_peer", w.key.GetPublicKey().HashBase58()),
 		zap.String("remote_peer", conn.RemotePeerKey.HashBase58()),
 		zap.String("request_id", reqID),
+		zap.String("object.type", o.GetType()),
 	)
 
 	logger.Info("processing object")
@@ -343,9 +345,9 @@ func (w *exchange) process(
 	}
 
 	// check if this is in response to a Send() WithResponse()
-	if rid := o.GetRaw(ObjectRequestID); rid != nil {
+	if reqID != "" {
 		logger.Info("got object with request id, returning to req channel")
-		if rs, ok := w.sendRequests.Get(rid.(string)); ok {
+		if rs, ok := w.sendRequests.Get(reqID); ok {
 			rs.out <- &Envelope{
 				Sender:  conn.RemotePeerKey,
 				Payload: o,
@@ -354,8 +356,8 @@ func (w *exchange) process(
 	}
 
 	ct := o.GetType()
-
 	w.handlers.Range(func(_, v interface{}) bool {
+		logger.Debug("publishing object to handler")
 		h := v.(*handler)
 		if !h.contentType.Match(ct) {
 			return true
@@ -397,6 +399,13 @@ func WithResponse(reqID string, out chan *Envelope) Option {
 	}
 }
 
+// AsResponse will send the object as a response.
+func AsResponse(reqID string) Option {
+	return func(opt *Options) {
+		opt.ResponseID = reqID
+	}
+}
+
 // Send an object to an address
 func (w *exchange) Send(
 	ctx context.Context,
@@ -409,6 +418,10 @@ func (w *exchange) Send(
 	opts := &Options{}
 	for _, option := range options {
 		option(opts)
+	}
+
+	if opts.ResponseID != "" {
+		o.SetRaw(ObjectRequestID, opts.ResponseID)
 	}
 
 	if opts.RequestID != "" {
