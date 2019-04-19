@@ -3,7 +3,6 @@ package dag
 import (
 	"go.uber.org/zap"
 	"nimona.io/internal/context"
-	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
@@ -32,16 +31,18 @@ func (m *manager) Sync(
 
 	// send the request to all addresses
 	for _, address := range addresses {
+		logger.Debug("sending request",
+			zap.String("address", address),
+		)
 		if err := m.exchange.Send(
 			ctx,
 			req.ToObject(),
 			address,
 			exchange.WithResponse("", responses),
 		); err != nil {
-			// TODO log error
-			return nil, errors.Wrap(
-				errors.Error("could not send request to peer"),
-				err,
+			// TODO log error, should return if they all fail
+			logger.Debug("could not send request",
+				zap.String("address", address),
 			)
 		}
 	}
@@ -65,6 +66,11 @@ func (m *manager) Sync(
 				return
 
 			case res := <-responses:
+				logger := logger.With(
+					zap.String("object._hash", res.Payload.HashBase58()),
+					zap.String("object.type", res.Payload.GetType()),
+				)
+
 				if res.Payload.GetType() != ObjectGraphResponseType {
 					continue
 				}

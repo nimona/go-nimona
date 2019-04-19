@@ -11,6 +11,7 @@ import (
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/object/exchange"
@@ -227,7 +228,13 @@ func TestSync(t *testing.T) {
 		handler = args[1].(func(*exchange.Envelope) error)
 	}).Return(nil, nil)
 
-	m, err := dag.New(os, x, nil)
+	pk, err := crypto.GenerateKey()
+	assert.NoError(t, err)
+
+	li, err := net.NewLocalInfo("", pk)
+	assert.NoError(t, err)
+
+	m, err := dag.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotNil(t, handler)
