@@ -11,6 +11,8 @@ import (
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
@@ -313,7 +315,13 @@ func Test_manager_Put(t *testing.T) {
 	os, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	d, err := dag.New(os, x, nil)
+	pk, err := crypto.GenerateKey()
+	assert.NoError(t, err)
+
+	li, err := net.NewLocalInfo("", pk)
+	assert.NoError(t, err)
+
+	d, err := dag.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, d)
 
@@ -347,7 +355,13 @@ func TestAppend(t *testing.T) {
 	os, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	d, err := dag.New(os, x, nil)
+	pk, err := crypto.GenerateKey()
+	assert.NoError(t, err)
+
+	li, err := net.NewLocalInfo("", pk)
+	assert.NoError(t, err)
+
+	d, err := dag.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, d)
 

@@ -10,6 +10,7 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
@@ -44,6 +45,7 @@ type (
 		store     graph.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
+		localInfo *net.LocalInfo
 		// backlog  backlog.Backlog
 	}
 	// options for Manager.Get()
@@ -59,13 +61,20 @@ func New(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
+	localInfo *net.LocalInfo,
 	// bc backlog.Backlog,
 ) (
 	Manager,
 	error,
 ) {
 	ctx := context.Background()
-	return NewWithContext(ctx, store, exchange, discovery)
+	return NewWithContext(
+		ctx,
+		store,
+		exchange,
+		discovery,
+		localInfo,
+	)
 }
 
 // NewWithContext constructs a new manager given an object store and exchange
@@ -74,6 +83,7 @@ func NewWithContext(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
+	localInfo *net.LocalInfo,
 	// bc backlog.Backlog,
 ) (
 	Manager,
@@ -84,18 +94,34 @@ func NewWithContext(
 		store:     store,
 		exchange:  exchange,
 		discovery: discovery,
+		localInfo: localInfo,
 		// backlog:  bc,
 	}
 	if _, err := m.exchange.Handle("**", m.Process); err != nil {
 		return nil, err
 	}
+	// add all local root objects to our local peer info
+	// TODO should we check if these can be published?
+	heads, err := m.store.Heads()
+	if err != nil {
+		return nil, err
+	}
+	rootObjectHashes := make([]string, len(heads))
+	for i, rootObject := range heads {
+		rootObjectHashes[i] = rootObject.HashBase58()
+	}
+	m.localInfo.AddContentHash(rootObjectHashes...)
 	return m, nil
 }
 
 // Process an object
 func (m *manager) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.Logger(ctx).With(
+		zap.String("object._hash", e.Payload.HashBase58()),
+		zap.String("object.type", e.Payload.GetType()),
+	)
+	logger.Debug("handling object")
 
 	o := e.Payload
 	switch o.GetType() {
@@ -104,8 +130,10 @@ func (m *manager) Process(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
+		reqID := o.GetRaw(exchange.ObjectRequestID).(string)
 		if err := m.handleObjectGraphRequest(
 			ctx,
+			reqID,
 			e.Sender,
 			v,
 		); err != nil {
@@ -137,7 +165,10 @@ func IsComplete(cs []*object.Object) bool {
 // Put stores a given object
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
 func (m *manager) Put(vs ...*object.Object) error {
-	for _, o := range vs {
+	hashes := make([]string, len(vs))
+	for i, o := range vs {
+		hashes[i] = o.HashBase58()
+
 		if err := m.store.Put(o); err != nil {
 			return err
 		}
@@ -156,6 +187,8 @@ func (m *manager) Put(vs ...*object.Object) error {
 
 		m.Publish(o.HashBase58())
 	}
+
+	m.localInfo.AddContentHash(hashes...)
 
 	return nil
 }
@@ -185,6 +218,7 @@ func (m *manager) Get(
 
 func (m *manager) handleObjectGraphRequest(
 	ctx context.Context,
+	reqID string,
 	sender *crypto.Key,
 	req *ObjectGraphRequest,
 ) error {
@@ -209,6 +243,7 @@ func (m *manager) handleObjectGraphRequest(
 		ctx,
 		res.ToObject(),
 		"peer:"+sender.HashBase58(),
+		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(
 			"dag/manager.handleObjectGraphRequest could not send response",
