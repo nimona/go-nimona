@@ -3,7 +3,6 @@ package net
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -83,13 +82,6 @@ func Read(conn *Connection) (*object.Object, error) {
 		if err := crypto.Verify(o); err != nil {
 			return nil, err
 		}
-	} else {
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("----- BLOCK NOT SIGNED ---------------------------------")
-		fmt.Println("--------------------------------------------------------")
-		fmt.Println("-----", o.GetType())
-		fmt.Println("-----", o)
-		fmt.Println("--------------------------------------------------------")
 	}
 
 	SendObjectEvent(
