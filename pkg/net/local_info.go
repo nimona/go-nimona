@@ -14,6 +14,10 @@ type LocalInfo struct {
 	mandate       *crypto.Mandate
 	addressesLock sync.RWMutex
 	addresses     []string
+
+	// TODO replace with generated string-bool syncmap
+	contentHashesLock sync.RWMutex
+	contentHashes     map[string]bool // map[hash]publishable
 }
 
 func NewLocalInfo(hostname string, key *crypto.Key) (
@@ -27,9 +31,10 @@ func NewLocalInfo(hostname string, key *crypto.Key) (
 	}
 
 	return &LocalInfo{
-		hostname:  hostname,
-		key:       key,
-		addresses: []string{},
+		hostname:      hostname,
+		key:           key,
+		addresses:     []string{},
+		contentHashes: map[string]bool{},
 	}, nil
 }
 
@@ -48,6 +53,24 @@ func (l *LocalInfo) AddAddress(addrs ...string) {
 	}
 	l.addresses = append(l.addresses, addrs...)
 	l.addressesLock.Unlock()
+}
+
+// AddContentHash that should be published with the peer info
+func (l *LocalInfo) AddContentHash(hashes ...string) {
+	l.contentHashesLock.Lock()
+	for _, hash := range hashes {
+		l.contentHashes[hash] = true
+	}
+	l.contentHashesLock.Unlock()
+}
+
+// RemoveContentHash from the peer info
+func (l *LocalInfo) RemoveContentHash(hashes ...string) {
+	l.contentHashesLock.Lock()
+	for _, hash := range hashes {
+		delete(l.contentHashes, hash)
+	}
+	l.contentHashesLock.Unlock()
 }
 
 func (l *LocalInfo) GetPeerKey() *crypto.Key {
@@ -73,6 +96,17 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 		p.Mandate = l.mandate
 	}
 	l.addressesLock.RUnlock()
+
+	l.contentHashesLock.RLock()
+	hashes := []string{}
+	for hash, publishable := range l.contentHashes {
+		if !publishable {
+			continue
+		}
+		hashes = append(hashes, hash)
+	}
+	p.ContentIDs = hashes
+	l.contentHashesLock.RUnlock()
 
 	o := p.ToObject()
 	if err := crypto.Sign(o, l.key); err != nil {
