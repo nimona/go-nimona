@@ -97,8 +97,20 @@ func New(
 
 	objectsEnd := router.Group("/api/v1/objects")
 	objectsEnd.GET("/", api.HandleGetObjects)
-	objectsEnd.GET("/:objectID", api.HandleGetObject)
+	objectsEnd.GET("/:objectHash", api.HandleGetObject)
 	objectsEnd.POST("/", api.HandlePostObject)
+
+	graphsEnd := router.Group("/api/v1/graphs")
+	graphsEnd.GET("/", api.HandleGetGraphs)
+	graphsEnd.POST("/", api.HandlePostGraphs)
+	graphsEnd.GET("/:rootObjectHash", api.HandleGetGraph)
+	graphsEnd.POST("/:rootObjectHash", api.HandlePostGraph)
+
+	aggregatesEnd := router.Group("/api/v1/aggregates")
+	aggregatesEnd.GET("/", api.HandleGetAggregates)
+	aggregatesEnd.POST("/", api.HandlePostAggregates)
+	aggregatesEnd.GET("/:rootObjectHash", api.HandleGetAggregate)
+	aggregatesEnd.POST("/:rootObjectHash", api.HandlePostAggregate)
 
 	streamsEnd := router.Group("/api/v1/streams")
 	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
@@ -147,32 +159,6 @@ func (api *API) Stop(c *gin.Context) {
 
 func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	m := o.ToPlainMap()
-
 	m["_hash"] = o.HashBase58()
-
-	if signer := o.GetSignerKey(); signer != nil {
-		m["_signer"] = o.GetSignerKey().HashBase58()
-		if api.localKey == signer.HashBase58() {
-			m["_direction"] = "outgoing"
-		} else {
-			m["_direction"] = "incoming"
-		}
-	}
-
-	if mandateObj := o.GetMandate(); mandateObj != nil {
-		mandate := &crypto.Mandate{}
-		if err := mandate.FromObject(mandateObj); err == nil {
-			m["_authority"] = "identity:" + mandate.Signer.HashBase58()
-		}
-	}
-
-	recipients := []string{}
-	if op := o.GetPolicy(); op != nil {
-		p := &object.Policy{}
-		p.FromObject(op)
-		recipients = append(recipients, p.Subjects...)
-	}
-	m["_recipients"] = recipients
-
 	return m
 }
