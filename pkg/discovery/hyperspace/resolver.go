@@ -50,20 +50,17 @@ func NewDiscoverer(key *crypto.Key, network net.Network, exc exchange.Exchange,
 // Discover finds and returns the closest peers to a query
 func (r *Discoverer) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
 	ctx := context.Background()
-	eps := r.store.FindExact(q)
-	if len(eps) > 0 {
-		return eps, nil
-	}
 	go r.LookupPeerInfo(ctx, q)
 	// TODO(geoah) use dht-like queries instead of a delay
 	time.Sleep(time.Second)
 	// cps := r.store.FindClosest(q)
 	// ps := append(eps, cps...)
-	eps = r.store.FindExact(q)
+	eps := r.store.FindExact(q)
 	return eps, nil
 }
 
 func (r *Discoverer) handleObject(e *exchange.Envelope) error {
+	s := e.Sender
 	o := e.Payload
 	switch o.GetType() {
 	case typePeerInfoRequest:
@@ -71,7 +68,7 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeerInfoRequest(v)
+		r.handlePeerInfoRequest(s, v)
 	case typePeerInfo:
 		v := &peer.PeerInfo{}
 		if err := v.FromObject(o); err != nil {
@@ -83,17 +80,23 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 }
 
 func (r *Discoverer) handlePeerInfo(p *peer.PeerInfo) {
+	logger := log.DefaultLogger.With(
+		zap.String("method", "resolver/handlePeerInfo"),
+		zap.String("peerinfo._hash", p.HashBase58()),
+		zap.Strings("peerinfo.addresses", p.Addresses),
+	)
+	logger.Debug("adding peerinfo to store")
 	r.store.Add(p)
 }
 
-func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest) {
+func (r *Discoverer) handlePeerInfoRequest(s *crypto.Key, q *peer.PeerInfoRequest) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	eps := r.store.FindExact(q)
 	cps := r.store.FindClosest(q)
 	ps := append(eps, cps...)
 	for _, p := range ps {
-		addr := "peer:" + q.RequesterSignerKey.HashBase58()
+		addr := "peer:" + s.HashBase58()
 		if err := r.exchange.Send(ctx, p.ToObject(), addr); err != nil {
 			logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		}
@@ -102,11 +105,13 @@ func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest) {
 
 // LookupPeerInfo does a network lookup given a query
 func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest) error {
+	logger := log.DefaultLogger.With(
+		zap.String("method", "resolver/handlePeerInfo"),
+		zap.Strings("query.contentIDs", q.ContentIDs),
+	)
 	o := q.ToObject()
-	if err := crypto.Sign(o, r.key); err != nil {
-		return err
-	}
 	ps := r.store.FindClosest(q)
+	logger.Debug("found closest peers", zap.Int("n", len(ps)))
 	for _, p := range ps {
 		r.exchange.Send(ctx, o, "peer:"+p.SignerKey.HashBase58())
 	}
