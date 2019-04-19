@@ -6,7 +6,6 @@ package peer
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
@@ -32,15 +31,6 @@ func (s PeerInfoRequest) ToObject() *object.Object {
 	}
 	if len(s.ContentTypes) > 0 {
 		o.SetRaw("contentTypes", s.ContentTypes)
-	}
-	if s.RequesterAuthorityKey != nil {
-		o.SetRaw("@authority", s.RequesterAuthorityKey)
-	}
-	if s.RequesterSignerKey != nil {
-		o.SetRaw("@signer", s.RequesterSignerKey)
-	}
-	if s.RequestSignature != nil {
-		o.SetRaw("@signature", s.RequestSignature)
 	}
 	return o
 }
@@ -83,36 +73,6 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 	}
 	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
 		return err
-	}
-	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
-		s.RequesterAuthorityKey = v
-	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
-		s.RequesterAuthorityKey = &crypto.Key{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.RequesterAuthorityKey.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
-		s.RequesterSignerKey = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.RequesterSignerKey = &crypto.Key{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.RequesterSignerKey.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
-		s.RequestSignature = v
-	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
-		s.RequestSignature = &crypto.Signature{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.RequestSignature.FromObject(o)
 	}
 
 	return nil
