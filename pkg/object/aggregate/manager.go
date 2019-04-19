@@ -146,8 +146,11 @@ func (m *manager) Append(
 		)
 	}
 
+	// if there are no tails we just use the root
 	if len(ts) == 0 {
-		return errors.Error("did not find graph tails")
+		ts = []*object.Object{
+			o,
+		}
 	}
 
 	// create mutation
