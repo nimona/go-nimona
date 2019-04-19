@@ -33,9 +33,9 @@ func toGraphObject(v *object.Object) (*graphObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	nType := "object"
+	nType := "object:root"
 	if len(v.GetParents()) > 0 {
-		nType = "mutation"
+		nType = "object"
 	}
 	o := &graphObject{
 		ID:       quad.IRI(v.HashBase58()).Full().Short(),
@@ -258,33 +258,6 @@ func (s *Cayley) Head(hash string) (*object.Object, error) {
 	}
 
 	return fromGraphObject(&gs[len(gs)-1])
-
-	// // figure out tail nodes
-	// ts := map[string]bool{}
-	// for i := range gs {
-	// 	g := gs[i]
-	// 	if _, ok := ts[g.ID.String()]; !ok {
-	// 		ts[g.ID.String()] = true
-	// 	}
-	// 	for _, p := range g.Parents {
-	// 		ts[p.String()] = false
-	// 	}
-	// }
-
-	// os := []*object.Object{}
-	// for i := range gs {
-	// 	g := gs[i]
-	// 	if !ts[g.ID.String()] {
-	// 		continue
-	// 	}
-	// 	o, gerr := fromGraphObject(&g)
-	// 	if gerr != nil {
-	// 		return nil, gerr
-	// 	}
-	// 	os = append(os, o)
-	// }
-
-	return nil, nil
 }
 
 // Heads returns all the objects that do not have any parents
@@ -293,7 +266,7 @@ func (s *Cayley) Heads() ([]*object.Object, error) {
 		s.store,
 	).Has(
 		quad.IRI("type"),
-		quad.String("object"),
+		quad.String("object:root"),
 	)
 
 	gs := []graphObject{}
