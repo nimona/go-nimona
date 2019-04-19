@@ -60,6 +60,6 @@ require (
 )
 
 replace (
-	github.com/golang/lint v0.0.0-20190409202823-959b441ac422 => github.com/golang/lint v0.0.0-20190409202823-5614ed5bae6fb75893070bdc0996a68765fdd275
-	github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
+	github.com/golang/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
+	github.com/ugorji/go/codec v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
 )
