@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/cayleygraph/cayley"
-	cayleyGraph "github.com/cayleygraph/cayley/graph"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -111,11 +110,6 @@ var daemonStartCmd = &cobra.Command{
 			}
 		}
 
-		err = cayleyGraph.InitQuadStore("bolt", config.Daemon.ObjectPath, nil)
-		if err != nil {
-			return errors.Wrap(err, "could not init quad store")
-		}
-
 		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)
 		if err != nil {
 			return errors.Wrap(err, "could not init graph store")
@@ -129,7 +123,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		dag, err := dag.New(dpr, x, nil)
+		dag, err := dag.New(dpr, x, nil, li)
 		if err != nil {
 			return err
 		}
@@ -170,6 +164,7 @@ var daemonStartCmd = &cobra.Command{
 		apiServer := api.New(
 			k,
 			n,
+			dis,
 			x,
 			li,
 			dpr,
