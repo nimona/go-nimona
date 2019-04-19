@@ -2,6 +2,7 @@ package context
 
 import (
 	stdcontext "context"
+	"time"
 )
 
 type (
@@ -34,6 +35,12 @@ func WithCancel(ctx stdcontext.Context) (*context, CancelFunc) {
 // Method returns the context's method
 func (ctx *context) Method() string {
 	return ctx.method
+}
+
+// WithTimeout wraps stdcontext.WithTimeout
+func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) {
+	cctx, cf := stdcontext.WithTimeout(parent, timeout)
+	return New(cctx), CancelFunc(cf)
 }
 
 // Arguments returns the context's arguments
