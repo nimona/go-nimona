@@ -1,14 +1,16 @@
 package api
 
 import (
-	"context"
-	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"nimona.io/internal/context"
+	"nimona.io/internal/errors"
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -43,6 +45,29 @@ func (api *API) HandleGetObject(c *gin.Context) {
 		c.AbortWithError(400, errors.New("missing object hash"))
 	}
 	o, err := api.objectStore.Get(objectHash)
+	if err != nil && err != kv.ErrNotFound {
+		c.AbortWithError(500, err)
+		return
+	} else if err == nil {
+		ms := api.mapObject(o)
+		c.Render(http.StatusOK, Renderer(c, ms))
+		return
+	}
+
+	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
+	defer cf()
+	ps, err := api.discovery.Discover(&peer.PeerInfoRequest{
+		ContentIDs: []string{objectHash},
+	})
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
+	}
+	addrs := []string{}
+	for _, p := range ps {
+		addrs = append(addrs, p.Address())
+	}
+	os, err := api.dag.Sync(ctx, []string{objectHash}, addrs)
 	if err != nil {
 		if err == kv.ErrNotFound {
 			c.AbortWithError(404, err)
@@ -51,7 +76,11 @@ func (api *API) HandleGetObject(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
-	ms := api.mapObject(o)
+	if len(os) == 0 {
+		c.AbortWithError(404, err)
+		return
+	}
+	ms := api.mapObject(os[0])
 	c.Render(http.StatusOK, Renderer(c, ms))
 }
 
