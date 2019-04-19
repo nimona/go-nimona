@@ -11,6 +11,7 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/aggregate"
@@ -22,10 +23,11 @@ import (
 
 // API for HTTP
 type API struct {
-	router   *gin.Engine
-	key      *crypto.Key
-	net      net.Network
-	exchange exchange.Exchange
+	router    *gin.Engine
+	key       *crypto.Key
+	net       net.Network
+	discovery discovery.Discoverer
+	exchange  exchange.Exchange
 
 	objectStore graph.Store
 	dag         dag.Manager
@@ -46,6 +48,7 @@ type API struct {
 func New(
 	k *crypto.Key,
 	n net.Network,
+	d discovery.Discoverer,
 	x exchange.Exchange,
 	linf *net.LocalInfo,
 	bls graph.Store,
@@ -63,6 +66,7 @@ func New(
 		router:      router,
 		key:         k,
 		net:         n,
+		discovery:   d,
 		exchange:    x,
 		objectStore: bls,
 

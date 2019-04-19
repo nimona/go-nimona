@@ -4,8 +4,11 @@ import (
 	"os"
 	"path"
 
+	cayleyGraph "github.com/cayleygraph/cayley/graph"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	_ "github.com/cayleygraph/cayley/graph/kv/bolt" // required for cayley
 
 	"nimona.io/pkg/crypto"
 )
@@ -57,6 +60,11 @@ var daemonInitCmd = &cobra.Command{
 
 		if err := config.Update(cfgFile); err != nil {
 			return err
+		}
+
+		err = cayleyGraph.InitQuadStore("bolt", config.Daemon.ObjectPath, nil)
+		if err != nil {
+			return errors.Wrap(err, "could not init quad store")
 		}
 
 		return nil
