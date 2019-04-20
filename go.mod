@@ -47,9 +47,9 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
 	go.uber.org/zap v1.9.1
-	golang.org/x/net v0.0.0-20190419101437-1f3472d942ba
+	golang.org/x/net v0.0.0-20190420064622-afa5a82059c6
 	golang.org/x/oauth2 v0.0.0-20190419101437-9f3314589c9a // indirect
-	golang.org/x/tools v0.0.0-20190419101437-4796d4bd3df0
+	golang.org/x/tools v0.0.0-20190420064622-685fecacd0a0
 	gonum.org/v1/gonum v0.0.0-20181121035319-3f7ecaa7e8ca
 	gopkg.in/go-playground/validator.v9 v9.28.0 // indirect
 	gopkg.in/resty.v1 v1.12.0
