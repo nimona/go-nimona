@@ -133,7 +133,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		hsr, err := hyperspace.NewDiscoverer(k, n, x, li, bootstrapAddresses)
+		hsr, err := hyperspace.NewDiscoverer(n, x, li, bootstrapAddresses)
 		if err != nil {
 			return err
 		}
