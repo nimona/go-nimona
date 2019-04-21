@@ -2,8 +2,10 @@ package dag
 
 import (
 	"go.uber.org/zap"
+
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
@@ -17,6 +19,12 @@ func (m *manager) Sync(
 	error,
 ) {
 	responses := make(chan *exchange.Envelope, 10)
+
+	addressesClean := net.Addresses{}
+	addressesClean.Add(addresses...)
+	addressesClean.Blacklist(m.localInfo.GetPeerInfo().Address())
+	addressesClean.Blacklist(m.localInfo.GetPeerInfo().Addresses...)
+	addresses = addressesClean.List()
 
 	// create objecet graph request
 	req := &ObjectGraphRequest{
