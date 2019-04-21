@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
@@ -58,9 +59,12 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 	)
 	defer cf()
 
-	logger := log.Logger(ctx).With()
+	logger := log.Logger(ctx).With(
+		zap.String("rootObjectHash", rootObjectHash),
+	)
 	logger.Info("handling request")
 
+	// find peers who provide the root object
 	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
 		ContentIDs: []string{rootObjectHash},
 	})
@@ -68,6 +72,8 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
+
+	// convert peer infos to addresses
 	if len(ps) == 0 {
 		c.AbortWithError(404, err)
 		return
@@ -77,7 +83,14 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 		addrs = append(addrs, p.Address())
 	}
 
-	// TODO check err, properly timeout ctx
+	// if we have the object, and if its signed, include the signer
+	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
+		if sk := rootObject.GetSignerKey(); sk != nil {
+			addrs = append(addrs, "peer:"+sk.HashBase58())
+		}
+	}
+
+	// try to sync the graph with the addresses we gathered
 	api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
 
 	ao, err := api.agg.Get(ctx, rootObjectHash)
