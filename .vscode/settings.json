@@ -1,5 +1,4 @@
 {
-    "go.buildOnSave": "package",
     "go.buildTags": "dev",
     "go.coverOnSave": true,
     "go.coverOnSingleTest": true,
