@@ -23,11 +23,13 @@ func (m *manager) Sync(
 		Selector: selector,
 	}
 
-	logger := log.DefaultLogger.With(
+	logger := log.Logger(ctx).With(
 		zap.String("method", "dag/manager.Sync"),
 		zap.Strings("selector", selector),
 		zap.Strings("addresses", addresses),
 	)
+
+	logger.Info("starting sync")
 
 	// send the request to all addresses
 	for _, address := range addresses {

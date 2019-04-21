@@ -25,16 +25,29 @@ func init() {
 
 // Network interface
 type Network interface {
-	Dial(ctx context.Context, address string) (*Connection, error)
+	Dial(ctx context.Context, address string, options ...Option) (*Connection, error)
 	Listen(ctx context.Context, addrress string) (chan *Connection, error)
 
 	AddMiddleware(handler MiddlewareHandler)
 	AddTransport(tag string, tsp Transport)
 }
 
+type (
+	// Options (mostly) for Dial()
+	Options struct {
+		LocalDiscoveryOnly bool
+	}
+	Option func(*Options)
+)
+
+func WithLocalDiscoveryOnly() Option {
+	return func(options *Options) {
+		options.LocalDiscoveryOnly = true
+	}
+}
+
 // New creates a new p2p network using an address book
 func New(discover discovery.Discoverer, local *LocalInfo) (Network, error) {
-
 	return &network{
 		discoverer: discover,
 		middleware: []MiddlewareHandler{},
@@ -64,9 +77,17 @@ func (n *network) AddTransport(tag string, tsp Transport) {
 }
 
 // Dial to a peer and return a net.Conn or error
-func (n *network) Dial(ctx context.Context, address string) (
-	*Connection, error) {
+func (n *network) Dial(
+	ctx context.Context,
+	address string,
+	opts ...Option,
+) (*Connection, error) {
 	logger := log.Logger(ctx)
+
+	options := &Options{}
+	for _, opt := range opts {
+		opt(options)
+	}
 
 	var conn *Connection
 	var err error
@@ -74,7 +95,7 @@ func (n *network) Dial(ctx context.Context, address string) (
 	addressType := strings.Split(address, ":")[0]
 	switch addressType {
 	case "peer":
-		conn, err = n.dialPeer(ctx, address)
+		conn, err = n.dialPeer(ctx, address, options.LocalDiscoveryOnly)
 	default:
 		t, ok := n.transports.Load(addressType)
 		if !ok {
@@ -109,7 +130,7 @@ func (n *network) Dial(ctx context.Context, address string) (
 // TODO do we need to return a listener?
 func (n *network) Listen(ctx context.Context, address string) (
 	chan *Connection, error) {
-
+	logger := log.Logger(ctx)
 	cconn := make(chan *Connection, 10)
 
 	n.transports.Range(func(key, value interface{}) bool {
@@ -128,7 +149,7 @@ func (n *network) Listen(ctx context.Context, address string) (
 				for _, mh := range n.middleware {
 					conn, err = mh(ctx, conn)
 					if err != nil {
-						log.DefaultLogger.Error(
+						logger.Error(
 							"middleware failure", zap.Error((err)))
 
 						if conn != nil {
@@ -151,8 +172,11 @@ func (n *network) Listen(ctx context.Context, address string) (
 	return cconn, nil
 }
 
-func (n *network) dialPeer(ctx context.Context, address string) (
-	*Connection, error) {
+func (n *network) dialPeer(
+	ctx context.Context,
+	address string,
+	localDiscoveryOnly bool,
+) (*Connection, error) {
 	logger := log.Logger(ctx)
 
 	peerID := strings.Replace(address, "peer:", "", 1)
@@ -163,7 +187,11 @@ func (n *network) dialPeer(ctx context.Context, address string) (
 	q := &peer.PeerInfoRequest{
 		SignerKeyHash: peerID,
 	}
-	ps, err := n.discoverer.Discover(q)
+	opts := []discovery.DiscovererOption{}
+	if localDiscoveryOnly {
+		opts = append(opts, discovery.Local())
+	}
+	ps, err := n.discoverer.Discover(ctx, q, opts...)
 	if err != nil {
 		return nil, err
 	}

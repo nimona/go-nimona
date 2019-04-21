@@ -77,9 +77,10 @@ type (
 	}
 	// Options (mostly) for Send()
 	Options struct {
-		ResponseID string
-		RequestID  string
-		Response   chan *Envelope
+		ResponseID     string
+		RequestID      string
+		Response       chan *Envelope
+		LocalDiscovery bool
 	}
 	Option      func(*Options)
 	sendRequest struct {
@@ -90,6 +91,7 @@ type (
 		context   context.Context
 		recipient string
 		object    *object.Object
+		options   *Options
 		err       chan error
 	}
 	// incomingObject holds an object that has just been received
@@ -174,36 +176,45 @@ func New(
 	}()
 
 	go func() {
+		localAddress := w.local.GetPeerInfo().Address()
 		for {
-			object := <-w.outgoing
-			if object.recipient == "" {
-				w.logger.Info("missing recipient")
-				object.err <- errors.New("missing recipient")
+			req := <-w.outgoing
+
+			if req.recipient == localAddress {
+				req.err <- errors.Error("cannot dial own peer")
+			}
+
+			logger := log.Logger(req.context).With(
+				zap.String("recipient", req.recipient),
+			)
+
+			if req.recipient == "" {
+				logger.Info("missing recipient")
+				req.err <- errors.New("missing recipient")
 				continue
 			}
 
-			logger := w.logger.With(zap.String("recipient", object.recipient))
+			logger.Debug("trying to send object")
 
 			// try to send the object directly to the recipient
-			logger.Debug("getting conn to write object")
-			conn, err := w.getOrDial(object.context, object.recipient)
+			conn, err := w.getOrDial(req.context, req.recipient, req.options)
 			if err != nil {
 				logger.Debug("could not get conn to recipient", zap.Error(err))
-				object.err <- err
+				req.err <- err
 				continue
 			}
 
-			if err := net.Write(object.object, conn); err != nil {
-				w.manager.Close(object.recipient)
+			if err := net.Write(req.object, conn); err != nil {
+				w.manager.Close(req.recipient)
 				logger.Debug("could not write to recipient", zap.Error(err))
-				object.err <- err
+				req.err <- err
 				continue
 			}
 
 			// update peer status
 			// TODO(geoah) fix status -- not that we are using this
 			// w.addressBook.PutPeerStatus(recipientThumbPrint, peer.StatusConnected)
-			object.err <- nil
+			req.err <- nil
 			continue
 		}
 	}()
@@ -256,14 +267,14 @@ func (w *exchange) HandleConnection(
 	)
 	for {
 		// TODO use decoder
-		object, err := net.Read(conn)
+		obj, err := net.Read(conn)
 		if err != nil {
 			return err
 		}
 
 		w.incoming <- &incomingObject{
 			conn:   conn,
-			object: object,
+			object: obj,
 		}
 	}
 }
@@ -406,6 +417,13 @@ func AsResponse(reqID string) Option {
 	}
 }
 
+// WithLocalDiscoveryOnly will only use local discovery to resolve addresses.
+func WithLocalDiscoveryOnly() Option {
+	return func(opt *Options) {
+		opt.LocalDiscovery = true
+	}
+}
+
 // Send an object to an address
 func (w *exchange) Send(
 	ctx context.Context,
@@ -440,13 +458,13 @@ func (w *exchange) Send(
 
 	switch getAddressType(address) {
 	case "peer":
-		err := w.sendDirectlyToPeer(ctx, o, address)
+		err := w.sendDirectlyToPeer(ctx, o, address, opts)
 		if err == nil {
 			return nil
 		}
 		logger.Debug("could not send directly to peer", zap.Error(err))
 
-		err = w.sendViaRelayToPeer(ctx, o, address)
+		err = w.sendViaRelayToPeer(ctx, o, address, opts)
 		if err == nil {
 			return nil
 		}
@@ -460,11 +478,16 @@ func (w *exchange) Send(
 			return err
 		}
 
+		discoveryOpts := []discovery.DiscovererOption{}
+		if opts.LocalDiscovery {
+			discoveryOpts = append(discoveryOpts, discovery.Local())
+		}
+
 		// TODO(geoah): Look for the correct object type as well
 		req := &peer.PeerInfoRequest{
 			AuthorityKeyHash: val,
 		}
-		peers, err := w.discover.Discover(req)
+		peers, err := w.discover.Discover(ctx, req, discoveryOpts...)
 		if err != nil {
 			return errors.New("discovery didn't yield any results for identity")
 		}
@@ -476,11 +499,13 @@ func (w *exchange) Send(
 
 		failed := 0
 		for _, peer := range peers {
-			if err := w.sendDirectlyToPeer(ctx, o, peer.Address()); err == nil {
+			err := w.sendDirectlyToPeer(ctx, o, peer.Address(), opts)
+			if err == nil {
 				continue
 			}
 
-			if err := w.sendViaRelayToPeer(ctx, o, peer.Address()); err == nil {
+			err = w.sendViaRelayToPeer(ctx, o, peer.Address(), opts)
+			if err == nil {
 				continue
 			}
 
@@ -495,7 +520,8 @@ func (w *exchange) Send(
 		return nil
 
 	default:
-		if err := w.sendDirectlyToPeer(ctx, o, address); err != nil {
+		err := w.sendDirectlyToPeer(ctx, o, address, opts)
+		if err != nil {
 			return errors.New("sending directly to address failed")
 		}
 
@@ -508,12 +534,14 @@ func (w *exchange) sendDirectlyToPeer(
 	ctx context.Context,
 	o *object.Object,
 	address string,
+	options *Options,
 ) error {
 	cerr := make(chan error, 1)
 	w.outgoing <- &outgoingObject{
 		context:   ctx,
 		recipient: address,
 		object:    o,
+		options:   options,
 		err:       cerr,
 	}
 	return <-cerr
@@ -523,6 +551,7 @@ func (w *exchange) sendViaRelayToPeer(
 	ctx context.Context,
 	o *object.Object,
 	address string,
+	options *Options,
 ) error {
 	// if recipient is a peer, we might have some relay addresses
 	if !strings.HasPrefix(address, "peer:") {
@@ -538,7 +567,7 @@ func (w *exchange) sendViaRelayToPeer(
 	q := &peer.PeerInfoRequest{
 		SignerKeyHash: recipient,
 	}
-	peers, err := w.discover.Discover(q)
+	peers, err := w.discover.Discover(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -580,6 +609,7 @@ func (w *exchange) sendViaRelayToPeer(
 				recipient: relayAddress,
 				object:    fwo,
 				err:       cerr,
+				options:   options,
 			}
 			if err := <-cerr; err == nil {
 				return nil
@@ -593,14 +623,14 @@ func (w *exchange) sendViaRelayToPeer(
 func (w *exchange) getOrDial(
 	ctx context.Context,
 	address string,
+	options *Options,
 ) (
 	*net.Connection,
 	error,
 ) {
-	w.logger.
-		Debug("looking for existing connection",
-			zap.String("address", address),
-		)
+	w.logger.Debug("looking for existing connection",
+		zap.String("address", address),
+	)
 	if address == "" {
 		return nil, errors.New("missing address")
 	}
@@ -613,7 +643,12 @@ func (w *exchange) getOrDial(
 		return existingConn, nil
 	}
 
-	conn, err := w.net.Dial(ctx, address)
+	netOpts := []net.Option{}
+	if options.LocalDiscovery {
+		netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
+	}
+
+	conn, err := w.net.Dial(ctx, address, netOpts...)
 	if err != nil {
 		// w.manager.Close(address)
 		return nil, errors.Wrap(err, errors.New("dialing failed"))

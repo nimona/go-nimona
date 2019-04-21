@@ -1,10 +1,9 @@
 package handshake
 
 import (
-	"context"
-
 	"go.uber.org/zap"
 
+	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -91,16 +90,17 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	*net.Connection, error) {
+	logger := log.Logger(ctx)
 	synObj, err := net.Read(conn)
 	if err != nil {
-		log.DefaultLogger.Warn("waiting for syn failed", zap.Error(err))
+		logger.Warn("waiting for syn failed", zap.Error(err))
 		// TODO close conn?
 		return nil, err
 	}
 
 	syn := &Syn{}
 	if err := syn.FromObject(synObj); err != nil {
-		log.DefaultLogger.Warn("could not convert obj to syn")
+		logger.Warn("could not convert obj to syn")
 		// TODO close conn?
 		return nil, err
 	}
@@ -116,20 +116,20 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	sao := synAck.ToObject()
 	if err := crypto.Sign(sao, hs.local.GetPeerKey()); err != nil {
-		log.DefaultLogger.Warn(
+		logger.Warn(
 			"could not sign for syn ack object", zap.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
 	if err := net.Write(sao, conn); err != nil {
-		log.DefaultLogger.Warn("sending for syn-ack failed", zap.Error(err))
+		logger.Warn("sending for syn-ack failed", zap.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
 
 	ackObj, err := net.Read(conn)
 	if err != nil {
-		log.DefaultLogger.Warn("waiting for ack failed", zap.Error(err))
+		logger.Warn("waiting for ack failed", zap.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
@@ -137,12 +137,12 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	ack := &Ack{}
 	if err := ack.FromObject(ackObj); err != nil {
 		// TODO close conn?
-		log.DefaultLogger.Warn("could not convert obj to syn ack")
+		logger.Warn("could not convert obj to syn ack")
 		return nil, nil
 	}
 
 	if ack.Nonce != syn.Nonce {
-		log.DefaultLogger.Warn("validating syn to ack nonce failed")
+		logger.Warn("validating syn to ack nonce failed")
 		// TODO close conn?
 		return nil, nil
 	}

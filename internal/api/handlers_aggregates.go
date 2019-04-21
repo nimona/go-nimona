@@ -8,6 +8,7 @@ import (
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
+	"nimona.io/internal/log"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object/mutation"
 )
@@ -48,10 +49,19 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 		return
 	}
 
-	ctx, cf := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cf := context.WithTimeout(
+		context.New(
+			context.WithMethod("HandleGetAggregate"),
+			context.WithArgument("rootObjectHash", rootObjectHash),
+		),
+		time.Second*3,
+	)
 	defer cf()
 
-	ps, err := api.discovery.Discover(&peer.PeerInfoRequest{
+	logger := log.Logger(ctx).With()
+	logger.Info("handling request")
+
+	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
 		ContentIDs: []string{rootObjectHash},
 	})
 	if err != nil {

@@ -2,6 +2,7 @@
 
 package mocks
 
+import context "nimona.io/internal/context"
 import discovery "nimona.io/pkg/discovery"
 import mock "github.com/stretchr/testify/mock"
 import peer "nimona.io/pkg/net/peer"
@@ -30,20 +31,20 @@ func (_m *Discoverer) AddProvider(provider discovery.Provider) error {
 	return r0
 }
 
-// Discover provides a mock function with given fields: q, options
-func (_m *Discoverer) Discover(q *peer.PeerInfoRequest, options ...discovery.DiscovererOption) ([]*peer.PeerInfo, error) {
+// Discover provides a mock function with given fields: ctx, q, options
+func (_m *Discoverer) Discover(ctx context.Context, q *peer.PeerInfoRequest, options ...discovery.DiscovererOption) ([]*peer.PeerInfo, error) {
 	_va := make([]interface{}, len(options))
 	for _i := range options {
 		_va[_i] = options[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, q)
+	_ca = append(_ca, ctx, q)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 []*peer.PeerInfo
-	if rf, ok := ret.Get(0).(func(*peer.PeerInfoRequest, ...discovery.DiscovererOption) []*peer.PeerInfo); ok {
-		r0 = rf(q, options...)
+	if rf, ok := ret.Get(0).(func(context.Context, *peer.PeerInfoRequest, ...discovery.DiscovererOption) []*peer.PeerInfo); ok {
+		r0 = rf(ctx, q, options...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*peer.PeerInfo)
@@ -51,8 +52,8 @@ func (_m *Discoverer) Discover(q *peer.PeerInfoRequest, options ...discovery.Dis
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*peer.PeerInfoRequest, ...discovery.DiscovererOption) error); ok {
-		r1 = rf(q, options...)
+	if rf, ok := ret.Get(1).(func(context.Context, *peer.PeerInfoRequest, ...discovery.DiscovererOption) error); ok {
+		r1 = rf(ctx, q, options...)
 	} else {
 		r1 = ret.Error(1)
 	}
