@@ -3,6 +3,8 @@ package context
 import (
 	stdcontext "context"
 	"time"
+
+	"nimona.io/internal/rand"
 )
 
 type (
@@ -20,16 +22,16 @@ type (
 
 // Background context wrapper
 func Background() *context {
-	return New(stdcontext.Background())
+	return New()
 }
 
 // A CancelFunc tells an operation to abandon its work
 type CancelFunc func()
 
 // WithCancel returns a copy of parent with a new Done channel
-func WithCancel(ctx stdcontext.Context) (*context, CancelFunc) {
-	cctx, cf := stdcontext.WithCancel(ctx)
-	return New(cctx), CancelFunc(cf)
+func WithCancel(parent stdcontext.Context) (*context, CancelFunc) {
+	cctx, cf := stdcontext.WithCancel(parent)
+	return New(WithParent(cctx)), CancelFunc(cf)
 }
 
 // Method returns the context's method
@@ -40,7 +42,7 @@ func (ctx *context) Method() string {
 // WithTimeout wraps stdcontext.WithTimeout
 func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) {
 	cctx, cf := stdcontext.WithTimeout(parent, timeout)
-	return New(cctx), CancelFunc(cf)
+	return New(WithParent(cctx)), CancelFunc(cf)
 }
 
 // Arguments returns the context's arguments
@@ -54,16 +56,16 @@ func (ctx *context) CorrelationID() string {
 }
 
 // New constructs a new *context from a parent Context and Options
-func New(parent stdcontext.Context, opts ...Option) *context {
+func New(opts ...Option) *context {
 	ctx := &context{
-		Context:   parent,
+		Context:   stdcontext.Background(),
 		arguments: map[string]interface{}{},
 	}
 	for _, opt := range opts {
 		opt(ctx)
 	}
 	if ctx.correlationID == "" {
-		// TODO generate a new one
+		ctx.correlationID = rand.String(12)
 	}
 	return ctx
 }

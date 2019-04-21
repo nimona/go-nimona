@@ -26,7 +26,10 @@ type (
 
 // NewQueue constructs a new queue
 func NewQueue(ctx context.Context, workers int) Queue {
-	ctx = context.New(ctx, context.WithMethod("queue.New"))
+	ctx = context.New(
+		context.WithParent(ctx),
+		context.WithMethod("queue.New"),
+	)
 	ctx, cf := context.WithCancel(ctx)
 
 	q := &q{

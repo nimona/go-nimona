@@ -56,7 +56,7 @@ func (api *API) HandleGetObject(c *gin.Context) {
 
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
 	defer cf()
-	ps, err := api.discovery.Discover(&peer.PeerInfoRequest{
+	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
 		ContentIDs: []string{objectHash},
 	})
 	if err != nil {

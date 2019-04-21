@@ -2,6 +2,8 @@
 
 package mocks
 
+import context "nimona.io/internal/context"
+
 import mock "github.com/stretchr/testify/mock"
 import peer "nimona.io/pkg/net/peer"
 
@@ -10,13 +12,13 @@ type Provider struct {
 	mock.Mock
 }
 
-// Discover provides a mock function with given fields: q
-func (_m *Provider) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
-	ret := _m.Called(q)
+// Discover provides a mock function with given fields: ctx, q
+func (_m *Provider) Discover(ctx context.Context, q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
+	ret := _m.Called(ctx, q)
 
 	var r0 []*peer.PeerInfo
-	if rf, ok := ret.Get(0).(func(*peer.PeerInfoRequest) []*peer.PeerInfo); ok {
-		r0 = rf(q)
+	if rf, ok := ret.Get(0).(func(context.Context, *peer.PeerInfoRequest) []*peer.PeerInfo); ok {
+		r0 = rf(ctx, q)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*peer.PeerInfo)
@@ -24,8 +26,8 @@ func (_m *Provider) Discover(q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*peer.PeerInfoRequest) error); ok {
-		r1 = rf(q)
+	if rf, ok := ret.Get(1).(func(context.Context, *peer.PeerInfoRequest) error); ok {
+		r1 = rf(ctx, q)
 	} else {
 		r1 = ret.Error(1)
 	}

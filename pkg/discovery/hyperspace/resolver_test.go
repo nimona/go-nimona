@@ -24,25 +24,24 @@ func TestDiscoverer(t *testing.T) {
 	k1, n1, x1, disc1, l1 := newPeer(t)
 	k2, n2, x2, disc2, l2 := newPeer(t)
 
-	fmt.Printf("\n\n\n\n-----------------------------\n")
 	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), l0.GetPeerInfo().Addresses)
 	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), l1.GetPeerInfo().Addresses)
 	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), l2.GetPeerInfo().Addresses)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	d0, err := NewDiscoverer(k0, n0, x0, l0, []string{})
+	d0, err := NewDiscoverer(n0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetPeerInfo().Addresses
 
-	d1, err := NewDiscoverer(k1, n1, x1, l1, ba)
+	d1, err := NewDiscoverer(n1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDiscoverer(k2, n2, x2, l2, ba)
+	d2, err := NewDiscoverer(n2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)

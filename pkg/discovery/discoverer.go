@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"nimona.io/internal/context"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -36,7 +37,11 @@ func parseSendOptions(opts ...DiscovererOption) *discovererOptions {
 // Discoverer interface
 type Discoverer interface {
 	AddProvider(provider Provider) error
-	Discover(q *peer.PeerInfoRequest, options ...DiscovererOption) ([]*peer.PeerInfo, error)
+	Discover(
+		ctx context.Context,
+		q *peer.PeerInfoRequest,
+		options ...DiscovererOption,
+	) ([]*peer.PeerInfo, error)
 	Add(v *peer.PeerInfo)
 	// AddPersistent(v *peer.PeerInfo)
 }
@@ -65,12 +70,16 @@ type discoverer struct {
 }
 
 // Discover goes through the given providers until one returns something
-func (r *discoverer) Discover(q *peer.PeerInfoRequest, opts ...DiscovererOption) ([]*peer.PeerInfo, error) {
+func (r *discoverer) Discover(
+	ctx context.Context,
+	q *peer.PeerInfoRequest,
+	opts ...DiscovererOption,
+) ([]*peer.PeerInfo, error) {
 	cfg := parseSendOptions(opts...)
 	if !cfg.Local {
 		r.providersLock.RLock()
 		for _, p := range r.providers {
-			if res, err := p.Discover(q); err == nil && res != nil {
+			if res, err := p.Discover(ctx, q); err == nil && res != nil {
 				r.providersLock.RUnlock()
 				return res, nil
 			}

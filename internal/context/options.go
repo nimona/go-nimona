@@ -25,6 +25,13 @@ func WithCorrelationID(cID string) Option {
 	}
 }
 
+// WithParent sets the context's parent context
+func WithParent(parent Context) Option {
+	return func(ctx *context) {
+		ctx.Context = parent
+	}
+}
+
 // WithArgument sets a Context argument
 func WithArgument(key string, value interface{}) Option {
 	return func(ctx *context) {

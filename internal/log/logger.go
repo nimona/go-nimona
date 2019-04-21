@@ -30,11 +30,11 @@ func init() {
 // Logger returns a zap logger with as much context as possible
 func Logger(ctx context.Context) *zap.Logger {
 	nl := DefaultLogger
-	// TODO add request id
-	// if ctx != nil {
-	// 	if rid, ok := ctx.Value(RequestIDKey{}).(string); ok {
-	// 		nl = nl.With(zap.String("req.id", rid))
-	// 	}
-	// }
+	if ctx == nil {
+		return nl
+	}
+	if nctx, ok := ctx.(interface{ CorrelationID() string }); ok {
+		nl = nl.With(zap.String("ctx.correlation_id", nctx.CorrelationID()))
+	}
 	return nl
 }

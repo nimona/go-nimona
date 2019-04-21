@@ -1,7 +1,6 @@
 package context_test
 
 import (
-	stdcontext "context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,10 +14,7 @@ func TestContext(t *testing.T) {
 		"foo": "bar",
 	}
 	cid := "001"
-	pctx := stdcontext.Background()
-
 	ctx := context.New(
-		pctx,
 		context.WithMethod(method),
 		context.WithArguments(args),
 		context.WithCorrelationID(cid),

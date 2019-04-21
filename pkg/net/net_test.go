@@ -1,15 +1,15 @@
 package net
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/pkg/discovery"
 
+	"nimona.io/internal/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -20,12 +20,14 @@ func TestNetDiscoverer(t *testing.T) {
 	_, _, l1 := newPeer(t, "", disc1)
 	_, _, l2 := newPeer(t, "", disc2)
 
+	ctx := context.New()
+
 	disc1.Add(l2.GetPeerInfo())
 	disc2.Add(l1.GetPeerInfo())
 
 	q1 := &peer.PeerInfoRequest{
 		SignerKeyHash: l2.GetPeerKey().GetPublicKey().HashBase58()}
-	ps2, err := disc1.Discover(q1)
+	ps2, err := disc1.Discover(ctx, q1)
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.GetPublicKey(), p2.SignerKey)
@@ -35,7 +37,7 @@ func TestNetDiscoverer(t *testing.T) {
 
 	q2 := &peer.PeerInfoRequest{
 		SignerKeyHash: l1.GetPeerKey().GetPublicKey().HashBase58()}
-	ps1, err := disc2.Discover(q2)
+	ps1, err := disc2.Discover(ctx, q2)
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.GetPublicKey(), p1.SignerKey)
@@ -50,7 +52,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	disc2 := discovery.NewDiscoverer()
 	address1 := fmt.Sprintf("0.0.0.0:%d", 0)
 
-	ctx := context.Background
+	ctx := context.New()
 
 	BindLocal = true
 	_, n1, l1 := newPeer(t, "", disc1)
@@ -58,7 +60,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	// we need to start listening before we add the peerInfo
 	// otherwise the addresses are not populated
-	sconn, err := n1.Listen(ctx(), address1)
+	sconn, err := n1.Listen(ctx, address1)
 	assert.NoError(t, err)
 
 	disc1.Add(l2.GetPeerInfo())
@@ -69,7 +71,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	done := make(chan bool)
 
 	go func() {
-		cconn, err := n2.Dial(ctx(), peer1Addr)
+		cconn, err := n2.Dial(ctx, peer1Addr)
 		assert.NoError(t, err)
 		err = Write((peer.PeerInfoRequest{}).ToObject(), cconn)
 		assert.NoError(t, err)
@@ -91,7 +93,7 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	disc2 := discovery.NewDiscoverer()
 	address1 := fmt.Sprintf("0.0.0.0:%d", 0)
 
-	ctx := context.Background
+	ctx := context.New()
 
 	BindLocal = true
 	_, n1, l1 := newPeer(t, "", disc1)
@@ -101,7 +103,7 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	// otherwise the addresses are not populated
 	fm := fakeMid{}
 
-	sconn, err := n1.Listen(ctx(), address1)
+	sconn, err := n1.Listen(ctx, address1)
 	n1.AddMiddleware(fm.Handle())
 	assert.NoError(t, err)
 
@@ -113,7 +115,7 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	done := make(chan bool)
 
 	go func() {
-		cconn, err := n2.Dial(ctx(), peer1Addr)
+		cconn, err := n2.Dial(ctx, peer1Addr)
 		assert.Error(t, err)
 		assert.Nil(t, cconn)
 		done <- true
@@ -147,8 +149,7 @@ type fakeMid struct {
 }
 
 func (fm *fakeMid) Handle() MiddlewareHandler {
-	return func(ctx context.Context,
-		conn *Connection) (*Connection, error) {
+	return func(ctx context.Context, conn *Connection) (*Connection, error) {
 		return conn, errors.New("what?")
 	}
 }
