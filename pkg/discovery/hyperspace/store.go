@@ -93,7 +93,6 @@ func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	defer s.lock.RUnlock()
 
 	ps := []*peer.PeerInfo{}
-check:
 	for _, v := range s.peers {
 		p := v.peerInfo
 		if q.AuthorityKeyHash != "" && p.AuthorityKey != nil &&
@@ -106,11 +105,12 @@ check:
 			ps = append(ps, p)
 			continue
 		}
+	contentCheck:
 		for _, ch := range p.ContentIDs {
 			for _, rch := range q.ContentIDs {
 				if ch == rch {
 					ps = append(ps, p)
-					break check
+					break contentCheck
 				}
 			}
 		}
