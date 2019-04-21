@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
+	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
@@ -58,16 +60,27 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 		c.AbortWithError(400, errors.New("missing root object hash"))
 	}
 
-	ctx, cf := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cf := context.WithTimeout(
+		context.New(),
+		time.Second*10,
+	)
 	defer cf()
 
-	ps, err := api.discovery.Discover(&peer.PeerInfoRequest{
+	logger := log.Logger(ctx).With(
+		zap.String("rootObjectHash", rootObjectHash),
+	)
+	logger.Info("handling request")
+
+	// find peers who provide the root object
+	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
 		ContentIDs: []string{rootObjectHash},
 	})
 	if err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
+
+	// convert peer infos to addresses
 	if len(ps) == 0 {
 		c.AbortWithError(404, err)
 		return
@@ -76,6 +89,15 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	for _, p := range ps {
 		addrs = append(addrs, p.Address())
 	}
+
+	// if we have the object, and if its signed, include the signer
+	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
+		if sk := rootObject.GetSignerKey(); sk != nil {
+			addrs = append(addrs, "peer:"+sk.HashBase58())
+		}
+	}
+
+	// try to sync the graph with the addresses we gathered
 	graphObjects, err := api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
 	if err != nil {
 		if errors.CausedBy(err, graph.ErrNotFound) {
@@ -85,10 +107,12 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 		c.AbortWithError(500, err)
 		return
 	}
+
 	if len(graphObjects) == 0 {
 		c.AbortWithError(404, err)
 		return
 	}
+
 	ms := []interface{}{}
 	for _, graphObject := range graphObjects {
 		ms = append(ms, api.mapObject(graphObject))
