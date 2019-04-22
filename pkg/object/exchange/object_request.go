@@ -10,5 +10,5 @@ import (
 type ObjectRequest struct {
 	ObjectHash string            `json:"objectHash"`
 	Signature  *crypto.Signature `json:"@signature"`
-	Signer     *crypto.Key       `json:"@signer"`
+	Signer     *crypto.PublicKey `json:"@signer"`
 }

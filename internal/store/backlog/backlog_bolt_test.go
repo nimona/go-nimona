@@ -36,30 +36,30 @@ func TestBolt_PushAndPop(t *testing.T) {
 	assert.NoError(t, err)
 
 	// push
-	err = bl.Push(eo1, k)
+	err = bl.Push(eo1, k.PublicKey)
 	assert.NoError(t, err)
 
 	// pushing the same obj/key fails
-	err = bl.Push(eo1, k)
+	err = bl.Push(eo1, k.PublicKey)
 	assert.Error(t, err)
 	assert.True(t, errors.CausedBy(err, ErrAlreadyExists))
 
 	// push one more just to check order
-	err = bl.Push(eo2, k)
+	err = bl.Push(eo2, k.PublicKey)
 	assert.NoError(t, err)
 
 	// pop
-	ao, _, err := bl.Pop(k)
+	ao, _, err := bl.Pop(k.PublicKey)
 	assert.NoError(t, err)
 	assert.Equal(t, eo1.HashBase58(), ao.HashBase58())
 
 	// pop the second one
-	ao, _, err = bl.Pop(k)
+	ao, _, err = bl.Pop(k.PublicKey)
 	assert.NoError(t, err)
 	assert.Equal(t, eo2.HashBase58(), ao.HashBase58())
 
 	// pop should error
-	ao, _, err = bl.Pop(k)
+	ao, _, err = bl.Pop(k.PublicKey)
 	assert.Error(t, err)
 	assert.True(t, errors.CausedBy(err, ErrNoMoreObjects))
 	assert.Nil(t, ao)

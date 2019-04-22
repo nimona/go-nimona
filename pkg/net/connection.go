@@ -8,6 +8,6 @@ import (
 
 type Connection struct {
 	Conn          net.Conn
-	RemotePeerKey *crypto.Key
+	RemotePeerKey *crypto.PublicKey
 	IsIncoming    bool
 }

@@ -41,13 +41,13 @@ type DHT struct {
 	net            net.Network
 	exchange       exchange.Exchange
 	queries        sync.Map
-	key            *crypto.Key
+	key            *crypto.PrivateKey
 	local          *net.LocalInfo
 	refreshBuckets bool
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
-func NewDHT(key *crypto.Key, network net.Network, exchange exchange.Exchange,
+func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Exchange,
 	local *net.LocalInfo, bootstrapAddresses []string) (*DHT, error) {
 
 	// create new kv store for storing providers
@@ -72,7 +72,7 @@ func NewDHT(key *crypto.Key, network net.Network, exchange exchange.Exchange,
 		ctx := context.Background()
 		req := &PeerInfoRequest{
 			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    key.GetPublicKey().HashBase58(),
+			PeerID:    key.PublicKey.Hash,
 		}
 		so := req.ToObject()
 		if err := crypto.Sign(so, key); err != nil {
@@ -200,7 +200,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		// TODO log error
 		return
 	}
-	addr := "peer:" + payload.Signer.HashBase58()
+	addr := "peer:" + payload.Signer.Hash
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		return
@@ -257,7 +257,7 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	addr := "peer:" + payload.Signer.HashBase58()
+	addr := "peer:" + payload.Signer.Hash
 	so := resp.ToObject()
 	if err := crypto.Sign(so, r.key); err != nil {
 		// TODO log error
@@ -408,7 +408,7 @@ func (r *DHT) PutProviders(ctx context.Context, key string) error {
 }
 
 // GetProviders will look for peers that provide a key
-func (r *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Key, error) {
+func (r *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.PublicKey, error) {
 	q := &query{
 		dht:              r,
 		id:               net.RandStringBytesMaskImprSrc(8),
@@ -422,8 +422,8 @@ func (r *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Key, e
 
 	go q.Run(ctx)
 
-	out := make(chan *crypto.Key, 1)
-	go func(q *query, out chan *crypto.Key) {
+	out := make(chan *crypto.PublicKey, 1)
+	go func(q *query, out chan *crypto.PublicKey) {
 		defer close(out)
 		for {
 			select {
@@ -459,7 +459,7 @@ func (r *DHT) GetAllProviders() (map[string][]string, error) {
 			if provider.Signature == nil {
 				continue
 			}
-			allProviders[objectID] = append(allProviders[objectID], provider.Signer.HashBase58())
+			allProviders[objectID] = append(allProviders[objectID], provider.Signer.Hash)
 		}
 	}
 	return allProviders, nil

@@ -59,7 +59,7 @@ type (
 	}
 	// echange implements an Exchange
 	exchange struct {
-		key      *crypto.Key
+		key      *crypto.PrivateKey
 		net      net.Network
 		manager  *ConnectionManager
 		discover discovery.Discoverer
@@ -109,7 +109,7 @@ type (
 
 // New creates a exchange on a given network
 func New(
-	key *crypto.Key,
+	key *crypto.PrivateKey,
 	n net.Network,
 	store graph.Store,
 	discover discovery.Discoverer,
@@ -150,7 +150,7 @@ func New(
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
-				address := "peer:" + conn.RemotePeerKey.HashBase58()
+				address := "peer:" + conn.RemotePeerKey.Hash
 				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
 					w.logger.Warn("failed to handle object", zap.Error(err))
@@ -263,7 +263,7 @@ func (w *exchange) HandleConnection(
 ) error {
 	w.logger.Debug(
 		"handling new connection",
-		zap.String("remote", "peer:"+conn.RemotePeerKey.HashBase58()),
+		zap.String("remote", "peer:"+conn.RemotePeerKey.Hash),
 	)
 	for {
 		// TODO use decoder
@@ -290,8 +290,8 @@ func (w *exchange) process(
 	}
 
 	logger := w.logger.With(
-		zap.String("local_peer", w.key.GetPublicKey().HashBase58()),
-		zap.String("remote_peer", conn.RemotePeerKey.HashBase58()),
+		zap.String("local_peer", w.key.PublicKey.Hash),
+		zap.String("remote_peer", conn.RemotePeerKey.Hash),
 		zap.String("request_id", reqID),
 		zap.String("object.type", o.GetType()),
 	)
@@ -307,7 +307,7 @@ func (w *exchange) process(
 		}
 		logger = logger.With(
 			zap.String("requested_hash", req.ObjectHash),
-			zap.String("recipient", conn.RemotePeerKey.HashBase58()),
+			zap.String("recipient", conn.RemotePeerKey.Hash),
 		)
 		logger.Info("got object request")
 		res, err := w.store.Get(req.ObjectHash)
@@ -325,7 +325,7 @@ func (w *exchange) process(
 		defer cf()
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
-			recipient: "peer:" + conn.RemotePeerKey.HashBase58(),
+			recipient: "peer:" + conn.RemotePeerKey.Hash,
 			object:    res,
 			err:       cerr,
 		}
@@ -559,7 +559,7 @@ func (w *exchange) sendViaRelayToPeer(
 	}
 
 	recipient := strings.Replace(address, "peer:", "", 1)
-	if recipient == w.key.GetPublicKey().HashBase58() {
+	if recipient == w.key.PublicKey.Hash {
 		// TODO(geoah) error or nil?
 		return errors.New("cannot send obj to self")
 	}
@@ -584,10 +584,8 @@ func (w *exchange) sendViaRelayToPeer(
 		FwObject:  o,
 	}
 
-	lk := w.key
-	lh := lk.HashBase58()
 	fwo := fw.ToObject()
-	if err := crypto.Sign(fwo, lk); err != nil {
+	if err := crypto.Sign(fwo, w.key); err != nil {
 		return err
 	}
 
@@ -600,7 +598,7 @@ func (w *exchange) sendViaRelayToPeer(
 				)
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
-			if strings.Contains(address, lh) {
+			if strings.Contains(address, w.key.PublicKey.Hash) {
 				continue
 			}
 			cerr := make(chan error, 1)

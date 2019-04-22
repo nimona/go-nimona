@@ -253,7 +253,7 @@ func TestSync(t *testing.T) {
 			args[3].(exchange.Option)(opt)
 			opt.Response <- &exchange.Envelope{
 				Payload: o,
-				Sender:  rkey.GetPublicKey(),
+				Sender:  rkey.PublicKey,
 			}
 		}
 	}
@@ -263,7 +263,7 @@ func TestSync(t *testing.T) {
 		"Send",
 		mock.Anything,
 		mock.Anything,
-		"peer:"+rkey.GetPublicKey().HashBase58(),
+		"peer:"+rkey.PublicKey.Hash,
 		mock.Anything,
 	).Run(
 		respWith(dag.ObjectGraphResponse{
@@ -293,7 +293,7 @@ func TestSync(t *testing.T) {
 			"Request",
 			mock.Anything,
 			o.HashBase58(),
-			"peer:"+rkey.GetPublicKey().HashBase58(),
+			"peer:"+rkey.PublicKey.Hash,
 			mock.Anything,
 		).Run(
 			respWith(o),
@@ -307,7 +307,7 @@ func TestSync(t *testing.T) {
 			o.HashBase58(),
 		},
 		[]string{
-			"peer:" + rkey.GetPublicKey().HashBase58(),
+			"peer:" + rkey.PublicKey.Hash,
 		},
 	)
 

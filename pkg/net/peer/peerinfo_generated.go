@@ -30,17 +30,11 @@ func (s PeerInfo) ToObject() *object.Object {
 	if len(s.ContentTypes) > 0 {
 		o.SetRaw("contentTypes", s.ContentTypes)
 	}
-	if s.AuthorityKey != nil {
-		o.SetRaw("@authority", s.AuthorityKey)
-	}
 	if s.SignerKey != nil {
 		o.SetRaw("@signer", s.SignerKey)
 	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
-	}
-	if s.Mandate != nil {
-		o.SetRaw("@mandate", s.Mandate)
 	}
 	return o
 }
@@ -81,20 +75,10 @@ func (s *PeerInfo) FromObject(o *object.Object) error {
 	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
 		return err
 	}
-	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
-		s.AuthorityKey = v
-	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
-		s.AuthorityKey = &crypto.Key{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.AuthorityKey.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
 		s.SignerKey = v
 	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.SignerKey = &crypto.Key{}
+		s.SignerKey = &crypto.PublicKey{}
 		o := &object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
@@ -111,15 +95,9 @@ func (s *PeerInfo) FromObject(o *object.Object) error {
 		}
 		s.Signature.FromObject(o)
 	}
-	if v, ok := o.GetRaw("@mandate").(*crypto.Mandate); ok {
-		s.Mandate = v
-	} else if v, ok := o.GetRaw("@mandate").(map[string]interface{}); ok {
-		s.Mandate = &crypto.Mandate{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Mandate.FromObject(o)
+
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
 	}
 
 	return nil

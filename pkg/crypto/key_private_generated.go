@@ -10,39 +10,18 @@ import (
 )
 
 const (
-	KeyType = "/key"
+	PrivateKeyType = "/key.private"
 )
 
 // ToObject returns a f12n object
-func (s Key) ToObject() *object.Object {
+func (s PrivateKey) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(KeyType)
+	o.SetType(PrivateKeyType)
 	if s.Algorithm != "" {
 		o.SetRaw("alg", s.Algorithm)
 	}
-	if s.KeyID != "" {
-		o.SetRaw("kid", s.KeyID)
-	}
 	if s.KeyType != "" {
 		o.SetRaw("kty", s.KeyType)
-	}
-	if s.KeyUsage != "" {
-		o.SetRaw("use", s.KeyUsage)
-	}
-	if s.KeyOps != "" {
-		o.SetRaw("key_ops", s.KeyOps)
-	}
-	if s.X509CertChain != "" {
-		o.SetRaw("x5c", s.X509CertChain)
-	}
-	if s.X509CertThumbprint != "" {
-		o.SetRaw("x5t", s.X509CertThumbprint)
-	}
-	if s.X509CertThumbprintS256 != "" {
-		o.SetRaw("x5tS256", s.X509CertThumbprintS256)
-	}
-	if s.X509URL != "" {
-		o.SetRaw("x5u", s.X509URL)
 	}
 	if s.Curve != "" {
 		o.SetRaw("crv", s.Curve)
@@ -59,7 +38,7 @@ func (s Key) ToObject() *object.Object {
 	return o
 }
 
-func anythingToAnythingForKey(
+func anythingToAnythingForPrivateKey(
 	from interface{},
 	to interface{},
 ) error {
@@ -81,33 +60,12 @@ func anythingToAnythingForKey(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Key) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForKey
+func (s *PrivateKey) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForPrivateKey
 	if err := atoa(o.GetRaw("alg"), &s.Algorithm); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("kid"), &s.KeyID); err != nil {
-		return err
-	}
 	if err := atoa(o.GetRaw("kty"), &s.KeyType); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("use"), &s.KeyUsage); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("key_ops"), &s.KeyOps); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("x5c"), &s.X509CertChain); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("x5t"), &s.X509CertThumbprint); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("x5tS256"), &s.X509CertThumbprintS256); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("x5u"), &s.X509URL); err != nil {
 		return err
 	}
 	if err := atoa(o.GetRaw("crv"), &s.Curve); err != nil {
@@ -123,10 +81,14 @@ func (s *Key) FromObject(o *object.Object) error {
 		return err
 	}
 
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
+	}
+
 	return nil
 }
 
 // GetType returns the object's type
-func (s Key) GetType() string {
-	return KeyType
+func (s PrivateKey) GetType() string {
+	return PrivateKeyType
 }

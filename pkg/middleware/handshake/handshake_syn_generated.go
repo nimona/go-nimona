@@ -66,6 +66,10 @@ func (s *Syn) FromObject(o *object.Object) error {
 		s.PeerInfo.FromObject(o)
 	}
 
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
+	}
+
 	return nil
 }
 

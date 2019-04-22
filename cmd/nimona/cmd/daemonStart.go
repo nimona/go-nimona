@@ -102,12 +102,12 @@ var daemonStartCmd = &cobra.Command{
 
 		ik := config.Daemon.IdentityKey
 		if ik != nil {
-			if config.Daemon.Mandate == nil {
-				return errors.New("missing mandate for identity")
-			}
-			if err := li.AttachMandate(config.Daemon.Mandate); err != nil {
-				return errors.Wrap(err, "could not attach mandate to network")
-			}
+			// if config.Daemon.Mandate == nil {
+			// 	return errors.New("missing mandate for identity")
+			// }
+			// if err := li.AttachMandate(config.Daemon.Mandate); err != nil {
+			// 	return errors.Wrap(err, "could not attach mandate to network")
+			// }
 		}
 
 		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)
@@ -145,11 +145,11 @@ var daemonStartCmd = &cobra.Command{
 		}
 
 		cmd.Println("Started daemon")
-		cmd.Println("* Peer private key hash:\n  *", k.HashBase58())
-		cmd.Println("* Peer public key hash:\n  *", k.GetPublicKey().HashBase58())
+		cmd.Println("* Peer private key hash:\n  *", k.Hash)
+		cmd.Println("* Peer public key hash:\n  *", k.PublicKey.Hash)
 		if ik != nil {
-			cmd.Println("* Identity private key hash:\n  *", ik.HashBase58())
-			cmd.Println("* Identity public key hash:\n  *", ik.GetPublicKey().HashBase58())
+			cmd.Println("* Identity private key hash:\n  *", ik.Hash)
+			cmd.Println("* Identity public key hash:\n  *", ik.PublicKey.Hash)
 		}
 		peerAddresses := li.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")

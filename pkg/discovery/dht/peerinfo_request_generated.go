@@ -67,20 +67,20 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 		return err
 	}
 	s.RawObject = o
-	if v, ok := o.GetRaw("@signer").(*crypto.Key); ok {
+	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
 		s.Signer = v
 	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.Key{}
+		s.Signer = &crypto.PublicKey{}
 		o := &object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
 		}
 		s.Signer.FromObject(o)
 	}
-	if v, ok := o.GetRaw("@authority").(*crypto.Key); ok {
+	if v, ok := o.GetRaw("@authority").(*crypto.PublicKey); ok {
 		s.Authority = v
 	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
-		s.Authority = &crypto.Key{}
+		s.Authority = &crypto.PublicKey{}
 		o := &object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
@@ -96,6 +96,10 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 			return err
 		}
 		s.Signature.FromObject(o)
+	}
+
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
 	}
 
 	return nil

@@ -9,9 +9,9 @@ import (
 )
 
 type LocalInfo struct {
-	hostname      string
-	key           *crypto.Key
-	mandate       *crypto.Mandate
+	hostname string
+	key      *crypto.PrivateKey
+	// mandate       *crypto.Mandate
 	addressesLock sync.RWMutex
 	addresses     []string
 
@@ -20,13 +20,13 @@ type LocalInfo struct {
 	contentHashes     map[string]bool // map[hash]publishable
 }
 
-func NewLocalInfo(hostname string, key *crypto.Key) (
+func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
 	*LocalInfo, error) {
 	if key == nil {
 		return nil, ErrMissingKey
 	}
 
-	if _, ok := key.Materialize().(*ecdsa.PrivateKey); !ok {
+	if _, ok := key.Key.(*ecdsa.PrivateKey); !ok {
 		return nil, ErrECDSAPrivateKeyRequired
 	}
 
@@ -38,13 +38,13 @@ func NewLocalInfo(hostname string, key *crypto.Key) (
 	}, nil
 }
 
-func (l *LocalInfo) AttachMandate(m *crypto.Mandate) error {
-	// TODO(geoah): Check if our peer key is the mandate's subject
-	l.addressesLock.Lock()
-	l.mandate = m
-	l.addressesLock.Unlock()
-	return nil
-}
+// func (l *LocalInfo) AttachMandate(m *crypto.Mandate) error {
+// 	// TODO(geoah): Check if our peer key is the mandate's subject
+// 	l.addressesLock.Lock()
+// 	l.mandate = m
+// 	l.addressesLock.Unlock()
+// 	return nil
+// }
 
 func (l *LocalInfo) AddAddress(addrs ...string) {
 	l.addressesLock.Lock()
@@ -73,7 +73,7 @@ func (l *LocalInfo) RemoveContentHash(hashes ...string) {
 	l.contentHashesLock.Unlock()
 }
 
-func (l *LocalInfo) GetPeerKey() *crypto.Key {
+func (l *LocalInfo) GetPeerKey() *crypto.PrivateKey {
 	return l.key
 }
 
@@ -81,7 +81,7 @@ func (l *LocalInfo) GetPeerKey() *crypto.Key {
 func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	// TODO cache peer info and reuse
 	p := &peer.PeerInfo{
-		SignerKey: l.key.GetPublicKey(),
+		SignerKey: l.key.PublicKey,
 	}
 
 	l.addressesLock.RLock()
@@ -91,10 +91,10 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 		addresses[i] = a
 	}
 	p.Addresses = addresses
-	if l.mandate != nil {
-		p.AuthorityKey = l.mandate.Signer
-		p.Mandate = l.mandate
-	}
+	// if l.mandate != nil {
+	// 	p.AuthorityKey = l.mandate.Signer
+	// 	p.Mandate = l.mandate
+	// }
 	l.addressesLock.RUnlock()
 
 	l.contentHashesLock.RLock()

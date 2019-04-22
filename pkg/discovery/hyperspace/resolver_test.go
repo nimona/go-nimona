@@ -24,9 +24,9 @@ func TestDiscoverer(t *testing.T) {
 	k1, n1, x1, disc1, l1 := newPeer(t)
 	k2, n2, x2, disc2, l2 := newPeer(t)
 
-	fmt.Println("k0:", k0.GetPublicKey().HashBase58(), l0.GetPeerInfo().Addresses)
-	fmt.Println("k1:", k1.GetPublicKey().HashBase58(), l1.GetPeerInfo().Addresses)
-	fmt.Println("k2:", k2.GetPublicKey().HashBase58(), l2.GetPeerInfo().Addresses)
+	fmt.Println("k0:", k0.PublicKey.Hash, l0.GetPeerInfo().Addresses)
+	fmt.Println("k1:", k1.PublicKey.Hash, l1.GetPeerInfo().Addresses)
+	fmt.Println("k2:", k2.PublicKey.Hash, l2.GetPeerInfo().Addresses)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
 	d0, err := NewDiscoverer(n0, x0, l0, []string{})
@@ -101,7 +101,7 @@ func TestDiscoverer(t *testing.T) {
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
 	defer cf()
 
-	err = x2.Send(ctx, eo1, "peer:"+k1.GetPublicKey().HashBase58())
+	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Hash)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -110,7 +110,7 @@ func TestDiscoverer(t *testing.T) {
 	defer cf2()
 
 	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, "peer:"+k2.GetPublicKey().HashBase58())
+	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Hash)
 	assert.NoError(t, err)
 
 	wg.Wait()
@@ -119,7 +119,7 @@ func TestDiscoverer(t *testing.T) {
 	assert.True(t, w2ObjectHandled)
 }
 
-func newPeer(t *testing.T) (*crypto.Key, net.Network, exchange.Exchange,
+func newPeer(t *testing.T) (*crypto.PrivateKey, net.Network, exchange.Exchange,
 	discovery.Discoverer, *net.LocalInfo) {
 
 	pk, err := crypto.GenerateKey()

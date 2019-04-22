@@ -37,7 +37,7 @@ func Verify(o *object.Object) error {
 		return err
 	}
 
-	key := &Key{}
+	key := &PrivateKey{}
 	if err := key.FromObject(ko); err != nil {
 		return err
 	}
@@ -47,13 +47,19 @@ func Verify(o *object.Object) error {
 		return err
 	}
 
-	switch k := key.Materialize().(type) {
+	return verify(sig, hash)
+}
+
+// verify a signature given a hash
+func verify(sig *Signature, hash []byte) error {
+	switch k := sig.PublicKey.Key.(type) {
 	case *ecdsa.PublicKey:
 		r := new(big.Int).SetBytes(sig.R)
 		s := new(big.Int).SetBytes(sig.S)
 		if ok := ecdsa.Verify(k, hash, r, s); !ok {
 			return ErrCouldNotVerify
 		}
+
 	case *ecdsa.PrivateKey:
 		r := new(big.Int).SetBytes(sig.R)
 		s := new(big.Int).SetBytes(sig.S)
@@ -61,6 +67,7 @@ func Verify(o *object.Object) error {
 		if ok := ecdsa.Verify(pk, hash, r, s); !ok {
 			return ErrCouldNotVerify
 		}
+
 	default:
 		return fmt.Errorf("verify does not support %T keys", k)
 	}
