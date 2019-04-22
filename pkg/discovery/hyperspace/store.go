@@ -32,7 +32,7 @@ func (s *Store) Add(cs ...*peer.PeerInfo) {
 	s.lock.Lock()
 	for _, c := range cs {
 		v := Vectorise(getPeerInfoRequest(c))
-		s.peers[c.SignerKey.HashBase58()] = &storeValue{
+		s.peers[c.SignerKey.Hash] = &storeValue{
 			vector:   v,
 			peerInfo: c,
 		}
@@ -92,16 +92,17 @@ func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
+	
 	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		if q.AuthorityKeyHash != "" && p.AuthorityKey != nil &&
-			q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
-			ps = append(ps, p)
-			continue
-		}
+		// if q.AuthorityKeyHash != "" && p.AuthorityKey != nil &&
+		// 	q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
+		// 	ps = append(ps, p)
+		// 	continue
+		// }
 		if q.SignerKeyHash != "" && p.SignerKey != nil &&
-			q.SignerKeyHash == p.SignerKey.HashBase58() {
+			q.SignerKeyHash == p.SignerKey.Hash {
 			ps = append(ps, p)
 			continue
 		}

@@ -12,7 +12,7 @@ type Provider struct {
 	ObjectIDs []string `json:"objectIDs"`
 
 	RawObject *object.Object    `json:"@"`
-	Signer    *crypto.Key       `json:"@signer"`
-	Authority *crypto.Key       `json:"@authority"`
+	Signer    *crypto.PublicKey `json:"@signer"`
+	Authority *crypto.PublicKey `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`
 }

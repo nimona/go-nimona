@@ -46,7 +46,7 @@ func NewBolt(st *storm.DB) (Backlog, error) {
 }
 
 // Push an object to the backlog with one or more recipients
-func (bl *Bolt) Push(o *object.Object, ks ...*crypto.Key) error {
+func (bl *Bolt) Push(o *object.Object, ks ...*crypto.PublicKey) error {
 	b, err := json.Marshal(o.ToMap())
 	if err != nil {
 		return err
@@ -58,14 +58,14 @@ func (bl *Bolt) Push(o *object.Object, ks ...*crypto.Key) error {
 		err := bl.storm.Save(&item{
 			Key: key{
 				ObjectHash: h,
-				KeyHash:    k.HashBase58(),
+				KeyHash:    k.Hash,
 			},
 			Object: b,
 			Pushed: n,
 			// TODO(geoah) remove once we figured out how to select based on
 			// only one part of the composite key
 			ObjectHash: h,
-			KeyHash:    k.HashBase58(),
+			KeyHash:    k.Hash,
 		})
 		if err != nil {
 			switch err {
@@ -80,10 +80,10 @@ func (bl *Bolt) Push(o *object.Object, ks ...*crypto.Key) error {
 }
 
 // Pop an object from the backlog for a specific recipient
-func (bl *Bolt) Pop(k *crypto.Key) (*object.Object, AckFunc, error) {
+func (bl *Bolt) Pop(k *crypto.PublicKey) (*object.Object, AckFunc, error) {
 	item := &item{}
 	q := bl.storm.Select(
-		query.Eq("KeyHash", k.HashBase58()),
+		query.Eq("KeyHash", k.Hash),
 	).
 		OrderBy("Pushed")
 

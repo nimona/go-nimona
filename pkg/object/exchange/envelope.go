@@ -8,6 +8,6 @@ import (
 // Envelope -
 type Envelope struct {
 	RequestID string
-	Sender    *crypto.Key
+	Sender    *crypto.PublicKey
 	Payload   *object.Object
 }

@@ -24,7 +24,7 @@ import (
 // API for HTTP
 type API struct {
 	router    *gin.Engine
-	key       *crypto.Key
+	key       *crypto.PrivateKey
 	net       net.Network
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
@@ -46,7 +46,7 @@ type API struct {
 
 // New HTTP API
 func New(
-	k *crypto.Key,
+	k *crypto.PrivateKey,
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,

@@ -26,24 +26,24 @@ func TestNetDiscoverer(t *testing.T) {
 	disc2.Add(l1.GetPeerInfo())
 
 	q1 := &peer.PeerInfoRequest{
-		SignerKeyHash: l2.GetPeerKey().GetPublicKey().HashBase58()}
+		SignerKeyHash: l2.GetPeerKey().PublicKey.Hash}
 	ps2, err := disc1.Discover(ctx, q1)
 	p2 := ps2[0]
 	assert.NoError(t, err)
-	// assert.Equal(t, n2.key.GetPublicKey(), p2.SignerKey)
+	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
-		l2.GetPeerKey().GetPublicKey().HashBase58(),
-		p2.SignerKey.GetPublicKey().HashBase58())
+		l2.GetPeerKey().PublicKey.Hash,
+		p2.SignerKey.Hash)
 
 	q2 := &peer.PeerInfoRequest{
-		SignerKeyHash: l1.GetPeerKey().GetPublicKey().HashBase58()}
+		SignerKeyHash: l1.GetPeerKey().PublicKey.Hash}
 	ps1, err := disc2.Discover(ctx, q2)
 	p1 := ps1[0]
 	assert.NoError(t, err)
-	// assert.Equal(t, n1.key.GetPublicKey(), p1.SignerKey)
+	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
-		l1.GetPeerKey().GetPublicKey().HashBase58(),
-		p1.SignerKey.HashBase58())
+		l1.GetPeerKey().PublicKey.Hash,
+		p1.SignerKey.Hash)
 }
 
 func TestNetConnectionSuccess(t *testing.T) {
@@ -126,7 +126,7 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 }
 
 func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.Key, *network, *LocalInfo) {
+	*crypto.PrivateKey, *network, *LocalInfo) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 

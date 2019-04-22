@@ -93,7 +93,7 @@ func (m *manager) Sync(
 					// add a request for this hash from this peer
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + res.Sender.HashBase58(),
+						addr: "peer:" + res.Sender.Hash,
 					}
 				}
 				respCount++

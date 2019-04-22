@@ -17,6 +17,9 @@ const (
 func (s Signature) ToObject() *object.Object {
 	o := object.New()
 	o.SetType(SignatureType)
+	if s.PublicKey != nil {
+		o.SetRaw("pub", s.PublicKey)
+	}
 	if s.Alg != "" {
 		o.SetRaw("alg", s.Alg)
 	}
@@ -53,6 +56,16 @@ func anythingToAnythingForSignature(
 // FromObject populates the struct from a f12n object
 func (s *Signature) FromObject(o *object.Object) error {
 	atoa := anythingToAnythingForSignature
+	if v, ok := o.GetRaw("pub").(*PublicKey); ok {
+		s.PublicKey = v
+	} else if v, ok := o.GetRaw("pub").(map[string]interface{}); ok {
+		s.PublicKey = &PublicKey{}
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.PublicKey.FromObject(o)
+	}
 	if err := atoa(o.GetRaw("alg"), &s.Alg); err != nil {
 		return err
 	}
@@ -61,6 +74,10 @@ func (s *Signature) FromObject(o *object.Object) error {
 	}
 	if err := atoa(o.GetRaw("s"), &s.S); err != nil {
 		return err
+	}
+
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
 	}
 
 	return nil

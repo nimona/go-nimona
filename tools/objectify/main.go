@@ -358,6 +358,10 @@ func (s *{{ .StructName }}) FromObject(o *object.Object) error {
 		{{- end }}
 	{{- end }}
 
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
+	}
+
 	return nil
 }
 

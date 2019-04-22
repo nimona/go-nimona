@@ -17,25 +17,25 @@ var identityInitCmd = &cobra.Command{
 			return err
 		}
 
-		mandate, err := crypto.NewMandate(
-			identityKey,
-			config.Daemon.PeerKey,
-			"default mandate",
-			[]string{"*"},
-			[]string{"*"},
-			"allow",
-		)
-		if err != nil {
-			return err
-		}
+		// mandate, err := crypto.NewMandate(
+		// 	identityKey,
+		// 	config.Daemon.PeerKey,
+		// 	"default mandate",
+		// 	[]string{"*"},
+		// 	[]string{"*"},
+		// 	"allow",
+		// )
+		// if err != nil {
+		// 	return err
+		// }
 
 		cmd.Println("identity:")
-		cmd.Println("  private key:", identityKey.HashBase58())
-		cmd.Println("  public key:", identityKey.GetPublicKey().HashBase58())
+		// cmd.Println("  private key:", identityKey.HashBase58())
+		cmd.Println("  public key:", identityKey.PublicKey.Hash)
 		cmd.Println("")
 
 		config.Daemon.IdentityKey = identityKey
-		config.Daemon.Mandate = mandate
+		// config.Daemon.Mandate = mandate
 
 		if err := config.Update(cfgFile); err != nil {
 			return err

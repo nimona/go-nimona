@@ -219,7 +219,7 @@ func (m *manager) Get(
 func (m *manager) handleObjectGraphRequest(
 	ctx context.Context,
 	reqID string,
-	sender *crypto.Key,
+	sender *crypto.PublicKey,
 	req *ObjectGraphRequest,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
@@ -242,7 +242,7 @@ func (m *manager) handleObjectGraphRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		"peer:"+sender.HashBase58(),
+		"peer:"+sender.Hash,
 		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(

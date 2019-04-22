@@ -72,6 +72,10 @@ func (s *ObjectForwardRequest) FromObject(o *object.Object) error {
 		s.Signature.FromObject(o)
 	}
 
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
+	}
+
 	return nil
 }
 

@@ -2,27 +2,35 @@
 
 // +build !generate
 
-package dag
+package crypto
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
 const (
-	ObjectGraphRequestType = "/object-graph-request"
+	PublicKeyType = "/key.public"
 )
 
 // ToObject returns a f12n object
-func (s ObjectGraphRequest) ToObject() *object.Object {
+func (s PublicKey) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(ObjectGraphRequestType)
-	if len(s.Selector) > 0 {
-		o.SetRaw("selector", s.Selector)
+	o.SetType(PublicKeyType)
+	if s.Algorithm != "" {
+		o.SetRaw("alg", s.Algorithm)
 	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
+	if s.KeyType != "" {
+		o.SetRaw("kty", s.KeyType)
+	}
+	if s.Curve != "" {
+		o.SetRaw("crv", s.Curve)
+	}
+	if len(s.X) > 0 {
+		o.SetRaw("x", s.X)
+	}
+	if len(s.Y) > 0 {
+		o.SetRaw("y", s.Y)
 	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
@@ -30,7 +38,7 @@ func (s ObjectGraphRequest) ToObject() *object.Object {
 	return o
 }
 
-func anythingToAnythingForObjectGraphRequest(
+func anythingToAnythingForPublicKey(
 	from interface{},
 	to interface{},
 ) error {
@@ -52,25 +60,27 @@ func anythingToAnythingForObjectGraphRequest(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ObjectGraphRequest) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForObjectGraphRequest
-	if err := atoa(o.GetRaw("selector"), &s.Selector); err != nil {
+func (s *PublicKey) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForPublicKey
+	if err := atoa(o.GetRaw("alg"), &s.Algorithm); err != nil {
 		return err
 	}
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
+	if err := atoa(o.GetRaw("kty"), &s.KeyType); err != nil {
+		return err
 	}
-	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
+	if err := atoa(o.GetRaw("crv"), &s.Curve); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("x"), &s.X); err != nil {
+		return err
+	}
+	if err := atoa(o.GetRaw("y"), &s.Y); err != nil {
+		return err
+	}
+	if v, ok := o.GetRaw("@signature").(*Signature); ok {
 		s.Signature = v
 	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
+		s.Signature = &Signature{}
 		o := &object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
@@ -86,6 +96,6 @@ func (s *ObjectGraphRequest) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s ObjectGraphRequest) GetType() string {
-	return ObjectGraphRequestType
+func (s PublicKey) GetType() string {
+	return PublicKeyType
 }

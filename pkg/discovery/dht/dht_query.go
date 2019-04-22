@@ -121,7 +121,7 @@ func (q *query) next() {
 		return
 	}
 
-	peersToAsk := []*crypto.Key{}
+	peersToAsk := []*crypto.PublicKey{}
 	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
 		if _, ok := q.contactedPeers.Load(peerInfo.HashBase58()); ok {
@@ -160,9 +160,9 @@ func (q *query) next() {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	for _, peer := range peersToAsk {
-		addr := "peer:" + peer.HashBase58()
+		addr := "peer:" + peer.Hash
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.HashBase58()))
+			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.Hash))
 		}
 	}
 }

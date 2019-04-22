@@ -98,7 +98,7 @@ func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest, e *exchange.
 		exchange.AsResponse(e.RequestID),
 	}
 	for _, p := range ps {
-		addr := "peer:" + e.Sender.HashBase58()
+		addr := "peer:" + e.Sender.Hash
 		err := r.exchange.Send(ctx, p.ToObject(), addr, opts...)
 		if err != nil {
 			logger.Debug("handleProviderRequest could not send object",
@@ -126,7 +126,7 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 	}
 	logger.Debug("found closest peers", zap.Int("n", len(ps)))
 	for _, p := range ps {
-		r.exchange.Send(ctx, o, "peer:"+p.SignerKey.HashBase58(), opts...)
+		r.exchange.Send(ctx, o, "peer:"+p.SignerKey.Hash, opts...)
 	}
 	// TODO(geoah) better timeout
 	t := time.NewTicker(time.Second * 5)
@@ -141,7 +141,7 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 		case res := <-out:
 			logger.Debug("got response",
 				zap.String("res.type", res.Payload.GetType()),
-				zap.String("res.sender", res.Sender.HashBase58()),
+				zap.String("res.sender", res.Sender.Hash),
 			)
 			r.handleObject(res)
 		}
@@ -158,7 +158,7 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 	}
 	for _, addr := range bootstrapAddresses {
 		q := &peer.PeerInfoRequest{
-			SignerKeyHash: key.GetPublicKey().HashBase58(),
+			SignerKeyHash: key.PublicKey.Hash,
 		}
 		o := q.ToObject()
 		err := crypto.Sign(o, key)

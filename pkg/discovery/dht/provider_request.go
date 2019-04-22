@@ -12,8 +12,8 @@ type ProviderRequest struct {
 	RequestID string `json:"requestID,omitempty"`
 	Key       string `json:"key"`
 
-	RawObject *object.Object  `json:"@"`
-	Signer    *crypto.Key       `json:"@signer"`
-	Authority *crypto.Key       `json:"@authority"`
+	RawObject *object.Object    `json:"@"`
+	Signer    *crypto.PublicKey `json:"@signer"`
+	Authority *crypto.PublicKey `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`
 }

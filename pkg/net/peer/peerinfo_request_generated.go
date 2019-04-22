@@ -75,6 +75,10 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 		return err
 	}
 
+	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
+		ao.afterFromObject()
+	}
+
 	return nil
 }
 

@@ -180,7 +180,7 @@ func (n *network) dialPeer(
 	logger := log.Logger(ctx)
 
 	peerID := strings.Replace(address, "peer:", "", 1)
-	if peerID == n.local.GetPeerKey().GetPublicKey().HashBase58() {
+	if peerID == n.local.GetPeerKey().PublicKey.Hash {
 		return nil, errors.New("cannot dial our own peer")
 	}
 	logger.Debug("dialing peer", zap.String("peer", address))

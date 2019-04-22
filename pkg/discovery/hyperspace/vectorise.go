@@ -44,11 +44,11 @@ func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,
 	}
-	if p.AuthorityKey != nil {
-		q.AuthorityKeyHash = p.AuthorityKey.HashBase58()
-	}
+	// if p.AuthorityKey != nil {
+	// 	q.AuthorityKeyHash = p.AuthorityKey.HashBase58()
+	// }
 	if p.SignerKey != nil {
-		q.SignerKeyHash = p.SignerKey.HashBase58()
+		q.SignerKeyHash = p.SignerKey.Hash
 	}
 	return q
 }

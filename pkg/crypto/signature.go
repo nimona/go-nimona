@@ -28,23 +28,24 @@ const (
 
 // Signature object (container), currently supports only ES256
 type Signature struct {
-	Alg string `json:"alg"`
-	R   []byte `json:"r"`
-	S   []byte `json:"s"`
+	PublicKey *PublicKey `json:"pub"`
+	Alg       string     `json:"alg"`
+	R         []byte     `json:"r"`
+	S         []byte     `json:"s"`
 }
 
 // NewSignature returns a signature given some bytes and a private key
-func NewSignature(key *Key, alg string, o *object.Object) (*Signature, error) {
+func NewSignature(
+	key *PrivateKey,
+	alg string,
+	o *object.Object,
+) (*Signature, error) {
+
 	if key == nil {
 		return nil, errors.New("missing key")
 	}
 
-	mKey := key.Materialize()
-	if mKey == nil {
-		return nil, errors.New("could not materialize")
-	}
-
-	pKey, ok := mKey.(*ecdsa.PrivateKey)
+	pKey, ok := key.Key.(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, errors.New("only ecdsa private keys are currently supported")
 	}
@@ -96,8 +97,9 @@ func NewSignature(key *Key, alg string, o *object.Object) (*Signature, error) {
 	}
 
 	return &Signature{
-		Alg: alg,
-		R:   r.Bytes(),
-		S:   s.Bytes(),
+		PublicKey: key.PublicKey,
+		Alg:       alg,
+		R:         r.Bytes(),
+		S:         s.Bytes(),
 	}, nil
 }

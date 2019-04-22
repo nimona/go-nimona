@@ -28,7 +28,7 @@ var DefaultClient *metrics
 type metrics struct {
 	exchange     Exchanger
 	colletor     Collector
-	localPeer    *crypto.Key
+	localPeer    *crypto.PrivateKey
 	statsAddress string
 }
 
@@ -50,7 +50,7 @@ func init() {
 	}
 }
 
-func NewTelemetry(exchange Exchanger, localPeer *crypto.Key,
+func NewTelemetry(exchange Exchanger, localPeer *crypto.PrivateKey,
 	statsAddress string) error {
 
 	// create the default client
