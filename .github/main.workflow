@@ -2,8 +2,8 @@ workflow "Lint, test, & build" {
   on = "push"
   resolves = [
     # "go-lint",
-    "go-test",
-    "go-build",
+    # "go-test",
+    # "go-build",
     # "docker-push",
   ]
 }
