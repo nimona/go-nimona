@@ -49,7 +49,7 @@ require (
 	go.uber.org/zap v1.9.1
 	golang.org/x/net v0.0.0-20190420064622-afa5a82059c6
 	golang.org/x/oauth2 v0.0.0-20190419101437-9f3314589c9a // indirect
-	golang.org/x/tools v0.0.0-20190420064622-685fecacd0a0
+	golang.org/x/tools v0.0.0-20190422120258-aa740d480789
 	gonum.org/v1/gonum v0.0.0-20181121035319-3f7ecaa7e8ca
 	gopkg.in/go-playground/validator.v9 v9.28.0 // indirect
 	gopkg.in/resty.v1 v1.12.0
