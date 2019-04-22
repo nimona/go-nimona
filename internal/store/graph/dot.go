@@ -3,7 +3,22 @@ package graph
 import (
 	"fmt"
 	"strings"
+
+	"nimona.io/pkg/object"
 )
+
+// Dot returns a graphviz representation of a graph
+func Dot(objects []*object.Object) (string, error) {
+	graphObjects := make([]graphObject, len(objects))
+	for i, o := range objects {
+		igo, err := toGraphObject(o)
+		if err != nil {
+			return "", err
+		}
+		graphObjects[i] = *igo
+	}
+	return dot(graphObjects), nil
+}
 
 func dot(objects []graphObject) string {
 	idSize := 5

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -55,6 +56,7 @@ func (api *API) HandlePostGraphs(c *gin.Context) {
 
 func (api *API) HandleGetGraph(c *gin.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
+	returnDot, _ := strconv.ParseBool(c.Query("dot"))
 
 	if rootObjectHash == "" {
 		c.AbortWithError(400, errors.New("missing root object hash"))
@@ -110,6 +112,17 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 
 	if len(graphObjects) == 0 {
 		c.AbortWithError(404, err)
+		return
+	}
+
+	if returnDot {
+		dot, err := graph.Dot(graphObjects)
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		c.Header("Content-Type", "text/vnd.graphviz")
+		c.String(http.StatusOK, dot)
 		return
 	}
 
