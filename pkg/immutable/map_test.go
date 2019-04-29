@@ -6,93 +6,67 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIterate(t *testing.T) {
+func TestPrimitive(t *testing.T) {
 	m := Map{}.
-		Set("foo", "bar0").
-		Set("foo", "bar1").
-		Set("foo", "bar2").
-		Set("not-foo", "not-bar0")
+		Set("foo", Value{stringValue{"bar0"}}).
+		Set("foo", Value{stringValue{"bar1"}}).
+		Set("foo", Value{stringValue{"bar2"}}).
+		Set("not-foo", Value{stringValue{"not-bar0"}}).
+		Set("nested-map", Value{mapValue{
+			Map{}.Set("nested-foo", Value{stringValue{"nested-bar"}}),
+		}})
 
-	p := map[string]interface{}{}
-	m.Iterate(func(k string, v interface{}) {
-		p[k] = v
-	})
-
+	p := m.Primitive()
 	assert.Equal(t, map[string]interface{}{
 		"foo":     "bar2",
 		"not-foo": "not-bar0",
+		"nested-map": map[string]interface{}{
+			"nested-foo": "nested-bar",
+		},
 	}, p)
+
+	h := m.PrimitiveHinted()
+	assert.Equal(t, map[string]interface{}{
+		"foo:s":     "bar2",
+		"not-foo:s": "not-bar0",
+		"nested-map:o": map[string]interface{}{
+			"nested-foo:s": "nested-bar",
+		},
+	}, h)
 }
 
-func TestPlainMap(t *testing.T) {
+func TestMap(t *testing.T) {
 	m := Map{}
-	assert.Equal(t, nil, m.Value("foo"))
+	assert.Equal(t, "", m.Value("foo").StringValue())
 	iCalls := 0
-	m.Iterate(func(_ string, _ interface{}) {
+	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 0, iCalls)
 
-	m = m.Set("foo", "bar")
-	assert.Equal(t, "bar", m.Value("foo"))
+	m = m.Set("foo", Value{stringValue{"bar"}})
+	assert.Equal(t, "bar", m.Value("foo").StringValue())
 	iCalls = 0
-	m.Iterate(func(_ string, _ interface{}) {
+	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm := m.Set("foo", "nbar")
-	assert.Equal(t, "bar", m.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("foo"))
+	nm := m.Set("foo", Value{stringValue{"nbar"}})
+	assert.Equal(t, "bar", m.Value("foo").StringValue())
+	assert.Equal(t, "nbar", nm.Value("foo").StringValue())
 	iCalls = 0
-	nm.Iterate(func(_ string, _ interface{}) {
+	nm.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm = nm.Set("nfoo", "nbar")
-	assert.Equal(t, "bar", m.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("nfoo"))
+	nm = nm.Set("nfoo", Value{stringValue{"nbar"}})
+	assert.Equal(t, "bar", m.Value("foo").StringValue())
+	assert.Equal(t, "nbar", nm.Value("foo").StringValue())
+	assert.Equal(t, "nbar", nm.Value("nfoo").StringValue())
 	iCalls = 0
-	nm.Iterate(func(_ string, _ interface{}) {
-		iCalls++
-	})
-	assert.Equal(t, 2, iCalls)
-}
-
-func TestNewMap(t *testing.T) {
-	m := NewMap()
-	assert.Equal(t, nil, m.Value("foo"))
-	iCalls := 0
-	m.Iterate(func(_ string, _ interface{}) {
-		iCalls++
-	})
-	assert.Equal(t, 0, iCalls)
-
-	m = m.Set("foo", "bar")
-	assert.Equal(t, "bar", m.Value("foo"))
-	iCalls = 0
-	m.Iterate(func(_ string, _ interface{}) {
-		iCalls++
-	})
-	assert.Equal(t, 1, iCalls)
-
-	nm := m.Set("foo", "nbar")
-	assert.Equal(t, "bar", m.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("foo"))
-	iCalls = 0
-	nm.Iterate(func(_ string, _ interface{}) {
-		iCalls++
-	})
-	assert.Equal(t, 1, iCalls)
-
-	nm = nm.Set("nfoo", "nbar")
-	assert.Equal(t, "bar", m.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("foo"))
-	assert.Equal(t, "nbar", nm.Value("nfoo"))
-	iCalls = 0
-	nm.Iterate(func(_ string, _ interface{}) {
+	nm.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 2, iCalls)
