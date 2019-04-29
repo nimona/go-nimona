@@ -1,42 +1,42 @@
 package immutable
 
-type mapIterator interface {
-	Value(k string) interface{}
-	Iterate(func(k string, v interface{}))
-}
-
 type Map struct {
 	mapIterator
 }
 
-type empty struct{}
-
-func (empty) Value(_ string) interface{} {
-	return nil
+type mapIterator interface {
+	Value(k string) Value
+	Iterate(func(k string, v Value))
 }
 
-func (empty) Iterate(f func(k string, v interface{})) {
-	// nothing to call
-}
+// type emptyMap struct{}
 
-func NewMap() Map {
-	return Map{empty{}}
-}
+// func (emptyMap) Value(_ string) Value {
+// 	return Value{}
+// }
 
-type pair struct {
+// func (emptyMap) Iterate(f func(k string, v Value)) {
+// 	// nothing to call
+// }
+
+// func NewMap() Map {
+// 	return Map{emptyMap{}}
+// }
+
+type mapPair struct {
 	k      string
-	v      interface{}
+	v      Value
 	parent mapIterator
 }
 
-func (p pair) Value(k string) interface{} {
+func (p mapPair) Value(k string) Value {
 	if k == p.k {
 		return p.v
 	}
 	return p.parent.Value(k)
 }
 
-func (p pair) Iterate(f func(k string, v interface{})) {
+func (p mapPair) Iterate(f func(k string, v Value)) {
 	f(p.k, p.v)
 	if p.parent == nil {
 		return
@@ -44,12 +44,12 @@ func (p pair) Iterate(f func(k string, v interface{})) {
 	p.parent.Iterate(f)
 }
 
-func (m Map) Iterate(f func(k string, v interface{})) {
+func (m Map) Iterate(f func(k string, v Value)) {
 	if m.mapIterator == nil {
 		return
 	}
-	seen := make(map[interface{}]bool)
-	m.mapIterator.Iterate(func(k string, v interface{}) {
+	seen := make(map[string]bool)
+	m.mapIterator.Iterate(func(k string, v Value) {
 		if !seen[k] {
 			f(k, v)
 			seen[k] = true
@@ -57,13 +57,29 @@ func (m Map) Iterate(f func(k string, v interface{})) {
 	})
 }
 
-func (m Map) Value(k string) interface{} {
+func (m Map) Value(k string) Value {
 	if m.mapIterator == nil {
-		return nil
+		return Value{}
 	}
 	return m.mapIterator.Value(k)
 }
 
-func (m Map) Set(k string, v interface{}) Map {
-	return Map{pair{k, v, m.mapIterator}}
+func (m Map) Set(k string, v Value) Map {
+	return Map{mapPair{k, v, m.mapIterator}}
+}
+
+func (m Map) Primitive() map[string]interface{} {
+	p := map[string]interface{}{}
+	m.Iterate(func(k string, v Value) {
+		p[k] = v.Primitive()
+	})
+	return p
+}
+
+func (m Map) PrimitiveHinted() map[string]interface{} {
+	p := map[string]interface{}{}
+	m.Iterate(func(k string, v Value) {
+		p[k+":"+v.kind.typeHint()] = v.PrimitiveHinted()
+	})
+	return p
 }
