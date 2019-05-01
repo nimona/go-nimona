@@ -115,7 +115,6 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 		zap.Strings("query.contentIDs", q.ContentIDs),
 		zap.Strings("query.contentTypes", q.ContentTypes),
 		zap.String("query.signerKeyHash", q.SignerKeyHash),
-		zap.String("query.authorityKeyHash", q.AuthorityKeyHash),
 	)
 	o := q.ToObject()
 	ps := r.store.FindClosest(q)

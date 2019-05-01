@@ -23,8 +23,7 @@ type PublicKey struct {
 	X     []byte `json:"x,omitempty"`
 	Y     []byte `json:"y,omitempty"`
 
-	// Policy    *Policy    `json:"@policy"`
-	Signature *Signature `json:"@signature"`
+	Signatures []*Signature `json:"sigs,omitempty"`
 
 	Key  interface{} `json:"-"`
 	Hash string      `json:"-"`

@@ -31,9 +31,6 @@ func (s PeerInfoResponse) ToObject() *object.Object {
 	if s.Signer != nil {
 		o.SetRaw("@signer", s.Signer)
 	}
-	if s.Authority != nil {
-		o.SetRaw("@authority", s.Authority)
-	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
@@ -90,16 +87,6 @@ func (s *PeerInfoResponse) FromObject(o *object.Object) error {
 			return err
 		}
 		s.Signer.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@authority").(*crypto.PublicKey); ok {
-		s.Authority = v
-	} else if v, ok := o.GetRaw("@authority").(map[string]interface{}); ok {
-		s.Authority = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Authority.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v

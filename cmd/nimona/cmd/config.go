@@ -20,11 +20,10 @@ type DaemonConfig struct {
 	BootstrapAddresses []string           `json:"bootstrap_addresses,omitempty"`
 	EnableMetrics      bool               `json:"metrics,omitempty"`
 	IdentityKey        *crypto.PrivateKey `json:"identity_key,omitempty"`
-	// Mandate            *crypto.Mandate `json:"mandate,omitempty"`
-	ObjectPath     string             `json:"object_path,omitempty"`
-	PeerKey        *crypto.PrivateKey `json:"peer_key,omitempty"`
-	Port           int                `json:"port,omitempty"`
-	RelayAddresses []string           `json:"relay_addresses,omitempty"`
+	ObjectPath         string             `json:"object_path,omitempty"`
+	PeerKey            *crypto.PrivateKey `json:"peer_key,omitempty"`
+	Port               int                `json:"port,omitempty"`
+	RelayAddresses     []string           `json:"relay_addresses,omitempty"`
 }
 
 type Config struct {

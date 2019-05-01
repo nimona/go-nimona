@@ -17,9 +17,6 @@ const (
 func (s PeerInfoRequest) ToObject() *object.Object {
 	o := object.New()
 	o.SetType(PeerInfoRequestType)
-	if s.AuthorityKeyHash != "" {
-		o.SetRaw("authority", s.AuthorityKeyHash)
-	}
 	if s.SignerKeyHash != "" {
 		o.SetRaw("signer", s.SignerKeyHash)
 	}
@@ -59,9 +56,6 @@ func anythingToAnythingForPeerInfoRequest(
 // FromObject populates the struct from a f12n object
 func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 	atoa := anythingToAnythingForPeerInfoRequest
-	if err := atoa(o.GetRaw("authority"), &s.AuthorityKeyHash); err != nil {
-		return err
-	}
 	if err := atoa(o.GetRaw("signer"), &s.SignerKeyHash); err != nil {
 		return err
 	}
