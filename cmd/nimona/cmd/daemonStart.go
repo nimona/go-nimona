@@ -102,12 +102,7 @@ var daemonStartCmd = &cobra.Command{
 
 		ik := config.Daemon.IdentityKey
 		if ik != nil {
-			// if config.Daemon.Mandate == nil {
-			// 	return errors.New("missing mandate for identity")
-			// }
-			// if err := li.AttachMandate(config.Daemon.Mandate); err != nil {
-			// 	return errors.Wrap(err, "could not attach mandate to network")
-			// }
+			// TODO(NOW) sign pub peer key, add signature to pub peer key
 		}
 
 		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)

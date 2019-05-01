@@ -9,9 +9,8 @@ import (
 )
 
 type LocalInfo struct {
-	hostname string
-	key      *crypto.PrivateKey
-	// mandate       *crypto.Mandate
+	hostname      string
+	key           *crypto.PrivateKey
 	addressesLock sync.RWMutex
 	addresses     []string
 
@@ -37,14 +36,6 @@ func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
 		contentHashes: map[string]bool{},
 	}, nil
 }
-
-// func (l *LocalInfo) AttachMandate(m *crypto.Mandate) error {
-// 	// TODO(geoah): Check if our peer key is the mandate's subject
-// 	l.addressesLock.Lock()
-// 	l.mandate = m
-// 	l.addressesLock.Unlock()
-// 	return nil
-// }
 
 func (l *LocalInfo) AddAddress(addrs ...string) {
 	l.addressesLock.Lock()
@@ -91,10 +82,6 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 		addresses[i] = a
 	}
 	p.Addresses = addresses
-	// if l.mandate != nil {
-	// 	p.AuthorityKey = l.mandate.Signer
-	// 	p.Mandate = l.mandate
-	// }
 	l.addressesLock.RUnlock()
 
 	l.contentHashesLock.RLock()

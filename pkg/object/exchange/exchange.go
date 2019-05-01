@@ -472,53 +472,6 @@ func (w *exchange) Send(
 
 		return net.ErrAllAddressesFailed
 
-	case "identity":
-		val, err := getAddressValue(address)
-		if err != nil {
-			return err
-		}
-
-		discoveryOpts := []discovery.DiscovererOption{}
-		if opts.LocalDiscovery {
-			discoveryOpts = append(discoveryOpts, discovery.Local())
-		}
-
-		// TODO(geoah): Look for the correct object type as well
-		req := &peer.PeerInfoRequest{
-			AuthorityKeyHash: val,
-		}
-		peers, err := w.discover.Discover(ctx, req, discoveryOpts...)
-		if err != nil {
-			return errors.New("discovery didn't yield any results for identity")
-		}
-
-		logger.Debug("sending object to identity",
-			zap.Int("peers", len(peers)),
-			zap.String("address", address),
-		)
-
-		failed := 0
-		for _, peer := range peers {
-			err := w.sendDirectlyToPeer(ctx, o, peer.Address(), opts)
-			if err == nil {
-				continue
-			}
-
-			err = w.sendViaRelayToPeer(ctx, o, peer.Address(), opts)
-			if err == nil {
-				continue
-			}
-
-			logger.Info("could not send to peer", zap.String("addr", address))
-			failed++
-		}
-
-		if failed == len(peers) {
-			return errors.New("sending failed for all peers")
-		}
-
-		return nil
-
 	default:
 		err := w.sendDirectlyToPeer(ctx, o, address, opts)
 		if err != nil {

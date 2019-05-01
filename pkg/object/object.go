@@ -153,44 +153,6 @@ func (o Object) SetSignature(v *Object) {
 	o.SetRaw("@signature", v)
 }
 
-// GetAuthorityKey returns the object's creator, or nil
-func (o Object) GetAuthorityKey() *Object {
-	v, ok := o.GetRaw("@authority").(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	vo := &Object{}
-	err := vo.FromMap(v)
-	if err != nil {
-		return nil
-	}
-	return vo
-}
-
-// SetAuthorityKey sets the object's creator
-func (o Object) SetAuthorityKey(v *Object) {
-	o.SetRaw("@authority", v)
-}
-
-// GetMandate returns the object's mandate, or nil
-func (o Object) GetMandate() *Object {
-	v, ok := o.GetRaw("@mandate").(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	vo := &Object{}
-	err := vo.FromMap(v)
-	if err != nil {
-		return nil
-	}
-	return vo
-}
-
-// SetMandate sets the object's mandate
-func (o Object) SetMandate(v *Object) {
-	o.SetRaw("@mandate", v)
-}
-
 // GetSignerKey returns the object's signer, or nil
 func (o Object) GetSignerKey() *Object {
 	v, ok := o.GetRaw("@signer").(map[string]interface{})

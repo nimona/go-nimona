@@ -15,6 +15,5 @@ type ProviderResponse struct {
 
 	RawObject *object.Object    `json:"@"`
 	Signer    *crypto.PublicKey `json:"@signer"`
-	Authority *crypto.PublicKey `json:"@authority"`
 	Signature *crypto.Signature `json:"@signature"`
 }

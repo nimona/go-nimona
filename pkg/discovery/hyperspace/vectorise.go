@@ -9,9 +9,6 @@ import (
 // Vectorise returns a sparse vector from a PeerInfoRequest
 func Vectorise(q *peer.PeerInfoRequest) *sparse.Vector {
 	i := []int{}
-	if q.AuthorityKeyHash != "" {
-		i = append(i, HashChunked("ak", []byte(q.AuthorityKeyHash))...)
-	}
 	if q.SignerKeyHash != "" {
 		i = append(i, HashChunked("sk", []byte(q.SignerKeyHash))...)
 	}
@@ -44,9 +41,6 @@ func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,
 	}
-	// if p.AuthorityKey != nil {
-	// 	q.AuthorityKeyHash = p.AuthorityKey.HashBase58()
-	// }
 	if p.SignerKey != nil {
 		q.SignerKeyHash = p.SignerKey.Hash
 	}

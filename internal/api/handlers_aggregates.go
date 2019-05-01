@@ -83,7 +83,7 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 		addrs = append(addrs, p.Address())
 	}
 
-	// if we have the object, and if its signed, include the signer
+	// if we have the object, and if it's signed, include the signer
 	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
 		if sk := rootObject.GetSignerKey(); sk != nil {
 			addrs = append(addrs, "peer:"+sk.HashBase58())

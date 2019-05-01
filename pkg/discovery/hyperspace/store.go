@@ -87,20 +87,14 @@ func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	return rs
 }
 
-// FindExact returns peers that match query authority or peer
+// FindExact returns peers that match query peer
 func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	
 	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		// if q.AuthorityKeyHash != "" && p.AuthorityKey != nil &&
-		// 	q.AuthorityKeyHash == p.AuthorityKey.HashBase58() {
-		// 	ps = append(ps, p)
-		// 	continue
-		// }
 		if q.SignerKeyHash != "" && p.SignerKey != nil &&
 			q.SignerKeyHash == p.SignerKey.Hash {
 			ps = append(ps, p)

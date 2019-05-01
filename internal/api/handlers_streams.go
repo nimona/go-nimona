@@ -61,11 +61,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	incoming := make(chan *object.Object, 100)
 	outgoing := make(chan *object.Object, 100)
 
-	// var mandateObj *object.Object
-	// if mandate := api.local.GetPeerInfo().Mandate; mandate != nil {
-	// 	mandateObj = mandate.ToObject()
-	// }
-
 	go func() {
 		for {
 			select {
@@ -77,9 +72,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 				}
 
 			case req := <-outgoing:
-				// if mandateObj != nil {
-				// 	req.SetMandate(mandateObj)
-				// }
 				if err := crypto.Sign(req, api.key); err != nil {
 					logger.Error("could not sign outgoing object", zap.Error(err))
 					req.SetRaw("_status", "error signing object")
