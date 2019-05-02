@@ -157,7 +157,7 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 	}
 	for _, addr := range bootstrapAddresses {
 		q := &peer.PeerInfoRequest{
-			SignerKeyHash: key.PublicKey.Hash,
+			SignerKeyHash: key.PublicKey.HashBase58(),
 		}
 		o := q.ToObject()
 		err := crypto.Sign(o, key)

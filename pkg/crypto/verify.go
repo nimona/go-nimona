@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/pkg/errors"
-
+	"nimona.io/internal/errors"
 	"nimona.io/pkg/object"
 )
 
@@ -16,7 +15,7 @@ var (
 	ErrCouldNotVerify = errors.New("could not verify signature")
 )
 
-// Verify object given the signer's key
+// Verify object
 func Verify(o *object.Object) error {
 	if o == nil {
 		return errors.New("missing object")
@@ -27,19 +26,12 @@ func Verify(o *object.Object) error {
 		return errors.New("missing signature")
 	}
 
-	ko := o.GetSignerKey()
-	if so == nil {
-		return errors.New("missing signer key")
-	}
-
-	sig := &Signature{}
-	if err := sig.FromObject(so); err != nil {
-		return err
-	}
-
-	key := &PrivateKey{}
-	if err := key.FromObject(ko); err != nil {
-		return err
+	sig, err := GetObjectSignature(o)
+	if err != nil {
+		return errors.Wrap(
+			errors.New("could not get signature"),
+			err,
+		)
 	}
 
 	hash, err := object.ObjectHash(o)

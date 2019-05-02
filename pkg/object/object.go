@@ -153,25 +153,6 @@ func (o Object) SetSignature(v *Object) {
 	o.SetRaw("@signature", v)
 }
 
-// GetSignerKey returns the object's signer, or nil
-func (o Object) GetSignerKey() *Object {
-	v, ok := o.GetRaw("@signer").(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	vo := &Object{}
-	err := vo.FromMap(v)
-	if err != nil {
-		return nil
-	}
-	return vo
-}
-
-// SetSignerKey sets the object's signer
-func (o Object) SetSignerKey(v *Object) {
-	o.SetRaw("@signer", v)
-}
-
 // GetPolicy returns the object's policy, or nil
 func (o Object) GetPolicy() *Object {
 	v, ok := o.GetRaw("@policy").(map[string]interface{})

@@ -10,6 +10,7 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object/mutation"
 )
@@ -85,8 +86,9 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 
 	// if we have the object, and if it's signed, include the signer
 	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
-		if sk := rootObject.GetSignerKey(); sk != nil {
-			addrs = append(addrs, "peer:"+sk.HashBase58())
+		sig, err := crypto.GetObjectSignature(rootObject)
+		if err == nil {
+			addrs = append(addrs, "peer:"+sig.PublicKey.HashBase58())
 		}
 	}
 
