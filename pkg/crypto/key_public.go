@@ -34,10 +34,13 @@ type PublicKey struct {
 // 	return k.ToObject().Hash()
 // }
 
-// // HashBase58 of the key
-// func (k *PublicKey) HashBase58() string {
-// 	return k.ToObject().HashBase58()
-// }
+// HashBase58 of the key
+func (k *PublicKey) HashBase58() string {
+	if k.Hash != "" {
+		return k.Hash
+	}
+	return k.ToObject().HashBase58()
+}
 
 // GetPublicKey returns the public key
 // func (k *PublicKey) GetPublicKey() *PublicKey {

@@ -32,8 +32,8 @@ func (s PublicKey) ToObject() *object.Object {
 	if len(s.Y) > 0 {
 		o.SetRaw("y", s.Y)
 	}
-	if len(s.Signatures) > 0 {
-		o.SetRaw("sigs", s.Signatures)
+	if s.Signature != nil {
+		o.SetRaw("@signature", s.Signature)
 	}
 	return o
 }
@@ -77,8 +77,15 @@ func (s *PublicKey) FromObject(o *object.Object) error {
 	if err := atoa(o.GetRaw("y"), &s.Y); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("sigs"), &s.Signatures); err != nil {
-		return err
+	if v, ok := o.GetRaw("@signature").(*Signature); ok {
+		s.Signature = v
+	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
+		s.Signature = &Signature{}
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.Signature.FromObject(o)
 	}
 
 	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {

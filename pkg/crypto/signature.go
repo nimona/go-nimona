@@ -3,8 +3,8 @@ package crypto
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
-	"errors"
 
+	"nimona.io/internal/errors"
 	"nimona.io/pkg/object"
 )
 
@@ -102,4 +102,26 @@ func NewSignature(
 		R:         r.Bytes(),
 		S:         s.Bytes(),
 	}, nil
+}
+
+func GetObjectSignature(o *object.Object) (*Signature, error) {
+	v, ok := o.GetRaw("@signature").(map[string]interface{})
+	if !ok {
+		return nil, errors.New("object is not signed")
+	}
+	vo := &object.Object{}
+	if err := vo.FromMap(v); err != nil {
+		return nil, errors.Wrap(
+			errors.New("invalid signature object"),
+			err,
+		)
+	}
+	s := &Signature{}
+	if err := s.FromObject(vo); err != nil {
+		return nil, errors.Wrap(
+			errors.New("invalid signature"),
+			err,
+		)
+	}
+	return s, nil
 }

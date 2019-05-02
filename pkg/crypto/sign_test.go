@@ -32,8 +32,10 @@ func TestSignAndVerify(t *testing.T) {
 	err = Sign(eo, subjectKey)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, eo.GetSignerKey())
-	assert.NotNil(t, eo.GetSignature())
+	es, err := GetObjectSignature(eo)
+	assert.NoError(t, err)
+	assert.NotNil(t, es)
+	assert.NotNil(t, es.PublicKey)
 
 	err = Verify(eo)
 	assert.NoError(t, err)

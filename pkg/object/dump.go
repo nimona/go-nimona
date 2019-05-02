@@ -9,9 +9,7 @@ func Dump(o *Object, skipKeys ...string) string {
 		delete(m, skipKey)
 	}
 	m["_hash"] = o.HashBase58()
-	if sk := o.GetSignerKey(); sk != nil {
-		m["_signer"] = sk.HashBase58()
-	}
+	// TODO(NOW): add sig chain as _xxx?
 	j, _ := json.MarshalIndent(m, "", "  ")
 	return string(j)
 }

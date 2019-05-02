@@ -72,7 +72,7 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 		ctx := context.Background()
 		req := &PeerInfoRequest{
 			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    key.PublicKey.Hash,
+			PeerID:    key.PublicKey.HashBase58(),
 		}
 		so := req.ToObject()
 		if err := crypto.Sign(so, key); err != nil {

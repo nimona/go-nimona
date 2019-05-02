@@ -94,8 +94,9 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 
 	// if we have the object, and if its signed, include the signer
 	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
-		if sk := rootObject.GetSignerKey(); sk != nil {
-			addrs = append(addrs, "peer:"+sk.HashBase58())
+		sig, err := crypto.GetObjectSignature(rootObject)
+		if err == nil {
+			addrs = append(addrs, "peer:"+sig.PublicKey.HashBase58())
 		}
 	}
 

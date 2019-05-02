@@ -25,11 +25,11 @@ func TestPrivateKey(t *testing.T) {
 	assert.Equal(t, emsk, nsk.Key)
 	assert.Equal(t, &emsk.PublicKey, nsk.PublicKey.Key)
 	assert.Equal(t, sk.Hash, nsk.Hash)
-	assert.Equal(t, sk.PublicKey.Hash, nsk.PublicKey.Hash)
+	assert.Equal(t, sk.PublicKey.HashBase58(), nsk.PublicKey.HashBase58())
 
 	// convert PublicKey to object
 	npk := &PublicKey{}
 	npk.FromObject(sk.PublicKey.ToObject())
 	assert.Equal(t, &emsk.PublicKey, npk.Key)
-	assert.Equal(t, sk.PublicKey.Hash, nsk.PublicKey.Hash)
+	assert.Equal(t, sk.PublicKey.HashBase58(), nsk.PublicKey.HashBase58())
 }

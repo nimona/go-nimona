@@ -290,7 +290,7 @@ func (w *exchange) process(
 	}
 
 	logger := w.logger.With(
-		zap.String("local_peer", w.key.PublicKey.Hash),
+		zap.String("local_peer", w.key.PublicKey.HashBase58()),
 		zap.String("remote_peer", conn.RemotePeerKey.Hash),
 		zap.String("request_id", reqID),
 		zap.String("object.type", o.GetType()),
@@ -512,7 +512,7 @@ func (w *exchange) sendViaRelayToPeer(
 	}
 
 	recipient := strings.Replace(address, "peer:", "", 1)
-	if recipient == w.key.PublicKey.Hash {
+	if recipient == w.key.PublicKey.HashBase58() {
 		// TODO(geoah) error or nil?
 		return errors.New("cannot send obj to self")
 	}
@@ -551,7 +551,7 @@ func (w *exchange) sendViaRelayToPeer(
 				)
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
-			if strings.Contains(address, w.key.PublicKey.Hash) {
+			if strings.Contains(address, w.key.PublicKey.HashBase58()) {
 				continue
 			}
 			cerr := make(chan error, 1)

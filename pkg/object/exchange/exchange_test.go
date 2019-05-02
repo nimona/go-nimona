@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -53,22 +54,6 @@ func TestSendSuccess(t *testing.T) {
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
-		assert.NotNil(t, eo1.GetSignerKey())
-		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t,
-			jp(eo1.GetSignerKey().ToMap()),
-			jp(o.GetSignerKey().ToMap()),
-		)
-		assert.Equal(t,
-			eo1.GetSignerKey().HashBase58(),
-			o.GetSignerKey().HashBase58(),
-		)
-		assert.NotNil(t, eo1.GetSignature())
-		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t,
-			jp(eo1.GetSignature().ToMap()),
-			jp(o.GetSignature().ToMap()),
-		)
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -78,11 +63,6 @@ func TestSendSuccess(t *testing.T) {
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
-		assert.Nil(t, eo2.GetSignature())
-		assert.Nil(t, o.GetSignature())
-		assert.Nil(t, eo2.GetSignerKey())
-		assert.Nil(t, o.GetSignerKey())
-
 		w2ObjectHandled = true
 		wg.Done()
 		return nil
@@ -91,13 +71,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Hash)
+	errS1 := x2.Send(ctx, eo1, "peer:"+k1.PublicKey.HashBase58())
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, "peer:"+k2.PublicKey.Hash)
+	errS2 := x1.Send(ctx, eo2, "peer:"+k2.PublicKey.HashBase58())
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
@@ -235,15 +215,15 @@ func TestSendRelay(t *testing.T) {
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
 	fmt.Println("k0:",
-		k0.PublicKey.Hash,
+		k0.PublicKey.HashBase58(),
 		l0.GetPeerInfo().Addresses,
 	)
 	fmt.Println("k1:",
-		k1.PublicKey.Hash,
+		k1.PublicKey.HashBase58(),
 		l1.GetPeerInfo().Addresses,
 	)
 	fmt.Println("k2:",
-		k2.PublicKey.Hash,
+		k2.PublicKey.HashBase58(),
 		l2.GetPeerInfo().Addresses,
 	)
 	fmt.Printf("-----------------------------\n\n\n\n")
@@ -295,22 +275,6 @@ func TestSendRelay(t *testing.T) {
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
 		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
-		assert.NotNil(t, eo1.GetSignerKey())
-		assert.NotNil(t, o.GetSignerKey())
-		assert.Equal(t,
-			jp(eo1.GetSignerKey().ToMap()),
-			jp(o.GetSignerKey().ToMap()),
-		)
-		assert.Equal(t,
-			eo1.GetSignerKey().HashBase58(),
-			o.GetSignerKey().HashBase58(),
-		)
-		assert.NotNil(t, eo1.GetSignature())
-		assert.NotNil(t, o.GetSignature())
-		assert.Equal(t,
-			jp(eo1.GetSignature().ToMap()),
-			jp(o.GetSignature().ToMap()),
-		)
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -320,11 +284,6 @@ func TestSendRelay(t *testing.T) {
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
 		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
-		assert.Nil(t, eo2.GetSignature())
-		assert.Nil(t, o.GetSignature())
-		assert.Nil(t, eo2.GetSignerKey())
-		assert.Nil(t, o.GetSignerKey())
-
 		w2ObjectHandled = true
 		wg.Done()
 		return nil
@@ -334,7 +293,7 @@ func TestSendRelay(t *testing.T) {
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
 	defer cf()
 
-	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Hash)
+	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.HashBase58())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -343,7 +302,7 @@ func TestSendRelay(t *testing.T) {
 	defer cf2()
 
 	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Hash)
+	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.HashBase58())
 	assert.NoError(t, err)
 
 	wg.Wait()
