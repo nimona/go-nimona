@@ -30,6 +30,11 @@ type PrivateKey struct {
 	PublicKey *PublicKey  `json:"-"`
 }
 
+// Fingerprint of the key
+func (k *PrivateKey) Fingerprint() string {
+	return k.PublicKey.Fingerprint()
+}
+
 // Hash of the PrivateKey
 // func (k *PrivateKey) Hash() []byte {
 // 	return k.ToObject().Hash()

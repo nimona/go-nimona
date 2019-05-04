@@ -117,7 +117,7 @@ func (r *discoverer) AddProvider(provider Provider) error {
 // These peers will eventually be gc-ed.
 func (r *discoverer) Add(v *peer.PeerInfo) {
 	r.cacheLock.Lock()
-	r.cacheTemp[v.HashBase58()] = v
+	r.cacheTemp[v.Fingerprint()] = v
 	r.cacheLock.Unlock()
 }
 
@@ -126,6 +126,6 @@ func (r *discoverer) Add(v *peer.PeerInfo) {
 // Mainly used for adding bootstrap nodes.
 func (r *discoverer) AddPersistent(v *peer.PeerInfo) {
 	r.cacheLock.Lock()
-	r.cachePersistent[v.HashBase58()] = v
+	r.cachePersistent[v.Fingerprint()] = v
 	r.cacheLock.Unlock()
 }

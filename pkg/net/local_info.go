@@ -71,9 +71,7 @@ func (l *LocalInfo) GetPeerKey() *crypto.PrivateKey {
 // GetPeerInfo returns the local peer info
 func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	// TODO cache peer info and reuse
-	p := &peer.PeerInfo{
-		SignerKey: l.key.PublicKey,
-	}
+	p := &peer.PeerInfo{}
 
 	l.addressesLock.RLock()
 	// TODO Check all the transports for addresses

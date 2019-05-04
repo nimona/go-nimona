@@ -105,7 +105,7 @@ func (q *query) nextIfCloser(newPeerID string) {
 		if len(closestPeers) == 0 {
 			return
 		}
-		closestPeerID := closestPeers[0].HashBase58()
+		closestPeerID := closestPeers[0].Fingerprint()
 		if comparePeers(q.closestPeerID, closestPeerID, q.key) == closestPeerID {
 			q.closestPeerID = closestPeerID
 			q.next()
@@ -124,11 +124,11 @@ func (q *query) next() {
 	peersToAsk := []*crypto.PublicKey{}
 	for _, peerInfo := range closestPeers {
 		// skip the ones we've already asked
-		if _, ok := q.contactedPeers.Load(peerInfo.HashBase58()); ok {
+		if _, ok := q.contactedPeers.Load(peerInfo.Fingerprint()); ok {
 			continue
 		}
-		peersToAsk = append(peersToAsk, peerInfo.SignerKey)
-		q.contactedPeers.Store(peerInfo.HashBase58(), true)
+		peersToAsk = append(peersToAsk, peerInfo.Signature.PublicKey)
+		q.contactedPeers.Store(peerInfo.Fingerprint(), true)
 	}
 
 	signer := q.dht.key

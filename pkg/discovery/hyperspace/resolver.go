@@ -80,7 +80,7 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 func (r *Discoverer) handlePeerInfo(p *peer.PeerInfo) {
 	logger := log.DefaultLogger.With(
 		zap.String("method", "resolver/handlePeerInfo"),
-		zap.String("peerinfo._hash", p.HashBase58()),
+		zap.String("peerinfo._hash", p.Fingerprint()),
 		zap.Strings("peerinfo.addresses", p.Addresses),
 	)
 	logger.Debug("adding peerinfo to store")
@@ -125,7 +125,7 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 	}
 	logger.Debug("found closest peers", zap.Int("n", len(ps)))
 	for _, p := range ps {
-		r.exchange.Send(ctx, o, "peer:"+p.SignerKey.Hash, opts...)
+		r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
 	}
 	// TODO(geoah) better timeout
 	t := time.NewTicker(time.Second * 5)
@@ -157,7 +157,7 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 	}
 	for _, addr := range bootstrapAddresses {
 		q := &peer.PeerInfoRequest{
-			SignerKeyHash: key.PublicKey.HashBase58(),
+			SignerKeyHash: key.PublicKey.Fingerprint(),
 		}
 		o := q.ToObject()
 		err := crypto.Sign(o, key)

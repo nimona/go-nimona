@@ -141,10 +141,10 @@ var daemonStartCmd = &cobra.Command{
 
 		cmd.Println("Started daemon")
 		cmd.Println("* Peer private key hash:\n  *", k.Hash)
-		cmd.Println("* Peer public key hash:\n  *", k.PublicKey.HashBase58())
+		cmd.Println("* Peer public key hash:\n  *", k.PublicKey.Fingerprint())
 		if ik != nil {
 			cmd.Println("* Identity private key hash:\n  *", ik.Hash)
-			cmd.Println("* Identity public key hash:\n  *", ik.PublicKey.HashBase58())
+			cmd.Println("* Identity public key hash:\n  *", ik.PublicKey.Fingerprint())
 		}
 		peerAddresses := li.GetPeerInfo().Addresses
 		cmd.Println("* Peer addresses:")

@@ -48,6 +48,6 @@ func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
 
 // Put adds or overwrites an item in the collection
 func (c *PeerInfoCollection) Put(peerInfo *PeerInfo) error {
-	c.peers.Store(peerInfo.HashBase58(), peerInfo)
+	c.peers.Store(peerInfo.Signature.PublicKey.Fingerprint(), peerInfo)
 	return nil
 }

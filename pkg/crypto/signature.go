@@ -125,3 +125,27 @@ func GetObjectSignature(o *object.Object) (*Signature, error) {
 	}
 	return s, nil
 }
+
+func GetObjectKeys(o *object.Object) (pks []*PublicKey) {
+	sig, _ := GetObjectSignature(o)
+	for {
+		if sig == nil || sig.PublicKey == nil {
+			return
+		}
+		pk := sig.PublicKey
+		pks = append(pks, pk)
+		sig = pk.Signature
+	}
+}
+
+
+func GetSignatureKeys(sig *Signature) (pks []*PublicKey) {
+	for {
+		if sig == nil || sig.PublicKey == nil {
+			return
+		}
+		pk := sig.PublicKey
+		pks = append(pks, pk)
+		sig = pk.Signature
+	}
+}

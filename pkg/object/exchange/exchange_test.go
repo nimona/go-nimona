@@ -71,13 +71,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, "peer:"+k1.PublicKey.HashBase58())
+	errS1 := x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint())
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, "peer:"+k2.PublicKey.HashBase58())
+	errS2 := x1.Send(ctx, eo2, "peer:"+k2.PublicKey.Fingerprint())
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
@@ -215,15 +215,15 @@ func TestSendRelay(t *testing.T) {
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
 	fmt.Println("k0:",
-		k0.PublicKey.HashBase58(),
+		k0.PublicKey.Fingerprint(),
 		l0.GetPeerInfo().Addresses,
 	)
 	fmt.Println("k1:",
-		k1.PublicKey.HashBase58(),
+		k1.PublicKey.Fingerprint(),
 		l1.GetPeerInfo().Addresses,
 	)
 	fmt.Println("k2:",
-		k2.PublicKey.HashBase58(),
+		k2.PublicKey.Fingerprint(),
 		l2.GetPeerInfo().Addresses,
 	)
 	fmt.Printf("-----------------------------\n\n\n\n")
@@ -293,7 +293,7 @@ func TestSendRelay(t *testing.T) {
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
 	defer cf()
 
-	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.HashBase58())
+	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -302,7 +302,7 @@ func TestSendRelay(t *testing.T) {
 	defer cf2()
 
 	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.HashBase58())
+	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint())
 	assert.NoError(t, err)
 
 	wg.Wait()
