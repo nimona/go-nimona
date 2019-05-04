@@ -68,7 +68,7 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.PeerInfo.SignerKey
+	conn.RemotePeerKey = synAck.PeerInfo.Signature.PublicKey
 	hs.discoverer.Add(synAck.PeerInfo)
 
 	ack := &Ack{
@@ -106,7 +106,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	}
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.PeerInfo.SignerKey
+	conn.RemotePeerKey = syn.PeerInfo.Signature.PublicKey
 	hs.discoverer.Add(syn.PeerInfo)
 
 	synAck := &SynAck{

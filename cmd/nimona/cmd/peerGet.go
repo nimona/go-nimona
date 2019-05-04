@@ -44,7 +44,7 @@ var peerGetCmd = &cobra.Command{
 		}
 
 		cmd.Println("peer:")
-		cmd.Println("  id:", peer.HashBase58())
+		cmd.Println("  id:", peer.Fingerprint())
 		cmd.Println("  addresses:", peer.Addresses)
 		cmd.Println("")
 		return nil

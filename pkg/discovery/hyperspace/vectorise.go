@@ -41,8 +41,8 @@ func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,
 	}
-	if p.SignerKey != nil {
-		q.SignerKeyHash = p.SignerKey.Hash
+	if p.Fingerprint() != "" {
+		q.SignerKeyHash = p.Fingerprint()
 	}
 	return q
 }

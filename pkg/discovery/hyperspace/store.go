@@ -32,7 +32,7 @@ func (s *Store) Add(cs ...*peer.PeerInfo) {
 	s.lock.Lock()
 	for _, c := range cs {
 		v := Vectorise(getPeerInfoRequest(c))
-		s.peers[c.SignerKey.Hash] = &storeValue{
+		s.peers[c.Fingerprint()] = &storeValue{
 			vector:   v,
 			peerInfo: c,
 		}
@@ -95,8 +95,7 @@ func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		if q.SignerKeyHash != "" && p.SignerKey != nil &&
-			q.SignerKeyHash == p.SignerKey.Hash {
+		if q.SignerKeyHash != "" && q.SignerKeyHash == p.Fingerprint() {
 			ps = append(ps, p)
 			continue
 		}

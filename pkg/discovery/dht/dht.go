@@ -72,7 +72,7 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 		ctx := context.Background()
 		req := &PeerInfoRequest{
 			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    key.PublicKey.HashBase58(),
+			PeerID:    key.PublicKey.Fingerprint(),
 		}
 		so := req.ToObject()
 		if err := crypto.Sign(so, key); err != nil {
@@ -104,7 +104,7 @@ func (r *DHT) refresh() {
 			continue
 		}
 
-		closestPeers, err := r.FindPeersClosestTo(peerInfo.HashBase58(), closestPeersToReturn)
+		closestPeers, err := r.FindPeersClosestTo(peerInfo.Fingerprint(), closestPeersToReturn)
 		if err != nil {
 			logger.Warn("refresh could not get peers ids", zap.Error(err))
 			time.Sleep(time.Second * 10)
@@ -114,12 +114,12 @@ func (r *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := r.exchange.Send(ctx, peerInfo.ToObject(), closestPeer.Address()); err != nil {
-				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.HashBase58()))
+				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Fingerprint()))
 			}
 		}
 
 		// HACK lookup our own peer info just so we can populate our peer table
-		r.GetPeerInfo(ctx, peerInfo.HashBase58())
+		r.GetPeerInfo(ctx, peerInfo.Fingerprint())
 
 		// sleep for a bit
 		time.Sleep(time.Second * 30)
@@ -304,7 +304,7 @@ func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 	// slice to hold the distances
 	dists := []distEntry{}
 	for _, peerInfo := range peerInfos {
-		peerInfoThumbprint := peerInfo.HashBase58()
+		peerInfoThumbprint := peerInfo.Fingerprint()
 		// calculate distance
 		de := distEntry{
 			key:      peerInfoThumbprint,
@@ -400,7 +400,7 @@ func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := r.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := r.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
-			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.HashBase58()))
+			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Fingerprint()))
 		}
 	}
 

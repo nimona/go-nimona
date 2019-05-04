@@ -26,25 +26,31 @@ func TestNetDiscoverer(t *testing.T) {
 	disc2.Add(l1.GetPeerInfo())
 
 	q1 := &peer.PeerInfoRequest{
-		SignerKeyHash: l2.GetPeerKey().PublicKey.HashBase58()}
+		SignerKeyHash: l2.GetPeerKey().PublicKey.Fingerprint()}
 	ps2, err := disc1.Discover(ctx, q1)
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
-		l2.GetPeerKey().PublicKey.HashBase58(),
-		p2.SignerKey.Hash)
+		l2.GetPeerKey().PublicKey.Fingerprint(),
+		p2.Fingerprint(),
+	)
 
 	q2 := &peer.PeerInfoRequest{
-		SignerKeyHash: l1.GetPeerKey().PublicKey.HashBase58()}
+		SignerKeyHash: l1.GetPeerKey().PublicKey.Fingerprint()}
 	ps1, err := disc2.Discover(ctx, q2)
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
-		l1.GetPeerKey().PublicKey.HashBase58(),
-		p1.SignerKey.Hash)
+		l1.GetPeerKey().PublicKey.Fingerprint(),
+		p1.Fingerprint(),
+	)
 }
+
+
+
+
 
 func TestNetConnectionSuccess(t *testing.T) {
 

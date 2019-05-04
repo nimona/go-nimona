@@ -1,8 +1,6 @@
 package peer
 
 import (
-	"fmt"
-
 	"nimona.io/pkg/crypto"
 )
 
@@ -14,30 +12,19 @@ type PeerInfo struct {
 	Protocols    []string          `json:"protocols"`
 	ContentIDs   []string          `json:"contentIDs"`
 	ContentTypes []string          `json:"contentTypes"`
-	SignerKey    *crypto.PublicKey `json:"@signer"`
 	Signature    *crypto.Signature `json:"@signature"`
 }
 
-// HashBase58 of peer
-// TODO rename to ID() or PeerIDs()?
-func (pi *PeerInfo) HashBase58() string {
-	if pi == nil {
+// Fingerprint of signer
+func (pi *PeerInfo) Fingerprint() string {
+	if pi == nil || pi.Signature == nil || pi.Signature.PublicKey == nil {
 		return ""
 	}
-	return pi.SignerKey.Hash
+
+	return pi.Signature.PublicKey.Fingerprint()
 }
 
 // Address of the peer
 func (pi *PeerInfo) Address() string {
-	return "peer:" + pi.HashBase58()
-}
-
-// String to allow pretty printing peers
-func (p *PeerInfo) String() string {
-	ppub := p.SignerKey.Hash
-	return fmt.Sprintf(
-		"(ppub: %s; addrs: %v)",
-		ppub,
-		p.Addresses,
-	)
+	return "peer:" + pi.Signature.PublicKey.Fingerprint()
 }

@@ -5,6 +5,9 @@ import (
 	"crypto/elliptic"
 
 	"github.com/pkg/errors"
+
+	"nimona.io/internal/encoding/base58"
+	"nimona.io/pkg/object"
 )
 
 //go:generate go run nimona.io/tools/objectify -schema /key.public -type PublicKey -in key_public.go -out key_public_generated.go
@@ -23,39 +26,23 @@ type PublicKey struct {
 	X     []byte `json:"x,omitempty"`
 	Y     []byte `json:"y,omitempty"`
 
-	Signatures []*Signature `json:"sigs,omitempty"`
+	Signature *Signature `json:"@signature,omitempty"`
 
 	Key  interface{} `json:"-"`
 	Hash string      `json:"-"`
 }
 
-// // Hash of the key
-// func (k *PublicKey) Hash() []byte {
-// 	return k.ToObject().Hash()
-// }
-
-// HashBase58 of the key
-func (k *PublicKey) HashBase58() string {
-	if k.Hash != "" {
-		return k.Hash
+// Fingerprint of the key
+func (k *PublicKey) Fingerprint() string {
+	fp := &PublicKey{
+		Algorithm: k.Algorithm,
+		KeyType:   k.KeyType,
+		Curve:     k.Curve,
+		X:         k.X,
+		Y:         k.Y,
 	}
-	return k.ToObject().HashBase58()
+	return base58.Encode(object.Hash(fp.ToObject()))
 }
-
-// GetPublicKey returns the public key
-// func (k *PublicKey) GetPublicKey() *PublicKey {
-// 	if len(k.D) == 0 {
-// 		return k
-// 	}
-
-// 	pk := k.Key.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey)
-// 	bpk, err := NewKey(pk)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return bpk
-// }
 
 func (k *PublicKey) afterFromObject() {
 	// TODO cache on k.key
@@ -74,22 +61,11 @@ func (k *PublicKey) afterFromObject() {
 
 	switch k.KeyType {
 	case EC:
-		// if len(k.D) > 0 {
-		// 	key = &ecdsa.PrivateKey{
-		// 		PublicKey: ecdsa.PublicKey{
-		// 			Curve: curve,
-		// 			X:     bigIntFromBytes(k.X),
-		// 			Y:     bigIntFromBytes(k.Y),
-		// 		},
-		// 		D: bigIntFromBytes(k.D),
-		// 	}
-		// } else {
 		k.Key = &ecdsa.PublicKey{
 			Curve: curve,
 			X:     bigIntFromBytes(k.X),
 			Y:     bigIntFromBytes(k.Y),
 		}
-		// }
 	default:
 		panic("invalid kty")
 		// return nil, errors.Errorf(`invalid kty %s`, h.KeyType)
@@ -115,8 +91,6 @@ func NewPublicKey(key interface{}) (*PublicKey, error) {
 		k.Curve = v.Curve.Params().Name
 		k.X = v.X.Bytes()
 		k.Y = v.Y.Bytes()
-	// case []byte:
-	// 	return newSymmetricKey(v)
 	default:
 		return nil, errors.Errorf(`invalid key type %T`, key)
 	}

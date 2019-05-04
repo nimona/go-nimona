@@ -30,9 +30,6 @@ func (s PeerInfo) ToObject() *object.Object {
 	if len(s.ContentTypes) > 0 {
 		o.SetRaw("contentTypes", s.ContentTypes)
 	}
-	if s.SignerKey != nil {
-		o.SetRaw("@signer", s.SignerKey)
-	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
@@ -74,16 +71,6 @@ func (s *PeerInfo) FromObject(o *object.Object) error {
 	}
 	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
 		return err
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.SignerKey = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.SignerKey = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.SignerKey.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v

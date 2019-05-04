@@ -73,7 +73,7 @@ func New(
 		dag: dag,
 		agg: agg,
 
-		localKey: linf.GetPeerInfo().HashBase58(),
+		localKey: linf.GetPeerInfo().Fingerprint(),
 		local:    linf,
 
 		version:      version,

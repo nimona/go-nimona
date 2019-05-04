@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/object"
 )
 
 // peerListCmd represents the peerList command
@@ -39,7 +39,7 @@ var peerListCmd = &cobra.Command{
 
 		for _, peer := range ms {
 			cmd.Println("peer:")
-			cmd.Println("  id:", peer.HashBase58())
+			cmd.Println("  id:", peer.Fingerprint())
 			cmd.Println("  addresses:", peer.Addresses)
 			cmd.Println("")
 		}
