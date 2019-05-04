@@ -98,7 +98,7 @@ func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest, e *exchange.
 		exchange.AsResponse(e.RequestID),
 	}
 	for _, p := range ps {
-		addr := "peer:" + e.Sender.Hash
+		addr := "peer:" + e.Sender.Fingerprint()
 		err := r.exchange.Send(ctx, p.ToObject(), addr, opts...)
 		if err != nil {
 			logger.Debug("handleProviderRequest could not send object",
@@ -140,7 +140,7 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 		case res := <-out:
 			logger.Debug("got response",
 				zap.String("res.type", res.Payload.GetType()),
-				zap.String("res.sender", res.Sender.Hash),
+				zap.String("res.sender", res.Sender.Fingerprint()),
 			)
 			r.handleObject(res)
 		}

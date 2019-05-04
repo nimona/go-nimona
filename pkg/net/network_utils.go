@@ -28,7 +28,7 @@ func Write(o *object.Object, conn *Connection) error {
 
 	ra := ""
 	if conn.RemotePeerKey != nil {
-		ra = conn.RemotePeerKey.Hash
+		ra = conn.RemotePeerKey.Fingerprint()
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
@@ -75,7 +75,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	ra := ""
 	if conn.RemotePeerKey != nil {
-		ra = conn.RemotePeerKey.Hash
+		ra = conn.RemotePeerKey.Fingerprint()
 	}
 
 	if o.GetSignature() != nil {

@@ -44,7 +44,7 @@ func Verify(o *object.Object) error {
 
 // verify a signature given a hash
 func verify(sig *Signature, hash []byte) error {
-	switch k := sig.PublicKey.Key.(type) {
+	switch k := sig.PublicKey.Key().(type) {
 	case *ecdsa.PublicKey:
 		r := new(big.Int).SetBytes(sig.R)
 		s := new(big.Int).SetBytes(sig.S)

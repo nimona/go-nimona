@@ -27,9 +27,6 @@ type PublicKey struct {
 	Y     []byte `json:"y,omitempty"`
 
 	Signature *Signature `json:"@signature,omitempty"`
-
-	Key  interface{} `json:"-"`
-	Hash string      `json:"-"`
 }
 
 // Fingerprint of the key
@@ -44,7 +41,7 @@ func (k *PublicKey) Fingerprint() string {
 	return base58.Encode(object.Hash(fp.ToObject()))
 }
 
-func (k *PublicKey) afterFromObject() {
+func (k *PublicKey) Key() interface{} {
 	// TODO cache on k.key
 	var curve elliptic.Curve
 	switch k.Curve {
@@ -61,7 +58,7 @@ func (k *PublicKey) afterFromObject() {
 
 	switch k.KeyType {
 	case EC:
-		k.Key = &ecdsa.PublicKey{
+		return &ecdsa.PublicKey{
 			Curve: curve,
 			X:     bigIntFromBytes(k.X),
 			Y:     bigIntFromBytes(k.Y),
@@ -70,8 +67,6 @@ func (k *PublicKey) afterFromObject() {
 		panic("invalid kty")
 		// return nil, errors.Errorf(`invalid kty %s`, h.KeyType)
 	}
-
-	k.Hash = k.ToObject().HashBase58()
 }
 
 // NewPublicKey creates a PublicKey from the given key.
@@ -86,7 +81,6 @@ func NewPublicKey(key interface{}) (*PublicKey, error) {
 	// case *rsa.PublicKey:
 	// 	return newRSAPublicKey(v)
 	case *ecdsa.PublicKey:
-		k.Key = v
 		k.KeyType = EC
 		k.Curve = v.Curve.Params().Name
 		k.X = v.X.Bytes()
@@ -94,8 +88,6 @@ func NewPublicKey(key interface{}) (*PublicKey, error) {
 	default:
 		return nil, errors.Errorf(`invalid key type %T`, key)
 	}
-
-	k.Hash = k.ToObject().HashBase58()
 
 	return k, nil
 }

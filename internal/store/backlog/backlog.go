@@ -13,6 +13,6 @@ type (
 	Backlog interface {
 		Push(*object.Object, ...*crypto.PublicKey) error
 		Pop(*crypto.PublicKey) (*object.Object, AckFunc, error)
-		// Peek(*crypto.Key) (*object.Object, error)
+		// Peek(*crypto.Key()) (*object.Object, error)
 	}
 )

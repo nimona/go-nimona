@@ -15,7 +15,7 @@ import (
 // GenerateCertificate for TLS serverset
 func GenerateCertificate(key *PrivateKey) (*tls.Certificate, error) {
 
-	pk, ok := key.Key.(*ecdsa.PrivateKey)
+	pk, ok := key.Key().(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, errors.New("only ecdsa private keys are supported")
 	}

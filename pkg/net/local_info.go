@@ -25,7 +25,7 @@ func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
 		return nil, ErrMissingKey
 	}
 
-	if _, ok := key.Key.(*ecdsa.PrivateKey); !ok {
+	if _, ok := key.Key().(*ecdsa.PrivateKey); !ok {
 		return nil, ErrECDSAPrivateKeyRequired
 	}
 

@@ -150,7 +150,7 @@ func New(
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
-				address := "peer:" + conn.RemotePeerKey.Hash
+				address := "peer:" + conn.RemotePeerKey.Fingerprint()
 				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
 					w.logger.Warn("failed to handle object", zap.Error(err))
@@ -263,7 +263,7 @@ func (w *exchange) HandleConnection(
 ) error {
 	w.logger.Debug(
 		"handling new connection",
-		zap.String("remote", "peer:"+conn.RemotePeerKey.Hash),
+		zap.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint()),
 	)
 	for {
 		// TODO use decoder
@@ -291,7 +291,7 @@ func (w *exchange) process(
 
 	logger := w.logger.With(
 		zap.String("local_peer", w.key.PublicKey.Fingerprint()),
-		zap.String("remote_peer", conn.RemotePeerKey.Hash),
+		zap.String("remote_peer", conn.RemotePeerKey.Fingerprint()),
 		zap.String("request_id", reqID),
 		zap.String("object.type", o.GetType()),
 	)
@@ -307,7 +307,7 @@ func (w *exchange) process(
 		}
 		logger = logger.With(
 			zap.String("requested_hash", req.ObjectHash),
-			zap.String("recipient", conn.RemotePeerKey.Hash),
+			zap.String("recipient", conn.RemotePeerKey.Fingerprint()),
 		)
 		logger.Info("got object request")
 		res, err := w.store.Get(req.ObjectHash)
@@ -325,7 +325,7 @@ func (w *exchange) process(
 		defer cf()
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
-			recipient: "peer:" + conn.RemotePeerKey.Hash,
+			recipient: "peer:" + conn.RemotePeerKey.Fingerprint(),
 			object:    res,
 			err:       cerr,
 		}

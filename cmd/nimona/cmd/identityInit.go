@@ -17,9 +17,7 @@ var identityInitCmd = &cobra.Command{
 			return err
 		}
 
-		cmd.Println("identity:")
-		cmd.Println("  private key:", identityKey.ToObject().HashBase58())
-		cmd.Println("  public key:", identityKey.PublicKey.Fingerprint())
+		cmd.Println("identity fingerprint:", identityKey.Fingerprint())
 		cmd.Println("")
 
 		config.Daemon.IdentityKey = identityKey

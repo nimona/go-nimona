@@ -35,6 +35,9 @@ func (s PrivateKey) ToObject() *object.Object {
 	if len(s.D) > 0 {
 		o.SetRaw("d", s.D)
 	}
+	if s.PublicKey != nil {
+		o.SetRaw("pub", s.PublicKey)
+	}
 	return o
 }
 
@@ -79,6 +82,16 @@ func (s *PrivateKey) FromObject(o *object.Object) error {
 	}
 	if err := atoa(o.GetRaw("d"), &s.D); err != nil {
 		return err
+	}
+	if v, ok := o.GetRaw("pub").(*PublicKey); ok {
+		s.PublicKey = v
+	} else if v, ok := o.GetRaw("pub").(map[string]interface{}); ok {
+		s.PublicKey = &PublicKey{}
+		o := &object.Object{}
+		if err := o.FromMap(v); err != nil {
+			return err
+		}
+		s.PublicKey.FromObject(o)
 	}
 
 	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {

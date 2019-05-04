@@ -45,7 +45,7 @@ func NewSignature(
 		return nil, errors.New("missing key")
 	}
 
-	pKey, ok := key.Key.(*ecdsa.PrivateKey)
+	pKey, ok := key.Key().(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, errors.New("only ecdsa private keys are currently supported")
 	}

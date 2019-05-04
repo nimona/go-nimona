@@ -25,9 +25,7 @@ type PrivateKey struct {
 	Y     []byte `json:"y,omitempty"`
 	D     []byte `json:"d,omitempty"`
 
-	Key       interface{} `json:"-"`
-	Hash      string      `json:"-"`
-	PublicKey *PublicKey  `json:"-"`
+	PublicKey *PublicKey `json:"pub,omitempty"`
 }
 
 // Fingerprint of the key
@@ -35,32 +33,7 @@ func (k *PrivateKey) Fingerprint() string {
 	return k.PublicKey.Fingerprint()
 }
 
-// Hash of the PrivateKey
-// func (k *PrivateKey) Hash() []byte {
-// 	return k.ToObject().Hash()
-// }
-
-// HashBase58 of the PrivateKey
-// func (k *PrivateKey) HashBase58() string {
-// 	return k.ToObject().HashBase58()
-// }
-
-// GetPublicKey returns the public key
-// func (k *PrivateKey) GetPublicKey() *PrivateKey {
-// 	if len(k.D) == 0 {
-// 		return k
-// 	}
-
-// 	pk := k.Key.(*ecdsa.PrivateKey).Public().(*ecdsa.PublicKey)
-// 	bpk, err := NewKey(pk)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return bpk
-// }
-
-func (k *PrivateKey) afterFromObject() {
+func (k *PrivateKey) Key() interface{} {
 	// TODO cache on k.key
 	var curve elliptic.Curve
 	switch k.Curve {
@@ -86,18 +59,11 @@ func (k *PrivateKey) afterFromObject() {
 			},
 			D: bigIntFromBytes(k.D),
 		}
-		pk, err := NewPublicKey(&sk.PublicKey)
-		if err != nil {
-			panic(err)
-		}
-		k.Key = sk
-		k.PublicKey = pk
+		return sk
 	default:
 		panic("invalid kty")
 		// return nil, errors.Errorf(`invalid kty %s`, h.KeyType)
 	}
-
-	k.Hash = k.ToObject().HashBase58()
 }
 
 // NewPrivateKey creates a PrivateKey from the given key.
@@ -111,7 +77,6 @@ func NewPrivateKey(key interface{}) (*PrivateKey, error) {
 	// case *rsa.PrivateKey:
 	// 	return newRSAPrivateKey(v)
 	case *ecdsa.PrivateKey:
-		k.Key = v
 		k.KeyType = EC
 		k.Curve = v.Curve.Params().Name
 		k.X = v.X.Bytes()
@@ -127,8 +92,6 @@ func NewPrivateKey(key interface{}) (*PrivateKey, error) {
 	default:
 		return nil, errors.Errorf(`invalid key type %T`, key)
 	}
-
-	k.Hash = k.ToObject().HashBase58()
 
 	return k, nil
 }
