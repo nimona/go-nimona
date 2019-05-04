@@ -226,7 +226,7 @@ package hyperspace
 
 // 	for _, c := range cs {
 // 		q := &peer.PeerInfoRequest{
-// 			SignerKeyHash: c.SignerKey.Hash,
+// 			SignerKeyHash: c.SignerKey.Fingerprint(),
 // 			ContentTypes:  c.ContentTypes,
 // 		}
 // 		rs := s.FindClosest(q)
@@ -352,8 +352,8 @@ package hyperspace
 // 	}
 // }
 
-// func getRandKey() *crypto.Key {
-// 	return &crypto.Key{
+// func getRandKey() *crypto.Key() {
+// 	return &crypto.Key(){
 // 		X: getRandBytes(32),
 // 	}
 // }

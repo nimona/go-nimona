@@ -200,7 +200,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		// TODO log error
 		return
 	}
-	addr := "peer:" + payload.Signer.Hash
+	addr := "peer:" + payload.Signer.Fingerprint()
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		return
@@ -257,7 +257,7 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	addr := "peer:" + payload.Signer.Hash
+	addr := "peer:" + payload.Signer.Fingerprint()
 	so := resp.ToObject()
 	if err := crypto.Sign(so, r.key); err != nil {
 		// TODO log error
@@ -459,7 +459,7 @@ func (r *DHT) GetAllProviders() (map[string][]string, error) {
 			if provider.Signature == nil {
 				continue
 			}
-			allProviders[objectID] = append(allProviders[objectID], provider.Signer.Hash)
+			allProviders[objectID] = append(allProviders[objectID], provider.Signer.Fingerprint())
 		}
 	}
 	return allProviders, nil

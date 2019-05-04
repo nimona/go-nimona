@@ -58,14 +58,14 @@ func (bl *Bolt) Push(o *object.Object, ks ...*crypto.PublicKey) error {
 		err := bl.storm.Save(&item{
 			Key: key{
 				ObjectHash: h,
-				KeyHash:    k.Hash,
+				KeyHash:    k.Fingerprint(),
 			},
 			Object: b,
 			Pushed: n,
 			// TODO(geoah) remove once we figured out how to select based on
 			// only one part of the composite key
 			ObjectHash: h,
-			KeyHash:    k.Hash,
+			KeyHash:    k.Fingerprint(),
 		})
 		if err != nil {
 			switch err {
@@ -83,7 +83,7 @@ func (bl *Bolt) Push(o *object.Object, ks ...*crypto.PublicKey) error {
 func (bl *Bolt) Pop(k *crypto.PublicKey) (*object.Object, AckFunc, error) {
 	item := &item{}
 	q := bl.storm.Select(
-		query.Eq("KeyHash", k.Hash),
+		query.Eq("KeyHash", k.Fingerprint()),
 	).
 		OrderBy("Pushed")
 

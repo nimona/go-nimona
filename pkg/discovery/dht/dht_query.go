@@ -160,9 +160,9 @@ func (q *query) next() {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 	for _, peer := range peersToAsk {
-		addr := "peer:" + peer.Hash
+		addr := "peer:" + peer.Fingerprint()
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.Hash))
+			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.Fingerprint()))
 		}
 	}
 }
