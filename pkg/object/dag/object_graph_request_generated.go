@@ -21,9 +21,6 @@ func (s ObjectGraphRequest) ToObject() *object.Object {
 	if len(s.Selector) > 0 {
 		o.SetRaw("selector", s.Selector)
 	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
-	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
@@ -56,16 +53,6 @@ func (s *ObjectGraphRequest) FromObject(o *object.Object) error {
 	atoa := anythingToAnythingForObjectGraphRequest
 	if err := atoa(o.GetRaw("selector"), &s.Selector); err != nil {
 		return err
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v

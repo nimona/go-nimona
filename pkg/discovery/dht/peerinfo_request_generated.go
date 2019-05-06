@@ -6,7 +6,6 @@ package dht
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
@@ -23,12 +22,6 @@ func (s PeerInfoRequest) ToObject() *object.Object {
 	}
 	if s.PeerID != "" {
 		o.SetRaw("peerID", s.PeerID)
-	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
-	}
-	if s.Signature != nil {
-		o.SetRaw("@signature", s.Signature)
 	}
 	return o
 }
@@ -62,27 +55,6 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 	}
 	if err := atoa(o.GetRaw("peerID"), &s.PeerID); err != nil {
 		return err
-	}
-	s.RawObject = o
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
-		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signature.FromObject(o)
 	}
 
 	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {

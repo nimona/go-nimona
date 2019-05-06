@@ -21,9 +21,6 @@ func (s Provider) ToObject() *object.Object {
 	if len(s.ObjectIDs) > 0 {
 		o.SetRaw("objectIDs", s.ObjectIDs)
 	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
-	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
@@ -56,17 +53,6 @@ func (s *Provider) FromObject(o *object.Object) error {
 	atoa := anythingToAnythingForProvider
 	if err := atoa(o.GetRaw("objectIDs"), &s.ObjectIDs); err != nil {
 		return err
-	}
-	s.RawObject = o
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v

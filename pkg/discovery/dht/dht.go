@@ -134,7 +134,7 @@ func (r *DHT) handleObject(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeerInfoRequest(v)
+		r.handlePeerInfoRequest(v, e.Sender)
 	case typePeerInfoResponse:
 		v := &PeerInfoResponse{}
 		if err := v.FromObject(o); err != nil {
@@ -146,7 +146,7 @@ func (r *DHT) handleObject(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handleProviderRequest(v)
+		r.handleProviderRequest(v, e.Sender)
 	case typeProviderResponse:
 		v := &ProviderResponse{}
 		if err := v.FromObject(o); err != nil {
@@ -171,7 +171,7 @@ func (r *DHT) handlePeerInfo(payload *peer.PeerInfo) {
 	}
 }
 
-func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
+func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.PublicKey) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
@@ -200,7 +200,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest) {
 		// TODO log error
 		return
 	}
-	addr := "peer:" + payload.Signer.Fingerprint()
+	addr := "peer:" + sender.Fingerprint()
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send object", zap.Error(err))
 		return
@@ -235,7 +235,7 @@ func (r *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 	q.(*query).incomingPayloads <- payload.PeerInfo
 }
 
-func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
+func (r *DHT) handleProviderRequest(payload *ProviderRequest, sender *crypto.PublicKey) {
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
@@ -257,7 +257,7 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest) {
 		ClosestPeers: closestPeerInfos,
 	}
 
-	addr := "peer:" + payload.Signer.Fingerprint()
+	addr := "peer:" + sender.Fingerprint()
 	so := resp.ToObject()
 	if err := crypto.Sign(so, r.key); err != nil {
 		// TODO log error
@@ -431,7 +431,9 @@ func (r *DHT) GetProviders(ctx context.Context, key string) (chan *crypto.Public
 				switch v := payload.(type) {
 				case *Provider:
 					// TODO do we need to check payload and id?
-					out <- v.Signer
+					if v.Signature != nil && v.Signature.PublicKey != nil {
+						out <- v.Signature.PublicKey
+					}
 				}
 			case <-time.After(maxQueryTime):
 				return
@@ -456,10 +458,13 @@ func (r *DHT) GetAllProviders() (map[string][]string, error) {
 			if _, ok := allProviders[objectID]; !ok {
 				allProviders[objectID] = []string{}
 			}
-			if provider.Signature == nil {
+			if provider.Signature == nil || provider.Signature.PublicKey == nil {
 				continue
 			}
-			allProviders[objectID] = append(allProviders[objectID], provider.Signer.Fingerprint())
+			allProviders[objectID] = append(
+				allProviders[objectID],
+				provider.Signature.PublicKey.Fingerprint(),
+			)
 		}
 	}
 	return allProviders, nil

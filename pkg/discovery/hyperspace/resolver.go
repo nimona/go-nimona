@@ -114,7 +114,7 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 		zap.String("method", "resolver/LookupPeerInfo"),
 		zap.Strings("query.contentIDs", q.ContentIDs),
 		zap.Strings("query.contentTypes", q.ContentTypes),
-		zap.String("query.signerKeyHash", q.SignerKeyHash),
+		zap.Strings("query.keys", q.Keys),
 	)
 	o := q.ToObject()
 	ps := r.store.FindClosest(q)
@@ -157,7 +157,9 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 	}
 	for _, addr := range bootstrapAddresses {
 		q := &peer.PeerInfoRequest{
-			SignerKeyHash: key.PublicKey.Fingerprint(),
+			Keys: []string{
+				key.PublicKey.Fingerprint(),
+			},
 		}
 		o := q.ToObject()
 		err := crypto.Sign(o, key)

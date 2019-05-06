@@ -95,7 +95,8 @@ func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	ps := []*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		if q.SignerKeyHash != "" && q.SignerKeyHash == p.Fingerprint() {
+		// TODO(NOW) allow to search all keys
+		if len(q.Keys) > 0 && q.Keys[0] == p.Fingerprint() {
 			ps = append(ps, p)
 			continue
 		}

@@ -9,8 +9,10 @@ import (
 // Vectorise returns a sparse vector from a PeerInfoRequest
 func Vectorise(q *peer.PeerInfoRequest) *sparse.Vector {
 	i := []int{}
-	if q.SignerKeyHash != "" {
-		i = append(i, HashChunked("sk", []byte(q.SignerKeyHash))...)
+	if len(q.Keys) > 0 {
+		for _, fingerprint := range q.Keys {
+			i = append(i, HashChunked("pk", []byte(fingerprint))...)
+		}
 	}
 	if len(q.Protocols) > 0 {
 		for _, protocol := range q.Protocols {
@@ -42,7 +44,10 @@ func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 		ContentTypes: p.ContentTypes,
 	}
 	if p.Fingerprint() != "" {
-		q.SignerKeyHash = p.Fingerprint()
+		// TODO(NOW) get all keys from peerinfo
+		q.Keys = []string{
+			p.Fingerprint(),
+		}
 	}
 	return q
 }
