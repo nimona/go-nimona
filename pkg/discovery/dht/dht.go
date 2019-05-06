@@ -35,7 +35,7 @@ var (
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	peerID         string
+	fingerprint    string
 	store          *Store
 	peerStore      *peer.PeerInfoCollection
 	net            net.Network
@@ -71,8 +71,8 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 	for _, addr := range bootstrapAddresses {
 		ctx := context.Background()
 		req := &PeerInfoRequest{
-			RequestID: net.RandStringBytesMaskImprSrc(8),
-			PeerID:    key.PublicKey.Fingerprint(),
+			RequestID:   net.RandStringBytesMaskImprSrc(8),
+			Fingerprint: key.PublicKey.Fingerprint(),
 		}
 		so := req.ToObject()
 		if err := crypto.Sign(so, key); err != nil {
@@ -114,7 +114,7 @@ func (r *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := r.exchange.Send(ctx, peerInfo.ToObject(), closestPeer.Address()); err != nil {
-				logger.Debug("refresh could not announce", zap.Error(err), zap.String("peerID", closestPeer.Fingerprint()))
+				logger.Debug("refresh could not announce", zap.Error(err), zap.String("fingerprint", closestPeer.Fingerprint()))
 			}
 		}
 
@@ -175,15 +175,15 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 	ctx := context.Background()
 	logger := log.Logger(ctx)
 
-	peerInfo, _ := r.peerStore.Get(payload.PeerID)
+	peerInfo, _ := r.peerStore.Get(payload.Fingerprint)
 	// TODO handle and log error
 
 	if peerInfo == nil {
-		// peerInfo, _ = r.net.Discoverer().Discover(payload.PeerID, net.Local())
+		// peerInfo, _ = r.net.Discoverer().Discover(payload.Fingerprint, net.Local())
 		// TODO handle and log error
 	}
 
-	closestPeerInfos, err := r.FindPeersClosestTo(payload.PeerID, closestPeersToReturn)
+	closestPeerInfos, err := r.FindPeersClosestTo(payload.Fingerprint, closestPeersToReturn)
 	if err != nil {
 		logger.Debug("could not get providers from local store", zap.Error(err))
 		// TODO handle and log error
@@ -400,7 +400,7 @@ func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := r.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := r.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
-			logger.Debug("put providers could not send", zap.Error(err), zap.String("peerID", closestPeer.Fingerprint()))
+			logger.Debug("put providers could not send", zap.Error(err), zap.String("fingerprint", closestPeer.Fingerprint()))
 		}
 	}
 

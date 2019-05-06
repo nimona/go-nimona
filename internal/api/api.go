@@ -93,7 +93,7 @@ func New(
 
 	peers := router.Group("/api/v1/peers")
 	peers.GET("/", api.HandleGetPeers)
-	peers.GET("/:peerID", api.HandleGetPeer)
+	peers.GET("/:fingerprint", api.HandleGetPeer)
 
 	objectsEnd := router.Group("/api/v1/objects")
 	objectsEnd.GET("/", api.HandleGetObjects)

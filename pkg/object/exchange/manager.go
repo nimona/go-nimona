@@ -24,11 +24,11 @@ func (cm *ConnectionManager) Get(remoteID string) (*net.Connection, error) {
 	return existingConn.(*net.Connection), nil
 }
 
-func (cm *ConnectionManager) Close(peerID string) {
-	existingConn, ok := cm.connections.Load(peerID)
+func (cm *ConnectionManager) Close(fingerprint string) {
+	existingConn, ok := cm.connections.Load(fingerprint)
 	if !ok {
 		return
 	}
 	existingConn.(*net.Connection).Conn.Close()
-	cm.connections.Delete(peerID)
+	cm.connections.Delete(fingerprint)
 }

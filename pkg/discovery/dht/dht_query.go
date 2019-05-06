@@ -23,15 +23,15 @@ const (
 )
 
 type query struct {
-	dht              *DHT
-	id               string
-	key              string
-	queryType        QueryType
-	closestPeerID    string
-	contactedPeers   sync.Map
-	incomingPayloads chan interface{}
-	outgoingPayloads chan interface{}
-	logger           *zap.Logger
+	dht                *DHT
+	id                 string
+	key                string
+	queryType          QueryType
+	closestFingerprint string
+	contactedPeers     sync.Map
+	incomingPayloads   chan interface{}
+	outgoingPayloads   chan interface{}
+	logger             *zap.Logger
 }
 
 func (q *query) Run(ctx context.Context) {
@@ -91,9 +91,9 @@ func (q *query) Run(ctx context.Context) {
 	go q.next()
 }
 
-func (q *query) nextIfCloser(newPeerID string) {
-	if q.closestPeerID == "" {
-		q.closestPeerID = newPeerID
+func (q *query) nextIfCloser(newFingerprint string) {
+	if q.closestFingerprint == "" {
+		q.closestFingerprint = newFingerprint
 		q.next()
 	} else {
 		// find closest peer
@@ -105,9 +105,9 @@ func (q *query) nextIfCloser(newPeerID string) {
 		if len(closestPeers) == 0 {
 			return
 		}
-		closestPeerID := closestPeers[0].Fingerprint()
-		if comparePeers(q.closestPeerID, closestPeerID, q.key) == closestPeerID {
-			q.closestPeerID = closestPeerID
+		closestFingerprint := closestPeers[0].Fingerprint()
+		if comparePeers(q.closestFingerprint, closestFingerprint, q.key) == closestFingerprint {
+			q.closestFingerprint = closestFingerprint
 			q.next()
 		}
 	}
@@ -137,8 +137,8 @@ func (q *query) next() {
 	switch q.queryType {
 	case PeerInfoQuery:
 		req := &PeerInfoRequest{
-			RequestID: q.id,
-			PeerID:    q.key,
+			RequestID:   q.id,
+			Fingerprint: q.key,
 		}
 		o = req.ToObject()
 		err = crypto.Sign(o, signer)
@@ -162,7 +162,7 @@ func (q *query) next() {
 	for _, peer := range peersToAsk {
 		addr := "peer:" + peer.Fingerprint()
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Warn("query next could not send", zap.Error(err), zap.String("peerID", peer.Fingerprint()))
+			logger.Warn("query next could not send", zap.Error(err), zap.String("fingerprint", peer.Fingerprint()))
 		}
 	}
 }

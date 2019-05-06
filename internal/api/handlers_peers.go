@@ -18,8 +18,8 @@ func (api *API) HandleGetPeers(c *gin.Context) {
 }
 
 func (api *API) HandleGetPeer(c *gin.Context) {
-	// peerID := c.Param("peerID")
-	// m, err := api.addressBook.GetPeerInfo(peerID)
+	// fingerprint := c.Param("fingerprint")
+	// m, err := api.addressBook.GetPeerInfo(fingerprint)
 	// if err != nil {
 	// 	c.AbortWithError(500, err)
 	// 	return
