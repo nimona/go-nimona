@@ -20,8 +20,8 @@ func (s PeerInfoRequest) ToObject() *object.Object {
 	if s.RequestID != "" {
 		o.SetRaw("requestID", s.RequestID)
 	}
-	if s.PeerID != "" {
-		o.SetRaw("peerID", s.PeerID)
+	if s.Fingerprint != "" {
+		o.SetRaw("fingerprint", s.Fingerprint)
 	}
 	return o
 }
@@ -53,7 +53,7 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("peerID"), &s.PeerID); err != nil {
+	if err := atoa(o.GetRaw("fingerprint"), &s.Fingerprint); err != nil {
 		return err
 	}
 

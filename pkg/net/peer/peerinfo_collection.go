@@ -32,8 +32,8 @@ func (c *PeerInfoCollection) All() ([]*PeerInfo, error) {
 }
 
 // Get retuns a single item from the collection given its id
-func (c *PeerInfoCollection) Get(peerID string) (*PeerInfo, error) {
-	peerInfo, ok := c.peers.Load(peerID)
+func (c *PeerInfoCollection) Get(fingerprint string) (*PeerInfo, error) {
+	peerInfo, ok := c.peers.Load(fingerprint)
 	if !ok || peerInfo == nil {
 		return nil, ErrNotFound
 	}

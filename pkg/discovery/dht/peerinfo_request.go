@@ -4,6 +4,6 @@ package dht
 
 // PeerInfoRequest payload
 type PeerInfoRequest struct {
-	RequestID string `json:"requestID,omitempty"`
-	PeerID    string `json:"peerID"`
+	RequestID   string `json:"requestID,omitempty"`
+	Fingerprint string `json:"fingerprint"`
 }
