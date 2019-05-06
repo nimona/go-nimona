@@ -100,11 +100,6 @@ var daemonStartCmd = &cobra.Command{
 		n.AddMiddleware(hsm.Handle())
 		n.AddTransport("tcps", tcp)
 
-		ik := config.Daemon.IdentityKey
-		if ik != nil {
-			// TODO(NOW) sign pub peer key, add signature to pub peer key
-		}
-
 		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)
 		if err != nil {
 			return errors.Wrap(err, "could not init graph store")
@@ -141,6 +136,7 @@ var daemonStartCmd = &cobra.Command{
 
 		cmd.Println("Started daemon")
 		cmd.Println("* Peer fingerprint:\n  *", k.PublicKey.Fingerprint())
+		ik := config.Daemon.IdentityKey
 		if ik != nil {
 			cmd.Println("* Identity fingerprint:\n  *", ik.PublicKey.Fingerprint())
 		}
