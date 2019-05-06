@@ -518,7 +518,9 @@ func (w *exchange) sendViaRelayToPeer(
 	}
 
 	q := &peer.PeerInfoRequest{
-		SignerKeyHash: recipient,
+		Keys: []string{
+			recipient,
+		},
 	}
 	peers, err := w.discover.Discover(ctx, q)
 	if err != nil {

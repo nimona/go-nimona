@@ -8,6 +8,5 @@ import (
 
 type Ack struct {
 	Nonce     string            `json:"nonce"`
-	Signer    *crypto.PublicKey `json:"@signer"`
 	Signature *crypto.Signature `json:"@signature"`
 }

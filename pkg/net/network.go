@@ -179,13 +179,15 @@ func (n *network) dialPeer(
 ) (*Connection, error) {
 	logger := log.Logger(ctx)
 
-	peerID := strings.Replace(address, "peer:", "", 1)
-	if peerID == n.local.GetPeerKey().PublicKey.Fingerprint() {
+	fingerprint := strings.Replace(address, "peer:", "", 1)
+	if fingerprint == n.local.GetPeerKey().Fingerprint() {
 		return nil, errors.New("cannot dial our own peer")
 	}
 	logger.Debug("dialing peer", zap.String("peer", address))
 	q := &peer.PeerInfoRequest{
-		SignerKeyHash: peerID,
+		Keys: []string{
+			fingerprint,
+		},
 	}
 	opts := []discovery.DiscovererOption{}
 	if localDiscoveryOnly {

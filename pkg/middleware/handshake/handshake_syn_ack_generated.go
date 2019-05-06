@@ -25,9 +25,6 @@ func (s SynAck) ToObject() *object.Object {
 	if s.PeerInfo != nil {
 		o.SetRaw("peerInfo", s.PeerInfo)
 	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
-	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
@@ -70,16 +67,6 @@ func (s *SynAck) FromObject(o *object.Object) error {
 			return err
 		}
 		s.PeerInfo.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
 		s.Signature = v

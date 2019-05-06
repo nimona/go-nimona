@@ -88,17 +88,18 @@ func (r *discoverer) Discover(
 	}
 
 	// we only cache peer infos by their peer id
-	if q.SignerKeyHash == "" {
+	if len(q.Keys) == 0 {
 		return nil, errors.New("could not resolve")
 	}
 
 	r.cacheLock.RLock()
 	defer r.cacheLock.RUnlock()
-	if res, ok := r.cacheTemp[q.SignerKeyHash]; ok && res != nil {
+	// TODO(NOW) figure out how to check for keys
+	if res, ok := r.cacheTemp[q.Keys[0]]; ok && res != nil {
 		return []*peer.PeerInfo{res}, nil
 	}
 
-	if res, ok := r.cachePersistent[q.SignerKeyHash]; ok && res != nil {
+	if res, ok := r.cachePersistent[q.Keys[0]]; ok && res != nil {
 		return []*peer.PeerInfo{res}, nil
 	}
 

@@ -24,9 +24,6 @@ func (s ObjectRequest) ToObject() *object.Object {
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
 	}
-	if s.Signer != nil {
-		o.SetRaw("@signer", s.Signer)
-	}
 	return o
 }
 
@@ -66,16 +63,6 @@ func (s *ObjectRequest) FromObject(o *object.Object) error {
 			return err
 		}
 		s.Signature.FromObject(o)
-	}
-	if v, ok := o.GetRaw("@signer").(*crypto.PublicKey); ok {
-		s.Signer = v
-	} else if v, ok := o.GetRaw("@signer").(map[string]interface{}); ok {
-		s.Signer = &crypto.PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signer.FromObject(o)
 	}
 
 	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {

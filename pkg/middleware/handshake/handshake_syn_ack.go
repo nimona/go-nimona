@@ -11,6 +11,5 @@ import (
 type SynAck struct {
 	Nonce     string            `json:"nonce"`
 	PeerInfo  *peer.PeerInfo    `json:"peerInfo,omitempty"`
-	Signer    *crypto.PublicKey `json:"@signer"`
 	Signature *crypto.Signature `json:"@signature"`
 }

@@ -9,6 +9,5 @@ import (
 // ObjectGraphRequest is the payload for proxied objects
 type ObjectGraphRequest struct {
 	Selector  []string          `json:"selector"`
-	Signer    *crypto.PublicKey `json:"@signer"`
 	Signature *crypto.Signature `json:"@signature"`
 }
