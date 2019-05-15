@@ -54,5 +54,3 @@ require (
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.2.2
 )
-
-replace github.com/ugorji/go/codec v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
