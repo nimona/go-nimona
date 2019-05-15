@@ -4,11 +4,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/object"
 )
 
@@ -43,7 +41,4 @@ func TestSignAndVerify(t *testing.T) {
 	eo.SetRaw("something-new", "some-new-value")
 	err = Verify(eo)
 	assert.Error(t, err)
-
-	b, _ := object.Marshal(eo)
-	fmt.Println(base58.Encode(b))
 }

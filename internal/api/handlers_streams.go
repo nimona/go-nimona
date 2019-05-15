@@ -28,17 +28,6 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	}
 
 	write := func(conn *websocket.Conn, data interface{}) error {
-		contentType := strings.ToLower(c.ContentType())
-		if strings.Contains(contentType, "cbor") {
-			bs, err := object.MarshalSimple(data)
-			if err != nil {
-				return err
-			}
-			if err := conn.WriteMessage(2, bs); err != nil {
-				return err
-			}
-		}
-
 		return conn.WriteJSON(data)
 	}
 

@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ugorji/go/codec"
 	"go.uber.org/zap"
 
 	"nimona.io/internal/log"
@@ -21,7 +20,7 @@ func Write(o *object.Object, conn *Connection) error {
 		return errors.New("missing object")
 	}
 
-	b, err := object.Marshal(o)
+	b, err := json.Marshal(o.ToMap())
 	if err != nil {
 		return err
 	}
@@ -56,9 +55,9 @@ func Write(o *object.Object, conn *Connection) error {
 func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
-	pDecoder := codec.NewDecoder(conn.Conn, object.RawCborHandler())
-	r := &codec.Raw{}
-	if err := pDecoder.Decode(r); err != nil {
+	pDecoder := json.NewDecoder(conn.Conn)
+	m := map[string]interface{}{}
+	if err := pDecoder.Decode(&m); err != nil {
 		return nil, err
 	}
 
@@ -68,8 +67,8 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}()
 
-	o, err := object.FromBytes([]byte(*r))
-	if err != nil {
+	o := &object.Object{}
+	if err := o.FromMap(m); err != nil {
 		return nil, err
 	}
 
@@ -84,11 +83,12 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}
 
-	SendObjectEvent(
-		"incoming",
-		o.GetType(),
-		pDecoder.NumBytesRead(),
-	)
+	// SendObjectEvent(
+	// 	"incoming",
+	// 	o.GetType(),
+	// 	pDecoder.NumBytesRead(),
+	// )
+
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		logger.Info(
@@ -97,5 +97,6 @@ func Read(conn *Connection) (*object.Object, error) {
 			zap.String("direction", "incoming"),
 		)
 	}
+
 	return o, nil
 }

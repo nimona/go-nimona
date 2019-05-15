@@ -37,18 +37,6 @@ func (m *Member) HintedName() string {
 	return m.Name + ":" + m.TypeHint
 }
 
-// FromBytes returns an object from a cbor byte stream
-// TODO: Remove and move to a generic codec
-func FromBytes(b []byte) (*Object, error) {
-	m := map[string]interface{}{}
-	if err := UnmarshalSimple(b, &m); err != nil {
-		return nil, err
-	}
-
-	o := FromMap(m)
-	return o, nil
-}
-
 // New returns an object from a map
 func New() *Object {
 	return &Object{

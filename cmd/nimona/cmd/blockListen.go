@@ -41,8 +41,13 @@ var objectListenCmd = &cobra.Command{
 				continue
 			}
 
-			o, err := object.FromBytes(body)
-			if err != nil {
+			m := map[string]interface{}{}
+			if err := json.Unmarshal(body, &m); err != nil {
+				return err
+			}
+
+			o := &object.Object{}
+			if err := o.FromMap(m); err != nil {
 				return err
 			}
 
