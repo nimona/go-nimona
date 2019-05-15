@@ -3,20 +3,20 @@ module nimona.io
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/Masterminds/semver v1.4.2
-	github.com/Sereal/Sereal v0.0.0-20190419101437-a9d24ede505a // indirect
+	github.com/Sereal/Sereal v0.0.0-20190515093507-c8b9511ad519 // indirect
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/cayleygraph/cayley v0.7.5
 	github.com/cheekybits/genny v1.0.0
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
-	github.com/dop251/goja v0.0.0-20190301185519-64be363d126e // indirect
+	github.com/dop251/goja v0.0.0-20190515093507-8d6ee3d16611 // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.1.0
-	github.com/gin-contrib/cors v0.0.0-20190419101437-f9e10995c85a
+	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-contrib/sse v0.0.0-20190419101437-5545eab6dad3 // indirect
-	github.com/gin-gonic/gin v1.3.0
+	github.com/gin-gonic/gin v1.4.0
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/golangci/golangci-lint v1.16.1-0.20190402065613-de1d1ad903cd
@@ -26,15 +26,14 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/influxdata/influxdb v1.7.6
 	github.com/influxdata/platform v0.0.0-20190419101437-d500d3cf5589 // indirect
-	github.com/james-bowman/sparse v0.0.0-20190419101437-cd8d5e984afd
+	github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
-	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/mr-tron/base58 v1.1.1
+	github.com/mr-tron/base58 v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0
-	github.com/remyoudompheng/bigfft v0.0.0-20190321074620-2f0d2b0e0001 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20190515093507-babf20351dd7 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/spaolacci/murmur3 v1.1.0
@@ -46,10 +45,10 @@ require (
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
-	go.uber.org/zap v1.9.1
-	golang.org/x/net v0.0.0-20190420064622-afa5a82059c6
+	go.uber.org/zap v1.10.0
+	golang.org/x/net v0.0.0-20190515093507-3ec191127204
 	golang.org/x/oauth2 v0.0.0-20190419101437-9f3314589c9a // indirect
-	golang.org/x/tools v0.0.0-20190422120258-aa740d480789
+	golang.org/x/tools v0.0.0-20190515093507-2196cb7019cc
 	gonum.org/v1/gonum v0.0.0-20181121035319-3f7ecaa7e8ca
 	gopkg.in/go-playground/validator.v9 v9.28.0 // indirect
 	gopkg.in/resty.v1 v1.12.0
