@@ -1,8 +1,5 @@
 {
     "go.buildTags": "dev",
-    "go.coverOnSave": true,
-    "go.coverOnSingleTest": true,
-    "go.coverOnTestPackage": true,
     "go.formatTool": "goimports",
     "go.lintTool":"golangci-lint",
     "go.lintOnSave": "package",
@@ -14,8 +11,12 @@
         "-v",
         "-race",
         "-failfast",
+        "-cpuprofile", "profile.out",
     ],
+    "go.testTimeout": "60s",
     "go.testEnvVars": {
+        "DEBUG_BLOCKS": "false",
+        "LOG_LEVEL": "debug",
         "BIND_LOCAL": "true",
         "GO111MODULE": "on"
     },
