@@ -69,7 +69,7 @@ type (
 		incoming chan *incomingObject
 
 		handlers sync.Map
-		logger   *zap.Logger
+		logger   log.ZapLogger
 
 		store        graph.Store
 		getRequests  *StringObjectRequestSyncMap

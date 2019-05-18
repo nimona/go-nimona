@@ -8,8 +8,6 @@ import (
 
 	"github.com/influxdata/influxdb/client/v2"
 	"go.uber.org/zap"
-
-	"nimona.io/internal/log"
 )
 
 // InfluxCollector implements the Collector interface with a InlfuxDB storage
@@ -43,7 +41,7 @@ func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 		client: c,
 		lock:   &sync.RWMutex{},
 		input:  input,
-		logger: log.Logger(context.Background()).Named("collector_influx"),
+		// logger: log.Logger(context.Background()), //.Named("collector_influx"),
 		// TODO fix the point aggregation and find a sane batch size
 		batchSize: 1,
 		batchConfig: client.BatchPointsConfig{

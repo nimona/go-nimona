@@ -1,40 +1,171 @@
 package log
 
 import (
-	"context"
-	"os"
-	"strings"
+	"encoding/json"
+	"fmt"
+	"reflect"
 
-	zap "go.uber.org/zap"
-	zapcore "go.uber.org/zap/zapcore"
+	"go.uber.org/zap"
+
+	"nimona.io/internal/context"
 )
 
-var DefaultLogger *zap.Logger
+type Level int8
 
-func init() {
-	config := zap.NewDevelopmentConfig()
-	switch strings.ToUpper(os.Getenv("LOG_LEVEL")) {
-	case "DEBUG":
-		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	case "INFO":
-		config.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
-	case "WARN":
-		config.Level = zap.NewAtomicLevelAt(zap.WarnLevel)
-	default:
-		config.Level = zap.NewAtomicLevelAt(zap.ErrorLevel)
+const (
+	DebugLevel Level = iota - 1
+	InfoLevel
+	WarnLevel
+	ErrorLevel
+	PanicLevel
+	FatalLevel
+)
+
+type (
+	logger struct {
+		name    string
+		context context.Context
+		parent  *logger
+		fields  []interface{}
 	}
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	DefaultLogger, _ = config.Build()
+	StringField struct {
+		Key   string
+		Value string
+	}
+	ZapLogger interface {
+		With(fields ...interface{}) *logger
+		Named(name string) *logger
+		Debug(msg string, fields ...interface{})
+		Info(msg string, fields ...interface{})
+		Warn(msg string, fields ...interface{})
+		Error(msg string, fields ...interface{})
+		Panic(msg string, fields ...interface{})
+		Fatal(msg string, fields ...interface{})
+	}
+)
+
+var (
+	DefaultLogger = &logger{}
+)
+
+func String(k, v string) StringField {
+	return StringField{
+		Key:   k,
+		Value: v,
+	}
 }
 
-// Logger returns a zap logger with as much context as possible
-func Logger(ctx context.Context) *zap.Logger {
-	nl := DefaultLogger
-	if ctx == nil {
-		return nl
+func Logger(ctx context.Context) *logger {
+	log := &logger{
+		context: ctx,
 	}
-	if nctx, ok := ctx.(interface{ CorrelationID() string }); ok {
-		nl = nl.With(zap.String("ctx.correlation_id", nctx.CorrelationID()))
+	return log
+}
+func (log *logger) write(level Level, msg string, extraFields ...interface{}) {
+	ctx := log.getContext()
+	fields := log.getFields()
+	fields = append(fields, extraFields...)
+
+	res := map[string]interface{}{}
+	cID := context.GetCorrelationID(ctx)
+	if cID == "" {
+		cID = "-"
 	}
-	return nl
+
+	for _, field := range fields {
+		var (
+			k string
+			v interface{}
+		)
+		switch f := field.(type) {
+		case StringField:
+			k = f.Key
+			v = f.Value
+		case zap.Field:
+			k = f.Key
+			if f.Interface != nil {
+				v = f.Interface
+			} else if f.String != "" {
+				v = f.String
+			} else {
+				v = f.Integer
+			}
+		default:
+			fmt.Println("___", f, reflect.TypeOf(field))
+		}
+		if k == "" {
+			continue
+		}
+		if s, ok := v.(interface{ String() string }); ok {
+			v = s.String()
+		} else if s, ok := v.(interface{ Error() string }); ok {
+			v = s.Error()
+		}
+		if _, ok := res[k]; !ok {
+			res[k] = v
+		}
+	}
+
+	j, _ := json.Marshal(res)
+	fmt.Printf("%s level=%d message=%s fields=%s\n", cID, level, msg, string(j))
+}
+
+func (log *logger) getFields() []interface{} {
+	fields := log.fields
+	if log.parent != nil {
+		fields = append(fields, log.parent.getFields()...)
+	}
+	return fields
+}
+
+func (log *logger) getContext() context.Context {
+	if log.context != nil {
+		return log.context
+	}
+
+	if log.parent != nil {
+		return log.parent.getContext()
+	}
+
+	return nil
+}
+
+func (log *logger) With(fields ...interface{}) *logger {
+	nlog := &logger{
+		parent: log,
+		fields: fields,
+	}
+	return nlog
+}
+
+func (log *logger) Named(name string) *logger {
+	nlog := &logger{
+		name:   name,
+		parent: log,
+	}
+	return nlog
+}
+
+func (log *logger) Debug(msg string, fields ...interface{}) {
+	log.write(DebugLevel, msg, fields...)
+}
+
+func (log *logger) Info(msg string, fields ...interface{}) {
+	log.write(InfoLevel, msg, fields...)
+}
+
+func (log *logger) Warn(msg string, fields ...interface{}) {
+	log.write(WarnLevel, msg, fields...)
+}
+
+func (log *logger) Error(msg string, fields ...interface{}) {
+	log.write(ErrorLevel, msg, fields...)
+}
+
+func (log *logger) Panic(msg string, fields ...interface{}) {
+	log.write(PanicLevel, msg, fields...)
+}
+
+func (log *logger) Fatal(msg string, fields ...interface{}) {
+	log.write(FatalLevel, msg, fields...)
 }

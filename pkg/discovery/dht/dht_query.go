@@ -31,7 +31,7 @@ type query struct {
 	contactedPeers     sync.Map
 	incomingPayloads   chan interface{}
 	outgoingPayloads   chan interface{}
-	logger             *zap.Logger
+	logger             log.ZapLogger
 }
 
 func (q *query) Run(ctx context.Context) {
