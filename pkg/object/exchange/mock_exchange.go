@@ -2,7 +2,7 @@
 
 package exchange
 
-import context "context"
+import context "nimona.io/internal/context"
 import mock "github.com/stretchr/testify/mock"
 import object "nimona.io/pkg/object"
 

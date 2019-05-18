@@ -3,6 +3,7 @@ package hyperspace
 import (
 	"github.com/james-bowman/sparse"
 
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -39,15 +40,14 @@ func Vectorise(q *peer.PeerInfoRequest) *sparse.Vector {
 
 func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 	q := &peer.PeerInfoRequest{
+		Keys:         []string{},
 		Protocols:    p.Protocols,
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,
 	}
-	if p.Fingerprint() != "" {
-		// TODO(NOW) get all keys from peerinfo
-		q.Keys = []string{
-			p.Fingerprint(),
-		}
+	keys := crypto.GetSignatureKeys(p.Signature)
+	for _, key := range keys {
+		q.Keys = append(q.Keys, key.Fingerprint())
 	}
 	return q
 }

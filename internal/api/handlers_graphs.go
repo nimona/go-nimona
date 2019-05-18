@@ -13,7 +13,6 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -74,9 +73,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	logger.Info("handling request")
 
 	// find peers who provide the root object
-	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
-		ContentIDs: []string{rootObjectHash},
-	})
+	ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return

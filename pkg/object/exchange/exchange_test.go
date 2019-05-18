@@ -344,7 +344,9 @@ func newPeer(
 	n.AddMiddleware(hsm.Handle())
 	n.AddTransport("tcps", tcp)
 
-	x, err := New(pk, n, ds, discover, li, fmt.Sprintf("0.0.0.0:%d", 0))
+	ctx := context.Background()
+
+	x, err := New(ctx, pk, n, ds, discover, li, fmt.Sprintf("0.0.0.0:%d", 0))
 	assert.NoError(t, err)
 
 	return pk, n, x.(*exchange), ds, li

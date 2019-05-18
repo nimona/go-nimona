@@ -1,14 +1,13 @@
 package hyperspace
 
 import (
-	"runtime"
 	"time"
 
 	"go.uber.org/zap"
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object/exchange"
@@ -16,6 +15,7 @@ import (
 
 // Discoverer hyperspace
 type Discoverer struct {
+	context  context.Context
 	store    *Store
 	net      net.Network
 	exchange exchange.Exchange
@@ -24,41 +24,104 @@ type Discoverer struct {
 
 // NewDiscoverer returns a new hyperspace discoverer
 func NewDiscoverer(
+	ctx context.Context,
 	network net.Network,
 	exc exchange.Exchange,
 	local *net.LocalInfo,
 	bootstrapAddresses []string,
 ) (*Discoverer, error) {
 	r := &Discoverer{
+		context:  ctx,
 		store:    NewStore(),
 		net:      network,
 		local:    local,
 		exchange: exc,
 	}
 
-	exc.Handle("/peer**", r.handleObject)
+	exc.Handle("/peer.request", r.handleObject)
+	exc.Handle("/peer", r.handleObject)
 
 	r.store.Add(local.GetPeerInfo())
-	r.bootstrap(bootstrapAddresses)
+	r.bootstrap(ctx, bootstrapAddresses)
 
 	return r, nil
 }
 
-// Discover finds and returns the closest peers to a query
-func (r *Discoverer) Discover(
+// FindByFingerprint finds and returns peer infos from a fingerprint
+func (r *Discoverer) FindByFingerprint(
 	ctx context.Context,
-	q *peer.PeerInfoRequest,
+	fingerprint string,
+	opts ...discovery.Option,
 ) ([]*peer.PeerInfo, error) {
-	go r.LookupPeerInfo(ctx, q)
-	// TODO(geoah) use dht-like queries instead of a delay
-	time.Sleep(time.Second)
-	// cps := r.store.FindClosest(q)
-	// ps := append(eps, cps...)
-	eps := r.store.FindExact(q)
+	opt := discovery.ParseOptions(opts...)
+
+	logger := log.Logger(ctx).With(
+		zap.String("method", "resolver/FindByFingerprint"),
+		zap.String("peerinfo.fingerprint", fingerprint),
+	)
+	logger.Debug("trying to find peer by fingerprint")
+
+	eps := r.store.FindByFingerprint(fingerprint)
+	if len(eps) > 0 {
+		logger.Debug(
+			"found peers in store",
+			zap.Int("n", len(eps)),
+		)
+
+		return eps, nil
+	}
+
+	if opt.Local {
+		return nil, nil
+	}
+
+	peers, _ := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+		Keys: []string{
+			fingerprint,
+		},
+	})
+
+	peers = r.store.FindByFingerprint(fingerprint)
+	return peers, nil
+}
+
+// FindByContent finds and returns peer infos from a content hash
+func (r *Discoverer) FindByContent(
+	ctx context.Context,
+	contentHash string,
+	opts ...discovery.Option,
+) ([]*peer.PeerInfo, error) {
+	opt := discovery.ParseOptions(opts...)
+
+	eps := r.store.FindByContent(contentHash)
+	if len(eps) > 0 {
+		return eps, nil
+	}
+
+	if opt.Local {
+		return nil, nil
+	}
+
+	r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+		ContentIDs: []string{
+			contentHash,
+		},
+	})
+
+	eps = r.store.FindByContent(contentHash)
 	return eps, nil
 }
 
 func (r *Discoverer) handleObject(e *exchange.Envelope) error {
+	// attempt to recover correlation id from request id
+	ctx := r.context
+	if e.RequestID != "" {
+		ctx = context.New(
+			context.WithCorrelationID(e.RequestID),
+		)
+	}
+
+	// handle payload
 	o := e.Payload
 	switch o.GetType() {
 	case peer.PeerInfoRequestType:
@@ -66,39 +129,80 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeerInfoRequest(v, e)
+		r.handlePeerInfoRequest(ctx, v, e)
 	case peer.PeerInfoType:
 		v := &peer.PeerInfo{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeerInfo(v)
+		r.handlePeerInfo(ctx, v)
 	}
 	return nil
 }
 
-func (r *Discoverer) handlePeerInfo(p *peer.PeerInfo) {
-	logger := log.DefaultLogger.With(
+func (r *Discoverer) handlePeerInfo(
+	ctx context.Context,
+	p *peer.PeerInfo,
+) {
+	logger := log.Logger(ctx).With(
 		zap.String("method", "resolver/handlePeerInfo"),
-		zap.String("peerinfo._hash", p.Fingerprint()),
+		zap.String("peerinfo.fingerprint", p.Fingerprint()),
 		zap.Strings("peerinfo.addresses", p.Addresses),
 	)
 	logger.Debug("adding peerinfo to store")
 	r.store.Add(p)
 }
 
-func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest, e *exchange.Envelope) {
-	ctx := context.Background()
-	logger := log.Logger(ctx)
-	eps := r.store.FindExact(q)
+func (r *Discoverer) handlePeerInfoRequest(
+	ctx context.Context,
+	q *peer.PeerInfoRequest,
+	e *exchange.Envelope,
+) {
+	ctx = context.FromContext(ctx)
+	logger := log.Logger(ctx).With(
+		zap.String("method", "resolver/handlePeerInfoRequest"),
+		zap.String("e.sender", e.Sender.Fingerprint()),
+		zap.String("e.requestID", e.RequestID),
+		zap.Strings("query.contentIDs", q.ContentIDs),
+		zap.Strings("query.contentTypes", q.ContentTypes),
+		zap.Strings("query.keys", q.Keys),
+	)
+
+	logger.Debug("handling peer info request")
+
 	cps := r.store.FindClosest(q)
-	ps := append(eps, cps...)
+
+	for _, f := range q.Keys {
+		ps := r.store.FindByFingerprint(f)
+		cps = append(cps, ps...)
+	}
+
+	for _, c := range q.ContentIDs {
+		ps := r.store.FindByContent(c)
+		cps = append(cps, ps...)
+	}
+
+	pm := map[string]*peer.PeerInfo{}
+	for _, p := range cps {
+		pm[p.Fingerprint()] = p
+	}
+
+	fps := []*peer.PeerInfo{}
+	for _, p := range pm {
+		fps = append(fps, p)
+	}
+
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.AsResponse(e.RequestID),
 	}
-	for _, p := range ps {
-		addr := "peer:" + e.Sender.Fingerprint()
+
+	addr := "peer:" + e.Sender.Fingerprint()
+	for _, p := range fps {
+		logger.Debug("responding with peer",
+			zap.String("address", addr),
+			zap.String("peer", p.Fingerprint()),
+		)
 		err := r.exchange.Send(ctx, p.ToObject(), addr, opts...)
 		if err != nil {
 			logger.Debug("handleProviderRequest could not send object",
@@ -109,7 +213,11 @@ func (r *Discoverer) handlePeerInfoRequest(q *peer.PeerInfoRequest, e *exchange.
 }
 
 // LookupPeerInfo does a network lookup given a query
-func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest) error {
+func (r *Discoverer) LookupPeerInfo(
+	ctx context.Context,
+	q *peer.PeerInfoRequest,
+) ([]*peer.PeerInfo, error) {
+	ctx = context.FromContext(ctx)
 	logger := log.Logger(ctx).With(
 		zap.String("method", "resolver/LookupPeerInfo"),
 		zap.Strings("query.contentIDs", q.ContentIDs),
@@ -119,54 +227,61 @@ func (r *Discoverer) LookupPeerInfo(ctx context.Context, q *peer.PeerInfoRequest
 	o := q.ToObject()
 	ps := r.store.FindClosest(q)
 	out := make(chan *exchange.Envelope, 10)
+	rctx := context.FromContext(ctx)
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithResponse("", out),
+		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
-	logger.Debug("found closest peers", zap.Int("n", len(ps)))
+	logger.Debug("found peers to ask", zap.Int("n", len(ps)))
 	for _, p := range ps {
 		r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
 	}
+	peers := []*peer.PeerInfo{}
 	// TODO(geoah) better timeout
 	t := time.NewTicker(time.Second * 5)
 	for {
 		select {
 		case <-t.C:
-			return nil
+			return peers, nil
 
 		case <-ctx.Done():
-			return nil
+			return peers, nil
 
 		case res := <-out:
-			logger.Debug("got response",
+			logger.Debug("got loopkup response",
 				zap.String("res.type", res.Payload.GetType()),
 				zap.String("res.sender", res.Sender.Fingerprint()),
 			)
 			r.handleObject(res)
+			if res.Payload.GetType() == peer.PeerInfoType {
+				v := &peer.PeerInfo{}
+				if err := v.FromObject(res.Payload); err == nil {
+					peers = append(peers, v)
+				}
+				return peers, nil
+			}
 		}
 	}
-	return nil
+	return peers, nil
 }
 
-func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
-	ctx := context.Background()
+func (r *Discoverer) bootstrap(
+	ctx context.Context,
+	bootstrapAddresses []string,
+) error {
 	logger := log.Logger(ctx)
 	key := r.local.GetPeerKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
+	q := &peer.PeerInfoRequest{
+		Keys: []string{
+			key.Fingerprint(),
+		},
+	}
+	o := q.ToObject()
 	for _, addr := range bootstrapAddresses {
-		q := &peer.PeerInfoRequest{
-			Keys: []string{
-				key.PublicKey.Fingerprint(),
-			},
-		}
-		o := q.ToObject()
-		err := crypto.Sign(o, key)
-		if err != nil {
-			continue
-		}
-		err = r.exchange.Send(ctx, o, addr, opts...)
+		err := r.exchange.Send(ctx, o, addr, opts...)
 		if err != nil {
 			logger.Debug("bootstrap could not send request", zap.Error(err))
 		}
@@ -176,27 +291,4 @@ func (r *Discoverer) bootstrap(bootstrapAddresses []string) error {
 		}
 	}
 	return nil
-}
-
-func getFrame(skipFrames int) runtime.Frame {
-	// We need the frame at index skipFrames+2, since we never want runtime.Callers and getFrame
-	targetFrameIndex := skipFrames + 2
-
-	// Set size to targetFrameIndex+2 to ensure we have room for one more caller than we need
-	programCounters := make([]uintptr, targetFrameIndex+2)
-	n := runtime.Callers(0, programCounters)
-
-	frame := runtime.Frame{Function: "unknown"}
-	if n > 0 {
-		frames := runtime.CallersFrames(programCounters[:n])
-		for more, frameIndex := true, 0; more && frameIndex <= targetFrameIndex; frameIndex++ {
-			var frameCandidate runtime.Frame
-			frameCandidate, more = frames.Next()
-			if frameIndex == targetFrameIndex {
-				frame = frameCandidate
-			}
-		}
-	}
-
-	return frame
 }

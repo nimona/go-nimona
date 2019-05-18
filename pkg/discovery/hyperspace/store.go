@@ -6,6 +6,7 @@ import (
 
 	"github.com/james-bowman/sparse"
 
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -31,8 +32,10 @@ type Store struct {
 func (s *Store) Add(cs ...*peer.PeerInfo) {
 	s.lock.Lock()
 	for _, c := range cs {
-		v := Vectorise(getPeerInfoRequest(c))
-		s.peers[c.Fingerprint()] = &storeValue{
+		pir := getPeerInfoRequest(c)
+		v := Vectorise(pir)
+		fingerprint := c.Fingerprint()
+		s.peers[fingerprint] = &storeValue{
 			vector:   v,
 			peerInfo: c,
 		}
@@ -66,7 +69,7 @@ func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 			vector:    v.vector,
 			peerInfos: v.peerInfo,
 		})
-		// fmt.Println("--- distance from", v, "is", d)
+		// fmt.Println("--- distance from", v.peerInfo.Fingerprint(), "is", d)
 	}
 
 	sort.Slice(r, func(i, j int) bool {
@@ -87,28 +90,51 @@ func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 	return rs
 }
 
-// FindExact returns peers that match query peer
-func (s *Store) FindExact(q *peer.PeerInfoRequest) []*peer.PeerInfo {
+// FindByFingerprint returns peers that are signed by a fingerprint
+func (s *Store) FindByFingerprint(fingerprint string) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	ps := []*peer.PeerInfo{}
+	ps := map[string]*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
-		// TODO(NOW) allow to search all keys
-		if len(q.Keys) > 0 && q.Keys[0] == p.Fingerprint() {
-			ps = append(ps, p)
-			continue
-		}
-	contentCheck:
-		for _, ch := range p.ContentIDs {
-			for _, rch := range q.ContentIDs {
-				if ch == rch {
-					ps = append(ps, p)
-					break contentCheck
-				}
+		keys := crypto.GetSignatureKeys(p.Signature)
+		for _, k := range keys {
+			if k.Fingerprint() == fingerprint {
+				ps[fingerprint] = p
+				break
 			}
 		}
 	}
-	return ps
+
+	fps := []*peer.PeerInfo{}
+	for _, p := range ps {
+		fps = append(fps, p)
+	}
+
+	return fps
+}
+
+// FindByContent returns peers that match a given content hash
+func (s *Store) FindByContent(contentHash string) []*peer.PeerInfo {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	ps := map[string]*peer.PeerInfo{}
+	for _, v := range s.peers {
+		p := v.peerInfo
+		for _, ch := range p.ContentIDs {
+			if ch == contentHash {
+				ps[p.Fingerprint()] = p
+				break
+			}
+		}
+	}
+
+	fps := []*peer.PeerInfo{}
+	for _, p := range ps {
+		fps = append(fps, p)
+	}
+
+	return fps
 }
