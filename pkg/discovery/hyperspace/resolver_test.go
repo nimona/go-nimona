@@ -1,120 +1,124 @@
 package hyperspace
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/context"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
 
-func TestDiscoverer(t *testing.T) {
-	k0, n0, x0, disc0, l0 := newPeer(t)
-	k1, n1, x1, disc1, l1 := newPeer(t)
-	k2, n2, x2, disc2, l2 := newPeer(t)
+func TestDiscoverer_BootstrapLookup(t *testing.T) {
+	_, k0, n0, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k1, n1, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 
-	fmt.Println("k0:", k0.PublicKey.Fingerprint(), l0.GetPeerInfo().Addresses)
-	fmt.Println("k1:", k1.PublicKey.Fingerprint(), l1.GetPeerInfo().Addresses)
-	fmt.Println("k2:", k2.PublicKey.Fingerprint(), l2.GetPeerInfo().Addresses)
-	fmt.Printf("-----------------------------\n\n\n\n")
-
-	d0, err := NewDiscoverer(n0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, n0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetPeerInfo().Addresses
 
-	d1, err := NewDiscoverer(n1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, n1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDiscoverer(n2, x2, l2, ba)
+	ctxR1 := context.New(context.WithCorrelationID("req1"))
+	peers, err := d1.FindByFingerprint(ctxR1, k0.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l0.GetPeerInfo().Addresses, peers[0].Addresses)
+
+	ctxR2 := context.New(context.WithCorrelationID("req2"))
+	peers, err = d0.FindByFingerprint(ctxR2, k1.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l1.GetPeerInfo().Addresses, peers[0].Addresses)
+}
+
+func TestDiscoverer_FindBothSides(t *testing.T) {
+	_, k0, n0, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k1, n1, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	_, k2, n2, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+
+	fmt.Println("k0", k0.Fingerprint())
+	fmt.Println("k1", k1.Fingerprint())
+	fmt.Println("k2", k2.Fingerprint())
+
+	d0, err := NewDiscoverer(ctx0, n0, x0, l0, []string{})
+	assert.NoError(t, err)
+	err = disc0.AddProvider(d0)
+	assert.NoError(t, err)
+
+	ba := l0.GetPeerInfo().Addresses
+
+	d1, err := NewDiscoverer(ctx1, n1, x1, l1, ba)
+	assert.NoError(t, err)
+	err = disc1.AddProvider(d1)
+	assert.NoError(t, err)
+
+	d2, err := NewDiscoverer(ctx2, n2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
-	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
-	}
-	eo1 := object.FromMap(em1)
+	ctxR1 := context.New(context.WithCorrelationID("req1"))
+	peers, err := d1.FindByFingerprint(ctxR1, k2.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l2.GetPeerInfo().Addresses, peers[0].Addresses)
 
-	em2 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
-	}
-	eo2 := object.FromMap(em2)
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	w1ObjectHandled := false
-	w2ObjectHandled := false
-
-	err = crypto.Sign(eo1, k2)
-	assert.NoError(t, err)
-
-	_, err = x1.Handle("test/msg", func(e *exchange.Envelope) error {
-		o := e.Payload
-		defer wg.Done()
-		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
-		w1ObjectHandled = true
-		return nil
-	})
-	assert.NoError(t, err)
-
-	_, err = x2.Handle("tes**", func(e *exchange.Envelope) error {
-		o := e.Payload
-		defer wg.Done()
-		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
-		w2ObjectHandled = true
-		return nil
-	})
-	assert.NoError(t, err)
-
-	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
-	defer cf()
-
-	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint())
-	assert.NoError(t, err)
-
-	time.Sleep(time.Second)
-
-	ctx2, cf2 := context.WithTimeout(context.Background(), time.Second*5)
-	defer cf2()
-
-	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint())
-	assert.NoError(t, err)
-
-	wg.Wait()
-
-	assert.True(t, w1ObjectHandled)
-	assert.True(t, w2ObjectHandled)
+	ctxR2 := context.New(context.WithCorrelationID("req2"))
+	peers, err = d2.FindByFingerprint(ctxR2, k1.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l1.GetPeerInfo().Addresses, peers[0].Addresses)
 }
 
-func newPeer(t *testing.T) (*crypto.PrivateKey, net.Network, exchange.Exchange,
-	discovery.Discoverer, *net.LocalInfo) {
+func newPeer(
+	t *testing.T,
+	name string,
+) (
+	*crypto.PrivateKey,
+	*crypto.PrivateKey,
+	net.Network,
+	exchange.Exchange,
+	discovery.Discoverer,
+	*net.LocalInfo,
+	context.Context,
+) {
+	ctx := context.New(context.WithCorrelationID(name))
 
+	// owner key
+	opk, err := crypto.GenerateKey()
+	assert.NoError(t, err)
+
+	// peer key
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
+	sig, err := crypto.NewSignature(
+		opk,
+		crypto.AlgorithmObjectHash,
+		pk.ToObject(),
+	)
+	assert.NoError(t, err)
+
+	pk.PublicKey.Signature = sig
+
 	disc := discovery.NewDiscoverer()
 	ds, err := graph.NewCayleyWithTempStore()
-	local, err := net.NewLocalInfo("host", pk)
+	local, err := net.NewLocalInfo("", pk)
 	assert.NoError(t, err)
 
 	n, err := net.New(disc, local)
@@ -125,10 +129,18 @@ func newPeer(t *testing.T) (*crypto.PrivateKey, net.Network, exchange.Exchange,
 	n.AddMiddleware(hsm.Handle())
 	n.AddTransport("tcps", tcp)
 
-	x, err := exchange.New(pk, n, ds, disc, local, fmt.Sprintf("0.0.0.0:%d", 0))
+	x, err := exchange.New(
+		ctx,
+		pk,
+		n,
+		ds,
+		disc,
+		local,
+		fmt.Sprintf("0.0.0.0:%d", 0),
+	)
 	assert.NoError(t, err)
 
-	return pk, n, x, disc, local
+	return opk, pk, n, x, disc, local, ctx
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when

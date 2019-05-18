@@ -1,9 +1,9 @@
 package exchange
 
 import (
-	"errors"
 	"sync"
 
+	"nimona.io/internal/errors"
 	"nimona.io/pkg/net"
 )
 

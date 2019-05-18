@@ -10,7 +10,6 @@ import (
 	"nimona.io/internal/errors"
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -56,9 +55,7 @@ func (api *API) HandleGetObject(c *gin.Context) {
 
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
 	defer cf()
-	ps, err := api.discovery.Discover(ctx, &peer.PeerInfoRequest{
-		ContentIDs: []string{objectHash},
-	})
+	ps, err := api.discovery.FindByContent(ctx, objectHash)
 	if err != nil {
 		c.AbortWithError(500, err)
 		return

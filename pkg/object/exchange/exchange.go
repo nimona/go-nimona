@@ -1,7 +1,7 @@
 package exchange
 
 import (
-	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -9,13 +9,13 @@ import (
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
 
+	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -109,6 +109,7 @@ type (
 
 // New creates a exchange on a given network
 func New(
+	ctx context.Context,
 	key *crypto.PrivateKey,
 	n net.Network,
 	store graph.Store,
@@ -119,8 +120,6 @@ func New(
 	Exchange,
 	error,
 ) {
-	ctx := context.Background()
-
 	w := &exchange{
 		key:      key,
 		net:      n,
@@ -128,8 +127,8 @@ func New(
 		discover: discover,
 		local:    localInfo,
 
-		outgoing: make(chan *outgoingObject, 10),
-		incoming: make(chan *incomingObject, 10),
+		outgoing: make(chan *outgoingObject, 1000),
+		incoming: make(chan *incomingObject, 1000),
 
 		handlers: sync.Map{},
 		logger:   log.Logger(ctx).Named("exchange"),
@@ -150,6 +149,10 @@ func New(
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
+				if conn == nil {
+					// TODO should this be nil?
+					return
+				}
 				address := "peer:" + conn.RemotePeerKey.Fingerprint()
 				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
@@ -186,6 +189,7 @@ func New(
 
 			logger := log.Logger(req.context).With(
 				zap.String("recipient", req.recipient),
+				zap.String("object.@ctx", req.object.GetType()),
 			)
 
 			if req.recipient == "" {
@@ -214,6 +218,7 @@ func New(
 			// update peer status
 			// TODO(geoah) fix status -- not that we are using this
 			// w.addressBook.PutPeerStatus(recipientThumbPrint, peer.StatusConnected)
+			logger.Debug("wrote to recipient", zap.Error(err))
 			req.err <- nil
 			continue
 		}
@@ -360,15 +365,16 @@ func (w *exchange) process(
 		logger.Info("got object with request id, returning to req channel")
 		if rs, ok := w.sendRequests.Get(reqID); ok {
 			rs.out <- &Envelope{
-				Sender:  conn.RemotePeerKey,
-				Payload: o,
+				Sender:    conn.RemotePeerKey,
+				Payload:   o,
+				RequestID: reqID,
 			}
 		}
 	}
 
 	ct := o.GetType()
 	w.handlers.Range(func(_, v interface{}) bool {
-		logger.Debug("publishing object to handler")
+		// logger.Debug("publishing object to handler")
 		h := v.(*handler)
 		if !h.contentType.Match(ct) {
 			return true
@@ -380,8 +386,9 @@ func (w *exchange) process(
 				}
 			}()
 			if err := h.handler(&Envelope{
-				Sender:  conn.RemotePeerKey,
-				Payload: o,
+				Sender:    conn.RemotePeerKey,
+				Payload:   o,
+				RequestID: reqID,
 			}); err != nil {
 				w.logger.Info(
 					"Could not handle event",
@@ -427,15 +434,28 @@ func WithLocalDiscoveryOnly() Option {
 // Send an object to an address
 func (w *exchange) Send(
 	ctx context.Context,
-	o *object.Object,
+	oo *object.Object,
 	address string,
 	options ...Option,
 ) error {
-	logger := log.Logger(ctx)
+	ctx = context.FromContext(ctx)
 
 	opts := &Options{}
 	for _, option := range options {
 		option(opts)
+	}
+
+	o := object.Copy(oo)
+
+	logger := log.Logger(ctx).With(
+		zap.String("address", address),
+		zap.String("opts", fmt.Sprintf("%#v", opts)),
+		zap.String("object.type", o.GetType()),
+	)
+
+	if "peer:"+w.local.GetFingerprint() == address {
+		logger.Debug("cannot send object to ourself")
+		return ErrCannotSendToSelf
 	}
 
 	if opts.ResponseID != "" {
@@ -506,6 +526,10 @@ func (w *exchange) sendViaRelayToPeer(
 	address string,
 	options *Options,
 ) error {
+	logger := log.Logger(ctx).With(
+		zap.String("method", "resolver/sendViaRelayToPeer"),
+	)
+
 	// if recipient is a peer, we might have some relay addresses
 	if !strings.HasPrefix(address, "peer:") {
 		return net.ErrAllAddressesFailed
@@ -517,15 +541,12 @@ func (w *exchange) sendViaRelayToPeer(
 		return errors.New("cannot send obj to self")
 	}
 
-	q := &peer.PeerInfoRequest{
-		Keys: []string{
-			recipient,
-		},
-	}
-	peers, err := w.discover.Discover(ctx, q)
+	peers, err := w.discover.FindByFingerprint(ctx, recipient)
 	if err != nil {
 		return err
 	}
+
+	logger.Debug("found peer(s)", zap.Int("n", len(peers)))
 
 	if len(peers) == 0 {
 		return net.ErrNoAddresses
@@ -581,20 +602,23 @@ func (w *exchange) getOrDial(
 	*net.Connection,
 	error,
 ) {
-	w.logger.Debug("looking for existing connection",
+	logger := log.Logger(ctx).With(
 		zap.String("address", address),
 	)
+	logger.Debug("looking for existing connection")
+
 	if address == "" {
+		logger.Debug("missing address, skipping")
 		return nil, errors.New("missing address")
 	}
 
 	existingConn, err := w.manager.Get(address)
 	if err == nil {
-		w.logger.Debug("found existing connection",
-			zap.String("address", address),
-		)
+		logger.Debug("found existing connection")
 		return existingConn, nil
 	}
+
+	logger.Debug("did not find existing connection, will dial")
 
 	netOpts := []net.Option{}
 	if options.LocalDiscovery {
@@ -604,12 +628,13 @@ func (w *exchange) getOrDial(
 	conn, err := w.net.Dial(ctx, address, netOpts...)
 	if err != nil {
 		// w.manager.Close(address)
+		logger.Info("failed to dial", zap.Error(err))
 		return nil, errors.Wrap(err, errors.New("dialing failed"))
 	}
 
 	go func() {
 		if err := w.HandleConnection(conn); err != nil {
-			w.logger.Warn("failed to handle object", zap.Error(err))
+			logger.Warn("failed to handle object", zap.Error(err))
 		}
 	}()
 

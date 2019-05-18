@@ -10,8 +10,14 @@ import (
 
 // Provider defines the interface for a discoverer provider, eg our DHT
 type Provider interface {
-	Discover(
+	FindByFingerprint(
 		ctx context.Context,
-		q *peer.PeerInfoRequest,
+		fingerprint string,
+		opts ...Option,
+	) ([]*peer.PeerInfo, error)
+	FindByContent(
+		ctx context.Context,
+		contentHash string,
+		opts ...Option,
 	) ([]*peer.PeerInfo, error)
 }

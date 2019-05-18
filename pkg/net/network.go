@@ -2,7 +2,7 @@ package net
 
 import (
 	"context"
-	"errors"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -10,9 +10,9 @@ import (
 
 	"go.uber.org/zap"
 
+	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/net/peer"
 )
 
 var (
@@ -82,7 +82,11 @@ func (n *network) Dial(
 	address string,
 	opts ...Option,
 ) (*Connection, error) {
-	logger := log.Logger(ctx)
+	logger := log.Logger(ctx).With(
+		zap.String("address", address),
+	)
+
+	logger.Debug("dialing")
 
 	options := &Options{}
 	for _, opt := range opts {
@@ -100,8 +104,8 @@ func (n *network) Dial(
 		t, ok := n.transports.Load(addressType)
 		if !ok {
 			logger.Info("not sure how to dial",
-				zap.String("address", address),
-				zap.String("type", addressType))
+				zap.String("type", addressType),
+			)
 			return nil, ErrNoAddresses
 		}
 
@@ -120,6 +124,7 @@ func (n *network) Dial(
 		}
 	}
 	if err != nil {
+		logger.Error("could not dial address", zap.Error(err))
 		return nil, err
 	}
 
@@ -149,8 +154,13 @@ func (n *network) Listen(ctx context.Context, address string) (
 				for _, mh := range n.middleware {
 					conn, err = mh(ctx, conn)
 					if err != nil {
+						if errors.CausedBy(err, io.EOF) {
+							break
+						}
 						logger.Error(
-							"middleware failure", zap.Error((err)))
+							"middleware failure",
+							zap.Error(err),
+						)
 
 						if conn != nil {
 							conn.Conn.Close()
@@ -177,36 +187,39 @@ func (n *network) dialPeer(
 	address string,
 	localDiscoveryOnly bool,
 ) (*Connection, error) {
-	logger := log.Logger(ctx)
+	logger := log.Logger(ctx).With(
+		zap.String("address", address),
+		zap.Bool("localDiscoveryOnly", localDiscoveryOnly),
+	)
 
 	fingerprint := strings.Replace(address, "peer:", "", 1)
 	if fingerprint == n.local.GetPeerKey().Fingerprint() {
 		return nil, errors.New("cannot dial our own peer")
 	}
-	logger.Debug("dialing peer", zap.String("peer", address))
-	q := &peer.PeerInfoRequest{
-		Keys: []string{
-			fingerprint,
-		},
-	}
-	opts := []discovery.DiscovererOption{}
+
+	logger.Debug("dialing peer")
+
+	opts := []discovery.Option{}
 	if localDiscoveryOnly {
 		opts = append(opts, discovery.Local())
 	}
-	ps, err := n.discoverer.Discover(ctx, q, opts...)
+	ps, err := n.discoverer.FindByFingerprint(ctx, fingerprint, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(ps) == 0 || len(ps[0].Addresses) == 0 {
-		return nil, ErrNoAddresses
-	}
+	logger.Debug("got peer infos", zap.Int("n", len(ps)))
 
-	// TODO we should probably try all results
-	for _, addr := range ps[0].Addresses {
-		conn, err := n.Dial(ctx, addr)
-		if err == nil {
-			return conn, nil
+	for _, p := range ps {
+		for _, addr := range p.Addresses {
+			logger.Debug("trying to dial peer",
+				zap.String("peer.fingerprint", p.Fingerprint()),
+				zap.Strings("peer.addresses", p.Addresses),
+			)
+			conn, err := n.Dial(ctx, addr)
+			if err == nil {
+				return conn, nil
+			}
 		}
 	}
 

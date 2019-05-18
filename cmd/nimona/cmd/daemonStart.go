@@ -12,6 +12,7 @@ import (
 	_ "github.com/cayleygraph/cayley/graph/kv/bolt" // required for cayley
 
 	"nimona.io/internal/api"
+	"nimona.io/internal/context"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
@@ -107,8 +108,12 @@ var daemonStartCmd = &cobra.Command{
 
 		dpr := graph.NewCayley(gs)
 
+		ctx := context.New(
+			context.WithCorrelationID("daemon"),
+		)
+
 		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
-		x, err := exchange.New(k, n, dpr, dis, li, bind)
+		x, err := exchange.New(ctx, k, n, dpr, dis, li, bind)
 		if err != nil {
 			return err
 		}
@@ -123,7 +128,7 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
-		hsr, err := hyperspace.NewDiscoverer(n, x, li, bootstrapAddresses)
+		hsr, err := hyperspace.NewDiscoverer(ctx, n, x, li, bootstrapAddresses)
 		if err != nil {
 			return err
 		}

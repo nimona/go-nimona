@@ -3,7 +3,7 @@
 package mocks
 
 import context "nimona.io/internal/context"
-
+import discovery "nimona.io/pkg/discovery"
 import mock "github.com/stretchr/testify/mock"
 import peer "nimona.io/pkg/net/peer"
 
@@ -12,13 +12,20 @@ type Provider struct {
 	mock.Mock
 }
 
-// Discover provides a mock function with given fields: ctx, q
-func (_m *Provider) Discover(ctx context.Context, q *peer.PeerInfoRequest) ([]*peer.PeerInfo, error) {
-	ret := _m.Called(ctx, q)
+// FindByContent provides a mock function with given fields: ctx, contentHash, opts
+func (_m *Provider) FindByContent(ctx context.Context, contentHash string, opts ...discovery.Option) ([]*peer.PeerInfo, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, contentHash)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 []*peer.PeerInfo
-	if rf, ok := ret.Get(0).(func(context.Context, *peer.PeerInfoRequest) []*peer.PeerInfo); ok {
-		r0 = rf(ctx, q)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...discovery.Option) []*peer.PeerInfo); ok {
+		r0 = rf(ctx, contentHash, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*peer.PeerInfo)
@@ -26,8 +33,38 @@ func (_m *Provider) Discover(ctx context.Context, q *peer.PeerInfoRequest) ([]*p
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *peer.PeerInfoRequest) error); ok {
-		r1 = rf(ctx, q)
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...discovery.Option) error); ok {
+		r1 = rf(ctx, contentHash, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByFingerprint provides a mock function with given fields: ctx, fingerprint, opts
+func (_m *Provider) FindByFingerprint(ctx context.Context, fingerprint string, opts ...discovery.Option) ([]*peer.PeerInfo, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, fingerprint)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 []*peer.PeerInfo
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...discovery.Option) []*peer.PeerInfo); ok {
+		r0 = rf(ctx, fingerprint, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*peer.PeerInfo)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...discovery.Option) error); ok {
+		r1 = rf(ctx, fingerprint, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}

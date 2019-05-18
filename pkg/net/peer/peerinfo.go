@@ -26,5 +26,5 @@ func (pi *PeerInfo) Fingerprint() string {
 
 // Address of the peer
 func (pi *PeerInfo) Address() string {
-	return "peer:" + pi.Signature.PublicKey.Fingerprint()
+	return "peer:" + pi.Fingerprint()
 }
