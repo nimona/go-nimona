@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
@@ -67,8 +66,8 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	)
 	defer cf()
 
-	logger := log.Logger(ctx).With(
-		zap.String("rootObjectHash", rootObjectHash),
+	logger := log.FromContext(ctx).With(
+		log.String("rootObjectHash", rootObjectHash),
 	)
 	logger.Info("handling request")
 

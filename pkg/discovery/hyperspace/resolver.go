@@ -3,8 +3,6 @@ package hyperspace
 import (
 	"time"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/discovery"
@@ -55,9 +53,9 @@ func (r *Discoverer) FindByFingerprint(
 ) ([]*peer.PeerInfo, error) {
 	opt := discovery.ParseOptions(opts...)
 
-	logger := log.Logger(ctx).With(
-		zap.String("method", "resolver/FindByFingerprint"),
-		zap.String("peerinfo.fingerprint", fingerprint),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver/FindByFingerprint"),
+		log.String("peerinfo.fingerprint", fingerprint),
 	)
 	logger.Debug("trying to find peer by fingerprint")
 
@@ -65,7 +63,7 @@ func (r *Discoverer) FindByFingerprint(
 	if len(eps) > 0 {
 		logger.Debug(
 			"found peers in store",
-			zap.Int("n", len(eps)),
+			log.Int("n", len(eps)),
 		)
 
 		return eps, nil
@@ -144,10 +142,10 @@ func (r *Discoverer) handlePeerInfo(
 	ctx context.Context,
 	p *peer.PeerInfo,
 ) {
-	logger := log.Logger(ctx).With(
-		zap.String("method", "resolver/handlePeerInfo"),
-		zap.String("peerinfo.fingerprint", p.Fingerprint()),
-		zap.Strings("peerinfo.addresses", p.Addresses),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver/handlePeerInfo"),
+		log.String("peerinfo.fingerprint", p.Fingerprint()),
+		log.Strings("peerinfo.addresses", p.Addresses),
 	)
 	logger.Debug("adding peerinfo to store")
 	r.store.Add(p)
@@ -159,13 +157,13 @@ func (r *Discoverer) handlePeerInfoRequest(
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
-	logger := log.Logger(ctx).With(
-		zap.String("method", "resolver/handlePeerInfoRequest"),
-		zap.String("e.sender", e.Sender.Fingerprint()),
-		zap.String("e.requestID", e.RequestID),
-		zap.Strings("query.contentIDs", q.ContentIDs),
-		zap.Strings("query.contentTypes", q.ContentTypes),
-		zap.Strings("query.keys", q.Keys),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver/handlePeerInfoRequest"),
+		log.String("e.sender", e.Sender.Fingerprint()),
+		log.String("e.requestID", e.RequestID),
+		log.Strings("query.contentIDs", q.ContentIDs),
+		log.Strings("query.contentTypes", q.ContentTypes),
+		log.Strings("query.keys", q.Keys),
 	)
 
 	logger.Debug("handling peer info request")
@@ -200,13 +198,13 @@ func (r *Discoverer) handlePeerInfoRequest(
 	addr := "peer:" + e.Sender.Fingerprint()
 	for _, p := range fps {
 		logger.Debug("responding with peer",
-			zap.String("address", addr),
-			zap.String("peer", p.Fingerprint()),
+			log.String("address", addr),
+			log.String("peer", p.Fingerprint()),
 		)
 		err := r.exchange.Send(ctx, p.ToObject(), addr, opts...)
 		if err != nil {
 			logger.Debug("handleProviderRequest could not send object",
-				zap.Error(err),
+				log.Error(err),
 			)
 		}
 	}
@@ -218,11 +216,11 @@ func (r *Discoverer) LookupPeerInfo(
 	q *peer.PeerInfoRequest,
 ) ([]*peer.PeerInfo, error) {
 	ctx = context.FromContext(ctx)
-	logger := log.Logger(ctx).With(
-		zap.String("method", "resolver/LookupPeerInfo"),
-		zap.Strings("query.contentIDs", q.ContentIDs),
-		zap.Strings("query.contentTypes", q.ContentTypes),
-		zap.Strings("query.keys", q.Keys),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver/LookupPeerInfo"),
+		log.Strings("query.contentIDs", q.ContentIDs),
+		log.Strings("query.contentTypes", q.ContentTypes),
+		log.Strings("query.keys", q.Keys),
 	)
 	o := q.ToObject()
 	ps := r.store.FindClosest(q)
@@ -232,7 +230,7 @@ func (r *Discoverer) LookupPeerInfo(
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
-	logger.Debug("found peers to ask", zap.Int("n", len(ps)))
+	logger.Debug("found peers to ask", log.Int("n", len(ps)))
 	for _, p := range ps {
 		r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
 	}
@@ -249,8 +247,8 @@ func (r *Discoverer) LookupPeerInfo(
 
 		case res := <-out:
 			logger.Debug("got loopkup response",
-				zap.String("res.type", res.Payload.GetType()),
-				zap.String("res.sender", res.Sender.Fingerprint()),
+				log.String("res.type", res.Payload.GetType()),
+				log.String("res.sender", res.Sender.Fingerprint()),
 			)
 			r.handleObject(res)
 			if res.Payload.GetType() == peer.PeerInfoType {
@@ -269,7 +267,7 @@ func (r *Discoverer) bootstrap(
 	ctx context.Context,
 	bootstrapAddresses []string,
 ) error {
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	key := r.local.GetPeerKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
@@ -283,11 +281,11 @@ func (r *Discoverer) bootstrap(
 	for _, addr := range bootstrapAddresses {
 		err := r.exchange.Send(ctx, o, addr, opts...)
 		if err != nil {
-			logger.Debug("bootstrap could not send request", zap.Error(err))
+			logger.Debug("bootstrap could not send request", log.Error(err))
 		}
 		err = r.exchange.Send(ctx, r.local.GetPeerInfo().ToObject(), addr, opts...)
 		if err != nil {
-			logger.Debug("bootstrap could not send self", zap.Error(err))
+			logger.Debug("bootstrap could not send self", log.Error(err))
 		}
 	}
 	return nil

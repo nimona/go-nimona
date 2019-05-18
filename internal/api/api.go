@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
@@ -125,7 +124,7 @@ func New(
 // Serve HTTP API
 func (api *API) Serve(address string) error {
 	ctx := context.Background()
-	logger := log.Logger(ctx).Named("api")
+	logger := log.FromContext(ctx).Named("api")
 
 	api.srv = &http.Server{
 		Addr:    address,
@@ -135,14 +134,14 @@ func (api *API) Serve(address string) error {
 	go func() {
 		if err := api.srv.ListenAndServe(); err != nil &&
 			err != http.ErrServerClosed {
-			logger.Error("Error serving", zap.Error(err))
+			logger.Error("Error serving", log.Error(err))
 		}
 	}()
 
 	<-api.gracefulStop
 
 	if err := api.srv.Shutdown(ctx); err != nil {
-		logger.Error("Failed to shutdown", zap.Error(err))
+		logger.Error("Failed to shutdown", log.Error(err))
 	}
 
 	return nil

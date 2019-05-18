@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
@@ -46,7 +45,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 	}
 
 	ctx := context.Background()
-	logger := log.Logger(ctx).Named("api")
+	logger := log.FromContext(ctx).Named("api")
 	incoming := make(chan *object.Object, 100)
 	outgoing := make(chan *object.Object, 100)
 
@@ -62,7 +61,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 
 			case req := <-outgoing:
 				if err := crypto.Sign(req, api.key); err != nil {
-					logger.Error("could not sign outgoing object", zap.Error(err))
+					logger.Error("could not sign outgoing object", log.Error(err))
 					req.SetRaw("_status", "error signing object")
 					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
@@ -97,8 +96,8 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 					}
 					if err := api.exchange.Send(ctx, req, addr); err != nil {
 						logger.Error("could not send outgoing object",
-							zap.Error(err),
-							zap.String("addr", addr))
+							log.Error(err),
+							log.String("addr", addr))
 						req.SetRaw("_status", "error sending object")
 					}
 					// TODO handle error
@@ -125,26 +124,26 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			if err == io.EOF {
-				logger.Debug("ws conn is dead", zap.Error(err))
+				logger.Debug("ws conn is dead", log.Error(err))
 				return
 			}
 
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-				logger.Debug("ws conn closed", zap.Error(err))
+				logger.Debug("ws conn closed", log.Error(err))
 				return
 			}
 
 			if websocket.IsUnexpectedCloseError(err) {
-				logger.Warn("ws conn closed with unexpected error", zap.Error(err))
+				logger.Warn("ws conn closed with unexpected error", log.Error(err))
 				return
 			}
 
-			logger.Warn("could not read from ws", zap.Error(err))
+			logger.Warn("could not read from ws", log.Error(err))
 			continue
 		}
 		m := map[string]interface{}{}
 		if err := json.Unmarshal(msg, &m); err != nil {
-			logger.Error("could not unmarshal outgoing object", zap.Error(err))
+			logger.Error("could not unmarshal outgoing object", log.Error(err))
 			continue
 		}
 		o := object.FromMap(m)
