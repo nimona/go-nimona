@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
-	"go.uber.org/zap"
+
+	"nimona.io/internal/log"
 )
 
 // InfluxCollector implements the Collector interface with a InlfuxDB storage
@@ -15,7 +16,7 @@ type InfluxCollector struct {
 	client      client.Client
 	input       chan Collectable
 	lock        *sync.RWMutex
-	logger      *zap.Logger
+	logger      log.Logger
 	batchSize   int
 	timeout     time.Duration
 	batchConfig client.BatchPointsConfig
@@ -41,7 +42,7 @@ func NewInfluxCollector(user, pass, addr string) (Collector, error) {
 		client: c,
 		lock:   &sync.RWMutex{},
 		input:  input,
-		// logger: log.Logger(context.Background()), //.Named("collector_influx"),
+		// logger: log.FromContext(context.Background()), //.Named("collector_influx"),
 		// TODO fix the point aggregation and find a sane batch size
 		batchSize: 1,
 		batchConfig: client.BatchPointsConfig{
@@ -74,7 +75,7 @@ func (ic *InfluxCollector) processor(ctx context.Context,
 	// Create a new point batch
 	bp, err := client.NewBatchPoints(ic.batchConfig)
 	if err != nil {
-		ic.logger.Error("Failed to create new batch points", zap.Error(err))
+		ic.logger.Error("Failed to create new batch points", log.Error(err))
 		return
 	}
 
@@ -107,18 +108,18 @@ func (ic *InfluxCollector) processor(ctx context.Context,
 			}
 			pt, err := client.NewPoint(event.Collection(), tags, fields)
 			if err != nil {
-				ic.logger.Error("Failed to create point", zap.Error(err))
+				ic.logger.Error("Failed to create point", log.Error(err))
 			}
 			bp.AddPoint(pt)
 		case <-timeout:
 			bp, err = ic.writePoints(bp)
 			if err != nil {
-				ic.logger.Error("Failed to write points", zap.Error(err))
+				ic.logger.Error("Failed to write points", log.Error(err))
 			}
 		case <-ctx.Done():
 			bp, err = ic.writePoints(bp)
 			if err != nil {
-				ic.logger.Error("Failed to write points", zap.Error(err))
+				ic.logger.Error("Failed to write points", log.Error(err))
 			}
 			break
 		}
@@ -126,7 +127,7 @@ func (ic *InfluxCollector) processor(ctx context.Context,
 		if len(bp.Points()) >= ic.batchSize {
 			bp, err = ic.writePoints(bp)
 			if err != nil {
-				ic.logger.Error("Failed to write points", zap.Error(err))
+				ic.logger.Error("Failed to write points", log.Error(err))
 			}
 		}
 	}
@@ -137,7 +138,7 @@ func (ic *InfluxCollector) createDB(db string) error {
 		Command: fmt.Sprintf("CREATE DATABASE %s", db),
 	})
 	if err != nil {
-		ic.logger.Error("Failed to create database", zap.Error(err))
+		ic.logger.Error("Failed to create database", log.Error(err))
 		return err
 	}
 

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
@@ -86,10 +84,10 @@ func (r *discoverer) FindByFingerprint(
 ) ([]*peer.PeerInfo, error) {
 	opt := ParseOptions(opts...)
 
-	logger := log.Logger(ctx).With(
-		zap.String("method", "discovery/discoverer.FindByFingerprint"),
-		zap.String("fingerprint", fingerprint),
-		zap.String("opts", fmt.Sprintf("%#v", opt)),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "discovery/discoverer.FindByFingerprint"),
+		log.String("fingerprint", fingerprint),
+		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
 	logger.Debug("trying to find peers")
@@ -129,10 +127,10 @@ func (r *discoverer) FindByContent(
 ) ([]*peer.PeerInfo, error) {
 	opt := ParseOptions(opts...)
 
-	logger := log.Logger(ctx).With(
-		zap.String("method", "discovery/discoverer.FindByContent"),
-		zap.String("contentHash", contentHash),
-		zap.String("opts", fmt.Sprintf("%#v", opt)),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "discovery/discoverer.FindByContent"),
+		log.String("contentHash", contentHash),
+		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
 	logger.Debug("trying to find peers")

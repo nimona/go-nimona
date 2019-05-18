@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
-	"go.uber.org/zap"
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
@@ -69,7 +68,7 @@ type (
 		incoming chan *incomingObject
 
 		handlers sync.Map
-		logger   log.ZapLogger
+		logger   log.Logger
 
 		store        graph.Store
 		getRequests  *StringObjectRequestSyncMap
@@ -131,7 +130,7 @@ func New(
 		incoming: make(chan *incomingObject, 1000),
 
 		handlers: sync.Map{},
-		logger:   log.Logger(ctx).Named("exchange"),
+		logger:   log.FromContext(ctx).Named("exchange"),
 
 		store:        store,
 		getRequests:  NewStringObjectRequestSyncMap(),
@@ -156,7 +155,7 @@ func New(
 				address := "peer:" + conn.RemotePeerKey.Fingerprint()
 				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
-					w.logger.Warn("failed to handle object", zap.Error(err))
+					w.logger.Warn("failed to handle object", log.Error(err))
 				}
 			}(conn)
 		}
@@ -168,11 +167,11 @@ func New(
 			go func(object *incomingObject) {
 				defer func() {
 					if r := recover(); r != nil {
-						w.logger.Error("Recovered while processing", zap.Any("r", r))
+						w.logger.Error("Recovered while processing", log.Any("r", r))
 					}
 				}()
 				if err := w.process(object.object, object.conn); err != nil {
-					w.logger.Error("processing object", zap.Error(err))
+					w.logger.Error("processing object", log.Error(err))
 				}
 			}(object)
 		}
@@ -187,9 +186,9 @@ func New(
 				req.err <- errors.Error("cannot dial own peer")
 			}
 
-			logger := log.Logger(req.context).With(
-				zap.String("recipient", req.recipient),
-				zap.String("object.@ctx", req.object.GetType()),
+			logger := log.FromContext(req.context).With(
+				log.String("recipient", req.recipient),
+				log.String("object.@ctx", req.object.GetType()),
 			)
 
 			if req.recipient == "" {
@@ -203,14 +202,14 @@ func New(
 			// try to send the object directly to the recipient
 			conn, err := w.getOrDial(req.context, req.recipient, req.options)
 			if err != nil {
-				logger.Debug("could not get conn to recipient", zap.Error(err))
+				logger.Debug("could not get conn to recipient", log.Error(err))
 				req.err <- err
 				continue
 			}
 
 			if err := net.Write(req.object, conn); err != nil {
 				w.manager.Close(req.recipient)
-				logger.Debug("could not write to recipient", zap.Error(err))
+				logger.Debug("could not write to recipient", log.Error(err))
 				req.err <- err
 				continue
 			}
@@ -218,7 +217,7 @@ func New(
 			// update peer status
 			// TODO(geoah) fix status -- not that we are using this
 			// w.addressBook.PutPeerStatus(recipientThumbPrint, peer.StatusConnected)
-			logger.Debug("wrote to recipient", zap.Error(err))
+			logger.Debug("wrote to recipient", log.Error(err))
 			req.err <- nil
 			continue
 		}
@@ -268,7 +267,7 @@ func (w *exchange) HandleConnection(
 ) error {
 	w.logger.Debug(
 		"handling new connection",
-		zap.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint()),
+		log.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint()),
 	)
 	for {
 		// TODO use decoder
@@ -295,10 +294,10 @@ func (w *exchange) process(
 	}
 
 	logger := w.logger.With(
-		zap.String("local_peer", w.key.PublicKey.Fingerprint()),
-		zap.String("remote_peer", conn.RemotePeerKey.Fingerprint()),
-		zap.String("request_id", reqID),
-		zap.String("object.type", o.GetType()),
+		log.String("local_peer", w.key.PublicKey.Fingerprint()),
+		log.String("remote_peer", conn.RemotePeerKey.Fingerprint()),
+		log.String("request_id", reqID),
+		log.String("object.type", o.GetType()),
 	)
 
 	logger.Info("processing object")
@@ -311,8 +310,8 @@ func (w *exchange) process(
 			return err
 		}
 		logger = logger.With(
-			zap.String("requested_hash", req.ObjectHash),
-			zap.String("recipient", conn.RemotePeerKey.Fingerprint()),
+			log.String("requested_hash", req.ObjectHash),
+			log.String("recipient", conn.RemotePeerKey.Fingerprint()),
 		)
 		logger.Info("got object request")
 		res, err := w.store.Get(req.ObjectHash)
@@ -336,7 +335,7 @@ func (w *exchange) process(
 		}
 		err = <-cerr
 		if err != nil {
-			logger.Warn("could not send response", zap.Error(err))
+			logger.Warn("could not send response", log.Error(err))
 		} else {
 			logger.Info("sent response")
 		}
@@ -347,7 +346,7 @@ func (w *exchange) process(
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		w.logger.Info("got forwarded message", zap.String("recipient", v.Recipient))
+		w.logger.Info("got forwarded message", log.String("recipient", v.Recipient))
 		cerr := make(chan error, 1)
 		ctx, cf := context.WithTimeout(context.Background(), time.Second)
 		defer cf()
@@ -382,7 +381,7 @@ func (w *exchange) process(
 		go func(h *handler, object interface{}) {
 			defer func() {
 				if r := recover(); r != nil {
-					w.logger.Error("Recovered while handling", zap.Any("r", r))
+					w.logger.Error("Recovered while handling", log.Any("r", r))
 				}
 			}()
 			if err := h.handler(&Envelope{
@@ -392,8 +391,8 @@ func (w *exchange) process(
 			}); err != nil {
 				w.logger.Info(
 					"Could not handle event",
-					zap.String("contentType", ct),
-					zap.Error(err),
+					log.String("contentType", ct),
+					log.Error(err),
 				)
 			}
 		}(h, o)
@@ -447,10 +446,10 @@ func (w *exchange) Send(
 
 	o := object.Copy(oo)
 
-	logger := log.Logger(ctx).With(
-		zap.String("address", address),
-		zap.String("opts", fmt.Sprintf("%#v", opts)),
-		zap.String("object.type", o.GetType()),
+	logger := log.FromContext(ctx).With(
+		log.String("address", address),
+		log.String("opts", fmt.Sprintf("%#v", opts)),
+		log.String("object.type", o.GetType()),
 	)
 
 	if "peer:"+w.local.GetFingerprint() == address {
@@ -482,13 +481,13 @@ func (w *exchange) Send(
 		if err == nil {
 			return nil
 		}
-		logger.Debug("could not send directly to peer", zap.Error(err))
+		logger.Debug("could not send directly to peer", log.Error(err))
 
 		err = w.sendViaRelayToPeer(ctx, o, address, opts)
 		if err == nil {
 			return nil
 		}
-		logger.Debug("could not via relay to peer", zap.Error(err))
+		logger.Debug("could not via relay to peer", log.Error(err))
 
 		return net.ErrAllAddressesFailed
 
@@ -526,8 +525,8 @@ func (w *exchange) sendViaRelayToPeer(
 	address string,
 	options *Options,
 ) error {
-	logger := log.Logger(ctx).With(
-		zap.String("method", "resolver/sendViaRelayToPeer"),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver/sendViaRelayToPeer"),
 	)
 
 	// if recipient is a peer, we might have some relay addresses
@@ -546,7 +545,7 @@ func (w *exchange) sendViaRelayToPeer(
 		return err
 	}
 
-	logger.Debug("found peer(s)", zap.Int("n", len(peers)))
+	logger.Debug("found peer(s)", log.Int("n", len(peers)))
 
 	if len(peers) == 0 {
 		return net.ErrNoAddresses
@@ -569,8 +568,8 @@ func (w *exchange) sendViaRelayToPeer(
 		if strings.HasPrefix(address, "relay:") {
 			w.logger.
 				Debug("found relay address",
-					zap.String("peer", recipient),
-					zap.String("address", address),
+					log.String("peer", recipient),
+					log.String("address", address),
 				)
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
@@ -602,8 +601,8 @@ func (w *exchange) getOrDial(
 	*net.Connection,
 	error,
 ) {
-	logger := log.Logger(ctx).With(
-		zap.String("address", address),
+	logger := log.FromContext(ctx).With(
+		log.String("address", address),
 	)
 	logger.Debug("looking for existing connection")
 
@@ -628,13 +627,13 @@ func (w *exchange) getOrDial(
 	conn, err := w.net.Dial(ctx, address, netOpts...)
 	if err != nil {
 		// w.manager.Close(address)
-		logger.Info("failed to dial", zap.Error(err))
+		logger.Info("failed to dial", log.Error(err))
 		return nil, errors.Wrap(err, errors.New("dialing failed"))
 	}
 
 	go func() {
 		if err := w.HandleConnection(conn); err != nil {
-			logger.Warn("failed to handle object", zap.Error(err))
+			logger.Warn("failed to handle object", log.Error(err))
 		}
 	}()
 

@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
@@ -31,18 +29,18 @@ type query struct {
 	contactedPeers     sync.Map
 	incomingPayloads   chan interface{}
 	outgoingPayloads   chan interface{}
-	logger             log.ZapLogger
+	logger             log.Logger
 }
 
 func (q *query) Run(ctx context.Context) {
-	q.logger = log.Logger(ctx)
+	q.logger = log.FromContext(ctx)
 	go func() {
 		// send what we know about the key
 		switch q.queryType {
 		case PeerInfoQuery:
 			if peerInfo, err := q.dht.peerStore.Get(q.key); err == nil {
 				if peerInfo == nil {
-					q.logger.Warn("got nil peerInfo", zap.String("requestID", q.key))
+					q.logger.Warn("got nil peerInfo", log.String("requestID", q.key))
 					break
 				}
 				q.outgoingPayloads <- peerInfo
@@ -117,7 +115,7 @@ func (q *query) next() {
 	// find closest peers
 	closestPeers, err := q.dht.FindPeersClosestTo(q.key, numPeersNear)
 	if err != nil {
-		q.logger.Warn("Failed find peers near", zap.Error(err))
+		q.logger.Warn("Failed find peers near", log.Error(err))
 		return
 	}
 
@@ -158,11 +156,11 @@ func (q *query) next() {
 	}
 
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	for _, peer := range peersToAsk {
 		addr := "peer:" + peer.Fingerprint()
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Warn("query next could not send", zap.Error(err), zap.String("fingerprint", peer.Fingerprint()))
+			logger.Warn("query next could not send", log.Error(err), log.String("fingerprint", peer.Fingerprint()))
 		}
 	}
 }

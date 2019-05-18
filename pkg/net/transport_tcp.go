@@ -9,7 +9,7 @@ import (
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
-	"go.uber.org/zap"
+
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 )
@@ -55,7 +55,7 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 	chan *Connection, error) {
 
-	logger := log.Logger(ctx).Named("network")
+	logger := log.FromContext(ctx).Named("network")
 	cert, err := crypto.GenerateCertificate(tt.local.GetPeerKey())
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 	}
 
 	port := tcpListener.Addr().(*net.TCPAddr).Port
-	logger.Info("Listening and service nimona", zap.Int("port", port))
+	logger.Info("Listening and service nimona", log.Int("port", port))
 	addresses := GetAddresses(tcpListener)
 	devices := make(chan igd.Device, 10)
 
@@ -86,26 +86,26 @@ func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 		logger.Info("Trying to find external IP and open port")
 		go func() {
 			if err := igd.Discover(devices, 2*time.Second); err != nil {
-				logger.Error("could not discover devices", zap.Error(err))
+				logger.Error("could not discover devices", log.Error(err))
 			}
 		}()
 		for device := range devices {
 			externalAddress, err := device.GetExternalIPAddress()
 			if err != nil {
-				logger.Error("could not get external ip", zap.Error(err))
+				logger.Error("could not get external ip", log.Error(err))
 				continue
 			}
 			desc := "nimona"
 			ttl := time.Hour * 24 * 365
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
-				logger.Error("could not add port mapping", zap.Error(err))
+				logger.Error("could not add port mapping", log.Error(err))
 			} else {
 				addresses = append(addresses, fmtAddress(externalAddress.String(), port))
 			}
 		}
 	}
 
-	logger.Info("Started listening", zap.Strings("addresses", addresses))
+	logger.Info("Started listening", log.Strings("addresses", addresses))
 	tt.local.AddAddress(addresses...)
 	tt.local.AddAddress(tt.relayAddresses...)
 
@@ -116,7 +116,7 @@ func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
 				log.DefaultLogger.Warn(
-					"could not accept connection", zap.Error(err))
+					"could not accept connection", log.Error(err))
 				continue
 			}
 

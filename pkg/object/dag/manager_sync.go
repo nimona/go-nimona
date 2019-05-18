@@ -1,8 +1,6 @@
 package dag
 
 import (
-	"go.uber.org/zap"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/net"
@@ -31,10 +29,10 @@ func (m *manager) Sync(
 		Selector: selector,
 	}
 
-	logger := log.Logger(ctx).With(
-		zap.String("method", "dag/manager.Sync"),
-		zap.Strings("selector", selector),
-		zap.Strings("addresses", addresses),
+	logger := log.FromContext(ctx).With(
+		log.String("method", "dag/manager.Sync"),
+		log.Strings("selector", selector),
+		log.Strings("addresses", addresses),
 	)
 
 	logger.Info("starting sync")
@@ -42,7 +40,7 @@ func (m *manager) Sync(
 	// send the request to all addresses
 	for _, address := range addresses {
 		logger.Debug("sending request",
-			zap.String("address", address),
+			log.String("address", address),
 		)
 		if err := m.exchange.Send(
 			ctx,
@@ -52,7 +50,7 @@ func (m *manager) Sync(
 		); err != nil {
 			// TODO log error, should return if they all fail
 			logger.Debug("could not send request",
-				zap.String("address", address),
+				log.String("address", address),
 			)
 		}
 	}
@@ -77,8 +75,8 @@ func (m *manager) Sync(
 
 			case res := <-responses:
 				logger := logger.With(
-					zap.String("object._hash", res.Payload.HashBase58()),
-					zap.String("object.type", res.Payload.GetType()),
+					log.String("object._hash", res.Payload.HashBase58()),
+					log.String("object.type", res.Payload.GetType()),
 				)
 
 				if res.Payload.GetType() != ObjectGraphResponseType {
@@ -87,7 +85,7 @@ func (m *manager) Sync(
 				gres := &ObjectGraphResponse{}
 				gres.FromObject(res.Payload)
 				logger.
-					With(zap.Strings("hashes", gres.ObjectHashes)).
+					With(log.Strings("hashes", gres.ObjectHashes)).
 					Debug("got graph response")
 				for _, objectHash := range gres.ObjectHashes {
 					// add a request for this hash from this peer

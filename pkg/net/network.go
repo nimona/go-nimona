@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/discovery"
@@ -82,8 +80,8 @@ func (n *network) Dial(
 	address string,
 	opts ...Option,
 ) (*Connection, error) {
-	logger := log.Logger(ctx).With(
-		zap.String("address", address),
+	logger := log.FromContext(ctx).With(
+		log.String("address", address),
 	)
 
 	logger.Debug("dialing")
@@ -104,7 +102,7 @@ func (n *network) Dial(
 		t, ok := n.transports.Load(addressType)
 		if !ok {
 			logger.Info("not sure how to dial",
-				zap.String("type", addressType),
+				log.String("type", addressType),
 			)
 			return nil, ErrNoAddresses
 		}
@@ -124,7 +122,7 @@ func (n *network) Dial(
 		}
 	}
 	if err != nil {
-		logger.Error("could not dial address", zap.Error(err))
+		logger.Error("could not dial address", log.Error(err))
 		return nil, err
 	}
 
@@ -135,7 +133,7 @@ func (n *network) Dial(
 // TODO do we need to return a listener?
 func (n *network) Listen(ctx context.Context, address string) (
 	chan *Connection, error) {
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	cconn := make(chan *Connection, 10)
 
 	n.transports.Range(func(key, value interface{}) bool {
@@ -159,7 +157,7 @@ func (n *network) Listen(ctx context.Context, address string) (
 						}
 						logger.Error(
 							"middleware failure",
-							zap.Error(err),
+							log.Error(err),
 						)
 
 						if conn != nil {
@@ -187,9 +185,9 @@ func (n *network) dialPeer(
 	address string,
 	localDiscoveryOnly bool,
 ) (*Connection, error) {
-	logger := log.Logger(ctx).With(
-		zap.String("address", address),
-		zap.Bool("localDiscoveryOnly", localDiscoveryOnly),
+	logger := log.FromContext(ctx).With(
+		log.String("address", address),
+		log.Bool("localDiscoveryOnly", localDiscoveryOnly),
 	)
 
 	fingerprint := strings.Replace(address, "peer:", "", 1)
@@ -208,13 +206,13 @@ func (n *network) dialPeer(
 		return nil, err
 	}
 
-	logger.Debug("got peer infos", zap.Int("n", len(ps)))
+	logger.Debug("got peer infos", log.Int("n", len(ps)))
 
 	for _, p := range ps {
 		for _, addr := range p.Addresses {
 			logger.Debug("trying to dial peer",
-				zap.String("peer.fingerprint", p.Fingerprint()),
-				zap.Strings("peer.addresses", p.Addresses),
+				log.String("peer.fingerprint", p.Fingerprint()),
+				log.Strings("peer.addresses", p.Addresses),
 			)
 			conn, err := n.Dial(ctx, addr)
 			if err == nil {

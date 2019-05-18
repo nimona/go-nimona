@@ -1,8 +1,6 @@
 package handshake
 
 import (
-	"go.uber.org/zap"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
@@ -90,10 +88,10 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	*net.Connection, error) {
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	synObj, err := net.Read(conn)
 	if err != nil {
-		logger.Warn("waiting for syn failed", zap.Error(err))
+		logger.Warn("waiting for syn failed", log.Error(err))
 		// TODO close conn?
 		return nil, err
 	}
@@ -117,19 +115,19 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	sao := synAck.ToObject()
 	if err := crypto.Sign(sao, hs.local.GetPeerKey()); err != nil {
 		logger.Warn(
-			"could not sign for syn ack object", zap.Error(err))
+			"could not sign for syn ack object", log.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
 	if err := net.Write(sao, conn); err != nil {
-		logger.Warn("sending for syn-ack failed", zap.Error(err))
+		logger.Warn("sending for syn-ack failed", log.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
 
 	ackObj, err := net.Read(conn)
 	if err != nil {
-		logger.Warn("waiting for ack failed", zap.Error(err))
+		logger.Warn("waiting for ack failed", log.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}

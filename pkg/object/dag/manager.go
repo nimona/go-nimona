@@ -3,7 +3,6 @@ package dag
 import (
 	"time"
 
-	"go.uber.org/zap"
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
@@ -117,9 +116,9 @@ func NewWithContext(
 // Process an object
 func (m *manager) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
-	logger := log.Logger(ctx).With(
-		zap.String("object._hash", e.Payload.HashBase58()),
-		zap.String("object.type", e.Payload.GetType()),
+	logger := log.FromContext(ctx).With(
+		log.String("object._hash", e.Payload.HashBase58()),
+		log.String("object.type", e.Payload.GetType()),
 	)
 	logger.Debug("handling object")
 
@@ -137,7 +136,7 @@ func (m *manager) Process(e *exchange.Envelope) error {
 			e.Sender,
 			v,
 		); err != nil {
-			logger.Warn("could not handle graph request object", zap.Error(err))
+			logger.Warn("could not handle graph request object", log.Error(err))
 		}
 	}
 
@@ -223,7 +222,7 @@ func (m *manager) handleObjectGraphRequest(
 	req *ObjectGraphRequest,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 
 	vs, err := m.store.Graph(req.Selector[0])
 	if err != nil {
@@ -247,7 +246,7 @@ func (m *manager) handleObjectGraphRequest(
 	); err != nil {
 		logger.Warn(
 			"dag/manager.handleObjectGraphRequest could not send response",
-			zap.Error(err),
+			log.Error(err),
 		)
 		return err
 	}

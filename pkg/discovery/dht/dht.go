@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net"
@@ -80,7 +78,7 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 			continue
 		}
 		if err := exchange.Send(ctx, so, addr); err != nil {
-			log.Logger(ctx).Warn("could not send to bootstrap", zap.String("addr", addr), zap.Error(err))
+			log.FromContext(ctx).Warn("could not send to bootstrap", log.String("addr", addr), log.Error(err))
 		}
 	}
 
@@ -93,7 +91,7 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 
 func (r *DHT) refresh() {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	// TODO this will be replaced when we introduce bucketing
 	// TODO our init process is a bit messed up and addressBook doesn't know
 	// about the peer's protocols instantly
@@ -106,7 +104,7 @@ func (r *DHT) refresh() {
 
 		closestPeers, err := r.FindPeersClosestTo(peerInfo.Fingerprint(), closestPeersToReturn)
 		if err != nil {
-			logger.Warn("refresh could not get peers ids", zap.Error(err))
+			logger.Warn("refresh could not get peers ids", log.Error(err))
 			time.Sleep(time.Second * 10)
 			continue
 		}
@@ -114,7 +112,7 @@ func (r *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := r.exchange.Send(ctx, peerInfo.ToObject(), closestPeer.Address()); err != nil {
-				logger.Debug("refresh could not announce", zap.Error(err), zap.String("fingerprint", closestPeer.Fingerprint()))
+				logger.Debug("refresh could not announce", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint()))
 			}
 		}
 
@@ -167,13 +165,13 @@ func (r *DHT) handleObject(e *exchange.Envelope) error {
 
 func (r *DHT) handlePeerInfo(payload *peer.PeerInfo) {
 	if err := r.peerStore.Put(payload); err != nil {
-		log.Logger(context.Background()).Error("could not handle peer info", zap.Error(err))
+		log.FromContext(context.Background()).Error("could not handle peer info", log.Error(err))
 	}
 }
 
 func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.PublicKey) {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 
 	peerInfo, _ := r.peerStore.Get(payload.Fingerprint)
 	// TODO handle and log error
@@ -185,7 +183,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 
 	closestPeerInfos, err := r.FindPeersClosestTo(payload.Fingerprint, closestPeersToReturn)
 	if err != nil {
-		logger.Debug("could not get providers from local store", zap.Error(err))
+		logger.Debug("could not get providers from local store", log.Error(err))
 		// TODO handle and log error
 	}
 
@@ -202,23 +200,23 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 	}
 	addr := "peer:" + sender.Fingerprint()
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
-		logger.Debug("handleProviderRequest could not send object", zap.Error(err))
+		logger.Debug("handleProviderRequest could not send object", log.Error(err))
 		return
 	}
 }
 
 func (r *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	for _, pi := range payload.ClosestPeers {
 		if err := r.peerStore.Put(pi); err != nil {
-			logger.Error("could not handle closest peer from peerinfo response", zap.Error(err))
+			logger.Error("could not handle closest peer from peerinfo response", log.Error(err))
 		}
 	}
 
 	if payload.PeerInfo != nil {
 		if err := r.peerStore.Put(payload.PeerInfo); err != nil {
-			logger.Error("could not handle peer info from peerinfo response", zap.Error(err))
+			logger.Error("could not handle peer info from peerinfo response", log.Error(err))
 		}
 	}
 
@@ -237,17 +235,17 @@ func (r *DHT) handlePeerInfoResponse(payload *PeerInfoResponse) {
 
 func (r *DHT) handleProviderRequest(payload *ProviderRequest, sender *crypto.PublicKey) {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 
 	providers, err := r.store.GetProviders(payload.Key)
 	if err != nil {
-		logger.Debug("could not get providers from local store", zap.Error(err))
+		logger.Debug("could not get providers from local store", log.Error(err))
 		// TODO handle and log error
 	}
 
 	closestPeerInfos, err := r.FindPeersClosestTo(payload.Key, closestPeersToReturn)
 	if err != nil {
-		logger.Debug("could not get providers from local store", zap.Error(err))
+		logger.Debug("could not get providers from local store", log.Error(err))
 		// TODO handle and log error
 	}
 
@@ -264,18 +262,18 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest, sender *crypto.Pub
 		return
 	}
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
-		logger.Warn("handleProviderRequest could not send object", zap.Error(err))
+		logger.Warn("handleProviderRequest could not send object", log.Error(err))
 		return
 	}
 }
 
 func (r *DHT) handleProviderResponse(payload *ProviderResponse) {
 	ctx := context.Background()
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 
 	for _, provider := range payload.Providers {
 		if err := r.store.PutProvider(provider); err != nil {
-			logger.Debug("could not store provider", zap.Error(err))
+			logger.Debug("could not store provider", log.Error(err))
 			// TODO handle error
 		}
 	}
@@ -385,7 +383,7 @@ func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*peer.PeerInfo, error
 // PutProviders adds a key of something we provide
 // TODO Find a better name for this
 func (r *DHT) PutProviders(ctx context.Context, key string) error {
-	logger := log.Logger(ctx)
+	logger := log.FromContext(ctx)
 	provider := &Provider{
 		ObjectIDs: []string{key},
 	}
@@ -400,7 +398,7 @@ func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := r.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := r.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
-			logger.Debug("put providers could not send", zap.Error(err), zap.String("fingerprint", closestPeer.Fingerprint()))
+			logger.Debug("put providers could not send", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint()))
 		}
 	}
 

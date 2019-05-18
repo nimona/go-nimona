@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"go.uber.org/zap"
-
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
@@ -34,8 +32,8 @@ func Write(o *object.Object, conn *Connection) error {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		log.DefaultLogger.Info(
 			string(b),
-			zap.String("remote_peer_hash", ra),
-			zap.String("direction", "outgoing"),
+			log.String("remote_peer_hash", ra),
+			log.String("direction", "outgoing"),
 		)
 	}
 
@@ -63,7 +61,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("Recovered while processing", zap.Any("r", r))
+			logger.Error("Recovered while processing", log.Any("r", r))
 		}
 	}()
 
@@ -93,8 +91,8 @@ func Read(conn *Connection) (*object.Object, error) {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		logger.Info(
 			string(b),
-			zap.String("remote_peer_hash", ra),
-			zap.String("direction", "incoming"),
+			log.String("remote_peer_hash", ra),
+			log.String("direction", "incoming"),
 		)
 	}
 
