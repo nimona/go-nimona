@@ -11,7 +11,7 @@ import (
 )
 
 // nolint: lll
-//go:generate go run github.com/vektra/mockery/cmd/mockery -name Discoverer -case underscore
+//go:generate $GOBIN/mockery -name Discoverer -case underscore
 
 // Options is the complete options structure for the discoverer
 type Options struct {

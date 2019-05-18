@@ -3,8 +3,8 @@ package example
 import "nimona.io/pkg/object"
 
 // nolint
-//go:generate go run nimona.io/tools/objectify -schema test/inn -type InnerFoo -in example.go -out inner_foo_generated.go
-//go:generate go run nimona.io/tools/objectify -schema test/foo -type Foo -in example.go -out foo_generated.go
+//go:generate $GOBIN/objectify -schema test/inn -type InnerFoo -in example.go -out inner_foo_generated.go
+//go:generate $GOBIN/objectify -schema test/foo -type Foo -in example.go -out foo_generated.go
 
 // InnerFoo -
 // nolint

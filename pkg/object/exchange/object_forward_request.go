@@ -5,7 +5,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /object-forward-request -type ObjectForwardRequest -in object_forward_request.go -out object_forward_request_generated.go
+//go:generate $GOBIN/objectify -schema /object-forward-request -type ObjectForwardRequest -in object_forward_request.go -out object_forward_request_generated.go
 
 // ObjectForwardRequest is the payload for proxied objects
 type ObjectForwardRequest struct {

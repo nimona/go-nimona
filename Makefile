@@ -2,47 +2,57 @@ NMAKE = go run nimona.io/tools/nmake
 DAEMN = go run nimona.io/cmd/nimona
 CMMNT = go run nimona.io/tools/generators/community
 
+BIN_NMAKE = ./tools/bin/nmake
+BIN_CMMNT = ./tools/bin/community
+
 export GO111MODULE=on
+export GOBIN=$(CURDIR)/tools/bin
 
 .PHONY: build
-build:
-	@$(NMAKE) build
+build: tools-check
+	@$(BIN_NMAKE) build
 
-.PHONY: cleanup
-cleanup:
-	@$(NMAKE) cleanup
+.PHONY: clean
+clean: tools-check
+	@$(BIN_NMAKE) cleanup
 
 .PHONY: community-docs
-community-docs:
-	@$(CMMNT)
+community-docs: tools-check
+	@$(BIN_CMMNT)
 
 .PHONY: deps
-deps:
-	@$(NMAKE) deps
+deps: tools-check
+	@$(BIN_NMAKE) deps
 
 .PHONY: generate
-generate:
-	@$(NMAKE) generate
+generate: tools-check
+	@$(BIN_NMAKE) generate
 
 .PHONY: install
-install:
-	@$(NMAKE) install
+install: tools-check
+	@$(BIN_NMAKE) install
 
 .PHONY: lint
-lint:
-	@$(NMAKE) lint
+lint: tools-check
+	$(BIN_NMAKE) lint
 
 .PHONY: run
-run:
+run: tools-check
 	@$(DAEMN)
 
 .PHONY: test
-test:
-	@$(NMAKE) test
+test: tools-check
+	@$(BIN_NMAKE) test
+
+.PHONY: tools-check
+tools-check: tools/bin/nmake
+
+tools/bin/nmake:
+	@$(MAKE) tools
 
 .PHONY: tools
 tools:
-	@$(NMAKE) tools
+	cd tools; $(NMAKE) tools
 
 .PHONY: tools-and-lint
 tools-and-lint: tools

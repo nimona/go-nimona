@@ -24,7 +24,7 @@ var lintCmd = &cobra.Command{
 			"run",
 		}
 
-		if err := execPipe(env, "golangci-lint", lintArgs, os.Stdout, os.Stderr); err != nil {
+		if err := execPipe(env, "./tools/bin/golangci-lint", lintArgs, os.Stdout, os.Stderr); err != nil {
 			return err
 		}
 

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -11,15 +12,22 @@ var toolsCmd = &cobra.Command{
 	Use:   "tools",
 	Short: "tools",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env := []string{}
+		cwd, err := os.Getwd()
+		if err != nil {
+			cwd = "."
+		}
+		env := []string{
+			"GOBIN=" + filepath.Join(cwd, "bin"),
+		}
 
 		tools := []string{
 			"github.com/cheekybits/genny",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint",
 			"github.com/goreleaser/goreleaser",
 			"github.com/golangci/golangci-lint/cmd/golangci-lint",
-			"github.com/shurcooL/vfsgen/cmd/vfsgendev",
 			"github.com/vektra/mockery/cmd/mockery",
+			"nimona.io/tools/nmake",
+			"nimona.io/tools/objectify",
+			"nimona.io/tools/generators/community",
 		}
 
 		info("Installing tools")

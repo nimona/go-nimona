@@ -4,7 +4,7 @@ import (
 	"nimona.io/pkg/crypto"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /object-request -type ObjectRequest -in object_request.go -out object_request_generated.go
+//go:generate $GOBIN/objectify -schema /object-request -type ObjectRequest -in object_request.go -out object_request_generated.go
 
 // ObjectRequest payload for ObjectRequestType
 type ObjectRequest struct {

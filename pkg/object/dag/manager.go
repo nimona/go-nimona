@@ -14,8 +14,8 @@ import (
 	"nimona.io/pkg/object/exchange"
 )
 
-//go:generate go run github.com/cheekybits/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
-//TODO go:generate go run github.com/cheekybits/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg dag gen "ObservableType=*object.Object"
+//go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
+//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg dag gen "ObservableType=*object.Object"
 
 type (
 	// Manager is responsible of keeping track of all the objects, graphs,
