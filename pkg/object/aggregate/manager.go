@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/object/mutation"
 )
 
-//go:generate go run github.com/cheekybits/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_generate.go -pkg aggregate gen "ObservableType=*AggregateObject"
+//go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_generate.go -pkg aggregate gen "ObservableType=*AggregateObject"
 
 type (
 	// Manager for object aggregates

@@ -19,7 +19,7 @@ debug
 # build directories
 bin/*
 dist/*
+tools/bin/*
 
 # Vendor
 vendor
-cmd/nimona/nimona

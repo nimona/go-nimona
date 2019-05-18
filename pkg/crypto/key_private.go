@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /key.private -type PrivateKey -in key_private.go -out key_private_generated.go
+//go:generate $GOBIN/objectify -schema /key.private -type PrivateKey -in key_private.go -out key_private_generated.go
 
 // PrivateKey
 type PrivateKey struct {

@@ -9,7 +9,7 @@ type Collectable interface {
 	ToObject() *object.Object
 }
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/telemetry/connection -type ConnectionEvent -in collectable.go -out event_connection_generated.go
+//go:generate $GOBIN/objectify -schema nimona.io/telemetry/connection -type ConnectionEvent -in collectable.go -out event_connection_generated.go
 
 // ConnectionEvent for reporting connection info
 type ConnectionEvent struct {
@@ -29,7 +29,7 @@ func (ce *ConnectionEvent) Measurements() map[string]interface{} {
 	}
 }
 
-//go:generate go run nimona.io/tools/objectify -schema nimona.io/telemetry/object -type ObjectEvent -in collectable.go -out event_object_generated.go
+//go:generate $GOBIN/objectify -schema nimona.io/telemetry/object -type ObjectEvent -in collectable.go -out event_object_generated.go
 
 // ObjectEvent for reporting object metrics
 type ObjectEvent struct {

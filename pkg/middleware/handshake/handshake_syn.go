@@ -5,7 +5,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /handshake.syn -type Syn -in handshake_syn.go -out handshake_syn_generated.go
+//go:generate $GOBIN/objectify -schema /handshake.syn -type Syn -in handshake_syn.go -out handshake_syn_generated.go
 
 type Syn struct {
 	RawObject *object.Object `json:"@"`

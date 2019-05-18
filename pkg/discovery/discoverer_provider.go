@@ -6,7 +6,7 @@ import (
 )
 
 // nolint: lll
-//go:generate go run github.com/vektra/mockery/cmd/mockery -name Provider -case underscore
+//go:generate $GOBIN/mockery -name Provider -case underscore
 
 // Provider defines the interface for a discoverer provider, eg our DHT
 type Provider interface {

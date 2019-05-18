@@ -18,7 +18,7 @@ import (
 	"nimona.io/pkg/object/exchange"
 )
 
-//go:generate go run -tags=dev nimona.io/tools/nmake vfsgen
+//go:generate $GOBIN/nmake vfsgen
 
 // API for HTTP
 type API struct {

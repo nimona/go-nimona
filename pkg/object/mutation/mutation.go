@@ -4,7 +4,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /object.mutation -type Mutation -in mutation.go -out mutation_generated.go
+//go:generate $GOBIN/objectify -schema /object.mutation -type Mutation -in mutation.go -out mutation_generated.go
 
 // Mutation provides operations to be applied given that the parent mutations
 // have already been applied

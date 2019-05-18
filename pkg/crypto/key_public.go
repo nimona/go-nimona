@@ -10,7 +10,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate go run nimona.io/tools/objectify -schema /key.public -type PublicKey -in key_public.go -out key_public_generated.go
+//go:generate $GOBIN/objectify -schema /key.public -type PublicKey -in key_public.go -out key_public_generated.go
 
 type PublicKey struct {
 	Algorithm string `json:"alg,omitempty"`
