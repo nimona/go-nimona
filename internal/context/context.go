@@ -42,7 +42,12 @@ func (ctx *context) Method() string {
 // WithTimeout wraps stdcontext.WithTimeout
 func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) {
 	cctx, cf := stdcontext.WithTimeout(parent, timeout)
-	return New(WithParent(cctx)), CancelFunc(cf)
+	return New(
+		WithParent(cctx),
+		WithCorrelationID(
+			GetCorrelationID(parent),
+		),
+	), CancelFunc(cf)
 }
 
 // Arguments returns the context's arguments
@@ -52,7 +57,30 @@ func (ctx *context) Arguments() map[string]interface{} {
 
 // CorrelationID returns the context's correlationID
 func (ctx *context) CorrelationID() string {
-	return ctx.correlationID
+	if ctx.correlationID != "" {
+		return ctx.correlationID
+	}
+
+	if ctx.Context != nil {
+		return GetCorrelationID(ctx.Context)
+	}
+
+	return ""
+}
+
+// FromContext returns a new context from a parent
+func FromContext(ctx stdcontext.Context) *context {
+	return New(WithParent(ctx))
+}
+
+// GetCorrelationID returns the correlation if there is one
+func GetCorrelationID(ctx stdcontext.Context) string {
+	switch cctx := ctx.(type) {
+	case *context:
+		return cctx.CorrelationID()
+	default:
+		return ""
+	}
 }
 
 // New constructs a new *context from a parent Context and Options
