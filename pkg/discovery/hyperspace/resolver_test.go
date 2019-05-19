@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,6 +33,8 @@ func TestDiscoverer_BootstrapLookup(t *testing.T) {
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
+
+	time.Sleep(time.Second)
 
 	ctxR1 := context.New(context.WithCorrelationID("req1"))
 	peers, err := d1.FindByFingerprint(ctxR1, k0.Fingerprint())
@@ -72,11 +75,15 @@ func TestDiscoverer_FindBothSides(t *testing.T) {
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	ctxR1 := context.New(context.WithCorrelationID("req1"))
 	peers, err := d1.FindByFingerprint(ctxR1, k2.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetPeerInfo().Addresses, peers[0].Addresses)
+
+	time.Sleep(time.Second)
 
 	ctxR2 := context.New(context.WithCorrelationID("req2"))
 	peers, err = d2.FindByFingerprint(ctxR2, k1.Fingerprint())
@@ -111,11 +118,15 @@ func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	ctxR1 := context.New(context.WithCorrelationID("req1"))
 	peers, err := d1.FindByFingerprint(ctxR1, ok2.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetPeerInfo().Addresses, peers[0].Addresses)
+
+	time.Sleep(time.Second)
 
 	ctxR2 := context.New(context.WithCorrelationID("req2"))
 	peers, err = d2.FindByFingerprint(ctxR2, ok1.Fingerprint())
