@@ -6,6 +6,8 @@ GOBIN = $(CURDIR)/tools/bin
 BIN_NMAKE = $(GOBIN)/nmake
 BIN_CMMNT = $(GOBIN)/community
 
+export GO111MODULE=on
+
 .PHONY: build
 build: tools-check
 	@cd cmd; $(BIN_NMAKE) build
@@ -19,7 +21,7 @@ community-docs: tools-check
 	@$(BIN_CMMNT)
 
 .PHONY: deps
-deps: tools-check
+deps: tools
 	@$(BIN_NMAKE) deps
 
 .PHONY: generate
