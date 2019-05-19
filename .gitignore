@@ -19,6 +19,7 @@ debug
 # build directories
 bin/*
 dist/*
+cmd/bin/*
 tools/bin/*
 
 # Vendor

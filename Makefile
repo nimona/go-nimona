@@ -1,16 +1,14 @@
 NMAKE = go run nimona.io/tools/nmake
 DAEMN = go run nimona.io/cmd/nimona
 CMMNT = go run nimona.io/tools/generators/community
+GOBIN = $(CURDIR)/tools/bin
 
-BIN_NMAKE = ./tools/bin/nmake
-BIN_CMMNT = ./tools/bin/community
-
-export GO111MODULE=on
-export GOBIN=$(CURDIR)/tools/bin
+BIN_NMAKE = $(GOBIN)/nmake
+BIN_CMMNT = $(GOBIN)/community
 
 .PHONY: build
 build: tools-check
-	@$(BIN_NMAKE) build
+	@cd cmd; $(BIN_NMAKE) build
 
 .PHONY: clean
 clean: tools-check
