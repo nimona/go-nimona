@@ -42,7 +42,7 @@ jobs:
           command: make build
       - run:
           name: Test goreleaser
-          command: ./tools/bin/goreleaser --skip-validate --rm-dist --skip-publish
+          command: cd cmd; ../tools/bin/goreleaser --skip-validate --rm-dist --skip-publish
       - *cache-save
   release:
     <<: *base
@@ -69,7 +69,7 @@ workflows:
       - build:
           filters:
             branches:
-              ignore: /.*/
+              only: master
             tags:
               only: /^v[0-9]+(\.[0-9]+)*/
       - release:
