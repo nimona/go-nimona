@@ -1,3 +1,5 @@
+// +build flaky
+
 package hyperspace
 
 import (
