@@ -17,8 +17,11 @@ debug
 *.txt
 
 # build directories
-bin/*
 dist/*
+cmd/dist/*
+tools/dist/*
+
+bin/*
 cmd/bin/*
 tools/bin/*
 
