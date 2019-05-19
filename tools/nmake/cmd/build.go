@@ -25,7 +25,7 @@ var buildCmd = &cobra.Command{
 	Short: "build",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		getPackages := func() ([]string, error) {
-			pkgs, err := filepath.Glob("./cmd/*/main.go")
+			pkgs, err := filepath.Glob("./*/main.go")
 			if err != nil {
 				return nil, err
 			}
