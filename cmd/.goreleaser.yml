@@ -1,12 +1,10 @@
 project_name: nimona
 builds:
-  - main: ./cmd/nimona
+  - main: ./nimona
     binary: nimona
     env:
       - GO111MODULE=on
-    flags: 
-      - -a
-      - -mod=vendor
+    flags:
       - -tags=releaser
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
