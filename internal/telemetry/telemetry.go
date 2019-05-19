@@ -3,8 +3,6 @@ package telemetry
 import (
 	"context"
 	"errors"
-	"log"
-	"os"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
@@ -32,23 +30,23 @@ type metrics struct {
 	statsAddress string
 }
 
-func init() {
-	// Check if the telemetry flags are set and start the collector
-	if os.Getenv("TELEMETRY") == "server" {
-		user := os.Getenv("TELEMETRY_SERVER_USER")
-		pass := os.Getenv("TELEMETRY_SERVER_PASS")
-		addr := os.Getenv("TELEMETRY_SERVER_ADDRESS")
+// func init() {
+// 	// Check if the telemetry flags are set and start the collector
+// 	if os.Getenv("TELEMETRY") == "server" {
+// 		user := os.Getenv("TELEMETRY_SERVER_USER")
+// 		pass := os.Getenv("TELEMETRY_SERVER_PASS")
+// 		addr := os.Getenv("TELEMETRY_SERVER_ADDRESS")
 
-		if user != "" || addr != "" {
-			col, err := NewInfluxCollector(user, pass, addr)
-			if err != nil {
-				log.Println("Failed to connect to inlfux", err)
-			}
+// 		if user != "" || addr != "" {
+// 			col, err := NewInfluxCollector(user, pass, addr)
+// 			if err != nil {
+// 				log.Println("Failed to connect to inlfux", err)
+// 			}
 
-			DefaultCollector = col
-		}
-	}
-}
+// 			DefaultCollector = col
+// 		}
+// 	}
+// }
 
 func NewTelemetry(exchange Exchanger, localPeer *crypto.PrivateKey,
 	statsAddress string) error {
