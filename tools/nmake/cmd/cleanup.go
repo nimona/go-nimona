@@ -17,7 +17,8 @@ var cleanupCmd = &cobra.Command{
 
 		paths := []string{
 			"./bin/*",
-			"./bin",
+			"./cmd/bin/*",
+			"./tools/bin/*",
 			"coverage*",
 		}
 
