@@ -15,7 +15,7 @@ require (
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
-	golang.org/x/tools v0.0.0-20190517183331-d88f79806bbd
+	golang.org/x/tools v0.0.0-20190522164419-521d6ed310dd
 	gopkg.in/yaml.v2 v2.2.2
 	nimona.io v0.0.0-00010101000000-000000000000
 )

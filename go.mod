@@ -2,7 +2,7 @@ module nimona.io
 
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
-	github.com/Sereal/Sereal v0.0.0-20190515093507-c8b9511ad519 // indirect
+	github.com/Sereal/Sereal v0.0.0-20190522164419-0ce96d1f4c08 // indirect
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
@@ -10,7 +10,7 @@ require (
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
-	github.com/dop251/goja v0.0.0-20190515093507-8d6ee3d16611 // indirect
+	github.com/dop251/goja v0.0.0-20190522164419-084dd324c724 // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/fatih/structs v1.1.0
 	github.com/gin-contrib/cors v1.3.0
@@ -38,8 +38,8 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522 // indirect
-	golang.org/x/net v0.0.0-20190515093507-3ec191127204
-	golang.org/x/sys v0.0.0-20190515181430-06a5c4944438 // indirect
+	golang.org/x/net v0.0.0-20190522164419-f3200d17e092
+	golang.org/x/sys v0.0.0-20190522164419-8097e1b27ff5 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
