@@ -27,3 +27,6 @@ tools/bin/*
 
 # Vendor
 vendor
+
+# Local testing
+.local

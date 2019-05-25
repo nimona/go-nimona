@@ -8,8 +8,8 @@ RUN ls -lah .
 
 ENV CGO_ENABLED=0
 
-RUN go run nimona.io/tools/nmake build
-RUN cp -r ./bin /bin
+RUN make build
+RUN cp -r ./bin/nimona /bin/nimona
 
 ###
 
