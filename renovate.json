@@ -13,5 +13,8 @@
   ],
   "lockFileMaintenance": {
     "enabled": false
-  }
+  },
+  "schedule": [
+    "every friday"
+  ]
 }
