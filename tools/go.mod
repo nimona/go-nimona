@@ -3,24 +3,30 @@ module nimona.io/tools
 go 1.12
 
 require (
-	github.com/Masterminds/semver v1.4.2
 	github.com/cheekybits/genny v1.0.0
-	github.com/fatih/color v1.7.0
+	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/golangci/golangci-lint v1.16.1-0.20190421084833-39f46be46090
 	github.com/goreleaser/goreleaser v0.106.0
-	github.com/mitchellh/mapstructure v1.1.2
-	github.com/shurcooL/httpfs v0.0.0-20181222201310-74dc9339e414 // indirect
+	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
-	github.com/spf13/cobra v0.0.4
-	github.com/spf13/viper v1.3.2
-	github.com/stretchr/testify v1.3.0
+	github.com/spf13/cobra v0.0.4 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
-	golang.org/x/tools v0.0.0-20190522164419-521d6ed310dd
-	gopkg.in/yaml.v2 v2.2.2
-	nimona.io v0.0.0-00010101000000-000000000000
+	golang.org/x/net v0.0.0-20190522164419-f3200d17e092 // indirect
+	golang.org/x/sys v0.0.0-20190522164419-8097e1b27ff5 // indirect
+	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/tools v0.0.0-20190522164419-521d6ed310dd // indirect
+	google.golang.org/appengine v1.6.0 // indirect
 )
 
 replace (
-	github.com/ugorji/go/codec => github.com/ugorji/go v1.1.2
 	nimona.io => ../
+	nimona.io/cmd/nimona => ../cmd/nimona
+	nimona.io/tools/community => ../tools/community
+	nimona.io/tools/objectify => ../tools/objectify
+	nimona.io/tools/vanity => ../tools/vanity
 )
+
+replace github.com/ugorji/go/codec => github.com/ugorji/go v1.1.2
