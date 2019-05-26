@@ -20,7 +20,7 @@ const (
 	cmReadmeFile    = "README.md"
 
 	cmDir          = "community"
-	templateDir    = "tools/generators/community/templates"
+	templateDir    = "tools/community/templates"
 	groupsYamlFile = "community/groups.yaml"
 )
 
