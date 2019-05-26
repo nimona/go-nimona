@@ -116,10 +116,6 @@ func isValidIP(addr net.Addr) (string, bool) {
 	return ip.String(), true
 }
 
-func isIPv4(address string) bool {
-	return strings.Count(address, ":") < 2
-}
-
 func isIPv6(address string) bool {
 	return strings.Count(address, ":") >= 2
 }

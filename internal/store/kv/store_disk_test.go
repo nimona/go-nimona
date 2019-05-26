@@ -10,13 +10,13 @@ import (
 )
 
 func cleanup(path, key string) {
-	os.Remove(filepath.Join(path, key+dataExt))
+	os.Remove(filepath.Join(path, key+dataExt)) // nolint: errcheck
 }
 
 func TestStoreObjectSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, _ := NewDiskStorage(path)
 
 	value := []byte("bar")
 	key := "foo"
@@ -34,7 +34,7 @@ func TestStoreObjectSuccess(t *testing.T) {
 func TestStoreObjectExists(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, _ := NewDiskStorage(path)
 
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
@@ -55,7 +55,7 @@ func TestStoreObjectExists(t *testing.T) {
 func TestGetSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, _ := NewDiskStorage(path)
 
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
@@ -78,7 +78,7 @@ func TestGetSuccess(t *testing.T) {
 func TestGetFail(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, _ := NewDiskStorage(path)
 
 	key := "TestKey2"
 
@@ -90,7 +90,7 @@ func TestGetFail(t *testing.T) {
 func TestListSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds,_ := NewDiskStorage(path)
 
 	value := []byte("bar")
 	key := "foo"

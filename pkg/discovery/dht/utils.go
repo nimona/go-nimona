@@ -67,26 +67,8 @@ func comparePeers(a, b, targetPeer string) string {
 	return b
 }
 
-func appendIfMissing(slice []string, i string) []string {
-	for _, ele := range slice {
-		if ele == i {
-			return slice
-		}
-	}
-	return append(slice, i)
-}
-
 func hash(key string) string {
 	hasher := sha1.New()
-	hasher.Write([]byte(key))
+	hasher.Write([]byte(key)) // nolint: errcheck
 	return fmt.Sprintf("%x", hasher.Sum(nil))
-}
-
-func in(k string, ar []string) bool {
-	for _, v := range ar {
-		if k == v {
-			return true
-		}
-	}
-	return false
 }

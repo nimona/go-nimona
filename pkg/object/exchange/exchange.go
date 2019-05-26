@@ -645,11 +645,3 @@ func (w *exchange) getOrDial(
 func getAddressType(addr string) string {
 	return strings.Split(addr, ":")[0]
 }
-
-func getAddressValue(addr string) (string, error) {
-	ps := strings.Split(addr, ":")
-	if len(ps) != 2 {
-		return "", errors.New("invalid address")
-	}
-	return ps[1], nil
-}

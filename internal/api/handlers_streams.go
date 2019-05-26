@@ -40,7 +40,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 
 	conn, err := wsupgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 
@@ -114,7 +114,7 @@ func (api *API) HandleGetStreams(c *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 

@@ -21,14 +21,16 @@ func TestPrivateKey(t *testing.T) {
 
 	// convert SecretKey to object and back
 	nsk := &PrivateKey{}
-	nsk.FromObject(sk.ToObject())
+	err = nsk.FromObject(sk.ToObject())
+	assert.NoError(t, err)
 	assert.Equal(t, emsk, nsk.Key())
 	assert.Equal(t, &emsk.PublicKey, nsk.PublicKey.Key())
 	assert.Equal(t, sk.PublicKey.Fingerprint(), nsk.PublicKey.Fingerprint())
 
 	// convert PublicKey to object
 	npk := &PublicKey{}
-	npk.FromObject(sk.PublicKey.ToObject())
+	err = npk.FromObject(sk.PublicKey.ToObject())
+	assert.NoError(t, err)
 	assert.Equal(t, &emsk.PublicKey, npk.Key())
 	assert.Equal(t, sk.PublicKey.Fingerprint(), nsk.PublicKey.Fingerprint())
 }

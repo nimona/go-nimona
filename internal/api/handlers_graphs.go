@@ -19,7 +19,7 @@ func (api *API) HandleGetGraphs(c *gin.Context) {
 	// TODO this will be replaced by manager.Subscribe()
 	graphRoots, err := api.objectStore.Heads()
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 	ms := []interface{}{}
@@ -32,19 +32,19 @@ func (api *API) HandleGetGraphs(c *gin.Context) {
 func (api *API) HandlePostGraphs(c *gin.Context) {
 	req := map[string]interface{}{}
 	if err := c.BindJSON(&req); err != nil {
-		c.AbortWithError(400, err)
+		c.AbortWithError(400, err) // nolint: errcheck
 		return
 	}
 
 	o := object.FromMap(req)
 
 	if err := crypto.Sign(o, api.key); err != nil {
-		c.AbortWithError(500, errors.New("could not sign object"))
+		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
 	if err := api.dag.Put(o); err != nil {
-		c.AbortWithError(500, errors.New("could not store object"))
+		c.AbortWithError(500, errors.New("could not store object")) // nolint: errcheck
 		return
 	}
 
@@ -57,7 +57,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	returnDot, _ := strconv.ParseBool(c.Query("dot"))
 
 	if rootObjectHash == "" {
-		c.AbortWithError(400, errors.New("missing root object hash"))
+		c.AbortWithError(400, errors.New("missing root object hash")) // nolint: errcheck
 	}
 
 	ctx, cf := context.WithTimeout(
@@ -74,13 +74,13 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	// find peers who provide the root object
 	ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 
 	// convert peer infos to addresses
 	if len(ps) == 0 {
-		c.AbortWithError(404, err)
+		c.AbortWithError(404, err) // nolint: errcheck
 		return
 	}
 	addrs := []string{}
@@ -100,22 +100,22 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	graphObjects, err := api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
 	if err != nil {
 		if errors.CausedBy(err, graph.ErrNotFound) {
-			c.AbortWithError(404, err)
+			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 
 	if len(graphObjects) == 0 {
-		c.AbortWithError(404, err)
+		c.AbortWithError(404, err) // nolint: errcheck
 		return
 	}
 
 	if returnDot {
 		dot, err := graph.Dot(graphObjects)
 		if err != nil {
-			c.AbortWithError(500, err)
+			c.AbortWithError(500, err) // nolint: errcheck
 			return
 		}
 		c.Header("Content-Type", "text/vnd.graphviz")

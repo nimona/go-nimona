@@ -23,7 +23,7 @@ func (c *PeerInfoCollection) All() ([]*PeerInfo, error) {
 	peers := []*PeerInfo{}
 	c.peers.Range(func(k, v interface{}) bool {
 		newPeerInfo := &PeerInfo{}
-		copier.Copy(newPeerInfo, v.(*PeerInfo))
+		copier.Copy(newPeerInfo, v.(*PeerInfo)) // nolint: errcheck
 		peers = append(peers, newPeerInfo)
 		return true
 	})

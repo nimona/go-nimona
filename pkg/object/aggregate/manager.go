@@ -32,7 +32,6 @@ type (
 	}
 	// options for Manager.Get()
 	getOptions struct {
-		sync    bool
 		timeout time.Duration
 	}
 	getOption func(*getOptions)

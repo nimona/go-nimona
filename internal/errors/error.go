@@ -2,12 +2,6 @@ package errors
 
 type (
 	Error string
-	// iError augments the error interface with helpers for our wrapped errors
-	iError interface {
-		error
-		Cause() error
-		Latest() error
-	}
 	// fError is a fundamental error with just a message
 	// TODO(geoah): consider adding a stack as pkg/errors does
 	fError struct {

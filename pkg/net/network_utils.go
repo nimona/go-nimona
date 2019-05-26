@@ -12,7 +12,7 @@ import (
 )
 
 func Write(o *object.Object, conn *Connection) error {
-	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second))
+	conn.Conn.SetWriteDeadline(time.Now().Add(time.Second)) // nolint: errcheck
 	if o == nil {
 		log.DefaultLogger.Error("object for fw cannot be nil")
 		return errors.New("missing object")

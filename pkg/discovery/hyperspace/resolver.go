@@ -36,11 +36,17 @@ func NewDiscoverer(
 		exchange: exc,
 	}
 
-	exc.Handle("/peer.request", r.handleObject)
-	exc.Handle("/peer", r.handleObject)
+	if _, err := exc.Handle("/peer.request", r.handleObject); err != nil {
+		return nil, err
+	}
+	if _, err := exc.Handle("/peer", r.handleObject); err != nil {
+		return nil, err
+	}
 
 	r.store.Add(local.GetPeerInfo())
-	r.bootstrap(ctx, bootstrapAddresses)
+	if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
+		return nil, err
+	}
 
 	return r, nil
 }
@@ -73,13 +79,15 @@ func (r *Discoverer) FindByFingerprint(
 		return nil, nil
 	}
 
-	peers, _ := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+	if _, err := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
 		Keys: []string{
 			fingerprint,
 		},
-	})
+	}); err != nil {
+		return nil, err
+	}
 
-	peers = r.store.FindByFingerprint(fingerprint)
+	peers := r.store.FindByFingerprint(fingerprint)
 	return peers, nil
 }
 
@@ -100,11 +108,13 @@ func (r *Discoverer) FindByContent(
 		return nil, nil
 	}
 
-	r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+	if _, err := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
 		ContentIDs: []string{
 			contentHash,
 		},
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	eps = r.store.FindByContent(contentHash)
 	return eps, nil
@@ -232,7 +242,10 @@ func (r *Discoverer) LookupPeerInfo(
 	}
 	logger.Debug("found peers to ask", log.Int("n", len(ps)))
 	for _, p := range ps {
-		r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
+		err := r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
+		if err != nil {
+			logger.Debug("could not lookup peer", log.Error(err))
+		}
 	}
 	peers := []*peer.PeerInfo{}
 	// TODO(geoah) better timeout
@@ -250,7 +263,9 @@ func (r *Discoverer) LookupPeerInfo(
 				log.String("res.type", res.Payload.GetType()),
 				log.String("res.sender", res.Sender.Fingerprint()),
 			)
-			r.handleObject(res)
+			if err := r.handleObject(res); err != nil {
+				logger.Debug("could not handle object", log.Error(err))
+			}
 			if res.Payload.GetType() == peer.PeerInfoType {
 				v := &peer.PeerInfo{}
 				if err := v.FromObject(res.Payload); err == nil {
