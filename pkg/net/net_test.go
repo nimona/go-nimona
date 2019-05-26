@@ -133,7 +133,7 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 		relayAddresses = append(relayAddresses, relayAddress)
 	}
 
-	localInfo, err := NewLocalInfo("", pk)
+	localInfo, err := NewLocalInfo("", pk) // nolint: ineffassign
 	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
 

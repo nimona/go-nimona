@@ -47,7 +47,9 @@ func New() *Object {
 // FromMap returns an object from a map
 func FromMap(m map[string]interface{}) *Object {
 	o := New()
-	o.FromMap(m)
+	if err := o.FromMap(m); err != nil {
+		panic(err)
+	}
 	return o
 }
 

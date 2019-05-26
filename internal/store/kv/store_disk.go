@@ -18,12 +18,14 @@ const (
 
 // NewDiskStorage creates a new diskStore struct with the given path
 // the files that will be generated from this struct are stored in the path
-func NewDiskStorage(path string) Store {
-	os.MkdirAll(path, os.ModePerm)
+func NewDiskStorage(path string) (Store, error) {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		return nil, err
+	}
 
 	return &diskStore{
 		path: path,
-	}
+	}, nil
 }
 
 // Store saves the object in two files one for the metadata and one for

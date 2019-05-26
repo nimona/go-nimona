@@ -33,15 +33,13 @@ var (
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
-	fingerprint    string
-	store          *Store
-	peerStore      *peer.PeerInfoCollection
-	net            net.Network
-	exchange       exchange.Exchange
-	queries        sync.Map
-	key            *crypto.PrivateKey
-	local          *net.LocalInfo
-	refreshBuckets bool
+	store     *Store
+	peerStore *peer.PeerInfoCollection
+	net       net.Network
+	exchange  exchange.Exchange
+	queries   sync.Map
+	key       *crypto.PrivateKey
+	local     *net.LocalInfo
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
@@ -62,8 +60,18 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 		local:     local,
 	}
 
-	exchange.Handle("nimona.io/dht/**", r.handleObject)
-	exchange.Handle("/peer", r.handleObject)
+	if _, err := exchange.Handle(
+		"nimona.io/dht/**",
+		r.handleObject,
+	); err != nil {
+		return nil, err
+	}
+	if _, err := exchange.Handle(
+		"/peer",
+		r.handleObject,
+	); err != nil {
+		return nil, err
+	}
 
 	// connect to the bootstrap addresses to get their peer infos
 	for _, addr := range bootstrapAddresses {
@@ -117,7 +125,9 @@ func (r *DHT) refresh() {
 		}
 
 		// HACK lookup our own peer info just so we can populate our peer table
-		r.GetPeerInfo(ctx, peerInfo.Fingerprint())
+		if _, err := r.GetPeerInfo(ctx, peerInfo.Fingerprint()); err != nil {
+			logger.Debug("could not get peer", log.Error(err))
+		}
 
 		// sleep for a bit
 		time.Sleep(time.Second * 30)

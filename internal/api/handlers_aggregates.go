@@ -17,7 +17,7 @@ func (api *API) HandleGetAggregates(c *gin.Context) {
 	// TODO this will be replaced by manager.Subscribe()
 	graphRoots, err := api.objectStore.Heads()
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 	ctx, cf := context.WithTimeout(context.Background(), time.Second*10)
@@ -26,7 +26,7 @@ func (api *API) HandleGetAggregates(c *gin.Context) {
 	for _, graphRoot := range graphRoots {
 		ao, err := api.agg.Get(ctx, graphRoot.HashBase58())
 		if err != nil {
-			c.AbortWithError(500, errors.Wrap(
+			c.AbortWithError(500, errors.Wrap( // nolint: errcheck
 				errors.Error("could not get aggregates"),
 				err,
 			))
@@ -45,7 +45,7 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 
 	if rootObjectHash == "" {
-		c.AbortWithError(400, errors.Error("missing root object hash"))
+		c.AbortWithError(400, errors.Error("missing root object hash")) // nolint: errcheck
 		return
 	}
 
@@ -66,13 +66,13 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 	// find peers who provide the root object
 	ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
 	if err != nil {
-		c.AbortWithError(500, err)
+		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 
 	// convert peer infos to addresses
 	if len(ps) == 0 {
-		c.AbortWithError(404, err)
+		c.AbortWithError(404, err) // nolint: errcheck
 		return
 	}
 	addrs := []string{}
@@ -89,11 +89,18 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 	}
 
 	// try to sync the graph with the addresses we gathered
-	api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
+	_, err = api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
+	if err != nil {
+		c.AbortWithError(500, errors.Wrap( // nolint: errcheck
+			errors.Error("could not sync"),
+			err,
+		))
+		return
+	}
 
 	ao, err := api.agg.Get(ctx, rootObjectHash)
 	if err != nil {
-		c.AbortWithError(500, errors.Wrap(
+		c.AbortWithError(500, errors.Wrap( // nolint: errcheck
 			errors.Error("could not get aggregates"),
 			err,
 		))
@@ -107,12 +114,12 @@ func (api *API) HandlePostAggregate(c *gin.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 	op := &mutation.Operation{}
 	if err := c.BindJSON(op); err != nil {
-		c.AbortWithError(400, err)
+		c.AbortWithError(400, err) // nolint: errcheck
 		return
 	}
 
 	if err := api.agg.Append(rootObjectHash, op); err != nil {
-		c.AbortWithError(500, errors.Wrap(
+		c.AbortWithError(500, errors.Wrap( // nolint: errcheck
 			errors.Error("could append operation"),
 			err,
 		))

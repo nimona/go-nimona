@@ -63,8 +63,18 @@ func NewTelemetry(exchange Exchanger, localPeer *crypto.PrivateKey,
 	// check the env var
 	// TODO is this actually nil at some point?
 	if DefaultClient.colletor != nil {
-		exchange.Handle(connectionEventType, DefaultClient.handleObject)
-		exchange.Handle(objectEventType, DefaultClient.handleObject)
+		if _, err := exchange.Handle(
+			connectionEventType,
+			DefaultClient.handleObject,
+		); err != nil {
+			return err
+		}
+		if _, err := exchange.Handle(
+			objectEventType,
+			DefaultClient.handleObject,
+		); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -88,13 +98,13 @@ func (t *metrics) handleObject(o *object.Object) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		t.colletor.Collect(v)
+		return t.colletor.Collect(v)
 	case typeObjectEvent:
 		v := &ObjectEvent{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		t.colletor.Collect(v)
+		return t.colletor.Collect(v)
 	}
 
 	return nil

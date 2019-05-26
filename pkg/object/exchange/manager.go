@@ -29,6 +29,6 @@ func (cm *ConnectionManager) Close(fingerprint string) {
 	if !ok {
 		return
 	}
-	existingConn.(*net.Connection).Conn.Close()
+	existingConn.(*net.Connection).Conn.Close() // nolint: errcheck
 	cm.connections.Delete(fingerprint)
 }

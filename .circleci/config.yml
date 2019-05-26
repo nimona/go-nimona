@@ -31,9 +31,9 @@ jobs:
       - *cache-restore
       - *deps
       - *tools
-      # - run:
-      #     name: Run linters
-      #     command: make lint || true
+      - run:
+          name: Run linters
+          command: make lint
       - run:
           name: Run tests
           command: make test

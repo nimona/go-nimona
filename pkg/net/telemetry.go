@@ -27,6 +27,7 @@ func SendConnectionEvent(outgoing bool) {
 	if outgoing {
 		direction = "outgoing"
 	}
+	// nolint: errcheck
 	telemetry.SendEvent(context.Background(), &telemetry.ConnectionEvent{
 		Direction: direction,
 	})
@@ -40,6 +41,7 @@ func SendObjectEvent(direction string, contentType string, objectSize int) {
 	if strings.Contains(contentType, "telemetry") {
 		return
 	}
+	// nolint: errcheck
 	go telemetry.SendEvent(context.Background(), &telemetry.ObjectEvent{
 		Direction:   direction,
 		ContentType: contentType,

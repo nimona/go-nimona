@@ -1,8 +1,6 @@
 package dag
 
 import (
-	"time"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
@@ -47,12 +45,6 @@ type (
 		localInfo *net.LocalInfo
 		// backlog  backlog.Backlog
 	}
-	// options for Manager.Get()
-	getOptions struct {
-		request bool
-		timeout time.Duration
-	}
-	getOption func(*getOptions)
 )
 
 // New constructs a new manager given an object store and exchange

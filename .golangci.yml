@@ -27,20 +27,6 @@ linters-settings:
 
 linters:
   fast: true
-  disable-all: true
-  enable:
-    - govet
-    - golint
-    - unconvert
-    - dupl
-    - goconst
-    - lll
-  presets:
-    - bugs
-    - unused
-    - format
-    - complexity
-    - performance
 
 issues:
   max-per-linter: 0
