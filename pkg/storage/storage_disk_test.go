@@ -10,18 +10,19 @@ import (
 )
 
 func cleanup(path, key string) {
-	os.Remove(filepath.Join(path, key+dataExt))
+	os.Remove(filepath.Join(path, key+dataExt)) // nolint: errcheck
 }
 
 func TestStoreObjectSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, err := NewDiskStorage(path)
+	assert.NoError(t, err)
 
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err = ds.Store(key, value)
 	assert.NoError(t, err)
 
 	key = "foo"
@@ -34,7 +35,8 @@ func TestStoreObjectSuccess(t *testing.T) {
 func TestStoreObjectExists(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, err := NewDiskStorage(path)
+	assert.NoError(t, err)
 
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
@@ -42,7 +44,7 @@ func TestStoreObjectExists(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err = ds.Store(key, value)
 	assert.NoError(t, err)
 
 	err = ds.Store(key, value)
@@ -55,7 +57,8 @@ func TestStoreObjectExists(t *testing.T) {
 func TestGetSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, err := NewDiskStorage(path)
+	assert.NoError(t, err)
 
 	values := make(map[string][]byte)
 	values["TestMetaKey"] = []byte("TestMetaValue")
@@ -63,7 +66,7 @@ func TestGetSuccess(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err = ds.Store(key, value)
 	assert.NoError(t, err)
 
 	bID := "foo"
@@ -78,11 +81,12 @@ func TestGetSuccess(t *testing.T) {
 func TestGetFail(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, err := NewDiskStorage(path)
+	assert.NoError(t, err)
 
 	key := "TestKey2"
 
-	_, err := ds.Get(key)
+	_, err = ds.Get(key)
 	assert.Error(t, err)
 	assert.EqualError(t, ErrNotFound, err.Error())
 }
@@ -90,12 +94,13 @@ func TestGetFail(t *testing.T) {
 func TestListSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds := NewDiskStorage(path)
+	ds, err := NewDiskStorage(path)
+	assert.NoError(t, err)
 
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err = ds.Store(key, value)
 	assert.NoError(t, err)
 
 	list, err := ds.List()

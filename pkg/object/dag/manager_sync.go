@@ -83,7 +83,10 @@ func (m *manager) Sync(
 					continue
 				}
 				gres := &ObjectGraphResponse{}
-				gres.FromObject(res.Payload)
+				if err := gres.FromObject(res.Payload); err != nil {
+					logger.Warn("could not get res from obj", log.Error(err))
+					continue
+				}
 				logger.
 					With(log.Strings("hashes", gres.ObjectHashes)).
 					Debug("got graph response")

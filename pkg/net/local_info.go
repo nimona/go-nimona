@@ -99,7 +99,9 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	if err := crypto.Sign(o, l.key); err != nil {
 		panic(err)
 	}
-	p.FromObject(o)
+	if err := p.FromObject(o); err != nil {
+		panic(err)
+	}
 	return p
 }
 

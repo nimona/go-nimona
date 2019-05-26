@@ -161,7 +161,7 @@ func (n *network) Listen(ctx context.Context, address string) (
 						)
 
 						if conn != nil {
-							conn.Conn.Close()
+							conn.Conn.Close() // nolint: errcheck
 						}
 						failed = true
 						break
