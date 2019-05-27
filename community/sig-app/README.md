@@ -17,12 +17,3 @@ The leads run operations and processes governing each group.
 The following subprojects are owned by sig-app:
 - **prototypes**
 - **apis**
-
-## Roadmaps
-
-### 2019/Q1
-- api
-  - [ ] design and document http and ws api for objects and mutations
-- prototypes
-  - [ ] wrap up the first version of the messenger app
-  - [ ] spec and implement the file sharing app
