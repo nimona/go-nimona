@@ -1,4 +1,4 @@
-fversion: 2
+version: 2
 base: &base
   docker:
     - image: circleci/golang:1.12
