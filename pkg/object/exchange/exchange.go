@@ -114,7 +114,6 @@ func New(
 	store graph.Store,
 	discover discovery.Discoverer,
 	localInfo *net.LocalInfo,
-	address string,
 ) (
 	Exchange,
 	error,
@@ -139,7 +138,7 @@ func New(
 
 	// TODO(superdecimal) we should probably remove .Listen() from here, net
 	// should have a function that accepts a connection handler or something.
-	incomingConnections, err := w.net.Listen(ctx, address)
+	incomingConnections, err := w.net.Listen(ctx)
 	if err != nil {
 		return nil, err
 	}

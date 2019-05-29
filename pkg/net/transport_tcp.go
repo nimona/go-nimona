@@ -15,14 +15,17 @@ import (
 )
 
 type tcpTransport struct {
-	local          *LocalInfo
-	relayAddresses []string
+	local   *LocalInfo
+	address string
 }
 
-func NewTCPTransport(local *LocalInfo, relayAddresses []string) Transport {
+func NewTCPTransport(
+	local *LocalInfo,
+	address string,
+) Transport {
 	return &tcpTransport{
-		local:          local,
-		relayAddresses: relayAddresses,
+		local:   local,
+		address: address,
 	}
 }
 
@@ -52,7 +55,7 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 	return conn, nil
 }
 
-func (tt *tcpTransport) Listen(ctx context.Context, address string) (
+func (tt *tcpTransport) Listen(ctx context.Context) (
 	chan *Connection, error) {
 
 	logger := log.FromContext(ctx).Named("network")
@@ -68,18 +71,22 @@ func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 	config.NextProtos = []string{"nimona/1"} // TODO(geoah) is this of any actual use?
 	config.Time = func() time.Time { return now }
 	config.Rand = rand.Reader
-	tcpListener, err := tls.Listen("tcp", address, &config)
+	tcpListener, err := tls.Listen("tcp", tt.address, &config)
 	if err != nil {
 		return nil, err
 	}
 
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 	logger.Info("Listening and service nimona", log.Int("port", port))
-	addresses := GetAddresses(tcpListener)
+	addresses := GetAddresses("tcps", tcpListener)
 	devices := make(chan igd.Device, 10)
 
 	if tt.local.GetHostname() != "" {
-		addresses = append(addresses, fmtAddress(tt.local.GetHostname(), port))
+		addresses = append(addresses, fmtAddress(
+			"tcps",
+			tt.local.GetHostname(),
+			port,
+		))
 	}
 
 	if UseUPNP {
@@ -95,19 +102,22 @@ func (tt *tcpTransport) Listen(ctx context.Context, address string) (
 				logger.Error("could not get external ip", log.Error(err))
 				continue
 			}
-			desc := "nimona"
+			desc := "nimona-tcp"
 			ttl := time.Hour * 24 * 365
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				logger.Error("could not add port mapping", log.Error(err))
 			} else {
-				addresses = append(addresses, fmtAddress(externalAddress.String(), port))
+				addresses = append(addresses, fmtAddress(
+					"tcps",
+					externalAddress.String(),
+					port,
+				))
 			}
 		}
 	}
 
 	logger.Info("Started listening", log.Strings("addresses", addresses))
 	tt.local.AddAddress(addresses...)
-	tt.local.AddAddress(tt.relayAddresses...)
 
 	cconn := make(chan *Connection, 10)
 	go func() {

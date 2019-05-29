@@ -1,13 +1,13 @@
 package net
 
 import (
-	"net"
+	"io"
 
 	"nimona.io/pkg/crypto"
 )
 
 type Connection struct {
-	Conn          net.Conn
+	Conn io.ReadWriteCloser
 	RemotePeerKey *crypto.PublicKey
 	IsIncoming    bool
 }
