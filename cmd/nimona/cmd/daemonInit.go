@@ -35,7 +35,8 @@ var daemonInitCmd = &cobra.Command{
 		config := &Config{
 			Daemon: DaemonConfig{
 				ObjectPath: path.Join(dataDir, "objects"),
-				Port:       21013,
+				TCPPort:    21013,
+				HTTPPort:   21083,
 				PeerKey:    peerKey,
 				// IdentityKey: identityKey,
 				BootstrapAddresses: []string{

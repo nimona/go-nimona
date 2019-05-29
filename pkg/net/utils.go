@@ -47,23 +47,21 @@ func RandStringBytesMaskImprSrc(n int) string {
 	return string(b)
 }
 
+
+
 // GetAddresses returns the addresses the transport is listening to
-func GetAddresses(l net.Listener) []string {
+func GetAddresses( protocol string, l net.Listener) []string {
 	port := l.Addr().(*net.TCPAddr).Port
 	// TODO log errors
-	network := strings.ToLower(l.Addr().Network())
-	if network == "tcp" {
-		network = "tcps"
-	}
 	addrs, _ := GetLocalPeerAddresses(port)
 	for i, addr := range addrs {
-		addrs[i] = fmt.Sprintf("%s:%s", network, addr)
+		addrs[i] = fmt.Sprintf("%s:%s", protocol, addr)
 	}
 	return addrs
 }
 
-func fmtAddress(address string, port int) string {
-	return fmt.Sprintf("tcps:%s:%d", address, port)
+func fmtAddress(protocol, address string, port int) string {
+	return fmt.Sprintf("%s:%s:%d", protocol, address, port)
 }
 
 // GetLocalPeerAddresses returns the addresses TCP can listen to on the local machine

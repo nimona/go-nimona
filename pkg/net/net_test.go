@@ -2,7 +2,6 @@ package net
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,7 +47,6 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
-	address1 := fmt.Sprintf("0.0.0.0:%d", 0)
 
 	ctx := context.New()
 
@@ -58,7 +56,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	// we need to start listening before we add the peerInfo
 	// otherwise the addresses are not populated
-	sconn, err := n1.Listen(ctx, address1)
+	sconn, err := n1.Listen(ctx)
 	assert.NoError(t, err)
 
 	disc1.Add(l2.GetPeerInfo())
@@ -89,7 +87,6 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
-	address1 := fmt.Sprintf("0.0.0.0:%d", 0)
 
 	ctx := context.New()
 
@@ -101,7 +98,7 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	// otherwise the addresses are not populated
 	fm := fakeMid{}
 
-	sconn, err := n1.Listen(ctx, address1)
+	sconn, err := n1.Listen(ctx)
 	n1.AddMiddleware(fm.Handle())
 	assert.NoError(t, err)
 
@@ -128,16 +125,14 @@ func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	relayAddresses := []string{}
-	if relayAddress != "" {
-		relayAddresses = append(relayAddresses, relayAddress)
-	}
-
 	localInfo, err := NewLocalInfo("", pk) // nolint: ineffassign
 	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
 
-	tcpTr := NewTCPTransport(localInfo, relayAddresses)
+	tcpTr := NewTCPTransport(
+		localInfo,
+		"0.0.0.0:0",
+	)
 	n.AddTransport("tcps", tcpTr)
 
 	return pk, n.(*network), localInfo
