@@ -10,3 +10,14 @@ const (
 	PanicLevel
 	FatalLevel
 )
+
+var (
+	levels = map[Level]string{
+		DebugLevel: "DEBUG",
+		InfoLevel:  "INFO",
+		WarnLevel:  "WARN",
+		ErrorLevel: "ERROR",
+		PanicLevel: "PANIC",
+		FatalLevel: "FATAL",
+	}
+)
