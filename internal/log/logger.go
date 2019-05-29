@@ -82,6 +82,7 @@ func FromContext(ctx context.Context) *logger {
 	}
 	return log
 }
+
 func (log *logger) write(level Level, msg string, extraFields ...Field) {
 	ctx := log.getContext()
 	fields := log.getFields()
@@ -107,7 +108,13 @@ func (log *logger) write(level Level, msg string, extraFields ...Field) {
 	}
 
 	j, _ := json.Marshal(res)
-	fmt.Printf("%s level=%d message=%s fields=%s\n", cID, level, msg, string(j))
+	fmt.Printf(
+		"ctx=%s level=%s message=%s fields=%s\n",
+		cID,
+		levels[level],
+		msg,
+		string(j),
+	)
 }
 
 func (log *logger) getFields() []Field {
