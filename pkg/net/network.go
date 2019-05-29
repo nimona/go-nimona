@@ -24,7 +24,7 @@ func init() {
 // Network interface
 type Network interface {
 	Dial(ctx context.Context, address string, options ...Option) (*Connection, error)
-	Listen(ctx context.Context, addrress string) (chan *Connection, error)
+	Listen(ctx context.Context) (chan *Connection, error)
 
 	AddMiddleware(handler MiddlewareHandler)
 	AddTransport(tag string, tsp Transport)
@@ -129,16 +129,15 @@ func (n *network) Dial(
 	return conn, nil
 }
 
-// Listen on an address
+// Listen
 // TODO do we need to return a listener?
-func (n *network) Listen(ctx context.Context, address string) (
-	chan *Connection, error) {
+func (n *network) Listen(ctx context.Context) (chan *Connection, error) {
 	logger := log.FromContext(ctx)
 	cconn := make(chan *Connection, 10)
 
 	n.transports.Range(func(key, value interface{}) bool {
 		tsp := value.(Transport)
-		chConn, err := tsp.Listen(ctx, address)
+		chConn, err := tsp.Listen(ctx)
 		if err != nil {
 			// TODO log
 			return true

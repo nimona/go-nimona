@@ -61,7 +61,6 @@ var daemonStartCmd = &cobra.Command{
 	Long:  "",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		bootstrapAddresses := viper.GetStringSlice("daemon.bootstraps")
-		relayAddresses := viper.GetStringSlice("daemon.relays")
 
 		if config.Daemon.PeerKey == nil {
 			return errors.New("daemon not configured, please run 'daemon init'")
@@ -90,16 +89,25 @@ var daemonStartCmd = &cobra.Command{
 			return err
 		}
 
+		relayAddresses := viper.GetStringSlice("daemon.relays")
+		li.AddAddress(relayAddresses...)
+
 		n, err := net.New(dis, li)
 		if err != nil {
 			return err
 		}
 
-		tcp := net.NewTCPTransport(li, relayAddresses)
+		tcpa := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.tcp_port"))
+		httpa := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.http_port"))
+
+		tcpt := net.NewTCPTransport(li, tcpa)
+		httpt := net.NewHTTPTransport(li, httpa)
+
 		hsm := handshake.New(li, dis)
 
 		n.AddMiddleware(hsm.Handle())
-		n.AddTransport("tcps", tcp)
+		n.AddTransport("tcps", tcpt)
+		n.AddTransport("https", httpt)
 
 		gs, err := cayley.NewGraph("bolt", config.Daemon.ObjectPath, nil)
 		if err != nil {
@@ -112,8 +120,7 @@ var daemonStartCmd = &cobra.Command{
 			context.WithCorrelationID("daemon"),
 		)
 
-		bind := fmt.Sprintf("0.0.0.0:%d", viper.GetInt("daemon.port"))
-		x, err := exchange.New(ctx, k, n, dpr, dis, li, bind)
+		x, err := exchange.New(ctx, k, n, dpr, dis, li)
 		if err != nil {
 			return err
 		}

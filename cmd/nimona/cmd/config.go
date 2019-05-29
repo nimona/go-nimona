@@ -22,7 +22,8 @@ type DaemonConfig struct {
 	IdentityKey        *crypto.PrivateKey `json:"identity_key,omitempty"`
 	ObjectPath         string             `json:"object_path,omitempty"`
 	PeerKey            *crypto.PrivateKey `json:"peer_key,omitempty"`
-	Port               int                `json:"port,omitempty"`
+	TCPPort            int                `json:"tcp_port,omitempty"`
+	HTTPPort           int                `json:"http_port,omitempty"`
 	RelayAddresses     []string           `json:"relay_addresses,omitempty"`
 }
 
