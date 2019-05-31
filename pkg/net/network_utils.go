@@ -11,6 +11,11 @@ import (
 )
 
 func Write(o *object.Object, conn *Connection) error {
+	if conn == nil {
+		log.DefaultLogger.Error("conn cannot be nil")
+		return errors.New("missing conn")
+	}
+
 	if o == nil {
 		log.DefaultLogger.Error("object for fw cannot be nil")
 		return errors.New("missing object")
