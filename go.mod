@@ -6,7 +6,6 @@ require (
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
-	github.com/cheekybits/genny v1.0.0
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
@@ -50,6 +49,7 @@ replace (
 	nimona.io/cmd/nimona => ./cmd/nimona
 	nimona.io/tools/community => ./tools/community
 	nimona.io/tools/objectify => ./tools/objectify
+	nimona.io/tools/proxy => ./tools/proxy
 	nimona.io/tools/vanity => ./tools/vanity
 )
 

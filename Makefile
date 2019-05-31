@@ -22,9 +22,11 @@ TOOLS += github.com/vektra/mockery/cmd/mockery
 TOOLS += nimona.io/tools/objectify
 TOOLS += nimona.io/tools/community
 TOOLS += nimona.io/tools/vanity
+TOOLS += nimona.io/tools/proxy
 
-# Enable Go modules
+# Go env vars
 export GO111MODULE=on
+export CGO_ENABLED=0
 
 # Default target
 .DEFAULT_GOAL := build
@@ -50,7 +52,7 @@ $(MAINBIN): $(SOURCES)
 	$(eval LDFLAGS += -X main.Version=$(VERSION))
 	$(eval LDFLAGS += -X main.Commit=$(GIT_SHA))
 	cd cmd && \
-		CGO_ENABLED=0 go build $(V) \
+		go build $(V) \
 			-o "../$@" \
 			-installsuffix cgo \
 			-ldflags '$(LDFLAGS)' \
@@ -83,7 +85,9 @@ generate: tools
 .PHONY: test
 test:
 	$(eval TAGS += integration)
-	BIND_LOCAL=true go test $(V) \
+	CGO_ENABLED=1 \
+	BIND_LOCAL=true \
+	go test $(V) \
 		-tags="$(TAGS)" \
 		-count=1 \
 		--race \

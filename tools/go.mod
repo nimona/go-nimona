@@ -11,9 +11,6 @@ require (
 	github.com/spf13/cobra v0.0.4 // indirect
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
 	golang.org/x/tools v0.0.0-20190531074219-75312fb06703 // indirect
-	nimona.io/tools/community v0.0.0-00010101000000-000000000000 // indirect
-	nimona.io/tools/objectify v0.0.0-00010101000000-000000000000 // indirect
-	nimona.io/tools/vanity v0.0.0-00010101000000-000000000000 // indirect
 )
 
 replace (
@@ -21,6 +18,7 @@ replace (
 	nimona.io/cmd/nimona => ../cmd/nimona
 	nimona.io/tools/community => ../tools/community
 	nimona.io/tools/objectify => ../tools/objectify
+	nimona.io/tools/proxy => ../tools/proxy
 	nimona.io/tools/vanity => ../tools/vanity
 )
 
