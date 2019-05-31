@@ -103,5 +103,3 @@ modernc.org/golex v1.0.0/go.mod h1:b/QX9oBD/LhixY6NDh+IdGv17hgB+51fET1i2kPSmvk=
 modernc.org/mathutil v1.0.0/go.mod h1:wU0vUrJsVWBZ4P6e7xtFJEhFSNsfRLJ8H458uRjg03k=
 modernc.org/strutil v1.0.0/go.mod h1:lstksw84oURvj9y3tn8lGvRxyRC1S2+g5uuIzNfIOBs=
 modernc.org/xc v1.0.0/go.mod h1:mRNCo0bvLjGhHO9WsyuKVU4q0ceiDDDoEeWDJHrNx8I=
-nimona.io v0.3.0 h1:6KIxDxY527WLIoSfNR1Vb9loJbmeosaYQlxpwimBeAU=
-nimona.io v0.3.0/go.mod h1:2aVVRQr8el6ER6nzxFimT0UpGwije5C79BZAqpCMxRg=
