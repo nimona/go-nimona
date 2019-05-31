@@ -109,29 +109,38 @@ lint: github.com/golangci/golangci-lint/cmd/golangci-lint
 # Local bootstrap
 .PHONY: local-bootstrap
 local-bootstrap: build
-	-$(MAINBIN) daemon init --data-dir=.local/bootstrap
-	BIND_LOCAL=true $(MAINBIN) daemon start start \
-		--data-dir=.local/bootstrap \
-		--port=8010 \
-		--api-port=8810 \
-		--bootstraps=
+	ENV=dev \
+	BIND_LOCAL=true \
+	NIMONA_CONFIG=.local/bootstrap/config.json \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES= \
+	NIMONA_DAEMON_OBJECT_PATH=.local/bootstrap/objects \
+	NIMONA_DAEMON_TCP_PORT=10000 \
+	NIMONA_DAEMON_HTTP_PORT=10080 \
+	NIMONA_API_PORT=10800 \
+	$(MAINBIN)
 
 # Local test peer one
 .PHONY: local-peer-one
 local-peer-one: build
-	-$(MAINBIN) daemon init --data-dir=.local/peer-one
-	ENV=dev BIND_LOCAL=true $(MAINBIN) daemon start start \
-		--data-dir=.local/peer-one \
-		--port=8001 \
-		--api-port=8801 \
-		--bootstraps=tcps:localhost:8010
+	ENV=dev \
+	BIND_LOCAL=true \
+	NIMONA_CONFIG=.local/peer-one/config.json \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:localhost:10000 \
+	NIMONA_DAEMON_OBJECT_PATH=.local/peer-one/objects \
+	NIMONA_DAEMON_TCP_PORT=10001 \
+	NIMONA_DAEMON_HTTP_PORT=10081 \
+	NIMONA_API_PORT=10801 \
+	$(MAINBIN)
 
 # Local test peer two
 .PHONY: local-peer-two
 local-peer-two: build
-	-$(MAINBIN) daemon init --data-dir=.local/peer-two
-	BIND_LOCAL=true $(MAINBIN) daemon start start \
-		--data-dir=.local/peer-two \
-		--port=8002 \
-		--api-port=8802 \
-		--bootstraps=tcps:localhost:8010
+	ENV=dev \
+	BIND_LOCAL=true \
+	NIMONA_CONFIG=.local/peer-two/config.json \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:localhost:10000 \
+	NIMONA_DAEMON_OBJECT_PATH=.local/peer-two/objects \
+	NIMONA_DAEMON_TCP_PORT=10002 \
+	NIMONA_DAEMON_HTTP_PORT=10082 \
+	NIMONA_API_PORT=10802 \
+	$(MAINBIN)
