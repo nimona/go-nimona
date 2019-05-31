@@ -2,7 +2,7 @@ module nimona.io
 
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
-	github.com/Sereal/Sereal v0.0.0-20190525133720-f3c5c39c5c5d // indirect
+	github.com/Sereal/Sereal v0.0.0-20190531074219-4d99287c2c28 // indirect
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
@@ -39,7 +39,7 @@ require (
 	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522 // indirect
 	golang.org/x/net v0.0.0-20190522164419-f3200d17e092
-	golang.org/x/sys v0.0.0-20190525133720-dbbf3f1254d4 // indirect
+	golang.org/x/sys v0.0.0-20190531074219-46560c3f3c0a // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
