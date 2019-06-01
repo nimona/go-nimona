@@ -36,6 +36,9 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 func (hs *Handshake) handleIncoming(ctx context.Context,
 	conn *net.Connection) (*net.Connection, error) {
 
+	logger := log.FromContext(ctx)
+	logger.Debug("handling inc connection, sending syn")
+
 	nonce := net.RandStringBytesMaskImprSrc(8)
 	syn := &Syn{
 		Nonce:    nonce,
@@ -50,6 +53,8 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 		return nil, err
 	}
 
+	logger.Debug("sent syn, waiting syn-ack")
+
 	synAckObj, err := net.Read(conn)
 	if err != nil {
 		return nil, err
@@ -63,6 +68,8 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 	if synAck.Nonce != nonce {
 		return nil, net.ErrNonce
 	}
+
+	logger.Debug("got syn-ack, sending ack")
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
@@ -82,13 +89,17 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 		return nil, err
 	}
 
+	logger.Debug("sent acl, done")
+
 	return conn, nil
 
 }
 
 func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	*net.Connection, error) {
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx).Named("net/middleware/handshake")
+	logger.Debug("handling out connection, waiting for syn")
+
 	synObj, err := net.Read(conn)
 	if err != nil {
 		logger.Warn("waiting for syn failed", log.Error(err))
@@ -102,6 +113,8 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 		// TODO close conn?
 		return nil, err
 	}
+
+	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
 	conn.RemotePeerKey = syn.PeerInfo.Signature.PublicKey
@@ -125,6 +138,8 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 		return nil, nil
 	}
 
+	logger.Debug("sent syn-ack, waiting ack")
+
 	ackObj, err := net.Read(conn)
 	if err != nil {
 		logger.Warn("waiting for ack failed", log.Error(err))
@@ -144,6 +159,8 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 		// TODO close conn?
 		return nil, nil
 	}
+
+	logger.Debug("got ack, done")
 
 	return conn, nil
 }
