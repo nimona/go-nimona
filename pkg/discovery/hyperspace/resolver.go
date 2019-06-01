@@ -36,6 +36,8 @@ func NewDiscoverer(
 		exchange: exc,
 	}
 
+	logger := log.FromContext(ctx)
+
 	if _, err := exc.Handle("/peer.request", r.handleObject); err != nil {
 		return nil, err
 	}
@@ -44,9 +46,12 @@ func NewDiscoverer(
 	}
 
 	r.store.Add(local.GetPeerInfo())
-	if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
-		return nil, err
-	}
+	go func() {
+		err := r.bootstrap(ctx, bootstrapAddresses)
+		if err != nil {
+			logger.Error("could not bootstrap", log.Error(err))
+		}
+	}()
 
 	return r, nil
 }
