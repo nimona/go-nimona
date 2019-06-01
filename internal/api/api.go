@@ -18,8 +18,6 @@ import (
 	"nimona.io/pkg/object/exchange"
 )
 
-//go:generate $GOBIN/nmake vfsgen
-
 // API for HTTP
 type API struct {
 	router    *gin.Engine
