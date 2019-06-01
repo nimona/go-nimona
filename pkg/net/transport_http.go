@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -40,7 +39,8 @@ func (tt *httpTransport) Dial(
 	*Connection,
 	error,
 ) {
-	address = strings.Replace(address, "https:", "", 1)
+	address = strings.Replace(address, "https:", "https://", 1)
+	address = strings.Replace(address, ":443", "", 1)
 
 	tr := &http2.Transport{
 		TLSClientConfig: &tls.Config{
@@ -52,16 +52,8 @@ func (tt *httpTransport) Dial(
 		Transport: tr,
 	}
 	pr, pw := io.Pipe()
-	req := &http.Request{
-		Method: "CONNECT",
-		Body:   ioutil.NopCloser(pr),
-		URL: &url.URL{
-			Scheme: "https",
-			Host:   address, // this will be used for dialing
-			Opaque: address, // this should be used for TLS validation
-		},
-		ContentLength: -1,
-	}
+	req, _ := http.NewRequest("GET", address, ioutil.NopCloser(pr))
+	req.ContentLength = -1
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -96,16 +88,20 @@ func (tt *httpTransport) Listen(
 	}
 
 	config := &tls.Config{
-		NextProtos:   []string{"h2"},
+		NextProtos:   []string{"h1"},
 		Certificates: []tls.Certificate{*cert},
 	}
 
 	cconn := make(chan *Connection, 10)
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
+		wf, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "only h2 is supported", 400)
+			return
 		}
+
+		wf.Flush()
 
 		rw := &connWrapper{
 			w: flushWriter{w},
@@ -201,6 +197,12 @@ func (fw flushWriter) Write(p []byte) (n int, err error) {
 		f.Flush()
 	}
 	return
+}
+
+func (fw flushWriter) Flush() {
+	if f, ok := fw.w.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 type connWrapper struct {
