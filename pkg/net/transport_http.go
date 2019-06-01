@@ -88,7 +88,7 @@ func (tt *httpTransport) Listen(
 	}
 
 	config := &tls.Config{
-		NextProtos:   []string{"h1"},
+		NextProtos:   []string{"h2"},
 		Certificates: []tls.Certificate{*cert},
 	}
 
