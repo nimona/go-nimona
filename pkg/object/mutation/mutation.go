@@ -9,8 +9,8 @@ import (
 // Mutation provides operations to be applied given that the parent mutations
 // have already been applied
 type Mutation struct {
-	Operations []*Operation `json:"ops:a<o>"`
-	Parents    []string     `json:"@parents:a<s>"`
+	Operations []*Operation `json:"ops:ao"`
+	Parents    []string     `json:"@parents:as"`
 }
 
 // New construct a mutation from an array of operations and parrent chains

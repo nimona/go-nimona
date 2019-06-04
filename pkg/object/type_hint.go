@@ -53,7 +53,6 @@ func GetTypeHint(t string) TypeHint {
 // DeduceTypeHint returns a TypeHint from a given value
 func DeduceTypeHint(o interface{}) TypeHint {
 	if o == nil {
-		panic(o)
 		return HintUndefined
 	}
 
@@ -71,8 +70,8 @@ func DeduceTypeHint(o interface{}) TypeHint {
 		if t.Elem() == reflect.TypeOf(byte(0)) {
 			return HintData
 		}
-		// TODO(geoah) add support for A<A<*>>
-		// eg {"foo:A<A<i>>:" [["1", "2"], ["3", "4"]]} should be A<A<i>>
+		// TODO(geoah) add support for aa*
+		// eg {"foo:aai:" [["1", "2"], ["3", "4"]]} should be aai
 		sv := reflect.New(t.Elem()).Elem().Interface()
 		if sv == nil {
 			oo := o.([]interface{})
@@ -82,9 +81,9 @@ func DeduceTypeHint(o interface{}) TypeHint {
 		}
 		if sv != nil {
 			subType := DeduceTypeHint(sv)
-			return HintArray + "<" + subType + ">"
+			return HintArray + subType
 		}
-		return HintArray + "<?>" // TODO(geoah) should this return "" or panic maybe?
+		return HintArray + "?" // TODO(geoah) should this return "" or panic maybe?
 
 	case reflect.String:
 		return HintString
