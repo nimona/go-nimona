@@ -22,7 +22,7 @@ type (
 	// Operation ...
 	Operation struct {
 		Operation string      `json:"op:s"`
-		Cursor    []string    `json:"cursor:a<s>"`
+		Cursor    []string    `json:"cursor:as"`
 		Value     interface{} `json:"value"`
 	}
 )

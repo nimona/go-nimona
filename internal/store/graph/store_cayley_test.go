@@ -29,28 +29,28 @@ var (
 	o2 = object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "o2",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			o1.HashBase58(),
 		},
 	})
 	o3 = object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "o3",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			o2.HashBase58(),
 		},
 	})
 	o4 = object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "o4",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			o2.HashBase58(),
 		},
 	})
 	o5 = object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "o5",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			o3.HashBase58(),
 			o4.HashBase58(),
 		},
@@ -58,7 +58,7 @@ var (
 	o6 = object.FromMap(map[string]interface{}{
 		"@ctx:s":        "object",
 		"@display:s":    "o6",
-		"@parents:a<s>": []string{},
+		"@parents:as": []string{},
 	})
 )
 
@@ -150,7 +150,7 @@ func TestCayley_Heads(t *testing.T) {
 	ox := object.FromMap(map[string]interface{}{
 		"@ctx:s":        "something",
 		"@display:s":    "ox",
-		"@parents:a<s>": []string{},
+		"@parents:as": []string{},
 	})
 
 	aos := []*object.Object{o1, o2, ox}
@@ -171,13 +171,13 @@ func TestCayley_Tails(t *testing.T) {
 	ox1 := object.FromMap(map[string]interface{}{
 		"@ctx:s":        "object",
 		"@display:s":    "ox1",
-		"@parents:a<s>": []string{},
+		"@parents:as": []string{},
 	})
 
 	ox2 := object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "ox2",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			ox1.HashBase58(),
 		},
 	})
@@ -207,13 +207,13 @@ func TestCayley_Head(t *testing.T) {
 	ox1 := object.FromMap(map[string]interface{}{
 		"@ctx:s":        "object",
 		"@display:s":    "ox1",
-		"@parents:a<s>": []string{},
+		"@parents:as": []string{},
 	})
 
 	ox2 := object.FromMap(map[string]interface{}{
 		"@ctx:s":     "mutation",
 		"@display:s": "ox2",
-		"@parents:a<s>": []string{
+		"@parents:as": []string{
 			ox1.HashBase58(),
 		},
 	})

@@ -14,18 +14,18 @@ func TestAggregator(t *testing.T) {
 
 	o := object.FromMap(map[string]interface{}{
 		"foo:s": "bar",
-		"numbers:a<i>": []interface{}{
+		"numbers:ai": []interface{}{
 			1, 2, 3,
 		},
-		"strings:a<s>": []interface{}{
+		"strings:as": []interface{}{
 			"a", "b", "c",
 		},
 		"map:o": map[string]interface{}{
 			"nested-foo:s": "bar",
-			"nested-numbers:a<i>": []interface{}{
+			"nested-numbers:ai": []interface{}{
 				1, 2, 3,
 			},
-			"nested-strings:a<s>": []interface{}{
+			"nested-strings:as": []interface{}{
 				"a", "b", "c",
 			},
 		},
@@ -51,7 +51,7 @@ func TestAggregator(t *testing.T) {
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
-				Cursor:    []string{"numbers:a<i>"},
+				Cursor:    []string{"numbers:ai"},
 				Value:     4,
 			},
 		},
@@ -64,7 +64,7 @@ func TestAggregator(t *testing.T) {
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
-				Cursor:    []string{"strings:a<s>"},
+				Cursor:    []string{"strings:as"},
 				Value:     "d",
 			},
 		},
@@ -90,7 +90,7 @@ func TestAggregator(t *testing.T) {
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
-				Cursor:    []string{"map:o", "nested-numbers:a<i>"},
+				Cursor:    []string{"map:o", "nested-numbers:ai"},
 				Value:     9,
 			},
 		},
@@ -104,7 +104,7 @@ func TestAggregator(t *testing.T) {
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
-				Cursor:    []string{"map:o", "nested-strings:a<s>"},
+				Cursor:    []string{"map:o", "nested-strings:as"},
 				Value:     "z",
 			},
 		},
@@ -112,18 +112,18 @@ func TestAggregator(t *testing.T) {
 
 	eo := object.FromMap(map[string]interface{}{
 		"foo:s": "not-bar",
-		"numbers:a<i>": []interface{}{
+		"numbers:ai": []interface{}{
 			1, 2, 3, 4,
 		},
-		"strings:a<s>": []interface{}{
+		"strings:as": []interface{}{
 			"a", "b", "c", "d",
 		},
 		"map:o": map[string]interface{}{
 			"nested-foo:s": "not-nested-bar",
-			"nested-numbers:a<i>": []interface{}{
+			"nested-numbers:ai": []interface{}{
 				1, 2, 3, 9,
 			},
-			"nested-strings:a<s>": []interface{}{
+			"nested-strings:as": []interface{}{
 				"a", "b", "c", "z",
 			},
 		},
