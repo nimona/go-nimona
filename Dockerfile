@@ -4,20 +4,14 @@ WORKDIR /src/nimona.io
 
 ADD . .
 
-RUN ls -lah .
-
-ENV CGO_ENABLED=0
-
 RUN make build
-RUN cp -r ./bin/nimona /bin/nimona
 
 ###
 
 FROM alpine:3.9
 
-COPY --from=builder /bin/* /
+RUN apk --no-cache add ca-certificates && update-ca-certificates
 
-RUN ls -lah /
+COPY --from=builder /src/nimona.io/bin/nimona /nimona
 
 ENTRYPOINT ["/nimona"]
-CMD ["daemon"]
