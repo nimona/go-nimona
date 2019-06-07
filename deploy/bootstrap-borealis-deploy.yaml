@@ -1,0 +1,48 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: bootstrap-borealis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bootstrap
+      name: borealis
+  template:
+    metadata:
+      labels:
+        app: bootstrap
+        name: borealis
+    spec:
+      hostname: borealis
+      subdomain: bootstrap
+      containers:
+        - name: daemon
+          image: nimona/nimona:v0.3.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              protocol: TCP
+              name: http
+            - containerPort: 443
+              protocol: TCP
+              name: https
+          env:
+            - name: ENV
+              value: "dev"
+            - name: BIND_LOCAL
+              value: "true"
+            - name: NIMONA_CONFIG
+              value: ".local/bootstrap/config.json"
+            - name: NIMONA_DAEMON_BOOTSTRAP_ADDRESSES
+              value: "https:andromeda.bootstrap.nimona.io:443"
+            - name: NIMONA_DAEMON_OBJECT_PATH
+              value: ".local/bootstrap/objects"
+            - name: NIMONA_DAEMON_TCP_PORT
+              value: "10000"
+            - name: NIMONA_DAEMON_HTTP_PORT
+              value: "443"
+            - name: NIMONA_API_PORT
+              value: "80"
+            - name: NIMONA_DAEMON_HOSTNAME
+              value: "borealis.bootstrap.nimona.io"
