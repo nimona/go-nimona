@@ -42,13 +42,15 @@ func (tt *httpTransport) Dial(
 	address = strings.Replace(address, "https:", "https://", 1)
 	address = strings.Replace(address, ":443", "", 1)
 
-	tr := &http2.Transport{
+	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true, // nolint: gosec
 		},
-		AllowHTTP: true,
 	}
-	http2.ConfigureTransport(tr)
+	if err := http2.ConfigureTransport(tr); err != nil {
+		return nil, err
+	}
+
 	client := &http.Client{
 		Transport: tr,
 	}
