@@ -48,6 +48,7 @@ func (tt *httpTransport) Dial(
 		},
 		AllowHTTP: true,
 	}
+	http2.ConfigureTransport(tr)
 	client := &http.Client{
 		Transport: tr,
 	}
