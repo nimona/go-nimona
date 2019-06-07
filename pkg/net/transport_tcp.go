@@ -78,15 +78,22 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 	logger.Info("Listening and service nimona", log.Int("port", port))
-	addresses := GetAddresses("tcps", tcpListener)
 	devices := make(chan igd.Device, 10)
 
+	useIPs := true
+	addresses := []string{}
+
 	if tt.local.GetHostname() != "" {
+		useIPs = false
 		addresses = append(addresses, fmtAddress(
 			"tcps",
 			tt.local.GetHostname(),
 			port,
 		))
+	}
+
+	if useIPs {
+		addresses = append(addresses, GetAddresses("tcps", tcpListener)...)
 	}
 
 	if UseUPNP {
@@ -106,7 +113,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 			ttl := time.Hour * 24 * 365
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				logger.Error("could not add port mapping", log.Error(err))
-			} else {
+			} else if useIPs {
 				addresses = append(addresses, fmtAddress(
 					"tcps",
 					externalAddress.String(),

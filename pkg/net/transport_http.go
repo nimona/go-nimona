@@ -147,11 +147,20 @@ func (tt *httpTransport) Listen(
 
 	port := netListener.Addr().(*net.TCPAddr).Port
 	logger.Info("HTTP tranport listening", log.Int("port", port))
-	addresses := GetAddresses("https", netListener)
 	devices := make(chan igd.Device, 10)
 
+	useIPs := true
+
+	addresses := []string{}
+
 	if tt.local.GetHostname() != "" {
+		useIPs = false
 		addresses = append(addresses, fmtAddress("https", tt.local.GetHostname(), port))
+	}
+
+	if useIPs {
+		addresses = append(addresses, GetAddresses("https", netListener)...)
+
 	}
 
 	if UseUPNP {
@@ -171,7 +180,7 @@ func (tt *httpTransport) Listen(
 			ttl := time.Hour * 24 * 365
 			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
 				logger.Error("could not add port mapping", log.Error(err))
-			} else {
+			} else if useIPs {
 				addresses = append(addresses, fmtAddress("https", externalAddress.String(), port))
 			}
 		}
