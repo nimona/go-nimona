@@ -58,6 +58,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 
 	if rootObjectHash == "" {
 		c.AbortWithError(400, errors.New("missing root object hash")) // nolint: errcheck
+		return
 	}
 
 	ctx, cf := context.WithTimeout(
