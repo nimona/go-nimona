@@ -28,7 +28,21 @@ spec:
             - name: BIND_ADDRESS
               value: 0.0.0.0:443
             - name: TARGETS
-              value: andromeda.bootstrap.nimona.io=andromeda.bootstrap.default.svc.cluster.local:443
+              value: "andromeda.bootstrap.nimona.io=andromeda.bootstrap.default.svc.cluster.local:443,\
+                borealis.bootstrap.nimona.io=borealis.bootstrap.default.svc.cluster.local:443,\
+                cassiopeia.bootstrap.nimona.io=cassiopeia.bootstrap.default.svc.cluster.local:443,\
+                draco.bootstrap.nimona.io=draco.bootstrap.default.svc.cluster.local:443,\
+                eridanus.bootstrap.nimona.io=eridanus.bootstrap.default.svc.cluster.local:443,\
+                fornax.bootstrap.nimona.io=fornax.bootstrap.default.svc.cluster.local:443,\
+                gemini.bootstrap.nimona.io=gemini.bootstrap.default.svc.cluster.local:443,\
+                hydra.bootstrap.nimona.io=hydra.bootstrap.default.svc.cluster.local:443,\
+                indus.bootstrap.nimona.io=indus.bootstrap.default.svc.cluster.local:443,\
+                lacerta.bootstrap.nimona.io=lacerta.bootstrap.default.svc.cluster.local:443,\
+                mensa.bootstrap.nimona.io=mensa.bootstrap.default.svc.cluster.local:443,\
+                norma.bootstrap.nimona.io=norma.bootstrap.default.svc.cluster.local:443,\
+                orion.bootstrap.nimona.io=orion.bootstrap.default.svc.cluster.local:443,\
+                pyxis.bootstrap.nimona.io=pyxis.bootstrap.default.svc.cluster.local:443,\
+                stats.bootstrap.nimona.io=stats.bootstrap.default.svc.cluster.local:443"
 ---
 apiVersion: v1
 kind: Service
