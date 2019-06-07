@@ -134,7 +134,7 @@ local-peer-one: build
 	ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/peer-one/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:localhost:10000 \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=https:andromeda.bootstrap.nimona.io:443,https:borealis.bootstrap.nimona.io:443,https:cassiopeia.bootstrap.nimona.io:443 \
 	NIMONA_DAEMON_OBJECT_PATH=.local/peer-one/objects \
 	NIMONA_DAEMON_TCP_PORT=10001 \
 	NIMONA_DAEMON_HTTP_PORT=10081 \
@@ -147,7 +147,7 @@ local-peer-two: build
 	ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/peer-two/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:localhost:10000 \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=https:andromeda.bootstrap.nimona.io:443,https:borealis.bootstrap.nimona.io:443,https:cassiopeia.bootstrap.nimona.io:443 \
 	NIMONA_DAEMON_OBJECT_PATH=.local/peer-two/objects \
 	NIMONA_DAEMON_TCP_PORT=10002 \
 	NIMONA_DAEMON_HTTP_PORT=10082 \
