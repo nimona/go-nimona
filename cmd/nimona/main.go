@@ -40,6 +40,7 @@ func main() {
 	)
 
 	logger := log.FromContext(ctx).With(
+		log.String("configFile", cfgFile),
 		log.String("build.version", Version),
 		log.String("build.commit", Commit),
 		log.String("build.timestamp", Date),
@@ -89,6 +90,8 @@ func main() {
 	if err := UpdateConfig(cfgFile, config); err != nil {
 		logger.Fatal("could not update config", log.Error(err))
 	}
+
+	logger.Info("loaded config", log.Any("config", config))
 
 	// check cayley quad store
 	if err := cayleyGraph.InitQuadStore(
