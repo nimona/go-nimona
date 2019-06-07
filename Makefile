@@ -27,6 +27,7 @@ TOOLS += nimona.io/tools/proxy
 # Go env vars
 export GO111MODULE=on
 export CGO_ENABLED=0
+export GOBIN=$(CURDIR)/$(BINDIR)
 
 # Default target
 .DEFAULT_GOAL := build
@@ -52,17 +53,21 @@ $(MAINBIN): $(SOURCES)
 	$(eval LDFLAGS += -X main.Version=$(VERSION))
 	$(eval LDFLAGS += -X main.Commit=$(GIT_SHA))
 	cd cmd && \
-		go build $(V) \
-			-o "../$@" \
+		go install $(V) \
 			-installsuffix cgo \
 			-ldflags '$(LDFLAGS)' \
 			./nimona
+
+build-proxy:
+	cd tools && \
+		go install $(V) \
+			-installsuffix cgo \
+			./proxy
 
 # Clean up everything
 .PHONY: clean
 clean:
 	rm -f *.cov
-	rm -f $(MAINBIN)
 	rm -rf $(GOBIN)
 
 # Generate community docs
@@ -79,7 +84,7 @@ deps:
 # Run go generate
 .PHONY: generate
 generate: tools
-	-GOBIN=$(GOBIN) go generate $(V) ./...
+	-go generate $(V) ./...
 
 # Run go test
 .PHONY: test
@@ -102,7 +107,7 @@ tools: deps $(TOOLS)
 # Check tools
 .PHONY: $(TOOLS)
 $(TOOLS): %:
-	cd tools; GOBIN=$(GOBIN) go install $(V) "$*"
+	cd tools; go install $(V) "$*"
 
 # Lint code
 .PHONY: lint
