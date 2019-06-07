@@ -13,22 +13,27 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/caarlos0/env/v6"
+	"golang.org/x/net/http2"
 )
 
 type Config struct {
-	BindAddress string            `env:"BIND_ADDRESS" envDefault:"0.0.0.0:443"`
-	Targets     map[string]string `env:"TARGETS"`
+	BindAddress string   `env:"BIND_ADDRESS" envDefault:"0.0.0.0:443"`
+	Targets     []string `env:"TARGETS" envSeparator:","`
+}
+
+type Health struct{}
+
+func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("ok"))
 }
 
 func main() {
-	c := &Config{
-		Targets: map[string]string{
-			"andromeda.bootstrap.nimona.io": "10.244.2.49",
-		},
-	}
+	c := &Config{}
 	if err := env.Parse(c); err != nil {
 		log.Fatal("env.Parse:", err)
 	}
@@ -68,16 +73,38 @@ func main() {
 		},
 	}
 
-	u, _ := url.Parse("https://localhost:10080")
+	targets := map[string]string{}
+	for _, target := range c.Targets {
+		ps := strings.Split(target, "=")
+		if len(ps) != 2 {
+			log.Println("* skipping target " + target)
+			continue
+		}
+		log.Println("* adding target " + target)
+		targets[ps[0]] = ps[1]
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			NextProtos:         []string{"h2"},
+			InsecureSkipVerify: true, // nolint: gosec
+		},
+	}
+	http2.ConfigureTransport(tr)
 
 	handler := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
+			target := targets[req.Host]
+			if target == "" {
+				log.Println("unknown source " + req.Host)
+				return
+			}
+
+			u, _ := url.Parse("https://" + target)
 			targetQuery := u.RawQuery
 			req.Method = "GET"
 			req.URL.Scheme = u.Scheme
 			req.URL.Host = u.Host
-			req.URL.Opaque = u.Host
-			req.URL.Path = u.Path
 			req.ContentLength = -1
 			if targetQuery == "" || req.URL.RawQuery == "" {
 				req.URL.RawQuery = targetQuery + req.URL.RawQuery
@@ -89,12 +116,7 @@ func main() {
 			}
 		},
 		FlushInterval: 250 * time.Millisecond,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				NextProtos:         []string{"h1"},
-				InsecureSkipVerify: true, // nolint: gosec
-			},
-		},
+		Transport:     tr,
 	}
 
 	srv := &http.Server{
@@ -111,6 +133,8 @@ func main() {
 		netListener,
 		config,
 	)
+
+	go http.ListenAndServe("0.0.0.0:80", &Health{})
 
 	log.Println("Starting proxy server on", c.BindAddress)
 	if err := srv.Serve(tlsListener); err != nil {
