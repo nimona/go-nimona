@@ -10,7 +10,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/spf13/cobra v0.0.5 // indirect
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
-	golang.org/x/tools v0.0.0-20190614071512-ed0dc450797f // indirect
+	golang.org/x/tools v0.0.0-20190616134342-5aca471b1d59 // indirect
 )
 
 replace (

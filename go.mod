@@ -38,7 +38,7 @@ require (
 	go.etcd.io/bbolt v1.3.3 // indirect
 	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522 // indirect
 	golang.org/x/net v0.0.0-20190614071512-d28f0bde5980
-	golang.org/x/sys v0.0.0-20190614071512-5ed2794edfdc // indirect
+	golang.org/x/sys v0.0.0-20190616134342-15dcb6c0061f // indirect
 	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 	google.golang.org/appengine v1.6.1 // indirect
