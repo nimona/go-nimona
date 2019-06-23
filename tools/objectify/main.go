@@ -541,13 +541,13 @@ func getHint(t types.Type) object.TypeHint {
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return object.HintArray + "<" + ss + ">"
+			return object.HintArray + ss
 		}
 	case *types.Slice:
 		st := v.Elem()
 		ss := getHint(st)
 		if ss != "" {
-			return object.HintArray + "<" + ss + ">"
+			return object.HintArray + ss
 		}
 	case *types.Struct:
 		return object.HintObject
