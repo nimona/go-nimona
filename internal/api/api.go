@@ -31,7 +31,7 @@ type API struct {
 	agg         aggregate.Manager
 	local       *net.LocalInfo
 
-	localKey string
+	localKey crypto.Fingerprint
 	token    string
 
 	version      string

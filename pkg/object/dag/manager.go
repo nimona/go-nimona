@@ -233,7 +233,7 @@ func (m *manager) handleObjectGraphRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		"peer:"+sender.Fingerprint(),
+		"peer:"+sender.Fingerprint().String(),
 		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(

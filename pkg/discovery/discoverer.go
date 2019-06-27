@@ -7,6 +7,7 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -43,7 +44,7 @@ type Discoverer interface {
 	// AddPersistent(v *peer.PeerInfo)
 	FindByFingerprint(
 		ctx context.Context,
-		fingerprint string,
+		fingerprint crypto.Fingerprint,
 		opts ...Option,
 	) ([]*peer.PeerInfo, error)
 	FindByContent(
@@ -79,14 +80,14 @@ type discoverer struct {
 // FindByFingerprint goes through the given providers until one returns something
 func (r *discoverer) FindByFingerprint(
 	ctx context.Context,
-	fingerprint string,
+	fingerprint crypto.Fingerprint,
 	opts ...Option,
 ) ([]*peer.PeerInfo, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "discovery/discoverer.FindByFingerprint"),
-		log.String("fingerprint", fingerprint),
+		log.String("fingerprint", fingerprint.String()),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
@@ -108,11 +109,11 @@ func (r *discoverer) FindByFingerprint(
 
 	// TODO move persistence into its own provider
 
-	if res, ok := r.cacheTemp[fingerprint]; ok && res != nil {
+	if res, ok := r.cacheTemp[fingerprint.String()]; ok && res != nil {
 		return []*peer.PeerInfo{res}, nil
 	}
 
-	if res, ok := r.cachePersistent[fingerprint]; ok && res != nil {
+	if res, ok := r.cachePersistent[fingerprint.String()]; ok && res != nil {
 		return []*peer.PeerInfo{res}, nil
 	}
 
@@ -160,7 +161,7 @@ func (r *discoverer) AddProvider(provider Provider) error {
 // These peers will eventually be gc-ed.
 func (r *discoverer) Add(v *peer.PeerInfo) {
 	r.cacheLock.Lock()
-	r.cacheTemp[v.Fingerprint()] = v
+	r.cacheTemp[v.Fingerprint().String()] = v
 	r.cacheLock.Unlock()
 }
 
@@ -169,6 +170,6 @@ func (r *discoverer) Add(v *peer.PeerInfo) {
 // Mainly used for adding bootstrap nodes.
 func (r *discoverer) AddPersistent(v *peer.PeerInfo) {
 	r.cacheLock.Lock()
-	r.cachePersistent[v.Fingerprint()] = v
+	r.cachePersistent[v.Fingerprint().String()] = v
 	r.cacheLock.Unlock()
 }

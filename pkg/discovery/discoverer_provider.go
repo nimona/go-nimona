@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"nimona.io/internal/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -12,7 +13,7 @@ import (
 type Provider interface {
 	FindByFingerprint(
 		ctx context.Context,
-		fingerprint string,
+		fingerprint crypto.Fingerprint,
 		opts ...Option,
 	) ([]*peer.PeerInfo, error)
 	FindByContent(

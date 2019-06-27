@@ -18,14 +18,14 @@ type storeValue struct {
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		peers: map[string]*storeValue{},
+		peers: map[crypto.Fingerprint]*storeValue{},
 	}
 }
 
 // Store holds peer capabilities with their vectors
 type Store struct {
 	lock  sync.RWMutex
-	peers map[string]*storeValue
+	peers map[crypto.Fingerprint]*storeValue
 }
 
 // Add peer capabilities to store
@@ -91,11 +91,11 @@ func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
 }
 
 // FindByFingerprint returns peers that are signed by a fingerprint
-func (s *Store) FindByFingerprint(fingerprint string) []*peer.PeerInfo {
+func (s *Store) FindByFingerprint(fingerprint crypto.Fingerprint) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	ps := map[string]*peer.PeerInfo{}
+	ps := map[crypto.Fingerprint]*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
 		keys := crypto.GetSignatureKeys(p.Signature)
@@ -120,7 +120,7 @@ func (s *Store) FindByContent(contentHash string) []*peer.PeerInfo {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	ps := map[string]*peer.PeerInfo{}
+	ps := map[crypto.Fingerprint]*peer.PeerInfo{}
 	for _, v := range s.peers {
 		p := v.peerInfo
 		for _, ch := range p.ContentIDs {

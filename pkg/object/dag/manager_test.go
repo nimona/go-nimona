@@ -263,7 +263,7 @@ func TestSync(t *testing.T) {
 		"Send",
 		mock.Anything,
 		mock.Anything,
-		"peer:"+rkey.PublicKey.Fingerprint(),
+		"peer:"+rkey.PublicKey.Fingerprint().String(),
 		mock.Anything,
 	).Run(
 		respWith(dag.ObjectGraphResponse{
@@ -293,7 +293,7 @@ func TestSync(t *testing.T) {
 			"Request",
 			mock.Anything,
 			o.HashBase58(),
-			"peer:"+rkey.PublicKey.Fingerprint(),
+			"peer:"+rkey.PublicKey.Fingerprint().String(),
 			mock.Anything,
 		).Run(
 			respWith(o),
@@ -307,7 +307,7 @@ func TestSync(t *testing.T) {
 			o.HashBase58(),
 		},
 		[]string{
-			"peer:" + rkey.PublicKey.Fingerprint(),
+			"peer:" + rkey.PublicKey.Fingerprint().String(),
 		},
 	)
 

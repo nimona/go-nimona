@@ -110,7 +110,7 @@ func (r *DHT) refresh() {
 			continue
 		}
 
-		closestPeers, err := r.FindPeersClosestTo(peerInfo.Fingerprint(), closestPeersToReturn)
+		closestPeers, err := r.FindPeersClosestTo(peerInfo.Fingerprint().String(), closestPeersToReturn)
 		if err != nil {
 			logger.Warn("refresh could not get peers ids", log.Error(err))
 			time.Sleep(time.Second * 10)
@@ -120,12 +120,12 @@ func (r *DHT) refresh() {
 		// announce our peer info to the closest peers
 		for _, closestPeer := range closestPeers {
 			if err := r.exchange.Send(ctx, peerInfo.ToObject(), closestPeer.Address()); err != nil {
-				logger.Debug("refresh could not announce", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint()))
+				logger.Debug("refresh could not announce", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint().String()))
 			}
 		}
 
 		// HACK lookup our own peer info just so we can populate our peer table
-		if _, err := r.GetPeerInfo(ctx, peerInfo.Fingerprint()); err != nil {
+		if _, err := r.GetPeerInfo(ctx, peerInfo.Fingerprint().String()); err != nil {
 			logger.Debug("could not get peer", log.Error(err))
 		}
 
@@ -183,7 +183,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 	ctx := context.Background()
 	logger := log.FromContext(ctx)
 
-	peerInfo, _ := r.peerStore.Get(payload.Fingerprint)
+	peerInfo, _ := r.peerStore.Get(payload.Fingerprint.String())
 	// TODO handle and log error
 
 	if peerInfo == nil {
@@ -191,7 +191,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 		// TODO handle and log error
 	}
 
-	closestPeerInfos, err := r.FindPeersClosestTo(payload.Fingerprint, closestPeersToReturn)
+	closestPeerInfos, err := r.FindPeersClosestTo(payload.Fingerprint.String(), closestPeersToReturn)
 	if err != nil {
 		logger.Debug("could not get providers from local store", log.Error(err))
 		// TODO handle and log error
@@ -208,7 +208,7 @@ func (r *DHT) handlePeerInfoRequest(payload *PeerInfoRequest, sender *crypto.Pub
 		// TODO log error
 		return
 	}
-	addr := "peer:" + sender.Fingerprint()
+	addr := "peer:" + sender.Fingerprint().String()
 	if err := r.exchange.Send(ctx, so, addr); err != nil {
 		logger.Debug("handleProviderRequest could not send object", log.Error(err))
 		return
@@ -265,7 +265,7 @@ func (r *DHT) handleProviderRequest(payload *ProviderRequest, sender *crypto.Pub
 		ClosestPeers: closestPeerInfos,
 	}
 
-	addr := "peer:" + sender.Fingerprint()
+	addr := "peer:" + sender.Fingerprint().String()
 	so := resp.ToObject()
 	if err := crypto.Sign(so, r.key); err != nil {
 		// TODO log error
@@ -312,7 +312,7 @@ func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 	// slice to hold the distances
 	dists := []distEntry{}
 	for _, peerInfo := range peerInfos {
-		peerInfoThumbprint := peerInfo.Fingerprint()
+		peerInfoThumbprint := peerInfo.Fingerprint().String()
 		// calculate distance
 		de := distEntry{
 			key:      peerInfoThumbprint,
@@ -408,7 +408,7 @@ func (r *DHT) PutProviders(ctx context.Context, key string) error {
 	closestPeers, _ := r.FindPeersClosestTo(key, closestPeersToReturn)
 	for _, closestPeer := range closestPeers {
 		if err := r.exchange.Send(ctx, so, closestPeer.Address()); err != nil {
-			logger.Debug("put providers could not send", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint()))
+			logger.Debug("put providers could not send", log.Error(err), log.String("fingerprint", closestPeer.Fingerprint().String()))
 		}
 	}
 
@@ -471,7 +471,7 @@ func (r *DHT) GetAllProviders() (map[string][]string, error) {
 			}
 			allProviders[objectID] = append(
 				allProviders[objectID],
-				provider.Signature.PublicKey.Fingerprint(),
+				provider.Signature.PublicKey.Fingerprint().String(),
 			)
 		}
 	}

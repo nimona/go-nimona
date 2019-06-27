@@ -168,7 +168,11 @@ func (gen *Generator) process() (code []byte, err error) {
 		if vf.Hint == "" {
 			vf.Hint = hint
 		} else if vf.Hint != hint {
-			panic(fmt.Errorf("existing hint of %s for field %s does not match infered %s", vf.Hint, vf.Name, hint))
+			if vf.Hint == "s" && hint == "o" {
+				// this is allowed as we'll be ho
+			} else {
+				panic(fmt.Errorf("existing hint of %s for field %s does not match infered %s", vf.Hint, vf.Name, hint))
+			}
 		}
 
 		if strings.Contains(vf.Hint, "o") {
