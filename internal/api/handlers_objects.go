@@ -73,11 +73,11 @@ func (api *API) HandleGetObject(c *gin.Context) {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
-	if len(os) == 0 {
+	if len(os.Objects) == 0 {
 		c.AbortWithError(404, err) // nolint: errcheck
 		return
 	}
-	ms := api.mapObject(os[0])
+	ms := api.mapObject(os.Objects[0])
 	c.Render(http.StatusOK, Renderer(c, ms))
 }
 

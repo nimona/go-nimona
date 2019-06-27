@@ -25,7 +25,7 @@ type (
 			selector []string,
 			addresses []string,
 		) (
-			[]*object.Object,
+			*Graph,
 			error,
 		)
 		Put(...*object.Object) error
@@ -33,7 +33,7 @@ type (
 			ctx context.Context,
 			rootHash string,
 		) (
-			[]*object.Object,
+			*Graph,
 			error,
 		)
 	}
@@ -189,7 +189,7 @@ func (m *manager) Get(
 	ctx context.Context,
 	rootHash string,
 ) (
-	[]*object.Object,
+	*Graph,
 	error,
 ) {
 	os, err := m.store.Graph(rootHash)
@@ -204,7 +204,11 @@ func (m *manager) Get(
 		return nil, ErrIncompleteGraph
 	}
 
-	return os, nil
+	g := &Graph{
+		Objects: os,
+	}
+
+	return g, nil
 }
 
 func (m *manager) handleObjectGraphRequest(

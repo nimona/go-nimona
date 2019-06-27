@@ -311,13 +311,13 @@ func TestSync(t *testing.T) {
 		},
 	)
 
-	assert.Equal(t, jp(o), jp(res[0]))
-	assert.Equal(t, jp(m1.ToObject()), jp(res[1]))
-	assert.Equal(t, jp(m2.ToObject()), jp(res[2]))
-	assert.Equal(t, jp(m3.ToObject()), jp(res[3]))
-	assert.Equal(t, jp(m4.ToObject()), jp(res[4]))
-	assert.Equal(t, jp(m5.ToObject()), jp(res[5]))
-	assert.Equal(t, jp(m6.ToObject()), jp(res[6]))
+	assert.Equal(t, jp(o), jp(res.Objects[0]))
+	assert.Equal(t, jp(m1.ToObject()), jp(res.Objects[1]))
+	assert.Equal(t, jp(m2.ToObject()), jp(res.Objects[2]))
+	assert.Equal(t, jp(m3.ToObject()), jp(res.Objects[3]))
+	assert.Equal(t, jp(m4.ToObject()), jp(res.Objects[4]))
+	assert.Equal(t, jp(m5.ToObject()), jp(res.Objects[5]))
+	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
 	assert.NoError(t, err)
 
 	os.(*graph.Cayley).Dump() // nolint
