@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/object/exchange"
 	"nimona.io/pkg/object/mutation"
+	"nimona.io/pkg/object/subscription"
 )
 
 //
@@ -26,6 +27,8 @@ import (
 //  m3  m4 |
 //   \ /   |
 //    m6   m5
+//     \  /
+//      s1
 //
 // o Ffsa2mABctpZ1rTpguU1N65GaDVMnbMHW3sLvJ3cAVri
 // m1 EnFp6PUXJd7UckwkMpzFD9iVPGwRnYJEVc5ADtjHF7rj
@@ -133,6 +136,14 @@ var (
 				Cursor:    []string{"map:o", "nested-strings:as"},
 				Value:     "z",
 			},
+		},
+	}
+
+	s1 = &subscription.Subscription{
+		Subscriber: "foo",
+		Parents: []string{
+			m5.ToObject().HashBase58(),
+			m6.ToObject().HashBase58(),
 		},
 	}
 )
@@ -275,6 +286,7 @@ func TestSync(t *testing.T) {
 				m4.ToObject().HashBase58(),
 				m5.ToObject().HashBase58(),
 				m6.ToObject().HashBase58(),
+				s1.ToObject().HashBase58(),
 			},
 		}.ToObject()),
 	).Return(nil)
@@ -288,6 +300,7 @@ func TestSync(t *testing.T) {
 		m4.ToObject(),
 		m5.ToObject(),
 		m6.ToObject(),
+		s1.ToObject(),
 	} {
 		x.On(
 			"Request",
@@ -318,6 +331,7 @@ func TestSync(t *testing.T) {
 	assert.Equal(t, jp(m4.ToObject()), jp(res.Objects[4]))
 	assert.Equal(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
+	assert.Equal(t, jp(s1.ToObject()), jp(res.Objects[7]))
 	assert.NoError(t, err)
 
 	os.(*graph.Cayley).Dump() // nolint
