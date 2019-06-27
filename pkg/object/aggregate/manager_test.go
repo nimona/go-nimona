@@ -420,7 +420,7 @@ func TestAppend(t *testing.T) {
 
 	g, err := d.Get(ctx, o.HashBase58())
 	assert.NoError(t, err)
-	assert.Len(t, g, 7)
+	assert.Len(t, g.Objects, 7)
 
 	var got *aggregate.AggregateObject
 	select {

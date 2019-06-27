@@ -4,7 +4,6 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
 
@@ -13,7 +12,7 @@ func (m *manager) Sync(
 	selector []string,
 	addresses []string,
 ) (
-	[]*object.Object,
+	*Graph,
 	error,
 ) {
 	responses := make(chan *exchange.Envelope, 10)
@@ -143,5 +142,14 @@ func (m *manager) Sync(
 	// TODO currently we only support a root selector
 	rootHash := selector[0]
 
-	return m.store.Graph(rootHash)
+	os, err := m.store.Graph(rootHash)
+	if err != nil {
+		return nil, err
+	}
+
+	g := &Graph{
+		Objects: os,
+	}
+
+	return g, nil
 }
