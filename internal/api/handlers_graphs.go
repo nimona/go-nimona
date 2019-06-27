@@ -93,7 +93,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
 		sig, err := crypto.GetObjectSignature(rootObject)
 		if err == nil {
-			addrs = append(addrs, "peer:"+sig.PublicKey.Fingerprint())
+			addrs = append(addrs, "peer:"+sig.PublicKey.Fingerprint().String())
 		}
 	}
 

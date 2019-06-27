@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"nimona.io/pkg/crypto"
+
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/discovery"
@@ -189,7 +191,7 @@ func (n *network) dialPeer(
 		log.Bool("localDiscoveryOnly", localDiscoveryOnly),
 	)
 
-	fingerprint := strings.Replace(address, "peer:", "", 1)
+	fingerprint := crypto.Fingerprint(strings.Replace(address, "peer:", "", 1))
 	if fingerprint == n.local.GetPeerKey().Fingerprint() {
 		return nil, errors.New("cannot dial our own peer")
 	}
@@ -210,7 +212,7 @@ func (n *network) dialPeer(
 	for _, p := range ps {
 		for _, addr := range p.Addresses {
 			logger.Debug("trying to dial peer",
-				log.String("peer.fingerprint", p.Fingerprint()),
+				log.String("peer.fingerprint", p.Fingerprint().String()),
 				log.Strings("peer.addresses", p.Addresses),
 			)
 			conn, err := n.Dial(ctx, addr)

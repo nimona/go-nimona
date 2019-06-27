@@ -94,7 +94,7 @@ func (m *manager) Sync(
 					// add a request for this hash from this peer
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + res.Sender.Fingerprint(),
+						addr: "peer:" + res.Sender.Fingerprint().String(),
 					}
 				}
 				respCount++

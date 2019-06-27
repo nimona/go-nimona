@@ -25,7 +25,7 @@ type query struct {
 	id                 string
 	key                string
 	queryType          QueryType
-	closestFingerprint string
+	closestFingerprint crypto.Fingerprint
 	contactedPeers     sync.Map
 	incomingPayloads   chan interface{}
 	outgoingPayloads   chan interface{}
@@ -89,7 +89,7 @@ func (q *query) Run(ctx context.Context) {
 	go q.next()
 }
 
-func (q *query) nextIfCloser(newFingerprint string) {
+func (q *query) nextIfCloser(newFingerprint crypto.Fingerprint) {
 	if q.closestFingerprint == "" {
 		q.closestFingerprint = newFingerprint
 		q.next()
@@ -104,7 +104,7 @@ func (q *query) nextIfCloser(newFingerprint string) {
 			return
 		}
 		closestFingerprint := closestPeers[0].Fingerprint()
-		if comparePeers(q.closestFingerprint, closestFingerprint, q.key) == closestFingerprint {
+		if comparePeers(q.closestFingerprint, closestFingerprint, crypto.Fingerprint(q.key)) == closestFingerprint {
 			q.closestFingerprint = closestFingerprint
 			q.next()
 		}
@@ -136,7 +136,7 @@ func (q *query) next() {
 	case PeerInfoQuery:
 		req := &PeerInfoRequest{
 			RequestID:   q.id,
-			Fingerprint: q.key,
+			Fingerprint: crypto.Fingerprint(q.key),
 		}
 		o = req.ToObject()
 		err = crypto.Sign(o, signer)
@@ -158,9 +158,9 @@ func (q *query) next() {
 	ctx := context.Background()
 	logger := log.FromContext(ctx)
 	for _, peer := range peersToAsk {
-		addr := "peer:" + peer.Fingerprint()
+		addr := "peer:" + peer.Fingerprint().String()
 		if err := q.dht.exchange.Send(ctx, o, addr); err != nil {
-			logger.Warn("query next could not send", log.Error(err), log.String("fingerprint", peer.Fingerprint()))
+			logger.Warn("query next could not send", log.Error(err), log.String("fingerprint", peer.Fingerprint().String()))
 		}
 	}
 }

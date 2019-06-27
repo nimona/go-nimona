@@ -40,7 +40,7 @@ func Vectorise(q *peer.PeerInfoRequest) *sparse.Vector {
 
 func getPeerInfoRequest(p *peer.PeerInfo) *peer.PeerInfoRequest {
 	q := &peer.PeerInfoRequest{
-		Keys:         []string{},
+		Keys:         []crypto.Fingerprint{},
 		Protocols:    p.Protocols,
 		ContentIDs:   p.ContentIDs,
 		ContentTypes: p.ContentTypes,

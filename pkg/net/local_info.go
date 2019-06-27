@@ -9,7 +9,7 @@ import (
 )
 
 type LocalInfo struct {
-	fingerprint   string
+	fingerprint   crypto.Fingerprint
 	hostname      string
 	key           *crypto.PrivateKey
 	addressesLock sync.RWMutex
@@ -105,7 +105,7 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	return p
 }
 
-func (l *LocalInfo) GetFingerprint() string {
+func (l *LocalInfo) GetFingerprint() crypto.Fingerprint {
 	return l.fingerprint
 }
 

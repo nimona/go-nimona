@@ -151,7 +151,7 @@ func New(
 					// TODO should this be nil?
 					return
 				}
-				address := "peer:" + conn.RemotePeerKey.Fingerprint()
+				address := "peer:" + conn.RemotePeerKey.Fingerprint().String()
 				w.manager.Add(address, conn)
 				if err := w.HandleConnection(conn); err != nil {
 					w.logger.Warn("failed to handle object", log.Error(err))
@@ -266,7 +266,7 @@ func (w *exchange) HandleConnection(
 ) error {
 	w.logger.Debug(
 		"handling new connection",
-		log.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint()),
+		log.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint().String()),
 	)
 	for {
 		// TODO use decoder
@@ -293,8 +293,8 @@ func (w *exchange) process(
 	}
 
 	logger := w.logger.With(
-		log.String("local_peer", w.key.PublicKey.Fingerprint()),
-		log.String("remote_peer", conn.RemotePeerKey.Fingerprint()),
+		log.String("local_peer", w.key.PublicKey.Fingerprint().String()),
+		log.String("remote_peer", conn.RemotePeerKey.Fingerprint().String()),
 		log.String("request_id", reqID),
 		log.String("object.type", o.GetType()),
 	)
@@ -310,7 +310,7 @@ func (w *exchange) process(
 		}
 		logger = logger.With(
 			log.String("requested_hash", req.ObjectHash),
-			log.String("recipient", conn.RemotePeerKey.Fingerprint()),
+			log.String("recipient", conn.RemotePeerKey.Fingerprint().String()),
 		)
 		logger.Info("got object request")
 		res, err := w.store.Get(req.ObjectHash)
@@ -328,7 +328,7 @@ func (w *exchange) process(
 		defer cf()
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
-			recipient: "peer:" + conn.RemotePeerKey.Fingerprint(),
+			recipient: "peer:" + conn.RemotePeerKey.Fingerprint().String(),
 			object:    res,
 			err:       cerr,
 		}
@@ -451,7 +451,7 @@ func (w *exchange) Send(
 		log.String("object.type", o.GetType()),
 	)
 
-	if "peer:"+w.local.GetFingerprint() == address {
+	if "peer:"+w.local.GetFingerprint().String() == address {
 		logger.Debug("cannot send object to ourself")
 		return ErrCannotSendToSelf
 	}
@@ -534,12 +534,15 @@ func (w *exchange) sendViaRelayToPeer(
 	}
 
 	recipient := strings.Replace(address, "peer:", "", 1)
-	if recipient == w.key.PublicKey.Fingerprint() {
+	if recipient == w.key.PublicKey.Fingerprint().String() {
 		// TODO(geoah) error or nil?
 		return errors.New("cannot send obj to self")
 	}
 
-	peers, err := w.discover.FindByFingerprint(ctx, recipient)
+	peers, err := w.discover.FindByFingerprint(
+		ctx,
+		crypto.Fingerprint(recipient),
+	)
 	if err != nil {
 		return err
 	}
@@ -572,7 +575,7 @@ func (w *exchange) sendViaRelayToPeer(
 				)
 			relayAddress := strings.Replace(address, "relay:", "", 1)
 			// TODO this is an ugly hack
-			if strings.Contains(address, w.key.PublicKey.Fingerprint()) {
+			if strings.Contains(address, w.key.PublicKey.Fingerprint().String()) {
 				continue
 			}
 			cerr := make(chan error, 1)

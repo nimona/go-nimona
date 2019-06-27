@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -58,7 +59,7 @@ func lessIntArr(a, b []int) bool {
 	return true
 }
 
-func comparePeers(a, b, targetPeer string) string {
+func comparePeers(a, b, targetPeer crypto.Fingerprint) crypto.Fingerprint {
 	distA := xor([]byte(a), []byte(targetPeer))
 	distB := xor([]byte(b), []byte(targetPeer))
 	if lessIntArr(distA, distB) {

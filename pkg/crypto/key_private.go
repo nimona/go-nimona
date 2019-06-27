@@ -29,7 +29,7 @@ type PrivateKey struct {
 }
 
 // Fingerprint of the key
-func (k *PrivateKey) Fingerprint() string {
+func (k *PrivateKey) Fingerprint() Fingerprint {
 	return k.PublicKey.Fingerprint()
 }
 

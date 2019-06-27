@@ -102,10 +102,18 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 		// TODO(geoah) hint SHOULD NOT be array, but array + inner hint
 		return hash(HintArray, b)
 	case HintString:
-		if o.(string) == "" {
+		s, ok := o.(string)
+		if !ok {
+			if ss, ok := o.(interface{ String() string }); ok {
+				s = ss.String()
+			} else {
+				return nil
+			}
+		}
+		if s == "" {
 			return nil
 		}
-		return hash(HintString, []byte(o.(string)))
+		return hash(HintString, []byte(s))
 	case HintData:
 		switch t.Kind() {
 		case reflect.String:
