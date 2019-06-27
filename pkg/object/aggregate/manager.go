@@ -77,16 +77,16 @@ func (m *manager) Get(ctx context.Context, hash string) (*AggregateObject, error
 
 	var ro *object.Object
 	ms := []*mutation.Mutation{}
-	for i := range os {
-		if os[i].GetType() != mutation.MutationType {
+	for i := range os.Objects {
+		if os.Objects[i].GetType() != mutation.MutationType {
 			if ro != nil {
 				return nil, errors.Error("more than one basic objects")
 			}
-			ro = os[i]
+			ro = os.Objects[i]
 			continue
 		}
 		m := &mutation.Mutation{}
-		if mErr := m.FromObject(os[i]); mErr != nil {
+		if mErr := m.FromObject(os.Objects[i]); mErr != nil {
 			return nil, errors.Wrap(
 				errors.New("could not retrieve from object"), mErr)
 		}

@@ -108,13 +108,13 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 		return
 	}
 
-	if len(graphObjects) == 0 {
+	if len(graphObjects.Objects) == 0 {
 		c.AbortWithError(404, err) // nolint: errcheck
 		return
 	}
 
 	if returnDot {
-		dot, err := graph.Dot(graphObjects)
+		dot, err := graph.Dot(graphObjects.Objects)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return
@@ -125,7 +125,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	}
 
 	ms := []interface{}{}
-	for _, graphObject := range graphObjects {
+	for _, graphObject := range graphObjects.Objects {
 		ms = append(ms, api.mapObject(graphObject))
 	}
 	c.Render(http.StatusOK, Renderer(c, ms))
