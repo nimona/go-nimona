@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
@@ -59,14 +60,14 @@ func NewDiscoverer(
 // FindByFingerprint finds and returns peer infos from a fingerprint
 func (r *Discoverer) FindByFingerprint(
 	ctx context.Context,
-	fingerprint string,
+	fingerprint crypto.Fingerprint,
 	opts ...discovery.Option,
 ) ([]*peer.PeerInfo, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver/FindByFingerprint"),
-		log.String("peerinfo.fingerprint", fingerprint),
+		log.Any("peerinfo.fingerprint", fingerprint),
 	)
 	logger.Debug("trying to find peer by fingerprint")
 
@@ -85,7 +86,7 @@ func (r *Discoverer) FindByFingerprint(
 	}
 
 	if _, err := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
-		Keys: []string{
+		Keys: []crypto.Fingerprint{
 			fingerprint,
 		},
 	}); err != nil {
@@ -159,7 +160,7 @@ func (r *Discoverer) handlePeerInfo(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver/handlePeerInfo"),
-		log.String("peerinfo.fingerprint", p.Fingerprint()),
+		log.String("peerinfo.fingerprint", p.Fingerprint().String()),
 		log.Strings("peerinfo.addresses", p.Addresses),
 	)
 	logger.Debug("adding peerinfo to store")
@@ -174,11 +175,11 @@ func (r *Discoverer) handlePeerInfoRequest(
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver/handlePeerInfoRequest"),
-		log.String("e.sender", e.Sender.Fingerprint()),
+		log.String("e.sender", e.Sender.Fingerprint().String()),
 		log.String("e.requestID", e.RequestID),
 		log.Strings("query.contentIDs", q.ContentIDs),
 		log.Strings("query.contentTypes", q.ContentTypes),
-		log.Strings("query.keys", q.Keys),
+		log.Any("query.keys", q.Keys),
 	)
 
 	logger.Debug("handling peer info request")
@@ -195,7 +196,7 @@ func (r *Discoverer) handlePeerInfoRequest(
 		cps = append(cps, ps...)
 	}
 
-	pm := map[string]*peer.PeerInfo{}
+	pm := map[crypto.Fingerprint]*peer.PeerInfo{}
 	for _, p := range cps {
 		pm[p.Fingerprint()] = p
 	}
@@ -210,11 +211,11 @@ func (r *Discoverer) handlePeerInfoRequest(
 		exchange.AsResponse(e.RequestID),
 	}
 
-	addr := "peer:" + e.Sender.Fingerprint()
+	addr := "peer:" + e.Sender.Fingerprint().String()
 	for _, p := range fps {
 		logger.Debug("responding with peer",
 			log.String("address", addr),
-			log.String("peer", p.Fingerprint()),
+			log.String("peer", p.Fingerprint().String()),
 		)
 		err := r.exchange.Send(ctx, p.ToObject(), addr, opts...)
 		if err != nil {
@@ -235,7 +236,7 @@ func (r *Discoverer) LookupPeerInfo(
 		log.String("method", "resolver/LookupPeerInfo"),
 		log.Strings("query.contentIDs", q.ContentIDs),
 		log.Strings("query.contentTypes", q.ContentTypes),
-		log.Strings("query.keys", q.Keys),
+		log.Any("query.keys", q.Keys),
 	)
 	o := q.ToObject()
 	ps := r.store.FindClosest(q)
@@ -247,7 +248,7 @@ func (r *Discoverer) LookupPeerInfo(
 	}
 	logger.Debug("found peers to ask", log.Int("n", len(ps)))
 	for _, p := range ps {
-		err := r.exchange.Send(ctx, o, "peer:"+p.Fingerprint(), opts...)
+		err := r.exchange.Send(ctx, o, "peer:"+p.Fingerprint().String(), opts...)
 		if err != nil {
 			logger.Debug("could not lookup peer", log.Error(err))
 		}
@@ -266,7 +267,7 @@ func (r *Discoverer) LookupPeerInfo(
 		case res := <-out:
 			logger.Debug("got loopkup response",
 				log.String("res.type", res.Payload.GetType()),
-				log.String("res.sender", res.Sender.Fingerprint()),
+				log.String("res.sender", res.Sender.Fingerprint().String()),
 			)
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
@@ -293,7 +294,7 @@ func (r *Discoverer) bootstrap(
 		exchange.WithLocalDiscoveryOnly(),
 	}
 	q := &peer.PeerInfoRequest{
-		Keys: []string{
+		Keys: []crypto.Fingerprint{
 			key.Fingerprint(),
 		},
 	}

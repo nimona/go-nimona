@@ -30,7 +30,7 @@ type PublicKey struct {
 }
 
 // Fingerprint of the key
-func (k *PublicKey) Fingerprint() string {
+func (k *PublicKey) Fingerprint() Fingerprint {
 	fp := &PublicKey{
 		Algorithm: k.Algorithm,
 		KeyType:   k.KeyType,
@@ -38,7 +38,7 @@ func (k *PublicKey) Fingerprint() string {
 		X:         k.X,
 		Y:         k.Y,
 	}
-	return base58.Encode(object.Hash(fp.ToObject()))
+	return Fingerprint(base58.Encode(object.Hash(fp.ToObject())))
 }
 
 func (k *PublicKey) Key() interface{} {

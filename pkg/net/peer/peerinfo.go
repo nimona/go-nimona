@@ -16,7 +16,7 @@ type PeerInfo struct {
 }
 
 // Fingerprint of signer
-func (pi *PeerInfo) Fingerprint() string {
+func (pi *PeerInfo) Fingerprint() crypto.Fingerprint {
 	if pi == nil || pi.Signature == nil || pi.Signature.PublicKey == nil {
 		return ""
 	}
@@ -26,5 +26,5 @@ func (pi *PeerInfo) Fingerprint() string {
 
 // Address of the peer
 func (pi *PeerInfo) Address() string {
-	return "peer:" + pi.Fingerprint()
+	return "peer:" + pi.Fingerprint().String()
 }

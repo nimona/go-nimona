@@ -3,6 +3,7 @@
 package mocks
 
 import context "nimona.io/internal/context"
+import crypto "nimona.io/pkg/crypto"
 import discovery "nimona.io/pkg/discovery"
 import mock "github.com/stretchr/testify/mock"
 import peer "nimona.io/pkg/net/peer"
@@ -43,7 +44,7 @@ func (_m *Provider) FindByContent(ctx context.Context, contentHash string, opts 
 }
 
 // FindByFingerprint provides a mock function with given fields: ctx, fingerprint, opts
-func (_m *Provider) FindByFingerprint(ctx context.Context, fingerprint string, opts ...discovery.Option) ([]*peer.PeerInfo, error) {
+func (_m *Provider) FindByFingerprint(ctx context.Context, fingerprint crypto.Fingerprint, opts ...discovery.Option) ([]*peer.PeerInfo, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -54,7 +55,7 @@ func (_m *Provider) FindByFingerprint(ctx context.Context, fingerprint string, o
 	ret := _m.Called(_ca...)
 
 	var r0 []*peer.PeerInfo
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...discovery.Option) []*peer.PeerInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, crypto.Fingerprint, ...discovery.Option) []*peer.PeerInfo); ok {
 		r0 = rf(ctx, fingerprint, opts...)
 	} else {
 		if ret.Get(0) != nil {
@@ -63,7 +64,7 @@ func (_m *Provider) FindByFingerprint(ctx context.Context, fingerprint string, o
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, ...discovery.Option) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, crypto.Fingerprint, ...discovery.Option) error); ok {
 		r1 = rf(ctx, fingerprint, opts...)
 	} else {
 		r1 = ret.Error(1)
