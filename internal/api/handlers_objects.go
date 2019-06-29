@@ -4,22 +4,21 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
+	"nimona.io/internal/http/router"
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
-func (api *API) HandleGetObjects(c *gin.Context) {
+func (api *API) HandleGetObjects(c *router.Context) {
 	// TODO this will be replaced by manager.Subscribe()
-	// objectHashs, err := api.objectStore.List()
-	// if err != nil {
-	// 	c.AbortWithError(500, err) // nolint: errcheck
-	// 	return
-	// }
+	ms, err := api.objectStore.Heads()
+	if err != nil {
+		c.AbortWithError(500, err) // nolint: errcheck
+		return
+	}
 	// ms := []interface{}{}
 	// for _, objectHash := range objectHashs {
 	// 	b, err := api.objectStore.Get(objectHash)
@@ -34,11 +33,11 @@ func (api *API) HandleGetObjects(c *gin.Context) {
 	// 	}
 	// 	ms = append(ms, api.mapObject(m))
 	// }
-	// c.Render(http.StatusOK, Renderer(c, ms))
-	c.Render(http.StatusNotImplemented, nil)
+	c.JSON(http.StatusOK, api.mapObjects(ms))
+	// c.JSON(http.StatusNotImplemented, nil)
 }
 
-func (api *API) HandleGetObject(c *gin.Context) {
+func (api *API) HandleGetObject(c *router.Context) {
 	objectHash := c.Param("objectHash")
 	if objectHash == "" {
 		c.AbortWithError(400, errors.New("missing object hash")) // nolint: errcheck
@@ -49,7 +48,7 @@ func (api *API) HandleGetObject(c *gin.Context) {
 		return
 	} else if err == nil {
 		ms := api.mapObject(o)
-		c.Render(http.StatusOK, Renderer(c, ms))
+		c.JSON(http.StatusOK, ms)
 		return
 	}
 
@@ -78,12 +77,12 @@ func (api *API) HandleGetObject(c *gin.Context) {
 		return
 	}
 	ms := api.mapObject(os.Objects[0])
-	c.Render(http.StatusOK, Renderer(c, ms))
+	c.JSON(http.StatusOK, ms)
 }
 
-func (api *API) HandlePostObject(c *gin.Context) {
+func (api *API) HandlePostObject(c *router.Context) {
 	req := map[string]interface{}{}
-	if err := c.BindJSON(req); err != nil {
+	if err := c.BindBody(req); err != nil {
 		c.AbortWithError(400, err) // nolint: errcheck
 		return
 	}
@@ -120,5 +119,5 @@ func (api *API) HandlePostObject(c *gin.Context) {
 		}
 	}
 
-	c.Render(http.StatusOK, Renderer(c, nil))
+	c.JSON(http.StatusOK, nil)
 }
