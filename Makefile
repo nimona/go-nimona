@@ -70,6 +70,12 @@ clean:
 	rm -f *.cov
 	rm -rf $(GOBIN)
 
+# Tidy go modules
+.PHONY: tidy
+tidy:
+	$(info Tidying go modules)
+	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy \;
+
 # Generate community docs
 .PHONY: community-docs
 community-docs: nimona.io/tools/community
