@@ -4,16 +4,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
+	"nimona.io/internal/http/router"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object/mutation"
 )
 
-func (api *API) HandleGetAggregates(c *gin.Context) {
+func (api *API) HandleGetAggregates(c *router.Context) {
 	// TODO this will be replaced by manager.Subscribe()
 	graphRoots, err := api.objectStore.Heads()
 	if err != nil {
@@ -34,14 +33,14 @@ func (api *API) HandleGetAggregates(c *gin.Context) {
 		}
 		aos = append(aos, api.mapObject(ao.Aggregate))
 	}
-	c.Render(http.StatusOK, Renderer(c, aos))
+	c.JSON(http.StatusOK, aos)
 }
 
-func (api *API) HandlePostAggregates(c *gin.Context) {
+func (api *API) HandlePostAggregates(c *router.Context) {
 	api.HandlePostGraphs(c)
 }
 
-func (api *API) HandleGetAggregate(c *gin.Context) {
+func (api *API) HandleGetAggregate(c *router.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 
 	if rootObjectHash == "" {
@@ -107,13 +106,13 @@ func (api *API) HandleGetAggregate(c *gin.Context) {
 		return
 	}
 
-	c.Render(http.StatusOK, Renderer(c, api.mapObject(ao.Aggregate)))
+	c.JSON(http.StatusOK, api.mapObject(ao.Aggregate))
 }
 
-func (api *API) HandlePostAggregate(c *gin.Context) {
+func (api *API) HandlePostAggregate(c *router.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 	op := &mutation.Operation{}
-	if err := c.BindJSON(op); err != nil {
+	if err := c.BindBody(op); err != nil {
 		c.AbortWithError(400, err) // nolint: errcheck
 		return
 	}
@@ -126,5 +125,5 @@ func (api *API) HandlePostAggregate(c *gin.Context) {
 		return
 	}
 
-	c.Render(http.StatusCreated, Renderer(c, nil))
+	c.JSON(http.StatusCreated, nil)
 }

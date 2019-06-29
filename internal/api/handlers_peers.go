@@ -1,10 +1,8 @@
 package api
 
-import (
-	"github.com/gin-gonic/gin"
-)
+import "nimona.io/internal/http/router"
 
-func (api *API) HandleGetPeers(c *gin.Context) {
+func (api *API) HandleGetPeers(c *router.Context) {
 	// peers, err := api.addressBook.GetAllPeerInfo()
 	// if err != nil {
 	// 	c.AbortWithError(500, err)
@@ -17,7 +15,7 @@ func (api *API) HandleGetPeers(c *gin.Context) {
 	// c.Render(http.StatusOK, Renderer(c, ms))
 }
 
-func (api *API) HandleGetPeer(c *gin.Context) {
+func (api *API) HandleGetPeer(c *router.Context) {
 	// fingerprint := c.Param("fingerprint")
 	// m, err := api.addressBook.GetPeerInfo(fingerprint)
 	// if err != nil {

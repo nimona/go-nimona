@@ -3,13 +3,14 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"nimona.io/internal/http/router"
 )
 
-func (api *API) TokenAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (api *API) TokenAuth() router.Handler {
+	return func(c *router.Context) {
 		if api.token != c.Request.Header.Get("Authorization") {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
+			c.Abort()
 			return
 		}
 	}

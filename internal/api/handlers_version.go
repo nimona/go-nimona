@@ -3,14 +3,14 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"nimona.io/internal/http/router"
 )
 
-func (api *API) HandleVersion(c *gin.Context) {
+func (api *API) HandleVersion(c *router.Context) {
 	d := map[string]interface{}{
 		"version": api.version,
 		"commit":  api.commit,
 		"date":    api.buildDate,
 	}
-	c.Render(http.StatusOK, Renderer(c, d))
+	c.JSON(http.StatusOK, d)
 }

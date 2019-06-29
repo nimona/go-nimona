@@ -6,15 +6,13 @@ require (
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
+	github.com/cheekybits/genny v1.0.0
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
 	github.com/dop251/goja v0.0.0-20190614071512-1a71e42e74ec // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/fatih/structs v1.1.0
-	github.com/gin-contrib/cors v1.3.0
-	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.4.0
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gobwas/glob v0.2.3
@@ -26,6 +24,7 @@ require (
 	github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mr-tron/base58 v1.1.2
 	github.com/pkg/errors v0.8.1
@@ -42,6 +41,8 @@ require (
 	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 	google.golang.org/appengine v1.6.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
 
 replace (
