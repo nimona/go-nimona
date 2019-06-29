@@ -5,17 +5,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
+	"nimona.io/internal/http/router"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
-func (api *API) HandleGetGraphs(c *gin.Context) {
+func (api *API) HandleGetGraphs(c *router.Context) {
 	// TODO this will be replaced by manager.Subscribe()
 	graphRoots, err := api.objectStore.Heads()
 	if err != nil {
@@ -26,12 +25,12 @@ func (api *API) HandleGetGraphs(c *gin.Context) {
 	for _, graphRoot := range graphRoots {
 		ms = append(ms, api.mapObject(graphRoot))
 	}
-	c.Render(http.StatusOK, Renderer(c, ms))
+	c.JSON(http.StatusOK, ms)
 }
 
-func (api *API) HandlePostGraphs(c *gin.Context) {
+func (api *API) HandlePostGraphs(c *router.Context) {
 	req := map[string]interface{}{}
-	if err := c.BindJSON(&req); err != nil {
+	if err := c.BindBody(&req); err != nil {
 		c.AbortWithError(400, err) // nolint: errcheck
 		return
 	}
@@ -49,10 +48,10 @@ func (api *API) HandlePostGraphs(c *gin.Context) {
 	}
 
 	m := api.mapObject(o)
-	c.Render(http.StatusOK, Renderer(c, m))
+	c.JSON(http.StatusOK, m)
 }
 
-func (api *API) HandleGetGraph(c *gin.Context) {
+func (api *API) HandleGetGraph(c *router.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 	returnDot, _ := strconv.ParseBool(c.Query("dot"))
 
@@ -120,7 +119,7 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 			return
 		}
 		c.Header("Content-Type", "text/vnd.graphviz")
-		c.String(http.StatusOK, dot)
+		c.Text(http.StatusOK, dot)
 		return
 	}
 
@@ -128,9 +127,9 @@ func (api *API) HandleGetGraph(c *gin.Context) {
 	for _, graphObject := range graphObjects.Objects {
 		ms = append(ms, api.mapObject(graphObject))
 	}
-	c.Render(http.StatusOK, Renderer(c, ms))
+	c.JSON(http.StatusOK, ms)
 }
 
-func (api *API) HandlePostGraph(c *gin.Context) {
-	c.Render(http.StatusNotImplemented, Renderer(c, nil))
+func (api *API) HandlePostGraph(c *router.Context) {
+	c.JSON(http.StatusNotImplemented, nil)
 }

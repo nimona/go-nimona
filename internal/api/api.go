@@ -4,9 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-
+	"nimona.io/internal/http/router"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
@@ -20,7 +18,7 @@ import (
 
 // API for HTTP
 type API struct {
-	router    *gin.Engine
+	router    *router.Router
 	key       *crypto.PrivateKey
 	net       net.Network
 	discovery discovery.Discoverer
@@ -56,11 +54,10 @@ func New(
 	buildDate string,
 	token string,
 ) *API {
-	router := gin.Default()
-	router.Use(cors.Default())
+	r := router.New()
 
 	api := &API{
-		router:      router,
+		router:      r,
 		key:         k,
 		net:         n,
 		discovery:   d,
@@ -80,41 +77,31 @@ func New(
 		gracefulStop: make(chan bool),
 	}
 
-	router.Group("/api/v1/")
-	router.GET("/version", api.HandleVersion)
+	r.Use(api.Cors())
+	r.Use(api.TokenAuth())
 
-	router.Use(api.TokenAuth())
+	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
+	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
+	r.Handle("GET", "/api/v1/peers$", api.HandleGetPeers)
+	r.Handle("GET", "/api/v1/peers/(?P<fingerprint>.+)$", api.HandleGetPeer)
 
-	local := router.Group("/api/v1/local")
-	local.GET("/", api.HandleGetLocal)
+	r.Handle("GET", "/api/v1/objects$", api.HandleGetObjects)
+	r.Handle("GET", "/api/v1/objects/(?P<objectHash>.+)$", api.HandleGetObject)
+	r.Handle("POST", "/api/v1/objects$", api.HandlePostObject)
 
-	peers := router.Group("/api/v1/peers")
-	peers.GET("/", api.HandleGetPeers)
-	peers.GET("/:fingerprint", api.HandleGetPeer)
+	r.Handle("GET", "/api/v1/graphs$", api.HandleGetGraphs)
+	r.Handle("POST", "/api/v1/graphs$", api.HandlePostGraphs)
+	r.Handle("GET", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandleGetGraph)
+	r.Handle("POST", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandlePostGraph)
 
-	objectsEnd := router.Group("/api/v1/objects")
-	objectsEnd.GET("/", api.HandleGetObjects)
-	objectsEnd.GET("/:objectHash", api.HandleGetObject)
-	objectsEnd.POST("/", api.HandlePostObject)
+	r.Handle("GET", "/api/v1/aggregates$", api.HandleGetAggregates)
+	r.Handle("POST", "/api/v1/aggregates$", api.HandlePostAggregates)
+	r.Handle("GET", "/api/v1/aggregates/(?P<rootObjectHash>.+)$", api.HandleGetAggregate)
+	r.Handle("POST", "/api/v1/aggregates/(?P<rootObjectHash>.+)$", api.HandlePostAggregate)
 
-	graphsEnd := router.Group("/api/v1/graphs")
-	graphsEnd.GET("/", api.HandleGetGraphs)
-	graphsEnd.POST("/", api.HandlePostGraphs)
-	graphsEnd.GET("/:rootObjectHash", api.HandleGetGraph)
-	graphsEnd.POST("/:rootObjectHash", api.HandlePostGraph)
+	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
 
-	aggregatesEnd := router.Group("/api/v1/aggregates")
-	aggregatesEnd.GET("/", api.HandleGetAggregates)
-	aggregatesEnd.POST("/", api.HandlePostAggregates)
-	aggregatesEnd.GET("/:rootObjectHash", api.HandleGetAggregate)
-	aggregatesEnd.POST("/:rootObjectHash", api.HandlePostAggregate)
-
-	streamsEnd := router.Group("/api/v1/streams")
-	streamsEnd.GET("/:ns/*pattern", api.HandleGetStreams)
-
-	router.POST("/api/v1/stop", api.Stop)
-
-	router.Use(ServeFs("/", Assets))
+	r.Handle("POST", "/api/v1/stop$", api.Stop)
 
 	return api
 }
@@ -145,7 +132,7 @@ func (api *API) Serve(address string) error {
 	return nil
 }
 
-func (api *API) Stop(c *gin.Context) {
+func (api *API) Stop(c *router.Context) {
 	c.Status(http.StatusOK)
 
 	go func() {
@@ -158,4 +145,12 @@ func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	m := o.ToPlainMap()
 	m["_hash"] = o.HashBase58()
 	return m
+}
+
+func (api *API) mapObjects(os []*object.Object) []map[string]interface{} {
+	ms := []map[string]interface{}{}
+	for _, o := range os {
+		ms = append(ms, api.mapObject(o))
+	}
+	return ms
 }

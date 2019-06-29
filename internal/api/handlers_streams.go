@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
+	"nimona.io/internal/http/router"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/exchange"
 )
 
-func (api *API) HandleGetStreams(c *gin.Context) {
+func (api *API) HandleGetStreams(c *router.Context) {
 	ns := c.Param("ns")
 	pattern := c.Param("pattern")
 
