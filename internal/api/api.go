@@ -19,7 +19,6 @@ import (
 // API for HTTP
 type API struct {
 	router    *router.Router
-	key       *crypto.PrivateKey
 	net       net.Network
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
@@ -29,8 +28,9 @@ type API struct {
 	agg         aggregate.Manager
 	local       *net.LocalInfo
 
-	localKey crypto.Fingerprint
-	token    string
+	localFingerprint crypto.Fingerprint
+
+	token string
 
 	version      string
 	commit       string
@@ -58,7 +58,6 @@ func New(
 
 	api := &API{
 		router:      r,
-		key:         k,
 		net:         n,
 		discovery:   d,
 		exchange:    x,
@@ -67,8 +66,9 @@ func New(
 		dag: dag,
 		agg: agg,
 
-		localKey: linf.GetPeerInfo().Fingerprint(),
-		local:    linf,
+		localFingerprint: linf.GetPeerInfo().Fingerprint(),
+
+		local: linf,
 
 		version:      version,
 		commit:       commit,
@@ -82,6 +82,11 @@ func New(
 
 	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
 	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
+
+	r.Handle("GET", "/api/v1/identities$", api.HandleGetIdentities)
+	r.Handle("GET", "/api/v1/identities/(?P<fingerprint>.+)$", api.HandleGetIdentity)
+	r.Handle("POST", "/api/v1/identities$", api.HandlePostIdentities)
+
 	r.Handle("GET", "/api/v1/peers$", api.HandleGetPeers)
 	r.Handle("GET", "/api/v1/peers/(?P<fingerprint>.+)$", api.HandleGetPeer)
 
@@ -144,6 +149,11 @@ func (api *API) Stop(c *router.Context) {
 func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	m := o.ToPlainMap()
 	m["_hash"] = o.HashBase58()
+	if o.GetType() == crypto.PublicKeyType {
+		p := &crypto.PublicKey{}
+		p.FromObject(o) // nolint: errcheck
+		m["_fingerprint"] = p.Fingerprint().String()
+	}
 	return m
 }
 

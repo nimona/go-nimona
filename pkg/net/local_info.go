@@ -9,9 +9,13 @@ import (
 )
 
 type LocalInfo struct {
-	fingerprint   crypto.Fingerprint
-	hostname      string
-	key           *crypto.PrivateKey
+	fingerprint crypto.Fingerprint
+	hostname    string
+
+	keyLock     sync.RWMutex
+	key         *crypto.PrivateKey
+	identityKey *crypto.PrivateKey
+
 	addressesLock sync.RWMutex
 	addresses     []string
 
@@ -66,7 +70,30 @@ func (l *LocalInfo) RemoveContentHash(hashes ...string) {
 	l.contentHashesLock.Unlock()
 }
 
+func (l *LocalInfo) AddIdentityKey(identityKey *crypto.PrivateKey) error {
+	l.keyLock.Lock()
+	defer l.keyLock.Unlock()
+
+	pko := l.key.PublicKey.ToObject()
+	sig, err := crypto.NewSignature(
+		identityKey,
+		crypto.AlgorithmObjectHash,
+		pko,
+	)
+	if err != nil {
+		return err
+	}
+
+	l.identityKey = identityKey
+	l.key.PublicKey.Signature = sig
+
+	return nil
+}
+
 func (l *LocalInfo) GetPeerKey() *crypto.PrivateKey {
+	l.keyLock.RLock()
+	defer l.keyLock.RUnlock()
+
 	return l.key
 }
 
@@ -76,6 +103,8 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	p := &peer.PeerInfo{}
 
 	l.addressesLock.RLock()
+	defer l.contentHashesLock.RUnlock()
+
 	// TODO Check all the transports for addresses
 	addresses := make([]string, len(l.addresses))
 	for i, a := range l.addresses {
@@ -93,10 +122,9 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 		hashes = append(hashes, hash)
 	}
 	p.ContentIDs = hashes
-	l.contentHashesLock.RUnlock()
 
 	o := p.ToObject()
-	if err := crypto.Sign(o, l.key); err != nil {
+	if err := crypto.Sign(o, l.GetPeerKey()); err != nil {
 		panic(err)
 	}
 	if err := p.FromObject(o); err != nil {

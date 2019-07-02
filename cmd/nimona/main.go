@@ -71,19 +71,7 @@ func main() {
 		if err != nil {
 			logger.Fatal("could not generate identity key", log.Error(err))
 		}
-		logger.Info("signing peer key")
-		pko := config.Daemon.PeerKey.PublicKey.ToObject()
-		sig, err := crypto.NewSignature(
-			identityKey,
-			crypto.AlgorithmObjectHash,
-			pko,
-		)
-		if err != nil {
-			logger.Fatal("could not sign peer key", log.Error(err))
-		}
-
 		config.Daemon.IdentityKey = identityKey
-		config.Daemon.PeerKey.PublicKey.Signature = sig
 	}
 
 	// update config
@@ -114,6 +102,11 @@ func main() {
 	)
 	if err != nil {
 		logger.Fatal("could not create local info", log.Error(err))
+	}
+
+	// add identity key to local info
+	if err := localInfo.AddIdentityKey(config.Daemon.IdentityKey); err != nil {
+		logger.Fatal("could not register identity key", log.Error(err))
 	}
 
 	// add relay addresses to local info
