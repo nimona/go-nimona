@@ -130,6 +130,7 @@ func (s *Cayley) Put(v *object.Object) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("xxxxxxxxxxxx", g.ID.String())
 	if _, err := s.schema.WriteAsQuads(qw, g); err != nil {
 		return err
 	}
@@ -141,22 +142,17 @@ func (s *Cayley) Graph(hash string) ([]*object.Object, error) {
 	p := cayley.StartPath(
 		s.store,
 		quad.IRI(hash),
-	).FollowRecursive(
-		cayley.
-			StartMorphism().
-			Or(
-				cayley.
-					StartMorphism().
-					In(predicateDependsOn),
-			).
-			Or(
-				cayley.
-					StartMorphism().
-					Out(predicateDependsOn),
-			),
-		0,
-		nil,
-	)
+	).Or(
+		cayley.StartMorphism(quad.IRI(hash)).FollowRecursive(
+			cayley.
+				StartMorphism().
+				Both(predicateDependsOn),
+			0,
+			nil,
+		),
+	).Or(
+		cayley.StartMorphism(quad.IRI(hash)),
+	).Unique()
 
 	gs := []graphObject{}
 	err := schema.LoadPathTo(nil, s.store, &gs, p)
