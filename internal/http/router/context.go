@@ -35,7 +35,11 @@ func (c *Context) Status(code int) {
 }
 
 func (c *Context) AbortWithError(code int, err error) {
-	c.Text(code, err.Error())
+	body := ""
+	if err != nil {
+		body = err.Error()
+	}
+	c.Text(code, body)
 }
 
 func (c *Context) Param(key string) string {
