@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
@@ -63,7 +64,7 @@ func (tt *httpTransport) Dial(
 	}
 
 	rw := &connWrapper{
-		w: flushWriter{pw},
+		w: pw,
 		r: res.Body,
 		c: res.Body,
 	}
@@ -107,7 +108,7 @@ func (tt *httpTransport) Listen(
 		wf.Flush()
 
 		rw := &connWrapper{
-			w: flushWriter{w},
+			w: w,
 			r: r.Body,
 			c: r.Body,
 		}
@@ -199,31 +200,17 @@ func (tt *httpTransport) Listen(
 	return cconn, nil
 }
 
-type flushWriter struct {
-	w io.Writer
-}
-
-func (fw flushWriter) Write(p []byte) (n int, err error) {
-	n, err = fw.w.Write(p)
-	if f, ok := fw.w.(http.Flusher); ok {
-		f.Flush()
-	}
-	return
-}
-
-func (fw flushWriter) Flush() {
-	if f, ok := fw.w.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
 type connWrapper struct {
 	r io.Reader
 	w io.Writer
 	c io.Closer
+	l sync.Mutex
 }
 
 func (fw connWrapper) Write(p []byte) (int, error) {
+	fw.l.Lock()
+	defer fw.l.Unlock()
+
 	n, err := fw.w.Write(p)
 	if f, ok := fw.w.(http.Flusher); ok {
 		f.Flush()
