@@ -1,5 +1,3 @@
-// +build flaky
-
 package graph_test
 
 import (
@@ -22,6 +20,17 @@ import (
 // 	.All()
 
 var (
+	a1 = object.FromMap(map[string]interface{}{
+		"@ctx:s":     "message",
+		"@display:s": "a1",
+	})
+	a2 = object.FromMap(map[string]interface{}{
+		"@ctx:s":     "mutation",
+		"@display:s": "a2",
+		"@parents:as": []string{
+			a1.HashBase58(),
+		},
+	})
 	o1 = object.FromMap(map[string]interface{}{
 		"@ctx:s":     "message",
 		"@display:s": "o1",
@@ -56,9 +65,13 @@ var (
 		},
 	})
 	o6 = object.FromMap(map[string]interface{}{
-		"@ctx:s":        "object",
-		"@display:s":    "o6",
+		"@ctx:s":      "object",
+		"@display:s":  "o6",
 		"@parents:as": []string{},
+	})
+	z1 = object.FromMap(map[string]interface{}{
+		"@ctx:s":     "message",
+		"@display:s": "z1",
 	})
 )
 
@@ -81,13 +94,25 @@ func TestCayley_Graph(t *testing.T) {
 	s, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	aos := []*object.Object{o3, o4, o5}
+	aos := []*object.Object{
+		a1, a2,
+		o3, o4, o5,
+		z1,
+	}
 	for _, ao := range aos {
 		err = s.Put(ao)
 		assert.NoError(t, err)
 	}
 
-	os, err := s.Graph(o3.HashBase58())
+	os, err := s.Graph(a1.HashBase58())
+	assert.NoError(t, err)
+	assert.Len(t, os, 2)
+
+	os, err = s.Graph(a2.HashBase58())
+	assert.NoError(t, err)
+	assert.Len(t, os, 2)
+
+	os, err = s.Graph(o3.HashBase58())
 	assert.NoError(t, err)
 	assert.Len(t, os, 3)
 
@@ -124,6 +149,14 @@ func TestCayley_Graph(t *testing.T) {
 	os, err = s.Graph(o5.HashBase58())
 	assert.NoError(t, err)
 	assert.Len(t, os, 5)
+
+	os, err = s.Graph(z1.HashBase58())
+	assert.NoError(t, err)
+	assert.Len(t, os, 1)
+
+	os, err = s.Graph("foo")
+	assert.Error(t, err)
+	assert.Len(t, os, 0)
 }
 
 func TestCayley_Get(t *testing.T) {
@@ -148,8 +181,8 @@ func TestCayley_Heads(t *testing.T) {
 	assert.NoError(t, err)
 
 	ox := object.FromMap(map[string]interface{}{
-		"@ctx:s":        "something",
-		"@display:s":    "ox",
+		"@ctx:s":      "something",
+		"@display:s":  "ox",
 		"@parents:as": []string{},
 	})
 
@@ -169,8 +202,8 @@ func TestCayley_Tails(t *testing.T) {
 	assert.NoError(t, err)
 
 	ox1 := object.FromMap(map[string]interface{}{
-		"@ctx:s":        "object",
-		"@display:s":    "ox1",
+		"@ctx:s":      "object",
+		"@display:s":  "ox1",
 		"@parents:as": []string{},
 	})
 
@@ -205,8 +238,8 @@ func TestCayley_Head(t *testing.T) {
 	assert.NoError(t, err)
 
 	ox1 := object.FromMap(map[string]interface{}{
-		"@ctx:s":        "object",
-		"@display:s":    "ox1",
+		"@ctx:s":      "object",
+		"@display:s":  "ox1",
 		"@parents:as": []string{},
 	})
 
