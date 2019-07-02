@@ -23,9 +23,7 @@ func hintsFromKey(k string) []TypeHint {
 		return nil
 	}
 	hs := []TypeHint{}
-	kh := strings.Replace(ps[1], "<", "", -1)
-	kh = strings.Replace(kh, ">", "", -1)
-	for _, sh := range kh {
+	for _, sh := range ps[1] {
 		hs = append(hs, GetTypeHint(string(sh)))
 	}
 	return hs
@@ -52,6 +50,9 @@ func objecthash(m map[string]interface{}, skipSig bool) ([]byte, error) {
 	x := map[string]interface{}{}
 	for _, k := range ks {
 		v := m[k]
+		if v == nil {
+			continue
+		}
 		ts := hintsFromKey(k)
 		hv := hashValueAs(k, v, ts...)
 		if hv == nil {
@@ -79,6 +80,10 @@ func hash(p TypeHint, b []byte) []byte {
 }
 
 func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
+	if o == nil {
+		return nil
+	}
+
 	v := reflect.ValueOf(o)
 	t := reflect.TypeOf(o)
 
