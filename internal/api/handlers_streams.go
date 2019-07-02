@@ -60,7 +60,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				}
 
 			case req := <-outgoing:
-				if err := crypto.Sign(req, api.key); err != nil {
+				if err := crypto.Sign(req, api.local.GetPeerKey()); err != nil {
 					logger.Error("could not sign outgoing object", log.Error(err))
 					req.SetRaw("_status", "error signing object")
 					if err := write(conn, api.mapObject(req)); err != nil {
