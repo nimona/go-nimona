@@ -107,7 +107,9 @@ func UpdateConfig(cfgFile string, c *Config) error {
 		return errors.Wrap(err, errors.New("could not open config"))
 	}
 
-	defer configFile.Close()
+	defer configFile.Close() // nolint: errcheck
+
+	configFile.Truncate(0) // nolint: errcheck
 
 	if _, err := configFile.Write(configBytes); err != nil {
 		return errors.Wrap(err, errors.New("could not write config"))
