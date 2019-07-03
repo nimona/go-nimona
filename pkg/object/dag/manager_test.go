@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -292,7 +294,7 @@ func TestSync(t *testing.T) {
 	).Return(nil)
 
 	// request o
-	for _, o := range []*object.Object{
+	for _, i := range []*object.Object{
 		o,
 		m1.ToObject(),
 		m2.ToObject(),
@@ -305,11 +307,11 @@ func TestSync(t *testing.T) {
 		x.On(
 			"Request",
 			mock.Anything,
-			o.HashBase58(),
+			i.HashBase58(),
 			"peer:"+rkey.PublicKey.Fingerprint().String(),
 			mock.Anything,
 		).Run(
-			respWith(o),
+			respWith(i),
 		).Return(nil)
 	}
 
@@ -324,6 +326,10 @@ func TestSync(t *testing.T) {
 		},
 	)
 
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Len(t, res.Objects, 8)
+
 	assert.Equal(t, jp(o), jp(res.Objects[0]))
 	assert.Equal(t, jp(m1.ToObject()), jp(res.Objects[1]))
 	assert.Equal(t, jp(m2.ToObject()), jp(res.Objects[2]))
@@ -332,14 +338,13 @@ func TestSync(t *testing.T) {
 	assert.Equal(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
 	assert.Equal(t, jp(s1.ToObject()), jp(res.Objects[7]))
-	assert.NoError(t, err)
 
 	os.(*graph.Cayley).Dump() // nolint
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when
 // dealing with numbers
-func jp(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ") // nolint
+func jp(v *object.Object) string {
+	b, _ := json.MarshalIndent(v.ToMap(), "", "  ") // nolint
 	return string(b)
 }
