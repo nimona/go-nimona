@@ -2,6 +2,7 @@ package dag
 
 import (
 	"nimona.io/internal/context"
+	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/exchange"
@@ -120,6 +121,11 @@ func (m *manager) Sync(
 			req.addr,
 			exchange.WithResponse("", out),
 		); err != nil {
+			logger.With(
+				log.String("req.hash", req.hash),
+				log.String("req.addr", req.hash),
+				log.Error(err),
+			).Debug("could not send request for object")
 			close(out)
 			continue
 		}
@@ -127,24 +133,35 @@ func (m *manager) Sync(
 		select {
 		case <-ctx.Done():
 		case res := <-out:
-			if res.Payload.HashBase58() != req.hash {
+			hash := res.Payload.HashBase58()
+			if hash != req.hash {
+				logger.With(
+					log.String("hash", hash),
+					log.String("req.hash", req.hash),
+					log.String("req.addr", req.hash),
+					log.Error(err),
+				).Debug("expected hash does not match actual")
 				break
 			}
-			if err := m.store.Put(res.Payload); err == nil {
-				close(out)
-				continue
+			if err := m.store.Put(res.Payload); err != nil {
+				logger.With(
+					log.String("req.hash", req.hash),
+					log.String("req.addr", req.hash),
+					log.Error(err),
+				).Debug("could not store objec")
 			}
 		}
 		close(out)
-
 	}
 
 	// TODO currently we only support a root selector
 	rootHash := selector[0]
-
 	os, err := m.store.Graph(rootHash)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(
+			errors.New("could not get graph from store"),
+			err,
+		)
 	}
 
 	g := &Graph{
