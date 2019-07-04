@@ -54,6 +54,7 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 func (api *API) HandleGetGraph(c *router.Context) {
 	rootObjectHash := c.Param("rootObjectHash")
 	returnDot, _ := strconv.ParseBool(c.Query("dot"))
+	sync, _ := strconv.ParseBool(c.Query("sync"))
 
 	if rootObjectHash == "" {
 		c.AbortWithError(400, errors.New("missing root object hash")) // nolint: errcheck
@@ -71,49 +72,67 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	)
 	logger.Info("handling request")
 
-	// find peers who provide the root object
-	ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
-	if err != nil {
-		c.AbortWithError(500, err) // nolint: errcheck
-		return
-	}
+	os := []*object.Object{}
 
-	// convert peer infos to addresses
-	if len(ps) == 0 {
-		c.AbortWithError(404, err) // nolint: errcheck
-		return
-	}
-	addrs := []string{}
-	for _, p := range ps {
-		addrs = append(addrs, p.Address())
-	}
-
-	// if we have the object, and if its signed, include the signer
-	if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
-		sig, err := crypto.GetObjectSignature(rootObject)
-		if err == nil {
-			addrs = append(addrs, "peer:"+sig.PublicKey.Fingerprint().String())
+	if sync {
+		// find peers who provide the root object
+		ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
+		if err != nil {
+			c.AbortWithError(500, err) // nolint: errcheck
+			return
 		}
-	}
 
-	// try to sync the graph with the addresses we gathered
-	graphObjects, err := api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
-	if err != nil {
-		if errors.CausedBy(err, graph.ErrNotFound) {
+		// convert peer infos to addresses
+		if len(ps) == 0 {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
-		c.AbortWithError(500, err) // nolint: errcheck
-		return
+		addrs := []string{}
+		for _, p := range ps {
+			addrs = append(addrs, p.Address())
+		}
+
+		// if we have the object, and if its signed, include the signer
+		if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
+			sig, err := crypto.GetObjectSignature(rootObject)
+			if err == nil {
+				addrs = append(addrs, "peer:"+sig.PublicKey.Fingerprint().String())
+			}
+		}
+
+		// try to sync the graph with the addresses we gathered
+		graphObjects, err := api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
+		if err != nil {
+			if errors.CausedBy(err, graph.ErrNotFound) {
+				c.AbortWithError(404, err) // nolint: errcheck
+				return
+			}
+			c.AbortWithError(500, err) // nolint: errcheck
+			return
+		}
+
+		os = graphObjects.Objects
+	} else {
+		graphObjects, err := api.dag.Get(ctx, rootObjectHash)
+		if err != nil {
+			if errors.CausedBy(err, graph.ErrNotFound) {
+				c.AbortWithError(404, err) // nolint: errcheck
+				return
+			}
+			c.AbortWithError(500, err) // nolint: errcheck
+			return
+		}
+
+		os = graphObjects.Objects
 	}
 
-	if len(graphObjects.Objects) == 0 {
-		c.AbortWithError(404, err) // nolint: errcheck
+	if len(os) == 0 {
+		c.AbortWithError(404, errors.New("no objects found")) // nolint: errcheck
 		return
 	}
 
 	if returnDot {
-		dot, err := graph.Dot(graphObjects.Objects)
+		dot, err := graph.Dot(os)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return
@@ -124,7 +143,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	}
 
 	ms := []interface{}{}
-	for _, graphObject := range graphObjects.Objects {
+	for _, graphObject := range os {
 		ms = append(ms, api.mapObject(graphObject))
 	}
 	c.JSON(http.StatusOK, ms)
