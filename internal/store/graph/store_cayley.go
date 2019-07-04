@@ -130,7 +130,6 @@ func (s *Cayley) Put(v *object.Object) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("xxxxxxxxxxxx", g.ID.String())
 	if _, err := s.schema.WriteAsQuads(qw, g); err != nil {
 		return err
 	}
