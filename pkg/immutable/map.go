@@ -65,19 +65,25 @@ func (m Map) Value(k string) Value {
 }
 
 func (m Map) Set(k string, v Value) Map {
-	return Map{mapPair{k, v, m.mapIterator}}
+	return Map{
+		mapPair{
+			k:      k,
+			v:      v,
+			parent: m.mapIterator,
+		},
+	}
 }
 
-func (m Map) Primitive() map[string]interface{} {
-	p := map[string]interface{}{}
+func (m Map) primitive() map[interface{}]interface{} {
+	p := map[interface{}]interface{}{}
 	m.Iterate(func(k string, v Value) {
 		p[k] = v.Primitive()
 	})
 	return p
 }
 
-func (m Map) PrimitiveHinted() map[string]interface{} {
-	p := map[string]interface{}{}
+func (m Map) primitiveHinted() map[interface{}]interface{} {
+	p := map[interface{}]interface{}{}
 	m.Iterate(func(k string, v Value) {
 		p[k+":"+v.kind.typeHint()] = v.PrimitiveHinted()
 	})
