@@ -15,9 +15,9 @@ func TestFromPrimitive(t *testing.T) {
 			"nested-foo:s": "nested-bar",
 		},
 		"foos:as": []interface{}{
-			"foo2",
-			"foo1",
 			"foo0",
+			"foo1",
+			"foo2",
 		},
 	}
 

@@ -54,11 +54,10 @@ func (l List) Iterate(f func(v Value)) {
 }
 
 func (l listIterator) Iterate(f func(v Value)) {
-	f(l.value)
-	if l.prev.listList == nil {
-		return
+	if l.prev.listList != nil {
+		l.prev.Iterate(f)
 	}
-	l.prev.Iterate(f)
+	f(l.value)
 }
 
 func (l List) Length() int {
