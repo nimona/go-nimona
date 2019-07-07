@@ -47,11 +47,7 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 		return nil, ErrAllAddressesFailed
 	}
 
-	conn := &Connection{
-		Conn:          tcpConn,
-		RemotePeerKey: nil, // we don't really know who the other side is
-	}
-
+	conn := newConnection(tcpConn, false)
 	return conn, nil
 }
 
@@ -137,12 +133,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 				continue
 			}
 
-			conn := &Connection{
-				Conn:          tcpConn,
-				RemotePeerKey: nil,
-				IsIncoming:    true,
-			}
-
+			conn := newConnection(tcpConn, true)
 			cconn <- conn
 		}
 	}()

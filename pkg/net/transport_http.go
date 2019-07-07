@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	igd "github.com/emersion/go-upnp-igd"
@@ -69,11 +68,7 @@ func (tt *httpTransport) Dial(
 		c: res.Body,
 	}
 
-	conn := &Connection{
-		Conn:          rw,
-		RemotePeerKey: nil, // we don't really know who the other side is
-	}
-
+	conn := newConnection(rw, false)
 	return conn, nil
 }
 
@@ -113,14 +108,8 @@ func (tt *httpTransport) Listen(
 			c: r.Body,
 		}
 
-		conn := &Connection{
-			Conn:          rw,
-			RemotePeerKey: nil,
-			IsIncoming:    true,
-		}
-
+		conn := newConnection(rw, true)
 		cconn <- conn
-
 		<-r.Cancel // TODO is this the right way to wait here?
 	}
 
@@ -204,13 +193,9 @@ type connWrapper struct {
 	r io.Reader
 	w io.Writer
 	c io.Closer
-	l sync.Mutex
 }
 
 func (fw connWrapper) Write(p []byte) (int, error) {
-	fw.l.Lock()
-	defer fw.l.Unlock()
-
 	n, err := fw.w.Write(p)
 	if f, ok := fw.w.(http.Flusher); ok {
 		f.Flush()

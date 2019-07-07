@@ -264,12 +264,19 @@ func (w *exchange) Handle(
 func (w *exchange) HandleConnection(
 	conn *net.Connection,
 ) error {
-	w.logger.Debug(
-		"handling new connection",
+	logger := w.logger.With(
 		log.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint().String()),
 	)
+	logger.Debug("handling new connection")
+
+	if err := net.Write(
+		w.local.GetPeerInfo().ToObject(),
+		conn,
+	); err != nil {
+		logger.Warn("could not write own peer to remote")
+	}
+
 	for {
-		// TODO use decoder
 		obj, err := net.Read(conn)
 		if err != nil {
 			return err
@@ -366,6 +373,7 @@ func (w *exchange) process(
 				Sender:    conn.RemotePeerKey,
 				Payload:   o,
 				RequestID: reqID,
+				conn:      conn,
 			}
 		}
 	}
@@ -387,6 +395,7 @@ func (w *exchange) process(
 				Sender:    conn.RemotePeerKey,
 				Payload:   o,
 				RequestID: reqID,
+				conn:      conn,
 			}); err != nil {
 				w.logger.Info(
 					"Could not handle event",

@@ -40,15 +40,10 @@ func Write(o *object.Object, conn *Connection) error {
 		)
 	}
 
-	if _, err := conn.Conn.Write(b); err != nil {
+	b = append(b, '\n')
+	if _, err := conn.conn.Write(b); err != nil {
 		return err
 	}
-
-	SendObjectEvent(
-		"outgoing",
-		o.GetType(),
-		len(b),
-	)
 
 	return nil
 }
@@ -56,9 +51,9 @@ func Write(o *object.Object, conn *Connection) error {
 func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
-	pDecoder := json.NewDecoder(conn.Conn)
+	r := <-conn.lines
 	m := map[string]interface{}{}
-	if err := pDecoder.Decode(&m); err != nil {
+	if err := json.Unmarshal(r, &m); err != nil {
 		return nil, err
 	}
 
@@ -83,12 +78,6 @@ func Read(conn *Connection) (*object.Object, error) {
 			return nil, err
 		}
 	}
-
-	// SendObjectEvent(
-	// 	"incoming",
-	// 	o.GetType(),
-	// 	pDecoder.NumBytesRead(),
-	// )
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
