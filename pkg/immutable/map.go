@@ -9,20 +9,6 @@ type mapIterator interface {
 	Iterate(func(k string, v Value))
 }
 
-// type emptyMap struct{}
-
-// func (emptyMap) Value(_ string) Value {
-// 	return Value{}
-// }
-
-// func (emptyMap) Iterate(f func(k string, v Value)) {
-// 	// nothing to call
-// }
-
-// func NewMap() Map {
-// 	return Map{emptyMap{}}
-// }
-
 type mapPair struct {
 	k      string
 	v      Value
@@ -59,7 +45,7 @@ func (m Map) Iterate(f func(k string, v Value)) {
 
 func (m Map) Value(k string) Value {
 	if m.mapIterator == nil {
-		return Value{}
+		return nil
 	}
 	return m.mapIterator.Value(k)
 }
@@ -74,7 +60,7 @@ func (m Map) Set(k string, v Value) Map {
 	}
 }
 
-func (m Map) primitive() map[interface{}]interface{} {
+func (m Map) Primitive() interface{} {
 	p := map[interface{}]interface{}{}
 	m.Iterate(func(k string, v Value) {
 		p[k] = v.Primitive()
@@ -82,10 +68,10 @@ func (m Map) primitive() map[interface{}]interface{} {
 	return p
 }
 
-func (m Map) primitiveHinted() map[interface{}]interface{} {
+func (m Map) PrimitiveHinted() interface{} {
 	p := map[interface{}]interface{}{}
 	m.Iterate(func(k string, v Value) {
-		p[k+":"+v.kind.typeHint()] = v.PrimitiveHinted()
+		p[k+":"+v.typeHint()] = v.PrimitiveHinted()
 	})
 	return p
 }

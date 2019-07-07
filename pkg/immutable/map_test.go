@@ -21,7 +21,27 @@ func TestFromPrimitive(t *testing.T) {
 		},
 	}
 
+	// em2 := map[interface{}]interface{}{
+	// 	"foo:s":     "bar2",
+	// 	"not-foo:s": "not-bar0",
+	// 	"nested-map:o": map[interface{}]interface{}{
+	// 		"nested-foo:s": "nested-bar-2",
+	// 	},
+	// 	"foos:as": []interface{}{
+	// 		"foo0",
+	// 		"foo1",
+	// 		"foo2",
+	// 		"foo3",
+	// 	},
+	// }
+
 	v := AnyToValue(":o", em)
+
+	// vm := v.(Map)
+	// v2 := vm.Set(
+	// 	"nested-map:o",
+	// 	vm.Value("foos:as").(List).Append("foo3"),
+	// )
 
 	// spew.Dump(v)
 	m := v.PrimitiveHinted()
@@ -30,21 +50,21 @@ func TestFromPrimitive(t *testing.T) {
 }
 
 func TestMapPrimitive(t *testing.T) {
-	l := List{}
-	l = l.Append(Value{stringValue{"foo0"}})
-	l = l.Append(Value{stringValue{"foo1"}})
-	l = l.Append(Value{stringValue{"foo2"}})
+	l := List{
+		hint: "as",
+	}
+	l = l.Append(stringValue{"foo0"})
+	l = l.Append(stringValue{"foo1"})
+	l = l.Append(stringValue{"foo2"})
 	m := Map{}.
-		Set("foo", Value{stringValue{"bar0"}}).
-		Set("foo", Value{stringValue{"bar1"}}).
-		Set("foo", Value{stringValue{"bar2"}}).
-		Set("not-foo", Value{stringValue{"not-bar0"}}).
-		Set("nested-map", Value{mapValue{
-			Map{}.Set("nested-foo", Value{stringValue{"nested-bar"}}),
-		}}).
-		Set("foos", Value{listValue{"as", l}})
+		Set("foo", stringValue{"bar0"}).
+		Set("foo", stringValue{"bar1"}).
+		Set("foo", stringValue{"bar2"}).
+		Set("not-foo", stringValue{"not-bar0"}).
+		Set("nested-map", Map{}.Set("nested-foo", stringValue{"nested-bar"})).
+		Set("foos", l)
 
-	p := m.primitive()
+	p := m.Primitive()
 	assert.Equal(t, map[interface{}]interface{}{
 		"foo":     "bar2",
 		"not-foo": "not-bar0",
@@ -58,7 +78,7 @@ func TestMapPrimitive(t *testing.T) {
 		},
 	}, p)
 
-	h := m.primitiveHinted()
+	h := m.PrimitiveHinted()
 	assert.Equal(t, map[interface{}]interface{}{
 		"foo:s":     "bar2",
 		"not-foo:s": "not-bar0",
@@ -75,34 +95,34 @@ func TestMapPrimitive(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	m := Map{}
-	assert.Equal(t, "", m.Value("foo").StringValue())
+	assert.Equal(t, nil, m.Value("foo"))
 	iCalls := 0
 	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 0, iCalls)
 
-	m = m.Set("foo", Value{stringValue{"bar"}})
-	assert.Equal(t, "bar", m.Value("foo").StringValue())
+	m = m.Set("foo", stringValue{"bar"})
+	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
 	iCalls = 0
 	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm := m.Set("foo", Value{stringValue{"nbar"}})
-	assert.Equal(t, "bar", m.Value("foo").StringValue())
-	assert.Equal(t, "nbar", nm.Value("foo").StringValue())
+	nm := m.Set("foo", stringValue{"nbar"})
+	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
+	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm = nm.Set("nfoo", Value{stringValue{"nbar"}})
-	assert.Equal(t, "bar", m.Value("foo").StringValue())
-	assert.Equal(t, "nbar", nm.Value("foo").StringValue())
-	assert.Equal(t, "nbar", nm.Value("nfoo").StringValue())
+	nm = nm.Set("nfoo", stringValue{"nbar"})
+	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
+	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
+	assert.Equal(t, "nbar", nm.Value("nfoo").Primitive().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++

@@ -1,84 +1,56 @@
 package immutable
 
 type List struct {
-	listList
-}
-
-type listList interface {
-	Value() Value
-	Iterate(f func(v Value))
-	Length() (n int)
-	Append(v Value) List
-}
-
-type listIterator struct {
+	hint  string
 	value Value
-	prev  List
+	prev  *List
 }
 
-func (l listIterator) Value() Value {
-	return l.value
-}
-
-func (l listIterator) Previous() List {
-	return l.prev
+func (l List) typeHint() string {
+	return l.hint
 }
 
 func (l List) Append(v Value) List {
-	if l.listList == nil {
+	// TODO check type
+
+	if l.value == nil {
 		return List{
-			listIterator{
-				value: v,
-			},
+			hint:  l.hint,
+			value: v,
 		}
 	}
 
-	return l.listList.Append(v)
-}
-
-func (l listIterator) Append(v Value) List {
 	return List{
-		listIterator{
-			value: v,
-			prev:  List{l},
-		},
+		hint:  l.hint,
+		value: v,
+		prev:  &l,
 	}
 }
 
 func (l List) Iterate(f func(v Value)) {
-	if l.listList == nil {
-		return
-	}
-
-	l.listList.Iterate(f)
-}
-
-func (l listIterator) Iterate(f func(v Value)) {
-	if l.prev.listList != nil {
+	if l.prev != nil {
 		l.prev.Iterate(f)
 	}
-	f(l.value)
-}
-
-func (l List) Length() int {
-	if l.listList == nil {
-		return 0
+	if l.value != nil {
+		f(l.value)
 	}
-
-	return l.listList.Length()
 }
 
-func (l listIterator) Length() (n int) {
+func (l List) Length() (n int) {
 	l.Iterate(func(v Value) {
 		n++
 	})
 	return
 }
 
-func (l List) primitive() interface{} {
+func (l List) Primitive() interface{} {
 	p := []interface{}{}
 	l.Iterate(func(v Value) {
-		p = append(p, v.raw())
+		p = append(p, v.Primitive())
 	})
 	return p
+}
+
+func (l List) PrimitiveHinted() interface{} {
+	return l.Primitive()
 }
