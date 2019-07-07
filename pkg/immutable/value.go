@@ -12,11 +12,11 @@ type (
 		Primitive() interface{}
 		PrimitiveHinted() interface{}
 	}
-	boolValue   struct{ value bool }
-	stringValue struct{ value string }
-	intValue    struct{ value int64 }
-	floatValue  struct{ value float64 }
-	bytesValue  struct{ value []byte }
+	Bool   bool
+	String string
+	Int    int64
+	Float  float64
+	Bytes  []byte
 )
 
 const (
@@ -29,24 +29,24 @@ const (
 	listTypeHint   = "a"
 )
 
-func (v boolValue) typeHint() string   { return boolTypeHint }
-func (v stringValue) typeHint() string { return stringTypeHint }
-func (v intValue) typeHint() string    { return intTypeHint }
-func (v floatValue) typeHint() string  { return floatTypeHint }
-func (v bytesValue) typeHint() string  { return bytesTypeHint }
-func (v Map) typeHint() string         { return mapTypeHint }
+func (v Bool) typeHint() string   { return boolTypeHint }
+func (v String) typeHint() string { return stringTypeHint }
+func (v Int) typeHint() string    { return intTypeHint }
+func (v Float) typeHint() string  { return floatTypeHint }
+func (v Bytes) typeHint() string  { return bytesTypeHint }
+func (v Map) typeHint() string    { return mapTypeHint }
 
-func (v boolValue) Primitive() interface{}   { return v.value }
-func (v stringValue) Primitive() interface{} { return v.value }
-func (v intValue) Primitive() interface{}    { return v.value }
-func (v floatValue) Primitive() interface{}  { return v.value }
-func (v bytesValue) Primitive() interface{}  { return v.value }
+func (v Bool) Primitive() interface{}   { return bool(v) }
+func (v String) Primitive() interface{} { return string(v) }
+func (v Int) Primitive() interface{}    { return int64(v) }
+func (v Float) Primitive() interface{}  { return float64(v) }
+func (v Bytes) Primitive() interface{}  { return []byte(v) }
 
-func (v boolValue) PrimitiveHinted() interface{}   { return v.value }
-func (v stringValue) PrimitiveHinted() interface{} { return v.value }
-func (v intValue) PrimitiveHinted() interface{}    { return v.value }
-func (v floatValue) PrimitiveHinted() interface{}  { return v.value }
-func (v bytesValue) PrimitiveHinted() interface{}  { return v.value }
+func (v Bool) PrimitiveHinted() interface{}   { return v.Primitive() }
+func (v String) PrimitiveHinted() interface{} { return v.Primitive() }
+func (v Int) PrimitiveHinted() interface{}    { return v.Primitive() }
+func (v Float) PrimitiveHinted() interface{}  { return v.Primitive() }
+func (v Bytes) PrimitiveHinted() interface{}  { return v.Primitive() }
 
 func getHints(k string) []string {
 	ps := strings.Split(k, ":")
@@ -75,31 +75,31 @@ func AnyToValue(k string, a interface{}) Value {
 	case boolTypeHint:
 		switch v := a.(type) {
 		case bool:
-			return boolValue{v}
+			return Bool(v)
 		}
 
 	case stringTypeHint:
 		switch v := a.(type) {
 		case string:
-			return stringValue{v}
+			return String(v)
 		}
 
 	case intTypeHint:
 		switch v := a.(type) {
 		case int:
-			return intValue{int64(v)}
+			return Int(int64(v))
 		}
 
 	case floatTypeHint:
 		switch v := a.(type) {
 		case float32:
-			return floatValue{float64(v)}
+			return Float(float64(v))
 		}
 
 	case bytesTypeHint:
 		switch v := a.(type) {
 		case []byte:
-			return bytesValue{v}
+			return Bytes(v)
 		}
 
 	case mapTypeHint:
