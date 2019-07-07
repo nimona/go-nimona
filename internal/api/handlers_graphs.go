@@ -72,7 +72,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	)
 	logger.Info("handling request")
 
-	os := []*object.Object{}
+	// os := []*object.Object{}
 
 	if sync {
 		// find peers who provide the root object
@@ -101,8 +101,8 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		}
 
 		// try to sync the graph with the addresses we gathered
-		graphObjects, err := api.dag.Sync(ctx, []string{rootObjectHash}, addrs)
-		if err != nil {
+		hs := []string{rootObjectHash}
+		if _, err = api.dag.Sync(ctx, hs, addrs); err != nil {
 			if errors.CausedBy(err, graph.ErrNotFound) {
 				c.AbortWithError(404, err) // nolint: errcheck
 				return
@@ -111,20 +111,20 @@ func (api *API) HandleGetGraph(c *router.Context) {
 			return
 		}
 
-		os = graphObjects.Objects
-	} else {
-		graphObjects, err := api.dag.Get(ctx, rootObjectHash)
-		if err != nil {
-			if errors.CausedBy(err, graph.ErrNotFound) {
-				c.AbortWithError(404, err) // nolint: errcheck
-				return
-			}
-			c.AbortWithError(500, err) // nolint: errcheck
-			return
-		}
-
-		os = graphObjects.Objects
+		// os = graphObjects.Objects
 	}
+
+	graphObjects, err := api.dag.Get(ctx, rootObjectHash)
+	if err != nil {
+		if errors.CausedBy(err, graph.ErrNotFound) {
+			c.AbortWithError(404, err) // nolint: errcheck
+			return
+		}
+		c.AbortWithError(500, err) // nolint: errcheck
+		return
+	}
+
+	os := graphObjects.Objects
 
 	if len(os) == 0 {
 		c.AbortWithError(404, errors.New("no objects found")) // nolint: errcheck
