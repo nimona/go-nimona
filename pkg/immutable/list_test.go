@@ -16,13 +16,13 @@ func TestList(t *testing.T) {
 	})
 	require.Equal(t, 0, iCalls)
 
-	l = l.Append(stringValue{"foo"})
+	l = l.Append(String("foo"))
 	require.Equal(t, 1, l.Length())
 
-	l1 := l.Append(stringValue{"bar"})
+	l1 := l.Append(String("bar"))
 	require.Equal(t, 2, l1.Length())
 
-	l2 := l.Append(stringValue{"bar2"})
+	l2 := l.Append(String("bar2"))
 	require.Equal(t, 2, l2.Length())
 
 	iCalls = 0

@@ -53,15 +53,15 @@ func TestMapPrimitive(t *testing.T) {
 	l := List{
 		hint: "as",
 	}
-	l = l.Append(stringValue{"foo0"})
-	l = l.Append(stringValue{"foo1"})
-	l = l.Append(stringValue{"foo2"})
+	l = l.Append(String("foo0"))
+	l = l.Append(String("foo1"))
+	l = l.Append(String("foo2"))
 	m := Map{}.
-		Set("foo", stringValue{"bar0"}).
-		Set("foo", stringValue{"bar1"}).
-		Set("foo", stringValue{"bar2"}).
-		Set("not-foo", stringValue{"not-bar0"}).
-		Set("nested-map", Map{}.Set("nested-foo", stringValue{"nested-bar"})).
+		Set("foo", String("bar0")).
+		Set("foo", String("bar1")).
+		Set("foo", String("bar2")).
+		Set("not-foo", String("not-bar0")).
+		Set("nested-map", Map{}.Set("nested-foo", String("nested-bar"))).
 		Set("foos", l)
 
 	p := m.Primitive()
@@ -102,7 +102,7 @@ func TestMap(t *testing.T) {
 	})
 	assert.Equal(t, 0, iCalls)
 
-	m = m.Set("foo", stringValue{"bar"})
+	m = m.Set("foo", String("bar"))
 	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
 	iCalls = 0
 	m.Iterate(func(_ string, _ Value) {
@@ -110,7 +110,7 @@ func TestMap(t *testing.T) {
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm := m.Set("foo", stringValue{"nbar"})
+	nm := m.Set("foo", String("nbar"))
 	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
 	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
 	iCalls = 0
@@ -119,7 +119,7 @@ func TestMap(t *testing.T) {
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm = nm.Set("nfoo", stringValue{"nbar"})
+	nm = nm.Set("nfoo", String("nbar"))
 	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
 	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
 	assert.Equal(t, "nbar", nm.Value("nfoo").Primitive().(string))
