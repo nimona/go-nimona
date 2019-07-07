@@ -138,10 +138,18 @@ func (r *discoverer) FindByContent(
 
 	r.providersLock.RLock()
 	for _, p := range r.providers {
-		res, err := p.FindByContent(ctx, contentHash, opts...)
-		if err == nil && res != nil {
+		eps, err := p.FindByContent(ctx, contentHash, opts...)
+		if err == nil && eps != nil {
+			ps := []string{}
+			for _, p := range eps {
+				ps = append(ps, p.Fingerprint().String())
+			}
+			logger.With(
+				log.Int("n", len(eps)),
+				log.Strings("peers", ps),
+			).Debug("found n peers")
 			r.providersLock.RUnlock()
-			return res, nil
+			return eps, nil
 		}
 	}
 	r.providersLock.RUnlock()
