@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cayleygraph/cayley"
 	cayleyGraph "github.com/cayleygraph/cayley/graph"
@@ -72,6 +73,13 @@ func main() {
 			logger.Fatal("could not generate identity key", log.Error(err))
 		}
 		config.Daemon.IdentityKey = identityKey
+	}
+
+	// make sure relays are valid
+	for i, addr := range config.Daemon.RelayAddresses {
+		if !strings.HasPrefix(addr, "relay:") {
+			config.Daemon.RelayAddresses[i] = "relay:" + addr
+		}
 	}
 
 	// update config
