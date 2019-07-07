@@ -3,8 +3,6 @@ package immutable
 import (
 	"fmt"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 type (
@@ -183,7 +181,6 @@ func rmHints(k string) string {
 
 func AnyToValue(k string, a interface{}) Value {
 	hs := getHints(k)
-	fmt.Println(k, a, hs)
 
 	switch hs[0] {
 	case boolTypeHint:
@@ -260,6 +257,6 @@ func AnyToValue(k string, a interface{}) Value {
 		}
 	}
 
-	spew.Dump(k, a)
+	// spew.Dump(k, a)
 	panic("not sure how to handle")
 }
