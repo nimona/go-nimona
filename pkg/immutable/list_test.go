@@ -16,20 +16,20 @@ func TestList(t *testing.T) {
 	})
 	require.Equal(t, 0, iCalls)
 
-	l = l.Append(Value{stringValue{"foo"}})
+	l = l.Append(stringValue{"foo"})
 	require.Equal(t, 1, l.Length())
 
-	l1 := l.Append(Value{stringValue{"bar"}})
+	l1 := l.Append(stringValue{"bar"})
 	require.Equal(t, 2, l1.Length())
 
-	l2 := l.Append(Value{stringValue{"bar2"}})
+	l2 := l.Append(stringValue{"bar2"})
 	require.Equal(t, 2, l2.Length())
 
 	iCalls = 0
 	values := []string{}
 	l1.Iterate(func(v Value) {
 		iCalls++
-		values = append(values, v.StringValue())
+		values = append(values, v.Primitive().(string))
 	})
 	require.Equal(t, 2, iCalls)
 	require.Len(t, values, 2)
