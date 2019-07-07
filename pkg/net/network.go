@@ -162,7 +162,7 @@ func (n *network) Listen(ctx context.Context) (chan *Connection, error) {
 						)
 
 						if conn != nil {
-							conn.Conn.Close() // nolint: errcheck
+							conn.conn.Close() // nolint: errcheck
 						}
 						failed = true
 						break
