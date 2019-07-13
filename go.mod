@@ -2,7 +2,7 @@ module nimona.io
 
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
-	github.com/Sereal/Sereal v0.0.0-20190614071512-cf1bab6c7a3a // indirect
+	github.com/Sereal/Sereal v0.0.0-20190713164153-0b8ac451a863 // indirect
 	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
@@ -10,7 +10,7 @@ require (
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
-	github.com/dop251/goja v0.0.0-20190614071512-1a71e42e74ec // indirect
+	github.com/dop251/goja v0.0.0-20190713164153-65ce6d6e2428 // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/fatih/structs v1.1.0
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
@@ -22,7 +22,7 @@ require (
 	github.com/gonum/internal v0.0.0-20181124074243-f884aa714029 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7
-	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+	github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
@@ -35,9 +35,9 @@ require (
 	github.com/tylertreat/BoomFilters v0.0.0-20181028192813-611b3dbe80e8 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522 // indirect
-	golang.org/x/net v0.0.0-20190614071512-d28f0bde5980
-	golang.org/x/sys v0.0.0-20190616134342-15dcb6c0061f // indirect
+	golang.org/x/exp v0.0.0-20190713164153-fd42eb6b336f // indirect
+	golang.org/x/net v0.0.0-20190713164153-da137c7871d7
+	golang.org/x/sys v0.0.0-20190713164153-fae7ac547cb7 // indirect
 	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 	google.golang.org/appengine v1.6.1 // indirect
