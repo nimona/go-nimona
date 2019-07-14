@@ -29,5 +29,9 @@ archive:
       format: zip
 snapshot:
   name_template: dev-{{.ShortCommit}}
-release:
-  draft: true
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^chore'
+      - '^refactor'
