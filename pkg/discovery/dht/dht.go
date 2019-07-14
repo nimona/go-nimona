@@ -12,6 +12,8 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
+
 )
 
 var (
@@ -39,12 +41,12 @@ type DHT struct {
 	exchange  exchange.Exchange
 	queries   sync.Map
 	key       *crypto.PrivateKey
-	local     *net.LocalInfo
+	local     *identity.LocalInfo
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
 func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Exchange,
-	local *net.LocalInfo, bootstrapAddresses []string) (*DHT, error) {
+	local *identity.LocalInfo, bootstrapAddresses []string) (*DHT, error) {
 
 	// create new kv store for storing providers
 	store, _ := newStore()

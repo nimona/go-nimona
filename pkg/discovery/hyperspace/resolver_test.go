@@ -15,9 +15,10 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/exchange"
 )
 
 func TestDiscoverer_BootstrapLookup(t *testing.T) {
@@ -146,7 +147,7 @@ func newPeer(
 	net.Network,
 	exchange.Exchange,
 	discovery.Discoverer,
-	*net.LocalInfo,
+	*identity.LocalInfo,
 	context.Context,
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
@@ -170,7 +171,7 @@ func newPeer(
 
 	disc := discovery.NewDiscoverer()
 	ds, err := graph.NewCayleyWithTempStore()
-	local, err := net.NewLocalInfo("", pk)
+	local, err := identity.NewLocalInfo("", pk)
 	assert.NoError(t, err)
 
 	n, err := net.New(disc, local)

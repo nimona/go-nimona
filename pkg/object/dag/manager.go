@@ -7,9 +7,9 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/net"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
+	"nimona.io/pkg/object"
 )
 
 //go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
@@ -42,7 +42,7 @@ type (
 		store     graph.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
-		localInfo *net.LocalInfo
+		localInfo *identity.LocalInfo
 		// backlog  backlog.Backlog
 	}
 )
@@ -52,7 +52,7 @@ func New(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
-	localInfo *net.LocalInfo,
+	localInfo *identity.LocalInfo,
 	// bc backlog.Backlog,
 ) (
 	Manager,
@@ -74,7 +74,7 @@ func NewWithContext(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
-	localInfo *net.LocalInfo,
+	localInfo *identity.LocalInfo,
 	// bc backlog.Backlog,
 ) (
 	Manager,

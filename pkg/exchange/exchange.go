@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/identity"
 )
 
 const (
@@ -62,7 +63,7 @@ type (
 		net      net.Network
 		manager  *ConnectionManager
 		discover discovery.Discoverer
-		local    *net.LocalInfo
+		local    *identity.LocalInfo
 
 		outgoing chan *outgoingObject
 		incoming chan *incomingObject
@@ -113,7 +114,7 @@ func New(
 	n net.Network,
 	store graph.Store,
 	discover discovery.Discoverer,
-	localInfo *net.LocalInfo,
+	localInfo *identity.LocalInfo,
 ) (
 	Exchange,
 	error,
