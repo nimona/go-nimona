@@ -10,7 +10,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 // Discoverer hyperspace

@@ -8,7 +8,7 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object/mutation"
 )
 

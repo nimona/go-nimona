@@ -16,7 +16,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object/mutation"
 )
 
