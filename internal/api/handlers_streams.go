@@ -13,7 +13,7 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 func (api *API) HandleGetStreams(c *router.Context) {

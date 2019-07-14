@@ -9,7 +9,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 //go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
