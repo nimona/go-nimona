@@ -122,7 +122,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 	}
 
 	logger.Info("Started listening", log.Strings("addresses", addresses))
-	tt.local.AddAddress(addresses...)
+	tt.local.AddAddress("tcps", addresses)
 
 	cconn := make(chan *Connection, 10)
 	go func() {

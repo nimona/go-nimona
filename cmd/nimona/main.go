@@ -119,7 +119,7 @@ func main() {
 	}
 
 	// add relay addresses to local info
-	localInfo.AddAddress(config.Daemon.RelayAddresses...)
+	localInfo.AddAddress("relay", config.Daemon.RelayAddresses)
 
 	network, err := net.New(discoverer, localInfo)
 	if err != nil {
