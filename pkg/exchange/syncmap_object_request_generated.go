@@ -42,3 +42,10 @@ func (m *StringObjectRequestSyncMap) Get(k string) (*ObjectRequest, bool) {
 func (m *StringObjectRequestSyncMap) Delete(k string) {
 	m.m.Delete(k)
 }
+
+// Range -
+func (m *StringObjectRequestSyncMap) Range(i func(k string, v *ObjectRequest) bool) {
+	m.m.Range(func(k, v interface{}) bool {
+		return i(k.(string), v.(*ObjectRequest))
+	})
+}

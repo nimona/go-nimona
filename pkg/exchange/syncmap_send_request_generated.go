@@ -42,3 +42,10 @@ func (m *StringSendRequestSyncMap) Get(k string) (*sendRequest, bool) {
 func (m *StringSendRequestSyncMap) Delete(k string) {
 	m.m.Delete(k)
 }
+
+// Range -
+func (m *StringSendRequestSyncMap) Range(i func(k string, v *sendRequest) bool) {
+	m.m.Range(func(k, v interface{}) bool {
+		return i(k.(string), v.(*sendRequest))
+	})
+}
