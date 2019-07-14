@@ -5,7 +5,7 @@ import (
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 func (m *manager) Sync(

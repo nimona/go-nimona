@@ -21,7 +21,7 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 var (

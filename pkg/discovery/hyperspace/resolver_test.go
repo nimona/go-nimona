@@ -17,7 +17,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object/exchange"
+	"nimona.io/pkg/exchange"
 )
 
 func TestDiscoverer_BootstrapLookup(t *testing.T) {
