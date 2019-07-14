@@ -12,11 +12,11 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net"
+	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object/mutation"
 )
 
@@ -318,7 +318,7 @@ func Test_manager_Put(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := net.NewLocalInfo("", pk)
+	li, err := identity.NewLocalInfo("", pk)
 	assert.NoError(t, err)
 
 	d, err := dag.New(os, x, nil, li)
@@ -358,7 +358,7 @@ func TestAppend(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := net.NewLocalInfo("", pk)
+	li, err := identity.NewLocalInfo("", pk)
 	assert.NoError(t, err)
 
 	d, err := dag.New(os, x, nil, li)

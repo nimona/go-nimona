@@ -6,10 +6,12 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/identity"
+
 )
 
 // NewHandshake ...
-func New(local *net.LocalInfo, discoverer discovery.Discoverer) net.Middleware {
+func New(local *identity.LocalInfo, discoverer discovery.Discoverer) net.Middleware {
 	return &Handshake{
 		local:      local,
 		discoverer: discoverer,
@@ -19,7 +21,7 @@ func New(local *net.LocalInfo, discoverer discovery.Discoverer) net.Middleware {
 // Handshake ..
 type Handshake struct {
 	discoverer discovery.Discoverer
-	local      *net.LocalInfo
+	local      *identity.LocalInfo
 }
 
 // TODO needs to be able to handle both server and client interactions

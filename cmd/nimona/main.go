@@ -104,7 +104,7 @@ func main() {
 	discoverer := discovery.NewDiscoverer()
 
 	// construct local info
-	localInfo, err := net.NewLocalInfo(
+	localInfo, err := identity.NewLocalInfo(
 		config.Daemon.AnnounceHostname,
 		config.Daemon.PeerKey,
 	)

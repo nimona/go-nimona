@@ -8,9 +8,10 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/net/peer"
-	"nimona.io/pkg/exchange"
 )
 
 // Discoverer hyperspace
@@ -19,7 +20,7 @@ type Discoverer struct {
 	store    *Store
 	net      net.Network
 	exchange exchange.Exchange
-	local    *net.LocalInfo
+	local    *identity.LocalInfo
 }
 
 // NewDiscoverer returns a new hyperspace discoverer
@@ -27,7 +28,7 @@ func NewDiscoverer(
 	ctx context.Context,
 	network net.Network,
 	exc exchange.Exchange,
-	local *net.LocalInfo,
+	local *identity.LocalInfo,
 	bootstrapAddresses []string,
 ) (*Discoverer, error) {
 	r := &Discoverer{

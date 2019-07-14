@@ -14,6 +14,8 @@ import (
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/identity"
+
 )
 
 // API for HTTP
@@ -26,7 +28,7 @@ type API struct {
 	objectStore graph.Store
 	dag         dag.Manager
 	agg         aggregate.Manager
-	local       *net.LocalInfo
+	local       *identity.LocalInfo
 
 	localFingerprint crypto.Fingerprint
 
@@ -45,7 +47,7 @@ func New(
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,
-	linf *net.LocalInfo,
+	linf *identity.LocalInfo,
 	bls graph.Store,
 	dag dag.Manager,
 	agg aggregate.Manager,

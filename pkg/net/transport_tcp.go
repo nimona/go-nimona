@@ -12,15 +12,17 @@ import (
 
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/identity"
+
 )
 
 type tcpTransport struct {
-	local   *LocalInfo
+	local   *identity.LocalInfo
 	address string
 }
 
 func NewTCPTransport(
-	local *LocalInfo,
+	local *identity.LocalInfo,
 	address string,
 ) Transport {
 	return &tcpTransport{

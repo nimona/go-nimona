@@ -9,6 +9,7 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/identity"
 	"nimona.io/pkg/net/peer"
 )
 
@@ -121,11 +122,11 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 }
 
 func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.PrivateKey, *network, *LocalInfo) {
+	*crypto.PrivateKey, *network, *identity.LocalInfo) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	localInfo, err := NewLocalInfo("", pk) // nolint: ineffassign
+	localInfo, err := identity.NewLocalInfo("", pk) // nolint: ineffassign
 	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
 
