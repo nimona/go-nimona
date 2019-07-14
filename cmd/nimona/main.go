@@ -19,6 +19,7 @@ import (
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/identity"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/exchange"
