@@ -446,7 +446,7 @@ func newPeer(
 	assert.NoError(t, err)
 
 	if relayAddress != "" {
-		li.AddAddress(relayAddress)
+		li.AddAddress("relay", []string{relayAddress})
 	}
 
 	n, err := net.New(discover, li)

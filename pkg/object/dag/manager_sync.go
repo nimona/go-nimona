@@ -4,7 +4,6 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
-	"nimona.io/pkg/net"
 	"nimona.io/pkg/exchange"
 )
 
@@ -17,12 +16,7 @@ func (m *manager) Sync(
 	error,
 ) {
 	responses := make(chan *exchange.Envelope, 10)
-
-	addressesClean := net.Addresses{}
-	addressesClean.Add(addresses...)
-	addressesClean.Blacklist(m.localInfo.GetPeerInfo().Address())
-	addressesClean.Blacklist(m.localInfo.GetPeerInfo().Addresses...)
-	addresses = addressesClean.List()
+	addresses = m.withoutOwnAddresses(addresses)
 
 	// create objecet graph request
 	req := &ObjectGraphRequest{
@@ -169,4 +163,19 @@ func (m *manager) Sync(
 	}
 
 	return g, nil
+}
+
+func (m *manager) withoutOwnAddresses(addrs []string) []string {
+	clnAddrs := []string{}
+	ownAddrs := m.localInfo.GetAddresses()
+	skpAddrs := map[string]bool{}
+	for _, o := range ownAddrs {
+		skpAddrs[o] = true
+	}
+	for _, a := range addrs {
+		if _, isOwn := skpAddrs[a]; !isOwn {
+			clnAddrs = append(clnAddrs, a)
+		}
+	}
+	return clnAddrs
 }

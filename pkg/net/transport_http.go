@@ -179,7 +179,7 @@ func (tt *httpTransport) Listen(
 		}
 	}
 
-	tt.local.AddAddress(addresses...)
+	tt.local.AddAddress("https", addresses)
 
 	logger.Info(
 		"Started listening",

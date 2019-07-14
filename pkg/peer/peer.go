@@ -8,21 +8,31 @@ import (
 	"nimona.io/pkg/net/peer"
 )
 
-type Peer struct {
-	fingerprint crypto.Fingerprint
-	hostname    string
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_addresses_handlers_generated.go -pkg peer gen "KeyType=string ValueType=bool"
 
-	keyLock     sync.RWMutex
-	key         *crypto.PrivateKey
-	identityKey *crypto.PrivateKey
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_on_addresses_generated.go -pkg peer gen "KeyType=OnAddressesUpdated ValueType=bool"
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_on_content_hashes_generated.go -pkg peer gen "KeyType=OnContentHashesUpdated ValueType=bool"
 
-	addressesLock sync.RWMutex
-	addresses     []string
+type (
+	Addresses []string
+	Peer      struct {
+		fingerprint crypto.Fingerprint
+		hostname    string
 
-	// TODO replace with generated string-bool syncmap
-	contentHashesLock sync.RWMutex
-	contentHashes     map[string]bool // map[hash]publishable
-}
+		keyLock     sync.RWMutex
+		key         *crypto.PrivateKey
+		identityKey *crypto.PrivateKey
+
+		addresses     *StringAddressesSyncMap
+		contentHashes *StringBoolSyncMap
+
+		onAddressesHandlers     *OnAddressesUpdatedBoolSyncMap
+		onContentHashesHandlers *OnContentHashesUpdatedBoolSyncMap
+	}
+	OnAddressesUpdated     func([]string)
+	OnContentHashesUpdated func([]string)
+)
 
 func NewPeer(hostname string, key *crypto.PrivateKey) (
 	*Peer, error) {
@@ -35,39 +45,57 @@ func NewPeer(hostname string, key *crypto.PrivateKey) (
 	}
 
 	return &Peer{
-		fingerprint:   key.Fingerprint(),
-		hostname:      hostname,
-		key:           key,
-		addresses:     []string{},
-		contentHashes: map[string]bool{},
+		fingerprint: key.Fingerprint(),
+		hostname:    hostname,
+		key:         key,
+
+		addresses:     &StringAddressesSyncMap{},
+		contentHashes: &StringBoolSyncMap{},
+
+		onAddressesHandlers:     &OnAddressesUpdatedBoolSyncMap{},
+		onContentHashesHandlers: &OnContentHashesUpdatedBoolSyncMap{},
 	}, nil
 }
 
-func (l *Peer) AddAddress(addrs ...string) {
-	l.addressesLock.Lock()
-	if l.addresses == nil {
-		l.addresses = []string{}
-	}
-	l.addresses = append(l.addresses, addrs...)
-	l.addressesLock.Unlock()
+func (l *Peer) OnAddressesUpdated(h OnAddressesUpdated) {
+	t := true
+	l.onAddressesHandlers.Put(h, &t)
+}
+
+func (l *Peer) OnContentHashesUpdated(h OnContentHashesUpdated) {
+	t := true
+	l.onContentHashesHandlers.Put(h, &t)
+}
+
+func (l *Peer) AddAddress(protocol string, addrs []string) {
+	a := Addresses(addrs)
+	l.addresses.Put(protocol, &a)
+	all := l.GetAddresses()
+	l.onAddressesHandlers.Range(func(h OnAddressesUpdated, _ *bool) bool {
+		h(all)
+		return true
+	})
 }
 
 // AddContentHash that should be published with the peer info
 func (l *Peer) AddContentHash(hashes ...string) {
-	l.contentHashesLock.Lock()
-	for _, hash := range hashes {
-		l.contentHashes[hash] = true
+	for _, h := range hashes {
+		t := true
+		l.contentHashes.Put(h, &t)
 	}
-	l.contentHashesLock.Unlock()
+	all := l.GetContentHashes()
+	l.onContentHashesHandlers.Range(func(h OnContentHashesUpdated, _ *bool) bool {
+		h(all)
+		return true
+	})
 }
 
 // RemoveContentHash from the peer info
 func (l *Peer) RemoveContentHash(hashes ...string) {
-	l.contentHashesLock.Lock()
-	for _, hash := range hashes {
-		delete(l.contentHashes, hash)
+	for _, h := range hashes {
+		t := false
+		l.contentHashes.Put(h, &t)
 	}
-	l.contentHashesLock.Unlock()
 }
 
 func (l *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
@@ -93,35 +121,36 @@ func (l *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
 func (l *Peer) GetPeerKey() *crypto.PrivateKey {
 	l.keyLock.RLock()
 	defer l.keyLock.RUnlock()
-
 	return l.key
+}
+
+func (l *Peer) GetAddresses() []string {
+	addrs := []string{}
+	l.addresses.Range(func(_ string, addresses *Addresses) bool {
+		addrs = append(addrs, []string(*addresses)...)
+		return true
+	})
+	return addrs
+}
+
+func (l *Peer) GetContentHashes() []string {
+	hashes := []string{}
+	l.contentHashes.Range(func(hash string, ok *bool) bool {
+		if *ok == true {
+			hashes = append(hashes, hash)
+		}
+		return true
+	})
+	return hashes
 }
 
 // GetPeerInfo returns the local peer info
 func (l *Peer) GetPeerInfo() *peer.PeerInfo {
 	// TODO cache peer info and reuse
-	p := &peer.PeerInfo{}
-
-	l.addressesLock.RLock()
-	defer l.contentHashesLock.RUnlock()
-
-	// TODO Check all the transports for addresses
-	addresses := make([]string, len(l.addresses))
-	for i, a := range l.addresses {
-		addresses[i] = a
+	p := &peer.PeerInfo{
+		Addresses:  l.GetAddresses(),
+		ContentIDs: l.GetContentHashes(),
 	}
-	p.Addresses = addresses
-	l.addressesLock.RUnlock()
-
-	l.contentHashesLock.RLock()
-	hashes := []string{}
-	for hash, publishable := range l.contentHashes {
-		if !publishable {
-			continue
-		}
-		hashes = append(hashes, hash)
-	}
-	p.ContentIDs = hashes
 
 	o := p.ToObject()
 	if err := crypto.Sign(o, l.GetPeerKey()); err != nil {

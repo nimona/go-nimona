@@ -53,6 +53,7 @@ github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7 h1:C6hcKh2Cbjw
 github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7/go.mod h1:G6EcQnwZKsWtItoaQHd+FHPPk6bDeYVJSeeSP9Sge+I=
 github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3 h1:sHsPfNMAG70QAvKbddQ0uScZCHQoZsT5NykGRCeeeIs=
 github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3/go.mod h1:yL958EeXv8Ylng6IfnvG4oflryUi3vgA3xPs9hmII1s=
+github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8 h1:+hdIRxrgNQHgj8v012zinre4oKQTGDytoX8W5HSpwKo=
 github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8/go.mod h1:yL958EeXv8Ylng6IfnvG4oflryUi3vgA3xPs9hmII1s=
 github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d h1:ljoJyU5NEhe3LWXrRSHnYqWtQehQSJ+9d9tfIGNbpSw=
 github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d/go.mod h1:siHz7M0dAufA9aNRidkfckDSVB/S+Ld7allyOe5uxVg=
@@ -105,6 +106,7 @@ golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn
 golang.org/x/net v0.0.0-20190603091049-60506f45cf65/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
 golang.org/x/net v0.0.0-20190614071512-d28f0bde5980 h1:Q8pl4CTmaw/tZ90YpeIvJ2acXcMdTvHCstB1thoK1dM=
 golang.org/x/net v0.0.0-20190614071512-d28f0bde5980/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/net v0.0.0-20190713164153-da137c7871d7 h1:CwIw8Mv77kFcKowAi5VR22WVYUFfABkpA/yVJXGNlNg=
 golang.org/x/net v0.0.0-20190713164153-da137c7871d7/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
