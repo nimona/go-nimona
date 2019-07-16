@@ -19,7 +19,7 @@ import (
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/exchange"
@@ -105,7 +105,7 @@ func main() {
 	discoverer := discovery.NewDiscoverer()
 
 	// construct local info
-	localInfo, err := identity.NewLocalInfo(
+	localInfo, err := peer.NewPeer(
 		config.Daemon.AnnounceHostname,
 		config.Daemon.PeerKey,
 	)

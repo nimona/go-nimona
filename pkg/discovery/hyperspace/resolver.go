@@ -9,9 +9,9 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/identity"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/net/peer"
+	npeer "nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 )
 
 // Discoverer hyperspace
@@ -20,7 +20,7 @@ type Discoverer struct {
 	store    *Store
 	net      net.Network
 	exchange exchange.Exchange
-	local    *identity.LocalInfo
+	local    *peer.Peer
 }
 
 // NewDiscoverer returns a new hyperspace discoverer
@@ -28,7 +28,7 @@ func NewDiscoverer(
 	ctx context.Context,
 	network net.Network,
 	exc exchange.Exchange,
-	local *identity.LocalInfo,
+	local *peer.Peer,
 	bootstrapAddresses []string,
 ) (*Discoverer, error) {
 	r := &Discoverer{
@@ -64,7 +64,7 @@ func (r *Discoverer) FindByFingerprint(
 	ctx context.Context,
 	fingerprint crypto.Fingerprint,
 	opts ...discovery.Option,
-) ([]*peer.PeerInfo, error) {
+) ([]*npeer.PeerInfo, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -88,7 +88,7 @@ func (r *Discoverer) FindByFingerprint(
 		return nil, nil
 	}
 
-	if _, err := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+	if _, err := r.LookupPeerInfo(ctx, &npeer.PeerInfoRequest{
 		Keys: []crypto.Fingerprint{
 			fingerprint,
 		},
@@ -106,7 +106,7 @@ func (r *Discoverer) FindByContent(
 	ctx context.Context,
 	contentHash string,
 	opts ...discovery.Option,
-) ([]*peer.PeerInfo, error) {
+) ([]*npeer.PeerInfo, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -136,7 +136,7 @@ func (r *Discoverer) FindByContent(
 
 	logger.Debug("looking up peers")
 
-	if _, err := r.LookupPeerInfo(ctx, &peer.PeerInfoRequest{
+	if _, err := r.LookupPeerInfo(ctx, &npeer.PeerInfoRequest{
 		ContentIDs: []string{
 			contentHash,
 		},
@@ -167,14 +167,14 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 	// handle payload
 	o := e.Payload
 	switch o.GetType() {
-	case peer.PeerInfoRequestType:
-		v := &peer.PeerInfoRequest{}
+	case npeer.PeerInfoRequestType:
+		v := &npeer.PeerInfoRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		r.handlePeerInfoRequest(ctx, v, e)
-	case peer.PeerInfoType:
-		v := &peer.PeerInfo{}
+	case npeer.PeerInfoType:
+		v := &npeer.PeerInfo{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 
 func (r *Discoverer) handlePeerInfo(
 	ctx context.Context,
-	p *peer.PeerInfo,
+	p *npeer.PeerInfo,
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeerInfo"),
@@ -199,7 +199,7 @@ func (r *Discoverer) handlePeerInfo(
 
 func (r *Discoverer) handlePeerInfoRequest(
 	ctx context.Context,
-	q *peer.PeerInfoRequest,
+	q *npeer.PeerInfoRequest,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -245,8 +245,8 @@ func (r *Discoverer) handlePeerInfoRequest(
 // LookupPeerInfo does a network lookup given a query
 func (r *Discoverer) LookupPeerInfo(
 	ctx context.Context,
-	q *peer.PeerInfoRequest,
-) ([]*peer.PeerInfo, error) {
+	q *npeer.PeerInfoRequest,
+) ([]*npeer.PeerInfo, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupPeerInfo"),
@@ -275,7 +275,7 @@ func (r *Discoverer) LookupPeerInfo(
 			logger.Debug("could not lookup peer", log.Error(err))
 		}
 	}
-	peers := []*peer.PeerInfo{}
+	peers := []*npeer.PeerInfo{}
 	// TODO(geoah) better timeout
 	t := time.NewTicker(time.Second * 5)
 	for {
@@ -294,8 +294,8 @@ func (r *Discoverer) LookupPeerInfo(
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
 			}
-			if res.Payload.GetType() == peer.PeerInfoType {
-				v := &peer.PeerInfo{}
+			if res.Payload.GetType() == npeer.PeerInfoType {
+				v := &npeer.PeerInfo{}
 				if err := v.FromObject(res.Payload); err == nil {
 					peers = append(peers, v)
 				}
@@ -315,7 +315,7 @@ func (r *Discoverer) bootstrap(
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
-	q := &peer.PeerInfoRequest{
+	q := &npeer.PeerInfoRequest{
 		Keys: []crypto.Fingerprint{
 			key.Fingerprint(),
 		},
@@ -334,13 +334,13 @@ func (r *Discoverer) bootstrap(
 	return nil
 }
 
-func (r *Discoverer) withoutOwnPeer(ps []*peer.PeerInfo) []*peer.PeerInfo {
+func (r *Discoverer) withoutOwnPeer(ps []*npeer.PeerInfo) []*npeer.PeerInfo {
 	lp := r.local.GetFingerprint().String()
-	pm := map[crypto.Fingerprint]*peer.PeerInfo{}
+	pm := map[crypto.Fingerprint]*npeer.PeerInfo{}
 	for _, p := range ps {
 		pm[p.Fingerprint()] = p
 	}
-	nps := []*peer.PeerInfo{}
+	nps := []*npeer.PeerInfo{}
 	for f, p := range pm {
 		if f.String() == lp {
 			continue

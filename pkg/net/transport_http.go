@@ -15,16 +15,16 @@ import (
 
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 )
 
 type httpTransport struct {
-	local   *identity.LocalInfo
+	local   *peer.Peer
 	address string
 }
 
 func NewHTTPTransport(
-	local *identity.LocalInfo,
+	local *peer.Peer,
 	address string,
 ) Transport {
 	return &httpTransport{
