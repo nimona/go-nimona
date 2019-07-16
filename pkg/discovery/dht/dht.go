@@ -9,11 +9,10 @@ import (
 
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/identity"
-
+	"nimona.io/pkg/net"
+	npeer "nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 )
 
 var (
@@ -30,23 +29,23 @@ var (
 	typePeerInfoResponse = PeerInfoResponse{}.GetType()
 	typeProviderRequest  = ProviderRequest{}.GetType()
 	typeProviderResponse = ProviderResponse{}.GetType()
-	typePeerInfo         = peer.PeerInfo{}.GetType()
+	typePeerInfo         = npeer.PeerInfo{}.GetType()
 )
 
 // DHT is the struct that implements the dht protocol
 type DHT struct {
 	store     *Store
-	peerStore *peer.PeerInfoCollection
+	peerStore *npeer.PeerInfoCollection
 	net       net.Network
 	exchange  exchange.Exchange
 	queries   sync.Map
 	key       *crypto.PrivateKey
-	local     *identity.LocalInfo
+	local     *peer.Peer
 }
 
 // NewDHT returns a new DHT from a exchange and peer manager
 func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Exchange,
-	local *identity.LocalInfo, bootstrapAddresses []string) (*DHT, error) {
+	local *peer.Peer, bootstrapAddresses []string) (*DHT, error) {
 
 	// create new kv store for storing providers
 	store, _ := newStore()
@@ -58,7 +57,7 @@ func NewDHT(key *crypto.PrivateKey, network net.Network, exchange exchange.Excha
 		exchange:  exchange,
 		queries:   sync.Map{},
 		key:       key,
-		peerStore: &peer.PeerInfoCollection{},
+		peerStore: &npeer.PeerInfoCollection{},
 		local:     local,
 	}
 
@@ -164,7 +163,7 @@ func (r *DHT) handleObject(e *exchange.Envelope) error {
 		}
 		r.handleProviderResponse(v)
 	case typePeerInfo:
-		v := &peer.PeerInfo{}
+		v := &npeer.PeerInfo{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -175,7 +174,7 @@ func (r *DHT) handleObject(e *exchange.Envelope) error {
 	return nil
 }
 
-func (r *DHT) handlePeerInfo(payload *peer.PeerInfo) {
+func (r *DHT) handlePeerInfo(payload *npeer.PeerInfo) {
 	if err := r.peerStore.Put(payload); err != nil {
 		log.FromContext(context.Background()).Error("could not handle peer info", log.Error(err))
 	}
@@ -304,9 +303,9 @@ func (r *DHT) handleProviderResponse(payload *ProviderResponse) {
 }
 
 // FindPeersClosestTo returns an array of n peers closest to the given key by xor distance
-func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
+func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*npeer.PeerInfo, error) {
 	// place to hold the results
-	rks := []*peer.PeerInfo{}
+	rks := []*npeer.PeerInfo{}
 
 	htk := hash(tk)
 
@@ -355,14 +354,14 @@ func (r *DHT) FindPeersClosestTo(tk string, n int) ([]*peer.PeerInfo, error) {
 }
 
 // Discover returns a peer's info from their id
-func (r *DHT) Discover(key string) (*peer.PeerInfo, error) {
+func (r *DHT) Discover(key string) (*npeer.PeerInfo, error) {
 	log.DefaultLogger.Warn("=========== trying to resolve key " + key)
 	ctx := context.Background()
 	return r.GetPeerInfo(ctx, key)
 }
 
 // GetPeerInfo returns a peer's info from their id
-func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*peer.PeerInfo, error) {
+func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*npeer.PeerInfo, error) {
 	q := &query{
 		dht:              r,
 		id:               net.RandStringBytesMaskImprSrc(8),
@@ -383,7 +382,7 @@ func (r *DHT) GetPeerInfo(ctx context.Context, id string) (*peer.PeerInfo, error
 		select {
 		case payload := <-q.outgoingPayloads:
 			switch v := payload.(type) {
-			case *peer.PeerInfo:
+			case *npeer.PeerInfo:
 				return v, nil
 			}
 		case <-ctx.Done():

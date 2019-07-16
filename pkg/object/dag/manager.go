@@ -8,7 +8,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -42,7 +42,7 @@ type (
 		store     graph.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
-		localInfo *identity.LocalInfo
+		localInfo *peer.Peer
 		// backlog  backlog.Backlog
 	}
 )
@@ -52,7 +52,7 @@ func New(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
-	localInfo *identity.LocalInfo,
+	localInfo *peer.Peer,
 	// bc backlog.Backlog,
 ) (
 	Manager,
@@ -74,7 +74,7 @@ func NewWithContext(
 	store graph.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
-	localInfo *identity.LocalInfo,
+	localInfo *peer.Peer,
 	// bc backlog.Backlog,
 ) (
 	Manager,

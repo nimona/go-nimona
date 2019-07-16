@@ -13,7 +13,7 @@ import (
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 
 )
 
@@ -49,7 +49,7 @@ func WithLocalDiscoveryOnly() Option {
 }
 
 // New creates a new p2p network using an address book
-func New(discover discovery.Discoverer, local *identity.LocalInfo) (Network, error) {
+func New(discover discovery.Discoverer, local *peer.Peer) (Network, error) {
 	return &network{
 		discoverer: discover,
 		middleware: []MiddlewareHandler{},
@@ -62,7 +62,7 @@ func New(discover discovery.Discoverer, local *identity.LocalInfo) (Network, err
 // network allows dialing and listening for p2p connections
 type network struct {
 	discoverer discovery.Discoverer
-	local      *identity.LocalInfo
+	local      *peer.Peer
 	midLock    *sync.RWMutex
 	transports *sync.Map
 	middleware []MiddlewareHandler

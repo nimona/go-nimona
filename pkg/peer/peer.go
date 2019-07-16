@@ -1,4 +1,4 @@
-package identity
+package peer
 
 import (
 	"crypto/ecdsa"
@@ -8,7 +8,7 @@ import (
 	"nimona.io/pkg/net/peer"
 )
 
-type LocalInfo struct {
+type Peer struct {
 	fingerprint crypto.Fingerprint
 	hostname    string
 
@@ -24,8 +24,8 @@ type LocalInfo struct {
 	contentHashes     map[string]bool // map[hash]publishable
 }
 
-func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
-	*LocalInfo, error) {
+func NewPeer(hostname string, key *crypto.PrivateKey) (
+	*Peer, error) {
 	if key == nil {
 		return nil, ErrMissingKey
 	}
@@ -34,7 +34,7 @@ func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
 		return nil, ErrECDSAPrivateKeyRequired
 	}
 
-	return &LocalInfo{
+	return &Peer{
 		fingerprint:   key.Fingerprint(),
 		hostname:      hostname,
 		key:           key,
@@ -43,7 +43,7 @@ func NewLocalInfo(hostname string, key *crypto.PrivateKey) (
 	}, nil
 }
 
-func (l *LocalInfo) AddAddress(addrs ...string) {
+func (l *Peer) AddAddress(addrs ...string) {
 	l.addressesLock.Lock()
 	if l.addresses == nil {
 		l.addresses = []string{}
@@ -53,7 +53,7 @@ func (l *LocalInfo) AddAddress(addrs ...string) {
 }
 
 // AddContentHash that should be published with the peer info
-func (l *LocalInfo) AddContentHash(hashes ...string) {
+func (l *Peer) AddContentHash(hashes ...string) {
 	l.contentHashesLock.Lock()
 	for _, hash := range hashes {
 		l.contentHashes[hash] = true
@@ -62,7 +62,7 @@ func (l *LocalInfo) AddContentHash(hashes ...string) {
 }
 
 // RemoveContentHash from the peer info
-func (l *LocalInfo) RemoveContentHash(hashes ...string) {
+func (l *Peer) RemoveContentHash(hashes ...string) {
 	l.contentHashesLock.Lock()
 	for _, hash := range hashes {
 		delete(l.contentHashes, hash)
@@ -70,7 +70,7 @@ func (l *LocalInfo) RemoveContentHash(hashes ...string) {
 	l.contentHashesLock.Unlock()
 }
 
-func (l *LocalInfo) AddIdentityKey(identityKey *crypto.PrivateKey) error {
+func (l *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
 	l.keyLock.Lock()
 	defer l.keyLock.Unlock()
 
@@ -90,7 +90,7 @@ func (l *LocalInfo) AddIdentityKey(identityKey *crypto.PrivateKey) error {
 	return nil
 }
 
-func (l *LocalInfo) GetPeerKey() *crypto.PrivateKey {
+func (l *Peer) GetPeerKey() *crypto.PrivateKey {
 	l.keyLock.RLock()
 	defer l.keyLock.RUnlock()
 
@@ -98,7 +98,7 @@ func (l *LocalInfo) GetPeerKey() *crypto.PrivateKey {
 }
 
 // GetPeerInfo returns the local peer info
-func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
+func (l *Peer) GetPeerInfo() *peer.PeerInfo {
 	// TODO cache peer info and reuse
 	p := &peer.PeerInfo{}
 
@@ -133,10 +133,10 @@ func (l *LocalInfo) GetPeerInfo() *peer.PeerInfo {
 	return p
 }
 
-func (l *LocalInfo) GetFingerprint() crypto.Fingerprint {
+func (l *Peer) GetFingerprint() crypto.Fingerprint {
 	return l.fingerprint
 }
 
-func (l *LocalInfo) GetHostname() string {
+func (l *Peer) GetHostname() string {
 	return l.hostname
 }

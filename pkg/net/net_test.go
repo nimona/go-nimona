@@ -9,8 +9,8 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/identity"
-	"nimona.io/pkg/net/peer"
+	npeer "nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 )
 
 func TestNetDiscoverer(t *testing.T) {
@@ -70,7 +70,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	go func() {
 		cconn, err := n2.Dial(ctx, peer1Addr)
 		assert.NoError(t, err)
-		err = Write((peer.PeerInfoRequest{}).ToObject(), cconn)
+		err = Write((npeer.PeerInfoRequest{}).ToObject(), cconn)
 		assert.NoError(t, err)
 		done <- true
 
@@ -78,7 +78,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	sc := <-sconn
 
-	err = Write((peer.PeerInfoRequest{}).ToObject(), sc)
+	err = Write((npeer.PeerInfoRequest{}).ToObject(), sc)
 	assert.NoError(t, err)
 
 	<-done
@@ -122,11 +122,11 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 }
 
 func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.PrivateKey, *network, *identity.LocalInfo) {
+	*crypto.PrivateKey, *network, *peer.Peer) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	localInfo, err := identity.NewLocalInfo("", pk) // nolint: ineffassign
+	localInfo, err := peer.NewPeer("", pk) // nolint: ineffassign
 	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
 
