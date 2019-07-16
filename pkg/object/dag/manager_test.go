@@ -13,7 +13,7 @@ import (
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/exchange"
@@ -244,7 +244,7 @@ func TestSync(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := identity.NewLocalInfo("", pk)
+	li, err := peer.NewPeer("", pk)
 	assert.NoError(t, err)
 
 	m, err := dag.New(os, x, nil, li)

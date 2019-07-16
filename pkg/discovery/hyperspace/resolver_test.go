@@ -16,7 +16,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 )
@@ -147,7 +147,7 @@ func newPeer(
 	net.Network,
 	exchange.Exchange,
 	discovery.Discoverer,
-	*identity.LocalInfo,
+	*peer.Peer,
 	context.Context,
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
@@ -171,7 +171,7 @@ func newPeer(
 
 	disc := discovery.NewDiscoverer()
 	ds, err := graph.NewCayleyWithTempStore()
-	local, err := identity.NewLocalInfo("", pk)
+	local, err := peer.NewPeer("", pk)
 	assert.NoError(t, err)
 
 	n, err := net.New(disc, local)

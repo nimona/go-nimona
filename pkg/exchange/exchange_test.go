@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
-	"nimona.io/pkg/identity"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
@@ -434,7 +434,7 @@ func newPeer(
 	net.Network,
 	*exchange,
 	graph.Store,
-	*identity.LocalInfo,
+	*peer.Peer,
 ) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
@@ -442,7 +442,7 @@ func newPeer(
 	ds, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	li, err := identity.NewLocalInfo("", pk)
+	li, err := peer.NewPeer("", pk)
 	assert.NoError(t, err)
 
 	if relayAddress != "" {
