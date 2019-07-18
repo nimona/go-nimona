@@ -14,14 +14,20 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-// Discoverer hyperspace
-type Discoverer struct {
-	context  context.Context
-	store    *Store
-	net      net.Network
-	exchange exchange.Exchange
-	local    *peer.Peer
-}
+//go:generate $GOBIN/genny -in=../../../internal/generator/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=string"
+
+type (
+	// Discoverer hyperspace
+	Discoverer struct {
+		context  context.Context
+		store    *Store
+		net      net.Network
+		exchange exchange.Exchange
+		local    *peer.Peer
+
+		contentHashes *StringSyncList
+	}
+)
 
 // NewDiscoverer returns a new hyperspace discoverer
 func NewDiscoverer(
@@ -37,9 +43,13 @@ func NewDiscoverer(
 		net:      network,
 		local:    local,
 		exchange: exc,
+
+		contentHashes: &StringSyncList{},
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "hyperspace/Discoverer"),
+	)
 
 	if _, err := exc.Handle("/peer.request", r.handleObject); err != nil {
 		return nil, err
@@ -47,6 +57,19 @@ func NewDiscoverer(
 	if _, err := exc.Handle("/peer", r.handleObject); err != nil {
 		return nil, err
 	}
+
+	r.local.OnContentHashesUpdated(func(hashes []string) {
+		nctx, _ := context.WithTimeout(ctx, time.Second*5)
+		for _, hash := range hashes {
+			r.contentHashes.Put(hash)
+		}
+		err := r.publishContentHashes(nctx)
+		if err != nil {
+			logger.Debug("could not publish content hashes",
+				log.Error(err),
+			)
+		}
+	})
 
 	// r.store.Add(local.GetPeerInfo())
 	go func() {
@@ -329,6 +352,44 @@ func (r *Discoverer) bootstrap(
 		err = r.exchange.Send(ctx, r.local.GetPeerInfo().ToObject(), addr, opts...)
 		if err != nil {
 			logger.Debug("bootstrap could not send self", log.Error(err))
+		}
+	}
+	return nil
+}
+
+func (r *Discoverer) getContentHashes() []string {
+	cIDs := []string{}
+	r.contentHashes.Range(func(k string) bool {
+		cIDs = append(cIDs, k)
+		return true
+	})
+	return cIDs
+}
+
+func (r *Discoverer) publishContentHashes(
+	ctx context.Context,
+) error {
+	logger := log.FromContext(ctx).With(
+		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
+	)
+	cps := r.store.FindClosest(&npeer.PeerInfoRequest{
+		ContentIDs: r.getContentHashes(),
+	})
+	if len(cps) == 0 {
+		return nil
+	}
+
+	pi := r.local.GetPeerInfo()
+	opts := []exchange.Option{
+		exchange.WithLocalDiscoveryOnly(),
+	}
+
+	o := pi.ToObject()
+	for _, p := range cps {
+		addr := p.Address()
+		err := r.exchange.Send(ctx, o, addr, opts...)
+		if err != nil {
+			logger.Debug("could not send request", log.Error(err))
 		}
 	}
 	return nil
