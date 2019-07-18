@@ -8,11 +8,11 @@ import (
 	"nimona.io/pkg/net/peer"
 )
 
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_addresses_handlers_generated.go -pkg peer gen "KeyType=string ValueType=bool"
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
+//go:generate $GOBIN/genny -in=../../internal/generator/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=string"
 
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_on_addresses_generated.go -pkg peer gen "KeyType=OnAddressesUpdated ValueType=bool"
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_on_content_hashes_generated.go -pkg peer gen "KeyType=OnContentHashesUpdated ValueType=bool"
+//go:generate $GOBIN/genny -in=../../internal/generator/synclist/synclist.go -out=synclist_on_addresses_generated.go -pkg peer gen "KeyType=OnAddressesUpdated"
+//go:generate $GOBIN/genny -in=../../internal/generator/synclist/synclist.go -out=synclist_on_content_hashes_generated.go -pkg peer gen "KeyType=OnContentHashesUpdated"
 
 type (
 	Addresses []string
@@ -25,10 +25,10 @@ type (
 		identityKey *crypto.PrivateKey
 
 		addresses     *StringAddressesSyncMap
-		contentHashes *StringBoolSyncMap
+		contentHashes *StringSyncList
 
-		onAddressesHandlers     *OnAddressesUpdatedBoolSyncMap
-		onContentHashesHandlers *OnContentHashesUpdatedBoolSyncMap
+		onAddressesHandlers     *OnAddressesUpdatedSyncList
+		onContentHashesHandlers *OnContentHashesUpdatedSyncList
 	}
 	OnAddressesUpdated     func([]string)
 	OnContentHashesUpdated func([]string)
@@ -50,59 +50,55 @@ func NewPeer(hostname string, key *crypto.PrivateKey) (
 		key:         key,
 
 		addresses:     &StringAddressesSyncMap{},
-		contentHashes: &StringBoolSyncMap{},
+		contentHashes: &StringSyncList{},
 
-		onAddressesHandlers:     &OnAddressesUpdatedBoolSyncMap{},
-		onContentHashesHandlers: &OnContentHashesUpdatedBoolSyncMap{},
+		onAddressesHandlers:     &OnAddressesUpdatedSyncList{},
+		onContentHashesHandlers: &OnContentHashesUpdatedSyncList{},
 	}, nil
 }
 
-func (l *Peer) OnAddressesUpdated(h OnAddressesUpdated) {
-	t := true
-	l.onAddressesHandlers.Put(h, &t)
+func (p *Peer) OnAddressesUpdated(h OnAddressesUpdated) {
+	p.onAddressesHandlers.Put(h)
 }
 
-func (l *Peer) OnContentHashesUpdated(h OnContentHashesUpdated) {
-	t := true
-	l.onContentHashesHandlers.Put(h, &t)
+func (p *Peer) OnContentHashesUpdated(h OnContentHashesUpdated) {
+	p.onContentHashesHandlers.Put(h)
 }
 
-func (l *Peer) AddAddress(protocol string, addrs []string) {
+func (p *Peer) AddAddress(protocol string, addrs []string) {
 	a := Addresses(addrs)
-	l.addresses.Put(protocol, &a)
-	all := l.GetAddresses()
-	l.onAddressesHandlers.Range(func(h OnAddressesUpdated, _ *bool) bool {
+	p.addresses.Put(protocol, &a)
+	all := p.GetAddresses()
+	p.onAddressesHandlers.Range(func(h OnAddressesUpdated) bool {
 		h(all)
 		return true
 	})
 }
 
 // AddContentHash that should be published with the peer info
-func (l *Peer) AddContentHash(hashes ...string) {
+func (p *Peer) AddContentHash(hashes ...string) {
 	for _, h := range hashes {
-		t := true
-		l.contentHashes.Put(h, &t)
+		p.contentHashes.Put(h)
 	}
-	all := l.GetContentHashes()
-	l.onContentHashesHandlers.Range(func(h OnContentHashesUpdated, _ *bool) bool {
+	all := p.GetContentHashes()
+	p.onContentHashesHandlers.Range(func(h OnContentHashesUpdated) bool {
 		h(all)
 		return true
 	})
 }
 
 // RemoveContentHash from the peer info
-func (l *Peer) RemoveContentHash(hashes ...string) {
+func (p *Peer) RemoveContentHash(hashes ...string) {
 	for _, h := range hashes {
-		t := false
-		l.contentHashes.Put(h, &t)
+		p.contentHashes.Delete(h)
 	}
 }
 
-func (l *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
-	l.keyLock.Lock()
-	defer l.keyLock.Unlock()
+func (p *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
+	p.keyLock.Lock()
+	defer p.keyLock.Unlock()
 
-	pko := l.key.PublicKey.ToObject()
+	pko := p.key.PublicKey.ToObject()
 	sig, err := crypto.NewSignature(
 		identityKey,
 		crypto.AlgorithmObjectHash,
@@ -112,60 +108,61 @@ func (l *Peer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
 		return err
 	}
 
-	l.identityKey = identityKey
-	l.key.PublicKey.Signature = sig
+	p.identityKey = identityKey
+	p.key.PublicKey.Signature = sig
 
 	return nil
 }
 
-func (l *Peer) GetPeerKey() *crypto.PrivateKey {
-	l.keyLock.RLock()
-	defer l.keyLock.RUnlock()
-	return l.key
+func (p *Peer) GetPeerKey() *crypto.PrivateKey {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+	return p.key
 }
 
-func (l *Peer) GetAddresses() []string {
+func (p *Peer) GetAddresses() []string {
 	addrs := []string{}
-	l.addresses.Range(func(_ string, addresses *Addresses) bool {
+	p.addresses.Range(func(_ string, addresses *Addresses) bool {
 		addrs = append(addrs, []string(*addresses)...)
 		return true
 	})
 	return addrs
 }
 
-func (l *Peer) GetContentHashes() []string {
+func (p *Peer) GetContentHashes() []string {
 	hashes := []string{}
-	l.contentHashes.Range(func(hash string, ok *bool) bool {
-		if *ok == true {
-			hashes = append(hashes, hash)
-		}
+	p.contentHashes.Range(func(hash string) bool {
+		hashes = append(hashes, hash)
 		return true
 	})
 	return hashes
 }
 
 // GetPeerInfo returns the local peer info
-func (l *Peer) GetPeerInfo() *peer.PeerInfo {
+func (p *Peer) GetPeerInfo() *peer.PeerInfo {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+
 	// TODO cache peer info and reuse
-	p := &peer.PeerInfo{
-		Addresses:  l.GetAddresses(),
-		ContentIDs: l.GetContentHashes(),
+	pi := &peer.PeerInfo{
+		Addresses:  p.GetAddresses(),
+		ContentIDs: p.GetContentHashes(),
 	}
 
-	o := p.ToObject()
-	if err := crypto.Sign(o, l.GetPeerKey()); err != nil {
+	o := pi.ToObject()
+	if err := crypto.Sign(o, p.GetPeerKey()); err != nil {
 		panic(err)
 	}
-	if err := p.FromObject(o); err != nil {
+	if err := pi.FromObject(o); err != nil {
 		panic(err)
 	}
-	return p
+	return pi
 }
 
-func (l *Peer) GetFingerprint() crypto.Fingerprint {
-	return l.fingerprint
+func (p *Peer) GetFingerprint() crypto.Fingerprint {
+	return p.fingerprint
 }
 
-func (l *Peer) GetHostname() string {
-	return l.hostname
+func (p *Peer) GetHostname() string {
+	return p.hostname
 }
