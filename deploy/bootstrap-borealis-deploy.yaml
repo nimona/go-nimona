@@ -18,7 +18,7 @@ spec:
       subdomain: bootstrap
       containers:
         - name: daemon
-          image: nimona/nimona:v0.3.1
+          image: nimona/nimona:v0.3.2
           imagePullPolicy: Always
           ports:
             - containerPort: 80
