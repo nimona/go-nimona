@@ -9,7 +9,7 @@ import (
 
 // ObjectForwardRequest is the payload for proxied objects
 type ObjectForwardRequest struct {
-	Recipient string            `json:"recipient"` // address
-	FwObject  *object.Object    `json:"fwObject"`
-	Signature *crypto.Signature `json:"@signature"`
+	Recipient string            `json:"recipient:s"` // address
+	FwObject  object.Object     `json:"fwObject:o"`
+	Signature *crypto.Signature `json:"@signature:o"`
 }

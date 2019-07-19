@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/cheekybits/genny v1.0.0
-	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golangci/golangci-lint v1.17.1
 	github.com/goreleaser/goreleaser v0.112.2
 	github.com/mattn/go-isatty v0.0.8 // indirect
@@ -13,12 +12,11 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.5 // indirect
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
-	golang.org/x/net v0.0.0-20190713164153-da137c7871d7 // indirect
-	golang.org/x/sys v0.0.0-20190713164153-fae7ac547cb7 // indirect
-	golang.org/x/tools v0.0.0-20190713164153-8b927904ee0d // indirect
-	google.golang.org/appengine v1.6.1 // indirect
+	nimona.io/tools/community v0.0.0-00010101000000-000000000000 // indirect
+	nimona.io/tools/objectify v0.0.0-00010101000000-000000000000 // indirect
+	nimona.io/tools/proxy v0.0.0-00010101000000-000000000000 // indirect
+	nimona.io/tools/vanity v0.0.0-00010101000000-000000000000 // indirect
 )
 
 replace (

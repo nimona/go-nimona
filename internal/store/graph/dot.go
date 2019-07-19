@@ -8,7 +8,7 @@ import (
 )
 
 // Dot returns a graphviz representation of a graph
-func Dot(objects []*object.Object) (string, error) {
+func Dot(objects []object.Object) (string, error) {
 	graphObjects := make([]graphObject, len(objects))
 	for i, o := range objects {
 		igo, err := toGraphObject(o)

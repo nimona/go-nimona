@@ -95,7 +95,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	p := &object.Policy{}
-	if err := p.FromObject(op); err != nil {
+	if err := p.FromObject(*op); err != nil {
 		c.AbortWithError(400, errors.New("invalid policy")) // nolint: errcheck
 		return
 	}

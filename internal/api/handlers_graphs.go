@@ -72,7 +72,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	)
 	logger.Info("handling request")
 
-	// os := []*object.Object{}
+	// os := []object.Object{}
 
 	if sync {
 		// find peers who provide the root object

@@ -14,7 +14,7 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s Foo) ToObject() *object.Object {
+func (s Foo) ToObject() object.Object {
 	o := object.New()
 	o.SetType(FooType)
 	if s.Bar != "" {
@@ -60,7 +60,7 @@ func anythingToAnythingForFoo(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Foo) FromObject(o *object.Object) error {
+func (s *Foo) FromObject(o object.Object) error {
 	atoa := anythingToAnythingForFoo
 	if err := atoa(o.GetRaw("bar"), &s.Bar); err != nil {
 		return err
@@ -72,7 +72,7 @@ func (s *Foo) FromObject(o *object.Object) error {
 		s.InnerFoo = v
 	} else if v, ok := o.GetRaw("inner_foo").(map[string]interface{}); ok {
 		s.InnerFoo = &InnerFoo{}
-		o := &object.Object{}
+		o := object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
 		}
@@ -82,7 +82,7 @@ func (s *Foo) FromObject(o *object.Object) error {
 		return err
 	}
 	if v, ok := o.GetRaw("object").(map[string]interface{}); ok {
-		s.Object = &object.Object{}
+		s.Object = object.Object{}
 		s.Object.FromMap(v)
 	}
 	if err := atoa(o.GetRaw("objects"), &s.Objects); err != nil {

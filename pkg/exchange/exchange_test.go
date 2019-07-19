@@ -31,14 +31,14 @@ func TestSendSuccess(t *testing.T) {
 	disc2.Add(l1.GetSignedPeer())
 
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo2 := object.FromMap(em2)
 
@@ -54,7 +54,7 @@ func TestSendSuccess(t *testing.T) {
 	// nolint: dupl
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
+		assert.Equal(t, eo1.GetRaw("body:s"), o.GetRaw("body:s"))
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -63,7 +63,7 @@ func TestSendSuccess(t *testing.T) {
 
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
+		assert.Equal(t, eo2.GetRaw("body:s"), o.GetRaw("body:s"))
 		w2ObjectHandled = true
 		wg.Done()
 		return nil
@@ -105,8 +105,8 @@ func TestSendWithResponseSuccess(t *testing.T) {
 
 	// send object with request id
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 	err = crypto.Sign(eo1, k1)
@@ -129,8 +129,8 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	// send object in response with the same request id
 
 	em2 := map[string]interface{}{
-		"@ctx":          "test/msg",
-		"body":          "bar2",
+		"@ctx:s":        "test/msg",
+		"body:s":        "bar2",
 		ObjectRequestID: "foo",
 	}
 	eo2 := object.FromMap(em2)
@@ -169,8 +169,8 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 
 	// send object with request id
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 	err = crypto.Sign(eo1, k1)
@@ -193,8 +193,8 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 	// send object in response with the same request id
 
 	em2 := map[string]interface{}{
-		"@ctx":          "test/msg",
-		"body":          "bar2",
+		"@ctx:s":        "test/msg",
+		"body:s":        "bar2",
 		ObjectRequestID: "foo",
 	}
 	eo2 := object.FromMap(em2)
@@ -233,8 +233,8 @@ func TestRequestSuccess(t *testing.T) {
 
 	// add an object to n2's store
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 	err = d2.Put(eo1)
@@ -260,6 +260,7 @@ func TestRequestSuccess(t *testing.T) {
 		t.Log("did not receive response in time")
 		t.FailNow()
 	case o1r := <-out:
+		eo1.SetRaw("_reqID:s", "foo")
 		compareObjects(t, eo1, o1r.Payload)
 	}
 }
@@ -280,8 +281,8 @@ func TestRequestSuccessHTTP(t *testing.T) {
 
 	// add an object to n2's store
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 	err = d2.Put(eo1)
@@ -307,6 +308,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 		t.Log("did not receive response in time")
 		t.FailNow()
 	case o1r := <-out:
+		eo1.SetRaw("_reqID:s", "foo")
 		compareObjects(t, eo1, o1r.Payload)
 	}
 }
@@ -363,14 +365,14 @@ func TestSendRelay(t *testing.T) {
 
 	// now we should be able to relay objects between n1 and n2
 	em1 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
-		"@ctx": "test/msg",
-		"body": "bar1",
+		"@ctx:s": "test/msg",
+		"body:s": "bar1",
 	}
 	eo2 := object.FromMap(em2)
 
@@ -386,7 +388,7 @@ func TestSendRelay(t *testing.T) {
 	// nolint: dupl
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo1.GetRaw("body"), o.GetRaw("body"))
+		assert.Equal(t, eo1.GetRaw("body:s"), o.GetRaw("body:s"))
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -395,7 +397,7 @@ func TestSendRelay(t *testing.T) {
 
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo2.GetRaw("body"), o.GetRaw("body"))
+		assert.Equal(t, eo2.GetRaw("body:s"), o.GetRaw("body:s"))
 		w2ObjectHandled = true
 		wg.Done()
 		return nil
@@ -473,10 +475,8 @@ func newPeer(
 	return pk, n, x.(*exchange), ds, li
 }
 
-func compareObjects(t *testing.T, expected, actual *object.Object) {
-	for m := range expected.Members {
-		assert.Equal(t, jp(expected.GetRaw(m)), jp(actual.GetRaw(m)))
-	}
+func compareObjects(t *testing.T, expected, actual object.Object) {
+	assert.Equal(t, jp(expected), jp(actual))
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when

@@ -46,7 +46,7 @@ func NewBolt(st *storm.DB) (Backlog, error) {
 }
 
 // Push an object to the backlog with one or more recipients
-func (bl *Bolt) Push(o *object.Object, ks ...*crypto.PublicKey) error {
+func (bl *Bolt) Push(o object.Object, ks ...*crypto.PublicKey) error {
 	b, err := json.Marshal(o.ToMap())
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (bl *Bolt) Push(o *object.Object, ks ...*crypto.PublicKey) error {
 }
 
 // Pop an object from the backlog for a specific recipient
-func (bl *Bolt) Pop(k *crypto.PublicKey) (*object.Object, AckFunc, error) {
+func (bl *Bolt) Pop(k *crypto.PublicKey) (object.Object, AckFunc, error) {
 	item := &item{}
 	q := bl.storm.Select(
 		query.Eq("KeyHash", k.Fingerprint().String()),
@@ -103,7 +103,7 @@ func (bl *Bolt) Pop(k *crypto.PublicKey) (*object.Object, AckFunc, error) {
 		return nil, nil, err
 	}
 
-	o := &object.Object{}
+	o := object.Object{}
 	m := map[string]interface{}{}
 	if err := json.Unmarshal(item.Object, &m); err != nil {
 		return nil, nil, err

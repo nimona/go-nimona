@@ -5,7 +5,8 @@
 package hyperspace
 
 import (
-	"github.com/mitchellh/mapstructure"
+	"encoding/json"
+
 	"nimona.io/pkg/object"
 )
 
@@ -14,48 +15,19 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s ContentHashesBloomRequest) ToObject() *object.Object {
-	o := object.New()
-	o.SetType(ContentHashesBloomRequestType)
-	if len(s.BloomFilter) > 0 {
-		o.SetRaw("bloomFilter", s.BloomFilter)
+func (s ContentHashesBloomRequest) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": ContentHashesBloomRequestType,
 	}
-	return o
-}
-
-func anythingToAnythingForContentHashesBloomRequest(
-	from interface{},
-	to interface{},
-) error {
-	config := &mapstructure.DecoderConfig{
-		Result:  to,
-		TagName: "json",
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	if err := decoder.Decode(from); err != nil {
-		return err
-	}
-
-	return nil
+	b, _ := json.Marshal(s)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ContentHashesBloomRequest) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForContentHashesBloomRequest
-	if err := atoa(o.GetRaw("bloomFilter"), &s.BloomFilter); err != nil {
-		return err
-	}
-
-	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
-		ao.afterFromObject()
-	}
-
-	return nil
+func (s *ContentHashesBloomRequest) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type

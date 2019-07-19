@@ -2,6 +2,7 @@ package object
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"math"
 	"reflect"
@@ -13,7 +14,7 @@ import (
 // It is based on Ben Laurie's object hash, but using the same type hints
 // as TJSON instead.
 // TODO add redaction
-func ObjectHash(o *Object) ([]byte, error) {
+func ObjectHash(o Object) ([]byte, error) {
 	return objecthash(o.ToMap(), true)
 }
 
@@ -122,7 +123,11 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 	case HintData:
 		switch t.Kind() {
 		case reflect.String:
-			panic("handle baseXX encoded data")
+			d, err := base64.StdEncoding.DecodeString(o.(string))
+			if err != nil {
+				panic(err)
+			}
+			return hash(HintData, d)
 		case reflect.Slice:
 			bo := make([]byte, v.Len())
 			switch t.Elem().Kind() {

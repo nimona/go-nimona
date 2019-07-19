@@ -2,35 +2,31 @@
 
 // +build !generate
 
-package dag
+package object
 
-import (
-	"encoding/json"
-
-	"nimona.io/pkg/object"
-)
+import "encoding/json"
 
 const (
-	ObjectGraphResponseType = "/object-graph-response"
+	PolicyType = "/policy"
 )
 
 // ToObject returns a f12n object
-func (s ObjectGraphResponse) ToObject() object.Object {
+func (s Policy) ToObject() Object {
 	m := map[string]interface{}{
-		"@ctx:s": ObjectGraphResponseType,
+		"@ctx:s": PolicyType,
 	}
 	b, _ := json.Marshal(s)
 	json.Unmarshal(b, &m)
-	return object.Object(m)
+	return Object(m)
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ObjectGraphResponse) FromObject(o object.Object) error {
+func (s *Policy) FromObject(o Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type
-func (s ObjectGraphResponse) GetType() string {
-	return ObjectGraphResponseType
+func (s Policy) GetType() string {
+	return PolicyType
 }

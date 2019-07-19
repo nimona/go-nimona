@@ -8,6 +8,6 @@ import (
 
 // ObjectGraphResponse is the payload for proxied objects
 type ObjectGraphResponse struct {
-	ObjectHashes []string          `json:"objectHashes"`
-	Signature    *crypto.Signature `json:"@signature"`
+	ObjectHashes []string          `json:"objectHashes:as"`
+	Signature    *crypto.Signature `json:"@signature:o"`
 }

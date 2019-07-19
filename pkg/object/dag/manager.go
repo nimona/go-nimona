@@ -13,7 +13,7 @@ import (
 )
 
 //go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
-//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg dag gen "ObservableType=*object.Object"
+//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg dag gen "ObservableType=object.Object"
 
 type (
 	// Manager is responsible of keeping track of all the objects, graphs,
@@ -28,7 +28,7 @@ type (
 			*Graph,
 			error,
 		)
-		Put(...*object.Object) error
+		Put(...object.Object) error
 		Get(
 			ctx context.Context,
 			rootHash string,
@@ -136,9 +136,9 @@ func (m *manager) Process(e *exchange.Envelope) error {
 }
 
 // IsComplete checks if a graph is missing any nodes
-func IsComplete(cs []*object.Object) bool {
+func IsComplete(cs []object.Object) bool {
 	ms := map[string]bool{}
-	cm := map[string]*object.Object{}
+	cm := map[string]object.Object{}
 	for _, c := range cs {
 		cm[c.HashBase58()] = c
 	}
@@ -155,7 +155,7 @@ func IsComplete(cs []*object.Object) bool {
 
 // Put stores a given object
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
-func (m *manager) Put(vs ...*object.Object) error {
+func (m *manager) Put(vs ...object.Object) error {
 	hashes := make([]string, len(vs))
 	for i, o := range vs {
 		hashes[i] = o.HashBase58()

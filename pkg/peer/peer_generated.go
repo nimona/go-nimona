@@ -5,8 +5,8 @@
 package peer
 
 import (
-	"github.com/mitchellh/mapstructure"
-	"nimona.io/pkg/crypto"
+	"encoding/json"
+
 	"nimona.io/pkg/object"
 )
 
@@ -15,67 +15,19 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s Peer) ToObject() *object.Object {
-	o := object.New()
-	o.SetType(PeerType)
-	if len(s.Addresses) > 0 {
-		o.SetRaw("addresses", s.Addresses)
+func (s Peer) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": PeerType,
 	}
-	if len(s.ContentTypes) > 0 {
-		o.SetRaw("contentTypes", s.ContentTypes)
-	}
-	if s.Signature != nil {
-		o.SetRaw("@signature", s.Signature)
-	}
-	return o
-}
-
-func anythingToAnythingForPeer(
-	from interface{},
-	to interface{},
-) error {
-	config := &mapstructure.DecoderConfig{
-		Result:  to,
-		TagName: "json",
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	if err := decoder.Decode(from); err != nil {
-		return err
-	}
-
-	return nil
+	b, _ := json.Marshal(s)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Peer) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForPeer
-	if err := atoa(o.GetRaw("addresses"), &s.Addresses); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
-		return err
-	}
-	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
-		s.Signature = v
-	} else if v, ok := o.GetRaw("@signature").(map[string]interface{}); ok {
-		s.Signature = &crypto.Signature{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.Signature.FromObject(o)
-	}
-
-	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
-		ao.afterFromObject()
-	}
-
-	return nil
+func (s *Peer) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type

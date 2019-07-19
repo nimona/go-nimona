@@ -16,7 +16,7 @@ var (
 )
 
 // Verify object
-func Verify(o *object.Object) error {
+func Verify(o object.Object) error {
 	if o == nil {
 		return errors.New("missing object")
 	}

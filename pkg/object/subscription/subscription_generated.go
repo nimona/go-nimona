@@ -5,7 +5,8 @@
 package subscription
 
 import (
-	"github.com/mitchellh/mapstructure"
+	"encoding/json"
+
 	"nimona.io/pkg/object"
 )
 
@@ -14,54 +15,19 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s Subscription) ToObject() *object.Object {
-	o := object.New()
-	o.SetType(SubscriptionType)
-	if s.Subscriber != "" {
-		o.SetRaw("subscriber", s.Subscriber)
+func (s Subscription) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": SubscriptionType,
 	}
-	if len(s.Parents) > 0 {
-		o.SetRaw("@parents", s.Parents)
-	}
-	return o
-}
-
-func anythingToAnythingForSubscription(
-	from interface{},
-	to interface{},
-) error {
-	config := &mapstructure.DecoderConfig{
-		Result:  to,
-		TagName: "json",
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	if err := decoder.Decode(from); err != nil {
-		return err
-	}
-
-	return nil
+	b, _ := json.Marshal(s)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Subscription) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForSubscription
-	if err := atoa(o.GetRaw("subscriber"), &s.Subscriber); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("@parents"), &s.Parents); err != nil {
-		return err
-	}
-
-	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
-		ao.afterFromObject()
-	}
-
-	return nil
+func (s *Subscription) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type

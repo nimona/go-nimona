@@ -14,7 +14,7 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s InnerFoo) ToObject() *object.Object {
+func (s InnerFoo) ToObject() object.Object {
 	o := object.New()
 	o.SetType(InnerFooType)
 	if s.InnerBar != "" {
@@ -96,7 +96,7 @@ func anythingToAnythingForInnerFoo(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *InnerFoo) FromObject(o *object.Object) error {
+func (s *InnerFoo) FromObject(o object.Object) error {
 	atoa := anythingToAnythingForInnerFoo
 	if err := atoa(o.GetRaw("inner_bar"), &s.InnerBar); err != nil {
 		return err

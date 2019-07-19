@@ -1,7 +1,6 @@
 package object
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,10 +9,10 @@ import (
 func TestObjectMethods(t *testing.T) {
 	m := map[string]interface{}{
 		"@ctx:s": "ctx-value",
-		"@signature:o": map[string]interface{}{
+		"@signature:o": Object{
 			"@ctx:s": "-signature",
 		},
-		"@policy:o": map[string]interface{}{
+		"@policy:o": Object{
 			"@ctx:s": "-policy",
 		},
 		"@parents:as": []string{"parent-value"},
@@ -21,44 +20,39 @@ func TestObjectMethods(t *testing.T) {
 
 	o := FromMap(m)
 
-	assert.Equal(t, jp(m["@ctx:s"]), jp(o.GetRaw("@ctx")))
-	assert.Equal(t, jp(m["@signature:o"]), jp(o.GetRaw("@signature")))
-	assert.Equal(t, jp(m["@policy:o"]), jp(o.GetRaw("@policy")))
-	assert.Equal(t, jp(m["@parents:as"]), jp(o.GetRaw("@parents")))
+	assert.Equal(t, m["@ctx:s"], o.GetRaw("@ctx:s"))
+	assert.Equal(t, m["@signature:o"], o.GetRaw("@signature:o"))
+	assert.Equal(t, m["@policy:o"], o.GetRaw("@policy:o"))
+	assert.Equal(t, m["@parents:as"], o.GetRaw("@parents:as"))
 
 	n := New()
 
-	n.SetRaw("@ctx", m["@ctx:s"])
-	n.SetRaw("@signature", m["@signature:o"])
-	n.SetRaw("@policy", m["@policy:o"])
-	n.SetRaw("@parents", m["@parents:as"])
+	n.SetRaw("@ctx:", m["@ctx:s"])
+	n.SetRaw("@signature:o", m["@signature:o"])
+	n.SetRaw("@policy:o", m["@policy:o"])
+	n.SetRaw("@parents:as", m["@parents:as"])
 
-	assert.Equal(t, jp(m["@ctx:s"]), jp(n.GetRaw("@ctx")))
-	assert.Equal(t, jp(m["@signature:o"]), jp(n.GetRaw("@signature")))
-	assert.Equal(t, jp(m["@policy:o"]), jp(n.GetRaw("@policy")))
-	assert.Equal(t, jp(m["@parents:as"]), jp(n.GetRaw("@parents")))
+	assert.Equal(t, m["@ctx:s"], n.GetRaw("@ctx:"))
+	assert.Equal(t, m["@signature:o"], n.GetRaw("@signature:o"))
+	assert.Equal(t, m["@policy:o"], n.GetRaw("@policy:o"))
+	assert.Equal(t, m["@parents:as"], n.GetRaw("@parents:as"))
 
 	e := New()
 
 	e.SetType(o.GetType())
-	e.SetSignature(o.GetSignature())
-	e.SetPolicy(o.GetPolicy())
+	s := o.GetSignature()
+	e.SetSignature(*s)
+	p := o.GetPolicy()
+	e.SetPolicy(*p)
 	e.SetParents(o.GetParents())
 
-	assert.NotNil(t, e.GetRaw("@ctx"))
-	assert.NotNil(t, e.GetRaw("@signature"))
-	assert.NotNil(t, e.GetRaw("@policy"))
-	assert.NotNil(t, e.GetRaw("@parents"))
+	assert.NotNil(t, e.GetRaw("@ctx:s"))
+	assert.NotNil(t, e.GetRaw("@signature:o"))
+	assert.NotNil(t, e.GetRaw("@policy:o"))
+	assert.NotNil(t, e.GetRaw("@parents:as"))
 
-	assert.Equal(t, jp(m["@ctx:s"]), jp(e.GetRaw("@ctx")))
-	assert.Equal(t, jp(m["@signature:o"]), jp(e.GetRaw("@signature")))
-	assert.Equal(t, jp(m["@policy:o"]), jp(e.GetRaw("@policy")))
-	assert.Equal(t, jp(m["@parents:as"]), jp(e.GetRaw("@parents")))
-}
-
-// jp is a lazy approach to comparing the mess that is unmarshaling json when
-// dealing with numbers
-func jp(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ") // nolint
-	return string(b)
+	assert.Equal(t, m["@ctx:s"], e.GetRaw("@ctx:s"))
+	assert.Equal(t, m["@signature:o"], e.GetRaw("@signature:o"))
+	assert.Equal(t, m["@policy:o"], e.GetRaw("@policy:o"))
+	assert.Equal(t, m["@parents:as"], e.GetRaw("@parents:as"))
 }
