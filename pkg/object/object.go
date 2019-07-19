@@ -63,7 +63,7 @@ func (o Object) ToMap() map[string]interface{} {
 
 // GetType returns the object's type
 func (o Object) GetType() string {
-	if v, ok := o.GetRaw("@ctx:s").(string); ok {
+	if v, ok := o.Get("@ctx:s").(string); ok {
 		return v
 	}
 	return ""
@@ -71,7 +71,7 @@ func (o Object) GetType() string {
 
 // SetType sets the object's type
 func (o Object) SetType(v string) {
-	o.SetRaw("@ctx:s", v)
+	o.Set("@ctx:s", v)
 }
 
 // GetSignature returns the object's signature, or nil
@@ -81,7 +81,7 @@ func (o Object) GetSignature() *Object {
 
 // SetSignature sets the object's signature
 func (o Object) SetSignature(v Object) {
-	o.SetRaw("@signature:o", v)
+	o.Set("@signature:o", v)
 }
 
 // GetPolicy returns the object's policy, or nil
@@ -90,7 +90,7 @@ func (o Object) GetPolicy() *Object {
 }
 
 func (o Object) getObject(k string) *Object {
-	v := o.GetRaw(k)
+	v := o.Get(k)
 	switch o := v.(type) {
 	case Object:
 		return &o
@@ -110,16 +110,16 @@ func (o Object) getObject(k string) *Object {
 
 // SetPolicy sets the object's policy
 func (o Object) SetPolicy(v Object) {
-	o.SetRaw("@policy:o", v)
+	o.Set("@policy:o", v)
 }
 
 // GetParents returns the object's parent refs
 func (o Object) GetParents() []string {
 	// TODO can we use mapstructure or something else to do this?
-	if v, ok := o.GetRaw("@parents:as").([]string); ok {
+	if v, ok := o.Get("@parents:as").([]string); ok {
 		return v
 	}
-	if v, ok := o.GetRaw("@parents:as").([]interface{}); ok {
+	if v, ok := o.Get("@parents:as").([]interface{}); ok {
 		parents := []string{}
 		for _, p := range v {
 			ps, ok := p.(string)
@@ -135,16 +135,16 @@ func (o Object) GetParents() []string {
 
 // SetParents sets the object's parents
 func (o Object) SetParents(v []string) {
-	o.SetRaw("@parents:as", v)
+	o.Set("@parents:as", v)
 }
 
-// GetRaw -
-func (o Object) GetRaw(lk string) interface{} {
+// Get -
+func (o Object) Get(lk string) interface{} {
 	return o[lk]
 }
 
-// SetRaw -
-func (o Object) SetRaw(k string, v interface{}) {
+// Set -
+func (o Object) Set(k string, v interface{}) {
 	map[string]interface{}(o)[k] = v
 }
 

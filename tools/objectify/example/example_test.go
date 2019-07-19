@@ -54,7 +54,7 @@ func TestGenerated(t *testing.T) {
 
 	// o := object.Object{}
 	// o.SetType("foo")
-	// o.SetRaw("bar", "bar")
+	// o.Set("bar", "bar")
 
 	f := &Foo{
 		Bar:      "foo",

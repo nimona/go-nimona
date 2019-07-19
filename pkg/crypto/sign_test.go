@@ -38,7 +38,7 @@ func TestSignAndVerify(t *testing.T) {
 	err = Verify(eo)
 	assert.NoError(t, err)
 
-	eo.SetRaw("something-new:s", "some-new-value")
+	eo.Set("something-new:s", "some-new-value")
 	err = Verify(eo)
 	assert.Error(t, err)
 }

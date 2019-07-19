@@ -18,22 +18,22 @@ func (s Foo) ToObject() object.Object {
 	o := object.New()
 	o.SetType(FooType)
 	if s.Bar != "" {
-		o.SetRaw("bar", s.Bar)
+		o.Set("bar", s.Bar)
 	}
 	if len(s.Bars) > 0 {
-		o.SetRaw("bars", s.Bars)
+		o.Set("bars", s.Bars)
 	}
 	if s.InnerFoo != nil {
-		o.SetRaw("inner_foo", s.InnerFoo)
+		o.Set("inner_foo", s.InnerFoo)
 	}
 	if len(s.InnerFoos) > 0 {
-		o.SetRaw("inner_foos", s.InnerFoos)
+		o.Set("inner_foos", s.InnerFoos)
 	}
 	if s.Object != nil {
-		o.SetRaw("object", s.Object)
+		o.Set("object", s.Object)
 	}
 	if len(s.Objects) > 0 {
-		o.SetRaw("objects", s.Objects)
+		o.Set("objects", s.Objects)
 	}
 	return o
 }
@@ -62,15 +62,15 @@ func anythingToAnythingForFoo(
 // FromObject populates the struct from a f12n object
 func (s *Foo) FromObject(o object.Object) error {
 	atoa := anythingToAnythingForFoo
-	if err := atoa(o.GetRaw("bar"), &s.Bar); err != nil {
+	if err := atoa(o.Get("bar"), &s.Bar); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("bars"), &s.Bars); err != nil {
+	if err := atoa(o.Get("bars"), &s.Bars); err != nil {
 		return err
 	}
-	if v, ok := o.GetRaw("inner_foo").(*InnerFoo); ok {
+	if v, ok := o.Get("inner_foo").(*InnerFoo); ok {
 		s.InnerFoo = v
-	} else if v, ok := o.GetRaw("inner_foo").(map[string]interface{}); ok {
+	} else if v, ok := o.Get("inner_foo").(map[string]interface{}); ok {
 		s.InnerFoo = &InnerFoo{}
 		o := object.Object{}
 		if err := o.FromMap(v); err != nil {
@@ -78,14 +78,14 @@ func (s *Foo) FromObject(o object.Object) error {
 		}
 		s.InnerFoo.FromObject(o)
 	}
-	if err := atoa(o.GetRaw("inner_foos"), &s.InnerFoos); err != nil {
+	if err := atoa(o.Get("inner_foos"), &s.InnerFoos); err != nil {
 		return err
 	}
-	if v, ok := o.GetRaw("object").(map[string]interface{}); ok {
+	if v, ok := o.Get("object").(map[string]interface{}); ok {
 		s.Object = object.Object{}
 		s.Object.FromMap(v)
 	}
-	if err := atoa(o.GetRaw("objects"), &s.Objects); err != nil {
+	if err := atoa(o.Get("objects"), &s.Objects); err != nil {
 		return err
 	}
 

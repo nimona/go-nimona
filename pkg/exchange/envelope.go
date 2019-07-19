@@ -17,7 +17,7 @@ type Envelope struct {
 
 func (e *Envelope) Respond(o object.Object) error {
 	if e.RequestID != "" {
-		o.SetRaw(ObjectRequestID, e.RequestID)
+		o.Set(ObjectRequestID, e.RequestID)
 	}
 	return net.Write(o, e.conn)
 }
