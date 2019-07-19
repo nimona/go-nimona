@@ -54,7 +54,7 @@ func TestSendSuccess(t *testing.T) {
 	// nolint: dupl
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo1.GetRaw("body:s"), o.GetRaw("body:s"))
+		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -63,7 +63,7 @@ func TestSendSuccess(t *testing.T) {
 
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo2.GetRaw("body:s"), o.GetRaw("body:s"))
+		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
 		w2ObjectHandled = true
 		wg.Done()
 		return nil
@@ -260,7 +260,7 @@ func TestRequestSuccess(t *testing.T) {
 		t.Log("did not receive response in time")
 		t.FailNow()
 	case o1r := <-out:
-		eo1.SetRaw("_reqID:s", "foo")
+		eo1.Set("_reqID:s", "foo")
 		compareObjects(t, eo1, o1r.Payload)
 	}
 }
@@ -308,7 +308,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 		t.Log("did not receive response in time")
 		t.FailNow()
 	case o1r := <-out:
-		eo1.SetRaw("_reqID:s", "foo")
+		eo1.Set("_reqID:s", "foo")
 		compareObjects(t, eo1, o1r.Payload)
 	}
 }
@@ -388,7 +388,7 @@ func TestSendRelay(t *testing.T) {
 	// nolint: dupl
 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo1.GetRaw("body:s"), o.GetRaw("body:s"))
+		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
 		w1ObjectHandled = true
 		wg.Done()
 		return nil
@@ -397,7 +397,7 @@ func TestSendRelay(t *testing.T) {
 
 	_, err = x2.Handle("tes**", func(e *Envelope) error {
 		o := e.Payload
-		assert.Equal(t, eo2.GetRaw("body:s"), o.GetRaw("body:s"))
+		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
 		w2ObjectHandled = true
 		wg.Done()
 		return nil

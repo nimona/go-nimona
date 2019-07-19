@@ -121,7 +121,7 @@ func (m *manager) Process(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		reqID := o.GetRaw(exchange.ObjectRequestID).(string)
+		reqID := o.Get(exchange.ObjectRequestID).(string)
 		if err := m.handleObjectGraphRequest(
 			ctx,
 			reqID,

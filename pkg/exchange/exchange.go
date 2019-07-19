@@ -297,7 +297,7 @@ func (w *exchange) process(
 	conn *net.Connection,
 ) error {
 	reqID := ""
-	if id, ok := o.GetRaw(ObjectRequestID).(string); ok {
+	if id, ok := o.Get(ObjectRequestID).(string); ok {
 		reqID = id
 	}
 
@@ -330,7 +330,7 @@ func (w *exchange) process(
 			)
 		}
 		if reqID != "" {
-			res.SetRaw(ObjectRequestID, reqID)
+			res.Set(ObjectRequestID, reqID)
 		}
 		cerr := make(chan error, 1)
 		ctx, cf := context.WithTimeout(context.Background(), time.Second)
@@ -468,11 +468,11 @@ func (w *exchange) Send(
 	}
 
 	if opts.ResponseID != "" {
-		o.SetRaw(ObjectRequestID, opts.ResponseID)
+		o.Set(ObjectRequestID, opts.ResponseID)
 	}
 
 	if opts.RequestID != "" {
-		o.SetRaw(ObjectRequestID, opts.RequestID)
+		o.Set(ObjectRequestID, opts.RequestID)
 		sr := &sendRequest{
 			out: opts.Response,
 		}

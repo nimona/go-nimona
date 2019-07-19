@@ -62,7 +62,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 			case req := <-outgoing:
 				if err := crypto.Sign(req, api.local.GetPeerKey()); err != nil {
 					logger.Error("could not sign outgoing object", log.Error(err))
-					req.SetRaw("_status", "error signing object")
+					req.Set("_status", "error signing object")
 					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 						continue
@@ -71,7 +71,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
 				subjects := []string{}
-				if ps := req.GetRaw("_recipients"); ps != nil {
+				if ps := req.Get("_recipients"); ps != nil {
 					if subsi, ok := ps.([]interface{}); ok {
 						for _, subi := range subsi {
 							if sub, ok := subi.(string); ok {
@@ -82,7 +82,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				}
 				if len(subjects) == 0 {
 					// TODO handle error
-					req.SetRaw("_status", "no subjects")
+					req.Set("_status", "no subjects")
 					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 					}
@@ -98,7 +98,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 						logger.Error("could not send outgoing object",
 							log.Error(err),
 							log.String("addr", addr))
-						req.SetRaw("_status", "error sending object")
+						req.Set("_status", "error sending object")
 					}
 					// TODO handle error
 					if err := write(conn, api.mapObject(req)); err != nil {

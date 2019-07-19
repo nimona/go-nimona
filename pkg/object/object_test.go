@@ -20,22 +20,22 @@ func TestObjectMethods(t *testing.T) {
 
 	o := FromMap(m)
 
-	assert.Equal(t, m["@ctx:s"], o.GetRaw("@ctx:s"))
-	assert.Equal(t, m["@signature:o"], o.GetRaw("@signature:o"))
-	assert.Equal(t, m["@policy:o"], o.GetRaw("@policy:o"))
-	assert.Equal(t, m["@parents:as"], o.GetRaw("@parents:as"))
+	assert.Equal(t, m["@ctx:s"], o.Get("@ctx:s"))
+	assert.Equal(t, m["@signature:o"], o.Get("@signature:o"))
+	assert.Equal(t, m["@policy:o"], o.Get("@policy:o"))
+	assert.Equal(t, m["@parents:as"], o.Get("@parents:as"))
 
 	n := New()
 
-	n.SetRaw("@ctx:", m["@ctx:s"])
-	n.SetRaw("@signature:o", m["@signature:o"])
-	n.SetRaw("@policy:o", m["@policy:o"])
-	n.SetRaw("@parents:as", m["@parents:as"])
+	n.Set("@ctx:", m["@ctx:s"])
+	n.Set("@signature:o", m["@signature:o"])
+	n.Set("@policy:o", m["@policy:o"])
+	n.Set("@parents:as", m["@parents:as"])
 
-	assert.Equal(t, m["@ctx:s"], n.GetRaw("@ctx:"))
-	assert.Equal(t, m["@signature:o"], n.GetRaw("@signature:o"))
-	assert.Equal(t, m["@policy:o"], n.GetRaw("@policy:o"))
-	assert.Equal(t, m["@parents:as"], n.GetRaw("@parents:as"))
+	assert.Equal(t, m["@ctx:s"], n.Get("@ctx:"))
+	assert.Equal(t, m["@signature:o"], n.Get("@signature:o"))
+	assert.Equal(t, m["@policy:o"], n.Get("@policy:o"))
+	assert.Equal(t, m["@parents:as"], n.Get("@parents:as"))
 
 	e := New()
 
@@ -46,13 +46,13 @@ func TestObjectMethods(t *testing.T) {
 	e.SetPolicy(*p)
 	e.SetParents(o.GetParents())
 
-	assert.NotNil(t, e.GetRaw("@ctx:s"))
-	assert.NotNil(t, e.GetRaw("@signature:o"))
-	assert.NotNil(t, e.GetRaw("@policy:o"))
-	assert.NotNil(t, e.GetRaw("@parents:as"))
+	assert.NotNil(t, e.Get("@ctx:s"))
+	assert.NotNil(t, e.Get("@signature:o"))
+	assert.NotNil(t, e.Get("@policy:o"))
+	assert.NotNil(t, e.Get("@parents:as"))
 
-	assert.Equal(t, m["@ctx:s"], e.GetRaw("@ctx:s"))
-	assert.Equal(t, m["@signature:o"], e.GetRaw("@signature:o"))
-	assert.Equal(t, m["@policy:o"], e.GetRaw("@policy:o"))
-	assert.Equal(t, m["@parents:as"], e.GetRaw("@parents:as"))
+	assert.Equal(t, m["@ctx:s"], e.Get("@ctx:s"))
+	assert.Equal(t, m["@signature:o"], e.Get("@signature:o"))
+	assert.Equal(t, m["@policy:o"], e.Get("@policy:o"))
+	assert.Equal(t, m["@parents:as"], e.Get("@parents:as"))
 }

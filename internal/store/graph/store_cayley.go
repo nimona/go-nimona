@@ -44,7 +44,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		Parents:  []quad.IRI{},
 		Data:     string(b),
 	}
-	if d, ok := v.GetRaw("@display").(string); ok {
+	if d, ok := v.Get("@display").(string); ok {
 		o.Display = d
 	}
 	for _, p := range v.GetParents() {
