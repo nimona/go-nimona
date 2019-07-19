@@ -20,8 +20,8 @@ func TestSignAndVerify(t *testing.T) {
 	assert.NotNil(t, subjectKey)
 
 	m := map[string]interface{}{
-		"@ctx": "test/signed",
-		"foo":  "bar",
+		"@ctx:s": "test/signed",
+		"foo:s":  "bar",
 	}
 
 	eo := object.FromMap(m)
@@ -38,7 +38,7 @@ func TestSignAndVerify(t *testing.T) {
 	err = Verify(eo)
 	assert.NoError(t, err)
 
-	eo.SetRaw("something-new", "some-new-value")
+	eo.SetRaw("something-new:s", "some-new-value")
 	err = Verify(eo)
 	assert.Error(t, err)
 }

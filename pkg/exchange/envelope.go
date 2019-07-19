@@ -10,12 +10,12 @@ import (
 type Envelope struct {
 	RequestID string
 	Sender    *crypto.PublicKey
-	Payload   *object.Object
+	Payload   object.Object
 
 	conn *net.Connection
 }
 
-func (e *Envelope) Respond(o *object.Object) error {
+func (e *Envelope) Respond(o object.Object) error {
 	if e.RequestID != "" {
 		o.SetRaw(ObjectRequestID, e.RequestID)
 	}

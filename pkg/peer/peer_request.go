@@ -8,6 +8,6 @@ import (
 
 // PeerRequest is a request for a peer info
 type PeerRequest struct {
-	Keys         []crypto.Fingerprint
-	ContentTypes []string
+	Keys         []crypto.Fingerprint `json:"keys:ao"`
+	ContentTypes []string             `json:"contentTypes:as"`
 }

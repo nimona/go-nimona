@@ -5,7 +5,8 @@
 package crypto
 
 import (
-	"github.com/mitchellh/mapstructure"
+	"encoding/json"
+
 	"nimona.io/pkg/object"
 )
 
@@ -14,73 +15,19 @@ const (
 )
 
 // ToObject returns a f12n object
-func (s Signature) ToObject() *object.Object {
-	o := object.New()
-	o.SetType(SignatureType)
-	if s.PublicKey != nil {
-		o.SetRaw("pub", s.PublicKey)
+func (s Signature) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": SignatureType,
 	}
-	if s.Alg != "" {
-		o.SetRaw("alg", s.Alg)
-	}
-	if len(s.R) > 0 {
-		o.SetRaw("r", s.R)
-	}
-	if len(s.S) > 0 {
-		o.SetRaw("s", s.S)
-	}
-	return o
-}
-
-func anythingToAnythingForSignature(
-	from interface{},
-	to interface{},
-) error {
-	config := &mapstructure.DecoderConfig{
-		Result:  to,
-		TagName: "json",
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	if err := decoder.Decode(from); err != nil {
-		return err
-	}
-
-	return nil
+	b, _ := json.Marshal(s)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Signature) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForSignature
-	if v, ok := o.GetRaw("pub").(*PublicKey); ok {
-		s.PublicKey = v
-	} else if v, ok := o.GetRaw("pub").(map[string]interface{}); ok {
-		s.PublicKey = &PublicKey{}
-		o := &object.Object{}
-		if err := o.FromMap(v); err != nil {
-			return err
-		}
-		s.PublicKey.FromObject(o)
-	}
-	if err := atoa(o.GetRaw("alg"), &s.Alg); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("r"), &s.R); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("s"), &s.S); err != nil {
-		return err
-	}
-
-	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {
-		ao.afterFromObject()
-	}
-
-	return nil
+func (s *Signature) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type

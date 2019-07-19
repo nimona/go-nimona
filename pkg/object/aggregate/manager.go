@@ -75,7 +75,7 @@ func (m *manager) Get(ctx context.Context, hash string) (*AggregateObject, error
 		)
 	}
 
-	var ro *object.Object
+	var ro object.Object
 	ms := []*mutation.Mutation{}
 	for i := range os.Objects {
 		if os.Objects[i].GetType() != mutation.MutationType {
@@ -147,7 +147,7 @@ func (m *manager) Append(
 
 	// if there are no tails we just use the root
 	if len(ts) == 0 {
-		ts = []*object.Object{
+		ts = []object.Object{
 			o,
 		}
 	}

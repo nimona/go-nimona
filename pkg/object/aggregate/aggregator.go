@@ -11,8 +11,8 @@ type (
 	Aggregator struct{}
 	// AggregateObject is an object with its mutations applied
 	AggregateObject struct {
-		Aggregate *object.Object
-		Root      *object.Object
+		Aggregate object.Object
+		Root      object.Object
 		Mutations []*mutation.Mutation
 	}
 )
@@ -37,7 +37,7 @@ func (o *AggregateObject) Mutate(m *mutation.Mutation) error {
 // Aggregate given an ordered list of objects and mutations,
 // returns a list of aggregate objects with their mutations applied.
 func (a *Aggregator) Aggregate(
-	o *object.Object,
+	o object.Object,
 	ms []*mutation.Mutation,
 ) (
 	*AggregateObject,

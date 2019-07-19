@@ -156,9 +156,9 @@ var (
 
 // 	x := &exchange.MockExchange{}
 
-// 	var handler func(*object.Object) error
+// 	var handler func(object.Object) error
 // 	x.On("Handle", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-// 		handler = args[1].(func(*object.Object) error)
+// 		handler = args[1].(func(object.Object) error)
 // 	}).Return(nil, nil)
 
 // 	m, err := dag.New(os, x, nil)
@@ -260,7 +260,7 @@ func TestSync(t *testing.T) {
 	// 	rHashes = append(rHashes, args[1].(string))
 	// }).Return(nil)
 
-	respWith := func(o *object.Object) func(args mock.Arguments) {
+	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
 			opt := &exchange.Options{}
 			args[3].(exchange.Option)(opt)
@@ -294,7 +294,7 @@ func TestSync(t *testing.T) {
 	).Return(nil)
 
 	// request o
-	for _, i := range []*object.Object{
+	for _, i := range []object.Object{
 		o,
 		m1.ToObject(),
 		m2.ToObject(),
@@ -344,7 +344,7 @@ func TestSync(t *testing.T) {
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when
 // dealing with numbers
-func jp(v *object.Object) string {
+func jp(v object.Object) string {
 	b, _ := json.MarshalIndent(v.ToMap(), "", "  ") // nolint
 	return string(b)
 }

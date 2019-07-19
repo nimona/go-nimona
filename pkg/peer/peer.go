@@ -8,9 +8,9 @@ import (
 
 // Peer holds the information exchange needs to connect to a remote peer
 type Peer struct {
-	Addresses    []string          `json:"addresses"`
-	ContentTypes []string          `json:"contentTypes"`
-	Signature    *crypto.Signature `json:"@signature"`
+	Addresses    []string          `json:"addresses:as"`
+	ContentTypes []string          `json:"contentTypes:as"`
+	Signature    *crypto.Signature `json:"@signature:o"`
 }
 
 // Fingerprint of signer

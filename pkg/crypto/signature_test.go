@@ -35,8 +35,8 @@ func TestNewSignature(t *testing.T) {
 
 func copyObjectThroughJSON(
 	t *testing.T,
-	o *object.Object,
-) *object.Object {
+	o object.Object,
+) object.Object {
 	j, err := json.Marshal(o.ToMap())
 	assert.NoError(t, err)
 	m := map[string]interface{}{}

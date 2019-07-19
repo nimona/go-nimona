@@ -21,7 +21,7 @@ import (
 
 const (
 	// ObjectRequestID object attribute
-	ObjectRequestID = "_reqID"
+	ObjectRequestID = "_reqID:s"
 )
 
 var (
@@ -52,7 +52,7 @@ type (
 		)
 		Send(
 			ctx context.Context,
-			object *object.Object,
+			object object.Object,
 			address string,
 			options ...Option,
 		) error
@@ -90,14 +90,14 @@ type (
 	outgoingObject struct {
 		context   context.Context
 		recipient string
-		object    *object.Object
+		object    object.Object
 		options   *Options
 		err       chan error
 	}
 	// incomingObject holds an object that has just been received
 	incomingObject struct {
 		conn   *net.Connection
-		object *object.Object
+		object object.Object
 	}
 	// handler is used for keeping track of handlers and what content
 	// types they want to receive
@@ -293,7 +293,7 @@ func (w *exchange) HandleConnection(
 
 // Process incoming object
 func (w *exchange) process(
-	o *object.Object,
+	o object.Object,
 	conn *net.Connection,
 ) error {
 	reqID := ""
@@ -443,7 +443,7 @@ func WithLocalDiscoveryOnly() Option {
 // Send an object to an address
 func (w *exchange) Send(
 	ctx context.Context,
-	oo *object.Object,
+	oo object.Object,
 	address string,
 	options ...Option,
 ) error {
@@ -514,7 +514,7 @@ func (w *exchange) Send(
 
 func (w *exchange) sendDirectlyToPeer(
 	ctx context.Context,
-	o *object.Object,
+	o object.Object,
 	address string,
 	options *Options,
 ) error {
@@ -531,7 +531,7 @@ func (w *exchange) sendDirectlyToPeer(
 
 func (w *exchange) sendViaRelayToPeer(
 	ctx context.Context,
-	o *object.Object,
+	o object.Object,
 	address string,
 	options *Options,
 ) error {

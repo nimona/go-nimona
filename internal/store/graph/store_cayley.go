@@ -28,7 +28,7 @@ type graphObject struct {
 	Data     string     `quad:"data,optional"`
 }
 
-func toGraphObject(v *object.Object) (*graphObject, error) {
+func toGraphObject(v object.Object) (*graphObject, error) {
 	b, err := json.Marshal(v.ToMap())
 	if err != nil {
 		return nil, err
@@ -53,8 +53,8 @@ func toGraphObject(v *object.Object) (*graphObject, error) {
 	return o, nil
 }
 
-func fromGraphObject(v *graphObject) (*object.Object, error) {
-	o := &object.Object{}
+func fromGraphObject(v *graphObject) (object.Object, error) {
+	o := object.Object{}
 	m := map[string]interface{}{}
 	if err := json.Unmarshal([]byte(v.Data), &m); err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ type Cayley struct {
 }
 
 // Put an object in the store
-func (s *Cayley) Put(v *object.Object) error {
+func (s *Cayley) Put(v object.Object) error {
 	qw := graph.NewWriter(s.store)
 	defer func() {
 		if err := qw.Flush(); err != nil {
@@ -137,7 +137,7 @@ func (s *Cayley) Put(v *object.Object) error {
 }
 
 // Graph returns all objects in a graph given the hash of of its objects
-func (s *Cayley) Graph(hash string) ([]*object.Object, error) {
+func (s *Cayley) Graph(hash string) ([]object.Object, error) {
 	p := cayley.StartPath(
 		s.store,
 		quad.IRI(hash),
@@ -159,7 +159,7 @@ func (s *Cayley) Graph(hash string) ([]*object.Object, error) {
 		return nil, err
 	}
 
-	os := []*object.Object{}
+	os := []object.Object{}
 	for i := range gs {
 		g := gs[i]
 		o, gerr := fromGraphObject(&g)
@@ -177,7 +177,7 @@ func (s *Cayley) Graph(hash string) ([]*object.Object, error) {
 }
 
 // Get returns an object given its hash
-func (s *Cayley) Get(hash string) (*object.Object, error) {
+func (s *Cayley) Get(hash string) (object.Object, error) {
 	p := cayley.StartPath(
 		s.store,
 		quad.IRI(hash),
@@ -198,7 +198,7 @@ func (s *Cayley) Get(hash string) (*object.Object, error) {
 }
 
 // Children returns the all the children of an object, sorted
-func (s *Cayley) Children(hash string) ([]*object.Object, error) {
+func (s *Cayley) Children(hash string) ([]object.Object, error) {
 	p := cayley.StartPath(
 		s.store,
 		quad.IRI(hash),
@@ -219,7 +219,7 @@ func (s *Cayley) Children(hash string) ([]*object.Object, error) {
 		return nil, err
 	}
 
-	os := []*object.Object{}
+	os := []object.Object{}
 	for i := range gs {
 		g := gs[i]
 		o, gerr := fromGraphObject(&g)
@@ -233,7 +233,7 @@ func (s *Cayley) Children(hash string) ([]*object.Object, error) {
 }
 
 // Head returns the root object given another object in the graph.
-func (s *Cayley) Head(hash string) (*object.Object, error) {
+func (s *Cayley) Head(hash string) (object.Object, error) {
 	// TODO(geoah) Figure out how to use cayley to get the graph's head
 	p := cayley.StartPath(
 		s.store,
@@ -260,7 +260,7 @@ func (s *Cayley) Head(hash string) (*object.Object, error) {
 }
 
 // Heads returns all the objects that do not have any parents
-func (s *Cayley) Heads() ([]*object.Object, error) {
+func (s *Cayley) Heads() ([]object.Object, error) {
 	p := cayley.StartPath(
 		s.store,
 	).Has(
@@ -274,7 +274,7 @@ func (s *Cayley) Heads() ([]*object.Object, error) {
 		return nil, err
 	}
 
-	os := []*object.Object{}
+	os := []object.Object{}
 	for i := range gs {
 		g := gs[i]
 		o, gerr := fromGraphObject(&g)
@@ -305,7 +305,7 @@ func (s *Cayley) Dump() ([]graphObject, error) {
 }
 
 // Tails returns all the leaf nodes starting from an object
-func (s *Cayley) Tails(hash string) ([]*object.Object, error) {
+func (s *Cayley) Tails(hash string) ([]object.Object, error) {
 	// TODO(geoah) Figure out how to use cayley to get the graph's leaves
 	p := cayley.StartPath(
 		s.store,
@@ -334,7 +334,7 @@ func (s *Cayley) Tails(hash string) ([]*object.Object, error) {
 		}
 	}
 
-	os := []*object.Object{}
+	os := []object.Object{}
 	for i := range gs {
 		g := gs[i]
 		if !ts[g.ID.String()] {

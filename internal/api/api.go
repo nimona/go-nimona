@@ -147,8 +147,8 @@ func (api *API) Stop(c *router.Context) {
 	return
 }
 
-func (api *API) mapObject(o *object.Object) map[string]interface{} {
-	m := o.ToPlainMap()
+func (api *API) mapObject(o object.Object) map[string]interface{} {
+	m := o.ToMap()
 	m["_hash"] = o.HashBase58()
 	if o.GetType() == crypto.PublicKeyType {
 		p := &crypto.PublicKey{}
@@ -158,7 +158,7 @@ func (api *API) mapObject(o *object.Object) map[string]interface{} {
 	return m
 }
 
-func (api *API) mapObjects(os []*object.Object) []map[string]interface{} {
+func (api *API) mapObjects(os []object.Object) []map[string]interface{} {
 	ms := []map[string]interface{}{}
 	for _, o := range os {
 		ms = append(ms, api.mapObject(o))

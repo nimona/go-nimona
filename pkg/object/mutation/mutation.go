@@ -22,7 +22,7 @@ func New(ops []*Operation, parents []string) *Mutation {
 }
 
 // Mutate applies the mutation's operations on the given object
-func (c Mutation) Mutate(o *object.Object) error {
+func (c Mutation) Mutate(o object.Object) error {
 	for _, operation := range c.Operations {
 		if err := operation.Apply(o); err != nil {
 			return err

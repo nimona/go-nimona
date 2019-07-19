@@ -8,6 +8,6 @@ import (
 
 // ObjectRequest payload for ObjectRequestType
 type ObjectRequest struct {
-	ObjectHash string            `json:"objectHash"`
-	Signature  *crypto.Signature `json:"@signature"`
+	ObjectHash string            `json:"objectHash:s"`
+	Signature  *crypto.Signature `json:"@signature:o"`
 }

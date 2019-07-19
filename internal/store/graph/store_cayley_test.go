@@ -79,7 +79,7 @@ func TestCayley_Children(t *testing.T) {
 	s, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	aos := []*object.Object{o1, o2, o3, o4, o5, o6}
+	aos := []object.Object{o1, o2, o3, o4, o5, o6}
 	for _, ao := range aos {
 		err = s.Put(ao)
 		assert.NoError(t, err)
@@ -94,7 +94,7 @@ func TestCayley_Graph(t *testing.T) {
 	s, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	aos := []*object.Object{
+	aos := []object.Object{
 		a1, a2,
 		o3, o4, o5,
 		z1,
@@ -186,7 +186,7 @@ func TestCayley_Heads(t *testing.T) {
 		"@parents:as": []string{},
 	})
 
-	aos := []*object.Object{o1, o2, ox}
+	aos := []object.Object{o1, o2, ox}
 	for _, ao := range aos {
 		err = s.Put(ao)
 		assert.NoError(t, err)
@@ -215,7 +215,7 @@ func TestCayley_Tails(t *testing.T) {
 		},
 	})
 
-	aos := []*object.Object{o1, o2, o3, o4, ox1, ox2}
+	aos := []object.Object{o1, o2, o3, o4, ox1, ox2}
 	for _, ao := range aos {
 		err = s.Put(ao)
 		assert.NoError(t, err)
@@ -251,7 +251,7 @@ func TestCayley_Head(t *testing.T) {
 		},
 	})
 
-	aos := []*object.Object{o1, o2, o3, o4, ox1, ox2}
+	aos := []object.Object{o1, o2, o3, o4, ox1, ox2}
 	for _, ao := range aos {
 		err = s.Put(ao)
 		assert.NoError(t, err)

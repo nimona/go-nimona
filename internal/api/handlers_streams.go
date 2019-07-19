@@ -46,8 +46,8 @@ func (api *API) HandleGetStreams(c *router.Context) {
 
 	ctx := context.Background()
 	logger := log.FromContext(ctx).Named("api")
-	incoming := make(chan *object.Object, 100)
-	outgoing := make(chan *object.Object, 100)
+	incoming := make(chan object.Object, 100)
+	outgoing := make(chan object.Object, 100)
 
 	go func() {
 		for {

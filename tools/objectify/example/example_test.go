@@ -52,7 +52,7 @@ func TestGenerated(t *testing.T) {
 		B: true,
 	}
 
-	// o := &object.Object{}
+	// o := object.Object{}
 	// o.SetType("foo")
 	// o.SetRaw("bar", "bar")
 
@@ -62,14 +62,14 @@ func TestGenerated(t *testing.T) {
 		InnerFoo: ff,
 		// InnerFoos: []*InnerFoo{ff},
 		// Object: o,
-		// Objects   []*object.Object `json:"objects"`
+		// Objects   []object.Object `json:"objects"`
 	}
 
 	m := f.ToObject().ToMap()
 	b, _ := json.MarshalIndent(m, "", "  ")
 	fmt.Println(string(b))
 
-	uo := &object.Object{}
+	uo := object.Object{}
 	err := uo.FromMap(m)
 	assert.NoError(t, err)
 

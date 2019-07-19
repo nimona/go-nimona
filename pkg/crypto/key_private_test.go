@@ -21,7 +21,8 @@ func TestPrivateKey(t *testing.T) {
 
 	// convert SecretKey to object and back
 	nsk := &PrivateKey{}
-	err = nsk.FromObject(sk.ToObject())
+	o := sk.ToObject()
+	err = nsk.FromObject(o)
 	assert.NoError(t, err)
 	assert.Equal(t, emsk, nsk.Key())
 	assert.Equal(t, &emsk.PublicKey, nsk.PublicKey.Key())

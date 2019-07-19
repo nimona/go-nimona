@@ -11,8 +11,8 @@ type (
 	AckFunc func()
 	// Backlog keeps track of objects than need to be sent to each recipient.
 	Backlog interface {
-		Push(*object.Object, ...*crypto.PublicKey) error
-		Pop(*crypto.PublicKey) (*object.Object, AckFunc, error)
-		// Peek(*crypto.Key()) (*object.Object, error)
+		Push(object.Object, ...*crypto.PublicKey) error
+		Pop(*crypto.PublicKey) (object.Object, AckFunc, error)
+		// Peek(*crypto.Key()) (object.Object, error)
 	}
 )

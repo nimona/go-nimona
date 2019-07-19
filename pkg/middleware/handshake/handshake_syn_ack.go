@@ -9,7 +9,7 @@ import (
 
 // HandshakeSynAck is the response in the second leg of our net handshake
 type SynAck struct {
-	Nonce     string            `json:"nonce"`
-	Peer  *peer.Peer    `json:"peer,omitempty"`
-	Signature *crypto.Signature `json:"@signature"`
+	Nonce     string            `json:"nonce:s"`
+	Peer      *peer.Peer        `json:"peer:o,omitempty"`
+	Signature *crypto.Signature `json:"@signature:o"`
 }

@@ -5,5 +5,5 @@ import (
 )
 
 type Graph struct {
-	Objects []*object.Object
+	Objects []object.Object
 }

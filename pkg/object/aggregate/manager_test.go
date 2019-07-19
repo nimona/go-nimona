@@ -142,7 +142,7 @@ var (
 func Test_manager_Put(t *testing.T) {
 	tests := []struct {
 		name    string
-		object  *object.Object
+		object  object.Object
 		want    map[string]interface{}
 		wantErr error
 	}{

@@ -28,7 +28,7 @@ type (
 )
 
 // Apply ...
-func (c Operation) Apply(o *object.Object) error {
+func (c Operation) Apply(o object.Object) error {
 	path := strings.Join(c.Cursor, ".")
 	m := o.ToMap()
 

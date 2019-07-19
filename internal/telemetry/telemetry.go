@@ -14,8 +14,8 @@ var (
 )
 
 type Exchanger interface {
-	Send(ctx context.Context, o *object.Object, address string) error
-	Handle(contentType string, h func(o *object.Object) error) (func(), error)
+	Send(ctx context.Context, o object.Object, address string) error
+	Handle(contentType string, h func(o object.Object) error) (func(), error)
 }
 
 const connectionEventType = "nimona.io/telemetry.connection"
@@ -91,7 +91,7 @@ func (t *metrics) SendEvent(ctx context.Context, event Collectable) error {
 	return t.exchange.Send(ctx, event.ToObject(), t.statsAddress)
 }
 
-func (t *metrics) handleObject(o *object.Object) error {
+func (t *metrics) handleObject(o object.Object) error {
 	switch o.GetType() {
 	case typeConnectionEvent:
 		v := &ConnectionEvent{}

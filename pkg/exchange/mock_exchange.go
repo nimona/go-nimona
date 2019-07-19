@@ -56,7 +56,7 @@ func (_m *MockExchange) Request(ctx context.Context, objectHash string, address 
 }
 
 // Send provides a mock function with given fields: ctx, _a1, address, options
-func (_m *MockExchange) Send(ctx context.Context, _a1 *object.Object, address string, options ...Option) error {
+func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, address string, options ...Option) error {
 	_va := make([]interface{}, len(options))
 	for _i := range options {
 		_va[_i] = options[_i]
@@ -67,7 +67,7 @@ func (_m *MockExchange) Send(ctx context.Context, _a1 *object.Object, address st
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *object.Object, string, ...Option) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, object.Object, string, ...Option) error); ok {
 		r0 = rf(ctx, _a1, address, options...)
 	} else {
 		r0 = ret.Error(0)

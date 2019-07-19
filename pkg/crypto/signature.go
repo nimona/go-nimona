@@ -28,17 +28,17 @@ const (
 
 // Signature object (container), currently supports only ES256
 type Signature struct {
-	PublicKey *PublicKey `json:"pub"`
-	Alg       string     `json:"alg"`
-	R         []byte     `json:"r"`
-	S         []byte     `json:"s"`
+	PublicKey *PublicKey `json:"pub:o"`
+	Alg       string     `json:"alg:s"`
+	R         []byte     `json:"r:d"`
+	S         []byte     `json:"s:d"`
 }
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
 	key *PrivateKey,
 	alg string,
-	o *object.Object,
+	o object.Object,
 ) (*Signature, error) {
 
 	if key == nil {
@@ -104,13 +104,13 @@ func NewSignature(
 	}, nil
 }
 
-func GetObjectSignature(o *object.Object) (*Signature, error) {
-	v, ok := o.GetRaw("@signature").(map[string]interface{})
-	if !ok {
+func GetObjectSignature(o object.Object) (*Signature, error) {
+	so := o.GetSignature()
+	if so == nil {
 		return nil, errors.New("object is not signed")
 	}
-	vo := &object.Object{}
-	if err := vo.FromMap(v); err != nil {
+	vo := object.Object{}
+	if err := vo.FromMap(*so); err != nil {
 		return nil, errors.Wrap(
 			errors.New("invalid signature object"),
 			err,
@@ -126,7 +126,7 @@ func GetObjectSignature(o *object.Object) (*Signature, error) {
 	return s, nil
 }
 
-func GetObjectKeys(o *object.Object) (pks []*PublicKey) {
+func GetObjectKeys(o object.Object) (pks []*PublicKey) {
 	sig, _ := GetObjectSignature(o)
 	for {
 		if sig == nil || sig.PublicKey == nil {
@@ -137,7 +137,6 @@ func GetObjectKeys(o *object.Object) (pks []*PublicKey) {
 		sig = pk.Signature
 	}
 }
-
 
 func GetSignatureKeys(sig *Signature) (pks []*PublicKey) {
 	for {

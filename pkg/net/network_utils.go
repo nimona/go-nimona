@@ -10,7 +10,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-func Write(o *object.Object, conn *Connection) error {
+func Write(o object.Object, conn *Connection) error {
 	if conn == nil {
 		log.DefaultLogger.Error("conn cannot be nil")
 		return errors.New("missing conn")
@@ -48,7 +48,7 @@ func Write(o *object.Object, conn *Connection) error {
 	return nil
 }
 
-func Read(conn *Connection) (*object.Object, error) {
+func Read(conn *Connection) (object.Object, error) {
 	logger := log.DefaultLogger
 
 	r := <-conn.lines
@@ -63,7 +63,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}()
 
-	o := &object.Object{}
+	o := object.Object{}
 	if err := o.FromMap(m); err != nil {
 		return nil, err
 	}
