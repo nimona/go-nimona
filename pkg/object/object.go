@@ -4,14 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/fatih/structs"
-
 	"nimona.io/internal/encoding/base58"
 )
-
-func init() {
-	structs.DefaultTagName = "json"
-}
 
 type (
 	// Object for everything f12n

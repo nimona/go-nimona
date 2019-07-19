@@ -24,8 +24,6 @@ github.com/dop251/goja v0.0.0-20190713164153-65ce6d6e2428 h1:qg8WCPz/1YyqunOkWru
 github.com/dop251/goja v0.0.0-20190713164153-65ce6d6e2428/go.mod h1:Mw6PkjjMXWbTj+nnj4s3QPXq1jaT0s5pC0iFD4+BOAA=
 github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53 h1:OTuEpp8bYIQQIDyW3qKwvyY2FowQ8t6p3VELdA5aIp8=
 github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53/go.mod h1:3WaCX16Lxvohw0qhIVz8dXrKA/6K3ZYmNPYqccqRRCc=
-github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
-github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/go-sourcemap/sourcemap v2.1.2+incompatible h1:0b/xya7BKGhXuqFESKM4oIiRo9WOt2ebz7KxfreD6ug=
 github.com/go-sourcemap/sourcemap v2.1.2+incompatible/go.mod h1:F8jJfvm2KbVjc5NqelyYJmf/v5J0dwNLS2mL4sNA1Jg=
 github.com/go-test/deep v1.0.1 h1:UQhStjbkDClarlmv0am7OXXO4/GaPdCGiUiMTvi28sg=
