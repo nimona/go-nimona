@@ -318,7 +318,7 @@ func Test_manager_Put(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := peer.NewPeer("", pk)
+	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
 	d, err := dag.New(os, x, nil, li)
@@ -358,7 +358,7 @@ func TestAppend(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := peer.NewPeer("", pk)
+	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
 	d, err := dag.New(os, x, nil, li)

@@ -19,12 +19,12 @@ import (
 )
 
 type httpTransport struct {
-	local   *peer.Peer
+	local   *peer.LocalPeer
 	address string
 }
 
 func NewHTTPTransport(
-	local *peer.Peer,
+	local *peer.LocalPeer,
 	address string,
 ) Transport {
 	return &httpTransport{

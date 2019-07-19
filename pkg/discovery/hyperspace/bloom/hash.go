@@ -1,8 +1,9 @@
-package hyperspace
+package bloom
 
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	"github.com/spaolacci/murmur3"
 )
@@ -29,8 +30,9 @@ func HashChunked(prefix string, o []byte) []int {
 	i := []int{}
 	var b int32
 	for j, c := range chunk(o, 4) {
-		b = Hash([]byte(fmt.Sprintf("%s_%d_%s", prefix, j, string(c))))
+		b = Hash([]byte(fmt.Sprintf("%s%d%s", prefix, j, string(c))))
 		i = append(i, int(b))
 	}
+	sort.Ints(i)
 	return i
 }

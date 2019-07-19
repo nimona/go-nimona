@@ -17,12 +17,12 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
+	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/peer"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/peer"
 )
 
 var (
@@ -105,7 +105,7 @@ func main() {
 	discoverer := discovery.NewDiscoverer()
 
 	// construct local info
-	localInfo, err := peer.NewPeer(
+	localInfo, err := peer.NewLocalPeer(
 		config.Daemon.AnnounceHostname,
 		config.Daemon.PeerKey,
 	)
@@ -222,7 +222,7 @@ func main() {
 	if ik != nil {
 		fmt.Println("* Identity fingerprint:\n  *", ik.PublicKey.Fingerprint())
 	}
-	peerAddresses := localInfo.GetPeerInfo().Addresses
+	peerAddresses := localInfo.GetAddresses()
 	fmt.Println("* Peer addresses:")
 	if len(peerAddresses) > 0 {
 		for _, addr := range peerAddresses {

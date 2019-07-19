@@ -7,11 +7,10 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
-
 )
 
 // NewHandshake ...
-func New(local *peer.Peer, discoverer discovery.Discoverer) net.Middleware {
+func New(local *peer.LocalPeer, discoverer discovery.Discoverer) net.Middleware {
 	return &Handshake{
 		local:      local,
 		discoverer: discoverer,
@@ -21,7 +20,7 @@ func New(local *peer.Peer, discoverer discovery.Discoverer) net.Middleware {
 // Handshake ..
 type Handshake struct {
 	discoverer discovery.Discoverer
-	local      *peer.Peer
+	local      *peer.LocalPeer
 }
 
 // TODO needs to be able to handle both server and client interactions
@@ -43,8 +42,8 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 	nonce := net.RandStringBytesMaskImprSrc(8)
 	syn := &Syn{
-		Nonce:    nonce,
-		PeerInfo: hs.local.GetPeerInfo(),
+		Nonce: nonce,
+		Peer:  hs.local.GetSignedPeer(),
 	}
 	so := syn.ToObject()
 	if err := crypto.Sign(so, hs.local.GetPeerKey()); err != nil {
@@ -75,8 +74,8 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.PeerInfo.Signature.PublicKey
-	hs.discoverer.Add(synAck.PeerInfo)
+	conn.RemotePeerKey = synAck.Peer.Signature.PublicKey
+	hs.discoverer.Add(synAck.Peer)
 
 	ack := &Ack{
 		Nonce: nonce,
@@ -119,12 +118,12 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.PeerInfo.Signature.PublicKey
-	hs.discoverer.Add(syn.PeerInfo)
+	conn.RemotePeerKey = syn.Peer.Signature.PublicKey
+	hs.discoverer.Add(syn.Peer)
 
 	synAck := &SynAck{
-		Nonce:    syn.Nonce,
-		PeerInfo: hs.local.GetPeerInfo(),
+		Nonce: syn.Nonce,
+		Peer:  hs.local.GetSignedPeer(),
 	}
 
 	sao := synAck.ToObject()

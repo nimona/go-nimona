@@ -11,21 +11,15 @@ import (
 )
 
 const (
-	PeerInfoType = "/peer"
+	PeerType = "nimona.io/discovery/peer"
 )
 
 // ToObject returns a f12n object
-func (s PeerInfo) ToObject() *object.Object {
+func (s Peer) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(PeerInfoType)
+	o.SetType(PeerType)
 	if len(s.Addresses) > 0 {
 		o.SetRaw("addresses", s.Addresses)
-	}
-	if len(s.Protocols) > 0 {
-		o.SetRaw("protocols", s.Protocols)
-	}
-	if len(s.ContentIDs) > 0 {
-		o.SetRaw("contentIDs", s.ContentIDs)
 	}
 	if len(s.ContentTypes) > 0 {
 		o.SetRaw("contentTypes", s.ContentTypes)
@@ -36,7 +30,7 @@ func (s PeerInfo) ToObject() *object.Object {
 	return o
 }
 
-func anythingToAnythingForPeerInfo(
+func anythingToAnythingForPeer(
 	from interface{},
 	to interface{},
 ) error {
@@ -58,15 +52,9 @@ func anythingToAnythingForPeerInfo(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *PeerInfo) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForPeerInfo
+func (s *Peer) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForPeer
 	if err := atoa(o.GetRaw("addresses"), &s.Addresses); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("protocols"), &s.Protocols); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("contentIDs"), &s.ContentIDs); err != nil {
 		return err
 	}
 	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
@@ -91,6 +79,6 @@ func (s *PeerInfo) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s PeerInfo) GetType() string {
-	return PeerInfoType
+func (s Peer) GetType() string {
+	return PeerType
 }

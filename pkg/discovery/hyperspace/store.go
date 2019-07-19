@@ -1,140 +1,161 @@
 package hyperspace
 
 import (
+	"fmt"
 	"sort"
-	"sync"
 
-	"github.com/james-bowman/sparse"
+	"nimona.io/pkg/discovery/hyperspace/bloom"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 )
 
-type storeValue struct {
-	vector   *sparse.Vector
-	peerInfo *peer.PeerInfo
-}
+//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=ContentHashesBloom"
+//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		peers: map[crypto.Fingerprint]*storeValue{},
+		blooms: &CryptoFingerprintContentHashesBloomSyncMap{},
+		peers:  &CryptoFingerprintPeerPeerSyncMap{},
 	}
 }
 
-// Store holds peer capabilities with their vectors
+// Store holds peer content blooms and their fingerprints
 type Store struct {
-	lock  sync.RWMutex
-	peers map[crypto.Fingerprint]*storeValue
+	blooms *CryptoFingerprintContentHashesBloomSyncMap
+	peers  *CryptoFingerprintPeerPeerSyncMap
 }
 
-// Add peer capabilities to store
-func (s *Store) Add(cs ...*peer.PeerInfo) {
-	s.lock.Lock()
-	for _, c := range cs {
-		pir := getPeerInfoRequest(c)
-		v := Vectorise(pir)
-		fingerprint := c.Fingerprint()
-		s.peers[fingerprint] = &storeValue{
-			vector:   v,
-			peerInfo: c,
-		}
-	}
-	s.lock.Unlock()
+// Add peers
+func (s *Store) AddPeer(peer *peer.Peer) {
+	s.peers.Put(peer.Fingerprint(), peer)
 }
 
-// FindClosest returns peers that closest resemble the query
-func (s *Store) FindClosest(q *peer.PeerInfoRequest) []*peer.PeerInfo {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+// Add content hashes
+func (s *Store) AddContentHashes(c *ContentHashesBloom) {
+	s.blooms.Put(c.Signature.PublicKey.Fingerprint(), c)
+}
 
-	qv := Vectorise(q)
-
-	// fmt.Println("-------- looking for", q)
-	// fmt.Println("looking for", q)
-	// fmt.Println("query vector", qv)
+// FindClosestPeer returns peers that closest resemble the query
+func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
+	q := bloom.NewBloom(f.String())
 
 	type kv struct {
-		distance  float64
-		vector    *sparse.Vector
-		peerInfos *peer.PeerInfo
+		bloomIntersection int
+		peer              *peer.Peer
 	}
 
 	r := []kv{}
-	for _, v := range s.peers {
-		d := CosineSimilarity(qv, v.vector)
-		// d := SimpleSimilarity(qv, v)
+	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
+		pb := bloom.NewBloom(p.Fingerprint().String())
 		r = append(r, kv{
-			distance:  d,
-			vector:    v.vector,
-			peerInfos: v.peerInfo,
+			bloomIntersection: intersectionCount(q.Bloom(), pb.Bloom()),
+			peer:              p,
 		})
-		// fmt.Println("--- distance from", v.peerInfo.Fingerprint(), "is", d)
-	}
-
-	sort.Slice(r, func(i, j int) bool {
-		return r[i].distance > r[j].distance
+		return true
 	})
 
-	// fmt.Println("first result is", r[0].peerInfos)
-	// fmt.Println("first result vector is", r[0].vector)
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].bloomIntersection < r[j].bloomIntersection
+	})
 
-	rs := []*peer.PeerInfo{}
+	fs := []*peer.Peer{}
 	for i, c := range r {
-		rs = append(rs, c.peerInfos)
-		if i > 10 {
+		fs = append(fs, c.peer)
+		if i > 10 { // TODO make limit configurable
 			break
 		}
 	}
 
-	return rs
+	return fs
+}
+
+// FindClosestContentProvider returns peers that are "closet" to the given
+// content
+func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentHashesBloom {
+	type kv struct {
+		bloomIntersection int
+		contentHashBloom  *ContentHashesBloom
+	}
+
+	r := []kv{}
+	s.blooms.Range(func(f crypto.Fingerprint, b *ContentHashesBloom) bool {
+		r = append(r, kv{
+			bloomIntersection: intersectionCount(q.Bloom(), b.Bloom()),
+			contentHashBloom:  b,
+		})
+		return true
+	})
+
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].bloomIntersection < r[j].bloomIntersection
+	})
+
+	cs := []*ContentHashesBloom{}
+	for i, c := range r {
+		cs = append(cs, c.contentHashBloom)
+		if i > 10 { // TODO make limit configurable
+			break
+		}
+	}
+
+	return cs
 }
 
 // FindByFingerprint returns peers that are signed by a fingerprint
-func (s *Store) FindByFingerprint(fingerprint crypto.Fingerprint) []*peer.PeerInfo {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	ps := map[crypto.Fingerprint]*peer.PeerInfo{}
-	for _, v := range s.peers {
-		p := v.peerInfo
-		keys := crypto.GetSignatureKeys(p.Signature)
-		for _, k := range keys {
-			if k.Fingerprint() == fingerprint {
-				ps[fingerprint] = p
-				break
+func (s *Store) FindByFingerprint(
+	fingerprint crypto.Fingerprint,
+) []*peer.Peer {
+	ps := []*peer.Peer{}
+	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
+		for _, k := range crypto.GetSignatureKeys(p.Signature) {
+			fmt.Println("_____", k.Fingerprint().String(), fingerprint.String())
+			if k.Fingerprint().String() != fingerprint.String() {
+				continue
 			}
+			ps = append(ps, p)
+			break
 		}
-	}
-
-	fps := []*peer.PeerInfo{}
-	for _, p := range ps {
-		fps = append(fps, p)
-	}
-
-	return fps
+		return true
+	})
+	return ps
 }
 
 // FindByContent returns peers that match a given content hash
-func (s *Store) FindByContent(contentHash string) []*peer.PeerInfo {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+func (s *Store) FindByContent(contentHash string) []*ContentHashesBloom {
+	cs := []*ContentHashesBloom{}
+	q := bloom.NewBloom(contentHash)
 
-	ps := map[crypto.Fingerprint]*peer.PeerInfo{}
-	for _, v := range s.peers {
-		p := v.peerInfo
-		for _, ch := range p.ContentIDs {
-			if ch == contentHash {
-				ps[p.Fingerprint()] = p
-				break
-			}
+	s.blooms.Range(func(f crypto.Fingerprint, c *ContentHashesBloom) bool {
+		if intersectionCount(c.Bloom(), q.Bloom()) != len(q) {
+			return true
+		}
+		cs = append(cs, c)
+		return true
+	})
+
+	return cs
+}
+
+func intersectionCount(a, b []int) int {
+	m := make(map[int]uint64)
+	for _, k := range a {
+		m[k] |= (1 << 0)
+	}
+	for _, k := range b {
+		m[k] |= (1 << 1)
+	}
+
+	i := 0
+	for _, v := range m {
+		a := v&(1<<0) != 0
+		b := v&(1<<1) != 0
+		switch {
+		case a && b:
+			i++
 		}
 	}
 
-	fps := []*peer.PeerInfo{}
-	for _, p := range ps {
-		fps = append(fps, p)
-	}
-
-	return fps
+	return i
 }

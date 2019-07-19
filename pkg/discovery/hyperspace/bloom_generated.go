@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package dht
+package hyperspace
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	ProviderType = "nimona.io/dht/provider"
+	ContentHashesBloomType = "nimona.io/discovery/hyperspace/bloom"
 )
 
 // ToObject returns a f12n object
-func (s Provider) ToObject() *object.Object {
+func (s ContentHashesBloom) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(ProviderType)
-	if len(s.ObjectIDs) > 0 {
-		o.SetRaw("objectIDs", s.ObjectIDs)
+	o.SetType(ContentHashesBloomType)
+	if len(s.BloomFilter) > 0 {
+		o.SetRaw("bloomFilter", s.BloomFilter)
 	}
 	if s.Signature != nil {
 		o.SetRaw("@signature", s.Signature)
@@ -27,7 +27,7 @@ func (s Provider) ToObject() *object.Object {
 	return o
 }
 
-func anythingToAnythingForProvider(
+func anythingToAnythingForContentHashesBloom(
 	from interface{},
 	to interface{},
 ) error {
@@ -49,9 +49,9 @@ func anythingToAnythingForProvider(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *Provider) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForProvider
-	if err := atoa(o.GetRaw("objectIDs"), &s.ObjectIDs); err != nil {
+func (s *ContentHashesBloom) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForContentHashesBloom
+	if err := atoa(o.GetRaw("bloomFilter"), &s.BloomFilter); err != nil {
 		return err
 	}
 	if v, ok := o.GetRaw("@signature").(*crypto.Signature); ok {
@@ -73,6 +73,6 @@ func (s *Provider) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s Provider) GetType() string {
-	return ProviderType
+func (s ContentHashesBloom) GetType() string {
+	return ContentHashesBloomType
 }

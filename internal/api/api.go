@@ -9,13 +9,12 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
-	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/peer"
-
 )
 
 // API for HTTP
@@ -28,7 +27,7 @@ type API struct {
 	objectStore graph.Store
 	dag         dag.Manager
 	agg         aggregate.Manager
-	local       *peer.Peer
+	local       *peer.LocalPeer
 
 	localFingerprint crypto.Fingerprint
 
@@ -47,7 +46,7 @@ func New(
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,
-	linf *peer.Peer,
+	linf *peer.LocalPeer,
 	bls graph.Store,
 	dag dag.Manager,
 	agg aggregate.Manager,
@@ -68,7 +67,7 @@ func New(
 		dag: dag,
 		agg: agg,
 
-		localFingerprint: linf.GetPeerInfo().Fingerprint(),
+		localFingerprint: linf.GetFingerprint(),
 
 		local: linf,
 

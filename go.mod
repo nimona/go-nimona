@@ -18,10 +18,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
-	github.com/gonum/internal v0.0.0-20181124074243-f884aa714029 // indirect
 	github.com/gorilla/websocket v1.4.0
-	github.com/james-bowman/sparse v0.0.0-20190515093507-80c6877364c7
 	github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
 	github.com/kr/pretty v0.1.0 // indirect
@@ -35,11 +32,8 @@ require (
 	github.com/tylertreat/BoomFilters v0.0.0-20181028192813-611b3dbe80e8 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/exp v0.0.0-20190713164153-fd42eb6b336f // indirect
 	golang.org/x/net v0.0.0-20190713164153-da137c7871d7
 	golang.org/x/sys v0.0.0-20190713164153-fae7ac547cb7 // indirect
-	gonum.org/v1/gonum v0.0.0-20190515092121-7e53d113562e
-	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect

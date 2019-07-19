@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package dht
+package peer
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -10,23 +10,23 @@ import (
 )
 
 const (
-	PeerInfoRequestType = "nimona.io/dht/peerinfo.request"
+	PeerRequestType = "nimona.io/discovery/peer.request"
 )
 
 // ToObject returns a f12n object
-func (s PeerInfoRequest) ToObject() *object.Object {
+func (s PeerRequest) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(PeerInfoRequestType)
-	if s.RequestID != "" {
-		o.SetRaw("requestID", s.RequestID)
+	o.SetType(PeerRequestType)
+	if len(s.Keys) > 0 {
+		o.SetRaw("keys", s.Keys)
 	}
-	if s.Fingerprint != "" {
-		o.SetRaw("fingerprint", s.Fingerprint)
+	if len(s.ContentTypes) > 0 {
+		o.SetRaw("contentTypes", s.ContentTypes)
 	}
 	return o
 }
 
-func anythingToAnythingForPeerInfoRequest(
+func anythingToAnythingForPeerRequest(
 	from interface{},
 	to interface{},
 ) error {
@@ -48,12 +48,12 @@ func anythingToAnythingForPeerInfoRequest(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *PeerInfoRequest) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForPeerInfoRequest
-	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
+func (s *PeerRequest) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForPeerRequest
+	if err := atoa(o.GetRaw("keys"), &s.Keys); err != nil {
 		return err
 	}
-	if err := atoa(o.GetRaw("fingerprint"), &s.Fingerprint); err != nil {
+	if err := atoa(o.GetRaw("contentTypes"), &s.ContentTypes); err != nil {
 		return err
 	}
 
@@ -65,6 +65,6 @@ func (s *PeerInfoRequest) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s PeerInfoRequest) GetType() string {
-	return PeerInfoRequestType
+func (s PeerRequest) GetType() string {
+	return PeerRequestType
 }

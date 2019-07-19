@@ -7,6 +7,6 @@ import (
 )
 
 func (api *API) HandleGetLocal(c *router.Context) {
-	ms := api.mapObject(api.local.GetPeerInfo().ToObject())
+	ms := api.mapObject(api.local.GetSignedPeer().ToObject())
 	c.JSON(http.StatusOK, ms)
 }
