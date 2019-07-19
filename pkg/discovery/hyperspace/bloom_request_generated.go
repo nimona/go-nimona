@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package dht
+package hyperspace
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -10,23 +10,20 @@ import (
 )
 
 const (
-	ProviderRequestType = "nimona.io/dht/provider.request"
+	ContentHashesBloomRequestType = "nimona.io/discovery/hyperspace/bloom.request"
 )
 
 // ToObject returns a f12n object
-func (s ProviderRequest) ToObject() *object.Object {
+func (s ContentHashesBloomRequest) ToObject() *object.Object {
 	o := object.New()
-	o.SetType(ProviderRequestType)
-	if s.RequestID != "" {
-		o.SetRaw("requestID", s.RequestID)
-	}
-	if s.Key != "" {
-		o.SetRaw("key", s.Key)
+	o.SetType(ContentHashesBloomRequestType)
+	if len(s.BloomFilter) > 0 {
+		o.SetRaw("bloomFilter", s.BloomFilter)
 	}
 	return o
 }
 
-func anythingToAnythingForProviderRequest(
+func anythingToAnythingForContentHashesBloomRequest(
 	from interface{},
 	to interface{},
 ) error {
@@ -48,12 +45,9 @@ func anythingToAnythingForProviderRequest(
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ProviderRequest) FromObject(o *object.Object) error {
-	atoa := anythingToAnythingForProviderRequest
-	if err := atoa(o.GetRaw("requestID"), &s.RequestID); err != nil {
-		return err
-	}
-	if err := atoa(o.GetRaw("key"), &s.Key); err != nil {
+func (s *ContentHashesBloomRequest) FromObject(o *object.Object) error {
+	atoa := anythingToAnythingForContentHashesBloomRequest
+	if err := atoa(o.GetRaw("bloomFilter"), &s.BloomFilter); err != nil {
 		return err
 	}
 
@@ -65,6 +59,6 @@ func (s *ProviderRequest) FromObject(o *object.Object) error {
 }
 
 // GetType returns the object's type
-func (s ProviderRequest) GetType() string {
-	return ProviderRequestType
+func (s ContentHashesBloomRequest) GetType() string {
+	return ContentHashesBloomRequestType
 }

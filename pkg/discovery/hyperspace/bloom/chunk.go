@@ -1,4 +1,4 @@
-package hyperspace
+package bloom
 
 func chunk(b []byte, n int) [][]byte {
 	r := [][]byte{}

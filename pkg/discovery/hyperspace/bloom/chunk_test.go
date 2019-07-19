@@ -1,4 +1,4 @@
-package hyperspace
+package bloom
 
 import (
 	"testing"

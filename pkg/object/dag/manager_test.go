@@ -244,7 +244,7 @@ func TestSync(t *testing.T) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	li, err := peer.NewPeer("", pk)
+	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
 	m, err := dag.New(os, x, nil, li)

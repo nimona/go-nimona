@@ -3,7 +3,7 @@ package api
 import "nimona.io/internal/http/router"
 
 func (api *API) HandleGetPeers(c *router.Context) {
-	// peers, err := api.addressBook.GetAllPeerInfo()
+	// peers, err := api.addressBook.GetAllPeer()
 	// if err != nil {
 	// 	c.AbortWithError(500, err)
 	// 	return
@@ -17,7 +17,7 @@ func (api *API) HandleGetPeers(c *router.Context) {
 
 func (api *API) HandleGetPeer(c *router.Context) {
 	// fingerprint := c.Param("fingerprint")
-	// m, err := api.addressBook.GetPeerInfo(fingerprint)
+	// m, err := api.addressBook.GetPeer(fingerprint)
 	// if err != nil {
 	// 	c.AbortWithError(500, err)
 	// 	return

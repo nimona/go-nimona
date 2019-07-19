@@ -14,10 +14,10 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
-	"nimona.io/pkg/peer"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
 func TestSendSuccess(t *testing.T) {
@@ -27,8 +27,8 @@ func TestSendSuccess(t *testing.T) {
 	k1, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	k2, _, x2, _, l2 := newPeer(t, "", disc2, true, false)
 
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l1.GetSignedPeer())
 
 	em1 := map[string]interface{}{
 		"@ctx": "test/msg",
@@ -96,8 +96,8 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	k1, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	k2, _, x2, _, l2 := newPeer(t, "", disc2, true, false)
 
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l1.GetSignedPeer())
 
 	mp2 := &mocks.Provider{}
 	err := disc2.AddProvider(mp2)
@@ -121,7 +121,7 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	err = x2.Send(
 		ctx,
 		eo1,
-		l1.GetPeerInfo().Addresses[0],
+		l1.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
 	assert.NoError(t, err)
@@ -140,7 +140,7 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	err = x1.Send(
 		ctx,
 		eo2,
-		l2.GetPeerInfo().Addresses[0],
+		l2.GetAddresses()[0],
 	)
 	assert.NoError(t, err)
 
@@ -160,8 +160,8 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 	k1, _, x1, _, l1 := newPeer(t, "", disc1, false, true)
 	k2, _, x2, _, l2 := newPeer(t, "", disc2, false, true)
 
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l1.GetSignedPeer())
 
 	mp2 := &mocks.Provider{}
 	err := disc2.AddProvider(mp2)
@@ -185,7 +185,7 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 	err = x2.Send(
 		ctx,
 		eo1,
-		l1.GetPeerInfo().Addresses[0],
+		l1.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
 	assert.NoError(t, err)
@@ -204,7 +204,7 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 	err = x1.Send(
 		ctx,
 		eo2,
-		l2.GetPeerInfo().Addresses[0],
+		l2.GetAddresses()[0],
 	)
 	assert.NoError(t, err)
 
@@ -224,8 +224,8 @@ func TestRequestSuccess(t *testing.T) {
 	_, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	_, _, _, d2, l2 := newPeer(t, "", disc2, true, false)
 
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l1.GetSignedPeer())
 
 	mp2 := &mocks.Provider{}
 	err := disc2.AddProvider(mp2)
@@ -249,7 +249,7 @@ func TestRequestSuccess(t *testing.T) {
 	err = x1.Request(
 		ctx,
 		eo1.HashBase58(),
-		l2.GetPeerInfo().Addresses[0],
+		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
 	assert.NoError(t, err)
@@ -271,8 +271,8 @@ func TestRequestSuccessHTTP(t *testing.T) {
 	_, _, x1, _, l1 := newPeer(t, "", disc1, false, true)
 	_, _, _, d2, l2 := newPeer(t, "", disc2, false, true)
 
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l1.GetPeerInfo())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l1.GetSignedPeer())
 
 	mp2 := &mocks.Provider{}
 	err := disc2.AddProvider(mp2)
@@ -296,7 +296,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 	err = x1.Request(
 		ctx,
 		eo1.HashBase58(),
-		l2.GetPeerInfo().Addresses[0],
+		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
 	assert.NoError(t, err)
@@ -322,34 +322,34 @@ func TestSendRelay(t *testing.T) {
 
 	// disable binding to local addresses
 	net.BindLocal = false
-	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc2, true, false)
-	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetPeerInfo().Addresses[0], disc3, true, false)
+	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc2, true, false)
+	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc3, true, false)
 
 	fmt.Printf("\n\n\n\n-----------------------------\n")
 	fmt.Println("k0:",
 		k0.PublicKey.Fingerprint(),
-		l0.GetPeerInfo().Addresses,
+		l0.GetAddresses(),
 	)
 	fmt.Println("k1:",
 		k1.PublicKey.Fingerprint(),
-		l1.GetPeerInfo().Addresses,
+		l1.GetAddresses(),
 	)
 	fmt.Println("k2:",
 		k2.PublicKey.Fingerprint(),
-		l2.GetPeerInfo().Addresses,
+		l2.GetAddresses(),
 	)
 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	disc1.Add(l1.GetPeerInfo())
-	disc1.Add(l2.GetPeerInfo())
-	disc2.Add(l2.GetPeerInfo())
-	disc3.Add(l1.GetPeerInfo())
+	disc1.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer())
+	disc2.Add(l2.GetSignedPeer())
+	disc3.Add(l1.GetSignedPeer())
 
 	// init connection from n1 to n0
 	err := x1.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		l0.GetPeerInfo().Addresses[0],
+		l0.GetAddresses()[0],
 	)
 	assert.NoError(t, err)
 
@@ -357,7 +357,7 @@ func TestSendRelay(t *testing.T) {
 	err = x2.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		l0.GetPeerInfo().Addresses[0],
+		l0.GetAddresses()[0],
 	)
 	assert.NoError(t, err)
 
@@ -434,7 +434,7 @@ func newPeer(
 	net.Network,
 	*exchange,
 	graph.Store,
-	*peer.Peer,
+	*peer.LocalPeer,
 ) {
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
@@ -442,7 +442,7 @@ func newPeer(
 	ds, err := graph.NewCayleyWithTempStore()
 	assert.NoError(t, err)
 
-	li, err := peer.NewPeer("", pk)
+	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
 	if relayAddress != "" {

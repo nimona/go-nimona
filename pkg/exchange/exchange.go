@@ -31,8 +31,8 @@ var (
 
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
-//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
-//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
+//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
 
 type (
 	// Exchange interface for mocking exchange
@@ -63,7 +63,7 @@ type (
 		net      net.Network
 		manager  *ConnectionManager
 		discover discovery.Discoverer
-		local    *peer.Peer
+		local    *peer.LocalPeer
 
 		outgoing chan *outgoingObject
 		incoming chan *incomingObject
@@ -114,7 +114,7 @@ func New(
 	n net.Network,
 	store graph.Store,
 	discover discovery.Discoverer,
-	localInfo *peer.Peer,
+	localInfo *peer.LocalPeer,
 ) (
 	Exchange,
 	error,
@@ -178,7 +178,8 @@ func New(
 	}()
 
 	go func() {
-		localAddress := w.local.GetPeerInfo().Address()
+		localAddress := w.local.GetAddress()
+		// TODO should we checking all local addresses instead of just the peer?
 		for {
 			req := <-w.outgoing
 
@@ -271,7 +272,7 @@ func (w *exchange) HandleConnection(
 	logger.Debug("handling new connection")
 
 	if err := net.Write(
-		w.local.GetPeerInfo().ToObject(),
+		w.local.GetSignedPeer().ToObject(),
 		conn,
 	); err != nil {
 		logger.Warn("could not write own peer to remote")

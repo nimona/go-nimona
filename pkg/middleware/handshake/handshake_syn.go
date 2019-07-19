@@ -1,7 +1,7 @@
 package handshake
 
 import (
-	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/object"
 )
 
@@ -10,5 +10,5 @@ import (
 type Syn struct {
 	RawObject *object.Object `json:"@"`
 	Nonce     string         `json:"nonce"`
-	PeerInfo  *peer.PeerInfo `json:"peerInfo,omitempty"`
+	Peer  *peer.Peer `json:"peer,omitempty"`
 }

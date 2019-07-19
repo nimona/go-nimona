@@ -17,12 +17,12 @@ import (
 )
 
 type tcpTransport struct {
-	local   *peer.Peer
+	local   *peer.LocalPeer
 	address string
 }
 
 func NewTCPTransport(
-	local *peer.Peer,
+	local *peer.LocalPeer,
 	address string,
 ) Transport {
 	return &tcpTransport{

@@ -6,8 +6,8 @@ package handshake
 
 import (
 	"github.com/mitchellh/mapstructure"
-	"nimona.io/pkg/net/peer"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
 const (
@@ -21,8 +21,8 @@ func (s Syn) ToObject() *object.Object {
 	if s.Nonce != "" {
 		o.SetRaw("nonce", s.Nonce)
 	}
-	if s.PeerInfo != nil {
-		o.SetRaw("peerInfo", s.PeerInfo)
+	if s.Peer != nil {
+		o.SetRaw("peer", s.Peer)
 	}
 	return o
 }
@@ -55,15 +55,15 @@ func (s *Syn) FromObject(o *object.Object) error {
 	if err := atoa(o.GetRaw("nonce"), &s.Nonce); err != nil {
 		return err
 	}
-	if v, ok := o.GetRaw("peerInfo").(*peer.PeerInfo); ok {
-		s.PeerInfo = v
-	} else if v, ok := o.GetRaw("peerInfo").(map[string]interface{}); ok {
-		s.PeerInfo = &peer.PeerInfo{}
+	if v, ok := o.GetRaw("peer").(*peer.Peer); ok {
+		s.Peer = v
+	} else if v, ok := o.GetRaw("peer").(map[string]interface{}); ok {
+		s.Peer = &peer.Peer{}
 		o := &object.Object{}
 		if err := o.FromMap(v); err != nil {
 			return err
 		}
-		s.PeerInfo.FromObject(o)
+		s.Peer.FromObject(o)
 	}
 
 	if ao, ok := interface{}(s).(interface{ afterFromObject() }); ok {

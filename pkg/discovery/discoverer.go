@@ -8,11 +8,42 @@ import (
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/net/peer"
+	"nimona.io/pkg/peer"
 )
 
-// nolint: lll
-//go:generate $GOBIN/mockery -name Discoverer -case underscore
+//go:generate $GOBIN/mockery -name Discoverer -case underscor
+//go:generate $GOBIN/mockery -name Provider -case underscore
+
+type (
+	// Provider defines the interface for a discoverer provider, eg our DHT
+	Provider interface {
+		FindByFingerprint(
+			ctx context.Context,
+			fingerprint crypto.Fingerprint,
+			opts ...Option,
+		) ([]*peer.Peer, error)
+		FindByContent(
+			ctx context.Context,
+			contentHash string,
+			opts ...Option,
+		) ([]crypto.Fingerprint, error)
+	}
+	// Discoverer interface
+	Discoverer interface {
+		AddProvider(provider Provider) error
+		Add(peer *peer.Peer)
+		FindByFingerprint(
+			ctx context.Context,
+			fingerprint crypto.Fingerprint,
+			opts ...Option,
+		) ([]*peer.Peer, error)
+		FindByContent(
+			ctx context.Context,
+			contentHash string,
+			opts ...Option,
+		) ([]crypto.Fingerprint, error)
+	}
+)
 
 // Options is the complete options structure for the discoverer
 type Options struct {
@@ -37,31 +68,14 @@ func ParseOptions(opts ...Option) *Options {
 	return options
 }
 
-// Discoverer interface
-type Discoverer interface {
-	AddProvider(provider Provider) error
-	Add(v *peer.PeerInfo)
-	// AddPersistent(v *peer.PeerInfo)
-	FindByFingerprint(
-		ctx context.Context,
-		fingerprint crypto.Fingerprint,
-		opts ...Option,
-	) ([]*peer.PeerInfo, error)
-	FindByContent(
-		ctx context.Context,
-		contentHash string,
-		opts ...Option,
-	) ([]*peer.PeerInfo, error)
-}
-
 // NewDiscoverer creates a new empty discoverer with no providers
 func NewDiscoverer() Discoverer {
 	return &discoverer{
 		providersLock:   sync.RWMutex{},
 		providers:       []Provider{},
 		cacheLock:       sync.RWMutex{},
-		cacheTemp:       map[string]*peer.PeerInfo{},
-		cachePersistent: map[string]*peer.PeerInfo{},
+		cacheTemp:       map[string]*peer.Peer{},
+		cachePersistent: map[string]*peer.Peer{},
 	}
 }
 
@@ -73,8 +87,8 @@ type discoverer struct {
 	providersLock   sync.RWMutex
 	providers       []Provider
 	cacheLock       sync.RWMutex
-	cacheTemp       map[string]*peer.PeerInfo
-	cachePersistent map[string]*peer.PeerInfo
+	cacheTemp       map[string]*peer.Peer
+	cachePersistent map[string]*peer.Peer
 }
 
 // FindByFingerprint goes through the given providers until one returns something
@@ -82,7 +96,7 @@ func (r *discoverer) FindByFingerprint(
 	ctx context.Context,
 	fingerprint crypto.Fingerprint,
 	opts ...Option,
-) ([]*peer.PeerInfo, error) {
+) ([]*peer.Peer, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -96,12 +110,20 @@ func (r *discoverer) FindByFingerprint(
 	// r.providersLock.RLock()
 	// defer r.providersLock.RUnlock()
 
+	ps := []*peer.Peer{}
 	for _, p := range r.providers {
-		res, err := p.FindByFingerprint(ctx, fingerprint, opts...)
-		if err == nil && res != nil {
-
-			return res, nil
+		eps, err := p.FindByFingerprint(ctx, fingerprint, opts...)
+		if err != nil {
+			logger.With(
+				log.Error(err),
+			).Debug("provider failed")
+			continue
 		}
+		ps = append(ps, eps...)
+		logger.With(
+			log.Int("n", len(eps)),
+			log.Any("peers", ps),
+		).Debug("found n peers")
 	}
 
 	// r.cacheLock.RLock()
@@ -110,14 +132,18 @@ func (r *discoverer) FindByFingerprint(
 	// TODO move persistence into its own provider
 
 	if res, ok := r.cacheTemp[fingerprint.String()]; ok && res != nil {
-		return []*peer.PeerInfo{res}, nil
+		ps = append(ps, res)
 	}
 
 	if res, ok := r.cachePersistent[fingerprint.String()]; ok && res != nil {
-		return []*peer.PeerInfo{res}, nil
+		ps = append(ps, res)
 	}
 
-	return nil, errors.New("could not resolve")
+	if len(ps) == 0 {
+		return nil, errors.New("could not resolve")
+	}
+
+	return ps, nil
 }
 
 // FindByContent goes through the given providers until one returns something
@@ -125,7 +151,7 @@ func (r *discoverer) FindByContent(
 	ctx context.Context,
 	contentHash string,
 	opts ...Option,
-) ([]*peer.PeerInfo, error) {
+) ([]crypto.Fingerprint, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -136,25 +162,27 @@ func (r *discoverer) FindByContent(
 
 	logger.Debug("trying to find peers")
 
-	r.providersLock.RLock()
+	ps := []crypto.Fingerprint{}
 	for _, p := range r.providers {
 		eps, err := p.FindByContent(ctx, contentHash, opts...)
-		if err == nil && eps != nil {
-			ps := []string{}
-			for _, p := range eps {
-				ps = append(ps, p.Fingerprint().String())
-			}
+		if err != nil {
 			logger.With(
-				log.Int("n", len(eps)),
-				log.Strings("peers", ps),
-			).Debug("found n peers")
-			r.providersLock.RUnlock()
-			return eps, nil
+				log.Error(err),
+			).Debug("provider failed")
+			continue
 		}
+		ps = append(ps, eps...)
+		logger.With(
+			log.Int("n", len(eps)),
+			log.Any("peers", ps),
+		).Debug("found n peers")
 	}
-	r.providersLock.RUnlock()
 
-	return nil, errors.New("could not resolve")
+	if len(ps) == 0 {
+		return nil, errors.New("could not resolve")
+	}
+
+	return ps, nil
 }
 
 // AddProvider to the discoverer
@@ -167,17 +195,17 @@ func (r *discoverer) AddProvider(provider Provider) error {
 
 // Add allows manually adding peer infos to be resolved.
 // These peers will eventually be gc-ed.
-func (r *discoverer) Add(v *peer.PeerInfo) {
+func (r *discoverer) Add(peer *peer.Peer) {
 	r.cacheLock.Lock()
-	r.cacheTemp[v.Fingerprint().String()] = v
+	r.cacheTemp[peer.Signature.PublicKey.Fingerprint().String()] = peer
 	r.cacheLock.Unlock()
 }
 
 // AddPersistent allows adding permanent peer infos to be resolved.
 // These peers can be overshadowed by other discoverers, but will never be gc-ed
 // Mainly used for adding bootstrap nodes.
-func (r *discoverer) AddPersistent(v *peer.PeerInfo) {
+func (r *discoverer) AddPersistent(peer *peer.Peer) {
 	r.cacheLock.Lock()
-	r.cachePersistent[v.Fingerprint().String()] = v
+	r.cachePersistent[peer.Signature.PublicKey.Fingerprint().String()] = peer
 	r.cacheLock.Unlock()
 }
