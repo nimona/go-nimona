@@ -1,7 +1,6 @@
 package hyperspace
 
 import (
-	"fmt"
 	"sort"
 
 	"nimona.io/pkg/discovery/hyperspace/bloom"
@@ -110,7 +109,6 @@ func (s *Store) FindByFingerprint(
 	ps := []*peer.Peer{}
 	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
 		for _, k := range crypto.GetSignatureKeys(p.Signature) {
-			fmt.Println("_____", k.Fingerprint().String(), fingerprint.String())
 			if k.Fingerprint().String() != fingerprint.String() {
 				continue
 			}
@@ -123,12 +121,12 @@ func (s *Store) FindByFingerprint(
 }
 
 // FindByContent returns peers that match a given content hash
-func (s *Store) FindByContent(contentHash string) []*ContentHashesBloom {
+func (s *Store) FindByContent(b bloom.Bloomer) []*ContentHashesBloom {
 	cs := []*ContentHashesBloom{}
-	q := bloom.NewBloom(contentHash)
+	q := b.Bloom()
 
 	s.blooms.Range(func(f crypto.Fingerprint, c *ContentHashesBloom) bool {
-		if intersectionCount(c.Bloom(), q.Bloom()) != len(q) {
+		if intersectionCount(c.Bloom(), b.Bloom()) != len(q) {
 			return true
 		}
 		cs = append(cs, c)
