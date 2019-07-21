@@ -1,10 +1,10 @@
 package hyperspace
 
 import (
-	"errors"
 	"time"
 
 	"nimona.io/internal/context"
+	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -82,9 +82,11 @@ func NewDiscoverer(
 
 	// r.store.Add(local.GetSignedPeer())
 	go func() {
-		err := r.bootstrap(ctx, bootstrapAddresses)
-		if err != nil {
+		if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
+		}
+		if err := r.publishContentHashes(ctx); err != nil {
+			logger.Error("could not publish initial content hashes", log.Error(err))
 		}
 	}()
 
@@ -147,7 +149,8 @@ func (r *Discoverer) FindByContent(
 	)
 	logger.Debug("trying to find peer by contentHash")
 
-	cs := r.store.FindByContent(contentHash)
+	b := bloom.NewBloom(contentHash)
+	cs := r.store.FindByContent(b)
 	fs := []crypto.Fingerprint{}
 	if len(cs) > 0 {
 		for _, b := range cs {
@@ -166,18 +169,14 @@ func (r *Discoverer) FindByContent(
 
 	logger.Debug("looking up peers")
 
-	b := bloom.NewBloom(contentHash)
-	if _, err := r.LookupContentProvider(ctx, b); err != nil {
+	fs, err := r.LookupContentProvider(ctx, b)
+	if err != nil {
 		logger.With(
 			log.Error(err),
 		).Debug("failed to look up peers")
 		return nil, err
 	}
 
-	cs = r.store.FindByContent(contentHash)
-	for _, b := range cs {
-		fs = append(fs, b.Signature.PublicKey.Fingerprint())
-	}
 	logger.With(
 		log.Int("n", len(fs)),
 	).Debug("found n peers")
@@ -289,9 +288,9 @@ func (r *Discoverer) handleProvider(
 		log.String("method", "hyperspace/resolver.handleProvider"),
 		log.String("p.fingerprint", p.Signature.PublicKey.Fingerprint().String()),
 	)
-	logger.Debug("adding peer to store")
+	logger.Debug("adding provider to store")
 	r.store.AddContentHashes(p)
-	logger.Debug("added peer to store")
+	logger.Debug("added provider to store")
 }
 
 func (r *Discoverer) handleProviderRequest(
@@ -324,14 +323,16 @@ func (r *Discoverer) handleProviderRequest(
 			)
 		}
 	}
-	logger.Debug("handling done")
+	logger.With(
+		log.Int("n", len(cps)),
+	).Debug("handling done, sent n blooms")
 }
 
 // LookupContentProvider searches the network for content given a bloom filter
 func (r *Discoverer) LookupContentProvider(
 	ctx context.Context,
 	q bloom.Bloomer,
-) ([]*peer.Peer, error) {
+) ([]crypto.Fingerprint, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupContentProvider"),
@@ -341,41 +342,47 @@ func (r *Discoverer) LookupContentProvider(
 		BloomFilter: q.Bloom(),
 	}
 	o := cq.ToObject()
-	ps := r.store.FindClosestContentProvider(q)
+	cs := r.store.FindClosestContentProvider(q)
+	fs := []crypto.Fingerprint{}
+	for _, c := range cs {
+		fs = append(fs, c.Signature.PublicKey.Fingerprint())
+	}
+	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
+	for _, p := range ps {
+		fs = append(fs, p.Fingerprint())
+	}
+	if len(fs) == 0 {
+		logger.Debug("couldn't find peers to ask")
+		return nil, errors.New("no peers to ask")
+	}
+
 	out := make(chan *exchange.Envelope, 10)
 	rctx := context.FromContext(ctx)
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
-	// ps = r.withoutOwnPeer(ps)
-	if len(ps) == 0 {
-		logger.Debug("couldn't find peers to ask")
-		return nil, errors.New("no peers to ask")
-	}
-
-	logger.Debug("found peers to ask", log.Int("n", len(ps)))
-	for _, p := range ps {
+	logger.Debug("found peers to ask", log.Int("n", len(fs)))
+	for _, f := range fs {
 		err := r.exchange.Send(
 			ctx,
 			o,
-			"peer:"+p.Signature.PublicKey.Fingerprint().String(),
+			f.Address(),
 			opts...,
 		)
 		if err != nil {
 			logger.Debug("could not lookup peer", log.Error(err))
 		}
 	}
-	peers := []*peer.Peer{}
 	// TODO(geoah) better timeout
 	t := time.NewTicker(time.Second * 5)
 	for {
 		select {
 		case <-t.C:
-			return peers, nil
+			break
 
 		case <-ctx.Done():
-			return peers, nil
+			break
 
 		case res := <-out:
 			logger.Debug("got loopkup response",
@@ -385,16 +392,24 @@ func (r *Discoverer) LookupContentProvider(
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
 			}
-			if res.Payload.GetType() == peer.PeerType {
-				v := &peer.Peer{}
-				if err := v.FromObject(res.Payload); err == nil {
-					peers = append(peers, v)
-				}
-				return peers, nil
-			}
+			// if res.Payload.GetType() == ContentHashesBloomType {
+			// 	v := &ContentHashesBloom{}
+			// 	if err := v.FromObject(res.Payload); err == nil {
+			// 		fingerprints = append(
+			// 			fingerprints,
+			// 			v.Signature.PublicKey.Fingerprint(),
+			// 		)
+			// 	}
+			// 	break
+			// }
 		}
 	}
-	return peers, nil
+	cs = r.store.FindByContent(q)
+	fs = []crypto.Fingerprint{}
+	for _, c := range cs {
+		fs = append(fs, c.Signature.PublicKey.Fingerprint())
+	}
+	return fs, nil
 }
 
 // LookupPeer does a network lookup given a query
@@ -506,19 +521,43 @@ func (r *Discoverer) publishContentHashes(
 	)
 	cs := r.getContentHashes()
 	b := bloom.NewBloom(cs...)
+
 	cps := r.store.FindClosestContentProvider(b)
-	if len(cps) == 0 {
-		return nil
+	fs := []crypto.Fingerprint{}
+	for _, c := range cps {
+		fs = append(fs, c.Signature.PublicKey.Fingerprint())
+	}
+	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
+	for _, p := range ps {
+		fs = append(fs, p.Fingerprint())
+	}
+	if len(fs) == 0 {
+		logger.Debug("couldn't find peers to tell")
+		return errors.New("no peers to tell")
 	}
 
-	pi := r.local.GetSignedPeer()
+	logger.With(
+		log.Int("n", len(fs)),
+		log.Any("bloom", b),
+	).Debug("trying to tell n peers")
+
+	cb := &ContentHashesBloom{
+		BloomFilter: b,
+	}
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
 
-	o := pi.ToObject()
-	for _, p := range cps {
-		addr := "peer:" + p.Signature.PublicKey.Fingerprint().String()
+	o := cb.ToObject()
+	if err := crypto.Sign(o, r.local.GetPeerKey()); err != nil {
+		logger.With(
+			log.Error(err),
+		).Error("could not sign object")
+		return errors.Wrap(err, errors.New("could not sign object"))
+	}
+
+	for _, f := range fs {
+		addr := f.Address()
 		err := r.exchange.Send(ctx, o, addr, opts...)
 		if err != nil {
 			logger.Debug("could not send request", log.Error(err))
