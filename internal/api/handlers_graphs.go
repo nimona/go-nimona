@@ -43,7 +43,7 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 	}
 
 	if err := api.dag.Put(o); err != nil {
-		c.AbortWithError(500, errors.New("could not store object")) // nolint: errcheck
+		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
 	}
 
@@ -87,6 +87,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
+
 		addrs := []string{}
 		for _, p := range ps {
 			addrs = append(addrs, p.Address())
@@ -96,7 +97,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
 			sig, err := crypto.GetObjectSignature(rootObject)
 			if err == nil {
-				addrs = append(addrs, "peer:"+sig.PublicKey.Fingerprint().String())
+				addrs = append(addrs, sig.PublicKey.Fingerprint().Address())
 			}
 		}
 
