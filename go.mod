@@ -1,9 +1,6 @@
 module nimona.io
 
 require (
-	github.com/DataDog/zstd v1.4.0 // indirect
-	github.com/Sereal/Sereal v0.0.0-20190713164153-0b8ac451a863 // indirect
-	github.com/asdine/storm v2.2.1+incompatible
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cayleygraph/cayley v0.7.5
 	github.com/cheekybits/genny v1.0.0
@@ -16,7 +13,6 @@ require (
 	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
@@ -29,11 +25,9 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tylertreat/BoomFilters v0.0.0-20181028192813-611b3dbe80e8 // indirect
-	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
-	go.etcd.io/bbolt v1.3.3 // indirect
 	golang.org/x/net v0.0.0-20190713164153-da137c7871d7
 	golang.org/x/sys v0.0.0-20190713164153-fae7ac547cb7 // indirect
-	google.golang.org/appengine v1.6.1 // indirect
+	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
