@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/internal/rand"
+
 	"github.com/gobwas/glob"
 
 	"nimona.io/internal/context"
@@ -252,7 +254,7 @@ func (w *exchange) Handle(
 	if err != nil {
 		return nil, err
 	}
-	hID := net.RandStringBytesMaskImprSrc(8)
+	hID := rand.String(8)
 	w.handlers.Store(hID, &handler{
 		contentType: g,
 		handler:     h,
@@ -418,7 +420,7 @@ func (w *exchange) process(
 // out, or been canceled.
 func WithResponse(reqID string, out chan *Envelope) Option {
 	if reqID == "" {
-		reqID = net.RandStringBytesMaskImprSrc(12)
+		reqID = rand.String(12)
 	}
 	return func(opt *Options) {
 		opt.RequestID = reqID

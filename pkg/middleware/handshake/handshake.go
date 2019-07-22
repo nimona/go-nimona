@@ -3,6 +3,7 @@ package handshake
 import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/net"
@@ -40,7 +41,7 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 	logger := log.FromContext(ctx)
 	logger.Debug("handling inc connection, sending syn")
 
-	nonce := net.RandStringBytesMaskImprSrc(8)
+	nonce := rand.String(8)
 	syn := &Syn{
 		Nonce: nonce,
 		Peer:  hs.local.GetSignedPeer(),
