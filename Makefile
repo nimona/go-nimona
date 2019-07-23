@@ -49,9 +49,9 @@ GIT_SHA ?= $(shell git rev-parse --short HEAD)
 build: $(MAINBIN)
 
 $(MAINBIN): $(SOURCES)
-	$(eval LDFLAGS += -X main.Date=$(shell date +%s))
-	$(eval LDFLAGS += -X main.Version=$(VERSION))
-	$(eval LDFLAGS += -X main.Commit=$(GIT_SHA))
+	$(eval LDFLAGS += -X $(MODULE)/internal/version.Date=$(shell date +%s))
+	$(eval LDFLAGS += -X $(MODULE)/internal/version.Version=$(VERSION))
+	$(eval LDFLAGS += -X $(MODULE)/internal/version.Commit=$(GIT_SHA))
 	cd cmd && \
 		go install $(V) \
 			-installsuffix cgo \

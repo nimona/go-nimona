@@ -14,6 +14,7 @@ import (
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/version"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
@@ -25,12 +26,6 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-var (
-	Version = "dev"
-	Commit  = "unknown"
-	Date    = "unknown"
-)
-
 func main() {
 	cfgFile := os.Getenv("NIMONA_CONFIG")
 	if cfgFile == "" {
@@ -38,14 +33,14 @@ func main() {
 	}
 
 	ctx := context.New(
-		context.WithCorrelationID("daemon"),
+		context.WithCorrelationID("mochi"),
 	)
 
 	logger := log.FromContext(ctx).With(
 		log.String("configFile", cfgFile),
-		log.String("build.version", Version),
-		log.String("build.commit", Commit),
-		log.String("build.timestamp", Date),
+		log.String("build.version", version.Version),
+		log.String("build.commit", version.Commit),
+		log.String("build.timestamp", version.Date),
 	)
 
 	// load config
@@ -242,9 +237,9 @@ func main() {
 		graphStore,
 		dag,
 		aggregate,
-		Version,
-		Commit,
-		Date,
+		version.Version,
+		version.Commit,
+		version.Date,
 		config.API.Token,
 	)
 
