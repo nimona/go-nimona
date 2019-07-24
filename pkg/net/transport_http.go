@@ -70,6 +70,7 @@ func (tt *httpTransport) Dial(
 	}
 
 	conn := newConnection(rw, false)
+	conn.remoteAddress = address
 	return conn, nil
 }
 
@@ -110,6 +111,7 @@ func (tt *httpTransport) Listen(
 		}
 
 		conn := newConnection(rw, true)
+		conn.remoteAddress = r.RemoteAddr
 		cconn <- conn
 		<-r.Cancel // TODO is this the right way to wait here?
 	}

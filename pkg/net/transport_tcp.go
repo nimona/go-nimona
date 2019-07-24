@@ -13,7 +13,6 @@ import (
 	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
-
 )
 
 type tcpTransport struct {
@@ -50,6 +49,7 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 	}
 
 	conn := newConnection(tcpConn, false)
+	conn.remoteAddress = address
 	return conn, nil
 }
 
@@ -136,6 +136,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 			}
 
 			conn := newConnection(tcpConn, true)
+			conn.remoteAddress = tcpConn.RemoteAddr().String()
 			cconn <- conn
 		}
 	}()
