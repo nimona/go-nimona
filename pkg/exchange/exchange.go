@@ -521,6 +521,9 @@ func (w *exchange) sendDirectlyToPeer(
 	options *Options,
 ) error {
 	cerr := make(chan error, 1)
+	nctx, cf := context.WithTimeout(ctx, 5*time.Second)
+	defer cf()
+
 	w.outgoing <- &outgoingObject{
 		context:   ctx,
 		recipient: address,
@@ -528,7 +531,12 @@ func (w *exchange) sendDirectlyToPeer(
 		options:   options,
 		err:       cerr,
 	}
-	return <-cerr
+	select {
+	case err := <-cerr:
+		return err
+	case <-nctx.Done():
+		return nil
+	}
 }
 
 func (w *exchange) sendViaRelayToPeer(
