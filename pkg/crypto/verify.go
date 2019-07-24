@@ -34,7 +34,7 @@ func Verify(o object.Object) error {
 		)
 	}
 
-	hash, err := object.ObjectHash(o)
+	hash, err := object.ObjectHashWithoutSignature(o)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"nimona.io/pkg/object"
 )
 
@@ -26,10 +27,17 @@ func TestNewSignature(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, sig, nsig)
 
-	err = verify(sig, o.Hash())
+	h, _ := object.ObjectHashWithoutSignature(o)
+	err = verify(sig, h)
 	assert.NoError(t, err)
 
-	err = verify(nsig, o.Hash())
+	err = verify(nsig, h)
+	assert.NoError(t, err)
+
+	err = Sign(o, sk)
+	assert.NoError(t, err)
+
+	err = Verify(o)
 	assert.NoError(t, err)
 }
 

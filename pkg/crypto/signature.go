@@ -83,7 +83,7 @@ func NewSignature(
 	// 	h := sha256.Sum256(b)
 	// 	hash = h[:]
 	case AlgorithmObjectHash:
-		hash, err = object.ObjectHash(o)
+		hash, err = object.ObjectHashWithoutSignature(o)
 		if err != nil {
 			return nil, err
 		}

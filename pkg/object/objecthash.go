@@ -15,6 +15,10 @@ import (
 // as TJSON instead.
 // TODO add redaction
 func ObjectHash(o Object) ([]byte, error) {
+	return objecthash(o.ToMap(), false)
+}
+
+func ObjectHashWithoutSignature(o Object) ([]byte, error) {
 	return objecthash(o.ToMap(), true)
 }
 
@@ -38,11 +42,7 @@ func objecthash(m map[string]interface{}, skipSig bool) ([]byte, error) {
 			continue
 		}
 		// TODO(geoah) is there a better way of doing this?
-		// TODO(geoah) better question is, do we need @?
-		if k == "@" {
-			continue
-		}
-		if skipSig && strings.HasPrefix(k, "@signature") {
+		if skipSig && k == "@signature:o" {
 			continue
 		}
 		ks = append(ks, k)
