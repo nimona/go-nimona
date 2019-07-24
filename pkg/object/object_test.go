@@ -18,6 +18,17 @@ func TestObjectMethods(t *testing.T) {
 		"@parents:as": []string{"parent-value"},
 	}
 
+	em := map[string]interface{}{
+		"@ctx:s": "ctx-value",
+		"@signature:o": map[string]interface{}{
+			"@ctx:s": "-signature",
+		},
+		"@policy:o": map[string]interface{}{
+			"@ctx:s": "-policy",
+		},
+		"@parents:as": []string{"parent-value"},
+	}
+
 	o := FromMap(m)
 
 	assert.Equal(t, m["@ctx:s"], o.Get("@ctx:s"))
@@ -32,10 +43,10 @@ func TestObjectMethods(t *testing.T) {
 	n.Set("@policy:o", m["@policy:o"])
 	n.Set("@parents:as", m["@parents:as"])
 
-	assert.Equal(t, m["@ctx:s"], n.Get("@ctx:"))
-	assert.Equal(t, m["@signature:o"], n.Get("@signature:o"))
-	assert.Equal(t, m["@policy:o"], n.Get("@policy:o"))
-	assert.Equal(t, m["@parents:as"], n.Get("@parents:as"))
+	assert.Equal(t, em["@ctx:s"], n.Get("@ctx:"))
+	assert.Equal(t, em["@signature:o"], n.Get("@signature:o"))
+	assert.Equal(t, em["@policy:o"], n.Get("@policy:o"))
+	assert.Equal(t, em["@parents:as"], n.Get("@parents:as"))
 
 	e := New()
 
@@ -51,8 +62,8 @@ func TestObjectMethods(t *testing.T) {
 	assert.NotNil(t, e.Get("@policy:o"))
 	assert.NotNil(t, e.Get("@parents:as"))
 
-	assert.Equal(t, m["@ctx:s"], e.Get("@ctx:s"))
-	assert.Equal(t, m["@signature:o"], e.Get("@signature:o"))
-	assert.Equal(t, m["@policy:o"], e.Get("@policy:o"))
-	assert.Equal(t, m["@parents:as"], e.Get("@parents:as"))
+	assert.Equal(t, em["@ctx:s"], e.Get("@ctx:s"))
+	assert.Equal(t, em["@signature:o"], e.Get("@signature:o"))
+	assert.Equal(t, em["@policy:o"], e.Get("@policy:o"))
+	assert.Equal(t, em["@parents:as"], e.Get("@parents:as"))
 }

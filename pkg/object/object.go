@@ -139,6 +139,9 @@ func (o Object) Get(lk string) interface{} {
 
 // Set -
 func (o Object) Set(k string, v interface{}) {
+	if ov, ok := v.(Object); ok {
+		v = ov.ToMap()
+	}
 	map[string]interface{}(o)[k] = v
 }
 
