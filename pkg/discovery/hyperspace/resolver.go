@@ -3,6 +3,8 @@ package hyperspace
 import (
 	"time"
 
+	"nimona.io/pkg/object"
+
 	"nimona.io/internal/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
@@ -192,6 +194,10 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 		)
 	}
 
+	logger := log.FromContext(ctx).With(
+		log.String("method", "hyperspace/resolver.handleObject"),
+	)
+
 	// handle payload
 	o := e.Payload
 	switch o.GetType() {
@@ -208,9 +214,17 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 		}
 		r.handlePeer(ctx, v)
 	case ContentHashesBloomType:
+		logger := logger.With(
+			log.String("e.sender", e.Sender.Fingerprint().String()),
+			log.String("o.type", o.GetType()),
+		)
 		v := &ContentHashesBloom{}
 		if err := v.FromObject(o); err != nil {
 			return err
+		}
+		if v.Signature == nil || v.Signature.PublicKey == nil {
+			logger.Warn("object has no signature")
+			return nil
 		}
 		r.handleProvider(ctx, v)
 	case ContentHashesBloomRequestType:
@@ -309,12 +323,20 @@ func (r *Discoverer) handleProviderRequest(
 	logger.Debug("handling content request")
 
 	cps := r.store.FindClosestContentProvider(q)
-	// TODO is there a reason to remove ourselves from this?
+
+	oc, err := r.getOwnContentHashesBloom()
+	if err == nil && oc != nil {
+		cps = append(cps, oc)
+	}
 
 	for _, p := range cps {
+		pf := ""
+		if p.Signature != nil {
+			pf = p.Signature.PublicKey.Fingerprint().String()
+		}
 		logger.Debug("responding with content hash bloom",
 			log.Any("bloom", p.Bloom),
-			log.String("fingerprint", p.Signature.PublicKey.Fingerprint().String()),
+			log.String("fingerprint", pf),
 		)
 		err := e.Respond(p.ToObject())
 		if err != nil {
@@ -357,32 +379,43 @@ func (r *Discoverer) LookupContentProvider(
 	}
 
 	out := make(chan *exchange.Envelope, 10)
-	rctx := context.FromContext(ctx)
+	rctx, _ := context.WithTimeout(ctx, time.Second*5)
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
 	logger.Debug("found peers to ask", log.Int("n", len(fs)))
 	for _, f := range fs {
-		err := r.exchange.Send(
-			ctx,
-			o,
-			f.Address(),
-			opts...,
-		)
-		if err != nil {
-			logger.Debug("could not lookup peer", log.Error(err))
-		}
+		go func(f crypto.Fingerprint) {
+			logger.With(
+				log.String("peer", f.String()),
+			).Debug("asking peer")
+			err := r.exchange.Send(
+				ctx,
+				object.Copy(o),
+				f.Address(),
+				opts...,
+			)
+			if err != nil {
+				logger.Debug("could not lookup peer", log.Error(err))
+				return
+			}
+			logger.With(
+				log.String("peer", f.String()),
+			).Debug("asked peer")
+		}(f)
 	}
 	// TODO(geoah) better timeout
-	t := time.NewTicker(time.Second * 5)
+	t := time.NewTimer(time.Second * 5)
+loop:
 	for {
 		select {
 		case <-t.C:
-			break
+			logger.Debug("timer done, giving up")
+			break loop
 
 		case <-ctx.Done():
-			break
+			break loop
 
 		case res := <-out:
 			logger.Debug("got loopkup response",
@@ -409,6 +442,9 @@ func (r *Discoverer) LookupContentProvider(
 	for _, c := range cs {
 		fs = append(fs, c.Signature.PublicKey.Fingerprint())
 	}
+	logger.With(
+		log.Int("n", len(fs)),
+	).Debug("done, found n providers")
 	return fs, nil
 }
 
@@ -511,6 +547,22 @@ func (r *Discoverer) getContentHashes() []string {
 		return true
 	})
 	return cIDs
+}
+
+func (r *Discoverer) getOwnContentHashesBloom() (*ContentHashesBloom, error) {
+	cs := r.getContentHashes()
+	b := bloom.NewBloom(cs...)
+	cb := &ContentHashesBloom{
+		BloomFilter: b,
+	}
+
+	o := cb.ToObject()
+	if err := crypto.Sign(o, r.local.GetPeerKey()); err != nil {
+		return nil, errors.Wrap(err, errors.New("could not sign object"))
+	}
+
+	err := cb.FromObject(o)
+	return cb, err
 }
 
 func (r *Discoverer) publishContentHashes(
