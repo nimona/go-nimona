@@ -33,7 +33,7 @@ func main() {
 	}
 
 	ctx := context.New(
-		context.WithCorrelationID("mochi"),
+		context.WithCorrelationID("nimona"),
 	)
 
 	logger := log.FromContext(ctx).With(
@@ -190,7 +190,7 @@ func main() {
 		dag,
 	)
 	if err != nil {
-		logger.Fatal("could not construct dag", log.Error(err))
+		logger.Fatal("could not construct aggregate", log.Error(err))
 	}
 
 	// construct hyperspace discoverer
