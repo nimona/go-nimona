@@ -179,7 +179,7 @@ func (m *manager) Put(vs ...object.Object) error {
 		m.Publish(o.HashBase58())
 	}
 
-	m.localInfo.AddContentHash(hashes...)
+	go m.localInfo.AddContentHash(hashes...)
 
 	return nil
 }
