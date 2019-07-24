@@ -38,7 +38,12 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 func (hs *Handshake) handleIncoming(ctx context.Context,
 	conn *net.Connection) (*net.Connection, error) {
 
-	logger := log.FromContext(ctx)
+	logger := log.
+		FromContext(ctx).
+		Named("net/middleware/handleIncoming").
+		With(
+			log.String("remote_addr", conn.RemoteAddr()),
+		)
 	logger.Debug("handling inc connection, sending syn")
 
 	nonce := rand.String(8)
@@ -99,7 +104,12 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	*net.Connection, error) {
-	logger := log.FromContext(ctx).Named("net/middleware/handshake")
+	logger := log.
+		FromContext(ctx).
+		Named("net/middleware/handleOutgoing").
+		With(
+			log.String("remote_addr", conn.RemoteAddr()),
+		)
 	logger.Debug("handling out connection, waiting for syn")
 
 	synObj, err := net.Read(conn)
