@@ -3,6 +3,7 @@ package log
 import (
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 
 	"nimona.io/internal/context"
 )
@@ -33,6 +34,13 @@ type (
 var (
 	DefaultLogger = &logger{}
 )
+
+func Stack() Field {
+	return Field{
+		Key:   "stack",
+		Value: string(debug.Stack()),
+	}
+}
 
 func String(k, v string) Field {
 	return Field{
