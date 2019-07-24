@@ -392,7 +392,11 @@ func (w *exchange) process(
 		go func(h *handler, object interface{}) {
 			defer func() {
 				if r := recover(); r != nil {
-					w.logger.Error("Recovered while handling", log.Any("r", r))
+					w.logger.
+						With(
+							log.Stack(),
+						).
+						Error("Recovered while handling", log.Any("r", r))
 				}
 			}()
 			if err := h.handler(&Envelope{
