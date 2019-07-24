@@ -74,7 +74,7 @@ func (p *LocalPeer) AddAddress(protocol string, addrs []string) {
 	all := p.GetAddresses()
 	p.handlerLock.RLock()
 	for _, h := range p.onAddressesHandlers {
-		h(all)
+		go h(all)
 	}
 	p.handlerLock.RUnlock()
 }
@@ -87,7 +87,7 @@ func (p *LocalPeer) AddContentHash(hashes ...string) {
 	all := p.GetContentHashes()
 	p.handlerLock.RLock()
 	for _, h := range p.onContentHashesHandlers {
-		h(all)
+		go h(all)
 	}
 	p.handlerLock.RUnlock()
 }
