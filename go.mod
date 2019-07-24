@@ -6,11 +6,11 @@ require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
-	github.com/dlclark/regexp2 v1.1.6 // indirect
+	github.com/dlclark/regexp2 v1.1.8 // indirect
 	github.com/dop251/goja v0.0.0-20190713164153-65ce6d6e2428 // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
-	github.com/go-test/deep v1.0.1 // indirect
+	github.com/go-test/deep v1.0.2 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/gorilla/websocket v1.4.0

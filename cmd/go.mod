@@ -4,7 +4,7 @@ go 1.12
 
 replace nimona.io => ../
 
-replace github.com/ugorji/go/codec => github.com/ugorji/go v1.1.2
+replace github.com/ugorji/go/codec => github.com/ugorji/go v1.1.7
 
 require (
 	github.com/caarlos0/env/v6 v6.0.0
