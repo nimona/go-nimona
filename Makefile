@@ -74,6 +74,7 @@ clean:
 .PHONY: tidy
 tidy:
 	$(info Tidying go modules)
+	@find . -type f -name "go.sum" -not -path "./vendor/*" -execdir rm {} \;
 	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy \;
 
 # Generate community docs

@@ -32,7 +32,6 @@ github.com/jinzhu/copier v0.0.0-20190713164153-976e0346caa8/go.mod h1:yL958EeXv8
 github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d h1:ljoJyU5NEhe3LWXrRSHnYqWtQehQSJ+9d9tfIGNbpSw=
 github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d/go.mod h1:siHz7M0dAufA9aNRidkfckDSVB/S+Ld7allyOe5uxVg=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
-github.com/kisielk/gotool v1.0.0 h1:AV2c/EiW3KqPNT9ZKl07ehoAGi4C5/01Cfbblndcapg=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
