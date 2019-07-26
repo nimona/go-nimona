@@ -14,6 +14,10 @@
   "lockFileMaintenance": {
     "enabled": false
   },
+  "commitBodyTable": true,
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
   "schedule": [
     "every friday"
   ]
