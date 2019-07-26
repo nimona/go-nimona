@@ -29,5 +29,3 @@ replace (
 	nimona.io/tools/proxy => ../tools/proxy
 	nimona.io/tools/vanity => ../tools/vanity
 )
-
-replace github.com/ugorji/go/codec => github.com/ugorji/go v1.1.7
