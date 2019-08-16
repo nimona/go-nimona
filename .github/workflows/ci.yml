@@ -2,6 +2,32 @@ name: CI
 on: [push]
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.12
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.12
+
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Download binary tools
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
+
+      - name: Make lint
+        run: make lint
+        env:
+          CI: 'true'
+
+      - name: Make test
+        run: make test
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -18,16 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
           curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
-
-      - name: Make lint
-        run: make lint
-        env:
-          CI: 'true'
-
-      - name: Make build
-        run: make build
 
       - name: Release
         run: |
