@@ -1,0 +1,34 @@
+name: Go
+on: [push]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.12
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.12
+
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Download binary tools
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
+
+      - name: Make deps
+        run: make deps
+
+      - name: Make lint
+        run: make lint
+        env:
+          CI: 'true'
+
+      - name: Make build
+        run: make build
+
+      # - name: Release
+      #   run: curl -sL https://git.io/goreleaser | bash
