@@ -1,9 +1,8 @@
 name: Release
-on: create
-
-create:
-  tags:
-    - v*
+on:
+  create:
+    tags:
+      - v*
 
 jobs:
   build:
@@ -25,6 +24,9 @@ jobs:
           curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
 
       - name: Release
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           cd cmd
           ../bin/goreleaser
