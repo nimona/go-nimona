@@ -1,0 +1,10 @@
+name: Pull Reqest Comments
+on: pull_request_review_comment
+
+jobs:
+  release:
+    name: Test release
+    runs-on: ubuntu-latest
+    steps:
+      - name: env
+        run: env
