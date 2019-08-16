@@ -19,19 +19,32 @@ builds:
     goarm:
       - 6
       - 7
-archive:
-  name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
-    }}v{{ .Arm }}{{ end }}'
-  format: tar.gz
-  wrap_in_directory: true
-  format_overrides:
-    - goos: windows
-      format: zip
+archives:
+  - name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
+      }}v{{ .Arm }}{{ end }}'
+    format: tar.gz
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+dockers:
+  - binaries:
+      - nimona
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "nimona/nimona:{{ .Tag }}"
+      - "nimona/nimona:v{{ .Major }}"
+      - "nimona/nimona:v{{ .Major }}.{{ .Minor }}"
+    dockerfile: nimona/Dockerfile
+    skip_push: auto
 snapshot:
   name_template: dev-{{.ShortCommit}}
+release:
+  prerelease: auto
 changelog:
   sort: asc
   filters:
     exclude:
       - '^chore'
-      - '^refactor'
+      - '^docs'

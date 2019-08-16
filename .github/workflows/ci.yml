@@ -32,4 +32,4 @@ jobs:
       - name: Release
         run: |
           cd cmd
-          ../bin/goreleaser --skip-validate --rm-dist --skip-publish
+          ../bin/goreleaser --snapshot
