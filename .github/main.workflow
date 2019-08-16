@@ -1,11 +1,21 @@
-workflow "Lint, test, & build" {
+workflow "make" {
   on = "push"
   resolves = [
+    "all",
     # "go-lint",
     # "go-test",
     # "go-build",
     # "docker-push",
   ]
+}
+
+action "all" {
+  uses = "docker://golang:latest"
+  runs = "make deps"
+  env = {
+    CI = "true"
+    GOPATH = "/github/workspace/.go"
+  }
 }
 
 action "deps" {
@@ -16,18 +26,16 @@ action "deps" {
   }
 }
 
-# action "go-lint" {
-#   needs = [
-#     "deps",
-#   ]
-#   uses = "docker://golang:latest"
-#   args = [
-#     "lint",
-#   ]
-#   env = {
-#     GOPATH = "/github/workspace/.go"
-#   }
-# }
+action "go-lint" {
+  needs = [
+    "deps",
+  ]
+  uses = "docker://golang:latest"
+  runs = "make lint"
+  env = {
+    GOPATH = "/github/workspace/.go"
+  }
+}
 
 action "go-test" {
   needs = [
