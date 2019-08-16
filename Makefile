@@ -7,6 +7,7 @@ PATH         := $(GOBIN):$(PATH)
 COVEROUT     := ./coverage.out
 CLITOOL      := cli-tool
 VERSION      := dev # TODO get VERSION from git
+CI           := $(CI)
 
 # Targets & Sources
 MAINBIN := $(BINDIR)/nimona
@@ -27,7 +28,11 @@ TOOLS += nimona.io/tools/proxy
 # Go env vars
 export GO111MODULE=on
 export CGO_ENABLED=0
-export GOBIN=$(CURDIR)/$(BINDIR)
+
+# Go bin for tools
+ifndef CI
+	export GOBIN=$(CURDIR)/$(BINDIR)
+endif
 
 # Default target
 .DEFAULT_GOAL := build
@@ -45,6 +50,9 @@ endif
 
 # Git Status
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
+
+.PHONY: all
+all: deps lint test build
 
 build: $(MAINBIN)
 
@@ -114,7 +122,9 @@ tools: deps $(TOOLS)
 # Check tools
 .PHONY: $(TOOLS)
 $(TOOLS): %:
+ifndef CI
 	cd tools; go install $(V) "$*"
+endif
 
 # Lint code
 .PHONY: lint
