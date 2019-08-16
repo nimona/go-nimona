@@ -1,4 +1,4 @@
-FROM golang:1.12.7 AS builder
+FROM golang:1.12.9 AS builder
 
 WORKDIR /src/nimona.io
 
