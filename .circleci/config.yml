@@ -3,6 +3,8 @@ base: &base
   docker:
     - image: circleci/golang:1.12
   working_directory: /go/src/nimona.io
+  environment:
+    CI: 'false'
 steps:
   - &checkout
     checkout 
