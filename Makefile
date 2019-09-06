@@ -14,25 +14,24 @@ MAINBIN := $(BINDIR)/nimona
 SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 
 # Tools
+BIN_GOBIN = github.com/myitcv/gobin
 TOOLS += github.com/cheekybits/genny
 TOOLS += github.com/goreleaser/goreleaser
 TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint
 TOOLS += github.com/vektra/mockery/cmd/mockery
 
 # Internal tools
-TOOLS += nimona.io/tools/objectify
-TOOLS += nimona.io/tools/community
-TOOLS += nimona.io/tools/vanity
-TOOLS += nimona.io/tools/proxy
+TOOLS_INTERNAL += nimona.io/tools/objectify
+TOOLS_INTERNAL += nimona.io/tools/community
+TOOLS_INTERNAL += nimona.io/tools/vanity
+TOOLS_INTERNAL += nimona.io/tools/proxy
 
 # Go env vars
 export GO111MODULE=on
 export CGO_ENABLED=0
 
 # Go bin for tools
-ifndef CI
-	export GOBIN=$(CURDIR)/$(BINDIR)
-endif
+export GOBIN=$(CURDIR)/$(BINDIR)
 
 # Default target
 .DEFAULT_GOAL := build
@@ -94,7 +93,7 @@ community-docs: nimona.io/tools/community
 .PHONY: deps
 deps:
 	$(info Installing dependencies)
-	-go mod $(V) download
+	-go mod download
 
 # Run go generate
 .PHONY: generate
@@ -115,20 +114,30 @@ test:
 		-coverprofile=$(COVEROUT) \
 		./...
 
-# Install tooling
+# Install tools
 .PHONY: tools
-tools: deps $(TOOLS)
+tools: $(TOOLS) $(TOOLS_INTERNAL)
 
 # Check tools
 .PHONY: $(TOOLS)
 $(TOOLS): %:
+	$(GOBIN)/gobin "$*"
+
+# Check internal tools
+.PHONY: $(TOOLS_INTERNAL)
+$(TOOLS_INTERNAL): %:
 ifndef CI
 	cd tools; go install $(V) "$*"
 endif
 
+# Check gobin
+.PHONY: $(BIN_GOBIN)
+$(BIN_GOBIN): %:
+	GO111MODULE=off go get -u $(BIN_GOBIN)
+
 # Lint code
 .PHONY: lint
-lint: github.com/golangci/golangci-lint/cmd/golangci-lint
+lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint
 	$(info Running Go linters)
 	$(GOBIN)/golangci-lint $(V) run
 
