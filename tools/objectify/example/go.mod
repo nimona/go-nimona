@@ -1,6 +1,6 @@
 module nimona.io/tools/objectify/example
 
-go 1.12
+go 1.13
 
 require (
 	github.com/mitchellh/mapstructure v1.1.2
