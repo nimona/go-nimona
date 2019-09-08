@@ -21,7 +21,6 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/peer"
 )
@@ -183,16 +182,6 @@ func main() {
 		logger.Fatal("could not construct dag", log.Error(err))
 	}
 
-	// construct aggregate
-	aggregate, err := aggregate.New(
-		graphStore,
-		exchange,
-		dag,
-	)
-	if err != nil {
-		logger.Fatal("could not construct aggregate", log.Error(err))
-	}
-
 	// construct hyperspace discoverer
 	hyperspace, err := hyperspace.NewDiscoverer(
 		ctx,
@@ -236,7 +225,6 @@ func main() {
 		localInfo,
 		graphStore,
 		dag,
-		aggregate,
 		version.Version,
 		version.Commit,
 		version.Date,

@@ -12,7 +12,6 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/aggregate"
 	"nimona.io/pkg/object/dag"
 	"nimona.io/pkg/peer"
 )
@@ -26,7 +25,6 @@ type API struct {
 
 	objectStore graph.Store
 	dag         dag.Manager
-	agg         aggregate.Manager
 	local       *peer.LocalPeer
 
 	localFingerprint crypto.Fingerprint
@@ -49,7 +47,6 @@ func New(
 	linf *peer.LocalPeer,
 	bls graph.Store,
 	dag dag.Manager,
-	agg aggregate.Manager,
 	version string,
 	commit string,
 	buildDate string,
@@ -65,7 +62,6 @@ func New(
 		objectStore: bls,
 
 		dag: dag,
-		agg: agg,
 
 		localFingerprint: linf.GetFingerprint(),
 
@@ -99,11 +95,6 @@ func New(
 	r.Handle("POST", "/api/v1/graphs$", api.HandlePostGraphs)
 	r.Handle("GET", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandleGetGraph)
 	r.Handle("POST", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandlePostGraph)
-
-	r.Handle("GET", "/api/v1/aggregates$", api.HandleGetAggregates)
-	r.Handle("POST", "/api/v1/aggregates$", api.HandlePostAggregates)
-	r.Handle("GET", "/api/v1/aggregates/(?P<rootObjectHash>.+)$", api.HandleGetAggregate)
-	r.Handle("POST", "/api/v1/aggregates/(?P<rootObjectHash>.+)$", api.HandlePostAggregate)
 
 	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
 
