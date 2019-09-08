@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/internal/context"
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
@@ -80,8 +81,7 @@ func newPeer(
 	pk.PublicKey.Signature = sig
 
 	disc := discovery.NewDiscoverer()
-	ds, err := graph.NewCayleyWithTempStore()
-	assert.NoError(t, err)
+	ds := graph.New(kv.NewMemory())
 	local, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 

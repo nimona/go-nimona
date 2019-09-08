@@ -1,11 +1,46 @@
 package graph
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"nimona.io/pkg/object"
 )
+
+type graphObject struct {
+	ID       string
+	NodeType string
+	Context  string
+	Display  string
+	Parents  []string
+	Data     string
+}
+
+func toGraphObject(v object.Object) (*graphObject, error) {
+	b, err := json.Marshal(v.ToMap())
+	if err != nil {
+		return nil, err
+	}
+	nType := "object:root"
+	if len(v.GetParents()) > 0 {
+		nType = "object"
+	}
+	o := &graphObject{
+		ID:       v.HashBase58(),
+		NodeType: nType,
+		Context:  v.GetType(),
+		Parents:  []string{},
+		Data:     string(b),
+	}
+	if d, ok := v.Get("@display").(string); ok {
+		o.Display = d
+	}
+	for _, p := range v.GetParents() {
+		o.Parents = append(o.Parents, p)
+	}
+	return o, nil
+}
 
 // Dot returns a graphviz representation of a graph
 func Dot(objects []object.Object) (string, error) {
@@ -30,12 +65,12 @@ func dot(objects []graphObject) string {
 		for i, p := range o.Parents {
 			parents[i] = fmt.Sprintf(
 				`<%s>`,
-				p.String()[1:idSize+1],
+				p[1:idSize+1],
 			)
 		}
 		id := fmt.Sprintf(
 			`<%s>`,
-			o.ID.String()[1:idSize+1],
+			o.ID[1:idSize+1],
 		)
 		if len(parents) == 0 {
 			s += fmt.Sprintf(

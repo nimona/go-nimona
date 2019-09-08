@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
@@ -441,8 +442,7 @@ func newPeer(
 	pk, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
-	ds, err := graph.NewCayleyWithTempStore()
-	assert.NoError(t, err)
+	ds := graph.New(kv.NewMemory())
 
 	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)

@@ -5,15 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cayleygraph/cayley"
-	cayleyGraph "github.com/cayleygraph/cayley/graph"
-
-	_ "github.com/cayleygraph/cayley/graph/kv/bolt" // required for cayley
-
 	"nimona.io/internal/api"
 	"nimona.io/internal/context"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/kv"
 	"nimona.io/internal/version"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -84,15 +80,6 @@ func main() {
 
 	logger.Info("loaded config", log.Any("config", config))
 
-	// check cayley quad store
-	if err := cayleyGraph.InitQuadStore(
-		"bolt",
-		config.Daemon.ObjectPath,
-		nil,
-	); err != nil {
-		logger.Fatal("could not init quad store", log.Error(err))
-	}
-
 	// start daemon
 
 	// construct discoverer
@@ -145,18 +132,8 @@ func main() {
 	// add middleware to network
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
-	// construct cayley db
-	cayleyStore, err := cayley.NewGraph(
-		"bolt",
-		config.Daemon.ObjectPath,
-		nil,
-	)
-	if err != nil {
-		logger.Fatal("could not init graph store", log.Error(err))
-	}
-
 	// construct graph store
-	graphStore := graph.NewCayley(cayleyStore)
+	graphStore := graph.New(kv.NewMemory())
 
 	// construct exchange
 	exchange, err := exchange.New(
