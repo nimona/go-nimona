@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/stretchr/testify v1.3.0
-	nimona.io v0.0.0
+	nimona.io v0.0.0-00010101000000-000000000000
 )
 
 replace nimona.io => ../../../
