@@ -1,7 +1,7 @@
 package kv
 
 import (
-	"errors"
+	"nimona.io/internal/errors"
 )
 
 var (

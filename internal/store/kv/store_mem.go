@@ -1,6 +1,9 @@
 package kv
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 type mem struct {
 	m sync.Map
@@ -41,6 +44,19 @@ func (m *mem) List() ([]string, error) {
 	ks := []string{}
 	m.m.Range(func(k, v interface{}) bool {
 		ks = append(ks, k.(string))
+		return true
+	})
+	return ks, nil
+}
+
+// Scan for a key prefix and return all matching keys
+func (m *mem) Scan(prefix string) ([]string, error) {
+	ks := []string{}
+	m.m.Range(func(k, v interface{}) bool {
+		key := k.(string)
+		if strings.HasPrefix(key, prefix) {
+			ks = append(ks, key)
+		}
 		return true
 	})
 	return ks, nil
