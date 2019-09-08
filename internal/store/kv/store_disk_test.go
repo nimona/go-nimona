@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -90,7 +91,7 @@ func TestGetFail(t *testing.T) {
 func TestListSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
-	ds,_ := NewDiskStorage(path)
+	ds, _ := NewDiskStorage(path)
 
 	value := []byte("bar")
 	key := "foo"
@@ -103,4 +104,38 @@ func TestListSuccess(t *testing.T) {
 	assert.Equal(t, key, list[0])
 
 	cleanup(path, key)
+}
+
+func TestScanSuccess(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+
+	ds, _ := NewDiskStorage(path)
+
+	pairs := map[string][]byte{
+		"bar":         []byte{1},
+		"foo":         []byte{1},
+		"foo.bar":     []byte{1},
+		"foo.foo.bar": []byte{1},
+		"not-foo":     []byte{1},
+		"not-foo.foo": []byte{1},
+	}
+
+	for k, v := range pairs {
+		err := ds.Store(k, v)
+		assert.NoError(t, err)
+	}
+
+	list, err := ds.Scan("foo")
+	sort.Strings(list)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"foo", "foo.bar", "foo.foo.bar"}, list)
+
+	list, err = ds.Scan("foo.")
+	sort.Strings(list)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"foo.bar", "foo.foo.bar"}, list)
+
+	for k := range pairs {
+		cleanup(path, k)
+	}
 }

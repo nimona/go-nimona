@@ -1,10 +1,12 @@
 package kv
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"nimona.io/internal/errors"
 )
 
 // diskStore stores the object in a file
@@ -32,6 +34,10 @@ func NewDiskStorage(path string) (Store, error) {
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
 func (d *diskStore) Store(key string, object []byte) error {
+	if strings.ContainsAny(key, "/\\") {
+		return errors.New("disk store keys cannot contain / or \\")
+	}
+
 	dataFilePath := filepath.Join(d.path, key+dataExt)
 
 	dataFileFound := false
@@ -88,6 +94,31 @@ func (d *diskStore) List() ([]string, error) {
 		if ext == dataExt {
 			key := name[0 : len(name)-len(ext)]
 			results = append(results, key)
+		}
+	}
+
+	return results, nil
+}
+
+// Scan for a key prefix and return all matching keys
+func (d *diskStore) Scan(prefix string) ([]string, error) {
+	results := make([]string, 0, 0)
+
+	files, err := ioutil.ReadDir(d.path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Range over all the files in the path for objects
+	for _, f := range files {
+		name := f.Name()
+		ext := filepath.Ext(name)
+
+		if ext == dataExt {
+			key := name[0 : len(name)-len(ext)]
+			if strings.HasPrefix(key, prefix) {
+				results = append(results, key)
+			}
 		}
 	}
 
