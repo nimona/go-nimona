@@ -15,18 +15,16 @@ require (
 	github.com/go-test/deep v1.0.3 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/gogo/protobuf v1.3.0 // indirect
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/joeycumines/go-dotnotation v0.0.0-20180131115956-2d3612e36c5d
-	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mr-tron/base58 v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/tylertreat/BoomFilters v0.0.0-20181028192813-611b3dbe80e8 // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
-	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
 
 replace (
