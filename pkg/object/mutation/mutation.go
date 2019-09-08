@@ -10,6 +10,7 @@ import (
 // have already been applied
 type Mutation struct {
 	Operations []*Operation `json:"ops:ao"`
+	Root       string       `json:"@root:s"`
 	Parents    []string     `json:"@parents:as"`
 }
 

@@ -132,6 +132,14 @@ func (o Object) SetParents(v []string) {
 	o.Set("@parents:as", v)
 }
 
+// GetRoot returns the object's root
+func (o Object) GetRoot() string {
+	if v, ok := o.Get("@root:s").(string); ok {
+		return v
+	}
+	return ""
+}
+
 // Get -
 func (o Object) Get(lk string) interface{} {
 	return o[lk]

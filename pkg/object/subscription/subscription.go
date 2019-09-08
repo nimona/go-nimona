@@ -10,6 +10,7 @@ import (
 // Subscription provides a way for users and peers to subscribe to graph updates
 type Subscription struct {
 	Subscriber crypto.Fingerprint `json:"subscriber:s"`
+	Root       string             `json:"@root:s"`
 	Parents    []string           `json:"@parents:as"`
 }
 
