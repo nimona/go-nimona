@@ -17,7 +17,7 @@ SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 BIN_GOBIN = github.com/myitcv/gobin
 TOOLS += github.com/cheekybits/genny
 TOOLS += github.com/goreleaser/goreleaser
-TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint
+TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.0
 TOOLS += github.com/vektra/mockery/cmd/mockery
 
 # Internal tools
@@ -137,7 +137,7 @@ $(BIN_GOBIN): %:
 
 # Lint code
 .PHONY: lint
-lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint
+lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.0
 	$(info Running Go linters)
 	$(GOBIN)/golangci-lint $(V) run
 
