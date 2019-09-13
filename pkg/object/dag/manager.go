@@ -99,7 +99,7 @@ func NewWithContext(
 	}
 	rootObjectHashes := make([]string, len(heads))
 	for i, rootObject := range heads {
-		rootObjectHashes[i] = rootObject.HashBase58()
+		rootObjectHashes[i] = rootObject.Hash().String()
 	}
 	m.localInfo.AddContentHash(rootObjectHashes...)
 	return m, nil
@@ -109,7 +109,7 @@ func NewWithContext(
 func (m *manager) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
 	logger := log.FromContext(ctx).With(
-		log.String("object._hash", e.Payload.HashBase58()),
+		log.String("object._hash", e.Payload.Hash().String()),
 		log.String("object.type", e.Payload.GetType()),
 	)
 	logger.Debug("handling object")
@@ -140,7 +140,7 @@ func IsComplete(cs []object.Object) bool {
 	ms := map[string]bool{}
 	cm := map[string]object.Object{}
 	for _, c := range cs {
-		cm[c.HashBase58()] = c
+		cm[c.Hash().String()] = c
 	}
 	for _, c := range cs {
 		for _, p := range c.GetParents() {
@@ -158,13 +158,13 @@ func IsComplete(cs []object.Object) bool {
 func (m *manager) Put(vs ...object.Object) error {
 	hashes := make([]string, len(vs))
 	for i, o := range vs {
-		hashes[i] = o.HashBase58()
+		hashes[i] = o.Hash().String()
 
 		if err := m.store.Put(o); err != nil {
 			return err
 		}
 
-		os, err := m.store.Graph(o.HashBase58())
+		os, err := m.store.Graph(o.Hash().String())
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve graph"),
@@ -176,7 +176,7 @@ func (m *manager) Put(vs ...object.Object) error {
 			return ErrIncompleteGraph
 		}
 
-		m.Publish(o.HashBase58())
+		m.Publish(o.Hash().String())
 	}
 
 	go m.localInfo.AddContentHash(hashes...)
@@ -227,7 +227,7 @@ func (m *manager) handleObjectGraphRequest(
 
 	hs := []string{}
 	for _, o := range vs {
-		hs = append(hs, o.HashBase58())
+		hs = append(hs, o.Hash().String())
 	}
 
 	res := &ObjectGraphResponse{

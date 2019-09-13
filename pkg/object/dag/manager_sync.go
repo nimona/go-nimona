@@ -69,7 +69,7 @@ func (m *manager) Sync(
 
 			case res := <-responses:
 				logger := logger.With(
-					log.String("object._hash", res.Payload.HashBase58()),
+					log.String("object._hash", res.Payload.Hash().String()),
 					log.String("object.type", res.Payload.GetType()),
 				)
 
@@ -127,7 +127,7 @@ func (m *manager) Sync(
 		select {
 		case <-ctx.Done():
 		case res := <-out:
-			hash := res.Payload.HashBase58()
+			hash := res.Payload.Hash().String()
 			if hash != req.hash {
 				logger.With(
 					log.String("hash", hash),

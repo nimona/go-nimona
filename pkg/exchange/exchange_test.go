@@ -249,7 +249,7 @@ func TestRequestSuccess(t *testing.T) {
 	)
 	err = x1.Request(
 		ctx,
-		eo1.HashBase58(),
+		eo1.Hash().String(),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
@@ -297,7 +297,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 	)
 	err = x1.Request(
 		ctx,
-		eo1.HashBase58(),
+		eo1.Hash().String(),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)

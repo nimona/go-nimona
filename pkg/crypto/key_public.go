@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 
 	"nimona.io/internal/encoding/base58"
-	"nimona.io/pkg/object"
 )
 
 //go:generate $GOBIN/objectify -schema /key.public -type PublicKey -in key_public.go -out key_public_generated.go
@@ -38,7 +37,7 @@ func (k *PublicKey) Fingerprint() Fingerprint {
 		X:         k.X,
 		Y:         k.Y,
 	}
-	return Fingerprint(base58.Encode(object.Hash(fp.ToObject())))
+	return Fingerprint(base58.Encode(fp.ToObject().Hash()))
 }
 
 func (k *PublicKey) Key() interface{} {
