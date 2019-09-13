@@ -63,9 +63,9 @@ var (
 
 	m1 = &mutation.Mutation{
 		Parents: []string{
-			o.HashBase58(),
+			o.Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAssign,
@@ -77,9 +77,9 @@ var (
 
 	m2 = &mutation.Mutation{
 		Parents: []string{
-			o.HashBase58(),
+			o.Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
@@ -91,9 +91,9 @@ var (
 
 	m3 = &mutation.Mutation{
 		Parents: []string{
-			m1.ToObject().HashBase58(),
+			m1.ToObject().Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
@@ -105,9 +105,9 @@ var (
 
 	m4 = &mutation.Mutation{
 		Parents: []string{
-			m2.ToObject().HashBase58(),
+			m2.ToObject().Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAssign,
@@ -119,9 +119,9 @@ var (
 
 	m5 = &mutation.Mutation{
 		Parents: []string{
-			m2.ToObject().HashBase58(),
+			m2.ToObject().Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
@@ -133,10 +133,10 @@ var (
 
 	m6 = &mutation.Mutation{
 		Parents: []string{
-			m3.ToObject().HashBase58(),
-			m4.ToObject().HashBase58(),
+			m3.ToObject().Hash().String(),
+			m4.ToObject().Hash().String(),
 		},
-		Root: o.HashBase58(),
+		Root: o.Hash().String(),
 		Operations: []*mutation.Operation{
 			{
 				Operation: mutation.OpAppend,
@@ -148,10 +148,10 @@ var (
 
 	s1 = &subscription.Subscription{
 		Subscriber: "foo",
-		Root:       o.HashBase58(),
+		Root:       o.Hash().String(),
 		Parents: []string{
-			m5.ToObject().HashBase58(),
-			m6.ToObject().HashBase58(),
+			m5.ToObject().Hash().String(),
+			m6.ToObject().Hash().String(),
 		},
 	}
 )
@@ -202,14 +202,14 @@ func TestSync(t *testing.T) {
 	).Run(
 		respWith(dag.ObjectGraphResponse{
 			ObjectHashes: []string{
-				o.HashBase58(),
-				m1.ToObject().HashBase58(),
-				m2.ToObject().HashBase58(),
-				m3.ToObject().HashBase58(),
-				m4.ToObject().HashBase58(),
-				m5.ToObject().HashBase58(),
-				m6.ToObject().HashBase58(),
-				s1.ToObject().HashBase58(),
+				o.Hash().String(),
+				m1.ToObject().Hash().String(),
+				m2.ToObject().Hash().String(),
+				m3.ToObject().Hash().String(),
+				m4.ToObject().Hash().String(),
+				m5.ToObject().Hash().String(),
+				m6.ToObject().Hash().String(),
+				s1.ToObject().Hash().String(),
 			},
 		}.ToObject()),
 	).Return(nil)
@@ -228,7 +228,7 @@ func TestSync(t *testing.T) {
 		x.On(
 			"Request",
 			mock.Anything,
-			i.HashBase58(),
+			i.Hash().String(),
 			"peer:"+rkey.PublicKey.Fingerprint().String(),
 			mock.Anything,
 		).Run(
@@ -240,7 +240,7 @@ func TestSync(t *testing.T) {
 	res, err := m.Sync(
 		ctx,
 		[]string{
-			o.HashBase58(),
+			o.Hash().String(),
 		},
 		[]string{
 			"peer:" + rkey.PublicKey.Fingerprint().String(),

@@ -29,7 +29,7 @@ func (s *Graph) Put(v object.Object) error {
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	key := v.HashBase58()
+	key := v.Hash().String()
 	if err := s.store.Put(key, value); err != nil {
 		return errors.Wrap(err, errors.New("could not persist object"))
 	}

@@ -8,7 +8,7 @@ func topographicalSortObjects(os []object.Object) []object.Object {
 	osm := map[string]object.Object{}
 	graph := map[string][]string{}
 	for _, o := range os {
-		key := o.HashBase58()
+		key := o.Hash().String()
 		osm[key] = o
 		parentKeys := o.GetParents()
 		if _, ok := graph[key]; !ok {

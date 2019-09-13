@@ -140,7 +140,7 @@ func (api *API) Stop(c *router.Context) {
 
 func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
-	m["_hash"] = o.HashBase58()
+	m["_hash"] = o.Hash().String()
 	if o.GetType() == crypto.PublicKeyType {
 		p := &crypto.PublicKey{}
 		p.FromObject(o) // nolint: errcheck
