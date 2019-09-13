@@ -39,6 +39,16 @@ func (m *mem) Get(k string) ([]byte, error) {
 	return b, nil
 }
 
+// Check if a pair exists
+func (m *mem) Check(k string) error {
+	_, ok := m.m.Load(k)
+	if !ok {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 // Remove the value of a key
 func (m *mem) Remove(k string) error {
 	m.m.Delete(k)

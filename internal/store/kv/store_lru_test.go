@@ -37,6 +37,9 @@ func Test_StoreLRU_HappyPathSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, value, v)
 
+	err = s.Check(key)
+	assert.NoError(t, err)
+
 	err = s.Put("foo.bar.second", []byte{1, 2, 3})
 	assert.NoError(t, err)
 
@@ -47,6 +50,9 @@ func Test_StoreLRU_HappyPathSuccess(t *testing.T) {
 	v, err = s.Get("foo.bar")
 	assert.Error(t, err)
 	assert.Nil(t, v)
+
+	err = s.Check("foo.bar")
+	assert.Error(t, err)
 
 	list, err := s.Scan("foo")
 	sort.Strings(list)
