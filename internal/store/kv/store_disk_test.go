@@ -22,7 +22,7 @@ func TestStoreObjectSuccess(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err := ds.Put(key, value)
 	assert.NoError(t, err)
 
 	key = "foo"
@@ -43,10 +43,10 @@ func TestStoreObjectExists(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err := ds.Put(key, value)
 	assert.NoError(t, err)
 
-	err = ds.Store(key, value)
+	err = ds.Put(key, value)
 	assert.Error(t, err)
 	assert.EqualError(t, ErrExists, err.Error())
 
@@ -64,7 +64,7 @@ func TestGetSuccess(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err := ds.Put(key, value)
 	assert.NoError(t, err)
 
 	bID := "foo"
@@ -96,7 +96,7 @@ func TestListSuccess(t *testing.T) {
 	value := []byte("bar")
 	key := "foo"
 
-	err := ds.Store(key, value)
+	err := ds.Put(key, value)
 	assert.NoError(t, err)
 
 	list, err := ds.List()
@@ -121,7 +121,7 @@ func TestScanSuccess(t *testing.T) {
 	}
 
 	for k, v := range pairs {
-		err := ds.Store(k, v)
+		err := ds.Put(k, v)
 		assert.NoError(t, err)
 	}
 

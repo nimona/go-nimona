@@ -30,12 +30,12 @@ func (s *Graph) Put(v object.Object) error {
 	}
 
 	key := v.HashBase58()
-	if err := s.store.Store(key, value); err != nil {
+	if err := s.store.Put(key, value); err != nil {
 		return errors.Wrap(err, errors.New("could not persist object"))
 	}
 	if root := v.GetRoot(); root != "" {
 		key = root + "." + key
-		if err := s.store.Store(key, value); err != nil {
+		if err := s.store.Put(key, value); err != nil {
 			return errors.Wrap(err, errors.New("could not persist object"))
 		}
 	}

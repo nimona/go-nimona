@@ -14,8 +14,8 @@ func NewMemory() Store {
 	return &mem{}
 }
 
-// Store a key-value pair
-func (m *mem) Store(k string, v []byte) error {
+// Put a key-value pair
+func (m *mem) Put(k string, v []byte) error {
 	if _, ok := m.m.Load(k); ok {
 		return ErrExists
 	}
