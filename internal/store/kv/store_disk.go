@@ -30,10 +30,10 @@ func NewDiskStorage(path string) (Store, error) {
 	}, nil
 }
 
-// Store saves the object in two files one for the metadata and one for
+// Put saves the object in two files one for the metadata and one for
 // the data. The convetion used is key.meta and key.data. Returns error if
 // the files cannot be created.
-func (d *diskStore) Store(key string, object []byte) error {
+func (d *diskStore) Put(key string, object []byte) error {
 	if strings.ContainsAny(key, "/\\") {
 		return errors.New("disk store keys cannot contain / or \\")
 	}
