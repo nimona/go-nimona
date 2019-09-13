@@ -32,6 +32,29 @@ func TestStoreObjectSuccess(t *testing.T) {
 	cleanup(path, key)
 }
 
+func TestRemoveObjectSuccess(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+
+	ds, _ := NewDiskStorage(path)
+
+	value := []byte("bar")
+	key := "foo"
+
+	err := ds.Put(key, value)
+	assert.NoError(t, err)
+
+	_, err = os.Stat(filepath.Join(path, key+dataExt))
+	assert.NoError(t, err)
+
+	err = ds.Remove(key)
+	assert.NoError(t, err)
+
+	_, err = os.Stat(filepath.Join(path, key+dataExt))
+	assert.Error(t, err)
+
+	cleanup(path, key)
+}
+
 func TestStoreObjectExists(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 
