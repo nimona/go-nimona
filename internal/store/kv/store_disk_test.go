@@ -76,6 +76,33 @@ func TestStoreObjectExists(t *testing.T) {
 	cleanup(path, key)
 }
 
+func TestCheckObjectExists(t *testing.T) {
+	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
+
+	ds, _ := NewDiskStorage(path)
+
+	values := make(map[string][]byte)
+	values["TestMetaKey"] = []byte("TestMetaValue")
+
+	value := []byte("bar")
+	key := "foo"
+
+	err := ds.Check(key)
+	assert.Error(t, err)
+
+	err = ds.Put(key, value)
+	assert.NoError(t, err)
+
+	err = ds.Check(key)
+	assert.NoError(t, err)
+
+	err = ds.Put(key, value)
+	assert.Error(t, err)
+	assert.EqualError(t, ErrExists, err.Error())
+
+	cleanup(path, key)
+}
+
 func TestGetSuccess(t *testing.T) {
 	path, _ := ioutil.TempDir("", "nimona-test-net-storage-disk")
 

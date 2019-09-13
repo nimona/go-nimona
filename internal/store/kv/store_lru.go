@@ -65,6 +65,16 @@ func (m *lru) Get(k string) ([]byte, error) {
 	return e.value, nil
 }
 
+// Check a pair exists, does not move the element to the front of the list
+func (m *lru) Check(k string) error {
+	_, ok := m.m.Load(k)
+	if !ok {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 // Remove the value of a key
 func (m *lru) Remove(k string) error {
 	v, ok := m.m.Load(k)

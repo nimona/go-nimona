@@ -76,6 +76,15 @@ func (d *diskStore) Get(key string) ([]byte, error) {
 	return b, nil
 }
 
+func (d *diskStore) Check(key string) error {
+	dataFilePath := filepath.Join(d.path, key+dataExt)
+	if _, err := os.Stat(dataFilePath); err != nil {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
 func (d *diskStore) Remove(key string) error {
 	dataFilePath := filepath.Join(d.path, key+dataExt)
 	if _, err := os.Stat(dataFilePath); err != nil {
