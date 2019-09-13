@@ -7,10 +7,13 @@ type Token string
 const (
 	UNKNOWN    Token = "UNKNOWN"
 	DOMAIN     Token = "DOMAIN"
-	DOT        Token = "DOT"
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
 	EVENT      Token = "EVENT"
+	STRUCT     Token = "STRUCT"
+	REPEATED   Token = "REPEATED"
+	SIGNED     Token = "SIGNED"
+	PRIMARY    Token = "PRIMARY"
 	IMPORT     Token = "IMPORT"
 	OBRACE     Token = "OBRACE"
 	PACKAGE    Token = "PACKAGE"
@@ -23,10 +26,14 @@ var (
 	wsRegex   = regexp.MustCompile("^[\\n\\t\\s]+")
 	textRegex = regexp.MustCompile("^[a-zA-Z0-9\\._@\\/]+$")
 	keywords  = map[string]Token{
-		"package": PACKAGE,
-		"import":  IMPORT,
-		"domain":  DOMAIN,
-		"event":   EVENT,
+		"package":  PACKAGE,
+		"import":   IMPORT,
+		"domain":   DOMAIN,
+		"event":    EVENT,
+		"struct":   STRUCT,
+		"repeated": REPEATED,
+		"primary":  PRIMARY,
+		"signed":   SIGNED,
 	}
 )
 

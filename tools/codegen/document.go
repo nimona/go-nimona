@@ -5,6 +5,7 @@ type Document struct {
 	Package      string
 	Imports      map[string]string
 	Domains      []*Domain
+	Structs      []*Struct
 }
 
 type Domain struct {
@@ -17,8 +18,16 @@ type Event struct {
 	Members []*Member
 }
 
+type Struct struct {
+	Name    string
+	Members []*Member
+}
+
 type Member struct {
 	Name string
 	Type string
 	Tag  string
+
+	Required bool
+	Repeated bool
 }

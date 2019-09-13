@@ -18,6 +18,18 @@ import (
 	{{- end }}
 )
 
+// basic structs
+type (
+	{{- range $struct := .Structs }}
+	{{ $struct.Name }} struct {
+		{{- range $member := $struct.Members }}
+		{{ $member.Name }} {{ $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{- end }}
+	}
+	{{- end }}
+)
+
+// domain events
 type (
 	{{- range $domain := .Domains }}
 	{{- range $event := .Events }}
@@ -38,10 +50,6 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) ContextName() string {
 
 func (e *{{ $domain.Name }}{{ $event.Name }}) EventName() string {
 	return "{{ $event.Name }}"
-}
-
-func (e *{{ $domain.Name }}{{ $event.Name }}) ContextName() string {
-	return "{{ $.Package }}/{{ $domain.Name}}.{{ $event.Name }}"
 }
 
 func (e *{{ $domain.Name }}{{ $event.Name }}) ToObject() object.Object {
@@ -69,6 +77,14 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// for i, s := range doc.Structs {
+	// 	for k, m := range s.Members {
+	// 		if m.Repeated {
+	// 			doc.Structs[i].Members[k].Type = "[]" + m.Type
+	// 		}
+	// 	}
+	// }
 
 	doc.Imports["json"] = "encoding/json"
 	doc.Imports["object"] = "nimona.io/object"

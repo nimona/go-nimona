@@ -66,6 +66,7 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	// if given token always expects TEXT afterwards, let's find it
 	case PACKAGE,
 		DOMAIN,
+		STRUCT,
 		EVENT:
 		_, text, err := p.expect(TEXT)
 		if err != nil {
@@ -101,43 +102,111 @@ func (p *Parser) parseEvent() (*Event, error) {
 			p.unscan()
 			break
 		}
+		member := &Member{}
+		if token == REPEATED {
+			member.Repeated = true
+			token, value = p.scanIgnoreWhiteSpace()
+		}
 		if token == TEXT {
-			member := &Member{
-				Name: memberName(value),
-				Tag:  value,
-			}
+			member.Tag = value + ":"
+			member.Name = memberName(value)
 			tokNext, memberType := p.scanIgnoreWhiteSpace()
 			if tokNext != TEXT {
 				return nil, fmt.Errorf("found %q, expected TEXT", memberType)
 			}
+			if member.Repeated {
+				member.Type = "[]"
+				member.Tag += "a"
+			}
 			switch memberType {
 			case "string":
-				member.Type = "string"
-				member.Tag += ":s"
+				member.Type += "string"
+				member.Tag += "s"
 			case "int":
-				member.Type = "int64"
-				member.Tag += ":i"
+				member.Type += "int64"
+				member.Tag += "i"
 			case "uint":
-				member.Type = "uint64"
-				member.Tag += ":u"
+				member.Type += "uint64"
+				member.Tag += "u"
 			case "float":
-				member.Type = "float64"
-				member.Tag += ":f"
+				member.Type += "float64"
+				member.Tag += "f"
 			case "bool":
-				member.Type = "bool"
-				member.Tag += ":b"
+				member.Type += "bool"
+				member.Tag += "b"
 			case "data":
-				member.Type = "[]byte"
-				member.Tag += ":d"
+				member.Type += "[]byte"
+				member.Tag += "d"
 			default:
-				member.Type = memberType
-				member.Tag += ":o"
+				member.Type += memberType
+				member.Tag += "o"
 			}
 			event.Members = append(event.Members, member)
-			fmt.Println("\t\tFound attribute", value, "of type", memberType)
+			fmt.Println("\tFound attribute", value, "of type", memberType)
+			continue
 		}
 	}
 	return event, nil
+}
+
+func (p *Parser) parseStruct() (*Struct, error) {
+	// create struct
+	str := &Struct{}
+
+	fmt.Println("Found struct", str.Name)
+
+	// parse attributes
+	for {
+		token, value := p.scanIgnoreWhiteSpace()
+		if token == EBRACE {
+			break
+		}
+		member := &Member{}
+		if token == REPEATED {
+			member.Repeated = true
+			token, value = p.scanIgnoreWhiteSpace()
+		}
+		if token == TEXT {
+			member.Tag = value + ":"
+			member.Name = memberName(value)
+			tokNext, memberType := p.scanIgnoreWhiteSpace()
+			if tokNext != TEXT {
+				return nil, fmt.Errorf("found %q, expected TEXT", memberType)
+			}
+			if member.Repeated {
+				member.Type = "[]"
+				member.Tag += "a"
+			}
+			switch memberType {
+			case "string":
+				member.Type += "string"
+				member.Tag += "s"
+			case "int":
+				member.Type += "int64"
+				member.Tag += "i"
+			case "uint":
+				member.Type += "uint64"
+				member.Tag += "u"
+			case "float":
+				member.Type += "float64"
+				member.Tag += "f"
+			case "bool":
+				member.Type += "bool"
+				member.Tag += "b"
+			case "data":
+				member.Type += "[]byte"
+				member.Tag += "d"
+			default:
+				member.Type += memberType
+				member.Tag += "o"
+			}
+			str.Members = append(str.Members, member)
+			fmt.Println("\tFound attribute", value, "of type", memberType)
+			continue
+		}
+		return nil, fmt.Errorf("found %q, expected MEMBER", token)
+	}
+	return str, nil
 }
 
 func (p *Parser) Parse() (*Document, error) {
@@ -178,10 +247,8 @@ func (p *Parser) Parse() (*Document, error) {
 
 	// gather domains
 	for {
-		domain := &Domain{}
-
 		// expect "domain" and value
-		token, domainName, err := p.expect(DOMAIN)
+		token, name, err := p.expect(DOMAIN, STRUCT)
 		if err != nil {
 			if token == EOF {
 				break
@@ -189,32 +256,47 @@ func (p *Parser) Parse() (*Document, error) {
 			return nil, err
 		}
 
-		domain.Name = domainName
-
-		fmt.Println("Found domain", domain.Name)
-
 		// expect "{"
 		if _, value, err := p.expect(OBRACE); err != nil {
 			return nil, fmt.Errorf("found %q, expected EVENT", value)
 		}
 
-		for {
-			// if "}", break
-			if token, _ := p.scanIgnoreWhiteSpace(); token == EBRACE {
-				break
-			}
-
-			p.unscan()
-
-			// parse event
-			event, err := p.parseEvent()
+		if token == STRUCT {
+			// parse struc
+			str, err := p.parseStruct()
 			if err != nil {
 				return nil, err
 			}
-			domain.Events = append(domain.Events, event)
+			str.Name = name
+			doc.Structs = append(doc.Structs, str)
+			continue
 		}
 
-		doc.Domains = append(doc.Domains, domain)
+		if token == DOMAIN {
+			domain := &Domain{
+				Name: name,
+			}
+			fmt.Println("Found domain", domain.Name)
+			for {
+				// if "}", break
+				token, _ := p.scanIgnoreWhiteSpace()
+				if token == EBRACE {
+					break
+				}
+				p.unscan()
+				if token == EVENT {
+					// parse event
+					event, err := p.parseEvent()
+					if err != nil {
+						return nil, err
+					}
+					domain.Events = append(domain.Events, event)
+					continue
+				}
+				return nil, fmt.Errorf("found %q, expected EVENT", token)
+			}
+			doc.Domains = append(doc.Domains, domain)
+		}
 	}
 
 	return doc, nil
