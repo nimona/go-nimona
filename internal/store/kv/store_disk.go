@@ -74,7 +74,21 @@ func (d *diskStore) Get(key string) ([]byte, error) {
 	}
 
 	return b, nil
+}
 
+func (d *diskStore) Remove(key string) error {
+	dataFilePath := filepath.Join(d.path, key+dataExt)
+	if _, err := os.Stat(dataFilePath); err != nil {
+		return ErrNotFound
+	}
+
+	// Read bytes from the data file
+	err := os.Remove(dataFilePath)
+	if err != nil {
+		return errors.Wrap(err, errors.New("could not remove file"))
+	}
+
+	return nil
 }
 
 // List returns a list of all the object hashes that exist as files

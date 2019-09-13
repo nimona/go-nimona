@@ -39,6 +39,12 @@ func (m *mem) Get(k string) ([]byte, error) {
 	return b, nil
 }
 
+// Remove the value of a key
+func (m *mem) Remove(k string) error {
+	m.m.Delete(k)
+	return nil
+}
+
 // List all keys
 func (m *mem) List() ([]string, error) {
 	ks := []string{}
