@@ -1,0 +1,27 @@
+package nimona.io/crypto
+
+struct Signature {
+    publicKey PublicKey
+    algorithm string
+    r data
+    s data
+}
+
+struct PrivateKey {
+    publicKey PublicKey
+    keyType string
+    algorithm string
+    curve string
+    x data
+    y data
+    d data
+}
+
+struct PublicKey {
+    keyType string
+    algorithm string
+    curve string
+    x data
+    y data
+    @signature Signature
+}

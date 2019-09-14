@@ -9,25 +9,6 @@ import (
 	"nimona.io/internal/encoding/base58"
 )
 
-//go:generate $GOBIN/objectify -schema /key.public -type PublicKey -in key_public.go -out key_public_generated.go
-
-type PublicKey struct {
-	Algorithm string `json:"alg:s,omitempty"`
-	// KeyID                  string `json:"kid,omitempty"`
-	KeyType string `json:"kty:s,omitempty"`
-	// KeyUsage               string `json:"use,omitempty"`
-	// KeyOps                 string `json:"key_ops,omitempty"`
-	// X509CertChain          string `json:"x5c,omitempty"`
-	// X509CertThumbprint     string `json:"x5t,omitempty"`
-	// X509CertThumbprintS256 string `json:"x5tS256,omitempty"`
-	// X509URL                string `json:"x5u,omitempty"`
-	Curve string `json:"crv:s,omitempty"`
-	X     []byte `json:"x:d,omitempty"`
-	Y     []byte `json:"y:d,omitempty"`
-
-	Signature *Signature `json:"@signature:o,omitempty"`
-}
-
 // Fingerprint of the key
 func (k *PublicKey) Fingerprint() Fingerprint {
 	fp := &PublicKey{

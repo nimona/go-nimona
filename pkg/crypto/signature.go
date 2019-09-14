@@ -24,16 +24,6 @@ const (
 	AlgorithmObjectHash = "OH_ES256"
 )
 
-//go:generate $GOBIN/objectify -schema /signature -type Signature -in signature.go -out signature_generated.go
-
-// Signature object (container), currently supports only ES256
-type Signature struct {
-	PublicKey *PublicKey `json:"pub:o"`
-	Alg       string     `json:"alg:s"`
-	R         []byte     `json:"r:d"`
-	S         []byte     `json:"s:d"`
-}
-
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
 	key *PrivateKey,
@@ -98,7 +88,7 @@ func NewSignature(
 
 	return &Signature{
 		PublicKey: key.PublicKey,
-		Alg:       alg,
+		Algorithm: alg,
 		R:         r.Bytes(),
 		S:         s.Bytes(),
 	}, nil
