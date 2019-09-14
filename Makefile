@@ -21,6 +21,7 @@ TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
 TOOLS += github.com/vektra/mockery/cmd/mockery
 
 # Internal tools
+TOOLS_INTERNAL += nimona.io/tools/codegen
 TOOLS_INTERNAL += nimona.io/tools/objectify
 TOOLS_INTERNAL += nimona.io/tools/community
 TOOLS_INTERNAL += nimona.io/tools/vanity
@@ -97,8 +98,9 @@ deps:
 
 # Run go generate
 .PHONY: generate
-generate: tools
+generate: github.com/myitcv/gobin nimona.io/tools/codegen
 	-go generate $(V) ./...
+	-$(GOBIN)/codegen -a .
 
 # Run go test
 .PHONY: test
@@ -116,7 +118,7 @@ test:
 
 # Install tools
 .PHONY: tools
-tools: $(TOOLS) $(TOOLS_INTERNAL)
+tools: github.com/myitcv/gobin $(TOOLS) $(TOOLS_INTERNAL)
 
 # Check tools
 .PHONY: $(TOOLS)
