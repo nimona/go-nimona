@@ -42,7 +42,7 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 		return
 	}
 
-	if err := api.dag.Put(o); err != nil {
+	if err := api.orchestrator.Put(o); err != nil {
 		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
 	}
@@ -103,7 +103,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 
 		// try to sync the graph with the addresses we gathered
 		hs := []string{rootObjectHash}
-		if _, err = api.dag.Sync(ctx, hs, addrs); err != nil {
+		if _, err = api.orchestrator.Sync(ctx, hs, addrs); err != nil {
 			if errors.CausedBy(err, graph.ErrNotFound) {
 				c.AbortWithError(404, err) // nolint: errcheck
 				return
@@ -115,7 +115,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		// os = graphObjects.Objects
 	}
 
-	graphObjects, err := api.dag.Get(ctx, rootObjectHash)
+	graphObjects, err := api.orchestrator.Get(ctx, rootObjectHash)
 	if err != nil {
 		if errors.CausedBy(err, graph.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck

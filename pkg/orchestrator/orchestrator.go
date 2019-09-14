@@ -1,4 +1,4 @@
-package dag
+package orchestrator
 
 import (
 	"nimona.io/internal/context"
@@ -12,13 +12,13 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg dag gen "ObservableType=string"
-//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg dag gen "ObservableType=object.Object"
+//go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg orchestrator gen "ObservableType=string"
+//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg orchestrator gen "ObservableType=object.Object"
 
 type (
-	// Manager is responsible of keeping track of all the objects, graphs,
-	// and mutations, and exposing the to the clients
-	Manager interface {
+	// Orchestrator is responsible of keeping streams and their underlying
+	// graphs up to date
+	Orchestrator interface {
 		Subscriber
 		Sync(
 			ctx context.Context,
@@ -37,7 +37,7 @@ type (
 			error,
 		)
 	}
-	manager struct {
+	orchestrator struct {
 		PubSub
 		store     graph.Store
 		exchange  exchange.Exchange
@@ -45,9 +45,12 @@ type (
 		localInfo *peer.LocalPeer
 		// backlog  backlog.Backlog
 	}
+	Graph struct {
+		Objects []object.Object
+	}
 )
 
-// New constructs a new manager given an object store and exchange
+// New constructs a new orchestrator given an object store and exchange
 func New(
 	store graph.Store,
 	exchange exchange.Exchange,
@@ -55,7 +58,7 @@ func New(
 	localInfo *peer.LocalPeer,
 	// bc backlog.Backlog,
 ) (
-	Manager,
+	Orchestrator,
 	error,
 ) {
 	ctx := context.Background()
@@ -68,7 +71,7 @@ func New(
 	)
 }
 
-// NewWithContext constructs a new manager given an object store and exchange
+// NewWithContext constructs a new orchestrator given an object store and exchange
 func NewWithContext(
 	ctx context.Context,
 	store graph.Store,
@@ -77,10 +80,10 @@ func NewWithContext(
 	localInfo *peer.LocalPeer,
 	// bc backlog.Backlog,
 ) (
-	Manager,
+	Orchestrator,
 	error,
 ) {
-	m := &manager{
+	m := &orchestrator{
 		PubSub:    NewPubSub(),
 		store:     store,
 		exchange:  exchange,
@@ -106,7 +109,7 @@ func NewWithContext(
 }
 
 // Process an object
-func (m *manager) Process(e *exchange.Envelope) error {
+func (m *orchestrator) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
 	logger := log.FromContext(ctx).With(
 		log.String("object._hash", e.Payload.Hash().String()),
@@ -155,7 +158,7 @@ func IsComplete(cs []object.Object) bool {
 
 // Put stores a given object
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
-func (m *manager) Put(vs ...object.Object) error {
+func (m *orchestrator) Put(vs ...object.Object) error {
 	hashes := make([]string, len(vs))
 	for i, o := range vs {
 		hashes[i] = o.Hash().String()
@@ -185,7 +188,7 @@ func (m *manager) Put(vs ...object.Object) error {
 }
 
 // Get returns a complete and ordered graph given any node of the graph.
-func (m *manager) Get(
+func (m *orchestrator) Get(
 	ctx context.Context,
 	rootHash string,
 ) (
@@ -211,7 +214,7 @@ func (m *manager) Get(
 	return g, nil
 }
 
-func (m *manager) handleObjectGraphRequest(
+func (m *orchestrator) handleObjectGraphRequest(
 	ctx context.Context,
 	reqID string,
 	sender *crypto.PublicKey,
@@ -241,7 +244,7 @@ func (m *manager) handleObjectGraphRequest(
 		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(
-			"dag/manager.handleObjectGraphRequest could not send response",
+			"orchestrator/orchestrator.handleObjectGraphRequest could not send response",
 			log.Error(err),
 		)
 		return err

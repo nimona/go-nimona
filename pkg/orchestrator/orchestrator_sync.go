@@ -1,4 +1,4 @@
-package dag
+package orchestrator
 
 import (
 	"nimona.io/internal/context"
@@ -7,7 +7,7 @@ import (
 	"nimona.io/pkg/exchange"
 )
 
-func (m *manager) Sync(
+func (m *orchestrator) Sync(
 	ctx context.Context,
 	selector []string,
 	addresses []string,
@@ -24,7 +24,7 @@ func (m *manager) Sync(
 	}
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "dag/manager.Sync"),
+		log.String("method", "orchestrator/orchestrator.Sync"),
 		log.Strings("selector", selector),
 		log.Strings("addresses", addresses),
 	)
@@ -165,7 +165,7 @@ func (m *manager) Sync(
 	return g, nil
 }
 
-func (m *manager) withoutOwnAddresses(addrs []string) []string {
+func (m *orchestrator) withoutOwnAddresses(addrs []string) []string {
 	clnAddrs := []string{}
 	ownAddrs := m.localInfo.GetAddresses()
 	skpAddrs := map[string]bool{}

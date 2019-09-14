@@ -2,7 +2,7 @@
 
 // +build !generate
 
-package dag
+package orchestrator
 
 import (
 	"encoding/json"
@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	ObjectGraphResponseType = "/object-graph-response"
+	ObjectGraphRequestType = "/object-graph-request"
 )
 
 // ToObject returns a f12n object
-func (s ObjectGraphResponse) ToObject() object.Object {
+func (s ObjectGraphRequest) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": ObjectGraphResponseType,
+		"@ctx:s": ObjectGraphRequestType,
 	}
 	b, _ := json.Marshal(s)
 	json.Unmarshal(b, &m)
@@ -25,12 +25,12 @@ func (s ObjectGraphResponse) ToObject() object.Object {
 }
 
 // FromObject populates the struct from a f12n object
-func (s *ObjectGraphResponse) FromObject(o object.Object) error {
+func (s *ObjectGraphRequest) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, s)
 }
 
 // GetType returns the object's type
-func (s ObjectGraphResponse) GetType() string {
-	return ObjectGraphResponseType
+func (s ObjectGraphRequest) GetType() string {
+	return ObjectGraphRequestType
 }
