@@ -141,7 +141,7 @@ func (api *API) Stop(c *router.Context) {
 func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
 	m["_hash"] = o.Hash().String()
-	if o.GetType() == crypto.PublicKeyType {
+	if o.GetType() == "nimona.io/crypto/PublicKey" {
 		p := &crypto.PublicKey{}
 		p.FromObject(o) // nolint: errcheck
 		m["_fingerprint"] = p.Fingerprint().String()
