@@ -138,7 +138,7 @@ func (p *Parser) parseEvent() (*Event, error) {
 				member.Type += "[]byte"
 				member.Tag += "d"
 			default:
-				member.Type += memberType
+				member.Type += "*" + memberType
 				member.Tag += "o"
 			}
 			event.Members = append(event.Members, member)
@@ -197,7 +197,7 @@ func (p *Parser) parseStruct() (*Struct, error) {
 				member.Type += "[]byte"
 				member.Tag += "d"
 			default:
-				member.Type += memberType
+				member.Type += "*" + memberType
 				member.Tag += "o"
 			}
 			str.Members = append(str.Members, member)

@@ -1,4 +1,4 @@
-package mochi.io/conversation
+package foo/example_test
 
 import nimona.io/crypto crypto
 
