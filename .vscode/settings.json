@@ -2,7 +2,7 @@
     "go.buildTags": "dev",
     "go.formatTool": "goimports",
     "go.lintTool":"golangci-lint",
-    "go.lintOnSave": "package",
+    "go.lintOnSave": "file",
     "go.lintFlags": [
       "--fast"
     ],
@@ -10,8 +10,7 @@
     "go.testFlags": [
         "-v",
         "-race",
-        "-failfast",
-        "-cpuprofile", "profile.out",
+        "-failfast"
     ],
     "go.testTimeout": "60s",
     "go.testEnvVars": {
