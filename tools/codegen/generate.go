@@ -18,6 +18,7 @@ import (
 	{{- end }}
 )
 
+{{- if .Structs }}
 // basic structs
 type (
 	{{- range $struct := .Structs }}
@@ -28,7 +29,9 @@ type (
 	}
 	{{- end }}
 )
+{{- end }}
 
+{{- if .Domains }}
 // domain events
 type (
 	{{- range $domain := .Domains }}
@@ -41,6 +44,7 @@ type (
 	{{- end }}
 	{{- end }}
 )
+{{- end }}
 
 {{- range $domain := .Domains }}
 {{- range $event := .Events }}
@@ -50,6 +54,10 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) ContextName() string {
 
 func (e *{{ $domain.Name }}{{ $event.Name }}) EventName() string {
 	return "{{ $event.Name }}"
+}
+
+func (e *{{ $domain.Name }}{{ $event.Name }}) GetType() string {
+	return "{{ $.Package }}/{{ $domain.Name}}.{{ $event.Name }}"
 }
 
 func (e *{{ $domain.Name }}{{ $event.Name }}) ToObject() object.Object {
@@ -70,6 +78,33 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) FromObject(o object.Object) error 
 
 {{ end }}
 {{- end }}
+
+{{- range $struct := .Structs }}
+func (e *{{ $struct.Name }}) ContextName() string {
+	return "{{ $.Package }}"
+}
+
+func (e *{{ $struct.Name }}) GetType() string {
+	return "{{ $.Package }}/{{ $struct.Name }}"
+}
+
+func (e *{{ $struct.Name }}) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": "{{ $.Package }}",
+		"@struct:s": "{{ $struct.Name }}",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *{{ $struct.Name }}) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+
+{{ end }}
 `
 
 func Generate(doc *Document, output string) ([]byte, error) {
