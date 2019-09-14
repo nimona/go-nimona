@@ -1,4 +1,4 @@
-[![CircleCI Image]](https://circleci.com/gh/nimona/go-nimona)
+[![Actions Image]](https://github.com/nimona/go-nimona/actions)
 [![License Image]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 
 # Nimona
@@ -40,6 +40,5 @@ In addition to the Common-Flow spec, contributors are also highly encouraged to
 
 <!-- Badge images -->
 
-[CircleCI Image]: https://img.shields.io/circleci/project/github/nimona/go-nimona.svg?style=flat
+[Actions Image]: https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat
 [License Image]: https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat
-
