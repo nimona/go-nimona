@@ -1,4 +1,4 @@
-package dag
+package orchestrator
 
 import (
 	"nimona.io/pkg/crypto"

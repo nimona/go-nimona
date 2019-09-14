@@ -2,7 +2,7 @@ package subscription
 
 import (
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object/dag"
+	"nimona.io/pkg/orchestrator"
 )
 
 //go:generate $GOBIN/objectify -schema /graph.subscription -type Subscription -in subscription.go -out subscription_generated.go
@@ -22,7 +22,7 @@ func New(subscriber *crypto.PublicKey, parents []string) *Subscription {
 	}
 }
 
-func GetSubscribers(g *dag.Graph) ([]crypto.Fingerprint, error) {
+func GetSubscribers(g *orchestrator.Graph) ([]crypto.Fingerprint, error) {
 	sm := map[crypto.Fingerprint]bool{}
 	for _, o := range g.Objects {
 		if o.GetType() == SubscriptionType {

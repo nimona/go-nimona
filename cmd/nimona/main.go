@@ -17,7 +17,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object/dag"
+	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 )
 
@@ -148,15 +148,15 @@ func main() {
 		logger.Fatal("could not construct exchange", log.Error(err))
 	}
 
-	// construct dag
-	dag, err := dag.New(
+	// construct orchestrator
+	orchestrator, err := orchestrator.New(
 		graphStore,
 		exchange,
 		nil,
 		localInfo,
 	)
 	if err != nil {
-		logger.Fatal("could not construct dag", log.Error(err))
+		logger.Fatal("could not construct orchestrator", log.Error(err))
 	}
 
 	// construct hyperspace discoverer
@@ -201,7 +201,7 @@ func main() {
 		exchange,
 		localInfo,
 		graphStore,
-		dag,
+		orchestrator,
 		version.Version,
 		version.Commit,
 		version.Date,

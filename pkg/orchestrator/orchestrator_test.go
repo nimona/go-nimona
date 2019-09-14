@@ -1,4 +1,4 @@
-package dag_test
+package orchestrator_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/dag"
+	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/object/mutation"
 	"nimona.io/pkg/object/subscription"
 	"nimona.io/pkg/peer"
@@ -173,7 +173,7 @@ func TestSync(t *testing.T) {
 	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
-	m, err := dag.New(os, x, nil, li)
+	m, err := orchestrator.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotNil(t, handler)
@@ -200,7 +200,7 @@ func TestSync(t *testing.T) {
 		"peer:"+rkey.PublicKey.Fingerprint().String(),
 		mock.Anything,
 	).Run(
-		respWith(dag.ObjectGraphResponse{
+		respWith(orchestrator.ObjectGraphResponse{
 			ObjectHashes: []string{
 				o.Hash().String(),
 				m1.ToObject().Hash().String(),

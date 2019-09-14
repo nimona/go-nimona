@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/dag"
+	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 )
 
@@ -24,7 +24,7 @@ type API struct {
 	exchange  exchange.Exchange
 
 	objectStore graph.Store
-	dag         dag.Manager
+	orchestrator         orchestrator.Orchestrator
 	local       *peer.LocalPeer
 
 	localFingerprint crypto.Fingerprint
@@ -46,7 +46,7 @@ func New(
 	x exchange.Exchange,
 	linf *peer.LocalPeer,
 	bls graph.Store,
-	dag dag.Manager,
+	orchestrator orchestrator.Orchestrator,
 	version string,
 	commit string,
 	buildDate string,
@@ -61,7 +61,7 @@ func New(
 		exchange:    x,
 		objectStore: bls,
 
-		dag: dag,
+		orchestrator: orchestrator,
 
 		localFingerprint: linf.GetFingerprint(),
 
