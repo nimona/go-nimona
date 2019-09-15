@@ -17,15 +17,15 @@ SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 BIN_GOBIN = github.com/myitcv/gobin
 TOOLS += github.com/cheekybits/genny
 TOOLS += github.com/goreleaser/goreleaser
-TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
+TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@9161de5
 TOOLS += github.com/vektra/mockery/cmd/mockery
 
 # Internal tools
-TOOLS_INTERNAL += nimona.io/tools/codegen
-TOOLS_INTERNAL += nimona.io/tools/objectify
-TOOLS_INTERNAL += nimona.io/tools/community
-TOOLS_INTERNAL += nimona.io/tools/vanity
-TOOLS_INTERNAL += nimona.io/tools/proxy
+TOOLS_INTERNAL += codegen
+TOOLS_INTERNAL += objectify
+TOOLS_INTERNAL += community
+TOOLS_INTERNAL += vanity
+TOOLS_INTERNAL += proxy
 
 # Go env vars
 export GO111MODULE=on
@@ -90,7 +90,7 @@ tidy:
 
 # Generate community docs
 .PHONY: community-docs
-community-docs: nimona.io/tools/community
+community-docs: community
 	$(GOBIN)/community
 
 # Install deps
@@ -101,7 +101,7 @@ deps:
 
 # Run go generate
 .PHONY: generate
-generate: github.com/myitcv/gobin nimona.io/tools/codegen
+generate: github.com/myitcv/gobin codegen
 	-go generate $(V) ./...
 	-$(GOBIN)/codegen -a .
 
@@ -133,7 +133,7 @@ $(TOOLS): %:
 .PHONY: $(TOOLS_INTERNAL)
 $(TOOLS_INTERNAL): %:
 ifndef CI
-	cd tools; go install $(V) "$*"
+	cd tools/$*; go install $(V)
 endif
 
 # Check gobin
@@ -143,7 +143,7 @@ $(BIN_GOBIN): %:
 
 # Lint code
 .PHONY: lint
-lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
+lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@9161de5
 	$(info Running Go linters)
 	$(GOBIN)/golangci-lint $(V) run
 
