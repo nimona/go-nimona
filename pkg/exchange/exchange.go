@@ -32,8 +32,8 @@ var (
 
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
 
 type (
 	// Exchange interface for mocking exchange

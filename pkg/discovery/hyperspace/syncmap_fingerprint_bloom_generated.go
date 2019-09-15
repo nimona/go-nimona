@@ -7,34 +7,34 @@ package hyperspace
 import (
 	"sync"
 
-	"nimona.io/pkg/crypto"
+	crypto "nimona.io/pkg/crypto"
 )
 
 type (
-	// CryptoFingerprintContentHashesBloomSyncMap -
-	CryptoFingerprintContentHashesBloomSyncMap struct {
+	// CryptoFingerprintContentProviderUpdatedSyncMap -
+	CryptoFingerprintContentProviderUpdatedSyncMap struct {
 		m sync.Map
 	}
 )
 
-// NewCryptoFingerprintContentHashesBloomSyncMap constructs a new SyncMap
-func NewCryptoFingerprintContentHashesBloomSyncMap() *CryptoFingerprintContentHashesBloomSyncMap {
-	return &CryptoFingerprintContentHashesBloomSyncMap{}
+// NewCryptoFingerprintContentProviderUpdatedSyncMap constructs a new SyncMap
+func NewCryptoFingerprintContentProviderUpdatedSyncMap() *CryptoFingerprintContentProviderUpdatedSyncMap {
+	return &CryptoFingerprintContentProviderUpdatedSyncMap{}
 }
 
 // Put -
-func (m *CryptoFingerprintContentHashesBloomSyncMap) Put(k crypto.Fingerprint, v *ContentHashesBloom) {
+func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Put(k crypto.Fingerprint, v *ContentProviderUpdated) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *CryptoFingerprintContentHashesBloomSyncMap) Get(k crypto.Fingerprint) (*ContentHashesBloom, bool) {
+func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Get(k crypto.Fingerprint) (*ContentProviderUpdated, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
 	}
 
-	v, ok := i.(*ContentHashesBloom)
+	v, ok := i.(*ContentProviderUpdated)
 	if !ok {
 		return nil, false
 	}
@@ -43,13 +43,13 @@ func (m *CryptoFingerprintContentHashesBloomSyncMap) Get(k crypto.Fingerprint) (
 }
 
 // Delete -
-func (m *CryptoFingerprintContentHashesBloomSyncMap) Delete(k crypto.Fingerprint) {
+func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Delete(k crypto.Fingerprint) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *CryptoFingerprintContentHashesBloomSyncMap) Range(i func(k crypto.Fingerprint, v *ContentHashesBloom) bool) {
+func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Range(i func(k crypto.Fingerprint, v *ContentProviderUpdated) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.Fingerprint), v.(*ContentHashesBloom))
+		return i(k.(crypto.Fingerprint), v.(*ContentProviderUpdated))
 	})
 }

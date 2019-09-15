@@ -3,36 +3,35 @@ package hyperspace
 import (
 	"sort"
 
-	"nimona.io/pkg/discovery/hyperspace/bloom"
-
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery/hyperspace/bloom"
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=ContentHashesBloom"
-//go:generate $GOBIN/genny -in=../../../internal/generator/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=ContentProviderUpdated"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		blooms: &CryptoFingerprintContentHashesBloomSyncMap{},
+		blooms: &CryptoFingerprintContentProviderUpdatedSyncMap{},
 		peers:  &CryptoFingerprintPeerPeerSyncMap{},
 	}
 }
 
 // Store holds peer content blooms and their fingerprints
 type Store struct {
-	blooms *CryptoFingerprintContentHashesBloomSyncMap
+	blooms *CryptoFingerprintContentProviderUpdatedSyncMap
 	peers  *CryptoFingerprintPeerPeerSyncMap
 }
 
 // Add peers
 func (s *Store) AddPeer(peer *peer.Peer) {
-	s.peers.Put(peer.Fingerprint(), peer)
+	s.peers.Put(peer.Signature.PublicKey.Fingerprint(), peer)
 }
 
 // Add content hashes
-func (s *Store) AddContentHashes(c *ContentHashesBloom) {
+func (s *Store) AddContentHashes(c *ContentProviderUpdated) {
 	s.blooms.Put(c.Signature.PublicKey.Fingerprint(), c)
 }
 
@@ -47,7 +46,7 @@ func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
 
 	r := []kv{}
 	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
-		pb := bloom.NewBloom(p.Fingerprint().String())
+		pb := bloom.NewBloom(p.Signature.PublicKey.Fingerprint().String())
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), pb.Bloom()),
 			peer:              p,
@@ -72,14 +71,14 @@ func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
 
 // FindClosestContentProvider returns peers that are "closet" to the given
 // content
-func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentHashesBloom {
+func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentProviderUpdated {
 	type kv struct {
 		bloomIntersection int
-		contentHashBloom  *ContentHashesBloom
+		contentHashBloom  *ContentProviderUpdated
 	}
 
 	r := []kv{}
-	s.blooms.Range(func(f crypto.Fingerprint, b *ContentHashesBloom) bool {
+	s.blooms.Range(func(f crypto.Fingerprint, b *ContentProviderUpdated) bool {
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), b.Bloom()),
 			contentHashBloom:  b,
@@ -91,7 +90,7 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentHashesBloo
 		return r[i].bloomIntersection < r[j].bloomIntersection
 	})
 
-	cs := []*ContentHashesBloom{}
+	cs := []*ContentProviderUpdated{}
 	for i, c := range r {
 		cs = append(cs, c.contentHashBloom)
 		if i > 10 { // TODO make limit configurable
@@ -121,11 +120,11 @@ func (s *Store) FindByFingerprint(
 }
 
 // FindByContent returns peers that match a given content hash
-func (s *Store) FindByContent(b bloom.Bloomer) []*ContentHashesBloom {
-	cs := []*ContentHashesBloom{}
+func (s *Store) FindByContent(b bloom.Bloomer) []*ContentProviderUpdated {
+	cs := []*ContentProviderUpdated{}
 	q := b.Bloom()
 
-	s.blooms.Range(func(f crypto.Fingerprint, c *ContentHashesBloom) bool {
+	s.blooms.Range(func(f crypto.Fingerprint, c *ContentProviderUpdated) bool {
 		if intersectionCount(c.Bloom(), b.Bloom()) != len(q) {
 			return true
 		}
@@ -136,8 +135,8 @@ func (s *Store) FindByContent(b bloom.Bloomer) []*ContentHashesBloom {
 	return cs
 }
 
-func intersectionCount(a, b []int) int {
-	m := make(map[int]uint64)
+func intersectionCount(a, b []int64) int {
+	m := make(map[int64]uint64)
 	for _, k := range a {
 		m[k] |= (1 << 0)
 	}

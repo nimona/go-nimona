@@ -15,8 +15,6 @@ import (
 //go:generate $GOBIN/mockery -name Discoverer -case underscore
 //go:generate $GOBIN/mockery -name Provider -case underscore
 
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_string_peer_generated.go -pkg discovery gen "KeyType=string ValueType=peer.Peer"
-
 type (
 	// Provider defines the interface for a discoverer provider, eg our DHT
 	Provider interface {

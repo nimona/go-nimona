@@ -3,9 +3,9 @@ package hyperspace
 import (
 	"time"
 
-	"nimona.io/pkg/object"
-
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/errors"
+	"nimona.io/internal/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace/bloom"
@@ -13,10 +13,18 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=../../../internal/generator/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=string"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=string"
+
+var (
+	peerRequestedType            = new(peer.PeerRequested).GetType()
+	peerType                     = new(peer.Peer).GetType()
+	contentProviderRequestedType = new(ContentProviderRequested).GetType()
+	contentProviderUpdatedType   = new(ContentProviderUpdated).GetType()
+)
 
 type (
 	// Discoverer hyperspace
@@ -53,19 +61,11 @@ func NewDiscoverer(
 		log.String("method", "hyperspace/Discoverer"),
 	)
 
-	if _, err := exc.Handle("nimona.io/discovery/hyperspace/bloom", r.handleObject); err != nil {
+	if _, err := exc.Handle("nimona.io/discovery/hyperspace/**", r.handleObject); err != nil {
 		return nil, err
 	}
 
-	if _, err := exc.Handle("nimona.io/discovery/hyperspace/bloom.request", r.handleObject); err != nil {
-		return nil, err
-	}
-
-	if _, err := exc.Handle("nimona.io/discovery/peer", r.handleObject); err != nil {
-		return nil, err
-	}
-
-	if _, err := exc.Handle("nimona.io/discovery/peer.request", r.handleObject); err != nil {
+	if _, err := exc.Handle("nimona.io/peer/**", r.handleObject); err != nil {
 		return nil, err
 	}
 
@@ -123,9 +123,9 @@ func (r *Discoverer) FindByFingerprint(
 		return nil, nil
 	}
 
-	if _, err := r.LookupPeer(ctx, &peer.PeerRequest{
-		Keys: []crypto.Fingerprint{
-			fingerprint,
+	if _, err := r.LookupPeer(ctx, &peer.PeerRequested{
+		Keys: []string{
+			fingerprint.String(),
 		},
 	}); err != nil {
 		return nil, err
@@ -201,24 +201,24 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 	// handle payload
 	o := e.Payload
 	switch o.GetType() {
-	case peer.PeerRequestType:
-		v := &peer.PeerRequest{}
+	case peerRequestedType:
+		v := &peer.PeerRequested{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		r.handlePeerRequest(ctx, v, e)
-	case peer.PeerType:
+	case peerType:
 		v := &peer.Peer{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeer(ctx, v)
-	case ContentHashesBloomType:
+		r.handlePeer(ctx, v, e)
+	case contentProviderUpdatedType:
 		logger := logger.With(
 			log.String("e.sender", e.Sender.Fingerprint().String()),
 			log.String("o.type", o.GetType()),
 		)
-		v := &ContentHashesBloom{}
+		v := &ContentProviderUpdated{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -226,9 +226,9 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 			logger.Warn("object has no signature")
 			return nil
 		}
-		r.handleProvider(ctx, v)
-	case ContentHashesBloomRequestType:
-		v := &ContentHashesBloomRequest{}
+		r.handleProvider(ctx, v, e)
+	case contentProviderRequestedType:
+		v := &ContentProviderRequested{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -240,10 +240,11 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 func (r *Discoverer) handlePeer(
 	ctx context.Context,
 	p *peer.Peer,
+	e *exchange.Envelope,
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeer"),
-		log.String("peer.fingerprint", p.Fingerprint().String()),
+		log.String("peer.fingerprint", e.Sender.Fingerprint().String()),
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to store")
@@ -253,7 +254,7 @@ func (r *Discoverer) handlePeer(
 
 func (r *Discoverer) handlePeerRequest(
 	ctx context.Context,
-	q *peer.PeerRequest,
+	q *peer.PeerRequested,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -261,7 +262,6 @@ func (r *Discoverer) handlePeerRequest(
 		log.String("method", "hyperspace/resolver.handlePeerRequest"),
 		log.String("e.sender", e.Sender.Fingerprint().String()),
 		log.String("e.requestID", e.RequestID),
-		log.Strings("query.contentTypes", q.ContentTypes),
 		log.Any("query.keys", q.Keys),
 	)
 
@@ -269,20 +269,22 @@ func (r *Discoverer) handlePeerRequest(
 
 	cps := []*peer.Peer{}
 	for _, k := range q.Keys {
-		cps = append(cps, r.store.FindClosestPeer(k)...)
+		f := crypto.Fingerprint(k)
+		cps = append(cps, r.store.FindClosestPeer(f)...)
 	}
 
 	// TODO doesn't the above already find the exact peers?
-	for _, f := range q.Keys {
+	for _, k := range q.Keys {
+		f := crypto.Fingerprint(k)
 		ps := r.store.FindByFingerprint(f)
 		cps = append(cps, ps...)
 	}
 
-	cps = r.withoutOwnPeer(cps)
+	// cps = r.withoutOwnPeer(cps)
 
 	for _, p := range cps {
 		logger.Debug("responding with peer",
-			log.String("peer", p.Fingerprint().String()),
+			log.String("peer", p.Signature.PublicKey.Fingerprint().String()),
 		)
 		err := e.Respond(p.ToObject())
 		if err != nil {
@@ -296,11 +298,12 @@ func (r *Discoverer) handlePeerRequest(
 
 func (r *Discoverer) handleProvider(
 	ctx context.Context,
-	p *ContentHashesBloom,
+	p *ContentProviderUpdated,
+	e *exchange.Envelope,
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleProvider"),
-		log.String("p.fingerprint", p.Signature.PublicKey.Fingerprint().String()),
+		log.String("peer.fingerprint", e.Sender.Fingerprint().String()),
 	)
 	logger.Debug("adding provider to store")
 	r.store.AddContentHashes(p)
@@ -309,7 +312,7 @@ func (r *Discoverer) handleProvider(
 
 func (r *Discoverer) handleProviderRequest(
 	ctx context.Context,
-	q *ContentHashesBloomRequest,
+	q *ContentProviderRequested,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -324,7 +327,7 @@ func (r *Discoverer) handleProviderRequest(
 
 	cps := r.store.FindClosestContentProvider(q)
 
-	oc, err := r.getOwnContentHashesBloom()
+	oc, err := r.getOwnContentProviderUpdated()
 	if err == nil && oc != nil {
 		cps = append(cps, oc)
 	}
@@ -360,7 +363,7 @@ func (r *Discoverer) LookupContentProvider(
 		log.String("method", "hyperspace/resolver.LookupContentProvider"),
 		log.Any("query.bloom", q),
 	)
-	cq := &ContentHashesBloomRequest{
+	cq := &ContentProviderRequested{
 		BloomFilter: q.Bloom(),
 	}
 	o := cq.ToObject()
@@ -371,7 +374,7 @@ func (r *Discoverer) LookupContentProvider(
 	}
 	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
 	for _, p := range ps {
-		fs = append(fs, p.Fingerprint())
+		fs = append(fs, p.Signature.PublicKey.Fingerprint())
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to ask")
@@ -425,8 +428,8 @@ loop:
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
 			}
-			// if res.Payload.GetType() == ContentHashesBloomType {
-			// 	v := &ContentHashesBloom{}
+			// if res.Payload.GetType() == ContentProviderUpdatedType {
+			// 	v := &ContentProviderUpdated{}
 			// 	if err := v.FromObject(res.Payload); err == nil {
 			// 		fingerprints = append(
 			// 			fingerprints,
@@ -451,17 +454,16 @@ loop:
 // LookupPeer does a network lookup given a query
 func (r *Discoverer) LookupPeer(
 	ctx context.Context,
-	q *peer.PeerRequest,
+	q *peer.PeerRequested,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupPeer"),
-		log.Strings("query.contentTypes", q.ContentTypes),
 		log.Any("query.keys", q.Keys),
 	)
 	o := q.ToObject()
 	// TODO support multiple keys
-	ps := r.store.FindClosestPeer(q.Keys[0])
+	ps := r.store.FindClosestPeer(crypto.Fingerprint(q.Keys[0]))
 	out := make(chan *exchange.Envelope, 10)
 	rctx := context.FromContext(ctx)
 	opts := []exchange.Option{
@@ -476,7 +478,8 @@ func (r *Discoverer) LookupPeer(
 
 	logger.Debug("found peers to ask", log.Int("n", len(ps)))
 	for _, p := range ps {
-		err := r.exchange.Send(ctx, o, "peer:"+p.Fingerprint().String(), opts...)
+		pa := "peer:" + p.Signature.PublicKey.Fingerprint().String()
+		err := r.exchange.Send(ctx, o, pa, opts...)
 		if err != nil {
 			logger.Debug("could not lookup peer", log.Error(err))
 		}
@@ -500,7 +503,7 @@ func (r *Discoverer) LookupPeer(
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
 			}
-			if res.Payload.GetType() == peer.PeerType {
+			if res.Payload.GetType() == peerType {
 				v := &peer.Peer{}
 				if err := v.FromObject(res.Payload); err == nil {
 					peers = append(peers, v)
@@ -521,9 +524,9 @@ func (r *Discoverer) bootstrap(
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
-	q := &peer.PeerRequest{
-		Keys: []crypto.Fingerprint{
-			key.Fingerprint(),
+	q := &peer.PeerRequested{
+		Keys: []string{
+			key.Fingerprint().String(),
 		},
 	}
 	o := q.ToObject()
@@ -549,10 +552,10 @@ func (r *Discoverer) getContentHashes() []string {
 	return cIDs
 }
 
-func (r *Discoverer) getOwnContentHashesBloom() (*ContentHashesBloom, error) {
+func (r *Discoverer) getOwnContentProviderUpdated() (*ContentProviderUpdated, error) {
 	cs := r.getContentHashes()
 	b := bloom.NewBloom(cs...)
-	cb := &ContentHashesBloom{
+	cb := &ContentProviderUpdated{
 		BloomFilter: b,
 	}
 
@@ -581,7 +584,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
 	for _, p := range ps {
-		fs = append(fs, p.Fingerprint())
+		fs = append(fs, p.Signature.PublicKey.Fingerprint())
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -593,7 +596,7 @@ func (r *Discoverer) publishContentHashes(
 		log.Any("bloom", b),
 	).Debug("trying to tell n peers")
 
-	cb := &ContentHashesBloom{
+	cb := &ContentProviderUpdated{
 		BloomFilter: b,
 	}
 	opts := []exchange.Option{
@@ -622,7 +625,7 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.local.GetFingerprint().String()
 	pm := map[crypto.Fingerprint]*peer.Peer{}
 	for _, p := range ps {
-		pm[p.Fingerprint()] = p
+		pm[p.Signature.PublicKey.Fingerprint()] = p
 	}
 	nps := []*peer.Peer{}
 	for f, p := range pm {
