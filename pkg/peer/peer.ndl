@@ -1,0 +1,14 @@
+package nimona.io/peer
+
+import nimona.io/crypto crypto
+
+struct Peer {
+    repeated addresses string
+    @signature crypto.Signature
+}
+
+domain Peer {
+    event Requested {
+        repeated keys string
+    }
+}

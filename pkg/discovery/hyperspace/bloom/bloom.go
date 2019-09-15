@@ -6,15 +6,15 @@ import (
 
 type (
 	// Bloom -
-	Bloom []int
+	Bloom []int64
 	// Bloomer -
 	Bloomer interface {
-		Bloom() []int
+		Bloom() []int64
 	}
 )
 
-func (b Bloom) Bloom() []int {
-	return []int(b)
+func (b Bloom) Bloom() []int64 {
+	return []int64(b)
 }
 
 func NewBloom(contentHashes ...string) Bloom {
@@ -25,7 +25,11 @@ func NewBloom(contentHashes ...string) Bloom {
 	}
 	bs = unique(bs)
 	sort.Ints(bs)
-	return Bloom(bs)
+	bs64 := make([]int64, len(bs))
+	for i, v := range bs {
+		bs64[i] = int64(v)
+	}
+	return Bloom(bs64)
 }
 
 func unique(s []int) []int {

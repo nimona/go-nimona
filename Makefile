@@ -34,6 +34,9 @@ export CGO_ENABLED=0
 # Go bin for tools
 export GOBIN=$(CURDIR)/$(BINDIR)
 
+# Generators path
+export GENERATORS=$(CURDIR)/internal/generator
+
 # Default target
 .DEFAULT_GOAL := build
 
@@ -106,6 +109,7 @@ generate: github.com/myitcv/gobin nimona.io/tools/codegen
 .PHONY: test
 test:
 	$(eval TAGS += integration)
+	LOG_LEVEL=debug \
 	CGO_ENABLED=1 \
 	BIND_LOCAL=true \
 	go test $(V) \

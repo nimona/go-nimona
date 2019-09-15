@@ -34,6 +34,7 @@ func JSONWriter() Writer {
 
 		m := map[string]interface{}{
 			"cID":    cID,
+			"name":   log.name,
 			"fields": res,
 			"msg":    msg,
 			"level":  levels[level],

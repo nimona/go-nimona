@@ -7,8 +7,8 @@ import (
 	"nimona.io/pkg/crypto"
 )
 
-//go:generate $GOBIN/genny -in=../../internal/generator/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
-//go:generate $GOBIN/genny -in=../../internal/generator/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=string"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=string"
 
 type (
 	Addresses []string

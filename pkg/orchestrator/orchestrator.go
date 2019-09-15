@@ -12,8 +12,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=../../../internal/generator/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg orchestrator gen "ObservableType=string"
-//TODO go:generate $GOBIN/genny -in=../../../internal/generator/queue/queue.go -out=queue_object_generated.go -extra-imports "nimona.io/pkg/object" -pkg orchestrator gen "ObservableType=object.Object"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg orchestrator gen "ObservableType=string"
 
 type (
 	// Orchestrator is responsible of keeping streams and their underlying

@@ -4,13 +4,14 @@ import (
 	"errors"
 	"testing"
 
+	"nimona.io/pkg/object"
+
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/peer"
-	npeer "nimona.io/pkg/peer"
 )
 
 func TestNetDiscoverer(t *testing.T) {
@@ -70,7 +71,11 @@ func TestNetConnectionSuccess(t *testing.T) {
 	go func() {
 		cconn, err := n2.Dial(ctx, peer1Addr)
 		assert.NoError(t, err)
-		err = Write((npeer.PeerRequest{}).ToObject(), cconn)
+		o := object.New()
+		o.FromMap(map[string]interface{}{
+			"foo:s": "bar",
+		})
+		err = Write(o, cconn)
 		assert.NoError(t, err)
 		done <- true
 
@@ -78,7 +83,11 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	sc := <-sconn
 
-	err = Write((npeer.PeerRequest{}).ToObject(), sc)
+	o := object.New()
+	o.FromMap(map[string]interface{}{
+		"foo:s": "bar",
+	})
+	err = Write(o, sc)
 	assert.NoError(t, err)
 
 	<-done

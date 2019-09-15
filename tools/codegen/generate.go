@@ -62,7 +62,8 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) GetType() string {
 
 func (e *{{ $domain.Name }}{{ $event.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": "{{ $.Package }}/{{ $domain.Name}}",
+		"@ctx:s": "{{ $.Package }}/{{ $domain.Name}}.{{ $event.Name }}",
+		"@domain:s": "{{ $.Package }}/{{ $domain.Name}}",
 		"@event:s": "{{ $event.Name }}",
 	}
 	b, _ := json.Marshal(e)
@@ -90,7 +91,7 @@ func (e *{{ $struct.Name }}) GetType() string {
 
 func (e *{{ $struct.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": "{{ $.Package }}",
+		"@ctx:s": "{{ $.Package }}/{{ $struct.Name }}",
 		"@struct:s": "{{ $struct.Name }}",
 	}
 	b, _ := json.Marshal(e)
