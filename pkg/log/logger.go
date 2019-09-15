@@ -2,6 +2,7 @@ package log
 
 import (
 	"runtime/debug"
+	"strings"
 
 	"nimona.io/pkg/context"
 )
@@ -129,7 +130,7 @@ func (log *logger) With(fields ...Field) *logger {
 
 func (log *logger) Named(name string) *logger {
 	nlog := &logger{
-		name:   name,
+		name:   strings.Join([]string{log.name, name}, "/"),
 		parent: log,
 		writer: log.writer,
 	}
