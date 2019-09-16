@@ -11,7 +11,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/gorilla/websocket v1.4.1
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
-	nimona.io v0.0.0
+	nimona.io v0.4.2
 )
 
 replace nimona.io => ../
