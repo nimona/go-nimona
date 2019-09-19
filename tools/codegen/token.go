@@ -13,6 +13,8 @@ const (
 	STRUCT     Token = "STRUCT"
 	REPEATED   Token = "REPEATED"
 	SIGNED     Token = "SIGNED"
+	ABSTRACT   Token = "ABSTRACT"
+	EXTENDS    Token = "EXTENDS"
 	PRIMARY    Token = "PRIMARY"
 	IMPORT     Token = "IMPORT"
 	OBRACE     Token = "OBRACE"
@@ -34,6 +36,8 @@ var (
 		"repeated": REPEATED,
 		"primary":  PRIMARY,
 		"signed":   SIGNED,
+		"abstract": ABSTRACT,
+		"extends":  EXTENDS,
 	}
 )
 

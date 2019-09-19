@@ -2,7 +2,34 @@ package foo/example_test
 
 import nimona.io/crypto crypto
 
-domain Conversation {
+abstract domain Stream {
+    signed event Created {
+        createdDateTime string
+        partitionKeys repeated string
+    }
+    signed event PolicyUpdated {
+        @stream crypto.Hash
+        @parents repeated crypto.Hash
+        subjects crypto.PublicKey
+        resources repeated string
+        conditions repeated string
+        action string
+    }
+}
+
+domain Subscription {
+    signed event Created {
+        resources repeated string
+        condition repeated string
+        includePast bool
+        limit int
+    }
+    signed event Canceled {
+        subscription crypto.Hash
+    }
+}
+
+domain Conversation extends Stream {
     signed event TopicUpdated {
         @stream crypto.Hash
         topic string

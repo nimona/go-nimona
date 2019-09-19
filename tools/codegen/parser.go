@@ -10,7 +10,9 @@ import (
 )
 
 var (
-	ErrNotField = errors.New("not a field")
+	ErrNotField  = errors.New("not a field")
+	ErrNotDomain = errors.New("not a domain")
+	ErrNotStruct = errors.New("not a struct")
 )
 
 type Parser struct {
@@ -71,6 +73,7 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	// if given token always expects TEXT afterwards, let's find it
 	case PACKAGE,
 		DOMAIN,
+		EXTENDS,
 		STRUCT,
 		EVENT:
 		_, text, err := p.expect(TEXT)
@@ -181,7 +184,20 @@ func (p *Parser) parseStruct() (*Struct, error) {
 	// create struct
 	str := &Struct{}
 
+	// expect STRUCT
+	_, value, err := p.expect(STRUCT)
+	if err != nil {
+		return nil, ErrNotStruct
+	}
+
+	str.Name = value
+
 	fmt.Println("Found struct", str.Name)
+
+	// expect "{"
+	if _, value, err := p.expect(OBRACE); err != nil {
+		return nil, fmt.Errorf("found %q, expected OBRACE", value)
+	}
 
 	// parse attributes
 	for {
@@ -200,6 +216,59 @@ func (p *Parser) parseStruct() (*Struct, error) {
 		}
 	}
 	return str, nil
+}
+
+func (p *Parser) parseDomain() (*Domain, error) {
+	// create domain
+	domain := &Domain{}
+
+	// expect ABSTRACT, or DOMAIN
+	token, value, err := p.expect(ABSTRACT, DOMAIN)
+	if err != nil {
+		return nil, ErrNotDomain
+	}
+
+	if token == ABSTRACT {
+		domain.IsAbstract = true
+		token, value, err = p.expect(DOMAIN)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	domain.Name = value
+
+	fmt.Println("Found domain", domain.Name)
+
+	// expect EXTENDS, or {
+	token, value, err = p.expect(EXTENDS)
+	if err != nil {
+		p.unscan()
+	} else {
+		domain.Extends = value
+	}
+
+	token, value, err = p.expect(OBRACE)
+	if err != nil {
+		return nil, fmt.Errorf("found %q, expected OBRACE", value)
+	}
+
+	for {
+		// if "}", break
+		token, _ := p.scanIgnoreWhiteSpace()
+		if token == EBRACE {
+			break
+		}
+		p.unscan()
+		// parse event
+		event, err := p.parseEvent()
+		if err != nil {
+			return nil, err
+		}
+		domain.Events = append(domain.Events, event)
+	}
+
+	return domain, nil
 }
 
 func (p *Parser) Parse() (*Document, error) {
@@ -240,52 +309,35 @@ func (p *Parser) Parse() (*Document, error) {
 
 	// gather domains
 	for {
-		// expect "domain" and value
-		token, name, err := p.expect(DOMAIN, STRUCT)
-		if err != nil {
-			if token == EOF {
-				break
-			}
+		// expect "abstract", or "domain"
+		domain, err := p.parseDomain()
+		if err != nil && err != ErrNotDomain {
 			return nil, err
+		} else if err == nil {
+			doc.Domains = append(doc.Domains, domain)
+			continue
 		}
 
-		// expect "{"
-		if _, value, err := p.expect(OBRACE); err != nil {
-			return nil, fmt.Errorf("found %q, expected EVENT", value)
-		}
+		p.unscan()
 
-		if token == STRUCT {
-			// parse struc
-			str, err := p.parseStruct()
-			if err != nil {
-				return nil, err
-			}
-			str.Name = name
+		// expect "struct"
+		str, err := p.parseStruct()
+		if err != nil && err != ErrNotStruct {
+			return nil, err
+		} else if err == nil {
 			doc.Structs = append(doc.Structs, str)
 			continue
 		}
 
-		if token == DOMAIN {
-			domain := &Domain{
-				Name: name,
-			}
-			fmt.Println("Found domain", domain.Name)
-			for {
-				// if "}", break
-				token, _ := p.scanIgnoreWhiteSpace()
-				if token == EBRACE {
-					break
-				}
-				p.unscan()
-				// parse event
-				event, err := p.parseEvent()
-				if err != nil {
-					return nil, err
-				}
-				domain.Events = append(domain.Events, event)
-			}
-			doc.Domains = append(doc.Domains, domain)
+		p.unscan()
+
+		// if "}", break
+		token, _ := p.scanIgnoreWhiteSpace()
+		if token == EBRACE || token == EOF {
+			break
 		}
+
+		return nil, fmt.Errorf("found %q, expected ABSTRACT, DOMAIN, or STRUCT", token)
 	}
 
 	return doc, nil
