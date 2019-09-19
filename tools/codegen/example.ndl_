@@ -31,7 +31,7 @@ domain Conversation {
         name string
         topic string
         created string
-        repeated labels string
+        labels repeated string
         @signature crypto.Signature
     }
     event MessageAdded {

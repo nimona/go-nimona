@@ -83,7 +83,7 @@ func main() {
 			o := strings.Replace(filepath.Base(f), ".ndl", "", 1)
 			codegen(f, filepath.Join(filepath.Dir(f), o+"_generated.go"))
 		}
-	} else if *input == "" || *output == "" {
+	} else if *input != "" || *output != "" {
 		codegen(*input, *output)
 	}
 
