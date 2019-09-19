@@ -2,42 +2,18 @@ package foo/example_test
 
 import nimona.io/crypto crypto
 
-struct Private {
-    type string
-    algorithm string
-    curve string
-    x data
-    y data
-    d data
-}
-
-struct PublicKey {
-    type string
-    algorithm string
-    curve string
-    x data
-    y data
-}
-
-struct Signature {
-    key crypto.PublicKey
-    algorithm string
-    r data
-    s data
-}
-
 domain Conversation {
-    event Created {
-        name string
+    signed event TopicUpdated {
+        @stream crypto.Hash
         topic string
-        created string
-        labels repeated string
-        @signature crypto.Signature
     }
-    event MessageAdded {
-        conversation string
+    signed event NameUpdated {
+        @stream crypto.Hash
+        name string
+    }
+    signed event MessageAdded {
+        @stream crypto.Hash
+        parents repeated crypto.Hash
         body string
-        created string
-        @signature crypto.Signature
     }
 }

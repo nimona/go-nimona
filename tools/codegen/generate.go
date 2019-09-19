@@ -114,13 +114,20 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		return nil, err
 	}
 
-	// for i, s := range doc.Structs {
-	// 	for k, m := range s.Members {
-	// 		if m.Repeated {
-	// 			doc.Structs[i].Members[k].Type = "[]" + m.Type
-	// 		}
-	// 	}
-	// }
+	for i, s := range doc.Domains {
+		for k, e := range s.Events {
+			if e.IsSigned {
+				doc.Domains[i].Events[k].Members = append(
+					doc.Domains[i].Events[k].Members,
+					&Member{
+						Name: "Signature",
+						Type: "*crypto.Signature",
+						Tag:  "@signature:o",
+					},
+				)
+			}
+		}
+	}
 
 	doc.Imports["json"] = "encoding/json"
 	doc.Imports["object"] = "nimona.io/object"
