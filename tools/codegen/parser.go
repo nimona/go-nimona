@@ -95,7 +95,6 @@ func (p *Parser) parseField() (*Member, error) {
 	member.Tag = value + ":"
 	member.Name = memberName(value)
 	token, value = p.scanIgnoreWhiteSpace()
-	fmt.Println(value)
 	if token == REPEATED {
 		member.Type = "[]"
 		member.Tag += "a"
@@ -133,16 +132,24 @@ func (p *Parser) parseField() (*Member, error) {
 }
 
 func (p *Parser) parseEvent() (*Event, error) {
-	// expect "event" and value
-	_, eventName, err := p.expect(EVENT)
+	// create event
+	event := &Event{}
+
+	// expect SIGNED, or EVENT
+	token, value, err := p.expect(SIGNED, EVENT)
 	if err != nil {
 		return nil, err
 	}
 
-	// create event
-	event := &Event{
-		Name: eventName,
+	if token == SIGNED {
+		event.IsSigned = true
+		token, value, err = p.expect(EVENT)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	event.Name = value
 
 	fmt.Println("\tFound event", event.Name)
 
@@ -270,16 +277,12 @@ func (p *Parser) Parse() (*Document, error) {
 					break
 				}
 				p.unscan()
-				if token == EVENT {
-					// parse event
-					event, err := p.parseEvent()
-					if err != nil {
-						return nil, err
-					}
-					domain.Events = append(domain.Events, event)
-					continue
+				// parse event
+				event, err := p.parseEvent()
+				if err != nil {
+					return nil, err
 				}
-				return nil, fmt.Errorf("found %q, expected EVENT", token)
+				domain.Events = append(domain.Events, event)
 			}
 			doc.Domains = append(doc.Domains, domain)
 		}

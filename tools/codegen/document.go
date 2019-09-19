@@ -9,13 +9,16 @@ type Document struct {
 }
 
 type Domain struct {
-	Name   string
-	Events []*Event
+	IsAbstract bool
+	Extends    string
+	Name       string
+	Events     []*Event
 }
 
 type Event struct {
-	Name    string
-	Members []*Member
+	Name     string
+	IsSigned bool
+	Members  []*Member
 }
 
 type Struct struct {
