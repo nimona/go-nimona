@@ -1,11 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"unicode"
+)
+
+var (
+	ErrNotField = errors.New("not a field")
 )
 
 type Parser struct {
@@ -80,6 +85,53 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	return token, value, nil
 }
 
+func (p *Parser) parseField() (*Member, error) {
+	token, value := p.scanIgnoreWhiteSpace()
+	member := &Member{}
+	if token != TEXT {
+		p.unscan()
+		return nil, ErrNotField
+	}
+	member.Tag = value + ":"
+	member.Name = memberName(value)
+	token, value = p.scanIgnoreWhiteSpace()
+	fmt.Println(value)
+	if token == REPEATED {
+		member.Type = "[]"
+		member.Tag += "a"
+		member.Repeated = true
+		token, value = p.scanIgnoreWhiteSpace()
+	}
+	if token != TEXT {
+		return nil, fmt.Errorf("found %q, expected member.type", value)
+	}
+	switch value {
+	case "string":
+		member.Type += "string"
+		member.Tag += "s"
+	case "int":
+		member.Type += "int64"
+		member.Tag += "i"
+	case "uint":
+		member.Type += "uint64"
+		member.Tag += "u"
+	case "float":
+		member.Type += "float64"
+		member.Tag += "f"
+	case "bool":
+		member.Type += "bool"
+		member.Tag += "b"
+	case "data":
+		member.Type += "[]byte"
+		member.Tag += "d"
+	default:
+		member.Type += "*" + value
+		member.Tag += "o"
+	}
+	fmt.Println("\tFound attribute", member.Name, "of type", member.Type)
+	return member, nil
+}
+
 func (p *Parser) parseEvent() (*Event, error) {
 	// expect "event" and value
 	_, eventName, err := p.expect(EVENT)
@@ -94,58 +146,27 @@ func (p *Parser) parseEvent() (*Event, error) {
 
 	fmt.Println("\tFound event", event.Name)
 
+	if _, _, err := p.expect(OBRACE); err != nil {
+		return nil, err
+	}
+
 	// parse attributes
 	for {
-		token, value := p.scanIgnoreWhiteSpace()
-		if token == EBRACE {
-			token, _ = p.scanIgnoreWhiteSpace()
-			p.unscan()
+		if token, _ := p.scanIgnoreWhiteSpace(); token == EBRACE {
 			break
 		}
-		member := &Member{}
-		if token == REPEATED {
-			member.Repeated = true
-			token, value = p.scanIgnoreWhiteSpace()
-		}
-		if token == TEXT {
-			member.Tag = value + ":"
-			member.Name = memberName(value)
-			tokNext, memberType := p.scanIgnoreWhiteSpace()
-			if tokNext != TEXT {
-				return nil, fmt.Errorf("found %q, expected TEXT", memberType)
-			}
-			if member.Repeated {
-				member.Type = "[]"
-				member.Tag += "a"
-			}
-			switch memberType {
-			case "string":
-				member.Type += "string"
-				member.Tag += "s"
-			case "int":
-				member.Type += "int64"
-				member.Tag += "i"
-			case "uint":
-				member.Type += "uint64"
-				member.Tag += "u"
-			case "float":
-				member.Type += "float64"
-				member.Tag += "f"
-			case "bool":
-				member.Type += "bool"
-				member.Tag += "b"
-			case "data":
-				member.Type += "[]byte"
-				member.Tag += "d"
-			default:
-				member.Type += "*" + memberType
-				member.Tag += "o"
-			}
-			event.Members = append(event.Members, member)
-			fmt.Println("\tFound attribute", value, "of type", memberType)
+		p.unscan()
+		member, err := p.parseField()
+		switch {
+		case err != nil && err == ErrNotField:
 			continue
+		case err != nil:
+			return nil, err
+		case err == nil:
+			event.Members = append(event.Members, member)
 		}
 	}
+
 	return event, nil
 }
 
@@ -157,54 +178,19 @@ func (p *Parser) parseStruct() (*Struct, error) {
 
 	// parse attributes
 	for {
-		token, value := p.scanIgnoreWhiteSpace()
-		if token == EBRACE {
+		if token, _ := p.scanIgnoreWhiteSpace(); token == EBRACE {
 			break
 		}
-		member := &Member{}
-		if token == REPEATED {
-			member.Repeated = true
-			token, value = p.scanIgnoreWhiteSpace()
-		}
-		if token == TEXT {
-			member.Tag = value + ":"
-			member.Name = memberName(value)
-			tokNext, memberType := p.scanIgnoreWhiteSpace()
-			if tokNext != TEXT {
-				return nil, fmt.Errorf("found %q, expected TEXT", memberType)
-			}
-			if member.Repeated {
-				member.Type = "[]"
-				member.Tag += "a"
-			}
-			switch memberType {
-			case "string":
-				member.Type += "string"
-				member.Tag += "s"
-			case "int":
-				member.Type += "int64"
-				member.Tag += "i"
-			case "uint":
-				member.Type += "uint64"
-				member.Tag += "u"
-			case "float":
-				member.Type += "float64"
-				member.Tag += "f"
-			case "bool":
-				member.Type += "bool"
-				member.Tag += "b"
-			case "data":
-				member.Type += "[]byte"
-				member.Tag += "d"
-			default:
-				member.Type += "*" + memberType
-				member.Tag += "o"
-			}
-			str.Members = append(str.Members, member)
-			fmt.Println("\tFound attribute", value, "of type", memberType)
+		p.unscan()
+		member, err := p.parseField()
+		switch {
+		case err != nil && err == ErrNotField:
 			continue
+		case err != nil:
+			return nil, err
+		case err == nil:
+			str.Members = append(str.Members, member)
 		}
-		return nil, fmt.Errorf("found %q, expected MEMBER", token)
 	}
 	return str, nil
 }
