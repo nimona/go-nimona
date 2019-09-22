@@ -1,0 +1,22 @@
+package example/stream
+
+import example/crypto crypto
+
+abstract domain example/stream {
+    struct Policy {
+        subjects repeated example/crypto.PublicKey
+        resources repeated string
+        conditions repeated string
+        action string
+    }
+    signed event Created {
+        createdDateTime string
+        partitionKeys repeated string
+        @policies repeated Policy
+    }
+    signed event PoliciesUpdated {
+        @stream example/crypto.Hash
+        @parents repeated example/crypto.Hash
+        @policies repeated Policy
+    }
+}

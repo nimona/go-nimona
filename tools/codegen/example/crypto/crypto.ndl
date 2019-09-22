@@ -1,0 +1,31 @@
+package example/crypto
+
+domain example/crypto {
+    struct Hash {
+        hashType string
+        digest data
+    }
+    struct Signature {
+        publicKey PublicKey
+        algorithm string
+        r data
+        s data
+    }
+    struct PrivateKey {
+        publicKey PublicKey
+        keyType string
+        algorithm string
+        curve string
+        x data
+        y data
+        d data
+    }
+    struct PublicKey {
+        keyType string
+        algorithm string
+        curve string
+        x data
+        y data
+        @signature Signature
+    }
+}

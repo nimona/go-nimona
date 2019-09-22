@@ -19,12 +19,11 @@ import (
 )
 
 {{ if .Structs }}
-// basic structs
 type (
 	{{- range $struct := .Structs }}
 	{{ $struct.Name }} struct {
 		{{- range $member := $struct.Members }}
-		{{ $member.Name }} {{ $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
 		{{- end }}
 	}
 	{{- end }}
@@ -37,12 +36,12 @@ func (e *{{ $struct.Name }}) ContextName() string {
 }
 
 func (e *{{ $struct.Name }}) GetType() string {
-	return "{{ $.Package }}/{{ $struct.Name }}"
+	return "{{ $struct.Name }}"
 }
 
 func (e *{{ $struct.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": "{{ $.Package }}/{{ $struct.Name }}",
+		"@ctx:s": "{{ $struct.Name }}",
 		"@struct:s": "{{ $struct.Name }}",
 	}
 	b, _ := json.Marshal(e)
@@ -57,13 +56,19 @@ func (e *{{ $struct.Name }}) FromObject(o object.Object) error {
 {{ end }}
 
 {{ if .Domains }}
-// domain events
 type (
 	{{- range $domain := .Domains }}
+	{{- range $struct := $domain.Structs }}
+	{{ $struct.Name }} struct {
+		{{- range $member := $struct.Members }}
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{- end }}
+	}
+	{{- end }}
 	{{- range $event := .Events }}
-	{{ $domain.Name }}{{ $event.Name }} struct {
+	{{ $event.Name }} struct {
 		{{- range $member := $event.Members }}
-		{{ $member.Name }} {{ $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
 		{{- end }}
 	}
 	{{- end }}
@@ -73,22 +78,18 @@ type (
 
 {{ range $domain := .Domains }}
 {{ range $event := .Events }}
-func (e *{{ $domain.Name }}{{ $event.Name }}) ContextName() string {
-	return "{{ $.Package }}/{{ $domain.Name}}"
-}
-
-func (e *{{ $domain.Name }}{{ $event.Name }}) EventName() string {
+func (e *{{ structName $event.Name }}) EventName() string {
 	return "{{ $event.Name }}"
 }
 
-func (e *{{ $domain.Name }}{{ $event.Name }}) GetType() string {
-	return "{{ $.Package }}/{{ $domain.Name}}.{{ $event.Name }}"
+func (e *{{ structName $event.Name }}) GetType() string {
+	return "{{ $domain.Name }}.{{ $event.Name }}"
 }
 
-func (e *{{ $domain.Name }}{{ $event.Name }}) ToObject() object.Object {
+func (e *{{ structName $event.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": "{{ $.Package }}/{{ $domain.Name}}.{{ $event.Name }}",
-		"@domain:s": "{{ $.Package }}/{{ $domain.Name}}",
+		"@ctx:s": "{{ $domain.Name }}.{{ $event.Name }}",
+		"@domain:s": "{{ $domain.Name }}",
 		"@event:s": "{{ $event.Name }}",
 	}
 	b, _ := json.Marshal(e)
@@ -96,7 +97,7 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *{{ $domain.Name }}{{ $event.Name }}) FromObject(o object.Object) error {
+func (e *{{ structName $event.Name }}) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
@@ -105,7 +106,18 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) FromObject(o object.Object) error 
 `
 
 func Generate(doc *Document, output string) ([]byte, error) {
-	t, err := template.New("tpl").Parse(tpl)
+	t, err := template.New("tpl").Funcs(template.FuncMap{
+		"structName": func(name string) string {
+			ps := strings.Split(name, "/")
+			ps = strings.Split(ps[len(ps)-1], ".")
+			return ucFirst(ps[len(ps)-1])
+		},
+		"memberType": func(name string) string {
+			ps := strings.Split(name, "/")
+			p := ps[len(ps)-1]
+			return p
+		},
+	}).Parse(tpl)
 	if err != nil {
 		return nil, err
 	}
