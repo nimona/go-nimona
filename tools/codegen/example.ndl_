@@ -2,6 +2,11 @@ package foo/example_test
 
 import nimona.io/crypto crypto
 
+struct Hash {
+    hashType string
+    digest data
+}
+
 abstract domain Stream {
     signed event Created {
         createdDateTime string

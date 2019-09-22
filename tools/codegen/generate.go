@@ -18,7 +18,7 @@ import (
 	{{- end }}
 )
 
-{{- if .Structs }}
+{{ if .Structs }}
 // basic structs
 type (
 	{{- range $struct := .Structs }}
@@ -29,9 +29,34 @@ type (
 	}
 	{{- end }}
 )
-{{- end }}
+{{ end }}
 
-{{- if .Domains }}
+{{ range $struct := .Structs }}
+func (e *{{ $struct.Name }}) ContextName() string {
+	return "{{ $.Package }}"
+}
+
+func (e *{{ $struct.Name }}) GetType() string {
+	return "{{ $.Package }}/{{ $struct.Name }}"
+}
+
+func (e *{{ $struct.Name }}) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": "{{ $.Package }}/{{ $struct.Name }}",
+		"@struct:s": "{{ $struct.Name }}",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *{{ $struct.Name }}) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+{{ end }}
+
+{{ if .Domains }}
 // domain events
 type (
 	{{- range $domain := .Domains }}
@@ -44,10 +69,10 @@ type (
 	{{- end }}
 	{{- end }}
 )
-{{- end }}
+{{ end }}
 
-{{- range $domain := .Domains }}
-{{- range $event := .Events }}
+{{ range $domain := .Domains }}
+{{ range $event := .Events }}
 func (e *{{ $domain.Name }}{{ $event.Name }}) ContextName() string {
 	return "{{ $.Package }}/{{ $domain.Name}}"
 }
@@ -75,36 +100,7 @@ func (e *{{ $domain.Name }}{{ $event.Name }}) FromObject(o object.Object) error 
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
-
-
 {{ end }}
-{{- end }}
-
-{{- range $struct := .Structs }}
-func (e *{{ $struct.Name }}) ContextName() string {
-	return "{{ $.Package }}"
-}
-
-func (e *{{ $struct.Name }}) GetType() string {
-	return "{{ $.Package }}/{{ $struct.Name }}"
-}
-
-func (e *{{ $struct.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "{{ $.Package }}/{{ $struct.Name }}",
-		"@struct:s": "{{ $struct.Name }}",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
-	return object.Object(m)
-}
-
-func (e *{{ $struct.Name }}) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-
 {{ end }}
 `
 

@@ -75,6 +75,7 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 		DOMAIN,
 		EXTENDS,
 		STRUCT,
+		COMMAND,
 		EVENT:
 		_, text, err := p.expect(TEXT)
 		if err != nil {
@@ -139,17 +140,21 @@ func (p *Parser) parseEvent() (*Event, error) {
 	event := &Event{}
 
 	// expect SIGNED, or EVENT
-	token, value, err := p.expect(SIGNED, EVENT)
+	token, value, err := p.expect(SIGNED, EVENT, COMMAND)
 	if err != nil {
 		return nil, err
 	}
 
 	if token == SIGNED {
 		event.IsSigned = true
-		token, value, err = p.expect(EVENT)
+		token, value, err = p.expect(EVENT, COMMAND)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if token == COMMAND {
+		event.IsCommand = true
 	}
 
 	event.Name = value
@@ -259,7 +264,20 @@ func (p *Parser) parseDomain() (*Domain, error) {
 		if token == EBRACE {
 			break
 		}
+
 		p.unscan()
+
+		// expect "struct"
+		str, err := p.parseStruct()
+		if err != nil && err != ErrNotStruct {
+			return nil, err
+		} else if err == nil {
+			domain.Structs = append(domain.Structs, str)
+			continue
+		}
+
+		p.unscan()
+
 		// parse event
 		event, err := p.parseEvent()
 		if err != nil {
@@ -305,6 +323,16 @@ func (p *Parser) Parse() (*Document, error) {
 		}
 		fmt.Println("Found import", importPkg, "as", importAlias)
 		doc.Imports[importAlias] = importPkg
+	}
+
+	// expect "struct"
+	str, err := p.parseStruct()
+	if err != nil && err != ErrNotStruct {
+		return nil, err
+	} else if err == nil {
+		doc.Structs = append(doc.Structs, str)
+	} else {
+		p.unscan()
 	}
 
 	// gather domains

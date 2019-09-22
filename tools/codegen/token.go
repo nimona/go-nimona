@@ -10,6 +10,7 @@ const (
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
 	EVENT      Token = "EVENT"
+	COMMAND    Token = "COMMAND"
 	STRUCT     Token = "STRUCT"
 	REPEATED   Token = "REPEATED"
 	SIGNED     Token = "SIGNED"
@@ -32,6 +33,7 @@ var (
 		"import":   IMPORT,
 		"domain":   DOMAIN,
 		"event":    EVENT,
+		"command":  COMMAND,
 		"struct":   STRUCT,
 		"repeated": REPEATED,
 		"primary":  PRIMARY,
