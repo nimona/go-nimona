@@ -8,7 +8,8 @@ import (
 )
 
 type Network struct {
-	ID string
+	ID   string
+	Name string
 }
 
 func NewNetwork(ctx context.Context, name string) (*Network, error) {
@@ -29,7 +30,10 @@ func NewNetwork(ctx context.Context, name string) (*Network, error) {
 		return nil, err
 	}
 
-	return &Network{ID: network.ID}, nil
+	return &Network{
+		ID:   network.ID,
+		Name: name,
+	}, nil
 }
 
 func (n *Network) Remove(ctx context.Context) error {
