@@ -4,12 +4,12 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 )
@@ -26,6 +26,7 @@ func New(
 	name string,
 	networkName string,
 	portMap map[string]string,
+	command string,
 ) (*Container, error) {
 	// Init the env
 	cli, err := client.NewEnvClient()
@@ -71,10 +72,7 @@ func New(
 		ctx,
 		&container.Config{
 			Image: image,
-			Cmd: strslice.StrSlice{
-				"uname",
-				"-a",
-			},
+			Cmd:   strings.Split(command, " "),
 		},
 		&container.HostConfig{
 			AutoRemove:   true,

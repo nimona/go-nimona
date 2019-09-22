@@ -46,6 +46,7 @@ func TestCreateContainer(t *testing.T) {
 				tt.containerName,
 				tt.networkName,
 				nil,
+				"",
 			)
 			require.NoError(t, err)
 			require.NotNil(t, c1)
