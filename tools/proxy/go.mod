@@ -1,6 +1,6 @@
 module nimona.io/tools/proxy
 
-go 1.13
+go 1.12
 
 require (
 	github.com/caarlos0/env/v6 v6.0.0

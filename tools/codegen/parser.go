@@ -376,19 +376,17 @@ var memberNameRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
 func memberName(str string) string {
 	// remove special chars
 	str = memberNameRegex.ReplaceAllString(str, "")
-	// uppercase first letter
-	for i, v := range str {
-		str = string(unicode.ToUpper(v)) + str[i+1:]
-		break
-	}
-	return str
+	return ucFirst(str)
 }
 
 func eventName(str string) string {
-	// uppercase first letter
+	return ucFirst(str)
+}
+
+func ucFirst(str string) string {
 	for i, v := range str {
-		str = string(unicode.ToUpper(v)) + str[i+1:]
+		return string(unicode.ToUpper(v)) + str[i+1:]
 		break
 	}
-	return str
+	return ""
 }
