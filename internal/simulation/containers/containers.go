@@ -3,6 +3,7 @@ package containers
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -52,11 +53,15 @@ func New(
 
 	// Pull the image
 	// TODO This should not be here, should be a pre-requisite
-	_, err = cli.ImagePull(
+	imgr, err := cli.ImagePull(
 		ctx,
 		image,
 		types.ImagePullOptions{},
 	)
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(ioutil.Discard, imgr)
 	if err != nil {
 		return nil, err
 	}
