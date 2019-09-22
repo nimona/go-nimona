@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -26,7 +25,7 @@ func New(
 	name string,
 	networkName string,
 	portMap map[string]string,
-	command string,
+	command []string,
 ) (*Container, error) {
 	// Init the env
 	cli, err := client.NewEnvClient()
@@ -36,6 +35,7 @@ func New(
 
 	// Create the port mapping
 	portBinding := nat.PortMap{}
+	portsSet := nat.PortSet{}
 
 	for conPort, hstPort := range portMap {
 		hostBinding := nat.PortBinding{
@@ -50,6 +50,7 @@ func New(
 		}
 
 		portBinding[containerPort] = []nat.PortBinding{hostBinding}
+		portsSet[containerPort] = struct{}{}
 	}
 
 	// Pull the image
@@ -71,8 +72,9 @@ func New(
 	cont, err := cli.ContainerCreate(
 		ctx,
 		&container.Config{
-			Image: image,
-			Cmd:   strings.Split(command, " "),
+			Image:        image,
+			Cmd:          command,
+			ExposedPorts: portsSet,
 		},
 		&container.HostConfig{
 			AutoRemove:   true,
