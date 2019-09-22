@@ -13,12 +13,14 @@ type Domain struct {
 	Extends    string
 	Name       string
 	Events     []*Event
+	Structs    []*Struct
 }
 
 type Event struct {
-	Name     string
-	IsSigned bool
-	Members  []*Member
+	Name      string
+	IsSigned  bool
+	IsCommand bool
+	Members   []*Member
 }
 
 type Struct struct {
