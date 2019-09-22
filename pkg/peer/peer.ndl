@@ -3,12 +3,15 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 
 struct Peer {
-    repeated addresses string
+    addresses repeated string
     @signature crypto.Signature
 }
 
 domain Peer {
-    event Requested {
-        repeated keys string
+    signed command Requested {
+        keys repeated string
+    }
+    signed event Updated {
+        addresses repeated string
     }
 }
