@@ -41,8 +41,7 @@ func objecthash(m map[string]interface{}, skipSig bool) ([]byte, error) {
 		if len(k) > 0 && k[0] == '_' {
 			continue
 		}
-		// TODO(geoah) is there a better way of doing this?
-		if skipSig && k == "@signature:o" {
+		if k == "@signature:o" {
 			continue
 		}
 		ks = append(ks, k)
