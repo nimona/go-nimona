@@ -24,6 +24,25 @@ func TestObjectHash(t *testing.T) {
 	assert.Equal(t, oh, h)
 }
 
+func TestObjectHashWithSignature(t *testing.T) {
+	v := map[string]interface{}{
+		"str:s": "foo",
+		"@signature:o": map[string]string{
+			"foo:s": "bar",
+		},
+	}
+
+	kh := hash(HintString, []byte("str:s"))
+	vh := hash(HintString, []byte("foo"))
+	ob := append(kh, vh...)
+	oh := hash(HintObject, ob)
+
+	o := FromMap(v)
+	h, err := ObjectHash(o)
+	assert.NoError(t, err)
+	assert.Equal(t, oh, h)
+}
+
 func TestObjectHashDocs(t *testing.T) {
 	v := map[string]interface{}{
 		"some-string": "bar",
