@@ -3,21 +3,19 @@ go 1.12
 module nimona.io
 
 require (
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/cheekybits/genny v1.0.0
-	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.13.1
-	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/gobwas/glob v0.2.3
 	github.com/gorilla/websocket v1.4.1
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mr-tron/base58 v1.1.2
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/spaolacci/murmur3 v1.1.0
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72
+	golang.org/x/text v0.3.2 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
 
 replace (
