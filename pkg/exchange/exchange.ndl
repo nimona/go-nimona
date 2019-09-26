@@ -1,0 +1,14 @@
+package nimona.io/exchange
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+domain nimona.io/exchange {
+    signed command ObjectRequest {
+        objectHash string
+    }
+    signed command ObjectForward {
+        Recipient string
+        FwObject object.Object
+    }
+}

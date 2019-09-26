@@ -8,6 +8,9 @@ import (
 
 	"github.com/gobwas/glob"
 
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 	"nimona.io/internal/rand"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/context"
@@ -26,6 +29,9 @@ const (
 )
 
 var (
+	objectRequestType = new(ObjectRequest).GetType()
+	objectForwardType = new(ObjectForward).GetType()
+
 	// ErrInvalidRequest when received an invalid request object
 	ErrInvalidRequest = errors.New("invalid request")
 )
@@ -313,7 +319,7 @@ func (w *exchange) process(
 
 	// TODO verify signature
 	switch o.GetType() {
-	case ObjectRequestType:
+	case objectRequestType:
 		req := &ObjectRequest{}
 		if err := req.FromObject(o); err != nil {
 			return err
@@ -350,8 +356,8 @@ func (w *exchange) process(
 		}
 		return err
 
-	case ObjectForwardRequestType:
-		v := &ObjectForwardRequest{}
+	case objectForwardType:
+		v := &ObjectForward{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -362,7 +368,7 @@ func (w *exchange) process(
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
 			recipient: v.Recipient,
-			object:    v.FwObject,
+			object:    *v.FwObject,
 			err:       cerr,
 		}
 		return <-cerr
@@ -579,9 +585,9 @@ func (w *exchange) sendViaRelayToPeer(
 	peer := peers[0]
 
 	// TODO(geoah) make sure fw object is signed
-	fw := &ObjectForwardRequest{
+	fw := &ObjectForward{
 		Recipient: address,
-		FwObject:  o,
+		FwObject:  &o,
 	}
 
 	fwo := fw.ToObject()
