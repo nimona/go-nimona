@@ -132,6 +132,11 @@ func Generate(doc *Document, output string) ([]byte, error) {
 						Type: "*crypto.Signature",
 						Tag:  "@signature:o",
 					},
+					&Member{
+						Name: "Authors",
+						Type: "[]*crypto.PublicKey",
+						Tag:  "@authors:ao",
+					},
 				)
 			}
 		}
