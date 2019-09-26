@@ -9,70 +9,65 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-// domain events
 type (
-	ContentProviderRequested struct {
-		BloomFilter []int64           `json:"bloomFilter:ai"`
-		Signature   *crypto.Signature `json:"@signature:o"`
+	Request struct {
+		QueryContentBloom []int64             `json:"queryContentBloom:ai"`
+		Nonce             string              `json:"nonce:s"`
+		Signature         *crypto.Signature   `json:"@signature:o"`
+		Authors           []*crypto.PublicKey `json:"@authors:ao"`
 	}
-	ContentProviderUpdated struct {
-		BloomFilter []int64           `json:"bloomFilter:ai"`
-		Signature   *crypto.Signature `json:"@signature:o"`
+	Announced struct {
+		AvailableContentBloom []int64             `json:"availableContentBloom:ai"`
+		Nonce                 string              `json:"nonce:s"`
+		Signature             *crypto.Signature   `json:"@signature:o"`
+		Authors               []*crypto.PublicKey `json:"@authors:ao"`
 	}
 )
 
-func (e *ContentProviderRequested) ContextName() string {
-	return "nimona.io/discovery/hyperspace/ContentProvider"
+func (e *Request) EventName() string {
+	return "Request"
 }
 
-func (e *ContentProviderRequested) EventName() string {
-	return "Requested"
+func (e *Request) GetType() string {
+	return "ContentProvider.Request"
 }
 
-func (e *ContentProviderRequested) GetType() string {
-	return "nimona.io/discovery/hyperspace/ContentProvider.Requested"
-}
-
-func (e *ContentProviderRequested) ToObject() object.Object {
+func (e *Request) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/discovery/hyperspace/ContentProvider.Requested",
-		"@domain:s": "nimona.io/discovery/hyperspace/ContentProvider",
-		"@event:s":  "Requested",
+		"@ctx:s":    "ContentProvider.Request",
+		"@domain:s": "ContentProvider",
+		"@event:s":  "Request",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *ContentProviderRequested) FromObject(o object.Object) error {
+func (e *Request) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *ContentProviderUpdated) ContextName() string {
-	return "nimona.io/discovery/hyperspace/ContentProvider"
+func (e *Announced) EventName() string {
+	return "Announced"
 }
 
-func (e *ContentProviderUpdated) EventName() string {
-	return "Updated"
+func (e *Announced) GetType() string {
+	return "ContentProvider.Announced"
 }
 
-func (e *ContentProviderUpdated) GetType() string {
-	return "nimona.io/discovery/hyperspace/ContentProvider.Updated"
-}
-
-func (e *ContentProviderUpdated) ToObject() object.Object {
+func (e *Announced) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/discovery/hyperspace/ContentProvider.Updated",
-		"@domain:s": "nimona.io/discovery/hyperspace/ContentProvider",
-		"@event:s":  "Updated",
+		"@ctx:s":    "ContentProvider.Announced",
+		"@domain:s": "ContentProvider",
+		"@event:s":  "Announced",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *ContentProviderUpdated) FromObject(o object.Object) error {
+func (e *Announced) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

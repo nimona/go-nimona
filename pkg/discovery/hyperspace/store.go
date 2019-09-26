@@ -8,20 +8,20 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=ContentProviderUpdated"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=Announced"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		blooms: &CryptoFingerprintContentProviderUpdatedSyncMap{},
+		blooms: &CryptoFingerprintAnnouncedSyncMap{},
 		peers:  &CryptoFingerprintPeerPeerSyncMap{},
 	}
 }
 
 // Store holds peer content blooms and their fingerprints
 type Store struct {
-	blooms *CryptoFingerprintContentProviderUpdatedSyncMap
+	blooms *CryptoFingerprintAnnouncedSyncMap
 	peers  *CryptoFingerprintPeerPeerSyncMap
 }
 
@@ -31,7 +31,7 @@ func (s *Store) AddPeer(peer *peer.Peer) {
 }
 
 // Add content hashes
-func (s *Store) AddContentHashes(c *ContentProviderUpdated) {
+func (s *Store) AddContentHashes(c *Announced) {
 	s.blooms.Put(c.Signature.PublicKey.Fingerprint(), c)
 }
 
@@ -71,14 +71,14 @@ func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
 
 // FindClosestContentProvider returns peers that are "closet" to the given
 // content
-func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentProviderUpdated {
+func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
 	type kv struct {
 		bloomIntersection int
-		contentHashBloom  *ContentProviderUpdated
+		contentHashBloom  *Announced
 	}
 
 	r := []kv{}
-	s.blooms.Range(func(f crypto.Fingerprint, b *ContentProviderUpdated) bool {
+	s.blooms.Range(func(f crypto.Fingerprint, b *Announced) bool {
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), b.Bloom()),
 			contentHashBloom:  b,
@@ -90,7 +90,7 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*ContentProviderUp
 		return r[i].bloomIntersection < r[j].bloomIntersection
 	})
 
-	cs := []*ContentProviderUpdated{}
+	cs := []*Announced{}
 	for i, c := range r {
 		cs = append(cs, c.contentHashBloom)
 		if i > 10 { // TODO make limit configurable
@@ -120,11 +120,11 @@ func (s *Store) FindByFingerprint(
 }
 
 // FindByContent returns peers that match a given content hash
-func (s *Store) FindByContent(b bloom.Bloomer) []*ContentProviderUpdated {
-	cs := []*ContentProviderUpdated{}
+func (s *Store) FindByContent(b bloom.Bloomer) []*Announced {
+	cs := []*Announced{}
 	q := b.Bloom()
 
-	s.blooms.Range(func(f crypto.Fingerprint, c *ContentProviderUpdated) bool {
+	s.blooms.Range(func(f crypto.Fingerprint, c *Announced) bool {
 		if intersectionCount(c.Bloom(), b.Bloom()) != len(q) {
 			return true
 		}
