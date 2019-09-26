@@ -10,6 +10,12 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/stream"
+)
+
+var (
+	streamRequestEventListType = new(stream.RequestEventList).GetType()
+	streamEventListCreatedType = new(stream.EventListCreated).GetType()
 )
 
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg orchestrator gen "ObservableType=string"
@@ -118,13 +124,13 @@ func (m *orchestrator) Process(e *exchange.Envelope) error {
 
 	o := e.Payload
 	switch o.GetType() {
-	case ObjectGraphRequestType:
-		v := &ObjectGraphRequest{}
+	case streamRequestEventListType:
+		v := &stream.RequestEventList{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		reqID := o.Get(exchange.ObjectRequestID).(string)
-		if err := m.handleObjectGraphRequest(
+		if err := m.handleStreamRequestEventList(
 			ctx,
 			reqID,
 			e.Sender,
@@ -213,16 +219,16 @@ func (m *orchestrator) Get(
 	return g, nil
 }
 
-func (m *orchestrator) handleObjectGraphRequest(
+func (m *orchestrator) handleStreamRequestEventList(
 	ctx context.Context,
 	reqID string,
 	sender *crypto.PublicKey,
-	req *ObjectGraphRequest,
+	req *stream.RequestEventList,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
 
-	vs, err := m.store.Graph(req.Selector[0])
+	vs, err := m.store.Graph(req.StreamHashes[0])
 	if err != nil {
 		return err
 	}
@@ -232,8 +238,8 @@ func (m *orchestrator) handleObjectGraphRequest(
 		hs = append(hs, o.Hash().String())
 	}
 
-	res := &ObjectGraphResponse{
-		ObjectHashes: hs,
+	res := &stream.EventListCreated{
+		EventHashes: hs,
 	}
 
 	if err := m.exchange.Send(
@@ -243,7 +249,7 @@ func (m *orchestrator) handleObjectGraphRequest(
 		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(
-			"orchestrator/orchestrator.handleObjectGraphRequest could not send response",
+			"orchestrator/orchestrator.handlestream.RequestEventList could not send response",
 			log.Error(err),
 		)
 		return err

@@ -5,11 +5,12 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/stream"
 )
 
 func (m *orchestrator) Sync(
 	ctx context.Context,
-	selector []string,
+	streamHashes []string,
 	addresses []string,
 ) (
 	*Graph,
@@ -19,13 +20,13 @@ func (m *orchestrator) Sync(
 	addresses = m.withoutOwnAddresses(addresses)
 
 	// create objecet graph request
-	req := &ObjectGraphRequest{
-		Selector: selector,
+	req := &stream.RequestEventList{
+		StreamHashes: streamHashes,
 	}
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "orchestrator/orchestrator.Sync"),
-		log.Strings("selector", selector),
+		log.Strings("streamHashes", streamHashes),
 		log.Strings("addresses", addresses),
 	)
 
@@ -73,18 +74,18 @@ func (m *orchestrator) Sync(
 					log.String("object.type", res.Payload.GetType()),
 				)
 
-				if res.Payload.GetType() != ObjectGraphResponseType {
+				if res.Payload.GetType() != streamEventListCreatedType {
 					continue
 				}
-				gres := &ObjectGraphResponse{}
+				gres := &stream.EventListCreated{}
 				if err := gres.FromObject(res.Payload); err != nil {
 					logger.Warn("could not get res from obj", log.Error(err))
 					continue
 				}
 				logger.
-					With(log.Strings("hashes", gres.ObjectHashes)).
+					With(log.Strings("hashes", gres.EventHashes)).
 					Debug("got graph response")
-				for _, objectHash := range gres.ObjectHashes {
+				for _, objectHash := range gres.EventHashes {
 					// add a request for this hash from this peer
 					requests <- &request{
 						hash: objectHash,
@@ -148,8 +149,8 @@ func (m *orchestrator) Sync(
 		close(out)
 	}
 
-	// TODO currently we only support a root selector
-	rootHash := selector[0]
+	// TODO currently we only support a root streamHashes
+	rootHash := streamHashes[0]
 	os, err := m.store.Graph(rootHash)
 	if err != nil {
 		return nil, errors.Wrap(
