@@ -9,7 +9,6 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-// basic structs
 type (
 	Peer struct {
 		Addresses []string          `json:"addresses:as"`
@@ -22,12 +21,12 @@ func (e *Peer) ContextName() string {
 }
 
 func (e *Peer) GetType() string {
-	return "nimona.io/peer/Peer"
+	return "Peer"
 }
 
 func (e *Peer) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer/Peer",
+		"@ctx:s":    "Peer",
 		"@struct:s": "Peer",
 	}
 	b, _ := json.Marshal(e)
@@ -40,34 +39,31 @@ func (e *Peer) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-// domain events
 type (
-	PeerRequested struct {
-		Keys      []string          `json:"keys:as"`
-		Signature *crypto.Signature `json:"@signature:o"`
+	Requested struct {
+		Keys      []string            `json:"keys:as"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
-	PeerUpdated struct {
-		Addresses []string          `json:"addresses:as"`
-		Signature *crypto.Signature `json:"@signature:o"`
+	Updated struct {
+		Addresses []string            `json:"addresses:as"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
 )
 
-func (e *PeerRequested) ContextName() string {
-	return "nimona.io/peer/Peer"
-}
-
-func (e *PeerRequested) EventName() string {
+func (e *Requested) EventName() string {
 	return "Requested"
 }
 
-func (e *PeerRequested) GetType() string {
-	return "nimona.io/peer/Peer.Requested"
+func (e *Requested) GetType() string {
+	return "Peer.Requested"
 }
 
-func (e *PeerRequested) ToObject() object.Object {
+func (e *Requested) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer/Peer.Requested",
-		"@domain:s": "nimona.io/peer/Peer",
+		"@ctx:s":    "Peer.Requested",
+		"@domain:s": "Peer",
 		"@event:s":  "Requested",
 	}
 	b, _ := json.Marshal(e)
@@ -75,27 +71,23 @@ func (e *PeerRequested) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *PeerRequested) FromObject(o object.Object) error {
+func (e *Requested) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *PeerUpdated) ContextName() string {
-	return "nimona.io/peer/Peer"
-}
-
-func (e *PeerUpdated) EventName() string {
+func (e *Updated) EventName() string {
 	return "Updated"
 }
 
-func (e *PeerUpdated) GetType() string {
-	return "nimona.io/peer/Peer.Updated"
+func (e *Updated) GetType() string {
+	return "Peer.Updated"
 }
 
-func (e *PeerUpdated) ToObject() object.Object {
+func (e *Updated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer/Peer.Updated",
-		"@domain:s": "nimona.io/peer/Peer",
+		"@ctx:s":    "Peer.Updated",
+		"@domain:s": "Peer",
 		"@event:s":  "Updated",
 	}
 	b, _ := json.Marshal(e)
@@ -103,7 +95,7 @@ func (e *PeerUpdated) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *PeerUpdated) FromObject(o object.Object) error {
+func (e *Updated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
