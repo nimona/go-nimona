@@ -1,0 +1,15 @@
+package nimona.io/middleware/handshake
+
+import nimona.io/crypto crypto
+
+domain nimona.io/net/handshake {
+    signed event Syn {
+        nonce string
+    }
+    signed event SynAck {
+        nonce string
+    }
+    signed event Ack {
+        nonce string
+    }
+}
