@@ -18,6 +18,7 @@ import (
 	"nimona.io/pkg/object/subscription"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/stream"
 )
 
 //
@@ -200,8 +201,8 @@ func TestSync(t *testing.T) {
 		"peer:"+rkey.PublicKey.Fingerprint().String(),
 		mock.Anything,
 	).Run(
-		respWith(orchestrator.ObjectGraphResponse{
-			ObjectHashes: []string{
+		respWith((&stream.EventListCreated{
+			EventHashes: []string{
 				o.Hash().String(),
 				m1.ToObject().Hash().String(),
 				m2.ToObject().Hash().String(),
@@ -211,7 +212,7 @@ func TestSync(t *testing.T) {
 				m6.ToObject().Hash().String(),
 				s1.ToObject().Hash().String(),
 			},
-		}.ToObject()),
+		}).ToObject()),
 	).Return(nil)
 
 	// request o
