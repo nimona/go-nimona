@@ -11,30 +11,30 @@ import (
 )
 
 type (
-	// CryptoFingerprintContentProviderUpdatedSyncMap -
-	CryptoFingerprintContentProviderUpdatedSyncMap struct {
+	// CryptoFingerprintAnnouncedSyncMap -
+	CryptoFingerprintAnnouncedSyncMap struct {
 		m sync.Map
 	}
 )
 
-// NewCryptoFingerprintContentProviderUpdatedSyncMap constructs a new SyncMap
-func NewCryptoFingerprintContentProviderUpdatedSyncMap() *CryptoFingerprintContentProviderUpdatedSyncMap {
-	return &CryptoFingerprintContentProviderUpdatedSyncMap{}
+// NewCryptoFingerprintAnnouncedSyncMap constructs a new SyncMap
+func NewCryptoFingerprintAnnouncedSyncMap() *CryptoFingerprintAnnouncedSyncMap {
+	return &CryptoFingerprintAnnouncedSyncMap{}
 }
 
 // Put -
-func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Put(k crypto.Fingerprint, v *ContentProviderUpdated) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Put(k crypto.Fingerprint, v *Announced) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Get(k crypto.Fingerprint) (*ContentProviderUpdated, bool) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Get(k crypto.Fingerprint) (*Announced, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
 	}
 
-	v, ok := i.(*ContentProviderUpdated)
+	v, ok := i.(*Announced)
 	if !ok {
 		return nil, false
 	}
@@ -43,13 +43,13 @@ func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Get(k crypto.Fingerprin
 }
 
 // Delete -
-func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Delete(k crypto.Fingerprint) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Delete(k crypto.Fingerprint) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *CryptoFingerprintContentProviderUpdatedSyncMap) Range(i func(k crypto.Fingerprint, v *ContentProviderUpdated) bool) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Range(i func(k crypto.Fingerprint, v *Announced) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.Fingerprint), v.(*ContentProviderUpdated))
+		return i(k.(crypto.Fingerprint), v.(*Announced))
 	})
 }

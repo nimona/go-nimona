@@ -20,10 +20,10 @@ import (
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=string"
 
 var (
-	peerRequestedType            = new(peer.PeerRequested).GetType()
+	peerRequestedType            = new(peer.Requested).GetType()
 	peerType                     = new(peer.Peer).GetType()
-	contentProviderRequestedType = new(ContentProviderRequested).GetType()
-	contentProviderUpdatedType   = new(ContentProviderUpdated).GetType()
+	contentProviderRequestType   = new(Request).GetType()
+	contentProviderAnnouncedType = new(Announced).GetType()
 )
 
 type (
@@ -61,11 +61,19 @@ func NewDiscoverer(
 		log.String("method", "hyperspace/Discoverer"),
 	)
 
-	if _, err := exc.Handle("nimona.io/discovery/hyperspace/**", r.handleObject); err != nil {
+	if _, err := exc.Handle(peerType, r.handleObject); err != nil {
 		return nil, err
 	}
 
-	if _, err := exc.Handle("nimona.io/peer/**", r.handleObject); err != nil {
+	if _, err := exc.Handle(peerRequestedType, r.handleObject); err != nil {
+		return nil, err
+	}
+
+	if _, err := exc.Handle(contentProviderRequestType, r.handleObject); err != nil {
+		return nil, err
+	}
+
+	if _, err := exc.Handle(contentProviderAnnouncedType, r.handleObject); err != nil {
 		return nil, err
 	}
 
@@ -83,6 +91,7 @@ func NewDiscoverer(
 	})
 
 	// r.store.Add(local.GetSignedPeer())
+
 	go func() {
 		if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
@@ -123,7 +132,7 @@ func (r *Discoverer) FindByFingerprint(
 		return nil, nil
 	}
 
-	if _, err := r.LookupPeer(ctx, &peer.PeerRequested{
+	if _, err := r.LookupPeer(ctx, &peer.Requested{
 		Keys: []string{
 			fingerprint.String(),
 		},
@@ -202,7 +211,7 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 	o := e.Payload
 	switch o.GetType() {
 	case peerRequestedType:
-		v := &peer.PeerRequested{}
+		v := &peer.Requested{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -213,12 +222,12 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 			return err
 		}
 		r.handlePeer(ctx, v, e)
-	case contentProviderUpdatedType:
+	case contentProviderAnnouncedType:
 		logger := logger.With(
 			log.String("e.sender", e.Sender.Fingerprint().String()),
 			log.String("o.type", o.GetType()),
 		)
-		v := &ContentProviderUpdated{}
+		v := &Announced{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -227,8 +236,8 @@ func (r *Discoverer) handleObject(e *exchange.Envelope) error {
 			return nil
 		}
 		r.handleProvider(ctx, v, e)
-	case contentProviderRequestedType:
-		v := &ContentProviderRequested{}
+	case contentProviderRequestType:
+		v := &Request{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -254,7 +263,7 @@ func (r *Discoverer) handlePeer(
 
 func (r *Discoverer) handlePeerRequest(
 	ctx context.Context,
-	q *peer.PeerRequested,
+	q *peer.Requested,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -298,7 +307,7 @@ func (r *Discoverer) handlePeerRequest(
 
 func (r *Discoverer) handleProvider(
 	ctx context.Context,
-	p *ContentProviderUpdated,
+	p *Announced,
 	e *exchange.Envelope,
 ) {
 	logger := log.FromContext(ctx).With(
@@ -312,7 +321,7 @@ func (r *Discoverer) handleProvider(
 
 func (r *Discoverer) handleProviderRequest(
 	ctx context.Context,
-	q *ContentProviderRequested,
+	q *Request,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -320,7 +329,7 @@ func (r *Discoverer) handleProviderRequest(
 		log.String("method", "hyperspace/resolver.handleProviderRequest"),
 		log.String("e.sender", e.Sender.Fingerprint().String()),
 		log.String("e.requestID", e.RequestID),
-		log.Any("query.bloom", q.BloomFilter),
+		log.Any("query.bloom", q.QueryContentBloom),
 	)
 
 	logger.Debug("handling content request")
@@ -363,8 +372,8 @@ func (r *Discoverer) LookupContentProvider(
 		log.String("method", "hyperspace/resolver.LookupContentProvider"),
 		log.Any("query.bloom", q),
 	)
-	cq := &ContentProviderRequested{
-		BloomFilter: q.Bloom(),
+	cq := &Request{
+		QueryContentBloom: q.Bloom(),
 	}
 	o := cq.ToObject()
 	cs := r.store.FindClosestContentProvider(q)
@@ -428,8 +437,8 @@ loop:
 			if err := r.handleObject(res); err != nil {
 				logger.Debug("could not handle object", log.Error(err))
 			}
-			// if res.Payload.GetType() == ContentProviderUpdatedType {
-			// 	v := &ContentProviderUpdated{}
+			// if res.Payload.GetType() == ContentProviderAnnouncedType {
+			// 	v := &Updated{}
 			// 	if err := v.FromObject(res.Payload); err == nil {
 			// 		fingerprints = append(
 			// 			fingerprints,
@@ -454,7 +463,7 @@ loop:
 // LookupPeer does a network lookup given a query
 func (r *Discoverer) LookupPeer(
 	ctx context.Context,
-	q *peer.PeerRequested,
+	q *peer.Requested,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -524,7 +533,7 @@ func (r *Discoverer) bootstrap(
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
-	q := &peer.PeerRequested{
+	q := &peer.Requested{
 		Keys: []string{
 			key.Fingerprint().String(),
 		},
@@ -552,11 +561,11 @@ func (r *Discoverer) getContentHashes() []string {
 	return cIDs
 }
 
-func (r *Discoverer) getOwnContentProviderUpdated() (*ContentProviderUpdated, error) {
+func (r *Discoverer) getOwnContentProviderUpdated() (*Announced, error) {
 	cs := r.getContentHashes()
 	b := bloom.NewBloom(cs...)
-	cb := &ContentProviderUpdated{
-		BloomFilter: b,
+	cb := &Announced{
+		AvailableContentBloom: b,
 	}
 
 	o := cb.ToObject()
@@ -596,8 +605,8 @@ func (r *Discoverer) publishContentHashes(
 		log.Any("bloom", b),
 	).Debug("trying to tell n peers")
 
-	cb := &ContentProviderUpdated{
-		BloomFilter: b,
+	cb := &Announced{
+		AvailableContentBloom: b,
 	}
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),

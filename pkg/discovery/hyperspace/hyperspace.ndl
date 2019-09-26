@@ -3,10 +3,12 @@ package nimona.io/discovery/hyperspace
 import nimona.io/crypto crypto
 
 domain ContentProvider {
-    signed command Requested {
-        bloomFilter repeated int
+    signed command Request {
+        queryContentBloom repeated int
+        nonce string
     }
-    signed event Updated {
-        bloomFilter repeated int
+    signed event Announced {
+        availableContentBloom repeated int
+        nonce string
     }
 }

@@ -1,9 +1,9 @@
 package hyperspace
 
-func (ch *ContentProviderUpdated) Bloom() []int64 {
-	return []int64(ch.BloomFilter)
+func (ch *Announced) Bloom() []int64 {
+	return []int64(ch.AvailableContentBloom)
 }
 
-func (ch *ContentProviderRequested) Bloom() []int64 {
-	return []int64(ch.BloomFilter)
+func (ch *Request) Bloom() []int64 {
+	return []int64(ch.QueryContentBloom)
 }
