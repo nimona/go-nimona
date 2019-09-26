@@ -11,20 +11,23 @@ import (
 
 type (
 	TopicSet struct {
-		Stream    crypto.Hash       `json:"@stream:o"`
-		Topic     string            `json:"topic:s"`
-		Signature *crypto.Signature `json:"@signature:o"`
+		Stream    crypto.Hash         `json:"@stream:o"`
+		Topic     string              `json:"topic:s"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
 	NameSet struct {
-		Stream    crypto.Hash       `json:"@stream:o"`
-		Name      string            `json:"name:s"`
-		Signature *crypto.Signature `json:"@signature:o"`
+		Stream    crypto.Hash         `json:"@stream:o"`
+		Name      string              `json:"name:s"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
 	MessageAdded struct {
-		Stream    crypto.Hash       `json:"@stream:o"`
-		Parents   crypto.Hash       `json:"parents:ao"`
-		Body      string            `json:"body:s"`
-		Signature *crypto.Signature `json:"@signature:o"`
+		Stream    crypto.Hash         `json:"@stream:o"`
+		Parents   crypto.Hash         `json:"parents:ao"`
+		Body      string              `json:"body:s"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
 )
 

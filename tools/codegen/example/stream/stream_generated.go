@@ -17,16 +17,18 @@ type (
 		Action     string           `json:"action:s"`
 	}
 	Created struct {
-		CreatedDateTime string            `json:"createdDateTime:s"`
-		PartitionKeys   []string          `json:"partitionKeys:as"`
-		Policies        []*Policy         `json:"@policies:ao"`
-		Signature       *crypto.Signature `json:"@signature:o"`
+		CreatedDateTime string              `json:"createdDateTime:s"`
+		PartitionKeys   []string            `json:"partitionKeys:as"`
+		Policies        []*Policy           `json:"@policies:ao"`
+		Signature       *crypto.Signature   `json:"@signature:o"`
+		Authors         []*crypto.PublicKey `json:"@authors:ao"`
 	}
 	PoliciesUpdated struct {
-		Stream    crypto.Hash       `json:"@stream:o"`
-		Parents   crypto.Hash       `json:"@parents:ao"`
-		Policies  []*Policy         `json:"@policies:ao"`
-		Signature *crypto.Signature `json:"@signature:o"`
+		Stream    crypto.Hash         `json:"@stream:o"`
+		Parents   crypto.Hash         `json:"@parents:ao"`
+		Policies  []*Policy           `json:"@policies:ao"`
+		Signature *crypto.Signature   `json:"@signature:o"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao"`
 	}
 )
 
