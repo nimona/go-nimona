@@ -8,12 +8,7 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-// basic structs
 type (
-	Hash struct {
-		HashType string `json:"hashType:s"`
-		Digest   []byte `json:"digest:d"`
-	}
 	Signature struct {
 		PublicKey *PublicKey `json:"publicKey:o"`
 		Algorithm string     `json:"algorithm:s"`
@@ -39,40 +34,17 @@ type (
 	}
 )
 
-func (e *Hash) ContextName() string {
-	return "nimona.io/crypto"
-}
-
-func (e *Hash) GetType() string {
-	return "nimona.io/crypto/Hash"
-}
-
-func (e *Hash) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto/Hash",
-		"@struct:s": "Hash",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
-	return object.Object(m)
-}
-
-func (e *Hash) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
 func (e *Signature) ContextName() string {
 	return "nimona.io/crypto"
 }
 
 func (e *Signature) GetType() string {
-	return "nimona.io/crypto/Signature"
+	return "Signature"
 }
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto/Signature",
+		"@ctx:s":    "Signature",
 		"@struct:s": "Signature",
 	}
 	b, _ := json.Marshal(e)
@@ -90,12 +62,12 @@ func (e *PrivateKey) ContextName() string {
 }
 
 func (e *PrivateKey) GetType() string {
-	return "nimona.io/crypto/PrivateKey"
+	return "PrivateKey"
 }
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto/PrivateKey",
+		"@ctx:s":    "PrivateKey",
 		"@struct:s": "PrivateKey",
 	}
 	b, _ := json.Marshal(e)
@@ -113,12 +85,12 @@ func (e *PublicKey) ContextName() string {
 }
 
 func (e *PublicKey) GetType() string {
-	return "nimona.io/crypto/PublicKey"
+	return "PublicKey"
 }
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto/PublicKey",
+		"@ctx:s":    "PublicKey",
 		"@struct:s": "PublicKey",
 	}
 	b, _ := json.Marshal(e)

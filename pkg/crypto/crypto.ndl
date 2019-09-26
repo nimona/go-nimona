@@ -1,10 +1,5 @@
 package nimona.io/crypto
 
-struct Hash {
-    hashType string
-    digest data
-}
-
 struct Signature {
     publicKey PublicKey
     algorithm string
