@@ -1,11 +1,11 @@
 package node
 
 import (
-	"context"
+	"nimona.io/pkg/context"
 	"fmt"
 	"math/rand"
 
-	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/simulation/containers"
 )
 
 type Environment struct {

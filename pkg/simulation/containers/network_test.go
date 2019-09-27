@@ -1,11 +1,11 @@
 package containers_test
 
 import (
-	"context"
+	"nimona.io/pkg/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/simulation/containers"
 )
 
 func TestNetwork(t *testing.T) {
