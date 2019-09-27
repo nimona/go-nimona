@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"nimona.io/internal/simulation/node"
+	"nimona.io/pkg/simulation/node"
 )
 
 func TestSimulation(t *testing.T) {

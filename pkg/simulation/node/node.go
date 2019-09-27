@@ -1,10 +1,10 @@
 package node
 
 import (
-	"context"
+	"nimona.io/pkg/context"
 	"fmt"
 
-	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/simulation/containers"
 )
 
 const defaultContainerPort = 28000
