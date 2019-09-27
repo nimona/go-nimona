@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/log"
 	"nimona.io/internal/rand"

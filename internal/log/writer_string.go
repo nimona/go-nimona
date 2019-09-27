@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 )
 
 func StringWriter() Writer {

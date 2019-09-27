@@ -3,7 +3,7 @@ package queue
 import (
 	"github.com/cheekybits/genny/generic"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
 )
 

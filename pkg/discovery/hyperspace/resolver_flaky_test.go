@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 )
 
 func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {

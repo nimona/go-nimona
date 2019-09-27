@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 )
 
 func TestContext(t *testing.T) {
