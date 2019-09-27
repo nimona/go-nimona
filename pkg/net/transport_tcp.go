@@ -10,7 +10,7 @@ import (
 
 	igd "github.com/emersion/go-upnp-igd"
 
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )

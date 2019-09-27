@@ -6,7 +6,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"

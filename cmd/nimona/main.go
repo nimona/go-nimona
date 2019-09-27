@@ -7,7 +7,7 @@ import (
 
 	"nimona.io/internal/api"
 	"nimona.io/pkg/context"
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
 	"nimona.io/internal/version"
