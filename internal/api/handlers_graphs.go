@@ -8,7 +8,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/http/router"
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"

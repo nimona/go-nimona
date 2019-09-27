@@ -13,7 +13,7 @@ import (
 	igd "github.com/emersion/go-upnp-igd"
 	"golang.org/x/net/http2"
 
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )

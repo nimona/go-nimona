@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )

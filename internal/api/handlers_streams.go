@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"nimona.io/internal/http/router"
-	"nimona.io/internal/log"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/exchange"
