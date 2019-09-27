@@ -1,7 +1,7 @@
 package net
 
 import (
-	"context"
+	"nimona.io/pkg/context"
 )
 
 type Transport interface {

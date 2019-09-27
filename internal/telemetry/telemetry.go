@@ -1,9 +1,9 @@
 package telemetry
 
 import (
-	"context"
 	"errors"
 
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )

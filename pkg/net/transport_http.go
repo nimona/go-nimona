@@ -1,7 +1,6 @@
 package net
 
 import (
-	"context"
 	"crypto/tls"
 	"io"
 	"io/ioutil"
@@ -13,8 +12,9 @@ import (
 	igd "github.com/emersion/go-upnp-igd"
 	"golang.org/x/net/http2"
 
-	"nimona.io/pkg/log"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
 

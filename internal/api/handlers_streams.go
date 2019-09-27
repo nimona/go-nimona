@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -10,10 +9,11 @@ import (
 	"github.com/gorilla/websocket"
 
 	"nimona.io/internal/http/router"
-	"nimona.io/pkg/log"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
+	"nimona.io/pkg/object"
 )
 
 func (api *API) HandleGetStreams(c *router.Context) {

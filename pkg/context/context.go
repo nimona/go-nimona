@@ -9,7 +9,13 @@ import (
 
 type (
 	// Context that matches std context
-	Context stdcontext.Context
+	Context interface {
+		Cancel()
+		Deadline() (deadline time.Time, ok bool)
+		Done() <-chan struct{}
+		Err() error
+		Value(key interface{}) interface{}
+	}
 	// context wraps stdcontext.Context allowing adding tracing information
 	// instead of using the Values.
 	context struct {
@@ -17,6 +23,9 @@ type (
 		method        string
 		arguments     map[string]interface{}
 		correlationID string
+		timeout       time.Duration
+		withCancel    bool
+		cancel        func()
 	}
 )
 
@@ -28,26 +37,16 @@ func Background() *context {
 // A CancelFunc tells an operation to abandon its work
 type CancelFunc func()
 
-// WithCancel returns a copy of parent with a new Done channel
-func WithCancel(parent stdcontext.Context) (*context, CancelFunc) {
-	cctx, cf := stdcontext.WithCancel(parent)
-	return New(WithParent(cctx)), CancelFunc(cf)
-}
-
 // Method returns the context's method
 func (ctx *context) Method() string {
 	return ctx.method
 }
 
-// WithTimeout wraps stdcontext.WithTimeout
-func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) {
-	cctx, cf := stdcontext.WithTimeout(parent, timeout)
-	return New(
-		WithParent(cctx),
-		WithCorrelationID(
-			GetCorrelationID(parent),
-		),
-	), CancelFunc(cf)
+// Cancel the context
+func (ctx *context) Cancel() {
+	if ctx.cancel != nil {
+		ctx.cancel()
+	}
 }
 
 // Arguments returns the context's arguments
@@ -94,6 +93,16 @@ func New(opts ...Option) *context {
 	}
 	if ctx.correlationID == "" {
 		ctx.correlationID = rand.String(12)
+	}
+	if ctx.timeout > 0 {
+		ctx.Context, ctx.cancel = stdcontext.WithTimeout(
+			ctx.Context,
+			ctx.timeout,
+		)
+	} else if ctx.withCancel {
+		ctx.Context, ctx.cancel = stdcontext.WithCancel(
+			ctx.Context,
+		)
 	}
 	return ctx
 }

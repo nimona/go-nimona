@@ -1,7 +1,6 @@
 package orchestrator_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -11,12 +10,13 @@ import (
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/object/mutation"
 	"nimona.io/pkg/object/subscription"
+	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 )
 

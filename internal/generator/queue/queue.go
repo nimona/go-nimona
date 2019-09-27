@@ -33,9 +33,9 @@ type (
 func NewQueue(ctx context.Context, workers int, done chan ObservableType) Queue {
 	ctx = context.New(
 		context.WithParent(ctx),
+		context.WithCancel(),
 		context.WithMethod("queue.New"),
 	)
-	ctx, cf := context.WithCancel(ctx)
 
 	q := &q{
 		cache: map[string]bool{},
@@ -47,7 +47,7 @@ func NewQueue(ctx context.Context, workers int, done chan ObservableType) Queue 
 
 	go func() {
 		<-q.exit
-		cf()
+		ctx.Cancel()
 		close(q.queue)
 		close(q.exit)
 	}()

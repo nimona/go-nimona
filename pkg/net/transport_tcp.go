@@ -1,7 +1,6 @@
 package net
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"net"
@@ -10,8 +9,9 @@ import (
 
 	igd "github.com/emersion/go-upnp-igd"
 
-	"nimona.io/pkg/log"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
 
