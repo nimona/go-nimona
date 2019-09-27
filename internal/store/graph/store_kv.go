@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/object"
 )

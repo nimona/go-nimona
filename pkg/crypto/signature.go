@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
 

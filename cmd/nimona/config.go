@@ -8,7 +8,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/crypto"
 )
 

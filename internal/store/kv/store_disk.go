@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 )
 
 // diskStore stores the object in a file
