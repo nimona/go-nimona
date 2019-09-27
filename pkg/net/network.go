@@ -1,17 +1,17 @@
 package net
 
 import (
-	"context"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
 

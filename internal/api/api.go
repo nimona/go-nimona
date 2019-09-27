@@ -1,15 +1,15 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"nimona.io/internal/http/router"
-	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
@@ -23,9 +23,9 @@ type API struct {
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
 
-	objectStore graph.Store
-	orchestrator         orchestrator.Orchestrator
-	local       *peer.LocalPeer
+	objectStore  graph.Store
+	orchestrator orchestrator.Orchestrator
+	local        *peer.LocalPeer
 
 	localFingerprint crypto.Fingerprint
 

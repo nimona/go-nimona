@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -12,6 +11,7 @@ import (
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
@@ -115,10 +115,7 @@ func TestSendWithResponseSuccess(t *testing.T) {
 
 	out := make(chan *Envelope, 1)
 
-	ctx, _ := context.WithDeadline(
-		context.Background(),
-		time.Now().Add(time.Second*3),
-	)
+	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x2.Send(
 		ctx,
 		eo1,
@@ -179,10 +176,7 @@ func TestSendWithResponseSuccessHTTP(t *testing.T) {
 
 	out := make(chan *Envelope, 1)
 
-	ctx, _ := context.WithDeadline(
-		context.Background(),
-		time.Now().Add(time.Second*3),
-	)
+	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x2.Send(
 		ctx,
 		eo1,
@@ -243,10 +237,7 @@ func TestRequestSuccess(t *testing.T) {
 
 	// request object, with req id
 	out := make(chan *Envelope, 1)
-	ctx, _ := context.WithDeadline(
-		context.Background(),
-		time.Now().Add(time.Second*3),
-	)
+	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
 		eo1.Hash().String(),
@@ -291,10 +282,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 
 	// request object, with req id
 	out := make(chan *Envelope, 1)
-	ctx, _ := context.WithDeadline(
-		context.Background(),
-		time.Now().Add(time.Second*3),
-	)
+	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
 		eo1.Hash().String(),
@@ -405,16 +393,16 @@ func TestSendRelay(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
-	defer cf()
+	ctx := context.New(context.WithTimeout(time.Second * 5))
+	defer ctx.Cancel()
 
 	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint().String())
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
-	ctx2, cf2 := context.WithTimeout(context.Background(), time.Second*5)
-	defer cf2()
+	ctx2 := context.New(context.WithTimeout(time.Second * 5))
+	defer ctx2.Cancel()
 
 	// TODO should be able to send not signed
 	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint().String())

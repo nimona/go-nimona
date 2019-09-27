@@ -6,16 +6,15 @@ import (
 	"sync"
 	"time"
 
-	"nimona.io/internal/rand"
-
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
+	"nimona.io/internal/rand"
 	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -335,8 +334,8 @@ func (w *exchange) process(
 			res.Set(ObjectRequestID, reqID)
 		}
 		cerr := make(chan error, 1)
-		ctx, cf := context.WithTimeout(context.Background(), time.Second)
-		defer cf()
+		ctx := context.New(context.WithTimeout(time.Second))
+		defer ctx.Cancel()
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
 			recipient: "peer:" + conn.RemotePeerKey.Fingerprint().String(),
@@ -358,8 +357,8 @@ func (w *exchange) process(
 		}
 		w.logger.Info("got forwarded message", log.String("recipient", v.Recipient))
 		cerr := make(chan error, 1)
-		ctx, cf := context.WithTimeout(context.Background(), time.Second)
-		defer cf()
+		ctx := context.New(context.WithTimeout(time.Second))
+		defer ctx.Cancel()
 		w.outgoing <- &outgoingObject{
 			context:   ctx,
 			recipient: v.Recipient,
@@ -525,9 +524,8 @@ func (w *exchange) sendDirectlyToPeer(
 	options *Options,
 ) error {
 	cerr := make(chan error, 1)
-	nctx, cf := context.WithTimeout(ctx, 5*time.Second)
-	defer cf()
-
+	nctx := context.New(context.WithTimeout(time.Second))
+	defer nctx.Cancel()
 	w.outgoing <- &outgoingObject{
 		context:   ctx,
 		recipient: address,

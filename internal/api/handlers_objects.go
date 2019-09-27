@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
 	"nimona.io/internal/http/router"
 	"nimona.io/internal/store/kv"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
 
@@ -52,8 +52,9 @@ func (api *API) HandleGetObject(c *router.Context) {
 		return
 	}
 
-	ctx, cf := context.WithTimeout(context.Background(), time.Second*5)
-	defer cf()
+	ctx := context.New(context.WithTimeout(time.Second * 5))
+	defer ctx.Cancel()
+
 	ps, err := api.discovery.FindByContent(ctx, objectHash)
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck

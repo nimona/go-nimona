@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
 	"nimona.io/internal/http/router"
-	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
 
@@ -61,11 +61,8 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		return
 	}
 
-	ctx, cf := context.WithTimeout(
-		context.New(),
-		time.Second*10,
-	)
-	defer cf()
+	ctx := context.New(context.WithTimeout(time.Second * 10))
+	defer ctx.Cancel()
 
 	logger := log.FromContext(ctx).With(
 		log.String("rootObjectHash", rootObjectHash),

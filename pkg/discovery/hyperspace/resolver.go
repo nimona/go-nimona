@@ -6,12 +6,12 @@ import (
 	"nimona.io/pkg/object"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace/bloom"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
 )
@@ -70,7 +70,7 @@ func NewDiscoverer(
 	}
 
 	r.local.OnContentHashesUpdated(func(hashes []string) {
-		nctx, _ := context.WithTimeout(ctx, time.Second*5)
+		nctx := context.New(context.WithTimeout(time.Second * 5))
 		for _, hash := range hashes {
 			r.contentHashes.Put(hash)
 		}
@@ -379,7 +379,7 @@ func (r *Discoverer) LookupContentProvider(
 	}
 
 	out := make(chan *exchange.Envelope, 10)
-	rctx, _ := context.WithTimeout(ctx, time.Second*5)
+	rctx := context.New(context.WithTimeout(time.Second * 5))
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithResponse(context.GetCorrelationID(rctx), out),
