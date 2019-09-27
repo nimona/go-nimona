@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
 )
 

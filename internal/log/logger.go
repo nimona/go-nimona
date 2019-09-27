@@ -3,7 +3,7 @@ package log
 import (
 	"runtime/debug"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 )
 
 type (

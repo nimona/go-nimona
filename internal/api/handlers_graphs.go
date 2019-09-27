@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/errors"
 	"nimona.io/internal/http/router"
 	"nimona.io/internal/log"

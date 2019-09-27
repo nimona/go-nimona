@@ -1,7 +1,7 @@
 package handshake
 
 import (
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/log"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"

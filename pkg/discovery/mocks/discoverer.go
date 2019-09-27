@@ -2,7 +2,7 @@
 
 package mocks
 
-import context "nimona.io/internal/context"
+import context "nimona.io/pkg/context"
 import crypto "nimona.io/pkg/crypto"
 import discovery "nimona.io/pkg/discovery"
 import mock "github.com/stretchr/testify/mock"

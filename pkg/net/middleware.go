@@ -1,7 +1,7 @@
 package net
 
 import (
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 )
 
 // MiddlewareHandler ...

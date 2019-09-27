@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"nimona.io/internal/api"
-	"nimona.io/internal/context"
+	"nimona.io/pkg/context"
 	"nimona.io/internal/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
