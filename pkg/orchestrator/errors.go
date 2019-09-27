@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 )
 
 const (

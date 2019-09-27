@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"nimona.io/pkg/context"
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/internal/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"

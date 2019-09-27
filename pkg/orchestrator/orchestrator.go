@@ -2,7 +2,7 @@ package orchestrator
 
 import (
 	"nimona.io/pkg/context"
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/crypto"

@@ -5,7 +5,7 @@ import (
 
 	"github.com/joeycumines/go-dotnotation/dotnotation"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
 

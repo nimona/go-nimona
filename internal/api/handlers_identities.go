@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/internal/http/router"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"

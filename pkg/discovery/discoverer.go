@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"nimona.io/pkg/context"
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"

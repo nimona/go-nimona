@@ -4,7 +4,7 @@ import (
 	"github.com/cheekybits/genny/generic"
 
 	"nimona.io/pkg/context"
-	"nimona.io/internal/errors"
+	"nimona.io/pkg/errors"
 )
 
 type (
