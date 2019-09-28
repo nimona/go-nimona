@@ -148,5 +148,40 @@ func (api *API) HandleGetGraph(c *router.Context) {
 }
 
 func (api *API) HandlePostGraph(c *router.Context) {
-	c.JSON(http.StatusNotImplemented, nil)
+	rootObjectHash := c.Param("rootObjectHash")
+
+	req := map[string]interface{}{}
+	if err := c.BindBody(&req); err != nil {
+		c.AbortWithError(400, err) // nolint: errcheck
+		return
+	}
+
+	ls, err := api.objectStore.Tails(rootObjectHash)
+	if err != nil {
+		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		return
+	}
+
+	parents := []string{}
+	for _, l := range ls {
+		parents = append(parents, l.Hash().String())
+	}
+
+	req["@root:s"] = rootObjectHash
+	req["@parents:as"] = parents
+
+	o := object.FromMap(req)
+
+	if err := crypto.Sign(o, api.local.GetPeerKey()); err != nil {
+		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		return
+	}
+
+	if err := api.orchestrator.Put(o); err != nil {
+		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
+		return
+	}
+
+	m := api.mapObject(o)
+	c.JSON(http.StatusOK, m)
 }
