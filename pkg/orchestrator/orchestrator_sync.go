@@ -3,8 +3,8 @@ package orchestrator
 import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/stream"
 )
 
@@ -124,6 +124,8 @@ func (m *orchestrator) Sync(
 			close(out)
 			continue
 		}
+
+		go m.localInfo.AddContentHash(req.hash)
 
 		select {
 		case <-ctx.Done():
