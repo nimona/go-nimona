@@ -22,7 +22,6 @@ TOOLS += github.com/vektra/mockery/cmd/mockery
 
 # Internal tools
 TOOLS_INTERNAL += codegen
-TOOLS_INTERNAL += objectify
 TOOLS_INTERNAL += community
 TOOLS_INTERNAL += vanity
 TOOLS_INTERNAL += proxy

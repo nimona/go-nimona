@@ -21,7 +21,6 @@ replace (
 	nimona.io/cmd => ./cmd
 	nimona.io/tools/codegen => ./tools/codegen
 	nimona.io/tools/community => ./tools/community
-	nimona.io/tools/objectify => ./tools/objectify
 	nimona.io/tools/proxy => ./tools/proxy
 	nimona.io/tools/vanity => ./tools/vanity
 )
