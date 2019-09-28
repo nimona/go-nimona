@@ -1,13 +1,15 @@
 package orchestrator
 
 import (
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
+	"fmt"
+
 	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
@@ -181,7 +183,10 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 		}
 
 		if !IsComplete(os) {
-			return ErrIncompleteGraph
+			return errors.Wrap(
+				errors.New("cannot store object"),
+				ErrIncompleteGraph,
+			)
 		}
 
 		m.Publish(o.Hash().String())

@@ -14,8 +14,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/mutation"
-	"nimona.io/pkg/object/subscription"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
@@ -29,8 +27,6 @@ import (
 //  m3  m4 |
 //   \ /   |
 //    m6   m5
-//     \  /
-//      s1
 //
 // o Ffsa2mABctpZ1rTpguU1N65GaDVMnbMHW3sLvJ3cAVri
 // m1 EnFp6PUXJd7UckwkMpzFD9iVPGwRnYJEVc5ADtjHF7rj
@@ -62,99 +58,54 @@ var (
 		},
 	})
 
-	m1 = &mutation.Mutation{
-		Parents: []string{
+	m1 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			o.Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAssign,
-				Cursor:    []string{"foo:s"},
-				Value:     "not-bar",
-			},
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m1",
+	})
 
-	m2 = &mutation.Mutation{
-		Parents: []string{
+	m2 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			o.Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAppend,
-				Cursor:    []string{"numbers:ai"},
-				Value:     4,
-			},
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m2",
+	})
 
-	m3 = &mutation.Mutation{
-		Parents: []string{
+	m3 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			m1.ToObject().Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAppend,
-				Cursor:    []string{"strings:as"},
-				Value:     "d",
-			},
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m3",
+	})
 
-	m4 = &mutation.Mutation{
-		Parents: []string{
+	m4 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			m2.ToObject().Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAssign,
-				Cursor:    []string{"map:o", "nested-foo:s"},
-				Value:     "not-nested-bar",
-			},
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m4",
+	})
 
-	m5 = &mutation.Mutation{
-		Parents: []string{
+	m5 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			m2.ToObject().Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAppend,
-				Cursor:    []string{"map:o", "nested-numbers:ai"},
-				Value:     9,
-			},
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m5",
+	})
 
-	m6 = &mutation.Mutation{
-		Parents: []string{
+	m6 = object.FromMap(map[string]interface{}{
+		"@parents:as": []string{
 			m3.ToObject().Hash().String(),
 			m4.ToObject().Hash().String(),
 		},
-		Root: o.Hash().String(),
-		Operations: []*mutation.Operation{
-			{
-				Operation: mutation.OpAppend,
-				Cursor:    []string{"map:o", "nested-strings:as"},
-				Value:     "z",
-			},
-		},
-	}
-
-	s1 = &subscription.Subscription{
-		Subscriber: "foo",
-		Root:       o.Hash().String(),
-		Parents: []string{
-			m5.ToObject().Hash().String(),
-			m6.ToObject().Hash().String(),
-		},
-	}
+		"@root:s": o.Hash().String(),
+		"foo:s":   "bar-m6",
+	})
 )
 
 func TestSync(t *testing.T) {
@@ -210,7 +161,6 @@ func TestSync(t *testing.T) {
 				m4.ToObject().Hash().String(),
 				m5.ToObject().Hash().String(),
 				m6.ToObject().Hash().String(),
-				s1.ToObject().Hash().String(),
 			},
 		}).ToObject()),
 	).Return(nil)
@@ -224,7 +174,6 @@ func TestSync(t *testing.T) {
 		m4.ToObject(),
 		m5.ToObject(),
 		m6.ToObject(),
-		s1.ToObject(),
 	} {
 		x.On(
 			"Request",
@@ -250,7 +199,7 @@ func TestSync(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	assert.Len(t, res.Objects, 8)
+	assert.Len(t, res.Objects, 7)
 
 	assert.Equal(t, jp(o), jp(res.Objects[0]))
 	// assert.Equal(t, jp(m1.ToObject()), jp(res.Objects[1]))
@@ -259,7 +208,6 @@ func TestSync(t *testing.T) {
 	// assert.Equal(t, jp(m4.ToObject()), jp(res.Objects[4]))
 	// assert.E	qual(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
-	assert.Equal(t, jp(s1.ToObject()), jp(res.Objects[7]))
 
 	os.(*graph.Graph).Dump() // nolint
 }
