@@ -10,27 +10,27 @@ import (
 
 type (
 	Signature struct {
-		PublicKey *PublicKey `json:"publicKey:o"`
-		Algorithm string     `json:"algorithm:s"`
-		R         []byte     `json:"r:d"`
-		S         []byte     `json:"s:d"`
+		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
+		Algorithm string     `json:"algorithm:s,omitempty"`
+		R         []byte     `json:"r:d,omitempty"`
+		S         []byte     `json:"s:d,omitempty"`
 	}
 	PrivateKey struct {
-		PublicKey *PublicKey `json:"publicKey:o"`
-		KeyType   string     `json:"keyType:s"`
-		Algorithm string     `json:"algorithm:s"`
-		Curve     string     `json:"curve:s"`
-		X         []byte     `json:"x:d"`
-		Y         []byte     `json:"y:d"`
-		D         []byte     `json:"d:d"`
+		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
+		KeyType   string     `json:"keyType:s,omitempty"`
+		Algorithm string     `json:"algorithm:s,omitempty"`
+		Curve     string     `json:"curve:s,omitempty"`
+		X         []byte     `json:"x:d,omitempty"`
+		Y         []byte     `json:"y:d,omitempty"`
+		D         []byte     `json:"d:d,omitempty"`
 	}
 	PublicKey struct {
-		KeyType   string     `json:"keyType:s"`
-		Algorithm string     `json:"algorithm:s"`
-		Curve     string     `json:"curve:s"`
-		X         []byte     `json:"x:d"`
-		Y         []byte     `json:"y:d"`
-		Signature *Signature `json:"@signature:o"`
+		KeyType   string     `json:"keyType:s,omitempty"`
+		Algorithm string     `json:"algorithm:s,omitempty"`
+		Curve     string     `json:"curve:s,omitempty"`
+		X         []byte     `json:"x:d,omitempty"`
+		Y         []byte     `json:"y:d,omitempty"`
+		Signature *Signature `json:"@signature:o,omitempty"`
 	}
 )
 

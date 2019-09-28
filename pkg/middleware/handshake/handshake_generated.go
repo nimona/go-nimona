@@ -11,19 +11,19 @@ import (
 
 type (
 	Syn struct {
-		Nonce     string              `json:"nonce:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Nonce     string              `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	SynAck struct {
-		Nonce     string              `json:"nonce:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Nonce     string              `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	Ack struct {
-		Nonce     string              `json:"nonce:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Nonce     string              `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
 

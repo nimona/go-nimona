@@ -11,16 +11,16 @@ import (
 
 type (
 	Request struct {
-		QueryContentBloom []int64             `json:"queryContentBloom:ai"`
-		Nonce             string              `json:"nonce:s"`
-		Signature         *crypto.Signature   `json:"@signature:o"`
-		Authors           []*crypto.PublicKey `json:"@authors:ao"`
+		QueryContentBloom []int64             `json:"queryContentBloom:ai,omitempty"`
+		Nonce             string              `json:"nonce:s,omitempty"`
+		Signature         *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors           []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	Announced struct {
-		AvailableContentBloom []int64             `json:"availableContentBloom:ai"`
-		Nonce                 string              `json:"nonce:s"`
-		Signature             *crypto.Signature   `json:"@signature:o"`
-		Authors               []*crypto.PublicKey `json:"@authors:ao"`
+		AvailableContentBloom []int64             `json:"availableContentBloom:ai,omitempty"`
+		Nonce                 string              `json:"nonce:s,omitempty"`
+		Signature             *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors               []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
 
