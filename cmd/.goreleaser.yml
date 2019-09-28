@@ -35,8 +35,6 @@ dockers:
     goarch: amd64
     image_templates:
       - "nimona/nimona:{{ .Tag }}"
-      - "nimona/nimona:v{{ .Major }}"
-      - "nimona/nimona:v{{ .Major }}.{{ .Minor }}"
     dockerfile: nimona/Dockerfile
     skip_push: false
 snapshot:
