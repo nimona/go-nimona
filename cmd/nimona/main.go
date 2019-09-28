@@ -113,15 +113,8 @@ func main() {
 		fmt.Sprintf("0.0.0.0:%d", config.Daemon.TCPPort),
 	)
 
-	// construct http transport
-	httpTransport := net.NewHTTPTransport(
-		localInfo,
-		fmt.Sprintf("0.0.0.0:%d", config.Daemon.HTTPPort),
-	)
-
 	// add transports to network
 	network.AddTransport("tcps", tcpTransport)
-	network.AddTransport("https", httpTransport)
 
 	// construct handshake
 	handshakeMiddleware := handshake.New(
