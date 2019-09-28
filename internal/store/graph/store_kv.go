@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"nimona.io/pkg/errors"
 	"nimona.io/internal/store/kv"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
 
@@ -45,6 +45,16 @@ func (s *Graph) Put(v object.Object) error {
 
 // Graph returns all objects in a graph given the hash of of its objects
 func (s *Graph) Graph(hash string) ([]object.Object, error) {
+	// find actual object
+	o, err := s.Get(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.New("could not find object"))
+	}
+
+	if oh := o.GetRoot(); oh != "" {
+		hash = oh
+	}
+
 	ohs, err := s.store.Scan(hash)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not find objects"))
