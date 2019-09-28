@@ -11,23 +11,23 @@ import (
 
 type (
 	TopicSet struct {
-		Stream    crypto.Hash         `json:"@stream:o"`
-		Topic     string              `json:"topic:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
+		Topic     string              `json:"topic:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	NameSet struct {
-		Stream    crypto.Hash         `json:"@stream:o"`
-		Name      string              `json:"name:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
+		Name      string              `json:"name:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	MessageAdded struct {
-		Stream    crypto.Hash         `json:"@stream:o"`
-		Parents   crypto.Hash         `json:"parents:ao"`
-		Body      string              `json:"body:s"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
+		Parents   crypto.Hash         `json:"parents:ao,omitempty"`
+		Body      string              `json:"body:s,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
 

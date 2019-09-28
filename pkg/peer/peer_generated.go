@@ -11,8 +11,8 @@ import (
 
 type (
 	Peer struct {
-		Addresses []string          `json:"addresses:as"`
-		Signature *crypto.Signature `json:"@signature:o"`
+		Addresses []string          `json:"addresses:as,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 	}
 )
 
@@ -41,14 +41,14 @@ func (e *Peer) FromObject(o object.Object) error {
 
 type (
 	Requested struct {
-		Keys      []string            `json:"keys:as"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Keys      []string            `json:"keys:as,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	Updated struct {
-		Addresses []string            `json:"addresses:as"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Addresses []string            `json:"addresses:as,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
 

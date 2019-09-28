@@ -11,15 +11,15 @@ import (
 
 type (
 	ObjectRequest struct {
-		ObjectHash string              `json:"objectHash:s"`
-		Signature  *crypto.Signature   `json:"@signature:o"`
-		Authors    []*crypto.PublicKey `json:"@authors:ao"`
+		ObjectHash string              `json:"objectHash:s,omitempty"`
+		Signature  *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors    []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	ObjectForward struct {
-		Recipient string              `json:"Recipient:s"`
-		FwObject  *object.Object      `json:"FwObject:o"`
-		Signature *crypto.Signature   `json:"@signature:o"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao"`
+		Recipient string              `json:"Recipient:s,omitempty"`
+		FwObject  *object.Object      `json:"FwObject:o,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
 

@@ -23,7 +23,7 @@ type (
 	{{- range $struct := .Structs }}
 	{{ $struct.Name }} struct {
 		{{- range $member := $struct.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
 		{{- end }}
 	}
 	{{- end }}
@@ -61,14 +61,14 @@ type (
 	{{- range $struct := $domain.Structs }}
 	{{ $struct.Name }} struct {
 		{{- range $member := $struct.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
 		{{- end }}
 	}
 	{{- end }}
 	{{- range $event := .Events }}
 	{{ $event.Name }} struct {
 		{{- range $member := $event.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }}"` + "`" + `
+		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
 		{{- end }}
 	}
 	{{- end }}
