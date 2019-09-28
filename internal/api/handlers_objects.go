@@ -95,30 +95,30 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	p := &object.Policy{}
-	if err := p.FromObject(*op); err != nil {
-		c.AbortWithError(400, errors.New("invalid policy")) // nolint: errcheck
-		return
-	}
+	// p := &object.Policy{}
+	// if err := p.FromObject(*op); err != nil {
+	// 	c.AbortWithError(400, errors.New("invalid policy")) // nolint: errcheck
+	// 	return
+	// }
 
-	if len(p.Subjects) == 0 {
-		c.AbortWithError(400, errors.New("missing recipients")) // nolint: errcheck
-		return
-	}
+	// if len(p.Subjects) == 0 {
+	// 	c.AbortWithError(400, errors.New("missing recipients")) // nolint: errcheck
+	// 	return
+	// }
 
 	if err := crypto.Sign(o, api.local.GetPeerKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
-	ctx := context.Background()
-	for _, recipient := range p.Subjects {
-		addr := "peer:" + recipient
-		if err := api.exchange.Send(ctx, o, addr); err != nil {
-			c.AbortWithError(500, err) // nolint: errcheck
-			return
-		}
-	}
+	// ctx := context.Background()
+	// for _, recipient := range p.Subjects {
+	// 	addr := "peer:" + recipient
+	// 	if err := api.exchange.Send(ctx, o, addr); err != nil {
+	// 		c.AbortWithError(500, err) // nolint: errcheck
+	// 		return
+	// 	}
+	// }
 
 	c.JSON(http.StatusOK, nil)
 }
