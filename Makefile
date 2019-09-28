@@ -16,7 +16,7 @@ SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 # Tools
 BIN_GOBIN = github.com/myitcv/gobin
 TOOLS += github.com/cheekybits/genny
-TOOLS += github.com/goreleaser/goreleaser
+TOOLS += github.com/goreleaser/goreleaser@v0.118.2
 TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@9161de5
 TOOLS += github.com/vektra/mockery/cmd/mockery
 
