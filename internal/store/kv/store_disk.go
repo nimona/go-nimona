@@ -15,7 +15,7 @@ type diskStore struct {
 }
 
 const (
-	dataExt string = ".data"
+	dataExt string = ".json"
 )
 
 // NewDiskStorage creates a new diskStore struct with the given path
