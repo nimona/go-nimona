@@ -79,6 +79,7 @@ func New(
 
 	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
 	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
+	r.Handle("GET", "/api/v1/dump$", api.HandleGetDump)
 
 	r.Handle("GET", "/api/v1/identities$", api.HandleGetIdentities)
 	r.Handle("GET", "/api/v1/identities/(?P<fingerprint>.+)$", api.HandleGetIdentity)
