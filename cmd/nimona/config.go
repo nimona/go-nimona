@@ -8,8 +8,8 @@ import (
 
 	"github.com/caarlos0/env/v6"
 
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 )
 
 type APIConfig struct {
@@ -46,21 +46,9 @@ func LoadConfig(cfgFile string) (*Config, error) {
 			TCPPort:    21013,
 			HTTPPort:   21083,
 			BootstrapAddresses: []string{
-				"https:andromeda.bootstrap.nimona.io:443",
-				"https:borealis.bootstrap.nimona.io:443",
-				"https:cassiopeia.bootstrap.nimona.io:443",
-				// "https:draco.bootstrap.nimona.io:443",
-				// "https:eridanus.bootstrap.nimona.io:443",
-				// "https:fornax.bootstrap.nimona.io:443",
-				// "https:gemini.bootstrap.nimona.io:443",
-				// "https:hydra.bootstrap.nimona.io:443",
-				// "https:indus.bootstrap.nimona.io:443",
-				// "https:lacerta.bootstrap.nimona.io:443",
-				// "https:mensa.bootstrap.nimona.io:443",
-				// "https:norma.bootstrap.nimona.io:443",
-				// "https:orion.bootstrap.nimona.io:443",
-				// "https:pyxis.bootstrap.nimona.io:443",
-				// "https:stats.bootstrap.nimona.io:443",
+				"tcps:egan.bootstrap.nimona.io:21013",
+				"tcps:liu.bootstrap.nimona.io:21013",
+				"tcps:rajaniemi.bootstrap.nimona.io:21013",
 			},
 		},
 	}
