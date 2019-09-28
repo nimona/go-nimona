@@ -37,7 +37,7 @@ dockers:
       - "nimona/nimona:v{{ .Major }}"
       - "nimona/nimona:v{{ .Major }}.{{ .Minor }}"
     dockerfile: nimona/Dockerfile
-    skip_push: auto
+    skip_push: false
 snapshot:
   name_template: dev-{{.ShortCommit}}
 release:
