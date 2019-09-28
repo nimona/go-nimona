@@ -10,4 +10,5 @@ type Store interface {
 	Get(string) (object.Object, error)
 	Graph(string) ([]object.Object, error)
 	Heads() ([]object.Object, error)
+	Tails(string) ([]object.Object, error)
 }

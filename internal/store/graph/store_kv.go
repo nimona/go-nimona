@@ -2,7 +2,6 @@ package graph
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"nimona.io/internal/store/kv"
@@ -120,6 +119,36 @@ func (s *Graph) Heads() ([]object.Object, error) {
 	return os, nil
 }
 
+// Tails returns all the objects that do are not being used as parents
+func (s *Graph) Tails(hash string) ([]object.Object, error) {
+	os, err := s.Graph(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.New("could not get graph"))
+	}
+
+	hm := map[string]bool{} // map[hash]isParent
+	om := map[string]object.Object{}
+	for _, o := range os {
+		h := o.Hash().String()
+		if _, ok := hm[h]; !ok {
+			hm[h] = false
+		}
+		for _, p := range o.GetParents() {
+			hm[p] = true
+		}
+		om[h] = o
+	}
+
+	os = []object.Object{}
+	for h, isParent := range hm {
+		if isParent == false {
+			os = append(os, om[h])
+		}
+	}
+
+	return os, nil
+}
+
 // Dump returns all objects
 func (s *Graph) Dump() ([]object.Object, error) {
 	ohs, err := s.store.List()
@@ -127,17 +156,19 @@ func (s *Graph) Dump() ([]object.Object, error) {
 		return nil, errors.Wrap(err, errors.New("could not find objects"))
 	}
 
-	os := make([]object.Object, len(ohs))
-	for i, oh := range ohs {
+	om := map[string]object.Object{}
+	for _, oh := range ohs {
 		o, err := s.Get(oh)
 		if err != nil {
 			return nil, errors.Wrap(err, errors.New("could not get object"))
 		}
-		os[i] = o
+		om[o.Hash().String()] = o
 	}
 
-	dot, _ := Dot(os)
-	fmt.Println(dot)
+	os := []object.Object{}
+	for _, o := range om {
+		os = append(os, o)
+	}
 
 	return os, nil
 }
