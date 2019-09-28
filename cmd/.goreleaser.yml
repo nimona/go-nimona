@@ -4,6 +4,7 @@ builds:
     binary: nimona
     env:
       - GO111MODULE=on
+      - CGO_ENABLED=0
     flags:
       - -tags=releaser
     ldflags:
