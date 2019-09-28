@@ -6,15 +6,15 @@ import (
 	"strings"
 
 	"nimona.io/internal/api"
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/log"
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
 	"nimona.io/internal/version"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/orchestrator"
@@ -133,7 +133,11 @@ func main() {
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct graph store
-	graphStore := graph.New(kv.NewMemory())
+	kvStore, err := kv.NewDiskStorage(config.Daemon.ObjectPath)
+	if err != nil {
+		logger.Fatal("could not construct kvStore", log.Error(err))
+	}
+	graphStore := graph.New(kvStore)
 
 	// construct exchange
 	exchange, err := exchange.New(
