@@ -209,7 +209,9 @@ func TestSync(t *testing.T) {
 	// assert.E	qual(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
 
-	os.(*graph.Graph).Dump() // nolint
+	dos, _ := os.(*graph.Graph).Dump() // nolint
+	dot, _ := graph.Dot(dos)
+	fmt.Println(dot)
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when
