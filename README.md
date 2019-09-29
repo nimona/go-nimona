@@ -1,5 +1,6 @@
-[![Actions Image]](https://github.com/nimona/go-nimona/actions)
-[![License Image]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
+[![Actions Status]](https://github.com/nimona/go-nimona/actions)
+[![FOSSA Status]](https://app.fossa.com/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona)
+[![License Status]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 
 # Nimona
 
@@ -40,5 +41,6 @@ In addition to the Common-Flow spec, contributors are also highly encouraged to
 
 <!-- Badge images -->
 
-[Actions Image]: https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat
-[License Image]: https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat
+[Actions Status]: https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat
+[License Status]: https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat
+[FOSSA Status]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnimona%2Fgo-nimona.svg?type=shield
