@@ -1,10 +1,11 @@
 package containers
 
 import (
-	"nimona.io/pkg/context"
 	"io"
 	"io/ioutil"
 	"time"
+
+	"nimona.io/pkg/context"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
