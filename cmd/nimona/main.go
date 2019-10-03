@@ -174,21 +174,19 @@ func main() {
 	}
 
 	// print some info
-	fmt.Println("Started daemon")
-	fmt.Println("* Peer fingerprint:\n  *", config.Daemon.PeerKey.Fingerprint())
+	nlogger := logger.With(
+		log.Strings("addresses", localInfo.GetAddresses()),
+		log.String("peer", config.Daemon.PeerKey.Fingerprint().String()),
+	)
+
 	ik := config.Daemon.IdentityKey
 	if ik != nil {
-		fmt.Println("* Identity fingerprint:\n  *", ik.PublicKey.Fingerprint())
+		nlogger = nlogger.With(
+			log.String("identity", ik.PublicKey.Fingerprint().String()),
+		)
 	}
-	peerAddresses := localInfo.GetAddresses()
-	fmt.Println("* Peer addresses:")
-	if len(peerAddresses) > 0 {
-		for _, addr := range peerAddresses {
-			fmt.Println("  *", addr)
-		}
-	} else {
-		fmt.Println("  * No addresses available")
-	}
+
+	nlogger.Info("starting daemon")
 
 	// construct api server
 	apiServer := api.New(
@@ -205,7 +203,13 @@ func main() {
 		config.API.Token,
 	)
 
-	fmt.Println("* HTTP API address:")
-	fmt.Printf("  * http://localhost:%d\n", config.API.Port)
+	logger.Info(
+		"starting http server",
+		log.String("url", fmt.Sprintf(
+			"http://localhost:%d\n",
+			config.API.Port,
+		)),
+	)
+
 	apiServer.Serve(fmt.Sprintf("0.0.0.0:%d", config.API.Port))
 }
