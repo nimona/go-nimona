@@ -149,7 +149,7 @@ lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lin
 # Local bootstrap
 .PHONY: local-bootstrap
 local-bootstrap: build
-	ENV=dev \
+	@ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/bootstrap/config.json \
 	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES= \
@@ -162,7 +162,7 @@ local-bootstrap: build
 # Local test peer one
 .PHONY: local-peer-one
 local-peer-one: build
-	ENV=dev \
+	@ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/peer-one/config.json \
 	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
@@ -175,7 +175,7 @@ local-peer-one: build
 # Local test peer two
 .PHONY: local-peer-two
 local-peer-two: build
-	ENV=dev \
+	@ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/peer-two/config.json \
 	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
