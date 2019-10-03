@@ -33,7 +33,8 @@ func StringWriter() Writer {
 		}
 
 		j, _ := json.Marshal(res)
-		fmt.Printf(
+		fmt.Fprintf(
+			log.output,
 			"ctx=%s level=%s message=%s fields=%s\n",
 			cID,
 			levels[level],
