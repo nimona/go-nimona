@@ -1,6 +1,8 @@
 package log
 
 import (
+	"io"
+	"os"
 	"runtime/debug"
 	"strings"
 
@@ -13,6 +15,7 @@ type (
 		context context.Context
 		parent  *logger
 		fields  []Field
+		output  io.Writer
 		writer  Writer
 	}
 	Field struct {
@@ -32,9 +35,11 @@ type (
 )
 
 var (
-	DefaultWriter = JSONWriter()
-	DefaultLogger = &logger{
+	DefaultOutput io.Writer = os.Stdout
+	DefaultWriter Writer    = JSONWriter()
+	DefaultLogger Logger    = &logger{
 		writer: DefaultWriter,
+		output: DefaultOutput,
 	}
 )
 
@@ -91,6 +96,7 @@ func FromContext(ctx context.Context) *logger {
 	log := &logger{
 		context: ctx,
 		writer:  DefaultWriter,
+		output:  DefaultOutput,
 	}
 	return log
 }
@@ -124,6 +130,7 @@ func (log *logger) With(fields ...Field) *logger {
 		parent: log,
 		fields: fields,
 		writer: log.writer,
+		output: log.output,
 	}
 	return nlog
 }
@@ -133,6 +140,7 @@ func (log *logger) Named(name string) *logger {
 		name:   strings.Join([]string{log.name, name}, "/"),
 		parent: log,
 		writer: log.writer,
+		output: log.output,
 	}
 	return nlog
 }
