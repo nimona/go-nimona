@@ -145,17 +145,6 @@ func main() {
 		logger.Fatal("could not construct exchange", log.Error(err))
 	}
 
-	// construct orchestrator
-	orchestrator, err := orchestrator.New(
-		graphStore,
-		exchange,
-		nil,
-		localInfo,
-	)
-	if err != nil {
-		logger.Fatal("could not construct orchestrator", log.Error(err))
-	}
-
 	// construct hyperspace discoverer
 	hyperspace, err := hyperspace.NewDiscoverer(
 		ctx,
@@ -166,6 +155,17 @@ func main() {
 	)
 	if err != nil {
 		logger.Fatal("could not construct hyperspace", log.Error(err))
+	}
+
+	// construct orchestrator
+	orchestrator, err := orchestrator.New(
+		graphStore,
+		exchange,
+		nil,
+		localInfo,
+	)
+	if err != nil {
+		logger.Fatal("could not construct orchestrator", log.Error(err))
 	}
 
 	// add hyperspace provider
