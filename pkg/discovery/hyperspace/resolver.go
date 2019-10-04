@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace/bloom"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -310,7 +310,7 @@ func (r *Discoverer) handleProvider(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleProvider"),
-		log.String("peer.fingerprint", e.Sender.Fingerprint().String()),
+		log.String("sender.fingerprint", e.Sender.Fingerprint().String()),
 	)
 	logger.Debug("adding provider to store")
 	r.store.AddContentHashes(p)
