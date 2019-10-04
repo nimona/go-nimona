@@ -109,6 +109,11 @@ func NewWithContext(
 	for i, rootObject := range heads {
 		rootObjectHashes[i] = rootObject.Hash().String()
 	}
+	logger := log.FromContext(ctx).Named("orchestrator")
+	logger.Info(
+		"adding existing root object hashes as content",
+		log.Strings("rootObjectHashes", rootObjectHashes),
+	)
 	m.localInfo.AddContentHash(rootObjectHashes...)
 	return m, nil
 }
