@@ -29,13 +29,13 @@ func (e *Request) EventName() string {
 }
 
 func (e *Request) GetType() string {
-	return "ContentProvider.Request"
+	return "nimona.io/discovery/hyperspace.Request"
 }
 
 func (e *Request) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "ContentProvider.Request",
-		"@domain:s": "ContentProvider",
+		"@ctx:s":    "nimona.io/discovery/hyperspace.Request",
+		"@domain:s": "nimona.io/discovery/hyperspace",
 		"@event:s":  "Request",
 	}
 	b, _ := json.Marshal(e)
@@ -53,13 +53,13 @@ func (e *Announced) EventName() string {
 }
 
 func (e *Announced) GetType() string {
-	return "ContentProvider.Announced"
+	return "nimona.io/discovery/hyperspace.Announced"
 }
 
 func (e *Announced) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "ContentProvider.Announced",
-		"@domain:s": "ContentProvider",
+		"@ctx:s":    "nimona.io/discovery/hyperspace.Announced",
+		"@domain:s": "nimona.io/discovery/hyperspace",
 		"@event:s":  "Announced",
 	}
 	b, _ := json.Marshal(e)

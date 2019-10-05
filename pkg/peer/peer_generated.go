@@ -57,13 +57,13 @@ func (e *Requested) EventName() string {
 }
 
 func (e *Requested) GetType() string {
-	return "Peer.Requested"
+	return "nimona.io/peer.Requested"
 }
 
 func (e *Requested) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "Peer.Requested",
-		"@domain:s": "Peer",
+		"@ctx:s":    "nimona.io/peer.Requested",
+		"@domain:s": "nimona.io/peer",
 		"@event:s":  "Requested",
 	}
 	b, _ := json.Marshal(e)
@@ -81,13 +81,13 @@ func (e *Updated) EventName() string {
 }
 
 func (e *Updated) GetType() string {
-	return "Peer.Updated"
+	return "nimona.io/peer.Updated"
 }
 
 func (e *Updated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "Peer.Updated",
-		"@domain:s": "Peer",
+		"@ctx:s":    "nimona.io/peer.Updated",
+		"@domain:s": "nimona.io/peer",
 		"@event:s":  "Updated",
 	}
 	b, _ := json.Marshal(e)

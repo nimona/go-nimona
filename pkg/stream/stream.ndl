@@ -19,9 +19,6 @@ abstract domain nimona.io/stream {
         @parents repeated string
         @policies repeated Policy
     }
-}
-
-domain nimona.io/stream/sync {
     command RequestEventList {
         streamHashes repeated string
     }

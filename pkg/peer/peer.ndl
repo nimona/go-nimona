@@ -7,7 +7,7 @@ struct Peer {
     @signature crypto.Signature
 }
 
-domain Peer {
+domain nimona.io/peer {
     signed command Requested {
         keys repeated string
     }
