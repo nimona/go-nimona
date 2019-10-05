@@ -2,7 +2,7 @@ package nimona.io/discovery/hyperspace
 
 import nimona.io/crypto crypto
 
-domain ContentProvider {
+domain nimona.io/discovery/hyperspace {
     signed command Request {
         queryContentBloom repeated int
         nonce string
@@ -12,3 +12,4 @@ domain ContentProvider {
         nonce string
     }
 }
+ 

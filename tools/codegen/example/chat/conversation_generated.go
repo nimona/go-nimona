@@ -10,19 +10,19 @@ import (
 )
 
 type (
-	TopicSet struct {
+	ConversationTopicSet struct {
 		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
 		Topic     string              `json:"topic:s,omitempty"`
 		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
-	NameSet struct {
+	ConversationNameSet struct {
 		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
 		Name      string              `json:"name:s,omitempty"`
 		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
-	MessageAdded struct {
+	ConversationMessageAdded struct {
 		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
 		Parents   crypto.Hash         `json:"parents:ao,omitempty"`
 		Body      string              `json:"body:s,omitempty"`
@@ -31,74 +31,74 @@ type (
 	}
 )
 
-func (e *TopicSet) EventName() string {
-	return "TopicSet"
+func (e *ConversationTopicSet) EventName() string {
+	return "ConversationTopicSet"
 }
 
-func (e *TopicSet) GetType() string {
-	return "example/conversation.TopicSet"
+func (e *ConversationTopicSet) GetType() string {
+	return "example/conversation.ConversationTopicSet"
 }
 
-func (e *TopicSet) ToObject() object.Object {
+func (e *ConversationTopicSet) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.TopicSet",
+		"@ctx:s":    "example/conversation.ConversationTopicSet",
 		"@domain:s": "example/conversation",
-		"@event:s":  "TopicSet",
+		"@event:s":  "ConversationTopicSet",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *TopicSet) FromObject(o object.Object) error {
+func (e *ConversationTopicSet) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *NameSet) EventName() string {
-	return "NameSet"
+func (e *ConversationNameSet) EventName() string {
+	return "ConversationNameSet"
 }
 
-func (e *NameSet) GetType() string {
-	return "example/conversation.NameSet"
+func (e *ConversationNameSet) GetType() string {
+	return "example/conversation.ConversationNameSet"
 }
 
-func (e *NameSet) ToObject() object.Object {
+func (e *ConversationNameSet) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.NameSet",
+		"@ctx:s":    "example/conversation.ConversationNameSet",
 		"@domain:s": "example/conversation",
-		"@event:s":  "NameSet",
+		"@event:s":  "ConversationNameSet",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *NameSet) FromObject(o object.Object) error {
+func (e *ConversationNameSet) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *MessageAdded) EventName() string {
-	return "MessageAdded"
+func (e *ConversationMessageAdded) EventName() string {
+	return "ConversationMessageAdded"
 }
 
-func (e *MessageAdded) GetType() string {
-	return "example/conversation.MessageAdded"
+func (e *ConversationMessageAdded) GetType() string {
+	return "example/conversation.ConversationMessageAdded"
 }
 
-func (e *MessageAdded) ToObject() object.Object {
+func (e *ConversationMessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.MessageAdded",
+		"@ctx:s":    "example/conversation.ConversationMessageAdded",
 		"@domain:s": "example/conversation",
-		"@event:s":  "MessageAdded",
+		"@event:s":  "ConversationMessageAdded",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *MessageAdded) FromObject(o object.Object) error {
+func (e *ConversationMessageAdded) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

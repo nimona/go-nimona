@@ -122,8 +122,13 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		return nil, err
 	}
 
+	lPackage := strings.ToLower(lastSegment(doc.Package))
 	for i, s := range doc.Domains {
 		for k, e := range s.Events {
+			lDomain := strings.ToLower(lastSegment(s.Name))
+			if lDomain != lPackage {
+				e.Name = ucFirst(lDomain) + ucFirst(e.Name)
+			}
 			if e.IsSigned {
 				doc.Domains[i].Events[k].Members = append(
 					doc.Domains[i].Events[k].Members,
@@ -155,4 +160,11 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	return out.Bytes(), nil
+}
+
+// lastSegment returns the last part of a namespace,
+// ie lastSegment(nimona.io/stream) returns stream
+func lastSegment(s string) string {
+	ps := strings.Split(s, "/")
+	return ps[len(ps)-1]
 }

@@ -95,13 +95,13 @@ func (e *RequestEventList) EventName() string {
 }
 
 func (e *RequestEventList) GetType() string {
-	return "nimona.io/stream/sync.RequestEventList"
+	return "nimona.io/stream.RequestEventList"
 }
 
 func (e *RequestEventList) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream/sync.RequestEventList",
-		"@domain:s": "nimona.io/stream/sync",
+		"@ctx:s":    "nimona.io/stream.RequestEventList",
+		"@domain:s": "nimona.io/stream",
 		"@event:s":  "RequestEventList",
 	}
 	b, _ := json.Marshal(e)
@@ -119,13 +119,13 @@ func (e *EventListCreated) EventName() string {
 }
 
 func (e *EventListCreated) GetType() string {
-	return "nimona.io/stream/sync.EventListCreated"
+	return "nimona.io/stream.EventListCreated"
 }
 
 func (e *EventListCreated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream/sync.EventListCreated",
-		"@domain:s": "nimona.io/stream/sync",
+		"@ctx:s":    "nimona.io/stream.EventListCreated",
+		"@domain:s": "nimona.io/stream",
 		"@event:s":  "EventListCreated",
 	}
 	b, _ := json.Marshal(e)
@@ -143,13 +143,13 @@ func (e *RequestEvents) EventName() string {
 }
 
 func (e *RequestEvents) GetType() string {
-	return "nimona.io/stream/sync.RequestEvents"
+	return "nimona.io/stream.RequestEvents"
 }
 
 func (e *RequestEvents) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream/sync.RequestEvents",
-		"@domain:s": "nimona.io/stream/sync",
+		"@ctx:s":    "nimona.io/stream.RequestEvents",
+		"@domain:s": "nimona.io/stream",
 		"@event:s":  "RequestEvents",
 	}
 	b, _ := json.Marshal(e)
