@@ -161,7 +161,8 @@ func (r *Discoverer) FindByContent(
 	b := bloom.NewBloom(contentHash)
 	cs := r.store.FindByContent(b)
 	fs := []crypto.Fingerprint{}
-	if len(cs) > 0 {
+
+	if opt.Local {
 		for _, b := range cs {
 			fs = append(fs, b.Signature.PublicKey.Fingerprint())
 		}
@@ -170,10 +171,6 @@ func (r *Discoverer) FindByContent(
 			log.Any("fingerprints", cs),
 		).Debug("found n fingerprints")
 		return fs, nil
-	}
-
-	if opt.Local {
-		return nil, nil
 	}
 
 	logger.Debug("looking up peers")
@@ -192,7 +189,9 @@ func (r *Discoverer) FindByContent(
 	return r.withoutOwnFingerprint(fs), nil
 }
 
-func (r *Discoverer) handleObject(e *exchange.Envelope) error {
+func (r *Discoverer) handleObject(
+	e *exchange.Envelope,
+) error {
 	// attempt to recover correlation id from request id
 	ctx := r.context
 	if e.RequestID != "" {
