@@ -1,8 +1,9 @@
 package node
 
 import (
-	"nimona.io/pkg/context"
 	"fmt"
+
+	"nimona.io/pkg/context"
 
 	"nimona.io/pkg/simulation/containers"
 )

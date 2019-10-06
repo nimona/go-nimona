@@ -4,37 +4,42 @@ import (
 	"bufio"
 	"io"
 
-	"github.com/tidwall/gjson"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 )
 
 // Logs filters the node json logs for the specific tag
-func (n *Node) Logs(tag string) ([]string, error) {
-	ctx := context.Background()
+func (n *Node) Logs() (chan string, chan error) {
+	logCh := make(chan string)
+	errCh := make(chan error)
 
-	rdr, err := n.container.Logs(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err,
-			errors.New("could not read container log"))
-	}
+	go func() {
+		ctx := context.Background()
 
-	brdr := bufio.NewReader(rdr)
-	logs := []string{}
-
-	for {
-		line, _, err := brdr.ReadLine()
-		if err == io.EOF {
-			break
-		}
+		rdr, err := n.container.Logs(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err,
-				errors.New("could not read container reader"))
+			errCh <- errors.Wrap(err,
+				errors.New("could not read container log"))
 		}
 
-		value := gjson.Get(string(line), tag)
-		logs = append(logs, value.String())
-	}
+		brdr := bufio.NewReader(rdr)
 
-	return logs, nil
+		for {
+			line, _, err := brdr.ReadLine()
+			if err == io.EOF {
+				close(errCh)
+				close(logCh)
+				return
+			}
+			if err != nil {
+				errCh <- errors.Wrap(err,
+					errors.New("could not read container reader"))
+			}
+
+			logCh <- string(line)
+
+		}
+
+	}()
+	return logCh, errCh
 }

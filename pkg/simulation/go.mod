@@ -10,7 +10,6 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tidwall/gjson v1.3.2
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	nimona.io v0.0.0
 )
