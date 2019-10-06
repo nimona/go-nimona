@@ -160,7 +160,10 @@ func (cnt *Container) Logs(ctx context.Context) (io.ReadCloser, error) {
 	rc, err := cli.ContainerLogs(
 		ctx,
 		cnt.ID,
-		types.ContainerLogsOptions{ShowStdout: true},
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+			Follow:     true,
+		},
 	)
 	if err != nil {
 		return nil, err
