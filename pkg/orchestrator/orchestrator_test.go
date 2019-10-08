@@ -60,52 +60,52 @@ var (
 	})
 
 	m1 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			o.Hash().String(),
+		"@parents:ao": []interface{}{
+			o.Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m1",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			o.Hash().String(),
+		"@parents:ao": []interface{}{
+			o.Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m2",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			m1.ToObject().Hash().String(),
+		"@parents:ao": []interface{}{
+			m1.ToObject().Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m3",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			m2.ToObject().Hash().String(),
+		"@parents:ao": []interface{}{
+			m2.ToObject().Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m4",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			m2.ToObject().Hash().String(),
+		"@parents:ao": []interface{}{
+			m2.ToObject().Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m5",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"@parents:as": []string{
-			m3.ToObject().Hash().String(),
-			m4.ToObject().Hash().String(),
+		"@parents:ao": []interface{}{
+			m3.ToObject().Hash().ToObject().ToMap(),
+			m4.ToObject().Hash().ToObject().ToMap(),
 		},
-		"@root:s": o.Hash().String(),
-		"foo:s":   "bar-m6",
+		"@stream:o": o.Hash().ToObject().ToMap(),
+		"foo:s":     "bar-m6",
 	})
 )
 
@@ -200,7 +200,7 @@ func TestSync(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	assert.Len(t, res.Objects, 7)
+	require.Len(t, res.Objects, 7)
 
 	assert.Equal(t, jp(o), jp(res.Objects[0]))
 	// assert.Equal(t, jp(m1.ToObject()), jp(res.Objects[1]))

@@ -1,14 +1,6 @@
 package object
 
-import (
-	"encoding/json"
-	"fmt"
-
-	"nimona.io/internal/encoding/base58"
-)
-
 type (
-	// Hash []byte
 	// Object for everything f12n
 	Object map[string]interface{}
 )
@@ -20,12 +12,16 @@ func New() Object {
 
 // FromMap returns an object from a map
 func FromMap(m map[string]interface{}) Object {
-	return Object(m)
+	o := Object{}
+	for k, v := range m {
+		o.Set(k, v)
+	}
+	return o
 }
 
 // FromMap inits the object from a map
 func (o *Object) FromMap(m map[string]interface{}) error {
-	v := Object(m)
+	v := FromMap(m)
 	*o = v
 	return nil
 }
@@ -74,11 +70,6 @@ func (o Object) SetSignature(v Object) {
 	o.Set("@signature:o", v)
 }
 
-// GetPolicy returns the object's policy, or nil
-func (o Object) GetPolicy() *Object {
-	return o.getObject("@policy:o")
-}
-
 func (o Object) getObject(k string) *Object {
 	v := o.Get(k)
 	switch o := v.(type) {
@@ -98,67 +89,24 @@ func (o Object) getObject(k string) *Object {
 	return nil
 }
 
-// SetPolicy sets the object's policy
-func (o Object) SetPolicy(v Object) {
-	o.Set("@policy:o", v)
-}
-
-// GetParents returns the object's parent refs
-func (o Object) GetParents() []string {
-	// TODO can we use mapstructure or something else to do this?
-	if v, ok := o.Get("@parents:as").([]string); ok {
-		return v
-	}
-	if v, ok := o.Get("@parents:as").([]interface{}); ok {
-		parents := []string{}
-		for _, p := range v {
-			ps, ok := p.(string)
-			if !ok {
-				continue
-			}
-			parents = append(parents, ps)
-		}
-		return parents
-	}
-	return nil
-}
-
-// SetParents sets the object's parents
-func (o Object) SetParents(v []string) {
-	o.Set("@parents:as", v)
-}
-
-// GetRoot returns the object's root
-func (o Object) GetRoot() string {
-	if v, ok := o.Get("@root:s").(string); ok {
-		return v
-	}
-	return ""
-}
-
 // Get -
 func (o Object) Get(lk string) interface{} {
-	return o[lk]
+	return map[string]interface{}(o)[lk]
 }
 
 // Set -
 func (o Object) Set(k string, v interface{}) {
-	if ov, ok := v.(Object); ok {
+	switch ov := v.(type) {
+	case Object:
 		v = ov.ToMap()
+	case []Object:
+		os := make([]Object, len(ov))
+		for i, o := range ov {
+			os[i] = o.ToMap()
+		}
+		v = os
 	}
 	map[string]interface{}(o)[k] = v
-}
-
-func (o Object) Compact() (string, error) {
-	j, err := json.Marshal(o.ToMap())
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf(
-		"*%s.json",
-		base58.Encode(j),
-	), nil
 }
 
 // Copy creates a copy of the original object

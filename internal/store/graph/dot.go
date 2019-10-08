@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/stream"
 )
 
 type graphObject struct {
@@ -23,7 +24,8 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		return nil, err
 	}
 	nType := "object:root"
-	if len(v.GetParents()) > 0 {
+	parents := stream.Parents(v)
+	if len(parents) > 0 {
 		nType = "object"
 	}
 	o := &graphObject{
@@ -36,8 +38,8 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 	if d, ok := v.Get("@display").(string); ok {
 		o.Display = d
 	}
-	for _, p := range v.GetParents() {
-		o.Parents = append(o.Parents, p)
+	for _, p := range stream.Parents(v) {
+		o.Parents = append(o.Parents, p.Compact())
 	}
 	return o, nil
 }

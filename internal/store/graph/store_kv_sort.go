@@ -2,6 +2,7 @@ package graph
 
 import (
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/stream"
 )
 
 func topographicalSortObjects(os []object.Object) []object.Object {
@@ -10,17 +11,18 @@ func topographicalSortObjects(os []object.Object) []object.Object {
 	for _, o := range os {
 		key := o.Hash().String()
 		osm[key] = o
-		parentKeys := o.GetParents()
+		parentKeys := stream.Parents(o)
 		if _, ok := graph[key]; !ok {
 			graph[key] = []string{}
 		}
 		for _, parentKey := range parentKeys {
-			if _, ok := graph[parentKey]; !ok {
-				graph[parentKey] = []string{
+			h := parentKey.Compact()
+			if _, ok := graph[h]; !ok {
+				graph[h] = []string{
 					key,
 				}
 			} else {
-				graph[parentKey] = append(graph[parentKey], key)
+				graph[h] = append(graph[h], key)
 			}
 		}
 	}
