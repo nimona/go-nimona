@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/stream"
 )
 
 func (api *API) HandleGetObjects(c *router.Context) {
@@ -91,8 +92,8 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	o := object.FromMap(req)
-	op := o.GetPolicy()
-	if op == nil {
+	op := stream.Policies(o)
+	if len(op) == 0 {
 		c.AbortWithError(400, errors.New("missing policy")) // nolint: errcheck
 		return
 	}

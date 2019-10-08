@@ -113,7 +113,8 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		// os = graphObjects.Objects
 	}
 
-	graphObjects, err := api.orchestrator.Get(ctx, rootObjectHash)
+	h, _ := object.HashFromCompact(rootObjectHash)
+	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
 		if errors.CausedBy(err, graph.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck

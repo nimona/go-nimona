@@ -7,6 +7,7 @@ import (
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/stream"
 )
 
 // New constructs a new graph store using a kv backend
@@ -32,8 +33,8 @@ func (s *Graph) Put(v object.Object) error {
 	if err := s.store.Put(key, value); err != nil {
 		return errors.Wrap(err, errors.New("could not persist object"))
 	}
-	if root := v.GetRoot(); root != "" {
-		key = root + "." + key
+	if root := stream.Stream(v); root != nil {
+		key = root.Compact() + "---" + key
 		if err := s.store.Put(key, value); err != nil {
 			return errors.Wrap(err, errors.New("could not persist object"))
 		}
@@ -50,8 +51,8 @@ func (s *Graph) Graph(hash string) ([]object.Object, error) {
 		return nil, errors.Wrap(err, errors.New("could not find object"))
 	}
 
-	if oh := o.GetRoot(); oh != "" {
-		hash = oh
+	if oh := stream.Stream(o); oh != nil {
+		hash = oh.Compact()
 	}
 
 	ohs, err := s.store.Scan(hash)
@@ -101,7 +102,7 @@ func (s *Graph) Heads() ([]object.Object, error) {
 
 	ohs := []string{}
 	for _, doh := range dohs {
-		if strings.Contains(doh, ".") {
+		if strings.Contains(doh, "---") {
 			continue
 		}
 		ohs = append(ohs, doh)
@@ -133,8 +134,8 @@ func (s *Graph) Tails(hash string) ([]object.Object, error) {
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}
-		for _, p := range o.GetParents() {
-			hm[p] = true
+		for _, p := range stream.Parents(o) {
+			hm[p.Compact()] = true
 		}
 		om[h] = o
 	}

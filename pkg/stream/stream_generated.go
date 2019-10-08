@@ -16,6 +16,9 @@ type (
 		Conditions []string            `json:"conditions:as,omitempty"`
 		Action     string              `json:"action:s,omitempty"`
 	}
+	Author struct {
+		PublicKey *crypto.PublicKey `json:"publicKey:o,omitempty"`
+	}
 	Created struct {
 		Nonce           string              `json:"nonce:s,omitempty"`
 		CreatedDateTime string              `json:"createdDateTime:s,omitempty"`
@@ -63,6 +66,26 @@ func (e *Policy) ToObject() object.Object {
 }
 
 func (e *Policy) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *Author) GetType() string {
+	return "nimona.io/stream.Author"
+}
+
+func (e *Author) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "nimona.io/stream.Author",
+		"@domain:s": "nimona.io/stream",
+		"@struct:s": "Author",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Author) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

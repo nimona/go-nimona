@@ -10,6 +10,9 @@ abstract domain nimona.io/stream {
         conditions repeated string
         action string
     }
+    struct Author {
+        publicKey crypto.PublicKey
+    }
     signed event Created {
         nonce string
         createdDateTime string

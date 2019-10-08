@@ -33,7 +33,7 @@ type (
 		Put(...object.Object) error
 		Get(
 			ctx context.Context,
-			rootHash string,
+			root *object.Hash,
 		) (
 			*Graph,
 			error,
@@ -151,11 +151,12 @@ func IsComplete(cs []object.Object) bool {
 		cm[c.Hash().String()] = c
 	}
 	for _, c := range cs {
-		for _, p := range c.GetParents() {
-			if _, ok := cm[p]; ok {
+		for _, p := range stream.Parents(c) {
+			h := p.Compact()
+			if _, ok := cm[h]; ok {
 				continue
 			}
-			ms[p] = true
+			ms[h] = true
 		}
 	}
 	return len(ms) == 0
@@ -196,12 +197,12 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 // Get returns a complete and ordered graph given any node of the graph.
 func (m *orchestrator) Get(
 	ctx context.Context,
-	rootHash string,
+	root *object.Hash,
 ) (
 	*Graph,
 	error,
 ) {
-	os, err := m.store.Graph(rootHash)
+	os, err := m.store.Graph(root.Compact())
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.Error("could not retrieve graph"),
