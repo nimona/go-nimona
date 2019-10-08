@@ -18,43 +18,6 @@ import (
 	{{- end }}
 )
 
-{{ if .Structs }}
-type (
-	{{- range $struct := .Structs }}
-	{{ $struct.Name }} struct {
-		{{- range $member := $struct.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
-		{{- end }}
-	}
-	{{- end }}
-)
-{{ end }}
-
-{{ range $struct := .Structs }}
-func (e *{{ $struct.Name }}) ContextName() string {
-	return "{{ $.Package }}"
-}
-
-func (e *{{ $struct.Name }}) GetType() string {
-	return "{{ $struct.Name }}"
-}
-
-func (e *{{ $struct.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "{{ $struct.Name }}",
-		"@struct:s": "{{ $struct.Name }}",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
-	return object.Object(m)
-}
-
-func (e *{{ $struct.Name }}) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-{{ end }}
-
 {{ if .Domains }}
 type (
 	{{- range $domain := .Domains }}
@@ -77,6 +40,27 @@ type (
 {{ end }}
 
 {{ range $domain := .Domains }}
+{{ range $struct := .Structs }}
+func (e *{{ structName $struct.Name }}) GetType() string {
+	return "{{ $domain.Name }}.{{ $struct.Name }}"
+}
+
+func (e *{{ structName $struct.Name }}) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": "{{ $domain.Name }}.{{ $struct.Name }}",
+		"@domain:s": "{{ $domain.Name }}",
+		"@struct:s": "{{ $struct.Name }}",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *{{ structName $struct.Name }}) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+{{ end }}
 {{ range $event := .Events }}
 func (e *{{ structName $event.Name }}) EventName() string {
 	return "{{ $event.Name }}"
@@ -106,6 +90,7 @@ func (e *{{ structName $event.Name }}) FromObject(o object.Object) error {
 `
 
 func Generate(doc *Document, output string) ([]byte, error) {
+	originalImports := map[string]string{}
 	t, err := template.New("tpl").Funcs(template.FuncMap{
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
@@ -113,9 +98,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			return ucFirst(ps[len(ps)-1])
 		},
 		"memberType": func(name string) string {
-			ps := strings.Split(name, "/")
-			p := ps[len(ps)-1]
-			return p
+			for alias, pkg := range originalImports {
+				name = strings.Replace(name, pkg, alias, 1)
+			}
+			return name
 		},
 	}).Parse(tpl)
 	if err != nil {
@@ -148,7 +134,13 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	doc.Imports["json"] = "encoding/json"
-	doc.Imports["object"] = "nimona.io/object"
+	if doc.Package != "nimona.io/object" {
+		doc.Imports["object"] = "nimona.io/object"
+	}
+
+	for alias, pkg := range doc.Imports {
+		originalImports[alias] = pkg
+	}
 
 	for i, pkg := range doc.Imports {
 		doc.Imports[i] = strings.Replace(pkg, "nimona.io/", "nimona.io/pkg/", 1)
@@ -159,7 +151,12 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		return nil, err
 	}
 
-	return out.Bytes(), nil
+	res := out.String()
+	if doc.Package == "nimona.io/object" {
+		res = strings.ReplaceAll(res, "object.", "")
+	}
+
+	return []byte(res), nil
 }
 
 // lastSegment returns the last part of a namespace,

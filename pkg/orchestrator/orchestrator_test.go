@@ -154,14 +154,14 @@ func TestSync(t *testing.T) {
 		mock.Anything,
 	).Run(
 		respWith((&stream.EventListCreated{
-			EventHashes: []string{
-				o.Hash().String(),
-				m1.ToObject().Hash().String(),
-				m2.ToObject().Hash().String(),
-				m3.ToObject().Hash().String(),
-				m4.ToObject().Hash().String(),
-				m5.ToObject().Hash().String(),
-				m6.ToObject().Hash().String(),
+			Events: []*object.Hash{
+				o.Hash(),
+				m1.ToObject().Hash(),
+				m2.ToObject().Hash(),
+				m3.ToObject().Hash(),
+				m4.ToObject().Hash(),
+				m5.ToObject().Hash(),
+				m6.ToObject().Hash(),
 			},
 		}).ToObject()),
 	).Return(nil)
@@ -179,7 +179,7 @@ func TestSync(t *testing.T) {
 		x.On(
 			"Request",
 			mock.Anything,
-			i.Hash().String(),
+			i.Hash(),
 			"peer:"+rkey.PublicKey.Fingerprint().String(),
 			mock.Anything,
 		).Run(
@@ -190,8 +190,8 @@ func TestSync(t *testing.T) {
 	ctx := context.Background()
 	res, err := m.Sync(
 		ctx,
-		[]string{
-			o.Hash().String(),
+		[]*object.Hash{
+			o.Hash(),
 		},
 		[]string{
 			"peer:" + rkey.PublicKey.Fingerprint().String(),

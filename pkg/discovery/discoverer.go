@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"sync"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
-	"nimona.io/internal/rand"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -25,7 +26,7 @@ type (
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
-			contentHash string,
+			contentHash *object.Hash,
 			opts ...Option,
 		) ([]crypto.Fingerprint, error)
 	}
@@ -40,7 +41,7 @@ type (
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
-			contentHash string,
+			contentHash *object.Hash,
 			opts ...Option,
 		) ([]crypto.Fingerprint, error)
 	}
@@ -145,14 +146,14 @@ func (r *discoverer) FindByFingerprint(
 // FindByContent goes through the given providers until one returns something
 func (r *discoverer) FindByContent(
 	ctx context.Context,
-	contentHash string,
+	contentHash *object.Hash,
 	opts ...Option,
 ) ([]crypto.Fingerprint, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "discovery/discoverer.FindByContent"),
-		log.String("contentHash", contentHash),
+		log.String("contentHash", contentHash.Compact()),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 

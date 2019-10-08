@@ -240,7 +240,7 @@ func TestRequestSuccess(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
-		eo1.Hash().String(),
+		eo1.Hash(),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
@@ -285,7 +285,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
-		eo1.Hash().String(),
+		eo1.Hash(),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)

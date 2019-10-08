@@ -5,19 +5,19 @@ package exchange
 import (
 	json "encoding/json"
 
-	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	ObjectRequest struct {
-		ObjectHash string              `json:"objectHash:s,omitempty"`
+		ObjectHash *object.Hash        `json:"objectHash:o,omitempty"`
 		Signature  *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors    []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	ObjectForward struct {
-		Recipient string              `json:"Recipient:s,omitempty"`
-		FwObject  *object.Object      `json:"FwObject:o,omitempty"`
+		Recipient string              `json:"recipient:s,omitempty"`
+		FwObject  *object.Object      `json:"fwObject:o,omitempty"`
 		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}

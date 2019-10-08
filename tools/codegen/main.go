@@ -51,13 +51,14 @@ func codegen(in, out string) {
 		TabIndent: true,
 		TabWidth:  4,
 	}
-	code, err = imports.Process(out, []byte(code), opt)
+	ccode, err := imports.Process(out, []byte(code), opt)
 	if err != nil {
+		fmt.Println(string(code))
 		fmt.Fprintln(os.Stderr, "error formatting code", err)
 		os.Exit(1)
 	}
 
-	if _, err := of.Write(code); err != nil {
+	if _, err := of.Write(ccode); err != nil {
 		fmt.Fprintln(os.Stderr, "error writing to file", err)
 		os.Exit(1)
 	}
@@ -86,5 +87,4 @@ func main() {
 	} else if *input != "" || *output != "" {
 		codegen(*input, *output)
 	}
-
 }

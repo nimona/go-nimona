@@ -27,11 +27,11 @@ func TestNewSignature(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, sig, nsig)
 
-	h, _ := object.ObjectHashWithoutSignature(o)
-	err = verify(sig, h)
+	h, _ := object.NewHash(o)
+	err = verify(sig, h.D)
 	assert.NoError(t, err)
 
-	err = verify(nsig, h)
+	err = verify(nsig, h.D)
 	assert.NoError(t, err)
 
 	err = Sign(o, sk)

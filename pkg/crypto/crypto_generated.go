@@ -16,8 +16,8 @@ type (
 		S         []byte     `json:"s:d,omitempty"`
 	}
 	PrivateKey struct {
-		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
 		KeyType   string     `json:"keyType:s,omitempty"`
+		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
 		Algorithm string     `json:"algorithm:s,omitempty"`
 		Curve     string     `json:"curve:s,omitempty"`
 		X         []byte     `json:"x:d,omitempty"`
@@ -34,17 +34,14 @@ type (
 	}
 )
 
-func (e *Signature) ContextName() string {
-	return "nimona.io/crypto"
-}
-
 func (e *Signature) GetType() string {
-	return "Signature"
+	return "nimona.io/crypto.Signature"
 }
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "Signature",
+		"@ctx:s":    "nimona.io/crypto.Signature",
+		"@domain:s": "nimona.io/crypto",
 		"@struct:s": "Signature",
 	}
 	b, _ := json.Marshal(e)
@@ -57,17 +54,14 @@ func (e *Signature) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PrivateKey) ContextName() string {
-	return "nimona.io/crypto"
-}
-
 func (e *PrivateKey) GetType() string {
-	return "PrivateKey"
+	return "nimona.io/crypto.PrivateKey"
 }
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "PrivateKey",
+		"@ctx:s":    "nimona.io/crypto.PrivateKey",
+		"@domain:s": "nimona.io/crypto",
 		"@struct:s": "PrivateKey",
 	}
 	b, _ := json.Marshal(e)
@@ -80,17 +74,14 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PublicKey) ContextName() string {
-	return "nimona.io/crypto"
-}
-
 func (e *PublicKey) GetType() string {
-	return "PublicKey"
+	return "nimona.io/crypto.PublicKey"
 }
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "PublicKey",
+		"@ctx:s":    "nimona.io/crypto.PublicKey",
+		"@domain:s": "nimona.io/crypto",
 		"@struct:s": "PublicKey",
 	}
 	b, _ := json.Marshal(e)

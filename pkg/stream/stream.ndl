@@ -1,6 +1,7 @@
 package nimona.io/stream
 
 import nimona.io/crypto crypto
+import nimona.io/object object
 
 abstract domain nimona.io/stream {
     struct Policy {
@@ -10,23 +11,26 @@ abstract domain nimona.io/stream {
         action string
     }
     signed event Created {
+        nonce string
         createdDateTime string
-        partitionKeys repeated string
         @policies repeated Policy
     }
-    signed event PoliciesUpdated {
-        @streamHash string
-        @parents repeated string
+    signed event Subscribed {
+        @policies repeated Policy
+    }
+    signed event PolicyAttached {
+        @stream nimona.io/object.Hash
+        @parents repeated nimona.io/object.Hash
         @policies repeated Policy
     }
     command RequestEventList {
-        streamHashes repeated string
+        streams repeated nimona.io/object.Hash
     }
     event EventListCreated {
-        streamHash string
-        eventHashes repeated string
+        stream nimona.io/object.Hash
+        events repeated nimona.io/object.Hash
     }
     command RequestEvents {
-        eventHashes repeated string
+        events repeated nimona.io/object.Hash
     }
 }

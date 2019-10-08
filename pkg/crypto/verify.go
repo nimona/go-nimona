@@ -9,11 +9,9 @@ import (
 	"nimona.io/pkg/object"
 )
 
-var (
-	// ErrCouldNotVerify is returned when the signature doesn't matches the
-	// given key
-	ErrCouldNotVerify = errors.New("could not verify signature")
-)
+// ErrCouldNotVerify is returned when the signature doesn't matches the
+// given key
+var ErrCouldNotVerify = errors.New("could not verify signature")
 
 // Verify object
 func Verify(o object.Object) error {
@@ -34,12 +32,12 @@ func Verify(o object.Object) error {
 		)
 	}
 
-	hash, err := object.ObjectHashWithoutSignature(o)
+	hash, err := object.NewHash(o)
 	if err != nil {
 		return err
 	}
 
-	return verify(sig, hash)
+	return verify(sig, hash.D)
 }
 
 // verify a signature given a hash

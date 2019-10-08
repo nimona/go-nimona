@@ -18,7 +18,7 @@ func (k *PublicKey) Fingerprint() Fingerprint {
 		X:         k.X,
 		Y:         k.Y,
 	}
-	return Fingerprint(base58.Encode(fp.ToObject().Hash()))
+	return Fingerprint(base58.Encode(fp.ToObject().Hash().D))
 }
 
 func (k *PublicKey) Key() interface{} {

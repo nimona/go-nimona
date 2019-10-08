@@ -15,7 +15,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=string"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=*object.Hash"
 
 var (
 	peerRequestedType            = new(peer.Requested).GetType()
@@ -33,7 +33,7 @@ type (
 		exchange exchange.Exchange
 		local    *peer.LocalPeer
 
-		contentHashes *StringSyncList
+		contentHashes *ObjectHashSyncList
 	}
 )
 
@@ -52,7 +52,7 @@ func NewDiscoverer(
 		local:    local,
 		exchange: exc,
 
-		contentHashes: &StringSyncList{},
+		contentHashes: &ObjectHashSyncList{},
 	}
 
 	logger := log.FromContext(ctx).With(
@@ -75,7 +75,7 @@ func NewDiscoverer(
 		return nil, err
 	}
 
-	r.local.OnContentHashesUpdated(func(hashes []string) {
+	r.local.OnContentHashesUpdated(func(hashes []*object.Hash) {
 		nctx := context.New(context.WithTimeout(time.Second * 5))
 		for _, hash := range hashes {
 			r.contentHashes.Put(hash)
@@ -146,7 +146,7 @@ func (r *Discoverer) FindByFingerprint(
 // FindByContent finds and returns peer infos from a content hash
 func (r *Discoverer) FindByContent(
 	ctx context.Context,
-	contentHash string,
+	contentHash *object.Hash,
 	opts ...discovery.Option,
 ) ([]crypto.Fingerprint, error) {
 	opt := discovery.ParseOptions(opts...)
@@ -158,7 +158,7 @@ func (r *Discoverer) FindByContent(
 	)
 	logger.Debug("trying to find peer by contentHash")
 
-	b := bloom.NewBloom(contentHash)
+	b := bloom.NewBloom(contentHash.Compact())
 	cs := r.store.FindByContent(b)
 	fs := []crypto.Fingerprint{}
 
@@ -549,9 +549,9 @@ func (r *Discoverer) bootstrap(
 	return nil
 }
 
-func (r *Discoverer) getContentHashes() []string {
-	cIDs := []string{}
-	r.contentHashes.Range(func(k string) bool {
+func (r *Discoverer) getContentHashes() []*object.Hash {
+	cIDs := []*object.Hash{}
+	r.contentHashes.Range(func(k *object.Hash) bool {
 		cIDs = append(cIDs, k)
 		return true
 	})
@@ -560,7 +560,11 @@ func (r *Discoverer) getContentHashes() []string {
 
 func (r *Discoverer) getOwnContentProviderUpdated() (*Announced, error) {
 	cs := r.getContentHashes()
-	b := bloom.NewBloom(cs...)
+	ss := []string{}
+	for _, c := range cs {
+		ss = append(ss, c.Compact())
+	}
+	b := bloom.NewBloom(ss...)
 	cb := &Announced{
 		AvailableContentBloom: b,
 	}
@@ -581,8 +585,11 @@ func (r *Discoverer) publishContentHashes(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
 	cs := r.getContentHashes()
-	b := bloom.NewBloom(cs...)
-
+	ss := []string{}
+	for _, c := range cs {
+		ss = append(ss, c.Compact())
+	}
+	b := bloom.NewBloom(ss...)
 	cps := r.store.FindClosestContentProvider(b)
 	fs := []crypto.Fingerprint{}
 	for _, c := range cps {

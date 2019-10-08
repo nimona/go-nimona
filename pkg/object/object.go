@@ -8,14 +8,10 @@ import (
 )
 
 type (
-	Hash []byte
+	// Hash []byte
 	// Object for everything f12n
 	Object map[string]interface{}
 )
-
-func (h Hash) String() string {
-	return base58.Encode(h)
-}
 
 // New returns an object from a map
 func New() Object {
@@ -41,18 +37,13 @@ func (o Object) ToObject() Object {
 }
 
 // Hash returns the object's hash
-func (o Object) Hash() Hash {
-	b, err := ObjectHash(o)
+func (o Object) Hash() *Hash {
+	h, err := NewHash(o)
 	if err != nil {
 		panic(err)
 	}
 
-	return Hash(b)
-}
-
-// CompactHash returns the object's hash in its (not really) compact format
-func (o Object) CompactHash() string {
-	return "&" + o.Hash().String() + ".b.oh/v1"
+	return h
 }
 
 // ToMap returns the object as a map
