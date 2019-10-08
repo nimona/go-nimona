@@ -5,12 +5,13 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
 
 func (m *orchestrator) Sync(
 	ctx context.Context,
-	streamHashes []string,
+	streams []*object.Hash,
 	addresses []string,
 ) (
 	*Graph,
@@ -21,12 +22,12 @@ func (m *orchestrator) Sync(
 
 	// create objecet graph request
 	req := &stream.RequestEventList{
-		StreamHashes: streamHashes,
+		Streams: streams,
 	}
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "orchestrator/orchestrator.Sync"),
-		log.Strings("streamHashes", streamHashes),
+		log.Any("streams", streams),
 		log.Strings("addresses", addresses),
 	)
 
@@ -52,7 +53,7 @@ func (m *orchestrator) Sync(
 
 	// and who knows about them
 	type request struct {
-		hash string
+		hash *object.Hash
 		addr string
 	}
 	requests := make(chan *request, 100)
@@ -83,9 +84,9 @@ func (m *orchestrator) Sync(
 					continue
 				}
 				logger.
-					With(log.Strings("hashes", gres.EventHashes)).
+					With(log.Any("hashes", gres.Events)).
 					Debug("got graph response")
-				for _, objectHash := range gres.EventHashes {
+				for _, objectHash := range gres.Events {
 					// add a request for this hash from this peer
 					requests <- &request{
 						hash: objectHash,
@@ -103,7 +104,7 @@ func (m *orchestrator) Sync(
 
 	for req := range requests {
 		// check if we actually have the object
-		obj, err := m.store.Get(req.hash)
+		obj, err := m.store.Get(req.hash.Compact())
 		if err == nil && obj != nil {
 			continue
 		}
@@ -117,8 +118,8 @@ func (m *orchestrator) Sync(
 			exchange.WithResponse("", out),
 		); err != nil {
 			logger.With(
-				log.String("req.hash", req.hash),
-				log.String("req.addr", req.hash),
+				log.Any("req.hash", req.hash),
+				log.Any("req.addr", req.hash),
 				log.Error(err),
 			).Debug("could not send request for object")
 			close(out)
@@ -130,20 +131,20 @@ func (m *orchestrator) Sync(
 		select {
 		case <-ctx.Done():
 		case res := <-out:
-			hash := res.Payload.Hash().String()
-			if hash != req.hash {
+			hash := res.Payload.Hash()
+			if hash.Compact() != req.hash.Compact() {
 				logger.With(
-					log.String("hash", hash),
-					log.String("req.hash", req.hash),
-					log.String("req.addr", req.hash),
+					log.String("hash", hash.Compact()),
+					log.String("req.hash", req.hash.Compact()),
+					log.String("req.addr", req.hash.Compact()),
 					log.Error(err),
 				).Debug("expected hash does not match actual")
 				break
 			}
 			if err := m.store.Put(res.Payload); err != nil {
 				logger.With(
-					log.String("req.hash", req.hash),
-					log.String("req.addr", req.hash),
+					log.String("req.hash", req.hash.Compact()),
+					log.String("req.addr", req.hash.Compact()),
 					log.Error(err),
 				).Debug("could not store objec")
 			}
@@ -151,9 +152,9 @@ func (m *orchestrator) Sync(
 		close(out)
 	}
 
-	// TODO currently we only support a root streamHashes
-	rootHash := streamHashes[0]
-	os, err := m.store.Graph(rootHash)
+	// TODO currently we only support a root streams
+	rootHash := streams[0]
+	os, err := m.store.Graph(rootHash.Compact())
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.New("could not get graph from store"),

@@ -15,9 +15,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-var (
-	UseUPNP = false
-)
+var UseUPNP = false
 
 func init() {
 	UseUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
@@ -223,5 +221,4 @@ func (n *network) dialPeer(
 	}
 
 	return nil, ErrAllAddressesFailed
-
 }

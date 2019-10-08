@@ -2,12 +2,11 @@ package nimona.io/peer
 
 import nimona.io/crypto crypto
 
-struct Peer {
-    addresses repeated string
-    @signature crypto.Signature
-}
-
 domain nimona.io/peer {
+    struct Peer {
+        addresses repeated string
+        @signature crypto.Signature
+    }
     signed command Requested {
         keys repeated string
     }

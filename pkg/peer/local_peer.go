@@ -5,10 +5,11 @@ import (
 	"sync"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object"
 )
 
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=string"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=*object.Hash"
 
 type (
 	Addresses []string
@@ -21,14 +22,14 @@ type (
 		identityKey *crypto.PrivateKey
 
 		addresses     *StringAddressesSyncMap
-		contentHashes *StringSyncList
+		contentHashes *ObjectHashSyncList
 
 		handlerLock             sync.RWMutex
 		onAddressesHandlers     []OnAddressesUpdated
 		onContentHashesHandlers []OnContentHashesUpdated
 	}
 	OnAddressesUpdated     func([]string)
-	OnContentHashesUpdated func([]string)
+	OnContentHashesUpdated func([]*object.Hash)
 )
 
 func NewLocalPeer(
@@ -49,7 +50,7 @@ func NewLocalPeer(
 		key:         key,
 
 		addresses:     &StringAddressesSyncMap{},
-		contentHashes: &StringSyncList{},
+		contentHashes: &ObjectHashSyncList{},
 
 		onAddressesHandlers:     []OnAddressesUpdated{},
 		onContentHashesHandlers: []OnContentHashesUpdated{},
@@ -80,7 +81,7 @@ func (p *LocalPeer) AddAddress(protocol string, addrs []string) {
 }
 
 // AddContentHash that should be published with the peer info
-func (p *LocalPeer) AddContentHash(hashes ...string) {
+func (p *LocalPeer) AddContentHash(hashes ...*object.Hash) {
 	for _, h := range hashes {
 		p.contentHashes.Put(h)
 	}
@@ -93,7 +94,7 @@ func (p *LocalPeer) AddContentHash(hashes ...string) {
 }
 
 // RemoveContentHash from the peer info
-func (p *LocalPeer) RemoveContentHash(hashes ...string) {
+func (p *LocalPeer) RemoveContentHash(hashes ...*object.Hash) {
 	for _, h := range hashes {
 		p.contentHashes.Delete(h)
 	}
@@ -138,9 +139,9 @@ func (p *LocalPeer) GetAddresses() []string {
 	return addrs
 }
 
-func (p *LocalPeer) GetContentHashes() []string {
-	hashes := []string{}
-	p.contentHashes.Range(func(hash string) bool {
+func (p *LocalPeer) GetContentHashes() []*object.Hash {
+	hashes := []*object.Hash{}
+	p.contentHashes.Range(func(hash *object.Hash) bool {
 		hashes = append(hashes, hash)
 		return true
 	})

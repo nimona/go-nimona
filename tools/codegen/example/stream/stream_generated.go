@@ -11,10 +11,10 @@ import (
 
 type (
 	Policy struct {
-		Subjects   crypto.PublicKey `json:"subjects:ao,omitempty"`
-		Resources  []string         `json:"resources:as,omitempty"`
-		Conditions []string         `json:"conditions:as,omitempty"`
-		Action     string           `json:"action:s,omitempty"`
+		Subjects   []*crypto.PublicKey `json:"subjects:ao,omitempty"`
+		Resources  []string            `json:"resources:as,omitempty"`
+		Conditions []string            `json:"conditions:as,omitempty"`
+		Action     string              `json:"action:s,omitempty"`
 	}
 	Created struct {
 		CreatedDateTime string              `json:"createdDateTime:s,omitempty"`
@@ -24,13 +24,33 @@ type (
 		Authors         []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	PoliciesUpdated struct {
-		Stream    crypto.Hash         `json:"@stream:o,omitempty"`
-		Parents   crypto.Hash         `json:"@parents:ao,omitempty"`
+		Stream    *crypto.Hash        `json:"@stream:o,omitempty"`
+		Parents   []*crypto.Hash      `json:"@parents:ao,omitempty"`
 		Policies  []*Policy           `json:"@policies:ao,omitempty"`
 		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
+
+func (e *Policy) GetType() string {
+	return "example/stream.Policy"
+}
+
+func (e *Policy) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "example/stream.Policy",
+		"@domain:s": "example/stream",
+		"@struct:s": "Policy",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Policy) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
 
 func (e *Created) EventName() string {
 	return "Created"

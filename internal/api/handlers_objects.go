@@ -55,7 +55,8 @@ func (api *API) HandleGetObject(c *router.Context) {
 	ctx := context.New(context.WithTimeout(time.Second * 5))
 	defer ctx.Cancel()
 
-	ps, err := api.discovery.FindByContent(ctx, objectHash)
+	h, _ := object.HashFromCompact(objectHash)
+	ps, err := api.discovery.FindByContent(ctx, h)
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
@@ -64,7 +65,8 @@ func (api *API) HandleGetObject(c *router.Context) {
 	for _, p := range ps {
 		addrs = append(addrs, p.Address())
 	}
-	os, err := api.orchestrator.Sync(ctx, []string{objectHash}, addrs)
+	hs := []*object.Hash{h}
+	os, err := api.orchestrator.Sync(ctx, hs, addrs)
 	if err != nil {
 		if err == kv.ErrNotFound {
 			c.AbortWithError(404, err) // nolint: errcheck

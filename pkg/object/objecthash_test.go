@@ -19,9 +19,9 @@ func TestObjectHash(t *testing.T) {
 	oh := hash(HintObject, ob)
 
 	o := FromMap(v)
-	h, err := ObjectHash(o)
+	h, err := NewHash(o)
 	assert.NoError(t, err)
-	assert.Equal(t, oh, h)
+	assert.Equal(t, oh, h.D)
 }
 
 func TestObjectHashWithSignature(t *testing.T) {
@@ -38,9 +38,9 @@ func TestObjectHashWithSignature(t *testing.T) {
 	oh := hash(HintObject, ob)
 
 	o := FromMap(v)
-	h, err := ObjectHash(o)
+	h, err := NewHash(o)
 	assert.NoError(t, err)
-	assert.Equal(t, oh, h)
+	assert.Equal(t, oh, h.D)
 }
 
 func TestObjectHashDocs(t *testing.T) {
@@ -53,7 +53,7 @@ func TestObjectHashDocs(t *testing.T) {
 	}
 
 	o := FromMap(v)
-	_, err := ObjectHash(o)
+	_, err := NewHash(o)
 	assert.NoError(t, err)
 }
 
@@ -94,7 +94,7 @@ func TestLongObjectHash(t *testing.T) {
 	}
 
 	o := FromMap(v)
-	_, err := ObjectHash(o)
+	_, err := NewHash(o)
 	assert.NoError(t, err)
 }
 
@@ -107,7 +107,7 @@ func TestLongObjectHashInterfaces(t *testing.T) {
 	}
 
 	o := FromMap(v)
-	h, err := ObjectHash(o)
+	h, err := NewHash(o)
 	assert.NoError(t, err)
 
 	b := `{"I:i":1,"Ai:ai":[1,2],"S:s":"a","As:as":["a","b"]}` // nolint
@@ -115,7 +115,7 @@ func TestLongObjectHashInterfaces(t *testing.T) {
 	json.Unmarshal([]byte(b), &nv) // nolint
 
 	no := FromMap(nv)
-	nh, err := ObjectHash(no)
+	nh, err := NewHash(no)
 	assert.NoError(t, err)
 
 	assert.Equal(t, h, nh)

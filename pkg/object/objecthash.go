@@ -10,16 +10,16 @@ import (
 	"strings"
 )
 
-// ObjectHash consistently hashes a map.
+// NewHash consistently hashes a map.
 // It is based on Ben Laurie's object hash, but using the same type hints
 // as TJSON instead.
 // TODO add redaction
-func ObjectHash(o Object) ([]byte, error) {
-	return objecthash(o.ToMap(), false)
-}
-
-func ObjectHashWithoutSignature(o Object) ([]byte, error) {
-	return objecthash(o.ToMap(), true)
+func NewHash(o Object) (*Hash, error) {
+	d, err := objecthash(o.ToMap())
+	return &Hash{
+		Algorithm: "OH1",
+		D:         d,
+	}, err
 }
 
 func hintsFromKey(k string) []TypeHint {
@@ -34,7 +34,7 @@ func hintsFromKey(k string) []TypeHint {
 	return hs
 }
 
-func objecthash(m map[string]interface{}, skipSig bool) ([]byte, error) {
+func objecthash(m map[string]interface{}) ([]byte, error) {
 	b := []byte{}
 	ks := []string{}
 	for k := range m {
@@ -178,7 +178,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 		if len(m) == 0 {
 			return nil
 		}
-		h, err := objecthash(m, false)
+		h, err := objecthash(m)
 		if err != nil {
 			panic("hashing error: " + err.Error())
 		}

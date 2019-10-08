@@ -2,6 +2,12 @@
 
 package crypto
 
+import (
+	json "encoding/json"
+
+	object "nimona.io/pkg/object"
+)
+
 type (
 	Hash struct {
 		HashType string `json:"hashType:s,omitempty"`
@@ -31,3 +37,83 @@ type (
 		Signature *Signature `json:"@signature:o,omitempty"`
 	}
 )
+
+func (e *Hash) GetType() string {
+	return "example/crypto.Hash"
+}
+
+func (e *Hash) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "example/crypto.Hash",
+		"@domain:s": "example/crypto",
+		"@struct:s": "Hash",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Hash) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *Signature) GetType() string {
+	return "example/crypto.Signature"
+}
+
+func (e *Signature) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "example/crypto.Signature",
+		"@domain:s": "example/crypto",
+		"@struct:s": "Signature",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Signature) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *PrivateKey) GetType() string {
+	return "example/crypto.PrivateKey"
+}
+
+func (e *PrivateKey) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "example/crypto.PrivateKey",
+		"@domain:s": "example/crypto",
+		"@struct:s": "PrivateKey",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *PrivateKey) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *PublicKey) GetType() string {
+	return "example/crypto.PublicKey"
+}
+
+func (e *PublicKey) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "example/crypto.PublicKey",
+		"@domain:s": "example/crypto",
+		"@struct:s": "PublicKey",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *PublicKey) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}

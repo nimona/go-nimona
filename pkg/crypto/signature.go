@@ -30,7 +30,6 @@ func NewSignature(
 	alg string,
 	o object.Object,
 ) (*Signature, error) {
-
 	if key == nil {
 		return nil, errors.New("missing key")
 	}
@@ -41,7 +40,7 @@ func NewSignature(
 	}
 
 	var (
-		hash []byte
+		hash *object.Hash
 		err  error
 	)
 
@@ -73,7 +72,7 @@ func NewSignature(
 	// 	h := sha256.Sum256(b)
 	// 	hash = h[:]
 	case AlgorithmObjectHash:
-		hash, err = object.ObjectHashWithoutSignature(o)
+		hash, err = object.NewHash(o)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +80,7 @@ func NewSignature(
 		return nil, ErrAlgorithNotImplemented
 	}
 
-	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash)
+	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash.D)
 	if err != nil {
 		return nil, err
 	}

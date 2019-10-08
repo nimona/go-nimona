@@ -4,27 +4,31 @@
 
 package peer
 
-import "sync"
+import (
+	"sync"
+
+	"nimona.io/pkg/object"
+)
 
 type (
-	// StringSyncList -
-	StringSyncList struct {
+	// ObjectHashSyncList -
+	ObjectHashSyncList struct {
 		m sync.Map
 	}
 )
 
-// NewStringValueTypeSyncMap constructs a new SyncMap
-func NewStringValueTypeSyncMap() *StringSyncList {
-	return &StringSyncList{}
+// NewObjectHashValueTypeSyncMap constructs a new SyncMap
+func NewObjectHashValueTypeSyncMap() *ObjectHashSyncList {
+	return &ObjectHashSyncList{}
 }
 
 // Put -
-func (m *StringSyncList) Put(k string) {
+func (m *ObjectHashSyncList) Put(k *object.Hash) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *StringSyncList) Exists(k string) bool {
+func (m *ObjectHashSyncList) Exists(k *object.Hash) bool {
 	_, ok := m.m.Load(k)
 	if !ok {
 		return false
@@ -34,13 +38,13 @@ func (m *StringSyncList) Exists(k string) bool {
 }
 
 // Delete -
-func (m *StringSyncList) Delete(k string) {
+func (m *ObjectHashSyncList) Delete(k *object.Hash) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *StringSyncList) Range(i func(k string) bool) {
+func (m *ObjectHashSyncList) Range(i func(k *object.Hash) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(string))
+		return i(k.(*object.Hash))
 	})
 }

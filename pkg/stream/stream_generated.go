@@ -11,36 +11,61 @@ import (
 
 type (
 	Policy struct {
-		Subjects   crypto.PublicKey `json:"subjects:ao,omitempty"`
-		Resources  []string         `json:"resources:as,omitempty"`
-		Conditions []string         `json:"conditions:as,omitempty"`
-		Action     string           `json:"action:s,omitempty"`
+		Subjects   []*crypto.PublicKey `json:"subjects:ao,omitempty"`
+		Resources  []string            `json:"resources:as,omitempty"`
+		Conditions []string            `json:"conditions:as,omitempty"`
+		Action     string              `json:"action:s,omitempty"`
 	}
 	Created struct {
+		Nonce           string              `json:"nonce:s,omitempty"`
 		CreatedDateTime string              `json:"createdDateTime:s,omitempty"`
-		PartitionKeys   []string            `json:"partitionKeys:as,omitempty"`
 		Policies        []*Policy           `json:"@policies:ao,omitempty"`
 		Signature       *crypto.Signature   `json:"@signature:o,omitempty"`
 		Authors         []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
-	PoliciesUpdated struct {
-		StreamHash string              `json:"@streamHash:s,omitempty"`
-		Parents    []string            `json:"@parents:as,omitempty"`
-		Policies   []*Policy           `json:"@policies:ao,omitempty"`
-		Signature  *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors    []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+	Subscribed struct {
+		Policies  []*Policy           `json:"@policies:ao,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+	}
+	PolicyAttached struct {
+		Stream    *object.Hash        `json:"@stream:o,omitempty"`
+		Parents   []*object.Hash      `json:"@parents:ao,omitempty"`
+		Policies  []*Policy           `json:"@policies:ao,omitempty"`
+		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
+		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 	RequestEventList struct {
-		StreamHashes []string `json:"streamHashes:as,omitempty"`
+		Streams []*object.Hash `json:"streams:ao,omitempty"`
 	}
 	EventListCreated struct {
-		StreamHash  string   `json:"streamHash:s,omitempty"`
-		EventHashes []string `json:"eventHashes:as,omitempty"`
+		Stream *object.Hash   `json:"stream:o,omitempty"`
+		Events []*object.Hash `json:"events:ao,omitempty"`
 	}
 	RequestEvents struct {
-		EventHashes []string `json:"eventHashes:as,omitempty"`
+		Events []*object.Hash `json:"events:ao,omitempty"`
 	}
 )
+
+func (e *Policy) GetType() string {
+	return "nimona.io/stream.Policy"
+}
+
+func (e *Policy) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "nimona.io/stream.Policy",
+		"@domain:s": "nimona.io/stream",
+		"@struct:s": "Policy",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Policy) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
 
 func (e *Created) EventName() string {
 	return "Created"
@@ -66,26 +91,50 @@ func (e *Created) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PoliciesUpdated) EventName() string {
-	return "PoliciesUpdated"
+func (e *Subscribed) EventName() string {
+	return "Subscribed"
 }
 
-func (e *PoliciesUpdated) GetType() string {
-	return "nimona.io/stream.PoliciesUpdated"
+func (e *Subscribed) GetType() string {
+	return "nimona.io/stream.Subscribed"
 }
 
-func (e *PoliciesUpdated) ToObject() object.Object {
+func (e *Subscribed) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.PoliciesUpdated",
+		"@ctx:s":    "nimona.io/stream.Subscribed",
 		"@domain:s": "nimona.io/stream",
-		"@event:s":  "PoliciesUpdated",
+		"@event:s":  "Subscribed",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *PoliciesUpdated) FromObject(o object.Object) error {
+func (e *Subscribed) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *PolicyAttached) EventName() string {
+	return "PolicyAttached"
+}
+
+func (e *PolicyAttached) GetType() string {
+	return "nimona.io/stream.PolicyAttached"
+}
+
+func (e *PolicyAttached) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "nimona.io/stream.PolicyAttached",
+		"@domain:s": "nimona.io/stream",
+		"@event:s":  "PolicyAttached",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *PolicyAttached) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

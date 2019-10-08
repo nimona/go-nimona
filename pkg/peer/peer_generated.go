@@ -14,32 +14,6 @@ type (
 		Addresses []string          `json:"addresses:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 	}
-)
-
-func (e *Peer) ContextName() string {
-	return "nimona.io/peer"
-}
-
-func (e *Peer) GetType() string {
-	return "Peer"
-}
-
-func (e *Peer) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s":    "Peer",
-		"@struct:s": "Peer",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
-	return object.Object(m)
-}
-
-func (e *Peer) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-type (
 	Requested struct {
 		Keys      []string            `json:"keys:as,omitempty"`
 		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
@@ -51,6 +25,26 @@ type (
 		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
 	}
 )
+
+func (e *Peer) GetType() string {
+	return "nimona.io/peer.Peer"
+}
+
+func (e *Peer) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s":    "nimona.io/peer.Peer",
+		"@domain:s": "nimona.io/peer",
+		"@struct:s": "Peer",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Peer) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
 
 func (e *Requested) EventName() string {
 	return "Requested"

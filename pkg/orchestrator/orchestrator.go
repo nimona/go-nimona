@@ -18,16 +18,13 @@ var (
 	streamEventListCreatedType = new(stream.EventListCreated).GetType()
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_string_generated.go -pkg orchestrator gen "ObservableType=string"
-
 type (
 	// Orchestrator is responsible of keeping streams and their underlying
 	// graphs up to date
 	Orchestrator interface {
-		Subscriber
 		Sync(
 			ctx context.Context,
-			selector []string,
+			streams []*object.Hash,
 			addresses []string,
 		) (
 			*Graph,
@@ -43,7 +40,6 @@ type (
 		)
 	}
 	orchestrator struct {
-		PubSub
 		store     graph.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
@@ -89,7 +85,6 @@ func NewWithContext(
 	error,
 ) {
 	m := &orchestrator{
-		PubSub:    NewPubSub(),
 		store:     store,
 		exchange:  exchange,
 		discovery: discovery,
@@ -105,14 +100,14 @@ func NewWithContext(
 	if err != nil {
 		return nil, err
 	}
-	rootObjectHashes := make([]string, len(heads))
+	rootObjectHashes := make([]*object.Hash, len(heads))
 	for i, rootObject := range heads {
-		rootObjectHashes[i] = rootObject.Hash().String()
+		rootObjectHashes[i] = rootObject.Hash()
 	}
 	logger := log.FromContext(ctx).Named("orchestrator")
 	logger.Info(
 		"adding existing root object hashes as content",
-		log.Strings("rootObjectHashes", rootObjectHashes),
+		log.Any("rootObjectHashes", rootObjectHashes),
 	)
 	m.localInfo.AddContentHash(rootObjectHashes...)
 	return m, nil
@@ -169,9 +164,9 @@ func IsComplete(cs []object.Object) bool {
 // Put stores a given object
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
 func (m *orchestrator) Put(vs ...object.Object) error {
-	hashes := make([]string, len(vs))
+	hashes := make([]*object.Hash, len(vs))
 	for i, o := range vs {
-		hashes[i] = o.Hash().String()
+		hashes[i] = o.Hash()
 
 		if err := m.store.Put(o); err != nil {
 			return err
@@ -191,8 +186,6 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 				ErrIncompleteGraph,
 			)
 		}
-
-		m.Publish(o.Hash().String())
 	}
 
 	go m.localInfo.AddContentHash(hashes...)
@@ -236,18 +229,18 @@ func (m *orchestrator) handleStreamRequestEventList(
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
 
-	vs, err := m.store.Graph(req.StreamHashes[0])
+	vs, err := m.store.Graph(req.Streams[0].Compact())
 	if err != nil {
 		return err
 	}
 
-	hs := []string{}
+	hs := []*object.Hash{}
 	for _, o := range vs {
-		hs = append(hs, o.Hash().String())
+		hs = append(hs, o.Hash())
 	}
 
 	res := &stream.EventListCreated{
-		EventHashes: hs,
+		Events: hs,
 	}
 
 	if err := m.exchange.Send(

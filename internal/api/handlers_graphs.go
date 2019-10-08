@@ -73,7 +73,8 @@ func (api *API) HandleGetGraph(c *router.Context) {
 
 	if sync {
 		// find peers who provide the root object
-		ps, err := api.discovery.FindByContent(ctx, rootObjectHash)
+		h, _ := object.HashFromCompact(rootObjectHash)
+		ps, err := api.discovery.FindByContent(ctx, h)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return
@@ -99,7 +100,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		}
 
 		// try to sync the graph with the addresses we gathered
-		hs := []string{rootObjectHash}
+		hs := []*object.Hash{h}
 		if _, err = api.orchestrator.Sync(ctx, hs, addrs); err != nil {
 			if errors.CausedBy(err, graph.ErrNotFound) {
 				c.AbortWithError(404, err) // nolint: errcheck

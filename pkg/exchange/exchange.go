@@ -43,7 +43,7 @@ type (
 	Exchange interface {
 		Request(
 			ctx context.Context,
-			objectHash string,
+			object *object.Hash,
 			address string,
 			options ...Option,
 		) error
@@ -234,7 +234,7 @@ func New(
 // Request an object given its hash from an address
 func (w *exchange) Request(
 	ctx context.Context,
-	hash string,
+	hash *object.Hash,
 	address string,
 	options ...Option,
 ) error {
@@ -322,11 +322,11 @@ func (w *exchange) process(
 			return err
 		}
 		logger = logger.With(
-			log.String("requested_hash", req.ObjectHash),
+			log.Any("requested_hash", req.ObjectHash),
 			log.String("recipient", conn.RemotePeerKey.Fingerprint().String()),
 		)
 		logger.Info("got object request")
-		res, err := w.store.Get(req.ObjectHash)
+		res, err := w.store.Get(req.ObjectHash.Compact())
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve object"),

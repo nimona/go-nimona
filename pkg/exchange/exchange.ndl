@@ -1,14 +1,13 @@
 package nimona.io/exchange
 
-import nimona.io/crypto crypto
 import nimona.io/object object
 
 domain nimona.io/exchange {
     signed command ObjectRequest {
-        objectHash string
+        objectHash nimona.io/object.Hash
     }
     signed command ObjectForward {
-        Recipient string
-        FwObject object.Object
+        recipient string
+        fwObject nimona.io/object.Object
     }
 }
