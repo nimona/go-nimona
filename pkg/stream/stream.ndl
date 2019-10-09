@@ -4,13 +4,13 @@ import nimona.io/crypto crypto
 import nimona.io/object object
 
 abstract domain nimona.io/stream {
-    struct Policy {
+    object Policy {
         subjects repeated nimona.io/crypto.PublicKey
         resources repeated string
         conditions repeated string
         action string
     }
-    struct Author {
+    object Author {
         publicKey crypto.PublicKey
     }
     signed event Created {

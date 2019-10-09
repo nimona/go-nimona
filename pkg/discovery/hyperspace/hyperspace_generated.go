@@ -24,19 +24,13 @@ type (
 	}
 )
 
-func (e *Request) EventName() string {
-	return "Request"
-}
-
 func (e *Request) GetType() string {
 	return "nimona.io/discovery/hyperspace.Request"
 }
 
 func (e *Request) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/discovery/hyperspace.Request",
-		"@domain:s": "nimona.io/discovery/hyperspace",
-		"@event:s":  "Request",
+		"@ctx:s": "nimona.io/discovery/hyperspace.Request",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -48,19 +42,13 @@ func (e *Request) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Announced) EventName() string {
-	return "Announced"
-}
-
 func (e *Announced) GetType() string {
 	return "nimona.io/discovery/hyperspace.Announced"
 }
 
 func (e *Announced) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/discovery/hyperspace.Announced",
-		"@domain:s": "nimona.io/discovery/hyperspace",
-		"@event:s":  "Announced",
+		"@ctx:s": "nimona.io/discovery/hyperspace.Announced",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

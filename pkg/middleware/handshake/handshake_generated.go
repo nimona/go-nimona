@@ -27,19 +27,13 @@ type (
 	}
 )
 
-func (e *Syn) EventName() string {
-	return "Syn"
-}
-
 func (e *Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
 
 func (e *Syn) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/net/handshake.Syn",
-		"@domain:s": "nimona.io/net/handshake",
-		"@event:s":  "Syn",
+		"@ctx:s": "nimona.io/net/handshake.Syn",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -51,19 +45,13 @@ func (e *Syn) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *SynAck) EventName() string {
-	return "SynAck"
-}
-
 func (e *SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
 
 func (e *SynAck) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/net/handshake.SynAck",
-		"@domain:s": "nimona.io/net/handshake",
-		"@event:s":  "SynAck",
+		"@ctx:s": "nimona.io/net/handshake.SynAck",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -75,19 +63,13 @@ func (e *SynAck) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Ack) EventName() string {
-	return "Ack"
-}
-
 func (e *Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
 
 func (e *Ack) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/net/handshake.Ack",
-		"@domain:s": "nimona.io/net/handshake",
-		"@event:s":  "Ack",
+		"@ctx:s": "nimona.io/net/handshake.Ack",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

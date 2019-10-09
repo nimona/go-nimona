@@ -40,9 +40,7 @@ func (e *Signature) GetType() string {
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto.Signature",
-		"@domain:s": "nimona.io/crypto",
-		"@struct:s": "Signature",
+		"@ctx:s": "nimona.io/crypto.Signature",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -60,9 +58,7 @@ func (e *PrivateKey) GetType() string {
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto.PrivateKey",
-		"@domain:s": "nimona.io/crypto",
-		"@struct:s": "PrivateKey",
+		"@ctx:s": "nimona.io/crypto.PrivateKey",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -80,9 +76,7 @@ func (e *PublicKey) GetType() string {
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/crypto.PublicKey",
-		"@domain:s": "nimona.io/crypto",
-		"@struct:s": "PublicKey",
+		"@ctx:s": "nimona.io/crypto.PublicKey",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

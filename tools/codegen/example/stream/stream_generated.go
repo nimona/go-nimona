@@ -38,9 +38,7 @@ func (e *Policy) GetType() string {
 
 func (e *Policy) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/stream.Policy",
-		"@domain:s": "example/stream",
-		"@struct:s": "Policy",
+		"@ctx:s": "example/stream.Policy",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -52,19 +50,13 @@ func (e *Policy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Created) EventName() string {
-	return "Created"
-}
-
 func (e *Created) GetType() string {
 	return "example/stream.Created"
 }
 
 func (e *Created) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/stream.Created",
-		"@domain:s": "example/stream",
-		"@event:s":  "Created",
+		"@ctx:s": "example/stream.Created",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -76,19 +68,13 @@ func (e *Created) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PoliciesUpdated) EventName() string {
-	return "PoliciesUpdated"
-}
-
 func (e *PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
 
 func (e *PoliciesUpdated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/stream.PoliciesUpdated",
-		"@domain:s": "example/stream",
-		"@event:s":  "PoliciesUpdated",
+		"@ctx:s": "example/stream.PoliciesUpdated",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

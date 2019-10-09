@@ -31,19 +31,13 @@ type (
 	}
 )
 
-func (e *ConversationTopicSet) EventName() string {
-	return "ConversationTopicSet"
-}
-
 func (e *ConversationTopicSet) GetType() string {
 	return "example/conversation.ConversationTopicSet"
 }
 
 func (e *ConversationTopicSet) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.ConversationTopicSet",
-		"@domain:s": "example/conversation",
-		"@event:s":  "ConversationTopicSet",
+		"@ctx:s": "example/conversation.ConversationTopicSet",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -55,19 +49,13 @@ func (e *ConversationTopicSet) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *ConversationNameSet) EventName() string {
-	return "ConversationNameSet"
-}
-
 func (e *ConversationNameSet) GetType() string {
 	return "example/conversation.ConversationNameSet"
 }
 
 func (e *ConversationNameSet) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.ConversationNameSet",
-		"@domain:s": "example/conversation",
-		"@event:s":  "ConversationNameSet",
+		"@ctx:s": "example/conversation.ConversationNameSet",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -79,19 +67,13 @@ func (e *ConversationNameSet) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *ConversationMessageAdded) EventName() string {
-	return "ConversationMessageAdded"
-}
-
 func (e *ConversationMessageAdded) GetType() string {
 	return "example/conversation.ConversationMessageAdded"
 }
 
 func (e *ConversationMessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/conversation.ConversationMessageAdded",
-		"@domain:s": "example/conversation",
-		"@event:s":  "ConversationMessageAdded",
+		"@ctx:s": "example/conversation.ConversationMessageAdded",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
