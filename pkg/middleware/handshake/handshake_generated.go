@@ -7,23 +7,24 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	stream "nimona.io/pkg/stream"
 )
 
 type (
 	Syn struct {
-		Nonce     string              `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	SynAck struct {
-		Nonce     string              `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	Ack struct {
-		Nonce     string              `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 )
 

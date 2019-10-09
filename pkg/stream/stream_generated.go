@@ -20,23 +20,26 @@ type (
 		PublicKey *crypto.PublicKey `json:"publicKey:o,omitempty"`
 	}
 	Created struct {
-		Nonce           string              `json:"nonce:s,omitempty"`
-		CreatedDateTime string              `json:"createdDateTime:s,omitempty"`
-		Policies        []*Policy           `json:"@policies:ao,omitempty"`
-		Signature       *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors         []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Nonce           string            `json:"nonce:s,omitempty"`
+		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
+		Policies        []*Policy         `json:"@policies:ao,omitempty"`
+		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors         []*Author         `json:"@authors:ao,omitempty"`
 	}
 	Subscribed struct {
-		Policies  []*Policy           `json:"@policies:ao,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*Author         `json:"@authors:ao,omitempty"`
+	}
+	Unsubscribed struct {
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*Author         `json:"@authors:ao,omitempty"`
 	}
 	PolicyAttached struct {
-		Stream    *object.Hash        `json:"@stream:o,omitempty"`
-		Parents   []*object.Hash      `json:"@parents:ao,omitempty"`
-		Policies  []*Policy           `json:"@policies:ao,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Stream    *object.Hash      `json:"@stream:o,omitempty"`
+		Parents   []*object.Hash    `json:"@parents:ao,omitempty"`
+		Policies  []*Policy         `json:"@policies:ao,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*Author         `json:"@authors:ao,omitempty"`
 	}
 	RequestEventList struct {
 		Streams []*object.Hash `json:"streams:ao,omitempty"`
@@ -118,6 +121,24 @@ func (e *Subscribed) ToObject() object.Object {
 }
 
 func (e *Subscribed) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *Unsubscribed) GetType() string {
+	return "nimona.io/stream.Unsubscribed"
+}
+
+func (e *Unsubscribed) ToObject() object.Object {
+	m := map[string]interface{}{
+		"@ctx:s": "nimona.io/stream.Unsubscribed",
+	}
+	b, _ := json.Marshal(e)
+	json.Unmarshal(b, &m)
+	return object.Object(m)
+}
+
+func (e *Unsubscribed) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
