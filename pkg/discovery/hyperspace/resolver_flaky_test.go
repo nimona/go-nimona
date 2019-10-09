@@ -22,19 +22,19 @@ func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {
 	fmt.Println("k1", k1.Fingerprint())
 	fmt.Println("k2", k2.Fingerprint())
 
-	d0, err := NewDiscoverer(ctx0, n0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetAddresses()
 
-	d1, err := NewDiscoverer(ctx1, n1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDiscoverer(ctx2, n2, x2, l2, ba)
+	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
@@ -65,19 +65,19 @@ func TestDiscoverer_FindBothSides(t *testing.T) {
 	fmt.Println("k1", k1.Fingerprint())
 	fmt.Println("k2", k2.Fingerprint())
 
-	d0, err := NewDiscoverer(ctx0, n0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetAddresses()
 
-	d1, err := NewDiscoverer(ctx1, n1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)
 
-	d2, err := NewDiscoverer(ctx2, n2, x2, l2, ba)
+	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)

@@ -19,17 +19,17 @@ import (
 )
 
 func TestDiscoverer_BootstrapLookup(t *testing.T) {
-	_, k0, n0, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
-	_, k1, n1, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 
-	d0, err := NewDiscoverer(ctx0, n0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddProvider(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetAddresses()
 
-	d1, err := NewDiscoverer(ctx1, n1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
 	assert.NoError(t, err)

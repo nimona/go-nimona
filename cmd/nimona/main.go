@@ -148,7 +148,6 @@ func main() {
 	// construct hyperspace discoverer
 	hyperspace, err := hyperspace.NewDiscoverer(
 		ctx,
-		network,
 		exchange,
 		localInfo,
 		config.Daemon.BootstrapAddresses,
