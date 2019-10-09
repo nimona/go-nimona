@@ -7,19 +7,20 @@ import (
 
 	"nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	stream "nimona.io/pkg/stream"
 )
 
 type (
 	ObjectRequest struct {
-		ObjectHash *object.Hash        `json:"objectHash:o,omitempty"`
-		Signature  *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors    []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		ObjectHash *object.Hash      `json:"objectHash:o,omitempty"`
+		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors    []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	ObjectForward struct {
-		Recipient string              `json:"recipient:s,omitempty"`
-		FwObject  *object.Object      `json:"fwObject:o,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Recipient string            `json:"recipient:s,omitempty"`
+		FwObject  *object.Object    `json:"fwObject:o,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 )
 

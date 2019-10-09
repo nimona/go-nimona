@@ -7,27 +7,28 @@ import (
 	crypto "example/crypto"
 
 	object "nimona.io/pkg/object"
+	stream "nimona.io/pkg/stream"
 )
 
 type (
 	ConversationTopicSet struct {
-		Stream    *crypto.Hash        `json:"@stream:o,omitempty"`
-		Topic     string              `json:"topic:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Topic     string            `json:"topic:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	ConversationNameSet struct {
-		Stream    *crypto.Hash        `json:"@stream:o,omitempty"`
-		Name      string              `json:"name:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Name      string            `json:"name:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	ConversationMessageAdded struct {
-		Stream    *crypto.Hash        `json:"@stream:o,omitempty"`
-		Parents   []*crypto.Hash      `json:"parents:ao,omitempty"`
-		Body      string              `json:"body:s,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
+		Body      string            `json:"body:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 )
 

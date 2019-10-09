@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	stream "nimona.io/pkg/stream"
 )
 
 type (
@@ -15,14 +16,14 @@ type (
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 	}
 	Requested struct {
-		Keys      []string            `json:"keys:as,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Keys      []string          `json:"keys:as,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	Updated struct {
-		Addresses []string            `json:"addresses:as,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Addresses []string          `json:"addresses:as,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 )
 

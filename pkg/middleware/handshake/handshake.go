@@ -1,13 +1,14 @@
 package handshake
 
 import (
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/log"
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/stream"
 )
 
 // NewHandshake ...
@@ -37,7 +38,6 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 
 func (hs *Handshake) handleIncoming(ctx context.Context,
 	conn *net.Connection) (*net.Connection, error) {
-
 	logger := log.
 		FromContext(ctx).
 		Named("net/middleware/handleIncoming").
@@ -49,8 +49,10 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 	nonce := rand.String(8)
 	syn := &Syn{
 		Nonce: nonce,
-		Authors: []*crypto.PublicKey{
-			hs.local.GetPeerKey().PublicKey,
+		Authors: []*stream.Author{
+			&stream.Author{
+				PublicKey: hs.local.GetPeerKey().PublicKey,
+			},
 		},
 	}
 	so := syn.ToObject()
@@ -82,7 +84,7 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Authors[0]
+	conn.RemotePeerKey = synAck.Authors[0].PublicKey
 
 	// TODO(@geoah) do we need to do something about this?
 	// hs.discoverer.Add(synAck.Peer)
@@ -103,7 +105,6 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 	logger.Debug("sent acl, done")
 
 	return conn, nil
-
 }
 
 func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
@@ -133,15 +134,17 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Authors[0]
+	conn.RemotePeerKey = syn.Authors[0].PublicKey
 
 	// TODO(@geoah) this one too
 	// hs.discoverer.Add(syn.Peer)
 
 	synAck := &SynAck{
 		Nonce: syn.Nonce,
-		Authors: []*crypto.PublicKey{
-			hs.local.GetPeerKey().PublicKey,
+		Authors: []*stream.Author{
+			&stream.Author{
+				PublicKey: hs.local.GetPeerKey().PublicKey,
+			},
 		},
 	}
 

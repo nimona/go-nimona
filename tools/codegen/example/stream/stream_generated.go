@@ -7,6 +7,7 @@ import (
 	crypto "example/crypto"
 
 	object "nimona.io/pkg/object"
+	stream "nimona.io/pkg/stream"
 )
 
 type (
@@ -17,18 +18,18 @@ type (
 		Action     string              `json:"action:s,omitempty"`
 	}
 	Created struct {
-		CreatedDateTime string              `json:"createdDateTime:s,omitempty"`
-		PartitionKeys   []string            `json:"partitionKeys:as,omitempty"`
-		Policies        []*Policy           `json:"@policies:ao,omitempty"`
-		Signature       *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors         []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
+		PartitionKeys   []string          `json:"partitionKeys:as,omitempty"`
+		Policies        []*Policy         `json:"@policies:ao,omitempty"`
+		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors         []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 	PoliciesUpdated struct {
-		Stream    *crypto.Hash        `json:"@stream:o,omitempty"`
-		Parents   []*crypto.Hash      `json:"@parents:ao,omitempty"`
-		Policies  []*Policy           `json:"@policies:ao,omitempty"`
-		Signature *crypto.Signature   `json:"@signature:o,omitempty"`
-		Authors   []*crypto.PublicKey `json:"@authors:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Parents   []*crypto.Hash    `json:"@parents:ao,omitempty"`
+		Policies  []*Policy         `json:"@policies:ao,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
 	}
 )
 

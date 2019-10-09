@@ -19,7 +19,8 @@ abstract domain nimona.io/stream {
         @policies repeated Policy
     }
     signed event Subscribed {
-        @policies repeated Policy
+    }
+    signed event Unsubscribed {
     }
     signed event PolicyAttached {
         @stream nimona.io/object.Hash

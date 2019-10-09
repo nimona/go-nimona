@@ -108,6 +108,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				e.Name = ucFirst(lDomain) + ucFirst(e.Name)
 			}
 			if e.IsSigned {
+				streamPkg := "stream."
+				if doc.Package == "nimona.io/stream" {
+					streamPkg = ""
+				}
 				doc.Domains[i].Events[k].Members = append(
 					doc.Domains[i].Events[k].Members,
 					&Member{
@@ -117,7 +121,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 					},
 					&Member{
 						Name: "Authors",
-						Type: "[]*crypto.PublicKey",
+						Type: "[]*" + streamPkg + "Author",
 						Tag:  "@authors:ao",
 					},
 				)
@@ -128,6 +132,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	doc.Imports["json"] = "encoding/json"
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"
+	}
+	if doc.Package != "nimona.io/stream" {
+		doc.Imports["stream"] = "nimona.io/stream"
 	}
 
 	for alias, pkg := range doc.Imports {
