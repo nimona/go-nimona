@@ -1,17 +1,17 @@
 package example/crypto
 
 domain example/crypto {
-    struct Hash {
+    object Hash {
         hashType string
         digest data
     }
-    struct Signature {
+    object Signature {
         publicKey PublicKey
         algorithm string
         r data
         s data
     }
-    struct PrivateKey {
+    object PrivateKey {
         publicKey PublicKey
         keyType string
         algorithm string
@@ -20,7 +20,7 @@ domain example/crypto {
         y data
         d data
     }
-    struct PublicKey {
+    object PublicKey {
         keyType string
         algorithm string
         curve string

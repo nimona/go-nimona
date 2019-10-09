@@ -1,13 +1,13 @@
 package nimona.io/crypto
 
 domain nimona.io/crypto {
-    struct Signature {
+    object Signature {
         publicKey PublicKey
         algorithm string
         r data
         s data
     }
-    struct PrivateKey {
+    object PrivateKey {
         keyType string
         publicKey PublicKey
         algorithm string
@@ -16,7 +16,7 @@ domain nimona.io/crypto {
         y data
         d data
     }
-    struct PublicKey {
+    object PublicKey {
         keyType string
         algorithm string
         curve string

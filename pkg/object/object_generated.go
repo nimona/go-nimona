@@ -22,9 +22,7 @@ func (e *Hash) GetType() string {
 
 func (e *Hash) ToObject() Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/Hash",
-		"@domain:s": "nimona.io/object",
-		"@struct:s": "Hash",
+		"@ctx:s": "nimona.io/Hash",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -42,9 +40,7 @@ func (e *Link) GetType() string {
 
 func (e *Link) ToObject() Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/Link",
-		"@domain:s": "nimona.io/object",
-		"@struct:s": "Link",
+		"@ctx:s": "nimona.io/Link",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

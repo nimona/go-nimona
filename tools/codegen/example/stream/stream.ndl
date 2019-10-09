@@ -3,7 +3,7 @@ package example/stream
 import example/crypto crypto
 
 abstract domain example/stream {
-    struct Policy {
+    object Policy {
         subjects repeated example/crypto.PublicKey
         resources repeated string
         conditions repeated string

@@ -56,9 +56,7 @@ func (e *Policy) GetType() string {
 
 func (e *Policy) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.Policy",
-		"@domain:s": "nimona.io/stream",
-		"@struct:s": "Policy",
+		"@ctx:s": "nimona.io/stream.Policy",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -76,9 +74,7 @@ func (e *Author) GetType() string {
 
 func (e *Author) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.Author",
-		"@domain:s": "nimona.io/stream",
-		"@struct:s": "Author",
+		"@ctx:s": "nimona.io/stream.Author",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -90,19 +86,13 @@ func (e *Author) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Created) EventName() string {
-	return "Created"
-}
-
 func (e *Created) GetType() string {
 	return "nimona.io/stream.Created"
 }
 
 func (e *Created) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.Created",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "Created",
+		"@ctx:s": "nimona.io/stream.Created",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -114,19 +104,13 @@ func (e *Created) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Subscribed) EventName() string {
-	return "Subscribed"
-}
-
 func (e *Subscribed) GetType() string {
 	return "nimona.io/stream.Subscribed"
 }
 
 func (e *Subscribed) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.Subscribed",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "Subscribed",
+		"@ctx:s": "nimona.io/stream.Subscribed",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -138,19 +122,13 @@ func (e *Subscribed) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PolicyAttached) EventName() string {
-	return "PolicyAttached"
-}
-
 func (e *PolicyAttached) GetType() string {
 	return "nimona.io/stream.PolicyAttached"
 }
 
 func (e *PolicyAttached) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.PolicyAttached",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "PolicyAttached",
+		"@ctx:s": "nimona.io/stream.PolicyAttached",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -162,19 +140,13 @@ func (e *PolicyAttached) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *RequestEventList) EventName() string {
-	return "RequestEventList"
-}
-
 func (e *RequestEventList) GetType() string {
 	return "nimona.io/stream.RequestEventList"
 }
 
 func (e *RequestEventList) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.RequestEventList",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "RequestEventList",
+		"@ctx:s": "nimona.io/stream.RequestEventList",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -186,19 +158,13 @@ func (e *RequestEventList) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *EventListCreated) EventName() string {
-	return "EventListCreated"
-}
-
 func (e *EventListCreated) GetType() string {
 	return "nimona.io/stream.EventListCreated"
 }
 
 func (e *EventListCreated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.EventListCreated",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "EventListCreated",
+		"@ctx:s": "nimona.io/stream.EventListCreated",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -210,19 +176,13 @@ func (e *EventListCreated) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *RequestEvents) EventName() string {
-	return "RequestEvents"
-}
-
 func (e *RequestEvents) GetType() string {
 	return "nimona.io/stream.RequestEvents"
 }
 
 func (e *RequestEvents) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/stream.RequestEvents",
-		"@domain:s": "nimona.io/stream",
-		"@event:s":  "RequestEvents",
+		"@ctx:s": "nimona.io/stream.RequestEvents",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

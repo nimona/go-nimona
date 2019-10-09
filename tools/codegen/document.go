@@ -5,7 +5,7 @@ type Document struct {
 	Package      string
 	Imports      map[string]string
 	Domains      []*Domain
-	Structs      []*Struct
+	Objects      []*Object
 }
 
 type Domain struct {
@@ -13,7 +13,7 @@ type Domain struct {
 	Extends    string
 	Name       string
 	Events     []*Event
-	Structs    []*Struct
+	Objects    []*Object
 }
 
 type Event struct {
@@ -23,7 +23,7 @@ type Event struct {
 	Members   []*Member
 }
 
-type Struct struct {
+type Object struct {
 	Name    string
 	Members []*Member
 }

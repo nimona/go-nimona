@@ -3,7 +3,7 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 
 domain nimona.io/peer {
-    struct Peer {
+    object Peer {
         addresses repeated string
         @signature crypto.Signature
     }

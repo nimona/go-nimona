@@ -21,9 +21,9 @@ import (
 {{ if .Domains }}
 type (
 	{{- range $domain := .Domains }}
-	{{- range $struct := $domain.Structs }}
-	{{ $struct.Name }} struct {
-		{{- range $member := $struct.Members }}
+	{{- range $object := $domain.Objects }}
+	{{ $object.Name }} struct {
+		{{- range $member := $object.Members }}
 		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
 		{{- end }}
 	}
@@ -40,32 +40,26 @@ type (
 {{ end }}
 
 {{ range $domain := .Domains }}
-{{ range $struct := .Structs }}
-func (e *{{ structName $struct.Name }}) GetType() string {
-	return "{{ $domain.Name }}.{{ $struct.Name }}"
+{{ range $object := .Objects }}
+func (e *{{ structName $object.Name }}) GetType() string {
+	return "{{ $domain.Name }}.{{ $object.Name }}"
 }
 
-func (e *{{ structName $struct.Name }}) ToObject() object.Object {
+func (e *{{ structName $object.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s": "{{ $domain.Name }}.{{ $struct.Name }}",
-		"@domain:s": "{{ $domain.Name }}",
-		"@struct:s": "{{ $struct.Name }}",
+		"@ctx:s": "{{ $domain.Name }}.{{ $object.Name }}",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 
-func (e *{{ structName $struct.Name }}) FromObject(o object.Object) error {
+func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 {{ end }}
 {{ range $event := .Events }}
-func (e *{{ structName $event.Name }}) EventName() string {
-	return "{{ $event.Name }}"
-}
-
 func (e *{{ structName $event.Name }}) GetType() string {
 	return "{{ $domain.Name }}.{{ $event.Name }}"
 }
@@ -73,8 +67,6 @@ func (e *{{ structName $event.Name }}) GetType() string {
 func (e *{{ structName $event.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{
 		"@ctx:s": "{{ $domain.Name }}.{{ $event.Name }}",
-		"@domain:s": "{{ $domain.Name }}",
-		"@event:s": "{{ $event.Name }}",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

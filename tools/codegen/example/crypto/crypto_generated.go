@@ -44,9 +44,7 @@ func (e *Hash) GetType() string {
 
 func (e *Hash) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/crypto.Hash",
-		"@domain:s": "example/crypto",
-		"@struct:s": "Hash",
+		"@ctx:s": "example/crypto.Hash",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -64,9 +62,7 @@ func (e *Signature) GetType() string {
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/crypto.Signature",
-		"@domain:s": "example/crypto",
-		"@struct:s": "Signature",
+		"@ctx:s": "example/crypto.Signature",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -84,9 +80,7 @@ func (e *PrivateKey) GetType() string {
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/crypto.PrivateKey",
-		"@domain:s": "example/crypto",
-		"@struct:s": "PrivateKey",
+		"@ctx:s": "example/crypto.PrivateKey",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -104,9 +98,7 @@ func (e *PublicKey) GetType() string {
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "example/crypto.PublicKey",
-		"@domain:s": "example/crypto",
-		"@struct:s": "PublicKey",
+		"@ctx:s": "example/crypto.PublicKey",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

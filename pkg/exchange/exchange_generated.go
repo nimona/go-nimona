@@ -23,19 +23,13 @@ type (
 	}
 )
 
-func (e *ObjectRequest) EventName() string {
-	return "ObjectRequest"
-}
-
 func (e *ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
 
 func (e *ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/exchange.ObjectRequest",
-		"@domain:s": "nimona.io/exchange",
-		"@event:s":  "ObjectRequest",
+		"@ctx:s": "nimona.io/exchange.ObjectRequest",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -47,19 +41,13 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *ObjectForward) EventName() string {
-	return "ObjectForward"
-}
-
 func (e *ObjectForward) GetType() string {
 	return "nimona.io/exchange.ObjectForward"
 }
 
 func (e *ObjectForward) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/exchange.ObjectForward",
-		"@domain:s": "nimona.io/exchange",
-		"@event:s":  "ObjectForward",
+		"@ctx:s": "nimona.io/exchange.ObjectForward",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

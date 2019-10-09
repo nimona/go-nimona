@@ -12,7 +12,7 @@ import (
 var (
 	ErrNotField  = errors.New("not a field")
 	ErrNotDomain = errors.New("not a domain")
-	ErrNotStruct = errors.New("not a struct")
+	ErrNotStruct = errors.New("not a object")
 )
 
 type Parser struct {
@@ -74,7 +74,7 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	case PACKAGE,
 		DOMAIN,
 		EXTENDS,
-		STRUCT,
+		OBJECT,
 		COMMAND,
 		EVENT:
 		_, text, err := p.expect(TEXT)
@@ -185,19 +185,19 @@ func (p *Parser) parseEvent() (*Event, error) {
 	return event, nil
 }
 
-func (p *Parser) parseStruct() (*Struct, error) {
-	// create struct
-	str := &Struct{}
+func (p *Parser) parseObject() (*Object, error) {
+	// create object
+	str := &Object{}
 
-	// expect STRUCT
-	_, value, err := p.expect(STRUCT)
+	// expect OBJECT
+	_, value, err := p.expect(OBJECT)
 	if err != nil {
 		return nil, ErrNotStruct
 	}
 
 	str.Name = value
 
-	fmt.Println("Found struct", str.Name)
+	fmt.Println("Found object", str.Name)
 
 	// expect "{"
 	if _, value, err := p.expect(OBRACE); err != nil {
@@ -267,12 +267,12 @@ func (p *Parser) parseDomain() (*Domain, error) {
 
 		p.unscan()
 
-		// expect "struct"
-		str, err := p.parseStruct()
+		// expect "object"
+		str, err := p.parseObject()
 		if err != nil && err != ErrNotStruct {
 			return nil, err
 		} else if err == nil {
-			domain.Structs = append(domain.Structs, str)
+			domain.Objects = append(domain.Objects, str)
 			continue
 		}
 
@@ -318,19 +318,20 @@ func (p *Parser) Parse() (*Document, error) {
 			return nil, fmt.Errorf("found %q, expected TEXT for import", token)
 		}
 		token, importAlias := p.scanIgnoreWhiteSpace()
-		if token != TEXT {
+		// doesn't really matter what the token is here, as long as it's not eof
+		if token == EOF {
 			return nil, fmt.Errorf("found %q, expected TEXT for import alias", token)
 		}
 		fmt.Println("Found import", importPkg, "as", importAlias)
 		doc.Imports[importAlias] = importPkg
 	}
 
-	// expect "struct"
-	str, err := p.parseStruct()
+	// expect "object"
+	str, err := p.parseObject()
 	if err != nil && err != ErrNotStruct {
 		return nil, err
 	} else if err == nil {
-		doc.Structs = append(doc.Structs, str)
+		doc.Objects = append(doc.Objects, str)
 	} else {
 		p.unscan()
 	}
@@ -348,12 +349,12 @@ func (p *Parser) Parse() (*Document, error) {
 
 		p.unscan()
 
-		// expect "struct"
-		str, err := p.parseStruct()
+		// expect "object"
+		str, err := p.parseObject()
 		if err != nil && err != ErrNotStruct {
 			return nil, err
 		} else if err == nil {
-			doc.Structs = append(doc.Structs, str)
+			doc.Objects = append(doc.Objects, str)
 			continue
 		}
 
@@ -365,7 +366,7 @@ func (p *Parser) Parse() (*Document, error) {
 			break
 		}
 
-		return nil, fmt.Errorf("found %q, expected ABSTRACT, DOMAIN, or STRUCT", token)
+		return nil, fmt.Errorf("found %q, expected ABSTRACT, DOMAIN, or OBJECT", token)
 	}
 
 	return doc, nil

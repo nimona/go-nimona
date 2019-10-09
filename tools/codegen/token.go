@@ -11,7 +11,7 @@ const (
 	EOF        Token = "EOF"
 	EVENT      Token = "EVENT"
 	COMMAND    Token = "COMMAND"
-	STRUCT     Token = "STRUCT"
+	OBJECT     Token = "OBJECT"
 	REPEATED   Token = "REPEATED"
 	SIGNED     Token = "SIGNED"
 	ABSTRACT   Token = "ABSTRACT"
@@ -34,7 +34,7 @@ var (
 		"domain":   DOMAIN,
 		"event":    EVENT,
 		"command":  COMMAND,
-		"struct":   STRUCT,
+		"object":   OBJECT,
 		"repeated": REPEATED,
 		"primary":  PRIMARY,
 		"signed":   SIGNED,

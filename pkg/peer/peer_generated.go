@@ -32,9 +32,7 @@ func (e *Peer) GetType() string {
 
 func (e *Peer) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer.Peer",
-		"@domain:s": "nimona.io/peer",
-		"@struct:s": "Peer",
+		"@ctx:s": "nimona.io/peer.Peer",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -46,19 +44,13 @@ func (e *Peer) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Requested) EventName() string {
-	return "Requested"
-}
-
 func (e *Requested) GetType() string {
 	return "nimona.io/peer.Requested"
 }
 
 func (e *Requested) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer.Requested",
-		"@domain:s": "nimona.io/peer",
-		"@event:s":  "Requested",
+		"@ctx:s": "nimona.io/peer.Requested",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)
@@ -70,19 +62,13 @@ func (e *Requested) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Updated) EventName() string {
-	return "Updated"
-}
-
 func (e *Updated) GetType() string {
 	return "nimona.io/peer.Updated"
 }
 
 func (e *Updated) ToObject() object.Object {
 	m := map[string]interface{}{
-		"@ctx:s":    "nimona.io/peer.Updated",
-		"@domain:s": "nimona.io/peer",
-		"@event:s":  "Updated",
+		"@ctx:s": "nimona.io/peer.Updated",
 	}
 	b, _ := json.Marshal(e)
 	json.Unmarshal(b, &m)

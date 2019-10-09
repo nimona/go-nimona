@@ -1,11 +1,11 @@
 package nimona.io/object
 
 domain nimona.io/object {
-    struct Hash {
+    object Hash {
         algorithm string
         d data
     }
-    struct Link {
+    object Link {
         target Hash
     }
 }
