@@ -11,10 +11,10 @@ import (
 
 type (
 	Policy struct {
-		Subjects   []*crypto.PublicKey `json:"subjects:ao,omitempty"`
-		Resources  []string            `json:"resources:as,omitempty"`
-		Conditions []string            `json:"conditions:as,omitempty"`
-		Action     string              `json:"action:s,omitempty"`
+		Subjects   []string `json:"subjects:as,omitempty"`
+		Resources  []string `json:"resources:as,omitempty"`
+		Conditions []string `json:"conditions:as,omitempty"`
+		Action     string   `json:"action:s,omitempty"`
 	}
 	Author struct {
 		PublicKey *crypto.PublicKey `json:"publicKey:o,omitempty"`

@@ -5,7 +5,7 @@ import nimona.io/object object
 
 abstract domain nimona.io/stream {
     object Policy {
-        subjects repeated nimona.io/crypto.PublicKey
+        subjects repeated string
         resources repeated string
         conditions repeated string
         action string
