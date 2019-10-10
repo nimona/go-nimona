@@ -1,4 +1,4 @@
-package object
+package hash
 
 import (
 	"crypto/sha256"
@@ -8,28 +8,34 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+
+	"nimona.io/pkg/object"
 )
 
-// NewHash consistently hashes a map.
+// New consistently hashes a map.
 // It is based on Ben Laurie's object hash, but using the same type hints
 // as TJSON instead.
 // TODO add redaction
-func NewHash(o Object) (*Hash, error) {
+func New(o object.Object) *object.Hash {
 	d, err := objecthash(o.ToMap())
-	return &Hash{
+	if err != nil {
+		panic(err)
+	}
+	// TODO(geoah) consider having an invalid hash type
+	return &object.Hash{
 		Algorithm: "OH1",
 		D:         d,
-	}, err
+	}
 }
 
-func hintsFromKey(k string) []TypeHint {
+func hintsFromKey(k string) []object.TypeHint {
 	ps := strings.Split(k, ":")
 	if len(ps) == 1 {
 		return nil
 	}
-	hs := []TypeHint{}
+	hs := []object.TypeHint{}
 	for _, sh := range ps[1] {
-		hs = append(hs, GetTypeHint(string(sh)))
+		hs = append(hs, object.GetTypeHint(string(sh)))
 	}
 	return hs
 }
@@ -59,16 +65,16 @@ func objecthash(m map[string]interface{}) ([]byte, error) {
 			continue
 		}
 		// fmt.Println("hashing value for", k, "as", fmt.Sprintf("%x", hv))
-		hk := hash(HintString, []byte(k))
+		hk := hash(object.HintString, []byte(k))
 		b = append(b, hk...)
 		b = append(b, hv...)
 		x[k] = hv
 	}
-	h := hash(HintObject, b)
+	h := hash(object.HintObject, b)
 	return h, nil
 }
 
-func hash(p TypeHint, b []byte) []byte {
+func hash(p object.TypeHint, b []byte) []byte {
 	h := sha256.New()
 	if _, err := h.Write([]byte(p)); err != nil {
 		panic(err)
@@ -79,7 +85,7 @@ func hash(p TypeHint, b []byte) []byte {
 	return h.Sum(nil)
 }
 
-func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
+func hashValueAs(k string, o interface{}, ts ...object.TypeHint) []byte {
 	if o == nil {
 		return nil
 	}
@@ -92,7 +98,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 	}
 
 	switch ts[0] {
-	case HintArray:
+	case object.HintArray:
 		if v.Len() == 0 {
 			return nil
 		}
@@ -105,8 +111,8 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 			b = append(b, hashValueAs(k, iv, ts[1:]...)...)
 		}
 		// TODO(geoah) hint SHOULD NOT be array, but array + inner hint
-		return hash(HintArray, b)
-	case HintString:
+		return hash(object.HintArray, b)
+	case object.HintString:
 		s, ok := o.(string)
 		if !ok {
 			if ss, ok := o.(interface{ String() string }); ok {
@@ -118,15 +124,15 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 		if s == "" {
 			return nil
 		}
-		return hash(HintString, []byte(s))
-	case HintData:
+		return hash(object.HintString, []byte(s))
+	case object.HintData:
 		switch t.Kind() {
 		case reflect.String:
 			d, err := base64.StdEncoding.DecodeString(o.(string))
 			if err != nil {
 				panic(err)
 			}
-			return hash(HintData, d)
+			return hash(object.HintData, d)
 		case reflect.Slice:
 			bo := make([]byte, v.Len())
 			switch t.Elem().Kind() {
@@ -138,7 +144,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 				for i := 0; i < v.Len(); i++ {
 					bo[i] = uint8(v.Index(i).Int())
 				}
-				return hash(HintData, bo)
+				return hash(object.HintData, bo)
 			case reflect.Uint,
 				reflect.Uint8,
 				reflect.Uint16,
@@ -147,7 +153,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 				for i := 0; i < v.Len(); i++ {
 					bo[i] = uint8(v.Index(i).Uint())
 				}
-				return hash(HintData, bo)
+				return hash(object.HintData, bo)
 			case reflect.Interface:
 				for i := 0; i < v.Len(); i++ {
 					iv := v.Index(i).Interface()
@@ -163,14 +169,14 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 							t.Elem().Kind().String())
 					}
 				}
-				return hash(HintData, bo)
+				return hash(object.HintData, bo)
 			default:
 				panic("data should be some sort of number array, was " +
 					t.Elem().Kind().String())
 			}
 		}
-		return hash(HintData, o.([]byte))
-	case HintObject:
+		return hash(object.HintData, o.([]byte))
+	case object.HintObject:
 		m, ok := o.(map[string]interface{})
 		if !ok {
 			panic("hashing only supports map[string]interface{}")
@@ -183,7 +189,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 			panic("hashing error: " + err.Error())
 		}
 		return h
-	case HintFloat:
+	case object.HintFloat:
 		switch t.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
@@ -191,7 +197,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 			if err != nil {
 				panic(err)
 			}
-			return hash(HintFloat, nf)
+			return hash(object.HintFloat, nf)
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
@@ -201,7 +207,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 			if err != nil {
 				panic(err)
 			}
-			return hash(HintFloat, nf)
+			return hash(object.HintFloat, nf)
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
@@ -211,33 +217,33 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 			if err != nil {
 				panic(err)
 			}
-			return hash(HintFloat, nf)
+			return hash(object.HintFloat, nf)
 		}
-	case HintInt:
+	case object.HintInt:
 		switch t.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", int64(v.Float()))))
+			return hash(object.HintInt, []byte(fmt.Sprintf("%d", int64(v.Float()))))
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", v.Int())))
+			return hash(object.HintInt, []byte(fmt.Sprintf("%d", v.Int())))
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", int64(v.Uint()))))
+			return hash(object.HintInt, []byte(fmt.Sprintf("%d", int64(v.Uint()))))
 		}
-	case HintUint:
-		return hash(HintUint, []byte(fmt.Sprintf("%d", o)))
-	case HintBool:
+	case object.HintUint:
+		return hash(object.HintUint, []byte(fmt.Sprintf("%d", o)))
+	case object.HintBool:
 		if v.Bool() {
-			return hash(HintBool, []byte{1})
+			return hash(object.HintBool, []byte{1})
 		}
-		return hash(HintBool, []byte{0})
+		return hash(object.HintBool, []byte{0})
 	}
 	panic(
 		fmt.Sprintf("hash: unsupported type %s (%s) for key %s",
@@ -260,7 +266,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 // 			return nil
 // 		}
 // 		if t.Elem() == reflect.TypeOf(byte(0)) {
-// 			return hash(HintData, o.([]byte))
+// 			return hash(object.HintData, o.([]byte))
 // 		}
 // 		vs := []interface{}{}
 // 		for i := 0; i < v.Len(); i++ {
@@ -270,12 +276,12 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 // 		for _, iv := range vs {
 // 			b = append(b, hashValue(iv)...)
 // 		}
-// 		return hash(HintArray, b)
+// 		return hash(object.HintArray, b)
 // 	case reflect.String:
 // 		if o.(string) == "" {
 // 			return nil
 // 		}
-// 		return hash(HintString, []byte(o.(string)))
+// 		return hash(object.HintString, []byte(o.(string)))
 // 	case reflect.Struct:
 // 		panic("structs are not currently supported")
 // 	case reflect.Map:
@@ -296,16 +302,16 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 // 		if err != nil {
 // 			panic(err)
 // 		}
-// 		return hash(HintFloat, []byte(nf))
+// 		return hash(object.HintFloat, []byte(nf))
 // 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-// 		return hash(HintInt, []byte(fmt.Sprintf("%d", v.Int())))
+// 		return hash(object.HintInt, []byte(fmt.Sprintf("%d", v.Int())))
 // 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-// 		return hash(HintUint, []byte(fmt.Sprintf("%d", v.Uint())))
+// 		return hash(object.HintUint, []byte(fmt.Sprintf("%d", v.Uint())))
 // 	case reflect.Bool:
 // 		if v.Bool() {
-// 			return hash(HintBool, []byte{1})
+// 			return hash(object.HintBool, []byte{1})
 // 		}
-// 		return hash(HintBool, []byte{0})
+// 		return hash(object.HintBool, []byte{0})
 // 	}
 // 	panic("hash: unsupported type " + v.String() + " -- " + fmt.Sprintf("%#v", o))
 // }
@@ -329,5 +335,5 @@ func hashFloat(f float64) ([]byte, error) {
 		nf = fmt.Sprintf("%x", math.Float64bits(f))
 	}
 
-	return hash(HintFloat, []byte(nf)), nil
+	return hash(object.HintFloat, []byte(nf)), nil
 }

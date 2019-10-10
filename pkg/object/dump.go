@@ -8,8 +8,6 @@ func Dump(o Object, skipKeys ...string) string {
 	for _, skipKey := range skipKeys {
 		delete(m, skipKey)
 	}
-	m["_hash"] = o.Hash().Compact()
-	// TODO(NOW): add sig chain as _xxx?
 	j, _ := json.MarshalIndent(m, "", "  ")
 	return string(j)
 }

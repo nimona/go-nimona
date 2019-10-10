@@ -1,4 +1,4 @@
-package object
+package hash
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"nimona.io/pkg/object"
 )
 
 func TestObjectHash(t *testing.T) {
@@ -13,14 +15,13 @@ func TestObjectHash(t *testing.T) {
 		"str:s": "foo",
 	}
 
-	kh := hash(HintString, []byte("str:s"))
-	vh := hash(HintString, []byte("foo"))
+	kh := hash(object.HintString, []byte("str:s"))
+	vh := hash(object.HintString, []byte("foo"))
 	ob := append(kh, vh...)
-	oh := hash(HintObject, ob)
+	oh := hash(object.HintObject, ob)
 
-	o := FromMap(v)
-	h, err := NewHash(o)
-	assert.NoError(t, err)
+	o := object.FromMap(v)
+	h := New(o)
 	assert.Equal(t, oh, h.D)
 }
 
@@ -32,14 +33,13 @@ func TestObjectHashWithSignature(t *testing.T) {
 		},
 	}
 
-	kh := hash(HintString, []byte("str:s"))
-	vh := hash(HintString, []byte("foo"))
+	kh := hash(object.HintString, []byte("str:s"))
+	vh := hash(object.HintString, []byte("foo"))
 	ob := append(kh, vh...)
-	oh := hash(HintObject, ob)
+	oh := hash(object.HintObject, ob)
 
-	o := FromMap(v)
-	h, err := NewHash(o)
-	assert.NoError(t, err)
+	o := object.FromMap(v)
+	h := New(o)
 	assert.Equal(t, oh, h.D)
 }
 
@@ -52,9 +52,9 @@ func TestObjectHashDocs(t *testing.T) {
 		},
 	}
 
-	o := FromMap(v)
-	_, err := NewHash(o)
-	assert.NoError(t, err)
+	o := object.FromMap(v)
+	h := New(o)
+	assert.NotNil(t, h)
 }
 
 func TestLongObjectHash(t *testing.T) {
@@ -93,9 +93,9 @@ func TestLongObjectHash(t *testing.T) {
 		"bool:b": true,
 	}
 
-	o := FromMap(v)
-	_, err := NewHash(o)
-	assert.NoError(t, err)
+	o := object.FromMap(v)
+	h := New(o)
+	assert.NotNil(t, h)
 }
 
 func TestLongObjectHashInterfaces(t *testing.T) {
@@ -106,17 +106,17 @@ func TestLongObjectHashInterfaces(t *testing.T) {
 		"As:as": []interface{}{"a", "b"},
 	}
 
-	o := FromMap(v)
-	h, err := NewHash(o)
-	assert.NoError(t, err)
+	o := object.FromMap(v)
+	h := New(o)
+	assert.NotNil(t, h)
 
 	b := `{"I:i":1,"Ai:ai":[1,2],"S:s":"a","As:as":["a","b"]}` // nolint
 	nv := map[string]interface{}{}
 	json.Unmarshal([]byte(b), &nv) // nolint
 
-	no := FromMap(nv)
-	nh, err := NewHash(no)
-	assert.NoError(t, err)
+	no := object.FromMap(nv)
+	nh := New(no)
+	assert.NotNil(t, nh)
 
 	assert.Equal(t, h, nh)
 }

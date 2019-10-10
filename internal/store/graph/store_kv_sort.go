@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -9,7 +10,7 @@ func topographicalSortObjects(os []object.Object) []object.Object {
 	osm := map[string]object.Object{}
 	graph := map[string][]string{}
 	for _, o := range os {
-		key := o.Hash().String()
+		key := hash.New(o).String()
 		osm[key] = o
 		parentKeys := stream.Parents(o)
 		if _, ok := graph[key]; !ok {

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 )
 
@@ -40,8 +41,8 @@ func NewSignature(
 	}
 
 	var (
-		hash *object.Hash
-		err  error
+		h   *object.Hash
+		err error
 	)
 
 	switch alg {
@@ -72,15 +73,13 @@ func NewSignature(
 	// 	h := sha256.Sum256(b)
 	// 	hash = h[:]
 	case AlgorithmObjectHash:
-		hash, err = object.NewHash(o)
-		if err != nil {
-			return nil, err
-		}
+		h = hash.New(o)
 	default:
 		return nil, ErrAlgorithNotImplemented
 	}
 
-	r, s, err := ecdsa.Sign(rand.Reader, pKey, hash.D)
+	// TODO(geoah) should this just be the data or should it include the alg?
+	r, s, err := ecdsa.Sign(rand.Reader, pKey, h.D)
 	if err != nil {
 		return nil, err
 	}

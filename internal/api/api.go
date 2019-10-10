@@ -9,6 +9,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
@@ -141,8 +142,8 @@ func (api *API) Stop(c *router.Context) {
 
 func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
-	m["_hash.compact"] = o.Hash().String()
-	m["_hash"] = o.Hash().ToObject().ToObject()
+	m["_hash.compact"] = hash.New(o).String()
+	m["_hash"] = hash.New(o.ToObject()).ToObject()
 	if o.GetType() == "nimona.io/crypto/PublicKey" {
 		p := &crypto.PublicKey{}
 		p.FromObject(o) // nolint: errcheck
