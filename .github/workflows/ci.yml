@@ -27,6 +27,13 @@ jobs:
 
       - name: Make test
         run: make test
+        env:
+          VERBOSE: 'true'
+
+      - name: Make e2e
+        run: make e2e
+        env:
+          VERBOSE: 'true'
 
   build:
     name: Build

@@ -104,6 +104,18 @@ generate: github.com/myitcv/gobin codegen
 	-go generate $(V) ./...
 	-$(GOBIN)/codegen -a .
 
+# Run e2e tests
+.PHONY: e2e
+e2e:
+	$(eval TAGS += e2e)
+	docker build -t nimona:dev .
+	E2E_DOCKER_IMAGE=nimona:dev \
+	cd pkg/simulation; \
+	go test $(V) \
+		-tags="$(TAGS)" \
+		-count=1 \
+		./...
+
 # Run go test
 .PHONY: test
 test:
