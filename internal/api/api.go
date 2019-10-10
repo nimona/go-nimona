@@ -144,7 +144,7 @@ func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
 	m["_hash.compact"] = hash.New(o).String()
 	m["_hash"] = hash.New(o.ToObject()).ToObject()
-	if o.GetType() == "nimona.io/crypto/PublicKey" {
+	if o.GetType() == "nimona.io/crypto.PublicKey" {
 		p := &crypto.PublicKey{}
 		p.FromObject(o) // nolint: errcheck
 		m["_fingerprint.compact"] = p.Fingerprint().String()

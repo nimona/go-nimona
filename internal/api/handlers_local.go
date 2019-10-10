@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"nimona.io/internal/store/graph"
 	"nimona.io/internal/http/router"
+	"nimona.io/internal/store/graph"
 )
 
 func (api *API) HandleGetLocal(c *router.Context) {
-	ms := api.mapObject(api.local.GetSignedPeer().ToObject())
+	p := api.local.GetSignedPeer()
+	ms := api.mapObject(p.ToObject())
+	ms["_fingerprint"] = p.Fingerprint().String()
 	c.JSON(http.StatusOK, ms)
 }
 
