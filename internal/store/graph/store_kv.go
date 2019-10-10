@@ -6,6 +6,7 @@ import (
 
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -29,7 +30,7 @@ func (s *Graph) Put(v object.Object) error {
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	key := v.Hash().String()
+	key := hash.New(v).String()
 	if err := s.store.Put(key, value); err != nil {
 		return errors.Wrap(err, errors.New("could not persist object"))
 	}
@@ -121,8 +122,8 @@ func (s *Graph) Heads() ([]object.Object, error) {
 }
 
 // Tails returns all the objects that do are not being used as parents
-func (s *Graph) Tails(hash string) ([]object.Object, error) {
-	os, err := s.Graph(hash)
+func (s *Graph) Tails(nodeHash string) ([]object.Object, error) {
+	os, err := s.Graph(nodeHash)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not get graph"))
 	}
@@ -130,7 +131,7 @@ func (s *Graph) Tails(hash string) ([]object.Object, error) {
 	hm := map[string]bool{} // map[hash]isParent
 	om := map[string]object.Object{}
 	for _, o := range os {
-		h := o.Hash().String()
+		h := hash.New(o).String()
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}
@@ -163,7 +164,7 @@ func (s *Graph) Dump() ([]object.Object, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, errors.New("could not get object"))
 		}
-		om[o.Hash().String()] = o
+		om[hash.New(o).String()] = o
 	}
 
 	os := []object.Object{}

@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
@@ -59,52 +60,54 @@ var (
 		},
 	})
 
+	oh = hash.New(o)
+
 	m1 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			o.Hash().ToObject().ToMap(),
+			oh.ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			o.Hash().ToObject().ToMap(),
+			oh.ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			m1.ToObject().Hash().ToObject().ToMap(),
+			hash.New(m1.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			m2.ToObject().Hash().ToObject().ToMap(),
+			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			m2.ToObject().Hash().ToObject().ToMap(),
+			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
 		"@parents:ao": []interface{}{
-			m3.ToObject().Hash().ToObject().ToMap(),
-			m4.ToObject().Hash().ToObject().ToMap(),
+			hash.New(m3.ToObject()).ToObject().ToMap(),
+			hash.New(m4.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": o.Hash().ToObject().ToMap(),
+		"@stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m6",
 	})
 )
@@ -155,13 +158,13 @@ func TestSync(t *testing.T) {
 	).Run(
 		respWith((&stream.EventListCreated{
 			Events: []*object.Hash{
-				o.Hash(),
-				m1.ToObject().Hash(),
-				m2.ToObject().Hash(),
-				m3.ToObject().Hash(),
-				m4.ToObject().Hash(),
-				m5.ToObject().Hash(),
-				m6.ToObject().Hash(),
+				oh,
+				hash.New(m1.ToObject()),
+				hash.New(m2.ToObject()),
+				hash.New(m3.ToObject()),
+				hash.New(m4.ToObject()),
+				hash.New(m5.ToObject()),
+				hash.New(m6.ToObject()),
 			},
 		}).ToObject()),
 	).Return(nil)
@@ -179,7 +182,7 @@ func TestSync(t *testing.T) {
 		x.On(
 			"Request",
 			mock.Anything,
-			i.Hash(),
+			hash.New(i),
 			"peer:"+rkey.PublicKey.Fingerprint().String(),
 			mock.Anything,
 		).Run(
@@ -191,7 +194,7 @@ func TestSync(t *testing.T) {
 	res, err := m.Sync(
 		ctx,
 		[]*object.Hash{
-			o.Hash(),
+			oh,
 		},
 		[]string{
 			"peer:" + rkey.PublicKey.Fingerprint().String(),

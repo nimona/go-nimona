@@ -15,6 +15,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
@@ -240,7 +241,7 @@ func TestRequestSuccess(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
-		eo1.Hash(),
+		hash.New(eo1),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)
@@ -285,7 +286,7 @@ func TestRequestSuccessHTTP(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
-		eo1.Hash(),
+		hash.New(eo1),
 		l2.GetAddresses()[0],
 		WithResponse("foo", out),
 	)

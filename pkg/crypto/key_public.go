@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"nimona.io/internal/encoding/base58"
+	"nimona.io/pkg/hash"
 )
 
 // Fingerprint of the key
@@ -18,7 +19,7 @@ func (k *PublicKey) Fingerprint() Fingerprint {
 		X:         k.X,
 		Y:         k.Y,
 	}
-	return Fingerprint(base58.Encode(fp.ToObject().Hash().D))
+	return Fingerprint(base58.Encode(hash.New(fp.ToObject()).D))
 }
 
 func (k *PublicKey) Key() interface{} {

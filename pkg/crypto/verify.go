@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 )
 
@@ -32,12 +33,8 @@ func Verify(o object.Object) error {
 		)
 	}
 
-	hash, err := object.NewHash(o)
-	if err != nil {
-		return err
-	}
-
-	return verify(sig, hash.D)
+	h := hash.New(o)
+	return verify(sig, h.D)
 }
 
 // verify a signature given a hash

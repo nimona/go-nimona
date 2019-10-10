@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
@@ -166,7 +167,7 @@ func (api *API) HandlePostGraph(c *router.Context) {
 
 	parents := []string{}
 	for _, l := range ls {
-		parents = append(parents, l.Hash().String())
+		parents = append(parents, hash.New(l).String())
 	}
 
 	req["@root:s"] = rootObjectHash

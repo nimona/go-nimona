@@ -4,6 +4,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
@@ -71,7 +72,7 @@ func (m *orchestrator) Sync(
 
 			case res := <-responses:
 				logger := logger.With(
-					log.String("object._hash", res.Payload.Hash().String()),
+					log.String("object._hash", hash.New(res.Payload).String()),
 					log.String("object.type", res.Payload.GetType()),
 				)
 
@@ -131,10 +132,10 @@ func (m *orchestrator) Sync(
 		select {
 		case <-ctx.Done():
 		case res := <-out:
-			hash := res.Payload.Hash()
-			if hash.Compact() != req.hash.Compact() {
+			h := hash.New(res.Payload)
+			if h.Compact() != req.hash.Compact() {
 				logger.With(
-					log.String("hash", hash.Compact()),
+					log.String("hash", h.Compact()),
 					log.String("req.hash", req.hash.Compact()),
 					log.String("req.addr", req.hash.Compact()),
 					log.Error(err),

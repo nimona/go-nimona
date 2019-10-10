@@ -32,16 +32,6 @@ func (o Object) ToObject() Object {
 	return o.Copy()
 }
 
-// Hash returns the object's hash
-func (o Object) Hash() *Hash {
-	h, err := NewHash(o)
-	if err != nil {
-		panic(err)
-	}
-
-	return h
-}
-
 // ToMap returns the object as a map
 func (o Object) ToMap() map[string]interface{} {
 	return map[string]interface{}(o)

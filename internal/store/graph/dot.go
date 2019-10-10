@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -29,7 +30,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		nType = "object"
 	}
 	o := &graphObject{
-		ID:       v.Hash().String(),
+		ID:       hash.New(v).String(),
 		NodeType: nType,
 		Context:  v.GetType(),
 		Parents:  []string{},

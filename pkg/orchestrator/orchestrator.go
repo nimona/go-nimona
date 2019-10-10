@@ -7,6 +7,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -102,7 +103,7 @@ func NewWithContext(
 	}
 	rootObjectHashes := make([]*object.Hash, len(heads))
 	for i, rootObject := range heads {
-		rootObjectHashes[i] = rootObject.Hash()
+		rootObjectHashes[i] = hash.New(rootObject)
 	}
 	logger := log.FromContext(ctx).Named("orchestrator")
 	logger.Info(
@@ -117,7 +118,7 @@ func NewWithContext(
 func (m *orchestrator) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
 	logger := log.FromContext(ctx).With(
-		log.String("object._hash", e.Payload.Hash().String()),
+		log.String("object._hash", hash.New(e.Payload).String()),
 		log.String("object.type", e.Payload.GetType()),
 	)
 	logger.Debug("handling object")
@@ -148,7 +149,7 @@ func IsComplete(cs []object.Object) bool {
 	ms := map[string]bool{}
 	cm := map[string]object.Object{}
 	for _, c := range cs {
-		cm[c.Hash().String()] = c
+		cm[hash.New(c).String()] = c
 	}
 	for _, c := range cs {
 		for _, p := range stream.Parents(c) {
@@ -167,13 +168,14 @@ func IsComplete(cs []object.Object) bool {
 func (m *orchestrator) Put(vs ...object.Object) error {
 	hashes := make([]*object.Hash, len(vs))
 	for i, o := range vs {
-		hashes[i] = o.Hash()
+		h := hash.New(o)
+		hashes[i] = h
 
 		if err := m.store.Put(o); err != nil {
 			return err
 		}
 
-		os, err := m.store.Graph(o.Hash().String())
+		os, err := m.store.Graph(h.String())
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve graph"),
@@ -237,7 +239,7 @@ func (m *orchestrator) handleStreamRequestEventList(
 
 	hs := []*object.Hash{}
 	for _, o := range vs {
-		hs = append(hs, o.Hash())
+		hs = append(hs, hash.New(o))
 	}
 
 	res := &stream.EventListCreated{
