@@ -11,7 +11,7 @@ import (
 )
 
 // Fingerprint of the key
-func (k *PublicKey) Fingerprint() Fingerprint {
+func (k PublicKey) Fingerprint() Fingerprint {
 	fp := &PublicKey{
 		Algorithm: k.Algorithm,
 		KeyType:   k.KeyType,
