@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"nimona.io/internal/api"
@@ -22,11 +23,12 @@ import (
 )
 
 func main() {
-	cfgFile := os.Getenv("NIMONA_CONFIG")
-	if cfgFile == "" {
-		cfgFile = ".nimona/config.json"
+	cfgPath := os.Getenv("NIMONA_CONFIG")
+	if cfgPath == "" {
+		cfgPath = ".nimona"
 	}
 
+	cfgFile := path.Join(cfgPath, "config.json")
 	ctx := context.New(
 		context.WithCorrelationID("nimona"),
 	)
@@ -126,7 +128,7 @@ func main() {
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct graph store
-	kvStore, err := kv.NewDiskStorage(config.Daemon.ObjectPath)
+	kvStore, err := kv.NewDiskStorage(path.Join(cfgPath, "objects"))
 	if err != nil {
 		logger.Fatal("could not construct kvStore", log.Error(err))
 	}

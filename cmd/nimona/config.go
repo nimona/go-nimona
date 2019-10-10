@@ -23,7 +23,6 @@ type DaemonConfig struct {
 	BootstrapAddresses []string           `json:"bootstrap_addresses,omitempty" env:"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES"`
 	EnableMetrics      bool               `json:"metrics,omitempty" env:"NIMONA_DAEMON_METRICS"`
 	IdentityKey        *crypto.PrivateKey `json:"identity_key,omitempty" env:"NIMONA_DAEMON_IDENTITY_KEY"`
-	ObjectPath         string             `json:"object_path,omitempty" env:"NIMONA_DAEMON_OBJECT_PATH" envDefault:"${HOME}/.nimona/objects" envExpand:"true"`
 	PeerKey            *crypto.PrivateKey `json:"peer_key,omitempty" env:"NIMONA_DAEMON_PEER_KEY"`
 	TCPPort            int                `json:"tcp_port,omitempty" env:"NIMONA_DAEMON_TCP_PORT"`
 	HTTPPort           int                `json:"http_port,omitempty" env:"NIMONA_DAEMON_HTTP_PORT"`
@@ -42,9 +41,8 @@ func LoadConfig(cfgFile string) (*Config, error) {
 			Port:     28000,
 		},
 		Daemon: DaemonConfig{
-			ObjectPath: path.Join(".nimona", "objects"),
-			TCPPort:    21013,
-			HTTPPort:   21083,
+			TCPPort:  21013,
+			HTTPPort: 21083,
 			BootstrapAddresses: []string{
 				"tcps:egan.bootstrap.nimona.io:21013",
 				"tcps:liu.bootstrap.nimona.io:21013",
