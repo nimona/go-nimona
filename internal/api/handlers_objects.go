@@ -105,12 +105,10 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	for _, p := range op {
 		for _, s := range p.Subjects {
-			ctx := context.Background()
-			addr := "peer:" + s
-			if err := api.exchange.Send(ctx, o, addr); err != nil {
-				c.AbortWithError(500, err) // nolint: errcheck
-				return
-			}
+			ctx := context.New(
+				context.WithTimeout(time.Second * 5),
+			)
+			go api.exchange.Send(ctx, o, "peer:"+s)
 		}
 	}
 
