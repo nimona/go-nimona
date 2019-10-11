@@ -8,6 +8,7 @@ import (
 )
 
 type Connection struct {
+	LocalPeerKey  *crypto.PublicKey
 	RemotePeerKey *crypto.PublicKey
 	IsIncoming    bool
 

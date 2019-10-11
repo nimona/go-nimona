@@ -80,7 +80,6 @@ func (tt *httpTransport) Listen(
 	chan *Connection,
 	error,
 ) {
-
 	logger := log.FromContext(ctx).Named("transport/https")
 
 	cert, err := crypto.GenerateCertificate(tt.local.GetPeerKey())
@@ -155,7 +154,6 @@ func (tt *httpTransport) Listen(
 
 	if useIPs {
 		addresses = append(addresses, GetAddresses("https", netListener)...)
-
 	}
 
 	if UseUPNP {

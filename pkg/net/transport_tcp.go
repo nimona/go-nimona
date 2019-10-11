@@ -32,7 +32,6 @@ func NewTCPTransport(
 
 func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 	*Connection, error) {
-
 	config := tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -50,12 +49,13 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 
 	conn := newConnection(tcpConn, false)
 	conn.remoteAddress = address
+	conn.localAddress = tcpConn.LocalAddr().String()
+
 	return conn, nil
 }
 
 func (tt *tcpTransport) Listen(ctx context.Context) (
 	chan *Connection, error) {
-
 	logger := log.FromContext(ctx).Named("network")
 	cert, err := crypto.GenerateCertificate(tt.local.GetPeerKey())
 	if err != nil {
@@ -126,7 +126,6 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 
 	cconn := make(chan *Connection, 10)
 	go func() {
-
 		for {
 			tcpConn, err := tcpListener.Accept()
 			if err != nil {
@@ -137,6 +136,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 
 			conn := newConnection(tcpConn, true)
 			conn.remoteAddress = tcpConn.RemoteAddr().String()
+			conn.localAddress = tcpConn.LocalAddr().String()
 			cconn <- conn
 		}
 	}()
