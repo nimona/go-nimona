@@ -152,118 +152,12 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	}
 }
 
-func TestSendWithResponseSuccessHTTP(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
-
-	k1, _, x1, _, l1 := newPeer(t, "", disc1, false, true)
-	k2, _, x2, _, l2 := newPeer(t, "", disc2, false, true)
-
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
-
-	mp2 := &mocks.Provider{}
-	err := disc2.AddProvider(mp2)
-	assert.NoError(t, err)
-
-	// send object with request id
-	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
-		"body:s": "bar1",
-	}
-	eo1 := object.FromMap(em1)
-	err = crypto.Sign(eo1, k1)
-	assert.NoError(t, err)
-
-	out := make(chan *Envelope, 1)
-
-	ctx := context.New(context.WithTimeout(time.Second * 3))
-	err = x2.Send(
-		ctx,
-		eo1,
-		l1.GetAddresses()[0],
-		WithResponse("foo", out),
-	)
-	assert.NoError(t, err)
-
-	// send object in response with the same request id
-
-	em2 := map[string]interface{}{
-		"@ctx:s":        "test/msg",
-		"body:s":        "bar2",
-		ObjectRequestID: "foo",
-	}
-	eo2 := object.FromMap(em2)
-	err = crypto.Sign(eo2, k2)
-	assert.NoError(t, err)
-
-	err = x1.Send(
-		ctx,
-		eo2,
-		l2.GetAddresses()[0],
-	)
-	assert.NoError(t, err)
-
-	select {
-	case <-ctx.Done():
-		t.Log("did not receive response in time")
-		t.FailNow()
-	case o2r := <-out:
-		compareObjects(t, eo2, o2r.Payload)
-	}
-}
-
 func TestRequestSuccess(t *testing.T) {
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
 	_, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	_, _, _, d2, l2 := newPeer(t, "", disc2, true, false)
-
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
-
-	mp2 := &mocks.Provider{}
-	err := disc2.AddProvider(mp2)
-	assert.NoError(t, err)
-
-	// add an object to n2's store
-	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
-		"body:s": "bar1",
-	}
-	eo1 := object.FromMap(em1)
-	err = d2.Put(eo1)
-	assert.NoError(t, err)
-
-	// request object, with req id
-	out := make(chan *Envelope, 1)
-	ctx := context.New(context.WithTimeout(time.Second * 3))
-	err = x1.Request(
-		ctx,
-		hash.New(eo1),
-		l2.GetAddresses()[0],
-		WithResponse("foo", out),
-	)
-	assert.NoError(t, err)
-
-	// check if we got back the expected obj
-	select {
-	case <-ctx.Done():
-		t.Log("did not receive response in time")
-		t.FailNow()
-	case o1r := <-out:
-		eo1.Set("_reqID:s", "foo")
-		compareObjects(t, eo1, o1r.Payload)
-	}
-}
-
-func TestRequestSuccessHTTP(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
-
-	_, _, x1, _, l1 := newPeer(t, "", disc1, false, true)
-	_, _, _, d2, l2 := newPeer(t, "", disc2, false, true)
 
 	disc1.Add(l2.GetSignedPeer())
 	disc2.Add(l1.GetSignedPeer())
