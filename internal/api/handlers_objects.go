@@ -108,7 +108,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 			ctx := context.New(
 				context.WithTimeout(time.Second * 5),
 			)
-			go api.exchange.Send(ctx, o, "peer:"+s)
+			go api.exchange.Send(ctx, o, "peer:"+s) // nolint: errcheck
 		}
 	}
 
