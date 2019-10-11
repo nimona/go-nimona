@@ -41,6 +41,6 @@ func JSONWriter() Writer {
 		}
 
 		b, _ := json.Marshal(m)
-		fmt.Fprintf(log.output, string(b))
+		fmt.Fprintf(log.output, string(b)+"\n")
 	}
 }
