@@ -5,8 +5,8 @@ import (
 	"errors"
 	"os"
 
-	"nimona.io/pkg/log"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
 
@@ -32,10 +32,12 @@ func Write(o object.Object, conn *Connection) error {
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		log.DefaultLogger.Info(
-			string(b),
-			log.String("remote_peer_hash", ra),
+			"writting to connection",
+			log.Any("object", o.ToMap()),
+			log.String("local.address", conn.localAddress),
+			log.String("remote.address", conn.remoteAddress),
+			log.String("remote.fingerprint", ra),
 			log.String("direction", "outgoing"),
 		)
 	}
@@ -80,10 +82,12 @@ func Read(conn *Connection) (object.Object, error) {
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		b, _ := json.MarshalIndent(o.ToMap(), "", "  ")
 		logger.Info(
-			string(b),
-			log.String("remote_peer_hash", ra),
+			"reading from connection",
+			log.Any("object", o.ToMap()),
+			log.String("local.address", conn.localAddress),
+			log.String("remote.address", conn.remoteAddress),
+			log.String("remote.fingerprint", ra),
 			log.String("direction", "incoming"),
 		)
 	}
