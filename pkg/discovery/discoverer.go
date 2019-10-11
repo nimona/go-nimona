@@ -119,9 +119,14 @@ func (r *discoverer) FindByFingerprint(
 			return true
 		}
 		ps = append(ps, eps...)
+		pf := make([]string, len(ps))
+		for i, p := range ps {
+			pf[i] = p.Fingerprint().String()
+		}
 		logger.With(
 			log.Int("n", len(eps)),
 			log.Any("peers", ps),
+			log.Strings("peers.fingerprints", pf),
 		).Debug("found n peers")
 		return true
 	})

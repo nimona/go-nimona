@@ -115,9 +115,15 @@ func (r *Discoverer) FindByFingerprint(
 	eps := r.store.FindByFingerprint(fingerprint)
 	eps = r.withoutOwnPeer(eps)
 	if len(eps) > 0 {
+		pf := make([]string, len(eps))
+		for i, p := range eps {
+			pf[i] = p.Fingerprint().String()
+		}
 		logger.Debug(
 			"found peers in store",
 			log.Int("n", len(eps)),
+			log.Any("peers", eps),
+			log.Strings("peers.fingerprints", pf),
 		)
 		return eps, nil
 	}
