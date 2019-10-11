@@ -4,6 +4,7 @@ type (
 	Options struct {
 		Name          string
 		Count         int
+		Env           []string
 		Command       []string
 		ContainerPort int
 		NodePort      int
@@ -20,6 +21,12 @@ func WithName(name string) Option {
 func WithCount(count int) Option {
 	return func(o *Options) {
 		o.Count = count
+	}
+}
+
+func WithEnv(env []string) Option {
+	return func(o *Options) {
+		o.Env = env
 	}
 }
 

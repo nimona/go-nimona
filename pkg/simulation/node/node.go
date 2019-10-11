@@ -48,6 +48,7 @@ func New(
 			Environment.net.Name,
 			ports,
 			options.Command,
+			options.Env,
 		)
 		// if this fails the containers need to be cleaned up
 		if err != nil {
