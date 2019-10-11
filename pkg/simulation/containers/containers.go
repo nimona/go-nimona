@@ -111,11 +111,18 @@ func New(
 		return nil, err
 	}
 
+	gwAddress := ""
+	for _, p := range ins.NetworkSettings.Ports {
+		if len(p) > 0 {
+			gwAddress = p[0].HostIP + ":" + p[0].HostPort
+			break
+		}
+	}
 	return &Container{
 		ID:      cont.ID,
 		Name:    name,
 		Image:   image,
-		Address: ins.NetworkSettings.Networks[networkName].IPAddress,
+		Address: gwAddress,
 	}, nil
 }
 
