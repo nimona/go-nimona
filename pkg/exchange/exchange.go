@@ -134,7 +134,15 @@ func New(
 		incoming: make(chan *incomingObject, 1000),
 
 		handlers: sync.Map{},
-		logger:   log.FromContext(ctx).Named("exchange"),
+		logger: log.FromContext(ctx).
+			Named("exchange").
+			With(
+				log.String("method", "exchange.New"),
+				log.String("local.fingerprint", localInfo.
+					GetFingerprint().
+					String(),
+				),
+			),
 
 		store:        store,
 		getRequests:  NewStringObjectRequestSyncMap(),
