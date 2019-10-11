@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	BindLocal = false // TODO(geoah) refactor to remove global
-	bindIpv6  = false // TODO(geoah) refactor to remove global
+	BindLocal   = false // TODO(geoah) refactor to remove global
+	BindPrivate = false // TODO(geoah) refactor to remove global
+	bindIpv6    = false // TODO(geoah) refactor to remove global
 )
 
 func init() {
 	BindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
+	BindPrivate, _ = strconv.ParseBool(os.Getenv("BIND_PRIVATE"))
 	bindIpv6, _ = strconv.ParseBool(os.Getenv("BIND_IPV6"))
 }
 
@@ -74,7 +76,10 @@ func isValidIP(addr net.Addr) (string, bool) {
 	if ip == nil {
 		return "", false
 	}
-	if !BindLocal && (ip.IsLoopback() || isPrivate(ip)) {
+	if !BindLocal && ip.IsLoopback() {
+		return "", false
+	}
+	if !BindPrivate && isPrivate(ip) {
 		return "", false
 	}
 	if !bindIpv6 && isIPv6(ip.String()) {
