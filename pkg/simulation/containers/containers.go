@@ -15,9 +15,10 @@ import (
 )
 
 type Container struct {
-	Image string
-	ID    string
-	Name  string
+	Image   string
+	ID      string
+	Name    string
+	Address string
 }
 
 func New(
@@ -27,6 +28,7 @@ func New(
 	networkName string,
 	portMap map[string]string,
 	command []string,
+	env []string,
 ) (*Container, error) {
 	// Init the env
 	cli, err := client.NewEnvClient()
@@ -61,12 +63,9 @@ func New(
 		image,
 		types.ImagePullOptions{},
 	)
-	if err != nil {
-		return nil, err
-	}
-	_, err = io.Copy(ioutil.Discard, imgr)
-	if err != nil {
-		return nil, err
+	// swallow error for now to allow for local repos
+	if err == nil {
+		io.Copy(ioutil.Discard, imgr) // nolint: errcheck
 	}
 
 	// Create the container
@@ -76,6 +75,7 @@ func New(
 			Image:        image,
 			Cmd:          command,
 			ExposedPorts: portsSet,
+			Env:          env,
 		},
 		&container.HostConfig{
 			AutoRemove:   true,
@@ -106,12 +106,17 @@ func New(
 		return nil, err
 	}
 
-	return &Container{
-		ID:    cont.ID,
-		Name:  name,
-		Image: image,
-	}, nil
+	ins, err := cli.ContainerInspect(ctx, cont.ID)
+	if err != nil {
+		return nil, err
+	}
 
+	return &Container{
+		ID:      cont.ID,
+		Name:    name,
+		Image:   image,
+		Address: ins.NetworkSettings.Networks[networkName].IPAddress,
+	}, nil
 }
 
 func (cnt *Container) Stop(ctx context.Context) error {
@@ -132,7 +137,6 @@ func (cnt *Container) Stop(ctx context.Context) error {
 	}
 
 	return nil
-
 }
 
 func (cnt *Container) Delete(ctx context.Context) error {

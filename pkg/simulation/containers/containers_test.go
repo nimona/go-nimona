@@ -1,9 +1,10 @@
 package containers_test
 
 import (
-	"nimona.io/pkg/context"
 	"io/ioutil"
 	"testing"
+
+	"nimona.io/pkg/context"
 
 	"github.com/stretchr/testify/require"
 
@@ -47,6 +48,7 @@ func TestCreateContainer(t *testing.T) {
 				tt.networkName,
 				nil,
 				[]string{"uname", "-a"},
+				[]string{},
 			)
 			require.NoError(t, err)
 			require.NotNil(t, c1)
