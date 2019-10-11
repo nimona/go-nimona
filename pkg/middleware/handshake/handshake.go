@@ -36,8 +36,10 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 	}
 }
 
-func (hs *Handshake) handleIncoming(ctx context.Context,
-	conn *net.Connection) (*net.Connection, error) {
+func (hs *Handshake) handleIncoming(
+	ctx context.Context,
+	conn *net.Connection,
+) (*net.Connection, error) {
 	logger := log.
 		FromContext(ctx).
 		Named("net/middleware/handleIncoming").
@@ -85,6 +87,7 @@ func (hs *Handshake) handleIncoming(ctx context.Context,
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
 	conn.RemotePeerKey = synAck.Authors[0].PublicKey
+	conn.LocalPeerKey = hs.local.GetPeerKey().PublicKey
 
 	// TODO(@geoah) do we need to do something about this?
 	// hs.discoverer.Add(synAck.Peer)
@@ -135,6 +138,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	// store the remote peer
 	conn.RemotePeerKey = syn.Authors[0].PublicKey
+	conn.LocalPeerKey = hs.local.GetPeerKey().PublicKey
 
 	// TODO(@geoah) this one too
 	// hs.discoverer.Add(syn.Peer)
