@@ -3,6 +3,8 @@ package simulation
 import (
 	"fmt"
 	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -10,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/client"
 	"nimona.io/pkg/simulation/node"
+	"nimona.io/pkg/stream"
 )
 
 func TestSimulation(t *testing.T) {
@@ -19,7 +23,7 @@ func TestSimulation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, env)
 
-	dockerImage := "docker.io/nimona/nimona:v0.5.0-alpha"
+	dockerImage := "nimona:dev"
 	if img := os.Getenv("E2E_DOCKER_IMAGE"); img != "" {
 		dockerImage = img
 	}
@@ -29,40 +33,83 @@ func TestSimulation(t *testing.T) {
 		dockerImage,
 		env,
 		node.WithName("nimona-e2e-"+rand.String(8)),
-		node.WithNodePort(8000),
-		node.WithCount(5),
+		node.WithNodePort(28000),
+		node.WithCount(3),
+		node.WithEnv([]string{
+			"BIND_PRIVATE=true",
+			"DEBUG_BLOCKS=true",
+		}),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, nodes)
 
-	done := make(chan bool)
+	// create clients for all nodes
+	clients := make([]*client.Client, len(nodes))
+	for i, node := range nodes {
+		baseURL := fmt.Sprintf("http://%s", node.Address())
+		c, err := client.New(baseURL)
+		require.NoError(t, err)
+		clients[i] = c
+	}
 
-	for _, nd := range nodes {
-		loch, errCh := nd.Logs()
-		lineCounter := 0
+	// gather recipients to send the obj to
+	recipients := []string{}
+	// skip first client as it's the one we'll be sending from
+	for _, c := range clients[1:] {
+		info, err := c.Info()
+		assert.NoError(t, err)
+		recipients = append(recipients, info.Fingerprint)
+	}
 
-		go func() {
+	// create an obj, and attach recipients to policy
+	nonce := rand.String(24)
+	streamCreated := stream.Created{
+		Nonce: nonce,
+		Policies: []*stream.Policy{
+			&stream.Policy{
+				Subjects:  recipients,
+				Resources: []string{"*"},
+				Action:    "allow",
+			},
+		},
+	}
+
+	// wait for the network to settle
+	// time.Sleep(time.Second * 10)
+
+	err = clients[0].PostObject(streamCreated.ToObject())
+	assert.NoError(t, err)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(len(recipients))
+
+	for _, nd := range nodes[1:] {
+		go func(nd *node.Node) {
+			loch, _ := nd.Logs()
 			for {
 				select {
 				case ll := <-loch:
 					fmt.Println(ll)
-					assert.NotEmpty(t, ll)
-					lineCounter++
-				case <-time.After(1 * time.Second):
-					done <- true
+					if strings.Contains(ll, nonce) {
+						fmt.Println("Node received object")
+						wg.Done()
+						return
+					}
+				case <-time.After(time.Second * 20):
+					t.Log("node didn't get obj in time")
+					t.Fail()
+					wg.Done()
 					return
 				}
 			}
-		}()
-
-		<-done
-		assert.Empty(t, errCh)
-		assert.NotZero(t, lineCounter)
+		}(nd)
 	}
 
-	// Teardown
+	wg.Wait()
+
 	err = node.Stop(nodes)
-	require.NoError(t, err)
+	assert.NoError(t, err)
+
 	err = env.Stop()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
