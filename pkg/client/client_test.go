@@ -5,12 +5,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
-
-	"nimona.io/internal/rand"
-	"nimona.io/pkg/stream"
 )
 
 func TestClient_Info(t *testing.T) {
@@ -82,31 +78,4 @@ func TestClient_Info(t *testing.T) {
 			gock.Off()
 		})
 	}
-}
-
-func TestClient_Iadfasfasfsafsdfasdf(t *testing.T) {
-	httpClient := http.DefaultClient
-	baseURL, err := url.Parse("http://localhost:28000")
-	require.NoError(t, err)
-
-	c := &Client{
-		baseURL:    baseURL,
-		httpClient: httpClient,
-	}
-
-	v := stream.Created{
-		Nonce: rand.String(24),
-		Policies: []*stream.Policy{
-			&stream.Policy{
-				Subjects: []string{
-					"6TkA2dsMdwD7ntasEEMcbhHi4fxxL5PhBPt5tVCAxHhF",
-				},
-				Resources: []string{"*"},
-				Action:    "allow",
-			},
-		},
-	}
-
-	err = c.PostObject(v.ToObject())
-	assert.NoError(t, err)
 }
