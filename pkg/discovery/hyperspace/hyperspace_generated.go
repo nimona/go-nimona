@@ -30,11 +30,24 @@ func (e *Request) GetType() string {
 }
 
 func (e *Request) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/discovery/hyperspace.Request",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/discovery/hyperspace.Request"
+	if len(e.QueryContentBloom) > 0 {
+		m["queryContentBloom:ai"] = e.QueryContentBloom
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["nonce:s"] = e.Nonce
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -48,11 +61,24 @@ func (e *Announced) GetType() string {
 }
 
 func (e *Announced) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/discovery/hyperspace.Announced",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/discovery/hyperspace.Announced"
+	if len(e.AvailableContentBloom) > 0 {
+		m["availableContentBloom:ai"] = e.AvailableContentBloom
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["nonce:s"] = e.Nonce
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 

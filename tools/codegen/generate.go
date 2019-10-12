@@ -46,11 +46,35 @@ func (e *{{ structName $object.Name }}) GetType() string {
 }
 
 func (e *{{ structName $object.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "{{ $domain.Name }}.{{ $object.Name }}",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "{{ $domain.Name }}.{{ $object.Name }}"
+	{{- range $member := $object.Members }}
+		{{- if $member.IsObject }}
+			{{- if $member.IsRepeated }}
+			if len(e.{{ $member.Name }}) > 0 {
+				m["{{ $member.Tag }}"] = func() []interface{} {
+					a := make([]interface{}, len(e.{{ $member.Name }}))
+					for i, v := range e.{{ $member.Name }} {
+						a[i] = v.ToObject().ToMap()
+					}
+					return a
+				}()
+			}
+			{{- else }}
+			if e.{{ $member.Name }} != nil {
+				m["{{ $member.Tag }}"] = e.{{ $member.Name }}.ToObject().ToMap()
+			}
+			{{- end }}
+		{{- else }}
+			{{- if $member.IsRepeated }}
+				if len(e.{{ $member.Name }}) > 0 {
+					m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+				}
+			{{- else }}
+				m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+			{{- end }}
+		{{- end }}
+	{{- end }}
 	return object.Object(m)
 }
 
@@ -65,11 +89,35 @@ func (e *{{ structName $event.Name }}) GetType() string {
 }
 
 func (e *{{ structName $event.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "{{ $domain.Name }}.{{ $event.Name }}",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "{{ $domain.Name }}.{{ $event.Name }}"
+	{{- range $member := $event.Members }}
+		{{- if $member.IsObject }}
+			{{- if $member.IsRepeated }}
+			if len(e.{{ $member.Name }}) > 0 {
+				m["{{ $member.Tag }}"] = func() []interface{} {
+					a := make([]interface{}, len(e.{{ $member.Name }}))
+					for i, v := range e.{{ $member.Name }} {
+						a[i] = v.ToObject().ToMap()
+					}
+					return a
+				}()
+			}
+			{{- else }}
+			if e.{{ $member.Name }} != nil {
+				m["{{ $member.Tag }}"] = e.{{ $member.Name }}.ToObject().ToMap()
+			}
+			{{- end }}
+		{{- else }}
+			{{- if $member.IsRepeated }}
+				if len(e.{{ $member.Name }}) > 0 {
+					m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+				}
+			{{- else }}
+				m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+			{{- end }}
+		{{- end }}
+	{{- end }}
 	return object.Object(m)
 }
 
@@ -115,14 +163,17 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				doc.Domains[i].Events[k].Members = append(
 					doc.Domains[i].Events[k].Members,
 					&Member{
-						Name: "Signature",
-						Type: "*crypto.Signature",
-						Tag:  "@signature:o",
+						Name:     "Signature",
+						Type:     "*crypto.Signature",
+						Tag:      "@signature:o",
+						IsObject: true,
 					},
 					&Member{
-						Name: "Authors",
-						Type: "[]*" + streamPkg + "Author",
-						Tag:  "@authors:ao",
+						Name:       "Authors",
+						Type:       "[]*" + streamPkg + "Author",
+						Tag:        "@authors:ao",
+						IsRepeated: true,
+						IsObject:   true,
 					},
 				)
 			}

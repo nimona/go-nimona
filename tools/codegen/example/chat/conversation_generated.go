@@ -37,11 +37,24 @@ func (e *ConversationTopicSet) GetType() string {
 }
 
 func (e *ConversationTopicSet) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/conversation.ConversationTopicSet",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/conversation.ConversationTopicSet"
+	if e.Stream != nil {
+		m["@stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["topic:s"] = e.Topic
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -55,11 +68,24 @@ func (e *ConversationNameSet) GetType() string {
 }
 
 func (e *ConversationNameSet) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/conversation.ConversationNameSet",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/conversation.ConversationNameSet"
+	if e.Stream != nil {
+		m["@stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["name:s"] = e.Name
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -73,11 +99,33 @@ func (e *ConversationMessageAdded) GetType() string {
 }
 
 func (e *ConversationMessageAdded) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/conversation.ConversationMessageAdded",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/conversation.ConversationMessageAdded"
+	if e.Stream != nil {
+		m["@stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Parents) > 0 {
+		m["parents:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Parents))
+			for i, v := range e.Parents {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
+	m["body:s"] = e.Body
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 

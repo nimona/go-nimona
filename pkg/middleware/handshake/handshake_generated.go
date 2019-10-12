@@ -33,11 +33,21 @@ func (e *Syn) GetType() string {
 }
 
 func (e *Syn) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/net/handshake.Syn",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/net/handshake.Syn"
+	m["nonce:s"] = e.Nonce
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -51,11 +61,21 @@ func (e *SynAck) GetType() string {
 }
 
 func (e *SynAck) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/net/handshake.SynAck",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/net/handshake.SynAck"
+	m["nonce:s"] = e.Nonce
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -69,11 +89,21 @@ func (e *Ack) GetType() string {
 }
 
 func (e *Ack) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/net/handshake.Ack",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/net/handshake.Ack"
+	m["nonce:s"] = e.Nonce
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 

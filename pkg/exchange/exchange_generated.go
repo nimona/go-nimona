@@ -29,11 +29,23 @@ func (e *ObjectRequest) GetType() string {
 }
 
 func (e *ObjectRequest) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/exchange.ObjectRequest",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/exchange.ObjectRequest"
+	if e.ObjectHash != nil {
+		m["objectHash:o"] = e.ObjectHash.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -47,11 +59,24 @@ func (e *ObjectForward) GetType() string {
 }
 
 func (e *ObjectForward) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/exchange.ObjectForward",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/exchange.ObjectForward"
+	m["recipient:s"] = e.Recipient
+	if e.FwObject != nil {
+		m["fwObject:o"] = e.FwObject.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 

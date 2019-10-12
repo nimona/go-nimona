@@ -32,11 +32,14 @@ func (e *Peer) GetType() string {
 }
 
 func (e *Peer) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/peer.Peer",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/peer.Peer"
+	if len(e.Addresses) > 0 {
+		m["addresses:as"] = e.Addresses
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -50,11 +53,23 @@ func (e *Requested) GetType() string {
 }
 
 func (e *Requested) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/peer.Requested",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/peer.Requested"
+	if len(e.Keys) > 0 {
+		m["keys:as"] = e.Keys
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -68,11 +83,23 @@ func (e *Updated) GetType() string {
 }
 
 func (e *Updated) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/peer.Updated",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/peer.Updated"
+	if len(e.Addresses) > 0 {
+		m["addresses:as"] = e.Addresses
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
