@@ -14,13 +14,13 @@ type (
 	ObjectRequest struct {
 		ObjectHash *object.Hash      `json:"objectHash:o,omitempty"`
 		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors    []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors    []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	ObjectForward struct {
 		Recipient string            `json:"recipient:s,omitempty"`
 		FwObject  *object.Object    `json:"fwObject:o,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -30,7 +30,7 @@ func (e *ObjectRequest) GetType() string {
 
 func (e *ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/exchange.ObjectRequest"
+	m["@type:s"] = "nimona.io/exchange.ObjectRequest"
 	if e.ObjectHash != nil {
 		m["objectHash:o"] = e.ObjectHash.ToObject().ToMap()
 	}
@@ -38,7 +38,7 @@ func (e *ObjectRequest) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -60,7 +60,7 @@ func (e *ObjectForward) GetType() string {
 
 func (e *ObjectForward) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/exchange.ObjectForward"
+	m["@type:s"] = "nimona.io/exchange.ObjectForward"
 	m["recipient:s"] = e.Recipient
 	if e.FwObject != nil {
 		m["fwObject:o"] = e.FwObject.ToObject().ToMap()
@@ -69,7 +69,7 @@ func (e *ObjectForward) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()

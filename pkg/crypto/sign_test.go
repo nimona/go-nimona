@@ -20,7 +20,7 @@ func TestSignAndVerify(t *testing.T) {
 	assert.NotNil(t, subjectKey)
 
 	m := map[string]interface{}{
-		"@ctx:s": "test/signed",
+		"@type:s": "test/signed",
 		"foo:s":  "bar",
 	}
 

@@ -171,7 +171,7 @@ func (api *API) HandlePostGraph(c *router.Context) {
 	}
 
 	req["@root:s"] = rootObjectHash
-	req["@parents:as"] = parents
+	req["parents:as"] = parents
 
 	o := object.FromMap(req)
 

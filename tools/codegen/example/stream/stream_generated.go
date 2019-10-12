@@ -20,16 +20,16 @@ type (
 	Created struct {
 		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
 		PartitionKeys   []string          `json:"partitionKeys:as,omitempty"`
-		Policies        []*Policy         `json:"@policies:ao,omitempty"`
+		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors         []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors         []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	PoliciesUpdated struct {
-		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
-		Parents   []*crypto.Hash    `json:"@parents:ao,omitempty"`
-		Policies  []*Policy         `json:"@policies:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
+		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
+		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -39,7 +39,7 @@ func (e *Policy) GetType() string {
 
 func (e *Policy) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/stream.Policy"
+	m["@type:s"] = "example/stream.Policy"
 	if len(e.Subjects) > 0 {
 		m["subjects:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Subjects))
@@ -70,13 +70,13 @@ func (e *Created) GetType() string {
 
 func (e *Created) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/stream.Created"
+	m["@type:s"] = "example/stream.Created"
 	m["createdDateTime:s"] = e.CreatedDateTime
 	if len(e.PartitionKeys) > 0 {
 		m["partitionKeys:as"] = e.PartitionKeys
 	}
 	if len(e.Policies) > 0 {
-		m["@policies:ao"] = func() []interface{} {
+		m["policies:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Policies))
 			for i, v := range e.Policies {
 				a[i] = v.ToObject().ToMap()
@@ -88,7 +88,7 @@ func (e *Created) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -110,12 +110,12 @@ func (e *PoliciesUpdated) GetType() string {
 
 func (e *PoliciesUpdated) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/stream.PoliciesUpdated"
+	m["@type:s"] = "example/stream.PoliciesUpdated"
 	if e.Stream != nil {
-		m["@stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	if len(e.Parents) > 0 {
-		m["@parents:ao"] = func() []interface{} {
+		m["parents:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Parents))
 			for i, v := range e.Parents {
 				a[i] = v.ToObject().ToMap()
@@ -124,7 +124,7 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 		}()
 	}
 	if len(e.Policies) > 0 {
-		m["@policies:ao"] = func() []interface{} {
+		m["policies:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Policies))
 			for i, v := range e.Policies {
 				a[i] = v.ToObject().ToMap()
@@ -136,7 +136,7 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()

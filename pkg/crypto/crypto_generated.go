@@ -40,7 +40,7 @@ func (e *Signature) GetType() string {
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/crypto.Signature"
+	m["@type:s"] = "nimona.io/crypto.Signature"
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
@@ -61,7 +61,7 @@ func (e *PrivateKey) GetType() string {
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/crypto.PrivateKey"
+	m["@type:s"] = "nimona.io/crypto.PrivateKey"
 	m["keyType:s"] = e.KeyType
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
@@ -85,7 +85,7 @@ func (e *PublicKey) GetType() string {
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/crypto.PublicKey"
+	m["@type:s"] = "nimona.io/crypto.PublicKey"
 	m["keyType:s"] = e.KeyType
 	m["algorithm:s"] = e.Algorithm
 	m["curve:s"] = e.Curve

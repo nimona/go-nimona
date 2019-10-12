@@ -22,24 +22,24 @@ type (
 	Created struct {
 		Nonce           string            `json:"nonce:s,omitempty"`
 		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
-		Policies        []*Policy         `json:"@policies:ao,omitempty"`
+		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors         []*Author         `json:"@authors:ao,omitempty"`
+		Authors         []*Author         `json:"authors:ao,omitempty"`
 	}
 	Subscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"@authors:ao,omitempty"`
+		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 	Unsubscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"@authors:ao,omitempty"`
+		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 	PolicyAttached struct {
-		Stream    *object.Hash      `json:"@stream:o,omitempty"`
-		Parents   []*object.Hash    `json:"@parents:ao,omitempty"`
-		Policies  []*Policy         `json:"@policies:ao,omitempty"`
+		Stream    *object.Hash      `json:"stream:o,omitempty"`
+		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
+		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"@authors:ao,omitempty"`
+		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 	RequestEventList struct {
 		Streams []*object.Hash `json:"streams:ao,omitempty"`
@@ -59,7 +59,7 @@ func (e *Policy) GetType() string {
 
 func (e *Policy) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.Policy"
+	m["@type:s"] = "nimona.io/stream.Policy"
 	if len(e.Subjects) > 0 {
 		m["subjects:as"] = e.Subjects
 	}
@@ -84,7 +84,7 @@ func (e *Author) GetType() string {
 
 func (e *Author) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.Author"
+	m["@type:s"] = "nimona.io/stream.Author"
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
@@ -102,11 +102,11 @@ func (e *Created) GetType() string {
 
 func (e *Created) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.Created"
+	m["@type:s"] = "nimona.io/stream.Created"
 	m["nonce:s"] = e.Nonce
 	m["createdDateTime:s"] = e.CreatedDateTime
 	if len(e.Policies) > 0 {
-		m["@policies:ao"] = func() []interface{} {
+		m["policies:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Policies))
 			for i, v := range e.Policies {
 				a[i] = v.ToObject().ToMap()
@@ -118,7 +118,7 @@ func (e *Created) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -140,12 +140,12 @@ func (e *Subscribed) GetType() string {
 
 func (e *Subscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.Subscribed"
+	m["@type:s"] = "nimona.io/stream.Subscribed"
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -167,12 +167,12 @@ func (e *Unsubscribed) GetType() string {
 
 func (e *Unsubscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.Unsubscribed"
+	m["@type:s"] = "nimona.io/stream.Unsubscribed"
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -194,12 +194,12 @@ func (e *PolicyAttached) GetType() string {
 
 func (e *PolicyAttached) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.PolicyAttached"
+	m["@type:s"] = "nimona.io/stream.PolicyAttached"
 	if e.Stream != nil {
-		m["@stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	if len(e.Parents) > 0 {
-		m["@parents:ao"] = func() []interface{} {
+		m["parents:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Parents))
 			for i, v := range e.Parents {
 				a[i] = v.ToObject().ToMap()
@@ -208,7 +208,7 @@ func (e *PolicyAttached) ToObject() object.Object {
 		}()
 	}
 	if len(e.Policies) > 0 {
-		m["@policies:ao"] = func() []interface{} {
+		m["policies:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Policies))
 			for i, v := range e.Policies {
 				a[i] = v.ToObject().ToMap()
@@ -220,7 +220,7 @@ func (e *PolicyAttached) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -242,7 +242,7 @@ func (e *RequestEventList) GetType() string {
 
 func (e *RequestEventList) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.RequestEventList"
+	m["@type:s"] = "nimona.io/stream.RequestEventList"
 	if len(e.Streams) > 0 {
 		m["streams:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Streams))
@@ -266,7 +266,7 @@ func (e *EventListCreated) GetType() string {
 
 func (e *EventListCreated) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.EventListCreated"
+	m["@type:s"] = "nimona.io/stream.EventListCreated"
 	if e.Stream != nil {
 		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
@@ -293,7 +293,7 @@ func (e *RequestEvents) GetType() string {
 
 func (e *RequestEvents) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/stream.RequestEvents"
+	m["@type:s"] = "nimona.io/stream.RequestEvents"
 	if len(e.Events) > 0 {
 		m["events:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Events))

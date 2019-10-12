@@ -16,16 +16,16 @@ abstract domain nimona.io/stream {
     signed event Created {
         nonce string
         createdDateTime string
-        @policies repeated Policy
+        policies repeated Policy
     }
     signed event Subscribed {
     }
     signed event Unsubscribed {
     }
     signed event PolicyAttached {
-        @stream nimona.io/object.Hash
-        @parents repeated nimona.io/object.Hash
-        @policies repeated Policy
+        stream nimona.io/object.Hash
+        parents repeated nimona.io/object.Hash
+        policies repeated Policy
     }
     command RequestEventList {
         streams repeated nimona.io/object.Hash

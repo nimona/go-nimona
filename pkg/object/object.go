@@ -39,7 +39,7 @@ func (o Object) ToMap() map[string]interface{} {
 
 // GetType returns the object's type
 func (o Object) GetType() string {
-	if v, ok := o.Get("@ctx:s").(string); ok {
+	if v, ok := o.Get("@type:s").(string); ok {
 		return v
 	}
 	return ""
@@ -47,7 +47,7 @@ func (o Object) GetType() string {
 
 // SetType sets the object's type
 func (o Object) SetType(v string) {
-	o.Set("@ctx:s", v)
+	o.Set("@type:s", v)
 }
 
 // GetSignature returns the object's signature, or nil

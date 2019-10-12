@@ -33,13 +33,13 @@ func TestSendSuccess(t *testing.T) {
 	disc2.Add(l1.GetSignedPeer())
 
 	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo2 := object.FromMap(em2)
@@ -107,7 +107,7 @@ func TestSendWithResponseSuccess(t *testing.T) {
 
 	// send object with request id
 	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
@@ -128,7 +128,7 @@ func TestSendWithResponseSuccess(t *testing.T) {
 	// send object in response with the same request id
 
 	em2 := map[string]interface{}{
-		"@ctx:s":        "test/msg",
+		"@type:s":        "test/msg",
 		"body:s":        "bar2",
 		ObjectRequestID: "foo",
 	}
@@ -168,7 +168,7 @@ func TestRequestSuccess(t *testing.T) {
 
 	// add an object to n2's store
 	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
@@ -249,13 +249,13 @@ func TestSendRelay(t *testing.T) {
 
 	// now we should be able to relay objects between n1 and n2
 	em1 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo1 := object.FromMap(em1)
 
 	em2 := map[string]interface{}{
-		"@ctx:s": "test/msg",
+		"@type:s": "test/msg",
 		"body:s": "bar1",
 	}
 	eo2 := object.FromMap(em2)

@@ -47,7 +47,7 @@ func (e *{{ structName $object.Name }}) GetType() string {
 
 func (e *{{ structName $object.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "{{ $domain.Name }}.{{ $object.Name }}"
+	m["@type:s"] = "{{ $domain.Name }}.{{ $object.Name }}"
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
@@ -90,7 +90,7 @@ func (e *{{ structName $event.Name }}) GetType() string {
 
 func (e *{{ structName $event.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "{{ $domain.Name }}.{{ $event.Name }}"
+	m["@type:s"] = "{{ $domain.Name }}.{{ $event.Name }}"
 	{{- range $member := $event.Members }}
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
@@ -171,7 +171,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 					&Member{
 						Name:       "Authors",
 						Type:       "[]*" + streamPkg + "Author",
-						Tag:        "@authors:ao",
+						Tag:        "authors:ao",
 						IsRepeated: true,
 						IsObject:   true,
 					},

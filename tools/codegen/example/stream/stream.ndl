@@ -12,11 +12,11 @@ abstract domain example/stream {
     signed event Created {
         createdDateTime string
         partitionKeys repeated string
-        @policies repeated Policy
+        policies repeated Policy
     }
     signed event PoliciesUpdated {
-        @stream example/crypto.Hash
-        @parents repeated example/crypto.Hash
-        @policies repeated Policy
+        stream example/crypto.Hash
+        parents repeated example/crypto.Hash
+        policies repeated Policy
     }
 }

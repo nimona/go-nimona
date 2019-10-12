@@ -12,23 +12,23 @@ import (
 
 type (
 	ConversationTopicSet struct {
-		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Topic     string            `json:"topic:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	ConversationNameSet struct {
-		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Name      string            `json:"name:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	ConversationMessageAdded struct {
-		Stream    *crypto.Hash      `json:"@stream:o,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Body      string            `json:"body:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -38,16 +38,16 @@ func (e *ConversationTopicSet) GetType() string {
 
 func (e *ConversationTopicSet) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/conversation.ConversationTopicSet"
+	m["@type:s"] = "example/conversation.ConversationTopicSet"
 	if e.Stream != nil {
-		m["@stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	m["topic:s"] = e.Topic
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -69,16 +69,16 @@ func (e *ConversationNameSet) GetType() string {
 
 func (e *ConversationNameSet) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/conversation.ConversationNameSet"
+	m["@type:s"] = "example/conversation.ConversationNameSet"
 	if e.Stream != nil {
-		m["@stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	m["name:s"] = e.Name
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -100,9 +100,9 @@ func (e *ConversationMessageAdded) GetType() string {
 
 func (e *ConversationMessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/conversation.ConversationMessageAdded"
+	m["@type:s"] = "example/conversation.ConversationMessageAdded"
 	if e.Stream != nil {
-		m["@stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	if len(e.Parents) > 0 {
 		m["parents:ao"] = func() []interface{} {
@@ -118,7 +118,7 @@ func (e *ConversationMessageAdded) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()

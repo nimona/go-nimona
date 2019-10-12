@@ -14,17 +14,17 @@ type (
 	Syn struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	SynAck struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	Ack struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -34,13 +34,13 @@ func (e *Syn) GetType() string {
 
 func (e *Syn) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/net/handshake.Syn"
+	m["@type:s"] = "nimona.io/net/handshake.Syn"
 	m["nonce:s"] = e.Nonce
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -62,13 +62,13 @@ func (e *SynAck) GetType() string {
 
 func (e *SynAck) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/net/handshake.SynAck"
+	m["@type:s"] = "nimona.io/net/handshake.SynAck"
 	m["nonce:s"] = e.Nonce
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -90,13 +90,13 @@ func (e *Ack) GetType() string {
 
 func (e *Ack) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/net/handshake.Ack"
+	m["@type:s"] = "nimona.io/net/handshake.Ack"
 	m["nonce:s"] = e.Nonce
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
