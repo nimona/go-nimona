@@ -201,7 +201,7 @@ func New(
 
 			logger := log.FromContext(req.context).With(
 				log.String("recipient", req.recipient),
-				log.String("object.@ctx", req.object.GetType()),
+				log.String("object.@type", req.object.GetType()),
 			)
 
 			if req.recipient == "" {

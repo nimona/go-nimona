@@ -9,12 +9,12 @@ import (
 
 type (
 	common struct {
-		Context   string            `json:"@ctx:s,omitempty"`
-		Stream    *object.Hash      `json:"@stream:o,omitempty"`
-		Parents   []*object.Hash    `json:"@parents:ao,omitempty"`
-		Policies  []*Policy         `json:"@policies:ao,omitempty"`
+		Context   string            `json:"@type:s,omitempty"`
+		Stream    *object.Hash      `json:"stream:o,omitempty"`
+		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
+		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"@authors:ao"`
+		Authors   []*Author         `json:"authors:ao"`
 	}
 )
 

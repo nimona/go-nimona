@@ -41,7 +41,7 @@ import (
 
 var (
 	o = object.FromMap(map[string]interface{}{
-		"@ctx:s": "foo",
+		"@type:s": "foo",
 		"foo:s":  "bar",
 		"numbers:ai": []int{
 			1, 2, 3,
@@ -63,51 +63,51 @@ var (
 	oh = hash.New(o)
 
 	m1 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			oh.ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			oh.ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			hash.New(m1.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"@parents:ao": []interface{}{
+		"parents:ao": []interface{}{
 			hash.New(m3.ToObject()).ToObject().ToMap(),
 			hash.New(m4.ToObject()).ToObject().ToMap(),
 		},
-		"@stream:o": oh.ToObject().ToMap(),
+		"stream:o": oh.ToObject().ToMap(),
 		"foo:s":     "bar-m6",
 	})
 )

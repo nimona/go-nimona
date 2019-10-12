@@ -15,13 +15,13 @@ type (
 		QueryContentBloom []int64           `json:"queryContentBloom:ai,omitempty"`
 		Nonce             string            `json:"nonce:s,omitempty"`
 		Signature         *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors           []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors           []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 	Announced struct {
 		AvailableContentBloom []int64           `json:"availableContentBloom:ai,omitempty"`
 		Nonce                 string            `json:"nonce:s,omitempty"`
 		Signature             *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors               []*stream.Author  `json:"@authors:ao,omitempty"`
+		Authors               []*stream.Author  `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -31,7 +31,7 @@ func (e *Request) GetType() string {
 
 func (e *Request) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/discovery/hyperspace.Request"
+	m["@type:s"] = "nimona.io/discovery/hyperspace.Request"
 	if len(e.QueryContentBloom) > 0 {
 		m["queryContentBloom:ai"] = e.QueryContentBloom
 	}
@@ -40,7 +40,7 @@ func (e *Request) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
@@ -62,7 +62,7 @@ func (e *Announced) GetType() string {
 
 func (e *Announced) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "nimona.io/discovery/hyperspace.Announced"
+	m["@type:s"] = "nimona.io/discovery/hyperspace.Announced"
 	if len(e.AvailableContentBloom) > 0 {
 		m["availableContentBloom:ai"] = e.AvailableContentBloom
 	}
@@ -71,7 +71,7 @@ func (e *Announced) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Authors) > 0 {
-		m["@authors:ao"] = func() []interface{} {
+		m["authors:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Authors))
 			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()

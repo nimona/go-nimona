@@ -8,29 +8,29 @@ import (
 
 func TestObjectMethods(t *testing.T) {
 	m := map[string]interface{}{
-		"@ctx:s": "ctx-value",
+		"@type:s": "ctx-value",
 		"@signature:o": Object{
-			"@ctx:s": "-signature",
+			"@type:s": "-signature",
 		},
-		"@policy:o": Object{
-			"@ctx:s": "-policy",
+		"something:o": Object{
+			"@type:s": "-something",
 		},
-		"@parents:ao": []Object{
+		"parents:ao": []Object{
 			(&Hash{}).ToObject(),
 		},
 	}
 
 	em := map[string]interface{}{
-		"@ctx:s": "ctx-value",
+		"@type:s": "ctx-value",
 		"@signature:o": map[string]interface{}{
-			"@ctx:s": "-signature",
+			"@type:s": "-signature",
 		},
-		"@policy:o": map[string]interface{}{
-			"@ctx:s": "-policy",
+		"something:o": map[string]interface{}{
+			"@type:s": "-something",
 		},
-		"@parents:ao": []map[string]interface{}{
+		"parents:ao": []map[string]interface{}{
 			map[string]interface{}{
-				"@ctx:s":    "nimona.io/Hash",
+				"@type:s":   "nimona.io/Hash",
 				"@domain:s": "nimona.io/object",
 				"@struct:s": "Hash",
 			},
@@ -39,19 +39,19 @@ func TestObjectMethods(t *testing.T) {
 
 	o := FromMap(m)
 
-	assert.Equal(t, em["@ctx:s"], o.Get("@ctx:s"))
+	assert.Equal(t, em["@type:s"], o.Get("@type:s"))
 	assert.Equal(t, em["@signature:o"], o.Get("@signature:o"))
-	assert.Equal(t, em["@policy:o"], o.Get("@policy:o"))
+	assert.Equal(t, em["something:o"], o.Get("something:o"))
 
 	n := New()
 
-	n.Set("@ctx:", m["@ctx:s"])
+	n.Set("@type:", m["@type:s"])
 	n.Set("@signature:o", m["@signature:o"])
-	n.Set("@policy:o", m["@policy:o"])
+	n.Set("something:o", m["something:o"])
 
-	assert.Equal(t, em["@ctx:s"], n.Get("@ctx:"))
+	assert.Equal(t, em["@type:s"], n.Get("@type:"))
 	assert.Equal(t, em["@signature:o"], n.Get("@signature:o"))
-	assert.Equal(t, em["@policy:o"], n.Get("@policy:o"))
+	assert.Equal(t, em["something:o"], n.Get("something:o"))
 
 	e := New()
 
@@ -59,9 +59,9 @@ func TestObjectMethods(t *testing.T) {
 	s := o.GetSignature()
 	e.SetSignature(*s)
 
-	assert.NotNil(t, e.Get("@ctx:s"))
+	assert.NotNil(t, e.Get("@type:s"))
 	assert.NotNil(t, e.Get("@signature:o"))
 
-	assert.Equal(t, em["@ctx:s"], e.Get("@ctx:s"))
+	assert.Equal(t, em["@type:s"], e.Get("@type:s"))
 	assert.Equal(t, em["@signature:o"], e.Get("@signature:o"))
 }

@@ -58,21 +58,21 @@ func Test_Normalize(t *testing.T) {
 	}
 
 	em := map[string]interface{}{
-		"@ctx:s":            "nimona.io/stream.Created",
+		"@type:s":           "nimona.io/stream.Created",
 		"nonce:s":           "nonce",
 		"createdDateTime:s": "",
-		"@authors:ao": []interface{}{
+		"authors:ao": []interface{}{
 			map[string]interface{}{
-				"@ctx:s": "nimona.io/stream.Author",
+				"@type:s": "nimona.io/stream.Author",
 				"publicKey:o": map[string]interface{}{
-					"@ctx:s":      "nimona.io/crypto.PublicKey",
+					"@type:s":     "nimona.io/crypto.PublicKey",
 					"keyType:s":   "kty",
 					"algorithm:s": "alg",
 					"curve:s":     "crv",
 					"x:d":         kx,
 					"y:d":         ky,
 					"@signature:o": map[string]interface{}{
-						"@ctx:s":      "nimona.io/crypto.Signature",
+						"@type:s":     "nimona.io/crypto.Signature",
 						"algorithm:s": "alg",
 						"r:d":         sr,
 						"s:d":         ss,
@@ -80,18 +80,18 @@ func Test_Normalize(t *testing.T) {
 				},
 			},
 		},
-		"@policies:ao": []interface{}{
+		"policies:ao": []interface{}{
 			map[string]interface{}{
-				"@ctx:s":       "nimona.io/stream.Policy",
+				"@type:s":      "nimona.io/stream.Policy",
 				"subjects:as":  []interface{}{"subject"},
 				"resources:as": []interface{}{"*"},
 				"action:s":     "allow",
 			},
 		},
 		"@signature:o": map[string]interface{}{
-			"@ctx:s": "nimona.io/crypto.Signature",
+			"@type:s": "nimona.io/crypto.Signature",
 			"publicKey:o": map[string]interface{}{
-				"@ctx:s":      "nimona.io/crypto.PublicKey",
+				"@type:s":     "nimona.io/crypto.PublicKey",
 				"keyType:s":   "kty",
 				"algorithm:s": "alg",
 				"curve:s":     "crv",

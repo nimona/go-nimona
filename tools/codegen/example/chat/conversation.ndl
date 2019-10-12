@@ -5,15 +5,15 @@ import example/stream stream
 
 domain example/conversation extends example/stream {
     signed event TopicSet {
-        @stream example/crypto.Hash
+        stream example/crypto.Hash
         topic string
     }
     signed event NameSet {
-        @stream example/crypto.Hash
+        stream example/crypto.Hash
         name string
     }
     signed event MessageAdded {
-        @stream example/crypto.Hash
+        stream example/crypto.Hash
         parents repeated example/crypto.Hash
         body string
     }

@@ -44,7 +44,7 @@ func (e *Hash) GetType() string {
 
 func (e *Hash) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/crypto.Hash"
+	m["@type:s"] = "example/crypto.Hash"
 	m["hashType:s"] = e.HashType
 	m["digest:d"] = e.Digest
 	return object.Object(m)
@@ -61,7 +61,7 @@ func (e *Signature) GetType() string {
 
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/crypto.Signature"
+	m["@type:s"] = "example/crypto.Signature"
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
@@ -82,7 +82,7 @@ func (e *PrivateKey) GetType() string {
 
 func (e *PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/crypto.PrivateKey"
+	m["@type:s"] = "example/crypto.PrivateKey"
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
@@ -106,7 +106,7 @@ func (e *PublicKey) GetType() string {
 
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@ctx:s"] = "example/crypto.PublicKey"
+	m["@type:s"] = "example/crypto.PublicKey"
 	m["keyType:s"] = e.KeyType
 	m["algorithm:s"] = e.Algorithm
 	m["curve:s"] = e.Curve
