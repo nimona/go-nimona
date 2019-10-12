@@ -39,11 +39,14 @@ func (e *Signature) GetType() string {
 }
 
 func (e *Signature) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/crypto.Signature",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/crypto.Signature"
+	if e.PublicKey != nil {
+		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["algorithm:s"] = e.Algorithm
+	m["r:d"] = e.R
+	m["s:d"] = e.S
 	return object.Object(m)
 }
 
@@ -57,11 +60,17 @@ func (e *PrivateKey) GetType() string {
 }
 
 func (e *PrivateKey) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/crypto.PrivateKey",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/crypto.PrivateKey"
+	m["keyType:s"] = e.KeyType
+	if e.PublicKey != nil {
+		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m["algorithm:s"] = e.Algorithm
+	m["curve:s"] = e.Curve
+	m["x:d"] = e.X
+	m["y:d"] = e.Y
+	m["d:d"] = e.D
 	return object.Object(m)
 }
 
@@ -75,11 +84,16 @@ func (e *PublicKey) GetType() string {
 }
 
 func (e *PublicKey) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/crypto.PublicKey",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/crypto.PublicKey"
+	m["keyType:s"] = e.KeyType
+	m["algorithm:s"] = e.Algorithm
+	m["curve:s"] = e.Curve
+	m["x:d"] = e.X
+	m["y:d"] = e.Y
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
 	return object.Object(m)
 }
 

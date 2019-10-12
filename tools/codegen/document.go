@@ -33,6 +33,7 @@ type Member struct {
 	Type string
 	Tag  string
 
+	IsObject bool
 	Required bool
-	Repeated bool
+	IsRepeated bool
 }

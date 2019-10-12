@@ -21,11 +21,10 @@ func (e *Hash) GetType() string {
 }
 
 func (e *Hash) ToObject() Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/Hash",
-	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/Hash"
+	m["algorithm:s"] = e.Algorithm
+	m["d:d"] = e.D
 	return Object(m)
 }
 
@@ -39,11 +38,11 @@ func (e *Link) GetType() string {
 }
 
 func (e *Link) ToObject() Object {
-	m := map[string]interface{}{
-		"@ctx:s": "nimona.io/Link",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "nimona.io/Link"
+	if e.Target != nil {
+		m["target:o"] = e.Target.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
 	return Object(m)
 }
 

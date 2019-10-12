@@ -38,11 +38,24 @@ func (e *Policy) GetType() string {
 }
 
 func (e *Policy) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/stream.Policy",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/stream.Policy"
+	if len(e.Subjects) > 0 {
+		m["subjects:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Subjects))
+			for i, v := range e.Subjects {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Resources) > 0 {
+		m["resources:as"] = e.Resources
+	}
+	if len(e.Conditions) > 0 {
+		m["conditions:as"] = e.Conditions
+	}
+	m["action:s"] = e.Action
 	return object.Object(m)
 }
 
@@ -56,11 +69,33 @@ func (e *Created) GetType() string {
 }
 
 func (e *Created) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/stream.Created",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/stream.Created"
+	m["createdDateTime:s"] = e.CreatedDateTime
+	if len(e.PartitionKeys) > 0 {
+		m["partitionKeys:as"] = e.PartitionKeys
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Policies) > 0 {
+		m["@policies:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Policies))
+			for i, v := range e.Policies {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 
@@ -74,11 +109,41 @@ func (e *PoliciesUpdated) GetType() string {
 }
 
 func (e *PoliciesUpdated) ToObject() object.Object {
-	m := map[string]interface{}{
-		"@ctx:s": "example/stream.PoliciesUpdated",
+	m := map[string]interface{}{}
+	m["@ctx:s"] = "example/stream.PoliciesUpdated"
+	if e.Stream != nil {
+		m["@stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	b, _ := json.Marshal(e)
-	json.Unmarshal(b, &m)
+	if len(e.Parents) > 0 {
+		m["@parents:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Parents))
+			for i, v := range e.Parents {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
+	if len(e.Policies) > 0 {
+		m["@policies:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Policies))
+			for i, v := range e.Policies {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["@authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
+	}
 	return object.Object(m)
 }
 

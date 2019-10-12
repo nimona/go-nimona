@@ -102,7 +102,7 @@ func (p *Parser) parseField() (*Member, error) {
 	if token == REPEATED {
 		member.Type = "[]"
 		member.Tag += "a"
-		member.Repeated = true
+		member.IsRepeated = true
 		token, value = p.scanIgnoreWhiteSpace()
 	}
 	if token != TEXT {
@@ -130,6 +130,7 @@ func (p *Parser) parseField() (*Member, error) {
 	default:
 		member.Type += "*" + value
 		member.Tag += "o"
+		member.IsObject = true
 	}
 	fmt.Println("\tFound attribute", member.Name, "of type", member.Type)
 	return member, nil
