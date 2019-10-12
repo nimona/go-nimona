@@ -43,6 +43,9 @@ func TestSimulation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, nodes)
 
+	// wait for the containers to settle
+	time.Sleep(time.Second * 5)
+
 	// create clients for all nodes
 	clients := make([]*client.Client, len(nodes))
 	for i, node := range nodes {
@@ -73,9 +76,6 @@ func TestSimulation(t *testing.T) {
 			},
 		},
 	}
-
-	// wait for the network to settle
-	// time.Sleep(time.Second * 10)
 
 	err = clients[0].PostObject(streamCreated.ToObject())
 	assert.NoError(t, err)
