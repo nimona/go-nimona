@@ -4,11 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"nimona.io/pkg/errors"
 )
-
-const dbFilepath string = "./nimona.db"
 
 const migrationsTable string = `
 CREATE TABLE IF NOT EXISTS Migrations (
@@ -27,17 +24,12 @@ type migrationRow struct {
 	Datetime  string
 }
 
-func New() (*DB, error) {
-	db, err := sql.Open("sqlite3", dbFilepath)
-	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not start db file"))
-	}
-
+func New(db *sql.DB) (*DB, error) {
 	ndb := &DB{
 		db: db,
 	}
 
-	err = ndb.createMigrationTable()
+	err := ndb.createMigrationTable()
 	err = ndb.runMigrations()
 
 	return ndb, err
