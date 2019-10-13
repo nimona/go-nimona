@@ -5,7 +5,11 @@ var migrations = [...]string{
 	  Hash TEXT NOT NULL PRIMARY KEY,
 	  Context TEXT,
 	  StreamHash TEXT,
-	  Body BLOB
+	  Body BLOB,
+	  Created INT,
+	  LastAccessed INT,
+	  TTL INT,
+	  Labels TEXT
 	 )
 	`,
 }
