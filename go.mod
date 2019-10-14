@@ -10,7 +10,7 @@ require (
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/mr-tron/base58 v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/sheerun/queue v1.0.0
