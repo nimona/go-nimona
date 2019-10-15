@@ -116,7 +116,7 @@ func (d *DB) runMigrations() error {
 }
 
 func (d *DB) GetByHash(
-	hash string,
+	hash object.Hash,
 ) (object.Object, error) {
 
 	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
@@ -127,7 +127,7 @@ func (d *DB) GetByHash(
 		)
 	}
 
-	row := stmt.QueryRow(hash)
+	row := stmt.QueryRow(hash.String())
 
 	obj := object.New()
 	data := []byte{}
@@ -155,7 +155,10 @@ func (d *DB) GetByHash(
 		)
 	}
 
-	if _, err := istmt.Exec(time.Now().Unix(), hash); err != nil {
+	if _, err := istmt.Exec(
+		time.Now().Unix(),
+		hash.String(),
+	); err != nil {
 		return nil, errors.Wrap(
 			err,
 			errors.New("could not update last access"),
@@ -219,7 +222,7 @@ func (d *DB) Store(
 }
 
 func (d *DB) GetByStreamHash(
-	streamHash string,
+	streamHash object.Hash,
 ) (object.Object, error) {
 
 	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE StreamHash=?")
@@ -227,7 +230,7 @@ func (d *DB) GetByStreamHash(
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
 
-	row := stmt.QueryRow(streamHash)
+	row := stmt.QueryRow(streamHash.String())
 
 	obj := object.New()
 	data := []byte{}
@@ -256,7 +259,10 @@ func (d *DB) GetByStreamHash(
 		)
 	}
 
-	if _, err := istmt.Exec(time.Now().Unix(), streamHash); err != nil {
+	if _, err := istmt.Exec(
+		time.Now().Unix(),
+		streamHash.String(),
+	); err != nil {
 		return nil, errors.Wrap(
 			err,
 			errors.New("could not update last access"),
@@ -267,7 +273,7 @@ func (d *DB) GetByStreamHash(
 }
 
 func (d *DB) UpdateTTL(
-	hash string,
+	hash object.Hash,
 	minutes int,
 ) error {
 
@@ -282,7 +288,7 @@ func (d *DB) UpdateTTL(
 	if _, err := stmt.Exec(
 		minutes,
 		time.Now().Unix(),
-		hash,
+		hash.String(),
 	); err != nil {
 		return errors.Wrap(
 			err,
