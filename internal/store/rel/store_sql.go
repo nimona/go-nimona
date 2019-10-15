@@ -167,8 +167,15 @@ func (d *DB) GetByHash(
 
 func (d *DB) Store(
 	obj object.Object,
-	ttl int, // minutes
+	opts ...Option,
 ) error {
+	options := &Options{
+		TTL: 0,
+	}
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	stmt, err := d.db.Prepare(`
 	INSERT INTO Objects(
 		Hash,
@@ -202,7 +209,7 @@ func (d *DB) Store(
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
-		ttl,
+		options.TTL,
 	)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
