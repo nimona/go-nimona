@@ -30,8 +30,6 @@ var (
 
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_send_request_generated.go -pkg exchange gen "KeyType=string ValueType=sendRequest"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_object_request_generated.go -pkg exchange gen "KeyType=string ValueType=ObjectRequest"
 
 type (
 	// Exchange interface for mocking exchange
@@ -70,9 +68,7 @@ type (
 		handlers sync.Map
 		logger   log.Logger
 
-		store        graph.Store
-		getRequests  *StringObjectRequestSyncMap
-		sendRequests *StringSendRequestSyncMap
+		store graph.Store
 	}
 	// Options (mostly) for Send()
 	Options struct {
@@ -80,10 +76,7 @@ type (
 		Response       chan *Envelope
 		LocalDiscovery bool
 	}
-	Option      func(*Options)
-	sendRequest struct {
-		out chan *Envelope
-	}
+	Option func(*Options)
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
 		context   context.Context
@@ -138,9 +131,7 @@ func New(
 				),
 			),
 
-		store:        store,
-		getRequests:  NewStringObjectRequestSyncMap(),
-		sendRequests: NewStringSendRequestSyncMap(),
+		store: store,
 	}
 
 	// TODO(superdecimal) we should probably remove .Listen() from here, net

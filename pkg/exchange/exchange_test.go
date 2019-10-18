@@ -116,10 +116,11 @@ func TestRequestSuccess(t *testing.T) {
 
 	// handle events in x1 to make sure we received responses
 	out := make(chan *Envelope, 1)
-	x1.Handle("test/msg", func(e *Envelope) error {
+	_, err = x1.Handle("test/msg", func(e *Envelope) error {
 		out <- e
 		return nil
 	})
+	assert.NoError(t, err)
 
 	// request object, with req id
 	ctx := context.New(context.WithTimeout(time.Second * 3))
