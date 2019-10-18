@@ -92,7 +92,10 @@ func New(opts ...Option) *context {
 		opt(ctx)
 	}
 	if ctx.correlationID == "" {
-		ctx.correlationID = rand.String(12)
+		ctx.correlationID = rand.String(8)
+	}
+	if pctx, ok := ctx.Context.(*context); ok {
+		ctx.correlationID = pctx.correlationID + "/" + ctx.correlationID
 	}
 	if ctx.timeout > 0 {
 		ctx.Context, ctx.cancel = stdcontext.WithTimeout(

@@ -141,10 +141,11 @@ func TestSync(t *testing.T) {
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
 			for _, h := range handlers {
-				h(&exchange.Envelope{
+				err := h(&exchange.Envelope{
 					Payload: o,
 					Sender:  rkey.PublicKey,
 				})
+				assert.NoError(t, err)
 			}
 		}
 	}
