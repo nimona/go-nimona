@@ -101,8 +101,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		}
 
 		// try to sync the graph with the addresses we gathered
-		hs := []*object.Hash{h}
-		if _, err = api.orchestrator.Sync(ctx, hs, addrs); err != nil {
+		if _, err = api.orchestrator.Sync(ctx, h, addrs); err != nil {
 			if errors.CausedBy(err, graph.ErrNotFound) {
 				c.AbortWithError(404, err) // nolint: errcheck
 				return

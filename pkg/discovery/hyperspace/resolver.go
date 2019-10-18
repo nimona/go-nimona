@@ -55,24 +55,21 @@ func NewDiscoverer(
 		log.String("method", "hyperspace/Discoverer"),
 	)
 
-	if _, err := exc.Handle(peerType, r.handleObject); err != nil {
-		return nil, err
+	types := []string{
+		peerType,
+		peerRequestedType,
+		contentProviderRequestType,
+		contentProviderAnnouncedType,
 	}
 
-	if _, err := exc.Handle(peerRequestedType, r.handleObject); err != nil {
-		return nil, err
-	}
-
-	if _, err := exc.Handle(contentProviderRequestType, r.handleObject); err != nil {
-		return nil, err
-	}
-
-	if _, err := exc.Handle(contentProviderAnnouncedType, r.handleObject); err != nil {
-		return nil, err
+	for _, t := range types {
+		if _, err := exc.Handle(t, r.handleObject); err != nil {
+			return nil, err
+		}
 	}
 
 	r.local.OnContentHashesUpdated(func(hashes []*object.Hash) {
-		nctx := context.New(context.WithTimeout(time.Second * 5))
+		nctx := context.New(context.WithTimeout(time.Second * 3))
 		for _, hash := range hashes {
 			r.contentHashes.Put(hash)
 		}
@@ -132,16 +129,15 @@ func (r *Discoverer) FindByFingerprint(
 		return nil, nil
 	}
 
-	if _, err := r.LookupPeer(ctx, &peer.Requested{
+	eps, err := r.LookupPeer(ctx, &peer.Requested{
 		Keys: []string{
 			fingerprint.String(),
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	eps = r.store.FindByFingerprint(fingerprint)
-	eps = r.withoutOwnPeer(eps)
 	return eps, nil
 }
 
@@ -196,11 +192,6 @@ func (r *Discoverer) handleObject(
 ) error {
 	// attempt to recover correlation id from request id
 	ctx := r.context
-	if e.RequestID != "" {
-		ctx = context.New(
-			context.WithCorrelationID(e.RequestID),
-		)
-	}
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleObject"),
@@ -269,7 +260,6 @@ func (r *Discoverer) handlePeerRequest(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeerRequest"),
 		log.String("e.sender", e.Sender.Fingerprint().String()),
-		log.String("e.requestID", e.RequestID),
 		log.Any("query.keys", q.Keys),
 	)
 
@@ -294,7 +284,14 @@ func (r *Discoverer) handlePeerRequest(
 		logger.Debug("responding with peer",
 			log.String("peer", p.Signature.PublicKey.Fingerprint().String()),
 		)
-		err := e.Respond(p.ToObject())
+		err := r.exchange.Send(
+			context.New(
+				context.WithTimeout(time.Second),
+			),
+			p.ToObject(),
+			e.Sender.Fingerprint().Address(),
+			exchange.WithLocalDiscoveryOnly(),
+		)
 		if err != nil {
 			logger.Debug("could not send object",
 				log.Error(err),
@@ -327,7 +324,6 @@ func (r *Discoverer) handleProviderRequest(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleProviderRequest"),
 		log.String("e.sender", e.Sender.Fingerprint().String()),
-		log.String("e.requestID", e.RequestID),
 		log.Any("query.bloom", q.QueryContentBloom),
 	)
 
@@ -349,7 +345,14 @@ func (r *Discoverer) handleProviderRequest(
 			log.Any("bloom", p.Bloom),
 			log.String("fingerprint", pf),
 		)
-		err := e.Respond(p.ToObject())
+		err := r.exchange.Send(
+			context.New(
+				context.WithTimeout(time.Second),
+			),
+			p.ToObject(),
+			e.Sender.Fingerprint().Address(),
+			exchange.WithLocalDiscoveryOnly(),
+		)
 		if err != nil {
 			logger.Debug("could not send object",
 				log.Error(err),
@@ -389,11 +392,42 @@ func (r *Discoverer) LookupContentProvider(
 		return nil, errors.New("no peers to ask")
 	}
 
-	out := make(chan *exchange.Envelope, 10)
-	rctx := context.New(context.WithTimeout(time.Second * 5))
+	// newPeers := make(chan *peer.Peer, 1)
+	// newContentProviders := make(chan *Announced, 1)
+
+	// cf, err := r.exchange.Handle(
+	// 	contentProviderAnnouncedType,
+	// 	func(e *exchange.Envelope) error {
+	// 		switch e.Payload.GetType() {
+	// 		case peerType:
+	// 			p := &peer.Peer{}
+	// 			err := p.FromObject(e.Payload)
+	// 			if err == nil {
+	// 				newPeers <- p
+	// 			}
+	// 		case contentProviderAnnouncedType:
+	// 			p := &Announced{}
+	// 			err := p.FromObject(e.Payload)
+	// 			if err == nil {
+	// 				newContentProviders <- p
+	// 			}
+	// 		}
+	// 		return nil
+	// 	},
+	// )
+	// if err != nil {
+	// 	return nil, errors.Wrap(
+	// 		errors.New("could not start handling contentProviderAnnouncedType"),
+	// 		err,
+	// 	)
+	// }
+	// defer cf()
+
+	// TODO(geoah): go through new peers and consider asking them
+	// TODO(geoah): go through new providers and consider returning early
+
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
 	logger.Debug("found peers to ask", log.Int("n", len(fs)))
 	for _, f := range fs {
@@ -416,37 +450,12 @@ func (r *Discoverer) LookupContentProvider(
 			).Debug("asked peer")
 		}(f)
 	}
-	// TODO(geoah) better timeout
 	t := time.NewTimer(time.Second * 5)
-loop:
-	for {
-		select {
-		case <-t.C:
-			logger.Debug("timer done, giving up")
-			break loop
-
-		case <-ctx.Done():
-			break loop
-
-		case res := <-out:
-			logger.Debug("got loopkup response",
-				log.String("res.type", res.Payload.GetType()),
-				log.String("res.sender", res.Sender.Fingerprint().String()),
-			)
-			if err := r.handleObject(res); err != nil {
-				logger.Debug("could not handle object", log.Error(err))
-			}
-			// if res.Payload.GetType() == ContentProviderAnnouncedType {
-			// 	v := &Updated{}
-			// 	if err := v.FromObject(res.Payload); err == nil {
-			// 		fingerprints = append(
-			// 			fingerprints,
-			// 			v.Signature.PublicKey.Fingerprint(),
-			// 		)
-			// 	}
-			// 	break
-			// }
-		}
+	select {
+	case <-t.C:
+		logger.Debug("timer done, giving up")
+	case <-ctx.Done():
+		logger.Debug("ctx done, giving up")
 	}
 	cs = r.store.FindByContent(q)
 	fs = []crypto.Fingerprint{}
@@ -472,11 +481,8 @@ func (r *Discoverer) LookupPeer(
 	o := q.ToObject()
 	// TODO support multiple keys
 	ps := r.store.FindClosestPeer(crypto.Fingerprint(q.Keys[0]))
-	out := make(chan *exchange.Envelope, 10)
-	rctx := context.FromContext(ctx)
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithResponse(context.GetCorrelationID(rctx), out),
 	}
 	ps = r.withoutOwnPeer(ps)
 	if len(ps) == 0 {
@@ -492,9 +498,30 @@ func (r *Discoverer) LookupPeer(
 			logger.Debug("could not lookup peer", log.Error(err))
 		}
 	}
+
 	peers := []*peer.Peer{}
-	// TODO(geoah) better timeout
-	t := time.NewTicker(time.Second * 5)
+	newPeers := make(chan *peer.Peer)
+	cf, err := r.exchange.Handle(
+		peerType,
+		func(e *exchange.Envelope) error {
+			p := &peer.Peer{}
+			err := p.FromObject(e.Payload)
+			if err != nil {
+				return nil
+			}
+			newPeers <- p
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(
+			errors.New("could not start handling contentProviderAnnouncedType"),
+			err,
+		)
+	}
+	defer cf()
+
+	t := time.NewTicker(time.Second * 4)
 	for {
 		select {
 		case <-t.C:
@@ -503,23 +530,19 @@ func (r *Discoverer) LookupPeer(
 		case <-ctx.Done():
 			return peers, nil
 
-		case res := <-out:
-			logger.Debug("got loopkup response",
-				log.String("res.type", res.Payload.GetType()),
-				log.String("res.sender", res.Sender.Fingerprint().String()),
+		case newPeer := <-newPeers:
+			logger.Debug(
+				"got back peer",
+				log.String("peer.fingerprint", newPeer.Fingerprint().String()),
 			)
-			if err := r.handleObject(res); err != nil {
-				logger.Debug("could not handle object", log.Error(err))
-			}
-			if res.Payload.GetType() == peerType {
-				v := &peer.Peer{}
-				if err := v.FromObject(res.Payload); err == nil {
-					peers = append(peers, v)
-				}
+			// TODO(geoah): q.Keys needs to be singular and a public key
+			if peerMatchesKeyFingerprint(newPeer, crypto.Fingerprint(q.Keys[0])) {
+				peers = append(peers, newPeer)
 				return peers, nil
 			}
 		}
 	}
+
 	return peers, nil
 }
 

@@ -107,16 +107,24 @@ func (s *Store) FindByFingerprint(
 ) []*peer.Peer {
 	ps := []*peer.Peer{}
 	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
-		for _, k := range crypto.GetSignatureKeys(p.Signature) {
-			if k.Fingerprint().String() != fingerprint.String() {
-				continue
-			}
+		if peerMatchesKeyFingerprint(p, fingerprint) {
 			ps = append(ps, p)
-			break
 		}
 		return true
 	})
 	return ps
+}
+
+func peerMatchesKeyFingerprint(
+	peer *peer.Peer,
+	fingerprint crypto.Fingerprint,
+) bool {
+	for _, k := range crypto.GetSignatureKeys(peer.Signature) {
+		if k.Fingerprint().String() == fingerprint.String() {
+			return true
+		}
+	}
+	return false
 }
 
 // FindByContent returns peers that match a given content hash

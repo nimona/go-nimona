@@ -1,7 +1,10 @@
 package orchestrator
 
 import (
+	"time"
+
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/hash"
@@ -12,23 +15,61 @@ import (
 
 func (m *orchestrator) Sync(
 	ctx context.Context,
-	streams []*object.Hash,
+	streamHash *object.Hash,
 	addresses []string,
 ) (
 	*Graph,
 	error,
 ) {
-	responses := make(chan *exchange.Envelope, 10)
 	addresses = m.withoutOwnAddresses(addresses)
+
+	// start listening for incoming events
+	newObjects := make(chan object.Object)
+	newEventLists := make(chan *stream.EventListCreated)
+	_, err := m.exchange.Handle(
+		"**",
+		func(e *exchange.Envelope) error {
+			switch e.Payload.GetType() {
+			case streamEventListCreatedType:
+				p := &stream.EventListCreated{}
+				err := p.FromObject(e.Payload)
+				if err != nil {
+					return nil
+				}
+				newEventLists <- p
+
+			default:
+				newObjects <- e.Payload
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(
+			errors.New("could not start handling contentProviderAnnouncedType"),
+			err,
+		)
+	}
+	// defer cf()
 
 	// create objecet graph request
 	req := &stream.RequestEventList{
-		Streams: streams,
+		Stream: streamHash,
 	}
+	sig, err := crypto.NewSignature(
+		m.localInfo.GetPeerKey(),
+		crypto.AlgorithmObjectHash,
+		req.ToObject(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Signature = sig
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "orchestrator/orchestrator.Sync"),
-		log.Any("streams", streams),
+		log.Any("stream", streamHash),
 		log.Strings("addresses", addresses),
 	)
 
@@ -39,17 +80,18 @@ func (m *orchestrator) Sync(
 		logger.Debug("sending request",
 			log.String("address", address),
 		)
-		if err := m.exchange.Send(
-			ctx,
-			req.ToObject(),
-			address,
-			exchange.WithResponse("", responses),
-		); err != nil {
-			// TODO log error, should return if they all fail
-			logger.Debug("could not send request",
-				log.String("address", address),
-			)
-		}
+		go func(address string) {
+			if err := m.exchange.Send(
+				ctx,
+				req.ToObject(),
+				address,
+			); err != nil {
+				// TODO log error, should return if they all fail
+				logger.Debug("could not send request",
+					log.String("address", address),
+				)
+			}
+		}(address)
 	}
 
 	// and who knows about them
@@ -57,7 +99,7 @@ func (m *orchestrator) Sync(
 		hash *object.Hash
 		addr string
 	}
-	requests := make(chan *request, 100)
+	requests := make(chan *request)
 
 	// TODO(geoah) how long should we be waiting for this part?
 	// wait for ctx to timeout or for responses to come back.
@@ -67,95 +109,92 @@ func (m *orchestrator) Sync(
 		for {
 			select {
 			case <-ctx.Done():
-				close(requests)
+				// close(requests)
 				return
 
-			case res := <-responses:
+			case eventList := <-newEventLists:
 				logger := logger.With(
-					log.String("object._hash", hash.New(res.Payload).String()),
-					log.String("object.type", res.Payload.GetType()),
+					log.Any("hashes", eventList.Events),
+					log.Any("stream", eventList.Stream),
 				)
 
-				if res.Payload.GetType() != streamEventListCreatedType {
+				logger.Debug("got new events list")
+
+				if eventList.Stream.String() != streamHash.String() {
 					continue
 				}
-				gres := &stream.EventListCreated{}
-				if err := gres.FromObject(res.Payload); err != nil {
-					logger.Warn("could not get res from obj", log.Error(err))
-					continue
-				}
-				logger.
-					With(log.Any("hashes", gres.Events)).
-					Debug("got graph response")
-				for _, objectHash := range gres.Events {
+
+				logger.Debug("got graph response")
+				for _, objectHash := range eventList.Events {
 					// add a request for this hash from this peer
+					if len(eventList.Authors) == 0 {
+						continue
+					}
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + res.Sender.Fingerprint().String(),
+						addr: eventList.Authors[0].PublicKey.Fingerprint().Address(),
 					}
 				}
 				respCount++
 				if respCount == len(addresses) {
-					close(requests)
+					// close(requests)
 					return
 				}
 			}
 		}
 	}()
 
-	for req := range requests {
-		// check if we actually have the object
-		obj, err := m.store.Get(req.hash.Compact())
-		if err == nil && obj != nil {
-			continue
-		}
-
-		// else we go through the peers who have it and ask them about it
-		out := make(chan *exchange.Envelope, 1)
-		if err := m.exchange.Request(
-			ctx,
-			req.hash,
-			req.addr,
-			exchange.WithResponse("", out),
-		); err != nil {
-			logger.With(
-				log.Any("req.hash", req.hash),
-				log.Any("req.addr", req.hash),
-				log.Error(err),
-			).Debug("could not send request for object")
-			close(out)
-			continue
-		}
-
-		go m.localInfo.AddContentHash(req.hash)
-
-		select {
-		case <-ctx.Done():
-		case res := <-out:
-			h := hash.New(res.Payload)
-			if h.Compact() != req.hash.Compact() {
-				logger.With(
-					log.String("hash", h.Compact()),
-					log.String("req.hash", req.hash.Compact()),
-					log.String("req.addr", req.hash.Compact()),
-					log.Error(err),
-				).Debug("expected hash does not match actual")
-				break
+	go func() {
+		for req := range requests {
+			// check if we actually have the object
+			obj, err := m.store.Get(req.hash.Compact())
+			if err == nil && obj != nil {
+				continue
 			}
-			if err := m.store.Put(res.Payload); err != nil {
+
+			// else we go through the peers who have it and ask them about it
+			if err := m.exchange.Request(
+				ctx,
+				req.hash,
+				req.addr,
+			); err != nil {
 				logger.With(
-					log.String("req.hash", req.hash.Compact()),
-					log.String("req.addr", req.hash.Compact()),
+					log.Any("req.hash", req.hash),
+					log.Any("req.addr", req.hash),
+					log.Error(err),
+				).Debug("could not send request for object")
+				continue
+			}
+		}
+	}()
+
+	timeout := time.NewTimer(time.Second * 5)
+loop:
+	for {
+		select {
+		case <-timeout.C:
+			break loop
+		case <-ctx.Done():
+			break loop
+		case o := <-newObjects:
+			oHash := hash.New(o)
+			oStreamHash := stream.Stream(o)
+			if oHash.String() != streamHash.String() {
+				if oStreamHash == nil || oStreamHash.String() != streamHash.String() {
+					continue loop
+				}
+			}
+			if err := m.store.Put(o); err != nil {
+				logger.With(
+					log.String("req.hash", streamHash.Compact()),
 					log.Error(err),
 				).Debug("could not store objec")
 			}
 		}
-		close(out)
 	}
 
 	// TODO currently we only support a root streams
-	rootHash := streams[0]
-	os, err := m.store.Graph(rootHash.Compact())
+	os, err := m.store.Graph(streamHash.Compact())
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.New("could not get graph from store"),

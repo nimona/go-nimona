@@ -25,7 +25,7 @@ type (
 	Orchestrator interface {
 		Sync(
 			ctx context.Context,
-			streams []*object.Hash,
+			stream *object.Hash,
 			addresses []string,
 		) (
 			*Graph,
@@ -118,6 +118,7 @@ func NewWithContext(
 func (m *orchestrator) Process(e *exchange.Envelope) error {
 	ctx := context.Background()
 	logger := log.FromContext(ctx).With(
+		log.String("method", "orchestrator.Process"),
 		log.String("object._hash", hash.New(e.Payload).String()),
 		log.String("object.type", e.Payload.GetType()),
 	)
@@ -130,10 +131,8 @@ func (m *orchestrator) Process(e *exchange.Envelope) error {
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		reqID := o.Get(exchange.ObjectRequestID).(string)
 		if err := m.handleStreamRequestEventList(
 			ctx,
-			reqID,
 			e.Sender,
 			v,
 		); err != nil {
@@ -225,14 +224,13 @@ func (m *orchestrator) Get(
 
 func (m *orchestrator) handleStreamRequestEventList(
 	ctx context.Context,
-	reqID string,
 	sender *crypto.PublicKey,
 	req *stream.RequestEventList,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
 
-	vs, err := m.store.Graph(req.Streams[0].Compact())
+	vs, err := m.store.Graph(req.Stream.Compact())
 	if err != nil {
 		return err
 	}
@@ -243,14 +241,29 @@ func (m *orchestrator) handleStreamRequestEventList(
 	}
 
 	res := &stream.EventListCreated{
+		Stream: req.Stream,
 		Events: hs,
+		Authors: []*stream.Author{
+			&stream.Author{
+				PublicKey: m.localInfo.GetPeerKey().PublicKey,
+			},
+		},
 	}
+	sig, err := crypto.NewSignature(
+		m.localInfo.GetPeerKey(),
+		crypto.AlgorithmObjectHash,
+		req.ToObject(),
+	)
+	if err != nil {
+		return err
+	}
+
+	res.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
 		"peer:"+sender.Fingerprint().String(),
-		exchange.AsResponse(reqID),
 	); err != nil {
 		logger.Warn(
 			"orchestrator/orchestrator.handlestream.RequestEventList could not send response",
