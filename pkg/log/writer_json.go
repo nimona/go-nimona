@@ -32,15 +32,12 @@ func JSONWriter() Writer {
 			}
 		}
 
-		m := map[string]interface{}{
-			"cID":    cID,
-			"name":   log.name,
-			"fields": res,
-			"msg":    msg,
-			"level":  levels[level],
-		}
+		res["$cID"] = cID
+		res["$name"] = log.name
+		res["$msg"] = msg
+		res["$level"] = levels[level]
 
-		b, _ := json.Marshal(m)
+		b, _ := json.Marshal(res)
 		fmt.Fprintf(log.output, string(b)+"\n")
 	}
 }
