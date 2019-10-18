@@ -66,8 +66,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	for _, p := range ps {
 		addrs = append(addrs, p.Address())
 	}
-	hs := []*object.Hash{h}
-	os, err := api.orchestrator.Sync(ctx, hs, addrs)
+	os, err := api.orchestrator.Sync(ctx, h, addrs)
 	if err != nil {
 		if err == kv.ErrNotFound {
 			c.AbortWithError(404, err) // nolint: errcheck

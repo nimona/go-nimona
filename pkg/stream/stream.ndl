@@ -27,14 +27,11 @@ abstract domain nimona.io/stream {
         parents repeated nimona.io/object.Hash
         policies repeated Policy
     }
-    command RequestEventList {
-        streams repeated nimona.io/object.Hash
-    }
-    event EventListCreated {
+    signed command RequestEventList {
         stream nimona.io/object.Hash
-        events repeated nimona.io/object.Hash
     }
-    command RequestEvents {
+    signed event EventListCreated {
+        stream nimona.io/object.Hash
         events repeated nimona.io/object.Hash
     }
 }

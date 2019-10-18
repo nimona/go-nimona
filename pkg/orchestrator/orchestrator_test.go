@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,7 +43,7 @@ import (
 var (
 	o = object.FromMap(map[string]interface{}{
 		"@type:s": "foo",
-		"foo:s":  "bar",
+		"foo:s":   "bar",
 		"numbers:ai": []int{
 			1, 2, 3,
 		},
@@ -67,7 +68,7 @@ var (
 			oh.ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m1",
+		"foo:s":    "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
@@ -75,7 +76,7 @@ var (
 			oh.ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m2",
+		"foo:s":    "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
@@ -83,7 +84,7 @@ var (
 			hash.New(m1.ToObject()).ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m3",
+		"foo:s":    "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
@@ -91,7 +92,7 @@ var (
 			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m4",
+		"foo:s":    "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
@@ -99,7 +100,7 @@ var (
 			hash.New(m2.ToObject()).ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m5",
+		"foo:s":    "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
@@ -108,7 +109,7 @@ var (
 			hash.New(m4.ToObject()).ToObject().ToMap(),
 		},
 		"stream:o": oh.ToObject().ToMap(),
-		"foo:s":     "bar-m6",
+		"foo:s":    "bar-m6",
 	})
 )
 
@@ -118,9 +119,9 @@ func TestSync(t *testing.T) {
 
 	x := &exchange.MockExchange{}
 
-	var handler func(*exchange.Envelope) error
+	var handlers []func(*exchange.Envelope) error
 	x.On("Handle", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		handler = args[1].(func(*exchange.Envelope) error)
+		handlers = append(handlers, args[1].(func(*exchange.Envelope) error))
 	}).Return(nil, nil)
 
 	pk, err := crypto.GenerateKey()
@@ -132,18 +133,18 @@ func TestSync(t *testing.T) {
 	m, err := orchestrator.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
-	assert.NotNil(t, handler)
+	assert.NotEmpty(t, handlers)
 
 	rkey, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
-			opt := &exchange.Options{}
-			args[3].(exchange.Option)(opt)
-			opt.Response <- &exchange.Envelope{
-				Payload: o,
-				Sender:  rkey.PublicKey,
+			for _, h := range handlers {
+				h(&exchange.Envelope{
+					Payload: o,
+					Sender:  rkey.PublicKey,
+				})
 			}
 		}
 	}
@@ -154,9 +155,9 @@ func TestSync(t *testing.T) {
 		mock.Anything,
 		mock.Anything,
 		"peer:"+rkey.PublicKey.Fingerprint().String(),
-		mock.Anything,
 	).Run(
 		respWith((&stream.EventListCreated{
+			Stream: oh,
 			Events: []*object.Hash{
 				oh,
 				hash.New(m1.ToObject()),
@@ -165,6 +166,11 @@ func TestSync(t *testing.T) {
 				hash.New(m4.ToObject()),
 				hash.New(m5.ToObject()),
 				hash.New(m6.ToObject()),
+			},
+			Authors: []*stream.Author{
+				&stream.Author{
+					PublicKey: rkey.PublicKey,
+				},
 			},
 		}).ToObject()),
 	).Return(nil)
@@ -190,17 +196,17 @@ func TestSync(t *testing.T) {
 		).Return(nil)
 	}
 
-	ctx := context.Background()
+	ctx := context.New(
+		context.WithCorrelationID("req1"),
+		context.WithTimeout(time.Millisecond*500),
+	)
 	res, err := m.Sync(
 		ctx,
-		[]*object.Hash{
-			oh,
-		},
+		oh,
 		[]string{
 			"peer:" + rkey.PublicKey.Fingerprint().String(),
 		},
 	)
-
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Len(t, res.Objects, 7)

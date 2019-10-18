@@ -1,5 +1,3 @@
-// +build flaky
-
 package hyperspace
 
 import (
@@ -14,13 +12,13 @@ import (
 )
 
 func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {
-	_, k0, n0, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
-	ok1, k1, n1, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
-	ok2, k2, n2, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+	ok0, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	ok1, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	ok2, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
 
-	fmt.Println("k0", k0.Fingerprint())
-	fmt.Println("k1", k1.Fingerprint())
-	fmt.Println("k2", k2.Fingerprint())
+	fmt.Println("ok0", ok0.Fingerprint(), "k0", k0.Fingerprint())
+	fmt.Println("ok1", ok1.Fingerprint(), "k1", k1.Fingerprint())
+	fmt.Println("ok2", ok2.Fingerprint(), "k2", k2.Fingerprint())
 
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
@@ -39,15 +37,12 @@ func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
-
+	time.Sleep(time.Millisecond * 50)
 	ctxR1 := context.New(context.WithCorrelationID("req1"))
 	peers, err := d1.FindByFingerprint(ctxR1, ok2.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
-
-	time.Sleep(time.Second)
 
 	ctxR2 := context.New(context.WithCorrelationID("req2"))
 	peers, err = d2.FindByFingerprint(ctxR2, ok1.Fingerprint())
@@ -57,9 +52,9 @@ func TestDiscoverer_FindBothSides_SubKeys(t *testing.T) {
 }
 
 func TestDiscoverer_FindBothSides(t *testing.T) {
-	_, k0, n0, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
-	_, k1, n1, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
-	_, k2, n2, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
 
 	fmt.Println("k0", k0.Fingerprint())
 	fmt.Println("k1", k1.Fingerprint())
@@ -82,15 +77,13 @@ func TestDiscoverer_FindBothSides(t *testing.T) {
 	err = disc2.AddProvider(d2)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 50)
 
 	ctxR1 := context.New(context.WithCorrelationID("req1"))
 	peers, err := d1.FindByFingerprint(ctxR1, k2.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
-
-	time.Sleep(time.Second)
 
 	ctxR2 := context.New(context.WithCorrelationID("req2"))
 	peers, err = d2.FindByFingerprint(ctxR2, k1.Fingerprint())

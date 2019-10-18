@@ -9,6 +9,7 @@ import (
 
 type (
 	common struct {
+		Type      string            `json:"@ctx:s,omitempty"`
 		Context   string            `json:"@type:s,omitempty"`
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Parents   []*object.Hash    `json:"parents:ao,omitempty"`

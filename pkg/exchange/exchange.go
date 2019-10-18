@@ -20,11 +20,6 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-const (
-	// ObjectRequestID object attribute
-	ObjectRequestID = "_reqID:s"
-)
-
 var (
 	objectRequestType = new(ObjectRequest).GetType()
 	objectForwardType = new(ObjectForward).GetType()
@@ -82,7 +77,6 @@ type (
 	// Options (mostly) for Send()
 	Options struct {
 		ResponseID     string
-		RequestID      string
 		Response       chan *Envelope
 		LocalDiscovery bool
 	}
@@ -308,15 +302,9 @@ func (w *exchange) process(
 	o object.Object,
 	conn *net.Connection,
 ) error {
-	reqID := ""
-	if id, ok := o.Get(ObjectRequestID).(string); ok {
-		reqID = id
-	}
-
 	logger := w.logger.With(
 		log.String("local_peer", w.key.PublicKey.Fingerprint().String()),
 		log.String("remote_peer", conn.RemotePeerKey.Fingerprint().String()),
-		log.String("request_id", reqID),
 		log.String("object.type", o.GetType()),
 	)
 
@@ -340,9 +328,6 @@ func (w *exchange) process(
 				errors.Error("could not retrieve object"),
 				err,
 			)
-		}
-		if reqID != "" {
-			res.Set(ObjectRequestID, reqID)
 		}
 		cerr := make(chan error, 1)
 		ctx := context.New(context.WithTimeout(time.Second))
@@ -379,19 +364,6 @@ func (w *exchange) process(
 		return <-cerr
 	}
 
-	// check if this is in response to a Send() WithResponse()
-	if reqID != "" {
-		logger.Info("got object with request id, returning to req channel")
-		if rs, ok := w.sendRequests.Get(reqID); ok {
-			rs.out <- &Envelope{
-				Sender:    conn.RemotePeerKey,
-				Payload:   o,
-				RequestID: reqID,
-				conn:      conn,
-			}
-		}
-	}
-
 	ct := o.GetType()
 	w.handlers.Range(func(_, v interface{}) bool {
 		// logger.Debug("publishing object to handler")
@@ -410,10 +382,8 @@ func (w *exchange) process(
 				}
 			}()
 			if err := h.handler(&Envelope{
-				Sender:    conn.RemotePeerKey,
-				Payload:   o,
-				RequestID: reqID,
-				conn:      conn,
+				Sender:  conn.RemotePeerKey,
+				Payload: o,
 			}); err != nil {
 				w.logger.Info(
 					"Could not handle event",
@@ -426,27 +396,6 @@ func (w *exchange) process(
 	})
 
 	return nil
-}
-
-// WithResponse will send any responses to the object being sent on the given
-// channel.
-// WARNING: the channel MUST NOT be closed before the context has either timed
-// out, or been canceled.
-func WithResponse(reqID string, out chan *Envelope) Option {
-	if reqID == "" {
-		reqID = rand.String(12)
-	}
-	return func(opt *Options) {
-		opt.RequestID = reqID
-		opt.Response = out
-	}
-}
-
-// AsResponse will send the object as a response.
-func AsResponse(reqID string) Option {
-	return func(opt *Options) {
-		opt.ResponseID = reqID
-	}
 }
 
 // WithLocalDiscoveryOnly will only use local discovery to resolve addresses.
@@ -481,24 +430,6 @@ func (w *exchange) Send(
 	if "peer:"+w.local.GetFingerprint().String() == address {
 		logger.Debug("cannot send object to ourself")
 		return ErrCannotSendToSelf
-	}
-
-	if opts.ResponseID != "" {
-		o.Set(ObjectRequestID, opts.ResponseID)
-	}
-
-	if opts.RequestID != "" {
-		o.Set(ObjectRequestID, opts.RequestID)
-		sr := &sendRequest{
-			out: opts.Response,
-		}
-		w.sendRequests.Put(opts.RequestID, sr)
-		go func() {
-			select {
-			case <-ctx.Done():
-				w.sendRequests.Delete(opts.RequestID)
-			}
-		}()
 	}
 
 	switch getAddressType(address) {

@@ -42,14 +42,15 @@ type (
 		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 	RequestEventList struct {
-		Streams []*object.Hash `json:"streams:ao,omitempty"`
+		Stream    *object.Hash      `json:"stream:o,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 	EventListCreated struct {
-		Stream *object.Hash   `json:"stream:o,omitempty"`
-		Events []*object.Hash `json:"events:ao,omitempty"`
-	}
-	RequestEvents struct {
-		Events []*object.Hash `json:"events:ao,omitempty"`
+		Stream    *object.Hash      `json:"stream:o,omitempty"`
+		Events    []*object.Hash    `json:"events:ao,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Authors   []*Author         `json:"authors:ao,omitempty"`
 	}
 )
 
@@ -243,10 +244,16 @@ func (e *RequestEventList) GetType() string {
 func (e *RequestEventList) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.RequestEventList"
-	if len(e.Streams) > 0 {
-		m["streams:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Streams))
-			for i, v := range e.Streams {
+	if e.Stream != nil {
+		m["stream:o"] = e.Stream.ToObject().ToMap()
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
 			}
 			return a
@@ -279,25 +286,13 @@ func (e *EventListCreated) ToObject() object.Object {
 			return a
 		}()
 	}
-	return object.Object(m)
-}
-
-func (e *EventListCreated) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *RequestEvents) GetType() string {
-	return "nimona.io/stream.RequestEvents"
-}
-
-func (e *RequestEvents) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.RequestEvents"
-	if len(e.Events) > 0 {
-		m["events:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Events))
-			for i, v := range e.Events {
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if len(e.Authors) > 0 {
+		m["authors:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Authors))
+			for i, v := range e.Authors {
 				a[i] = v.ToObject().ToMap()
 			}
 			return a
@@ -306,7 +301,7 @@ func (e *RequestEvents) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *RequestEvents) FromObject(o object.Object) error {
+func (e *EventListCreated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
