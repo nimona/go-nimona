@@ -8,9 +8,6 @@
   <a href="https://github.com/nimona/go-nimona/actions">
     <img src="https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat" alt="Actions Status">
   </a>
-  <a href="https://github.com/nimona/go-nimona/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat" alt="License Status">
-  </a>
   <a href="https://github.com/nimona/go-nimona/commits/master">
     <img src="https://img.shields.io/github/last-commit/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
 alt="GitHub last commit">
@@ -21,6 +18,9 @@ alt="GitHub issues">
   </a>
   <a href="https://github.com/nimona/go-nimona/pulls">
     <img src="https://img.shields.io/github/issues-pr-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests">
+  </a>
+  <a href="https://github.com/nimona/go-nimona/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat" alt="License Status">
   </a>
 </p>
       
