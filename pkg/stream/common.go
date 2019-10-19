@@ -3,8 +3,14 @@ package stream
 import (
 	json "encoding/json"
 
-	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
+)
+
+var (
+	typeStreamSubscribed   = (&Subscribed{}).GetType()
+	typeStreamUnsubscribed = (&Unsubscribed{}).GetType()
 )
 
 type (
@@ -40,4 +46,56 @@ func Policies(o object.Object) []*Policy {
 
 func Authors(o object.Object) []*Author {
 	return toCommon(o).Authors
+}
+
+func GetStreamSubscribers(os []object.Object) []*crypto.PublicKey {
+	subs := map[*crypto.PublicKey]bool{}
+	for _, o := range os {
+		switch o.GetType() {
+		case typeStreamSubscribed:
+			e := &Subscribed{}
+			e.FromObject(o)
+			for _, a := range e.Authors {
+				subs[a.PublicKey] = true
+			}
+		case typeStreamUnsubscribed:
+			e := &Unsubscribed{}
+			e.FromObject(o)
+			for _, a := range e.Authors {
+				subs[a.PublicKey] = true
+			}
+		}
+	}
+	cleanSubs := []*crypto.PublicKey{}
+	for k, ok := range subs {
+		if !ok {
+			continue
+		}
+		cleanSubs = append(cleanSubs, k)
+	}
+	return cleanSubs
+}
+
+func GetStreamTails(os []object.Object) []object.Object {
+	hm := map[string]bool{} // map[hash]isParent
+	om := map[string]object.Object{}
+	for _, o := range os {
+		h := hash.New(o).String()
+		if _, ok := hm[h]; !ok {
+			hm[h] = false
+		}
+		for _, p := range Parents(o) {
+			hm[p.Compact()] = true
+		}
+		om[h] = o
+	}
+
+	os = []object.Object{}
+	for h, isParent := range hm {
+		if isParent == false {
+			os = append(os, om[h])
+		}
+	}
+
+	return os
 }
