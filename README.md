@@ -1,3 +1,8 @@
+__WARNING:__ Nimona is still in its very early stages of design and development and will be there for a while.  
+Documentation is currently non existent but should start slowly poping up as the various design decisions mature.
+
+---
+
 [![Actions Status]](https://github.com/nimona/go-nimona/actions)
 [![License Status]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 
@@ -5,15 +10,11 @@
 
 Nimona’s main goal is to provide a number of layers/components to help with the challenges presented when dealing with decentralized and peer to peer applications.
 
-## Architecture
-
-As the various components and protocols start taking shape their specifications will live under [`docs`](./docs).
-
 ## Development
 
 ### Requirements
 
-- Go 1.11.x with modules enabled
+- Go 1.13+ with modules enabled
 - Make
 
 ### Getting Started
