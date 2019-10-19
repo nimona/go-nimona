@@ -57,7 +57,7 @@ func (m *orchestrator) Sync(
 		Stream: streamHash,
 	}
 	sig, err := crypto.NewSignature(
-		m.localInfo.GetPeerKey(),
+		m.localInfo.GetPeerPrivateKey(),
 		crypto.AlgorithmObjectHash,
 		req.ToObject(),
 	)
@@ -127,12 +127,12 @@ func (m *orchestrator) Sync(
 				logger.Debug("got graph response")
 				for _, objectHash := range eventList.Events {
 					// add a request for this hash from this peer
-					if len(eventList.Authors) == 0 {
+					if eventList.Identity == nil {
 						continue
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: eventList.Authors[0].PublicKey.Fingerprint().Address(),
+						addr: eventList.Identity.Fingerprint().Address(),
 					}
 				}
 				respCount++

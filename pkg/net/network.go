@@ -190,7 +190,7 @@ func (n *network) dialPeer(
 	)
 
 	fingerprint := crypto.Fingerprint(strings.Replace(address, "peer:", "", 1))
-	if fingerprint == n.local.GetPeerKey().Fingerprint() {
+	if fingerprint == n.local.GetPeerPrivateKey().Fingerprint() {
 		return nil, errors.New("cannot dial our own peer")
 	}
 

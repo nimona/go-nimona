@@ -7,7 +7,6 @@ import (
 	crypto "example/crypto"
 
 	object "nimona.io/pkg/object"
-	stream "nimona.io/pkg/stream"
 )
 
 type (
@@ -22,14 +21,14 @@ type (
 		PartitionKeys   []string          `json:"partitionKeys:as,omitempty"`
 		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors         []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity        *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	PoliciesUpdated struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 )
 
@@ -87,14 +86,8 @@ func (e *Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -135,14 +128,8 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

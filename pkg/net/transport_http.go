@@ -82,7 +82,7 @@ func (tt *httpTransport) Listen(
 ) {
 	logger := log.FromContext(ctx).Named("transport/https")
 
-	cert, err := crypto.GenerateCertificate(tt.local.GetPeerKey())
+	cert, err := crypto.GenerateCertificate(tt.local.GetPeerPrivateKey())
 	if err != nil {
 		return nil, err
 	}

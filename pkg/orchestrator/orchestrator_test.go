@@ -168,11 +168,7 @@ func TestSync(t *testing.T) {
 				hash.New(m5.ToObject()),
 				hash.New(m6.ToObject()),
 			},
-			Authors: []*stream.Author{
-				&stream.Author{
-					PublicKey: rkey.PublicKey,
-				},
-			},
+			Identity: rkey.PublicKey,
 		}).ToObject()),
 	).Return(nil)
 

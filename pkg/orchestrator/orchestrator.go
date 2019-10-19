@@ -241,16 +241,12 @@ func (m *orchestrator) handleStreamRequestEventList(
 	}
 
 	res := &stream.EventListCreated{
-		Stream: req.Stream,
-		Events: hs,
-		Authors: []*stream.Author{
-			&stream.Author{
-				PublicKey: m.localInfo.GetPeerKey().PublicKey,
-			},
-		},
+		Stream:   req.Stream,
+		Events:   hs,
+		Identity: m.localInfo.GetIdentityKey(),
 	}
 	sig, err := crypto.NewSignature(
-		m.localInfo.GetPeerKey(),
+		m.localInfo.GetPeerPrivateKey(),
 		crypto.AlgorithmObjectHash,
 		req.ToObject(),
 	)

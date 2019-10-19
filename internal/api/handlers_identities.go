@@ -10,7 +10,7 @@ import (
 )
 
 func (api *API) HandleGetIdentities(c *router.Context) {
-	p := api.local.GetPeerKey()
+	p := api.local.GetPeerPrivateKey()
 	if p.PublicKey.Signature == nil {
 		c.JSON(http.StatusNotFound, []interface{}{})
 		return

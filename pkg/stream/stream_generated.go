@@ -16,41 +16,38 @@ type (
 		Conditions []string `json:"conditions:as,omitempty"`
 		Action     string   `json:"action:s,omitempty"`
 	}
-	Author struct {
-		PublicKey *crypto.PublicKey `json:"publicKey:o,omitempty"`
-	}
 	Created struct {
 		Nonce           string            `json:"nonce:s,omitempty"`
 		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
 		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors         []*Author         `json:"authors:ao,omitempty"`
+		Identity        *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	Subscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	Unsubscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	PolicyAttached struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	RequestEventList struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	EventListCreated struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Events    []*object.Hash    `json:"events:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*Author         `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 )
 
@@ -79,24 +76,6 @@ func (e *Policy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Author) GetType() string {
-	return "nimona.io/stream.Author"
-}
-
-func (e *Author) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.Author"
-	if e.PublicKey != nil {
-		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
-	}
-	return object.Object(m)
-}
-
-func (e *Author) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
 func (e *Created) GetType() string {
 	return "nimona.io/stream.Created"
 }
@@ -118,14 +97,8 @@ func (e *Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -145,14 +118,8 @@ func (e *Subscribed) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -172,14 +139,8 @@ func (e *Unsubscribed) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -220,14 +181,8 @@ func (e *PolicyAttached) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -250,14 +205,8 @@ func (e *RequestEventList) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -289,14 +238,8 @@ func (e *EventListCreated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

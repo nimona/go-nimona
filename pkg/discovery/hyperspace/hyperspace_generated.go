@@ -7,7 +7,6 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	stream "nimona.io/pkg/stream"
 )
 
 type (
@@ -15,13 +14,13 @@ type (
 		QueryContentBloom []int64           `json:"queryContentBloom:ai,omitempty"`
 		Nonce             string            `json:"nonce:s,omitempty"`
 		Signature         *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors           []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity          *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	Announced struct {
 		AvailableContentBloom []int64           `json:"availableContentBloom:ai,omitempty"`
 		Nonce                 string            `json:"nonce:s,omitempty"`
 		Signature             *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors               []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity              *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 )
 
@@ -39,14 +38,8 @@ func (e *Request) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -70,14 +63,8 @@ func (e *Announced) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

@@ -120,10 +120,34 @@ func (p *LocalPeer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
 	return nil
 }
 
-func (p *LocalPeer) GetPeerKey() *crypto.PrivateKey {
+func (p *LocalPeer) GetPeerKey() *crypto.PublicKey {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+	return p.key.PublicKey
+}
+
+func (p *LocalPeer) GetPeerPrivateKey() *crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 	return p.key
+}
+
+func (p *LocalPeer) GetIdentityKey() *crypto.PublicKey {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+	if p.identityKey == nil {
+		return p.key.PublicKey
+	}
+	return p.identityKey.PublicKey
+}
+
+func (p *LocalPeer) GetIdentityPrivateKey() *crypto.PrivateKey {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+	if p.identityKey == nil {
+		return p.key
+	}
+	return p.identityKey
 }
 
 func (p *LocalPeer) GetAddress() string {
@@ -167,7 +191,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	}
 
 	o := pi.ToObject()
-	if err := crypto.Sign(o, p.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, p.GetPeerPrivateKey()); err != nil {
 		panic(err)
 	}
 	if err := pi.FromObject(o); err != nil {
