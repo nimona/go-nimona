@@ -2,8 +2,8 @@ name: CI
 on: [push]
 
 jobs:
-  test:
-    name: Test
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.13
@@ -14,25 +14,46 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v1
 
-      - name: Download binary tools
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
-
       - name: Make lint
         run: make lint
         env:
           CI: 'true'
+          VERBOSE: 'true'
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+
+      - name: Check out the code
+        uses: actions/checkout@v1
 
       - name: Make test
         run: make test
         env:
+          CI: 'true'
           VERBOSE: 'true'
+
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+
+      - name: Check out the code
+        uses: actions/checkout@v1
 
       - name: Make e2e
         run: make e2e
         env:
+          CI: 'true'
           VERBOSE: 'true'
 
   build:
