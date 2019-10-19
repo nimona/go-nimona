@@ -1,10 +1,35 @@
-__WARNING:__ Nimona is still in its very early stages of design and development and will be there for a while.  
+<h1 align="center">
+  <img src="https://user-images.githubusercontent.com/88447/67148586-4010a580-f2a1-11e9-9ece-91acf37b0c6f.png" alt="nimona" width="250px">
+</h1>
+<h4 align="center">a new internet stack; or something like it.</h4>
+
+
+<p align="center">
+  <a href="https://github.com/nimona/go-nimona/actions">
+    <img src="https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat" alt="Actions Status">
+  </a>
+  <a href="https://github.com/nimona/go-nimona/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat" alt="License Status">
+  </a>
+  <a href="https://github.com/nimona/go-nimona/commits/master">
+    <img src="https://img.shields.io/github/last-commit/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
+alt="GitHub last commit">
+  </a>
+  <a href="https://github.com/nimona/go-nimona/issues">
+    <img src="https://img.shields.io/github/issues-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
+alt="GitHub issues">
+  </a>
+  <a href="https://github.com/nimona/go-nimona/pulls">
+    <img src="https://img.shields.io/github/issues-pr-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests">
+  </a>
+</p>
+      
+---
+
+__WARNING__: Nimona is still in its very early stages of design and development and stay like this for a while.  
 Documentation is currently non existent but should start slowly poping up as the various design decisions mature.
 
 ---
-
-[![Actions Status]](https://github.com/nimona/go-nimona/actions)
-[![License Status]](https://github.com/nimona/go-nimona/blob/master/LICENSE)
 
 # Nimona
 
