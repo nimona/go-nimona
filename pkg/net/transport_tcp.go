@@ -57,7 +57,7 @@ func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 func (tt *tcpTransport) Listen(ctx context.Context) (
 	chan *Connection, error) {
 	logger := log.FromContext(ctx).Named("network")
-	cert, err := crypto.GenerateCertificate(tt.local.GetPeerKey())
+	cert, err := crypto.GenerateCertificate(tt.local.GetPeerPrivateKey())
 	if err != nil {
 		return nil, err
 	}

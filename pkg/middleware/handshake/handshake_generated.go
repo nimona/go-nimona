@@ -7,24 +7,23 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	stream "nimona.io/pkg/stream"
 )
 
 type (
 	Syn struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	SynAck struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	Ack struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 )
 
@@ -39,14 +38,8 @@ func (e *Syn) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -67,14 +60,8 @@ func (e *SynAck) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -95,14 +82,8 @@ func (e *Ack) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

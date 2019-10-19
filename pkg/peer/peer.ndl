@@ -3,7 +3,7 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 
 domain nimona.io/peer {
-    signed object Peer {
+    signed event Peer {
         addresses repeated string
     }
     signed command Requested {

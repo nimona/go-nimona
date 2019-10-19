@@ -38,7 +38,7 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := crypto.Sign(o, api.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
@@ -174,7 +174,7 @@ func (api *API) HandlePostGraph(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := crypto.Sign(o, api.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}

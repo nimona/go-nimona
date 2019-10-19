@@ -26,21 +26,21 @@ func TestNetDiscoverer(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer())
 	disc2.Add(l1.GetSignedPeer())
 
-	ps2, err := disc1.FindByFingerprint(ctx, l2.GetPeerKey().Fingerprint())
+	ps2, err := disc1.FindByFingerprint(ctx, l2.GetPeerPrivateKey().Fingerprint())
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
-		l2.GetPeerKey().Fingerprint(),
+		l2.GetPeerPrivateKey().Fingerprint(),
 		p2.Fingerprint(),
 	)
 
-	ps1, err := disc2.FindByFingerprint(ctx, l1.GetPeerKey().Fingerprint())
+	ps1, err := disc2.FindByFingerprint(ctx, l1.GetPeerPrivateKey().Fingerprint())
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
-		l1.GetPeerKey().Fingerprint(),
+		l1.GetPeerPrivateKey().Fingerprint(),
 		p1.Fingerprint(),
 	)
 }

@@ -8,7 +8,6 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/stream"
 )
 
 // NewHandshake ...
@@ -50,15 +49,11 @@ func (hs *Handshake) handleIncoming(
 
 	nonce := rand.String(8)
 	syn := &Syn{
-		Nonce: nonce,
-		Authors: []*stream.Author{
-			&stream.Author{
-				PublicKey: hs.local.GetPeerKey().PublicKey,
-			},
-		},
+		Nonce:    nonce,
+		Identity: hs.local.GetIdentityKey(),
 	}
 	so := syn.ToObject()
-	if err := crypto.Sign(so, hs.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -86,8 +81,8 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Authors[0].PublicKey
-	conn.LocalPeerKey = hs.local.GetPeerKey().PublicKey
+	conn.RemotePeerKey = synAck.Signature.PublicKey
+	conn.LocalPeerKey = hs.local.GetPeerKey()
 
 	// TODO(@geoah) do we need to do something about this?
 	// hs.discoverer.Add(synAck.Peer)
@@ -97,7 +92,7 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	ao := ack.ToObject()
-	if err := crypto.Sign(ao, hs.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(ao, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -137,23 +132,19 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Authors[0].PublicKey
-	conn.LocalPeerKey = hs.local.GetPeerKey().PublicKey
+	conn.RemotePeerKey = syn.Signature.PublicKey
+	conn.LocalPeerKey = hs.local.GetPeerKey()
 
 	// TODO(@geoah) this one too
 	// hs.discoverer.Add(syn.Peer)
 
 	synAck := &SynAck{
-		Nonce: syn.Nonce,
-		Authors: []*stream.Author{
-			&stream.Author{
-				PublicKey: hs.local.GetPeerKey().PublicKey,
-			},
-		},
+		Nonce:    syn.Nonce,
+		Identity: hs.local.GetIdentityKey(),
 	}
 
 	sao := synAck.ToObject()
-	if err := crypto.Sign(sao, hs.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(sao, hs.local.GetPeerPrivateKey()); err != nil {
 		logger.Warn(
 			"could not sign for syn ack object", log.Error(err))
 		// TODO close conn?

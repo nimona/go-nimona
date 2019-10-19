@@ -7,23 +7,18 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	stream "nimona.io/pkg/stream"
 )
 
 type (
 	Peer struct {
 		Addresses []string          `json:"addresses:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 	Requested struct {
 		Keys      []string          `json:"keys:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
-	}
-	Updated struct {
-		Addresses []string          `json:"addresses:as,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Authors   []*stream.Author  `json:"authors:ao,omitempty"`
+		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
 	}
 )
 
@@ -39,6 +34,9 @@ func (e *Peer) ToObject() object.Object {
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -61,49 +59,13 @@ func (e *Requested) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+	if e.Identity != nil {
+		m["@identity:o"] = e.Identity.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
 
 func (e *Requested) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *Updated) GetType() string {
-	return "nimona.io/peer.Updated"
-}
-
-func (e *Updated) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.Updated"
-	if len(e.Addresses) > 0 {
-		m["addresses:as"] = e.Addresses
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	if len(e.Authors) > 0 {
-		m["authors:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Authors))
-			for i, v := range e.Authors {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
-	}
-	return object.Object(m)
-}
-
-func (e *Updated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

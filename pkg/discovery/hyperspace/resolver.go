@@ -551,7 +551,7 @@ func (r *Discoverer) bootstrap(
 	bootstrapAddresses []string,
 ) error {
 	logger := log.FromContext(ctx)
-	key := r.local.GetPeerKey()
+	key := r.local.GetPeerPrivateKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 	}
@@ -595,7 +595,7 @@ func (r *Discoverer) getOwnContentProviderUpdated() (*Announced, error) {
 	}
 
 	o := cb.ToObject()
-	if err := crypto.Sign(o, r.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, r.local.GetPeerPrivateKey()); err != nil {
 		return nil, errors.Wrap(err, errors.New("could not sign object"))
 	}
 
@@ -642,7 +642,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 
 	o := cb.ToObject()
-	if err := crypto.Sign(o, r.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, r.local.GetPeerPrivateKey()); err != nil {
 		logger.With(
 			log.Error(err),
 		).Error("could not sign object")

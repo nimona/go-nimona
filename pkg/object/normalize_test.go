@@ -20,20 +20,16 @@ func Test_Normalize(t *testing.T) {
 
 	s := stream.Created{
 		Nonce: "nonce",
-		Authors: []*stream.Author{
-			&stream.Author{
-				PublicKey: &crypto.PublicKey{
-					KeyType:   "kty",
-					Algorithm: "alg",
-					Curve:     "crv",
-					X:         kx,
-					Y:         ky,
-					Signature: &crypto.Signature{
-						Algorithm: "alg",
-						R:         sr,
-						S:         ss,
-					},
-				},
+		Identity: &crypto.PublicKey{
+			KeyType:   "kty",
+			Algorithm: "alg",
+			Curve:     "crv",
+			X:         kx,
+			Y:         ky,
+			Signature: &crypto.Signature{
+				Algorithm: "alg",
+				R:         sr,
+				S:         ss,
 			},
 		},
 		Policies: []*stream.Policy{
@@ -61,23 +57,18 @@ func Test_Normalize(t *testing.T) {
 		"@type:s":           "nimona.io/stream.Created",
 		"nonce:s":           "nonce",
 		"createdDateTime:s": "",
-		"authors:ao": []interface{}{
-			map[string]interface{}{
-				"@type:s": "nimona.io/stream.Author",
-				"publicKey:o": map[string]interface{}{
-					"@type:s":     "nimona.io/crypto.PublicKey",
-					"keyType:s":   "kty",
-					"algorithm:s": "alg",
-					"curve:s":     "crv",
-					"x:d":         kx,
-					"y:d":         ky,
-					"@signature:o": map[string]interface{}{
-						"@type:s":     "nimona.io/crypto.Signature",
-						"algorithm:s": "alg",
-						"r:d":         sr,
-						"s:d":         ss,
-					},
-				},
+		"@identity:o": map[string]interface{}{
+			"@type:s":     "nimona.io/crypto.PublicKey",
+			"keyType:s":   "kty",
+			"algorithm:s": "alg",
+			"curve:s":     "crv",
+			"x:d":         kx,
+			"y:d":         ky,
+			"@signature:o": map[string]interface{}{
+				"@type:s":     "nimona.io/crypto.Signature",
+				"algorithm:s": "alg",
+				"r:d":         sr,
+				"s:d":         ss,
 			},
 		},
 		"policies:ao": []interface{}{

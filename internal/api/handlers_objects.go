@@ -97,7 +97,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	if err := crypto.Sign(o, api.local.GetPeerKey()); err != nil {
+	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
