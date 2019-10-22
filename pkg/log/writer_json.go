@@ -33,7 +33,9 @@ func JSONWriter() Writer {
 		}
 
 		res["$cID"] = cID
-		res["$name"] = log.name
+		if log.name != "" {
+			res["$name"] = log.name
+		}
 		res["$msg"] = msg
 		res["$level"] = levels[level]
 

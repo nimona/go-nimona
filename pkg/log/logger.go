@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"nimona.io/pkg/context"
 )
@@ -94,6 +95,7 @@ func Any(k string, v interface{}) Field {
 
 func FromContext(ctx context.Context) *logger {
 	log := &logger{
+		parent:  DefaultLogger.(*logger),
 		context: ctx,
 		writer:  DefaultWriter,
 		output:  DefaultOutput,
@@ -102,6 +104,10 @@ func FromContext(ctx context.Context) *logger {
 }
 
 func (log *logger) write(level Level, msg string, extraFields ...Field) {
+	extraFields = append(
+		extraFields,
+		String("$$time", time.Now().Format(time.RFC3339Nano)),
+	)
 	log.writer(log, level, msg, extraFields...)
 }
 
