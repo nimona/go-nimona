@@ -2,7 +2,6 @@ package exchange
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -141,117 +140,117 @@ func TestRequestSuccess(t *testing.T) {
 	}
 }
 
-func TestSendRelay(t *testing.T) {
-	// enable binding to local addresses
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
-	disc3 := discovery.NewDiscoverer()
+// func TestSendRelay(t *testing.T) {
+// 	// enable binding to local addresses
+// 	disc1 := discovery.NewDiscoverer()
+// 	disc2 := discovery.NewDiscoverer()
+// 	disc3 := discovery.NewDiscoverer()
 
-	net.BindLocal = true
-	k0, _, _, _, l0 := newPeer(t, "", disc1, true, false)
+// 	net.BindLocal = true
+// 	k0, _, _, _, l0 := newPeer(t, "", disc1, true, false)
 
-	// disable binding to local addresses
-	net.BindLocal = false
-	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc2, true, false)
-	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc3, true, false)
+// 	// disable binding to local addresses
+// 	net.BindLocal = false
+// 	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc2, true, false)
+// 	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc3, true, false)
 
-	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:",
-		k0.PublicKey.Fingerprint(),
-		l0.GetAddresses(),
-	)
-	fmt.Println("k1:",
-		k1.PublicKey.Fingerprint(),
-		l1.GetAddresses(),
-	)
-	fmt.Println("k2:",
-		k2.PublicKey.Fingerprint(),
-		l2.GetAddresses(),
-	)
-	fmt.Printf("-----------------------------\n\n\n\n")
+// 	fmt.Printf("\n\n\n\n-----------------------------\n")
+// 	fmt.Println("k0:",
+// 		k0.PublicKey.Fingerprint(),
+// 		l0.GetAddresses(),
+// 	)
+// 	fmt.Println("k1:",
+// 		k1.PublicKey.Fingerprint(),
+// 		l1.GetAddresses(),
+// 	)
+// 	fmt.Println("k2:",
+// 		k2.PublicKey.Fingerprint(),
+// 		l2.GetAddresses(),
+// 	)
+// 	fmt.Printf("-----------------------------\n\n\n\n")
 
-	disc1.Add(l1.GetSignedPeer())
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l2.GetSignedPeer())
-	disc3.Add(l1.GetSignedPeer())
+// 	disc1.Add(l1.GetSignedPeer())
+// 	disc1.Add(l2.GetSignedPeer())
+// 	disc2.Add(l2.GetSignedPeer())
+// 	disc3.Add(l1.GetSignedPeer())
 
-	// init connection from n1 to n0
-	err := x1.Send(
-		context.Background(),
-		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		l0.GetAddresses()[0],
-	)
-	assert.NoError(t, err)
+// 	// init connection from n1 to n0
+// 	err := x1.Send(
+// 		context.Background(),
+// 		object.FromMap(map[string]interface{}{"foo": "bar"}),
+// 		l0.GetAddresses()[0],
+// 	)
+// 	assert.NoError(t, err)
 
-	// init connection from n2 to n0
-	err = x2.Send(
-		context.Background(),
-		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		l0.GetAddresses()[0],
-	)
-	assert.NoError(t, err)
+// 	// init connection from n2 to n0
+// 	err = x2.Send(
+// 		context.Background(),
+// 		object.FromMap(map[string]interface{}{"foo": "bar"}),
+// 		l0.GetAddresses()[0],
+// 	)
+// 	assert.NoError(t, err)
 
-	// now we should be able to relay objects between n1 and n2
-	em1 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo1 := object.FromMap(em1)
+// 	// now we should be able to relay objects between n1 and n2
+// 	em1 := map[string]interface{}{
+// 		"@type:s": "test/msg",
+// 		"body:s":  "bar1",
+// 	}
+// 	eo1 := object.FromMap(em1)
 
-	em2 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo2 := object.FromMap(em2)
+// 	em2 := map[string]interface{}{
+// 		"@type:s": "test/msg",
+// 		"body:s":  "bar1",
+// 	}
+// 	eo2 := object.FromMap(em2)
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
+// 	wg := sync.WaitGroup{}
+// 	wg.Add(2)
 
-	w1ObjectHandled := false
-	w2ObjectHandled := false
+// 	w1ObjectHandled := false
+// 	w2ObjectHandled := false
 
-	err = crypto.Sign(eo1, k2)
-	assert.NoError(t, err)
+// 	err = crypto.Sign(eo1, k2)
+// 	assert.NoError(t, err)
 
-	// nolint: dupl
-	_, err = x1.Handle("test/msg", func(e *Envelope) error {
-		o := e.Payload
-		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
-		w1ObjectHandled = true
-		wg.Done()
-		return nil
-	})
-	assert.NoError(t, err)
+// 	// nolint: dupl
+// 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
+// 		o := e.Payload
+// 		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
+// 		w1ObjectHandled = true
+// 		wg.Done()
+// 		return nil
+// 	})
+// 	assert.NoError(t, err)
 
-	_, err = x2.Handle("tes**", func(e *Envelope) error {
-		o := e.Payload
-		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
-		w2ObjectHandled = true
-		wg.Done()
-		return nil
-	})
-	assert.NoError(t, err)
+// 	_, err = x2.Handle("tes**", func(e *Envelope) error {
+// 		o := e.Payload
+// 		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
+// 		w2ObjectHandled = true
+// 		wg.Done()
+// 		return nil
+// 	})
+// 	assert.NoError(t, err)
 
-	ctx := context.New(context.WithTimeout(time.Second * 5))
-	defer ctx.Cancel()
+// 	ctx := context.New(context.WithTimeout(time.Second * 5))
+// 	defer ctx.Cancel()
 
-	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint().String())
-	assert.NoError(t, err)
+// 	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint().String())
+// 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+// 	time.Sleep(time.Second)
 
-	ctx2 := context.New(context.WithTimeout(time.Second * 5))
-	defer ctx2.Cancel()
+// 	ctx2 := context.New(context.WithTimeout(time.Second * 5))
+// 	defer ctx2.Cancel()
 
-	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint().String())
-	assert.NoError(t, err)
+// 	// TODO should be able to send not signed
+// 	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint().String())
+// 	assert.NoError(t, err)
 
-	wg.Wait()
+// 	wg.Wait()
 
-	assert.True(t, w1ObjectHandled)
-	assert.True(t, w2ObjectHandled)
-}
+// 	assert.True(t, w1ObjectHandled)
+// 	assert.True(t, w2ObjectHandled)
+// }
 
 func newPeer(
 	t *testing.T,
