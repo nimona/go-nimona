@@ -51,13 +51,19 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	obj := c.ToObject()
 	obj.Set("key:s", "value")
 
-	err = db.Store(
+	err = db.Put(
 		obj,
 		rel.WithTTL(0),
 	)
 	require.NoError(t, err)
 
-	retrievedObj, err := db.GetByHash(*hash.New(obj))
+	err = db.Put(
+		obj,
+		rel.WithTTL(10),
+	)
+
+	require.NoError(t, err)
+	retrievedObj, err := db.Get(*hash.New(obj))
 	require.NoError(t, err)
 
 	val := retrievedObj.Get("key:s")
@@ -69,6 +75,10 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = db.UpdateTTL(*hash.New(obj), 10)
 	require.NoError(t, err)
+
+	hashList, err := db.GetRelations(*hash.New(p.ToObject()))
+	require.NoError(t, err)
+	assert.NotEmpty(t, hashList)
 
 	err = db.Close()
 	require.NoError(t, err)

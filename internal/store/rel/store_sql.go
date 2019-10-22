@@ -115,7 +115,7 @@ func (d *DB) runMigrations() error {
 	return nil
 }
 
-func (d *DB) GetByHash(
+func (d *DB) Get(
 	hash object.Hash,
 ) (object.Object, error) {
 
@@ -168,7 +168,7 @@ func (d *DB) GetByHash(
 	return obj, nil
 }
 
-func (d *DB) Store(
+func (d *DB) Put(
 	obj object.Object,
 	opts ...Option,
 ) error {
@@ -180,7 +180,7 @@ func (d *DB) Store(
 	}
 
 	stmt, err := d.db.Prepare(`
-	INSERT INTO Objects(
+	REPLACE INTO Objects(
 		Hash,
 		StreamHash,
 		Body,
@@ -200,7 +200,6 @@ func (d *DB) Store(
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	stHashStr := ""
 	stHash := stream.Stream(obj)
 	if stHash != nil {
 		stHash.String()
@@ -208,7 +207,7 @@ func (d *DB) Store(
 
 	_, err = stmt.Exec(
 		hash.New(obj).String(),
-		stHashStr,
+		stHash.String(),
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -221,32 +220,38 @@ func (d *DB) Store(
 	return nil
 }
 
-func (d *DB) GetByStreamHash(
-	streamHash object.Hash,
-) (object.Object, error) {
+func (d *DB) GetRelations(
+	parent object.Hash,
+) ([]*object.Hash, error) {
 
-	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE StreamHash=?")
+	stmt, err := d.db.Prepare("SELECT Hash FROM Objects WHERE StreamHash=?")
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
 
-	row := stmt.QueryRow(streamHash.String())
-
-	obj := object.New()
-	data := []byte{}
-
-	if err := row.Scan(&data); err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not query objects"),
-		)
+	rows, err := stmt.Query(parent.String())
+	if err != nil {
+		return nil, errors.Wrap(err, errors.New("could not query"))
 	}
 
-	if err := json.Unmarshal(data, &obj); err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not unmarshal data"),
-		)
+	hashList := []*object.Hash{}
+
+	for rows.Next() {
+
+		data := []byte{}
+		if err := rows.Scan(&data); err != nil {
+			return nil, errors.Wrap(
+				err,
+				errors.New("could not query objects"),
+			)
+		}
+
+		h, err := object.HashFromCompact(string(data))
+		if err != nil {
+			continue
+		}
+
+		hashList = append(hashList, h)
 	}
 
 	istmt, err := d.db.Prepare(
@@ -261,7 +266,7 @@ func (d *DB) GetByStreamHash(
 
 	if _, err := istmt.Exec(
 		time.Now().Unix(),
-		streamHash.String(),
+		parent.String(),
 	); err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -269,7 +274,7 @@ func (d *DB) GetByStreamHash(
 		)
 	}
 
-	return obj, nil
+	return hashList, nil
 }
 
 func (d *DB) UpdateTTL(
