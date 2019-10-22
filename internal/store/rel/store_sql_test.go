@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 	"nimona.io/internal/store/rel"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/stream"
 )
@@ -79,6 +80,13 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	hashList, err := db.GetRelations(*hash.New(p.ToObject()))
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
+
+	err = db.Delete(*hash.New(p.ToObject()))
+	require.NoError(t, err)
+
+	retrievedObj2, err := db.Get(*hash.New(p.ToObject()))
+	require.True(t, errors.CausedBy(err, rel.ErrNotFound))
+	require.Nil(t, retrievedObj2)
 
 	err = db.Close()
 	require.NoError(t, err)
