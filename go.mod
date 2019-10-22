@@ -5,6 +5,7 @@ module nimona.io
 require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
+	github.com/enriquebris/goconcurrentqueue v0.0.0-20190719205347-3e5689c24f05
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
