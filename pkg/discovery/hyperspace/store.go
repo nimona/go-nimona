@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/hyperspace/bloom"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -26,8 +27,11 @@ type Store struct {
 }
 
 // Add peers
-func (s *Store) AddPeer(peer *peer.Peer) {
-	s.peers.Put(peer.Signature.PublicKey.Fingerprint(), peer)
+func (s *Store) AddPeer(p *peer.Peer) {
+	s.peers.Range(func(k crypto.Fingerprint, v *peer.Peer) bool {
+		return true
+	})
+	s.peers.Put(p.Signature.PublicKey.Fingerprint(), p)
 }
 
 // Add content hashes
@@ -141,6 +145,11 @@ func (s *Store) FindByContent(b bloom.Bloomer) []*Announced {
 	})
 
 	return cs
+}
+
+func isPartOfBloom(h *object.Hash, b bloom.Bloomer) bool {
+	q := bloom.NewBloom(h.String())
+	return intersectionCount(q.Bloom(), b.Bloom()) == len(q)
 }
 
 func intersectionCount(a, b []int64) int {
