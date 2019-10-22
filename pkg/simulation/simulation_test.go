@@ -18,33 +18,98 @@ import (
 )
 
 func TestSimulation(t *testing.T) {
-	// Setup
+	// create new env
 	env, err := node.NewEnvironment()
 	require.NoError(t, err)
 	require.NotNil(t, env)
 
+	// stop env when we are done
+	defer func() {
+		err := env.Stop()
+		assert.NoError(t, err)
+	}()
+
+	// figure out which docker image we need
 	dockerImage := "nimona:dev"
 	if img := os.Getenv("E2E_DOCKER_IMAGE"); img != "" {
 		dockerImage = img
 	}
 
-	// Setup Nodes
-	nodes, err := node.New(
+	// setup bootstrap nodes
+	bNodes, err := node.New(
 		dockerImage,
 		env,
-		node.WithName("nimona-e2e-"+rand.String(8)),
-		node.WithNodePort(28000),
-		node.WithCount(3),
+		node.WithName("nimona-e2e-bootstrap-"+rand.String(8)),
+		node.WithNodePort(27000),
+		node.WithCount(1),
 		node.WithEnv([]string{
+			"NIMONA_ALIAS=nimona-e2e-bootstrap",
 			"BIND_PRIVATE=true",
 			"DEBUG_BLOCKS=true",
+			"NIMONA_DAEMON_HTTP_PORT=27000",
+			"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=none",
 		}),
 	)
 	require.NoError(t, err)
-	require.NotNil(t, nodes)
+	require.NotNil(t, bNodes)
+
+	// stop bootstrap nodes when we are done
+	defer func() {
+		err := node.Stop(bNodes)
+		assert.NoError(t, err)
+	}()
 
 	// wait for the containers to settle
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 15)
+
+	// create clients for all nodes
+	bClients := make([]*client.Client, len(bNodes))
+	for i, node := range bNodes {
+		baseURL := fmt.Sprintf("http://%s", node.Address())
+		c, err := client.New(baseURL)
+		require.NoError(t, err)
+		bClients[i] = c
+	}
+
+	// gather bootstrap addresses
+	bootstrapAddresses := make([]string, len(bClients))
+	for i, bClient := range bClients {
+		res, err := bClient.Info()
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		bootstrapAddresses[i] = res.Addresses[0]
+	}
+
+	// setup normal nodes
+	nodes := make([]*node.Node, 3)
+	for i := range nodes {
+		ns, err := node.New(
+			dockerImage,
+			env,
+			node.WithName(fmt.Sprintf("nimona-e2e-%d", i)),
+			node.WithNodePort(28001+i),
+			node.WithCount(1),
+			node.WithEnv([]string{
+				"BIND_PRIVATE=true",
+				"DEBUG_BLOCKS=true",
+				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
+				"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=" +
+					strings.Join(bootstrapAddresses, ","),
+			}),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, nodes)
+		nodes[i] = ns[0]
+	}
+
+	// stop normal nodes when we are done
+	defer func() {
+		err := node.Stop(nodes)
+		assert.NoError(t, err)
+	}()
+
+	// wait for the containers to settle
+	time.Sleep(time.Second * 20)
 
 	// create clients for all nodes
 	clients := make([]*client.Client, len(nodes))
@@ -64,8 +129,22 @@ func TestSimulation(t *testing.T) {
 		recipients = append(recipients, info.Fingerprint)
 	}
 
+	fmt.Printf("\n\n\n")
+
+	bInfo, err := bClients[0].Info()
+	require.NoError(t, err)
+	fmt.Printf("> bootstrap 0 - %s - %v\n", bInfo.Fingerprint, bInfo.Addresses)
+
+	for i, c := range clients {
+		info, err := c.Info()
+		require.NoError(t, err)
+		fmt.Printf("> peer %d - %s - %v\n", i, info.Fingerprint, info.Addresses)
+	}
+
+	fmt.Printf("\n\n\n")
+
 	// create an obj, and attach recipients to policy
-	nonce := rand.String(24)
+	nonce := rand.String(24) + "xnonce"
 	streamCreated := stream.Created{
 		Nonce: nonce,
 		Policies: []*stream.Policy{
@@ -78,7 +157,7 @@ func TestSimulation(t *testing.T) {
 	}
 
 	err = clients[0].PostObject(streamCreated.ToObject())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(recipients))
@@ -89,9 +168,8 @@ func TestSimulation(t *testing.T) {
 			for {
 				select {
 				case ll := <-loch:
-					fmt.Println(ll)
 					if strings.Contains(ll, nonce) {
-						fmt.Println("Node received object")
+						fmt.Println("Node logged nonce")
 						wg.Done()
 						return
 					}
@@ -105,11 +183,14 @@ func TestSimulation(t *testing.T) {
 		}(nd)
 	}
 
+	for _, nd := range append(bNodes, nodes...) {
+		go func(nd *node.Node) {
+			loch, _ := nd.Logs()
+			for ll := range loch {
+				fmt.Println(ll)
+			}
+		}(nd)
+	}
+
 	wg.Wait()
-
-	err = node.Stop(nodes)
-	assert.NoError(t, err)
-
-	err = env.Stop()
-	assert.NoError(t, err)
 }
