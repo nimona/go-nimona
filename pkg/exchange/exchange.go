@@ -1,11 +1,10 @@
 package exchange
 
 import (
-	"fmt"
 	"strings"
 	"sync"
-	"time"
 
+	"github.com/enriquebris/goconcurrentqueue"
 	"github.com/gobwas/glob"
 
 	"nimona.io/internal/rand"
@@ -20,16 +19,23 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-var (
-	objectRequestType = new(ObjectRequest).GetType()
-	objectForwardType = new(ObjectForward).GetType()
+var objectRequestType = new(ObjectRequest).GetType()
 
+const (
 	// ErrInvalidRequest when received an invalid request object
-	ErrInvalidRequest = errors.New("invalid request")
+	ErrInvalidRequest = errors.Error("invalid request")
+	// ErrSendingTimedOut when sending times out
+	ErrSendingTimedOut = errors.Error("sending timed out")
+	// errOutboxForwarded when an object is forewarded to a different outbox
+	// this usually happens when an existing connection already existed
+	errOutboxForwarded = errors.Error("request has been moved to another outbox")
 )
 
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses.go -pkg exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=inboxes.go -pkg exchange gen "KeyType=string ValueType=inbox SyncmapName=inboxes"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes.go -pkg exchange gen "KeyType=crypto.Fingerprint ValueType=outbox SyncmapName=outboxes"
 
 type (
 	// Exchange interface for mocking exchange
@@ -56,27 +62,47 @@ type (
 	}
 	// echange implements an Exchange
 	exchange struct {
-		key      *crypto.PrivateKey
-		net      net.Network
-		manager  *ConnectionManager
+		key *crypto.PrivateKey
+		net net.Network
+
 		discover discovery.Discoverer
 		local    *peer.LocalPeer
 
-		outgoing chan *outgoingObject
-		incoming chan *incomingObject
+		outboxes *OutboxesMap
+		inboxes  *InboxesMap
 
-		handlers sync.Map
-		logger   log.Logger
-
-		store graph.Store
+		store graph.Store // TODO remove
 	}
 	// Options (mostly) for Send()
 	Options struct {
-		ResponseID     string
-		Response       chan *Envelope
 		LocalDiscovery bool
 	}
 	Option func(*Options)
+	// inbox holds a single handler, and the messages for it.
+	// every registered handler will have one inbox.
+	// the queue should only hold `*Envelope`s.
+	inbox struct {
+		contentType glob.Glob
+		handler     func(*Envelope) error
+		queue       goconcurrentqueue.Queue
+	}
+	// addressState defines the states of a peer's address
+	// current options are:
+	// * -1 unconnectable
+	// * 0 unknown
+	// * 1 connectable
+	// * 2 blacklisted
+	addressState int
+	// outbox holds information about a single peer, its open connection,
+	// and the messages for it.
+	// the queue should only hold `*outgoingObject`s.
+	outbox struct {
+		peer      crypto.Fingerprint
+		addresses *AddressesMap
+		conn      *net.Connection
+		connLock  sync.RWMutex
+		queue     goconcurrentqueue.Queue
+	}
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
 		context   context.Context
@@ -84,17 +110,6 @@ type (
 		object    object.Object
 		options   *Options
 		err       chan error
-	}
-	// incomingObject holds an object that has just been received
-	incomingObject struct {
-		conn   *net.Connection
-		object object.Object
-	}
-	// handler is used for keeping track of handlers and what content
-	// types they want to receive
-	handler struct {
-		contentType glob.Glob
-		handler     func(o *Envelope) error
 	}
 )
 
@@ -111,25 +126,14 @@ func New(
 	error,
 ) {
 	w := &exchange{
-		key:      key,
-		net:      n,
-		manager:  &ConnectionManager{},
+		key: key,
+		net: n,
+
 		discover: discover,
 		local:    localInfo,
 
-		outgoing: make(chan *outgoingObject, 1000),
-		incoming: make(chan *incomingObject, 1000),
-
-		handlers: sync.Map{},
-		logger: log.FromContext(ctx).
-			Named("exchange").
-			With(
-				log.String("method", "exchange.New"),
-				log.String("local.fingerprint", localInfo.
-					GetFingerprint().
-					String(),
-				),
-			),
+		outboxes: NewOutboxesMap(),
+		inboxes:  NewInboxesMap(),
 
 		store: store,
 	}
@@ -141,87 +145,244 @@ func New(
 		return nil, err
 	}
 
+	logger := log.
+		FromContext(ctx).
+		Named("exchange").
+		With(
+			log.String("method", "exchange.New"),
+			log.String("local.fingerprint", localInfo.
+				GetFingerprint().
+				String(),
+			),
+		)
+
+	// add request object handler
+	w.Handle(objectRequestType, w.handleObjectRequest) // nolint: errcheck
+
+	// handle new incoming connections
 	go func() {
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
-				if conn == nil {
-					// TODO should this be nil?
-					return
-				}
-				address := "peer:" + conn.RemotePeerKey.Fingerprint().String()
-				w.manager.Add(address, conn)
-				if err := w.HandleConnection(conn); err != nil {
-					w.logger.Warn("failed to handle object", log.Error(err))
+				if err := w.handleConnection(conn); err != nil {
+					logger.Warn("failed to handle object", log.Error(err))
 				}
 			}(conn)
 		}
 	}()
 
-	go func() {
-		for {
-			object := <-w.incoming
-			go func(object *incomingObject) {
-				defer func() {
-					if r := recover(); r != nil {
-						w.logger.Error("Recovered while processing", log.Any("r", r))
-					}
-				}()
-				if err := w.process(object.object, object.conn); err != nil {
-					w.logger.Error("processing object", log.Error(err))
-				}
-			}(object)
+	return w, nil
+}
+
+func (w *exchange) createInbox(
+	handlerID string,
+	contentType glob.Glob,
+	handler func(o *Envelope) error,
+) (
+	func(),
+	error,
+) {
+	inbox := &inbox{
+		contentType: contentType,
+		handler:     handler,
+		queue:       goconcurrentqueue.NewFIFO(),
+	}
+	close := func() {
+		w.inboxes.Delete(handlerID)
+	}
+	go w.processInbox(inbox)
+	w.inboxes.Put(handlerID, inbox)
+	return close, nil
+}
+
+func (w *exchange) processInbox(inbox *inbox) {
+	logger := log.DefaultLogger.
+		With(
+			log.String("method", "exchange.processInbox"),
+		)
+	for {
+		v, err := inbox.queue.DequeueOrWaitForNextElement()
+		if err != nil {
+			panic(err)
 		}
-	}()
-
-	go func() {
-		localAddress := w.local.GetAddress()
-		// TODO should we checking all local addresses instead of just the peer?
-		for {
-			req := <-w.outgoing
-
-			if req.recipient == localAddress {
-				req.err <- errors.Error("cannot dial own peer")
-			}
-
-			logger := log.FromContext(req.context).With(
-				log.String("recipient", req.recipient),
-				log.String("object.@type", req.object.GetType()),
-			)
-
-			if req.recipient == "" {
-				logger.Info("missing recipient")
-				req.err <- errors.New("missing recipient")
-				continue
-			}
-
-			logger.Debug("trying to send object")
-
-			// try to send the object directly to the recipient
-			conn, err := w.getOrDial(req.context, req.recipient, req.options)
-			if err != nil {
-				logger.Debug("could not get conn to recipient", log.Error(err))
-				req.err <- err
-				continue
-			}
-
-			if err := net.Write(req.object, conn); err != nil {
-				w.manager.Close(req.recipient)
-				logger.Debug("could not write to recipient", log.Error(err))
-				req.err <- err
-				continue
-			}
-
-			// update peer status
-			// TODO(geoah) fix status -- not that we are using this
-			// w.addressBook.PutPeerStatus(recipientThumbPrint, peer.StatusConnected)
-			logger.Debug("wrote to recipient", log.Error(err))
-			req.err <- nil
+		e := v.(*Envelope)
+		// TODO(geoah) validate payload and sender
+		ct := e.Payload.GetType()
+		if !inbox.contentType.Match(ct) {
 			continue
 		}
-	}()
+		go func(handler func(*Envelope) error, e *Envelope) {
+			defer func() {
+				if r := recover(); r != nil {
+					logger.
+						With(
+							log.Stack(),
+						).
+						Error("Recovered while handling", log.Any("r", r))
+				}
+			}()
+			if err := handler(e); err != nil {
+				logger.Info(
+					"Could not handle event",
+					log.String("contentType", ct),
+					log.Error(err),
+				)
+			}
+		}(inbox.handler, e)
+	}
+}
 
-	return w, nil
+func (w *exchange) getInbox(handlerID string) *inbox {
+	inbox, _ := w.inboxes.Get(handlerID)
+	return inbox
+}
+
+func (w *exchange) writeToInboxes(e *Envelope) {
+	w.inboxes.Range(func(handlerID string, inbox *inbox) bool {
+		inbox.queue.Enqueue(e) // nolint: errcheck
+		return true
+	})
+}
+
+func (w *exchange) getOutbox(peer crypto.Fingerprint) *outbox {
+	outbox := &outbox{
+		peer:      peer,
+		addresses: NewAddressesMap(),
+		queue:     goconcurrentqueue.NewFIFO(),
+	}
+	outbox, loaded := w.outboxes.GetOrPut(peer, outbox)
+	if !loaded {
+		go w.processOutbox(outbox)
+	}
+	return outbox
+}
+
+func (w *exchange) updateOutboxConn(outbox *outbox, conn *net.Connection) {
+	outbox.connLock.Lock()
+	if outbox.conn != nil {
+		outbox.conn.Close() // nolint: errcheck
+	}
+	outbox.conn = conn
+	outbox.connLock.Unlock()
+}
+
+func (w *exchange) updateOutboxConnIfEmpty(
+	outbox *outbox,
+	conn *net.Connection,
+) bool {
+	outbox.connLock.Lock()
+	if outbox.conn == nil {
+		outbox.conn = conn
+		return true
+	}
+	outbox.connLock.Unlock()
+	return false
+}
+
+func (w *exchange) processOutbox(outbox *outbox) {
+	getConnection := func(req *outgoingObject) (*net.Connection, error) {
+		outbox.connLock.Lock()
+		defer outbox.connLock.Unlock()
+		if outbox.conn != nil {
+			return outbox.conn, nil
+		}
+		netOpts := []net.Option{}
+		if req.options.LocalDiscovery {
+			netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
+		}
+		conn, err := w.net.Dial(req.context, req.recipient, netOpts...)
+		if err != nil {
+			return nil, err
+		}
+		// if the remote peer doesn't match the one on our outbox
+		// this check is mainly done for when the outbox.peer is actually an
+		// address, ie tcps:0.0.0.0:0
+		// once we have the real remote peer, we should be replacing the outbox
+		if conn.RemotePeerKey.Fingerprint().String() != outbox.peer.String() {
+			// check if we already have an outbox with the new peer
+			existingOutbox, outboxExisted := w.outboxes.GetOrPut(
+				conn.RemotePeerKey.Fingerprint(),
+				outbox,
+			)
+			// and if so
+			if outboxExisted {
+				// enqueue the object on that outbox
+				existingOutbox.queue.Enqueue(req) // nolint: errcheck
+				// try to update the connection if its gone
+				updated := w.updateOutboxConnIfEmpty(existingOutbox, conn)
+				// close the connection if we are not using it
+				if !updated {
+					conn.Close() // nolint: errcheck
+					w.updateOutboxConn(outbox, existingOutbox.conn)
+				}
+				// and finally return errOutboxForwarded so caller knows to exit
+				return nil, errOutboxForwarded
+			}
+		}
+		go func() { // TODO(geoah): why is this async?
+			if err := w.handleConnection(conn); err != nil {
+				log.DefaultLogger.Warn("failed to handle outbox connection", log.Error(err))
+			}
+		}()
+		return conn, nil
+	}
+	for {
+		// dequeue the next item to send
+		// TODO figure out what can go wrong here
+		v, err := outbox.queue.DequeueOrWaitForNextElement()
+		if err != nil {
+			panic(err)
+		}
+		req := v.(*outgoingObject)
+		// check if the context for this is done
+		if err := req.context.Err(); err != nil {
+			req.err <- err
+			continue
+		}
+		// make a logger from our req context
+		logger := log.FromContext(req.context).With(
+			log.String("recipient", req.recipient),
+			log.String("object.@type", req.object.GetType()),
+		)
+		// validate req
+		if req.recipient == "" {
+			logger.Info("missing recipient")
+			req.err <- errors.New("missing recipient")
+			continue
+		}
+		// try to send the object
+		var lastErr error
+		for i := 0; i < 3; i++ {
+			logger.Debug("trying to get connection", log.Int("attempt", i+1))
+			conn, err := getConnection(req)
+			if err != nil {
+				// the object has been forwarded to another outbox
+				if err == errOutboxForwarded {
+					return
+				}
+				lastErr = err
+				outbox.conn = nil
+				continue
+			}
+			logger.Debug("trying write object", log.Int("attempt", i+1))
+			if err := net.Write(req.object, conn); err != nil {
+				lastErr = err
+				outbox.conn = nil
+				continue
+			}
+			lastErr = nil
+			break
+		}
+		if lastErr == nil {
+			logger.Debug("wrote object")
+		}
+		// errOutboxForwarded are not considered errors here
+		// else, we should report back with something
+		if lastErr != errOutboxForwarded {
+			req.err <- lastErr
+		}
+		continue
+	}
 }
 
 // Request an object given its hash from an address
@@ -250,69 +411,53 @@ func (w *exchange) Handle(
 		return nil, err
 	}
 	hID := rand.String(8)
-	w.handlers.Store(hID, &handler{
-		contentType: g,
-		handler:     h,
-	})
-	r := func() {
-		w.handlers.Delete(hID)
-	}
-	return r, nil
+	return w.createInbox(hID, g, h)
 }
 
-func (w *exchange) HandleConnection(
+func (w *exchange) handleConnection(
 	conn *net.Connection,
 ) error {
-	logger := w.logger.With(
-		log.String("remote", "peer:"+conn.RemotePeerKey.Fingerprint().String()),
-	)
-	logger.Debug("handling new connection")
+	if conn == nil {
+		// TODO should this be nil?
+		return errors.New("missing connection")
+	}
 
+	// get outbox and update the connection to the peer
+	outbox := w.getOutbox(conn.RemotePeerKey.Fingerprint())
+	w.updateOutboxConn(outbox, conn)
+
+	// TODO(geoah) this looks like a hack
 	if err := net.Write(
 		w.local.GetSignedPeer().ToObject(),
 		conn,
 	); err != nil {
-		logger.Warn("could not write own peer to remote")
+		return err
 	}
 
 	for {
-		obj, err := net.Read(conn)
+		payload, err := net.Read(conn)
 		if err != nil {
 			return err
 		}
 
-		w.incoming <- &incomingObject{
-			conn:   conn,
-			object: obj,
-		}
+		w.writeToInboxes(&Envelope{
+			Sender:  conn.RemotePeerKey,
+			Payload: payload,
+		})
 	}
 }
 
-// Process incoming object
-func (w *exchange) process(
-	o object.Object,
-	conn *net.Connection,
+// handleObjectRequest -
+func (w *exchange) handleObjectRequest(
+	e *Envelope,
 ) error {
-	logger := w.logger.With(
-		log.String("local_peer", w.key.PublicKey.Fingerprint().String()),
-		log.String("remote_peer", conn.RemotePeerKey.Fingerprint().String()),
-		log.String("object.type", o.GetType()),
-	)
-
-	logger.Info("processing object")
-
 	// TODO verify signature
-	switch o.GetType() {
+	switch e.Payload.GetType() {
 	case objectRequestType:
 		req := &ObjectRequest{}
-		if err := req.FromObject(o); err != nil {
+		if err := req.FromObject(e.Payload); err != nil {
 			return err
 		}
-		logger = logger.With(
-			log.Any("requested_hash", req.ObjectHash),
-			log.String("recipient", conn.RemotePeerKey.Fingerprint().String()),
-		)
-		logger.Info("got object request")
 		res, err := w.store.Get(req.ObjectHash.Compact())
 		if err != nil {
 			return errors.Wrap(
@@ -320,71 +465,14 @@ func (w *exchange) process(
 				err,
 			)
 		}
-		cerr := make(chan error, 1)
-		ctx := context.New(context.WithTimeout(time.Second))
-		defer ctx.Cancel()
-		w.outgoing <- &outgoingObject{
-			context:   ctx,
-			recipient: "peer:" + conn.RemotePeerKey.Fingerprint().String(),
-			object:    res,
-			err:       cerr,
-		}
-		err = <-cerr
-		if err != nil {
-			logger.Warn("could not send response", log.Error(err))
-		} else {
-			logger.Info("sent response")
-		}
-		return err
-
-	case objectForwardType:
-		v := &ObjectForward{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		w.logger.Info("got forwarded message", log.String("recipient", v.Recipient))
-		cerr := make(chan error, 1)
-		ctx := context.New(context.WithTimeout(time.Second))
-		defer ctx.Cancel()
-		w.outgoing <- &outgoingObject{
-			context:   ctx,
-			recipient: v.Recipient,
-			object:    *v.FwObject,
-			err:       cerr,
-		}
-		return <-cerr
+		go w.Send( // nolint: errcheck
+			context.New(),
+			res,
+			"peer:"+e.Sender.Fingerprint().String(),
+			WithLocalDiscoveryOnly(),
+		)
+		return nil
 	}
-
-	ct := o.GetType()
-	w.handlers.Range(func(_, v interface{}) bool {
-		// logger.Debug("publishing object to handler")
-		h := v.(*handler)
-		if !h.contentType.Match(ct) {
-			return true
-		}
-		go func(h *handler, object interface{}) {
-			defer func() {
-				if r := recover(); r != nil {
-					w.logger.
-						With(
-							log.Stack(),
-						).
-						Error("Recovered while handling", log.Any("r", r))
-				}
-			}()
-			if err := h.handler(&Envelope{
-				Sender:  conn.RemotePeerKey,
-				Payload: o,
-			}); err != nil {
-				w.logger.Info(
-					"Could not handle event",
-					log.String("contentType", ct),
-					log.Error(err),
-				)
-			}
-		}(h, o)
-		return true
-	})
 
 	return nil
 }
@@ -404,202 +492,31 @@ func (w *exchange) Send(
 	options ...Option,
 ) error {
 	ctx = context.FromContext(ctx)
-
 	opts := &Options{}
 	for _, option := range options {
 		option(opts)
 	}
-
-	o := object.Copy(oo)
-
-	logger := log.FromContext(ctx).With(
-		log.String("address", address),
-		log.String("opts", fmt.Sprintf("%#v", opts)),
-		log.String("object.type", o.GetType()),
-	)
-
-	if "peer:"+w.local.GetFingerprint().String() == address {
-		logger.Debug("cannot send object to ourself")
-		return ErrCannotSendToSelf
-	}
-
-	switch getAddressType(address) {
-	case "peer":
-		err := w.sendDirectlyToPeer(ctx, o, address, opts)
-		if err == nil {
-			return nil
-		}
-		logger.Debug("could not send directly to peer", log.Error(err))
-
-		err = w.sendViaRelayToPeer(ctx, o, address, opts)
-		if err == nil {
-			return nil
-		}
-		logger.Debug("could not via relay to peer", log.Error(err))
-
-		return net.ErrAllAddressesFailed
-
-	default:
-		err := w.sendDirectlyToPeer(ctx, o, address, opts)
-		if err != nil {
-			return errors.New("sending directly to address failed")
-		}
-
-	}
-
-	return nil
-}
-
-func (w *exchange) sendDirectlyToPeer(
-	ctx context.Context,
-	o object.Object,
-	address string,
-	options *Options,
-) error {
-	cerr := make(chan error, 1)
-	nctx := context.New(context.WithTimeout(time.Second))
-	defer nctx.Cancel()
-	w.outgoing <- &outgoingObject{
+	o := object.Copy(oo) // TODO do we really need to copy?
+	// if !strings.HasPrefix(address, "peer:") {
+	// 	panic("NO PEER PREFIX")
+	// }
+	fingerprint := strings.Replace(address, "peer:", "", 1)
+	outbox := w.getOutbox(crypto.Fingerprint(fingerprint))
+	errRecv := make(chan error, 1)
+	envelope := &outgoingObject{
 		context:   ctx,
 		recipient: address,
 		object:    o,
-		options:   options,
-		err:       cerr,
+		options:   opts,
+		err:       errRecv,
 	}
-	select {
-	case err := <-cerr:
-		return err
-	case <-nctx.Done():
+	if err := outbox.queue.Enqueue(envelope); err != nil {
 		return nil
 	}
-}
-
-func (w *exchange) sendViaRelayToPeer(
-	ctx context.Context,
-	o object.Object,
-	address string,
-	options *Options,
-) error {
-	logger := log.FromContext(ctx).With(
-		log.String("method", "resolver/sendViaRelayToPeer"),
-	)
-
-	// if recipient is a peer, we might have some relay addresses
-	if !strings.HasPrefix(address, "peer:") {
-		return net.ErrAllAddressesFailed
-	}
-
-	recipient := strings.Replace(address, "peer:", "", 1)
-	if recipient == w.key.PublicKey.Fingerprint().String() {
-		// TODO(geoah) error or nil?
-		return errors.New("cannot send obj to self")
-	}
-
-	peers, err := w.discover.FindByFingerprint(
-		ctx,
-		crypto.Fingerprint(recipient),
-	)
-	if err != nil {
+	select {
+	case <-ctx.Done():
+		return ErrSendingTimedOut
+	case err := <-errRecv:
 		return err
 	}
-
-	logger.Debug("found peer(s)", log.Int("n", len(peers)))
-
-	if len(peers) == 0 {
-		return net.ErrNoAddresses
-	}
-
-	peer := peers[0]
-
-	// TODO(geoah) make sure fw object is signed
-	fw := &ObjectForward{
-		Recipient: address,
-		FwObject:  &o,
-	}
-
-	fwo := fw.ToObject()
-	if err := crypto.Sign(fwo, w.key); err != nil {
-		return err
-	}
-
-	for _, address := range peer.Addresses {
-		if strings.HasPrefix(address, "relay:") {
-			w.logger.
-				Debug("found relay address",
-					log.String("peer", recipient),
-					log.String("address", address),
-				)
-			relayAddress := strings.Replace(address, "relay:", "", 1)
-			// TODO this is an ugly hack
-			if strings.Contains(address, w.key.PublicKey.Fingerprint().String()) {
-				continue
-			}
-			cerr := make(chan error, 1)
-			w.outgoing <- &outgoingObject{
-				context:   ctx,
-				recipient: relayAddress,
-				object:    fwo,
-				err:       cerr,
-				options:   options,
-			}
-			if err := <-cerr; err == nil {
-				return nil
-			}
-		}
-	}
-
-	return net.ErrAllAddressesFailed
-}
-
-func (w *exchange) getOrDial(
-	ctx context.Context,
-	address string,
-	options *Options,
-) (
-	*net.Connection,
-	error,
-) {
-	logger := log.FromContext(ctx).With(
-		log.String("address", address),
-	)
-	logger.Debug("looking for existing connection")
-
-	if address == "" {
-		logger.Debug("missing address, skipping")
-		return nil, errors.New("missing address")
-	}
-
-	existingConn, err := w.manager.Get(address)
-	if err == nil {
-		logger.Debug("found existing connection")
-		return existingConn, nil
-	}
-
-	logger.Debug("did not find existing connection, will dial")
-
-	netOpts := []net.Option{}
-	if options.LocalDiscovery {
-		netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
-	}
-
-	conn, err := w.net.Dial(ctx, address, netOpts...)
-	if err != nil {
-		// w.manager.Close(address)
-		logger.Info("failed to dial", log.Error(err))
-		return nil, errors.Wrap(err, errors.New("dialing failed"))
-	}
-
-	go func() {
-		if err := w.HandleConnection(conn); err != nil {
-			logger.Warn("failed to handle object", log.Error(err))
-		}
-	}()
-
-	w.manager.Add(address, conn)
-
-	return conn, nil
-}
-
-func getAddressType(addr string) string {
-	return strings.Split(addr, ":")[0]
 }
