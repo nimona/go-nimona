@@ -7,7 +7,7 @@ package hyperspace
 import (
 	"sync"
 
-	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )
 

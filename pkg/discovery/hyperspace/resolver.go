@@ -1,6 +1,7 @@
 package hyperspace
 
 import (
+	"fmt"
 	"time"
 
 	"nimona.io/pkg/context"
@@ -21,6 +22,10 @@ var (
 	peerType                     = new(peer.Peer).GetType()
 	contentProviderRequestType   = new(Request).GetType()
 	contentProviderAnnouncedType = new(Announced).GetType()
+)
+
+const (
+	ErrNoPeersToAsk = errors.Error("no peers to ask")
 )
 
 type (
@@ -62,12 +67,14 @@ func NewDiscoverer(
 		contentProviderAnnouncedType,
 	}
 
+	// handle types of objects we care about
 	for _, t := range types {
 		if _, err := exc.Handle(t, r.handleObject); err != nil {
 			return nil, err
 		}
 	}
 
+	// listen on content hash updates
 	r.local.OnContentHashesUpdated(func(hashes []*object.Hash) {
 		nctx := context.New(context.WithTimeout(time.Second * 3))
 		for _, hash := range hashes {
@@ -81,7 +88,10 @@ func NewDiscoverer(
 		}
 	})
 
-	// r.store.Add(local.GetSignedPeer())
+	// pre-fill content hashes from local info
+	for _, ch := range r.local.GetContentHashes() {
+		r.contentHashes.Put(ch)
+	}
 
 	go func() {
 		if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
@@ -110,33 +120,32 @@ func (r *Discoverer) FindByFingerprint(
 	logger.Debug("trying to find peer by fingerprint")
 
 	eps := r.store.FindByFingerprint(fingerprint)
-	eps = r.withoutOwnPeer(eps)
+	// eps = r.withoutOwnPeer(eps)
 	if len(eps) > 0 {
-		pf := make([]string, len(eps))
-		for i, p := range eps {
-			pf[i] = p.Fingerprint().String()
-		}
 		logger.Debug(
 			"found peers in store",
 			log.Int("n", len(eps)),
 			log.Any("peers", eps),
-			log.Strings("peers.fingerprints", pf),
 		)
-		return eps, nil
+		// return eps, nil
 	}
 
 	if opt.Local {
-		return nil, nil
+		return eps, nil
 	}
 
-	eps, err := r.LookupPeer(ctx, &peer.Requested{
+	meps, _ := r.LookupPeer(ctx, &peer.Requested{
 		Keys: []string{
 			fingerprint.String(),
 		},
-	})
-	if err != nil {
-		return nil, err
-	}
+	}) // nolint: errcheck
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	eps = append(eps, meps...)
+	// eps = r.store.FindByFingerprint(fingerprint)
+	eps = r.withoutOwnPeer(eps)
 
 	return eps, nil
 }
@@ -160,20 +169,20 @@ func (r *Discoverer) FindByContent(
 	cs := r.store.FindByContent(b)
 	fs := []crypto.Fingerprint{}
 
+	for _, b := range cs {
+		fs = append(fs, b.Signature.PublicKey.Fingerprint())
+	}
+	logger.With(
+		log.Any("fingerprints", cs),
+	).Debug("found fingerprints in store")
+
 	if opt.Local {
-		for _, b := range cs {
-			fs = append(fs, b.Signature.PublicKey.Fingerprint())
-		}
-		logger.With(
-			log.Int("n", len(cs)),
-			log.Any("fingerprints", cs),
-		).Debug("found n fingerprints")
 		return fs, nil
 	}
 
-	logger.Debug("looking up peers")
+	logger.Debug("looking up providers")
 
-	fs, err := r.LookupContentProvider(ctx, b)
+	mfs, err := r.LookupContentProvider(ctx, b)
 	if err != nil {
 		logger.With(
 			log.Error(err),
@@ -181,6 +190,7 @@ func (r *Discoverer) FindByContent(
 		return nil, err
 	}
 
+	fs = append(fs, mfs...)
 	logger.With(
 		log.Int("n", len(fs)),
 	).Debug("found n peers")
@@ -286,7 +296,7 @@ func (r *Discoverer) handlePeerRequest(
 		)
 		err := r.exchange.Send(
 			context.New(
-				context.WithTimeout(time.Second),
+				context.WithParent(ctx),
 			),
 			p.ToObject(),
 			e.Sender.Fingerprint().Address(),
@@ -347,7 +357,7 @@ func (r *Discoverer) handleProviderRequest(
 		)
 		err := r.exchange.Send(
 			context.New(
-				context.WithTimeout(time.Second),
+				context.WithParent(ctx),
 			),
 			p.ToObject(),
 			e.Sender.Fingerprint().Address(),
@@ -374,176 +384,242 @@ func (r *Discoverer) LookupContentProvider(
 		log.String("method", "hyperspace/resolver.LookupContentProvider"),
 		log.Any("query.bloom", q),
 	)
-	cq := &Request{
+
+	// create content request
+	contentRequest := &Request{
 		QueryContentBloom: q.Bloom(),
 	}
-	o := cq.ToObject()
-	cs := r.store.FindClosestContentProvider(q)
-	fs := []crypto.Fingerprint{}
-	for _, c := range cs {
-		fs = append(fs, c.Signature.PublicKey.Fingerprint())
-	}
-	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
-	for _, p := range ps {
-		fs = append(fs, p.Signature.PublicKey.Fingerprint())
-	}
-	if len(fs) == 0 {
-		logger.Debug("couldn't find peers to ask")
-		return nil, errors.New("no peers to ask")
-	}
 
-	// newPeers := make(chan *peer.Peer, 1)
-	// newContentProviders := make(chan *Announced, 1)
+	// create channel to keep providers we find
+	providers := make(chan crypto.Fingerprint)
 
-	// cf, err := r.exchange.Handle(
-	// 	contentProviderAnnouncedType,
-	// 	func(e *exchange.Envelope) error {
-	// 		switch e.Payload.GetType() {
-	// 		case peerType:
-	// 			p := &peer.Peer{}
-	// 			err := p.FromObject(e.Payload)
-	// 			if err == nil {
-	// 				newPeers <- p
-	// 			}
-	// 		case contentProviderAnnouncedType:
-	// 			p := &Announced{}
-	// 			err := p.FromObject(e.Payload)
-	// 			if err == nil {
-	// 				newContentProviders <- p
-	// 			}
-	// 		}
-	// 		return nil
-	// 	},
-	// )
-	// if err != nil {
-	// 	return nil, errors.Wrap(
-	// 		errors.New("could not start handling contentProviderAnnouncedType"),
-	// 		err,
-	// 	)
-	// }
-	// defer cf()
+	// create channel for the peers we need to ask
+	recipients := make(chan crypto.Fingerprint)
 
-	// TODO(geoah): go through new peers and consider asking them
-	// TODO(geoah): go through new providers and consider returning early
-
-	opts := []exchange.Option{
-		exchange.WithLocalDiscoveryOnly(),
-	}
-	logger.Debug("found peers to ask", log.Int("n", len(fs)))
-	for _, f := range fs {
-		go func(f crypto.Fingerprint) {
-			logger.With(
-				log.String("peer", f.String()),
-			).Debug("asking peer")
+	// send content requests to recipients
+	go func() {
+		// keep a record of the peers we already asked
+		recipientsAsked := map[crypto.Fingerprint]bool{}
+		// go through the peers we need to ask
+		for recipient := range recipients {
+			// check if we've already asked them
+			if _, alreadyAsked := recipientsAsked[recipient]; alreadyAsked {
+				continue
+			}
+			// else mark them as already been asked
+			recipientsAsked[recipient] = true
+			// and finally ask them
 			err := r.exchange.Send(
 				ctx,
-				object.Copy(o),
-				f.Address(),
-				opts...,
+				contentRequest.ToObject(),
+				recipient.Address(),
+				exchange.WithLocalDiscoveryOnly(),
 			)
 			if err != nil {
 				logger.Debug("could not lookup peer", log.Error(err))
-				return
+				continue
 			}
-			logger.With(
-				log.String("peer", f.String()),
-			).Debug("asked peer")
-		}(f)
+			logger.Debug("asked peer", log.String("peer", recipient.String()))
+		}
+	}()
+
+	// listen for new content providers and ask them
+	contentProviderHandler := func(e *exchange.Envelope) error {
+		cp := &Announced{}
+		cp.FromObject(e.Payload) // nolint: errcheck
+		if cp.Signature == nil || cp.Signature.PublicKey == nil {
+			return nil
+		}
+		if intersectionCount(cp.Bloom(), q.Bloom()) == len(q.Bloom()) {
+			providers <- cp.Signature.PublicKey.Fingerprint()
+			return nil
+		}
+		recipients <- cp.Signature.PublicKey.Fingerprint()
+		return nil
 	}
-	t := time.NewTimer(time.Second * 5)
-	select {
-	case <-t.C:
-		logger.Debug("timer done, giving up")
-	case <-ctx.Done():
-		logger.Debug("ctx done, giving up")
+	cpCancel, err := r.exchange.Handle(
+		contentProviderAnnouncedType,
+		contentProviderHandler,
+	)
+	if err != nil {
+		return nil, err
 	}
-	cs = r.store.FindByContent(q)
-	fs = []crypto.Fingerprint{}
-	for _, c := range cs {
-		fs = append(fs, c.Signature.PublicKey.Fingerprint())
+
+	// listen for new peers and ask them
+	peerHandler := func(e *exchange.Envelope) error {
+		cp := &peer.Peer{}
+		cp.FromObject(e.Payload) // nolint: errcheck
+		if cp.Signature != nil && cp.Signature.PublicKey != nil {
+			recipients <- cp.Signature.PublicKey.Fingerprint()
+		}
+		return nil
 	}
-	logger.With(
-		log.Int("n", len(fs)),
-	).Debug("done, found n providers")
-	return fs, nil
+	peerCancel, err := r.exchange.Handle(
+		peerType,
+		peerHandler,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// find and ask "closest" content providers
+	announcements := r.store.FindClosestContentProvider(q)
+	for _, announcement := range announcements {
+		fmt.Println("_ ann", announcement.Signature.PublicKey.Fingerprint().String())
+		recipients <- announcement.Signature.PublicKey.Fingerprint()
+	}
+
+	// find and ask "closest" peers
+	closestPeers := r.store.FindClosestPeer(r.local.GetFingerprint())
+	for _, peer := range closestPeers {
+		fmt.Println("_ rec", peer.Fingerprint().String())
+		recipients <- peer.Fingerprint()
+	}
+
+	// close handlers
+	defer cpCancel()
+	defer peerCancel()
+
+	// error early if there are no peers to contact
+	if len(announcements) == 0 && len(closestPeers) == 0 {
+		return nil, ErrNoPeersToAsk
+	}
+
+	// gather all providers until something happens
+	providersList := []crypto.Fingerprint{}
+	t := time.NewTimer(time.Second * 1)
+loop:
+	for {
+		select {
+		case provider := <-providers:
+			providersList = append(providersList, provider)
+			break loop
+		case <-t.C:
+			logger.Debug("timer done, giving up")
+			break loop
+		case <-ctx.Done():
+			logger.Debug("ctx done, giving up")
+			break loop
+		}
+	}
+
+	logger.Debug("done, found n providers", log.Int("n", len(providersList)))
+	return providersList, nil
 }
 
 // LookupPeer does a network lookup given a query
 func (r *Discoverer) LookupPeer(
 	ctx context.Context,
-	q *peer.Requested,
+	peerRequest *peer.Requested,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupPeer"),
-		log.Any("query.keys", q.Keys),
+		log.Any("query.keys", peerRequest.Keys),
 	)
-	o := q.ToObject()
-	// TODO support multiple keys
-	ps := r.store.FindClosestPeer(crypto.Fingerprint(q.Keys[0]))
-	opts := []exchange.Option{
-		exchange.WithLocalDiscoveryOnly(),
-	}
-	ps = r.withoutOwnPeer(ps)
-	if len(ps) == 0 {
-		logger.Debug("couldn't find peers to ask")
-		return nil, errors.New("no peers to ask")
-	}
+	logger.Debug("looking up peer")
 
-	logger.Debug("found peers to ask", log.Int("n", len(ps)))
-	for _, p := range ps {
-		pa := "peer:" + p.Signature.PublicKey.Fingerprint().String()
-		err := r.exchange.Send(ctx, o, pa, opts...)
-		if err != nil {
-			logger.Debug("could not lookup peer", log.Error(err))
-		}
-	}
+	// create channel to keep peers we find
+	peers := make(chan *peer.Peer)
 
-	peers := []*peer.Peer{}
-	newPeers := make(chan *peer.Peer)
-	cf, err := r.exchange.Handle(
-		peerType,
-		func(e *exchange.Envelope) error {
-			p := &peer.Peer{}
-			err := p.FromObject(e.Payload)
-			if err != nil {
-				return nil
+	// create channel for the peers we need to ask
+	recipients := make(chan crypto.Fingerprint)
+
+	// allows us to match peers with peerRequest
+	peerMatchesRequest := func(peer *peer.Peer) bool {
+		for _, key := range peerRequest.Keys {
+			if key == peer.Signature.PublicKey.Fingerprint().String() {
+				return true
 			}
-			newPeers <- p
+		}
+		return false
+	}
+
+	// send content requests to recipients
+	go func() {
+		// keep a record of the peers we already asked
+		recipientsAsked := map[crypto.Fingerprint]bool{}
+		// go through the peers we need to ask
+		for recipient := range recipients {
+			// check if we've already asked them
+			if _, alreadyAsked := recipientsAsked[recipient]; alreadyAsked {
+				continue
+			}
+			// else mark them as already been asked
+			recipientsAsked[recipient] = true
+			// and finally ask them
+			err := r.exchange.Send(
+				ctx,
+				peerRequest.ToObject(),
+				recipient.Address(),
+				exchange.WithLocalDiscoveryOnly(),
+			)
+			if err != nil {
+				logger.Debug("could not lookup peer", log.Error(err))
+				continue
+			}
+			logger.Debug("asked peer", log.String("peer", recipient.String()))
+		}
+	}()
+
+	// listen for new peers and ask them
+	peerHandler := func(e *exchange.Envelope) error {
+		cp := &peer.Peer{}
+		cp.FromObject(e.Payload) // nolint: errcheck
+		if cp.Signature == nil || cp.Signature.PublicKey == nil {
 			return nil
-		},
+		}
+		if peerMatchesRequest(cp) {
+			peers <- cp
+			return nil
+		}
+		recipients <- cp.Signature.PublicKey.Fingerprint()
+		return nil
+	}
+	peerCancel, err := r.exchange.Handle(
+		peerType,
+		peerHandler,
 	)
 	if err != nil {
-		return nil, errors.Wrap(
-			errors.New("could not start handling contentProviderAnnouncedType"),
-			err,
-		)
+		return nil, err
 	}
-	defer cf()
 
-	t := time.NewTicker(time.Second * 4)
+	// find and ask "closest" peers
+	go func() {
+		cps := r.store.FindClosestPeer(r.local.GetFingerprint())
+		cps = r.withoutOwnPeer(cps)
+		for _, peer := range cps {
+			if peerMatchesRequest(peer) {
+				peers <- peer
+				continue
+			}
+			recipients <- peer.Fingerprint()
+		}
+	}()
+
+	// close handlers
+	defer peerCancel()
+
+	// gather all peers until something happens
+	peersList := []*peer.Peer{}
+	t := time.NewTimer(time.Second * 1)
+loop:
 	for {
 		select {
+		case peer := <-peers:
+			peersList = append(peersList, peer)
+			break loop
 		case <-t.C:
-			return peers, nil
-
+			logger.Debug("timer done, giving up")
+			break loop
 		case <-ctx.Done():
-			return peers, nil
-
-		case newPeer := <-newPeers:
-			logger.Debug(
-				"got back peer",
-				log.String("peer.fingerprint", newPeer.Fingerprint().String()),
-			)
-			// TODO(geoah): q.Keys needs to be singular and a public key
-			if peerMatchesKeyFingerprint(newPeer, crypto.Fingerprint(q.Keys[0])) {
-				peers = append(peers, newPeer)
-				return peers, nil
-			}
+			logger.Debug("ctx done, giving up")
+			break loop
 		}
 	}
 
-	return peers, nil
+	logger.Debug("done, found n peers", log.Int("n", len(peersList)))
+	return peersList, nil
 }
 
 func (r *Discoverer) bootstrap(

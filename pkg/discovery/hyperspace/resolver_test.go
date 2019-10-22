@@ -1,6 +1,8 @@
 package hyperspace
 
 import (
+	"crypto/rand"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,12 +17,12 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
-func TestDiscoverer_BootstrapLookup(t *testing.T) {
+func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
-	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
@@ -29,6 +31,10 @@ func TestDiscoverer_BootstrapLookup(t *testing.T) {
 
 	ba := l0.GetAddresses()
 
+	time.Sleep(time.Second)
+
+	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+
 	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddProvider(d1)
@@ -36,17 +42,219 @@ func TestDiscoverer_BootstrapLookup(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	ctxR1 := context.New(context.WithCorrelationID("req1"))
-	peers, err := d1.FindByFingerprint(ctxR1, k0.Fingerprint())
+	ctx := context.New(
+		context.WithCorrelationID("req1"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err := d1.FindByFingerprint(ctx, k0.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
 
-	ctxR2 := context.New(context.WithCorrelationID("req2"))
+	ctxR2 := context.New(
+		context.WithCorrelationID("req2"),
+		context.WithTimeout(time.Second),
+	)
 	peers, err = d0.FindByFingerprint(ctxR2, k1.Fingerprint())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
+}
+
+func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
+	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+
+	// bootstrap node
+	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
+	assert.NoError(t, err)
+	err = disc0.AddProvider(d0)
+	assert.NoError(t, err)
+
+	time.Sleep(time.Second)
+
+	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+
+	fmt.Println("k0", k0.Fingerprint())
+	fmt.Println("k1", k1.Fingerprint())
+	fmt.Println("k2", k2.Fingerprint())
+
+	// bootstrap address
+	ba := l0.GetAddresses()
+
+	// node 1
+	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
+	assert.NoError(t, err)
+	err = disc1.AddProvider(d1)
+	assert.NoError(t, err)
+
+	// node 2
+	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
+	assert.NoError(t, err)
+	err = disc2.AddProvider(d2)
+	assert.NoError(t, err)
+
+	// wait for everything to settle
+	time.Sleep(time.Second)
+
+	// find bootstrap from node1
+	ctx := context.New(
+		context.WithCorrelationID("req1"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err := d1.FindByFingerprint(ctx, k0.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
+
+	// find node 1 from node 2
+	ctx = context.New(
+		context.WithCorrelationID("req2"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err = d2.FindByFingerprint(ctx, k1.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
+
+	// find node 2 from node 1
+	ctx = context.New(
+		context.WithCorrelationID("req3"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err = d1.FindByFingerprint(ctx, k2.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
+
+	// add extra peer
+	_, k3, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
+
+	// setup node 3
+	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
+	assert.NoError(t, err)
+	err = disc3.AddProvider(d3)
+	assert.NoError(t, err)
+	assert.NotNil(t, d3)
+
+	// wait for everything to settle
+	time.Sleep(time.Second)
+
+	fmt.Println("peer0", k0.Fingerprint())
+	fmt.Println("peer1", k1.Fingerprint())
+	fmt.Println("peer2", k2.Fingerprint())
+	fmt.Println("peer3", k3.Fingerprint())
+
+	fmt.Println("-------------------")
+	fmt.Println("-------------------")
+	fmt.Println("-------------------")
+	fmt.Println("-------------------")
+
+	// find node 3 from node 1
+	ctx = context.New(
+		context.WithCorrelationID("req4"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err = d1.FindByFingerprint(ctx, k3.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
+
+	// find node 3 from node 2
+	ctx = context.New(
+		context.WithCorrelationID("req5"),
+		context.WithTimeout(time.Second),
+	)
+	peers, err = d2.FindByFingerprint(ctx, k3.Fingerprint())
+	require.NoError(t, err)
+	require.Len(t, peers, 1)
+	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
+}
+
+func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) {
+	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+
+	// make peer 1 a provider
+	token := make([]byte, 32)
+	rand.Read(token) // nolint: errcheck
+	ch := &object.Hash{
+		Algorithm: "OH1",
+		D:         token,
+	}
+	l1.AddContentHash(ch)
+
+	// print peer info
+	fmt.Println("k0", k0.Fingerprint())
+	fmt.Println("k1", k1.Fingerprint())
+	fmt.Println("k2", k2.Fingerprint())
+
+	// bootstrap peer
+	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
+	assert.NoError(t, err)
+	err = disc0.AddProvider(d0)
+	assert.NoError(t, err)
+
+	// bootstrap address
+	ba := l0.GetAddresses()
+
+	// peer 1
+	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
+	assert.NoError(t, err)
+	err = disc1.AddProvider(d1)
+	assert.NoError(t, err)
+
+	// peer 2
+	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
+	assert.NoError(t, err)
+	err = disc2.AddProvider(d2)
+	assert.NoError(t, err)
+
+	// wait for everything to settle
+	time.Sleep(time.Second)
+
+	// find peer 1 from peer 2
+	ctx := context.New(
+		context.WithCorrelationID("req1"),
+		context.WithTimeout(time.Second),
+	)
+	providers, err := d2.FindByContent(ctx, ch)
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
+
+	// find peer 1 from bootstrap
+	ctx = context.New(
+		context.WithCorrelationID("req2"),
+		context.WithTimeout(time.Second),
+	)
+	providers, err = d0.FindByContent(ctx, ch)
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
+
+	// add extra peer
+	_, _, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
+
+	// setup peer 3
+	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
+	assert.NoError(t, err)
+	err = disc3.AddProvider(d1)
+	assert.NoError(t, err)
+
+	// wait for everything to settle
+	time.Sleep(time.Second)
+
+	// find peer 1 from peer 3
+	ctx = context.New(
+		context.WithCorrelationID("req3"),
+		context.WithTimeout(time.Second),
+	)
+	providers, err = d3.FindByContent(ctx, ch)
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
 }
 
 func newPeer(
