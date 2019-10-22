@@ -2,13 +2,14 @@ package api
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
 	"nimona.io/internal/http/router"
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -53,7 +54,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 		return
 	}
 
-	ctx := context.New(context.WithTimeout(time.Second * 5))
+	ctx := context.New()
 	defer ctx.Cancel()
 
 	h, _ := object.HashFromCompact(objectHash)
@@ -103,11 +104,17 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	for _, p := range op {
-		for _, s := range p.Subjects {
-			ctx := context.New(
-				context.WithTimeout(time.Second * 5),
-			)
-			go api.exchange.Send(ctx, o, "peer:"+s) // nolint: errcheck
+		for i, s := range p.Subjects {
+			go func(i int, s string) {
+				ctx := context.New(
+					context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
+				)
+				err := api.exchange.Send(ctx, o, "peer:"+s)
+				if err != nil {
+					logger := log.FromContext(ctx)
+					logger.Error("could not send to peer", log.String("s", s), log.Error(err))
+				}
+			}(i, s)
 		}
 	}
 
