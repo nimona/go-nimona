@@ -11,6 +11,11 @@ import (
 	"nimona.io/pkg/stream"
 )
 
+const (
+	// ErrNotFound is returned when a requested object or hash is not found
+	ErrNotFound = errors.Error("not found")
+)
+
 const migrationsTable string = `
 CREATE TABLE IF NOT EXISTS Migrations (
 	ID INTEGER NOT NULL PRIMARY KEY,
@@ -135,7 +140,7 @@ func (d *DB) Get(
 	if err := row.Scan(&data); err != nil {
 		return nil, errors.Wrap(
 			err,
-			errors.New("could not query objects"),
+			ErrNotFound,
 		)
 	}
 
@@ -242,7 +247,7 @@ func (d *DB) GetRelations(
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Wrap(
 				err,
-				errors.New("could not query objects"),
+				ErrNotFound,
 			)
 		}
 
@@ -298,6 +303,29 @@ func (d *DB) UpdateTTL(
 		return errors.Wrap(
 			err,
 			errors.New("could not update last access and ttl"),
+		)
+	}
+
+	return nil
+}
+
+func (d *DB) Delete(
+	hash object.Hash,
+) error {
+
+	stmt, err := d.db.Prepare(`
+	DELETE FROM Objects
+	WHERE Hash=?`)
+	if err != nil {
+		return errors.Wrap(err, errors.New("could not prepare query"))
+	}
+
+	if _, err := stmt.Exec(
+		hash.String(),
+	); err != nil {
+		return errors.Wrap(
+			err,
+			errors.New("could not delete object"),
 		)
 	}
 
