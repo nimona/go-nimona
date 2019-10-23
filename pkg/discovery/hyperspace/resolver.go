@@ -93,14 +93,15 @@ func NewDiscoverer(
 		r.contentHashes.Put(ch)
 	}
 
-	go func() {
-		if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
-			logger.Error("could not bootstrap", log.Error(err))
-		}
-		if err := r.publishContentHashes(ctx); err != nil {
-			logger.Error("could not publish initial content hashes", log.Error(err))
-		}
-	}()
+	// get in touch with bootstrap nodes
+	if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
+		logger.Error("could not bootstrap", log.Error(err))
+	}
+
+	// publish content
+	if err := r.publishContentHashes(ctx); err != nil {
+		logger.Error("could not publish initial content hashes", log.Error(err))
+	}
 
 	return r, nil
 }
@@ -120,14 +121,12 @@ func (r *Discoverer) FindByFingerprint(
 	logger.Debug("trying to find peer by fingerprint")
 
 	eps := r.store.FindByFingerprint(fingerprint)
-	// eps = r.withoutOwnPeer(eps)
 	if len(eps) > 0 {
 		logger.Debug(
 			"found peers in store",
 			log.Int("n", len(eps)),
 			log.Any("peers", eps),
 		)
-		// return eps, nil
 	}
 
 	if opt.Local {
@@ -139,12 +138,8 @@ func (r *Discoverer) FindByFingerprint(
 			fingerprint.String(),
 		},
 	}) // nolint: errcheck
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	eps = append(eps, meps...)
-	// eps = r.store.FindByFingerprint(fingerprint)
 	eps = r.withoutOwnPeer(eps)
 
 	return eps, nil
@@ -638,6 +633,7 @@ func (r *Discoverer) bootstrap(
 	}
 	o := q.ToObject()
 	for _, addr := range bootstrapAddresses {
+		logger.Debug("connecting to bootstrap", log.String("address", addr))
 		err := r.exchange.Send(ctx, o, addr, opts...)
 		if err != nil {
 			logger.Debug("bootstrap could not send request", log.Error(err))

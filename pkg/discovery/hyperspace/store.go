@@ -5,7 +5,6 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/hyperspace/bloom"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -145,11 +144,6 @@ func (s *Store) FindByContent(b bloom.Bloomer) []*Announced {
 	})
 
 	return cs
-}
-
-func isPartOfBloom(h *object.Hash, b bloom.Bloomer) bool {
-	q := bloom.NewBloom(h.String())
-	return intersectionCount(q.Bloom(), b.Bloom()) == len(q)
 }
 
 func intersectionCount(a, b []int64) int {
