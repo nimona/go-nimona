@@ -95,12 +95,12 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	assert.NoError(t, err)
 
 	// wait for everything to settle
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	// find bootstrap from node1
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	peers, err := d1.FindByFingerprint(ctx, k0.Fingerprint())
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// find node 1 from node 2
 	ctx = context.New(
 		context.WithCorrelationID("req2"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	peers, err = d2.FindByFingerprint(ctx, k1.Fingerprint())
 	require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// find node 2 from node 1
 	ctx = context.New(
 		context.WithCorrelationID("req3"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	peers, err = d1.FindByFingerprint(ctx, k2.Fingerprint())
 	require.NoError(t, err)
@@ -138,7 +138,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	assert.NotNil(t, d3)
 
 	// wait for everything to settle
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	fmt.Println("peer0", k0.Fingerprint())
 	fmt.Println("peer1", k1.Fingerprint())
@@ -153,7 +153,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// find node 3 from node 1
 	ctx = context.New(
 		context.WithCorrelationID("req4"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	peers, err = d1.FindByFingerprint(ctx, k3.Fingerprint())
 	require.NoError(t, err)
@@ -163,7 +163,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// find node 3 from node 2
 	ctx = context.New(
 		context.WithCorrelationID("req5"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	peers, err = d2.FindByFingerprint(ctx, k3.Fingerprint())
 	require.NoError(t, err)
@@ -212,7 +212,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	assert.NoError(t, err)
 
 	// wait for everything to settle
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	// find peer 1 from peer 2
 	ctx := context.New(
@@ -227,7 +227,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// find peer 1 from bootstrap
 	ctx = context.New(
 		context.WithCorrelationID("req2"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*2),
 	)
 	providers, err = d0.FindByContent(ctx, ch)
 	require.NoError(t, err)
@@ -244,7 +244,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	assert.NoError(t, err)
 
 	// wait for everything to settle
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 5)
 
 	// find peer 1 from peer 3
 	ctx = context.New(
