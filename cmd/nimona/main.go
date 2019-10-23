@@ -28,6 +28,13 @@ func main() {
 		cfgPath = ".nimona"
 	}
 
+	nodeAlias := os.Getenv("NIMONA_ALIAS")
+	if nodeAlias != "" {
+		log.DefaultLogger = log.DefaultLogger.With(
+			log.String("$alias", nodeAlias),
+		)
+	}
+
 	cfgFile := path.Join(cfgPath, "config.json")
 	ctx := context.New(
 		context.WithCorrelationID("nimona"),
