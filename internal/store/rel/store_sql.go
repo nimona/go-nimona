@@ -51,6 +51,11 @@ func New(
 		return nil, err
 	}
 
+	go func() {
+		ndb.gc() //nolint
+		time.Sleep(1 * time.Minute)
+	}()
+
 	return ndb, nil
 }
 
@@ -364,4 +369,26 @@ func (d *DB) Subscribe(parent object.Hash) (chan object.Hash, error) {
 
 	d.subscribers[parent.String()] = append(d.subscribers[parent.String()], ch)
 	return ch, nil
+}
+
+func (d *DB) gc() error {
+	stmt, err := d.db.Prepare(`
+	DELETE
+	FROM
+		Objects
+	WHERE
+		datetime (LastAccessed + TTL * 60, 'unixepoch') < datetime ('now');
+	`)
+	if err != nil {
+		return errors.Wrap(err, errors.New("could not prepare query"))
+	}
+
+	if _, err := stmt.Exec(); err != nil {
+		return errors.Wrap(
+			err,
+			errors.New("could not gc delete objects"),
+		)
+	}
+
+	return nil
 }
