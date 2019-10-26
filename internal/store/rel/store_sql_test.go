@@ -3,7 +3,9 @@ package rel_test
 import (
 	"database/sql"
 	"os"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -20,7 +22,7 @@ const dbFilepath string = "./nimona.db"
 func TestNewDatabase(t *testing.T) {
 	dblite, err := sql.Open("sqlite3", dbFilepath)
 	defer func() {
-		os.Remove(dbFilepath)
+		os.Remove(dbFilepath) //nolint
 	}()
 	require.NoError(t, err)
 
@@ -35,7 +37,7 @@ func TestNewDatabase(t *testing.T) {
 func TestStoreRetrieveUpdate(t *testing.T) {
 	dblite, err := sql.Open("sqlite3", dbFilepath)
 	defer func() {
-		os.Remove(dbFilepath)
+		os.Remove(dbFilepath) //nolint
 	}()
 	require.NoError(t, err)
 
@@ -90,4 +92,63 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = db.Close()
 	require.NoError(t, err)
+}
+
+func TestSubscribe(t *testing.T) {
+	// create db
+	dblite, err := sql.Open("sqlite3", dbFilepath)
+	defer func() {
+		os.Remove(dbFilepath) //nolint
+	}()
+	require.NoError(t, err)
+
+	db, err := rel.New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, db)
+
+	// setup data
+	p := stream.Created{
+		Nonce: "asdf",
+	}
+	streamHash := hash.New(p.ToObject())
+	c := stream.PolicyAttached{
+		Stream: streamHash,
+	}
+	obj := c.ToObject()
+	obj.Set("key:s", "value")
+
+	var wg sync.WaitGroup
+
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
+		// subscribe
+		ch, err := db.Subscribe(*streamHash)
+		require.NoError(t, err)
+
+		go func() {
+			hs := <-ch
+			require.NotEmpty(t, hs)
+			wg.Done()
+		}()
+	}
+
+	// store data
+	err = db.Put(
+		obj,
+		rel.WithTTL(10),
+	)
+	require.NoError(t, err)
+
+	done := make(chan bool)
+	go func() {
+		wg.Wait()
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		break
+	case <-time.After(1 * time.Second):
+		t.Fatalf("failed to get update")
+	}
 }
