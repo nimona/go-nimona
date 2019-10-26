@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS Migrations (
 
 type DB struct {
 	db *sql.DB
+	// the key is the parent object.Hash
+	// updates on any put
+	subscribers map[string][]chan object.Hash
 }
 
 type migrationRow struct {
@@ -37,13 +40,18 @@ func New(
 	db *sql.DB,
 ) (*DB, error) {
 	ndb := &DB{
-		db: db,
+		db:          db,
+		subscribers: map[string][]chan object.Hash{},
 	}
 
-	err := ndb.createMigrationTable()
-	err = ndb.runMigrations()
+	if err := ndb.createMigrationTable(); err != nil {
+		return nil, err
+	}
+	if err := ndb.runMigrations(); err != nil {
+		return nil, err
+	}
 
-	return ndb, err
+	return ndb, nil
 }
 
 func (d *DB) Close() error {
@@ -67,9 +75,10 @@ func (d *DB) runMigrations() error {
 
 	for index, mig := range migrations {
 
-		rows, err := tx.Query("select ID, LastIndex, Datetime from Migrations order by id desc limit 1")
+		rows, err := tx.Query(
+			"select ID, LastIndex, Datetime from Migrations order by id desc limit 1")
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not run migration"),
@@ -79,7 +88,9 @@ func (d *DB) runMigrations() error {
 		mgr := migrationRow{}
 
 		for rows.Next() {
-			rows.Scan(&mgr.id, &mgr.LastIndex, &mgr.Datetime)
+			if err := rows.Scan(&mgr.id, &mgr.LastIndex, &mgr.Datetime); err != nil {
+				continue
+			}
 		}
 
 		if mgr.id > 0 && mgr.LastIndex >= index {
@@ -88,7 +99,7 @@ func (d *DB) runMigrations() error {
 
 		_, err = tx.Exec(mig)
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not run migration"),
@@ -98,7 +109,7 @@ func (d *DB) runMigrations() error {
 		stmt, err := tx.Prepare(
 			"INSERT INTO Migrations(LastIndex, Datetime) VALUES(?, ?)")
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not insert to migrations table"),
@@ -107,7 +118,7 @@ func (d *DB) runMigrations() error {
 
 		_, err = stmt.Exec(index, time.Now().Unix())
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not insert to migrations table"),
@@ -115,7 +126,12 @@ func (d *DB) runMigrations() error {
 		}
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(
+			err,
+			errors.New("could not insert to migrations table"),
+		)
+	}
 
 	return nil
 }
@@ -210,9 +226,12 @@ func (d *DB) Put(
 		stHash.String()
 	}
 
+	streamHashStr := stHash.String()
+	objectHash := hash.New(obj)
+
 	_, err = stmt.Exec(
-		hash.New(obj).String(),
-		stHash.String(),
+		objectHash.String(),
+		streamHashStr,
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -222,6 +241,11 @@ func (d *DB) Put(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
+	if subs, ok := d.subscribers[streamHashStr]; ok {
+		for _, subCh := range subs {
+			subCh <- *objectHash
+		}
+	}
 	return nil
 }
 
@@ -330,4 +354,14 @@ func (d *DB) Delete(
 	}
 
 	return nil
+}
+
+func (d *DB) Subscribe(parent object.Hash) (chan object.Hash, error) {
+	ch := make(chan object.Hash)
+	if _, ok := d.subscribers[parent.String()]; !ok {
+		d.subscribers[parent.String()] = []chan object.Hash{}
+	}
+
+	d.subscribers[parent.String()] = append(d.subscribers[parent.String()], ch)
+	return ch, nil
 }
