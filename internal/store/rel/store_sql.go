@@ -27,7 +27,7 @@ type DB struct {
 	db *sql.DB
 	// the key is the parent object.Hash
 	// updates on any put
-	subscribers map[string][]chan object.Hash
+	subscribers map[string][]chan object.Hash // todo: need to make this thread safe
 }
 
 type migrationRow struct {
@@ -44,16 +44,22 @@ func New(
 		subscribers: map[string][]chan object.Hash{},
 	}
 
+	// initialise the tables required for the migration
 	if err := ndb.createMigrationTable(); err != nil {
 		return nil, err
 	}
+
+	// Execute the migrations
 	if err := ndb.runMigrations(); err != nil {
 		return nil, err
 	}
 
+	// Initialise the garbage collector in the background to run every minute
 	go func() {
-		ndb.gc() //nolint
-		time.Sleep(1 * time.Minute)
+		for {
+			ndb.gc() //nolint
+			time.Sleep(1 * time.Minute)
+		}
 	}()
 
 	return ndb, nil
@@ -63,6 +69,8 @@ func (d *DB) Close() error {
 	return d.db.Close()
 }
 
+// createMigrationTable creates the tables required to keep the state
+// of the migrations
 func (d *DB) createMigrationTable() error {
 	_, err := d.db.Exec(migrationsTable)
 	if err != nil {
@@ -72,14 +80,18 @@ func (d *DB) createMigrationTable() error {
 	return nil
 }
 
+// runMigrations executes the migrations in the array and stores the state
+// in the migration tables
 func (d *DB) runMigrations() error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not start transaction"))
 	}
 
+	// iterate over the migrations array
 	for index, mig := range migrations {
 
+		// get the last migration index
 		rows, err := tx.Query(
 			"select ID, LastIndex, Datetime from Migrations order by id desc limit 1")
 		if err != nil {
@@ -102,6 +114,7 @@ func (d *DB) runMigrations() error {
 			continue
 		}
 
+		// execute the current migration
 		_, err = tx.Exec(mig)
 		if err != nil {
 			tx.Rollback() //nolint
@@ -111,6 +124,7 @@ func (d *DB) runMigrations() error {
 			)
 		}
 
+		// store the migration status state in the table
 		stmt, err := tx.Prepare(
 			"INSERT INTO Migrations(LastIndex, Datetime) VALUES(?, ?)")
 		if err != nil {
@@ -132,6 +146,7 @@ func (d *DB) runMigrations() error {
 	}
 
 	if err := tx.Commit(); err != nil {
+		tx.Rollback()
 		return errors.Wrap(
 			err,
 			errors.New("could not insert to migrations table"),
@@ -145,6 +160,7 @@ func (d *DB) Get(
 	hash object.Hash,
 ) (object.Object, error) {
 
+	// get the object
 	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
 		return nil, errors.Wrap(
@@ -172,6 +188,7 @@ func (d *DB) Get(
 		)
 	}
 
+	// update the last accessed column
 	istmt, err := d.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
 	if err != nil {
