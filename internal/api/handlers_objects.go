@@ -91,6 +91,11 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
+	k := api.local.GetPeerPrivateKey()
+	id := api.local.GetIdentityKey()
+
+	req["@identity:o"] = id.ToObject().ToMap()
+
 	o := object.FromMap(req)
 	op := stream.Policies(o)
 	if len(op) == 0 {
@@ -98,8 +103,13 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
+	if err := crypto.Sign(o, k); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		return
+	}
+
+	if err := api.orchestrator.Put(o); err != nil {
+		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
 	}
 
@@ -118,5 +128,6 @@ func (api *API) HandlePostObject(c *router.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, nil)
+	m := api.mapObject(o)
+	c.JSON(http.StatusOK, m)
 }
