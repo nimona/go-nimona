@@ -75,12 +75,6 @@ func Read(conn *Connection) (object.Object, error) {
 		ra = conn.RemotePeerKey.Fingerprint().String()
 	}
 
-	if o.GetSignature() != nil {
-		if err := crypto.Verify(o); err != nil {
-			return nil, err
-		}
-	}
-
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
 		logger.Info(
 			"reading from connection",
@@ -90,6 +84,14 @@ func Read(conn *Connection) (object.Object, error) {
 			log.String("remote.fingerprint", ra),
 			log.String("direction", "incoming"),
 		)
+	}
+
+	if o.GetSignature() != nil {
+		if err := crypto.Verify(o); err != nil {
+			// TODO we should verify, but return an error that doesn't
+			// kill the connection
+			return o, nil
+		}
 	}
 
 	return o, nil
