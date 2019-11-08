@@ -138,6 +138,14 @@ func TestSync(t *testing.T) {
 	rkey, err := crypto.GenerateKey()
 	assert.NoError(t, err)
 
+	crypto.Sign(o, rkey)  // nolint: errcheck
+	crypto.Sign(m1, rkey) // nolint: errcheck
+	crypto.Sign(m2, rkey) // nolint: errcheck
+	crypto.Sign(m3, rkey) // nolint: errcheck
+	crypto.Sign(m4, rkey) // nolint: errcheck
+	crypto.Sign(m5, rkey) // nolint: errcheck
+	crypto.Sign(m6, rkey) // nolint: errcheck
+
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
 			for _, h := range handlers {
@@ -150,26 +158,34 @@ func TestSync(t *testing.T) {
 		}
 	}
 
+	// construct event list
+	elo := (&stream.EventListCreated{
+		Stream: oh,
+		Events: []*object.Hash{
+			oh,
+			hash.New(m1.ToObject()),
+			hash.New(m2.ToObject()),
+			hash.New(m3.ToObject()),
+			hash.New(m4.ToObject()),
+			hash.New(m5.ToObject()),
+			hash.New(m6.ToObject()),
+		},
+		Identity: rkey.PublicKey,
+	}).ToObject()
+
+	err = crypto.Sign(elo, rkey)
+	assert.NoError(t, err)
+
 	// send request
 	x.On(
 		"Send",
 		mock.Anything,
 		mock.Anything,
 		"peer:"+rkey.PublicKey.Fingerprint().String(),
+		mock.Anything,
+		mock.Anything,
 	).Run(
-		respWith((&stream.EventListCreated{
-			Stream: oh,
-			Events: []*object.Hash{
-				oh,
-				hash.New(m1.ToObject()),
-				hash.New(m2.ToObject()),
-				hash.New(m3.ToObject()),
-				hash.New(m4.ToObject()),
-				hash.New(m5.ToObject()),
-				hash.New(m6.ToObject()),
-			},
-			Identity: rkey.PublicKey,
-		}).ToObject()),
+		respWith(elo),
 	).Return(nil)
 
 	// request o
@@ -187,6 +203,7 @@ func TestSync(t *testing.T) {
 			mock.Anything,
 			hash.New(i),
 			"peer:"+rkey.PublicKey.Fingerprint().String(),
+			mock.Anything,
 			mock.Anything,
 		).Run(
 			respWith(i),
