@@ -21,7 +21,17 @@ func (m *orchestrator) Sync(
 	*Graph,
 	error,
 ) {
+	ctx = context.New(
+		context.WithParent(ctx),
+	)
+
 	addresses = m.withoutOwnAddresses(addresses)
+
+	logger := log.FromContext(ctx).With(
+		log.String("method", "orchestrator/orchestrator.Sync"),
+		log.Any("stream", streamHash),
+		log.Strings("addresses", addresses),
+	)
 
 	// start listening for incoming events
 	newObjects := make(chan object.Object)
@@ -36,6 +46,10 @@ func (m *orchestrator) Sync(
 				if err != nil {
 					return nil
 				}
+				logger.Debug(
+					"got event list created",
+					log.Any("p", p),
+				)
 				newEventLists <- p
 
 			default:
@@ -50,57 +64,21 @@ func (m *orchestrator) Sync(
 			err,
 		)
 	}
-	// defer cf()
 
-	// create objecet graph request
-	req := &stream.RequestEventList{
-		Stream: streamHash,
-	}
-	sig, err := crypto.NewSignature(
-		m.localInfo.GetPeerPrivateKey(),
-		crypto.AlgorithmObjectHash,
-		req.ToObject(),
-	)
-	if err != nil {
-		return nil, err
+	// net options
+	opts := []exchange.Option{
+		exchange.WithLocalDiscoveryOnly(),
+		exchange.WithAsync(),
 	}
 
-	req.Signature = sig
-
-	logger := log.FromContext(ctx).With(
-		log.String("method", "orchestrator/orchestrator.Sync"),
-		log.Any("stream", streamHash),
-		log.Strings("addresses", addresses),
-	)
-
-	logger.Info("starting sync")
-
-	// send the request to all addresses
-	for _, address := range addresses {
-		logger.Debug("sending request",
-			log.String("address", address),
-		)
-		go func(address string) {
-			if err := m.exchange.Send(
-				ctx,
-				req.ToObject(),
-				address,
-			); err != nil {
-				// TODO log error, should return if they all fail
-				logger.Debug("could not send request",
-					log.String("address", address),
-				)
-			}
-		}(address)
-	}
-
-	// and who knows about them
+	// keep a record of who knows about which object
 	type request struct {
 		hash *object.Hash
 		addr string
 	}
 	requests := make(chan *request)
 
+	// start processing responses
 	// TODO(geoah) how long should we be waiting for this part?
 	// wait for ctx to timeout or for responses to come back.
 	// could we wait until all requests responded or failed?
@@ -125,14 +103,16 @@ func (m *orchestrator) Sync(
 				}
 
 				logger.Debug("got graph response")
+				sig := eventList.Signature
 				for _, objectHash := range eventList.Events {
 					// add a request for this hash from this peer
-					if eventList.Identity == nil {
+					if sig == nil || sig.PublicKey == nil {
+						logger.Debug("object has no signature, skipping request")
 						continue
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: eventList.Identity.Fingerprint().Address(),
+						addr: sig.PublicKey.Fingerprint().Address(), // eventList.Identity.Fingerprint().Address(),
 					}
 				}
 				respCount++
@@ -157,6 +137,7 @@ func (m *orchestrator) Sync(
 				ctx,
 				req.hash,
 				req.addr,
+				opts...,
 			); err != nil {
 				logger.With(
 					log.Any("req.hash", req.hash),
@@ -167,6 +148,41 @@ func (m *orchestrator) Sync(
 			}
 		}
 	}()
+
+	// create object graph request
+	req := &stream.RequestEventList{
+		Stream: streamHash,
+	}
+	sig, err := crypto.NewSignature(
+		m.localInfo.GetPeerPrivateKey(),
+		crypto.AlgorithmObjectHash,
+		req.ToObject(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Signature = sig
+
+	logger.Info("starting sync")
+
+	// send the request to all addresses
+	for _, address := range addresses {
+		logger.Debug("sending request",
+			log.String("address", address),
+		)
+		if err := m.exchange.Send(
+			ctx,
+			req.ToObject(),
+			address,
+			opts...,
+		); err != nil {
+			// TODO log error, should return if they all fail
+			logger.Debug("could not send request",
+				log.String("address", address),
+			)
+		}
+	}
 
 	timeout := time.NewTimer(time.Second * 5)
 loop:
@@ -188,8 +204,12 @@ loop:
 				logger.With(
 					log.String("req.hash", streamHash.Compact()),
 					log.Error(err),
-				).Debug("could not store objec")
+				).Debug("could not store object")
 			}
+			logger.Debug(
+				"got object",
+				log.String("req.hash", streamHash.Compact()),
+			)
 		}
 	}
 
