@@ -1,7 +1,6 @@
 package hyperspace
 
 import (
-	"fmt"
 	"time"
 
 	"nimona.io/pkg/context"
@@ -392,6 +391,7 @@ func (r *Discoverer) LookupContentProvider(
 	recipients := make(chan crypto.Fingerprint)
 
 	// send content requests to recipients
+	contentRequestObject := contentRequest.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
 		recipientsAsked := map[crypto.Fingerprint]bool{}
@@ -406,13 +406,13 @@ func (r *Discoverer) LookupContentProvider(
 			// and finally ask them
 			err := r.exchange.Send(
 				ctx,
-				contentRequest.ToObject(),
+				contentRequestObject,
 				recipient.Address(),
 				exchange.WithLocalDiscoveryOnly(),
+				exchange.WithAsync(),
 			)
 			if err != nil {
 				logger.Debug("could not lookup peer", log.Error(err))
-				continue
 			}
 			logger.Debug("asked peer", log.String("peer", recipient.String()))
 		}
@@ -460,14 +460,12 @@ func (r *Discoverer) LookupContentProvider(
 	// find and ask "closest" content providers
 	announcements := r.store.FindClosestContentProvider(q)
 	for _, announcement := range announcements {
-		fmt.Println("_ ann", announcement.Signature.PublicKey.Fingerprint().String())
 		recipients <- announcement.Signature.PublicKey.Fingerprint()
 	}
 
 	// find and ask "closest" peers
 	closestPeers := r.store.FindClosestPeer(r.local.GetFingerprint())
 	for _, peer := range closestPeers {
-		fmt.Println("_ rec", peer.Fingerprint().String())
 		recipients <- peer.Fingerprint()
 	}
 
@@ -482,7 +480,7 @@ func (r *Discoverer) LookupContentProvider(
 
 	// gather all providers until something happens
 	providersList := []crypto.Fingerprint{}
-	t := time.NewTimer(time.Second * 1)
+	t := time.NewTimer(time.Second * 5)
 loop:
 	for {
 		select {
@@ -531,6 +529,7 @@ func (r *Discoverer) LookupPeer(
 	}
 
 	// send content requests to recipients
+	peerRequestObject := peerRequest.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
 		recipientsAsked := map[crypto.Fingerprint]bool{}
@@ -543,16 +542,17 @@ func (r *Discoverer) LookupPeer(
 			// else mark them as already been asked
 			recipientsAsked[recipient] = true
 			// and finally ask them
-			err := r.exchange.Send(
-				ctx,
-				peerRequest.ToObject(),
-				recipient.Address(),
-				exchange.WithLocalDiscoveryOnly(),
-			)
-			if err != nil {
-				logger.Debug("could not lookup peer", log.Error(err))
-				continue
-			}
+			go func(peerRequestObject object.Object, address string) {
+				err := r.exchange.Send(
+					ctx,
+					peerRequestObject,
+					address,
+					exchange.WithLocalDiscoveryOnly(),
+				)
+				if err != nil {
+					logger.Debug("could not lookup peer", log.Error(err))
+				}
+			}(peerRequestObject, recipient.Address())
 			logger.Debug("asked peer", log.String("peer", recipient.String()))
 		}
 	}()
@@ -597,7 +597,7 @@ func (r *Discoverer) LookupPeer(
 
 	// gather all peers until something happens
 	peersList := []*peer.Peer{}
-	t := time.NewTimer(time.Second * 1)
+	t := time.NewTimer(time.Second * 5)
 loop:
 	for {
 		select {
@@ -625,6 +625,7 @@ func (r *Discoverer) bootstrap(
 	key := r.local.GetPeerPrivateKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
+		exchange.WithAsync(),
 	}
 	q := &peer.Requested{
 		Keys: []string{
@@ -711,6 +712,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
+		exchange.WithAsync(),
 	}
 
 	o := cb.ToObject()
