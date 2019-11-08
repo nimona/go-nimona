@@ -4,8 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/enriquebris/goconcurrentqueue"
 	"github.com/gobwas/glob"
+	"github.com/sheerun/queue"
 
 	"nimona.io/internal/rand"
 	"nimona.io/internal/store/graph"
@@ -76,6 +76,7 @@ type (
 	// Options (mostly) for Send()
 	Options struct {
 		LocalDiscovery bool
+		Async          bool
 	}
 	Option func(*Options)
 	// inbox holds a single handler, and the messages for it.
@@ -84,7 +85,7 @@ type (
 	inbox struct {
 		contentType glob.Glob
 		handler     func(*Envelope) error
-		queue       goconcurrentqueue.Queue
+		queue       *queue.Queue
 	}
 	// addressState defines the states of a peer's address
 	// current options are:
@@ -101,7 +102,7 @@ type (
 		addresses *AddressesMap
 		conn      *net.Connection
 		connLock  sync.RWMutex
-		queue     goconcurrentqueue.Queue
+		queue     *queue.Queue
 	}
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
@@ -165,7 +166,7 @@ func New(
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
 				if err := w.handleConnection(conn); err != nil {
-					logger.Warn("failed to handle object", log.Error(err))
+					logger.Warn("failed to handle connection", log.Error(err))
 				}
 			}(conn)
 		}
@@ -185,7 +186,7 @@ func (w *exchange) createInbox(
 	inbox := &inbox{
 		contentType: contentType,
 		handler:     handler,
-		queue:       goconcurrentqueue.NewFIFO(),
+		queue:       queue.New(),
 	}
 	close := func() {
 		w.inboxes.Delete(handlerID)
@@ -201,10 +202,7 @@ func (w *exchange) processInbox(inbox *inbox) {
 			log.String("method", "exchange.processInbox"),
 		)
 	for {
-		v, err := inbox.queue.DequeueOrWaitForNextElement()
-		if err != nil {
-			panic(err)
-		}
+		v := inbox.queue.Pop()
 		e := v.(*Envelope)
 		// TODO(geoah) validate payload and sender
 		ct := e.Payload.GetType()
@@ -239,7 +237,7 @@ func (w *exchange) getInbox(handlerID string) *inbox {
 
 func (w *exchange) writeToInboxes(e *Envelope) {
 	w.inboxes.Range(func(handlerID string, inbox *inbox) bool {
-		inbox.queue.Enqueue(e) // nolint: errcheck
+		inbox.queue.Append(e)
 		return true
 	})
 }
@@ -248,7 +246,7 @@ func (w *exchange) getOutbox(peer crypto.Fingerprint) *outbox {
 	outbox := &outbox{
 		peer:      peer,
 		addresses: NewAddressesMap(),
-		queue:     goconcurrentqueue.NewFIFO(),
+		queue:     queue.New(),
 	}
 	outbox, loaded := w.outboxes.GetOrPut(peer, outbox)
 	if !loaded {
@@ -281,15 +279,16 @@ func (w *exchange) updateOutboxConnIfEmpty(
 
 func (w *exchange) processOutbox(outbox *outbox) {
 	getConnection := func(req *outgoingObject) (*net.Connection, error) {
-		outbox.connLock.Lock()
-		defer outbox.connLock.Unlock()
+		outbox.connLock.RLock()
 		if outbox.conn != nil {
+			outbox.connLock.RUnlock()
 			return outbox.conn, nil
 		}
+		outbox.connLock.RUnlock()
 		netOpts := []net.Option{}
-		if req.options.LocalDiscovery {
-			netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
-		}
+		// if req.options.LocalDiscovery {
+		netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
+		// }
 		conn, err := w.net.Dial(req.context, req.recipient, netOpts...)
 		if err != nil {
 			return nil, err
@@ -307,7 +306,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			// and if so
 			if outboxExisted {
 				// enqueue the object on that outbox
-				existingOutbox.queue.Enqueue(req) // nolint: errcheck
+				existingOutbox.queue.Append(req)
 				// try to update the connection if its gone
 				updated := w.updateOutboxConnIfEmpty(existingOutbox, conn)
 				// close the connection if we are not using it
@@ -319,20 +318,20 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				return nil, errOutboxForwarded
 			}
 		}
-		go func() { // TODO(geoah): why is this async?
-			if err := w.handleConnection(conn); err != nil {
-				log.DefaultLogger.Warn("failed to handle outbox connection", log.Error(err))
-			}
-		}()
+		if err := w.handleConnection(conn); err != nil {
+			w.updateOutboxConn(outbox, nil)
+			log.DefaultLogger.Warn(
+				"failed to handle outbox connection",
+				log.Error(err),
+			)
+			return nil, err
+		}
 		return conn, nil
 	}
 	for {
 		// dequeue the next item to send
 		// TODO figure out what can go wrong here
-		v, err := outbox.queue.DequeueOrWaitForNextElement()
-		if err != nil {
-			panic(err)
-		}
+		v := outbox.queue.Pop()
 		req := v.(*outgoingObject)
 		// check if the context for this is done
 		if err := req.context.Err(); err != nil {
@@ -361,13 +360,13 @@ func (w *exchange) processOutbox(outbox *outbox) {
 					return
 				}
 				lastErr = err
-				outbox.conn = nil
+				w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			logger.Debug("trying write object", log.Int("attempt", i+1))
 			if err := net.Write(req.object, conn); err != nil {
 				lastErr = err
-				outbox.conn = nil
+				w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			lastErr = nil
@@ -419,7 +418,7 @@ func (w *exchange) handleConnection(
 ) error {
 	if conn == nil {
 		// TODO should this be nil?
-		return errors.New("missing connection")
+		panic(errors.New("missing connection"))
 	}
 
 	// get outbox and update the connection to the peer
@@ -434,17 +433,29 @@ func (w *exchange) handleConnection(
 		return err
 	}
 
-	for {
-		payload, err := net.Read(conn)
-		if err != nil {
-			return err
-		}
+	go func() {
+		for {
+			payload, err := net.Read(conn)
+			// TODO split errors into connection or payload
+			// ie a payload that cannot be unmarshalled or verified
+			// should not kill the connection
+			if err != nil {
+				log.DefaultLogger.Warn(
+					"failed to read from connection",
+					log.Error(err),
+				)
+				w.updateOutboxConn(outbox, nil)
+				return
+			}
 
-		w.writeToInboxes(&Envelope{
-			Sender:  conn.RemotePeerKey,
-			Payload: payload,
-		})
-	}
+			w.writeToInboxes(&Envelope{
+				Sender:  conn.RemotePeerKey,
+				Payload: payload,
+			})
+		}
+	}()
+
+	return nil
 }
 
 // handleObjectRequest -
@@ -484,6 +495,13 @@ func WithLocalDiscoveryOnly() Option {
 	}
 }
 
+// WithAsync will not wait to actually send the object
+func WithAsync() Option {
+	return func(opt *Options) {
+		opt.Async = true
+	}
+}
+
 // Send an object to an address
 func (w *exchange) Send(
 	ctx context.Context,
@@ -503,14 +521,15 @@ func (w *exchange) Send(
 	fingerprint := strings.Replace(address, "peer:", "", 1)
 	outbox := w.getOutbox(crypto.Fingerprint(fingerprint))
 	errRecv := make(chan error, 1)
-	envelope := &outgoingObject{
+	req := &outgoingObject{
 		context:   ctx,
 		recipient: address,
 		object:    o,
 		options:   opts,
 		err:       errRecv,
 	}
-	if err := outbox.queue.Enqueue(envelope); err != nil {
+	outbox.queue.Append(req)
+	if opts.Async {
 		return nil
 	}
 	select {

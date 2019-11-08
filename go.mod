@@ -13,6 +13,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mr-tron/base58 v1.1.2
 	github.com/pkg/errors v0.8.1
+	github.com/sheerun/queue v1.0.0
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
