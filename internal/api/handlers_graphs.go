@@ -36,9 +36,14 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 		return
 	}
 
+	k := api.local.GetPeerPrivateKey()
+	id := api.local.GetIdentityKey()
+
+	req["@identity:o"] = id.ToObject().ToMap()
+
 	o := object.FromMap(req)
 
-	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
+	if err := crypto.Sign(o, k); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
@@ -62,8 +67,13 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		return
 	}
 
-	ctx := context.New(context.WithTimeout(time.Second * 10))
-	defer ctx.Cancel()
+	ctx := context.New()
+	cID := ctx.CorrelationID()
+
+	ctx = context.New(
+		context.WithCorrelationID(cID),
+		context.WithTimeout(time.Second*5),
+	)
 
 	logger := log.FromContext(ctx).With(
 		log.String("rootObjectHash", rootObjectHash),
@@ -101,6 +111,10 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		}
 
 		// try to sync the graph with the addresses we gathered
+		ctx = context.New(
+			context.WithCorrelationID(cID),
+			context.WithTimeout(time.Second*5),
+		)
 		if _, err = api.orchestrator.Sync(ctx, h, addrs); err != nil {
 			if errors.CausedBy(err, graph.ErrNotFound) {
 				c.AbortWithError(404, err) // nolint: errcheck
@@ -114,6 +128,10 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	}
 
 	h, _ := object.HashFromCompact(rootObjectHash)
+	ctx = context.New(
+		context.WithCorrelationID(cID),
+		context.WithTimeout(time.Second*5),
+	)
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
 		if errors.CausedBy(err, graph.ErrNotFound) {
