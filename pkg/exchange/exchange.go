@@ -286,9 +286,9 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		}
 		outbox.connLock.RUnlock()
 		netOpts := []net.Option{}
-		// if req.options.LocalDiscovery {
-		netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
-		// }
+		if req.options.LocalDiscovery {
+			netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
+		}
 		conn, err := w.net.Dial(req.context, req.recipient, netOpts...)
 		if err != nil {
 			return nil, err
