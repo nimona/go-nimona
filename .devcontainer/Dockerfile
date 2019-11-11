@@ -43,10 +43,10 @@ RUN apt-get update \
         github.com/cweill/gotests/... \
         golang.org/x/tools/cmd/goimports \
         golang.org/x/lint/golint \
-        golang.org/x/tools/cmd/gopls@latest \
+        golang.org/x/tools/cmd/gopls \
         github.com/alecthomas/gometalinter \
         honnef.co/go/tools/... \
-        github.com/golangci/golangci-lint/cmd/golangci-lint@v1.19.1 \
+        github.com/golangci/golangci-lint/cmd/golangci-lint \
         github.com/mgechev/revive \
         mvdan.cc/gofumpt/gofumports \
         github.com/derekparker/delve/cmd/dlv 2>&1 \
