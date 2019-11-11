@@ -24,12 +24,12 @@ func NewCryptoFingerprintPeerPeerSyncMap() *CryptoFingerprintPeerPeerSyncMap {
 }
 
 // Put -
-func (m *CryptoFingerprintPeerPeerSyncMap) Put(k crypto.Fingerprint, v *peer.Peer) {
+func (m *CryptoFingerprintPeerPeerSyncMap) Put(k crypto.PublicKey, v *peer.Peer) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *CryptoFingerprintPeerPeerSyncMap) Get(k crypto.Fingerprint) (*peer.Peer, bool) {
+func (m *CryptoFingerprintPeerPeerSyncMap) Get(k crypto.PublicKey) (*peer.Peer, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -44,13 +44,13 @@ func (m *CryptoFingerprintPeerPeerSyncMap) Get(k crypto.Fingerprint) (*peer.Peer
 }
 
 // Delete -
-func (m *CryptoFingerprintPeerPeerSyncMap) Delete(k crypto.Fingerprint) {
+func (m *CryptoFingerprintPeerPeerSyncMap) Delete(k crypto.PublicKey) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *CryptoFingerprintPeerPeerSyncMap) Range(i func(k crypto.Fingerprint, v *peer.Peer) bool) {
+func (m *CryptoFingerprintPeerPeerSyncMap) Range(i func(k crypto.PublicKey, v *peer.Peer) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.Fingerprint), v.(*peer.Peer))
+		return i(k.(crypto.PublicKey), v.(*peer.Peer))
 	})
 }

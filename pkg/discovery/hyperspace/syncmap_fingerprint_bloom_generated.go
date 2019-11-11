@@ -23,12 +23,12 @@ func NewCryptoFingerprintAnnouncedSyncMap() *CryptoFingerprintAnnouncedSyncMap {
 }
 
 // Put -
-func (m *CryptoFingerprintAnnouncedSyncMap) Put(k crypto.Fingerprint, v *Announced) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Put(k crypto.PublicKey, v *Announced) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *CryptoFingerprintAnnouncedSyncMap) Get(k crypto.Fingerprint) (*Announced, bool) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Get(k crypto.PublicKey) (*Announced, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -43,13 +43,13 @@ func (m *CryptoFingerprintAnnouncedSyncMap) Get(k crypto.Fingerprint) (*Announce
 }
 
 // Delete -
-func (m *CryptoFingerprintAnnouncedSyncMap) Delete(k crypto.Fingerprint) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Delete(k crypto.PublicKey) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *CryptoFingerprintAnnouncedSyncMap) Range(i func(k crypto.Fingerprint, v *Announced) bool) {
+func (m *CryptoFingerprintAnnouncedSyncMap) Range(i func(k crypto.PublicKey, v *Announced) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.Fingerprint), v.(*Announced))
+		return i(k.(crypto.PublicKey), v.(*Announced))
 	})
 }

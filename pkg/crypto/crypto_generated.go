@@ -9,30 +9,35 @@ import (
 )
 
 type (
+	Certificate struct {
+		Subject   PublicKey  `json:"subject:s,omitempty"`
+		Signature *Signature `json:"signature:o,omitempty"`
+	}
 	Signature struct {
-		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		R         []byte     `json:"r:d,omitempty"`
-		S         []byte     `json:"s:d,omitempty"`
-	}
-	PrivateKey struct {
-		KeyType   string     `json:"keyType:s,omitempty"`
-		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		Curve     string     `json:"curve:s,omitempty"`
-		X         []byte     `json:"x:d,omitempty"`
-		Y         []byte     `json:"y:d,omitempty"`
-		D         []byte     `json:"d:d,omitempty"`
-	}
-	PublicKey struct {
-		KeyType   string     `json:"keyType:s,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		Curve     string     `json:"curve:s,omitempty"`
-		X         []byte     `json:"x:d,omitempty"`
-		Y         []byte     `json:"y:d,omitempty"`
-		Signature *Signature `json:"@signature:o,omitempty"`
+		Signer *Certificate `json:"signer:o,omitempty"`
+		Alg    string       `json:"alg:s,omitempty"`
+		X      []byte       `json:"x:d,omitempty"`
 	}
 )
+
+func (e *Certificate) GetType() string {
+	return "nimona.io/crypto.Certificate"
+}
+
+func (e *Certificate) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "nimona.io/crypto.Certificate"
+	m["subject:s"] = e.Subject
+	if e.Signature != nil {
+		m["signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	return object.Object(m)
+}
+
+func (e *Certificate) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
 
 func (e *Signature) GetType() string {
 	return "nimona.io/crypto.Signature"
@@ -41,63 +46,15 @@ func (e *Signature) GetType() string {
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Signature"
-	if e.PublicKey != nil {
-		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
+	if e.Signer != nil {
+		m["signer:o"] = e.Signer.ToObject().ToMap()
 	}
-	m["algorithm:s"] = e.Algorithm
-	m["r:d"] = e.R
-	m["s:d"] = e.S
+	m["alg:s"] = e.Alg
+	m["x:d"] = e.X
 	return object.Object(m)
 }
 
 func (e *Signature) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *PrivateKey) GetType() string {
-	return "nimona.io/crypto.PrivateKey"
-}
-
-func (e *PrivateKey) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/crypto.PrivateKey"
-	m["keyType:s"] = e.KeyType
-	if e.PublicKey != nil {
-		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
-	}
-	m["algorithm:s"] = e.Algorithm
-	m["curve:s"] = e.Curve
-	m["x:d"] = e.X
-	m["y:d"] = e.Y
-	m["d:d"] = e.D
-	return object.Object(m)
-}
-
-func (e *PrivateKey) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *PublicKey) GetType() string {
-	return "nimona.io/crypto.PublicKey"
-}
-
-func (e *PublicKey) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/crypto.PublicKey"
-	m["keyType:s"] = e.KeyType
-	m["algorithm:s"] = e.Algorithm
-	m["curve:s"] = e.Curve
-	m["x:d"] = e.X
-	m["y:d"] = e.Y
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	return object.Object(m)
-}
-
-func (e *PublicKey) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

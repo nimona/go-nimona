@@ -105,21 +105,21 @@ func NewDiscoverer(
 	return r, nil
 }
 
-// FindByFingerprint finds and returns peer infos from a fingerprint
-func (r *Discoverer) FindByFingerprint(
+// FindByPublicKey finds and returns peer infos from a fingerprint
+func (r *Discoverer) FindByPublicKey(
 	ctx context.Context,
-	fingerprint crypto.Fingerprint,
+	fingerprint crypto.PublicKey,
 	opts ...discovery.Option,
 ) ([]*peer.Peer, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.FindByFingerprint"),
+		log.String("method", "hyperspace/resolver.FindByPublicKey"),
 		log.Any("peer.fingerprint", fingerprint),
 	)
 	logger.Debug("trying to find peer by fingerprint")
 
-	eps := r.store.FindByFingerprint(fingerprint)
+	eps := r.store.FindByPublicKey(fingerprint)
 	if len(eps) > 0 {
 		logger.Debug(
 			"found peers in store",
@@ -149,7 +149,7 @@ func (r *Discoverer) FindByContent(
 	ctx context.Context,
 	contentHash *object.Hash,
 	opts ...discovery.Option,
-) ([]crypto.Fingerprint, error) {
+) ([]crypto.PublicKey, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -161,10 +161,10 @@ func (r *Discoverer) FindByContent(
 
 	b := bloom.NewBloom(contentHash.Compact())
 	cs := r.store.FindByContent(b)
-	fs := []crypto.Fingerprint{}
+	fs := []crypto.PublicKey{}
 
 	for _, b := range cs {
-		fs = append(fs, b.Signature.PublicKey.Fingerprint())
+		fs = append(fs, b.Signature.Signer.Subject)
 	}
 	logger.With(
 		log.Any("fingerprints", cs),
@@ -218,14 +218,14 @@ func (r *Discoverer) handleObject(
 		r.handlePeer(ctx, v, e)
 	case contentProviderAnnouncedType:
 		logger := logger.With(
-			log.String("e.sender", e.Sender.Fingerprint().String()),
+			log.String("e.sender", e.Sender.String()),
 			log.String("o.type", o.GetType()),
 		)
 		v := &Announced{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		if v.Signature == nil || v.Signature.PublicKey == nil {
+		if v.Signature == nil || v.Signature.Signer.Subject == "" {
 			logger.Warn("object has no signature")
 			return nil
 		}
@@ -247,7 +247,7 @@ func (r *Discoverer) handlePeer(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeer"),
-		log.String("peer.fingerprint", e.Sender.Fingerprint().String()),
+		log.String("peer.fingerprint", e.Sender.String()),
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to store")
@@ -263,7 +263,7 @@ func (r *Discoverer) handlePeerRequest(
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeerRequest"),
-		log.String("e.sender", e.Sender.Fingerprint().String()),
+		log.String("e.sender", e.Sender.String()),
 		log.Any("query.keys", q.Keys),
 	)
 
@@ -271,14 +271,14 @@ func (r *Discoverer) handlePeerRequest(
 
 	cps := []*peer.Peer{}
 	for _, k := range q.Keys {
-		f := crypto.Fingerprint(k)
+		f := crypto.PublicKey(k)
 		cps = append(cps, r.store.FindClosestPeer(f)...)
 	}
 
 	// TODO doesn't the above already find the exact peers?
 	for _, k := range q.Keys {
-		f := crypto.Fingerprint(k)
-		ps := r.store.FindByFingerprint(f)
+		f := crypto.PublicKey(k)
+		ps := r.store.FindByPublicKey(f)
 		cps = append(cps, ps...)
 	}
 
@@ -286,14 +286,14 @@ func (r *Discoverer) handlePeerRequest(
 
 	for _, p := range cps {
 		logger.Debug("responding with peer",
-			log.String("peer", p.Signature.PublicKey.Fingerprint().String()),
+			log.String("peer", p.Signature.Signer.Subject.String()),
 		)
 		err := r.exchange.Send(
 			context.New(
 				context.WithParent(ctx),
 			),
 			p.ToObject(),
-			e.Sender.Fingerprint().Address(),
+			e.Sender.Address(),
 			exchange.WithLocalDiscoveryOnly(),
 		)
 		if err != nil {
@@ -312,7 +312,7 @@ func (r *Discoverer) handleProvider(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleProvider"),
-		log.String("sender.fingerprint", e.Sender.Fingerprint().String()),
+		log.String("sender.fingerprint", e.Sender.String()),
 	)
 	logger.Debug("adding provider to store")
 	r.store.AddContentHashes(p)
@@ -327,7 +327,7 @@ func (r *Discoverer) handleProviderRequest(
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handleProviderRequest"),
-		log.String("e.sender", e.Sender.Fingerprint().String()),
+		log.String("e.sender", e.Sender.String()),
 		log.Any("query.bloom", q.QueryContentBloom),
 	)
 
@@ -343,7 +343,7 @@ func (r *Discoverer) handleProviderRequest(
 	for _, p := range cps {
 		pf := ""
 		if p.Signature != nil {
-			pf = p.Signature.PublicKey.Fingerprint().String()
+			pf = p.Signature.Signer.Subject.String()
 		}
 		logger.Debug("responding with content hash bloom",
 			log.Any("bloom", p.Bloom),
@@ -354,7 +354,7 @@ func (r *Discoverer) handleProviderRequest(
 				context.WithParent(ctx),
 			),
 			p.ToObject(),
-			e.Sender.Fingerprint().Address(),
+			e.Sender.Address(),
 			exchange.WithLocalDiscoveryOnly(),
 		)
 		if err != nil {
@@ -372,7 +372,7 @@ func (r *Discoverer) handleProviderRequest(
 func (r *Discoverer) LookupContentProvider(
 	ctx context.Context,
 	q bloom.Bloomer,
-) ([]crypto.Fingerprint, error) {
+) ([]crypto.PublicKey, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupContentProvider"),
@@ -385,24 +385,24 @@ func (r *Discoverer) LookupContentProvider(
 	}
 
 	// create channel to keep providers we find
-	providers := make(chan crypto.Fingerprint)
+	providers := make(chan crypto.PublicKey)
 
 	// create channel for the peers we need to ask
-	recipients := make(chan crypto.Fingerprint)
+	recipients := make(chan crypto.PublicKey)
 
 	// send content requests to recipients
 	contentRequestObject := contentRequest.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
-		recipientsAsked := map[crypto.Fingerprint]bool{}
+		recipientsAsked := map[string]bool{}
 		// go through the peers we need to ask
 		for recipient := range recipients {
 			// check if we've already asked them
-			if _, alreadyAsked := recipientsAsked[recipient]; alreadyAsked {
+			if _, alreadyAsked := recipientsAsked[recipient.String()]; alreadyAsked {
 				continue
 			}
 			// else mark them as already been asked
-			recipientsAsked[recipient] = true
+			recipientsAsked[recipient.String()] = true
 			// and finally ask them
 			err := r.exchange.Send(
 				ctx,
@@ -422,14 +422,14 @@ func (r *Discoverer) LookupContentProvider(
 	contentProviderHandler := func(e *exchange.Envelope) error {
 		cp := &Announced{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.PublicKey == nil {
+		if cp.Signature == nil || cp.Signature.Signer.Subject == "" {
 			return nil
 		}
 		if intersectionCount(cp.Bloom(), q.Bloom()) == len(q.Bloom()) {
-			providers <- cp.Signature.PublicKey.Fingerprint()
+			providers <- cp.Signature.Signer.Subject
 			return nil
 		}
-		recipients <- cp.Signature.PublicKey.Fingerprint()
+		recipients <- cp.Signature.Signer.Subject
 		return nil
 	}
 	cpCancel, err := r.exchange.Handle(
@@ -444,8 +444,8 @@ func (r *Discoverer) LookupContentProvider(
 	peerHandler := func(e *exchange.Envelope) error {
 		cp := &peer.Peer{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature != nil && cp.Signature.PublicKey != nil {
-			recipients <- cp.Signature.PublicKey.Fingerprint()
+		if cp.Signature != nil && cp.Signature.Signer.Subject != "" {
+			recipients <- cp.Signature.Signer.Subject
 		}
 		return nil
 	}
@@ -460,13 +460,13 @@ func (r *Discoverer) LookupContentProvider(
 	// find and ask "closest" content providers
 	announcements := r.store.FindClosestContentProvider(q)
 	for _, announcement := range announcements {
-		recipients <- announcement.Signature.PublicKey.Fingerprint()
+		recipients <- announcement.Signature.Signer.Subject
 	}
 
 	// find and ask "closest" peers
-	closestPeers := r.store.FindClosestPeer(r.local.GetFingerprint())
+	closestPeers := r.store.FindClosestPeer(r.local.GetPeerKey())
 	for _, peer := range closestPeers {
-		recipients <- peer.Fingerprint()
+		recipients <- peer.PublicKey()
 	}
 
 	// close handlers
@@ -479,7 +479,7 @@ func (r *Discoverer) LookupContentProvider(
 	}
 
 	// gather all providers until something happens
-	providersList := []crypto.Fingerprint{}
+	providersList := []crypto.PublicKey{}
 	t := time.NewTimer(time.Second * 5)
 loop:
 	for {
@@ -516,12 +516,12 @@ func (r *Discoverer) LookupPeer(
 	peers := make(chan *peer.Peer)
 
 	// create channel for the peers we need to ask
-	recipients := make(chan crypto.Fingerprint)
+	recipients := make(chan crypto.PublicKey)
 
 	// allows us to match peers with peerRequest
 	peerMatchesRequest := func(peer *peer.Peer) bool {
 		for _, key := range peerRequest.Keys {
-			if key == peer.Signature.PublicKey.Fingerprint().String() {
+			if key == peer.Signature.Signer.Subject.String() {
 				return true
 			}
 		}
@@ -532,15 +532,15 @@ func (r *Discoverer) LookupPeer(
 	peerRequestObject := peerRequest.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
-		recipientsAsked := map[crypto.Fingerprint]bool{}
+		recipientsAsked := map[string]bool{}
 		// go through the peers we need to ask
 		for recipient := range recipients {
 			// check if we've already asked them
-			if _, alreadyAsked := recipientsAsked[recipient]; alreadyAsked {
+			if _, alreadyAsked := recipientsAsked[recipient.String()]; alreadyAsked {
 				continue
 			}
 			// else mark them as already been asked
-			recipientsAsked[recipient] = true
+			recipientsAsked[recipient.String()] = true
 			// and finally ask them
 			go func(peerRequestObject object.Object, address string) {
 				err := r.exchange.Send(
@@ -561,14 +561,14 @@ func (r *Discoverer) LookupPeer(
 	peerHandler := func(e *exchange.Envelope) error {
 		cp := &peer.Peer{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.PublicKey == nil {
+		if cp.Signature == nil || cp.Signature.Signer.Subject == "" {
 			return nil
 		}
 		if peerMatchesRequest(cp) {
 			peers <- cp
 			return nil
 		}
-		recipients <- cp.Signature.PublicKey.Fingerprint()
+		recipients <- cp.Signature.Signer.Subject
 		return nil
 	}
 	peerCancel, err := r.exchange.Handle(
@@ -581,14 +581,14 @@ func (r *Discoverer) LookupPeer(
 
 	// find and ask "closest" peers
 	go func() {
-		cps := r.store.FindClosestPeer(r.local.GetFingerprint())
+		cps := r.store.FindClosestPeer(r.local.GetPeerKey())
 		cps = r.withoutOwnPeer(cps)
 		for _, peer := range cps {
 			if peerMatchesRequest(peer) {
 				peers <- peer
 				continue
 			}
-			recipients <- peer.Fingerprint()
+			recipients <- peer.PublicKey()
 		}
 	}()
 
@@ -629,7 +629,7 @@ func (r *Discoverer) bootstrap(
 	}
 	q := &peer.Requested{
 		Keys: []string{
-			key.Fingerprint().String(),
+			key.String(),
 		},
 	}
 	o := q.ToObject()
@@ -689,13 +689,13 @@ func (r *Discoverer) publishContentHashes(
 	}
 	b := bloom.NewBloom(ss...)
 	cps := r.store.FindClosestContentProvider(b)
-	fs := []crypto.Fingerprint{}
+	fs := []crypto.PublicKey{}
 	for _, c := range cps {
-		fs = append(fs, c.Signature.PublicKey.Fingerprint())
+		fs = append(fs, c.Signature.Signer.Subject)
 	}
-	ps := r.store.FindClosestPeer(r.local.GetFingerprint())
+	ps := r.store.FindClosestPeer(r.local.GetPeerKey())
 	for _, p := range ps {
-		fs = append(fs, p.Signature.PublicKey.Fingerprint())
+		fs = append(fs, p.Signature.Signer.Subject)
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -734,14 +734,14 @@ func (r *Discoverer) publishContentHashes(
 }
 
 func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
-	lp := r.local.GetFingerprint().String()
-	pm := map[crypto.Fingerprint]*peer.Peer{}
+	lp := r.local.GetPeerKey().String()
+	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		pm[p.Signature.PublicKey.Fingerprint()] = p
+		pm[p.Signature.Signer.Subject.String()] = p
 	}
 	nps := []*peer.Peer{}
 	for f, p := range pm {
-		if f.String() == lp {
+		if f == lp {
 			continue
 		}
 		nps = append(nps, p)
@@ -749,15 +749,15 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	return nps
 }
 
-func (r *Discoverer) withoutOwnFingerprint(ps []crypto.Fingerprint) []crypto.Fingerprint {
-	lp := r.local.GetFingerprint().String()
-	pm := map[crypto.Fingerprint]crypto.Fingerprint{}
+func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.PublicKey {
+	lp := r.local.GetPeerKey().String()
+	pm := map[string]crypto.PublicKey{}
 	for _, p := range ps {
-		pm[p] = p
+		pm[p.String()] = p
 	}
-	nps := []crypto.Fingerprint{}
+	nps := []crypto.PublicKey{}
 	for f, p := range pm {
-		if f.String() == lp {
+		if f == lp {
 			continue
 		}
 		nps = append(nps, p)

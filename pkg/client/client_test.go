@@ -39,7 +39,6 @@ func TestClient_Info(t *testing.T) {
 				},
 			},
 			assert: func(t *testing.T, r *InfoResponse) {
-				require.NotEmpty(t, r.Signature.Algorithm)
 				require.NotEmpty(t, r.Hash.Algorithm)
 				require.NotEmpty(t, r.HashCompact)
 				require.NotEmpty(t, r.Fingerprint)

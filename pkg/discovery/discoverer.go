@@ -19,31 +19,31 @@ import (
 type (
 	// Provider defines the interface for a discoverer provider, eg our DHT
 	Provider interface {
-		FindByFingerprint(
+		FindByPublicKey(
 			ctx context.Context,
-			fingerprint crypto.Fingerprint,
+			key crypto.PublicKey,
 			opts ...Option,
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
 			contentHash *object.Hash,
 			opts ...Option,
-		) ([]crypto.Fingerprint, error)
+		) ([]crypto.PublicKey, error)
 	}
 	// Discoverer interface
 	Discoverer interface {
 		AddProvider(provider Provider) error
 		Add(peer *peer.Peer)
-		FindByFingerprint(
+		FindByPublicKey(
 			ctx context.Context,
-			fingerprint crypto.Fingerprint,
+			key crypto.PublicKey,
 			opts ...Option,
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
 			contentHash *object.Hash,
 			opts ...Option,
-		) ([]crypto.Fingerprint, error)
+		) ([]crypto.PublicKey, error)
 	}
 )
 
@@ -89,17 +89,17 @@ type discoverer struct {
 	cachePersistent *StringPeerPeerSyncMap
 }
 
-// FindByFingerprint goes through the given providers until one returns something
-func (r *discoverer) FindByFingerprint(
+// FindByPublicKey goes through the given providers until one returns something
+func (r *discoverer) FindByPublicKey(
 	ctx context.Context,
-	fingerprint crypto.Fingerprint,
+	key crypto.PublicKey,
 	opts ...Option,
 ) ([]*peer.Peer, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "discovery/discoverer.FindByFingerprint"),
-		log.String("fingerprint", fingerprint.String()),
+		log.String("method", "discovery/discoverer.FindByPublicKey"),
+		log.String("key", key.String()),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
@@ -111,7 +111,7 @@ func (r *discoverer) FindByFingerprint(
 		if !ok {
 			return true
 		}
-		eps, err := p.FindByFingerprint(ctx, fingerprint, opts...)
+		eps, err := p.FindByPublicKey(ctx, key, opts...)
 		if err != nil {
 			logger.With(
 				log.Error(err),
@@ -129,11 +129,11 @@ func (r *discoverer) FindByFingerprint(
 
 	// TODO move persistence into its own provider
 
-	if res, ok := r.cacheTemp.Get(fingerprint.String()); ok && res != nil {
+	if res, ok := r.cacheTemp.Get(key.String()); ok && res != nil {
 		ps = append(ps, res)
 	}
 
-	if res, ok := r.cachePersistent.Get(fingerprint.String()); ok && res != nil {
+	if res, ok := r.cachePersistent.Get(key.String()); ok && res != nil {
 		ps = append(ps, res)
 	}
 
@@ -149,7 +149,7 @@ func (r *discoverer) FindByContent(
 	ctx context.Context,
 	contentHash *object.Hash,
 	opts ...Option,
-) ([]crypto.Fingerprint, error) {
+) ([]crypto.PublicKey, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
@@ -160,7 +160,7 @@ func (r *discoverer) FindByContent(
 
 	logger.Debug("trying to find peers")
 
-	ps := []crypto.Fingerprint{}
+	ps := []crypto.PublicKey{}
 	r.providers.Range(func(_, v interface{}) bool {
 		p, ok := v.(Provider)
 		if !ok {
@@ -197,12 +197,12 @@ func (r *discoverer) AddProvider(provider Provider) error {
 // Add allows manually adding peer infos to be resolved.
 // These peers will eventually be gc-ed.
 func (r *discoverer) Add(peer *peer.Peer) {
-	r.cacheTemp.Put(peer.Signature.PublicKey.Fingerprint().String(), peer)
+	r.cacheTemp.Put(peer.Signature.Signer.Subject.String(), peer)
 }
 
 // AddPersistent allows adding permanent peer infos to be resolved.
 // These peers can be overshadowed by other discoverers, but will never be gc-ed
 // Mainly used for adding bootstrap nodes.
 func (r *discoverer) AddPersistent(peer *peer.Peer) {
-	r.cachePersistent.Put(peer.Signature.PublicKey.Fingerprint().String(), peer)
+	r.cachePersistent.Put(peer.Signature.Signer.Subject.String(), peer)
 }

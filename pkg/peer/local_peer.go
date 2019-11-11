@@ -1,7 +1,6 @@
 package peer
 
 import (
-	"crypto/ecdsa"
 	"sync"
 
 	"nimona.io/pkg/crypto"
@@ -14,12 +13,12 @@ import (
 type (
 	Addresses []string
 	LocalPeer struct {
-		fingerprint crypto.Fingerprint
-		hostname    string
+		hostname string
 
 		keyLock     sync.RWMutex
-		key         *crypto.PrivateKey
-		identityKey *crypto.PrivateKey
+		key         crypto.PrivateKey
+		identityKey crypto.PrivateKey
+		certificate *crypto.Certificate
 
 		addresses     *StringAddressesSyncMap
 		contentHashes *ObjectHashSyncList
@@ -34,20 +33,11 @@ type (
 
 func NewLocalPeer(
 	hostname string,
-	key *crypto.PrivateKey,
+	key crypto.PrivateKey,
 ) (*LocalPeer, error) {
-	if key == nil {
-		return nil, ErrMissingKey
-	}
-
-	if _, ok := key.Key().(*ecdsa.PrivateKey); !ok {
-		return nil, ErrECDSAPrivateKeyRequired
-	}
-
 	return &LocalPeer{
-		fingerprint: key.Fingerprint(),
-		hostname:    hostname,
-		key:         key,
+		hostname: hostname,
+		key:      key,
 
 		addresses:     &StringAddressesSyncMap{},
 		contentHashes: &ObjectHashSyncList{},
@@ -100,58 +90,49 @@ func (p *LocalPeer) RemoveContentHash(hashes ...*object.Hash) {
 	}
 }
 
-func (p *LocalPeer) AddIdentityKey(identityKey *crypto.PrivateKey) error {
+func (p *LocalPeer) AddIdentityKey(identityKey crypto.PrivateKey) error {
 	p.keyLock.Lock()
 	defer p.keyLock.Unlock()
 
-	pko := p.key.PublicKey.ToObject()
-	sig, err := crypto.NewSignature(
-		identityKey,
-		crypto.AlgorithmObjectHash,
-		pko,
-	)
-	if err != nil {
-		return err
-	}
-
 	p.identityKey = identityKey
-	p.key.PublicKey.Signature = sig
+	p.certificate = crypto.NewCertificate(p.key)
+	p.certificate.Sign(identityKey)
 
 	return nil
 }
 
-func (p *LocalPeer) GetPeerKey() *crypto.PublicKey {
+func (p *LocalPeer) GetPeerKey() crypto.PublicKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	return p.key.PublicKey
+	return p.key.PublicKey()
 }
 
-func (p *LocalPeer) GetPeerPrivateKey() *crypto.PrivateKey {
+func (p *LocalPeer) GetPeerPrivateKey() crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 	return p.key
 }
 
-func (p *LocalPeer) GetIdentityKey() *crypto.PublicKey {
+func (p *LocalPeer) GetIdentityKey() crypto.PublicKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	if p.identityKey == nil {
-		return p.key.PublicKey
+	if p.identityKey == "" {
+		return p.key.PublicKey()
 	}
-	return p.identityKey.PublicKey
+	return p.identityKey.PublicKey()
 }
 
-func (p *LocalPeer) GetIdentityPrivateKey() *crypto.PrivateKey {
+func (p *LocalPeer) GetIdentityPrivateKey() crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	if p.identityKey == nil {
+	if p.identityKey == "" {
 		return p.key
 	}
 	return p.identityKey
 }
 
 func (p *LocalPeer) GetAddress() string {
-	return "peer:" + p.key.Fingerprint().String()
+	return p.key.PublicKey().Address()
 }
 
 func (p *LocalPeer) GetAddresses() []string {
@@ -172,9 +153,9 @@ func (p *LocalPeer) GetContentHashes() []*object.Hash {
 	return hashes
 }
 
-func (p *LocalPeer) GetFingerprint() crypto.Fingerprint {
-	return p.fingerprint
-}
+// func (p *LocalPeer) GetFingerprint() crypto.PublicKey {
+// 	return p.fingerprint
+// }
 
 func (p *LocalPeer) GetHostname() string {
 	return p.hostname

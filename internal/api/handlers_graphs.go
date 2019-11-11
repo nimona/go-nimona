@@ -106,7 +106,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
 			sig, err := crypto.GetObjectSignature(rootObject)
 			if err == nil {
-				addrs = append(addrs, sig.PublicKey.Fingerprint().Address())
+				addrs = append(addrs, sig.Signer.Subject.Address())
 			}
 		}
 

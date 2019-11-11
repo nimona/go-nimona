@@ -124,7 +124,7 @@ func TestSync(t *testing.T) {
 		handlers = append(handlers, args[1].(func(*exchange.Envelope) error))
 	}).Return(nil, nil)
 
-	pk, err := crypto.GenerateKey()
+	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	li, err := peer.NewLocalPeer("", pk)
@@ -135,7 +135,7 @@ func TestSync(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.NotEmpty(t, handlers)
 
-	rkey, err := crypto.GenerateKey()
+	rkey, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	crypto.Sign(o, rkey)  // nolint: errcheck
@@ -151,7 +151,7 @@ func TestSync(t *testing.T) {
 			for _, h := range handlers {
 				err := h(&exchange.Envelope{
 					Payload: o,
-					Sender:  rkey.PublicKey,
+					Sender:  rkey.PublicKey(),
 				})
 				assert.NoError(t, err)
 			}
@@ -170,7 +170,7 @@ func TestSync(t *testing.T) {
 			hash.New(m5.ToObject()),
 			hash.New(m6.ToObject()),
 		},
-		Identity: rkey.PublicKey,
+		Identity: rkey.PublicKey(),
 	}).ToObject()
 
 	err = crypto.Sign(elo, rkey)
@@ -181,7 +181,7 @@ func TestSync(t *testing.T) {
 		"Send",
 		mock.Anything,
 		mock.Anything,
-		"peer:"+rkey.PublicKey.Fingerprint().String(),
+		"peer:"+rkey.PublicKey().String(),
 		mock.Anything,
 		mock.Anything,
 	).Run(
@@ -202,7 +202,7 @@ func TestSync(t *testing.T) {
 			"Request",
 			mock.Anything,
 			hash.New(i),
-			"peer:"+rkey.PublicKey.Fingerprint().String(),
+			"peer:"+rkey.PublicKey().String(),
 			mock.Anything,
 			mock.Anything,
 		).Run(
@@ -218,7 +218,7 @@ func TestSync(t *testing.T) {
 		ctx,
 		oh,
 		[]string{
-			"peer:" + rkey.PublicKey.Fingerprint().String(),
+			"peer:" + rkey.PublicKey().String(),
 		},
 	)
 	require.NoError(t, err)

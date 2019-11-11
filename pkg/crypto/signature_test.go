@@ -11,16 +11,16 @@ import (
 )
 
 func TestNewSignature(t *testing.T) {
-	sk, err := GenerateKey()
+	sk, err := GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	o := object.FromMap(map[string]interface{}{
 		"foo:s": "bar",
 	})
 
-	sig, err := NewSignature(sk, AlgorithmObjectHash, o)
+	sig, err := NewSignature(sk, o)
 	assert.NoError(t, err)
-	assert.Equal(t, sk.PublicKey, sig.PublicKey)
+	assert.Equal(t, sk.PublicKey(), sig.Signer.Subject)
 
 	osig := copyObjectThroughJSON(t, sig.ToObject())
 	nsig := &Signature{}
@@ -29,10 +29,10 @@ func TestNewSignature(t *testing.T) {
 	assert.Equal(t, sig, nsig)
 
 	h := hash.New(o)
-	err = verify(sig, h.D)
+	err = sig.Signer.Subject.Verify(h.D, sig.X)
 	assert.NoError(t, err)
 
-	err = verify(nsig, h.D)
+	err = nsig.Signer.Subject.Verify(h.D, nsig.X)
 	assert.NoError(t, err)
 
 	err = Sign(o, sk)

@@ -106,13 +106,13 @@ func (m *orchestrator) Sync(
 				sig := eventList.Signature
 				for _, objectHash := range eventList.Events {
 					// add a request for this hash from this peer
-					if sig == nil || sig.PublicKey == nil {
+					if sig == nil || sig.Signer == nil || sig.Signer.Subject == "" {
 						logger.Debug("object has no signature, skipping request")
 						continue
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: sig.PublicKey.Fingerprint().Address(), // eventList.Identity.Fingerprint().Address(),
+						addr: "peer:" + sig.Signer.Subject.String(), // eventList.Identity.Fingerprint().Address(),
 					}
 				}
 				respCount++
@@ -155,7 +155,6 @@ func (m *orchestrator) Sync(
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
-		crypto.AlgorithmObjectHash,
 		req.ToObject(),
 	)
 	if err != nil {

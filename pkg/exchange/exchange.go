@@ -35,7 +35,7 @@ const (
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses.go -pkg exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=inboxes.go -pkg exchange gen "KeyType=string ValueType=inbox SyncmapName=inboxes"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes.go -pkg exchange gen "KeyType=crypto.Fingerprint ValueType=outbox SyncmapName=outboxes"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes.go -pkg exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
 
 type (
 	// Exchange interface for mocking exchange
@@ -62,7 +62,7 @@ type (
 	}
 	// echange implements an Exchange
 	exchange struct {
-		key *crypto.PrivateKey
+		key crypto.PrivateKey
 		net net.Network
 
 		discover discovery.Discoverer
@@ -98,7 +98,7 @@ type (
 	// and the messages for it.
 	// the queue should only hold `*outgoingObject`s.
 	outbox struct {
-		peer      crypto.Fingerprint
+		peer      crypto.PublicKey
 		addresses *AddressesMap
 		conn      *net.Connection
 		connLock  sync.RWMutex
@@ -117,7 +117,7 @@ type (
 // New creates a exchange on a given network
 func New(
 	ctx context.Context,
-	key *crypto.PrivateKey,
+	key crypto.PrivateKey,
 	n net.Network,
 	store graph.Store,
 	discover discovery.Discoverer,
@@ -151,10 +151,7 @@ func New(
 		Named("exchange").
 		With(
 			log.String("method", "exchange.New"),
-			log.String("local.fingerprint", localInfo.
-				GetFingerprint().
-				String(),
-			),
+			log.String("local.peer", localInfo.GetPeerKey().String()),
 		)
 
 	// add request object handler
@@ -242,7 +239,7 @@ func (w *exchange) writeToInboxes(e *Envelope) {
 	})
 }
 
-func (w *exchange) getOutbox(peer crypto.Fingerprint) *outbox {
+func (w *exchange) getOutbox(peer crypto.PublicKey) *outbox {
 	outbox := &outbox{
 		peer:      peer,
 		addresses: NewAddressesMap(),
@@ -297,10 +294,10 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		// this check is mainly done for when the outbox.peer is actually an
 		// address, ie tcps:0.0.0.0:0
 		// once we have the real remote peer, we should be replacing the outbox
-		if conn.RemotePeerKey.Fingerprint().String() != outbox.peer.String() {
+		if conn.RemotePeerKey.String() != outbox.peer.String() {
 			// check if we already have an outbox with the new peer
 			existingOutbox, outboxExisted := w.outboxes.GetOrPut(
-				conn.RemotePeerKey.Fingerprint(),
+				conn.RemotePeerKey,
 				outbox,
 			)
 			// and if so
@@ -422,7 +419,7 @@ func (w *exchange) handleConnection(
 	}
 
 	// get outbox and update the connection to the peer
-	outbox := w.getOutbox(conn.RemotePeerKey.Fingerprint())
+	outbox := w.getOutbox(conn.RemotePeerKey)
 	w.updateOutboxConn(outbox, conn)
 
 	// TODO(geoah) this looks like a hack
@@ -479,7 +476,7 @@ func (w *exchange) handleObjectRequest(
 		go w.Send( // nolint: errcheck
 			context.New(),
 			res,
-			"peer:"+e.Sender.Fingerprint().String(),
+			"peer:"+e.Sender.String(),
 			WithLocalDiscoveryOnly(),
 		)
 		return nil
@@ -519,7 +516,7 @@ func (w *exchange) Send(
 	// 	panic("NO PEER PREFIX")
 	// }
 	fingerprint := strings.Replace(address, "peer:", "", 1)
-	outbox := w.getOutbox(crypto.Fingerprint(fingerprint))
+	outbox := w.getOutbox(crypto.PublicKey(fingerprint))
 	errRecv := make(chan error, 1)
 	req := &outgoingObject{
 		context:   ctx,

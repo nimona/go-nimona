@@ -28,8 +28,6 @@ type API struct {
 	orchestrator orchestrator.Orchestrator
 	local        *peer.LocalPeer
 
-	localFingerprint crypto.Fingerprint
-
 	token string
 
 	version      string
@@ -41,7 +39,7 @@ type API struct {
 
 // New HTTP API
 func New(
-	k *crypto.PrivateKey,
+	k crypto.PrivateKey,
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,
@@ -63,8 +61,6 @@ func New(
 		objectStore: bls,
 
 		orchestrator: orchestrator,
-
-		localFingerprint: linf.GetFingerprint(),
 
 		local: linf,
 
@@ -144,11 +140,6 @@ func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
 	m["_hash.compact"] = hash.New(o).String()
 	m["_hash"] = hash.New(o.ToObject()).ToObject()
-	if o.GetType() == "nimona.io/crypto.PublicKey" {
-		p := &crypto.PublicKey{}
-		p.FromObject(o) // nolint: errcheck
-		m["_fingerprint.compact"] = p.Fingerprint().String()
-	}
 	return m
 }
 

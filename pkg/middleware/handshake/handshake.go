@@ -81,7 +81,7 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Signature.PublicKey
+	conn.RemotePeerKey = synAck.Signature.Signer.Subject
 	conn.LocalPeerKey = hs.local.GetPeerKey()
 
 	// TODO(@geoah) do we need to do something about this?
@@ -132,7 +132,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Signature.PublicKey
+	conn.RemotePeerKey = syn.Signature.Signer.Subject
 	conn.LocalPeerKey = hs.local.GetPeerKey()
 
 	// TODO(@geoah) this one too
