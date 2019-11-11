@@ -1,27 +1,13 @@
 package nimona.io/crypto
 
 domain nimona.io/crypto {
-    object Signature {
-        publicKey PublicKey
-        algorithm string
-        r data
-        s data
+    event Certificate {
+        subject PublicKey
+        signature Signature
     }
-    object PrivateKey {
-        keyType string
-        publicKey PublicKey
-        algorithm string
-        curve string
+    event Signature {
+        signer Certificate
+        alg string
         x data
-        y data
-        d data
-    }
-    object PublicKey {
-        keyType string
-        algorithm string
-        curve string
-        x data
-        y data
-        @signature Signature
     }
 }

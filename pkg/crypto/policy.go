@@ -7,18 +7,3 @@ type Policy struct {
 	Actions     []string `json:"actions,omitempty"`
 	Effect      string   `json:"effect,omitempty"`
 }
-
-// func ID(v interface{}) string {
-// 	d, err := object.Marshal(v)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	h := NewSha3(d)
-// 	b, err := object.Marshal(h)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return string(base58.Encode(b))
-// }

@@ -94,7 +94,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 	k := api.local.GetPeerPrivateKey()
 	id := api.local.GetIdentityKey()
 
-	req["@identity:o"] = id.ToObject().ToMap()
+	req["@identity:s"] = id
 
 	o := object.FromMap(req)
 	op := stream.Policies(o)

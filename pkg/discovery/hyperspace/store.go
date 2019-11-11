@@ -8,8 +8,8 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=Announced"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.Fingerprint ValueType=peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=Announced"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
@@ -27,19 +27,19 @@ type Store struct {
 
 // Add peers
 func (s *Store) AddPeer(p *peer.Peer) {
-	s.peers.Range(func(k crypto.Fingerprint, v *peer.Peer) bool {
+	s.peers.Range(func(k crypto.PublicKey, v *peer.Peer) bool {
 		return true
 	})
-	s.peers.Put(p.Signature.PublicKey.Fingerprint(), p)
+	s.peers.Put(p.Signature.Signer.Subject, p)
 }
 
 // Add content hashes
 func (s *Store) AddContentHashes(c *Announced) {
-	s.blooms.Put(c.Signature.PublicKey.Fingerprint(), c)
+	s.blooms.Put(c.Signature.Signer.Subject, c)
 }
 
 // FindClosestPeer returns peers that closest resemble the query
-func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
+func (s *Store) FindClosestPeer(f crypto.PublicKey) []*peer.Peer {
 	q := bloom.NewBloom(f.String())
 
 	type kv struct {
@@ -48,8 +48,8 @@ func (s *Store) FindClosestPeer(f crypto.Fingerprint) []*peer.Peer {
 	}
 
 	r := []kv{}
-	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
-		pb := bloom.NewBloom(p.Signature.PublicKey.Fingerprint().String())
+	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
+		pb := bloom.NewBloom(p.Signature.Signer.Subject.String())
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), pb.Bloom()),
 			peer:              p,
@@ -81,7 +81,7 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
 	}
 
 	r := []kv{}
-	s.blooms.Range(func(f crypto.Fingerprint, b *Announced) bool {
+	s.blooms.Range(func(f crypto.PublicKey, b *Announced) bool {
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), b.Bloom()),
 			contentHashBloom:  b,
@@ -104,12 +104,12 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
 	return cs
 }
 
-// FindByFingerprint returns peers that are signed by a fingerprint
-func (s *Store) FindByFingerprint(
-	fingerprint crypto.Fingerprint,
+// FindByPublicKey returns peers that are signed by a fingerprint
+func (s *Store) FindByPublicKey(
+	fingerprint crypto.PublicKey,
 ) []*peer.Peer {
 	ps := []*peer.Peer{}
-	s.peers.Range(func(f crypto.Fingerprint, p *peer.Peer) bool {
+	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
 		if peerMatchesKeyFingerprint(p, fingerprint) {
 			ps = append(ps, p)
 		}
@@ -120,10 +120,10 @@ func (s *Store) FindByFingerprint(
 
 func peerMatchesKeyFingerprint(
 	peer *peer.Peer,
-	fingerprint crypto.Fingerprint,
+	fingerprint crypto.PublicKey,
 ) bool {
 	for _, k := range crypto.GetSignatureKeys(peer.Signature) {
-		if k.Fingerprint().String() == fingerprint.String() {
+		if k.String() == fingerprint.String() {
 			return true
 		}
 	}
@@ -135,7 +135,7 @@ func (s *Store) FindByContent(b bloom.Bloomer) []*Announced {
 	cs := []*Announced{}
 	q := b.Bloom()
 
-	s.blooms.Range(func(f crypto.Fingerprint, c *Announced) bool {
+	s.blooms.Range(func(f crypto.PublicKey, c *Announced) bool {
 		if intersectionCount(c.Bloom(), b.Bloom()) != len(q) {
 			return true
 		}

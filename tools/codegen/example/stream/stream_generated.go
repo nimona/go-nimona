@@ -21,14 +21,14 @@ type (
 		PartitionKeys   []string          `json:"partitionKeys:as,omitempty"`
 		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity        *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity        crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	PoliciesUpdated struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -86,9 +86,7 @@ func (e *Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -128,9 +126,7 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

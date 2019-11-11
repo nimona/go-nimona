@@ -55,9 +55,9 @@ func main() {
 	}
 
 	// create peer key pair if it does not exist
-	if config.Daemon.PeerKey == nil {
+	if config.Daemon.PeerKey == "" {
 		logger.Info("creating new peer key pair")
-		peerKey, err := crypto.GenerateKey()
+		peerKey, err := crypto.GenerateEd25519PrivateKey()
 		if err != nil {
 			logger.Fatal("could not generate peer key", log.Error(err))
 		}
@@ -66,9 +66,9 @@ func main() {
 
 	// create identity key pair if it does not exist
 	// TODO this is temporary
-	if config.Daemon.IdentityKey == nil {
+	if config.Daemon.IdentityKey == "" {
 		logger.Info("creating new identity key pair")
-		identityKey, err := crypto.GenerateKey()
+		identityKey, err := crypto.GenerateEd25519PrivateKey()
 		if err != nil {
 			logger.Fatal("could not generate identity key", log.Error(err))
 		}
@@ -184,13 +184,13 @@ func main() {
 	// print some info
 	nlogger := logger.With(
 		log.Strings("addresses", localInfo.GetAddresses()),
-		log.String("peer", config.Daemon.PeerKey.Fingerprint().String()),
+		log.String("peer", config.Daemon.PeerKey.PublicKey().String()),
 	)
 
 	ik := config.Daemon.IdentityKey
-	if ik != nil {
+	if ik != "" {
 		nlogger = nlogger.With(
-			log.String("identity", ik.PublicKey.Fingerprint().String()),
+			log.String("identity", ik.PublicKey().String()),
 		)
 	}
 

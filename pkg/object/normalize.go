@@ -51,7 +51,7 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 			case 's':
 				nv, err = normalizeString(v)
 			case 'd':
-				nv, err = normalizeData(v)
+				nv, err = NormalizeData(v)
 			case 'u':
 				nv, err = normalizeUint(v)
 			case 'i':
@@ -74,7 +74,7 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	case 's':
 		return normalizeString(i)
 	case 'd':
-		return normalizeData(i)
+		return NormalizeData(i)
 	case 'u':
 		return normalizeUint(i)
 	case 'i':
@@ -95,7 +95,7 @@ func normalizeString(i interface{}) (string, error) {
 	return v, nil
 }
 
-func normalizeData(i interface{}) ([]byte, error) {
+func NormalizeData(i interface{}) ([]byte, error) {
 	switch v := i.(type) {
 	case []byte:
 		return v, nil

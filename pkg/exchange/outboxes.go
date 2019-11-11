@@ -24,18 +24,18 @@ func NewOutboxesMap() *OutboxesMap {
 }
 
 // GetOrPut -
-func (m *OutboxesMap) GetOrPut(k crypto.Fingerprint, v *outbox) (*outbox, bool) {
+func (m *OutboxesMap) GetOrPut(k crypto.PublicKey, v *outbox) (*outbox, bool) {
 	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*outbox), ok
 }
 
 // Put -
-func (m *OutboxesMap) Put(k crypto.Fingerprint, v *outbox) {
+func (m *OutboxesMap) Put(k crypto.PublicKey, v *outbox) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *OutboxesMap) Get(k crypto.Fingerprint) (*outbox, bool) {
+func (m *OutboxesMap) Get(k crypto.PublicKey) (*outbox, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -50,13 +50,13 @@ func (m *OutboxesMap) Get(k crypto.Fingerprint) (*outbox, bool) {
 }
 
 // Delete -
-func (m *OutboxesMap) Delete(k crypto.Fingerprint) {
+func (m *OutboxesMap) Delete(k crypto.PublicKey) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *OutboxesMap) Range(i func(k crypto.Fingerprint, v *outbox) bool) {
+func (m *OutboxesMap) Range(i func(k crypto.PublicKey, v *outbox) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.Fingerprint), v.(*outbox))
+		return i(k.(crypto.PublicKey), v.(*outbox))
 	})
 }

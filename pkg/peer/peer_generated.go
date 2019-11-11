@@ -13,12 +13,12 @@ type (
 	Peer struct {
 		Addresses []string          `json:"addresses:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	Requested struct {
 		Keys      []string          `json:"keys:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -35,9 +35,7 @@ func (e *Peer) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -59,9 +57,7 @@ func (e *Requested) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

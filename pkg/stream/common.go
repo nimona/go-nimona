@@ -21,7 +21,7 @@ type (
 		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o"`
+		Identity  crypto.PublicKey  `json:"@identity:o"`
 	}
 )
 
@@ -44,29 +44,26 @@ func Policies(o object.Object) []*Policy {
 	return toCommon(o).Policies
 }
 
-func Identity(o object.Object) *crypto.PublicKey {
+func Identity(o object.Object) crypto.PublicKey {
 	return toCommon(o).Identity
 }
 
-func GetStreamSubscribers(os []object.Object) []*crypto.PublicKey {
-	subs := map[*crypto.PublicKey]bool{}
+func GetStreamSubscribers(os []object.Object) []crypto.PublicKey {
+	subs := map[string]crypto.PublicKey{}
 	for _, o := range os {
 		switch o.GetType() {
 		case typeStreamSubscribed:
 			e := &Subscribed{}
 			e.FromObject(o) // nolint: errcheck
-			subs[e.Identity] = true
+			subs[e.Identity.String()] = e.Identity
 		case typeStreamUnsubscribed:
 			e := &Unsubscribed{}
 			e.FromObject(o) // nolint: errcheck
-			subs[e.Identity] = false
+			delete(subs, e.Identity.String())
 		}
 	}
-	cleanSubs := []*crypto.PublicKey{}
-	for k, ok := range subs {
-		if !ok {
-			continue
-		}
+	cleanSubs := []crypto.PublicKey{}
+	for _, k := range subs {
 		cleanSubs = append(cleanSubs, k)
 	}
 	return cleanSubs

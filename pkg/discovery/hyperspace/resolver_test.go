@@ -46,7 +46,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err := d1.FindByFingerprint(ctx, k0.Fingerprint())
+	peers, err := d1.FindByPublicKey(ctx, k0.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -55,7 +55,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err = d0.FindByFingerprint(ctxR2, k1.Fingerprint())
+	peers, err = d0.FindByPublicKey(ctxR2, k1.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -75,9 +75,9 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
 
-	fmt.Println("k0", k0.Fingerprint())
-	fmt.Println("k1", k1.Fingerprint())
-	fmt.Println("k2", k2.Fingerprint())
+	fmt.Println("k0", k0)
+	fmt.Println("k1", k1)
+	fmt.Println("k2", k2)
 
 	// bootstrap address
 	ba := l0.GetAddresses()
@@ -102,7 +102,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err := d1.FindByFingerprint(ctx, k0.Fingerprint())
+	peers, err := d1.FindByPublicKey(ctx, k0.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -112,7 +112,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.FindByFingerprint(ctx, k1.Fingerprint())
+	peers, err = d2.FindByPublicKey(ctx, k1.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -122,7 +122,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.FindByFingerprint(ctx, k2.Fingerprint())
+	peers, err = d1.FindByPublicKey(ctx, k2.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
@@ -140,10 +140,10 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// wait for everything to settle
 	time.Sleep(time.Second * 5)
 
-	fmt.Println("peer0", k0.Fingerprint())
-	fmt.Println("peer1", k1.Fingerprint())
-	fmt.Println("peer2", k2.Fingerprint())
-	fmt.Println("peer3", k3.Fingerprint())
+	fmt.Println("peer0", k0)
+	fmt.Println("peer1", k1)
+	fmt.Println("peer2", k2)
+	fmt.Println("peer3", k3)
 
 	fmt.Println("-------------------")
 	fmt.Println("-------------------")
@@ -155,7 +155,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req4"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.FindByFingerprint(ctx, k3.Fingerprint())
+	peers, err = d1.FindByPublicKey(ctx, k3.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -165,7 +165,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req5"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.FindByFingerprint(ctx, k3.Fingerprint())
+	peers, err = d2.FindByPublicKey(ctx, k3.PublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -186,9 +186,9 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	l1.AddContentHash(ch)
 
 	// print peer info
-	fmt.Println("k0", k0.Fingerprint())
-	fmt.Println("k1", k1.Fingerprint())
-	fmt.Println("k2", k2.Fingerprint())
+	fmt.Println("k0", k0)
+	fmt.Println("k1", k1)
+	fmt.Println("k2", k2)
 
 	// bootstrap peer
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
@@ -222,7 +222,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	providers, err := d2.FindByContent(ctx, ch)
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0])
 
 	// find peer 1 from bootstrap
 	ctx = context.New(
@@ -232,7 +232,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	providers, err = d0.FindByContent(ctx, ch)
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0])
 
 	// add extra peer
 	_, _, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
@@ -254,15 +254,15 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	providers, err = d3.FindByContent(ctx, ch)
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey.Fingerprint(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0])
 }
 
 func newPeer(
 	t *testing.T,
 	name string,
 ) (
-	*crypto.PrivateKey,
-	*crypto.PrivateKey,
+	crypto.PrivateKey,
+	crypto.PrivateKey,
 	net.Network,
 	exchange.Exchange,
 	discovery.Discoverer,
@@ -272,21 +272,20 @@ func newPeer(
 	ctx := context.New(context.WithCorrelationID(name))
 
 	// owner key
-	opk, err := crypto.GenerateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	// peer key
-	pk, err := crypto.GenerateKey()
+	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	sig, err := crypto.NewSignature(
-		opk,
-		crypto.AlgorithmObjectHash,
-		pk.ToObject(),
-	)
-	assert.NoError(t, err)
+	// sig, err := crypto.NewSignature(
+	// 	opk,
+	// 	pk.PublicKey().ToObject(),
+	// )
+	// assert.NoError(t, err)
 
-	pk.PublicKey.Signature = sig
+	// pk.PublicKey.Signature = sig
 
 	disc := discovery.NewDiscoverer()
 	ds := graph.New(kv.NewMemory())

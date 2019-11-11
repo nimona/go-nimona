@@ -82,7 +82,7 @@ func (tt *httpTransport) Listen(
 ) {
 	logger := log.FromContext(ctx).Named("transport/https")
 
-	cert, err := crypto.GenerateCertificate(tt.local.GetPeerPrivateKey())
+	cert, err := crypto.GenerateTLSCertificate(tt.local.GetPeerPrivateKey())
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,8 @@ func (tt *httpTransport) Listen(
 		log.Int("port", port),
 	)
 
-	return cconn, nil
+	// return cconn, nil
+	panic("http is being deprecated")
 }
 
 type connWrapper struct {

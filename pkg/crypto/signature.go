@@ -1,9 +1,6 @@
 package crypto
 
 import (
-	"crypto/ecdsa"
-	"crypto/rand"
-
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
@@ -19,77 +16,23 @@ var (
 )
 
 const (
-	// AlgorithmES256 for creating ES256 based signatures
-	AlgorithmES256 = "ES256"
 	// AlgorithmObjectHash for creating ObjectHash+ES256 based signatures
 	AlgorithmObjectHash = "OH_ES256"
 )
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
-	key *PrivateKey,
-	alg string,
+	k PrivateKey,
 	o object.Object,
 ) (*Signature, error) {
-	if key == nil {
-		return nil, errors.New("missing key")
+	h := hash.New(o)
+	x := k.Sign(h.D)
+	s := &Signature{
+		Signer: NewCertificate(k),
+		Alg:    AlgorithmObjectHash,
+		X:      x,
 	}
-
-	pKey, ok := key.Key().(*ecdsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("only ecdsa private keys are currently supported")
-	}
-
-	var (
-		h   *object.Hash
-		err error
-	)
-
-	switch alg {
-	// case AlgorithmES256:
-	// 	o, err := object.NewFromStruct(v)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	b, err := object.Marshal(o)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	m := map[string]interface{}{}
-	// 	if err := object.UnmarshalSimple(b, &m); err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// TODO replace ES256 with OH that should deal with removing the @sig
-	// 	delete(m, "@signature")
-
-	// 	b, err = object.Marshal(m)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	h := sha256.Sum256(b)
-	// 	hash = h[:]
-	case AlgorithmObjectHash:
-		h = hash.New(o)
-	default:
-		return nil, ErrAlgorithNotImplemented
-	}
-
-	// TODO(geoah) should this just be the data or should it include the alg?
-	r, s, err := ecdsa.Sign(rand.Reader, pKey, h.D)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Signature{
-		PublicKey: key.PublicKey,
-		Algorithm: alg,
-		R:         r.Bytes(),
-		S:         s.Bytes(),
-	}, nil
+	return s, nil
 }
 
 func GetObjectSignature(o object.Object) (*Signature, error) {
@@ -114,25 +57,12 @@ func GetObjectSignature(o object.Object) (*Signature, error) {
 	return s, nil
 }
 
-func GetObjectKeys(o object.Object) (pks []*PublicKey) {
-	sig, _ := GetObjectSignature(o)
+func GetSignatureKeys(sig *Signature) (pks []PublicKey) {
 	for {
-		if sig == nil || sig.PublicKey == nil {
+		if sig == nil || sig.Signer == nil || sig.Signer.Subject == "" {
 			return
 		}
-		pk := sig.PublicKey
-		pks = append(pks, pk)
-		sig = pk.Signature
-	}
-}
-
-func GetSignatureKeys(sig *Signature) (pks []*PublicKey) {
-	for {
-		if sig == nil || sig.PublicKey == nil {
-			return
-		}
-		pk := sig.PublicKey
-		pks = append(pks, pk)
-		sig = pk.Signature
+		pks = append(pks, sig.Signer.Subject)
+		sig = sig.Signer.Signature
 	}
 }

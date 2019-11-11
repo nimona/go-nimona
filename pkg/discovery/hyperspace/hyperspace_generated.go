@@ -14,13 +14,13 @@ type (
 		QueryContentBloom []int64           `json:"queryContentBloom:ai,omitempty"`
 		Nonce             string            `json:"nonce:s,omitempty"`
 		Signature         *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity          *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity          crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	Announced struct {
 		AvailableContentBloom []int64           `json:"availableContentBloom:ai,omitempty"`
 		Nonce                 string            `json:"nonce:s,omitempty"`
 		Signature             *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity              *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity              crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -38,9 +38,7 @@ func (e *Request) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -63,9 +61,7 @@ func (e *Announced) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

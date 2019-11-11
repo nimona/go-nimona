@@ -73,13 +73,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint().String())
+	errS1 := x2.Send(ctx, eo1, k1.PublicKey().Address())
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, "peer:"+k2.PublicKey.Fingerprint().String())
+	errS2 := x1.Send(ctx, eo2, k2.PublicKey().Address())
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
@@ -234,7 +234,7 @@ func TestRequestSuccess(t *testing.T) {
 // 	ctx := context.New(context.WithTimeout(time.Second * 5))
 // 	defer ctx.Cancel()
 
-// 	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.Fingerprint().String())
+// 	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.PublicKey().String())
 // 	assert.NoError(t, err)
 
 // 	time.Sleep(time.Second)
@@ -243,7 +243,7 @@ func TestRequestSuccess(t *testing.T) {
 // 	defer ctx2.Cancel()
 
 // 	// TODO should be able to send not signed
-// 	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.Fingerprint().String())
+// 	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.PublicKey().String())
 // 	assert.NoError(t, err)
 
 // 	wg.Wait()
@@ -259,13 +259,13 @@ func newPeer(
 	listenTCP bool,
 	listenHTTP bool,
 ) (
-	*crypto.PrivateKey,
+	crypto.PrivateKey,
 	net.Network,
 	*exchange,
 	graph.Store,
 	*peer.LocalPeer,
 ) {
-	pk, err := crypto.GenerateKey()
+	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	ds := graph.New(kv.NewMemory())

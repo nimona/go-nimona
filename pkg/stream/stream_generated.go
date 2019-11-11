@@ -21,33 +21,33 @@ type (
 		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
 		Policies        []*Policy         `json:"policies:ao,omitempty"`
 		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity        *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity        crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	Subscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	Unsubscribed struct {
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	PolicyAttached struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	RequestEventList struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	EventListCreated struct {
 		Stream    *object.Hash      `json:"stream:o,omitempty"`
 		Events    []*object.Hash    `json:"events:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -97,9 +97,7 @@ func (e *Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -118,9 +116,7 @@ func (e *Subscribed) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -139,9 +135,7 @@ func (e *Unsubscribed) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -181,9 +175,7 @@ func (e *PolicyAttached) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -205,9 +197,7 @@ func (e *RequestEventList) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -238,9 +228,7 @@ func (e *EventListCreated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

@@ -14,20 +14,20 @@ type (
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Topic     string            `json:"topic:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationNameSet struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Name      string            `json:"name:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationMessageAdded struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Body      string            `json:"body:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -45,9 +45,7 @@ func (e *ConversationTopicSet) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -70,9 +68,7 @@ func (e *ConversationNameSet) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -104,9 +100,7 @@ func (e *ConversationMessageAdded) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

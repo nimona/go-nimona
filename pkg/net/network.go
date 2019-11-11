@@ -189,8 +189,10 @@ func (n *network) dialPeer(
 		log.Bool("localDiscoveryOnly", localDiscoveryOnly),
 	)
 
-	fingerprint := crypto.Fingerprint(strings.Replace(address, "peer:", "", 1))
-	if fingerprint == n.local.GetPeerPrivateKey().Fingerprint() {
+	pkey := strings.Replace(address, "peer:", "", 1)
+	key := crypto.PublicKey(pkey)
+
+	if n.local.GetPeerKey().Equals(key) {
 		return nil, errors.New("cannot dial our own peer")
 	}
 
@@ -200,7 +202,7 @@ func (n *network) dialPeer(
 	if localDiscoveryOnly {
 		opts = append(opts, discovery.Local())
 	}
-	ps, err := n.discoverer.FindByFingerprint(ctx, fingerprint, opts...)
+	ps, err := n.discoverer.FindByPublicKey(ctx, key, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +212,7 @@ func (n *network) dialPeer(
 	for _, p := range ps {
 		for _, addr := range p.Addresses {
 			logger.Debug("trying to dial peer",
-				log.String("peer.fingerprint", p.Fingerprint().String()),
+				log.String("peer.key", p.PublicKey().String()),
 				log.Strings("peer.addresses", p.Addresses),
 			)
 			conn, err := n.Dial(ctx, addr)

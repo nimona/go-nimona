@@ -4,13 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"nimona.io/pkg/object"
-
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -26,27 +25,26 @@ func TestNetDiscoverer(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer())
 	disc2.Add(l1.GetSignedPeer())
 
-	ps2, err := disc1.FindByFingerprint(ctx, l2.GetPeerPrivateKey().Fingerprint())
+	ps2, err := disc1.FindByPublicKey(ctx, l2.GetPeerKey())
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
-		l2.GetPeerPrivateKey().Fingerprint(),
-		p2.Fingerprint(),
+		l2.GetPeerKey(),
+		p2.PublicKey(),
 	)
 
-	ps1, err := disc2.FindByFingerprint(ctx, l1.GetPeerPrivateKey().Fingerprint())
+	ps1, err := disc2.FindByPublicKey(ctx, l1.GetPeerKey())
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
-		l1.GetPeerPrivateKey().Fingerprint(),
-		p1.Fingerprint(),
+		l1.GetPeerKey(),
+		p1.PublicKey(),
 	)
 }
 
 func TestNetConnectionSuccess(t *testing.T) {
-
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
@@ -78,7 +76,6 @@ func TestNetConnectionSuccess(t *testing.T) {
 		err = Write(o, cconn)
 		assert.NoError(t, err)
 		done <- true
-
 	}()
 
 	sc := <-sconn
@@ -94,7 +91,6 @@ func TestNetConnectionSuccess(t *testing.T) {
 }
 
 func TestNetConnectionFailureMiddleware(t *testing.T) {
-
 	disc1 := discovery.NewDiscoverer()
 	disc2 := discovery.NewDiscoverer()
 
@@ -130,9 +126,16 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	assert.Len(t, sconn, 0)
 }
 
-func newPeer(t *testing.T, relayAddress string, discover discovery.Discoverer) (
-	*crypto.PrivateKey, *network, *peer.LocalPeer) {
-	pk, err := crypto.GenerateKey()
+func newPeer(
+	t *testing.T,
+	relayAddress string,
+	discover discovery.Discoverer,
+) (
+	crypto.PrivateKey,
+	*network,
+	*peer.LocalPeer,
+) {
+	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
 	localInfo, err := peer.NewLocalPeer("", pk) // nolint: ineffassign

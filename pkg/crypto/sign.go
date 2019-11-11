@@ -3,8 +3,8 @@ package crypto
 import "nimona.io/pkg/object"
 
 // Sign any object (container) with given key and return a signature object (container)
-func Sign(o object.Object, key *PrivateKey) error {
-	sig, err := NewSignature(key, AlgorithmObjectHash, o)
+func Sign(o object.Object, key PrivateKey) error {
+	sig, err := NewSignature(key, o)
 	if err != nil {
 		return err
 	}

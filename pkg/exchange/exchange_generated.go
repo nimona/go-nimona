@@ -13,13 +13,13 @@ type (
 	ObjectRequest struct {
 		ObjectHash *object.Hash      `json:"objectHash:o,omitempty"`
 		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity   *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity   crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ObjectForward struct {
 		Recipient string            `json:"recipient:s,omitempty"`
 		FwObject  *object.Object    `json:"fwObject:o,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  *crypto.PublicKey `json:"@identity:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -36,9 +36,7 @@ func (e *ObjectRequest) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 
@@ -61,9 +59,7 @@ func (e *ObjectForward) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != nil {
-		m["@identity:o"] = e.Identity.ToObject().ToMap()
-	}
+	m["@identity:s"] = e.Identity
 	return object.Object(m)
 }
 

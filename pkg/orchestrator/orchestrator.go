@@ -224,7 +224,7 @@ func (m *orchestrator) Get(
 
 func (m *orchestrator) handleStreamRequestEventList(
 	ctx context.Context,
-	sender *crypto.PublicKey,
+	sender crypto.PublicKey,
 	req *stream.RequestEventList,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
@@ -247,7 +247,6 @@ func (m *orchestrator) handleStreamRequestEventList(
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
-		crypto.AlgorithmObjectHash,
 		req.ToObject(),
 	)
 	if err != nil {
@@ -259,7 +258,7 @@ func (m *orchestrator) handleStreamRequestEventList(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		"peer:"+sender.Fingerprint().String(),
+		"peer:"+sender.String(),
 	); err != nil {
 		logger.Warn(
 			"orchestrator/orchestrator.handlestream.RequestEventList could not send response",

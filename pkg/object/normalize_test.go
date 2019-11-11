@@ -14,24 +14,10 @@ import (
 
 func Test_Normalize(t *testing.T) {
 	kx := []byte{111, 39, 65, 188, 215, 49, 84, 43, 192, 187}
-	ky := []byte{235, 143, 194, 90, 199, 139, 81, 230, 181, 145}
-	sr := []byte{140, 7, 104, 131, 111, 142, 147, 105, 153, 234}
-	ss := []byte{98, 144, 226, 154, 141, 254, 84, 218, 191, 16}
 
 	s := stream.Created{
-		Nonce: "nonce",
-		Identity: &crypto.PublicKey{
-			KeyType:   "kty",
-			Algorithm: "alg",
-			Curve:     "crv",
-			X:         kx,
-			Y:         ky,
-			Signature: &crypto.Signature{
-				Algorithm: "alg",
-				R:         sr,
-				S:         ss,
-			},
-		},
+		Nonce:    "nonce",
+		Identity: "foo",
 		Policies: []*stream.Policy{
 			&stream.Policy{
 				Subjects:  []string{"subject"},
@@ -40,16 +26,11 @@ func Test_Normalize(t *testing.T) {
 			},
 		},
 		Signature: &crypto.Signature{
-			PublicKey: &crypto.PublicKey{
-				KeyType:   "kty",
-				Algorithm: "alg",
-				Curve:     "crv",
-				X:         kx,
-				Y:         ky,
+			Signer: &crypto.Certificate{
+				Subject: "foo",
 			},
-			Algorithm: "alg",
-			R:         sr,
-			S:         ss,
+			Alg: "alg",
+			X:   kx,
 		},
 	}
 
@@ -57,20 +38,7 @@ func Test_Normalize(t *testing.T) {
 		"@type:s":           "nimona.io/stream.Created",
 		"nonce:s":           "nonce",
 		"createdDateTime:s": "",
-		"@identity:o": map[string]interface{}{
-			"@type:s":     "nimona.io/crypto.PublicKey",
-			"keyType:s":   "kty",
-			"algorithm:s": "alg",
-			"curve:s":     "crv",
-			"x:d":         kx,
-			"y:d":         ky,
-			"@signature:o": map[string]interface{}{
-				"@type:s":     "nimona.io/crypto.Signature",
-				"algorithm:s": "alg",
-				"r:d":         sr,
-				"s:d":         ss,
-			},
-		},
+		"@identity:s":       "foo",
 		"policies:ao": []interface{}{
 			map[string]interface{}{
 				"@type:s":      "nimona.io/stream.Policy",
@@ -81,17 +49,12 @@ func Test_Normalize(t *testing.T) {
 		},
 		"@signature:o": map[string]interface{}{
 			"@type:s": "nimona.io/crypto.Signature",
-			"publicKey:o": map[string]interface{}{
-				"@type:s":     "nimona.io/crypto.PublicKey",
-				"keyType:s":   "kty",
-				"algorithm:s": "alg",
-				"curve:s":     "crv",
-				"x:d":         kx,
-				"y:d":         ky,
+			"signer:o": map[string]interface{}{
+				"@type:s":   "nimona.io/crypto.Certificate",
+				"subject:s": "foo",
 			},
-			"algorithm:s": "alg",
-			"r:d":         sr,
-			"s:d":         ss,
+			"alg:s": "alg",
+			"x:d":   kx,
 		},
 	}
 
