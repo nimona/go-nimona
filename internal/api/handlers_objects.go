@@ -92,7 +92,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	k := api.local.GetPeerPrivateKey()
-	id := api.local.GetIdentityKey()
+	id := api.local.GetIdentityPublicKey()
 
 	req["@identity:s"] = id
 

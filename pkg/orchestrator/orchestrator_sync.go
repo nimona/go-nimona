@@ -106,13 +106,13 @@ func (m *orchestrator) Sync(
 				sig := eventList.Signature
 				for _, objectHash := range eventList.Events {
 					// add a request for this hash from this peer
-					if sig == nil || sig.Signer == nil || sig.Signer.Subject == "" {
+					if sig == nil || sig.Signer.IsEmpty() {
 						logger.Debug("object has no signature, skipping request")
 						continue
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + sig.Signer.Subject.String(), // eventList.Identity.Fingerprint().Address(),
+						addr: "peer:" + sig.Signer.String(), // eventList.Identity.Fingerprint().Address(),
 					}
 				}
 				respCount++

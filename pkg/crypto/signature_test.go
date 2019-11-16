@@ -20,7 +20,7 @@ func TestNewSignature(t *testing.T) {
 
 	sig, err := NewSignature(sk, o)
 	assert.NoError(t, err)
-	assert.Equal(t, sk.PublicKey(), sig.Signer.Subject)
+	assert.Equal(t, sk.PublicKey(), sig.Signer)
 
 	osig := copyObjectThroughJSON(t, sig.ToObject())
 	nsig := &Signature{}
@@ -29,10 +29,10 @@ func TestNewSignature(t *testing.T) {
 	assert.Equal(t, sig, nsig)
 
 	h := hash.New(o)
-	err = sig.Signer.Subject.Verify(h.D, sig.X)
+	err = sig.Signer.Verify(h.D, sig.X)
 	assert.NoError(t, err)
 
-	err = nsig.Signer.Subject.Verify(h.D, nsig.X)
+	err = nsig.Signer.Verify(h.D, nsig.X)
 	assert.NoError(t, err)
 
 	err = Sign(o, sk)

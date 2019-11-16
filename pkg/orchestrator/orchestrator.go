@@ -243,7 +243,7 @@ func (m *orchestrator) handleStreamRequestEventList(
 	res := &stream.EventListCreated{
 		Stream:   req.Stream,
 		Events:   hs,
-		Identity: m.localInfo.GetIdentityKey(),
+		Identity: m.localInfo.GetIdentityPublicKey(),
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),

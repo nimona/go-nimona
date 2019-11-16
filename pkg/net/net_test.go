@@ -25,21 +25,21 @@ func TestNetDiscoverer(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer())
 	disc2.Add(l1.GetSignedPeer())
 
-	ps2, err := disc1.FindByPublicKey(ctx, l2.GetPeerKey())
+	ps2, err := disc1.FindByPublicKey(ctx, l2.GetPeerPublicKey())
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
-		l2.GetPeerKey(),
+		l2.GetPeerPublicKey(),
 		p2.PublicKey(),
 	)
 
-	ps1, err := disc2.FindByPublicKey(ctx, l1.GetPeerKey())
+	ps1, err := disc2.FindByPublicKey(ctx, l1.GetPeerPublicKey())
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
-		l1.GetPeerKey(),
+		l1.GetPeerPublicKey(),
 		p1.PublicKey(),
 	)
 }

@@ -1,13 +1,18 @@
 package crypto
 
-func NewCertificate(k PrivateKey) *Certificate {
+import "time"
+
+func NewCertificate(subject PublicKey, issuer PrivateKey) *Certificate {
 	c := &Certificate{
-		Subject: k.PublicKey(),
+		Subject: subject,
+		Created: time.Now().Format(time.RFC3339),
+		Expires: time.Now().Add(time.Hour * 24 * 365).Format(time.RFC3339),
 	}
+	s, _ := NewSignature(issuer, c.ToObject())
+	c.Signature = s
 	return c
 }
 
-func (c *Certificate) Sign(k PrivateKey) {
-	s, _ := NewSignature(k, c.ToObject())
-	c.Signature = s
+func NewSelfSignedCertificate(k PrivateKey) *Certificate {
+	return NewCertificate(k.PublicKey(), k)
 }

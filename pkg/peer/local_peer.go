@@ -15,10 +15,15 @@ type (
 	LocalPeer struct {
 		hostname string
 
-		keyLock     sync.RWMutex
-		key         crypto.PrivateKey
-		identityKey crypto.PrivateKey
-		certificate *crypto.Certificate
+		keyLock sync.RWMutex
+
+		peerPrivateKey crypto.PrivateKey
+		peerPublicKey  crypto.PublicKey
+
+		identityPrivateKey crypto.PrivateKey
+		identityPublicKey  crypto.PublicKey
+
+		certificates []*crypto.Certificate
 
 		addresses     *StringAddressesSyncMap
 		contentHashes *ObjectHashSyncList
@@ -33,11 +38,17 @@ type (
 
 func NewLocalPeer(
 	hostname string,
-	key crypto.PrivateKey,
+	peerPrivateKey crypto.PrivateKey,
 ) (*LocalPeer, error) {
 	return &LocalPeer{
 		hostname: hostname,
-		key:      key,
+
+		peerPrivateKey: peerPrivateKey,
+		peerPublicKey:  peerPrivateKey.PublicKey(),
+
+		certificates: []*crypto.Certificate{
+			crypto.NewSelfSignedCertificate(peerPrivateKey),
+		},
 
 		addresses:     &StringAddressesSyncMap{},
 		contentHashes: &ObjectHashSyncList{},
@@ -90,49 +101,49 @@ func (p *LocalPeer) RemoveContentHash(hashes ...*object.Hash) {
 	}
 }
 
-func (p *LocalPeer) AddIdentityKey(identityKey crypto.PrivateKey) error {
+func (p *LocalPeer) AddIdentityKey(identityPrivateKey crypto.PrivateKey) error {
 	p.keyLock.Lock()
 	defer p.keyLock.Unlock()
 
-	p.identityKey = identityKey
-	p.certificate = crypto.NewCertificate(p.key)
-	p.certificate.Sign(identityKey)
+	p.identityPrivateKey = identityPrivateKey
+	p.identityPublicKey = identityPrivateKey.PublicKey()
+
+	p.certificates = append(
+		p.certificates,
+		crypto.NewCertificate(p.peerPublicKey, identityPrivateKey),
+	)
 
 	return nil
 }
 
-func (p *LocalPeer) GetPeerKey() crypto.PublicKey {
+func (p *LocalPeer) GetPeerPublicKey() crypto.PublicKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	return p.key.PublicKey()
+	return p.peerPublicKey
 }
 
 func (p *LocalPeer) GetPeerPrivateKey() crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	return p.key
+	return p.peerPrivateKey
 }
 
-func (p *LocalPeer) GetIdentityKey() crypto.PublicKey {
+func (p *LocalPeer) GetIdentityPublicKey() crypto.PublicKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	if p.identityKey == "" {
-		return p.key.PublicKey()
+	if p.identityPublicKey.IsEmpty() {
+		return p.peerPublicKey
 	}
-	return p.identityKey.PublicKey()
+	return p.identityPublicKey
 }
 
 func (p *LocalPeer) GetIdentityPrivateKey() crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
-	if p.identityKey == "" {
-		return p.key
+	if p.identityPrivateKey == "" {
+		return p.peerPrivateKey
 	}
-	return p.identityKey
-}
-
-func (p *LocalPeer) GetAddress() string {
-	return p.key.PublicKey().Address()
+	return p.identityPrivateKey
 }
 
 func (p *LocalPeer) GetAddresses() []string {
@@ -153,10 +164,6 @@ func (p *LocalPeer) GetContentHashes() []*object.Hash {
 	return hashes
 }
 
-// func (p *LocalPeer) GetFingerprint() crypto.PublicKey {
-// 	return p.fingerprint
-// }
-
 func (p *LocalPeer) GetHostname() string {
 	return p.hostname
 }
@@ -168,15 +175,26 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 
 	// TODO cache peer info and reuse
 	pi := &Peer{
-		Addresses: p.GetAddresses(),
+		Addresses:    p.GetAddresses(),
+		Certificates: p.certificates,
+		ContentTypes: []string{},
 	}
 
 	o := pi.ToObject()
-	if err := crypto.Sign(o, p.GetPeerPrivateKey()); err != nil {
+	sig, err := crypto.NewSignature(p.peerPrivateKey, o)
+	if err != nil {
 		panic(err)
 	}
-	if err := pi.FromObject(o); err != nil {
-		panic(err)
-	}
+
+	pi.Signature = sig
+
 	return pi
+}
+
+// GetCertificate returns the peer's certificate
+func (p *LocalPeer) GetCertificates() []*crypto.Certificate {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+
+	return p.certificates
 }

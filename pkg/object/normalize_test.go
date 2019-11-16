@@ -26,11 +26,9 @@ func Test_Normalize(t *testing.T) {
 			},
 		},
 		Signature: &crypto.Signature{
-			Signer: &crypto.Certificate{
-				Subject: "foo",
-			},
-			Alg: "alg",
-			X:   kx,
+			Signer: "foo",
+			Alg:    "alg",
+			X:      kx,
 		},
 	}
 
@@ -48,13 +46,10 @@ func Test_Normalize(t *testing.T) {
 			},
 		},
 		"@signature:o": map[string]interface{}{
-			"@type:s": "nimona.io/crypto.Signature",
-			"signer:o": map[string]interface{}{
-				"@type:s":   "nimona.io/crypto.Certificate",
-				"subject:s": "foo",
-			},
-			"alg:s": "alg",
-			"x:d":   kx,
+			"@type:s":  "nimona.io/crypto.Signature",
+			"signer:s": "foo",
+			"alg:s":    "alg",
+			"x:d":      kx,
 		},
 	}
 

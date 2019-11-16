@@ -197,12 +197,12 @@ func (r *discoverer) AddProvider(provider Provider) error {
 // Add allows manually adding peer infos to be resolved.
 // These peers will eventually be gc-ed.
 func (r *discoverer) Add(peer *peer.Peer) {
-	r.cacheTemp.Put(peer.Signature.Signer.Subject.String(), peer)
+	r.cacheTemp.Put(peer.Signature.Signer.String(), peer)
 }
 
 // AddPersistent allows adding permanent peer infos to be resolved.
 // These peers can be overshadowed by other discoverers, but will never be gc-ed
 // Mainly used for adding bootstrap nodes.
 func (r *discoverer) AddPersistent(peer *peer.Peer) {
-	r.cachePersistent.Put(peer.Signature.Signer.Subject.String(), peer)
+	r.cachePersistent.Put(peer.Signature.Signer.String(), peer)
 }

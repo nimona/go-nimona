@@ -37,7 +37,7 @@ func (api *API) HandlePostGraphs(c *router.Context) {
 	}
 
 	k := api.local.GetPeerPrivateKey()
-	id := api.local.GetIdentityKey()
+	id := api.local.GetIdentityPublicKey()
 
 	req["@identity:o"] = id.ToObject().ToMap()
 
@@ -106,7 +106,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		if rootObject, err := api.objectStore.Get(rootObjectHash); err == nil {
 			sig, err := crypto.GetObjectSignature(rootObject)
 			if err == nil {
-				addrs = append(addrs, sig.Signer.Subject.Address())
+				addrs = append(addrs, sig.Signer.Address())
 			}
 		}
 
