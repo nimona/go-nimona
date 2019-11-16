@@ -50,7 +50,7 @@ func (hs *Handshake) handleIncoming(
 	nonce := rand.String(8)
 	syn := &Syn{
 		Nonce:    nonce,
-		Identity: hs.local.GetIdentityKey(),
+		Identity: hs.local.GetIdentityPublicKey(),
 	}
 	so := syn.ToObject()
 	if err := crypto.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
@@ -81,8 +81,8 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Signature.Signer.Subject
-	conn.LocalPeerKey = hs.local.GetPeerKey()
+	conn.RemotePeerKey = synAck.Signature.Signer
+	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) do we need to do something about this?
 	// hs.discoverer.Add(synAck.Peer)
@@ -132,15 +132,15 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Signature.Signer.Subject
-	conn.LocalPeerKey = hs.local.GetPeerKey()
+	conn.RemotePeerKey = syn.Signature.Signer
+	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) this one too
 	// hs.discoverer.Add(syn.Peer)
 
 	synAck := &SynAck{
 		Nonce:    syn.Nonce,
-		Identity: hs.local.GetIdentityKey(),
+		Identity: hs.local.GetIdentityPublicKey(),
 	}
 
 	sao := synAck.ToObject()

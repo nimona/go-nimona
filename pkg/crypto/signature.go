@@ -28,7 +28,7 @@ func NewSignature(
 	h := hash.New(o)
 	x := k.Sign(h.D)
 	s := &Signature{
-		Signer: NewCertificate(k),
+		Signer: k.PublicKey(),
 		Alg:    AlgorithmObjectHash,
 		X:      x,
 	}
@@ -55,14 +55,4 @@ func GetObjectSignature(o object.Object) (*Signature, error) {
 		)
 	}
 	return s, nil
-}
-
-func GetSignatureKeys(sig *Signature) (pks []PublicKey) {
-	for {
-		if sig == nil || sig.Signer == nil || sig.Signer.Subject == "" {
-			return
-		}
-		pks = append(pks, sig.Signer.Subject)
-		sig = sig.Signer.Signature
-	}
 }

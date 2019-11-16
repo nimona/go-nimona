@@ -7,15 +7,11 @@ import (
 )
 
 func (api *API) HandleGetIdentities(c *router.Context) {
-	// p := api.local.GetPeerPrivateKey()
-	// if p.PublicKey.Signature == nil {
-	// 	c.JSON(http.StatusNotFound, []interface{}{})
-	// 	return
-	// }
+	p := api.local.GetIdentityPublicKey()
 
-	// c.JSON(http.StatusOK, []interface{}{
-	// 	api.mapObject(p.PublicKey.Signature.PublicKey.ToObject()),
-	// })
+	c.JSON(http.StatusOK, []interface{}{
+		api.mapObject(p.ToObject()),
+	})
 }
 
 func (api *API) HandleGetIdentity(c *router.Context) {

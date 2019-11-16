@@ -3,10 +3,12 @@ package nimona.io/crypto
 domain nimona.io/crypto {
     event Certificate {
         subject PublicKey
-        signature Signature
+        created string
+        expires string
+        @signature Signature
     }
     event Signature {
-        signer Certificate
+        signer PublicKey
         alg string
         x data
     }

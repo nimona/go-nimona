@@ -11,12 +11,14 @@ import (
 type (
 	Certificate struct {
 		Subject   PublicKey  `json:"subject:s,omitempty"`
-		Signature *Signature `json:"signature:o,omitempty"`
+		Created   string     `json:"created:s,omitempty"`
+		Expires   string     `json:"expires:s,omitempty"`
+		Signature *Signature `json:"@signature:o,omitempty"`
 	}
 	Signature struct {
-		Signer *Certificate `json:"signer:o,omitempty"`
-		Alg    string       `json:"alg:s,omitempty"`
-		X      []byte       `json:"x:d,omitempty"`
+		Signer PublicKey `json:"signer:s,omitempty"`
+		Alg    string    `json:"alg:s,omitempty"`
+		X      []byte    `json:"x:d,omitempty"`
 	}
 )
 
@@ -28,8 +30,10 @@ func (e *Certificate) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Certificate"
 	m["subject:s"] = e.Subject
+	m["created:s"] = e.Created
+	m["expires:s"] = e.Expires
 	if e.Signature != nil {
-		m["signature:o"] = e.Signature.ToObject().ToMap()
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -46,9 +50,7 @@ func (e *Signature) GetType() string {
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Signature"
-	if e.Signer != nil {
-		m["signer:o"] = e.Signer.ToObject().ToMap()
-	}
+	m["signer:s"] = e.Signer
 	m["alg:s"] = e.Alg
 	m["x:d"] = e.X
 	return object.Object(m)

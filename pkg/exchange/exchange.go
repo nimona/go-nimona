@@ -151,7 +151,7 @@ func New(
 		Named("exchange").
 		With(
 			log.String("method", "exchange.New"),
-			log.String("local.peer", localInfo.GetPeerKey().String()),
+			log.String("local.peer", localInfo.GetPeerPublicKey().String()),
 		)
 
 	// add request object handler

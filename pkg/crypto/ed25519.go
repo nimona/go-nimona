@@ -35,7 +35,6 @@ func GenerateEd25519PrivateKey() (PrivateKey, error) {
 
 func NewPrivateKey(seed []byte) PrivateKey {
 	k := ed25519.NewKeyFromSeed(seed)
-	// p := k.Public().(ed25519.PublicKey)
 	return PrivateKey(k)
 }
 

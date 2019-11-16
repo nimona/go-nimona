@@ -11,9 +11,11 @@ import (
 
 type (
 	Peer struct {
-		Addresses []string          `json:"addresses:as,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Addresses    []string              `json:"addresses:as,omitempty"`
+		ContentTypes []string              `json:"contentTypes:as,omitempty"`
+		Certificates []*crypto.Certificate `json:"certificates:ao,omitempty"`
+		Signature    *crypto.Signature     `json:"@signature:o,omitempty"`
+		Identity     crypto.PublicKey      `json:"@identity:s,omitempty"`
 	}
 	Requested struct {
 		Keys      []string          `json:"keys:as,omitempty"`
@@ -31,6 +33,18 @@ func (e *Peer) ToObject() object.Object {
 	m["@type:s"] = "nimona.io/peer.Peer"
 	if len(e.Addresses) > 0 {
 		m["addresses:as"] = e.Addresses
+	}
+	if len(e.ContentTypes) > 0 {
+		m["contentTypes:as"] = e.ContentTypes
+	}
+	if len(e.Certificates) > 0 {
+		m["certificates:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Certificates))
+			for i, v := range e.Certificates {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()

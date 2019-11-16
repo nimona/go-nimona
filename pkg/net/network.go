@@ -192,7 +192,7 @@ func (n *network) dialPeer(
 	pkey := strings.Replace(address, "peer:", "", 1)
 	key := crypto.PublicKey(pkey)
 
-	if n.local.GetPeerKey().Equals(key) {
+	if n.local.GetPeerPublicKey().Equals(key) {
 		return nil, errors.New("cannot dial our own peer")
 	}
 

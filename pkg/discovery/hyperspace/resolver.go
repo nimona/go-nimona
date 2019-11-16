@@ -164,7 +164,7 @@ func (r *Discoverer) FindByContent(
 	fs := []crypto.PublicKey{}
 
 	for _, b := range cs {
-		fs = append(fs, b.Signature.Signer.Subject)
+		fs = append(fs, b.Signature.Signer)
 	}
 	logger.With(
 		log.Any("fingerprints", cs),
@@ -225,7 +225,7 @@ func (r *Discoverer) handleObject(
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		if v.Signature == nil || v.Signature.Signer.Subject == "" {
+		if v.Signature == nil || v.Signature.Signer == "" {
 			logger.Warn("object has no signature")
 			return nil
 		}
@@ -286,7 +286,7 @@ func (r *Discoverer) handlePeerRequest(
 
 	for _, p := range cps {
 		logger.Debug("responding with peer",
-			log.String("peer", p.Signature.Signer.Subject.String()),
+			log.String("peer", p.Signature.Signer.String()),
 		)
 		err := r.exchange.Send(
 			context.New(
@@ -343,7 +343,7 @@ func (r *Discoverer) handleProviderRequest(
 	for _, p := range cps {
 		pf := ""
 		if p.Signature != nil {
-			pf = p.Signature.Signer.Subject.String()
+			pf = p.Signature.Signer.String()
 		}
 		logger.Debug("responding with content hash bloom",
 			log.Any("bloom", p.Bloom),
@@ -422,14 +422,14 @@ func (r *Discoverer) LookupContentProvider(
 	contentProviderHandler := func(e *exchange.Envelope) error {
 		cp := &Announced{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.Signer.Subject == "" {
+		if cp.Signature == nil || cp.Signature.Signer == "" {
 			return nil
 		}
 		if intersectionCount(cp.Bloom(), q.Bloom()) == len(q.Bloom()) {
-			providers <- cp.Signature.Signer.Subject
+			providers <- cp.Signature.Signer
 			return nil
 		}
-		recipients <- cp.Signature.Signer.Subject
+		recipients <- cp.Signature.Signer
 		return nil
 	}
 	cpCancel, err := r.exchange.Handle(
@@ -444,8 +444,8 @@ func (r *Discoverer) LookupContentProvider(
 	peerHandler := func(e *exchange.Envelope) error {
 		cp := &peer.Peer{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature != nil && cp.Signature.Signer.Subject != "" {
-			recipients <- cp.Signature.Signer.Subject
+		if cp.Signature != nil && cp.Signature.Signer != "" {
+			recipients <- cp.Signature.Signer
 		}
 		return nil
 	}
@@ -460,11 +460,11 @@ func (r *Discoverer) LookupContentProvider(
 	// find and ask "closest" content providers
 	announcements := r.store.FindClosestContentProvider(q)
 	for _, announcement := range announcements {
-		recipients <- announcement.Signature.Signer.Subject
+		recipients <- announcement.Signature.Signer
 	}
 
 	// find and ask "closest" peers
-	closestPeers := r.store.FindClosestPeer(r.local.GetPeerKey())
+	closestPeers := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
 	for _, peer := range closestPeers {
 		recipients <- peer.PublicKey()
 	}
@@ -521,7 +521,7 @@ func (r *Discoverer) LookupPeer(
 	// allows us to match peers with peerRequest
 	peerMatchesRequest := func(peer *peer.Peer) bool {
 		for _, key := range peerRequest.Keys {
-			if key == peer.Signature.Signer.Subject.String() {
+			if key == peer.Signature.Signer.String() {
 				return true
 			}
 		}
@@ -561,14 +561,14 @@ func (r *Discoverer) LookupPeer(
 	peerHandler := func(e *exchange.Envelope) error {
 		cp := &peer.Peer{}
 		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.Signer.Subject == "" {
+		if cp.Signature == nil || cp.Signature.Signer == "" {
 			return nil
 		}
 		if peerMatchesRequest(cp) {
 			peers <- cp
 			return nil
 		}
-		recipients <- cp.Signature.Signer.Subject
+		recipients <- cp.Signature.Signer
 		return nil
 	}
 	peerCancel, err := r.exchange.Handle(
@@ -581,7 +581,7 @@ func (r *Discoverer) LookupPeer(
 
 	// find and ask "closest" peers
 	go func() {
-		cps := r.store.FindClosestPeer(r.local.GetPeerKey())
+		cps := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
 		cps = r.withoutOwnPeer(cps)
 		for _, peer := range cps {
 			if peerMatchesRequest(peer) {
@@ -691,11 +691,11 @@ func (r *Discoverer) publishContentHashes(
 	cps := r.store.FindClosestContentProvider(b)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
-		fs = append(fs, c.Signature.Signer.Subject)
+		fs = append(fs, c.Signature.Signer)
 	}
-	ps := r.store.FindClosestPeer(r.local.GetPeerKey())
+	ps := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
 	for _, p := range ps {
-		fs = append(fs, p.Signature.Signer.Subject)
+		fs = append(fs, p.Signature.Signer)
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -734,10 +734,10 @@ func (r *Discoverer) publishContentHashes(
 }
 
 func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
-	lp := r.local.GetPeerKey().String()
+	lp := r.local.GetPeerPublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		pm[p.Signature.Signer.Subject.String()] = p
+		pm[p.Signature.Signer.String()] = p
 	}
 	nps := []*peer.Peer{}
 	for f, p := range pm {
@@ -750,7 +750,7 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 }
 
 func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.PublicKey {
-	lp := r.local.GetPeerKey().String()
+	lp := r.local.GetPeerPublicKey().String()
 	pm := map[string]crypto.PublicKey{}
 	for _, p := range ps {
 		pm[p.String()] = p

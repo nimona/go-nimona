@@ -30,12 +30,12 @@ func (s *Store) AddPeer(p *peer.Peer) {
 	s.peers.Range(func(k crypto.PublicKey, v *peer.Peer) bool {
 		return true
 	})
-	s.peers.Put(p.Signature.Signer.Subject, p)
+	s.peers.Put(p.Signature.Signer, p)
 }
 
 // Add content hashes
 func (s *Store) AddContentHashes(c *Announced) {
-	s.blooms.Put(c.Signature.Signer.Subject, c)
+	s.blooms.Put(c.Signature.Signer, c)
 }
 
 // FindClosestPeer returns peers that closest resemble the query
@@ -49,7 +49,7 @@ func (s *Store) FindClosestPeer(f crypto.PublicKey) []*peer.Peer {
 
 	r := []kv{}
 	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
-		pb := bloom.NewBloom(p.Signature.Signer.Subject.String())
+		pb := bloom.NewBloom(p.Signature.Signer.String())
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), pb.Bloom()),
 			peer:              p,
@@ -106,28 +106,18 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
 
 // FindByPublicKey returns peers that are signed by a fingerprint
 func (s *Store) FindByPublicKey(
-	fingerprint crypto.PublicKey,
+	publicKey crypto.PublicKey,
 ) []*peer.Peer {
 	ps := []*peer.Peer{}
 	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
-		if peerMatchesKeyFingerprint(p, fingerprint) {
-			ps = append(ps, p)
+		for _, cert := range p.Certificates {
+			if cert.Signature.Signer.Equals(publicKey) {
+				ps = append(ps, p)
+			}
 		}
 		return true
 	})
 	return ps
-}
-
-func peerMatchesKeyFingerprint(
-	peer *peer.Peer,
-	fingerprint crypto.PublicKey,
-) bool {
-	for _, k := range crypto.GetSignatureKeys(peer.Signature) {
-		if k.String() == fingerprint.String() {
-			return true
-		}
-	}
-	return false
 }
 
 // FindByContent returns peers that match a given content hash
