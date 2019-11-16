@@ -108,18 +108,18 @@ func NewDiscoverer(
 // FindByPublicKey finds and returns peer infos from a fingerprint
 func (r *Discoverer) FindByPublicKey(
 	ctx context.Context,
-	fingerprint crypto.PublicKey,
+	publicKey crypto.PublicKey,
 	opts ...discovery.Option,
 ) ([]*peer.Peer, error) {
 	opt := discovery.ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.FindByPublicKey"),
-		log.Any("peer.fingerprint", fingerprint),
+		log.Any("peer.publicKey", publicKey),
 	)
-	logger.Debug("trying to find peer by fingerprint")
+	logger.Debug("trying to find peer by publicKey")
 
-	eps := r.store.FindByPublicKey(fingerprint)
+	eps := r.store.FindByPublicKey(publicKey)
 	if len(eps) > 0 {
 		logger.Debug(
 			"found peers in store",
@@ -132,11 +132,7 @@ func (r *Discoverer) FindByPublicKey(
 		return eps, nil
 	}
 
-	meps, _ := r.LookupPeer(ctx, &peer.Requested{
-		Keys: []string{
-			fingerprint.String(),
-		},
-	}) // nolint: errcheck
+	meps, _ := r.LookupPeer(ctx, publicKey) // nolint: errcheck
 
 	eps = append(eps, meps...)
 	eps = r.withoutOwnPeer(eps)
@@ -264,25 +260,15 @@ func (r *Discoverer) handlePeerRequest(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeerRequest"),
 		log.String("e.sender", e.Sender.String()),
-		log.Any("query.keys", q.Keys),
+		log.Any("query.key", q.Key),
 	)
 
 	logger.Debug("handling peer request")
 
-	cps := []*peer.Peer{}
-	for _, k := range q.Keys {
-		f := crypto.PublicKey(k)
-		cps = append(cps, r.store.FindClosestPeer(f)...)
-	}
-
+	cps := r.store.FindClosestPeer(q.Key)
 	// TODO doesn't the above already find the exact peers?
-	for _, k := range q.Keys {
-		f := crypto.PublicKey(k)
-		ps := r.store.FindByPublicKey(f)
-		cps = append(cps, ps...)
-	}
-
-	// cps = r.withoutOwnPeer(cps)
+	cps = append(cps, r.store.FindByPublicKey(q.Key)...)
+	cps = r.withoutOwnPeer(cps)
 
 	for _, p := range cps {
 		logger.Debug("responding with peer",
@@ -503,12 +489,12 @@ loop:
 // LookupPeer does a network lookup given a query
 func (r *Discoverer) LookupPeer(
 	ctx context.Context,
-	peerRequest *peer.Requested,
+	requestedPeer crypto.PublicKey,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupPeer"),
-		log.Any("query.keys", peerRequest.Keys),
+		log.Any("requestedPeer", requestedPeer),
 	)
 	logger.Debug("looking up peer")
 
@@ -520,8 +506,8 @@ func (r *Discoverer) LookupPeer(
 
 	// allows us to match peers with peerRequest
 	peerMatchesRequest := func(peer *peer.Peer) bool {
-		for _, key := range peerRequest.Keys {
-			if key == peer.Signature.Signer.String() {
+		for _, cert := range peer.Certificates {
+			if cert.Signature.Signer.Equals(requestedPeer) {
 				return true
 			}
 		}
@@ -529,6 +515,9 @@ func (r *Discoverer) LookupPeer(
 	}
 
 	// send content requests to recipients
+	peerRequest := &peer.Requested{
+		Key: requestedPeer,
+	}
 	peerRequestObject := peerRequest.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
@@ -622,15 +611,13 @@ func (r *Discoverer) bootstrap(
 	bootstrapAddresses []string,
 ) error {
 	logger := log.FromContext(ctx)
-	key := r.local.GetPeerPrivateKey()
+	publicKey := r.local.GetPeerPublicKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	}
 	q := &peer.Requested{
-		Keys: []string{
-			key.String(),
-		},
+		Key: publicKey,
 	}
 	o := q.ToObject()
 	for _, addr := range bootstrapAddresses {
