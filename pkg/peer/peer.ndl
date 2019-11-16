@@ -9,6 +9,6 @@ domain nimona.io/peer {
         certificates repeated crypto.Certificate
     }
     signed command Requested {
-        keys repeated string
+        key crypto.PublicKey
     }
 }

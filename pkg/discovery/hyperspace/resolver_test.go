@@ -150,22 +150,22 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	fmt.Println("-------------------")
 	fmt.Println("-------------------")
 
-	// find node 3 from node 1
+	// find node 3 from node 1 from it's identity
 	ctx = context.New(
 		context.WithCorrelationID("req4"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.FindByPublicKey(ctx, k3.PublicKey())
+	peers, err = d1.FindByPublicKey(ctx, l3.GetIdentityPublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
 
-	// find node 3 from node 2
+	// find node 3 from node 2 from it's identity
 	ctx = context.New(
 		context.WithCorrelationID("req5"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.FindByPublicKey(ctx, k3.PublicKey())
+	peers, err = d2.FindByPublicKey(ctx, l3.GetIdentityPublicKey())
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -271,7 +271,7 @@ func newPeer(
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
 
-	// owner key
+	// identity key
 	opk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
@@ -279,17 +279,12 @@ func newPeer(
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	// sig, err := crypto.NewSignature(
-	// 	opk,
-	// 	pk.PublicKey().ToObject(),
-	// )
-	// assert.NoError(t, err)
-
-	// pk.PublicKey.Signature = sig
-
 	disc := discovery.NewDiscoverer()
 	ds := graph.New(kv.NewMemory())
 	local, err := peer.NewLocalPeer("", pk)
+	assert.NoError(t, err)
+
+	err = local.AddIdentityKey(opk)
 	assert.NoError(t, err)
 
 	n, err := net.New(disc, local)
