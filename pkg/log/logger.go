@@ -36,13 +36,34 @@ type (
 )
 
 var (
-	DefaultOutput io.Writer = os.Stdout
-	DefaultWriter Writer    = JSONWriter()
-	DefaultLogger Logger    = &logger{
+	DefaultLogLevel Level     = ErrorLevel
+	DefaultOutput   io.Writer = os.Stdout
+	DefaultWriter   Writer    = JSONWriter()
+	DefaultLogger   Logger    = &logger{
 		writer: DefaultWriter,
 		output: DefaultOutput,
 	}
 )
+
+func init() {
+	logLevel := os.Getenv("LOG_LEVEL")
+	switch strings.ToUpper(logLevel) {
+	case "DEBUG":
+		DefaultLogLevel = DebugLevel
+	case "INFO":
+		DefaultLogLevel = InfoLevel
+	case "WARN", "WARNING":
+		DefaultLogLevel = WarnLevel
+	case "ERR", "ERROR":
+		DefaultLogLevel = ErrorLevel
+	case "PANIC":
+		DefaultLogLevel = PanicLevel
+	case "FATAL":
+		DefaultLogLevel = FatalLevel
+	default:
+		DefaultLogLevel = ErrorLevel
+	}
+}
 
 func Stack() Field {
 	return Field{
@@ -152,25 +173,37 @@ func (log *logger) Named(name string) *logger {
 }
 
 func (log *logger) Debug(msg string, fields ...Field) {
-	log.write(DebugLevel, msg, fields...)
+	if DebugLevel >= DefaultLogLevel {
+		log.write(DebugLevel, msg, fields...)
+	}
 }
 
 func (log *logger) Info(msg string, fields ...Field) {
-	log.write(InfoLevel, msg, fields...)
+	if InfoLevel >= DefaultLogLevel {
+		log.write(InfoLevel, msg, fields...)
+	}
 }
 
 func (log *logger) Warn(msg string, fields ...Field) {
-	log.write(WarnLevel, msg, fields...)
+	if WarnLevel >= DefaultLogLevel {
+		log.write(WarnLevel, msg, fields...)
+	}
 }
 
 func (log *logger) Error(msg string, fields ...Field) {
-	log.write(ErrorLevel, msg, fields...)
+	if ErrorLevel >= DefaultLogLevel {
+		log.write(ErrorLevel, msg, fields...)
+	}
 }
 
 func (log *logger) Panic(msg string, fields ...Field) {
-	log.write(PanicLevel, msg, fields...)
+	if PanicLevel >= DefaultLogLevel {
+		log.write(PanicLevel, msg, fields...)
+	}
 }
 
 func (log *logger) Fatal(msg string, fields ...Field) {
-	log.write(FatalLevel, msg, fields...)
+	if FatalLevel >= DefaultLogLevel {
+		log.write(FatalLevel, msg, fields...)
+	}
 }
