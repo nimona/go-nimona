@@ -93,8 +93,10 @@ func isIPv6(address string) bool {
 }
 
 func isPrivate(ip net.IP) bool {
-	_, object24, _ := net.ParseCIDR("10.0.0.0/8")
-	_, object20, _ := net.ParseCIDR("172.16.0.0/12")
-	_, object16, _ := net.ParseCIDR("192.168.0.0/16")
-	return object16.Contains(ip) || object20.Contains(ip) || object24.Contains(ip)
+	_, block24, _ := net.ParseCIDR("10.0.0.0/8")
+	_, block20, _ := net.ParseCIDR("172.16.0.0/12")
+	_, block16, _ := net.ParseCIDR("192.168.0.0/16")
+	_, blockLinkLocal, _ := net.ParseCIDR("169.254.0.0/16")
+	return block16.Contains(ip) || block20.Contains(ip) || block24.Contains(ip) ||
+		blockLinkLocal.Contains(ip)
 }
