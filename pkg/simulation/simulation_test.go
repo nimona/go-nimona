@@ -46,6 +46,7 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_ALIAS=nimona-e2e-bootstrap",
 			"BIND_PRIVATE=true",
 			"DEBUG_BLOCKS=true",
+			"LOG_LEVEL=debug",
 			"NIMONA_DAEMON_HTTP_PORT=27000",
 			"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=none",
 		}),
@@ -92,6 +93,7 @@ func TestSimulation(t *testing.T) {
 			node.WithEnv([]string{
 				"BIND_PRIVATE=true",
 				"DEBUG_BLOCKS=true",
+				"LOG_LEVEL=debug",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
 				"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=" +
 					strings.Join(bootstrapAddresses, ","),
