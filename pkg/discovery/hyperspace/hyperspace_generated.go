@@ -16,12 +16,6 @@ type (
 		Signature         *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity          crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	Announced struct {
-		AvailableContentBloom []int64           `json:"availableContentBloom:ai,omitempty"`
-		Nonce                 string            `json:"nonce:s,omitempty"`
-		Signature             *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity              crypto.PublicKey  `json:"@identity:s,omitempty"`
-	}
 )
 
 func (e *Request) GetType() string {
@@ -43,29 +37,6 @@ func (e *Request) ToObject() object.Object {
 }
 
 func (e *Request) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *Announced) GetType() string {
-	return "nimona.io/discovery/hyperspace.Announced"
-}
-
-func (e *Announced) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/discovery/hyperspace.Announced"
-	if len(e.AvailableContentBloom) > 0 {
-		m["availableContentBloom:ai"] = e.AvailableContentBloom
-	}
-	m["nonce:s"] = e.Nonce
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	m["@identity:s"] = e.Identity
-	return object.Object(m)
-}
-
-func (e *Announced) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

@@ -17,7 +17,7 @@ func (b Bloom) Bloom() []int64 {
 	return []int64(b)
 }
 
-func NewBloom(contentHashes ...string) Bloom {
+func New(contentHashes ...string) Bloom {
 	bs := []int{}
 	for _, c := range contentHashes {
 		b := HashChunked("", []byte(c))
