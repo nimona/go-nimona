@@ -17,10 +17,9 @@ import (
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=*object.Hash"
 
 var (
-	peerRequestedType            = new(peer.Requested).GetType()
-	peerType                     = new(peer.Peer).GetType()
-	contentProviderRequestType   = new(Request).GetType()
-	contentProviderAnnouncedType = new(Announced).GetType()
+	peerRequestedType          = new(peer.Requested).GetType()
+	peerType                   = new(peer.Peer).GetType()
+	contentProviderRequestType = new(Request).GetType()
 )
 
 const (
@@ -63,7 +62,6 @@ func NewDiscoverer(
 		peerType,
 		peerRequestedType,
 		contentProviderRequestType,
-		contentProviderAnnouncedType,
 	}
 
 	// handle types of objects we care about
@@ -155,7 +153,7 @@ func (r *Discoverer) FindByContent(
 	)
 	logger.Debug("trying to find peer by contentHash")
 
-	b := bloom.NewBloom(contentHash.Compact())
+	b := bloom.New(contentHash.Compact())
 	cs := r.store.FindByContent(b)
 	fs := []crypto.PublicKey{}
 
@@ -193,9 +191,9 @@ func (r *Discoverer) handleObject(
 	// attempt to recover correlation id from request id
 	ctx := r.context
 
-	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handleObject"),
-	)
+	// logger := log.FromContext(ctx).With(
+	// 	log.String("method", "hyperspace/resolver.handleObject"),
+	// )
 
 	// handle payload
 	o := e.Payload
@@ -212,20 +210,6 @@ func (r *Discoverer) handleObject(
 			return err
 		}
 		r.handlePeer(ctx, v, e)
-	case contentProviderAnnouncedType:
-		logger := logger.With(
-			log.String("e.sender", e.Sender.String()),
-			log.String("o.type", o.GetType()),
-		)
-		v := &Announced{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		if v.Signature == nil || v.Signature.Signer == "" {
-			logger.Warn("object has no signature")
-			return nil
-		}
-		r.handleProvider(ctx, v, e)
 	case contentProviderRequestType:
 		v := &Request{}
 		if err := v.FromObject(o); err != nil {
@@ -291,20 +275,6 @@ func (r *Discoverer) handlePeerRequest(
 	logger.Debug("handling done")
 }
 
-func (r *Discoverer) handleProvider(
-	ctx context.Context,
-	p *Announced,
-	e *exchange.Envelope,
-) {
-	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handleProvider"),
-		log.String("sender.fingerprint", e.Sender.String()),
-	)
-	logger.Debug("adding provider to store")
-	r.store.AddContentHashes(p)
-	logger.Debug("added provider to store")
-}
-
 func (r *Discoverer) handleProviderRequest(
 	ctx context.Context,
 	q *Request,
@@ -319,12 +289,8 @@ func (r *Discoverer) handleProviderRequest(
 
 	logger.Debug("handling content request")
 
-	cps := r.store.FindClosestContentProvider(q)
-
-	oc, err := r.getOwnContentProviderUpdated()
-	if err == nil && oc != nil {
-		cps = append(cps, oc)
-	}
+	cps := r.store.FindClosestContentProvider(q.QueryContentBloom)
+	cps = append(cps, r.local.GetSignedPeer())
 
 	for _, p := range cps {
 		pf := ""
@@ -332,7 +298,7 @@ func (r *Discoverer) handleProviderRequest(
 			pf = p.Signature.Signer.String()
 		}
 		logger.Debug("responding with content hash bloom",
-			log.Any("bloom", p.Bloom),
+			log.Any("bloom", p.ContentBloom),
 			log.String("fingerprint", pf),
 		)
 		err := r.exchange.Send(
@@ -357,7 +323,7 @@ func (r *Discoverer) handleProviderRequest(
 // LookupContentProvider searches the network for content given a bloom filter
 func (r *Discoverer) LookupContentProvider(
 	ctx context.Context,
-	q bloom.Bloomer,
+	q bloom.Bloom,
 ) ([]crypto.PublicKey, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -406,12 +372,12 @@ func (r *Discoverer) LookupContentProvider(
 
 	// listen for new content providers and ask them
 	contentProviderHandler := func(e *exchange.Envelope) error {
-		cp := &Announced{}
+		cp := &peer.Peer{}
 		cp.FromObject(e.Payload) // nolint: errcheck
 		if cp.Signature == nil || cp.Signature.Signer == "" {
 			return nil
 		}
-		if intersectionCount(cp.Bloom(), q.Bloom()) == len(q.Bloom()) {
+		if intersectionCount(cp.ContentBloom, q) == len(q.Bloom()) {
 			providers <- cp.Signature.Signer
 			return nil
 		}
@@ -419,7 +385,7 @@ func (r *Discoverer) LookupContentProvider(
 		return nil
 	}
 	cpCancel, err := r.exchange.Handle(
-		contentProviderAnnouncedType,
+		peerType,
 		contentProviderHandler,
 	)
 	if err != nil {
@@ -643,26 +609,6 @@ func (r *Discoverer) getContentHashes() []*object.Hash {
 	return cIDs
 }
 
-func (r *Discoverer) getOwnContentProviderUpdated() (*Announced, error) {
-	cs := r.getContentHashes()
-	ss := []string{}
-	for _, c := range cs {
-		ss = append(ss, c.Compact())
-	}
-	b := bloom.NewBloom(ss...)
-	cb := &Announced{
-		AvailableContentBloom: b,
-	}
-
-	o := cb.ToObject()
-	if err := crypto.Sign(o, r.local.GetPeerPrivateKey()); err != nil {
-		return nil, errors.Wrap(err, errors.New("could not sign object"))
-	}
-
-	err := cb.FromObject(o)
-	return cb, err
-}
-
 func (r *Discoverer) publishContentHashes(
 	ctx context.Context,
 ) error {
@@ -674,7 +620,7 @@ func (r *Discoverer) publishContentHashes(
 	for _, c := range cs {
 		ss = append(ss, c.Compact())
 	}
-	b := bloom.NewBloom(ss...)
+	b := bloom.New(ss...)
 	cps := r.store.FindClosestContentProvider(b)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
@@ -694,8 +640,8 @@ func (r *Discoverer) publishContentHashes(
 		log.Any("bloom", b),
 	).Debug("trying to tell n peers")
 
-	cb := &Announced{
-		AvailableContentBloom: b,
+	cb := &peer.Peer{
+		ContentBloom: b,
 	}
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),

@@ -12,6 +12,7 @@ import (
 type (
 	Peer struct {
 		Addresses    []string              `json:"addresses:as,omitempty"`
+		ContentBloom []int64               `json:"contentBloom:ai,omitempty"`
 		ContentTypes []string              `json:"contentTypes:as,omitempty"`
 		Certificates []*crypto.Certificate `json:"certificates:ao,omitempty"`
 		Signature    *crypto.Signature     `json:"@signature:o,omitempty"`
@@ -33,6 +34,9 @@ func (e *Peer) ToObject() object.Object {
 	m["@type:s"] = "nimona.io/peer.Peer"
 	if len(e.Addresses) > 0 {
 		m["addresses:as"] = e.Addresses
+	}
+	if len(e.ContentBloom) > 0 {
+		m["contentBloom:ai"] = e.ContentBloom
 	}
 	if len(e.ContentTypes) > 0 {
 		m["contentTypes:as"] = e.ContentTypes

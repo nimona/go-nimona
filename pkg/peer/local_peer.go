@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery/hyperspace/bloom"
 	"nimona.io/pkg/object"
 )
 
@@ -173,10 +174,17 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 
+	cs := p.GetContentHashes()
+	hs := make([]string, len(cs))
+	for i, c := range cs {
+		hs[i] = c.Compact()
+	}
+
 	// TODO cache peer info and reuse
 	pi := &Peer{
 		Addresses:    p.GetAddresses(),
 		Certificates: p.certificates,
+		ContentBloom: bloom.New(hs...),
 		ContentTypes: []string{},
 	}
 

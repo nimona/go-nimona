@@ -8,21 +8,19 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=Announced"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		blooms: &CryptoFingerprintAnnouncedSyncMap{},
-		peers:  &CryptoFingerprintPeerPeerSyncMap{},
+		peers: &CryptoFingerprintPeerPeerSyncMap{},
 	}
 }
 
 // Store holds peer content blooms and their fingerprints
 type Store struct {
-	blooms *CryptoFingerprintAnnouncedSyncMap
-	peers  *CryptoFingerprintPeerPeerSyncMap
+	peers *CryptoFingerprintPeerPeerSyncMap
 }
 
 // Add peers
@@ -33,14 +31,9 @@ func (s *Store) AddPeer(p *peer.Peer) {
 	s.peers.Put(p.Signature.Signer, p)
 }
 
-// Add content hashes
-func (s *Store) AddContentHashes(c *Announced) {
-	s.blooms.Put(c.Signature.Signer, c)
-}
-
 // FindClosestPeer returns peers that closest resemble the query
 func (s *Store) FindClosestPeer(f crypto.PublicKey) []*peer.Peer {
-	q := bloom.NewBloom(f.String())
+	q := bloom.New(f.String())
 
 	type kv struct {
 		bloomIntersection int
@@ -49,7 +42,7 @@ func (s *Store) FindClosestPeer(f crypto.PublicKey) []*peer.Peer {
 
 	r := []kv{}
 	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
-		pb := bloom.NewBloom(p.Signature.Signer.String())
+		pb := bloom.New(p.Signature.Signer.String())
 		r = append(r, kv{
 			bloomIntersection: intersectionCount(q.Bloom(), pb.Bloom()),
 			peer:              p,
@@ -74,17 +67,17 @@ func (s *Store) FindClosestPeer(f crypto.PublicKey) []*peer.Peer {
 
 // FindClosestContentProvider returns peers that are "closet" to the given
 // content
-func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
+func (s *Store) FindClosestContentProvider(q []int64) []*peer.Peer {
 	type kv struct {
 		bloomIntersection int
-		contentHashBloom  *Announced
+		peer              *peer.Peer
 	}
 
 	r := []kv{}
-	s.blooms.Range(func(f crypto.PublicKey, b *Announced) bool {
+	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
 		r = append(r, kv{
-			bloomIntersection: intersectionCount(q.Bloom(), b.Bloom()),
-			contentHashBloom:  b,
+			bloomIntersection: intersectionCount(q, p.ContentBloom),
+			peer:              p,
 		})
 		return true
 	})
@@ -93,9 +86,9 @@ func (s *Store) FindClosestContentProvider(q bloom.Bloomer) []*Announced {
 		return r[i].bloomIntersection < r[j].bloomIntersection
 	})
 
-	cs := []*Announced{}
+	cs := []*peer.Peer{}
 	for i, c := range r {
-		cs = append(cs, c.contentHashBloom)
+		cs = append(cs, c.peer)
 		if i > 10 { // TODO make limit configurable
 			break
 		}
@@ -121,12 +114,11 @@ func (s *Store) FindByPublicKey(
 }
 
 // FindByContent returns peers that match a given content hash
-func (s *Store) FindByContent(b bloom.Bloomer) []*Announced {
-	cs := []*Announced{}
-	q := b.Bloom()
+func (s *Store) FindByContent(q []int64) []*peer.Peer {
+	cs := []*peer.Peer{}
 
-	s.blooms.Range(func(f crypto.PublicKey, c *Announced) bool {
-		if intersectionCount(c.Bloom(), b.Bloom()) != len(q) {
+	s.peers.Range(func(f crypto.PublicKey, c *peer.Peer) bool {
+		if intersectionCount(c.ContentBloom, q) != len(q) {
 			return true
 		}
 		cs = append(cs, c)

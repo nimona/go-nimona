@@ -7,9 +7,5 @@ domain nimona.io/discovery/hyperspace {
         queryContentBloom repeated int
         nonce string
     }
-    signed event Announced {
-        availableContentBloom repeated int
-        nonce string
-    }
 }
  
