@@ -3,6 +3,7 @@ package rel
 import (
 	"database/sql"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"nimona.io/pkg/errors"
@@ -27,7 +28,12 @@ type DB struct {
 	db *sql.DB
 	// the key is the parent object.Hash
 	// updates on any put
-	subscribers map[string][]chan object.Hash // todo: need to make this thread safe
+	subscribers sync.Map
+}
+
+type subscription struct {
+	Hash string
+	Ch   chan object.Hash
 }
 
 type migrationRow struct {
@@ -41,7 +47,7 @@ func New(
 ) (*DB, error) {
 	ndb := &DB{
 		db:          db,
-		subscribers: map[string][]chan object.Hash{},
+		subscribers: sync.Map{},
 	}
 
 	// initialise the tables required for the migration
@@ -146,7 +152,7 @@ func (d *DB) runMigrations() error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
+		tx.Rollback() //nolint
 		return errors.Wrap(
 			err,
 			errors.New("could not insert to migrations table"),
@@ -263,11 +269,17 @@ func (d *DB) Put(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
-	if subs, ok := d.subscribers[streamHashStr]; ok {
-		for _, subCh := range subs {
-			subCh <- *objectHash
-		}
-	}
+	d.subscribers.Range(func(key, value interface{}) bool {
+		go func() {
+			sub := key.(subscription)
+
+			if sub.Hash == streamHashStr {
+				sub.Ch <- *objectHash
+			}
+		}()
+		return true
+	})
+
 	return nil
 }
 
@@ -378,14 +390,19 @@ func (d *DB) Delete(
 	return nil
 }
 
-func (d *DB) Subscribe(parent object.Hash) (chan object.Hash, error) {
+func (d *DB) Subscribe(parent object.Hash) (subscription, error) {
 	ch := make(chan object.Hash)
-	if _, ok := d.subscribers[parent.String()]; !ok {
-		d.subscribers[parent.String()] = []chan object.Hash{}
+	newSub := subscription{
+		Ch:   ch,
+		Hash: parent.String(),
 	}
+	d.subscribers.Store(newSub, true)
 
-	d.subscribers[parent.String()] = append(d.subscribers[parent.String()], ch)
-	return ch, nil
+	return newSub, nil
+}
+
+func (d *DB) Unsubscribe(sub subscription) {
+	d.subscribers.Delete(sub)
 }
 
 func (d *DB) gc() error {

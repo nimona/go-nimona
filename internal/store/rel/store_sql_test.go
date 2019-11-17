@@ -122,11 +122,11 @@ func TestSubscribe(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 		// subscribe
-		ch, err := db.Subscribe(*streamHash)
+		subscription, err := db.Subscribe(*streamHash)
 		require.NoError(t, err)
 
 		go func() {
-			hs := <-ch
+			hs := <-subscription.Ch
 			require.NotEmpty(t, hs)
 			wg.Done()
 		}()
