@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Migrations (
 	Datetime INT
 )`
 
-type DB struct {
+type Store struct {
 	db *sql.DB
 	// the key is the parent object.Hash
 	// updates on any put
@@ -44,8 +44,8 @@ type migrationRow struct {
 
 func New(
 	db *sql.DB,
-) (*DB, error) {
-	ndb := &DB{
+) (*Store, error) {
+	ndb := &Store{
 		db:          db,
 		subscribers: sync.Map{},
 	}
@@ -71,14 +71,14 @@ func New(
 	return ndb, nil
 }
 
-func (d *DB) Close() error {
-	return d.db.Close()
+func (st *Store) Close() error {
+	return st.db.Close()
 }
 
 // createMigrationTable creates the tables required to keep the state
 // of the migrations
-func (d *DB) createMigrationTable() error {
-	_, err := d.db.Exec(migrationsTable)
+func (st *Store) createMigrationTable() error {
+	_, err := st.db.Exec(migrationsTable)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not create migrations table"))
 	}
@@ -88,8 +88,8 @@ func (d *DB) createMigrationTable() error {
 
 // runMigrations executes the migrations in the array and stores the state
 // in the migration tables
-func (d *DB) runMigrations() error {
-	tx, err := d.db.Begin()
+func (st *Store) runMigrations() error {
+	tx, err := st.db.Begin()
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not start transaction"))
 	}
@@ -162,11 +162,11 @@ func (d *DB) runMigrations() error {
 	return nil
 }
 
-func (d *DB) Get(
+func (st *Store) Get(
 	hash object.Hash,
 ) (object.Object, error) {
 	// get the object
-	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
+	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -194,7 +194,7 @@ func (d *DB) Get(
 	}
 
 	// update the last accessed column
-	istmt, err := d.db.Prepare(
+	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
 	if err != nil {
 		return nil, errors.Wrap(
@@ -216,7 +216,7 @@ func (d *DB) Get(
 	return obj, nil
 }
 
-func (d *DB) Put(
+func (st *Store) Put(
 	obj object.Object,
 	opts ...Option,
 ) error {
@@ -227,7 +227,7 @@ func (d *DB) Put(
 		opt(options)
 	}
 
-	stmt, err := d.db.Prepare(`
+	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects(
 		Hash,
 		StreamHash,
@@ -265,7 +265,7 @@ func (d *DB) Put(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
-	d.subscribers.Range(func(key, value interface{}) bool {
+	st.subscribers.Range(func(key, value interface{}) bool {
 		go func() {
 			sub := key.(subscription)
 
@@ -279,10 +279,10 @@ func (d *DB) Put(
 	return nil
 }
 
-func (d *DB) GetRelations(
+func (st *Store) GetRelations(
 	parent object.Hash,
 ) ([]object.Hash, error) {
-	stmt, err := d.db.Prepare("SELECT Hash FROM Objects WHERE StreamHash=?")
+	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE StreamHash=?")
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
@@ -309,7 +309,7 @@ func (d *DB) GetRelations(
 		hashList = append(hashList, h)
 	}
 
-	istmt, err := d.db.Prepare(
+	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE StreamHash=?",
 	)
 	if err != nil {
@@ -332,11 +332,11 @@ func (d *DB) GetRelations(
 	return hashList, nil
 }
 
-func (d *DB) UpdateTTL(
+func (st *Store) UpdateTTL(
 	hash object.Hash,
 	minutes int,
 ) error {
-	stmt, err := d.db.Prepare(`
+	stmt, err := st.db.Prepare(`
 	UPDATE Objects
 	SET TTL=?, LastAccessed=?
 	WHERE Hash=?`)
@@ -358,10 +358,10 @@ func (d *DB) UpdateTTL(
 	return nil
 }
 
-func (d *DB) Delete(
+func (st *Store) Delete(
 	hash object.Hash,
 ) error {
-	stmt, err := d.db.Prepare(`
+	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
 	WHERE Hash=?`)
 	if err != nil {
@@ -380,23 +380,23 @@ func (d *DB) Delete(
 	return nil
 }
 
-func (d *DB) Subscribe(parent object.Hash) (subscription, error) {
+func (st *Store) Subscribe(parent object.Hash) (subscription, error) {
 	ch := make(chan object.Hash)
 	newSub := subscription{
 		Ch:   ch,
 		Hash: parent.String(),
 	}
-	d.subscribers.Store(newSub, true)
+	st.subscribers.Store(newSub, true)
 
 	return newSub, nil
 }
 
-func (d *DB) Unsubscribe(sub subscription) {
-	d.subscribers.Delete(sub)
+func (st *Store) Unsubscribe(sub subscription) {
+	st.subscribers.Delete(sub)
 }
 
-func (d *DB) gc() error {
-	stmt, err := d.db.Prepare(`
+func (st *Store) gc() error {
+	stmt, err := st.db.Prepare(`
 	DELETE
 	FROM
 		Objects

@@ -26,11 +26,11 @@ func TestNewDatabase(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := sqln.New(dblite)
+	store, err := sqln.New(dblite)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, store)
 
-	err = db.Close()
+	err = store.Close()
 	require.NoError(t, err)
 }
 
@@ -41,9 +41,9 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := sqln.New(dblite)
+	store, err := sqln.New(dblite)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, store)
 
 	p := stream.Created{
 		Nonce: "asdf",
@@ -54,19 +54,19 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	obj := c.ToObject()
 	obj.Set("key:s", "value")
 
-	err = db.Put(
+	err = store.Put(
 		obj,
 		sqln.WithTTL(0),
 	)
 	require.NoError(t, err)
 
-	err = db.Put(
+	err = store.Put(
 		obj,
 		sqln.WithTTL(10),
 	)
 
 	require.NoError(t, err)
-	retrievedObj, err := db.Get(hash.New(obj))
+	retrievedObj, err := store.Get(hash.New(obj))
 	require.NoError(t, err)
 
 	val := retrievedObj.Get("key:s")
@@ -76,21 +76,21 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	stHash := stream.Stream(obj)
 	require.NotEmpty(t, stHash)
 
-	err = db.UpdateTTL(hash.New(obj), 10)
+	err = store.UpdateTTL(hash.New(obj), 10)
 	require.NoError(t, err)
 
-	hashList, err := db.GetRelations(hash.New(p.ToObject()))
+	hashList, err := store.GetRelations(hash.New(p.ToObject()))
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
 
 	err = db.Delete(hash.New(p.ToObject()))
 	require.NoError(t, err)
 
-	retrievedObj2, err := db.Get(hash.New(p.ToObject()))
+	retrievedObj2, err := store.Get(hash.New(p.ToObject()))
 	require.True(t, errors.CausedBy(err, sqln.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
-	err = db.Close()
+	err = store.Close()
 	require.NoError(t, err)
 }
 
@@ -102,9 +102,9 @@ func TestSubscribe(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := sqln.New(dblite)
+	store, err := sqln.New(dblite)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	require.NotNil(t, store)
 
 	// setup data
 	p := stream.Created{
@@ -122,7 +122,7 @@ func TestSubscribe(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 		// subscribe
-		subscription, err := db.Subscribe(streamHash)
+		subscription, err := store.Subscribe(streamHash)
 		require.NoError(t, err)
 
 		go func() {
@@ -133,7 +133,7 @@ func TestSubscribe(t *testing.T) {
 	}
 
 	// store data
-	err = db.Put(
+	err = store.Put(
 		obj,
 		sqln.WithTTL(10),
 	)
