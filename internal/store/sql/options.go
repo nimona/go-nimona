@@ -1,4 +1,4 @@
-package rel
+package sql
 
 type (
 	Options struct {
