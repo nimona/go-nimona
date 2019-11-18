@@ -1,4 +1,4 @@
-package rel
+package sql
 
 var migrations = [...]string{
 	`CREATE TABLE IF NOT EXISTS Objects (

@@ -1,4 +1,4 @@
-package rel_test
+package sql_test
 
 import (
 	"database/sql"
@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-	"nimona.io/internal/store/rel"
+	sqln "nimona.io/internal/store/sql"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/stream"
@@ -26,7 +26,7 @@ func TestNewDatabase(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := rel.New(dblite)
+	db, err := sqln.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, db)
 
@@ -41,7 +41,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := rel.New(dblite)
+	db, err := sqln.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, db)
 
@@ -56,13 +56,13 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = db.Put(
 		obj,
-		rel.WithTTL(0),
+		sqln.WithTTL(0),
 	)
 	require.NoError(t, err)
 
 	err = db.Put(
 		obj,
-		rel.WithTTL(10),
+		sqln.WithTTL(10),
 	)
 
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	retrievedObj2, err := db.Get(hash.New(p.ToObject()))
-	require.True(t, errors.CausedBy(err, rel.ErrNotFound))
+	require.True(t, errors.CausedBy(err, sqln.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
 	err = db.Close()
@@ -102,7 +102,7 @@ func TestSubscribe(t *testing.T) {
 	}()
 	require.NoError(t, err)
 
-	db, err := rel.New(dblite)
+	db, err := sqln.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, db)
 
@@ -135,7 +135,7 @@ func TestSubscribe(t *testing.T) {
 	// store data
 	err = db.Put(
 		obj,
-		rel.WithTTL(10),
+		sqln.WithTTL(10),
 	)
 	require.NoError(t, err)
 

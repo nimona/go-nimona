@@ -1,4 +1,4 @@
-package rel
+package sql
 
 import (
 	"database/sql"
