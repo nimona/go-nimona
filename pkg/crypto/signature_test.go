@@ -29,10 +29,10 @@ func TestNewSignature(t *testing.T) {
 	assert.Equal(t, sig, nsig)
 
 	h := hash.New(o)
-	err = sig.Signer.Verify(h.D, sig.X)
+	err = sig.Signer.Verify(h.Bytes(), sig.X)
 	assert.NoError(t, err)
 
-	err = nsig.Signer.Verify(h.D, nsig.X)
+	err = nsig.Signer.Verify(h.Bytes(), nsig.X)
 	assert.NoError(t, err)
 
 	err = Sign(o, sk)

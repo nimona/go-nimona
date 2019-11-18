@@ -21,8 +21,7 @@ type (
 	}
 	InfoResponse struct {
 		Signature   *crypto.Signature `json:"@signature:o"`
-		Hash        *object.Hash      `json:"_hash"`
-		HashCompact string            `json:"_hash.compact"`
+		Hash        string            `json:"_hash"`
 		Fingerprint string            `json:"_fingerprint"`
 		Addresses   []string          `json:"addresses:as"`
 	}

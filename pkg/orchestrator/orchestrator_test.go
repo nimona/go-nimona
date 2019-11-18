@@ -64,51 +64,51 @@ var (
 	oh = hash.New(o)
 
 	m1 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			oh.ToObject().ToMap(),
+		"parents:as": []interface{}{
+			oh,
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			oh.ToObject().ToMap(),
+		"parents:as": []interface{}{
+			oh,
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			hash.New(m1.ToObject()).ToObject().ToMap(),
+		"parents:as": []interface{}{
+			hash.New(m1.ToObject()),
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			hash.New(m2.ToObject()).ToObject().ToMap(),
+		"parents:as": []interface{}{
+			hash.New(m2.ToObject()),
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			hash.New(m2.ToObject()).ToObject().ToMap(),
+		"parents:as": []interface{}{
+			hash.New(m2.ToObject()),
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"parents:ao": []interface{}{
-			hash.New(m3.ToObject()).ToObject().ToMap(),
-			hash.New(m4.ToObject()).ToObject().ToMap(),
+		"parents:as": []interface{}{
+			hash.New(m3.ToObject()),
+			hash.New(m4.ToObject()),
 		},
-		"stream:o": oh.ToObject().ToMap(),
+		"stream:s": oh,
 		"foo:s":    "bar-m6",
 	})
 )
@@ -161,7 +161,7 @@ func TestSync(t *testing.T) {
 	// construct event list
 	elo := (&stream.EventListCreated{
 		Stream: oh,
-		Events: []*object.Hash{
+		Events: []object.Hash{
 			oh,
 			hash.New(m1.ToObject()),
 			hash.New(m2.ToObject()),

@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=*object.Hash"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=object.Hash"
 
 var (
 	peerRequestedType          = new(peer.Requested).GetType()
@@ -72,7 +72,7 @@ func NewDiscoverer(
 	}
 
 	// listen on content hash updates
-	r.local.OnContentHashesUpdated(func(hashes []*object.Hash) {
+	r.local.OnContentHashesUpdated(func(hashes []object.Hash) {
 		nctx := context.New(context.WithTimeout(time.Second * 3))
 		for _, hash := range hashes {
 			r.contentHashes.Put(hash)
@@ -141,7 +141,7 @@ func (r *Discoverer) FindByPublicKey(
 // FindByContent finds and returns peer infos from a content hash
 func (r *Discoverer) FindByContent(
 	ctx context.Context,
-	contentHash *object.Hash,
+	contentHash object.Hash,
 	opts ...discovery.Option,
 ) ([]crypto.PublicKey, error) {
 	opt := discovery.ParseOptions(opts...)
@@ -153,7 +153,7 @@ func (r *Discoverer) FindByContent(
 	)
 	logger.Debug("trying to find peer by contentHash")
 
-	b := bloom.New(contentHash.Compact())
+	b := bloom.New(contentHash.String())
 	cs := r.store.FindByContent(b)
 	fs := []crypto.PublicKey{}
 
@@ -600,9 +600,9 @@ func (r *Discoverer) bootstrap(
 	return nil
 }
 
-func (r *Discoverer) getContentHashes() []*object.Hash {
-	cIDs := []*object.Hash{}
-	r.contentHashes.Range(func(k *object.Hash) bool {
+func (r *Discoverer) getContentHashes() []object.Hash {
+	cIDs := []object.Hash{}
+	r.contentHashes.Range(func(k object.Hash) bool {
 		cIDs = append(cIDs, k)
 		return true
 	})
@@ -618,7 +618,7 @@ func (r *Discoverer) publishContentHashes(
 	cs := r.getContentHashes()
 	ss := []string{}
 	for _, c := range cs {
-		ss = append(ss, c.Compact())
+		ss = append(ss, c.String())
 	}
 	b := bloom.New(ss...)
 	cps := r.store.FindClosestContentProvider(b)

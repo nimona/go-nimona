@@ -23,12 +23,12 @@ func NewObjectHashValueTypeSyncMap() *ObjectHashSyncList {
 }
 
 // Put -
-func (m *ObjectHashSyncList) Put(k *object.Hash) {
+func (m *ObjectHashSyncList) Put(k object.Hash) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ObjectHashSyncList) Exists(k *object.Hash) bool {
+func (m *ObjectHashSyncList) Exists(k object.Hash) bool {
 	_, ok := m.m.Load(k)
 	if !ok {
 		return false
@@ -38,13 +38,13 @@ func (m *ObjectHashSyncList) Exists(k *object.Hash) bool {
 }
 
 // Delete -
-func (m *ObjectHashSyncList) Delete(k *object.Hash) {
+func (m *ObjectHashSyncList) Delete(k object.Hash) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ObjectHashSyncList) Range(i func(k *object.Hash) bool) {
+func (m *ObjectHashSyncList) Range(i func(k object.Hash) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(*object.Hash))
+		return i(k.(object.Hash))
 	})
 }

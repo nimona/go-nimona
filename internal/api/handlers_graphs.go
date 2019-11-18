@@ -84,7 +84,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 
 	if sync {
 		// find peers who provide the root object
-		h, _ := object.HashFromCompact(rootObjectHash)
+		h := object.Hash(rootObjectHash)
 		ps, err := api.discovery.FindByContent(ctx, h)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
@@ -127,7 +127,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 		// os = graphObjects.Objects
 	}
 
-	h, _ := object.HashFromCompact(rootObjectHash)
+	h := object.Hash(rootObjectHash)
 	ctx = context.New(
 		context.WithCorrelationID(cID),
 		context.WithTimeout(time.Second*5),

@@ -32,20 +32,20 @@ type (
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	PolicyAttached struct {
-		Stream    *object.Hash      `json:"stream:o,omitempty"`
-		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
+		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Parents   []object.Hash     `json:"parents:as,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	RequestEventList struct {
-		Stream    *object.Hash      `json:"stream:o,omitempty"`
+		Stream    object.Hash       `json:"stream:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	EventListCreated struct {
-		Stream    *object.Hash      `json:"stream:o,omitempty"`
-		Events    []*object.Hash    `json:"events:ao,omitempty"`
+		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Events    []object.Hash     `json:"events:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -151,17 +151,9 @@ func (e *PolicyAttached) GetType() string {
 func (e *PolicyAttached) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.PolicyAttached"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
+	m["stream:s"] = e.Stream
 	if len(e.Parents) > 0 {
-		m["parents:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Parents))
-			for i, v := range e.Parents {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		m["parents:as"] = e.Parents
 	}
 	if len(e.Policies) > 0 {
 		m["policies:ao"] = func() []interface{} {
@@ -191,9 +183,7 @@ func (e *RequestEventList) GetType() string {
 func (e *RequestEventList) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.RequestEventList"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
+	m["stream:s"] = e.Stream
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
@@ -213,17 +203,9 @@ func (e *EventListCreated) GetType() string {
 func (e *EventListCreated) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.EventListCreated"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
+	m["stream:s"] = e.Stream
 	if len(e.Events) > 0 {
-		m["events:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Events))
-			for i, v := range e.Events {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		m["events:as"] = e.Events
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()

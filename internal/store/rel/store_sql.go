@@ -63,7 +63,7 @@ func New(
 	// Initialise the garbage collector in the background to run every minute
 	go func() {
 		for {
-			ndb.gc() //nolint
+			ndb.gc() // nolint
 			time.Sleep(1 * time.Minute)
 		}
 	}()
@@ -101,7 +101,7 @@ func (d *DB) runMigrations() error {
 		rows, err := tx.Query(
 			"select ID, LastIndex, Datetime from Migrations order by id desc limit 1")
 		if err != nil {
-			tx.Rollback() //nolint
+			tx.Rollback() // nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not run migration"),
@@ -123,7 +123,7 @@ func (d *DB) runMigrations() error {
 		// execute the current migration
 		_, err = tx.Exec(mig)
 		if err != nil {
-			tx.Rollback() //nolint
+			tx.Rollback() // nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not run migration"),
@@ -134,7 +134,7 @@ func (d *DB) runMigrations() error {
 		stmt, err := tx.Prepare(
 			"INSERT INTO Migrations(LastIndex, Datetime) VALUES(?, ?)")
 		if err != nil {
-			tx.Rollback() //nolint
+			tx.Rollback() // nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not insert to migrations table"),
@@ -143,7 +143,7 @@ func (d *DB) runMigrations() error {
 
 		_, err = stmt.Exec(index, time.Now().Unix())
 		if err != nil {
-			tx.Rollback() //nolint
+			tx.Rollback() // nolint
 			return errors.Wrap(
 				err,
 				errors.New("could not insert to migrations table"),
@@ -152,7 +152,7 @@ func (d *DB) runMigrations() error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback() //nolint
+		tx.Rollback() // nolint
 		return errors.Wrap(
 			err,
 			errors.New("could not insert to migrations table"),
@@ -165,7 +165,6 @@ func (d *DB) runMigrations() error {
 func (d *DB) Get(
 	hash object.Hash,
 ) (object.Object, error) {
-
 	// get the object
 	stmt, err := d.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
@@ -250,9 +249,6 @@ func (d *DB) Put(
 	}
 
 	stHash := stream.Stream(obj)
-	if stHash != nil {
-		stHash.String()
-	}
 
 	streamHashStr := stHash.String()
 	objectHash := hash.New(obj)
@@ -274,7 +270,7 @@ func (d *DB) Put(
 			sub := key.(subscription)
 
 			if sub.Hash == streamHashStr {
-				sub.Ch <- *objectHash
+				sub.Ch <- objectHash
 			}
 		}()
 		return true
@@ -285,8 +281,7 @@ func (d *DB) Put(
 
 func (d *DB) GetRelations(
 	parent object.Hash,
-) ([]*object.Hash, error) {
-
+) ([]object.Hash, error) {
 	stmt, err := d.db.Prepare("SELECT Hash FROM Objects WHERE StreamHash=?")
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
@@ -297,11 +292,11 @@ func (d *DB) GetRelations(
 		return nil, errors.Wrap(err, errors.New("could not query"))
 	}
 
-	hashList := []*object.Hash{}
+	hashList := []object.Hash{}
 
 	for rows.Next() {
 
-		data := []byte{}
+		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Wrap(
 				err,
@@ -309,10 +304,7 @@ func (d *DB) GetRelations(
 			)
 		}
 
-		h, err := object.HashFromCompact(string(data))
-		if err != nil {
-			continue
-		}
+		h := object.Hash(data)
 
 		hashList = append(hashList, h)
 	}
@@ -344,7 +336,6 @@ func (d *DB) UpdateTTL(
 	hash object.Hash,
 	minutes int,
 ) error {
-
 	stmt, err := d.db.Prepare(`
 	UPDATE Objects
 	SET TTL=?, LastAccessed=?
@@ -370,7 +361,6 @@ func (d *DB) UpdateTTL(
 func (d *DB) Delete(
 	hash object.Hash,
 ) error {
-
 	stmt, err := d.db.Prepare(`
 	DELETE FROM Objects
 	WHERE Hash=?`)

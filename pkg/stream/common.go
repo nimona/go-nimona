@@ -17,8 +17,8 @@ type (
 	common struct {
 		Type      string            `json:"@ctx:s,omitempty"`
 		Context   string            `json:"@type:s,omitempty"`
-		Stream    *object.Hash      `json:"stream:o,omitempty"`
-		Parents   []*object.Hash    `json:"parents:ao,omitempty"`
+		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Parents   []object.Hash     `json:"parents:as,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:o"`
@@ -32,11 +32,11 @@ func toCommon(o object.Object) *common {
 	return c
 }
 
-func Parents(o object.Object) []*object.Hash {
+func Parents(o object.Object) []object.Hash {
 	return toCommon(o).Parents
 }
 
-func Stream(o object.Object) *object.Hash {
+func Stream(o object.Object) object.Hash {
 	return toCommon(o).Stream
 }
 
@@ -78,7 +78,7 @@ func GetStreamTails(os []object.Object) []object.Object {
 			hm[h] = false
 		}
 		for _, p := range Parents(o) {
-			hm[p.Compact()] = true
+			hm[p.String()] = true
 		}
 		om[h] = o
 	}

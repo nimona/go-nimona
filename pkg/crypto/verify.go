@@ -27,5 +27,5 @@ func Verify(o object.Object) error {
 	}
 
 	h := hash.New(o)
-	return sig.Signer.Verify(h.D, sig.X)
+	return sig.Signer.Verify(h.Bytes(), sig.X)
 }

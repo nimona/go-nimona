@@ -40,7 +40,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		o.Display = d
 	}
 	for _, p := range stream.Parents(v) {
-		o.Parents = append(o.Parents, p.Compact())
+		o.Parents = append(o.Parents, p.String())
 	}
 	return o, nil
 }

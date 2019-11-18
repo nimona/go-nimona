@@ -25,7 +25,7 @@ type (
 	Orchestrator interface {
 		Sync(
 			ctx context.Context,
-			stream *object.Hash,
+			stream object.Hash,
 			addresses []string,
 		) (
 			*Graph,
@@ -34,7 +34,7 @@ type (
 		Put(...object.Object) error
 		Get(
 			ctx context.Context,
-			root *object.Hash,
+			root object.Hash,
 		) (
 			*Graph,
 			error,
@@ -101,7 +101,7 @@ func NewWithContext(
 	if err != nil {
 		return nil, err
 	}
-	rootObjectHashes := make([]*object.Hash, len(heads))
+	rootObjectHashes := make([]object.Hash, len(heads))
 	for i, rootObject := range heads {
 		rootObjectHashes[i] = hash.New(rootObject)
 	}
@@ -152,7 +152,7 @@ func IsComplete(cs []object.Object) bool {
 	}
 	for _, c := range cs {
 		for _, p := range stream.Parents(c) {
-			h := p.Compact()
+			h := p.String()
 			if _, ok := cm[h]; ok {
 				continue
 			}
@@ -165,7 +165,7 @@ func IsComplete(cs []object.Object) bool {
 // Put stores a given object
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
 func (m *orchestrator) Put(vs ...object.Object) error {
-	hashes := make([]*object.Hash, len(vs))
+	hashes := make([]object.Hash, len(vs))
 	for i, o := range vs {
 		h := hash.New(o)
 		hashes[i] = h
@@ -198,12 +198,12 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 // Get returns a complete and ordered graph given any node of the graph.
 func (m *orchestrator) Get(
 	ctx context.Context,
-	root *object.Hash,
+	root object.Hash,
 ) (
 	*Graph,
 	error,
 ) {
-	os, err := m.store.Graph(root.Compact())
+	os, err := m.store.Graph(root.String())
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.Error("could not retrieve graph"),
@@ -230,12 +230,12 @@ func (m *orchestrator) handleStreamRequestEventList(
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
 
-	vs, err := m.store.Graph(req.Stream.Compact())
+	vs, err := m.store.Graph(req.Stream.String())
 	if err != nil {
 		return err
 	}
 
-	hs := []*object.Hash{}
+	hs := []object.Hash{}
 	for _, o := range vs {
 		hs = append(hs, hash.New(o))
 	}

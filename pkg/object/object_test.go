@@ -15,9 +15,7 @@ func TestObjectMethods(t *testing.T) {
 		"something:o": Object{
 			"@type:s": "-something",
 		},
-		"parents:ao": []Object{
-			(&Hash{}).ToObject(),
-		},
+		"parents:as": []Object{},
 	}
 
 	em := map[string]interface{}{
@@ -28,7 +26,7 @@ func TestObjectMethods(t *testing.T) {
 		"something:o": map[string]interface{}{
 			"@type:s": "-something",
 		},
-		"parents:ao": []map[string]interface{}{
+		"parents:as": []map[string]interface{}{
 			map[string]interface{}{
 				"@type:s":   "nimona.io/Hash",
 				"@domain:s": "nimona.io/object",

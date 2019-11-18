@@ -26,7 +26,7 @@ func NewSignature(
 	o object.Object,
 ) (*Signature, error) {
 	h := hash.New(o)
-	x := k.Sign(h.D)
+	x := k.Sign(h.Bytes())
 	s := &Signature{
 		Signer: k.PublicKey(),
 		Alg:    AlgorithmObjectHash,

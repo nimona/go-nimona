@@ -22,7 +22,11 @@ func TestObjectHash(t *testing.T) {
 
 	o := object.FromMap(v)
 	h := New(o)
-	assert.Equal(t, oh, h.D)
+	f := formatHash(contentHash{
+		algorithm: "oh1",
+		d:         oh,
+	})
+	assert.Equal(t, h, f)
 }
 
 func TestObjectHashWithSignature(t *testing.T) {
@@ -40,7 +44,11 @@ func TestObjectHashWithSignature(t *testing.T) {
 
 	o := object.FromMap(v)
 	h := New(o)
-	assert.Equal(t, oh, h.D)
+	f := formatHash(contentHash{
+		algorithm: "oh1",
+		d:         oh,
+	})
+	assert.Equal(t, h, f)
 }
 
 func TestObjectHashDocs(t *testing.T) {
