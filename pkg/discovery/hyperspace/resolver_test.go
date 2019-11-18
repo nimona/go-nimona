@@ -15,9 +15,9 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -179,10 +179,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// make peer 1 a provider
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
-	ch := &object.Hash{
-		Algorithm: "OH1",
-		D:         token,
-	}
+	ch := hash.FromBytes(token)
 	l1.AddContentHash(ch)
 
 	// print peer info

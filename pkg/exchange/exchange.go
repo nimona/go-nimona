@@ -42,7 +42,7 @@ type (
 	Exchange interface {
 		Request(
 			ctx context.Context,
-			object *object.Hash,
+			object object.Hash,
 			address string,
 			options ...Option,
 		) error
@@ -384,7 +384,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 // Request an object given its hash from an address
 func (w *exchange) Request(
 	ctx context.Context,
-	hash *object.Hash,
+	hash object.Hash,
 	address string,
 	options ...Option,
 ) error {
@@ -466,7 +466,7 @@ func (w *exchange) handleObjectRequest(
 		if err := req.FromObject(e.Payload); err != nil {
 			return err
 		}
-		res, err := w.store.Get(req.ObjectHash.Compact())
+		res, err := w.store.Get(req.ObjectHash.String())
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve object"),

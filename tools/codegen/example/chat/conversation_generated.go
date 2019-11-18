@@ -11,20 +11,20 @@ import (
 
 type (
 	ConversationTopicSet struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:s,omitempty"`
 		Topic     string            `json:"topic:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationNameSet struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:s,omitempty"`
 		Name      string            `json:"name:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationMessageAdded struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
-		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:s,omitempty"`
+		Parents   []*crypto.Hash    `json:"parents:as,omitempty"`
 		Body      string            `json:"body:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
@@ -39,7 +39,7 @@ func (e *ConversationTopicSet) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/conversation.ConversationTopicSet"
 	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:s"] = e.Stream.ToObject().ToMap()
 	}
 	m["topic:s"] = e.Topic
 	if e.Signature != nil {
@@ -62,7 +62,7 @@ func (e *ConversationNameSet) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/conversation.ConversationNameSet"
 	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:s"] = e.Stream.ToObject().ToMap()
 	}
 	m["name:s"] = e.Name
 	if e.Signature != nil {
@@ -85,10 +85,10 @@ func (e *ConversationMessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/conversation.ConversationMessageAdded"
 	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
+		m["stream:s"] = e.Stream.ToObject().ToMap()
 	}
 	if len(e.Parents) > 0 {
-		m["parents:ao"] = func() []interface{} {
+		m["parents:as"] = func() []interface{} {
 			a := make([]interface{}, len(e.Parents))
 			for i, v := range e.Parents {
 				a[i] = v.ToObject().ToMap()

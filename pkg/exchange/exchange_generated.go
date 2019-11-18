@@ -11,7 +11,7 @@ import (
 
 type (
 	ObjectRequest struct {
-		ObjectHash *object.Hash      `json:"objectHash:o,omitempty"`
+		ObjectHash object.Hash       `json:"objectHash:s,omitempty"`
 		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity   crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -30,9 +30,7 @@ func (e *ObjectRequest) GetType() string {
 func (e *ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/exchange.ObjectRequest"
-	if e.ObjectHash != nil {
-		m["objectHash:o"] = e.ObjectHash.ToObject().ToMap()
-	}
+	m["objectHash:s"] = e.ObjectHash
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}

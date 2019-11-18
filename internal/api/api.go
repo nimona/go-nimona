@@ -138,8 +138,7 @@ func (api *API) Stop(c *router.Context) {
 
 func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
-	m["_hash.compact"] = hash.New(o).String()
-	m["_hash"] = hash.New(o.ToObject()).ToObject()
+	m["_hash"] = hash.New(o).String()
 	return m
 }
 

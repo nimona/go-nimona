@@ -15,7 +15,7 @@ import (
 
 func (m *orchestrator) Sync(
 	ctx context.Context,
-	streamHash *object.Hash,
+	streamHash object.Hash,
 	addresses []string,
 ) (
 	*Graph,
@@ -73,7 +73,7 @@ func (m *orchestrator) Sync(
 
 	// keep a record of who knows about which object
 	type request struct {
-		hash *object.Hash
+		hash object.Hash
 		addr string
 	}
 	requests := make(chan *request)
@@ -127,7 +127,7 @@ func (m *orchestrator) Sync(
 	go func() {
 		for req := range requests {
 			// check if we actually have the object
-			obj, err := m.store.Get(req.hash.Compact())
+			obj, err := m.store.Get(req.hash.String())
 			if err == nil && obj != nil {
 				continue
 			}
@@ -195,25 +195,25 @@ loop:
 			oHash := hash.New(o)
 			oStreamHash := stream.Stream(o)
 			if oHash.String() != streamHash.String() {
-				if oStreamHash == nil || oStreamHash.String() != streamHash.String() {
+				if oStreamHash.IsEqual(streamHash) == false {
 					continue loop
 				}
 			}
 			if err := m.store.Put(o); err != nil {
 				logger.With(
-					log.String("req.hash", streamHash.Compact()),
+					log.String("req.hash", streamHash.String()),
 					log.Error(err),
 				).Debug("could not store object")
 			}
 			logger.Debug(
 				"got object",
-				log.String("req.hash", streamHash.Compact()),
+				log.String("req.hash", streamHash.String()),
 			)
 		}
 	}
 
 	// TODO currently we only support a root streams
-	os, err := m.store.Graph(streamHash.Compact())
+	os, err := m.store.Graph(streamHash.String())
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.New("could not get graph from store"),

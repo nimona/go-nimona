@@ -9,23 +9,47 @@ import (
 	"sort"
 	"strings"
 
+	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/object"
 )
+
+type (
+	contentHash struct {
+		algorithm string `json:"algorithm:s,omitempty"`
+		d         []byte `json:"d:d,omitempty"`
+	}
+)
+
+func FromBytes(b []byte) object.Hash {
+	return formatHash(
+		contentHash{
+			algorithm: "oh1",
+			d:         b,
+		},
+	)
+}
+
+func formatHash(h contentHash) object.Hash {
+	s := "hash:" + h.algorithm + "." + base58.Encode(h.d)
+	return object.Hash(s)
+}
 
 // New consistently hashes a map.
 // It is based on Ben Laurie's object hash, but using the same type hints
 // as TJSON instead.
 // TODO add redaction
-func New(o object.Object) *object.Hash {
+func New(o object.Object) object.Hash {
 	d, err := objecthash(o.ToMap())
 	if err != nil {
 		panic(err)
 	}
 	// TODO(geoah) consider having an invalid hash type
-	return &object.Hash{
-		Algorithm: "OH1",
-		D:         d,
-	}
+	return formatHash(
+		contentHash{
+			algorithm: "oh1",
+			d:         d,
+		},
+	)
 }
 
 func hintsFromKey(k string) []object.TypeHint {

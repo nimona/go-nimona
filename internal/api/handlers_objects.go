@@ -57,7 +57,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	ctx := context.New()
 	defer ctx.Cancel()
 
-	h, _ := object.HashFromCompact(objectHash)
+	h := object.Hash(objectHash)
 	ps, err := api.discovery.FindByContent(ctx, h)
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck

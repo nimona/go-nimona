@@ -15,7 +15,7 @@ type Provider struct {
 }
 
 // FindByContent provides a mock function with given fields: ctx, contentHash, opts
-func (_m *Provider) FindByContent(ctx context.Context, contentHash *object.Hash, opts ...discovery.Option) ([]crypto.PublicKey, error) {
+func (_m *Provider) FindByContent(ctx context.Context, contentHash object.Hash, opts ...discovery.Option) ([]crypto.PublicKey, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -26,7 +26,7 @@ func (_m *Provider) FindByContent(ctx context.Context, contentHash *object.Hash,
 	ret := _m.Called(_ca...)
 
 	var r0 []crypto.PublicKey
-	if rf, ok := ret.Get(0).(func(context.Context, *object.Hash, ...discovery.Option) []crypto.PublicKey); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, object.Hash, ...discovery.Option) []crypto.PublicKey); ok {
 		r0 = rf(ctx, contentHash, opts...)
 	} else {
 		if ret.Get(0) != nil {
@@ -35,7 +35,7 @@ func (_m *Provider) FindByContent(ctx context.Context, contentHash *object.Hash,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *object.Hash, ...discovery.Option) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, object.Hash, ...discovery.Option) error); ok {
 		r1 = rf(ctx, contentHash, opts...)
 	} else {
 		r1 = ret.Error(1)

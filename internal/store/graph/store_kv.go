@@ -34,8 +34,8 @@ func (s *Graph) Put(v object.Object) error {
 	if err := s.store.Put(key, value); err != nil {
 		return errors.Wrap(err, errors.New("could not persist object"))
 	}
-	if root := stream.Stream(v); root != nil {
-		key = root.Compact() + "---" + key
+	if root := stream.Stream(v); root.IsEmpty() == false {
+		key = root.String() + "---" + key
 		if err := s.store.Put(key, value); err != nil {
 			return errors.Wrap(err, errors.New("could not persist object"))
 		}
@@ -52,8 +52,8 @@ func (s *Graph) Graph(hash string) ([]object.Object, error) {
 		return nil, errors.Wrap(err, errors.New("could not find object"))
 	}
 
-	if oh := stream.Stream(o); oh != nil {
-		hash = oh.Compact()
+	if oh := stream.Stream(o); oh.IsEmpty() == false {
+		hash = oh.String()
 	}
 
 	ohs, err := s.store.Scan(hash)
@@ -136,7 +136,7 @@ func (s *Graph) Tails(nodeHash string) ([]object.Object, error) {
 			hm[h] = false
 		}
 		for _, p := range stream.Parents(o) {
-			hm[p.Compact()] = true
+			hm[p.String()] = true
 		}
 		om[h] = o
 	}

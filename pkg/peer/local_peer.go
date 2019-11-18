@@ -9,7 +9,7 @@ import (
 )
 
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=*object.Hash"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=object.Hash"
 
 type (
 	Addresses []string
@@ -34,7 +34,7 @@ type (
 		onContentHashesHandlers []OnContentHashesUpdated
 	}
 	OnAddressesUpdated     func([]string)
-	OnContentHashesUpdated func([]*object.Hash)
+	OnContentHashesUpdated func([]object.Hash)
 )
 
 func NewLocalPeer(
@@ -83,7 +83,7 @@ func (p *LocalPeer) AddAddress(protocol string, addrs []string) {
 }
 
 // AddContentHash that should be published with the peer info
-func (p *LocalPeer) AddContentHash(hashes ...*object.Hash) {
+func (p *LocalPeer) AddContentHash(hashes ...object.Hash) {
 	for _, h := range hashes {
 		p.contentHashes.Put(h)
 	}
@@ -96,7 +96,7 @@ func (p *LocalPeer) AddContentHash(hashes ...*object.Hash) {
 }
 
 // RemoveContentHash from the peer info
-func (p *LocalPeer) RemoveContentHash(hashes ...*object.Hash) {
+func (p *LocalPeer) RemoveContentHash(hashes ...object.Hash) {
 	for _, h := range hashes {
 		p.contentHashes.Delete(h)
 	}
@@ -156,9 +156,9 @@ func (p *LocalPeer) GetAddresses() []string {
 	return addrs
 }
 
-func (p *LocalPeer) GetContentHashes() []*object.Hash {
-	hashes := []*object.Hash{}
-	p.contentHashes.Range(func(hash *object.Hash) bool {
+func (p *LocalPeer) GetContentHashes() []object.Hash {
+	hashes := []object.Hash{}
+	p.contentHashes.Range(func(hash object.Hash) bool {
 		hashes = append(hashes, hash)
 		return true
 	})
@@ -177,7 +177,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	cs := p.GetContentHashes()
 	hs := make([]string, len(cs))
 	for i, c := range cs {
-		hs[i] = c.Compact()
+		hs[i] = c.String()
 	}
 
 	// TODO cache peer info and reuse

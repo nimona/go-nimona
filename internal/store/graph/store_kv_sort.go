@@ -17,7 +17,7 @@ func topographicalSortObjects(os []object.Object) []object.Object {
 			graph[key] = []string{}
 		}
 		for _, parentKey := range parentKeys {
-			h := parentKey.Compact()
+			h := parentKey.String()
 			if _, ok := graph[h]; !ok {
 				graph[h] = []string{
 					key,

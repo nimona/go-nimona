@@ -22,7 +22,7 @@ const dbFilepath string = "./nimona.db"
 func TestNewDatabase(t *testing.T) {
 	dblite, err := sql.Open("sqlite3", dbFilepath)
 	defer func() {
-		os.Remove(dbFilepath) //nolint
+		os.Remove(dbFilepath) // nolint
 	}()
 	require.NoError(t, err)
 
@@ -37,7 +37,7 @@ func TestNewDatabase(t *testing.T) {
 func TestStoreRetrieveUpdate(t *testing.T) {
 	dblite, err := sql.Open("sqlite3", dbFilepath)
 	defer func() {
-		os.Remove(dbFilepath) //nolint
+		os.Remove(dbFilepath) // nolint
 	}()
 	require.NoError(t, err)
 
@@ -66,7 +66,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	retrievedObj, err := db.Get(*hash.New(obj))
+	retrievedObj, err := db.Get(hash.New(obj))
 	require.NoError(t, err)
 
 	val := retrievedObj.Get("key:s")
@@ -76,17 +76,17 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	stHash := stream.Stream(obj)
 	require.NotEmpty(t, stHash)
 
-	err = db.UpdateTTL(*hash.New(obj), 10)
+	err = db.UpdateTTL(hash.New(obj), 10)
 	require.NoError(t, err)
 
-	hashList, err := db.GetRelations(*hash.New(p.ToObject()))
+	hashList, err := db.GetRelations(hash.New(p.ToObject()))
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
 
-	err = db.Delete(*hash.New(p.ToObject()))
+	err = db.Delete(hash.New(p.ToObject()))
 	require.NoError(t, err)
 
-	retrievedObj2, err := db.Get(*hash.New(p.ToObject()))
+	retrievedObj2, err := db.Get(hash.New(p.ToObject()))
 	require.True(t, errors.CausedBy(err, rel.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
@@ -98,7 +98,7 @@ func TestSubscribe(t *testing.T) {
 	// create db
 	dblite, err := sql.Open("sqlite3", dbFilepath)
 	defer func() {
-		os.Remove(dbFilepath) //nolint
+		os.Remove(dbFilepath) // nolint
 	}()
 	require.NoError(t, err)
 
@@ -122,7 +122,7 @@ func TestSubscribe(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 		// subscribe
-		subscription, err := db.Subscribe(*streamHash)
+		subscription, err := db.Subscribe(streamHash)
 		require.NoError(t, err)
 
 		go func() {

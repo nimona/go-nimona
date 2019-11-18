@@ -31,6 +31,21 @@ var primitives = map[string]struct {
 		Type:     "crypto.PublicKey",
 		IsObject: false,
 	},
+	"[]*nimona.io/object.Hash": {
+		Tag:      "as",
+		Type:     "[]object.Hash",
+		IsObject: false,
+	},
+	"*nimona.io/object.Hash": {
+		Tag:      "s",
+		Type:     "object.Hash",
+		IsObject: false,
+	},
+	"*Hash": {
+		Tag:      "s",
+		Type:     "Hash",
+		IsObject: false,
+	},
 }
 
 // nolint
@@ -185,7 +200,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			for _, mv := range e.Members {
 				for pk, pv := range primitives {
 					if strings.HasSuffix(mv.Type, pk) {
-						mv.Tag = strings.Replace(mv.Tag, ":o", ":"+pv.Tag, 1)
+						tagName := strings.Split(mv.Tag, ":")[0]
+						mv.Tag = tagName + ":" + pv.Tag
 						mv.Type = pv.Type
 						mv.IsObject = pv.IsObject
 						break

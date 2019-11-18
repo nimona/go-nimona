@@ -26,7 +26,7 @@ type (
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
-			contentHash *object.Hash,
+			contentHash object.Hash,
 			opts ...Option,
 		) ([]crypto.PublicKey, error)
 	}
@@ -41,7 +41,7 @@ type (
 		) ([]*peer.Peer, error)
 		FindByContent(
 			ctx context.Context,
-			contentHash *object.Hash,
+			contentHash object.Hash,
 			opts ...Option,
 		) ([]crypto.PublicKey, error)
 	}
@@ -147,14 +147,14 @@ func (r *discoverer) FindByPublicKey(
 // FindByContent goes through the given providers until one returns something
 func (r *discoverer) FindByContent(
 	ctx context.Context,
-	contentHash *object.Hash,
+	contentHash object.Hash,
 	opts ...Option,
 ) ([]crypto.PublicKey, error) {
 	opt := ParseOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "discovery/discoverer.FindByContent"),
-		log.String("contentHash", contentHash.Compact()),
+		log.String("contentHash", contentHash.String()),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
