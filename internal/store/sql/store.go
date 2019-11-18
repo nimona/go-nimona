@@ -8,7 +8,7 @@ type ObjectStore interface {
 	Put(object.Object, ...Option) error
 	Get(object.Hash) (object.Object, error)
 	UpdateTTL(hash object.Hash, minutes int) error
-	Delete(object.Hash) error
+	Remove(object.Hash) error
 }
 
 type StreamStore interface {

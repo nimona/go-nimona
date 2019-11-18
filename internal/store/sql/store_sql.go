@@ -358,7 +358,7 @@ func (st *Store) UpdateTTL(
 	return nil
 }
 
-func (st *Store) Delete(
+func (st *Store) Remove(
 	hash object.Hash,
 ) error {
 	stmt, err := st.db.Prepare(`
