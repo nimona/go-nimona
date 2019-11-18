@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mattn/go-sqlite3 v1.11.0
+	github.com/mattn/go-sqlite3 v1.12.0
 	github.com/mr-tron/base58 v1.1.2
 	github.com/sheerun/queue v1.0.0
 	github.com/spaolacci/murmur3 v1.1.0
