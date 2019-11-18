@@ -83,7 +83,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
 
-	err = db.Delete(hash.New(p.ToObject()))
+	err = store.Remove(hash.New(p.ToObject()))
 	require.NoError(t, err)
 
 	retrievedObj2, err := store.Get(hash.New(p.ToObject()))
