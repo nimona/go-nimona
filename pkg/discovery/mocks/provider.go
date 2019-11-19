@@ -44,20 +44,20 @@ func (_m *Provider) FindByContent(ctx context.Context, contentHash object.Hash, 
 	return r0, r1
 }
 
-// FindByPublicKey provides a mock function with given fields: ctx, fingerprint, opts
-func (_m *Provider) FindByPublicKey(ctx context.Context, fingerprint crypto.PublicKey, opts ...discovery.Option) ([]*peer.Peer, error) {
+// FindByPublicKey provides a mock function with given fields: ctx, key, opts
+func (_m *Provider) FindByPublicKey(ctx context.Context, key crypto.PublicKey, opts ...discovery.Option) ([]*peer.Peer, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, ctx, fingerprint)
+	_ca = append(_ca, ctx, key)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 []*peer.Peer
 	if rf, ok := ret.Get(0).(func(context.Context, crypto.PublicKey, ...discovery.Option) []*peer.Peer); ok {
-		r0 = rf(ctx, fingerprint, opts...)
+		r0 = rf(ctx, key, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*peer.Peer)
@@ -66,7 +66,7 @@ func (_m *Provider) FindByPublicKey(ctx context.Context, fingerprint crypto.Publ
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, crypto.PublicKey, ...discovery.Option) error); ok {
-		r1 = rf(ctx, fingerprint, opts...)
+		r1 = rf(ctx, key, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}

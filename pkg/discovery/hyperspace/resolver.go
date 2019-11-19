@@ -58,18 +58,14 @@ func NewDiscoverer(
 		log.String("method", "hyperspace/Discoverer"),
 	)
 
-	types := []string{
-		peerType,
-		peerRequestedType,
-		contentProviderRequestType,
-	}
-
-	// handle types of objects we care about
-	for _, t := range types {
-		if _, err := exc.Handle(t, r.handleObject); err != nil {
-			return nil, err
-		}
-	}
+	objectSub := r.exchange.Subscribe(
+		exchange.FilterByObjectType(
+			peerType,
+			peerRequestedType,
+			contentProviderRequestType,
+		),
+	)
+	go exchange.HandleEnvelopeSubscription(objectSub, r.handleObject)
 
 	// listen on content hash updates
 	r.local.OnContentHashesUpdated(func(hashes []object.Hash) {
@@ -384,13 +380,14 @@ func (r *Discoverer) LookupContentProvider(
 		recipients <- cp.Signature.Signer
 		return nil
 	}
-	cpCancel, err := r.exchange.Handle(
-		peerType,
+	providerSub := r.exchange.Subscribe(
+		exchange.FilterByObjectType(peerType),
+	)
+	defer providerSub.Cancel()
+	go exchange.HandleEnvelopeSubscription(
+		providerSub,
 		contentProviderHandler,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// listen for new peers and ask them
 	peerHandler := func(e *exchange.Envelope) error {
@@ -401,13 +398,14 @@ func (r *Discoverer) LookupContentProvider(
 		}
 		return nil
 	}
-	peerCancel, err := r.exchange.Handle(
-		peerType,
+	peerSub := r.exchange.Subscribe(
+		exchange.FilterByObjectType(peerType),
+	)
+	defer peerSub.Cancel()
+	go exchange.HandleEnvelopeSubscription(
+		peerSub,
 		peerHandler,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// find and ask "closest" content providers
 	announcements := r.store.FindClosestContentProvider(q)
@@ -420,10 +418,6 @@ func (r *Discoverer) LookupContentProvider(
 	for _, peer := range closestPeers {
 		recipients <- peer.PublicKey()
 	}
-
-	// close handlers
-	defer cpCancel()
-	defer peerCancel()
 
 	// error early if there are no peers to contact
 	if len(announcements) == 0 && len(closestPeers) == 0 {
@@ -526,13 +520,14 @@ func (r *Discoverer) LookupPeer(
 		recipients <- cp.Signature.Signer
 		return nil
 	}
-	peerCancel, err := r.exchange.Handle(
-		peerType,
+	peerSub := r.exchange.Subscribe(
+		exchange.FilterByObjectType(peerType),
+	)
+	defer peerSub.Cancel()
+	go exchange.HandleEnvelopeSubscription(
+		peerSub,
 		peerHandler,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// find and ask "closest" peers
 	go func() {
@@ -546,9 +541,6 @@ func (r *Discoverer) LookupPeer(
 			recipients <- peer.PublicKey()
 		}
 	}()
-
-	// close handlers
-	defer peerCancel()
 
 	// gather all peers until something happens
 	peersList := []*peer.Peer{}

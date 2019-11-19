@@ -4,10 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gobwas/glob"
 	"github.com/sheerun/queue"
 
-	"nimona.io/internal/rand"
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -34,8 +32,8 @@ const (
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses.go -pkg exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=inboxes.go -pkg exchange gen "KeyType=string ValueType=inbox SyncmapName=inboxes"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes.go -pkg exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes.go -pkg exchange gen "ObjectType=*Envelope PubSubName=envelope"
 
 type (
 	// Exchange interface for mocking exchange
@@ -46,13 +44,9 @@ type (
 			address string,
 			options ...Option,
 		) error
-		Handle(
-			contentTypeGlob string,
-			handler func(object *Envelope) error,
-		) (
-			cancelationFunc func(),
-			err error,
-		)
+		Subscribe(
+			filters ...EnvelopeFilter,
+		) EnvelopeSubscription
 		Send(
 			ctx context.Context,
 			object object.Object,
@@ -69,7 +63,7 @@ type (
 		local    *peer.LocalPeer
 
 		outboxes *OutboxesMap
-		inboxes  *InboxesMap
+		inboxes  EnvelopePubSub
 
 		store graph.Store // TODO remove
 	}
@@ -79,14 +73,6 @@ type (
 		Async          bool
 	}
 	Option func(*Options)
-	// inbox holds a single handler, and the messages for it.
-	// every registered handler will have one inbox.
-	// the queue should only hold `*Envelope`s.
-	inbox struct {
-		contentType glob.Glob
-		handler     func(*Envelope) error
-		queue       *queue.Queue
-	}
 	// addressState defines the states of a peer's address
 	// current options are:
 	// * -1 unconnectable
@@ -134,7 +120,7 @@ func New(
 		local:    localInfo,
 
 		outboxes: NewOutboxesMap(),
-		inboxes:  NewInboxesMap(),
+		inboxes:  NewEnvelopePubSub(),
 
 		store: store,
 	}
@@ -154,8 +140,15 @@ func New(
 			log.String("local.peer", localInfo.GetPeerPublicKey().String()),
 		)
 
-	// add request object handler
-	w.Handle(objectRequestType, w.handleObjectRequest) // nolint: errcheck
+	// subscribe to object requests and handle them
+	objectReqSub := w.inboxes.Subscribe(
+		FilterByObjectType(objectRequestType),
+	)
+	go func() {
+		if err := w.handleObjectRequests(objectReqSub); err != nil {
+			logger.Error("handling object requests failed", log.Error(err))
+		}
+	}()
 
 	// handle new incoming connections
 	go func() {
@@ -170,73 +163,6 @@ func New(
 	}()
 
 	return w, nil
-}
-
-func (w *exchange) createInbox(
-	handlerID string,
-	contentType glob.Glob,
-	handler func(o *Envelope) error,
-) (
-	func(),
-	error,
-) {
-	inbox := &inbox{
-		contentType: contentType,
-		handler:     handler,
-		queue:       queue.New(),
-	}
-	close := func() {
-		w.inboxes.Delete(handlerID)
-	}
-	go w.processInbox(inbox)
-	w.inboxes.Put(handlerID, inbox)
-	return close, nil
-}
-
-func (w *exchange) processInbox(inbox *inbox) {
-	logger := log.DefaultLogger.
-		With(
-			log.String("method", "exchange.processInbox"),
-		)
-	for {
-		v := inbox.queue.Pop()
-		e := v.(*Envelope)
-		// TODO(geoah) validate payload and sender
-		ct := e.Payload.GetType()
-		if !inbox.contentType.Match(ct) {
-			continue
-		}
-		go func(handler func(*Envelope) error, e *Envelope) {
-			defer func() {
-				if r := recover(); r != nil {
-					logger.
-						With(
-							log.Stack(),
-						).
-						Error("Recovered while handling", log.Any("r", r))
-				}
-			}()
-			if err := handler(e); err != nil {
-				logger.Info(
-					"Could not handle event",
-					log.String("contentType", ct),
-					log.Error(err),
-				)
-			}
-		}(inbox.handler, e)
-	}
-}
-
-func (w *exchange) getInbox(handlerID string) *inbox {
-	inbox, _ := w.inboxes.Get(handlerID)
-	return inbox
-}
-
-func (w *exchange) writeToInboxes(e *Envelope) {
-	w.inboxes.Range(func(handlerID string, inbox *inbox) bool {
-		inbox.queue.Append(e)
-		return true
-	})
 }
 
 func (w *exchange) getOutbox(peer crypto.PublicKey) *outbox {
@@ -394,20 +320,9 @@ func (w *exchange) Request(
 	return w.Send(ctx, req.ToObject(), address, options...)
 }
 
-// Handle allows registering a callback function to handle incoming objects
-func (w *exchange) Handle(
-	typePatern string,
-	h func(o *Envelope) error,
-) (
-	func(),
-	error,
-) {
-	g, err := glob.Compile(typePatern, '.', '/', '#')
-	if err != nil {
-		return nil, err
-	}
-	hID := rand.String(8)
-	return w.createInbox(hID, g, h)
+// Subscribe to incoming objects as envelopes
+func (w *exchange) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
+	return w.inboxes.Subscribe(filters...)
 }
 
 func (w *exchange) handleConnection(
@@ -445,7 +360,7 @@ func (w *exchange) handleConnection(
 				return
 			}
 
-			w.writeToInboxes(&Envelope{
+			w.inboxes.Publish(&Envelope{
 				Sender:  conn.RemotePeerKey,
 				Payload: payload,
 			})
@@ -455,33 +370,37 @@ func (w *exchange) handleConnection(
 	return nil
 }
 
-// handleObjectRequest -
-func (w *exchange) handleObjectRequest(
-	e *Envelope,
+// handleObjectRequests -
+func (w *exchange) handleObjectRequests(
+	subscription EnvelopeSubscription,
 ) error {
-	// TODO verify signature
-	switch e.Payload.GetType() {
-	case objectRequestType:
-		req := &ObjectRequest{}
-		if err := req.FromObject(e.Payload); err != nil {
+	for {
+		e, err := subscription.Next()
+		if err != nil {
 			return err
 		}
-		res, err := w.store.Get(req.ObjectHash.String())
-		if err != nil {
-			return errors.Wrap(
-				errors.Error("could not retrieve object"),
-				err,
+		// TODO verify signature
+		switch e.Payload.GetType() {
+		case objectRequestType:
+			req := &ObjectRequest{}
+			if err := req.FromObject(e.Payload); err != nil {
+				return err
+			}
+			res, err := w.store.Get(req.ObjectHash.String())
+			if err != nil {
+				return errors.Wrap(
+					errors.Error("could not retrieve object"),
+					err,
+				)
+			}
+			go w.Send( // nolint: errcheck
+				context.New(),
+				res,
+				"peer:"+e.Sender.String(),
+				WithLocalDiscoveryOnly(),
 			)
 		}
-		go w.Send( // nolint: errcheck
-			context.New(),
-			res,
-			"peer:"+e.Sender.String(),
-			WithLocalDiscoveryOnly(),
-		)
-		return nil
 	}
-
 	return nil
 }
 

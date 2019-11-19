@@ -8,19 +8,19 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_fingerprint_peer_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_publickey_bloom_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_publickey_peer_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {
 	return &Store{
-		peers: &CryptoFingerprintPeerPeerSyncMap{},
+		peers: &CryptoPublicKeyPeerPeerSyncMap{},
 	}
 }
 
 // Store holds peer content blooms and their fingerprints
 type Store struct {
-	peers *CryptoFingerprintPeerPeerSyncMap
+	peers *CryptoPublicKeyPeerPeerSyncMap
 }
 
 // Add peers

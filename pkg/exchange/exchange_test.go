@@ -53,23 +53,32 @@ func TestSendSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	// nolint: dupl
-	_, err = x1.Handle("test/msg", func(e *Envelope) error {
-		o := e.Payload
-		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
-		w1ObjectHandled = true
-		wg.Done()
-		return nil
-	})
-	assert.NoError(t, err)
+	go HandleEnvelopeSubscription(
+		x1.Subscribe(
+			FilterByObjectType("test/msg"),
+		),
+		func(e *Envelope) error {
+			o := e.Payload
+			assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
+			w1ObjectHandled = true
+			wg.Done()
+			return nil
+		},
+	)
 
-	_, err = x2.Handle("tes**", func(e *Envelope) error {
-		o := e.Payload
-		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
-		w2ObjectHandled = true
-		wg.Done()
-		return nil
-	})
-	assert.NoError(t, err)
+	// nolint: dupl
+	go HandleEnvelopeSubscription(
+		x1.Subscribe(
+			FilterByObjectType("tes**"),
+		),
+		func(e *Envelope) error {
+			o := e.Payload
+			assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
+			w2ObjectHandled = true
+			wg.Done()
+			return nil
+		},
+	)
 
 	ctx := context.Background()
 
@@ -115,11 +124,15 @@ func TestRequestSuccess(t *testing.T) {
 
 	// handle events in x1 to make sure we received responses
 	out := make(chan *Envelope, 1)
-	_, err = x1.Handle("test/msg", func(e *Envelope) error {
-		out <- e
-		return nil
-	})
-	assert.NoError(t, err)
+	go HandleEnvelopeSubscription(
+		x1.Subscribe(
+			FilterByObjectType("test/msg"),
+		),
+		func(e *Envelope) error {
+			out <- e
+			return nil
+		},
+	)
 
 	// request object, with req id
 	ctx := context.New(context.WithTimeout(time.Second * 3))

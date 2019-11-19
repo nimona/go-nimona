@@ -77,7 +77,7 @@ func New(
 func NewWithContext(
 	ctx context.Context,
 	store graph.Store,
-	exchange exchange.Exchange,
+	exc exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
 	// bc backlog.Backlog,
@@ -85,16 +85,20 @@ func NewWithContext(
 	Orchestrator,
 	error,
 ) {
+	logger := log.FromContext(ctx).Named("orchestrator")
 	m := &orchestrator{
 		store:     store,
-		exchange:  exchange,
+		exchange:  exc,
 		discovery: discovery,
 		localInfo: localInfo,
 		// backlog:  bc,
 	}
-	if _, err := m.exchange.Handle("**", m.Process); err != nil {
-		return nil, err
-	}
+	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
+	go func() {
+		if err := m.process(ctx, sub); err != nil {
+			logger.Error("processing failed", log.Error(err))
+		}
+	}()
 	// add all local root objects to our local peer info
 	// TODO should we check if these can be published?
 	heads, err := m.store.Heads()
@@ -105,7 +109,6 @@ func NewWithContext(
 	for i, rootObject := range heads {
 		rootObjectHashes[i] = hash.New(rootObject)
 	}
-	logger := log.FromContext(ctx).Named("orchestrator")
 	logger.Info(
 		"adding existing root object hashes as content",
 		log.Any("rootObjectHashes", rootObjectHashes),
@@ -115,28 +118,34 @@ func NewWithContext(
 }
 
 // Process an object
-func (m *orchestrator) Process(e *exchange.Envelope) error {
-	ctx := context.Background()
-	logger := log.FromContext(ctx).With(
-		log.String("method", "orchestrator.Process"),
-		log.String("object._hash", hash.New(e.Payload).String()),
-		log.String("object.type", e.Payload.GetType()),
-	)
-	logger.Debug("handling object")
-
-	o := e.Payload
-	switch o.GetType() {
-	case streamRequestEventListType:
-		v := &stream.RequestEventList{}
-		if err := v.FromObject(o); err != nil {
+func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscription) error {
+	for {
+		e, err := sub.Next()
+		if err != nil {
 			return err
 		}
-		if err := m.handleStreamRequestEventList(
-			ctx,
-			e.Sender,
-			v,
-		); err != nil {
-			logger.Warn("could not handle graph request object", log.Error(err))
+		ctx := context.FromContext(ctx)
+		logger := log.FromContext(ctx).With(
+			log.String("method", "orchestrator.Process"),
+			log.String("object._hash", hash.New(e.Payload).String()),
+			log.String("object.type", e.Payload.GetType()),
+		)
+		logger.Debug("handling object")
+
+		o := e.Payload
+		switch o.GetType() {
+		case streamRequestEventListType:
+			v := &stream.RequestEventList{}
+			if err := v.FromObject(o); err != nil {
+				return err
+			}
+			if err := m.handleStreamRequestEventList(
+				ctx,
+				e.Sender,
+				v,
+			); err != nil {
+				logger.Warn("could not handle graph request object", log.Error(err))
+			}
 		}
 	}
 

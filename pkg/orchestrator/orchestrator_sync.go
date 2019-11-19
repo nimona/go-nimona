@@ -36,15 +36,20 @@ func (m *orchestrator) Sync(
 	// start listening for incoming events
 	newObjects := make(chan object.Object)
 	newEventLists := make(chan *stream.EventListCreated)
-	_, err := m.exchange.Handle(
-		"**",
-		func(e *exchange.Envelope) error {
+	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
+	defer sub.Cancel()
+	go func() {
+		for {
+			e, err := sub.Next()
+			if err != nil {
+				return
+			}
 			switch e.Payload.GetType() {
 			case streamEventListCreatedType:
 				p := &stream.EventListCreated{}
 				err := p.FromObject(e.Payload)
 				if err != nil {
-					return nil
+					return
 				}
 				logger.Debug(
 					"got event list created",
@@ -55,15 +60,8 @@ func (m *orchestrator) Sync(
 			default:
 				newObjects <- e.Payload
 			}
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, errors.Wrap(
-			errors.New("could not start handling contentProviderAnnouncedType"),
-			err,
-		)
-	}
+		}
+	}()
 
 	// net options
 	opts := []exchange.Option{
