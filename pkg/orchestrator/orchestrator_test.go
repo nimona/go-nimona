@@ -118,11 +118,13 @@ func TestSync(t *testing.T) {
 	os := graph.New(kv)
 
 	x := &exchange.MockExchange{}
-
-	var handlers []func(*exchange.Envelope) error
-	x.On("Handle", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		handlers = append(handlers, args[1].(func(*exchange.Envelope) error))
-	}).Return(nil, nil)
+	subs := []*exchange.MockEnvelopeSubscription{}
+	x.On("Subscribe", mock.Anything).
+		Return(func(filters ...exchange.EnvelopeFilter) exchange.EnvelopeSubscription {
+			sub := &exchange.MockEnvelopeSubscription{}
+			subs = append(subs, sub)
+			return sub
+		})
 
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
@@ -133,7 +135,7 @@ func TestSync(t *testing.T) {
 	m, err := orchestrator.New(os, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
-	assert.NotEmpty(t, handlers)
+	assert.NotEmpty(t, subs)
 
 	rkey, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
@@ -148,12 +150,11 @@ func TestSync(t *testing.T) {
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
-			for _, h := range handlers {
-				err := h(&exchange.Envelope{
+			for _, s := range subs {
+				s.AddNext(&exchange.Envelope{
 					Payload: o,
 					Sender:  rkey.PublicKey(),
-				})
-				assert.NoError(t, err)
+				}, nil)
 			}
 		}
 	}

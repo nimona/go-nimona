@@ -11,26 +11,18 @@ import (
 	"nimona.io/internal/http/router"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
 
 func (api *API) HandleGetStreams(c *router.Context) {
-	ns := c.Param("ns")
-	pattern := c.Param("pattern")
-
-	if pattern != "" {
-		pattern = ns + pattern
-	} else {
-		pattern = ns
-	}
+	// pattern := c.Param("ns") + c.Param("pattern")
 
 	write := func(conn *websocket.Conn, data interface{}) error {
 		return conn.WriteJSON(data)
 	}
 
-	var wsupgrader = websocket.Upgrader{
+	wsupgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
@@ -109,16 +101,15 @@ func (api *API) HandleGetStreams(c *router.Context) {
 			}
 		}
 	}()
-	hr, err := api.exchange.Handle(pattern, func(e *exchange.Envelope) error {
-		incoming <- e.Payload
-		return nil
-	})
-	if err != nil {
-		c.AbortWithError(500, err) // nolint: errcheck
-		return
-	}
-
-	defer hr()
+	// hr, err := api.exchange.Handle(pattern, func(e *exchange.Envelope) error {
+	// 	incoming <- e.Payload
+	// 	return nil
+	// })
+	// if err != nil {
+	// 	c.AbortWithError(500, err) // nolint: errcheck
+	// 	return
+	// }
+	// defer hr()
 
 	for {
 		_, msg, err := conn.ReadMessage()
