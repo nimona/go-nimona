@@ -1,96 +1,73 @@
-package publisher
+package pubsub
 
 import (
 	"github.com/cheekybits/genny/generic"
+
+	"nimona.io/internal/pubsub"
 )
 
 type (
-	ObservableType generic.Type // nolint
-	// PubSub -
-	PubSub interface {
-		Publisher
-		Subscriber
+	ObjectType generic.Type // nolint
+	PubSubName string       // nolint
+	// PubSubNamePubSub -
+	PubSubNamePubSub interface {
+		Publish(ObjectType)
+		Subscribe(...PubSubNameFilter) PubSubNameSubscription
 	}
-	// Publisher deals with the publishing part of our PubSub
-	Publisher interface {
-		Publish(ObservableType)
+	PubSubNameFilter func(ObjectType) bool
+	// PubSubNameSubscription is returned for every subscription
+	PubSubNameSubscription interface {
+		Next() (ObjectType, error)
+		Cancel()
 	}
-	// Subscriber deals with the subscribing part of our PubSub
-	Subscriber interface {
-		Subscribe(chan ObservableType, ...filter)
-		Unsubscribe(chan ObservableType)
+	psPubSubNameSubscription struct {
+		subscription pubsub.Subscription
 	}
-	filter     func(ObservableType) bool
-	subscriber struct {
-		filters []filter
-		out     chan ObservableType
-	}
-	publisher struct {
-		outgoing             chan ObservableType
-		registerSubscriber   chan *subscriber
-		unregisterSubscriber chan chan ObservableType
-		subscriptions        map[*subscriber]bool
+	psPubSubName struct {
+		pubsub pubsub.PubSub
 	}
 )
 
-// NewPubSub constructs and returns a new PubSub
-func NewPubSub() PubSub {
-	o := &publisher{
-		outgoing:             make(chan ObservableType, 100),
-		registerSubscriber:   make(chan *subscriber, 1),
-		unregisterSubscriber: make(chan chan ObservableType, 1),
-		subscriptions:        map[*subscriber]bool{},
+// NewPubSubName constructs and returns a new PubSubNamePubSub
+func NewPubSubNamePubSub() PubSubNamePubSub {
+	return &psPubSubName{
+		pubsub: pubsub.New(),
 	}
+}
 
-	go o.process()
+// Cancel the subscription
+func (s *psPubSubNameSubscription) Cancel() {
+	s.subscription.Cancel()
+}
 
-	return o
+// Next returns the an item from the queue
+func (s *psPubSubNameSubscription) Next() (ObjectType, error) {
+	next, err := s.subscription.Next()
+	if err != nil {
+		return nil, err
+	}
+	return next.(ObjectType), nil
 }
 
 // Subscribe to published events with optional filters
-func (o *publisher) Subscribe(out chan ObservableType, filters ...filter) {
-	o.registerSubscriber <- &subscriber{
-		out:     out,
-		filters: filters,
+func (ps *psPubSubName) Subscribe(filters ...PubSubNameFilter) PubSubNameSubscription {
+	// cast filters
+	iFilters := make([]pubsub.Filter, len(filters))
+	for i, filter := range filters {
+		filter := filter
+		iFilters[i] = func(v interface{}) bool {
+			return filter(v.(ObjectType))
+		}
 	}
-}
+	// create a new subscription
+	sub := &psPubSubNameSubscription{
+		subscription: ps.pubsub.Subscribe(iFilters...),
+	}
 
-// Unsubscribe given a subscribed channel
-func (o *publisher) Unsubscribe(out chan ObservableType) {
-	o.unregisterSubscriber <- out
+	return sub
 }
 
 // Publish to all subscribers
-func (o *publisher) Publish(v ObservableType) {
-	o.outgoing <- v
-}
-
-func (o *publisher) process() {
-	for {
-		select {
-		case s := <-o.registerSubscriber:
-			o.subscriptions[s] = true
-
-		case s := <-o.unregisterSubscriber:
-			for k := range o.subscriptions {
-				if k.out == s {
-					delete(o.subscriptions, k)
-				}
-			}
-
-		case e := <-o.outgoing:
-			for s := range o.subscriptions {
-				publish := true
-				for _, f := range s.filters {
-					if f(e) == false {
-						publish = false
-						break
-					}
-				}
-				if publish {
-					s.out <- e
-				}
-			}
-		}
-	}
+func (ps *psPubSubName) Publish(v ObjectType) {
+	ps.pubsub.Publish(v)
 }
