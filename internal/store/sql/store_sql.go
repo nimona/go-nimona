@@ -3,6 +3,8 @@ package sql
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -380,7 +382,9 @@ func (st *Store) Remove(
 	return nil
 }
 
-func (st *Store) Subscribe(parent object.Hash) (subscription, error) {
+func (st *Store) Subscribe(
+	parent object.Hash,
+) (subscription, error) {
 	ch := make(chan object.Hash)
 	newSub := subscription{
 		Ch:   ch,
@@ -391,7 +395,9 @@ func (st *Store) Subscribe(parent object.Hash) (subscription, error) {
 	return newSub, nil
 }
 
-func (st *Store) Unsubscribe(sub subscription) {
+func (st *Store) Unsubscribe(
+	sub subscription,
+) {
 	st.subscribers.Delete(sub)
 }
 
@@ -415,4 +421,85 @@ func (st *Store) gc() error {
 	}
 
 	return nil
+}
+
+func (st *Store) All(
+	hashes ...object.Hash,
+) ([]object.Object, error) {
+
+	objects := []object.Object{}
+	queryHashStr := strings.Repeat(",?", len(hashes))[1:]
+	hsei := make([]interface{}, 0)
+
+	for _, hs := range hashes {
+		hsei = append(hsei, hs)
+	}
+
+	// get the object
+	stmt, err := st.db.Prepare(
+		fmt.Sprintf(
+			"SELECT Body FROM Objects WHERE Hash IN (%s)",
+			queryHashStr,
+		),
+	)
+	if err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not prepare query"),
+		)
+	}
+
+	rows, err := stmt.Query(hsei...)
+	if err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not query"),
+		)
+	}
+
+	for rows.Next() {
+		obj := object.New()
+		data := []byte{}
+
+		if err := rows.Scan(&data); err != nil {
+			return nil, errors.Wrap(
+				err,
+				ErrNotFound,
+			)
+		}
+
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return nil, errors.Wrap(
+				err,
+				errors.New("could not unmarshal data"),
+			)
+		}
+
+		objects = append(objects, obj)
+	}
+
+	// update the last accessed column
+	istmt, err := st.db.Prepare(
+		fmt.Sprintf(
+			"UPDATE Objects SET LastAccessed=? WHERE Hash IN (%s)",
+			queryHashStr,
+		),
+	)
+	if err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not prepare query"),
+		)
+	}
+
+	if _, err := istmt.Exec(
+		append([]interface{}{time.Now().Unix()}, hsei...)...,
+	); err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not update last access"),
+		)
+	}
+
+	return objects, nil
 }
