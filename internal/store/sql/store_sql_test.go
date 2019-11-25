@@ -2,6 +2,7 @@ package sql_test
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	sqln "nimona.io/internal/store/sql"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
 
@@ -151,4 +153,45 @@ func TestSubscribe(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatalf("failed to get update")
 	}
+}
+
+func TestAll(t *testing.T) {
+	dblite, err := sql.Open("sqlite3", dbFilepath)
+	defer func() {
+		os.Remove(dbFilepath) // nolint
+	}()
+	require.NoError(t, err)
+
+	store, err := sqln.New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	p := stream.Created{
+		Nonce: "asdf",
+	}
+	c := stream.PolicyAttached{
+		Stream: hash.New(p.ToObject()),
+	}
+
+	hashes := []object.Hash{}
+
+	for i := 0; i < 5; i++ {
+		obj := c.ToObject()
+		obj.Set("key:s", fmt.Sprintf("value_%d", i))
+
+		err = store.Put(
+			obj,
+			sqln.WithTTL(0),
+		)
+		require.NoError(t, err)
+
+		hashes = append(hashes, hash.New(obj))
+	}
+
+	objects, err := store.All(hashes...)
+	require.NoError(t, err)
+	require.Len(t, objects, len(hashes))
+
+	err = store.Close()
+	require.NoError(t, err)
 }
