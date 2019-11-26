@@ -59,7 +59,9 @@ func Dot(objects []object.Object) (string, error) {
 }
 
 func dot(objects []graphObject) string {
-	idSize := 5
+	clean := func(s string) string {
+		return strings.Replace(s, "hash:oh1.", "", 1)[:5]
+	}
 	s := ""
 	objectIDs := []string{}
 	mutationIDs := []string{}
@@ -68,12 +70,12 @@ func dot(objects []graphObject) string {
 		for i, p := range o.Parents {
 			parents[i] = fmt.Sprintf(
 				`<%s>`,
-				p[1:idSize+1],
+				clean(p),
 			)
 		}
 		id := fmt.Sprintf(
 			`<%s>`,
-			o.ID[1:idSize+1],
+			clean(o.ID),
 		)
 		if len(parents) == 0 {
 			s += fmt.Sprintf(
@@ -83,7 +85,7 @@ func dot(objects []graphObject) string {
 			objectIDs = append(objectIDs, id)
 		} else {
 			s += fmt.Sprintf(
-				"\t%s -> {%s} [shape=circle,label=\" mutates\"];\n",
+				"\t%s -> {%s} [shape=circle,label=\"  dep\"];\n",
 				id,
 				strings.Join(parents, " "),
 			)
