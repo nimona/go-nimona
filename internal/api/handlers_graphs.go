@@ -187,7 +187,7 @@ func (api *API) HandlePostGraph(c *router.Context) {
 		parents = append(parents, hash.New(l).String())
 	}
 
-	req["@root:s"] = rootObjectHash
+	req["stream:s"] = rootObjectHash
 	req["parents:as"] = parents
 
 	o := object.FromMap(req)
