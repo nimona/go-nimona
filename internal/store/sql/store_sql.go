@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"nimona.io/pkg/errors"
@@ -13,6 +12,8 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
+
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub.go -pkg sql gen "ObjectType=object.Object PubSubName=sqlStore"
 
 const (
 	// ErrNotFound is returned when a requested object or hash is not found
@@ -27,15 +28,8 @@ CREATE TABLE IF NOT EXISTS Migrations (
 )`
 
 type Store struct {
-	db *sql.DB
-	// the key is the parent object.Hash
-	// updates on any put
-	subscribers sync.Map
-}
-
-type subscription struct {
-	Hash string
-	Ch   chan object.Hash
+	db     *sql.DB
+	pubsub SqlStorePubSub
 }
 
 type migrationRow struct {
@@ -48,8 +42,8 @@ func New(
 	db *sql.DB,
 ) (*Store, error) {
 	ndb := &Store{
-		db:          db,
-		subscribers: sync.Map{},
+		db:     db,
+		pubsub: NewSqlStorePubSub(),
 	}
 
 	// initialise the tables required for the migration
@@ -269,16 +263,7 @@ func (st *Store) Put(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
-	st.subscribers.Range(func(key, value interface{}) bool {
-		go func() {
-			sub := key.(subscription)
-
-			if sub.Hash == streamHashStr {
-				sub.Ch <- objectHash
-			}
-		}()
-		return true
-	})
+	st.pubsub.Publish(obj)
 
 	return nil
 }
@@ -385,22 +370,9 @@ func (st *Store) Remove(
 }
 
 func (st *Store) Subscribe(
-	parent object.Hash,
-) (subscription, error) {
-	ch := make(chan object.Hash)
-	newSub := subscription{
-		Ch:   ch,
-		Hash: parent.String(),
-	}
-	st.subscribers.Store(newSub, true)
-
-	return newSub, nil
-}
-
-func (st *Store) Unsubscribe(
-	sub subscription,
-) {
-	st.subscribers.Delete(sub)
+	filters ...SqlStoreFilter,
+) SqlStoreSubscription {
+	return st.pubsub.Subscribe(filters...)
 }
 
 func (st *Store) gc() error {

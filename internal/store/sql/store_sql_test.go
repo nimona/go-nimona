@@ -118,6 +118,7 @@ func TestSubscribe(t *testing.T) {
 		Stream: streamHash,
 	}
 	obj := c.ToObject()
+	obj.SetType("foo")
 	obj.Set("key:s", "value")
 
 	var wg sync.WaitGroup
@@ -125,11 +126,13 @@ func TestSubscribe(t *testing.T) {
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 		// subscribe
-		subscription, err := store.Subscribe(streamHash)
-		require.NoError(t, err)
+		subscription := store.Subscribe(
+			sqln.FilterByStreamHash(streamHash),
+		)
 
 		go func() {
-			hs := <-subscription.Ch
+			hs, err := subscription.Next()
+			require.NoError(t, err)
 			require.NotEmpty(t, hs)
 			wg.Done()
 		}()
