@@ -12,7 +12,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.13.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/mr-tron/base58 v1.1.2
+	github.com/mr-tron/base58 v1.1.3
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
