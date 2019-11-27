@@ -5,13 +5,14 @@ module nimona.io
 require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
+	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/websocket v1.4.1
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.13.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mr-tron/base58 v1.1.2
-	github.com/sheerun/queue v1.0.0
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0

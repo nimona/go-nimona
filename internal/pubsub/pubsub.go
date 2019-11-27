@@ -3,7 +3,7 @@ package pubsub
 import (
 	"sync"
 
-	"github.com/sheerun/queue"
+	"github.com/geoah/go-queue"
 
 	"nimona.io/pkg/errors"
 )
