@@ -54,6 +54,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		Stream: hash.New(p.ToObject()),
 	}
 	obj := c.ToObject()
+	obj.SetType("foo")
 	obj.Set("key:s", "value")
 
 	err = store.Put(

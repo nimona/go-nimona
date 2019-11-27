@@ -232,13 +232,14 @@ func (st *Store) Put(
 	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects(
 		Hash,
+		Type,
 		StreamHash,
 		Body,
 		Created,
 		LastAccessed,
 		TTl
 	)
-	VALUES(?, ?, ?, ?, ? ,?)
+	VALUES(?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return errors.Wrap(err,
@@ -257,6 +258,7 @@ func (st *Store) Put(
 
 	_, err = stmt.Exec(
 		objectHash.String(),
+		obj.GetType(),
 		streamHashStr,
 		body,
 		time.Now().Unix(),
@@ -426,7 +428,6 @@ func (st *Store) gc() error {
 func (st *Store) All(
 	hashes ...object.Hash,
 ) ([]object.Object, error) {
-
 	objects := []object.Object{}
 	queryHashStr := strings.Repeat(",?", len(hashes))[1:]
 	hsei := make([]interface{}, 0)
