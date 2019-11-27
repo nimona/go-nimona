@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sheerun/queue"
+	"github.com/geoah/go-queue"
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/context"

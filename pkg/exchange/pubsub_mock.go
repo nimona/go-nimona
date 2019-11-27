@@ -5,7 +5,7 @@ import (
 
 	"nimona.io/internal/pubsub"
 
-	"github.com/sheerun/queue"
+	"github.com/geoah/go-queue"
 )
 
 type (
