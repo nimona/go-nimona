@@ -11,6 +11,7 @@ import (
 
 type (
 	Peer struct {
+		Version      int64                 `json:"version:i,omitempty"`
 		Addresses    []string              `json:"addresses:as,omitempty"`
 		Bloom        []int64               `json:"bloom:ai,omitempty"`
 		ContentTypes []string              `json:"contentTypes:as,omitempty"`
@@ -37,6 +38,7 @@ func (e *Peer) GetType() string {
 func (e *Peer) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/peer.Peer"
+	m["version:i"] = e.Version
 	if len(e.Addresses) > 0 {
 		m["addresses:as"] = e.Addresses
 	}
