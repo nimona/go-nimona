@@ -8,6 +8,7 @@ import (
 	"nimona.io/internal/store/kv"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -58,7 +59,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	defer ctx.Cancel()
 
 	h := object.Hash(objectHash)
-	ps, err := api.discovery.FindByContent(ctx, h)
+	ps, err := api.discovery.Lookup(ctx, discovery.LookupByContentHash(h))
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return

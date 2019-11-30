@@ -46,7 +46,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err := d1.FindByPublicKey(ctx, k0.PublicKey())
+	peers, err := d1.Lookup(ctx, discovery.LookupByKey(k0.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -55,7 +55,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err = d0.FindByPublicKey(ctxR2, k1.PublicKey())
+	peers, err = d0.Lookup(ctxR2, discovery.LookupByKey(k1.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -102,7 +102,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err := d1.FindByPublicKey(ctx, k0.PublicKey())
+	peers, err := d1.Lookup(ctx, discovery.LookupByKey(k0.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -112,7 +112,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.FindByPublicKey(ctx, k1.PublicKey())
+	peers, err = d2.Lookup(ctx, discovery.LookupByKey(k1.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -122,7 +122,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.FindByPublicKey(ctx, k2.PublicKey())
+	peers, err = d1.Lookup(ctx, discovery.LookupByKey(k2.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
@@ -155,7 +155,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req4"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.FindByPublicKey(ctx, l3.GetIdentityPublicKey())
+	peers, err = d1.Lookup(ctx, discovery.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -165,7 +165,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req5"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.FindByPublicKey(ctx, l3.GetIdentityPublicKey())
+	peers, err = d2.Lookup(ctx, discovery.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -216,20 +216,20 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	providers, err := d2.FindByContent(ctx, ch)
+	providers, err := d2.Lookup(ctx, discovery.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 
 	// find peer 1 from bootstrap
 	ctx = context.New(
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	providers, err = d0.FindByContent(ctx, ch)
+	providers, err = d0.Lookup(ctx, discovery.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 
 	// add extra peer
 	_, _, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
@@ -248,10 +248,10 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second),
 	)
-	providers, err = d3.FindByContent(ctx, ch)
+	providers, err = d3.Lookup(ctx, discovery.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey(), providers[0])
+	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 }
 
 func newPeer(

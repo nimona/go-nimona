@@ -6,15 +6,12 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/discovery/hyperspace/bloom"
+	"nimona.io/pkg/discovery/bloom"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
-
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=object.Hash"
 
 var (
 	peerType        = new(peer.Peer).GetType()
@@ -33,8 +30,6 @@ type (
 		store    *Store
 		exchange exchange.Exchange
 		local    *peer.LocalPeer
-
-		contentHashes *ObjectHashSyncList
 	}
 )
 
@@ -50,8 +45,6 @@ func NewDiscoverer(
 		store:    NewStore(),
 		local:    local,
 		exchange: exc,
-
-		contentHashes: &ObjectHashSyncList{},
 	}
 
 	logger := log.FromContext(ctx).With(
@@ -65,26 +58,8 @@ func NewDiscoverer(
 			peerLookupType,
 		),
 	)
+
 	go exchange.HandleEnvelopeSubscription(objectSub, r.handleObject)
-
-	// listen on content hash updates
-	r.local.OnContentHashesUpdated(func(hashes []object.Hash) {
-		nctx := context.New(context.WithTimeout(time.Second * 3))
-		for _, hash := range hashes {
-			r.contentHashes.Put(hash)
-		}
-		err := r.publishContentHashes(nctx)
-		if err != nil {
-			logger.Debug("could not publish content hashes",
-				log.Error(err),
-			)
-		}
-	})
-
-	// pre-fill content hashes from local info
-	for _, ch := range r.local.GetContentHashes() {
-		r.contentHashes.Put(ch)
-	}
 
 	// get in touch with bootstrap nodes
 	if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
@@ -99,86 +74,43 @@ func NewDiscoverer(
 	return r, nil
 }
 
-// FindByPublicKey finds and returns peer infos from a fingerprint
-func (r *Discoverer) FindByPublicKey(
+// Lookup finds and returns peer infos from a fingerprint
+func (r *Discoverer) Lookup(
 	ctx context.Context,
-	publicKey crypto.PublicKey,
-	opts ...discovery.Option,
-) ([]*peer.Peer, error) {
-	opt := discovery.ParseOptions(opts...)
+	opts ...discovery.LookupOption,
+) (
+	[]*peer.Peer,
+	error,
+) {
+	opt := discovery.ParseLookupOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.FindByPublicKey"),
-		log.Any("peer.publicKey", publicKey),
+		log.String("method", "hyperspace/resolver.Lookup"),
 	)
-	logger.Debug("trying to find peer by publicKey")
+	logger.Debug("looking up")
 
-	eps := r.store.FindByPublicKey(publicKey)
-	if len(eps) > 0 {
-		logger.Debug(
-			"found peers in store",
-			log.Int("n", len(eps)),
-			log.Any("peers", eps),
+	eps := []*peer.Peer{}
+	if !opt.Local {
+		// nolint: errcheck
+		eps, _ = r.lookup(
+			ctx,
+			bloom.New(opt.Lookups...),
+			opt.Filters,
 		)
 	}
 
-	if opt.Local {
-		return eps, nil
+	lps := r.store.Get(bloom.New(opt.Lookups...))
+	if len(lps) > 0 {
+		logger.Debug(
+			"found peers in store",
+			log.Int("n", len(lps)),
+			log.Any("peers", lps),
+		)
 	}
 
-	meps, _ := r.LookupPeer(ctx, publicKey) // nolint: errcheck
+	ps := r.withoutOwnPeer(append(eps, lps...))
 
-	eps = append(eps, meps...)
-	eps = r.withoutOwnPeer(eps)
-
-	return eps, nil
-}
-
-// FindByContent finds and returns peer infos from a content hash
-func (r *Discoverer) FindByContent(
-	ctx context.Context,
-	contentHash object.Hash,
-	opts ...discovery.Option,
-) ([]crypto.PublicKey, error) {
-	opt := discovery.ParseOptions(opts...)
-
-	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.FindByContent"),
-		log.Any("contentHash", contentHash),
-		log.Any("opts", opts),
-	)
-	logger.Debug("trying to find peer by contentHash")
-
-	b := bloom.New(contentHash.String())
-	cs := r.store.FindByContent(b)
-	fs := []crypto.PublicKey{}
-
-	for _, b := range cs {
-		fs = append(fs, b.Signature.Signer)
-	}
-	logger.With(
-		log.Any("fingerprints", cs),
-	).Debug("found fingerprints in store")
-
-	if opt.Local {
-		return fs, nil
-	}
-
-	logger.Debug("looking up providers")
-
-	mfs, err := r.LookupContentProvider(ctx, b)
-	if err != nil {
-		logger.With(
-			log.Error(err),
-		).Debug("failed to look up peers")
-		return nil, err
-	}
-
-	fs = append(fs, mfs...)
-	logger.With(
-		log.Int("n", len(fs)),
-	).Debug("found n peers")
-	return r.withoutOwnFingerprint(fs), nil
+	return ps, nil
 }
 
 func (r *Discoverer) handleObject(
@@ -240,14 +172,12 @@ func (r *Discoverer) handlePeerRequest(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeerRequest"),
 		log.String("e.sender", e.Sender.String()),
-		log.Any("query.key", q.Key),
+		log.Any("query.bloom", q.Bloom),
 	)
 
 	logger.Debug("handling peer request")
 
-	cps := r.store.FindClosestPeer(q.Key)
-	// TODO doesn't the above already find the exact peers?
-	cps = append(cps, r.store.FindByPublicKey(q.Key)...)
+	cps := r.store.GetClosest(q.Bloom)
 	cps = r.withoutOwnPeer(cps)
 
 	for _, p := range cps {
@@ -285,7 +215,7 @@ func (r *Discoverer) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	cps := r.store.FindClosestContentProvider(q.Bloom)
+	cps := r.store.GetClosest(q.Bloom)
 	cps = append(cps, r.local.GetSignedPeer())
 
 	for _, p := range cps {
@@ -316,145 +246,16 @@ func (r *Discoverer) handlePeerLookup(
 	).Debug("handling done, sent n blooms")
 }
 
-// LookupContentProvider searches the network for content given a bloom filter
-func (r *Discoverer) LookupContentProvider(
+// lookup does a network lookup given a query
+func (r *Discoverer) lookup(
 	ctx context.Context,
-	q bloom.Bloom,
-) ([]crypto.PublicKey, error) {
-	ctx = context.FromContext(ctx)
-	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.LookupContentProvider"),
-		log.Any("query.bloom", q),
-	)
-
-	// create content request
-	contentRequest := &peer.Lookup{
-		Bloom: q.Bloom(),
-	}
-
-	// create channel to keep providers we find
-	providers := make(chan crypto.PublicKey)
-
-	// create channel for the peers we need to ask
-	recipients := make(chan crypto.PublicKey)
-
-	// send content requests to recipients
-	contentRequestObject := contentRequest.ToObject()
-	go func() {
-		// keep a record of the peers we already asked
-		recipientsAsked := map[string]bool{}
-		// go through the peers we need to ask
-		for recipient := range recipients {
-			// check if we've already asked them
-			if _, alreadyAsked := recipientsAsked[recipient.String()]; alreadyAsked {
-				continue
-			}
-			// else mark them as already been asked
-			recipientsAsked[recipient.String()] = true
-			// and finally ask them
-			err := r.exchange.Send(
-				ctx,
-				contentRequestObject,
-				recipient.Address(),
-				exchange.WithLocalDiscoveryOnly(),
-				exchange.WithAsync(),
-			)
-			if err != nil {
-				logger.Debug("could not lookup peer", log.Error(err))
-			}
-			logger.Debug("asked peer", log.String("peer", recipient.String()))
-		}
-	}()
-
-	// listen for new content providers and ask them
-	contentProviderHandler := func(e *exchange.Envelope) error {
-		cp := &peer.Peer{}
-		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.Signer == "" {
-			return nil
-		}
-		if intersectionCount(cp.Bloom, q) == len(q.Bloom()) {
-			providers <- cp.Signature.Signer
-			return nil
-		}
-		recipients <- cp.Signature.Signer
-		return nil
-	}
-	providerSub := r.exchange.Subscribe(
-		exchange.FilterByObjectType(peerType),
-	)
-	defer providerSub.Cancel()
-	go exchange.HandleEnvelopeSubscription(
-		providerSub,
-		contentProviderHandler,
-	)
-
-	// listen for new peers and ask them
-	peerHandler := func(e *exchange.Envelope) error {
-		cp := &peer.Peer{}
-		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature != nil && cp.Signature.Signer != "" {
-			recipients <- cp.Signature.Signer
-		}
-		return nil
-	}
-	peerSub := r.exchange.Subscribe(
-		exchange.FilterByObjectType(peerType),
-	)
-	defer peerSub.Cancel()
-	go exchange.HandleEnvelopeSubscription(
-		peerSub,
-		peerHandler,
-	)
-
-	// find and ask "closest" content providers
-	announcements := r.store.FindClosestContentProvider(q)
-	for _, announcement := range announcements {
-		recipients <- announcement.Signature.Signer
-	}
-
-	// find and ask "closest" peers
-	closestPeers := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
-	for _, peer := range closestPeers {
-		recipients <- peer.PublicKey()
-	}
-
-	// error early if there are no peers to contact
-	if len(announcements) == 0 && len(closestPeers) == 0 {
-		return nil, ErrNoPeersToAsk
-	}
-
-	// gather all providers until something happens
-	providersList := []crypto.PublicKey{}
-	t := time.NewTimer(time.Second * 5)
-loop:
-	for {
-		select {
-		case provider := <-providers:
-			providersList = append(providersList, provider)
-			break loop
-		case <-t.C:
-			logger.Debug("timer done, giving up")
-			break loop
-		case <-ctx.Done():
-			logger.Debug("ctx done, giving up")
-			break loop
-		}
-	}
-
-	logger.Debug("done, found n providers", log.Int("n", len(providersList)))
-	return providersList, nil
-}
-
-// LookupPeer does a network lookup given a query
-func (r *Discoverer) LookupPeer(
-	ctx context.Context,
-	requestedPeer crypto.PublicKey,
+	bloom bloom.Bloom,
+	filters []discovery.LookupFilter,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.LookupPeer"),
-		log.Any("requestedPeer", requestedPeer),
+		log.Any("bloom", bloom),
 	)
 	logger.Debug("looking up peer")
 
@@ -465,18 +266,13 @@ func (r *Discoverer) LookupPeer(
 	recipients := make(chan crypto.PublicKey)
 
 	// allows us to match peers with peerRequest
-	peerMatchesRequest := func(peer *peer.Peer) bool {
-		for _, cert := range peer.Certificates {
-			if cert.Signature.Signer.Equals(requestedPeer) {
-				return true
-			}
-		}
-		return false
+	peerMatchesRequest := func(p *peer.Peer) bool {
+		return matchPeerWithLookupFilters(p, filters...)
 	}
 
 	// send content requests to recipients
 	peerRequest := &peer.Request{
-		Key: requestedPeer,
+		Bloom: bloom,
 	}
 	peerRequestObject := peerRequest.ToObject()
 	go func() {
@@ -491,17 +287,16 @@ func (r *Discoverer) LookupPeer(
 			// else mark them as already been asked
 			recipientsAsked[recipient.String()] = true
 			// and finally ask them
-			go func(peerRequestObject object.Object, address string) {
-				err := r.exchange.Send(
-					ctx,
-					peerRequestObject,
-					address,
-					exchange.WithLocalDiscoveryOnly(),
-				)
-				if err != nil {
-					logger.Debug("could not lookup peer", log.Error(err))
-				}
-			}(peerRequestObject, recipient.Address())
+			err := r.exchange.Send(
+				ctx,
+				peerRequestObject,
+				recipient.Address(),
+				exchange.WithLocalDiscoveryOnly(),
+				exchange.WithAsync(),
+			)
+			if err != nil {
+				logger.Debug("could send request to peer", log.Error(err))
+			}
 			logger.Debug("asked peer", log.String("peer", recipient.String()))
 		}
 	}()
@@ -531,14 +326,14 @@ func (r *Discoverer) LookupPeer(
 
 	// find and ask "closest" peers
 	go func() {
-		cps := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
+		cps := r.store.GetClosest(r.local.GetSignedPeer().Bloom)
 		cps = r.withoutOwnPeer(cps)
-		for _, peer := range cps {
-			if peerMatchesRequest(peer) {
-				peers <- peer
+		for _, p := range cps {
+			if peerMatchesRequest(p) {
+				peers <- p
 				continue
 			}
-			recipients <- peer.PublicKey()
+			recipients <- p.PublicKey()
 		}
 	}()
 
@@ -569,24 +364,23 @@ func (r *Discoverer) bootstrap(
 	bootstrapAddresses []string,
 ) error {
 	logger := log.FromContext(ctx)
-	publicKey := r.local.GetPeerPublicKey()
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
+		// exchange.WithAsync(),
 	}
 	q := &peer.Request{
-		Key: publicKey,
+		Bloom: r.local.GetSignedPeer().Bloom,
 	}
 	o := q.ToObject()
 	for _, addr := range bootstrapAddresses {
 		logger.Debug("connecting to bootstrap", log.String("address", addr))
 		err := r.exchange.Send(ctx, o, addr, opts...)
 		if err != nil {
-			logger.Debug("bootstrap could not send request", log.Error(err))
+			logger.Debug("could not send request to bootstrap", log.Error(err))
 		}
 		err = r.exchange.Send(ctx, r.local.GetSignedPeer().ToObject(), addr, opts...)
 		if err != nil {
-			logger.Debug("bootstrap could not send self", log.Error(err))
+			logger.Debug("could not send own peer to bootstrap", log.Error(err))
 		}
 	}
 	return nil
@@ -599,14 +393,10 @@ func (r *Discoverer) publishContentHashes(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
 	cb := r.local.GetSignedPeer()
-	cps := r.store.FindClosestContentProvider(cb.Bloom)
+	cps := r.store.GetClosest(cb.Bloom)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
 		fs = append(fs, c.Signature.Signer)
-	}
-	ps := r.store.FindClosestPeer(r.local.GetPeerPublicKey())
-	for _, p := range ps {
-		fs = append(fs, p.Signature.Signer)
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -671,4 +461,13 @@ func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.Publi
 		nps = append(nps, p)
 	}
 	return nps
+}
+
+func matchPeerWithLookupFilters(p *peer.Peer, fs ...discovery.LookupFilter) bool {
+	for _, f := range fs {
+		if f(p) == false {
+			return false
+		}
+	}
+	return true
 }

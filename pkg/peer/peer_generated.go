@@ -19,7 +19,7 @@ type (
 		Identity     crypto.PublicKey      `json:"@identity:s,omitempty"`
 	}
 	Request struct {
-		Key       crypto.PublicKey  `json:"key:s,omitempty"`
+		Bloom     []int64           `json:"bloom:ai,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -74,7 +74,9 @@ func (e *Request) GetType() string {
 func (e *Request) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/peer.Request"
-	m["key:s"] = e.Key
+	if len(e.Bloom) > 0 {
+		m["bloom:ai"] = e.Bloom
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
