@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery/hyperspace/bloom"
+	"nimona.io/pkg/discovery/bloom"
 	"nimona.io/pkg/object"
 )
 
@@ -175,8 +175,10 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 
-	// gather up certificates, content ids and types
-	hs := []string{}
+	// gather up peer key, certificates, content ids and types
+	hs := []string{
+		p.peerPublicKey.String(),
+	}
 	for _, c := range p.GetContentHashes() {
 		hs = append(hs, c.String())
 	}

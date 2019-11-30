@@ -6,10 +6,8 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -19,56 +17,27 @@ import (
 type (
 	// Provider defines the interface for a discoverer provider, eg our DHT
 	Provider interface {
-		FindByPublicKey(
+		Lookup(
 			ctx context.Context,
-			key crypto.PublicKey,
-			opts ...Option,
-		) ([]*peer.Peer, error)
-		FindByContent(
-			ctx context.Context,
-			contentHash object.Hash,
-			opts ...Option,
-		) ([]crypto.PublicKey, error)
+			opts ...LookupOption,
+		) (
+			[]*peer.Peer,
+			error,
+		)
 	}
 	// Discoverer interface
 	Discoverer interface {
-		AddProvider(provider Provider) error
 		Add(peer *peer.Peer)
-		FindByPublicKey(
+		AddProvider(provider Provider) error
+		Lookup(
 			ctx context.Context,
-			key crypto.PublicKey,
-			opts ...Option,
-		) ([]*peer.Peer, error)
-		FindByContent(
-			ctx context.Context,
-			contentHash object.Hash,
-			opts ...Option,
-		) ([]crypto.PublicKey, error)
+			opts ...LookupOption,
+		) (
+			[]*peer.Peer,
+			error,
+		)
 	}
 )
-
-// Options is the complete options structure for the discoverer
-type Options struct {
-	Local bool
-}
-
-// Option is the type for our functional options
-type Option func(*Options)
-
-// Local forces the discoverer to only look at its cache
-func Local() Option {
-	return func(opts *Options) {
-		opts.Local = true
-	}
-}
-
-func ParseOptions(opts ...Option) *Options {
-	options := &Options{}
-	for _, o := range opts {
-		o(options)
-	}
-	return options
-}
 
 // NewDiscoverer creates a new empty discoverer with no providers
 func NewDiscoverer() Discoverer {
@@ -89,21 +58,26 @@ type discoverer struct {
 	cachePersistent *StringPeerPeerSyncMap
 }
 
-// FindByPublicKey goes through the given providers until one returns something
-func (r *discoverer) FindByPublicKey(
+// Lookup goes through the given providers until one returns something
+func (r *discoverer) Lookup(
 	ctx context.Context,
-	key crypto.PublicKey,
-	opts ...Option,
-) ([]*peer.Peer, error) {
-	opt := ParseOptions(opts...)
+	opts ...LookupOption,
+) (
+	[]*peer.Peer,
+	error,
+) {
+	opt := ParseLookupOptions(opts...)
+
+	if len(opt.Filters) == 0 {
+		return nil, errors.New("missing filters")
+	}
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "discovery/discoverer.FindByPublicKey"),
-		log.String("key", key.String()),
+		log.String("method", "discovery/discoverer.Lookup"),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
 	)
 
-	logger.Debug("trying to find peers")
+	logger.Debug("trying to lookup peers")
 
 	ps := []*peer.Peer{}
 	r.providers.Range(func(_, v interface{}) bool {
@@ -111,7 +85,7 @@ func (r *discoverer) FindByPublicKey(
 		if !ok {
 			return true
 		}
-		eps, err := p.FindByPublicKey(ctx, key, opts...)
+		eps, err := p.Lookup(ctx, opts...)
 		if err != nil {
 			logger.With(
 				log.Error(err),
@@ -129,60 +103,22 @@ func (r *discoverer) FindByPublicKey(
 
 	// TODO move persistence into its own provider
 
-	if res, ok := r.cacheTemp.Get(key.String()); ok && res != nil {
-		ps = append(ps, res)
-	}
-
-	if res, ok := r.cachePersistent.Get(key.String()); ok && res != nil {
-		ps = append(ps, res)
-	}
-
-	if len(ps) == 0 {
-		return nil, errors.New("could not resolve")
-	}
-
-	return ps, nil
-}
-
-// FindByContent goes through the given providers until one returns something
-func (r *discoverer) FindByContent(
-	ctx context.Context,
-	contentHash object.Hash,
-	opts ...Option,
-) ([]crypto.PublicKey, error) {
-	opt := ParseOptions(opts...)
-
-	logger := log.FromContext(ctx).With(
-		log.String("method", "discovery/discoverer.FindByContent"),
-		log.String("contentHash", contentHash.String()),
-		log.String("opts", fmt.Sprintf("%#v", opt)),
-	)
-
-	logger.Debug("trying to find peers")
-
-	ps := []crypto.PublicKey{}
-	r.providers.Range(func(_, v interface{}) bool {
-		p, ok := v.(Provider)
-		if !ok {
-			return true
+	r.cacheTemp.Range(func(k string, p *peer.Peer) bool {
+		if matchPeerWithLookupFilters(p, opt.Filters...) {
+			ps = append(ps, p)
 		}
-		eps, err := p.FindByContent(ctx, contentHash, opts...)
-		if err != nil {
-			logger.With(
-				log.Error(err),
-			).Debug("provider failed")
-			return true
+		return true
+	})
+
+	r.cachePersistent.Range(func(k string, p *peer.Peer) bool {
+		if matchPeerWithLookupFilters(p, opt.Filters...) {
+			ps = append(ps, p)
 		}
-		ps = append(ps, eps...)
-		logger.With(
-			log.Int("n", len(eps)),
-			log.Any("peers", ps),
-		).Debug("found n peers")
 		return true
 	})
 
 	if len(ps) == 0 {
-		return nil, errors.New("could not resolve")
+		return nil, errors.New("could not lookup peer")
 	}
 
 	return ps, nil

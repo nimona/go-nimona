@@ -10,7 +10,7 @@ domain nimona.io/peer {
         certificates repeated crypto.Certificate
     }
     signed command Request {
-        key crypto.PublicKey
+        bloom repeated int
     }
     signed command Lookup {
         bloom repeated int

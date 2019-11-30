@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/store/graph"
 	"nimona.io/internal/store/kv"
@@ -31,6 +32,14 @@ func TestSendSuccess(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer())
 	disc2.Add(l1.GetSignedPeer())
 
+	dr1, err := disc1.Lookup(
+		context.Background(),
+		discovery.LookupByKey(l2.GetPeerPublicKey()),
+	)
+	require.NoError(t, err)
+	require.Len(t, dr1, 1)
+	require.Equal(t, l2.GetIdentityPublicKey(), dr1[0].PublicKey())
+
 	em1 := map[string]interface{}{
 		"@type:s": "test/msg",
 		"body:s":  "bar1",
@@ -49,7 +58,7 @@ func TestSendSuccess(t *testing.T) {
 	w1ObjectHandled := false
 	w2ObjectHandled := false
 
-	err := crypto.Sign(eo1, k2)
+	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
 	// nolint: dupl

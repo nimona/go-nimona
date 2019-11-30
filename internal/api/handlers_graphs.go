@@ -9,6 +9,7 @@ import (
 	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
@@ -85,7 +86,7 @@ func (api *API) HandleGetGraph(c *router.Context) {
 	if sync {
 		// find peers who provide the root object
 		h := object.Hash(rootObjectHash)
-		ps, err := api.discovery.FindByContent(ctx, h)
+		ps, err := api.discovery.Lookup(ctx, discovery.LookupByContentHash(h))
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return

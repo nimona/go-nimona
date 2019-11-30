@@ -45,3 +45,29 @@ func unique(s []int) []int {
 	}
 	return s[:j]
 }
+
+func (b Bloom) Contains(needle []int64) bool {
+	return intersectionCount(needle, b.Bloom()) == len(needle)
+}
+
+func intersectionCount(a, b []int64) int {
+	m := make(map[int64]uint64)
+	for _, k := range a {
+		m[k] |= (1 << 0)
+	}
+	for _, k := range b {
+		m[k] |= (1 << 1)
+	}
+
+	i := 0
+	for _, v := range m {
+		a := v&(1<<0) != 0
+		b := v&(1<<1) != 0
+		switch {
+		case a && b:
+			i++
+		}
+	}
+
+	return i
+}
