@@ -5,11 +5,14 @@ import nimona.io/crypto crypto
 domain nimona.io/peer {
     signed event Peer {
         addresses repeated string
-        contentBloom repeated int
+        bloom repeated int
         contentTypes repeated string
         certificates repeated crypto.Certificate
     }
-    signed command Requested {
+    signed command Request {
         key crypto.PublicKey
+    }
+    signed command Lookup {
+        bloom repeated int
     }
 }

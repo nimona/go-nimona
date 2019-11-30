@@ -28,6 +28,7 @@ type (
 
 		addresses     *StringAddressesSyncMap
 		contentHashes *ObjectHashSyncList
+		contentTypes  []string
 
 		handlerLock             sync.RWMutex
 		onAddressesHandlers     []OnAddressesUpdated
@@ -174,18 +175,24 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 
-	cs := p.GetContentHashes()
-	hs := make([]string, len(cs))
-	for i, c := range cs {
-		hs[i] = c.String()
+	// gather up certificates, content ids and types
+	hs := []string{}
+	for _, c := range p.GetContentHashes() {
+		hs = append(hs, c.String())
+	}
+	for _, c := range p.contentTypes {
+		hs = append(hs, c)
+	}
+	for _, c := range p.certificates {
+		hs = append(hs, c.Signature.Signer.String())
 	}
 
 	// TODO cache peer info and reuse
 	pi := &Peer{
+		Bloom:        bloom.New(hs...),
 		Addresses:    p.GetAddresses(),
 		Certificates: p.certificates,
-		ContentBloom: bloom.New(hs...),
-		ContentTypes: []string{},
+		ContentTypes: p.contentTypes,
 	}
 
 	o := pi.ToObject()

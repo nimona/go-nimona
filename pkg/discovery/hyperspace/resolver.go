@@ -17,9 +17,9 @@ import (
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_content_hashes_generated.go -pkg hyperspace gen "KeyType=object.Hash"
 
 var (
-	peerRequestedType          = new(peer.Requested).GetType()
-	peerType                   = new(peer.Peer).GetType()
-	contentProviderRequestType = new(Request).GetType()
+	peerType        = new(peer.Peer).GetType()
+	peerLookupType  = new(peer.Lookup).GetType()
+	peerRequestType = new(peer.Request).GetType()
 )
 
 const (
@@ -61,8 +61,8 @@ func NewDiscoverer(
 	objectSub := r.exchange.Subscribe(
 		exchange.FilterByObjectType(
 			peerType,
-			peerRequestedType,
-			contentProviderRequestType,
+			peerRequestType,
+			peerLookupType,
 		),
 	)
 	go exchange.HandleEnvelopeSubscription(objectSub, r.handleObject)
@@ -194,8 +194,8 @@ func (r *Discoverer) handleObject(
 	// handle payload
 	o := e.Payload
 	switch o.GetType() {
-	case peerRequestedType:
-		v := &peer.Requested{}
+	case peerRequestType:
+		v := &peer.Request{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -206,12 +206,12 @@ func (r *Discoverer) handleObject(
 			return err
 		}
 		r.handlePeer(ctx, v, e)
-	case contentProviderRequestType:
-		v := &Request{}
+	case peerLookupType:
+		v := &peer.Lookup{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handleProviderRequest(ctx, v, e)
+		r.handlePeerLookup(ctx, v, e)
 	}
 	return nil
 }
@@ -233,7 +233,7 @@ func (r *Discoverer) handlePeer(
 
 func (r *Discoverer) handlePeerRequest(
 	ctx context.Context,
-	q *peer.Requested,
+	q *peer.Request,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -271,21 +271,21 @@ func (r *Discoverer) handlePeerRequest(
 	logger.Debug("handling done")
 }
 
-func (r *Discoverer) handleProviderRequest(
+func (r *Discoverer) handlePeerLookup(
 	ctx context.Context,
-	q *Request,
+	q *peer.Lookup,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handleProviderRequest"),
+		log.String("method", "hyperspace/resolver.handlePeerLookup"),
 		log.String("e.sender", e.Sender.String()),
-		log.Any("query.bloom", q.QueryContentBloom),
+		log.Any("query.bloom", q.Bloom),
 	)
 
-	logger.Debug("handling content request")
+	logger.Debug("handling peer lookup")
 
-	cps := r.store.FindClosestContentProvider(q.QueryContentBloom)
+	cps := r.store.FindClosestContentProvider(q.Bloom)
 	cps = append(cps, r.local.GetSignedPeer())
 
 	for _, p := range cps {
@@ -294,7 +294,7 @@ func (r *Discoverer) handleProviderRequest(
 			pf = p.Signature.Signer.String()
 		}
 		logger.Debug("responding with content hash bloom",
-			log.Any("bloom", p.ContentBloom),
+			log.Any("bloom", p.Bloom),
 			log.String("fingerprint", pf),
 		)
 		err := r.exchange.Send(
@@ -328,8 +328,8 @@ func (r *Discoverer) LookupContentProvider(
 	)
 
 	// create content request
-	contentRequest := &Request{
-		QueryContentBloom: q.Bloom(),
+	contentRequest := &peer.Lookup{
+		Bloom: q.Bloom(),
 	}
 
 	// create channel to keep providers we find
@@ -373,7 +373,7 @@ func (r *Discoverer) LookupContentProvider(
 		if cp.Signature == nil || cp.Signature.Signer == "" {
 			return nil
 		}
-		if intersectionCount(cp.ContentBloom, q) == len(q.Bloom()) {
+		if intersectionCount(cp.Bloom, q) == len(q.Bloom()) {
 			providers <- cp.Signature.Signer
 			return nil
 		}
@@ -475,7 +475,7 @@ func (r *Discoverer) LookupPeer(
 	}
 
 	// send content requests to recipients
-	peerRequest := &peer.Requested{
+	peerRequest := &peer.Request{
 		Key: requestedPeer,
 	}
 	peerRequestObject := peerRequest.ToObject()
@@ -574,7 +574,7 @@ func (r *Discoverer) bootstrap(
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	}
-	q := &peer.Requested{
+	q := &peer.Request{
 		Key: publicKey,
 	}
 	o := q.ToObject()
@@ -592,28 +592,14 @@ func (r *Discoverer) bootstrap(
 	return nil
 }
 
-func (r *Discoverer) getContentHashes() []object.Hash {
-	cIDs := []object.Hash{}
-	r.contentHashes.Range(func(k object.Hash) bool {
-		cIDs = append(cIDs, k)
-		return true
-	})
-	return cIDs
-}
-
 func (r *Discoverer) publishContentHashes(
 	ctx context.Context,
 ) error {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
-	cs := r.getContentHashes()
-	ss := []string{}
-	for _, c := range cs {
-		ss = append(ss, c.String())
-	}
-	b := bloom.New(ss...)
-	cps := r.store.FindClosestContentProvider(b)
+	cb := r.local.GetSignedPeer()
+	cps := r.store.FindClosestContentProvider(cb.Bloom)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
 		fs = append(fs, c.Signature.Signer)
@@ -629,12 +615,9 @@ func (r *Discoverer) publishContentHashes(
 
 	logger.With(
 		log.Int("n", len(fs)),
-		log.Any("bloom", b),
+		log.Any("bloom", cb.Bloom),
 	).Debug("trying to tell n peers")
 
-	cb := &peer.Peer{
-		ContentBloom: b,
-	}
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),

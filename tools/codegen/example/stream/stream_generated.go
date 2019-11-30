@@ -24,8 +24,8 @@ type (
 		Identity        crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	PoliciesUpdated struct {
-		Stream    *crypto.Hash      `json:"stream:s,omitempty"`
-		Parents   []*crypto.Hash    `json:"parents:as,omitempty"`
+		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
+		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
@@ -103,10 +103,10 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/stream.PoliciesUpdated"
 	if e.Stream != nil {
-		m["stream:s"] = e.Stream.ToObject().ToMap()
+		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
 	if len(e.Parents) > 0 {
-		m["parents:as"] = func() []interface{} {
+		m["parents:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Parents))
 			for i, v := range e.Parents {
 				a[i] = v.ToObject().ToMap()

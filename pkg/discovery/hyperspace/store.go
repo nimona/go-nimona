@@ -75,7 +75,7 @@ func (s *Store) FindClosestContentProvider(q []int64) []*peer.Peer {
 	r := []kv{}
 	s.peers.Range(func(f crypto.PublicKey, p *peer.Peer) bool {
 		r = append(r, kv{
-			bloomIntersection: intersectionCount(q, p.ContentBloom),
+			bloomIntersection: intersectionCount(q, p.Bloom),
 			peer:              p,
 		})
 		return true
@@ -117,7 +117,7 @@ func (s *Store) FindByContent(q []int64) []*peer.Peer {
 	cs := []*peer.Peer{}
 
 	s.peers.Range(func(f crypto.PublicKey, c *peer.Peer) bool {
-		if intersectionCount(c.ContentBloom, q) != len(q) {
+		if intersectionCount(c.Bloom, q) != len(q) {
 			return true
 		}
 		cs = append(cs, c)
