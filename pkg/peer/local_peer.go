@@ -2,6 +2,7 @@ package peer
 
 import (
 	"sync"
+	"time"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery/bloom"
@@ -191,6 +192,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 
 	// TODO cache peer info and reuse
 	pi := &Peer{
+		Version:      time.Now().UTC().Unix(),
 		Bloom:        bloom.New(hs...),
 		Addresses:    p.GetAddresses(),
 		Certificates: p.certificates,
