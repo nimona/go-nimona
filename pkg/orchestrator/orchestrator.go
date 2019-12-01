@@ -45,7 +45,6 @@ type (
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
 		localInfo *peer.LocalPeer
-		// backlog  backlog.Backlog
 	}
 	Graph struct {
 		Objects []object.Object
@@ -58,7 +57,6 @@ func New(
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
-	// bc backlog.Backlog,
 ) (
 	Orchestrator,
 	error,
@@ -80,7 +78,6 @@ func NewWithContext(
 	exc exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
-	// bc backlog.Backlog,
 ) (
 	Orchestrator,
 	error,
@@ -91,9 +88,10 @@ func NewWithContext(
 		exchange:  exc,
 		discovery: discovery,
 		localInfo: localInfo,
-		// backlog:  bc,
 	}
-	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
+	sub := m.exchange.Subscribe(
+		exchange.FilterByObjectType("**"),
+	)
 	go func() {
 		if err := m.process(ctx, sub); err != nil {
 			logger.Error("processing failed", log.Error(err))
@@ -145,6 +143,20 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 				v,
 			); err != nil {
 				logger.Warn("could not handle graph request object", log.Error(err))
+			}
+		default:
+			shouldPersist := false
+			for _, t := range m.localInfo.GetContentTypes() {
+				if o.GetType() == t {
+					shouldPersist = true
+					break
+				}
+			}
+			if !shouldPersist {
+				break
+			}
+			if err := m.store.Put(o); err != nil {
+				logger.Warn("could not persist", log.Error(err))
 			}
 		}
 	}
