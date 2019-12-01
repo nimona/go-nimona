@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	streamRequestEventListType = new(stream.RequestEventList).GetType()
-	streamEventListCreatedType = new(stream.EventListCreated).GetType()
+	streamRequestType  = new(stream.StreamRequest).GetType()
+	streamResponseType = new(stream.StreamResponse).GetType()
 )
 
 type (
@@ -132,12 +132,12 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 
 		o := e.Payload
 		switch o.GetType() {
-		case streamRequestEventListType:
-			v := &stream.RequestEventList{}
+		case streamRequestType:
+			v := &stream.StreamRequest{}
 			if err := v.FromObject(o); err != nil {
 				return err
 			}
-			if err := m.handleStreamRequestEventList(
+			if err := m.handleStreamRequest(
 				ctx,
 				e.Sender,
 				v,
@@ -211,7 +211,7 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 		}
 	}
 
-	go m.localInfo.AddContentHash(hashes...)
+	m.localInfo.AddContentHash(hashes...)
 
 	return nil
 }
@@ -243,10 +243,10 @@ func (m *orchestrator) Get(
 	return g, nil
 }
 
-func (m *orchestrator) handleStreamRequestEventList(
+func (m *orchestrator) handleStreamRequest(
 	ctx context.Context,
 	sender crypto.PublicKey,
-	req *stream.RequestEventList,
+	req *stream.StreamRequest,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
@@ -261,9 +261,9 @@ func (m *orchestrator) handleStreamRequestEventList(
 		hs = append(hs, hash.New(o))
 	}
 
-	res := &stream.EventListCreated{
+	res := &stream.StreamResponse{
 		Stream:   req.Stream,
-		Events:   hs,
+		Children: hs,
 		Identity: m.localInfo.GetIdentityPublicKey(),
 	}
 	sig, err := crypto.NewSignature(
@@ -282,7 +282,7 @@ func (m *orchestrator) handleStreamRequestEventList(
 		"peer:"+sender.String(),
 	); err != nil {
 		logger.Warn(
-			"orchestrator/orchestrator.handlestream.RequestEventList could not send response",
+			"orchestrator/orchestrator.handlestream.StreamRequest could not send response",
 			log.Error(err),
 		)
 		return err

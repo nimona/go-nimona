@@ -16,36 +16,16 @@ type (
 		Conditions []string `json:"conditions:as,omitempty"`
 		Action     string   `json:"action:s,omitempty"`
 	}
-	Created struct {
-		Nonce           string            `json:"nonce:s,omitempty"`
-		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
-		Policies        []*Policy         `json:"policies:ao,omitempty"`
-		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity        crypto.PublicKey  `json:"@identity:s,omitempty"`
-	}
-	Subscribed struct {
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
-	}
-	Unsubscribed struct {
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
-	}
-	PolicyAttached struct {
-		Stream    object.Hash       `json:"stream:s,omitempty"`
-		Parents   []object.Hash     `json:"parents:as,omitempty"`
-		Policies  []*Policy         `json:"policies:ao,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
-	}
-	RequestEventList struct {
+	StreamRequest struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
 		Stream    object.Hash       `json:"stream:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	EventListCreated struct {
+	StreamResponse struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
 		Stream    object.Hash       `json:"stream:s,omitempty"`
-		Events    []object.Hash     `json:"events:as,omitempty"`
+		Children  []object.Hash     `json:"children:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -76,113 +56,14 @@ func (e *Policy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Created) GetType() string {
-	return "nimona.io/stream.Created"
+func (e *StreamRequest) GetType() string {
+	return "nimona.io/stream.StreamRequest"
 }
 
-func (e *Created) ToObject() object.Object {
+func (e *StreamRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.Created"
+	m["@type:s"] = "nimona.io/stream.StreamRequest"
 	m["nonce:s"] = e.Nonce
-	m["createdDateTime:s"] = e.CreatedDateTime
-	if len(e.Policies) > 0 {
-		m["policies:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Policies))
-			for i, v := range e.Policies {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	m["@identity:s"] = e.Identity
-	return object.Object(m)
-}
-
-func (e *Created) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *Subscribed) GetType() string {
-	return "nimona.io/stream.Subscribed"
-}
-
-func (e *Subscribed) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.Subscribed"
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	m["@identity:s"] = e.Identity
-	return object.Object(m)
-}
-
-func (e *Subscribed) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *Unsubscribed) GetType() string {
-	return "nimona.io/stream.Unsubscribed"
-}
-
-func (e *Unsubscribed) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.Unsubscribed"
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	m["@identity:s"] = e.Identity
-	return object.Object(m)
-}
-
-func (e *Unsubscribed) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *PolicyAttached) GetType() string {
-	return "nimona.io/stream.PolicyAttached"
-}
-
-func (e *PolicyAttached) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.PolicyAttached"
-	m["stream:s"] = e.Stream
-	if len(e.Parents) > 0 {
-		m["parents:as"] = e.Parents
-	}
-	if len(e.Policies) > 0 {
-		m["policies:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Policies))
-			for i, v := range e.Policies {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	m["@identity:s"] = e.Identity
-	return object.Object(m)
-}
-
-func (e *PolicyAttached) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e *RequestEventList) GetType() string {
-	return "nimona.io/stream.RequestEventList"
-}
-
-func (e *RequestEventList) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.RequestEventList"
 	m["stream:s"] = e.Stream
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
@@ -191,21 +72,22 @@ func (e *RequestEventList) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *RequestEventList) FromObject(o object.Object) error {
+func (e *StreamRequest) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *EventListCreated) GetType() string {
-	return "nimona.io/stream.EventListCreated"
+func (e *StreamResponse) GetType() string {
+	return "nimona.io/stream.StreamResponse"
 }
 
-func (e *EventListCreated) ToObject() object.Object {
+func (e *StreamResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.EventListCreated"
+	m["@type:s"] = "nimona.io/stream.StreamResponse"
+	m["nonce:s"] = e.Nonce
 	m["stream:s"] = e.Stream
-	if len(e.Events) > 0 {
-		m["events:as"] = e.Events
+	if len(e.Children) > 0 {
+		m["children:as"] = e.Children
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
@@ -214,7 +96,7 @@ func (e *EventListCreated) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *EventListCreated) FromObject(o object.Object) error {
+func (e *StreamResponse) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

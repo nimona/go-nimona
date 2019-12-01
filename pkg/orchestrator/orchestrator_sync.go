@@ -35,7 +35,7 @@ func (m *orchestrator) Sync(
 
 	// start listening for incoming events
 	newObjects := make(chan object.Object)
-	newEventLists := make(chan *stream.EventListCreated)
+	streamResponse := make(chan *stream.StreamResponse)
 	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
 	defer sub.Cancel()
 	go func() {
@@ -45,8 +45,8 @@ func (m *orchestrator) Sync(
 				return
 			}
 			switch e.Payload.GetType() {
-			case streamEventListCreatedType:
-				p := &stream.EventListCreated{}
+			case streamResponseType:
+				p := &stream.StreamResponse{}
 				err := p.FromObject(e.Payload)
 				if err != nil {
 					return
@@ -55,7 +55,7 @@ func (m *orchestrator) Sync(
 					"got event list created",
 					log.Any("p", p),
 				)
-				newEventLists <- p
+				streamResponse <- p
 
 			default:
 				newObjects <- e.Payload
@@ -88,21 +88,21 @@ func (m *orchestrator) Sync(
 				// close(requests)
 				return
 
-			case eventList := <-newEventLists:
+			case res := <-streamResponse:
 				logger := logger.With(
-					log.Any("hashes", eventList.Events),
-					log.Any("stream", eventList.Stream),
+					log.Any("hashes", res.Children),
+					log.Any("stream", res.Stream),
 				)
 
-				logger.Debug("got new events list")
+				logger.Debug("got new events ")
 
-				if eventList.Stream.String() != streamHash.String() {
+				if res.Stream.String() != streamHash.String() {
 					continue
 				}
 
 				logger.Debug("got graph response")
-				sig := eventList.Signature
-				for _, objectHash := range eventList.Events {
+				sig := res.Signature
+				for _, objectHash := range res.Children {
 					// add a request for this hash from this peer
 					if sig == nil || sig.Signer.IsEmpty() {
 						logger.Debug("object has no signature, skipping request")
@@ -110,7 +110,7 @@ func (m *orchestrator) Sync(
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + sig.Signer.String(), // eventList.Identity.Fingerprint().Address(),
+						addr: "peer:" + sig.Signer.String(), // res.Identity.Fingerprint().Address(),
 					}
 				}
 				respCount++
@@ -148,7 +148,7 @@ func (m *orchestrator) Sync(
 	}()
 
 	// create object graph request
-	req := &stream.RequestEventList{
+	req := &stream.StreamRequest{
 		Stream: streamHash,
 	}
 	sig, err := crypto.NewSignature(
