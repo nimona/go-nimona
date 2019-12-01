@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"nimona.io/internal/fixtures"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/client"
 	"nimona.io/pkg/simulation/node"
-	"nimona.io/pkg/stream"
 )
 
 func TestSimulation(t *testing.T) {
@@ -147,10 +148,10 @@ func TestSimulation(t *testing.T) {
 
 	// create an obj, and attach recipients to policy
 	nonce := rand.String(24) + "xnonce"
-	streamCreated := stream.Created{
+	streamCreated := fixtures.TestStream{
 		Nonce: nonce,
-		Policies: []*stream.Policy{
-			&stream.Policy{
+		Policies: []*fixtures.TestPolicy{
+			&fixtures.TestPolicy{
 				Subjects:  recipients,
 				Resources: []string{"*"},
 				Action:    "allow",
