@@ -77,6 +77,7 @@ func New(
 	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
 	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
 	r.Handle("GET", "/api/v1/dump$", api.HandleGetDump)
+	r.Handle("GET", "/api/v1/peers", api.HandleGetLookup)
 
 	r.Handle("GET", "/api/v1/identities$", api.HandleGetIdentities)
 	r.Handle("GET", "/api/v1/identities/(?P<fingerprint>.+)$", api.HandleGetIdentity)
@@ -87,12 +88,8 @@ func New(
 
 	r.Handle("GET", "/api/v1/objects$", api.HandleGetObjects)
 	r.Handle("GET", "/api/v1/objects/(?P<objectHash>.+)$", api.HandleGetObject)
-	r.Handle("POST", "/api/v1/objects$", api.HandlePostObject)
-
-	r.Handle("GET", "/api/v1/graphs$", api.HandleGetGraphs)
-	r.Handle("POST", "/api/v1/graphs$", api.HandlePostGraphs)
-	r.Handle("GET", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandleGetGraph)
-	r.Handle("POST", "/api/v1/graphs/(?P<rootObjectHash>.+)$", api.HandlePostGraph)
+	r.Handle("POST", "/api/v1/objects$", api.HandlePostObjects)
+	r.Handle("POST", "/api/v1/objects/(?P<rootObjectHash>.+)$", api.HandlePostObject)
 
 	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
 
