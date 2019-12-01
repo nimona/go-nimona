@@ -160,9 +160,9 @@ func TestSync(t *testing.T) {
 	}
 
 	// construct event list
-	elo := (&stream.EventListCreated{
+	elo := (&stream.StreamResponse{
 		Stream: oh,
-		Events: []object.Hash{
+		Children: []object.Hash{
 			oh,
 			hash.New(m1.ToObject()),
 			hash.New(m2.ToObject()),

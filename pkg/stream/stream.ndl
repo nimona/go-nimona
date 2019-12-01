@@ -10,25 +10,13 @@ abstract domain nimona.io/stream {
         conditions repeated string
         action string
     }
-    signed event Created {
+    signed command StreamRequest {
         nonce string
-        createdDateTime string
-        policies repeated Policy
-    }
-    signed event Subscribed {
-    }
-    signed event Unsubscribed {
-    }
-    signed event PolicyAttached {
-        stream nimona.io/object.Hash
-        parents repeated nimona.io/object.Hash
-        policies repeated Policy
-    }
-    signed command RequestEventList {
         stream nimona.io/object.Hash
     }
-    signed event EventListCreated {
+    signed command StreamResponse {
+        nonce string
         stream nimona.io/object.Hash
-        events repeated nimona.io/object.Hash
+        children repeated nimona.io/object.Hash
     }
 }

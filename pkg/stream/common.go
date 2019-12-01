@@ -8,11 +8,6 @@ import (
 	"nimona.io/pkg/object"
 )
 
-var (
-	typeStreamSubscribed   = (&Subscribed{}).GetType()
-	typeStreamUnsubscribed = (&Unsubscribed{}).GetType()
-)
-
 type (
 	common struct {
 		Type      string            `json:"@ctx:s,omitempty"`
@@ -46,27 +41,6 @@ func Policies(o object.Object) []*Policy {
 
 func Identity(o object.Object) crypto.PublicKey {
 	return toCommon(o).Identity
-}
-
-func GetStreamSubscribers(os []object.Object) []crypto.PublicKey {
-	subs := map[string]crypto.PublicKey{}
-	for _, o := range os {
-		switch o.GetType() {
-		case typeStreamSubscribed:
-			e := &Subscribed{}
-			e.FromObject(o) // nolint: errcheck
-			subs[e.Identity.String()] = e.Identity
-		case typeStreamUnsubscribed:
-			e := &Unsubscribed{}
-			e.FromObject(o) // nolint: errcheck
-			delete(subs, e.Identity.String())
-		}
-	}
-	cleanSubs := []crypto.PublicKey{}
-	for _, k := range subs {
-		cleanSubs = append(cleanSubs, k)
-	}
-	return cleanSubs
 }
 
 func GetStreamTails(os []object.Object) []object.Object {
