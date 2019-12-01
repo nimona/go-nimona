@@ -31,6 +31,11 @@ var primitives = map[string]struct {
 		Type:     "crypto.PublicKey",
 		IsObject: false,
 	},
+	"[]*nimona.io/crypto.PublicKey": {
+		Tag:      "as",
+		Type:     "[]crypto.PublicKey",
+		IsObject: false,
+	},
 	"[]*nimona.io/object.Hash": {
 		Tag:      "as",
 		Type:     "[]object.Hash",
@@ -39,6 +44,11 @@ var primitives = map[string]struct {
 	"*nimona.io/object.Hash": {
 		Tag:      "s",
 		Type:     "object.Hash",
+		IsObject: false,
+	},
+	"[]*object.Hash": {
+		Tag:      "as",
+		Type:     "[]object.Hash",
 		IsObject: false,
 	},
 	"*Hash": {
