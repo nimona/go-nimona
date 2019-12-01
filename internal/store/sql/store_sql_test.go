@@ -1,34 +1,38 @@
 package sql_test
 
 import (
-	"database/sql"
+	ssql "database/sql"
 	"fmt"
-	"os"
+	"io/ioutil"
+	"path"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-	sqln "nimona.io/internal/store/sql"
+
+	"nimona.io/internal/fixtures"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
-const dbFilepath string = "./nimona.db"
+func tempSqlite3(t *testing.T) *ssql.DB {
+	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
+	require.NoError(t, err)
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	require.NoError(t, err)
+	return db
+}
 
 func TestNewDatabase(t *testing.T) {
-	dblite, err := sql.Open("sqlite3", dbFilepath)
-	defer func() {
-		os.Remove(dbFilepath) // nolint
-	}()
-	require.NoError(t, err)
-
-	store, err := sqln.New(dblite)
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -37,20 +41,15 @@ func TestNewDatabase(t *testing.T) {
 }
 
 func TestStoreRetrieveUpdate(t *testing.T) {
-	dblite, err := sql.Open("sqlite3", dbFilepath)
-	defer func() {
-		os.Remove(dbFilepath) // nolint
-	}()
-	require.NoError(t, err)
-
-	store, err := sqln.New(dblite)
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
-	p := stream.Created{
+	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	c := stream.PolicyAttached{
+	c := fixtures.TestSubscribed{
 		Stream: hash.New(p.ToObject()),
 	}
 	obj := c.ToObject()
@@ -59,13 +58,13 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = store.Put(
 		obj,
-		sqln.WithTTL(0),
+		sql.WithTTL(0),
 	)
 	require.NoError(t, err)
 
 	err = store.Put(
 		obj,
-		sqln.WithTTL(10),
+		sql.WithTTL(10),
 	)
 
 	require.NoError(t, err)
@@ -90,7 +89,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	retrievedObj2, err := store.Get(hash.New(p.ToObject()))
-	require.True(t, errors.CausedBy(err, sqln.ErrNotFound))
+	require.True(t, errors.CausedBy(err, sql.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
 	err = store.Close()
@@ -99,22 +98,17 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 func TestSubscribe(t *testing.T) {
 	// create db
-	dblite, err := sql.Open("sqlite3", dbFilepath)
-	defer func() {
-		os.Remove(dbFilepath) // nolint
-	}()
-	require.NoError(t, err)
-
-	store, err := sqln.New(dblite)
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
 	// setup data
-	p := stream.Created{
+	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
 	streamHash := hash.New(p.ToObject())
-	c := stream.PolicyAttached{
+	c := fixtures.TestSubscribed{
 		Stream: streamHash,
 	}
 	obj := c.ToObject()
@@ -127,7 +121,7 @@ func TestSubscribe(t *testing.T) {
 		wg.Add(1)
 		// subscribe
 		subscription := store.Subscribe(
-			sqln.FilterByStreamHash(streamHash),
+			sql.FilterByStreamHash(streamHash),
 		)
 
 		go func() {
@@ -141,7 +135,7 @@ func TestSubscribe(t *testing.T) {
 	// store data
 	err = store.Put(
 		obj,
-		sqln.WithTTL(10),
+		sql.WithTTL(10),
 	)
 	require.NoError(t, err)
 
@@ -160,20 +154,15 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	dblite, err := sql.Open("sqlite3", dbFilepath)
-	defer func() {
-		os.Remove(dbFilepath) // nolint
-	}()
-	require.NoError(t, err)
-
-	store, err := sqln.New(dblite)
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
-	p := stream.Created{
+	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	c := stream.PolicyAttached{
+	c := fixtures.TestSubscribed{
 		Stream: hash.New(p.ToObject()),
 	}
 
@@ -185,7 +174,7 @@ func TestAll(t *testing.T) {
 
 		err = store.Put(
 			obj,
-			sqln.WithTTL(0),
+			sql.WithTTL(0),
 		)
 		require.NoError(t, err)
 
