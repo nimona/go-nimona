@@ -3,6 +3,8 @@ package hyperspace
 import (
 	"time"
 
+	"nimona.io/internal/rand"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -14,9 +16,9 @@ import (
 )
 
 var (
-	peerType        = new(peer.Peer).GetType()
-	peerLookupType  = new(peer.Lookup).GetType()
-	peerRequestType = new(peer.Request).GetType()
+	peerType               = new(peer.Peer).GetType()
+	peerLookupRequestType  = new(peer.LookupRequest).GetType()
+	peerLookupResponseType = new(peer.LookupResponse).GetType()
 )
 
 const (
@@ -54,8 +56,8 @@ func NewDiscoverer(
 	objectSub := r.exchange.Subscribe(
 		exchange.FilterByObjectType(
 			peerType,
-			peerRequestType,
-			peerLookupType,
+			peerLookupRequestType,
+			peerLookupResponseType,
 		),
 	)
 
@@ -126,20 +128,14 @@ func (r *Discoverer) handleObject(
 	// handle payload
 	o := e.Payload
 	switch o.GetType() {
-	case peerRequestType:
-		v := &peer.Request{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		r.handlePeerRequest(ctx, v, e)
 	case peerType:
 		v := &peer.Peer{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		r.handlePeer(ctx, v, e)
-	case peerLookupType:
-		v := &peer.Lookup{}
+	case peerLookupRequestType:
+		v := &peer.LookupRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -163,47 +159,9 @@ func (r *Discoverer) handlePeer(
 	logger.Debug("added peer to store")
 }
 
-func (r *Discoverer) handlePeerRequest(
-	ctx context.Context,
-	q *peer.Request,
-	e *exchange.Envelope,
-) {
-	ctx = context.FromContext(ctx)
-	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handlePeerRequest"),
-		log.String("e.sender", e.Sender.String()),
-		log.Any("query.bloom", q.Bloom),
-	)
-
-	logger.Debug("handling peer request")
-
-	cps := r.store.GetClosest(q.Bloom)
-	cps = r.withoutOwnPeer(cps)
-
-	for _, p := range cps {
-		logger.Debug("responding with peer",
-			log.String("peer", p.Signature.Signer.String()),
-		)
-		err := r.exchange.Send(
-			context.New(
-				context.WithParent(ctx),
-			),
-			p.ToObject(),
-			e.Sender.Address(),
-			exchange.WithLocalDiscoveryOnly(),
-		)
-		if err != nil {
-			logger.Debug("could not send object",
-				log.Error(err),
-			)
-		}
-	}
-	logger.Debug("handling done")
-}
-
 func (r *Discoverer) handlePeerLookup(
 	ctx context.Context,
-	q *peer.Lookup,
+	q *peer.LookupRequest,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -216,34 +174,58 @@ func (r *Discoverer) handlePeerLookup(
 	logger.Debug("handling peer lookup")
 
 	cps := r.store.GetClosest(q.Bloom)
-	cps = append(cps, r.local.GetSignedPeer())
+	res := &peer.LookupResponse{
+		Nonce: q.Nonce,
+		Peers: []crypto.PublicKey{},
+	}
+
+	sig, err := crypto.NewSignature(r.local.GetPeerPrivateKey(), res.ToObject())
+	if err != nil {
+		logger.Error("could not sign lookup res", log.Error(err))
+		return
+	}
+
+	res.Signature = sig
+
+	ctx = context.New(
+		context.WithParent(ctx),
+	)
 
 	for _, p := range cps {
-		pf := ""
-		if p.Signature != nil {
-			pf = p.Signature.Signer.String()
-		}
-		logger.Debug("responding with content hash bloom",
+		logger.Debug("responding for content hash bloom",
 			log.Any("bloom", p.Bloom),
-			log.String("fingerprint", pf),
+			log.String("peer", p.Signature.Signer.String()),
 		)
 		err := r.exchange.Send(
-			context.New(
-				context.WithParent(ctx),
-			),
+			ctx,
 			p.ToObject(),
 			e.Sender.Address(),
 			exchange.WithLocalDiscoveryOnly(),
+			exchange.WithAsync(),
 		)
 		if err != nil {
-			logger.Debug("could not send object",
+			logger.Debug("could not send peer",
 				log.Error(err),
 			)
+			continue
 		}
+		res.Peers = append(res.Peers, p.PublicKey())
+	}
+	err = r.exchange.Send(
+		ctx,
+		res.ToObject(),
+		e.Sender.Address(),
+		exchange.WithLocalDiscoveryOnly(),
+		exchange.WithAsync(),
+	)
+	if err != nil {
+		logger.Debug("could not send lookup response",
+			log.Error(err),
+		)
 	}
 	logger.With(
 		log.Int("n", len(cps)),
-	).Debug("handling done, sent n blooms")
+	).Debug("handling done, sent n peers")
 }
 
 // lookup does a network lookup given a query
@@ -259,11 +241,14 @@ func (r *Discoverer) lookup(
 	)
 	logger.Debug("looking up peer")
 
+	// create channel to mark all requests are completed
+	done := make(chan struct{})
 	// create channel to keep peers we find
 	peers := make(chan *peer.Peer)
-
 	// create channel for the peers we need to ask
 	recipients := make(chan crypto.PublicKey)
+	// and for the ones that responded
+	recipientsResponded := make(chan crypto.PublicKey)
 
 	// allows us to match peers with peerRequest
 	peerMatchesRequest := func(p *peer.Peer) bool {
@@ -271,58 +256,81 @@ func (r *Discoverer) lookup(
 	}
 
 	// send content requests to recipients
-	peerRequest := &peer.Request{
+	req := &peer.LookupRequest{
+		Nonce: rand.String(12),
 		Bloom: bloom,
 	}
-	peerRequestObject := peerRequest.ToObject()
+	reqObject := req.ToObject()
 	go func() {
 		// keep a record of the peers we already asked
-		recipientsAsked := map[string]bool{}
-		// go through the peers we need to ask
-		for recipient := range recipients {
-			// check if we've already asked them
-			if _, alreadyAsked := recipientsAsked[recipient.String()]; alreadyAsked {
-				continue
+		// also mark our own peer as done from the beginning
+		recipientsAsked := map[string]bool{
+			r.local.GetPeerPublicKey().String(): true,
+		}
+		for {
+			select {
+			// go through the peers we need to ask
+			case recipient := <-recipients:
+				// check if we've already asked them
+				if _, asked := recipientsAsked[recipient.String()]; asked {
+					continue
+				}
+				// else mark them as already been asked
+				recipientsAsked[recipient.String()] = false
+				// and finally ask them
+				err := r.exchange.Send(
+					ctx,
+					reqObject,
+					recipient.Address(),
+					exchange.WithLocalDiscoveryOnly(),
+					// exchange.WithAsync(),
+				)
+				if err != nil {
+					logger.Debug("could send request to peer", log.Error(err))
+				}
+				logger.Debug("asked peer", log.String("peer", recipient.String()))
+			case recipient := <-recipientsResponded:
+				recipientsAsked[recipient.String()] = true
+				allDone := true
+				for _, ok := range recipientsAsked {
+					if !ok {
+						allDone = false
+						break
+					}
+				}
+				if allDone {
+					done <- struct{}{}
+				}
 			}
-			// else mark them as already been asked
-			recipientsAsked[recipient.String()] = true
-			// and finally ask them
-			err := r.exchange.Send(
-				ctx,
-				peerRequestObject,
-				recipient.Address(),
-				exchange.WithLocalDiscoveryOnly(),
-				exchange.WithAsync(),
-			)
-			if err != nil {
-				logger.Debug("could send request to peer", log.Error(err))
-			}
-			logger.Debug("asked peer", log.String("peer", recipient.String()))
 		}
 	}()
 
-	// listen for new peers and ask them
-	peerHandler := func(e *exchange.Envelope) error {
-		cp := &peer.Peer{}
-		cp.FromObject(e.Payload) // nolint: errcheck
-		if cp.Signature == nil || cp.Signature.Signer == "" {
-			return nil
-		}
-		if peerMatchesRequest(cp) {
-			peers <- cp
-			return nil
-		}
-		recipients <- cp.Signature.Signer
-		return nil
-	}
-	peerSub := r.exchange.Subscribe(
-		exchange.FilterByObjectType(peerType),
+	// listen for lookup responses
+	resSub := r.exchange.Subscribe(
+		exchange.FilterByObjectType(peerLookupResponseType),
+		func(e *exchange.Envelope) bool {
+			v := e.Payload.Get("nonce:s")
+			rn, ok := v.(string)
+			return ok && rn == req.Nonce
+		},
 	)
-	defer peerSub.Cancel()
-	go exchange.HandleEnvelopeSubscription(
-		peerSub,
-		peerHandler,
-	)
+	defer resSub.Cancel()
+	go func() {
+		for {
+			e, err := resSub.Next()
+			if err != nil {
+				break
+			}
+			res := &peer.LookupResponse{}
+			if err := res.FromObject(e.Payload); err != nil {
+				break
+			}
+			for _, r := range res.Peers {
+				recipients <- r
+			}
+			recipientsResponded <- res.Signature.Signer
+		}
+	}()
 
 	// find and ask "closest" peers
 	go func() {
@@ -346,6 +354,9 @@ loop:
 		case peer := <-peers:
 			peersList = append(peersList, peer)
 			break loop
+		case <-done:
+			logger.Debug("done")
+			break loop
 		case <-t.C:
 			logger.Debug("timer done, giving up")
 			break loop
@@ -368,7 +379,8 @@ func (r *Discoverer) bootstrap(
 		exchange.WithLocalDiscoveryOnly(),
 		// exchange.WithAsync(),
 	}
-	q := &peer.Request{
+	q := &peer.LookupRequest{
+		Nonce: rand.String(12),
 		Bloom: r.local.GetSignedPeer().Bloom,
 	}
 	o := q.ToObject()
