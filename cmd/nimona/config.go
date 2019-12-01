@@ -19,14 +19,15 @@ type APIConfig struct {
 }
 
 type DaemonConfig struct {
-	AnnounceHostname   string             `json:"hostname,omitempty" env:"NIMONA_DAEMON_HOSTNAME"`
-	BootstrapAddresses []string           `json:"bootstrap_addresses,omitempty" env:"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES"`
-	EnableMetrics      bool               `json:"metrics,omitempty" env:"NIMONA_DAEMON_METRICS"`
+	AnnounceHostname   string            `json:"hostname,omitempty" env:"NIMONA_DAEMON_HOSTNAME"`
+	BootstrapAddresses []string          `json:"bootstrap_addresses,omitempty" env:"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES"`
+	EnableMetrics      bool              `json:"metrics,omitempty" env:"NIMONA_DAEMON_METRICS"`
 	IdentityKey        crypto.PrivateKey `json:"identity_key,omitempty" env:"NIMONA_DAEMON_IDENTITY_KEY"`
 	PeerKey            crypto.PrivateKey `json:"peer_key,omitempty" env:"NIMONA_DAEMON_PEER_KEY"`
-	TCPPort            int                `json:"tcp_port,omitempty" env:"NIMONA_DAEMON_TCP_PORT"`
-	HTTPPort           int                `json:"http_port,omitempty" env:"NIMONA_DAEMON_HTTP_PORT"`
-	RelayAddresses     []string           `json:"relay_addresses,omitempty" env:"NIMONA_DAEMON_RELAY_ADDRESSES"`
+	TCPPort            int               `json:"tcp_port,omitempty" env:"NIMONA_DAEMON_TCP_PORT"`
+	HTTPPort           int               `json:"http_port,omitempty" env:"NIMONA_DAEMON_HTTP_PORT"`
+	RelayAddresses     []string          `json:"relay_addresses,omitempty" env:"NIMONA_DAEMON_RELAY_ADDRESSES"`
+	ContentTypes       []string          `json:"content_types,omitempty" env:"NIMONA_CONTENT_TYPES"`
 }
 
 type Config struct {
