@@ -307,11 +307,6 @@ func newPeer(
 		n.AddTransport("tcps", tcp)
 	}
 
-	if listenHTTP {
-		http := net.NewHTTPTransport(li, "0.0.0.0:0")
-		n.AddTransport("https", http)
-	}
-
 	hsm := handshake.New(li, discover)
 	n.AddMiddleware(hsm.Handle())
 
