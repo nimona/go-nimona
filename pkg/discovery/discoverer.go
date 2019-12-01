@@ -117,10 +117,6 @@ func (r *discoverer) Lookup(
 		return true
 	})
 
-	if len(ps) == 0 {
-		return nil, errors.New("could not lookup peer")
-	}
-
 	return ps, nil
 }
 
