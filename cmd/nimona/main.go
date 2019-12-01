@@ -103,6 +103,9 @@ func main() {
 		logger.Fatal("could not create local info", log.Error(err))
 	}
 
+	// add content types
+	localInfo.AddContentTypes(config.Daemon.ContentTypes...)
+
 	// add identity key to local info
 	if err := localInfo.AddIdentityKey(config.Daemon.IdentityKey); err != nil {
 		logger.Fatal("could not register identity key", log.Error(err))

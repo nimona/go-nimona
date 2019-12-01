@@ -167,6 +167,18 @@ func (p *LocalPeer) GetContentHashes() []object.Hash {
 	return hashes
 }
 
+func (p *LocalPeer) AddContentTypes(types ...string) {
+	p.keyLock.Lock()
+	defer p.keyLock.Unlock()
+	p.contentTypes = append(p.contentTypes, types...)
+}
+
+func (p *LocalPeer) GetContentTypes() []string {
+	p.keyLock.RLock()
+	defer p.keyLock.RUnlock()
+	return p.contentTypes
+}
+
 func (p *LocalPeer) GetHostname() string {
 	return p.hostname
 }
