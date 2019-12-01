@@ -7,19 +7,19 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/stream"
 )
 
 func Test_Normalize(t *testing.T) {
 	kx := []byte{111, 39, 65, 188, 215, 49, 84, 43, 192, 187}
 
-	s := stream.Created{
+	s := fixtures.TestStream{
 		Nonce:    "nonce",
 		Identity: "foo",
-		Policies: []*stream.Policy{
-			&stream.Policy{
+		Policies: []*fixtures.TestPolicy{
+			&fixtures.TestPolicy{
 				Subjects:  []string{"subject"},
 				Resources: []string{"*"},
 				Action:    "allow",
@@ -33,13 +33,13 @@ func Test_Normalize(t *testing.T) {
 	}
 
 	em := map[string]interface{}{
-		"@type:s":           "nimona.io/stream.Created",
+		"@type:s":           "nimona.io/fixtures.TestStream",
 		"nonce:s":           "nonce",
 		"createdDateTime:s": "",
 		"@identity:s":       "foo",
 		"policies:ao": []interface{}{
 			map[string]interface{}{
-				"@type:s":      "nimona.io/stream.Policy",
+				"@type:s":      "nimona.io/fixtures.TestPolicy",
 				"subjects:as":  []interface{}{"subject"},
 				"resources:as": []interface{}{"*"},
 				"action:s":     "allow",
