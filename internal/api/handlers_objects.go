@@ -3,13 +3,16 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"nimona.io/internal/http/router"
-	"nimona.io/internal/store/kv"
+	"nimona.io/internal/store/graph"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
@@ -22,37 +25,15 @@ func (api *API) HandleGetObjects(c *router.Context) {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
-	// ms := []interface{}{}
-	// for _, objectHash := range objectHashs {
-	// 	b, err := api.objectStore.Get(objectHash)
-	// 	if err != nil {
-	// 		c.AbortWithError(500, err) // nolint: errcheck
-	// 		return
-	// 	}
-	// 	m, err := object.Unmarshal(b)
-	// 	if err != nil {
-	// 		c.AbortWithError(500, err) // nolint: errcheck
-	// 		return
-	// 	}
-	// 	ms = append(ms, api.mapObject(m))
-	// }
+
 	c.JSON(http.StatusOK, api.mapObjects(ms))
-	// c.JSON(http.StatusNotImplemented, nil)
 }
 
 func (api *API) HandleGetObject(c *router.Context) {
 	objectHash := c.Param("objectHash")
+	returnDot, _ := strconv.ParseBool(c.Query("dot"))
 	if objectHash == "" {
 		c.AbortWithError(400, errors.New("missing object hash")) // nolint: errcheck
-	}
-	o, err := api.objectStore.Get(objectHash)
-	if err != nil && err != kv.ErrNotFound {
-		c.AbortWithError(500, err) // nolint: errcheck
-		return
-	} else if err == nil {
-		ms := api.mapObject(o)
-		c.JSON(http.StatusOK, ms)
-		return
 	}
 
 	ctx := context.New()
@@ -64,28 +45,48 @@ func (api *API) HandleGetObject(c *router.Context) {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
+
 	addrs := []string{}
 	for _, p := range ps {
 		addrs = append(addrs, p.Address())
 	}
-	os, err := api.orchestrator.Sync(ctx, h, addrs)
+	api.orchestrator.Sync(ctx, h, addrs) // nolint: errcheck
+
+	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
-		if err == kv.ErrNotFound {
+		if errors.CausedBy(err, graph.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
-	if len(os.Objects) == 0 {
-		c.AbortWithError(404, err) // nolint: errcheck
+
+	os := graphObjects.Objects
+	if len(os) == 0 {
+		c.AbortWithError(404, errors.New("no objects found")) // nolint: errcheck
 		return
 	}
-	ms := api.mapObject(os.Objects[0])
+
+	if returnDot {
+		dot, err := graph.Dot(os)
+		if err != nil {
+			c.AbortWithError(500, err) // nolint: errcheck
+			return
+		}
+		c.Header("Content-Type", "text/vnd.graphviz")
+		c.Text(http.StatusOK, dot)
+		return
+	}
+
+	ms := []interface{}{}
+	for _, graphObject := range os {
+		ms = append(ms, api.mapObject(graphObject))
+	}
 	c.JSON(http.StatusOK, ms)
 }
 
-func (api *API) HandlePostObject(c *router.Context) {
+func (api *API) HandlePostObjects(c *router.Context) {
 	req := map[string]interface{}{}
 	if err := c.BindBody(&req); err != nil {
 		c.AbortWithError(400, err) // nolint: errcheck
@@ -93,9 +94,8 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	k := api.local.GetPeerPrivateKey()
-	id := api.local.GetIdentityPublicKey()
 
-	req["@identity:s"] = id
+	req["@identity:s"] = api.local.GetIdentityPublicKey().String()
 
 	o := object.FromMap(req)
 	op := stream.Policies(o)
@@ -114,6 +114,9 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
+	ctx := context.New(context.WithTimeout(time.Second))
+	api.syncOut(ctx, o) // nolint: errcheck
+
 	for _, p := range op {
 		for i, s := range p.Subjects {
 			go func(i int, s string) {
@@ -131,4 +134,75 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	m := api.mapObject(o)
 	c.JSON(http.StatusOK, m)
+}
+
+func (api *API) HandlePostObject(c *router.Context) {
+	rootObjectHash := c.Param("rootObjectHash")
+
+	req := map[string]interface{}{}
+	if err := c.BindBody(&req); err != nil {
+		c.AbortWithError(400, err) // nolint: errcheck
+		return
+	}
+
+	ls, err := api.objectStore.Tails(rootObjectHash)
+	if err != nil {
+		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		return
+	}
+
+	parents := []string{}
+	for _, l := range ls {
+		parents = append(parents, hash.New(l).String())
+	}
+
+	req["stream:s"] = rootObjectHash
+	req["parents:as"] = parents
+	req["@identity:s"] = api.local.GetIdentityPublicKey().String()
+
+	o := object.FromMap(req)
+
+	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
+		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		return
+	}
+
+	ctx := context.New(context.WithTimeout(time.Second))
+	api.syncOut(ctx, o) // nolint: errcheck
+
+	if err := api.orchestrator.Put(o); err != nil {
+		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
+		return
+	}
+
+	m := api.mapObject(o)
+	c.JSON(http.StatusOK, m)
+}
+
+func (api *API) syncOut(ctx context.Context, o object.Object) error {
+	if o.GetType() == "" {
+		return nil
+	}
+
+	id, ok := o.Get("@identity:s").(string)
+	if !ok || id == "" {
+		return nil
+	}
+
+	opts := []discovery.LookupOption{
+		discovery.LookupByContentType(o.GetType()),
+		discovery.LookupByCertificateSigner(crypto.PublicKey(id)),
+	}
+
+	ps, err := api.discovery.Lookup(ctx, opts...)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range ps {
+		// nolint: errcheck
+		api.exchange.Send(ctx, o, p.Address(), exchange.WithAsync())
+	}
+
+	return nil
 }
