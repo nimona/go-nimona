@@ -425,6 +425,11 @@ func (w *exchange) Send(
 	address string,
 	options ...Option,
 ) error {
+	if address == w.local.GetPeerPublicKey().Address() {
+		// TODO should this be returning an error?
+		return nil
+	}
+
 	ctx = context.FromContext(ctx)
 	opts := &Options{}
 	for _, option := range options {
