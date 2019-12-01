@@ -24,7 +24,6 @@ TOOLS += github.com/vektra/mockery/cmd/mockery
 TOOLS_INTERNAL += codegen
 TOOLS_INTERNAL += community
 TOOLS_INTERNAL += vanity
-TOOLS_INTERNAL += proxy
 
 # Go env vars
 export GO111MODULE=on
@@ -67,12 +66,6 @@ $(MAINBIN): $(SOURCES)
 			-installsuffix cgo \
 			-ldflags '$(LDFLAGS)' \
 			./nimona
-
-build-proxy:
-	cd tools && \
-		go install $(V) \
-			-installsuffix cgo \
-			./proxy
 
 # Clean up everything
 .PHONY: clean
