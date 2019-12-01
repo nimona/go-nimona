@@ -19,15 +19,18 @@ type (
 		Signature    *crypto.Signature     `json:"@signature:o,omitempty"`
 		Identity     crypto.PublicKey      `json:"@identity:s,omitempty"`
 	}
-	Request struct {
+	LookupRequest struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
 		Bloom     []int64           `json:"bloom:ai,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	Lookup struct {
-		Bloom     []int64           `json:"bloom:ai,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	LookupResponse struct {
+		Nonce     string             `json:"nonce:s,omitempty"`
+		Bloom     []int64            `json:"bloom:ai,omitempty"`
+		Peers     []crypto.PublicKey `json:"peers:as,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey   `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -69,13 +72,14 @@ func (e *Peer) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Request) GetType() string {
-	return "nimona.io/peer.Request"
+func (e *LookupRequest) GetType() string {
+	return "nimona.io/peer.LookupRequest"
 }
 
-func (e *Request) ToObject() object.Object {
+func (e *LookupRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.Request"
+	m["@type:s"] = "nimona.io/peer.LookupRequest"
+	m["nonce:s"] = e.Nonce
 	if len(e.Bloom) > 0 {
 		m["bloom:ai"] = e.Bloom
 	}
@@ -86,20 +90,24 @@ func (e *Request) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *Request) FromObject(o object.Object) error {
+func (e *LookupRequest) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *Lookup) GetType() string {
-	return "nimona.io/peer.Lookup"
+func (e *LookupResponse) GetType() string {
+	return "nimona.io/peer.LookupResponse"
 }
 
-func (e *Lookup) ToObject() object.Object {
+func (e *LookupResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.Lookup"
+	m["@type:s"] = "nimona.io/peer.LookupResponse"
+	m["nonce:s"] = e.Nonce
 	if len(e.Bloom) > 0 {
 		m["bloom:ai"] = e.Bloom
+	}
+	if len(e.Peers) > 0 {
+		m["peers:as"] = e.Peers
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
@@ -108,7 +116,7 @@ func (e *Lookup) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *Lookup) FromObject(o object.Object) error {
+func (e *LookupResponse) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

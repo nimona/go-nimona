@@ -10,10 +10,13 @@ domain nimona.io/peer {
         contentTypes repeated string
         certificates repeated crypto.Certificate
     }
-    signed command Request {
+    signed command LookupRequest {
+        nonce string
         bloom repeated int
     }
-    signed command Lookup {
+    signed command LookupResponse {
+        nonce string
         bloom repeated int
+        peers repeated nimona.io/crypto.PublicKey
     }
 }
