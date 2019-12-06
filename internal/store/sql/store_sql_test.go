@@ -153,7 +153,7 @@ func TestSubscribe(t *testing.T) {
 	}
 }
 
-func TestAll(t *testing.T) {
+func TestFilter(t *testing.T) {
 	dblite := tempSqlite3(t)
 	store, err := sql.New(dblite)
 	require.NoError(t, err)
@@ -162,28 +162,54 @@ func TestAll(t *testing.T) {
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
+
+	err = store.Put(p.ToObject(), sql.WithTTL(0))
+	require.NoError(t, err)
+
+	ph := hash.New(p.ToObject())
+
 	c := fixtures.TestSubscribed{
-		Stream: hash.New(p.ToObject()),
+		Stream: ph,
 	}
 
 	hashes := []object.Hash{}
-
 	for i := 0; i < 5; i++ {
 		obj := c.ToObject()
 		obj.Set("key:s", fmt.Sprintf("value_%d", i))
-
-		err = store.Put(
-			obj,
-			sql.WithTTL(0),
-		)
+		err = store.Put(obj, sql.WithTTL(0))
 		require.NoError(t, err)
-
 		hashes = append(hashes, hash.New(obj))
 	}
 
-	objects, err := store.All(hashes...)
+	objects, err := store.Filter(
+		sql.FilterByHash(hashes[0]),
+		sql.FilterByHash(hashes[1]),
+		sql.FilterByHash(hashes[2]),
+		sql.FilterByHash(hashes[3]),
+		sql.FilterByHash(hashes[4]),
+	)
 	require.NoError(t, err)
 	require.Len(t, objects, len(hashes))
+
+	objects, err = store.Filter(
+		sql.FilterByObjectType(c.GetType()),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, len(hashes))
+
+	objects, err = store.Filter(
+		sql.FilterByStreamHash(ph),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, len(hashes)+1)
+
+	objects, err = store.Filter(
+		sql.FilterByHash(hashes[0]),
+		sql.FilterByObjectType(c.GetType()),
+		sql.FilterByStreamHash(ph),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, 1)
 
 	err = store.Close()
 	require.NoError(t, err)

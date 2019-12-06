@@ -3,7 +3,6 @@ package sql
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -370,9 +369,13 @@ func (st *Store) Remove(
 }
 
 func (st *Store) Subscribe(
-	filters ...SqlStoreFilter,
+	lookupOptions ...LookupOption,
 ) SqlStoreSubscription {
-	return st.pubsub.Subscribe(filters...)
+	options := &LookupOptions{}
+	for _, lookupOption := range lookupOptions {
+		lookupOption(options)
+	}
+	return st.pubsub.Subscribe(options.Filters...)
 }
 
 func (st *Store) gc() error {
@@ -397,38 +400,56 @@ func (st *Store) gc() error {
 	return nil
 }
 
-func (st *Store) All(
-	hashes ...object.Hash,
+func (st *Store) Filter(
+	lookupOptions ...LookupOption,
 ) ([]object.Object, error) {
-	objects := []object.Object{}
-	queryHashStr := strings.Repeat(",?", len(hashes))[1:]
-	hsei := make([]interface{}, 0)
-
-	for _, hs := range hashes {
-		hsei = append(hsei, hs)
+	options := &LookupOptions{}
+	for _, lookupOption := range lookupOptions {
+		lookupOption(options)
 	}
 
+	where := "WHERE 1 "
+	whereArgs := []interface{}{}
+
+	if len(options.Lookups.ObjectHashes) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.ObjectHashes))[1:]
+		where += "AND Hash IN (" + qs + ") "
+		whereArgs = append(whereArgs, ahtoai(options.Lookups.ObjectHashes)...)
+	}
+
+	if len(options.Lookups.ContentTypes) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.ContentTypes))[1:]
+		where += "AND Type IN (" + qs + ") "
+		whereArgs = append(whereArgs, astoai(options.Lookups.ContentTypes)...)
+	}
+
+	if len(options.Lookups.StreamHashes) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.StreamHashes))[1:]
+		where += "AND (StreamHash IN (" + qs + ") OR (Hash IN (" + qs + "))) "
+		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
+		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
+	}
+
+	objects := []object.Object{}
+
 	// get the object
-	stmt, err := st.db.Prepare(
-		fmt.Sprintf(
-			"SELECT Body FROM Objects WHERE Hash IN (%s)",
-			queryHashStr,
-		),
-	)
+	stmt, err := st.db.Prepare("SELECT Body FROM Objects " + where)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
-			errors.New("could not prepare query"),
+			errors.New("could not prepare where"),
 		)
 	}
 
-	rows, err := stmt.Query(hsei...)
+	rows, err := stmt.Query(whereArgs...)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
 			errors.New("could not query"),
 		)
 	}
+
+	hashes := []interface{}{}
 
 	for rows.Next() {
 		obj := object.New()
@@ -449,14 +470,14 @@ func (st *Store) All(
 		}
 
 		objects = append(objects, obj)
+		hashes = append(hashes, hash.New(obj))
 	}
 
 	// update the last accessed column
+	updateQs := strings.Repeat(",?", len(hashes))[1:]
 	istmt, err := st.db.Prepare(
-		fmt.Sprintf(
-			"UPDATE Objects SET LastAccessed=? WHERE Hash IN (%s)",
-			queryHashStr,
-		),
+		"UPDATE Objects SET LastAccessed = ? " +
+			"WHERE Hash IN (" + updateQs + ")",
 	)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -466,7 +487,7 @@ func (st *Store) All(
 	}
 
 	if _, err := istmt.Exec(
-		append([]interface{}{time.Now().Unix()}, hsei...)...,
+		append([]interface{}{time.Now().Unix()}, hashes...)...,
 	); err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -475,4 +496,20 @@ func (st *Store) All(
 	}
 
 	return objects, nil
+}
+
+func astoai(ah []string) []interface{} {
+	as := make([]interface{}, len(ah))
+	for i, h := range ah {
+		as[i] = h
+	}
+	return as
+}
+
+func ahtoai(ah []object.Hash) []interface{} {
+	as := make([]interface{}, len(ah))
+	for i, h := range ah {
+		as[i] = h.String()
+	}
+	return as
 }
