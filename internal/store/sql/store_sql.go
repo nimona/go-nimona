@@ -223,7 +223,7 @@ func (st *Store) Put(
 	}
 
 	stmt, err := st.db.Prepare(`
-	REPLACE INTO Objects(
+	REPLACE INTO Objects (
 		Hash,
 		Type,
 		StreamHash,
@@ -231,8 +231,10 @@ func (st *Store) Put(
 		Created,
 		LastAccessed,
 		TTl
-	)
-	VALUES(?, ?, ?, ?, ?, ?, ?)
+	) VALUES (
+		?, ?, ?, ?, ?, ?, ?
+	) ON CONFLICT (Hash) DO UPDATE SET
+		LastAccessed=?
 	`)
 	if err != nil {
 		return errors.Wrap(err,
@@ -257,6 +259,7 @@ func (st *Store) Put(
 		time.Now().Unix(),
 		time.Now().Unix(),
 		options.TTL,
+		time.Now().Unix(),
 	)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
