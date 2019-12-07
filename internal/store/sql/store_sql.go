@@ -226,7 +226,7 @@ func (st *Store) Put(
 	REPLACE INTO Objects (
 		Hash,
 		Type,
-		StreamHash,
+		RootHash,
 		Body,
 		Created,
 		LastAccessed,
@@ -246,15 +246,21 @@ func (st *Store) Put(
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	stHash := stream.Stream(obj)
+	objectType := obj.GetType()
+	streamHash := stream.Stream(obj).String()
+	objectHash := hash.New(obj).String()
 
-	streamHashStr := stHash.String()
-	objectHash := hash.New(obj)
+	// if the object doesn't belong to a stream, we need to set the stream
+	// to the object's hash.
+	// This should allow queries to consider the root object part of the stream.
+	if streamHash == "" {
+		streamHash = objectHash
+	}
 
 	_, err = stmt.Exec(
-		objectHash.String(),
-		obj.GetType(),
-		streamHashStr,
+		objectHash,
+		objectType,
+		streamHash,
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -273,7 +279,7 @@ func (st *Store) Put(
 func (st *Store) GetRelations(
 	parent object.Hash,
 ) ([]object.Hash, error) {
-	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE StreamHash=?")
+	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE RootHash=?")
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
@@ -286,7 +292,6 @@ func (st *Store) GetRelations(
 	hashList := []object.Hash{}
 
 	for rows.Next() {
-
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Wrap(
@@ -294,14 +299,11 @@ func (st *Store) GetRelations(
 				ErrNotFound,
 			)
 		}
-
-		h := object.Hash(data)
-
-		hashList = append(hashList, h)
+		hashList = append(hashList, object.Hash(data))
 	}
 
 	istmt, err := st.db.Prepare(
-		"UPDATE Objects SET LastAccessed=? WHERE StreamHash=?",
+		"UPDATE Objects SET LastAccessed=? WHERE RootHash=?",
 	)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -327,19 +329,12 @@ func (st *Store) UpdateTTL(
 	hash object.Hash,
 	minutes int,
 ) error {
-	stmt, err := st.db.Prepare(`
-	UPDATE Objects
-	SET TTL=?, LastAccessed=?
-	WHERE Hash=?`)
+	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootHash=?`)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
 
-	if _, err := stmt.Exec(
-		minutes,
-		time.Now().Unix(),
-		hash.String(),
-	); err != nil {
+	if _, err := stmt.Exec(minutes, hash.String()); err != nil {
 		return errors.Wrap(
 			err,
 			errors.New("could not update last access and ttl"),
@@ -428,8 +423,7 @@ func (st *Store) Filter(
 
 	if len(options.Lookups.StreamHashes) > 0 {
 		qs := strings.Repeat(",?", len(options.Lookups.StreamHashes))[1:]
-		where += "AND (StreamHash IN (" + qs + ") OR (Hash IN (" + qs + "))) "
-		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
+		where += "AND RootHash IN (" + qs + ") "
 		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
 	}
 
