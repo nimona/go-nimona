@@ -206,4 +206,5 @@ func (log *logger) Fatal(msg string, fields ...Field) {
 	if FatalLevel >= DefaultLogLevel {
 		log.write(FatalLevel, msg, fields...)
 	}
+	os.Exit(1)
 }
