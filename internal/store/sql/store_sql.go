@@ -376,11 +376,9 @@ func (st *Store) Subscribe(
 
 func (st *Store) gc() error {
 	stmt, err := st.db.Prepare(`
-	DELETE
-	FROM
-		Objects
-	WHERE
-		datetime (LastAccessed + TTL * 60, 'unixepoch') < datetime ('now');
+	DELETE FROM Objects WHERE
+	  TTL > 0 AND
+	  datetime(LastAccessed + TTL * 60, 'unixepoch') < datetime ('now');
 	`)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
