@@ -22,6 +22,25 @@ type (
 	}
 )
 
+func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
+	options := &LookupOptions{
+		Lookups: struct {
+			ObjectHashes []object.Hash
+			StreamHashes []object.Hash
+			ContentTypes []string
+		}{
+			ObjectHashes: []object.Hash{},
+			StreamHashes: []object.Hash{},
+			ContentTypes: []string{},
+		},
+		Filters: []SqlStoreFilter{},
+	}
+	for _, lookupOption := range lookupOptions {
+		lookupOption(options)
+	}
+	return *options
+}
+
 func FilterByHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)

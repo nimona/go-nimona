@@ -369,11 +369,9 @@ func (st *Store) Remove(
 func (st *Store) Subscribe(
 	lookupOptions ...LookupOption,
 ) SqlStoreSubscription {
-	options := &LookupOptions{}
-	for _, lookupOption := range lookupOptions {
-		lookupOption(options)
-	}
-	return st.pubsub.Subscribe(options.Filters...)
+	options := newLookupOptions(lookupOptions...)
+	ps := st.pubsub
+	return ps.Subscribe(options.Filters...)
 }
 
 func (st *Store) gc() error {
@@ -401,10 +399,7 @@ func (st *Store) gc() error {
 func (st *Store) Filter(
 	lookupOptions ...LookupOption,
 ) ([]object.Object, error) {
-	options := &LookupOptions{}
-	for _, lookupOption := range lookupOptions {
-		lookupOption(options)
-	}
+	options := newLookupOptions(lookupOptions...)
 
 	where := "WHERE 1 "
 	whereArgs := []interface{}{}
@@ -426,7 +421,6 @@ func (st *Store) Filter(
 		where += "AND RootHash IN (" + qs + ") "
 		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
 	}
-
 	objects := []object.Object{}
 
 	// get the object
@@ -468,6 +462,10 @@ func (st *Store) Filter(
 
 		objects = append(objects, obj)
 		hashes = append(hashes, hash.New(obj))
+	}
+
+	if len(hashes) == 0 {
+		return objects, nil
 	}
 
 	// update the last accessed column
