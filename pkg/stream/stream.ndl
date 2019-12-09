@@ -3,20 +3,30 @@ package nimona.io/stream
 import nimona.io/crypto crypto
 import nimona.io/object object
 
-abstract domain nimona.io/stream {
-    object Policy {
-        subjects repeated string
-        resources repeated string
-        conditions repeated string
-        action string
-    }
-    signed command StreamRequest {
-        nonce string
-        stream nimona.io/object.Hash
-    }
-    signed command StreamResponse {
-        nonce string
-        stream nimona.io/object.Hash
-        children repeated nimona.io/object.Hash
-    }
+object nimona.io/stream.Policy {
+    subjects repeated string
+    resources repeated string
+    conditions repeated string
+    action string
+}
+
+signed object nimona.io/stream.StreamRequest {
+    nonce string
+    stream nimona.io/object.Hash
+}
+
+signed object nimona.io/stream.StreamResponse {
+    nonce string
+    stream nimona.io/object.Hash
+    children repeated nimona.io/object.Hash
+}
+
+signed object nimona.io/stream.ObjectRequest {
+    nonce string
+    hash nimona.io/object.Hash
+}
+
+signed object nimona.io/stream.ObjectResponse {
+    nonce string
+    hash nimona.io/object.Hash
 }

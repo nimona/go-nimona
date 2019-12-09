@@ -34,11 +34,15 @@ func (e *Syn) GetType() string {
 func (e *Syn) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.Syn"
-	m["nonce:s"] = e.Nonce
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -54,11 +58,15 @@ func (e *SynAck) GetType() string {
 func (e *SynAck) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.SynAck"
-	m["nonce:s"] = e.Nonce
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -74,11 +82,15 @@ func (e *Ack) GetType() string {
 func (e *Ack) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.Ack"
-	m["nonce:s"] = e.Nonce
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 

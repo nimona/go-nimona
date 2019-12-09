@@ -3,24 +3,25 @@ package nimona.io/fixtures
 import nimona.io/crypto crypto
 import nimona.io/object object
 
-abstract domain nimona.io/fixtures {
-    object TestPolicy {
-        subjects repeated string
-        resources repeated string
-        conditions repeated string
-        action string
-    }
-    signed event TestStream {
-        nonce string
-        createdDateTime string
-        policies repeated TestPolicy
-    }
-    signed event TestSubscribed {
-        nonce string
-        stream nimona.io/object.Hash
-    }
-    signed event TestUnsubscribed {
-        nonce string
-        stream nimona.io/object.Hash
-    }
+object nimona.io/fixtures.TestPolicy {
+    subjects repeated string
+    resources repeated string
+    conditions repeated string
+    action string
+}
+
+signed object nimona.io/fixtures.TestStream {
+    nonce string
+    createdDateTime string
+    policies repeated TestPolicy
+}
+
+signed object nimona.io/fixtures.TestSubscribed {
+    nonce string
+    stream nimona.io/object.Hash
+}
+
+signed object nimona.io/fixtures.TestUnsubscribed {
+    nonce string
+    stream nimona.io/object.Hash
 }

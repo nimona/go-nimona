@@ -4,25 +4,25 @@ package chat
 
 import (
 	json "encoding/json"
-	crypto "example/crypto"
 
+	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
-	ConversationTopicSet struct {
+	TopicSet struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Topic     string            `json:"topic:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	ConversationNameSet struct {
+	NameSet struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Name      string            `json:"name:s,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	ConversationMessageAdded struct {
+	MessageAdded struct {
 		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
 		Body      string            `json:"body:s,omitempty"`
@@ -31,59 +31,67 @@ type (
 	}
 )
 
-func (e *ConversationTopicSet) GetType() string {
-	return "example/conversation.ConversationTopicSet"
+func (e *TopicSet) GetType() string {
+	return "example/conversation.TopicSet"
 }
 
-func (e *ConversationTopicSet) ToObject() object.Object {
+func (e *TopicSet) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.ConversationTopicSet"
+	m["@type:s"] = "example/conversation.TopicSet"
 	if e.Stream != nil {
 		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	m["topic:s"] = e.Topic
+	if e.Topic != "" {
+		m["topic:s"] = e.Topic
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
-func (e *ConversationTopicSet) FromObject(o object.Object) error {
+func (e *TopicSet) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *ConversationNameSet) GetType() string {
-	return "example/conversation.ConversationNameSet"
+func (e *NameSet) GetType() string {
+	return "example/conversation.NameSet"
 }
 
-func (e *ConversationNameSet) ToObject() object.Object {
+func (e *NameSet) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.ConversationNameSet"
+	m["@type:s"] = "example/conversation.NameSet"
 	if e.Stream != nil {
 		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
-	m["name:s"] = e.Name
+	if e.Name != "" {
+		m["name:s"] = e.Name
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
-func (e *ConversationNameSet) FromObject(o object.Object) error {
+func (e *NameSet) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e *ConversationMessageAdded) GetType() string {
-	return "example/conversation.ConversationMessageAdded"
+func (e *MessageAdded) GetType() string {
+	return "example/conversation.MessageAdded"
 }
 
-func (e *ConversationMessageAdded) ToObject() object.Object {
+func (e *MessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.ConversationMessageAdded"
+	m["@type:s"] = "example/conversation.MessageAdded"
 	if e.Stream != nil {
 		m["stream:o"] = e.Stream.ToObject().ToMap()
 	}
@@ -96,15 +104,19 @@ func (e *ConversationMessageAdded) ToObject() object.Object {
 			return a
 		}()
 	}
-	m["body:s"] = e.Body
+	if e.Body != "" {
+		m["body:s"] = e.Body
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
-func (e *ConversationMessageAdded) FromObject(o object.Object) error {
+func (e *MessageAdded) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

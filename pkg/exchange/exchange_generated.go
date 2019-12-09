@@ -5,7 +5,7 @@ package exchange
 import (
 	json "encoding/json"
 
-	"nimona.io/pkg/crypto"
+	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
@@ -30,11 +30,15 @@ func (e *ObjectRequest) GetType() string {
 func (e *ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/exchange.ObjectRequest"
-	m["objectHash:s"] = e.ObjectHash
+	if e.ObjectHash != "" {
+		m["objectHash:s"] = e.ObjectHash
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -50,14 +54,18 @@ func (e *ObjectForward) GetType() string {
 func (e *ObjectForward) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/exchange.ObjectForward"
-	m["recipient:s"] = e.Recipient
+	if e.Recipient != "" {
+		m["recipient:s"] = e.Recipient
+	}
 	if e.FwObject != nil {
 		m["fwObject:o"] = e.FwObject.ToObject().ToMap()
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 

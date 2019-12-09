@@ -3,18 +3,18 @@ package example/chat
 import example/crypto crypto
 import example/stream stream
 
-domain example/conversation extends example/stream {
-    signed event TopicSet {
-        stream example/crypto.Hash
-        topic string
-    }
-    signed event NameSet {
-        stream example/crypto.Hash
-        name string
-    }
-    signed event MessageAdded {
-        stream example/crypto.Hash
-        parents repeated example/crypto.Hash
-        body string
-    }
+signed object example/conversation.TopicSet {
+    stream example/crypto.Hash
+    topic string
+}
+
+signed object example/conversation.NameSet {
+    stream example/crypto.Hash
+    name string
+}
+
+signed object example/conversation.objectAdded {
+    stream example/crypto.Hash
+    parents repeated example/crypto.Hash
+    body string
 }

@@ -7,54 +7,28 @@ import (
 )
 
 var primitives = map[string]struct {
-	Tag      string
-	Type     string
-	IsObject bool
+	Hint      string
+	Type      string
+	IsObject  bool
+	IsPrimary bool
 }{
-	"*PrivateKey": {
-		Tag:      "s",
-		Type:     "PrivateKey",
-		IsObject: false,
+	"nimona.io/crypto.PrivateKey": {
+		Hint:      "s",
+		Type:      "crypto.PrivateKey",
+		IsObject:  false,
+		IsPrimary: true,
 	},
-	"*crypto.PrivateKey": {
-		Tag:      "s",
-		Type:     "crypto.PrivateKey",
-		IsObject: false,
+	"nimona.io/crypto.PublicKey": {
+		Hint:      "s",
+		Type:      "crypto.PublicKey",
+		IsObject:  false,
+		IsPrimary: true,
 	},
-	"*PublicKey": {
-		Tag:      "s",
-		Type:     "PublicKey",
-		IsObject: false,
-	},
-	"*crypto.PublicKey": {
-		Tag:      "s",
-		Type:     "crypto.PublicKey",
-		IsObject: false,
-	},
-	"[]*nimona.io/crypto.PublicKey": {
-		Tag:      "as",
-		Type:     "[]crypto.PublicKey",
-		IsObject: false,
-	},
-	"[]*nimona.io/object.Hash": {
-		Tag:      "as",
-		Type:     "[]object.Hash",
-		IsObject: false,
-	},
-	"*nimona.io/object.Hash": {
-		Tag:      "s",
-		Type:     "object.Hash",
-		IsObject: false,
-	},
-	"[]*object.Hash": {
-		Tag:      "as",
-		Type:     "[]object.Hash",
-		IsObject: false,
-	},
-	"*Hash": {
-		Tag:      "s",
-		Type:     "Hash",
-		IsObject: false,
+	"nimona.io/object.Hash": {
+		Hint:      "s",
+		Type:      "object.Hash",
+		IsObject:  false,
+		IsPrimary: true,
 	},
 }
 
@@ -70,41 +44,41 @@ import (
 	{{- end }}
 )
 
-{{ if .Domains }}
 type (
-	{{- range $domain := .Domains }}
-	{{- range $object := $domain.Objects }}
-	{{ $object.Name }} struct {
+	{{- range $object := .Objects }}
+	{{ structName $object.Name }} struct {
 		{{- range $member := $object.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
+			{{- if $member.IsRepeated }}
+				{{- if $member.IsObject }}
+					{{ $member.Name }} []*{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+				{{- else }}
+					{{ $member.Name }} []{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+				{{- end }}
+			{{- else if $member.IsPrimitive }}
+				{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+			{{- else if $member.IsObject }}
+				{{ $member.Name }} *{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+			{{- else }}
+				{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+			{{- end }}
 		{{- end }}
 	}
-	{{- end }}
-	{{- range $event := .Events }}
-	{{ $event.Name }} struct {
-		{{- range $member := $event.Members }}
-		{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ $member.Tag }},omitempty"` + "`" + `
-		{{- end }}
-	}
-	{{- end }}
 	{{- end }}
 )
-{{ end }}
 
-{{ range $domain := .Domains }}
 {{ range $object := .Objects }}
 func (e *{{ structName $object.Name }}) GetType() string {
-	return "{{ $domain.Name }}.{{ $object.Name }}"
+	return "{{ $object.Name }}"
 }
 
 func (e *{{ structName $object.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "{{ $domain.Name }}.{{ $object.Name }}"
+	m["@type:s"] = "{{ $object.Name }}"
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
 			if len(e.{{ $member.Name }}) > 0 {
-				m["{{ $member.Tag }}"] = func() []interface{} {
+				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = func() []interface{} {
 					a := make([]interface{}, len(e.{{ $member.Name }}))
 					for i, v := range e.{{ $member.Name }} {
 						a[i] = v.ToObject().ToMap()
@@ -114,16 +88,38 @@ func (e *{{ structName $object.Name }}) ToObject() object.Object {
 			}
 			{{- else }}
 			if e.{{ $member.Name }} != nil {
-				m["{{ $member.Tag }}"] = e.{{ $member.Name }}.ToObject().ToMap()
+				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}.ToObject().ToMap()
 			}
 			{{- end }}
 		{{- else }}
 			{{- if $member.IsRepeated }}
 				if len(e.{{ $member.Name }}) > 0 {
-					m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 			{{- else }}
-				m["{{ $member.Tag }}"] = e.{{ $member.Name }}
+				{{- if eq $member.Hint "s" }}
+				if e.{{ $member.Name }} != "" {
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				}
+				{{- else if eq $member.Hint "i" }}
+				if e.{{ $member.Name }} != 0 {
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				}
+				{{- else if eq $member.Hint "d" }}
+				if len(e.{{ $member.Name }}) != 0 {
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				}
+				{{- else if eq $member.Hint "u" }}
+				if e.{{ $member.Name }} != 0 {
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				}
+				{{- else if eq $member.Hint "f" }}
+				if e.{{ $member.Name }} != 0 {
+					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				}
+				{{- else }}
+				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				{{- end }}
 			{{- end }}
 		{{- end }}
 	{{- end }}
@@ -134,50 +130,6 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
-{{ end }}
-{{ range $event := .Events }}
-func (e *{{ structName $event.Name }}) GetType() string {
-	return "{{ $domain.Name }}.{{ $event.Name }}"
-}
-
-func (e *{{ structName $event.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "{{ $domain.Name }}.{{ $event.Name }}"
-	{{- range $member := $event.Members }}
-		{{- if $member.IsObject }}
-			{{- if $member.IsRepeated }}
-			if len(e.{{ $member.Name }}) > 0 {
-				m["{{ $member.Tag }}"] = func() []interface{} {
-					a := make([]interface{}, len(e.{{ $member.Name }}))
-					for i, v := range e.{{ $member.Name }} {
-						a[i] = v.ToObject().ToMap()
-					}
-					return a
-				}()
-			}
-			{{- else }}
-			if e.{{ $member.Name }} != nil {
-				m["{{ $member.Tag }}"] = e.{{ $member.Name }}.ToObject().ToMap()
-			}
-			{{- end }}
-		{{- else }}
-			{{- if $member.IsRepeated }}
-				if len(e.{{ $member.Name }}) > 0 {
-					m["{{ $member.Tag }}"] = e.{{ $member.Name }}
-				}
-			{{- else }}
-				m["{{ $member.Tag }}"] = e.{{ $member.Name }}
-			{{- end }}
-		{{- end }}
-	{{- end }}
-	return object.Object(m)
-}
-
-func (e *{{ structName $event.Name }}) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-{{ end }}
 {{ end }}
 `
 
@@ -193,55 +145,64 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			for alias, pkg := range originalImports {
 				name = strings.Replace(name, pkg, alias, 1)
 			}
-			return name
+			ps := strings.Split(name, "/")
+			return strings.TrimPrefix(ps[len(ps)-1], doc.PackageAlias+".")
+		},
+		"memberTag": func(tag, hint string, isRepeated bool) string {
+			if isRepeated {
+				return tag + ":a" + hint
+			}
+			return tag + ":" + hint
 		},
 	}).Parse(tpl)
 	if err != nil {
 		return nil, err
 	}
 
-	lPackage := strings.ToLower(lastSegment(doc.Package))
-	for i, s := range doc.Domains {
-		for k, e := range s.Events {
-			lDomain := strings.ToLower(lastSegment(s.Name))
-			if lDomain != lPackage {
-				e.Name = ucFirst(lDomain) + ucFirst(e.Name)
-			}
-			for _, mv := range e.Members {
-				for pk, pv := range primitives {
-					if strings.HasSuffix(mv.Type, pk) {
-						tagName := strings.Split(mv.Tag, ":")[0]
-						mv.Tag = tagName + ":" + pv.Tag
-						mv.Type = pv.Type
-						mv.IsObject = pv.IsObject
-						break
-					}
+	// lPackage := strings.ToLower(lastSegment(doc.Package))
+	// for i, s := range doc.Domains {
+	for k, e := range doc.Objects {
+		// lDomain := strings.ToLower(lastSegment(s.Name))
+		// if lDomain != lPackage {
+		// 	e.Name = ucFirst(lDomain) + ucFirst(e.Name)
+		// }
+		for _, mv := range e.Members {
+			for pk, pv := range primitives {
+				if strings.HasSuffix(mv.Type, pk) {
+					mv.Hint = pv.Hint
+					mv.Type = pv.Type
+					mv.IsObject = pv.IsObject
+					mv.IsPrimitive = pv.IsPrimary
+					break
 				}
 			}
-			if e.IsSigned {
-				// streamPkg := "stream."
-				// if doc.Package == "nimona.io/stream" {
-				// 	streamPkg = ""
-				// }
-				doc.Domains[i].Events[k].Members = append(
-					doc.Domains[i].Events[k].Members,
-					&Member{
-						Name:     "Signature",
-						Type:     "*crypto.Signature",
-						Tag:      "@signature:o",
-						IsObject: true,
-					},
-					&Member{
-						Name:       "Identity",
-						Type:       "crypto.PublicKey",
-						Tag:        "@identity:s",
-						IsRepeated: false,
-						IsObject:   false,
-					},
-				)
-			}
+		}
+		if e.IsSigned {
+			// streamPkg := "stream."
+			// if doc.Package == "nimona.io/stream" {
+			// 	streamPkg = ""
+			// }
+			doc.Objects[k].Members = append(
+				doc.Objects[k].Members,
+				&Member{
+					Name:     "Signature",
+					Type:     "nimona.io/crypto.Signature",
+					Tag:      "@signature",
+					Hint:     "o",
+					IsObject: true,
+				},
+				&Member{
+					Name:       "Identity",
+					Type:       "nimona.io/crypto.PublicKey",
+					Tag:        "@identity",
+					Hint:       "s",
+					IsRepeated: false,
+					IsObject:   false,
+				},
+			)
 		}
 	}
+	// }
 
 	doc.Imports["json"] = "encoding/json"
 	if doc.Package != "nimona.io/object" {
@@ -251,7 +212,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		doc.Imports["stream"] = "nimona.io/stream"
 	}
 	if doc.Package != "nimona.io/crypto" {
-		doc.Imports["stream"] = "nimona.io/crypto"
+		doc.Imports["crypto"] = "nimona.io/crypto"
 	}
 
 	for alias, pkg := range doc.Imports {
