@@ -1,15 +1,14 @@
 package nimona.io/crypto
 
-domain nimona.io/crypto {
-    event Certificate {
-        subject PublicKey
-        created string
-        expires string
-        @signature Signature
-    }
-    event Signature {
-        signer PublicKey
-        alg string
-        x data
-    }
+object nimona.io/crypto.Certificate {
+    subject nimona.io/crypto.PublicKey
+    created string
+    expires string
+    @signature Signature
+}
+
+object nimona.io/crypto.Signature {
+    signer nimona.io/crypto.PublicKey
+    alg string
+    x data
 }

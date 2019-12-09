@@ -1,31 +1,32 @@
 package example/crypto
 
-domain example/crypto {
-    object Hash {
-        hashType string
-        digest data
-    }
-    object Signature {
-        publicKey PublicKey
-        algorithm string
-        r data
-        s data
-    }
-    object PrivateKey {
-        publicKey PublicKey
-        keyType string
-        algorithm string
-        curve string
-        x data
-        y data
-        d data
-    }
-    object PublicKey {
-        keyType string
-        algorithm string
-        curve string
-        x data
-        y data
-        @signature Signature
-    }
+object example/crypto.Hash {
+    hashType string
+    digest data
+}
+
+object example/crypto.Signature {
+    publicKey PublicKey
+    algorithm string
+    r data
+    s data
+}
+
+object example/crypto.PrivateKey {
+    publicKey PublicKey
+    keyType string
+    algorithm string
+    curve string
+    x data
+    y data
+    d data
+}
+
+object example/crypto.PublicKey {
+    keyType string
+    algorithm string
+    curve string
+    x data
+    y data
+    @signature Signature
 }

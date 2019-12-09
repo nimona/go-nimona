@@ -29,9 +29,15 @@ func (e *Certificate) GetType() string {
 func (e *Certificate) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Certificate"
-	m["subject:s"] = e.Subject
-	m["created:s"] = e.Created
-	m["expires:s"] = e.Expires
+	if e.Subject != "" {
+		m["subject:s"] = e.Subject
+	}
+	if e.Created != "" {
+		m["created:s"] = e.Created
+	}
+	if e.Expires != "" {
+		m["expires:s"] = e.Expires
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
@@ -50,9 +56,15 @@ func (e *Signature) GetType() string {
 func (e *Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Signature"
-	m["signer:s"] = e.Signer
-	m["alg:s"] = e.Alg
-	m["x:d"] = e.X
+	if e.Signer != "" {
+		m["signer:s"] = e.Signer
+	}
+	if e.Alg != "" {
+		m["alg:s"] = e.Alg
+	}
+	if len(e.X) != 0 {
+		m["x:d"] = e.X
+	}
 	return object.Object(m)
 }
 

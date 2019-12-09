@@ -4,36 +4,24 @@ type Document struct {
 	PackageAlias string
 	Package      string
 	Imports      map[string]string
-	Domains      []*Domain
 	Objects      []*Object
 }
 
-type Domain struct {
-	IsAbstract bool
-	Extends    string
-	Name       string
-	Events     []*Event
-	Objects    []*Object
-}
-
-type Event struct {
+type Object struct {
 	Name      string
 	IsSigned  bool
 	IsCommand bool
 	Members   []*Member
 }
 
-type Object struct {
-	Name    string
-	Members []*Member
-}
-
 type Member struct {
 	Name string
 	Type string
 	Tag  string
+	Hint string
 
-	IsObject bool
-	Required bool
-	IsRepeated bool
+	IsPrimitive bool
+	IsObject    bool
+	Required    bool
+	IsRepeated  bool
 }

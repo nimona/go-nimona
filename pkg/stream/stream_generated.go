@@ -29,6 +29,18 @@ type (
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
+	ObjectRequest struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Hash      object.Hash       `json:"hash:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	}
+	ObjectResponse struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Hash      object.Hash       `json:"hash:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	}
 )
 
 func (e *Policy) GetType() string {
@@ -47,7 +59,9 @@ func (e *Policy) ToObject() object.Object {
 	if len(e.Conditions) > 0 {
 		m["conditions:as"] = e.Conditions
 	}
-	m["action:s"] = e.Action
+	if e.Action != "" {
+		m["action:s"] = e.Action
+	}
 	return object.Object(m)
 }
 
@@ -63,12 +77,18 @@ func (e *StreamRequest) GetType() string {
 func (e *StreamRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.StreamRequest"
-	m["nonce:s"] = e.Nonce
-	m["stream:s"] = e.Stream
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Stream != "" {
+		m["stream:s"] = e.Stream
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -84,19 +104,79 @@ func (e *StreamResponse) GetType() string {
 func (e *StreamResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/stream.StreamResponse"
-	m["nonce:s"] = e.Nonce
-	m["stream:s"] = e.Stream
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Stream != "" {
+		m["stream:s"] = e.Stream
+	}
 	if len(e.Children) > 0 {
 		m["children:as"] = e.Children
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
 func (e *StreamResponse) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *ObjectRequest) GetType() string {
+	return "nimona.io/stream.ObjectRequest"
+}
+
+func (e *ObjectRequest) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "nimona.io/stream.ObjectRequest"
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Hash != "" {
+		m["hash:s"] = e.Hash
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
+	return object.Object(m)
+}
+
+func (e *ObjectRequest) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e *ObjectResponse) GetType() string {
+	return "nimona.io/stream.ObjectResponse"
+}
+
+func (e *ObjectResponse) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "nimona.io/stream.ObjectResponse"
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Hash != "" {
+		m["hash:s"] = e.Hash
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
+	return object.Object(m)
+}
+
+func (e *ObjectResponse) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

@@ -53,7 +53,9 @@ func (e *TestPolicy) ToObject() object.Object {
 	if len(e.Conditions) > 0 {
 		m["conditions:as"] = e.Conditions
 	}
-	m["action:s"] = e.Action
+	if e.Action != "" {
+		m["action:s"] = e.Action
+	}
 	return object.Object(m)
 }
 
@@ -69,8 +71,12 @@ func (e *TestStream) GetType() string {
 func (e *TestStream) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestStream"
-	m["nonce:s"] = e.Nonce
-	m["createdDateTime:s"] = e.CreatedDateTime
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.CreatedDateTime != "" {
+		m["createdDateTime:s"] = e.CreatedDateTime
+	}
 	if len(e.Policies) > 0 {
 		m["policies:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Policies))
@@ -83,7 +89,9 @@ func (e *TestStream) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -99,12 +107,18 @@ func (e *TestSubscribed) GetType() string {
 func (e *TestSubscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestSubscribed"
-	m["nonce:s"] = e.Nonce
-	m["stream:s"] = e.Stream
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Stream != "" {
+		m["stream:s"] = e.Stream
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -120,12 +134,18 @@ func (e *TestUnsubscribed) GetType() string {
 func (e *TestUnsubscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestUnsubscribed"
-	m["nonce:s"] = e.Nonce
-	m["stream:s"] = e.Stream
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Stream != "" {
+		m["stream:s"] = e.Stream
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 

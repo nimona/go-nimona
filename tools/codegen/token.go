@@ -9,14 +9,9 @@ const (
 	DOMAIN     Token = "DOMAIN"
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
-	EVENT      Token = "EVENT"
-	COMMAND    Token = "COMMAND"
 	OBJECT     Token = "OBJECT"
 	REPEATED   Token = "REPEATED"
 	SIGNED     Token = "SIGNED"
-	ABSTRACT   Token = "ABSTRACT"
-	EXTENDS    Token = "EXTENDS"
-	PRIMARY    Token = "PRIMARY"
 	IMPORT     Token = "IMPORT"
 	OBRACE     Token = "OBRACE"
 	PACKAGE    Token = "PACKAGE"
@@ -32,14 +27,9 @@ var (
 		"package":  PACKAGE,
 		"import":   IMPORT,
 		"domain":   DOMAIN,
-		"event":    EVENT,
-		"command":  COMMAND,
 		"object":   OBJECT,
 		"repeated": REPEATED,
-		"primary":  PRIMARY,
 		"signed":   SIGNED,
-		"abstract": ABSTRACT,
-		"extends":  EXTENDS,
 	}
 )
 

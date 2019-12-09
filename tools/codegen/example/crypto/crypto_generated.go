@@ -45,8 +45,12 @@ func (e *Hash) GetType() string {
 func (e *Hash) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.Hash"
-	m["hashType:s"] = e.HashType
-	m["digest:d"] = e.Digest
+	if e.HashType != "" {
+		m["hashType:s"] = e.HashType
+	}
+	if len(e.Digest) != 0 {
+		m["digest:d"] = e.Digest
+	}
 	return object.Object(m)
 }
 
@@ -65,9 +69,15 @@ func (e *Signature) ToObject() object.Object {
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
-	m["algorithm:s"] = e.Algorithm
-	m["r:d"] = e.R
-	m["s:d"] = e.S
+	if e.Algorithm != "" {
+		m["algorithm:s"] = e.Algorithm
+	}
+	if len(e.R) != 0 {
+		m["r:d"] = e.R
+	}
+	if len(e.S) != 0 {
+		m["s:d"] = e.S
+	}
 	return object.Object(m)
 }
 
@@ -86,12 +96,24 @@ func (e *PrivateKey) ToObject() object.Object {
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
-	m["keyType:s"] = e.KeyType
-	m["algorithm:s"] = e.Algorithm
-	m["curve:s"] = e.Curve
-	m["x:d"] = e.X
-	m["y:d"] = e.Y
-	m["d:d"] = e.D
+	if e.KeyType != "" {
+		m["keyType:s"] = e.KeyType
+	}
+	if e.Algorithm != "" {
+		m["algorithm:s"] = e.Algorithm
+	}
+	if e.Curve != "" {
+		m["curve:s"] = e.Curve
+	}
+	if len(e.X) != 0 {
+		m["x:d"] = e.X
+	}
+	if len(e.Y) != 0 {
+		m["y:d"] = e.Y
+	}
+	if len(e.D) != 0 {
+		m["d:d"] = e.D
+	}
 	return object.Object(m)
 }
 
@@ -107,11 +129,21 @@ func (e *PublicKey) GetType() string {
 func (e *PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.PublicKey"
-	m["keyType:s"] = e.KeyType
-	m["algorithm:s"] = e.Algorithm
-	m["curve:s"] = e.Curve
-	m["x:d"] = e.X
-	m["y:d"] = e.Y
+	if e.KeyType != "" {
+		m["keyType:s"] = e.KeyType
+	}
+	if e.Algorithm != "" {
+		m["algorithm:s"] = e.Algorithm
+	}
+	if e.Curve != "" {
+		m["curve:s"] = e.Curve
+	}
+	if len(e.X) != 0 {
+		m["x:d"] = e.X
+	}
+	if len(e.Y) != 0 {
+		m["y:d"] = e.Y
+	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}

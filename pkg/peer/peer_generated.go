@@ -41,7 +41,9 @@ func (e *Peer) GetType() string {
 func (e *Peer) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/peer.Peer"
-	m["version:i"] = e.Version
+	if e.Version != 0 {
+		m["version:i"] = e.Version
+	}
 	if len(e.Addresses) > 0 {
 		m["addresses:as"] = e.Addresses
 	}
@@ -63,7 +65,9 @@ func (e *Peer) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -73,20 +77,24 @@ func (e *Peer) FromObject(o object.Object) error {
 }
 
 func (e *LookupRequest) GetType() string {
-	return "nimona.io/peer.LookupRequest"
+	return "LookupRequest"
 }
 
 func (e *LookupRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.LookupRequest"
-	m["nonce:s"] = e.Nonce
+	m["@type:s"] = "LookupRequest"
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
 	if len(e.Bloom) > 0 {
 		m["bloom:ai"] = e.Bloom
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -96,13 +104,15 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 }
 
 func (e *LookupResponse) GetType() string {
-	return "nimona.io/peer.LookupResponse"
+	return "LookupResponse"
 }
 
 func (e *LookupResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.LookupResponse"
-	m["nonce:s"] = e.Nonce
+	m["@type:s"] = "LookupResponse"
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
 	if len(e.Bloom) > 0 {
 		m["bloom:ai"] = e.Bloom
 	}
@@ -112,7 +122,9 @@ func (e *LookupResponse) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 

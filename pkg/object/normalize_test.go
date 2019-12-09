@@ -33,10 +33,9 @@ func Test_Normalize(t *testing.T) {
 	}
 
 	em := map[string]interface{}{
-		"@type:s":           "nimona.io/fixtures.TestStream",
-		"nonce:s":           "nonce",
-		"createdDateTime:s": "",
-		"@identity:s":       "foo",
+		"@type:s":     "nimona.io/fixtures.TestStream",
+		"nonce:s":     "nonce",
+		"@identity:s": "foo",
 		"policies:ao": []interface{}{
 			map[string]interface{}{
 				"@type:s":      "nimona.io/fixtures.TestPolicy",

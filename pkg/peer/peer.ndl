@@ -2,21 +2,22 @@ package nimona.io/peer
 
 import nimona.io/crypto crypto
 
-domain nimona.io/peer {
-    signed event Peer {
-        version int
-        addresses repeated string
-        bloom repeated int
-        contentTypes repeated string
-        certificates repeated crypto.Certificate
-    }
-    signed command LookupRequest {
-        nonce string
-        bloom repeated int
-    }
-    signed command LookupResponse {
-        nonce string
-        bloom repeated int
-        peers repeated nimona.io/crypto.PublicKey
-    }
+
+signed object nimona.io/peer.Peer {
+    version int
+    addresses repeated string
+    bloom repeated int
+    contentTypes repeated string
+    certificates repeated nimona.io/crypto.Certificate
+}
+
+signed object LookupRequest {
+    nonce string
+    bloom repeated int
+}
+
+signed object LookupResponse {
+    nonce string
+    bloom repeated int
+    peers repeated nimona.io/crypto.PublicKey
 }

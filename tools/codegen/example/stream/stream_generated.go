@@ -4,8 +4,8 @@ package stream
 
 import (
 	json "encoding/json"
-	crypto "example/crypto"
 
+	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
@@ -54,7 +54,9 @@ func (e *Policy) ToObject() object.Object {
 	if len(e.Conditions) > 0 {
 		m["conditions:as"] = e.Conditions
 	}
-	m["action:s"] = e.Action
+	if e.Action != "" {
+		m["action:s"] = e.Action
+	}
 	return object.Object(m)
 }
 
@@ -70,7 +72,9 @@ func (e *Created) GetType() string {
 func (e *Created) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/stream.Created"
-	m["createdDateTime:s"] = e.CreatedDateTime
+	if e.CreatedDateTime != "" {
+		m["createdDateTime:s"] = e.CreatedDateTime
+	}
 	if len(e.PartitionKeys) > 0 {
 		m["partitionKeys:as"] = e.PartitionKeys
 	}
@@ -86,7 +90,9 @@ func (e *Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
@@ -126,7 +132,9 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	m["@identity:s"] = e.Identity
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	return object.Object(m)
 }
 
