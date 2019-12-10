@@ -168,6 +168,8 @@ local-bootstrap: build
 local-peer-one: build
 	@ENV=dev \
 	BIND_LOCAL=true \
+	LOG_LEVEL=debug \
+	DEBUG_BLOCKS=true \
 	NIMONA_CONFIG=.local/peer-one/config.json \
 	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
 	NIMONA_DAEMON_OBJECT_PATH=.local/peer-one/objects \
@@ -181,10 +183,29 @@ local-peer-one: build
 local-peer-two: build
 	@ENV=dev \
 	BIND_LOCAL=true \
+	LOG_LEVEL=debug \
+	DEBUG_BLOCKS=true \
 	NIMONA_CONFIG=.local/peer-two/config.json \
 	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
 	NIMONA_DAEMON_OBJECT_PATH=.local/peer-two/objects \
 	NIMONA_DAEMON_TCP_PORT=10002 \
 	NIMONA_DAEMON_HTTP_PORT=10082 \
 	NIMONA_API_PORT=10802 \
+	$(MAINBIN)
+
+
+
+# Local test peer three
+.PHONY: local-peer-three
+local-peer-three: build
+	@ENV=dev \
+	BIND_LOCAL=true \
+	LOG_LEVEL=debug \
+	DEBUG_BLOCKS=true \
+	NIMONA_CONFIG=.local/peer-three/config.json \
+	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
+	NIMONA_DAEMON_OBJECT_PATH=.local/peer-three/objects \
+	NIMONA_DAEMON_TCP_PORT=10003 \
+	NIMONA_DAEMON_HTTP_PORT=10083 \
+	NIMONA_API_PORT=10803 \
 	$(MAINBIN)
