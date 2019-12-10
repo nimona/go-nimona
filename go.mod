@@ -3,7 +3,7 @@ go 1.13
 module nimona.io
 
 require (
-	github.com/caarlos0/env/v6 v6.1.0 // indirect
+	github.com/caarlos0/env/v6 v6.1.0
 	github.com/cheekybits/genny v1.0.0
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/geoah/go-queue v2.0.0+incompatible
@@ -16,6 +16,9 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
+	github.com/tsdtsdtsd/identicon v0.0.0-20190130180410-ca6dab10d534
+	github.com/tyler-smith/go-bip39 v1.0.2
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.15
 )

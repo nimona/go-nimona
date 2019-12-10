@@ -8,7 +8,10 @@ import (
 	"path"
 	"strings"
 
+	ssql "database/sql"
+
 	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/internal/api"
 	"nimona.io/internal/store/sql"
 	"nimona.io/internal/version"
@@ -150,6 +153,16 @@ func main() {
 		logger.Fatal("could not start sql store", log.Error(err))
 	}
 
+	db, err := ssql.Open("sqlite3", path.Join(cfgPath, "objects.sqlite3"))
+	if err != nil {
+		logger.Fatal("could not create sqlite3 db", log.Error(err))
+	}
+
+	sqlStore, err := sql.New(db)
+	if err != nil {
+		logger.Fatal("could not construct sql store", log.Error(err))
+	}
+
 	// construct exchange
 	exchange, err := exchange.New(
 		ctx,
@@ -212,7 +225,8 @@ func main() {
 		discoverer,
 		exchange,
 		localInfo,
-		store,
+		graphStore,
+		sqlStore,
 		orchestrator,
 		version.Version,
 		version.Commit,

@@ -7,6 +7,7 @@ import (
 	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/hash"
@@ -19,6 +20,8 @@ import (
 
 // API for HTTP
 type API struct {
+	config *config.Config
+
 	router    *router.Router
 	net       net.Network
 	discovery discovery.Discoverer
@@ -39,12 +42,13 @@ type API struct {
 
 // New HTTP API
 func New(
+	cfg *config.Config,
 	k crypto.PrivateKey,
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,
 	linf *peer.LocalPeer,
-	bls *sql.Store,
+	sst *sql.Store,
 	orchestrator orchestrator.Orchestrator,
 	version string,
 	commit string,
@@ -54,11 +58,13 @@ func New(
 	r := router.New()
 
 	api := &API{
+		config: cfg,
+
 		router:      r,
 		net:         n,
 		discovery:   d,
 		exchange:    x,
-		objectStore: bls,
+		objectStore: sst,
 
 		orchestrator: orchestrator,
 
@@ -92,6 +98,7 @@ func New(
 	r.Handle("POST", "/api/v1/objects/(?P<rootObjectHash>.+)$", api.HandlePostObject)
 
 	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
+	r.Handle("GET", "/ws", api.HandleWS)
 
 	r.Handle("POST", "/api/v1/stop$", api.Stop)
 
