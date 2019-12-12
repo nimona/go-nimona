@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -32,11 +33,47 @@ type (
 	}
 )
 
-func (e *Policy) GetType() string {
+func (e Policy) GetType() string {
 	return "example/stream.Policy"
 }
 
-func (e *Policy) ToObject() object.Object {
+func (e Policy) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "subjects",
+				Type:       "example/crypto.PublicKey",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "resources",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "conditions",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "action",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Policy) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/stream.Policy"
 	if len(e.Subjects) > 0 {
@@ -57,6 +94,10 @@ func (e *Policy) ToObject() object.Object {
 	if e.Action != "" {
 		m["action:s"] = e.Action
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -65,11 +106,54 @@ func (e *Policy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Created) GetType() string {
+func (e Created) GetType() string {
 	return "example/stream.Created"
 }
 
-func (e *Created) ToObject() object.Object {
+func (e Created) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "createdDateTime",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "partitionKeys",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "policies",
+				Type:       "Policy",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Created) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/stream.Created"
 	if e.CreatedDateTime != "" {
@@ -93,6 +177,10 @@ func (e *Created) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -101,11 +189,54 @@ func (e *Created) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PoliciesUpdated) GetType() string {
+func (e PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
 
-func (e *PoliciesUpdated) ToObject() object.Object {
+func (e PoliciesUpdated) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "stream",
+				Type:       "example/crypto.Hash",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "parents",
+				Type:       "example/crypto.Hash",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "policies",
+				Type:       "Policy",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e PoliciesUpdated) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/stream.PoliciesUpdated"
 	if e.Stream != nil {
@@ -134,6 +265,10 @@ func (e *PoliciesUpdated) ToObject() object.Object {
 	}
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

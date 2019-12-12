@@ -6,6 +6,7 @@ import (
 	json "encoding/json"
 
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -22,11 +23,47 @@ type (
 	}
 )
 
-func (e *Certificate) GetType() string {
+func (e Certificate) GetType() string {
 	return "nimona.io/crypto.Certificate"
 }
 
-func (e *Certificate) ToObject() object.Object {
+func (e Certificate) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "subject",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "created",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "expires",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Certificate) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Certificate"
 	if e.Subject != "" {
@@ -41,6 +78,10 @@ func (e *Certificate) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -49,11 +90,40 @@ func (e *Certificate) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Signature) GetType() string {
+func (e Signature) GetType() string {
 	return "nimona.io/crypto.Signature"
 }
 
-func (e *Signature) ToObject() object.Object {
+func (e Signature) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "signer",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "alg",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "x",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/crypto.Signature"
 	if e.Signer != "" {
@@ -64,6 +134,10 @@ func (e *Signature) ToObject() object.Object {
 	}
 	if len(e.X) != 0 {
 		m["x:d"] = e.X
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

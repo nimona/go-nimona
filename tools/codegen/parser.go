@@ -86,9 +86,36 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	return token, value, nil
 }
 
-func (p *Parser) parseField() (*Member, error) {
+func (p *Parser) parseField() (interface{}, error) {
 	token, value := p.scanIgnoreWhiteSpace()
 	member := &Member{}
+	if token == OPTIONAL {
+		member.IsOptional = true
+		token, value = p.scanIgnoreWhiteSpace()
+	}
+	if token == LINK {
+		link := &Link{
+			IsOptional: member.IsOptional,
+		}
+		token, value = p.scanIgnoreWhiteSpace()
+		if token != TEXT {
+			return nil, fmt.Errorf("found %q, expected link.direction", value)
+		}
+		switch strings.ToLower(value) {
+		case "in":
+			link.Direction = "in"
+		case "out":
+			link.Direction = "out"
+		default:
+			return nil, fmt.Errorf("found %q, expected in or out for link.direction", value)
+		}
+		token, value = p.scanIgnoreWhiteSpace()
+		if token != TEXT {
+			return nil, fmt.Errorf("found %q, expected link.type", value)
+		}
+		link.Type = value
+		return link, nil
+	}
 	if token != TEXT {
 		p.unscan()
 		return nil, ErrNotField
@@ -105,25 +132,32 @@ func (p *Parser) parseField() (*Member, error) {
 	}
 	switch value {
 	case "string":
-		member.Type += "string"
+		member.Type = "string"
+		member.SimpleType = "string"
 		member.Hint = "s"
 	case "int":
-		member.Type += "int64"
+		member.Type = "int64"
+		member.SimpleType = "int"
 		member.Hint = "i"
 	case "uint":
-		member.Type += "uint64"
+		member.Type = "uint64"
+		member.SimpleType = "uint"
 		member.Hint = "u"
 	case "float":
-		member.Type += "float64"
+		member.Type = "float64"
+		member.SimpleType = "float"
 		member.Hint = "f"
 	case "bool":
-		member.Type += "bool"
+		member.Type = "bool"
+		member.SimpleType = "bool"
 		member.Hint = "b"
 	case "data":
-		member.Type += "[]byte"
+		member.Type = "[]byte"
+		member.SimpleType = "data"
 		member.Hint = "d"
 	default:
-		member.Type += value
+		member.Type = value
+		member.SimpleType = value
 		member.Hint = "o"
 		member.IsObject = true
 	}
@@ -163,14 +197,19 @@ func (p *Parser) parseEvent() (*Object, error) {
 			break
 		}
 		p.unscan()
-		member, err := p.parseField()
+		res, err := p.parseField()
 		switch {
 		case err != nil && err == ErrNotField:
 			continue
 		case err != nil:
 			return nil, err
 		case err == nil:
-			object.Members = append(object.Members, member)
+			switch v := res.(type) {
+			case *Link:
+				object.Links = append(object.Links, v)
+			case *Member:
+				object.Members = append(object.Members, v)
+			}
 		}
 	}
 

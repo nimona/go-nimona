@@ -67,11 +67,38 @@ type (
 )
 
 {{ range $object := .Objects }}
-func (e *{{ structName $object.Name }}) GetType() string {
+func (e {{ structName $object.Name }}) GetType() string {
 	return "{{ $object.Name }}"
 }
 
-func (e *{{ structName $object.Name }}) ToObject() object.Object {
+{{ if neq $.Package "nimona.io/schema" }}
+func (e {{ structName $object.Name }}) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+		{{- range $member := $object.Members }}
+			&schema.Property{
+				Name: "{{ $member.Tag }}",
+				Type: "{{ $member.SimpleType }}",
+				Hint: "{{ $member.Hint }}",
+				IsRepeated: {{ if $member.IsRepeated }} true {{ else }} false {{ end }},
+				IsOptional: {{ if $member.IsOptional }} true {{ else }} false {{ end }},
+			},
+		{{- end }}
+		},
+		Links: []*schema.Link{
+		{{- range $link := $object.Links }}
+			&schema.Link{
+				Type: "{{ $link.Type }}",
+				Direction: "{{ $link.Direction }}",
+				IsOptional: {{ if $link.IsOptional }} true {{ else }} false {{ end }},
+			},
+		{{- end }}
+		},
+	}
+}
+{{ end }}
+
+func (e {{ structName $object.Name }}) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "{{ $object.Name }}"
 	{{- range $member := $object.Members }}
@@ -123,6 +150,11 @@ func (e *{{ structName $object.Name }}) ToObject() object.Object {
 			{{- end }}
 		{{- end }}
 	{{- end }}
+	{{ if neq $.Package "nimona.io/schema" }}
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
+	{{- end }}
 	return object.Object(m)
 }
 
@@ -153,6 +185,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return tag + ":a" + hint
 			}
 			return tag + ":" + hint
+		},
+		"neq": func(a, b string) bool {
+			return a != b
 		},
 	}).Parse(tpl)
 	if err != nil {
@@ -185,15 +220,17 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			doc.Objects[k].Members = append(
 				doc.Objects[k].Members,
 				&Member{
-					Name:     "Signature",
-					Type:     "nimona.io/crypto.Signature",
-					Tag:      "@signature",
-					Hint:     "o",
-					IsObject: true,
+					Name:       "Signature",
+					Type:       "nimona.io/crypto.Signature",
+					SimpleType: "nimona.io/crypto.Signature",
+					Tag:        "@signature",
+					Hint:       "o",
+					IsObject:   true,
 				},
 				&Member{
 					Name:       "Identity",
 					Type:       "nimona.io/crypto.PublicKey",
+					SimpleType: "nimona.io/crypto.PublicKey",
 					Tag:        "@identity",
 					Hint:       "s",
 					IsRepeated: false,
@@ -213,6 +250,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 	if doc.Package != "nimona.io/crypto" {
 		doc.Imports["crypto"] = "nimona.io/crypto"
+	}
+	if doc.Package != "nimona.io/schema" {
+		doc.Imports["schema"] = "nimona.io/schema"
 	}
 
 	for alias, pkg := range doc.Imports {

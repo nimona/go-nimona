@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -37,11 +38,47 @@ type (
 	}
 )
 
-func (e *TestPolicy) GetType() string {
+func (e TestPolicy) GetType() string {
 	return "nimona.io/fixtures.TestPolicy"
 }
 
-func (e *TestPolicy) ToObject() object.Object {
+func (e TestPolicy) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "subjects",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "resources",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "conditions",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "action",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e TestPolicy) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestPolicy"
 	if len(e.Subjects) > 0 {
@@ -56,6 +93,10 @@ func (e *TestPolicy) ToObject() object.Object {
 	if e.Action != "" {
 		m["action:s"] = e.Action
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -64,11 +105,54 @@ func (e *TestPolicy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *TestStream) GetType() string {
+func (e TestStream) GetType() string {
 	return "nimona.io/fixtures.TestStream"
 }
 
-func (e *TestStream) ToObject() object.Object {
+func (e TestStream) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "createdDateTime",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "policies",
+				Type:       "TestPolicy",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e TestStream) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestStream"
 	if e.Nonce != "" {
@@ -92,6 +176,10 @@ func (e *TestStream) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -100,11 +188,47 @@ func (e *TestStream) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *TestSubscribed) GetType() string {
+func (e TestSubscribed) GetType() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
 
-func (e *TestSubscribed) ToObject() object.Object {
+func (e TestSubscribed) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "stream",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e TestSubscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestSubscribed"
 	if e.Nonce != "" {
@@ -119,6 +243,10 @@ func (e *TestSubscribed) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -127,11 +255,47 @@ func (e *TestSubscribed) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *TestUnsubscribed) GetType() string {
+func (e TestUnsubscribed) GetType() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
 }
 
-func (e *TestUnsubscribed) ToObject() object.Object {
+func (e TestUnsubscribed) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "stream",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e TestUnsubscribed) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/fixtures.TestUnsubscribed"
 	if e.Nonce != "" {
@@ -145,6 +309,10 @@ func (e *TestUnsubscribed) ToObject() object.Object {
 	}
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

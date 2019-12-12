@@ -12,16 +12,25 @@ type Object struct {
 	IsSigned  bool
 	IsCommand bool
 	Members   []*Member
+	Links     []*Link
+}
+
+type Link struct {
+	Type       string
+	Direction  string
+	IsOptional bool
 }
 
 type Member struct {
-	Name string
-	Type string
-	Tag  string
-	Hint string
+	Name       string
+	Type       string
+	SimpleType string
+	Tag        string
+	Hint       string
 
-	IsPrimitive bool
 	IsObject    bool
-	Required    bool
-	IsRepeated  bool
+	IsPrimitive bool
+
+	IsOptional bool
+	IsRepeated bool
 }
