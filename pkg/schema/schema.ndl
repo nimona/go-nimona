@@ -1,0 +1,21 @@
+package nimona.io/schema
+
+object nimona.io/schema.Property {
+    name string
+    type string
+    hint string
+    isRepeated bool
+    isOptional bool
+    properties repeated Property
+}
+
+object nimona.io/schema.Link {
+    type string
+    direction string
+    isOptional bool
+}
+
+object nimona.io/schema.Object {
+    properties repeated Property
+    links repeated Link
+}

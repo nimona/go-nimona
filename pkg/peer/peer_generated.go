@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -34,11 +35,68 @@ type (
 	}
 )
 
-func (e *Peer) GetType() string {
+func (e Peer) GetType() string {
 	return "nimona.io/peer.Peer"
 }
 
-func (e *Peer) ToObject() object.Object {
+func (e Peer) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "version",
+				Type:       "int",
+				Hint:       "i",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "addresses",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "bloom",
+				Type:       "int",
+				Hint:       "i",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "contentTypes",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "certificates",
+				Type:       "nimona.io/crypto.Certificate",
+				Hint:       "o",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Peer) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/peer.Peer"
 	if e.Version != 0 {
@@ -68,6 +126,10 @@ func (e *Peer) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -76,13 +138,49 @@ func (e *Peer) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *LookupRequest) GetType() string {
-	return "LookupRequest"
+func (e LookupRequest) GetType() string {
+	return "nimona.io/LookupRequest"
 }
 
-func (e *LookupRequest) ToObject() object.Object {
+func (e LookupRequest) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "bloom",
+				Type:       "int",
+				Hint:       "i",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e LookupRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "LookupRequest"
+	m["@type:s"] = "nimona.io/LookupRequest"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
@@ -95,6 +193,10 @@ func (e *LookupRequest) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -103,13 +205,56 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *LookupResponse) GetType() string {
-	return "LookupResponse"
+func (e LookupResponse) GetType() string {
+	return "nimona.io/LookupResponse"
 }
 
-func (e *LookupResponse) ToObject() object.Object {
+func (e LookupResponse) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "bloom",
+				Type:       "int",
+				Hint:       "i",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "peers",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e LookupResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "LookupResponse"
+	m["@type:s"] = "nimona.io/LookupResponse"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
@@ -124,6 +269,10 @@ func (e *LookupResponse) ToObject() object.Object {
 	}
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

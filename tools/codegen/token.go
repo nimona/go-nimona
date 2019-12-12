@@ -10,7 +10,9 @@ const (
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
 	OBJECT     Token = "OBJECT"
+	LINK       Token = "LINK"
 	REPEATED   Token = "REPEATED"
+	OPTIONAL   Token = "OPTIONAL"
 	SIGNED     Token = "SIGNED"
 	IMPORT     Token = "IMPORT"
 	OBRACE     Token = "OBRACE"
@@ -28,7 +30,9 @@ var (
 		"import":   IMPORT,
 		"domain":   DOMAIN,
 		"object":   OBJECT,
+		"@link":    LINK,
 		"repeated": REPEATED,
+		"optional": OPTIONAL,
 		"signed":   SIGNED,
 	}
 )

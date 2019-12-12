@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -23,11 +24,40 @@ type (
 	}
 )
 
-func (e *ObjectRequest) GetType() string {
+func (e ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
 
-func (e *ObjectRequest) ToObject() object.Object {
+func (e ObjectRequest) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "objectHash",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/exchange.ObjectRequest"
 	if e.ObjectHash != "" {
@@ -39,6 +69,10 @@ func (e *ObjectRequest) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -47,11 +81,47 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *ObjectForward) GetType() string {
+func (e ObjectForward) GetType() string {
 	return "nimona.io/exchange.ObjectForward"
 }
 
-func (e *ObjectForward) ToObject() object.Object {
+func (e ObjectForward) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "recipient",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "fwObject",
+				Type:       "nimona.io/object.Object",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e ObjectForward) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/exchange.ObjectForward"
 	if e.Recipient != "" {
@@ -65,6 +135,10 @@ func (e *ObjectForward) ToObject() object.Object {
 	}
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

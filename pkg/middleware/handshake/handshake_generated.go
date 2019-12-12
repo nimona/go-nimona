@@ -7,6 +7,7 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -27,11 +28,40 @@ type (
 	}
 )
 
-func (e *Syn) GetType() string {
+func (e Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
 
-func (e *Syn) ToObject() object.Object {
+func (e Syn) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Syn) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.Syn"
 	if e.Nonce != "" {
@@ -43,6 +73,10 @@ func (e *Syn) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -51,11 +85,40 @@ func (e *Syn) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *SynAck) GetType() string {
+func (e SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
 
-func (e *SynAck) ToObject() object.Object {
+func (e SynAck) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e SynAck) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.SynAck"
 	if e.Nonce != "" {
@@ -67,6 +130,10 @@ func (e *SynAck) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -75,11 +142,40 @@ func (e *SynAck) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Ack) GetType() string {
+func (e Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
 
-func (e *Ack) ToObject() object.Object {
+func (e Ack) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Ack) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "nimona.io/net/handshake.Ack"
 	if e.Nonce != "" {
@@ -90,6 +186,10 @@ func (e *Ack) ToObject() object.Object {
 	}
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

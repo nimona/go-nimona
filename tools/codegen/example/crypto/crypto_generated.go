@@ -6,6 +6,7 @@ import (
 	json "encoding/json"
 
 	object "nimona.io/pkg/object"
+	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -38,11 +39,33 @@ type (
 	}
 )
 
-func (e *Hash) GetType() string {
+func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
 
-func (e *Hash) ToObject() object.Object {
+func (e Hash) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "hashType",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "digest",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Hash) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.Hash"
 	if e.HashType != "" {
@@ -50,6 +73,10 @@ func (e *Hash) ToObject() object.Object {
 	}
 	if len(e.Digest) != 0 {
 		m["digest:d"] = e.Digest
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -59,11 +86,47 @@ func (e *Hash) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *Signature) GetType() string {
+func (e Signature) GetType() string {
 	return "example/crypto.Signature"
 }
 
-func (e *Signature) ToObject() object.Object {
+func (e Signature) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "publicKey",
+				Type:       "PublicKey",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "algorithm",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "r",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "s",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e Signature) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.Signature"
 	if e.PublicKey != nil {
@@ -78,6 +141,10 @@ func (e *Signature) ToObject() object.Object {
 	if len(e.S) != 0 {
 		m["s:d"] = e.S
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -86,11 +153,68 @@ func (e *Signature) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PrivateKey) GetType() string {
+func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
 
-func (e *PrivateKey) ToObject() object.Object {
+func (e PrivateKey) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "publicKey",
+				Type:       "PublicKey",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "keyType",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "algorithm",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "curve",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "x",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "y",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "d",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e PrivateKey) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.PrivateKey"
 	if e.PublicKey != nil {
@@ -114,6 +238,10 @@ func (e *PrivateKey) ToObject() object.Object {
 	if len(e.D) != 0 {
 		m["d:d"] = e.D
 	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
+	}
 	return object.Object(m)
 }
 
@@ -122,11 +250,61 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e *PublicKey) GetType() string {
+func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
 
-func (e *PublicKey) ToObject() object.Object {
+func (e PublicKey) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "keyType",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "algorithm",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "curve",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "x",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "y",
+				Type:       "data",
+				Hint:       "d",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e PublicKey) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "example/crypto.PublicKey"
 	if e.KeyType != "" {
@@ -146,6 +324,10 @@ func (e *PublicKey) ToObject() object.Object {
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
