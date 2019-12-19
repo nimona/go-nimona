@@ -7,6 +7,7 @@ import (
 
 	"nimona.io/internal/http/router"
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -20,7 +21,9 @@ import (
 
 func (api *API) HandleGetObjects(c *router.Context) {
 	// TODO this will be replaced by manager.Subscribe()
-	ms, err := api.objectStore.Heads()
+	contentTypes := api.local.GetContentTypes()
+
+	ms, err := api.objectStore.Filter(sql.FilterByObjectType(contentTypes...))
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
@@ -54,7 +57,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
-		if errors.CausedBy(err, graph.ErrNotFound) {
+		if errors.CausedBy(err, sql.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
@@ -145,14 +148,22 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	ls, err := api.objectStore.Tails(rootObjectHash)
+	// Get all the objects for a stream
+	objs, err := api.objectStore.Filter(
+		sql.FilterByStreamHash(
+			object.Hash(rootObjectHash),
+		),
+	)
 	if err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
+	// Find the leaves
+	leaves := stream.GetStreamLeaves(objs)
+
 	parents := []string{}
-	for _, l := range ls {
+	for _, l := range leaves {
 		parents = append(parents, hash.New(l).String())
 	}
 

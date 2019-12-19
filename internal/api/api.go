@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"nimona.io/internal/http/router"
-	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -24,7 +24,7 @@ type API struct {
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
 
-	objectStore  graph.Store
+	objectStore  *sql.Store
 	orchestrator orchestrator.Orchestrator
 	local        *peer.LocalPeer
 
@@ -44,7 +44,7 @@ func New(
 	d discovery.Discoverer,
 	x exchange.Exchange,
 	linf *peer.LocalPeer,
-	bls graph.Store,
+	bls *sql.Store,
 	orchestrator orchestrator.Orchestrator,
 	version string,
 	commit string,
