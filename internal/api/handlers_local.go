@@ -7,6 +7,7 @@ import (
 
 	"nimona.io/internal/http/router"
 	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -46,7 +47,7 @@ func (api *API) HandleGetLookup(c *router.Context) {
 }
 
 func (api *API) HandleGetDump(c *router.Context) {
-	dos, _ := api.objectStore.(*graph.Graph).Dump()
+	dos, _ := api.objectStore.Filter(sql.FilterDump())
 	dot, _ := graph.Dot(dos)
 	fmt.Println(dot)
 	c.Text(http.StatusOK, dot)
