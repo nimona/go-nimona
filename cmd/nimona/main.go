@@ -1,14 +1,15 @@
 package main
 
 import (
+	ssql "database/sql"
+
 	"fmt"
 	"os"
 	"path"
 	"strings"
 
 	"nimona.io/internal/api"
-	"nimona.io/internal/store/graph"
-	"nimona.io/internal/store/kv"
+	"nimona.io/internal/store/sql"
 	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -138,18 +139,23 @@ func main() {
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct graph store
-	kvStore, err := kv.NewDiskStorage(path.Join(cfgPath, "objects"))
+	dirPath := path.Join(cfgPath, "nimona-store-sql")
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	if err != nil {
-		logger.Fatal("could not construct kvStore", log.Error(err))
+		logger.Fatal("could not open sql file", log.Error(err))
 	}
-	graphStore := graph.New(kvStore)
+
+	store, err := sql.New(db)
+	if err != nil {
+		logger.Fatal("could not start sql store", log.Error(err))
+	}
 
 	// construct exchange
 	exchange, err := exchange.New(
 		ctx,
 		config.Daemon.PeerKey,
 		network,
-		graphStore,
+		store,
 		discoverer,
 		localInfo,
 	)
@@ -170,7 +176,7 @@ func main() {
 
 	// construct orchestrator
 	orchestrator, err := orchestrator.New(
-		graphStore,
+		store,
 		exchange,
 		nil,
 		localInfo,
@@ -206,7 +212,7 @@ func main() {
 		discoverer,
 		exchange,
 		localInfo,
-		graphStore,
+		store,
 		orchestrator,
 		version.Version,
 		version.Commit,

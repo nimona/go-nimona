@@ -43,7 +43,7 @@ func Identity(o object.Object) crypto.PublicKey {
 	return toCommon(o).Identity
 }
 
-func GetStreamTails(os []object.Object) []object.Object {
+func GetStreamLeaves(os []object.Object) []object.Object {
 	hm := map[string]bool{} // map[hash]isParent
 	om := map[string]object.Object{}
 	for _, o := range os {
