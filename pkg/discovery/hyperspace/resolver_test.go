@@ -2,15 +2,18 @@ package hyperspace
 
 import (
 	"crypto/rand"
+	ssql "database/sql"
 	"fmt"
+	"io/ioutil"
+	"path"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/store/graph"
-	"nimona.io/internal/store/kv"
+	_ "github.com/mattn/go-sqlite3"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -259,7 +262,10 @@ func newPeer(
 	assert.NoError(t, err)
 
 	disc := discovery.NewDiscoverer()
-	ds := graph.New(kv.NewMemory())
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
+	assert.NoError(t, err)
+
 	local, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
@@ -278,11 +284,19 @@ func newPeer(
 		ctx,
 		pk,
 		n,
-		ds,
+		store,
 		disc,
 		local,
 	)
 	assert.NoError(t, err)
 
 	return opk, pk, n, x, disc, local, ctx
+}
+
+func tempSqlite3(t *testing.T) *ssql.DB {
+	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
+	require.NoError(t, err)
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	require.NoError(t, err)
+	return db
 }
