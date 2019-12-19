@@ -6,7 +6,7 @@ import (
 
 	"github.com/geoah/go-queue"
 
-	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -65,7 +65,7 @@ type (
 		outboxes *OutboxesMap
 		inboxes  EnvelopePubSub
 
-		store graph.Store // TODO remove
+		store *sql.Store // TODO remove
 	}
 	// Options (mostly) for Send()
 	Options struct {
@@ -105,7 +105,7 @@ func New(
 	ctx context.Context,
 	key crypto.PrivateKey,
 	n net.Network,
-	store graph.Store,
+	store *sql.Store,
 	discover discovery.Discoverer,
 	localInfo *peer.LocalPeer,
 ) (
@@ -386,7 +386,7 @@ func (w *exchange) handleObjectRequests(
 			if err := req.FromObject(e.Payload); err != nil {
 				return err
 			}
-			res, err := w.store.Get(req.ObjectHash.String())
+			res, err := w.store.Get(req.ObjectHash)
 			if err != nil {
 				return errors.Wrap(
 					errors.Error("could not retrieve object"),
