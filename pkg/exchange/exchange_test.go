@@ -1,7 +1,10 @@
 package exchange
 
 import (
+	ssql "database/sql"
 	"encoding/json"
+	"io/ioutil"
+	"path"
 	"sync"
 	"testing"
 	"time"
@@ -9,8 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/store/graph"
-	"nimona.io/internal/store/kv"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -20,6 +22,8 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestSendSuccess(t *testing.T) {
@@ -284,13 +288,14 @@ func newPeer(
 	crypto.PrivateKey,
 	net.Network,
 	*exchange,
-	graph.Store,
+	*sql.Store,
 	*peer.LocalPeer,
 ) {
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	ds := graph.New(kv.NewMemory())
+	ds,err  := sql.New(tempSqlite3(t))
+	assert.NoError(t, err)
 
 	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
@@ -327,4 +332,12 @@ func compareObjects(t *testing.T, expected, actual object.Object) {
 func jp(v interface{}) string {
 	b, _ := json.MarshalIndent(v, "", "  ") // nolint
 	return string(b)
+}
+
+func tempSqlite3(t *testing.T) *ssql.DB {
+	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
+	require.NoError(t, err)
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	require.NoError(t, err)
+	return db
 }
