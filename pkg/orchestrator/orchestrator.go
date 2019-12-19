@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"nimona.io/internal/store/graph"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -41,7 +41,7 @@ type (
 		)
 	}
 	orchestrator struct {
-		store     graph.Store
+		store     *sql.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
 		localInfo *peer.LocalPeer
@@ -53,7 +53,7 @@ type (
 
 // New constructs a new orchestrator given an object store and exchange
 func New(
-	store graph.Store,
+	store *sql.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
@@ -74,7 +74,7 @@ func New(
 // NewWithContext constructs a new orchestrator given an object store and exchange
 func NewWithContext(
 	ctx context.Context,
-	store graph.Store,
+	store *sql.Store,
 	exc exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
@@ -97,21 +97,30 @@ func NewWithContext(
 			logger.Error("processing failed", log.Error(err))
 		}
 	}()
-	// add all local root objects to our local peer info
-	// TODO should we check if these can be published?
-	heads, err := m.store.Heads()
+
+	// Get all the content types that the local peer supports
+	// find all the objects and serve only those objects
+	// TODO which objects do we need to serve?
+	contentTypes := m.localInfo.GetContentTypes()
+
+	supportedObjects, err := m.store.Filter(sql.FilterByObjectType(contentTypes...))
 	if err != nil {
-		return nil, err
+		logger.Error("failed to get objects", log.Error(err))
+	} else {
+		// serve all the object hashes
+		supportedHashes := make([]object.Hash, len(supportedObjects))
+
+		for i, sobj := range supportedObjects {
+			supportedHashes[i] = hash.New(sobj)
+		}
+
+		logger.Info(
+			"adding supported object hashes as content",
+			log.Any("rootObjectHashes", supportedHashes),
+		)
+		m.localInfo.AddContentHash(supportedHashes...)
 	}
-	rootObjectHashes := make([]object.Hash, len(heads))
-	for i, rootObject := range heads {
-		rootObjectHashes[i] = hash.New(rootObject)
-	}
-	logger.Info(
-		"adding existing root object hashes as content",
-		log.Any("rootObjectHashes", rootObjectHashes),
-	)
-	m.localInfo.AddContentHash(rootObjectHashes...)
+
 	return m, nil
 }
 
@@ -169,14 +178,18 @@ func IsComplete(cs []object.Object) bool {
 	ms := map[string]bool{}
 	cm := map[string]object.Object{}
 	for _, c := range cs {
+		// k: hash v: object
 		cm[hash.New(c).String()] = c
 	}
 	for _, c := range cs {
+		// get all the parents of an object
 		for _, p := range stream.Parents(c) {
 			h := p.String()
+			// check if that hash exists in the map
 			if _, ok := cm[h]; ok {
 				continue
 			}
+			// if missing add the entry to the map
 			ms[h] = true
 		}
 	}
@@ -191,11 +204,13 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 		h := hash.New(o)
 		hashes[i] = h
 
+		// store the object
 		if err := m.store.Put(o); err != nil {
 			return err
 		}
 
-		os, err := m.store.Graph(h.String())
+		// get all the objects that are part of the same graph
+		os, err := m.store.Filter(sql.FilterByStreamHash(h))
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve graph"),
@@ -224,7 +239,7 @@ func (m *orchestrator) Get(
 	*Graph,
 	error,
 ) {
-	os, err := m.store.Graph(root.String())
+	os, err := m.store.Filter(sql.FilterByStreamHash(root))
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.Error("could not retrieve graph"),
@@ -251,11 +266,13 @@ func (m *orchestrator) handleStreamRequest(
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
 
-	vs, err := m.store.Graph(req.Stream.String())
+	// get the entire graph for this stream
+	vs, err := m.store.Filter(sql.FilterByStreamHash(req.Stream))
 	if err != nil {
 		return err
 	}
 
+	// get only the object hashes
 	hs := []object.Hash{}
 	for _, o := range vs {
 		hs = append(hs, hash.New(o))

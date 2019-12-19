@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"time"
 
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -125,7 +126,7 @@ func (m *orchestrator) Sync(
 	go func() {
 		for req := range requests {
 			// check if we actually have the object
-			obj, err := m.store.Get(req.hash.String())
+			obj, err := m.store.Get(req.hash)
 			if err == nil && obj != nil {
 				continue
 			}
@@ -211,7 +212,7 @@ loop:
 	}
 
 	// TODO currently we only support a root streams
-	os, err := m.store.Graph(streamHash.String())
+	os, err := m.store.Filter(sql.FilterByStreamHash(streamHash))
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.New("could not get graph from store"),
