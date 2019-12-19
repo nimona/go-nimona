@@ -1,8 +1,10 @@
 package orchestrator_test
 
 import (
+	ssql "database/sql"
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
+	"path"
 	"testing"
 	"time"
 
@@ -10,8 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/store/graph"
-	"nimona.io/internal/store/kv"
+	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
@@ -20,6 +21,8 @@ import (
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 //
@@ -114,8 +117,9 @@ var (
 )
 
 func TestSync(t *testing.T) {
-	kv := kv.NewMemory()
-	os := graph.New(kv)
+	dblite := tempSqlite3(t)
+	store, err := sql.New(dblite)
+	assert.NoError(t, err)
 
 	x := &exchange.MockExchange{}
 	subs := []*exchange.MockEnvelopeSubscription{}
@@ -132,7 +136,7 @@ func TestSync(t *testing.T) {
 	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
 
-	m, err := orchestrator.New(os, x, nil, li)
+	m, err := orchestrator.New(store, x, nil, li)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotEmpty(t, subs)
@@ -234,9 +238,9 @@ func TestSync(t *testing.T) {
 	// assert.E	qual(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
 
-	dos, _ := os.(*graph.Graph).Dump() // nolint
-	dot, _ := graph.Dot(dos)
-	fmt.Println(dot)
+	// dos, _ := os.(*graph.Graph).Dump() // nolint
+	// dot, _ := graph.Dot(dos)
+	// fmt.Println(dot)
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when
@@ -244,4 +248,12 @@ func TestSync(t *testing.T) {
 func jp(v object.Object) string {
 	b, _ := json.MarshalIndent(v.ToMap(), "", "  ") // nolint
 	return string(b)
+}
+
+func tempSqlite3(t *testing.T) *ssql.DB {
+	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
+	require.NoError(t, err)
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	require.NoError(t, err)
+	return db
 }
