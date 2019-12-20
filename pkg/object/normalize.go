@@ -34,6 +34,8 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	ps := strings.Split(k, ":")
 	t := ps[len(ps)-1]
 	switch t[0] {
+	case 'b':
+		return normalizeBool(i)
 	case 'a':
 		a, ok := i.([]interface{})
 		if !ok {
@@ -46,6 +48,8 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 			var nv interface{}
 			var err error
 			switch t[1] {
+			case 'b':
+				nv, err = normalizeBool(v)
 			case 'o':
 				nv, err = normalizeObject(v)
 			case 's':
@@ -83,6 +87,18 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 		return normalizeFloat(i)
 	}
 	return nil, errors.New("unknown key hint " + t)
+}
+
+func normalizeBool(i interface{}) (bool, error) {
+	switch v := i.(type) {
+	case bool:
+		return v, nil
+	case string:
+		return strconv.ParseBool(v)
+	}
+	return false, errors.New("invalid bool type, got " +
+		reflect.TypeOf(i).String(),
+	)
 }
 
 func normalizeString(i interface{}) (string, error) {
