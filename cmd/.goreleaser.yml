@@ -1,6 +1,7 @@
 project_name: nimona
 builds:
-  - main: ./nimona
+  - id: linux
+    main: ./nimona
     binary: nimona
     env:
       - GO111MODULE=on
@@ -10,16 +11,10 @@ builds:
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
     goos:
-      - darwin
-      - freebsd
       - linux
-      - windows
     goarch:
       - amd64
       - 386
-    goarm:
-      - 6
-      - 7
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
       }}v{{ .Arm }}{{ end }}'
