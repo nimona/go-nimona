@@ -27,7 +27,7 @@ TOOLS_INTERNAL += vanity
 
 # Go env vars
 export GO111MODULE=on
-export CGO_ENABLED=0
+export CGO_ENABLED=1
 
 # Go bin for tools
 export GOBIN=$(CURDIR)/$(BINDIR)
@@ -63,7 +63,6 @@ $(MAINBIN): $(SOURCES)
 	$(eval LDFLAGS += -X $(MODULE)/internal/version.Commit=$(GIT_SHA))
 	cd cmd && \
 		go install $(V) \
-			-installsuffix cgo \
 			-ldflags '$(LDFLAGS)' \
 			./nimona
 
