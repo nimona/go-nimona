@@ -75,7 +75,7 @@ func (e Syn) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -132,7 +132,7 @@ func (e SynAck) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -189,7 +189,7 @@ func (e Ack) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

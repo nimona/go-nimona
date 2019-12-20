@@ -89,7 +89,7 @@ func (e TopicSet) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -156,7 +156,7 @@ func (e NameSet) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -239,7 +239,7 @@ func (e ObjectAdded) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
