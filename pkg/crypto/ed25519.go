@@ -92,8 +92,9 @@ func (i PrivateKey) IsEmpty() bool {
 }
 
 func (i PrivateKey) Bytes() []byte {
-	out := make([]byte, 32)
-	for i, b := range i.ed25519() {
+	k := i.ed25519().Seed()
+	out := make([]byte, len(k))
+	for i, b := range k {
 		out[i] = b
 	}
 	return out
