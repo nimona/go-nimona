@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	_ "github.com/mattn/go-sqlite3"
 	"nimona.io/internal/api"
 	"nimona.io/internal/store/sql"
 	"nimona.io/internal/version"
@@ -139,8 +140,7 @@ func main() {
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct graph store
-	dirPath := path.Join(cfgPath, "nimona-store-sql")
-	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := ssql.Open("sqlite3", path.Join(cfgPath, "sqlite3.db"))
 	if err != nil {
 		logger.Fatal("could not open sql file", log.Error(err))
 	}
