@@ -420,10 +420,6 @@ func (st *Store) Filter(
 		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
 	}
 
-	if options.Dump {
-		where = ""
-	}
-
 	objects := []object.Object{}
 
 	// get the object

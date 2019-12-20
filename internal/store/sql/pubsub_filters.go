@@ -19,7 +19,6 @@ type (
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []SqlStoreFilter
-		Dump    bool
 	}
 )
 
@@ -35,7 +34,6 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ContentTypes: []string{},
 		},
 		Filters: []SqlStoreFilter{},
-		Dump:    false,
 	}
 	for _, lookupOption := range lookupOptions {
 		lookupOption(options)
@@ -88,11 +86,5 @@ func FilterByObjectType(typePatterns ...string) LookupOption {
 			}
 			return false
 		})
-	}
-}
-
-func FilterDump() LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Dump = true
 	}
 }
