@@ -128,7 +128,7 @@ func (e Peer) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -195,7 +195,7 @@ func (e LookupRequest) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -272,7 +272,7 @@ func (e LookupResponse) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

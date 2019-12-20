@@ -95,7 +95,7 @@ func (e TestPolicy) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -178,7 +178,7 @@ func (e TestStream) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -245,7 +245,7 @@ func (e TestSubscribed) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -312,7 +312,7 @@ func (e TestUnsubscribed) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

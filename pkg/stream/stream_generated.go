@@ -101,7 +101,7 @@ func (e Policy) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -168,7 +168,7 @@ func (e StreamRequest) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -245,7 +245,7 @@ func (e StreamResponse) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -312,7 +312,7 @@ func (e ObjectRequest) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -379,7 +379,7 @@ func (e ObjectResponse) ToObject() object.Object {
 	}
 
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema"] = schema.ToObject().ToMap()
+		m["$schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
