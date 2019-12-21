@@ -47,6 +47,22 @@ builds:
       - windows
     goarch:
       - 386
+  - id: darwin
+    main: ./nimona
+    binary: nimona
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=1
+      - CC=o64-clang
+      - CXX=o64-clang++
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
+    goos:
+      - darwin
+    goarch:
+      - amd64
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
       }}v{{ .Arm }}{{ end }}'
