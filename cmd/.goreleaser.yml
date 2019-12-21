@@ -15,6 +15,38 @@ builds:
     goarch:
       - amd64
       - 386
+  - id: windows_64
+    main: ./nimona
+    binary: nimona
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}} -extldflags '-static'
+    goos:
+      - windows
+    goarch:
+      - amd64
+  - id: windows_32
+    main: ./nimona
+    binary: nimona
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=1
+      - CC=i686-w64-mingw32-gcc
+      - CXX=i686-w64-mingw32-g++
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}} -extldflags '-static'
+    goos:
+      - windows
+    goarch:
+      - 386
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
       }}v{{ .Arm }}{{ end }}'
