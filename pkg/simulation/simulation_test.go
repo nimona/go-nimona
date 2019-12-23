@@ -48,8 +48,8 @@ func TestSimulation(t *testing.T) {
 			"BIND_PRIVATE=true",
 			"DEBUG_BLOCKS=true",
 			"LOG_LEVEL=debug",
-			"NIMONA_DAEMON_HTTP_PORT=27000",
-			"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=none",
+			"NIMONA_API_PORT=27000",
+			"NIMONA_PEER_BOOTSTRAP_ADDRESSES=",
 		}),
 	)
 	require.NoError(t, err)
@@ -96,7 +96,7 @@ func TestSimulation(t *testing.T) {
 				"DEBUG_BLOCKS=true",
 				"LOG_LEVEL=debug",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
-				"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=" +
+				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +
 					strings.Join(bootstrapAddresses, ","),
 			}),
 		)

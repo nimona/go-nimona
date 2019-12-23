@@ -70,14 +70,14 @@ func (d *Daemon) Start() {
 
 	// create identity key pair if it does not exist
 	// TODO this is temporary
-	// if config.Daemon.IdentityKey == "" {
-	// 	logger.Info("creating new identity key pair")
-	// 	identityKey, err := crypto.GenerateEd25519PrivateKey()
-	// 	if err != nil {
-	// 		logger.Fatal("could not generate identity key", log.Error(err))
-	// 	}
-	// 	config.Daemon.IdentityKey = identityKey
-	// }
+	if config.Daemon.IdentityKey == "" {
+		logger.Info("creating new identity key pair")
+		identityKey, err := crypto.GenerateEd25519PrivateKey()
+		if err != nil {
+			logger.Fatal("could not generate identity key", log.Error(err))
+		}
+		config.Daemon.IdentityKey = identityKey
+	}
 
 	// make sure relays are valid
 	for i, addr := range config.Daemon.RelayAddresses {
@@ -225,13 +225,10 @@ func (d *Daemon) Start() {
 		config.API.Token,
 	)
 
+	apiAddress := fmt.Sprintf("0.0.0.0:%d", config.API.Port)
 	logger.Info(
 		"starting http server",
-		log.String("url", fmt.Sprintf(
-			"http://localhost:%d\n",
-			config.API.Port,
-		)),
+		log.String("address", apiAddress),
 	)
-
-	apiServer.Serve(fmt.Sprintf("0.0.0.0:%d", config.API.Port)) // nolint: errcheck
+	apiServer.Serve(apiAddress) // nolint: errcheck
 }
