@@ -18,22 +18,21 @@ type APIConfig struct {
 	Token    string `json:"token,omitempty" env:"NIMONA_API_TOKEN"`
 }
 
-type DaemonConfig struct {
-	AnnounceHostname   string            `json:"hostname,omitempty" env:"NIMONA_DAEMON_HOSTNAME"`
-	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" env:"NIMONA_DAEMON_BOOTSTRAP_ADDRESSES"`
-	EnableMetrics      bool              `json:"metrics,omitempty" env:"NIMONA_DAEMON_METRICS"`
-	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" env:"NIMONA_DAEMON_IDENTITY_KEY"`
-	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" env:"NIMONA_DAEMON_PEER_KEY"`
-	TCPPort            int               `json:"tcpPort,omitempty" env:"NIMONA_DAEMON_TCP_PORT"`
-	HTTPPort           int               `json:"httpPort,omitempty" env:"NIMONA_DAEMON_HTTP_PORT"`
-	RelayAddresses     []string          `json:"relayAddresses,omitempty" env:"NIMONA_DAEMON_RELAY_ADDRESSES"`
-	ContentTypes       []string          `json:"contentTypes,omitempty" env:"NIMONA_CONTENT_TYPES"`
+type PeerConfig struct {
+	AnnounceHostname   string            `json:"hostname,omitempty" env:"NIMONA_PEER_HOSTNAME"`
+	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" env:"NIMONA_PEER_BOOTSTRAP_ADDRESSES"`
+	EnableMetrics      bool              `json:"metrics,omitempty" env:"NIMONA_PEER_METRICS"`
+	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" env:"NIMONA_PEER_IDENTITY_KEY"`
+	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" env:"NIMONA_PEER_PEER_KEY"`
+	TCPPort            int               `json:"tcpPort,omitempty" env:"NIMONA_PEER_TCP_PORT"`
+	RelayAddresses     []string          `json:"relayAddresses,omitempty" env:"NIMONA_PEER_RELAY_ADDRESSES"`
+	ContentTypes       []string          `json:"contentTypes,omitempty" env:"NIMONA_PEER_CONTENT_TYPES"`
 }
 
 type Config struct {
-	Path   string       `json:"-" env:"NIMONA_CONFIG" envDefault:"${HOME}/.nimona" envExpand:"true"`
-	API    APIConfig    `json:"api"`
-	Daemon DaemonConfig `json:"daemon"`
+	Path   string     `json:"-" env:"NIMONA_CONFIG" envDefault:"${HOME}/.nimona" envExpand:"true"`
+	API    APIConfig  `json:"api"`
+	Daemon PeerConfig `json:"daemon"`
 }
 
 func New() *Config {
@@ -42,9 +41,8 @@ func New() *Config {
 			Hostname: "localhost",
 			Port:     10801,
 		},
-		Daemon: DaemonConfig{
-			TCPPort:  21013,
-			HTTPPort: 21083,
+		Daemon: PeerConfig{
+			TCPPort: 21013,
 			BootstrapAddresses: []string{
 				"tcps:egan.bootstrap.nimona.io:21013",
 				"tcps:liu.bootstrap.nimona.io:21013",

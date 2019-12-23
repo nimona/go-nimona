@@ -156,10 +156,10 @@ local-bootstrap: build
 	@ENV=dev \
 	BIND_LOCAL=true \
 	NIMONA_CONFIG=.local/bootstrap/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES= \
-	NIMONA_DAEMON_OBJECT_PATH=.local/bootstrap/objects \
-	NIMONA_DAEMON_TCP_PORT=10000 \
-	NIMONA_DAEMON_HTTP_PORT=10080 \
+	NIMONA_PEER_BOOTSTRAP_ADDRESSES= \
+	NIMONA_PEER_OBJECT_PATH=.local/bootstrap/objects \
+	NIMONA_PEER_TCP_PORT=10000 \
+	NIMONA_PEER_HTTP_PORT=10080 \
 	NIMONA_API_PORT=10800 \
 	$(MAINBIN)
 
@@ -171,10 +171,10 @@ local-peer-one: build
 	LOG_LEVEL=debug \
 	DEBUG_BLOCKS=true \
 	NIMONA_CONFIG=.local/peer-one/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
-	NIMONA_DAEMON_OBJECT_PATH=.local/peer-one/objects \
-	NIMONA_DAEMON_TCP_PORT=10001 \
-	NIMONA_DAEMON_HTTP_PORT=10081 \
+	NIMONA_PEER_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
+	NIMONA_PEER_OBJECT_PATH=.local/peer-one/objects \
+	NIMONA_PEER_TCP_PORT=10001 \
+	NIMONA_PEER_HTTP_PORT=10081 \
 	NIMONA_API_PORT=10801 \
 	$(MAINBIN)
 
@@ -186,10 +186,10 @@ local-peer-two: build
 	LOG_LEVEL=debug \
 	DEBUG_BLOCKS=true \
 	NIMONA_CONFIG=.local/peer-two/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
-	NIMONA_DAEMON_OBJECT_PATH=.local/peer-two/objects \
-	NIMONA_DAEMON_TCP_PORT=10002 \
-	NIMONA_DAEMON_HTTP_PORT=10082 \
+	NIMONA_PEER_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
+	NIMONA_PEER_OBJECT_PATH=.local/peer-two/objects \
+	NIMONA_PEER_TCP_PORT=10002 \
+	NIMONA_PEER_HTTP_PORT=10082 \
 	NIMONA_API_PORT=10802 \
 	$(MAINBIN)
 
@@ -203,9 +203,9 @@ local-peer-three: build
 	LOG_LEVEL=debug \
 	DEBUG_BLOCKS=true \
 	NIMONA_CONFIG=.local/peer-three/config.json \
-	NIMONA_DAEMON_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
-	NIMONA_DAEMON_OBJECT_PATH=.local/peer-three/objects \
-	NIMONA_DAEMON_TCP_PORT=10003 \
-	NIMONA_DAEMON_HTTP_PORT=10083 \
+	NIMONA_PEER_BOOTSTRAP_ADDRESSES=tcps:rajaniemi.bootstrap.nimona.io:21013,tcps:liu.bootstrap.nimona.io:21013,tcps:egan.bootstrap.nimona.io:21013 \
+	NIMONA_PEER_OBJECT_PATH=.local/peer-three/objects \
+	NIMONA_PEER_TCP_PORT=10003 \
+	NIMONA_PEER_HTTP_PORT=10083 \
 	NIMONA_API_PORT=10803 \
 	$(MAINBIN)
