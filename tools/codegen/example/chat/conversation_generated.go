@@ -32,7 +32,7 @@ type (
 	}
 )
 
-func (e *TopicSet) GetType() string {
+func (e TopicSet) GetType() string {
 	return "example/conversation.TopicSet"
 }
 
