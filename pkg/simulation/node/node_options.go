@@ -2,12 +2,11 @@ package node
 
 type (
 	Options struct {
-		Name          string
-		Count         int
-		Env           []string
-		Command       []string
-		ContainerPort int
-		NodePort      int
+		Name         string
+		Count        int
+		Env          []string
+		Command      []string
+		PortMappings map[int]int
 	}
 	Option func(*Options)
 )
@@ -36,14 +35,8 @@ func WithCommand(command []string) Option {
 	}
 }
 
-func WithNodePort(port int) Option {
+func WithPortMapping(containerPort, nodePort int) Option {
 	return func(o *Options) {
-		o.NodePort = port
-	}
-}
-
-func WithContainerPort(port int) Option {
-	return func(o *Options) {
-		o.ContainerPort = port
+		o.PortMappings[containerPort] = nodePort
 	}
 }
