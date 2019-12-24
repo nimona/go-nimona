@@ -41,14 +41,14 @@ func TestSimulation(t *testing.T) {
 		dockerImage,
 		env,
 		node.WithName("nimona-e2e-bootstrap-"+rand.String(8)),
-		node.WithNodePort(27000),
+		node.WithPortMapping(28000, 27000),
 		node.WithCount(1),
 		node.WithEnv([]string{
 			"NIMONA_ALIAS=nimona-e2e-bootstrap",
 			"BIND_PRIVATE=true",
 			"DEBUG_BLOCKS=true",
 			"LOG_LEVEL=debug",
-			"NIMONA_API_PORT=27000",
+			"NIMONA_API_PORT=28000",
 			"NIMONA_PEER_BOOTSTRAP_ADDRESSES=",
 		}),
 	)
@@ -89,12 +89,13 @@ func TestSimulation(t *testing.T) {
 			dockerImage,
 			env,
 			node.WithName(fmt.Sprintf("nimona-e2e-%d", i)),
-			node.WithNodePort(28001+i),
+			node.WithPortMapping(28000, 28001+i),
 			node.WithCount(1),
 			node.WithEnv([]string{
 				"BIND_PRIVATE=true",
 				"DEBUG_BLOCKS=true",
 				"LOG_LEVEL=debug",
+				"NIMONA_API_PORT=28000",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
 				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +
 					strings.Join(bootstrapAddresses, ","),

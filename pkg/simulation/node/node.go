@@ -2,13 +2,12 @@ package node
 
 import (
 	"fmt"
+	"strconv"
 
 	"nimona.io/pkg/context"
 
 	"nimona.io/pkg/simulation/containers"
 )
-
-const defaultContainerPort = 28000
 
 type Node struct {
 	name      string
@@ -24,10 +23,10 @@ func New(
 	nodes := []*Node{}
 
 	options := &Options{
-		Name:          "NimNode",
-		Count:         1,
-		Command:       []string{},
-		ContainerPort: defaultContainerPort,
+		Name:         "NimNode",
+		Count:        1,
+		Command:      []string{},
+		PortMappings: map[int]int{},
 	}
 	for _, opt := range opts {
 		opt(options)
@@ -36,9 +35,8 @@ func New(
 	ports := map[string]string{}
 
 	for i := 0; i < options.Count; i++ {
-		if options.NodePort > 0 {
-			ports[fmt.Sprintf("%d", options.ContainerPort)] =
-				fmt.Sprintf("%d", options.NodePort+i)
+		for containerPort, nodePort := range options.PortMappings {
+			ports[strconv.Itoa(containerPort)] = strconv.Itoa(nodePort + i)
 		}
 
 		cnt, err := containers.New(
