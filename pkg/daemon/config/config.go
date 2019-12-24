@@ -13,9 +13,9 @@ import (
 )
 
 type APIConfig struct {
-	Hostname string `json:"hostname,omitempty" env:"NIMONA_API_HOSTNAME"`
-	Port     int    `json:"port,omitempty" env:"NIMONA_API_PORT"`
-	Token    string `json:"token,omitempty" env:"NIMONA_API_TOKEN"`
+	Host  string `json:"host,omitempty" env:"NIMONA_API_HOST"`
+	Port  int    `json:"port,omitempty" env:"NIMONA_API_PORT"`
+	Token string `json:"token,omitempty" env:"NIMONA_API_TOKEN"`
 }
 
 type PeerConfig struct {
@@ -30,18 +30,18 @@ type PeerConfig struct {
 }
 
 type Config struct {
-	Path   string     `json:"-" env:"NIMONA_CONFIG" envDefault:"${HOME}/.nimona" envExpand:"true"`
-	API    APIConfig  `json:"api"`
-	Daemon PeerConfig `json:"daemon"`
+	Path string     `json:"-" env:"NIMONA_CONFIG" envDefault:"${HOME}/.nimona" envExpand:"true"`
+	API  APIConfig  `json:"api"`
+	Peer PeerConfig `json:"peer"`
 }
 
 func New() *Config {
 	c := &Config{
 		API: APIConfig{
-			Hostname: "localhost",
-			Port:     10801,
+			Host: "localhost",
+			Port: 10801,
 		},
-		Daemon: PeerConfig{
+		Peer: PeerConfig{
 			TCPPort: 21013,
 			BootstrapAddresses: []string{
 				"tcps:egan.bootstrap.nimona.io:21013",

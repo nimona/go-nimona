@@ -200,7 +200,7 @@ func (api *API) newIdentity(
 		return err
 	}
 
-	api.config.Daemon.IdentityKey = identityKey
+	api.config.Peer.IdentityKey = identityKey
 	if err := api.config.Update(); err != nil {
 		panic(err)
 	}
