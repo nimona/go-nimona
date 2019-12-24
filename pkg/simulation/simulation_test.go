@@ -48,6 +48,7 @@ func TestSimulation(t *testing.T) {
 			"BIND_PRIVATE=true",
 			"DEBUG_BLOCKS=true",
 			"LOG_LEVEL=debug",
+			"NIMONA_API_HOST=0.0.0.0",
 			"NIMONA_API_PORT=28000",
 			"NIMONA_PEER_BOOTSTRAP_ADDRESSES=",
 		}),
@@ -95,6 +96,7 @@ func TestSimulation(t *testing.T) {
 				"BIND_PRIVATE=true",
 				"DEBUG_BLOCKS=true",
 				"LOG_LEVEL=debug",
+				"NIMONA_API_HOST=0.0.0.0",
 				"NIMONA_API_PORT=28000",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
 				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +

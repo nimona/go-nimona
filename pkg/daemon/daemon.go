@@ -59,30 +59,30 @@ func (d *Daemon) Start() {
 	}
 
 	// create peer key pair if it does not exist
-	if config.Daemon.PeerKey == "" {
+	if config.Peer.PeerKey == "" {
 		logger.Info("creating new peer key pair")
 		peerKey, err := crypto.GenerateEd25519PrivateKey()
 		if err != nil {
 			logger.Fatal("could not generate peer key", log.Error(err))
 		}
-		config.Daemon.PeerKey = peerKey
+		config.Peer.PeerKey = peerKey
 	}
 
 	// create identity key pair if it does not exist
 	// TODO this is temporary
-	if config.Daemon.IdentityKey == "" {
+	if config.Peer.IdentityKey == "" {
 		logger.Info("creating new identity key pair")
 		identityKey, err := crypto.GenerateEd25519PrivateKey()
 		if err != nil {
 			logger.Fatal("could not generate identity key", log.Error(err))
 		}
-		config.Daemon.IdentityKey = identityKey
+		config.Peer.IdentityKey = identityKey
 	}
 
 	// make sure relays are valid
-	for i, addr := range config.Daemon.RelayAddresses {
+	for i, addr := range config.Peer.RelayAddresses {
 		if !strings.HasPrefix(addr, "relay:") {
-			config.Daemon.RelayAddresses[i] = "relay:" + addr
+			config.Peer.RelayAddresses[i] = "relay:" + addr
 		}
 	}
 
@@ -100,25 +100,25 @@ func (d *Daemon) Start() {
 
 	// construct local info
 	localInfo, err := peer.NewLocalPeer(
-		config.Daemon.AnnounceHostname,
-		config.Daemon.PeerKey,
+		config.Peer.AnnounceHostname,
+		config.Peer.PeerKey,
 	)
 	if err != nil {
 		logger.Fatal("could not create local info", log.Error(err))
 	}
 
 	// add content types
-	localInfo.AddContentTypes(config.Daemon.ContentTypes...)
+	localInfo.AddContentTypes(config.Peer.ContentTypes...)
 
 	// add identity key to local info
-	if config.Daemon.IdentityKey != "" {
-		if err := localInfo.AddIdentityKey(config.Daemon.IdentityKey); err != nil {
+	if config.Peer.IdentityKey != "" {
+		if err := localInfo.AddIdentityKey(config.Peer.IdentityKey); err != nil {
 			logger.Fatal("could not register identity key", log.Error(err))
 		}
 	}
 
 	// add relay addresses to local info
-	localInfo.AddAddress("relay", config.Daemon.RelayAddresses)
+	localInfo.AddAddress("relay", config.Peer.RelayAddresses)
 
 	network, err := net.New(discoverer, localInfo)
 	if err != nil {
@@ -128,7 +128,7 @@ func (d *Daemon) Start() {
 	// construct tcp transport
 	tcpTransport := net.NewTCPTransport(
 		localInfo,
-		fmt.Sprintf("0.0.0.0:%d", config.Daemon.TCPPort),
+		fmt.Sprintf("0.0.0.0:%d", config.Peer.TCPPort),
 	)
 
 	// add transports to network
@@ -157,7 +157,7 @@ func (d *Daemon) Start() {
 	// construct exchange
 	exchange, err := exchange.New(
 		ctx,
-		config.Daemon.PeerKey,
+		config.Peer.PeerKey,
 		network,
 		store,
 		discoverer,
@@ -172,7 +172,7 @@ func (d *Daemon) Start() {
 		ctx,
 		exchange,
 		localInfo,
-		config.Daemon.BootstrapAddresses,
+		config.Peer.BootstrapAddresses,
 	)
 	if err != nil {
 		logger.Fatal("could not construct hyperspace", log.Error(err))
@@ -197,10 +197,10 @@ func (d *Daemon) Start() {
 	// print some info
 	nlogger := logger.With(
 		log.Strings("addresses", localInfo.GetAddresses()),
-		log.String("peer", config.Daemon.PeerKey.PublicKey().String()),
+		log.String("peer", config.Peer.PeerKey.PublicKey().String()),
 	)
 
-	ik := config.Daemon.IdentityKey
+	ik := config.Peer.IdentityKey
 	if ik != "" {
 		nlogger = nlogger.With(
 			log.String("identity", ik.PublicKey().String()),
@@ -212,7 +212,7 @@ func (d *Daemon) Start() {
 	// construct api server
 	apiServer := api.New(
 		config,
-		config.Daemon.PeerKey,
+		config.Peer.PeerKey,
 		network,
 		discoverer,
 		exchange,
@@ -225,7 +225,7 @@ func (d *Daemon) Start() {
 		config.API.Token,
 	)
 
-	apiAddress := fmt.Sprintf("0.0.0.0:%d", config.API.Port)
+	apiAddress := fmt.Sprintf("%s:%d", config.API.Host, config.API.Port)
 	logger.Info(
 		"starting http server",
 		log.String("address", apiAddress),
