@@ -1,6 +1,6 @@
 package api
 
-import "nimona.io/internal/http/router"
+import "nimona.io/pkg/http/router"
 
 func (api *API) Cors() router.Handler {
 	return func(c *router.Context) {

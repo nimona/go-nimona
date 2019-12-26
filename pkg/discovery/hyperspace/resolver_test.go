@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/mattn/go-sqlite3"
-	"nimona.io/internal/store/sql"
+	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"

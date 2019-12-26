@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"nimona.io/internal/store/sql"
+	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
