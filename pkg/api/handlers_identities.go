@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"nimona.io/internal/http/router"
+	"nimona.io/pkg/http/router"
 )
 
 func (api *API) HandleGetIdentities(c *router.Context) {

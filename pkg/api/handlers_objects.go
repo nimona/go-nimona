@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
-	"nimona.io/internal/http/router"
-	"nimona.io/internal/store/graph"
-	"nimona.io/internal/store/sql"
+	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/hash"
@@ -72,7 +72,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	}
 
 	if returnDot {
-		dot, err := graph.Dot(os)
+		dot, err := dot.Dot(os)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return

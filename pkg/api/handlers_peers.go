@@ -1,6 +1,6 @@
 package api
 
-import "nimona.io/internal/http/router"
+import "nimona.io/pkg/http/router"
 
 func (api *API) HandleGetPeers(c *router.Context) {
 	// peers, err := api.addressBook.GetAllPeer()

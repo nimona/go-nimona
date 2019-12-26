@@ -3,19 +3,19 @@ package api
 import (
 	"net/http"
 
-	"nimona.io/internal/http/router"
-	"nimona.io/internal/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/hash"
+	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/store/sql"
 )
 
 // API for HTTP
@@ -82,7 +82,6 @@ func New(
 
 	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
 	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
-	r.Handle("GET", "/api/v1/dump$", api.HandleGetDump)
 	r.Handle("GET", "/api/v1/peers", api.HandleGetLookup)
 
 	r.Handle("GET", "/api/v1/identities$", api.HandleGetIdentities)
@@ -98,7 +97,6 @@ func New(
 	r.Handle("POST", "/api/v1/objects/(?P<rootObjectHash>.+)$", api.HandlePostObject)
 
 	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
-	r.Handle("GET", "/ws", api.HandleWS)
 
 	r.Handle("POST", "/api/v1/stop$", api.Stop)
 

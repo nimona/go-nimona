@@ -1,12 +1,10 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"nimona.io/internal/http/router"
-	"nimona.io/internal/store/graph"
+	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -43,11 +41,4 @@ func (api *API) HandleGetLookup(c *router.Context) {
 	}
 
 	c.JSON(http.StatusOK, ps)
-}
-
-func (api *API) HandleGetDump(c *router.Context) {
-	dos, _ := api.objectStore.Filter()
-	dot, _ := graph.Dot(dos)
-	fmt.Println(dot)
-	c.Text(http.StatusOK, dot)
 }

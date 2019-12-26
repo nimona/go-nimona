@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"nimona.io/internal/http/router"
+	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
