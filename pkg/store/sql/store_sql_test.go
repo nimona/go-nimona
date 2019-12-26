@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/internal/store/sql"
+	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
