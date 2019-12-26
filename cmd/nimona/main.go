@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"nimona.io/internal/api"
-	"nimona.io/internal/version"
+	"nimona.io/pkg/api"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/version"
 )
 
 func main() {
