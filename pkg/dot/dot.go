@@ -1,4 +1,4 @@
-package graph
+package dot
 
 import (
 	"encoding/json"
