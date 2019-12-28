@@ -5,10 +5,17 @@ type Document struct {
 	Package      string
 	Imports      map[string]string
 	Objects      []*Object
+	Streams      []*Stream
+}
+
+type Stream struct {
+	Name    string
+	Objects []*Object
 }
 
 type Object struct {
 	Name      string
+	IsRoot    bool
 	IsSigned  bool
 	IsCommand bool
 	Members   []*Member

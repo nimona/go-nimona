@@ -11,7 +11,7 @@ import (
 
 var (
 	ErrNotField  = errors.New("not a field")
-	ErrNotDomain = errors.New("not a domain")
+	ErrNotStream = errors.New("not a stream")
 	ErrNotStruct = errors.New("not a object")
 )
 
@@ -72,15 +72,10 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	switch token {
 	// if given token always expects TEXT afterwards, let's find it
 	case PACKAGE,
-		DOMAIN,
+		STREAM,
 		OBJECT:
-		_, text, err := p.expect(TEXT)
-		if err != nil {
-			return token, text, fmt.Errorf(
-				"found %q, didn't find expected TEXT after", value,
-			)
-		}
-		return token, text, nil
+		_, text := p.scanIgnoreWhiteSpace()
+		return TEXT, text, nil
 	}
 
 	return token, value, nil
@@ -97,10 +92,7 @@ func (p *Parser) parseField() (interface{}, error) {
 		link := &Link{
 			IsOptional: member.IsOptional,
 		}
-		token, value = p.scanIgnoreWhiteSpace()
-		if token != TEXT {
-			return nil, fmt.Errorf("found %q, expected link.direction", value)
-		}
+		_, value = p.scanIgnoreWhiteSpace()
 		switch strings.ToLower(value) {
 		case "in":
 			link.Direction = "in"
@@ -109,16 +101,9 @@ func (p *Parser) parseField() (interface{}, error) {
 		default:
 			return nil, fmt.Errorf("found %q, expected in or out for link.direction", value)
 		}
-		token, value = p.scanIgnoreWhiteSpace()
-		if token != TEXT {
-			return nil, fmt.Errorf("found %q, expected link.type", value)
-		}
+		_, value = p.scanIgnoreWhiteSpace()
 		link.Type = value
 		return link, nil
-	}
-	if token != TEXT {
-		p.unscan()
-		return nil, ErrNotField
 	}
 	member.Tag = value
 	member.Name = memberName(value)
@@ -126,9 +111,6 @@ func (p *Parser) parseField() (interface{}, error) {
 	if token == REPEATED {
 		member.IsRepeated = true
 		token, value = p.scanIgnoreWhiteSpace()
-	}
-	if token != TEXT {
-		return nil, fmt.Errorf("found %q, expected member.type", value)
 	}
 	switch value {
 	case "string":
@@ -165,22 +147,64 @@ func (p *Parser) parseField() (interface{}, error) {
 	return member, nil
 }
 
-func (p *Parser) parseEvent() (*Object, error) {
+func (p *Parser) parseStream() (*Stream, error) {
+	// create stream
+	stream := &Stream{}
+
+	// expect STREAM
+	_, value, err := p.expect(STREAM)
+	if err != nil {
+		p.unscan()
+		return nil, ErrNotStream
+	}
+
+	stream.Name = value
+
+	fmt.Println("Found stream", stream.Name)
+
+	_, value, err = p.expect(OBRACE)
+	if err != nil {
+		return nil, fmt.Errorf("found %q, expected OBRACE", value)
+	}
+
+	for {
+		// if "}", break
+		token, _ := p.scanIgnoreWhiteSpace()
+		if token == EBRACE {
+			break
+		}
+
+		p.unscan()
+
+		// parse object
+		object, err := p.parseObject()
+		if err != nil {
+			return nil, err
+		}
+		stream.Objects = append(stream.Objects, object)
+	}
+
+	return stream, nil
+}
+
+func (p *Parser) parseObject() (*Object, error) {
 	// create object
 	object := &Object{}
 
-	// expect SIGNED, or OBJECT
-	token, value, err := p.expect(SIGNED, OBJECT)
+start:
+	// expect SIGNED, ROOT, or OBJECT
+	token, value, err := p.expect(SIGNED, ROOT, OBJECT)
 	if err != nil {
 		return nil, err
 	}
 
-	if token == SIGNED {
+	switch token {
+	case SIGNED:
 		object.IsSigned = true
-		token, value, err = p.expect(OBJECT)
-		if err != nil {
-			return nil, err
-		}
+		goto start
+	case ROOT:
+		object.IsRoot = true
+		goto start
 	}
 
 	object.Name = value
@@ -241,9 +265,6 @@ func (p *Parser) Parse() (*Document, error) {
 			break
 		}
 		token, importPkg := p.scanIgnoreWhiteSpace()
-		if token != TEXT {
-			return nil, fmt.Errorf("found %q, expected TEXT for import", token)
-		}
 		token, importAlias := p.scanIgnoreWhiteSpace()
 		// doesn't really matter what the token is here, as long as it's not eof
 		if token == EOF {
@@ -262,8 +283,19 @@ func (p *Parser) Parse() (*Document, error) {
 
 		p.unscan()
 
+		// expect stream
+		stream, err := p.parseStream()
+		if err != nil && err != ErrNotStream {
+			return nil, err
+		} else if err == nil {
+			doc.Streams = append(doc.Streams, stream)
+			continue
+		}
+
+		p.unscan()
+
 		// parse object
-		object, err := p.parseEvent()
+		object, err := p.parseObject()
 		if err != nil {
 			return nil, err
 		}

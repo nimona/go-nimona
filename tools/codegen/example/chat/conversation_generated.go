@@ -5,114 +5,35 @@ package chat
 import (
 	json "encoding/json"
 
-	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 	schema "nimona.io/pkg/schema"
 )
 
 type (
-	TopicSet struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
-		Topic     string            `json:"topic:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	ConversationCreated struct {
+		Name string `json:"name:s,omitempty"`
 	}
-	NameSet struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
-		Name      string            `json:"name:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	ConversationTopicUpdated struct {
+		Topic string `json:"topic:s,omitempty"`
 	}
-	ObjectAdded struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
-		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
-		Body      string            `json:"body:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	ConversationMessageAdded struct {
+		Message *message `json:"message:o,omitempty"`
+	}
+	ConversationMessageRemoved struct {
+		Message *message `json:"message:o,omitempty"`
+	}
+	MessageCreated struct {
+		Body string `json:"body:s,omitempty"`
 	}
 )
 
-func (e TopicSet) GetType() string {
-	return "example/conversation.TopicSet"
+func (e ConversationCreated) GetType() string {
+	return "mochi.io/conversation.Created"
 }
 
-func (e TopicSet) GetSchema() *schema.Object {
+func (e ConversationCreated) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
-			&schema.Property{
-				Name:       "stream",
-				Type:       "example/crypto.Hash",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&schema.Property{
-				Name:       "topic",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&schema.Property{
-				Name:       "@signature",
-				Type:       "nimona.io/crypto.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&schema.Property{
-				Name:       "@identity",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
-		Links: []*schema.Link{},
-	}
-}
-
-func (e TopicSet) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.TopicSet"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
-	if e.Topic != "" {
-		m["topic:s"] = e.Topic
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
-	}
-
-	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
-}
-
-func (e *TopicSet) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e NameSet) GetType() string {
-	return "example/conversation.NameSet"
-}
-
-func (e NameSet) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
-				Name:       "stream",
-				Type:       "example/crypto.Hash",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
 			&schema.Property{
 				Name:       "name",
 				Type:       "string",
@@ -120,16 +41,39 @@ func (e NameSet) GetSchema() *schema.Object {
 				IsRepeated: false,
 				IsOptional: false,
 			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e ConversationCreated) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "mochi.io/conversation.Created"
+	if e.Name != "" {
+		m["name:s"] = e.Name
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema:o"] = schema.ToObject().ToMap()
+	}
+	return object.Object(m)
+}
+
+func (e *ConversationCreated) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e ConversationTopicUpdated) GetType() string {
+	return "mochi.io/conversation.TopicUpdated"
+}
+
+func (e ConversationTopicUpdated) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
 			&schema.Property{
-				Name:       "@signature",
-				Type:       "nimona.io/crypto.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&schema.Property{
-				Name:       "@identity",
-				Type:       "nimona.io/crypto.PublicKey",
+				Name:       "topic",
+				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
@@ -139,20 +83,11 @@ func (e NameSet) GetSchema() *schema.Object {
 	}
 }
 
-func (e NameSet) ToObject() object.Object {
+func (e ConversationTopicUpdated) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.NameSet"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
-	if e.Name != "" {
-		m["name:s"] = e.Name
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	m["@type:s"] = "mochi.io/conversation.TopicUpdated"
+	if e.Topic != "" {
+		m["topic:s"] = e.Topic
 	}
 
 	if schema := e.GetSchema(); schema != nil {
@@ -161,32 +96,92 @@ func (e NameSet) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *NameSet) FromObject(o object.Object) error {
+func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e ObjectAdded) GetType() string {
-	return "example/conversation.objectAdded"
+func (e ConversationMessageAdded) GetType() string {
+	return "mochi.io/conversation.MessageAdded"
 }
 
-func (e ObjectAdded) GetSchema() *schema.Object {
+func (e ConversationMessageAdded) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
-				Name:       "stream",
-				Type:       "example/crypto.Hash",
+				Name:       "message",
+				Type:       "mochi.io/message",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e ConversationMessageAdded) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "mochi.io/conversation.MessageAdded"
+	if e.Message != nil {
+		m["message:o"] = e.Message.ToObject().ToMap()
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema:o"] = schema.ToObject().ToMap()
+	}
+	return object.Object(m)
+}
+
+func (e *ConversationMessageAdded) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e ConversationMessageRemoved) GetType() string {
+	return "mochi.io/conversation.MessageRemoved"
+}
+
+func (e ConversationMessageRemoved) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
 			&schema.Property{
-				Name:       "parents",
-				Type:       "example/crypto.Hash",
+				Name:       "message",
+				Type:       "mochi.io/message",
 				Hint:       "o",
-				IsRepeated: true,
+				IsRepeated: false,
 				IsOptional: false,
 			},
+		},
+		Links: []*schema.Link{},
+	}
+}
+
+func (e ConversationMessageRemoved) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "mochi.io/conversation.MessageRemoved"
+	if e.Message != nil {
+		m["message:o"] = e.Message.ToObject().ToMap()
+	}
+
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema:o"] = schema.ToObject().ToMap()
+	}
+	return object.Object(m)
+}
+
+func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e MessageCreated) GetType() string {
+	return "mochi.io/message.Created"
+}
+
+func (e MessageCreated) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
 			&schema.Property{
 				Name:       "body",
 				Type:       "string",
@@ -194,48 +189,16 @@ func (e ObjectAdded) GetSchema() *schema.Object {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
-				Name:       "@signature",
-				Type:       "nimona.io/crypto.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&schema.Property{
-				Name:       "@identity",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
 		},
 		Links: []*schema.Link{},
 	}
 }
 
-func (e ObjectAdded) ToObject() object.Object {
+func (e MessageCreated) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/conversation.objectAdded"
-	if e.Stream != nil {
-		m["stream:o"] = e.Stream.ToObject().ToMap()
-	}
-	if len(e.Parents) > 0 {
-		m["parents:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Parents))
-			for i, v := range e.Parents {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
-	}
+	m["@type:s"] = "mochi.io/message.Created"
 	if e.Body != "" {
 		m["body:s"] = e.Body
-	}
-	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
-	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
 	}
 
 	if schema := e.GetSchema(); schema != nil {
@@ -244,7 +207,7 @@ func (e ObjectAdded) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *ObjectAdded) FromObject(o object.Object) error {
+func (e *MessageCreated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

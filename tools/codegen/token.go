@@ -6,11 +6,12 @@ type Token string
 
 const (
 	UNKNOWN    Token = "UNKNOWN"
-	DOMAIN     Token = "DOMAIN"
+	STREAM     Token = "STREAM"
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
 	OBJECT     Token = "OBJECT"
 	LINK       Token = "LINK"
+	ROOT       Token = "ROOT"
 	REPEATED   Token = "REPEATED"
 	OPTIONAL   Token = "OPTIONAL"
 	SIGNED     Token = "SIGNED"
@@ -28,9 +29,10 @@ var (
 	keywords  = map[string]Token{
 		"package":  PACKAGE,
 		"import":   IMPORT,
-		"domain":   DOMAIN,
+		"stream":   STREAM,
 		"object":   OBJECT,
 		"@link":    LINK,
+		"root":     ROOT,
 		"repeated": REPEATED,
 		"optional": OPTIONAL,
 		"signed":   SIGNED,
