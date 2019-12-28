@@ -53,7 +53,6 @@ func (e ObjectRequest) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -69,7 +68,6 @@ func (e ObjectRequest) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -117,7 +115,6 @@ func (e ObjectForward) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -136,7 +133,6 @@ func (e ObjectForward) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}

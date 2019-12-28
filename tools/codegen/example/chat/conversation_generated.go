@@ -5,25 +5,34 @@ package chat
 import (
 	json "encoding/json"
 
+	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 	schema "nimona.io/pkg/schema"
 )
 
 type (
 	ConversationCreated struct {
-		Name string `json:"name:s,omitempty"`
+		Name      string            `json:"name:s,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationTopicUpdated struct {
-		Topic string `json:"topic:s,omitempty"`
+		Topic     string            `json:"topic:s,omitempty"`
+		DependsOn []object.Hash     `json:"dependsOn:ar,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationMessageAdded struct {
-		Message *message `json:"message:o,omitempty"`
+		Body      string            `json:"body:s,omitempty"`
+		DependsOn []object.Hash     `json:"dependsOn:ar,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	ConversationMessageRemoved struct {
-		Message *message `json:"message:o,omitempty"`
-	}
-	MessageCreated struct {
-		Body string `json:"body:s,omitempty"`
+		Removes   object.Hash       `json:"removes:r,omitempty"`
+		DependsOn []object.Hash     `json:"dependsOn:ar,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -41,8 +50,21 @@ func (e ConversationCreated) GetSchema() *schema.Object {
 				IsRepeated: false,
 				IsOptional: false,
 			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -52,7 +74,12 @@ func (e ConversationCreated) ToObject() object.Object {
 	if e.Name != "" {
 		m["name:s"] = e.Name
 	}
-
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -78,8 +105,28 @@ func (e ConversationTopicUpdated) GetSchema() *schema.Object {
 				IsRepeated: false,
 				IsOptional: false,
 			},
+			&schema.Property{
+				Name:       "dependsOn",
+				Type:       "relationship",
+				Hint:       "r",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -89,7 +136,15 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 	if e.Topic != "" {
 		m["topic:s"] = e.Topic
 	}
-
+	if len(e.DependsOn) > 0 {
+		m["dependsOn:ar"] = e.DependsOn
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -109,24 +164,52 @@ func (e ConversationMessageAdded) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
-				Name:       "message",
-				Type:       "mochi.io/message",
+				Name:       "body",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "dependsOn",
+				Type:       "relationship",
+				Hint:       "r",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
 func (e ConversationMessageAdded) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "mochi.io/conversation.MessageAdded"
-	if e.Message != nil {
-		m["message:o"] = e.Message.ToObject().ToMap()
+	if e.Body != "" {
+		m["body:s"] = e.Body
 	}
-
+	if len(e.DependsOn) > 0 {
+		m["dependsOn:ar"] = e.DependsOn
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -146,24 +229,50 @@ func (e ConversationMessageRemoved) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
-				Name:       "message",
-				Type:       "mochi.io/message",
+				Name:       "removes",
+				Type:       "relationship",
+				Hint:       "r",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "dependsOn",
+				Type:       "relationship",
+				Hint:       "r",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
 func (e ConversationMessageRemoved) ToObject() object.Object {
 	m := map[string]interface{}{}
 	m["@type:s"] = "mochi.io/conversation.MessageRemoved"
-	if e.Message != nil {
-		m["message:o"] = e.Message.ToObject().ToMap()
+	m["removes:r"] = e.Removes
+	if len(e.DependsOn) > 0 {
+		m["dependsOn:ar"] = e.DependsOn
 	}
-
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -171,43 +280,6 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e MessageCreated) GetType() string {
-	return "mochi.io/message.Created"
-}
-
-func (e MessageCreated) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
-				Name:       "body",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
-		Links: []*schema.Link{},
-	}
-}
-
-func (e MessageCreated) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "mochi.io/message.Created"
-	if e.Body != "" {
-		m["body:s"] = e.Body
-	}
-
-	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
-}
-
-func (e *MessageCreated) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

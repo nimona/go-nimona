@@ -17,14 +17,8 @@ type (
 		IsOptional bool        `json:"isOptional:b,omitempty"`
 		Properties []*Property `json:"properties:ao,omitempty"`
 	}
-	Link struct {
-		Type       string `json:"type:s,omitempty"`
-		Direction  string `json:"direction:s,omitempty"`
-		IsOptional bool   `json:"isOptional:b,omitempty"`
-	}
 	Object struct {
 		Properties []*Property `json:"properties:ao,omitempty"`
-		Links      []*Link     `json:"links:ao,omitempty"`
 	}
 )
 
@@ -55,34 +49,10 @@ func (e Property) ToObject() object.Object {
 			return a
 		}()
 	}
-
 	return object.Object(m)
 }
 
 func (e *Property) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
-}
-
-func (e Link) GetType() string {
-	return "nimona.io/schema.Link"
-}
-
-func (e Link) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/schema.Link"
-	if e.Type != "" {
-		m["type:s"] = e.Type
-	}
-	if e.Direction != "" {
-		m["direction:s"] = e.Direction
-	}
-	m["isOptional:b"] = e.IsOptional
-
-	return object.Object(m)
-}
-
-func (e *Link) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
@@ -103,16 +73,6 @@ func (e Object) ToObject() object.Object {
 			return a
 		}()
 	}
-	if len(e.Links) > 0 {
-		m["links:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Links))
-			for i, v := range e.Links {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
-	}
-
 	return object.Object(m)
 }
 

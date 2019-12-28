@@ -9,13 +9,6 @@ object nimona.io/schema.Property {
     properties repeated Property
 }
 
-object nimona.io/schema.Link {
-    type string
-    direction string
-    isOptional bool
-}
-
 object nimona.io/schema.Object {
     properties repeated Property
-    links repeated Link
 }

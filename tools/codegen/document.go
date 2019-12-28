@@ -19,13 +19,6 @@ type Object struct {
 	IsSigned  bool
 	IsCommand bool
 	Members   []*Member
-	Links     []*Link
-}
-
-type Link struct {
-	Type       string
-	Direction  string
-	IsOptional bool
 }
 
 type Member struct {

@@ -88,23 +88,6 @@ func (p *Parser) parseField() (interface{}, error) {
 		member.IsOptional = true
 		token, value = p.scanIgnoreWhiteSpace()
 	}
-	if token == LINK {
-		link := &Link{
-			IsOptional: member.IsOptional,
-		}
-		_, value = p.scanIgnoreWhiteSpace()
-		switch strings.ToLower(value) {
-		case "in":
-			link.Direction = "in"
-		case "out":
-			link.Direction = "out"
-		default:
-			return nil, fmt.Errorf("found %q, expected in or out for link.direction", value)
-		}
-		_, value = p.scanIgnoreWhiteSpace()
-		link.Type = value
-		return link, nil
-	}
 	member.Tag = value
 	member.Name = memberName(value)
 	token, value = p.scanIgnoreWhiteSpace()
@@ -113,6 +96,10 @@ func (p *Parser) parseField() (interface{}, error) {
 		token, value = p.scanIgnoreWhiteSpace()
 	}
 	switch value {
+	case "relationship":
+		member.Type = "object.Hash"
+		member.SimpleType = "relationship"
+		member.Hint = "r"
 	case "string":
 		member.Type = "string"
 		member.SimpleType = "string"
@@ -229,8 +216,6 @@ start:
 			return nil, err
 		case err == nil:
 			switch v := res.(type) {
-			case *Link:
-				object.Links = append(object.Links, v)
 			case *Member:
 				object.Members = append(object.Members, v)
 			}
