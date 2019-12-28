@@ -85,15 +85,6 @@ func (e {{ structName $object.Name }}) GetSchema() *schema.Object {
 			},
 		{{- end }}
 		},
-		Links: []*schema.Link{
-		{{- range $link := $object.Links }}
-			&schema.Link{
-				Type: "{{ $link.Type }}",
-				Direction: "{{ $link.Direction }}",
-				IsOptional: {{ if $link.IsOptional }} true {{ else }} false {{ end }},
-			},
-		{{- end }}
-		},
 	}
 }
 {{ end }}
@@ -150,7 +141,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 			{{- end }}
 		{{- end }}
 	{{- end }}
-	{{ if neq $.Package "nimona.io/schema" }}
+	{{- if neq $.Package "nimona.io/schema" }}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}

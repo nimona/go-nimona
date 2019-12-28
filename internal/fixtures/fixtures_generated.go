@@ -74,7 +74,6 @@ func (e TestPolicy) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -93,7 +92,6 @@ func (e TestPolicy) ToObject() object.Object {
 	if e.Action != "" {
 		m["action:s"] = e.Action
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -148,7 +146,6 @@ func (e TestStream) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -176,7 +173,6 @@ func (e TestStream) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -224,7 +220,6 @@ func (e TestSubscribed) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -243,7 +238,6 @@ func (e TestSubscribed) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -291,7 +285,6 @@ func (e TestUnsubscribed) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -310,7 +303,6 @@ func (e TestUnsubscribed) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}

@@ -1,25 +1,19 @@
 package example/chat
 
-import example/crypto crypto
-import example/stream stream
-
 stream mochi.io/conversation {
-    root object Created {
+    signed root object Created {
         name string
     }
-    object TopicUpdated {
+    signed object TopicUpdated {
         topic string
+        dependsOn repeated relationship
     }
-    object MessageAdded {
-        message mochi.io/message
-    }
-    object MessageRemoved {
-        message mochi.io/message
-    }
-}
-
-stream mochi.io/message {
-    root object Created {
+    signed object MessageAdded {
         body string
+        dependsOn repeated relationship
+    }
+    signed object MessageRemoved {
+        removes relationship
+        dependsOn repeated relationship
     }
 }

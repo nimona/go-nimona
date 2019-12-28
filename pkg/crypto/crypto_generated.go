@@ -59,7 +59,6 @@ func (e Certificate) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -78,7 +77,6 @@ func (e Certificate) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -119,7 +117,6 @@ func (e Signature) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -135,7 +132,6 @@ func (e Signature) ToObject() object.Object {
 	if len(e.X) != 0 {
 		m["x:d"] = e.X
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}

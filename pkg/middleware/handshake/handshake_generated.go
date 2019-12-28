@@ -57,7 +57,6 @@ func (e Syn) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -73,7 +72,6 @@ func (e Syn) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -114,7 +112,6 @@ func (e SynAck) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -130,7 +127,6 @@ func (e SynAck) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
@@ -171,7 +167,6 @@ func (e Ack) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 		},
-		Links: []*schema.Link{},
 	}
 }
 
@@ -187,7 +182,6 @@ func (e Ack) ToObject() object.Object {
 	if e.Identity != "" {
 		m["@identity:s"] = e.Identity
 	}
-
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
 	}
