@@ -3,18 +3,23 @@ package example/chat
 import example/crypto crypto
 import example/stream stream
 
-signed object example/conversation.TopicSet {
-    stream example/crypto.Hash
-    topic string
+stream mochi.io/conversation {
+    root object Created {
+        name string
+    }
+    object TopicUpdated {
+        topic string
+    }
+    object MessageAdded {
+        message mochi.io/message
+    }
+    object MessageRemoved {
+        message mochi.io/message
+    }
 }
 
-signed object example/conversation.NameSet {
-    stream example/crypto.Hash
-    name string
-}
-
-signed object example/conversation.objectAdded {
-    stream example/crypto.Hash
-    parents repeated example/crypto.Hash
-    body string
+stream mochi.io/message {
+    root object Created {
+        body string
+    }
 }

@@ -171,7 +171,13 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
 			ps = strings.Split(ps[len(ps)-1], ".")
-			return ucFirst(ps[len(ps)-1])
+			if len(ps) == 1 {
+				return ucFirst(ps[0])
+			}
+			if strings.ToLower(ps[len(ps)-2]) == strings.ToLower(doc.PackageAlias) {
+				return ucFirst(ps[len(ps)-1])
+			}
+			return ucFirst(ps[len(ps)-2]) + ucFirst(ps[len(ps)-1])
 		},
 		"memberType": func(name string) string {
 			for alias, pkg := range originalImports {
@@ -194,13 +200,17 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		return nil, err
 	}
 
-	// lPackage := strings.ToLower(lastSegment(doc.Package))
-	// for i, s := range doc.Domains {
+	// instead of doing the same work for both top-level and stream objects, we
+	// convert stream objects into top-level ones
+
+	for _, s := range doc.Streams {
+		for _, o := range s.Objects {
+			o.Name = s.Name + "." + o.Name
+			doc.Objects = append(doc.Objects, o)
+		}
+	}
+
 	for k, e := range doc.Objects {
-		// lDomain := strings.ToLower(lastSegment(s.Name))
-		// if lDomain != lPackage {
-		// 	e.Name = ucFirst(lDomain) + ucFirst(e.Name)
-		// }
 		for _, mv := range e.Members {
 			for pk, pv := range primitives {
 				if strings.HasSuffix(mv.Type, pk) {
@@ -213,10 +223,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			}
 		}
 		if e.IsSigned {
-			// streamPkg := "stream."
-			// if doc.Package == "nimona.io/stream" {
-			// 	streamPkg = ""
-			// }
 			doc.Objects[k].Members = append(
 				doc.Objects[k].Members,
 				&Member{
