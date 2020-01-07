@@ -251,8 +251,8 @@ func (st *Store) Put(
 	}
 
 	objectType := obj.GetType()
-	streamHash := stream.Stream(obj).String()
 	objectHash := hash.New(obj).String()
+	streamHash := stream.GetStream(obj).String()
 	signerPublicKey := stream.GetSigner(obj).String()
 	authorPublicKey := stream.GetIdentity(obj).String()
 
