@@ -9,4 +9,5 @@ var migrations = [...]string{
 	`ALTER TABLE Objects ADD Created INT;`,
 	`ALTER TABLE Objects ADD LastAccessed INT;`,
 	`ALTER TABLE Objects ADD SignerPublicKey TEXT;`,
+	`ALTER TABLE Objects ADD AuthorPublicKey TEXT;`,
 }
