@@ -43,6 +43,14 @@ func Identity(o object.Object) crypto.PublicKey {
 	return toCommon(o).Identity
 }
 
+func GetSigner(o object.Object) crypto.PublicKey {
+	c := toCommon(o)
+	if c.Signature == nil || c.Signature.Signer.IsEmpty() {
+		return ""
+	}
+	return c.Signature.Signer
+}
+
 func GetStreamLeaves(os []object.Object) []object.Object {
 	hm := map[string]bool{} // map[hash]isParent
 	om := map[string]object.Object{}

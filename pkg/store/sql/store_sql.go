@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/pkg/crypto"
+
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
@@ -227,12 +229,13 @@ func (st *Store) Put(
 		Hash,
 		Type,
 		RootHash,
+		SignerPublicKey,
 		Body,
 		Created,
 		LastAccessed,
 		TTl
 	) VALUES (
-		?, ?, ?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?
 	) ON CONFLICT (Hash) DO UPDATE SET
 		LastAccessed=?
 	`)
@@ -249,6 +252,7 @@ func (st *Store) Put(
 	objectType := obj.GetType()
 	streamHash := stream.Stream(obj).String()
 	objectHash := hash.New(obj).String()
+	signerPublicKey := stream.GetSigner(obj).String()
 
 	// if the object doesn't belong to a stream, we need to set the stream
 	// to the object's hash.
@@ -261,6 +265,7 @@ func (st *Store) Put(
 		objectHash,
 		objectType,
 		streamHash,
+		signerPublicKey,
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -420,6 +425,12 @@ func (st *Store) Filter(
 		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
 	}
 
+	if len(options.Lookups.Signers) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.Signers))[1:]
+		where += "AND SignerPublicKey IN (" + qs + ") "
+		whereArgs = append(whereArgs, aktoai(options.Lookups.Signers)...)
+	}
+
 	objects := []object.Object{}
 
 	// get the object
@@ -501,6 +512,14 @@ func astoai(ah []string) []interface{} {
 }
 
 func ahtoai(ah []object.Hash) []interface{} {
+	as := make([]interface{}, len(ah))
+	for i, h := range ah {
+		as[i] = h.String()
+	}
+	return as
+}
+
+func aktoai(ah []crypto.PublicKey) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

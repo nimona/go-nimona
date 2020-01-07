@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"nimona.io/pkg/crypto"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -159,9 +161,17 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
+	k, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
+
+	s, err := crypto.NewSignature(k, p.ToObject())
+	require.NoError(t, err)
+
+	p.Signature = s
 
 	err = store.Put(p.ToObject(), sql.WithTTL(0))
 	require.NoError(t, err)
@@ -190,6 +200,18 @@ func TestFilter(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, len(hashes))
+
+	objects, err = store.Filter(
+		sql.FilterBySigner(k.PublicKey()),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, 1)
+
+	objects, err = store.Filter(
+		sql.FilterBySigner(crypto.PublicKey("foo")),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, 0)
 
 	objects, err = store.Filter(
 		sql.FilterByObjectType(c.GetType()),
