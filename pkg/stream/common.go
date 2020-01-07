@@ -12,7 +12,7 @@ type (
 	common struct {
 		Type      string            `json:"@ctx:s,omitempty"`
 		Context   string            `json:"@type:s,omitempty"`
-		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Stream    object.Hash       `json:"@stream:s,omitempty"`
 		Parents   []object.Hash     `json:"parents:as,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
@@ -31,7 +31,7 @@ func Parents(o object.Object) []object.Hash {
 	return toCommon(o).Parents
 }
 
-func Stream(o object.Object) object.Hash {
+func GetStream(o object.Object) object.Hash {
 	return toCommon(o).Stream
 }
 

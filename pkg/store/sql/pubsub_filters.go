@@ -81,15 +81,7 @@ func FilterByStreamHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			os := o.Get("@stream:s")
-			switch oh := os.(type) {
-			case object.Hash:
-				return h.IsEqual(oh)
-			case string:
-				return h.String() == os
-			default:
-				return false
-			}
+			return !h.IsEmpty() && h.IsEqual(stream.GetStream(o))
 		})
 	}
 }
