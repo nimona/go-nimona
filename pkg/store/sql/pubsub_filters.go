@@ -20,6 +20,7 @@ type (
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Signers      []crypto.PublicKey
+			Identities   []crypto.PublicKey
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []SqlStoreFilter
@@ -33,11 +34,13 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Signers      []crypto.PublicKey
+			Identities   []crypto.PublicKey
 		}{
 			ObjectHashes: []object.Hash{},
 			StreamHashes: []object.Hash{},
 			ContentTypes: []string{},
 			Signers:      []crypto.PublicKey{},
+			Identities:   []crypto.PublicKey{},
 		},
 		Filters: []SqlStoreFilter{},
 	}
@@ -61,6 +64,15 @@ func FilterBySigner(h crypto.PublicKey) LookupOption {
 		opts.Lookups.Signers = append(opts.Lookups.Signers, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
 			return !h.IsEmpty() && h.Equals(stream.GetSigner(o))
+		})
+	}
+}
+
+func FilterByIdentity(h crypto.PublicKey) LookupOption {
+	return func(opts *LookupOptions) {
+		opts.Lookups.Identities = append(opts.Lookups.Identities, h)
+		opts.Filters = append(opts.Filters, func(o object.Object) bool {
+			return !h.IsEmpty() && h.Equals(stream.GetIdentity(o))
 		})
 	}
 }

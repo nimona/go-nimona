@@ -1,7 +1,7 @@
 package stream
 
 import (
-	json "encoding/json"
+	"encoding/json"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hash"
@@ -16,7 +16,7 @@ type (
 		Parents   []object.Hash     `json:"parents:as,omitempty"`
 		Policies  []*Policy         `json:"policies:ao,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:o"`
+		Identity  crypto.PublicKey  `json:"@identity:s"`
 	}
 )
 
@@ -39,7 +39,7 @@ func Policies(o object.Object) []*Policy {
 	return toCommon(o).Policies
 }
 
-func Identity(o object.Object) crypto.PublicKey {
+func GetIdentity(o object.Object) crypto.PublicKey {
 	return toCommon(o).Identity
 }
 

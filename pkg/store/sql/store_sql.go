@@ -230,12 +230,13 @@ func (st *Store) Put(
 		Type,
 		RootHash,
 		SignerPublicKey,
+		AuthorPublicKey,
 		Body,
 		Created,
 		LastAccessed,
 		TTl
 	) VALUES (
-		?, ?, ?, ?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?, ?
 	) ON CONFLICT (Hash) DO UPDATE SET
 		LastAccessed=?
 	`)
@@ -253,6 +254,7 @@ func (st *Store) Put(
 	streamHash := stream.Stream(obj).String()
 	objectHash := hash.New(obj).String()
 	signerPublicKey := stream.GetSigner(obj).String()
+	authorPublicKey := stream.GetIdentity(obj).String()
 
 	// if the object doesn't belong to a stream, we need to set the stream
 	// to the object's hash.
@@ -266,6 +268,7 @@ func (st *Store) Put(
 		objectType,
 		streamHash,
 		signerPublicKey,
+		authorPublicKey,
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -429,6 +432,12 @@ func (st *Store) Filter(
 		qs := strings.Repeat(",?", len(options.Lookups.Signers))[1:]
 		where += "AND SignerPublicKey IN (" + qs + ") "
 		whereArgs = append(whereArgs, aktoai(options.Lookups.Signers)...)
+	}
+
+	if len(options.Lookups.Identities) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.Identities))[1:]
+		where += "AND AuthorPublicKey IN (" + qs + ") "
+		whereArgs = append(whereArgs, aktoai(options.Lookups.Identities)...)
 	}
 
 	objects := []object.Object{}

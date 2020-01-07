@@ -9,16 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"nimona.io/pkg/crypto"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"nimona.io/pkg/crypto"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/stream"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -77,7 +76,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NotNil(t, val)
 	assert.Equal(t, "value", val.(string))
 
-	stHash := stream.Stream(obj)
+	stHash := stream.GetStream(obj)
 	require.NotEmpty(t, stHash)
 
 	err = store.UpdateTTL(hash.New(obj), 10)
@@ -186,6 +185,9 @@ func TestFilter(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		obj := c.ToObject()
 		obj.Set("key:s", fmt.Sprintf("value_%d", i))
+		if i%2 == 0 {
+			obj.Set("@identity:s", s.Signer.String())
+		}
 		err = store.Put(obj, sql.WithTTL(0))
 		require.NoError(t, err)
 		hashes = append(hashes, hash.New(obj))
@@ -206,6 +208,12 @@ func TestFilter(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 1)
+
+	objects, err = store.Filter(
+		sql.FilterByIdentity(k.PublicKey()),
+	)
+	require.NoError(t, err)
+	require.Len(t, objects, 3)
 
 	objects, err = store.Filter(
 		sql.FilterBySigner(crypto.PublicKey("foo")),
