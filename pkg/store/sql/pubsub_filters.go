@@ -2,9 +2,11 @@ package sql
 
 import (
 	"github.com/gobwas/glob"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/stream"
 )
 
 // LookupOptions
@@ -12,10 +14,12 @@ type (
 	LookupOption  func(*LookupOptions)
 	LookupOptions struct {
 		// Lookups are used to perform db queries for these filters
+		// TODO find a better name for this
 		Lookups struct {
 			ObjectHashes []object.Hash
 			StreamHashes []object.Hash
 			ContentTypes []string
+			Signers      []crypto.PublicKey
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []SqlStoreFilter
@@ -28,10 +32,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ObjectHashes []object.Hash
 			StreamHashes []object.Hash
 			ContentTypes []string
+			Signers      []crypto.PublicKey
 		}{
 			ObjectHashes: []object.Hash{},
 			StreamHashes: []object.Hash{},
 			ContentTypes: []string{},
+			Signers:      []crypto.PublicKey{},
 		},
 		Filters: []SqlStoreFilter{},
 	}
@@ -50,11 +56,20 @@ func FilterByHash(h object.Hash) LookupOption {
 	}
 }
 
+func FilterBySigner(h crypto.PublicKey) LookupOption {
+	return func(opts *LookupOptions) {
+		opts.Lookups.Signers = append(opts.Lookups.Signers, h)
+		opts.Filters = append(opts.Filters, func(o object.Object) bool {
+			return !h.IsEmpty() && h.Equals(stream.GetSigner(o))
+		})
+	}
+}
+
 func FilterByStreamHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			os := o.Get("stream:s")
+			os := o.Get("@stream:s")
 			switch oh := os.(type) {
 			case object.Hash:
 				return h.IsEqual(oh)
