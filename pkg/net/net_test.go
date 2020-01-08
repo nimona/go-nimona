@@ -1,7 +1,7 @@
 package net
 
 import (
-	ssql "database/sql"
+	"database/sql"
 	"errors"
 	"io/ioutil"
 	"path"
@@ -10,23 +10,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/store/sql"
-
-	_ "github.com/mattn/go-sqlite3"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestNetDiscoverer(t *testing.T) {
 	dblite1 := tempSqlite3(t)
-	store1, err := sql.New(dblite1)
+	store1, err := sqlobjectstore.New(dblite1)
 	assert.NoError(t, err)
 
 	dblite2 := tempSqlite3(t)
-	store2, err := sql.New(dblite2)
+	store2, err := sqlobjectstore.New(dblite2)
 	assert.NoError(t, err)
 
 	disc1 := discovery.NewPeerStorer(store1)
@@ -61,11 +61,11 @@ func TestNetDiscoverer(t *testing.T) {
 
 func TestNetConnectionSuccess(t *testing.T) {
 	dblite1 := tempSqlite3(t)
-	store1, err := sql.New(dblite1)
+	store1, err := sqlobjectstore.New(dblite1)
 	assert.NoError(t, err)
 
 	dblite2 := tempSqlite3(t)
-	store2, err := sql.New(dblite2)
+	store2, err := sqlobjectstore.New(dblite2)
 	assert.NoError(t, err)
 
 	disc1 := discovery.NewPeerStorer(store1)
@@ -115,11 +115,11 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 func TestNetConnectionFailureMiddleware(t *testing.T) {
 	dblite1 := tempSqlite3(t)
-	store1, err := sql.New(dblite1)
+	store1, err := sqlobjectstore.New(dblite1)
 	assert.NoError(t, err)
 
 	dblite2 := tempSqlite3(t)
-	store2, err := sql.New(dblite2)
+	store2, err := sqlobjectstore.New(dblite2)
 	assert.NoError(t, err)
 
 	disc1 := discovery.NewPeerStorer(store1)
@@ -191,10 +191,10 @@ func (fm *fakeMid) Handle() MiddlewareHandler {
 	}
 }
 
-func tempSqlite3(t *testing.T) *ssql.DB {
+func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-new")
 	require.NoError(t, err)
-	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }

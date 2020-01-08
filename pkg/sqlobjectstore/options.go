@@ -1,4 +1,4 @@
-package sql
+package sqlobjectstore
 
 type (
 	Options struct {

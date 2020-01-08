@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"time"
 
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -11,6 +10,7 @@ import (
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
 
@@ -212,7 +212,7 @@ loop:
 	}
 
 	// TODO currently we only support a root streams
-	os, err := m.store.Filter(sql.FilterByStreamHash(streamHash))
+	os, err := m.store.Filter(sqlobjectstore.FilterByStreamHash(streamHash))
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.New("could not get graph from store"),

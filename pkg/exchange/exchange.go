@@ -6,7 +6,7 @@ import (
 
 	"github.com/geoah/go-queue"
 
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -65,7 +65,7 @@ type (
 		outboxes *OutboxesMap
 		inboxes  EnvelopePubSub
 
-		store *sql.Store // TODO remove
+		store *sqlobjectstore.Store // TODO remove
 	}
 	// Options (mostly) for Send()
 	Options struct {
@@ -105,7 +105,7 @@ func New(
 	ctx context.Context,
 	key crypto.PrivateKey,
 	n net.Network,
-	store *sql.Store,
+	store *sqlobjectstore.Store,
 	discover discovery.Discoverer,
 	localInfo *peer.LocalPeer,
 ) (
