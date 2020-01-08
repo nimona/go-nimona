@@ -1,7 +1,7 @@
-package sql_test
+package sqlobjectstore
 
 import (
-	ssql "database/sql"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -12,28 +12,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/stream"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
-func tempSqlite3(t *testing.T) *ssql.DB {
+func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
 	require.NoError(t, err)
-	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }
 
 func TestNewDatabase(t *testing.T) {
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -43,7 +42,7 @@ func TestNewDatabase(t *testing.T) {
 
 func TestStoreRetrieveUpdate(t *testing.T) {
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -59,13 +58,13 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = store.Put(
 		obj,
-		sql.WithTTL(0),
+		WithTTL(0),
 	)
 	require.NoError(t, err)
 
 	err = store.Put(
 		obj,
-		sql.WithTTL(10),
+		WithTTL(10),
 	)
 
 	require.NoError(t, err)
@@ -90,7 +89,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	retrievedObj2, err := store.Get(hash.New(p.ToObject()))
-	require.True(t, errors.CausedBy(err, sql.ErrNotFound))
+	require.True(t, errors.CausedBy(err, ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
 	err = store.Close()
@@ -100,7 +99,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 func TestSubscribe(t *testing.T) {
 	// create db
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -122,7 +121,7 @@ func TestSubscribe(t *testing.T) {
 		wg.Add(1)
 		// subscribe
 		subscription := store.Subscribe(
-			sql.FilterByStreamHash(streamHash),
+			FilterByStreamHash(streamHash),
 		)
 
 		go func() {
@@ -136,7 +135,7 @@ func TestSubscribe(t *testing.T) {
 	// store data
 	err = store.Put(
 		obj,
-		sql.WithTTL(10),
+		WithTTL(10),
 	)
 	require.NoError(t, err)
 
@@ -156,7 +155,7 @@ func TestSubscribe(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := New(dblite)
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
@@ -172,7 +171,7 @@ func TestFilter(t *testing.T) {
 
 	p.Signature = s
 
-	err = store.Put(p.ToObject(), sql.WithTTL(0))
+	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
 
 	ph := hash.New(p.ToObject())
@@ -188,55 +187,55 @@ func TestFilter(t *testing.T) {
 		if i%2 == 0 {
 			obj.Set("@identity:s", s.Signer.String())
 		}
-		err = store.Put(obj, sql.WithTTL(0))
+		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)
 		hashes = append(hashes, hash.New(obj))
 	}
 
 	objects, err := store.Filter(
-		sql.FilterByHash(hashes[0]),
-		sql.FilterByHash(hashes[1]),
-		sql.FilterByHash(hashes[2]),
-		sql.FilterByHash(hashes[3]),
-		sql.FilterByHash(hashes[4]),
+		FilterByHash(hashes[0]),
+		FilterByHash(hashes[1]),
+		FilterByHash(hashes[2]),
+		FilterByHash(hashes[3]),
+		FilterByHash(hashes[4]),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, len(hashes))
 
 	objects, err = store.Filter(
-		sql.FilterBySigner(k.PublicKey()),
+		FilterBySigner(k.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 1)
 
 	objects, err = store.Filter(
-		sql.FilterByIdentity(k.PublicKey()),
+		FilterByIdentity(k.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 3)
 
 	objects, err = store.Filter(
-		sql.FilterBySigner(crypto.PublicKey("foo")),
+		FilterBySigner(crypto.PublicKey("foo")),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 0)
 
 	objects, err = store.Filter(
-		sql.FilterByObjectType(c.GetType()),
+		FilterByObjectType(c.GetType()),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, len(hashes))
 
 	objects, err = store.Filter(
-		sql.FilterByStreamHash(ph),
+		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, len(hashes)+1)
 
 	objects, err = store.Filter(
-		sql.FilterByHash(hashes[0]),
-		sql.FilterByObjectType(c.GetType()),
-		sql.FilterByStreamHash(ph),
+		FilterByHash(hashes[0]),
+		FilterByObjectType(c.GetType()),
+		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 1)

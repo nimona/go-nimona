@@ -1,7 +1,7 @@
 package daemon
 
 import (
-	ssql "database/sql"
+	"database/sql"
 	"fmt"
 	"path"
 	"strings"
@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
@@ -26,7 +26,7 @@ type Daemon struct {
 	Net          net.Network
 	Discovery    discovery.Discoverer
 	Exchange     exchange.Exchange
-	Store        *sql.Store
+	Store        *sqlobjectstore.Store
 	Orchestrator orchestrator.Orchestrator
 	LocalPeer    *peer.LocalPeer
 }
@@ -88,12 +88,12 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct graph store
-	db, err := ssql.Open("sqlite3", path.Join(config.Path, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(config.Path, "sqlite3.db"))
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not open sql file"), err)
 	}
 
-	store, err := sql.New(db)
+	store, err := sqlobjectstore.New(db)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not start sql store"), err)
 	}

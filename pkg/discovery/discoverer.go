@@ -9,7 +9,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 //go:generate $GOBIN/mockery -name PeerStorer -case underscore
@@ -29,7 +29,7 @@ type (
 )
 
 // NewPeerStorer creates a new empty addressBook with no providers
-func NewPeerStorer(store *sql.Store) PeerStorer {
+func NewPeerStorer(store *sqlobjectstore.Store) PeerStorer {
 	return &addressBook{
 		providers: sync.Map{},
 		store:     store,
@@ -39,7 +39,7 @@ func NewPeerStorer(store *sql.Store) PeerStorer {
 // addressBook is
 type addressBook struct {
 	providers sync.Map
-	store     *sql.Store
+	store     *sqlobjectstore.Store
 }
 
 // Lookup goes through the given providers until one returns something
@@ -62,7 +62,7 @@ func (r *addressBook) Lookup(
 
 	// find all peer objects
 	// TODO replace with sqlpeerstore
-	os, err := r.store.Filter(sql.FilterByObjectType("nimona.io/peer.Peer"))
+	os, err := r.store.Filter(sqlobjectstore.FilterByObjectType("nimona.io/peer.Peer"))
 	if err != nil {
 		return nil, err
 	}
@@ -129,11 +129,11 @@ func (r *addressBook) AddDiscoverer(provider Discoverer) error {
 // These peers will eventually be gc-ed unless pinned.
 // WARNING: Only bootstrap peers should be pinned. Probably.
 func (r *addressBook) Add(peer *peer.Peer, pin bool) {
-	opts := []sql.Option{}
+	opts := []sqlobjectstore.Option{}
 	if pin {
-		opts = append(opts, sql.WithTTL(0))
+		opts = append(opts, sqlobjectstore.WithTTL(0))
 	} else {
-		opts = append(opts, sql.WithTTL(60))
+		opts = append(opts, sqlobjectstore.WithTTL(60))
 	}
 	r.store.Put(peer.ToObject(), opts...)
 }

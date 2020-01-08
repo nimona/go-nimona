@@ -1,7 +1,6 @@
 package orchestrator
 
 import (
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -11,6 +10,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
 
@@ -41,7 +41,7 @@ type (
 		)
 	}
 	orchestrator struct {
-		store     *sql.Store
+		store     *sqlobjectstore.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
 		localInfo *peer.LocalPeer
@@ -53,7 +53,7 @@ type (
 
 // New constructs a new orchestrator given an object store and exchange
 func New(
-	store *sql.Store,
+	store *sqlobjectstore.Store,
 	exchange exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
@@ -74,7 +74,7 @@ func New(
 // NewWithContext constructs a new orchestrator given an object store and exchange
 func NewWithContext(
 	ctx context.Context,
-	store *sql.Store,
+	store *sqlobjectstore.Store,
 	exc exchange.Exchange,
 	discovery discovery.Discoverer,
 	localInfo *peer.LocalPeer,
@@ -103,7 +103,7 @@ func NewWithContext(
 	// TODO which objects do we need to serve?
 	contentTypes := m.localInfo.GetContentTypes()
 
-	supportedObjects, err := m.store.Filter(sql.FilterByObjectType(contentTypes...))
+	supportedObjects, err := m.store.Filter(sqlobjectstore.FilterByObjectType(contentTypes...))
 	if err != nil {
 		logger.Error("failed to get objects", log.Error(err))
 	} else {
@@ -210,7 +210,7 @@ func (m *orchestrator) Put(vs ...object.Object) error {
 		}
 
 		// get all the objects that are part of the same graph
-		os, err := m.store.Filter(sql.FilterByStreamHash(h))
+		os, err := m.store.Filter(sqlobjectstore.FilterByStreamHash(h))
 		if err != nil {
 			return errors.Wrap(
 				errors.Error("could not retrieve graph"),
@@ -239,7 +239,7 @@ func (m *orchestrator) Get(
 	*Graph,
 	error,
 ) {
-	os, err := m.store.Filter(sql.FilterByStreamHash(root))
+	os, err := m.store.Filter(sqlobjectstore.FilterByStreamHash(root))
 	if err != nil {
 		return nil, errors.Wrap(
 			errors.Error("could not retrieve graph"),
@@ -267,7 +267,7 @@ func (m *orchestrator) handleStreamRequest(
 	logger := log.FromContext(ctx)
 
 	// get the entire graph for this stream
-	vs, err := m.store.Filter(sql.FilterByStreamHash(req.Stream))
+	vs, err := m.store.Filter(sqlobjectstore.FilterByStreamHash(req.Stream))
 	if err != nil {
 		return err
 	}

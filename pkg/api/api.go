@@ -15,7 +15,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 // API for HTTP
@@ -27,7 +27,7 @@ type API struct {
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
 
-	objectStore  *sql.Store
+	objectStore  *sqlobjectstore.Store
 	orchestrator orchestrator.Orchestrator
 	local        *peer.LocalPeer
 
@@ -48,7 +48,7 @@ func New(
 	d discovery.Discoverer,
 	x exchange.Exchange,
 	linf *peer.LocalPeer,
-	sst *sql.Store,
+	sst *sqlobjectstore.Store,
 	orchestrator orchestrator.Orchestrator,
 	version string,
 	commit string,

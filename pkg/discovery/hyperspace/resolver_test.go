@@ -2,7 +2,7 @@ package hyperspace
 
 import (
 	"crypto/rand"
-	ssql "database/sql"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -21,7 +22,7 @@ import (
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
@@ -262,7 +263,7 @@ func newPeer(
 	assert.NoError(t, err)
 
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := sqlobjectstore.New(dblite)
 	assert.NoError(t, err)
 
 	disc := discovery.NewPeerStorer(store)
@@ -294,10 +295,10 @@ func newPeer(
 	return opk, pk, n, x, disc, local, ctx
 }
 
-func tempSqlite3(t *testing.T) *ssql.DB {
+func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
 	require.NoError(t, err)
-	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }

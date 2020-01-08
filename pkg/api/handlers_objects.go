@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"nimona.io/pkg/http/router"
-	"nimona.io/pkg/store/sql"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -23,7 +23,7 @@ func (api *API) HandleGetObjects(c *router.Context) {
 	// TODO this will be replaced by manager.Subscribe()
 	contentTypes := api.local.GetContentTypes()
 
-	ms, err := api.objectStore.Filter(sql.FilterByObjectType(contentTypes...))
+	ms, err := api.objectStore.Filter(sqlobjectstore.FilterByObjectType(contentTypes...))
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
@@ -57,7 +57,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
-		if errors.CausedBy(err, sql.ErrNotFound) {
+		if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
@@ -150,7 +150,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	// Get all the objects for a stream
 	objs, err := api.objectStore.Filter(
-		sql.FilterByStreamHash(
+		sqlobjectstore.FilterByStreamHash(
 			object.Hash(rootObjectHash),
 		),
 	)
