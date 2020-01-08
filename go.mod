@@ -8,7 +8,7 @@ require (
 	github.com/emersion/go-upnp-igd v0.0.0-20170924120501-6fb51d2a2a53
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-sqlite3 v1.13.0
