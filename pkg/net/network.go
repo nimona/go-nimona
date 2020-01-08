@@ -198,11 +198,11 @@ func (n *network) dialPeer(
 
 	logger.Debug("dialing peer")
 
-	opts := []discovery.LookupOption{
-		discovery.LookupByKey(key),
+	opts := []peer.LookupOption{
+		peer.LookupByKey(key),
 	}
 	if localDiscoveryOnly {
-		opts = append(opts, discovery.LookupOnlyLocal())
+		opts = append(opts, peer.LookupOnlyLocal())
 	}
 	ps, err := n.discoverer.Lookup(ctx, opts...)
 	if err != nil {

@@ -1,15 +1,14 @@
-package discovery
+package peer
 
 import (
+	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery/bloom"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
 )
 
 // LookupOptions
 type (
-	LookupFilter  func(*peer.Peer) bool
+	LookupFilter  func(*Peer) bool
 	LookupOption  func(*LookupOptions)
 	LookupOptions struct {
 		Local bool
@@ -20,6 +19,23 @@ type (
 		Filters []LookupFilter
 	}
 )
+
+func ParseLookupOptions(opts ...LookupOption) *LookupOptions {
+	options := &LookupOptions{}
+	for _, o := range opts {
+		o(options)
+	}
+	return options
+}
+
+func (l LookupOptions) Match(p *Peer) bool {
+	for _, f := range l.Filters {
+		if f(p) == false {
+			return false
+		}
+	}
+	return true
+}
 
 // LookupOnlyLocal forces the discoverer to only look at its cache
 func LookupOnlyLocal() LookupOption {
@@ -34,7 +50,7 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 		opts.Lookups = append(opts.Lookups, hash.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
+			func(p *Peer) bool {
 				return bloom.Bloom(p.Bloom).Contains(
 					bloom.New(hash.String()),
 				)
@@ -49,7 +65,7 @@ func LookupByKey(key crypto.PublicKey) LookupOption {
 		opts.Lookups = append(opts.Lookups, key.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
+			func(p *Peer) bool {
 				return p.Signature.Signer.Equals(key)
 			},
 		)
@@ -62,7 +78,7 @@ func LookupByContentType(contentType string) LookupOption {
 		opts.Lookups = append(opts.Lookups, contentType)
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
+			func(p *Peer) bool {
 				for _, t := range p.ContentTypes {
 					if contentType == t {
 						return true
@@ -80,7 +96,7 @@ func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
 		opts.Lookups = append(opts.Lookups, certSigner.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
+			func(p *Peer) bool {
 				for _, c := range p.Certificates {
 					if certSigner.Equals(c.Signature.Signer) {
 						return true
@@ -90,21 +106,4 @@ func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
 			},
 		)
 	}
-}
-
-func ParseLookupOptions(opts ...LookupOption) *LookupOptions {
-	options := &LookupOptions{}
-	for _, o := range opts {
-		o(options)
-	}
-	return options
-}
-
-func matchPeerWithLookupFilters(p *peer.Peer, fs ...LookupFilter) bool {
-	for _, f := range fs {
-		if f(p) == false {
-			return false
-		}
-	}
-	return true
 }

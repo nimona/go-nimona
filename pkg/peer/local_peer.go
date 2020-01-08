@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery/bloom"
 	"nimona.io/pkg/object"
 )
 

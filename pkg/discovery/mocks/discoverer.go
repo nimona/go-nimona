@@ -3,7 +3,7 @@
 package mocks
 
 import context "nimona.io/pkg/context"
-import discovery "nimona.io/pkg/discovery"
+
 import mock "github.com/stretchr/testify/mock"
 import peer "nimona.io/pkg/peer"
 
@@ -12,27 +12,8 @@ type Discoverer struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: _a0
-func (_m *Discoverer) Add(_a0 *peer.Peer) {
-	_m.Called(_a0)
-}
-
-// AddProvider provides a mock function with given fields: provider
-func (_m *Discoverer) AddProvider(provider discovery.Provider) error {
-	ret := _m.Called(provider)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(discovery.Provider) error); ok {
-		r0 = rf(provider)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Lookup provides a mock function with given fields: ctx, opts
-func (_m *Discoverer) Lookup(ctx context.Context, opts ...discovery.LookupOption) ([]*peer.Peer, error) {
+func (_m *Discoverer) Lookup(ctx context.Context, opts ...peer.LookupOption) ([]*peer.Peer, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -43,7 +24,7 @@ func (_m *Discoverer) Lookup(ctx context.Context, opts ...discovery.LookupOption
 	ret := _m.Called(_ca...)
 
 	var r0 []*peer.Peer
-	if rf, ok := ret.Get(0).(func(context.Context, ...discovery.LookupOption) []*peer.Peer); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ...peer.LookupOption) []*peer.Peer); ok {
 		r0 = rf(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
@@ -52,7 +33,7 @@ func (_m *Discoverer) Lookup(ctx context.Context, opts ...discovery.LookupOption
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, ...discovery.LookupOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, ...peer.LookupOption) error); ok {
 		r1 = rf(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)

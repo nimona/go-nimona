@@ -5,10 +5,9 @@ import (
 
 	"nimona.io/internal/rand"
 
+	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/discovery/bloom"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
@@ -79,12 +78,12 @@ func NewDiscoverer(
 // Lookup finds and returns peer infos from a fingerprint
 func (r *Discoverer) Lookup(
 	ctx context.Context,
-	opts ...discovery.LookupOption,
+	opts ...peer.LookupOption,
 ) (
 	[]*peer.Peer,
 	error,
 ) {
-	opt := discovery.ParseLookupOptions(opts...)
+	opt := peer.ParseLookupOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.Lookup"),
@@ -232,7 +231,7 @@ func (r *Discoverer) handlePeerLookup(
 func (r *Discoverer) lookup(
 	ctx context.Context,
 	bloom bloom.Bloom,
-	filters []discovery.LookupFilter,
+	filters []peer.LookupFilter,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -475,7 +474,7 @@ func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.Publi
 	return nps
 }
 
-func matchPeerWithLookupFilters(p *peer.Peer, fs ...discovery.LookupFilter) bool {
+func matchPeerWithLookupFilters(p *peer.Peer, fs ...peer.LookupFilter) bool {
 	for _, f := range fs {
 		if f(p) == false {
 			return false
