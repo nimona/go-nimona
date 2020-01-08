@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"nimona.io/pkg/crypto"
-
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hash"
+	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -21,22 +21,21 @@ const (
 	ErrNotFound = errors.Error("not found")
 )
 
-const migrationsTable string = `
-CREATE TABLE IF NOT EXISTS Migrations (
-	ID INTEGER NOT NULL PRIMARY KEY,
-	LastIndex INTEGER,
-	Datetime INT
-)`
+var migrations = []string{
+	`CREATE TABLE IF NOT EXISTS Objects (Hash TEXT NOT NULL PRIMARY KEY);`,
+	`ALTER TABLE Objects ADD Type TEXT;`,
+	`ALTER TABLE Objects ADD Body TEXT;`,
+	`ALTER TABLE Objects ADD RootHash TEXT;`,
+	`ALTER TABLE Objects ADD TTL INT;`,
+	`ALTER TABLE Objects ADD Created INT;`,
+	`ALTER TABLE Objects ADD LastAccessed INT;`,
+	`ALTER TABLE Objects ADD SignerPublicKey TEXT;`,
+	`ALTER TABLE Objects ADD AuthorPublicKey TEXT;`,
+}
 
 type Store struct {
 	db     *sql.DB
 	pubsub SqlStorePubSub
-}
-
-type migrationRow struct {
-	id        int
-	LastIndex int
-	Datetime  string
 }
 
 func New(
@@ -47,14 +46,9 @@ func New(
 		pubsub: NewSqlStorePubSub(),
 	}
 
-	// initialise the tables required for the migration
-	if err := ndb.createMigrationTable(); err != nil {
-		return nil, err
-	}
-
-	// Execute the migrations
-	if err := ndb.runMigrations(); err != nil {
-		return nil, err
+	// run migrations
+	if err := migration.Up(db, migrations...); err != nil {
+		return nil, errors.Wrap(err, errors.New("failed to run migrations"))
 	}
 
 	// Initialise the garbage collector in the background to run every minute
@@ -70,93 +64,6 @@ func New(
 
 func (st *Store) Close() error {
 	return st.db.Close()
-}
-
-// createMigrationTable creates the tables required to keep the state
-// of the migrations
-func (st *Store) createMigrationTable() error {
-	_, err := st.db.Exec(migrationsTable)
-	if err != nil {
-		return errors.Wrap(err, errors.New("could not create migrations table"))
-	}
-
-	return nil
-}
-
-// runMigrations executes the migrations in the array and stores the state
-// in the migration tables
-func (st *Store) runMigrations() error {
-	tx, err := st.db.Begin()
-	if err != nil {
-		return errors.Wrap(err, errors.New("could not start transaction"))
-	}
-
-	// iterate over the migrations array
-	for index, mig := range migrations {
-
-		// get the last migration index
-		rows, err := tx.Query(
-			"select ID, LastIndex, Datetime from Migrations order by id desc limit 1")
-		if err != nil {
-			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not run migration"),
-			)
-		}
-
-		mgr := migrationRow{}
-
-		for rows.Next() {
-			if err := rows.Scan(&mgr.id, &mgr.LastIndex, &mgr.Datetime); err != nil {
-				continue
-			}
-		}
-
-		if mgr.id > 0 && mgr.LastIndex >= index {
-			continue
-		}
-
-		// execute the current migration
-		_, err = tx.Exec(mig)
-		if err != nil {
-			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not run migration"),
-			)
-		}
-
-		// store the migration status state in the table
-		stmt, err := tx.Prepare(
-			"INSERT INTO Migrations(LastIndex, Datetime) VALUES(?, ?)")
-		if err != nil {
-			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not insert to migrations table"),
-			)
-		}
-
-		_, err = stmt.Exec(index, time.Now().Unix())
-		if err != nil {
-			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not insert to migrations table"),
-			)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		tx.Rollback() // nolint
-		return errors.Wrap(
-			err,
-			errors.New("could not insert to migrations table"),
-		)
-	}
-
-	return nil
 }
 
 func (st *Store) Get(

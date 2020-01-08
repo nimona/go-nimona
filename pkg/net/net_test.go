@@ -1,31 +1,46 @@
 package net
 
 import (
+	ssql "database/sql"
 	"errors"
+	"io/ioutil"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/store/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestNetDiscoverer(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
+	dblite1 := tempSqlite3(t)
+	store1, err := sql.New(dblite1)
+	assert.NoError(t, err)
+
+	dblite2 := tempSqlite3(t)
+	store2, err := sql.New(dblite2)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+	disc2 := discovery.NewPeerStorer(store2)
 
 	_, _, l1 := newPeer(t, "", disc1)
 	_, _, l2 := newPeer(t, "", disc2)
 
 	ctx := context.New()
 
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer(), true)
+	disc2.Add(l1.GetSignedPeer(), true)
 
-	ps2, err := disc1.Lookup(ctx, discovery.LookupByKey(l2.GetPeerPublicKey()))
+	ps2, err := disc1.Lookup(ctx, peer.LookupByKey(l2.GetPeerPublicKey()))
 	p2 := ps2[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
@@ -34,7 +49,7 @@ func TestNetDiscoverer(t *testing.T) {
 		p2.PublicKey(),
 	)
 
-	ps1, err := disc2.Lookup(ctx, discovery.LookupByKey(l1.GetPeerPublicKey()))
+	ps1, err := disc2.Lookup(ctx, peer.LookupByKey(l1.GetPeerPublicKey()))
 	p1 := ps1[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
@@ -45,8 +60,16 @@ func TestNetDiscoverer(t *testing.T) {
 }
 
 func TestNetConnectionSuccess(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
+	dblite1 := tempSqlite3(t)
+	store1, err := sql.New(dblite1)
+	assert.NoError(t, err)
+
+	dblite2 := tempSqlite3(t)
+	store2, err := sql.New(dblite2)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+	disc2 := discovery.NewPeerStorer(store2)
 
 	ctx := context.New()
 
@@ -59,8 +82,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	sconn, err := n1.Listen(ctx)
 	assert.NoError(t, err)
 
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer(), true)
+	disc2.Add(l1.GetSignedPeer(), true)
 
 	peer1Addr := l1.GetAddresses()[0]
 
@@ -91,8 +114,16 @@ func TestNetConnectionSuccess(t *testing.T) {
 }
 
 func TestNetConnectionFailureMiddleware(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
+	dblite1 := tempSqlite3(t)
+	store1, err := sql.New(dblite1)
+	assert.NoError(t, err)
+
+	dblite2 := tempSqlite3(t)
+	store2, err := sql.New(dblite2)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+	disc2 := discovery.NewPeerStorer(store2)
 
 	ctx := context.New()
 
@@ -108,8 +139,8 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	n1.AddMiddleware(fm.Handle())
 	assert.NoError(t, err)
 
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer(), true)
+	disc2.Add(l1.GetSignedPeer(), true)
 
 	peer1Addr := l1.GetAddresses()[0]
 
@@ -158,4 +189,12 @@ func (fm *fakeMid) Handle() MiddlewareHandler {
 	return func(ctx context.Context, conn *Connection) (*Connection, error) {
 		return conn, errors.New("what?")
 	}
+}
+
+func tempSqlite3(t *testing.T) *ssql.DB {
+	dirPath, err := ioutil.TempDir("", "nimona-new")
+	require.NoError(t, err)
+	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	require.NoError(t, err)
+	return db
 }

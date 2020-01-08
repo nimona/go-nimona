@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/mattn/go-sqlite3"
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -22,6 +21,7 @@ import (
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/store/sql"
 )
 
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
@@ -29,7 +29,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
-	err = disc0.AddProvider(d0)
+	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
 	ba := l0.GetAddresses()
@@ -38,14 +38,14 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
-	err = disc1.AddProvider(d1)
+	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err := d1.Lookup(ctx, discovery.LookupByKey(k0.PublicKey()))
+	peers, err := d1.Lookup(ctx, peer.LookupByKey(k0.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -54,7 +54,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second),
 	)
-	peers, err = d0.Lookup(ctxR2, discovery.LookupByKey(k1.PublicKey()))
+	peers, err = d0.Lookup(ctxR2, peer.LookupByKey(k1.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -66,7 +66,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// bootstrap node
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
-	err = disc0.AddProvider(d0)
+	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
 	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
@@ -82,13 +82,13 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// node 1
 	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
-	err = disc1.AddProvider(d1)
+	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	// node 2
 	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
 	assert.NoError(t, err)
-	err = disc2.AddProvider(d2)
+	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
 	// find bootstrap from node1
@@ -96,7 +96,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err := d1.Lookup(ctx, discovery.LookupByKey(k0.PublicKey()))
+	peers, err := d1.Lookup(ctx, peer.LookupByKey(k0.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
@@ -106,7 +106,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.Lookup(ctx, discovery.LookupByKey(k1.PublicKey()))
+	peers, err = d2.Lookup(ctx, peer.LookupByKey(k1.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
@@ -116,7 +116,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.Lookup(ctx, discovery.LookupByKey(k2.PublicKey()))
+	peers, err = d1.Lookup(ctx, peer.LookupByKey(k2.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
@@ -127,7 +127,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// setup node 3
 	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
 	assert.NoError(t, err)
-	err = disc3.AddProvider(d3)
+	err = disc3.AddDiscoverer(d3)
 	assert.NoError(t, err)
 	assert.NotNil(t, d3)
 
@@ -146,7 +146,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req4"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d1.Lookup(ctx, discovery.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
+	peers, err = d1.Lookup(ctx, peer.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -156,7 +156,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req5"),
 		context.WithTimeout(time.Second*2),
 	)
-	peers, err = d2.Lookup(ctx, discovery.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
+	peers, err = d2.Lookup(ctx, peer.LookupByCertificateSigner(l3.GetIdentityPublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
@@ -181,7 +181,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// bootstrap peer
 	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
 	assert.NoError(t, err)
-	err = disc0.AddProvider(d0)
+	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
 	// bootstrap address
@@ -190,13 +190,13 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// peer 1
 	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
 	assert.NoError(t, err)
-	err = disc1.AddProvider(d1)
+	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	// peer 2
 	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
 	assert.NoError(t, err)
-	err = disc2.AddProvider(d2)
+	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
 	// find peer 1 from peer 2
@@ -204,7 +204,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	providers, err := d2.Lookup(ctx, discovery.LookupByContentHash(ch))
+	providers, err := d2.Lookup(ctx, peer.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
@@ -214,7 +214,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	providers, err = d0.Lookup(ctx, discovery.LookupByContentHash(ch))
+	providers, err = d0.Lookup(ctx, peer.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
@@ -225,7 +225,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// setup peer 3
 	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
 	assert.NoError(t, err)
-	err = disc3.AddProvider(d1)
+	err = disc3.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	// find peer 1 from peer 3
@@ -233,7 +233,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second),
 	)
-	providers, err = d3.Lookup(ctx, discovery.LookupByContentHash(ch))
+	providers, err = d3.Lookup(ctx, peer.LookupByContentHash(ch))
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
@@ -247,7 +247,7 @@ func newPeer(
 	crypto.PrivateKey,
 	net.Network,
 	exchange.Exchange,
-	discovery.Discoverer,
+	discovery.PeerStorer,
 	*peer.LocalPeer,
 	context.Context,
 ) {
@@ -261,10 +261,11 @@ func newPeer(
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	disc := discovery.NewDiscoverer()
 	dblite := tempSqlite3(t)
 	store, err := sql.New(dblite)
 	assert.NoError(t, err)
+
+	disc := discovery.NewPeerStorer(store)
 
 	local, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)

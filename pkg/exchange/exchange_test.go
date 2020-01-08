@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/store/sql"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -22,23 +21,32 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/store/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestSendSuccess(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
+	dblite1 := tempSqlite3(t)
+	store1, err := sql.New(dblite1)
+	assert.NoError(t, err)
+
+	dblite2 := tempSqlite3(t)
+	store2, err := sql.New(dblite2)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+	disc2 := discovery.NewPeerStorer(store2)
 
 	k1, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	k2, _, x2, _, l2 := newPeer(t, "", disc2, true, false)
 
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer(), true)
+	disc2.Add(l1.GetSignedPeer(), true)
 
 	dr1, err := disc1.Lookup(
 		context.Background(),
-		discovery.LookupByKey(l2.GetPeerPublicKey()),
+		peer.LookupByKey(l2.GetPeerPublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, dr1, 1)
@@ -113,17 +121,25 @@ func TestSendSuccess(t *testing.T) {
 }
 
 func TestRequestSuccess(t *testing.T) {
-	disc1 := discovery.NewDiscoverer()
-	disc2 := discovery.NewDiscoverer()
+	dblite1 := tempSqlite3(t)
+	store1, err := sql.New(dblite1)
+	assert.NoError(t, err)
+
+	dblite2 := tempSqlite3(t)
+	store2, err := sql.New(dblite2)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+	disc2 := discovery.NewPeerStorer(store2)
 
 	_, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
 	_, _, _, d2, l2 := newPeer(t, "", disc2, true, false)
 
-	disc1.Add(l2.GetSignedPeer())
-	disc2.Add(l1.GetSignedPeer())
+	disc1.Add(l2.GetSignedPeer(), true)
+	disc2.Add(l1.GetSignedPeer(), true)
 
-	mp2 := &mocks.Provider{}
-	err := disc2.AddProvider(mp2)
+	mp2 := &mocks.Discoverer{}
+	err = disc2.AddDiscoverer(mp2)
 	assert.NoError(t, err)
 
 	// add an object to n2's store
@@ -168,9 +184,9 @@ func TestRequestSuccess(t *testing.T) {
 
 // func TestSendRelay(t *testing.T) {
 // 	// enable binding to local addresses
-// 	disc1 := discovery.NewDiscoverer()
-// 	disc2 := discovery.NewDiscoverer()
-// 	disc3 := discovery.NewDiscoverer()
+// 	disc1 := discovery.NewPeerStorer()
+// 	disc2 := discovery.NewPeerStorer()
+// 	disc3 := discovery.NewPeerStorer()
 
 // 	net.BindLocal = true
 // 	k0, _, _, _, l0 := newPeer(t, "", disc1, true, false)
@@ -294,7 +310,7 @@ func newPeer(
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	ds,err  := sql.New(tempSqlite3(t))
+	ds, err := sql.New(tempSqlite3(t))
 	assert.NoError(t, err)
 
 	li, err := peer.NewLocalPeer("", pk)

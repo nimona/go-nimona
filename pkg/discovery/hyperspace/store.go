@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery/bloom"
+	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/peer"
 )
 
