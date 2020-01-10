@@ -18,12 +18,10 @@ func Test_Normalize(t *testing.T) {
 	s := fixtures.TestStream{
 		Nonce:    "nonce",
 		Identity: "foo",
-		Policies: []*fixtures.TestPolicy{
-			&fixtures.TestPolicy{
-				Subjects:  []string{"subject"},
-				Resources: []string{"*"},
-				Action:    "allow",
-			},
+		Policy: &fixtures.TestPolicy{
+			Subjects:  []string{"subject"},
+			Resources: []string{"*"},
+			Action:    "allow",
 		},
 		Signature: &crypto.Signature{
 			Signer: "foo",
@@ -56,8 +54,8 @@ func Test_Normalize(t *testing.T) {
 					"@type:s":      string("nimona.io/schema.Property"),
 					"hint:s":       string("o"),
 					"isOptional:b": bool(false),
-					"isRepeated:b": bool(true),
-					"name:s":       string("policies"),
+					"isRepeated:b": bool(false),
+					"name:s":       string("@policy"),
 					"type:s":       string("TestPolicy"),
 				},
 				map[string]interface{}{
@@ -81,47 +79,45 @@ func Test_Normalize(t *testing.T) {
 		"@type:s":     "nimona.io/fixtures.TestStream",
 		"nonce:s":     "nonce",
 		"@identity:s": "foo",
-		"policies:ao": []interface{}{
-			map[string]interface{}{
-				"@type:s":      "nimona.io/fixtures.TestPolicy",
-				"subjects:as":  []interface{}{"subject"},
-				"resources:as": []interface{}{"*"},
-				"action:s":     "allow",
-				"$schema:o": map[string]interface{}{
-					"@type:s": string("nimona.io/schema.Object"),
-					"properties:ao": []interface{}{
-						map[string]interface{}{
-							"@type:s":      string("nimona.io/schema.Property"),
-							"hint:s":       string("s"),
-							"isOptional:b": bool(false),
-							"isRepeated:b": bool(true),
-							"name:s":       string("subjects"),
-							"type:s":       string("string"),
-						},
-						map[string]interface{}{
-							"@type:s":      string("nimona.io/schema.Property"),
-							"hint:s":       string("s"),
-							"isOptional:b": bool(false),
-							"isRepeated:b": bool(true),
-							"name:s":       string("resources"),
-							"type:s":       string("string"),
-						},
-						map[string]interface{}{
-							"@type:s":      string("nimona.io/schema.Property"),
-							"hint:s":       string("s"),
-							"isOptional:b": bool(false),
-							"isRepeated:b": bool(true),
-							"name:s":       string("conditions"),
-							"type:s":       string("string"),
-						},
-						map[string]interface{}{
-							"@type:s":      string("nimona.io/schema.Property"),
-							"hint:s":       string("s"),
-							"isOptional:b": bool(false),
-							"isRepeated:b": bool(false),
-							"name:s":       string("action"),
-							"type:s":       string("string"),
-						},
+		"@policy:o": map[string]interface{}{
+			"@type:s":      "nimona.io/fixtures.TestPolicy",
+			"subjects:as":  []interface{}{"subject"},
+			"resources:as": []interface{}{"*"},
+			"action:s":     "allow",
+			"$schema:o": map[string]interface{}{
+				"@type:s": string("nimona.io/schema.Object"),
+				"properties:ao": []interface{}{
+					map[string]interface{}{
+						"@type:s":      string("nimona.io/schema.Property"),
+						"hint:s":       string("s"),
+						"isOptional:b": bool(false),
+						"isRepeated:b": bool(true),
+						"name:s":       string("subjects"),
+						"type:s":       string("string"),
+					},
+					map[string]interface{}{
+						"@type:s":      string("nimona.io/schema.Property"),
+						"hint:s":       string("s"),
+						"isOptional:b": bool(false),
+						"isRepeated:b": bool(true),
+						"name:s":       string("resources"),
+						"type:s":       string("string"),
+					},
+					map[string]interface{}{
+						"@type:s":      string("nimona.io/schema.Property"),
+						"hint:s":       string("s"),
+						"isOptional:b": bool(false),
+						"isRepeated:b": bool(true),
+						"name:s":       string("conditions"),
+						"type:s":       string("string"),
+					},
+					map[string]interface{}{
+						"@type:s":      string("nimona.io/schema.Property"),
+						"hint:s":       string("s"),
+						"isOptional:b": bool(false),
+						"isRepeated:b": bool(false),
+						"name:s":       string("action"),
+						"type:s":       string("string"),
 					},
 				},
 			},

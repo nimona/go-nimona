@@ -4,22 +4,20 @@ import (
 	"database/sql"
 	"fmt"
 	"path"
-	"strings"
-
-	"nimona.io/pkg/errors"
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 type Daemon struct {
@@ -32,15 +30,19 @@ type Daemon struct {
 }
 
 func New(ctx context.Context, config *config.Config) (*Daemon, error) {
-	// make sure relays are valid
-	for i, addr := range config.Peer.RelayAddresses {
-		if !strings.HasPrefix(addr, "relay:") {
-			config.Peer.RelayAddresses[i] = "relay:" + addr
-		}
+	// construct object store
+	db, err := sql.Open("sqlite3", path.Join(config.Path, "sqlite3.db"))
+	if err != nil {
+		return nil, errors.Wrap(errors.New("could not open sql file"), err)
 	}
 
-	// construct discoverer
-	discoverer := discovery.NewDiscoverer()
+	store, err := sqlobjectstore.New(db)
+	if err != nil {
+		return nil, errors.Wrap(errors.New("could not start sql store"), err)
+	}
+
+	// construct peerstore
+	peerstore := discovery.NewPeerStorer(store)
 
 	// construct local info
 	localInfo, err := peer.NewLocalPeer(
@@ -64,7 +66,7 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 	// add relay addresses to local info
 	localInfo.AddAddress("relay", config.Peer.RelayAddresses)
 
-	network, err := net.New(discoverer, localInfo)
+	network, err := net.New(peerstore, localInfo)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not create network"), err)
 	}
@@ -81,22 +83,11 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 	// construct handshake
 	handshakeMiddleware := handshake.New(
 		localInfo,
-		discoverer,
+		peerstore,
 	)
 
 	// add middleware to network
 	network.AddMiddleware(handshakeMiddleware.Handle())
-
-	// construct graph store
-	db, err := sql.Open("sqlite3", path.Join(config.Path, "sqlite3.db"))
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not open sql file"), err)
-	}
-
-	store, err := sqlobjectstore.New(db)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not start sql store"), err)
-	}
 
 	// construct exchange
 	exchange, err := exchange.New(
@@ -104,16 +95,17 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 		config.Peer.PeerKey,
 		network,
 		store,
-		discoverer,
+		peerstore,
 		localInfo,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
 	}
 
-	// construct hyperspace discoverer
+	// construct hyperspace peerstore
 	hyperspace, err := hyperspace.NewDiscoverer(
 		ctx,
+		peerstore,
 		exchange,
 		localInfo,
 		config.Peer.BootstrapAddresses,
@@ -134,13 +126,13 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 	}
 
 	// add hyperspace provider
-	if err := discoverer.AddProvider(hyperspace); err != nil {
+	if err := peerstore.AddDiscoverer(hyperspace); err != nil {
 		return nil, errors.Wrap(errors.New("could not add hyperspace provider"), err)
 	}
 
 	return &Daemon{
 		Net:          network,
-		Discovery:    discoverer,
+		Discovery:    peerstore,
 		Exchange:     exchange,
 		Store:        store,
 		Orchestrator: orchestrator,

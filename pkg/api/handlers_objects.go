@@ -5,17 +5,18 @@ import (
 	"strconv"
 	"time"
 
-	"nimona.io/pkg/http/router"
-	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/peer"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/hash"
+	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
 
@@ -43,17 +44,17 @@ func (api *API) HandleGetObject(c *router.Context) {
 	defer ctx.Cancel()
 
 	h := object.Hash(objectHash)
-	ps, err := api.discovery.Lookup(ctx, discovery.LookupByContentHash(h))
+	ps, err := api.discovery.Lookup(ctx, peer.LookupByContentHash(h))
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
 
-	addrs := []string{}
+	keys := []crypto.PublicKey{}
 	for _, p := range ps {
-		addrs = append(addrs, p.Address())
+		keys = append(keys, p.PublicKey())
 	}
-	api.orchestrator.Sync(ctx, h, addrs) // nolint: errcheck
+	api.orchestrator.Sync(ctx, h, peer.LookupByKey(keys...)) // nolint: errcheck
 
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
@@ -101,18 +102,13 @@ func (api *API) HandlePostObjects(c *router.Context) {
 	req["@identity:s"] = api.local.GetIdentityPublicKey().String()
 
 	o := object.FromMap(req)
-	op := stream.Policies(o)
-	if len(op) == 0 {
-		c.AbortWithError(400, errors.New("missing policy")) // nolint: errcheck
-		return
-	}
 
 	if err := crypto.Sign(o, k); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
-	if err := api.orchestrator.Put(o); err != nil {
+	if err := api.objectStore.Put(o); err != nil {
 		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
 	}
@@ -120,19 +116,19 @@ func (api *API) HandlePostObjects(c *router.Context) {
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
-	for _, p := range op {
-		for i, s := range p.Subjects {
-			go func(i int, s string) {
-				ctx := context.New(
-					context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
-				)
-				err := api.exchange.Send(ctx, o, "peer:"+s)
-				if err != nil {
-					logger := log.FromContext(ctx)
-					logger.Error("could not send to peer", log.String("s", s), log.Error(err))
-				}
-			}(i, s)
-		}
+	p := stream.GetPolicy(o)
+
+	for i, s := range p.Subjects {
+		go func(i int, s string) {
+			ctx := context.New(
+				context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
+			)
+			err := api.exchange.Send(ctx, o, peer.LookupByKey(crypto.PublicKey(s)), exchange.WithAsync())
+			if err != nil {
+				logger := log.FromContext(ctx)
+				logger.Error("could not send to peer", log.String("s", s), log.Error(err))
+			}
+		}(i, s)
 	}
 
 	m := api.mapObject(o)
@@ -200,9 +196,9 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return nil
 	}
 
-	opts := []discovery.LookupOption{
-		discovery.LookupByContentType(o.GetType()),
-		discovery.LookupByCertificateSigner(crypto.PublicKey(id)),
+	opts := []peer.LookupOption{
+		peer.LookupByContentType(o.GetType()),
+		peer.LookupByCertificateSigner(crypto.PublicKey(id)),
 	}
 
 	ps, err := api.discovery.Lookup(ctx, opts...)
@@ -212,7 +208,7 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 
 	for _, p := range ps {
 		// nolint: errcheck
-		api.exchange.Send(ctx, o, p.Address(), exchange.WithAsync())
+		api.exchange.Send(ctx, o, peer.LookupByKey(p.PublicKey()), exchange.WithAsync())
 	}
 
 	return nil

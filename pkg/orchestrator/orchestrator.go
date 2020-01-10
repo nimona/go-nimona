@@ -1,6 +1,10 @@
 package orchestrator
 
 import (
+	"time"
+
+	"github.com/vburenin/nsync"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -15,8 +19,8 @@ import (
 )
 
 var (
-	streamRequestType  = new(stream.StreamRequest).GetType()
-	streamResponseType = new(stream.StreamResponse).GetType()
+	streamRequestType      = new(stream.Request).GetType()
+	streamAnnouncementType = new(stream.Announcement).GetType()
 )
 
 type (
@@ -26,24 +30,19 @@ type (
 		Sync(
 			ctx context.Context,
 			stream object.Hash,
-			addresses []string,
-		) (
-			*Graph,
-			error,
-		)
+			recipients peer.LookupOption,
+		) (*Graph, error)
 		Put(...object.Object) error
 		Get(
 			ctx context.Context,
 			root object.Hash,
-		) (
-			*Graph,
-			error,
-		)
+		) (*Graph, error)
 	}
 	orchestrator struct {
 		store     *sqlobjectstore.Store
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
+		syncLock  *nsync.NamedMutex
 		localInfo *peer.LocalPeer
 	}
 	Graph struct {
@@ -87,6 +86,7 @@ func NewWithContext(
 		store:     store,
 		exchange:  exc,
 		discovery: discovery,
+		syncLock:  nsync.NewNamedMutex(),
 		localInfo: localInfo,
 	}
 	sub := m.exchange.Subscribe(
@@ -126,6 +126,7 @@ func NewWithContext(
 
 // Process an object
 func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscription) error {
+	return nil
 	for {
 		e, err := sub.Next()
 		if err != nil {
@@ -142,7 +143,7 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 		o := e.Payload
 		switch o.GetType() {
 		case streamRequestType:
-			v := &stream.StreamRequest{}
+			v := &stream.Request{}
 			if err := v.FromObject(o); err != nil {
 				return err
 			}
@@ -154,18 +155,57 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 				logger.Warn("could not handle graph request object", log.Error(err))
 			}
 		default:
-			shouldPersist := false
-			for _, t := range m.localInfo.GetContentTypes() {
-				if o.GetType() == t {
-					shouldPersist = true
+			// shouldPersist := false
+			// for _, t := range m.localInfo.GetContentTypes() {
+			// 	if o.GetType() == t {
+			// 		shouldPersist = true
+			// 		break
+			// 	}
+			// }
+			// if !shouldPersist {
+			// 	break
+			// }
+			streamHash := stream.GetStream(o)
+			if streamHash.IsEmpty() {
+				continue
+			}
+			streamObjects, err := m.store.Filter(
+				sqlobjectstore.FilterByStreamHash(streamHash),
+			)
+			if err != nil {
+				logger.Warn("could not get stream objects", log.Error(err))
+				continue
+			}
+			parents := stream.GetParents(o)
+			parentsMissing := false
+			for _, parent := range parents {
+				parentMissing := true
+				for _, streamObject := range streamObjects {
+					if parent == hash.New(streamObject) {
+						parentMissing = false
+						break
+					}
+				}
+				if parentMissing {
+					parentsMissing = true
 					break
 				}
 			}
-			if !shouldPersist {
-				break
+			if parentsMissing {
+				go func(streamHash object.Hash, sender crypto.PublicKey) {
+					// nolint: errcheck
+					m.Sync(
+						context.New(
+							context.WithTimeout(time.Second*5),
+						),
+						streamHash,
+						peer.LookupByKey(sender),
+					)
+				}(streamHash, e.Sender)
 			}
 			if err := m.store.Put(o); err != nil {
 				logger.Warn("could not persist", log.Error(err))
+				continue
 			}
 		}
 	}
@@ -183,7 +223,7 @@ func IsComplete(cs []object.Object) bool {
 	}
 	for _, c := range cs {
 		// get all the parents of an object
-		for _, p := range stream.Parents(c) {
+		for _, p := range stream.GetParents(c) {
 			h := p.String()
 			// check if that hash exists in the map
 			if _, ok := cm[h]; ok {
@@ -261,7 +301,7 @@ func (m *orchestrator) Get(
 func (m *orchestrator) handleStreamRequest(
 	ctx context.Context,
 	sender crypto.PublicKey,
-	req *stream.StreamRequest,
+	req *stream.Request,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
@@ -278,9 +318,9 @@ func (m *orchestrator) handleStreamRequest(
 		hs = append(hs, hash.New(o))
 	}
 
-	res := &stream.StreamResponse{
+	res := &stream.Announcement{
 		Stream:   req.Stream,
-		Children: hs,
+		Leaves:   hs,
 		Identity: m.localInfo.GetIdentityPublicKey(),
 	}
 	sig, err := crypto.NewSignature(
@@ -290,16 +330,15 @@ func (m *orchestrator) handleStreamRequest(
 	if err != nil {
 		return err
 	}
-
 	res.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		"peer:"+sender.String(),
+		peer.LookupByKey(sender),
 	); err != nil {
 		logger.Warn(
-			"orchestrator/orchestrator.handlestream.StreamRequest could not send response",
+			"orchestrator/orchestrator.handlestream.Request could not send response",
 			log.Error(err),
 		)
 		return err

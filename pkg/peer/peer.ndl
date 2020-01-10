@@ -18,5 +18,5 @@ signed object nimona.io/LookupRequest {
 signed object nimona.io/LookupResponse {
     nonce string
     bloom repeated int
-    peers repeated nimona.io/crypto.PublicKey
+    peers repeated nimona.io/peer.Peer
 }

@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
@@ -23,25 +22,11 @@ func init() {
 
 // Network interface
 type Network interface {
-	Dial(ctx context.Context, address string, options ...Option) (*Connection, error)
+	Dial(ctx context.Context, peer *peer.Peer) (*Connection, error)
 	Listen(ctx context.Context) (chan *Connection, error)
 
 	AddMiddleware(handler MiddlewareHandler)
 	AddTransport(tag string, tsp Transport)
-}
-
-type (
-	// Options (mostly) for Dial()
-	Options struct {
-		LocalDiscoveryOnly bool
-	}
-	Option func(*Options)
-)
-
-func WithLocalDiscoveryOnly() Option {
-	return func(options *Options) {
-		options.LocalDiscoveryOnly = true
-	}
 }
 
 // New creates a new p2p network using an address book
@@ -77,28 +62,17 @@ func (n *network) AddTransport(tag string, tsp Transport) {
 // Dial to a peer and return a net.Conn or error
 func (n *network) Dial(
 	ctx context.Context,
-	address string,
-	opts ...Option,
+	p *peer.Peer,
 ) (*Connection, error) {
 	logger := log.FromContext(ctx).With(
-		log.String("address", address),
+		log.String("peer", p.PublicKey().String()),
+		log.Strings("addresses", p.Addresses),
 	)
 
 	logger.Debug("dialing")
 
-	options := &Options{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	var conn *Connection
-	var err error
-
-	addressType := strings.Split(address, ":")[0]
-	switch addressType {
-	case "peer":
-		conn, err = n.dialPeer(ctx, address, options.LocalDiscoveryOnly)
-	default:
+	for _, address := range p.Addresses {
+		addressType := strings.Split(address, ":")[0]
 		t, ok := n.transports.Load(addressType)
 		if !ok {
 			logger.Info("not sure how to dial",
@@ -108,8 +82,7 @@ func (n *network) Dial(
 		}
 
 		trsp := t.(Transport)
-
-		conn, err = trsp.Dial(ctx, address)
+		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
 			return nil, err
 		}
@@ -120,13 +93,11 @@ func (n *network) Dial(
 				return nil, err
 			}
 		}
-	}
-	if err != nil {
-		logger.Error("could not dial address", log.Error(err))
-		return nil, err
+		return conn, nil
 	}
 
-	return conn, nil
+	logger.Error("could not dial peer")
+	return nil, ErrAllAddressesFailed
 }
 
 // Listen
@@ -177,52 +148,4 @@ func (n *network) Listen(ctx context.Context) (chan *Connection, error) {
 	})
 
 	return cconn, nil
-}
-
-func (n *network) dialPeer(
-	ctx context.Context,
-	address string,
-	localDiscoveryOnly bool,
-) (*Connection, error) {
-	logger := log.FromContext(ctx).With(
-		log.String("address", address),
-		log.Bool("localDiscoveryOnly", localDiscoveryOnly),
-	)
-
-	pkey := strings.Replace(address, "peer:", "", 1)
-	key := crypto.PublicKey(pkey)
-
-	if n.local.GetPeerPublicKey().Equals(key) {
-		return nil, errors.New("cannot dial our own peer")
-	}
-
-	logger.Debug("dialing peer")
-
-	opts := []peer.LookupOption{
-		peer.LookupByKey(key),
-	}
-	if localDiscoveryOnly {
-		opts = append(opts, peer.LookupOnlyLocal())
-	}
-	ps, err := n.discoverer.Lookup(ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debug("got peer infos", log.Int("n", len(ps)))
-
-	for _, p := range ps {
-		for _, addr := range p.Addresses {
-			logger.Debug("trying to dial peer",
-				log.String("peer.key", p.PublicKey().String()),
-				log.Strings("peer.addresses", p.Addresses),
-			)
-			conn, err := n.Dial(ctx, addr)
-			if err == nil {
-				return conn, nil
-			}
-		}
-	}
-
-	return nil, ErrAllAddressesFailed
 }

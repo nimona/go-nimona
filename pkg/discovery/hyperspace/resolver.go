@@ -1,13 +1,14 @@
 package hyperspace
 
 import (
+	"sort"
 	"time"
 
 	"nimona.io/internal/rand"
-
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
@@ -27,8 +28,9 @@ const (
 type (
 	// Discoverer hyperspace
 	Discoverer struct {
-		context  context.Context
-		store    *Store
+		context   context.Context
+		peerstore discovery.PeerStorer
+		// store     *Store
 		exchange exchange.Exchange
 		local    *peer.LocalPeer
 	}
@@ -37,13 +39,15 @@ type (
 // NewDiscoverer returns a new hyperspace discoverer
 func NewDiscoverer(
 	ctx context.Context,
+	ps discovery.PeerStorer,
 	exc exchange.Exchange,
 	local *peer.LocalPeer,
 	bootstrapAddresses []string,
 ) (*Discoverer, error) {
 	r := &Discoverer{
-		context:  ctx,
-		store:    NewStore(),
+		context:   ctx,
+		peerstore: ps,
+		// store:     NewStore(),
 		local:    local,
 		exchange: exc,
 	}
@@ -90,26 +94,16 @@ func (r *Discoverer) Lookup(
 	)
 	logger.Debug("looking up")
 
-	eps := []*peer.Peer{}
-	if !opt.Local {
-		// nolint: errcheck
-		eps, _ = r.lookup(
-			ctx,
-			bloom.New(opt.Lookups...),
-			opt.Filters,
-		)
+	eps, err := r.lookup(
+		ctx,
+		bloom.New(opt.Lookups...),
+		opt,
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	lps := r.store.Get(bloom.New(opt.Lookups...))
-	if len(lps) > 0 {
-		logger.Debug(
-			"found peers in store",
-			log.Int("n", len(lps)),
-			log.Any("peers", lps),
-		)
-	}
-
-	ps := r.withoutOwnPeer(append(eps, lps...))
+	ps := r.withoutOwnPeer(eps)
 
 	return ps, nil
 }
@@ -132,13 +126,21 @@ func (r *Discoverer) handleObject(
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeer(ctx, v, e)
+		r.handlePeer(ctx, v)
 	case peerLookupRequestType:
 		v := &peer.LookupRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
 		r.handlePeerLookup(ctx, v, e)
+	case peerLookupResponseType:
+		v := &peer.LookupResponse{}
+		if err := v.FromObject(o); err != nil {
+			return err
+		}
+		for _, p := range v.Peers {
+			r.handlePeer(ctx, p)
+		}
 	}
 	return nil
 }
@@ -146,16 +148,15 @@ func (r *Discoverer) handleObject(
 func (r *Discoverer) handlePeer(
 	ctx context.Context,
 	p *peer.Peer,
-	e *exchange.Envelope,
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/resolver.handlePeer"),
-		log.String("peer.fingerprint", e.Sender.String()),
+		log.String("peer.publicKey", p.PublicKey().String()),
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to store")
-	r.store.AddPeer(p)
-	logger.Debug("added peer to store")
+	r.peerstore.Add(p, false)
+	// logger.Debug("added peer to store")
 }
 
 func (r *Discoverer) handlePeerLookup(
@@ -172,19 +173,15 @@ func (r *Discoverer) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	cps := r.store.GetClosest(q.Bloom)
-	res := &peer.LookupResponse{
-		Nonce: q.Nonce,
-		Peers: []crypto.PublicKey{},
-	}
-
-	sig, err := crypto.NewSignature(r.local.GetPeerPrivateKey(), res.ToObject())
+	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
 	if err != nil {
-		logger.Error("could not sign lookup res", log.Error(err))
 		return
 	}
-
-	res.Signature = sig
+	cps := getClosest(aps, q.Bloom)
+	res := &peer.LookupResponse{
+		Nonce: q.Nonce,
+		Peers: []*peer.Peer{},
+	}
 
 	ctx = context.New(
 		context.WithParent(ctx),
@@ -198,7 +195,7 @@ func (r *Discoverer) handlePeerLookup(
 		err := r.exchange.Send(
 			ctx,
 			p.ToObject(),
-			e.Sender.Address(),
+			peer.LookupByKey(e.Sender),
 			exchange.WithLocalDiscoveryOnly(),
 			exchange.WithAsync(),
 		)
@@ -208,12 +205,12 @@ func (r *Discoverer) handlePeerLookup(
 			)
 			continue
 		}
-		res.Peers = append(res.Peers, p.PublicKey())
+		res.Peers = append(res.Peers, p)
 	}
 	err = r.exchange.Send(
 		ctx,
 		res.ToObject(),
-		e.Sender.Address(),
+		peer.LookupByKey(e.Sender),
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	)
@@ -231,7 +228,7 @@ func (r *Discoverer) handlePeerLookup(
 func (r *Discoverer) lookup(
 	ctx context.Context,
 	bloom bloom.Bloom,
-	filters []peer.LookupFilter,
+	matcher *peer.LookupOptions,
 ) ([]*peer.Peer, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -249,10 +246,10 @@ func (r *Discoverer) lookup(
 	// and for the ones that responded
 	recipientsResponded := make(chan crypto.PublicKey)
 
-	// allows us to match peers with peerRequest
-	peerMatchesRequest := func(p *peer.Peer) bool {
-		return matchPeerWithLookupFilters(p, filters...)
-	}
+	// // allows us to match peers with peerRequest
+	// peerMatchesRequest := func(p *peer.Peer) bool {
+	// 	return matcher.Match(p)
+	// }
 
 	// send content requests to recipients
 	req := &peer.LookupRequest{
@@ -280,9 +277,9 @@ func (r *Discoverer) lookup(
 				err := r.exchange.Send(
 					ctx,
 					reqObject,
-					recipient.Address(),
+					peer.LookupByKey(recipient),
 					exchange.WithLocalDiscoveryOnly(),
-					// exchange.WithAsync(),
+					exchange.WithAsync(),
 				)
 				if err != nil {
 					logger.Debug("could send request to peer", log.Error(err))
@@ -324,19 +321,30 @@ func (r *Discoverer) lookup(
 			if err := res.FromObject(e.Payload); err != nil {
 				break
 			}
-			for _, r := range res.Peers {
-				recipients <- r
+			// logger.Debug("_____ !!!! got resp", log.Int("n", len(res.Peers)))
+			for _, p := range res.Peers {
+				// logger.Debug("_____ !!!! got resp", log.String("key", r.PublicKey().String()))
+				if matcher.Match(p) {
+					peers <- p
+					continue
+				}
+				recipients <- p.PublicKey()
 			}
-			recipientsResponded <- res.Signature.Signer
+			recipientsResponded <- e.Sender
 		}
 	}()
 
 	// find and ask "closest" peers
 	go func() {
-		cps := r.store.GetClosest(r.local.GetSignedPeer().Bloom)
+		aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
+		if err != nil {
+			logger.Error("error getting all peers", log.Error(err))
+			return
+		}
+		cps := getClosest(aps, bloom)
 		cps = r.withoutOwnPeer(cps)
 		for _, p := range cps {
-			if peerMatchesRequest(p) {
+			if matcher.Match(p) {
 				peers <- p
 				continue
 			}
@@ -376,22 +384,19 @@ func (r *Discoverer) bootstrap(
 	logger := log.FromContext(ctx)
 	opts := []exchange.Option{
 		exchange.WithLocalDiscoveryOnly(),
-		// exchange.WithAsync(),
+		exchange.WithAsync(),
 	}
+	nonce := rand.String(6)
 	q := &peer.LookupRequest{
-		Nonce: rand.String(12),
+		Nonce: nonce,
 		Bloom: r.local.GetSignedPeer().Bloom,
 	}
 	o := q.ToObject()
 	for _, addr := range bootstrapAddresses {
 		logger.Debug("connecting to bootstrap", log.String("address", addr))
-		err := r.exchange.Send(ctx, o, addr, opts...)
+		err := r.exchange.SendToAddress(ctx, o, addr, opts...)
 		if err != nil {
 			logger.Debug("could not send request to bootstrap", log.Error(err))
-		}
-		err = r.exchange.Send(ctx, r.local.GetSignedPeer().ToObject(), addr, opts...)
-		if err != nil {
-			logger.Debug("could not send own peer to bootstrap", log.Error(err))
 		}
 	}
 	return nil
@@ -404,10 +409,16 @@ func (r *Discoverer) publishContentHashes(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
 	cb := r.local.GetSignedPeer()
-	cps := r.store.GetClosest(cb.Bloom)
+	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
+	if err != nil {
+		return err
+	}
+	cps := getClosest(aps, cb.Bloom)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
-		fs = append(fs, c.Signature.Signer)
+		if c.Signature != nil {
+			fs = append(fs, c.Signature.Signer)
+		}
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -433,8 +444,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 
 	for _, f := range fs {
-		addr := f.Address()
-		err := r.exchange.Send(ctx, o, addr, opts...)
+		err := r.exchange.Send(ctx, o, peer.LookupByKey(f), opts...)
 		if err != nil {
 			logger.Debug("could not send request", log.Error(err))
 		}
@@ -474,11 +484,44 @@ func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.Publi
 	return nps
 }
 
-func matchPeerWithLookupFilters(p *peer.Peer, fs ...peer.LookupFilter) bool {
-	for _, f := range fs {
-		if f(p) == false {
-			return false
+// func matchPeerWithLookupFilters(p *peer.Peer, fs ...peer.LookupFilter) bool {
+// 	for _, f := range fs {
+// 		if f(p) == false {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
+
+// getClosest returns peers that closest resemble the query
+func getClosest(ps []*peer.Peer, q bloom.Bloom) []*peer.Peer {
+	type kv struct {
+		bloomIntersection int
+		peer              *peer.Peer
+	}
+
+	r := []kv{}
+	for _, p := range ps {
+		r = append(r, kv{
+			bloomIntersection: intersectionCount(
+				q.Bloom(),
+				p.Bloom,
+			),
+			peer: p,
+		})
+	}
+
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].bloomIntersection < r[j].bloomIntersection
+	})
+
+	fs := []*peer.Peer{}
+	for i, c := range r {
+		fs = append(fs, c.peer)
+		if i > 10 { // TODO make limit configurable
+			break
 		}
 	}
-	return true
+
+	return fs
 }

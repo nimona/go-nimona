@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
+
+	"nimona.io/pkg/peer"
 
 	"github.com/gorilla/websocket"
 
-	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
@@ -81,15 +82,11 @@ func (api *API) HandleGetStreams(c *router.Context) {
 					continue
 				}
 				for _, recipient := range subjects {
-					addr := recipient
-					// TODO(geoah) Rephrase ui and api and remove
-					if !strings.Contains(addr, ":") {
-						addr = "peer:" + recipient
-					}
-					if err := api.exchange.Send(ctx, req, addr); err != nil {
+					rec := peer.LookupByKey(crypto.PublicKey(recipient))
+					if err := api.exchange.Send(ctx, req, rec); err != nil {
 						logger.Error("could not send outgoing object",
 							log.Error(err),
-							log.String("addr", addr))
+						)
 						req.Set("_status", "error sending object")
 					}
 					// TODO handle error

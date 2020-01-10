@@ -6,31 +6,31 @@ import (
 	"os"
 	"path"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/kelseyhightower/envconfig"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 )
 
 type APIConfig struct {
-	Host  string `json:"host,omitempty" env:"NIMONA_API_HOST"`
-	Port  int    `json:"port,omitempty" env:"NIMONA_API_PORT"`
-	Token string `json:"token,omitempty" env:"NIMONA_API_TOKEN"`
+	Host  string `json:"host,omitempty" envconfig:"HOST"`
+	Port  int    `json:"port,omitempty" envconfig:"PORT"`
+	Token string `json:"token,omitempty" envconfig:"TOKEN"`
 }
 
 type PeerConfig struct {
-	AnnounceHostname   string            `json:"hostname,omitempty" env:"NIMONA_PEER_HOSTNAME"`
-	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" env:"NIMONA_PEER_BOOTSTRAP_ADDRESSES"`
-	EnableMetrics      bool              `json:"metrics,omitempty" env:"NIMONA_PEER_METRICS"`
-	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" env:"NIMONA_PEER_IDENTITY_KEY"`
-	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" env:"NIMONA_PEER_PEER_KEY"`
-	TCPPort            int               `json:"tcpPort,omitempty" env:"NIMONA_PEER_TCP_PORT"`
-	RelayAddresses     []string          `json:"relayAddresses,omitempty" env:"NIMONA_PEER_RELAY_ADDRESSES"`
-	ContentTypes       []string          `json:"contentTypes,omitempty" env:"NIMONA_PEER_CONTENT_TYPES"`
+	AnnounceHostname   string            `json:"hostname,omitempty" envconfig:"HOSTNAME"`
+	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
+	EnableMetrics      bool              `json:"metrics,omitempty" envconfig:"METRICS"`
+	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
+	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" envconfig:"PEER_KEY"`
+	TCPPort            int               `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
+	RelayAddresses     []string          `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
+	ContentTypes       []string          `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
 }
 
 type Config struct {
-	Path string     `json:"-" env:"NIMONA_CONFIG" envDefault:"${HOME}/.nimona" envExpand:"true"`
+	Path string     `json:"-"`
 	API  APIConfig  `json:"api"`
 	Peer PeerConfig `json:"peer"`
 }
@@ -54,8 +54,11 @@ func New() *Config {
 }
 
 func (c *Config) Load() error {
+	c.Path = os.ExpandEnv(c.Path)
+
 	defer func() {
-		env.Parse(c) // nolint
+		envconfig.Process("nimona_api", &c.API)   // nolint: errcheck
+		envconfig.Process("nimona_peer", &c.Peer) // nolint: errcheck
 	}()
 
 	cfgFile := path.Join(c.Path, "config.json")
@@ -72,7 +75,6 @@ func (c *Config) Load() error {
 	defer jsonFile.Close() // nolint
 
 	jsonBytes, _ := ioutil.ReadAll(jsonFile)
-
 	if err := json.Unmarshal(jsonBytes, c); err != nil {
 		return err
 	}

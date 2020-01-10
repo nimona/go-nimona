@@ -25,7 +25,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		return nil, err
 	}
 	nType := "object:root"
-	parents := stream.Parents(v)
+	parents := stream.GetParents(v)
 	if len(parents) > 0 {
 		nType = "object"
 	}
@@ -39,7 +39,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 	if d, ok := v.Get("@display").(string); ok {
 		o.Display = d
 	}
-	for _, p := range stream.Parents(v) {
+	for _, p := range stream.GetParents(v) {
 		o.Parents = append(o.Parents, p.String())
 	}
 	return o, nil

@@ -17,16 +17,24 @@ type (
 		Conditions []string `json:"conditions:as,omitempty"`
 		Action     string   `json:"action:s,omitempty"`
 	}
-	StreamRequest struct {
+	Request struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Leaves    []object.Hash     `json:"leaves:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	StreamResponse struct {
+	Response struct {
 		Nonce     string            `json:"nonce:s,omitempty"`
 		Stream    object.Hash       `json:"stream:s,omitempty"`
 		Children  []object.Hash     `json:"children:as,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+	}
+	Announcement struct {
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Stream    object.Hash       `json:"stream:s,omitempty"`
+		Leaves    []object.Hash     `json:"leaves:as,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -109,11 +117,11 @@ func (e *Policy) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e StreamRequest) GetType() string {
-	return "nimona.io/stream.StreamRequest"
+func (e Request) GetType() string {
+	return "nimona.io/stream.Request"
 }
 
-func (e StreamRequest) GetSchema() *schema.Object {
+func (e Request) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
@@ -128,6 +136,13 @@ func (e StreamRequest) GetSchema() *schema.Object {
 				Type:       "nimona.io/object.Hash",
 				Hint:       "s",
 				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "leaves",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: true,
 				IsOptional: false,
 			},
 			&schema.Property{
@@ -148,14 +163,17 @@ func (e StreamRequest) GetSchema() *schema.Object {
 	}
 }
 
-func (e StreamRequest) ToObject() object.Object {
+func (e Request) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.StreamRequest"
+	m["@type:s"] = "nimona.io/stream.Request"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
 	if e.Stream != "" {
 		m["stream:s"] = e.Stream
+	}
+	if len(e.Leaves) > 0 {
+		m["leaves:as"] = e.Leaves
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
@@ -169,16 +187,16 @@ func (e StreamRequest) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *StreamRequest) FromObject(o object.Object) error {
+func (e *Request) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
-func (e StreamResponse) GetType() string {
-	return "nimona.io/stream.StreamResponse"
+func (e Response) GetType() string {
+	return "nimona.io/stream.Response"
 }
 
-func (e StreamResponse) GetSchema() *schema.Object {
+func (e Response) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
@@ -220,9 +238,9 @@ func (e StreamResponse) GetSchema() *schema.Object {
 	}
 }
 
-func (e StreamResponse) ToObject() object.Object {
+func (e Response) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.StreamResponse"
+	m["@type:s"] = "nimona.io/stream.Response"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
@@ -244,13 +262,88 @@ func (e StreamResponse) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *StreamResponse) FromObject(o object.Object) error {
+func (e *Response) FromObject(o object.Object) error {
+	b, _ := json.Marshal(map[string]interface{}(o))
+	return json.Unmarshal(b, e)
+}
+
+func (e Announcement) GetType() string {
+	return "nimona.io/stream.Announcement"
+}
+
+func (e Announcement) GetSchema() *schema.Object {
+	return &schema.Object{
+		Properties: []*schema.Property{
+			&schema.Property{
+				Name:       "nonce",
+				Type:       "string",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "stream",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "leaves",
+				Type:       "nimona.io/object.Hash",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@signature",
+				Type:       "nimona.io/crypto.Signature",
+				Hint:       "o",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&schema.Property{
+				Name:       "@identity",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+		},
+	}
+}
+
+func (e Announcement) ToObject() object.Object {
+	m := map[string]interface{}{}
+	m["@type:s"] = "nimona.io/stream.Announcement"
+	if e.Nonce != "" {
+		m["nonce:s"] = e.Nonce
+	}
+	if e.Stream != "" {
+		m["stream:s"] = e.Stream
+	}
+	if len(e.Leaves) > 0 {
+		m["leaves:as"] = e.Leaves
+	}
+	if e.Signature != nil {
+		m["@signature:o"] = e.Signature.ToObject().ToMap()
+	}
+	if e.Identity != "" {
+		m["@identity:s"] = e.Identity
+	}
+	if schema := e.GetSchema(); schema != nil {
+		m["$schema:o"] = schema.ToObject().ToMap()
+	}
+	return object.Object(m)
+}
+
+func (e *Announcement) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
 
 func (e ObjectRequest) GetType() string {
-	return "nimona.io/stream.ObjectRequest"
+	return "nimona.io/object.Request"
 }
 
 func (e ObjectRequest) GetSchema() *schema.Object {
@@ -290,7 +383,7 @@ func (e ObjectRequest) GetSchema() *schema.Object {
 
 func (e ObjectRequest) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.ObjectRequest"
+	m["@type:s"] = "nimona.io/object.Request"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
@@ -315,7 +408,7 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 }
 
 func (e ObjectResponse) GetType() string {
-	return "nimona.io/stream.ObjectResponse"
+	return "nimona.io/object.Response"
 }
 
 func (e ObjectResponse) GetSchema() *schema.Object {
@@ -355,7 +448,7 @@ func (e ObjectResponse) GetSchema() *schema.Object {
 
 func (e ObjectResponse) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/stream.ObjectResponse"
+	m["@type:s"] = "nimona.io/object.Response"
 	if e.Nonce != "" {
 		m["nonce:s"] = e.Nonce
 	}
