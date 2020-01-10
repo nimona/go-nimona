@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -67,8 +68,7 @@ func TestSendSuccess(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	w1ObjectHandled := false
-	w2ObjectHandled := false
+	handled := int32(0)
 
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestSendSuccess(t *testing.T) {
 		func(e *Envelope) error {
 			o := e.Payload
 			assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
-			w1ObjectHandled = true
+			atomic.AddInt32(&handled, 1)
 			wg.Done()
 			return nil
 		},
@@ -95,7 +95,7 @@ func TestSendSuccess(t *testing.T) {
 		func(e *Envelope) error {
 			o := e.Payload
 			assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
-			w2ObjectHandled = true
+			atomic.AddInt32(&handled, 1)
 			wg.Done()
 			return nil
 		},
@@ -103,21 +103,20 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, k1.PublicKey().Address())
+	errS1 := x2.Send(ctx, eo1, peer.LookupByKey(k1.PublicKey()))
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, k2.PublicKey().Address())
+	errS2 := x1.Send(ctx, eo2, peer.LookupByKey(k2.PublicKey()))
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
 		wg.Wait()
 	}
 
-	assert.True(t, w1ObjectHandled)
-	assert.True(t, w2ObjectHandled)
+	assert.Equal(t, int32(2), atomic.LoadInt32(&handled))
 }
 
 func TestRequestSuccess(t *testing.T) {
@@ -168,7 +167,7 @@ func TestRequestSuccess(t *testing.T) {
 	err = x1.Request(
 		ctx,
 		hash.New(eo1),
-		l2.GetAddresses()[0],
+		peer.LookupByKey(l2.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -297,7 +296,7 @@ func TestRequestSuccess(t *testing.T) {
 func newPeer(
 	t *testing.T,
 	relayAddress string,
-	discover discovery.Discoverer,
+	discover discovery.PeerStorer,
 	listenTCP bool,
 	listenHTTP bool,
 ) (

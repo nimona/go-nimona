@@ -6,7 +6,6 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -49,9 +48,9 @@ func (r *addressBook) Lookup(
 ) ([]*peer.Peer, error) {
 	opt := peer.ParseLookupOptions(opts...)
 
-	if len(opt.Filters) == 0 {
-		return nil, errors.New("missing filters")
-	}
+	// if len(opt.Filters) == 0 {
+	// 	return nil, errors.New("missing filters")
+	// }
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "discovery/addressBook.Lookup"),
@@ -62,7 +61,9 @@ func (r *addressBook) Lookup(
 
 	// find all peer objects
 	// TODO replace with sqlpeerstore
-	os, err := r.store.Filter(sqlobjectstore.FilterByObjectType("nimona.io/peer.Peer"))
+	os, err := r.store.Filter(
+		sqlobjectstore.FilterByObjectType("nimona.io/peer.Peer"),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -135,5 +136,5 @@ func (r *addressBook) Add(peer *peer.Peer, pin bool) {
 	} else {
 		opts = append(opts, sqlobjectstore.WithTTL(60))
 	}
-	r.store.Put(peer.ToObject(), opts...)
+	r.store.Put(peer.ToObject(), opts...) // nolint: errcheck
 }

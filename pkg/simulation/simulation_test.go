@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"nimona.io/internal/fixtures"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/fixtures"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/client"
 	"nimona.io/pkg/simulation/node"
@@ -51,6 +50,7 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_API_HOST=0.0.0.0",
 			"NIMONA_API_PORT=28000",
 			"NIMONA_PEER_BOOTSTRAP_ADDRESSES=",
+			"XNODE=NODE-BOOTSTRAP",
 		}),
 	)
 	require.NoError(t, err)
@@ -90,7 +90,7 @@ func TestSimulation(t *testing.T) {
 			dockerImage,
 			env,
 			node.WithName(fmt.Sprintf("nimona-e2e-%d", i)),
-			node.WithPortMapping(28000, 28001+i),
+			node.WithPortMapping(28000, 28000+i),
 			node.WithCount(1),
 			node.WithEnv([]string{
 				"BIND_PRIVATE=true",
@@ -99,6 +99,7 @@ func TestSimulation(t *testing.T) {
 				"NIMONA_API_HOST=0.0.0.0",
 				"NIMONA_API_PORT=28000",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
+				fmt.Sprintf("XNODE=NODE%d", i),
 				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +
 					strings.Join(bootstrapAddresses, ","),
 			}),
@@ -115,7 +116,7 @@ func TestSimulation(t *testing.T) {
 	}()
 
 	// wait for the containers to settle
-	time.Sleep(time.Second * 20)
+	time.Sleep(time.Second * 30)
 
 	// create clients for all nodes
 	clients := make([]*client.Client, len(nodes))
@@ -153,12 +154,10 @@ func TestSimulation(t *testing.T) {
 	nonce := rand.String(24) + "xnonce"
 	streamCreated := fixtures.TestStream{
 		Nonce: nonce,
-		Policies: []*fixtures.TestPolicy{
-			&fixtures.TestPolicy{
-				Subjects:  recipients,
-				Resources: []string{"*"},
-				Action:    "allow",
-			},
+		Policy: &fixtures.TestPolicy{
+			Subjects:  recipients,
+			Resources: []string{"*"},
+			Action:    "allow",
 		},
 	}
 

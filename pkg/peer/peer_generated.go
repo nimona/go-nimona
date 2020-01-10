@@ -27,11 +27,11 @@ type (
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 	LookupResponse struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Bloom     []int64            `json:"bloom:ai,omitempty"`
-		Peers     []crypto.PublicKey `json:"peers:as,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey   `json:"@identity:s,omitempty"`
+		Nonce     string            `json:"nonce:s,omitempty"`
+		Bloom     []int64           `json:"bloom:ai,omitempty"`
+		Peers     []*Peer           `json:"peers:ao,omitempty"`
+		Signature *crypto.Signature `json:"@signature:o,omitempty"`
+		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
 )
 
@@ -224,8 +224,8 @@ func (e LookupResponse) GetSchema() *schema.Object {
 			},
 			&schema.Property{
 				Name:       "peers",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
+				Type:       "nimona.io/peer.Peer",
+				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -257,7 +257,13 @@ func (e LookupResponse) ToObject() object.Object {
 		m["bloom:ai"] = e.Bloom
 	}
 	if len(e.Peers) > 0 {
-		m["peers:as"] = e.Peers
+		m["peers:ao"] = func() []interface{} {
+			a := make([]interface{}, len(e.Peers))
+			for i, v := range e.Peers {
+				a[i] = v.ToObject().ToMap()
+			}
+			return a
+		}()
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()

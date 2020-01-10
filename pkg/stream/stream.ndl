@@ -10,23 +10,30 @@ object nimona.io/stream.Policy {
     action string
 }
 
-signed object nimona.io/stream.StreamRequest {
+signed object nimona.io/stream.Request {
     nonce string
     stream nimona.io/object.Hash
+    leaves repeated nimona.io/object.Hash
 }
 
-signed object nimona.io/stream.StreamResponse {
+signed object nimona.io/stream.Response {
     nonce string
     stream nimona.io/object.Hash
     children repeated nimona.io/object.Hash
 }
 
-signed object nimona.io/stream.ObjectRequest {
+signed object nimona.io/stream.Announcement {
+    nonce string
+    stream nimona.io/object.Hash
+    leaves repeated nimona.io/object.Hash
+}
+
+signed object nimona.io/object.Request {
     nonce string
     hash nimona.io/object.Hash
 }
 
-signed object nimona.io/stream.ObjectResponse {
+signed object nimona.io/object.Response {
     nonce string
     hash nimona.io/object.Hash
 }

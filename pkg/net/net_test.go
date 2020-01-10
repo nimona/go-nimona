@@ -85,12 +85,10 @@ func TestNetConnectionSuccess(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer(), true)
 	disc2.Add(l1.GetSignedPeer(), true)
 
-	peer1Addr := l1.GetAddresses()[0]
-
 	done := make(chan bool)
 
 	go func() {
-		cconn, err := n2.Dial(ctx, peer1Addr)
+		cconn, err := n2.Dial(ctx, l1.GetSignedPeer())
 		assert.NoError(t, err)
 		o := object.New()
 		o.FromMap(map[string]interface{}{ // nolint: errcheck
@@ -142,12 +140,10 @@ func TestNetConnectionFailureMiddleware(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer(), true)
 	disc2.Add(l1.GetSignedPeer(), true)
 
-	peer1Addr := l1.GetAddresses()[0]
-
 	done := make(chan bool)
 
 	go func() {
-		cconn, err := n2.Dial(ctx, peer1Addr)
+		cconn, err := n2.Dial(ctx, l1.GetSignedPeer())
 		assert.Error(t, err)
 		assert.Nil(t, cconn)
 		done <- true

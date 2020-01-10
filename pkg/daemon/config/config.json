@@ -1,0 +1,17 @@
+{
+    "api": {
+      "hostname": "localhost",
+      "port": 3
+    },
+    "peer": {
+      "bootstrapAddresses": [
+        "tcps:foo:21013"
+      ],
+      "identityKey": "ed25519.prv.foo",
+      "peerKey": "ed25519.prv.foo",
+      "tcpPort": 1,
+      "contentTypes": [
+        "foo/bar"
+      ]
+    }
+  }

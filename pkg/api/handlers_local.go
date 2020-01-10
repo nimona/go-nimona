@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/peer"
 )
 
 func (api *API) HandleGetLocal(c *router.Context) {
@@ -19,13 +19,13 @@ func (api *API) HandleGetLocal(c *router.Context) {
 }
 
 func (api *API) HandleGetLookup(c *router.Context) {
-	opts := []discovery.LookupOption{}
+	opts := []peer.LookupOption{}
 	if v := c.Query("contentType"); v != "" {
-		opts = append(opts, discovery.LookupByContentType(v))
+		opts = append(opts, peer.LookupByContentType(v))
 	}
 	if v := c.Query("certificateSigner"); v != "" {
 		cs := crypto.PublicKey(v)
-		opts = append(opts, discovery.LookupByCertificateSigner(cs))
+		opts = append(opts, peer.LookupByCertificateSigner(cs))
 	}
 
 	if len(opts) == 0 {

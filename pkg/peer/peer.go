@@ -8,5 +8,8 @@ func (pi *Peer) Address() string {
 }
 
 func (pi *Peer) PublicKey() crypto.PublicKey {
+	if pi.Signature == nil {
+		return ""
+	}
 	return pi.Signature.Signer
 }

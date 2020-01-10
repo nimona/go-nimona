@@ -1,12 +1,11 @@
 package exchange
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/geoah/go-queue"
+	"github.com/hashicorp/go-multierror"
 
-	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -15,9 +14,13 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
-var objectRequestType = new(ObjectRequest).GetType()
+var (
+	objectRequestType = new(ObjectRequest).GetType()
+	peerType          = new(peer.Peer).GetType()
+)
 
 const (
 	// ErrInvalidRequest when received an invalid request object
@@ -41,13 +44,19 @@ type (
 		Request(
 			ctx context.Context,
 			object object.Hash,
-			address string,
+			recipient peer.LookupOption,
 			options ...Option,
 		) error
 		Subscribe(
 			filters ...EnvelopeFilter,
 		) EnvelopeSubscription
 		Send(
+			ctx context.Context,
+			object object.Object,
+			recipient peer.LookupOption,
+			options ...Option,
+		) error
+		SendToAddress(
 			ctx context.Context,
 			object object.Object,
 			address string,
@@ -59,7 +68,7 @@ type (
 		key crypto.PrivateKey
 		net net.Network
 
-		discover discovery.Discoverer
+		discover discovery.PeerStorer
 		local    *peer.LocalPeer
 
 		outboxes *OutboxesMap
@@ -93,7 +102,7 @@ type (
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
 		context   context.Context
-		recipient string
+		recipient *peer.Peer
 		object    object.Object
 		options   *Options
 		err       chan error
@@ -106,7 +115,7 @@ func New(
 	key crypto.PrivateKey,
 	n net.Network,
 	store *sqlobjectstore.Store,
-	discover discovery.Discoverer,
+	discover discovery.PeerStorer,
 	localInfo *peer.LocalPeer,
 ) (
 	Exchange,
@@ -147,6 +156,16 @@ func New(
 	go func() {
 		if err := w.handleObjectRequests(objectReqSub); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
+		}
+	}()
+
+	// subscribe to peers and handle them
+	peerSub := w.inboxes.Subscribe(
+		FilterByObjectType(peerType),
+	)
+	go func() {
+		if err := w.handlePeers(peerSub); err != nil {
+			logger.Error("handling peer failed", log.Error(err))
 		}
 	}()
 
@@ -208,11 +227,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			return outbox.conn, nil
 		}
 		outbox.connLock.RUnlock()
-		netOpts := []net.Option{}
-		if req.options.LocalDiscovery {
-			netOpts = append(netOpts, net.WithLocalDiscoveryOnly())
-		}
-		conn, err := w.net.Dial(req.context, req.recipient, netOpts...)
+		conn, err := w.net.Dial(req.context, req.recipient)
 		if err != nil {
 			return nil, err
 		}
@@ -263,11 +278,11 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		}
 		// make a logger from our req context
 		logger := log.FromContext(req.context).With(
-			log.String("recipient", req.recipient),
+			log.String("recipient", req.recipient.PublicKey().String()),
 			log.String("object.@type", req.object.GetType()),
 		)
 		// validate req
-		if req.recipient == "" {
+		if req.recipient == nil {
 			logger.Info("missing recipient")
 			req.err <- errors.New("missing recipient")
 			continue
@@ -311,13 +326,13 @@ func (w *exchange) processOutbox(outbox *outbox) {
 func (w *exchange) Request(
 	ctx context.Context,
 	hash object.Hash,
-	address string,
+	recipient peer.LookupOption,
 	options ...Option,
 ) error {
 	req := &ObjectRequest{
 		ObjectHash: hash,
 	}
-	return w.Send(ctx, req.ToObject(), address, options...)
+	return w.Send(ctx, req.ToObject(), recipient, options...)
 }
 
 // Subscribe to incoming objects as envelopes
@@ -371,9 +386,7 @@ func (w *exchange) handleConnection(
 }
 
 // handleObjectRequests -
-func (w *exchange) handleObjectRequests(
-	subscription EnvelopeSubscription,
-) error {
+func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error {
 	for {
 		e, err := subscription.Next()
 		if err != nil {
@@ -384,21 +397,38 @@ func (w *exchange) handleObjectRequests(
 		case objectRequestType:
 			req := &ObjectRequest{}
 			if err := req.FromObject(e.Payload); err != nil {
-				return err
+				continue
 			}
 			res, err := w.store.Get(req.ObjectHash)
 			if err != nil {
-				return errors.Wrap(
-					errors.Error("could not retrieve object"),
-					err,
-				)
+				continue
 			}
 			go w.Send( // nolint: errcheck
 				context.New(),
 				res,
-				"peer:"+e.Sender.String(),
+				peer.LookupByKey(e.Sender),
 				WithLocalDiscoveryOnly(),
 			)
+		}
+	}
+	return nil
+}
+
+// handlePeers -
+func (w *exchange) handlePeers(subscription EnvelopeSubscription) error {
+	for {
+		e, err := subscription.Next()
+		if err != nil {
+			return err
+		}
+		// TODO verify peer
+		switch e.Payload.GetType() {
+		case peerType:
+			p := &peer.Peer{}
+			if err := p.FromObject(e.Payload); err != nil {
+				continue
+			}
+			w.discover.Add(p, false)
 		}
 	}
 	return nil
@@ -418,36 +448,85 @@ func WithAsync() Option {
 	}
 }
 
-// Send an object to an address
+// Send an object to peers resulting from a lookup
 func (w *exchange) Send(
 	ctx context.Context,
 	oo object.Object,
-	address string,
+	recipient peer.LookupOption,
 	options ...Option,
 ) error {
-	if address == w.local.GetPeerPublicKey().Address() {
-		// TODO should this be returning an error?
-		return nil
-	}
-
 	ctx = context.FromContext(ctx)
 	opts := &Options{}
 	for _, option := range options {
 		option(opts)
 	}
+
 	o := object.Copy(oo) // TODO do we really need to copy?
-	// if !strings.HasPrefix(address, "peer:") {
-	// 	panic("NO PEER PREFIX")
-	// }
-	fingerprint := strings.Replace(address, "peer:", "", 1)
-	outbox := w.getOutbox(crypto.PublicKey(fingerprint))
+
+	lookupOpts := []peer.LookupOption{
+		recipient,
+	}
+	if opts.LocalDiscovery {
+		lookupOpts = append(lookupOpts, peer.LookupOnlyLocal())
+	}
+	ps, err := w.discover.Lookup(ctx, lookupOpts...)
+	if err != nil {
+		return err
+	}
+
+	errs := &multierror.Group{}
+	for _, p := range ps {
+		p := p
+		errs.Go(func() error {
+			outbox := w.getOutbox(p.PublicKey())
+			errRecv := make(chan error, 1)
+			req := &outgoingObject{
+				context:   ctx,
+				recipient: p,
+				object:    o,
+				options:   opts,
+				err:       errRecv,
+			}
+			outbox.queue.Append(req)
+			if opts.Async {
+				return nil
+			}
+			select {
+			case <-ctx.Done():
+				return ErrSendingTimedOut
+			case err := <-errRecv:
+				return err
+			}
+		})
+	}
+	return errs.Wait().ErrorOrNil()
+}
+
+// SendToAddress an object to an address
+func (w *exchange) SendToAddress(
+	ctx context.Context,
+	oo object.Object,
+	address string,
+	options ...Option,
+) error {
+	ctx = context.FromContext(ctx)
+	opts := &Options{}
+	for _, option := range options {
+		option(opts)
+	}
+
+	o := object.Copy(oo) // TODO do we really need to copy?
+
+	outbox := w.getOutbox(crypto.PublicKey(address))
 	errRecv := make(chan error, 1)
 	req := &outgoingObject{
-		context:   ctx,
-		recipient: address,
-		object:    o,
-		options:   opts,
-		err:       errRecv,
+		context: ctx,
+		recipient: &peer.Peer{
+			Addresses: []string{address},
+		},
+		object:  o,
+		options: opts,
+		err:     errRecv,
 	}
 	outbox.queue.Append(req)
 	if opts.Async {

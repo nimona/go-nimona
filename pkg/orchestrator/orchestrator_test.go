@@ -1,7 +1,7 @@
 package orchestrator_test
 
 import (
-	ssql "database/sql"
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"path"
@@ -12,7 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/store/sql"
+	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
@@ -20,9 +21,8 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 //
@@ -67,58 +67,58 @@ var (
 	oh = hash.New(o)
 
 	m1 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			oh,
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m1",
+		"@stream:s": oh,
+		"foo:s":     "bar-m1",
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			oh,
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m2",
+		"@stream:s": oh,
+		"foo:s":     "bar-m2",
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			hash.New(m1.ToObject()),
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m3",
+		"@stream:s": oh,
+		"foo:s":     "bar-m3",
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			hash.New(m2.ToObject()),
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m4",
+		"@stream:s": oh,
+		"foo:s":     "bar-m4",
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			hash.New(m2.ToObject()),
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m5",
+		"@stream:s": oh,
+		"foo:s":     "bar-m5",
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"parents:as": []interface{}{
+		"@parents:as": []interface{}{
 			hash.New(m3.ToObject()),
 			hash.New(m4.ToObject()),
 		},
-		"stream:s": oh,
-		"foo:s":    "bar-m6",
+		"@stream:s": oh,
+		"foo:s":     "bar-m6",
 	})
 )
 
 func TestSync(t *testing.T) {
 	dblite := tempSqlite3(t)
-	store, err := sql.New(dblite)
+	store, err := sqlobjectstore.New(dblite)
 	assert.NoError(t, err)
 
 	x := &exchange.MockExchange{}
@@ -164,9 +164,9 @@ func TestSync(t *testing.T) {
 	}
 
 	// construct event list
-	elo := (&stream.StreamResponse{
+	elo := (&stream.Announcement{
 		Stream: oh,
-		Children: []object.Hash{
+		Leaves: []object.Hash{
 			oh,
 			hash.New(m1.ToObject()),
 			hash.New(m2.ToObject()),
@@ -186,7 +186,12 @@ func TestSync(t *testing.T) {
 		"Send",
 		mock.Anything,
 		mock.Anything,
-		"peer:"+rkey.PublicKey().String(),
+		mock.MatchedBy(
+			func(opt peer.LookupOption) bool {
+				opts := peer.ParseLookupOptions(opt)
+				return opts.Lookups[0] == rkey.PublicKey().String()
+			},
+		),
 		mock.Anything,
 		mock.Anything,
 	).Run(
@@ -207,7 +212,12 @@ func TestSync(t *testing.T) {
 			"Request",
 			mock.Anything,
 			hash.New(i),
-			"peer:"+rkey.PublicKey().String(),
+			mock.MatchedBy(
+				func(opt peer.LookupOption) bool {
+					opts := peer.ParseLookupOptions(opt)
+					return opts.Lookups[0] == rkey.PublicKey().String()
+				},
+			),
 			mock.Anything,
 			mock.Anything,
 		).Run(
@@ -222,9 +232,7 @@ func TestSync(t *testing.T) {
 	res, err := m.Sync(
 		ctx,
 		oh,
-		[]string{
-			"peer:" + rkey.PublicKey().String(),
-		},
+		peer.LookupByKey(rkey.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, res)
@@ -250,10 +258,10 @@ func jp(v object.Object) string {
 	return string(b)
 }
 
-func tempSqlite3(t *testing.T) *ssql.DB {
+func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
 	require.NoError(t, err)
-	db, err := ssql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }

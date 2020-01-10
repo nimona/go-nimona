@@ -28,7 +28,7 @@ import (
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
 
-	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
@@ -37,10 +37,13 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 
-	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
+
+	// allow bootstraping to settle
+	time.Sleep(time.Second)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
@@ -65,7 +68,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
@@ -81,16 +84,19 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	ba := l0.GetAddresses()
 
 	// node 1
-	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	// node 2
-	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
+	d2, err := NewDiscoverer(ctx2, disc2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
+
+	// allow bootstraping to settle
+	time.Sleep(time.Second)
 
 	// find bootstrap from node1
 	ctx := context.New(
@@ -117,6 +123,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req3"),
 		context.WithTimeout(time.Second*2),
 	)
+
 	peers, err = d1.Lookup(ctx, peer.LookupByKey(k2.PublicKey()))
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -126,7 +133,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k3, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
 
 	// setup node 3
-	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
+	d3, err := NewDiscoverer(ctx3, disc3, x3, l3, ba)
 	assert.NoError(t, err)
 	err = disc3.AddDiscoverer(d3)
 	assert.NoError(t, err)
@@ -141,6 +148,9 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	fmt.Println("-------------------")
 	fmt.Println("-------------------")
 	fmt.Println("-------------------")
+
+	// allow bootstraping to settle
+	time.Sleep(time.Second)
 
 	// find node 3 from node 1 from it's identity
 	ctx = context.New(
@@ -180,7 +190,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	fmt.Println("k2", k2)
 
 	// bootstrap peer
-	d0, err := NewDiscoverer(ctx0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
@@ -189,16 +199,19 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	ba := l0.GetAddresses()
 
 	// peer 1
-	d1, err := NewDiscoverer(ctx1, x1, l1, ba)
+	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
 	// peer 2
-	d2, err := NewDiscoverer(ctx2, x2, l2, ba)
+	d2, err := NewDiscoverer(ctx2, disc2, x2, l2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
+
+	// allow bootstraping to settle
+	time.Sleep(time.Second)
 
 	// find peer 1 from peer 2
 	ctx := context.New(
@@ -224,10 +237,13 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	_, _, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
 
 	// setup peer 3
-	d3, err := NewDiscoverer(ctx3, x3, l3, ba)
+	d3, err := NewDiscoverer(ctx3, disc3, x3, l3, ba)
 	assert.NoError(t, err)
 	err = disc3.AddDiscoverer(d1)
 	assert.NoError(t, err)
+
+	// allow bootstraping to settle
+	time.Sleep(time.Second)
 
 	// find peer 1 from peer 3
 	ctx = context.New(

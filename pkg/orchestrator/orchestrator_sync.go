@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -17,7 +18,7 @@ import (
 func (m *orchestrator) Sync(
 	ctx context.Context,
 	streamHash object.Hash,
-	addresses []string,
+	recipients peer.LookupOption,
 ) (
 	*Graph,
 	error,
@@ -26,17 +27,43 @@ func (m *orchestrator) Sync(
 		context.WithParent(ctx),
 	)
 
-	addresses = m.withoutOwnAddresses(addresses)
+	// only allow one sync to run at the same time for each stream
+	syncAvailable := m.syncLock.TryLock(streamHash.String())
+	if syncAvailable == false {
+		return nil, errors.New("sync for this stream is already in progress")
+	}
+	defer m.syncLock.Unlock(streamHash.String())
 
+	// find the graph's objects
+	objects, err := m.store.Filter(
+		sqlobjectstore.FilterByStreamHash(streamHash),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// find the graph's leaves
+	leafObjects := stream.GetStreamLeaves(objects)
+	leaves := make([]object.Hash, len(leafObjects))
+	for i, lo := range leafObjects {
+		leaves[i] = hash.New(lo)
+	}
+
+	// add keys mentioned in policies
+	// pks := stream.GetAllowsKeysFromPolicies(objects...)
+	// for _, pk := range pks {
+	// 	keys = append(keys, pk)
+	// }
+
+	// setup logger
 	logger := log.FromContext(ctx).With(
 		log.String("method", "orchestrator/orchestrator.Sync"),
 		log.Any("stream", streamHash),
-		log.Strings("addresses", addresses),
 	)
 
 	// start listening for incoming events
 	newObjects := make(chan object.Object)
-	streamResponse := make(chan *stream.StreamResponse)
+	streamResponse := make(chan *stream.Announcement)
 	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
 	defer sub.Cancel()
 	go func() {
@@ -46,8 +73,8 @@ func (m *orchestrator) Sync(
 				return
 			}
 			switch e.Payload.GetType() {
-			case streamResponseType:
-				p := &stream.StreamResponse{}
+			case streamAnnouncementType:
+				p := &stream.Announcement{}
 				err := p.FromObject(e.Payload)
 				if err != nil {
 					return
@@ -73,7 +100,7 @@ func (m *orchestrator) Sync(
 	// keep a record of who knows about which object
 	type request struct {
 		hash object.Hash
-		addr string
+		peer crypto.PublicKey
 	}
 	requests := make(chan *request)
 
@@ -91,7 +118,7 @@ func (m *orchestrator) Sync(
 
 			case res := <-streamResponse:
 				logger := logger.With(
-					log.Any("hashes", res.Children),
+					log.Any("hashes", res.Leaves),
 					log.Any("stream", res.Stream),
 				)
 
@@ -103,7 +130,7 @@ func (m *orchestrator) Sync(
 
 				logger.Debug("got graph response")
 				sig := res.Signature
-				for _, objectHash := range res.Children {
+				for _, objectHash := range res.Leaves {
 					// add a request for this hash from this peer
 					if sig == nil || sig.Signer.IsEmpty() {
 						logger.Debug("object has no signature, skipping request")
@@ -111,14 +138,14 @@ func (m *orchestrator) Sync(
 					}
 					requests <- &request{
 						hash: objectHash,
-						addr: "peer:" + sig.Signer.String(), // res.Identity.Fingerprint().Address(),
+						peer: sig.Signer,
 					}
 				}
 				respCount++
-				if respCount == len(addresses) {
-					// close(requests)
-					return
-				}
+				// if respCount == len(addresses) {
+				// 	// close(requests)
+				// 	return
+				// }
 			}
 		}
 	}()
@@ -135,12 +162,12 @@ func (m *orchestrator) Sync(
 			if err := m.exchange.Request(
 				ctx,
 				req.hash,
-				req.addr,
+				peer.LookupByKey(req.peer),
 				opts...,
 			); err != nil {
 				logger.With(
 					log.Any("req.hash", req.hash),
-					log.Any("req.addr", req.hash),
+					log.Any("req.peer", req.hash),
 					log.Error(err),
 				).Debug("could not send request for object")
 				continue
@@ -149,8 +176,9 @@ func (m *orchestrator) Sync(
 	}()
 
 	// create object graph request
-	req := &stream.StreamRequest{
+	req := &stream.Request{
 		Stream: streamHash,
+		Leaves: leaves,
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
@@ -164,22 +192,15 @@ func (m *orchestrator) Sync(
 
 	logger.Info("starting sync")
 
-	// send the request to all addresses
-	for _, address := range addresses {
-		logger.Debug("sending request",
-			log.String("address", address),
-		)
-		if err := m.exchange.Send(
-			ctx,
-			req.ToObject(),
-			address,
-			opts...,
-		); err != nil {
-			// TODO log error, should return if they all fail
-			logger.Debug("could not send request",
-				log.String("address", address),
-			)
-		}
+	logger.Debug("sending request")
+	if err := m.exchange.Send(
+		ctx,
+		req.ToObject(),
+		recipients,
+		opts...,
+	); err != nil {
+		// TODO log error, should return if they all fail
+		logger.Debug("could not send request")
 	}
 
 	timeout := time.NewTimer(time.Second * 5)
@@ -192,7 +213,7 @@ loop:
 			break loop
 		case o := <-newObjects:
 			oHash := hash.New(o)
-			oStreamHash := stream.Stream(o)
+			oStreamHash := stream.GetStream(o)
 			if oHash.String() != streamHash.String() {
 				if oStreamHash.IsEqual(streamHash) == false {
 					continue loop
