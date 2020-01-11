@@ -25,6 +25,15 @@ jobs:
           docker login -u=$DOCKER_USERNAME -p="$DOCKER_PASSWORD"
           docker build -t nimona/nimona:$(git describe --abbrev=0) .
 
+      - name: Download binary tools
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
+
+
       - name: Release binaries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
