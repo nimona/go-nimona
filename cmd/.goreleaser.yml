@@ -23,15 +23,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-dockers:
-  - binaries:
-      - nimona
-    goos: linux
-    goarch: amd64
-    image_templates:
-      - "nimona/nimona:{{ .Tag }}"
-    dockerfile: nimona/Dockerfile
-    skip_push: false
 snapshot:
   name_template: dev-{{.ShortCommit}}
 release:
