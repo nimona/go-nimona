@@ -24,6 +24,7 @@ jobs:
         run: |
           docker login -u=$DOCKER_USERNAME -p="$DOCKER_PASSWORD"
           docker build -t nimona/nimona:$(git describe --abbrev=0) .
+          docker push nimona/nimona:$(git describe --abbrev=0)
 
       - name: Download binary tools
         env:
