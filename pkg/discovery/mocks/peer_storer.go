@@ -32,7 +32,7 @@ func (_m *PeerStorer) AddDiscoverer(_a0 discovery.Discoverer) error {
 }
 
 // Lookup provides a mock function with given fields: _a0, _a1
-func (_m *PeerStorer) Lookup(_a0 context.Context, _a1 ...peer.LookupOption) ([]*peer.Peer, error) {
+func (_m *PeerStorer) Lookup(_a0 context.Context, _a1 ...peer.LookupOption) (<-chan *peer.Peer, error) {
 	_va := make([]interface{}, len(_a1))
 	for _i := range _a1 {
 		_va[_i] = _a1[_i]
@@ -42,12 +42,12 @@ func (_m *PeerStorer) Lookup(_a0 context.Context, _a1 ...peer.LookupOption) ([]*
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 []*peer.Peer
-	if rf, ok := ret.Get(0).(func(context.Context, ...peer.LookupOption) []*peer.Peer); ok {
+	var r0 <-chan *peer.Peer
+	if rf, ok := ret.Get(0).(func(context.Context, ...peer.LookupOption) <-chan *peer.Peer); ok {
 		r0 = rf(_a0, _a1...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*peer.Peer)
+			r0 = ret.Get(0).(<-chan *peer.Peer)
 		}
 	}
 

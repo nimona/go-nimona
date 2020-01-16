@@ -54,6 +54,9 @@ func New() *Config {
 }
 
 func (c *Config) Load() error {
+	if path := os.Getenv("NIMONA_CONFIG"); path != "" {
+		c.Path = path
+	}
 	c.Path = os.ExpandEnv(c.Path)
 
 	defer func() {

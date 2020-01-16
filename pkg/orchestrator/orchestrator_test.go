@@ -164,9 +164,9 @@ func TestSync(t *testing.T) {
 	}
 
 	// construct event list
-	elo := (&stream.Announcement{
+	elo := (&stream.Response{
 		Stream: oh,
-		Leaves: []object.Hash{
+		Children: []object.Hash{
 			oh,
 			hash.New(m1.ToObject()),
 			hash.New(m2.ToObject()),
@@ -181,11 +181,21 @@ func TestSync(t *testing.T) {
 	err = crypto.Sign(elo, rkey)
 	assert.NoError(t, err)
 
+	nonce := ""
+
 	// send request
 	x.On(
 		"Send",
 		mock.Anything,
-		mock.Anything,
+		mock.MatchedBy(
+			func(o object.Object) bool {
+				if o.GetType() != "nimona.io/stream.Request" {
+					return false
+				}
+				nonce = o.Get("nonce:s").(string)
+				return true
+			},
+		),
 		mock.MatchedBy(
 			func(opt peer.LookupOption) bool {
 				opts := peer.ParseLookupOptions(opt)
@@ -198,32 +208,47 @@ func TestSync(t *testing.T) {
 		respWith(elo),
 	).Return(nil)
 
-	// request o
-	for _, i := range []object.Object{
-		o,
-		m1.ToObject(),
-		m2.ToObject(),
-		m3.ToObject(),
-		m4.ToObject(),
-		m5.ToObject(),
-		m6.ToObject(),
-	} {
-		x.On(
-			"Request",
-			mock.Anything,
-			hash.New(i),
-			mock.MatchedBy(
-				func(opt peer.LookupOption) bool {
-					opts := peer.ParseLookupOptions(opt)
-					return opts.Lookups[0] == rkey.PublicKey().String()
-				},
-			),
-			mock.Anything,
-			mock.Anything,
-		).Run(
-			respWith(i),
-		).Return(nil)
+	o1 := m1.ToObject()
+	o2 := m2.ToObject()
+	o3 := m3.ToObject()
+	o4 := m4.ToObject()
+	o5 := m5.ToObject()
+	o6 := m6.ToObject()
+
+	ores := &stream.ObjectResponse{
+		Nonce:  nonce,
+		Stream: oh,
+		Objects: []*object.Object{
+			&o,
+			&o1,
+			&o2,
+			&o3,
+			&o4,
+			&o5,
+			&o6,
+		},
 	}
+
+	// request o
+	x.On(
+		"Send",
+		mock.Anything,
+		mock.MatchedBy(
+			func(o object.Object) bool {
+				return o.GetType() == "nimona.io/stream.ObjectRequest"
+			},
+		),
+		mock.MatchedBy(
+			func(opt peer.LookupOption) bool {
+				opts := peer.ParseLookupOptions(opt)
+				return opts.Lookups[0] == rkey.PublicKey().String()
+			},
+		),
+		mock.Anything,
+		mock.Anything,
+	).Run(
+		respWith(ores.ToObject()),
+	).Return(nil)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),

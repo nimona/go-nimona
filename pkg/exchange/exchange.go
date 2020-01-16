@@ -474,8 +474,21 @@ func (w *exchange) Send(
 		return err
 	}
 
+	done := map[crypto.PublicKey]bool{}
+
+	ownPublicKey := w.local.GetPeerPublicKey()
 	errs := &multierror.Group{}
-	for _, p := range ps {
+	for p := range ps {
+		// check if the peer is done
+		if _, ok := done[p.PublicKey()]; ok {
+			continue
+		}
+		// mark peer as done
+		done[p.PublicKey()] = true
+		// check this is not our own peer
+		if p.PublicKey().Equals(ownPublicKey) {
+			continue
+		}
 		p := p
 		errs.Go(func() error {
 			outbox := w.getOutbox(p.PublicKey())
@@ -499,6 +512,7 @@ func (w *exchange) Send(
 			}
 		})
 	}
+
 	return errs.Wait().ErrorOrNil()
 }
 

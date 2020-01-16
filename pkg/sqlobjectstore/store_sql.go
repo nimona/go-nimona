@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/stream"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub.go -pkg sql gen "ObjectType=object.Object PubSubName=sqlStore"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore gen "ObjectType=object.Object PubSubName=sqlStore"
 
 const (
 	// ErrNotFound is returned when a requested object or hash is not found
@@ -346,6 +346,8 @@ func (st *Store) Filter(
 		where += "AND AuthorPublicKey IN (" + qs + ") "
 		whereArgs = append(whereArgs, aktoai(options.Lookups.Identities)...)
 	}
+
+	where += "ORDER BY Created ASC"
 
 	objects := []object.Object{}
 

@@ -40,7 +40,9 @@ func (api *API) HandleGetObject(c *router.Context) {
 		c.AbortWithError(400, errors.New("missing object hash")) // nolint: errcheck
 	}
 
-	ctx := context.New()
+	ctx := context.New(
+		context.WithTimeout(15 * time.Second),
+	)
 	defer ctx.Cancel()
 
 	h := object.Hash(objectHash)
@@ -51,7 +53,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	}
 
 	keys := []crypto.PublicKey{}
-	for _, p := range ps {
+	for _, p := range gatherPeers(ps) {
 		keys = append(keys, p.PublicKey())
 	}
 	api.orchestrator.Sync(ctx, h, peer.LookupByKey(keys...)) // nolint: errcheck
@@ -206,10 +208,19 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return err
 	}
 
-	for _, p := range ps {
+	for _, p := range gatherPeers(ps) {
 		// nolint: errcheck
 		api.exchange.Send(ctx, o, peer.LookupByKey(p.PublicKey()), exchange.WithAsync())
 	}
 
 	return nil
+}
+
+func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
+	ps := []*peer.Peer{}
+	for p := range p {
+		p := p
+		ps = append(ps, p)
+	}
+	return peer.Unique(ps)
 }
