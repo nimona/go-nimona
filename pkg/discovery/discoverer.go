@@ -17,13 +17,19 @@ import (
 type (
 	// Discoverer defines the interface for a addressBook provider, eg our DHT
 	Discoverer interface {
-		Lookup(ctx context.Context, opts ...peer.LookupOption) ([]*peer.Peer, error)
+		Lookup(
+			ctx context.Context,
+			opts ...peer.LookupOption,
+		) (<-chan *peer.Peer, error)
 	}
 	// PeerStorer interface
 	PeerStorer interface {
 		Add(*peer.Peer, bool)
 		AddDiscoverer(Discoverer) error
-		Lookup(context.Context, ...peer.LookupOption) ([]*peer.Peer, error)
+		Lookup(
+			context.Context,
+			...peer.LookupOption,
+		) (<-chan *peer.Peer, error)
 	}
 )
 
@@ -45,7 +51,7 @@ type addressBook struct {
 func (r *addressBook) Lookup(
 	ctx context.Context,
 	opts ...peer.LookupOption,
-) ([]*peer.Peer, error) {
+) (<-chan *peer.Peer, error) {
 	opt := peer.ParseLookupOptions(opts...)
 
 	// if len(opt.Filters) == 0 {
@@ -69,7 +75,8 @@ func (r *addressBook) Lookup(
 	}
 
 	// something to hold our results
-	ps := []*peer.Peer{}
+	ps := make(chan *peer.Peer, 100)
+	// ps := []*peer.Peer{}
 
 	// go through the peers objects, and if they match the lookup options
 	// add them to the results
@@ -79,43 +86,51 @@ func (r *addressBook) Lookup(
 			continue
 		}
 		if opt.Match(p) {
-			ps = append(ps, p)
+			// ps = append(ps, p)
+			ps <- p
 		}
 	}
 
 	// if we have found some results, let's just return
 	// TODO I don't really like this
 	if len(ps) > 0 {
+		close(ps)
 		return ps, nil
 	}
 
 	// if no results have been found but only local results were requests return
 	if opt.Local {
+		close(ps)
 		return ps, nil
 	}
-
-	// else, go through the discoveres and try to find some results
-	// TODO once we have more than one discoverer we should run them in parallel
-	r.providers.Range(func(_, v interface{}) bool {
-		p, ok := v.(Discoverer)
-		if !ok {
-			return true
-		}
-		eps, err := p.Lookup(ctx, opts...)
-		if err != nil {
+	go func() {
+		// else, go through the discoveres and try to find some results
+		// TODO once we have more than one discoverer we should run them in parallel
+		r.providers.Range(func(_, v interface{}) bool {
+			p, ok := v.(Discoverer)
+			if !ok {
+				return true
+			}
+			eps, err := p.Lookup(ctx, opts...)
+			if err != nil {
+				logger.With(
+					log.Error(err),
+				).Debug("provider failed")
+				return true
+			}
+			// ps = append(ps, eps...)
+			for ep := range eps {
+				ps <- ep
+			}
 			logger.With(
-				log.Error(err),
-			).Debug("provider failed")
+				log.Int("n", len(eps)),
+				log.Int("total.n", len(ps)),
+				log.Any("peers", ps),
+			).Debug("found n peers")
 			return true
-		}
-		ps = append(ps, eps...)
-		logger.With(
-			log.Int("n", len(eps)),
-			log.Int("total.n", len(ps)),
-			log.Any("peers", ps),
-		).Debug("found n peers")
-		return true
-	})
+		})
+		close(ps)
+	}()
 
 	return ps, nil
 }

@@ -13,7 +13,7 @@ type Discoverer struct {
 }
 
 // Lookup provides a mock function with given fields: ctx, opts
-func (_m *Discoverer) Lookup(ctx context.Context, opts ...peer.LookupOption) ([]*peer.Peer, error) {
+func (_m *Discoverer) Lookup(ctx context.Context, opts ...peer.LookupOption) (<-chan *peer.Peer, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -23,12 +23,12 @@ func (_m *Discoverer) Lookup(ctx context.Context, opts ...peer.LookupOption) ([]
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 []*peer.Peer
-	if rf, ok := ret.Get(0).(func(context.Context, ...peer.LookupOption) []*peer.Peer); ok {
+	var r0 <-chan *peer.Peer
+	if rf, ok := ret.Get(0).(func(context.Context, ...peer.LookupOption) <-chan *peer.Peer); ok {
 		r0 = rf(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*peer.Peer)
+			r0 = ret.Get(0).(<-chan *peer.Peer)
 		}
 	}
 

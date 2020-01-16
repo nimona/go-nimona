@@ -41,7 +41,7 @@ func TestNetDiscoverer(t *testing.T) {
 	disc2.Add(l1.GetSignedPeer(), true)
 
 	ps2, err := disc1.Lookup(ctx, peer.LookupByKey(l2.GetPeerPublicKey()))
-	p2 := ps2[0]
+	p2 := gatherPeers(ps2)[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
 	assert.Equal(t,
@@ -50,7 +50,7 @@ func TestNetDiscoverer(t *testing.T) {
 	)
 
 	ps1, err := disc2.Lookup(ctx, peer.LookupByKey(l1.GetPeerPublicKey()))
-	p1 := ps1[0]
+	p1 := gatherPeers(ps1)[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)
 	assert.Equal(t,
@@ -193,4 +193,13 @@ func tempSqlite3(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
+}
+
+func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
+	ps := []*peer.Peer{}
+	for p := range p {
+		p := p
+		ps = append(ps, p)
+	}
+	return peer.Unique(ps)
 }

@@ -51,7 +51,7 @@ func TestSendSuccess(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, dr1, 1)
-	require.Equal(t, l2.GetIdentityPublicKey(), dr1[0].PublicKey())
+	require.Equal(t, l2.GetIdentityPublicKey(), gatherPeers(dr1)[0].PublicKey())
 
 	em1 := map[string]interface{}{
 		"@type:s": "test/msg",
@@ -355,4 +355,13 @@ func tempSqlite3(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
+}
+
+func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
+	ps := []*peer.Peer{}
+	for p := range p {
+		p := p
+		ps = append(ps, p)
+	}
+	return peer.Unique(ps)
 }

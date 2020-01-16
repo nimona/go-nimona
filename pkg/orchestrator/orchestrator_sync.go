@@ -1,8 +1,10 @@
 package orchestrator
 
 import (
+	"sync/atomic"
 	"time"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -15,10 +17,18 @@ import (
 	"nimona.io/pkg/stream"
 )
 
+type syncStatus string
+
+const (
+	syncStatusComplete  syncStatus = "COMPLETE"
+	syncStatusRequested syncStatus = "REQUESTED"
+)
+
 func (m *orchestrator) Sync(
 	ctx context.Context,
 	streamHash object.Hash,
 	recipients peer.LookupOption,
+	options ...exchange.Option,
 ) (
 	*Graph,
 	error,
@@ -34,8 +44,8 @@ func (m *orchestrator) Sync(
 	}
 	defer m.syncLock.Unlock(streamHash.String())
 
-	// find the graph's objects
-	objects, err := m.store.Filter(
+	// find the graph's knownObjects
+	knownObjects, err := m.store.Filter(
 		sqlobjectstore.FilterByStreamHash(streamHash),
 	)
 	if err != nil {
@@ -43,17 +53,11 @@ func (m *orchestrator) Sync(
 	}
 
 	// find the graph's leaves
-	leafObjects := stream.GetStreamLeaves(objects)
+	leafObjects := stream.GetStreamLeaves(knownObjects)
 	leaves := make([]object.Hash, len(leafObjects))
 	for i, lo := range leafObjects {
 		leaves[i] = hash.New(lo)
 	}
-
-	// add keys mentioned in policies
-	// pks := stream.GetAllowsKeysFromPolicies(objects...)
-	// for _, pk := range pks {
-	// 	keys = append(keys, pk)
-	// }
 
 	// setup logger
 	logger := log.FromContext(ctx).With(
@@ -61,115 +65,135 @@ func (m *orchestrator) Sync(
 		log.Any("stream", streamHash),
 	)
 
-	// start listening for incoming events
 	newObjects := make(chan object.Object)
-	streamResponse := make(chan *stream.Announcement)
-	sub := m.exchange.Subscribe(exchange.FilterByObjectType("**"))
+
+	// start listening for incoming events
+	sub := m.exchange.Subscribe(
+		exchange.FilterByObjectType("nimona.io/stream.**"),
+	)
 	defer sub.Cancel()
+
+	missingObjectsRetrieved := make(chan struct{})
+	maxMissingObjects := int64(0)
+	currentMissingObjects := int64(0)
+
+	streamRequestNonce := rand.String(12)
+
 	go func() {
+		// keep a record of all stream objects and their status
+		allObjects := map[object.Hash]syncStatus{}
+		// add existing objects as completed
+		for _, knownObject := range knownObjects {
+			allObjects[hash.New(knownObject)] = syncStatusComplete
+		}
 		for {
 			e, err := sub.Next()
 			if err != nil {
 				return
 			}
 			switch e.Payload.GetType() {
-			case streamAnnouncementType:
-				p := &stream.Announcement{}
+			case streamResponseType:
+				p := &stream.Response{}
 				err := p.FromObject(e.Payload)
 				if err != nil {
 					return
 				}
+				if !p.Stream.IsEqual(streamHash) {
+					continue
+				}
+				// TODO start using nonces properly
+				// if p.Nonce != streamRequestNonce {
+				// 	continue
+				// }
 				logger.Debug(
 					"got event list created",
 					log.Any("p", p),
 				)
-				streamResponse <- p
 
-			default:
-				newObjects <- e.Payload
-			}
-		}
-	}()
-
-	// net options
-	opts := []exchange.Option{
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
-	}
-
-	// keep a record of who knows about which object
-	type request struct {
-		hash object.Hash
-		peer crypto.PublicKey
-	}
-	requests := make(chan *request)
-
-	// start processing responses
-	// TODO(geoah) how long should we be waiting for this part?
-	// wait for ctx to timeout or for responses to come back.
-	// could we wait until all requests responded or failed?
-	go func() {
-		respCount := 0
-		for {
-			select {
-			case <-ctx.Done():
-				// close(requests)
-				return
-
-			case res := <-streamResponse:
-				logger := logger.With(
-					log.Any("hashes", res.Leaves),
-					log.Any("stream", res.Stream),
-				)
-
-				logger.Debug("got new events ")
-
-				if res.Stream.String() != streamHash.String() {
+				logger.Debug("got graph response")
+				if p.Signature == nil || p.Signature.Signer.IsEmpty() {
+					logger.Debug("object has no signature, skipping request")
 					continue
 				}
 
-				logger.Debug("got graph response")
-				sig := res.Signature
-				for _, objectHash := range res.Leaves {
-					// add a request for this hash from this peer
-					if sig == nil || sig.Signer.IsEmpty() {
-						logger.Debug("object has no signature, skipping request")
+				// gather the missing objects from this response
+				missingObjects := []object.Hash{}
+				for _, objectHash := range p.Children {
+					// check sync status for object
+					// and move on if completed or requested
+					if _, ok := allObjects[objectHash]; ok {
 						continue
 					}
-					requests <- &request{
-						hash: objectHash,
-						peer: sig.Signer,
+					// else, update the sync status
+					allObjects[objectHash] = syncStatusRequested
+					atomic.AddInt64(&maxMissingObjects, 1)
+					atomic.AddInt64(&currentMissingObjects, 1)
+					missingObjects = append(missingObjects, objectHash)
+				}
+
+				// create a request for them
+				objReq := &stream.ObjectRequest{
+					Nonce:    rand.String(12),
+					Stream:   p.Stream,
+					Objects:  missingObjects,
+					Identity: m.localInfo.GetIdentityPublicKey(),
+				}
+				sig, err := crypto.NewSignature(
+					m.localInfo.GetPeerPrivateKey(),
+					objReq.ToObject(),
+				)
+				if err != nil {
+					continue
+				}
+				objReq.Signature = sig
+
+				// and send the request to the sync response sender
+				if err := m.exchange.Send(
+					ctx,
+					objReq.ToObject(),
+					peer.LookupByKey(e.Sender),
+					exchange.WithLocalDiscoveryOnly(),
+					exchange.WithAsync(),
+				); err != nil {
+					logger.With(
+						log.Any("sender", e.Sender),
+						log.Error(err),
+					).Debug("could not send request for stream objects")
+				}
+
+			case streamObjectResponseType:
+				p := &stream.ObjectResponse{}
+				err := p.FromObject(e.Payload)
+				if err != nil {
+					return
+				}
+				if !p.Stream.IsEqual(streamHash) {
+					continue
+				}
+				// go through returned objects
+				for _, obj := range p.Objects {
+					if obj == nil {
+						continue
+					}
+					obj := obj
+					// check sync status for object
+					// and push it to newObjects if it was not completed
+					objectHash := hash.New(*obj)
+					// TODO do we care if this was not requested?
+					status, ok := allObjects[objectHash]
+					if ok && status == syncStatusComplete {
+						continue
+					}
+					newObjects <- *obj
+					m := atomic.LoadInt64(&maxMissingObjects)
+					c := atomic.AddInt64(&currentMissingObjects, -1)
+					if m > 0 && c == 0 {
+						missingObjectsRetrieved <- struct{}{}
 					}
 				}
-				respCount++
-				// if respCount == len(addresses) {
-				// 	// close(requests)
-				// 	return
-				// }
-			}
-		}
-	}()
 
-	go func() {
-		for req := range requests {
-			// check if we actually have the object
-			obj, err := m.store.Get(req.hash)
-			if err == nil && obj != nil {
-				continue
-			}
-
-			// else we go through the peers who have it and ask them about it
-			if err := m.exchange.Request(
-				ctx,
-				req.hash,
-				peer.LookupByKey(req.peer),
-				opts...,
-			); err != nil {
-				logger.With(
-					log.Any("req.hash", req.hash),
-					log.Any("req.peer", req.hash),
-					log.Error(err),
-				).Debug("could not send request for object")
+			default:
+				// if anything else, move on
 				continue
 			}
 		}
@@ -177,8 +201,10 @@ func (m *orchestrator) Sync(
 
 	// create object graph request
 	req := &stream.Request{
-		Stream: streamHash,
-		Leaves: leaves,
+		Nonce:    streamRequestNonce,
+		Stream:   streamHash,
+		Leaves:   leaves,
+		Identity: m.localInfo.GetIdentityPublicKey(),
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
@@ -193,32 +219,23 @@ func (m *orchestrator) Sync(
 	logger.Info("starting sync")
 
 	logger.Debug("sending request")
-	if err := m.exchange.Send(
-		ctx,
-		req.ToObject(),
-		recipients,
-		opts...,
-	); err != nil {
-		// TODO log error, should return if they all fail
-		logger.Debug("could not send request")
-	}
+	go func() {
+		if err := m.exchange.Send(
+			ctx,
+			req.ToObject(),
+			recipients,
+			options...,
+		); err != nil {
+			// TODO log error, should return if they all fail
+			logger.Debug("could not send request")
+		}
+	}()
 
 	timeout := time.NewTimer(time.Second * 5)
 loop:
 	for {
 		select {
-		case <-timeout.C:
-			break loop
-		case <-ctx.Done():
-			break loop
 		case o := <-newObjects:
-			oHash := hash.New(o)
-			oStreamHash := stream.GetStream(o)
-			if oHash.String() != streamHash.String() {
-				if oStreamHash.IsEqual(streamHash) == false {
-					continue loop
-				}
-			}
 			if err := m.store.Put(o); err != nil {
 				logger.With(
 					log.String("req.hash", streamHash.String()),
@@ -229,6 +246,12 @@ loop:
 				"got object",
 				log.String("req.hash", streamHash.String()),
 			)
+		case <-timeout.C:
+			break loop
+		case <-ctx.Done():
+			break loop
+		case <-missingObjectsRetrieved:
+			break loop
 		}
 	}
 
