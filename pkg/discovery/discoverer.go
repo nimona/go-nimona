@@ -54,10 +54,6 @@ func (r *addressBook) Lookup(
 ) (<-chan *peer.Peer, error) {
 	opt := peer.ParseLookupOptions(opts...)
 
-	// if len(opt.Filters) == 0 {
-	// 	return nil, errors.New("missing filters")
-	// }
-
 	logger := log.FromContext(ctx).With(
 		log.String("method", "discovery/addressBook.Lookup"),
 		log.String("opts", fmt.Sprintf("%#v", opt)),
@@ -74,9 +70,7 @@ func (r *addressBook) Lookup(
 		return nil, err
 	}
 
-	// something to hold our results
-	ps := make(chan *peer.Peer, 100)
-	// ps := []*peer.Peer{}
+	lps := []*peer.Peer{}
 
 	// go through the peers objects, and if they match the lookup options
 	// add them to the results
@@ -86,9 +80,17 @@ func (r *addressBook) Lookup(
 			continue
 		}
 		if opt.Match(p) {
-			// ps = append(ps, p)
-			ps <- p
+			lps = append(lps, p)
 		}
+	}
+
+	// something to hold our results
+	// TODO should probably remove the buffer
+	ps := make(chan *peer.Peer, 100)
+
+	// push local peers to channel
+	for _, p := range peer.Unique(lps) {
+		ps <- p
 	}
 
 	// if we have found some results, let's just return
@@ -118,7 +120,6 @@ func (r *addressBook) Lookup(
 				).Debug("provider failed")
 				return true
 			}
-			// ps = append(ps, eps...)
 			for ep := range eps {
 				ps <- ep
 			}
