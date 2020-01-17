@@ -117,10 +117,7 @@ func New(
 	store *sqlobjectstore.Store,
 	discover discovery.PeerStorer,
 	localInfo *peer.LocalPeer,
-) (
-	Exchange,
-	error,
-) {
+) (Exchange, error) {
 	w := &exchange{
 		key: key,
 		net: n,
@@ -140,6 +137,10 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// add local peer to discoverer
+	// TODO this is mostly a hack as discover doesn't have access to local
+	w.discover.Add(w.local.GetSignedPeer(), true)
 
 	logger := log.
 		FromContext(ctx).
