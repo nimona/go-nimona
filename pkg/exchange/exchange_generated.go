@@ -16,9 +16,9 @@ type (
 		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity   crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
-	ObjectForward struct {
-		Recipient string            `json:"recipient:s,omitempty"`
-		FwObject  *object.Object    `json:"fwObject:o,omitempty"`
+	DataForward struct {
+		Recipient crypto.PublicKey  `json:"recipient:s,omitempty"`
+		Data      []byte            `json:"data:d,omitempty"`
 		Signature *crypto.Signature `json:"@signature:o,omitempty"`
 		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
 	}
@@ -79,24 +79,24 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e ObjectForward) GetType() string {
-	return "nimona.io/exchange.ObjectForward"
+func (e DataForward) GetType() string {
+	return "nimona.io/exchange.DataForward"
 }
 
-func (e ObjectForward) GetSchema() *schema.Object {
+func (e DataForward) GetSchema() *schema.Object {
 	return &schema.Object{
 		Properties: []*schema.Property{
 			&schema.Property{
 				Name:       "recipient",
-				Type:       "string",
+				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "fwObject",
-				Type:       "nimona.io/object.Object",
-				Hint:       "o",
+				Name:       "data",
+				Type:       "data",
+				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
@@ -118,14 +118,14 @@ func (e ObjectForward) GetSchema() *schema.Object {
 	}
 }
 
-func (e ObjectForward) ToObject() object.Object {
+func (e DataForward) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/exchange.ObjectForward"
+	m["@type:s"] = "nimona.io/exchange.DataForward"
 	if e.Recipient != "" {
 		m["recipient:s"] = e.Recipient
 	}
-	if e.FwObject != nil {
-		m["fwObject:o"] = e.FwObject.ToObject().ToMap()
+	if len(e.Data) != 0 {
+		m["data:d"] = e.Data
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
@@ -139,7 +139,7 @@ func (e ObjectForward) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *ObjectForward) FromObject(o object.Object) error {
+func (e *DataForward) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }

@@ -3,6 +3,7 @@ package exchange
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"sync"
@@ -28,6 +29,7 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
+	// create the stores
 	dblite1 := tempSqlite3(t)
 	store1, err := sqlobjectstore.New(dblite1)
 	assert.NoError(t, err)
@@ -36,15 +38,19 @@ func TestSendSuccess(t *testing.T) {
 	store2, err := sqlobjectstore.New(dblite2)
 	assert.NoError(t, err)
 
+	// attach the stores to discovery
 	disc1 := discovery.NewPeerStorer(store1)
 	disc2 := discovery.NewPeerStorer(store2)
 
-	k1, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
-	k2, _, x2, _, l2 := newPeer(t, "", disc2, true, false)
+	// create new peers
+	k1, _, x1, _, l1 := newPeer(t, disc1, true, false)
+	k2, _, x2, _, l2 := newPeer(t, disc2, true, false)
 
+	// make peers aware of each other
 	disc1.Add(l2.GetSignedPeer(), true)
 	disc2.Add(l1.GetSignedPeer(), true)
 
+	// peer1 looks for peer2
 	dr1, err := disc1.Lookup(
 		context.Background(),
 		peer.LookupByKey(l2.GetPeerPublicKey()),
@@ -53,6 +59,7 @@ func TestSendSuccess(t *testing.T) {
 	require.Len(t, dr1, 1)
 	require.Equal(t, l2.GetIdentityPublicKey(), gatherPeers(dr1)[0].PublicKey())
 
+	// create test objects
 	em1 := map[string]interface{}{
 		"@type:s": "test/msg",
 		"body:s":  "bar1",
@@ -73,6 +80,7 @@ func TestSendSuccess(t *testing.T) {
 	err = crypto.Sign(eo1, k2)
 	assert.NoError(t, err)
 
+	// add message handlers
 	// nolint: dupl
 	go HandleEnvelopeSubscription(
 		x1.Subscribe(
@@ -131,8 +139,8 @@ func TestRequestSuccess(t *testing.T) {
 	disc1 := discovery.NewPeerStorer(store1)
 	disc2 := discovery.NewPeerStorer(store2)
 
-	_, _, x1, _, l1 := newPeer(t, "", disc1, true, false)
-	_, _, _, d2, l2 := newPeer(t, "", disc2, true, false)
+	_, _, x1, _, l1 := newPeer(t, disc1, true, false)
+	_, _, _, d2, l2 := newPeer(t, disc2, true, false)
 
 	disc1.Add(l2.GetSignedPeer(), true)
 	disc2.Add(l1.GetSignedPeer(), true)
@@ -181,121 +189,153 @@ func TestRequestSuccess(t *testing.T) {
 	}
 }
 
-// func TestSendRelay(t *testing.T) {
-// 	// enable binding to local addresses
-// 	disc1 := discovery.NewPeerStorer()
-// 	disc2 := discovery.NewPeerStorer()
-// 	disc3 := discovery.NewPeerStorer()
+func TestSendRelay(t *testing.T) {
+	dblite1 := tempSqlite3(t)
+	store1, err := sqlobjectstore.New(dblite1)
+	assert.NoError(t, err)
 
-// 	net.BindLocal = true
-// 	k0, _, _, _, l0 := newPeer(t, "", disc1, true, false)
+	dblite2 := tempSqlite3(t)
+	store2, err := sqlobjectstore.New(dblite2)
+	assert.NoError(t, err)
 
-// 	// disable binding to local addresses
-// 	net.BindLocal = false
-// 	k1, _, x1, _, l1 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc2, true, false)
-// 	k2, _, x2, _, l2 := newPeer(t, "relay:"+l0.GetAddresses()[0], disc3, true, false)
+	dblite3 := tempSqlite3(t)
+	store3, err := sqlobjectstore.New(dblite3)
+	assert.NoError(t, err)
 
-// 	fmt.Printf("\n\n\n\n-----------------------------\n")
-// 	fmt.Println("k0:",
-// 		k0.PublicKey.Fingerprint(),
-// 		l0.GetAddresses(),
-// 	)
-// 	fmt.Println("k1:",
-// 		k1.PublicKey.Fingerprint(),
-// 		l1.GetAddresses(),
-// 	)
-// 	fmt.Println("k2:",
-// 		k2.PublicKey.Fingerprint(),
-// 		l2.GetAddresses(),
-// 	)
-// 	fmt.Printf("-----------------------------\n\n\n\n")
+	discRel := discovery.NewPeerStorer(store1)
+	disc1 := discovery.NewPeerStorer(store2)
+	disc2 := discovery.NewPeerStorer(store3)
 
-// 	disc1.Add(l1.GetSignedPeer())
-// 	disc1.Add(l2.GetSignedPeer())
-// 	disc2.Add(l2.GetSignedPeer())
-// 	disc3.Add(l1.GetSignedPeer())
+	// enable binding to local addresses
+	net.BindLocal = true
 
-// 	// init connection from n1 to n0
-// 	err := x1.Send(
-// 		context.Background(),
-// 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-// 		l0.GetAddresses()[0],
-// 	)
-// 	assert.NoError(t, err)
+	// relay peer
+	relayPeerKey, _, _, _, relayPeer := newPeer(t, discRel, true, false)
 
-// 	// init connection from n2 to n0
-// 	err = x2.Send(
-// 		context.Background(),
-// 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-// 		l0.GetAddresses()[0],
-// 	)
-// 	assert.NoError(t, err)
+	// disable binding to local addresses
+	net.BindLocal = false
+	k1, _, x1, _, l1 := newPeer(t, disc1, true, false)
+	k2, _, x2, _, l2 := newPeer(t, disc2, true, false)
 
-// 	// now we should be able to relay objects between n1 and n2
-// 	em1 := map[string]interface{}{
-// 		"@type:s": "test/msg",
-// 		"body:s":  "bar1",
-// 	}
-// 	eo1 := object.FromMap(em1)
+	l1.AddRelays(relayPeerKey.PublicKey())
+	l2.AddRelays(relayPeerKey.PublicKey())
 
-// 	em2 := map[string]interface{}{
-// 		"@type:s": "test/msg",
-// 		"body:s":  "bar1",
-// 	}
-// 	eo2 := object.FromMap(em2)
+	fmt.Printf("\n\n\n\n-----------------------------\n")
+	fmt.Println("k0:",
+		relayPeerKey.PublicKey(),
+		relayPeer.GetAddresses(),
+	)
+	fmt.Println("k1:",
+		k1.PublicKey(),
+		l1.GetAddresses(),
+	)
+	fmt.Println("k2:",
+		k2.PublicKey(),
+		l2.GetAddresses(),
+	)
+	fmt.Printf("-----------------------------\n\n\n\n")
 
-// 	wg := sync.WaitGroup{}
-// 	wg.Add(2)
+	discRel.Add(l1.GetSignedPeer(), false)
+	discRel.Add(l2.GetSignedPeer(), false)
+	disc1.Add(relayPeer.GetSignedPeer(), false)
+	disc1.Add(l2.GetSignedPeer(), false)
+	disc2.Add(relayPeer.GetSignedPeer(), false)
+	disc2.Add(l1.GetSignedPeer(), false)
 
-// 	w1ObjectHandled := false
-// 	w2ObjectHandled := false
+	// init connection from peer1 to relay
+	err = x1.Send(
+		context.Background(),
+		object.FromMap(map[string]interface{}{"foo": "bar"}),
+		peer.LookupByKey(relayPeer.GetPeerPublicKey()),
+	)
+	assert.NoError(t, err)
 
-// 	err = crypto.Sign(eo1, k2)
-// 	assert.NoError(t, err)
+	// init connection from peer2 to relay
+	err = x2.Send(
+		context.Background(),
+		object.FromMap(map[string]interface{}{"foo": "bar"}),
+		peer.LookupByKey(relayPeer.GetPeerPublicKey()),
+	)
+	assert.NoError(t, err)
 
-// 	// nolint: dupl
-// 	_, err = x1.Handle("test/msg", func(e *Envelope) error {
-// 		o := e.Payload
-// 		assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
-// 		w1ObjectHandled = true
-// 		wg.Done()
-// 		return nil
-// 	})
-// 	assert.NoError(t, err)
+	// create the messages
+	em1 := map[string]interface{}{
+		"@type:s": "test/msg",
+		"body:s":  "bar1",
+	}
+	eo1 := object.FromMap(em1)
 
-// 	_, err = x2.Handle("tes**", func(e *Envelope) error {
-// 		o := e.Payload
-// 		assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
-// 		w2ObjectHandled = true
-// 		wg.Done()
-// 		return nil
-// 	})
-// 	assert.NoError(t, err)
+	em2 := map[string]interface{}{
+		"@type:s": "test/msg",
+		"body:s":  "bar1",
+	}
+	eo2 := object.FromMap(em2)
 
-// 	ctx := context.New(context.WithTimeout(time.Second * 5))
-// 	defer ctx.Cancel()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 
-// 	err = x2.Send(ctx, eo1, "peer:"+k1.PublicKey.PublicKey().String())
-// 	assert.NoError(t, err)
+	w1ObjectHandled := false
+	w2ObjectHandled := false
 
-// 	time.Sleep(time.Second)
+	err = crypto.Sign(eo1, k2)
+	assert.NoError(t, err)
 
-// 	ctx2 := context.New(context.WithTimeout(time.Second * 5))
-// 	defer ctx2.Cancel()
+	handled := int32(0)
 
-// 	// TODO should be able to send not signed
-// 	err = x1.Send(ctx2, eo2, "peer:"+k2.PublicKey.PublicKey().String())
-// 	assert.NoError(t, err)
+	// add handlers
+	go HandleEnvelopeSubscription(
+		x1.Subscribe(
+			FilterByObjectType("test/msg"),
+		),
+		func(e *Envelope) error {
+			o := e.Payload
+			w1ObjectHandled = true
+			assert.Equal(t, eo1.Get("body:s"), o.Get("body:s"))
+			atomic.AddInt32(&handled, 1)
+			wg.Done()
+			return nil
+		},
+	)
 
-// 	wg.Wait()
+	// nolint: dupl
+	go HandleEnvelopeSubscription(
+		x1.Subscribe(
+			FilterByObjectType("tes**"),
+		),
+		func(e *Envelope) error {
+			o := e.Payload
+			w2ObjectHandled = true
+			assert.Equal(t, eo2.Get("body:s"), o.Get("body:s"))
+			atomic.AddInt32(&handled, 1)
+			wg.Done()
+			return nil
+		},
+	)
+	assert.NoError(t, err)
 
-// 	assert.True(t, w1ObjectHandled)
-// 	assert.True(t, w2ObjectHandled)
-// }
+	ctx := context.New(context.WithTimeout(time.Second * 5))
+	defer ctx.Cancel()
+
+	err = x2.Send(ctx, eo1, peer.LookupByKey(k1.PublicKey()))
+	assert.NoError(t, err)
+
+	time.Sleep(time.Second)
+
+	ctx2 := context.New(context.WithTimeout(time.Second * 5))
+	defer ctx2.Cancel()
+
+	// TODO should be able to send not signed
+	err = x1.Send(ctx2, eo2, peer.LookupByKey(k2.PublicKey()))
+	assert.NoError(t, err)
+
+	wg.Wait()
+
+	assert.True(t, w1ObjectHandled)
+	assert.True(t, w2ObjectHandled)
+}
 
 func newPeer(
 	t *testing.T,
-	relayAddress string,
 	discover discovery.PeerStorer,
 	listenTCP bool,
 	listenHTTP bool,
@@ -314,10 +354,6 @@ func newPeer(
 
 	li, err := peer.NewLocalPeer("", pk)
 	assert.NoError(t, err)
-
-	if relayAddress != "" {
-		li.AddAddress("relay", []string{relayAddress})
-	}
 
 	n, err := net.New(discover, li)
 	assert.NoError(t, err)
