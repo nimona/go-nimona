@@ -11,6 +11,7 @@ import (
 
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=object.Hash"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_public_key_generated.go -pkg peer gen "KeyType=crypto.PublicKey"
 
 type (
 	Addresses []string
@@ -27,6 +28,7 @@ type (
 
 		certificates []*crypto.Certificate
 
+		relays        *CryptoPublicKeySyncList
 		addresses     *StringAddressesSyncMap
 		contentHashes *ObjectHashSyncList
 		contentTypes  []string
@@ -54,6 +56,7 @@ func NewLocalPeer(
 		},
 
 		addresses:     &StringAddressesSyncMap{},
+		relays:        NewCryptoPublicKeyValueTypeSyncMap(),
 		contentHashes: &ObjectHashSyncList{},
 
 		onAddressesHandlers:     []OnAddressesUpdated{},
@@ -82,6 +85,10 @@ func (p *LocalPeer) AddAddress(protocol string, addrs []string) {
 		go h(all)
 	}
 	p.handlerLock.RUnlock()
+}
+
+func (p *LocalPeer) AddRelays(relayPeer crypto.PublicKey) {
+	p.relays.Put(relayPeer)
 }
 
 // AddContentHash that should be published with the peer info
@@ -202,11 +209,18 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		hs = append(hs, c.Signature.Signer.String())
 	}
 
+	relays := []crypto.PublicKey{}
+	p.relays.Range(func(k crypto.PublicKey) bool {
+		relays = append(relays, k)
+		return false
+	})
+
 	// TODO cache peer info and reuse
 	pi := &Peer{
 		Version:      time.Now().UTC().Unix(),
 		Bloom:        bloom.New(hs...),
 		Addresses:    p.GetAddresses(),
+		Relays:       relays,
 		Certificates: p.certificates,
 		ContentTypes: p.contentTypes,
 	}
