@@ -17,6 +17,7 @@ type (
 		Bloom        []int64               `json:"bloom:ai,omitempty"`
 		ContentTypes []string              `json:"contentTypes:as,omitempty"`
 		Certificates []*crypto.Certificate `json:"certificates:ao,omitempty"`
+		Relays       []crypto.PublicKey    `json:"relays:as,omitempty"`
 		Signature    *crypto.Signature     `json:"@signature:o,omitempty"`
 		Identity     crypto.PublicKey      `json:"@identity:s,omitempty"`
 	}
@@ -78,6 +79,13 @@ func (e Peer) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
+				Name:       "relays",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: true,
+				IsOptional: false,
+			},
+			&schema.Property{
 				Name:       "@signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
@@ -118,6 +126,9 @@ func (e Peer) ToObject() object.Object {
 			}
 			return a
 		}()
+	}
+	if len(e.Relays) > 0 {
+		m["relays:as"] = e.Relays
 	}
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
