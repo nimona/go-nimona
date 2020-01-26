@@ -63,8 +63,10 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 		}
 	}
 
-	// add relay addresses to local info
-	localInfo.AddAddress("relay", config.Peer.RelayAddresses)
+	// add relay peers to local info
+	for _, rp := range config.Peer.RelayAddresses {
+		localInfo.AddRelays(rp)
+	}
 
 	network, err := net.New(peerstore, localInfo)
 	if err != nil {

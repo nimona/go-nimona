@@ -19,14 +19,14 @@ type APIConfig struct {
 }
 
 type PeerConfig struct {
-	AnnounceHostname   string            `json:"hostname,omitempty" envconfig:"HOSTNAME"`
-	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
-	EnableMetrics      bool              `json:"metrics,omitempty" envconfig:"METRICS"`
-	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
-	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" envconfig:"PEER_KEY"`
-	TCPPort            int               `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
-	RelayAddresses     []string          `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
-	ContentTypes       []string          `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
+	AnnounceHostname   string             `json:"hostname,omitempty" envconfig:"HOSTNAME"`
+	BootstrapAddresses []string           `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
+	EnableMetrics      bool               `json:"metrics,omitempty" envconfig:"METRICS"`
+	IdentityKey        crypto.PrivateKey  `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
+	PeerKey            crypto.PrivateKey  `json:"peerKey,omitempty" envconfig:"PEER_KEY"`
+	TCPPort            int                `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
+	RelayAddresses     []crypto.PublicKey `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
+	ContentTypes       []string           `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
 }
 
 type Config struct {
