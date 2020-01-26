@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/geoah/go-queue"
@@ -20,6 +21,7 @@ import (
 var (
 	objectRequestType = new(ObjectRequest).GetType()
 	peerType          = new(peer.Peer).GetType()
+	dataForwardType   = new(DataForward).GetType()
 )
 
 const (
@@ -151,10 +153,22 @@ func New(
 
 	// subscribe to object requests and handle them
 	objectReqSub := w.inboxes.Subscribe(
+		FilterByObjectType(dataForwardType),
+	)
+
+	//subscribe to data forward type
+	dataForwardSub := w.inboxes.Subscribe(
 		FilterByObjectType(objectRequestType),
 	)
+
 	go func() {
 		if err := w.handleObjectRequests(objectReqSub); err != nil {
+			logger.Error("handling object requests failed", log.Error(err))
+		}
+	}()
+
+	go func() {
+		if err := w.handleObjectRequests(dataForwardSub); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
 		}
 	}()
@@ -310,6 +324,50 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			lastErr = nil
 			break
 		}
+
+		// Only try the relays if we fail to write the object
+		if lastErr != nil {
+			// convert the object from the request to []byte
+			// todo: find a way to encrypt it
+			payload, err := json.Marshal(req.object)
+			if err != nil {
+				lastErr = err
+			}
+
+			// Try to send it to one peer
+			for _, relayPeer := range req.recipient.Relays {
+				logger.Debug(
+					"trying relay peer",
+					log.String("relay", relayPeer.String()),
+					log.String("recipient", req.recipient.PublicKey().String()),
+				)
+				newReq := DataForward{
+					Recipient: req.recipient.PublicKey(),
+					Data:      payload,
+				}
+				ctx := context.Background()
+
+				// send the new wrapped object
+				// to the lookup peer
+				err := w.Send(
+					ctx,
+					newReq.ToObject(),
+					peer.LookupByKey(crypto.PublicKey(relayPeer)),
+				)
+				if err != nil {
+					// if this fails send it to the next one
+					lastErr = err
+					continue
+				}
+
+				// success so stop trying to send
+				lastErr = nil
+				break
+			}
+
+			// todo: wait for ack, how??
+		}
+
 		if lastErr == nil {
 			logger.Debug("wrote object")
 		}
@@ -375,6 +433,10 @@ func (w *exchange) handleConnection(
 				return
 			}
 
+			log.DefaultLogger.Debug(
+				"reading from connection",
+				log.String("payload", payload.Copy().GetType()),
+			)
 			w.inboxes.Publish(&Envelope{
 				Sender:  conn.RemotePeerKey,
 				Payload: payload,
@@ -392,7 +454,17 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 		if err != nil {
 			return err
 		}
+
+		logger := log.
+			FromContext(context.Background()).
+			Named("exchange").
+			With(
+				log.String("method", "exchange.handleObjectRequests"),
+				log.String("payload", e.Payload.GetType()),
+			)
+
 		// TODO verify signature
+		logger.Debug("getting payload")
 		switch e.Payload.GetType() {
 		case objectRequestType:
 			req := &ObjectRequest{}
@@ -409,6 +481,36 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 				peer.LookupByKey(e.Sender),
 				WithLocalDiscoveryOnly(),
 			)
+		case dataForwardType:
+			// if we receive a dataForward payload we check if it is meant for
+			// this peer, if yes try to decode it, if not forward it
+			// we treat this a data because it needs to be encrypted
+
+			// decode object
+			fwd := &DataForward{}
+			if err := fwd.FromObject((e.Payload)); err != nil {
+				return err
+			}
+
+			// todo: is this right?
+			o := object.Object{}
+			err := json.Unmarshal(fwd.Data, &o)
+			if err != nil {
+				return errors.Wrap(errors.Error("could not decode data"), err)
+			}
+
+			// send the object to the intended recipient
+			// is the original sender lost this way? do we care?
+			if err := w.Send(
+				context.Background(),
+				o,
+				peer.LookupByKey(fwd.Recipient),
+			); err != nil {
+				return errors.Wrap(
+					errors.Error("could not send object"),
+					err,
+				)
+			}
 		}
 	}
 	return nil
