@@ -38,6 +38,12 @@ jobs:
           CI: 'true'
           VERBOSE: 'true'
 
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+          parallel: true
+
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
