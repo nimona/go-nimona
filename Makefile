@@ -120,8 +120,9 @@ test:
 		-count=1 \
 		--race \
 		-covermode=atomic \
-		-coverprofile=$(COVEROUT) \
+		-coverprofile=$(COVEROUT).tmp \
 		./...
+	cat $(COVEROUT).tmp | grep -v "_generated\|generator\|cmd" > $(COVEROUT)
 
 # Install tools
 .PHONY: tools
@@ -192,8 +193,6 @@ local-peer-two: build
 	NIMONA_PEER_HTTP_PORT=10082 \
 	NIMONA_API_PORT=10802 \
 	$(MAINBIN)
-
-
 
 # Local test peer three
 .PHONY: local-peer-three
