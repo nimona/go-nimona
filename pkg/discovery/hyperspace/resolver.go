@@ -4,6 +4,8 @@ import (
 	"sort"
 	"sync"
 
+	"nimona.io/pkg/object"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
@@ -376,7 +378,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 
 	o := cb.ToObject()
-	if err := crypto.Sign(o, r.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(o, r.local.GetPeerPrivateKey()); err != nil {
 		logger.With(
 			log.Error(err),
 		).Error("could not sign object")

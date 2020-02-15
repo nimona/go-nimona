@@ -7,7 +7,6 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -16,22 +15,22 @@ type (
 		Addresses    []string              `json:"addresses:as,omitempty"`
 		Bloom        []int64               `json:"bloom:ai,omitempty"`
 		ContentTypes []string              `json:"contentTypes:as,omitempty"`
-		Certificates []*crypto.Certificate `json:"certificates:ao,omitempty"`
+		Certificates []*object.Certificate `json:"certificates:ao,omitempty"`
 		Relays       []crypto.PublicKey    `json:"relays:as,omitempty"`
-		Signature    *crypto.Signature     `json:"_signature:o,omitempty"`
+		Signature    *object.Signature     `json:"_signature:o,omitempty"`
 		Owners       []crypto.PublicKey    `json:"@owners:as,omitempty"`
 	}
 	LookupRequest struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Bloom     []int64            `json:"bloom:ai,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	LookupResponse struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Bloom     []int64            `json:"bloom:ai,omitempty"`
 		Peers     []*Peer            `json:"peers:ao,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -39,60 +38,59 @@ type (
 func (e Peer) GetType() string {
 	return "nimona.io/peer.Peer"
 }
-
-func (e Peer) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Peer) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "version",
 				Type:       "int",
 				Hint:       "i",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "addresses",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "bloom",
 				Type:       "int",
 				Hint:       "i",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "contentTypes",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "certificates",
-				Type:       "nimona.io/crypto.Certificate",
+				Type:       "nimona.io/object.Certificate",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "relays",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -150,32 +148,31 @@ func (e *Peer) FromObject(o object.Object) error {
 func (e LookupRequest) GetType() string {
 	return "nimona.io/LookupRequest"
 }
-
-func (e LookupRequest) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e LookupRequest) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "nonce",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "bloom",
 				Type:       "int",
 				Hint:       "i",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -215,39 +212,38 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 func (e LookupResponse) GetType() string {
 	return "nimona.io/LookupResponse"
 }
-
-func (e LookupResponse) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e LookupResponse) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "nonce",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "bloom",
 				Type:       "int",
 				Hint:       "i",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "peers",
 				Type:       "nimona.io/peer.Peer",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",

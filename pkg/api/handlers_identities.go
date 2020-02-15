@@ -10,7 +10,7 @@ func (api *API) HandleGetIdentities(c *router.Context) {
 	p := api.local.GetIdentityPublicKey()
 
 	c.JSON(http.StatusOK, []interface{}{
-		api.mapObject(p.ToObject()),
+		p.String(),
 	})
 }
 

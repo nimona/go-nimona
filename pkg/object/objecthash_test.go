@@ -1,4 +1,4 @@
-package hash
+package object
 
 import (
 	"encoding/json"
@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"nimona.io/pkg/object"
 )
 
 func TestObjectHash(t *testing.T) {
@@ -15,13 +13,13 @@ func TestObjectHash(t *testing.T) {
 		"str:s": "foo",
 	}
 
-	kh := hash(object.HintString, []byte("str:s"))
-	vh := hash(object.HintString, []byte("foo"))
+	kh := hash(HintString, []byte("str:s"))
+	vh := hash(HintString, []byte("foo"))
 	ob := append(kh, vh...)
-	oh := hash(object.HintObject, ob)
+	oh := hash(HintObject, ob)
 
-	o := object.FromMap(v)
-	h := New(o)
+	o := FromMap(v)
+	h := NewHash(o)
 	f := formatHash(contentHash{
 		algorithm: "oh1",
 		d:         oh,
@@ -37,13 +35,13 @@ func TestObjectHashWithSignature(t *testing.T) {
 		},
 	}
 
-	kh := hash(object.HintString, []byte("str:s"))
-	vh := hash(object.HintString, []byte("foo"))
+	kh := hash(HintString, []byte("str:s"))
+	vh := hash(HintString, []byte("foo"))
 	ob := append(kh, vh...)
-	oh := hash(object.HintObject, ob)
+	oh := hash(HintObject, ob)
 
-	o := object.FromMap(v)
-	h := New(o)
+	o := FromMap(v)
+	h := NewHash(o)
 	f := formatHash(contentHash{
 		algorithm: "oh1",
 		d:         oh,
@@ -60,8 +58,8 @@ func TestObjectHashDocs(t *testing.T) {
 		},
 	}
 
-	o := object.FromMap(v)
-	h := New(o)
+	o := FromMap(v)
+	h := NewHash(o)
 	assert.NotNil(t, h)
 }
 
@@ -101,8 +99,8 @@ func TestLongObjectHash(t *testing.T) {
 		"bool:b": true,
 	}
 
-	o := object.FromMap(v)
-	h := New(o)
+	o := FromMap(v)
+	h := NewHash(o)
 	assert.NotNil(t, h)
 }
 
@@ -114,16 +112,16 @@ func TestLongObjectHashInterfaces(t *testing.T) {
 		"As:as": []interface{}{"a", "b"},
 	}
 
-	o := object.FromMap(v)
-	h := New(o)
+	o := FromMap(v)
+	h := NewHash(o)
 	assert.NotNil(t, h)
 
 	b := `{"I:i":1,"Ai:ai":[1,2],"S:s":"a","As:as":["a","b"]}` // nolint
 	nv := map[string]interface{}{}
 	json.Unmarshal([]byte(b), &nv) // nolint
 
-	no := object.FromMap(nv)
-	nh := New(no)
+	no := FromMap(nv)
+	nh := NewHash(no)
 	assert.NotNil(t, nh)
 
 	assert.Equal(t, h, nh)

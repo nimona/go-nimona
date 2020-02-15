@@ -1,13 +1,13 @@
-package nimona.io/crypto
+package nimona.io/object
 
-object nimona.io/crypto.Certificate {
+object nimona.io/object.Certificate {
     subject nimona.io/crypto.PublicKey
     created string
     expires string
     _signature Signature
 }
 
-object nimona.io/crypto.Signature {
+object nimona.io/object.Signature {
     signer nimona.io/crypto.PublicKey
     alg string
     x data

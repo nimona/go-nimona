@@ -14,12 +14,6 @@ func TestEd(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, p1)
 
-	pp1 := p1.PublicKey().ToObject()
-	var ppA PublicKey
-	err = ppA.FromObject(pp1)
-	require.NoError(t, err)
-	require.Equal(t, p1.PublicKey(), ppA)
-
 	fmt.Println("private key", p1)
 	fmt.Println("public key", p1.PublicKey())
 

@@ -7,19 +7,18 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	schema "nimona.io/pkg/schema"
 )
 
 type (
 	ObjectRequest struct {
 		ObjectHash object.Hash        `json:"objectHash:s,omitempty"`
-		Signature  *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature  *object.Signature  `json:"_signature:o,omitempty"`
 		Owners     []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	DataForward struct {
 		Recipient crypto.PublicKey   `json:"recipient:s,omitempty"`
 		Data      []byte             `json:"data:d,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -27,25 +26,24 @@ type (
 func (e ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
-
-func (e ObjectRequest) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e ObjectRequest) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "objectHash",
 				Type:       "nimona.io/object.Hash",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -82,32 +80,31 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 func (e DataForward) GetType() string {
 	return "nimona.io/exchange.DataForward"
 }
-
-func (e DataForward) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e DataForward) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "recipient",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "data",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",

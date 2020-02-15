@@ -1,9 +1,7 @@
-package crypto
+package object
 
 import (
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hash"
-	"nimona.io/pkg/object"
 )
 
 const (
@@ -13,7 +11,7 @@ const (
 )
 
 // Verify object
-func Verify(o object.Object) error {
+func Verify(o Object) error {
 	if o == nil {
 		return errors.New("missing object")
 	}
@@ -26,6 +24,6 @@ func Verify(o object.Object) error {
 		)
 	}
 
-	h := hash.New(o)
+	h := NewHash(o)
 	return sig.Signer.Verify(h.Bytes(), sig.X)
 }

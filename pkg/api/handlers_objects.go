@@ -12,7 +12,6 @@ import (
 	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -105,7 +104,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := crypto.Sign(o, k); err != nil {
+	if err := object.Sign(o, k); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
@@ -162,7 +161,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	parents := []string{}
 	for _, l := range leaves {
-		parents = append(parents, hash.New(l).String())
+		parents = append(parents, object.NewHash(l).String())
 	}
 
 	req["stream:s"] = rootObjectHash
@@ -171,7 +170,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := crypto.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}

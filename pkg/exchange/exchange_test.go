@@ -20,7 +20,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
@@ -77,7 +76,7 @@ func TestSendSuccess(t *testing.T) {
 
 	handled := int32(0)
 
-	err = crypto.Sign(eo1, k2)
+	err = object.Sign(eo1, k2)
 	assert.NoError(t, err)
 
 	// add message handlers
@@ -174,7 +173,7 @@ func TestRequestSuccess(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 3))
 	err = x1.Request(
 		ctx,
-		hash.New(eo1),
+		object.NewHash(eo1),
 		peer.LookupByOwner(l2.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
@@ -277,7 +276,7 @@ func TestSendRelay(t *testing.T) {
 	w1ObjectHandled := false
 	w2ObjectHandled := false
 
-	err = crypto.Sign(eo1, k2)
+	err = object.Sign(eo1, k2)
 	assert.NoError(t, err)
 
 	handled := int32(0)

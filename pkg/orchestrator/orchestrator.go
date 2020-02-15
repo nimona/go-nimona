@@ -9,7 +9,6 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -108,7 +107,7 @@ func NewWithContext(
 		supportedHashes := make([]object.Hash, len(supportedObjects))
 
 		for i, sobj := range supportedObjects {
-			supportedHashes[i] = hash.New(sobj)
+			supportedHashes[i] = object.NewHash(sobj)
 		}
 
 		logger.Info(
@@ -131,7 +130,7 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 		ctx := context.FromContext(ctx)
 		logger := log.FromContext(ctx).With(
 			log.String("method", "orchestrator.Process"),
-			log.String("object._hash", hash.New(e.Payload).String()),
+			log.String("object._hash", object.NewHash(e.Payload).String()),
 			log.String("object.type", e.Payload.GetType()),
 		)
 		logger.Debug("handling object")
@@ -196,7 +195,7 @@ func IsComplete(cs []object.Object) bool {
 	cm := map[string]object.Object{}
 	for _, c := range cs {
 		// k: hash v: object
-		cm[hash.New(c).String()] = c
+		cm[object.NewHash(c).String()] = c
 	}
 	for _, c := range cs {
 		// get all the parents of an object
@@ -226,14 +225,14 @@ func (m *orchestrator) Put(o object.Object) error {
 			parents := stream.GetStreamLeaves(os)
 			parentHashes := make([]string, len(parents))
 			for i, p := range parents {
-				parentHashes[i] = hash.New(p).String()
+				parentHashes[i] = object.NewHash(p).String()
 			}
 			o.Set("@parents:as", parentHashes)
 		}
 	}
 	o.Set("@owners:as", []interface{}{m.localInfo.GetIdentityPublicKey().String()})
 
-	h := hash.New(o)
+	h := object.NewHash(o)
 
 	// store the object
 	if err := m.store.Put(o); err != nil {
@@ -271,7 +270,7 @@ func (m *orchestrator) Put(o object.Object) error {
 	leaves := stream.GetStreamLeaves(os)
 	leafHashes := make([]object.Hash, len(leaves))
 	for i, p := range leaves {
-		leafHashes[i] = hash.New(p)
+		leafHashes[i] = object.NewHash(p)
 	}
 
 	// send announcements about new hashes
@@ -283,7 +282,7 @@ func (m *orchestrator) Put(o object.Object) error {
 		},
 	}
 
-	sig, err := crypto.NewSignature(
+	sig, err := object.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
 		announcement.ToObject(),
 	)
@@ -408,7 +407,7 @@ func (m *orchestrator) handleStreamRequest(
 	// get only the object hashes
 	hs := []object.Hash{}
 	for _, o := range vs {
-		hs = append(hs, hash.New(o))
+		hs = append(hs, object.NewHash(o))
 	}
 
 	res := &stream.Response{
@@ -419,7 +418,7 @@ func (m *orchestrator) handleStreamRequest(
 			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
-	sig, err := crypto.NewSignature(
+	sig, err := object.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
 		req.ToObject(),
 	)
@@ -478,7 +477,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 		obj := obj
 		res.Objects[i] = &obj
 	}
-	sig, err := crypto.NewSignature(
+	sig, err := object.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
 		req.ToObject(),
 	)

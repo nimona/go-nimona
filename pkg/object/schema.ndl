@@ -1,0 +1,14 @@
+package nimona.io/object
+
+object nimona.io/object.SchemaProperty {
+    name string
+    type string
+    hint string
+    isRepeated bool
+    isOptional bool
+    properties repeated SchemaProperty
+}
+
+object nimona.io/object.SchemaObject {
+    properties repeated SchemaProperty
+}

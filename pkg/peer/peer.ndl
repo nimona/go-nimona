@@ -7,7 +7,7 @@ signed object nimona.io/peer.Peer {
     addresses repeated string
     bloom repeated int
     contentTypes repeated string
-    certificates repeated nimona.io/crypto.Certificate
+    certificates repeated nimona.io/object.Certificate
     relays repeated nimona.io/crypto.PublicKey
 }
 

@@ -9,7 +9,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -56,7 +55,7 @@ func (m *orchestrator) Sync(
 	leafObjects := stream.GetStreamLeaves(knownObjects)
 	leaves := make([]object.Hash, len(leafObjects))
 	for i, lo := range leafObjects {
-		leaves[i] = hash.New(lo)
+		leaves[i] = object.NewHash(lo)
 	}
 
 	// setup logger
@@ -84,7 +83,7 @@ func (m *orchestrator) Sync(
 		allObjects := map[object.Hash]syncStatus{}
 		// add existing objects as completed
 		for _, knownObject := range knownObjects {
-			allObjects[hash.New(knownObject)] = syncStatusComplete
+			allObjects[object.NewHash(knownObject)] = syncStatusComplete
 		}
 		for {
 			e, err := sub.Next()
@@ -140,7 +139,7 @@ func (m *orchestrator) Sync(
 						m.localInfo.GetIdentityPublicKey(),
 					},
 				}
-				sig, err := crypto.NewSignature(
+				sig, err := object.NewSignature(
 					m.localInfo.GetPeerPrivateKey(),
 					objReq.ToObject(),
 				)
@@ -180,7 +179,7 @@ func (m *orchestrator) Sync(
 					obj := obj
 					// check sync status for object
 					// and push it to newObjects if it was not completed
-					objectHash := hash.New(*obj)
+					objectHash := object.NewHash(*obj)
 					// TODO do we care if this was not requested?
 					status, ok := allObjects[objectHash]
 					if ok && status == syncStatusComplete {
@@ -210,7 +209,7 @@ func (m *orchestrator) Sync(
 			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
-	sig, err := crypto.NewSignature(
+	sig, err := object.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
 		req.ToObject(),
 	)

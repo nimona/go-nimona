@@ -71,12 +71,12 @@ func (e {{ structName $object.Name }}) GetType() string {
 	return "{{ $object.Name }}"
 }
 
-{{ if neq $.Package "nimona.io/schema" }}
-func (e {{ structName $object.Name }}) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
+{{- if hnp $object.Name "nimona.io/object.Schema" }}
+func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
 		{{- range $member := $object.Members }}
-			&schema.Property{
+			&object.SchemaProperty{
 				Name: "{{ $member.Tag }}",
 				Type: "{{ $member.SimpleType }}",
 				Hint: "{{ $member.Hint }}",
@@ -141,7 +141,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 			{{- end }}
 		{{- end }}
 	{{- end }}
-	{{- if neq $.Package "nimona.io/schema" }}
+	{{- if hnp $object.Name "nimona.io/object.Schema" }}
 	if schema := e.GetSchema(); schema != nil {
 		m["_schema:o"] = schema.ToObject().ToMap()
 	}
@@ -186,6 +186,12 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		"neq": func(a, b string) bool {
 			return a != b
 		},
+		"hp": func(a, b string) bool {
+			return strings.HasPrefix(a, b)
+		},
+		"hnp": func(a, b string) bool {
+			return !strings.HasPrefix(a, b)
+		},
 	}).Parse(tpl)
 	if err != nil {
 		return nil, err
@@ -218,8 +224,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				doc.Objects[k].Members,
 				&Member{
 					Name:       "Signature",
-					Type:       "nimona.io/crypto.Signature",
-					SimpleType: "nimona.io/crypto.Signature",
+					Type:       "nimona.io/object.Signature",
+					SimpleType: "nimona.io/object.Signature",
 					Tag:        "_signature",
 					Hint:       "o",
 					IsObject:   true,
@@ -267,7 +273,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 
 	res := out.String()
 	if doc.Package == "nimona.io/object" {
-		res = strings.ReplaceAll(res, "object.", "")
+		res = strings.ReplaceAll(res, "object.Object", "Object")
+		res = strings.ReplaceAll(res, "*object.Schema", "*Schema")
+		res = strings.ReplaceAll(res, "&object.Schema", "&Schema")
 	}
 
 	return []byte(res), nil

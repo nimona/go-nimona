@@ -6,7 +6,6 @@ import (
 	json "encoding/json"
 
 	object "nimona.io/pkg/object"
-	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -14,7 +13,7 @@ type (
 		HashType string `json:"hashType:s,omitempty"`
 		Digest   []byte `json:"digest:d,omitempty"`
 	}
-	Signature struct {
+	ObjectSignature struct {
 		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
 		Algorithm string     `json:"algorithm:s,omitempty"`
 		R         []byte     `json:"r:d,omitempty"`
@@ -42,18 +41,17 @@ type (
 func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
-
-func (e Hash) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Hash) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "hashType",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "digest",
 				Type:       "data",
 				Hint:       "d",
@@ -84,35 +82,34 @@ func (e *Hash) FromObject(o object.Object) error {
 	return json.Unmarshal(b, e)
 }
 
-func (e Signature) GetType() string {
-	return "example/crypto.Signature"
+func (e ObjectSignature) GetType() string {
+	return "example/object.Signature"
 }
-
-func (e Signature) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e ObjectSignature) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "publicKey",
 				Type:       "PublicKey",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "algorithm",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "r",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "s",
 				Type:       "data",
 				Hint:       "d",
@@ -123,9 +120,9 @@ func (e Signature) GetSchema() *schema.Object {
 	}
 }
 
-func (e Signature) ToObject() object.Object {
+func (e ObjectSignature) ToObject() object.Object {
 	m := map[string]interface{}{}
-	m["@type:s"] = "example/crypto.Signature"
+	m["@type:s"] = "example/object.Signature"
 	if e.PublicKey != nil {
 		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
@@ -144,7 +141,7 @@ func (e Signature) ToObject() object.Object {
 	return object.Object(m)
 }
 
-func (e *Signature) FromObject(o object.Object) error {
+func (e *ObjectSignature) FromObject(o object.Object) error {
 	b, _ := json.Marshal(map[string]interface{}(o))
 	return json.Unmarshal(b, e)
 }
@@ -152,53 +149,52 @@ func (e *Signature) FromObject(o object.Object) error {
 func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
-
-func (e PrivateKey) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e PrivateKey) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "publicKey",
 				Type:       "PublicKey",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "keyType",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "algorithm",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "curve",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "x",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "y",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "d",
 				Type:       "data",
 				Hint:       "d",
@@ -247,46 +243,45 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
-
-func (e PublicKey) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e PublicKey) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "keyType",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "algorithm",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "curve",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "x",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "y",
 				Type:       "data",
 				Hint:       "d",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
 				Type:       "Signature",
 				Hint:       "o",

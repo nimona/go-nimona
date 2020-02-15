@@ -7,6 +7,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
+	object "nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -55,7 +56,7 @@ func (hs *Handshake) handleIncoming(
 		},
 	}
 	so := syn.ToObject()
-	if err := crypto.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +95,7 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	ao := ack.ToObject()
-	if err := crypto.Sign(ao, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(ao, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -148,7 +149,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	}
 
 	sao := synAck.ToObject()
-	if err := crypto.Sign(sao, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(sao, hs.local.GetPeerPrivateKey()); err != nil {
 		logger.Warn(
 			"could not sign for syn ack object", log.Error(err))
 		// TODO close conn?

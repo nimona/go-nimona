@@ -7,23 +7,22 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	schema "nimona.io/pkg/schema"
 )
 
 type (
 	Syn struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	SynAck struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	Ack struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -31,25 +30,24 @@ type (
 func (e Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
-
-func (e Syn) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Syn) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "nonce",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -86,25 +84,24 @@ func (e *Syn) FromObject(o object.Object) error {
 func (e SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
-
-func (e SynAck) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e SynAck) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "nonce",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -141,25 +138,24 @@ func (e *SynAck) FromObject(o object.Object) error {
 func (e Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
-
-func (e Ack) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Ack) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "nonce",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",

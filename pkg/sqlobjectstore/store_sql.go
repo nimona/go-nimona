@@ -8,7 +8,6 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
@@ -159,7 +158,7 @@ func (st *Store) Put(
 	}
 
 	objectType := obj.GetType()
-	objectHash := hash.New(obj).String()
+	objectHash := object.NewHash(obj).String()
 	streamHash := stream.GetStream(obj).String()
 	signerPublicKey := stream.GetSigner(obj).String()
 	// TODO support multiple owners
@@ -394,7 +393,7 @@ func (st *Store) Filter(
 		}
 
 		objects = append(objects, obj)
-		hashes = append(hashes, hash.New(obj))
+		hashes = append(hashes, object.NewHash(obj))
 	}
 
 	if len(hashes) == 0 {

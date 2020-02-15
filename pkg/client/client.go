@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
@@ -20,7 +19,7 @@ type (
 		httpClient *http.Client
 	}
 	InfoResponse struct {
-		Signature   *crypto.Signature `json:"_signature:o"`
+		Signature   *object.Signature `json:"_signature:o"`
 		Hash        string            `json:"_hash"`
 		Fingerprint string            `json:"_fingerprint"`
 		Addresses   []string          `json:"addresses:as"`

@@ -7,7 +7,6 @@ import (
 
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	schema "nimona.io/pkg/schema"
 )
 
 type (
@@ -21,14 +20,14 @@ type (
 		CreatedDateTime string             `json:"createdDateTime:s,omitempty"`
 		PartitionKeys   []string           `json:"partitionKeys:as,omitempty"`
 		Policies        []*Policy          `json:"policies:ao,omitempty"`
-		Signature       *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature       *object.Signature  `json:"_signature:o,omitempty"`
 		Owners          []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	PoliciesUpdated struct {
 		Stream    *crypto.Hash       `json:"stream:o,omitempty"`
 		Parents   []*crypto.Hash     `json:"parents:ao,omitempty"`
 		Policies  []*Policy          `json:"policies:ao,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -36,32 +35,31 @@ type (
 func (e Policy) GetType() string {
 	return "example/stream.Policy"
 }
-
-func (e Policy) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Policy) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "subjects",
 				Type:       "example/crypto.PublicKey",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "resources",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "conditions",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "action",
 				Type:       "string",
 				Hint:       "s",
@@ -107,39 +105,38 @@ func (e *Policy) FromObject(o object.Object) error {
 func (e Created) GetType() string {
 	return "example/stream.Created"
 }
-
-func (e Created) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e Created) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "createdDateTime",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "partitionKeys",
 				Type:       "string",
 				Hint:       "s",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "policies",
 				Type:       "Policy",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
@@ -188,39 +185,38 @@ func (e *Created) FromObject(o object.Object) error {
 func (e PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
-
-func (e PoliciesUpdated) GetSchema() *schema.Object {
-	return &schema.Object{
-		Properties: []*schema.Property{
-			&schema.Property{
+func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{
+			&object.SchemaProperty{
 				Name:       "stream",
 				Type:       "example/crypto.Hash",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "parents",
 				Type:       "example/crypto.Hash",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "policies",
 				Type:       "Policy",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "_signature",
-				Type:       "nimona.io/crypto.Signature",
+				Type:       "nimona.io/object.Signature",
 				Hint:       "o",
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&schema.Property{
+			&object.SchemaProperty{
 				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
