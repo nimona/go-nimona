@@ -28,44 +28,58 @@ TODO
 
 TODO
 
+```json
+{
+  "@type:s": "nimona.io/profile.Created",
+  "@authors:s": ["f00"],
+  "@policy:o": {
+    "subjects:as": ["*"],
+    "resources:as": ["*"],
+    "action:s": "READ",
+    "allow:b": true
+  }
+}
+```
+
 ## Hypothetical roots
 
-Since streams are identified by the hash of their root object, in order for
-someone to retrieve a stream they must at the very least know that hash.
+As mentioned before, streams are identified by the hash of their root object.
+In order for a peer to find the providers or a stream and get its objects,
+it must at the very least know its identifier.
+This is usually not an issue as most times a peer will learn about the
+existence of a stream from somewhere before deciding to request it.
+There are some cases though where that might not be the case, especially
+when looking for something that might be considered relatively "well known".
 
-A hypothetical root is an object that identifies a stream that can be assumed
-exists given the type of stream and the identity that would have created it.
+An example of this would be the profile stream of an identity.
+Let's say we are looking at a blog post that a single author.
+Unless the blog post somehow contains a link to the author's profile stream,
+there is no other way to easily find the stream's identifier.
+
+This is where hypothetical roots come in.
+
+A hypothetical root is an object that identifies a stream and can be assumed
+exists given the type of stream and the author that would have created it.
 This allows peers to find streams unique to an identity without having to
 somehow learn of their existence.
 
-In addition to the type and identity's key,s the constructed object will also
-need to define a fixed policy that will define the owner as the only one that
-has access to modify this stream.
-This ensures that hypothetical roots can only be created for initially
-private streams.
-The owner can decide to update the policy in subsequent updates.
-
-On their own they do do not hold additional information, but are expected to
-provide it via the related objects that must be signed by identity that was
-assumed.
+Since the hypothetical root does not contain a policy, the stream starts
+off as publicly accessible but writable only by the author.
+The author can subsequently decide to restrict the rest of the stream by
+using a more strict policy.
 
 ---
 
-Identity profiles are a good example for such a use-case.
+Let's go back to our original example of profile streams.
 
-Peer `a11` is wants the profile steam for the identity `f00`.
-All it has to do is construct the hypothetical root, calculate its hash,
-and find its providers on the network.
+Assuming that peer `a11` wants the profile stream for the identity `f00`,
+all it has to do is construct the hypothetical root, calculate its hash,
+and find providers for it on the network.
 
 ```json
 {
   "@type:s": "nimona.io/profile.Created",
-  "@identity:s": "f00",
-  "@policy:o": {
-    "subjects:as": ["f00"],
-    "resources:as": ["*"],
-    "action:s": "ALLOW"
-  }
+  "@authors:as": ["f00"]
 }
 ```
 
@@ -76,8 +90,8 @@ remaining stream.
 ---
 
 The NDL for defining hypothetical roots is as follows.
-Additional objects can be defined in the stream as needed, but the hypothetical
-root cannot have additional properties.
+Additional objects can be defined in the stream as needed, but the
+hypothetical root object itself cannot have additional properties.
 
 ```ndl
 stream nimona.io/profile {
