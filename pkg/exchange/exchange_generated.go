@@ -3,29 +3,27 @@
 package exchange
 
 import (
-	json "encoding/json"
-
 	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	ObjectRequest struct {
-		ObjectHash object.Hash        `json:"objectHash:s,omitempty"`
-		Signature  *object.Signature  `json:"_signature:o,omitempty"`
-		Owners     []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header     object.Header
+		ObjectHash object.Hash
 	}
 	DataForward struct {
-		Recipient crypto.PublicKey   `json:"recipient:s,omitempty"`
-		Data      []byte             `json:"data:d,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header    object.Header
+		Recipient crypto.PublicKey
+		Data      []byte
 	}
 )
 
 func (e ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
+
 func (e ObjectRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -36,50 +34,38 @@ func (e ObjectRequest) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e ObjectRequest) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/exchange.ObjectRequest"
+	d := map[string]interface{}{}
 	if e.ObjectHash != "" {
-		m["objectHash:s"] = e.ObjectHash
+		d["objectHash:s"] = e.ObjectHash
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/exchange.ObjectRequest")
+	return o
 }
 
 func (e *ObjectRequest) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("objectHash:s"); v != nil {
+		e.ObjectHash = object.Hash(v.PrimitiveHinted().(string))
+	}
+	return nil
 }
 
 func (e DataForward) GetType() string {
 	return "nimona.io/exchange.DataForward"
 }
+
 func (e DataForward) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -97,46 +83,36 @@ func (e DataForward) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e DataForward) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/exchange.DataForward"
+	d := map[string]interface{}{}
 	if e.Recipient != "" {
-		m["recipient:s"] = e.Recipient
+		d["recipient:s"] = e.Recipient
 	}
 	if len(e.Data) != 0 {
-		m["data:d"] = e.Data
+		d["data:d"] = e.Data
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/exchange.DataForward")
+	return o
 }
 
 func (e *DataForward) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("recipient:s"); v != nil {
+		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("data:d"); v != nil {
+		e.Data = []byte(v.PrimitiveHinted().([]byte))
+	}
+	return nil
 }

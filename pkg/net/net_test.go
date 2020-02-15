@@ -90,8 +90,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	go func() {
 		cconn, err := n2.Dial(ctx, l1.GetSignedPeer())
 		assert.NoError(t, err)
-		o := object.New()
-		o.FromMap(map[string]interface{}{ // nolint: errcheck
+		o := object.FromMap(map[string]interface{}{ // nolint: errcheck
 			"foo:s": "bar",
 		})
 		err = Write(o, cconn)
@@ -101,9 +100,10 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	sc := <-sconn
 
-	o := object.New()
-	o.FromMap(map[string]interface{}{ // nolint: errcheck
-		"foo:s": "bar",
+	o := object.FromMap(map[string]interface{}{ // nolint: errcheck
+		"data:o": map[string]interface{}{
+			"foo:s": "bar",
+		},
 	})
 	err = Write(o, sc)
 	assert.NoError(t, err)

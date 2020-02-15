@@ -294,7 +294,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		// make a logger from our req context
 		logger := log.FromContext(req.context).With(
 			log.String("recipient", req.recipient.PublicKey().String()),
-			log.String("object.@type", req.object.GetType()),
+			log.String("object.type", req.object.GetType()),
 		)
 		// validate req
 		if req.recipient == nil {
@@ -330,7 +330,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		if lastErr != nil {
 			// convert the object from the request to []byte
 			// todo: find a way to encrypt it
-			payload, err := json.Marshal(req.object)
+			payload, err := json.Marshal(req.object.ToMap())
 			if err != nil {
 				lastErr = err
 			}
@@ -436,11 +436,11 @@ func (w *exchange) handleConnection(
 
 			log.DefaultLogger.Debug(
 				"reading from connection",
-				log.String("payload", payload.Copy().GetType()),
+				log.String("payload", payload.GetType()),
 			)
 			w.inboxes.Publish(&Envelope{
 				Sender:  conn.RemotePeerKey,
-				Payload: payload,
+				Payload: *payload,
 			})
 		}
 	}()
@@ -493,13 +493,13 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 				return err
 			}
 
-			// todo: is this right?
-			o := object.Object{}
-			err := json.Unmarshal(fwd.Data, &o)
+			m := map[string]interface{}{}
+			err := json.Unmarshal(fwd.Data, &m)
 			if err != nil {
 				return errors.Wrap(errors.Error("could not decode data"), err)
 			}
 
+			o := object.FromMap(m)
 			// send the object to the intended recipient
 			// is the original sender lost this way? do we care?
 			if err := w.Send(
@@ -554,7 +554,7 @@ func WithAsync() Option {
 // Send an object to peers resulting from a lookup
 func (w *exchange) Send(
 	ctx context.Context,
-	oo object.Object,
+	o object.Object,
 	recipient peer.LookupOption,
 	options ...Option,
 ) error {
@@ -563,8 +563,6 @@ func (w *exchange) Send(
 	for _, option := range options {
 		option(opts)
 	}
-
-	o := object.Copy(oo) // TODO do we really need to copy?
 
 	lookupOpts := []peer.LookupOption{
 		recipient,
@@ -622,7 +620,7 @@ func (w *exchange) Send(
 // SendToAddress an object to an address
 func (w *exchange) SendToAddress(
 	ctx context.Context,
-	oo object.Object,
+	o object.Object,
 	address string,
 	options ...Option,
 ) error {
@@ -631,8 +629,6 @@ func (w *exchange) SendToAddress(
 	for _, option := range options {
 		option(opts)
 	}
-
-	o := object.Copy(oo) // TODO do we really need to copy?
 
 	outbox := w.getOutbox(crypto.PublicKey(address))
 	errRecv := make(chan error, 1)

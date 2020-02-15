@@ -98,13 +98,13 @@ func (api *API) HandlePostObjects(c *router.Context) {
 		return
 	}
 
-	k := api.local.GetPeerPrivateKey()
-
-	req["@owners:as"] = []interface{}{api.local.GetIdentityPublicKey().String()}
-
 	o := object.FromMap(req)
+	k := api.local.GetPeerPrivateKey()
+	o.Header.Owners = []crypto.PublicKey{
+		api.local.GetIdentityPublicKey(),
+	}
 
-	if err := object.Sign(o, k); err != nil {
+	if err := object.Sign(&o, k); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
@@ -170,7 +170,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := object.Sign(o, api.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(&o, api.local.GetPeerPrivateKey()); err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}

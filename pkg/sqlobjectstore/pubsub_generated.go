@@ -46,7 +46,7 @@ func (s *psSqlStoreSubscription) Cancel() {
 func (s *psSqlStoreSubscription) Next() (object.Object, error) {
 	next, err := s.subscription.Next()
 	if err != nil {
-		return nil, err
+		return object.Object{}, err
 	}
 	return next.(object.Object), nil
 }

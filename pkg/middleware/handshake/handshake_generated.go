@@ -3,33 +3,29 @@
 package handshake
 
 import (
-	json "encoding/json"
-
-	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Syn struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Nonce  string
 	}
 	SynAck struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Nonce  string
 	}
 	Ack struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Nonce  string
 	}
 )
 
 func (e Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
+
 func (e Syn) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -40,50 +36,38 @@ func (e Syn) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e Syn) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/net/handshake.Syn"
+	d := map[string]interface{}{}
 	if e.Nonce != "" {
-		m["nonce:s"] = e.Nonce
+		d["nonce:s"] = e.Nonce
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/net/handshake.Syn")
+	return o
 }
 
 func (e *Syn) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	return nil
 }
 
 func (e SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
+
 func (e SynAck) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -94,50 +78,38 @@ func (e SynAck) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e SynAck) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/net/handshake.SynAck"
+	d := map[string]interface{}{}
 	if e.Nonce != "" {
-		m["nonce:s"] = e.Nonce
+		d["nonce:s"] = e.Nonce
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/net/handshake.SynAck")
+	return o
 }
 
 func (e *SynAck) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	return nil
 }
 
 func (e Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
+
 func (e Ack) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -148,43 +120,30 @@ func (e Ack) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e Ack) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/net/handshake.Ack"
+	d := map[string]interface{}{}
 	if e.Nonce != "" {
-		m["nonce:s"] = e.Nonce
+		d["nonce:s"] = e.Nonce
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/net/handshake.Ack")
+	return o
 }
 
 func (e *Ack) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	return nil
 }

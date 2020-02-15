@@ -5,12 +5,13 @@ import (
 )
 
 // Sign any object (container) with given key and return a signature object (container)
-func Sign(o Object, key crypto.PrivateKey) error {
-	sig, err := NewSignature(key, o)
+// TODO(geoah) remove Sign method and let devs deal with setting the signature
+func Sign(o *Object, key crypto.PrivateKey) error {
+	sig, err := NewSignature(key, *o)
 	if err != nil {
 		return err
 	}
 
-	o.SetSignature(sig.ToObject())
+	o.Header.Signature = sig
 	return nil
 }

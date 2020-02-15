@@ -3,44 +3,47 @@
 package crypto
 
 import (
-	json "encoding/json"
-
+	"nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Hash struct {
-		HashType string `json:"hashType:s,omitempty"`
-		Digest   []byte `json:"digest:d,omitempty"`
+		Header   object.Header
+		HashType string
+		Digest   []byte
 	}
-	ObjectSignature struct {
-		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		R         []byte     `json:"r:d,omitempty"`
-		S         []byte     `json:"s:d,omitempty"`
+	HeaderSignature struct {
+		Header    object.Header
+		PublicKey *PublicKey
+		Algorithm string
+		R         []byte
+		S         []byte
 	}
 	PrivateKey struct {
-		PublicKey *PublicKey `json:"publicKey:o,omitempty"`
-		KeyType   string     `json:"keyType:s,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		Curve     string     `json:"curve:s,omitempty"`
-		X         []byte     `json:"x:d,omitempty"`
-		Y         []byte     `json:"y:d,omitempty"`
-		D         []byte     `json:"d:d,omitempty"`
+		Header    object.Header
+		PublicKey *PublicKey
+		KeyType   string
+		Algorithm string
+		Curve     string
+		X         []byte
+		Y         []byte
+		D         []byte
 	}
 	PublicKey struct {
-		KeyType   string     `json:"keyType:s,omitempty"`
-		Algorithm string     `json:"algorithm:s,omitempty"`
-		Curve     string     `json:"curve:s,omitempty"`
-		X         []byte     `json:"x:d,omitempty"`
-		Y         []byte     `json:"y:d,omitempty"`
-		Signature *Signature `json:"_signature:o,omitempty"`
+		Header    object.Header
+		KeyType   string
+		Algorithm string
+		Curve     string
+		X         []byte
+		Y         []byte
 	}
 )
 
 func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
+
 func (e Hash) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -63,29 +66,40 @@ func (e Hash) GetSchema() *object.SchemaObject {
 }
 
 func (e Hash) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "example/crypto.Hash"
+	d := map[string]interface{}{}
 	if e.HashType != "" {
-		m["hashType:s"] = e.HashType
+		d["hashType:s"] = e.HashType
 	}
 	if len(e.Digest) != 0 {
-		m["digest:d"] = e.Digest
+		d["digest:d"] = e.Digest
 	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	return object.Object(m)
+	o.SetType("example/crypto.Hash")
+	return o
 }
 
 func (e *Hash) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("hashType:s"); v != nil {
+		e.HashType = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("digest:d"); v != nil {
+		e.Digest = []byte(v.PrimitiveHinted().([]byte))
+	}
+	return nil
 }
 
-func (e ObjectSignature) GetType() string {
-	return "example/object.Signature"
+func (e HeaderSignature) GetType() string {
+	return "example/object.Header.Signature"
 }
-func (e ObjectSignature) GetSchema() *object.SchemaObject {
+
+func (e HeaderSignature) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
 			&object.SchemaProperty{
@@ -120,35 +134,55 @@ func (e ObjectSignature) GetSchema() *object.SchemaObject {
 	}
 }
 
-func (e ObjectSignature) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "example/object.Signature"
+func (e HeaderSignature) ToObject() object.Object {
+	d := map[string]interface{}{}
 	if e.PublicKey != nil {
-		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
+		d["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
 	if e.Algorithm != "" {
-		m["algorithm:s"] = e.Algorithm
+		d["algorithm:s"] = e.Algorithm
 	}
 	if len(e.R) != 0 {
-		m["r:d"] = e.R
+		d["r:d"] = e.R
 	}
 	if len(e.S) != 0 {
-		m["s:d"] = e.S
+		d["s:d"] = e.S
 	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	return object.Object(m)
+	o.SetType("example/object.Header.Signature")
+	return o
 }
 
-func (e *ObjectSignature) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+func (e *HeaderSignature) FromObject(o object.Object) error {
+	e.Header = o.Header
+	if v := o.Data.Value("publicKey:o"); v != nil {
+		es := &PublicKey{}
+		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
+		es.FromObject(eo)
+		e.PublicKey = es
+	}
+	if v := o.Data.Value("algorithm:s"); v != nil {
+		e.Algorithm = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("r:d"); v != nil {
+		e.R = []byte(v.PrimitiveHinted().([]byte))
+	}
+	if v := o.Data.Value("s:d"); v != nil {
+		e.S = []byte(v.PrimitiveHinted().([]byte))
+	}
+	return nil
 }
 
 func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
+
 func (e PrivateKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -206,43 +240,72 @@ func (e PrivateKey) GetSchema() *object.SchemaObject {
 }
 
 func (e PrivateKey) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "example/crypto.PrivateKey"
+	d := map[string]interface{}{}
 	if e.PublicKey != nil {
-		m["publicKey:o"] = e.PublicKey.ToObject().ToMap()
+		d["publicKey:o"] = e.PublicKey.ToObject().ToMap()
 	}
 	if e.KeyType != "" {
-		m["keyType:s"] = e.KeyType
+		d["keyType:s"] = e.KeyType
 	}
 	if e.Algorithm != "" {
-		m["algorithm:s"] = e.Algorithm
+		d["algorithm:s"] = e.Algorithm
 	}
 	if e.Curve != "" {
-		m["curve:s"] = e.Curve
+		d["curve:s"] = e.Curve
 	}
 	if len(e.X) != 0 {
-		m["x:d"] = e.X
+		d["x:d"] = e.X
 	}
 	if len(e.Y) != 0 {
-		m["y:d"] = e.Y
+		d["y:d"] = e.Y
 	}
 	if len(e.D) != 0 {
-		m["d:d"] = e.D
+		d["d:d"] = e.D
 	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	return object.Object(m)
+	o.SetType("example/crypto.PrivateKey")
+	return o
 }
 
 func (e *PrivateKey) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("publicKey:o"); v != nil {
+		es := &PublicKey{}
+		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
+		es.FromObject(eo)
+		e.PublicKey = es
+	}
+	if v := o.Data.Value("keyType:s"); v != nil {
+		e.KeyType = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("algorithm:s"); v != nil {
+		e.Algorithm = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("curve:s"); v != nil {
+		e.Curve = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("x:d"); v != nil {
+		e.X = []byte(v.PrimitiveHinted().([]byte))
+	}
+	if v := o.Data.Value("y:d"); v != nil {
+		e.Y = []byte(v.PrimitiveHinted().([]byte))
+	}
+	if v := o.Data.Value("d:d"); v != nil {
+		e.D = []byte(v.PrimitiveHinted().([]byte))
+	}
+	return nil
 }
 
 func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
+
 func (e PublicKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -281,45 +344,54 @@ func (e PublicKey) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e PublicKey) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "example/crypto.PublicKey"
+	d := map[string]interface{}{}
 	if e.KeyType != "" {
-		m["keyType:s"] = e.KeyType
+		d["keyType:s"] = e.KeyType
 	}
 	if e.Algorithm != "" {
-		m["algorithm:s"] = e.Algorithm
+		d["algorithm:s"] = e.Algorithm
 	}
 	if e.Curve != "" {
-		m["curve:s"] = e.Curve
+		d["curve:s"] = e.Curve
 	}
 	if len(e.X) != 0 {
-		m["x:d"] = e.X
+		d["x:d"] = e.X
 	}
 	if len(e.Y) != 0 {
-		m["y:d"] = e.Y
+		d["y:d"] = e.Y
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("example/crypto.PublicKey")
+	return o
 }
 
 func (e *PublicKey) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("keyType:s"); v != nil {
+		e.KeyType = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("algorithm:s"); v != nil {
+		e.Algorithm = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("curve:s"); v != nil {
+		e.Curve = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("x:d"); v != nil {
+		e.X = []byte(v.PrimitiveHinted().([]byte))
+	}
+	if v := o.Data.Value("y:d"); v != nil {
+		e.Y = []byte(v.PrimitiveHinted().([]byte))
+	}
+	return nil
 }

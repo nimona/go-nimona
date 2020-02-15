@@ -5,7 +5,7 @@ object example/crypto.Hash {
     digest data
 }
 
-object example/object.Signature {
+object example/object.Header.Signature {
     publicKey PublicKey
     algorithm string
     r data
@@ -28,5 +28,4 @@ object example/crypto.PublicKey {
     curve string
     x data
     y data
-    _signature Signature
 }

@@ -10,6 +10,7 @@ const (
 	EBRACE     Token = "EBRACE"
 	EOF        Token = "EOF"
 	OBJECT     Token = "OBJECT"
+	MAP        Token = "MAP"
 	LINK       Token = "LINK"
 	ROOT       Token = "ROOT"
 	REPEATED   Token = "REPEATED"
@@ -31,6 +32,7 @@ var (
 		"import":   IMPORT,
 		"stream":   STREAM,
 		"object":   OBJECT,
+		"map":      MAP,
 		"@link":    LINK,
 		"root":     ROOT,
 		"repeated": REPEATED,

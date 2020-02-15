@@ -1,54 +1,32 @@
 package stream
 
 import (
-	"encoding/json"
 	"strings"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 )
 
-type (
-	common struct {
-		Context   string             `json:"@ctx:s,omitempty"`
-		Type      string             `json:"@type:s,omitempty"`
-		Stream    object.Hash        `json:"@stream:s,omitempty"`
-		Parents   []object.Hash      `json:"@parents:as,omitempty"`
-		Policy    *Policy            `json:"@policy:o,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as"`
-	}
-)
-
-func toCommon(o object.Object) *common {
-	c := &common{}
-	b, _ := json.Marshal(map[string]interface{}(o)) // nolint: errcheck
-	json.Unmarshal(b, c)                            // nolint: errcheck
-	return c
-}
+// TODO(geoah) remove all helpers
 
 func GetParents(o object.Object) []object.Hash {
-	return toCommon(o).Parents
+	return o.Header.Parents
 }
 
 func GetStream(o object.Object) object.Hash {
-	return toCommon(o).Stream
+	return o.Header.Stream
 }
 
-func GetPolicy(o object.Object) *Policy {
-	return toCommon(o).Policy
+func GetPolicy(o object.Object) object.Policy {
+	return o.Header.Policy
 }
 
 func GetOwners(o object.Object) []crypto.PublicKey {
-	return toCommon(o).Owners
+	return o.Header.Owners
 }
 
 func GetSigner(o object.Object) crypto.PublicKey {
-	c := toCommon(o)
-	if c.Signature == nil || c.Signature.Signer.IsEmpty() {
-		return ""
-	}
-	return c.Signature.Signer
+	return o.Header.Signature.Signer
 }
 
 func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
@@ -56,13 +34,12 @@ func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 	pks := []crypto.PublicKey{}
 	for _, o := range os {
 		p := GetPolicy(o)
-		if p == nil {
-			continue
-		}
-		switch strings.ToLower(p.Action) {
-		case "allow":
-			for _, s := range p.Subjects {
-				pks = append(pks, crypto.PublicKey(s))
+		for _, a := range p.Actions {
+			switch strings.ToLower(a) {
+			case "allow":
+				for _, s := range p.Subjects {
+					pks = append(pks, crypto.PublicKey(s))
+				}
 			}
 		}
 	}
@@ -85,7 +62,7 @@ func GetStreamLeaves(os []object.Object) []object.Object {
 
 	os = []object.Object{}
 	for h, isParent := range hm {
-		if isParent == false {
+		if !isParent {
 			os = append(os, om[h])
 		}
 	}

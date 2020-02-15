@@ -2,44 +2,43 @@
 
 package object
 
-import (
-	json "encoding/json"
-)
+import "nimona.io/pkg/immutable"
 
 type (
 	SchemaProperty struct {
-		Name       string            `json:"name:s,omitempty"`
-		Type       string            `json:"type:s,omitempty"`
-		Hint       string            `json:"hint:s,omitempty"`
-		IsRepeated bool              `json:"isRepeated:b,omitempty"`
-		IsOptional bool              `json:"isOptional:b,omitempty"`
-		Properties []*SchemaProperty `json:"properties:ao,omitempty"`
+		Header     Header
+		Name       string
+		Type       string
+		Hint       string
+		IsRepeated bool
+		IsOptional bool
+		Properties []*SchemaProperty
 	}
 	SchemaObject struct {
-		Properties []*SchemaProperty `json:"properties:ao,omitempty"`
+		Header     Header
+		Properties []*SchemaProperty
 	}
 )
 
 func (e SchemaProperty) GetType() string {
-	return "nimona.io/object.SchemaProperty"
+	return "nimona.io/SchemaProperty"
 }
 
 func (e SchemaProperty) ToObject() Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/object.SchemaProperty"
+	d := map[string]interface{}{}
 	if e.Name != "" {
-		m["name:s"] = e.Name
+		d["name:s"] = e.Name
 	}
 	if e.Type != "" {
-		m["type:s"] = e.Type
+		d["type:s"] = e.Type
 	}
 	if e.Hint != "" {
-		m["hint:s"] = e.Hint
+		d["hint:s"] = e.Hint
 	}
-	m["isRepeated:b"] = e.IsRepeated
-	m["isOptional:b"] = e.IsOptional
+	d["isRepeated:b"] = e.IsRepeated
+	d["isOptional:b"] = e.IsOptional
 	if len(e.Properties) > 0 {
-		m["properties:ao"] = func() []interface{} {
+		d["properties:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Properties))
 			for i, v := range e.Properties {
 				a[i] = v.ToObject().ToMap()
@@ -47,23 +46,52 @@ func (e SchemaProperty) ToObject() Object {
 			return a
 		}()
 	}
-	return Object(m)
+	o := Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
+	}
+	o.SetType("nimona.io/SchemaProperty")
+	return o
 }
 
 func (e *SchemaProperty) FromObject(o Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("name:s"); v != nil {
+		e.Name = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("type:s"); v != nil {
+		e.Type = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("hint:s"); v != nil {
+		e.Hint = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("isRepeated:b"); v != nil {
+		e.IsRepeated = bool(v.PrimitiveHinted().(bool))
+	}
+	if v := o.Data.Value("isOptional:b"); v != nil {
+		e.IsOptional = bool(v.PrimitiveHinted().(bool))
+	}
+	if v := o.Data.Value("properties:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Properties = make([]*SchemaProperty, len(m))
+		for i, iv := range m {
+			es := &SchemaProperty{}
+			eo := FromMap(iv.(map[string]interface{}))
+			es.FromObject(eo)
+			e.Properties[i] = es
+		}
+	}
+	return nil
 }
 
 func (e SchemaObject) GetType() string {
-	return "nimona.io/object.SchemaObject"
+	return "nimona.io/SchemaObject"
 }
 
 func (e SchemaObject) ToObject() Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/object.SchemaObject"
+	d := map[string]interface{}{}
 	if len(e.Properties) > 0 {
-		m["properties:ao"] = func() []interface{} {
+		d["properties:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Properties))
 			for i, v := range e.Properties {
 				a[i] = v.ToObject().ToMap()
@@ -71,10 +99,25 @@ func (e SchemaObject) ToObject() Object {
 			return a
 		}()
 	}
-	return Object(m)
+	o := Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
+	}
+	o.SetType("nimona.io/SchemaObject")
+	return o
 }
 
 func (e *SchemaObject) FromObject(o Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("properties:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Properties = make([]*SchemaProperty, len(m))
+		for i, iv := range m {
+			es := &SchemaProperty{}
+			eo := FromMap(iv.(map[string]interface{}))
+			es.FromObject(eo)
+			e.Properties[i] = es
+		}
+	}
+	return nil
 }

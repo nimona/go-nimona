@@ -29,7 +29,7 @@ func TestList(t *testing.T) {
 	values := []string{}
 	l1.Iterate(func(v Value) {
 		iCalls++
-		values = append(values, v.Primitive().(string))
+		values = append(values, v.PrimitiveHinted().(string))
 	})
 	require.Equal(t, 2, iCalls)
 	require.Len(t, values, 2)

@@ -69,10 +69,12 @@ func (st *Store) Close() error {
 func (st *Store) Get(
 	hash object.Hash,
 ) (object.Object, error) {
+	obj := object.Object{}
+
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
-		return nil, errors.Wrap(
+		return obj, errors.Wrap(
 			err,
 			errors.New("could not prepare query"),
 		)
@@ -80,28 +82,30 @@ func (st *Store) Get(
 
 	row := stmt.QueryRow(hash.String())
 
-	obj := object.New()
+	m := map[string]interface{}{}
 	data := []byte{}
 
 	if err := row.Scan(&data); err != nil {
-		return nil, errors.Wrap(
+		return obj, errors.Wrap(
 			err,
 			ErrNotFound,
 		)
 	}
 
-	if err := json.Unmarshal(data, &obj); err != nil {
-		return nil, errors.Wrap(
+	if err := json.Unmarshal(data, &m); err != nil {
+		return obj, errors.Wrap(
 			err,
 			errors.New("could not unmarshal data"),
 		)
 	}
 
+	obj = object.FromMap(m)
+
 	// update the last accessed column
 	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
 	if err != nil {
-		return nil, errors.Wrap(
+		return obj, errors.Wrap(
 			err,
 			errors.New("could not prepare query"),
 		)
@@ -111,7 +115,7 @@ func (st *Store) Get(
 		time.Now().Unix(),
 		hash.String(),
 	); err != nil {
-		return nil, errors.Wrap(
+		return obj, errors.Wrap(
 			err,
 			errors.New("could not update last access"),
 		)
@@ -163,8 +167,8 @@ func (st *Store) Put(
 	signerPublicKey := stream.GetSigner(obj).String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if len(stream.GetOwners(obj)) > 0 {
-		ownerPublicKey = stream.GetOwners(obj)[0].String()
+	if len(obj.Header.Owners) > 0 {
+		ownerPublicKey = obj.Header.Owners[0].String()
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
@@ -375,7 +379,6 @@ func (st *Store) Filter(
 	hashes := []interface{}{}
 
 	for rows.Next() {
-		obj := object.New()
 		data := []byte{}
 
 		if err := rows.Scan(&data); err != nil {
@@ -385,13 +388,15 @@ func (st *Store) Filter(
 			)
 		}
 
-		if err := json.Unmarshal(data, &obj); err != nil {
+		m := map[string]interface{}{}
+		if err := json.Unmarshal(data, &m); err != nil {
 			return nil, errors.Wrap(
 				err,
 				errors.New("could not unmarshal data"),
 			)
 		}
 
+		obj := object.FromMap(m)
 		objects = append(objects, obj)
 		hashes = append(hashes, object.NewHash(obj))
 	}

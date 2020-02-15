@@ -12,16 +12,9 @@ const (
 
 // Verify object
 func Verify(o Object) error {
-	if o == nil {
-		return errors.New("missing object")
-	}
-
-	sig, err := GetObjectSignature(o)
-	if err != nil {
-		return errors.Wrap(
-			errors.New("could not get signature"),
-			err,
-		)
+	sig := o.Header.Signature
+	if sig.IsEmpty() {
+		return errors.New("missing signature")
 	}
 
 	h := NewHash(o)

@@ -3,41 +3,38 @@
 package peer
 
 import (
-	json "encoding/json"
-
 	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Peer struct {
-		Version      int64                 `json:"version:i,omitempty"`
-		Addresses    []string              `json:"addresses:as,omitempty"`
-		Bloom        []int64               `json:"bloom:ai,omitempty"`
-		ContentTypes []string              `json:"contentTypes:as,omitempty"`
-		Certificates []*object.Certificate `json:"certificates:ao,omitempty"`
-		Relays       []crypto.PublicKey    `json:"relays:as,omitempty"`
-		Signature    *object.Signature     `json:"_signature:o,omitempty"`
-		Owners       []crypto.PublicKey    `json:"@owners:as,omitempty"`
+		Header       object.Header
+		Version      int64
+		Addresses    []string
+		Bloom        []int64
+		ContentTypes []string
+		Certificates []*object.Certificate
+		Relays       []crypto.PublicKey
 	}
 	LookupRequest struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Bloom     []int64            `json:"bloom:ai,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Nonce  string
+		Bloom  []int64
 	}
 	LookupResponse struct {
-		Nonce     string             `json:"nonce:s,omitempty"`
-		Bloom     []int64            `json:"bloom:ai,omitempty"`
-		Peers     []*Peer            `json:"peers:ao,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Nonce  string
+		Bloom  []int64
+		Peers  []*Peer
 	}
 )
 
 func (e Peer) GetType() string {
 	return "nimona.io/peer.Peer"
 }
+
 func (e Peer) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -83,41 +80,26 @@ func (e Peer) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e Peer) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/peer.Peer"
+	d := map[string]interface{}{}
 	if e.Version != 0 {
-		m["version:i"] = e.Version
+		d["version:i"] = e.Version
 	}
 	if len(e.Addresses) > 0 {
-		m["addresses:as"] = e.Addresses
+		d["addresses:as"] = e.Addresses
 	}
 	if len(e.Bloom) > 0 {
-		m["bloom:ai"] = e.Bloom
+		d["bloom:ai"] = e.Bloom
 	}
 	if len(e.ContentTypes) > 0 {
-		m["contentTypes:as"] = e.ContentTypes
+		d["contentTypes:as"] = e.ContentTypes
 	}
 	if len(e.Certificates) > 0 {
-		m["certificates:ao"] = func() []interface{} {
+		d["certificates:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Certificates))
 			for i, v := range e.Certificates {
 				a[i] = v.ToObject().ToMap()
@@ -126,28 +108,69 @@ func (e Peer) ToObject() object.Object {
 		}()
 	}
 	if len(e.Relays) > 0 {
-		m["relays:as"] = e.Relays
+		d["relays:as"] = e.Relays
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/peer.Peer")
+	return o
 }
 
 func (e *Peer) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("version:i"); v != nil {
+		e.Version = int64(v.PrimitiveHinted().(int64))
+	}
+	if v := o.Data.Value("addresses:as"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]string)
+		e.Addresses = make([]string, len(m))
+		for i, iv := range m {
+			e.Addresses[i] = string(iv)
+		}
+	}
+	if v := o.Data.Value("bloom:ai"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]int64)
+		e.Bloom = make([]int64, len(m))
+		for i, iv := range m {
+			e.Bloom[i] = int64(iv)
+		}
+	}
+	if v := o.Data.Value("contentTypes:as"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]string)
+		e.ContentTypes = make([]string, len(m))
+		for i, iv := range m {
+			e.ContentTypes[i] = string(iv)
+		}
+	}
+	if v := o.Data.Value("certificates:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Certificates = make([]*object.Certificate, len(m))
+		for i, iv := range m {
+			es := &object.Certificate{}
+			eo := object.FromMap(iv.(map[string]interface{}))
+			es.FromObject(eo)
+			e.Certificates[i] = es
+		}
+	}
+	if v := o.Data.Value("relays:as"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]string)
+		e.Relays = make([]crypto.PublicKey, len(m))
+		for i, iv := range m {
+			e.Relays[i] = crypto.PublicKey(iv)
+		}
+	}
+	return nil
 }
 
 func (e LookupRequest) GetType() string {
 	return "nimona.io/LookupRequest"
 }
+
 func (e LookupRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -165,53 +188,48 @@ func (e LookupRequest) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e LookupRequest) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/LookupRequest"
+	d := map[string]interface{}{}
 	if e.Nonce != "" {
-		m["nonce:s"] = e.Nonce
+		d["nonce:s"] = e.Nonce
 	}
 	if len(e.Bloom) > 0 {
-		m["bloom:ai"] = e.Bloom
+		d["bloom:ai"] = e.Bloom
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/LookupRequest")
+	return o
 }
 
 func (e *LookupRequest) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("bloom:ai"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]int64)
+		e.Bloom = make([]int64, len(m))
+		for i, iv := range m {
+			e.Bloom[i] = int64(iv)
+		}
+	}
+	return nil
 }
 
 func (e LookupResponse) GetType() string {
 	return "nimona.io/LookupResponse"
 }
+
 func (e LookupResponse) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -236,35 +254,20 @@ func (e LookupResponse) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e LookupResponse) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "nimona.io/LookupResponse"
+	d := map[string]interface{}{}
 	if e.Nonce != "" {
-		m["nonce:s"] = e.Nonce
+		d["nonce:s"] = e.Nonce
 	}
 	if len(e.Bloom) > 0 {
-		m["bloom:ai"] = e.Bloom
+		d["bloom:ai"] = e.Bloom
 	}
 	if len(e.Peers) > 0 {
-		m["peers:ao"] = func() []interface{} {
+		d["peers:ao"] = func() []interface{} {
 			a := make([]interface{}, len(e.Peers))
 			for i, v := range e.Peers {
 				a[i] = v.ToObject().ToMap()
@@ -272,19 +275,38 @@ func (e LookupResponse) ToObject() object.Object {
 			return a
 		}()
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("nimona.io/LookupResponse")
+	return o
 }
 
 func (e *LookupResponse) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("bloom:ai"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]int64)
+		e.Bloom = make([]int64, len(m))
+		for i, iv := range m {
+			e.Bloom[i] = int64(iv)
+		}
+	}
+	if v := o.Data.Value("peers:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Peers = make([]*Peer, len(m))
+		for i, iv := range m {
+			es := &Peer{}
+			eo := object.FromMap(iv.(map[string]interface{}))
+			es.FromObject(eo)
+			e.Peers[i] = es
+		}
+	}
+	return nil
 }

@@ -16,148 +16,41 @@ func Test_Normalize(t *testing.T) {
 	kx := []byte{111, 39, 65, 188, 215, 49, 84, 43, 192, 187}
 
 	s := fixtures.TestStream{
+		Header: object.Header{
+			Signature: object.Signature{
+				Signer: "foo",
+				Alg:    "alg",
+				X:      kx,
+			},
+			Owners: []crypto.PublicKey{
+				"foo",
+			},
+			Policy: object.Policy{
+				Subjects:  []string{"subject"},
+				Resources: []string{"*"},
+				Actions:   []string{"allow"},
+			},
+		},
 		Nonce: "nonce",
-		Owners: []crypto.PublicKey{
-			"foo",
-		},
-		Policy: &fixtures.TestPolicy{
-			Subjects:  []string{"subject"},
-			Resources: []string{"*"},
-			Action:    "allow",
-		},
-		Signature: &object.Signature{
-			Signer: "foo",
-			Alg:    "alg",
-			X:      kx,
-		},
 	}
 
 	em := map[string]interface{}{
-		"_schema:o": map[string]interface{}{
-			"@type:s": string("nimona.io/object.SchemaObject"),
-			"properties:ao": []interface{}{
-				map[string]interface{}{
-					"@type:s":      string("nimona.io/object.SchemaProperty"),
-					"hint:s":       string("s"),
-					"isOptional:b": bool(false),
-					"isRepeated:b": bool(false),
-					"name:s":       string("nonce"),
-					"type:s":       string("string"),
-				},
-				map[string]interface{}{
-					"@type:s":      string("nimona.io/object.SchemaProperty"),
-					"hint:s":       string("s"),
-					"isOptional:b": bool(false),
-					"isRepeated:b": bool(false),
-					"name:s":       string("createdDateTime"),
-					"type:s":       string("string"),
-				},
-				map[string]interface{}{
-					"@type:s":      string("nimona.io/object.SchemaProperty"),
-					"hint:s":       string("o"),
-					"isOptional:b": bool(false),
-					"isRepeated:b": bool(false),
-					"name:s":       string("@policy"),
-					"type:s":       string("TestPolicy"),
-				},
-				map[string]interface{}{
-					"@type:s":      string("nimona.io/object.SchemaProperty"),
-					"hint:s":       string("o"),
-					"isOptional:b": bool(false),
-					"isRepeated:b": bool(false),
-					"name:s":       string("_signature"),
-					"type:s":       string("nimona.io/object.Signature"),
-				},
-				map[string]interface{}{
-					"@type:s":      string("nimona.io/object.SchemaProperty"),
-					"hint:s":       string("s"),
-					"isOptional:b": bool(false),
-					"isRepeated:b": bool(true),
-					"name:s":       string("@owners"),
-					"type:s":       string("nimona.io/crypto.PublicKey"),
-				},
+		"header:o": map[string]interface{}{
+			"type:s":    "nimona.io/fixtures.TestStream",
+			"owners:as": []string{"foo"},
+			"policy:o": map[string]interface{}{
+				"subjects:as":  []string{"subject"},
+				"resources:as": []string{"*"},
+				"actions:as":   []string{"allow"},
+			},
+			"_signature:o": map[string]interface{}{
+				"signer:s": "foo",
+				"alg:s":    "alg",
+				"x:d":      kx,
 			},
 		},
-		"@type:s":    "nimona.io/fixtures.TestStream",
-		"nonce:s":    "nonce",
-		"@owners:as": []interface{}{"foo"},
-		"@policy:o": map[string]interface{}{
-			"@type:s":      "nimona.io/fixtures.TestPolicy",
-			"subjects:as":  []interface{}{"subject"},
-			"resources:as": []interface{}{"*"},
-			"action:s":     "allow",
-			"_schema:o": map[string]interface{}{
-				"@type:s": string("nimona.io/object.SchemaObject"),
-				"properties:ao": []interface{}{
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(true),
-						"name:s":       string("subjects"),
-						"type:s":       string("string"),
-					},
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(true),
-						"name:s":       string("resources"),
-						"type:s":       string("string"),
-					},
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(true),
-						"name:s":       string("conditions"),
-						"type:s":       string("string"),
-					},
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(false),
-						"name:s":       string("action"),
-						"type:s":       string("string"),
-					},
-				},
-			},
-		},
-		"_signature:o": map[string]interface{}{
-			"_schema:o": map[string]interface{}{
-				"@type:s": string("nimona.io/object.SchemaObject"),
-				"properties:ao": []interface{}{
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(false),
-						"name:s":       string("signer"),
-						"type:s":       string("nimona.io/crypto.PublicKey"),
-					},
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("s"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(false),
-						"name:s":       string("alg"),
-						"type:s":       string("string"),
-					},
-					map[string]interface{}{
-						"@type:s":      string("nimona.io/object.SchemaProperty"),
-						"hint:s":       string("d"),
-						"isOptional:b": bool(false),
-						"isRepeated:b": bool(false),
-						"name:s":       string("x"),
-						"type:s":       string("data"),
-					},
-				},
-			},
-			"@type:s":  "nimona.io/object.Signature",
-			"signer:s": "foo",
-			"alg:s":    "alg",
-			"x:d":      kx,
+		"data:o": map[string]interface{}{
+			"nonce:s": "nonce",
 		},
 	}
 
