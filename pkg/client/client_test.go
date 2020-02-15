@@ -29,7 +29,7 @@ func TestClient_Info(t *testing.T) {
 					"algorithm:s": "OH_ES256",
 				},
 				"_fingerprint": "xxx",
-				"_hash":        "hash:oh1.xxx",
+				"_hash":        "oh1.xxx",
 				"addresses:as": []string{
 					"tcps:127.0.0.1:21013",
 					"tcps:192.168.1.57:21013",

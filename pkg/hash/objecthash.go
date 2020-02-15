@@ -30,7 +30,7 @@ func FromBytes(b []byte) object.Hash {
 }
 
 func formatHash(h contentHash) object.Hash {
-	s := "hash:" + h.algorithm + "." + base58.Encode(h.d)
+	s := h.algorithm + "." + base58.Encode(h.d)
 	return object.Hash(s)
 }
 

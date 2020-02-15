@@ -60,7 +60,7 @@ func Dot(objects []object.Object) (string, error) {
 
 func dot(objects []graphObject) string {
 	clean := func(s string) string {
-		return strings.Replace(s, "hash:oh1.", "", 1)[:5]
+		return strings.Replace(s, "oh1.", "", 1)[:5]
 	}
 	s := ""
 	objectIDs := []string{}
