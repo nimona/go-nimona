@@ -65,7 +65,7 @@ func Test_Normalize(t *testing.T) {
 					"hint:s":       string("o"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(false),
-					"name:s":       string("@signature"),
+					"name:s":       string("_signature"),
 					"type:s":       string("nimona.io/crypto.Signature"),
 				},
 				map[string]interface{}{
@@ -124,7 +124,7 @@ func Test_Normalize(t *testing.T) {
 				},
 			},
 		},
-		"@signature:o": map[string]interface{}{
+		"_signature:o": map[string]interface{}{
 			"_schema:o": map[string]interface{}{
 				"@type:s": string("nimona.io/schema.Object"),
 				"properties:ao": []interface{}{

@@ -14,7 +14,7 @@ type (
 		Subject   PublicKey  `json:"subject:s,omitempty"`
 		Created   string     `json:"created:s,omitempty"`
 		Expires   string     `json:"expires:s,omitempty"`
-		Signature *Signature `json:"@signature:o,omitempty"`
+		Signature *Signature `json:"_signature:o,omitempty"`
 	}
 	Signature struct {
 		Signer PublicKey `json:"signer:s,omitempty"`
@@ -52,7 +52,7 @@ func (e Certificate) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -75,7 +75,7 @@ func (e Certificate) ToObject() object.Object {
 		m["expires:s"] = e.Expires
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["_schema:o"] = schema.ToObject().ToMap()

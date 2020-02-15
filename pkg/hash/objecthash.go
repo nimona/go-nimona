@@ -71,9 +71,6 @@ func objecthash(m map[string]interface{}) ([]byte, error) {
 		if len(k) > 0 && k[0] == '_' {
 			continue
 		}
-		if k == "@signature:o" {
-			continue
-		}
 		ks = append(ks, k)
 	}
 	sort.Strings(ks)

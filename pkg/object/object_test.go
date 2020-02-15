@@ -9,7 +9,7 @@ import (
 func TestObjectMethods(t *testing.T) {
 	m := map[string]interface{}{
 		"@type:s": "ctx-value",
-		"@signature:o": Object{
+		"_signature:o": Object{
 			"@type:s": "-signature",
 		},
 		"something:o": Object{
@@ -20,7 +20,7 @@ func TestObjectMethods(t *testing.T) {
 
 	em := map[string]interface{}{
 		"@type:s": "ctx-value",
-		"@signature:o": map[string]interface{}{
+		"_signature:o": map[string]interface{}{
 			"@type:s": "-signature",
 		},
 		"something:o": map[string]interface{}{
@@ -38,17 +38,17 @@ func TestObjectMethods(t *testing.T) {
 	o := FromMap(m)
 
 	assert.Equal(t, em["@type:s"], o.Get("@type:s"))
-	assert.Equal(t, em["@signature:o"], o.Get("@signature:o"))
+	assert.Equal(t, em["_signature:o"], o.Get("_signature:o"))
 	assert.Equal(t, em["something:o"], o.Get("something:o"))
 
 	n := New()
 
 	n.Set("@type:", m["@type:s"])
-	n.Set("@signature:o", m["@signature:o"])
+	n.Set("_signature:o", m["_signature:o"])
 	n.Set("something:o", m["something:o"])
 
 	assert.Equal(t, em["@type:s"], n.Get("@type:"))
-	assert.Equal(t, em["@signature:o"], n.Get("@signature:o"))
+	assert.Equal(t, em["_signature:o"], n.Get("_signature:o"))
 	assert.Equal(t, em["something:o"], n.Get("something:o"))
 
 	e := New()
@@ -58,8 +58,8 @@ func TestObjectMethods(t *testing.T) {
 	e.SetSignature(*s)
 
 	assert.NotNil(t, e.Get("@type:s"))
-	assert.NotNil(t, e.Get("@signature:o"))
+	assert.NotNil(t, e.Get("_signature:o"))
 
 	assert.Equal(t, em["@type:s"], e.Get("@type:s"))
-	assert.Equal(t, em["@signature:o"], e.Get("@signature:o"))
+	assert.Equal(t, em["_signature:o"], e.Get("_signature:o"))
 }
