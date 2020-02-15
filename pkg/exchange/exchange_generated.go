@@ -12,15 +12,15 @@ import (
 
 type (
 	ObjectRequest struct {
-		ObjectHash object.Hash       `json:"objectHash:s,omitempty"`
-		Signature  *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity   crypto.PublicKey  `json:"@identity:s,omitempty"`
+		ObjectHash object.Hash        `json:"objectHash:s,omitempty"`
+		Signature  *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners     []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	DataForward struct {
-		Recipient crypto.PublicKey  `json:"recipient:s,omitempty"`
-		Data      []byte            `json:"data:d,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Recipient crypto.PublicKey   `json:"recipient:s,omitempty"`
+		Data      []byte             `json:"data:d,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
 
@@ -46,10 +46,10 @@ func (e ObjectRequest) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -65,8 +65,8 @@ func (e ObjectRequest) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
@@ -108,10 +108,10 @@ func (e DataForward) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -130,8 +130,8 @@ func (e DataForward) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()

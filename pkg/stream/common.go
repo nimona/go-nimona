@@ -11,13 +11,13 @@ import (
 
 type (
 	common struct {
-		Context   string            `json:"@ctx:s,omitempty"`
-		Type      string            `json:"@type:s,omitempty"`
-		Stream    object.Hash       `json:"@stream:s,omitempty"`
-		Parents   []object.Hash     `json:"@parents:as,omitempty"`
-		Policy    *Policy           `json:"@policy:o,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s"`
+		Context   string             `json:"@ctx:s,omitempty"`
+		Type      string             `json:"@type:s,omitempty"`
+		Stream    object.Hash        `json:"@stream:s,omitempty"`
+		Parents   []object.Hash      `json:"@parents:as,omitempty"`
+		Policy    *Policy            `json:"@policy:o,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as"`
 	}
 )
 
@@ -40,8 +40,8 @@ func GetPolicy(o object.Object) *Policy {
 	return toCommon(o).Policy
 }
 
-func GetIdentity(o object.Object) crypto.PublicKey {
-	return toCommon(o).Identity
+func GetOwners(o object.Object) []crypto.PublicKey {
+	return toCommon(o).Owners
 }
 
 func GetSigner(o object.Object) crypto.PublicKey {

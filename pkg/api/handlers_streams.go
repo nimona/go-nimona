@@ -82,7 +82,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 					continue
 				}
 				for _, recipient := range subjects {
-					rec := peer.LookupByKey(crypto.PublicKey(recipient))
+					rec := peer.LookupByOwner(crypto.PublicKey(recipient))
 					if err := api.exchange.Send(ctx, req, rec); err != nil {
 						logger.Error("could not send outgoing object",
 							log.Error(err),

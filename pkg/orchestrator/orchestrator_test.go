@@ -175,7 +175,9 @@ func TestSync(t *testing.T) {
 			hash.New(m5.ToObject()),
 			hash.New(m6.ToObject()),
 		},
-		Identity: rkey.PublicKey(),
+		Owners: []crypto.PublicKey{
+			rkey.PublicKey(),
+		},
 	}).ToObject()
 
 	err = crypto.Sign(elo, rkey)
@@ -257,7 +259,7 @@ func TestSync(t *testing.T) {
 	res, err := m.Sync(
 		ctx,
 		oh,
-		peer.LookupByKey(rkey.PublicKey()),
+		peer.LookupByOwner(rkey.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, res)

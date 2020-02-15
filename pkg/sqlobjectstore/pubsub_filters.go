@@ -68,11 +68,16 @@ func FilterBySigner(h crypto.PublicKey) LookupOption {
 	}
 }
 
-func FilterByIdentity(h crypto.PublicKey) LookupOption {
+func FilterByOwner(h crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Identities = append(opts.Lookups.Identities, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return !h.IsEmpty() && h.Equals(stream.GetIdentity(o))
+			for _, owner := range stream.GetOwners(o) {
+				if !h.IsEmpty() && h.Equals(owner) {
+					return true
+				}
+			}
+			return false
 		})
 	}
 }

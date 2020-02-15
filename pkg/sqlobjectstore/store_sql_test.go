@@ -185,7 +185,7 @@ func TestFilter(t *testing.T) {
 		obj := c.ToObject()
 		obj.Set("key:s", fmt.Sprintf("value_%d", i))
 		if i%2 == 0 {
-			obj.Set("@identity:s", s.Signer.String())
+			obj.Set("@owners:as", []interface{}{s.Signer.String()})
 		}
 		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)
@@ -209,7 +209,7 @@ func TestFilter(t *testing.T) {
 	require.Len(t, objects, 1)
 
 	objects, err = store.Filter(
-		FilterByIdentity(k.PublicKey()),
+		FilterByOwner(k.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 3)

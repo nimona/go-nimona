@@ -56,7 +56,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	for _, p := range gatherPeers(ps) {
 		keys = append(keys, p.PublicKey())
 	}
-	api.orchestrator.Sync(ctx, h, peer.LookupByKey(keys...)) // nolint: errcheck
+	api.orchestrator.Sync(ctx, h, peer.LookupByOwner(keys...)) // nolint: errcheck
 
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
@@ -101,7 +101,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 
 	k := api.local.GetPeerPrivateKey()
 
-	req["@identity:s"] = api.local.GetIdentityPublicKey().String()
+	req["@owners:as"] = []interface{}{api.local.GetIdentityPublicKey().String()}
 
 	o := object.FromMap(req)
 
@@ -125,7 +125,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 			ctx := context.New(
 				context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
 			)
-			err := api.exchange.Send(ctx, o, peer.LookupByKey(crypto.PublicKey(s)), exchange.WithAsync())
+			err := api.exchange.Send(ctx, o, peer.LookupByOwner(crypto.PublicKey(s)), exchange.WithAsync())
 			if err != nil {
 				logger := log.FromContext(ctx)
 				logger.Error("could not send to peer", log.String("s", s), log.Error(err))
@@ -167,7 +167,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	req["stream:s"] = rootObjectHash
 	req["parents:as"] = parents
-	req["@identity:s"] = api.local.GetIdentityPublicKey().String()
+	req["@owners:as"] = []interface{}{api.local.GetIdentityPublicKey().String()}
 
 	o := object.FromMap(req)
 
@@ -193,14 +193,14 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return nil
 	}
 
-	id, ok := o.Get("@identity:s").(string)
-	if !ok || id == "" {
+	owners := stream.GetOwners(o)
+	if len(owners) == 0 {
 		return nil
 	}
 
 	opts := []peer.LookupOption{
 		peer.LookupByContentType(o.GetType()),
-		peer.LookupByCertificateSigner(crypto.PublicKey(id)),
+		peer.LookupByCertificateSigner(crypto.PublicKey(owners[0])),
 	}
 
 	ps, err := api.discovery.Lookup(ctx, opts...)
@@ -210,7 +210,7 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 
 	for _, p := range gatherPeers(ps) {
 		// nolint: errcheck
-		api.exchange.Send(ctx, o, peer.LookupByKey(p.PublicKey()), exchange.WithAsync())
+		api.exchange.Send(ctx, o, peer.LookupByOwner(p.PublicKey()), exchange.WithAsync())
 	}
 
 	return nil

@@ -225,12 +225,12 @@ func Generate(doc *Document, output string) ([]byte, error) {
 					IsObject:   true,
 				},
 				&Member{
-					Name:       "Identity",
+					Name:       "Owners",
 					Type:       "nimona.io/crypto.PublicKey",
 					SimpleType: "nimona.io/crypto.PublicKey",
-					Tag:        "@identity",
+					Tag:        "@owners",
 					Hint:       "s",
-					IsRepeated: false,
+					IsRepeated: true,
 					IsObject:   false,
 				},
 			)

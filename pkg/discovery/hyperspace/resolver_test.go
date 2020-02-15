@@ -50,7 +50,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithTimeout(time.Second),
 	)
 
-	peersChan, err := d1.Lookup(ctx, peer.LookupByKey(k0.PublicKey()))
+	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
 
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second),
 	)
-	peersChan, err = d0.Lookup(ctxR2, peer.LookupByKey(k1.PublicKey()))
+	peersChan, err = d0.Lookup(ctxR2, peer.LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -107,7 +107,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second*2),
 	)
-	peersChan, err := d1.Lookup(ctx, peer.LookupByKey(k0.PublicKey()))
+	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -118,7 +118,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	peersChan, err = d2.Lookup(ctx, peer.LookupByKey(k1.PublicKey()))
+	peersChan, err = d2.Lookup(ctx, peer.LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -130,7 +130,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithTimeout(time.Second*2),
 	)
 
-	peersChan, err = d1.Lookup(ctx, peer.LookupByKey(k2.PublicKey()))
+	peersChan, err = d1.Lookup(ctx, peer.LookupByOwner(k2.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)

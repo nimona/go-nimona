@@ -31,6 +31,7 @@ var migrations = []string{
 	`ALTER TABLE Objects ADD LastAccessed INT;`,
 	`ALTER TABLE Objects ADD SignerPublicKey TEXT;`,
 	`ALTER TABLE Objects ADD AuthorPublicKey TEXT;`,
+	`ALTER TABLE Objects RENAME AuthorPublicKey TO OwnerPublicKey;`,
 }
 
 type Store struct {
@@ -137,7 +138,7 @@ func (st *Store) Put(
 		Type,
 		RootHash,
 		SignerPublicKey,
-		AuthorPublicKey,
+		OwnerPublicKey,
 		Body,
 		Created,
 		LastAccessed,
@@ -161,7 +162,11 @@ func (st *Store) Put(
 	objectHash := hash.New(obj).String()
 	streamHash := stream.GetStream(obj).String()
 	signerPublicKey := stream.GetSigner(obj).String()
-	authorPublicKey := stream.GetIdentity(obj).String()
+	// TODO support multiple owners
+	ownerPublicKey := ""
+	if len(stream.GetOwners(obj)) > 0 {
+		ownerPublicKey = stream.GetOwners(obj)[0].String()
+	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
 	// to the object's hash.
@@ -175,7 +180,7 @@ func (st *Store) Put(
 		objectType,
 		streamHash,
 		signerPublicKey,
-		authorPublicKey,
+		ownerPublicKey,
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
@@ -343,7 +348,7 @@ func (st *Store) Filter(
 
 	if len(options.Lookups.Identities) > 0 {
 		qs := strings.Repeat(",?", len(options.Lookups.Identities))[1:]
-		where += "AND AuthorPublicKey IN (" + qs + ") "
+		where += "AND OwnerPublicKey IN (" + qs + ") "
 		whereArgs = append(whereArgs, aktoai(options.Lookups.Identities)...)
 	}
 
