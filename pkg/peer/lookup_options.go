@@ -69,20 +69,22 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 			opts.Filters,
 			func(p *Peer) bool {
 				for _, key := range keys {
-					for _, owner := range p.Owners {
+					for _, owner := range p.Header.Owners {
 						if owner.Equals(key) {
 							return true
 						}
 					}
 					for _, c := range p.Certificates {
-						if c.Signature != nil {
-							if c.Signature.Signer.Equals(key) {
+						if !c.Header.Signature.IsEmpty() {
+							if c.Header.Signature.Signer.Equals(key) {
 								return true
 							}
 						}
 					}
-					if p.Signature != nil {
-						return p.Signature.Signer.Equals(key)
+					if !p.Header.Signature.IsEmpty() {
+						if p.Header.Signature.Signer.Equals(key) {
+							return true
+						}
 					}
 				}
 				return false
@@ -117,7 +119,7 @@ func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
 			opts.Filters,
 			func(p *Peer) bool {
 				for _, c := range p.Certificates {
-					if certSigner.Equals(c.Signature.Signer) {
+					if certSigner.Equals(c.Header.Signature.Signer) {
 						return true
 					}
 				}

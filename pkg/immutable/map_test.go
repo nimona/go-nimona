@@ -8,44 +8,21 @@ import (
 )
 
 func TestFromPrimitive(t *testing.T) {
-	em := map[interface{}]interface{}{
+	em := map[string]interface{}{
 		"foo:s":     "bar2",
 		"not-foo:s": "not-bar0",
-		"nested-map:o": map[interface{}]interface{}{
+		"nested-map:o": map[string]interface{}{
 			"nested-foo:s": "nested-bar",
 		},
-		"foos:as": []interface{}{
+		"foos:as": []string{
 			"foo0",
 			"foo1",
 			"foo2",
 		},
 	}
 
-	// em2 := map[interface{}]interface{}{
-	// 	"foo:s":     "bar2",
-	// 	"not-foo:s": "not-bar0",
-	// 	"nested-map:o": map[interface{}]interface{}{
-	// 		"nested-foo:s": "nested-bar-2",
-	// 	},
-	// 	"foos:as": []interface{}{
-	// 		"foo0",
-	// 		"foo1",
-	// 		"foo2",
-	// 		"foo3",
-	// 	},
-	// }
-
 	v := AnyToValue(":o", em)
-
-	// vm := v.(Map)
-	// v2 := vm.Set(
-	// 	"nested-map:o",
-	// 	vm.Value("foos:as").(List).Append("foo3"),
-	// )
-
-	// spew.Dump(v)
 	m := v.PrimitiveHinted()
-
 	require.Equal(t, em, m)
 }
 
@@ -64,28 +41,14 @@ func TestMapPrimitive(t *testing.T) {
 		Set("nested-map", Map{}.Set("nested-foo", String("nested-bar"))).
 		Set("foos", l)
 
-	p := m.Primitive()
-	assert.Equal(t, map[interface{}]interface{}{
-		"foo":     "bar2",
-		"not-foo": "not-bar0",
-		"nested-map": map[interface{}]interface{}{
-			"nested-foo": "nested-bar",
-		},
-		"foos": []interface{}{
-			"foo0",
-			"foo1",
-			"foo2",
-		},
-	}, p)
-
 	h := m.PrimitiveHinted()
-	assert.Equal(t, map[interface{}]interface{}{
+	assert.Equal(t, map[string]interface{}{
 		"foo:s":     "bar2",
 		"not-foo:s": "not-bar0",
-		"nested-map:o": map[interface{}]interface{}{
+		"nested-map:o": map[string]interface{}{
 			"nested-foo:s": "nested-bar",
 		},
-		"foos:as": []interface{}{
+		"foos:as": []string{
 			"foo0",
 			"foo1",
 			"foo2",
@@ -103,7 +66,7 @@ func TestMap(t *testing.T) {
 	assert.Equal(t, 0, iCalls)
 
 	m = m.Set("foo", String("bar"))
-	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
+	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
 	iCalls = 0
 	m.Iterate(func(_ string, _ Value) {
 		iCalls++
@@ -111,8 +74,8 @@ func TestMap(t *testing.T) {
 	assert.Equal(t, 1, iCalls)
 
 	nm := m.Set("foo", String("nbar"))
-	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
-	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
+	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("foo").PrimitiveHinted().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++
@@ -120,9 +83,9 @@ func TestMap(t *testing.T) {
 	assert.Equal(t, 1, iCalls)
 
 	nm = nm.Set("nfoo", String("nbar"))
-	assert.Equal(t, "bar", m.Value("foo").Primitive().(string))
-	assert.Equal(t, "nbar", nm.Value("foo").Primitive().(string))
-	assert.Equal(t, "nbar", nm.Value("nfoo").Primitive().(string))
+	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("foo").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("nfoo").PrimitiveHinted().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++

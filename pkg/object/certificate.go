@@ -13,7 +13,7 @@ func NewCertificate(subject crypto.PublicKey, issuer crypto.PrivateKey) *Certifi
 		Expires: time.Now().Add(time.Hour * 24 * 365).Format(time.RFC3339),
 	}
 	s, _ := NewSignature(issuer, c.ToObject())
-	c.Signature = s
+	c.Header.Signature = s
 	return c
 }
 

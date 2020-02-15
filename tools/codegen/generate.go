@@ -47,19 +47,20 @@ import (
 type (
 	{{- range $object := .Objects }}
 	{{ structName $object.Name }} struct {
+		Header *object.Header
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{- if $member.IsObject }}
-					{{ $member.Name }} []*{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+					{{ $member.Name }} []*{{ memberType $member.Type }}
 				{{- else }}
-					{{ $member.Name }} []{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+					{{ $member.Name }} []{{ memberType $member.Type }}
 				{{- end }}
 			{{- else if $member.IsPrimitive }}
-				{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+				{{ $member.Name }} {{ memberType $member.Type }}
 			{{- else if $member.IsObject }}
-				{{ $member.Name }} *{{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+				{{ $member.Name }} *{{ memberType $member.Type }}
 			{{- else }}
-				{{ $member.Name }} {{ memberType $member.Type }} ` + "`" + `json:"{{ memberTag $member.Tag $member.Hint $member.IsRepeated }},omitempty"` + "`" + `
+				{{ $member.Name }} {{ memberType $member.Type }}
 			{{- end }}
 		{{- end }}
 	}
@@ -71,7 +72,7 @@ func (e {{ structName $object.Name }}) GetType() string {
 	return "{{ $object.Name }}"
 }
 
-{{- if hnp $object.Name "nimona.io/object.Schema" }}
+{{ if hnp $object.Name "nimona.io/object.Schema" }}
 func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -90,13 +91,12 @@ func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
 {{ end }}
 
 func (e {{ structName $object.Name }}) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "{{ $object.Name }}"
+	d := map[string]interface{}{}
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
 			if len(e.{{ $member.Name }}) > 0 {
-				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = func() []interface{} {
+				d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = func() []interface{} {
 					a := make([]interface{}, len(e.{{ $member.Name }}))
 					for i, v := range e.{{ $member.Name }} {
 						a[i] = v.ToObject().ToMap()
@@ -106,52 +106,147 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 			}
 			{{- else }}
 			if e.{{ $member.Name }} != nil {
-				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}.ToObject().ToMap()
+				d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}.ToObject().ToMap()
 			}
 			{{- end }}
 		{{- else }}
 			{{- if $member.IsRepeated }}
 				if len(e.{{ $member.Name }}) > 0 {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 			{{- else }}
 				{{- if eq $member.Hint "s" }}
 				if e.{{ $member.Name }} != "" {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 				{{- else if eq $member.Hint "i" }}
 				if e.{{ $member.Name }} != 0 {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 				{{- else if eq $member.Hint "d" }}
 				if len(e.{{ $member.Name }}) != 0 {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 				{{- else if eq $member.Hint "u" }}
 				if e.{{ $member.Name }} != 0 {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 				{{- else if eq $member.Hint "f" }}
 				if e.{{ $member.Name }} != 0 {
-					m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+					d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				}
 				{{- else }}
-				m["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
+				d["{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"] = e.{{ $member.Name }}
 				{{- end }}
 			{{- end }}
 		{{- end }}
 	{{- end }}
 	{{- if hnp $object.Name "nimona.io/object.Schema" }}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
 	{{- end }}
-	return object.Object(m)
+	o := object.Object{
+		Header: e.Header,
+		Data: immutable.AnyToValue(":o", d).(immutable.Map),
+	}
+	o.SetType("{{ $object.Name }}")
+	return o
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	{{- range $member := $object.Members }}
+	{{- if $member.IsObject }}
+		{{- if $member.IsRepeated }}
+		if v := o.Data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
+			m := v.PrimitiveHinted().([]interface{})
+			e.{{ $member.Name }} = make([]*{{ memberType $member.Type }}, len(m))
+			for i, iv := range m {
+				{{- if eq $member.Type "nimona.io/object.Object" }}
+					eo := object.FromMap(iv.(map[string]interface{}))
+					e.{{ $member.Name }}[i] = &eo
+				{{- else }}
+					es := &{{ memberType $member.Type }}{}
+					eo := object.FromMap(iv.(map[string]interface{}))
+					es.FromObject(eo)
+					e.{{ $member.Name }}[i] = es
+				{{- end }}
+			}
+		}
+		{{- else }}
+		if v := o.Data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
+			es := &{{ memberType $member.Type }}{}
+			eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
+			es.FromObject(eo)
+			e.{{ $member.Name }} = es
+		}
+		{{- end }}
+	{{- else }}
+		{{- if $member.IsRepeated }}
+		if v := o.Data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
+			{{- if eq $member.Hint "s" }}
+				m := v.PrimitiveHinted().([]string)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else if eq $member.Hint "i" }}
+				m := v.PrimitiveHinted().([]int64)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else if eq $member.Hint "d" }}
+				m := v.PrimitiveHinted().([]byte)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else if eq $member.Hint "u" }}
+				m := v.PrimitiveHinted().([]uint64)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else if eq $member.Hint "f" }}
+				m := v.PrimitiveHinted().([]float64)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else if eq $member.Hint "b" }}
+				m := v.PrimitiveHinted().([]bool)
+				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
+				for i, iv := range m {
+					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
+				}
+			{{- else }}
+				// TODO missing implementation for repeated type hint {{ $member.Hint }}
+			{{- end }}
+		}
+		{{- else }}
+			if v := o.Data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
+				{{- if eq $member.Hint "s" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(string))
+				{{- else if eq $member.Hint "i" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(int64))
+				{{- else if eq $member.Hint "d" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().([]byte))
+				{{- else if eq $member.Hint "u" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(uint64))
+				{{- else if eq $member.Hint "f" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(float64))
+				{{- else if eq $member.Hint "b" }}
+					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(bool))
+				{{- else }}
+					e.{{ $member.Name }} = v.PrimitiveHinted().({{ memberType $member.Type }})
+				{{- end }}
+			}
+		{{- end }}
+	{{- end }}
+{{- end }}
+	return nil
 }
 {{ end }}
 `
@@ -207,7 +302,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		}
 	}
 
-	for k, e := range doc.Objects {
+	for _, e := range doc.Objects {
 		for _, mv := range e.Members {
 			for pk, pv := range primitives {
 				if strings.HasSuffix(mv.Type, pk) {
@@ -219,30 +314,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				}
 			}
 		}
-		if e.IsSigned {
-			doc.Objects[k].Members = append(
-				doc.Objects[k].Members,
-				&Member{
-					Name:       "Signature",
-					Type:       "nimona.io/object.Signature",
-					SimpleType: "nimona.io/object.Signature",
-					Tag:        "_signature",
-					Hint:       "o",
-					IsObject:   true,
-				},
-				&Member{
-					Name:       "Owners",
-					Type:       "nimona.io/crypto.PublicKey",
-					SimpleType: "nimona.io/crypto.PublicKey",
-					Tag:        "@owners",
-					Hint:       "s",
-					IsRepeated: true,
-					IsObject:   false,
-				},
-			)
-		}
 	}
-	// }
 
 	doc.Imports["json"] = "encoding/json"
 	if doc.Package != "nimona.io/object" {
@@ -274,8 +346,13 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	res := out.String()
 	if doc.Package == "nimona.io/object" {
 		res = strings.ReplaceAll(res, "object.Object", "Object")
-		res = strings.ReplaceAll(res, "*object.Schema", "*Schema")
-		res = strings.ReplaceAll(res, "&object.Schema", "&Schema")
+		res = strings.ReplaceAll(res, "object.Schema", "Schema")
+		res = strings.ReplaceAll(res, "object.FromMap", "FromMap")
+		res = strings.ReplaceAll(res, "*object.Header", "Header")
+		res = strings.ReplaceAll(res, "&object.Header", "Header")
+	} else {
+		res = strings.ReplaceAll(res, "*object.Header", "object.Header")
+		res = strings.ReplaceAll(res, "&object.Header", "object.Header")
 	}
 
 	return []byte(res), nil

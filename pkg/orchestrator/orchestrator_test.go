@@ -44,21 +44,25 @@ import (
 
 var (
 	o = object.FromMap(map[string]interface{}{
-		"@type:s": "foo",
-		"foo:s":   "bar",
-		"numbers:ai": []int{
-			1, 2, 3,
+		"header:o": map[string]interface{}{
+			"type:s": "foo",
 		},
-		"strings:as": []string{
-			"a", "b", "c",
-		},
-		"map:o": map[string]interface{}{
-			"nested-foo:s": "bar",
-			"nested-numbers:ai": []interface{}{
+		"data:o": map[string]interface{}{
+			"foo:s": "bar",
+			"numbers:ai": []int{
 				1, 2, 3,
 			},
-			"nested-strings:as": []interface{}{
+			"strings:as": []string{
 				"a", "b", "c",
+			},
+			"map:o": map[string]interface{}{
+				"nested-foo:s": "bar",
+				"nested-numbers:ai": []interface{}{
+					1, 2, 3,
+				},
+				"nested-strings:as": []interface{}{
+					"a", "b", "c",
+				},
 			},
 		},
 	})
@@ -66,52 +70,76 @@ var (
 	oh = object.NewHash(o)
 
 	m1 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			oh,
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				oh.String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m1",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m1",
+		},
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			oh,
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				oh.String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m2",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m2",
+		},
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			object.NewHash(m1.ToObject()),
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				object.NewHash(m1.ToObject()).String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m3",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m3",
+		},
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			object.NewHash(m2.ToObject()),
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				object.NewHash(m2.ToObject()).String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m4",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m4",
+		},
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			object.NewHash(m2.ToObject()),
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				object.NewHash(m2.ToObject()).String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m5",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m5",
+		},
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"@parents:as": []interface{}{
-			object.NewHash(m3.ToObject()),
-			object.NewHash(m4.ToObject()),
+		"header:o": map[string]interface{}{
+			"parents:as": []string{
+				object.NewHash(m3.ToObject()).String(),
+				object.NewHash(m4.ToObject()).String(),
+			},
+			"stream:s": oh.String(),
 		},
-		"@stream:s": oh,
-		"foo:s":     "bar-m6",
+		"data:o": map[string]interface{}{
+			"foo:s": "bar-m6",
+		},
 	})
 )
 
@@ -143,13 +171,13 @@ func TestSync(t *testing.T) {
 	rkey, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	object.Sign(o, rkey)  // nolint: errcheck
-	object.Sign(m1, rkey) // nolint: errcheck
-	object.Sign(m2, rkey) // nolint: errcheck
-	object.Sign(m3, rkey) // nolint: errcheck
-	object.Sign(m4, rkey) // nolint: errcheck
-	object.Sign(m5, rkey) // nolint: errcheck
-	object.Sign(m6, rkey) // nolint: errcheck
+	object.Sign(&o, rkey)  // nolint: errcheck
+	object.Sign(&m1, rkey) // nolint: errcheck
+	object.Sign(&m2, rkey) // nolint: errcheck
+	object.Sign(&m3, rkey) // nolint: errcheck
+	object.Sign(&m4, rkey) // nolint: errcheck
+	object.Sign(&m5, rkey) // nolint: errcheck
+	object.Sign(&m6, rkey) // nolint: errcheck
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
@@ -174,12 +202,14 @@ func TestSync(t *testing.T) {
 			object.NewHash(m5.ToObject()),
 			object.NewHash(m6.ToObject()),
 		},
-		Owners: []crypto.PublicKey{
-			rkey.PublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				rkey.PublicKey(),
+			},
 		},
 	}).ToObject()
 
-	err = object.Sign(elo, rkey)
+	err = object.Sign(&elo, rkey)
 	assert.NoError(t, err)
 
 	nonce := ""

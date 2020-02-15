@@ -1,5 +1,7 @@
 package immutable
 
+import "strings"
+
 type Map struct {
 	mapIterator
 }
@@ -18,6 +20,9 @@ type mapPair struct {
 func (p mapPair) Value(k string) Value {
 	if k == p.k {
 		return p.v
+	}
+	if p.parent == nil {
+		return nil
 	}
 	return p.parent.Value(k)
 }
@@ -44,6 +49,10 @@ func (m Map) Iterate(f func(k string, v Value)) {
 }
 
 func (m Map) Value(k string) Value {
+	ps := strings.Split(k, ":")
+	if len(ps) > 1 {
+		k = ps[0]
+	}
 	if m.mapIterator == nil {
 		return nil
 	}
@@ -51,6 +60,13 @@ func (m Map) Value(k string) Value {
 }
 
 func (m Map) Set(k string, v Value) Map {
+	ps := strings.Split(k, ":")
+	if len(ps) > 1 {
+		k = ps[0]
+		// if ps[1] != v.typeHint() {
+		// 	panic("hint does not match value type")
+		// }
+	}
 	return Map{
 		mapPair{
 			k:      k,
@@ -60,16 +76,11 @@ func (m Map) Set(k string, v Value) Map {
 	}
 }
 
-func (m Map) Primitive() interface{} {
-	p := map[interface{}]interface{}{}
-	m.Iterate(func(k string, v Value) {
-		p[k] = v.Primitive()
-	})
-	return p
-}
-
 func (m Map) PrimitiveHinted() interface{} {
-	p := map[interface{}]interface{}{}
+	if m.mapIterator == nil {
+		return nil
+	}
+	p := map[string]interface{}{}
 	m.Iterate(func(k string, v Value) {
 		p[k+":"+v.typeHint()] = v.PrimitiveHinted()
 	})

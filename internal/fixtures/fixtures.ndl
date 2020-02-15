@@ -13,15 +13,12 @@ object nimona.io/fixtures.TestPolicy {
 signed object nimona.io/fixtures.TestStream {
     nonce string
     createdDateTime string
-    @policy TestPolicy
 }
 
 signed object nimona.io/fixtures.TestSubscribed {
     nonce string
-    @stream nimona.io/object.Hash
 }
 
 signed object nimona.io/fixtures.TestUnsubscribed {
     nonce string
-    @stream nimona.io/object.Hash
 }

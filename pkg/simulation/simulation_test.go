@@ -14,6 +14,7 @@ import (
 	"nimona.io/internal/fixtures"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/client"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/simulation/node"
 )
 
@@ -153,12 +154,15 @@ func TestSimulation(t *testing.T) {
 	// create an obj, and attach recipients to policy
 	nonce := rand.String(24) + "xnonce"
 	streamCreated := fixtures.TestStream{
-		Nonce: nonce,
-		Policy: &fixtures.TestPolicy{
-			Subjects:  recipients,
-			Resources: []string{"*"},
-			Action:    "allow",
+		Header: object.Header{
+			Policy: object.Policy{
+				Subjects:  recipients,
+				Resources: []string{"*"},
+				Actions:   []string{"read"},
+				Effect:    "allow",
+			},
 		},
+		Nonce: nonce,
 	}
 
 	err = clients[0].PostObject(streamCreated.ToObject())

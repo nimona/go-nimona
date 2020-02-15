@@ -124,6 +124,10 @@ func (p *Parser) parseField() (interface{}, error) {
 		member.Type = "[]byte"
 		member.SimpleType = "data"
 		member.Hint = "d"
+	case "map":
+		member.Type = "immutable.Map"
+		member.SimpleType = "map"
+		member.Hint = "m"
 	default:
 		member.Type = value
 		member.SimpleType = value

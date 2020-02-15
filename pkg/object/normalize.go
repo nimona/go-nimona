@@ -37,42 +37,105 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	case 'b':
 		return normalizeBool(i)
 	case 'a':
-		a, ok := i.([]interface{})
-		if !ok {
-			return nil, errors.New("invalid array type, got " +
-				reflect.TypeOf(i).String(),
-			)
-		}
-		na := make([]interface{}, len(a))
-		for i, v := range a {
-			var nv interface{}
+		switch reflect.TypeOf(i).Kind() {
+		case reflect.Slice:
 			var err error
 			switch t[1] {
 			case 'b':
-				nv, err = normalizeBool(v)
+				v := reflect.ValueOf(i)
+				m := make([]bool, v.Len())
+				for j := 0; j < v.Len(); j++ {
+					m[j], err = normalizeBool(v.Index(j).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid bool type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 'o':
-				nv, err = normalizeObject(v)
+				v := reflect.ValueOf(i)
+				m := make([]interface{}, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeObject(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid object type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 's':
-				nv, err = normalizeString(v)
+				v := reflect.ValueOf(i)
+				m := make([]string, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeString(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid string type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 'd':
-				nv, err = NormalizeData(v)
+				v := reflect.ValueOf(i)
+				m := make([][]byte, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = NormalizeData(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid data type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 'u':
-				nv, err = normalizeUint(v)
+				v := reflect.ValueOf(i)
+				m := make([]uint64, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeUint(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid uint64 type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 'i':
-				nv, err = normalizeInt(v)
+				v := reflect.ValueOf(i)
+				m := make([]int64, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeInt(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid int type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			case 'f':
-				nv, err = normalizeFloat(v)
+				v := reflect.ValueOf(i)
+				m := make([]float64, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeFloat(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							errors.New("invalid float64 type, t="+reflect.TypeOf(i).String()+" k="+k),
+						)
+					}
+				}
+				return m, nil
 			default:
 				return nil, errors.New("unknown array hint " + t)
 			}
-			if err != nil {
-				return nil, errors.Wrap(err,
-					errors.New("error normalising array value of "+t),
-				)
-			}
-			na[i] = nv
 		}
-		return na, nil
 	case 'o':
 		return normalizeObject(i)
 	case 's':
@@ -140,7 +203,7 @@ func NormalizeData(i interface{}) ([]byte, error) {
 		}
 		return b, nil
 	}
-	return nil, errors.New("unknown data type")
+	return nil, errors.New("unknown data type, t=" + reflect.TypeOf(i).String())
 }
 
 func normalizeUint(i interface{}) (uint64, error) {
@@ -263,6 +326,21 @@ func normalizeObject(i interface{}) (map[string]interface{}, error) {
 				)
 			}
 			nm[k] = nv
+		}
+		return nm, nil
+	case map[interface{}]interface{}:
+		for k, v := range m {
+			s, ok := k.(string)
+			if !ok {
+				return nil, errors.New("invalid map key")
+			}
+			nv, err := normalizeFromKey(s, v)
+			if err != nil {
+				return nil, errors.Wrap(err,
+					errors.New("error normalising value for map with key "+s),
+				)
+			}
+			nm[s] = nv
 		}
 		return nm, nil
 	}

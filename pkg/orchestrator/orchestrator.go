@@ -277,8 +277,10 @@ func (m *orchestrator) Put(o object.Object) error {
 	announcement := &stream.Announcement{
 		Stream: streamHash,
 		Leaves: leafHashes,
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				m.localInfo.GetIdentityPublicKey(),
+			},
 		},
 	}
 
@@ -290,7 +292,7 @@ func (m *orchestrator) Put(o object.Object) error {
 		return err
 	}
 
-	announcement.Signature = sig
+	announcement.Header.Signature = sig
 
 	// figure out who to send it to
 	recipients := stream.GetAllowsKeysFromPolicies(os...)
@@ -414,8 +416,10 @@ func (m *orchestrator) handleStreamRequest(
 		Stream:   req.Stream,
 		Nonce:    req.Nonce,
 		Children: hs,
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				m.localInfo.GetIdentityPublicKey(),
+			},
 		},
 	}
 	sig, err := object.NewSignature(
@@ -425,7 +429,7 @@ func (m *orchestrator) handleStreamRequest(
 	if err != nil {
 		return err
 	}
-	res.Signature = sig
+	res.Header.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,
@@ -469,8 +473,10 @@ func (m *orchestrator) handleStreamObjectRequest(
 		Stream:  req.Stream,
 		Nonce:   req.Nonce,
 		Objects: make([]*object.Object, len(vs)),
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				m.localInfo.GetIdentityPublicKey(),
+			},
 		},
 	}
 	for i, obj := range vs {
@@ -484,7 +490,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 	if err != nil {
 		return err
 	}
-	res.Signature = sig
+	res.Header.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,

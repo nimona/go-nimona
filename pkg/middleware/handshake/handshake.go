@@ -51,12 +51,14 @@ func (hs *Handshake) handleIncoming(
 	nonce := rand.String(8)
 	syn := &Syn{
 		Nonce: nonce,
-		Owners: []crypto.PublicKey{
-			hs.local.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				hs.local.GetIdentityPublicKey(),
+			},
 		},
 	}
 	so := syn.ToObject()
-	if err := object.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(&so, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -72,7 +74,7 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	synAck := &SynAck{}
-	if err := synAck.FromObject(synAckObj); err != nil {
+	if err := synAck.FromObject(*synAckObj); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +86,7 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Signature.Signer
+	conn.RemotePeerKey = synAck.Header.Signature.Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) do we need to do something about this?
@@ -95,7 +97,7 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	ao := ack.ToObject()
-	if err := object.Sign(ao, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(&ao, hs.local.GetPeerPrivateKey()); err != nil {
 		return nil, err
 	}
 
@@ -126,7 +128,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	}
 
 	syn := &Syn{}
-	if err := syn.FromObject(synObj); err != nil {
+	if err := syn.FromObject(*synObj); err != nil {
 		logger.Warn("could not convert obj to syn")
 		// TODO close conn?
 		return nil, err
@@ -135,7 +137,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Signature.Signer
+	conn.RemotePeerKey = syn.Header.Signature.Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) this one too
@@ -143,13 +145,15 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	synAck := &SynAck{
 		Nonce: syn.Nonce,
-		Owners: []crypto.PublicKey{
-			hs.local.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				hs.local.GetIdentityPublicKey(),
+			},
 		},
 	}
 
 	sao := synAck.ToObject()
-	if err := object.Sign(sao, hs.local.GetPeerPrivateKey()); err != nil {
+	if err := object.Sign(&sao, hs.local.GetPeerPrivateKey()); err != nil {
 		logger.Warn(
 			"could not sign for syn ack object", log.Error(err))
 		// TODO close conn?
@@ -171,7 +175,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	}
 
 	ack := &Ack{}
-	if err := ack.FromObject(ackObj); err != nil {
+	if err := ack.FromObject(*ackObj); err != nil {
 		// TODO close conn?
 		logger.Warn("could not convert obj to syn ack")
 		return nil, nil

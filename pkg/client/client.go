@@ -19,10 +19,9 @@ type (
 		httpClient *http.Client
 	}
 	InfoResponse struct {
-		Signature   *object.Signature `json:"_signature:o"`
-		Hash        string            `json:"_hash"`
-		Fingerprint string            `json:"_fingerprint"`
-		Addresses   []string          `json:"addresses:as"`
+		Hash        string   `json:"_hash"`
+		Fingerprint string   `json:"_fingerprint"`
+		Addresses   []string `json:"addresses:as"`
 	}
 )
 

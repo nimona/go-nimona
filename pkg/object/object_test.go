@@ -1,65 +1,52 @@
 package object
 
 import (
+	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/immutable"
 )
 
-func TestObjectMethods(t *testing.T) {
-	m := map[string]interface{}{
-		"@type:s": "ctx-value",
-		"_signature:o": Object{
-			"@type:s": "-signature",
-		},
-		"something:o": Object{
-			"@type:s": "-something",
-		},
-		"parents:as": []Object{},
-	}
-
-	em := map[string]interface{}{
-		"@type:s": "ctx-value",
-		"_signature:o": map[string]interface{}{
-			"@type:s": "-signature",
-		},
-		"something:o": map[string]interface{}{
-			"@type:s": "-something",
-		},
-		"parents:as": []map[string]interface{}{
-			map[string]interface{}{
-				"@type:s":   "nimona.io/Hash",
-				"@domain:s": "nimona.io/object",
-				"@struct:s": "Hash",
+func TestObject(t *testing.T) {
+	o := Object{
+		Header: Header{
+			Stream:  Hash("stream"),
+			Parents: []Hash{"parent1", "parent2"},
+			Policy: Policy{
+				Subjects: []string{"subject1", "subject2"},
+				Actions:  []string{"action1", "action2"},
+				Effect:   "effect",
 			},
+			Signature: Signature{
+				Signer: "signer",
+				Alg:    "alg",
+				X:      []byte{1, 2, 3},
+			},
+			Owners: []crypto.PublicKey{"owner1", "owner2"},
 		},
+		Data: immutable.AnyToValue(":o", map[string]interface{}{
+			"foo:s": "bar",
+		}).(immutable.Map),
 	}
+	o.SetType("type")
 
-	o := FromMap(m)
+	m := o.ToMap()
+	n := FromMap(m)
 
-	assert.Equal(t, em["@type:s"], o.Get("@type:s"))
-	assert.Equal(t, em["_signature:o"], o.Get("_signature:o"))
-	assert.Equal(t, em["something:o"], o.Get("something:o"))
+	require.EqualValues(t, o.Header, n.Header)
+	require.EqualValues(t, o.Data.PrimitiveHinted(), n.Data.PrimitiveHinted())
 
-	n := New()
+	jb, err := json.Marshal(m)
+	require.NoError(t, err)
 
-	n.Set("@type:", m["@type:s"])
-	n.Set("_signature:o", m["_signature:o"])
-	n.Set("something:o", m["something:o"])
+	jm := map[string]interface{}{}
+	err = json.Unmarshal(jb, &jm)
+	require.NoError(t, err)
+	n = FromMap(jm)
 
-	assert.Equal(t, em["@type:s"], n.Get("@type:"))
-	assert.Equal(t, em["_signature:o"], n.Get("_signature:o"))
-	assert.Equal(t, em["something:o"], n.Get("something:o"))
-
-	e := New()
-
-	e.SetType(o.GetType())
-	s := o.GetSignature()
-	e.SetSignature(*s)
-
-	assert.NotNil(t, e.Get("@type:s"))
-	assert.NotNil(t, e.Get("_signature:o"))
-
-	assert.Equal(t, em["@type:s"], e.Get("@type:s"))
-	assert.Equal(t, em["_signature:o"], e.Get("_signature:o"))
+	require.EqualValues(t, o.Header, n.Header)
+	require.EqualValues(t, o.Data.PrimitiveHinted(), n.Data.PrimitiveHinted())
 }

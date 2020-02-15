@@ -206,7 +206,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		hs = append(hs, c)
 	}
 	for _, c := range p.certificates {
-		hs = append(hs, c.Signature.Signer.String())
+		hs = append(hs, c.Header.Signature.Signer.String())
 	}
 
 	relays := []crypto.PublicKey{}
@@ -225,13 +225,19 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		ContentTypes: p.contentTypes,
 	}
 
+	if !p.identityPublicKey.IsEmpty() {
+		pi.Header.Owners = []crypto.PublicKey{
+			p.identityPublicKey,
+		}
+	}
+
 	o := pi.ToObject()
 	sig, err := object.NewSignature(p.peerPrivateKey, o)
 	if err != nil {
 		panic(err)
 	}
 
-	pi.Signature = sig
+	pi.Header.Signature = sig
 
 	return pi
 }

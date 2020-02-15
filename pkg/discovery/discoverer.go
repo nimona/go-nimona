@@ -152,5 +152,6 @@ func (r *addressBook) Add(peer *peer.Peer, pin bool) {
 	} else {
 		opts = append(opts, sqlobjectstore.WithTTL(60))
 	}
-	r.store.Put(peer.ToObject(), opts...) // nolint: errcheck
+	o := peer.ToObject()
+	r.store.Put(o, opts...) // nolint: errcheck
 }

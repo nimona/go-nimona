@@ -48,11 +48,10 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	c := fixtures.TestSubscribed{
-		Stream: object.NewHash(p.ToObject()),
-	}
+	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
 	obj.SetType("foo")
+	obj.Header.Stream = object.NewHash(p.ToObject())
 	obj.Set("key:s", "value")
 
 	err = store.Put(
@@ -89,7 +88,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	retrievedObj2, err := store.Get(object.NewHash(p.ToObject()))
 	require.True(t, errors.CausedBy(err, ErrNotFound))
-	require.Nil(t, retrievedObj2)
+	require.True(t, retrievedObj2.IsEmpty())
 
 	err = store.Close()
 	require.NoError(t, err)
@@ -107,11 +106,10 @@ func TestSubscribe(t *testing.T) {
 		Nonce: "asdf",
 	}
 	streamHash := object.NewHash(p.ToObject())
-	c := fixtures.TestSubscribed{
-		Stream: streamHash,
-	}
+	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
 	obj.SetType("foo")
+	obj.Header.Stream = streamHash
 	obj.Set("key:s", "value")
 
 	var wg sync.WaitGroup
@@ -168,23 +166,24 @@ func TestFilter(t *testing.T) {
 	s, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
-	p.Signature = s
+	p.Header.Signature = s
 
 	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
 
 	ph := object.NewHash(p.ToObject())
 
-	c := fixtures.TestSubscribed{
-		Stream: ph,
-	}
+	c := fixtures.TestSubscribed{}
+	c.Header.Stream = ph
 
 	hashes := []object.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := c.ToObject()
 		obj.Set("key:s", fmt.Sprintf("value_%d", i))
 		if i%2 == 0 {
-			obj.Set("@owners:as", []interface{}{s.Signer.String()})
+			obj.Header.Owners = []crypto.PublicKey{
+				s.Signer,
+			}
 		}
 		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)

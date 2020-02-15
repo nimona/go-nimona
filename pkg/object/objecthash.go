@@ -90,6 +90,9 @@ func objecthash(m map[string]interface{}) ([]byte, error) {
 		b = append(b, hv...)
 		x[k] = hv
 	}
+	if len(b) == 0 {
+		return nil, nil
+	}
 	h := hash(HintObject, b)
 	return h, nil
 }
@@ -199,7 +202,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) []byte {
 	case HintObject:
 		m, ok := o.(map[string]interface{})
 		if !ok {
-			panic("hashing only supports map[string]interface{}")
+			panic("hashing only supports map[string]interface{}, got " + reflect.TypeOf(o).String())
 		}
 		if len(m) == 0 {
 			return nil

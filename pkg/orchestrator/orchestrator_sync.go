@@ -110,7 +110,7 @@ func (m *orchestrator) Sync(
 				)
 
 				logger.Debug("got graph response")
-				if p.Signature == nil || p.Signature.Signer.IsEmpty() {
+				if p.Header.Signature.Signer.IsEmpty() {
 					logger.Debug("object has no signature, skipping request")
 					continue
 				}
@@ -135,8 +135,10 @@ func (m *orchestrator) Sync(
 					Nonce:   rand.String(12),
 					Stream:  p.Stream,
 					Objects: missingObjects,
-					Owners: []crypto.PublicKey{
-						m.localInfo.GetIdentityPublicKey(),
+					Header: object.Header{
+						Owners: []crypto.PublicKey{
+							m.localInfo.GetIdentityPublicKey(),
+						},
 					},
 				}
 				sig, err := object.NewSignature(
@@ -146,7 +148,7 @@ func (m *orchestrator) Sync(
 				if err != nil {
 					continue
 				}
-				objReq.Signature = sig
+				objReq.Header.Signature = sig
 
 				// and send the request to the sync response sender
 				if err := m.exchange.Send(
@@ -205,8 +207,10 @@ func (m *orchestrator) Sync(
 		Nonce:  streamRequestNonce,
 		Stream: streamHash,
 		Leaves: leaves,
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+		Header: object.Header{
+			Owners: []crypto.PublicKey{
+				m.localInfo.GetIdentityPublicKey(),
+			},
 		},
 	}
 	sig, err := object.NewSignature(
@@ -217,7 +221,7 @@ func (m *orchestrator) Sync(
 		return nil, err
 	}
 
-	req.Signature = sig
+	req.Header.Signature = sig
 
 	logger.Info("starting sync")
 

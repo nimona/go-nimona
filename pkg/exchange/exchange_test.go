@@ -55,28 +55,27 @@ func TestSendSuccess(t *testing.T) {
 		peer.LookupByOwner(l2.GetPeerPublicKey()),
 	)
 	require.NoError(t, err)
-	require.Len(t, dr1, 1)
-	require.Equal(t, l2.GetIdentityPublicKey(), gatherPeers(dr1)[0].PublicKey())
+
+	gp := gatherPeers(dr1)
+	require.Len(t, gp, 1)
+	require.Equal(t, l2.GetIdentityPublicKey(), gp[0].PublicKey())
+	require.Equal(t, l2.GetAddresses(), gp[0].Addresses)
 
 	// create test objects
-	em1 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo1 := object.FromMap(em1)
+	eo1 := object.Object{}
+	eo1.Set("body:s", "bar1")
+	eo1.SetType("test/msg")
 
-	em2 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo2 := object.FromMap(em2)
+	eo2 := object.Object{}
+	eo2.Set("body:s", "bar1")
+	eo2.SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	handled := int32(0)
 
-	err = object.Sign(eo1, k2)
+	err = object.Sign(&eo1, k2)
 	assert.NoError(t, err)
 
 	// add message handlers
@@ -149,11 +148,9 @@ func TestRequestSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	// add an object to n2's store
-	em1 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo1 := object.FromMap(em1)
+	eo1 := object.Object{}
+	eo1.Set("body:s", "bar1")
+	eo1.SetType("test/msg")
 	err = d2.Put(eo1)
 	assert.NoError(t, err)
 
@@ -242,33 +239,35 @@ func TestSendRelay(t *testing.T) {
 	disc2.Add(l1.GetSignedPeer(), false)
 
 	// init connection from peer1 to relay
+	o1 := object.Object{}
+	o1.SetType("foo")
+	o1.Set("foo:s", "bar")
 	err = x1.Send(
 		context.Background(),
-		object.FromMap(map[string]interface{}{"foo": "bar"}),
+		o1,
 		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
 	// init connection from peer2 to relay
+	o2 := object.Object{}
+	o2.SetType("foo")
+	o2.Set("foo:s", "bar")
 	err = x2.Send(
 		context.Background(),
-		object.FromMap(map[string]interface{}{"foo": "bar"}),
+		o2,
 		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
 	// create the messages
-	em1 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo1 := object.FromMap(em1)
+	eo1 := object.Object{}
+	eo1.Set("body:s", "bar1")
+	eo1.SetType("test/msg")
 
-	em2 := map[string]interface{}{
-		"@type:s": "test/msg",
-		"body:s":  "bar1",
-	}
-	eo2 := object.FromMap(em2)
+	eo2 := object.Object{}
+	eo2.Set("body:s", "bar1")
+	eo2.SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -276,7 +275,7 @@ func TestSendRelay(t *testing.T) {
 	w1ObjectHandled := false
 	w2ObjectHandled := false
 
-	err = object.Sign(eo1, k2)
+	err = object.Sign(&eo1, k2)
 	assert.NoError(t, err)
 
 	handled := int32(0)
@@ -387,6 +386,7 @@ func jp(v interface{}) string {
 func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
 	require.NoError(t, err)
+	fmt.Println(path.Join(dirPath, "sqlite3.db"))
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db

@@ -3,41 +3,36 @@
 package chat
 
 import (
-	json "encoding/json"
-
-	crypto "nimona.io/pkg/crypto"
+	"nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	ConversationCreated struct {
-		Name      string             `json:"name:s,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header object.Header
+		Name   string
 	}
 	ConversationTopicUpdated struct {
-		Topic     string             `json:"topic:s,omitempty"`
-		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header    object.Header
+		Topic     string
+		DependsOn []object.Hash
 	}
 	ConversationMessageAdded struct {
-		Body      string             `json:"body:s,omitempty"`
-		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header    object.Header
+		Body      string
+		DependsOn []object.Hash
 	}
 	ConversationMessageRemoved struct {
-		Removes   object.Hash        `json:"removes:r,omitempty"`
-		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *object.Signature  `json:"_signature:o,omitempty"`
-		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
+		Header    object.Header
+		Removes   object.Hash
+		DependsOn []object.Hash
 	}
 )
 
 func (e ConversationCreated) GetType() string {
 	return "mochi.io/conversation.Created"
 }
+
 func (e ConversationCreated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -48,50 +43,38 @@ func (e ConversationCreated) GetSchema() *object.SchemaObject {
 				IsRepeated: false,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e ConversationCreated) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "mochi.io/conversation.Created"
+	d := map[string]interface{}{}
 	if e.Name != "" {
-		m["name:s"] = e.Name
+		d["name:s"] = e.Name
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("mochi.io/conversation.Created")
+	return o
 }
 
 func (e *ConversationCreated) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("name:s"); v != nil {
+		e.Name = string(v.PrimitiveHinted().(string))
+	}
+	return nil
 }
 
 func (e ConversationTopicUpdated) GetType() string {
 	return "mochi.io/conversation.TopicUpdated"
 }
+
 func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -109,53 +92,44 @@ func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e ConversationTopicUpdated) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "mochi.io/conversation.TopicUpdated"
+	d := map[string]interface{}{}
 	if e.Topic != "" {
-		m["topic:s"] = e.Topic
+		d["topic:s"] = e.Topic
 	}
 	if len(e.DependsOn) > 0 {
-		m["dependsOn:ar"] = e.DependsOn
+		d["dependsOn:ar"] = e.DependsOn
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("mochi.io/conversation.TopicUpdated")
+	return o
 }
 
 func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("topic:s"); v != nil {
+		e.Topic = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+		// TODO missing implementation for repeated type hint r
+	}
+	return nil
 }
 
 func (e ConversationMessageAdded) GetType() string {
 	return "mochi.io/conversation.MessageAdded"
 }
+
 func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -173,53 +147,44 @@ func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e ConversationMessageAdded) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "mochi.io/conversation.MessageAdded"
+	d := map[string]interface{}{}
 	if e.Body != "" {
-		m["body:s"] = e.Body
+		d["body:s"] = e.Body
 	}
 	if len(e.DependsOn) > 0 {
-		m["dependsOn:ar"] = e.DependsOn
+		d["dependsOn:ar"] = e.DependsOn
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("mochi.io/conversation.MessageAdded")
+	return o
 }
 
 func (e *ConversationMessageAdded) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("body:s"); v != nil {
+		e.Body = string(v.PrimitiveHinted().(string))
+	}
+	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+		// TODO missing implementation for repeated type hint r
+	}
+	return nil
 }
 
 func (e ConversationMessageRemoved) GetType() string {
 	return "mochi.io/conversation.MessageRemoved"
 }
+
 func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -237,44 +202,34 @@ func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 				IsRepeated: true,
 				IsOptional: false,
 			},
-			&object.SchemaProperty{
-				Name:       "_signature",
-				Type:       "nimona.io/object.Signature",
-				Hint:       "o",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "@owners",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
 		},
 	}
 }
 
 func (e ConversationMessageRemoved) ToObject() object.Object {
-	m := map[string]interface{}{}
-	m["@type:s"] = "mochi.io/conversation.MessageRemoved"
-	m["removes:r"] = e.Removes
+	d := map[string]interface{}{}
+	d["removes:r"] = e.Removes
 	if len(e.DependsOn) > 0 {
-		m["dependsOn:ar"] = e.DependsOn
+		d["dependsOn:ar"] = e.DependsOn
 	}
-	if e.Signature != nil {
-		m["_signature:o"] = e.Signature.ToObject().ToMap()
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// }
+	o := object.Object{
+		Header: e.Header,
+		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
 	}
-	if len(e.Owners) > 0 {
-		m["@owners:as"] = e.Owners
-	}
-	if schema := e.GetSchema(); schema != nil {
-		m["_schema:o"] = schema.ToObject().ToMap()
-	}
-	return object.Object(m)
+	o.SetType("mochi.io/conversation.MessageRemoved")
+	return o
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	b, _ := json.Marshal(map[string]interface{}(o))
-	return json.Unmarshal(b, e)
+	e.Header = o.Header
+	if v := o.Data.Value("removes:r"); v != nil {
+		e.Removes = v.PrimitiveHinted().(object.Hash)
+	}
+	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+		// TODO missing implementation for repeated type hint r
+	}
+	return nil
 }

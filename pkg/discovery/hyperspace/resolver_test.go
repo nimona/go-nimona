@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"nimona.io/pkg/object"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,6 +20,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 )

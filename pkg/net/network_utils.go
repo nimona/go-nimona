@@ -11,16 +11,12 @@ import (
 
 func Write(o object.Object, conn *Connection) error {
 	if conn == nil {
-		log.DefaultLogger.Error("conn cannot be nil")
+		log.DefaultLogger.Info("conn cannot be nil")
 		return errors.New("missing conn")
 	}
 
-	if o == nil {
-		log.DefaultLogger.Error("object for fw cannot be nil")
-		return errors.New("missing object")
-	}
-
-	b, err := json.Marshal(o.ToMap())
+	m := o.ToMap()
+	b, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
@@ -49,7 +45,7 @@ func Write(o object.Object, conn *Connection) error {
 	return nil
 }
 
-func Read(conn *Connection) (object.Object, error) {
+func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
 	r := <-conn.lines
@@ -64,10 +60,7 @@ func Read(conn *Connection) (object.Object, error) {
 		}
 	}()
 
-	o := object.Object{}
-	if err := o.FromMap(m); err != nil {
-		return nil, err
-	}
+	o := object.FromMap(m)
 
 	ra := ""
 	if conn.RemotePeerKey != "" {
@@ -75,8 +68,9 @@ func Read(conn *Connection) (object.Object, error) {
 	}
 
 	if os.Getenv("DEBUG_BLOCKS") == "true" {
-		logger.Info(
+		logger.Error(
 			"reading from connection",
+			log.Any("map", m),
 			log.Any("object", o.ToMap()),
 			log.String("local.address", conn.localAddress),
 			log.String("remote.address", conn.remoteAddress),
@@ -85,13 +79,13 @@ func Read(conn *Connection) (object.Object, error) {
 		)
 	}
 
-	if o.GetSignature() != nil {
+	if !o.Header.Signature.IsEmpty() {
 		if err := object.Verify(o); err != nil {
 			// TODO we should verify, but return an error that doesn't
 			// kill the connection
-			return o, nil
+			return &o, nil
 		}
 	}
 
-	return o, nil
+	return &o, nil
 }
