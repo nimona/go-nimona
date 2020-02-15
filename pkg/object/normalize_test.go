@@ -33,7 +33,7 @@ func Test_Normalize(t *testing.T) {
 	}
 
 	em := map[string]interface{}{
-		"$schema:o": map[string]interface{}{
+		"_schema:o": map[string]interface{}{
 			"@type:s": string("nimona.io/schema.Object"),
 			"properties:ao": []interface{}{
 				map[string]interface{}{
@@ -86,7 +86,7 @@ func Test_Normalize(t *testing.T) {
 			"subjects:as":  []interface{}{"subject"},
 			"resources:as": []interface{}{"*"},
 			"action:s":     "allow",
-			"$schema:o": map[string]interface{}{
+			"_schema:o": map[string]interface{}{
 				"@type:s": string("nimona.io/schema.Object"),
 				"properties:ao": []interface{}{
 					map[string]interface{}{
@@ -125,7 +125,7 @@ func Test_Normalize(t *testing.T) {
 			},
 		},
 		"@signature:o": map[string]interface{}{
-			"$schema:o": map[string]interface{}{
+			"_schema:o": map[string]interface{}{
 				"@type:s": string("nimona.io/schema.Object"),
 				"properties:ao": []interface{}{
 					map[string]interface{}{

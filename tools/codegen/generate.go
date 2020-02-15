@@ -143,7 +143,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 	{{- end }}
 	{{- if neq $.Package "nimona.io/schema" }}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	{{- end }}
 	return object.Object(m)

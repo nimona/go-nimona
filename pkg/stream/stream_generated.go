@@ -109,7 +109,7 @@ func (e Policy) ToObject() object.Object {
 		m["action:s"] = e.Action
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -184,7 +184,7 @@ func (e Request) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -259,7 +259,7 @@ func (e Response) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -334,7 +334,7 @@ func (e ObjectRequest) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -415,7 +415,7 @@ func (e ObjectResponse) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -490,7 +490,7 @@ func (e Announcement) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

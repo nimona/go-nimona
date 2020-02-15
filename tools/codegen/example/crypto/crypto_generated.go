@@ -74,7 +74,7 @@ func (e Hash) ToObject() object.Object {
 		m["digest:d"] = e.Digest
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -139,7 +139,7 @@ func (e Signature) ToObject() object.Object {
 		m["s:d"] = e.S
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -234,7 +234,7 @@ func (e PrivateKey) ToObject() object.Object {
 		m["d:d"] = e.D
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -319,7 +319,7 @@ func (e PublicKey) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
