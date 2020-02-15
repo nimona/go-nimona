@@ -26,7 +26,7 @@ type (
 		identityPrivateKey crypto.PrivateKey
 		identityPublicKey  crypto.PublicKey
 
-		certificates []*crypto.Certificate
+		certificates []*object.Certificate
 
 		relays        *CryptoPublicKeySyncList
 		addresses     *StringAddressesSyncMap
@@ -51,8 +51,8 @@ func NewLocalPeer(
 		peerPrivateKey: peerPrivateKey,
 		peerPublicKey:  peerPrivateKey.PublicKey(),
 
-		certificates: []*crypto.Certificate{
-			crypto.NewSelfSignedCertificate(peerPrivateKey),
+		certificates: []*object.Certificate{
+			object.NewSelfSignedCertificate(peerPrivateKey),
 		},
 
 		addresses:     &StringAddressesSyncMap{},
@@ -120,7 +120,7 @@ func (p *LocalPeer) AddIdentityKey(identityPrivateKey crypto.PrivateKey) error {
 
 	p.certificates = append(
 		p.certificates,
-		crypto.NewCertificate(p.peerPublicKey, identityPrivateKey),
+		object.NewCertificate(p.peerPublicKey, identityPrivateKey),
 	)
 
 	return nil
@@ -226,7 +226,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	}
 
 	o := pi.ToObject()
-	sig, err := crypto.NewSignature(p.peerPrivateKey, o)
+	sig, err := object.NewSignature(p.peerPrivateKey, o)
 	if err != nil {
 		panic(err)
 	}
@@ -237,7 +237,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 }
 
 // GetCertificate returns the peer's certificate
-func (p *LocalPeer) GetCertificates() []*crypto.Certificate {
+func (p *LocalPeer) GetCertificates() []*object.Certificate {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 

@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"nimona.io/pkg/object"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +20,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/middleware/handshake"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
@@ -190,7 +191,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	// make peer 1 a provider
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
-	ch := hash.FromBytes(token)
+	ch := object.HashFromBytes(token)
 	l1.AddContentHash(ch)
 
 	// print peer info

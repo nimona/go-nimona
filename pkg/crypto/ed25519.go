@@ -8,7 +8,6 @@ import (
 
 	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object"
 )
 
 // https://blog.filippo.io/using-ed25519-keys-for-encryption
@@ -149,24 +148,7 @@ func (r PublicKey) raw() crypto.PublicKey {
 	return ed25519.PublicKey(r)
 }
 
-func (r PublicKey) ToObject() object.Object {
-	o := object.New()
-	o.Set("@type:s", "ed25519")
-	o.Set("x:s", strings.Replace(string(r), "ed25519.", "", 1))
-	return o
-}
-
 func (r PublicKey) Equals(w PublicKey) bool {
 	return string(r) == string(w)
 	// return subtle.ConstantTimeCompare(w.ed25519(), r.ed25519()) == 1
-}
-
-func (r *PublicKey) FromObject(o object.Object) error {
-	v := o.Get("x:s")
-	s, ok := v.(string)
-	if !ok {
-		return errors.New("invalid x type")
-	}
-	*r = PublicKey("ed25519." + s)
-	return nil
 }

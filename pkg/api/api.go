@@ -8,7 +8,6 @@ import (
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
@@ -140,7 +139,7 @@ func (api *API) Stop(c *router.Context) {
 
 func (api *API) mapObject(o object.Object) map[string]interface{} {
 	m := o.ToMap()
-	m["_hash"] = hash.New(o).String()
+	m["_hash"] = object.NewHash(o).String()
 	return m
 }
 

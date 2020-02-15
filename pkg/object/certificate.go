@@ -1,8 +1,12 @@
-package crypto
+package object
 
-import "time"
+import (
+	"time"
 
-func NewCertificate(subject PublicKey, issuer PrivateKey) *Certificate {
+	"nimona.io/pkg/crypto"
+)
+
+func NewCertificate(subject crypto.PublicKey, issuer crypto.PrivateKey) *Certificate {
 	c := &Certificate{
 		Subject: subject,
 		Created: time.Now().Format(time.RFC3339),
@@ -13,6 +17,6 @@ func NewCertificate(subject PublicKey, issuer PrivateKey) *Certificate {
 	return c
 }
 
-func NewSelfSignedCertificate(k PrivateKey) *Certificate {
+func NewSelfSignedCertificate(k crypto.PrivateKey) *Certificate {
 	return NewCertificate(k.PublicKey(), k)
 }

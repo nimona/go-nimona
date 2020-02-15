@@ -5,7 +5,7 @@ object example/crypto.Hash {
     digest data
 }
 
-object example/crypto.Signature {
+object example/object.Signature {
     publicKey PublicKey
     algorithm string
     r data

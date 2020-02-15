@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 )
 
@@ -16,7 +15,7 @@ type (
 		Stream    object.Hash        `json:"@stream:s,omitempty"`
 		Parents   []object.Hash      `json:"@parents:as,omitempty"`
 		Policy    *Policy            `json:"@policy:o,omitempty"`
-		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
+		Signature *object.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as"`
 	}
 )
@@ -74,7 +73,7 @@ func GetStreamLeaves(os []object.Object) []object.Object {
 	hm := map[string]bool{} // map[hash]isParent
 	om := map[string]object.Object{}
 	for _, o := range os {
-		h := hash.New(o).String()
+		h := object.NewHash(o).String()
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}

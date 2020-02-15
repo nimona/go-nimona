@@ -17,7 +17,6 @@ import (
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -50,7 +49,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		Nonce: "asdf",
 	}
 	c := fixtures.TestSubscribed{
-		Stream: hash.New(p.ToObject()),
+		Stream: object.NewHash(p.ToObject()),
 	}
 	obj := c.ToObject()
 	obj.SetType("foo")
@@ -68,7 +67,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	retrievedObj, err := store.Get(hash.New(obj))
+	retrievedObj, err := store.Get(object.NewHash(obj))
 	require.NoError(t, err)
 
 	val := retrievedObj.Get("key:s")
@@ -78,17 +77,17 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	stHash := stream.GetStream(obj)
 	require.NotEmpty(t, stHash)
 
-	err = store.UpdateTTL(hash.New(obj), 10)
+	err = store.UpdateTTL(object.NewHash(obj), 10)
 	require.NoError(t, err)
 
-	hashList, err := store.GetRelations(hash.New(p.ToObject()))
+	hashList, err := store.GetRelations(object.NewHash(p.ToObject()))
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
 
-	err = store.Remove(hash.New(p.ToObject()))
+	err = store.Remove(object.NewHash(p.ToObject()))
 	require.NoError(t, err)
 
-	retrievedObj2, err := store.Get(hash.New(p.ToObject()))
+	retrievedObj2, err := store.Get(object.NewHash(p.ToObject()))
 	require.True(t, errors.CausedBy(err, ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
@@ -107,7 +106,7 @@ func TestSubscribe(t *testing.T) {
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	streamHash := hash.New(p.ToObject())
+	streamHash := object.NewHash(p.ToObject())
 	c := fixtures.TestSubscribed{
 		Stream: streamHash,
 	}
@@ -166,7 +165,7 @@ func TestFilter(t *testing.T) {
 		Nonce: "asdf",
 	}
 
-	s, err := crypto.NewSignature(k, p.ToObject())
+	s, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
 	p.Signature = s
@@ -174,7 +173,7 @@ func TestFilter(t *testing.T) {
 	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
 
-	ph := hash.New(p.ToObject())
+	ph := object.NewHash(p.ToObject())
 
 	c := fixtures.TestSubscribed{
 		Stream: ph,
@@ -189,7 +188,7 @@ func TestFilter(t *testing.T) {
 		}
 		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)
-		hashes = append(hashes, hash.New(obj))
+		hashes = append(hashes, object.NewHash(obj))
 	}
 
 	objects, err := store.Filter(

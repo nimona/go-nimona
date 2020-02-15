@@ -25,7 +25,7 @@ func Test_Normalize(t *testing.T) {
 			Resources: []string{"*"},
 			Action:    "allow",
 		},
-		Signature: &crypto.Signature{
+		Signature: &object.Signature{
 			Signer: "foo",
 			Alg:    "alg",
 			X:      kx,
@@ -34,10 +34,10 @@ func Test_Normalize(t *testing.T) {
 
 	em := map[string]interface{}{
 		"_schema:o": map[string]interface{}{
-			"@type:s": string("nimona.io/schema.Object"),
+			"@type:s": string("nimona.io/object.SchemaObject"),
 			"properties:ao": []interface{}{
 				map[string]interface{}{
-					"@type:s":      string("nimona.io/schema.Property"),
+					"@type:s":      string("nimona.io/object.SchemaProperty"),
 					"hint:s":       string("s"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(false),
@@ -45,7 +45,7 @@ func Test_Normalize(t *testing.T) {
 					"type:s":       string("string"),
 				},
 				map[string]interface{}{
-					"@type:s":      string("nimona.io/schema.Property"),
+					"@type:s":      string("nimona.io/object.SchemaProperty"),
 					"hint:s":       string("s"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(false),
@@ -53,7 +53,7 @@ func Test_Normalize(t *testing.T) {
 					"type:s":       string("string"),
 				},
 				map[string]interface{}{
-					"@type:s":      string("nimona.io/schema.Property"),
+					"@type:s":      string("nimona.io/object.SchemaProperty"),
 					"hint:s":       string("o"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(false),
@@ -61,15 +61,15 @@ func Test_Normalize(t *testing.T) {
 					"type:s":       string("TestPolicy"),
 				},
 				map[string]interface{}{
-					"@type:s":      string("nimona.io/schema.Property"),
+					"@type:s":      string("nimona.io/object.SchemaProperty"),
 					"hint:s":       string("o"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(false),
 					"name:s":       string("_signature"),
-					"type:s":       string("nimona.io/crypto.Signature"),
+					"type:s":       string("nimona.io/object.Signature"),
 				},
 				map[string]interface{}{
-					"@type:s":      string("nimona.io/schema.Property"),
+					"@type:s":      string("nimona.io/object.SchemaProperty"),
 					"hint:s":       string("s"),
 					"isOptional:b": bool(false),
 					"isRepeated:b": bool(true),
@@ -87,10 +87,10 @@ func Test_Normalize(t *testing.T) {
 			"resources:as": []interface{}{"*"},
 			"action:s":     "allow",
 			"_schema:o": map[string]interface{}{
-				"@type:s": string("nimona.io/schema.Object"),
+				"@type:s": string("nimona.io/object.SchemaObject"),
 				"properties:ao": []interface{}{
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(true),
@@ -98,7 +98,7 @@ func Test_Normalize(t *testing.T) {
 						"type:s":       string("string"),
 					},
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(true),
@@ -106,7 +106,7 @@ func Test_Normalize(t *testing.T) {
 						"type:s":       string("string"),
 					},
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(true),
@@ -114,7 +114,7 @@ func Test_Normalize(t *testing.T) {
 						"type:s":       string("string"),
 					},
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(false),
@@ -126,10 +126,10 @@ func Test_Normalize(t *testing.T) {
 		},
 		"_signature:o": map[string]interface{}{
 			"_schema:o": map[string]interface{}{
-				"@type:s": string("nimona.io/schema.Object"),
+				"@type:s": string("nimona.io/object.SchemaObject"),
 				"properties:ao": []interface{}{
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(false),
@@ -137,7 +137,7 @@ func Test_Normalize(t *testing.T) {
 						"type:s":       string("nimona.io/crypto.PublicKey"),
 					},
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("s"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(false),
@@ -145,7 +145,7 @@ func Test_Normalize(t *testing.T) {
 						"type:s":       string("string"),
 					},
 					map[string]interface{}{
-						"@type:s":      string("nimona.io/schema.Property"),
+						"@type:s":      string("nimona.io/object.SchemaProperty"),
 						"hint:s":       string("d"),
 						"isOptional:b": bool(false),
 						"isRepeated:b": bool(false),
@@ -154,7 +154,7 @@ func Test_Normalize(t *testing.T) {
 					},
 				},
 			},
-			"@type:s":  "nimona.io/crypto.Signature",
+			"@type:s":  "nimona.io/object.Signature",
 			"signer:s": "foo",
 			"alg:s":    "alg",
 			"x:d":      kx,

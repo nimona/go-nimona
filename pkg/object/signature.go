@@ -1,9 +1,8 @@
-package crypto
+package object
 
 import (
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hash"
-	"nimona.io/pkg/object"
 )
 
 var (
@@ -22,10 +21,10 @@ const (
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
-	k PrivateKey,
-	o object.Object,
+	k crypto.PrivateKey,
+	o Object,
 ) (*Signature, error) {
-	h := hash.New(o)
+	h := NewHash(o)
 	x := k.Sign(h.Bytes())
 	s := &Signature{
 		Signer: k.PublicKey(),
@@ -35,12 +34,12 @@ func NewSignature(
 	return s, nil
 }
 
-func GetObjectSignature(o object.Object) (*Signature, error) {
+func GetObjectSignature(o Object) (*Signature, error) {
 	so := o.GetSignature()
 	if so == nil {
 		return nil, errors.New("object is not signed")
 	}
-	vo := object.Object{}
+	vo := Object{}
 	if err := vo.FromMap(*so); err != nil {
 		return nil, errors.Wrap(
 			errors.New("invalid signature object"),

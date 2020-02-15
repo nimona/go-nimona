@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 )
@@ -87,7 +86,7 @@ func Read(conn *Connection) (object.Object, error) {
 	}
 
 	if o.GetSignature() != nil {
-		if err := crypto.Verify(o); err != nil {
+		if err := object.Verify(o); err != nil {
 			// TODO we should verify, but return an error that doesn't
 			// kill the connection
 			return o, nil

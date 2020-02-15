@@ -17,7 +17,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
@@ -64,7 +63,7 @@ var (
 		},
 	})
 
-	oh = hash.New(o)
+	oh = object.NewHash(o)
 
 	m1 = object.FromMap(map[string]interface{}{
 		"@parents:as": []interface{}{
@@ -84,7 +83,7 @@ var (
 
 	m3 = object.FromMap(map[string]interface{}{
 		"@parents:as": []interface{}{
-			hash.New(m1.ToObject()),
+			object.NewHash(m1.ToObject()),
 		},
 		"@stream:s": oh,
 		"foo:s":     "bar-m3",
@@ -92,7 +91,7 @@ var (
 
 	m4 = object.FromMap(map[string]interface{}{
 		"@parents:as": []interface{}{
-			hash.New(m2.ToObject()),
+			object.NewHash(m2.ToObject()),
 		},
 		"@stream:s": oh,
 		"foo:s":     "bar-m4",
@@ -100,7 +99,7 @@ var (
 
 	m5 = object.FromMap(map[string]interface{}{
 		"@parents:as": []interface{}{
-			hash.New(m2.ToObject()),
+			object.NewHash(m2.ToObject()),
 		},
 		"@stream:s": oh,
 		"foo:s":     "bar-m5",
@@ -108,8 +107,8 @@ var (
 
 	m6 = object.FromMap(map[string]interface{}{
 		"@parents:as": []interface{}{
-			hash.New(m3.ToObject()),
-			hash.New(m4.ToObject()),
+			object.NewHash(m3.ToObject()),
+			object.NewHash(m4.ToObject()),
 		},
 		"@stream:s": oh,
 		"foo:s":     "bar-m6",
@@ -144,13 +143,13 @@ func TestSync(t *testing.T) {
 	rkey, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	crypto.Sign(o, rkey)  // nolint: errcheck
-	crypto.Sign(m1, rkey) // nolint: errcheck
-	crypto.Sign(m2, rkey) // nolint: errcheck
-	crypto.Sign(m3, rkey) // nolint: errcheck
-	crypto.Sign(m4, rkey) // nolint: errcheck
-	crypto.Sign(m5, rkey) // nolint: errcheck
-	crypto.Sign(m6, rkey) // nolint: errcheck
+	object.Sign(o, rkey)  // nolint: errcheck
+	object.Sign(m1, rkey) // nolint: errcheck
+	object.Sign(m2, rkey) // nolint: errcheck
+	object.Sign(m3, rkey) // nolint: errcheck
+	object.Sign(m4, rkey) // nolint: errcheck
+	object.Sign(m5, rkey) // nolint: errcheck
+	object.Sign(m6, rkey) // nolint: errcheck
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
@@ -168,19 +167,19 @@ func TestSync(t *testing.T) {
 		Stream: oh,
 		Children: []object.Hash{
 			oh,
-			hash.New(m1.ToObject()),
-			hash.New(m2.ToObject()),
-			hash.New(m3.ToObject()),
-			hash.New(m4.ToObject()),
-			hash.New(m5.ToObject()),
-			hash.New(m6.ToObject()),
+			object.NewHash(m1.ToObject()),
+			object.NewHash(m2.ToObject()),
+			object.NewHash(m3.ToObject()),
+			object.NewHash(m4.ToObject()),
+			object.NewHash(m5.ToObject()),
+			object.NewHash(m6.ToObject()),
 		},
 		Owners: []crypto.PublicKey{
 			rkey.PublicKey(),
 		},
 	}).ToObject()
 
-	err = crypto.Sign(elo, rkey)
+	err = object.Sign(elo, rkey)
 	assert.NoError(t, err)
 
 	nonce := ""

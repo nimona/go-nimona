@@ -1,0 +1,18 @@
+package nimona.io/object
+
+object nimona.io/object.Header {
+    ctx string
+    type string
+    stream nimona.io/object.Hash
+    parents repeated nimona.io/object.Hash
+    policy nimona.io/object.Policy
+    signature nimona.io/object.Signature
+    owners repeated nimona.io/crypto.PublicKey
+}
+
+object nimona.io/object.Policy {
+    description string
+    subjects repeated string
+    actions repeated string
+    effect string
+}

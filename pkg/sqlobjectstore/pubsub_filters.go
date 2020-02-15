@@ -4,7 +4,6 @@ import (
 	"github.com/gobwas/glob"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hash"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/stream"
 )
@@ -54,7 +53,7 @@ func FilterByHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return hash.New(o) == h
+			return object.NewHash(o) == h
 		})
 	}
 }

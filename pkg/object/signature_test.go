@@ -1,20 +1,19 @@
-package crypto
+package object
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"nimona.io/pkg/crypto"
 
-	"nimona.io/pkg/hash"
-	"nimona.io/pkg/object"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewSignature(t *testing.T) {
-	sk, err := GenerateEd25519PrivateKey()
+	sk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	o := object.FromMap(map[string]interface{}{
+	o := FromMap(map[string]interface{}{
 		"foo:s": "bar",
 	})
 
@@ -28,7 +27,7 @@ func TestNewSignature(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, sig, nsig)
 
-	h := hash.New(o)
+	h := NewHash(o)
 	err = sig.Signer.Verify(h.Bytes(), sig.X)
 	assert.NoError(t, err)
 
@@ -44,12 +43,12 @@ func TestNewSignature(t *testing.T) {
 
 func copyObjectThroughJSON(
 	t *testing.T,
-	o object.Object,
-) object.Object {
+	o Object,
+) Object {
 	j, err := json.Marshal(o.ToMap())
 	assert.NoError(t, err)
 	m := map[string]interface{}{}
 	err = json.Unmarshal(j, &m)
 	assert.NoError(t, err)
-	return object.FromMap(m)
+	return FromMap(m)
 }
