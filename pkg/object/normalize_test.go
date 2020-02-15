@@ -16,8 +16,10 @@ func Test_Normalize(t *testing.T) {
 	kx := []byte{111, 39, 65, 188, 215, 49, 84, 43, 192, 187}
 
 	s := fixtures.TestStream{
-		Nonce:    "nonce",
-		Identity: "foo",
+		Nonce: "nonce",
+		Owners: []crypto.PublicKey{
+			"foo",
+		},
 		Policy: &fixtures.TestPolicy{
 			Subjects:  []string{"subject"},
 			Resources: []string{"*"},
@@ -70,15 +72,15 @@ func Test_Normalize(t *testing.T) {
 					"@type:s":      string("nimona.io/schema.Property"),
 					"hint:s":       string("s"),
 					"isOptional:b": bool(false),
-					"isRepeated:b": bool(false),
-					"name:s":       string("@identity"),
+					"isRepeated:b": bool(true),
+					"name:s":       string("@owners"),
 					"type:s":       string("nimona.io/crypto.PublicKey"),
 				},
 			},
 		},
-		"@type:s":     "nimona.io/fixtures.TestStream",
-		"nonce:s":     "nonce",
-		"@identity:s": "foo",
+		"@type:s":    "nimona.io/fixtures.TestStream",
+		"nonce:s":    "nonce",
+		"@owners:as": []interface{}{"foo"},
 		"@policy:o": map[string]interface{}{
 			"@type:s":      "nimona.io/fixtures.TestPolicy",
 			"subjects:as":  []interface{}{"subject"},

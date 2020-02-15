@@ -142,7 +142,7 @@ func (r *Discoverer) Lookup(
 			err := r.exchange.Send(
 				ctx,
 				reqObject,
-				peer.LookupByKey(recipient),
+				peer.LookupByOwner(recipient),
 				exchange.WithLocalDiscoveryOnly(),
 				exchange.WithAsync(),
 			)
@@ -299,7 +299,7 @@ func (r *Discoverer) handlePeerLookup(
 	err = r.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByKey(e.Sender),
+		peer.LookupByOwner(e.Sender),
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	)
@@ -384,7 +384,7 @@ func (r *Discoverer) publishContentHashes(
 	}
 
 	for _, f := range fs {
-		err := r.exchange.Send(ctx, o, peer.LookupByKey(f), opts...)
+		err := r.exchange.Send(ctx, o, peer.LookupByOwner(f), opts...)
 		if err != nil {
 			logger.Debug("could not send request", log.Error(err))
 		}

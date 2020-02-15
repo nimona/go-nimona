@@ -133,10 +133,12 @@ func (m *orchestrator) Sync(
 
 				// create a request for them
 				objReq := &stream.ObjectRequest{
-					Nonce:    rand.String(12),
-					Stream:   p.Stream,
-					Objects:  missingObjects,
-					Identity: m.localInfo.GetIdentityPublicKey(),
+					Nonce:   rand.String(12),
+					Stream:  p.Stream,
+					Objects: missingObjects,
+					Owners: []crypto.PublicKey{
+						m.localInfo.GetIdentityPublicKey(),
+					},
 				}
 				sig, err := crypto.NewSignature(
 					m.localInfo.GetPeerPrivateKey(),
@@ -151,7 +153,7 @@ func (m *orchestrator) Sync(
 				if err := m.exchange.Send(
 					ctx,
 					objReq.ToObject(),
-					peer.LookupByKey(e.Sender),
+					peer.LookupByOwner(e.Sender),
 					exchange.WithLocalDiscoveryOnly(),
 					exchange.WithAsync(),
 				); err != nil {
@@ -201,10 +203,12 @@ func (m *orchestrator) Sync(
 
 	// create object graph request
 	req := &stream.Request{
-		Nonce:    streamRequestNonce,
-		Stream:   streamHash,
-		Leaves:   leaves,
-		Identity: m.localInfo.GetIdentityPublicKey(),
+		Nonce:  streamRequestNonce,
+		Stream: streamHash,
+		Leaves: leaves,
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
+		},
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),

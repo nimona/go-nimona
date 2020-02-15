@@ -49,8 +49,10 @@ func (hs *Handshake) handleIncoming(
 
 	nonce := rand.String(8)
 	syn := &Syn{
-		Nonce:    nonce,
-		Identity: hs.local.GetIdentityPublicKey(),
+		Nonce: nonce,
+		Owners: []crypto.PublicKey{
+			hs.local.GetIdentityPublicKey(),
+		},
 	}
 	so := syn.ToObject()
 	if err := crypto.Sign(so, hs.local.GetPeerPrivateKey()); err != nil {
@@ -139,8 +141,10 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	// hs.discoverer.Add(syn.Peer)
 
 	synAck := &SynAck{
-		Nonce:    syn.Nonce,
-		Identity: hs.local.GetIdentityPublicKey(),
+		Nonce: syn.Nonce,
+		Owners: []crypto.PublicKey{
+			hs.local.GetIdentityPublicKey(),
+		},
 	}
 
 	sao := synAck.ToObject()

@@ -18,18 +18,18 @@ type (
 		Action     string              `json:"action:s,omitempty"`
 	}
 	Created struct {
-		CreatedDateTime string            `json:"createdDateTime:s,omitempty"`
-		PartitionKeys   []string          `json:"partitionKeys:as,omitempty"`
-		Policies        []*Policy         `json:"policies:ao,omitempty"`
-		Signature       *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity        crypto.PublicKey  `json:"@identity:s,omitempty"`
+		CreatedDateTime string             `json:"createdDateTime:s,omitempty"`
+		PartitionKeys   []string           `json:"partitionKeys:as,omitempty"`
+		Policies        []*Policy          `json:"policies:ao,omitempty"`
+		Signature       *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners          []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	PoliciesUpdated struct {
-		Stream    *crypto.Hash      `json:"stream:o,omitempty"`
-		Parents   []*crypto.Hash    `json:"parents:ao,omitempty"`
-		Policies  []*Policy         `json:"policies:ao,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Stream    *crypto.Hash       `json:"stream:o,omitempty"`
+		Parents   []*crypto.Hash     `json:"parents:ao,omitempty"`
+		Policies  []*Policy          `json:"policies:ao,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
 
@@ -140,10 +140,10 @@ func (e Created) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -171,8 +171,8 @@ func (e Created) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
@@ -221,10 +221,10 @@ func (e PoliciesUpdated) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -258,8 +258,8 @@ func (e PoliciesUpdated) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()

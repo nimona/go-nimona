@@ -12,19 +12,19 @@ import (
 
 type (
 	Syn struct {
-		Nonce     string            `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Nonce     string             `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	SynAck struct {
-		Nonce     string            `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Nonce     string             `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	Ack struct {
-		Nonce     string            `json:"nonce:s,omitempty"`
-		Signature *crypto.Signature `json:"@signature:o,omitempty"`
-		Identity  crypto.PublicKey  `json:"@identity:s,omitempty"`
+		Nonce     string             `json:"nonce:s,omitempty"`
+		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
 
@@ -50,10 +50,10 @@ func (e Syn) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -69,8 +69,8 @@ func (e Syn) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
@@ -105,10 +105,10 @@ func (e SynAck) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -124,8 +124,8 @@ func (e SynAck) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()
@@ -160,10 +160,10 @@ func (e Ack) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@identity",
+				Name:       "@owners",
 				Type:       "nimona.io/crypto.PublicKey",
 				Hint:       "s",
-				IsRepeated: false,
+				IsRepeated: true,
 				IsOptional: false,
 			},
 		},
@@ -179,8 +179,8 @@ func (e Ack) ToObject() object.Object {
 	if e.Signature != nil {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
-	if e.Identity != "" {
-		m["@identity:s"] = e.Identity
+	if len(e.Owners) > 0 {
+		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["$schema:o"] = schema.ToObject().ToMap()

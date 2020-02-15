@@ -353,7 +353,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				err := w.Send(
 					ctx,
 					newReq.ToObject(),
-					peer.LookupByKey(crypto.PublicKey(relayPeer)),
+					peer.LookupByOwner(crypto.PublicKey(relayPeer)),
 				)
 				if err != nil {
 					// if this fails send it to the next one
@@ -479,7 +479,7 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 			go w.Send( // nolint: errcheck
 				context.New(),
 				res,
-				peer.LookupByKey(e.Sender),
+				peer.LookupByOwner(e.Sender),
 				WithLocalDiscoveryOnly(),
 			)
 		case dataForwardType:
@@ -505,7 +505,7 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 			if err := w.Send(
 				context.Background(),
 				o,
-				peer.LookupByKey(fwd.Recipient),
+				peer.LookupByOwner(fwd.Recipient),
 			); err != nil {
 				return errors.Wrap(
 					errors.Error("could not send object"),

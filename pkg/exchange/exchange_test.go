@@ -53,7 +53,7 @@ func TestSendSuccess(t *testing.T) {
 	// peer1 looks for peer2
 	dr1, err := disc1.Lookup(
 		context.Background(),
-		peer.LookupByKey(l2.GetPeerPublicKey()),
+		peer.LookupByOwner(l2.GetPeerPublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, dr1, 1)
@@ -111,13 +111,13 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, peer.LookupByKey(k1.PublicKey()))
+	errS1 := x2.Send(ctx, eo1, peer.LookupByOwner(k1.PublicKey()))
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
 	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, peer.LookupByKey(k2.PublicKey()))
+	errS2 := x1.Send(ctx, eo2, peer.LookupByOwner(k2.PublicKey()))
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
@@ -175,7 +175,7 @@ func TestRequestSuccess(t *testing.T) {
 	err = x1.Request(
 		ctx,
 		hash.New(eo1),
-		peer.LookupByKey(l2.GetPeerPublicKey()),
+		peer.LookupByOwner(l2.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -246,7 +246,7 @@ func TestSendRelay(t *testing.T) {
 	err = x1.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		peer.LookupByKey(relayPeer.GetPeerPublicKey()),
+		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -254,7 +254,7 @@ func TestSendRelay(t *testing.T) {
 	err = x2.Send(
 		context.Background(),
 		object.FromMap(map[string]interface{}{"foo": "bar"}),
-		peer.LookupByKey(relayPeer.GetPeerPublicKey()),
+		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -316,7 +316,7 @@ func TestSendRelay(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 5))
 	defer ctx.Cancel()
 
-	err = x2.Send(ctx, eo1, peer.LookupByKey(k1.PublicKey()))
+	err = x2.Send(ctx, eo1, peer.LookupByOwner(k1.PublicKey()))
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -325,7 +325,7 @@ func TestSendRelay(t *testing.T) {
 	defer ctx2.Cancel()
 
 	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, peer.LookupByKey(k2.PublicKey()))
+	err = x1.Send(ctx2, eo2, peer.LookupByOwner(k2.PublicKey()))
 	assert.NoError(t, err)
 
 	wg.Wait()

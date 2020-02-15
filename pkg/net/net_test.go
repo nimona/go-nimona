@@ -40,7 +40,7 @@ func TestNetDiscoverer(t *testing.T) {
 	disc1.Add(l2.GetSignedPeer(), true)
 	disc2.Add(l1.GetSignedPeer(), true)
 
-	ps2, err := disc1.Lookup(ctx, peer.LookupByKey(l2.GetPeerPublicKey()))
+	ps2, err := disc1.Lookup(ctx, peer.LookupByOwner(l2.GetPeerPublicKey()))
 	p2 := gatherPeers(ps2)[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n2.key.PublicKey, p2.SignerKey)
@@ -49,7 +49,7 @@ func TestNetDiscoverer(t *testing.T) {
 		p2.PublicKey(),
 	)
 
-	ps1, err := disc2.Lookup(ctx, peer.LookupByKey(l1.GetPeerPublicKey()))
+	ps1, err := disc2.Lookup(ctx, peer.LookupByOwner(l1.GetPeerPublicKey()))
 	p1 := gatherPeers(ps1)[0]
 	assert.NoError(t, err)
 	// assert.Equal(t, n1.key.PublicKey, p1.SignerKey)

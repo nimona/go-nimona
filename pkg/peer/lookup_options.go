@@ -59,8 +59,8 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 	}
 }
 
-// LookupByKey matches the peer key
-func LookupByKey(keys ...crypto.PublicKey) LookupOption {
+// LookupByOwner matches the peer key
+func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		for _, key := range keys {
 			opts.Lookups = append(opts.Lookups, key.String())
@@ -69,8 +69,10 @@ func LookupByKey(keys ...crypto.PublicKey) LookupOption {
 			opts.Filters,
 			func(p *Peer) bool {
 				for _, key := range keys {
-					if p.Identity.Equals(key) {
-						return true
+					for _, owner := range p.Owners {
+						if owner.Equals(key) {
+							return true
+						}
 					}
 					for _, c := range p.Certificates {
 						if c.Signature != nil {

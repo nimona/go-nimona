@@ -231,7 +231,7 @@ func (m *orchestrator) Put(o object.Object) error {
 			o.Set("@parents:as", parentHashes)
 		}
 	}
-	o.Set("@identity:s", m.localInfo.GetIdentityPublicKey().String())
+	o.Set("@owners:as", []interface{}{m.localInfo.GetIdentityPublicKey().String()})
 
 	h := hash.New(o)
 
@@ -276,9 +276,11 @@ func (m *orchestrator) Put(o object.Object) error {
 
 	// send announcements about new hashes
 	announcement := &stream.Announcement{
-		Stream:   streamHash,
-		Leaves:   leafHashes,
-		Identity: m.localInfo.GetIdentityPublicKey(),
+		Stream: streamHash,
+		Leaves: leafHashes,
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
+		},
 	}
 
 	sig, err := crypto.NewSignature(
@@ -302,7 +304,7 @@ func (m *orchestrator) Put(o object.Object) error {
 			return m.exchange.Send(
 				context.New(),
 				announcement.ToObject(),
-				peer.LookupByKey(recipient),
+				peer.LookupByOwner(recipient),
 				exchange.WithAsync(),
 				exchange.WithLocalDiscoveryOnly(),
 			)
@@ -377,7 +379,7 @@ func (m *orchestrator) handleStreamAnnouncement(
 	if _, err := m.Sync(
 		ctx,
 		req.Stream,
-		peer.LookupByKey(sender),
+		peer.LookupByOwner(sender),
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	); err != nil {
@@ -413,7 +415,9 @@ func (m *orchestrator) handleStreamRequest(
 		Stream:   req.Stream,
 		Nonce:    req.Nonce,
 		Children: hs,
-		Identity: m.localInfo.GetIdentityPublicKey(),
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
+		},
 	}
 	sig, err := crypto.NewSignature(
 		m.localInfo.GetPeerPrivateKey(),
@@ -427,7 +431,7 @@ func (m *orchestrator) handleStreamRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByKey(sender),
+		peer.LookupByOwner(sender),
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	); err != nil {
@@ -463,10 +467,12 @@ func (m *orchestrator) handleStreamObjectRequest(
 
 	// construct object response
 	res := &stream.ObjectResponse{
-		Stream:   req.Stream,
-		Nonce:    req.Nonce,
-		Objects:  make([]*object.Object, len(vs)),
-		Identity: m.localInfo.GetIdentityPublicKey(),
+		Stream:  req.Stream,
+		Nonce:   req.Nonce,
+		Objects: make([]*object.Object, len(vs)),
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
+		},
 	}
 	for i, obj := range vs {
 		obj := obj
@@ -484,7 +490,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByKey(sender),
+		peer.LookupByOwner(sender),
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	); err != nil {
