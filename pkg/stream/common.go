@@ -16,7 +16,7 @@ type (
 		Stream    object.Hash        `json:"@stream:s,omitempty"`
 		Parents   []object.Hash      `json:"@parents:as,omitempty"`
 		Policy    *Policy            `json:"@policy:o,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as"`
 	}
 )

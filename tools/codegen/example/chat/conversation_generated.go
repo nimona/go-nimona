@@ -13,25 +13,25 @@ import (
 type (
 	ConversationCreated struct {
 		Name      string             `json:"name:s,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	ConversationTopicUpdated struct {
 		Topic     string             `json:"topic:s,omitempty"`
 		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	ConversationMessageAdded struct {
 		Body      string             `json:"body:s,omitempty"`
 		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	ConversationMessageRemoved struct {
 		Removes   object.Hash        `json:"removes:r,omitempty"`
 		DependsOn []object.Hash      `json:"dependsOn:ar,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -51,7 +51,7 @@ func (e ConversationCreated) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -75,7 +75,7 @@ func (e ConversationCreated) ToObject() object.Object {
 		m["name:s"] = e.Name
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -113,7 +113,7 @@ func (e ConversationTopicUpdated) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -140,7 +140,7 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 		m["dependsOn:ar"] = e.DependsOn
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -178,7 +178,7 @@ func (e ConversationMessageAdded) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -205,7 +205,7 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 		m["dependsOn:ar"] = e.DependsOn
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -243,7 +243,7 @@ func (e ConversationMessageRemoved) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -268,7 +268,7 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 		m["dependsOn:ar"] = e.DependsOn
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners

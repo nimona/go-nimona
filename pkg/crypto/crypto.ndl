@@ -4,7 +4,7 @@ object nimona.io/crypto.Certificate {
     subject nimona.io/crypto.PublicKey
     created string
     expires string
-    @signature Signature
+    _signature Signature
 }
 
 object nimona.io/crypto.Signature {

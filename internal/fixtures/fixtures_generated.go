@@ -21,19 +21,19 @@ type (
 		Nonce           string             `json:"nonce:s,omitempty"`
 		CreatedDateTime string             `json:"createdDateTime:s,omitempty"`
 		Policy          *TestPolicy        `json:"@policy:o,omitempty"`
-		Signature       *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature       *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners          []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	TestSubscribed struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Stream    object.Hash        `json:"@stream:s,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	TestUnsubscribed struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Stream    object.Hash        `json:"@stream:s,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -132,7 +132,7 @@ func (e TestStream) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -162,7 +162,7 @@ func (e TestStream) ToObject() object.Object {
 		m["@policy:o"] = e.Policy.ToObject().ToMap()
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -200,7 +200,7 @@ func (e TestSubscribed) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -227,7 +227,7 @@ func (e TestSubscribed) ToObject() object.Object {
 		m["@stream:s"] = e.Stream
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -265,7 +265,7 @@ func (e TestUnsubscribed) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -292,7 +292,7 @@ func (e TestUnsubscribed) ToObject() object.Object {
 		m["@stream:s"] = e.Stream
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners

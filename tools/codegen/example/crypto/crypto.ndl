@@ -28,5 +28,5 @@ object example/crypto.PublicKey {
     curve string
     x data
     y data
-    @signature Signature
+    _signature Signature
 }

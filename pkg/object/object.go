@@ -52,12 +52,12 @@ func (o Object) SetType(v string) {
 
 // GetSignature returns the object's signature, or nil
 func (o Object) GetSignature() *Object {
-	return o.getObject("@signature:o")
+	return o.getObject("_signature:o")
 }
 
 // SetSignature sets the object's signature
 func (o Object) SetSignature(v Object) {
-	o.Set("@signature:o", v)
+	o.Set("_signature:o", v)
 }
 
 func (o Object) getObject(k string) *Object {

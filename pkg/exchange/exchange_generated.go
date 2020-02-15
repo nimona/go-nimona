@@ -13,13 +13,13 @@ import (
 type (
 	ObjectRequest struct {
 		ObjectHash object.Hash        `json:"objectHash:s,omitempty"`
-		Signature  *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature  *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners     []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	DataForward struct {
 		Recipient crypto.PublicKey   `json:"recipient:s,omitempty"`
 		Data      []byte             `json:"data:d,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -39,7 +39,7 @@ func (e ObjectRequest) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -63,7 +63,7 @@ func (e ObjectRequest) ToObject() object.Object {
 		m["objectHash:s"] = e.ObjectHash
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -101,7 +101,7 @@ func (e DataForward) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -128,7 +128,7 @@ func (e DataForward) ToObject() object.Object {
 		m["data:d"] = e.Data
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners

@@ -35,7 +35,7 @@ type (
 		Curve     string     `json:"curve:s,omitempty"`
 		X         []byte     `json:"x:d,omitempty"`
 		Y         []byte     `json:"y:d,omitempty"`
-		Signature *Signature `json:"@signature:o,omitempty"`
+		Signature *Signature `json:"_signature:o,omitempty"`
 	}
 )
 
@@ -287,7 +287,7 @@ func (e PublicKey) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -316,7 +316,7 @@ func (e PublicKey) ToObject() object.Object {
 		m["y:d"] = e.Y
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if schema := e.GetSchema(); schema != nil {
 		m["_schema:o"] = schema.ToObject().ToMap()

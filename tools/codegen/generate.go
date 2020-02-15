@@ -220,7 +220,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 					Name:       "Signature",
 					Type:       "nimona.io/crypto.Signature",
 					SimpleType: "nimona.io/crypto.Signature",
-					Tag:        "@signature",
+					Tag:        "_signature",
 					Hint:       "o",
 					IsObject:   true,
 				},

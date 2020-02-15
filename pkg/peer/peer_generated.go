@@ -18,20 +18,20 @@ type (
 		ContentTypes []string              `json:"contentTypes:as,omitempty"`
 		Certificates []*crypto.Certificate `json:"certificates:ao,omitempty"`
 		Relays       []crypto.PublicKey    `json:"relays:as,omitempty"`
-		Signature    *crypto.Signature     `json:"@signature:o,omitempty"`
+		Signature    *crypto.Signature     `json:"_signature:o,omitempty"`
 		Owners       []crypto.PublicKey    `json:"@owners:as,omitempty"`
 	}
 	LookupRequest struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Bloom     []int64            `json:"bloom:ai,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 	LookupResponse struct {
 		Nonce     string             `json:"nonce:s,omitempty"`
 		Bloom     []int64            `json:"bloom:ai,omitempty"`
 		Peers     []*Peer            `json:"peers:ao,omitempty"`
-		Signature *crypto.Signature  `json:"@signature:o,omitempty"`
+		Signature *crypto.Signature  `json:"_signature:o,omitempty"`
 		Owners    []crypto.PublicKey `json:"@owners:as,omitempty"`
 	}
 )
@@ -86,7 +86,7 @@ func (e Peer) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -131,7 +131,7 @@ func (e Peer) ToObject() object.Object {
 		m["relays:as"] = e.Relays
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -169,7 +169,7 @@ func (e LookupRequest) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -196,7 +196,7 @@ func (e LookupRequest) ToObject() object.Object {
 		m["bloom:ai"] = e.Bloom
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners
@@ -241,7 +241,7 @@ func (e LookupResponse) GetSchema() *schema.Object {
 				IsOptional: false,
 			},
 			&schema.Property{
-				Name:       "@signature",
+				Name:       "_signature",
 				Type:       "nimona.io/crypto.Signature",
 				Hint:       "o",
 				IsRepeated: false,
@@ -277,7 +277,7 @@ func (e LookupResponse) ToObject() object.Object {
 		}()
 	}
 	if e.Signature != nil {
-		m["@signature:o"] = e.Signature.ToObject().ToMap()
+		m["_signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if len(e.Owners) > 0 {
 		m["@owners:as"] = e.Owners

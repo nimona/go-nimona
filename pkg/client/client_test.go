@@ -25,7 +25,7 @@ func TestClient_Info(t *testing.T) {
 			name:     "success",
 			respCode: 200,
 			respBody: map[string]interface{}{
-				"@signature:o": map[string]interface{}{
+				"_signature:o": map[string]interface{}{
 					"algorithm:s": "OH_ES256",
 				},
 				"_fingerprint": "xxx",

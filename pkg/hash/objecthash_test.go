@@ -32,7 +32,7 @@ func TestObjectHash(t *testing.T) {
 func TestObjectHashWithSignature(t *testing.T) {
 	v := map[string]interface{}{
 		"str:s": "foo",
-		"@signature:o": map[string]string{
+		"_signature:o": map[string]string{
 			"foo:s": "bar",
 		},
 	}
