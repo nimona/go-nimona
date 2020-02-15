@@ -81,7 +81,7 @@ func (e ConversationCreated) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -146,7 +146,7 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -211,7 +211,7 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -274,7 +274,7 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

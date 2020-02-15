@@ -78,7 +78,7 @@ func (e Certificate) ToObject() object.Object {
 		m["@signature:o"] = e.Signature.ToObject().ToMap()
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -133,7 +133,7 @@ func (e Signature) ToObject() object.Object {
 		m["x:d"] = e.X
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }

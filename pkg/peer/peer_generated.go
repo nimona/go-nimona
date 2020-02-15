@@ -137,7 +137,7 @@ func (e Peer) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -202,7 +202,7 @@ func (e LookupRequest) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
@@ -283,7 +283,7 @@ func (e LookupResponse) ToObject() object.Object {
 		m["@owners:as"] = e.Owners
 	}
 	if schema := e.GetSchema(); schema != nil {
-		m["$schema:o"] = schema.ToObject().ToMap()
+		m["_schema:o"] = schema.ToObject().ToMap()
 	}
 	return object.Object(m)
 }
