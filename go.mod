@@ -14,7 +14,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.13.0
 	github.com/mr-tron/base58 v1.1.3
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.0
 	github.com/vburenin/nsync v0.0.0-20160822015540-9a75d1c80410
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.15
