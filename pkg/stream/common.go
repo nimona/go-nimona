@@ -7,33 +7,11 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// TODO(geoah) remove all helpers
-
-func GetParents(o object.Object) []object.Hash {
-	return o.Header.Parents
-}
-
-func GetStream(o object.Object) object.Hash {
-	return o.Header.Stream
-}
-
-func GetPolicy(o object.Object) object.Policy {
-	return o.Header.Policy
-}
-
-func GetOwners(o object.Object) []crypto.PublicKey {
-	return o.Header.Owners
-}
-
-func GetSigner(o object.Object) crypto.PublicKey {
-	return o.Header.Signature.Signer
-}
-
 func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 	// TODO this currently only accepts allow actions
 	pks := []crypto.PublicKey{}
 	for _, o := range os {
-		p := GetPolicy(o)
+		p := o.GetPolicy()
 		for _, a := range p.Actions {
 			switch strings.ToLower(a) {
 			case "allow":
@@ -54,7 +32,7 @@ func GetStreamLeaves(os []object.Object) []object.Object {
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}
-		for _, p := range GetParents(o) {
+		for _, p := range o.GetParents() {
 			hm[p.String()] = true
 		}
 		om[h] = o

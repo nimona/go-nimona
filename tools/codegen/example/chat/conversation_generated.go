@@ -3,27 +3,50 @@
 package chat
 
 import (
-	"nimona.io/pkg/immutable"
+	"errors"
+
+	crypto "nimona.io/pkg/crypto"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	ConversationCreated struct {
-		Header object.Header
-		Name   string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Name      string
 	}
 	ConversationTopicUpdated struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		Topic     string
 		DependsOn []object.Hash
 	}
 	ConversationMessageAdded struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		Body      string
 		DependsOn []object.Hash
 	}
 	ConversationMessageRemoved struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		Removes   object.Hash
 		DependsOn []object.Hash
 	}
@@ -32,6 +55,46 @@ type (
 func (e ConversationCreated) GetType() string {
 	return "mochi.io/conversation.Created"
 }
+
+// func (e *ConversationCreated) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e ConversationCreated) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *ConversationCreated) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e ConversationCreated) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *ConversationCreated) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e ConversationCreated) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *ConversationCreated) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e ConversationCreated) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *ConversationCreated) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e ConversationCreated) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e ConversationCreated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -48,24 +111,41 @@ func (e ConversationCreated) GetSchema() *object.SchemaObject {
 }
 
 func (e ConversationCreated) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("mochi.io/conversation.Created")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Name != "" {
-		d["name:s"] = e.Name
+		o = o.Set("name:s", e.Name)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("mochi.io/conversation.Created")
 	return o
 }
 
 func (e *ConversationCreated) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("name:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -74,6 +154,46 @@ func (e *ConversationCreated) FromObject(o object.Object) error {
 func (e ConversationTopicUpdated) GetType() string {
 	return "mochi.io/conversation.TopicUpdated"
 }
+
+// func (e *ConversationTopicUpdated) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e ConversationTopicUpdated) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *ConversationTopicUpdated) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e ConversationTopicUpdated) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *ConversationTopicUpdated) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e ConversationTopicUpdated) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *ConversationTopicUpdated) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e ConversationTopicUpdated) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *ConversationTopicUpdated) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e ConversationTopicUpdated) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -97,30 +217,51 @@ func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 }
 
 func (e ConversationTopicUpdated) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("mochi.io/conversation.TopicUpdated")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Topic != "" {
-		d["topic:s"] = e.Topic
+		o = o.Set("topic:s", e.Topic)
 	}
 	if len(e.DependsOn) > 0 {
-		d["dependsOn:ar"] = e.DependsOn
+		v := immutable.List{}
+		for _, iv := range e.DependsOn {
+			// TODO missing type hint r, for repeated DependsOn
+		}
+		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("mochi.io/conversation.TopicUpdated")
 	return o
 }
 
 func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("topic:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("topic:s"); v != nil {
 		e.Topic = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil
@@ -129,6 +270,46 @@ func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
 func (e ConversationMessageAdded) GetType() string {
 	return "mochi.io/conversation.MessageAdded"
 }
+
+// func (e *ConversationMessageAdded) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e ConversationMessageAdded) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *ConversationMessageAdded) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e ConversationMessageAdded) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *ConversationMessageAdded) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e ConversationMessageAdded) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *ConversationMessageAdded) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e ConversationMessageAdded) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *ConversationMessageAdded) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e ConversationMessageAdded) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -152,30 +333,51 @@ func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 }
 
 func (e ConversationMessageAdded) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("mochi.io/conversation.MessageAdded")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Body != "" {
-		d["body:s"] = e.Body
+		o = o.Set("body:s", e.Body)
 	}
 	if len(e.DependsOn) > 0 {
-		d["dependsOn:ar"] = e.DependsOn
+		v := immutable.List{}
+		for _, iv := range e.DependsOn {
+			// TODO missing type hint r, for repeated DependsOn
+		}
+		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("mochi.io/conversation.MessageAdded")
 	return o
 }
 
 func (e *ConversationMessageAdded) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("body:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("body:s"); v != nil {
 		e.Body = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil
@@ -184,6 +386,46 @@ func (e *ConversationMessageAdded) FromObject(o object.Object) error {
 func (e ConversationMessageRemoved) GetType() string {
 	return "mochi.io/conversation.MessageRemoved"
 }
+
+// func (e *ConversationMessageRemoved) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e ConversationMessageRemoved) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *ConversationMessageRemoved) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e ConversationMessageRemoved) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *ConversationMessageRemoved) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e ConversationMessageRemoved) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *ConversationMessageRemoved) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e ConversationMessageRemoved) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *ConversationMessageRemoved) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e ConversationMessageRemoved) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -207,28 +449,49 @@ func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 }
 
 func (e ConversationMessageRemoved) ToObject() object.Object {
-	d := map[string]interface{}{}
-	d["removes:r"] = e.Removes
+	o := object.Object{}
+	o = o.SetType("mochi.io/conversation.MessageRemoved")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
+	// TODO missing type hint r, for Removes
 	if len(e.DependsOn) > 0 {
-		d["dependsOn:ar"] = e.DependsOn
+		v := immutable.List{}
+		for _, iv := range e.DependsOn {
+			// TODO missing type hint r, for repeated DependsOn
+		}
+		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("mochi.io/conversation.MessageRemoved")
 	return o
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("removes:r"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("removes:r"); v != nil {
 		e.Removes = v.PrimitiveHinted().(object.Hash)
 	}
-	if v := o.Data.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil

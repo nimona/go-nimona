@@ -4,17 +4,28 @@ package exchange
 
 import (
 	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/immutable"
+	"nimona.io/pkg/errors"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	ObjectRequest struct {
-		Header     object.Header
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signature  object.Signature
 		ObjectHash object.Hash
 	}
 	DataForward struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		Recipient crypto.PublicKey
 		Data      []byte
 	}
@@ -23,6 +34,46 @@ type (
 func (e ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
+
+// func (e *ObjectRequest) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e ObjectRequest) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *ObjectRequest) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e ObjectRequest) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *ObjectRequest) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e ObjectRequest) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *ObjectRequest) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e ObjectRequest) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *ObjectRequest) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e ObjectRequest) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e ObjectRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -39,24 +90,41 @@ func (e ObjectRequest) GetSchema() *object.SchemaObject {
 }
 
 func (e ObjectRequest) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/exchange.ObjectRequest")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.ObjectHash != "" {
-		d["objectHash:s"] = e.ObjectHash
+		o = o.Set("objectHash:s", e.ObjectHash)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/exchange.ObjectRequest")
 	return o
 }
 
 func (e *ObjectRequest) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("objectHash:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("objectHash:s"); v != nil {
 		e.ObjectHash = object.Hash(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -65,6 +133,46 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 func (e DataForward) GetType() string {
 	return "nimona.io/exchange.DataForward"
 }
+
+// func (e *DataForward) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e DataForward) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *DataForward) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e DataForward) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *DataForward) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e DataForward) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *DataForward) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e DataForward) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *DataForward) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e DataForward) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e DataForward) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -88,30 +196,47 @@ func (e DataForward) GetSchema() *object.SchemaObject {
 }
 
 func (e DataForward) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/exchange.DataForward")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Recipient != "" {
-		d["recipient:s"] = e.Recipient
+		o = o.Set("recipient:s", e.Recipient)
 	}
 	if len(e.Data) != 0 {
-		d["data:d"] = e.Data
+		o = o.Set("data:d", e.Data)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/exchange.DataForward")
 	return o
 }
 
 func (e *DataForward) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("recipient:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("recipient:s"); v != nil {
 		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("data:d"); v != nil {
+	if v := data.Value("data:d"); v != nil {
 		e.Data = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil

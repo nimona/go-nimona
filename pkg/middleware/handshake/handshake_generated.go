@@ -3,28 +3,86 @@
 package handshake
 
 import (
-	"nimona.io/pkg/immutable"
+	"errors"
+
+	crypto "nimona.io/pkg/crypto"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Syn struct {
-		Header object.Header
-		Nonce  string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Nonce     string
 	}
 	SynAck struct {
-		Header object.Header
-		Nonce  string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Nonce     string
 	}
 	Ack struct {
-		Header object.Header
-		Nonce  string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Nonce     string
 	}
 )
 
 func (e Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
+
+// func (e *Syn) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Syn) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Syn) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Syn) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Syn) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Syn) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Syn) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Syn) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Syn) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Syn) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Syn) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -41,24 +99,41 @@ func (e Syn) GetSchema() *object.SchemaObject {
 }
 
 func (e Syn) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/net/handshake.Syn")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/net/handshake.Syn")
 	return o
 }
 
 func (e *Syn) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -67,6 +142,46 @@ func (e *Syn) FromObject(o object.Object) error {
 func (e SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
+
+// func (e *SynAck) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e SynAck) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *SynAck) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e SynAck) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *SynAck) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e SynAck) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *SynAck) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e SynAck) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *SynAck) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e SynAck) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e SynAck) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -83,24 +198,41 @@ func (e SynAck) GetSchema() *object.SchemaObject {
 }
 
 func (e SynAck) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/net/handshake.SynAck")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/net/handshake.SynAck")
 	return o
 }
 
 func (e *SynAck) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -109,6 +241,46 @@ func (e *SynAck) FromObject(o object.Object) error {
 func (e Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
+
+// func (e *Ack) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Ack) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Ack) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Ack) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Ack) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Ack) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Ack) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Ack) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Ack) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Ack) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Ack) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -125,24 +297,41 @@ func (e Ack) GetSchema() *object.SchemaObject {
 }
 
 func (e Ack) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/net/handshake.Ack")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/net/handshake.Ack")
 	return o
 }
 
 func (e *Ack) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil

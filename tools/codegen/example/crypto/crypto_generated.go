@@ -3,25 +3,43 @@
 package crypto
 
 import (
-	"nimona.io/pkg/immutable"
+	"errors"
+
+	crypto "nimona.io/pkg/crypto"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Hash struct {
-		Header   object.Header
-		HashType string
-		Digest   []byte
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		HashType  string
+		Digest    []byte
 	}
 	HeaderSignature struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		PublicKey *PublicKey
 		Algorithm string
 		R         []byte
 		S         []byte
 	}
 	PrivateKey struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		PublicKey *PublicKey
 		KeyType   string
 		Algorithm string
@@ -31,7 +49,12 @@ type (
 		D         []byte
 	}
 	PublicKey struct {
-		Header    object.Header
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
 		KeyType   string
 		Algorithm string
 		Curve     string
@@ -43,6 +66,46 @@ type (
 func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
+
+// func (e *Hash) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Hash) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Hash) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Hash) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Hash) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Hash) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Hash) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Hash) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Hash) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Hash) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Hash) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -66,30 +129,47 @@ func (e Hash) GetSchema() *object.SchemaObject {
 }
 
 func (e Hash) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/crypto.Hash")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.HashType != "" {
-		d["hashType:s"] = e.HashType
+		o = o.Set("hashType:s", e.HashType)
 	}
 	if len(e.Digest) != 0 {
-		d["digest:d"] = e.Digest
+		o = o.Set("digest:d", e.Digest)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/crypto.Hash")
 	return o
 }
 
 func (e *Hash) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("hashType:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("hashType:s"); v != nil {
 		e.HashType = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("digest:d"); v != nil {
+	if v := data.Value("digest:d"); v != nil {
 		e.Digest = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -98,6 +178,46 @@ func (e *Hash) FromObject(o object.Object) error {
 func (e HeaderSignature) GetType() string {
 	return "example/object.Header.Signature"
 }
+
+// func (e *HeaderSignature) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e HeaderSignature) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *HeaderSignature) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e HeaderSignature) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *HeaderSignature) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e HeaderSignature) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *HeaderSignature) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e HeaderSignature) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *HeaderSignature) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e HeaderSignature) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e HeaderSignature) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -135,45 +255,62 @@ func (e HeaderSignature) GetSchema() *object.SchemaObject {
 }
 
 func (e HeaderSignature) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/object.Header.Signature")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
-		d["publicKey:o"] = e.PublicKey.ToObject().ToMap()
+		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
 	}
 	if e.Algorithm != "" {
-		d["algorithm:s"] = e.Algorithm
+		o = o.Set("algorithm:s", e.Algorithm)
 	}
 	if len(e.R) != 0 {
-		d["r:d"] = e.R
+		o = o.Set("r:d", e.R)
 	}
 	if len(e.S) != 0 {
-		d["s:d"] = e.S
+		o = o.Set("s:d", e.S)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/object.Header.Signature")
 	return o
 }
 
 func (e *HeaderSignature) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("publicKey:o"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("publicKey:o"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.PublicKey = es
 	}
-	if v := o.Data.Value("algorithm:s"); v != nil {
+	if v := data.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("r:d"); v != nil {
+	if v := data.Value("r:d"); v != nil {
 		e.R = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := o.Data.Value("s:d"); v != nil {
+	if v := data.Value("s:d"); v != nil {
 		e.S = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -182,6 +319,46 @@ func (e *HeaderSignature) FromObject(o object.Object) error {
 func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
+
+// func (e *PrivateKey) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e PrivateKey) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *PrivateKey) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e PrivateKey) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *PrivateKey) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e PrivateKey) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *PrivateKey) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e PrivateKey) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *PrivateKey) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e PrivateKey) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e PrivateKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -240,63 +417,80 @@ func (e PrivateKey) GetSchema() *object.SchemaObject {
 }
 
 func (e PrivateKey) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/crypto.PrivateKey")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
-		d["publicKey:o"] = e.PublicKey.ToObject().ToMap()
+		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
 	}
 	if e.KeyType != "" {
-		d["keyType:s"] = e.KeyType
+		o = o.Set("keyType:s", e.KeyType)
 	}
 	if e.Algorithm != "" {
-		d["algorithm:s"] = e.Algorithm
+		o = o.Set("algorithm:s", e.Algorithm)
 	}
 	if e.Curve != "" {
-		d["curve:s"] = e.Curve
+		o = o.Set("curve:s", e.Curve)
 	}
 	if len(e.X) != 0 {
-		d["x:d"] = e.X
+		o = o.Set("x:d", e.X)
 	}
 	if len(e.Y) != 0 {
-		d["y:d"] = e.Y
+		o = o.Set("y:d", e.Y)
 	}
 	if len(e.D) != 0 {
-		d["d:d"] = e.D
+		o = o.Set("d:d", e.D)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/crypto.PrivateKey")
 	return o
 }
 
 func (e *PrivateKey) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("publicKey:o"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("publicKey:o"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.PublicKey = es
 	}
-	if v := o.Data.Value("keyType:s"); v != nil {
+	if v := data.Value("keyType:s"); v != nil {
 		e.KeyType = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("algorithm:s"); v != nil {
+	if v := data.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("curve:s"); v != nil {
+	if v := data.Value("curve:s"); v != nil {
 		e.Curve = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("x:d"); v != nil {
+	if v := data.Value("x:d"); v != nil {
 		e.X = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := o.Data.Value("y:d"); v != nil {
+	if v := data.Value("y:d"); v != nil {
 		e.Y = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := o.Data.Value("d:d"); v != nil {
+	if v := data.Value("d:d"); v != nil {
 		e.D = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -305,6 +499,46 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
+
+// func (e *PublicKey) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e PublicKey) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *PublicKey) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e PublicKey) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *PublicKey) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e PublicKey) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *PublicKey) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e PublicKey) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *PublicKey) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e PublicKey) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e PublicKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -349,48 +583,65 @@ func (e PublicKey) GetSchema() *object.SchemaObject {
 }
 
 func (e PublicKey) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/crypto.PublicKey")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.KeyType != "" {
-		d["keyType:s"] = e.KeyType
+		o = o.Set("keyType:s", e.KeyType)
 	}
 	if e.Algorithm != "" {
-		d["algorithm:s"] = e.Algorithm
+		o = o.Set("algorithm:s", e.Algorithm)
 	}
 	if e.Curve != "" {
-		d["curve:s"] = e.Curve
+		o = o.Set("curve:s", e.Curve)
 	}
 	if len(e.X) != 0 {
-		d["x:d"] = e.X
+		o = o.Set("x:d", e.X)
 	}
 	if len(e.Y) != 0 {
-		d["y:d"] = e.Y
+		o = o.Set("y:d", e.Y)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/crypto.PublicKey")
 	return o
 }
 
 func (e *PublicKey) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("keyType:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("keyType:s"); v != nil {
 		e.KeyType = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("algorithm:s"); v != nil {
+	if v := data.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("curve:s"); v != nil {
+	if v := data.Value("curve:s"); v != nil {
 		e.Curve = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("x:d"); v != nil {
+	if v := data.Value("x:d"); v != nil {
 		e.X = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := o.Data.Value("y:d"); v != nil {
+	if v := data.Value("y:d"); v != nil {
 		e.Y = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil

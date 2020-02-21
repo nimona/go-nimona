@@ -34,12 +34,12 @@ func TestMapPrimitive(t *testing.T) {
 	l = l.Append(String("foo1"))
 	l = l.Append(String("foo2"))
 	m := Map{}.
-		Set("foo", String("bar0")).
-		Set("foo", String("bar1")).
-		Set("foo", String("bar2")).
-		Set("not-foo", String("not-bar0")).
-		Set("nested-map", Map{}.Set("nested-foo", String("nested-bar"))).
-		Set("foos", l)
+		Set("foo:s", String("bar0")).
+		Set("foo:s", String("bar1")).
+		Set("foo:s", String("bar2")).
+		Set("not-foo:s", String("not-bar0")).
+		Set("nested-map:o", Map{}.Set("nested-foo:s", String("nested-bar"))).
+		Set("foos:as", l)
 
 	h := m.PrimitiveHinted()
 	assert.Equal(t, map[string]interface{}{
@@ -58,34 +58,34 @@ func TestMapPrimitive(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	m := Map{}
-	assert.Equal(t, nil, m.Value("foo"))
+	assert.Equal(t, nil, m.Value("foo:s"))
 	iCalls := 0
 	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 0, iCalls)
 
-	m = m.Set("foo", String("bar"))
-	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
+	m = m.Set("foo:s", String("bar"))
+	assert.Equal(t, "bar", m.Value("foo:s").PrimitiveHinted().(string))
 	iCalls = 0
 	m.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm := m.Set("foo", String("nbar"))
-	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
-	assert.Equal(t, "nbar", nm.Value("foo").PrimitiveHinted().(string))
+	nm := m.Set("foo:s", String("nbar"))
+	assert.Equal(t, "bar", m.Value("foo:s").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("foo:s").PrimitiveHinted().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++
 	})
 	assert.Equal(t, 1, iCalls)
 
-	nm = nm.Set("nfoo", String("nbar"))
-	assert.Equal(t, "bar", m.Value("foo").PrimitiveHinted().(string))
-	assert.Equal(t, "nbar", nm.Value("foo").PrimitiveHinted().(string))
-	assert.Equal(t, "nbar", nm.Value("nfoo").PrimitiveHinted().(string))
+	nm = nm.Set("nfoo:s", String("nbar"))
+	assert.Equal(t, "bar", m.Value("foo:s").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("foo:s").PrimitiveHinted().(string))
+	assert.Equal(t, "nbar", nm.Value("nfoo:s").PrimitiveHinted().(string))
 	iCalls = 0
 	nm.Iterate(func(_ string, _ Value) {
 		iCalls++

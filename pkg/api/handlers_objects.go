@@ -100,15 +100,17 @@ func (api *API) HandlePostObjects(c *router.Context) {
 
 	o := object.FromMap(req)
 	k := api.local.GetPeerPrivateKey()
-	o.Header.Owners = []crypto.PublicKey{
+	o = o.SetOwners([]crypto.PublicKey{
 		api.local.GetIdentityPublicKey(),
-	}
+	})
 
-	if err := object.Sign(&o, k); err != nil {
+	sig, err := object.NewSignature(k, o)
+	if err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
+	o = o.SetSignature(sig)
 	if err := api.objectStore.Put(o); err != nil {
 		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
@@ -117,7 +119,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
-	p := stream.GetPolicy(o)
+	p := o.GetPolicy()
 
 	for i, s := range p.Subjects {
 		go func(i int, s string) {
@@ -170,11 +172,13 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	o := object.FromMap(req)
 
-	if err := object.Sign(&o, api.local.GetPeerPrivateKey()); err != nil {
+	sig, err := object.NewSignature(api.local.GetPeerPrivateKey(), o)
+	if err != nil {
 		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
 		return
 	}
 
+	o = o.SetSignature(sig)
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
@@ -192,7 +196,7 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return nil
 	}
 
-	owners := stream.GetOwners(o)
+	owners := o.GetOwners()
 	if len(owners) == 0 {
 		return nil
 	}

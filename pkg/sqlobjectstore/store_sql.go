@@ -10,7 +10,6 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/stream"
 )
 
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore gen "ObjectType=object.Object PubSubName=sqlStore"
@@ -135,6 +134,7 @@ func (st *Store) Put(
 		opt(options)
 	}
 
+	// TODO(geoah) why replace?
 	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects (
 		Hash,
@@ -163,12 +163,12 @@ func (st *Store) Put(
 
 	objectType := obj.GetType()
 	objectHash := object.NewHash(obj).String()
-	streamHash := stream.GetStream(obj).String()
-	signerPublicKey := stream.GetSigner(obj).String()
+	streamHash := obj.GetStream().String()
+	signerPublicKey := obj.GetSignature().Signer.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if len(obj.Header.Owners) > 0 {
-		ownerPublicKey = obj.Header.Owners[0].String()
+	if len(obj.GetOwners()) > 0 {
+		ownerPublicKey = obj.GetOwners()[0].String()
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
@@ -349,10 +349,10 @@ func (st *Store) Filter(
 		whereArgs = append(whereArgs, aktoai(options.Lookups.Signers)...)
 	}
 
-	if len(options.Lookups.Identities) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.Identities))[1:]
+	if len(options.Lookups.Owners) > 0 {
+		qs := strings.Repeat(",?", len(options.Lookups.Owners))[1:]
 		where += "AND OwnerPublicKey IN (" + qs + ") "
-		whereArgs = append(whereArgs, aktoai(options.Lookups.Identities)...)
+		whereArgs = append(whereArgs, aktoai(options.Lookups.Owners)...)
 	}
 
 	where += "ORDER BY Created ASC"

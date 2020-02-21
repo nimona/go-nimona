@@ -199,7 +199,7 @@ func IsComplete(cs []object.Object) bool {
 	}
 	for _, c := range cs {
 		// get all the parents of an object
-		for _, p := range stream.GetParents(c) {
+		for _, p := range c.GetParents() {
 			h := p.String()
 			// check if that hash exists in the map
 			if _, ok := cm[h]; ok {
@@ -216,7 +216,7 @@ func IsComplete(cs []object.Object) bool {
 // TODO(geoah) what happend if the graph is not complete? Error or sync?
 func (m *orchestrator) Put(o object.Object) error {
 	// set parents
-	streamHash := stream.GetStream(o)
+	streamHash := o.GetStream()
 	if !streamHash.IsEmpty() {
 		os, _ := m.store.Filter(
 			sqlobjectstore.FilterByStreamHash(streamHash),
@@ -277,10 +277,8 @@ func (m *orchestrator) Put(o object.Object) error {
 	announcement := &stream.Announcement{
 		Stream: streamHash,
 		Leaves: leafHashes,
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				m.localInfo.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
 
@@ -292,7 +290,7 @@ func (m *orchestrator) Put(o object.Object) error {
 		return err
 	}
 
-	announcement.Header.Signature = sig
+	announcement.Signature = sig
 
 	// figure out who to send it to
 	recipients := stream.GetAllowsKeysFromPolicies(os...)
@@ -416,10 +414,8 @@ func (m *orchestrator) handleStreamRequest(
 		Stream:   req.Stream,
 		Nonce:    req.Nonce,
 		Children: hs,
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				m.localInfo.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
 	sig, err := object.NewSignature(
@@ -429,7 +425,7 @@ func (m *orchestrator) handleStreamRequest(
 	if err != nil {
 		return err
 	}
-	res.Header.Signature = sig
+	res.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,
@@ -473,10 +469,8 @@ func (m *orchestrator) handleStreamObjectRequest(
 		Stream:  req.Stream,
 		Nonce:   req.Nonce,
 		Objects: make([]*object.Object, len(vs)),
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				m.localInfo.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
 	for i, obj := range vs {
@@ -490,7 +484,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 	if err != nil {
 		return err
 	}
-	res.Header.Signature = sig
+	res.Signature = sig
 
 	if err := m.exchange.Send(
 		ctx,

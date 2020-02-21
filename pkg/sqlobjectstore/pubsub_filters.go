@@ -5,7 +5,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/stream"
 )
 
 // LookupOptions
@@ -19,7 +18,7 @@ type (
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Signers      []crypto.PublicKey
-			Identities   []crypto.PublicKey
+			Owners       []crypto.PublicKey
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []SqlStoreFilter
@@ -33,13 +32,13 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Signers      []crypto.PublicKey
-			Identities   []crypto.PublicKey
+			Owners       []crypto.PublicKey
 		}{
 			ObjectHashes: []object.Hash{},
 			StreamHashes: []object.Hash{},
 			ContentTypes: []string{},
 			Signers:      []crypto.PublicKey{},
-			Identities:   []crypto.PublicKey{},
+			Owners:       []crypto.PublicKey{},
 		},
 		Filters: []SqlStoreFilter{},
 	}
@@ -62,16 +61,16 @@ func FilterBySigner(h crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Signers = append(opts.Lookups.Signers, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return !h.IsEmpty() && h.Equals(stream.GetSigner(o))
+			return !h.IsEmpty() && h.Equals(o.GetSignature().Signer)
 		})
 	}
 }
 
 func FilterByOwner(h crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups.Identities = append(opts.Lookups.Identities, h)
+		opts.Lookups.Owners = append(opts.Lookups.Owners, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			for _, owner := range o.Header.Owners {
+			for _, owner := range o.GetOwners() {
 				if !owner.IsEmpty() && h.Equals(owner) {
 					return true
 				}
@@ -85,7 +84,7 @@ func FilterByStreamHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return !h.IsEmpty() && h.IsEqual(stream.GetStream(o))
+			return !h.IsEmpty() && h.IsEqual(o.GetStream())
 		})
 	}
 }

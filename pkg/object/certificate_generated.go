@@ -4,21 +4,67 @@ package object
 
 import (
 	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/immutable"
+	"nimona.io/pkg/errors"
+	immutable "nimona.io/pkg/immutable"
 )
 
 type (
 	Certificate struct {
-		Header  Header
-		Subject crypto.PublicKey
-		Created string
-		Expires string
+		raw       Object
+		Stream    Hash
+		Parents   []Hash
+		Owners    []crypto.PublicKey
+		Policy    Policy
+		Signature Signature
+		Subject   crypto.PublicKey
+		Created   string
+		Expires   string
 	}
 )
 
 func (e Certificate) GetType() string {
 	return "nimona.io/object.Certificate"
 }
+
+// func (e *Certificate) SetStream(v Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Certificate) GetStream() Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Certificate) SetParents(hashes []Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Certificate) GetParents() []Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Certificate) SetPolicy(policy Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Certificate) GetPolicy() Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Certificate) SetSignature(v Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Certificate) GetSignature() Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Certificate) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Certificate) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Certificate) GetSchema() *SchemaObject {
 	return &SchemaObject{
@@ -49,36 +95,53 @@ func (e Certificate) GetSchema() *SchemaObject {
 }
 
 func (e Certificate) ToObject() Object {
-	d := map[string]interface{}{}
+	o := Object{}
+	o = o.SetType("nimona.io/object.Certificate")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Subject != "" {
-		d["subject:s"] = e.Subject
+		o = o.Set("subject:s", e.Subject)
 	}
 	if e.Created != "" {
-		d["created:s"] = e.Created
+		o = o.Set("created:s", e.Created)
 	}
 	if e.Expires != "" {
-		d["expires:s"] = e.Expires
+		o = o.Set("expires:s", e.Expires)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/object.Certificate")
 	return o
 }
 
 func (e *Certificate) FromObject(o Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("subject:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("subject:s"); v != nil {
 		e.Subject = crypto.PublicKey(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("created:s"); v != nil {
+	if v := data.Value("created:s"); v != nil {
 		e.Created = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("expires:s"); v != nil {
+	if v := data.Value("expires:s"); v != nil {
 		e.Expires = string(v.PrimitiveHinted().(string))
 	}
 	return nil

@@ -53,7 +53,8 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				}
 
 			case req := <-outgoing:
-				if err := object.Sign(&req, api.local.GetPeerPrivateKey()); err != nil {
+				sig, err := object.NewSignature(api.local.GetPeerPrivateKey(), req)
+				if err != nil {
 					logger.Error("could not sign outgoing object", log.Error(err))
 					req.Set("_status", "error signing object")
 					if err := write(conn, api.mapObject(req)); err != nil {
@@ -61,6 +62,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 						continue
 					}
 				}
+				req = req.SetSignature(sig)
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
 				subjects := []string{}

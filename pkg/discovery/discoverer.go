@@ -77,7 +77,7 @@ func (r *addressBook) Lookup(
 	for _, o := range os {
 		p := &peer.Peer{}
 		if err := p.FromObject(o); err != nil {
-			continue
+			panic(err)
 		}
 		if opt.Match(p) {
 			lps = append(lps, p)

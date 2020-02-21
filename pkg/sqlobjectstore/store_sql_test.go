@@ -18,12 +18,12 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/stream"
 )
 
 func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
 	require.NoError(t, err)
+	fmt.Println(path.Join(dirPath, "sqlite3.db"))
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
@@ -50,9 +50,9 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	}
 	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
-	obj.SetType("foo")
-	obj.Header.Stream = object.NewHash(p.ToObject())
-	obj.Set("key:s", "value")
+	obj = obj.SetType("foo")
+	obj = obj.SetStream(object.NewHash(p.ToObject()))
+	obj = obj.Set("key:s", "value")
 
 	err = store.Put(
 		obj,
@@ -65,6 +65,8 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		WithTTL(10),
 	)
 
+	fmt.Println(object.NewHash(obj))
+
 	require.NoError(t, err)
 	retrievedObj, err := store.Get(object.NewHash(obj))
 	require.NoError(t, err)
@@ -73,7 +75,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NotNil(t, val)
 	assert.Equal(t, "value", val.(string))
 
-	stHash := stream.GetStream(obj)
+	stHash := obj.GetStream()
 	require.NotEmpty(t, stHash)
 
 	err = store.UpdateTTL(object.NewHash(obj), 10)
@@ -108,9 +110,9 @@ func TestSubscribe(t *testing.T) {
 	streamHash := object.NewHash(p.ToObject())
 	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
-	obj.SetType("foo")
-	obj.Header.Stream = streamHash
-	obj.Set("key:s", "value")
+	obj = obj.SetType("foo")
+	obj = obj.SetStream(streamHash)
+	obj = obj.Set("key:s", "value")
 
 	var wg sync.WaitGroup
 
@@ -166,7 +168,7 @@ func TestFilter(t *testing.T) {
 	s, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
-	p.Header.Signature = s
+	p.Signature = s
 
 	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
@@ -174,16 +176,17 @@ func TestFilter(t *testing.T) {
 	ph := object.NewHash(p.ToObject())
 
 	c := fixtures.TestSubscribed{}
-	c.Header.Stream = ph
+	c.Stream = ph
 
 	hashes := []object.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := c.ToObject()
-		obj.Set("key:s", fmt.Sprintf("value_%d", i))
+		obj = obj.SetType(c.GetType())
+		obj = obj.Set("key:s", fmt.Sprintf("value_%d", i))
 		if i%2 == 0 {
-			obj.Header.Owners = []crypto.PublicKey{
-				s.Signer,
-			}
+			obj = obj.SetOwners([]crypto.PublicKey{
+				k.PublicKey(),
+			})
 		}
 		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)
