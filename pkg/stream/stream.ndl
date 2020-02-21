@@ -12,30 +12,25 @@ object nimona.io/stream.Policy {
 
 signed object nimona.io/stream.Request {
     nonce string
-    stream nimona.io/object.Hash
     leaves repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.Response {
     nonce string
-    stream nimona.io/object.Hash
     children repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.ObjectRequest {
     nonce string
-    stream nimona.io/object.Hash
     objects repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.ObjectResponse {
     nonce string
-    stream nimona.io/object.Hash
     objects repeated nimona.io/object.Object
 }
 
 signed object nimona.io/stream.Announcement {
     nonce string
-    stream nimona.io/object.Hash
     leaves repeated nimona.io/object.Hash
 }

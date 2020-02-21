@@ -3,36 +3,99 @@
 package fixtures
 
 import (
-	"nimona.io/pkg/immutable"
+	"errors"
+
+	crypto "nimona.io/pkg/crypto"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	TestPolicy struct {
-		Header     object.Header
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signature  object.Signature
 		Subjects   []string
 		Resources  []string
 		Conditions []string
 		Action     string
 	}
 	TestStream struct {
-		Header          object.Header
+		raw             object.Object
+		Stream          object.Hash
+		Parents         []object.Hash
+		Owners          []crypto.PublicKey
+		Policy          object.Policy
+		Signature       object.Signature
 		Nonce           string
 		CreatedDateTime string
 	}
 	TestSubscribed struct {
-		Header object.Header
-		Nonce  string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Nonce     string
 	}
 	TestUnsubscribed struct {
-		Header object.Header
-		Nonce  string
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Nonce     string
 	}
 )
 
 func (e TestPolicy) GetType() string {
 	return "nimona.io/fixtures.TestPolicy"
 }
+
+// func (e *TestPolicy) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e TestPolicy) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *TestPolicy) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e TestPolicy) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *TestPolicy) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e TestPolicy) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *TestPolicy) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e TestPolicy) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *TestPolicy) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e TestPolicy) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e TestPolicy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -70,54 +133,83 @@ func (e TestPolicy) GetSchema() *object.SchemaObject {
 }
 
 func (e TestPolicy) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/fixtures.TestPolicy")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
-		d["subjects:as"] = e.Subjects
+		v := immutable.List{}
+		for _, iv := range e.Subjects {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("subjects:as", v)
 	}
 	if len(e.Resources) > 0 {
-		d["resources:as"] = e.Resources
+		v := immutable.List{}
+		for _, iv := range e.Resources {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("resources:as", v)
 	}
 	if len(e.Conditions) > 0 {
-		d["conditions:as"] = e.Conditions
+		v := immutable.List{}
+		for _, iv := range e.Conditions {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("conditions:as", v)
 	}
 	if e.Action != "" {
-		d["action:s"] = e.Action
+		o = o.Set("action:s", e.Action)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/fixtures.TestPolicy")
 	return o
 }
 
 func (e *TestPolicy) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("subjects:as"); v != nil && v.IsList() {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Subjects = make([]string, len(m))
 		for i, iv := range m {
 			e.Subjects[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("resources:as"); v != nil && v.IsList() {
+	if v := data.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("conditions:as"); v != nil && v.IsList() {
+	if v := data.Value("conditions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Conditions = make([]string, len(m))
 		for i, iv := range m {
 			e.Conditions[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("action:s"); v != nil {
+	if v := data.Value("action:s"); v != nil {
 		e.Action = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -126,6 +218,46 @@ func (e *TestPolicy) FromObject(o object.Object) error {
 func (e TestStream) GetType() string {
 	return "nimona.io/fixtures.TestStream"
 }
+
+// func (e *TestStream) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e TestStream) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *TestStream) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e TestStream) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *TestStream) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e TestStream) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *TestStream) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e TestStream) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *TestStream) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e TestStream) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e TestStream) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -149,30 +281,47 @@ func (e TestStream) GetSchema() *object.SchemaObject {
 }
 
 func (e TestStream) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/fixtures.TestStream")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	if e.CreatedDateTime != "" {
-		d["createdDateTime:s"] = e.CreatedDateTime
+		o = o.Set("createdDateTime:s", e.CreatedDateTime)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/fixtures.TestStream")
 	return o
 }
 
 func (e *TestStream) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("createdDateTime:s"); v != nil {
+	if v := data.Value("createdDateTime:s"); v != nil {
 		e.CreatedDateTime = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -181,6 +330,46 @@ func (e *TestStream) FromObject(o object.Object) error {
 func (e TestSubscribed) GetType() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
+
+// func (e *TestSubscribed) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e TestSubscribed) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *TestSubscribed) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e TestSubscribed) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *TestSubscribed) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e TestSubscribed) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *TestSubscribed) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e TestSubscribed) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *TestSubscribed) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e TestSubscribed) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e TestSubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -197,24 +386,41 @@ func (e TestSubscribed) GetSchema() *object.SchemaObject {
 }
 
 func (e TestSubscribed) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/fixtures.TestSubscribed")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/fixtures.TestSubscribed")
 	return o
 }
 
 func (e *TestSubscribed) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -223,6 +429,46 @@ func (e *TestSubscribed) FromObject(o object.Object) error {
 func (e TestUnsubscribed) GetType() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
 }
+
+// func (e *TestUnsubscribed) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e TestUnsubscribed) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *TestUnsubscribed) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e TestUnsubscribed) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *TestUnsubscribed) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e TestUnsubscribed) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *TestUnsubscribed) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e TestUnsubscribed) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *TestUnsubscribed) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e TestUnsubscribed) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e TestUnsubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -239,24 +485,41 @@ func (e TestUnsubscribed) GetSchema() *object.SchemaObject {
 }
 
 func (e TestUnsubscribed) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("nimona.io/fixtures.TestUnsubscribed")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
-		d["nonce:s"] = e.Nonce
+		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("nimona.io/fixtures.TestUnsubscribed")
 	return o
 }
 
 func (e *TestUnsubscribed) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("nonce:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil

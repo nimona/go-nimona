@@ -3,36 +3,93 @@
 package stream
 
 import (
+	"errors"
+
 	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/immutable"
+	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Policy struct {
-		Header     object.Header
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signature  object.Signature
 		Subjects   []*crypto.PublicKey
 		Resources  []string
 		Conditions []string
 		Action     string
 	}
 	Created struct {
-		Header          object.Header
+		raw             object.Object
+		Stream          object.Hash
+		Parents         []object.Hash
+		Owners          []crypto.PublicKey
+		Policy          object.Policy
+		Signature       object.Signature
 		CreatedDateTime string
 		PartitionKeys   []string
 		Policies        []*Policy
 	}
 	PoliciesUpdated struct {
-		Header   object.Header
-		Stream   *crypto.Hash
-		Parents  []*crypto.Hash
-		Policies []*Policy
+		raw       object.Object
+		Stream    object.Hash
+		Parents   []object.Hash
+		Owners    []crypto.PublicKey
+		Policy    object.Policy
+		Signature object.Signature
+		Stream    *crypto.Hash
+		Parents   []*crypto.Hash
+		Policies  []*Policy
 	}
 )
 
 func (e Policy) GetType() string {
 	return "example/stream.Policy"
 }
+
+// func (e *Policy) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Policy) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Policy) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Policy) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Policy) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Policy) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Policy) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Policy) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Policy) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Policy) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Policy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -70,39 +127,62 @@ func (e Policy) GetSchema() *object.SchemaObject {
 }
 
 func (e Policy) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/stream.Policy")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
-		d["subjects:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Subjects))
-			for i, v := range e.Subjects {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		v := immutable.List{}
+		for _, iv := range e.Subjects {
+			v = v.Append(iv.ToObject().Raw())
+		}
+		o = o.Set("subjects:ao", v)
 	}
 	if len(e.Resources) > 0 {
-		d["resources:as"] = e.Resources
+		v := immutable.List{}
+		for _, iv := range e.Resources {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("resources:as", v)
 	}
 	if len(e.Conditions) > 0 {
-		d["conditions:as"] = e.Conditions
+		v := immutable.List{}
+		for _, iv := range e.Conditions {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("conditions:as", v)
 	}
 	if e.Action != "" {
-		d["action:s"] = e.Action
+		o = o.Set("action:s", e.Action)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/stream.Policy")
 	return o
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("subjects:ao"); v != nil && v.IsList() {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("subjects:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Subjects = make([]*crypto.PublicKey, len(m))
 		for i, iv := range m {
@@ -112,21 +192,21 @@ func (e *Policy) FromObject(o object.Object) error {
 			e.Subjects[i] = es
 		}
 	}
-	if v := o.Data.Value("resources:as"); v != nil && v.IsList() {
+	if v := data.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("conditions:as"); v != nil && v.IsList() {
+	if v := data.Value("conditions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Conditions = make([]string, len(m))
 		for i, iv := range m {
 			e.Conditions[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("action:s"); v != nil {
+	if v := data.Value("action:s"); v != nil {
 		e.Action = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -135,6 +215,46 @@ func (e *Policy) FromObject(o object.Object) error {
 func (e Created) GetType() string {
 	return "example/stream.Created"
 }
+
+// func (e *Created) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e Created) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *Created) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e Created) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *Created) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e Created) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *Created) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e Created) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *Created) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e Created) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e Created) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -165,46 +285,65 @@ func (e Created) GetSchema() *object.SchemaObject {
 }
 
 func (e Created) ToObject() object.Object {
-	d := map[string]interface{}{}
+	o := object.Object{}
+	o = o.SetType("example/stream.Created")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
+	}
+	if len(e.Parents) > 0 {
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
 	if e.CreatedDateTime != "" {
-		d["createdDateTime:s"] = e.CreatedDateTime
+		o = o.Set("createdDateTime:s", e.CreatedDateTime)
 	}
 	if len(e.PartitionKeys) > 0 {
-		d["partitionKeys:as"] = e.PartitionKeys
+		v := immutable.List{}
+		for _, iv := range e.PartitionKeys {
+			v = v.Append(immutable.String(iv))
+		}
+		o = o.Set("partitionKeys:as", v)
 	}
 	if len(e.Policies) > 0 {
-		d["policies:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Policies))
-			for i, v := range e.Policies {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		v := immutable.List{}
+		for _, iv := range e.Policies {
+			v = v.Append(iv.ToObject().Raw())
+		}
+		o = o.Set("policies:ao", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/stream.Created")
 	return o
 }
 
 func (e *Created) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("createdDateTime:s"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("createdDateTime:s"); v != nil {
 		e.CreatedDateTime = string(v.PrimitiveHinted().(string))
 	}
-	if v := o.Data.Value("partitionKeys:as"); v != nil && v.IsList() {
+	if v := data.Value("partitionKeys:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.PartitionKeys = make([]string, len(m))
 		for i, iv := range m {
 			e.PartitionKeys[i] = string(iv)
 		}
 	}
-	if v := o.Data.Value("policies:ao"); v != nil && v.IsList() {
+	if v := data.Value("policies:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {
@@ -220,6 +359,46 @@ func (e *Created) FromObject(o object.Object) error {
 func (e PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
+
+// func (e *PoliciesUpdated) SetStream(v object.Hash) {
+// 	e.raw = e.raw.SetStream(v)
+// }
+
+// func (e PoliciesUpdated) GetStream() object.Hash {
+// 	return e.raw.GetStream()
+// }
+
+// func (e *PoliciesUpdated) SetParents(hashes []object.Hash) {
+// 	e.raw = e.raw.SetParents(hashes)
+// }
+
+// func (e PoliciesUpdated) GetParents() []object.Hash {
+// 	return e.raw.GetParents()
+// }
+
+// func (e *PoliciesUpdated) SetPolicy(policy object.Policy) {
+// 	e.raw = e.raw.SetPolicy(policy)
+// }
+
+// func (e PoliciesUpdated) GetPolicy() object.Policy {
+// 	return e.raw.GetPolicy()
+// }
+
+// func (e *PoliciesUpdated) SetSignature(v object.Signature) {
+// 	e.raw = e.raw.SetSignature(v)
+// }
+
+// func (e PoliciesUpdated) GetSignature() object.Signature {
+// 	return e.raw.GetSignature()
+// }
+
+// func (e *PoliciesUpdated) SetOwners(owners []crypto.PublicKey) {
+// 	e.raw = e.raw.SetOwners(owners)
+// }
+
+// func (e PoliciesUpdated) GetOwners() []crypto.PublicKey {
+// 	return e.raw.GetOwners()
+// }
 
 func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -250,48 +429,61 @@ func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
 }
 
 func (e PoliciesUpdated) ToObject() object.Object {
-	d := map[string]interface{}{}
-	if e.Stream != nil {
-		d["stream:o"] = e.Stream.ToObject().ToMap()
+	o := object.Object{}
+	o = o.SetType("example/stream.PoliciesUpdated")
+	if len(e.Stream) > 0 {
+		o = o.SetStream(e.Stream)
 	}
 	if len(e.Parents) > 0 {
-		d["parents:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Parents))
-			for i, v := range e.Parents {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		o = o.SetParents(e.Parents)
+	}
+	if len(e.Owners) > 0 {
+		o = o.SetOwners(e.Owners)
+	}
+	o = o.SetSignature(e.Signature)
+	o = o.SetPolicy(e.Policy)
+	if e.Stream != nil {
+		o = o.Set("stream:o", e.Stream.ToObject().Raw())
+	}
+	if len(e.Parents) > 0 {
+		v := immutable.List{}
+		for _, iv := range e.Parents {
+			v = v.Append(iv.ToObject().Raw())
+		}
+		o = o.Set("parents:ao", v)
 	}
 	if len(e.Policies) > 0 {
-		d["policies:ao"] = func() []interface{} {
-			a := make([]interface{}, len(e.Policies))
-			for i, v := range e.Policies {
-				a[i] = v.ToObject().ToMap()
-			}
-			return a
-		}()
+		v := immutable.List{}
+		for _, iv := range e.Policies {
+			v = v.Append(iv.ToObject().Raw())
+		}
+		o = o.Set("policies:ao", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
 	// }
-	o := object.Object{
-		Header: e.Header,
-		Data:   immutable.AnyToValue(":o", d).(immutable.Map),
-	}
-	o.SetType("example/stream.PoliciesUpdated")
 	return o
 }
 
 func (e *PoliciesUpdated) FromObject(o object.Object) error {
-	e.Header = o.Header
-	if v := o.Data.Value("stream:o"); v != nil {
+	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Stream = o.GetStream()
+	e.Parents = o.GetParents()
+	e.Owners = o.GetOwners()
+	e.Signature = o.GetSignature()
+	e.Policy = o.GetPolicy()
+	if v := data.Value("stream:o"); v != nil {
 		es := &crypto.Hash{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.Stream = es
 	}
-	if v := o.Data.Value("parents:ao"); v != nil && v.IsList() {
+	if v := data.Value("parents:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Parents = make([]*crypto.Hash, len(m))
 		for i, iv := range m {
@@ -301,7 +493,7 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 			e.Parents[i] = es
 		}
 	}
-	if v := o.Data.Value("policies:ao"); v != nil && v.IsList() {
+	if v := data.Value("policies:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {

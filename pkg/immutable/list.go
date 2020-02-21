@@ -43,10 +43,6 @@ func (l List) Length() (n int) {
 	return
 }
 
-// func (l List) Primitive() interface{} {
-
-// }
-
 func (l List) PrimitiveHinted() interface{} {
 	if l.value == nil {
 		return nil

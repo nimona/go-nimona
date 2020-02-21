@@ -3,6 +3,7 @@ package net
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"testing"
@@ -190,6 +191,7 @@ func (fm *fakeMid) Handle() MiddlewareHandler {
 func tempSqlite3(t *testing.T) *sql.DB {
 	dirPath, err := ioutil.TempDir("", "nimona-new")
 	require.NoError(t, err)
+	fmt.Println(path.Join(dirPath, "sqlite3.db"))
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db

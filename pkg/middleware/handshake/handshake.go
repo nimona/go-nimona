@@ -1,6 +1,7 @@
 package handshake
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -51,17 +52,18 @@ func (hs *Handshake) handleIncoming(
 	nonce := rand.String(8)
 	syn := &Syn{
 		Nonce: nonce,
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				hs.local.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			hs.local.GetIdentityPublicKey(),
 		},
 	}
 	so := syn.ToObject()
-	if err := object.Sign(&so, hs.local.GetPeerPrivateKey()); err != nil {
+	sig, err := object.NewSignature(hs.local.GetPeerPrivateKey(), so)
+	if err != nil {
 		return nil, err
 	}
 
+	so = so.SetSignature(sig)
+	spew.Dump(so.ToMap())
 	if err := net.Write(so, conn); err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Header.Signature.Signer
+	conn.RemotePeerKey = synAck.Signature.Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) do we need to do something about this?
@@ -97,10 +99,12 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	ao := ack.ToObject()
-	if err := object.Sign(&ao, hs.local.GetPeerPrivateKey()); err != nil {
+	sig, err = object.NewSignature(hs.local.GetPeerPrivateKey(), ao)
+	if err != nil {
 		return nil, err
 	}
 
+	ao = ao.SetSignature(sig)
 	if err := net.Write(ao, conn); err != nil {
 		return nil, err
 	}
@@ -137,7 +141,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Header.Signature.Signer
+	conn.RemotePeerKey = syn.Signature.Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) this one too
@@ -145,20 +149,22 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	synAck := &SynAck{
 		Nonce: syn.Nonce,
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				hs.local.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			hs.local.GetIdentityPublicKey(),
 		},
 	}
-
 	sao := synAck.ToObject()
-	if err := object.Sign(&sao, hs.local.GetPeerPrivateKey()); err != nil {
+	sig, err := object.NewSignature(hs.local.GetPeerPrivateKey(), sao)
+	if err != nil {
 		logger.Warn(
-			"could not sign for syn ack object", log.Error(err))
+			"could not sign for syn ack object",
+			log.Error(err),
+		)
 		// TODO close conn?
 		return nil, nil
 	}
+
+	sao = sao.SetSignature(sig)
 	if err := net.Write(sao, conn); err != nil {
 		logger.Warn("sending for syn-ack failed", log.Error(err))
 		// TODO close conn?

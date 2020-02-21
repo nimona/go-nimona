@@ -12,7 +12,7 @@ const (
 
 // Verify object
 func Verify(o Object) error {
-	sig := o.Header.Signature
+	sig := o.GetSignature()
 	if sig.IsEmpty() {
 		return errors.New("missing signature")
 	}

@@ -63,20 +63,21 @@ func TestSendSuccess(t *testing.T) {
 
 	// create test objects
 	eo1 := object.Object{}
-	eo1.Set("body:s", "bar1")
-	eo1.SetType("test/msg")
+	eo1 = eo1.Set("body:s", "bar1")
+	eo1 = eo1.SetType("test/msg")
 
 	eo2 := object.Object{}
-	eo2.Set("body:s", "bar1")
-	eo2.SetType("test/msg")
+	eo2 = eo2.Set("body:s", "bar1")
+	eo2 = eo2.SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	handled := int32(0)
 
-	err = object.Sign(&eo1, k2)
+	sig, err := object.NewSignature(k2, eo1)
 	assert.NoError(t, err)
+	eo1 = eo1.SetSignature(sig)
 
 	// add message handlers
 	// nolint: dupl
@@ -149,8 +150,8 @@ func TestRequestSuccess(t *testing.T) {
 
 	// add an object to n2's store
 	eo1 := object.Object{}
-	eo1.Set("body:s", "bar1")
-	eo1.SetType("test/msg")
+	eo1 = eo1.Set("body:s", "bar1")
+	eo1 = eo1.SetType("test/msg")
 	err = d2.Put(eo1)
 	assert.NoError(t, err)
 
@@ -240,8 +241,8 @@ func TestSendRelay(t *testing.T) {
 
 	// init connection from peer1 to relay
 	o1 := object.Object{}
-	o1.SetType("foo")
-	o1.Set("foo:s", "bar")
+	o1 = o1.SetType("foo")
+	o1 = o1.Set("foo:s", "bar")
 	err = x1.Send(
 		context.Background(),
 		o1,
@@ -251,8 +252,8 @@ func TestSendRelay(t *testing.T) {
 
 	// init connection from peer2 to relay
 	o2 := object.Object{}
-	o2.SetType("foo")
-	o2.Set("foo:s", "bar")
+	o2 = o2.SetType("foo")
+	o2 = o2.Set("foo:s", "bar")
 	err = x2.Send(
 		context.Background(),
 		o2,
@@ -262,12 +263,12 @@ func TestSendRelay(t *testing.T) {
 
 	// create the messages
 	eo1 := object.Object{}
-	eo1.Set("body:s", "bar1")
-	eo1.SetType("test/msg")
+	eo1 = eo1.Set("body:s", "bar1")
+	eo1 = eo1.SetType("test/msg")
 
 	eo2 := object.Object{}
-	eo2.Set("body:s", "bar1")
-	eo2.SetType("test/msg")
+	eo2 = eo2.Set("body:s", "bar1")
+	eo2 = eo2.SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -275,8 +276,9 @@ func TestSendRelay(t *testing.T) {
 	w1ObjectHandled := false
 	w2ObjectHandled := false
 
-	err = object.Sign(&eo1, k2)
+	sig, err := object.NewSignature(k2, eo1)
 	assert.NoError(t, err)
+	eo1 = eo1.SetSignature(sig)
 
 	handled := int32(0)
 

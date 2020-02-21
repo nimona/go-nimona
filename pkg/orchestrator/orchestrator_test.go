@@ -33,20 +33,18 @@ import (
 //   \ /   |
 //    m6   m5
 //
-// o Ffsa2mABctpZ1rTpguU1N65GaDVMnbMHW3sLvJ3cAVri
-// m1 EnFp6PUXJd7UckwkMpzFD9iVPGwRnYJEVc5ADtjHF7rj
-// m2 7oPoh9GC5wRt8xXUFCBpySYYS6V5pbz9PzxexPYi33et
-// m3 FkAHo36tu1zUqiX1eBwUq8AWUcRDgjRcDtKTPz31YiBa
-// m4 AU1qfwJEAmxCZgRSVkW9FX4ZQBzXeE8nEgQtMoXKpUmP
-// m5 GXLmHnazQGu6obWWgsi1dgPRwjHQ4xxVj6oYpZTvYk4V
-// m6 FMSQefm7qnspxSH13zXkCX2nhvC7CJL2e1BfX5SM3t7S
+// o oh1.E9W237sWo6b9j8C9G43XGYBjBsACq8zH6NvW4cTHxkk4
+// m1 oh1.5rA4otS4aA64xuRbDptYsxGeCDS2DWtVSHNXwbDn7d1p
+// m2 oh1.AYG83AybocVBuBcWJefS5dK8UPWbQe9r9XqG9HgVc3Fq
+// m3 oh1.7BYfVhAgrm2t3pvtAyh1CtHbvqGtcFBjxQ8Q7FuXMWi8
+// m4 oh1.2xzVNtS9GLf9iz4t2Ye9rRBYm747xQ1kxHtm23otb8VN
+// m5 oh1.EPWPg5K421ZrWMQkzYKeufD22Ndd4ZcBMdejuWNRNGEX
+// m6 oh1.2sWcm2YgAo1T8QE1CymyMcpvkBPDzEHPzLpoxozpLRLT
 //
 
 var (
 	o = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"type:s": "foo",
-		},
+		"type:s": "foo",
 		"data:o": map[string]interface{}{
 			"foo:s": "bar",
 			"numbers:ai": []int{
@@ -70,73 +68,61 @@ var (
 	oh = object.NewHash(o)
 
 	m1 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				oh.String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			oh.String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m1",
 		},
 	})
 
 	m2 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				oh.String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			oh.String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m2",
 		},
 	})
 
 	m3 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				object.NewHash(m1.ToObject()).String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			object.NewHash(m1.ToObject()).String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m3",
 		},
 	})
 
 	m4 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				object.NewHash(m2.ToObject()).String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			object.NewHash(m2.ToObject()).String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m4",
 		},
 	})
 
 	m5 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				object.NewHash(m2.ToObject()).String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			object.NewHash(m2.ToObject()).String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m5",
 		},
 	})
 
 	m6 = object.FromMap(map[string]interface{}{
-		"header:o": map[string]interface{}{
-			"parents:as": []string{
-				object.NewHash(m3.ToObject()).String(),
-				object.NewHash(m4.ToObject()).String(),
-			},
-			"stream:s": oh.String(),
+		"parents:as": []string{
+			object.NewHash(m3.ToObject()).String(),
+			object.NewHash(m4.ToObject()).String(),
 		},
+		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
 			"foo:s": "bar-m6",
 		},
@@ -171,13 +157,26 @@ func TestSync(t *testing.T) {
 	rkey, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	object.Sign(&o, rkey)  // nolint: errcheck
-	object.Sign(&m1, rkey) // nolint: errcheck
-	object.Sign(&m2, rkey) // nolint: errcheck
-	object.Sign(&m3, rkey) // nolint: errcheck
-	object.Sign(&m4, rkey) // nolint: errcheck
-	object.Sign(&m5, rkey) // nolint: errcheck
-	object.Sign(&m6, rkey) // nolint: errcheck
+	so, _ := object.NewSignature(rkey, o) // nolint: errcheck
+	o = o.SetSignature(so)
+
+	sm1, _ := object.NewSignature(rkey, m1) // nolint: errcheck
+	m1 = m1.SetSignature(sm1)
+
+	sm2, _ := object.NewSignature(rkey, m2) // nolint: errcheck
+	m2 = m2.SetSignature(sm2)
+
+	sm3, _ := object.NewSignature(rkey, m3) // nolint: errcheck
+	m3 = m3.SetSignature(sm3)
+
+	sm4, _ := object.NewSignature(rkey, m4) // nolint: errcheck
+	m4 = m4.SetSignature(sm4)
+
+	sm5, _ := object.NewSignature(rkey, m5) // nolint: errcheck
+	m5 = m5.SetSignature(sm5)
+
+	sm6, _ := object.NewSignature(rkey, m6) // nolint: errcheck
+	m6 = m6.SetSignature(sm6)
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
@@ -202,15 +201,14 @@ func TestSync(t *testing.T) {
 			object.NewHash(m5.ToObject()),
 			object.NewHash(m6.ToObject()),
 		},
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				rkey.PublicKey(),
-			},
-		},
 	}).ToObject()
-
-	err = object.Sign(&elo, rkey)
+	elo = elo.SetOwners([]crypto.PublicKey{
+		rkey.PublicKey(),
+	})
+	sig, err := object.NewSignature(rkey, elo)
 	assert.NoError(t, err)
+
+	elo = elo.SetSignature(sig)
 
 	nonce := ""
 

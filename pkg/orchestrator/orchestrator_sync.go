@@ -110,7 +110,7 @@ func (m *orchestrator) Sync(
 				)
 
 				logger.Debug("got graph response")
-				if p.Header.Signature.Signer.IsEmpty() {
+				if p.Signature.Signer.IsEmpty() {
 					logger.Debug("object has no signature, skipping request")
 					continue
 				}
@@ -135,10 +135,8 @@ func (m *orchestrator) Sync(
 					Nonce:   rand.String(12),
 					Stream:  p.Stream,
 					Objects: missingObjects,
-					Header: object.Header{
-						Owners: []crypto.PublicKey{
-							m.localInfo.GetIdentityPublicKey(),
-						},
+					Owners: []crypto.PublicKey{
+						m.localInfo.GetIdentityPublicKey(),
 					},
 				}
 				sig, err := object.NewSignature(
@@ -148,7 +146,7 @@ func (m *orchestrator) Sync(
 				if err != nil {
 					continue
 				}
-				objReq.Header.Signature = sig
+				objReq.Signature = sig
 
 				// and send the request to the sync response sender
 				if err := m.exchange.Send(
@@ -183,6 +181,7 @@ func (m *orchestrator) Sync(
 					// and push it to newObjects if it was not completed
 					objectHash := object.NewHash(*obj)
 					// TODO do we care if this was not requested?
+					// TODO(geoah) who is setting this to syncStatusComplete?
 					status, ok := allObjects[objectHash]
 					if ok && status == syncStatusComplete {
 						continue
@@ -207,10 +206,8 @@ func (m *orchestrator) Sync(
 		Nonce:  streamRequestNonce,
 		Stream: streamHash,
 		Leaves: leaves,
-		Header: object.Header{
-			Owners: []crypto.PublicKey{
-				m.localInfo.GetIdentityPublicKey(),
-			},
+		Owners: []crypto.PublicKey{
+			m.localInfo.GetIdentityPublicKey(),
 		},
 	}
 	sig, err := object.NewSignature(
@@ -221,7 +218,7 @@ func (m *orchestrator) Sync(
 		return nil, err
 	}
 
-	req.Header.Signature = sig
+	req.Signature = sig
 
 	logger.Info("starting sync")
 

@@ -63,15 +63,19 @@ func getHints(k string) []string {
 }
 
 func rmHints(k string) string {
-	ps := strings.Split(k, ":")
-	if len(ps) == 1 {
-		return k
-	}
-	return ps[0]
+	// ps := strings.Split(k, ":")
+	// if len(ps) == 1 {
+	return k
+	// }
+	// return ps[0]
 }
 
 func AnyToValue(k string, a interface{}) Value {
 	hs := getHints(k)
+
+	if a == nil {
+		return nil
+	}
 
 	if len(hs) == 0 {
 		panic("missing hints; k=" + k)
@@ -126,6 +130,8 @@ func AnyToValue(k string, a interface{}) Value {
 		switch v := a.(type) {
 		case float32:
 			return Float(float64(v))
+		case float64:
+			return Float(v)
 		}
 
 	case bytesTypeHint:
@@ -143,16 +149,20 @@ func AnyToValue(k string, a interface{}) Value {
 				if !ok {
 					panic("only string keys are allowed")
 				}
-				// TODO should we not be checking the hint?
-				m = m.Set(rmHints(s), AnyToValue(s, v))
+				if v != nil {
+					// TODO should we not be checking the hint?
+					m = m.Set(rmHints(s), AnyToValue(s, v))
+				}
 			}
-			return Map{m}
+			return Map{m: m.m}
 		case map[string]interface{}:
 			m := Map{}
 			for k, v := range v {
-				m = m.Set(rmHints(k), AnyToValue(k, v))
+				if v != nil {
+					m = m.Set(rmHints(k), AnyToValue(k, v))
+				}
 			}
-			return Map{m}
+			return Map{m: m.m}
 		}
 
 	case listTypeHint:
@@ -162,7 +172,39 @@ func AnyToValue(k string, a interface{}) Value {
 				hint: "as",
 			}
 			for _, v := range v {
-				m = m.Append(AnyToValue(":s", v))
+				m = m.Append(String(v))
+			}
+			return m
+		case []bool:
+			m := List{
+				hint: "ab",
+			}
+			for _, v := range v {
+				m = m.Append(Bool(v))
+			}
+			return m
+		case []int64:
+			m := List{
+				hint: "ai",
+			}
+			for _, v := range v {
+				m = m.Append(Int(v))
+			}
+			return m
+		case []float64:
+			m := List{
+				hint: "af",
+			}
+			for _, v := range v {
+				m = m.Append(Float(v))
+			}
+			return m
+		case [][]byte:
+			m := List{
+				hint: "ad",
+			}
+			for _, v := range v {
+				m = m.Append(Bytes(v))
 			}
 			return m
 		case []interface{}:
@@ -171,7 +213,9 @@ func AnyToValue(k string, a interface{}) Value {
 			}
 			h := fmt.Sprintf(":%s", strings.Join(hs[1:], ""))
 			for _, v := range v {
-				m = m.Append(AnyToValue(h, v))
+				if v != nil {
+					m = m.Append(AnyToValue(h, v))
+				}
 			}
 			return m
 		}
@@ -189,5 +233,6 @@ func AnyToValue(k string, a interface{}) Value {
 			return m
 		}
 	}
+
 	panic(fmt.Sprintf("not sure how to handle; k=%s a=%#v t=%s", k, a, reflect.TypeOf(a).String()))
 }
