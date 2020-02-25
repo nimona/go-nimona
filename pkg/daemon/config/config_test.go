@@ -31,7 +31,7 @@ func TestConfigLoadFromEnvs(t *testing.T) {
 	c.Path = "./missing"
 
 	os.Setenv("NIMONA_PEER_IDENTITY_KEY", "id1")            // nolint: errcheck
-	os.Setenv("NIMONA_PEER_PEER_KEY", "pk1")                // nolint: errcheck
+	os.Setenv("NIMONA_PEER_KEY", "pk1")                     // nolint: errcheck
 	os.Setenv("NIMONA_PEER_HOSTNAME", "foo")                // nolint: errcheck
 	os.Setenv("NIMONA_PEER_BOOTSTRAP_ADDRESSES", "bs1,bs2") // nolint: errcheck
 
