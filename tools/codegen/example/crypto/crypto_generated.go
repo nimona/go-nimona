@@ -67,46 +67,6 @@ func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
 
-// func (e *Hash) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Hash) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Hash) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Hash) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Hash) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Hash) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Hash) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Hash) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Hash) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Hash) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Hash) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -178,46 +138,6 @@ func (e *Hash) FromObject(o object.Object) error {
 func (e HeaderSignature) GetType() string {
 	return "example/object.Header.Signature"
 }
-
-// func (e *HeaderSignature) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e HeaderSignature) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *HeaderSignature) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e HeaderSignature) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *HeaderSignature) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e HeaderSignature) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *HeaderSignature) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e HeaderSignature) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *HeaderSignature) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e HeaderSignature) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e HeaderSignature) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -319,46 +239,6 @@ func (e *HeaderSignature) FromObject(o object.Object) error {
 func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
-
-// func (e *PrivateKey) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e PrivateKey) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *PrivateKey) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e PrivateKey) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *PrivateKey) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e PrivateKey) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *PrivateKey) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e PrivateKey) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *PrivateKey) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e PrivateKey) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e PrivateKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -499,46 +379,6 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
-
-// func (e *PublicKey) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e PublicKey) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *PublicKey) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e PublicKey) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *PublicKey) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e PublicKey) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *PublicKey) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e PublicKey) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *PublicKey) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e PublicKey) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e PublicKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

@@ -77,46 +77,6 @@ func (e {{ structName $object.Name }}) GetType() string {
 	return "{{ $object.Name }}"
 }
 
-// func (e *{{ structName $object.Name }}) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e {{ structName $object.Name }}) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *{{ structName $object.Name }}) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e {{ structName $object.Name }}) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *{{ structName $object.Name }}) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e {{ structName $object.Name }}) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *{{ structName $object.Name }}) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e {{ structName $object.Name }}) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *{{ structName $object.Name }}) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e {{ structName $object.Name }}) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 {{ if hnp $object.Name "nimona.io/object.Schema" }}
 func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

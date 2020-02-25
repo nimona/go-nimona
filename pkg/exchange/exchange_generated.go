@@ -35,46 +35,6 @@ func (e ObjectRequest) GetType() string {
 	return "nimona.io/exchange.ObjectRequest"
 }
 
-// func (e *ObjectRequest) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e ObjectRequest) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *ObjectRequest) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e ObjectRequest) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *ObjectRequest) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e ObjectRequest) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *ObjectRequest) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e ObjectRequest) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *ObjectRequest) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e ObjectRequest) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e ObjectRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -133,46 +93,6 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 func (e DataForward) GetType() string {
 	return "nimona.io/exchange.DataForward"
 }
-
-// func (e *DataForward) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e DataForward) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *DataForward) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e DataForward) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *DataForward) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e DataForward) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *DataForward) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e DataForward) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *DataForward) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e DataForward) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e DataForward) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

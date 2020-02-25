@@ -51,46 +51,6 @@ func (e Policy) GetType() string {
 	return "example/stream.Policy"
 }
 
-// func (e *Policy) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Policy) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Policy) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Policy) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Policy) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Policy) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Policy) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Policy) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Policy) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Policy) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Policy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -216,46 +176,6 @@ func (e Created) GetType() string {
 	return "example/stream.Created"
 }
 
-// func (e *Created) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Created) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Created) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Created) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Created) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Created) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Created) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Created) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Created) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Created) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Created) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -359,46 +279,6 @@ func (e *Created) FromObject(o object.Object) error {
 func (e PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
-
-// func (e *PoliciesUpdated) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e PoliciesUpdated) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *PoliciesUpdated) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e PoliciesUpdated) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *PoliciesUpdated) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e PoliciesUpdated) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *PoliciesUpdated) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e PoliciesUpdated) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *PoliciesUpdated) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e PoliciesUpdated) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

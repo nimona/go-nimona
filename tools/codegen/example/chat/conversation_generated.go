@@ -56,46 +56,6 @@ func (e ConversationCreated) GetType() string {
 	return "mochi.io/conversation.Created"
 }
 
-// func (e *ConversationCreated) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e ConversationCreated) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *ConversationCreated) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e ConversationCreated) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *ConversationCreated) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e ConversationCreated) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *ConversationCreated) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e ConversationCreated) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *ConversationCreated) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e ConversationCreated) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e ConversationCreated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -154,46 +114,6 @@ func (e *ConversationCreated) FromObject(o object.Object) error {
 func (e ConversationTopicUpdated) GetType() string {
 	return "mochi.io/conversation.TopicUpdated"
 }
-
-// func (e *ConversationTopicUpdated) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e ConversationTopicUpdated) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *ConversationTopicUpdated) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e ConversationTopicUpdated) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *ConversationTopicUpdated) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e ConversationTopicUpdated) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *ConversationTopicUpdated) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e ConversationTopicUpdated) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *ConversationTopicUpdated) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e ConversationTopicUpdated) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
@@ -271,46 +191,6 @@ func (e ConversationMessageAdded) GetType() string {
 	return "mochi.io/conversation.MessageAdded"
 }
 
-// func (e *ConversationMessageAdded) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e ConversationMessageAdded) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *ConversationMessageAdded) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e ConversationMessageAdded) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *ConversationMessageAdded) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e ConversationMessageAdded) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *ConversationMessageAdded) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e ConversationMessageAdded) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *ConversationMessageAdded) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e ConversationMessageAdded) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -386,46 +266,6 @@ func (e *ConversationMessageAdded) FromObject(o object.Object) error {
 func (e ConversationMessageRemoved) GetType() string {
 	return "mochi.io/conversation.MessageRemoved"
 }
-
-// func (e *ConversationMessageRemoved) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e ConversationMessageRemoved) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *ConversationMessageRemoved) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e ConversationMessageRemoved) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *ConversationMessageRemoved) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e ConversationMessageRemoved) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *ConversationMessageRemoved) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e ConversationMessageRemoved) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *ConversationMessageRemoved) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e ConversationMessageRemoved) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

@@ -52,46 +52,6 @@ func (e Peer) GetType() string {
 	return "nimona.io/peer.Peer"
 }
 
-// func (e *Peer) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Peer) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Peer) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Peer) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Peer) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Peer) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Peer) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Peer) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Peer) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Peer) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Peer) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -257,46 +217,6 @@ func (e LookupRequest) GetType() string {
 	return "nimona.io/LookupRequest"
 }
 
-// func (e *LookupRequest) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e LookupRequest) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *LookupRequest) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e LookupRequest) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *LookupRequest) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e LookupRequest) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *LookupRequest) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e LookupRequest) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *LookupRequest) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e LookupRequest) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e LookupRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -376,46 +296,6 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 func (e LookupResponse) GetType() string {
 	return "nimona.io/LookupResponse"
 }
-
-// func (e *LookupResponse) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e LookupResponse) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *LookupResponse) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e LookupResponse) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *LookupResponse) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e LookupResponse) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *LookupResponse) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e LookupResponse) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *LookupResponse) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e LookupResponse) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e LookupResponse) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

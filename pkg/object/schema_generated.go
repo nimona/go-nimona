@@ -38,46 +38,6 @@ func (e SchemaProperty) GetType() string {
 	return "nimona.io/SchemaProperty"
 }
 
-// func (e *SchemaProperty) SetStream(v Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e SchemaProperty) GetStream() Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *SchemaProperty) SetParents(hashes []Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e SchemaProperty) GetParents() []Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *SchemaProperty) SetPolicy(policy Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e SchemaProperty) GetPolicy() Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *SchemaProperty) SetSignature(v Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e SchemaProperty) GetSignature() Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *SchemaProperty) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e SchemaProperty) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e SchemaProperty) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/SchemaProperty")
@@ -156,46 +116,6 @@ func (e *SchemaProperty) FromObject(o Object) error {
 func (e SchemaObject) GetType() string {
 	return "nimona.io/SchemaObject"
 }
-
-// func (e *SchemaObject) SetStream(v Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e SchemaObject) GetStream() Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *SchemaObject) SetParents(hashes []Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e SchemaObject) GetParents() []Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *SchemaObject) SetPolicy(policy Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e SchemaObject) GetPolicy() Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *SchemaObject) SetSignature(v Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e SchemaObject) GetSignature() Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *SchemaObject) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e SchemaObject) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e SchemaObject) ToObject() Object {
 	o := Object{}

@@ -44,46 +44,6 @@ func (e Syn) GetType() string {
 	return "nimona.io/net/handshake.Syn"
 }
 
-// func (e *Syn) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Syn) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Syn) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Syn) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Syn) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Syn) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Syn) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Syn) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Syn) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Syn) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Syn) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -143,46 +103,6 @@ func (e SynAck) GetType() string {
 	return "nimona.io/net/handshake.SynAck"
 }
 
-// func (e *SynAck) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e SynAck) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *SynAck) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e SynAck) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *SynAck) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e SynAck) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *SynAck) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e SynAck) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *SynAck) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e SynAck) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e SynAck) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -241,46 +161,6 @@ func (e *SynAck) FromObject(o object.Object) error {
 func (e Ack) GetType() string {
 	return "nimona.io/net/handshake.Ack"
 }
-
-// func (e *Ack) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Ack) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Ack) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Ack) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Ack) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Ack) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Ack) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Ack) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Ack) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Ack) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e Ack) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

@@ -57,46 +57,6 @@ func (e TestPolicy) GetType() string {
 	return "nimona.io/fixtures.TestPolicy"
 }
 
-// func (e *TestPolicy) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e TestPolicy) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *TestPolicy) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e TestPolicy) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *TestPolicy) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e TestPolicy) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *TestPolicy) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e TestPolicy) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *TestPolicy) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e TestPolicy) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e TestPolicy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -219,46 +179,6 @@ func (e TestStream) GetType() string {
 	return "nimona.io/fixtures.TestStream"
 }
 
-// func (e *TestStream) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e TestStream) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *TestStream) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e TestStream) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *TestStream) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e TestStream) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *TestStream) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e TestStream) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *TestStream) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e TestStream) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e TestStream) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -331,46 +251,6 @@ func (e TestSubscribed) GetType() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
 
-// func (e *TestSubscribed) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e TestSubscribed) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *TestSubscribed) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e TestSubscribed) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *TestSubscribed) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e TestSubscribed) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *TestSubscribed) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e TestSubscribed) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *TestSubscribed) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e TestSubscribed) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e TestSubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
@@ -429,46 +309,6 @@ func (e *TestSubscribed) FromObject(o object.Object) error {
 func (e TestUnsubscribed) GetType() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
 }
-
-// func (e *TestUnsubscribed) SetStream(v object.Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e TestUnsubscribed) GetStream() object.Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *TestUnsubscribed) SetParents(hashes []object.Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e TestUnsubscribed) GetParents() []object.Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *TestUnsubscribed) SetPolicy(policy object.Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e TestUnsubscribed) GetPolicy() object.Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *TestUnsubscribed) SetSignature(v object.Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e TestUnsubscribed) GetSignature() object.Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *TestUnsubscribed) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e TestUnsubscribed) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
 
 func (e TestUnsubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{

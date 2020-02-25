@@ -26,46 +26,6 @@ func (e Certificate) GetType() string {
 	return "nimona.io/object.Certificate"
 }
 
-// func (e *Certificate) SetStream(v Hash) {
-// 	e.raw = e.raw.SetStream(v)
-// }
-
-// func (e Certificate) GetStream() Hash {
-// 	return e.raw.GetStream()
-// }
-
-// func (e *Certificate) SetParents(hashes []Hash) {
-// 	e.raw = e.raw.SetParents(hashes)
-// }
-
-// func (e Certificate) GetParents() []Hash {
-// 	return e.raw.GetParents()
-// }
-
-// func (e *Certificate) SetPolicy(policy Policy) {
-// 	e.raw = e.raw.SetPolicy(policy)
-// }
-
-// func (e Certificate) GetPolicy() Policy {
-// 	return e.raw.GetPolicy()
-// }
-
-// func (e *Certificate) SetSignature(v Signature) {
-// 	e.raw = e.raw.SetSignature(v)
-// }
-
-// func (e Certificate) GetSignature() Signature {
-// 	return e.raw.GetSignature()
-// }
-
-// func (e *Certificate) SetOwners(owners []crypto.PublicKey) {
-// 	e.raw = e.raw.SetOwners(owners)
-// }
-
-// func (e Certificate) GetOwners() []crypto.PublicKey {
-// 	return e.raw.GetOwners()
-// }
-
 func (e Certificate) GetSchema() *SchemaObject {
 	return &SchemaObject{
 		Properties: []*SchemaProperty{
