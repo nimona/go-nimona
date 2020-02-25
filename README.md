@@ -26,8 +26,8 @@ alt="GitHub issues">
       
 ---
 
-__WARNING__: Nimona is still in its very early stages of design and development and stay like this for a while.  
-Documentation is currently non existent but should start slowly poping up as the various design decisions mature.
+__WARNING__: Nimona is still in its very early stages of design and development and will stay like this for a while.  
+Documentation is currently non existent but should start slowly popping up as the various design decisions mature.
 
 ---
 
