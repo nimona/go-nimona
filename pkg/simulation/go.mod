@@ -1,6 +1,6 @@
 module nimona.io/pkg/simulation
 
-go 1.13
+go 1.14
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
