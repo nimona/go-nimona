@@ -158,25 +158,25 @@ func TestSync(t *testing.T) {
 	assert.NoError(t, err)
 
 	so, _ := object.NewSignature(rkey, o) // nolint: errcheck
-	o = o.SetSignature(so)
+	o = o.AddSignature(so)
 
 	sm1, _ := object.NewSignature(rkey, m1) // nolint: errcheck
-	m1 = m1.SetSignature(sm1)
+	m1 = m1.AddSignature(sm1)
 
 	sm2, _ := object.NewSignature(rkey, m2) // nolint: errcheck
-	m2 = m2.SetSignature(sm2)
+	m2 = m2.AddSignature(sm2)
 
 	sm3, _ := object.NewSignature(rkey, m3) // nolint: errcheck
-	m3 = m3.SetSignature(sm3)
+	m3 = m3.AddSignature(sm3)
 
 	sm4, _ := object.NewSignature(rkey, m4) // nolint: errcheck
-	m4 = m4.SetSignature(sm4)
+	m4 = m4.AddSignature(sm4)
 
 	sm5, _ := object.NewSignature(rkey, m5) // nolint: errcheck
-	m5 = m5.SetSignature(sm5)
+	m5 = m5.AddSignature(sm5)
 
 	sm6, _ := object.NewSignature(rkey, m6) // nolint: errcheck
-	m6 = m6.SetSignature(sm6)
+	m6 = m6.AddSignature(sm6)
 
 	respWith := func(o object.Object) func(args mock.Arguments) {
 		return func(args mock.Arguments) {
@@ -208,7 +208,7 @@ func TestSync(t *testing.T) {
 	sig, err := object.NewSignature(rkey, elo)
 	assert.NoError(t, err)
 
-	elo = elo.SetSignature(sig)
+	elo = elo.AddSignature(sig)
 
 	nonce := ""
 

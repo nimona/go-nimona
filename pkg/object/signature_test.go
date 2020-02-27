@@ -20,7 +20,7 @@ func TestNewSignature(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, sk.PublicKey(), sig.Signer)
 
-	o = o.SetSignature(sig)
+	o = o.AddSignature(sig)
 	err = Verify(o)
 	assert.NoError(t, err)
 }

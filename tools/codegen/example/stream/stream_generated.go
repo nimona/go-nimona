@@ -17,7 +17,7 @@ type (
 		Parents    []object.Hash
 		Owners     []crypto.PublicKey
 		Policy     object.Policy
-		Signature  object.Signature
+		Signatures []object.Signature
 		Subjects   []*crypto.PublicKey
 		Resources  []string
 		Conditions []string
@@ -29,21 +29,21 @@ type (
 		Parents         []object.Hash
 		Owners          []crypto.PublicKey
 		Policy          object.Policy
-		Signature       object.Signature
+		Signatures      []object.Signature
 		CreatedDateTime string
 		PartitionKeys   []string
 		Policies        []*Policy
 	}
 	PoliciesUpdated struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Stream    *crypto.Hash
-		Parents   []*crypto.Hash
-		Policies  []*Policy
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Stream     *crypto.Hash
+		Parents    []*crypto.Hash
+		Policies   []*Policy
 	}
 )
 
@@ -98,7 +98,7 @@ func (e Policy) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
 		v := immutable.List{}
@@ -140,7 +140,7 @@ func (e *Policy) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("subjects:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
@@ -216,7 +216,7 @@ func (e Created) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.CreatedDateTime != "" {
 		o = o.Set("createdDateTime:s", e.CreatedDateTime)
@@ -251,7 +251,7 @@ func (e *Created) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("createdDateTime:s"); v != nil {
 		e.CreatedDateTime = string(v.PrimitiveHinted().(string))
@@ -320,7 +320,7 @@ func (e PoliciesUpdated) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Stream != nil {
 		o = o.Set("stream:o", e.Stream.ToObject().Raw())
@@ -355,7 +355,7 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("stream:o"); v != nil {
 		es := &crypto.Hash{}

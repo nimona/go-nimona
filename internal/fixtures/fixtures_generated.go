@@ -17,7 +17,7 @@ type (
 		Parents    []object.Hash
 		Owners     []crypto.PublicKey
 		Policy     object.Policy
-		Signature  object.Signature
+		Signatures []object.Signature
 		Subjects   []string
 		Resources  []string
 		Conditions []string
@@ -29,27 +29,27 @@ type (
 		Parents         []object.Hash
 		Owners          []crypto.PublicKey
 		Policy          object.Policy
-		Signature       object.Signature
+		Signatures      []object.Signature
 		Nonce           string
 		CreatedDateTime string
 	}
 	TestSubscribed struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
 	}
 	TestUnsubscribed struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
 	}
 )
 
@@ -104,7 +104,7 @@ func (e TestPolicy) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
 		v := immutable.List{}
@@ -146,7 +146,7 @@ func (e *TestPolicy) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
@@ -212,7 +212,7 @@ func (e TestStream) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -236,7 +236,7 @@ func (e *TestStream) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -277,7 +277,7 @@ func (e TestSubscribed) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -298,7 +298,7 @@ func (e *TestSubscribed) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -336,7 +336,7 @@ func (e TestUnsubscribed) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -357,7 +357,7 @@ func (e *TestUnsubscribed) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))

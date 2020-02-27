@@ -17,61 +17,61 @@ type (
 		Parents    []object.Hash
 		Owners     []crypto.PublicKey
 		Policy     object.Policy
-		Signature  object.Signature
+		Signatures []object.Signature
 		Subjects   []string
 		Resources  []string
 		Conditions []string
 		Action     string
 	}
 	Request struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Leaves    []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Leaves     []object.Hash
 	}
 	Response struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Children  []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Children   []object.Hash
 	}
 	ObjectRequest struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Objects   []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Objects    []object.Hash
 	}
 	ObjectResponse struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Objects   []*object.Object
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Objects    []*object.Object
 	}
 	Announcement struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Leaves    []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Leaves     []object.Hash
 	}
 )
 
@@ -126,7 +126,7 @@ func (e Policy) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
 		v := immutable.List{}
@@ -168,7 +168,7 @@ func (e *Policy) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
@@ -234,7 +234,7 @@ func (e Request) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -262,7 +262,7 @@ func (e *Request) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -314,7 +314,7 @@ func (e Response) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -342,7 +342,7 @@ func (e *Response) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -394,7 +394,7 @@ func (e ObjectRequest) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -422,7 +422,7 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -474,7 +474,7 @@ func (e ObjectResponse) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -502,7 +502,7 @@ func (e *ObjectResponse) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -555,7 +555,7 @@ func (e Announcement) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -583,7 +583,7 @@ func (e *Announcement) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))

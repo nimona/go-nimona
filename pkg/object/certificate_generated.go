@@ -10,15 +10,15 @@ import (
 
 type (
 	Certificate struct {
-		raw       Object
-		Stream    Hash
-		Parents   []Hash
-		Owners    []crypto.PublicKey
-		Policy    Policy
-		Signature Signature
-		Subject   crypto.PublicKey
-		Created   string
-		Expires   string
+		raw        Object
+		Stream     Hash
+		Parents    []Hash
+		Owners     []crypto.PublicKey
+		Policy     Policy
+		Signatures []Signature
+		Subject    crypto.PublicKey
+		Created    string
+		Expires    string
 	}
 )
 
@@ -66,7 +66,7 @@ func (e Certificate) ToObject() Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Subject != "" {
 		o = o.Set("subject:s", e.Subject)
@@ -93,7 +93,7 @@ func (e *Certificate) FromObject(o Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("subject:s"); v != nil {
 		e.Subject = crypto.PublicKey(v.PrimitiveHinted().(string))

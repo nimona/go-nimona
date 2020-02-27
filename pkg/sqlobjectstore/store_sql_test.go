@@ -168,7 +168,7 @@ func TestFilter(t *testing.T) {
 	s, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
-	p.Signature = s
+	p.Signatures = append(p.Signatures, s)
 
 	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
@@ -204,22 +204,10 @@ func TestFilter(t *testing.T) {
 	require.Len(t, objects, len(hashes))
 
 	objects, err = store.Filter(
-		FilterBySigner(k.PublicKey()),
-	)
-	require.NoError(t, err)
-	require.Len(t, objects, 1)
-
-	objects, err = store.Filter(
 		FilterByOwner(k.PublicKey()),
 	)
 	require.NoError(t, err)
 	require.Len(t, objects, 3)
-
-	objects, err = store.Filter(
-		FilterBySigner(crypto.PublicKey("foo")),
-	)
-	require.NoError(t, err)
-	require.Len(t, objects, 0)
 
 	objects, err = store.Filter(
 		FilterByObjectType(c.GetType()),

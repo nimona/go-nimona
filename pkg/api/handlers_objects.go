@@ -110,7 +110,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 		return
 	}
 
-	o = o.SetSignature(sig)
+	o = o.AddSignature(sig)
 	if err := api.objectStore.Put(o); err != nil {
 		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
 		return
@@ -178,7 +178,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	o = o.SetSignature(sig)
+	o = o.AddSignature(sig)
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
