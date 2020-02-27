@@ -110,7 +110,7 @@ func (m *orchestrator) Sync(
 				)
 
 				logger.Debug("got graph response")
-				if p.Signature.Signer.IsEmpty() {
+				if len(p.Signatures) == 0 {
 					logger.Debug("object has no signature, skipping request")
 					continue
 				}
@@ -146,7 +146,7 @@ func (m *orchestrator) Sync(
 				if err != nil {
 					continue
 				}
-				objReq.Signature = sig
+				objReq.Signatures = []object.Signature{sig}
 
 				// and send the request to the sync response sender
 				if err := m.exchange.Send(
@@ -218,7 +218,7 @@ func (m *orchestrator) Sync(
 		return nil, err
 	}
 
-	req.Signature = sig
+	req.Signatures = []object.Signature{sig}
 
 	logger.Info("starting sync")
 

@@ -12,54 +12,54 @@ import (
 
 type (
 	Hash struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		HashType  string
-		Digest    []byte
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		HashType   string
+		Digest     []byte
 	}
 	HeaderSignature struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		PublicKey *PublicKey
-		Algorithm string
-		R         []byte
-		S         []byte
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		PublicKey  *PublicKey
+		Algorithm  string
+		R          []byte
+		S          []byte
 	}
 	PrivateKey struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		PublicKey *PublicKey
-		KeyType   string
-		Algorithm string
-		Curve     string
-		X         []byte
-		Y         []byte
-		D         []byte
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		PublicKey  *PublicKey
+		KeyType    string
+		Algorithm  string
+		Curve      string
+		X          []byte
+		Y          []byte
+		D          []byte
 	}
 	PublicKey struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		KeyType   string
-		Algorithm string
-		Curve     string
-		X         []byte
-		Y         []byte
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		KeyType    string
+		Algorithm  string
+		Curve      string
+		X          []byte
+		Y          []byte
 	}
 )
 
@@ -100,7 +100,7 @@ func (e Hash) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.HashType != "" {
 		o = o.Set("hashType:s", e.HashType)
@@ -124,7 +124,7 @@ func (e *Hash) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("hashType:s"); v != nil {
 		e.HashType = string(v.PrimitiveHinted().(string))
@@ -186,7 +186,7 @@ func (e HeaderSignature) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
 		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
@@ -216,7 +216,7 @@ func (e *HeaderSignature) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("publicKey:o"); v != nil {
 		es := &PublicKey{}
@@ -308,7 +308,7 @@ func (e PrivateKey) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
 		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
@@ -347,7 +347,7 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("publicKey:o"); v != nil {
 		es := &PublicKey{}
@@ -434,7 +434,7 @@ func (e PublicKey) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.KeyType != "" {
 		o = o.Set("keyType:s", e.KeyType)
@@ -467,7 +467,7 @@ func (e *PublicKey) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("keyType:s"); v != nil {
 		e.KeyType = string(v.PrimitiveHinted().(string))

@@ -19,7 +19,7 @@ func TestObject(t *testing.T) {
 		Actions:  []string{"action1", "action2"},
 		Effect:   "effect",
 	})
-	o = o.SetSignature(Signature{
+	o = o.AddSignature(Signature{
 		Signer: "signer",
 		Alg:    "alg",
 		X:      []byte{1, 2, 3},
@@ -36,10 +36,12 @@ func TestObject(t *testing.T) {
 			"actions:as":  []string{"action1", "action2"},
 			"effect:s":    "effect",
 		},
-		"_signature:o": map[string]interface{}{
-			"signer:s": "signer",
-			"alg:s":    "alg",
-			"x:d":      []byte{1, 2, 3},
+		"_signatures:ao": []interface{}{
+			map[string]interface{}{
+				"signer:s": "signer",
+				"alg:s":    "alg",
+				"x:d":      []byte{1, 2, 3},
+			},
 		},
 		"owners:as": []string{"owner1", "owner2"},
 		"data:o": map[string]interface{}{

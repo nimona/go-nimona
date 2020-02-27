@@ -78,7 +78,7 @@ func Read(conn *Connection) (*object.Object, error) {
 	)
 	// }
 
-	if !o.GetSignature().IsEmpty() {
+	if len(o.GetSignatures()) > 0 {
 		if err := object.Verify(o); err != nil {
 			// TODO we should verify, but return an error that doesn't
 			// kill the connection

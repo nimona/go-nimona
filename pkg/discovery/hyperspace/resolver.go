@@ -353,8 +353,8 @@ func (r *Discoverer) publishContentHashes(
 	cps := getClosest(pps, cb.Bloom)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
-		if !c.Signature.IsEmpty() {
-			fs = append(fs, c.Signature.Signer)
+		for _, s := range c.Signatures {
+			fs = append(fs, s.Signer)
 		}
 	}
 	if len(fs) == 0 {
@@ -381,7 +381,7 @@ func (r *Discoverer) publishContentHashes(
 		return errors.Wrap(err, errors.New("could not sign object"))
 	}
 
-	o = o.SetSignature(sig)
+	o = o.AddSignature(sig)
 	for _, f := range fs {
 		err := r.exchange.Send(ctx, o, peer.LookupByOwner(f), opts...)
 		if err != nil {
@@ -395,7 +395,9 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.local.GetPeerPublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		pm[p.Signature.Signer.String()] = p
+		for _, s := range p.Signatures {
+			pm[s.Signer.String()] = p
+		}
 	}
 	nps := []*peer.Peer{}
 	for f, p := range pm {

@@ -77,7 +77,7 @@ func TestSendSuccess(t *testing.T) {
 
 	sig, err := object.NewSignature(k2, eo1)
 	assert.NoError(t, err)
-	eo1 = eo1.SetSignature(sig)
+	eo1 = eo1.AddSignature(sig)
 
 	// add message handlers
 	// nolint: dupl
@@ -278,7 +278,7 @@ func TestSendRelay(t *testing.T) {
 
 	sig, err := object.NewSignature(k2, eo1)
 	assert.NoError(t, err)
-	eo1 = eo1.SetSignature(sig)
+	eo1 = eo1.AddSignature(sig)
 
 	handled := int32(0)
 

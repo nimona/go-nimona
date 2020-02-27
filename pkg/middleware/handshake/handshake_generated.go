@@ -12,31 +12,31 @@ import (
 
 type (
 	Syn struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
 	}
 	SynAck struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
 	}
 	Ack struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
 	}
 )
 
@@ -70,7 +70,7 @@ func (e Syn) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -91,7 +91,7 @@ func (e *Syn) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -129,7 +129,7 @@ func (e SynAck) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -150,7 +150,7 @@ func (e *SynAck) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -188,7 +188,7 @@ func (e Ack) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -209,7 +209,7 @@ func (e *Ack) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))

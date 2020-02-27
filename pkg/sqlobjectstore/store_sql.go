@@ -30,6 +30,7 @@ var migrations = []string{
 	`ALTER TABLE Objects ADD SignerPublicKey TEXT;`,
 	`ALTER TABLE Objects ADD AuthorPublicKey TEXT;`,
 	`ALTER TABLE Objects RENAME AuthorPublicKey TO OwnerPublicKey;`,
+	`ALTER TABLE Objects RENAME SignerPublicKey TO _DeprecatedSignerPublicKey;`,
 }
 
 type Store struct {
@@ -140,14 +141,13 @@ func (st *Store) Put(
 		Hash,
 		Type,
 		RootHash,
-		SignerPublicKey,
 		OwnerPublicKey,
 		Body,
 		Created,
 		LastAccessed,
 		TTl
 	) VALUES (
-		?, ?, ?, ?, ?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?
 	) ON CONFLICT (Hash) DO UPDATE SET
 		LastAccessed=?
 	`)
@@ -164,7 +164,6 @@ func (st *Store) Put(
 	objectType := obj.GetType()
 	objectHash := object.NewHash(obj).String()
 	streamHash := obj.GetStream().String()
-	signerPublicKey := obj.GetSignature().Signer.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
 	if len(obj.GetOwners()) > 0 {
@@ -182,7 +181,6 @@ func (st *Store) Put(
 		objectHash,
 		objectType,
 		streamHash,
-		signerPublicKey,
 		ownerPublicKey,
 		body,
 		time.Now().Unix(),
@@ -341,12 +339,6 @@ func (st *Store) Filter(
 		qs := strings.Repeat(",?", len(options.Lookups.StreamHashes))[1:]
 		where += "AND RootHash IN (" + qs + ") "
 		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
-	}
-
-	if len(options.Lookups.Signers) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.Signers))[1:]
-		where += "AND SignerPublicKey IN (" + qs + ") "
-		whereArgs = append(whereArgs, aktoai(options.Lookups.Signers)...)
 	}
 
 	if len(options.Lookups.Owners) > 0 {

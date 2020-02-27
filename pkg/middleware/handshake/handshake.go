@@ -62,7 +62,7 @@ func (hs *Handshake) handleIncoming(
 		return nil, err
 	}
 
-	so = so.SetSignature(sig)
+	so = so.AddSignature(sig)
 	spew.Dump(so.ToMap())
 	if err := net.Write(so, conn); err != nil {
 		return nil, err
@@ -88,7 +88,10 @@ func (hs *Handshake) handleIncoming(
 
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
-	conn.RemotePeerKey = synAck.Signature.Signer
+	if len(synAck.Signatures) == 0 {
+		return nil, net.ErrMissingSignature
+	}
+	conn.RemotePeerKey = synAck.Signatures[0].Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) do we need to do something about this?
@@ -104,7 +107,7 @@ func (hs *Handshake) handleIncoming(
 		return nil, err
 	}
 
-	ao = ao.SetSignature(sig)
+	ao = ao.AddSignature(sig)
 	if err := net.Write(ao, conn); err != nil {
 		return nil, err
 	}
@@ -141,7 +144,10 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	logger.Debug("got syn, sending syn-ack")
 
 	// store the remote peer
-	conn.RemotePeerKey = syn.Signature.Signer
+	if len(syn.Signatures) == 0 {
+		return nil, net.ErrMissingSignature
+	}
+	conn.RemotePeerKey = syn.Signatures[0].Signer
 	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
 
 	// TODO(@geoah) this one too
@@ -164,7 +170,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 		return nil, nil
 	}
 
-	sao = sao.SetSignature(sig)
+	sao = sao.AddSignature(sig)
 	if err := net.Write(sao, conn); err != nil {
 		logger.Warn("sending for syn-ack failed", log.Error(err))
 		// TODO close conn?

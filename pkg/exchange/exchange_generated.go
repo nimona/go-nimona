@@ -16,18 +16,18 @@ type (
 		Parents    []object.Hash
 		Owners     []crypto.PublicKey
 		Policy     object.Policy
-		Signature  object.Signature
+		Signatures []object.Signature
 		ObjectHash object.Hash
 	}
 	DataForward struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Recipient crypto.PublicKey
-		Data      []byte
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Recipient  crypto.PublicKey
+		Data       []byte
 	}
 )
 
@@ -61,7 +61,7 @@ func (e ObjectRequest) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.ObjectHash != "" {
 		o = o.Set("objectHash:s", e.ObjectHash)
@@ -82,7 +82,7 @@ func (e *ObjectRequest) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:s"); v != nil {
 		e.ObjectHash = object.Hash(v.PrimitiveHinted().(string))
@@ -127,7 +127,7 @@ func (e DataForward) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Recipient != "" {
 		o = o.Set("recipient:s", e.Recipient)
@@ -151,7 +151,7 @@ func (e *DataForward) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("recipient:s"); v != nil {
 		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))

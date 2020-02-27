@@ -27,10 +27,6 @@ func (v Policy) IsEmpty() bool {
 	return len(v.Subjects) == 0
 }
 
-func (o Object) set(k string, v immutable.Value) Object {
-	return Object(immutable.Map(o).Set(k, v))
-}
-
 func (o Object) data() immutable.Map {
 	data := immutable.Map(o).Value("data:o")
 	if data == nil {
@@ -137,13 +133,21 @@ func (o Object) GetPolicy() Policy {
 	return p
 }
 
-func (o Object) SetSignature(v Signature) Object {
-	return o.set("_signature:o", immutable.AnyToValue(":o", v.ToMap()))
+func (o Object) AddSignature(vs ...Signature) Object {
+	sigs := immutable.List{}
+	if os := o.Get("_signatures:ao"); os != nil {
+		if ol, ok := os.(immutable.List); ok && ol.Length() > 0 {
+			sigs = ol
+		}
+	}
+	for _, v := range vs {
+		sigs = sigs.Append(immutable.AnyToValue(":o", v.ToMap()))
+	}
+	return o.set("_signatures:ao", sigs)
 }
 
-func (o Object) GetSignature() Signature {
-	im := immutable.Map(o).Value("_signature:o")
-	if im == nil {
+func immutableMapToSignature(im immutable.Map) Signature {
+	if im.IsEmpty() {
 		return Signature{}
 	}
 	v, ok := im.PrimitiveHinted().(map[string]interface{})
@@ -153,6 +157,22 @@ func (o Object) GetSignature() Signature {
 	s := Signature{}
 	mapstructure.Decode(v, &s) // nolint: errcheck
 	return s
+}
+
+func (o Object) GetSignatures() []Signature {
+	sigs := []Signature{}
+	if os := o.get("_signatures:ao"); os != nil {
+		if ol, ok := os.(immutable.List); ok && ol.Length() > 0 {
+			ol.Iterate(func(v immutable.Value) {
+				m, ok := v.(immutable.Map)
+				if !ok {
+					return
+				}
+				sigs = append(sigs, immutableMapToSignature(m))
+			})
+		}
+	}
+	return sigs
 }
 
 func (o Object) SetOwners(owners []crypto.PublicKey) Object {
@@ -243,4 +263,12 @@ func (o Object) Set(k string, v interface{}) Object {
 
 func (o Object) Raw() immutable.Map {
 	return immutable.Map(o)
+}
+
+func (o Object) set(k string, v immutable.Value) Object {
+	return Object(immutable.Map(o).Set(k, v))
+}
+
+func (o Object) get(k string) immutable.Value {
+	return immutable.Map(o).Value(k)
 }

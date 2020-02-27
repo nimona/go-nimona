@@ -288,7 +288,7 @@ func (m *orchestrator) Put(o object.Object) error {
 		return err
 	}
 
-	announcement.Signature = sig
+	announcement.Signatures = []object.Signature{sig}
 
 	// figure out who to send it to
 	recipients := stream.GetAllowsKeysFromPolicies(os...)
@@ -421,7 +421,7 @@ func (m *orchestrator) handleStreamRequest(
 	if err != nil {
 		return err
 	}
-	res.Signature = sig
+	res.Signatures = []object.Signature{sig}
 
 	if err := m.exchange.Send(
 		ctx,
@@ -480,7 +480,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 	if err != nil {
 		return err
 	}
-	res.Signature = sig
+	res.Signatures = []object.Signature{sig}
 
 	if err := m.exchange.Send(
 		ctx,

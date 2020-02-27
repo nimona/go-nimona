@@ -44,8 +44,10 @@ func TestObjectHash(t *testing.T) {
 
 func TestObjectHashWithSignature(t *testing.T) {
 	v := map[string]interface{}{
-		"_signature:o": map[string]interface{}{
-			"foo:s": "bar",
+		"_signatures:ao": []interface{}{
+			map[string]interface{}{
+				"foo:s": "bar",
+			},
 		},
 		"data:o": map[string]interface{}{
 			"foo:s": "bar",

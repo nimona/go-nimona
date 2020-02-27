@@ -62,7 +62,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 						continue
 					}
 				}
-				req = req.SetSignature(sig)
+				req = req.AddSignature(sig)
 				// TODO(geoah) better way to require recipients?
 				// TODO(geoah) helper function for getting subjects
 				subjects := []string{}

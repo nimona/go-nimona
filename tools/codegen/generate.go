@@ -52,7 +52,7 @@ type (
 		Parents []object.Hash
 		Owners []crypto.PublicKey
 		Policy object.Policy
-		Signature object.Signature
+		Signatures []object.Signature
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{- if $member.IsObject }}
@@ -107,7 +107,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
@@ -188,7 +188,7 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	{{- range $member := $object.Members }}
 	{{- if $member.IsObject }}

@@ -204,7 +204,9 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	}
 	hs = append(hs, p.contentTypes...)
 	for _, c := range p.certificates {
-		hs = append(hs, c.Signature.Signer.String())
+		for _, s := range c.Signatures {
+			hs = append(hs, s.Signer.String())
+		}
 	}
 
 	relays := []crypto.PublicKey{}
@@ -235,7 +237,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		panic(err)
 	}
 
-	pi.Signature = sig
+	pi.Signatures = append(pi.Signatures, sig)
 
 	return pi
 }

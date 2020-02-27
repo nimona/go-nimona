@@ -12,43 +12,43 @@ import (
 
 type (
 	ConversationCreated struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Name      string
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Name       string
 	}
 	ConversationTopicUpdated struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Topic     string
-		DependsOn []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Topic      string
+		DependsOn  []object.Hash
 	}
 	ConversationMessageAdded struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Body      string
-		DependsOn []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Body       string
+		DependsOn  []object.Hash
 	}
 	ConversationMessageRemoved struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Removes   object.Hash
-		DependsOn []object.Hash
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Removes    object.Hash
+		DependsOn  []object.Hash
 	}
 )
 
@@ -82,7 +82,7 @@ func (e ConversationCreated) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Name != "" {
 		o = o.Set("name:s", e.Name)
@@ -103,7 +103,7 @@ func (e *ConversationCreated) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
@@ -148,7 +148,7 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Topic != "" {
 		o = o.Set("topic:s", e.Topic)
@@ -176,7 +176,7 @@ func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("topic:s"); v != nil {
 		e.Topic = string(v.PrimitiveHinted().(string))
@@ -224,7 +224,7 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Body != "" {
 		o = o.Set("body:s", e.Body)
@@ -252,7 +252,7 @@ func (e *ConversationMessageAdded) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("body:s"); v != nil {
 		e.Body = string(v.PrimitiveHinted().(string))
@@ -300,7 +300,7 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	// TODO missing type hint r, for Removes
 	if len(e.DependsOn) > 0 {
@@ -326,7 +326,7 @@ func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("removes:r"); v != nil {
 		e.Removes = v.PrimitiveHinted().(object.Hash)

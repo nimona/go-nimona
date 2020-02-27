@@ -17,7 +17,7 @@ type (
 		Parents      []object.Hash
 		Owners       []crypto.PublicKey
 		Policy       object.Policy
-		Signature    object.Signature
+		Signatures   []object.Signature
 		Version      int64
 		Addresses    []string
 		Bloom        []int64
@@ -26,25 +26,25 @@ type (
 		Relays       []crypto.PublicKey
 	}
 	LookupRequest struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Bloom     []int64
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Bloom      []int64
 	}
 	LookupResponse struct {
-		raw       object.Object
-		Stream    object.Hash
-		Parents   []object.Hash
-		Owners    []crypto.PublicKey
-		Policy    object.Policy
-		Signature object.Signature
-		Nonce     string
-		Bloom     []int64
-		Peers     []*Peer
+		raw        object.Object
+		Stream     object.Hash
+		Parents    []object.Hash
+		Owners     []crypto.PublicKey
+		Policy     object.Policy
+		Signatures []object.Signature
+		Nonce      string
+		Bloom      []int64
+		Peers      []*Peer
 	}
 )
 
@@ -113,7 +113,7 @@ func (e Peer) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	o = o.Set("version:i", e.Version)
 	if len(e.Addresses) > 0 {
@@ -167,7 +167,7 @@ func (e *Peer) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("version:i"); v != nil {
 		e.Version = int64(v.PrimitiveHinted().(int64))
@@ -250,7 +250,7 @@ func (e LookupRequest) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -278,7 +278,7 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -337,7 +337,7 @@ func (e LookupResponse) ToObject() object.Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -372,7 +372,7 @@ func (e *LookupResponse) FromObject(o object.Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))

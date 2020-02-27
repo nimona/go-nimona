@@ -15,7 +15,7 @@ type (
 		Parents    []Hash
 		Owners     []crypto.PublicKey
 		Policy     Policy
-		Signature  Signature
+		Signatures []Signature
 		Name       string
 		Type       string
 		Hint       string
@@ -29,7 +29,7 @@ type (
 		Parents    []Hash
 		Owners     []crypto.PublicKey
 		Policy     Policy
-		Signature  Signature
+		Signatures []Signature
 		Properties []*SchemaProperty
 	}
 )
@@ -50,7 +50,7 @@ func (e SchemaProperty) ToObject() Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Name != "" {
 		o = o.Set("name:s", e.Name)
@@ -83,7 +83,7 @@ func (e *SchemaProperty) FromObject(o Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
@@ -129,7 +129,7 @@ func (e SchemaObject) ToObject() Object {
 	if len(e.Owners) > 0 {
 		o = o.SetOwners(e.Owners)
 	}
-	o = o.SetSignature(e.Signature)
+	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Properties) > 0 {
 		v := immutable.List{}
@@ -151,7 +151,7 @@ func (e *SchemaObject) FromObject(o Object) error {
 	e.Stream = o.GetStream()
 	e.Parents = o.GetParents()
 	e.Owners = o.GetOwners()
-	e.Signature = o.GetSignature()
+	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
 	if v := data.Value("properties:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
