@@ -223,12 +223,13 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		Relays:       relays,
 		Certificates: p.certificates,
 		ContentTypes: p.contentTypes,
+		Owners: []crypto.PublicKey{
+			p.peerPublicKey,
+		},
 	}
 
 	if !p.identityPublicKey.IsEmpty() {
-		pi.Owners = []crypto.PublicKey{
-			p.identityPublicKey,
-		}
+		pi.Owners = append(pi.Owners, p.identityPublicKey)
 	}
 
 	o := pi.ToObject()
