@@ -84,7 +84,11 @@ func (n *network) Dial(
 		trsp := t.(Transport)
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
-			return nil, err
+			logger.Info("could not dial",
+				log.String("type", addressType),
+				log.Error(err),
+			)
+			continue
 		}
 
 		for _, mh := range n.middleware {
