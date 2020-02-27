@@ -36,7 +36,5 @@ func (km *Kmutex) Lock(key interface{}) {
 	if mutex != nmutex {
 		mutex.Unlock()
 		km.Lock(key)
-		return
 	}
-	return
 }

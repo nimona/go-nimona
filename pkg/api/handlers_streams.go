@@ -78,6 +78,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				if len(subjects) == 0 {
 					// TODO handle error
 					req.Set("_status", "no subjects")
+					// nolint: staticcheck
 					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
 					}

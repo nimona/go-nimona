@@ -27,11 +27,7 @@ func (m *KeyTypeSyncList) Put(k KeyType) {
 // Exists -
 func (m *KeyTypeSyncList) Exists(k KeyType) bool {
 	_, ok := m.m.Load(k)
-	if !ok {
-		return false
-	}
-
-	return true
+	return ok
 }
 
 // Delete -

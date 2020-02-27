@@ -30,7 +30,7 @@ func ParseLookupOptions(opts ...LookupOption) *LookupOptions {
 
 func (l LookupOptions) Match(p *Peer) bool {
 	for _, f := range l.Filters {
-		if f(p) == false {
+		if !f(p) {
 			return false
 		}
 	}

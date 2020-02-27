@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
 	"strings"
@@ -43,7 +42,7 @@ func NewPublicKey(publicKey ed25519.PublicKey) PublicKey {
 }
 
 func parse25519PublicKey(s string) (ed25519.PublicKey, error) {
-	if strings.HasPrefix(s, "ed25519.") == false {
+	if !strings.HasPrefix(s, "ed25519.") {
 		return nil, errors.Error("invalid key type")
 	}
 	b58 := strings.Replace(s, "ed25519.", "", 1)
@@ -56,7 +55,7 @@ func parse25519PublicKey(s string) (ed25519.PublicKey, error) {
 }
 
 func parse25519PrivateKey(s string) (ed25519.PrivateKey, error) {
-	if strings.HasPrefix(s, "ed25519.prv.") == false {
+	if !strings.HasPrefix(s, "ed25519.prv.") {
 		return nil, errors.Error("invalid key type")
 	}
 	b58 := strings.Replace(s, "ed25519.prv.", "", 1)
@@ -93,18 +92,12 @@ func (i PrivateKey) IsEmpty() bool {
 func (i PrivateKey) Bytes() []byte {
 	k := i.ed25519().Seed()
 	out := make([]byte, len(k))
-	for i, b := range k {
-		out[i] = b
-	}
+	copy(out, k)
 	return out
 }
 
 func (i PrivateKey) Sign(message []byte) []byte {
 	return ed25519.Sign(i.ed25519(), message)
-}
-
-func (i PrivateKey) raw() crypto.PrivateKey {
-	return i
 }
 
 func (i PrivateKey) String() string {
@@ -142,10 +135,6 @@ func (r PublicKey) Verify(message []byte, signature []byte) error {
 		return errors.Error("invalid signature")
 	}
 	return nil
-}
-
-func (r PublicKey) raw() crypto.PublicKey {
-	return ed25519.PublicKey(r)
 }
 
 func (r PublicKey) Equals(w PublicKey) bool {

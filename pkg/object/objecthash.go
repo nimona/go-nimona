@@ -14,8 +14,8 @@ import (
 
 type (
 	contentHash struct {
-		algorithm string `json:"algorithm:s,omitempty"`
-		d         []byte `json:"d:d,omitempty"`
+		algorithm string
+		d         []byte
 	}
 )
 

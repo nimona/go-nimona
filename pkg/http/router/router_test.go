@@ -7,8 +7,6 @@ import (
 )
 
 func Test_match(t *testing.T) {
-	type args struct {
-	}
 	tests := []struct {
 		name    string
 		pattern string

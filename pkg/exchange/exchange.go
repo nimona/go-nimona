@@ -514,7 +514,6 @@ func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error
 			}
 		}
 	}
-	return nil
 }
 
 // handlePeers -
@@ -534,7 +533,6 @@ func (w *exchange) handlePeers(subscription EnvelopeSubscription) error {
 			w.discover.Add(p, false)
 		}
 	}
-	return nil
 }
 
 // WithLocalDiscoveryOnly will only use local discovery to resolve addresses.

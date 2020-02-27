@@ -293,11 +293,6 @@ func (r *Discoverer) handlePeerLookup(
 		Peers: cps,
 	}
 
-	hs := []string{}
-	for _, p := range cps {
-		hs = append(hs, p.PublicKey().String())
-	}
-
 	err = r.exchange.Send(
 		ctx,
 		res.ToObject(),
@@ -411,31 +406,6 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	}
 	return nps
 }
-
-func (r *Discoverer) withoutOwnFingerprint(ps []crypto.PublicKey) []crypto.PublicKey {
-	lp := r.local.GetPeerPublicKey().String()
-	pm := map[string]crypto.PublicKey{}
-	for _, p := range ps {
-		pm[p.String()] = p
-	}
-	nps := []crypto.PublicKey{}
-	for f, p := range pm {
-		if f == lp {
-			continue
-		}
-		nps = append(nps, p)
-	}
-	return nps
-}
-
-// func matchPeerWithLookupFilters(p *peer.Peer, fs ...peer.LookupFilter) bool {
-// 	for _, f := range fs {
-// 		if f(p) == false {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
 
 // getClosest returns peers that closest resemble the query
 func getClosest(ps []*peer.Peer, q bloom.Bloom) []*peer.Peer {

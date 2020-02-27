@@ -166,7 +166,7 @@ func newPeer(
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	localInfo, err := peer.NewLocalPeer("", pk) // nolint: ineffassign
+	localInfo, _ := peer.NewLocalPeer("", pk) // nolint: ineffassign, errcheck
 	n, err := New(discover, localInfo)
 	assert.NoError(t, err)
 
