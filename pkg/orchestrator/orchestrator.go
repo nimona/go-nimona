@@ -185,8 +185,6 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 
 		}
 	}
-
-	return nil
 }
 
 // IsComplete checks if a graph is missing any nodes
@@ -346,8 +344,6 @@ func (m *orchestrator) handleStreamAnnouncement(
 	_, err := m.store.Get(req.Stream)
 	// if we don't have the root, we probably don't care about this
 	if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
-		if len(req.Leaves) == 1 && req.Leaves[0] == req.Stream {
-		}
 		return nil
 	}
 	if err != nil {

@@ -130,11 +130,9 @@ func (api *API) Serve(address string) error {
 
 func (api *API) Stop(c *router.Context) {
 	c.Status(http.StatusOK)
-
 	go func() {
 		api.gracefulStop <- true
 	}()
-	return
 }
 
 func (api *API) mapObject(o object.Object) map[string]interface{} {

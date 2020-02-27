@@ -65,6 +65,7 @@ func (q *q) process(ctx context.Context) {
 			}
 			q.cache[i.key] = true
 			go func() {
+				// nolint: staticcheck
 				if err := i.work(); err != nil {
 					// TODO log and/or error
 				}

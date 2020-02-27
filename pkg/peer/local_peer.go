@@ -202,9 +202,7 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 	for _, c := range p.GetContentHashes() {
 		hs = append(hs, c.String())
 	}
-	for _, c := range p.contentTypes {
-		hs = append(hs, c)
-	}
+	hs = append(hs, p.contentTypes...)
 	for _, c := range p.certificates {
 		hs = append(hs, c.Signature.Signer.String())
 	}

@@ -38,7 +38,7 @@ func (m *orchestrator) Sync(
 
 	// only allow one sync to run at the same time for each stream
 	syncAvailable := m.syncLock.TryLock(streamHash.String())
-	if syncAvailable == false {
+	if !syncAvailable {
 		return nil, errors.New("sync for this stream is already in progress")
 	}
 	defer m.syncLock.Unlock(streamHash.String())
@@ -273,19 +273,4 @@ loop:
 	}
 
 	return g, nil
-}
-
-func (m *orchestrator) withoutOwnAddresses(addrs []string) []string {
-	clnAddrs := []string{}
-	ownAddrs := m.localInfo.GetAddresses()
-	skpAddrs := map[string]bool{}
-	for _, o := range ownAddrs {
-		skpAddrs[o] = true
-	}
-	for _, a := range addrs {
-		if _, isOwn := skpAddrs[a]; !isOwn {
-			clnAddrs = append(clnAddrs, a)
-		}
-	}
-	return clnAddrs
 }
