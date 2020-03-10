@@ -9,17 +9,24 @@ import (
 
 func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 	// TODO this currently only accepts allow actions
-	pks := []crypto.PublicKey{}
+	pkm := map[crypto.PublicKey]struct{}{}
 	for _, o := range os {
+		for _, s := range o.GetOwners() {
+			pkm[s] = struct{}{}
+		}
 		p := o.GetPolicy()
 		for _, a := range p.Actions {
 			switch strings.ToLower(a) {
 			case "allow":
 				for _, s := range p.Subjects {
-					pks = append(pks, crypto.PublicKey(s))
+					pkm[crypto.PublicKey(s)] = struct{}{}
 				}
 			}
 		}
+	}
+	pks := []crypto.PublicKey{}
+	for k := range pkm {
+		pks = append(pks, k)
 	}
 	return pks
 }
