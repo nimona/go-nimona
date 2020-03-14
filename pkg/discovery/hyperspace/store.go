@@ -24,16 +24,15 @@ type Store struct {
 
 // Add peers
 func (s *Store) AddPeer(p *peer.Peer) {
-	if len(p.Signatures) == 0 {
+	if len(p.Owners) == 0 {
 		return
 	}
-	xp, ok := s.peers.Get(p.Signatures[0].Signer)
+	// go through previous peer infos and remove them
+	xp, ok := s.peers.Get(p.Owners[0])
 	if ok && xp != nil && xp.Version != 0 && xp.Version >= p.Version {
 		return
 	}
-	for _, v := range p.Signatures {
-		s.peers.Put(v.Signer, p)
-	}
+	s.peers.Put(p.Owners[0], p)
 }
 
 // GetClosest returns peers that closest resemble the query

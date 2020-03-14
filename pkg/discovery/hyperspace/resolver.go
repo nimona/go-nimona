@@ -353,9 +353,7 @@ func (r *Discoverer) publishContentHashes(
 	cps := getClosest(pps, cb.Bloom)
 	fs := []crypto.PublicKey{}
 	for _, c := range cps {
-		for _, s := range c.Signatures {
-			fs = append(fs, s.Signer)
-		}
+		fs = append(fs, c.Owners...)
 	}
 	if len(fs) == 0 {
 		logger.Debug("couldn't find peers to tell")
@@ -395,8 +393,8 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.local.GetPeerPublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		for _, s := range p.Signatures {
-			pm[s.Signer.String()] = p
+		for _, s := range p.Owners {
+			pm[s.String()] = p
 		}
 	}
 	nps := []*peer.Peer{}

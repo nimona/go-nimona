@@ -228,10 +228,6 @@ func (p *LocalPeer) GetSignedPeer() *Peer {
 		},
 	}
 
-	if !p.identityPublicKey.IsEmpty() {
-		pi.Owners = append(pi.Owners, p.identityPublicKey)
-	}
-
 	o := pi.ToObject()
 	sig, err := object.NewSignature(p.peerPrivateKey, o)
 	if err != nil {
