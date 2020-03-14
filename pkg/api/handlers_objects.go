@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"nimona.io/pkg/peer"
@@ -20,10 +21,16 @@ import (
 )
 
 func (api *API) HandleGetObjects(c *router.Context) {
-	// TODO this will be replaced by manager.Subscribe()
-	contentTypes := api.local.GetContentTypes()
-
-	ms, err := api.objectStore.Filter(sqlobjectstore.FilterByObjectType(contentTypes...))
+	filters := []sqlobjectstore.LookupOption{}
+	contentTypes := strings.Split(c.Query("type"), ",")
+	for _, ct := range contentTypes {
+		ct = strings.TrimSpace(ct)
+		if len(ct) == 0 {
+			continue
+		}
+		filters = append(filters, sqlobjectstore.FilterByObjectType(ct))
+	}
+	ms, err := api.objectStore.Filter(filters...)
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
