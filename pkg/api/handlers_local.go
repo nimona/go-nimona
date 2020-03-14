@@ -14,7 +14,6 @@ import (
 func (api *API) HandleGetLocal(c *router.Context) {
 	p := api.local.GetSignedPeer()
 	ms := api.mapObject(p.ToObject())
-	ms["_fingerprint"] = p.PublicKey().String()
 	c.JSON(http.StatusOK, ms)
 }
 

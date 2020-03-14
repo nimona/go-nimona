@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
+
+	"nimona.io/pkg/peer"
 )
 
 func TestClient_Info(t *testing.T) {
@@ -18,7 +20,7 @@ func TestClient_Info(t *testing.T) {
 		name     string
 		respBody interface{}
 		respCode int
-		assert   func(*testing.T, *InfoResponse)
+		assert   func(*testing.T, *peer.Peer)
 		wantErr  bool
 	}{
 		{
@@ -30,16 +32,19 @@ func TestClient_Info(t *testing.T) {
 						"algorithm:s": "OH_ES256",
 					},
 				},
-				"_fingerprint": "xxx",
-				"_hash":        "oh1.xxx",
-				"addresses:as": []string{
-					"tcps:127.0.0.1:21013",
-					"tcps:192.168.1.57:21013",
+				"_hash:s": "oh1.xxx",
+				"owners:as": []string{
+					"foo",
+				},
+				"data:o": map[string]interface{}{
+					"addresses:as": []string{
+						"tcps:127.0.0.1:21013",
+						"tcps:192.168.1.57:21013",
+					},
 				},
 			},
-			assert: func(t *testing.T, r *InfoResponse) {
-				require.NotEmpty(t, r.Hash)
-				require.NotEmpty(t, r.Fingerprint)
+			assert: func(t *testing.T, r *peer.Peer) {
+				require.NotEmpty(t, r.PublicKey().String())
 				require.NotEmpty(t, r.Addresses)
 			},
 			wantErr: false,
@@ -48,7 +53,7 @@ func TestClient_Info(t *testing.T) {
 			name:     "error on 500",
 			respCode: 500,
 			respBody: nil,
-			assert: func(t *testing.T, r *InfoResponse) {
+			assert: func(t *testing.T, r *peer.Peer) {
 				require.Nil(t, r)
 			},
 			wantErr: true,

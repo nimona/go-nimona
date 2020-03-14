@@ -11,8 +11,8 @@ func (pi *Peer) Address() string {
 }
 
 func (pi *Peer) PublicKey() crypto.PublicKey {
-	if len(pi.Signatures) == 0 {
+	if len(pi.Owners) == 0 {
 		return ""
 	}
-	return pi.Signatures[0].Signer
+	return pi.Owners[0]
 }

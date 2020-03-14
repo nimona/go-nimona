@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"nimona.io/pkg/peer"
 
 	"nimona.io/pkg/object"
 )
@@ -17,11 +17,6 @@ type (
 	Client struct {
 		baseURL    *url.URL
 		httpClient *http.Client
-	}
-	InfoResponse struct {
-		Hash        string   `json:"_hash"`
-		Fingerprint string   `json:"_fingerprint"`
-		Addresses   []string `json:"addresses:as"`
 	}
 )
 
@@ -71,20 +66,17 @@ func (c *Client) do(
 		return errors.New("unexpected status " + resp.Status)
 	}
 	defer resp.Body.Close() // nolint: errcheck
-	if resBody == nil {
-		b, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println(string(b))
-		return nil
-	}
 	return json.NewDecoder(resp.Body).Decode(&resBody)
 }
 
-func (c *Client) Info() (*InfoResponse, error) {
-	resp := &InfoResponse{}
-	if err := c.do("GET", "/api/v1/local", nil, resp); err != nil {
+func (c *Client) Info() (*peer.Peer, error) {
+	resp := map[string]interface{}{}
+	if err := c.do("GET", "/api/v1/local", nil, &resp); err != nil {
 		return nil, err
 	}
-	return resp, nil
+	p := &peer.Peer{}
+	p.FromObject(object.FromMap(resp)) // nolint: errcheck
+	return p, nil
 }
 
 func (c *Client) PostObject(o object.Object) error {

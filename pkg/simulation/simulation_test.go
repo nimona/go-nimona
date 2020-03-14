@@ -134,19 +134,19 @@ func TestSimulation(t *testing.T) {
 	for _, c := range clients[1:] {
 		info, err := c.Info()
 		assert.NoError(t, err)
-		recipients = append(recipients, info.Fingerprint)
+		recipients = append(recipients, info.PublicKey().String())
 	}
 
 	fmt.Printf("\n\n\n")
 
 	bInfo, err := bClients[0].Info()
 	require.NoError(t, err)
-	fmt.Printf("> bootstrap 0 - %s - %v\n", bInfo.Fingerprint, bInfo.Addresses)
+	fmt.Printf("> bootstrap 0 - %s - %v\n", bInfo.PublicKey(), bInfo.Addresses)
 
 	for i, c := range clients {
 		info, err := c.Info()
 		require.NoError(t, err)
-		fmt.Printf("> peer %d - %s - %v\n", i, info.Fingerprint, info.Addresses)
+		fmt.Printf("> peer %d - %s - %v\n", i, info.PublicKey(), info.Addresses)
 	}
 
 	fmt.Printf("\n\n\n")
