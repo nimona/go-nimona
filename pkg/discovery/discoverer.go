@@ -93,13 +93,6 @@ func (r *addressBook) Lookup(
 		ps <- p
 	}
 
-	// if we have found some results, let's just return
-	// TODO I don't really like this
-	if len(ps) > 0 {
-		close(ps)
-		return ps, nil
-	}
-
 	// if no results have been found but only local results were requests return
 	if opt.Local {
 		close(ps)
