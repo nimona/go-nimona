@@ -87,10 +87,10 @@ func NewDiscoverer(
 				context.Background(),
 				peer.LookupByContentType("nimona.io/peer.Peer"),
 			); err != nil {
-				logger.Error("could not publish initial content hashes", log.Error(err))
+				logger.Error("could not refresh peers", log.Error(err))
 			}
 			if err := r.publishContentHashes(ctx); err != nil {
-				logger.Error("could not publish initial content hashes", log.Error(err))
+				logger.Error("could not refresh content hashes", log.Error(err))
 			}
 		}
 	}()
