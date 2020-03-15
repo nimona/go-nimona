@@ -187,9 +187,13 @@ func (r *Discoverer) Lookup(
 				// recipientsResponded[e.Sender.String()] = true
 				recipientsResponded.Store(e.Sender, true)
 				for _, p := range res.Peers {
+					// add peers to our peerstore
+					r.peerstore.Add(p, false)
+					// if the peer matches the query, add it to our results
 					if opt.Match(p) {
 						peers <- p
 					}
+					// push peer to the list peers we might want to ask next
 					recipients <- p.PublicKey()
 				}
 				allDone := true
