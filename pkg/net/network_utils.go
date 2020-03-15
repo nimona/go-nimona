@@ -25,8 +25,7 @@ func Write(o object.Object, conn *Connection) error {
 		ra = conn.RemotePeerKey.String()
 	}
 
-	// if os.Getenv("DEBUG_BLOCKS") == "true" {
-	log.DefaultLogger.Info(
+	log.DefaultLogger.Debug(
 		"writting to connection",
 		log.Any("object", o.ToMap()),
 		log.String("local.address", conn.localAddress),
@@ -34,7 +33,6 @@ func Write(o object.Object, conn *Connection) error {
 		log.String("remote.fingerprint", ra),
 		log.String("direction", "outgoing"),
 	)
-	// }
 
 	b = append(b, '\n')
 	if _, err := conn.conn.Write(b); err != nil {
@@ -66,8 +64,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		ra = conn.RemotePeerKey.String()
 	}
 
-	// if os.Getenv("DEBUG_BLOCKS") == "true" {
-	logger.Error(
+	logger.Debug(
 		"reading from connection",
 		log.Any("map", m),
 		log.Any("object", o.ToMap()),
@@ -76,7 +73,6 @@ func Read(conn *Connection) (*object.Object, error) {
 		log.String("remote.fingerprint", ra),
 		log.String("direction", "incoming"),
 	)
-	// }
 
 	if len(o.GetSignatures()) > 0 {
 		if err := object.Verify(o); err != nil {
