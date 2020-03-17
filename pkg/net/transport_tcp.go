@@ -113,7 +113,7 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 			}
 
 			// add port mapping
-			err = d.Forward(9001, "upnp test")
+			err = d.Forward(uint16(port), "nimona daemon")
 			if err != nil {
 				logger.Error("could not forward port", log.Error(err))
 				return
