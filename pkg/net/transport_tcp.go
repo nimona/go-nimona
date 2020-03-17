@@ -79,50 +79,54 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 	devices := make(chan igd.Device, 10)
 
 	useIPs := true
-	addresses := []string{}
 
 	if tt.local.GetHostname() != "" {
 		useIPs = false
-		addresses = append(addresses, fmtAddress(
-			"tcps",
-			tt.local.GetHostname(),
-			port,
-		))
+		tt.local.AddAddress("tcps-hostname", []string{
+			fmtAddress(
+				"tcps",
+				tt.local.GetHostname(),
+				port,
+			),
+		})
 	}
 
 	if useIPs {
-		addresses = append(addresses, GetAddresses("tcps", tcpListener)...)
+		tt.local.AddAddress("tcps-local", GetAddresses("tcps", tcpListener))
 	}
 
 	if UseUPNP {
-		logger.Info("Trying to find external IP and open port")
 		go func() {
-			if err := igd.Discover(devices, 2*time.Second); err != nil {
-				logger.Error("could not discover devices", log.Error(err))
+			logger.Info("Trying to find external IP and open port")
+			go func() {
+				if err := igd.Discover(devices, 2*time.Second); err != nil {
+					logger.Error("could not discover devices", log.Error(err))
+				}
+			}()
+			for device := range devices {
+				externalAddress, err := device.GetExternalIPAddress()
+				if err != nil {
+					logger.Error("could not get external ip", log.Error(err))
+					continue
+				}
+				desc := "nimona-tcp"
+				ttl := time.Hour * 24 * 365
+				if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
+					logger.Error("could not add port mapping", log.Error(err))
+				} else if useIPs {
+					tt.local.AddAddress("tcps", []string{
+						fmtAddress(
+							"tcps-upnp",
+							externalAddress.String(),
+							port,
+						),
+					})
+				}
 			}
 		}()
-		for device := range devices {
-			externalAddress, err := device.GetExternalIPAddress()
-			if err != nil {
-				logger.Error("could not get external ip", log.Error(err))
-				continue
-			}
-			desc := "nimona-tcp"
-			ttl := time.Hour * 24 * 365
-			if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
-				logger.Error("could not add port mapping", log.Error(err))
-			} else if useIPs {
-				addresses = append(addresses, fmtAddress(
-					"tcps",
-					externalAddress.String(),
-					port,
-				))
-			}
-		}
 	}
 
-	logger.Info("Started listening", log.Strings("addresses", addresses))
-	tt.local.AddAddress("tcps", addresses)
+	logger.Info("Started listening")
 
 	cconn := make(chan *Connection, 10)
 	go func() {
