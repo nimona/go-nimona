@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	igd "github.com/emersion/go-upnp-igd"
+	"gitlab.com/NebulousLabs/go-upnp"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -76,7 +76,6 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 
 	port := tcpListener.Addr().(*net.TCPAddr).Port
 	logger.Info("Listening and service nimona", log.Int("port", port))
-	devices := make(chan igd.Device, 10)
 
 	useIPs := true
 
@@ -95,34 +94,45 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 		tt.local.AddAddress("tcps-local", GetAddresses("tcps", tcpListener))
 	}
 
-	if UseUPNP {
+	if UseUPNP && useIPs {
 		go func() {
 			logger.Info("Trying to find external IP and open port")
-			go func() {
-				if err := igd.Discover(devices, 2*time.Second); err != nil {
-					logger.Error("could not discover devices", log.Error(err))
-				}
-			}()
-			for device := range devices {
-				externalAddress, err := device.GetExternalIPAddress()
-				if err != nil {
-					logger.Error("could not get external ip", log.Error(err))
-					continue
-				}
-				desc := "nimona-tcp"
-				ttl := time.Hour * 24 * 365
-				if _, err := device.AddPortMapping(igd.TCP, port, port, desc, ttl); err != nil {
-					logger.Error("could not add port mapping", log.Error(err))
-				} else if useIPs {
-					tt.local.AddAddress("tcps", []string{
-						fmtAddress(
-							"tcps-upnp",
-							externalAddress.String(),
-							port,
-						),
-					})
-				}
+
+			// connect to router
+			d, err := upnp.Discover()
+			if err != nil {
+				logger.Error("could not discover devices", log.Error(err))
+				return
 			}
+
+			// discover external IP
+			ip, err := d.ExternalIP()
+			if err != nil {
+				logger.Error("could not discover external ip", log.Error(err))
+				return
+			}
+
+			// add port mapping
+			err = d.Forward(9001, "upnp test")
+			if err != nil {
+				logger.Error("could not forward port", log.Error(err))
+				return
+			}
+
+			tt.local.AddAddress("tcps-upnp", []string{
+				fmtAddress(
+					"tcps",
+					ip,
+					port,
+				),
+			})
+
+			logger.Info(
+				"created port mapping",
+				log.String("externalAddress", ip),
+				log.Int("port", port),
+				log.Strings("addresses", tt.local.GetAddresses()),
+			)
 		}()
 	}
 
