@@ -320,8 +320,12 @@ func (st *Store) Filter(
 ) ([]object.Object, error) {
 	options := newLookupOptions(lookupOptions...)
 
-	where := "WHERE 1 "
-	whereArgs := []interface{}{}
+	// WHERE 1 helps with making subsequent conditions easier and also should
+	// resolve some errors when there are no variables
+	where := "WHERE ? "
+	whereArgs := []interface{}{
+		1,
+	}
 
 	if len(options.Lookups.ObjectHashes) > 0 {
 		qs := strings.Repeat(",?", len(options.Lookups.ObjectHashes))[1:]
@@ -356,7 +360,7 @@ func (st *Store) Filter(
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
-			errors.New("could not prepare where"),
+			errors.New("could not prepare statement"),
 		)
 	}
 

@@ -231,7 +231,7 @@ func (m *orchestrator) Sync(
 			options...,
 		); err != nil {
 			// TODO log error, should return if they all fail
-			logger.Debug("could not send request")
+			logger.Debug("could not send request", log.Error(err))
 		}
 	}()
 
