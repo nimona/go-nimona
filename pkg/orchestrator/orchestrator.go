@@ -96,26 +96,32 @@ func NewWithContext(
 
 	// Get all the content types that the local peer supports
 	// find all the objects and serve only those objects
-	// TODO which objects do we need to serve?
-	contentTypes := m.localInfo.GetContentTypes()
-
-	supportedObjects, err := m.store.Filter(sqlobjectstore.FilterByObjectType(contentTypes...))
+	os, err := m.store.Filter()
 	if err != nil {
 		logger.Error("failed to get objects", log.Error(err))
-	} else {
-		// serve all the object hashes
-		supportedHashes := make([]object.Hash, len(supportedObjects))
-
-		for i, sobj := range supportedObjects {
-			supportedHashes[i] = object.NewHash(sobj)
-		}
-
-		logger.Info(
-			"adding supported object hashes as content",
-			log.Any("rootObjectHashes", supportedHashes),
-		)
-		m.localInfo.AddContentHash(supportedHashes...)
+		return m, nil
 	}
+
+	// hashes we serve
+	hs := []object.Hash{}
+
+	for i, o := range os {
+		// ignore peers
+		if o.GetType() == "nimona.io/peer.Peer" {
+			continue
+		}
+		// if object is part of a stream, ignore children
+		if o.GetStream() != "" && o.GetStream() != object.NewHash(o) {
+			continue
+		}
+		hs[i] = object.NewHash(o)
+	}
+
+	logger.Info(
+		"adding supported object hashes as content",
+		log.Any("rootObjectHashes", hs),
+	)
+	m.localInfo.AddContentHash(hs...)
 
 	return m, nil
 }
