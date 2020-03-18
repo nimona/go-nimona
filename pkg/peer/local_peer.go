@@ -9,9 +9,9 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg peer gen "KeyType=string ValueType=Addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg peer gen "KeyType=object.Hash"
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_public_key_generated.go -pkg peer gen "KeyType=crypto.PublicKey"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_string_addresses_generated.go -pkg=peer gen "KeyType=string ValueType=Addresses"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_string_generated.go -pkg=peer -imp=nimona.io/pkg/object gen "KeyType=object.Hash"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=synclist_public_key_generated.go -pkg=peer -imp=nimona.io/pkg/crypto gen "KeyType=crypto.PublicKey"
 
 type (
 	Addresses []string

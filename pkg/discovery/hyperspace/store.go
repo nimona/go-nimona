@@ -8,7 +8,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_publickey_peer_generated.go -pkg hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_publickey_peer_generated.go -imp=nimona.io/pkg/peer,nimona.io/pkg/crypto -pkg=hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 
 // NewStore retuns empty store
 func NewStore() *Store {

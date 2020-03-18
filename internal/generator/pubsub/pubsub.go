@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"github.com/cheekybits/genny/generic"
+	"github.com/geoah/genny/generic"
 
 	"nimona.io/internal/pubsub"
 )
@@ -41,10 +41,10 @@ func (s *psPubSubNameSubscription) Cancel() {
 }
 
 // Next returns the an item from the queue
-func (s *psPubSubNameSubscription) Next() (ObjectType, error) {
+func (s *psPubSubNameSubscription) Next() (r ObjectType, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
-		return nil, err
+		return
 	}
 	return next.(ObjectType), nil
 }
