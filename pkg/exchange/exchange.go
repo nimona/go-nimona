@@ -558,25 +558,12 @@ func (w *exchange) Send(
 		}
 		p := p
 		errs.Go(func() error {
-			outbox := w.getOutbox(p.PublicKey())
-			errRecv := make(chan error, 1)
-			req := &outgoingObject{
-				context:   ctx,
-				recipient: p,
-				object:    o,
-				options:   opts,
-				err:       errRecv,
-			}
-			outbox.queue.Append(req)
-			if opts.Async {
-				return nil
-			}
-			select {
-			case <-ctx.Done():
-				return ErrSendingTimedOut
-			case err := <-errRecv:
-				return err
-			}
+			return w.SendToPeer(
+				ctx,
+				o,
+				p,
+				options...,
+			)
 		})
 	}
 
