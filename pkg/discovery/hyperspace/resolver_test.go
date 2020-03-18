@@ -28,12 +28,12 @@ import (
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
 
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
-	ba := l0.GetAddresses()
+	ba := []*peer.Peer{l0.GetSignedPeer()}
 
 	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
 
@@ -72,7 +72,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
@@ -85,7 +85,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	fmt.Println("k2", k2)
 
 	// bootstrap address
-	ba := l0.GetAddresses()
+	ba := []*peer.Peer{l0.GetSignedPeer()}
 
 	// node 1
 	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
@@ -199,13 +199,13 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvideForEachOther(t *testing.T) 
 	fmt.Println("k2", k2)
 
 	// bootstrap peer
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, []string{})
+	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
 	// bootstrap address
-	ba := l0.GetAddresses()
+	ba := []*peer.Peer{l0.GetSignedPeer()}
 
 	// peer 1
 	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)

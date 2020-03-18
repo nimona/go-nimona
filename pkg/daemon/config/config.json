@@ -4,6 +4,9 @@
       "port": 3
     },
     "peer": {
+      "bootstrapKeys": [
+        "bk"
+      ],
       "bootstrapAddresses": [
         "tcps:foo:21013"
       ],

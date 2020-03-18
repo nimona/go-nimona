@@ -8,6 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
@@ -104,13 +105,26 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
 	}
 
+	// get temp bootstrap peers from config
+	bootstrapPeers := make([]*peer.Peer, len(config.Peer.BootstrapKeys))
+	for i, k := range config.Peer.BootstrapKeys {
+		bootstrapPeers[i] = &peer.Peer{
+			Owners: []crypto.PublicKey{
+				crypto.PublicKey(k),
+			},
+		}
+	}
+	for i, a := range config.Peer.BootstrapAddresses {
+		bootstrapPeers[i].Addresses = []string{a}
+	}
+
 	// construct hyperspace peerstore
 	hyperspace, err := hyperspace.NewDiscoverer(
 		ctx,
 		peerstore,
 		exchange,
 		localInfo,
-		config.Peer.BootstrapAddresses,
+		bootstrapPeers,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct hyperspace"), err)
