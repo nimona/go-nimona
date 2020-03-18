@@ -222,19 +222,6 @@ func (w *exchange) updateOutboxConn(outbox *outbox, conn *net.Connection) {
 	outbox.connLock.Unlock()
 }
 
-func (w *exchange) updateOutboxConnIfEmpty(
-	outbox *outbox,
-	conn *net.Connection,
-) bool {
-	outbox.connLock.Lock()
-	if outbox.conn == nil {
-		outbox.conn = conn
-		return true
-	}
-	outbox.connLock.Unlock()
-	return false
-}
-
 func (w *exchange) processOutbox(outbox *outbox) {
 	getConnection := func(req *outgoingObject) (*net.Connection, error) {
 		outbox.connLock.RLock()
