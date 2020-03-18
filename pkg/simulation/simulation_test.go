@@ -76,11 +76,13 @@ func TestSimulation(t *testing.T) {
 	}
 
 	// gather bootstrap addresses
+	bootstrapKeys := make([]string, len(bClients))
 	bootstrapAddresses := make([]string, len(bClients))
 	for i, bClient := range bClients {
 		res, err := bClient.Info()
 		require.NoError(t, err)
 		require.NotNil(t, res)
+		bootstrapKeys[i] = res.PublicKey().String()
 		bootstrapAddresses[i] = res.Addresses[0]
 	}
 
@@ -101,6 +103,8 @@ func TestSimulation(t *testing.T) {
 				"NIMONA_API_PORT=28000",
 				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
 				fmt.Sprintf("XNODE=NODE%d", i),
+				"NIMONA_PEER_BOOTSTRAP_KEYS=" +
+					strings.Join(bootstrapKeys, ","),
 				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +
 					strings.Join(bootstrapAddresses, ","),
 			}),

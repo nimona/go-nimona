@@ -3,9 +3,11 @@ package exchange
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/geoah/go-queue"
 	"github.com/hashicorp/go-multierror"
+	"github.com/patrickmn/go-cache"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -58,10 +60,10 @@ type (
 			recipient peer.LookupOption,
 			options ...Option,
 		) error
-		SendToAddress(
+		SendToPeer(
 			ctx context.Context,
 			object object.Object,
-			address string,
+			p *peer.Peer,
 			options ...Option,
 		) error
 	}
@@ -76,7 +78,8 @@ type (
 		outboxes *OutboxesMap
 		inboxes  EnvelopePubSub
 
-		store *sqlobjectstore.Store // TODO remove
+		store     *sqlobjectstore.Store // TODO remove
+		blacklist *cache.Cache
 	}
 	// Options (mostly) for Send()
 	Options struct {
@@ -130,7 +133,8 @@ func New(
 		outboxes: NewOutboxesMap(),
 		inboxes:  NewEnvelopePubSub(),
 
-		store: store,
+		store:     store,
+		blacklist: cache.New(10*time.Second, 5*time.Minute),
 	}
 
 	// TODO(superdecimal) we should probably remove .Listen() from here, net
@@ -615,11 +619,11 @@ func (w *exchange) Send(
 	return errs.Wait().ErrorOrNil()
 }
 
-// SendToAddress an object to an address
-func (w *exchange) SendToAddress(
+// SendToPeer an object to an address
+func (w *exchange) SendToPeer(
 	ctx context.Context,
 	o object.Object,
-	address string,
+	p *peer.Peer,
 	options ...Option,
 ) error {
 	ctx = context.FromContext(ctx)
@@ -628,16 +632,14 @@ func (w *exchange) SendToAddress(
 		option(opts)
 	}
 
-	outbox := w.getOutbox(crypto.PublicKey(address))
+	outbox := w.getOutbox(p.PublicKey())
 	errRecv := make(chan error, 1)
 	req := &outgoingObject{
-		context: ctx,
-		recipient: &peer.Peer{
-			Addresses: []string{address},
-		},
-		object:  o,
-		options: opts,
-		err:     errRecv,
+		context:   ctx,
+		recipient: p,
+		object:    o,
+		options:   opts,
+		err:       errRecv,
 	}
 	outbox.queue.Append(req)
 	if opts.Async {

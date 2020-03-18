@@ -20,6 +20,7 @@ type APIConfig struct {
 
 type PeerConfig struct {
 	AnnounceHostname   string             `json:"hostname,omitempty" envconfig:"HOSTNAME"`
+	BootstrapKeys      []string           `json:"bootstrapKeys,omitempty" envconfig:"BOOTSTRAP_KEYS"`
 	BootstrapAddresses []string           `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
 	EnableMetrics      bool               `json:"metrics,omitempty" envconfig:"METRICS"`
 	IdentityKey        crypto.PrivateKey  `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
@@ -43,6 +44,11 @@ func New() *Config {
 		},
 		Peer: PeerConfig{
 			TCPPort: 21013,
+			BootstrapKeys: []string{
+				"ed25519.Eq4y6LPB1cHX5pM8rgK9vbjFSt6e6hDW8rAwTu1TUaXW",
+				"ed25519.7GhQzPptXaBehoaq3DfcSfj1Z7X5tyjinEdx1R7mqfx8",
+				"ed25519.B6KNw8oyerJRpPKtHrf5YSCeBqELbAfWScxRLNdGbazG",
+			},
 			BootstrapAddresses: []string{
 				"tcps:egan.bootstrap.nimona.io:21013",
 				"tcps:liu.bootstrap.nimona.io:21013",

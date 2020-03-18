@@ -45,7 +45,7 @@ func NewDiscoverer(
 	ps discovery.PeerStorer,
 	exc exchange.Exchange,
 	local *peer.LocalPeer,
-	bootstrapAddresses []string,
+	bootstrapPeers []*peer.Peer,
 ) (*Discoverer, error) {
 	r := &Discoverer{
 		context:   ctx,
@@ -71,7 +71,7 @@ func NewDiscoverer(
 
 	// get in touch with bootstrap nodes
 	go func() {
-		if err := r.bootstrap(ctx, bootstrapAddresses); err != nil {
+		if err := r.bootstrap(ctx, bootstrapPeers); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
 		}
 
@@ -333,7 +333,7 @@ func (r *Discoverer) handlePeerLookup(
 
 func (r *Discoverer) bootstrap(
 	ctx context.Context,
-	bootstrapAddresses []string,
+	bootstrapPeers []*peer.Peer,
 ) error {
 	logger := log.FromContext(ctx)
 	opts := []exchange.Option{
@@ -346,9 +346,9 @@ func (r *Discoverer) bootstrap(
 		Bloom: r.local.GetSignedPeer().Bloom,
 	}
 	o := q.ToObject()
-	for _, addr := range bootstrapAddresses {
-		logger.Debug("connecting to bootstrap", log.String("address", addr))
-		err := r.exchange.SendToAddress(ctx, o, addr, opts...)
+	for _, p := range bootstrapPeers {
+		logger.Debug("connecting to bootstrap", log.Strings("addresses", p.Addresses))
+		err := r.exchange.SendToPeer(ctx, o, p, opts...)
 		if err != nil {
 			logger.Debug("could not send request to bootstrap", log.Error(err))
 		}
