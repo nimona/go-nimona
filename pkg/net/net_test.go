@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,6 +111,55 @@ func TestNetConnectionSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	<-done
+}
+
+func TestNetDialBackoff(t *testing.T) {
+	dblite1 := tempSqlite3(t)
+	store1, err := sqlobjectstore.New(dblite1)
+	assert.NoError(t, err)
+
+	disc1 := discovery.NewPeerStorer(store1)
+
+	ctx := context.New()
+
+	p := &peer.Peer{
+		Owners:    []crypto.PublicKey{"foo"},
+		Addresses: []string{"tcps:240.0.0.1:1000"},
+	}
+
+	// attempt 1, failed
+	_, n1, _ := newPeer(t, "", disc1)
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesFailed, err)
+
+	// attempt 2, blacklisted
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+
+	// wait for backoff to expire
+	time.Sleep(time.Second * 2)
+
+	// attempt 3, failed
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesFailed, err)
+
+	// attempt 4, blacklisted
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+
+	// wait, but backoff should not have expired
+	time.Sleep(time.Second * 2)
+
+	// attempt 5, blacklisted
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+
+	// wait for backoff to expire
+	time.Sleep(time.Second * 2)
+
+	// attempt 6, failed
+	_, err = n1.Dial(ctx, p)
+	assert.Equal(t, ErrAllAddressesFailed, err)
 }
 
 func TestNetConnectionFailureMiddleware(t *testing.T) {

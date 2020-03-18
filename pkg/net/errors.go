@@ -19,4 +19,6 @@ var (
 	ErrNonce = errors.New("nonce does not match")
 	// ErrMissingSignature is when the signature is missing
 	ErrMissingSignature = errors.New("signature missing")
+	// ErrAllAddressesBlacklisted all peer's addresses are currently blacklisted
+	ErrAllAddressesBlacklisted = errors.New("all addresses blacklisted")
 )
