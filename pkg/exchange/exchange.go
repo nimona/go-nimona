@@ -31,9 +31,6 @@ const (
 	ErrInvalidRequest = errors.Error("invalid request")
 	// ErrSendingTimedOut when sending times out
 	ErrSendingTimedOut = errors.Error("sending timed out")
-	// errOutboxForwarded when an object is forewarded to a different outbox
-	// this usually happens when an existing connection already existed
-	errOutboxForwarded = errors.Error("request has been moved to another outbox")
 )
 
 // nolint: lll
@@ -250,31 +247,6 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		if err != nil {
 			return nil, err
 		}
-		// if the remote peer doesn't match the one on our outbox
-		// this check is mainly done for when the outbox.peer is actually an
-		// address, ie tcps:0.0.0.0:0
-		// once we have the real remote peer, we should be replacing the outbox
-		if conn.RemotePeerKey.String() != outbox.peer.String() {
-			// check if we already have an outbox with the new peer
-			existingOutbox, outboxExisted := w.outboxes.GetOrPut(
-				conn.RemotePeerKey,
-				outbox,
-			)
-			// and if so
-			if outboxExisted {
-				// enqueue the object on that outbox
-				existingOutbox.queue.Append(req)
-				// try to update the connection if its gone
-				updated := w.updateOutboxConnIfEmpty(existingOutbox, conn)
-				// close the connection if we are not using it
-				if !updated {
-					conn.Close() // nolint: errcheck
-					w.updateOutboxConn(outbox, existingOutbox.conn)
-				}
-				// and finally return errOutboxForwarded so caller knows to exit
-				return nil, errOutboxForwarded
-			}
-		}
 		if err := w.handleConnection(conn); err != nil {
 			w.updateOutboxConn(outbox, nil)
 			log.DefaultLogger.Warn(
@@ -312,10 +284,6 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			logger.Debug("trying to get connection", log.Int("attempt", i+1))
 			conn, err := getConnection(req)
 			if err != nil {
-				// the object has been forwarded to another outbox
-				if err == errOutboxForwarded {
-					return
-				}
 				lastErr = err
 				w.updateOutboxConn(outbox, nil)
 				continue
@@ -376,11 +344,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		if lastErr == nil {
 			logger.Debug("wrote object")
 		}
-		// errOutboxForwarded are not considered errors here
-		// else, we should report back with something
-		if lastErr != errOutboxForwarded {
-			req.err <- lastErr
-		}
+		req.err <- lastErr
 		continue
 	}
 }
