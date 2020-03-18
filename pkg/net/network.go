@@ -1,11 +1,16 @@
 package net
 
 import (
+	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/discovery"
@@ -37,6 +42,8 @@ func New(discover discovery.Discoverer, local *peer.LocalPeer) (Network, error) 
 		local:      local,
 		midLock:    &sync.RWMutex{},
 		transports: &sync.Map{},
+		attempts:   newAttemptsMap(),
+		blacklist:  cache.New(time.Second*5, time.Second*60),
 	}, nil
 }
 
@@ -47,6 +54,8 @@ type network struct {
 	midLock    *sync.RWMutex
 	transports *sync.Map
 	middleware []MiddlewareHandler
+	attempts   *attemptsMap
+	blacklist  *cache.Cache
 }
 
 func (n *network) AddMiddleware(handler MiddlewareHandler) {
@@ -71,37 +80,89 @@ func (n *network) Dial(
 
 	logger.Debug("dialing")
 
+	// keep a flag on whether all addresses where blacklisted so we can return
+	// an ErrMissingSignature error
+	allBlacklisted := true
+
+	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
+		// check if address is currently blacklisted
+		if _, blacklisted := n.blacklist.Get(address); blacklisted {
+			logger.Debug("address is blacklisted, skipping")
+			continue
+		}
+		// get protocol from address
 		addressType := strings.Split(address, ":")[0]
 		t, ok := n.transports.Load(addressType)
 		if !ok {
-			logger.Info("not sure how to dial",
+			logger.Debug("not sure how to dial",
 				log.String("type", addressType),
 			)
-			return nil, ErrNoAddresses
+			continue
 		}
 
+		// reset blacklist flag
+		allBlacklisted = false
+
+		// dial address
 		trsp := t.(Transport)
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
-			logger.Info("could not dial",
+			// blacklist address
+			n.exponentialyBlacklist(address)
+			logger.Info("could not dial address",
 				log.String("type", addressType),
 				log.Error(err),
 			)
 			continue
 		}
 
+		// pass connection to all middleware
+		var merr error
 		for _, mh := range n.middleware {
-			conn, err = mh(ctx, conn)
-			if err != nil {
-				return nil, err
+			conn, merr = mh(ctx, conn)
+			if merr != nil {
+				break
 			}
 		}
+		if merr != nil {
+			conn.Close() // nolint: errcheck
+			logger.Info("could not handle middleware",
+				log.String("type", addressType),
+				log.Error(err),
+			)
+			continue
+		}
+
+		// at this point we consider the connection successful, so we can
+		// reset the failed attempts
+		n.attempts.Put(address, 0)
+		n.attempts.Put(p.PublicKey().String(), 0)
+
 		return conn, nil
 	}
 
-	logger.Error("could not dial peer")
-	return nil, ErrAllAddressesFailed
+	err := ErrAllAddressesFailed
+	if allBlacklisted {
+		err = ErrAllAddressesBlacklisted
+	}
+
+	logger.Error("could not dial peer", log.Error(err))
+	return nil, err
+}
+
+func (n *network) exponentialyBlacklist(k string) {
+	baseBackoff := float64(time.Second * 1)
+	maxBackoff := float64(time.Minute * 10)
+	attempts, _ := n.attempts.Get(k)
+	attempts++
+	backoff := baseBackoff * math.Pow(1.5, float64(attempts))
+	if backoff > maxBackoff {
+		backoff = maxBackoff
+	}
+	fmt.Println("BLACKLISTING", k, attempts, backoff)
+	n.attempts.Put(k, attempts)
+	n.blacklist.Set(k, attempts, time.Duration(backoff))
 }
 
 // Listen

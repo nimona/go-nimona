@@ -267,7 +267,8 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		}
 		// try to send the object
 		var lastErr error
-		for i := 0; i < 3; i++ {
+		maxAttempts := 1
+		for i := 0; i < maxAttempts; i++ {
 			logger.Debug("trying to get connection", log.Int("attempt", i+1))
 			conn, err := getConnection(req)
 			if err != nil {
