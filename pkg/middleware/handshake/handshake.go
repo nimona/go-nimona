@@ -1,7 +1,6 @@
 package handshake
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -63,7 +62,6 @@ func (hs *Handshake) handleIncoming(
 	}
 
 	so = so.AddSignature(sig)
-	spew.Dump(so.ToMap())
 	if err := net.Write(so, conn); err != nil {
 		return nil, err
 	}
