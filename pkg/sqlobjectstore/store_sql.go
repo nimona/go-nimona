@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/object"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore gen "ObjectType=object.Object PubSubName=sqlStore"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore -imp=nimona.io/pkg/object gen "ObjectType=object.Object PubSubName=sqlStore"
 
 const (
 	// ErrNotFound is returned when a requested object or hash is not found

@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/cheekybits/genny/generic"
+	"github.com/geoah/genny/generic"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"

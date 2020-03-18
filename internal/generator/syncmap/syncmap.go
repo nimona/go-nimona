@@ -3,7 +3,7 @@ package syncmap
 import (
 	"sync"
 
-	"github.com/cheekybits/genny/generic"
+	"github.com/geoah/genny/generic"
 )
 
 type (
