@@ -287,11 +287,12 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		}
 
 		// Only try the relays if we fail to write the object
-		if lastErr != nil {
+		if lastErr != nil && req.object.GetType() != "nimona.io/LookupRequest" {
 			// convert the object from the request to []byte
 			// todo: find a way to encrypt it
 			payload, err := json.Marshal(req.object.ToMap())
 			if err != nil {
+				// TODO log and move on?
 				lastErr = err
 			}
 
@@ -306,26 +307,30 @@ func (w *exchange) processOutbox(outbox *outbox) {
 					Recipient: req.recipient.PublicKey(),
 					Data:      payload,
 				}
-				ctx := context.Background()
-
+				ctx := context.New(
+					context.WithTimeout(time.Second * 5),
+				)
 				// send the new wrapped object
 				// to the lookup peer
 				err := w.Send(
 					ctx,
 					newReq.ToObject(),
 					peer.LookupByOwner(relayPeer),
+					WithAsync(),
+					WithLocalDiscoveryOnly(),
 				)
 				if err != nil {
-					// if this fails send it to the next one
-					lastErr = err
+					logger.Error(
+						"trying relay peer",
+						log.String("relay", relayPeer.String()),
+						log.String("recipient", req.recipient.PublicKey().String()),
+						log.Error(err),
+					)
 					continue
 				}
-
-				// success so stop trying to send
+				// reset error if we managed to send to at least one relay
 				lastErr = nil
-				break
 			}
-
 			// todo: wait for ack, how??
 		}
 
@@ -333,7 +338,6 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			logger.Debug("wrote object")
 		}
 		req.err <- lastErr
-		continue
 	}
 }
 
@@ -432,10 +436,12 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 			if err != nil {
 				continue
 			}
+			// TODO why the go routine?
 			go w.Send( // nolint: errcheck
 				context.New(),
 				res,
 				peer.LookupByOwner(e.Sender),
+				WithAsync(),
 				WithLocalDiscoveryOnly(),
 			)
 		case dataForwardType:
@@ -445,7 +451,7 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 
 			// decode object
 			fwd := &DataForward{}
-			if err := fwd.FromObject((e.Payload)); err != nil {
+			if err := fwd.FromObject(e.Payload); err != nil {
 				return err
 			}
 
@@ -462,6 +468,8 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 				context.Background(),
 				o,
 				peer.LookupByOwner(fwd.Recipient),
+				WithAsync(),
+				WithLocalDiscoveryOnly(),
 			); err != nil {
 				return errors.Wrap(
 					errors.Error("could not send object"),
