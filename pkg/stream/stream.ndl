@@ -32,5 +32,5 @@ signed object nimona.io/stream.ObjectResponse {
 
 signed object nimona.io/stream.Announcement {
     nonce string
-    leaves repeated nimona.io/object.Hash
+    objects repeated nimona.io/object.Object
 }

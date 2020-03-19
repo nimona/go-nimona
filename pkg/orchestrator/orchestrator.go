@@ -229,14 +229,16 @@ func (m *orchestrator) Put(o object.Object) error {
 		)
 		if len(os) > 0 {
 			parents := stream.GetStreamLeaves(os)
-			parentHashes := make([]string, len(parents))
+			parentHashes := make([]object.Hash, len(parents))
 			for i, p := range parents {
-				parentHashes[i] = object.NewHash(p).String()
+				parentHashes[i] = object.NewHash(p)
 			}
-			o.Set("@parents:as", parentHashes)
+			o.SetParents(parentHashes)
 		}
 	}
-	o.Set("@owners:as", []interface{}{m.localInfo.GetIdentityPublicKey().String()})
+	o.SetOwners([]crypto.PublicKey{
+		m.localInfo.GetIdentityPublicKey(),
+	})
 
 	h := object.NewHash(o)
 
@@ -245,16 +247,16 @@ func (m *orchestrator) Put(o object.Object) error {
 		return err
 	}
 
-	// // get all the objects that are part of the same graph
-	// os, err := m.store.Filter(
-	// 	sqlobjectstore.FilterByStreamHash(h),
-	// )
-	// if err != nil {
-	// 	return errors.Wrap(
-	// 		errors.Error("could not retrieve graph"),
-	// 		err,
-	// 	)
-	// }
+	// get all the objects that are part of the same graph
+	os, err := m.store.Filter(
+		sqlobjectstore.FilterByStreamHash(h),
+	)
+	if err != nil {
+		return errors.Wrap(
+			errors.Error("could not retrieve graph"),
+			err,
+		)
+	}
 
 	// if !IsComplete(os) {
 	// 	return errors.Wrap(
@@ -263,28 +265,19 @@ func (m *orchestrator) Put(o object.Object) error {
 	// 	)
 	// }
 
-	// start publishing new content hashes
-	m.localInfo.AddContentHash(h)
-
-	// find leaves
-	os, err := m.store.Filter(
-		sqlobjectstore.FilterByStreamHash(streamHash),
-	)
-	if err != nil {
-		return err
-	}
-	leaves := stream.GetStreamLeaves(os)
-	leafHashes := make([]object.Hash, len(leaves))
-	for i, p := range leaves {
-		leafHashes[i] = object.NewHash(p)
+	// if this is a new stream
+	if streamHash.IsEmpty() {
+		m.localInfo.AddContentHash(h)
 	}
 
 	// send announcements about new hashes
 	announcement := &stream.Announcement{
 		Stream: streamHash,
-		Leaves: leafHashes,
+		Objects: []*object.Object{
+			&o,
+		},
 		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+			m.localInfo.GetPeerPublicKey(),
 		},
 	}
 
@@ -358,9 +351,17 @@ func (m *orchestrator) handleStreamAnnouncement(
 		return err
 	}
 
+	// let's add the objects to the store
+	// and also gather up their leaves
+	leaves := []object.Hash{}
+	for _, o := range req.Objects {
+		m.store.Put(*o) // nolint: errcheck
+		leaves = append(leaves, o.GetParents()...)
+	}
+
 	// then let's go through the leaves
 	missingObjects := []object.Hash{}
-	for _, leafHash := range req.Leaves {
+	for _, leafHash := range leaves {
 		// see if we already have each of them
 		_, err := m.store.Get(leafHash)
 		// and if not, request them
@@ -379,6 +380,7 @@ func (m *orchestrator) handleStreamAnnouncement(
 	}
 
 	// if there are leaves missing, sync
+	// TODO reconsider this
 	if _, err := m.Sync(
 		ctx,
 		req.Stream,

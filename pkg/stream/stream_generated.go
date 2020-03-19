@@ -71,7 +71,7 @@ type (
 		Policy     object.Policy
 		Signatures []object.Signature
 		Nonce      string
-		Leaves     []object.Hash
+		Objects    []*object.Object
 	}
 )
 
@@ -533,9 +533,9 @@ func (e Announcement) GetSchema() *object.SchemaObject {
 				IsOptional: false,
 			},
 			&object.SchemaProperty{
-				Name:       "leaves",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
+				Name:       "objects",
+				Type:       "nimona.io/object.Object",
+				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -560,12 +560,12 @@ func (e Announcement) ToObject() object.Object {
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
 	}
-	if len(e.Leaves) > 0 {
+	if len(e.Objects) > 0 {
 		v := immutable.List{}
-		for _, iv := range e.Leaves {
-			v = v.Append(immutable.String(iv))
+		for _, iv := range e.Objects {
+			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("leaves:as", v)
+		o = o.Set("objects:ao", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
@@ -588,11 +588,12 @@ func (e *Announcement) FromObject(o object.Object) error {
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("leaves:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Leaves = make([]object.Hash, len(m))
+	if v := data.Value("objects:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Objects = make([]*object.Object, len(m))
 		for i, iv := range m {
-			e.Leaves[i] = object.Hash(iv)
+			eo := object.FromMap(iv.(map[string]interface{}))
+			e.Objects[i] = &eo
 		}
 	}
 	return nil
