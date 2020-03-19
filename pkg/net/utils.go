@@ -14,6 +14,8 @@ var (
 	bindIpv6    = false // TODO(geoah) refactor to remove global
 )
 
+// TODO remove Binds and replace with options
+// nolint: gochecknoinits
 func init() {
 	BindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
 	BindPrivate, _ = strconv.ParseBool(os.Getenv("BIND_PRIVATE"))
@@ -35,7 +37,8 @@ func fmtAddress(protocol, address string, port int) string {
 	return fmt.Sprintf("%s:%s:%d", protocol, address, port)
 }
 
-// GetLocalPeerAddresses returns the addresses TCP can listen to on the local machine
+// GetLocalPeerAddresses returns the addresses TCP can listen to on the
+// local machine
 func GetLocalPeerAddresses(port int) ([]string, error) {
 	// go through all ifs
 	ifaces, err := net.Interfaces()

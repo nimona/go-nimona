@@ -21,7 +21,7 @@ type migrationRow struct {
 }
 
 func Up(db *sql.DB, migrations ...string) error {
-	// initialise the tables required for the migration
+	// initialize the tables required for the migration
 	if err := createMigrationTable(db); err != nil {
 		return err
 	}
@@ -55,7 +55,6 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 
 	// iterate over the migrations array
 	for index, mig := range migrations {
-
 		// get the last migration index
 		rows, err := tx.Query(`
 			SELECT 

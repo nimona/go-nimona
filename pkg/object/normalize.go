@@ -2,6 +2,7 @@ package object
 
 import (
 	"encoding/base64"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -27,6 +28,7 @@ func Normalize(i interface{}) (map[string]interface{}, error) {
 	return normalizeObject(i)
 }
 
+// nolint: gocritic
 func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	if i == nil {
 		return nil, nil
@@ -49,7 +51,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid bool type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid bool type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -62,7 +68,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid object type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid object type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -75,7 +85,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid string type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid string type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -88,7 +102,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid data type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid data type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -101,7 +119,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid uint64 type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid uint64 type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -114,7 +136,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid int type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid int type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -127,7 +153,11 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					if err != nil {
 						return nil, errors.Wrap(
 							err,
-							errors.New("invalid float64 type, t="+reflect.TypeOf(i).String()+" k="+k),
+							fmt.Errorf(
+								"invalid float64 type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
 						)
 					}
 				}
@@ -183,7 +213,10 @@ func NormalizeData(i interface{}) ([]byte, error) {
 		for i, n := range v {
 			u, err := normalizeUint(n)
 			if err != nil {
-				return nil, errors.Wrap(err, errors.New("could not normalize data"))
+				return nil, errors.Wrap(
+					err,
+					errors.New("could not normalize data"),
+				)
 			}
 			d[i] = uint8(u)
 		}
@@ -203,7 +236,10 @@ func NormalizeData(i interface{}) ([]byte, error) {
 		}
 		return b, nil
 	}
-	return nil, errors.New("unknown data type, t=" + reflect.TypeOf(i).String())
+	return nil, fmt.Errorf(
+		"unknown data type, t=%v",
+		reflect.TypeOf(i).String(),
+	)
 }
 
 func normalizeUint(i interface{}) (uint64, error) {
@@ -231,7 +267,7 @@ func normalizeUint(i interface{}) (uint64, error) {
 	case uint32:
 		return uint64(v), nil
 	case uint64:
-		return uint64(v), nil
+		return v, nil
 	case string:
 		nv, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
@@ -257,7 +293,7 @@ func normalizeInt(i interface{}) (int64, error) {
 	case int32:
 		return int64(v), nil
 	case int64:
-		return int64(v), nil
+		return v, nil
 	case uint:
 		return int64(v), nil
 	case uint8:
@@ -283,7 +319,7 @@ func normalizeFloat(i interface{}) (float64, error) {
 	case float32:
 		return float64(v), nil
 	case float64:
-		return float64(v), nil
+		return v, nil
 	case int:
 		return float64(v), nil
 	case int8:

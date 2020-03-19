@@ -16,26 +16,25 @@ func GenerateTLSCertificate(privateKey PrivateKey) (*tls.Certificate, error) {
 	now := time.Now()
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(now.Unix()),
+		// TODO replace subject
 		Subject: pkix.Name{
 			CommonName:         "quickserve.example.com",
 			Country:            []string{"USA"},
 			Organization:       []string{"example.com"},
 			OrganizationalUnit: []string{"quickserve"},
 		},
-		NotBefore:             now,
-		NotAfter:              now.AddDate(0, 0, 1), // Valid for one day
-		SubjectKeyId:          []byte{113, 117, 105, 99, 107, 115, 101, 114, 118, 101},
+		NotBefore: now,
+		NotAfter:  now.AddDate(0, 0, 1), // Valid for one day
+		SubjectKeyId: []byte{
+			// TODO replace subject key id
+			113, 117, 105, 99, 107, 115, 101, 114, 118, 101,
+		},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		KeyUsage: x509.KeyUsageKeyEncipherment |
 			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
-
-	// priv, err := rsa.GenerateKey(rand.Reader, 2048)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	cert, err := x509.CreateCertificate(
 		rand.Reader,

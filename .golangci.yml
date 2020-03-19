@@ -1,33 +1,124 @@
+linters-settings:
+  depguard:
+    list-type: blacklist
+    packages:
+      - github.com/sirupsen/logrus
+    packages-with-error-message:
+      - github.com/sirupsen/logrus: "logging is allowed only by nimona.io/pkg/log"
+  dupl:
+    threshold: 100
+  funlen:
+    lines: 100
+    # TODO try and reduce
+    statements: 150
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+  gocyclo:
+    min-complexity: 20
+  goimports:
+    local-prefixes: nimona.io
+  golint:
+    min-confidence: 0
+  gomnd:
+    settings:
+      mnd:
+        # don't include the "operation" and "assign"
+        checks: argument,case,condition,return
+  govet:
+    # TODO reconsider checking for shadowing
+    check-shadowing: false
+  lll:
+    line-length: 80
+  maligned:
+    suggest-new: true
+  misspell:
+    locale: US
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dupl
+    - errcheck
+    - gochecknoinits
+    - gocritic
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - scopelint
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
+
+    # TODO consider enabling
+    # - rowserrcheck
+    # - stylecheck
+    # - gomnd
+    # - interfacer
+    # - unparam
+    # - funlen
+    # - goconst
+    # - gocyclo
+
+    # don't enable:
+    # - gochecknoglobals
+    # - gocognit
+    # - godox
+    # - maligned
+    # - prealloc
+    # - dogsled
+
+issues:
+  exclude-rules:
+    - linters:
+        - lll
+      source: "^//go:generate "
+    - linters:
+        - lll
+      source: "`json:"
+    - linters:
+        - golint
+      text: "returns unexported type"
+    - linters:
+        - gocritic
+      text: "paramTypeCombine:"
+    - linters:
+        - gocritic
+      text: "hugeParam:"
+
 run:
   skip-dirs:
     - vendor
+    - internal/generator
   skip-files:
     - .*_generated.go
     - .*_mock.go
     - .*_mock_test.go
-
-linters-settings:
-  govet:
-    check-shadowing: true
-  golint:
-    min-confidence: 0
-  gocyclo:
-    min-complexity: 20
-  maligned:
-    suggest-new: true
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  lll:
-    line-length: 80
-  goimports:
-    local-prefixes: nimona.io
-
-issues:
-  max-per-linter: 0
-  max-same-issues: 0
-  exclude-use-default: false
-  exclude:
-    - "declaration of \"err\" shadows"

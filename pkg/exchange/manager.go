@@ -12,7 +12,6 @@ type ConnectionManager struct {
 }
 
 func (cm *ConnectionManager) Add(address string, conn *net.Connection) {
-	// cm.Close(conn.RemoteID)
 	cm.connections.Store(address, conn)
 }
 

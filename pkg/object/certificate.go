@@ -6,7 +6,10 @@ import (
 	"nimona.io/pkg/crypto"
 )
 
-func NewCertificate(subject crypto.PublicKey, issuer crypto.PrivateKey) *Certificate {
+func NewCertificate(
+	subject crypto.PublicKey,
+	issuer crypto.PrivateKey,
+) *Certificate {
 	c := &Certificate{
 		Subject: subject,
 		Created: time.Now().Format(time.RFC3339),

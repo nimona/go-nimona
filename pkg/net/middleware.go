@@ -4,11 +4,11 @@ import (
 	"nimona.io/pkg/context"
 )
 
-// MiddlewareHandler ...
+// MiddlewareHandler defines a middleware handler
 type MiddlewareHandler func(ctx context.Context,
 	conn *Connection) (*Connection, error)
 
-// Middleware ...
+// Middleware defines a middleware interface
 type Middleware interface {
 	Handle() MiddlewareHandler
 }

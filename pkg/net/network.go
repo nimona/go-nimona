@@ -21,6 +21,8 @@ import (
 
 var UseUPNP = false
 
+// TODO remove UseUPNP and replace with option
+// nolint: gochecknoinits
 func init() {
 	UseUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
 }
@@ -35,7 +37,10 @@ type Network interface {
 }
 
 // New creates a new p2p network using an address book
-func New(discover discovery.Discoverer, local *peer.LocalPeer) (Network, error) {
+func New(
+	discover discovery.Discoverer,
+	local *peer.LocalPeer,
+) (Network, error) {
 	return &network{
 		discoverer: discover,
 		middleware: []MiddlewareHandler{},

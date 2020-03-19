@@ -16,8 +16,7 @@ func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 		}
 		p := o.GetPolicy()
 		for _, a := range p.Actions {
-			switch strings.ToLower(a) {
-			case "allow":
+			if strings.EqualFold(a, "allow") {
 				for _, s := range p.Subjects {
 					pkm[crypto.PublicKey(s)] = struct{}{}
 				}

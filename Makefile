@@ -16,9 +16,10 @@ SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 # Tools
 BIN_GOBIN = github.com/myitcv/gobin
 TOOLS += github.com/geoah/genny@v1.0.3
-TOOLS += github.com/goreleaser/goreleaser@v0.118.2
-TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@9161de5
+TOOLS += github.com/goreleaser/goreleaser@v0.129.0
+TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 TOOLS += github.com/geoah/mockery/cmd/mockery@v0.0.1
+TOOLS += mvdan.cc/gofumpt/gofumports
 
 # Internal tools
 TOOLS_INTERNAL += codegen
@@ -69,8 +70,8 @@ $(MAINBIN): $(SOURCES)
 # Clean up everything
 .PHONY: clean
 clean:
-	rm -f *.cov
-	rm -rf $(GOBIN)
+	@rm -f *.cov
+	@rm -rf $(GOBIN)
 
 # Tidy go modules
 .PHONY: tidy
@@ -82,19 +83,19 @@ tidy:
 # Generate community docs
 .PHONY: community-docs
 community-docs: community
-	$(GOBIN)/community
+	@$(GOBIN)/community
 
 # Install deps
 .PHONY: deps
 deps:
 	$(info Installing dependencies)
-	-go mod download
+	@go mod download
 
 # Run go generate
 .PHONY: generate
 generate: github.com/myitcv/gobin codegen
-	-go generate $(V) ./...
-	-$(GOBIN)/codegen -a .
+	@go generate $(V) ./...
+	@$(GOBIN)/codegen -a .
 
 # Run e2e tests
 .PHONY: e2e
@@ -112,7 +113,7 @@ e2e:
 .PHONY: test
 test:
 	$(eval TAGS += integration)
-	LOG_LEVEL=debug \
+	@LOG_LEVEL=debug \
 	CGO_ENABLED=1 \
 	BIND_LOCAL=true \
 	go test $(V) \
@@ -130,25 +131,26 @@ tools: github.com/myitcv/gobin $(TOOLS) $(TOOLS_INTERNAL)
 # Check tools
 .PHONY: $(TOOLS)
 $(TOOLS): %:
-	$(GOBIN)/gobin "$*"
+	@$(GOBIN)/gobin "$*"
 
 # Check internal tools
 .PHONY: $(TOOLS_INTERNAL)
 $(TOOLS_INTERNAL): %:
 ifndef CI
-	cd tools/$*; go install $(V)
+	$(info Installing tools/$*)
+	@cd tools/$*; go install $(V)
 endif
 
 # Check gobin
 .PHONY: $(BIN_GOBIN)
 $(BIN_GOBIN): %:
-	GO111MODULE=off go get -u $(BIN_GOBIN)
+	@GO111MODULE=off go get -u $(BIN_GOBIN)
 
 # Lint code
 .PHONY: lint
-lint: github.com/myitcv/gobin github.com/golangci/golangci-lint/cmd/golangci-lint@9161de5
+lint:
 	$(info Running Go linters)
-	$(GOBIN)/golangci-lint $(V) run
+	@$(GOBIN)/golangci-lint $(V) run
 
 # Local bootstrap
 .PHONY: local-bootstrap
@@ -192,8 +194,6 @@ local-peer-two: build
 	NIMONA_PEER_HTTP_PORT=10082 \
 	NIMONA_API_PORT=10802 \
 	$(MAINBIN)
-
-
 
 # Local test peer three
 .PHONY: local-peer-three

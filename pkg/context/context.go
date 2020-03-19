@@ -15,6 +15,9 @@ type (
 		Done() <-chan struct{}
 		Err() error
 		Value(key interface{}) interface{}
+		Arguments() map[string]interface{}
+		Method() string
+		CorrelationID() string
 	}
 	// context wraps stdcontext.Context allowing adding tracing information
 	// instead of using the Values.
@@ -30,7 +33,7 @@ type (
 )
 
 // Background context wrapper
-func Background() *context {
+func Background() Context {
 	return New()
 }
 
@@ -68,7 +71,7 @@ func (ctx *context) CorrelationID() string {
 }
 
 // FromContext returns a new context from a parent
-func FromContext(ctx stdcontext.Context) *context {
+func FromContext(ctx stdcontext.Context) Context {
 	return New(WithParent(ctx))
 }
 
@@ -83,7 +86,7 @@ func GetCorrelationID(ctx stdcontext.Context) string {
 }
 
 // New constructs a new *context from a parent Context and Options
-func New(opts ...Option) *context {
+func New(opts ...Option) Context {
 	ctx := &context{
 		Context:   stdcontext.Background(),
 		arguments: map[string]interface{}{},

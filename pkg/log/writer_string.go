@@ -22,6 +22,7 @@ func StringWriter() Writer {
 		for _, field := range fields {
 			k := field.Key
 			v := field.Value
+			// nolint: gocritic
 			if s, ok := v.(interface{ String() string }); ok {
 				v = s.String()
 			} else if s, ok := v.(interface{ Error() string }); ok {

@@ -51,7 +51,7 @@ func New(
 		return nil, errors.Wrap(err, errors.New("failed to run migrations"))
 	}
 
-	// Initialise the garbage collector in the background to run every minute
+	// Initialize the garbage collector in the background to run every minute
 	go func() {
 		for {
 			ndb.gc() // nolint
@@ -352,6 +352,7 @@ func (st *Store) Filter(
 	objects := []object.Object{}
 
 	// get the object
+	// nolint: gosec
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects " + where)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -405,20 +406,12 @@ func (st *Store) Filter(
 	)
 	if err != nil {
 		return objects, nil
-		// return nil, errors.Wrap(
-		// 	err,
-		// 	errors.New("could not prepare query"),
-		// )
 	}
 
 	if _, err := istmt.Exec(
 		append([]interface{}{time.Now().Unix()}, hashes...)...,
 	); err != nil {
 		return objects, nil
-		// return nil, errors.Wrap(
-		// 	err,
-		// 	errors.New("could not update last access"),
-		// )
 	}
 
 	return objects, nil

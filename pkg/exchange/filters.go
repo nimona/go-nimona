@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"github.com/gobwas/glob"
+
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 )

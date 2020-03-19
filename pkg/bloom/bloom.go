@@ -63,8 +63,7 @@ func intersectionCount(a, b []int64) int {
 	for _, v := range m {
 		a := v&(1<<0) != 0
 		b := v&(1<<1) != 0
-		switch {
-		case a && b:
+		if a && b {
 			i++
 		}
 	}

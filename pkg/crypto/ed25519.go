@@ -139,5 +139,4 @@ func (r PublicKey) Verify(message []byte, signature []byte) error {
 
 func (r PublicKey) Equals(w PublicKey) bool {
 	return string(r) == string(w)
-	// return subtle.ConstantTimeCompare(w.ed25519(), r.ed25519()) == 1
 }

@@ -48,7 +48,7 @@ func New(
 	x exchange.Exchange,
 	linf *peer.LocalPeer,
 	sst *sqlobjectstore.Store,
-	orchestrator orchestrator.Orchestrator,
+	or orchestrator.Orchestrator,
 	version string,
 	commit string,
 	buildDate string,
@@ -65,7 +65,7 @@ func New(
 		exchange:    x,
 		objectStore: sst,
 
-		orchestrator: orchestrator,
+		orchestrator: or,
 
 		local: linf,
 
@@ -79,25 +79,81 @@ func New(
 	r.Use(api.Cors())
 	r.Use(api.TokenAuth())
 
-	r.Handle("GET", "/api/v1/version$", api.HandleVersion)
-	r.Handle("GET", "/api/v1/local$", api.HandleGetLocal)
-	r.Handle("GET", "/api/v1/peers", api.HandleGetLookup)
+	r.Handle(
+		"GET",
+		"/api/v1/version$",
+		api.HandleVersion,
+	)
+	r.Handle(
+		"GET",
+		"/api/v1/local$",
+		api.HandleGetLocal,
+	)
+	r.Handle(
+		"GET",
+		"/api/v1/peers",
+		api.HandleGetLookup,
+	)
 
-	r.Handle("GET", "/api/v1/identities$", api.HandleGetIdentities)
-	r.Handle("GET", "/api/v1/identities/(?P<fingerprint>.+)$", api.HandleGetIdentity)
-	r.Handle("POST", "/api/v1/identities$", api.HandlePostIdentities)
+	r.Handle(
+		"GET",
+		"/api/v1/identities$",
+		api.HandleGetIdentities,
+	)
+	r.Handle(
+		"GET",
+		"/api/v1/identities/(?P<fingerprint>.+)$",
+		api.HandleGetIdentity,
+	)
+	r.Handle(
+		"POST",
+		"/api/v1/identities$",
+		api.HandlePostIdentities,
+	)
 
-	r.Handle("GET", "/api/v1/peers$", api.HandleGetPeers)
-	r.Handle("GET", "/api/v1/peers/(?P<fingerprint>.+)$", api.HandleGetPeer)
+	r.Handle(
+		"GET",
+		"/api/v1/peers$",
+		api.HandleGetPeers,
+	)
+	r.Handle(
+		"GET",
+		"/api/v1/peers/(?P<fingerprint>.+)$",
+		api.HandleGetPeer,
+	)
 
-	r.Handle("GET", "/api/v1/objects$", api.HandleGetObjects)
-	r.Handle("GET", "/api/v1/objects/(?P<objectHash>.+)$", api.HandleGetObject)
-	r.Handle("POST", "/api/v1/objects$", api.HandlePostObjects)
-	r.Handle("POST", "/api/v1/objects/(?P<rootObjectHash>.+)$", api.HandlePostObject)
+	r.Handle(
+		"GET",
+		"/api/v1/objects$",
+		api.HandleGetObjects,
+	)
+	r.Handle(
+		"GET",
+		"/api/v1/objects/(?P<objectHash>.+)$",
+		api.HandleGetObject,
+	)
+	r.Handle(
+		"POST",
+		"/api/v1/objects$",
+		api.HandlePostObjects,
+	)
+	r.Handle(
+		"POST",
+		"/api/v1/objects/(?P<rootObjectHash>.+)$",
+		api.HandlePostObject,
+	)
 
-	r.Handle("GET", "/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$", api.HandleGetStreams)
+	r.Handle(
+		"GET",
+		"/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$",
+		api.HandleGetStreams,
+	)
 
-	r.Handle("POST", "/api/v1/stop$", api.Stop)
+	r.Handle(
+		"POST",
+		"/api/v1/stop$",
+		api.Stop,
+	)
 
 	return api
 }

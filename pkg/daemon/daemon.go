@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 
+	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/pkg/context"
@@ -30,54 +31,54 @@ type Daemon struct {
 	LocalPeer    *peer.LocalPeer
 }
 
-func New(ctx context.Context, config *config.Config) (*Daemon, error) {
+func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	// construct object store
-	db, err := sql.Open("sqlite3", path.Join(config.Path, "sqlite3.db"))
+	db, err := sql.Open("sqlite3", path.Join(cfg.Path, "sqlite3.db"))
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not open sql file"), err)
 	}
 
-	store, err := sqlobjectstore.New(db)
+	st, err := sqlobjectstore.New(db)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not start sql store"), err)
 	}
 
 	// construct peerstore
-	peerstore := discovery.NewPeerStorer(store)
+	ps := discovery.NewPeerStorer(st)
 
 	// construct local info
-	localInfo, err := peer.NewLocalPeer(
-		config.Peer.AnnounceHostname,
-		config.Peer.PeerKey,
+	li, err := peer.NewLocalPeer(
+		cfg.Peer.AnnounceHostname,
+		cfg.Peer.PeerKey,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not create local info"), err)
 	}
 
 	// add content types
-	localInfo.AddContentTypes(config.Peer.ContentTypes...)
+	li.AddContentTypes(cfg.Peer.ContentTypes...)
 
 	// add identity key to local info
-	if config.Peer.IdentityKey != "" {
-		if err := localInfo.AddIdentityKey(config.Peer.IdentityKey); err != nil {
+	if cfg.Peer.IdentityKey != "" {
+		if err := li.AddIdentityKey(cfg.Peer.IdentityKey); err != nil {
 			return nil, errors.Wrap(errors.New("could not register identity key"), err)
 		}
 	}
 
 	// add relay peers to local info
-	for _, rp := range config.Peer.RelayAddresses {
-		localInfo.AddRelays(rp)
+	for _, rp := range cfg.Peer.RelayAddresses {
+		li.AddRelays(rp)
 	}
 
-	network, err := net.New(peerstore, localInfo)
+	network, err := net.New(ps, li)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not create network"), err)
 	}
 
 	// construct tcp transport
 	tcpTransport := net.NewTCPTransport(
-		localInfo,
-		fmt.Sprintf("0.0.0.0:%d", config.Peer.TCPPort),
+		li,
+		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
 	)
 
 	// add transports to network
@@ -85,45 +86,45 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 
 	// construct handshake
 	handshakeMiddleware := handshake.New(
-		localInfo,
-		peerstore,
+		li,
+		ps,
 	)
 
 	// add middleware to network
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct exchange
-	exchange, err := exchange.New(
+	ex, err := exchange.New(
 		ctx,
-		config.Peer.PeerKey,
+		cfg.Peer.PeerKey,
 		network,
-		store,
-		peerstore,
-		localInfo,
+		st,
+		ps,
+		li,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
 	}
 
-	// get temp bootstrap peers from config
-	bootstrapPeers := make([]*peer.Peer, len(config.Peer.BootstrapKeys))
-	for i, k := range config.Peer.BootstrapKeys {
+	// get temp bootstrap peers from cfg
+	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
+	for i, k := range cfg.Peer.BootstrapKeys {
 		bootstrapPeers[i] = &peer.Peer{
 			Owners: []crypto.PublicKey{
 				crypto.PublicKey(k),
 			},
 		}
 	}
-	for i, a := range config.Peer.BootstrapAddresses {
+	for i, a := range cfg.Peer.BootstrapAddresses {
 		bootstrapPeers[i].Addresses = []string{a}
 	}
 
 	// construct hyperspace peerstore
-	hyperspace, err := hyperspace.NewDiscoverer(
+	hs, err := hyperspace.NewDiscoverer(
 		ctx,
-		peerstore,
-		exchange,
-		localInfo,
+		ps,
+		ex,
+		li,
 		bootstrapPeers,
 	)
 	if err != nil {
@@ -131,27 +132,27 @@ func New(ctx context.Context, config *config.Config) (*Daemon, error) {
 	}
 
 	// construct orchestrator
-	orchestrator, err := orchestrator.New(
-		store,
-		exchange,
+	or, err := orchestrator.New(
+		st,
+		ex,
 		nil,
-		localInfo,
+		li,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct orchestrator"), err)
 	}
 
 	// add hyperspace provider
-	if err := peerstore.AddDiscoverer(hyperspace); err != nil {
+	if err := ps.AddDiscoverer(hs); err != nil {
 		return nil, errors.Wrap(errors.New("could not add hyperspace provider"), err)
 	}
 
 	return &Daemon{
 		Net:          network,
-		Discovery:    peerstore,
-		Exchange:     exchange,
-		Store:        store,
-		Orchestrator: orchestrator,
-		LocalPeer:    localInfo,
+		Discovery:    ps,
+		Exchange:     ex,
+		Store:        st,
+		Orchestrator: or,
+		LocalPeer:    li,
 	}, nil
 }

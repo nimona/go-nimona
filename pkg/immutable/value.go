@@ -70,6 +70,7 @@ func rmHints(k string) string {
 	// return ps[0]
 }
 
+// nolint: gocritic
 func AnyToValue(k string, a interface{}) Value {
 	hs := getHints(k)
 
@@ -113,7 +114,7 @@ func AnyToValue(k string, a interface{}) Value {
 		case int32:
 			return Int(int64(v))
 		case int64:
-			return Int(int64(v))
+			return Int(v)
 		case uint:
 			return Int(int64(v))
 		case uint8:
@@ -234,5 +235,10 @@ func AnyToValue(k string, a interface{}) Value {
 		}
 	}
 
-	panic(fmt.Sprintf("not sure how to handle; k=%s a=%#v t=%s", k, a, reflect.TypeOf(a).String()))
+	panic(
+		fmt.Sprintf(
+			"not sure how to handle; k=%s a=%#v t=%s",
+			k, a, reflect.TypeOf(a).String(),
+		),
+	)
 }

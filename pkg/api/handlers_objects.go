@@ -25,7 +25,7 @@ func (api *API) HandleGetObjects(c *router.Context) {
 	contentTypes := strings.Split(c.Query("type"), ",")
 	for _, ct := range contentTypes {
 		ct = strings.TrimSpace(ct)
-		if len(ct) == 0 {
+		if ct == "" {
 			continue
 		}
 		filters = append(filters, sqlobjectstore.FilterByObjectType(ct))
@@ -81,13 +81,13 @@ func (api *API) HandleGetObject(c *router.Context) {
 	}
 
 	if returnDot {
-		dot, err := dot.Dot(os)
+		d, err := dot.Dot(os)
 		if err != nil {
 			c.AbortWithError(500, err) // nolint: errcheck
 			return
 		}
 		c.Header("Content-Type", "text/vnd.graphviz")
-		c.Text(http.StatusOK, dot)
+		c.Text(http.StatusOK, d)
 		return
 	}
 
@@ -113,13 +113,21 @@ func (api *API) HandlePostObjects(c *router.Context) {
 
 	sig, err := object.NewSignature(k, o)
 	if err != nil {
-		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.New("could not sign object"),
+		)
 		return
 	}
 
 	o = o.AddSignature(sig)
 	if err := api.objectStore.Put(o); err != nil {
-		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.Wrap(err, errors.New("could not store object")),
+		)
 		return
 	}
 
@@ -133,10 +141,19 @@ func (api *API) HandlePostObjects(c *router.Context) {
 			ctx := context.New(
 				context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
 			)
-			err := api.exchange.Send(ctx, o, peer.LookupByOwner(crypto.PublicKey(s)), exchange.WithAsync())
+			err := api.exchange.Send(
+				ctx,
+				o,
+				peer.LookupByOwner(crypto.PublicKey(s)),
+				exchange.WithAsync(),
+			)
 			if err != nil {
 				logger := log.FromContext(ctx)
-				logger.Error("could not send to peer", log.String("s", s), log.Error(err))
+				logger.Error(
+					"could not send to peer",
+					log.String("s", s),
+					log.Error(err),
+				)
 			}
 		}(i, s)
 	}
@@ -161,7 +178,11 @@ func (api *API) HandlePostObject(c *router.Context) {
 		),
 	)
 	if err != nil {
-		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.New("could not sign object"),
+		)
 		return
 	}
 
@@ -181,7 +202,11 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	sig, err := object.NewSignature(api.local.GetPeerPrivateKey(), o)
 	if err != nil {
-		c.AbortWithError(500, errors.New("could not sign object")) // nolint: errcheck
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.New("could not sign object"),
+		)
 		return
 	}
 
@@ -190,7 +215,11 @@ func (api *API) HandlePostObject(c *router.Context) {
 	api.syncOut(ctx, o) // nolint: errcheck
 
 	if err := api.orchestrator.Put(o); err != nil {
-		c.AbortWithError(500, errors.Wrap(err, errors.New("could not store object"))) // nolint: errcheck
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.Wrap(err, errors.New("could not store object")),
+		)
 		return
 	}
 
@@ -210,7 +239,7 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 
 	opts := []peer.LookupOption{
 		peer.LookupByContentType(o.GetType()),
-		peer.LookupByCertificateSigner(crypto.PublicKey(owners[0])),
+		peer.LookupByCertificateSigner(owners[0]),
 	}
 
 	ps, err := api.discovery.Lookup(ctx, opts...)
@@ -220,7 +249,12 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 
 	for _, p := range gatherPeers(ps) {
 		// nolint: errcheck
-		api.exchange.Send(ctx, o, peer.LookupByOwner(p.PublicKey()), exchange.WithAsync())
+		api.exchange.Send(
+			ctx,
+			o,
+			peer.LookupByOwner(p.PublicKey()),
+			exchange.WithAsync(),
+		)
 	}
 
 	return nil

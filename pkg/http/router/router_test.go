@@ -70,15 +70,13 @@ func Test_match(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			re := regexp.MustCompile(tt.pattern)
-			match, params := match(re, tt.path)
-			if match != tt.match {
-				t.Errorf("match() match = %v, want %v", match, tt.match)
-			}
-			if !reflect.DeepEqual(params, tt.params) {
-				t.Errorf("match() params = %v, want %v", params, tt.params)
-			}
-		})
+		re := regexp.MustCompile(tt.pattern)
+		match, params := match(re, tt.path)
+		if match != tt.match {
+			t.Errorf("match() match = %v, want %v", match, tt.match)
+		}
+		if !reflect.DeepEqual(params, tt.params) {
+			t.Errorf("match() params = %v, want %v", params, tt.params)
+		}
 	}
 }

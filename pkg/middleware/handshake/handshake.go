@@ -11,20 +11,24 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-// NewHandshake ...
-func New(local *peer.LocalPeer, discoverer discovery.Discoverer) net.Middleware {
+// New handshake middleware
+func New(
+	local *peer.LocalPeer,
+	discoverer discovery.Discoverer,
+) net.Middleware {
 	return &Handshake{
 		local:      local,
 		discoverer: discoverer,
 	}
 }
 
-// Handshake ..
+// Handshake middleware
 type Handshake struct {
 	discoverer discovery.Discoverer
 	local      *peer.LocalPeer
 }
 
+// Handle incoming and outgoing connections
 // TODO needs to be able to handle both server and client interactions
 func (hs *Handshake) Handle() net.MiddlewareHandler {
 	return func(ctx context.Context, conn *net.Connection) (

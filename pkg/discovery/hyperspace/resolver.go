@@ -110,7 +110,7 @@ func (r *Discoverer) Lookup(
 	)
 	logger.Debug("looking up")
 
-	bloom := bloom.New(opt.Lookups...)
+	bl := bloom.New(opt.Lookups...)
 
 	// create channel to keep peers we find
 	peers := make(chan *peer.Peer, 100)
@@ -118,7 +118,7 @@ func (r *Discoverer) Lookup(
 	// send content requests to recipients
 	req := &peer.LookupRequest{
 		Nonce: rand.String(12),
-		Bloom: bloom,
+		Bloom: bl,
 	}
 	reqObject := req.ToObject()
 
@@ -184,7 +184,6 @@ func (r *Discoverer) Lookup(
 				if err := res.FromObject(e.Payload); err != nil {
 					continue
 				}
-				// recipientsResponded[e.Sender.String()] = true
 				recipientsResponded.Store(e.Sender, true)
 				for _, p := range res.Peers {
 					// add peers to our peerstore
@@ -223,7 +222,7 @@ func (r *Discoverer) Lookup(
 	for p := range aps {
 		pps = append(pps, p)
 	}
-	cps := getClosest(pps, bloom)
+	cps := getClosest(pps, bl)
 	cps = r.withoutOwnPeer(cps)
 	for _, p := range cps {
 		recipients <- p.PublicKey()
@@ -276,7 +275,6 @@ func (r *Discoverer) handlePeer(
 	)
 	logger.Debug("adding peer to store")
 	r.peerstore.Add(p, false)
-	// logger.Debug("added peer to store")
 }
 
 func (r *Discoverer) handlePeerLookup(
