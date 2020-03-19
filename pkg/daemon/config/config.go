@@ -55,6 +55,11 @@ func New() *Config {
 				"tcps:liu.bootstrap.nimona.io:21013",
 				"tcps:rajaniemi.bootstrap.nimona.io:21013",
 			},
+			RelayAddresses: []crypto.PublicKey{
+				"ed25519.Eq4y6LPB1cHX5pM8rgK9vbjFSt6e6hDW8rAwTu1TUaXW",
+				"ed25519.7GhQzPptXaBehoaq3DfcSfj1Z7X5tyjinEdx1R7mqfx8",
+				"ed25519.B6KNw8oyerJRpPKtHrf5YSCeBqELbAfWScxRLNdGbazG",
+			},
 		},
 	}
 	return c
