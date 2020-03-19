@@ -22,18 +22,6 @@ func TestEd(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, r1, NewPublicKey(rA))
 
-	// p2, err := GenerateEd25519PrivateKey()
-	// require.NoError(t, err)
-	// require.NotNil(t, p2)
-
-	// p3, err := GenerateEd25519PrivateKey()
-	// require.NoError(t, err)
-	// require.NotNil(t, p3)
-
-	// s1 := p1.Shared(&p2.PublicKey)
-	// s2 := p2.Shared(&p1.PublicKey)
-	// require.Equal(t, s1, s2)
-
 	b := make([]byte, 5647)
 	n, err := io.ReadFull(rand.Reader, b)
 	require.NoError(t, err)
@@ -48,8 +36,4 @@ func TestEd(t *testing.T) {
 	s1[0] = 0
 	err = p1.PublicKey().Verify(b, s1)
 	require.Error(t, err)
-
-	// sX := p3.Shared(&p1.PublicKey)
-	// require.NotEqual(t, s1, sX)
-	// require.NotEqual(t, s2, sX)
 }

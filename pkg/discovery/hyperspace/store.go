@@ -10,7 +10,7 @@ import (
 
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap/syncmap.go -out=syncmap_publickey_peer_generated.go -imp=nimona.io/pkg/peer,nimona.io/pkg/crypto -pkg=hyperspace gen "KeyType=crypto.PublicKey ValueType=peer.Peer"
 
-// NewStore retuns empty store
+// NewStore returns empty store
 func NewStore() *Store {
 	return &Store{
 		peers: &CryptoPublicKeyPeerPeerSyncMap{},
@@ -94,8 +94,7 @@ func intersectionCount(a, b []int64) int {
 	for _, v := range m {
 		a := v&(1<<0) != 0
 		b := v&(1<<1) != 0
-		switch {
-		case a && b:
+		if a && b {
 			i++
 		}
 	}

@@ -137,11 +137,15 @@ func TestSync(t *testing.T) {
 	x := &exchange.MockExchange{}
 	subs := []*exchange.MockEnvelopeSubscription{}
 	x.On("Subscribe", mock.Anything).
-		Return(func(filters ...exchange.EnvelopeFilter) exchange.EnvelopeSubscription {
-			sub := &exchange.MockEnvelopeSubscription{}
-			subs = append(subs, sub)
-			return sub
-		})
+		Return(
+			func(
+				filters ...exchange.EnvelopeFilter,
+			) exchange.EnvelopeSubscription {
+				sub := &exchange.MockEnvelopeSubscription{}
+				subs = append(subs, sub)
+				return sub
+			},
+		)
 
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
@@ -293,16 +297,7 @@ func TestSync(t *testing.T) {
 	require.Len(t, res.Objects, 7)
 
 	assert.Equal(t, jp(o), jp(res.Objects[0]))
-	// assert.Equal(t, jp(m1.ToObject()), jp(res.Objects[1]))
-	// assert.Equal(t, jp(m2.ToObject()), jp(res.Objects[2]))
-	// assert.Equal(t, jp(m3.ToObject()), jp(res.Objects[3]))
-	// assert.Equal(t, jp(m4.ToObject()), jp(res.Objects[4]))
-	// assert.E	qual(t, jp(m5.ToObject()), jp(res.Objects[5]))
 	assert.Equal(t, jp(m6.ToObject()), jp(res.Objects[6]))
-
-	// dos, _ := os.(*graph.Graph).Dump() // nolint
-	// dot, _ := graph.Dot(dos)
-	// fmt.Println(dot)
 }
 
 // jp is a lazy approach to comparing the mess that is unmarshaling json when

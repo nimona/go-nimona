@@ -35,9 +35,9 @@ const (
 
 // nolint: lll
 //go:generate $GOBIN/mockery -case underscore -inpkg -name Exchange
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses.go -pkg=exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes.go -imp=nimona.io/pkg/crypto -pkg=exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes.go -pkg=exchange gen "ObjectType=*Envelope PubSubName=envelope"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses_generated.go -pkg=exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=exchange gen "ObjectType=*Envelope PubSubName=envelope"
 
 type (
 	// Exchange interface for mocking exchange
@@ -158,7 +158,7 @@ func New(
 		FilterByObjectType(dataForwardType),
 	)
 
-	//subscribe to data forward type
+	// subscribe to data forward type
 	dataForwardSub := w.inboxes.Subscribe(
 		FilterByObjectType(objectRequestType),
 	)
@@ -200,13 +200,13 @@ func New(
 	return w, nil
 }
 
-func (w *exchange) getOutbox(peer crypto.PublicKey) *outbox {
+func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
 	outbox := &outbox{
-		peer:      peer,
+		peer:      recipient,
 		addresses: NewAddressesMap(),
 		queue:     queue.New(),
 	}
-	outbox, loaded := w.outboxes.GetOrPut(peer, outbox)
+	outbox, loaded := w.outboxes.GetOrPut(recipient, outbox)
 	if !loaded {
 		go w.processOutbox(outbox)
 	}
@@ -313,7 +313,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				err := w.Send(
 					ctx,
 					newReq.ToObject(),
-					peer.LookupByOwner(crypto.PublicKey(relayPeer)),
+					peer.LookupByOwner(relayPeer),
 				)
 				if err != nil {
 					// if this fails send it to the next one
@@ -405,9 +405,9 @@ func (w *exchange) handleConnection(
 }
 
 // handleObjectRequests -
-func (w *exchange) handleObjectRequests(subscription EnvelopeSubscription) error {
+func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 	for {
-		e, err := subscription.Next()
+		e, err := sub.Next()
 		if err != nil {
 			return err
 		}
@@ -480,8 +480,7 @@ func (w *exchange) handlePeers(subscription EnvelopeSubscription) error {
 			return err
 		}
 		// TODO verify peer
-		switch e.Payload.GetType() {
-		case peerType:
+		if e.Payload.GetType() == peerType {
 			p := &peer.Peer{}
 			if err := p.FromObject(e.Payload); err != nil {
 				continue

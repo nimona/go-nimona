@@ -33,7 +33,7 @@ func NewTCPTransport(
 func (tt *tcpTransport) Dial(ctx context.Context, address string) (
 	*Connection, error) {
 	config := tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: true, // nolint: gosec
 	}
 	addr := strings.Replace(address, "tcps:", "", 1)
 	dialer := net.Dialer{Timeout: time.Second}
@@ -66,7 +66,8 @@ func (tt *tcpTransport) Listen(ctx context.Context) (
 	config := tls.Config{
 		Certificates: []tls.Certificate{*cert},
 	}
-	config.NextProtos = []string{"nimona/1"} // TODO(geoah) is this of any actual use?
+	// TODO(geoah) is this of any actual use?
+	config.NextProtos = []string{"nimona/1"}
 	config.Time = func() time.Time { return now }
 	config.Rand = rand.Reader
 	tcpListener, err := tls.Listen("tcp", tt.address, &config)

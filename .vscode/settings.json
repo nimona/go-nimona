@@ -1,12 +1,15 @@
 {
     "go.buildTags": "dev",
     "go.formatTool": "goimports",
-    "go.lintTool":"golangci-lint",
+    "go.languageServerExperimentalFeatures": {
+        "format": false
+    },
+    "go.lintTool": "golangci-lint",
     "go.lintOnSave": "file",
     "go.lintFlags": [
-      "--fast"
+        "--fast"
     ],
-    "go.vetOnSave": "off",
+    // "go.vetOnSave": "off",
     "go.testFlags": [
         "-v",
         "-race",

@@ -17,8 +17,6 @@ import (
 )
 
 func (api *API) HandleGetStreams(c *router.Context) {
-	// pattern := c.Param("ns") + c.Param("pattern")
-
 	write := func(conn *websocket.Conn, data interface{}) error {
 		return conn.WriteJSON(data)
 	}
@@ -53,9 +51,15 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				}
 
 			case req := <-outgoing:
-				sig, err := object.NewSignature(api.local.GetPeerPrivateKey(), req)
+				sig, err := object.NewSignature(
+					api.local.GetPeerPrivateKey(),
+					req,
+				)
 				if err != nil {
-					logger.Error("could not sign outgoing object", log.Error(err))
+					logger.Error(
+						"could not sign outgoing object",
+						log.Error(err),
+					)
 					req.Set("_status", "error signing object")
 					if err := write(conn, api.mapObject(req)); err != nil {
 						// TODO handle error
@@ -101,15 +105,6 @@ func (api *API) HandleGetStreams(c *router.Context) {
 			}
 		}
 	}()
-	// hr, err := api.exchange.Handle(pattern, func(e *exchange.Envelope) error {
-	// 	incoming <- e.Payload
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	c.AbortWithError(500, err) // nolint: errcheck
-	// 	return
-	// }
-	// defer hr()
 
 	for {
 		_, msg, err := conn.ReadMessage()
@@ -119,13 +114,20 @@ func (api *API) HandleGetStreams(c *router.Context) {
 				return
 			}
 
-			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+			if websocket.IsCloseError(
+				err,
+				websocket.CloseGoingAway,
+				websocket.CloseNormalClosure,
+			) {
 				logger.Debug("ws conn closed", log.Error(err))
 				return
 			}
 
 			if websocket.IsUnexpectedCloseError(err) {
-				logger.Warn("ws conn closed with unexpected error", log.Error(err))
+				logger.Warn(
+					"ws conn closed with unexpected error",
+					log.Error(err),
+				)
 				return
 			}
 

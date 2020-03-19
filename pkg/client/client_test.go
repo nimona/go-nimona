@@ -60,24 +60,22 @@ func TestClient_Info(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				baseURL:    baseURL,
-				httpClient: httpClient,
-			}
-			gock.New("http://nimona").
-				Get("/api/v1/local").
-				Reply(tt.respCode).
-				JSON(tt.respBody)
-			got, err := c.Info()
-			if (err != nil) != tt.wantErr {
-				t.Errorf(
-					"Client.Info() error = %v, wantErr %v",
-					err, tt.wantErr,
-				)
-			}
-			tt.assert(t, got)
-			gock.Off()
-		})
+		c := &Client{
+			baseURL:    baseURL,
+			httpClient: httpClient,
+		}
+		gock.New("http://nimona").
+			Get("/api/v1/local").
+			Reply(tt.respCode).
+			JSON(tt.respBody)
+		got, err := c.Info()
+		if (err != nil) != tt.wantErr {
+			t.Errorf(
+				"Client.Info() error = %v, wantErr %v",
+				err, tt.wantErr,
+			)
+		}
+		tt.assert(t, got)
+		gock.Off()
 	}
 }

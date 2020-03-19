@@ -47,10 +47,6 @@ func (m Map) Iterate(f func(k string, v Value)) {
 }
 
 func (m Map) Value(k string) Value {
-	// ps := strings.Split(k, ":")
-	// if len(ps) > 1 {
-	// 	k = ps[0]
-	// }
 	if m.m == nil {
 		return nil
 	}
@@ -58,13 +54,6 @@ func (m Map) Value(k string) Value {
 }
 
 func (m Map) Set(k string, v Value) Map {
-	// ps := strings.Split(k, ":")
-	// if len(ps) > 1 {
-	// 	k = ps[0]
-	// 	// if ps[1] != v.typeHint() {
-	// 	// 	panic("hint does not match value type")
-	// 	// }
-	// }
 	return Map{
 		mapPair{
 			k:      k,
@@ -80,13 +69,7 @@ func (m Map) PrimitiveHinted() interface{} {
 	}
 	p := map[string]interface{}{}
 	m.Iterate(func(k string, v Value) {
-		// h := ":" + v.typeHint()
-		// if strings.HasSuffix(k, h) {
 		p[k] = v.PrimitiveHinted()
-		// } else {
-		// 	p[k+h] = v.PrimitiveHinted()
-		// }
-
 	})
 	return p
 }

@@ -18,6 +18,7 @@ type APIConfig struct {
 	Token string `json:"token,omitempty" envconfig:"TOKEN"`
 }
 
+// nolint: lll
 type PeerConfig struct {
 	AnnounceHostname   string             `json:"hostname,omitempty" envconfig:"HOSTNAME"`
 	BootstrapKeys      []string           `json:"bootstrapKeys,omitempty" envconfig:"BOOTSTRAP_KEYS"`
@@ -60,8 +61,8 @@ func New() *Config {
 }
 
 func (c *Config) Load() error {
-	if path := os.Getenv("NIMONA_CONFIG"); path != "" {
-		c.Path = path
+	if p := os.Getenv("NIMONA_CONFIG"); p != "" {
+		c.Path = p
 	}
 	c.Path = os.ExpandEnv(c.Path)
 

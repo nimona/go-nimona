@@ -19,29 +19,6 @@ func (api *API) HandleGetIdentity(c *router.Context) {
 }
 
 func (api *API) HandlePostIdentities(c *router.Context) {
-	// req := map[string]interface{}{}
-	// if err := c.BindBody(req); err != nil {
-	// 	c.AbortWithError(400, err) // nolint: errcheck
-	// 	return
-	// }
-
-	// o := object.FromMap(req)
-
-	// p := &crypto.PrivateKey{}
-	// if err := p.FromObject(o); err != nil {
-	// 	c.AbortWithError(400, errors.New("invalid private key object")) // nolint: errcheck
-	// 	return
-	// }
-
-	// if p.Key() == nil {
-	// 	c.AbortWithError(400, errors.New("invalid private key")) // nolint: errcheck
-	// 	return
-	// }
-
-	// if err := api.local.AddIdentityKey(p); err != nil {
-	// 	c.AbortWithError(400, errors.New("could not add key")) // nolint: errcheck
-	// 	return
-	// }
-
-	// c.JSON(http.StatusOK, nil)
+	// TODO implement
+	c.JSON(http.StatusNotImplemented, nil)
 }

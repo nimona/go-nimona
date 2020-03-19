@@ -71,12 +71,15 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	handler(ctx)
 }
 
-func match(pattern *regexp.Regexp, path string) (bool, map[string]string) {
+func match(
+	pattern *regexp.Regexp,
+	path string,
+) (matches bool, params map[string]string) {
 	match := pattern.FindStringSubmatch(path)
+	params = map[string]string{}
 	if len(match) == 0 {
 		return false, map[string]string{}
 	}
-	params := map[string]string{}
 	for i, name := range pattern.SubexpNames() {
 		if i != 0 && name != "" && match[i] != "" {
 			params[name] = match[i]

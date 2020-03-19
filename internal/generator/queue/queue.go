@@ -65,6 +65,9 @@ func (q *q) process(ctx context.Context) {
 		case <-q.ctx.Done():
 			return
 
+		case <-ctx.Done():
+			return
+
 		case i := <-q.queue:
 			if _, ok := q.cache[i.key]; ok {
 				continue

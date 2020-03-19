@@ -99,7 +99,7 @@ func (r *addressBook) Lookup(
 		return ps, nil
 	}
 	go func() {
-		// else, go through the discoveres and try to find some results
+		// else, go through the discoverers and try to find some results
 		// TODO once we have more than one discoverer we should run them in parallel
 		r.providers.Range(func(_, v interface{}) bool {
 			p, ok := v.(Discoverer)
@@ -138,13 +138,13 @@ func (r *addressBook) AddDiscoverer(provider Discoverer) error {
 // Add allows manually adding peer infos to be resolved.
 // These peers will eventually be gc-ed unless pinned.
 // WARNING: Only bootstrap peers should be pinned. Probably.
-func (r *addressBook) Add(peer *peer.Peer, pin bool) {
+func (r *addressBook) Add(p *peer.Peer, pin bool) {
 	opts := []sqlobjectstore.Option{}
 	if pin {
 		opts = append(opts, sqlobjectstore.WithTTL(0))
 	} else {
 		opts = append(opts, sqlobjectstore.WithTTL(60))
 	}
-	o := peer.ToObject()
+	o := p.ToObject()
 	r.store.Put(o, opts...) // nolint: errcheck
 }

@@ -54,36 +54,37 @@ type (
 
 // New constructs a new orchestrator given an object store and exchange
 func New(
-	store *sqlobjectstore.Store,
-	exchange exchange.Exchange,
-	discovery discovery.Discoverer,
-	localInfo *peer.LocalPeer,
+	st *sqlobjectstore.Store,
+	ex exchange.Exchange,
+	ds discovery.Discoverer,
+	li *peer.LocalPeer,
 ) (Orchestrator, error) {
 	ctx := context.Background()
 	return NewWithContext(
 		ctx,
-		store,
-		exchange,
-		discovery,
-		localInfo,
+		st,
+		ex,
+		ds,
+		li,
 	)
 }
 
-// NewWithContext constructs a new orchestrator given an object store and exchange
+// NewWithContext constructs a new orchestrator given an object store and
+// exchange
 func NewWithContext(
 	ctx context.Context,
-	store *sqlobjectstore.Store,
-	exc exchange.Exchange,
-	discovery discovery.Discoverer,
-	localInfo *peer.LocalPeer,
+	st *sqlobjectstore.Store,
+	ex exchange.Exchange,
+	ds discovery.Discoverer,
+	li *peer.LocalPeer,
 ) (Orchestrator, error) {
 	logger := log.FromContext(ctx).Named("orchestrator")
 	m := &orchestrator{
-		store:     store,
-		exchange:  exc,
-		discovery: discovery,
+		store:     st,
+		exchange:  ex,
+		discovery: ds,
 		syncLock:  nsync.NewNamedMutex(),
-		localInfo: localInfo,
+		localInfo: li,
 	}
 	sub := m.exchange.Subscribe(
 		exchange.FilterByObjectType("**"),
@@ -129,7 +130,10 @@ func NewWithContext(
 }
 
 // Process an object
-func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscription) error {
+func (m *orchestrator) process(
+	ctx context.Context,
+	sub exchange.EnvelopeSubscription,
+) error {
 	for {
 		e, err := sub.Next()
 		if err != nil {
@@ -190,7 +194,6 @@ func (m *orchestrator) process(ctx context.Context, sub exchange.EnvelopeSubscri
 					log.Error(err),
 				)
 			}
-
 		}
 	}
 }
@@ -219,7 +222,7 @@ func IsComplete(cs []object.Object) bool {
 }
 
 // Put stores a given object
-// TODO(geoah) what happend if the graph is not complete? Error or sync?
+// TODO(geoah) what happened if the graph is not complete? Error or sync?
 func (m *orchestrator) Put(o object.Object) error {
 	// set parents
 	streamHash := o.GetStream()

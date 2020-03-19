@@ -24,8 +24,8 @@ type (
 		Value interface{}
 	}
 	Logger interface {
-		With(fields ...Field) *logger
-		Named(name string) *logger
+		With(fields ...Field) Logger
+		Named(name string) Logger
 		Debug(msg string, fields ...Field)
 		Info(msg string, fields ...Field)
 		Warn(msg string, fields ...Field)
@@ -45,6 +45,8 @@ var (
 	}
 )
 
+// TODO is there an alternative to init for here?
+// nolint: gochecknoinits
 func init() {
 	logLevel := os.Getenv("LOG_LEVEL")
 	switch strings.ToUpper(logLevel) {
@@ -114,7 +116,7 @@ func Any(k string, v interface{}) Field {
 	}
 }
 
-func FromContext(ctx context.Context) *logger {
+func FromContext(ctx context.Context) Logger {
 	log := &logger{
 		parent:  DefaultLogger.(*logger),
 		context: ctx,
@@ -152,7 +154,7 @@ func (log *logger) getContext() context.Context {
 	return nil
 }
 
-func (log *logger) With(fields ...Field) *logger {
+func (log *logger) With(fields ...Field) Logger {
 	nlog := &logger{
 		parent: log,
 		fields: fields,
@@ -162,7 +164,7 @@ func (log *logger) With(fields ...Field) *logger {
 	return nlog
 }
 
-func (log *logger) Named(name string) *logger {
+func (log *logger) Named(name string) Logger {
 	nlog := &logger{
 		name:   strings.Join([]string{log.name, name}, "/"),
 		parent: log,

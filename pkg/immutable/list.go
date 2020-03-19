@@ -12,7 +12,6 @@ func (l List) typeHint() string {
 
 func (l List) Append(v Value) List {
 	// TODO check type
-
 	if l.value == nil {
 		return List{
 			hint:  l.hint,
