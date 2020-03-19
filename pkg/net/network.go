@@ -1,7 +1,6 @@
 package net
 
 import (
-	"fmt"
 	"io"
 	"math"
 	"os"
@@ -114,8 +113,10 @@ func (n *network) Dial(
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
 			// blacklist address
-			n.exponentialyBlacklist(address)
-			logger.Info("could not dial address",
+			attempts, backoff := n.exponentialyBlacklist(address)
+			logger.Error("could not dial address, blacklisting",
+				log.Int("failedAttempts", attempts),
+				log.String("backoff", backoff.String()),
 				log.String("type", addressType),
 				log.Error(err),
 			)
@@ -156,7 +157,7 @@ func (n *network) Dial(
 	return nil, err
 }
 
-func (n *network) exponentialyBlacklist(k string) {
+func (n *network) exponentialyBlacklist(k string) (int, time.Duration) {
 	baseBackoff := float64(time.Second * 1)
 	maxBackoff := float64(time.Minute * 10)
 	attempts, _ := n.attempts.Get(k)
@@ -165,9 +166,9 @@ func (n *network) exponentialyBlacklist(k string) {
 	if backoff > maxBackoff {
 		backoff = maxBackoff
 	}
-	fmt.Println("BLACKLISTING", k, attempts, backoff)
 	n.attempts.Put(k, attempts)
 	n.blacklist.Set(k, attempts, time.Duration(backoff))
+	return attempts, time.Duration(backoff)
 }
 
 // Listen
