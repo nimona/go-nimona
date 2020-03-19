@@ -223,8 +223,9 @@ func IsComplete(cs []object.Object) bool {
 func (m *orchestrator) Put(o object.Object) error {
 	// set parents
 	streamHash := o.GetStream()
+	os := []object.Object{}
 	if !streamHash.IsEmpty() {
-		os, _ := m.store.Filter(
+		os, _ = m.store.Filter(
 			sqlobjectstore.FilterByStreamHash(streamHash),
 		)
 		if len(os) > 0 {
@@ -233,37 +234,19 @@ func (m *orchestrator) Put(o object.Object) error {
 			for i, p := range parents {
 				parentHashes[i] = object.NewHash(p)
 			}
-			o.SetParents(parentHashes)
+			o = o.SetParents(parentHashes)
 		}
 	}
-	o.SetOwners([]crypto.PublicKey{
+	o = o.SetOwners([]crypto.PublicKey{
 		m.localInfo.GetIdentityPublicKey(),
 	})
-
-	h := object.NewHash(o)
 
 	// store the object
 	if err := m.store.Put(o); err != nil {
 		return err
 	}
 
-	// get all the objects that are part of the same graph
-	os, err := m.store.Filter(
-		sqlobjectstore.FilterByStreamHash(h),
-	)
-	if err != nil {
-		return errors.Wrap(
-			errors.Error("could not retrieve graph"),
-			err,
-		)
-	}
-
-	// if !IsComplete(os) {
-	// 	return errors.Wrap(
-	// 		errors.New("cannot store object"),
-	// 		ErrIncompleteGraph,
-	// 	)
-	// }
+	h := object.NewHash(o)
 
 	// if this is a new stream
 	if streamHash.IsEmpty() {
