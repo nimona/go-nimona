@@ -6,7 +6,7 @@ require (
 	github.com/geoah/genny v1.0.0
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
-	github.com/gorilla/websocket v1.4.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-multierror v1.0.1-0.20191120192120-72917a1559e1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
