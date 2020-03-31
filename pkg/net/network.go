@@ -1,6 +1,7 @@
 package net
 
 import (
+	"expvar"
 	"io"
 	"math"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/discovery"
@@ -24,6 +26,18 @@ var UseUPNP = false
 // nolint: gochecknoinits
 func init() {
 	UseUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
+
+	connConnOutCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:net.conn.out", connConnOutCounter)
+
+	connConnIncCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:net.conn.in", connConnIncCounter)
+
+	connDialCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:net.dial", connDialCounter)
+
+	connBlacklistCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:net.conn.dial.blacklist", connBlacklistCounter)
 }
 
 // Network interface
@@ -83,6 +97,7 @@ func (n *network) Dial(
 	)
 
 	logger.Debug("dialing")
+	expvar.Get("nm:net.dial").(metric.Metric).Add(1)
 
 	// keep a flag on whether all addresses where blacklisted so we can return
 	// an ErrMissingSignature error
@@ -113,6 +128,7 @@ func (n *network) Dial(
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
 			// blacklist address
+			expvar.Get("nm:net.conn.dial.blacklist").(metric.Metric).Add(1)
 			attempts, backoff := n.exponentialyBlacklist(address)
 			logger.Error("could not dial address, blacklisting",
 				log.Int("failedAttempts", attempts),
@@ -144,6 +160,8 @@ func (n *network) Dial(
 		// reset the failed attempts
 		n.attempts.Put(address, 0)
 		n.attempts.Put(p.PublicKey().String(), 0)
+
+		expvar.Get("nm:net.conn.out").(metric.Metric).Add(1)
 
 		return conn, nil
 	}
@@ -189,6 +207,8 @@ func (n *network) Listen(ctx context.Context) (chan *Connection, error) {
 				conn := <-chConn
 				n.midLock.RLock()
 				failed := false
+
+				expvar.Get("nm:net.conn.in").(metric.Metric).Add(1)
 
 				for _, mh := range n.middleware {
 					conn, err = mh(ctx, conn)
