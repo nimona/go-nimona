@@ -33,9 +33,8 @@ type (
 	Discoverer struct {
 		context   context.Context
 		peerstore discovery.PeerStorer
-		// store     *Store
-		exchange exchange.Exchange
-		local    *peer.LocalPeer
+		exchange  exchange.Exchange
+		local     *peer.LocalPeer
 	}
 )
 
@@ -50,9 +49,8 @@ func NewDiscoverer(
 	r := &Discoverer{
 		context:   ctx,
 		peerstore: ps,
-		// store:     NewStore(),
-		local:    local,
-		exchange: exc,
+		local:     local,
+		exchange:  exc,
 	}
 
 	logger := log.FromContext(ctx).With(
@@ -144,19 +142,26 @@ func (r *Discoverer) Lookup(
 	}()
 
 	// create channel for the peers we need to ask
+	initialRecipients := make(chan crypto.PublicKey, 100)
 	recipients := make(chan crypto.PublicKey)
-	// keep a record of who we asked and who has responded
-	recipientsResponded := &sync.Map{}
+	// keep a record of who responded
+	recipientsResponded := map[crypto.PublicKey]bool{}
+	recipientsRespondedLock := sync.RWMutex{}
 
 	go func() {
 		for {
 			recipient := <-recipients
 			// check if we've already asked them
-			if _, asked := recipientsResponded.Load(recipient); asked {
+			recipientsRespondedLock.RLock()
+			if _, asked := recipientsResponded[recipient]; asked {
+				recipientsRespondedLock.RUnlock()
 				continue
 			}
-			// else mark them as already been asked, but not responded
-			recipientsResponded.Store(recipient, false)
+			recipientsRespondedLock.RUnlock()
+			recipientsRespondedLock.Lock()
+			// else mark them as already been asked
+			recipientsResponded[recipient] = false
+			recipientsRespondedLock.Unlock()
 			// and finally ask them
 			err := r.exchange.Send(
 				ctx,
@@ -173,18 +178,28 @@ func (r *Discoverer) Lookup(
 	}()
 
 	go func() {
-	loop:
+		timeout := time.NewTimer(time.Second * 10)
+		defer close(peers)
+		defer close(recipients)
+		defer resSub.Cancel()
 		for {
 			select {
 			case <-ctx.Done():
 				logger.Debug("ctx done, giving up")
-				break loop
+				return
+			case <-timeout.C:
+				logger.Debug("timeout done, giving up")
+				return
+			case r := <-initialRecipients:
+				recipients <- r
 			case e := <-peerLookupResponses:
 				res := &peer.LookupResponse{}
 				if err := res.FromObject(e.Payload); err != nil {
 					continue
 				}
-				recipientsResponded.Store(e.Sender, true)
+				recipientsRespondedLock.Lock()
+				recipientsResponded[e.Sender] = true
+				recipientsRespondedLock.Unlock()
 				for _, p := range res.Peers {
 					// add peers to our peerstore
 					r.peerstore.Add(p, false)
@@ -195,21 +210,19 @@ func (r *Discoverer) Lookup(
 					// push peer to the list peers we might want to ask next
 					recipients <- p.PublicKey()
 				}
+				recipientsRespondedLock.RLock()
 				allDone := true
-				recipientsResponded.Range(func(peer, answered interface{}) bool {
-					if v, ok := answered.(bool); !ok || !v {
+				for _, answered := range recipientsResponded {
+					if !answered {
 						allDone = false
-						return false
 					}
-					return true
-				})
+				}
+				recipientsRespondedLock.RUnlock()
 				if allDone {
-					break loop
+					return
 				}
 			}
 		}
-		close(peers)
-		resSub.Cancel()
 	}()
 
 	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
@@ -225,8 +238,9 @@ func (r *Discoverer) Lookup(
 	cps := getClosest(pps, bl)
 	cps = r.withoutOwnPeer(cps)
 	for _, p := range cps {
-		recipients <- p.PublicKey()
+		initialRecipients <- p.PublicKey()
 	}
+	close(initialRecipients)
 
 	return peers, nil
 }
@@ -457,4 +471,25 @@ func getClosest(ps []*peer.Peer, q bloom.Bloom) []*peer.Peer {
 	}
 
 	return fs
+}
+
+func intersectionCount(a, b []int64) int {
+	m := make(map[int64]uint64)
+	for _, k := range a {
+		m[k] |= (1 << 0)
+	}
+	for _, k := range b {
+		m[k] |= (1 << 1)
+	}
+
+	i := 0
+	for _, v := range m {
+		a := v&(1<<0) != 0
+		b := v&(1<<1) != 0
+		if a && b {
+			i++
+		}
+	}
+
+	return i
 }
