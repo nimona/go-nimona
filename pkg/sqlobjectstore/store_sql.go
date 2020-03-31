@@ -19,6 +19,7 @@ const (
 	ErrNotFound = errors.Error("not found")
 )
 
+// nolint: lll
 var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS Objects (Hash TEXT NOT NULL PRIMARY KEY);`,
 	`ALTER TABLE Objects ADD Type TEXT;`,
