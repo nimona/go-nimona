@@ -2,12 +2,14 @@ package exchange
 
 import (
 	"encoding/json"
+	"expvar"
 	"sync"
 	"time"
 
 	"github.com/geoah/go-queue"
 	"github.com/hashicorp/go-multierror"
 	"github.com/patrickmn/go-cache"
+	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -38,6 +40,23 @@ const (
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses_generated.go -pkg=exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=exchange gen "ObjectType=*Envelope PubSubName=envelope"
+
+func init() {
+	objHandledCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:exc.obj.received", objHandledCounter)
+
+	objSentCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:exc.obj.send.success", objSentCounter)
+
+	objRelayedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:exc.obj.send.relayed", objRelayedCounter)
+
+	objFailedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:exc.obj.send.failed", objFailedCounter)
+
+	objAttemptedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:exc.obj.send", objAttemptedCounter)
+}
 
 type (
 	// Exchange interface for mocking exchange
@@ -283,6 +302,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				continue
 			}
 			lastErr = nil
+			expvar.Get("nm:exc.obj.send.success").(metric.Metric).Add(1)
 			break
 		}
 
@@ -330,12 +350,15 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				}
 				// reset error if we managed to send to at least one relay
 				lastErr = nil
+				expvar.Get("nm:exc.obj.send.relayed").(metric.Metric).Add(1)
 			}
 			// todo: wait for ack, how??
 		}
 
 		if lastErr == nil {
 			logger.Debug("wrote object")
+		} else {
+			expvar.Get("nm:exc.obj.send.failed").(metric.Metric).Add(1)
 		}
 		req.err <- lastErr
 	}
@@ -364,7 +387,7 @@ func (w *exchange) handleConnection(
 ) error {
 	if conn == nil {
 		// TODO should this be nil?
-		panic(errors.New("missing connection"))
+		return errors.New("missing connection")
 	}
 
 	// get outbox and update the connection to the peer
@@ -393,6 +416,8 @@ func (w *exchange) handleConnection(
 				w.updateOutboxConn(outbox, nil)
 				return
 			}
+
+			expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
 
 			log.DefaultLogger.Debug(
 				"reading from connection",
@@ -577,6 +602,8 @@ func (w *exchange) SendToPeer(
 	for _, option := range options {
 		option(opts)
 	}
+
+	expvar.Get("nm:exc.obj.send").(metric.Metric).Add(1)
 
 	outbox := w.getOutbox(p.PublicKey())
 	errRecv := make(chan error, 1)
