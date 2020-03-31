@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/zserge/metric"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
@@ -153,6 +155,14 @@ func New(
 		"POST",
 		"/api/v1/stop$",
 		api.Stop,
+	)
+
+	r.Handle(
+		"GET",
+		"/debug/metrics",
+		func(c *router.Context) {
+			metric.Handler(metric.Exposed).ServeHTTP(c.Writer, c.Request)
+		},
 	)
 
 	return api
