@@ -31,6 +31,12 @@ var migrations = []string{
 	`ALTER TABLE Objects ADD AuthorPublicKey TEXT;`,
 	`ALTER TABLE Objects RENAME AuthorPublicKey TO OwnerPublicKey;`,
 	`ALTER TABLE Objects RENAME SignerPublicKey TO _DeprecatedSignerPublicKey;`,
+	`CREATE INDEX Created_idx ON Objects(Created);`,
+	`CREATE INDEX TTL_LastAccessed_idx ON Objects(TTL, LastAccessed);`,
+	`CREATE INDEX Type_RootHash_OwnerPublicKey_idx ON Objects(Type, RootHash, OwnerPublicKey);`,
+	`CREATE INDEX RootHash_idx ON Objects(RootHash);`,
+	`CREATE INDEX RootHash_TTL_idx ON Objects(RootHash, TTL);`,
+	`CREATE INDEX Hash_LastAccessed_idx ON Objects(Hash, LastAccessed);`,
 }
 
 type Store struct {
