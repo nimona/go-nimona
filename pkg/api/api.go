@@ -1,7 +1,12 @@
 package api
 
 import (
+	"expvar"
 	"net/http"
+	"os"
+	"runtime"
+	"strconv"
+	"time"
 
 	"github.com/zserge/metric"
 
@@ -157,13 +162,56 @@ func New(
 		api.Stop,
 	)
 
-	r.Handle(
-		"GET",
-		"/debug/metrics",
-		func(c *router.Context) {
-			metric.Handler(metric.Exposed).ServeHTTP(c.Writer, c.Request)
-		},
-	)
+	if y, _ := strconv.ParseBool(os.Getenv("NIMONA_EXPVAR")); y {
+		expvar.Publish(
+			"go:goroutine",
+			metric.NewGauge("2m1s", "15m30s", "1h1m"),
+		)
+		expvar.Publish(
+			"go:cgocall",
+			metric.NewGauge("2m1s", "15m30s", "1h1m"),
+		)
+		expvar.Publish(
+			"go:alloc",
+			metric.NewGauge("2m1s", "15m30s", "1h1m"),
+		)
+		expvar.Publish(
+			"go:alloc.total",
+			metric.NewGauge("2m1s", "15m30s", "1h1m"),
+		)
+		go func() {
+			for range time.Tick(100 * time.Millisecond) {
+				m := &runtime.MemStats{}
+				runtime.ReadMemStats(m)
+				expvar.Get("go:goroutine").(metric.Metric).Add(
+					float64(runtime.NumGoroutine()),
+				)
+				expvar.Get("go:cgocall").(metric.Metric).Add(
+					float64(runtime.NumCgoCall()),
+				)
+				expvar.Get("go:alloc").(metric.Metric).Add(
+					float64(m.Alloc) / 1000000,
+				)
+				expvar.Get("go:alloc.total").(metric.Metric).Add(
+					float64(m.TotalAlloc) / 1000000,
+				)
+			}
+		}()
+		r.Handle(
+			"GET",
+			"/debug/metrics",
+			func(c *router.Context) {
+				metric.Handler(metric.Exposed).ServeHTTP(c.Writer, c.Request)
+			},
+		)
+		r.Handle(
+			"GET",
+			"/debug/expvar",
+			func(c *router.Context) {
+				expvar.Handler().ServeHTTP(c.Writer, c.Request)
+			},
+		)
+	}
 
 	return api
 }
@@ -207,9 +255,9 @@ func (api *API) mapObject(o object.Object) map[string]interface{} {
 	return m
 }
 
-func (api *API) mapObjects(os []object.Object) []map[string]interface{} {
+func (api *API) mapObjects(objects []object.Object) []map[string]interface{} {
 	ms := []map[string]interface{}{}
-	for _, o := range os {
+	for _, o := range objects {
 		ms = append(ms, api.mapObject(o))
 	}
 	return ms
