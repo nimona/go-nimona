@@ -2,7 +2,6 @@ package hyperspace
 
 import (
 	"sort"
-	"sync"
 	"time"
 
 	"nimona.io/pkg/object"
@@ -143,44 +142,28 @@ func (r *Discoverer) Lookup(
 
 	// create channel for the peers we need to ask
 	initialRecipients := make(chan crypto.PublicKey, 100)
-	recipients := make(chan crypto.PublicKey)
-	// keep a record of who responded
-	recipientsResponded := map[crypto.PublicKey]bool{}
-	recipientsRespondedLock := sync.RWMutex{}
 
-	go func() {
-		for {
-			recipient := <-recipients
-			// check if we've already asked them
-			recipientsRespondedLock.RLock()
-			if _, asked := recipientsResponded[recipient]; asked {
-				recipientsRespondedLock.RUnlock()
-				continue
-			}
-			recipientsRespondedLock.RUnlock()
-			recipientsRespondedLock.Lock()
-			// else mark them as already been asked
-			recipientsResponded[recipient] = false
-			recipientsRespondedLock.Unlock()
-			// and finally ask them
-			err := r.exchange.Send(
-				ctx,
-				reqObject,
-				peer.LookupByOwner(recipient),
-				exchange.WithLocalDiscoveryOnly(),
-				exchange.WithAsync(),
-			)
-			if err != nil {
-				logger.Debug("could send request to peer", log.Error(err))
-			}
-			logger.Debug("asked peer", log.String("peer", recipient.String()))
+	queryPeer := func(pk crypto.PublicKey) {
+		err := r.exchange.Send(
+			ctx,
+			reqObject,
+			peer.LookupByOwner(pk),
+			exchange.WithLocalDiscoveryOnly(),
+			exchange.WithAsync(),
+		)
+		if err != nil {
+			logger.Debug("could send request to peer", log.Error(err))
 		}
-	}()
+		logger.Debug("asked peer", log.String("peer", pk.String()))
+	}
 
 	go func() {
+		// keep a record of who responded
+		recipientsResponded := map[crypto.PublicKey]bool{}
+		// just in case timeout
+		// TODO maybe figure out if the ctx as a timeout before adding one
 		timeout := time.NewTimer(time.Second * 10)
 		defer close(peers)
-		defer close(recipients)
 		defer resSub.Cancel()
 		for {
 			select {
@@ -191,15 +174,17 @@ func (r *Discoverer) Lookup(
 				logger.Debug("timeout done, giving up")
 				return
 			case r := <-initialRecipients:
-				recipients <- r
+				// mark peer as asked
+				recipientsResponded[r] = false
+				// ask recipient
+				queryPeer(r)
 			case e := <-peerLookupResponses:
 				res := &peer.LookupResponse{}
 				if err := res.FromObject(e.Payload); err != nil {
 					continue
 				}
-				recipientsRespondedLock.Lock()
+				// mark sender as responded
 				recipientsResponded[e.Sender] = true
-				recipientsRespondedLock.Unlock()
 				for _, p := range res.Peers {
 					// add peers to our peerstore
 					r.peerstore.Add(p, false)
@@ -207,17 +192,22 @@ func (r *Discoverer) Lookup(
 					if opt.Match(p) {
 						peers <- p
 					}
-					// push peer to the list peers we might want to ask next
-					recipients <- p.PublicKey()
+					// check if we've already asked this peer
+					if _, asked := recipientsResponded[p.PublicKey()]; asked {
+						// if so, move on
+						continue
+					}
+					// else mark peer as asked
+					recipientsResponded[p.PublicKey()] = false
+					// and ask them
+					queryPeer(p.PublicKey())
 				}
-				recipientsRespondedLock.RLock()
 				allDone := true
 				for _, answered := range recipientsResponded {
 					if !answered {
 						allDone = false
 					}
 				}
-				recipientsRespondedLock.RUnlock()
 				if allDone {
 					return
 				}
