@@ -77,19 +77,20 @@ func NewDiscoverer(
 			logger.Error("could not publish initial content hashes", log.Error(err))
 		}
 
+		// TODO reconsider
 		// subsequently try to get fresh peers every 5 minutes
-		ticker := time.NewTicker(5 * time.Minute)
-		for range ticker.C {
-			if _, err := r.Lookup(
-				context.Background(),
-				peer.LookupByContentType("nimona.io/peer.Peer"),
-			); err != nil {
-				logger.Error("could not refresh peers", log.Error(err))
-			}
-			if err := r.publishContentHashes(ctx); err != nil {
-				logger.Error("could not refresh content hashes", log.Error(err))
-			}
-		}
+		// ticker := time.NewTicker(5 * time.Minute)
+		// for range ticker.C {
+		// 	if _, err := r.Lookup(
+		// 		context.Background(),
+		// 		peer.LookupByContentType("nimona.io/peer.Peer"),
+		// 	); err != nil {
+		// 		logger.Error("could not refresh peers", log.Error(err))
+		// 	}
+		// 	if err := r.publishContentHashes(ctx); err != nil {
+		// 		logger.Error("could not refresh content hashes", log.Error(err))
+		// 	}
+		// }
 	}()
 
 	return r, nil
