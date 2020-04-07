@@ -46,6 +46,10 @@ func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
 	r := <-conn.lines
+	if len(r) == 0 {
+		return nil, errors.New("line was empty")
+	}
+
 	m := map[string]interface{}{}
 	if err := json.Unmarshal(r, &m); err != nil {
 		return nil, err
