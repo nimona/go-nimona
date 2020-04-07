@@ -39,6 +39,7 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *Connection {
 	}
 
 	go func() {
+		defer close(c.lines)
 		reader := bufio.NewReader(conn)
 		for {
 			line, err := reader.ReadBytes('\n')
