@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
+	"runtime/pprof"
 	"strconv"
 	"time"
 
@@ -203,6 +205,16 @@ func New(
 			func(c *router.Context) {
 				metric.Handler(metric.Exposed).ServeHTTP(c.Writer, c.Request)
 			},
+		)
+		goroutineStackHandler := func(c *router.Context) {
+			stack := debug.Stack()
+			c.Writer.Write(stack)                          // nolint: errcheck
+			pprof.Lookup("goroutine").WriteTo(c.Writer, 2) // nolint: errcheck
+		}
+		r.Handle(
+			"GET",
+			"/debug/stack/goroutine",
+			goroutineStackHandler,
 		)
 		r.Handle(
 			"GET",
