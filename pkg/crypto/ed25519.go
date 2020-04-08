@@ -5,6 +5,9 @@ import (
 	"crypto/rand"
 	"strings"
 
+	"github.com/teserakt-io/golang-ed25519/extra25519"
+	"golang.org/x/crypto/curve25519"
+
 	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/errors"
 )
@@ -76,14 +79,51 @@ func (i PrivateKey) PublicKey() PublicKey {
 	return NewPublicKey(i.ed25519().Public().(ed25519.PublicKey))
 }
 
-// func (i PrivateKey) Shared(r PublicKey) []byte {
-// this requires a curve25519
-// 	var shared [32]byte
-// 	ib := i.Bytes()
-// 	rb := r.Bytes()
-// 	curve25519.ScalarMult(&shared, &ib, &rb)
-// 	return shared[:]
-// }
+func publicEd25519KeyToCurve25519(pub ed25519.PublicKey) []byte {
+	var edPk [ed25519.PublicKeySize]byte
+	var curveKey [32]byte
+	copy(edPk[:], pub)
+	if !extra25519.PublicKeyToCurve25519(&curveKey, &edPk) {
+		panic("could not convert ed25519 public key to curve25519")
+	}
+	return curveKey[:]
+}
+
+func privateEd25519KeyToCurve25519(priv ed25519.PrivateKey) []byte {
+	var edSk [ed25519.PrivateKeySize]byte
+	var curveKey [32]byte
+	copy(edSk[:], priv)
+	extra25519.PrivateKeyToCurve25519(&curveKey, &edSk)
+	return curveKey[:]
+}
+
+// CalculateSharedKey calculates a shared secret given a private an public key
+func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
+	ca := privateEd25519KeyToCurve25519(priv.ed25519())
+	cB := publicEd25519KeyToCurve25519(pub.ed25519())
+	ss, err := curve25519.X25519(ca, cB)
+	if err != nil {
+		return nil, err
+	}
+	return ss, nil
+}
+
+// NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
+// secret given a public key, and returns the created public key and secret
+func NewEphemeralSharedKey(pub PublicKey) (*PublicKey, []byte, error) {
+	priv, err := GenerateEd25519PrivateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	ca := privateEd25519KeyToCurve25519(priv.ed25519())
+	cB := publicEd25519KeyToCurve25519(pub.ed25519())
+	ss, err := curve25519.X25519(ca, cB)
+	if err != nil {
+		return nil, nil, err
+	}
+	A := priv.PublicKey()
+	return &A, ss, nil
+}
 
 func (i PrivateKey) IsEmpty() bool {
 	return i == ""
