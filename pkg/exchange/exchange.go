@@ -1,8 +1,12 @@
 package exchange
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/json"
 	"expvar"
+	"io"
 	"time"
 
 	"github.com/geoah/go-queue"
@@ -308,33 +312,31 @@ func (w *exchange) processOutbox(outbox *outbox) {
 
 		// Only try the relays if we fail to write the object
 		if lastErr != nil && req.object.GetType() != "nimona.io/LookupRequest" {
-			// convert the object from the request to []byte
-			// todo: find a way to encrypt it
-			payload, err := json.Marshal(req.object.ToMap())
-			if err != nil {
-				// TODO log and move on?
-				lastErr = err
-			}
-
-			// Try to send it to one peer
 			for _, relayPeer := range req.recipient.Relays {
+				df, err := wrapInDataForward(
+					req.object,
+					req.recipient.PublicKey(),
+					relayPeer,
+				)
+				if err != nil {
+					logger.Error(
+						"could not create data forward object",
+						log.Error(err),
+					)
+					continue
+				}
 				logger.Debug(
 					"trying relay peer",
 					log.String("relay", relayPeer.String()),
 					log.String("recipient", req.recipient.PublicKey().String()),
 				)
-				newReq := DataForward{
-					Recipient: req.recipient.PublicKey(),
-					Data:      payload,
-				}
 				ctx := context.New(
 					context.WithTimeout(time.Second * 5),
 				)
-				// send the new wrapped object
-				// to the lookup peer
-				err := w.Send(
+				// send the newly wrapped object  to the lookup peer
+				err = w.Send(
 					ctx,
-					newReq.ToObject(),
+					df.ToObject(),
 					peer.LookupByOwner(relayPeer),
 					WithAsync(),
 					WithLocalDiscoveryOnly(),
@@ -429,19 +431,65 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 				return err
 			}
 
+			// if the data are encrypted we should first decrupt them
+			if !fwd.Ephermeral.IsEmpty() {
+				ss, err := crypto.CalculateSharedKey(
+					w.local.GetPeerPrivateKey(),
+					fwd.Ephermeral,
+				)
+				if err != nil {
+					continue
+				}
+				fwd.Data, err = decrypt(fwd.Data, ss)
+				if err != nil {
+					continue
+				}
+			}
+
+			// unmarshal payload
 			m := map[string]interface{}{}
 			err := json.Unmarshal(fwd.Data, &m)
 			if err != nil {
 				return errors.Wrap(errors.Error("could not decode data"), err)
 			}
 
+			// convert it into an object
 			o := object.FromMap(m)
+
+			// and if this is not a dataforward then we assume it is for us
+			if o.GetType() != dataForwardType {
+				if len(o.GetSignatures()) == 0 {
+					logger.Error("data forward object has no signature")
+					continue
+				}
+				w.inboxes.Publish(&Envelope{
+					Sender:  o.GetSignatures()[0].Signer,
+					Payload: o,
+				})
+				continue
+			}
+
+			// if this is a dataforward and for some reason we are the
+			// recipient, handle it
+			nfwd := &DataForward{}
+			if err := nfwd.FromObject(o); err != nil {
+				return errors.Wrap(errors.Error("could not parse nfwd"), err)
+			}
+
+			if nfwd.Recipient.Equals(w.local.GetPeerPublicKey()) {
+				w.inboxes.Publish(&Envelope{
+					Sender:  o.GetSignatures()[0].Signer,
+					Payload: o,
+				})
+				continue
+			}
+
 			// send the object to the intended recipient
 			// is the original sender lost this way? do we care?
 			if err := w.Send(
 				context.Background(),
 				o,
-				peer.LookupByOwner(fwd.Recipient),
+				peer.LookupByOwner(nfwd.Recipient),
 				WithAsync(),
 				WithLocalDiscoveryOnly(),
 			); err != nil {
@@ -573,4 +621,72 @@ func (w *exchange) SendToPeer(
 	case err := <-errRecv:
 		return err
 	}
+}
+
+func encrypt(data []byte, key []byte) ([]byte, error) {
+	block, _ := aes.NewCipher(key)
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+	return ciphertext, nil
+}
+
+func decrypt(data []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, nil
+}
+
+func wrapInDataForward(
+	o object.Object,
+	rks ...crypto.PublicKey,
+) (*DataForward, error) {
+	if len(rks) == 0 {
+		return nil, errors.New("missing recipients")
+	}
+	// marshal payload
+	payload, err := json.Marshal(o.ToMap())
+	if err != nil {
+		return nil, err
+	}
+	// create an ephemeral key pair, and calculate the shared key
+	ek, ss, err := crypto.NewEphemeralSharedKey(rks[0])
+	if err != nil {
+		return nil, err
+	}
+	// encrypt payload
+	ep, err := encrypt(payload, ss)
+	if err != nil {
+		return nil, err
+	}
+	// create data forward object
+	df := &DataForward{
+		Recipient:  rks[0],
+		Ephermeral: *ek,
+		Data:       ep,
+	}
+	// if there are more than one recipients, wrap for the next
+	if len(rks) > 1 {
+		return wrapInDataForward(df.ToObject(), rks[1:]...)
+	}
+	// else return
+	return df, nil
 }

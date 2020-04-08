@@ -9,5 +9,6 @@ signed object nimona.io/exchange.ObjectRequest {
 
 signed object nimona.io/exchange.DataForward {
     recipient nimona.io/crypto.PublicKey
+    ephermeral nimona.io/crypto.PublicKey
     data data
 }

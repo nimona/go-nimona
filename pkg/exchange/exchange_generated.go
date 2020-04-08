@@ -27,6 +27,7 @@ type (
 		Policy     object.Policy
 		Signatures []object.Signature
 		Recipient  crypto.PublicKey
+		Ephermeral crypto.PublicKey
 		Data       []byte
 	}
 )
@@ -105,6 +106,13 @@ func (e DataForward) GetSchema() *object.SchemaObject {
 				IsOptional: false,
 			},
 			&object.SchemaProperty{
+				Name:       "ephermeral",
+				Type:       "nimona.io/crypto.PublicKey",
+				Hint:       "s",
+				IsRepeated: false,
+				IsOptional: false,
+			},
+			&object.SchemaProperty{
 				Name:       "data",
 				Type:       "data",
 				Hint:       "d",
@@ -132,6 +140,9 @@ func (e DataForward) ToObject() object.Object {
 	if e.Recipient != "" {
 		o = o.Set("recipient:s", e.Recipient)
 	}
+	if e.Ephermeral != "" {
+		o = o.Set("ephermeral:s", e.Ephermeral)
+	}
 	if len(e.Data) != 0 {
 		o = o.Set("data:d", e.Data)
 	}
@@ -155,6 +166,9 @@ func (e *DataForward) FromObject(o object.Object) error {
 	e.Policy = o.GetPolicy()
 	if v := data.Value("recipient:s"); v != nil {
 		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))
+	}
+	if v := data.Value("ephermeral:s"); v != nil {
+		e.Ephermeral = crypto.PublicKey(v.PrimitiveHinted().(string))
 	}
 	if v := data.Value("data:d"); v != nil {
 		e.Data = []byte(v.PrimitiveHinted().([]byte))
