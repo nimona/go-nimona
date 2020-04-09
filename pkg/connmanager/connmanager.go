@@ -4,7 +4,6 @@ import (
 	"errors"
 	"sync"
 
-	"nimona.io/internal/generator/queue"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
@@ -23,7 +22,6 @@ type peerbox struct {
 	addresses *AddressesMap
 	conn      *net.Connection
 	connLock  sync.RWMutex
-	queue     *queue.Queue
 }
 
 type Manager interface {
@@ -39,7 +37,7 @@ type manager struct {
 	// store the connections per peer
 	connections *ConnectionsMap
 	local       *peer.LocalPeer
-	connHandler ConnectionHandler
+	connHandler ConnectionHandler // TODO: (geoah) should this be a slice?
 }
 
 func New(
@@ -88,10 +86,9 @@ func (m *manager) SetHandler(handler ConnectionHandler) {
 
 func (m *manager) GetConnection(
 	ctx context.Context,
-	peer *peer.Peer,
+	pr *peer.Peer,
 ) (*net.Connection, error) {
-
-	pbox := m.getPeerbox(peer.PublicKey())
+	pbox := m.getPeerbox(pr.PublicKey())
 
 	pbox.connLock.RLock()
 	if pbox.conn != nil {
@@ -100,7 +97,7 @@ func (m *manager) GetConnection(
 	}
 
 	pbox.connLock.RUnlock()
-	conn, err := m.net.Dial(ctx, peer)
+	conn, err := m.net.Dial(ctx, pr)
 	if err != nil {
 		// todo log
 		return nil, err
@@ -154,7 +151,6 @@ func (m *manager) handleConnection(
 			if m.connHandler != nil {
 				m.connHandler(conn.RemotePeerKey, *payload)
 			}
-
 		}
 	}()
 	return nil
@@ -169,13 +165,13 @@ func (m *manager) updateConnection(pbox *peerbox, conn *net.Connection) {
 	pbox.connLock.Unlock()
 }
 
-func (m *manager) getPeerbox(peer crypto.PublicKey) *peerbox {
+func (m *manager) getPeerbox(pr crypto.PublicKey) *peerbox {
 	pbx := &peerbox{
-		peer:      peer,
+		peer:      pr,
 		addresses: NewAddressesMap(),
 	}
 
-	pbx, _ = m.connections.GetOrPut(peer, pbx)
+	pbx, _ = m.connections.GetOrPut(pr, pbx)
 
 	return pbx
 }

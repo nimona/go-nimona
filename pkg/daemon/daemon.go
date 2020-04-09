@@ -96,7 +96,11 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 
 	cmgr, err := connmanager.New(ctx, network, li)
 	if err != nil {
-		return nil, errors.Wrap(errors.New("could not construct connection manager"), err)
+		return nil,
+			errors.Wrap(
+				errors.New("could not construct connection manager"),
+				err,
+			)
 	}
 
 	// construct exchange

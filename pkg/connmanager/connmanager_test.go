@@ -11,6 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -35,10 +36,12 @@ func TestGetConnection(t *testing.T) {
 	assert.NotNil(t, mgr2)
 
 	conn1, err := mgr.GetConnection(ctx, li2.GetSignedPeer())
+	assert.NoError(t, err)
+
 	conn2, err := mgr.GetConnection(ctx, li2.GetSignedPeer())
 	assert.NoError(t, err)
 
-	// assert that we retrived the same connection
+	// verify that we retrieved the same connection
 	if !reflect.DeepEqual(conn1, conn2) {
 		t.Errorf("manager.GetConnection() = %v, want %v", conn1, conn2)
 	}
@@ -68,8 +71,6 @@ func newPeer(t *testing.T) (
 
 	hsm := handshake.New(li, discover)
 	n.AddMiddleware(hsm.Handle())
-
-	// _, err = exchange.New(context.Background(), pk, n, store, discover, li)
 
 	return n, li, discover
 }

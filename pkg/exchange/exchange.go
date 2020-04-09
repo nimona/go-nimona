@@ -253,13 +253,11 @@ func (w *exchange) processOutbox(outbox *outbox) {
 			conn, err := w.connmgr.GetConnection(req.context, req.recipient)
 			if err != nil {
 				lastErr = err
-				// w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			logger.Debug("trying write object", log.Int("attempt", i+1))
 			if err := net.Write(req.object, conn); err != nil {
 				lastErr = err
-				// w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			lastErr = nil
