@@ -2,10 +2,8 @@ package connmanager
 
 import (
 	"errors"
-	"expvar"
 	"sync"
 
-	"github.com/zserge/metric"
 	"nimona.io/internal/generator/queue"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -147,8 +145,6 @@ func (m *manager) handleConnection(
 				m.updateConnection(pbox, conn)
 				return
 			}
-
-			expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
 
 			log.DefaultLogger.Debug(
 				"reading from connection",
