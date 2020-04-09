@@ -16,6 +16,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
+	"nimona.io/pkg/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -368,7 +369,10 @@ func newPeer(
 
 	ctx := context.Background()
 
-	x, err := New(ctx, pk, n, ds, discover, li)
+	cmgr, err := connmanager.New(ctx, n, li)
+	assert.NoError(t, err)
+
+	x, err := New(ctx, pk, n, ds, discover, li, cmgr)
 	assert.NoError(t, err)
 
 	return pk, n, x.(*exchange), ds, li
