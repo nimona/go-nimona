@@ -8,6 +8,7 @@ import (
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
+	"nimona.io/pkg/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
@@ -93,6 +94,11 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	// add middleware to network
 	network.AddMiddleware(handshakeMiddleware.Handle())
 
+	cmgr, err := connmanager.New(ctx, network, li)
+	if err != nil {
+		return nil, errors.Wrap(errors.New("could not construct connection manager"), err)
+	}
+
 	// construct exchange
 	ex, err := exchange.New(
 		ctx,
@@ -101,6 +107,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		st,
 		ps,
 		li,
+		cmgr,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
