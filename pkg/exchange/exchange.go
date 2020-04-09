@@ -3,7 +3,6 @@ package exchange
 import (
 	"encoding/json"
 	"expvar"
-	"sync"
 	"time"
 
 	"github.com/geoah/go-queue"
@@ -11,6 +10,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/zserge/metric"
 
+	"nimona.io/pkg/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -86,8 +86,9 @@ type (
 	}
 	// echange implements an Exchange
 	exchange struct {
-		key crypto.PrivateKey
-		net net.Network
+		key     crypto.PrivateKey
+		net     net.Network
+		connmgr connmanager.Manager
 
 		discover discovery.PeerStorer
 		local    *peer.LocalPeer
@@ -115,11 +116,8 @@ type (
 	// and the messages for it.
 	// the queue should only hold `*outgoingObject`s.
 	outbox struct {
-		peer      crypto.PublicKey
-		addresses *AddressesMap
-		conn      *net.Connection
-		connLock  sync.RWMutex
-		queue     *queue.Queue
+		peer  crypto.PublicKey
+		queue *queue.Queue
 	}
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
@@ -139,6 +137,7 @@ func New(
 	store *sqlobjectstore.Store,
 	discover discovery.PeerStorer,
 	localInfo *peer.LocalPeer,
+	connmgr connmanager.Manager,
 ) (Exchange, error) {
 	w := &exchange{
 		key: key,
@@ -146,19 +145,13 @@ func New(
 
 		discover: discover,
 		local:    localInfo,
+		connmgr:  connmgr,
 
 		outboxes: NewOutboxesMap(),
 		inboxes:  NewEnvelopePubSub(),
 
 		store:     store,
 		blacklist: cache.New(10*time.Second, 5*time.Minute),
-	}
-
-	// TODO(superdecimal) we should probably remove .Listen() from here, net
-	// should have a function that accepts a connection handler or something.
-	incomingConnections, err := w.net.Listen(ctx)
-	if err != nil {
-		return nil, err
 	}
 
 	// add local peer to discoverer
@@ -205,26 +198,20 @@ func New(
 		}
 	}()
 
-	// handle new incoming connections
-	go func() {
-		for {
-			conn := <-incomingConnections
-			go func(conn *net.Connection) {
-				if err := w.handleConnection(conn); err != nil {
-					logger.Warn("failed to handle connection", log.Error(err))
-				}
-			}(conn)
-		}
-	}()
+	w.connmgr.SetHandler(func(pk crypto.PublicKey, obj object.Object) {
+		w.inboxes.Publish(&Envelope{
+			Sender:  pk,
+			Payload: obj,
+		})
+	})
 
 	return w, nil
 }
 
 func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
 	outbox := &outbox{
-		peer:      recipient,
-		addresses: NewAddressesMap(),
-		queue:     queue.New(),
+		peer:  recipient,
+		queue: queue.New(),
 	}
 	outbox, loaded := w.outboxes.GetOrPut(recipient, outbox)
 	if !loaded {
@@ -233,37 +220,7 @@ func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
 	return outbox
 }
 
-func (w *exchange) updateOutboxConn(outbox *outbox, conn *net.Connection) {
-	outbox.connLock.Lock()
-	if outbox.conn != nil {
-		outbox.conn.Close() // nolint: errcheck
-	}
-	outbox.conn = conn
-	outbox.connLock.Unlock()
-}
-
 func (w *exchange) processOutbox(outbox *outbox) {
-	getConnection := func(req *outgoingObject) (*net.Connection, error) {
-		outbox.connLock.RLock()
-		if outbox.conn != nil {
-			outbox.connLock.RUnlock()
-			return outbox.conn, nil
-		}
-		outbox.connLock.RUnlock()
-		conn, err := w.net.Dial(req.context, req.recipient)
-		if err != nil {
-			return nil, err
-		}
-		if err := w.handleConnection(conn); err != nil {
-			w.updateOutboxConn(outbox, nil)
-			log.DefaultLogger.Warn(
-				"failed to handle outbox connection",
-				log.Error(err),
-			)
-			return nil, err
-		}
-		return conn, nil
-	}
 	for {
 		// dequeue the next item to send
 		// TODO figure out what can go wrong here
@@ -290,16 +247,17 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		maxAttempts := 1
 		for i := 0; i < maxAttempts; i++ {
 			logger.Debug("trying to get connection", log.Int("attempt", i+1))
-			conn, err := getConnection(req)
+
+			conn, err := w.connmgr.GetConnection(req.context, req.recipient)
 			if err != nil {
 				lastErr = err
-				w.updateOutboxConn(outbox, nil)
+				// w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			logger.Debug("trying write object", log.Int("attempt", i+1))
 			if err := net.Write(req.object, conn); err != nil {
 				lastErr = err
-				w.updateOutboxConn(outbox, nil)
+				// w.updateOutboxConn(outbox, nil)
 				continue
 			}
 			lastErr = nil
@@ -381,57 +339,6 @@ func (w *exchange) Request(
 // Subscribe to incoming objects as envelopes
 func (w *exchange) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
-}
-
-func (w *exchange) handleConnection(
-	conn *net.Connection,
-) error {
-	if conn == nil {
-		// TODO should this be nil?
-		return errors.New("missing connection")
-	}
-
-	// get outbox and update the connection to the peer
-	outbox := w.getOutbox(conn.RemotePeerKey)
-	w.updateOutboxConn(outbox, conn)
-
-	// TODO(geoah) this looks like a hack
-	if err := net.Write(
-		w.local.GetSignedPeer().ToObject(),
-		conn,
-	); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			payload, err := net.Read(conn)
-			// TODO split errors into connection or payload
-			// ie a payload that cannot be unmarshalled or verified
-			// should not kill the connection
-			if err != nil {
-				log.DefaultLogger.Warn(
-					"failed to read from connection",
-					log.Error(err),
-				)
-				w.updateOutboxConn(outbox, nil)
-				return
-			}
-
-			expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
-
-			log.DefaultLogger.Debug(
-				"reading from connection",
-				log.String("payload", payload.GetType()),
-			)
-			w.inboxes.Publish(&Envelope{
-				Sender:  conn.RemotePeerKey,
-				Payload: *payload,
-			})
-		}
-	}()
-
-	return nil
 }
 
 // handleObjectRequests -

@@ -2,12 +2,16 @@ package connmanager
 
 import (
 	"errors"
+	"expvar"
 	"sync"
 
+	"github.com/zserge/metric"
 	"nimona.io/internal/generator/queue"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -26,7 +30,10 @@ type peerbox struct {
 
 type Manager interface {
 	GetConnection(context.Context, *peer.Peer) (*net.Connection, error)
+	SetHandler(ConnectionHandler)
 }
+
+type ConnectionHandler func(crypto.PublicKey, object.Object)
 
 type manager struct {
 	net net.Network
@@ -34,6 +41,7 @@ type manager struct {
 	// store the connections per peer
 	connections *ConnectionsMap
 	local       *peer.LocalPeer
+	connHandler ConnectionHandler
 }
 
 func New(
@@ -41,6 +49,13 @@ func New(
 	n net.Network,
 	localInfo *peer.LocalPeer,
 ) (Manager, error) {
+	logger := log.
+		FromContext(ctx).
+		Named("connmanager").
+		With(
+			log.String("method", "connmanager.New"),
+			log.String("local.peer", localInfo.GetPeerPublicKey().String()),
+		)
 
 	mgr := &manager{
 		net:         n,
@@ -60,13 +75,17 @@ func New(
 			go func(conn *net.Connection) {
 				if err := mgr.handleConnection(conn); err != nil {
 					// TODO
-					// logger.Warn("failed to handle connection", log.Error(err))
+					logger.Error("failed to handle connection", log.Error(err))
 				}
 			}(conn)
 		}
 	}()
 
 	return mgr, nil
+}
+
+func (m *manager) SetHandler(handler ConnectionHandler) {
+	m.connHandler = handler
 }
 
 func (m *manager) GetConnection(
@@ -114,6 +133,34 @@ func (m *manager) handleConnection(
 		return err
 	}
 
+	go func() {
+		for {
+			payload, err := net.Read(conn)
+			// TODO split errors into connection or payload
+			// ie a payload that cannot be unmarshalled or verified
+			// should not kill the connection
+			if err != nil {
+				log.DefaultLogger.Warn(
+					"failed to read from connection",
+					log.Error(err),
+				)
+				m.updateConnection(pbox, conn)
+				return
+			}
+
+			expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
+
+			log.DefaultLogger.Debug(
+				"reading from connection",
+				log.String("payload", payload.GetType()),
+			)
+
+			if m.connHandler != nil {
+				m.connHandler(conn.RemotePeerKey, *payload)
+			}
+
+		}
+	}()
 	return nil
 }
 
