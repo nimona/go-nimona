@@ -199,6 +199,8 @@ func New(
 	}()
 
 	w.connmgr.SetHandler(func(pk crypto.PublicKey, obj object.Object) {
+		expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
+
 		w.inboxes.Publish(&Envelope{
 			Sender:  pk,
 			Payload: obj,
