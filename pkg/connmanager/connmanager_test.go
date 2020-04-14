@@ -24,14 +24,17 @@ import (
 func TestGetConnection(t *testing.T) {
 	ctx := context.Background()
 
+	handler := func(conn *net.Connection) error {
+		return nil
+	}
 	n, li, disc := newPeer(t)
 	n2, li2, _ := newPeer(t)
 	disc.Add(li2.GetSignedPeer(), true)
 
-	mgr, err := New(ctx, n, li)
+	mgr, err := New(ctx, n, li, handler)
 	assert.NoError(t, err)
 
-	mgr2, err := New(ctx, n2, li2)
+	mgr2, err := New(ctx, n2, li2, handler)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr2)
 
@@ -52,6 +55,7 @@ func newPeer(t *testing.T) (
 	*peer.LocalPeer,
 	discovery.PeerStorer,
 ) {
+	net.BindLocal = true
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 

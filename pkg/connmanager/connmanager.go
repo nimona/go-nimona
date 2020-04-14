@@ -1,14 +1,12 @@
 package connmanager
 
 import (
-	"errors"
 	"sync"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -26,10 +24,9 @@ type peerbox struct {
 
 type Manager interface {
 	GetConnection(context.Context, *peer.Peer) (*net.Connection, error)
-	SetHandler(ConnectionHandler)
 }
 
-type ConnectionHandler func(crypto.PublicKey, object.Object)
+type ConnectionHandler func(*net.Connection) error
 
 type manager struct {
 	net net.Network
@@ -44,6 +41,7 @@ func New(
 	ctx context.Context,
 	n net.Network,
 	localInfo *peer.LocalPeer,
+	handler ConnectionHandler,
 ) (Manager, error) {
 	logger := log.
 		FromContext(ctx).
@@ -57,6 +55,7 @@ func New(
 		net:         n,
 		connections: NewConnectionsMap(),
 		local:       localInfo,
+		connHandler: handler,
 	}
 
 	incomingConnections, err := n.Listen(ctx)
@@ -69,7 +68,11 @@ func New(
 		for {
 			conn := <-incomingConnections
 			go func(conn *net.Connection) {
-				if err := mgr.handleConnection(conn); err != nil {
+				// find existing peerbox and update it
+				pbox := mgr.getPeerbox(conn.RemotePeerKey)
+				mgr.updateConnection(pbox, conn)
+
+				if err := mgr.connHandler(conn); err != nil {
 					// TODO
 					logger.Error("failed to handle connection", log.Error(err))
 				}
@@ -78,10 +81,6 @@ func New(
 	}()
 
 	return mgr, nil
-}
-
-func (m *manager) SetHandler(handler ConnectionHandler) {
-	m.connHandler = handler
 }
 
 func (m *manager) GetConnection(
@@ -103,57 +102,13 @@ func (m *manager) GetConnection(
 		return nil, err
 	}
 
-	if err := m.handleConnection(conn); err != nil {
+	if err := m.connHandler(conn); err != nil {
 		return nil, err
 	}
 
-	return conn, nil
-}
-
-func (m *manager) handleConnection(
-	conn *net.Connection,
-) error {
-	if conn == nil {
-		panic(errors.New("missing connection"))
-	}
-
-	// find existing peerbox and update it
-	pbox := m.getPeerbox(conn.RemotePeerKey)
 	m.updateConnection(pbox, conn)
 
-	if err := net.Write(
-		m.local.GetSignedPeer().ToObject(),
-		conn,
-	); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			payload, err := net.Read(conn)
-			// TODO split errors into connection or payload
-			// ie a payload that cannot be unmarshalled or verified
-			// should not kill the connection
-			if err != nil {
-				log.DefaultLogger.Warn(
-					"failed to read from connection",
-					log.Error(err),
-				)
-				m.updateConnection(pbox, conn)
-				return
-			}
-
-			log.DefaultLogger.Debug(
-				"reading from connection",
-				log.String("payload", payload.GetType()),
-			)
-
-			if m.connHandler != nil {
-				m.connHandler(conn.RemotePeerKey, *payload)
-			}
-		}
-	}()
-	return nil
+	return conn, nil
 }
 
 func (m *manager) updateConnection(pbox *peerbox, conn *net.Connection) {

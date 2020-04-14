@@ -137,7 +137,6 @@ func New(
 	store *sqlobjectstore.Store,
 	discover discovery.PeerStorer,
 	localInfo *peer.LocalPeer,
-	connmgr connmanager.Manager,
 ) (Exchange, error) {
 	w := &exchange{
 		key: key,
@@ -145,7 +144,6 @@ func New(
 
 		discover: discover,
 		local:    localInfo,
-		connmgr:  connmgr,
 
 		outboxes: NewOutboxesMap(),
 		inboxes:  NewEnvelopePubSub(),
@@ -153,6 +151,16 @@ func New(
 		store:     store,
 		blacklist: cache.New(10*time.Second, 5*time.Minute),
 	}
+
+	connmgr, err := connmanager.New(ctx, n, localInfo, w.handleConnection)
+	if err != nil {
+		return nil,
+			errors.Wrap(
+				errors.New("could not construct connection manager"),
+				err,
+			)
+	}
+	w.connmgr = connmgr
 
 	// add local peer to discoverer
 	// TODO this is mostly a hack as discover doesn't have access to local
@@ -198,16 +206,49 @@ func New(
 		}
 	}()
 
-	w.connmgr.SetHandler(func(pk crypto.PublicKey, obj object.Object) {
-		expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
-
-		w.inboxes.Publish(&Envelope{
-			Sender:  pk,
-			Payload: obj,
-		})
-	})
-
 	return w, nil
+}
+
+func (w *exchange) handleConnection(conn *net.Connection) error {
+	expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
+
+	if conn == nil {
+		return errors.New("missing connection")
+	}
+
+	if err := net.Write(
+		w.local.GetSignedPeer().ToObject(),
+		conn,
+	); err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			payload, err := net.Read(conn)
+			// TODO split errors into connection or payload
+			// ie a payload that cannot be unmarshalled or verified
+			// should not kill the connection
+			if err != nil {
+				log.DefaultLogger.Warn(
+					"failed to read from connection",
+					log.Error(err),
+				)
+				return
+			}
+
+			log.DefaultLogger.Debug(
+				"reading from connection",
+				log.String("payload", payload.GetType()),
+			)
+
+			w.inboxes.Publish(&Envelope{
+				Sender:  conn.RemotePeerKey,
+				Payload: *payload,
+			})
+		}
+	}()
+	return nil
 }
 
 func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
