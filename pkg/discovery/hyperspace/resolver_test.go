@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"nimona.io/pkg/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
@@ -318,9 +317,6 @@ func newPeer(
 	n.AddMiddleware(hsm.Handle())
 	n.AddTransport("tcps", tcp)
 
-	cmgr, err := connmanager.New(ctx, n, local)
-	assert.NoError(t, err)
-
 	x, err := exchange.New(
 		ctx,
 		pk,
@@ -328,7 +324,6 @@ func newPeer(
 		store,
 		disc,
 		local,
-		cmgr,
 	)
 	assert.NoError(t, err)
 
