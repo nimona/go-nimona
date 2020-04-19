@@ -58,7 +58,7 @@ func TestSendSuccess(t *testing.T) {
 
 	gp := gatherPeers(dr1)
 	require.Len(t, gp, 1)
-	require.Equal(t, l2.GetIdentityPublicKey(), gp[0].PublicKey())
+	require.Equal(t, l2.GetPeerPublicKey(), gp[0].PublicKey())
 	require.Equal(t, l2.GetAddresses(), gp[0].Addresses)
 
 	// create test objects
