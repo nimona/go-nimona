@@ -36,7 +36,8 @@ func GenerateEd25519PrivateKey() (PrivateKey, error) {
 
 func NewPrivateKey(seed []byte) PrivateKey {
 	k := ed25519.NewKeyFromSeed(seed)
-	return PrivateKey(k)
+	s := "ed25519.prv." + base58.Encode(k)
+	return PrivateKey(s)
 }
 
 func NewPublicKey(publicKey ed25519.PublicKey) PublicKey {
@@ -130,10 +131,10 @@ func (i PrivateKey) IsEmpty() bool {
 }
 
 func (i PrivateKey) Bytes() []byte {
-	k := i.ed25519().Seed()
-	out := make([]byte, len(k))
-	copy(out, k)
-	return out
+	if i.IsEmpty() {
+		return nil
+	}
+	return i.ed25519().Seed()
 }
 
 func (i PrivateKey) Sign(message []byte) []byte {
