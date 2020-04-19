@@ -142,7 +142,7 @@ func (p *LocalPeer) GetIdentityPublicKey() crypto.PublicKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 	if p.identityPublicKey.IsEmpty() {
-		return p.peerPublicKey
+		return crypto.EmptyPublicKey
 	}
 	return p.identityPublicKey
 }
@@ -151,7 +151,7 @@ func (p *LocalPeer) GetIdentityPrivateKey() crypto.PrivateKey {
 	p.keyLock.RLock()
 	defer p.keyLock.RUnlock()
 	if p.identityPrivateKey == "" {
-		return p.peerPrivateKey
+		return crypto.EmptyPrivateKey
 	}
 	return p.identityPrivateKey
 }

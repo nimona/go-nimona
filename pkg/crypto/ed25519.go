@@ -25,6 +25,11 @@ type (
 	PublicKey  string
 )
 
+const (
+	EmptyPrivateKey = PrivateKey("")
+	EmptyPublicKey  = PublicKey("")
+)
+
 func GenerateEd25519PrivateKey() (PrivateKey, error) {
 	_, k, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
