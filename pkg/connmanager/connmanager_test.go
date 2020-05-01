@@ -1,24 +1,17 @@
 package connmanager
 
 import (
-	"database/sql"
-	"fmt"
-	"io/ioutil"
-	"path"
 	"reflect"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/middleware/handshake"
+	"nimona.io/pkg/eventbus"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestGetConnection(t *testing.T) {
@@ -27,21 +20,35 @@ func TestGetConnection(t *testing.T) {
 	handler := func(conn *net.Connection) error {
 		return nil
 	}
-	n, li, disc := newPeer(t)
-	n2, li2, _ := newPeer(t)
-	disc.Add(li2.GetSignedPeer(), true)
 
-	mgr, err := New(ctx, n, li, handler)
+	eb1, _, n1 := newPeer(t)
+	eb2, kc2, n2 := newPeer(t)
+
+	mgr, err := New(ctx, eb1, n1, handler)
 	assert.NoError(t, err)
 
-	mgr2, err := New(ctx, n2, li2, handler)
+	lst1, err := n1.Listen(ctx, "0.0.0.0:0")
+	assert.NoError(t, err)
+	defer lst1.Close()
+
+	mgr2, err := New(ctx, eb2, n2, handler)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr2)
 
-	conn1, err := mgr.GetConnection(ctx, li2.GetSignedPeer())
+	lst2, err := n2.Listen(ctx, "0.0.0.0:0")
+	assert.NoError(t, err)
+	defer lst2.Close()
+
+	conn1, err := mgr.GetConnection(ctx, &peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+	})
 	assert.NoError(t, err)
 
-	conn2, err := mgr.GetConnection(ctx, li2.GetSignedPeer())
+	conn2, err := mgr.GetConnection(ctx, &peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+	})
 	assert.NoError(t, err)
 
 	// verify that we retrieved the same connection
@@ -51,39 +58,22 @@ func TestGetConnection(t *testing.T) {
 }
 
 func newPeer(t *testing.T) (
+	eventbus.Eventbus,
+	keychain.Keychain,
 	net.Network,
-	*peer.LocalPeer,
-	discovery.PeerStorer,
 ) {
 	net.BindLocal = true
+
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	store, err := sqlobjectstore.New(tempSqlite3(t))
-	assert.NoError(t, err)
+	eb := eventbus.New()
 
-	discover := discovery.NewPeerStorer(store)
+	kc := keychain.New()
+	kc.Put(keychain.PrimaryPeerKey, pk)
 
-	li, err := peer.NewLocalPeer("", pk)
-	assert.NoError(t, err)
-
-	n, err := net.New(discover, li)
-	assert.NoError(t, err)
-
-	tcp := net.NewTCPTransport(li, "0.0.0.0:0")
-	n.AddTransport("tcps", tcp)
-
-	hsm := handshake.New(li, discover)
-	n.AddMiddleware(hsm.Handle())
-
-	return n, li, discover
-}
-
-func tempSqlite3(t *testing.T) *sql.DB {
-	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
-	require.NoError(t, err)
-	fmt.Println(path.Join(dirPath, "sqlite3.db"))
-	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
-	require.NoError(t, err)
-	return db
+	return eb, kc, net.New(
+		net.WithKeychain(kc),
+		net.WithEventBus(eb),
+	)
 }

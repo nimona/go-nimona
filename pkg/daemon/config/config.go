@@ -27,6 +27,7 @@ type PeerConfig struct {
 	IdentityKey        crypto.PrivateKey  `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
 	PeerKey            crypto.PrivateKey  `json:"peerKey,omitempty" envconfig:"KEY"`
 	TCPPort            int                `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
+	UPNP               bool               `json:"upnp,omitempty" envconfig:"UPNP"`
 	RelayAddresses     []crypto.PublicKey `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
 	ContentTypes       []string           `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
 }

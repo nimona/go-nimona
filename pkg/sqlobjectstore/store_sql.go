@@ -424,6 +424,40 @@ func (st *Store) Filter(
 	return objects, nil
 }
 
+func (st *Store) GetPinned() ([]object.Hash, error) {
+	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE TTL = 0")
+	if err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not prepare statement"),
+		)
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, errors.Wrap(
+			err,
+			errors.New("could not query"),
+		)
+	}
+
+	hs := []object.Hash{}
+	for rows.Next() {
+		h := ""
+		if err := rows.Scan(&h); err != nil {
+			return nil, errors.Wrap(
+				err,
+				ErrNotFound,
+			)
+		}
+		if h != "" {
+			hs = append(hs, object.Hash(h))
+		}
+	}
+
+	return hs, nil
+}
+
 func astoai(ah []string) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {

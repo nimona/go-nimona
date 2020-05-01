@@ -20,7 +20,8 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/mocks"
-	"nimona.io/pkg/middleware/handshake"
+	"nimona.io/pkg/eventbus"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -42,24 +43,30 @@ func TestSendSuccess(t *testing.T) {
 	disc2 := discovery.NewPeerStorer(store2)
 
 	// create new peers
-	k1, _, x1, _, l1 := newPeer(t, disc1, true, false)
-	k2, _, x2, _, l2 := newPeer(t, disc2, true, false)
+	kc1, n1, x1, _ := newPeer(t, disc1)
+	kc2, n2, x2, _ := newPeer(t, disc2)
 
 	// make peers aware of each other
-	disc1.Add(l2.GetSignedPeer(), true)
-	disc2.Add(l1.GetSignedPeer(), true)
+	disc1.Add(&peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+	}, true)
+	disc2.Add(&peer.Peer{
+		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Addresses: n1.Addresses(),
+	}, true)
 
 	// peer1 looks for peer2
 	dr1, err := disc1.Lookup(
 		context.Background(),
-		peer.LookupByOwner(l2.GetPeerPublicKey()),
+		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
 	)
 	require.NoError(t, err)
 
 	gp := gatherPeers(dr1)
 	require.Len(t, gp, 1)
-	require.Equal(t, l2.GetPeerPublicKey(), gp[0].PublicKey())
-	require.Equal(t, l2.GetAddresses(), gp[0].Addresses)
+	require.Equal(t, kc2.GetPrimaryPeerKey().PublicKey(), gp[0].PublicKey())
+	require.Equal(t, n2.Addresses(), gp[0].Addresses)
 
 	// create test objects
 	eo1 := object.Object{}
@@ -75,9 +82,13 @@ func TestSendSuccess(t *testing.T) {
 
 	handled := int32(0)
 
-	sig, err := object.NewSignature(k2, eo1)
+	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
 	assert.NoError(t, err)
 	eo1 = eo1.AddSignature(sig)
+
+	sig, err = object.NewSignature(kc1.GetPrimaryPeerKey(), eo2)
+	assert.NoError(t, err)
+	eo2 = eo2.AddSignature(sig)
 
 	// add message handlers
 	// nolint: dupl
@@ -110,13 +121,20 @@ func TestSendSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	errS1 := x2.Send(ctx, eo1, peer.LookupByOwner(k1.PublicKey()))
+	errS1 := x2.Send(
+		ctx,
+		eo1,
+		peer.LookupByOwner(kc1.GetPrimaryPeerKey().PublicKey()),
+	)
 	assert.NoError(t, errS1)
 
 	time.Sleep(time.Second)
 
-	// TODO should be able to send not signed
-	errS2 := x1.Send(ctx, eo2, peer.LookupByOwner(k2.PublicKey()))
+	errS2 := x1.Send(
+		ctx,
+		eo2,
+		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
+	)
 	assert.NoError(t, errS2)
 
 	if errS1 == nil && errS2 == nil {
@@ -138,11 +156,17 @@ func TestRequestSuccess(t *testing.T) {
 	disc1 := discovery.NewPeerStorer(store1)
 	disc2 := discovery.NewPeerStorer(store2)
 
-	_, _, x1, _, l1 := newPeer(t, disc1, true, false)
-	_, _, _, d2, l2 := newPeer(t, disc2, true, false)
+	kc1, n1, x1, _ := newPeer(t, disc1)
+	kc2, n2, _, d2 := newPeer(t, disc2)
 
-	disc1.Add(l2.GetSignedPeer(), true)
-	disc2.Add(l1.GetSignedPeer(), true)
+	disc1.Add(&peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+	}, true)
+	disc2.Add(&peer.Peer{
+		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Addresses: n1.Addresses(),
+	}, true)
 
 	mp2 := &mocks.Discoverer{}
 	err = disc2.AddDiscoverer(mp2)
@@ -172,7 +196,7 @@ func TestRequestSuccess(t *testing.T) {
 	err = x1.Request(
 		ctx,
 		object.NewHash(eo1),
-		peer.LookupByOwner(l2.GetPeerPublicKey()),
+		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -207,37 +231,49 @@ func TestSendRelay(t *testing.T) {
 	net.BindLocal = true
 
 	// relay peer
-	relayPeerKey, _, _, _, relayPeer := newPeer(t, discRel, true, false)
+	rkc, rn, _, _ := newPeer(t, discRel)
 
 	// disable binding to local addresses
 	net.BindLocal = false
-	k1, _, x1, _, l1 := newPeer(t, disc1, true, false)
-	k2, _, x2, _, l2 := newPeer(t, disc2, true, false)
+	kc1, n1, x1, _ := newPeer(t, disc1)
+	kc2, n2, x2, _ := newPeer(t, disc2)
 
-	l1.AddRelays(relayPeerKey.PublicKey())
-	l2.AddRelays(relayPeerKey.PublicKey())
-
-	fmt.Printf("\n\n\n\n-----------------------------\n")
-	fmt.Println("k0:",
-		relayPeerKey.PublicKey(),
-		relayPeer.GetAddresses(),
-	)
-	fmt.Println("k1:",
-		k1.PublicKey(),
-		l1.GetAddresses(),
-	)
-	fmt.Println("k2:",
-		k2.PublicKey(),
-		l2.GetAddresses(),
-	)
-	fmt.Printf("-----------------------------\n\n\n\n")
-
-	discRel.Add(l1.GetSignedPeer(), false)
-	discRel.Add(l2.GetSignedPeer(), false)
-	disc1.Add(relayPeer.GetSignedPeer(), false)
-	disc1.Add(l2.GetSignedPeer(), false)
-	disc2.Add(relayPeer.GetSignedPeer(), false)
-	disc2.Add(l1.GetSignedPeer(), false)
+	discRel.Add(&peer.Peer{
+		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Addresses: n1.Addresses(),
+		Relays: []crypto.PublicKey{
+			rkc.GetPrimaryPeerKey().PublicKey(),
+		},
+	}, false)
+	discRel.Add(&peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+		Relays: []crypto.PublicKey{
+			rkc.GetPrimaryPeerKey().PublicKey(),
+		},
+	}, false)
+	disc1.Add(&peer.Peer{
+		Owners:    rkc.ListPublicKeys(keychain.PeerKey),
+		Addresses: rn.Addresses(),
+	}, false)
+	disc1.Add(&peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+		Relays: []crypto.PublicKey{
+			rkc.GetPrimaryPeerKey().PublicKey(),
+		},
+	}, false)
+	disc2.Add(&peer.Peer{
+		Owners:    rkc.ListPublicKeys(keychain.PeerKey),
+		Addresses: rn.Addresses(),
+	}, false)
+	disc2.Add(&peer.Peer{
+		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Addresses: n1.Addresses(),
+		Relays: []crypto.PublicKey{
+			rkc.GetPrimaryPeerKey().PublicKey(),
+		},
+	}, false)
 
 	// init connection from peer1 to relay
 	o1 := object.Object{}
@@ -246,7 +282,7 @@ func TestSendRelay(t *testing.T) {
 	err = x1.Send(
 		context.Background(),
 		o1,
-		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
+		peer.LookupByOwner(rkc.GetPrimaryPeerKey().PublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -257,7 +293,7 @@ func TestSendRelay(t *testing.T) {
 	err = x2.Send(
 		context.Background(),
 		o2,
-		peer.LookupByOwner(relayPeer.GetPeerPublicKey()),
+		peer.LookupByOwner(rkc.GetPrimaryPeerKey().PublicKey()),
 	)
 	assert.NoError(t, err)
 
@@ -276,7 +312,7 @@ func TestSendRelay(t *testing.T) {
 	w1ObjectHandled := false
 	w2ObjectHandled := false
 
-	sig, err := object.NewSignature(k2, eo1)
+	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
 	assert.NoError(t, err)
 	eo1 = eo1.AddSignature(sig)
 
@@ -316,7 +352,11 @@ func TestSendRelay(t *testing.T) {
 	ctx := context.New(context.WithTimeout(time.Second * 5))
 	defer ctx.Cancel()
 
-	err = x2.Send(ctx, eo1, peer.LookupByOwner(k1.PublicKey()))
+	err = x2.Send(
+		ctx,
+		eo1,
+		peer.LookupByOwner(kc1.GetPrimaryPeerKey().PublicKey()),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
@@ -325,7 +365,11 @@ func TestSendRelay(t *testing.T) {
 	defer ctx2.Cancel()
 
 	// TODO should be able to send not signed
-	err = x1.Send(ctx2, eo2, peer.LookupByOwner(k2.PublicKey()))
+	err = x1.Send(
+		ctx2,
+		eo2,
+		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
+	)
 	assert.NoError(t, err)
 
 	wg.Wait()
@@ -337,41 +381,35 @@ func TestSendRelay(t *testing.T) {
 func newPeer(
 	t *testing.T,
 	discover discovery.PeerStorer,
-	listenTCP bool,
-	listenHTTP bool,
 ) (
-	crypto.PrivateKey,
+	keychain.Keychain,
 	net.Network,
 	*exchange,
 	*sqlobjectstore.Store,
-	*peer.LocalPeer,
 ) {
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
+	eb := eventbus.New()
+
+	kc := keychain.New()
+	kc.Put(keychain.PrimaryPeerKey, pk)
+
 	ds, err := sqlobjectstore.New(tempSqlite3(t))
 	assert.NoError(t, err)
 
-	li, err := peer.NewLocalPeer("", pk)
-	assert.NoError(t, err)
-
-	n, err := net.New(discover, li)
-	assert.NoError(t, err)
-
-	if listenTCP {
-		tcp := net.NewTCPTransport(li, "0.0.0.0:0")
-		n.AddTransport("tcps", tcp)
-	}
-
-	hsm := handshake.New(li, discover)
-	n.AddMiddleware(hsm.Handle())
-
 	ctx := context.Background()
 
-	x, err := New(ctx, pk, n, ds, discover, li)
+	n := net.New(
+		net.WithKeychain(kc),
+	)
+	_, err = n.Listen(ctx, "127.0.0.1:0")
+	require.NoError(t, err)
+
+	x, err := New(ctx, eb, kc, n, ds, discover)
 	assert.NoError(t, err)
 
-	return pk, n, x.(*exchange), ds, li
+	return kc, n, x.(*exchange), ds
 }
 
 func compareObjects(t *testing.T, expected, actual object.Object) {

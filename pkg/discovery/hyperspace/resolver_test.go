@@ -17,8 +17,9 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/middleware/handshake"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -26,23 +27,30 @@ import (
 )
 
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
-	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
 
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
+	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
 	assert.NoError(t, err)
+
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
-	ba := []*peer.Peer{l0.GetSignedPeer()}
+	ba := []*peer.Peer{
+		{
+			Addresses: n0.Addresses(),
+			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+		},
+	}
 
-	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
+	time.Sleep(time.Second)
 
-	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
+	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
+
+	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
-	// allow bootstraping to settle
 	time.Sleep(time.Second)
 
 	ctx := context.New(
@@ -55,7 +63,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n0.Addresses(), peers[0].Addresses)
 
 	ctxR2 := context.New(
 		context.WithCorrelationID("req2"),
@@ -65,41 +73,45 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n1.Addresses(), peers[0].Addresses)
 }
 
 func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
-	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
+	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
-	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
-	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+	time.Sleep(time.Second)
 
-	fmt.Println("k0", k0)
-	fmt.Println("k1", k1)
-	fmt.Println("k2", k2)
+	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
+	_, k2, kc2, eb2, n2, x2, disc2, ctx2 := newPeer(t, "peer2")
 
 	// bootstrap address
-	ba := []*peer.Peer{l0.GetSignedPeer()}
+	ba := []*peer.Peer{
+		{
+			Addresses: n0.Addresses(),
+			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+		},
+	}
 
 	// node 1
-	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
+	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	// node 2
-	d2, err := NewDiscoverer(ctx2, disc2, x2, l2, ba)
+	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
-	// allow bootstraping to settle
 	time.Sleep(time.Second)
 
 	// find bootstrap from node1
@@ -111,7 +123,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l0.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n0.Addresses(), peers[0].Addresses)
 
 	// find node 1 from node 2
 	ctx = context.New(
@@ -122,7 +134,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l1.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n1.Addresses(), peers[0].Addresses)
 
 	// find node 2 from node 1
 	ctx = context.New(
@@ -134,17 +146,20 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l2.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n2.Addresses(), peers[0].Addresses)
 
 	// add extra peer
-	_, k3, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
+	_, k3, kc3, eb3, n3, x3, disc3, ctx3 := newPeer(t, "peer3")
 
 	// setup node 3
-	d3, err := NewDiscoverer(ctx3, disc3, x3, l3, ba)
+	d3, err := New(ctx3, disc3, kc3, eb3, x3, ba)
 	assert.NoError(t, err)
+
 	err = disc3.AddDiscoverer(d3)
 	assert.NoError(t, err)
 	assert.NotNil(t, d3)
+
+	time.Sleep(time.Second)
 
 	fmt.Println("peer0", k0)
 	fmt.Println("peer1", k1)
@@ -166,12 +181,14 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	)
 	peersChan, err = d1.Lookup(
 		ctx,
-		peer.LookupByCertificateSigner(l3.GetIdentityPublicKey()),
+		peer.LookupByCertificateSigner(
+			kc3.ListPublicKeys(keychain.IdentityKey)[0],
+		),
 	)
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n3.Addresses(), peers[0].Addresses)
 
 	// find node 3 from node 2 from it's identity
 	ctx = context.New(
@@ -180,24 +197,25 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	)
 	peersChan, err = d2.Lookup(
 		ctx,
-		peer.LookupByCertificateSigner(l3.GetIdentityPublicKey()),
+		peer.LookupByCertificateSigner(
+			kc3.ListPublicKeys(keychain.IdentityKey)[0],
+		),
 	)
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, l3.GetAddresses(), peers[0].Addresses)
+	require.Equal(t, n3.Addresses(), peers[0].Addresses)
 }
 
 func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
-	_, k0, _, x0, disc0, l0, ctx0 := newPeer(t, "peer0")
-	_, k1, _, x1, disc1, l1, ctx1 := newPeer(t, "peer1")
-	_, k2, _, x2, disc2, l2, ctx2 := newPeer(t, "peer2")
+	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
+	_, k1, kc1, eb1, _, x1, disc1, ctx1 := newPeer(t, "peer1")
+	_, k2, kc2, eb2, _, x2, disc2, ctx2 := newPeer(t, "peer2")
 
 	// make peer 1 a provider
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
 	ch := object.HashFromBytes(token)
-	l1.AddContentHash(ch)
 
 	// print peer info
 	fmt.Println("k0", k0)
@@ -205,27 +223,41 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	fmt.Println("k2", k2)
 
 	// bootstrap peer
-	d0, err := NewDiscoverer(ctx0, disc0, x0, l0, nil)
+	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
 	assert.NoError(t, err)
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	// bootstrap address
-	ba := []*peer.Peer{l0.GetSignedPeer()}
+	ba := []*peer.Peer{
+		{
+			Addresses: n0.Addresses(),
+			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+		},
+	}
 
 	// peer 1
-	d1, err := NewDiscoverer(ctx1, disc1, x1, l1, ba)
+	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
 	assert.NoError(t, err)
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
+	eb1.Publish(
+		eventbus.ObjectPinned{
+			Hash: ch,
+		},
+	)
+
+	time.Sleep(time.Second)
+
 	// peer 2
-	d2, err := NewDiscoverer(ctx2, disc2, x2, l2, ba)
+	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
 	assert.NoError(t, err)
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
-	// allow bootstraping to settle
 	time.Sleep(time.Second)
 
 	// find peer 1 from peer 2
@@ -249,29 +281,6 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
-
-	// add extra peer
-	_, _, _, x3, disc3, l3, ctx3 := newPeer(t, "peer3")
-
-	// setup peer 3
-	d3, err := NewDiscoverer(ctx3, disc3, x3, l3, ba)
-	assert.NoError(t, err)
-	err = disc3.AddDiscoverer(d1)
-	assert.NoError(t, err)
-
-	// allow bootstraping to settle
-	time.Sleep(time.Second)
-
-	// find peer 1 from peer 3
-	ctx = context.New(
-		context.WithCorrelationID("req3"),
-		context.WithTimeout(time.Second),
-	)
-	providersChan, err = d3.Lookup(ctx, peer.LookupByContentHash(ch))
-	providers = gatherPeers(providersChan)
-	require.NoError(t, err)
-	require.Len(t, providers, 1)
-	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 }
 
 // nolint: gocritic
@@ -281,13 +290,16 @@ func newPeer(
 ) (
 	crypto.PrivateKey,
 	crypto.PrivateKey,
+	keychain.Keychain,
+	eventbus.Eventbus,
 	net.Network,
 	exchange.Exchange,
 	discovery.PeerStorer,
-	*peer.LocalPeer,
 	context.Context,
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
+
+	eb := eventbus.New()
 
 	// identity key
 	opk, err := crypto.GenerateEd25519PrivateKey()
@@ -297,37 +309,42 @@ func newPeer(
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
+	// peer certificate
+	c := peer.NewCertificate(
+		pk.PublicKey(),
+		opk,
+	)
+
+	kc := keychain.New()
+	kc.Put(keychain.PrimaryPeerKey, pk)
+	kc.Put(keychain.IdentityKey, opk)
+	kc.PutCertificate(&c)
+
 	dblite := tempSqlite3(t)
 	store, err := sqlobjectstore.New(dblite)
 	assert.NoError(t, err)
 
 	disc := discovery.NewPeerStorer(store)
 
-	local, err := peer.NewLocalPeer("", pk)
-	assert.NoError(t, err)
+	n := net.New(
+		net.WithEventBus(eb),
+		net.WithKeychain(kc),
+	)
 
-	err = local.AddIdentityKey(opk)
-	assert.NoError(t, err)
-
-	n, err := net.New(disc, local)
-	assert.NoError(t, err)
-
-	tcp := net.NewTCPTransport(local, "127.0.0.1:0")
-	hsm := handshake.New(local, disc)
-	n.AddMiddleware(hsm.Handle())
-	n.AddTransport("tcps", tcp)
+	_, err = n.Listen(context.Background(), "127.0.0.1:0")
+	require.NoError(t, err)
 
 	x, err := exchange.New(
 		ctx,
-		pk,
+		eb,
+		kc,
 		n,
 		store,
 		disc,
-		local,
 	)
 	assert.NoError(t, err)
 
-	return opk, pk, n, x, disc, local, ctx
+	return opk, pk, kc, eb, n, x, disc, ctx
 }
 
 func tempSqlite3(t *testing.T) *sql.DB {

@@ -1,4 +1,4 @@
-package nimona.io/middleware/handshake
+package nimona.io/net
 
 import nimona.io/crypto crypto
 

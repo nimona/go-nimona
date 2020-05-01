@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path"
 
+	"nimona.io/pkg/nat"
+
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
@@ -14,8 +16,9 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/middleware/handshake"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
@@ -28,7 +31,6 @@ type Daemon struct {
 	Exchange     exchange.Exchange
 	Store        *sqlobjectstore.Store
 	Orchestrator orchestrator.Orchestrator
-	LocalPeer    *peer.LocalPeer
 }
 
 func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
@@ -46,61 +48,53 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	// construct peerstore
 	ps := discovery.NewPeerStorer(st)
 
-	// construct local info
-	li, err := peer.NewLocalPeer(
-		cfg.Peer.AnnounceHostname,
-		cfg.Peer.PeerKey,
-	)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not create local info"), err)
-	}
-
-	// add content types
-	li.AddContentTypes(cfg.Peer.ContentTypes...)
-
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		if err := li.AddIdentityKey(cfg.Peer.IdentityKey); err != nil {
-			return nil, errors.Wrap(errors.New("could not register identity key"), err)
-		}
+		keychain.DefaultKeychain.Put(
+			keychain.IdentityKey,
+			cfg.Peer.IdentityKey,
+		)
 	}
 
-	// add relay peers to local info
+	if cfg.Peer.AnnounceHostname != "" {
+		eventbus.DefaultEventbus.Publish(
+			eventbus.NetworkAddressAdded{
+				Address: fmt.Sprintf(
+					"%s:%d",
+					cfg.Peer.AnnounceHostname,
+					cfg.Peer.TCPPort,
+				),
+			},
+		)
+	}
+
+	// add relay peers
 	for _, rp := range cfg.Peer.RelayAddresses {
-		li.AddRelays(rp)
+		eventbus.DefaultEventbus.Publish(
+			eventbus.RelayAdded{
+				PublicKey: rp,
+			},
+		)
 	}
 
-	network, err := net.New(ps, li)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not create network"), err)
-	}
-
-	// construct tcp transport
-	tcpTransport := net.NewTCPTransport(
-		li,
-		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
+	keychain.DefaultKeychain.Put(
+		keychain.PrimaryPeerKey,
+		cfg.Peer.PeerKey,
 	)
 
-	// add transports to network
-	network.AddTransport("tcps", tcpTransport)
-
-	// construct handshake
-	handshakeMiddleware := handshake.New(
-		li,
-		ps,
+	network := net.New(
+		net.WithKeychain(keychain.DefaultKeychain),
+		net.WithEventBus(eventbus.DefaultEventbus),
 	)
-
-	// add middleware to network
-	network.AddMiddleware(handshakeMiddleware.Handle())
 
 	// construct exchange
 	ex, err := exchange.New(
 		ctx,
-		cfg.Peer.PeerKey,
+		eventbus.DefaultEventbus,
+		keychain.DefaultKeychain,
 		network,
 		st,
 		ps,
-		li,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
@@ -120,11 +114,12 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	// construct hyperspace peerstore
-	hs, err := hyperspace.NewDiscoverer(
+	hs, err := hyperspace.New(
 		ctx,
 		ps,
+		keychain.DefaultKeychain,
+		eventbus.DefaultEventbus,
 		ex,
-		li,
 		bootstrapPeers,
 	)
 	if err != nil {
@@ -136,7 +131,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		st,
 		ex,
 		nil,
-		li,
+		keychain.DefaultKeychain,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct orchestrator"), err)
@@ -147,12 +142,22 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		return nil, errors.Wrap(errors.New("could not add hyperspace provider"), err)
 	}
 
+	if _, err := network.Listen(
+		ctx,
+		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
+	); err != nil {
+		return nil, err
+	}
+
+	if cfg.Peer.UPNP {
+		nat.MapExternalPort(cfg.Peer.TCPPort) // nolint: errcheck
+	}
+
 	return &Daemon{
 		Net:          network,
 		Discovery:    ps,
 		Exchange:     ex,
 		Store:        st,
 		Orchestrator: or,
-		LocalPeer:    li,
 	}, nil
 }

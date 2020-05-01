@@ -9,6 +9,7 @@ import (
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -32,7 +33,7 @@ type (
 			ctx context.Context,
 			stream object.Hash,
 			recipients peer.LookupOption,
-			options ...exchange.Option,
+			options ...exchange.SendOption,
 		) (*Graph, error)
 		Put(object.Object) error
 		Get(
@@ -45,7 +46,7 @@ type (
 		exchange  exchange.Exchange
 		discovery discovery.Discoverer
 		syncLock  *nsync.NamedMutex
-		localInfo *peer.LocalPeer
+		keychain  keychain.Keychain
 	}
 	Graph struct {
 		Objects []object.Object
@@ -57,7 +58,7 @@ func New(
 	st *sqlobjectstore.Store,
 	ex exchange.Exchange,
 	ds discovery.Discoverer,
-	li *peer.LocalPeer,
+	kc keychain.Keychain,
 ) (Orchestrator, error) {
 	ctx := context.Background()
 	return NewWithContext(
@@ -65,7 +66,7 @@ func New(
 		st,
 		ex,
 		ds,
-		li,
+		kc,
 	)
 }
 
@@ -76,7 +77,7 @@ func NewWithContext(
 	st *sqlobjectstore.Store,
 	ex exchange.Exchange,
 	ds discovery.Discoverer,
-	li *peer.LocalPeer,
+	kc keychain.Keychain,
 ) (Orchestrator, error) {
 	logger := log.FromContext(ctx).Named("orchestrator")
 	m := &orchestrator{
@@ -84,7 +85,7 @@ func NewWithContext(
 		exchange:  ex,
 		discovery: ds,
 		syncLock:  nsync.NewNamedMutex(),
-		localInfo: li,
+		keychain:  kc,
 	}
 	sub := m.exchange.Subscribe(
 		exchange.FilterByObjectType("**"),
@@ -123,7 +124,6 @@ func NewWithContext(
 			"adding supported object hashes as content",
 			log.Any("rootObjectHashes", hs),
 		)
-		m.localInfo.AddContentHash(hs...)
 	}()
 
 	return m, nil
@@ -240,20 +240,13 @@ func (m *orchestrator) Put(o object.Object) error {
 			o = o.SetParents(parentHashes)
 		}
 	}
-	o = o.SetOwners([]crypto.PublicKey{
-		m.localInfo.GetIdentityPublicKey(),
-	})
+	o = o.SetOwners(
+		m.keychain.ListPublicKeys(keychain.IdentityKey),
+	)
 
 	// store the object
 	if err := m.store.Put(o); err != nil {
 		return err
-	}
-
-	h := object.NewHash(o)
-
-	// if this is a new stream
-	if streamHash.IsEmpty() {
-		m.localInfo.AddContentHash(h)
 	}
 
 	// send announcements about new hashes
@@ -262,13 +255,11 @@ func (m *orchestrator) Put(o object.Object) error {
 		Objects: []*object.Object{
 			&o,
 		},
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetPeerPublicKey(),
-		},
+		Owners: m.keychain.ListPublicKeys(keychain.IdentityKey),
 	}
 
 	sig, err := object.NewSignature(
-		m.localInfo.GetPeerPrivateKey(),
+		m.keychain.GetPrimaryPeerKey(),
 		announcement.ToObject(),
 	)
 	if err != nil {
@@ -407,11 +398,11 @@ func (m *orchestrator) handleStreamRequest(
 		Nonce:    req.Nonce,
 		Children: hs,
 		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+			m.keychain.GetPrimaryPeerKey().PublicKey(),
 		},
 	}
 	sig, err := object.NewSignature(
-		m.localInfo.GetPeerPrivateKey(),
+		m.keychain.GetPrimaryPeerKey(),
 		req.ToObject(),
 	)
 	if err != nil {
@@ -462,7 +453,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 		Nonce:   req.Nonce,
 		Objects: make([]*object.Object, len(vs)),
 		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
+			m.keychain.GetPrimaryPeerKey().PublicKey(),
 		},
 	}
 	for i, obj := range vs {
@@ -470,7 +461,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 		res.Objects[i] = &obj
 	}
 	sig, err := object.NewSignature(
-		m.localInfo.GetPeerPrivateKey(),
+		m.keychain.GetPrimaryPeerKey(),
 		req.ToObject(),
 	)
 	if err != nil {

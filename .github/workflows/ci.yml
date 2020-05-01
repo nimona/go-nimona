@@ -41,6 +41,7 @@ jobs:
       - name: Make test
         run: make test
         env:
+          GOMAXPROCS: 4
           CI: 'true'
           VERBOSE: 'true'
 

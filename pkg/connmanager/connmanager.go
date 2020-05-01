@@ -5,7 +5,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/log"
+	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
 )
@@ -23,59 +23,46 @@ type peerbox struct {
 }
 
 type Manager interface {
-	GetConnection(context.Context, *peer.Peer) (*net.Connection, error)
+	GetConnection(
+		context.Context,
+		*peer.Peer,
+	) (*net.Connection, error)
 }
 
 type ConnectionHandler func(*net.Connection) error
 
 type manager struct {
-	net net.Network
+	eventbus eventbus.Eventbus
+	net      net.Network
 
 	// store the connections per peer
 	connections *ConnectionsMap
-	local       *peer.LocalPeer
 	connHandler ConnectionHandler // TODO: (geoah) should this be a slice?
 }
 
 func New(
 	ctx context.Context,
+	eb eventbus.Eventbus,
 	n net.Network,
-	localInfo *peer.LocalPeer,
 	handler ConnectionHandler,
 ) (Manager, error) {
-	logger := log.
-		FromContext(ctx).
-		Named("connmanager").
-		With(
-			log.String("method", "connmanager.New"),
-			log.String("local.peer", localInfo.GetPeerPublicKey().String()),
-		)
-
 	mgr := &manager{
+		eventbus:    eb,
 		net:         n,
 		connections: NewConnectionsMap(),
-		local:       localInfo,
 		connHandler: handler,
-	}
-
-	incomingConnections, err := n.Listen(ctx)
-	if err != nil {
-		return nil, err
 	}
 
 	// handle new incoming connections
 	go func() {
 		for {
-			conn := <-incomingConnections
+			conn, _ := n.Accept() // nolint: errcheck
 			go func(conn *net.Connection) {
 				// find existing peerbox and update it
 				pbox := mgr.getPeerbox(conn.RemotePeerKey)
 				mgr.updateConnection(pbox, conn)
-
-				if err := mgr.connHandler(conn); err != nil {
-					// TODO
-					logger.Error("failed to handle connection", log.Error(err))
-				}
+				// TODO handle error, or close connection?
+				mgr.connHandler(conn) // nolint: errcheck
 			}(conn)
 		}
 	}()
@@ -102,11 +89,15 @@ func (m *manager) GetConnection(
 		return nil, err
 	}
 
+	m.updateConnection(pbox, conn)
+
+	m.eventbus.Publish(eventbus.PeerConnectionEstablished{
+		PublicKey: conn.RemotePeerKey,
+	})
+
 	if err := m.connHandler(conn); err != nil {
 		return nil, err
 	}
-
-	m.updateConnection(pbox, conn)
 
 	return conn, nil
 }

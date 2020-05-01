@@ -4,9 +4,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"nimona.io/pkg/keychain"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/log"
@@ -27,7 +28,7 @@ func (m *orchestrator) Sync(
 	ctx context.Context,
 	streamHash object.Hash,
 	recipients peer.LookupOption,
-	options ...exchange.Option,
+	options ...exchange.SendOption,
 ) (
 	*Graph,
 	error,
@@ -135,12 +136,10 @@ func (m *orchestrator) Sync(
 					Nonce:   rand.String(12),
 					Stream:  p.Stream,
 					Objects: missingObjects,
-					Owners: []crypto.PublicKey{
-						m.localInfo.GetIdentityPublicKey(),
-					},
+					Owners:  m.keychain.ListPublicKeys(keychain.IdentityKey),
 				}
 				sig, err := object.NewSignature(
-					m.localInfo.GetPeerPrivateKey(),
+					m.keychain.GetPrimaryPeerKey(),
 					objReq.ToObject(),
 				)
 				if err != nil {
@@ -206,12 +205,10 @@ func (m *orchestrator) Sync(
 		Nonce:  streamRequestNonce,
 		Stream: streamHash,
 		Leaves: leaves,
-		Owners: []crypto.PublicKey{
-			m.localInfo.GetIdentityPublicKey(),
-		},
+		Owners: m.keychain.ListPublicKeys(keychain.IdentityKey),
 	}
 	sig, err := object.NewSignature(
-		m.localInfo.GetPeerPrivateKey(),
+		m.keychain.GetPrimaryPeerKey(),
 		req.ToObject(),
 	)
 	if err != nil {

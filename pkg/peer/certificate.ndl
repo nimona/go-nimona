@@ -1,6 +1,6 @@
-package nimona.io/object
+package nimona.io/peer
 
-object nimona.io/object.Certificate {
+object nimona.io/peer.Certificate {
     subject nimona.io/crypto.PublicKey
     created string
     expires string

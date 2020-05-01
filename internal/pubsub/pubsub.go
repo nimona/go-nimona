@@ -23,9 +23,9 @@ type (
 		Next() (interface{}, error)
 		Cancel()
 	}
-	subscription struct {
+	QueueSubscription struct {
 		filters []Filter
-		queue   *queue.Queue
+		Queue   *queue.Queue
 		cancel  func()
 	}
 	// Publisher deals with the publishing part of our PubSub
@@ -48,13 +48,13 @@ func New() PubSub {
 	}
 }
 
-func (ps *subscription) Cancel() {
+func (ps *QueueSubscription) Cancel() {
 	ps.cancel()
 }
 
-func (ps *subscription) Next() (interface{}, error) {
+func (ps *QueueSubscription) Next() (interface{}, error) {
 	// get the first item in the queue
-	next := ps.queue.Pop()
+	next := ps.Queue.Pop()
 	if next == nil {
 		// nil should only be allowed from the cancelation function, so
 		// assume it's canceled
@@ -67,8 +67,8 @@ func (ps *subscription) Next() (interface{}, error) {
 // Subscribe to published events with optional filters
 func (ps *pubsub) Subscribe(filters ...Filter) Subscription {
 	// create a new subscription
-	sub := &subscription{
-		queue:   queue.New(),
+	sub := &QueueSubscription{
+		Queue:   queue.New(),
 		filters: filters,
 	}
 
@@ -77,10 +77,10 @@ func (ps *pubsub) Subscribe(filters ...Filter) Subscription {
 		// delete the subscription
 		ps.subscriptions.Delete(sub)
 		// wipe the queue
-		sub.queue.Clean()
+		sub.Queue.Clean()
 		// prepend the queue with a nil item that will cause Next() to error
 		// with ErrSubscriptionCanceled
-		sub.queue.Prepend(nil)
+		sub.Queue.Prepend(nil)
 	}
 
 	// and store it
@@ -93,10 +93,7 @@ func (ps *pubsub) Publish(v interface{}) {
 	// go through our subscriptions
 	ps.subscriptions.Range(func(k, _ interface{}) bool {
 		// assuming it's ok
-		sub, ok := k.(*subscription)
-		if !ok {
-			return true
-		}
+		sub := k.(*QueueSubscription)
 		// go through the filters
 		for _, filter := range sub.filters {
 			// and make sure they pass
@@ -105,7 +102,7 @@ func (ps *pubsub) Publish(v interface{}) {
 			}
 		}
 		// and add it to the queue
-		sub.queue.Append(v)
+		sub.Queue.Append(v)
 		return true
 	})
 }

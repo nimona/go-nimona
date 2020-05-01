@@ -8,11 +8,18 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/peer"
 )
 
 func (api *API) HandleGetLocal(c *router.Context) {
-	p := api.local.GetSignedPeer()
+	p := &peer.Peer{
+		Addresses: api.net.Addresses(),
+		Certificates: api.keychain.GetCertificates(
+			api.keychain.GetPrimaryPeerKey().PublicKey(),
+		),
+		Owners: api.keychain.ListPublicKeys(keychain.PeerKey),
+	}
 	ms := api.mapObject(p.ToObject())
 	c.JSON(http.StatusOK, ms)
 }
