@@ -1,10 +1,9 @@
 package hyperspace
 
 import (
+	"fmt"
 	"sort"
 	"time"
-
-	"nimona.io/pkg/object"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/bloom"
@@ -12,8 +11,11 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -30,26 +32,35 @@ const (
 type (
 	// Discoverer hyperspace
 	Discoverer struct {
-		context   context.Context
-		peerstore discovery.PeerStorer
-		exchange  exchange.Exchange
-		local     *peer.LocalPeer
+		context          context.Context
+		peerstore        discovery.PeerStorer
+		exchange         exchange.Exchange
+		eventbus         eventbus.Eventbus
+		keychain         keychain.Keychain
+		pinnedObjects    *pinnedObjects
+		networkAddresses *networkAddresses
+		relays           *relays
 	}
 )
 
-// NewDiscoverer returns a new hyperspace discoverer
-func NewDiscoverer(
+// New returns a new discoverer
+func New(
 	ctx context.Context,
 	ps discovery.PeerStorer,
+	kc keychain.Keychain,
+	eb eventbus.Eventbus,
 	exc exchange.Exchange,
-	local *peer.LocalPeer,
 	bootstrapPeers []*peer.Peer,
 ) (*Discoverer, error) {
 	r := &Discoverer{
-		context:   ctx,
-		peerstore: ps,
-		local:     local,
-		exchange:  exc,
+		context:          ctx,
+		peerstore:        ps,
+		eventbus:         eb,
+		keychain:         kc,
+		exchange:         exc,
+		pinnedObjects:    &pinnedObjects{},
+		networkAddresses: &networkAddresses{},
+		relays:           &relays{},
 	}
 
 	logger := log.FromContext(ctx).With(
@@ -65,6 +76,33 @@ func NewDiscoverer(
 	)
 
 	go exchange.HandleEnvelopeSubscription(objectSub, r.handleObject)
+
+	// keep track of network addresses
+	go func() {
+		s := r.eventbus.Subscribe()
+		for {
+			e, err := s.Next()
+			if err != nil {
+				return
+			}
+			switch v := e.(type) {
+			case eventbus.NetworkAddressAdded:
+				r.networkAddresses.Put(v.Address)
+			case eventbus.NetworkAddressRemoved:
+				r.networkAddresses.Delete(v.Address)
+			case eventbus.ObjectPinned:
+				r.pinnedObjects.Put(v.Hash)
+			case eventbus.ObjectUnpinned:
+				r.pinnedObjects.Delete(v.Hash)
+			case eventbus.PeerConnectionEstablished:
+				r.announceSelf(v.PublicKey)
+			case eventbus.RelayAdded:
+				r.relays.Put(v.PublicKey)
+			case eventbus.RelayRemoved:
+				r.relays.Delete(v.PublicKey)
+			}
+		}
+	}()
 
 	// get in touch with bootstrap nodes
 	go func() {
@@ -132,6 +170,7 @@ func (r *Discoverer) Lookup(
 		},
 	)
 	go func() {
+		defer close(peerLookupResponses)
 		for {
 			e, err := resSub.Next()
 			if err != nil {
@@ -164,6 +203,7 @@ func (r *Discoverer) Lookup(
 		// just in case timeout
 		// TODO maybe figure out if the ctx as a timeout before adding one
 		timeout := time.NewTimer(time.Second * 10)
+		defer close(initialRecipients)
 		defer close(peers)
 		defer resSub.Cancel()
 		for {
@@ -174,12 +214,20 @@ func (r *Discoverer) Lookup(
 			case <-timeout.C:
 				logger.Debug("timeout done, giving up")
 				return
-			case r := <-initialRecipients:
+			case r, ok := <-initialRecipients:
+				if !ok {
+					initialRecipients = nil
+					continue
+				}
 				// mark peer as asked
 				recipientsResponded[r] = false
 				// ask recipient
 				queryPeer(r)
-			case e := <-peerLookupResponses:
+			case e, ok := <-peerLookupResponses:
+				if !ok {
+					peerLookupResponses = nil
+					continue
+				}
 				res := &peer.LookupResponse{}
 				if err := res.FromObject(e.Payload); err != nil {
 					continue
@@ -231,7 +279,6 @@ func (r *Discoverer) Lookup(
 	for _, p := range cps {
 		initialRecipients <- p.PublicKey()
 	}
-	close(initialRecipients)
 
 	return peers, nil
 }
@@ -292,6 +339,7 @@ func (r *Discoverer) handlePeerLookup(
 		log.String("method", "hyperspace/resolver.handlePeerLookup"),
 		log.String("e.sender", e.Sender.String()),
 		log.Any("query.bloom", q.Bloom),
+		log.Any("o.signer", e.Payload.GetSignatures()),
 	)
 
 	logger.Debug("handling peer lookup")
@@ -305,7 +353,7 @@ func (r *Discoverer) handlePeerLookup(
 		pps = append(pps, p)
 	}
 	cps := getClosest(pps, q.Bloom)
-	cps = append(cps, r.local.GetSignedPeer())
+	cps = append(cps, r.getLocalPeer())
 	cps = peer.Unique(cps)
 
 	ctx = context.New(
@@ -339,14 +387,14 @@ func (r *Discoverer) bootstrap(
 	bootstrapPeers []*peer.Peer,
 ) error {
 	logger := log.FromContext(ctx)
-	opts := []exchange.Option{
+	opts := []exchange.SendOption{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	}
 	nonce := rand.String(6)
 	q := &peer.LookupRequest{
 		Nonce: nonce,
-		Bloom: r.local.GetSignedPeer().Bloom,
+		Bloom: r.getLocalPeer().Bloom,
 	}
 	o := q.ToObject()
 	for _, p := range bootstrapPeers {
@@ -365,7 +413,7 @@ func (r *Discoverer) publishContentHashes(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
-	cb := r.local.GetSignedPeer()
+	cb := r.getLocalPeer()
 	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
 	if err != nil {
 		return err
@@ -389,21 +437,12 @@ func (r *Discoverer) publishContentHashes(
 		log.Any("bloom", cb.Bloom),
 	).Debug("trying to tell n peers")
 
-	opts := []exchange.Option{
+	opts := []exchange.SendOption{
 		exchange.WithLocalDiscoveryOnly(),
 		exchange.WithAsync(),
 	}
 
 	o := cb.ToObject()
-	sig, err := object.NewSignature(r.local.GetPeerPrivateKey(), o)
-	if err != nil {
-		logger.With(
-			log.Error(err),
-		).Error("could not sign object")
-		return errors.Wrap(err, errors.New("could not sign object"))
-	}
-
-	o = o.AddSignature(sig)
 	for _, f := range fs {
 		err := r.exchange.Send(ctx, o, peer.LookupByOwner(f), opts...)
 		if err != nil {
@@ -413,8 +452,68 @@ func (r *Discoverer) publishContentHashes(
 	return nil
 }
 
+func (r *Discoverer) announceSelf(p crypto.PublicKey) {
+	ctx := context.New(
+		context.WithTimeout(time.Second * 3),
+	)
+	err := r.exchange.SendToPeer(
+		ctx,
+		r.getLocalPeer().ToObject(),
+		&peer.Peer{
+			Version: -1,
+			Owners:  []crypto.PublicKey{p},
+		},
+		exchange.WithAsync(),
+	)
+	if err != nil {
+		return
+	}
+}
+
+func (r *Discoverer) getLocalPeer() *peer.Peer {
+	k := r.keychain.GetPrimaryPeerKey()
+	pk := k.PublicKey()
+	cs := r.keychain.GetCertificates(pk)
+
+	// gather up peer key, certificates, content ids and types
+	hs := []string{
+		pk.String(),
+	}
+
+	for _, c := range r.pinnedObjects.List() {
+		fmt.Println("))) ", c)
+		hs = append(hs, c.String())
+	}
+
+	for _, c := range cs {
+		hs = append(hs, c.Subject.String())
+	}
+
+	// TODO cache peer info and reuse
+	pi := &peer.Peer{
+		Version:   time.Now().UTC().Unix(),
+		Bloom:     bloom.New(hs...),
+		Addresses: r.networkAddresses.List(),
+		Relays:    r.relays.List(),
+		Certificates: r.keychain.GetCertificates(
+			r.keychain.GetPrimaryPeerKey().PublicKey(),
+		),
+		Owners: r.keychain.ListPublicKeys(keychain.PeerKey),
+	}
+
+	o := pi.ToObject()
+	sig, err := object.NewSignature(k, o)
+	if err != nil {
+		panic(err)
+	}
+
+	pi.Signatures = append(pi.Signatures, sig)
+
+	return pi
+}
+
 func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
-	lp := r.local.GetPeerPublicKey().String()
+	lp := r.keychain.GetPrimaryPeerKey().PublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
 		for _, s := range p.Owners {

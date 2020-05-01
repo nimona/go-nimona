@@ -6,16 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"nimona.io/pkg/peer"
-
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -106,10 +106,10 @@ func (api *API) HandlePostObjects(c *router.Context) {
 	}
 
 	o := object.FromMap(req)
-	k := api.local.GetPeerPrivateKey()
-	o = o.SetOwners([]crypto.PublicKey{
-		api.local.GetIdentityPublicKey(),
-	})
+	k := api.keychain.GetPrimaryPeerKey()
+	o = o.SetOwners(
+		api.keychain.ListPublicKeys(keychain.IdentityKey),
+	)
 
 	sig, err := object.NewSignature(k, o)
 	if err != nil {
@@ -196,11 +196,16 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	req["stream:s"] = rootObjectHash
 	req["parents:as"] = parents
-	req["@owners:as"] = []interface{}{api.local.GetIdentityPublicKey().String()}
+	req["@owners:as"] = []interface{}{
+		api.keychain.List(keychain.IdentityKey)[0],
+	}
 
 	o := object.FromMap(req)
 
-	sig, err := object.NewSignature(api.local.GetPeerPrivateKey(), o)
+	sig, err := object.NewSignature(
+		api.keychain.GetPrimaryPeerKey(),
+		o,
+	)
 	if err != nil {
 		// nolint: errcheck
 		c.AbortWithError(

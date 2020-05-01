@@ -4,14 +4,12 @@ import (
 	"net/http"
 
 	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/keychain"
 )
 
 func (api *API) HandleGetIdentities(c *router.Context) {
-	p := api.local.GetIdentityPublicKey()
-
-	c.JSON(http.StatusOK, []interface{}{
-		p.String(),
-	})
+	p := api.keychain.ListPublicKeys(keychain.IdentityKey)
+	c.JSON(http.StatusOK, p)
 }
 
 func (api *API) HandleGetIdentity(c *router.Context) {

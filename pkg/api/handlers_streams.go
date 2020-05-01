@@ -52,7 +52,7 @@ func (api *API) HandleGetStreams(c *router.Context) {
 
 			case req := <-outgoing:
 				sig, err := object.NewSignature(
-					api.local.GetPeerPrivateKey(),
+					api.keychain.GetPrimaryPeerKey(),
 					req,
 				)
 				if err != nil {

@@ -37,4 +37,5 @@
     "editor.rulers": [
         80,
     ],
+    "go.useLanguageServer": false,
 }

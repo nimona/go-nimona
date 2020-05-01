@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"nimona.io/pkg/keychain"
+
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
@@ -22,7 +24,6 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
-	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
@@ -31,13 +32,13 @@ type API struct {
 	config *config.Config
 
 	router    *router.Router
+	keychain  keychain.Keychain
 	net       net.Network
 	discovery discovery.Discoverer
 	exchange  exchange.Exchange
 
 	objectStore  *sqlobjectstore.Store
 	orchestrator orchestrator.Orchestrator
-	local        *peer.LocalPeer
 
 	token string
 
@@ -52,10 +53,10 @@ type API struct {
 func New(
 	cfg *config.Config,
 	k crypto.PrivateKey,
+	kc keychain.Keychain,
 	n net.Network,
 	d discovery.Discoverer,
 	x exchange.Exchange,
-	linf *peer.LocalPeer,
 	sst *sqlobjectstore.Store,
 	or orchestrator.Orchestrator,
 	version string,
@@ -69,14 +70,13 @@ func New(
 		config: cfg,
 
 		router:      r,
+		keychain:    kc,
 		net:         n,
 		discovery:   d,
 		exchange:    x,
 		objectStore: sst,
 
 		orchestrator: or,
-
-		local: linf,
 
 		version:      version,
 		commit:       commit,

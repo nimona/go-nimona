@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"nimona.io/pkg/keychain"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -150,10 +152,11 @@ func TestSync(t *testing.T) {
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	li, err := peer.NewLocalPeer("", pk)
-	assert.NoError(t, err)
+	kc := keychain.New()
+	kc.Put(keychain.PrimaryPeerKey, pk)
+	kc.Put(keychain.IdentityKey, pk)
 
-	m, err := orchestrator.New(store, x, nil, li)
+	m, err := orchestrator.New(store, x, nil, kc)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotEmpty(t, subs)

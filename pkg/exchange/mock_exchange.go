@@ -17,7 +17,7 @@ type MockExchange struct {
 }
 
 // Request provides a mock function with given fields: ctx, _a1, recipient, options
-func (_m *MockExchange) Request(ctx context.Context, _a1 object.Hash, recipient peer.LookupOption, options ...Option) error {
+func (_m *MockExchange) Request(ctx context.Context, _a1 object.Hash, recipient peer.LookupOption, options ...SendOption) error {
 	_va := make([]interface{}, len(options))
 	for _i := range options {
 		_va[_i] = options[_i]
@@ -28,7 +28,7 @@ func (_m *MockExchange) Request(ctx context.Context, _a1 object.Hash, recipient 
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, object.Hash, peer.LookupOption, ...Option) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, object.Hash, peer.LookupOption, ...SendOption) error); ok {
 		r0 = rf(ctx, _a1, recipient, options...)
 	} else {
 		r0 = ret.Error(0)
@@ -38,7 +38,7 @@ func (_m *MockExchange) Request(ctx context.Context, _a1 object.Hash, recipient 
 }
 
 // Send provides a mock function with given fields: ctx, _a1, recipient, options
-func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, recipient peer.LookupOption, options ...Option) error {
+func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, recipient peer.LookupOption, options ...SendOption) error {
 	_va := make([]interface{}, len(options))
 	for _i := range options {
 		_va[_i] = options[_i]
@@ -49,7 +49,7 @@ func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, recipient p
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, object.Object, peer.LookupOption, ...Option) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, object.Object, peer.LookupOption, ...SendOption) error); ok {
 		r0 = rf(ctx, _a1, recipient, options...)
 	} else {
 		r0 = ret.Error(0)
@@ -59,7 +59,7 @@ func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, recipient p
 }
 
 // SendToPeer provides a mock function with given fields: ctx, _a1, p, options
-func (_m *MockExchange) SendToPeer(ctx context.Context, _a1 object.Object, p *peer.Peer, options ...Option) error {
+func (_m *MockExchange) SendToPeer(ctx context.Context, _a1 object.Object, p *peer.Peer, options ...SendOption) error {
 	_va := make([]interface{}, len(options))
 	for _i := range options {
 		_va[_i] = options[_i]
@@ -70,7 +70,7 @@ func (_m *MockExchange) SendToPeer(ctx context.Context, _a1 object.Object, p *pe
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, object.Object, *peer.Peer, ...Option) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, object.Object, *peer.Peer, ...SendOption) error); ok {
 		r0 = rf(ctx, _a1, p, options...)
 	} else {
 		r0 = ret.Error(0)

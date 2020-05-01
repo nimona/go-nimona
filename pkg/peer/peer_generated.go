@@ -22,7 +22,7 @@ type (
 		Addresses    []string
 		Bloom        []int64
 		ContentTypes []string
-		Certificates []*object.Certificate
+		Certificates []*Certificate
 		Relays       []crypto.PublicKey
 	}
 	LookupRequest struct {
@@ -85,7 +85,7 @@ func (e Peer) GetSchema() *object.SchemaObject {
 			},
 			&object.SchemaProperty{
 				Name:       "certificates",
-				Type:       "nimona.io/object.Certificate",
+				Type:       "nimona.io/peer.Certificate",
 				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
@@ -195,9 +195,9 @@ func (e *Peer) FromObject(o object.Object) error {
 	}
 	if v := data.Value("certificates:ao"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
-		e.Certificates = make([]*object.Certificate, len(m))
+		e.Certificates = make([]*Certificate, len(m))
 		for i, iv := range m {
-			es := &object.Certificate{}
+			es := &Certificate{}
 			eo := object.FromMap(iv.(map[string]interface{}))
 			es.FromObject(eo)
 			e.Certificates[i] = es

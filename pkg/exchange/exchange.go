@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"expvar"
+	"fmt"
 	"io"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/eventbus"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
@@ -70,7 +73,7 @@ type (
 			ctx context.Context,
 			object object.Hash,
 			recipient peer.LookupOption,
-			options ...Option,
+			options ...SendOption,
 		) error
 		Subscribe(
 			filters ...EnvelopeFilter,
@@ -79,23 +82,22 @@ type (
 			ctx context.Context,
 			object object.Object,
 			recipient peer.LookupOption,
-			options ...Option,
+			options ...SendOption,
 		) error
 		SendToPeer(
 			ctx context.Context,
 			object object.Object,
 			p *peer.Peer,
-			options ...Option,
+			options ...SendOption,
 		) error
 	}
 	// echange implements an Exchange
 	exchange struct {
-		key     crypto.PrivateKey
-		net     net.Network
-		connmgr connmanager.Manager
+		net      net.Network
+		connmgr  connmanager.Manager
+		keychain keychain.Keychain
 
 		discover discovery.PeerStorer
-		local    *peer.LocalPeer
 
 		outboxes *OutboxesMap
 		inboxes  EnvelopePubSub
@@ -103,12 +105,14 @@ type (
 		store     *sqlobjectstore.Store // TODO remove
 		blacklist *cache.Cache
 	}
-	// Options (mostly) for Send()
-	Options struct {
+	// // Option for creating a new exchange
+	// Option func(*exchange)
+	// SendOptions (mostly) for Send()
+	SendOptions struct {
 		LocalDiscovery bool
 		Async          bool
 	}
-	Option func(*Options)
+	SendOption func(*SendOptions)
 	// addressState defines the states of a peer's address
 	// current options are:
 	// * -1 unconnectable
@@ -128,7 +132,7 @@ type (
 		context   context.Context
 		recipient *peer.Peer
 		object    object.Object
-		options   *Options
+		options   *SendOptions
 		err       chan error
 	}
 )
@@ -136,27 +140,23 @@ type (
 // New creates a exchange on a given network
 func New(
 	ctx context.Context,
-	key crypto.PrivateKey,
+	eb eventbus.Eventbus,
+	kc keychain.Keychain,
 	n net.Network,
 	store *sqlobjectstore.Store,
 	discover discovery.PeerStorer,
-	localInfo *peer.LocalPeer,
 ) (Exchange, error) {
 	w := &exchange{
-		key: key,
-		net: n,
-
-		discover: discover,
-		local:    localInfo,
-
-		outboxes: NewOutboxesMap(),
-		inboxes:  NewEnvelopePubSub(),
-
+		keychain:  kc,
+		net:       n,
+		discover:  discover,
+		outboxes:  NewOutboxesMap(),
+		inboxes:   NewEnvelopePubSub(),
 		store:     store,
 		blacklist: cache.New(10*time.Second, 5*time.Minute),
 	}
 
-	connmgr, err := connmanager.New(ctx, n, localInfo, w.handleConnection)
+	connmgr, err := connmanager.New(ctx, eb, n, w.handleConnection)
 	if err != nil {
 		return nil,
 			errors.Wrap(
@@ -166,16 +166,19 @@ func New(
 	}
 	w.connmgr = connmgr
 
-	// add local peer to discoverer
-	// TODO this is mostly a hack as discover doesn't have access to local
-	w.discover.Add(w.local.GetSignedPeer(), true)
+	// // add local peer to discoverer
+	// // TODO this is mostly a hack as discover doesn't have access to local
+	// w.discover.Add(w.local.GetSignedPeer(), true)
 
 	logger := log.
 		FromContext(ctx).
 		Named("exchange").
 		With(
 			log.String("method", "exchange.New"),
-			log.String("local.peer", localInfo.GetPeerPublicKey().String()),
+			log.String(
+				"local.peer",
+				w.keychain.GetPrimaryPeerKey().PublicKey().String(),
+			),
 		)
 
 	// subscribe to object requests and handle them
@@ -218,13 +221,6 @@ func (w *exchange) handleConnection(conn *net.Connection) error {
 
 	if conn == nil {
 		return errors.New("missing connection")
-	}
-
-	if err := net.Write(
-		w.local.GetSignedPeer().ToObject(),
-		conn,
-	); err != nil {
-		return err
 	}
 
 	go func() {
@@ -371,7 +367,7 @@ func (w *exchange) Request(
 	ctx context.Context,
 	hash object.Hash,
 	recipient peer.LookupOption,
-	options ...Option,
+	options ...SendOption,
 ) error {
 	req := &ObjectRequest{
 		ObjectHash: hash,
@@ -434,7 +430,7 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 			// if the data are encrypted we should first decrupt them
 			if !fwd.Ephermeral.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
-					w.local.GetPeerPrivateKey(),
+					w.keychain.GetPrimaryPeerKey(),
 					fwd.Ephermeral,
 				)
 				if err != nil {
@@ -459,7 +455,8 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 			// and if this is not a dataforward then we assume it is for us
 			if o.GetType() != dataForwardType {
 				if len(o.GetSignatures()) == 0 {
-					logger.Error("data forward object has no signature")
+					fmt.Println("___", o.GetType())
+					logger.Error("forwarded object has no signature")
 					continue
 				}
 				w.inboxes.Publish(&Envelope{
@@ -476,7 +473,8 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 				return errors.Wrap(errors.Error("could not parse nfwd"), err)
 			}
 
-			if nfwd.Recipient.Equals(w.local.GetPeerPublicKey()) {
+			pk := w.keychain.GetPrimaryPeerKey().PublicKey()
+			if nfwd.Recipient.Equals(pk) {
 				w.inboxes.Publish(&Envelope{
 					Sender:  o.GetSignatures()[0].Signer,
 					Payload: o,
@@ -521,15 +519,15 @@ func (w *exchange) handlePeers(subscription EnvelopeSubscription) error {
 }
 
 // WithLocalDiscoveryOnly will only use local discovery to resolve addresses.
-func WithLocalDiscoveryOnly() Option {
-	return func(opt *Options) {
+func WithLocalDiscoveryOnly() SendOption {
+	return func(opt *SendOptions) {
 		opt.LocalDiscovery = true
 	}
 }
 
 // WithAsync will not wait to actually send the object
-func WithAsync() Option {
-	return func(opt *Options) {
+func WithAsync() SendOption {
+	return func(opt *SendOptions) {
 		opt.Async = true
 	}
 }
@@ -539,10 +537,10 @@ func (w *exchange) Send(
 	ctx context.Context,
 	o object.Object,
 	recipient peer.LookupOption,
-	options ...Option,
+	options ...SendOption,
 ) error {
 	ctx = context.FromContext(ctx)
-	opts := &Options{}
+	opts := &SendOptions{}
 	for _, option := range options {
 		option(opts)
 	}
@@ -560,7 +558,7 @@ func (w *exchange) Send(
 
 	done := map[crypto.PublicKey]bool{}
 
-	ownPublicKey := w.local.GetPeerPublicKey()
+	ownPublicKey := w.keychain.GetPrimaryPeerKey().PublicKey()
 	errs := &multierror.Group{}
 	for p := range ps {
 		// check if the peer is done
@@ -592,10 +590,10 @@ func (w *exchange) SendToPeer(
 	ctx context.Context,
 	o object.Object,
 	p *peer.Peer,
-	options ...Option,
+	options ...SendOption,
 ) error {
 	ctx = context.FromContext(ctx)
-	opts := &Options{}
+	opts := &SendOptions{}
 	for _, option := range options {
 		option(opts)
 	}

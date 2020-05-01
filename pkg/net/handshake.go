@@ -1,38 +1,24 @@
-package handshake
+package net
 
 import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/net"
-	object "nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
+	"nimona.io/pkg/object"
 )
-
-// New handshake middleware
-func New(
-	local *peer.LocalPeer,
-	discoverer discovery.Discoverer,
-) net.Middleware {
-	return &Handshake{
-		local:      local,
-		discoverer: discoverer,
-	}
-}
 
 // Handshake middleware
 type Handshake struct {
-	discoverer discovery.Discoverer
-	local      *peer.LocalPeer
+	keychain keychain.Keychain
 }
 
 // Handle incoming and outgoing connections
 // TODO needs to be able to handle both server and client interactions
-func (hs *Handshake) Handle() net.MiddlewareHandler {
-	return func(ctx context.Context, conn *net.Connection) (
-		*net.Connection, error) {
+func (hs *Handshake) Handle() MiddlewareHandler {
+	return func(ctx context.Context, conn *Connection) (
+		*Connection, error) {
 		if conn.IsIncoming {
 			return hs.handleIncoming(ctx, conn)
 		}
@@ -42,8 +28,8 @@ func (hs *Handshake) Handle() net.MiddlewareHandler {
 
 func (hs *Handshake) handleIncoming(
 	ctx context.Context,
-	conn *net.Connection,
-) (*net.Connection, error) {
+	conn *Connection,
+) (*Connection, error) {
 	logger := log.
 		FromContext(ctx).
 		Named("net/middleware/handleIncoming").
@@ -52,38 +38,45 @@ func (hs *Handshake) handleIncoming(
 		)
 	logger.Debug("handling inc connection, sending syn")
 
+	ks := hs.keychain.List(keychain.PeerKey)
+	k := hs.keychain.GetPrimaryPeerKey()
+
+	pks := make([]crypto.PublicKey, len(ks))
+	for i := 0; i < len(ks); i++ {
+		pks[i] = ks[i].PublicKey()
+	}
+	pk := pks[0]
+
 	nonce := rand.String(8)
-	syn := &Syn{
-		Nonce: nonce,
-		Owners: []crypto.PublicKey{
-			hs.local.GetIdentityPublicKey(),
-		},
+	syn := &HandshakeSyn{
+		Nonce:  nonce,
+		Owners: pks,
 	}
 	so := syn.ToObject()
-	sig, err := object.NewSignature(hs.local.GetPeerPrivateKey(), so)
+	sig, err := object.NewSignature(k, so)
 	if err != nil {
 		return nil, err
 	}
 
 	so = so.AddSignature(sig)
-	if err := net.Write(so, conn); err != nil {
+	if err := Write(so, conn); err != nil {
 		return nil, err
 	}
 
 	logger.Debug("sent syn, waiting syn-ack")
 
-	synAckObj, err := net.Read(conn)
+	synAckObj, err := Read(conn)
 	if err != nil {
 		return nil, err
 	}
 
-	synAck := &SynAck{}
+	synAck := &HandshakeSynAck{}
 	if err := synAck.FromObject(*synAckObj); err != nil {
 		return nil, err
 	}
 
 	if synAck.Nonce != nonce {
-		return nil, net.ErrNonce
+		return nil, ErrNonce
 	}
 
 	logger.Debug("got syn-ack, sending ack")
@@ -91,26 +84,26 @@ func (hs *Handshake) handleIncoming(
 	// store who is on the other side
 	// TODO Exchange relies on this nees to be somewhere else?
 	if len(synAck.Signatures) == 0 {
-		return nil, net.ErrMissingSignature
+		return nil, ErrMissingSignature
 	}
 	conn.RemotePeerKey = synAck.Signatures[0].Signer
-	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
+	conn.LocalPeerKey = pk
 
 	// TODO(@geoah) do we need to do something about this?
 	// hs.discoverer.Add(synAck.Peer)
 
-	ack := &Ack{
+	ack := &HandshakeAck{
 		Nonce: nonce,
 	}
 
 	ao := ack.ToObject()
-	sig, err = object.NewSignature(hs.local.GetPeerPrivateKey(), ao)
+	sig, err = object.NewSignature(k, ao)
 	if err != nil {
 		return nil, err
 	}
 
 	ao = ao.AddSignature(sig)
-	if err := net.Write(ao, conn); err != nil {
+	if err := Write(ao, conn); err != nil {
 		return nil, err
 	}
 
@@ -119,8 +112,10 @@ func (hs *Handshake) handleIncoming(
 	return conn, nil
 }
 
-func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
-	*net.Connection, error) {
+func (hs *Handshake) handleOutgoing(
+	ctx context.Context,
+	conn *Connection,
+) (*Connection, error) {
 	logger := log.
 		FromContext(ctx).
 		Named("net/middleware/handleOutgoing").
@@ -129,14 +124,23 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 		)
 	logger.Debug("handling out connection, waiting for syn")
 
-	synObj, err := net.Read(conn)
+	ks := hs.keychain.List(keychain.PeerKey)
+	k := hs.keychain.GetPrimaryPeerKey()
+
+	pks := make([]crypto.PublicKey, len(ks))
+	for i := 0; i < len(ks); i++ {
+		pks[i] = ks[i].PublicKey()
+	}
+	pk := pks[0]
+
+	synObj, err := Read(conn)
 	if err != nil {
 		logger.Warn("waiting for syn failed", log.Error(err))
 		// TODO close conn?
 		return nil, err
 	}
 
-	syn := &Syn{}
+	syn := &HandshakeSyn{}
 	if err := syn.FromObject(*synObj); err != nil {
 		logger.Warn("could not convert obj to syn")
 		// TODO close conn?
@@ -147,22 +151,20 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	// store the remote peer
 	if len(syn.Signatures) == 0 {
-		return nil, net.ErrMissingSignature
+		return nil, ErrMissingSignature
 	}
 	conn.RemotePeerKey = syn.Signatures[0].Signer
-	conn.LocalPeerKey = hs.local.GetPeerPublicKey()
+	conn.LocalPeerKey = pk
 
 	// TODO(@geoah) this one too
 	// hs.discoverer.Add(syn.Peer)
 
-	synAck := &SynAck{
-		Nonce: syn.Nonce,
-		Owners: []crypto.PublicKey{
-			hs.local.GetIdentityPublicKey(),
-		},
+	synAck := &HandshakeSynAck{
+		Nonce:  syn.Nonce,
+		Owners: pks,
 	}
 	sao := synAck.ToObject()
-	sig, err := object.NewSignature(hs.local.GetPeerPrivateKey(), sao)
+	sig, err := object.NewSignature(k, sao)
 	if err != nil {
 		logger.Warn(
 			"could not sign for syn ack object",
@@ -173,7 +175,7 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 	}
 
 	sao = sao.AddSignature(sig)
-	if err := net.Write(sao, conn); err != nil {
+	if err := Write(sao, conn); err != nil {
 		logger.Warn("sending for syn-ack failed", log.Error(err))
 		// TODO close conn?
 		return nil, nil
@@ -181,14 +183,14 @@ func (hs *Handshake) handleOutgoing(ctx context.Context, conn *net.Connection) (
 
 	logger.Debug("sent syn-ack, waiting ack")
 
-	ackObj, err := net.Read(conn)
+	ackObj, err := Read(conn)
 	if err != nil {
 		logger.Warn("waiting for ack failed", log.Error(err))
 		// TODO close conn?
 		return nil, nil
 	}
 
-	ack := &Ack{}
+	ack := &HandshakeAck{}
 	if err := ack.FromObject(*ackObj); err != nil {
 		// TODO close conn?
 		logger.Warn("could not convert obj to syn ack")
