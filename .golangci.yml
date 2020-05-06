@@ -5,8 +5,6 @@ linters-settings:
       - github.com/sirupsen/logrus
     packages-with-error-message:
       - github.com/sirupsen/logrus: "logging is allowed only by nimona.io/pkg/log"
-  dupl:
-    threshold: 100
   funlen:
     lines: 100
     # TODO try and reduce
@@ -54,7 +52,6 @@ linters:
     - bodyclose
     - deadcode
     - depguard
-    - dupl
     - errcheck
     - gochecknoinits
     - gocritic
@@ -89,6 +86,7 @@ linters:
     # - gocyclo
 
     # don't enable:
+    # - dupl
     # - gochecknoglobals
     # - gocognit
     # - godox
