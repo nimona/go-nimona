@@ -42,7 +42,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		},
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
 
@@ -51,11 +51,11 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
-		context.WithTimeout(time.Second*3),
+		context.WithTimeout(time.Second),
 	)
 
 	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
@@ -67,7 +67,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	ctxR2 := context.New(
 		context.WithCorrelationID("req2"),
-		context.WithTimeout(time.Second*3),
+		context.WithTimeout(time.Second),
 	)
 	peersChan, err = d0.Lookup(ctxR2, peer.LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
@@ -85,7 +85,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
 	_, k2, kc2, eb2, n2, x2, disc2, ctx2 := newPeer(t, "peer2")
@@ -104,7 +104,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// node 2
 	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
@@ -112,7 +112,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// find bootstrap from node1
 	ctx := context.New(
@@ -159,7 +159,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, d3)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	fmt.Println("peer0", k0)
 	fmt.Println("peer1", k1)
@@ -172,7 +172,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	fmt.Println("-------------------")
 
 	// allow bootstraping to settle
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// find node 3 from node 1 from it's identity
 	ctx = context.New(
@@ -216,6 +216,11 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
 	ch := object.HashFromBytes(token)
+	eb1.Publish(
+		eventbus.ObjectPinned{
+			Hash: ch,
+		},
+	)
 
 	// print peer info
 	fmt.Println("k0", k0)
@@ -228,7 +233,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	err = disc0.AddDiscoverer(d0)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// bootstrap address
 	ba := []*peer.Peer{
@@ -244,13 +249,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	err = disc1.AddDiscoverer(d1)
 	assert.NoError(t, err)
 
-	eb1.Publish(
-		eventbus.ObjectPinned{
-			Hash: ch,
-		},
-	)
-
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// peer 2
 	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
@@ -258,12 +257,12 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	err = disc2.AddDiscoverer(d2)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 250)
 
 	// find peer 1 from peer 2
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
-		context.WithTimeout(time.Second*3),
+		context.WithTimeout(time.Second),
 	)
 	providersChan, err := d2.Lookup(ctx, peer.LookupByContentHash(ch))
 	providers := gatherPeers(providersChan)
