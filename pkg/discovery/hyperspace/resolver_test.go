@@ -55,7 +55,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*3),
 	)
 
 	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
@@ -67,7 +67,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	ctxR2 := context.New(
 		context.WithCorrelationID("req2"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*3),
 	)
 	peersChan, err = d0.Lookup(ctxR2, peer.LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
@@ -263,7 +263,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// find peer 1 from peer 2
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
-		context.WithTimeout(time.Second),
+		context.WithTimeout(time.Second*3),
 	)
 	providersChan, err := d2.Lookup(ctx, peer.LookupByContentHash(ch))
 	providers := gatherPeers(providersChan)
@@ -339,7 +339,6 @@ func newPeer(
 		eb,
 		kc,
 		n,
-		store,
 		disc,
 	)
 	assert.NoError(t, err)

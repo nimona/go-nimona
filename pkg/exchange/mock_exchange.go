@@ -16,27 +16,6 @@ type MockExchange struct {
 	mock.Mock
 }
 
-// Request provides a mock function with given fields: ctx, _a1, recipient, options
-func (_m *MockExchange) Request(ctx context.Context, _a1 object.Hash, recipient peer.LookupOption, options ...SendOption) error {
-	_va := make([]interface{}, len(options))
-	for _i := range options {
-		_va[_i] = options[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, _a1, recipient)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, object.Hash, peer.LookupOption, ...SendOption) error); ok {
-		r0 = rf(ctx, _a1, recipient, options...)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Send provides a mock function with given fields: ctx, _a1, recipient, options
 func (_m *MockExchange) Send(ctx context.Context, _a1 object.Object, recipient peer.LookupOption, options ...SendOption) error {
 	_va := make([]interface{}, len(options))

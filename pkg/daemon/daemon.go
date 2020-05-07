@@ -93,7 +93,6 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		eventbus.DefaultEventbus,
 		keychain.DefaultKeychain,
 		network,
-		st,
 		ps,
 	)
 	if err != nil {

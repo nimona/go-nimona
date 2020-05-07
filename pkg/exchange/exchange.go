@@ -26,13 +26,11 @@ import (
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 var (
-	objectRequestType = new(ObjectRequest).GetType()
-	peerType          = new(peer.Peer).GetType()
-	dataForwardType   = new(DataForward).GetType()
+	peerType        = new(peer.Peer).GetType()
+	dataForwardType = new(DataForward).GetType()
 )
 
 const (
@@ -69,12 +67,6 @@ func init() {
 type (
 	// Exchange interface for mocking exchange
 	Exchange interface {
-		Request(
-			ctx context.Context,
-			object object.Hash,
-			recipient peer.LookupOption,
-			options ...SendOption,
-		) error
 		Subscribe(
 			filters ...EnvelopeFilter,
 		) EnvelopeSubscription
@@ -93,16 +85,12 @@ type (
 	}
 	// echange implements an Exchange
 	exchange struct {
-		net      net.Network
-		connmgr  connmanager.Manager
-		keychain keychain.Keychain
-
-		discover discovery.PeerStorer
-
-		outboxes *OutboxesMap
-		inboxes  EnvelopePubSub
-
-		store     *sqlobjectstore.Store // TODO remove
+		net       net.Network
+		connmgr   connmanager.Manager
+		keychain  keychain.Keychain
+		discover  discovery.PeerStorer
+		outboxes  *OutboxesMap
+		inboxes   EnvelopePubSub
 		blacklist *cache.Cache
 	}
 	// // Option for creating a new exchange
@@ -143,7 +131,6 @@ func New(
 	eb eventbus.Eventbus,
 	kc keychain.Keychain,
 	n net.Network,
-	store *sqlobjectstore.Store,
 	discover discovery.PeerStorer,
 ) (Exchange, error) {
 	w := &exchange{
@@ -152,7 +139,6 @@ func New(
 		discover:  discover,
 		outboxes:  NewOutboxesMap(),
 		inboxes:   NewEnvelopePubSub(),
-		store:     store,
 		blacklist: cache.New(10*time.Second, 5*time.Minute),
 	}
 
@@ -181,24 +167,13 @@ func New(
 			),
 		)
 
-	// subscribe to object requests and handle them
-	objectReqSub := w.inboxes.Subscribe(
+	// subscribe to data forward type
+	dataForwardSub := w.inboxes.Subscribe(
 		FilterByObjectType(dataForwardType),
 	)
 
-	// subscribe to data forward type
-	dataForwardSub := w.inboxes.Subscribe(
-		FilterByObjectType(objectRequestType),
-	)
-
 	go func() {
-		if err := w.handleObjectRequests(objectReqSub); err != nil {
-			logger.Error("handling object requests failed", log.Error(err))
-		}
-	}()
-
-	go func() {
-		if err := w.handleObjectRequests(dataForwardSub); err != nil {
+		if err := w.handleObjects(dataForwardSub); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
 		}
 	}()
@@ -362,26 +337,13 @@ func (w *exchange) processOutbox(outbox *outbox) {
 	}
 }
 
-// Request an object given its hash from an address
-func (w *exchange) Request(
-	ctx context.Context,
-	hash object.Hash,
-	recipient peer.LookupOption,
-	options ...SendOption,
-) error {
-	req := &ObjectRequest{
-		ObjectHash: hash,
-	}
-	return w.Send(ctx, req.ToObject(), recipient, options...)
-}
-
 // Subscribe to incoming objects as envelopes
 func (w *exchange) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
 }
 
-// handleObjectRequests -
-func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
+// handleObjects -
+func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 	for {
 		e, err := sub.Next()
 		if err != nil {
@@ -392,30 +354,14 @@ func (w *exchange) handleObjectRequests(sub EnvelopeSubscription) error {
 			FromContext(context.Background()).
 			Named("exchange").
 			With(
-				log.String("method", "exchange.handleObjectRequests"),
+				log.String("method", "exchange.handleObjects"),
 				log.String("payload", e.Payload.GetType()),
 			)
 
 		// TODO verify signature
 		logger.Debug("getting payload")
+		// nolint: gocritic // don't care about singleCaseSwitch here
 		switch e.Payload.GetType() {
-		case objectRequestType:
-			req := &ObjectRequest{}
-			if err := req.FromObject(e.Payload); err != nil {
-				continue
-			}
-			res, err := w.store.Get(req.ObjectHash)
-			if err != nil {
-				continue
-			}
-			// TODO why the go routine?
-			go w.Send( // nolint: errcheck
-				context.New(),
-				res,
-				peer.LookupByOwner(e.Sender),
-				WithAsync(),
-				WithLocalDiscoveryOnly(),
-			)
 		case dataForwardType:
 			// if we receive a dataForward payload we check if it is meant for
 			// this peer, if yes try to decode it, if not forward it
