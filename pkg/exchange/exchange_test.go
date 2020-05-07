@@ -2,7 +2,6 @@ package exchange
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -19,7 +18,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/discovery/mocks"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
@@ -142,72 +140,6 @@ func TestSendSuccess(t *testing.T) {
 	}
 
 	assert.Equal(t, int32(2), atomic.LoadInt32(&handled))
-}
-
-func TestRequestSuccess(t *testing.T) {
-	dblite1 := tempSqlite3(t)
-	store1, err := sqlobjectstore.New(dblite1)
-	assert.NoError(t, err)
-
-	dblite2 := tempSqlite3(t)
-	store2, err := sqlobjectstore.New(dblite2)
-	assert.NoError(t, err)
-
-	disc1 := discovery.NewPeerStorer(store1)
-	disc2 := discovery.NewPeerStorer(store2)
-
-	kc1, n1, x1, _ := newPeer(t, disc1)
-	kc2, n2, _, d2 := newPeer(t, disc2)
-
-	disc1.Add(&peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
-		Addresses: n2.Addresses(),
-	}, true)
-	disc2.Add(&peer.Peer{
-		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
-		Addresses: n1.Addresses(),
-	}, true)
-
-	mp2 := &mocks.Discoverer{}
-	err = disc2.AddDiscoverer(mp2)
-	assert.NoError(t, err)
-
-	// add an object to n2's store
-	eo1 := object.Object{}
-	eo1 = eo1.Set("body:s", "bar1")
-	eo1 = eo1.SetType("test/msg")
-	err = d2.Put(eo1)
-	assert.NoError(t, err)
-
-	// handle events in x1 to make sure we received responses
-	out := make(chan *Envelope, 1)
-	go HandleEnvelopeSubscription(
-		x1.Subscribe(
-			FilterByObjectType("test/msg"),
-		),
-		func(e *Envelope) error {
-			out <- e
-			return nil
-		},
-	)
-
-	// request object, with req id
-	ctx := context.New(context.WithTimeout(time.Second * 3))
-	err = x1.Request(
-		ctx,
-		object.NewHash(eo1),
-		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
-	)
-	assert.NoError(t, err)
-
-	// check if we got back the expected obj
-	select {
-	case <-ctx.Done():
-		t.Log("did not receive response in time")
-		t.FailNow()
-	case o1r := <-out:
-		compareObjects(t, eo1, o1r.Payload)
-	}
 }
 
 func TestSendRelay(t *testing.T) {
@@ -406,21 +338,10 @@ func newPeer(
 	_, err = n.Listen(ctx, "127.0.0.1:0")
 	require.NoError(t, err)
 
-	x, err := New(ctx, eb, kc, n, ds, discover)
+	x, err := New(ctx, eb, kc, n, discover)
 	assert.NoError(t, err)
 
 	return kc, n, x.(*exchange), ds
-}
-
-func compareObjects(t *testing.T, expected, actual object.Object) {
-	assert.Equal(t, jp(expected), jp(actual))
-}
-
-// jp is a lazy approach to comparing the mess that is unmarshaling json when
-// dealing with numbers
-func jp(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ") // nolint
-	return string(b)
 }
 
 func tempSqlite3(t *testing.T) *sql.DB {

@@ -1,7 +1,6 @@
 package hyperspace
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
@@ -481,7 +480,6 @@ func (r *Discoverer) getLocalPeer() *peer.Peer {
 	}
 
 	for _, c := range r.pinnedObjects.List() {
-		fmt.Println("))) ", c)
 		hs = append(hs, c.String())
 	}
 
