@@ -2,13 +2,13 @@ package hyperspace
 
 import (
 	"sort"
+	"sync"
 	"time"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
@@ -32,34 +32,41 @@ type (
 	// Discoverer hyperspace
 	Discoverer struct {
 		context          context.Context
-		peerstore        discovery.PeerStorer
 		exchange         exchange.Exchange
 		eventbus         eventbus.Eventbus
 		keychain         keychain.Keychain
+		peerCache        *peerCache
 		pinnedObjects    *pinnedObjects
 		networkAddresses *networkAddresses
 		relays           *relays
+		// only used for initial bootstraping
+		initialBootstrapPeers []*peer.Peer
 	}
+	// Option for customizing a new discoverer
+	Option func(*Discoverer)
 )
 
 // New returns a new discoverer
 func New(
 	ctx context.Context,
-	ps discovery.PeerStorer,
-	kc keychain.Keychain,
-	eb eventbus.Eventbus,
-	exc exchange.Exchange,
-	bootstrapPeers []*peer.Peer,
+	opts ...Option,
 ) (*Discoverer, error) {
 	r := &Discoverer{
-		context:          ctx,
-		peerstore:        ps,
-		eventbus:         eb,
-		keychain:         kc,
-		exchange:         exc,
-		pinnedObjects:    &pinnedObjects{},
-		networkAddresses: &networkAddresses{},
-		relays:           &relays{},
+		context:  ctx,
+		keychain: keychain.DefaultKeychain,
+		eventbus: eventbus.DefaultEventbus,
+		exchange: exchange.DefaultExchange,
+		peerCache: &peerCache{
+			m: sync.Map{},
+		},
+		pinnedObjects:         &pinnedObjects{},
+		networkAddresses:      &networkAddresses{},
+		relays:                &relays{},
+		initialBootstrapPeers: []*peer.Peer{},
+	}
+
+	for _, opt := range opts {
+		opt(r)
 	}
 
 	logger := log.FromContext(ctx).With(
@@ -105,7 +112,7 @@ func New(
 
 	// get in touch with bootstrap nodes
 	go func() {
-		if err := r.bootstrap(ctx, bootstrapPeers); err != nil {
+		if err := r.bootstrap(ctx, r.initialBootstrapPeers); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
 		}
 
@@ -180,20 +187,18 @@ func (r *Discoverer) Lookup(
 	}()
 
 	// create channel for the peers we need to ask
-	initialRecipients := make(chan crypto.PublicKey, 100)
+	initialRecipients := make(chan *peer.Peer, 100)
 
-	queryPeer := func(pk crypto.PublicKey) {
+	queryPeer := func(p *peer.Peer) {
 		err := r.exchange.Send(
 			ctx,
 			reqObject,
-			peer.LookupByOwner(pk),
-			exchange.WithLocalDiscoveryOnly(),
-			exchange.WithAsync(),
+			p,
 		)
 		if err != nil {
 			logger.Debug("could send request to peer", log.Error(err))
 		}
-		logger.Debug("asked peer", log.String("peer", pk.String()))
+		logger.Debug("asked peer", log.String("peer", p.PublicKey().String()))
 	}
 
 	go func() {
@@ -219,7 +224,7 @@ func (r *Discoverer) Lookup(
 					continue
 				}
 				// mark peer as asked
-				recipientsResponded[r] = false
+				recipientsResponded[r.PublicKey()] = false
 				// ask recipient
 				queryPeer(r)
 			case e, ok := <-peerLookupResponses:
@@ -235,7 +240,8 @@ func (r *Discoverer) Lookup(
 				recipientsResponded[e.Sender] = true
 				for _, p := range res.Peers {
 					// add peers to our peerstore
-					r.peerstore.Add(p, false)
+					// TODO pin this in the cache
+					r.peerCache.Put(p)
 					// if the peer matches the query, add it to our results
 					if opt.Match(p) {
 						peers <- p
@@ -248,7 +254,7 @@ func (r *Discoverer) Lookup(
 					// else mark peer as asked
 					recipientsResponded[p.PublicKey()] = false
 					// and ask them
-					queryPeer(p.PublicKey())
+					queryPeer(p)
 				}
 				allDone := true
 				for _, answered := range recipientsResponded {
@@ -263,20 +269,10 @@ func (r *Discoverer) Lookup(
 		}
 	}()
 
-	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
-	if err != nil {
-		logger.Error("error getting all peers", log.Error(err))
-		return nil, err
-	}
-
-	pps := []*peer.Peer{}
-	for p := range aps {
-		pps = append(pps, p)
-	}
-	cps := getClosest(pps, bl)
+	cps := r.getClosest(bl)
 	cps = r.withoutOwnPeer(cps)
 	for _, p := range cps {
-		initialRecipients <- p.PublicKey()
+		initialRecipients <- p
 	}
 
 	return peers, nil
@@ -325,7 +321,7 @@ func (r *Discoverer) handlePeer(
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to store")
-	r.peerstore.Add(p, false)
+	r.peerCache.Put(p)
 }
 
 func (r *Discoverer) handlePeerLookup(
@@ -343,15 +339,7 @@ func (r *Discoverer) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
-	if err != nil {
-		return
-	}
-	pps := []*peer.Peer{}
-	for p := range aps {
-		pps = append(pps, p)
-	}
-	cps := getClosest(pps, q.Bloom)
+	cps := r.getClosest(q.Bloom)
 	cps = append(cps, r.getLocalPeer())
 	cps = peer.Unique(cps)
 
@@ -364,12 +352,19 @@ func (r *Discoverer) handlePeerLookup(
 		Peers: cps,
 	}
 
+	p, err := r.peerCache.Get(e.Sender)
+	if err != nil {
+		p = &peer.Peer{
+			Owners: []crypto.PublicKey{
+				e.Sender,
+			},
+		}
+	}
+
 	err = r.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByOwner(e.Sender),
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
+		p,
 	)
 	if err != nil {
 		logger.Debug("could not send lookup response",
@@ -386,10 +381,6 @@ func (r *Discoverer) bootstrap(
 	bootstrapPeers []*peer.Peer,
 ) error {
 	logger := log.FromContext(ctx)
-	opts := []exchange.SendOption{
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
-	}
 	nonce := rand.String(6)
 	q := &peer.LookupRequest{
 		Nonce: nonce,
@@ -398,7 +389,7 @@ func (r *Discoverer) bootstrap(
 	o := q.ToObject()
 	for _, p := range bootstrapPeers {
 		logger.Debug("connecting to bootstrap", log.Strings("addresses", p.Addresses))
-		err := r.exchange.SendToPeer(ctx, o, p, opts...)
+		err := r.exchange.Send(ctx, o, p)
 		if err != nil {
 			logger.Debug("could not send request to bootstrap", log.Error(err))
 		}
@@ -413,37 +404,20 @@ func (r *Discoverer) publishContentHashes(
 		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
 	)
 	cb := r.getLocalPeer()
-	aps, err := r.peerstore.Lookup(ctx, peer.LookupOnlyLocal())
-	if err != nil {
-		return err
-	}
-	pps := []*peer.Peer{}
-	for p := range aps {
-		pps = append(pps, p)
-	}
-	cps := getClosest(pps, cb.Bloom)
-	fs := []crypto.PublicKey{}
-	for _, c := range cps {
-		fs = append(fs, c.Owners...)
-	}
-	if len(fs) == 0 {
+	ps := r.getClosest(cb.Bloom)
+	if len(ps) == 0 {
 		logger.Debug("couldn't find peers to tell")
 		return errors.New("no peers to tell")
 	}
 
 	logger.With(
-		log.Int("n", len(fs)),
+		log.Int("n", len(ps)),
 		log.Any("bloom", cb.Bloom),
 	).Debug("trying to tell n peers")
 
-	opts := []exchange.SendOption{
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
-	}
-
 	o := cb.ToObject()
-	for _, f := range fs {
-		err := r.exchange.Send(ctx, o, peer.LookupByOwner(f), opts...)
+	for _, p := range ps {
+		err := r.exchange.Send(ctx, o, p)
 		if err != nil {
 			logger.Debug("could not send request", log.Error(err))
 		}
@@ -455,14 +429,12 @@ func (r *Discoverer) announceSelf(p crypto.PublicKey) {
 	ctx := context.New(
 		context.WithTimeout(time.Second * 3),
 	)
-	err := r.exchange.SendToPeer(
+	err := r.exchange.Send(
 		ctx,
 		r.getLocalPeer().ToObject(),
 		&peer.Peer{
-			Version: -1,
-			Owners:  []crypto.PublicKey{p},
+			Owners: []crypto.PublicKey{p},
 		},
-		exchange.WithAsync(),
 	)
 	if err != nil {
 		return
@@ -528,16 +500,16 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	return nps
 }
 
-// getClosest returns peers that closest resemble the query
-func getClosest(ps []*peer.Peer, q bloom.Bloom) []*peer.Peer {
+// getClosest returns the closest peers to the bloom filter from the cache
+func (r *Discoverer) getClosest(q bloom.Bloom) []*peer.Peer {
 	type kv struct {
 		bloomIntersection int
 		peer              *peer.Peer
 	}
 
-	r := []kv{}
-	for _, p := range ps {
-		r = append(r, kv{
+	rs := []kv{}
+	for _, p := range r.peerCache.List() {
+		rs = append(rs, kv{
 			bloomIntersection: intersectionCount(
 				q.Bloom(),
 				p.Bloom,
@@ -546,12 +518,16 @@ func getClosest(ps []*peer.Peer, q bloom.Bloom) []*peer.Peer {
 		})
 	}
 
-	sort.Slice(r, func(i, j int) bool {
-		return r[i].bloomIntersection < r[j].bloomIntersection
+	if len(rs) == 0 {
+		return []*peer.Peer{}
+	}
+
+	sort.Slice(rs, func(i, j int) bool {
+		return rs[i].bloomIntersection < rs[j].bloomIntersection
 	})
 
 	fs := []*peer.Peer{}
-	for i, c := range r {
+	for i, c := range rs {
 		fs = append(fs, c.peer)
 		if i > 10 { // TODO make limit configurable
 			break

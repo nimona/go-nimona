@@ -12,27 +12,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
-	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
-	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
-	assert.NoError(t, err)
-
-	err = disc0.AddDiscoverer(d0)
+	d0, err := New(
+		ctx0,
+		WithKeychain(kc0),
+		WithEventbus(eb0),
+		WithExchange(x0),
+	)
 	assert.NoError(t, err)
 
 	ba := []*peer.Peer{
@@ -44,11 +42,15 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 250)
 
-	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
+	_, k1, kc1, eb1, n1, x1, ctx1 := newPeer(t, "peer1")
 
-	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
-	assert.NoError(t, err)
-	err = disc1.AddDiscoverer(d1)
+	d1, err := New(
+		ctx1,
+		WithKeychain(kc1),
+		WithEventbus(eb1),
+		WithExchange(x1),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
@@ -77,18 +79,21 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 }
 
 func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
-	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
-	assert.NoError(t, err)
-	err = disc0.AddDiscoverer(d0)
+	_, err := New(
+		ctx0,
+		WithKeychain(kc0),
+		WithEventbus(eb0),
+		WithExchange(x0),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
-	_, k1, kc1, eb1, n1, x1, disc1, ctx1 := newPeer(t, "peer1")
-	_, k2, kc2, eb2, n2, x2, disc2, ctx2 := newPeer(t, "peer2")
+	_, k1, kc1, eb1, n1, x1, ctx1 := newPeer(t, "peer1")
+	_, k2, kc2, eb2, n2, x2, ctx2 := newPeer(t, "peer2")
 
 	// bootstrap address
 	ba := []*peer.Peer{
@@ -99,17 +104,25 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	}
 
 	// node 1
-	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
-	assert.NoError(t, err)
-	err = disc1.AddDiscoverer(d1)
+	d1, err := New(
+		ctx1,
+		WithKeychain(kc1),
+		WithEventbus(eb1),
+		WithExchange(x1),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
 	// node 2
-	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
-	assert.NoError(t, err)
-	err = disc2.AddDiscoverer(d2)
+	d2, err := New(
+		ctx2,
+		WithKeychain(kc2),
+		WithEventbus(eb2),
+		WithExchange(x2),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
@@ -149,15 +162,17 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	require.Equal(t, n2.Addresses(), peers[0].Addresses)
 
 	// add extra peer
-	_, k3, kc3, eb3, n3, x3, disc3, ctx3 := newPeer(t, "peer3")
+	_, k3, kc3, eb3, n3, x3, ctx3 := newPeer(t, "peer3")
 
 	// setup node 3
-	d3, err := New(ctx3, disc3, kc3, eb3, x3, ba)
+	_, err = New(
+		ctx3,
+		WithKeychain(kc3),
+		WithEventbus(eb3),
+		WithExchange(x3),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
-
-	err = disc3.AddDiscoverer(d3)
-	assert.NoError(t, err)
-	assert.NotNil(t, d3)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -208,9 +223,9 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 }
 
 func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
-	_, k0, kc0, eb0, n0, x0, disc0, ctx0 := newPeer(t, "peer0")
-	_, k1, kc1, eb1, _, x1, disc1, ctx1 := newPeer(t, "peer1")
-	_, k2, kc2, eb2, _, x2, disc2, ctx2 := newPeer(t, "peer2")
+	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
+	_, k1, kc1, eb1, _, x1, ctx1 := newPeer(t, "peer1")
+	_, k2, kc2, eb2, _, x2, ctx2 := newPeer(t, "peer2")
 
 	// make peer 1 a provider
 	token := make([]byte, 32)
@@ -228,9 +243,12 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	fmt.Println("k2", k2)
 
 	// bootstrap peer
-	d0, err := New(ctx0, disc0, kc0, eb0, x0, nil)
-	assert.NoError(t, err)
-	err = disc0.AddDiscoverer(d0)
+	d0, err := New(
+		ctx0,
+		WithKeychain(kc0),
+		WithEventbus(eb0),
+		WithExchange(x0),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
@@ -244,17 +262,25 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	}
 
 	// peer 1
-	d1, err := New(ctx1, disc1, kc1, eb1, x1, ba)
-	assert.NoError(t, err)
-	err = disc1.AddDiscoverer(d1)
+	_, err = New(
+		ctx1,
+		WithKeychain(kc1),
+		WithEventbus(eb1),
+		WithExchange(x1),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
 	// peer 2
-	d2, err := New(ctx2, disc2, kc2, eb2, x2, ba)
-	assert.NoError(t, err)
-	err = disc2.AddDiscoverer(d2)
+	d2, err := New(
+		ctx2,
+		WithKeychain(kc2),
+		WithEventbus(eb2),
+		WithExchange(x2),
+		WithBoostrapPeers(ba),
+	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
@@ -293,7 +319,6 @@ func newPeer(
 	eventbus.Eventbus,
 	net.Network,
 	exchange.Exchange,
-	discovery.PeerStorer,
 	context.Context,
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
@@ -319,12 +344,6 @@ func newPeer(
 	kc.Put(keychain.IdentityKey, opk)
 	kc.PutCertificate(&c)
 
-	dblite := tempSqlite3(t)
-	store, err := sqlobjectstore.New(dblite)
-	assert.NoError(t, err)
-
-	disc := discovery.NewPeerStorer(store)
-
 	n := net.New(
 		net.WithEventBus(eb),
 		net.WithKeychain(kc),
@@ -333,16 +352,14 @@ func newPeer(
 	_, err = n.Listen(context.Background(), "127.0.0.1:0")
 	require.NoError(t, err)
 
-	x, err := exchange.New(
+	x := exchange.New(
 		ctx,
-		eb,
-		kc,
-		n,
-		disc,
+		exchange.WithEventbus(eb),
+		exchange.WithKeychain(kc),
+		exchange.WithNet(n),
 	)
-	assert.NoError(t, err)
 
-	return opk, pk, kc, eb, n, x, disc, ctx
+	return opk, pk, kc, eb, n, x, ctx
 }
 
 func tempSqlite3(t *testing.T) *sql.DB {
