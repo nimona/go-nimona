@@ -24,15 +24,13 @@ func TestGetConnection(t *testing.T) {
 	eb1, _, n1 := newPeer(t)
 	eb2, kc2, n2 := newPeer(t)
 
-	mgr, err := New(ctx, eb1, n1, handler)
-	assert.NoError(t, err)
+	mgr := New(ctx, eb1, n1, handler)
 
 	lst1, err := n1.Listen(ctx, "0.0.0.0:0")
 	assert.NoError(t, err)
 	defer lst1.Close()
 
-	mgr2, err := New(ctx, eb2, n2, handler)
-	assert.NoError(t, err)
+	mgr2 := New(ctx, eb2, n2, handler)
 	assert.NotNil(t, mgr2)
 
 	lst2, err := n2.Listen(ctx, "0.0.0.0:0")
