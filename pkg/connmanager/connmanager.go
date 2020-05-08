@@ -45,7 +45,7 @@ func New(
 	eb eventbus.Eventbus,
 	n net.Network,
 	handler ConnectionHandler,
-) (Manager, error) {
+) Manager {
 	mgr := &manager{
 		eventbus:    eb,
 		net:         n,
@@ -67,7 +67,7 @@ func New(
 		}
 	}()
 
-	return mgr, nil
+	return mgr
 }
 
 func (m *manager) GetConnection(
