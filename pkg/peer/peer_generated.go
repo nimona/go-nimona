@@ -23,7 +23,7 @@ type (
 		Bloom        []int64
 		ContentTypes []string
 		Certificates []*Certificate
-		Relays       []crypto.PublicKey
+		Relays       []*Peer
 	}
 	LookupRequest struct {
 		raw        object.Object
@@ -92,8 +92,8 @@ func (e Peer) GetSchema() *object.SchemaObject {
 			},
 			&object.SchemaProperty{
 				Name:       "relays",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
+				Type:       "nimona.io/peer.Peer",
+				Hint:       "o",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -147,9 +147,9 @@ func (e Peer) ToObject() object.Object {
 	if len(e.Relays) > 0 {
 		v := immutable.List{}
 		for _, iv := range e.Relays {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("relays:as", v)
+		o = o.Set("relays:ao", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:o"] = schema.ToObject().ToMap()
@@ -203,11 +203,14 @@ func (e *Peer) FromObject(o object.Object) error {
 			e.Certificates[i] = es
 		}
 	}
-	if v := data.Value("relays:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Relays = make([]crypto.PublicKey, len(m))
+	if v := data.Value("relays:ao"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]interface{})
+		e.Relays = make([]*Peer, len(m))
 		for i, iv := range m {
-			e.Relays[i] = crypto.PublicKey(iv)
+			es := &Peer{}
+			eo := object.FromMap(iv.(map[string]interface{}))
+			es.FromObject(eo)
+			e.Relays[i] = es
 		}
 	}
 	return nil

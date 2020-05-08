@@ -9,7 +9,7 @@ signed object nimona.io/peer.Peer {
     bloom repeated int
     contentTypes repeated string
     certificates repeated nimona.io/peer.Certificate
-    relays repeated nimona.io/crypto.PublicKey
+    relays repeated nimona.io/peer.Peer
 }
 
 signed object nimona.io/LookupRequest {

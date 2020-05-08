@@ -3,6 +3,7 @@ package eventbus
 import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
 type (
@@ -39,7 +40,7 @@ type (
 	// RelayAdded is published when a relay has been found and should be used.
 	RelayAdded struct {
 		baseEvent
-		PublicKey crypto.PublicKey
+		Peer *peer.Peer
 	}
 	// RelayRemoved is published when a relay should be removed.
 	RelayRemoved struct {

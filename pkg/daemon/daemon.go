@@ -64,10 +64,17 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	// add relay peers
-	for _, rp := range cfg.Peer.RelayAddresses {
+	for i, rp := range cfg.Peer.RelayKeys {
 		eventbus.DefaultEventbus.Publish(
 			eventbus.RelayAdded{
-				PublicKey: rp,
+				Peer: &peer.Peer{
+					Owners: []crypto.PublicKey{
+						crypto.PublicKey(rp),
+					},
+					Addresses: []string{
+						cfg.Peer.RelayAddresses[i],
+					},
+				},
 			},
 		)
 	}
@@ -76,21 +83,6 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		keychain.PrimaryPeerKey,
 		cfg.Peer.PeerKey,
 	)
-
-	// network := net.New(
-	// 	net.WithKeychain(keychain.DefaultKeychain),
-	// 	net.WithEventBus(eventbus.DefaultEventbus),
-	// )
-
-	// construct exchange
-	// ex := exchange.New(
-	// 	ctx,
-	// 	exchange.WithKeychain(keychain.DefaultKeychain),
-	// 	exchange.WithNet(net.DefaultNetwork),
-	// )
-	// if err != nil {
-	// 	return nil, errors.Wrap(errors.New("could not construct exchange"), err)
-	// }
 
 	// get temp bootstrap peers from cfg
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))

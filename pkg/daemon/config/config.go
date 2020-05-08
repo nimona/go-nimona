@@ -20,16 +20,17 @@ type APIConfig struct {
 
 // nolint: lll
 type PeerConfig struct {
-	AnnounceHostname   string             `json:"hostname,omitempty" envconfig:"HOSTNAME"`
-	BootstrapKeys      []string           `json:"bootstrapKeys,omitempty" envconfig:"BOOTSTRAP_KEYS"`
-	BootstrapAddresses []string           `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
-	EnableMetrics      bool               `json:"metrics,omitempty" envconfig:"METRICS"`
-	IdentityKey        crypto.PrivateKey  `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
-	PeerKey            crypto.PrivateKey  `json:"peerKey,omitempty" envconfig:"KEY"`
-	TCPPort            int                `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
-	UPNP               bool               `json:"upnp,omitempty" envconfig:"UPNP"`
-	RelayAddresses     []crypto.PublicKey `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
-	ContentTypes       []string           `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
+	AnnounceHostname   string            `json:"hostname,omitempty" envconfig:"HOSTNAME"`
+	BootstrapKeys      []string          `json:"bootstrapKeys,omitempty" envconfig:"BOOTSTRAP_KEYS"`
+	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
+	EnableMetrics      bool              `json:"metrics,omitempty" envconfig:"METRICS"`
+	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
+	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" envconfig:"KEY"`
+	TCPPort            int               `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
+	UPNP               bool              `json:"upnp,omitempty" envconfig:"UPNP"`
+	RelayKeys          []string          `json:"relayKeys,omitempty" envconfig:"RELAY_KEYS"`
+	RelayAddresses     []string          `json:"relayAddresses,omitempty" envconfig:"RELAY_ADDRESSES"`
+	ContentTypes       []string          `json:"contentTypes,omitempty" envconfig:"CONTENT_TYPES"`
 }
 
 type Config struct {
@@ -56,10 +57,15 @@ func New() *Config {
 				"tcps:liu.bootstrap.nimona.io:21013",
 				"tcps:rajaniemi.bootstrap.nimona.io:21013",
 			},
-			RelayAddresses: []crypto.PublicKey{
+			RelayKeys: []string{
 				"ed25519.Eq4y6LPB1cHX5pM8rgK9vbjFSt6e6hDW8rAwTu1TUaXW",
 				"ed25519.7GhQzPptXaBehoaq3DfcSfj1Z7X5tyjinEdx1R7mqfx8",
 				"ed25519.B6KNw8oyerJRpPKtHrf5YSCeBqELbAfWScxRLNdGbazG",
+			},
+			RelayAddresses: []string{
+				"tcps:egan.bootstrap.nimona.io:21013",
+				"tcps:liu.bootstrap.nimona.io:21013",
+				"tcps:rajaniemi.bootstrap.nimona.io:21013",
 			},
 		},
 	}

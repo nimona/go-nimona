@@ -117,7 +117,7 @@ func New(
 			case eventbus.PeerConnectionEstablished:
 				r.announceSelf(v.PublicKey)
 			case eventbus.RelayAdded:
-				r.relays.Put(v.PublicKey)
+				r.relays.Put(v.Peer)
 			case eventbus.RelayRemoved:
 				r.relays.Delete(v.PublicKey)
 			}
@@ -126,6 +126,10 @@ func New(
 
 	// get in touch with bootstrap nodes
 	go func() {
+		if len(r.initialBootstrapPeers) == 0 {
+			return
+		}
+
 		if err := r.bootstrap(ctx, r.initialBootstrapPeers); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
 		}
