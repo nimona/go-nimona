@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 )
 
 type (
@@ -13,8 +14,8 @@ type (
 )
 
 // Put -
-func (m *relays) Put(k crypto.PublicKey) {
-	m.m.Store(k, true)
+func (m *relays) Put(v *peer.Peer) {
+	m.m.Store(v.PublicKey(), v)
 }
 
 // Delete -
@@ -23,10 +24,10 @@ func (m *relays) Delete(k crypto.PublicKey) {
 }
 
 // List -
-func (m *relays) List() []crypto.PublicKey {
-	hs := []crypto.PublicKey{}
+func (m *relays) List() []*peer.Peer {
+	hs := []*peer.Peer{}
 	m.m.Range(func(k, v interface{}) bool {
-		hs = append(hs, k.(crypto.PublicKey))
+		hs = append(hs, v.(*peer.Peer))
 		return true
 	})
 	return hs

@@ -1,10 +1,6 @@
 package exchange
 
 import (
-	"database/sql"
-	"fmt"
-	"io/ioutil"
-	"path"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -13,58 +9,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestSendSuccess(t *testing.T) {
-	// create the stores
-	dblite1 := tempSqlite3(t)
-	store1, err := sqlobjectstore.New(dblite1)
-	assert.NoError(t, err)
-
-	dblite2 := tempSqlite3(t)
-	store2, err := sqlobjectstore.New(dblite2)
-	assert.NoError(t, err)
-
-	// attach the stores to discovery
-	disc1 := discovery.NewPeerStorer(store1)
-	disc2 := discovery.NewPeerStorer(store2)
-
 	// create new peers
-	kc1, n1, x1, _ := newPeer(t, disc1)
-	kc2, n2, x2, _ := newPeer(t, disc2)
+	kc1, n1, x1 := newPeer(t)
+	kc2, n2, x2 := newPeer(t)
 
-	// make peers aware of each other
-	disc1.Add(&peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
-		Addresses: n2.Addresses(),
-	}, true)
-	disc2.Add(&peer.Peer{
+	// make up the peers
+	p1 := &peer.Peer{
 		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
 		Addresses: n1.Addresses(),
-	}, true)
-
-	// peer1 looks for peer2
-	dr1, err := disc1.Lookup(
-		context.Background(),
-		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
-	)
-	require.NoError(t, err)
-
-	gp := gatherPeers(dr1)
-	require.Len(t, gp, 1)
-	require.Equal(t, kc2.GetPrimaryPeerKey().PublicKey(), gp[0].PublicKey())
-	require.Equal(t, n2.Addresses(), gp[0].Addresses)
+	}
+	p2 := &peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+	}
 
 	// create test objects
 	eo1 := object.Object{}
@@ -122,7 +89,7 @@ func TestSendSuccess(t *testing.T) {
 	errS1 := x2.Send(
 		ctx,
 		eo1,
-		peer.LookupByOwner(kc1.GetPrimaryPeerKey().PublicKey()),
+		p1,
 	)
 	assert.NoError(t, errS1)
 
@@ -131,7 +98,7 @@ func TestSendSuccess(t *testing.T) {
 	errS2 := x1.Send(
 		ctx,
 		eo2,
-		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
+		p2,
 	)
 	assert.NoError(t, errS2)
 
@@ -143,78 +110,48 @@ func TestSendSuccess(t *testing.T) {
 }
 
 func TestSendRelay(t *testing.T) {
-	dblite1 := tempSqlite3(t)
-	store1, err := sqlobjectstore.New(dblite1)
-	assert.NoError(t, err)
-
-	dblite2 := tempSqlite3(t)
-	store2, err := sqlobjectstore.New(dblite2)
-	assert.NoError(t, err)
-
-	dblite3 := tempSqlite3(t)
-	store3, err := sqlobjectstore.New(dblite3)
-	assert.NoError(t, err)
-
-	discRel := discovery.NewPeerStorer(store1)
-	disc1 := discovery.NewPeerStorer(store2)
-	disc2 := discovery.NewPeerStorer(store3)
-
 	// enable binding to local addresses
 	net.BindLocal = true
 
 	// relay peer
-	rkc, rn, _, _ := newPeer(t, discRel)
+	rkc, rn, _ := newPeer(t)
 
 	// disable binding to local addresses
 	net.BindLocal = false
-	kc1, n1, x1, _ := newPeer(t, disc1)
-	kc2, n2, x2, _ := newPeer(t, disc2)
+	kc1, n1, x1 := newPeer(t)
+	kc2, n2, x2 := newPeer(t)
 
-	discRel.Add(&peer.Peer{
-		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
-		Addresses: n1.Addresses(),
-		Relays: []crypto.PublicKey{
-			rkc.GetPrimaryPeerKey().PublicKey(),
-		},
-	}, false)
-	discRel.Add(&peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
-		Addresses: n2.Addresses(),
-		Relays: []crypto.PublicKey{
-			rkc.GetPrimaryPeerKey().PublicKey(),
-		},
-	}, false)
-	disc1.Add(&peer.Peer{
+	// make up the peers
+	pR := &peer.Peer{
 		Owners:    rkc.ListPublicKeys(keychain.PeerKey),
 		Addresses: rn.Addresses(),
-	}, false)
-	disc1.Add(&peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
-		Addresses: n2.Addresses(),
-		Relays: []crypto.PublicKey{
-			rkc.GetPrimaryPeerKey().PublicKey(),
-		},
-	}, false)
-	disc2.Add(&peer.Peer{
-		Owners:    rkc.ListPublicKeys(keychain.PeerKey),
-		Addresses: rn.Addresses(),
-	}, false)
-	disc2.Add(&peer.Peer{
+	}
+	p1 := &peer.Peer{
 		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
 		Addresses: n1.Addresses(),
-		Relays: []crypto.PublicKey{
-			rkc.GetPrimaryPeerKey().PublicKey(),
+		Relays: []*peer.Peer{
+			pR,
 		},
-	}, false)
+	}
+	p2 := &peer.Peer{
+		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Addresses: n2.Addresses(),
+		Relays: []*peer.Peer{
+			pR,
+		},
+	}
 
 	// init connection from peer1 to relay
 	o1 := object.Object{}
 	o1 = o1.SetType("foo")
 	o1 = o1.Set("foo:s", "bar")
-	err = x1.Send(
-		context.Background(),
+	err := x1.Send(
+		context.New(
+			context.WithCorrelationID("pre0"),
+			context.WithTimeout(time.Second),
+		),
 		o1,
-		peer.LookupByOwner(rkc.GetPrimaryPeerKey().PublicKey()),
+		pR,
 	)
 	assert.NoError(t, err)
 
@@ -223,9 +160,12 @@ func TestSendRelay(t *testing.T) {
 	o2 = o2.SetType("foo")
 	o2 = o2.Set("foo:s", "bar")
 	err = x2.Send(
-		context.Background(),
+		context.New(
+			context.WithCorrelationID("pre1"),
+			context.WithTimeout(time.Second),
+		),
 		o2,
-		peer.LookupByOwner(rkc.GetPrimaryPeerKey().PublicKey()),
+		pR,
 	)
 	assert.NoError(t, err)
 
@@ -281,26 +221,26 @@ func TestSendRelay(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	ctx := context.New(context.WithTimeout(time.Second * 5))
-	defer ctx.Cancel()
-
 	err = x2.Send(
-		ctx,
+		context.New(
+			context.WithCorrelationID("req0"),
+			context.WithTimeout(time.Second),
+		),
 		eo1,
-		peer.LookupByOwner(kc1.GetPrimaryPeerKey().PublicKey()),
+		p1,
 	)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second)
 
-	ctx2 := context.New(context.WithTimeout(time.Second * 5))
-	defer ctx2.Cancel()
-
 	// TODO should be able to send not signed
 	err = x1.Send(
-		ctx2,
+		context.New(
+			context.WithCorrelationID("req1"),
+			context.WithTimeout(time.Second),
+		),
 		eo2,
-		peer.LookupByOwner(kc2.GetPrimaryPeerKey().PublicKey()),
+		p2,
 	)
 	assert.NoError(t, err)
 
@@ -312,12 +252,10 @@ func TestSendRelay(t *testing.T) {
 
 func newPeer(
 	t *testing.T,
-	discover discovery.PeerStorer,
 ) (
 	keychain.Keychain,
 	net.Network,
 	*exchange,
-	*sqlobjectstore.Store,
 ) {
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
@@ -326,9 +264,6 @@ func newPeer(
 
 	kc := keychain.New()
 	kc.Put(keychain.PrimaryPeerKey, pk)
-
-	ds, err := sqlobjectstore.New(tempSqlite3(t))
-	assert.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -344,25 +279,6 @@ func newPeer(
 		WithKeychain(kc),
 		WithEventbus(eb),
 	)
-	assert.NoError(t, err)
 
-	return kc, n, x.(*exchange), ds
-}
-
-func tempSqlite3(t *testing.T) *sql.DB {
-	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
-	require.NoError(t, err)
-	fmt.Println(path.Join(dirPath, "sqlite3.db"))
-	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
-	require.NoError(t, err)
-	return db
-}
-
-func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
-	ps := []*peer.Peer{}
-	for p := range p {
-		p := p
-		ps = append(ps, p)
-	}
-	return peer.Unique(ps)
+	return kc, n, x.(*exchange)
 }
