@@ -5,32 +5,30 @@ import (
 	"io"
 	"math"
 	"net"
-	"os"
-	"strconv"
 	"strings"
 	"time"
-
-	"nimona.io/pkg/eventbus"
 
 	"github.com/patrickmn/go-cache"
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
 
 var (
-	UseUPNP = false
+	DefaultNetwork = New(
+		WithEventBus(eventbus.DefaultEventbus),
+		WithKeychain(keychain.DefaultKeychain),
+	)
 )
 
 // TODO remove UseUPNP and replace with option
 // nolint: gochecknoinits
 func init() {
-	UseUPNP, _ = strconv.ParseBool(os.Getenv("UPNP"))
-
 	connConnOutCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
 	expvar.Publish("nm:net.conn.out", connConnOutCounter)
 
