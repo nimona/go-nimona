@@ -10,20 +10,19 @@ import (
 	"strconv"
 	"time"
 
-	"nimona.io/pkg/keychain"
-
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/http/router"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
@@ -31,11 +30,11 @@ import (
 type API struct {
 	config *config.Config
 
-	router    *router.Router
-	keychain  keychain.Keychain
-	net       net.Network
-	discovery discovery.Discoverer
-	exchange  exchange.Exchange
+	router   *router.Router
+	keychain keychain.Keychain
+	net      net.Network
+	resolver resolver.Resolver
+	exchange exchange.Exchange
 
 	objectStore  *sqlobjectstore.Store
 	orchestrator orchestrator.Orchestrator
@@ -55,7 +54,7 @@ func New(
 	k crypto.PrivateKey,
 	kc keychain.Keychain,
 	n net.Network,
-	d discovery.Discoverer,
+	d resolver.Resolver,
 	x exchange.Exchange,
 	sst *sqlobjectstore.Store,
 	or orchestrator.Orchestrator,
@@ -72,7 +71,7 @@ func New(
 		router:      r,
 		keychain:    kc,
 		net:         n,
-		discovery:   d,
+		resolver:    d,
 		exchange:    x,
 		objectStore: sst,
 
@@ -98,11 +97,11 @@ func New(
 		"/api/v1/local$",
 		api.HandleGetLocal,
 	)
-	r.Handle(
-		"GET",
-		"/api/v1/peers",
-		api.HandleGetLookup,
-	)
+	// r.Handle(
+	// 	"GET",
+	// 	"/api/v1/peers",
+	// 	api.HandleGetLookup,
+	// )
 
 	r.Handle(
 		"GET",
@@ -136,27 +135,27 @@ func New(
 		"/api/v1/objects$",
 		api.HandleGetObjects,
 	)
-	r.Handle(
-		"GET",
-		"/api/v1/objects/(?P<objectHash>.+)$",
-		api.HandleGetObject,
-	)
+	// r.Handle(
+	// 	"GET",
+	// 	"/api/v1/objects/(?P<objectHash>.+)$",
+	// 	api.HandleGetObject,
+	// )
 	r.Handle(
 		"POST",
 		"/api/v1/objects$",
 		api.HandlePostObjects,
 	)
-	r.Handle(
-		"POST",
-		"/api/v1/objects/(?P<rootObjectHash>.+)$",
-		api.HandlePostObject,
-	)
+	// r.Handle(
+	// 	"POST",
+	// 	"/api/v1/objects/(?P<rootObjectHash>.+)$",
+	// 	api.HandlePostObject,
+	// )
 
-	r.Handle(
-		"GET",
-		"/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$",
-		api.HandleGetStreams,
-	)
+	// r.Handle(
+	// 	"GET",
+	// 	"/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$",
+	// 	api.HandleGetStreams,
+	// )
 
 	r.Handle(
 		"POST",

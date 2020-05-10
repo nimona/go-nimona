@@ -10,12 +10,12 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -52,7 +52,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 	defer ctx.Cancel()
 
 	h := object.Hash(objectHash)
-	ps, err := api.discovery.Lookup(ctx, peer.LookupByContentHash(h))
+	ps, err := api.resolver.Lookup(ctx, resolver.LookupByContentHash(h))
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
@@ -62,7 +62,14 @@ func (api *API) HandleGetObject(c *router.Context) {
 	for _, p := range gatherPeers(ps) {
 		keys = append(keys, p.PublicKey())
 	}
-	api.orchestrator.Sync(ctx, h, peer.LookupByOwner(keys...)) // nolint: errcheck
+	nps, err := api.resolver.Lookup(ctx, resolver.LookupByOwner(keys...))
+	if err != nil {
+		c.AbortWithError(500, err) // nolint: errcheck
+		return
+	}
+	for p := range nps {
+		go api.orchestrator.Sync(ctx, h, p) // nolint: errcheck
+	}
 
 	graphObjects, err := api.orchestrator.Get(ctx, h)
 	if err != nil {
@@ -141,19 +148,27 @@ func (api *API) HandlePostObjects(c *router.Context) {
 			ctx := context.New(
 				context.WithCorrelationID("XPOST" + strconv.Itoa(i)),
 			)
-			err := api.exchange.Send(
+			ps, err := api.resolver.Lookup(
 				ctx,
-				o,
-				peer.LookupByOwner(crypto.PublicKey(s)),
-				exchange.WithAsync(),
+				resolver.LookupByOwner(crypto.PublicKey(s)),
 			)
 			if err != nil {
-				logger := log.FromContext(ctx)
-				logger.Error(
-					"could not send to peer",
-					log.String("s", s),
-					log.Error(err),
+				return
+			}
+			for p := range ps {
+				err := api.exchange.Send(
+					ctx,
+					o,
+					p,
 				)
+				if err != nil {
+					logger := log.FromContext(ctx)
+					logger.Error(
+						"could not send to peer",
+						log.String("s", s),
+						log.Error(err),
+					)
+				}
 			}
 		}(i, s)
 	}
@@ -242,23 +257,22 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return nil
 	}
 
-	opts := []peer.LookupOption{
-		peer.LookupByContentType(o.GetType()),
-		peer.LookupByCertificateSigner(owners[0]),
+	opts := []resolver.LookupOption{
+		resolver.LookupByContentType(o.GetType()),
+		resolver.LookupByCertificateSigner(owners[0]),
 	}
 
-	ps, err := api.discovery.Lookup(ctx, opts...)
+	ps, err := api.resolver.Lookup(ctx, opts...)
 	if err != nil {
 		return err
 	}
 
-	for _, p := range gatherPeers(ps) {
+	for p := range ps {
 		// nolint: errcheck
-		api.exchange.Send(
+		go api.exchange.Send(
 			ctx,
 			o,
-			peer.LookupByOwner(p.PublicKey()),
-			exchange.WithAsync(),
+			p,
 		)
 	}
 

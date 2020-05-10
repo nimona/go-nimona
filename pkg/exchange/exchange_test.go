@@ -338,7 +338,12 @@ func newPeer(
 	_, err = n.Listen(ctx, "127.0.0.1:0")
 	require.NoError(t, err)
 
-	x, err := New(ctx, eb, kc, n, discover)
+	x := New(
+		ctx,
+		WithNet(n),
+		WithKeychain(kc),
+		WithEventbus(eb),
+	)
 	assert.NoError(t, err)
 
 	return kc, n, x.(*exchange), ds

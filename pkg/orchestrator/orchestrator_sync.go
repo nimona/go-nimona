@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/keychain"
 
 	"nimona.io/internal/rand"
@@ -27,8 +28,7 @@ const (
 func (m *orchestrator) Sync(
 	ctx context.Context,
 	streamHash object.Hash,
-	recipients peer.LookupOption,
-	options ...exchange.SendOption,
+	recipient *peer.Peer,
 ) (
 	*Graph,
 	error,
@@ -151,9 +151,11 @@ func (m *orchestrator) Sync(
 				if err := m.exchange.Send(
 					ctx,
 					objReq.ToObject(),
-					peer.LookupByOwner(e.Sender),
-					exchange.WithLocalDiscoveryOnly(),
-					exchange.WithAsync(),
+					&peer.Peer{
+						Owners: []crypto.PublicKey{
+							e.Sender,
+						},
+					},
 				); err != nil {
 					logger.With(
 						log.Any("sender", e.Sender),
@@ -224,8 +226,7 @@ func (m *orchestrator) Sync(
 		if err := m.exchange.Send(
 			ctx,
 			req.ToObject(),
-			recipients,
-			options...,
+			recipient,
 		); err != nil {
 			// TODO log error, should return if they all fail
 			logger.Debug("could not send request", log.Error(err))
