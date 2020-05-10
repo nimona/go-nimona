@@ -99,7 +99,7 @@ generate: github.com/myitcv/gobin codegen
 
 # Run e2e tests
 .PHONY: e2e
-e2e:
+e2e: clean
 	$(eval TAGS += e2e)
 	docker build -t nimona:dev .
 	E2E_DOCKER_IMAGE=nimona:dev \

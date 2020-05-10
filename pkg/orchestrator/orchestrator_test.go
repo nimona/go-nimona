@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"nimona.io/pkg/keychain"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +17,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
@@ -233,9 +232,8 @@ func TestSync(t *testing.T) {
 			},
 		),
 		mock.MatchedBy(
-			func(opt peer.LookupOption) bool {
-				opts := peer.ParseLookupOptions(opt)
-				return opts.Lookups[0] == rkey.PublicKey().String()
+			func(p *peer.Peer) bool {
+				return p.Owners[0] == rkey.PublicKey()
 			},
 		),
 		mock.Anything,
@@ -275,9 +273,8 @@ func TestSync(t *testing.T) {
 			},
 		),
 		mock.MatchedBy(
-			func(opt peer.LookupOption) bool {
-				opts := peer.ParseLookupOptions(opt)
-				return opts.Lookups[0] == rkey.PublicKey().String()
+			func(p *peer.Peer) bool {
+				return p.Owners[0] == rkey.PublicKey()
 			},
 		),
 		mock.Anything,
@@ -293,7 +290,11 @@ func TestSync(t *testing.T) {
 	res, err := m.Sync(
 		ctx,
 		oh,
-		peer.LookupByOwner(rkey.PublicKey()),
+		&peer.Peer{
+			Owners: []crypto.PublicKey{
+				rkey.PublicKey(),
+			},
+		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, res)

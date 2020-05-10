@@ -1,18 +1,20 @@
 package orchestrator
 
 import (
+	"time"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/vburenin/nsync"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/discovery"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -32,8 +34,7 @@ type (
 		Sync(
 			ctx context.Context,
 			stream object.Hash,
-			recipients peer.LookupOption,
-			options ...exchange.SendOption,
+			recipient *peer.Peer,
 		) (*Graph, error)
 		Put(object.Object) error
 		Get(
@@ -42,11 +43,11 @@ type (
 		) (*Graph, error)
 	}
 	orchestrator struct {
-		store     *sqlobjectstore.Store
-		exchange  exchange.Exchange
-		discovery discovery.Discoverer
-		syncLock  *nsync.NamedMutex
-		keychain  keychain.Keychain
+		store    *sqlobjectstore.Store
+		exchange exchange.Exchange
+		resolver resolver.Resolver
+		syncLock *nsync.NamedMutex
+		keychain keychain.Keychain
 	}
 	Graph struct {
 		Objects []object.Object
@@ -57,7 +58,7 @@ type (
 func New(
 	st *sqlobjectstore.Store,
 	ex exchange.Exchange,
-	ds discovery.Discoverer,
+	ds resolver.Resolver,
 	kc keychain.Keychain,
 ) (Orchestrator, error) {
 	ctx := context.Background()
@@ -76,16 +77,16 @@ func NewWithContext(
 	ctx context.Context,
 	st *sqlobjectstore.Store,
 	ex exchange.Exchange,
-	ds discovery.Discoverer,
+	ds resolver.Resolver,
 	kc keychain.Keychain,
 ) (Orchestrator, error) {
 	logger := log.FromContext(ctx).Named("orchestrator")
 	m := &orchestrator{
-		store:     st,
-		exchange:  ex,
-		discovery: ds,
-		syncLock:  nsync.NewNamedMutex(),
-		keychain:  kc,
+		store:    st,
+		exchange: ex,
+		resolver: ds,
+		syncLock: nsync.NewNamedMutex(),
+		keychain: kc,
 	}
 	sub := m.exchange.Subscribe(
 		exchange.FilterByObjectType("**"),
@@ -276,13 +277,25 @@ func (m *orchestrator) Put(o object.Object) error {
 	for _, recipient := range recipients {
 		recipient := recipient
 		errs.Go(func() error {
-			return m.exchange.Send(
-				context.New(),
-				announcement.ToObject(),
-				peer.LookupByOwner(recipient),
-				exchange.WithAsync(),
-				exchange.WithLocalDiscoveryOnly(),
+			ps, err := m.resolver.Lookup(
+				context.New(
+					context.WithTimeout(time.Second*5),
+				),
+				resolver.LookupByOwner(recipient),
 			)
+			if err != nil {
+				return err
+			}
+			for p := range ps {
+				if err := m.exchange.Send(
+					context.New(),
+					announcement.ToObject(),
+					p,
+				); err != nil {
+					return err
+				}
+			}
+			return nil
 		})
 	}
 
@@ -361,9 +374,11 @@ func (m *orchestrator) handleStreamAnnouncement(
 	if _, err := m.Sync(
 		ctx,
 		req.Stream,
-		peer.LookupByOwner(sender),
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
+		&peer.Peer{
+			Owners: []crypto.PublicKey{
+				sender,
+			},
+		},
 	); err != nil {
 		return err
 	}
@@ -413,9 +428,11 @@ func (m *orchestrator) handleStreamRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByOwner(sender),
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
+		&peer.Peer{
+			Owners: []crypto.PublicKey{
+				sender,
+			},
+		},
 	); err != nil {
 		logger.Warn(
 			"orchestrator.handleStreamRequest could not send response",
@@ -472,9 +489,11 @@ func (m *orchestrator) handleStreamObjectRequest(
 	if err := m.exchange.Send(
 		ctx,
 		res.ToObject(),
-		peer.LookupByOwner(sender),
-		exchange.WithLocalDiscoveryOnly(),
-		exchange.WithAsync(),
+		&peer.Peer{
+			Owners: []crypto.PublicKey{
+				sender,
+			},
+		},
 	); err != nil {
 		logger.Warn(
 			"orchestrator.handleStreamObjectRequest could not send object response",

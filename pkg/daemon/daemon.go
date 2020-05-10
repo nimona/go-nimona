@@ -5,29 +5,27 @@ import (
 	"fmt"
 	"path"
 
-	"nimona.io/pkg/nat"
-
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon/config"
-	"nimona.io/pkg/discovery"
-	"nimona.io/pkg/discovery/hyperspace"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/nat"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
 type Daemon struct {
 	Net          net.Network
-	Discovery    discovery.Discoverer
+	Resolver     resolver.Resolver
 	Exchange     exchange.Exchange
 	Store        *sqlobjectstore.Store
 	Orchestrator orchestrator.Orchestrator
@@ -44,9 +42,6 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not start sql store"), err)
 	}
-
-	// construct peerstore
-	ps := discovery.NewPeerStorer(st)
 
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
@@ -82,22 +77,20 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		cfg.Peer.PeerKey,
 	)
 
-	network := net.New(
-		net.WithKeychain(keychain.DefaultKeychain),
-		net.WithEventBus(eventbus.DefaultEventbus),
-	)
+	// network := net.New(
+	// 	net.WithKeychain(keychain.DefaultKeychain),
+	// 	net.WithEventBus(eventbus.DefaultEventbus),
+	// )
 
 	// construct exchange
-	ex, err := exchange.New(
-		ctx,
-		eventbus.DefaultEventbus,
-		keychain.DefaultKeychain,
-		network,
-		ps,
-	)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not construct exchange"), err)
-	}
+	// ex := exchange.New(
+	// 	ctx,
+	// 	exchange.WithKeychain(keychain.DefaultKeychain),
+	// 	exchange.WithNet(net.DefaultNetwork),
+	// )
+	// if err != nil {
+	// 	return nil, errors.Wrap(errors.New("could not construct exchange"), err)
+	// }
 
 	// get temp bootstrap peers from cfg
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
@@ -112,36 +105,27 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		bootstrapPeers[i].Addresses = []string{a}
 	}
 
-	// construct hyperspace peerstore
-	hs, err := hyperspace.New(
+	// construct resolver
+	rs := resolver.New(
 		ctx,
-		ps,
-		keychain.DefaultKeychain,
-		eventbus.DefaultEventbus,
-		ex,
-		bootstrapPeers,
+		resolver.WithExchange(exchange.DefaultExchange),
+		resolver.WithKeychain(keychain.DefaultKeychain),
+		resolver.WithEventbus(eventbus.DefaultEventbus),
+		resolver.WithBoostrapPeers(bootstrapPeers),
 	)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not construct hyperspace"), err)
-	}
 
 	// construct orchestrator
 	or, err := orchestrator.New(
 		st,
-		ex,
-		nil,
+		exchange.DefaultExchange,
+		rs,
 		keychain.DefaultKeychain,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct orchestrator"), err)
 	}
 
-	// add hyperspace provider
-	if err := ps.AddDiscoverer(hs); err != nil {
-		return nil, errors.Wrap(errors.New("could not add hyperspace provider"), err)
-	}
-
-	if _, err := network.Listen(
+	if _, err := net.DefaultNetwork.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
 	); err != nil {
@@ -153,9 +137,9 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Net:          network,
-		Discovery:    ps,
-		Exchange:     ex,
+		Net:          net.DefaultNetwork,
+		Exchange:     exchange.DefaultExchange,
+		Resolver:     rs,
 		Store:        st,
 		Orchestrator: or,
 	}, nil

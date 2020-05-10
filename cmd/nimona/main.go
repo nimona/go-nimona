@@ -93,7 +93,7 @@ func main() {
 		config.Peer.PeerKey,
 		keychain.DefaultKeychain,
 		d.Net,
-		d.Discovery,
+		d.Resolver,
 		d.Exchange,
 		d.Store,
 		d.Orchestrator,

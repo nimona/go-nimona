@@ -1,4 +1,4 @@
-package hyperspace
+package resolver
 
 import (
 	"crypto/rand"
@@ -22,16 +22,15 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
+func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
-	d0, err := New(
+	d0 := New(
 		ctx0,
 		WithKeychain(kc0),
 		WithEventbus(eb0),
 		WithExchange(x0),
 	)
-	assert.NoError(t, err)
 
 	ba := []*peer.Peer{
 		{
@@ -44,14 +43,13 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 
 	_, k1, kc1, eb1, n1, x1, ctx1 := newPeer(t, "peer1")
 
-	d1, err := New(
+	d1 := New(
 		ctx1,
 		WithKeychain(kc1),
 		WithEventbus(eb1),
 		WithExchange(x1),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -60,7 +58,7 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithTimeout(time.Second),
 	)
 
-	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
+	peersChan, err := d1.Lookup(ctx, LookupByOwner(k0.PublicKey()))
 
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
@@ -71,24 +69,23 @@ func TestDiscoverer_TwoPeersCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second),
 	)
-	peersChan, err = d0.Lookup(ctxR2, peer.LookupByOwner(k1.PublicKey()))
+	peersChan, err = d0.Lookup(ctxR2, LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.Equal(t, n1.Addresses(), peers[0].Addresses)
 }
 
-func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
+func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	_, err := New(
+	New(
 		ctx0,
 		WithKeychain(kc0),
 		WithEventbus(eb0),
 		WithExchange(x0),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -104,26 +101,24 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	}
 
 	// node 1
-	d1, err := New(
+	d1 := New(
 		ctx1,
 		WithKeychain(kc1),
 		WithEventbus(eb1),
 		WithExchange(x1),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
 	// node 2
-	d2, err := New(
+	d2 := New(
 		ctx2,
 		WithKeychain(kc2),
 		WithEventbus(eb2),
 		WithExchange(x2),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -132,7 +127,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second*2),
 	)
-	peersChan, err := d1.Lookup(ctx, peer.LookupByOwner(k0.PublicKey()))
+	peersChan, err := d1.Lookup(ctx, LookupByOwner(k0.PublicKey()))
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -143,7 +138,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	peersChan, err = d2.Lookup(ctx, peer.LookupByOwner(k1.PublicKey()))
+	peersChan, err = d2.Lookup(ctx, LookupByOwner(k1.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -155,7 +150,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		context.WithTimeout(time.Second*2),
 	)
 
-	peersChan, err = d1.Lookup(ctx, peer.LookupByOwner(k2.PublicKey()))
+	peersChan, err = d1.Lookup(ctx, LookupByOwner(k2.PublicKey()))
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
@@ -165,14 +160,13 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	_, k3, kc3, eb3, n3, x3, ctx3 := newPeer(t, "peer3")
 
 	// setup node 3
-	_, err = New(
+	New(
 		ctx3,
 		WithKeychain(kc3),
 		WithEventbus(eb3),
 		WithExchange(x3),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -196,7 +190,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	)
 	peersChan, err = d1.Lookup(
 		ctx,
-		peer.LookupByCertificateSigner(
+		LookupByCertificateSigner(
 			kc3.ListPublicKeys(keychain.IdentityKey)[0],
 		),
 	)
@@ -212,7 +206,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	)
 	peersChan, err = d2.Lookup(
 		ctx,
-		peer.LookupByCertificateSigner(
+		LookupByCertificateSigner(
 			kc3.ListPublicKeys(keychain.IdentityKey)[0],
 		),
 	)
@@ -222,7 +216,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	require.Equal(t, n3.Addresses(), peers[0].Addresses)
 }
 
-func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
+func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 	_, k1, kc1, eb1, _, x1, ctx1 := newPeer(t, "peer1")
 	_, k2, kc2, eb2, _, x2, ctx2 := newPeer(t, "peer2")
@@ -243,13 +237,12 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	fmt.Println("k2", k2)
 
 	// bootstrap peer
-	d0, err := New(
+	d0 := New(
 		ctx0,
 		WithKeychain(kc0),
 		WithEventbus(eb0),
 		WithExchange(x0),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -262,26 +255,24 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	}
 
 	// peer 1
-	_, err = New(
+	New(
 		ctx1,
 		WithKeychain(kc1),
 		WithEventbus(eb1),
 		WithExchange(x1),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
 	// peer 2
-	d2, err := New(
+	d2 := New(
 		ctx2,
 		WithKeychain(kc2),
 		WithEventbus(eb2),
 		WithExchange(x2),
 		WithBoostrapPeers(ba),
 	)
-	assert.NoError(t, err)
 
 	time.Sleep(time.Millisecond * 250)
 
@@ -290,7 +281,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		context.WithCorrelationID("req1"),
 		context.WithTimeout(time.Second),
 	)
-	providersChan, err := d2.Lookup(ctx, peer.LookupByContentHash(ch))
+	providersChan, err := d2.Lookup(ctx, LookupByContentHash(ch))
 	providers := gatherPeers(providersChan)
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
@@ -301,7 +292,7 @@ func TestDiscoverer_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		context.WithCorrelationID("req2"),
 		context.WithTimeout(time.Second*2),
 	)
-	providersChan, err = d0.Lookup(ctx, peer.LookupByContentHash(ch))
+	providersChan, err = d0.Lookup(ctx, LookupByContentHash(ch))
 	providers = gatherPeers(providersChan)
 	require.NoError(t, err)
 	require.Len(t, providers, 1)

@@ -1,14 +1,15 @@
-package peer
+package resolver
 
 import (
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
 // LookupOptions
 type (
-	LookupFilter  func(*Peer) bool
+	LookupFilter  func(*peer.Peer) bool
 	LookupOption  func(*LookupOptions)
 	LookupOptions struct {
 		Local bool
@@ -28,7 +29,7 @@ func ParseLookupOptions(opts ...LookupOption) *LookupOptions {
 	return options
 }
 
-func (l LookupOptions) Match(p *Peer) bool {
+func (l LookupOptions) Match(p *peer.Peer) bool {
 	for _, f := range l.Filters {
 		if !f(p) {
 			return false
@@ -50,7 +51,7 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 		opts.Lookups = append(opts.Lookups, hash.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *Peer) bool {
+			func(p *peer.Peer) bool {
 				return bloom.Bloom(p.Bloom).Contains(
 					bloom.New(hash.String()),
 				)
@@ -67,7 +68,7 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 		}
 		opts.Filters = append(
 			opts.Filters,
-			func(p *Peer) bool {
+			func(p *peer.Peer) bool {
 				for _, key := range keys {
 					for _, owner := range p.Owners {
 						if owner.Equals(key) {
@@ -100,7 +101,7 @@ func LookupByContentType(contentType string) LookupOption {
 		opts.Lookups = append(opts.Lookups, contentType)
 		opts.Filters = append(
 			opts.Filters,
-			func(p *Peer) bool {
+			func(p *peer.Peer) bool {
 				for _, t := range p.ContentTypes {
 					if contentType == t {
 						return true
@@ -118,7 +119,7 @@ func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
 		opts.Lookups = append(opts.Lookups, certSigner.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *Peer) bool {
+			func(p *peer.Peer) bool {
 				for _, c := range p.Certificates {
 					for _, s := range c.Signatures {
 						if certSigner.Equals(s.Signer) {

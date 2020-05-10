@@ -1,4 +1,4 @@
-package hyperspace
+package resolver
 
 import (
 	"sort"
@@ -24,13 +24,27 @@ var (
 	peerLookupResponseType = new(peer.LookupResponse).GetType()
 )
 
+var (
+	DefaultResolver = New(
+		context.Background(),
+		WithEventbus(eventbus.DefaultEventbus),
+		WithExchange(exchange.DefaultExchange),
+		WithKeychain(keychain.DefaultKeychain),
+	)
+)
+
 const (
 	ErrNoPeersToAsk = errors.Error("no peers to ask")
 )
 
 type (
-	// Discoverer hyperspace
-	Discoverer struct {
+	Resolver interface {
+		Lookup(
+			ctx context.Context,
+			opts ...LookupOption,
+		) (<-chan *peer.Peer, error)
+	}
+	resolver struct {
 		context          context.Context
 		exchange         exchange.Exchange
 		eventbus         eventbus.Eventbus
@@ -42,16 +56,16 @@ type (
 		// only used for initial bootstraping
 		initialBootstrapPeers []*peer.Peer
 	}
-	// Option for customizing a new discoverer
-	Option func(*Discoverer)
+	// Option for customizing a new resolver
+	Option func(*resolver)
 )
 
-// New returns a new discoverer
+// New returns a new resolver
 func New(
 	ctx context.Context,
 	opts ...Option,
-) (*Discoverer, error) {
-	r := &Discoverer{
+) Resolver {
+	r := &resolver{
 		context:  ctx,
 		keychain: keychain.DefaultKeychain,
 		eventbus: eventbus.DefaultEventbus,
@@ -70,7 +84,7 @@ func New(
 	}
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/Discoverer"),
+		log.String("method", "resolver"),
 	)
 
 	objectSub := r.exchange.Subscribe(
@@ -137,18 +151,18 @@ func New(
 		// }
 	}()
 
-	return r, nil
+	return r
 }
 
 // Lookup finds and returns peer infos from a fingerprint
-func (r *Discoverer) Lookup(
+func (r *resolver) Lookup(
 	ctx context.Context,
-	opts ...peer.LookupOption,
+	opts ...LookupOption,
 ) (<-chan *peer.Peer, error) {
-	opt := peer.ParseLookupOptions(opts...)
+	opt := ParseLookupOptions(opts...)
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.Lookup"),
+		log.String("method", "resolver.Lookup"),
 	)
 	logger.Debug("looking up")
 
@@ -278,7 +292,7 @@ func (r *Discoverer) Lookup(
 	return peers, nil
 }
 
-func (r *Discoverer) handleObject(
+func (r *resolver) handleObject(
 	e *exchange.Envelope,
 ) error {
 	// attempt to recover correlation id from request id
@@ -311,27 +325,27 @@ func (r *Discoverer) handleObject(
 	return nil
 }
 
-func (r *Discoverer) handlePeer(
+func (r *resolver) handlePeer(
 	ctx context.Context,
 	p *peer.Peer,
 ) {
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handlePeer"),
+		log.String("method", "resolver.handlePeer"),
 		log.String("peer.publicKey", p.PublicKey().String()),
 		log.Strings("peer.addresses", p.Addresses),
 	)
-	logger.Debug("adding peer to store")
+	logger.Debug("adding peer to cache")
 	r.peerCache.Put(p)
 }
 
-func (r *Discoverer) handlePeerLookup(
+func (r *resolver) handlePeerLookup(
 	ctx context.Context,
 	q *peer.LookupRequest,
 	e *exchange.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/resolver.handlePeerLookup"),
+		log.String("method", "resolver.handlePeerLookup"),
 		log.String("e.sender", e.Sender.String()),
 		log.Any("query.bloom", q.Bloom),
 		log.Any("o.signer", e.Payload.GetSignatures()),
@@ -376,7 +390,7 @@ func (r *Discoverer) handlePeerLookup(
 	).Debug("handling done, sent n peers")
 }
 
-func (r *Discoverer) bootstrap(
+func (r *resolver) bootstrap(
 	ctx context.Context,
 	bootstrapPeers []*peer.Peer,
 ) error {
@@ -397,11 +411,11 @@ func (r *Discoverer) bootstrap(
 	return nil
 }
 
-func (r *Discoverer) publishContentHashes(
+func (r *resolver) publishContentHashes(
 	ctx context.Context,
 ) error {
 	logger := log.FromContext(ctx).With(
-		log.String("method", "hyperspace/Discoverer.publishContentHashes"),
+		log.String("method", "resolver.publishContentHashes"),
 	)
 	cb := r.getLocalPeer()
 	ps := r.getClosest(cb.Bloom)
@@ -425,7 +439,7 @@ func (r *Discoverer) publishContentHashes(
 	return nil
 }
 
-func (r *Discoverer) announceSelf(p crypto.PublicKey) {
+func (r *resolver) announceSelf(p crypto.PublicKey) {
 	ctx := context.New(
 		context.WithTimeout(time.Second * 3),
 	)
@@ -441,7 +455,7 @@ func (r *Discoverer) announceSelf(p crypto.PublicKey) {
 	}
 }
 
-func (r *Discoverer) getLocalPeer() *peer.Peer {
+func (r *resolver) getLocalPeer() *peer.Peer {
 	k := r.keychain.GetPrimaryPeerKey()
 	pk := k.PublicKey()
 	cs := r.keychain.GetCertificates(pk)
@@ -482,7 +496,7 @@ func (r *Discoverer) getLocalPeer() *peer.Peer {
 	return pi
 }
 
-func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
+func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.keychain.GetPrimaryPeerKey().PublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
@@ -501,7 +515,7 @@ func (r *Discoverer) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 }
 
 // getClosest returns the closest peers to the bloom filter from the cache
-func (r *Discoverer) getClosest(q bloom.Bloom) []*peer.Peer {
+func (r *resolver) getClosest(q bloom.Bloom) []*peer.Peer {
 	type kv struct {
 		bloomIntersection int
 		peer              *peer.Peer
