@@ -97,11 +97,6 @@ func New(
 		"/api/v1/local$",
 		api.HandleGetLocal,
 	)
-	// r.Handle(
-	// 	"GET",
-	// 	"/api/v1/peers",
-	// 	api.HandleGetLookup,
-	// )
 
 	r.Handle(
 		"GET",
@@ -135,28 +130,11 @@ func New(
 		"/api/v1/objects$",
 		api.HandleGetObjects,
 	)
-	// r.Handle(
-	// 	"GET",
-	// 	"/api/v1/objects/(?P<objectHash>.+)$",
-	// 	api.HandleGetObject,
-	// )
 	r.Handle(
 		"POST",
 		"/api/v1/objects$",
 		api.HandlePostObjects,
 	)
-	// r.Handle(
-	// 	"POST",
-	// 	"/api/v1/objects/(?P<rootObjectHash>.+)$",
-	// 	api.HandlePostObject,
-	// )
-
-	// r.Handle(
-	// 	"GET",
-	// 	"/api/v1/streams/(?P<ns>.+)/(?P<pattern>.*)$",
-	// 	api.HandleGetStreams,
-	// )
-
 	r.Handle(
 		"POST",
 		"/api/v1/stop$",
