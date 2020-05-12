@@ -2,10 +2,7 @@ package resolver
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"fmt"
-	"io/ioutil"
-	"path"
 	"testing"
 	"time"
 
@@ -351,14 +348,6 @@ func newPeer(
 	)
 
 	return opk, pk, kc, eb, n, x, ctx
-}
-
-func tempSqlite3(t *testing.T) *sql.DB {
-	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
-	require.NoError(t, err)
-	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
-	require.NoError(t, err)
-	return db
 }
 
 func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
