@@ -106,6 +106,9 @@ type Network interface {
 Package `exchange` is responsible to sending and receiving objects to from
 peers.
 
+It is also responsible for relaying objects when a peer is not directly
+accessible.
+
 ```go
 type Exchange interface {
     Send(ctx context.Context, object object.Object, p *peer.Peer) error
@@ -133,21 +136,6 @@ func LookupByContentType(contentType string) LookupOption { ... }
 func LookupByIdentity(key crypto.PublicKey) LookupOption { ... }
 func LookupByCertificateSigner(key crypto.PublicKey) LookupOption { ... }
 ```
-
-### Mesh
-
-Package `mesh` merges `exchange` and `resolver`.
-Instead of being able to send objects to specific peers, it accepts resolver
-lookup options in order to figure out which peers it needs to send objects to.
-
-```go
-type Mesh interface {
-    Send(ctx context.Context, object object.Object, options LookupOption) error
-}
-```
-
-`mesh` is also responsible for relaying objects when a peer is not directly
-accessible.
 
 ### Orchestrator
 
