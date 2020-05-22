@@ -158,6 +158,13 @@ func New(
 	return r
 }
 
+func Lookup(
+	ctx context.Context,
+	opts ...LookupOption,
+) (<-chan *peer.Peer, error) {
+	return DefaultResolver.Lookup(ctx, opts...)
+}
+
 // Lookup finds and returns peer infos from a fingerprint
 func (r *resolver) Lookup(
 	ctx context.Context,
