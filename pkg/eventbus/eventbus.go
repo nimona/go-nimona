@@ -37,6 +37,16 @@ func New() Eventbus {
 	}
 }
 
+// Publish a local event in the Default eventbus
+func Publish(e localEvent) {
+	DefaultEventbus.Publish(e)
+}
+
+// Subscribe to all local events on the default eventbus
+func Subscribe() pubsub.Subscription {
+	return DefaultEventbus.Subscribe()
+}
+
 // Publish a local event
 func (eb *eventbus) Publish(e localEvent) {
 	eb.lock.Lock()
