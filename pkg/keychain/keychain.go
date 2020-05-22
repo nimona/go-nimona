@@ -30,6 +30,30 @@ type (
 	}
 )
 
+func Put(kt keytype, pk crypto.PrivateKey) {
+	DefaultKeychain.Put(kt, pk)
+}
+
+func List(kt keytype) []crypto.PrivateKey {
+	return DefaultKeychain.List(kt)
+}
+
+func ListPublicKeys(kt keytype) []crypto.PublicKey {
+	return DefaultKeychain.ListPublicKeys(kt)
+}
+
+func GetPrimaryPeerKey() crypto.PrivateKey {
+	return DefaultKeychain.GetPrimaryPeerKey()
+}
+
+func PutCertificate(cert *peer.Certificate) {
+	DefaultKeychain.PutCertificate(cert)
+}
+
+func GetCertificates(pk crypto.PublicKey) []*peer.Certificate {
+	return DefaultKeychain.GetCertificates(pk)
+}
+
 func New() Keychain {
 	return &memorystore{
 		keyLock: sync.RWMutex{},
