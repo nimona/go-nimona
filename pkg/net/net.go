@@ -83,6 +83,28 @@ func New(opts ...Option) Network {
 	return n
 }
 
+func Dial(
+	ctx context.Context,
+	p *peer.Peer,
+) (*Connection, error) {
+	return DefaultNetwork.Dial(ctx, p)
+}
+
+func Listen(
+	ctx context.Context,
+	bindAddress string,
+) (Listener, error) {
+	return DefaultNetwork.Listen(ctx, bindAddress)
+}
+
+func Accept() (*Connection, error) {
+	return DefaultNetwork.Accept()
+}
+
+func Addresses() []string {
+	return DefaultNetwork.Addresses()
+}
+
 // network allows dialing and listening for p2p connections
 type network struct {
 	eventbus    eventbus.Eventbus
