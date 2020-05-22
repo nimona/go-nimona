@@ -153,6 +153,14 @@ func New(
 	return w
 }
 
+func Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
+	return DefaultExchange.Subscribe(filters...)
+}
+
+func Send(ctx context.Context, obj object.Object, p *peer.Peer) error {
+	return DefaultExchange.Send(ctx, obj, p)
+}
+
 func (w *exchange) handleConnection(conn *net.Connection) error {
 	expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
 
