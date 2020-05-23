@@ -16,26 +16,21 @@ func GenerateTLSCertificate(privateKey PrivateKey) (*tls.Certificate, error) {
 	now := time.Now()
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(now.Unix()),
-		// TODO replace subject
 		Subject: pkix.Name{
-			CommonName:         "quickserve.example.com",
-			Country:            []string{"USA"},
-			Organization:       []string{"example.com"},
-			OrganizationalUnit: []string{"quickserve"},
+			CommonName: privateKey.PublicKey().String(),
 		},
 		NotBefore: now,
-		NotAfter:  now.AddDate(0, 0, 1), // Valid for one day
-		SubjectKeyId: []byte{
-			// TODO replace subject key id
-			113, 117, 105, 99, 107, 115, 101, 114, 118, 101,
-		},
+		NotAfter:  now.AddDate(1, 0, 0),
+		// TODO figure out the correct/best values for the following
 		BasicConstraintsValid: true,
 		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageServerAuth,
+		},
 		KeyUsage: x509.KeyUsageKeyEncipherment |
-			x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			x509.KeyUsageDigitalSignature |
+			x509.KeyUsageCertSign,
 	}
-
 	cert, err := x509.CreateCertificate(
 		rand.Reader,
 		template,
@@ -47,9 +42,11 @@ func GenerateTLSCertificate(privateKey PrivateKey) (*tls.Certificate, error) {
 		return nil, err
 	}
 
-	var outCert tls.Certificate
-	outCert.Certificate = append(outCert.Certificate, cert)
-	outCert.PrivateKey = k
-
-	return &outCert, nil
+	outCert := &tls.Certificate{
+		Certificate: [][]byte{
+			cert,
+		},
+		PrivateKey: k,
+	}
+	return outCert, nil
 }
