@@ -63,7 +63,7 @@ func main() {
 
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		keychain.DefaultKeychain.Put(
+		keychain.Put(
 			keychain.IdentityKey,
 			cfg.Peer.IdentityKey,
 		)
@@ -71,7 +71,7 @@ func main() {
 
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
-		eventbus.DefaultEventbus.Publish(
+		eventbus.Publish(
 			eventbus.RelayAdded{
 				Peer: &peer.Peer{
 					Owners: []crypto.PublicKey{
@@ -85,7 +85,7 @@ func main() {
 		)
 	}
 
-	keychain.DefaultKeychain.Put(
+	keychain.Put(
 		keychain.PrimaryPeerKey,
 		cfg.Peer.PeerKey,
 	)
@@ -105,7 +105,7 @@ func main() {
 
 	fmt.Println("* connecting to the network")
 
-	if _, err := net.DefaultNetwork.Listen(
+	if _, err := net.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
 	); err != nil {
@@ -113,7 +113,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := resolver.DefaultResolver.Bootstrap(
+	if err := resolver.Bootstrap(
 		context.New(
 			context.WithTimeout(time.Second*5),
 		),
@@ -129,7 +129,7 @@ func main() {
 	}
 	defer rmBinding()
 
-	sub := exchange.DefaultExchange.Subscribe(
+	sub := exchange.Subscribe(
 		exchange.FilterByObjectType("nimona.io/msg"),
 	)
 	go func() {
@@ -151,8 +151,10 @@ func main() {
 		text := scanner.Text()
 		cmd := strings.Split(text, " ")[0]
 		switch cmd {
+		case "":
+			continue
 		case "info":
-			fmt.Println("> addresses", net.DefaultNetwork.Addresses())
+			fmt.Println("> addresses", net.Addresses())
 			fmt.Println("> peer", cfg.Peer.PeerKey.PublicKey().String())
 			fmt.Println("> identity", cfg.Peer.IdentityKey.PublicKey().String())
 		case "exit", "quit":
@@ -171,7 +173,7 @@ func main() {
 				Datetime: time.Now().Unix(),
 				Body:     body,
 			}
-			rs, err := resolver.DefaultResolver.Lookup(
+			rs, err := resolver.Lookup(
 				context.New(
 					context.WithTimeout(time.Second),
 				),
@@ -185,7 +187,7 @@ func main() {
 			failed := 0
 			for r := range rs {
 				fmt.Println("** found on", r.Addresses)
-				if err := exchange.DefaultExchange.Send(
+				if err := exchange.Send(
 					context.New(
 						context.WithTimeout(time.Second),
 					),
