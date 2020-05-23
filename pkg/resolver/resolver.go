@@ -43,6 +43,10 @@ type (
 			ctx context.Context,
 			opts ...LookupOption,
 		) (<-chan *peer.Peer, error)
+		Bootstrap(
+			ctx context.Context,
+			bootstrapPeers ...*peer.Peer,
+		) error
 	}
 	resolver struct {
 		context          context.Context
@@ -130,7 +134,7 @@ func New(
 			return
 		}
 
-		if err := r.bootstrap(ctx, r.initialBootstrapPeers); err != nil {
+		if err := r.Bootstrap(ctx, r.initialBootstrapPeers...); err != nil {
 			logger.Error("could not bootstrap", log.Error(err))
 		}
 
@@ -401,9 +405,9 @@ func (r *resolver) handlePeerLookup(
 	).Debug("handling done, sent n peers")
 }
 
-func (r *resolver) bootstrap(
+func (r *resolver) Bootstrap(
 	ctx context.Context,
-	bootstrapPeers []*peer.Peer,
+	bootstrapPeers ...*peer.Peer,
 ) error {
 	logger := log.FromContext(ctx)
 	nonce := rand.String(6)
@@ -581,4 +585,11 @@ func intersectionCount(a, b []int64) int {
 	}
 
 	return i
+}
+
+func Bootstrap(
+	ctx context.Context,
+	bootstrapPeers ...*peer.Peer,
+) error {
+	return DefaultResolver.Bootstrap(ctx, bootstrapPeers...)
 }
