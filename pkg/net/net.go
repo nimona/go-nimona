@@ -1,6 +1,8 @@
 package net
 
 import (
+	"crypto/ed25519"
+	"crypto/tls"
 	"expvar"
 	"io"
 	"math"
@@ -12,6 +14,7 @@ import (
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
@@ -63,11 +66,9 @@ type (
 // New creates a new p2p network
 func New(opts ...Option) Network {
 	n := &network{
-		keychain: keychain.DefaultKeychain,
-		eventbus: eventbus.DefaultEventbus,
-		transports: map[string]Transport{
-			"tcps": &tcpTransport{},
-		},
+		keychain:    keychain.DefaultKeychain,
+		eventbus:    eventbus.DefaultEventbus,
+		transports:  map[string]Transport{},
 		middleware:  []MiddlewareHandler{},
 		listeners:   []*listener{},
 		connections: make(chan *Connection),
@@ -76,10 +77,9 @@ func New(opts ...Option) Network {
 	for _, opt := range opts {
 		opt(n)
 	}
-	n.middleware = append(
-		n.middleware,
-		(&Handshake{keychain: n.keychain}).Handle(),
-	)
+	n.transports["tcps"] = &tcpTransport{
+		keychain: n.keychain,
+	}
 	return n
 }
 
@@ -175,6 +175,16 @@ func (n *network) Dial(
 			continue
 		}
 
+		// check negotiated key against dialed
+		if conn.RemotePeerKey != p.PublicKey() {
+			n.exponentialyBlacklist(address)
+			logger.Error("remote didn't match expect key, blacklisting",
+				log.String("expected", p.PublicKey().String()),
+				log.String("received", conn.RemotePeerKey.String()),
+			)
+			continue
+		}
+
 		// at this point we consider the connection successful, so we can
 		// reset the failed attempts
 		n.attempts.Put(address, 0)
@@ -266,8 +276,33 @@ func (n *network) Listen(
 				conn.remoteAddress = rawConn.RemoteAddr().String()
 				conn.localAddress = rawConn.LocalAddr().String()
 
-				conn, err = n.handleMiddleware(ctx, conn)
-				if err != nil {
+				if tlsConn, ok := rawConn.(*tls.Conn); ok {
+					if err := tlsConn.Handshake(); err != nil {
+						// not currently supported
+						// TODO find a way to surface this error
+						conn.Close() // nolint: errcheck
+						continue
+					}
+					state := tlsConn.ConnectionState()
+					certs := state.PeerCertificates
+					if len(certs) != 1 {
+						// not currently supported
+						// TODO find a way to surface this error
+						conn.Close() // nolint: errcheck
+						continue
+					}
+					pubKey, ok := certs[0].PublicKey.(ed25519.PublicKey)
+					if !ok {
+						// not currently supported
+						// TODO find a way to surface this error
+						conn.Close() // nolint: errcheck
+						continue
+					}
+					conn.RemotePeerKey = crypto.NewPublicKey(pubKey)
+				} else {
+					// not currently supported
+					// TODO find a way to surface this error
+					conn.Close() // nolint: errcheck
 					continue
 				}
 

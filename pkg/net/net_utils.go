@@ -63,18 +63,13 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	o := object.FromMap(m)
 
-	ra := ""
-	if conn.RemotePeerKey != "" {
-		ra = conn.RemotePeerKey.String()
-	}
-
 	logger.Debug(
 		"reading from connection",
 		log.Any("map", m),
 		log.Any("object", o.ToMap()),
 		log.String("local.address", conn.localAddress),
 		log.String("remote.address", conn.remoteAddress),
-		log.String("remote.fingerprint", ra),
+		log.String("remote.fingerprint", conn.RemotePeerKey.String()),
 		log.String("direction", "incoming"),
 	)
 
