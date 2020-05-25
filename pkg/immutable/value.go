@@ -9,8 +9,10 @@ import (
 type (
 	Value interface {
 		typeHint() string
+		hash() []byte
 
 		PrimitiveHinted() interface{}
+		Hash() string
 
 		IsList() bool
 		IsMap() bool
