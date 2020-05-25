@@ -107,7 +107,7 @@ func (s *memorystore) GetPrimaryPeerKey() crypto.PrivateKey {
 func (s *memorystore) PutCertificate(c *peer.Certificate) {
 	s.certLock.Lock()
 	defer s.certLock.Unlock()
-	h := object.NewHash(c.ToObject())
+	h := c.ToObject().Hash()
 	for _, sub := range c.Policy.Subjects {
 		if _, ok := s.certs[crypto.PublicKey(sub)]; !ok {
 			s.certs[crypto.PublicKey(sub)] = map[object.Hash]*peer.Certificate{}

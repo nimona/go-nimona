@@ -38,8 +38,7 @@ func NewSignature(
 	k crypto.PrivateKey,
 	o Object,
 ) (Signature, error) {
-	h := NewHash(o)
-	x := k.Sign(h.Bytes())
+	x := k.Sign(o.Hash().Bytes())
 	s := Signature{
 		Signer: k.PublicKey(),
 		Alg:    AlgorithmObjectHash,

@@ -56,7 +56,7 @@ func (m *orchestrator) Sync(
 	leafObjects := stream.GetStreamLeaves(knownObjects)
 	leaves := make([]object.Hash, len(leafObjects))
 	for i, lo := range leafObjects {
-		leaves[i] = object.NewHash(lo)
+		leaves[i] = lo.Hash()
 	}
 
 	// setup logger
@@ -84,7 +84,7 @@ func (m *orchestrator) Sync(
 		allObjects := map[object.Hash]syncStatus{}
 		// add existing objects as completed
 		for _, knownObject := range knownObjects {
-			allObjects[object.NewHash(knownObject)] = syncStatusComplete
+			allObjects[knownObject.Hash()] = syncStatusComplete
 		}
 		for {
 			e, err := sub.Next()
@@ -180,7 +180,7 @@ func (m *orchestrator) Sync(
 					obj := obj
 					// check sync status for object
 					// and push it to newObjects if it was not completed
-					objectHash := object.NewHash(*obj)
+					objectHash := obj.Hash()
 					// TODO do we care if this was not requested?
 					// TODO(geoah) who is setting this to syncStatusComplete?
 					status, ok := allObjects[objectHash]

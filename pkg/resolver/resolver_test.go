@@ -225,7 +225,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// make peer 1 a provider
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
-	ch := object.HashFromBytes(token)
+	ch := object.Hash("foo")
 	eb1.Publish(
 		eventbus.ObjectPinned{
 			Hash: ch,
