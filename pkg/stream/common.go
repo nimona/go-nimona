@@ -34,7 +34,7 @@ func GetStreamLeaves(os []object.Object) []object.Object {
 	hm := map[string]bool{} // map[hash]isParent
 	om := map[string]object.Object{}
 	for _, o := range os {
-		h := object.NewHash(o).String()
+		h := o.Hash().String()
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}

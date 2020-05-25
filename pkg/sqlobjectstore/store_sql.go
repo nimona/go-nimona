@@ -169,7 +169,7 @@ func (st *Store) Put(
 	}
 
 	objectType := obj.GetType()
-	objectHash := object.NewHash(obj).String()
+	objectHash := obj.Hash().String()
 	streamHash := obj.GetStream().String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
@@ -398,7 +398,7 @@ func (st *Store) Filter(
 
 		obj := object.FromMap(m)
 		objects = append(objects, obj)
-		hashes = append(hashes, object.NewHash(obj))
+		hashes = append(hashes, obj.Hash())
 	}
 
 	if len(hashes) == 0 {

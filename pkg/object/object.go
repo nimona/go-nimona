@@ -261,6 +261,10 @@ func (o Object) Set(k string, v interface{}) Object {
 	)
 }
 
+func (o Object) Hash() Hash {
+	return Hash(immutable.Map(o).Hash())
+}
+
 func (o Object) Raw() immutable.Map {
 	return immutable.Map(o)
 }

@@ -115,10 +115,10 @@ func NewWithContext(
 				continue
 			}
 			// if object is part of a stream, ignore children
-			if o.GetStream() != "" && o.GetStream() != object.NewHash(o) {
+			if o.GetStream() != "" && o.GetStream() != o.Hash() {
 				continue
 			}
-			hs = append(hs, object.NewHash(o))
+			hs = append(hs, o.Hash())
 		}
 
 		logger.Info(
@@ -143,7 +143,7 @@ func (m *orchestrator) process(
 		ctx := context.FromContext(ctx)
 		logger := log.FromContext(ctx).With(
 			log.String("method", "orchestrator.Process"),
-			log.String("object._hash", object.NewHash(e.Payload).String()),
+			log.String("object._hash", e.Payload.Hash().String()),
 			log.String("object.type", e.Payload.GetType()),
 		)
 		logger.Debug("handling object")
@@ -205,7 +205,7 @@ func IsComplete(cs []object.Object) bool {
 	cm := map[string]object.Object{}
 	for _, c := range cs {
 		// k: hash v: object
-		cm[object.NewHash(c).String()] = c
+		cm[c.Hash().String()] = c
 	}
 	for _, c := range cs {
 		// get all the parents of an object
@@ -236,7 +236,7 @@ func (m *orchestrator) Put(o object.Object) error {
 			parents := stream.GetStreamLeaves(os)
 			parentHashes := make([]object.Hash, len(parents))
 			for i, p := range parents {
-				parentHashes[i] = object.NewHash(p)
+				parentHashes[i] = p.Hash()
 			}
 			o = o.SetParents(parentHashes)
 		}
@@ -405,7 +405,7 @@ func (m *orchestrator) handleStreamRequest(
 	// get only the object hashes
 	hs := []object.Hash{}
 	for _, o := range vs {
-		hs = append(hs, object.NewHash(o))
+		hs = append(hs, o.Hash())
 	}
 
 	res := &stream.Response{

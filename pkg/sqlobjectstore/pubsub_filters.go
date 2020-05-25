@@ -50,7 +50,7 @@ func FilterByHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return object.NewHash(o) == h
+			return o.Hash() == h
 		})
 	}
 }

@@ -51,7 +51,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
 	obj = obj.SetType("foo")
-	obj = obj.SetStream(object.NewHash(p.ToObject()))
+	obj = obj.SetStream(p.ToObject().Hash())
 	obj = obj.Set("key:s", "value")
 
 	err = store.Put(
@@ -65,10 +65,10 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		WithTTL(10),
 	)
 
-	fmt.Println(object.NewHash(obj))
+	fmt.Println(obj.Hash())
 
 	require.NoError(t, err)
-	retrievedObj, err := store.Get(object.NewHash(obj))
+	retrievedObj, err := store.Get(obj.Hash())
 	require.NoError(t, err)
 
 	val := retrievedObj.Get("key:s")
@@ -78,17 +78,17 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	stHash := obj.GetStream()
 	require.NotEmpty(t, stHash)
 
-	err = store.UpdateTTL(object.NewHash(obj), 10)
+	err = store.UpdateTTL(obj.Hash(), 10)
 	require.NoError(t, err)
 
-	hashList, err := store.GetRelations(object.NewHash(p.ToObject()))
+	hashList, err := store.GetRelations(p.ToObject().Hash())
 	require.NoError(t, err)
 	assert.NotEmpty(t, hashList)
 
-	err = store.Remove(object.NewHash(p.ToObject()))
+	err = store.Remove(p.ToObject().Hash())
 	require.NoError(t, err)
 
-	retrievedObj2, err := store.Get(object.NewHash(p.ToObject()))
+	retrievedObj2, err := store.Get(p.ToObject().Hash())
 	require.True(t, errors.CausedBy(err, ErrNotFound))
 	require.True(t, retrievedObj2.IsEmpty())
 
@@ -107,7 +107,7 @@ func TestSubscribe(t *testing.T) {
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	streamHash := object.NewHash(p.ToObject())
+	streamHash := p.ToObject().Hash()
 	c := fixtures.TestSubscribed{}
 	obj := c.ToObject()
 	obj = obj.SetType("foo")
@@ -173,7 +173,7 @@ func TestFilter(t *testing.T) {
 	err = store.Put(p.ToObject(), WithTTL(0))
 	require.NoError(t, err)
 
-	ph := object.NewHash(p.ToObject())
+	ph := p.ToObject().Hash()
 
 	c := fixtures.TestSubscribed{}
 	c.Stream = ph
@@ -190,7 +190,7 @@ func TestFilter(t *testing.T) {
 		}
 		err = store.Put(obj, WithTTL(0))
 		require.NoError(t, err)
-		hashes = append(hashes, object.NewHash(obj))
+		hashes = append(hashes, obj.Hash())
 	}
 
 	objects, err := store.Filter(

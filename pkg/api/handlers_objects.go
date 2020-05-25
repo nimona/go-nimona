@@ -206,7 +206,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	parents := []string{}
 	for _, l := range leaves {
-		parents = append(parents, object.NewHash(l).String())
+		parents = append(parents, l.Hash().String())
 	}
 
 	req["stream:s"] = rootObjectHash

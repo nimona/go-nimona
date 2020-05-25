@@ -17,9 +17,8 @@ func Verify(o Object) error {
 		return errors.New("missing signature")
 	}
 
-	h := NewHash(o)
 	for _, s := range sigs {
-		if err := s.Signer.Verify(h.Bytes(), s.X); err != nil {
+		if err := s.Signer.Verify(o.Hash().Bytes(), s.X); err != nil {
 			return err
 		}
 	}

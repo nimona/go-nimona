@@ -66,7 +66,7 @@ var (
 		},
 	})
 
-	oh = object.NewHash(o)
+	oh = o.Hash()
 
 	m1 = object.FromMap(map[string]interface{}{
 		"parents:as": []string{
@@ -90,7 +90,7 @@ var (
 
 	m3 = object.FromMap(map[string]interface{}{
 		"parents:as": []string{
-			object.NewHash(m1.ToObject()).String(),
+			m1.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
@@ -100,7 +100,7 @@ var (
 
 	m4 = object.FromMap(map[string]interface{}{
 		"parents:as": []string{
-			object.NewHash(m2.ToObject()).String(),
+			m2.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
@@ -110,7 +110,7 @@ var (
 
 	m5 = object.FromMap(map[string]interface{}{
 		"parents:as": []string{
-			object.NewHash(m2.ToObject()).String(),
+			m2.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
@@ -120,8 +120,8 @@ var (
 
 	m6 = object.FromMap(map[string]interface{}{
 		"parents:as": []string{
-			object.NewHash(m3.ToObject()).String(),
-			object.NewHash(m4.ToObject()).String(),
+			m3.ToObject().Hash().String(),
+			m4.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
 		"data:o": map[string]interface{}{
@@ -200,12 +200,12 @@ func TestSync(t *testing.T) {
 		Stream: oh,
 		Children: []object.Hash{
 			oh,
-			object.NewHash(m1.ToObject()),
-			object.NewHash(m2.ToObject()),
-			object.NewHash(m3.ToObject()),
-			object.NewHash(m4.ToObject()),
-			object.NewHash(m5.ToObject()),
-			object.NewHash(m6.ToObject()),
+			m1.ToObject().Hash(),
+			m2.ToObject().Hash(),
+			m3.ToObject().Hash(),
+			m4.ToObject().Hash(),
+			m5.ToObject().Hash(),
+			m6.ToObject().Hash(),
 		},
 	}).ToObject()
 	elo = elo.SetOwners([]crypto.PublicKey{

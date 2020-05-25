@@ -28,7 +28,7 @@ func toGraphObject(v object.Object) (*graphObject, error) {
 		nType = "object"
 	}
 	o := &graphObject{
-		ID:       object.NewHash(v).String(),
+		ID:       v.Hash().String(),
 		NodeType: nType,
 		Context:  v.GetType(),
 		Parents:  []string{},
