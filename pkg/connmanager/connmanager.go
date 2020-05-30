@@ -1,6 +1,7 @@
 package connmanager
 
 import (
+	"fmt"
 	"sync"
 
 	"nimona.io/pkg/context"
@@ -83,6 +84,10 @@ func (m *manager) GetConnection(
 	}
 
 	pbox.connLock.RUnlock()
+	if len(pr.Addresses) == 0 {
+		return nil, fmt.Errorf("no addresses to dial")
+	}
+
 	conn, err := m.net.Dial(ctx, pr)
 	if err != nil {
 		// todo log
