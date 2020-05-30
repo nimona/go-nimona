@@ -28,6 +28,11 @@ func (m *peerCache) Get(k crypto.PublicKey) (*peer.Peer, error) {
 	return p.(*peer.Peer), nil
 }
 
+// Remove -
+func (m *peerCache) Remove(k crypto.PublicKey) {
+	m.m.Delete(k)
+}
+
 // List -
 func (m *peerCache) List() []*peer.Peer {
 	ps := []*peer.Peer{}

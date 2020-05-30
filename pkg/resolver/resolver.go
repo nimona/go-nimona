@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/pkg/net"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
@@ -225,7 +227,14 @@ func (r *resolver) Lookup(
 			p,
 		)
 		if err != nil {
+			switch err {
+			case net.ErrAllAddressesBlacklisted,
+				net.ErrNoAddresses:
+				// remove peer from cache if it cannot be dialled
+				r.peerCache.Remove(p.PublicKey())
+			}
 			logger.Debug("could send request to peer", log.Error(err))
+			return
 		}
 		logger.Debug("asked peer", log.String("peer", p.PublicKey().String()))
 	}
