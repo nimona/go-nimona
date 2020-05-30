@@ -261,6 +261,10 @@ func (r *resolver) Lookup(
 					initialRecipients = nil
 					continue
 				}
+				// check if the recipient matches the query
+				if opt.Match(r) {
+					peers <- r
+				}
 				// mark peer as asked
 				recipientsResponded[r.PublicKey()] = false
 				// ask recipient
