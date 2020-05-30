@@ -127,6 +127,10 @@ func (n *network) Dial(
 		log.Strings("addresses", p.Addresses),
 	)
 
+	if len(p.Addresses) == 0 {
+		return nil, ErrNoAddresses
+	}
+
 	logger.Debug("dialing")
 	expvar.Get("nm:net.dial").(metric.Metric).Add(1)
 
