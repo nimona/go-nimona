@@ -230,7 +230,7 @@ func (r *resolver) Lookup(
 			switch err {
 			case net.ErrAllAddressesBlacklisted,
 				net.ErrNoAddresses:
-				// remove peer from cache if it cannot be dialled
+				// remove peer from cache if it cannot be dialed
 				r.peerCache.Remove(p.PublicKey())
 			}
 			logger.Debug("could send request to peer", log.Error(err))
@@ -311,7 +311,7 @@ func (r *resolver) Lookup(
 		}
 	}()
 
-	cps := r.getClosest(bl)
+	cps := r.getClosest(bl, 10)
 	cps = r.withoutOwnPeer(cps)
 	for _, p := range cps {
 		initialRecipients <- p
@@ -381,7 +381,15 @@ func (r *resolver) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	cps := r.getClosest(q.Bloom)
+	ps := r.getClosest(q.Bloom, 30)
+	// keep only peers which have addresses or relays
+	cps := []*peer.Peer{}
+	for _, p := range ps {
+		if len(p.Addresses) != 0 || len(p.Relays) != 0 {
+			cps = append(cps, p)
+		}
+	}
+	// TODO why are we adding ourselves?
 	cps = append(cps, r.getLocalPeer())
 	cps = peer.Unique(cps)
 
@@ -446,7 +454,7 @@ func (r *resolver) publishContentHashes(
 		log.String("method", "resolver.publishContentHashes"),
 	)
 	cb := r.getLocalPeer()
-	ps := r.getClosest(cb.Bloom)
+	ps := r.getClosest(cb.Bloom, 10)
 	if len(ps) == 0 {
 		logger.Debug("couldn't find peers to tell")
 		return errors.New("no peers to tell")
@@ -543,7 +551,7 @@ func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 }
 
 // getClosest returns the closest peers to the bloom filter from the cache
-func (r *resolver) getClosest(q bloom.Bloom) []*peer.Peer {
+func (r *resolver) getClosest(q bloom.Bloom, n int) []*peer.Peer {
 	type kv struct {
 		bloomIntersection int
 		peer              *peer.Peer
@@ -571,7 +579,7 @@ func (r *resolver) getClosest(q bloom.Bloom) []*peer.Peer {
 	fs := []*peer.Peer{}
 	for i, c := range rs {
 		fs = append(fs, c.peer)
-		if i > 10 { // TODO make limit configurable
+		if i > n {
 			break
 		}
 	}
