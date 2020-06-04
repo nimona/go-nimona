@@ -18,6 +18,8 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+
+	"github.com/patrickmn/go-cache"
 )
 
 var (
@@ -61,6 +63,7 @@ type (
 		relays           *relays
 		// only used for initial bootstraping
 		initialBootstrapPeers []*peer.Peer
+		blacklist             *cache.Cache
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -83,6 +86,7 @@ func New(
 		networkAddresses:      &networkAddresses{},
 		relays:                &relays{},
 		initialBootstrapPeers: []*peer.Peer{},
+		blacklist:             cache.New(time.Second*5, time.Second*60),
 	}
 
 	for _, opt := range opts {
@@ -230,8 +234,8 @@ func (r *resolver) Lookup(
 			switch err {
 			case net.ErrAllAddressesBlacklisted,
 				net.ErrNoAddresses:
-				// remove peer from cache if it cannot be dialed
-				r.peerCache.Remove(p.PublicKey())
+				// blacklist the peer if it cannot be dialed
+				r.blacklist.SetDefault(p.PublicKey().String(), p.Version)
 			}
 			logger.Debug("could send request to peer", log.Error(err))
 			return
@@ -256,19 +260,27 @@ func (r *resolver) Lookup(
 			case <-timeout.C:
 				logger.Debug("timeout done, giving up")
 				return
-			case r, ok := <-initialRecipients:
+			case rp, ok := <-initialRecipients:
 				if !ok {
 					initialRecipients = nil
 					continue
 				}
+
+				// if blacklisted skip it
+				if _, blacklisted := r.blacklist.Get(
+					rp.PublicKey().String(),
+				); blacklisted {
+					continue
+				}
+
 				// check if the recipient matches the query
-				if opt.Match(r) {
-					peers <- r
+				if opt.Match(rp) {
+					peers <- rp
 				}
 				// mark peer as asked
-				recipientsResponded[r.PublicKey()] = false
+				recipientsResponded[rp.PublicKey()] = false
 				// ask recipient
-				queryPeer(r)
+				queryPeer(rp)
 			case e, ok := <-peerLookupResponses:
 				if !ok {
 					peerLookupResponses = nil
@@ -284,6 +296,14 @@ func (r *resolver) Lookup(
 					// add peers to our peerstore
 					// TODO pin this in the cache
 					r.peerCache.Put(p)
+					r.removeBlacklist(p)
+
+					// if blacklisted skip it
+					if _, blacklisted := r.blacklist.Get(
+						p.PublicKey().String(),
+					); blacklisted {
+						continue
+					}
 					// if the peer matches the query, add it to our results
 					if opt.Match(p) {
 						peers <- p
@@ -364,6 +384,7 @@ func (r *resolver) handlePeer(
 	)
 	logger.Debug("adding peer to cache")
 	r.peerCache.Put(p)
+	r.removeBlacklist(p)
 }
 
 func (r *resolver) handlePeerLookup(
@@ -578,6 +599,12 @@ func (r *resolver) getClosest(q bloom.Bloom, n int) []*peer.Peer {
 
 	fs := []*peer.Peer{}
 	for i, c := range rs {
+		// if the peer is blacklisted ignore it
+		if _, blacklisted := r.blacklist.Get(
+			c.peer.PublicKey().String(),
+		); blacklisted {
+			continue
+		}
 		fs = append(fs, c.peer)
 		if i > n {
 			break
@@ -606,6 +633,16 @@ func intersectionCount(a, b []int64) int {
 	}
 
 	return i
+}
+
+func (r *resolver) removeBlacklist(p *peer.Peer) {
+	v, blacklisted := r.blacklist.Get(p.PublicKey().String())
+
+	if iver, ok := v.(int64); ok && blacklisted {
+		if p.Version > iver {
+			r.blacklist.Delete(p.PublicKey().String())
+		}
+	}
 }
 
 func Bootstrap(
