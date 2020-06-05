@@ -12,7 +12,6 @@ func NewCertificate(
 	issuer crypto.PrivateKey,
 ) Certificate {
 	c := Certificate{
-		Subject: subject,
 		Created: time.Now().Format(time.RFC3339),
 		Expires: time.Now().Add(time.Hour * 24 * 365).Format(time.RFC3339),
 	}
