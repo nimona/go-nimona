@@ -85,8 +85,8 @@ tidy:
 .PHONY: tidy
 check-tidy:
 	$(info Checking if go.mod is tidy)
-	@$(GOMOD) tidy
-	git diff --exit-code go.mod
+	@go mod tidy
+	@git diff --exit-code go.mod
 
 # Generate community docs
 .PHONY: community-docs
