@@ -1,7 +1,17 @@
 package nimona.io/peer
 
 object nimona.io/peer.Certificate {
-    subject nimona.io/crypto.PublicKey
+    nonce string
     created string
     expires string
+}
+
+object nimona.io/peer.CertificateRequest {
+    applicationName string
+    applicationDescription string
+    applicationURL string
+    subject string
+    resources repeated string
+    actions repeated string
+    nonce string
 }

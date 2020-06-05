@@ -527,7 +527,9 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	}
 
 	for _, c := range cs {
-		hs = append(hs, c.Subject.String())
+		for _, s := range c.Signatures {
+			hs = append(hs, s.Signer.String())
+		}
 	}
 
 	// TODO cache peer info and reuse
