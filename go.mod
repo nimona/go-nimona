@@ -19,7 +19,6 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
-	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/vburenin/nsync v0.0.0-20160822015540-9a75d1c80410
 	github.com/zserge/metric v0.1.0
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
