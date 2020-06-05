@@ -6,6 +6,7 @@ require (
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-multierror v1.0.1-0.20191120192120-72917a1559e1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
@@ -13,6 +14,7 @@ require (
 	github.com/mitchellh/mapstructure v1.2.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.0
