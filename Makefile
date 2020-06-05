@@ -80,6 +80,14 @@ tidy:
 	@find . -type f -name "go.sum" -not -path "./vendor/*" -execdir rm {} \;
 	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy \;
 
+# Tidy dependecies and make sure go.mod has been committed
+# Currently only checks the main go.mod
+.PHONY: tidy
+check-tidy:
+	$(info Checking if go.mod is tidy)
+	@$(GOMOD) tidy
+	git diff --exit-code go.mod
+
 # Generate community docs
 .PHONY: community-docs
 community-docs: community
