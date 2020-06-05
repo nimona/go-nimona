@@ -191,6 +191,7 @@ func (r *resolver) Lookup(
 
 	// create channel to keep peers we find
 	peers := make(chan *peer.Peer, 100)
+	peersSent := make(map[crypto.PublicKey]int64)
 
 	// send content requests to recipients
 	req := &peer.LookupRequest{
@@ -273,10 +274,19 @@ func (r *resolver) Lookup(
 					continue
 				}
 
+				// if we have already sent a high version skip
+				if ver, ok := peersSent[rp.PublicKey()]; ok {
+					if ver >= rp.Version {
+						continue
+					}
+				}
+
 				// check if the recipient matches the query
 				if opt.Match(rp) {
 					peers <- rp
 				}
+
+				peersSent[rp.PublicKey()] = rp.Version
 				// mark peer as asked
 				recipientsResponded[rp.PublicKey()] = false
 				// ask recipient
@@ -304,6 +314,14 @@ func (r *resolver) Lookup(
 					); blacklisted {
 						continue
 					}
+
+					// if we have already sent a high version skip
+					if ver, ok := peersSent[p.PublicKey()]; ok {
+						if ver >= p.Version {
+							continue
+						}
+					}
+
 					// if the peer matches the query, add it to our results
 					if opt.Match(p) {
 						peers <- p
@@ -313,6 +331,8 @@ func (r *resolver) Lookup(
 						// if so, move on
 						continue
 					}
+
+					peersSent[p.PublicKey()] = p.Version
 					// else mark peer as asked
 					recipientsResponded[p.PublicKey()] = false
 					// and ask them
