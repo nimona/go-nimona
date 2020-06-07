@@ -128,7 +128,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n0.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n0.Addresses(), peers[0].Addresses)
 
 	// find node 1 from node 2
 	ctx = context.New(
@@ -139,7 +139,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n1.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n1.Addresses(), peers[0].Addresses)
 
 	// find node 2 from node 1
 	ctx = context.New(
@@ -151,7 +151,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n2.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n2.Addresses(), peers[0].Addresses)
 
 	// add extra peer
 	_, k3, kc3, eb3, n3, x3, ctx3 := newPeer(t, "peer3")
@@ -167,10 +167,14 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 250)
 
-	fmt.Println("peer0", k0)
-	fmt.Println("peer1", k1)
-	fmt.Println("peer2", k2)
-	fmt.Println("peer3", k3)
+	fmt.Println("peer0", k0.PublicKey())
+	fmt.Println("  ^ id", kc0.ListPublicKeys(keychain.IdentityKey)[0])
+	fmt.Println("peer1", k1.PublicKey())
+	fmt.Println("  ^ id", kc1.ListPublicKeys(keychain.IdentityKey)[0])
+	fmt.Println("peer2", k2.PublicKey())
+	fmt.Println("  ^ id", kc2.ListPublicKeys(keychain.IdentityKey)[0])
+	fmt.Println("peer3", k3.PublicKey())
+	fmt.Println("  ^ id", kc3.ListPublicKeys(keychain.IdentityKey)[0])
 
 	fmt.Println("-------------------")
 	fmt.Println("-------------------")
@@ -180,7 +184,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// allow bootstraping to settle
 	time.Sleep(time.Millisecond * 250)
 
-	// find node 3 from node 1 from it's identity
+	// find node 3 from node 1 from its identity
 	ctx = context.New(
 		context.WithCorrelationID("req4"),
 		context.WithTimeout(time.Second*2),
@@ -194,7 +198,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n3.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n3.Addresses(), peers[0].Addresses)
 
 	// find node 3 from node 2 from it's identity
 	ctx = context.New(
@@ -210,7 +214,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n3.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n3.Addresses(), peers[0].Addresses)
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
