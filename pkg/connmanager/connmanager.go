@@ -79,8 +79,9 @@ func (m *manager) GetConnection(
 
 	pbox.connLock.RLock()
 	if pbox.conn != nil {
+		conn := pbox.conn
 		pbox.connLock.RUnlock()
-		return pbox.conn, nil
+		return conn, nil
 	}
 
 	pbox.connLock.RUnlock()
