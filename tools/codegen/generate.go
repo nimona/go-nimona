@@ -113,7 +113,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
 			if len(e.{{ $member.Name }}) > 0 {
-				v := immutable.List{}
+				v := object.List{}
 				for _, iv := range e.{{ $member.Name }} {
 					v = v.Append(iv.ToObject().Raw())
 				}
@@ -127,20 +127,20 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 		{{- else }}
 			{{- if $member.IsRepeated }}
 				if len(e.{{ $member.Name }}) > 0 {
-					v := immutable.List{}
+					v := object.List{}
 					for _, iv := range e.{{ $member.Name }} {
 						{{- if eq $member.Hint "s" }}
-							v = v.Append(immutable.String(iv))
+							v = v.Append(object.String(iv))
 						{{- else if eq $member.Hint "b" }}
-							v = v.Append(immutable.Bool(iv))
+							v = v.Append(object.Bool(iv))
 						{{- else if eq $member.Hint "d" }}
-							v = v.Append(immutable.Bytes(iv))
+							v = v.Append(object.Bytes(iv))
 						{{- else if eq $member.Hint "i" }}
-							v = v.Append(immutable.Int(iv))
+							v = v.Append(object.Int(iv))
 						{{- else if eq $member.Hint "u" }}
 							// TODO(geoah) uints not implemented
 						{{- else if eq $member.Hint "f" }}
-							v = v.Append(immutable.Float(iv))
+							v = v.Append(object.Float(iv))
 						{{- else }}
 							// TODO missing type hint {{ $member.Hint }}, for repeated {{ $member.Name }}
 						{{- end }}
@@ -179,7 +179,7 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -351,7 +351,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	doc.Imports["json"] = "encoding/json"
-	doc.Imports["immutable"] = "nimona.io/immutable"
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"
 	}
@@ -380,12 +379,12 @@ func Generate(doc *Document, output string) ([]byte, error) {
 
 	res := out.String()
 	if doc.Package == "nimona.io/object" {
-		res = strings.ReplaceAll(res, "object.Object", "Object")
-		res = strings.ReplaceAll(res, "object.Hash", "Hash")
-		res = strings.ReplaceAll(res, "object.Schema", "Schema")
-		res = strings.ReplaceAll(res, "object.Signature", "Signature")
-		res = strings.ReplaceAll(res, "object.Policy", "Policy")
-		res = strings.ReplaceAll(res, "object.FromMap", "FromMap")
+		res = strings.ReplaceAll(res, "object.", "")
+		// res = strings.ReplaceAll(res, "object.Hash", "Hash")
+		// res = strings.ReplaceAll(res, "object.Schema", "Schema")
+		// res = strings.ReplaceAll(res, "object.Signature", "Signature")
+		// res = strings.ReplaceAll(res, "object.Policy", "Policy")
+		// res = strings.ReplaceAll(res, "object.FromMap", "FromMap")
 	}
 
 	return []byte(res), nil

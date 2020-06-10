@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -101,23 +100,23 @@ func (e Policy) ToObject() object.Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Subjects {
 			v = v.Append(iv.ToObject().Raw())
 		}
 		o = o.Set("subjects:ao", v)
 	}
 	if len(e.Resources) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Resources {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("resources:as", v)
 	}
 	if len(e.Conditions) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Conditions {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("conditions:as", v)
 	}
@@ -131,7 +130,7 @@ func (e Policy) ToObject() object.Object {
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -222,14 +221,14 @@ func (e Created) ToObject() object.Object {
 		o = o.Set("createdDateTime:s", e.CreatedDateTime)
 	}
 	if len(e.PartitionKeys) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.PartitionKeys {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("partitionKeys:as", v)
 	}
 	if len(e.Policies) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Policies {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -242,7 +241,7 @@ func (e Created) ToObject() object.Object {
 }
 
 func (e *Created) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -326,14 +325,14 @@ func (e PoliciesUpdated) ToObject() object.Object {
 		o = o.Set("stream:o", e.Stream.ToObject().Raw())
 	}
 	if len(e.Parents) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Parents {
 			v = v.Append(iv.ToObject().Raw())
 		}
 		o = o.Set("parents:ao", v)
 	}
 	if len(e.Policies) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Policies {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -346,7 +345,7 @@ func (e PoliciesUpdated) ToObject() object.Object {
 }
 
 func (e *PoliciesUpdated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

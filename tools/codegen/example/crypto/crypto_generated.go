@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -115,7 +114,7 @@ func (e Hash) ToObject() object.Object {
 }
 
 func (e *Hash) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -207,7 +206,7 @@ func (e HeaderSignature) ToObject() object.Object {
 }
 
 func (e *HeaderSignature) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -338,7 +337,7 @@ func (e PrivateKey) ToObject() object.Object {
 }
 
 func (e *PrivateKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -458,7 +457,7 @@ func (e PublicKey) ToObject() object.Object {
 }
 
 func (e *PublicKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

@@ -1,4 +1,4 @@
-package immutable
+package object
 
 import (
 	"testing"

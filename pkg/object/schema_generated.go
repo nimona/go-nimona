@@ -5,7 +5,6 @@ package object
 import (
 	crypto "nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	immutable "nimona.io/pkg/immutable"
 )
 
 type (
@@ -64,7 +63,7 @@ func (e SchemaProperty) ToObject() Object {
 	o = o.Set("isRepeated:b", e.IsRepeated)
 	o = o.Set("isOptional:b", e.IsOptional)
 	if len(e.Properties) > 0 {
-		v := immutable.List{}
+		v := List{}
 		for _, iv := range e.Properties {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -74,7 +73,7 @@ func (e SchemaProperty) ToObject() Object {
 }
 
 func (e *SchemaProperty) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -132,7 +131,7 @@ func (e SchemaObject) ToObject() Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Properties) > 0 {
-		v := immutable.List{}
+		v := List{}
 		for _, iv := range e.Properties {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -142,7 +141,7 @@ func (e SchemaObject) ToObject() Object {
 }
 
 func (e *SchemaObject) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(Map)
 	if !ok {
 		return errors.New("missing data")
 	}

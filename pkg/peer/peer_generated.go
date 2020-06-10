@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -117,35 +116,35 @@ func (e Peer) ToObject() object.Object {
 	o = o.SetPolicy(e.Policy)
 	o = o.Set("version:i", e.Version)
 	if len(e.Addresses) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Addresses {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("addresses:as", v)
 	}
 	if len(e.Bloom) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Bloom {
-			v = v.Append(immutable.Int(iv))
+			v = v.Append(object.Int(iv))
 		}
 		o = o.Set("bloom:ai", v)
 	}
 	if len(e.ContentTypes) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.ContentTypes {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("contentTypes:as", v)
 	}
 	if len(e.Certificates) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Certificates {
 			v = v.Append(iv.ToObject().Raw())
 		}
 		o = o.Set("certificates:ao", v)
 	}
 	if len(e.Relays) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Relays {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -158,7 +157,7 @@ func (e Peer) ToObject() object.Object {
 }
 
 func (e *Peer) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -259,9 +258,9 @@ func (e LookupRequest) ToObject() object.Object {
 		o = o.Set("nonce:s", e.Nonce)
 	}
 	if len(e.Bloom) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Bloom {
-			v = v.Append(immutable.Int(iv))
+			v = v.Append(object.Int(iv))
 		}
 		o = o.Set("bloom:ai", v)
 	}
@@ -272,7 +271,7 @@ func (e LookupRequest) ToObject() object.Object {
 }
 
 func (e *LookupRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -346,14 +345,14 @@ func (e LookupResponse) ToObject() object.Object {
 		o = o.Set("nonce:s", e.Nonce)
 	}
 	if len(e.Bloom) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Bloom {
-			v = v.Append(immutable.Int(iv))
+			v = v.Append(object.Int(iv))
 		}
 		o = o.Set("bloom:ai", v)
 	}
 	if len(e.Peers) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Peers {
 			v = v.Append(iv.ToObject().Raw())
 		}
@@ -366,7 +365,7 @@ func (e LookupResponse) ToObject() object.Object {
 }
 
 func (e *LookupResponse) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

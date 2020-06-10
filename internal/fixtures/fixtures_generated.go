@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -107,23 +106,23 @@ func (e TestPolicy) ToObject() object.Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if len(e.Subjects) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Subjects {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("subjects:as", v)
 	}
 	if len(e.Resources) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Resources {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("resources:as", v)
 	}
 	if len(e.Conditions) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Conditions {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("conditions:as", v)
 	}
@@ -137,7 +136,7 @@ func (e TestPolicy) ToObject() object.Object {
 }
 
 func (e *TestPolicy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -227,7 +226,7 @@ func (e TestStream) ToObject() object.Object {
 }
 
 func (e *TestStream) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -289,7 +288,7 @@ func (e TestSubscribed) ToObject() object.Object {
 }
 
 func (e *TestSubscribed) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -348,7 +347,7 @@ func (e TestUnsubscribed) ToObject() object.Object {
 }
 
 func (e *TestUnsubscribed) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

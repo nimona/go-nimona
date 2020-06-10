@@ -1,4 +1,4 @@
-package immutable
+package object
 
 import (
 	"fmt"
@@ -8,58 +8,51 @@ import (
 
 type (
 	Value interface {
-		typeHint() string
-		hash() []byte
+		typeHint() TypeHint
 
 		PrimitiveHinted() interface{}
-		Hash() string
+		Hash() Hash
 
 		IsList() bool
 		IsMap() bool
 		IsBool() bool
 		IsString() bool
+		IsRef() bool
 		IsInt() bool
 		IsFloat() bool
 		IsBytes() bool
 	}
 	Bool   bool
 	String string
+	Ref    Hash
 	Int    int64
 	Float  float64
 	Bytes  []byte
 )
 
-const (
-	boolTypeHint   = "b"
-	stringTypeHint = "s"
-	intTypeHint    = "i"
-	floatTypeHint  = "f"
-	bytesTypeHint  = "d"
-	mapTypeHint    = "o"
-	listTypeHint   = "a"
-)
-
-func (v Bool) typeHint() string   { return boolTypeHint }
-func (v String) typeHint() string { return stringTypeHint }
-func (v Int) typeHint() string    { return intTypeHint }
-func (v Float) typeHint() string  { return floatTypeHint }
-func (v Bytes) typeHint() string  { return bytesTypeHint }
-func (v Map) typeHint() string    { return mapTypeHint }
+func (v Bool) typeHint() TypeHint   { return HintBool }
+func (v String) typeHint() TypeHint { return HintString }
+func (v Ref) typeHint() TypeHint    { return HintRef }
+func (v Int) typeHint() TypeHint    { return HintInt }
+func (v Float) typeHint() TypeHint  { return HintFloat }
+func (v Bytes) typeHint() TypeHint  { return HintData }
+func (v Map) typeHint() TypeHint    { return HintObject }
 
 func (v Bool) PrimitiveHinted() interface{}   { return bool(v) }
 func (v String) PrimitiveHinted() interface{} { return string(v) }
+func (v Ref) PrimitiveHinted() interface{}    { return string(v) }
 func (v Int) PrimitiveHinted() interface{}    { return int64(v) }
 func (v Float) PrimitiveHinted() interface{}  { return float64(v) }
 func (v Bytes) PrimitiveHinted() interface{}  { return []byte(v) }
 
-func getHints(k string) []string {
+func getHints(k string) typeHints {
 	ps := strings.Split(k, ":")
 	if len(ps) == 1 {
 		return nil
 	}
-	hs := []string{}
+	hs := typeHints{}
 	for _, sh := range ps[1] {
-		hs = append(hs, string(sh))
+		hs = append(hs, TypeHint(sh))
 	}
 	return hs
 }
@@ -85,13 +78,13 @@ func AnyToValue(k string, a interface{}) Value {
 	}
 
 	switch hs[0] {
-	case boolTypeHint:
+	case HintBool:
 		switch v := a.(type) {
 		case bool:
 			return Bool(v)
 		}
 
-	case stringTypeHint:
+	case HintString:
 		switch v := a.(type) {
 		case string:
 			return String(v)
@@ -105,7 +98,7 @@ func AnyToValue(k string, a interface{}) Value {
 			return String(s.String())
 		}
 
-	case intTypeHint:
+	case HintInt:
 		switch v := a.(type) {
 		case int:
 			return Int(int64(v))
@@ -129,7 +122,7 @@ func AnyToValue(k string, a interface{}) Value {
 			return Int(int64(v))
 		}
 
-	case floatTypeHint:
+	case HintFloat:
 		switch v := a.(type) {
 		case float32:
 			return Float(float64(v))
@@ -137,13 +130,13 @@ func AnyToValue(k string, a interface{}) Value {
 			return Float(v)
 		}
 
-	case bytesTypeHint:
+	case HintData:
 		switch v := a.(type) {
 		case []byte:
 			return Bytes(v)
 		}
 
-	case mapTypeHint:
+	case HintObject:
 		switch v := a.(type) {
 		case map[interface{}]interface{}:
 			m := Map{}
@@ -168,7 +161,7 @@ func AnyToValue(k string, a interface{}) Value {
 			return Map{m: m.m}
 		}
 
-	case listTypeHint:
+	case HintArray:
 		switch v := a.(type) {
 		case []string:
 			m := List{
@@ -212,9 +205,9 @@ func AnyToValue(k string, a interface{}) Value {
 			return m
 		case []interface{}:
 			m := List{
-				hint: strings.Join(hs, ""),
+				hint: hs.TypeHint(),
 			}
-			h := fmt.Sprintf(":%s", strings.Join(hs[1:], ""))
+			h := fmt.Sprintf(":%s", hs[1:].TypeHint().String())
 			for _, v := range v {
 				if v != nil {
 					m = m.Append(AnyToValue(h, v))
@@ -225,9 +218,9 @@ func AnyToValue(k string, a interface{}) Value {
 
 		switch reflect.TypeOf(a).Kind() {
 		case reflect.Slice:
-			h := fmt.Sprintf(":%s", strings.Join(hs[1:], ""))
+			h := fmt.Sprintf(":%s", hs[1:].TypeHint().String())
 			m := List{
-				hint: strings.Join(hs, ""),
+				hint: hs.TypeHint(),
 			}
 			v := reflect.ValueOf(a)
 			for i := 0; i < v.Len(); i++ {
