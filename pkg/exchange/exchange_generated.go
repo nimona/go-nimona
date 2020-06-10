@@ -5,7 +5,6 @@ package exchange
 import (
 	crypto "nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -74,7 +73,7 @@ func (e ObjectRequest) ToObject() object.Object {
 }
 
 func (e *ObjectRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -153,7 +152,7 @@ func (e DataForward) ToObject() object.Object {
 }
 
 func (e *DataForward) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

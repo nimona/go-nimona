@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -94,7 +93,7 @@ func (e ConversationCreated) ToObject() object.Object {
 }
 
 func (e *ConversationCreated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -154,7 +153,7 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 		o = o.Set("topic:s", e.Topic)
 	}
 	if len(e.DependsOn) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.DependsOn {
 			// TODO missing type hint r, for repeated DependsOn
 		}
@@ -167,7 +166,7 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 }
 
 func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -230,7 +229,7 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 		o = o.Set("body:s", e.Body)
 	}
 	if len(e.DependsOn) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.DependsOn {
 			// TODO missing type hint r, for repeated DependsOn
 		}
@@ -243,7 +242,7 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 }
 
 func (e *ConversationMessageAdded) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -304,7 +303,7 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 	o = o.SetPolicy(e.Policy)
 	// TODO missing type hint r, for Removes
 	if len(e.DependsOn) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.DependsOn {
 			// TODO missing type hint r, for repeated DependsOn
 		}
@@ -317,7 +316,7 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

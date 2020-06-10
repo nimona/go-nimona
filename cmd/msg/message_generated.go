@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -73,7 +72,7 @@ func (e Msg) ToObject() object.Object {
 }
 
 func (e *Msg) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

@@ -1,4 +1,4 @@
-package immutable
+package object
 
 type Map struct {
 	m mapIterator

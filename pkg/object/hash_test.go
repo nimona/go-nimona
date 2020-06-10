@@ -1,4 +1,4 @@
-package immutable
+package object
 
 import (
 	"math"
@@ -11,7 +11,7 @@ func TestHash(t *testing.T) {
 	tests := []struct {
 		name  string
 		value Value
-		hash  string
+		hash  Hash
 	}{
 		{
 			name:  "string",
@@ -63,14 +63,14 @@ func TestHash(t *testing.T) {
 			value: List{}.
 				Append(String("foo")).
 				Append(String("bar")),
-			hash: "oh1.2uMKwin1K763GKkFuKjToDPNKRFxDEJ2JMoxACerEGtT",
+			hash: "oh1.HBLT1cYx761cbXHHxLtriS3afPUnoJ64USKRxBacers5",
 		},
 		{
 			name: "array, int",
 			value: List{}.
 				Append(Int(123)).
 				Append(Int(456)),
-			hash: "oh1.FSV8pEhavs8GzYW7iH9WxC69SxnSruGmqNKny1mttitj",
+			hash: "oh1.H8rss8J56aDns3ZREEg9Mw1VwRkHtKq3yDqTuXB8aJV5",
 		},
 		{
 			name: "map",
@@ -78,7 +78,7 @@ func TestHash(t *testing.T) {
 				"foo:s",
 				String("bar"),
 			),
-			hash: "oh1.A2Q9xKrKqjvr1KLr32AcMJBGiMZ5UpKpuHojjhafLkEj",
+			hash: "oh1.CgfoHRELcu1DwPjtGcXuVr1oFbAVxF8mRTWkTyJsE9gk",
 		},
 		{
 			name: "map, nested",
@@ -89,7 +89,15 @@ func TestHash(t *testing.T) {
 					String("bar"),
 				),
 			),
-			hash: "oh1.DmjgHp5UYzXV9EUjcbrsdXDV2agUTQH5YsosULNZRwtM",
+			hash: "oh1.EAKxMZySQigLYF9hZ3D4YjqrhWQ6q24NhvvbmUAsQSCt",
+		},
+		{
+			name: "map, nested reference, should match previous",
+			value: Map{}.Set(
+				"data:r",
+				Ref("oh1.CgfoHRELcu1DwPjtGcXuVr1oFbAVxF8mRTWkTyJsE9gk"),
+			),
+			hash: "oh1.EAKxMZySQigLYF9hZ3D4YjqrhWQ6q24NhvvbmUAsQSCt",
 		},
 	}
 	for _, tt := range tests {

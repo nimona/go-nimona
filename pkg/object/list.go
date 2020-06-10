@@ -1,12 +1,12 @@
-package immutable
+package object
 
 type List struct {
-	hint  string
+	hint  TypeHint
 	value Value
 	prev  *List
 }
 
-func (l List) typeHint() string {
+func (l List) typeHint() TypeHint {
 	return l.hint
 }
 

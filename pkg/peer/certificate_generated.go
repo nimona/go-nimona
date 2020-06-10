@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	crypto "nimona.io/pkg/crypto"
-	immutable "nimona.io/pkg/immutable"
 	object "nimona.io/pkg/object"
 )
 
@@ -101,7 +100,7 @@ func (e Certificate) ToObject() object.Object {
 }
 
 func (e *Certificate) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -211,16 +210,16 @@ func (e CertificateRequest) ToObject() object.Object {
 		o = o.Set("subject:s", e.Subject)
 	}
 	if len(e.Resources) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Resources {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("resources:as", v)
 	}
 	if len(e.Actions) > 0 {
-		v := immutable.List{}
+		v := object.List{}
 		for _, iv := range e.Actions {
-			v = v.Append(immutable.String(iv))
+			v = v.Append(object.String(iv))
 		}
 		o = o.Set("actions:as", v)
 	}
@@ -234,7 +233,7 @@ func (e CertificateRequest) ToObject() object.Object {
 }
 
 func (e *CertificateRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(immutable.Map)
+	data, ok := o.Raw().Value("data:o").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

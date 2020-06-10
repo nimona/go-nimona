@@ -7,11 +7,31 @@ import (
 type (
 	// TypeHint are the hints of a member's type
 	TypeHint string
+	// TODO v is only used for arrays, we should find a better way to do this.
+	typeHints []TypeHint
 )
 
 // String implements the Stringer interface
 func (t TypeHint) String() string {
 	return string(t)
+}
+
+// String implements the Stringer interface
+func (ts typeHints) String() string {
+	s := ""
+	for _, t := range ts {
+		s += t.String()
+	}
+	return s
+}
+
+// TypeHint for a composite hint.
+func (ts typeHints) TypeHint() TypeHint {
+	s := ""
+	for _, t := range ts {
+		s += t.String()
+	}
+	return TypeHint(s)
 }
 
 const (
@@ -24,6 +44,7 @@ const (
 	HintInt       TypeHint = "i"
 	HintNil       TypeHint = "n"
 	HintString    TypeHint = "s"
+	HintRef       TypeHint = "r"
 	HintUint      TypeHint = "u"
 )
 
