@@ -57,7 +57,11 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("Recovered while processing", log.Any("r", r))
+			logger.Error(
+				"recovered from panic during read",
+				log.Any("r", r),
+				log.Stack(),
+			)
 		}
 	}()
 

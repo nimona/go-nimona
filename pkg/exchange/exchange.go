@@ -169,6 +169,16 @@ func (w *exchange) handleConnection(conn *net.Connection) error {
 	}
 
 	go func() {
+		defer func() {
+			conn.Close() // nolint: errcheck
+			if r := recover(); r != nil {
+				log.DefaultLogger.Error(
+					"recovered from panic, closed conn",
+					log.Any("r", r),
+					log.Stack(),
+				)
+			}
+		}()
 		for {
 			payload, err := net.Read(conn)
 			// TODO split errors into connection or payload
