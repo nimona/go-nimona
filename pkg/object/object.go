@@ -27,7 +27,7 @@ func (v Policy) IsEmpty() bool {
 }
 
 func (o Object) data() Map {
-	data := Map(o).Value("data:o")
+	data := Map(o).Value("data:m")
 	if data == nil {
 		return Map{}
 	}
@@ -115,11 +115,11 @@ func (o Object) SetPolicy(policy Policy) Object {
 	if v.IsEmpty() {
 		return o
 	}
-	return o.set("policy:o", v)
+	return o.set("policy:m", v)
 }
 
 func (o Object) GetPolicy() Policy {
-	im := Map(o).Value("policy:o")
+	im := Map(o).Value("policy:m")
 	if im == nil {
 		return Policy{}
 	}
@@ -134,15 +134,15 @@ func (o Object) GetPolicy() Policy {
 
 func (o Object) AddSignature(vs ...Signature) Object {
 	sigs := List{}
-	if os := o.Get("_signatures:ao"); os != nil {
+	if os := o.Get("_signatures:am"); os != nil {
 		if ol, ok := os.(List); ok && ol.Length() > 0 {
 			sigs = ol
 		}
 	}
 	for _, v := range vs {
-		sigs = sigs.Append(AnyToValue(":o", v.ToMap()))
+		sigs = sigs.Append(AnyToValue(":m", v.ToMap()))
 	}
-	return o.set("_signatures:ao", sigs)
+	return o.set("_signatures:am", sigs)
 }
 
 func immutableMapToSignature(im Map) Signature {
@@ -160,7 +160,7 @@ func immutableMapToSignature(im Map) Signature {
 
 func (o Object) GetSignatures() []Signature {
 	sigs := []Signature{}
-	if os := o.get("_signatures:ao"); os != nil {
+	if os := o.get("_signatures:am"); os != nil {
 		if ol, ok := os.(List); ok && ol.Length() > 0 {
 			ol.Iterate(func(v Value) {
 				m, ok := v.(Map)
@@ -210,7 +210,7 @@ func FromMap(m map[string]interface{}) Object {
 	}
 
 	return Object(
-		AnyToValue(":o", n).(Map),
+		AnyToValue(":m", n).(Map),
 	)
 }
 
@@ -256,7 +256,7 @@ func (o Object) Set(k string, v interface{}) Object {
 		data = data.Set(k, AnyToValue(k, v))
 	}
 	return Object(
-		Map(o).Set("data:o", data),
+		Map(o).Set("data:m", data),
 	)
 }
 

@@ -56,7 +56,7 @@ func (e Policy) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "subjects",
 				Type:       "example/crypto.PublicKey",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -104,7 +104,7 @@ func (e Policy) ToObject() object.Object {
 		for _, iv := range e.Subjects {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("subjects:ao", v)
+		o = o.Set("subjects:am", v)
 	}
 	if len(e.Resources) > 0 {
 		v := object.List{}
@@ -124,13 +124,13 @@ func (e Policy) ToObject() object.Object {
 		o = o.Set("action:s", e.Action)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -141,7 +141,7 @@ func (e *Policy) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("subjects:ao"); v != nil && v.IsList() {
+	if v := data.Value("subjects:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Subjects = make([]*crypto.PublicKey, len(m))
 		for i, iv := range m {
@@ -195,7 +195,7 @@ func (e Created) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "policies",
 				Type:       "Policy",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -232,16 +232,16 @@ func (e Created) ToObject() object.Object {
 		for _, iv := range e.Policies {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("policies:ao", v)
+		o = o.Set("policies:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Created) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -262,7 +262,7 @@ func (e *Created) FromObject(o object.Object) error {
 			e.PartitionKeys[i] = string(iv)
 		}
 	}
-	if v := data.Value("policies:ao"); v != nil && v.IsList() {
+	if v := data.Value("policies:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {
@@ -285,21 +285,21 @@ func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "stream",
 				Type:       "example/crypto.Hash",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: false,
 				IsOptional: false,
 			},
 			&object.SchemaProperty{
 				Name:       "parents",
 				Type:       "example/crypto.Hash",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
 			&object.SchemaProperty{
 				Name:       "policies",
 				Type:       "Policy",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -322,30 +322,30 @@ func (e PoliciesUpdated) ToObject() object.Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.Stream != nil {
-		o = o.Set("stream:o", e.Stream.ToObject().Raw())
+		o = o.Set("stream:m", e.Stream.ToObject().Raw())
 	}
 	if len(e.Parents) > 0 {
 		v := object.List{}
 		for _, iv := range e.Parents {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("parents:ao", v)
+		o = o.Set("parents:am", v)
 	}
 	if len(e.Policies) > 0 {
 		v := object.List{}
 		for _, iv := range e.Policies {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("policies:ao", v)
+		o = o.Set("policies:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *PoliciesUpdated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -356,13 +356,13 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("stream:o"); v != nil {
+	if v := data.Value("stream:m"); v != nil {
 		es := &crypto.Hash{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.Stream = es
 	}
-	if v := data.Value("parents:ao"); v != nil && v.IsList() {
+	if v := data.Value("parents:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Parents = make([]*crypto.Hash, len(m))
 		for i, iv := range m {
@@ -372,7 +372,7 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 			e.Parents[i] = es
 		}
 	}
-	if v := data.Value("policies:ao"); v != nil && v.IsList() {
+	if v := data.Value("policies:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {

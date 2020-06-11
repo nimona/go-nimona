@@ -152,13 +152,13 @@ func (e Policy) ToObject() object.Object {
 		o = o.Set("action:s", e.Action)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -246,13 +246,13 @@ func (e Request) ToObject() object.Object {
 		o = o.Set("leaves:as", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Request) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -326,13 +326,13 @@ func (e Response) ToObject() object.Object {
 		o = o.Set("children:as", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Response) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -406,13 +406,13 @@ func (e ObjectRequest) ToObject() object.Object {
 		o = o.Set("objects:as", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ObjectRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -453,7 +453,7 @@ func (e ObjectResponse) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "objects",
 				Type:       "nimona.io/object.Object",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -483,16 +483,16 @@ func (e ObjectResponse) ToObject() object.Object {
 		for _, iv := range e.Objects {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("objects:ao", v)
+		o = o.Set("objects:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ObjectResponse) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -506,7 +506,7 @@ func (e *ObjectResponse) FromObject(o object.Object) error {
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("objects:ao"); v != nil && v.IsList() {
+	if v := data.Value("objects:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Objects = make([]*object.Object, len(m))
 		for i, iv := range m {
@@ -534,7 +534,7 @@ func (e Announcement) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "objects",
 				Type:       "nimona.io/object.Object",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -564,16 +564,16 @@ func (e Announcement) ToObject() object.Object {
 		for _, iv := range e.Objects {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("objects:ao", v)
+		o = o.Set("objects:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Announcement) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -587,7 +587,7 @@ func (e *Announcement) FromObject(o object.Object) error {
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("objects:ao"); v != nil && v.IsList() {
+	if v := data.Value("objects:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Objects = make([]*object.Object, len(m))
 		for i, iv := range m {

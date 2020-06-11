@@ -36,7 +36,7 @@ func (ts typeHints) TypeHint() TypeHint {
 
 const (
 	HintUndefined TypeHint = ""
-	HintObject    TypeHint = "o"
+	HintMap       TypeHint = "m"
 	HintArray     TypeHint = "a"
 	HintBool      TypeHint = "b"
 	HintData      TypeHint = "d"
@@ -47,29 +47,6 @@ const (
 	HintRef       TypeHint = "r"
 	HintUint      TypeHint = "u"
 )
-
-var (
-	hints = map[string]TypeHint{
-		"":  HintUndefined,
-		"o": HintObject,
-		"a": HintArray,
-		"b": HintBool,
-		"d": HintData,
-		"f": HintFloat,
-		"i": HintInt,
-		"n": HintNil,
-		"s": HintString,
-		"u": HintUint,
-	}
-)
-
-// GetTypeHint returns a TypeHint from a string
-func GetTypeHint(t string) TypeHint {
-	if t, ok := hints[t]; ok {
-		return t
-	}
-	return HintUndefined
-}
 
 // DeduceTypeHint returns a TypeHint from a given value
 func DeduceTypeHint(o interface{}) TypeHint {
@@ -111,7 +88,7 @@ func DeduceTypeHint(o interface{}) TypeHint {
 
 	case reflect.Map,
 		reflect.Struct:
-		return HintObject
+		return HintMap
 
 	case reflect.Float32, reflect.Float64:
 		return HintFloat

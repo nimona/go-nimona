@@ -87,13 +87,13 @@ func (e ConversationCreated) ToObject() object.Object {
 		o = o.Set("name:s", e.Name)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ConversationCreated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -160,13 +160,13 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -236,13 +236,13 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ConversationMessageAdded) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -310,13 +310,13 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 		o = o.Set("dependsOn:ar", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

@@ -157,7 +157,7 @@ func main() {
 		}
 
 		m := asr.ToObject().ToMap()
-		delete(m, "_signatures:ao")
+		delete(m, "_signatures:am")
 
 		b, _ := json.Marshal(m)
 		s := string(b)

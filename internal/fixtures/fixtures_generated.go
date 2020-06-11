@@ -130,13 +130,13 @@ func (e TestPolicy) ToObject() object.Object {
 		o = o.Set("action:s", e.Action)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *TestPolicy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -220,13 +220,13 @@ func (e TestStream) ToObject() object.Object {
 		o = o.Set("createdDateTime:s", e.CreatedDateTime)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *TestStream) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -282,13 +282,13 @@ func (e TestSubscribed) ToObject() object.Object {
 		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *TestSubscribed) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -341,13 +341,13 @@ func (e TestUnsubscribed) ToObject() object.Object {
 		o = o.Set("nonce:s", e.Nonce)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *TestUnsubscribed) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

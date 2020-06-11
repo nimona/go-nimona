@@ -31,12 +31,12 @@ func TestObject(t *testing.T) {
 		"type:s":     "type",
 		"stream:s":   "stream",
 		"parents:as": []string{"parent1", "parent2"},
-		"policy:o": map[string]interface{}{
+		"policy:m": map[string]interface{}{
 			"subjects:as": []string{"subject1", "subject2"},
 			"actions:as":  []string{"action1", "action2"},
 			"effect:s":    "effect",
 		},
-		"_signatures:ao": []interface{}{
+		"_signatures:am": []interface{}{
 			map[string]interface{}{
 				"signer:s": "signer",
 				"alg:s":    "alg",
@@ -44,7 +44,7 @@ func TestObject(t *testing.T) {
 			},
 		},
 		"owners:as": []string{"owner1", "owner2"},
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar",
 		},
 	}

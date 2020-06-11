@@ -83,7 +83,7 @@ func TestHash(t *testing.T) {
 		{
 			name: "map, nested",
 			value: Map{}.Set(
-				"data:o",
+				"data:m",
 				Map{}.Set(
 					"foo:s",
 					String("bar"),

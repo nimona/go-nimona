@@ -66,13 +66,13 @@ func (e Msg) ToObject() object.Object {
 		o = o.Set("body:s", e.Body)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Msg) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
