@@ -46,7 +46,7 @@ import (
 var (
 	o = object.FromMap(map[string]interface{}{
 		"type:s": "foo",
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar",
 			"numbers:ai": []int{
 				1, 2, 3,
@@ -54,7 +54,7 @@ var (
 			"strings:as": []string{
 				"a", "b", "c",
 			},
-			"map:o": map[string]interface{}{
+			"map:m": map[string]interface{}{
 				"nested-foo:s": "bar",
 				"nested-numbers:ai": []interface{}{
 					1, 2, 3,
@@ -73,7 +73,7 @@ var (
 			oh.String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m1",
 		},
 	})
@@ -83,7 +83,7 @@ var (
 			oh.String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m2",
 		},
 	})
@@ -93,7 +93,7 @@ var (
 			m1.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m3",
 		},
 	})
@@ -103,7 +103,7 @@ var (
 			m2.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m4",
 		},
 	})
@@ -113,7 +113,7 @@ var (
 			m2.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m5",
 		},
 	})
@@ -124,7 +124,7 @@ var (
 			m4.ToObject().Hash().String(),
 		},
 		"stream:s": oh.String(),
-		"data:o": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m6",
 		},
 	})

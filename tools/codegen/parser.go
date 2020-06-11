@@ -131,7 +131,7 @@ func (p *Parser) parseField() (interface{}, error) {
 	default:
 		member.Type = value
 		member.SimpleType = value
-		member.Hint = "o"
+		member.Hint = "m"
 		member.IsObject = true
 	}
 	fmt.Println("\tFound attribute", member.Name, "of type", member.Type)

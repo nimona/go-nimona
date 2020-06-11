@@ -67,13 +67,13 @@ func (e SchemaProperty) ToObject() Object {
 		for _, iv := range e.Properties {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("properties:ao", v)
+		o = o.Set("properties:am", v)
 	}
 	return o
 }
 
 func (e *SchemaProperty) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:o").(Map)
+	data, ok := o.Raw().Value("data:m").(Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -99,7 +99,7 @@ func (e *SchemaProperty) FromObject(o Object) error {
 	if v := data.Value("isOptional:b"); v != nil {
 		e.IsOptional = bool(v.PrimitiveHinted().(bool))
 	}
-	if v := data.Value("properties:ao"); v != nil && v.IsList() {
+	if v := data.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Properties = make([]*SchemaProperty, len(m))
 		for i, iv := range m {
@@ -135,13 +135,13 @@ func (e SchemaObject) ToObject() Object {
 		for _, iv := range e.Properties {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("properties:ao", v)
+		o = o.Set("properties:am", v)
 	}
 	return o
 }
 
 func (e *SchemaObject) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:o").(Map)
+	data, ok := o.Raw().Value("data:m").(Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -152,7 +152,7 @@ func (e *SchemaObject) FromObject(o Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("properties:ao"); v != nil && v.IsList() {
+	if v := data.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Properties = make([]*SchemaProperty, len(m))
 		for i, iv := range m {

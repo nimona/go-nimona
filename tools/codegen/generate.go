@@ -172,14 +172,14 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 	{{- end }}
 	{{- if hnp $object.Name "nimona.io/object.Schema" }}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	{{- end }}
 	return o
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

@@ -35,21 +35,21 @@ package object_test
 // 	}
 
 // 	em := map[string]interface{}{
-// 		"header:o": map[string]interface{}{
+// 		"header:m": map[string]interface{}{
 // 			"type:s":    "nimona.io/fixtures.TestStream",
 // 			"owners:as": []string{"foo"},
-// 			"policy:o": map[string]interface{}{
+// 			"policy:m": map[string]interface{}{
 // 				"subjects:as":  []string{"subject"},
 // 				"resources:as": []string{"*"},
 // 				"actions:as":   []string{"allow"},
 // 			},
-// 			"_signature:o": map[string]interface{}{
+// 			"_signature:m": map[string]interface{}{
 // 				"signer:s": "foo",
 // 				"alg:s":    "alg",
 // 				"x:d":      kx,
 // 			},
 // 		},
-// 		"data:o": map[string]interface{}{
+// 		"data:m": map[string]interface{}{
 // 			"nonce:s": "nonce",
 // 		},
 // 	}

@@ -7,9 +7,9 @@ type (
 		Hint       string      `json:"hint:s,omitempty"`
 		IsRepeated bool        `json:"isRepeated:b,omitempty"`
 		IsOptional bool        `json:"isOptional:b,omitempty"`
-		Properties []*Property `json:"properties:ao,omitempty"`
+		Properties []*Property `json:"properties:am,omitempty"`
 	}
 	Object struct {
-		Properties []*Property `json:"properties:ao,omitempty"`
+		Properties []*Property `json:"properties:am,omitempty"`
 	}
 )

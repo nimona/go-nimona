@@ -27,7 +27,7 @@ func TestClient_Info(t *testing.T) {
 			name:     "success",
 			respCode: 200,
 			respBody: map[string]interface{}{
-				"_signatures:ao": []interface{}{
+				"_signatures:am": []interface{}{
 					map[string]interface{}{
 						"algorithm:s": "OH_ES256",
 					},
@@ -36,7 +36,7 @@ func TestClient_Info(t *testing.T) {
 				"owners:as": []string{
 					"foo",
 				},
-				"data:o": map[string]interface{}{
+				"data:m": map[string]interface{}{
 					"addresses:as": []string{
 						"tcps:127.0.0.1:21013",
 						"tcps:192.168.1.57:21013",

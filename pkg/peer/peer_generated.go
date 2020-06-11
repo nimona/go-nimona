@@ -85,14 +85,14 @@ func (e Peer) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "certificates",
 				Type:       "nimona.io/peer.Certificate",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
 			&object.SchemaProperty{
 				Name:       "relays",
 				Type:       "nimona.io/peer.Peer",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -141,23 +141,23 @@ func (e Peer) ToObject() object.Object {
 		for _, iv := range e.Certificates {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("certificates:ao", v)
+		o = o.Set("certificates:am", v)
 	}
 	if len(e.Relays) > 0 {
 		v := object.List{}
 		for _, iv := range e.Relays {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("relays:ao", v)
+		o = o.Set("relays:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Peer) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -192,7 +192,7 @@ func (e *Peer) FromObject(o object.Object) error {
 			e.ContentTypes[i] = string(iv)
 		}
 	}
-	if v := data.Value("certificates:ao"); v != nil && v.IsList() {
+	if v := data.Value("certificates:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Certificates = make([]*Certificate, len(m))
 		for i, iv := range m {
@@ -202,7 +202,7 @@ func (e *Peer) FromObject(o object.Object) error {
 			e.Certificates[i] = es
 		}
 	}
-	if v := data.Value("relays:ao"); v != nil && v.IsList() {
+	if v := data.Value("relays:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Relays = make([]*Peer, len(m))
 		for i, iv := range m {
@@ -265,13 +265,13 @@ func (e LookupRequest) ToObject() object.Object {
 		o = o.Set("bloom:ai", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *LookupRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -319,7 +319,7 @@ func (e LookupResponse) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "peers",
 				Type:       "nimona.io/peer.Peer",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: true,
 				IsOptional: false,
 			},
@@ -356,16 +356,16 @@ func (e LookupResponse) ToObject() object.Object {
 		for _, iv := range e.Peers {
 			v = v.Append(iv.ToObject().Raw())
 		}
-		o = o.Set("peers:ao", v)
+		o = o.Set("peers:am", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *LookupResponse) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -386,7 +386,7 @@ func (e *LookupResponse) FromObject(o object.Object) error {
 			e.Bloom[i] = int64(iv)
 		}
 	}
-	if v := data.Value("peers:ao"); v != nil && v.IsList() {
+	if v := data.Value("peers:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Peers = make([]*Peer, len(m))
 		for i, iv := range m {

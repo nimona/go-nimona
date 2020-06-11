@@ -108,13 +108,13 @@ func (e Hash) ToObject() object.Object {
 		o = o.Set("digest:d", e.Digest)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *Hash) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -144,7 +144,7 @@ func (e HeaderSignature) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "publicKey",
 				Type:       "PublicKey",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: false,
 				IsOptional: false,
 			},
@@ -188,7 +188,7 @@ func (e HeaderSignature) ToObject() object.Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
-		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
+		o = o.Set("publicKey:m", e.PublicKey.ToObject().Raw())
 	}
 	if e.Algorithm != "" {
 		o = o.Set("algorithm:s", e.Algorithm)
@@ -200,13 +200,13 @@ func (e HeaderSignature) ToObject() object.Object {
 		o = o.Set("s:d", e.S)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *HeaderSignature) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -217,7 +217,7 @@ func (e *HeaderSignature) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("publicKey:o"); v != nil {
+	if v := data.Value("publicKey:m"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
@@ -245,7 +245,7 @@ func (e PrivateKey) GetSchema() *object.SchemaObject {
 			&object.SchemaProperty{
 				Name:       "publicKey",
 				Type:       "PublicKey",
-				Hint:       "o",
+				Hint:       "m",
 				IsRepeated: false,
 				IsOptional: false,
 			},
@@ -310,7 +310,7 @@ func (e PrivateKey) ToObject() object.Object {
 	o = o.AddSignature(e.Signatures...)
 	o = o.SetPolicy(e.Policy)
 	if e.PublicKey != nil {
-		o = o.Set("publicKey:o", e.PublicKey.ToObject().Raw())
+		o = o.Set("publicKey:m", e.PublicKey.ToObject().Raw())
 	}
 	if e.KeyType != "" {
 		o = o.Set("keyType:s", e.KeyType)
@@ -331,13 +331,13 @@ func (e PrivateKey) ToObject() object.Object {
 		o = o.Set("d:d", e.D)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *PrivateKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}
@@ -348,7 +348,7 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("publicKey:o"); v != nil {
+	if v := data.Value("publicKey:m"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
@@ -451,13 +451,13 @@ func (e PublicKey) ToObject() object.Object {
 		o = o.Set("y:d", e.Y)
 	}
 	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:o"] = schema.ToObject().ToMap()
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
 	return o
 }
 
 func (e *PublicKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:o").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
 	}

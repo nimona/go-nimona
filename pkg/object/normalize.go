@@ -60,7 +60,7 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					}
 				}
 				return m, nil
-			case 'o':
+			case 'm':
 				v := reflect.ValueOf(i)
 				m := make([]interface{}, v.Len())
 				for i := 0; i < v.Len(); i++ {
@@ -166,7 +166,7 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 				return nil, errors.New("unknown array hint " + t)
 			}
 		}
-	case 'o':
+	case 'm':
 		return normalizeObject(i)
 	case 's':
 		return normalizeString(i)

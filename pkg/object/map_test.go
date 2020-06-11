@@ -11,7 +11,7 @@ func TestFromPrimitive(t *testing.T) {
 	em := map[string]interface{}{
 		"foo:s":     "bar2",
 		"not-foo:s": "not-bar0",
-		"nested-map:o": map[string]interface{}{
+		"nested-map:m": map[string]interface{}{
 			"nested-foo:s": "nested-bar",
 		},
 		"foos:as": []string{
@@ -21,7 +21,7 @@ func TestFromPrimitive(t *testing.T) {
 		},
 	}
 
-	v := AnyToValue(":o", em)
+	v := AnyToValue(":m", em)
 	m := v.PrimitiveHinted()
 	require.Equal(t, em, m)
 }
@@ -38,14 +38,14 @@ func TestMapPrimitive(t *testing.T) {
 		Set("foo:s", String("bar1")).
 		Set("foo:s", String("bar2")).
 		Set("not-foo:s", String("not-bar0")).
-		Set("nested-map:o", Map{}.Set("nested-foo:s", String("nested-bar"))).
+		Set("nested-map:m", Map{}.Set("nested-foo:s", String("nested-bar"))).
 		Set("foos:as", l)
 
 	h := m.PrimitiveHinted()
 	assert.Equal(t, map[string]interface{}{
 		"foo:s":     "bar2",
 		"not-foo:s": "not-bar0",
-		"nested-map:o": map[string]interface{}{
+		"nested-map:m": map[string]interface{}{
 			"nested-foo:s": "nested-bar",
 		},
 		"foos:as": []string{

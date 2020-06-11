@@ -1,6 +1,7 @@
 package object
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strings"
@@ -36,7 +37,7 @@ func (v Ref) typeHint() TypeHint    { return HintRef }
 func (v Int) typeHint() TypeHint    { return HintInt }
 func (v Float) typeHint() TypeHint  { return HintFloat }
 func (v Bytes) typeHint() TypeHint  { return HintData }
-func (v Map) typeHint() TypeHint    { return HintObject }
+func (v Map) typeHint() TypeHint    { return HintMap }
 
 func (v Bool) PrimitiveHinted() interface{}   { return bool(v) }
 func (v String) PrimitiveHinted() interface{} { return string(v) }
@@ -82,6 +83,12 @@ func AnyToValue(k string, a interface{}) Value {
 		switch v := a.(type) {
 		case bool:
 			return Bool(v)
+		}
+
+	case HintRef:
+		switch v := a.(type) {
+		case string:
+			return Ref(v)
 		}
 
 	case HintString:
@@ -134,9 +141,15 @@ func AnyToValue(k string, a interface{}) Value {
 		switch v := a.(type) {
 		case []byte:
 			return Bytes(v)
+		case string:
+			b, err := base64.StdEncoding.DecodeString(v)
+			if err != nil {
+				panic(err)
+			}
+			return Bytes(b)
 		}
 
-	case HintObject:
+	case HintMap:
 		switch v := a.(type) {
 		case map[interface{}]interface{}:
 			m := Map{}

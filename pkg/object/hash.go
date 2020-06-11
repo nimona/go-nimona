@@ -107,7 +107,7 @@ func (v Map) hash() Hash {
 		// hash the key (including the hint)
 		// but if we are dealing with an object, replace its hint
 		ck := k
-		if strings.HasSuffix(k, ":"+HintObject.String()) {
+		if strings.HasSuffix(k, ":"+HintMap.String()) {
 			ck = k[:len(k)-2] + ":" + HintRef.String()
 		}
 		h = append(h, hash("", []byte(ck))...)
