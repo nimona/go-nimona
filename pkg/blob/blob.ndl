@@ -1,0 +1,10 @@
+package nimona.io/blob
+
+signed object nimona.io/Chunk {
+  data data
+}
+
+signed object nimona.io/Blob {
+   chunks repeated Chunk
+}
+
