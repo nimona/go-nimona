@@ -26,18 +26,28 @@ func (l List) Append(v Value) List {
 	}
 }
 
-func (l List) Iterate(f func(v Value)) {
+func (l List) iterate(f func(v Value) bool) bool {
 	if l.prev != nil {
-		l.prev.Iterate(f)
+		if !l.prev.iterate(f) {
+			return false
+		}
 	}
 	if l.value != nil {
-		f(l.value)
+		if !f(l.value) {
+			return false
+		}
 	}
+	return true
+}
+
+func (l List) Iterate(f func(v Value) bool) {
+	l.iterate(f)
 }
 
 func (l List) Length() (n int) {
-	l.Iterate(func(v Value) {
+	l.Iterate(func(v Value) bool {
 		n++
+		return true
 	})
 	return
 }
@@ -50,44 +60,51 @@ func (l List) PrimitiveHinted() interface{} {
 	switch {
 	case l.value.IsList():
 		p := []interface{}{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted())
+			return true
 		})
 		return p
 	case l.value.IsMap():
 		p := []interface{}{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted())
+			return true
 		})
 		return p
 	case l.value.IsBool():
 		p := []bool{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted().(bool))
+			return true
 		})
 		return p
 	case l.value.IsString():
 		p := []string{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted().(string))
+			return true
 		})
 		return p
 	case l.value.IsInt():
 		p := []int64{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted().(int64))
+			return true
 		})
 		return p
 	case l.value.IsFloat():
 		p := []float64{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted().(float64))
+			return true
 		})
 		return p
 	case l.value.IsBytes():
 		p := [][]byte{}
-		l.Iterate(func(v Value) {
+		l.Iterate(func(v Value) bool {
 			p = append(p, v.PrimitiveHinted().([]byte))
+			return true
 		})
 		return p
 	}
