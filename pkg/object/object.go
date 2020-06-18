@@ -162,12 +162,13 @@ func (o Object) GetSignatures() []Signature {
 	sigs := []Signature{}
 	if os := o.get("_signatures:am"); os != nil {
 		if ol, ok := os.(List); ok && ol.Length() > 0 {
-			ol.Iterate(func(v Value) {
+			ol.Iterate(func(v Value) bool {
 				m, ok := v.(Map)
 				if !ok {
-					return
+					return true
 				}
 				sigs = append(sigs, immutableMapToSignature(m))
+				return true
 			})
 		}
 	}

@@ -93,11 +93,11 @@ func (v Bytes) hash() Hash {
 func (v Map) hash() Hash {
 	// get all map keys
 	ks := []string{}
-	v.Iterate(func(k string, v Value) {
-		if strings.HasPrefix(k, "_") {
-			return
+	v.Iterate(func(k string, v Value) bool {
+		if !strings.HasPrefix(k, "_") {
+			ks = append(ks, k)
 		}
-		ks = append(ks, k)
+		return true
 	})
 	// sort them
 	sort.Strings(ks)
@@ -120,8 +120,9 @@ func (v Map) hash() Hash {
 
 func (v List) hash() Hash {
 	h := []byte{}
-	v.Iterate(func(v Value) {
+	v.Iterate(func(v Value) bool {
 		h = append(h, v.Hash()...)
+		return true
 	})
 	return hash(v.hint, h)
 }

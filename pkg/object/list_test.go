@@ -11,8 +11,9 @@ func TestList(t *testing.T) {
 	require.Equal(t, 0, l.Length())
 
 	iCalls := 0
-	l.Iterate(func(_ Value) {
+	l.Iterate(func(_ Value) bool {
 		iCalls++
+		return true
 	})
 	require.Equal(t, 0, iCalls)
 
@@ -27,9 +28,10 @@ func TestList(t *testing.T) {
 
 	iCalls = 0
 	values := []string{}
-	l1.Iterate(func(v Value) {
+	l1.Iterate(func(v Value) bool {
 		iCalls++
 		values = append(values, v.PrimitiveHinted().(string))
+		return true
 	})
 	require.Equal(t, 2, iCalls)
 	require.Len(t, values, 2)
