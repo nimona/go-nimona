@@ -108,7 +108,9 @@ func (m Map) PrimitiveHinted() interface{} {
 	}
 	p := map[string]interface{}{}
 	m.Iterate(func(k string, v Value) bool {
-		p[k] = v.PrimitiveHinted()
+		if v != nil {
+			p[k] = v.PrimitiveHinted()
+		}
 		return true
 	})
 	return p
