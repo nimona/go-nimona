@@ -31,7 +31,7 @@ func (v String) IsList() bool   { return false }
 func (v String) IsMap() bool    { return false }
 func (v String) IsBool() bool   { return false }
 func (v String) IsString() bool { return true }
-func (v String) IsRef() bool    { return true }
+func (v String) IsRef() bool    { return false }
 func (v String) IsInt() bool    { return false }
 func (v String) IsFloat() bool  { return false }
 func (v String) IsBytes() bool  { return false }
