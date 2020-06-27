@@ -95,6 +95,9 @@ linters:
     # - dogsled
 
 issues:
+  exclude:
+     - Using the variable on range scope `tt` in function literal
+     - Using the variable on range scope `tc` in function literal
   exclude-rules:
     - linters:
         - lll
