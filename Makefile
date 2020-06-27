@@ -20,6 +20,7 @@ TOOLS += github.com/goreleaser/goreleaser@v0.129.0
 TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 TOOLS += github.com/geoah/mockery/cmd/mockery@v0.0.1
 TOOLS += mvdan.cc/gofumpt/gofumports
+TOOLS += github.com/golang/mock/mockgen@v1.4.3
 
 # Internal tools
 TOOLS_INTERNAL += codegen
