@@ -59,7 +59,7 @@ _Note: keys starting with an underscore (`_`) should be ignored and not be part
 of the hash._
 
 _Note: when hashing map keys, the type should be always changed to `r`.
-So that `foo:s` would become `foo:r` before hashing.`
+So that `foo:s` would become `foo:r` before hashing.`_
 
 ### Referencing and Redaction
 
