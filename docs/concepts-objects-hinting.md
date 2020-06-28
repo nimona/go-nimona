@@ -118,3 +118,5 @@ the same hash, even if we didn’t have access to the schema itself._
 * [Tagged JSON]
 
 [Tagged JSON]: https://tjson.org
+[Ben Laurie]: https://github.com/benlaurie
+[Object hash]: https://github.com/benlaurie/objecthash
