@@ -70,7 +70,11 @@ func (l *loader) Load(
 func (l *loader) Unload(
 	obj object.Object,
 	opts ...option,
-) (*object.Object, error) {
+) (
+	result *object.Object,
+	unloaded []object.Object,
+	err error,
+) {
 	o := &options{}
 	for _, opt := range opts {
 		opt(o)
@@ -86,6 +90,7 @@ func (l *loader) Unload(
 			return true
 		}
 		objs[k] = v.Hash()
+		unloaded = append(unloaded, object.Object(v.(object.Map)))
 		return true
 	})
 	for k, ref := range objs {
@@ -93,5 +98,5 @@ func (l *loader) Unload(
 		nk := strings.Replace(k, ":m", ":r", 1)
 		obj = obj.Set(nk, object.Ref(ref))
 	}
-	return &obj, nil
+	return &obj, unloaded, nil
 }
