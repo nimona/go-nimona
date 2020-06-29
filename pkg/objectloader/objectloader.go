@@ -3,21 +3,17 @@ package objectloader
 import (
 	"strings"
 
-	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
-	"nimona.io/pkg/resolver"
 )
 
 type (
 	Loader interface {
 		Load(object.Object, ...option) (object.Object, error)
-		Unload(object.Object, ...option) (object.Object, error)
+		Unload(object.Object, ...option) (object.Object, []object.Object, error)
 	}
 	loader struct {
-		store    objectstore.Store
-		resolver resolver.Resolver
-		exchange exchange.Exchange
+		store objectstore.Getter
 	}
 	option  func(*options)
 	options struct {
