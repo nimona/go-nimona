@@ -114,11 +114,12 @@ func Test_loader_Unload(t *testing.T) {
 		opts []option
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *object.Object
-		wantErr bool
+		name              string
+		fields            fields
+		args              args
+		want              *object.Object
+		wantUnloadedCount int
+		wantErr           bool
 	}{{
 		name: "should pass, 1 object unloaded",
 		args: args{
@@ -135,20 +136,22 @@ func Test_loader_Unload(t *testing.T) {
 				return nil
 			},
 		},
-		want: &testObject1Unloaded,
+		want:              &testObject1Unloaded,
+		wantUnloadedCount: 1,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &loader{
 				store: tt.fields.store(t),
 			}
-			got, err := l.Unload(tt.args.obj, tt.args.opts...)
+			got, gotUnloaded, err := l.Unload(tt.args.obj, tt.args.opts...)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
 			assert.Equal(t, tt.want.ToMap(), got.ToMap())
+			assert.Len(t, gotUnloaded, tt.wantUnloadedCount)
 		})
 	}
 }
