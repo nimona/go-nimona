@@ -9,8 +9,8 @@ import (
 
 type (
 	Loader interface {
-		Load(object.Object, ...option) (object.Object, error)
-		Unload(object.Object, ...option) (object.Object, []object.Object, error)
+		Load(object.Object, ...option) (*object.Object, error)
+		Unload(object.Object, ...option) (*object.Object, []object.Object, error)
 	}
 	loader struct {
 		store objectstore.Getter
@@ -21,6 +21,14 @@ type (
 		skipTypes []string
 	}
 )
+
+func New(
+	store objectstore.Getter,
+) Loader {
+	return &loader{
+		store: store,
+	}
+}
 
 func WithType(t string) func(*options) {
 	return func(o *options) {

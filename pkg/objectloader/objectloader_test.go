@@ -141,9 +141,9 @@ func Test_loader_Unload(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &loader{
-				store: tt.fields.store(t),
-			}
+			l := New(
+				tt.fields.store(t),
+			)
 			got, gotUnloaded, err := l.Unload(tt.args.obj, tt.args.opts...)
 			if tt.wantErr {
 				require.Error(t, err)
