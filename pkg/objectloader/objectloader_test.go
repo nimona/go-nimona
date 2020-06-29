@@ -32,9 +32,7 @@ var (
 
 func Test_loader_Load(t *testing.T) {
 	type fields struct {
-		store    func(*testing.T) objectstore.Store
-		resolver func(*testing.T) resolver.Resolver
-		exchange func(*testing.T) exchange.Exchange
+		store func(*testing.T) objectstore.Store
 	}
 	type args struct {
 		obj  object.Object
@@ -64,12 +62,6 @@ func Test_loader_Load(t *testing.T) {
 				)
 				return m
 			},
-			resolver: func(t *testing.T) resolver.Resolver {
-				return nil
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				return nil
-			},
 		},
 		want: &testObject1,
 	}, {
@@ -90,21 +82,13 @@ func Test_loader_Load(t *testing.T) {
 				)
 				return m
 			},
-			resolver: func(t *testing.T) resolver.Resolver {
-				return nil
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				return nil
-			},
 		},
 		wantErr: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &loader{
-				store:    tt.fields.store(t),
-				resolver: tt.fields.resolver(t),
-				exchange: tt.fields.exchange(t),
+				store: tt.fields.store(t),
 			}
 			got, err := l.Load(tt.args.obj, tt.args.opts...)
 			if tt.wantErr {
@@ -156,9 +140,7 @@ func Test_loader_Unload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &loader{
-				store:    tt.fields.store(t),
-				resolver: tt.fields.resolver(t),
-				exchange: tt.fields.exchange(t),
+				store: tt.fields.store(t),
 			}
 			got, err := l.Unload(tt.args.obj, tt.args.opts...)
 			if tt.wantErr {
