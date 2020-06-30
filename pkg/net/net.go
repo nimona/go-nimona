@@ -319,6 +319,10 @@ func (n *network) Listen(
 			}
 		}()
 	}
+	// block our own addresses, just in case anyone tries to dial them
+	for _, addr := range mlst.addresses {
+		n.blocklist.Set(addr, 0, cache.NoExpiration)
+	}
 	return mlst, nil
 }
 

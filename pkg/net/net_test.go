@@ -43,6 +43,13 @@ func TestNetConnectionSuccess(t *testing.T) {
 		done <- true
 	}()
 
+	// attempt to dial own address, should fail
+	_, err = n1.Dial(ctx, &peer.Peer{
+		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Addresses: n1.Addresses(),
+	})
+	require.Equal(t, ErrAllAddressesBlocked, err)
+
 	sc, err := n1.Accept()
 	require.NoError(t, err)
 
