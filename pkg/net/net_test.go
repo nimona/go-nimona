@@ -73,9 +73,9 @@ func TestNetDialBackoff(t *testing.T) {
 	_, err := n1.Dial(ctx, p)
 	assert.Equal(t, ErrAllAddressesFailed, err)
 
-	// attempt 2, blacklisted
+	// attempt 2, blocked
 	_, err = n1.Dial(ctx, p)
-	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+	assert.Equal(t, ErrAllAddressesBlocked, err)
 
 	// wait for backoff to expire
 	time.Sleep(time.Second * 2)
@@ -84,16 +84,16 @@ func TestNetDialBackoff(t *testing.T) {
 	_, err = n1.Dial(ctx, p)
 	assert.Equal(t, ErrAllAddressesFailed, err)
 
-	// attempt 4, blacklisted
+	// attempt 4, blocked
 	_, err = n1.Dial(ctx, p)
-	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+	assert.Equal(t, ErrAllAddressesBlocked, err)
 
 	// wait, but backoff should not have expired
 	time.Sleep(time.Second * 2)
 
-	// attempt 5, blacklisted
+	// attempt 5, blocked
 	_, err = n1.Dial(ctx, p)
-	assert.Equal(t, ErrAllAddressesBlacklisted, err)
+	assert.Equal(t, ErrAllAddressesBlocked, err)
 
 	// wait for backoff to expire
 	time.Sleep(time.Second * 2)
