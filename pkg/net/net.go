@@ -41,8 +41,8 @@ func init() {
 	connDialCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
 	expvar.Publish("nm:net.dial", connDialCounter)
 
-	connBlacklistCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:net.conn.dial.blacklist", connBlacklistCounter)
+	connBlocklistCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
+	expvar.Publish("nm:net.conn.dial.blocked", connBlocklistCounter)
 }
 
 type (
@@ -72,7 +72,7 @@ func New(opts ...Option) Network {
 		middleware:  []MiddlewareHandler{},
 		listeners:   []*listener{},
 		connections: make(chan *Connection),
-		blacklist:   cache.New(time.Second*5, time.Second*60),
+		blocklist:   cache.New(time.Second*5, time.Second*60),
 	}
 	for _, opt := range opts {
 		opt(n)
@@ -114,7 +114,7 @@ type network struct {
 	listeners   []*listener
 	connections chan *Connection
 	attempts    attemptsMap
-	blacklist   *cache.Cache
+	blocklist   *cache.Cache
 }
 
 // Dial to a peer and return a net.Conn or error
@@ -134,15 +134,15 @@ func (n *network) Dial(
 	logger.Debug("dialing")
 	expvar.Get("nm:net.dial").(metric.Metric).Add(1)
 
-	// keep a flag on whether all addresses where blacklisted so we can return
-	// an ErrMissingSignature error
-	allBlacklisted := true
+	// keep a flag on whether all addresses where blocked so we can return
+	// an ErrAllAddressesBlocked error
+	allBlocked := true
 
 	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
-		// check if address is currently blacklisted
-		if _, blacklisted := n.blacklist.Get(address); blacklisted {
-			logger.Debug("address is blacklisted, skipping")
+		// check if address is currently blocklisted
+		if _, blocklisted := n.blocklist.Get(address); blocklisted {
+			logger.Debug("address is blocklisted, skipping")
 			continue
 		}
 		// get protocol from address
@@ -155,16 +155,16 @@ func (n *network) Dial(
 			continue
 		}
 
-		// reset blacklist flag
-		allBlacklisted = false
+		// reset blocked flag
+		allBlocked = false
 
 		// dial address
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
-			// blacklist address
-			expvar.Get("nm:net.conn.dial.blacklist").(metric.Metric).Add(1)
-			attempts, backoff := n.exponentialyBlacklist(address)
-			logger.Error("could not dial address, blacklisting",
+			// blocking address
+			expvar.Get("nm:net.conn.dial.blocked").(metric.Metric).Add(1)
+			attempts, backoff := n.exponentialyBlockAddress(address)
+			logger.Error("could not dial address, blocking",
 				log.Int("failedAttempts", attempts),
 				log.String("backoff", backoff.String()),
 				log.String("type", addressType),
@@ -181,8 +181,8 @@ func (n *network) Dial(
 
 		// check negotiated key against dialed
 		if conn.RemotePeerKey != p.PublicKey() {
-			n.exponentialyBlacklist(address)
-			logger.Error("remote didn't match expect key, blacklisting",
+			n.exponentialyBlockAddress(address)
+			logger.Error("remote didn't match expect key, blocking",
 				log.String("expected", p.PublicKey().String()),
 				log.String("received", conn.RemotePeerKey.String()),
 			)
@@ -200,15 +200,15 @@ func (n *network) Dial(
 	}
 
 	err := ErrAllAddressesFailed
-	if allBlacklisted {
-		err = ErrAllAddressesBlacklisted
+	if allBlocked {
+		err = ErrAllAddressesBlocked
 	}
 
 	logger.Error("could not dial peer", log.Error(err))
 	return nil, err
 }
 
-func (n *network) exponentialyBlacklist(k string) (int, time.Duration) {
+func (n *network) exponentialyBlockAddress(k string) (int, time.Duration) {
 	baseBackoff := float64(time.Second * 1)
 	maxBackoff := float64(time.Minute * 10)
 	attempts, _ := n.attempts.Get(k)
@@ -218,7 +218,7 @@ func (n *network) exponentialyBlacklist(k string) (int, time.Duration) {
 		backoff = maxBackoff
 	}
 	n.attempts.Put(k, attempts)
-	n.blacklist.Set(k, attempts, time.Duration(backoff))
+	n.blocklist.Set(k, attempts, time.Duration(backoff))
 	return attempts, time.Duration(backoff)
 }
 
