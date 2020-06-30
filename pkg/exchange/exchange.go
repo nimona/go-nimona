@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/geoah/go-queue"
-	"github.com/patrickmn/go-cache"
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/connmanager"
@@ -77,20 +76,18 @@ type (
 	Option func(*exchange)
 	// echange implements an Exchange
 	exchange struct {
-		net       net.Network
-		connmgr   connmanager.Manager
-		keychain  keychain.Keychain
-		eventbus  eventbus.Eventbus
-		outboxes  *OutboxesMap
-		inboxes   EnvelopePubSub
-		blacklist *cache.Cache
+		net      net.Network
+		connmgr  connmanager.Manager
+		keychain keychain.Keychain
+		eventbus eventbus.Eventbus
+		outboxes *OutboxesMap
+		inboxes  EnvelopePubSub
 	}
 	// addressState defines the states of a peer's address
 	// current options are:
 	// * -1 unconnectable
 	// * 0 unknown
 	// * 1 connectable
-	// * 2 blacklisted
 	addressState int
 	// outbox holds information about a single peer, its open connection,
 	// and the messages for it.
@@ -114,12 +111,11 @@ func New(
 	opts ...Option,
 ) Exchange {
 	w := &exchange{
-		net:       net.DefaultNetwork,
-		keychain:  keychain.DefaultKeychain,
-		eventbus:  eventbus.DefaultEventbus,
-		outboxes:  NewOutboxesMap(),
-		inboxes:   NewEnvelopePubSub(),
-		blacklist: cache.New(10*time.Second, 5*time.Minute),
+		net:      net.DefaultNetwork,
+		keychain: keychain.DefaultKeychain,
+		eventbus: eventbus.DefaultEventbus,
+		outboxes: NewOutboxesMap(),
+		inboxes:  NewEnvelopePubSub(),
 	}
 	for _, opt := range opts {
 		opt(w)
