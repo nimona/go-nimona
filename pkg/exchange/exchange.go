@@ -6,11 +6,11 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"expvar"
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/geoah/go-queue"
+	"github.com/patrickmn/go-cache"
 	"github.com/zserge/metric"
 
 	"nimona.io/pkg/connmanager"
@@ -40,6 +40,9 @@ const (
 	ErrInvalidRequest = errors.Error("invalid request")
 	// ErrSendingTimedOut when sending times out
 	ErrSendingTimedOut = errors.Error("sending timed out")
+	// ErrAlreadySentDuringContext when trying to send to the same peer during
+	// this context
+	ErrAlreadySentDuringContext = errors.Error("already sent to peer")
 )
 
 // nolint: lll
@@ -76,18 +79,20 @@ type (
 	Option func(*exchange)
 	// echange implements an Exchange
 	exchange struct {
-		net      net.Network
-		connmgr  connmanager.Manager
-		keychain keychain.Keychain
-		eventbus eventbus.Eventbus
-		outboxes *OutboxesMap
-		inboxes  EnvelopePubSub
+		net       net.Network
+		connmgr   connmanager.Manager
+		keychain  keychain.Keychain
+		eventbus  eventbus.Eventbus
+		outboxes  *OutboxesMap
+		inboxes   EnvelopePubSub
+		deduplist *cache.Cache
 	}
 	// addressState defines the states of a peer's address
 	// current options are:
 	// * -1 unconnectable
 	// * 0 unknown
 	// * 1 connectable
+	// * 2 blocked
 	addressState int
 	// outbox holds information about a single peer, its open connection,
 	// and the messages for it.
@@ -111,11 +116,12 @@ func New(
 	opts ...Option,
 ) Exchange {
 	w := &exchange{
-		net:      net.DefaultNetwork,
-		keychain: keychain.DefaultKeychain,
-		eventbus: eventbus.DefaultEventbus,
-		outboxes: NewOutboxesMap(),
-		inboxes:  NewEnvelopePubSub(),
+		net:       net.DefaultNetwork,
+		keychain:  keychain.DefaultKeychain,
+		eventbus:  eventbus.DefaultEventbus,
+		outboxes:  NewOutboxesMap(),
+		inboxes:   NewEnvelopePubSub(),
+		deduplist: cache.New(10*time.Second, 1*time.Minute),
 	}
 	for _, opt := range opts {
 		opt(w)
@@ -375,7 +381,6 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 			// and if this is not a dataforward then we assume it is for us
 			if o.GetType() != dataForwardType {
 				if len(o.GetSignatures()) == 0 {
-					fmt.Println("___", o.GetType())
 					logger.Error("forwarded object has no signature")
 					continue
 				}
@@ -430,6 +435,11 @@ func (w *exchange) Send(
 	o object.Object,
 	p *peer.Peer,
 ) error {
+	dedupKey := ctx.CorrelationID() + p.PublicKey().String() + o.Hash().String()
+	if _, ok := w.deduplist.Get(dedupKey); ok {
+		return ErrAlreadySentDuringContext
+	}
+
 	ctx = context.FromContext(ctx)
 
 	expvar.Get("nm:exc.obj.send").(metric.Metric).Add(1)
@@ -447,6 +457,7 @@ func (w *exchange) Send(
 	case <-ctx.Done():
 		return ErrSendingTimedOut
 	case err := <-errRecv:
+		w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
 		return err
 	}
 }

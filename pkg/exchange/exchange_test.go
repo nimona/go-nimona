@@ -93,6 +93,13 @@ func TestSendSuccess(t *testing.T) {
 	)
 	assert.NoError(t, errS1)
 
+	errS1b := x2.Send(
+		ctx,
+		eo1,
+		p1,
+	)
+	assert.Equal(t, ErrAlreadySentDuringContext, errS1b)
+
 	time.Sleep(time.Second)
 
 	errS2 := x1.Send(
