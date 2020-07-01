@@ -21,6 +21,7 @@ TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.24.0
 TOOLS += github.com/geoah/mockery/cmd/mockery@v0.0.1
 TOOLS += mvdan.cc/gofumpt/gofumports
 TOOLS += github.com/golang/mock/mockgen@v1.4.3
+TOOLS += github.com/frapposelli/wwhrd@v0.3.0
 
 # Internal tools
 TOOLS_INTERNAL += codegen
@@ -160,6 +161,12 @@ $(BIN_GOBIN): %:
 lint:
 	$(info Running Go linters)
 	@$(GOBIN)/golangci-lint $(V) run
+
+# Check licenses
+licenses:
+	$(info Checking licenses)
+	@$(GOCMD) mod vendor
+	@$(GOBIN)/wwhrd check
 
 # Local bootstrap
 .PHONY: local-bootstrap
