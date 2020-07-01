@@ -26,14 +26,18 @@ alt="GitHub issues">
 
 ---
 
-__WARNING__: Nimona is still in its very early stages of design and development and will stay like this for a while.  
-Documentation is currently non existent but should start slowly popping up as the various design decisions mature.
+__WARNING__: Nimona is still in its very early stages of design and development
+and will stay like this for a while.  
+Documentation is slowly starting to pop up, but everything is still pretty much
+in flux.
 
 ---
 
 # Nimona
 
-Nimona’s main goal is to provide a number of layers/components to help with the challenges presented when dealing with decentralized and peer to peer applications.
+Nimona’s main goal is to provide a number of layers/components to help with
+the challenges presented when dealing with decentralized and peer to peer
+applications.
 
 ## Development
 
@@ -75,7 +79,7 @@ more network addresses.
 Currently the only supported protocol for peer communication is TCP over TLS.
 Such addresses are prefixed with `tcps:` followed by an ip address and port.
 
-Network keeps a blacklist that will exponentially back-off attempts to dial
+Network keeps a blocklist that will exponentially back-off attempts to dial
 unresponsive addresses.
 
 Upon successful connection and handshake, the resulting `net.Connection` will
