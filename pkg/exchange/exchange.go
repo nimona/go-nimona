@@ -5,13 +5,13 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/json"
-	"expvar"
 	"io"
 	"time"
 
 	"github.com/geoah/go-queue"
 	"github.com/patrickmn/go-cache"
-	"github.com/zserge/metric"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"nimona.io/pkg/connmanager"
 	"nimona.io/pkg/context"
@@ -33,6 +33,36 @@ var (
 		WithKeychain(keychain.DefaultKeychain),
 		WithNet(net.DefaultNetwork),
 	)
+	objHandledCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_received_total",
+			Help: "Total number of (top level) objects received",
+		},
+	)
+	objSentCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_send_success_total",
+			Help: "Total number of (top level) objects sent",
+		},
+	)
+	objRelayedCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_send_relayed_total",
+			Help: "Total number of (top level) objects sent via a relay",
+		},
+	)
+	objFailedCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_send_failed_total",
+			Help: "Total number of (top level) objects that failed to send",
+		},
+	)
+	objAttemptedCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_send_attempts_total",
+			Help: "Total number of (top level) objects attempted to send",
+		},
+	)
 )
 
 const (
@@ -50,24 +80,6 @@ const (
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses_generated.go -pkg=exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=exchange gen "ObjectType=*Envelope PubSubName=envelope"
-
-// nolint: gochecknoinits
-func init() {
-	objHandledCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:exc.obj.received", objHandledCounter)
-
-	objSentCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:exc.obj.send.success", objSentCounter)
-
-	objRelayedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:exc.obj.send.relayed", objRelayedCounter)
-
-	objFailedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:exc.obj.send.failed", objFailedCounter)
-
-	objAttemptedCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:exc.obj.send", objAttemptedCounter)
-}
 
 type (
 	// Exchange interface for mocking exchange
@@ -164,7 +176,7 @@ func Send(ctx context.Context, obj object.Object, p *peer.Peer) error {
 }
 
 func (w *exchange) handleConnection(conn *net.Connection) error {
-	expvar.Get("nm:exc.obj.received").(metric.Metric).Add(1)
+	objHandledCounter.Inc()
 
 	if conn == nil {
 		return errors.New("missing connection")
@@ -259,7 +271,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				continue
 			}
 			lastErr = nil
-			expvar.Get("nm:exc.obj.send.success").(metric.Metric).Add(1)
+			objSentCounter.Inc()
 			break
 		}
 
@@ -303,7 +315,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 				}
 				// reset error if we managed to send to at least one relay
 				lastErr = nil
-				expvar.Get("nm:exc.obj.send.relayed").(metric.Metric).Add(1)
+				objRelayedCounter.Inc()
 			}
 			// todo: wait for ack, how??
 		}
@@ -311,7 +323,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		if lastErr == nil {
 			logger.Debug("wrote object")
 		} else {
-			expvar.Get("nm:exc.obj.send.failed").(metric.Metric).Add(1)
+			objFailedCounter.Inc()
 		}
 		req.err <- lastErr
 	}
@@ -442,7 +454,7 @@ func (w *exchange) Send(
 
 	ctx = context.FromContext(ctx)
 
-	expvar.Get("nm:exc.obj.send").(metric.Metric).Add(1)
+	objAttemptedCounter.Inc()
 
 	outbox := w.getOutbox(p.PublicKey())
 	errRecv := make(chan error, 1)
