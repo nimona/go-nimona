@@ -191,6 +191,8 @@ local-peer-one: build
 	NIMONA_PEER_OBJECT_PATH=.local/peer-one/objects \
 	NIMONA_PEER_TCP_PORT=10001 \
 	NIMONA_API_PORT=10801 \
+	NIMONA_PEER_METRICS=true \
+	NIMONA_PEER_DEBUG=true \
 	$(MAINBIN)
 
 # Local test peer two
@@ -204,6 +206,8 @@ local-peer-two: build
 	NIMONA_PEER_OBJECT_PATH=.local/peer-two/objects \
 	NIMONA_PEER_TCP_PORT=10002 \
 	NIMONA_API_PORT=10802 \
+	NIMONA_PEER_METRICS=true \
+	NIMONA_PEER_DEBUG=true \
 	$(MAINBIN)
 
 # Local test peer three
@@ -217,4 +221,6 @@ local-peer-three: build
 	NIMONA_PEER_OBJECT_PATH=.local/peer-three/objects \
 	NIMONA_PEER_TCP_PORT=10003 \
 	NIMONA_API_PORT=10803 \
+	NIMONA_PEER_METRICS=true \
+	NIMONA_PEER_DEBUG=true \
 	$(MAINBIN)
