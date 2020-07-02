@@ -3,7 +3,6 @@ package net
 import (
 	"crypto/ed25519"
 	"crypto/tls"
-	"expvar"
 	"io"
 	"math"
 	"net"
@@ -11,7 +10,8 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/zserge/metric"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -27,23 +27,43 @@ var (
 		WithEventBus(eventbus.DefaultEventbus),
 		WithKeychain(keychain.DefaultKeychain),
 	)
+	connConnOutCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_conn_out_total",
+			Help: "Total number of outgoing connections",
+		},
+	)
+	connConnIncCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_conn_in_total",
+			Help: "Total number of incoming connections",
+		},
+	)
+	connDialAttemptCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_dial_attempt_total",
+			Help: "Total number of dial attempts",
+		},
+	)
+	connDialSuccessCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_dial_success_total",
+			Help: "Total number of successful dials",
+		},
+	)
+	connDialErrorCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_dial_failed_total",
+			Help: "Total number of failed dials",
+		},
+	)
+	connDialBlockedCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_net_dial_blocked_total",
+			Help: "Total number of failed dials due to all addresses blocked",
+		},
+	)
 )
-
-// TODO remove UseUPNP and replace with option
-// nolint: gochecknoinits
-func init() {
-	connConnOutCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:net.conn.out", connConnOutCounter)
-
-	connConnIncCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:net.conn.in", connConnIncCounter)
-
-	connDialCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:net.dial", connDialCounter)
-
-	connBlocklistCounter := metric.NewCounter("2m1s", "15m30s", "1h1m")
-	expvar.Publish("nm:net.conn.dial.blocked", connBlocklistCounter)
-}
 
 type (
 	// Network interface
@@ -132,7 +152,7 @@ func (n *network) Dial(
 	}
 
 	logger.Debug("dialing")
-	expvar.Get("nm:net.dial").(metric.Metric).Add(1)
+	connDialAttemptCounter.Inc()
 
 	// keep a flag on whether all addresses where blocked so we can return
 	// an ErrAllAddressesBlocked error
@@ -162,7 +182,6 @@ func (n *network) Dial(
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
 			// blocking address
-			expvar.Get("nm:net.conn.dial.blocked").(metric.Metric).Add(1)
 			attempts, backoff := n.exponentialyBlockAddress(address)
 			logger.Error("could not dial address, blocking",
 				log.Int("failedAttempts", attempts),
@@ -194,7 +213,8 @@ func (n *network) Dial(
 		n.attempts.Put(address, 0)
 		n.attempts.Put(p.PublicKey().String(), 0)
 
-		expvar.Get("nm:net.conn.out").(metric.Metric).Add(1)
+		connDialSuccessCounter.Inc()
+		connConnOutCounter.Inc()
 
 		return conn, nil
 	}
@@ -202,6 +222,9 @@ func (n *network) Dial(
 	err := ErrAllAddressesFailed
 	if allBlocked {
 		err = ErrAllAddressesBlocked
+		connDialBlockedCounter.Inc()
+	} else {
+		connDialErrorCounter.Inc()
 	}
 
 	logger.Error("could not dial peer", log.Error(err))
@@ -314,7 +337,7 @@ func (n *network) Listen(
 					PublicKey: conn.RemotePeerKey,
 				})
 
-				expvar.Get("nm:net.conn.in").(metric.Metric).Add(1)
+				connConnIncCounter.Inc()
 				n.connections <- conn
 			}
 		}()
