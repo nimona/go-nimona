@@ -1,16 +1,11 @@
 package api
 
 import (
-	"expvar"
 	"net/http"
-	"os"
-	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
-	"strconv"
-	"time"
 
-	"github.com/zserge/metric"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -140,49 +135,16 @@ func New(
 		"/api/v1/stop$",
 		api.Stop,
 	)
-
-	if y, _ := strconv.ParseBool(os.Getenv("NIMONA_EXPVAR")); y {
-		expvar.Publish(
-			"go:goroutine",
-			metric.NewGauge("2m1s", "15m30s", "1h1m"),
-		)
-		expvar.Publish(
-			"go:cgocall",
-			metric.NewGauge("2m1s", "15m30s", "1h1m"),
-		)
-		expvar.Publish(
-			"go:alloc",
-			metric.NewGauge("2m1s", "15m30s", "1h1m"),
-		)
-		expvar.Publish(
-			"go:alloc.total",
-			metric.NewGauge("2m1s", "15m30s", "1h1m"),
-		)
-		go func() {
-			for range time.Tick(100 * time.Millisecond) {
-				m := &runtime.MemStats{}
-				runtime.ReadMemStats(m)
-				expvar.Get("go:goroutine").(metric.Metric).Add(
-					float64(runtime.NumGoroutine()),
-				)
-				expvar.Get("go:cgocall").(metric.Metric).Add(
-					float64(runtime.NumCgoCall()),
-				)
-				expvar.Get("go:alloc").(metric.Metric).Add(
-					float64(m.Alloc) / 1000000,
-				)
-				expvar.Get("go:alloc.total").(metric.Metric).Add(
-					float64(m.TotalAlloc) / 1000000,
-				)
-			}
-		}()
+	if cfg.Peer.EnableMetrics {
 		r.Handle(
 			"GET",
-			"/debug/metrics",
+			"/metrics",
 			func(c *router.Context) {
-				metric.Handler(metric.Exposed).ServeHTTP(c.Writer, c.Request)
+				promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 			},
 		)
+	}
+	if cfg.Peer.EnableDebug {
 		goroutineStackHandler := func(c *router.Context) {
 			stack := debug.Stack()
 			c.Writer.Write(stack)                          // nolint: errcheck
@@ -192,13 +154,6 @@ func New(
 			"GET",
 			"/debug/stack/goroutine",
 			goroutineStackHandler,
-		)
-		r.Handle(
-			"GET",
-			"/debug/expvar",
-			func(c *router.Context) {
-				expvar.Handler().ServeHTTP(c.Writer, c.Request)
-			},
 		)
 	}
 

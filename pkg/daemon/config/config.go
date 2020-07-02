@@ -24,6 +24,7 @@ type PeerConfig struct {
 	BootstrapKeys      []string          `json:"bootstrapKeys,omitempty" envconfig:"BOOTSTRAP_KEYS"`
 	BootstrapAddresses []string          `json:"bootstrapAddresses,omitempty" envconfig:"BOOTSTRAP_ADDRESSES"`
 	EnableMetrics      bool              `json:"metrics,omitempty" envconfig:"METRICS"`
+	EnableDebug        bool              `json:"debug,omitempty" envconfig:"DEBUG"`
 	IdentityKey        crypto.PrivateKey `json:"identityKey,omitempty" envconfig:"IDENTITY_KEY"`
 	PeerKey            crypto.PrivateKey `json:"peerKey,omitempty" envconfig:"KEY"`
 	TCPPort            int               `json:"tcpPort,omitempty" envconfig:"TCP_PORT"`
