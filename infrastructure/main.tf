@@ -8,8 +8,28 @@ provider "scaleway" {
   region = "fr-par"
 }
 
+provider "cloudflare" {
+  version = "~> 2.0"
+}
+
 resource "scaleway_instance_ip" "node" {
   count = local.node_count
+}
+
+resource "cloudflare_record" "node" {
+  count   = local.node_count
+  zone_id = var.cloudflare_zone_id
+  name    = "${local.node_names[count.index]}${var.node_dns_suffix}"
+  value   = scaleway_instance_ip.node[count.index].address
+  type    = "A"
+}
+
+resource "cloudflare_record" "node-wildcard" {
+  count   = local.node_count
+  zone_id = var.cloudflare_zone_id
+  name    = "*.${local.node_names[count.index]}${var.node_dns_suffix}"
+  value   = scaleway_instance_ip.node[count.index].address
+  type    = "A"
 }
 
 resource "scaleway_instance_security_group" "node" {
