@@ -23,6 +23,11 @@ variable "node_server_tags" {
   default = ["nimona", "node"]
 }
 
+variable "node_dns_suffix" {
+  type    = string
+  default = ".node"
+}
+
 variable "ssh_private_key_file" {
   type    = string
   default = "ssh/id_rsa"
@@ -31,4 +36,8 @@ variable "ssh_private_key_file" {
 variable "ssh_public_key_file" {
   type    = string
   default = "ssh/id_rsa.pub"
+}
+
+variable "cloudflare_zone_id" {
+  type = string
 }
