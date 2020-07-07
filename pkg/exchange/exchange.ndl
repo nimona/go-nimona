@@ -3,10 +3,6 @@ package nimona.io/exchange
 import nimona.io/object object
 import nimona.io/crypto crypto
 
-signed object nimona.io/exchange.ObjectRequest {
-    objectHash nimona.io/object.Hash
-}
-
 signed object nimona.io/exchange.DataForward {
     recipient nimona.io/crypto.PublicKey
     ephermeral nimona.io/crypto.PublicKey

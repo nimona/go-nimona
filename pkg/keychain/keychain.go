@@ -100,7 +100,7 @@ func (s *memorystore) ListPublicKeys(t keytype) []crypto.PublicKey {
 
 func (s *memorystore) GetPrimaryPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
-	defer s.keyLock.RUnlock()
+	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
 }
 

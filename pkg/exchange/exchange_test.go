@@ -19,6 +19,9 @@ import (
 )
 
 func TestSendSuccess(t *testing.T) {
+	// enable binding to local addresses
+	net.BindLocal = true
+
 	// create new peers
 	kc1, n1, x1 := newPeer(t)
 	kc2, n2, x2 := newPeer(t)
@@ -226,7 +229,6 @@ func TestSendRelay(t *testing.T) {
 			return nil
 		},
 	)
-	assert.NoError(t, err)
 
 	err = x2.Send(
 		context.New(

@@ -147,15 +147,16 @@ func New(
 		)
 
 	// subscribe to data forward type
-	dataForwardSub := w.inboxes.Subscribe(
+	subs := w.inboxes.Subscribe(
 		FilterByObjectType(dataForwardType),
 	)
 
 	go func() {
-		if err := w.handleObjects(dataForwardSub); err != nil {
+		if err := w.handleObjects(subs); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
 		}
 	}()
+
 	connmgr := connmanager.New(
 		ctx,
 		w.eventbus,
