@@ -209,12 +209,19 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 			}
 		}
 		{{- else }}
-		if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
-			es := &{{ memberType $member.Type }}{}
-			eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
-			es.FromObject(eo)
-			e.{{ $member.Name }} = es
-		}
+			{{- if eq $member.Type "nimona.io/object.Object" }}
+				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsMap() {
+					eo := object.Object(v.(object.Map))
+					e.{{ $member.Name }} = &eo
+				}
+			{{- else }}
+				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
+					es := &{{ memberType $member.Type }}{}
+					eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
+					es.FromObject(eo)
+					e.{{ $member.Name }} = es
+				}
+			{{- end }}
 		{{- end }}
 	{{- else }}
 		{{- if $member.IsRepeated }}
