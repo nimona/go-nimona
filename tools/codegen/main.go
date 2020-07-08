@@ -1,12 +1,14 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
@@ -20,14 +22,17 @@ var (
 )
 
 func codegen(in, out string) {
-	rf, err := os.Open(in)
-	defer rf.Close()
+	rf, err := ioutil.ReadFile(in)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error reading file", err)
 		os.Exit(1)
 	}
 
-	doc, err := NewParser(bufio.NewReader(rf)).Parse()
+	re := regexp.MustCompile("(?s)//.*?\n|/\\*.*?\\*/")
+	rf = re.ReplaceAll(rf, nil)
+	fmt.Println(string(rf))
+
+	doc, err := NewParser(bytes.NewReader(rf)).Parse()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error parsing file", err)
 		os.Exit(1)
