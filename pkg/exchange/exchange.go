@@ -25,6 +25,8 @@ import (
 	"nimona.io/pkg/peer"
 )
 
+//go:generate $GOBIN/mockgen -destination=../exchangemock/exchangemock_generated.go -package=exchangemock -source=exchange.go
+
 var (
 	dataForwardType = new(DataForward).GetType()
 	DefaultExchange = New(
