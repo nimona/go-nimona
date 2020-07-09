@@ -1,39 +1,17 @@
 {
     "go.buildTags": "dev",
     "go.formatTool": "goimports",
-    "go.languageServerExperimentalFeatures": {
-        "format": false
-    },
     "go.lintTool": "golangci-lint",
     "go.lintOnSave": "file",
     "go.lintFlags": [
         "--fast"
     ],
-    // "go.vetOnSave": "off",
     "go.testFlags": [
         "-v",
         "-race",
         "-failfast"
     ],
     "go.testTimeout": "60s",
-    "go.testEnvVars": {
-        "DEBUG_BLOCKS": "false",
-        "LOG_LEVEL": "debug",
-        "BIND_LOCAL": "true",
-        "GO111MODULE": "on"
-    },
-    "terminal.integrated.env.osx": {
-        "BIND_LOCAL": "true",
-        "GO111MODULE": "on"
-    },
-    "terminal.integrated.env.windows": {
-        "BIND_LOCAL": "true",
-        "GO111MODULE": "on"
-    },
-    "terminal.integrated.env.linux": {
-        "BIND_LOCAL": "true",
-        "GO111MODULE": "on"
-    },
     "editor.rulers": [
         80,
     ],
