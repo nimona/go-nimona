@@ -4,7 +4,6 @@ LDFLAGS      := -w -s
 BINDIR       := bin
 GOBIN        := $(CURDIR)/$(BINDIR)
 PATH         := $(GOBIN):$(PATH)
-COVEROUT     := ./coverage.out
 CLITOOL      := cli-tool
 VERSION      := dev # TODO get VERSION from git
 CI           := $(CI)
@@ -22,6 +21,7 @@ TOOLS += github.com/geoah/mockery/cmd/mockery@v0.0.1
 TOOLS += mvdan.cc/gofumpt/gofumports
 TOOLS += github.com/golang/mock/mockgen@v1.4.3
 TOOLS += github.com/frapposelli/wwhrd@v0.3.0
+TOOLS += github.com/ory/go-acc@v0.2.3
 
 # Internal tools
 TOOLS_INTERNAL += codegen
@@ -130,9 +130,19 @@ test:
 		-tags="$(TAGS)" \
 		-count=1 \
 		--race \
-		-covermode=atomic \
-		-coverprofile=$(COVEROUT) \
 		./...
+
+# Code coverage
+cover:
+	$(info Checking code coverage)
+	$(eval TAGS += integration)
+	@LOG_LEVEL=debug \
+	CGO_ENABLED=1 \
+	BIND_LOCAL=true \
+	$(BINDIR)/go-acc ./... --output coverage.tmp.out
+	@cat coverage.tmp.out | grep -Ev "_generated|.pb.go" > coverage.out
+	@rm -f coverage.tmp.out
+	@go tool cover -func=coverage.out
 
 # Install tools
 .PHONY: tools
