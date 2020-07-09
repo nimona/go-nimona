@@ -19,7 +19,7 @@ func Test_memoryKeychain_List(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		keytype keytype
+		keytype KeyType
 		key     crypto.PrivateKey
 		want    []crypto.PrivateKey
 	}{
@@ -65,7 +65,7 @@ func Test_memoryKeychain_GetPrimaryPeerKey(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		keytype keytype
+		keytype KeyType
 		key     crypto.PrivateKey
 		want    crypto.PrivateKey
 	}{
