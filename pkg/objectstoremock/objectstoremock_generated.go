@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	object "nimona.io/pkg/object"
 	reflect "reflect"
+	time "time"
 )
 
 // MockGetter is a mock of Getter interface
@@ -84,4 +85,62 @@ func (m *MockStore) Get(hash object.Hash) (object.Object, error) {
 func (mr *MockStoreMockRecorder) Get(hash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStore)(nil).Get), hash)
+}
+
+// GetByType mocks base method
+func (m *MockStore) GetByType(arg0 string) ([]object.Object, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByType", arg0)
+	ret0, _ := ret[0].([]object.Object)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByType indicates an expected call of GetByType
+func (mr *MockStoreMockRecorder) GetByType(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByType", reflect.TypeOf((*MockStore)(nil).GetByType), arg0)
+}
+
+// GetByStream mocks base method
+func (m *MockStore) GetByStream(arg0 object.Hash) ([]object.Object, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByStream", arg0)
+	ret0, _ := ret[0].([]object.Object)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByStream indicates an expected call of GetByStream
+func (mr *MockStoreMockRecorder) GetByStream(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByStream", reflect.TypeOf((*MockStore)(nil).GetByStream), arg0)
+}
+
+// Put mocks base method
+func (m *MockStore) Put(arg0 object.Object) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Put indicates an expected call of Put
+func (mr *MockStoreMockRecorder) Put(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStore)(nil).Put), arg0)
+}
+
+// PutWithTimeout mocks base method
+func (m *MockStore) PutWithTimeout(arg0 object.Object, arg1 time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutWithTimeout", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PutWithTimeout indicates an expected call of PutWithTimeout
+func (mr *MockStoreMockRecorder) PutWithTimeout(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutWithTimeout", reflect.TypeOf((*MockStore)(nil).PutWithTimeout), arg0, arg1)
 }
