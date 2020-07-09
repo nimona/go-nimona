@@ -11,7 +11,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
-	"nimona.io/pkg/objectstore/objectstoremock"
+	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/resolver"
 )
 
