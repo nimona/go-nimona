@@ -131,17 +131,32 @@ func (st *Store) Get(
 	return obj, nil
 }
 
+func (st *Store) GetByStream(
+	streamRootHash object.Hash,
+) ([]object.Object, error) {
+	return st.Filter(
+		FilterByStreamHash(streamRootHash),
+	)
+}
+
+func (st *Store) GetByType(
+	objectType string,
+) ([]object.Object, error) {
+	return st.Filter(
+		FilterByObjectType(objectType),
+	)
+}
+
 func (st *Store) Put(
 	obj object.Object,
-	opts ...Option,
 ) error {
-	options := &Options{
-		TTL: 0,
-	}
-	for _, opt := range opts {
-		opt(options)
-	}
+	return st.PutWithTimeout(obj, 0)
+}
 
+func (st *Store) PutWithTimeout(
+	obj object.Object,
+	ttl time.Duration,
+) error {
 	// TODO(geoah) why replace?
 	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects (
@@ -192,7 +207,7 @@ func (st *Store) Put(
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
-		options.TTL,
+		ttl,
 		time.Now().Unix(),
 	)
 	if err != nil {

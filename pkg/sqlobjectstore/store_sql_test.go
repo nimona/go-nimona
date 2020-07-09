@@ -56,13 +56,12 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	err = store.Put(
 		obj,
-		WithTTL(0),
 	)
 	require.NoError(t, err)
 
-	err = store.Put(
+	err = store.PutWithTimeout(
 		obj,
-		WithTTL(10),
+		10*time.Second,
 	)
 
 	fmt.Println(obj.Hash())
@@ -132,9 +131,9 @@ func TestSubscribe(t *testing.T) {
 	}
 
 	// store data
-	err = store.Put(
+	err = store.PutWithTimeout(
 		obj,
-		WithTTL(10),
+		10*time.Second,
 	)
 	require.NoError(t, err)
 
@@ -170,7 +169,7 @@ func TestFilter(t *testing.T) {
 
 	p.Signatures = append(p.Signatures, s)
 
-	err = store.Put(p.ToObject(), WithTTL(0))
+	err = store.Put(p.ToObject())
 	require.NoError(t, err)
 
 	ph := p.ToObject().Hash()
@@ -188,7 +187,7 @@ func TestFilter(t *testing.T) {
 				k.PublicKey(),
 			})
 		}
-		err = store.Put(obj, WithTTL(0))
+		err = store.Put(obj)
 		require.NoError(t, err)
 		hashes = append(hashes, obj.Hash())
 	}
