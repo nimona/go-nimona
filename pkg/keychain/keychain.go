@@ -12,33 +12,35 @@ var (
 	DefaultKeychain = New()
 )
 
+//go:generate $GOBIN/mockgen -destination=../keychainmock/keychainmock_generated.go -package=keychainmock -source=keychain.go
+
 type (
 	Keychain interface {
-		Put(keytype, crypto.PrivateKey)
-		List(keytype) []crypto.PrivateKey
-		ListPublicKeys(keytype) []crypto.PublicKey
+		Put(KeyType, crypto.PrivateKey)
+		List(KeyType) []crypto.PrivateKey
+		ListPublicKeys(KeyType) []crypto.PublicKey
 		GetPrimaryPeerKey() crypto.PrivateKey
 		PutCertificate(*peer.Certificate)
 		GetCertificates(crypto.PublicKey) []*peer.Certificate
 	}
 	memorystore struct {
 		keyLock        sync.RWMutex
-		keys           map[keytype]map[crypto.PrivateKey]struct{}
+		keys           map[KeyType]map[crypto.PrivateKey]struct{}
 		certLock       sync.RWMutex
 		certs          map[crypto.PublicKey]map[object.Hash]*peer.Certificate
 		primaryPeerKey crypto.PrivateKey
 	}
 )
 
-func Put(kt keytype, pk crypto.PrivateKey) {
+func Put(kt KeyType, pk crypto.PrivateKey) {
 	DefaultKeychain.Put(kt, pk)
 }
 
-func List(kt keytype) []crypto.PrivateKey {
+func List(kt KeyType) []crypto.PrivateKey {
 	return DefaultKeychain.List(kt)
 }
 
-func ListPublicKeys(kt keytype) []crypto.PublicKey {
+func ListPublicKeys(kt KeyType) []crypto.PublicKey {
 	return DefaultKeychain.ListPublicKeys(kt)
 }
 
@@ -57,7 +59,7 @@ func GetCertificates(pk crypto.PublicKey) []*peer.Certificate {
 func New() Keychain {
 	return &memorystore{
 		keyLock: sync.RWMutex{},
-		keys: map[keytype]map[crypto.PrivateKey]struct{}{
+		keys: map[KeyType]map[crypto.PrivateKey]struct{}{
 			PeerKey:     {},
 			IdentityKey: {},
 		},
@@ -66,7 +68,7 @@ func New() Keychain {
 	}
 }
 
-func (s *memorystore) Put(t keytype, k crypto.PrivateKey) {
+func (s *memorystore) Put(t KeyType, k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	switch t {
 	case PrimaryPeerKey:
@@ -78,7 +80,7 @@ func (s *memorystore) Put(t keytype, k crypto.PrivateKey) {
 	s.keyLock.Unlock()
 }
 
-func (s *memorystore) List(t keytype) []crypto.PrivateKey {
+func (s *memorystore) List(t KeyType) []crypto.PrivateKey {
 	s.keyLock.RLock()
 	ks := []crypto.PrivateKey{}
 	for k := range s.keys[t] {
@@ -88,7 +90,7 @@ func (s *memorystore) List(t keytype) []crypto.PrivateKey {
 	return ks
 }
 
-func (s *memorystore) ListPublicKeys(t keytype) []crypto.PublicKey {
+func (s *memorystore) ListPublicKeys(t KeyType) []crypto.PublicKey {
 	s.keyLock.RLock()
 	pks := []crypto.PublicKey{}
 	for k := range s.keys[t] {
