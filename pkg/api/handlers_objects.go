@@ -68,10 +68,10 @@ func (api *API) HandleGetObject(c *router.Context) {
 		return
 	}
 	for p := range nps {
-		go api.orchestrator.Sync(ctx, h, p) // nolint: errcheck
+		go api.streammanager.Sync(ctx, h, p) // nolint: errcheck
 	}
 
-	graphObjects, err := api.orchestrator.Get(ctx, h)
+	graphObjects, err := api.streammanager.Get(ctx, h)
 	if err != nil {
 		if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck
@@ -234,7 +234,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
-	if err := api.orchestrator.Put(o); err != nil {
+	if err := api.streammanager.Put(o); err != nil {
 		// nolint: errcheck
 		c.AbortWithError(
 			500,

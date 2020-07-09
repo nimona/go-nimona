@@ -1,4 +1,4 @@
-package orchestrator_test
+package streammanager_test
 
 import (
 	"database/sql"
@@ -19,10 +19,10 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
+	"nimona.io/pkg/streammanager"
 )
 
 //
@@ -155,7 +155,7 @@ func TestSync(t *testing.T) {
 	kc.Put(keychain.PrimaryPeerKey, pk)
 	kc.Put(keychain.IdentityKey, pk)
 
-	m, err := orchestrator.New(store, x, nil, kc)
+	m, err := streammanager.New(store, x, nil, kc)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotEmpty(t, subs)

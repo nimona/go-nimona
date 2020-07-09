@@ -17,18 +17,18 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/nat"
 	"nimona.io/pkg/net"
-	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/streammanager"
 )
 
 type Daemon struct {
-	Net          net.Network
-	Resolver     resolver.Resolver
-	Exchange     exchange.Exchange
-	Store        *sqlobjectstore.Store
-	Orchestrator orchestrator.Orchestrator
+	Net           net.Network
+	Resolver      resolver.Resolver
+	Exchange      exchange.Exchange
+	Store         *sqlobjectstore.Store
+	StreamManager streammanager.StreamManager
 }
 
 func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
@@ -106,15 +106,15 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		resolver.WithBoostrapPeers(bootstrapPeers),
 	)
 
-	// construct orchestrator
-	or, err := orchestrator.New(
+	// construct streammanager
+	or, err := streammanager.New(
 		st,
 		exchange.DefaultExchange,
 		rs,
 		keychain.DefaultKeychain,
 	)
 	if err != nil {
-		return nil, errors.Wrap(errors.New("could not construct orchestrator"), err)
+		return nil, errors.Wrap(errors.New("could not construct streammanager"), err)
 	}
 
 	if _, err := net.DefaultNetwork.Listen(
@@ -129,10 +129,10 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Net:          net.DefaultNetwork,
-		Exchange:     exchange.DefaultExchange,
-		Resolver:     rs,
-		Store:        st,
-		Orchestrator: or,
+		Net:           net.DefaultNetwork,
+		Exchange:      exchange.DefaultExchange,
+		Resolver:      rs,
+		Store:         st,
+		StreamManager: or,
 	}, nil
 }

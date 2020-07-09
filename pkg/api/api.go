@@ -16,9 +16,9 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/orchestrator"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/streammanager"
 )
 
 // API for HTTP
@@ -31,8 +31,8 @@ type API struct {
 	resolver resolver.Resolver
 	exchange exchange.Exchange
 
-	objectStore  *sqlobjectstore.Store
-	orchestrator orchestrator.Orchestrator
+	objectStore   *sqlobjectstore.Store
+	streammanager streammanager.StreamManager
 
 	token string
 
@@ -52,7 +52,7 @@ func New(
 	d resolver.Resolver,
 	x exchange.Exchange,
 	sst *sqlobjectstore.Store,
-	or orchestrator.Orchestrator,
+	or streammanager.StreamManager,
 	version string,
 	commit string,
 	buildDate string,
@@ -70,7 +70,7 @@ func New(
 		exchange:    x,
 		objectStore: sst,
 
-		orchestrator: or,
+		streammanager: or,
 
 		version:      version,
 		commit:       commit,

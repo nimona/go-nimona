@@ -1,4 +1,4 @@
-package orchestrator
+package streammanager
 
 import (
 	"nimona.io/pkg/errors"

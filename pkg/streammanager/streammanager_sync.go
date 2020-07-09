@@ -1,16 +1,15 @@
-package orchestrator
+package streammanager
 
 import (
 	"sync/atomic"
 	"time"
 
-	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/keychain"
-
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -25,7 +24,7 @@ const (
 	syncStatusRequested syncStatus = "REQUESTED"
 )
 
-func (m *orchestrator) Sync(
+func (m *streammanager) Sync(
 	ctx context.Context,
 	streamHash object.Hash,
 	recipient *peer.Peer,
@@ -61,7 +60,7 @@ func (m *orchestrator) Sync(
 
 	// setup logger
 	logger := log.FromContext(ctx).With(
-		log.String("method", "orchestrator/orchestrator.Sync"),
+		log.String("method", "streammanager/streammanager.Sync"),
 		log.Any("stream", streamHash),
 	)
 

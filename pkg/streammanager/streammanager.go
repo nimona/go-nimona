@@ -1,4 +1,4 @@
-package orchestrator
+package streammanager
 
 import (
 	"time"
@@ -27,10 +27,12 @@ var (
 	streamAnnouncementType   = new(stream.Announcement).GetType()
 )
 
+//go:generate $GOBIN/mockgen -destination=../streammanagermock/streammanagermock_generated.go -package=streammanagermock -source=streammanager.go
+
 type (
-	// Orchestrator is responsible of keeping streams and their underlying
+	// StreamManager is responsible of keeping streams and their underlying
 	// graphs up to date
-	Orchestrator interface {
+	StreamManager interface {
 		Sync(
 			ctx context.Context,
 			stream object.Hash,
@@ -42,7 +44,7 @@ type (
 			root object.Hash,
 		) (*Graph, error)
 	}
-	orchestrator struct {
+	streammanager struct {
 		store    *sqlobjectstore.Store
 		exchange exchange.Exchange
 		resolver resolver.Resolver
@@ -54,13 +56,13 @@ type (
 	}
 )
 
-// New constructs a new orchestrator given an object store and exchange
+// New constructs a new streammanager given an object store and exchange
 func New(
 	st *sqlobjectstore.Store,
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
-) (Orchestrator, error) {
+) (StreamManager, error) {
 	ctx := context.Background()
 	return NewWithContext(
 		ctx,
@@ -71,7 +73,7 @@ func New(
 	)
 }
 
-// NewWithContext constructs a new orchestrator given an object store and
+// NewWithContext constructs a new streammanager given an object store and
 // exchange
 func NewWithContext(
 	ctx context.Context,
@@ -79,9 +81,9 @@ func NewWithContext(
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
-) (Orchestrator, error) {
-	logger := log.FromContext(ctx).Named("orchestrator")
-	m := &orchestrator{
+) (StreamManager, error) {
+	logger := log.FromContext(ctx).Named("streammanager")
+	m := &streammanager{
 		store:    st,
 		exchange: ex,
 		resolver: ds,
@@ -131,7 +133,7 @@ func NewWithContext(
 }
 
 // Process an object
-func (m *orchestrator) process(
+func (m *streammanager) process(
 	ctx context.Context,
 	sub exchange.EnvelopeSubscription,
 ) error {
@@ -142,7 +144,7 @@ func (m *orchestrator) process(
 		}
 		ctx := context.FromContext(ctx)
 		logger := log.FromContext(ctx).With(
-			log.String("method", "orchestrator.Process"),
+			log.String("method", "streammanager.Process"),
 			log.String("object._hash", e.Payload.Hash().String()),
 			log.String("object.type", e.Payload.GetType()),
 		)
@@ -224,7 +226,7 @@ func IsComplete(cs []object.Object) bool {
 
 // Put stores a given object
 // TODO(geoah) what happened if the graph is not complete? Error or sync?
-func (m *orchestrator) Put(o object.Object) error {
+func (m *streammanager) Put(o object.Object) error {
 	// set parents
 	streamHash := o.GetStream()
 	os := []object.Object{}
@@ -303,7 +305,7 @@ func (m *orchestrator) Put(o object.Object) error {
 }
 
 // Get returns a complete and ordered graph given any node of the graph.
-func (m *orchestrator) Get(
+func (m *streammanager) Get(
 	ctx context.Context,
 	root object.Hash,
 ) (*Graph, error) {
@@ -326,7 +328,7 @@ func (m *orchestrator) Get(
 	return g, nil
 }
 
-func (m *orchestrator) handleStreamAnnouncement(
+func (m *streammanager) handleStreamAnnouncement(
 	ctx context.Context,
 	sender crypto.PublicKey,
 	req *stream.Announcement,
@@ -386,7 +388,7 @@ func (m *orchestrator) handleStreamAnnouncement(
 	return nil
 }
 
-func (m *orchestrator) handleStreamRequest(
+func (m *streammanager) handleStreamRequest(
 	ctx context.Context,
 	sender crypto.PublicKey,
 	req *stream.Request,
@@ -435,7 +437,7 @@ func (m *orchestrator) handleStreamRequest(
 		},
 	); err != nil {
 		logger.Warn(
-			"orchestrator.handleStreamRequest could not send response",
+			"streammanager.handleStreamRequest could not send response",
 			log.Error(err),
 		)
 		return err
@@ -444,7 +446,7 @@ func (m *orchestrator) handleStreamRequest(
 	return nil
 }
 
-func (m *orchestrator) handleStreamObjectRequest(
+func (m *streammanager) handleStreamObjectRequest(
 	ctx context.Context,
 	sender crypto.PublicKey,
 	req *stream.ObjectRequest,
@@ -496,7 +498,7 @@ func (m *orchestrator) handleStreamObjectRequest(
 		},
 	); err != nil {
 		logger.Warn(
-			"orchestrator.handleStreamObjectRequest could not send object response",
+			"streammanager.handleStreamObjectRequest could not send object response",
 			log.Error(err),
 		)
 		return err

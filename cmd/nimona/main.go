@@ -96,7 +96,7 @@ func main() {
 		d.Resolver,
 		d.Exchange,
 		d.Store,
-		d.Orchestrator,
+		d.StreamManager,
 		version.Version,
 		version.Commit,
 		version.Date,
