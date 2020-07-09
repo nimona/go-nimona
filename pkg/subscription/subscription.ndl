@@ -1,0 +1,23 @@
+package nimona.io/subscription
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+signed object nimona.io/subscription.Subscription {
+    subjects repeated nimona.io/crypto.PublicKey
+    types repeated string
+    streams repeated nimona.io/object.Hash
+    expiry string
+}
+
+stream nimona.io/subscriptionChain {
+    signed root object Created {
+        name string
+    }
+    signed object SubscriptionAdded {
+        subscription nimona.io/object.Hash
+    }
+    signed object SubscriptionRemoved {
+        subscription nimona.io/object.Hash
+    }
+}
