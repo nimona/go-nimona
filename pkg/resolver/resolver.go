@@ -40,6 +40,8 @@ const (
 	ErrNoPeersToAsk = errors.Error("no peers to ask")
 )
 
+//go:generate $GOBIN/mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
+
 type (
 	Resolver interface {
 		Lookup(
