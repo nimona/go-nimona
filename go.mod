@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.1-0.20191120192120-72917a1559e1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.13.0
-	github.com/mitchellh/mapstructure v1.2.0
+	github.com/mitchellh/mapstructure v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
