@@ -135,9 +135,9 @@ func (e Subscription) ToObject() object.Object {
 }
 
 func (e *Subscription) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -146,28 +146,28 @@ func (e *Subscription) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("subjects:as"); v != nil && v.IsList() {
+	if v := content.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Subjects = make([]crypto.PublicKey, len(m))
 		for i, iv := range m {
 			e.Subjects[i] = crypto.PublicKey(iv)
 		}
 	}
-	if v := data.Value("types:as"); v != nil && v.IsList() {
+	if v := content.Value("types:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Types = make([]string, len(m))
 		for i, iv := range m {
 			e.Types[i] = string(iv)
 		}
 	}
-	if v := data.Value("streams:as"); v != nil && v.IsList() {
+	if v := content.Value("streams:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Streams = make([]object.Hash, len(m))
 		for i, iv := range m {
 			e.Streams[i] = object.Hash(iv)
 		}
 	}
-	if v := data.Value("expiry:s"); v != nil {
+	if v := content.Value("expiry:s"); v != nil {
 		e.Expiry = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -215,9 +215,9 @@ func (e SubscriptionChainCreated) ToObject() object.Object {
 }
 
 func (e *SubscriptionChainCreated) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -226,7 +226,7 @@ func (e *SubscriptionChainCreated) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("name:s"); v != nil {
+	if v := content.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -274,9 +274,9 @@ func (e SubscriptionChainSubscriptionAdded) ToObject() object.Object {
 }
 
 func (e *SubscriptionChainSubscriptionAdded) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -285,7 +285,7 @@ func (e *SubscriptionChainSubscriptionAdded) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("subscription:s"); v != nil {
+	if v := content.Value("subscription:s"); v != nil {
 		e.Subscription = object.Hash(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -333,9 +333,9 @@ func (e SubscriptionChainSubscriptionRemoved) ToObject() object.Object {
 }
 
 func (e *SubscriptionChainSubscriptionRemoved) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -344,7 +344,7 @@ func (e *SubscriptionChainSubscriptionRemoved) FromObject(o object.Object) error
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("subscription:s"); v != nil {
+	if v := content.Value("subscription:s"); v != nil {
 		e.Subscription = object.Hash(v.PrimitiveHinted().(string))
 	}
 	return nil

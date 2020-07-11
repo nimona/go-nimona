@@ -27,7 +27,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	done := make(chan bool)
 
 	resObj := object.FromMap(map[string]interface{}{ // nolint: errcheck
-		"data:m": map[string]interface{}{
+		"content:m": map[string]interface{}{
 			"foo:s": "bar",
 		},
 	})
@@ -54,7 +54,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	require.NoError(t, err)
 
 	reqObj := object.FromMap(map[string]interface{}{ // nolint: errcheck
-		"data:m": map[string]interface{}{
+		"content:m": map[string]interface{}{
 			"foo:s": "bar",
 		},
 	})

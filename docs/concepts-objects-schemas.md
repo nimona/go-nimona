@@ -16,7 +16,7 @@ The value of `_schema` defines the structure of the object itself.
       "body:s"
     ]
   },
-  "data:m": {
+  "content:m": {
     "body:s": "Hello world!"
   }
 }

@@ -73,9 +73,9 @@ func (e SchemaProperty) ToObject() Object {
 }
 
 func (e *SchemaProperty) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
+	content, ok := o.Raw().Value("content:m").(Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -84,22 +84,22 @@ func (e *SchemaProperty) FromObject(o Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("name:s"); v != nil {
+	if v := content.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("type:s"); v != nil {
+	if v := content.Value("type:s"); v != nil {
 		e.Type = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("hint:s"); v != nil {
+	if v := content.Value("hint:s"); v != nil {
 		e.Hint = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("isRepeated:b"); v != nil {
+	if v := content.Value("isRepeated:b"); v != nil {
 		e.IsRepeated = bool(v.PrimitiveHinted().(bool))
 	}
-	if v := data.Value("isOptional:b"); v != nil {
+	if v := content.Value("isOptional:b"); v != nil {
 		e.IsOptional = bool(v.PrimitiveHinted().(bool))
 	}
-	if v := data.Value("properties:am"); v != nil && v.IsList() {
+	if v := content.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Properties = make([]*SchemaProperty, len(m))
 		for i, iv := range m {
@@ -141,9 +141,9 @@ func (e SchemaObject) ToObject() Object {
 }
 
 func (e *SchemaObject) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
+	content, ok := o.Raw().Value("content:m").(Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -152,7 +152,7 @@ func (e *SchemaObject) FromObject(o Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("properties:am"); v != nil && v.IsList() {
+	if v := content.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Properties = make([]*SchemaProperty, len(m))
 		for i, iv := range m {

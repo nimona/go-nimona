@@ -72,9 +72,9 @@ func (e Msg) ToObject() object.Object {
 }
 
 func (e *Msg) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -83,10 +83,10 @@ func (e *Msg) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("datetime:i"); v != nil {
+	if v := content.Value("datetime:i"); v != nil {
 		e.Datetime = int64(v.PrimitiveHinted().(int64))
 	}
-	if v := data.Value("body:s"); v != nil {
+	if v := content.Value("body:s"); v != nil {
 		e.Body = string(v.PrimitiveHinted().(string))
 	}
 	return nil

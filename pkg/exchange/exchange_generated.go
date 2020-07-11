@@ -84,9 +84,9 @@ func (e DataForward) ToObject() object.Object {
 }
 
 func (e *DataForward) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -95,13 +95,13 @@ func (e *DataForward) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("recipient:s"); v != nil {
+	if v := content.Value("recipient:s"); v != nil {
 		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("ephermeral:s"); v != nil {
+	if v := content.Value("ephermeral:s"); v != nil {
 		e.Ephermeral = crypto.PublicKey(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("data:d"); v != nil {
+	if v := content.Value("data:d"); v != nil {
 		e.Data = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
