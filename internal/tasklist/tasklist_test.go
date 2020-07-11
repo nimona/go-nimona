@@ -12,22 +12,32 @@ import (
 )
 
 func Test_TaskList_Simple(t *testing.T) {
-	l := New()
+	ctx := context.New(
+		context.WithTimeout(time.Second * 2),
+	)
+	l := New(ctx)
 
 	// add new task
-	s1 := l.Put(1)
+	s1, err := l.Put(1)
+	assert.NoError(t, err)
 	assert.Equal(t, StatusPending, s1)
 	assert.Len(t, l.tasks, 1)
 
 	// add one more task
-	s2 := l.Put(2)
+	s2, err := l.Put(2)
+	assert.NoError(t, err)
 	assert.Equal(t, StatusPending, s2)
 	assert.Len(t, l.tasks, 2)
 
 	// re-add the same task, should not be added
-	s2b := l.Put(2)
+	s2b, err := l.Put(2)
+	assert.NoError(t, err)
 	assert.Equal(t, StatusPending, s2b)
 	assert.Len(t, l.tasks, 2)
+
+	// ignore a task
+	l.Ignore(3)
+	assert.Len(t, l.tasks, 3)
 
 	// pop first task
 	t1, d1, err := l.Pop()
@@ -40,11 +50,7 @@ func Test_TaskList_Simple(t *testing.T) {
 	// wait for all tasks to be done
 	done := int64(0)
 	go func() {
-		l.Wait(
-			context.New(
-				context.WithTimeout(time.Second),
-			),
-		)
+		l.Wait()
 		atomic.AddInt64(&done, 1)
 	}()
 
@@ -70,7 +76,12 @@ func Test_TaskList_Simple(t *testing.T) {
 	time.Sleep(time.Millisecond)
 	assert.Equal(t, int64(1), atomic.LoadInt64(&done))
 
-	// pop another task, should error with "done"
+	// pop another task, should error
 	_, _, err = l.Pop()
 	assert.Error(t, err)
+
+	// put a new task, should say ignored
+	s4, err := l.Put(4)
+	assert.Error(t, err)
+	assert.Equal(t, StatusIgnored, s4)
 }
