@@ -1,2 +1,4 @@
 /.terraform/
+/inventories/
 /ssh/id_rsa
+/vendor/

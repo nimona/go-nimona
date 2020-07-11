@@ -94,3 +94,12 @@ resource "scaleway_instance_server" "node" {
     ]
   }
 }
+
+resource "local_file" "ansible-inventory" {
+  filename = "${path.module}/inventories/production"
+  content = templatefile("${path.module}/terraform/ansible-inventory.tpl", {
+    node_user = var.node_server_user
+    names     = cloudflare_record.node.*.hostname
+    ips       = scaleway_instance_ip.node.*.address
+  })
+}
