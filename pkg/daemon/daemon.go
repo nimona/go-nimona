@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path"
 
+	"nimona.io/pkg/objectmanager"
+
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
@@ -106,12 +108,20 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		resolver.WithBoostrapPeers(bootstrapPeers),
 	)
 
+	// construct objectmanager
+	om := objectmanager.New(
+		ctx,
+		objectmanager.WithExchange(exchange.DefaultExchange),
+		objectmanager.WithStore(st),
+	)
+
 	// construct streammanager
 	or, err := streammanager.New(
 		st,
 		exchange.DefaultExchange,
 		rs,
 		keychain.DefaultKeychain,
+		om,
 	)
 	if err != nil {
 		return nil, errors.Wrap(errors.New("could not construct streammanager"), err)

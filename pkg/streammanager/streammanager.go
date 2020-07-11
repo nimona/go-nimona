@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/vburenin/nsync"
 
+	"nimona.io/internal/rand"
+	"nimona.io/internal/tasklist"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -13,6 +15,7 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
@@ -20,11 +23,9 @@ import (
 )
 
 var (
-	streamRequestType        = new(stream.Request).GetType()
-	streamResponseType       = new(stream.Response).GetType()
-	streamObjectRequestType  = new(stream.ObjectRequest).GetType()
-	streamObjectResponseType = new(stream.ObjectResponse).GetType()
-	streamAnnouncementType   = new(stream.Announcement).GetType()
+	streamRequestType      = new(stream.Request).GetType()
+	streamResponseType     = new(stream.Response).GetType()
+	streamAnnouncementType = new(stream.Announcement).GetType()
 )
 
 //go:generate $GOBIN/mockgen -destination=../streammanagermock/streammanagermock_generated.go -package=streammanagermock -source=streammanager.go
@@ -45,11 +46,12 @@ type (
 		) (*Graph, error)
 	}
 	streammanager struct {
-		store    *sqlobjectstore.Store
-		exchange exchange.Exchange
-		resolver resolver.Resolver
-		syncLock *nsync.NamedMutex
-		keychain keychain.Keychain
+		store         *sqlobjectstore.Store
+		exchange      exchange.Exchange
+		resolver      resolver.Resolver
+		syncLock      *nsync.NamedMutex
+		keychain      keychain.Keychain
+		objectmanager objectmanager.Requester
 	}
 	Graph struct {
 		Objects []object.Object
@@ -62,6 +64,7 @@ func New(
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
+	om objectmanager.Requester,
 ) (StreamManager, error) {
 	ctx := context.Background()
 	return NewWithContext(
@@ -70,6 +73,7 @@ func New(
 		ex,
 		ds,
 		kc,
+		om,
 	)
 }
 
@@ -81,14 +85,16 @@ func NewWithContext(
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
+	om objectmanager.Requester,
 ) (StreamManager, error) {
 	logger := log.FromContext(ctx).Named("streammanager")
 	m := &streammanager{
-		store:    st,
-		exchange: ex,
-		resolver: ds,
-		syncLock: nsync.NewNamedMutex(),
-		keychain: kc,
+		store:         st,
+		exchange:      ex,
+		resolver:      ds,
+		syncLock:      nsync.NewNamedMutex(),
+		keychain:      kc,
+		objectmanager: om,
 	}
 	sub := m.exchange.Subscribe(
 		exchange.FilterByObjectType("**"),
@@ -158,21 +164,6 @@ func (m *streammanager) process(
 				return err
 			}
 			if err := m.handleStreamRequest(
-				ctx,
-				e.Sender,
-				v,
-			); err != nil {
-				logger.Warn(
-					"could not handle graph request object",
-					log.Error(err),
-				)
-			}
-		case streamObjectRequestType:
-			v := &stream.ObjectRequest{}
-			if err := v.FromObject(o); err != nil {
-				return err
-			}
-			if err := m.handleStreamObjectRequest(
 				ctx,
 				e.Sender,
 				v,
@@ -446,63 +437,165 @@ func (m *streammanager) handleStreamRequest(
 	return nil
 }
 
-func (m *streammanager) handleStreamObjectRequest(
+func (m *streammanager) Sync(
 	ctx context.Context,
-	sender crypto.PublicKey,
-	req *stream.ObjectRequest,
-) error {
-	// TODO check if policy allows requested to retrieve the object
-	logger := log.FromContext(ctx)
+	streamHash object.Hash,
+	recipient *peer.Peer,
+) (
+	*Graph,
+	error,
+) {
+	ctx = context.New(
+		context.WithParent(ctx),
+	)
 
-	// create filter to get all requested objects
-	filters := []sqlobjectstore.LookupOption{}
-	for _, hash := range req.Objects {
-		filters = append(filters, sqlobjectstore.FilterByHash(hash))
+	// only allow one sync to run at the same time for each stream
+	syncAvailable := m.syncLock.TryLock(streamHash.String())
+	if !syncAvailable {
+		return nil, errors.New("sync for this stream is already in progress")
 	}
+	defer m.syncLock.Unlock(streamHash.String())
 
-	// get the objects
-	vs, err := m.store.Filter(filters...)
+	// find the graph's knownObjects
+	knownObjects, err := m.store.Filter(
+		sqlobjectstore.FilterByStreamHash(streamHash),
+	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// construct object response
-	res := &stream.ObjectResponse{
-		Stream:  req.Stream,
-		Nonce:   req.Nonce,
-		Objects: make([]*object.Object, len(vs)),
-		Owners: []crypto.PublicKey{
-			m.keychain.GetPrimaryPeerKey().PublicKey(),
-		},
+	// find the graph's leaves
+	leafObjects := stream.GetStreamLeaves(knownObjects)
+	leaves := make([]object.Hash, len(leafObjects))
+	for i, lo := range leafObjects {
+		leaves[i] = lo.Hash()
 	}
-	for i, obj := range vs {
-		obj := obj
-		res.Objects[i] = &obj
+
+	// setup logger
+	logger := log.FromContext(ctx).With(
+		log.String("method", "streammanager/streammanager.Sync"),
+		log.Any("stream", streamHash),
+	)
+
+	// start listening for incoming events
+	sub := m.exchange.Subscribe(
+		exchange.FilterByObjectType("nimona.io/stream.**"),
+	)
+	defer sub.Cancel()
+
+	// create new task list
+	tasks := tasklist.New(ctx)
+
+	// create request nonce
+	streamRequestNonce := rand.String(12)
+
+	go func() {
+		for _, knownObject := range knownObjects {
+			tasks.Ignore(knownObject.Hash())
+		}
+		for {
+			e, err := sub.Next()
+			if err != nil {
+				return
+			}
+			if e.Payload.GetType() != streamResponseType {
+				continue
+			}
+			p := &stream.Response{}
+			if err := p.FromObject(e.Payload); err != nil {
+				return
+			}
+			if !p.Stream.IsEqual(streamHash) {
+				continue
+			}
+			logger.Debug("got graph response")
+			if len(p.Signatures) == 0 {
+				logger.Debug("object has no signature, skipping request")
+				continue
+			}
+			for _, objectHash := range p.Children {
+				if _, err := tasks.Put(objectHash); err != nil {
+					logger.Error(
+						"error putting in task list",
+						log.Error(err),
+					)
+				}
+			}
+		}
+	}()
+
+	// create object graph request
+	req := &stream.Request{
+		Nonce:  streamRequestNonce,
+		Stream: streamHash,
+		Leaves: leaves,
+		Owners: m.keychain.ListPublicKeys(keychain.IdentityKey),
 	}
 	sig, err := object.NewSignature(
 		m.keychain.GetPrimaryPeerKey(),
 		req.ToObject(),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	res.Signatures = []object.Signature{sig}
+
+	req.Signatures = []object.Signature{sig}
+
+	logger.Debug("sending sync request")
 
 	if err := m.exchange.Send(
 		ctx,
-		res.ToObject(),
-		&peer.Peer{
-			Owners: []crypto.PublicKey{
-				sender,
-			},
-		},
+		req.ToObject(),
+		recipient,
 	); err != nil {
-		logger.Warn(
-			"streammanager.handleStreamObjectRequest could not send object response",
-			log.Error(err),
-		)
-		return err
+		return nil, err
 	}
 
-	return nil
+	go func() {
+		for {
+			task, done, err := tasks.Pop()
+			if err != nil {
+				break
+			}
+			hash := task.(object.Hash)
+			obj, err := m.objectmanager.Request(
+				ctx,
+				hash,
+				recipient,
+			)
+			if err != nil {
+				logger.With(
+					log.String("req.hash", streamHash.String()),
+					log.Error(err),
+				).Error("error trying to get missing stream object")
+				done(err)
+				continue
+			}
+			if err := m.store.Put(*obj); err != nil {
+				logger.With(
+					log.String("req.hash", streamHash.String()),
+					log.Error(err),
+				).Debug("could not store object")
+				done(err)
+				continue
+			}
+			done(nil)
+		}
+	}()
+
+	tasks.Wait()
+
+	os, err := m.store.Filter(sqlobjectstore.FilterByStreamHash(streamHash))
+	if err != nil {
+		return nil, errors.Wrap(
+			errors.New("could not get graph from store"),
+			err,
+		)
+	}
+
+	g := &Graph{
+		Objects: os,
+	}
+
+	return g, nil
 }
