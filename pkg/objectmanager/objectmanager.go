@@ -16,6 +16,8 @@ var (
 	ErrTimeout  = errors.New("request timed out")
 )
 
+//go:generate $GOBIN/mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
+
 type (
 	Requester interface {
 		Request(
