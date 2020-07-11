@@ -90,7 +90,7 @@ func TestObjectRequest(t *testing.T) {
 
 	objRecv, err := mgr.Request(ctx, obj.Hash(), p2)
 	assert.NoError(t, err)
-	assert.Equal(t, obj, *objRecv)
+	assert.Equal(t, obj.ToMap(), objRecv.ToMap())
 
 	wg.Wait()
 
