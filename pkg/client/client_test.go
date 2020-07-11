@@ -36,7 +36,7 @@ func TestClient_Info(t *testing.T) {
 				"owners:as": []string{
 					"foo",
 				},
-				"data:m": map[string]interface{}{
+				"content:m": map[string]interface{}{
 					"addresses:as": []string{
 						"tcps:127.0.0.1:21013",
 						"tcps:192.168.1.57:21013",

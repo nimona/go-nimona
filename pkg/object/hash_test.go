@@ -83,21 +83,21 @@ func TestHash(t *testing.T) {
 		{
 			name: "map, nested",
 			value: Map{}.Set(
-				"data:m",
+				"content:m",
 				Map{}.Set(
 					"foo:s",
 					String("bar"),
 				),
 			),
-			hash: "oh1.EAKxMZySQigLYF9hZ3D4YjqrhWQ6q24NhvvbmUAsQSCt",
+			hash: "oh1.ABdLLpP9tKSssEtHjzaqcL7AuFqDs2Xz64aBtxi4VZqp",
 		},
 		{
 			name: "map, nested reference, should match previous",
 			value: Map{}.Set(
-				"data:r",
+				"content:r",
 				Ref("oh1.CgfoHRELcu1DwPjtGcXuVr1oFbAVxF8mRTWkTyJsE9gk"),
 			),
-			hash: "oh1.EAKxMZySQigLYF9hZ3D4YjqrhWQ6q24NhvvbmUAsQSCt",
+			hash: "oh1.ABdLLpP9tKSssEtHjzaqcL7AuFqDs2Xz64aBtxi4VZqp",
 		},
 	}
 	for _, tt := range tests {

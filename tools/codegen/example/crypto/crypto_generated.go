@@ -114,9 +114,9 @@ func (e Hash) ToObject() object.Object {
 }
 
 func (e *Hash) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -125,10 +125,10 @@ func (e *Hash) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("hashType:s"); v != nil {
+	if v := content.Value("hashType:s"); v != nil {
 		e.HashType = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("digest:d"); v != nil {
+	if v := content.Value("digest:d"); v != nil {
 		e.Digest = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -206,9 +206,9 @@ func (e HeaderSignature) ToObject() object.Object {
 }
 
 func (e *HeaderSignature) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -217,19 +217,19 @@ func (e *HeaderSignature) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("publicKey:m"); v != nil {
+	if v := content.Value("publicKey:m"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.PublicKey = es
 	}
-	if v := data.Value("algorithm:s"); v != nil {
+	if v := content.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("r:d"); v != nil {
+	if v := content.Value("r:d"); v != nil {
 		e.R = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := data.Value("s:d"); v != nil {
+	if v := content.Value("s:d"); v != nil {
 		e.S = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -337,9 +337,9 @@ func (e PrivateKey) ToObject() object.Object {
 }
 
 func (e *PrivateKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -348,28 +348,28 @@ func (e *PrivateKey) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("publicKey:m"); v != nil {
+	if v := content.Value("publicKey:m"); v != nil {
 		es := &PublicKey{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.PublicKey = es
 	}
-	if v := data.Value("keyType:s"); v != nil {
+	if v := content.Value("keyType:s"); v != nil {
 		e.KeyType = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("algorithm:s"); v != nil {
+	if v := content.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("curve:s"); v != nil {
+	if v := content.Value("curve:s"); v != nil {
 		e.Curve = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("x:d"); v != nil {
+	if v := content.Value("x:d"); v != nil {
 		e.X = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := data.Value("y:d"); v != nil {
+	if v := content.Value("y:d"); v != nil {
 		e.Y = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := data.Value("d:d"); v != nil {
+	if v := content.Value("d:d"); v != nil {
 		e.D = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -457,9 +457,9 @@ func (e PublicKey) ToObject() object.Object {
 }
 
 func (e *PublicKey) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -468,19 +468,19 @@ func (e *PublicKey) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("keyType:s"); v != nil {
+	if v := content.Value("keyType:s"); v != nil {
 		e.KeyType = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("algorithm:s"); v != nil {
+	if v := content.Value("algorithm:s"); v != nil {
 		e.Algorithm = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("curve:s"); v != nil {
+	if v := content.Value("curve:s"); v != nil {
 		e.Curve = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("x:d"); v != nil {
+	if v := content.Value("x:d"); v != nil {
 		e.X = []byte(v.PrimitiveHinted().([]byte))
 	}
-	if v := data.Value("y:d"); v != nil {
+	if v := content.Value("y:d"); v != nil {
 		e.Y = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil

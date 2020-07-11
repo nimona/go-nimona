@@ -138,9 +138,9 @@ func (e Policy) ToObject() object.Object {
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -149,28 +149,28 @@ func (e *Policy) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("subjects:as"); v != nil && v.IsList() {
+	if v := content.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Subjects = make([]string, len(m))
 		for i, iv := range m {
 			e.Subjects[i] = string(iv)
 		}
 	}
-	if v := data.Value("resources:as"); v != nil && v.IsList() {
+	if v := content.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := data.Value("conditions:as"); v != nil && v.IsList() {
+	if v := content.Value("conditions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Conditions = make([]string, len(m))
 		for i, iv := range m {
 			e.Conditions[i] = string(iv)
 		}
 	}
-	if v := data.Value("action:s"); v != nil {
+	if v := content.Value("action:s"); v != nil {
 		e.Action = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -232,9 +232,9 @@ func (e Request) ToObject() object.Object {
 }
 
 func (e *Request) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -243,10 +243,10 @@ func (e *Request) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
+	if v := content.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("leaves:as"); v != nil && v.IsList() {
+	if v := content.Value("leaves:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Leaves = make([]object.Hash, len(m))
 		for i, iv := range m {
@@ -312,9 +312,9 @@ func (e Response) ToObject() object.Object {
 }
 
 func (e *Response) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -323,10 +323,10 @@ func (e *Response) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
+	if v := content.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("children:as"); v != nil && v.IsList() {
+	if v := content.Value("children:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Children = make([]object.Hash, len(m))
 		for i, iv := range m {
@@ -392,9 +392,9 @@ func (e Announcement) ToObject() object.Object {
 }
 
 func (e *Announcement) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
+	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
-		return errors.New("missing data")
+		return errors.New("missing content")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -403,10 +403,10 @@ func (e *Announcement) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
+	if v := content.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("objects:am"); v != nil && v.IsList() {
+	if v := content.Value("objects:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Objects = make([]*object.Object, len(m))
 		for i, iv := range m {

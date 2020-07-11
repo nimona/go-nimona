@@ -19,7 +19,7 @@ var (
 	testObject0 = object.Object{}.
 			SetType("bar").
 			Set("foo:s", object.String("bar"))
-	testObject0Ref = object.Ref("oh1.D5Uoh8k7vHe3xzcnbw5Z5XBsetqMmmBuijU2ampLt4do")
+	testObject0Ref = object.Ref("oh1.2jXQVCJR45BXrrveBS1bfGZNwjbRXV1wxWpnBggB47uw")
 	testObject1    = object.Object{}.
 			SetType("foo").
 			Set("foo:s", object.String("bar")).
