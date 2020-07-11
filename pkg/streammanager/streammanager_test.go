@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +20,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
@@ -34,13 +36,13 @@ import (
 //   \ /   |
 //    m6   m5
 //
-// o oh1.E9W237sWo6b9j8C9G43XGYBjBsACq8zH6NvW4cTHxkk4
-// m1 oh1.5rA4otS4aA64xuRbDptYsxGeCDS2DWtVSHNXwbDn7d1p
-// m2 oh1.AYG83AybocVBuBcWJefS5dK8UPWbQe9r9XqG9HgVc3Fq
-// m3 oh1.7BYfVhAgrm2t3pvtAyh1CtHbvqGtcFBjxQ8Q7FuXMWi8
-// m4 oh1.2xzVNtS9GLf9iz4t2Ye9rRBYm747xQ1kxHtm23otb8VN
-// m5 oh1.EPWPg5K421ZrWMQkzYKeufD22Ndd4ZcBMdejuWNRNGEX
-// m6 oh1.2sWcm2YgAo1T8QE1CymyMcpvkBPDzEHPzLpoxozpLRLT
+// o oh1.8wKCBdvvSAGmYPsUojqutMJeHJSW9RWsyezWYSDrp61T
+// m1 oh1.8vTC4sMVudao8yu9XRqxGxbL5oVzpBnrD1tJEmW5RhsL
+// m2 oh1.EJtWxi9SbineBFmvRg2pVqds2ZXYYrBT4bYWjpcqW9wr
+// m3 oh1.7yz1xieBqDMzFwKbJEyvzBLZuAncEtVWPzR9sDKhHBfj
+// m4 oh1.7sdrcbf5BifrD2bsxD4d4xHaFkr49ZNmLHGBHXQxEtg1
+// m5 oh1.7Qh36on7Eq1Yz3M6cyxV3gcA35ujyA22RoajZh67pG9U
+// m6 oh1.5MN741kx8Kd9WcUrYz5D5sFk6RLpbx9g8RRpDjqM8S8F
 //
 
 var (
@@ -155,7 +157,9 @@ func TestSync(t *testing.T) {
 	kc.Put(keychain.PrimaryPeerKey, pk)
 	kc.Put(keychain.IdentityKey, pk)
 
-	m, err := streammanager.New(store, x, nil, kc)
+	om := objectmanagermock.NewMockRequester(gomock.NewController(t))
+
+	m, err := streammanager.New(store, x, nil, kc, om)
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.NotEmpty(t, subs)
@@ -216,7 +220,7 @@ func TestSync(t *testing.T) {
 
 	elo = elo.AddSignature(sig)
 
-	nonce := ""
+	// nonce := ""
 
 	// send request
 	x.On(
@@ -224,11 +228,7 @@ func TestSync(t *testing.T) {
 		mock.Anything,
 		mock.MatchedBy(
 			func(o object.Object) bool {
-				if o.GetType() != "nimona.io/stream.Request" {
-					return false
-				}
-				nonce = o.Get("nonce:s").(string)
-				return true
+				return o.GetType() == "nimona.io/stream.Request"
 			},
 		),
 		mock.MatchedBy(
@@ -242,46 +242,25 @@ func TestSync(t *testing.T) {
 		respWith(elo),
 	).Return(nil)
 
+	om.EXPECT().Request(gomock.Any(), o.Hash(), gomock.Any()).Return(&o, nil)
+
 	o1 := m1.ToObject()
+	om.EXPECT().Request(gomock.Any(), o1.Hash(), gomock.Any()).Return(&o1, nil)
+
 	o2 := m2.ToObject()
+	om.EXPECT().Request(gomock.Any(), o2.Hash(), gomock.Any()).Return(&o2, nil)
+
 	o3 := m3.ToObject()
+	om.EXPECT().Request(gomock.Any(), o3.Hash(), gomock.Any()).Return(&o3, nil)
+
 	o4 := m4.ToObject()
+	om.EXPECT().Request(gomock.Any(), o4.Hash(), gomock.Any()).Return(&o4, nil)
+
 	o5 := m5.ToObject()
+	om.EXPECT().Request(gomock.Any(), o5.Hash(), gomock.Any()).Return(&o5, nil)
+
 	o6 := m6.ToObject()
-
-	ores := &stream.ObjectResponse{
-		Nonce:  nonce,
-		Stream: oh,
-		Objects: []*object.Object{
-			&o,
-			&o1,
-			&o2,
-			&o3,
-			&o4,
-			&o5,
-			&o6,
-		},
-	}
-
-	// request o
-	x.On(
-		"Send",
-		mock.Anything,
-		mock.MatchedBy(
-			func(o object.Object) bool {
-				return o.GetType() == "nimona.io/stream.ObjectRequest"
-			},
-		),
-		mock.MatchedBy(
-			func(p *peer.Peer) bool {
-				return p.Owners[0] == rkey.PublicKey()
-			},
-		),
-		mock.Anything,
-		mock.Anything,
-	).Run(
-		respWith(ores.ToObject()),
-	).Return(nil)
+	om.EXPECT().Request(gomock.Any(), o6.Hash(), gomock.Any()).Return(&o6, nil)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),

@@ -20,16 +20,6 @@ signed object nimona.io/stream.Response {
     children repeated nimona.io/object.Hash
 }
 
-signed object nimona.io/stream.ObjectRequest {
-    nonce string
-    objects repeated nimona.io/object.Hash
-}
-
-signed object nimona.io/stream.ObjectResponse {
-    nonce string
-    objects repeated nimona.io/object.Object
-}
-
 signed object nimona.io/stream.Announcement {
     nonce string
     objects repeated nimona.io/object.Object
