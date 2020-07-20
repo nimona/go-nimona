@@ -28,22 +28,24 @@ func TestObject(t *testing.T) {
 	o = o.Set("foo:s", "bar")
 
 	m := map[string]interface{}{
-		"type:s":     "type",
-		"stream:s":   "stream",
-		"parents:as": []string{"parent1", "parent2"},
-		"policy:m": map[string]interface{}{
-			"subjects:as": []string{"subject1", "subject2"},
-			"actions:as":  []string{"action1", "action2"},
-			"effect:s":    "effect",
-		},
-		"_signatures:am": []interface{}{
-			map[string]interface{}{
-				"signer:s": "signer",
-				"alg:s":    "alg",
-				"x:d":      []byte{1, 2, 3},
+		"type:s": "type",
+		"metadata:m": map[string]interface{}{
+			"stream:s":   "stream",
+			"parents:as": []string{"parent1", "parent2"},
+			"policy:m": map[string]interface{}{
+				"subjects:as": []string{"subject1", "subject2"},
+				"actions:as":  []string{"action1", "action2"},
+				"effect:s":    "effect",
 			},
+			"_signatures:am": []interface{}{
+				map[string]interface{}{
+					"signer:s": "signer",
+					"alg:s":    "alg",
+					"x:d":      []byte{1, 2, 3},
+				},
+			},
+			"owners:as": []string{"owner1", "owner2"},
 		},
-		"owners:as": []string{"owner1", "owner2"},
 		"content:m": map[string]interface{}{
 			"foo:s": "bar",
 		},

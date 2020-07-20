@@ -99,6 +99,10 @@ func (v Map) hash() Hash {
 		}
 		return true
 	})
+	// return if there are no keys we can use
+	if len(ks) == 0 {
+		return ""
+	}
 	// sort them
 	sort.Strings(ks)
 	h := []byte{}
@@ -110,9 +114,16 @@ func (v Map) hash() Hash {
 		if strings.HasSuffix(k, ":"+HintMap.String()) {
 			ck = k[:len(k)-2] + ":" + HintRef.String()
 		}
-		h = append(h, hash("", []byte(ck))...)
 		// hash the value
-		h = append(h, v.Value(k).Hash()...)
+		vh := v.Value(k).Hash()
+		// and move on if nothing was hashed
+		if vh.IsEmpty() {
+			continue
+		}
+		// else, append the key's hash
+		h = append(h, hash("", []byte(ck))...)
+		// and finally append the value hash
+		h = append(h, vh...)
 	}
 	// and finally hash the whole thing
 	return hash("r", h)
