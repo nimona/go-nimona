@@ -22,7 +22,7 @@ type (
 		Streams    []object.Hash
 		Expiry     string
 	}
-	SubscriptionChainCreated struct {
+	SubscriptionStreamRoot struct {
 		raw        object.Object
 		Stream     object.Hash
 		Parents    []object.Hash
@@ -31,7 +31,7 @@ type (
 		Signatures []object.Signature
 		Name       string
 	}
-	SubscriptionChainSubscriptionAdded struct {
+	SubscriptionAdded struct {
 		raw          object.Object
 		Stream       object.Hash
 		Parents      []object.Hash
@@ -40,7 +40,7 @@ type (
 		Signatures   []object.Signature
 		Subscription object.Hash
 	}
-	SubscriptionChainSubscriptionRemoved struct {
+	SubscriptionRemoved struct {
 		raw          object.Object
 		Stream       object.Hash
 		Parents      []object.Hash
@@ -55,38 +55,37 @@ func (e Subscription) GetType() string {
 	return "nimona.io/subscription.Subscription"
 }
 
+func (e Subscription) IsStreamRoot() bool {
+	return false
+}
+
 func (e Subscription) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subjects",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "types",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "streams",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "expiry",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subjects",
+			Type:       "nimona.io/crypto.PublicKey",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "types",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "streams",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "expiry",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -173,27 +172,29 @@ func (e *Subscription) FromObject(o object.Object) error {
 	return nil
 }
 
-func (e SubscriptionChainCreated) GetType() string {
-	return "nimona.io/subscriptionChain.Created"
+func (e SubscriptionStreamRoot) GetType() string {
+	return "stream:nimona.io/subscription"
 }
 
-func (e SubscriptionChainCreated) GetSchema() *object.SchemaObject {
+func (e SubscriptionStreamRoot) IsStreamRoot() bool {
+	return true
+}
+
+func (e SubscriptionStreamRoot) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "name",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "name",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
-func (e SubscriptionChainCreated) ToObject() object.Object {
+func (e SubscriptionStreamRoot) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("nimona.io/subscriptionChain.Created")
+	o = o.SetType("stream:nimona.io/subscription")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -214,7 +215,7 @@ func (e SubscriptionChainCreated) ToObject() object.Object {
 	return o
 }
 
-func (e *SubscriptionChainCreated) FromObject(o object.Object) error {
+func (e *SubscriptionStreamRoot) FromObject(o object.Object) error {
 	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
 		return errors.New("missing content")
@@ -232,27 +233,29 @@ func (e *SubscriptionChainCreated) FromObject(o object.Object) error {
 	return nil
 }
 
-func (e SubscriptionChainSubscriptionAdded) GetType() string {
-	return "nimona.io/subscriptionChain.SubscriptionAdded"
+func (e SubscriptionAdded) GetType() string {
+	return "event:nimona.io/subscription.SubscriptionAdded"
 }
 
-func (e SubscriptionChainSubscriptionAdded) GetSchema() *object.SchemaObject {
+func (e SubscriptionAdded) IsStreamRoot() bool {
+	return false
+}
+
+func (e SubscriptionAdded) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subscription",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subscription",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
-func (e SubscriptionChainSubscriptionAdded) ToObject() object.Object {
+func (e SubscriptionAdded) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("nimona.io/subscriptionChain.SubscriptionAdded")
+	o = o.SetType("event:nimona.io/subscription.SubscriptionAdded")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -273,7 +276,7 @@ func (e SubscriptionChainSubscriptionAdded) ToObject() object.Object {
 	return o
 }
 
-func (e *SubscriptionChainSubscriptionAdded) FromObject(o object.Object) error {
+func (e *SubscriptionAdded) FromObject(o object.Object) error {
 	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
 		return errors.New("missing content")
@@ -291,27 +294,29 @@ func (e *SubscriptionChainSubscriptionAdded) FromObject(o object.Object) error {
 	return nil
 }
 
-func (e SubscriptionChainSubscriptionRemoved) GetType() string {
-	return "nimona.io/subscriptionChain.SubscriptionRemoved"
+func (e SubscriptionRemoved) GetType() string {
+	return "event:nimona.io/subscription.SubscriptionRemoved"
 }
 
-func (e SubscriptionChainSubscriptionRemoved) GetSchema() *object.SchemaObject {
+func (e SubscriptionRemoved) IsStreamRoot() bool {
+	return false
+}
+
+func (e SubscriptionRemoved) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subscription",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subscription",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
-func (e SubscriptionChainSubscriptionRemoved) ToObject() object.Object {
+func (e SubscriptionRemoved) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("nimona.io/subscriptionChain.SubscriptionRemoved")
+	o = o.SetType("event:nimona.io/subscription.SubscriptionRemoved")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -332,7 +337,7 @@ func (e SubscriptionChainSubscriptionRemoved) ToObject() object.Object {
 	return o
 }
 
-func (e *SubscriptionChainSubscriptionRemoved) FromObject(o object.Object) error {
+func (e *SubscriptionRemoved) FromObject(o object.Object) error {
 	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
 		return errors.New("missing content")

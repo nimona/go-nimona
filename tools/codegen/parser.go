@@ -73,9 +73,10 @@ func (p *Parser) expect(ets ...Token) (Token, string, error) {
 	// if given token always expects TEXT afterwards, let's find it
 	case PACKAGE,
 		STREAM,
+		EVENT,
 		OBJECT:
 		_, text := p.scanIgnoreWhiteSpace()
-		return TEXT, text, nil
+		return token, text, nil
 	}
 
 	return token, value, nil
@@ -183,8 +184,8 @@ func (p *Parser) parseObject() (*Object, error) {
 	object := &Object{}
 
 start:
-	// expect SIGNED, ROOT, or OBJECT
-	token, value, err := p.expect(SIGNED, ROOT, OBJECT)
+	// expect SIGNED, ROOT, EVENT, or OBJECT
+	token, value, err := p.expect(SIGNED, ROOT, OBJECT, EVENT)
 	if err != nil {
 		return nil, err
 	}
@@ -196,12 +197,17 @@ start:
 	case ROOT:
 		object.IsRoot = true
 		goto start
+	case EVENT:
+		object.IsEvent = true
 	}
 
 	object.Name = value
 
-	fmt.Println("\tFound object", object.Name)
-
+	if object.IsEvent {
+		fmt.Println("\tFound event", object.Name)
+	} else {
+		fmt.Println("\tFound object", object.Name)
+	}
 	if _, _, err := p.expect(OBRACE); err != nil {
 		return nil, err
 	}

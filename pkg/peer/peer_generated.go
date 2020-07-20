@@ -51,52 +51,49 @@ func (e Peer) GetType() string {
 	return "nimona.io/peer.Peer"
 }
 
+func (e Peer) IsStreamRoot() bool {
+	return false
+}
+
 func (e Peer) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "version",
-				Type:       "int",
-				Hint:       "i",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "addresses",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "bloom",
-				Type:       "int",
-				Hint:       "i",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "contentTypes",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "certificates",
-				Type:       "nimona.io/peer.Certificate",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "relays",
-				Type:       "nimona.io/peer.Peer",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "version",
+			Type:       "int",
+			Hint:       "i",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "addresses",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "bloom",
+			Type:       "int",
+			Hint:       "i",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "contentTypes",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "certificates",
+			Type:       "nimona.io/peer.Certificate",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "relays",
+			Type:       "nimona.io/peer.Peer",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -219,24 +216,25 @@ func (e LookupRequest) GetType() string {
 	return "nimona.io/LookupRequest"
 }
 
+func (e LookupRequest) IsStreamRoot() bool {
+	return false
+}
+
 func (e LookupRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "bloom",
-				Type:       "int",
-				Hint:       "i",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "bloom",
+			Type:       "int",
+			Hint:       "i",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -299,31 +297,31 @@ func (e LookupResponse) GetType() string {
 	return "nimona.io/LookupResponse"
 }
 
+func (e LookupResponse) IsStreamRoot() bool {
+	return false
+}
+
 func (e LookupResponse) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "bloom",
-				Type:       "int",
-				Hint:       "i",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "peers",
-				Type:       "nimona.io/peer.Peer",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "bloom",
+			Type:       "int",
+			Hint:       "i",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "peers",
+			Type:       "nimona.io/peer.Peer",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 

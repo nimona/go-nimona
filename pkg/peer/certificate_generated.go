@@ -42,31 +42,31 @@ func (e Certificate) GetType() string {
 	return "nimona.io/peer.Certificate"
 }
 
+func (e Certificate) IsStreamRoot() bool {
+	return false
+}
+
 func (e Certificate) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "created",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "expires",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "created",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "expires",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -127,59 +127,55 @@ func (e CertificateRequest) GetType() string {
 	return "nimona.io/peer.CertificateRequest"
 }
 
+func (e CertificateRequest) IsStreamRoot() bool {
+	return false
+}
+
 func (e CertificateRequest) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "applicationName",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "applicationDescription",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "applicationURL",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "subject",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "resources",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "actions",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "applicationName",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "applicationDescription",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "applicationURL",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "subject",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "resources",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "actions",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

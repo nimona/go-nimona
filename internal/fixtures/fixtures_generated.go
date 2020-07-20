@@ -56,38 +56,37 @@ func (e TestPolicy) GetType() string {
 	return "nimona.io/fixtures.TestPolicy"
 }
 
+func (e TestPolicy) IsStreamRoot() bool {
+	return false
+}
+
 func (e TestPolicy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subjects",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "resources",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "conditions",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "action",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subjects",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "resources",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "conditions",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "action",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -178,24 +177,25 @@ func (e TestStream) GetType() string {
 	return "nimona.io/fixtures.TestStream"
 }
 
+func (e TestStream) IsStreamRoot() bool {
+	return false
+}
+
 func (e TestStream) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "createdDateTime",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "createdDateTime",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -250,17 +250,19 @@ func (e TestSubscribed) GetType() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
 
+func (e TestSubscribed) IsStreamRoot() bool {
+	return false
+}
+
 func (e TestSubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -309,17 +311,19 @@ func (e TestUnsubscribed) GetType() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
 }
 
+func (e TestUnsubscribed) IsStreamRoot() bool {
+	return false
+}
+
 func (e TestUnsubscribed) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

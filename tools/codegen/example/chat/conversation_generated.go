@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	ConversationCreated struct {
+	ConversationStreamRoot struct {
 		raw        object.Object
 		Stream     object.Hash
 		Parents    []object.Hash
@@ -51,27 +51,29 @@ type (
 	}
 )
 
-func (e ConversationCreated) GetType() string {
-	return "mochi.io/conversation.Created"
+func (e ConversationStreamRoot) GetType() string {
+	return "stream:mochi.io/conversation"
 }
 
-func (e ConversationCreated) GetSchema() *object.SchemaObject {
+func (e ConversationStreamRoot) IsStreamRoot() bool {
+	return true
+}
+
+func (e ConversationStreamRoot) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "name",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "name",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
-func (e ConversationCreated) ToObject() object.Object {
+func (e ConversationStreamRoot) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("mochi.io/conversation.Created")
+	o = o.SetType("stream:mochi.io/conversation")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -92,7 +94,7 @@ func (e ConversationCreated) ToObject() object.Object {
 	return o
 }
 
-func (e *ConversationCreated) FromObject(o object.Object) error {
+func (e *ConversationStreamRoot) FromObject(o object.Object) error {
 	content, ok := o.Raw().Value("content:m").(object.Map)
 	if !ok {
 		return errors.New("missing content")
@@ -114,24 +116,25 @@ func (e ConversationTopicUpdated) GetType() string {
 	return "mochi.io/conversation.TopicUpdated"
 }
 
+func (e ConversationTopicUpdated) IsStreamRoot() bool {
+	return false
+}
+
 func (e ConversationTopicUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "topic",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "dependsOn",
-				Type:       "relationship",
-				Hint:       "r",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "topic",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "dependsOn",
+			Type:       "relationship",
+			Hint:       "r",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -190,24 +193,25 @@ func (e ConversationMessageAdded) GetType() string {
 	return "mochi.io/conversation.MessageAdded"
 }
 
+func (e ConversationMessageAdded) IsStreamRoot() bool {
+	return false
+}
+
 func (e ConversationMessageAdded) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "body",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "dependsOn",
-				Type:       "relationship",
-				Hint:       "r",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "body",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "dependsOn",
+			Type:       "relationship",
+			Hint:       "r",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -266,24 +270,25 @@ func (e ConversationMessageRemoved) GetType() string {
 	return "mochi.io/conversation.MessageRemoved"
 }
 
+func (e ConversationMessageRemoved) IsStreamRoot() bool {
+	return false
+}
+
 func (e ConversationMessageRemoved) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "removes",
-				Type:       "relationship",
-				Hint:       "r",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "dependsOn",
-				Type:       "relationship",
-				Hint:       "r",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "removes",
+			Type:       "relationship",
+			Hint:       "r",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "dependsOn",
+			Type:       "relationship",
+			Hint:       "r",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 

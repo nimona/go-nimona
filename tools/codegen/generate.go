@@ -77,20 +77,21 @@ func (e {{ structName $object.Name }}) GetType() string {
 	return "{{ $object.Name }}"
 }
 
+func (e {{ structName $object.Name }}) IsStreamRoot() bool {
+	return {{ if $object.IsRoot }}true{{ else }}false{{ end }}
+}
+
 {{ if hnp $object.Name "nimona.io/object.Schema" }}
 func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
 		Properties: []*object.SchemaProperty{
-		{{- range $member := $object.Members }}
-			&object.SchemaProperty{
+		{{- range $member := $object.Members }} {
 				Name: "{{ $member.Tag }}",
 				Type: "{{ $member.SimpleType }}",
 				Hint: "{{ $member.Hint }}",
 				IsRepeated: {{ if $member.IsRepeated }} true {{ else }} false {{ end }},
 				IsOptional: {{ if $member.IsOptional }} true {{ else }} false {{ end }},
-			},
-		{{- end }}
-		},
+			}, {{- end }}},
 	}
 }
 {{ end }}
@@ -298,13 +299,18 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
 			ps = strings.Split(ps[len(ps)-1], ".")
+			nn := ""
 			if len(ps) == 1 {
-				return ucFirst(ps[0])
+				nn = ucFirst(ps[0])
+			} else if strings.ToLower(ps[len(ps)-2]) == strings.ToLower(doc.PackageAlias) {
+				nn = ucFirst(ps[len(ps)-1])
+			} else {
+				nn = ucFirst(ps[len(ps)-2]) + ucFirst(ps[len(ps)-1])
 			}
-			if strings.ToLower(ps[len(ps)-2]) == strings.ToLower(doc.PackageAlias) {
-				return ucFirst(ps[len(ps)-1])
+			if strings.HasPrefix(name, "stream:") {
+				nn += "StreamRoot"
 			}
-			return ucFirst(ps[len(ps)-2]) + ucFirst(ps[len(ps)-1])
+			return nn
 		},
 		"memberType": func(name string) string {
 			for alias, pkg := range originalImports {
@@ -338,7 +344,14 @@ func Generate(doc *Document, output string) ([]byte, error) {
 
 	for _, s := range doc.Streams {
 		for _, o := range s.Objects {
-			o.Name = s.Name + "." + o.Name
+			switch {
+			case o.IsRoot:
+				o.Name = "stream:" + s.Name
+			case o.IsEvent:
+				o.Name = "event:" + s.Name + "." + o.Name
+			default:
+				o.Name = s.Name + "." + o.Name
+			}
 			doc.Objects = append(doc.Objects, o)
 		}
 	}

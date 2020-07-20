@@ -58,38 +58,37 @@ func (e Policy) GetType() string {
 	return "nimona.io/stream.Policy"
 }
 
+func (e Policy) IsStreamRoot() bool {
+	return false
+}
+
 func (e Policy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subjects",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "resources",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "conditions",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "action",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subjects",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "resources",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "conditions",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "action",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -180,24 +179,25 @@ func (e Request) GetType() string {
 	return "nimona.io/stream.Request"
 }
 
+func (e Request) IsStreamRoot() bool {
+	return false
+}
+
 func (e Request) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "leaves",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "leaves",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -260,24 +260,25 @@ func (e Response) GetType() string {
 	return "nimona.io/stream.Response"
 }
 
+func (e Response) IsStreamRoot() bool {
+	return false
+}
+
 func (e Response) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "children",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "children",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -340,24 +341,25 @@ func (e Announcement) GetType() string {
 	return "nimona.io/stream.Announcement"
 }
 
+func (e Announcement) IsStreamRoot() bool {
+	return false
+}
+
 func (e Announcement) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "nonce",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "objects",
-				Type:       "nimona.io/object.Object",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "objects",
+			Type:       "nimona.io/object.Object",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 

@@ -31,7 +31,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		"me",
 		"also_me",
 	}
-	testChain0 := subscription.SubscriptionChainCreated{
+	testChain0 := subscription.SubscriptionStreamRoot{
 		Owners: testOwners,
 	}
 	testSubscription0 := subscription.Subscription{
@@ -95,7 +95,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			testSubscription0.ToObject(),
 		)
 		m.EXPECT().Put(
-			subscription.SubscriptionChainSubscriptionAdded{
+			subscription.SubscriptionAdded{
 				Owners:       testOwners,
 				Subscription: testSubscription0.ToObject().Hash(),
 			}.ToObject(),
@@ -116,7 +116,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		c := gomock.NewController(t)
 		m := streammanagermock.NewMockStreamManager(c)
 		m.EXPECT().Put(
-			subscription.SubscriptionChainSubscriptionAdded{
+			subscription.SubscriptionAdded{
 				Stream:       testChain0.ToObject().Hash(),
 				Subscription: testSubscription0.ToObject().Hash(),
 				Owners:       testOwners,
@@ -303,7 +303,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				c := gomock.NewController(t)
 				m := streammanagermock.NewMockStreamManager(c)
 				m.EXPECT().Put(
-					subscription.SubscriptionChainSubscriptionAdded{
+					subscription.SubscriptionAdded{
 						Stream:       testChain0.ToObject().Hash(),
 						Subscription: testSubscription0.ToObject().Hash(),
 						Owners:       testOwners,
@@ -355,7 +355,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		"me",
 		"also_me",
 	}
-	testChain0 := subscription.SubscriptionChainCreated{
+	testChain0 := subscription.SubscriptionStreamRoot{
 		Owners: testOwners,
 	}
 	testSubscription0 := subscription.Subscription{
@@ -370,7 +370,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscription0Added := subscription.SubscriptionChainSubscriptionAdded{
+	testSubscription0Added := subscription.SubscriptionAdded{
 		Owners:       testOwners,
 		Subscription: testSubscription0.ToObject().Hash(),
 	}
@@ -386,31 +386,31 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscription1Added := subscription.SubscriptionChainSubscriptionAdded{
+	testSubscription1Added := subscription.SubscriptionAdded{
 		Owners:       testOwners,
 		Subscription: testSubscription1.ToObject().Hash(),
 	}
-	testSubscription1Removed := subscription.SubscriptionChainSubscriptionRemoved{
+	testSubscription1Removed := subscription.SubscriptionRemoved{
 		Owners:       testOwners,
 		Subscription: testSubscription1.ToObject().Hash(),
 	}
 	testSubscriptionAddedInvalid := new(object.Object).
 		SetType(
-			new(subscription.SubscriptionChainSubscriptionAdded).GetType(),
+			new(subscription.SubscriptionAdded).GetType(),
 		)
 	testSubscriptionRemovedInvalid := new(object.Object).
 		SetType(
-			new(subscription.SubscriptionChainSubscriptionRemoved).GetType(),
+			new(subscription.SubscriptionRemoved).GetType(),
 		)
 	testSubscriptionInvalid := new(object.Object).
 		SetType(
 			new(subscription.Subscription).GetType(),
 		)
-	testSubscriptionErrAdded := subscription.SubscriptionChainSubscriptionAdded{
+	testSubscriptionErrAdded := subscription.SubscriptionAdded{
 		Owners:       testOwners,
 		Subscription: testSubscriptionInvalid.ToObject().Hash(),
 	}
-	testSubscriptionMisAdded := subscription.SubscriptionChainSubscriptionAdded{
+	testSubscriptionMisAdded := subscription.SubscriptionAdded{
 		Owners:       testOwners,
 		Subscription: object.Hash("missing"),
 	}
@@ -426,7 +426,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscription2Added := subscription.SubscriptionChainSubscriptionAdded{
+	testSubscription2Added := subscription.SubscriptionAdded{
 		Owners:       testOwners,
 		Subscription: testSubscription2.ToObject().Hash(),
 	}
