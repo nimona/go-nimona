@@ -1,0 +1,21 @@
+---
+- name: Add caddy apt repository
+  apt_repository:
+    repo: "deb [trusted=yes] https://apt.fury.io/caddy/ /"
+    state: present
+    update_cache: true
+
+- name: Install caddy
+  apt:
+    name: caddy
+    state: present
+  notify: restart caddy
+
+- name: Configure main Caddyfile
+  template:
+    src: "Caddyfile.j2"
+    dest: "{{ caddy_caddyfile }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload caddy

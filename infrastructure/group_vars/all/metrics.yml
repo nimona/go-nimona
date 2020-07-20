@@ -1,0 +1,2 @@
+---
+metrics_users: "{{ vault_metrics_users }}"

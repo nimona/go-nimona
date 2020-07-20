@@ -9,3 +9,5 @@
       tags: ["network", "fail2ban"]
     - role: docker
       tags: ["tools", "docker"]
+    - role: caddy
+      tags: ["tools", "caddy", "http"]
