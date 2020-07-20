@@ -262,7 +262,7 @@ func (o Object) Get(k string) interface{} {
 	// if len(ps) > 1 {
 	// 	k = ps[0]
 	// }
-	v := o.data().Value(k)
+	v := o.get(k)
 	if v == nil {
 		return nil
 	}
