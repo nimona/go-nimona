@@ -34,7 +34,7 @@ func (v Policy) IsEmpty() bool {
 }
 
 func (o Object) data() Map {
-	data := Map(o).Value("content:m")
+	data := Map(o).Value("data:m")
 	if data == nil {
 		return Map{}
 	}
@@ -278,7 +278,7 @@ func (o Object) Set(k string, v interface{}) Object {
 		data = data.Set(k, AnyToValue(k, v))
 	}
 	return Object(
-		Map(o).Set("content:m", data),
+		Map(o).Set("data:m", data),
 	)
 }
 

@@ -48,7 +48,7 @@ import (
 var (
 	o = object.FromMap(map[string]interface{}{
 		"type:s": "foo",
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar",
 			"numbers:ai": []int{
 				1, 2, 3,
@@ -77,7 +77,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m1",
 		},
 	})
@@ -89,7 +89,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m2",
 		},
 	})
@@ -101,7 +101,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m3",
 		},
 	})
@@ -113,7 +113,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m4",
 		},
 	})
@@ -125,7 +125,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m5",
 		},
 	})
@@ -138,7 +138,7 @@ var (
 			},
 			"stream:s": oh.String(),
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar-m6",
 		},
 	})

@@ -74,9 +74,9 @@ func (e Chunk) ToObject() object.Object {
 }
 
 func (e *Chunk) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -85,7 +85,7 @@ func (e *Chunk) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("data:d"); v != nil {
+	if v := data.Value("data:d"); v != nil {
 		e.Data = []byte(v.PrimitiveHinted().([]byte))
 	}
 	return nil
@@ -139,9 +139,9 @@ func (e Blob) ToObject() object.Object {
 }
 
 func (e *Blob) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -150,7 +150,7 @@ func (e *Blob) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("chunks:am"); v != nil && v.IsList() {
+	if v := data.Value("chunks:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Chunks = make([]*Chunk, len(m))
 		for i, iv := range m {

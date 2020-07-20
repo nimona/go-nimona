@@ -41,7 +41,7 @@ present in the JSON format.
 
 The top level of each object defines its metadata.
 Metadata are fixed and application developers should not be making up new ones.
-All type-specific data are grouped under the `content:m` attribute.
+All type-specific data are grouped under the `data:m` attribute.
 
 ```json
 {
@@ -55,7 +55,7 @@ All type-specific data are grouped under the `content:m` attribute.
     "x0...",
     "x1..."
   ],
-  "content:m": {
+  "data:m": {
     "foo:s": "bar"
   },
   "_signatures:am": [
@@ -77,7 +77,7 @@ All type-specific data are grouped under the `content:m` attribute.
 * `stream:s` (optional) Root hash of the stream the object is part of.  
 * `parents:as` (optional) Array of hashes of parent objects, this is used
   for streams
-* `content:m` Map of arbitrary data.  
+* `data:m` Map of arbitrary data.  
   Currently this can only be a map, but we're considering allowing any type.
 * `_signatures:am` (optional) Array of signatures.
 

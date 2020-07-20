@@ -180,9 +180,9 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -194,7 +194,7 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	{{- range $member := $object.Members }}
 	{{- if $member.IsObject }}
 		{{- if $member.IsRepeated }}
-		if v := content.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
+		if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
 			m := v.PrimitiveHinted().([]interface{})
 			e.{{ $member.Name }} = make([]*{{ memberType $member.Type }}, len(m))
 			for i, iv := range m {
@@ -211,12 +211,12 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 		}
 		{{- else }}
 			{{- if eq $member.Type "nimona.io/object.Object" }}
-				if v := content.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsMap() {
+				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsMap() {
 					eo := object.Object(v.(object.Map))
 					e.{{ $member.Name }} = &eo
 				}
 			{{- else }}
-				if v := content.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
+				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
 					es := &{{ memberType $member.Type }}{}
 					eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 					es.FromObject(eo)
@@ -226,7 +226,7 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 		{{- end }}
 	{{- else }}
 		{{- if $member.IsRepeated }}
-		if v := content.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
+		if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
 			{{- if eq $member.Hint "s" }}
 				m := v.PrimitiveHinted().([]string)
 				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
@@ -268,7 +268,7 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 			{{- end }}
 		}
 		{{- else }}
-			if v := content.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
+			if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
 				{{- if eq $member.Hint "s" }}
 					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(string))
 				{{- else if eq $member.Hint "i" }}

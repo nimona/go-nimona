@@ -129,9 +129,9 @@ func (e Policy) ToObject() object.Object {
 }
 
 func (e *Policy) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -140,7 +140,7 @@ func (e *Policy) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("subjects:am"); v != nil && v.IsList() {
+	if v := data.Value("subjects:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Subjects = make([]*crypto.PublicKey, len(m))
 		for i, iv := range m {
@@ -150,21 +150,21 @@ func (e *Policy) FromObject(o object.Object) error {
 			e.Subjects[i] = es
 		}
 	}
-	if v := content.Value("resources:as"); v != nil && v.IsList() {
+	if v := data.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := content.Value("conditions:as"); v != nil && v.IsList() {
+	if v := data.Value("conditions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Conditions = make([]string, len(m))
 		for i, iv := range m {
 			e.Conditions[i] = string(iv)
 		}
 	}
-	if v := content.Value("action:s"); v != nil {
+	if v := data.Value("action:s"); v != nil {
 		e.Action = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -240,9 +240,9 @@ func (e Created) ToObject() object.Object {
 }
 
 func (e *Created) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -251,17 +251,17 @@ func (e *Created) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("createdDateTime:s"); v != nil {
+	if v := data.Value("createdDateTime:s"); v != nil {
 		e.CreatedDateTime = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("partitionKeys:as"); v != nil && v.IsList() {
+	if v := data.Value("partitionKeys:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.PartitionKeys = make([]string, len(m))
 		for i, iv := range m {
 			e.PartitionKeys[i] = string(iv)
 		}
 	}
-	if v := content.Value("policies:am"); v != nil && v.IsList() {
+	if v := data.Value("policies:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {
@@ -344,9 +344,9 @@ func (e PoliciesUpdated) ToObject() object.Object {
 }
 
 func (e *PoliciesUpdated) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -355,13 +355,13 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("stream:m"); v != nil {
+	if v := data.Value("stream:m"); v != nil {
 		es := &crypto.Hash{}
 		eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
 		es.FromObject(eo)
 		e.Stream = es
 	}
-	if v := content.Value("parents:am"); v != nil && v.IsList() {
+	if v := data.Value("parents:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Parents = make([]*crypto.Hash, len(m))
 		for i, iv := range m {
@@ -371,7 +371,7 @@ func (e *PoliciesUpdated) FromObject(o object.Object) error {
 			e.Parents[i] = es
 		}
 	}
-	if v := content.Value("policies:am"); v != nil && v.IsList() {
+	if v := data.Value("policies:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Policies = make([]*Policy, len(m))
 		for i, iv := range m {

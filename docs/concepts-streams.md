@@ -13,7 +13,7 @@ The benefit of this is that there is no need to find a way to reference the stre
 ```json
 {
     "type:s": "stream:nimona.io/kv",
-    "content:m": {
+    "data:m": {
         "": ""
     }
 }

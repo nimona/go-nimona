@@ -154,9 +154,9 @@ func (e Peer) ToObject() object.Object {
 }
 
 func (e *Peer) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -165,31 +165,31 @@ func (e *Peer) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("version:i"); v != nil {
+	if v := data.Value("version:i"); v != nil {
 		e.Version = int64(v.PrimitiveHinted().(int64))
 	}
-	if v := content.Value("addresses:as"); v != nil && v.IsList() {
+	if v := data.Value("addresses:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Addresses = make([]string, len(m))
 		for i, iv := range m {
 			e.Addresses[i] = string(iv)
 		}
 	}
-	if v := content.Value("bloom:ai"); v != nil && v.IsList() {
+	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]int64)
 		e.Bloom = make([]int64, len(m))
 		for i, iv := range m {
 			e.Bloom[i] = int64(iv)
 		}
 	}
-	if v := content.Value("contentTypes:as"); v != nil && v.IsList() {
+	if v := data.Value("contentTypes:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.ContentTypes = make([]string, len(m))
 		for i, iv := range m {
 			e.ContentTypes[i] = string(iv)
 		}
 	}
-	if v := content.Value("certificates:am"); v != nil && v.IsList() {
+	if v := data.Value("certificates:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Certificates = make([]*Certificate, len(m))
 		for i, iv := range m {
@@ -199,7 +199,7 @@ func (e *Peer) FromObject(o object.Object) error {
 			e.Certificates[i] = es
 		}
 	}
-	if v := content.Value("relays:am"); v != nil && v.IsList() {
+	if v := data.Value("relays:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Relays = make([]*Peer, len(m))
 		for i, iv := range m {
@@ -269,9 +269,9 @@ func (e LookupRequest) ToObject() object.Object {
 }
 
 func (e *LookupRequest) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -280,10 +280,10 @@ func (e *LookupRequest) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("bloom:ai"); v != nil && v.IsList() {
+	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]int64)
 		e.Bloom = make([]int64, len(m))
 		for i, iv := range m {
@@ -363,9 +363,9 @@ func (e LookupResponse) ToObject() object.Object {
 }
 
 func (e *LookupResponse) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -374,17 +374,17 @@ func (e *LookupResponse) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("bloom:ai"); v != nil && v.IsList() {
+	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]int64)
 		e.Bloom = make([]int64, len(m))
 		for i, iv := range m {
 			e.Bloom[i] = int64(iv)
 		}
 	}
-	if v := content.Value("peers:am"); v != nil && v.IsList() {
+	if v := data.Value("peers:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Peers = make([]*Peer, len(m))
 		for i, iv := range m {
