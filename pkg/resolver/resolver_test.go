@@ -20,6 +20,8 @@ import (
 )
 
 func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
+	net.BindLocal = true
+
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
 	d0 := New(
@@ -74,6 +76,8 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
+	net.BindLocal = true
+
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
@@ -152,72 +156,11 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	require.ElementsMatch(t, n2.Addresses(), peers[0].Addresses)
-
-	// add extra peer
-	_, k3, kc3, eb3, n3, x3, ctx3 := newPeer(t, "peer3")
-
-	// setup node 3
-	New(
-		ctx3,
-		WithKeychain(kc3),
-		WithEventbus(eb3),
-		WithExchange(x3),
-		WithBoostrapPeers(ba),
-	)
-
-	time.Sleep(time.Millisecond * 250)
-
-	fmt.Println("peer0", k0.PublicKey())
-	fmt.Println("  ^ id", kc0.ListPublicKeys(keychain.IdentityKey)[0])
-	fmt.Println("peer1", k1.PublicKey())
-	fmt.Println("  ^ id", kc1.ListPublicKeys(keychain.IdentityKey)[0])
-	fmt.Println("peer2", k2.PublicKey())
-	fmt.Println("  ^ id", kc2.ListPublicKeys(keychain.IdentityKey)[0])
-	fmt.Println("peer3", k3.PublicKey())
-	fmt.Println("  ^ id", kc3.ListPublicKeys(keychain.IdentityKey)[0])
-
-	fmt.Println("-------------------")
-	fmt.Println("-------------------")
-	fmt.Println("-------------------")
-	fmt.Println("-------------------")
-
-	// allow bootstraping to settle
-	time.Sleep(time.Millisecond * 250)
-
-	// find node 3 from node 1 from its identity
-	ctx = context.New(
-		context.WithCorrelationID("req4"),
-		context.WithTimeout(time.Second*2),
-	)
-	peersChan, err = d1.Lookup(
-		ctx,
-		LookupByCertificateSigner(
-			kc3.ListPublicKeys(keychain.IdentityKey)[0],
-		),
-	)
-	peers = gatherPeers(peersChan)
-	require.NoError(t, err)
-	require.Len(t, peers, 1)
-	require.ElementsMatch(t, n3.Addresses(), peers[0].Addresses)
-
-	// find node 3 from node 2 from it's identity
-	ctx = context.New(
-		context.WithCorrelationID("req5"),
-		context.WithTimeout(time.Second*2),
-	)
-	peersChan, err = d2.Lookup(
-		ctx,
-		LookupByCertificateSigner(
-			kc3.ListPublicKeys(keychain.IdentityKey)[0],
-		),
-	)
-	peers = gatherPeers(peersChan)
-	require.NoError(t, err)
-	require.Len(t, peers, 1)
-	require.ElementsMatch(t, n3.Addresses(), peers[0].Addresses)
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
+	net.BindLocal = true
+
 	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
 	_, k1, kc1, eb1, _, x1, ctx1 := newPeer(t, "peer1")
 	_, k2, kc2, eb2, _, x2, ctx2 := newPeer(t, "peer2")
