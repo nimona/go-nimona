@@ -51,7 +51,7 @@ func (l *loader) Load(
 		opt(o)
 	}
 	refs := map[string]object.Hash{}
-	data := obj.Raw().Value("content:m")
+	data := obj.Raw().Value("data:m")
 	object.Traverse(data, func(k string, v object.Value) bool {
 		if !v.IsRef() {
 			return true
@@ -88,7 +88,7 @@ func (l *loader) Unload(
 		opt(o)
 	}
 	objs := map[string]object.Hash{}
-	data := obj.Raw().Value("content:m")
+	data := obj.Raw().Value("data:m")
 	object.Traverse(data, func(k string, v object.Value) bool {
 		if !v.IsMap() {
 			return true

@@ -70,7 +70,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	retrievedObj, err := store.Get(obj.Hash())
 	require.NoError(t, err)
 
-	val := retrievedObj.Raw().Value("content:m").(object.Map).Value("key:s")
+	val := retrievedObj.Raw().Value("data:m").(object.Map).Value("key:s")
 	require.NotNil(t, val)
 	assert.Equal(t, "value", string(val.(object.String)))
 

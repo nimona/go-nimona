@@ -135,9 +135,9 @@ func (e TestPolicy) ToObject() object.Object {
 }
 
 func (e *TestPolicy) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -146,28 +146,28 @@ func (e *TestPolicy) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("subjects:as"); v != nil && v.IsList() {
+	if v := data.Value("subjects:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Subjects = make([]string, len(m))
 		for i, iv := range m {
 			e.Subjects[i] = string(iv)
 		}
 	}
-	if v := content.Value("resources:as"); v != nil && v.IsList() {
+	if v := data.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := content.Value("conditions:as"); v != nil && v.IsList() {
+	if v := data.Value("conditions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Conditions = make([]string, len(m))
 		for i, iv := range m {
 			e.Conditions[i] = string(iv)
 		}
 	}
-	if v := content.Value("action:s"); v != nil {
+	if v := data.Value("action:s"); v != nil {
 		e.Action = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -226,9 +226,9 @@ func (e TestStream) ToObject() object.Object {
 }
 
 func (e *TestStream) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -237,10 +237,10 @@ func (e *TestStream) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("createdDateTime:s"); v != nil {
+	if v := data.Value("createdDateTime:s"); v != nil {
 		e.CreatedDateTime = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -290,9 +290,9 @@ func (e TestSubscribed) ToObject() object.Object {
 }
 
 func (e *TestSubscribed) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -301,7 +301,7 @@ func (e *TestSubscribed) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -351,9 +351,9 @@ func (e TestUnsubscribed) ToObject() object.Object {
 }
 
 func (e *TestUnsubscribed) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -362,7 +362,7 @@ func (e *TestUnsubscribed) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil

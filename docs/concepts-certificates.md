@@ -29,7 +29,7 @@ the remote party simply ignores the object or request.
 ```json
 {
   "type:s": "nimona.io/peer.Certificate",
-  "content:m": {
+  "data:m": {
     "subject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
     "resources:as": [
       "nimona.io/profile.Profile",
@@ -67,7 +67,7 @@ the user.
 ```json
 {
   "type:s": "nimona.io/peer.CertificateRequest",
-  "content:m": {
+  "data:m": {
     "applicationName:s": "Foobar",
     "applicationDescription:s": "An app that does nothing",
     "applicationURL:s": "https://github.com/nimona",

@@ -100,9 +100,9 @@ func (e Certificate) ToObject() object.Object {
 }
 
 func (e *Certificate) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -111,13 +111,13 @@ func (e *Certificate) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("created:s"); v != nil {
+	if v := data.Value("created:s"); v != nil {
 		e.Created = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("expires:s"); v != nil {
+	if v := data.Value("expires:s"); v != nil {
 		e.Expires = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -229,9 +229,9 @@ func (e CertificateRequest) ToObject() object.Object {
 }
 
 func (e *CertificateRequest) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -240,33 +240,33 @@ func (e *CertificateRequest) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("applicationName:s"); v != nil {
+	if v := data.Value("applicationName:s"); v != nil {
 		e.ApplicationName = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("applicationDescription:s"); v != nil {
+	if v := data.Value("applicationDescription:s"); v != nil {
 		e.ApplicationDescription = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("applicationURL:s"); v != nil {
+	if v := data.Value("applicationURL:s"); v != nil {
 		e.ApplicationURL = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("subject:s"); v != nil {
+	if v := data.Value("subject:s"); v != nil {
 		e.Subject = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("resources:as"); v != nil && v.IsList() {
+	if v := data.Value("resources:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Resources = make([]string, len(m))
 		for i, iv := range m {
 			e.Resources[i] = string(iv)
 		}
 	}
-	if v := content.Value("actions:as"); v != nil && v.IsList() {
+	if v := data.Value("actions:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.Actions = make([]string, len(m))
 		for i, iv := range m {
 			e.Actions[i] = string(iv)
 		}
 	}
-	if v := content.Value("nonce:s"); v != nil {
+	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
 	return nil

@@ -95,9 +95,9 @@ func (e ConversationStreamRoot) ToObject() object.Object {
 }
 
 func (e *ConversationStreamRoot) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -106,7 +106,7 @@ func (e *ConversationStreamRoot) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("name:s"); v != nil {
+	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -169,9 +169,9 @@ func (e ConversationTopicUpdated) ToObject() object.Object {
 }
 
 func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -180,10 +180,10 @@ func (e *ConversationTopicUpdated) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("topic:s"); v != nil {
+	if v := data.Value("topic:s"); v != nil {
 		e.Topic = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil
@@ -246,9 +246,9 @@ func (e ConversationMessageAdded) ToObject() object.Object {
 }
 
 func (e *ConversationMessageAdded) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -257,10 +257,10 @@ func (e *ConversationMessageAdded) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("body:s"); v != nil {
+	if v := data.Value("body:s"); v != nil {
 		e.Body = string(v.PrimitiveHinted().(string))
 	}
-	if v := content.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil
@@ -321,9 +321,9 @@ func (e ConversationMessageRemoved) ToObject() object.Object {
 }
 
 func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -332,10 +332,10 @@ func (e *ConversationMessageRemoved) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("removes:r"); v != nil {
+	if v := data.Value("removes:r"); v != nil {
 		e.Removes = v.PrimitiveHinted().(object.Hash)
 	}
-	if v := content.Value("dependsOn:ar"); v != nil && v.IsList() {
+	if v := data.Value("dependsOn:ar"); v != nil && v.IsList() {
 		// TODO missing implementation for repeated type hint r
 	}
 	return nil

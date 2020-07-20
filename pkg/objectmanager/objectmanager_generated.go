@@ -73,9 +73,9 @@ func (e Request) ToObject() object.Object {
 }
 
 func (e *Request) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -84,7 +84,7 @@ func (e *Request) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("objectHash:s"); v != nil {
+	if v := data.Value("objectHash:s"); v != nil {
 		e.ObjectHash = object.Hash(v.PrimitiveHinted().(string))
 	}
 	return nil
@@ -134,9 +134,9 @@ func (e Response) ToObject() object.Object {
 }
 
 func (e *Response) FromObject(o object.Object) error {
-	content, ok := o.Raw().Value("content:m").(object.Map)
+	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
-		return errors.New("missing content")
+		return errors.New("missing data")
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
@@ -145,7 +145,7 @@ func (e *Response) FromObject(o object.Object) error {
 	e.Owners = o.GetOwners()
 	e.Signatures = o.GetSignatures()
 	e.Policy = o.GetPolicy()
-	if v := content.Value("objectHash:m"); v != nil && v.IsMap() {
+	if v := data.Value("objectHash:m"); v != nil && v.IsMap() {
 		eo := object.Object(v.(object.Map))
 		e.ObjectHash = &eo
 	}

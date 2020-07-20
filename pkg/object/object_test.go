@@ -46,7 +46,7 @@ func TestObject(t *testing.T) {
 			},
 			"owners:as": []string{"owner1", "owner2"},
 		},
-		"content:m": map[string]interface{}{
+		"data:m": map[string]interface{}{
 			"foo:s": "bar",
 		},
 	}

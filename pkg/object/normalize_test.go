@@ -49,7 +49,7 @@ package object_test
 // 				"x:d":      kx,
 // 			},
 // 		},
-// 		"content:m": map[string]interface{}{
+// 		"data:m": map[string]interface{}{
 // 			"nonce:s": "nonce",
 // 		},
 // 	}
