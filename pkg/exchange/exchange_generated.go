@@ -26,31 +26,31 @@ func (e DataForward) GetType() string {
 	return "nimona.io/exchange.DataForward"
 }
 
+func (e DataForward) IsStreamRoot() bool {
+	return false
+}
+
 func (e DataForward) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "recipient",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "ephermeral",
-				Type:       "nimona.io/crypto.PublicKey",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "data",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "recipient",
+			Type:       "nimona.io/crypto.PublicKey",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "ephermeral",
+			Type:       "nimona.io/crypto.PublicKey",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "data",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

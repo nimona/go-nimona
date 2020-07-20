@@ -34,17 +34,19 @@ func (e Chunk) GetType() string {
 	return "nimona.io/Chunk"
 }
 
+func (e Chunk) IsStreamRoot() bool {
+	return false
+}
+
 func (e Chunk) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "data",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "data",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -93,17 +95,19 @@ func (e Blob) GetType() string {
 	return "nimona.io/Blob"
 }
 
+func (e Blob) IsStreamRoot() bool {
+	return false
+}
+
 func (e Blob) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "chunks",
-				Type:       "Chunk",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "chunks",
+			Type:       "Chunk",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 

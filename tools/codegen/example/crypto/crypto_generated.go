@@ -66,24 +66,25 @@ func (e Hash) GetType() string {
 	return "example/crypto.Hash"
 }
 
+func (e Hash) IsStreamRoot() bool {
+	return false
+}
+
 func (e Hash) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "hashType",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "digest",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "hashType",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "digest",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -138,38 +139,37 @@ func (e HeaderSignature) GetType() string {
 	return "example/object.Header.Signature"
 }
 
+func (e HeaderSignature) IsStreamRoot() bool {
+	return false
+}
+
 func (e HeaderSignature) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "publicKey",
-				Type:       "PublicKey",
-				Hint:       "m",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "algorithm",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "r",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "s",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "publicKey",
+			Type:       "PublicKey",
+			Hint:       "m",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "algorithm",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "r",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "s",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -239,59 +239,55 @@ func (e PrivateKey) GetType() string {
 	return "example/crypto.PrivateKey"
 }
 
+func (e PrivateKey) IsStreamRoot() bool {
+	return false
+}
+
 func (e PrivateKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "publicKey",
-				Type:       "PublicKey",
-				Hint:       "m",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "keyType",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "algorithm",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "curve",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "x",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "y",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "d",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "publicKey",
+			Type:       "PublicKey",
+			Hint:       "m",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "keyType",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "algorithm",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "curve",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "x",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "y",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "d",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -379,45 +375,43 @@ func (e PublicKey) GetType() string {
 	return "example/crypto.PublicKey"
 }
 
+func (e PublicKey) IsStreamRoot() bool {
+	return false
+}
+
 func (e PublicKey) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "keyType",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "algorithm",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "curve",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "x",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "y",
-				Type:       "data",
-				Hint:       "d",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "keyType",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "algorithm",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "curve",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "x",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "y",
+			Type:       "data",
+			Hint:       "d",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

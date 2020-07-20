@@ -50,38 +50,37 @@ func (e Policy) GetType() string {
 	return "example/stream.Policy"
 }
 
+func (e Policy) IsStreamRoot() bool {
+	return false
+}
+
 func (e Policy) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "subjects",
-				Type:       "example/crypto.PublicKey",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "resources",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "conditions",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "action",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "subjects",
+			Type:       "example/crypto.PublicKey",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "resources",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "conditions",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "action",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -175,31 +174,31 @@ func (e Created) GetType() string {
 	return "example/stream.Created"
 }
 
+func (e Created) IsStreamRoot() bool {
+	return false
+}
+
 func (e Created) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "createdDateTime",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "partitionKeys",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "policies",
-				Type:       "Policy",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "createdDateTime",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "partitionKeys",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "policies",
+			Type:       "Policy",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -279,31 +278,31 @@ func (e PoliciesUpdated) GetType() string {
 	return "example/stream.PoliciesUpdated"
 }
 
+func (e PoliciesUpdated) IsStreamRoot() bool {
+	return false
+}
+
 func (e PoliciesUpdated) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "stream",
-				Type:       "example/crypto.Hash",
-				Hint:       "m",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "parents",
-				Type:       "example/crypto.Hash",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "policies",
-				Type:       "Policy",
-				Hint:       "m",
-				IsRepeated: true,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "stream",
+			Type:       "example/crypto.Hash",
+			Hint:       "m",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "parents",
+			Type:       "example/crypto.Hash",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "policies",
+			Type:       "Policy",
+			Hint:       "m",
+			IsRepeated: true,
+			IsOptional: false,
+		}},
 	}
 }
 

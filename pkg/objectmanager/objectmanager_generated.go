@@ -33,17 +33,19 @@ func (e Request) GetType() string {
 	return "nimona.io/objectmanager.Request"
 }
 
+func (e Request) IsStreamRoot() bool {
+	return false
+}
+
 func (e Request) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "objectHash",
-				Type:       "nimona.io/object.Hash",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "objectHash",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 
@@ -92,17 +94,19 @@ func (e Response) GetType() string {
 	return "nimona.io/objectmanager.Response"
 }
 
+func (e Response) IsStreamRoot() bool {
+	return false
+}
+
 func (e Response) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "objectHash",
-				Type:       "nimona.io/object.Object",
-				Hint:       "m",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "objectHash",
+			Type:       "nimona.io/object.Object",
+			Hint:       "m",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

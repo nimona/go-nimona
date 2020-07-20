@@ -30,7 +30,6 @@ func codegen(in, out string) {
 
 	re := regexp.MustCompile("(?s)//.*?\n|/\\*.*?\\*/")
 	rf = re.ReplaceAll(rf, nil)
-	fmt.Println(string(rf))
 
 	doc, err := NewParser(bytes.NewReader(rf)).Parse()
 	if err != nil {

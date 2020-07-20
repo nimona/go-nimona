@@ -37,6 +37,10 @@ func (e SchemaProperty) GetType() string {
 	return "nimona.io/SchemaProperty"
 }
 
+func (e SchemaProperty) IsStreamRoot() bool {
+	return false
+}
+
 func (e SchemaProperty) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/SchemaProperty")
@@ -114,6 +118,10 @@ func (e *SchemaProperty) FromObject(o Object) error {
 
 func (e SchemaObject) GetType() string {
 	return "nimona.io/SchemaObject"
+}
+
+func (e SchemaObject) IsStreamRoot() bool {
+	return false
 }
 
 func (e SchemaObject) ToObject() Object {

@@ -26,24 +26,25 @@ func (e Msg) GetType() string {
 	return "nimona.io/msg"
 }
 
+func (e Msg) IsStreamRoot() bool {
+	return false
+}
+
 func (e Msg) GetSchema() *object.SchemaObject {
 	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-			&object.SchemaProperty{
-				Name:       "datetime",
-				Type:       "int",
-				Hint:       "i",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-			&object.SchemaProperty{
-				Name:       "body",
-				Type:       "string",
-				Hint:       "s",
-				IsRepeated: false,
-				IsOptional: false,
-			},
-		},
+		Properties: []*object.SchemaProperty{{
+			Name:       "datetime",
+			Type:       "int",
+			Hint:       "i",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "body",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
 	}
 }
 

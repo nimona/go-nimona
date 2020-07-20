@@ -16,6 +16,7 @@ type Stream struct {
 type Object struct {
 	Name      string
 	IsRoot    bool
+	IsEvent   bool
 	IsSigned  bool
 	IsCommand bool
 	Members   []*Member

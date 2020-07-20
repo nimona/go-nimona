@@ -127,7 +127,7 @@ func (m *subscriptionmanager) Subscribe(
 	// finally, get the hypothetical root for our subscription chain
 	chainRoot := m.hypotheticalRoot(owners)
 	// and add the subscription to the our chain
-	chainEvent := subscription.SubscriptionChainSubscriptionAdded{
+	chainEvent := subscription.SubscriptionAdded{
 		Stream:       chainRoot.Hash(),
 		Subscription: sub.ToObject().Hash(),
 		Owners:       owners,
@@ -154,12 +154,12 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 	}
 	// replay the stream and gather the subscriptions
 	hashes := map[object.Hash]struct{}{}
-	typeAdded := subscription.SubscriptionChainSubscriptionAdded{}.GetType()
-	typeRemoved := subscription.SubscriptionChainSubscriptionRemoved{}.GetType()
+	typeAdded := subscription.SubscriptionAdded{}.GetType()
+	typeRemoved := subscription.SubscriptionRemoved{}.GetType()
 	for _, obj := range stream.Objects {
 		switch obj.GetType() {
 		case typeAdded:
-			event := &subscription.SubscriptionChainSubscriptionAdded{}
+			event := &subscription.SubscriptionAdded{}
 			if err := event.FromObject(obj); err != nil {
 				logger.Error(
 					"unable to parse subscription added from object",
@@ -169,7 +169,7 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 			}
 			hashes[event.Subscription] = struct{}{}
 		case typeRemoved:
-			event := &subscription.SubscriptionChainSubscriptionRemoved{}
+			event := &subscription.SubscriptionRemoved{}
 			if err := event.FromObject(obj); err != nil {
 				logger.Error(
 					"unable to parse subscription removed from object",
@@ -238,7 +238,7 @@ func (m *subscriptionmanager) GetSubscriptionsByType(
 func (m *subscriptionmanager) hypotheticalRoot(
 	owners []crypto.PublicKey,
 ) object.Object {
-	return subscription.SubscriptionChainCreated{
+	return subscription.SubscriptionStreamRoot{
 		Owners: owners,
 	}.ToObject()
 }

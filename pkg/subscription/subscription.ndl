@@ -10,14 +10,14 @@ signed object nimona.io/subscription.Subscription {
     expiry string
 }
 
-stream nimona.io/subscriptionChain {
-    signed root object Created {
+stream nimona.io/subscription {
+    signed root event Created {
         name string
     }
-    signed object SubscriptionAdded {
+    signed event SubscriptionAdded {
         subscription nimona.io/object.Hash
     }
-    signed object SubscriptionRemoved {
+    signed event SubscriptionRemoved {
         subscription nimona.io/object.Hash
     }
 }
