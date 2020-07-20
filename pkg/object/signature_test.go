@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"testing"
 
 	"nimona.io/pkg/crypto"
@@ -21,6 +22,7 @@ func TestNewSignature(t *testing.T) {
 	assert.Equal(t, sk.PublicKey(), sig.Signer)
 
 	o = o.AddSignature(sig)
+	fmt.Println(Dump(o))
 	err = Verify(o)
 	assert.NoError(t, err)
 }

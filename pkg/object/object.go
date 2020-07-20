@@ -16,6 +16,13 @@ type (
 		Actions   []string `json:"actions:as,omitempty" mapstructure:"actions:as,omitempty"`
 		Effect    string   `json:"effect:s,omitempty" mapstructure:"effect:s,omitempty"`
 	}
+	// Metadata struct {
+	// 	Owners     []crypto.PublicKey `json:"owners"`
+	// 	Parents    []Hash             `json:"parents"`
+	// 	Policy     Policy             `json:"policy"`
+	// 	Signatures []Signature        `json:"_signatures"`
+	// 	Stream     Hash               `json:"stream"`
+	// }
 )
 
 func (v Signature) IsEmpty() bool {
@@ -28,6 +35,20 @@ func (v Policy) IsEmpty() bool {
 
 func (o Object) data() Map {
 	data := Map(o).Value("content:m")
+	if data == nil {
+		return Map{}
+	}
+
+	mdata, ok := data.(Map)
+	if !ok {
+		return Map{}
+	}
+
+	return mdata
+}
+
+func (o Object) meta() Map {
+	data := Map(o).Value("metadata:m")
 	if data == nil {
 		return Map{}
 	}
@@ -59,11 +80,11 @@ func (o Object) SetType(v string) Object {
 }
 
 func (o Object) SetStream(v Hash) Object {
-	return o.set("stream:s", String(v.String()))
+	return o.setMeta("stream:s", String(v.String()))
 }
 
 func (o Object) GetStream() Hash {
-	im := Map(o).Value("stream:s")
+	im := o.getMeta("stream:s")
 	if im == nil {
 		return ""
 	}
@@ -79,11 +100,11 @@ func (o Object) SetParents(hashes []Hash) Object {
 	for _, hash := range hashes {
 		v = v.Append(String(hash.String()))
 	}
-	return o.set("parents:as", v)
+	return o.setMeta("parents:as", v)
 }
 
 func (o Object) GetParents() []Hash {
-	im := Map(o).Value("parents:as")
+	im := o.getMeta("parents:as")
 	if im == nil {
 		return []Hash{}
 	}
@@ -115,11 +136,11 @@ func (o Object) SetPolicy(policy Policy) Object {
 	if v.IsEmpty() {
 		return o
 	}
-	return o.set("policy:m", v)
+	return o.setMeta("policy:m", v)
 }
 
 func (o Object) GetPolicy() Policy {
-	im := Map(o).Value("policy:m")
+	im := o.getMeta("policy:m")
 	if im == nil {
 		return Policy{}
 	}
@@ -134,7 +155,7 @@ func (o Object) GetPolicy() Policy {
 
 func (o Object) AddSignature(vs ...Signature) Object {
 	sigs := List{}
-	if os := o.Get("_signatures:am"); os != nil {
+	if os := o.getMeta("_signatures:am"); os != nil {
 		if ol, ok := os.(List); ok && ol.Length() > 0 {
 			sigs = ol
 		}
@@ -142,7 +163,7 @@ func (o Object) AddSignature(vs ...Signature) Object {
 	for _, v := range vs {
 		sigs = sigs.Append(AnyToValue(":m", v.ToMap()))
 	}
-	return o.set("_signatures:am", sigs)
+	return o.setMeta("_signatures:am", sigs)
 }
 
 func immutableMapToSignature(im Map) Signature {
@@ -160,7 +181,7 @@ func immutableMapToSignature(im Map) Signature {
 
 func (o Object) GetSignatures() []Signature {
 	sigs := []Signature{}
-	if os := o.get("_signatures:am"); os != nil {
+	if os := o.getMeta("_signatures:am"); os != nil {
 		if ol, ok := os.(List); ok && ol.Length() > 0 {
 			ol.Iterate(func(v Value) bool {
 				m, ok := v.(Map)
@@ -180,11 +201,11 @@ func (o Object) SetOwners(owners []crypto.PublicKey) Object {
 	for _, owner := range owners {
 		v = v.Append(String(owner.String()))
 	}
-	return o.set("owners:as", v)
+	return o.setMeta("owners:as", v)
 }
 
 func (o Object) GetOwners() []crypto.PublicKey {
-	im := Map(o).Value("owners:as")
+	im := o.getMeta("owners:as")
 	if im == nil {
 		return []crypto.PublicKey{}
 	}
@@ -258,6 +279,17 @@ func (o Object) Set(k string, v interface{}) Object {
 	}
 	return Object(
 		Map(o).Set("content:m", data),
+	)
+}
+
+func (o Object) getMeta(k string) Value {
+	return o.meta().Value(k)
+}
+
+func (o Object) setMeta(k string, v Value) Object {
+	meta := o.meta().Set(k, v)
+	return Object(
+		Map(o).Set("metadata:m", meta),
 	)
 }
 
