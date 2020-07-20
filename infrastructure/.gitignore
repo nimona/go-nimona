@@ -1,4 +1,5 @@
 /.terraform/
+/.vault-password
 /inventories/
 /ssh/id_rsa
 /vendor/

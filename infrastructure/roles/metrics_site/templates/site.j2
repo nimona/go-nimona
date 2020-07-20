@@ -1,0 +1,15 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+
+route {{ metrics_site_host_path }} {
+    rewrite * {{ metrics_site_upstream_path }}
+    reverse_proxy {{ metrics_site_upstream }}
+}
+
+{% if metrics_site_users != {} %}
+basicauth {{ metrics_site_host_path }} {
+    {% for user, pass in metrics_site_users.items() %}
+    {{ user }} {{ pass | password_hash('bcrypt', metrics_site_password_salt) | b64encode }}
+    {% endfor %}
+}
+{% endif %}

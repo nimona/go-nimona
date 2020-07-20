@@ -1,0 +1,4 @@
+---
+caddy_caddyfile: /etc/caddy/Caddyfile
+caddy_sites_enabled_dir: /etc/caddy/sites-enabled
+caddy_default_message: "OK"

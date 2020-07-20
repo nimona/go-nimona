@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+{{ inventory_hostname }}
+
+respond "{{ caddy_default_message }}"
+
+import "{{ caddy_sites_enabled_dir }}/*"
