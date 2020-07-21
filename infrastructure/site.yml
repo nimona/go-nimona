@@ -13,3 +13,5 @@
       tags: ["tools", "caddy", "http"]
     - role: node_exporter
       tags: ["services", "metrics", "node_exporter"]
+    - role: cadvisor
+      tags: ["services", "metrics", "cadvisor"]
