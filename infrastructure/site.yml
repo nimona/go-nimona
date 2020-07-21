@@ -11,3 +11,5 @@
       tags: ["tools", "docker"]
     - role: caddy
       tags: ["tools", "caddy", "http"]
+    - role: node_exporter
+      tags: ["services", "metrics", "node_exporter"]
