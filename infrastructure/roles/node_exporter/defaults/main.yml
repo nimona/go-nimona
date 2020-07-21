@@ -1,0 +1,6 @@
+---
+node_exporter_version: "v1.0.1"
+node_exporter_port: "9100"
+node_exporter_bind: "127.0.0.1"
+node_exporter_web_listen_address: |-
+  {{ node_exporter_bind }}:{{ node_exporter_port }}

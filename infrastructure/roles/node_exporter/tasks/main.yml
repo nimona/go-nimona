@@ -1,0 +1,28 @@
+---
+- name: Create and start node_exporter container
+  docker_container:
+    name: node_exporter
+    image: "prom/node-exporter:{{ node_exporter_version | default('latest') }}"
+    command:
+      - "--path.rootfs=/host"
+      - '--web.listen-address="{{ node_exporter_web_listen_address }}"'
+    pull: yes
+    recreate: '{{ node_exporter_version == "latest" }}'
+    restart_policy: always
+    state: started
+    capabilities:
+      - SYS_TIME
+    pid_mode: host
+    network_mode: host
+    volumes:
+      - "/:/host:ro,rslave"
+
+- name: Configure caddy
+  import_role:
+    name: metrics_site
+  vars:
+    metrics_site_name: node_exporter
+    metrics_site_host_path: /metrics/node
+    metrics_site_upstream_path: /metrics
+    metrics_site_upstream: "127.0.0.1:{{ node_exporter_port }}"
+    metrics_site_users: "{{ metrics_users }}"
