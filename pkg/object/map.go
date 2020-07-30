@@ -1,6 +1,9 @@
 package object
 
-import "strconv"
+import (
+	"sort"
+	"strconv"
+)
 
 type Map struct {
 	m mapIterator
@@ -52,6 +55,30 @@ func (m Map) iterate(f func(k string, v Value) bool) bool {
 	})
 }
 
+func (m Map) keys() []string {
+	keys := []string{}
+	m.m.iterate(func(k string, v Value) bool {
+		keys = append(keys, k)
+		return true
+	})
+	sort.Sort(sort.StringSlice(keys))
+	return keys
+}
+
+func (m Map) iterateSorted(f func(k string, v Value) bool) bool {
+	if m.m == nil {
+		return true
+	}
+	keys := m.keys()
+	for _, k := range keys {
+		cont := f(k, m.Value(k))
+		if !cont {
+			return false
+		}
+	}
+	return true
+}
+
 func (m Map) Iterate(f func(k string, v Value) bool) {
 	m.iterate(f)
 }
@@ -66,7 +93,7 @@ func traverse(k string, v Value, f func(string, Value) bool) bool {
 	}
 	switch cv := v.(type) {
 	case Map:
-		cont = cv.iterate(func(ik string, iv Value) bool {
+		cont = cv.iterateSorted(func(ik string, iv Value) bool {
 			cont = traverse(k+ik, iv, f)
 			return cont
 		})

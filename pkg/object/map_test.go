@@ -157,7 +157,7 @@ func Test_Traverse(t *testing.T) {
 			"": Map{}.
 				Set("foo0:s", String("bar0")).
 				Set("foo1:s", String("bar1")),
-			"foo1:s": String("bar1"),
+			"foo0:s": String("bar0"),
 		},
 	}, {
 		name: "should pass, complex map, stop after 6",
@@ -183,14 +183,14 @@ func Test_Traverse(t *testing.T) {
 					Append(Int(3)),
 				).
 				Set("foo3:i", Int(4)),
-			"foo3:i": Int(4),
+			"foo0:s": String("bar0"),
+			"foo1:s": String("bar1"),
 			"foo2:as": List{}.
 				Append(Int(1)).
 				Append(Int(2)).
 				Append(Int(3)),
 			"foo2:as.0": Int(1),
 			"foo2:as.1": Int(2),
-			"foo2:as.2": Int(3),
 		},
 	}, {
 		name: "should pass, nested map, stop after 6",
@@ -216,14 +216,14 @@ func Test_Traverse(t *testing.T) {
 					Set("foo3:i", Int(3)),
 				).
 				Set("foo3:i", Int(4)),
-			"foo3:i": Int(4),
+			"foo0:s": String("bar0"),
+			"foo1:s": String("bar1"),
 			"foo2:am": Map{}.
 				Set("foo1:i", Int(1)).
 				Set("foo2:i", Int(2)).
 				Set("foo3:i", Int(3)),
 			"foo2:am.foo1:i": Int(1),
 			"foo2:am.foo2:i": Int(2),
-			"foo2:am.foo3:i": Int(3),
 		},
 	}}
 	for _, tt := range tests {
