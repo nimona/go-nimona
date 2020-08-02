@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object"
 )
 
 func FilterBySender(keys ...crypto.PublicKey) EnvelopeFilter {
@@ -30,6 +31,17 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	return func(e *Envelope) bool {
 		for _, pattern := range patterns {
 			if pattern.Match(e.Payload.GetType()) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func FilterByObjectHash(objectHashes ...object.Hash) EnvelopeFilter {
+	return func(e *Envelope) bool {
+		for _, hash := range objectHashes {
+			if hash == e.Payload.Hash() {
 				return true
 			}
 		}
