@@ -1,0 +1,10 @@
+package nimona.io/object
+
+signed object nimona.io/object.Request {
+    objectHash nimona.io/object.Hash
+}
+
+signed object nimona.io/object.Response {
+    objectHash nimona.io/object.Object
+}
+
