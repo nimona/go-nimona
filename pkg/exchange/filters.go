@@ -48,3 +48,9 @@ func FilterByObjectHash(objectHashes ...object.Hash) EnvelopeFilter {
 		return false
 	}
 }
+
+func FilterByNonce(nonce string) EnvelopeFilter {
+	return func(e *Envelope) bool {
+		return e.Payload.Get("nonce:s").(string) == nonce
+	}
+}
