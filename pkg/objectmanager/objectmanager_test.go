@@ -7,6 +7,9 @@ import (
 	"sync"
 	"testing"
 
+	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,13 +17,15 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/exchangemock"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
-
-	_ "github.com/mattn/go-sqlite3"
+	"nimona.io/pkg/stream"
 )
 
 func TestObjectRequest(t *testing.T) {
@@ -54,13 +59,13 @@ func TestObjectRequest(t *testing.T) {
 	// setup hander
 	go exchange.HandleEnvelopeSubscription(
 		x2.Subscribe(
-			exchange.FilterByObjectType(new(Request).GetType()),
+			exchange.FilterByObjectType(new(object.Request).GetType()),
 		),
 		func(e *exchange.Envelope) error {
 			o := e.Payload
 			objectHandled = true
 
-			objr := Request{}
+			objr := object.Request{}
 			err := objr.FromObject(o)
 			require.NoError(t, err)
 
@@ -97,6 +102,7 @@ func TestObjectRequest(t *testing.T) {
 	assert.True(t, objectHandled)
 	assert.True(t, objectReceived)
 }
+
 func newPeer(
 	t *testing.T,
 ) (
@@ -104,7 +110,7 @@ func newPeer(
 	net.Network,
 	exchange.Exchange,
 	*sqlobjectstore.Store,
-	Requester,
+	ObjectManager,
 ) {
 	dblite := tempSqlite3(t)
 	store, err := sqlobjectstore.New(dblite)
@@ -148,4 +154,130 @@ func tempSqlite3(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
+}
+
+func Test_manager_RequestStream(t *testing.T) {
+	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testPeer := &peer.Peer{
+		Owners: []crypto.PublicKey{
+			testPeerKey.PublicKey(),
+		},
+	}
+	f00 := object.Object{}.
+		Set("f00:s", "f00")
+	f01 := object.Object{}.
+		Set("f01:s", "f01")
+	f02 := object.Object{}.
+		Set("f02:s", "f02")
+
+	type fields struct {
+		store    func(*testing.T) objectstore.Store
+		exchange func(*testing.T) exchange.Exchange
+	}
+	type args struct {
+		ctx      context.Context
+		rootHash object.Hash
+		peer     *peer.Peer
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []object.Object
+		wantErr bool
+	}{{
+		name: "should pass",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				return m
+			},
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{
+						nil,
+						nil,
+						nil,
+						nil,
+					},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{
+							Objects: []*exchange.Envelope{{
+								Payload: stream.Response{
+									Nonce: "7",
+									Children: []object.Hash{
+										f00.Hash(),
+										f01.Hash(),
+										f02.Hash(),
+									},
+								}.ToObject(),
+							}},
+						},
+						&exchangemock.MockSubscriptionSimple{
+							Objects: []*exchange.Envelope{{
+								Payload: f00,
+							}},
+						},
+						&exchangemock.MockSubscriptionSimple{
+							Objects: []*exchange.Envelope{{
+								Payload: f01,
+							}},
+						},
+						&exchangemock.MockSubscriptionSimple{
+							Objects: []*exchange.Envelope{{
+								Payload: f02,
+							}},
+						},
+					},
+				}
+				return m
+			},
+		},
+		args: args{
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     testPeer,
+		},
+		want: []object.Object{
+			f00,
+			f01,
+			f02,
+		},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				store:    tt.fields.store(t),
+				exchange: tt.fields.exchange(t),
+				newNonce: func() string {
+					return "7"
+				},
+			}
+			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("manager.RequestStream() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.want != nil {
+				objs := []object.Object{}
+				for {
+					obj, err := got.Next()
+					if err != nil {
+						break
+					}
+					objs = append(objs, *obj)
+				}
+				require.Equal(t, len(tt.want), len(objs))
+				for i := 0; i < len(tt.want); i++ {
+					assert.Equal(
+						t,
+						tt.want[i].ToMap(),
+						objs[i].ToMap(),
+						"for index %d", i,
+					)
+				}
+			}
+		})
+	}
 }

@@ -30,6 +30,7 @@ type (
 		Policy     object.Policy
 		Signatures []object.Signature
 		Nonce      string
+		RootHash   object.Hash
 		Leaves     []object.Hash
 	}
 	Response struct {
@@ -192,6 +193,12 @@ func (e Request) GetSchema() *object.SchemaObject {
 			IsRepeated: false,
 			IsOptional: false,
 		}, {
+			Name:       "rootHash",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
 			Name:       "leaves",
 			Type:       "nimona.io/object.Hash",
 			Hint:       "s",
@@ -217,6 +224,9 @@ func (e Request) ToObject() object.Object {
 	o = o.SetPolicy(e.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
+	}
+	if e.RootHash != "" {
+		o = o.Set("rootHash:s", e.RootHash)
 	}
 	if len(e.Leaves) > 0 {
 		v := object.List{}
@@ -245,6 +255,9 @@ func (e *Request) FromObject(o object.Object) error {
 	e.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	if v := data.Value("rootHash:s"); v != nil {
+		e.RootHash = object.Hash(v.PrimitiveHinted().(string))
 	}
 	if v := data.Value("leaves:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)

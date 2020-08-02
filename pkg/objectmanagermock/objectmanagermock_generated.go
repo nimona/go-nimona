@@ -12,31 +12,31 @@ import (
 	reflect "reflect"
 )
 
-// MockRequester is a mock of Requester interface
-type MockRequester struct {
+// MockObjectManager is a mock of ObjectManager interface
+type MockObjectManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockRequesterMockRecorder
+	recorder *MockObjectManagerMockRecorder
 }
 
-// MockRequesterMockRecorder is the mock recorder for MockRequester
-type MockRequesterMockRecorder struct {
-	mock *MockRequester
+// MockObjectManagerMockRecorder is the mock recorder for MockObjectManager
+type MockObjectManagerMockRecorder struct {
+	mock *MockObjectManager
 }
 
-// NewMockRequester creates a new mock instance
-func NewMockRequester(ctrl *gomock.Controller) *MockRequester {
-	mock := &MockRequester{ctrl: ctrl}
-	mock.recorder = &MockRequesterMockRecorder{mock}
+// NewMockObjectManager creates a new mock instance
+func NewMockObjectManager(ctrl *gomock.Controller) *MockObjectManager {
+	mock := &MockObjectManager{ctrl: ctrl}
+	mock.recorder = &MockObjectManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockRequester) EXPECT() *MockRequesterMockRecorder {
+func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 	return m.recorder
 }
 
 // Request mocks base method
-func (m *MockRequester) Request(ctx context.Context, hash object.Hash, peer *peer.Peer) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.Peer) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Request", ctx, hash, peer)
 	ret0, _ := ret[0].(*object.Object)
@@ -45,7 +45,22 @@ func (m *MockRequester) Request(ctx context.Context, hash object.Hash, peer *pee
 }
 
 // Request indicates an expected call of Request
-func (mr *MockRequesterMockRecorder) Request(ctx, hash, peer interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockRequester)(nil).Request), ctx, hash, peer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, peer)
+}
+
+// RequestStream mocks base method
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, peer *peer.Peer) (object.ReferencesResults, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestStream", ctx, rootHash, peer)
+	ret0, _ := ret[0].(object.ReferencesResults)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestStream indicates an expected call of RequestStream
+func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash, peer interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), ctx, rootHash, peer)
 }
