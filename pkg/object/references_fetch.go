@@ -25,10 +25,10 @@ type (
 	}
 )
 
-// LoadReferences will look for references in the given object, request the
-// referred objects using the requestHandler, and will return them in a lazy
-// loaded result.
-func FetchReferences(
+// FetchWithReferences will look for references in the given object, request the
+// primary object and all referred objects using the requestHandler, and will
+// return them in a lazy loaded result.
+func FetchWithReferences(
 	ctx context.Context,
 	requestHandler FetcherFunc,
 	objectHash Hash,

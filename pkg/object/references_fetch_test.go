@@ -76,7 +76,7 @@ func TestFetchReferences(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FetchReferences(
+			got, err := FetchWithReferences(
 				tt.args.ctx,
 				tt.args.requestHandler,
 				tt.args.objectHash,
