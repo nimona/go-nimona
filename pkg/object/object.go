@@ -166,6 +166,18 @@ func (o Object) AddSignature(vs ...Signature) Object {
 	return o.setMeta("_signatures:am", sigs)
 }
 
+func GetReferences(o Object) []Hash {
+	refs := []Hash{}
+	Traverse(o.data(), func(k string, v Value) bool {
+		if !v.IsRef() {
+			return true
+		}
+		refs = append(refs, Hash(v.(Ref)))
+		return true
+	})
+	return refs
+}
+
 func immutableMapToSignature(im Map) Signature {
 	if im.IsEmpty() {
 		return Signature{}

@@ -42,8 +42,7 @@ func TestLoadReferences(t *testing.T) {
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
-				switch hash {
-				case "f01":
+				if hash == "f01" {
 					return &f01, nil
 				}
 				return nil, errors.New("not found")

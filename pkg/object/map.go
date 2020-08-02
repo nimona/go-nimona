@@ -61,7 +61,7 @@ func (m Map) keys() []string {
 		keys = append(keys, k)
 		return true
 	})
-	sort.Sort(sort.StringSlice(keys))
+	sort.Strings(keys)
 	return keys
 }
 

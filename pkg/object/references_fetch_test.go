@@ -20,11 +20,6 @@ func TestFetchReferences(t *testing.T) {
 	f02 := Object{}.
 		Set("f02:s", "f02")
 
-	// f00Full := Object{}.
-	// 	Set("f00:s", "f00").
-	// 	Set("f01:m", f01.Raw()).
-	// 	Set("f02:m", f02.Raw())
-
 	type args struct {
 		ctx            context.Context
 		requestHandler FetcherFunc
@@ -43,8 +38,7 @@ func TestFetchReferences(t *testing.T) {
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
-				switch hash {
-				case "f01":
+				if hash == "f01" {
 					return &f01, nil
 				}
 				return nil, errors.New("not found")
