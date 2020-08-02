@@ -177,6 +177,8 @@ func (m *manager) RequestStream(
 				objectHash,
 				requestHandler,
 			)
+			// TODO check the validity of each event, they should be ordered
+			// so we should already have its parents.
 			next <- objectRefOrErr{
 				object: fullObj,
 				err:    err,
