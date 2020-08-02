@@ -400,11 +400,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	res := out.String()
 	if doc.Package == "nimona.io/object" {
 		res = strings.ReplaceAll(res, "object.", "")
-		// res = strings.ReplaceAll(res, "object.Hash", "Hash")
-		// res = strings.ReplaceAll(res, "object.Schema", "Schema")
-		// res = strings.ReplaceAll(res, "object.Signature", "Signature")
-		// res = strings.ReplaceAll(res, "object.Policy", "Policy")
-		// res = strings.ReplaceAll(res, "object.FromMap", "FromMap")
 	}
 
 	return []byte(res), nil
