@@ -1,4 +1,4 @@
-package sqlobjectstore
+package objectmanager
 
 import (
 	"github.com/gobwas/glob"

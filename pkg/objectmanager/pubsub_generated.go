@@ -2,7 +2,7 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/geoah/genny
 
-package sqlobjectstore
+package objectmanager
 
 import (
 	"nimona.io/internal/pubsub"

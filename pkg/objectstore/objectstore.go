@@ -3,7 +3,13 @@ package objectstore
 import (
 	"time"
 
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+)
+
+const (
+	// ErrNotFound is returned when a requested object or hash is not found
+	ErrNotFound = errors.Error("not found")
 )
 
 //go:generate $GOBIN/mockgen -destination=../objectstoremock/objectstoremock_generated.go -package=objectstoremock -source=objectstore.go

@@ -6,6 +6,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
@@ -24,6 +25,8 @@ var (
 )
 
 //go:generate $GOBIN/mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
+//go:generate $GOBIN/mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub_generated.go
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg objectmanager -imp=nimona.io/pkg/object gen "ObjectType=object.Object Name=Object name=object"
 
 type (
 	ObjectManager interface {
@@ -41,6 +44,8 @@ type (
 	manager struct {
 		store    objectstore.Store
 		exchange exchange.Exchange
+		keychain keychain.Keychain
+		pubsub   ObjectPubSub
 		newNonce func() string
 	}
 	Option        func(*manager)
@@ -368,4 +373,44 @@ func (m *manager) handleStreamRequest(
 	}
 
 	return nil
+}
+
+// Put stores a given object
+// TODO(geoah) what happened if the stream graph is not complete? Do we care?
+func (m *manager) Put(o object.Object) (object.Object, error) {
+	// add owners
+	// TODO should we be adding owners?
+	o = o.SetOwners(
+		m.keychain.ListPublicKeys(keychain.IdentityKey),
+	)
+	// figure out if we need to add parents to the object
+	streamHash := o.GetStream()
+	if !streamHash.IsEmpty() {
+		os, err := m.store.GetByStream(streamHash)
+		if err != nil && err != objectstore.ErrNotFound {
+			return o, err
+		}
+		if len(os) > 0 {
+			parents := stream.GetStreamLeaves(os)
+			parentHashes := make([]object.Hash, len(parents))
+			for i, p := range parents {
+				parentHashes[i] = p.Hash()
+			}
+			o = o.SetParents(parentHashes)
+		}
+	}
+	// add to store
+	if err := m.store.Put(o); err != nil {
+		return o, err
+	}
+	// announce to pubsub
+	m.pubsub.Publish(o)
+	return o, nil
+}
+
+func (m *manager) Subscribe(
+	lookupOptions ...LookupOption,
+) ObjectSubscription {
+	options := newLookupOptions(lookupOptions...)
+	return m.pubsub.Subscribe(options.Filters...)
 }

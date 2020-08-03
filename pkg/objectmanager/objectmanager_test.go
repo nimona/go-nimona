@@ -19,6 +19,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/exchangemock"
 	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/keychainmock"
 	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
@@ -278,6 +279,131 @@ func Test_manager_RequestStream(t *testing.T) {
 					)
 				}
 			}
+		})
+	}
+}
+
+func Test_manager_Put(t *testing.T) {
+	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testOwnPublicKeys := []crypto.PublicKey{
+		testOwnPrivateKey.PublicKey(),
+	}
+	testObjectSimple := object.Object{}.
+		SetType("foo").
+		Set("foo:s", "bar")
+	testObjectSimpleUpdated := object.Object{}.
+		SetType("foo").
+		Set("foo:s", "bar").
+		SetOwners(testOwnPublicKeys)
+	testObjectWithStream := object.Object{}.
+		SetType("foo").
+		SetStream("streamRoot").
+		Set("foo:s", "bar")
+	testObjectWithStreamUpdated := object.Object{}.
+		SetType("foo").
+		SetStream("streamRoot").
+		Set("foo:s", "bar").
+		SetOwners(testOwnPublicKeys).
+		SetParents(
+			[]object.Hash{
+				object.Object{}.Set("foo:s", "bar1").Hash(),
+				object.Object{}.Set("foo:s", "bar2").Hash(),
+			},
+		)
+	type fields struct {
+		store    func(*testing.T) objectstore.Store
+		keychain func(*testing.T) keychain.Keychain
+		pubsub   func(*testing.T) ObjectPubSub
+	}
+	type args struct {
+		o object.Object
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    object.Object
+		wantErr bool
+	}{{
+		name: "should pass, simple object",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					Put(testObjectSimpleUpdated)
+				return m
+			},
+			keychain: func(t *testing.T) keychain.Keychain {
+				m := keychainmock.NewMockKeychain(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					ListPublicKeys(keychain.IdentityKey).
+					Return(testOwnPublicKeys)
+				return m
+			},
+			pubsub: func(t *testing.T) ObjectPubSub {
+				return NewObjectPubSub()
+			},
+		},
+		args: args{
+			o: testObjectSimple,
+		},
+		want: testObjectSimpleUpdated,
+	}, {
+		name: "should pass, stream event",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					GetByStream(object.Hash("streamRoot")).
+					Return(
+						[]object.Object{
+							object.Object{}.Set("foo:s", "bar1"),
+							object.Object{}.Set("foo:s", "bar2"),
+						},
+						nil,
+					)
+				m.EXPECT().
+					Put(testObjectWithStreamUpdated)
+				return m
+			},
+			keychain: func(t *testing.T) keychain.Keychain {
+				m := keychainmock.NewMockKeychain(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					ListPublicKeys(keychain.IdentityKey).
+					Return(testOwnPublicKeys)
+				return m
+			},
+			pubsub: func(t *testing.T) ObjectPubSub {
+				return NewObjectPubSub()
+			},
+		},
+		args: args{
+			o: testObjectWithStream,
+		},
+		want: testObjectWithStreamUpdated,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				store:    tt.fields.store(t),
+				keychain: tt.fields.keychain(t),
+				pubsub:   tt.fields.pubsub(t),
+			}
+			got, err := m.Put(tt.args.o)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want.ToMap(), got.ToMap())
 		})
 	}
 }

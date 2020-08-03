@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
+	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
@@ -327,7 +328,7 @@ func (m *streammanager) handleStreamAnnouncement(
 	// first let's check if we care about this announcement
 	_, err := m.store.Get(req.Stream)
 	// if we don't have the root, we probably don't care about this
-	if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
+	if errors.CausedBy(err, objectstore.ErrNotFound) {
 		return nil
 	}
 	if err != nil {
@@ -348,7 +349,7 @@ func (m *streammanager) handleStreamAnnouncement(
 		// see if we already have each of them
 		_, err := m.store.Get(leafHash)
 		// and if not, request them
-		if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
+		if errors.CausedBy(err, objectstore.ErrNotFound) {
 			missingObjects = append(missingObjects, leafHash)
 			continue
 		}

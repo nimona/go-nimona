@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
@@ -73,7 +74,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 
 	graphObjects, err := api.streammanager.Get(ctx, h)
 	if err != nil {
-		if errors.CausedBy(err, sqlobjectstore.ErrNotFound) {
+		if errors.CausedBy(err, objectstore.ErrNotFound) {
 			c.AbortWithError(404, err) // nolint: errcheck
 			return
 		}
