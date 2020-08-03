@@ -10,14 +10,10 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstore"
 )
 
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore -imp=nimona.io/pkg/object gen "ObjectType=object.Object Name=Object name=object"
-
-const (
-	// ErrNotFound is returned when a requested object or hash is not found
-	ErrNotFound = errors.Error("not found")
-)
 
 // nolint: lll
 var migrations = []string{
@@ -41,16 +37,14 @@ var migrations = []string{
 }
 
 type Store struct {
-	db     *sql.DB
-	pubsub ObjectPubSub
+	db *sql.DB
 }
 
 func New(
 	db *sql.DB,
 ) (*Store, error) {
 	ndb := &Store{
-		db:     db,
-		pubsub: NewObjectPubSub(),
+		db: db,
 	}
 
 	// run migrations
@@ -95,7 +89,7 @@ func (st *Store) Get(
 	if err := row.Scan(&data); err != nil {
 		return obj, errors.Wrap(
 			err,
-			ErrNotFound,
+			objectstore.ErrNotFound,
 		)
 	}
 
@@ -214,8 +208,6 @@ func (st *Store) PutWithTimeout(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
-	st.pubsub.Publish(obj)
-
 	return nil
 }
 
@@ -239,7 +231,7 @@ func (st *Store) GetRelations(
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Wrap(
 				err,
-				ErrNotFound,
+				objectstore.ErrNotFound,
 			)
 		}
 		hashList = append(hashList, object.Hash(data))
@@ -307,14 +299,6 @@ func (st *Store) Remove(
 	}
 
 	return nil
-}
-
-func (st *Store) Subscribe(
-	lookupOptions ...LookupOption,
-) ObjectSubscription {
-	options := newLookupOptions(lookupOptions...)
-	ps := st.pubsub
-	return ps.Subscribe(options.Filters...)
 }
 
 func (st *Store) gc() error {
@@ -399,7 +383,7 @@ func (st *Store) Filter(
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Wrap(
 				err,
-				ErrNotFound,
+				objectstore.ErrNotFound,
 			)
 		}
 
@@ -462,7 +446,7 @@ func (st *Store) GetPinned() ([]object.Hash, error) {
 		if err := rows.Scan(&h); err != nil {
 			return nil, errors.Wrap(
 				err,
-				ErrNotFound,
+				objectstore.ErrNotFound,
 			)
 		}
 		if h != "" {

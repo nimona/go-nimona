@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"sync"
 	"testing"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstore"
 )
 
 func tempSqlite3(t *testing.T) *sql.DB {
@@ -88,67 +88,11 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	retrievedObj2, err := store.Get(p.ToObject().Hash())
-	require.True(t, errors.CausedBy(err, ErrNotFound))
+	require.True(t, errors.CausedBy(err, objectstore.ErrNotFound))
 	require.True(t, retrievedObj2.IsEmpty())
 
 	err = store.Close()
 	require.NoError(t, err)
-}
-
-func TestSubscribe(t *testing.T) {
-	// create db
-	dblite := tempSqlite3(t)
-	store, err := New(dblite)
-	require.NoError(t, err)
-	require.NotNil(t, store)
-
-	// setup data
-	p := fixtures.TestStream{
-		Nonce: "asdf",
-	}
-	streamHash := p.ToObject().Hash()
-	c := fixtures.TestSubscribed{}
-	obj := c.ToObject()
-	obj = obj.SetType("foo")
-	obj = obj.SetStream(streamHash)
-	obj = obj.Set("key:s", "value")
-
-	var wg sync.WaitGroup
-
-	for i := 1; i <= 5; i++ {
-		wg.Add(1)
-		// subscribe
-		subscription := store.Subscribe(
-			FilterByStreamHash(streamHash),
-		)
-
-		go func() {
-			hs, err := subscription.Next()
-			require.NoError(t, err)
-			require.NotEmpty(t, hs)
-			wg.Done()
-		}()
-	}
-
-	// store data
-	err = store.PutWithTimeout(
-		obj,
-		10*time.Second,
-	)
-	require.NoError(t, err)
-
-	done := make(chan bool)
-	go func() {
-		wg.Wait()
-		done <- true
-	}()
-
-	select {
-	case <-done:
-		break
-	case <-time.After(1 * time.Second):
-		t.Fatalf("failed to get update")
-	}
 }
 
 func TestFilter(t *testing.T) {
