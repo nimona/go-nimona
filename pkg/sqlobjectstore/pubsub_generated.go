@@ -10,40 +10,39 @@ import (
 )
 
 type (
-	sqlStore string // nolint
-	// SqlStorePubSub -
-	SqlStorePubSub interface {
+	// ObjectPubSub -
+	ObjectPubSub interface {
 		Publish(object.Object)
-		Subscribe(...SqlStoreFilter) SqlStoreSubscription
+		Subscribe(...ObjectFilter) ObjectSubscription
 	}
-	SqlStoreFilter func(object.Object) bool
-	// SqlStoreSubscription is returned for every subscription
-	SqlStoreSubscription interface {
+	ObjectFilter func(object.Object) bool
+	// ObjectSubscription is returned for every subscription
+	ObjectSubscription interface {
 		Next() (object.Object, error)
 		Cancel()
 	}
-	psSqlStoreSubscription struct {
+	objectSubscription struct {
 		subscription pubsub.Subscription
 	}
-	psSqlStore struct {
+	objectPubSub struct {
 		pubsub pubsub.PubSub
 	}
 )
 
-// NewSqlStore constructs and returns a new SqlStorePubSub
-func NewSqlStorePubSub() SqlStorePubSub {
-	return &psSqlStore{
+// NewObject constructs and returns a new Object
+func NewObjectPubSub() ObjectPubSub {
+	return &objectPubSub{
 		pubsub: pubsub.New(),
 	}
 }
 
 // Cancel the subscription
-func (s *psSqlStoreSubscription) Cancel() {
+func (s *objectSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
 // Next returns the an item from the queue
-func (s *psSqlStoreSubscription) Next() (r object.Object, err error) {
+func (s *objectSubscription) Next() (r object.Object, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
 		return
@@ -52,7 +51,7 @@ func (s *psSqlStoreSubscription) Next() (r object.Object, err error) {
 }
 
 // Subscribe to published events with optional filters
-func (ps *psSqlStore) Subscribe(filters ...SqlStoreFilter) SqlStoreSubscription {
+func (ps *objectPubSub) Subscribe(filters ...ObjectFilter) ObjectSubscription {
 	// cast filters
 	iFilters := make([]pubsub.Filter, len(filters))
 	for i, filter := range filters {
@@ -62,7 +61,7 @@ func (ps *psSqlStore) Subscribe(filters ...SqlStoreFilter) SqlStoreSubscription 
 		}
 	}
 	// create a new subscription
-	sub := &psSqlStoreSubscription{
+	sub := &objectSubscription{
 		subscription: ps.pubsub.Subscribe(iFilters...),
 	}
 
@@ -70,6 +69,6 @@ func (ps *psSqlStore) Subscribe(filters ...SqlStoreFilter) SqlStoreSubscription 
 }
 
 // Publish to all subscribers
-func (ps *psSqlStore) Publish(v object.Object) {
+func (ps *objectPubSub) Publish(v object.Object) {
 	ps.pubsub.Publish(v)
 }
