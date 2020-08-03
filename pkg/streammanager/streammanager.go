@@ -51,7 +51,7 @@ type (
 		resolver      resolver.Resolver
 		syncLock      *nsync.NamedMutex
 		keychain      keychain.Keychain
-		objectmanager objectmanager.Requester
+		objectmanager objectmanager.ObjectManager
 	}
 	Graph struct {
 		Objects []object.Object
@@ -64,7 +64,7 @@ func New(
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
-	om objectmanager.Requester,
+	om objectmanager.ObjectManager,
 ) (StreamManager, error) {
 	ctx := context.Background()
 	return NewWithContext(
@@ -85,7 +85,7 @@ func NewWithContext(
 	ex exchange.Exchange,
 	ds resolver.Resolver,
 	kc keychain.Keychain,
-	om objectmanager.Requester,
+	om objectmanager.ObjectManager,
 ) (StreamManager, error) {
 	logger := log.FromContext(ctx).Named("streammanager")
 	m := &streammanager{

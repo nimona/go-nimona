@@ -169,7 +169,7 @@ func TestSync(t *testing.T) {
 	kc.Put(keychain.PrimaryPeerKey, pk)
 	kc.Put(keychain.IdentityKey, pk)
 
-	om := objectmanagermock.NewMockRequester(gomock.NewController(t))
+	om := objectmanagermock.NewMockObjectManager(gomock.NewController(t))
 
 	m, err := streammanager.New(store, x, nil, kc, om)
 	assert.NoError(t, err)
