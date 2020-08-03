@@ -21,7 +21,7 @@ type (
 			Owners       []crypto.PublicKey
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
-		Filters []SqlStoreFilter
+		Filters []ObjectFilter
 	}
 )
 
@@ -38,7 +38,7 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 		},
-		Filters: []SqlStoreFilter{},
+		Filters: []ObjectFilter{},
 	}
 	for _, lookupOption := range lookupOptions {
 		lookupOption(options)

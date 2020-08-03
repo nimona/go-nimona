@@ -9,7 +9,6 @@ import (
 )
 
 type (
-	envelope string // nolint
 	// EnvelopePubSub -
 	EnvelopePubSub interface {
 		Publish(*Envelope)
@@ -21,28 +20,28 @@ type (
 		Next() (*Envelope, error)
 		Cancel()
 	}
-	psEnvelopeSubscription struct {
+	envelopeSubscription struct {
 		subscription pubsub.Subscription
 	}
-	psEnvelope struct {
+	envelopePubSub struct {
 		pubsub pubsub.PubSub
 	}
 )
 
-// NewEnvelope constructs and returns a new EnvelopePubSub
+// NewEnvelope constructs and returns a new Envelope
 func NewEnvelopePubSub() EnvelopePubSub {
-	return &psEnvelope{
+	return &envelopePubSub{
 		pubsub: pubsub.New(),
 	}
 }
 
 // Cancel the subscription
-func (s *psEnvelopeSubscription) Cancel() {
+func (s *envelopeSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
 // Next returns the an item from the queue
-func (s *psEnvelopeSubscription) Next() (r *Envelope, err error) {
+func (s *envelopeSubscription) Next() (r *Envelope, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
 		return
@@ -51,7 +50,7 @@ func (s *psEnvelopeSubscription) Next() (r *Envelope, err error) {
 }
 
 // Subscribe to published events with optional filters
-func (ps *psEnvelope) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
+func (ps *envelopePubSub) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	// cast filters
 	iFilters := make([]pubsub.Filter, len(filters))
 	for i, filter := range filters {
@@ -61,7 +60,7 @@ func (ps *psEnvelope) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription 
 		}
 	}
 	// create a new subscription
-	sub := &psEnvelopeSubscription{
+	sub := &envelopeSubscription{
 		subscription: ps.pubsub.Subscribe(iFilters...),
 	}
 
@@ -69,6 +68,6 @@ func (ps *psEnvelope) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription 
 }
 
 // Publish to all subscribers
-func (ps *psEnvelope) Publish(v *Envelope) {
+func (ps *envelopePubSub) Publish(v *Envelope) {
 	ps.pubsub.Publish(v)
 }

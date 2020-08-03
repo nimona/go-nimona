@@ -8,40 +8,39 @@ import (
 
 type (
 	ObjectType generic.Type // nolint
-	PubSubName string       // nolint
-	// PubSubNamePubSub -
-	PubSubNamePubSub interface {
+	// NamePubSub -
+	NamePubSub interface {
 		Publish(ObjectType)
-		Subscribe(...PubSubNameFilter) PubSubNameSubscription
+		Subscribe(...NameFilter) NameSubscription
 	}
-	PubSubNameFilter func(ObjectType) bool
-	// PubSubNameSubscription is returned for every subscription
-	PubSubNameSubscription interface {
+	NameFilter func(ObjectType) bool
+	// NameSubscription is returned for every subscription
+	NameSubscription interface {
 		Next() (ObjectType, error)
 		Cancel()
 	}
-	psPubSubNameSubscription struct {
+	nameSubscription struct {
 		subscription pubsub.Subscription
 	}
-	psPubSubName struct {
+	namePubSub struct {
 		pubsub pubsub.PubSub
 	}
 )
 
-// NewPubSubName constructs and returns a new PubSubNamePubSub
-func NewPubSubNamePubSub() PubSubNamePubSub {
-	return &psPubSubName{
+// NewName constructs and returns a new Name
+func NewNamePubSub() NamePubSub {
+	return &namePubSub{
 		pubsub: pubsub.New(),
 	}
 }
 
 // Cancel the subscription
-func (s *psPubSubNameSubscription) Cancel() {
+func (s *nameSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
 // Next returns the an item from the queue
-func (s *psPubSubNameSubscription) Next() (r ObjectType, err error) {
+func (s *nameSubscription) Next() (r ObjectType, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
 		return
@@ -50,7 +49,7 @@ func (s *psPubSubNameSubscription) Next() (r ObjectType, err error) {
 }
 
 // Subscribe to published events with optional filters
-func (ps *psPubSubName) Subscribe(filters ...PubSubNameFilter) PubSubNameSubscription {
+func (ps *namePubSub) Subscribe(filters ...NameFilter) NameSubscription {
 	// cast filters
 	iFilters := make([]pubsub.Filter, len(filters))
 	for i, filter := range filters {
@@ -60,7 +59,7 @@ func (ps *psPubSubName) Subscribe(filters ...PubSubNameFilter) PubSubNameSubscri
 		}
 	}
 	// create a new subscription
-	sub := &psPubSubNameSubscription{
+	sub := &nameSubscription{
 		subscription: ps.pubsub.Subscribe(iFilters...),
 	}
 
@@ -68,6 +67,6 @@ func (ps *psPubSubName) Subscribe(filters ...PubSubNameFilter) PubSubNameSubscri
 }
 
 // Publish to all subscribers
-func (ps *psPubSubName) Publish(v ObjectType) {
+func (ps *namePubSub) Publish(v ObjectType) {
 	ps.pubsub.Publish(v)
 }

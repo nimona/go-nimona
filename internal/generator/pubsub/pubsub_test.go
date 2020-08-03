@@ -10,7 +10,7 @@ import (
 )
 
 func TestPubSubSimple(t *testing.T) {
-	ps := NewPubSubNamePubSub()
+	ps := NewNamePubSub()
 	ps.Publish("one")
 
 	s := ps.Subscribe()
@@ -27,7 +27,7 @@ func TestPubSubSimple(t *testing.T) {
 }
 
 func TestPubSubFiltered(t *testing.T) {
-	ps := NewPubSubNamePubSub()
+	ps := NewNamePubSub()
 
 	f1 := func(v ObjectType) bool {
 		return strings.HasPrefix(v.(string), "t")
@@ -48,7 +48,7 @@ func TestPubSubFiltered(t *testing.T) {
 }
 
 func TestPubSubFilteredMultiple(t *testing.T) {
-	ps := NewPubSubNamePubSub()
+	ps := NewNamePubSub()
 
 	f1 := func(v ObjectType) bool {
 		return strings.HasPrefix(v.(string), "t")
@@ -69,7 +69,7 @@ func TestPubSubFilteredMultiple(t *testing.T) {
 }
 
 func TestPubSubCancel(t *testing.T) {
-	ps := NewPubSubNamePubSub()
+	ps := NewNamePubSub()
 
 	s := ps.Subscribe()
 	ps.Publish("one")
