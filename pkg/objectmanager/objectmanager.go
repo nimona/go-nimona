@@ -1,6 +1,9 @@
 package objectmanager
 
 import (
+	"sync"
+	"time"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -42,11 +45,12 @@ type (
 		) (object.ReferencesResults, error)
 	}
 	manager struct {
-		store    objectstore.Store
-		exchange exchange.Exchange
-		keychain keychain.Keychain
-		pubsub   ObjectPubSub
-		newNonce func() string
+		store           objectstore.Store
+		exchange        exchange.Exchange
+		keychain        keychain.Keychain
+		pubsub          ObjectPubSub
+		newNonce        func() string
+		registeredTypes sync.Map
 	}
 	Option        func(*manager)
 	StreamResults struct {
@@ -93,7 +97,7 @@ func New(
 		)
 
 	subs := m.exchange.Subscribe(
-		exchange.FilterByObjectType(objectRequestType),
+		exchange.FilterByObjectType("**"),
 	)
 
 	go func() {
@@ -103,6 +107,27 @@ func New(
 	}()
 
 	return m
+}
+
+func (m *manager) RegisterType(
+	objectType string,
+	ttl time.Duration,
+) {
+	m.registeredTypes.Store(objectType, ttl)
+}
+
+func (m *manager) isRegisteredType(objectType string) (bool, time.Duration) {
+	found := false
+	ttl := time.Duration(0)
+	m.registeredTypes.Range(func(k, v interface{}) bool {
+		if k.(string) == objectType {
+			found = true
+			ttl = v.(time.Duration)
+			return false
+		}
+		return true
+	})
+	return found, ttl
 }
 
 func (m *manager) RequestStream(
@@ -266,7 +291,38 @@ func (m *manager) handleObjects(
 				log.String("payload", env.Payload.GetType()),
 			)
 
-		logger.Debug("getting payload")
+		logger.Debug("handling object")
+
+		if ok, ttl := m.isRegisteredType(env.Payload.GetType()); ok {
+			mainObj, refObjs, err := object.UnloadReferences(ctx, env.Payload)
+			if err != nil {
+				logger.Error(
+					"error unloading nested objects",
+					log.String("hash", mainObj.Hash().String()),
+					log.String("type", mainObj.GetType()),
+					log.Error(err),
+				)
+			}
+			for _, refObj := range refObjs {
+				// TODO reconsider ttls for nested objects
+				if err := m.store.PutWithTimeout(refObj, ttl); err != nil {
+					logger.Error(
+						"error trying to persist incoming nested object",
+						log.String("hash", refObj.Hash().String()),
+						log.String("type", refObj.GetType()),
+						log.Error(err),
+					)
+				}
+			}
+			if err := m.store.PutWithTimeout(*mainObj, ttl); err != nil {
+				logger.Error(
+					"error trying to persist incoming object",
+					log.String("hash", mainObj.Hash().String()),
+					log.String("type", mainObj.GetType()),
+					log.Error(err),
+				)
+			}
+		}
 
 		switch env.Payload.GetType() {
 		case objectRequestType:
