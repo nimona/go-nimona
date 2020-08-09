@@ -1,0 +1,22 @@
+package nimona.io/feed
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+stream mochi.io/feed {
+    signed root event Created {
+        type string
+        sequence int
+        datetime string
+    }
+    signed event Added {
+        objectHash repeated nimona.io/object.Hash
+        sequence int
+        datetime string
+    }
+    signed event Removed {
+        objectHash repeated nimona.io/object.Hash
+        sequence int
+        datetime string
+    }
+}
