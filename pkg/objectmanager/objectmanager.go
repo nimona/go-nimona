@@ -1,6 +1,7 @@
 package objectmanager
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	feed "nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -293,35 +295,8 @@ func (m *manager) handleObjects(
 
 		logger.Debug("handling object")
 
-		if ok, ttl := m.isRegisteredType(env.Payload.GetType()); ok {
-			mainObj, refObjs, err := object.UnloadReferences(ctx, env.Payload)
-			if err != nil {
-				logger.Error(
-					"error unloading nested objects",
-					log.String("hash", mainObj.Hash().String()),
-					log.String("type", mainObj.GetType()),
-					log.Error(err),
-				)
-			}
-			for _, refObj := range refObjs {
-				// TODO reconsider ttls for nested objects
-				if err := m.store.PutWithTimeout(refObj, ttl); err != nil {
-					logger.Error(
-						"error trying to persist incoming nested object",
-						log.String("hash", refObj.Hash().String()),
-						log.String("type", refObj.GetType()),
-						log.Error(err),
-					)
-				}
-			}
-			if err := m.store.PutWithTimeout(*mainObj, ttl); err != nil {
-				logger.Error(
-					"error trying to persist incoming object",
-					log.String("hash", mainObj.Hash().String()),
-					log.String("type", mainObj.GetType()),
-					log.Error(err),
-				)
-			}
+		if err := m.storeObject(ctx, env.Payload); err != nil {
+			return err
 		}
 
 		switch env.Payload.GetType() {
@@ -347,6 +322,82 @@ func (m *manager) handleObjects(
 			}
 		}
 	}
+}
+
+func (m *manager) storeObject(
+	ctx context.Context,
+	obj object.Object,
+) error {
+	ok, ttl := m.isRegisteredType(obj.GetType())
+	if ok {
+		return nil
+	}
+
+	logger := log.FromContext(ctx)
+
+	// deref nested objects
+	mainObj, refObjs, err := object.UnloadReferences(ctx, obj)
+	if err != nil {
+		logger.Error(
+			"error unloading nested objects",
+			log.String("hash", mainObj.Hash().String()),
+			log.String("type", mainObj.GetType()),
+			log.Error(err),
+		)
+	}
+
+	// store nested objects
+	for _, refObj := range refObjs {
+		// TODO reconsider ttls for nested objects
+		if err := m.store.PutWithTimeout(refObj, ttl); err != nil {
+			logger.Error(
+				"error trying to persist incoming nested object",
+				log.String("hash", refObj.Hash().String()),
+				log.String("type", refObj.GetType()),
+				log.Error(err),
+			)
+		}
+	}
+
+	// store primary object
+	if err := m.store.PutWithTimeout(*mainObj, ttl); err != nil {
+		logger.Error(
+			"error trying to persist incoming object",
+			log.String("hash", mainObj.Hash().String()),
+			log.String("type", mainObj.GetType()),
+			log.Error(err),
+		)
+	}
+
+	// TODO check if object already exists in feed
+
+	// add to feed
+	feedStreamHash := m.getFeedRootHash(
+		getTypeForFeed(obj.GetType()),
+	)
+	feedEvent := feed.Added{
+		Stream: feedStreamHash,
+		ObjectHash: []object.Hash{
+			obj.Hash(),
+		},
+	}.ToObject()
+	os, err := m.store.GetByStream(feedStreamHash)
+	if err != nil && err != objectstore.ErrNotFound {
+		return err
+	}
+	if len(os) > 0 {
+		parents := stream.GetStreamLeaves(os)
+		parentHashes := make([]object.Hash, len(parents))
+		for i, p := range parents {
+			parentHashes[i] = p.Hash()
+		}
+		feedEvent = feedEvent.SetParents(parentHashes)
+	}
+	if err := m.store.Put(feedEvent); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *manager) handleObjectRequest(
@@ -469,4 +520,17 @@ func (m *manager) Subscribe(
 ) ObjectSubscription {
 	options := newLookupOptions(lookupOptions...)
 	return m.pubsub.Subscribe(options.Filters...)
+}
+
+func (m *manager) getFeedRootHash(feedType string) object.Hash {
+	r := feed.FeedStreamRoot{
+		Type:   feedType,
+		Owners: m.keychain.ListPublicKeys(keychain.IdentityKey),
+	}
+	return r.ToObject().Hash()
+}
+
+func getTypeForFeed(objectType string) string {
+	pt := object.ParseType(objectType)
+	return strings.TrimLeft(pt.Namespace+"/"+pt.Object, "/")
 }
