@@ -17,7 +17,6 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
