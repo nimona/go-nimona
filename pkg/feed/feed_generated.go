@@ -45,7 +45,7 @@ type (
 )
 
 func (e FeedStreamRoot) GetType() string {
-	return "stream:mochi.io/feed"
+	return "stream:nimona.io/feed"
 }
 
 func (e FeedStreamRoot) IsStreamRoot() bool {
@@ -72,7 +72,7 @@ func (e FeedStreamRoot) GetSchema() *object.SchemaObject {
 
 func (e FeedStreamRoot) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("stream:mochi.io/feed")
+	o = o.SetType("stream:nimona.io/feed")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -118,7 +118,7 @@ func (e *FeedStreamRoot) FromObject(o object.Object) error {
 }
 
 func (e Added) GetType() string {
-	return "event:mochi.io/feed.Added"
+	return "event:nimona.io/feed.Added"
 }
 
 func (e Added) IsStreamRoot() bool {
@@ -151,7 +151,7 @@ func (e Added) GetSchema() *object.SchemaObject {
 
 func (e Added) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("event:mochi.io/feed.Added")
+	o = o.SetType("event:nimona.io/feed.Added")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}
@@ -209,7 +209,7 @@ func (e *Added) FromObject(o object.Object) error {
 }
 
 func (e Removed) GetType() string {
-	return "event:mochi.io/feed.Removed"
+	return "event:nimona.io/feed.Removed"
 }
 
 func (e Removed) IsStreamRoot() bool {
@@ -242,7 +242,7 @@ func (e Removed) GetSchema() *object.SchemaObject {
 
 func (e Removed) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("event:mochi.io/feed.Removed")
+	o = o.SetType("event:nimona.io/feed.Removed")
 	if len(e.Stream) > 0 {
 		o = o.SetStream(e.Stream)
 	}

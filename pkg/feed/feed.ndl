@@ -3,7 +3,7 @@ package nimona.io/feed
 import nimona.io/crypto crypto
 import nimona.io/object object
 
-stream mochi.io/feed {
+stream nimona.io/feed {
     signed root event Created {
         type string
         datetime string
