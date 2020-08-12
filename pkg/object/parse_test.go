@@ -38,6 +38,20 @@ func TestParseType(t *testing.T) {
 			Namespace:   "nimona.io",
 			Object:      "crypto.PublicKey",
 		},
+	}, {
+		objectType: "crypto.PublicKey",
+		want: ParsedType{
+			PrimaryType: "",
+			Namespace:   "",
+			Object:      "crypto.PublicKey",
+		},
+	}, {
+		objectType: "",
+		want: ParsedType{
+			PrimaryType: "",
+			Namespace:   "",
+			Object:      "",
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.objectType, func(t *testing.T) {

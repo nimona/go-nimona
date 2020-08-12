@@ -137,3 +137,21 @@ func (v List) hash() Hash {
 	})
 	return hash(v.hint, h)
 }
+
+type hashSlice []Hash
+
+func (p hashSlice) Len() int {
+	return len(p)
+}
+
+func (p hashSlice) Less(i, j int) bool {
+	return p[i] < p[j]
+}
+
+func (p hashSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func SortHashSlice(h []Hash) {
+	sort.Sort(hashSlice(h))
+}
