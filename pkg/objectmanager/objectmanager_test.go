@@ -6,6 +6,7 @@ import (
 	"path"
 	"sync"
 	"testing"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -13,11 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/gomockutil"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/exchangemock"
+	"nimona.io/pkg/feed"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/keychainmock"
 	"nimona.io/pkg/net"
@@ -311,10 +314,40 @@ func Test_manager_Put(t *testing.T) {
 				object.Object{}.Set("foo:s", "bar2").Hash(),
 			},
 		)
+	testObjectComplex := object.Object{}.
+		SetType("foo-complex").
+		Set("foo:s", "bar").
+		Set("nested-simple:m", testObjectSimple.Raw())
+	testObjectComplexUpdated := object.Object{}.
+		SetType("foo-complex").
+		Set("foo:s", "bar").
+		SetOwners(testOwnPublicKeys).
+		Set("nested-simple:r", object.Ref(testObjectSimple.Hash()))
+	testObjectComplexReturned := object.Object{}.
+		SetType("foo-complex").
+		Set("foo:s", "bar").
+		SetOwners(testOwnPublicKeys).
+		Set("nested-simple:m", testObjectSimple.Raw())
+	testFeedHash := getFeedRootHash(
+		[]crypto.PublicKey{
+			testOwnPrivateKey.PublicKey(),
+		},
+		getTypeForFeed(testObjectSimple.GetType()),
+	)
+	testFeedFirst := feed.Added{
+		ObjectHash: []object.Hash{
+			testObjectSimpleUpdated.Hash(),
+		},
+		Stream: testFeedHash,
+		Parents: []object.Hash{
+			testFeedHash,
+		},
+	}.ToObject()
 	type fields struct {
-		store    func(*testing.T) objectstore.Store
-		keychain func(*testing.T) keychain.Keychain
-		pubsub   func(*testing.T) ObjectPubSub
+		store           func(*testing.T) objectstore.Store
+		keychain        func(*testing.T) keychain.Keychain
+		pubsub          func(*testing.T) ObjectPubSub
+		registeredTypes []string
 	}
 	type args struct {
 		o object.Object
@@ -354,6 +387,36 @@ func Test_manager_Put(t *testing.T) {
 		},
 		want: testObjectSimpleUpdated,
 	}, {
+		name: "should pass, complex object",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					Put(testObjectSimple)
+				m.EXPECT().
+					Put(testObjectComplexUpdated)
+				return m
+			},
+			keychain: func(t *testing.T) keychain.Keychain {
+				m := keychainmock.NewMockKeychain(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					ListPublicKeys(keychain.IdentityKey).
+					Return(testOwnPublicKeys)
+				return m
+			},
+			pubsub: func(t *testing.T) ObjectPubSub {
+				return NewObjectPubSub()
+			},
+		},
+		args: args{
+			o: testObjectComplex,
+		},
+		want: testObjectComplexReturned,
+	}, {
 		name: "should pass, stream event",
 		fields: fields{
 			store: func(t *testing.T) objectstore.Store {
@@ -390,6 +453,48 @@ func Test_manager_Put(t *testing.T) {
 			o: testObjectWithStream,
 		},
 		want: testObjectWithStreamUpdated,
+	}, {
+		name: "should pass, simple object, registered, first item in feed",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					PutWithTimeout(
+						testObjectSimpleUpdated,
+						time.Hour,
+					)
+				m.EXPECT().
+					GetByStream(testFeedHash).
+					Return([]object.Object{}, nil)
+				m.EXPECT().
+					Put(
+						gomockutil.ObjectEq(testFeedFirst),
+					)
+				return m
+			},
+			keychain: func(t *testing.T) keychain.Keychain {
+				m := keychainmock.NewMockKeychain(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					ListPublicKeys(keychain.IdentityKey).
+					MaxTimes(2).
+					Return(testOwnPublicKeys)
+				return m
+			},
+			pubsub: func(t *testing.T) ObjectPubSub {
+				return NewObjectPubSub()
+			},
+			registeredTypes: []string{
+				"foo",
+			},
+		},
+		args: args{
+			o: testObjectSimple,
+		},
+		want: testObjectSimpleUpdated,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -398,7 +503,13 @@ func Test_manager_Put(t *testing.T) {
 				keychain: tt.fields.keychain(t),
 				pubsub:   tt.fields.pubsub(t),
 			}
-			got, err := m.Put(tt.args.o)
+			for _, t := range tt.fields.registeredTypes {
+				m.RegisterType(t, time.Hour)
+			}
+			got, err := m.Put(
+				context.Background(),
+				tt.args.o,
+			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return

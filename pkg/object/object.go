@@ -96,6 +96,7 @@ func (o Object) GetStream() Hash {
 }
 
 func (o Object) SetParents(hashes []Hash) Object {
+	SortHashSlice(hashes)
 	v := List{}
 	for _, hash := range hashes {
 		v = v.Append(String(hash.String()))
@@ -319,4 +320,11 @@ func (o Object) set(k string, v Value) Object {
 
 func (o Object) get(k string) Value {
 	return Map(o).Value(k)
+}
+
+// Collapse the object's immutable values into a single layer in order to reduce
+// its complexity. Most usually used for tests.
+func Collapse(o Object) Object {
+	m := o.ToMap()
+	return FromMap(m)
 }

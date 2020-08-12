@@ -6,7 +6,6 @@ import nimona.io/object object
 stream mochi.io/feed {
     signed root event Created {
         type string
-        sequence int
         datetime string
     }
     signed event Added {

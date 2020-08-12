@@ -10,7 +10,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
-	feed "nimona.io/pkg/feedmanager"
+	"nimona.io/pkg/feed"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -45,6 +45,10 @@ type (
 			rootHash object.Hash,
 			peer *peer.Peer,
 		) (object.ReferencesResults, error)
+		Put(
+			ctx context.Context,
+			o object.Object,
+		) (object.Object, error)
 	}
 	manager struct {
 		store           objectstore.Store
@@ -329,7 +333,7 @@ func (m *manager) storeObject(
 	obj object.Object,
 ) error {
 	ok, ttl := m.isRegisteredType(obj.GetType())
-	if ok {
+	if !ok {
 		return nil
 	}
 
@@ -372,7 +376,8 @@ func (m *manager) storeObject(
 	// TODO check if object already exists in feed
 
 	// add to feed
-	feedStreamHash := m.getFeedRootHash(
+	feedStreamHash := getFeedRootHash(
+		m.keychain.ListPublicKeys(keychain.IdentityKey),
 		getTypeForFeed(obj.GetType()),
 	)
 	feedEvent := feed.Added{
@@ -392,6 +397,10 @@ func (m *manager) storeObject(
 			parentHashes[i] = p.Hash()
 		}
 		feedEvent = feedEvent.SetParents(parentHashes)
+	} else {
+		feedEvent = feedEvent.SetParents([]object.Hash{
+			feedStreamHash,
+		})
 	}
 	if err := m.store.Put(feedEvent); err != nil {
 		return err
@@ -484,7 +493,10 @@ func (m *manager) handleStreamRequest(
 
 // Put stores a given object
 // TODO(geoah) what happened if the stream graph is not complete? Do we care?
-func (m *manager) Put(o object.Object) (object.Object, error) {
+func (m *manager) Put(
+	ctx context.Context,
+	o object.Object,
+) (object.Object, error) {
 	// add owners
 	// TODO should we be adding owners?
 	o = o.SetOwners(
@@ -507,7 +519,7 @@ func (m *manager) Put(o object.Object) (object.Object, error) {
 		}
 	}
 	// add to store
-	if err := m.store.Put(o); err != nil {
+	if err := m.storeObject(ctx, o); err != nil {
 		return o, err
 	}
 	// announce to pubsub
@@ -522,10 +534,10 @@ func (m *manager) Subscribe(
 	return m.pubsub.Subscribe(options.Filters...)
 }
 
-func (m *manager) getFeedRootHash(feedType string) object.Hash {
+func getFeedRootHash(owners []crypto.PublicKey, feedType string) object.Hash {
 	r := feed.FeedStreamRoot{
 		Type:   feedType,
-		Owners: m.keychain.ListPublicKeys(keychain.IdentityKey),
+		Owners: owners,
 	}
 	return r.ToObject().Hash()
 }
