@@ -16,13 +16,13 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/keychainmock"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectmanager"
+	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/resolvermock"
-	"nimona.io/pkg/streammanager"
-	"nimona.io/pkg/streammanagermock"
 	"nimona.io/pkg/subscription"
 )
 
@@ -112,16 +112,21 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		).Return(nil)
 		return m
 	}
-	defaultStreamManagerMock := func(t *testing.T) streammanager.StreamManager {
+	testSubscriptionAdded := subscription.SubscriptionAdded{
+		Stream:       testChain0.ToObject().Hash(),
+		Subscription: testSubscription0.ToObject().Hash(),
+		Owners:       testOwners,
+	}.ToObject()
+	defaultObjectManagerMock := func(t *testing.T) objectmanager.ObjectManager {
 		c := gomock.NewController(t)
-		m := streammanagermock.NewMockStreamManager(c)
+		m := objectmanagermock.NewMockObjectManager(c)
 		m.EXPECT().Put(
-			subscription.SubscriptionAdded{
-				Stream:       testChain0.ToObject().Hash(),
-				Subscription: testSubscription0.ToObject().Hash(),
-				Owners:       testOwners,
-			}.ToObject(),
-		).Return(nil)
+			gomock.Any(),
+			testSubscriptionAdded,
+		).Return(
+			testSubscriptionAdded,
+			nil,
+		)
 		return m
 	}
 	type fields struct {
@@ -129,7 +134,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		resolver      func(*testing.T) resolver.Resolver
 		exchange      func(*testing.T) exchange.Exchange
 		objectstore   func(*testing.T) objectstore.Store
-		streammanager func(*testing.T) streammanager.StreamManager
+		objectmanager func(*testing.T) objectmanager.ObjectManager
 	}
 	type args struct {
 		ctx      context.Context
@@ -150,7 +155,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			resolver:      defaultResolverMock,
 			exchange:      defaultExchangeMock,
 			objectstore:   defaultObjectStoreMock,
-			streammanager: defaultStreamManagerMock,
+			objectmanager: defaultObjectManagerMock,
 		},
 		args: args{
 			ctx: context.New(),
@@ -185,7 +190,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				)
 				return m
 			},
-			streammanager: func(t *testing.T) streammanager.StreamManager {
+			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
 				return nil
 			},
 		},
@@ -234,7 +239,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				)
 				return m
 			},
-			streammanager: func(t *testing.T) streammanager.StreamManager {
+			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
 				return nil
 			},
 		},
@@ -277,7 +282,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				)
 				return m
 			},
-			streammanager: func(t *testing.T) streammanager.StreamManager {
+			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
 				return nil
 			},
 		},
@@ -299,16 +304,14 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			resolver:    defaultResolverMock,
 			exchange:    defaultExchangeMock,
 			objectstore: defaultObjectStoreMock,
-			streammanager: func(t *testing.T) streammanager.StreamManager {
+			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
 				c := gomock.NewController(t)
-				m := streammanagermock.NewMockStreamManager(c)
+				m := objectmanagermock.NewMockObjectManager(c)
 				m.EXPECT().Put(
-					subscription.SubscriptionAdded{
-						Stream:       testChain0.ToObject().Hash(),
-						Subscription: testSubscription0.ToObject().Hash(),
-						Owners:       testOwners,
-					}.ToObject(),
+					gomock.Any(),
+					testSubscriptionAdded,
 				).Return(
+					testSubscriptionAdded,
 					errors.New("something bad"),
 				)
 				return m
@@ -334,7 +337,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				tt.fields.resolver(t),
 				tt.fields.exchange(t),
 				tt.fields.objectstore(t),
-				tt.fields.streammanager(t),
+				tt.fields.objectmanager(t),
 			)
 			require.NoError(t, err)
 			if err := m.Subscribe(
@@ -458,20 +461,10 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		m.EXPECT().
 			Get(object.Hash("missing")).
 			Return(object.Object{}, errors.New("missing"))
-		return m
-	}
-	defaultExchangeMock := func(t *testing.T) exchange.Exchange {
-		return nil
-	}
-	defaultStreamManagerMock := func(t *testing.T) streammanager.StreamManager {
-		c := gomock.NewController(t)
-		m := streammanagermock.NewMockStreamManager(c)
-		m.EXPECT().Get(
-			gomock.Any(),
-			testChain0.ToObject().Hash(),
-		).Return(
-			&streammanager.Graph{
-				Objects: []object.Object{
+		m.EXPECT().
+			GetByStream(testChain0.ToObject().Hash()).
+			Return(
+				[]object.Object{
 					testChain0.ToObject(),
 					testSubscription0Added.ToObject(),
 					testSubscriptionAddedInvalid.ToObject(),
@@ -482,9 +475,16 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 					testSubscriptionMisAdded.ToObject(),
 					testSubscriptionErrAdded.ToObject(),
 				},
-			},
-			nil,
-		)
+				nil,
+			)
+		return m
+	}
+	defaultExchangeMock := func(t *testing.T) exchange.Exchange {
+		return nil
+	}
+	defaultObjectManagerMock := func(t *testing.T) objectmanager.ObjectManager {
+		c := gomock.NewController(t)
+		m := objectmanagermock.NewMockObjectManager(c)
 		return m
 	}
 	type fields struct {
@@ -492,7 +492,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		resolver      func(*testing.T) resolver.Resolver
 		exchange      func(*testing.T) exchange.Exchange
 		objectstore   func(*testing.T) objectstore.Store
-		streammanager func(*testing.T) streammanager.StreamManager
+		objectmanager func(*testing.T) objectmanager.ObjectManager
 	}
 	type args struct {
 		ctx context.Context
@@ -510,7 +510,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			resolver:      defaultResolverMock,
 			exchange:      defaultExchangeMock,
 			objectstore:   defaultObjectStoreMock,
-			streammanager: defaultStreamManagerMock,
+			objectmanager: defaultObjectManagerMock,
 		},
 		want: []subscription.Subscription{
 			testSubscription0,
@@ -524,7 +524,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 				resolver:      tt.fields.resolver(t),
 				exchange:      tt.fields.exchange(t),
 				objectstore:   tt.fields.objectstore(t),
-				streammanager: tt.fields.streammanager(t),
+				objectmanager: tt.fields.objectmanager(t),
 			}
 			got, err := m.GetOwnSubscriptions(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
