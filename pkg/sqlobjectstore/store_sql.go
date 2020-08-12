@@ -13,8 +13,6 @@ import (
 	"nimona.io/pkg/objectstore"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg sqlobjectstore -imp=nimona.io/pkg/object gen "ObjectType=object.Object Name=Object name=object"
-
 // nolint: lll
 var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS Objects (Hash TEXT NOT NULL PRIMARY KEY);`,
