@@ -136,6 +136,7 @@ func (m *manager) isRegisteredType(objectType string) (bool, time.Duration) {
 	return found, ttl
 }
 
+// TODO add support for multiple recipients
 func (m *manager) RequestStream(
 	ctx context.Context,
 	rootHash object.Hash,
@@ -482,7 +483,7 @@ func (m *manager) handleStreamRequest(
 		},
 	); err != nil {
 		logger.Warn(
-			"streammanager.handleStreamRequest could not send response",
+			"objectmanager.handleStreamRequest could not send response",
 			log.Error(err),
 		)
 		return err

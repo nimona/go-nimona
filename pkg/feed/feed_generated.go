@@ -18,7 +18,6 @@ type (
 		Policy     object.Policy
 		Signatures []object.Signature
 		Type       string
-		Sequence   int64
 		Datetime   string
 	}
 	Added struct {
@@ -62,12 +61,6 @@ func (e FeedStreamRoot) GetSchema() *object.SchemaObject {
 			IsRepeated: false,
 			IsOptional: false,
 		}, {
-			Name:       "sequence",
-			Type:       "int",
-			Hint:       "i",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
 			Name:       "datetime",
 			Type:       "string",
 			Hint:       "s",
@@ -94,7 +87,6 @@ func (e FeedStreamRoot) ToObject() object.Object {
 	if e.Type != "" {
 		o = o.Set("type:s", e.Type)
 	}
-	o = o.Set("sequence:i", e.Sequence)
 	if e.Datetime != "" {
 		o = o.Set("datetime:s", e.Datetime)
 	}
@@ -118,9 +110,6 @@ func (e *FeedStreamRoot) FromObject(o object.Object) error {
 	e.Policy = o.GetPolicy()
 	if v := data.Value("type:s"); v != nil {
 		e.Type = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("sequence:i"); v != nil {
-		e.Sequence = int64(v.PrimitiveHinted().(int64))
 	}
 	if v := data.Value("datetime:s"); v != nil {
 		e.Datetime = string(v.PrimitiveHinted().(string))

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/pkg/objectmanager"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/dot"
@@ -14,7 +16,6 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
@@ -68,24 +69,25 @@ func (api *API) HandleGetObject(c *router.Context) {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
+	os := []object.Object{}
 	for p := range nps {
-		go api.streammanager.Sync(ctx, h, p) // nolint: errcheck
-	}
-
-	graphObjects, err := api.streammanager.Get(ctx, h)
-	if err != nil {
-		if errors.CausedBy(err, objectstore.ErrNotFound) {
-			c.AbortWithError(404, err) // nolint: errcheck
-			return
+		os = []object.Object{}
+		res, err := api.objectmanager.RequestStream(ctx, h, p)
+		if err != nil {
+			continue
 		}
-		c.AbortWithError(500, err) // nolint: errcheck
-		return
-	}
-
-	os := graphObjects.Objects
-	if len(os) == 0 {
-		c.AbortWithError(404, errors.New("no objects found")) // nolint: errcheck
-		return
+		done := false
+		for {
+			obj, err := res.Next()
+			if err == objectmanager.ErrDone {
+				done = true
+				break
+			}
+			os = append(os, *obj)
+		}
+		if done {
+			break
+		}
 	}
 
 	if returnDot {
@@ -234,15 +236,6 @@ func (api *API) HandlePostObject(c *router.Context) {
 	o = o.AddSignature(sig)
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
-
-	if err := api.streammanager.Put(o); err != nil {
-		// nolint: errcheck
-		c.AbortWithError(
-			500,
-			errors.Wrap(err, errors.New("could not store object")),
-		)
-		return
-	}
 
 	m := api.mapObject(o)
 	c.JSON(http.StatusOK, m)

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path"
 
-	"nimona.io/pkg/objectmanager"
-
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
@@ -19,10 +17,10 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/nat"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
-	"nimona.io/pkg/streammanager"
 )
 
 type Daemon struct {
@@ -30,7 +28,7 @@ type Daemon struct {
 	Resolver      resolver.Resolver
 	Exchange      exchange.Exchange
 	Store         *sqlobjectstore.Store
-	StreamManager streammanager.StreamManager
+	ObjectManager objectmanager.ObjectManager
 }
 
 func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
@@ -115,18 +113,6 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		objectmanager.WithStore(st),
 	)
 
-	// construct streammanager
-	or, err := streammanager.New(
-		st,
-		exchange.DefaultExchange,
-		rs,
-		keychain.DefaultKeychain,
-		om,
-	)
-	if err != nil {
-		return nil, errors.Wrap(errors.New("could not construct streammanager"), err)
-	}
-
 	if _, err := net.DefaultNetwork.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
@@ -143,6 +129,6 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		Exchange:      exchange.DefaultExchange,
 		Resolver:      rs,
 		Store:         st,
-		StreamManager: or,
+		ObjectManager: om,
 	}, nil
 }

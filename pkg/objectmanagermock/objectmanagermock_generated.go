@@ -64,3 +64,18 @@ func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash, peer inter
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), ctx, rootHash, peer)
 }
+
+// Put mocks base method
+func (m *MockObjectManager) Put(ctx context.Context, o object.Object) (object.Object, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", ctx, o)
+	ret0, _ := ret[0].(object.Object)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Put indicates an expected call of Put
+func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectManager)(nil).Put), ctx, o)
+}

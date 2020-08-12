@@ -12,9 +12,9 @@ import (
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/resolver"
-	"nimona.io/pkg/streammanager"
 	"nimona.io/pkg/subscription"
 )
 
@@ -40,7 +40,7 @@ type (
 		resolver      resolver.Resolver
 		exchange      exchange.Exchange
 		objectstore   objectstore.Store
-		streammanager streammanager.StreamManager
+		objectmanager objectmanager.ObjectManager
 	}
 )
 
@@ -50,14 +50,14 @@ func New(
 	rs resolver.Resolver,
 	xc exchange.Exchange,
 	os objectstore.Store,
-	sm streammanager.StreamManager,
+	sm objectmanager.ObjectManager,
 ) (SubscriptionManager, error) {
 	m := &subscriptionmanager{
 		keychain:      kc,
 		resolver:      rs,
 		exchange:      xc,
 		objectstore:   os,
-		streammanager: sm,
+		objectmanager: sm,
 	}
 	// find our identity public key
 	owners := kc.ListPublicKeys(keychain.IdentityKey)
@@ -132,7 +132,7 @@ func (m *subscriptionmanager) Subscribe(
 		Subscription: sub.ToObject().Hash(),
 		Owners:       owners,
 	}
-	if err := m.streammanager.Put(chainEvent.ToObject()); err != nil {
+	if _, err := m.objectmanager.Put(ctx, chainEvent.ToObject()); err != nil {
 		return err
 	}
 	return nil
@@ -148,7 +148,7 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 	// get the hypothetical root for our subscription chain
 	chainRoot := m.hypotheticalRoot(owners)
 	// get the whole stream
-	stream, err := m.streammanager.Get(ctx, chainRoot.Hash())
+	stream, err := m.objectstore.GetByStream(chainRoot.Hash())
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 	hashes := map[object.Hash]struct{}{}
 	typeAdded := subscription.SubscriptionAdded{}.GetType()
 	typeRemoved := subscription.SubscriptionRemoved{}.GetType()
-	for _, obj := range stream.Objects {
+	for _, obj := range stream {
 		switch obj.GetType() {
 		case typeAdded:
 			event := &subscription.SubscriptionAdded{}
