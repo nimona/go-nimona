@@ -8,9 +8,9 @@ import (
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
+	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
