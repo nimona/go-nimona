@@ -9,15 +9,3 @@ signed object nimona.io/subscription.Subscription {
     streams repeated nimona.io/object.Hash
     expiry string
 }
-
-stream nimona.io/subscription {
-    signed root event Created {
-        name string
-    }
-    signed event SubscriptionAdded {
-        subscription nimona.io/object.Hash
-    }
-    signed event SubscriptionRemoved {
-        subscription nimona.io/object.Hash
-    }
-}

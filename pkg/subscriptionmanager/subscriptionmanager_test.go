@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/exchangemock"
+	"nimona.io/pkg/feed"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/keychainmock"
 	"nimona.io/pkg/object"
@@ -21,8 +22,6 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
-	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/subscription"
 )
 
@@ -30,9 +29,6 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 	testOwners := []crypto.PublicKey{
 		"me",
 		"also_me",
-	}
-	testChain0 := subscription.SubscriptionStreamRoot{
-		Owners: testOwners,
 	}
 	testSubscription0 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -61,44 +57,14 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		)
 		return m
 	}
-	defaultResolverMock := func(t *testing.T) resolver.Resolver {
-		r := make(chan *peer.Peer)
-		go func() {
-			r <- testPeer0
-			close(r)
-		}()
-		c := gomock.NewController(t)
-		m := resolvermock.NewMockResolver(c)
-		m.EXPECT().Lookup(
-			gomock.Any(),
-			gomock.Any(),
-		).DoAndReturn(
-			func(
-				ctx context.Context,
-				opts ...resolver.LookupOption,
-			) (<-chan *peer.Peer, error) {
-				o := &resolver.LookupOptions{}
-				opts[0](o)
-				require.Equal(t, "foo", o.Lookups[0])
-				return r, nil
-			},
-		)
-		return m
-	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
 		c := gomock.NewController(t)
 		m := objectstoremock.NewMockStore(c)
 		m.EXPECT().Put(
-			testChain0.ToObject(),
-		)
-		m.EXPECT().Put(
-			testSubscription0.ToObject(),
-		)
-		m.EXPECT().Put(
-			subscription.SubscriptionAdded{
-				Owners:       testOwners,
-				Subscription: testSubscription0.ToObject().Hash(),
-			}.ToObject(),
+			feed.GetFeedHypotheticalRoot(
+				testOwners,
+				"nimona.io/subscription.Subscription",
+			).ToObject(),
 		)
 		return m
 	}
@@ -112,36 +78,29 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		).Return(nil)
 		return m
 	}
-	testSubscriptionAdded := subscription.SubscriptionAdded{
-		Stream:       testChain0.ToObject().Hash(),
-		Subscription: testSubscription0.ToObject().Hash(),
-		Owners:       testOwners,
-	}.ToObject()
 	defaultObjectManagerMock := func(t *testing.T) objectmanager.ObjectManager {
 		c := gomock.NewController(t)
 		m := objectmanagermock.NewMockObjectManager(c)
 		m.EXPECT().Put(
 			gomock.Any(),
-			testSubscriptionAdded,
-		).Return(
-			testSubscriptionAdded,
-			nil,
+			testSubscription0.ToObject(),
 		)
 		return m
 	}
+
 	type fields struct {
 		keychain      func(*testing.T) keychain.Keychain
-		resolver      func(*testing.T) resolver.Resolver
 		exchange      func(*testing.T) exchange.Exchange
 		objectstore   func(*testing.T) objectstore.Store
 		objectmanager func(*testing.T) objectmanager.ObjectManager
 	}
 	type args struct {
-		ctx      context.Context
-		subjects []crypto.PublicKey
-		types    []string
-		streams  []object.Hash
-		expiry   time.Time
+		ctx       context.Context
+		subjects  []crypto.PublicKey
+		types     []string
+		streams   []object.Hash
+		expiry    time.Time
+		recipient *peer.Peer
 	}
 	tests := []struct {
 		name    string
@@ -152,7 +111,6 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		name: "should pass, subscribe on a new chain",
 		fields: fields{
 			keychain:      defaultKeychainMock,
-			resolver:      defaultResolverMock,
 			exchange:      defaultExchangeMock,
 			objectstore:   defaultObjectStoreMock,
 			objectmanager: defaultObjectManagerMock,
@@ -165,34 +123,29 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			types: []string{
 				"foo/bar",
 			},
-			expiry: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			expiry:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			recipient: testPeer0,
 		},
 	}, {
 		name: "should fail, could not write subscription",
 		fields: fields{
 			keychain: defaultKeychainMock,
-			resolver: func(t *testing.T) resolver.Resolver {
-				return nil
-			},
 			exchange: func(t *testing.T) exchange.Exchange {
 				return nil
 			},
-			objectstore: func(t *testing.T) objectstore.Store {
+			objectstore: defaultObjectStoreMock,
+			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
 				c := gomock.NewController(t)
-				m := objectstoremock.NewMockStore(c)
+				m := objectmanagermock.NewMockObjectManager(c)
 				m.EXPECT().Put(
-					testChain0.ToObject(),
-				)
-				m.EXPECT().Put(
+					gomock.Any(),
 					testSubscription0.ToObject(),
 				).Return(
+					object.Object{},
 					errors.New("something bad"),
 				)
 				return m
 			},
-			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
-				return nil
-			},
 		},
 		args: args{
 			ctx: context.Background(),
@@ -202,63 +155,14 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			types: []string{
 				"foo/bar",
 			},
-			expiry: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			expiry:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			recipient: testPeer0,
 		},
 		wantErr: true,
 	}, {
-		name: "should fail, failed to lookup peers",
+		name: "should fail, failed to send to recipient",
 		fields: fields{
 			keychain: defaultKeychainMock,
-			resolver: func(t *testing.T) resolver.Resolver {
-				c := gomock.NewController(t)
-				m := resolvermock.NewMockResolver(c)
-				m.EXPECT().Lookup(
-					gomock.Any(),
-					gomock.Any(),
-				).DoAndReturn(
-					func(
-						ctx context.Context,
-						opts ...resolver.LookupOption,
-					) (<-chan *peer.Peer, error) {
-						return nil, errors.New("something bad")
-					},
-				)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				return nil
-			},
-			objectstore: func(t *testing.T) objectstore.Store {
-				c := gomock.NewController(t)
-				m := objectstoremock.NewMockStore(c)
-				m.EXPECT().Put(
-					testChain0.ToObject(),
-				)
-				m.EXPECT().Put(
-					testSubscription0.ToObject(),
-				)
-				return m
-			},
-			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
-				return nil
-			},
-		},
-		args: args{
-			ctx: context.Background(),
-			subjects: []crypto.PublicKey{
-				crypto.PublicKey("foo"),
-			},
-			types: []string{
-				"foo/bar",
-			},
-			expiry: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-		},
-		wantErr: true,
-	}, {
-		name: "should fail, failed to send to all peers",
-		fields: fields{
-			keychain: defaultKeychainMock,
-			resolver: defaultResolverMock,
 			exchange: func(t *testing.T) exchange.Exchange {
 				c := gomock.NewController(t)
 				m := exchangemock.NewMockExchange(c)
@@ -271,20 +175,8 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				)
 				return m
 			},
-			objectstore: func(t *testing.T) objectstore.Store {
-				c := gomock.NewController(t)
-				m := objectstoremock.NewMockStore(c)
-				m.EXPECT().Put(
-					testChain0.ToObject(),
-				)
-				m.EXPECT().Put(
-					testSubscription0.ToObject(),
-				)
-				return m
-			},
-			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
-				return nil
-			},
+			objectstore:   defaultObjectStoreMock,
+			objectmanager: defaultObjectManagerMock,
 		},
 		args: args{
 			ctx: context.Background(),
@@ -294,38 +186,8 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			types: []string{
 				"foo/bar",
 			},
-			expiry: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-		},
-		wantErr: true,
-	}, {
-		name: "should fail, failed to put on stream manager",
-		fields: fields{
-			keychain:    defaultKeychainMock,
-			resolver:    defaultResolverMock,
-			exchange:    defaultExchangeMock,
-			objectstore: defaultObjectStoreMock,
-			objectmanager: func(t *testing.T) objectmanager.ObjectManager {
-				c := gomock.NewController(t)
-				m := objectmanagermock.NewMockObjectManager(c)
-				m.EXPECT().Put(
-					gomock.Any(),
-					testSubscriptionAdded,
-				).Return(
-					testSubscriptionAdded,
-					errors.New("something bad"),
-				)
-				return m
-			},
-		},
-		args: args{
-			ctx: context.Background(),
-			subjects: []crypto.PublicKey{
-				crypto.PublicKey("foo"),
-			},
-			types: []string{
-				"foo/bar",
-			},
-			expiry: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			expiry:    time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			recipient: testPeer0,
 		},
 		wantErr: true,
 	}}
@@ -334,7 +196,6 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			m, err := New(
 				context.Background(),
 				tt.fields.keychain(t),
-				tt.fields.resolver(t),
 				tt.fields.exchange(t),
 				tt.fields.objectstore(t),
 				tt.fields.objectmanager(t),
@@ -346,6 +207,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 				tt.args.types,
 				tt.args.streams,
 				tt.args.expiry,
+				tt.args.recipient,
 			); (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -357,9 +219,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 	testOwners := []crypto.PublicKey{
 		"me",
 		"also_me",
-	}
-	testChain0 := subscription.SubscriptionStreamRoot{
-		Owners: testOwners,
 	}
 	testSubscription0 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -373,10 +232,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscription0Added := subscription.SubscriptionAdded{
-		Owners:       testOwners,
-		Subscription: testSubscription0.ToObject().Hash(),
-	}
 	testSubscription1 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
 			crypto.PublicKey("foo"),
@@ -388,34 +243,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Owners: testOwners,
-	}
-	testSubscription1Added := subscription.SubscriptionAdded{
-		Owners:       testOwners,
-		Subscription: testSubscription1.ToObject().Hash(),
-	}
-	testSubscription1Removed := subscription.SubscriptionRemoved{
-		Owners:       testOwners,
-		Subscription: testSubscription1.ToObject().Hash(),
-	}
-	testSubscriptionAddedInvalid := new(object.Object).
-		SetType(
-			new(subscription.SubscriptionAdded).GetType(),
-		)
-	testSubscriptionRemovedInvalid := new(object.Object).
-		SetType(
-			new(subscription.SubscriptionRemoved).GetType(),
-		)
-	testSubscriptionInvalid := new(object.Object).
-		SetType(
-			new(subscription.Subscription).GetType(),
-		)
-	testSubscriptionErrAdded := subscription.SubscriptionAdded{
-		Owners:       testOwners,
-		Subscription: testSubscriptionInvalid.ToObject().Hash(),
-	}
-	testSubscriptionMisAdded := subscription.SubscriptionAdded{
-		Owners:       testOwners,
-		Subscription: object.Hash("missing"),
 	}
 	testSubscription2 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -429,10 +256,34 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscription2Added := subscription.SubscriptionAdded{
-		Owners:       testOwners,
-		Subscription: testSubscription2.ToObject().Hash(),
-	}
+	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
+		[]object.Object{
+			feed.Added{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription0.ToObject().Hash(),
+				},
+			}.ToObject(),
+			feed.Added{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription1.ToObject().Hash(),
+				},
+			}.ToObject(),
+			feed.Added{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription2.ToObject().Hash(),
+				},
+			}.ToObject(),
+			feed.Removed{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription1.ToObject().Hash(),
+				},
+			}.ToObject(),
+		},
+	)
 	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
 		c := gomock.NewController(t)
 		m := keychainmock.NewMockKeychain(c)
@@ -443,9 +294,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		)
 		return m
 	}
-	defaultResolverMock := func(t *testing.T) resolver.Resolver {
-		return nil
-	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
 		c := gomock.NewController(t)
 		m := objectstoremock.NewMockStore(c)
@@ -455,28 +303,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		m.EXPECT().
 			Get(testSubscription2.ToObject().Hash()).
 			Return(testSubscription2.ToObject(), nil)
-		m.EXPECT().
-			Get(testSubscriptionInvalid.ToObject().Hash()).
-			Return(testSubscriptionInvalid.ToObject(), nil)
-		m.EXPECT().
-			Get(object.Hash("missing")).
-			Return(object.Object{}, errors.New("missing"))
-		m.EXPECT().
-			GetByStream(testChain0.ToObject().Hash()).
-			Return(
-				[]object.Object{
-					testChain0.ToObject(),
-					testSubscription0Added.ToObject(),
-					testSubscriptionAddedInvalid.ToObject(),
-					testSubscription1Added.ToObject(),
-					testSubscriptionRemovedInvalid.ToObject(),
-					testSubscription1Removed.ToObject(),
-					testSubscription2Added.ToObject(),
-					testSubscriptionMisAdded.ToObject(),
-					testSubscriptionErrAdded.ToObject(),
-				},
-				nil,
-			)
 		return m
 	}
 	defaultExchangeMock := func(t *testing.T) exchange.Exchange {
@@ -485,11 +311,20 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 	defaultObjectManagerMock := func(t *testing.T) objectmanager.ObjectManager {
 		c := gomock.NewController(t)
 		m := objectmanagermock.NewMockObjectManager(c)
+		m.EXPECT().RequestStream(
+			gomock.Any(),
+			feed.GetFeedHypotheticalRootHash(
+				testOwners,
+				subscriptionType,
+			),
+		).Return(
+			testFeedSubscriptionReader1,
+			nil,
+		)
 		return m
 	}
 	type fields struct {
 		keychain      func(*testing.T) keychain.Keychain
-		resolver      func(*testing.T) resolver.Resolver
 		exchange      func(*testing.T) exchange.Exchange
 		objectstore   func(*testing.T) objectstore.Store
 		objectmanager func(*testing.T) objectmanager.ObjectManager
@@ -507,7 +342,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		name: "should pass, got subs",
 		fields: fields{
 			keychain:      defaultKeychainMock,
-			resolver:      defaultResolverMock,
 			exchange:      defaultExchangeMock,
 			objectstore:   defaultObjectStoreMock,
 			objectmanager: defaultObjectManagerMock,
@@ -521,7 +355,6 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &subscriptionmanager{
 				keychain:      tt.fields.keychain(t),
-				resolver:      tt.fields.resolver(t),
 				exchange:      tt.fields.exchange(t),
 				objectstore:   tt.fields.objectstore(t),
 				objectmanager: tt.fields.objectmanager(t),
@@ -568,31 +401,66 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 			Format(time.RFC3339),
 		Owners: testOwners,
 	}
-	testSubscriptionInvalid := new(object.Object).
-		SetType(
-			new(subscription.Subscription).GetType(),
+	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
+		[]object.Object{
+			feed.Added{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription0.ToObject().Hash(),
+				},
+			}.ToObject(),
+			feed.Added{
+				Owners: testOwners,
+				ObjectHash: []object.Hash{
+					testSubscription1.ToObject().Hash(),
+				},
+			}.ToObject(),
+		},
+	)
+	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
+		c := gomock.NewController(t)
+		m := keychainmock.NewMockKeychain(c)
+		m.EXPECT().ListPublicKeys(
+			keychain.IdentityKey,
+		).AnyTimes().Return(
+			testOwners,
 		)
+		return m
+	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
 		c := gomock.NewController(t)
 		m := objectstoremock.NewMockStore(c)
 		m.EXPECT().
-			GetByType("nimona.io/subscription.Subscription").
-			Return(
-				[]object.Object{
-					testSubscription0.ToObject(),
-					testSubscription1.ToObject(),
-					testSubscriptionInvalid.ToObject(),
-				},
-				nil,
-			)
+			Get(testSubscription0.ToObject().Hash()).
+			Return(testSubscription0.ToObject(), nil)
+		m.EXPECT().
+			Get(testSubscription1.ToObject().Hash()).
+			Return(testSubscription1.ToObject(), nil)
 		return m
 	}
 	type fields struct {
-		objectstore func(*testing.T) objectstore.Store
+		keychain      func(*testing.T) keychain.Keychain
+		objectstore   func(*testing.T) objectstore.Store
+		objectmanager func(*testing.T) objectmanager.ObjectManager
 	}
 	type args struct {
 		ctx        context.Context
 		objectType string
+	}
+	defaultObjectManagerMock := func(t *testing.T) objectmanager.ObjectManager {
+		c := gomock.NewController(t)
+		m := objectmanagermock.NewMockObjectManager(c)
+		m.EXPECT().RequestStream(
+			gomock.Any(),
+			feed.GetFeedHypotheticalRootHash(
+				testOwners,
+				subscriptionType,
+			),
+		).Return(
+			testFeedSubscriptionReader1,
+			nil,
+		)
+		return m
 	}
 	tests := []struct {
 		name    string
@@ -603,7 +471,9 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 	}{{
 		name: "should pass, found subs",
 		fields: fields{
-			objectstore: defaultObjectStoreMock,
+			objectstore:   defaultObjectStoreMock,
+			objectmanager: defaultObjectManagerMock,
+			keychain:      defaultKeychainMock,
 		},
 		args: args{
 			ctx:        context.New(),
@@ -616,7 +486,9 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &subscriptionmanager{
-				objectstore: tt.fields.objectstore(t),
+				keychain:      tt.fields.keychain(t),
+				objectmanager: tt.fields.objectmanager(t),
+				objectstore:   tt.fields.objectstore(t),
 			}
 			got, err := m.GetSubscriptionsByType(
 				tt.args.ctx,
