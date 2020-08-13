@@ -6,77 +6,64 @@ import (
 )
 
 var (
-	ErrDone    = errors.New("done")
 	ErrTimeout = errors.New("timeout")
 )
 
-type (
-	objectRefs struct {
-		context context.Context
-		request FetcherFunc
-		next    chan objectRefOrErr
-	}
-	ReferencesResults interface {
-		Next() (*Object, error)
-	}
-	objectRefOrErr struct {
-		object *Object
-		err    error
-	}
-)
-
 // FetchWithReferences will look for references in the given object, request the
-// primary object and all referred objects using the requestHandler, and will
+// primary object and all referred objects using the getter, and will
 // return them in a lazy loaded result.
 func FetchWithReferences(
 	ctx context.Context,
-	requestHandler FetcherFunc,
+	getter GetterFunc,
 	objectHash Hash,
-) (ReferencesResults, error) {
-	next := make(chan objectRefOrErr)
-	obj, err := requestHandler(ctx, objectHash)
+) (ReadCloser, error) {
+	obj, err := getter(ctx, objectHash)
 	if err != nil {
 		return nil, err
 	}
 
+	objectChan := make(chan *Object)
+	errorChan := make(chan error)
+	closeChan := make(chan struct{})
+
+	reader := NewReadCloser(
+		ctx,
+		objectChan,
+		errorChan,
+		closeChan,
+	)
+
 	go func() {
-		next <- objectRefOrErr{
-			object: obj,
+		defer close(objectChan)
+		defer close(errorChan)
+		select {
+		case <-ctx.Done():
+			return
+		case <-closeChan:
+			return
+		case objectChan <- obj:
+			// all good
 		}
 		refs := GetReferences(*obj)
 		for _, ref := range refs {
-			refObj, err := requestHandler(
+			refObj, err := getter(
 				ctx,
 				ref,
 			)
-			next <- objectRefOrErr{
-				object: refObj,
-				err:    err,
-			}
 			if err != nil {
+				errorChan <- err
 				return
 			}
+			select {
+			case <-ctx.Done():
+				return
+			case <-closeChan:
+				return
+			case objectChan <- refObj:
+				// all good
+			}
 		}
-		close(next)
 	}()
 
-	g := &objectRefs{
-		context: ctx,
-		request: requestHandler,
-		next:    next,
-	}
-
-	return g, nil
-}
-
-func (g *objectRefs) Next() (*Object, error) {
-	select {
-	case n, ok := <-g.next:
-		if !ok {
-			return nil, ErrDone
-		}
-		return n.object, n.err
-	case <-g.context.Done():
-		return nil, ErrTimeout
-	}
+	return reader, nil
 }

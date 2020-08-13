@@ -25,9 +25,9 @@ func TestLoadReferences(t *testing.T) {
 		Set("f02:m", f02.Raw())
 
 	type args struct {
-		ctx            context.Context
-		requestHandler FetcherFunc
-		objectHash     Hash
+		ctx        context.Context
+		getter     GetterFunc
+		objectHash Hash
 	}
 	tests := []struct {
 		name    string
@@ -38,7 +38,7 @@ func TestLoadReferences(t *testing.T) {
 		name: "should pass, one object, no references",
 		args: args{
 			ctx: context.Background(),
-			requestHandler: func(
+			getter: func(
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
@@ -54,7 +54,7 @@ func TestLoadReferences(t *testing.T) {
 		name: "should pass, one object, two references",
 		args: args{
 			ctx: context.Background(),
-			requestHandler: func(
+			getter: func(
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
@@ -77,7 +77,7 @@ func TestLoadReferences(t *testing.T) {
 			got, err := LoadReferences(
 				tt.args.ctx,
 				tt.args.objectHash,
-				tt.args.requestHandler,
+				tt.args.getter,
 			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)

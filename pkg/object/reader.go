@@ -28,12 +28,12 @@ type (
 func NewReadCloser(
 	ctx context.Context,
 	objects <-chan *Object,
-	errors <-chan error,
+	errs <-chan error,
 	closer chan<- struct{},
 ) ReadCloser {
 	r := &readCloser{
 		ctx:     ctx,
-		errors:  errors,
+		errors:  errs,
 		objects: objects,
 		closer:  closer,
 	}
