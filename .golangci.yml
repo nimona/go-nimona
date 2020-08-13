@@ -118,6 +118,9 @@ issues:
 run:
   skip-dirs:
     - vendor
+    - cmd
+    - tools
+    - playground
     - internal/generator
   skip-files:
     - .*_generated.go
