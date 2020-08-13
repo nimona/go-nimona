@@ -21,9 +21,9 @@ func TestFetchReferences(t *testing.T) {
 		Set("f02:s", "f02")
 
 	type args struct {
-		ctx            context.Context
-		requestHandler FetcherFunc
-		objectHash     Hash
+		ctx        context.Context
+		getter     GetterFunc
+		objectHash Hash
 	}
 	tests := []struct {
 		name    string
@@ -34,7 +34,7 @@ func TestFetchReferences(t *testing.T) {
 		name: "should pass, one object, no references",
 		args: args{
 			ctx: context.Background(),
-			requestHandler: func(
+			getter: func(
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
@@ -52,7 +52,7 @@ func TestFetchReferences(t *testing.T) {
 		name: "should pass, one object, two references",
 		args: args{
 			ctx: context.Background(),
-			requestHandler: func(
+			getter: func(
 				ctx context.Context,
 				hash Hash,
 			) (*Object, error) {
@@ -78,7 +78,7 @@ func TestFetchReferences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := FetchWithReferences(
 				tt.args.ctx,
-				tt.args.requestHandler,
+				tt.args.getter,
 				tt.args.objectHash,
 			)
 			if (err != nil) != tt.wantErr {
@@ -88,7 +88,7 @@ func TestFetchReferences(t *testing.T) {
 			if tt.want != nil {
 				objs := []Object{}
 				for {
-					obj, err := got.Next()
+					obj, err := got.Read()
 					if err != nil {
 						break
 					}

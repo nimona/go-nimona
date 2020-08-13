@@ -7,14 +7,14 @@ import (
 )
 
 // LoadReferences will look for references in the given object, request the
-// referred objects using the requestHandler, and will replace the references
+// referred objects using the getter, and will replace the references
 // with the actual object before returning the complete
 func LoadReferences(
 	ctx context.Context,
 	objectHash Hash,
-	requestHandler FetcherFunc,
+	getter GetterFunc,
 ) (*Object, error) {
-	obj, err := requestHandler(
+	obj, err := getter(
 		ctx,
 		objectHash,
 	)
@@ -32,7 +32,7 @@ func LoadReferences(
 	})
 	refObjs := map[string]*Object{}
 	for k, ref := range refs {
-		refObj, err := requestHandler(ctx, ref)
+		refObj, err := getter(ctx, ref)
 		if err != nil {
 			return nil, err
 		}
