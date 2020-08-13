@@ -3,19 +3,21 @@ package subscriptionmanager
 import (
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/feed"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
-	"nimona.io/pkg/resolver"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/subscription"
+)
+
+var (
+	subscriptionType = subscription.Subscription{}.GetType()
 )
 
 type (
@@ -26,6 +28,7 @@ type (
 			types []string,
 			streams []object.Hash,
 			expiry time.Time,
+			recipient *peer.Peer,
 		) error
 		GetOwnSubscriptions(
 			ctx context.Context,
@@ -37,7 +40,6 @@ type (
 	}
 	subscriptionmanager struct {
 		keychain      keychain.Keychain
-		resolver      resolver.Resolver
 		exchange      exchange.Exchange
 		objectstore   objectstore.Store
 		objectmanager objectmanager.ObjectManager
@@ -47,23 +49,23 @@ type (
 func New(
 	ctx context.Context,
 	kc keychain.Keychain,
-	rs resolver.Resolver,
 	xc exchange.Exchange,
 	os objectstore.Store,
 	sm objectmanager.ObjectManager,
 ) (SubscriptionManager, error) {
 	m := &subscriptionmanager{
 		keychain:      kc,
-		resolver:      rs,
 		exchange:      xc,
 		objectstore:   os,
 		objectmanager: sm,
 	}
-	// find our identity public key
-	owners := kc.ListPublicKeys(keychain.IdentityKey)
+
 	// make sure that the hypothetical root for our subscription chain exists
-	chainRoot := m.hypotheticalRoot(owners)
-	if err := m.objectstore.Put(chainRoot); err != nil {
+	feedRoot := feed.GetFeedHypotheticalRoot(
+		kc.ListPublicKeys(keychain.IdentityKey),
+		subscriptionType,
+	)
+	if err := m.objectstore.Put(feedRoot.ToObject()); err != nil {
 		return nil, err
 	}
 
@@ -76,6 +78,7 @@ func (m *subscriptionmanager) Subscribe(
 	types []string,
 	streams []object.Hash,
 	expiry time.Time,
+	recipient *peer.Peer,
 ) error {
 	ctx = context.FromContext(ctx)
 	// find our identity public key
@@ -89,50 +92,16 @@ func (m *subscriptionmanager) Subscribe(
 		Expiry:   expiry.Format(time.RFC3339),
 	}
 	// store the subscription
-	if err := m.objectstore.Put(sub.ToObject()); err != nil {
+	// this will add it to the subscriptions feed as well
+	if _, err := m.objectmanager.Put(ctx, sub.ToObject()); err != nil {
 		return err
 	}
-	// find peers who we are subscribing to
-	lookupOpts := []resolver.LookupOption{}
-	for _, subject := range subjects {
-		lookupOpts = append(
-			lookupOpts,
-			resolver.LookupByCertificateSigner(subject),
-		)
-	}
-	peers, err := m.resolver.Lookup(
+	// and send the subscription to the recipient
+	if err := m.exchange.Send(
 		ctx,
-		lookupOpts...,
-	)
-	if err != nil {
-		return err
-	}
-	// and send the subscription to them
-	totalSent := 0
-	var errs error
-	for peer := range peers {
-		if err := m.exchange.Send(
-			ctx,
-			sub.ToObject(),
-			peer,
-		); err != nil {
-			errs = multierror.Append(errs, err)
-			continue
-		}
-		totalSent++
-	}
-	if totalSent == 0 {
-		return errors.New("did not find any peers to send subscription")
-	}
-	// finally, get the hypothetical root for our subscription chain
-	chainRoot := m.hypotheticalRoot(owners)
-	// and add the subscription to the our chain
-	chainEvent := subscription.SubscriptionAdded{
-		Stream:       chainRoot.Hash(),
-		Subscription: sub.ToObject().Hash(),
-		Owners:       owners,
-	}
-	if _, err := m.objectmanager.Put(ctx, chainEvent.ToObject()); err != nil {
+		sub.ToObject(),
+		recipient,
+	); err != nil {
 		return err
 	}
 	return nil
@@ -143,46 +112,28 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 ) ([]subscription.Subscription, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx)
-	// find our identity public key
-	owners := m.keychain.ListPublicKeys(keychain.IdentityKey)
-	// get the hypothetical root for our subscription chain
-	chainRoot := m.hypotheticalRoot(owners)
-	// get the whole stream
-	stream, err := m.objectstore.GetByStream(chainRoot.Hash())
+	owners := m.keychain.ListPublicKeys(
+		keychain.IdentityKey,
+	)
+	// get the subscriptions feed
+	subscriptionFeedReader, err := m.objectmanager.RequestStream(
+		ctx,
+		feed.GetFeedHypotheticalRootHash(
+			owners,
+			subscriptionType,
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
-	// replay the stream and gather the subscriptions
-	hashes := map[object.Hash]struct{}{}
-	typeAdded := subscription.SubscriptionAdded{}.GetType()
-	typeRemoved := subscription.SubscriptionRemoved{}.GetType()
-	for _, obj := range stream {
-		switch obj.GetType() {
-		case typeAdded:
-			event := &subscription.SubscriptionAdded{}
-			if err := event.FromObject(obj); err != nil {
-				logger.Error(
-					"unable to parse subscription added from object",
-					log.Error(err),
-				)
-				continue
-			}
-			hashes[event.Subscription] = struct{}{}
-		case typeRemoved:
-			event := &subscription.SubscriptionRemoved{}
-			if err := event.FromObject(obj); err != nil {
-				logger.Error(
-					"unable to parse subscription removed from object",
-					log.Error(err),
-				)
-				continue
-			}
-			delete(hashes, event.Subscription)
-		}
+	// go through the feed and gather subscriptions that are still there
+	subscriptionHashes, err := feed.GetFeedHashes(subscriptionFeedReader)
+	if err != nil {
+		return nil, err
 	}
 	// load actual subscriptions
 	subs := []subscription.Subscription{}
-	for hash := range hashes {
+	for _, hash := range subscriptionHashes {
 		obj, err := m.objectstore.Get(hash)
 		if err != nil {
 			logger.Error(
@@ -191,6 +142,7 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 			)
 			continue
 		}
+		// TODO who is responsible for ignoring expired subscriptions?
 		sub := subscription.Subscription{}
 		if err := sub.FromObject(obj); err != nil {
 			logger.Error(
@@ -199,7 +151,17 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 			)
 			continue
 		}
-		subs = append(subs, sub)
+		ours := false
+		for _, subOwner := range sub.Owners {
+			// TODO either deal with multiple owners, or wait until we kill them
+			if subOwner == owners[0] {
+				ours = true
+				break
+			}
+		}
+		if ours {
+			subs = append(subs, sub)
+		}
 	}
 	return subs, nil
 }
@@ -210,13 +172,37 @@ func (m *subscriptionmanager) GetSubscriptionsByType(
 ) ([]subscription.Subscription, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx)
-	typeSub := subscription.Subscription{}.GetType()
-	objs, err := m.objectstore.GetByType(typeSub)
+	owners := m.keychain.ListPublicKeys(
+		keychain.IdentityKey,
+	)
+	// get the subscriptions feed
+	subscriptionFeedReader, err := m.objectmanager.RequestStream(
+		ctx,
+		feed.GetFeedHypotheticalRootHash(
+			owners,
+			subscriptionType,
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
+	// go through the feed and gather subscriptions that are still there
+	subscriptionHashes, err := feed.GetFeedHashes(subscriptionFeedReader)
+	if err != nil {
+		return nil, err
+	}
+	// load actual subscriptions
 	subs := []subscription.Subscription{}
-	for _, obj := range objs {
+	for _, hash := range subscriptionHashes {
+		obj, err := m.objectstore.Get(hash)
+		if err != nil {
+			logger.Error(
+				"unable to get subscription object",
+				log.Error(err),
+			)
+			continue
+		}
+		// TODO who is responsible for ignoring expired subscriptions?
 		sub := subscription.Subscription{}
 		if err := sub.FromObject(obj); err != nil {
 			logger.Error(
@@ -225,20 +211,23 @@ func (m *subscriptionmanager) GetSubscriptionsByType(
 			)
 			continue
 		}
-		for _, t := range sub.Types {
-			if t == objectType {
+		// TODO should this include own subscriptions?
+		// ours := false
+		// for _, subOwner := range sub.Owners {
+		// 	// TODO either deal with multiple owners, or wait until we kill them
+		// 	if subOwner == owners[0] {
+		// 		ours = true
+		// 		break
+		// 	}
+		// }
+		// if ours {
+		// 	continue
+		// }
+		for _, subType := range sub.Types {
+			if subType == objectType {
 				subs = append(subs, sub)
-				break
 			}
 		}
 	}
 	return subs, nil
-}
-
-func (m *subscriptionmanager) hypotheticalRoot(
-	owners []crypto.PublicKey,
-) object.Object {
-	return subscription.SubscriptionStreamRoot{
-		Owners: owners,
-	}.ToObject()
 }

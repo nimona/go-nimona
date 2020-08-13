@@ -30,9 +30,9 @@ func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 	return pks
 }
 
-func GetStreamLeaves(os []object.Object) []object.Object {
+func GetStreamLeaves(os []*object.Object) []*object.Object {
 	hm := map[string]bool{} // map[hash]isParent
-	om := map[string]object.Object{}
+	om := map[string]*object.Object{}
 	for _, o := range os {
 		h := o.Hash().String()
 		if _, ok := hm[h]; !ok {
@@ -44,7 +44,7 @@ func GetStreamLeaves(os []object.Object) []object.Object {
 		om[h] = o
 	}
 
-	os = []object.Object{}
+	os = []*object.Object{}
 	for h, isParent := range hm {
 		if !isParent {
 			os = append(os, om[h])
