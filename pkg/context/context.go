@@ -32,6 +32,16 @@ type (
 	}
 )
 
+var (
+	todo = New()
+)
+
+// TODO returns a non-nil, empty Context. Code should use context.TODO when
+// it's unclear which Context to use or it is not yet available.
+func TODO() Context {
+	return todo
+}
+
 // Background context wrapper
 func Background() Context {
 	return New()
