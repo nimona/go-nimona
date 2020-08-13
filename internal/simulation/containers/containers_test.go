@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/simulation/containers"
+	"nimona.io/internal/simulation/containers"
 )
 
 func TestCreateContainer(t *testing.T) {

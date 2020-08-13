@@ -13,9 +13,9 @@ import (
 
 	"nimona.io/internal/fixtures"
 	"nimona.io/internal/rand"
+	"nimona.io/internal/simulation/node"
 	"nimona.io/pkg/client"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/simulation/node"
 )
 
 func TestSimulation(t *testing.T) {

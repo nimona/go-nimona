@@ -6,7 +6,7 @@ import (
 
 	"nimona.io/pkg/context"
 
-	"nimona.io/pkg/simulation/containers"
+	"nimona.io/internal/simulation/containers"
 )
 
 type Node struct {

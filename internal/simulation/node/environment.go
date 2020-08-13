@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"nimona.io/pkg/simulation/containers"
+	"nimona.io/internal/simulation/containers"
 )
 
 type Environment struct {

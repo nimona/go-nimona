@@ -1,4 +1,4 @@
-module nimona.io/pkg/simulation
+module nimona.io/internal/simulation
 
 go 1.14
 
