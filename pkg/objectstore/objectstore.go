@@ -20,8 +20,8 @@ type (
 	}
 	Store interface {
 		Get(hash object.Hash) (object.Object, error)
-		GetByType(string) ([]object.Object, error)
-		GetByStream(object.Hash) ([]object.Object, error)
+		GetByType(string) (object.ReadCloser, error)
+		GetByStream(object.Hash) (object.ReadCloser, error)
 		Put(object.Object) error
 		PutWithTimeout(object.Object, time.Duration) error
 	}

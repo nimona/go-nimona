@@ -199,10 +199,10 @@ func (api *API) mapObject(o object.Object) map[string]interface{} {
 	return m
 }
 
-func (api *API) mapObjects(objects []object.Object) []map[string]interface{} {
+func (api *API) mapObjects(objects []*object.Object) []map[string]interface{} {
 	ms := []map[string]interface{}{}
 	for _, o := range objects {
-		ms = append(ms, api.mapObject(o))
+		ms = append(ms, api.mapObject(*o))
 	}
 	return ms
 }
