@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"nimona.io/pkg/simulation/containers"
+	"nimona.io/internal/simulation/containers"
 )
 
 func TestNetwork(t *testing.T) {

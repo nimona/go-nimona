@@ -113,7 +113,7 @@ e2e: clean
 	$(eval TAGS += e2e)
 	docker build -t nimona:dev .
 	E2E_DOCKER_IMAGE=nimona:dev \
-	cd pkg/simulation; \
+	cd internal/simulation; \
 	go test $(V) \
 		-tags="$(TAGS)" \
 		-count=1 \
