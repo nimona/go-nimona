@@ -266,7 +266,10 @@ func Test_manager_RequestStream(t *testing.T) {
 			if tt.want != nil {
 				objs := []object.Object{}
 				for {
-					obj, err := got.Next()
+					obj, err := got.Read()
+					if err == object.ErrReaderDone {
+						break
+					}
 					if err != nil {
 						break
 					}
@@ -426,10 +429,12 @@ func Test_manager_Put(t *testing.T) {
 				m.EXPECT().
 					GetByStream(object.Hash("streamRoot")).
 					Return(
-						[]object.Object{
-							object.Object{}.Set("foo:s", "bar1"),
-							object.Object{}.Set("foo:s", "bar2"),
-						},
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+							},
+						),
 						nil,
 					)
 				m.EXPECT().
@@ -467,7 +472,7 @@ func Test_manager_Put(t *testing.T) {
 					)
 				m.EXPECT().
 					GetByStream(testFeedHash).
-					Return([]object.Object{}, nil)
+					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(
 						gomockutil.ObjectEq(testFeedFirst),

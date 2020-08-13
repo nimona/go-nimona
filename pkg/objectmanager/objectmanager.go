@@ -43,8 +43,8 @@ type (
 		RequestStream(
 			ctx context.Context,
 			rootHash object.Hash,
-			peer *peer.Peer,
-		) (object.ReferencesResults, error)
+			recipients ...*peer.Peer,
+		) (object.ReadCloser, error)
 		Put(
 			ctx context.Context,
 			o object.Object,
@@ -58,28 +58,8 @@ type (
 		newNonce        func() string
 		registeredTypes sync.Map
 	}
-	Option        func(*manager)
-	StreamResults struct {
-		context context.Context
-		next    chan objectRefOrErr
-	}
-	objectRefOrErr struct {
-		object *object.Object
-		err    error
-	}
+	Option func(*manager)
 )
-
-func (r *StreamResults) Next() (*object.Object, error) {
-	select {
-	case n, ok := <-r.next:
-		if !ok {
-			return nil, ErrDone
-		}
-		return n.object, n.err
-	case <-r.context.Done():
-		return nil, ErrTimeout
-	}
-}
 
 func New(
 	ctx context.Context,
@@ -140,8 +120,8 @@ func (m *manager) isRegisteredType(objectType string) (bool, time.Duration) {
 func (m *manager) RequestStream(
 	ctx context.Context,
 	rootHash object.Hash,
-	recipient *peer.Peer,
-) (object.ReferencesResults, error) {
+	recipients ...*peer.Peer,
+) (object.ReadCloser, error) {
 	nonce := m.newNonce()
 	responses := make(chan stream.Response)
 
@@ -168,13 +148,21 @@ func (m *manager) RequestStream(
 		}
 	}()
 
+	if len(recipients) == 0 {
+		return m.store.GetByStream(rootHash)
+	}
+
+	if len(recipients) > 1 {
+		panic(errors.New("currently only a single recipient is supported"))
+	}
+
 	req := stream.Request{
 		RootHash: rootHash,
 	}
 	if err := m.exchange.Send(
 		ctx,
 		req.ToObject(),
-		recipient,
+		recipients[0],
 	); err != nil {
 		return nil, err
 	}
@@ -189,8 +177,6 @@ func (m *manager) RequestStream(
 		return nil, ErrTimeout
 	}
 
-	next := make(chan objectRefOrErr)
-
 	requestHandler := func(
 		ctx context.Context,
 		objectHash object.Hash,
@@ -203,34 +189,48 @@ func (m *manager) RequestStream(
 		return m.Request(
 			ctx,
 			objectHash,
-			recipient,
+			recipients[0],
 		)
 	}
 
+	objectChan := make(chan *object.Object)
+	errorChan := make(chan error)
+	closeChan := make(chan struct{})
+
+	reader := object.NewReadCloser(
+		ctx,
+		objectChan,
+		errorChan,
+		closeChan,
+	)
+
 	go func() {
+		defer close(objectChan)
+		defer close(errorChan)
 		for _, objectHash := range objectHashes {
 			fullObj, err := object.LoadReferences(
 				ctx,
 				objectHash,
 				requestHandler,
 			)
+			if err != nil {
+				errorChan <- err
+				return
+			}
 			// TODO check the validity of each event, they should be ordered
 			// so we should already have its parents.
-			next <- objectRefOrErr{
-				object: fullObj,
-				err:    err,
-			}
-			if err != nil {
-				break
+			select {
+			case objectChan <- fullObj:
+				// all good
+			case <-ctx.Done():
+				return
+			case <-closeChan:
+				return
 			}
 		}
-		close(next)
 	}()
 
-	return &StreamResults{
-		context: ctx,
-		next:    next,
-	}, nil
+	return reader, nil
 }
 
 func (m *manager) Request(
@@ -387,21 +387,27 @@ func (m *manager) storeObject(
 			obj.Hash(),
 		},
 	}.ToObject()
-	os, err := m.store.GetByStream(feedStreamHash)
+	or, err := m.store.GetByStream(feedStreamHash)
 	if err != nil && err != objectstore.ErrNotFound {
 		return err
 	}
-	if len(os) > 0 {
-		parents := stream.GetStreamLeaves(os)
-		parentHashes := make([]object.Hash, len(parents))
-		for i, p := range parents {
-			parentHashes[i] = p.Hash()
-		}
-		feedEvent = feedEvent.SetParents(parentHashes)
-	} else {
+	if err == objectstore.ErrNotFound {
 		feedEvent = feedEvent.SetParents([]object.Hash{
 			feedStreamHash,
 		})
+	} else {
+		os, err := object.ReadAll(or)
+		if err != nil {
+			return err
+		}
+		if len(os) > 0 {
+			parents := stream.GetStreamLeaves(os)
+			parentHashes := make([]object.Hash, len(parents))
+			for i, p := range parents {
+				parentHashes[i] = p.Hash()
+			}
+			feedEvent = feedEvent.SetParents(parentHashes)
+		}
 	}
 	if err := m.store.Put(feedEvent); err != nil {
 		return err
@@ -456,14 +462,21 @@ func (m *manager) handleStreamRequest(
 	}
 
 	// get the entire graph for this stream
-	vs, err := m.store.GetByStream(req.Stream)
+	or, err := m.store.GetByStream(req.Stream)
 	if err != nil {
 		return err
 	}
 
 	// get only the object hashes
 	hs := []object.Hash{}
-	for _, o := range vs {
+	for {
+		o, err := or.Read()
+		if err == object.ErrReaderDone {
+			break
+		}
+		if err != nil {
+			return err
+		}
 		hs = append(hs, o.Hash())
 	}
 
@@ -506,8 +519,12 @@ func (m *manager) Put(
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
 	if !streamHash.IsEmpty() {
-		os, err := m.store.GetByStream(streamHash)
+		or, err := m.store.GetByStream(streamHash)
 		if err != nil && err != objectstore.ErrNotFound {
+			return o, err
+		}
+		os, err := object.ReadAll(or)
+		if err != nil {
 			return o, err
 		}
 		if len(os) > 0 {
