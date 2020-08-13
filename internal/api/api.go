@@ -7,9 +7,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/daemon/config"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/keychain"
