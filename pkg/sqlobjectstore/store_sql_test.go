@@ -136,41 +136,51 @@ func TestFilter(t *testing.T) {
 		hashes = append(hashes, obj.Hash())
 	}
 
-	objects, err := store.Filter(
+	objectReader, err := store.Filter(
 		FilterByHash(hashes[0]),
 		FilterByHash(hashes[1]),
 		FilterByHash(hashes[2]),
 		FilterByHash(hashes[3]),
 		FilterByHash(hashes[4]),
 	)
+	require.NotNil(t, objectReader)
 	require.NoError(t, err)
-	require.Len(t, objects, len(hashes))
-
-	objects, err = store.Filter(
+	objects, err := object.ReadAll(objectReader)
+	require.NoError(t, err)
+	require.Equal(t, len(hashes), len(objects))
+	objectReader, err = store.Filter(
 		FilterByOwner(k.PublicKey()),
 	)
 	require.NoError(t, err)
-	require.Len(t, objects, 3)
+	objects, err = object.ReadAll(objectReader)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(objects))
 
-	objects, err = store.Filter(
+	objectReader, err = store.Filter(
 		FilterByObjectType(c.GetType()),
 	)
 	require.NoError(t, err)
-	require.Len(t, objects, len(hashes))
+	objects, err = object.ReadAll(objectReader)
+	require.NoError(t, err)
+	require.Equal(t, len(hashes), len(objects))
 
-	objects, err = store.Filter(
+	objectReader, err = store.Filter(
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
-	require.Len(t, objects, len(hashes)+1)
+	objects, err = object.ReadAll(objectReader)
+	require.NoError(t, err)
+	require.Equal(t, len(hashes)+1, len(objects))
 
-	objects, err = store.Filter(
+	objectReader, err = store.Filter(
 		FilterByHash(hashes[0]),
 		FilterByObjectType(c.GetType()),
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
-	require.Len(t, objects, 1)
+	objects, err = object.ReadAll(objectReader)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(objects))
 
 	err = store.Close()
 	require.NoError(t, err)

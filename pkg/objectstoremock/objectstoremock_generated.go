@@ -88,10 +88,10 @@ func (mr *MockStoreMockRecorder) Get(hash interface{}) *gomock.Call {
 }
 
 // GetByType mocks base method
-func (m *MockStore) GetByType(arg0 string) ([]object.Object, error) {
+func (m *MockStore) GetByType(arg0 string) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByType", arg0)
-	ret0, _ := ret[0].([]object.Object)
+	ret0, _ := ret[0].(object.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -103,10 +103,10 @@ func (mr *MockStoreMockRecorder) GetByType(arg0 interface{}) *gomock.Call {
 }
 
 // GetByStream mocks base method
-func (m *MockStore) GetByStream(arg0 object.Hash) ([]object.Object, error) {
+func (m *MockStore) GetByStream(arg0 object.Hash) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByStream", arg0)
-	ret0, _ := ret[0].([]object.Object)
+	ret0, _ := ret[0].(object.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

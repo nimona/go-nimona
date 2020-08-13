@@ -32,12 +32,16 @@ func (api *API) HandleGetObjects(c *router.Context) {
 		}
 		filters = append(filters, sqlobjectstore.FilterByObjectType(ct))
 	}
-	ms, err := api.objectStore.Filter(filters...)
+	or, err := api.objectStore.Filter(filters...)
 	if err != nil {
 		c.AbortWithError(500, err) // nolint: errcheck
 		return
 	}
-
+	ms, err := object.ReadAll(or)
+	if err != nil {
+		c.AbortWithError(500, err) // nolint: errcheck
+		return
+	}
 	c.JSON(http.StatusOK, api.mapObjects(ms))
 }
 
@@ -78,7 +82,7 @@ func (api *API) HandleGetObject(c *router.Context) {
 		}
 		done := false
 		for {
-			obj, err := res.Next()
+			obj, err := res.Read()
 			if err == objectmanager.ErrDone {
 				done = true
 				break
@@ -190,7 +194,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 	}
 
 	// Get all the objects for a stream
-	objs, err := api.objectStore.Filter(
+	or, err := api.objectStore.Filter(
 		sqlobjectstore.FilterByStreamHash(
 			object.Hash(rootObjectHash),
 		),
@@ -199,7 +203,16 @@ func (api *API) HandlePostObject(c *router.Context) {
 		// nolint: errcheck
 		c.AbortWithError(
 			500,
-			errors.New("could not sign object"),
+			errors.New("could not filter objects"),
+		)
+		return
+	}
+	objs, err := object.ReadAll(or)
+	if err != nil {
+		// nolint: errcheck
+		c.AbortWithError(
+			500,
+			errors.New("could not read all objects"),
 		)
 		return
 	}

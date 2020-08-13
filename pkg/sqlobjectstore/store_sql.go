@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
@@ -125,7 +126,7 @@ func (st *Store) Get(
 
 func (st *Store) GetByStream(
 	streamRootHash object.Hash,
-) ([]object.Object, error) {
+) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamHash(streamRootHash),
 	)
@@ -133,7 +134,7 @@ func (st *Store) GetByStream(
 
 func (st *Store) GetByType(
 	objectType string,
-) ([]object.Object, error) {
+) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByObjectType(objectType),
 	)
@@ -321,7 +322,7 @@ func (st *Store) gc() error {
 
 func (st *Store) Filter(
 	lookupOptions ...LookupOption,
-) ([]object.Object, error) {
+) (object.ReadCloser, error) {
 	options := newLookupOptions(lookupOptions...)
 
 	where := "WHERE 1 "
@@ -353,11 +354,9 @@ func (st *Store) Filter(
 
 	where += "ORDER BY Created ASC"
 
-	objects := []object.Object{}
-
 	// get the object
 	// nolint: gosec
-	stmt, err := st.db.Prepare("SELECT Body FROM Objects " + where)
+	stmt, err := st.db.Prepare("SELECT Hash FROM Objects " + where)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -373,33 +372,34 @@ func (st *Store) Filter(
 		)
 	}
 
-	hashes := []interface{}{}
+	hashes := []string{}
+	hashesForUpdate := []interface{}{}
+
+	errorChan := make(chan error)
+	objectsChan := make(chan *object.Object)
+	closeChan := make(chan struct{})
+
+	reader := object.NewReadCloser(
+		context.TODO(),
+		objectsChan,
+		errorChan,
+		closeChan,
+	)
 
 	for rows.Next() {
-		data := []byte{}
-
-		if err := rows.Scan(&data); err != nil {
+		hash := ""
+		if err := rows.Scan(&hash); err != nil {
 			return nil, errors.Wrap(
 				err,
 				objectstore.ErrNotFound,
 			)
 		}
-
-		m := map[string]interface{}{}
-		if err := json.Unmarshal(data, &m); err != nil {
-			return nil, errors.Wrap(
-				err,
-				errors.New("could not unmarshal data"),
-			)
-		}
-
-		obj := object.FromMap(m)
-		objects = append(objects, obj)
-		hashes = append(hashes, obj.Hash())
+		hashes = append(hashes, hash)
+		hashesForUpdate = append(hashesForUpdate, hash)
 	}
 
 	if len(hashes) == 0 {
-		return objects, nil
+		return nil, objectstore.ErrNotFound
 	}
 
 	// update the last accessed column
@@ -409,16 +409,34 @@ func (st *Store) Filter(
 			"WHERE Hash IN (" + updateQs + ")",
 	)
 	if err != nil {
-		return objects, nil
+		return nil, err
 	}
 
 	if _, err := istmt.Exec(
-		append([]interface{}{time.Now().Unix()}, hashes...)...,
+		append([]interface{}{time.Now().Unix()}, hashesForUpdate...)...,
 	); err != nil {
-		return objects, nil
+		return nil, err
 	}
 
-	return objects, nil
+	go func() {
+		defer close(objectsChan)
+		defer close(errorChan)
+		for _, hash := range hashes {
+			o, err := st.Get(object.Hash(hash))
+			if err != nil {
+				errorChan <- err
+				return
+			}
+			select {
+			case <-closeChan:
+				return
+			case objectsChan <- &o:
+				// all good
+			}
+		}
+	}()
+
+	return reader, nil
 }
 
 func (st *Store) GetPinned() ([]object.Hash, error) {
