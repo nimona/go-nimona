@@ -3,6 +3,7 @@ go 1.14
 module nimona.io
 
 require (
+	github.com/bmatcuk/doublestar v1.3.1
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
@@ -23,7 +24,9 @@ require (
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20181011194642-3a71999ed0d3
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
+	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
 	gopkg.in/h2non/gock.v1 v1.0.15
+	gopkg.in/yaml.v2 v2.2.5
 )
 
 // https://github.com/spaolacci/murmur3/issues/29
