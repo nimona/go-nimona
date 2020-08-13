@@ -4,12 +4,12 @@ module nimona.io
 
 require (
 	github.com/bmatcuk/doublestar v1.3.1
+	github.com/elliotchance/orderedmap v1.3.0
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.4.3
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/go-multierror v1.0.1-0.20191120192120-72917a1559e1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.13.0
 	github.com/mitchellh/mapstructure v1.2.0
