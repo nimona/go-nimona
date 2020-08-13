@@ -51,18 +51,23 @@ func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *g
 }
 
 // RequestStream mocks base method
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, peer *peer.Peer) (object.ReferencesResults, error) {
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, recipients ...*peer.Peer) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RequestStream", ctx, rootHash, peer)
-	ret0, _ := ret[0].(object.ReferencesResults)
+	varargs := []interface{}{ctx, rootHash}
+	for _, a := range recipients {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RequestStream", varargs...)
+	ret0, _ := ret[0].(object.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RequestStream indicates an expected call of RequestStream
-func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash, peer interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash interface{}, recipients ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), ctx, rootHash, peer)
+	varargs := append([]interface{}{ctx, rootHash}, recipients...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), varargs...)
 }
 
 // Put mocks base method
