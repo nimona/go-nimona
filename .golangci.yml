@@ -3,6 +3,7 @@ linters-settings:
     list-type: blacklist
     packages:
       - github.com/sirupsen/logrus
+      - gotest.tools/assert
     packages-with-error-message:
       - github.com/sirupsen/logrus: "logging is allowed only by nimona.io/pkg/log"
   funlen:
