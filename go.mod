@@ -26,7 +26,7 @@ require (
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
 	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
 	gopkg.in/h2non/gock.v1 v1.0.15
-	gopkg.in/yaml.v2 v2.2.5
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 // https://github.com/spaolacci/murmur3/issues/29
