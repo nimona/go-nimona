@@ -17,31 +17,22 @@ var (
 type (
 	Keychain interface {
 		Put(KeyType, crypto.PrivateKey)
-		List(KeyType) []crypto.PrivateKey
-		ListPublicKeys(KeyType) []crypto.PublicKey
 		GetPrimaryPeerKey() crypto.PrivateKey
+		GetPrimaryIdentityKey() crypto.PrivateKey
 		PutCertificate(*peer.Certificate)
 		GetCertificates(crypto.PublicKey) []*peer.Certificate
 	}
 	memorystore struct {
-		keyLock        sync.RWMutex
-		keys           map[KeyType]map[crypto.PrivateKey]struct{}
-		certLock       sync.RWMutex
-		certs          map[crypto.PublicKey]map[object.Hash]*peer.Certificate
-		primaryPeerKey crypto.PrivateKey
+		keyLock            sync.RWMutex
+		certLock           sync.RWMutex
+		certs              map[crypto.PublicKey]map[object.Hash]*peer.Certificate
+		primaryPeerKey     crypto.PrivateKey
+		primaryIdentityKey crypto.PrivateKey
 	}
 )
 
 func Put(kt KeyType, pk crypto.PrivateKey) {
 	DefaultKeychain.Put(kt, pk)
-}
-
-func List(kt KeyType) []crypto.PrivateKey {
-	return DefaultKeychain.List(kt)
-}
-
-func ListPublicKeys(kt KeyType) []crypto.PublicKey {
-	return DefaultKeychain.ListPublicKeys(kt)
 }
 
 func GetPrimaryPeerKey() crypto.PrivateKey {
@@ -58,11 +49,7 @@ func GetCertificates(pk crypto.PublicKey) []*peer.Certificate {
 
 func New() Keychain {
 	return &memorystore{
-		keyLock: sync.RWMutex{},
-		keys: map[KeyType]map[crypto.PrivateKey]struct{}{
-			PeerKey:     {},
-			IdentityKey: {},
-		},
+		keyLock:  sync.RWMutex{},
 		certLock: sync.RWMutex{},
 		certs:    map[crypto.PublicKey]map[object.Hash]*peer.Certificate{},
 	}
@@ -73,37 +60,22 @@ func (s *memorystore) Put(t KeyType, k crypto.PrivateKey) {
 	switch t {
 	case PrimaryPeerKey:
 		s.primaryPeerKey = k
-		s.keys[PeerKey][k] = struct{}{}
-	default:
-		s.keys[t][k] = struct{}{}
+	case PrimaryIdentityKey:
+		s.primaryIdentityKey = k
 	}
 	s.keyLock.Unlock()
-}
-
-func (s *memorystore) List(t KeyType) []crypto.PrivateKey {
-	s.keyLock.RLock()
-	ks := []crypto.PrivateKey{}
-	for k := range s.keys[t] {
-		ks = append(ks, k)
-	}
-	s.keyLock.RUnlock()
-	return ks
-}
-
-func (s *memorystore) ListPublicKeys(t KeyType) []crypto.PublicKey {
-	s.keyLock.RLock()
-	pks := []crypto.PublicKey{}
-	for k := range s.keys[t] {
-		pks = append(pks, k.PublicKey())
-	}
-	s.keyLock.RUnlock()
-	return pks
 }
 
 func (s *memorystore) GetPrimaryPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
+}
+
+func (s *memorystore) GetPrimaryIdentityKey() crypto.PrivateKey {
+	s.keyLock.RLock()
+	defer s.keyLock.RUnlock() //nolint: gocritic
+	return s.primaryIdentityKey
 }
 
 func (s *memorystore) PutCertificate(c *peer.Certificate) {

@@ -394,12 +394,12 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 
 			// and if this is not a dataforward then we assume it is for us
 			if o.GetType() != dataForwardType {
-				if len(o.GetSignatures()) == 0 {
+				if o.GetSignature().IsEmpty() {
 					logger.Error("forwarded object has no signature")
 					continue
 				}
 				w.inboxes.Publish(&Envelope{
-					Sender:  o.GetSignatures()[0].Signer,
+					Sender:  o.GetSignature().Signer,
 					Payload: o,
 				})
 				continue
@@ -415,7 +415,7 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 			pk := w.keychain.GetPrimaryPeerKey().PublicKey()
 			if nfwd.Recipient.Equals(pk) {
 				w.inboxes.Publish(&Envelope{
-					Sender:  o.GetSignatures()[0].Signer,
+					Sender:  o.GetSignature().Signer,
 					Payload: o,
 				})
 				continue
@@ -430,9 +430,7 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 				o,
 				&peer.Peer{
 					Metadata: object.Metadata{
-						Owners: []crypto.PublicKey{
-							nfwd.Recipient,
-						},
+						Owner: nfwd.Recipient,
 					},
 				},
 			); err != nil {

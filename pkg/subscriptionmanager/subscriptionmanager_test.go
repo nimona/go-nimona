@@ -26,10 +26,9 @@ import (
 )
 
 func Test_subscriptionmanager_Subscribe(t *testing.T) {
-	testOwners := []crypto.PublicKey{
-		"me",
-		"also_me",
-	}
+	testOwnerPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testOwner := testOwnerPrivateKey.PublicKey()
 	testSubscription0 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
 			crypto.PublicKey("foo"),
@@ -41,24 +40,23 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testPeer0 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: []crypto.PublicKey{
-				"foo",
-			},
+			Owner: testOwner,
 		},
 	}
 	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
 		c := gomock.NewController(t)
 		m := keychainmock.NewMockKeychain(c)
-		m.EXPECT().ListPublicKeys(
-			keychain.IdentityKey,
-		).AnyTimes().Return(
-			testOwners,
-		)
+		m.EXPECT().
+			GetPrimaryIdentityKey().
+			AnyTimes().
+			Return(
+				testOwnerPrivateKey,
+			)
 		return m
 	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
@@ -66,7 +64,7 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		m := objectstoremock.NewMockStore(c)
 		m.EXPECT().Put(
 			feed.GetFeedHypotheticalRoot(
-				testOwners,
+				testOwner,
 				"nimona.io/subscription.Subscription",
 			).ToObject(),
 		)
@@ -220,13 +218,12 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 }
 
 func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
-	testOwners := []crypto.PublicKey{
-		"me",
-		"also_me",
-	}
+	testOwnerPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testOwner := testOwnerPrivateKey.PublicKey()
 	testSubscription0 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
-			crypto.PublicKey("foo"),
+			testOwner,
 		},
 		Types: []string{
 			"foo/bar/0",
@@ -235,12 +232,12 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testSubscription1 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
-			crypto.PublicKey("foo"),
+			testOwner,
 		},
 		Types: []string{
 			"foo/bar/1",
@@ -249,12 +246,12 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testSubscription2 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
-			crypto.PublicKey("foo"),
+			testOwner,
 		},
 		Types: []string{
 			"foo/bar/2",
@@ -263,14 +260,14 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
 		[]object.Object{
 			feed.Added{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription0.ToObject().Hash(),
@@ -278,7 +275,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			}.ToObject(),
 			feed.Added{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
@@ -286,7 +283,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			}.ToObject(),
 			feed.Added{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription2.ToObject().Hash(),
@@ -294,7 +291,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 			}.ToObject(),
 			feed.Removed{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
@@ -305,11 +302,12 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
 		c := gomock.NewController(t)
 		m := keychainmock.NewMockKeychain(c)
-		m.EXPECT().ListPublicKeys(
-			keychain.IdentityKey,
-		).AnyTimes().Return(
-			testOwners,
-		)
+		m.EXPECT().
+			GetPrimaryIdentityKey().
+			AnyTimes().
+			Return(
+				testOwnerPrivateKey,
+			)
 		return m
 	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
@@ -332,7 +330,7 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		m.EXPECT().RequestStream(
 			gomock.Any(),
 			feed.GetFeedHypotheticalRootHash(
-				testOwners,
+				testOwner,
 				subscriptionType,
 			),
 		).Return(
@@ -391,10 +389,9 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 }
 
 func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
-	testOwners := []crypto.PublicKey{
-		"me",
-		"also_me",
-	}
+	testOwnerPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testOwner := testOwnerPrivateKey.PublicKey()
 	testSubscription0 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
 			crypto.PublicKey("foo0"),
@@ -406,7 +403,7 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testSubscription1 := subscription.Subscription{
@@ -420,14 +417,14 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 			Date(2021, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
 		Metadata: object.Metadata{
-			Owners: testOwners,
+			Owner: testOwner,
 		},
 	}
 	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
 		[]object.Object{
 			feed.Added{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription0.ToObject().Hash(),
@@ -435,7 +432,7 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 			}.ToObject(),
 			feed.Added{
 				Metadata: object.Metadata{
-					Owners: testOwners,
+					Owner: testOwner,
 				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
@@ -446,11 +443,12 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
 		c := gomock.NewController(t)
 		m := keychainmock.NewMockKeychain(c)
-		m.EXPECT().ListPublicKeys(
-			keychain.IdentityKey,
-		).AnyTimes().Return(
-			testOwners,
-		)
+		m.EXPECT().
+			GetPrimaryIdentityKey().
+			AnyTimes().
+			Return(
+				testOwnerPrivateKey,
+			)
 		return m
 	}
 	defaultObjectStoreMock := func(t *testing.T) objectstore.Store {
@@ -479,7 +477,7 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 		m.EXPECT().RequestStream(
 			gomock.Any(),
 			feed.GetFeedHypotheticalRootHash(
-				testOwners,
+				testOwner,
 				subscriptionType,
 			),
 		).Return(

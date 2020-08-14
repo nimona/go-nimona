@@ -13,7 +13,6 @@ import (
 	"nimona.io/pkg/dot"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/http/router"
-	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -121,8 +120,8 @@ func (api *API) HandlePostObjects(c *router.Context) {
 
 	o := object.FromMap(req)
 	k := api.keychain.GetPrimaryPeerKey()
-	o = o.SetOwners(
-		api.keychain.ListPublicKeys(keychain.IdentityKey),
+	o = o.SetOwner(
+		api.keychain.GetPrimaryIdentityKey().PublicKey(),
 	)
 
 	sig, err := object.NewSignature(k, o)
@@ -135,7 +134,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 		return
 	}
 
-	o = o.AddSignature(sig)
+	o = o.SetSignature(sig)
 	if err := api.objectStore.Put(o); err != nil {
 		// nolint: errcheck
 		c.AbortWithError(
@@ -227,9 +226,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	req["stream:s"] = rootObjectHash
 	req["parents:as"] = parents
-	req["@owners:as"] = []interface{}{
-		api.keychain.List(keychain.IdentityKey)[0],
-	}
+	req["owner:s"] = api.keychain.GetPrimaryIdentityKey().PublicKey()
 
 	o := object.FromMap(req)
 
@@ -246,7 +243,7 @@ func (api *API) HandlePostObject(c *router.Context) {
 		return
 	}
 
-	o = o.AddSignature(sig)
+	o = o.SetSignature(sig)
 	ctx := context.New(context.WithTimeout(time.Second))
 	api.syncOut(ctx, o) // nolint: errcheck
 
@@ -259,14 +256,14 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 		return nil
 	}
 
-	owners := o.GetOwners()
-	if len(owners) == 0 {
+	owner := o.GetOwner()
+	if owner.IsEmpty() {
 		return nil
 	}
 
 	opts := []resolver.LookupOption{
 		resolver.LookupByContentType(o.GetType()),
-		resolver.LookupByCertificateSigner(owners[0]),
+		resolver.LookupByCertificateSigner(owner),
 	}
 
 	ps, err := api.resolver.Lookup(ctx, opts...)

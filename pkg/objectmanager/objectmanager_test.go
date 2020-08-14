@@ -48,13 +48,13 @@ func TestObjectRequest(t *testing.T) {
 	// make up the peers
 	_ = &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+			Owner: kc1.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n1.Addresses(),
 	}
 	p2 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 	}
@@ -169,9 +169,7 @@ func Test_manager_RequestStream(t *testing.T) {
 	require.NoError(t, err)
 	testPeer := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: []crypto.PublicKey{
-				testPeerKey.PublicKey(),
-			},
+			Owner: testPeerKey.PublicKey(),
 		},
 	}
 	f00 := object.Object{}.
@@ -298,16 +296,14 @@ func Test_manager_RequestStream(t *testing.T) {
 func Test_manager_Put(t *testing.T) {
 	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
-	testOwnPublicKeys := []crypto.PublicKey{
-		testOwnPrivateKey.PublicKey(),
-	}
+	testOwnPublicKey := testOwnPrivateKey.PublicKey()
 	testObjectSimple := object.Object{}.
 		SetType("foo").
 		Set("foo:s", "bar")
 	testObjectSimpleUpdated := object.Object{}.
 		SetType("foo").
 		Set("foo:s", "bar").
-		SetOwners(testOwnPublicKeys)
+		SetOwner(testOwnPublicKey)
 	testObjectWithStream := object.Object{}.
 		SetType("foo").
 		SetStream("streamRoot").
@@ -316,7 +312,7 @@ func Test_manager_Put(t *testing.T) {
 		SetType("foo").
 		SetStream("streamRoot").
 		Set("foo:s", "bar").
-		SetOwners(testOwnPublicKeys).
+		SetOwner(testOwnPublicKey).
 		SetParents(
 			[]object.Hash{
 				object.Object{}.Set("foo:s", "bar1").Hash(),
@@ -330,17 +326,15 @@ func Test_manager_Put(t *testing.T) {
 	testObjectComplexUpdated := object.Object{}.
 		SetType("foo-complex").
 		Set("foo:s", "bar").
-		SetOwners(testOwnPublicKeys).
+		SetOwner(testOwnPublicKey).
 		Set("nested-simple:r", object.Ref(testObjectSimple.Hash()))
 	testObjectComplexReturned := object.Object{}.
 		SetType("foo-complex").
 		Set("foo:s", "bar").
-		SetOwners(testOwnPublicKeys).
+		SetOwner(testOwnPublicKey).
 		Set("nested-simple:m", testObjectSimple.Raw())
 	testFeedHash := getFeedRootHash(
-		[]crypto.PublicKey{
-			testOwnPrivateKey.PublicKey(),
-		},
+		testOwnPrivateKey.PublicKey(),
 		getTypeForFeed(testObjectSimple.GetType()),
 	)
 	testFeedFirst := feed.Added{
@@ -385,8 +379,8 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					ListPublicKeys(keychain.IdentityKey).
-					Return(testOwnPublicKeys)
+					GetPrimaryIdentityKey().
+					Return(testOwnPrivateKey)
 				return m
 			},
 			pubsub: func(t *testing.T) ObjectPubSub {
@@ -415,8 +409,8 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					ListPublicKeys(keychain.IdentityKey).
-					Return(testOwnPublicKeys)
+					GetPrimaryIdentityKey().
+					Return(testOwnPrivateKey)
 				return m
 			},
 			pubsub: func(t *testing.T) ObjectPubSub {
@@ -454,8 +448,8 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					ListPublicKeys(keychain.IdentityKey).
-					Return(testOwnPublicKeys)
+					GetPrimaryIdentityKey().
+					Return(testOwnPrivateKey)
 				return m
 			},
 			pubsub: func(t *testing.T) ObjectPubSub {
@@ -492,9 +486,9 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					ListPublicKeys(keychain.IdentityKey).
+					GetPrimaryIdentityKey().
 					MaxTimes(2).
-					Return(testOwnPublicKeys)
+					Return(testOwnPrivateKey)
 				return m
 			},
 			pubsub: func(t *testing.T) ObjectPubSub {

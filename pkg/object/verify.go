@@ -12,15 +12,17 @@ const (
 
 // Verify object
 func Verify(o Object) error {
-	sigs := o.GetSignatures()
-	if len(sigs) == 0 {
-		return errors.New("missing signature")
+	sig := o.GetSignature()
+	if sig.IsEmpty() {
+		// TODO return error or nil?
+		return nil
 	}
 
-	for _, s := range sigs {
-		if err := s.Signer.Verify(o.Hash().rawBytes(), s.X); err != nil {
-			return err
-		}
+	if err := sig.Signer.Verify(
+		o.Hash().rawBytes(),
+		sig.X,
+	); err != nil {
+		return err
 	}
 
 	return nil

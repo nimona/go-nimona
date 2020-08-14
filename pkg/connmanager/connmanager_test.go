@@ -40,7 +40,7 @@ func TestGetConnection(t *testing.T) {
 
 	conn1, err := mgr.GetConnection(ctx, &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 	})
@@ -48,7 +48,7 @@ func TestGetConnection(t *testing.T) {
 
 	conn2, err := mgr.GetConnection(ctx, &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 	})

@@ -70,10 +70,12 @@ func (e Certificate) ToObject() object.Object {
 	if len(e.Metadata.Parents) > 0 {
 		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Metadata.Owners) > 0 {
-		o = o.SetOwners(e.Metadata.Owners)
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
 	}
-	o = o.AddSignature(e.Metadata.Signatures...)
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
 	o = o.SetPolicy(e.Metadata.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
@@ -99,8 +101,8 @@ func (e *Certificate) FromObject(o object.Object) error {
 	e.raw = e.raw.SetType(o.GetType())
 	e.Metadata.Stream = o.GetStream()
 	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owners = o.GetOwners()
-	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
@@ -179,10 +181,12 @@ func (e CertificateRequest) ToObject() object.Object {
 	if len(e.Metadata.Parents) > 0 {
 		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Metadata.Owners) > 0 {
-		o = o.SetOwners(e.Metadata.Owners)
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
 	}
-	o = o.AddSignature(e.Metadata.Signatures...)
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
 	o = o.SetPolicy(e.Metadata.Policy)
 	if e.ApplicationName != "" {
 		o = o.Set("applicationName:s", e.ApplicationName)
@@ -228,8 +232,8 @@ func (e *CertificateRequest) FromObject(o object.Object) error {
 	e.raw = e.raw.SetType(o.GetType())
 	e.Metadata.Stream = o.GetStream()
 	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owners = o.GetOwners()
-	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("applicationName:s"); v != nil {
 		e.ApplicationName = string(v.PrimitiveHinted().(string))

@@ -41,7 +41,7 @@ func serve() {
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
 		keychain.Put(
-			keychain.IdentityKey,
+			keychain.PrimaryIdentityKey,
 			cfg.Peer.IdentityKey,
 		)
 	}
@@ -52,9 +52,7 @@ func serve() {
 			eventbus.RelayAdded{
 				Peer: &peer.Peer{
 					Metadata: object.Metadata{
-						Owners: []crypto.PublicKey{
-							crypto.PublicKey(rp),
-						},
+						Owner: crypto.PublicKey(rp),
 					},
 					Addresses: []string{
 						cfg.Peer.RelayAddresses[i],
@@ -74,9 +72,7 @@ func serve() {
 	for i, k := range cfg.Peer.BootstrapKeys {
 		bootstrapPeers[i] = &peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{
-					crypto.PublicKey(k),
-				},
+				Owner: crypto.PublicKey(k),
 			},
 		}
 	}

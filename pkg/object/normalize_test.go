@@ -22,7 +22,7 @@ package object_test
 // 				Alg:    "alg",
 // 				X:      kx,
 // 			},
-// 			Owners: []crypto.PublicKey{
+// 			Owner: []crypto.PublicKey{
 // 				"foo",
 // 			},
 // 			Policy: object.Policy{
@@ -37,7 +37,7 @@ package object_test
 // 	em := map[string]interface{}{
 // 		"header:m": map[string]interface{}{
 // 			"type:s":    "nimona.io/fixtures.TestStream",
-// 			"owners:as": []string{"foo"},
+// 			"Owner:as": []string{"foo"},
 // 			"policy:m": map[string]interface{}{
 // 				"subjects:as":  []string{"subject"},
 // 				"resources:as": []string{"*"},

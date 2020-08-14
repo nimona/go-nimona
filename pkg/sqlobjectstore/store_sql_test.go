@@ -108,10 +108,10 @@ func TestFilter(t *testing.T) {
 		Nonce: "asdf",
 	}
 
-	s, err := object.NewSignature(k, p.ToObject())
+	sig, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
-	p.Metadata.Signatures = append(p.Metadata.Signatures, s)
+	p.Metadata.Signature = sig
 
 	err = store.Put(p.ToObject())
 	require.NoError(t, err)
@@ -127,9 +127,7 @@ func TestFilter(t *testing.T) {
 		obj = obj.SetType(c.GetType())
 		obj = obj.Set("key:s", fmt.Sprintf("value_%d", i))
 		if i%2 == 0 {
-			obj = obj.SetOwners([]crypto.PublicKey{
-				k.PublicKey(),
-			})
+			obj = obj.SetOwner(k.PublicKey())
 		}
 		err = store.Put(obj)
 		require.NoError(t, err)

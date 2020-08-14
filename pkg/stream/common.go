@@ -11,8 +11,9 @@ func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
 	// TODO this currently only accepts allow actions
 	pkm := map[crypto.PublicKey]struct{}{}
 	for _, o := range os {
-		for _, s := range o.GetOwners() {
-			pkm[s] = struct{}{}
+		owner := o.GetOwner()
+		if !owner.IsEmpty() {
+			pkm[owner] = struct{}{}
 		}
 		p := o.GetPolicy()
 		for _, a := range p.Actions {

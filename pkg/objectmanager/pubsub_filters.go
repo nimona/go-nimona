@@ -59,12 +59,8 @@ func FilterByOwner(h crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Owners = append(opts.Lookups.Owners, h)
 		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			for _, owner := range o.GetOwners() {
-				if !owner.IsEmpty() && h.Equals(owner) {
-					return true
-				}
-			}
-			return false
+			owner := o.GetOwner()
+			return !owner.IsEmpty() && owner.Equals(h)
 		})
 	}
 }

@@ -47,34 +47,6 @@ func (mr *MockKeychainMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockKeychain)(nil).Put), arg0, arg1)
 }
 
-// List mocks base method
-func (m *MockKeychain) List(arg0 keychain.KeyType) []crypto.PrivateKey {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", arg0)
-	ret0, _ := ret[0].([]crypto.PrivateKey)
-	return ret0
-}
-
-// List indicates an expected call of List
-func (mr *MockKeychainMockRecorder) List(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockKeychain)(nil).List), arg0)
-}
-
-// ListPublicKeys mocks base method
-func (m *MockKeychain) ListPublicKeys(arg0 keychain.KeyType) []crypto.PublicKey {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPublicKeys", arg0)
-	ret0, _ := ret[0].([]crypto.PublicKey)
-	return ret0
-}
-
-// ListPublicKeys indicates an expected call of ListPublicKeys
-func (mr *MockKeychainMockRecorder) ListPublicKeys(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublicKeys", reflect.TypeOf((*MockKeychain)(nil).ListPublicKeys), arg0)
-}
-
 // GetPrimaryPeerKey mocks base method
 func (m *MockKeychain) GetPrimaryPeerKey() crypto.PrivateKey {
 	m.ctrl.T.Helper()
@@ -87,6 +59,20 @@ func (m *MockKeychain) GetPrimaryPeerKey() crypto.PrivateKey {
 func (mr *MockKeychainMockRecorder) GetPrimaryPeerKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryPeerKey", reflect.TypeOf((*MockKeychain)(nil).GetPrimaryPeerKey))
+}
+
+// GetPrimaryIdentityKey mocks base method
+func (m *MockKeychain) GetPrimaryIdentityKey() crypto.PrivateKey {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrimaryIdentityKey")
+	ret0, _ := ret[0].(crypto.PrivateKey)
+	return ret0
+}
+
+// GetPrimaryIdentityKey indicates an expected call of GetPrimaryIdentityKey
+func (mr *MockKeychainMockRecorder) GetPrimaryIdentityKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryIdentityKey", reflect.TypeOf((*MockKeychain)(nil).GetPrimaryIdentityKey))
 }
 
 // PutCertificate mocks base method

@@ -47,7 +47,7 @@ All type-specific data are grouped under the `data:m` attribute.
 {
   "type:s": "type",
   "stream:s": "x0...",
-  "owners:as": [
+  "Owner:as": [
     "x0...",
     "x1..."
   ],
@@ -71,7 +71,7 @@ All type-specific data are grouped under the `data:m` attribute.
 ### Metadata
 
 * `type:s` Object type
-* `owners:as` (optional) Array of public keys of the owner/s of the object.  
+* `Owner:as` (optional) Array of public keys of the owner/s of the object.  
   If one or more owners are set, the equivalent number of signature MUST be
   provided, one signed by each of the owners.
 * `stream:s` (optional) Root hash of the stream the object is part of.  
