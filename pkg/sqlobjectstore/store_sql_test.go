@@ -111,7 +111,7 @@ func TestFilter(t *testing.T) {
 	s, err := object.NewSignature(k, p.ToObject())
 	require.NoError(t, err)
 
-	p.Signatures = append(p.Signatures, s)
+	p.Metadata.Signatures = append(p.Metadata.Signatures, s)
 
 	err = store.Put(p.ToObject())
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestFilter(t *testing.T) {
 	ph := p.ToObject().Hash()
 
 	c := fixtures.TestSubscribed{}
-	c.Stream = ph
+	c.Metadata.Stream = ph
 
 	hashes := []object.Hash{}
 	for i := 0; i < 5; i++ {

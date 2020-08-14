@@ -48,11 +48,7 @@ type (
 	{{- range $object := .Objects }}
 	{{ structName $object.Name }} struct {
 		raw object.Object
-		Stream object.Hash
-		Parents []object.Hash
-		Owners []crypto.PublicKey
-		Policy object.Policy
-		Signatures []object.Signature
+		Metadata object.Metadata
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{- if $member.IsObject }}
@@ -99,17 +95,17 @@ func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
 func (e {{ structName $object.Name }}) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("{{ $object.Name }}")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
 			{{- if $member.IsRepeated }}
@@ -186,11 +182,11 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	{{- range $member := $object.Members }}
 	{{- if $member.IsObject }}
 		{{- if $member.IsRepeated }}

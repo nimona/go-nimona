@@ -382,7 +382,9 @@ func (m *manager) storeObject(
 		getTypeForFeed(obj.GetType()),
 	)
 	feedEvent := feed.Added{
-		Stream: feedStreamHash,
+		Metadata: object.Metadata{
+			Stream: feedStreamHash,
+		},
 		ObjectHash: []object.Hash{
 			obj.Hash(),
 		},
@@ -435,8 +437,10 @@ func (m *manager) handleObjectRequest(
 		ctx,
 		obj,
 		&peer.Peer{
-			Owners: []crypto.PublicKey{
-				env.Sender,
+			Metadata: object.Metadata{
+				Owners: []crypto.PublicKey{
+					env.Sender,
+				},
 			},
 		},
 	); err != nil {
@@ -462,7 +466,7 @@ func (m *manager) handleStreamRequest(
 	}
 
 	// get the entire graph for this stream
-	or, err := m.store.GetByStream(req.Stream)
+	or, err := m.store.GetByStream(req.Metadata.Stream)
 	if err != nil {
 		return err
 	}
@@ -481,7 +485,9 @@ func (m *manager) handleStreamRequest(
 	}
 
 	res := &stream.Response{
-		Stream:   req.Stream,
+		Metadata: object.Metadata{
+			Stream: req.Metadata.Stream,
+		},
 		Nonce:    req.Nonce,
 		Children: hs,
 	}
@@ -490,8 +496,10 @@ func (m *manager) handleStreamRequest(
 		ctx,
 		res.ToObject(),
 		&peer.Peer{
-			Owners: []crypto.PublicKey{
-				env.Sender,
+			Metadata: object.Metadata{
+				Owners: []crypto.PublicKey{
+					env.Sender,
+				},
 			},
 		},
 	); err != nil {
@@ -554,8 +562,10 @@ func (m *manager) Subscribe(
 
 func getFeedRootHash(owners []crypto.PublicKey, feedType string) object.Hash {
 	r := feed.FeedStreamRoot{
-		Type:   feedType,
-		Owners: owners,
+		Type: feedType,
+		Metadata: object.Metadata{
+			Owners: owners,
+		},
 	}
 	return r.ToObject().Hash()
 }

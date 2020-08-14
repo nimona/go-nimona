@@ -9,20 +9,21 @@ import (
 type (
 	// Object for everything f12n
 	Object Map
-	// Policy for object
+	// Metadata for object
+	Metadata struct {
+		Owners     []crypto.PublicKey `json:"owners"`
+		Parents    []Hash             `json:"parents"`
+		Policy     Policy             `json:"policy"`
+		Signatures []Signature        `json:"_signatures"`
+		Stream     Hash               `json:"stream"`
+	}
+	// Policy for object metadata
 	Policy struct {
 		Subjects  []string `json:"subjects:as,omitempty" mapstructure:"subjects:as,omitempty"`
 		Resources []string `json:"resources:as,omitempty" mapstructure:"resources:as,omitempty"`
 		Actions   []string `json:"actions:as,omitempty" mapstructure:"actions:as,omitempty"`
 		Effect    string   `json:"effect:s,omitempty" mapstructure:"effect:s,omitempty"`
 	}
-	// Metadata struct {
-	// 	Owners     []crypto.PublicKey `json:"owners"`
-	// 	Parents    []Hash             `json:"parents"`
-	// 	Policy     Policy             `json:"policy"`
-	// 	Signatures []Signature        `json:"_signatures"`
-	// 	Stream     Hash               `json:"stream"`
-	// }
 )
 
 func (v Signature) IsEmpty() bool {

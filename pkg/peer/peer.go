@@ -4,15 +4,15 @@ import "nimona.io/pkg/crypto"
 
 // Address of the peer
 func (pi *Peer) Address() string {
-	if len(pi.Signatures) == 0 {
+	if len(pi.Metadata.Signatures) == 0 {
 		return ""
 	}
-	return "peer:" + pi.Signatures[0].Signer.String()
+	return "peer:" + pi.Metadata.Signatures[0].Signer.String()
 }
 
 func (pi *Peer) PublicKey() crypto.PublicKey {
-	if len(pi.Owners) == 0 {
+	if len(pi.Metadata.Owners) == 0 {
 		return ""
 	}
-	return pi.Owners[0]
+	return pi.Metadata.Owners[0]
 }

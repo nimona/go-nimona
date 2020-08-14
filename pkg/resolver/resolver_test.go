@@ -34,7 +34,9 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	ba := []*peer.Peer{
 		{
 			Addresses: n0.Addresses(),
-			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+			Metadata: object.Metadata{
+				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+			},
 		},
 	}
 
@@ -97,7 +99,9 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	ba := []*peer.Peer{
 		{
 			Addresses: n0.Addresses(),
-			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+			Metadata: object.Metadata{
+				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+			},
 		},
 	}
 
@@ -194,7 +198,9 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	ba := []*peer.Peer{
 		{
 			Addresses: n0.Addresses(),
-			Owners:    kc0.ListPublicKeys(keychain.PeerKey),
+			Metadata: object.Metadata{
+				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+			},
 		},
 	}
 

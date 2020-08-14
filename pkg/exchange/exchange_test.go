@@ -28,11 +28,15 @@ func TestSendSuccess(t *testing.T) {
 
 	// make up the peers
 	p1 := &peer.Peer{
-		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n1.Addresses(),
 	}
 	p2 := &peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n2.Addresses(),
 	}
 
@@ -133,18 +137,24 @@ func TestSendRelay(t *testing.T) {
 
 	// make up the peers
 	pR := &peer.Peer{
-		Owners:    rkc.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: rkc.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: rn.Addresses(),
 	}
 	p1 := &peer.Peer{
-		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n1.Addresses(),
 		Relays: []*peer.Peer{
 			pR,
 		},
 	}
 	p2 := &peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n2.Addresses(),
 		Relays: []*peer.Peer{
 			pR,

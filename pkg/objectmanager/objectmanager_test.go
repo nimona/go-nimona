@@ -47,11 +47,15 @@ func TestObjectRequest(t *testing.T) {
 
 	// make up the peers
 	_ = &peer.Peer{
-		Owners:    kc1.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n1.Addresses(),
 	}
 	p2 := &peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n2.Addresses(),
 	}
 
@@ -164,8 +168,10 @@ func Test_manager_RequestStream(t *testing.T) {
 	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testPeer := &peer.Peer{
-		Owners: []crypto.PublicKey{
-			testPeerKey.PublicKey(),
+		Metadata: object.Metadata{
+			Owners: []crypto.PublicKey{
+				testPeerKey.PublicKey(),
+			},
 		},
 	}
 	f00 := object.Object{}.
@@ -341,9 +347,11 @@ func Test_manager_Put(t *testing.T) {
 		ObjectHash: []object.Hash{
 			testObjectSimpleUpdated.Hash(),
 		},
-		Stream: testFeedHash,
-		Parents: []object.Hash{
-			testFeedHash,
+		Metadata: object.Metadata{
+			Stream: testFeedHash,
+			Parents: []object.Hash{
+				testFeedHash,
+			},
 		},
 	}.ToObject()
 	type fields struct {

@@ -5,29 +5,20 @@ package peer
 import (
 	"errors"
 
-	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Certificate struct {
-		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
-		Nonce      string
-		Created    string
-		Expires    string
+		raw      object.Object
+		Metadata object.Metadata
+		Nonce    string
+		Created  string
+		Expires  string
 	}
 	CertificateRequest struct {
 		raw                    object.Object
-		Stream                 object.Hash
-		Parents                []object.Hash
-		Owners                 []crypto.PublicKey
-		Policy                 object.Policy
-		Signatures             []object.Signature
+		Metadata               object.Metadata
 		ApplicationName        string
 		ApplicationDescription string
 		ApplicationURL         string
@@ -73,17 +64,17 @@ func (e Certificate) GetSchema() *object.SchemaObject {
 func (e Certificate) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("nimona.io/peer.Certificate")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
 	}
@@ -106,11 +97,11 @@ func (e *Certificate) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
@@ -182,17 +173,17 @@ func (e CertificateRequest) GetSchema() *object.SchemaObject {
 func (e CertificateRequest) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("nimona.io/peer.CertificateRequest")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.ApplicationName != "" {
 		o = o.Set("applicationName:s", e.ApplicationName)
 	}
@@ -235,11 +226,11 @@ func (e *CertificateRequest) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("applicationName:s"); v != nil {
 		e.ApplicationName = string(v.PrimitiveHinted().(string))
 	}
