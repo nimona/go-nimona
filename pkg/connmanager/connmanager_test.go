@@ -11,6 +11,7 @@ import (
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -38,13 +39,17 @@ func TestGetConnection(t *testing.T) {
 	defer lst2.Close()
 
 	conn1, err := mgr.GetConnection(ctx, &peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
 
 	conn2, err := mgr.GetConnection(ctx, &peer.Peer{
-		Owners:    kc2.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+		},
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)

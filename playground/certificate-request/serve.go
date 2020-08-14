@@ -5,12 +5,13 @@ import (
 	"os"
 	"time"
 
+	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/net"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 )
@@ -50,8 +51,10 @@ func serve() {
 		eventbus.Publish(
 			eventbus.RelayAdded{
 				Peer: &peer.Peer{
-					Owners: []crypto.PublicKey{
-						crypto.PublicKey(rp),
+					Metadata: object.Metadata{
+						Owners: []crypto.PublicKey{
+							crypto.PublicKey(rp),
+						},
 					},
 					Addresses: []string{
 						cfg.Peer.RelayAddresses[i],
@@ -70,8 +73,10 @@ func serve() {
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
 	for i, k := range cfg.Peer.BootstrapKeys {
 		bootstrapPeers[i] = &peer.Peer{
-			Owners: []crypto.PublicKey{
-				crypto.PublicKey(k),
+			Metadata: object.Metadata{
+				Owners: []crypto.PublicKey{
+					crypto.PublicKey(k),
+				},
 			},
 		}
 	}

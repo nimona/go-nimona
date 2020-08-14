@@ -62,8 +62,10 @@ func GetFeedHypotheticalRoot(
 	objectType string,
 ) FeedStreamRoot {
 	r := FeedStreamRoot{
-		Type:   getTypeForFeed(objectType),
-		Owners: owners,
+		Type: getTypeForFeed(objectType),
+		Metadata: object.Metadata{
+			Owners: owners,
+		},
 	}
 	return r
 }

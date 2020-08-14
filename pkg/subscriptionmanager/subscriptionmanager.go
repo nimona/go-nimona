@@ -85,7 +85,9 @@ func (m *subscriptionmanager) Subscribe(
 	owners := m.keychain.ListPublicKeys(keychain.IdentityKey)
 	// create a new subscription
 	sub := subscription.Subscription{
-		Owners:   owners,
+		Metadata: object.Metadata{
+			Owners: owners,
+		},
 		Subjects: subjects,
 		Types:    types,
 		Streams:  streams,
@@ -152,7 +154,7 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 			continue
 		}
 		ours := false
-		for _, subOwner := range sub.Owners {
+		for _, subOwner := range sub.Metadata.Owners {
 			// TODO either deal with multiple owners, or wait until we kill them
 			if subOwner == owners[0] {
 				ours = true

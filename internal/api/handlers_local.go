@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -14,7 +15,9 @@ func (api *API) HandleGetLocal(c *router.Context) {
 		Certificates: api.keychain.GetCertificates(
 			api.keychain.GetPrimaryPeerKey().PublicKey(),
 		),
-		Owners: api.keychain.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: api.keychain.ListPublicKeys(keychain.PeerKey),
+		},
 	}
 	ms := api.mapObject(p.ToObject())
 	c.JSON(http.StatusOK, ms)

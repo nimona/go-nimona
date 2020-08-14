@@ -447,8 +447,10 @@ func (r *resolver) handlePeerLookup(
 	p, err := r.peerCache.Get(e.Sender)
 	if err != nil {
 		p = &peer.Peer{
-			Owners: []crypto.PublicKey{
-				e.Sender,
+			Metadata: object.Metadata{
+				Owners: []crypto.PublicKey{
+					e.Sender,
+				},
 			},
 		}
 	}
@@ -525,7 +527,9 @@ func (r *resolver) announceSelf(p crypto.PublicKey) {
 		ctx,
 		r.getLocalPeer().ToObject(),
 		&peer.Peer{
-			Owners: []crypto.PublicKey{p},
+			Metadata: object.Metadata{
+				Owners: []crypto.PublicKey{p},
+			},
 		},
 	)
 	if err != nil {
@@ -548,7 +552,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	}
 
 	for _, c := range cs {
-		for _, s := range c.Signatures {
+		for _, s := range c.Metadata.Signatures {
 			hs = append(hs, s.Signer.String())
 		}
 	}
@@ -562,7 +566,9 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		Certificates: r.keychain.GetCertificates(
 			r.keychain.GetPrimaryPeerKey().PublicKey(),
 		),
-		Owners: r.keychain.ListPublicKeys(keychain.PeerKey),
+		Metadata: object.Metadata{
+			Owners: r.keychain.ListPublicKeys(keychain.PeerKey),
+		},
 	}
 
 	o := pi.ToObject()
@@ -571,7 +577,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		panic(err)
 	}
 
-	pi.Signatures = append(pi.Signatures, sig)
+	pi.Metadata.Signatures = append(pi.Metadata.Signatures, sig)
 
 	return pi
 }
@@ -580,7 +586,7 @@ func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.keychain.GetPrimaryPeerKey().PublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		for _, s := range p.Owners {
+		for _, s := range p.Metadata.Owners {
 			pm[s.String()] = p
 		}
 	}

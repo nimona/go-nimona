@@ -159,11 +159,13 @@ func TestSimulation(t *testing.T) {
 	// create an obj, and attach recipients to policy
 	nonce := rand.String(24) + "xnonce"
 	streamCreated := fixtures.TestStream{
-		Policy: object.Policy{
-			Subjects:  recipients,
-			Resources: []string{"*"},
-			Actions:   []string{"read"},
-			Effect:    "allow",
+		Metadata: object.Metadata{
+			Policy: object.Policy{
+				Subjects:  recipients,
+				Resources: []string{"*"},
+				Actions:   []string{"read"},
+				Effect:    "allow",
+			},
 		},
 		Nonce: nonce,
 	}

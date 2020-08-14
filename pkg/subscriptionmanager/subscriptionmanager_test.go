@@ -40,11 +40,15 @@ func Test_subscriptionmanager_Subscribe(t *testing.T) {
 		Expiry: time.
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testPeer0 := &peer.Peer{
-		Owners: []crypto.PublicKey{
-			"foo",
+		Metadata: object.Metadata{
+			Owners: []crypto.PublicKey{
+				"foo",
+			},
 		},
 	}
 	defaultKeychainMock := func(t *testing.T) keychain.Keychain {
@@ -230,7 +234,9 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		Expiry: time.
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testSubscription1 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -242,7 +248,9 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		Expiry: time.
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testSubscription2 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -254,30 +262,40 @@ func Test_subscriptionmanager_GetOwnSubscriptions(t *testing.T) {
 		Expiry: time.
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
 		[]object.Object{
 			feed.Added{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription0.ToObject().Hash(),
 				},
 			}.ToObject(),
 			feed.Added{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
 				},
 			}.ToObject(),
 			feed.Added{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription2.ToObject().Hash(),
 				},
 			}.ToObject(),
 			feed.Removed{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
 				},
@@ -387,7 +405,9 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 		Expiry: time.
 			Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testSubscription1 := subscription.Subscription{
 		Subjects: []crypto.PublicKey{
@@ -399,18 +419,24 @@ func Test_subscriptionmanager_GetSubscriptions(t *testing.T) {
 		Expiry: time.
 			Date(2021, 1, 1, 0, 0, 0, 0, time.UTC).
 			Format(time.RFC3339),
-		Owners: testOwners,
+		Metadata: object.Metadata{
+			Owners: testOwners,
+		},
 	}
 	testFeedSubscriptionReader1 := object.NewReadCloserFromObjects(
 		[]object.Object{
 			feed.Added{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription0.ToObject().Hash(),
 				},
 			}.ToObject(),
 			feed.Added{
-				Owners: testOwners,
+				Metadata: object.Metadata{
+					Owners: testOwners,
+				},
 				ObjectHash: []object.Hash{
 					testSubscription1.ToObject().Hash(),
 				},

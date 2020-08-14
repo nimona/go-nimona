@@ -70,20 +70,20 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 			opts.Filters,
 			func(p *peer.Peer) bool {
 				for _, key := range keys {
-					for _, owner := range p.Owners {
+					for _, owner := range p.Metadata.Owners {
 						if owner.Equals(key) {
 							return true
 						}
 					}
 					// TODO(geoah) should certs and sigs be considered owners?
 					for _, c := range p.Certificates {
-						for _, s := range c.Signatures {
+						for _, s := range c.Metadata.Signatures {
 							if s.Signer.Equals(key) {
 								return true
 							}
 						}
 					}
-					for _, s := range p.Signatures {
+					for _, s := range p.Metadata.Signatures {
 						if s.Signer.Equals(key) {
 							return true
 						}
@@ -121,7 +121,7 @@ func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
 			opts.Filters,
 			func(p *peer.Peer) bool {
 				for _, c := range p.Certificates {
-					for _, s := range c.Signatures {
+					for _, s := range c.Metadata.Signatures {
 						if certSigner.Equals(s.Signer) {
 							return true
 						}

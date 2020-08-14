@@ -2,28 +2,17 @@
 
 package object
 
-import (
-	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/errors"
-)
+import "nimona.io/pkg/errors"
 
 type (
 	Request struct {
 		raw        Object
-		Stream     Hash
-		Parents    []Hash
-		Owners     []crypto.PublicKey
-		Policy     Policy
-		Signatures []Signature
+		Metadata   Metadata
 		ObjectHash Hash
 	}
 	Response struct {
 		raw        Object
-		Stream     Hash
-		Parents    []Hash
-		Owners     []crypto.PublicKey
-		Policy     Policy
-		Signatures []Signature
+		Metadata   Metadata
 		ObjectHash *Object
 	}
 )
@@ -51,17 +40,17 @@ func (e Request) GetSchema() *SchemaObject {
 func (e Request) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/Request")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.ObjectHash != "" {
 		o = o.Set("objectHash:s", e.ObjectHash)
 	}
@@ -78,11 +67,11 @@ func (e *Request) FromObject(o Object) error {
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:s"); v != nil {
 		e.ObjectHash = Hash(v.PrimitiveHinted().(string))
 	}
@@ -112,17 +101,17 @@ func (e Response) GetSchema() *SchemaObject {
 func (e Response) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/Response")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.ObjectHash != nil {
 		o = o.Set("objectHash:m", e.ObjectHash.ToObject().Raw())
 	}
@@ -139,11 +128,11 @@ func (e *Response) FromObject(o Object) error {
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:m"); v != nil && v.IsMap() {
 		eo := Object(v.(Map))
 		e.ObjectHash = &eo

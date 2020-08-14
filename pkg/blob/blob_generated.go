@@ -5,28 +5,19 @@ package blob
 import (
 	"errors"
 
-	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Chunk struct {
-		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
-		Data       []byte
+		raw      object.Object
+		Metadata object.Metadata
+		Data     []byte
 	}
 	Blob struct {
-		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
-		Chunks     []*Chunk
+		raw      object.Object
+		Metadata object.Metadata
+		Chunks   []*Chunk
 	}
 )
 
@@ -53,17 +44,17 @@ func (e Chunk) GetSchema() *object.SchemaObject {
 func (e Chunk) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("nimona.io/Chunk")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.Data) != 0 {
 		o = o.Set("data:d", e.Data)
 	}
@@ -80,11 +71,11 @@ func (e *Chunk) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("data:d"); v != nil {
 		e.Data = []byte(v.PrimitiveHinted().([]byte))
 	}
@@ -114,17 +105,17 @@ func (e Blob) GetSchema() *object.SchemaObject {
 func (e Blob) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("nimona.io/Blob")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.Chunks) > 0 {
 		v := object.List{}
 		for _, iv := range e.Chunks {
@@ -145,11 +136,11 @@ func (e *Blob) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("chunks:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Chunks = make([]*Chunk, len(m))

@@ -5,39 +5,26 @@ package feed
 import (
 	"errors"
 
-	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	FeedStreamRoot struct {
-		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
-		Type       string
-		Datetime   string
+		raw      object.Object
+		Metadata object.Metadata
+		Type     string
+		Datetime string
 	}
 	Added struct {
 		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
+		Metadata   object.Metadata
 		ObjectHash []object.Hash
 		Sequence   int64
 		Datetime   string
 	}
 	Removed struct {
 		raw        object.Object
-		Stream     object.Hash
-		Parents    []object.Hash
-		Owners     []crypto.PublicKey
-		Policy     object.Policy
-		Signatures []object.Signature
+		Metadata   object.Metadata
 		ObjectHash []object.Hash
 		Sequence   int64
 		Datetime   string
@@ -73,17 +60,17 @@ func (e FeedStreamRoot) GetSchema() *object.SchemaObject {
 func (e FeedStreamRoot) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("stream:nimona.io/feed")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.Type != "" {
 		o = o.Set("type:s", e.Type)
 	}
@@ -103,11 +90,11 @@ func (e *FeedStreamRoot) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("type:s"); v != nil {
 		e.Type = string(v.PrimitiveHinted().(string))
 	}
@@ -152,17 +139,17 @@ func (e Added) GetSchema() *object.SchemaObject {
 func (e Added) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("event:nimona.io/feed.Added")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.ObjectHash) > 0 {
 		v := object.List{}
 		for _, iv := range e.ObjectHash {
@@ -187,11 +174,11 @@ func (e *Added) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.ObjectHash = make([]object.Hash, len(m))
@@ -243,17 +230,17 @@ func (e Removed) GetSchema() *object.SchemaObject {
 func (e Removed) ToObject() object.Object {
 	o := object.Object{}
 	o = o.SetType("event:nimona.io/feed.Removed")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.ObjectHash) > 0 {
 		v := object.List{}
 		for _, iv := range e.ObjectHash {
@@ -278,11 +265,11 @@ func (e *Removed) FromObject(o object.Object) error {
 	}
 	e.raw = object.Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
 		e.ObjectHash = make([]object.Hash, len(m))

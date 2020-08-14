@@ -2,19 +2,12 @@
 
 package object
 
-import (
-	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/errors"
-)
+import "nimona.io/pkg/errors"
 
 type (
 	SchemaProperty struct {
 		raw        Object
-		Stream     Hash
-		Parents    []Hash
-		Owners     []crypto.PublicKey
-		Policy     Policy
-		Signatures []Signature
+		Metadata   Metadata
 		Name       string
 		Type       string
 		Hint       string
@@ -24,11 +17,7 @@ type (
 	}
 	SchemaObject struct {
 		raw        Object
-		Stream     Hash
-		Parents    []Hash
-		Owners     []crypto.PublicKey
-		Policy     Policy
-		Signatures []Signature
+		Metadata   Metadata
 		Properties []*SchemaProperty
 	}
 )
@@ -44,17 +33,17 @@ func (e SchemaProperty) IsStreamRoot() bool {
 func (e SchemaProperty) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/SchemaProperty")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if e.Name != "" {
 		o = o.Set("name:s", e.Name)
 	}
@@ -83,11 +72,11 @@ func (e *SchemaProperty) FromObject(o Object) error {
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
 	}
@@ -127,17 +116,17 @@ func (e SchemaObject) IsStreamRoot() bool {
 func (e SchemaObject) ToObject() Object {
 	o := Object{}
 	o = o.SetType("nimona.io/SchemaObject")
-	if len(e.Stream) > 0 {
-		o = o.SetStream(e.Stream)
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
 	}
-	if len(e.Parents) > 0 {
-		o = o.SetParents(e.Parents)
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Owners) > 0 {
-		o = o.SetOwners(e.Owners)
+	if len(e.Metadata.Owners) > 0 {
+		o = o.SetOwners(e.Metadata.Owners)
 	}
-	o = o.AddSignature(e.Signatures...)
-	o = o.SetPolicy(e.Policy)
+	o = o.AddSignature(e.Metadata.Signatures...)
+	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.Properties) > 0 {
 		v := List{}
 		for _, iv := range e.Properties {
@@ -155,11 +144,11 @@ func (e *SchemaObject) FromObject(o Object) error {
 	}
 	e.raw = Object{}
 	e.raw = e.raw.SetType(o.GetType())
-	e.Stream = o.GetStream()
-	e.Parents = o.GetParents()
-	e.Owners = o.GetOwners()
-	e.Signatures = o.GetSignatures()
-	e.Policy = o.GetPolicy()
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owners = o.GetOwners()
+	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})
 		e.Properties = make([]*SchemaProperty, len(m))

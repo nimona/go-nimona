@@ -110,7 +110,7 @@ func (s *memorystore) PutCertificate(c *peer.Certificate) {
 	s.certLock.Lock()
 	defer s.certLock.Unlock()
 	h := c.ToObject().Hash()
-	for _, sub := range c.Policy.Subjects {
+	for _, sub := range c.Metadata.Policy.Subjects {
 		if _, ok := s.certs[crypto.PublicKey(sub)]; !ok {
 			s.certs[crypto.PublicKey(sub)] = map[object.Hash]*peer.Certificate{}
 		}

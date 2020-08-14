@@ -429,8 +429,10 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 				context.Background(),
 				o,
 				&peer.Peer{
-					Owners: []crypto.PublicKey{
-						nfwd.Recipient,
+					Metadata: object.Metadata{
+						Owners: []crypto.PublicKey{
+							nfwd.Recipient,
+						},
 					},
 				},
 			); err != nil {
