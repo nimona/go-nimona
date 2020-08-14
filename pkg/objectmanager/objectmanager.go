@@ -378,7 +378,7 @@ func (m *manager) storeObject(
 
 	// add to feed
 	feedStreamHash := getFeedRootHash(
-		m.keychain.ListPublicKeys(keychain.IdentityKey),
+		m.keychain.GetPrimaryIdentityKey().PublicKey(),
 		getTypeForFeed(obj.GetType()),
 	)
 	feedEvent := feed.Added{
@@ -438,9 +438,7 @@ func (m *manager) handleObjectRequest(
 		obj,
 		&peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{
-					env.Sender,
-				},
+				Owner: env.Sender,
 			},
 		},
 	); err != nil {
@@ -497,9 +495,7 @@ func (m *manager) handleStreamRequest(
 		res.ToObject(),
 		&peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{
-					env.Sender,
-				},
+				Owner: env.Sender,
 			},
 		},
 	); err != nil {
@@ -521,8 +517,8 @@ func (m *manager) Put(
 ) (object.Object, error) {
 	// add owners
 	// TODO should we be adding owners?
-	o = o.SetOwners(
-		m.keychain.ListPublicKeys(keychain.IdentityKey),
+	o = o.SetOwner(
+		m.keychain.GetPrimaryIdentityKey().PublicKey(),
 	)
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
@@ -560,11 +556,11 @@ func (m *manager) Subscribe(
 	return m.pubsub.Subscribe(options.Filters...)
 }
 
-func getFeedRootHash(owners []crypto.PublicKey, feedType string) object.Hash {
+func getFeedRootHash(owner crypto.PublicKey, feedType string) object.Hash {
 	r := feed.FeedStreamRoot{
 		Type: feedType,
 		Metadata: object.Metadata{
-			Owners: owners,
+			Owner: owner,
 		},
 	}
 	return r.ToObject().Hash()

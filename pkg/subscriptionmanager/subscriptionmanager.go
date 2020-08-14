@@ -62,7 +62,7 @@ func New(
 
 	// make sure that the hypothetical root for our subscription chain exists
 	feedRoot := feed.GetFeedHypotheticalRoot(
-		kc.ListPublicKeys(keychain.IdentityKey),
+		kc.GetPrimaryIdentityKey().PublicKey(),
 		subscriptionType,
 	)
 	if err := m.objectstore.Put(feedRoot.ToObject()); err != nil {
@@ -82,11 +82,11 @@ func (m *subscriptionmanager) Subscribe(
 ) error {
 	ctx = context.FromContext(ctx)
 	// find our identity public key
-	owners := m.keychain.ListPublicKeys(keychain.IdentityKey)
+	owners := m.keychain.GetPrimaryIdentityKey().PublicKey()
 	// create a new subscription
 	sub := subscription.Subscription{
 		Metadata: object.Metadata{
-			Owners: owners,
+			Owner: owners,
 		},
 		Subjects: subjects,
 		Types:    types,
@@ -114,14 +114,12 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 ) ([]subscription.Subscription, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx)
-	owners := m.keychain.ListPublicKeys(
-		keychain.IdentityKey,
-	)
+	owner := m.keychain.GetPrimaryIdentityKey().PublicKey()
 	// get the subscriptions feed
 	subscriptionFeedReader, err := m.objectmanager.RequestStream(
 		ctx,
 		feed.GetFeedHypotheticalRootHash(
-			owners,
+			owner,
 			subscriptionType,
 		),
 	)
@@ -154,12 +152,10 @@ func (m *subscriptionmanager) GetOwnSubscriptions(
 			continue
 		}
 		ours := false
-		for _, subOwner := range sub.Metadata.Owners {
-			// TODO either deal with multiple owners, or wait until we kill them
-			if subOwner == owners[0] {
-				ours = true
-				break
-			}
+		subOwner := sub.Metadata.Owner
+		// TODO either deal with multiple owners, or wait until we kill them
+		if subOwner == owner {
+			ours = true
 		}
 		if ours {
 			subs = append(subs, sub)
@@ -174,14 +170,12 @@ func (m *subscriptionmanager) GetSubscriptionsByType(
 ) ([]subscription.Subscription, error) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx)
-	owners := m.keychain.ListPublicKeys(
-		keychain.IdentityKey,
-	)
+	owner := m.keychain.GetPrimaryIdentityKey().PublicKey()
 	// get the subscriptions feed
 	subscriptionFeedReader, err := m.objectmanager.RequestStream(
 		ctx,
 		feed.GetFeedHypotheticalRootHash(
-			owners,
+			owner,
 			subscriptionType,
 		),
 	)
@@ -214,17 +208,6 @@ func (m *subscriptionmanager) GetSubscriptionsByType(
 			continue
 		}
 		// TODO should this include own subscriptions?
-		// ours := false
-		// for _, subOwner := range sub.Owners {
-		// 	// TODO either deal with multiple owners, or wait until we kill them
-		// 	if subOwner == owners[0] {
-		// 		ours = true
-		// 		break
-		// 	}
-		// }
-		// if ours {
-		// 	continue
-		// }
 		for _, subType := range sub.Types {
 			if subType == objectType {
 				subs = append(subs, sub)

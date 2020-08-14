@@ -35,7 +35,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 		{
 			Addresses: n0.Addresses(),
 			Metadata: object.Metadata{
-				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},
 		},
 	}
@@ -100,7 +100,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		{
 			Addresses: n0.Addresses(),
 			Metadata: object.Metadata{
-				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},
 		},
 	}
@@ -199,7 +199,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		{
 			Addresses: n0.Addresses(),
 			Metadata: object.Metadata{
-				Owners: kc0.ListPublicKeys(keychain.PeerKey),
+				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},
 		},
 	}
@@ -282,7 +282,7 @@ func newPeer(
 
 	kc := keychain.New()
 	kc.Put(keychain.PrimaryPeerKey, pk)
-	kc.Put(keychain.IdentityKey, opk)
+	kc.Put(keychain.PrimaryIdentityKey, opk)
 	kc.PutCertificate(&c)
 
 	n := net.New(

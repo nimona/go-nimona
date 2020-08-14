@@ -58,23 +58,26 @@ func GetFeedHashes(
 }
 
 func GetFeedHypotheticalRoot(
-	owners []crypto.PublicKey,
+	owner crypto.PublicKey,
 	objectType string,
 ) FeedStreamRoot {
 	r := FeedStreamRoot{
 		Type: getTypeForFeed(objectType),
 		Metadata: object.Metadata{
-			Owners: owners,
+			Owner: owner,
 		},
 	}
 	return r
 }
 
 func GetFeedHypotheticalRootHash(
-	owners []crypto.PublicKey,
+	owner crypto.PublicKey,
 	objectType string,
 ) object.Hash {
-	return GetFeedHypotheticalRoot(owners, objectType).ToObject().Hash()
+	return GetFeedHypotheticalRoot(
+		owner,
+		objectType,
+	).ToObject().Hash()
 }
 
 func getTypeForFeed(objectType string) string {

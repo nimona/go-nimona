@@ -19,12 +19,12 @@ func TestObject(t *testing.T) {
 		Actions:  []string{"action1", "action2"},
 		Effect:   "effect",
 	})
-	o = o.AddSignature(Signature{
+	o = o.SetSignature(Signature{
 		Signer: "signer",
 		Alg:    "alg",
 		X:      []byte{1, 2, 3},
 	})
-	o = o.SetOwners([]crypto.PublicKey{"owner1", "owner2"})
+	o = o.SetOwner(crypto.PublicKey("owner1"))
 	o = o.Set("foo:s", "bar")
 
 	m := map[string]interface{}{
@@ -37,14 +37,12 @@ func TestObject(t *testing.T) {
 				"actions:as":  []string{"action1", "action2"},
 				"effect:s":    "effect",
 			},
-			"_signatures:am": []interface{}{
-				map[string]interface{}{
-					"signer:s": "signer",
-					"alg:s":    "alg",
-					"x:d":      []byte{1, 2, 3},
-				},
+			"_signature:m": map[string]interface{}{
+				"signer:s": "signer",
+				"alg:s":    "alg",
+				"x:d":      []byte{1, 2, 3},
 			},
-			"owners:as": []string{"owner1", "owner2"},
+			"owner:s": "owner1",
 		},
 		"data:m": map[string]interface{}{
 			"foo:s": "bar",

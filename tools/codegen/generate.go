@@ -101,10 +101,12 @@ func (e {{ structName $object.Name }}) ToObject() object.Object {
 	if len(e.Metadata.Parents) > 0 {
 		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Metadata.Owners) > 0 {
-		o = o.SetOwners(e.Metadata.Owners)
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
 	}
-	o = o.AddSignature(e.Metadata.Signatures...)
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
 	o = o.SetPolicy(e.Metadata.Policy)
 	{{- range $member := $object.Members }}
 		{{- if $member.IsObject }}
@@ -184,8 +186,8 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 	e.raw = e.raw.SetType(o.GetType())
 	e.Metadata.Stream = o.GetStream()
 	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owners = o.GetOwners()
-	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
 	e.Metadata.Policy = o.GetPolicy()
 	{{- range $member := $object.Members }}
 	{{- if $member.IsObject }}

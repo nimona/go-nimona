@@ -23,7 +23,7 @@ func NewCertificate(
 		Expires: time.Now().Add(time.Hour * 24 * 365).Format(time.RFC3339),
 	}
 	s, _ := object.NewSignature(issuer, c.ToObject())
-	c.Metadata.Signatures = append(c.Metadata.Signatures, s)
+	c.Metadata.Signature = s
 	return c
 }
 

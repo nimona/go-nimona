@@ -50,7 +50,7 @@ package api
 // 						continue
 // 					}
 // 				}
-// 				req = req.AddSignature(sig)
+// 				req = req.SetSignature(sig)
 // 				// TODO(geoah) better way to require recipients?
 // 				// TODO(geoah) helper function for getting subjects
 // 				subjects := []string{}

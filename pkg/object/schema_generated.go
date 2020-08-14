@@ -39,10 +39,12 @@ func (e SchemaProperty) ToObject() Object {
 	if len(e.Metadata.Parents) > 0 {
 		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Metadata.Owners) > 0 {
-		o = o.SetOwners(e.Metadata.Owners)
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
 	}
-	o = o.AddSignature(e.Metadata.Signatures...)
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
 	o = o.SetPolicy(e.Metadata.Policy)
 	if e.Name != "" {
 		o = o.Set("name:s", e.Name)
@@ -74,8 +76,8 @@ func (e *SchemaProperty) FromObject(o Object) error {
 	e.raw = e.raw.SetType(o.GetType())
 	e.Metadata.Stream = o.GetStream()
 	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owners = o.GetOwners()
-	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("name:s"); v != nil {
 		e.Name = string(v.PrimitiveHinted().(string))
@@ -122,10 +124,12 @@ func (e SchemaObject) ToObject() Object {
 	if len(e.Metadata.Parents) > 0 {
 		o = o.SetParents(e.Metadata.Parents)
 	}
-	if len(e.Metadata.Owners) > 0 {
-		o = o.SetOwners(e.Metadata.Owners)
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
 	}
-	o = o.AddSignature(e.Metadata.Signatures...)
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
 	o = o.SetPolicy(e.Metadata.Policy)
 	if len(e.Properties) > 0 {
 		v := List{}
@@ -146,8 +150,8 @@ func (e *SchemaObject) FromObject(o Object) error {
 	e.raw = e.raw.SetType(o.GetType())
 	e.Metadata.Stream = o.GetStream()
 	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owners = o.GetOwners()
-	e.Metadata.Signatures = o.GetSignatures()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("properties:am"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]interface{})

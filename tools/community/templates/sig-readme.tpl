@@ -20,7 +20,7 @@ The following subprojects are owned by {{ .Label }}:
   - Description: {{ .Description }}
 {{- end }}
 {{- if .Owners }}
-  - Owners:
+  - Owner:
 {{- range .Owners }}
     - {{ . }}
 {{- end }}

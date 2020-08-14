@@ -11,11 +11,11 @@ type (
 	Object Map
 	// Metadata for object
 	Metadata struct {
-		Owners     []crypto.PublicKey `json:"owners"`
-		Parents    []Hash             `json:"parents"`
-		Policy     Policy             `json:"policy"`
-		Signatures []Signature        `json:"_signatures"`
-		Stream     Hash               `json:"stream"`
+		Owner     crypto.PublicKey `json:"owner"`
+		Parents   []Hash           `json:"parents"`
+		Policy    Policy           `json:"policy"`
+		Signature Signature        `json:"_signature"`
+		Stream    Hash             `json:"stream"`
 	}
 	// Policy for object metadata
 	Policy struct {
@@ -155,19 +155,6 @@ func (o Object) GetPolicy() Policy {
 	return p
 }
 
-func (o Object) AddSignature(vs ...Signature) Object {
-	sigs := List{}
-	if os := o.getMeta("_signatures:am"); os != nil {
-		if ol, ok := os.(List); ok && ol.Length() > 0 {
-			sigs = ol
-		}
-	}
-	for _, v := range vs {
-		sigs = sigs.Append(AnyToValue(":m", v.ToMap()))
-	}
-	return o.setMeta("_signatures:am", sigs)
-}
-
 func GetReferences(o Object) []Hash {
 	refs := []Hash{}
 	Traverse(o.data(), func(k string, v Value) bool {
@@ -193,45 +180,28 @@ func immutableMapToSignature(im Map) Signature {
 	return s
 }
 
-func (o Object) GetSignatures() []Signature {
-	sigs := []Signature{}
-	if os := o.getMeta("_signatures:am"); os != nil {
-		if ol, ok := os.(List); ok && ol.Length() > 0 {
-			ol.Iterate(func(v Value) bool {
-				m, ok := v.(Map)
-				if !ok {
-					return true
-				}
-				sigs = append(sigs, immutableMapToSignature(m))
-				return true
-			})
-		}
-	}
-	return sigs
+func (o Object) SetSignature(signature Signature) Object {
+	return o.setMeta("_signature:m", AnyToValue(":m", signature.ToMap()))
 }
 
-func (o Object) SetOwners(owners []crypto.PublicKey) Object {
-	v := List{}
-	for _, owner := range owners {
-		v = v.Append(String(owner.String()))
+func (o Object) GetSignature() Signature {
+	signatureMap := o.getMeta("_signature:m")
+	if signatureMap == nil || !signatureMap.IsMap() {
+		return Signature{}
 	}
-	return o.setMeta("owners:as", v)
+	return immutableMapToSignature(signatureMap.(Map))
 }
 
-func (o Object) GetOwners() []crypto.PublicKey {
-	im := o.getMeta("owners:as")
-	if im == nil {
-		return []crypto.PublicKey{}
+func (o Object) SetOwner(owner crypto.PublicKey) Object {
+	return o.setMeta("owner:s", String(owner.String()))
+}
+
+func (o Object) GetOwner() crypto.PublicKey {
+	im := o.getMeta("owner:s")
+	if im == nil || !im.IsString() {
+		return ""
 	}
-	v, ok := im.PrimitiveHinted().([]string)
-	if !ok {
-		return []crypto.PublicKey{}
-	}
-	os := make([]crypto.PublicKey, len(v))
-	for i, p := range v {
-		os[i] = crypto.PublicKey(p)
-	}
-	return os
+	return crypto.PublicKey(im.(String))
 }
 
 // FromMap returns an object from a map

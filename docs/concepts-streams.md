@@ -28,7 +28,7 @@ _Note: Work in progress._
 ```json
 {
   "type:s": "nimona.io/profile.Created",
-  "owners:as": ["f00"],
+  "Owner:as": ["f00"],
   "policy:m": {
     "subjects:as": ["*"],
     "resources:as": ["*"],

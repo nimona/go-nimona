@@ -181,8 +181,8 @@ func (st *Store) PutWithTimeout(
 	streamHash := obj.GetStream().String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if len(obj.GetOwners()) > 0 {
-		ownerPublicKey = obj.GetOwners()[0].String()
+	if !obj.GetOwner().IsEmpty() {
+		ownerPublicKey = obj.GetOwner().String()
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream

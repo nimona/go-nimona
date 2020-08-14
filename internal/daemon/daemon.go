@@ -47,7 +47,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
 		keychain.DefaultKeychain.Put(
-			keychain.IdentityKey,
+			keychain.PrimaryIdentityKey,
 			cfg.Peer.IdentityKey,
 		)
 	}
@@ -70,9 +70,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 			eventbus.RelayAdded{
 				Peer: &peer.Peer{
 					Metadata: object.Metadata{
-						Owners: []crypto.PublicKey{
-							crypto.PublicKey(rp),
-						},
+						Owner: crypto.PublicKey(rp),
 					},
 					Addresses: []string{
 						cfg.Peer.RelayAddresses[i],
@@ -92,9 +90,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	for i, k := range cfg.Peer.BootstrapKeys {
 		bootstrapPeers[i] = &peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{
-					crypto.PublicKey(k),
-				},
+				Owner: crypto.PublicKey(k),
 			},
 		}
 	}

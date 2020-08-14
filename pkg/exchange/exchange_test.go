@@ -29,13 +29,13 @@ func TestSendSuccess(t *testing.T) {
 	// make up the peers
 	p1 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+			Owner: kc1.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n1.Addresses(),
 	}
 	p2 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 	}
@@ -56,11 +56,11 @@ func TestSendSuccess(t *testing.T) {
 
 	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
 	assert.NoError(t, err)
-	eo1 = eo1.AddSignature(sig)
+	eo1 = eo1.SetSignature(sig)
 
 	sig, err = object.NewSignature(kc1.GetPrimaryPeerKey(), eo2)
 	assert.NoError(t, err)
-	eo2 = eo2.AddSignature(sig)
+	eo2 = eo2.SetSignature(sig)
 
 	// add message handlers
 	// nolint: dupl
@@ -138,13 +138,13 @@ func TestSendRelay(t *testing.T) {
 	// make up the peers
 	pR := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: rkc.ListPublicKeys(keychain.PeerKey),
+			Owner: rkc.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: rn.Addresses(),
 	}
 	p1 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc1.ListPublicKeys(keychain.PeerKey),
+			Owner: kc1.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n1.Addresses(),
 		Relays: []*peer.Peer{
@@ -153,7 +153,7 @@ func TestSendRelay(t *testing.T) {
 	}
 	p2 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owners: kc2.ListPublicKeys(keychain.PeerKey),
+			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 		Relays: []*peer.Peer{
@@ -206,7 +206,7 @@ func TestSendRelay(t *testing.T) {
 
 	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
 	assert.NoError(t, err)
-	eo1 = eo1.AddSignature(sig)
+	eo1 = eo1.SetSignature(sig)
 
 	handled := int32(0)
 

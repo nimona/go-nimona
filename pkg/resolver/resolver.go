@@ -418,7 +418,7 @@ func (r *resolver) handlePeerLookup(
 		log.String("method", "resolver.handlePeerLookup"),
 		log.String("e.sender", e.Sender.String()),
 		log.Any("query.bloom", q.Bloom),
-		log.Any("o.signer", e.Payload.GetSignatures()),
+		log.Any("o.signer", e.Payload.GetSignature().Signer),
 	)
 
 	logger.Debug("handling peer lookup")
@@ -448,9 +448,7 @@ func (r *resolver) handlePeerLookup(
 	if err != nil {
 		p = &peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{
-					e.Sender,
-				},
+				Owner: e.Sender,
 			},
 		}
 	}
@@ -528,7 +526,7 @@ func (r *resolver) announceSelf(p crypto.PublicKey) {
 		r.getLocalPeer().ToObject(),
 		&peer.Peer{
 			Metadata: object.Metadata{
-				Owners: []crypto.PublicKey{p},
+				Owner: p,
 			},
 		},
 	)
@@ -552,8 +550,8 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	}
 
 	for _, c := range cs {
-		for _, s := range c.Metadata.Signatures {
-			hs = append(hs, s.Signer.String())
+		if !c.Metadata.Signature.IsEmpty() {
+			hs = append(hs, c.Metadata.Signature.Signer.String())
 		}
 	}
 
@@ -567,7 +565,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 			r.keychain.GetPrimaryPeerKey().PublicKey(),
 		),
 		Metadata: object.Metadata{
-			Owners: r.keychain.ListPublicKeys(keychain.PeerKey),
+			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
 		},
 	}
 
@@ -577,7 +575,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		panic(err)
 	}
 
-	pi.Metadata.Signatures = append(pi.Metadata.Signatures, sig)
+	pi.Metadata.Signature = sig
 
 	return pi
 }
@@ -586,8 +584,9 @@ func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
 	lp := r.keychain.GetPrimaryPeerKey().PublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
-		for _, s := range p.Metadata.Owners {
-			pm[s.String()] = p
+		owner := p.Metadata.Owner
+		if !owner.IsEmpty() {
+			pm[owner.String()] = p
 		}
 	}
 	nps := []*peer.Peer{}

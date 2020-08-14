@@ -34,9 +34,7 @@ func TestClient_Info(t *testing.T) {
 						},
 					},
 					"_hash:s": "oh1.xxx",
-					"owners:as": []string{
-						"foo",
-					},
+					"owner:s": "foo",
 				},
 				"data:m": map[string]interface{}{
 					"addresses:as": []string{
