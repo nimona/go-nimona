@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/patrickmn/go-cache"
 
 	"nimona.io/internal/rand"
@@ -62,6 +63,8 @@ type (
 		pinnedObjects    *pinnedObjects
 		networkAddresses *networkAddresses
 		relays           *relays
+		localPeer        *peer.Peer
+		localPeerLock    sync.RWMutex
 		// only used for initial bootstraping
 		initialBootstrapPeers []*peer.Peer
 		blocklist             *cache.Cache
@@ -88,6 +91,7 @@ func New(
 		relays:                &relays{},
 		initialBootstrapPeers: []*peer.Peer{},
 		blocklist:             cache.New(time.Second*5, time.Second*60),
+		localPeerLock:         sync.RWMutex{},
 	}
 
 	for _, opt := range opts {
@@ -536,48 +540,53 @@ func (r *resolver) announceSelf(p crypto.PublicKey) {
 }
 
 func (r *resolver) getLocalPeer() *peer.Peer {
-	k := r.keychain.GetPrimaryPeerKey()
-	pk := k.PublicKey()
-	cs := r.keychain.GetCertificates(pk)
+	r.localPeerLock.RLock()
+	lastPeer := r.localPeer
+	r.localPeerLock.RUnlock()
+
+	identityKey := r.keychain.GetPrimaryIdentityKey().PublicKey()
+	peerKey := r.keychain.GetPrimaryPeerKey().PublicKey()
+	certificates := r.keychain.GetCertificates(peerKey)
+	pinnedObjects := r.pinnedObjects.List()
+	addresses := r.networkAddresses.List()
+	relays := r.relays.List()
 
 	// gather up peer key, certificates, content ids and types
 	hs := []string{
-		pk.String(),
+		peerKey.String(),
 	}
-
-	for _, c := range r.pinnedObjects.List() {
+	for _, c := range pinnedObjects {
 		hs = append(hs, c.String())
 	}
-
-	for _, c := range cs {
+	for _, c := range certificates {
 		if !c.Metadata.Signature.IsEmpty() {
 			hs = append(hs, c.Metadata.Signature.Signer.String())
 		}
 	}
+	bloomSlice := bloom.New(hs...)
 
-	// TODO cache peer info and reuse
-	pi := &peer.Peer{
-		Version:   time.Now().UTC().Unix(),
-		Bloom:     bloom.New(hs...),
-		Addresses: r.networkAddresses.List(),
-		Relays:    r.relays.List(),
-		Certificates: r.keychain.GetCertificates(
-			r.keychain.GetPrimaryPeerKey().PublicKey(),
-		),
+	if cmp.Equal(lastPeer.Addresses, addresses) &&
+		cmp.Equal(lastPeer.Addresses, addresses) &&
+		cmp.Equal(lastPeer.Bloom, bloomSlice) {
+		return lastPeer
+	}
+
+	localPeer := &peer.Peer{
+		Version:      time.Now().Unix(),
+		Bloom:        bloomSlice,
+		Addresses:    addresses,
+		Relays:       relays,
+		Certificates: certificates,
 		Metadata: object.Metadata{
-			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: identityKey,
 		},
 	}
 
-	o := pi.ToObject()
-	sig, err := object.NewSignature(k, o)
-	if err != nil {
-		panic(err)
-	}
+	r.localPeerLock.Lock()
+	r.localPeer = localPeer
+	r.localPeerLock.Unlock()
 
-	pi.Metadata.Signature = sig
-
-	return pi
+	return localPeer
 }
 
 func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
