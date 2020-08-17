@@ -201,8 +201,16 @@ func (w *exchange) handleConnection(conn *net.Connection) error {
 			// ie a payload that cannot be unmarshalled or verified
 			// should not kill the connection
 			if err != nil {
+				if err == net.ErrInvalidSignature {
+					log.DefaultLogger.Warn(
+						"error reading from connection",
+						log.Error(err),
+						log.String("hash", payload.Hash().String()),
+					)
+					continue
+				}
 				log.DefaultLogger.Warn(
-					"failed to read from connection",
+					"error reading from connection, closing connection",
 					log.Error(err),
 				)
 				return
@@ -280,7 +288,7 @@ func (w *exchange) processOutbox(outbox *outbox) {
 		// Only try the relays if we fail to write the object
 		if lastErr != nil && req.object.GetType() != "nimona.io/LookupRequest" {
 			for _, relayPeer := range req.recipient.Relays {
-				df, err := wrapInDataForward(
+				df, err := w.wrapInDataForward(
 					req.object,
 					req.recipient.PublicKey(),
 					relayPeer.PublicKey(),
@@ -443,7 +451,8 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 	}
 }
 
-// SendToPeer an object to an address
+// Send an object to the given peer.
+// Before sending, we'll go through the root object as well as any embedded
 func (w *exchange) Send(
 	ctx context.Context,
 	o object.Object,
@@ -455,6 +464,21 @@ func (w *exchange) Send(
 	}
 
 	ctx = context.FromContext(ctx)
+
+	var err error
+	if k := w.keychain.GetPrimaryPeerKey(); !k.IsEmpty() {
+		o, err = signAll(k, o)
+		if err != nil {
+			return err
+		}
+	}
+
+	if k := w.keychain.GetPrimaryIdentityKey(); !k.IsEmpty() {
+		o, err = signAll(k, o)
+		if err != nil {
+			return err
+		}
+	}
 
 	objAttemptedCounter.Inc()
 
@@ -474,6 +498,41 @@ func (w *exchange) Send(
 		w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
 		return err
 	}
+}
+
+func signAll(k crypto.PrivateKey, o object.Object) (object.Object, error) {
+	os := map[string]object.Object{}
+	object.Traverse(o.Raw(), func(path string, v object.Value) bool {
+		if !v.IsMap() {
+			return true
+		}
+		m := v.(object.Map)
+		t := m.Value("type:s")
+		if t == nil || !t.IsString() || t.(object.String) == "" {
+			return true
+		}
+		os[path] = object.Object(m)
+		return true
+	})
+	for path, obj := range os {
+		if obj.GetOwner() != k.PublicKey() {
+			continue
+		}
+		sig, err := object.NewSignature(k, obj)
+		if err != nil {
+			return object.Object{}, err
+		}
+
+		signedObj := obj.SetSignature(sig)
+		if path == "" {
+			o = signedObj
+		} else {
+			o = object.Object(
+				o.Raw().Set(path, signedObj.Raw()),
+			)
+		}
+	}
+	return o, nil
 }
 
 func encrypt(data []byte, key []byte) ([]byte, error) {
@@ -508,7 +567,7 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func wrapInDataForward(
+func (w *exchange) wrapInDataForward(
 	o object.Object,
 	rks ...crypto.PublicKey,
 ) (*DataForward, error) {
@@ -532,13 +591,21 @@ func wrapInDataForward(
 	}
 	// create data forward object
 	df := &DataForward{
+		Metadata: object.Metadata{
+			Owner: ek.PublicKey(),
+		},
 		Recipient:  rks[0],
-		Ephermeral: *ek,
+		Ephermeral: ek.PublicKey(), // TODO to we need this attribute?
 		Data:       ep,
 	}
+	sig, err := object.NewSignature(*ek, df.ToObject())
+	if err != nil {
+		return nil, err
+	}
+	df.Metadata.Signature = sig
 	// if there are more than one recipients, wrap for the next
 	if len(rks) > 1 {
-		return wrapInDataForward(df.ToObject(), rks[1:]...)
+		return w.wrapInDataForward(df.ToObject(), rks[1:]...)
 	}
 	// else return
 	return df, nil

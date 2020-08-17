@@ -200,6 +200,9 @@ func (r *resolver) Lookup(
 
 	// send content requests to recipients
 	req := &peer.LookupRequest{
+		Metadata: object.Metadata{
+			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+		},
 		Nonce: rand.String(12),
 		Bloom: bl,
 	}
@@ -444,6 +447,9 @@ func (r *resolver) handlePeerLookup(
 	)
 
 	res := &peer.LookupResponse{
+		Metadata: object.Metadata{
+			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+		},
 		Nonce: q.Nonce,
 		Peers: cps,
 	}
@@ -479,6 +485,9 @@ func (r *resolver) Bootstrap(
 	logger := log.FromContext(ctx)
 	nonce := rand.String(6)
 	q := &peer.LookupRequest{
+		Metadata: object.Metadata{
+			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+		},
 		Nonce: nonce,
 		Bloom: r.getLocalPeer().Bloom,
 	}
@@ -544,7 +553,6 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	lastPeer := r.localPeer
 	r.localPeerLock.RUnlock()
 
-	identityKey := r.keychain.GetPrimaryIdentityKey().PublicKey()
 	peerKey := r.keychain.GetPrimaryPeerKey().PublicKey()
 	certificates := r.keychain.GetCertificates(peerKey)
 	pinnedObjects := r.pinnedObjects.List()
@@ -565,7 +573,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	}
 	bloomSlice := bloom.New(hs...)
 
-	if cmp.Equal(lastPeer.Addresses, addresses) &&
+	if lastPeer != nil &&
 		cmp.Equal(lastPeer.Addresses, addresses) &&
 		cmp.Equal(lastPeer.Bloom, bloomSlice) {
 		return lastPeer
@@ -578,7 +586,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		Relays:       relays,
 		Certificates: certificates,
 		Metadata: object.Metadata{
-			Owner: identityKey,
+			Owner: peerKey,
 		},
 	}
 

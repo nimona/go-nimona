@@ -40,27 +40,20 @@ func TestSendSuccess(t *testing.T) {
 		Addresses: n2.Addresses(),
 	}
 
-	// create test objects
-	eo1 := object.Object{}
-	eo1 = eo1.Set("body:s", "bar1")
-	eo1 = eo1.SetType("test/msg")
+	// create test objects from p2 to p1
+	eo1 := object.Object{}.
+		Set("body:s", "bar1").
+		SetType("test/msg")
 
-	eo2 := object.Object{}
-	eo2 = eo2.Set("body:s", "bar1")
-	eo2 = eo2.SetType("test/msg")
+	// and from p1 to p2
+	eo2 := object.Object{}.
+		Set("body:s", "bar2").
+		SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	handled := int32(0)
-
-	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
-	assert.NoError(t, err)
-	eo1 = eo1.SetSignature(sig)
-
-	sig, err = object.NewSignature(kc1.GetPrimaryPeerKey(), eo2)
-	assert.NoError(t, err)
-	eo2 = eo2.SetSignature(sig)
 
 	// add message handlers
 	// nolint: dupl
@@ -79,7 +72,7 @@ func TestSendSuccess(t *testing.T) {
 
 	// nolint: dupl
 	go HandleEnvelopeSubscription(
-		x1.Subscribe(
+		x2.Subscribe(
 			FilterByObjectType("tes**"),
 		),
 		func(e *Envelope) error {
@@ -162,9 +155,10 @@ func TestSendRelay(t *testing.T) {
 	}
 
 	// init connection from peer1 to relay
-	o1 := object.Object{}
-	o1 = o1.SetType("foo")
-	o1 = o1.Set("foo:s", "bar")
+	o1 := object.Object{}.
+		SetOwner(p1.PublicKey()).
+		SetType("foo").
+		Set("foo:s", "bar")
 	err := x1.Send(
 		context.New(
 			context.WithCorrelationID("pre0"),
@@ -176,9 +170,10 @@ func TestSendRelay(t *testing.T) {
 	assert.NoError(t, err)
 
 	// init connection from peer2 to relay
-	o2 := object.Object{}
-	o2 = o2.SetType("foo")
-	o2 = o2.Set("foo:s", "bar")
+	o2 := object.Object{}.
+		SetOwner(p2.PublicKey()).
+		SetType("foo").
+		Set("foo:s", "bar")
 	err = x2.Send(
 		context.New(
 			context.WithCorrelationID("pre1"),
@@ -189,24 +184,23 @@ func TestSendRelay(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	// create the messages
-	eo1 := object.Object{}
-	eo1 = eo1.Set("body:s", "bar1")
-	eo1 = eo1.SetType("test/msg")
+	// create the message from p2 to p1
+	eo1 := object.Object{}.
+		SetOwner(p2.PublicKey()).
+		Set("body:s", "bar1").
+		SetType("test/msg")
 
-	eo2 := object.Object{}
-	eo2 = eo2.Set("body:s", "bar1")
-	eo2 = eo2.SetType("test/msg")
+		// and from p1 to p2
+	eo2 := object.Object{}.
+		SetOwner(p1.PublicKey()).
+		Set("body:s", "bar2").
+		SetType("test/msg")
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	w1ObjectHandled := false
 	w2ObjectHandled := false
-
-	sig, err := object.NewSignature(kc2.GetPrimaryPeerKey(), eo1)
-	assert.NoError(t, err)
-	eo1 = eo1.SetSignature(sig)
 
 	handled := int32(0)
 
@@ -227,7 +221,7 @@ func TestSendRelay(t *testing.T) {
 
 	// nolint: dupl
 	go HandleEnvelopeSubscription(
-		x1.Subscribe(
+		x2.Subscribe(
 			FilterByObjectType("tes**"),
 		),
 		func(e *Envelope) error {
@@ -252,7 +246,6 @@ func TestSendRelay(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	// TODO should be able to send not signed
 	err = x1.Send(
 		context.New(
 			context.WithCorrelationID("req1"),
@@ -300,4 +293,43 @@ func newPeer(
 	)
 
 	return kc, n, x.(*exchange)
+}
+
+func Test_exchange_signAll(t *testing.T) {
+	k, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	t.Run("should pass, sign root object", func(t *testing.T) {
+		o := object.Object{}.
+			SetType("foo").
+			SetOwner(k.PublicKey()).
+			Set("foo:s", "data")
+
+		g, err := signAll(k, o)
+		assert.NoError(t, err)
+
+		assert.NotNil(t, g.GetSignature())
+		assert.False(t, g.GetSignature().IsEmpty())
+		assert.False(t, g.GetSignature().Signer.IsEmpty())
+	})
+
+	t.Run("should pass, sign nested object", func(t *testing.T) {
+		n := object.Object{}.
+			SetType("foo").
+			SetOwner(k.PublicKey()).
+			Set("foo:s", "data")
+		o := object.Object{}.
+			SetType("foo").
+			Set("foo:m", n.Raw())
+
+		g, err := signAll(k, o)
+		assert.NoError(t, err)
+
+		assert.True(t, g.GetSignature().IsEmpty())
+		assert.True(t, g.GetSignature().Signer.IsEmpty())
+
+		gn := object.FromMap(g.Get("foo:m").(map[string]interface{}))
+		assert.False(t, gn.GetSignature().IsEmpty())
+		assert.False(t, gn.GetSignature().Signer.IsEmpty())
+	})
 }
