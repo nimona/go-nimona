@@ -246,7 +246,7 @@ func (o Object) Get(k string) interface{} {
 	// if len(ps) > 1 {
 	// 	k = ps[0]
 	// }
-	v := o.get(k)
+	v := o.data().Value(k)
 	if v == nil {
 		return nil
 	}
@@ -287,10 +287,6 @@ func (o Object) Raw() Map {
 
 func (o Object) set(k string, v Value) Object {
 	return Object(Map(o).Set(k, v))
-}
-
-func (o Object) get(k string) Value {
-	return Map(o).Value(k)
 }
 
 // Collapse the object's immutable values into a single layer in order to reduce
