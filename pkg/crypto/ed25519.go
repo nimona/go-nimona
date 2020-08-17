@@ -116,7 +116,7 @@ func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
 
 // NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
 // secret given a public key, and returns the created public key and secret
-func NewEphemeralSharedKey(pub PublicKey) (*PublicKey, []byte, error) {
+func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
 	priv, err := GenerateEd25519PrivateKey()
 	if err != nil {
 		return nil, nil, err
@@ -127,8 +127,7 @@ func NewEphemeralSharedKey(pub PublicKey) (*PublicKey, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	A := priv.PublicKey()
-	return &A, ss, nil
+	return &priv, ss, nil
 }
 
 func (i PrivateKey) IsEmpty() bool {

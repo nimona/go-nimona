@@ -2,10 +2,14 @@ package net
 
 import (
 	"encoding/json"
-	"errors"
 
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+)
+
+var (
+	ErrInvalidSignature = errors.Error("invalid signature")
 )
 
 func Write(o object.Object, conn *Connection) error {
@@ -79,9 +83,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	if !o.GetSignature().IsEmpty() {
 		if err := object.Verify(o); err != nil {
-			// TODO we should verify, but return an error that doesn't
-			// kill the connection
-			return &o, nil
+			return &o, ErrInvalidSignature
 		}
 	}
 
