@@ -11,6 +11,9 @@
         "-race",
         "-failfast"
     ],
+    "go.testEnvVars": {
+        "LOG_LEVEL": "DEBUG",
+    },
     "go.testTimeout": "60s",
     "editor.rulers": [
         80,
