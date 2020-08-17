@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   vscode:
-    image: qmcgaw/godevcontainer:debian
+    image: geoah/go-devcontainer:v0.1.0
     volumes:
       - ../:/workspace
       - ~/.ssh:/home/vscode/.ssh:ro
