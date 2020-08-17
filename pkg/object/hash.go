@@ -131,7 +131,7 @@ func (v Map) hash() Hash {
 
 func (v List) hash() Hash {
 	h := []byte{}
-	v.Iterate(func(v Value) bool {
+	v.Iterate(func(_ int, v Value) bool {
 		h = append(h, v.Hash()...)
 		return true
 	})

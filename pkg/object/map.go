@@ -2,7 +2,6 @@ package object
 
 import (
 	"sort"
-	"strconv"
 )
 
 type Map struct {
@@ -83,43 +82,15 @@ func (m Map) Iterate(f func(k string, v Value) bool) {
 	m.iterate(f)
 }
 
-func traverse(k string, v Value, f func(string, Value) bool) bool {
-	cont := f(k, v)
-	if !cont {
-		return false
-	}
-	if k != "" {
-		k += "."
-	}
-	switch cv := v.(type) {
-	case Map:
-		cont = cv.iterateSorted(func(ik string, iv Value) bool {
-			cont = traverse(k+ik, iv, f)
-			return cont
-		})
-	case List:
-		i := 0
-		cont = cv.iterate(func(iv Value) bool {
-			cont = traverse(k+strconv.Itoa(i), iv, f)
-			i++
-			return cont
-		})
-	}
-	return cont
-}
-
-func Traverse(v Value, f func(string, Value) bool) {
-	traverse("", v, f)
-}
-
-func (m Map) Value(k string) Value {
-	if m.m == nil {
+func (m Map) Value(path string) Value {
+	v, err := resolvePath(path, m)
+	if err != nil {
 		return nil
 	}
-	return m.m.value(k)
+	return v
 }
 
-func (m Map) Set(k string, v Value) Map {
+func (m Map) set(k string, v Value) Map {
 	return Map{
 		mapPair{
 			k:      k,
@@ -127,6 +98,14 @@ func (m Map) Set(k string, v Value) Map {
 			parent: m.m,
 		},
 	}
+}
+
+func (m Map) Set(path string, v Value) Map {
+	nm, err := setPath(m, path, v)
+	if err != nil {
+		panic(err)
+	}
+	return nm.(Map)
 }
 
 func (m Map) PrimitiveHinted() interface{} {
