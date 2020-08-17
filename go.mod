@@ -3,7 +3,7 @@ go 1.14
 module nimona.io
 
 require (
-	github.com/bmatcuk/doublestar v1.3.1
+	github.com/bmatcuk/doublestar v1.3.2
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
