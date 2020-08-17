@@ -12,6 +12,11 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
+// nolint: gochecknoinits
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 // String returns a random string of a given length
 func String(n int) string {
 	b := make([]byte, n)
