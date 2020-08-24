@@ -28,3 +28,5 @@ require (
 	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/mitchellh/mapstructure => github.com/geoah/mapstructure v1.3.4-rc2
