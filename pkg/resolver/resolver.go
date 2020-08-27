@@ -28,15 +28,6 @@ var (
 	peerLookupResponseType = new(peer.LookupResponse).GetType()
 )
 
-var (
-	DefaultResolver = New(
-		context.Background(),
-		WithEventbus(eventbus.DefaultEventbus),
-		WithExchange(exchange.DefaultExchange),
-		WithKeychain(keychain.DefaultKeychain),
-	)
-)
-
 const (
 	ErrNoPeersToAsk = errors.Error("no peers to ask")
 )
@@ -171,13 +162,6 @@ func New(
 	}()
 
 	return r
-}
-
-func Lookup(
-	ctx context.Context,
-	opts ...LookupOption,
-) (<-chan *peer.Peer, error) {
-	return DefaultResolver.Lookup(ctx, opts...)
 }
 
 // Lookup finds and returns peer infos from a fingerprint
@@ -688,11 +672,4 @@ func (r *resolver) removeBlock(p *peer.Peer) {
 			r.blocklist.Delete(p.PublicKey().String())
 		}
 	}
-}
-
-func Bootstrap(
-	ctx context.Context,
-	bootstrapPeers ...*peer.Peer,
-) error {
-	return DefaultResolver.Bootstrap(ctx, bootstrapPeers...)
 }
