@@ -1,14 +1,8 @@
 package objectmanager
 
 import (
-	"database/sql"
-	"io/ioutil"
-	"path"
-	"sync"
 	"testing"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -17,151 +11,96 @@ import (
 	"nimona.io/internal/gomockutil"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/exchangemock"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/keychainmock"
-	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/resolver"
+	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/stream"
 )
 
-func TestObjectRequest(t *testing.T) {
-	// enable binding to local addresses
-	net.BindLocal = true
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	objectHandled := false
-	objectReceived := false
-
-	// create new peers
-	kc1, n1, x1, _, mgr := newPeer(t)
-	kc2, n2, x2, st2, _ := newPeer(t)
-
-	// make up the peers
-	_ = &peer.Peer{
+func Test_manager_Request(t *testing.T) {
+	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testPeer := &peer.Peer{
 		Metadata: object.Metadata{
-			Owner: kc1.GetPrimaryPeerKey().PublicKey(),
+			Owner: testPeerKey.PublicKey(),
 		},
-		Addresses: n1.Addresses(),
 	}
-	p2 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
-		},
-		Addresses: n2.Addresses(),
+	f00 := object.Object{}.
+		Set("f00:s", "f00")
+	type fields struct {
+		store    func(*testing.T) objectstore.Store
+		exchange func(*testing.T) exchange.Exchange
 	}
-
-	// create test objects
-	obj := object.Object{}
-	obj = obj.Set("body:s", "bar1")
-	obj = obj.SetType("test/msg")
-
-	// setup hander
-	go exchange.HandleEnvelopeSubscription(
-		x2.Subscribe(
-			exchange.FilterByObjectType(new(object.Request).GetType()),
-		),
-		func(e *exchange.Envelope) error {
-			o := e.Payload
-			objectHandled = true
-
-			objr := object.Request{}
-			err := objr.FromObject(o)
-			require.NoError(t, err)
-
-			assert.Equal(t, obj.Hash().String(), objr.ObjectHash.String())
-			wg.Done()
-			return nil
+	type args struct {
+		ctx      context.Context
+		rootHash object.Hash
+		peer     *peer.Peer
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *object.Object
+		wantErr bool
+	}{{
+		name: "should pass",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				return m
+			},
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{
+						nil,
+					},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{
+							Objects: []*exchange.Envelope{{
+								Payload: f00,
+							}},
+						},
+					},
+				}
+				return m
+			},
 		},
-	)
-
-	go exchange.HandleEnvelopeSubscription(
-		x1.Subscribe(
-			exchange.FilterBySender(p2.PublicKey()),
-		),
-		func(e *exchange.Envelope) error {
-			o := e.Payload
-			objectReceived = true
-
-			assert.Equal(t, obj.Get("body:s"), o.Get("body:s"))
-			wg.Done()
-			return nil
+		args: args{
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     testPeer,
 		},
-	)
-	err := st2.Put(obj)
-	assert.NoError(t, err)
-
-	ctx := context.Background()
-
-	objRecv, err := mgr.Request(ctx, obj.Hash(), p2)
-	assert.NoError(t, err)
-	assert.Equal(t, obj.ToMap(), objRecv.ToMap())
-
-	wg.Wait()
-
-	assert.True(t, objectHandled)
-	assert.True(t, objectReceived)
-}
-
-func newPeer(
-	t *testing.T,
-) (
-	keychain.Keychain,
-	net.Network,
-	exchange.Exchange,
-	*sqlobjectstore.Store,
-	ObjectManager,
-) {
-	dblite := tempSqlite3(t)
-	store, err := sqlobjectstore.New(dblite)
-	assert.NoError(t, err)
-
-	ctx := context.Background()
-
-	pk, err := crypto.GenerateEd25519PrivateKey()
-	assert.NoError(t, err)
-
-	eb := eventbus.New()
-
-	kc := keychain.New()
-	kc.Put(keychain.PrimaryPeerKey, pk)
-
-	n := net.New(
-		net.WithKeychain(kc),
-	)
-	_, err = n.Listen(ctx, "127.0.0.1:0")
-	require.NoError(t, err)
-
-	x := exchange.New(
-		ctx,
-		exchange.WithNet(n),
-		exchange.WithKeychain(kc),
-		exchange.WithEventbus(eb),
-	)
-
-	mgr := New(
-		ctx,
-		WithExchange(x),
-		WithStore(store),
-	)
-
-	return kc, n, x, store, mgr
-}
-
-func tempSqlite3(t *testing.T) *sql.DB {
-	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
-	require.NoError(t, err)
-	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
-	require.NoError(t, err)
-	return db
+		want: &f00,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				objectstore: tt.fields.store(t),
+				exchange:    tt.fields.exchange(t),
+				newNonce: func() string {
+					return "7"
+				},
+			}
+			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(
+				t,
+				tt.want.ToMap(),
+				got.ToMap(),
+			)
+		})
+	}
 }
 
 func Test_manager_RequestStream(t *testing.T) {
@@ -256,8 +195,8 @@ func Test_manager_RequestStream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
-				store:    tt.fields.store(t),
-				exchange: tt.fields.exchange(t),
+				objectstore: tt.fields.store(t),
+				exchange:    tt.fields.exchange(t),
 				newNonce: func() string {
 					return "7"
 				},
@@ -297,6 +236,17 @@ func Test_manager_Put(t *testing.T) {
 	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testOwnPublicKey := testOwnPrivateKey.PublicKey()
+	testSubscriberPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
+	testSubscriberPeer := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: testSubscriberPublicKey,
+		},
+		Addresses: []string{
+			"not-important",
+		},
+	}
 	testObjectSimple := object.Object{}.
 		SetType("foo").
 		Set("foo:s", "bar")
@@ -304,13 +254,16 @@ func Test_manager_Put(t *testing.T) {
 		SetType("foo").
 		Set("foo:s", "bar").
 		SetOwner(testOwnPublicKey)
+	testObjectStreamRoot := object.Object{}.
+		SetType("fooRoot").
+		Set("root:s", "true")
 	testObjectWithStream := object.Object{}.
 		SetType("foo").
-		SetStream("streamRoot").
+		SetStream(testObjectStreamRoot.Hash()).
 		Set("foo:s", "bar")
 	testObjectWithStreamUpdated := object.Object{}.
 		SetType("foo").
-		SetStream("streamRoot").
+		SetStream(testObjectStreamRoot.Hash()).
 		Set("foo:s", "bar").
 		SetOwner(testOwnPublicKey).
 		SetParents(
@@ -349,10 +302,12 @@ func Test_manager_Put(t *testing.T) {
 		},
 	}.ToObject()
 	type fields struct {
-		store           func(*testing.T) objectstore.Store
-		keychain        func(*testing.T) keychain.Keychain
-		pubsub          func(*testing.T) ObjectPubSub
-		registeredTypes []string
+		store                 func(*testing.T) objectstore.Store
+		keychain              func(*testing.T) keychain.Keychain
+		exchange              func(*testing.T) exchange.Exchange
+		resolver              func(*testing.T) resolver.Resolver
+		receivedSubscriptions []object.Object
+		registeredTypes       []string
 	}
 	type args struct {
 		o object.Object
@@ -383,8 +338,20 @@ func Test_manager_Put(t *testing.T) {
 					Return(testOwnPrivateKey)
 				return m
 			},
-			pubsub: func(t *testing.T) ObjectPubSub {
-				return NewObjectPubSub()
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
 			},
 		},
 		args: args{
@@ -413,8 +380,20 @@ func Test_manager_Put(t *testing.T) {
 					Return(testOwnPrivateKey)
 				return m
 			},
-			pubsub: func(t *testing.T) ObjectPubSub {
-				return NewObjectPubSub()
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
 			},
 		},
 		args: args{
@@ -429,7 +408,7 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetByStream(object.Hash("streamRoot")).
+					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]object.Object{
@@ -452,8 +431,20 @@ func Test_manager_Put(t *testing.T) {
 					Return(testOwnPrivateKey)
 				return m
 			},
-			pubsub: func(t *testing.T) ObjectPubSub {
-				return NewObjectPubSub()
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
 			},
 		},
 		args: args{
@@ -491,8 +482,20 @@ func Test_manager_Put(t *testing.T) {
 					Return(testOwnPrivateKey)
 				return m
 			},
-			pubsub: func(t *testing.T) ObjectPubSub {
-				return NewObjectPubSub()
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
 			},
 			registeredTypes: []string{
 				"foo",
@@ -502,13 +505,98 @@ func Test_manager_Put(t *testing.T) {
 			o: testObjectSimple,
 		},
 		want: testObjectSimpleUpdated,
+	}, {
+		name: "should pass, stream event, with subscribers",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					GetByStream(testObjectStreamRoot.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+							},
+						),
+						nil,
+					)
+				m.EXPECT().
+					Put(testObjectWithStreamUpdated)
+				return m
+			},
+			keychain: func(t *testing.T) keychain.Keychain {
+				m := keychainmock.NewMockKeychain(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					GetPrimaryIdentityKey().
+					Return(testOwnPrivateKey)
+				m.EXPECT().
+					GetPrimaryPeerKey().
+					Return(testOwnPrivateKey)
+				return m
+			},
+			exchange: func(t *testing.T) exchange.Exchange {
+				m := &exchangemock.MockExchangeSimple{
+					SendCalls: []error{
+						nil,
+					},
+					SubscribeCalls: []exchange.EnvelopeSubscription{
+						&exchangemock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				r := make(chan *peer.Peer, 10)
+				r <- testSubscriberPeer
+				close(r)
+				m.EXPECT().Lookup(
+					gomock.Any(),
+					// TODO we need a custom matcher for options
+					gomock.Any(),
+				).Return(r, nil)
+				return m
+			},
+			receivedSubscriptions: []object.Object{
+				stream.Subscription{
+					Metadata: object.Metadata{
+						Owner: testSubscriberPublicKey,
+					},
+					RootHashes: []object.Hash{
+						testObjectStreamRoot.Hash(),
+					},
+				}.ToObject(),
+			},
+		},
+		args: args{
+			o: testObjectWithStream,
+		},
+		want: testObjectWithStreamUpdated,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &manager{
-				store:    tt.fields.store(t),
-				keychain: tt.fields.keychain(t),
-				pubsub:   tt.fields.pubsub(t),
+			m := New(
+				context.Background(),
+				WithStore(tt.fields.store(t)),
+				WithKeychain(tt.fields.keychain(t)),
+				WithExchange(tt.fields.exchange(t)),
+				WithResolver(tt.fields.resolver(t)),
+			)
+			for _, obj := range tt.fields.receivedSubscriptions {
+				err := m.(*manager).handleStreamSubscription(
+					context.Background(),
+					&exchange.Envelope{
+						Payload: obj,
+					},
+				)
+				require.NoError(t, err)
 			}
 			for _, t := range tt.fields.registeredTypes {
 				m.RegisterType(t, time.Hour)

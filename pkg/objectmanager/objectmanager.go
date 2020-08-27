@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/stream"
 )
 
@@ -25,16 +26,22 @@ var (
 )
 
 var (
-	objectRequestType = object.Request{}.GetType()
-	streamRequestType = stream.Request{}.GetType()
+	objectRequestType      = object.Request{}.GetType()
+	streamRequestType      = stream.Request{}.GetType()
+	streamSubscriptionType = stream.Subscription{}.GetType()
 )
 
 //go:generate $GOBIN/mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate $GOBIN/mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub_generated.go
 //go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg objectmanager -imp=nimona.io/pkg/object gen "ObjectType=object.Object Name=Object name=object"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=object.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
+		Put(
+			ctx context.Context,
+			o object.Object,
+		) (object.Object, error)
 		Request(
 			ctx context.Context,
 			hash object.Hash,
@@ -45,18 +52,24 @@ type (
 			rootHash object.Hash,
 			recipients ...*peer.Peer,
 		) (object.ReadCloser, error)
-		Put(
-			ctx context.Context,
-			o object.Object,
-		) (object.Object, error)
+		Subscribe(
+			lookupOptions ...LookupOption,
+		) ObjectSubscription
+		RegisterType(
+			objectType string,
+			ttl time.Duration,
+		)
 	}
+
 	manager struct {
-		store           objectstore.Store
+		objectstore     objectstore.Store
 		exchange        exchange.Exchange
 		keychain        keychain.Keychain
+		resolver        resolver.Resolver
 		pubsub          ObjectPubSub
 		newNonce        func() string
 		registeredTypes sync.Map
+		subscriptions   *SubscriptionsMap
 	}
 	Option func(*manager)
 )
@@ -69,6 +82,8 @@ func New(
 		newNonce: func() string {
 			return rand.String(16)
 		},
+		pubsub:        NewObjectPubSub(),
+		subscriptions: &SubscriptionsMap{},
 	}
 
 	for _, opt := range opts {
@@ -128,9 +143,9 @@ func (m *manager) RequestStream(
 	sub := m.exchange.Subscribe(
 		exchange.FilterByObjectType(stream.Response{}.GetType()),
 	)
-	defer sub.Cancel()
 
 	go func() {
+		defer sub.Cancel()
 		for {
 			env, err := sub.Next()
 			if err != nil || env == nil {
@@ -149,7 +164,7 @@ func (m *manager) RequestStream(
 	}()
 
 	if len(recipients) == 0 {
-		return m.store.GetByStream(rootHash)
+		return m.objectstore.GetByStream(rootHash)
 	}
 
 	if len(recipients) > 1 {
@@ -182,7 +197,7 @@ func (m *manager) RequestStream(
 		objectHash object.Hash,
 	) (*object.Object, error) {
 		// TODO(geoah) check store before requesting the object
-		// obj, err := m.store.Get(objectHash)
+		// obj, err := m.objectstore.Get(objectHash)
 		// if err == nil {
 		// 	return &obj, nil
 		// }
@@ -242,7 +257,6 @@ func (m *manager) Request(
 	errCh := make(chan error)
 
 	sub := m.exchange.Subscribe(
-		// exchange.FilterByObjectType(object.Response{}.GetType()),
 		exchange.FilterByObjectHash(hash),
 	)
 	defer sub.Cancel()
@@ -300,6 +314,7 @@ func (m *manager) handleObjects(
 
 		logger.Debug("handling object")
 
+		// store object
 		if err := m.storeObject(ctx, env.Payload); err != nil {
 			return err
 		}
@@ -325,7 +340,20 @@ func (m *manager) handleObjects(
 					log.Error(err),
 				)
 			}
+		case streamSubscriptionType:
+			if err := m.handleStreamSubscription(
+				ctx,
+				env,
+			); err != nil {
+				logger.Warn(
+					"could not handle stream request",
+					log.Error(err),
+				)
+			}
 		}
+
+		// publish to pubsub
+		m.pubsub.Publish(env.Payload)
 	}
 }
 
@@ -339,22 +367,25 @@ func (m *manager) storeObject(
 	}
 
 	logger := log.FromContext(ctx)
+	objType := obj.GetType()
+	objHash := obj.Hash()
 
 	// deref nested objects
 	mainObj, refObjs, err := object.UnloadReferences(ctx, obj)
 	if err != nil {
 		logger.Error(
 			"error unloading nested objects",
-			log.String("hash", mainObj.Hash().String()),
-			log.String("type", mainObj.GetType()),
+			log.String("hash", objHash.String()),
+			log.String("type", objType),
 			log.Error(err),
 		)
+		return err
 	}
 
 	// store nested objects
 	for _, refObj := range refObjs {
 		// TODO reconsider ttls for nested objects
-		if err := m.store.PutWithTimeout(refObj, ttl); err != nil {
+		if err := m.objectstore.PutWithTimeout(refObj, ttl); err != nil {
 			logger.Error(
 				"error trying to persist incoming nested object",
 				log.String("hash", refObj.Hash().String()),
@@ -365,11 +396,11 @@ func (m *manager) storeObject(
 	}
 
 	// store primary object
-	if err := m.store.PutWithTimeout(*mainObj, ttl); err != nil {
+	if err := m.objectstore.PutWithTimeout(*mainObj, ttl); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
-			log.String("hash", mainObj.Hash().String()),
-			log.String("type", mainObj.GetType()),
+			log.String("hash", objHash.String()),
+			log.String("type", objType),
 			log.Error(err),
 		)
 	}
@@ -379,17 +410,17 @@ func (m *manager) storeObject(
 	// add to feed
 	feedStreamHash := getFeedRootHash(
 		m.keychain.GetPrimaryIdentityKey().PublicKey(),
-		getTypeForFeed(obj.GetType()),
+		getTypeForFeed(objType),
 	)
 	feedEvent := feed.Added{
 		Metadata: object.Metadata{
 			Stream: feedStreamHash,
 		},
 		ObjectHash: []object.Hash{
-			obj.Hash(),
+			objHash,
 		},
 	}.ToObject()
-	or, err := m.store.GetByStream(feedStreamHash)
+	or, err := m.objectstore.GetByStream(feedStreamHash)
 	if err != nil && err != objectstore.ErrNotFound {
 		return err
 	}
@@ -411,8 +442,64 @@ func (m *manager) storeObject(
 			feedEvent = feedEvent.SetParents(parentHashes)
 		}
 	}
-	if err := m.store.Put(feedEvent); err != nil {
+	if err := m.objectstore.Put(feedEvent); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// TODO should announceObject be best effort and not return an error?
+func (m *manager) announceObject(
+	ctx context.Context,
+	obj object.Object,
+) error {
+	// if this is not part of a stream, we're done here
+	if obj.GetStream().IsEmpty() {
+		return nil
+	}
+
+	// find subscriptions for this stream
+	subscribersMap := map[crypto.PublicKey]struct{}{}
+	m.subscriptions.Range(func(_ object.Hash, sub *stream.Subscription) bool {
+		// TODO check expiry
+		subscribersMap[sub.Metadata.Owner] = struct{}{}
+		return true
+	})
+	subscribers := []crypto.PublicKey{}
+	for subscriber := range subscribersMap {
+		subscribers = append(subscribers, subscriber)
+	}
+
+	if len(subscribers) == 0 {
+		return nil
+	}
+
+	// notify subscribers
+	announcement := stream.Announcement{
+		Metadata: object.Metadata{
+			Owner: m.keychain.GetPrimaryPeerKey().PublicKey(),
+		},
+		Objects: []*object.Object{
+			&obj,
+		},
+	}.ToObject()
+	for _, subscriber := range subscribers {
+		// TODO verify that subscriber has access to this object/stream
+		peers, err := m.resolver.Lookup(
+			ctx,
+			resolver.LookupByOwner(subscriber),
+		)
+		if err != nil {
+			// TODO log error
+			continue
+		}
+		for peer := range peers {
+			if err := m.exchange.Send(ctx, announcement, peer); err != nil {
+				// TODO log error
+				continue
+			}
+		}
 	}
 
 	return nil
@@ -428,7 +515,7 @@ func (m *manager) handleObjectRequest(
 	}
 
 	hash := req.ObjectHash
-	obj, err := m.store.Get(hash)
+	obj, err := m.objectstore.Get(hash)
 	if err != nil {
 		return err
 	}
@@ -464,7 +551,7 @@ func (m *manager) handleStreamRequest(
 	}
 
 	// get the entire graph for this stream
-	or, err := m.store.GetByStream(req.Metadata.Stream)
+	or, err := m.objectstore.GetByStream(req.Metadata.Stream)
 	if err != nil {
 		return err
 	}
@@ -509,6 +596,23 @@ func (m *manager) handleStreamRequest(
 	return nil
 }
 
+func (m *manager) handleStreamSubscription(
+	ctx context.Context,
+	env *exchange.Envelope,
+) error {
+	sub := &stream.Subscription{}
+	if err := sub.FromObject(env.Payload); err != nil {
+		return err
+	}
+
+	for _, rootHash := range sub.RootHashes {
+		// TODO introduce time-to-live for subscriptions
+		m.subscriptions.Put(rootHash, sub)
+	}
+
+	return nil
+}
+
 // Put stores a given object
 // TODO(geoah) what happened if the stream graph is not complete? Do we care?
 func (m *manager) Put(
@@ -523,7 +627,7 @@ func (m *manager) Put(
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
 	if !streamHash.IsEmpty() {
-		or, err := m.store.GetByStream(streamHash)
+		or, err := m.objectstore.GetByStream(streamHash)
 		if err != nil && err != objectstore.ErrNotFound {
 			return o, err
 		}
@@ -544,7 +648,11 @@ func (m *manager) Put(
 	if err := m.storeObject(ctx, o); err != nil {
 		return o, err
 	}
-	// announce to pubsub
+	// announce to subscribers
+	if err := m.announceObject(ctx, o); err != nil {
+		return o, err
+	}
+	// publish to pubsub
 	m.pubsub.Publish(o)
 	return o, nil
 }

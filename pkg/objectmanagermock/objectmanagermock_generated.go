@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
 	object "nimona.io/pkg/object"
+	objectmanager "nimona.io/pkg/objectmanager"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
 )
@@ -33,6 +34,21 @@ func NewMockObjectManager(ctrl *gomock.Controller) *MockObjectManager {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 	return m.recorder
+}
+
+// Put mocks base method
+func (m *MockObjectManager) Put(ctx context.Context, o object.Object) (object.Object, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", ctx, o)
+	ret0, _ := ret[0].(object.Object)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Put indicates an expected call of Put
+func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectManager)(nil).Put), ctx, o)
 }
 
 // Request mocks base method
@@ -70,17 +86,20 @@ func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), varargs...)
 }
 
-// Put mocks base method
-func (m *MockObjectManager) Put(ctx context.Context, o object.Object) (object.Object, error) {
+// Subscribe mocks base method
+func (m *MockObjectManager) Subscribe(lookupOptions ...objectmanager.LookupOption) objectmanager.ObjectSubscription {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", ctx, o)
-	ret0, _ := ret[0].(object.Object)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	varargs := []interface{}{}
+	for _, a := range lookupOptions {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Subscribe", varargs...)
+	ret0, _ := ret[0].(objectmanager.ObjectSubscription)
+	return ret0
 }
 
-// Put indicates an expected call of Put
-func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
+// Subscribe indicates an expected call of Subscribe
+func (mr *MockObjectManagerMockRecorder) Subscribe(lookupOptions ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockObjectManager)(nil).Put), ctx, o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockObjectManager)(nil).Subscribe), lookupOptions...)
 }

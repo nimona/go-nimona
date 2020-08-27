@@ -25,3 +25,8 @@ signed object nimona.io/stream.Announcement {
     nonce string
     objects repeated nimona.io/object.Object
 }
+
+signed object nimona.io/stream.Subscription {
+    rootHashes repeated nimona.io/object.Hash
+    expiry string
+}
