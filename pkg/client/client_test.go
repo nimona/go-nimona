@@ -28,10 +28,8 @@ func TestClient_Info(t *testing.T) {
 			respCode: 200,
 			respBody: map[string]interface{}{
 				"metadata:m": map[string]interface{}{
-					"_signatures:am": []interface{}{
-						map[string]interface{}{
-							"algorithm:s": "OH_ES256",
-						},
+					"_signature:m": map[string]interface{}{
+						"algorithm:s": "OH_ES256",
 					},
 					"_hash:s": "oh1.xxx",
 					"owner:s": "foo",
