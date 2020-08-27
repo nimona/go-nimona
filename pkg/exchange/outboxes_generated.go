@@ -60,3 +60,23 @@ func (m *OutboxesMap) Range(i func(k crypto.PublicKey, v *outbox) bool) {
 		return i(k.(crypto.PublicKey), v.(*outbox))
 	})
 }
+
+// ListKeys -
+func (m *OutboxesMap) ListKeys() []crypto.PublicKey {
+	vs := []crypto.PublicKey{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, k.(crypto.PublicKey))
+		return true
+	})
+	return vs
+}
+
+// ListValues -
+func (m *OutboxesMap) ListValues() []*outbox {
+	vs := []*outbox{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, v.(*outbox))
+		return true
+	})
+	return vs
+}

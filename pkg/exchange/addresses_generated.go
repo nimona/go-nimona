@@ -58,3 +58,23 @@ func (m *AddressesMap) Range(i func(k string, v *addressState) bool) {
 		return i(k.(string), v.(*addressState))
 	})
 }
+
+// ListKeys -
+func (m *AddressesMap) ListKeys() []string {
+	vs := []string{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, k.(string))
+		return true
+	})
+	return vs
+}
+
+// ListValues -
+func (m *AddressesMap) ListValues() []*addressState {
+	vs := []*addressState{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, v.(*addressState))
+		return true
+	})
+	return vs
+}

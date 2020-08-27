@@ -58,3 +58,23 @@ func (m *SyncmapNameMap) Range(i func(k KeyType, v *ValueType) bool) {
 		return i(k.(KeyType), v.(*ValueType))
 	})
 }
+
+// ListKeys -
+func (m *SyncmapNameMap) ListKeys() []KeyType {
+	vs := []KeyType{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, k.(KeyType))
+		return true
+	})
+	return vs
+}
+
+// ListValues -
+func (m *SyncmapNameMap) ListValues() []*ValueType {
+	vs := []*ValueType{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, v.(*ValueType))
+		return true
+	})
+	return vs
+}
