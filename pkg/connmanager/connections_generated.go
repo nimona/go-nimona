@@ -60,3 +60,23 @@ func (m *ConnectionsMap) Range(i func(k crypto.PublicKey, v *peerbox) bool) {
 		return i(k.(crypto.PublicKey), v.(*peerbox))
 	})
 }
+
+// ListKeys -
+func (m *ConnectionsMap) ListKeys() []crypto.PublicKey {
+	vs := []crypto.PublicKey{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, k.(crypto.PublicKey))
+		return true
+	})
+	return vs
+}
+
+// ListValues -
+func (m *ConnectionsMap) ListValues() []*peerbox {
+	vs := []*peerbox{}
+	m.m.Range(func(k, v interface{}) bool {
+		vs = append(vs, v.(*peerbox))
+		return true
+	})
+	return vs
+}
