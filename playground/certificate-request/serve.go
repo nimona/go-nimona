@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"nimona.io/pkg/exchange"
+
 	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -90,7 +92,14 @@ func serve() {
 		os.Exit(1)
 	}
 
-	if err := resolver.Bootstrap(
+	res := resolver.New(
+		ctx,
+		resolver.WithEventbus(eventbus.DefaultEventbus),
+		resolver.WithExchange(exchange.DefaultExchange),
+		resolver.WithKeychain(keychain.DefaultKeychain),
+	)
+
+	if err := res.Bootstrap(
 		context.New(
 			context.WithTimeout(time.Second*5),
 		),

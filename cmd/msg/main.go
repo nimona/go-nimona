@@ -114,7 +114,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := resolver.Bootstrap(
+	res := resolver.New(
+		ctx,
+		resolver.WithEventbus(eventbus.DefaultEventbus),
+		resolver.WithExchange(exchange.DefaultExchange),
+		resolver.WithKeychain(keychain.DefaultKeychain),
+	)
+
+	if err := res.Bootstrap(
 		context.New(
 			context.WithTimeout(time.Second*5),
 		),
@@ -174,7 +181,7 @@ func main() {
 				Datetime: time.Now().Unix(),
 				Body:     body,
 			}
-			rs, err := resolver.Lookup(
+			rs, err := res.Lookup(
 				context.New(
 					context.WithTimeout(time.Second),
 				),
