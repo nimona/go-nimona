@@ -36,6 +36,12 @@ type (
 		Nonce    string
 		Objects  []*object.Object
 	}
+	Subscription struct {
+		raw        object.Object
+		Metadata   object.Metadata
+		RootHashes []object.Hash
+		Expiry     string
+	}
 )
 
 func (e Policy) GetType() string {
@@ -419,6 +425,89 @@ func (e *Announcement) FromObject(o object.Object) error {
 			eo := object.FromMap(iv.(map[string]interface{}))
 			e.Objects[i] = &eo
 		}
+	}
+	return nil
+}
+
+func (e Subscription) GetType() string {
+	return "nimona.io/stream.Subscription"
+}
+
+func (e Subscription) IsStreamRoot() bool {
+	return false
+}
+
+func (e Subscription) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{{
+			Name:       "rootHashes",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: true,
+			IsOptional: false,
+		}, {
+			Name:       "expiry",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}},
+	}
+}
+
+func (e Subscription) ToObject() object.Object {
+	o := object.Object{}
+	o = o.SetType("nimona.io/stream.Subscription")
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
+	}
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
+	}
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
+	}
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
+	o = o.SetPolicy(e.Metadata.Policy)
+	if len(e.RootHashes) > 0 {
+		v := object.List{}
+		for _, iv := range e.RootHashes {
+			v = v.Append(object.String(iv))
+		}
+		o = o.Set("rootHashes:as", v)
+	}
+	if e.Expiry != "" {
+		o = o.Set("expiry:s", e.Expiry)
+	}
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
+	// }
+	return o
+}
+
+func (e *Subscription) FromObject(o object.Object) error {
+	data, ok := o.Raw().Value("data:m").(object.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
+	e.Metadata.Policy = o.GetPolicy()
+	if v := data.Value("rootHashes:as"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]string)
+		e.RootHashes = make([]object.Hash, len(m))
+		for i, iv := range m {
+			e.RootHashes[i] = object.Hash(iv)
+		}
+	}
+	if v := data.Value("expiry:s"); v != nil {
+		e.Expiry = string(v.PrimitiveHinted().(string))
 	}
 	return nil
 }
