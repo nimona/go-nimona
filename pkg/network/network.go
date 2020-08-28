@@ -98,7 +98,7 @@ type (
 	network struct {
 		net       net.Network
 		connmgr   connmanager.Manager
-		localpeer  localpeer.LocalPeer
+		localpeer localpeer.LocalPeer
 		outboxes  *OutboxesMap
 		inboxes   EnvelopePubSub
 		deduplist *cache.Cache
