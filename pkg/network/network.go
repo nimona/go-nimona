@@ -1,4 +1,4 @@
-package exchange
+package network
 
 import (
 	"crypto/aes"
@@ -18,23 +18,16 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/mockgen -destination=../exchangemock/exchangemock_generated.go -package=exchangemock -source=exchange.go
+//go:generate $GOBIN/mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
 
 var (
-	dataForwardType = new(DataForward).GetType()
-	DefaultExchange = New(
-		context.Background(),
-		WithEventbus(eventbus.DefaultEventbus),
-		WithKeychain(keychain.DefaultKeychain),
-		WithNet(net.DefaultNetwork),
-	)
+	dataForwardType   = new(DataForward).GetType()
 	objHandledCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_received_total",
@@ -78,35 +71,38 @@ const (
 )
 
 // nolint: lll
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses_generated.go -pkg=exchange gen "KeyType=string ValueType=addressState SyncmapName=addresses"
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=exchange gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=exchange gen "ObjectType=*Envelope Name=Envelope name=envelope"
+//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
 
 type (
-	// Exchange interface for mocking exchange
-	Exchange interface {
-		Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription
-		Send(ctx context.Context, object object.Object, p *peer.Peer) error
+	// Network interface for mocking
+	Network interface {
+		Subscribe(
+			filters ...EnvelopeFilter,
+		) EnvelopeSubscription
+		Send(
+			ctx context.Context,
+			object object.Object,
+			recipient *peer.Peer,
+		) error
+		Listen(
+			ctx context.Context,
+			bindAddress string,
+		) (net.Listener, error)
+		Keychain() keychain.Keychain
+		Addresses() []string
 	}
-	// Option for customizing a new exchange
-	Option func(*exchange)
-	// echange implements an Exchange
-	exchange struct {
+	// Option for customizing a new Network
+	Option func(*network)
+	// network implements a Network
+	network struct {
 		net       net.Network
 		connmgr   connmanager.Manager
 		keychain  keychain.Keychain
-		eventbus  eventbus.Eventbus
 		outboxes  *OutboxesMap
 		inboxes   EnvelopePubSub
 		deduplist *cache.Cache
 	}
-	// addressState defines the states of a peer's address
-	// current options are:
-	// * -1 unconnectable
-	// * 0 unknown
-	// * 1 connectable
-	// * 2 blocked
-	addressState int
 	// outbox holds information about a single peer, its open connection,
 	// and the messages for it.
 	// the queue should only hold `*outgoingObject`s.
@@ -123,15 +119,12 @@ type (
 	}
 )
 
-// New creates a exchange on a given network
+// New creates a network on a given network
 func New(
 	ctx context.Context,
 	opts ...Option,
-) Exchange {
-	w := &exchange{
-		net:       net.DefaultNetwork,
-		keychain:  keychain.DefaultKeychain,
-		eventbus:  eventbus.DefaultEventbus,
+) Network {
+	w := &network{
 		outboxes:  NewOutboxesMap(),
 		inboxes:   NewEnvelopePubSub(),
 		deduplist: cache.New(10*time.Second, 1*time.Minute),
@@ -139,12 +132,21 @@ func New(
 	for _, opt := range opts {
 		opt(w)
 	}
+	if w.keychain == nil {
+		w.keychain = keychain.New()
+		k, err := crypto.GenerateEd25519PrivateKey()
+		if err != nil {
+			panic(err)
+		}
+		w.keychain.PutPrimaryPeerKey(k)
+	}
+	w.net = net.New(w.keychain)
 
 	logger := log.
 		FromContext(ctx).
-		Named("exchange").
+		Named("network").
 		With(
-			log.String("method", "exchange.New"),
+			log.String("method", "network.New"),
 		)
 
 	// subscribe to data forward type
@@ -160,7 +162,6 @@ func New(
 
 	connmgr := connmanager.New(
 		ctx,
-		w.eventbus,
 		w.net,
 		w.handleConnection,
 	)
@@ -169,15 +170,21 @@ func New(
 	return w
 }
 
-func Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
-	return DefaultExchange.Subscribe(filters...)
+func (w *network) Keychain() keychain.Keychain {
+	return w.keychain
 }
 
-func Send(ctx context.Context, obj object.Object, p *peer.Peer) error {
-	return DefaultExchange.Send(ctx, obj, p)
+func (w *network) Addresses() []string {
+	return w.net.Addresses()
+}
+func (w *network) Listen(
+	ctx context.Context,
+	bindAddress string,
+) (net.Listener, error) {
+	return w.net.Listen(ctx, bindAddress)
 }
 
-func (w *exchange) handleConnection(conn *net.Connection) error {
+func (w *network) handleConnection(conn *net.Connection) error {
 	objHandledCounter.Inc()
 
 	if conn == nil {
@@ -230,7 +237,7 @@ func (w *exchange) handleConnection(conn *net.Connection) error {
 	return nil
 }
 
-func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
+func (w *network) getOutbox(recipient crypto.PublicKey) *outbox {
 	outbox := &outbox{
 		peer:  recipient,
 		queue: queue.New(),
@@ -242,7 +249,7 @@ func (w *exchange) getOutbox(recipient crypto.PublicKey) *outbox {
 	return outbox
 }
 
-func (w *exchange) processOutbox(outbox *outbox) {
+func (w *network) processOutbox(outbox *outbox) {
 	for {
 		// dequeue the next item to send
 		// TODO figure out what can go wrong here
@@ -340,12 +347,12 @@ func (w *exchange) processOutbox(outbox *outbox) {
 }
 
 // Subscribe to incoming objects as envelopes
-func (w *exchange) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
+func (w *network) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
 }
 
 // handleObjects -
-func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
+func (w *network) handleObjects(sub EnvelopeSubscription) error {
 	for {
 		e, err := sub.Next()
 		if err != nil {
@@ -354,9 +361,9 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 
 		logger := log.
 			FromContext(context.Background()).
-			Named("exchange").
+			Named("network").
 			With(
-				log.String("method", "exchange.handleObjects"),
+				log.String("method", "network.handleObjects"),
 				log.String("payload", e.Payload.GetType()),
 			)
 
@@ -453,7 +460,7 @@ func (w *exchange) handleObjects(sub EnvelopeSubscription) error {
 
 // Send an object to the given peer.
 // Before sending, we'll go through the root object as well as any embedded
-func (w *exchange) Send(
+func (w *network) Send(
 	ctx context.Context,
 	o object.Object,
 	p *peer.Peer,
@@ -567,7 +574,7 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (w *exchange) wrapInDataForward(
+func (w *network) wrapInDataForward(
 	o object.Object,
 	rks ...crypto.PublicKey,
 ) (*DataForward, error) {

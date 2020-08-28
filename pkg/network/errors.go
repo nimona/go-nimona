@@ -1,4 +1,4 @@
-package exchange
+package network
 
 import (
 	"nimona.io/pkg/errors"
