@@ -77,13 +77,13 @@ type (
 
 // New creates a new p2p network
 func New(
-	localpeer localpeer.LocalPeer,
+	local localpeer.LocalPeer,
 ) Network {
 	n := &network{
-		localpeer: localpeer,
+		localpeer: local,
 		transports: map[string]Transport{
 			"tcps": &tcpTransport{
-				localpeer: localpeer,
+				localpeer: local,
 			},
 		},
 		listeners:   []*listener{},
