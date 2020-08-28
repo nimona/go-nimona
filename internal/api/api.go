@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nimona.io/internal/daemon/config"
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/http/router"
@@ -27,7 +26,6 @@ type API struct {
 
 	router    *router.Router
 	localpeer localpeer.LocalPeer
-	net       net.Network
 	resolver  resolver.Resolver
 	network   network.Network
 
