@@ -34,7 +34,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		testObj,
 		&peer.Peer{
 			Metadata: object.Metadata{
-				Owner: n2.Keychain().GetPrimaryPeerKey().PublicKey(),
+				Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			},
 			Addresses: n2.Addresses(),
 		},
@@ -54,7 +54,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		testObj,
 		&peer.Peer{
 			Metadata: object.Metadata{
-				Owner: n1.Keychain().GetPrimaryPeerKey().PublicKey(),
+				Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			},
 			Addresses: n1.Addresses(),
 		},
@@ -80,14 +80,14 @@ func TestNetwork_Relay(t *testing.T) {
 
 	p0 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owner: n0.Keychain().GetPrimaryPeerKey().PublicKey(),
+			Owner: n0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n0.Addresses(),
 	}
 
 	p1 := &peer.Peer{
 		Metadata: object.Metadata{
-			Owner: n1.Keychain().GetPrimaryPeerKey().PublicKey(),
+			Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n1.Addresses(),
 		Relays: []*peer.Peer{
@@ -98,7 +98,7 @@ func TestNetwork_Relay(t *testing.T) {
 	p2 := &peer.Peer{
 
 		Metadata: object.Metadata{
-			Owner: n2.Keychain().GetPrimaryPeerKey().PublicKey(),
+			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
 		Addresses: n2.Addresses(),
 		Relays: []*peer.Peer{
@@ -110,8 +110,8 @@ func TestNetwork_Relay(t *testing.T) {
 		SetType("foo").
 		Set("foo:s", object.String("bar"))
 
-	testObjFromP1 := testObj.SetOwner(n1.Keychain().GetPrimaryPeerKey().PublicKey())
-	testObjFromP2 := testObj.SetOwner(n2.Keychain().GetPrimaryPeerKey().PublicKey())
+	testObjFromP1 := testObj.SetOwner(n1.LocalPeer().GetPrimaryPeerKey().PublicKey())
+	testObjFromP2 := testObj.SetOwner(n2.LocalPeer().GetPrimaryPeerKey().PublicKey())
 
 	// send from p1 to p0
 	err = n1.Send(context.Background(), testObj, p0)

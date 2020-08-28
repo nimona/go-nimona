@@ -10,11 +10,11 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 )
 
 type tcpTransport struct {
-	keychain keychain.Keychain
+	localpeer localpeer.LocalPeer
 }
 
 func (tt *tcpTransport) Dial(
@@ -23,9 +23,9 @@ func (tt *tcpTransport) Dial(
 ) (*Connection, error) {
 	// TODO we probably should not be generating the certificate every time
 	// but at this point it's kind of annoying to cache the primary peer key
-	// TODO consider storing ready made certificated in the keychain
+	// TODO consider storing ready made certificated in the localpeer
 	cert, err := crypto.GenerateTLSCertificate(
-		tt.keychain.GetPrimaryPeerKey(),
+		tt.localpeer.GetPrimaryPeerKey(),
 	)
 	if err != nil {
 		return nil, err

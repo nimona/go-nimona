@@ -14,11 +14,6 @@ type (
 	}
 )
 
-// NewKeyTypeValueTypeSyncMap constructs a new SyncMap
-func NewKeyTypeValueTypeSyncMap() *KeyTypeSyncList {
-	return &KeyTypeSyncList{}
-}
-
 // Put -
 func (m *KeyTypeSyncList) Put(k KeyType) {
 	m.m.Store(k, true)
@@ -40,4 +35,14 @@ func (m *KeyTypeSyncList) Range(i func(k KeyType) bool) {
 	m.m.Range(func(k, v interface{}) bool {
 		return i(k.(KeyType))
 	})
+}
+
+// List -
+func (m *KeyTypeSyncList) List() []KeyType {
+	r := []KeyType{}
+	m.m.Range(func(k, v interface{}) bool {
+		r = append(r, k.(KeyType))
+		return true
+	})
+	return r
 }

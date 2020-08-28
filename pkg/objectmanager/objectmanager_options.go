@@ -1,8 +1,8 @@
 package objectmanager
 
 import (
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/network"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/resolver"
 )
@@ -19,9 +19,9 @@ func WithExchange(x exchange.Exchange) func(*manager) {
 	}
 }
 
-func WithKeychain(k keychain.Keychain) func(*manager) {
+func WithLocalPeer(k localpeer.LocalPeer) func(*manager) {
 	return func(m *manager) {
-		m.keychain = k
+		m.localpeer = k
 	}
 }
 

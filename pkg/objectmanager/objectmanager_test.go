@@ -11,11 +11,11 @@ import (
 	"nimona.io/internal/gomockutil"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/exchangemock"
+	"nimona.io/pkg/network"
+	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/feed"
-	"nimona.io/pkg/keychain"
-	"nimona.io/pkg/keychainmock"
+	"nimona.io/pkg/localpeer"
+	"nimona.io/pkg/localpeermock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
@@ -303,7 +303,7 @@ func Test_manager_Put(t *testing.T) {
 	}.ToObject()
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
-		keychain              func(*testing.T) keychain.Keychain
+		localpeer              func(*testing.T) localpeer.LocalPeer
 		exchange              func(*testing.T) exchange.Exchange
 		resolver              func(*testing.T) resolver.Resolver
 		receivedSubscriptions []object.Object
@@ -329,8 +329,8 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectSimpleUpdated)
 				return m
 			},
-			keychain: func(t *testing.T) keychain.Keychain {
-				m := keychainmock.NewMockKeychain(
+			localpeer: func(t *testing.T) localpeer.LocalPeer {
+				m := localpeermock.NewMockLocalPeer(
 					gomock.NewController(t),
 				)
 				m.EXPECT().
@@ -371,8 +371,8 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectComplexUpdated)
 				return m
 			},
-			keychain: func(t *testing.T) keychain.Keychain {
-				m := keychainmock.NewMockKeychain(
+			localpeer: func(t *testing.T) localpeer.LocalPeer {
+				m := localpeermock.NewMockLocalPeer(
 					gomock.NewController(t),
 				)
 				m.EXPECT().
@@ -422,8 +422,8 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			keychain: func(t *testing.T) keychain.Keychain {
-				m := keychainmock.NewMockKeychain(
+			localpeer: func(t *testing.T) localpeer.LocalPeer {
+				m := localpeermock.NewMockLocalPeer(
 					gomock.NewController(t),
 				)
 				m.EXPECT().
@@ -472,8 +472,8 @@ func Test_manager_Put(t *testing.T) {
 					)
 				return m
 			},
-			keychain: func(t *testing.T) keychain.Keychain {
-				m := keychainmock.NewMockKeychain(
+			localpeer: func(t *testing.T) localpeer.LocalPeer {
+				m := localpeermock.NewMockLocalPeer(
 					gomock.NewController(t),
 				)
 				m.EXPECT().
@@ -527,8 +527,8 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			keychain: func(t *testing.T) keychain.Keychain {
-				m := keychainmock.NewMockKeychain(
+			localpeer: func(t *testing.T) localpeer.LocalPeer {
+				m := localpeermock.NewMockLocalPeer(
 					gomock.NewController(t),
 				)
 				m.EXPECT().
@@ -585,7 +585,7 @@ func Test_manager_Put(t *testing.T) {
 			m := New(
 				context.Background(),
 				WithStore(tt.fields.store(t)),
-				WithKeychain(tt.fields.keychain(t)),
+				WithLocalPeer(tt.fields.localpeer(t)),
 				WithExchange(tt.fields.exchange(t)),
 				WithResolver(tt.fields.resolver(t)),
 			)

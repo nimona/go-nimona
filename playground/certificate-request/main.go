@@ -11,8 +11,8 @@ import (
 	"github.com/skip2/go-qrcode"
 
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/network"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/peer"
 )
 
@@ -142,7 +142,7 @@ func main() {
 			ApplicationName:        "Foobar App",
 			ApplicationDescription: "An app that does nothing",
 			ApplicationURL:         "https://github.com/nimona",
-			Subject:                keychain.GetPrimaryPeerKey().PublicKey().String(),
+			Subject:                localpeer.GetPrimaryPeerKey().PublicKey().String(),
 			Resources: []string{
 				"nimona.io/**",
 				"mochi.io/**",

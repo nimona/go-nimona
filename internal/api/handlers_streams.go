@@ -36,7 +36,7 @@ package api
 
 // 			case req := <-outgoing:
 // 				sig, err := object.NewSignature(
-// 					api.keychain.GetPrimaryPeerKey(),
+// 					api.localpeer.GetPrimaryPeerKey(),
 // 					req,
 // 				)
 // 				if err != nil {

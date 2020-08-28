@@ -11,11 +11,11 @@ import (
 func (api *API) HandleGetLocal(c *router.Context) {
 	p := &peer.Peer{
 		Addresses: api.net.Addresses(),
-		Certificates: api.keychain.GetCertificates(
-			api.keychain.GetPrimaryPeerKey().PublicKey(),
+		Certificates: api.localpeer.GetCertificates(
+			api.localpeer.GetPrimaryPeerKey().PublicKey(),
 		),
 		Metadata: object.Metadata{
-			Owner: api.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: api.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
 	}
 	ms := api.mapObject(p.ToObject())

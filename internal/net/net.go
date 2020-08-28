@@ -14,7 +14,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
@@ -76,13 +76,13 @@ type (
 
 // New creates a new p2p network
 func New(
-	keychain keychain.Keychain,
+	localpeer localpeer.LocalPeer,
 ) Network {
 	n := &network{
-		keychain: keychain,
+		localpeer: localpeer,
 		transports: map[string]Transport{
 			"tcps": &tcpTransport{
-				keychain: keychain,
+				localpeer: localpeer,
 			},
 		},
 		listeners:   []*listener{},
@@ -94,7 +94,7 @@ func New(
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	keychain    keychain.Keychain
+	localpeer   localpeer.LocalPeer
 	transports  map[string]Transport
 	listeners   []*listener
 	connections chan *Connection
@@ -219,7 +219,7 @@ func (n *network) Listen(
 		addresses: []string{},
 		listeners: []net.Listener{},
 	}
-	k := n.keychain.GetPrimaryPeerKey()
+	k := n.localpeer.GetPrimaryPeerKey()
 	for pt, tsp := range n.transports {
 		lst, err := tsp.Listen(ctx, bindAddress, k)
 		if err != nil {

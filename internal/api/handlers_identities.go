@@ -7,7 +7,7 @@ import (
 )
 
 func (api *API) HandleGetIdentities(c *router.Context) {
-	p := api.keychain.GetPrimaryIdentityKey().PublicKey()
+	p := api.localpeer.GetPrimaryIdentityKey().PublicKey()
 	c.JSON(http.StatusOK, p)
 }
 

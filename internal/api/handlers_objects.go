@@ -119,9 +119,9 @@ func (api *API) HandlePostObjects(c *router.Context) {
 	}
 
 	o := object.FromMap(req)
-	k := api.keychain.GetPrimaryPeerKey()
+	k := api.localpeer.GetPrimaryPeerKey()
 	o = o.SetOwner(
-		api.keychain.GetPrimaryIdentityKey().PublicKey(),
+		api.localpeer.GetPrimaryIdentityKey().PublicKey(),
 	)
 
 	sig, err := object.NewSignature(k, o)
@@ -226,12 +226,12 @@ func (api *API) HandlePostObject(c *router.Context) {
 
 	req["stream:s"] = rootObjectHash
 	req["parents:as"] = parents
-	req["owner:s"] = api.keychain.GetPrimaryIdentityKey().PublicKey()
+	req["owner:s"] = api.localpeer.GetPrimaryIdentityKey().PublicKey()
 
 	o := object.FromMap(req)
 
 	sig, err := object.NewSignature(
-		api.keychain.GetPrimaryPeerKey(),
+		api.localpeer.GetPrimaryPeerKey(),
 		o,
 	)
 	if err != nil {

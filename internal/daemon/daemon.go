@@ -15,8 +15,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
@@ -46,8 +45,8 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		keychain.DefaultKeychain.Put(
-			keychain.PrimaryIdentityKey,
+		localpeer.DefaultLocalPeer.Put(
+			localpeer.PrimaryIdentityKey,
 			cfg.Peer.IdentityKey,
 		)
 	}
@@ -80,8 +79,8 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		)
 	}
 
-	keychain.DefaultKeychain.Put(
-		keychain.PrimaryPeerKey,
+	localpeer.DefaultLocalPeer.Put(
+		localpeer.PrimaryPeerKey,
 		cfg.Peer.PeerKey,
 	)
 
@@ -102,7 +101,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	rs := resolver.New(
 		ctx,
 		resolver.WithExchange(exchange.DefaultExchange),
-		resolver.WithKeychain(keychain.DefaultKeychain),
+		resolver.WithLocalPeer(localpeer.DefaultLocalPeer),
 		resolver.WithEventbus(eventbus.DefaultEventbus),
 		resolver.WithBoostrapPeers(bootstrapPeers),
 	)

@@ -18,7 +18,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -89,7 +89,7 @@ type (
 			ctx context.Context,
 			bindAddress string,
 		) (net.Listener, error)
-		Keychain() keychain.Keychain
+		LocalPeer() localpeer.LocalPeer
 		Addresses() []string
 	}
 	// Option for customizing a new Network
@@ -98,7 +98,7 @@ type (
 	network struct {
 		net       net.Network
 		connmgr   connmanager.Manager
-		keychain  keychain.Keychain
+		localpeer  localpeer.LocalPeer
 		outboxes  *OutboxesMap
 		inboxes   EnvelopePubSub
 		deduplist *cache.Cache
@@ -132,15 +132,15 @@ func New(
 	for _, opt := range opts {
 		opt(w)
 	}
-	if w.keychain == nil {
-		w.keychain = keychain.New()
+	if w.localpeer == nil {
+		w.localpeer = localpeer.New()
 		k, err := crypto.GenerateEd25519PrivateKey()
 		if err != nil {
 			panic(err)
 		}
-		w.keychain.PutPrimaryPeerKey(k)
+		w.localpeer.PutPrimaryPeerKey(k)
 	}
-	w.net = net.New(w.keychain)
+	w.net = net.New(w.localpeer)
 
 	logger := log.
 		FromContext(ctx).
@@ -170,8 +170,8 @@ func New(
 	return w
 }
 
-func (w *network) Keychain() keychain.Keychain {
-	return w.keychain
+func (w *network) LocalPeer() localpeer.LocalPeer {
+	return w.localpeer
 }
 
 func (w *network) Addresses() []string {
@@ -385,7 +385,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			// if the data are encrypted we should first decrupt them
 			if !fwd.Ephermeral.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
-					w.keychain.GetPrimaryPeerKey(),
+					w.localpeer.GetPrimaryPeerKey(),
 					fwd.Ephermeral,
 				)
 				if err != nil {
@@ -427,7 +427,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 				return errors.Wrap(errors.Error("could not parse nfwd"), err)
 			}
 
-			pk := w.keychain.GetPrimaryPeerKey().PublicKey()
+			pk := w.localpeer.GetPrimaryPeerKey().PublicKey()
 			if nfwd.Recipient.Equals(pk) {
 				w.inboxes.Publish(&Envelope{
 					Sender:  o.GetSignature().Signer,
@@ -473,14 +473,14 @@ func (w *network) Send(
 	ctx = context.FromContext(ctx)
 
 	var err error
-	if k := w.keychain.GetPrimaryPeerKey(); !k.IsEmpty() {
+	if k := w.localpeer.GetPrimaryPeerKey(); !k.IsEmpty() {
 		o, err = signAll(k, o)
 		if err != nil {
 			return err
 		}
 	}
 
-	if k := w.keychain.GetPrimaryIdentityKey(); !k.IsEmpty() {
+	if k := w.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
 		o, err = signAll(k, o)
 		if err != nil {
 			return err
