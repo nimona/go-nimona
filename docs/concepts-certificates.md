@@ -44,11 +44,11 @@ the remote party simply ignores the object or request.
     "created:s": "2020-06-25T19:16:43Z",
     "expires:s": "2021-06-25T19:16:43Z",
   },
-  "_signatures:am": [{
+  "_signature:m": {
       "signer:o": "ed25519.8mE4CeLLCwpyfqyNFkT6gV32ZYcYP6jt1yzMDmzbxxRL",
       "alg:o": "OH_ES256",
       "x:d": "x0..."
-  }]
+  }
 }
 ```
 

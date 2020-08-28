@@ -47,10 +47,7 @@ All type-specific data are grouped under the `data:m` attribute.
 {
   "type:s": "type",
   "stream:s": "x0...",
-  "Owner:as": [
-    "x0...",
-    "x1..."
-  ],
+  "owner:s": "x0...",
   "parents:as": [
     "x0...",
     "x1..."
@@ -58,28 +55,24 @@ All type-specific data are grouped under the `data:m` attribute.
   "data:m": {
     "foo:s": "bar"
   },
-  "_signatures:am": [
-    {
-      "alg:s": "hashing-algorithm",
-      "signer:s": "x0...",
-      "x:d": "x0..."
-    }
-  ]
+  "_signature:m": {
+    "alg:s": "hashing-algorithm",
+    "signer:s": "x0...",
+    "x:d": "x0..."
+  }
 }
 ```
 
 ### Metadata
 
 * `type:s` Object type
-* `Owner:as` (optional) Array of public keys of the owner/s of the object.  
-  If one or more owners are set, the equivalent number of signature MUST be
-  provided, one signed by each of the owners.
+* `owner:s` (optional) Public keys of the owner of the object.  
 * `stream:s` (optional) Root hash of the stream the object is part of.  
 * `parents:as` (optional) Array of hashes of parent objects, this is used
   for streams
 * `data:m` Map of arbitrary data.  
   Currently this can only be a map, but we're considering allowing any type.
-* `_signatures:am` (optional) Array of signatures.
+* `_signature:m` (optional) Cryptographic signature by the owner.
 
 Additional metadata will be added in regards to access control and schema
 specification.
