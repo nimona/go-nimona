@@ -10,9 +10,9 @@ import (
 	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/http/router"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/internal/net"
 	"nimona.io/pkg/object"
@@ -26,7 +26,7 @@ type API struct {
 	config *config.Config
 
 	router   *router.Router
-	keychain keychain.Keychain
+	localpeer localpeer.LocalPeer
 	net      net.Network
 	resolver resolver.Resolver
 	exchange exchange.Exchange
@@ -47,7 +47,7 @@ type API struct {
 func New(
 	cfg *config.Config,
 	k crypto.PrivateKey,
-	kc keychain.Keychain,
+	kc localpeer.LocalPeer,
 	n net.Network,
 	d resolver.Resolver,
 	x exchange.Exchange,
@@ -64,7 +64,7 @@ func New(
 		config: cfg,
 
 		router:      r,
-		keychain:    kc,
+		localpeer:    kc,
 		net:         n,
 		resolver:    d,
 		exchange:    x,

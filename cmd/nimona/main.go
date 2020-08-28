@@ -9,7 +9,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/internal/daemon"
 	"nimona.io/internal/daemon/config"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/internal/version"
 )
@@ -91,7 +91,7 @@ func main() {
 	apiServer := api.New(
 		config,
 		config.Peer.PeerKey,
-		keychain.DefaultKeychain,
+		localpeer.DefaultLocalPeer,
 		d.Net,
 		d.Resolver,
 		d.Exchange,

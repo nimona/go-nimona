@@ -8,8 +8,8 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	net "nimona.io/internal/net"
 	context "nimona.io/pkg/context"
-	network "nimona.io/pkg/exchange"
-	keychain "nimona.io/pkg/keychain"
+	localpeer "nimona.io/pkg/localpeer"
+	network "nimona.io/pkg/network"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
@@ -85,18 +85,18 @@ func (mr *MockNetworkMockRecorder) Listen(ctx, bindAddress interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Listen", reflect.TypeOf((*MockNetwork)(nil).Listen), ctx, bindAddress)
 }
 
-// Keychain mocks base method
-func (m *MockNetwork) Keychain() keychain.Keychain {
+// LocalPeer mocks base method
+func (m *MockNetwork) LocalPeer() localpeer.LocalPeer {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Keychain")
-	ret0, _ := ret[0].(keychain.Keychain)
+	ret := m.ctrl.Call(m, "LocalPeer")
+	ret0, _ := ret[0].(localpeer.LocalPeer)
 	return ret0
 }
 
-// Keychain indicates an expected call of Keychain
-func (mr *MockNetworkMockRecorder) Keychain() *gomock.Call {
+// LocalPeer indicates an expected call of LocalPeer
+func (mr *MockNetworkMockRecorder) LocalPeer() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Keychain", reflect.TypeOf((*MockNetwork)(nil).Keychain))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalPeer", reflect.TypeOf((*MockNetwork)(nil).LocalPeer))
 }
 
 // Addresses mocks base method

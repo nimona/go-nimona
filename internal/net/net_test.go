@@ -9,7 +9,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -117,10 +117,10 @@ func TestNetDialBackoff(t *testing.T) {
 }
 
 func newPeer(t *testing.T) (
-	keychain.Keychain,
+	localpeer.LocalPeer,
 	*network,
 ) {
-	kc := keychain.New()
+	kc := localpeer.New()
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 	kc.PutPrimaryPeerKey(pk)

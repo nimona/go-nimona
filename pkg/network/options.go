@@ -1,12 +1,12 @@
 package network
 
 import (
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 )
 
-// WithKeychain overrides the default keychain for the network.
-func WithKeychain(k keychain.Keychain) func(*network) {
+// WithLocalPeer overrides the default localpeer for the network.
+func WithLocalPeer(k localpeer.LocalPeer) func(*network) {
 	return func(w *network) {
-		w.keychain = k
+		w.localpeer = k
 	}
 }

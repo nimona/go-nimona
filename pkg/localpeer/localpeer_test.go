@@ -1,4 +1,4 @@
-package keychain
+package localpeer
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"nimona.io/pkg/crypto"
 )
 
-func Test_memoryKeychain_GetPrimaryPeerKey(t *testing.T) {
+func Test_memoryLocalPeer_GetPrimaryPeerKey(t *testing.T) {
 	k1, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
@@ -40,7 +40,7 @@ func Test_memoryKeychain_GetPrimaryPeerKey(t *testing.T) {
 	}
 }
 
-func Test_memoryKeychain_GetPrimaryIdentityKey(t *testing.T) {
+func Test_memoryLocalPeer_GetPrimaryIdentityKey(t *testing.T) {
 	k1, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 

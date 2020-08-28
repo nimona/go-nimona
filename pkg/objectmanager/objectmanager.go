@@ -9,9 +9,9 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/feed"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
@@ -64,7 +64,7 @@ type (
 	manager struct {
 		objectstore     objectstore.Store
 		exchange        exchange.Exchange
-		keychain        keychain.Keychain
+		localpeer        localpeer.LocalPeer
 		resolver        resolver.Resolver
 		pubsub          ObjectPubSub
 		newNonce        func() string
@@ -409,7 +409,7 @@ func (m *manager) storeObject(
 
 	// add to feed
 	feedStreamHash := getFeedRootHash(
-		m.keychain.GetPrimaryIdentityKey().PublicKey(),
+		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
 		getTypeForFeed(objType),
 	)
 	feedEvent := feed.Added{
@@ -478,7 +478,7 @@ func (m *manager) announceObject(
 	// notify subscribers
 	announcement := stream.Announcement{
 		Metadata: object.Metadata{
-			Owner: m.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
 		Objects: []*object.Object{
 			&obj,
@@ -622,7 +622,7 @@ func (m *manager) Put(
 	// add owners
 	// TODO should we be adding owners?
 	o = o.SetOwner(
-		m.keychain.GetPrimaryIdentityKey().PublicKey(),
+		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
 	)
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()

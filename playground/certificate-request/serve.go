@@ -5,13 +5,13 @@ import (
 	"os"
 	"time"
 
-	"nimona.io/pkg/exchange"
+	"nimona.io/pkg/network"
 
 	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/internal/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -42,8 +42,8 @@ func serve() {
 
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		keychain.Put(
-			keychain.PrimaryIdentityKey,
+		localpeer.Put(
+			localpeer.PrimaryIdentityKey,
 			cfg.Peer.IdentityKey,
 		)
 	}
@@ -64,8 +64,8 @@ func serve() {
 		)
 	}
 
-	keychain.Put(
-		keychain.PrimaryPeerKey,
+	localpeer.Put(
+		localpeer.PrimaryPeerKey,
 		cfg.Peer.PeerKey,
 	)
 
@@ -96,7 +96,7 @@ func serve() {
 		ctx,
 		resolver.WithEventbus(eventbus.DefaultEventbus),
 		resolver.WithExchange(exchange.DefaultExchange),
-		resolver.WithKeychain(keychain.DefaultKeychain),
+		resolver.WithLocalPeer(localpeer.DefaultLocalPeer),
 	)
 
 	if err := res.Bootstrap(
