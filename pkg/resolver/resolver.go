@@ -8,16 +8,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/patrickmn/go-cache"
 
+	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/keychain"
+	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
-	"nimona.io/internal/net"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -46,16 +45,13 @@ type (
 		) error
 	}
 	resolver struct {
-		context          context.Context
-		exchange         exchange.Exchange
-		eventbus         eventbus.Eventbus
-		keychain         keychain.Keychain
-		peerCache        *peerCache
-		pinnedObjects    *pinnedObjects
-		networkAddresses *networkAddresses
-		relays           *relays
-		localPeer        *peer.Peer
-		localPeerLock    sync.RWMutex
+		context            context.Context
+		network            network.Network
+		localpeer          localpeer.LocalPeer
+		peerCache          *peerCache
+		peerConnections    *peerConnections
+		localPeerCache     *peer.Peer
+		localPeerCacheLock sync.RWMutex
 		// only used for initial bootstraping
 		initialBootstrapPeers []*peer.Peer
 		blocklist             *cache.Cache
@@ -67,68 +63,39 @@ type (
 // New returns a new resolver
 func New(
 	ctx context.Context,
+	netw network.Network,
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
-		context:  ctx,
-		keychain: keychain.DefaultKeychain,
-		eventbus: eventbus.DefaultEventbus,
-		exchange: exchange.DefaultExchange,
+		context: ctx,
+		network: netw,
 		peerCache: &peerCache{
 			m: sync.Map{},
 		},
-		pinnedObjects:         &pinnedObjects{},
-		networkAddresses:      &networkAddresses{},
-		relays:                &relays{},
+		peerConnections: &peerConnections{
+			m: sync.Map{},
+		},
 		initialBootstrapPeers: []*peer.Peer{},
 		blocklist:             cache.New(time.Second*5, time.Second*60),
-		localPeerLock:         sync.RWMutex{},
+		localPeerCacheLock:    sync.RWMutex{},
 	}
 
 	for _, opt := range opts {
 		opt(r)
 	}
 
+	r.localpeer = r.network.LocalPeer()
+
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver"),
 	)
 
-	objectSub := r.exchange.Subscribe(
-		exchange.FilterByObjectType(
-			peerType,
-			peerLookupRequestType,
-			peerLookupResponseType,
-		),
+	// we are listening for all incoming object types in order to learn about
+	// new peers that are talking to us so we can announce ourselves to them
+	go network.HandleEnvelopeSubscription(
+		r.network.Subscribe(),
+		r.handleObject,
 	)
-
-	go exchange.HandleEnvelopeSubscription(objectSub, r.handleObject)
-
-	// keep track of network addresses
-	go func() {
-		s := r.eventbus.Subscribe()
-		for {
-			e, err := s.Next()
-			if err != nil {
-				return
-			}
-			switch v := e.(type) {
-			case eventbus.NetworkAddressAdded:
-				r.networkAddresses.Put(v.Address)
-			case eventbus.NetworkAddressRemoved:
-				r.networkAddresses.Delete(v.Address)
-			case eventbus.ObjectPinned:
-				r.pinnedObjects.Put(v.Hash)
-			case eventbus.ObjectUnpinned:
-				r.pinnedObjects.Delete(v.Hash)
-			case eventbus.PeerConnectionEstablished:
-				r.announceSelf(v.PublicKey)
-			case eventbus.RelayAdded:
-				r.relays.Put(v.Peer)
-			case eventbus.RelayRemoved:
-				r.relays.Delete(v.PublicKey)
-			}
-		}
-	}()
 
 	// get in touch with bootstrap nodes
 	go func() {
@@ -185,19 +152,19 @@ func (r *resolver) Lookup(
 	// send content requests to recipients
 	req := &peer.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: r.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
 		Nonce: rand.String(12),
 		Bloom: bl,
 	}
 	reqObject := req.ToObject()
 
-	peerLookupResponses := make(chan *exchange.Envelope)
+	peerLookupResponses := make(chan *network.Envelope)
 
 	// listen for lookup responses
-	resSub := r.exchange.Subscribe(
-		exchange.FilterByObjectType(peerLookupResponseType),
-		func(e *exchange.Envelope) bool {
+	resSub := r.network.Subscribe(
+		network.FilterByObjectType(peerLookupResponseType),
+		func(e *network.Envelope) bool {
 			v := e.Payload.Get("nonce:s")
 			rn, ok := v.(string)
 			return ok && rn == req.Nonce
@@ -218,7 +185,7 @@ func (r *resolver) Lookup(
 	initialRecipients := make(chan *peer.Peer, 100)
 
 	queryPeer := func(p *peer.Peer) {
-		err := r.exchange.Send(
+		err := r.network.Send(
 			ctx,
 			reqObject,
 			p,
@@ -353,10 +320,17 @@ func (r *resolver) Lookup(
 }
 
 func (r *resolver) handleObject(
-	e *exchange.Envelope,
+	e *network.Envelope,
 ) error {
 	// attempt to recover correlation id from request id
 	ctx := r.context
+
+	// check if this is a peer we've received objects from in the past x minutes
+	// and if not, announce ourselves to them
+	lastConn := r.peerConnections.GetOrPut(e.Sender)
+	if lastConn != nil && lastConn.Add(time.Minute*5).After(time.Now()) {
+		r.announceSelf(e.Sender)
+	}
 
 	// handle payload
 	o := e.Payload
@@ -402,7 +376,7 @@ func (r *resolver) handlePeer(
 func (r *resolver) handlePeerLookup(
 	ctx context.Context,
 	q *peer.LookupRequest,
-	e *exchange.Envelope,
+	e *network.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -432,7 +406,7 @@ func (r *resolver) handlePeerLookup(
 
 	res := &peer.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: r.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
 		Nonce: q.Nonce,
 		Peers: cps,
@@ -447,7 +421,7 @@ func (r *resolver) handlePeerLookup(
 		}
 	}
 
-	err = r.exchange.Send(
+	err = r.network.Send(
 		ctx,
 		res.ToObject(),
 		p,
@@ -470,7 +444,7 @@ func (r *resolver) Bootstrap(
 	nonce := rand.String(6)
 	q := &peer.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.keychain.GetPrimaryPeerKey().PublicKey(),
+			Owner: r.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
 		Nonce: nonce,
 		Bloom: r.getLocalPeer().Bloom,
@@ -478,7 +452,7 @@ func (r *resolver) Bootstrap(
 	o := q.ToObject()
 	for _, p := range bootstrapPeers {
 		logger.Debug("connecting to bootstrap", log.Strings("addresses", p.Addresses))
-		err := r.exchange.Send(ctx, o, p)
+		err := r.network.Send(ctx, o, p)
 		if err != nil {
 			logger.Debug("could not send request to bootstrap", log.Error(err))
 		}
@@ -506,7 +480,7 @@ func (r *resolver) publishContentHashes(
 
 	o := cb.ToObject()
 	for _, p := range ps {
-		err := r.exchange.Send(ctx, o, p)
+		err := r.network.Send(ctx, o, p)
 		if err != nil {
 			logger.Debug("could not send request", log.Error(err))
 		}
@@ -518,7 +492,7 @@ func (r *resolver) announceSelf(p crypto.PublicKey) {
 	ctx := context.New(
 		context.WithTimeout(time.Second * 3),
 	)
-	err := r.exchange.Send(
+	err := r.network.Send(
 		ctx,
 		r.getLocalPeer().ToObject(),
 		&peer.Peer{
@@ -533,21 +507,21 @@ func (r *resolver) announceSelf(p crypto.PublicKey) {
 }
 
 func (r *resolver) getLocalPeer() *peer.Peer {
-	r.localPeerLock.RLock()
-	lastPeer := r.localPeer
-	r.localPeerLock.RUnlock()
+	r.localPeerCacheLock.RLock()
+	lastPeer := r.localPeerCache
+	r.localPeerCacheLock.RUnlock()
 
-	peerKey := r.keychain.GetPrimaryPeerKey().PublicKey()
-	certificates := r.keychain.GetCertificates(peerKey)
-	pinnedObjects := r.pinnedObjects.List()
-	addresses := r.networkAddresses.List()
-	relays := r.relays.List()
+	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
+	certificates := r.localpeer.GetCertificates(peerKey)
+	contentHashes := r.localpeer.GetContentHashes()
+	addresses := r.network.Addresses()
+	relays := r.localpeer.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
 	hs := []string{
 		peerKey.String(),
 	}
-	for _, c := range pinnedObjects {
+	for _, c := range contentHashes {
 		hs = append(hs, c.String())
 	}
 	for _, c := range certificates {
@@ -563,7 +537,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		return lastPeer
 	}
 
-	localPeer := &peer.Peer{
+	localPeerCache := &peer.Peer{
 		Version:      time.Now().Unix(),
 		Bloom:        bloomSlice,
 		Addresses:    addresses,
@@ -574,15 +548,15 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 		},
 	}
 
-	r.localPeerLock.Lock()
-	r.localPeer = localPeer
-	r.localPeerLock.Unlock()
+	r.localPeerCacheLock.Lock()
+	r.localPeerCache = localPeerCache
+	r.localPeerCacheLock.Unlock()
 
-	return localPeer
+	return localPeerCache
 }
 
 func (r *resolver) withoutOwnPeer(ps []*peer.Peer) []*peer.Peer {
-	lp := r.keychain.GetPrimaryPeerKey().PublicKey().String()
+	lp := r.localpeer.GetPrimaryPeerKey().PublicKey().String()
 	pm := map[string]*peer.Peer{}
 	for _, p := range ps {
 		owner := p.Metadata.Owner
