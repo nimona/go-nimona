@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
-	"nimona.io/pkg/net"
+	"nimona.io/internal/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )

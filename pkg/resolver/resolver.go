@@ -17,7 +17,7 @@ import (
 	"nimona.io/pkg/exchange"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/net"
+	"nimona.io/internal/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )

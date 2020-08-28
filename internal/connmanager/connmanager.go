@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"sync"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
 )
 
@@ -33,8 +32,7 @@ type Manager interface {
 type ConnectionHandler func(*net.Connection) error
 
 type manager struct {
-	eventbus eventbus.Eventbus
-	net      net.Network
+	net net.Network
 
 	// store the connections per peer
 	connections *ConnectionsMap
@@ -43,12 +41,10 @@ type manager struct {
 
 func New(
 	ctx context.Context,
-	eb eventbus.Eventbus,
 	n net.Network,
 	handler ConnectionHandler,
 ) Manager {
 	mgr := &manager{
-		eventbus:    eb,
 		net:         n,
 		connections: NewConnectionsMap(),
 		connHandler: handler,
@@ -97,9 +93,10 @@ func (m *manager) GetConnection(
 
 	m.updateConnection(pbox, conn)
 
-	m.eventbus.Publish(eventbus.PeerConnectionEstablished{
-		PublicKey: conn.RemotePeerKey,
-	})
+	// TODO(geoah) publish connections?
+	// m.eventbus.Publish(eventbus.PeerConnectionEstablished{
+	// 	PublicKey: conn.RemotePeerKey,
+	// })
 
 	if err := m.connHandler(conn); err != nil {
 		return nil, err

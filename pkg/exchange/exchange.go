@@ -13,14 +13,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"nimona.io/pkg/connmanager"
+	"nimona.io/internal/connmanager"
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
