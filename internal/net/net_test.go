@@ -123,8 +123,8 @@ func newPeer(t *testing.T) (
 	kc := keychain.New()
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
-	kc.Put(keychain.PrimaryPeerKey, pk)
+	kc.PutPrimaryPeerKey(pk)
 	return kc, New(
-		WithKeychain(kc),
+		kc,
 	).(*network)
 }

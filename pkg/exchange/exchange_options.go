@@ -3,7 +3,7 @@ package exchange
 import (
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
-	"nimona.io/pkg/net"
+	"nimona.io/internal/net"
 )
 
 // WithNet overrides the default network for the exchange.

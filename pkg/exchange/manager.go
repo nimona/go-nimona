@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/net"
+	"nimona.io/internal/net"
 )
 
 type ConnectionManager struct {
