@@ -3,7 +3,6 @@ package net
 import (
 	"crypto/ed25519"
 	"crypto/tls"
-	"io"
 	"math"
 	"net"
 	"strings"
@@ -15,7 +14,6 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
@@ -89,7 +87,6 @@ func New(opts ...Option) Network {
 		keychain:    keychain.DefaultKeychain,
 		eventbus:    eventbus.DefaultEventbus,
 		transports:  map[string]Transport{},
-		middleware:  []MiddlewareHandler{},
 		listeners:   []*listener{},
 		connections: make(chan *Connection),
 		blocklist:   cache.New(time.Second*5, time.Second*60),
@@ -130,7 +127,6 @@ type network struct {
 	eventbus    eventbus.Eventbus
 	keychain    keychain.Keychain
 	transports  map[string]Transport
-	middleware  []MiddlewareHandler
 	listeners   []*listener
 	connections chan *Connection
 	attempts    attemptsMap
@@ -189,12 +185,6 @@ func (n *network) Dial(
 				log.String("type", addressType),
 				log.Error(err),
 			)
-			continue
-		}
-
-		// pass connection to all middleware
-		conn, err = n.handleMiddleware(ctx, conn)
-		if err != nil {
 			continue
 		}
 
@@ -355,24 +345,4 @@ func (n *network) Addresses() []string {
 		addrs = append(addrs, l.Addresses()...)
 	}
 	return addrs
-}
-
-func (n *network) handleMiddleware(
-	ctx context.Context,
-	conn *Connection,
-) (*Connection, error) {
-	var err error
-	for _, mh := range n.middleware {
-		conn, err = mh(ctx, conn)
-		if err != nil {
-			if errors.CausedBy(err, io.EOF) {
-				break
-			}
-			if conn != nil {
-				conn.conn.Close() // nolint: errcheck
-			}
-			return nil, err
-		}
-	}
-	return conn, nil
 }
