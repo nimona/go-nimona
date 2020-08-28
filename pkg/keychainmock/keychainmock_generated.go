@@ -7,7 +7,6 @@ package keychainmock
 import (
 	gomock "github.com/golang/mock/gomock"
 	crypto "nimona.io/pkg/crypto"
-	keychain "nimona.io/pkg/keychain"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
 )
@@ -35,18 +34,6 @@ func (m *MockKeychain) EXPECT() *MockKeychainMockRecorder {
 	return m.recorder
 }
 
-// Put mocks base method
-func (m *MockKeychain) Put(arg0 keychain.KeyType, arg1 crypto.PrivateKey) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Put", arg0, arg1)
-}
-
-// Put indicates an expected call of Put
-func (mr *MockKeychainMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockKeychain)(nil).Put), arg0, arg1)
-}
-
 // GetPrimaryPeerKey mocks base method
 func (m *MockKeychain) GetPrimaryPeerKey() crypto.PrivateKey {
 	m.ctrl.T.Helper()
@@ -59,6 +46,18 @@ func (m *MockKeychain) GetPrimaryPeerKey() crypto.PrivateKey {
 func (mr *MockKeychainMockRecorder) GetPrimaryPeerKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryPeerKey", reflect.TypeOf((*MockKeychain)(nil).GetPrimaryPeerKey))
+}
+
+// PutPrimaryPeerKey mocks base method
+func (m *MockKeychain) PutPrimaryPeerKey(arg0 crypto.PrivateKey) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PutPrimaryPeerKey", arg0)
+}
+
+// PutPrimaryPeerKey indicates an expected call of PutPrimaryPeerKey
+func (mr *MockKeychainMockRecorder) PutPrimaryPeerKey(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutPrimaryPeerKey", reflect.TypeOf((*MockKeychain)(nil).PutPrimaryPeerKey), arg0)
 }
 
 // GetPrimaryIdentityKey mocks base method
@@ -75,16 +74,16 @@ func (mr *MockKeychainMockRecorder) GetPrimaryIdentityKey() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryIdentityKey", reflect.TypeOf((*MockKeychain)(nil).GetPrimaryIdentityKey))
 }
 
-// PutCertificate mocks base method
-func (m *MockKeychain) PutCertificate(arg0 *peer.Certificate) {
+// PutPrimaryIdentityKey mocks base method
+func (m *MockKeychain) PutPrimaryIdentityKey(arg0 crypto.PrivateKey) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PutCertificate", arg0)
+	m.ctrl.Call(m, "PutPrimaryIdentityKey", arg0)
 }
 
-// PutCertificate indicates an expected call of PutCertificate
-func (mr *MockKeychainMockRecorder) PutCertificate(arg0 interface{}) *gomock.Call {
+// PutPrimaryIdentityKey indicates an expected call of PutPrimaryIdentityKey
+func (mr *MockKeychainMockRecorder) PutPrimaryIdentityKey(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutCertificate", reflect.TypeOf((*MockKeychain)(nil).PutCertificate), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutPrimaryIdentityKey", reflect.TypeOf((*MockKeychain)(nil).PutPrimaryIdentityKey), arg0)
 }
 
 // GetCertificates mocks base method
@@ -99,4 +98,16 @@ func (m *MockKeychain) GetCertificates(arg0 crypto.PublicKey) []*peer.Certificat
 func (mr *MockKeychainMockRecorder) GetCertificates(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertificates", reflect.TypeOf((*MockKeychain)(nil).GetCertificates), arg0)
+}
+
+// PutCertificate mocks base method
+func (m *MockKeychain) PutCertificate(arg0 *peer.Certificate) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PutCertificate", arg0)
+}
+
+// PutCertificate indicates an expected call of PutCertificate
+func (mr *MockKeychainMockRecorder) PutCertificate(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutCertificate", reflect.TypeOf((*MockKeychain)(nil).PutCertificate), arg0)
 }

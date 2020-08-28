@@ -8,19 +8,16 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-var (
-	DefaultKeychain = New()
-)
-
 //go:generate $GOBIN/mockgen -destination=../keychainmock/keychainmock_generated.go -package=keychainmock -source=keychain.go
 
 type (
 	Keychain interface {
-		Put(KeyType, crypto.PrivateKey)
 		GetPrimaryPeerKey() crypto.PrivateKey
+		PutPrimaryPeerKey(crypto.PrivateKey)
 		GetPrimaryIdentityKey() crypto.PrivateKey
-		PutCertificate(*peer.Certificate)
+		PutPrimaryIdentityKey(crypto.PrivateKey)
 		GetCertificates(crypto.PublicKey) []*peer.Certificate
+		PutCertificate(*peer.Certificate)
 	}
 	memorystore struct {
 		keyLock            sync.RWMutex
@@ -31,22 +28,6 @@ type (
 	}
 )
 
-func Put(kt KeyType, pk crypto.PrivateKey) {
-	DefaultKeychain.Put(kt, pk)
-}
-
-func GetPrimaryPeerKey() crypto.PrivateKey {
-	return DefaultKeychain.GetPrimaryPeerKey()
-}
-
-func PutCertificate(cert *peer.Certificate) {
-	DefaultKeychain.PutCertificate(cert)
-}
-
-func GetCertificates(pk crypto.PublicKey) []*peer.Certificate {
-	return DefaultKeychain.GetCertificates(pk)
-}
-
 func New() Keychain {
 	return &memorystore{
 		keyLock:  sync.RWMutex{},
@@ -55,14 +36,15 @@ func New() Keychain {
 	}
 }
 
-func (s *memorystore) Put(t KeyType, k crypto.PrivateKey) {
+func (s *memorystore) PutPrimaryPeerKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
-	switch t {
-	case PrimaryPeerKey:
-		s.primaryPeerKey = k
-	case PrimaryIdentityKey:
-		s.primaryIdentityKey = k
-	}
+	s.primaryPeerKey = k
+	s.keyLock.Unlock()
+}
+
+func (s *memorystore) PutPrimaryIdentityKey(k crypto.PrivateKey) {
+	s.keyLock.Lock()
+	s.primaryIdentityKey = k
 	s.keyLock.Unlock()
 }
 
