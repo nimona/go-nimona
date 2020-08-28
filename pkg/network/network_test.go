@@ -112,8 +112,10 @@ func TestNetwork_Relay(t *testing.T) {
 		SetType("foo").
 		Set("foo:s", object.String("bar"))
 
-	testObjFromP1 := testObj.SetOwner(n1.LocalPeer().GetPrimaryPeerKey().PublicKey())
-	testObjFromP2 := testObj.SetOwner(n2.LocalPeer().GetPrimaryPeerKey().PublicKey())
+	testObjFromP1 := testObj.
+		SetOwner(n1.LocalPeer().GetPrimaryPeerKey().PublicKey())
+	testObjFromP2 := testObj.
+		SetOwner(n2.LocalPeer().GetPrimaryPeerKey().PublicKey())
 
 	// send from p1 to p0
 	err = n1.Send(context.Background(), testObj, p0)
@@ -125,6 +127,7 @@ func TestNetwork_Relay(t *testing.T) {
 
 	// now we should be able to send from p1 to p2
 	err = n1.Send(context.Background(), testObjFromP1, p2)
+	require.NoError(t, err)
 
 	sub := n2.Subscribe(FilterByObjectType("foo"))
 	env, err := sub.Next()
