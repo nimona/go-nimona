@@ -16,30 +16,26 @@ func Test_memoryKeychain_GetPrimaryPeerKey(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		keytype KeyType
-		key     crypto.PrivateKey
-		want    crypto.PrivateKey
+		key  crypto.PrivateKey
+		want crypto.PrivateKey
 	}{
 		{
-			keytype: PrimaryPeerKey,
-			key:     k1,
-			want:    k1,
+			key:  k1,
+			want: k1,
 		},
 		{
-			keytype: PrimaryPeerKey,
-			key:     k1,
-			want:    k1,
+			key:  k1,
+			want: k1,
 		},
 		{
-			keytype: PrimaryPeerKey,
-			key:     k2,
-			want:    k2,
+			key:  k2,
+			want: k2,
 		},
 	}
 
 	s := New()
 	for _, tt := range tests {
-		s.Put(tt.keytype, tt.key)
+		s.PutPrimaryPeerKey(tt.key)
 		require.Equal(t, tt.want, s.GetPrimaryPeerKey())
 	}
 }
@@ -52,30 +48,26 @@ func Test_memoryKeychain_GetPrimaryIdentityKey(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		keytype KeyType
-		key     crypto.PrivateKey
-		want    crypto.PrivateKey
+		key  crypto.PrivateKey
+		want crypto.PrivateKey
 	}{
 		{
-			keytype: PrimaryIdentityKey,
-			key:     k1,
-			want:    k1,
+			key:  k1,
+			want: k1,
 		},
 		{
-			keytype: PrimaryIdentityKey,
-			key:     k1,
-			want:    k1,
+			key:  k1,
+			want: k1,
 		},
 		{
-			keytype: PrimaryIdentityKey,
-			key:     k2,
-			want:    k2,
+			key:  k2,
+			want: k2,
 		},
 	}
 
 	s := New()
 	for _, tt := range tests {
-		s.Put(tt.keytype, tt.key)
+		s.PutPrimaryIdentityKey(tt.key)
 		require.Equal(t, tt.want, s.GetPrimaryIdentityKey())
 	}
 }
