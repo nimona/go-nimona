@@ -11,11 +11,10 @@ import (
 	"nimona.io/internal/gomockutil"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/network"
-	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/localpeer"
-	"nimona.io/pkg/localpeermock"
+	"nimona.io/pkg/network"
+	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
@@ -36,8 +35,8 @@ func Test_manager_Request(t *testing.T) {
 	f00 := object.Object{}.
 		Set("f00:s", "f00")
 	type fields struct {
-		store    func(*testing.T) objectstore.Store
-		exchange func(*testing.T) exchange.Exchange
+		store   func(*testing.T) objectstore.Store
+		network func(*testing.T) network.Network
 	}
 	type args struct {
 		ctx      context.Context
@@ -57,14 +56,14 @@ func Test_manager_Request(t *testing.T) {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				return m
 			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
 					SendCalls: []error{
 						nil,
 					},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{
-							Objects: []*exchange.Envelope{{
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
 								Payload: f00,
 							}},
 						},
@@ -84,7 +83,7 @@ func Test_manager_Request(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
 				objectstore: tt.fields.store(t),
-				exchange:    tt.fields.exchange(t),
+				network:     tt.fields.network(t),
 				newNonce: func() string {
 					return "7"
 				},
@@ -119,8 +118,8 @@ func Test_manager_RequestStream(t *testing.T) {
 		Set("f02:s", "f02")
 
 	type fields struct {
-		store    func(*testing.T) objectstore.Store
-		exchange func(*testing.T) exchange.Exchange
+		store   func(*testing.T) objectstore.Store
+		network func(*testing.T) network.Network
 	}
 	type args struct {
 		ctx      context.Context
@@ -140,17 +139,17 @@ func Test_manager_RequestStream(t *testing.T) {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				return m
 			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
 					SendCalls: []error{
 						nil,
 						nil,
 						nil,
 						nil,
 					},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{
-							Objects: []*exchange.Envelope{{
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
 								Payload: stream.Response{
 									Nonce: "7",
 									Children: []object.Hash{
@@ -161,18 +160,18 @@ func Test_manager_RequestStream(t *testing.T) {
 								}.ToObject(),
 							}},
 						},
-						&exchangemock.MockSubscriptionSimple{
-							Objects: []*exchange.Envelope{{
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
 								Payload: f00,
 							}},
 						},
-						&exchangemock.MockSubscriptionSimple{
-							Objects: []*exchange.Envelope{{
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
 								Payload: f01,
 							}},
 						},
-						&exchangemock.MockSubscriptionSimple{
-							Objects: []*exchange.Envelope{{
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
 								Payload: f02,
 							}},
 						},
@@ -196,7 +195,7 @@ func Test_manager_RequestStream(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
 				objectstore: tt.fields.store(t),
-				exchange:    tt.fields.exchange(t),
+				network:     tt.fields.network(t),
 				newNonce: func() string {
 					return "7"
 				},
@@ -238,6 +237,9 @@ func Test_manager_Put(t *testing.T) {
 	testOwnPublicKey := testOwnPrivateKey.PublicKey()
 	testSubscriberPrivateKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
+	testLocalPeer := localpeer.New()
+	testLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
+	testLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testSubscriberPeer := &peer.Peer{
 		Metadata: object.Metadata{
@@ -303,8 +305,7 @@ func Test_manager_Put(t *testing.T) {
 	}.ToObject()
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
-		localpeer              func(*testing.T) localpeer.LocalPeer
-		exchange              func(*testing.T) exchange.Exchange
+		network               func(*testing.T) network.Network
 		resolver              func(*testing.T) resolver.Resolver
 		receivedSubscriptions []object.Object
 		registeredTypes       []string
@@ -329,20 +330,12 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectSimpleUpdated)
 				return m
 			},
-			localpeer: func(t *testing.T) localpeer.LocalPeer {
-				m := localpeermock.NewMockLocalPeer(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPrimaryIdentityKey().
-					Return(testOwnPrivateKey)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
-					SendCalls: []error{},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls:       []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -371,20 +364,12 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectComplexUpdated)
 				return m
 			},
-			localpeer: func(t *testing.T) localpeer.LocalPeer {
-				m := localpeermock.NewMockLocalPeer(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPrimaryIdentityKey().
-					Return(testOwnPrivateKey)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
-					SendCalls: []error{},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls:       []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -422,20 +407,12 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			localpeer: func(t *testing.T) localpeer.LocalPeer {
-				m := localpeermock.NewMockLocalPeer(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPrimaryIdentityKey().
-					Return(testOwnPrivateKey)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
-					SendCalls: []error{},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls:       []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -472,21 +449,12 @@ func Test_manager_Put(t *testing.T) {
 					)
 				return m
 			},
-			localpeer: func(t *testing.T) localpeer.LocalPeer {
-				m := localpeermock.NewMockLocalPeer(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPrimaryIdentityKey().
-					MaxTimes(2).
-					Return(testOwnPrivateKey)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
-					SendCalls: []error{},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls:       []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -527,25 +495,14 @@ func Test_manager_Put(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			localpeer: func(t *testing.T) localpeer.LocalPeer {
-				m := localpeermock.NewMockLocalPeer(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPrimaryIdentityKey().
-					Return(testOwnPrivateKey)
-				m.EXPECT().
-					GetPrimaryPeerKey().
-					Return(testOwnPrivateKey)
-				return m
-			},
-			exchange: func(t *testing.T) exchange.Exchange {
-				m := &exchangemock.MockExchangeSimple{
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
 					SendCalls: []error{
 						nil,
 					},
-					SubscribeCalls: []exchange.EnvelopeSubscription{
-						&exchangemock.MockSubscriptionSimple{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -584,15 +541,14 @@ func Test_manager_Put(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := New(
 				context.Background(),
-				WithStore(tt.fields.store(t)),
-				WithLocalPeer(tt.fields.localpeer(t)),
-				WithExchange(tt.fields.exchange(t)),
-				WithResolver(tt.fields.resolver(t)),
+				tt.fields.network(t),
+				tt.fields.resolver(t),
+				tt.fields.store(t),
 			)
 			for _, obj := range tt.fields.receivedSubscriptions {
 				err := m.(*manager).handleStreamSubscription(
 					context.Background(),
-					&exchange.Envelope{
+					&network.Envelope{
 						Payload: obj,
 					},
 				)
