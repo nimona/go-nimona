@@ -1,4 +1,4 @@
-package exchange
+package network
 
 func HandleEnvelopeSubscription(
 	sub EnvelopeSubscription,

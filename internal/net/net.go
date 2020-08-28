@@ -14,17 +14,12 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/keychain"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/peer"
 )
 
 var (
-	DefaultNetwork = New(
-		WithEventBus(eventbus.DefaultEventbus),
-		WithKeychain(keychain.DefaultKeychain),
-	)
 	connConnOutCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_net_conn_out_total",
@@ -77,54 +72,28 @@ type (
 		Accept() (*Connection, error)
 		Addresses() []string
 	}
-	// Option for customizing a new network
-	Option func(*network)
 )
 
 // New creates a new p2p network
-func New(opts ...Option) Network {
+func New(
+	keychain keychain.Keychain,
+) Network {
 	n := &network{
-		keychain:    keychain.DefaultKeychain,
-		eventbus:    eventbus.DefaultEventbus,
-		transports:  map[string]Transport{},
+		keychain: keychain,
+		transports: map[string]Transport{
+			"tcps": &tcpTransport{
+				keychain: keychain,
+			},
+		},
 		listeners:   []*listener{},
 		connections: make(chan *Connection),
 		blocklist:   cache.New(time.Second*5, time.Second*60),
 	}
-	for _, opt := range opts {
-		opt(n)
-	}
-	n.transports["tcps"] = &tcpTransport{
-		keychain: n.keychain,
-	}
 	return n
-}
-
-func Dial(
-	ctx context.Context,
-	p *peer.Peer,
-) (*Connection, error) {
-	return DefaultNetwork.Dial(ctx, p)
-}
-
-func Listen(
-	ctx context.Context,
-	bindAddress string,
-) (Listener, error) {
-	return DefaultNetwork.Listen(ctx, bindAddress)
-}
-
-func Accept() (*Connection, error) {
-	return DefaultNetwork.Accept()
-}
-
-func Addresses() []string {
-	return DefaultNetwork.Addresses()
 }
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	eventbus    eventbus.Eventbus
 	keychain    keychain.Keychain
 	transports  map[string]Transport
 	listeners   []*listener
@@ -262,11 +231,12 @@ func (n *network) Listen(
 
 		n.listeners = append(n.listeners, mlst)
 
-		for _, addr := range mlst.addresses {
-			n.eventbus.Publish(eventbus.NetworkAddressAdded{
-				Address: addr,
-			})
-		}
+		// TODO(geoah) publish addresse?
+		// for _, addr := range mlst.addresses {
+		// 	n.eventbus.Publish(eventbus.NetworkAddressAdded{
+		// 		Address: addr,
+		// 	})
+		// }
 
 		// TODO goroutine never ends
 		go func() {
@@ -323,9 +293,10 @@ func (n *network) Listen(
 					continue
 				}
 
-				n.eventbus.Publish(eventbus.PeerConnectionEstablished{
-					PublicKey: conn.RemotePeerKey,
-				})
+				// TODO(geoah) publish addresse?
+				// n.eventbus.Publish(eventbus.PeerConnectionEstablished{
+				// 	PublicKey: conn.RemotePeerKey,
+				// })
 
 				connConnIncCounter.Inc()
 				n.connections <- conn

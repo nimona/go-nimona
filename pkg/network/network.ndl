@@ -1,9 +1,9 @@
-package nimona.io/exchange
+package nimona.io/network
 
 import nimona.io/object object
 import nimona.io/crypto crypto
 
-signed object nimona.io/exchange.DataForward {
+signed object nimona.io/network.DataForward {
     recipient nimona.io/crypto.PublicKey
     ephermeral nimona.io/crypto.PublicKey
     data data
