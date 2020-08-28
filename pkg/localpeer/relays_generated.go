@@ -18,33 +18,33 @@ type (
 )
 
 // Put -
-func (m *PeerPeerSyncList) Put(k peer.Peer) {
+func (m *PeerPeerSyncList) Put(k *peer.Peer) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *PeerPeerSyncList) Exists(k peer.Peer) bool {
+func (m *PeerPeerSyncList) Exists(k *peer.Peer) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *PeerPeerSyncList) Delete(k peer.Peer) {
+func (m *PeerPeerSyncList) Delete(k *peer.Peer) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *PeerPeerSyncList) Range(i func(k peer.Peer) bool) {
+func (m *PeerPeerSyncList) Range(i func(k *peer.Peer) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(peer.Peer))
+		return i(k.(*peer.Peer))
 	})
 }
 
 // List -
-func (m *PeerPeerSyncList) List() []peer.Peer {
-	r := []peer.Peer{}
+func (m *PeerPeerSyncList) List() []*peer.Peer {
+	r := []*peer.Peer{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(peer.Peer))
+		r = append(r, k.(*peer.Peer))
 		return true
 	})
 	return r

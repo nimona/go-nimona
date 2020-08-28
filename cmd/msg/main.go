@@ -72,7 +72,7 @@ func main() {
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
 		local.PutRelays(
-			peer.Peer{
+			&peer.Peer{
 				Metadata: object.Metadata{
 					Owner: crypto.PublicKey(rp),
 				},
