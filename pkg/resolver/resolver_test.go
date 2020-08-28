@@ -9,12 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/exchange"
-	"nimona.io/pkg/keychain"
-	"nimona.io/internal/net"
+	"nimona.io/pkg/localpeer"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -22,13 +21,11 @@ import (
 func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	net.BindLocal = true
 
-	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 
 	d0 := New(
 		ctx0,
-		WithKeychain(kc0),
-		WithEventbus(eb0),
-		WithExchange(x0),
+		n0,
 	)
 
 	ba := []*peer.Peer{
@@ -42,13 +39,11 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 250)
 
-	_, k1, kc1, eb1, n1, x1, ctx1 := newPeer(t, "peer1")
+	_, k1, _, n1, ctx1 := newPeer(t, "peer1")
 
 	d1 := New(
 		ctx1,
-		WithKeychain(kc1),
-		WithEventbus(eb1),
-		WithExchange(x1),
+		n1,
 		WithBoostrapPeers(ba),
 	)
 
@@ -80,20 +75,15 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	net.BindLocal = true
 
-	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
+	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
-	New(
-		ctx0,
-		WithKeychain(kc0),
-		WithEventbus(eb0),
-		WithExchange(x0),
-	)
+	New(ctx0, n0)
 
 	time.Sleep(time.Millisecond * 250)
 
-	_, k1, kc1, eb1, n1, x1, ctx1 := newPeer(t, "peer1")
-	_, k2, kc2, eb2, n2, x2, ctx2 := newPeer(t, "peer2")
+	_, k1, _, n1, ctx1 := newPeer(t, "peer1")
+	_, k2, _, n2, ctx2 := newPeer(t, "peer2")
 
 	// bootstrap address
 	ba := []*peer.Peer{
@@ -108,9 +98,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// node 1
 	d1 := New(
 		ctx1,
-		WithKeychain(kc1),
-		WithEventbus(eb1),
-		WithExchange(x1),
+		n1,
 		WithBoostrapPeers(ba),
 	)
 
@@ -119,9 +107,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// node 2
 	d2 := New(
 		ctx2,
-		WithKeychain(kc2),
-		WithEventbus(eb2),
-		WithExchange(x2),
+		n2,
 		WithBoostrapPeers(ba),
 	)
 
@@ -165,19 +151,15 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	net.BindLocal = true
 
-	_, k0, kc0, eb0, n0, x0, ctx0 := newPeer(t, "peer0")
-	_, k1, kc1, eb1, _, x1, ctx1 := newPeer(t, "peer1")
-	_, k2, kc2, eb2, _, x2, ctx2 := newPeer(t, "peer2")
+	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
+	_, k1, kc1, n1, ctx1 := newPeer(t, "peer1")
+	_, k2, _, n2, ctx2 := newPeer(t, "peer2")
 
 	// make peer 1 a provider
 	token := make([]byte, 32)
 	rand.Read(token) // nolint: errcheck
 	ch := object.Hash("foo")
-	eb1.Publish(
-		eventbus.ObjectPinned{
-			Hash: ch,
-		},
-	)
+	kc1.PutContentHashes(ch)
 
 	// print peer info
 	fmt.Println("k0", k0)
@@ -187,9 +169,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// bootstrap peer
 	d0 := New(
 		ctx0,
-		WithKeychain(kc0),
-		WithEventbus(eb0),
-		WithExchange(x0),
+		n0,
 	)
 
 	time.Sleep(time.Millisecond * 250)
@@ -207,9 +187,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// peer 1
 	New(
 		ctx1,
-		WithKeychain(kc1),
-		WithEventbus(eb1),
-		WithExchange(x1),
+		n1,
 		WithBoostrapPeers(ba),
 	)
 
@@ -218,9 +196,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// peer 2
 	d2 := New(
 		ctx2,
-		WithKeychain(kc2),
-		WithEventbus(eb2),
-		WithExchange(x2),
+		n2,
 		WithBoostrapPeers(ba),
 	)
 
@@ -256,15 +232,11 @@ func newPeer(
 ) (
 	crypto.PrivateKey,
 	crypto.PrivateKey,
-	keychain.Keychain,
-	eventbus.Eventbus,
-	net.Network,
-	exchange.Exchange,
+	localpeer.LocalPeer,
+	network.Network,
 	context.Context,
 ) {
 	ctx := context.New(context.WithCorrelationID(name))
-
-	eb := eventbus.New()
 
 	// identity key
 	opk, err := crypto.GenerateEd25519PrivateKey()
@@ -280,27 +252,20 @@ func newPeer(
 		opk,
 	)
 
-	kc := keychain.New()
-	kc.Put(keychain.PrimaryPeerKey, pk)
-	kc.Put(keychain.PrimaryIdentityKey, opk)
+	kc := localpeer.New()
+	kc.PutPrimaryPeerKey(pk)
+	kc.PutPrimaryIdentityKey(opk)
 	kc.PutCertificate(&c)
 
-	n := net.New(
-		net.WithEventBus(eb),
-		net.WithKeychain(kc),
+	n := network.New(
+		ctx,
+		network.WithLocalPeer(kc),
 	)
 
 	_, err = n.Listen(context.Background(), "127.0.0.1:0")
 	require.NoError(t, err)
 
-	x := exchange.New(
-		ctx,
-		exchange.WithEventbus(eb),
-		exchange.WithKeychain(kc),
-		exchange.WithNet(n),
-	)
-
-	return opk, pk, kc, eb, n, x, ctx
+	return opk, pk, kc, n, ctx
 }
 
 func gatherPeers(p <-chan *peer.Peer) []*peer.Peer {
