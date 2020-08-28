@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"path"
 
+	"nimona.io/pkg/network"
+
 	// required for sqlobjectstore
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/internal/daemon/config"
 	"nimona.io/internal/nat"
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -24,9 +25,8 @@ import (
 )
 
 type Daemon struct {
-	Net           net.Network
 	Resolver      resolver.Resolver
-	Exchange      exchange.Exchange
+	Network       network.Network
 	Store         *sqlobjectstore.Store
 	ObjectManager objectmanager.ObjectManager
 }
@@ -43,12 +43,11 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		return nil, errors.Wrap(errors.New("could not start sql store"), err)
 	}
 
+	local := localpeer.New()
+
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		localpeer.DefaultLocalPeer.Put(
-			localpeer.PrimaryIdentityKey,
-			cfg.Peer.IdentityKey,
-		)
+		local.PutPrimaryIdentityKey(cfg.Peer.IdentityKey)
 	}
 
 	if cfg.Peer.AnnounceHostname != "" {
@@ -79,10 +78,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		)
 	}
 
-	localpeer.DefaultLocalPeer.Put(
-		localpeer.PrimaryPeerKey,
-		cfg.Peer.PeerKey,
-	)
+	local.PutPrimaryPeerKey(cfg.Peer.PeerKey)
 
 	// get temp bootstrap peers from cfg
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
@@ -97,23 +93,27 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		bootstrapPeers[i].Addresses = []string{a}
 	}
 
+	net := network.New(
+		ctx,
+		network.WithLocalPeer(local),
+	)
+
 	// construct resolver
 	rs := resolver.New(
 		ctx,
-		resolver.WithExchange(exchange.DefaultExchange),
-		resolver.WithLocalPeer(localpeer.DefaultLocalPeer),
-		resolver.WithEventbus(eventbus.DefaultEventbus),
+		net,
 		resolver.WithBoostrapPeers(bootstrapPeers),
 	)
 
 	// construct objectmanager
 	om := objectmanager.New(
 		ctx,
-		objectmanager.WithExchange(exchange.DefaultExchange),
-		objectmanager.WithStore(st),
+		net,
+		rs,
+		st,
 	)
 
-	if _, err := net.DefaultNetwork.Listen(
+	if _, err := net.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
 	); err != nil {
@@ -125,8 +125,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Net:           net.DefaultNetwork,
-		Exchange:      exchange.DefaultExchange,
+		Network:       net,
 		Resolver:      rs,
 		Store:         st,
 		ObjectManager: om,

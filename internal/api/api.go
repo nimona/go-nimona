@@ -8,13 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nimona.io/internal/daemon/config"
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/http/router"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
-	"nimona.io/internal/net"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/resolver"
@@ -25,11 +25,11 @@ import (
 type API struct {
 	config *config.Config
 
-	router   *router.Router
+	router    *router.Router
 	localpeer localpeer.LocalPeer
-	net      net.Network
-	resolver resolver.Resolver
-	exchange exchange.Exchange
+	net       net.Network
+	resolver  resolver.Resolver
+	network   network.Network
 
 	objectStore   *sqlobjectstore.Store
 	objectmanager objectmanager.ObjectManager
@@ -48,9 +48,8 @@ func New(
 	cfg *config.Config,
 	k crypto.PrivateKey,
 	kc localpeer.LocalPeer,
-	n net.Network,
 	d resolver.Resolver,
-	x exchange.Exchange,
+	x network.Network,
 	sst *sqlobjectstore.Store,
 	or objectmanager.ObjectManager,
 	version string,
@@ -64,10 +63,9 @@ func New(
 		config: cfg,
 
 		router:      r,
-		localpeer:    kc,
-		net:         n,
+		localpeer:   kc,
 		resolver:    d,
-		exchange:    x,
+		network:     x,
 		objectStore: sst,
 
 		objectmanager: or,

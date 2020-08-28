@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/pkg/network"
+
 	"nimona.io/internal/daemon/config"
+	"nimona.io/internal/nat"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/localpeer"
-	"nimona.io/internal/nat"
-	"nimona.io/internal/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
@@ -62,34 +61,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	// create local peer
+	local := localpeer.New()
+
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		localpeer.Put(
-			localpeer.PrimaryIdentityKey,
-			cfg.Peer.IdentityKey,
-		)
+		local.PutPrimaryIdentityKey(cfg.Peer.IdentityKey)
 	}
 
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
-		eventbus.Publish(
-			eventbus.RelayAdded{
-				Peer: &peer.Peer{
-					Metadata: object.Metadata{
-						Owner: crypto.PublicKey(rp),
-					},
-					Addresses: []string{
-						cfg.Peer.RelayAddresses[i],
-					},
+		local.PutRelays(
+			peer.Peer{
+				Metadata: object.Metadata{
+					Owner: crypto.PublicKey(rp),
+				},
+				Addresses: []string{
+					cfg.Peer.RelayAddresses[i],
 				},
 			},
 		)
 	}
 
-	localpeer.Put(
-		localpeer.PrimaryPeerKey,
-		cfg.Peer.PeerKey,
-	)
+	local.PutPrimaryPeerKey(cfg.Peer.PeerKey)
 
 	// get temp bootstrap peers from cfg
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
@@ -106,6 +100,11 @@ func main() {
 
 	fmt.Println("* connecting to the network")
 
+	net := network.New(
+		ctx,
+		network.WithLocalPeer(local),
+	)
+
 	if _, err := net.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
@@ -116,9 +115,7 @@ func main() {
 
 	res := resolver.New(
 		ctx,
-		resolver.WithEventbus(eventbus.DefaultEventbus),
-		resolver.WithExchange(exchange.DefaultExchange),
-		resolver.WithLocalPeer(localpeer.DefaultLocalPeer),
+		net,
 	)
 
 	if err := res.Bootstrap(
@@ -137,8 +134,8 @@ func main() {
 	}
 	defer rmBinding()
 
-	sub := exchange.Subscribe(
-		exchange.FilterByObjectType("nimona.io/msg"),
+	sub := net.Subscribe(
+		network.FilterByObjectType("nimona.io/msg"),
 	)
 	go func() {
 		for {
@@ -195,7 +192,7 @@ func main() {
 			failed := 0
 			for r := range rs {
 				fmt.Println("** found on", r.Addresses)
-				if err := exchange.Send(
+				if err := net.Send(
 					context.New(
 						context.WithTimeout(time.Second),
 					),

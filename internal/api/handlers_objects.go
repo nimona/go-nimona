@@ -162,7 +162,7 @@ func (api *API) HandlePostObjects(c *router.Context) {
 				return
 			}
 			for p := range ps {
-				err := api.exchange.Send(
+				err := api.network.Send(
 					ctx,
 					o,
 					p,
@@ -273,7 +273,7 @@ func (api *API) syncOut(ctx context.Context, o object.Object) error {
 
 	for p := range ps {
 		// nolint: errcheck
-		go api.exchange.Send(
+		go api.network.Send(
 			ctx,
 			o,
 			p,
