@@ -11,6 +11,7 @@ import (
 	objectmanager "nimona.io/pkg/objectmanager"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
+	time "time"
 )
 
 // MockObjectManager is a mock of ObjectManager interface
@@ -102,4 +103,16 @@ func (m *MockObjectManager) Subscribe(lookupOptions ...objectmanager.LookupOptio
 func (mr *MockObjectManagerMockRecorder) Subscribe(lookupOptions ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockObjectManager)(nil).Subscribe), lookupOptions...)
+}
+
+// RegisterType mocks base method
+func (m *MockObjectManager) RegisterType(objectType string, ttl time.Duration) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterType", objectType, ttl)
+}
+
+// RegisterType indicates an expected call of RegisterType
+func (mr *MockObjectManagerMockRecorder) RegisterType(objectType, ttl interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterType", reflect.TypeOf((*MockObjectManager)(nil).RegisterType), objectType, ttl)
 }

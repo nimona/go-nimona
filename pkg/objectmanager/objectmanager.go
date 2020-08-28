@@ -9,10 +9,10 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
@@ -62,9 +62,9 @@ type (
 	}
 
 	manager struct {
+		network         network.Network
 		objectstore     objectstore.Store
-		exchange        exchange.Exchange
-		localpeer        localpeer.LocalPeer
+		localpeer       localpeer.LocalPeer
 		resolver        resolver.Resolver
 		pubsub          ObjectPubSub
 		newNonce        func() string
@@ -76,7 +76,9 @@ type (
 
 func New(
 	ctx context.Context,
-	opts ...Option,
+	net network.Network,
+	res resolver.Resolver,
+	str objectstore.Store,
 ) ObjectManager {
 	m := &manager{
 		newNonce: func() string {
@@ -84,10 +86,10 @@ func New(
 		},
 		pubsub:        NewObjectPubSub(),
 		subscriptions: &SubscriptionsMap{},
-	}
-
-	for _, opt := range opts {
-		opt(m)
+		network:       net,
+		resolver:      res,
+		localpeer:     net.LocalPeer(),
+		objectstore:   str,
 	}
 
 	logger := log.
@@ -97,8 +99,8 @@ func New(
 			log.String("method", "objectmanager.New"),
 		)
 
-	subs := m.exchange.Subscribe(
-		exchange.FilterByObjectType("**"),
+	subs := m.network.Subscribe(
+		network.FilterByObjectType("**"),
 	)
 
 	go func() {
@@ -140,8 +142,8 @@ func (m *manager) RequestStream(
 	nonce := m.newNonce()
 	responses := make(chan stream.Response)
 
-	sub := m.exchange.Subscribe(
-		exchange.FilterByObjectType(stream.Response{}.GetType()),
+	sub := m.network.Subscribe(
+		network.FilterByObjectType(stream.Response{}.GetType()),
 	)
 
 	go func() {
@@ -174,7 +176,7 @@ func (m *manager) RequestStream(
 	req := stream.Request{
 		RootHash: rootHash,
 	}
-	if err := m.exchange.Send(
+	if err := m.network.Send(
 		ctx,
 		req.ToObject(),
 		recipients[0],
@@ -256,8 +258,8 @@ func (m *manager) Request(
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
 
-	sub := m.exchange.Subscribe(
-		exchange.FilterByObjectHash(hash),
+	sub := m.network.Subscribe(
+		network.FilterByObjectHash(hash),
 	)
 	defer sub.Cancel()
 
@@ -278,7 +280,7 @@ func (m *manager) Request(
 		}
 	}()
 
-	if err := m.exchange.Send(ctx, object.Request{
+	if err := m.network.Send(ctx, object.Request{
 		ObjectHash: hash,
 	}.ToObject(), pr); err != nil {
 		return nil, err
@@ -295,7 +297,7 @@ func (m *manager) Request(
 }
 
 func (m *manager) handleObjects(
-	sub exchange.EnvelopeSubscription,
+	sub network.EnvelopeSubscription,
 ) error {
 	for {
 		env, err := sub.Next()
@@ -495,7 +497,7 @@ func (m *manager) announceObject(
 			continue
 		}
 		for peer := range peers {
-			if err := m.exchange.Send(ctx, announcement, peer); err != nil {
+			if err := m.network.Send(ctx, announcement, peer); err != nil {
 				// TODO log error
 				continue
 			}
@@ -507,7 +509,7 @@ func (m *manager) announceObject(
 
 func (m *manager) handleObjectRequest(
 	ctx context.Context,
-	env *exchange.Envelope,
+	env *network.Envelope,
 ) error {
 	req := &object.Request{}
 	if err := req.FromObject(env.Payload); err != nil {
@@ -520,7 +522,7 @@ func (m *manager) handleObjectRequest(
 		return err
 	}
 
-	if err := m.exchange.Send(
+	if err := m.network.Send(
 		ctx,
 		obj,
 		&peer.Peer{
@@ -540,7 +542,7 @@ func (m *manager) handleObjectRequest(
 
 func (m *manager) handleStreamRequest(
 	ctx context.Context,
-	env *exchange.Envelope,
+	env *network.Envelope,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx)
@@ -577,7 +579,7 @@ func (m *manager) handleStreamRequest(
 		Children: hs,
 	}
 
-	if err := m.exchange.Send(
+	if err := m.network.Send(
 		ctx,
 		res.ToObject(),
 		&peer.Peer{
@@ -598,7 +600,7 @@ func (m *manager) handleStreamRequest(
 
 func (m *manager) handleStreamSubscription(
 	ctx context.Context,
-	env *exchange.Envelope,
+	env *network.Envelope,
 ) error {
 	sub := &stream.Subscription{}
 	if err := sub.FromObject(env.Payload); err != nil {
@@ -621,9 +623,15 @@ func (m *manager) Put(
 ) (object.Object, error) {
 	// add owners
 	// TODO should we be adding owners?
-	o = o.SetOwner(
-		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
-	)
+	if ik := m.localpeer.GetPrimaryIdentityKey(); !ik.IsEmpty() {
+		o = o.SetOwner(
+			ik.PublicKey(),
+		)
+	} else {
+		o = o.SetOwner(
+			m.localpeer.GetPrimaryPeerKey().PublicKey(),
+		)
+	}
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
 	if !streamHash.IsEmpty() {
