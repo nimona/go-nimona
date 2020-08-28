@@ -1,21 +1,21 @@
 # Streams
 
-While objects on their own are useful for creating permanent content-addressable data, there are very few applications where data never get updated. Streams allow developers to create complex applications by applying event driven and event sourcing patterns using graphs of immutable objects.
+While objects on their own are useful for creating permanent content-addressable data structures, there are very few applications where data never get updated. This is where streams come in, they allow developers to create complex applications by applying event driven and event sourcing patterns using graphs of individually immutable objects.
 
-Objects in a stream form a directed acyclic graph (DAG) by allowing each of the objects to reference others it depends or knows of. This graph can then be serialized into a linear series of objects that can be replayed consistently by everyone that has the same representation of the graph.
+Objects in a stream form a directed acyclic graph (DAG) by allowing each of the objects to reference others it depends on or knows of. This graph can then be serialized into a linear series of objects that can be replayed consistently by everyone that has the same representation of the graph.
 
 Streams are identified by the hash of their root object. This means that even though each of their objects is content-addressable; the stream as a whole is not, as its root hash (and thus identifier) does not change when more objects are added to the graph.
 
-The benefit of this is that there is no need to find a way to reference the stream as it changes. The downside is that you do not really know if you have actually  received the whole stream and if people are not holding back on you.
+The benefit of this is that there is no need to find a way to reference the stream as it changes. The downside is that you do not really know if you have actually  received the whole stream and whether peers are not holding back on you.
+
+![feed](concepts-streams.drawio.svg)
 
 ## Structure
 
 ```json
 {
     "type:s": "stream:nimona.io/kv",
-    "data:m": {
-        "": ""
-    }
+    "data:m": {}
 }
 ```
 
@@ -28,7 +28,7 @@ _Note: Work in progress._
 ```json
 {
   "type:s": "nimona.io/profile.Created",
-  "Owner:as": ["f00"],
+  "owner:a": "f00",
   "policy:m": {
     "subjects:as": ["*"],
     "resources:as": ["*"],
@@ -61,7 +61,7 @@ Assuming that peer `a11` wants the profile stream for the identity `f00`, all it
 ```json
 {
   "type:s": "nimona.io/profile.Created",
-  "authors:as": ["f00"]
+  "author:s": "f00"
 }
 ```
 
@@ -105,6 +105,20 @@ _Note: Work in progress._
         nonce string
         leaves repeated nimona.io/object.Hash
     }
+```
+
+## Subscriptions
+
+Peers can "subscribe" to stream updates by creating and sending subscriptions to other peers.
+A subscription can be used to subscribe on updates to one or more streams using the streams' root hash and must also specify an expiration time for the subscription.
+
+When a peer receives or creates an update for a stream, they will go through the subscriptions they have received, and notify the relevant peers about the new updates. If the subscriber does not have have access to the stream, no notification will be sent.
+
+```ndl
+signed object nimona.io/stream.Subscription {
+    rootHashes nimona.io/object.Hash
+    expiry nimona.io/object.DateTime
+}
 ```
 
 ## References
