@@ -67,6 +67,10 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	gotObj, err := Read(sc)
 	require.NoError(t, err)
+	assert.Equal(t, "ping", gotObj.GetType())
+
+	gotObj, err = Read(sc)
+	require.NoError(t, err)
 	assert.EqualValues(t, resObj.ToMap(), gotObj.ToMap())
 
 	<-done

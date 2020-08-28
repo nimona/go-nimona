@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -164,6 +165,18 @@ func (n *network) Dial(
 				log.String("expected", p.PublicKey().String()),
 				log.String("received", conn.RemotePeerKey.String()),
 			)
+			continue
+		}
+
+		// try to write something
+		if err := Write(
+			new(object.Object).
+				SetType("ping").
+				Set("dt:s", time.Now().Format(time.RFC3339)),
+			conn,
+		); err != nil {
+			n.exponentialyBlockAddress(address)
+			logger.Error("could not actually write to remote, blocking")
 			continue
 		}
 
