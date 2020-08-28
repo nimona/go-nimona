@@ -69,54 +69,23 @@ In addition to the Common-Flow spec, contributors are also highly encouraged to
 
 ### Network
 
-Package `net` provides access to the basic nimona networking primitives
-allowing peers to connect to each other and perform negotiate their
-identities, certificates, and capabilities (via handshake).
-
-A valid `peer.Peer` is required that includes both a public key, and one or
-more network addresses.
-
-Currently the only supported protocol for peer communication is TCP over TLS.
-Such addresses are prefixed with `tcps:` followed by an ip address and port.
-
-Network keeps a blocklist that will exponentially back-off attempts to dial
-unresponsive addresses.
-
-Upon successful connection and handshake, the resulting `net.Connection` will
-hold the remote peer's keys, certificates, and capabilities.
-
-```go
-    type Network interface {
-        Dial(ctx context.Context, peer *peer.Peer) (*Connection, error)
-        Listen(ctx context.Context, bindAddress string) (Listener, error)
-        Accept() (*Connection, error)
-        Addresses() []string
-  }
-```
-
-### Connection Manager
-
-Package `connmanager` wraps `net.Network` in order to cache open connections
-when a peer with an open connection is being re-dialed.
+Package `exchange` is responsible for a number of things around connections and
+object exchange, as well as relaying objects to inaccessible peers.
 
 ```go
 type Network interface {
-    Dial(ctx context.Context, peer *peer.Peer) (*Connection, error)
-}
-```
-
-### Exchange
-
-Package `exchange` is responsible to sending and receiving objects to from
-peers.
-
-It is also responsible for relaying objects when a peer is not directly
-accessible.
-
-```go
-type Exchange interface {
-    Send(ctx context.Context, object object.Object, p *peer.Peer) error
-    Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription
+    Subscribe(
+        filters ...EnvelopeFilter,
+    ) EnvelopeSubscription
+    Send(
+        ctx context.Context,
+        object object.Object,
+        recipient *peer.Peer,
+    ) error
+    Listen(
+        ctx context.Context,
+        bindAddress string,
+    ) (Listener, error)
 }
 ```
 
@@ -127,7 +96,10 @@ fulfill specific requirements.
 
 ```go
 type Resolver interface {
-  Lookup(ctx context.Context, opts ...LookupOption) (<-chan *peer.Peer, error)
+    Lookup(
+        ctx context.Context,
+        opts ...LookupOption,
+    ) (<-chan *peer.Peer, error)
 }
 ```
 
@@ -140,11 +112,6 @@ func LookupByContentType(contentType string) LookupOption { ... }
 func LookupByIdentity(key crypto.PublicKey) LookupOption { ... }
 func LookupByCertificateSigner(key crypto.PublicKey) LookupOption { ... }
 ```
-
-### Orchestrator
-
-Package `orchestrator` deals with creating, updating, getting, and synchronizing
-streams.
 
 <!-- Links -->
 
