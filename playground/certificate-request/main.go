@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"strings"
 
+	"nimona.io/pkg/network"
+
 	"github.com/gorilla/websocket"
 	"github.com/skip2/go-qrcode"
 
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/network"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/peer"
 )
 
@@ -57,6 +57,8 @@ var upgrader = websocket.Upgrader{
 
 // nolint: errcheck
 func main() {
+	net := serve()
+
 	http.HandleFunc("/qr.png", func(w http.ResponseWriter, r *http.Request) {
 		s := strings.Replace(r.URL.Query().Get("s"), "/qr.png?s=", "", 1)
 		fmt.Println(">>>", s)
@@ -68,8 +70,8 @@ func main() {
 	http.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("*** sub start")
 		conn, _ := upgrader.Upgrade(w, r, nil)
-		sub := exchange.Subscribe(
-			exchange.FilterByObjectType("nimona.io/peer.Certificate"),
+		sub := net.Subscribe(
+			network.FilterByObjectType("nimona.io/peer.Certificate"),
 		)
 		n := strings.Replace(r.URL.Query().Get("n"), "/echo?n=", "", 1)
 		fmt.Println("nonce:", n)
@@ -133,7 +135,6 @@ func main() {
 		}
 	})
 
-	serve()
 	tmpl := template.Must(template.New("index").Parse(indexTemplate))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +143,10 @@ func main() {
 			ApplicationName:        "Foobar App",
 			ApplicationDescription: "An app that does nothing",
 			ApplicationURL:         "https://github.com/nimona",
-			Subject:                localpeer.GetPrimaryPeerKey().PublicKey().String(),
+			Subject: net.LocalPeer().
+				GetPrimaryPeerKey().
+				PublicKey().
+				String(),
 			Resources: []string{
 				"nimona.io/**",
 				"mochi.io/**",

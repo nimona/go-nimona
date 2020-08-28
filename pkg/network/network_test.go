@@ -41,7 +41,9 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	sub := n2.Subscribe()
+	sub := n2.Subscribe(
+		FilterByObjectType("foo"),
+	)
 	env, err := sub.Next()
 	require.NoError(t, err)
 

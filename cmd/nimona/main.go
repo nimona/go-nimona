@@ -5,13 +5,12 @@ import (
 	"os"
 
 	"nimona.io/internal/api"
-	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/internal/daemon"
 	"nimona.io/internal/daemon/config"
-	"nimona.io/pkg/localpeer"
-	"nimona.io/pkg/log"
 	"nimona.io/internal/version"
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/log"
 )
 
 func main() {
@@ -74,7 +73,7 @@ func main() {
 
 	// print some info
 	nlogger := logger.With(
-		log.Strings("addresses", d.Net.Addresses()),
+		log.Strings("addresses", d.Network.Addresses()),
 		log.String("peer", config.Peer.PeerKey.PublicKey().String()),
 	)
 
@@ -91,10 +90,9 @@ func main() {
 	apiServer := api.New(
 		config,
 		config.Peer.PeerKey,
-		localpeer.DefaultLocalPeer,
-		d.Net,
+		d.Network.LocalPeer(),
 		d.Resolver,
-		d.Exchange,
+		d.Network,
 		d.Store,
 		d.ObjectManager,
 		version.Version,

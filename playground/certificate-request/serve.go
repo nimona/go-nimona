@@ -5,20 +5,18 @@ import (
 	"os"
 	"time"
 
-	"nimona.io/pkg/network"
-
 	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/localpeer"
-	"nimona.io/internal/net"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 )
 
-func serve() {
+func serve() network.Network {
 	ctx := context.New()
 
 	// load config
@@ -40,12 +38,11 @@ func serve() {
 		cfg.Peer.PeerKey = peerKey
 	}
 
+	local := localpeer.New()
+
 	// add identity key to local info
 	if cfg.Peer.IdentityKey != "" {
-		localpeer.Put(
-			localpeer.PrimaryIdentityKey,
-			cfg.Peer.IdentityKey,
-		)
+		local.PutPrimaryIdentityKey(cfg.Peer.IdentityKey)
 	}
 
 	// add relay peers
@@ -64,10 +61,7 @@ func serve() {
 		)
 	}
 
-	localpeer.Put(
-		localpeer.PrimaryPeerKey,
-		cfg.Peer.PeerKey,
-	)
+	local.PutPrimaryPeerKey(cfg.Peer.PeerKey)
 
 	// get temp bootstrap peers from cfg
 	bootstrapPeers := make([]*peer.Peer, len(cfg.Peer.BootstrapKeys))
@@ -84,6 +78,7 @@ func serve() {
 
 	fmt.Println("* connecting to the network")
 
+	net := network.New(ctx, network.WithLocalPeer(local))
 	if _, err := net.Listen(
 		ctx,
 		fmt.Sprintf("0.0.0.0:%d", cfg.Peer.TCPPort),
@@ -94,9 +89,7 @@ func serve() {
 
 	res := resolver.New(
 		ctx,
-		resolver.WithEventbus(eventbus.DefaultEventbus),
-		resolver.WithExchange(exchange.DefaultExchange),
-		resolver.WithLocalPeer(localpeer.DefaultLocalPeer),
+		net,
 	)
 
 	if err := res.Bootstrap(
@@ -115,4 +108,6 @@ func serve() {
 		cfg.Peer.PeerKey.PublicKey(),
 		net.Addresses(),
 	)
+
+	return net
 }
