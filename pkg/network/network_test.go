@@ -36,7 +36,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			},
-			Addresses: n2.Addresses(),
+			Addresses: n2.LocalPeer().GetAddresses(),
 		},
 	)
 	require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			},
-			Addresses: n1.Addresses(),
+			Addresses: n1.LocalPeer().GetAddresses(),
 		},
 	)
 	require.NoError(t, err)
@@ -84,14 +84,14 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: n0.Addresses(),
+		Addresses: n0.LocalPeer().GetAddresses(),
 	}
 
 	p1 := &peer.Peer{
 		Metadata: object.Metadata{
 			Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: n1.Addresses(),
+		Addresses: n1.LocalPeer().GetAddresses(),
 		Relays: []*peer.Peer{
 			p0,
 		},
@@ -102,7 +102,7 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: n2.Addresses(),
+		Addresses: n2.LocalPeer().GetAddresses(),
 		Relays: []*peer.Peer{
 			p0,
 		},

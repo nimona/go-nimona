@@ -30,7 +30,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 
 	ba := []*peer.Peer{
 		{
-			Addresses: n0.Addresses(),
+			Addresses: n0.LocalPeer().GetAddresses(),
 			Metadata: object.Metadata{
 				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},
@@ -59,7 +59,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n0.Addresses(), peers[0].Addresses)
+	require.Equal(t, n0.LocalPeer().GetAddresses(), peers[0].Addresses)
 
 	ctxR2 := context.New(
 		context.WithCorrelationID("req2"),
@@ -69,7 +69,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n1.Addresses(), peers[0].Addresses)
+	require.Equal(t, n1.LocalPeer().GetAddresses(), peers[0].Addresses)
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
@@ -88,7 +88,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	// bootstrap address
 	ba := []*peer.Peer{
 		{
-			Addresses: n0.Addresses(),
+			Addresses: n0.LocalPeer().GetAddresses(),
 			Metadata: object.Metadata{
 				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},
@@ -122,7 +122,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.ElementsMatch(t, n0.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n0.LocalPeer().GetAddresses(), peers[0].Addresses)
 
 	// find node 1 from node 2
 	ctx = context.New(
@@ -133,7 +133,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.ElementsMatch(t, n1.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n1.LocalPeer().GetAddresses(), peers[0].Addresses)
 
 	// find node 2 from node 1
 	ctx = context.New(
@@ -145,7 +145,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.ElementsMatch(t, n2.Addresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n2.LocalPeer().GetAddresses(), peers[0].Addresses)
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
@@ -177,7 +177,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	// bootstrap address
 	ba := []*peer.Peer{
 		{
-			Addresses: n0.Addresses(),
+			Addresses: n0.LocalPeer().GetAddresses(),
 			Metadata: object.Metadata{
 				Owner: kc0.GetPrimaryPeerKey().PublicKey(),
 			},

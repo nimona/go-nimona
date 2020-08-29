@@ -103,7 +103,7 @@ func serve() network.Network {
 		"* ready",
 		cfg.Peer.PeerKey,
 		cfg.Peer.PeerKey.PublicKey(),
-		net.Addresses(),
+		net.LocalPeer().GetAddresses(),
 	)
 
 	return net

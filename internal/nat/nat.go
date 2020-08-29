@@ -6,7 +6,7 @@ import (
 	"gitlab.com/NebulousLabs/go-upnp"
 )
 
-func MapExternalPort(port int) (string, func(), error) {
+func MapExternalPort(port int) (address string, removeMap func(), err error) {
 	// connect to router
 	d, err := upnp.Discover()
 	if err != nil {

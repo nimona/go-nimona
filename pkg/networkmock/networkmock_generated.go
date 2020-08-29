@@ -98,17 +98,3 @@ func (mr *MockNetworkMockRecorder) LocalPeer() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalPeer", reflect.TypeOf((*MockNetwork)(nil).LocalPeer))
 }
-
-// Addresses mocks base method
-func (m *MockNetwork) Addresses() []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Addresses")
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// Addresses indicates an expected call of Addresses
-func (mr *MockNetworkMockRecorder) Addresses() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Addresses", reflect.TypeOf((*MockNetwork)(nil).Addresses))
-}

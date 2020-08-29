@@ -90,7 +90,6 @@ type (
 			bindAddress string,
 		) (net.Listener, error)
 		LocalPeer() localpeer.LocalPeer
-		Addresses() []string
 	}
 	// Option for customizing a new Network
 	Option func(*network)
@@ -174,9 +173,6 @@ func (w *network) LocalPeer() localpeer.LocalPeer {
 	return w.localpeer
 }
 
-func (w *network) Addresses() []string {
-	return w.net.Addresses()
-}
 func (w *network) Listen(
 	ctx context.Context,
 	bindAddress string,
