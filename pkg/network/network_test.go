@@ -3,6 +3,8 @@ package network
 import (
 	"testing"
 
+	"nimona.io/internal/net"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +15,8 @@ import (
 )
 
 func TestNetwork_SimpleConnection(t *testing.T) {
+	net.BindLocal = true
+
 	n1 := New(context.Background())
 	n2 := New(context.Background())
 
@@ -72,6 +76,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 }
 
 func TestNetwork_Relay(t *testing.T) {
+	net.BindLocal = true
+
 	n0 := New(context.Background())
 	n1 := New(context.Background())
 	n2 := New(context.Background())
