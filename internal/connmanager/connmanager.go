@@ -93,11 +93,6 @@ func (m *manager) GetConnection(
 
 	m.updateConnection(pbox, conn)
 
-	// TODO(geoah) publish connections?
-	// m.eventbus.Publish(eventbus.PeerConnectionEstablished{
-	// 	PublicKey: conn.RemotePeerKey,
-	// })
-
 	if err := m.connHandler(conn); err != nil {
 		return nil, err
 	}
