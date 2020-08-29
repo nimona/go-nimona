@@ -10,7 +10,7 @@ import (
 
 func (api *API) HandleGetLocal(c *router.Context) {
 	p := &peer.Peer{
-		Addresses:    api.network.Addresses(),
+		Addresses:    api.localpeer.GetAddresses(),
 		Certificates: api.localpeer.GetCertificates(),
 		Metadata: object.Metadata{
 			Owner: api.localpeer.GetPrimaryPeerKey().PublicKey(),

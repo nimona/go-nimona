@@ -514,7 +514,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
 	certificates := r.localpeer.GetCertificates()
 	contentHashes := r.localpeer.GetContentHashes()
-	addresses := r.network.Addresses()
+	addresses := r.localpeer.GetAddresses()
 	relays := r.localpeer.GetRelays()
 
 	// gather up peer key, certificates, content ids and types

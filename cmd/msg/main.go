@@ -160,7 +160,7 @@ func main() {
 		case "":
 			continue
 		case "info":
-			fmt.Println("> addresses", net.Addresses())
+			fmt.Println("> addresses", net.LocalPeer().GetAddresses())
 			fmt.Println("> peer", cfg.Peer.PeerKey.PublicKey().String())
 			fmt.Println("> identity", cfg.Peer.IdentityKey.PublicKey().String())
 		case "exit", "quit":

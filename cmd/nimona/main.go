@@ -73,7 +73,7 @@ func main() {
 
 	// print some info
 	nlogger := logger.With(
-		log.Strings("addresses", d.Network.Addresses()),
+		log.Strings("addresses", d.Network.LocalPeer().GetAddresses()),
 		log.String("peer", config.Peer.PeerKey.PublicKey().String()),
 	)
 
