@@ -11,6 +11,8 @@ import (
 //go:generate $GOBIN/mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=contenthashes_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.Hash"
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.Peer"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.Certificate"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
 
 type (
 	LocalPeer interface {
@@ -18,20 +20,22 @@ type (
 		PutPrimaryPeerKey(crypto.PrivateKey)
 		GetPrimaryIdentityKey() crypto.PrivateKey
 		PutPrimaryIdentityKey(crypto.PrivateKey)
-		GetCertificates(crypto.PublicKey) []*peer.Certificate
+		GetCertificates() []*peer.Certificate
 		PutCertificate(*peer.Certificate)
 		GetContentHashes() []object.Hash
 		PutContentHashes(...object.Hash)
+		GetAddresses() []string
+		PutAddresses(...string)
 		GetRelays() []*peer.Peer
 		PutRelays(...*peer.Peer)
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
-		certLock           sync.RWMutex
-		certs              map[crypto.PublicKey]map[object.Hash]*peer.Certificate
 		primaryPeerKey     crypto.PrivateKey
 		primaryIdentityKey crypto.PrivateKey
 		contentHashes      *ObjectHashSyncList
+		certificates       *PeerCertificateSyncList
+		addresses          *StringSyncList
 		relays             *PeerPeerSyncList
 	}
 )
@@ -39,9 +43,9 @@ type (
 func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
-		certLock:      sync.RWMutex{},
-		certs:         map[crypto.PublicKey]map[object.Hash]*peer.Certificate{},
 		contentHashes: &ObjectHashSyncList{},
+		certificates:  &PeerCertificateSyncList{},
+		addresses:     &StringSyncList{},
 		relays:        &PeerPeerSyncList{},
 	}
 }
@@ -71,29 +75,21 @@ func (s *localPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
 }
 
 func (s *localPeer) PutCertificate(c *peer.Certificate) {
-	s.certLock.Lock()
-	defer s.certLock.Unlock()
-	h := c.ToObject().Hash()
-	for _, sub := range c.Metadata.Policy.Subjects {
-		if _, ok := s.certs[crypto.PublicKey(sub)]; !ok {
-			s.certs[crypto.PublicKey(sub)] = map[object.Hash]*peer.Certificate{}
-		}
-		s.certs[crypto.PublicKey(sub)][h] = c
-	}
+	s.certificates.Put(c)
 }
 
-func (s *localPeer) GetCertificates(
-	sub crypto.PublicKey,
-) []*peer.Certificate {
-	cm, ok := s.certs[sub]
-	if !ok {
-		return []*peer.Certificate{}
+func (s *localPeer) GetCertificates() []*peer.Certificate {
+	return s.certificates.List()
+}
+
+func (s *localPeer) GetAddresses() []string {
+	return s.addresses.List()
+}
+
+func (s *localPeer) PutAddresses(addresses ...string) {
+	for _, h := range addresses {
+		s.addresses.Put(h)
 	}
-	cs := []*peer.Certificate{}
-	for _, c := range cm {
-		cs = append(cs, c)
-	}
-	return cs
 }
 
 func (s *localPeer) GetContentHashes() []object.Hash {

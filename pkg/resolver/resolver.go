@@ -512,7 +512,7 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	r.localPeerCacheLock.RUnlock()
 
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
-	certificates := r.localpeer.GetCertificates(peerKey)
+	certificates := r.localpeer.GetCertificates()
 	contentHashes := r.localpeer.GetContentHashes()
 	addresses := r.network.Addresses()
 	relays := r.localpeer.GetRelays()

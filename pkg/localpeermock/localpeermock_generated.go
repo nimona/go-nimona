@@ -88,17 +88,17 @@ func (mr *MockLocalPeerMockRecorder) PutPrimaryIdentityKey(arg0 interface{}) *go
 }
 
 // GetCertificates mocks base method
-func (m *MockLocalPeer) GetCertificates(arg0 crypto.PublicKey) []*peer.Certificate {
+func (m *MockLocalPeer) GetCertificates() []*peer.Certificate {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCertificates", arg0)
+	ret := m.ctrl.Call(m, "GetCertificates")
 	ret0, _ := ret[0].([]*peer.Certificate)
 	return ret0
 }
 
 // GetCertificates indicates an expected call of GetCertificates
-func (mr *MockLocalPeerMockRecorder) GetCertificates(arg0 interface{}) *gomock.Call {
+func (mr *MockLocalPeerMockRecorder) GetCertificates() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertificates", reflect.TypeOf((*MockLocalPeer)(nil).GetCertificates), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertificates", reflect.TypeOf((*MockLocalPeer)(nil).GetCertificates))
 }
 
 // PutCertificate mocks base method
@@ -141,6 +141,36 @@ func (m *MockLocalPeer) PutContentHashes(arg0 ...object.Hash) {
 func (mr *MockLocalPeerMockRecorder) PutContentHashes(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutContentHashes", reflect.TypeOf((*MockLocalPeer)(nil).PutContentHashes), arg0...)
+}
+
+// GetAddresses mocks base method
+func (m *MockLocalPeer) GetAddresses() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAddresses")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetAddresses indicates an expected call of GetAddresses
+func (mr *MockLocalPeerMockRecorder) GetAddresses() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAddresses", reflect.TypeOf((*MockLocalPeer)(nil).GetAddresses))
+}
+
+// PutAddresses mocks base method
+func (m *MockLocalPeer) PutAddresses(arg0 ...string) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "PutAddresses", varargs...)
+}
+
+// PutAddresses indicates an expected call of PutAddresses
+func (mr *MockLocalPeerMockRecorder) PutAddresses(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutAddresses", reflect.TypeOf((*MockLocalPeer)(nil).PutAddresses), arg0...)
 }
 
 // GetRelays mocks base method
