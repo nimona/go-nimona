@@ -15,7 +15,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
@@ -50,29 +49,26 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		local.PutPrimaryIdentityKey(cfg.Peer.IdentityKey)
 	}
 
-	if cfg.Peer.AnnounceHostname != "" {
-		eventbus.DefaultEventbus.Publish(
-			eventbus.NetworkAddressAdded{
-				Address: fmt.Sprintf(
-					"%s:%d",
-					cfg.Peer.AnnounceHostname,
-					cfg.Peer.TCPPort,
-				),
-			},
-		)
-	}
+	// TODO(geoah) FIX ME :P
+	// if cfg.Peer.AnnounceHostname != "" {
+	// 	local.Put fmt.Sprintf(
+	// 					"%s:%d",
+	// 					cfg.Peer.AnnounceHostname,
+	// 					cfg.Peer.TCPPort,
+	// 				),
+	// 			},
+	// 		)
+	// }
 
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
-		eventbus.DefaultEventbus.Publish(
-			eventbus.RelayAdded{
-				Peer: &peer.Peer{
-					Metadata: object.Metadata{
-						Owner: crypto.PublicKey(rp),
-					},
-					Addresses: []string{
-						cfg.Peer.RelayAddresses[i],
-					},
+		local.PutRelays(
+			&peer.Peer{
+				Metadata: object.Metadata{
+					Owner: crypto.PublicKey(rp),
+				},
+				Addresses: []string{
+					cfg.Peer.RelayAddresses[i],
 				},
 			},
 		)

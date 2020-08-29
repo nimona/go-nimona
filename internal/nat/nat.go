@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"gitlab.com/NebulousLabs/go-upnp"
-
-	"nimona.io/pkg/eventbus"
 )
 
 func MapExternalPort(port int) (func(), error) {
@@ -30,15 +28,17 @@ func MapExternalPort(port int) (func(), error) {
 		return nil, err
 	}
 
-	eventbus.DefaultEventbus.Publish(
-		eventbus.NetworkAddressAdded{
-			Address: fmt.Sprintf(
-				"tcps:%s:%d",
-				ip,
-				port,
-			),
-		},
-	)
+	fmt.Println(ip)
+	// TODO(geoah) fix?
+	// eventbus.DefaultEventbus.Publish(
+	// 	eventbus.NetworkAddressAdded{
+	// 		Address: fmt.Sprintf(
+	// 			"tcps:%s:%d",
+	// 			ip,
+	// 			port,
+	// 		),
+	// 	},
+	// )
 
 	return func() {
 		// clear mappings
