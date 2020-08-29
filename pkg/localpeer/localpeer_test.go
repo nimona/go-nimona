@@ -3,71 +3,58 @@ package localpeer
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
-func Test_memoryLocalPeer_GetPrimaryPeerKey(t *testing.T) {
+func TestLocalPeer(t *testing.T) {
 	k1, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
 	k2, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
-	tests := []struct {
-		key  crypto.PrivateKey
-		want crypto.PrivateKey
-	}{
-		{
-			key:  k1,
-			want: k1,
+	lp := New()
+
+	lp.PutPrimaryPeerKey(k1)
+	assert.Equal(t, k1, lp.GetPrimaryPeerKey())
+
+	lp.PutPrimaryIdentityKey(k2)
+	assert.Equal(t, k2, lp.GetPrimaryIdentityKey())
+
+	ch1 := object.Hash("f01")
+	ch2 := object.Hash("f02")
+
+	lp.PutContentHashes(ch1)
+	assert.ElementsMatch(t, []object.Hash{ch1}, lp.GetContentHashes())
+
+	lp.PutContentHashes(ch1, ch2)
+	assert.ElementsMatch(t, []object.Hash{ch1, ch2}, lp.GetContentHashes())
+
+	lp.PutRelays(&peer.Peer{
+		Metadata: object.Metadata{
+			Owner: k1.PublicKey(),
 		},
-		{
-			key:  k1,
-			want: k1,
+	})
+	assert.ElementsMatch(t, []*peer.Peer{{
+		Metadata: object.Metadata{
+			Owner: k1.PublicKey(),
 		},
-		{
-			key:  k2,
-			want: k2,
-		},
+	}}, lp.GetRelays())
+
+	c1 := &peer.Certificate{
+		Nonce: rand.String(6),
 	}
+	lp.PutCertificate(c1)
+	assert.ElementsMatch(t, []*peer.Certificate{c1}, lp.GetCertificates())
 
-	s := New()
-	for _, tt := range tests {
-		s.PutPrimaryPeerKey(tt.key)
-		require.Equal(t, tt.want, s.GetPrimaryPeerKey())
-	}
-}
-
-func Test_memoryLocalPeer_GetPrimaryIdentityKey(t *testing.T) {
-	k1, err := crypto.GenerateEd25519PrivateKey()
-	require.NoError(t, err)
-
-	k2, err := crypto.GenerateEd25519PrivateKey()
-	require.NoError(t, err)
-
-	tests := []struct {
-		key  crypto.PrivateKey
-		want crypto.PrivateKey
-	}{
-		{
-			key:  k1,
-			want: k1,
-		},
-		{
-			key:  k1,
-			want: k1,
-		},
-		{
-			key:  k2,
-			want: k2,
-		},
-	}
-
-	s := New()
-	for _, tt := range tests {
-		s.PutPrimaryIdentityKey(tt.key)
-		require.Equal(t, tt.want, s.GetPrimaryIdentityKey())
-	}
+	a1 := "foo"
+	a2 := "foo2"
+	lp.PutAddresses(a1, a2)
+	assert.ElementsMatch(t, []string{a1, a2}, lp.GetAddresses())
 }
