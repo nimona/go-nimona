@@ -244,12 +244,7 @@ func (n *network) Listen(
 
 		n.listeners = append(n.listeners, mlst)
 
-		// TODO(geoah) publish addresse?
-		// for _, addr := range mlst.addresses {
-		// 	n.eventbus.Publish(eventbus.NetworkAddressAdded{
-		// 		Address: addr,
-		// 	})
-		// }
+		n.localpeer.PutAddresses(mlst.addresses...)
 
 		// TODO goroutine never ends
 		go func() {
@@ -305,11 +300,6 @@ func (n *network) Listen(
 					conn.Close() // nolint: errcheck
 					continue
 				}
-
-				// TODO(geoah) publish addresse?
-				// n.eventbus.Publish(eventbus.PeerConnectionEstablished{
-				// 	PublicKey: conn.RemotePeerKey,
-				// })
 
 				connConnIncCounter.Inc()
 				n.connections <- conn

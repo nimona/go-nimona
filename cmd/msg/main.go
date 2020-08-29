@@ -128,10 +128,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	rmBinding, err := nat.MapExternalPort(cfg.Peer.TCPPort)
+	addr, rmBinding, err := nat.MapExternalPort(cfg.Peer.TCPPort)
 	if err != nil {
 		fmt.Println("* could not create UPNP mapping, error:", err)
 	}
+	local.PutAddresses(addr)
 	defer rmBinding()
 
 	sub := net.Subscribe(

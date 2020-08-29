@@ -49,16 +49,13 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 		local.PutPrimaryIdentityKey(cfg.Peer.IdentityKey)
 	}
 
-	// TODO(geoah) FIX ME :P
-	// if cfg.Peer.AnnounceHostname != "" {
-	// 	local.Put fmt.Sprintf(
-	// 					"%s:%d",
-	// 					cfg.Peer.AnnounceHostname,
-	// 					cfg.Peer.TCPPort,
-	// 				),
-	// 			},
-	// 		)
-	// }
+	if cfg.Peer.AnnounceHostname != "" {
+		local.PutAddresses(fmt.Sprintf(
+			"%s:%d",
+			cfg.Peer.AnnounceHostname,
+			cfg.Peer.TCPPort,
+		))
+	}
 
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
@@ -117,7 +114,8 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 	}
 
 	if cfg.Peer.UPNP {
-		nat.MapExternalPort(cfg.Peer.TCPPort) // nolint: errcheck
+		addr, _, _ := nat.MapExternalPort(cfg.Peer.TCPPort) // nolint: errcheck
+		local.PutAddresses(addr)
 	}
 
 	return &Daemon{
