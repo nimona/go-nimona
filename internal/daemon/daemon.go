@@ -51,7 +51,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 
 	if cfg.Peer.AnnounceHostname != "" {
 		local.PutAddresses(fmt.Sprintf(
-			"%s:%d",
+			"tcps:%s:%d",
 			cfg.Peer.AnnounceHostname,
 			cfg.Peer.TCPPort,
 		))
@@ -115,7 +115,7 @@ func New(ctx context.Context, cfg *config.Config) (*Daemon, error) {
 
 	if cfg.Peer.UPNP {
 		addr, _, _ := nat.MapExternalPort(cfg.Peer.TCPPort) // nolint: errcheck
-		local.PutAddresses(addr)
+		local.PutAddresses("tcps:" + addr)
 	}
 
 	return &Daemon{
