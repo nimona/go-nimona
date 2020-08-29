@@ -6,11 +6,11 @@ import (
 	"gitlab.com/NebulousLabs/go-upnp"
 )
 
-func MapExternalPort(port int) (func(), error) {
+func MapExternalPort(port int) (string, func(), error) {
 	// connect to router
 	d, err := upnp.Discover()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	// clear existing mappings
@@ -19,29 +19,21 @@ func MapExternalPort(port int) (func(), error) {
 	// discover external IP
 	ip, err := d.ExternalIP()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	// add port mapping
 	err = d.Forward(uint16(port), "nimona daemon")
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	fmt.Println(ip)
-	// TODO(geoah) fix?
-	// eventbus.DefaultEventbus.Publish(
-	// 	eventbus.NetworkAddressAdded{
-	// 		Address: fmt.Sprintf(
-	// 			"tcps:%s:%d",
-	// 			ip,
-	// 			port,
-	// 		),
-	// 	},
-	// )
-
-	return func() {
-		// clear mappings
-		d.Clear(uint16(port)) // nolint: errcheck
-	}, nil
+	return fmt.Sprintf(
+			"tcps:%s:%d",
+			ip,
+			port,
+		), func() {
+			// clear mappings
+			d.Clear(uint16(port)) // nolint: errcheck
+		}, nil
 }
