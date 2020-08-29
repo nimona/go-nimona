@@ -8,7 +8,6 @@ import (
 	"nimona.io/internal/daemon/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/eventbus"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -47,15 +46,13 @@ func serve() network.Network {
 
 	// add relay peers
 	for i, rp := range cfg.Peer.RelayKeys {
-		eventbus.Publish(
-			eventbus.RelayAdded{
-				Peer: &peer.Peer{
-					Metadata: object.Metadata{
-						Owner: crypto.PublicKey(rp),
-					},
-					Addresses: []string{
-						cfg.Peer.RelayAddresses[i],
-					},
+		local.PutRelays(
+			&peer.Peer{
+				Metadata: object.Metadata{
+					Owner: crypto.PublicKey(rp),
+				},
+				Addresses: []string{
+					cfg.Peer.RelayAddresses[i],
 				},
 			},
 		)
