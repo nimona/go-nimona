@@ -97,36 +97,13 @@ func New(
 		r.handleObject,
 	)
 
-	// get in touch with bootstrap nodes
-	go func() {
-		if len(r.initialBootstrapPeers) == 0 {
-			return
-		}
+	for _, p := range r.initialBootstrapPeers {
+		r.peerCache.Put(p)
+	}
 
-		if err := r.Bootstrap(ctx, r.initialBootstrapPeers...); err != nil {
-			logger.Error("could not bootstrap", log.Error(err))
-		}
-
-		// publish content
-		if err := r.publishContentHashes(ctx); err != nil {
-			logger.Error("could not publish initial content hashes", log.Error(err))
-		}
-
-		// TODO reconsider
-		// subsequently try to get fresh peers every 5 minutes
-		// ticker := time.NewTicker(5 * time.Minute)
-		// for range ticker.C {
-		// 	if _, err := r.Lookup(
-		// 		context.Background(),
-		// 		peer.LookupByContentType("nimona.io/peer.Peer"),
-		// 	); err != nil {
-		// 		logger.Error("could not refresh peers", log.Error(err))
-		// 	}
-		// 	if err := r.publishContentHashes(ctx); err != nil {
-		// 		logger.Error("could not refresh content hashes", log.Error(err))
-		// 	}
-		// }
-	}()
+	if err := r.Bootstrap(ctx, r.initialBootstrapPeers...); err != nil {
+		logger.Error("could not bootstrap", log.Error(err))
+	}
 
 	return r
 }
@@ -312,6 +289,11 @@ func (r *resolver) Lookup(
 
 	cps := r.getClosest(bl, 10)
 	cps = r.withoutOwnPeer(cps)
+
+	if len(cps) == 0 {
+		return nil, errors.New("no peers to ask")
+	}
+
 	for _, p := range cps {
 		initialRecipients <- p
 	}
@@ -441,6 +423,10 @@ func (r *resolver) Bootstrap(
 	bootstrapPeers ...*peer.Peer,
 ) error {
 	logger := log.FromContext(ctx)
+	if len(r.initialBootstrapPeers) == 0 {
+		return nil
+	}
+
 	nonce := rand.String(6)
 	q := &peer.LookupRequest{
 		Metadata: object.Metadata{
@@ -452,39 +438,13 @@ func (r *resolver) Bootstrap(
 	o := q.ToObject()
 	for _, p := range bootstrapPeers {
 		logger.Debug("connecting to bootstrap", log.Strings("addresses", p.Addresses))
+
 		err := r.network.Send(ctx, o, p)
 		if err != nil {
 			logger.Debug("could not send request to bootstrap", log.Error(err))
 		}
 	}
-	return nil
-}
 
-func (r *resolver) publishContentHashes(
-	ctx context.Context,
-) error {
-	logger := log.FromContext(ctx).With(
-		log.String("method", "resolver.publishContentHashes"),
-	)
-	cb := r.getLocalPeer()
-	ps := r.getClosest(cb.Bloom, 10)
-	if len(ps) == 0 {
-		logger.Debug("couldn't find peers to tell")
-		return errors.New("no peers to tell")
-	}
-
-	logger.With(
-		log.Int("n", len(ps)),
-		log.Any("bloom", cb.Bloom),
-	).Debug("trying to tell n peers")
-
-	o := cb.ToObject()
-	for _, p := range ps {
-		err := r.network.Send(ctx, o, p)
-		if err != nil {
-			logger.Debug("could not send request", log.Error(err))
-		}
-	}
 	return nil
 }
 

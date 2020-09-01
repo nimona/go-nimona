@@ -37,7 +37,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 		},
 	}
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	_, k1, _, n1, ctx1 := newPeer(t, "peer1")
 
@@ -47,7 +47,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 		WithBoostrapPeers(ba),
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	ctx := context.New(
 		context.WithCorrelationID("req1"),
@@ -59,7 +59,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	peers := gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n0.LocalPeer().GetAddresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n0.LocalPeer().GetAddresses(), peers[0].Addresses)
 
 	ctxR2 := context.New(
 		context.WithCorrelationID("req2"),
@@ -74,13 +74,14 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 	net.BindLocal = true
+	net.BindPrivate = false
 
 	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
 	New(ctx0, n0)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	_, k1, _, n1, ctx1 := newPeer(t, "peer1")
 	_, k2, _, n2, ctx2 := newPeer(t, "peer2")
@@ -102,7 +103,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		WithBoostrapPeers(ba),
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	// node 2
 	d2 := New(
@@ -111,7 +112,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 		WithBoostrapPeers(ba),
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	// find bootstrap from node1
 	ctx := context.New(
@@ -150,6 +151,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	net.BindLocal = true
+	net.BindPrivate = false
 
 	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 	_, k1, kc1, n1, ctx1 := newPeer(t, "peer1")
@@ -162,9 +164,9 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 	kc1.PutContentHashes(ch)
 
 	// print peer info
-	fmt.Println("k0", k0)
-	fmt.Println("k1", k1)
-	fmt.Println("k2", k2)
+	fmt.Println("0", k0.PublicKey(), n0.LocalPeer().GetAddresses())
+	fmt.Println("1", k1.PublicKey(), n1.LocalPeer().GetAddresses())
+	fmt.Println("2", k2.PublicKey(), n2.LocalPeer().GetAddresses())
 
 	// bootstrap peer
 	d0 := New(
@@ -172,7 +174,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		n0,
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	// bootstrap address
 	ba := []*peer.Peer{
@@ -191,7 +193,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		WithBoostrapPeers(ba),
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	// peer 2
 	d2 := New(
@@ -200,7 +202,7 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		WithBoostrapPeers(ba),
 	)
 
-	time.Sleep(time.Millisecond * 250)
+	time.Sleep(time.Millisecond * 100)
 
 	// find peer 1 from peer 2
 	ctx := context.New(
@@ -208,8 +210,8 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		context.WithTimeout(time.Second),
 	)
 	providersChan, err := d2.Lookup(ctx, LookupByContentHash(ch))
-	providers := gatherPeers(providersChan)
 	require.NoError(t, err)
+	providers := gatherPeers(providersChan)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 
@@ -219,8 +221,8 @@ func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
 		context.WithTimeout(time.Second*2),
 	)
 	providersChan, err = d0.Lookup(ctx, LookupByContentHash(ch))
-	providers = gatherPeers(providersChan)
 	require.NoError(t, err)
+	providers = gatherPeers(providersChan)
 	require.Len(t, providers, 1)
 	require.Equal(t, k1.PublicKey(), providers[0].PublicKey())
 }
