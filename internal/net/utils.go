@@ -95,7 +95,8 @@ func isPrivate(ip net.IP) bool {
 	_, block24, _ := net.ParseCIDR("10.0.0.0/8")
 	_, block20, _ := net.ParseCIDR("172.16.0.0/12")
 	_, block16, _ := net.ParseCIDR("192.168.0.0/16")
+	_, blockShared, _ := net.ParseCIDR("100.64.0.0/10")
 	_, blockLinkLocal, _ := net.ParseCIDR("169.254.0.0/16")
 	return block16.Contains(ip) || block20.Contains(ip) || block24.Contains(ip) ||
-		blockLinkLocal.Contains(ip)
+		blockLinkLocal.Contains(ip) || blockShared.Contains(ip)
 }
