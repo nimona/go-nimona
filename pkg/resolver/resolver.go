@@ -328,7 +328,7 @@ func (r *resolver) handleObject(
 	// check if this is a peer we've received objects from in the past x minutes
 	// and if not, announce ourselves to them
 	lastConn := r.peerConnections.GetOrPut(e.Sender)
-	if lastConn != nil && lastConn.Add(time.Minute*5).After(time.Now()) {
+	if lastConn == nil || lastConn.Add(time.Minute*5).Before(time.Now()) {
 		r.announceSelf(e.Sender)
 	}
 
