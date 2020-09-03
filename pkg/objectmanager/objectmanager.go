@@ -2,8 +2,6 @@ package objectmanager
 
 import (
 	"strings"
-	"sync"
-	"time"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
@@ -55,21 +53,16 @@ type (
 		Subscribe(
 			lookupOptions ...LookupOption,
 		) ObjectSubscription
-		RegisterType(
-			objectType string,
-			ttl time.Duration,
-		)
 	}
 
 	manager struct {
-		network         network.Network
-		objectstore     objectstore.Store
-		localpeer       localpeer.LocalPeer
-		resolver        resolver.Resolver
-		pubsub          ObjectPubSub
-		newNonce        func() string
-		registeredTypes sync.Map
-		subscriptions   *SubscriptionsMap
+		network       network.Network
+		objectstore   objectstore.Store
+		localpeer     localpeer.LocalPeer
+		resolver      resolver.Resolver
+		pubsub        ObjectPubSub
+		newNonce      func() string
+		subscriptions *SubscriptionsMap
 	}
 	Option func(*manager)
 )
@@ -112,25 +105,16 @@ func New(
 	return m
 }
 
-func (m *manager) RegisterType(
-	objectType string,
-	ttl time.Duration,
-) {
-	m.registeredTypes.Store(objectType, ttl)
-}
-
-func (m *manager) isRegisteredType(objectType string) (bool, time.Duration) {
-	found := false
-	ttl := time.Duration(0)
-	m.registeredTypes.Range(func(k, v interface{}) bool {
-		if k.(string) == objectType {
-			found = true
-			ttl = v.(time.Duration)
-			return false
+func (m *manager) isRegisteredContentType(
+	contentType string,
+) bool {
+	contentTypes := m.localpeer.GetContentTypes()
+	for _, ct := range contentTypes {
+		if contentType == ct {
+			return true
 		}
-		return true
-	})
-	return found, ttl
+	}
+	return false
 }
 
 // TODO add support for multiple recipients
@@ -363,7 +347,7 @@ func (m *manager) storeObject(
 	ctx context.Context,
 	obj object.Object,
 ) error {
-	ok, ttl := m.isRegisteredType(obj.GetType())
+	ok := m.isRegisteredContentType(obj.GetType())
 	if !ok {
 		return nil
 	}
@@ -387,7 +371,7 @@ func (m *manager) storeObject(
 	// store nested objects
 	for _, refObj := range refObjs {
 		// TODO reconsider ttls for nested objects
-		if err := m.objectstore.PutWithTimeout(refObj, ttl); err != nil {
+		if err := m.objectstore.PutWithTimeout(refObj, 0); err != nil {
 			logger.Error(
 				"error trying to persist incoming nested object",
 				log.String("hash", refObj.Hash().String()),
@@ -398,7 +382,7 @@ func (m *manager) storeObject(
 	}
 
 	// store primary object
-	if err := m.objectstore.PutWithTimeout(*mainObj, ttl); err != nil {
+	if err := m.objectstore.PutWithTimeout(*mainObj, 0); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
 			log.String("hash", objHash.String()),

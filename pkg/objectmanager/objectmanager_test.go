@@ -314,7 +314,6 @@ func Test_manager_Put(t *testing.T) {
 		network               func(*testing.T) network.Network
 		resolver              func(*testing.T) resolver.Resolver
 		receivedSubscriptions []object.Object
-		registeredTypes       []string
 	}
 	type args struct {
 		o object.Object
@@ -455,7 +454,7 @@ func Test_manager_Put(t *testing.T) {
 				m.EXPECT().
 					PutWithTimeout(
 						testObjectSimpleUpdated,
-						time.Hour,
+						time.Duration(0),
 					)
 				m.EXPECT().
 					GetByStream(testFeedHash).
@@ -468,8 +467,14 @@ func Test_manager_Put(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
-					SendCalls:       []error{},
+					ReturnLocalPeer: func() localpeer.LocalPeer {
+						tmpLocalPeer := localpeer.New()
+						tmpLocalPeer.PutContentTypes("foo")
+						tmpLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
+						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
+						return tmpLocalPeer
+					}(),
+					SendCalls: []error{},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -481,9 +486,6 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				return m
-			},
-			registeredTypes: []string{
-				"foo",
 			},
 		},
 		args: args{
@@ -672,9 +674,6 @@ func Test_manager_Put(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-			}
-			for _, t := range tt.fields.registeredTypes {
-				m.RegisterType(t, time.Hour)
 			}
 			got, err := m.Put(
 				context.Background(),
