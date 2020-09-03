@@ -474,13 +474,13 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
 	certificates := r.localpeer.GetCertificates()
 	contentHashes := r.localpeer.GetContentHashes()
+	contentTypes := r.localpeer.GetContentTypes()
 	addresses := r.localpeer.GetAddresses()
 	relays := r.localpeer.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
-	hs := []string{
-		peerKey.String(),
-	}
+	hs := contentTypes
+	hs = append(hs, peerKey.String())
 	for _, c := range contentHashes {
 		hs = append(hs, c.String())
 	}
