@@ -274,6 +274,12 @@ func Test_manager_Put(t *testing.T) {
 				object.Object{}.Set("foo:s", "bar2").Hash(),
 			},
 		)
+	testObjectSubscriptionInline := stream.Subscription{
+		Metadata: object.Metadata{
+			Owner:  testSubscriberPublicKey,
+			Stream: testObjectStreamRoot.Hash(),
+		},
+	}.ToObject()
 	testObjectComplex := object.Object{}.
 		SetType("foo-complex").
 		Set("foo:s", "bar").
@@ -404,6 +410,17 @@ func Test_manager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
+					GetByStream(testObjectStreamRoot.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+							},
+						),
+						nil,
+					)
+				m.EXPECT().
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
@@ -492,6 +509,17 @@ func Test_manager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
+					GetByStream(testObjectStreamRoot.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+							},
+						),
+						nil,
+					)
+				m.EXPECT().
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
@@ -505,6 +533,9 @@ func Test_manager_Put(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{},
 					},
 				}
+				t.Cleanup(func() {
+					assert.Equal(t, 1, m.SendCalled)
+				})
 				return m
 			},
 			resolver: func(t *testing.T) resolver.Resolver {
@@ -536,6 +567,94 @@ func Test_manager_Put(t *testing.T) {
 			o: testObjectWithStream,
 		},
 		want: testObjectWithStreamUpdated,
+	}, {
+		// root
+		//  |
+		//  o1
+		//  |
+		//  o2
+		//  |
+		//  o3 (subscription)
+		name: "should pass, stream event, with inline subscribers",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					GetByStream(testObjectStreamRoot.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+								testObjectSubscriptionInline,
+							},
+						),
+						nil,
+					)
+				m.EXPECT().
+					GetByStream(testObjectStreamRoot.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]object.Object{
+								object.Object{}.Set("foo:s", "bar1"),
+								object.Object{}.Set("foo:s", "bar2"),
+								testObjectSubscriptionInline,
+							},
+						),
+						nil,
+					)
+				m.EXPECT().
+					Put(testObjectWithStreamUpdated)
+				return m
+			},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls: []error{
+						nil,
+					},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
+					},
+				}
+				t.Cleanup(func() {
+					assert.Equal(t, 1, m.SendCalled)
+				})
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				r := make(chan *peer.Peer, 10)
+				r <- testSubscriberPeer
+				close(r)
+				m.EXPECT().Lookup(
+					gomock.Any(),
+					// TODO we need a custom matcher for options
+					gomock.Any(),
+				).Return(r, nil)
+				return m
+			},
+			receivedSubscriptions: []object.Object{},
+		},
+		args: args{
+			o: testObjectWithStream,
+		},
+		want: object.Object{}.
+			SetType("foo").
+			SetStream(testObjectStreamRoot.Hash()).
+			Set("foo:s", "bar").
+			SetOwner(testOwnPublicKey).
+			SetParents(
+				[]object.Hash{
+					object.Object{}.Set("foo:s", "bar1").Hash(),
+					object.Object{}.Set("foo:s", "bar2").Hash(),
+					testObjectSubscriptionInline.Hash(),
+				},
+			),
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

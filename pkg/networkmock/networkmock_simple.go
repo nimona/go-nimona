@@ -14,9 +14,9 @@ import (
 type (
 	MockNetworkSimple struct {
 		mutex           sync.Mutex
-		subscribeCalled int
+		SubscribeCalled int
 		SubscribeCalls  []network.EnvelopeSubscription
-		sendCalled      int
+		SendCalled      int
 		SendCalls       []error
 		ReturnAddresses []string
 		ReturnLocalPeer localpeer.LocalPeer
@@ -28,11 +28,11 @@ func (m *MockNetworkSimple) Subscribe(
 ) network.EnvelopeSubscription {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	if m.subscribeCalled >= len(m.SubscribeCalls) {
+	if m.SubscribeCalled >= len(m.SubscribeCalls) {
 		panic("too many calls to subscribe")
 	}
-	r := m.SubscribeCalls[m.subscribeCalled]
-	m.subscribeCalled++
+	r := m.SubscribeCalls[m.SubscribeCalled]
+	m.SubscribeCalled++
 	return r
 }
 
@@ -43,11 +43,11 @@ func (m *MockNetworkSimple) Send(
 ) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	if m.sendCalled >= len(m.SendCalls) {
+	if m.SendCalled >= len(m.SendCalls) {
 		panic("too many calls to send")
 	}
-	r := m.SendCalls[m.sendCalled]
-	m.sendCalled++
+	r := m.SendCalls[m.SendCalled]
+	m.SendCalled++
 	return r
 }
 

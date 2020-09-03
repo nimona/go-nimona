@@ -461,13 +461,33 @@ func (m *manager) announceObject(
 		return nil
 	}
 
-	// find subscriptions for this stream
+	// find ephemeral subscriptions for this stream
 	subscribersMap := map[crypto.PublicKey]struct{}{}
 	m.subscriptions.Range(func(_ object.Hash, sub *stream.Subscription) bool {
 		// TODO check expiry
 		subscribersMap[sub.Metadata.Owner] = struct{}{}
 		return true
 	})
+
+	// find subscriptions that are attached in the stream
+	r, err := m.objectstore.GetByStream(obj.GetStream())
+	if err != nil {
+		return err
+	}
+	for {
+		obj, err := r.Read()
+		// TODO do we want to return if error is not EOF?
+		if err != nil {
+			break
+		}
+		if obj.GetType() != streamSubscriptionType {
+			continue
+		}
+		if obj.GetOwner().IsEmpty() {
+			continue
+		}
+		subscribersMap[obj.GetOwner()] = struct{}{}
+	}
 	subscribers := []crypto.PublicKey{}
 	for subscriber := range subscribersMap {
 		subscribers = append(subscribers, subscriber)

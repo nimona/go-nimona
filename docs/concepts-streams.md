@@ -121,6 +121,10 @@ signed object nimona.io/stream.Subscription {
 }
 ```
 
+Subscriptions can also be added as stream events.
+This allows identities and peers that have write access to a stream to denote their interest in receiving updates about that stream.
+In this case `rootHashes` should be empty and the expiry is optional.
+
 ## References
 
 * <https://docs.textile.io/concepts/threads>
