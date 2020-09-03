@@ -24,6 +24,8 @@ type (
 		PutCertificate(*peer.Certificate)
 		GetContentHashes() []object.Hash
 		PutContentHashes(...object.Hash)
+		GetContentTypes() []string
+		PutContentTypes(...string)
 		GetAddresses() []string
 		PutAddresses(...string)
 		GetRelays() []*peer.Peer
@@ -34,6 +36,7 @@ type (
 		primaryPeerKey     crypto.PrivateKey
 		primaryIdentityKey crypto.PrivateKey
 		contentHashes      *ObjectHashSyncList
+		contentTypes       *StringSyncList
 		certificates       *PeerCertificateSyncList
 		addresses          *StringSyncList
 		relays             *PeerPeerSyncList
@@ -44,6 +47,7 @@ func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
 		contentHashes: &ObjectHashSyncList{},
+		contentTypes:  &StringSyncList{},
 		certificates:  &PeerCertificateSyncList{},
 		addresses:     &StringSyncList{},
 		relays:        &PeerPeerSyncList{},
@@ -99,6 +103,16 @@ func (s *localPeer) GetContentHashes() []object.Hash {
 func (s *localPeer) PutContentHashes(contentHashes ...object.Hash) {
 	for _, h := range contentHashes {
 		s.contentHashes.Put(h)
+	}
+}
+
+func (s *localPeer) GetContentTypes() []string {
+	return s.contentTypes.List()
+}
+
+func (s *localPeer) PutContentTypes(contentTypes ...string) {
+	for _, h := range contentTypes {
+		s.contentTypes.Put(h)
 	}
 }
 
