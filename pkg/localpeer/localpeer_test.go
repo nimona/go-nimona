@@ -57,4 +57,7 @@ func TestLocalPeer(t *testing.T) {
 	a2 := "foo2"
 	lp.PutAddresses(a1, a2)
 	assert.ElementsMatch(t, []string{a1, a2}, lp.GetAddresses())
+
+	lp.PutContentTypes(a1, a2)
+	assert.ElementsMatch(t, []string{a1, a2}, lp.GetContentTypes())
 }
