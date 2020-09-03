@@ -20,7 +20,7 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
 	github.com/stretchr/testify v1.6.1
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
-	github.com/twmb/murmur3 v1.1.4
+	github.com/twmb/murmur3 v1.1.5
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20181011194642-3a71999ed0d3
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
