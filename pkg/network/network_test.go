@@ -3,11 +3,10 @@ package network
 import (
 	"testing"
 
-	"nimona.io/internal/net"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
@@ -32,6 +31,12 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		SetType("foo").
 		Set("foo:s", object.String("bar"))
 
+	// subscribe to objects of type "foo" coming to n2
+	sub := n2.Subscribe(
+		FilterByObjectType("foo"),
+	)
+	require.NotNil(t, sub)
+
 	// send from p1 to p2
 	err = n1.Send(
 		context.Background(),
@@ -45,14 +50,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	sub := n2.Subscribe(
-		FilterByObjectType("foo"),
-	)
+	// wait for event from n1 to arrive
 	env, err := sub.Next()
 	require.NoError(t, err)
-
-	require.NotNil(t, sub)
 	assert.Equal(t, testObj.ToMap(), env.Payload.ToMap())
+
+	// subscribe to all objects coming to n1
+	sub = n1.Subscribe()
 
 	// send from p2 to p1
 	err = n2.Send(
@@ -67,10 +71,9 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	sub = n1.Subscribe()
+	// next object should be our foo
 	env, err = sub.Next()
 	require.NoError(t, err)
-
 	require.NotNil(t, sub)
 	assert.Equal(t, testObj.ToMap(), env.Payload.ToMap())
 }
