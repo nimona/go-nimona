@@ -9,7 +9,10 @@ VERSION      := dev # TODO get VERSION from git
 CI           := $(CI)
 
 # Targets & Sources
-MAINBIN := $(BINDIR)/nimona
+BINS = nimona
+BINS += keygen
+BINS += sonar
+
 SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 
 # Tools
@@ -57,16 +60,15 @@ GIT_SHA ?= $(shell git rev-parse --short HEAD)
 .PHONY: all
 all: deps lint test build
 
-build: $(MAINBIN)
+build: $(BINS)
 
-$(MAINBIN): $(SOURCES)
+$(BINS): %:
 	$(eval LDFLAGS += -X $(MODULE)/internal/version.Date=$(shell date +%s))
 	$(eval LDFLAGS += -X $(MODULE)/internal/version.Version=$(VERSION))
 	$(eval LDFLAGS += -X $(MODULE)/internal/version.Commit=$(GIT_SHA))
-	cd cmd && \
-		go install $(V) \
-			-ldflags '$(LDFLAGS)' \
-			./nimona
+	go install $(V) \
+		-ldflags '$(LDFLAGS)' \
+		./cmd/$*
 
 # Clean up everything
 .PHONY: clean
