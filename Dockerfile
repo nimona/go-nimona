@@ -13,5 +13,6 @@ RUN make build
 FROM debian:buster-slim
 
 COPY --from=builder /src/nimona.io/bin/nimona /nimona
+COPY --from=builder /src/nimona.io/bin/sonar /sonar
 
 ENTRYPOINT ["/nimona"]

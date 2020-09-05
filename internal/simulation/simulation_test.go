@@ -8,16 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/fixtures"
 	"nimona.io/internal/rand"
 	"nimona.io/internal/simulation/node"
-	"nimona.io/pkg/client"
-	"nimona.io/pkg/object"
 )
 
+// nolint: lll
 func TestSimulation(t *testing.T) {
 	// create new env
 	env, err := node.NewEnvironment()
@@ -26,8 +23,8 @@ func TestSimulation(t *testing.T) {
 
 	// stop env when we are done
 	defer func() {
-		err := env.Stop()
-		assert.NoError(t, err)
+		time.Sleep(time.Second)
+		env.Stop() // nolint: errcheck
 	}()
 
 	// figure out which docker image we need
@@ -41,163 +38,113 @@ func TestSimulation(t *testing.T) {
 		dockerImage,
 		env,
 		node.WithName("nimona-e2e-bootstrap-"+rand.String(8)),
-		node.WithPortMapping(28000, 27000),
+		node.WithPortMapping(17000, 17000),
 		node.WithCount(1),
 		node.WithEnv([]string{
-			"NIMONA_ALIAS=nimona-e2e-bootstrap",
+			"LOG_LEVEL=error",
+			"BIND_LOCAL=false",
 			"BIND_PRIVATE=true",
-			"DEBUG_BLOCKS=true",
-			"LOG_LEVEL=debug",
-			"NIMONA_API_HOST=0.0.0.0",
-			"NIMONA_API_PORT=28000",
-			"NIMONA_PEER_BOOTSTRAP_KEYS=",
-			"NIMONA_PEER_BOOTSTRAP_ADDRESSES=",
-			"XNODE=NODE-BOOTSTRAP",
+			"NIMONA_BIND_ADDRESS=0.0.0.0:17000",
+			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.Jf3xha8ZqEnFv9T9UDcN41nFFfZpc9MY4tzUnpgGHx8ZwKQ6uXX6PGY1nHLQAKhPiFtV4YEqMsCd5vjkdRyC5nJ",
+			"NIMONA_PING_PEERS=ed25519.3ykKbHUoHE8Sa9P6ckzrsXzGw3HC9iV4vnTcNrrcBBmP,ed25519.9CA3BuLzPrxHAHET8zicCtTku5zAaPsA6WRFp4PRARx2",
+		}),
+		node.WithEntrypoint([]string{
+			"/sonar",
 		}),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, bNodes)
 
-	// stop bootstrap nodes when we are done
-	defer func() {
-		err := node.Stop(bNodes)
-		assert.NoError(t, err)
-	}()
-
 	// wait for the containers to settle
 	time.Sleep(time.Second * 15)
 
-	// create clients for all nodes
-	bClients := make([]*client.Client, len(bNodes))
-	for i, node := range bNodes {
-		baseURL := fmt.Sprintf("http://%s", node.Address())
-		c, err := client.New(baseURL)
-		require.NoError(t, err)
-		bClients[i] = c
-	}
+	// setup node 1
+	nodes := bNodes
+	newNodes, err := node.New(
+		dockerImage,
+		env,
+		node.WithName("nimona-e2e-1"),
+		node.WithPortMapping(17001, 17001),
+		node.WithCount(1),
+		node.WithEnv([]string{
+			"LOG_LEVEL=error",
+			"BIND_LOCAL=false",
+			"BIND_PRIVATE=true",
+			"NIMONA_BIND_ADDRESS=0.0.0.0:17001",
+			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.2bAdgQxfcJsGRMccgMXkGSPQt396g77KKq8y6fEeQbxpnPqS5Ujh1DXTNU539wW5ispS1McLyKjrJDsgxYKneyCZ",
+			"NIMONA_PING_PEERS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW,ed25519.9CA3BuLzPrxHAHET8zicCtTku5zAaPsA6WRFp4PRARx2",
+			fmt.Sprintf("NIMONA_BOOTSTRAP_PEERS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW@tcps:%s", bNodes[0].Address()),
+		}),
+		node.WithEntrypoint([]string{
+			"/sonar",
+		}),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, newNodes)
+	nodes = append(nodes, newNodes[0])
 
-	// gather bootstrap addresses
-	bootstrapKeys := make([]string, len(bClients))
-	bootstrapAddresses := make([]string, len(bClients))
-	for i, bClient := range bClients {
-		res, err := bClient.Info()
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		bootstrapKeys[i] = res.PublicKey().String()
-		bootstrapAddresses[i] = res.Addresses[0]
-	}
+	// setup node 2
+	newNodes, err = node.New(
+		dockerImage,
+		env,
+		node.WithName("nimona-e2e-2"),
+		node.WithPortMapping(17002, 17002),
+		node.WithCount(1),
+		node.WithEnv([]string{
+			"LOG_LEVEL=error",
+			"BIND_LOCAL=false",
+			"BIND_PRIVATE=true",
+			"NIMONA_BIND_ADDRESS=0.0.0.0:17002",
+			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.4i1anFeotM4TKnjLsJFLgwERtq4rD5yaR6AQ5HuChgNBfzrApXpQYA8WT83bMSc8CLj76LbJfdSKn3HiKmSpn25U",
+			"NIMONA_PING_PEERS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW,ed25519.3ykKbHUoHE8Sa9P6ckzrsXzGw3HC9iV4vnTcNrrcBBmP",
+			fmt.Sprintf("NIMONA_BOOTSTRAP_PEERS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW@tcps:%s", bNodes[0].Address()),
+		}),
+		node.WithEntrypoint([]string{
+			"/sonar",
+		}),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, newNodes)
+	nodes = append(nodes, newNodes[0])
 
-	// setup normal nodes
-	nodes := make([]*node.Node, 3)
-	for i := range nodes {
-		ns, err := node.New(
-			dockerImage,
-			env,
-			node.WithName(fmt.Sprintf("nimona-e2e-%d", i)),
-			node.WithPortMapping(28000, 28000+i),
-			node.WithCount(1),
-			node.WithEnv([]string{
-				"BIND_PRIVATE=true",
-				"DEBUG_BLOCKS=true",
-				"LOG_LEVEL=debug",
-				"NIMONA_API_HOST=0.0.0.0",
-				"NIMONA_API_PORT=28000",
-				fmt.Sprintf("NIMONA_ALIAS=nimona-e2e-node-%d", i),
-				fmt.Sprintf("XNODE=NODE%d", i),
-				"NIMONA_PEER_BOOTSTRAP_KEYS=" +
-					strings.Join(bootstrapKeys, ","),
-				"NIMONA_PEER_BOOTSTRAP_ADDRESSES=" +
-					strings.Join(bootstrapAddresses, ","),
-			}),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, nodes)
-		nodes[i] = ns[0]
-	}
-
-	// stop normal nodes when we are done
+	// stop all nodes when we are done
 	defer func() {
-		err := node.Stop(nodes)
-		assert.NoError(t, err)
+		node.Stop(nodes)   // nolint: errcheck
+		node.Delete(nodes) // nolint: errcheck
 	}()
 
-	// wait for the containers to settle
-	time.Sleep(time.Second * 30)
+	wgSent := &sync.WaitGroup{}
+	wgReceived := &sync.WaitGroup{}
 
-	// create clients for all nodes
-	clients := make([]*client.Client, len(nodes))
-	for i, node := range nodes {
-		baseURL := fmt.Sprintf("http://%s", node.Address())
-		c, err := client.New(baseURL)
-		require.NoError(t, err)
-		clients[i] = c
-	}
+	wgSent.Add(len(nodes))
+	wgReceived.Add(len(nodes))
 
-	// gather recipients to send the obj to
-	recipients := []string{}
-	// skip first client as it's the one we'll be sending from
-	for _, c := range clients[1:] {
-		info, err := c.Info()
-		assert.NoError(t, err)
-		recipients = append(recipients, info.PublicKey().String())
-	}
-
-	fmt.Printf("\n\n\n")
-
-	bInfo, err := bClients[0].Info()
-	require.NoError(t, err)
-	fmt.Printf("> bootstrap 0 - %s - %v\n", bInfo.PublicKey(), bInfo.Addresses)
-
-	for i, c := range clients {
-		info, err := c.Info()
-		require.NoError(t, err)
-		fmt.Printf("> peer %d - %s - %v\n", i, info.PublicKey(), info.Addresses)
-	}
-
-	fmt.Printf("\n\n\n")
-
-	// create an obj, and attach recipients to policy
-	nonce := rand.String(24) + "xnonce"
-	streamCreated := fixtures.TestStream{
-		Metadata: object.Metadata{
-			Policy: object.Policy{
-				Subjects:  recipients,
-				Resources: []string{"*"},
-				Actions:   []string{"read"},
-				Effect:    "allow",
-			},
-		},
-		Nonce: nonce,
-	}
-
-	err = clients[0].PostObject(streamCreated.ToObject())
-	require.NoError(t, err)
-
-	wg := &sync.WaitGroup{}
-	wg.Add(len(recipients))
-
-	for _, nd := range nodes[1:] {
+	for _, nd := range nodes {
 		go func(nd *node.Node) {
 			loch, _ := nd.Logs()
 			for {
 				select {
 				case ll := <-loch:
-					if strings.Contains(ll, nonce) {
-						fmt.Println("Node logged nonce")
-						wg.Done()
-						return
+					if strings.Contains(ll, "all pings sent") {
+						fmt.Println("log: all pings sent")
+						wgSent.Done()
 					}
-				case <-time.After(time.Second * 20):
-					t.Log("node didn't get obj in time")
+					if strings.Contains(ll, "all pings received") {
+						fmt.Println("log: all pings received")
+						wgReceived.Done()
+					}
+				case <-time.After(time.Minute):
+					t.Log("didn't see expected logs in time")
 					t.Fail()
-					wg.Done()
+					wgSent.Done()
+					wgReceived.Done()
 					return
 				}
 			}
 		}(nd)
 	}
 
-	for _, nd := range append(bNodes, nodes...) {
+	for _, nd := range nodes {
 		go func(nd *node.Node) {
 			loch, _ := nd.Logs()
 			for ll := range loch {
@@ -206,5 +153,6 @@ func TestSimulation(t *testing.T) {
 		}(nd)
 	}
 
-	wg.Wait()
+	wgSent.Wait()
+	wgReceived.Wait()
 }
