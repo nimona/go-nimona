@@ -47,6 +47,7 @@ func TestCreateContainer(t *testing.T) {
 				tt.containerName,
 				tt.networkName,
 				nil,
+				nil,
 				[]string{"uname", "-a"},
 				[]string{},
 			)

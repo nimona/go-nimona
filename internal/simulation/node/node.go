@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"nimona.io/pkg/context"
-
 	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/context"
 )
 
 type Node struct {
@@ -23,8 +22,9 @@ func New(
 	nodes := []*Node{}
 
 	options := &Options{
-		Name:         "NimNode",
+		Name:         "nimona-node",
 		Count:        1,
+		Entrypoint:   []string{},
 		Command:      []string{},
 		PortMappings: map[int]int{},
 	}
@@ -45,6 +45,7 @@ func New(
 			fmt.Sprintf("%s-%d", options.Name, i),
 			Environment.net.Name,
 			ports,
+			options.Entrypoint,
 			options.Command,
 			options.Env,
 		)

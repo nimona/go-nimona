@@ -5,6 +5,7 @@ type (
 		Name         string
 		Count        int
 		Env          []string
+		Entrypoint   []string
 		Command      []string
 		PortMappings map[int]int
 	}
@@ -26,6 +27,12 @@ func WithCount(count int) Option {
 func WithEnv(env []string) Option {
 	return func(o *Options) {
 		o.Env = env
+	}
+}
+
+func WithEntrypoint(entrypoint []string) Option {
+	return func(o *Options) {
+		o.Entrypoint = entrypoint
 	}
 }
 
