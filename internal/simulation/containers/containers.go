@@ -27,6 +27,7 @@ func New(
 	name string,
 	networkName string,
 	portMap map[string]string,
+	entrypoint []string,
 	command []string,
 	env []string,
 ) (*Container, error) {
@@ -73,6 +74,7 @@ func New(
 		ctx,
 		&container.Config{
 			Image:        image,
+			Entrypoint:   entrypoint,
 			Cmd:          command,
 			ExposedPorts: portsSet,
 			Env:          env,
@@ -114,7 +116,8 @@ func New(
 	gwAddress := ""
 	for _, p := range ins.NetworkSettings.Ports {
 		if len(p) > 0 {
-			gwAddress = p[0].HostIP + ":" + p[0].HostPort
+			addr := ins.NetworkSettings.DefaultNetworkSettings.IPAddress
+			gwAddress = addr + ":" + p[0].HostPort
 			break
 		}
 	}
