@@ -1,25 +1,25 @@
 package node
 
 import (
-	"nimona.io/pkg/context"
 	"fmt"
-	"math/rand"
 
+	"nimona.io/internal/rand"
 	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/context"
 )
 
 type Environment struct {
 	net *containers.Network
 }
 
-const defaultNetworkName = "NimNet"
+const defaultNetworkName = "nimona-network"
 
 func NewEnvironment() (*Environment, error) {
 	ctx := context.Background()
 
 	nnet, err := containers.NewNetwork(
 		ctx,
-		fmt.Sprintf("%s-%d", defaultNetworkName, rand.Intn(100)),
+		fmt.Sprintf("%s-%s", defaultNetworkName, rand.String(8)),
 	)
 	if err != nil {
 		return nil, err
