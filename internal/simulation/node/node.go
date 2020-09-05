@@ -77,3 +77,16 @@ func Stop(nodes []*Node) error {
 
 	return nil
 }
+
+func Delete(nodes []*Node) error {
+	ctx := context.Background()
+
+	for _, nd := range nodes {
+		err := nd.container.Delete(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
