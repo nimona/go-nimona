@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	// required for sqlite3
+	_ "github.com/mattn/go-sqlite3"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
