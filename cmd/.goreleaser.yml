@@ -1,8 +1,8 @@
 project_name: nimona
 builds:
   - id: linux
-    main: ./nimona
-    binary: nimona
+    main: ./bootstrap
+    binary: bootstrap
     env:
       - GO111MODULE=on
       - CGO_ENABLED=1
