@@ -1,11 +1,11 @@
 # Sonar (Testing tool)
 
 Sonar is a testing tool used as part of our first-pass end to end tests.
-It allows spinning up nodes that will attempt to "ping" other specified
-peers and wait for them their pings as well.
+It allows creating peers that will attempt to "ping" other specified
+peers and wait for them to ping back.
 
-Once sonar has managed to ping all its peers, and has received pings from
-all of them, it exits.
+Once sonar has managed to ping all its peers, it then waits to receive pings
+from all other defined peers, and exits.
 
 ## Env vars
 
