@@ -9,7 +9,7 @@ VERSION      := dev # TODO get VERSION from git
 CI           := $(CI)
 
 # Targets & Sources
-BINS = nimona
+BINS = bootstrap
 BINS += keygen
 BINS += sonar
 
