@@ -1,8 +1,0 @@
-package main
-
-import nimona.io/crypto crypto
-
-signed object nimona.io/msg {
-    datetime int
-    body string
-}
