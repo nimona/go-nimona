@@ -53,18 +53,18 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method
-func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.Peer) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.Peer, excludeNested bool) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Request", ctx, hash, peer)
+	ret := m.ctrl.Call(m, "Request", ctx, hash, peer, excludeNested)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Request indicates an expected call of Request
-func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer, excludeNested interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, peer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, peer, excludeNested)
 }
 
 // RequestStream mocks base method

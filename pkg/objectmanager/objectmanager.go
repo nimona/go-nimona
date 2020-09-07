@@ -44,6 +44,7 @@ type (
 			ctx context.Context,
 			hash object.Hash,
 			peer *peer.Peer,
+			excludeNested bool,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
@@ -191,6 +192,7 @@ func (m *manager) RequestStream(
 			ctx,
 			objectHash,
 			recipients[0],
+			true,
 		)
 	}
 
@@ -238,6 +240,7 @@ func (m *manager) Request(
 	ctx context.Context,
 	hash object.Hash,
 	pr *peer.Peer,
+	excludeNested bool,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
@@ -265,7 +268,8 @@ func (m *manager) Request(
 	}()
 
 	if err := m.network.Send(ctx, object.Request{
-		ObjectHash: hash,
+		ObjectHash:            hash,
+		ExcludedNestedObjects: excludeNested,
 	}.ToObject(), pr); err != nil {
 		return nil, err
 	}
@@ -526,9 +530,29 @@ func (m *manager) handleObjectRequest(
 		return err
 	}
 
+	robj := &obj
+
+	switch req.ExcludedNestedObjects {
+	case true:
+		robj, _, err = object.UnloadReferences(ctx, obj)
+		if err != nil {
+			return err
+		}
+	case false:
+		robj, err = object.LoadReferences(ctx, hash, func(
+			ctx context.Context, hash object.Hash,
+		) (*object.Object, error) {
+			obj, err := m.objectstore.Get(hash)
+			return &obj, err
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	if err := m.network.Send(
 		ctx,
-		obj,
+		*robj,
 		&peer.Peer{
 			Metadata: object.Metadata{
 				Owner: env.Sender,
