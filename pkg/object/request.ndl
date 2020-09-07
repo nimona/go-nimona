@@ -2,6 +2,7 @@ package nimona.io/object
 
 signed object nimona.io/object.Request {
     objectHash nimona.io/object.Hash
+    excludedNestedObjects bool
 }
 
 signed object nimona.io/object.Response {

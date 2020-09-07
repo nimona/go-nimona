@@ -1,6 +1,7 @@
 package objectmanager
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -88,7 +89,7 @@ func Test_manager_Request(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -98,6 +99,189 @@ func Test_manager_Request(t *testing.T) {
 				tt.want.ToMap(),
 				got.ToMap(),
 			)
+		})
+	}
+}
+
+func Test_manager_handle_request(t *testing.T) {
+	localPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	peer1Key, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	peer1 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: peer1Key.PublicKey(),
+		},
+	}
+
+	localPeer := localpeer.New()
+	localPeer.PutPrimaryIdentityKey(localPeerKey)
+
+	f00 := peer1.ToObject()
+	f01 := object.Object{}.
+		Set("f01:s", "f01").
+		Set("asdf:m", f00.Raw())
+
+	unloadedF01 := f01.Set("asdf:m", nil)
+	unloadedF01 = unloadedF01.Set("asdf:r", object.Ref(f00.Hash()))
+
+	type fields struct {
+		storeHandler   func(*testing.T) objectstore.Store
+		networkHandler func(
+			*testing.T,
+			context.Context,
+			bool, *sync.WaitGroup,
+			object.Object,
+		) network.Network
+		resolver func(*testing.T) resolver.Resolver
+	}
+	type args struct {
+		ctx           context.Context
+		rootHash      object.Hash
+		peer          *peer.Peer
+		excludeNested bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    object.Object
+		wantErr bool
+	}{
+		{
+			name: "object should be unloaded",
+			fields: fields{
+				storeHandler: func(t *testing.T) objectstore.Store {
+					m := objectstoremock.NewMockStore(gomock.NewController(t))
+					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					return m
+				},
+				networkHandler: func(
+					t *testing.T,
+					ctx context.Context,
+					excludeNested bool,
+					wg *sync.WaitGroup,
+					want object.Object,
+				) network.Network {
+					m := networkmock.NewMockNetwork(gomock.NewController(t))
+					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().Subscribe(gomock.Any()).Return(
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
+								Payload: object.Request{
+									ObjectHash:            f01.Hash(),
+									ExcludedNestedObjects: excludeNested,
+								}.ToObject(),
+							}},
+						},
+					)
+
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+						DoAndReturn(func(
+							ctx context.Context,
+							obj object.Object,
+							recipient *peer.Peer,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						})
+
+					return m
+				},
+				resolver: func(t *testing.T) resolver.Resolver {
+					m := resolvermock.NewMockResolver(
+						gomock.NewController(t),
+					)
+					return m
+				},
+			},
+			args: args{
+				ctx:           context.Background(),
+				rootHash:      f00.Hash(),
+				peer:          peer1,
+				excludeNested: true,
+			},
+			want: unloadedF01,
+		},
+		{
+			name: "object should NOT be unloaded",
+			fields: fields{
+				storeHandler: func(t *testing.T) objectstore.Store {
+					m := objectstoremock.NewMockStore(gomock.NewController(t))
+					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					return m
+				},
+				networkHandler: func(
+					t *testing.T,
+					ctx context.Context,
+					excludeNested bool,
+					wg *sync.WaitGroup,
+					want object.Object,
+				) network.Network {
+					m := networkmock.NewMockNetwork(gomock.NewController(t))
+					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().Subscribe(gomock.Any()).Return(
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
+								Payload: object.Request{
+									ObjectHash:            f01.Hash(),
+									ExcludedNestedObjects: excludeNested,
+								}.ToObject(),
+							}},
+						},
+					)
+
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+						DoAndReturn(func(
+							ctx context.Context,
+							obj object.Object,
+							recipient *peer.Peer,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						})
+
+					return m
+				},
+				resolver: func(t *testing.T) resolver.Resolver {
+					m := resolvermock.NewMockResolver(
+						gomock.NewController(t),
+					)
+					return m
+				},
+			},
+			args: args{
+				ctx:           context.Background(),
+				rootHash:      f00.Hash(),
+				peer:          peer1,
+				excludeNested: false,
+			},
+			want: f01,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			mgr := New(
+				tt.args.ctx,
+				tt.fields.networkHandler(
+					t,
+					tt.args.ctx,
+					tt.args.excludeNested,
+					&wg,
+					tt.want,
+				),
+				tt.fields.resolver(t),
+				tt.fields.storeHandler(t),
+			)
+			assert.NotNil(t, mgr)
+			wg.Wait()
 		})
 	}
 }

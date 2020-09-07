@@ -6,9 +6,10 @@ import "nimona.io/pkg/errors"
 
 type (
 	Request struct {
-		raw        Object
-		Metadata   Metadata
-		ObjectHash Hash
+		raw                   Object
+		Metadata              Metadata
+		ObjectHash            Hash
+		ExcludedNestedObjects bool
 	}
 	Response struct {
 		raw        Object
@@ -31,6 +32,12 @@ func (e Request) GetSchema() *SchemaObject {
 			Name:       "objectHash",
 			Type:       "nimona.io/Hash",
 			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "excludedNestedObjects",
+			Type:       "bool",
+			Hint:       "b",
 			IsRepeated: false,
 			IsOptional: false,
 		}},
@@ -56,6 +63,7 @@ func (e Request) ToObject() Object {
 	if e.ObjectHash != "" {
 		o = o.Set("objectHash:s", e.ObjectHash)
 	}
+	o = o.Set("excludedNestedObjects:b", e.ExcludedNestedObjects)
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:m"] = schema.ToObject().ToMap()
 	// }
@@ -76,6 +84,9 @@ func (e *Request) FromObject(o Object) error {
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("objectHash:s"); v != nil {
 		e.ObjectHash = Hash(v.PrimitiveHinted().(string))
+	}
+	if v := data.Value("excludedNestedObjects:b"); v != nil {
+		e.ExcludedNestedObjects = bool(v.PrimitiveHinted().(bool))
 	}
 	return nil
 }
