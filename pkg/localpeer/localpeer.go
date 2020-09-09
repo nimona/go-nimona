@@ -11,7 +11,7 @@ import (
 //go:generate $GOBIN/mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=contenthashes_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.Hash"
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.Peer"
-//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.Certificate"
+//go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 //go:generate $GOBIN/genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
 
 type (
@@ -20,8 +20,8 @@ type (
 		PutPrimaryPeerKey(crypto.PrivateKey)
 		GetPrimaryIdentityKey() crypto.PrivateKey
 		PutPrimaryIdentityKey(crypto.PrivateKey)
-		GetCertificates() []*peer.Certificate
-		PutCertificate(*peer.Certificate)
+		GetCertificates() []*object.Certificate
+		PutCertificate(*object.Certificate)
 		GetContentHashes() []object.Hash
 		PutContentHashes(...object.Hash)
 		GetContentTypes() []string
@@ -37,7 +37,7 @@ type (
 		primaryIdentityKey crypto.PrivateKey
 		contentHashes      *ObjectHashSyncList
 		contentTypes       *StringSyncList
-		certificates       *PeerCertificateSyncList
+		certificates       *ObjectCertificateSyncList
 		addresses          *StringSyncList
 		relays             *PeerPeerSyncList
 	}
@@ -48,7 +48,7 @@ func New() LocalPeer {
 		keyLock:       sync.RWMutex{},
 		contentHashes: &ObjectHashSyncList{},
 		contentTypes:  &StringSyncList{},
-		certificates:  &PeerCertificateSyncList{},
+		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
 		relays:        &PeerPeerSyncList{},
 	}
@@ -78,11 +78,11 @@ func (s *localPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
 	return s.primaryIdentityKey
 }
 
-func (s *localPeer) PutCertificate(c *peer.Certificate) {
+func (s *localPeer) PutCertificate(c *object.Certificate) {
 	s.certificates.Put(c)
 }
 
-func (s *localPeer) GetCertificates() []*peer.Certificate {
+func (s *localPeer) GetCertificates() []*object.Certificate {
 	return s.certificates.List()
 }
 

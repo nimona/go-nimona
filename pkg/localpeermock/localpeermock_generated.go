@@ -88,10 +88,10 @@ func (mr *MockLocalPeerMockRecorder) PutPrimaryIdentityKey(arg0 interface{}) *go
 }
 
 // GetCertificates mocks base method
-func (m *MockLocalPeer) GetCertificates() []*peer.Certificate {
+func (m *MockLocalPeer) GetCertificates() []*object.Certificate {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCertificates")
-	ret0, _ := ret[0].([]*peer.Certificate)
+	ret0, _ := ret[0].([]*object.Certificate)
 	return ret0
 }
 
@@ -102,7 +102,7 @@ func (mr *MockLocalPeerMockRecorder) GetCertificates() *gomock.Call {
 }
 
 // PutCertificate mocks base method
-func (m *MockLocalPeer) PutCertificate(arg0 *peer.Certificate) {
+func (m *MockLocalPeer) PutCertificate(arg0 *object.Certificate) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PutCertificate", arg0)
 }
@@ -141,6 +141,36 @@ func (m *MockLocalPeer) PutContentHashes(arg0 ...object.Hash) {
 func (mr *MockLocalPeerMockRecorder) PutContentHashes(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutContentHashes", reflect.TypeOf((*MockLocalPeer)(nil).PutContentHashes), arg0...)
+}
+
+// GetContentTypes mocks base method
+func (m *MockLocalPeer) GetContentTypes() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContentTypes")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetContentTypes indicates an expected call of GetContentTypes
+func (mr *MockLocalPeerMockRecorder) GetContentTypes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentTypes", reflect.TypeOf((*MockLocalPeer)(nil).GetContentTypes))
+}
+
+// PutContentTypes mocks base method
+func (m *MockLocalPeer) PutContentTypes(arg0 ...string) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "PutContentTypes", varargs...)
+}
+
+// PutContentTypes indicates an expected call of PutContentTypes
+func (mr *MockLocalPeerMockRecorder) PutContentTypes(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutContentTypes", reflect.TypeOf((*MockLocalPeer)(nil).PutContentTypes), arg0...)
 }
 
 // GetAddresses mocks base method

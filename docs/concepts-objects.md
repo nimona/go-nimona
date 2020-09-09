@@ -125,8 +125,8 @@ be removed soon enough._
 * `nimona.io/peer.PeerInfo`
 * `nimona.io/peer.PeerRequest`
 * `nimona.io/peer.PeerResponse`
-* `nimona.io/peer.Certificate`
-* `nimona.io/peer.CertificateRequest`
+* `nimona.io/object.Certificate`
+* `nimona.io/object.CertificateRequest`
 * `nimona.io/exchange.ObjectRequest`
 * `nimona.io/exchange.ObjectResponse`
 * ...

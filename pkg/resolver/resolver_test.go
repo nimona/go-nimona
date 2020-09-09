@@ -249,15 +249,16 @@ func newPeer(
 	assert.NoError(t, err)
 
 	// peer certificate
-	c := peer.NewCertificate(
+	c, err := object.NewCertificate(
 		pk.PublicKey(),
 		opk,
 	)
+	require.NoError(t, err)
 
 	kc := localpeer.New()
 	kc.PutPrimaryPeerKey(pk)
 	kc.PutPrimaryIdentityKey(opk)
-	kc.PutCertificate(&c)
+	kc.PutCertificate(c)
 
 	n := network.New(
 		ctx,

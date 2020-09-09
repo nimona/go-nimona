@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -71,7 +72,20 @@ func setPath(target Value, path string, value Value) (Value, error) {
 		if len(parts) == 1 {
 			return t.set(parts[0], value), nil
 		}
-		nv, err := setPath(t.Value(parts[0]), pathJoin(parts[1:]...), value)
+		newTarget := t.Value(parts[0])
+		if newTarget == nil {
+			hs := getHints(parts[0])
+			switch hs[0] {
+			case HintMap:
+				newTarget = Map{}
+			default:
+				// TODO do we need to implement more cases, maybe lists?
+				return nil, fmt.Errorf(
+					"empty target for type %s is not supported", hs[0],
+				)
+			}
+		}
+		nv, err := setPath(newTarget, pathJoin(parts[1:]...), value)
 		if err != nil {
 			return nil, err
 		}
@@ -90,8 +104,6 @@ func setPath(target Value, path string, value Value) (Value, error) {
 			return nil, err
 		}
 		return t.set(i, nv), nil
-
-	default:
-		return nil, errors.New("invalid path")
 	}
+	return nil, errors.New("invalid path")
 }

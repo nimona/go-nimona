@@ -6,7 +6,7 @@ Certificates enable users to authorize applications to act on their behalf
 in the network while limiting the data they can interact with and the actions
 they can perform.
 
-A certificate is a signed object of type `nimona.io/peer.Certificate` and
+A certificate is a signed object of type `nimona.io/object.Certificate` and
 consists of the following required attributes:
 
 * `subject` (string): The public part of the application's key pair.
@@ -28,7 +28,7 @@ the remote party simply ignores the object or request.
 
 ```json
 {
-  "type:s": "nimona.io/peer.Certificate",
+  "type:s": "nimona.io/object.Certificate",
   "data:m": {
     "subject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
     "resources:as": [
@@ -66,7 +66,7 @@ the user.
 
 ```json
 {
-  "type:s": "nimona.io/peer.CertificateRequest",
+  "type:s": "nimona.io/object.CertificateRequest",
   "data:m": {
     "applicationName:s": "Foobar",
     "applicationDescription:s": "An app that does nothing",

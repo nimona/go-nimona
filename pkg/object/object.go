@@ -4,6 +4,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
+)
+
+const (
+	ErrNoSignature = errors.Error("object has no signature")
 )
 
 type (
@@ -177,6 +182,17 @@ func immutableMapToSignature(im Map) Signature {
 	}
 	s := Signature{}
 	mapstructure.Decode(v, &s) // nolint: errcheck
+	// check if signature has a certificate
+	if v := im.Value("certificate:m"); v != nil {
+		if !v.IsMap() {
+			panic("invalid signature object")
+		}
+		c := &Certificate{}
+		if err := c.FromObject(Object(v.(Map))); err != nil {
+			panic("invalid signature")
+		}
+		s.Certificate = c
+	}
 	return s
 }
 

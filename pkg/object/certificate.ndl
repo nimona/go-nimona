@@ -1,12 +1,12 @@
-package nimona.io/peer
+package nimona.io/object
 
-object nimona.io/peer.Certificate {
+object nimona.io/object.Certificate {
     nonce string
     created string
     expires string
 }
 
-object nimona.io/peer.CertificateRequest {
+object nimona.io/object.CertificateRequest {
     applicationName string
     applicationDescription string
     applicationURL string

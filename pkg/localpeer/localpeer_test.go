@@ -47,11 +47,11 @@ func TestLocalPeer(t *testing.T) {
 		},
 	}}, lp.GetRelays())
 
-	c1 := &peer.Certificate{
+	c1 := &object.Certificate{
 		Nonce: rand.String(6),
 	}
 	lp.PutCertificate(c1)
-	assert.ElementsMatch(t, []*peer.Certificate{c1}, lp.GetCertificates())
+	assert.ElementsMatch(t, []*object.Certificate{c1}, lp.GetCertificates())
 
 	a1 := "foo"
 	a2 := "foo2"
