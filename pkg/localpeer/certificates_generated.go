@@ -7,44 +7,44 @@ package localpeer
 import (
 	"sync"
 
-	"nimona.io/pkg/peer"
+	"nimona.io/pkg/object"
 )
 
 type (
-	// PeerCertificateSyncList -
-	PeerCertificateSyncList struct {
+	// ObjectCertificateSyncList -
+	ObjectCertificateSyncList struct {
 		m sync.Map
 	}
 )
 
 // Put -
-func (m *PeerCertificateSyncList) Put(k *peer.Certificate) {
+func (m *ObjectCertificateSyncList) Put(k *object.Certificate) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *PeerCertificateSyncList) Exists(k *peer.Certificate) bool {
+func (m *ObjectCertificateSyncList) Exists(k *object.Certificate) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *PeerCertificateSyncList) Delete(k *peer.Certificate) {
+func (m *ObjectCertificateSyncList) Delete(k *object.Certificate) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *PeerCertificateSyncList) Range(i func(k *peer.Certificate) bool) {
+func (m *ObjectCertificateSyncList) Range(i func(k *object.Certificate) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(*peer.Certificate))
+		return i(k.(*object.Certificate))
 	})
 }
 
 // List -
-func (m *PeerCertificateSyncList) List() []*peer.Certificate {
-	r := []*peer.Certificate{}
+func (m *ObjectCertificateSyncList) List() []*object.Certificate {
+	r := []*object.Certificate{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(*peer.Certificate))
+		r = append(r, k.(*object.Certificate))
 		return true
 	})
 	return r

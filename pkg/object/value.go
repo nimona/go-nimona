@@ -47,7 +47,8 @@ func (v Float) PrimitiveHinted() interface{}  { return float64(v) }
 func (v Bytes) PrimitiveHinted() interface{}  { return []byte(v) }
 
 func getHints(k string) typeHints {
-	ps := strings.Split(k, ":")
+	ps := strings.Split(k, pathSeperator)
+	ps = strings.Split(ps[len(ps)-1], ":")
 	if len(ps) == 1 {
 		return nil
 	}
