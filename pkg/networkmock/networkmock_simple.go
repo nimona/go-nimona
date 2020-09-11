@@ -58,6 +58,7 @@ func (m *MockNetworkSimple) Addresses() []string {
 func (m *MockNetworkSimple) Listen(
 	ctx context.Context,
 	bindAddress string,
+	options ...network.ListenOption,
 ) (net.Listener, error) {
 	panic("not implemented")
 }

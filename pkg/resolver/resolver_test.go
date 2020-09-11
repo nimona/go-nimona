@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/localpeer"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
-	net.BindLocal = true
-
 	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 
 	d0 := New(
@@ -73,9 +70,6 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
-	net.BindLocal = true
-	net.BindPrivate = false
-
 	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 
 	// bootstrap node
@@ -150,9 +144,6 @@ func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanProvide(t *testing.T) {
-	net.BindLocal = true
-	net.BindPrivate = false
-
 	_, k0, kc0, n0, ctx0 := newPeer(t, "peer0")
 	_, k1, kc1, n1, ctx1 := newPeer(t, "peer1")
 	_, k2, _, n2, ctx2 := newPeer(t, "peer2")
@@ -265,7 +256,7 @@ func newPeer(
 		network.WithLocalPeer(kc),
 	)
 
-	_, err = n.Listen(context.Background(), "127.0.0.1:0")
+	_, err = n.Listen(context.Background(), "127.0.0.1:0", network.BindLocal)
 	require.NoError(t, err)
 
 	return opk, pk, kc, n, ctx

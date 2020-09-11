@@ -26,14 +26,18 @@ func TestGetConnection(t *testing.T) {
 
 	mgr := New(ctx, n1, handler)
 
-	lst1, err := n1.Listen(ctx, "0.0.0.0:0")
+	lst1, err := n1.Listen(ctx, "0.0.0.0:0", &net.ListenConfig{
+		BindLocal: true,
+	})
 	assert.NoError(t, err)
 	defer lst1.Close()
 
 	mgr2 := New(ctx, n2, handler)
 	assert.NotNil(t, mgr2)
 
-	lst2, err := n2.Listen(ctx, "0.0.0.0:0")
+	lst2, err := n2.Listen(ctx, "0.0.0.0:0", &net.ListenConfig{
+		BindLocal: true,
+	})
 	assert.NoError(t, err)
 	defer lst2.Close()
 
@@ -63,8 +67,6 @@ func newPeer(t *testing.T) (
 	localpeer.LocalPeer,
 	net.Network,
 ) {
-	net.BindLocal = true
-
 	pk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 

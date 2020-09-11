@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
@@ -14,16 +13,14 @@ import (
 )
 
 func TestNetwork_SimpleConnection(t *testing.T) {
-	net.BindLocal = true
-
 	n1 := New(context.Background())
 	n2 := New(context.Background())
 
-	l1, err := n1.Listen(context.Background(), "0.0.0.0:0")
+	l1, err := n1.Listen(context.Background(), "0.0.0.0:0", BindLocal)
 	require.NoError(t, err)
 	defer l1.Close()
 
-	l2, err := n2.Listen(context.Background(), "0.0.0.0:0")
+	l2, err := n2.Listen(context.Background(), "0.0.0.0:0", BindLocal)
 	require.NoError(t, err)
 	defer l2.Close()
 
@@ -79,13 +76,11 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 }
 
 func TestNetwork_Relay(t *testing.T) {
-	net.BindLocal = true
-
 	n0 := New(context.Background())
 	n1 := New(context.Background())
 	n2 := New(context.Background())
 
-	l0, err := n0.Listen(context.Background(), "0.0.0.0:0")
+	l0, err := n0.Listen(context.Background(), "0.0.0.0:0", BindLocal)
 	require.NoError(t, err)
 	defer l0.Close()
 
