@@ -22,12 +22,17 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 )
 
+// nolint: lll
 type config struct {
-	PeerPrivateKey  crypto.PrivateKey  `envconfig:"PEER_PRIVATE_KEY"`
-	BindAddress     string             `envconfig:"BIND_ADDRESS"`
-	AnnounceAddress string             `envconfig:"ANNOUNCE_ADDRESS"`
-	BootstrapPeers  []peer.Shorthand   `envconfig:"BOOTSTRAP_PEERS"` // shorthands
-	PingPeers       []crypto.PublicKey `envconfig:"PING_PEERS"`
+	Peer struct {
+		PrivateKey      crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
+		BindAddress     string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+		AnnounceAddress string            `envconfig:"ANNOUNCE_ADDRESS"`
+		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
+	} `envconfig:"PEER"`
+	Sonar struct {
+		PingPeers []crypto.PublicKey `envconfig:"PING_PEERS"`
+	} `envconfig:"SONAR"`
 }
 
 func main() {
@@ -41,21 +46,19 @@ func main() {
 		log.String("build.timestamp", version.Date),
 	)
 
-	cfg := &config{
-		BindAddress: "0.0.0.0:0",
-	}
+	cfg := &config{}
 	if err := envconfig.Process("nimona", cfg); err != nil {
 		logger.Fatal("error processing config", log.Error(err))
 	}
 
-	if cfg.PeerPrivateKey.IsEmpty() {
+	if cfg.Peer.PrivateKey.IsEmpty() {
 		logger.Fatal("missing peer private key")
 	}
 
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.PeerPrivateKey)
+	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
 	net := network.New(
@@ -66,7 +69,9 @@ func main() {
 	// start listening
 	lis, err := net.Listen(
 		ctx,
-		cfg.BindAddress,
+		cfg.Peer.BindAddress,
+		network.BindLocal,
+		network.BindPrivate,
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
@@ -74,7 +79,7 @@ func main() {
 
 	// convert shorthands into peers
 	bootstrapPeers := []*peer.Peer{}
-	for _, s := range cfg.BootstrapPeers {
+	for _, s := range cfg.Peer.Bootstraps {
 		bootstrapPeer, err := s.Peer()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
@@ -122,7 +127,7 @@ func main() {
 	// listen for pings
 	go func() {
 		pingedFromPeers := map[crypto.PublicKey]bool{} // [key]pinged
-		for _, p := range cfg.PingPeers {
+		for _, p := range cfg.Sonar.PingPeers {
 			pingedFromPeers[p] = false
 		}
 		sub := man.Subscribe(
@@ -199,7 +204,7 @@ func main() {
 
 	go func() {
 		pingPeers := map[crypto.PublicKey]bool{} // [key]pinged
-		for _, p := range cfg.PingPeers {
+		for _, p := range cfg.Sonar.PingPeers {
 			pingPeers[p] = false
 		}
 		for {
