@@ -126,7 +126,6 @@ test:
 	$(eval TAGS += integration)
 	@LOG_LEVEL=debug \
 	CGO_ENABLED=1 \
-	BIND_LOCAL=true \
 	go test $(V) \
 		-tags="$(TAGS)" \
 		-count=1 \
@@ -139,7 +138,6 @@ cover:
 	$(eval TAGS += integration)
 	@LOG_LEVEL=debug \
 	CGO_ENABLED=1 \
-	BIND_LOCAL=true \
 	$(BINDIR)/go-acc ./... --output coverage.tmp.out
 	@cat coverage.tmp.out | grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.out
 	@rm -f coverage.tmp.out

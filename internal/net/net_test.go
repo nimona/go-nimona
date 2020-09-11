@@ -17,11 +17,12 @@ import (
 func TestNetConnectionSuccess(t *testing.T) {
 	ctx := context.New()
 
-	BindLocal = true
 	kc1, n1 := newPeer(t)
 	_, n2 := newPeer(t)
 
-	_, err := n1.Listen(ctx, "0.0.0.0:0")
+	_, err := n1.Listen(ctx, "0.0.0.0:0", &ListenConfig{
+		BindLocal: true,
+	})
 	assert.NoError(t, err)
 
 	done := make(chan bool)

@@ -71,18 +71,23 @@ func (mr *MockNetworkMockRecorder) Send(ctx, object, recipient interface{}) *gom
 }
 
 // Listen mocks base method
-func (m *MockNetwork) Listen(ctx context.Context, bindAddress string) (net.Listener, error) {
+func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ...network.ListenOption) (net.Listener, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Listen", ctx, bindAddress)
+	varargs := []interface{}{ctx, bindAddress}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Listen", varargs...)
 	ret0, _ := ret[0].(net.Listener)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Listen indicates an expected call of Listen
-func (mr *MockNetworkMockRecorder) Listen(ctx, bindAddress interface{}) *gomock.Call {
+func (mr *MockNetworkMockRecorder) Listen(ctx, bindAddress interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Listen", reflect.TypeOf((*MockNetwork)(nil).Listen), ctx, bindAddress)
+	varargs := append([]interface{}{ctx, bindAddress}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Listen", reflect.TypeOf((*MockNetwork)(nil).Listen), varargs...)
 }
 
 // LocalPeer mocks base method

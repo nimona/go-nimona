@@ -88,6 +88,7 @@ type (
 		Listen(
 			ctx context.Context,
 			bindAddress string,
+			options ...ListenOption,
 		) (net.Listener, error)
 		LocalPeer() localpeer.LocalPeer
 	}
@@ -173,11 +174,30 @@ func (w *network) LocalPeer() localpeer.LocalPeer {
 	return w.localpeer
 }
 
+type ListenOption func(c *net.ListenConfig)
+
+func BindLocal(c *net.ListenConfig) {
+	c.BindLocal = true
+}
+
+func BindPrivate(c *net.ListenConfig) {
+	c.BindPrivate = true
+}
+
+func BindIPV6(c *net.ListenConfig) {
+	c.BindIPV6 = true
+}
+
 func (w *network) Listen(
 	ctx context.Context,
 	bindAddress string,
+	options ...ListenOption,
 ) (net.Listener, error) {
-	return w.net.Listen(ctx, bindAddress)
+	listenConfig := &net.ListenConfig{}
+	for _, o := range options {
+		o(listenConfig)
+	}
+	return w.net.Listen(ctx, bindAddress, listenConfig)
 }
 
 func (w *network) handleConnection(conn *net.Connection) error {

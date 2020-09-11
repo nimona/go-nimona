@@ -3,30 +3,25 @@ package net
 import (
 	"fmt"
 	"net"
-	"os"
-	"strconv"
 	"strings"
 )
 
-var (
-	BindLocal   = false // TODO(geoah) refactor to remove global
-	BindPrivate = false // TODO(geoah) refactor to remove global
-	bindIpv6    = false // TODO(geoah) refactor to remove global
-)
-
-// TODO remove Binds and replace with options
-// nolint: gochecknoinits
-func init() {
-	BindLocal, _ = strconv.ParseBool(os.Getenv("BIND_LOCAL"))
-	BindPrivate, _ = strconv.ParseBool(os.Getenv("BIND_PRIVATE"))
-	bindIpv6, _ = strconv.ParseBool(os.Getenv("BIND_IPV6"))
-}
-
 // GetAddresses returns the addresses the transport is listening to
-func GetAddresses(protocol string, l net.Listener) []string {
+func GetAddresses(
+	protocol string,
+	l net.Listener,
+	includeLocal bool,
+	includePrivate bool,
+	includeIPV6 bool,
+) []string {
 	port := l.Addr().(*net.TCPAddr).Port
 	// TODO log errors
-	addrs, _ := GetLocalPeerAddresses(port)
+	addrs, _ := GetLocalPeerAddresses(
+		port,
+		includeLocal,
+		includePrivate,
+		includeIPV6,
+	)
 	for i, addr := range addrs {
 		addrs[i] = fmt.Sprintf("%s:%s", protocol, addr)
 	}
@@ -35,7 +30,12 @@ func GetAddresses(protocol string, l net.Listener) []string {
 
 // GetLocalPeerAddresses returns the addresses TCP can listen to on the
 // local machine
-func GetLocalPeerAddresses(port int) ([]string, error) {
+func GetLocalPeerAddresses(
+	port int,
+	includeLocal bool,
+	includePrivate bool,
+	includeIPV6 bool,
+) ([]string, error) {
 	// go through all ifs
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -55,7 +55,12 @@ func GetLocalPeerAddresses(port int) ([]string, error) {
 	// gather valid addresses
 	addrs := []string{}
 	for _, ip := range ips {
-		cleanIP, valid := isValidIP(ip)
+		cleanIP, valid := isValidIP(
+			ip,
+			includeLocal,
+			includePrivate,
+			includeIPV6,
+		)
 		if valid {
 			hostPort := fmt.Sprintf("%s:%d", cleanIP, port)
 			addrs = append(addrs, hostPort)
@@ -64,7 +69,12 @@ func GetLocalPeerAddresses(port int) ([]string, error) {
 	return addrs, nil
 }
 
-func isValidIP(addr net.Addr) (string, bool) {
+func isValidIP(
+	addr net.Addr,
+	includeLocal bool,
+	includePrivate bool,
+	includeIPV6 bool,
+) (string, bool) {
 	var ip net.IP
 	switch v := addr.(type) {
 	case *net.IPNet:
@@ -75,13 +85,13 @@ func isValidIP(addr net.Addr) (string, bool) {
 	if ip == nil {
 		return "", false
 	}
-	if !BindLocal && ip.IsLoopback() {
+	if !includeLocal && ip.IsLoopback() {
 		return "", false
 	}
-	if !BindPrivate && isPrivate(ip) {
+	if !includePrivate && isPrivate(ip) {
 		return "", false
 	}
-	if !bindIpv6 && isIPv6(ip.String()) {
+	if !includeIPV6 && isIPv6(ip.String()) {
 		return "", false
 	}
 	return ip.String(), true

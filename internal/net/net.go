@@ -69,6 +69,7 @@ type (
 		Listen(
 			ctx context.Context,
 			bindAddress string,
+			listenConfig *ListenConfig,
 		) (Listener, error)
 		Accept() (*Connection, error)
 		Addresses() []string
@@ -222,11 +223,18 @@ func (n *network) Accept() (*Connection, error) {
 	return conn, nil
 }
 
+type ListenConfig struct {
+	BindLocal   bool
+	BindPrivate bool
+	BindIPV6    bool
+}
+
 // Listen
 // TODO do we need to return a listener?
 func (n *network) Listen(
 	ctx context.Context,
 	bindAddress string,
+	listenConfig *ListenConfig,
 ) (Listener, error) {
 	mlst := &listener{
 		addresses: []string{},
@@ -239,8 +247,19 @@ func (n *network) Listen(
 			return nil, err
 		}
 
+		if listenConfig == nil {
+			listenConfig = &ListenConfig{}
+		}
+
+		addresses := GetAddresses(
+			pt,
+			lst,
+			listenConfig.BindLocal,
+			listenConfig.BindPrivate,
+			listenConfig.BindIPV6,
+		)
 		mlst.listeners = append(mlst.listeners, lst)
-		mlst.addresses = append(mlst.addresses, GetAddresses(pt, lst)...)
+		mlst.addresses = append(mlst.addresses, addresses...)
 
 		n.listeners = append(n.listeners, mlst)
 
