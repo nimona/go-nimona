@@ -48,7 +48,10 @@ var (
 // TODO is there an alternative to init for here?
 // nolint: gochecknoinits
 func init() {
-	logLevel := os.Getenv("LOG_LEVEL")
+	logLevel := os.Getenv("NIMONA_LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = os.Getenv("LOG_LEVEL")
+	}
 	switch strings.ToUpper(logLevel) {
 	case "DEBUG":
 		DefaultLogLevel = DebugLevel
