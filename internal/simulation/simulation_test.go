@@ -37,8 +37,8 @@ func TestSimulation(t *testing.T) {
 	bNodes, err := node.New(
 		dockerImage,
 		env,
-		node.WithName("nimona-e2e-bootstrap-"+rand.String(8)),
 		node.WithPortMapping(17000, 17000),
+		node.WithName("nimona-e2e-bootstrap-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
 			"NIMONA_LOG_LEVEL=error",
@@ -61,8 +61,8 @@ func TestSimulation(t *testing.T) {
 	newNodes, err := node.New(
 		dockerImage,
 		env,
-		node.WithName("nimona-e2e-1"),
 		node.WithPortMapping(17001, 17001),
+		node.WithName("nimona-e2e-1-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
 			"NIMONA_LOG_LEVEL=error",
@@ -83,8 +83,8 @@ func TestSimulation(t *testing.T) {
 	newNodes, err = node.New(
 		dockerImage,
 		env,
-		node.WithName("nimona-e2e-2"),
 		node.WithPortMapping(17002, 17002),
+		node.WithName("nimona-e2e-2-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
 			"NIMONA_LOG_LEVEL=error",
