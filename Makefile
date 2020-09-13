@@ -24,6 +24,7 @@ TOOLS += mvdan.cc/gofumpt/gofumports
 TOOLS += github.com/golang/mock/mockgen@v1.4.3
 TOOLS += github.com/frapposelli/wwhrd@v0.3.0
 TOOLS += github.com/ory/go-acc@v0.2.3
+TOOLS += go101.org/gold@v0.1.1
 
 # Internal tools
 TOOLS_INTERNAL += codegen
@@ -176,3 +177,9 @@ licenses:
 	$(info Checking licenses)
 	@$(GOCMD) mod vendor
 	@$(GOBIN)/wwhrd check
+
+# Serve docs
+.PHONY: docs
+docs:
+	$(info Serving go docs)
+	@$(GOBIN)/gold -emphasize-wdpkgs ./...
