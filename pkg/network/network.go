@@ -6,6 +6,8 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/geoah/go-queue"
@@ -14,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"nimona.io/internal/connmanager"
+	"nimona.io/internal/nat"
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -174,18 +177,28 @@ func (w *network) LocalPeer() localpeer.LocalPeer {
 	return w.localpeer
 }
 
-type ListenOption func(c *net.ListenConfig)
+type (
+	ListenOption func(c *listenConfig)
+	listenConfig struct {
+		net.ListenConfig
+		upnp bool
+	}
+)
 
-func BindLocal(c *net.ListenConfig) {
+func ListenOnLocalIPs(c *listenConfig) {
 	c.BindLocal = true
 }
 
-func BindPrivate(c *net.ListenConfig) {
+func ListenOnPrivateIPs(c *listenConfig) {
 	c.BindPrivate = true
 }
 
-func BindIPV6(c *net.ListenConfig) {
+func ListenOnIPV6(c *listenConfig) {
 	c.BindIPV6 = true
+}
+
+func ListenOnExternalPort(c *listenConfig) {
+	c.upnp = true
 }
 
 func (w *network) Listen(
@@ -193,11 +206,39 @@ func (w *network) Listen(
 	bindAddress string,
 	options ...ListenOption,
 ) (net.Listener, error) {
-	listenConfig := &net.ListenConfig{}
+	listenConfig := &listenConfig{}
 	for _, o := range options {
 		o(listenConfig)
 	}
-	return w.net.Listen(ctx, bindAddress, listenConfig)
+	listener, err := w.net.Listen(
+		ctx,
+		bindAddress,
+		&listenConfig.ListenConfig,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// TODO consider if we should be erroring if there are no addresses, but
+	// a upnp port was provided in the config options.
+	if len(listener.Addresses()) == 0 {
+		return listener, nil
+	}
+	localPort, err := strconv.ParseInt(
+		strings.Split(listener.Addresses()[0], ":")[2], 10, 64,
+	)
+	if err != nil || localPort == 0 {
+		return nil, errors.Wrap(
+			errors.New("unable to get port from address"),
+			err,
+		)
+	}
+	externalAddress, _, err := nat.MapExternalPort(int(localPort))
+	if err != nil {
+		// TODO return error or simply log it?
+		return listener, nil
+	}
+	w.localpeer.PutAddresses(externalAddress)
+	return listener, nil
 }
 
 func (w *network) handleConnection(conn *net.Connection) error {

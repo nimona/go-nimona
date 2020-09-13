@@ -256,7 +256,7 @@ func newPeer(
 		network.WithLocalPeer(kc),
 	)
 
-	_, err = n.Listen(context.Background(), "127.0.0.1:0", network.BindLocal)
+	_, err = n.Listen(ctx, "127.0.0.1:0", network.ListenOnLocalIPs)
 	require.NoError(t, err)
 
 	return opk, pk, kc, n, ctx
