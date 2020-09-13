@@ -26,10 +26,3 @@ require (
 	gopkg.in/h2non/gock.v1 v1.0.15
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace (
-	nimona.io/cmd => ./cmd
-	nimona.io/tools/codegen => ./tools/codegen
-	nimona.io/tools/community => ./tools/community
-	nimona.io/tools/vanity => ./tools/vanity
-)
