@@ -1,0 +1,5 @@
+---
+bootstrap_nimona_version: "v0.11.0"
+bootstrap_peer_port: "22581"
+bootstrap_metrics_port: "22580"
+bootstrap_peer_announce_address: "{{ inventory_hostname }}:22581"

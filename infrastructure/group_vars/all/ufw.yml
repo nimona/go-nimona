@@ -3,3 +3,4 @@ ufw_rules:
   - { to_port: 22, rule: allow, protocol: tcp }
   - { to_port: 80, rule: allow, protocol: tcp }
   - { to_port: 443, rule: allow, protocol: tcp }
+  - { to_port: 22581, rule: allow, protocol: tcp }

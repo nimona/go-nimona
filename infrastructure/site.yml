@@ -15,3 +15,5 @@
       tags: ["services", "metrics", "node_exporter"]
     - role: cadvisor
       tags: ["services", "metrics", "cadvisor"]
+    - role: bootstrap
+      tags: ["services", "nimona", "bootstrap"]
