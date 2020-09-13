@@ -70,8 +70,8 @@ func main() {
 	lis, err := net.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
-		network.BindLocal,
-		network.BindPrivate,
+		network.ListenOnLocalIPs,
+		network.ListenOnPrivateIPs,
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
