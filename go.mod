@@ -23,6 +23,5 @@ require (
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20181011194642-3a71999ed0d3
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
-	gopkg.in/h2non/gock.v1 v1.0.15
 	gopkg.in/yaml.v2 v2.3.0
 )
