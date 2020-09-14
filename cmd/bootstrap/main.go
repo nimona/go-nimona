@@ -1,11 +1,13 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
@@ -25,6 +27,9 @@ type config struct {
 		AnnounceAddress string            `envconfig:"ANNOUNCE_ADDRESS"`
 		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
+	Metrics struct {
+		BindAddress string `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+	} `envconfig:"METRICS"`
 }
 
 func main() {
@@ -95,7 +100,16 @@ func main() {
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 
-	logger.Info("ready")
+	logger.Info("bootstrap node ready")
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe(cfg.Metrics.BindAddress, nil)
+		if err != nil {
+			logger.Warn("error serving metrics", log.Error(err))
+			return
+		}
+	}()
 
 	// register for termination signals
 	sigs := make(chan os.Signal, 1)
