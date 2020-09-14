@@ -66,7 +66,7 @@ func TestResolver_TwoPeersCanFindEachOther(t *testing.T) {
 	peers = gatherPeers(peersChan)
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
-	require.Equal(t, n1.LocalPeer().GetAddresses(), peers[0].Addresses)
+	require.ElementsMatch(t, n1.LocalPeer().GetAddresses(), peers[0].Addresses)
 }
 
 func TestResolver_TwoPeersAndOneBootstrapCanFindEachOther(t *testing.T) {
