@@ -130,8 +130,6 @@ func TestSimulation(t *testing.T) {
 				case <-time.After(time.Minute):
 					t.Log("didn't see expected logs in time")
 					t.Fail()
-					wgSent.Done()
-					wgReceived.Done()
 					return
 				}
 			}
