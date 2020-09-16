@@ -15,7 +15,7 @@
       NIMONA_PEER_ANNOUNCE_ADDRESS: "{{ bootstrap_peer_announce_address }}"
       NIMONA_PEER_PRIVATE_KEY: "{{ vault_nimona_bootstrap_private_keys[inventory_hostname] }}"
     published_ports:
-      - "127.0.0.1:{{ bootstrap_peer_port }}:{{ bootstrap_peer_port }}"
+      - "0.0.0.0:{{ bootstrap_peer_port }}:{{ bootstrap_peer_port }}"
       - "127.0.0.1:{{ bootstrap_metrics_port }}:{{ bootstrap_metrics_port }}"
 
 - name: Configure caddy
