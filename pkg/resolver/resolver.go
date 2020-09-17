@@ -67,11 +67,9 @@ func New(
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
-		context: ctx,
-		network: netw,
-		peerCache: &peerCache{
-			m: sync.Map{},
-		},
+		context:   ctx,
+		network:   netw,
+		peerCache: NewPeerCache(10 * time.Second),
 		peerConnections: &peerConnections{
 			m: sync.Map{},
 		},
@@ -98,7 +96,7 @@ func New(
 	)
 
 	for _, p := range r.initialBootstrapPeers {
-		r.peerCache.Put(p)
+		r.peerCache.Put(p, 0)
 	}
 
 	if err := r.Bootstrap(ctx, r.initialBootstrapPeers...); err != nil {
@@ -241,7 +239,7 @@ func (r *resolver) Lookup(
 				for _, p := range res.Peers {
 					// add peers to our peerstore
 					// TODO pin this in the cache
-					r.peerCache.Put(p)
+					r.peerCache.Put(p, 1*time.Minute)
 					r.removeBlock(p)
 
 					// if blocklisted skip it
@@ -351,7 +349,7 @@ func (r *resolver) handlePeer(
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to cache")
-	r.peerCache.Put(p)
+	r.peerCache.Put(p, 1*time.Minute)
 	r.removeBlock(p)
 }
 
