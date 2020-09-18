@@ -133,6 +133,19 @@ test:
 		--race \
 		./...
 
+# Code coverage for code climate
+cover-codeclimate:
+	$(info Checking code coverage)
+	$(eval TAGS += integration)
+	@LOG_LEVEL=debug \
+	CGO_ENABLED=1 \
+	$(BINDIR)/go-acc ./... --output coverage.raw.out
+	@cat coverage.raw.out | grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.cln.out
+	@sed "s/nimona.io\///" coverage.cln.out > coverage.out
+	@rm -f coverage.raw.out
+	@rm -f coverage.cln.out
+
+
 # Code coverage
 cover:
 	$(info Checking code coverage)
