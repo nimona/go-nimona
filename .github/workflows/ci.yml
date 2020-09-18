@@ -72,20 +72,18 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v1
 
-      - name: Make cover
-        run: make tools cover
+      - name: Publish coverage
+        uses: paambaati/codeclimate-action@v2.6.0
         env:
-          GOMAXPROCS: 4
           CI: 'true'
           VERBOSE: 'true'
-
-      - name: Publish coverage
-        uses: codecov/codecov-action@v1.0.10
+          GOMAXPROCS: 4
+          CC_TEST_REPORTER_ID: 085aacaf8f700db084131fa4b223c9d27718d864f26a668cd1993d46868524ac
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.out
-          fail_ci_if_error: ${{ github.ref != 'refs/heads/master' }}
-
+          debug: true
+          coverageCommand: make tools cover-codeclimate
+          coverageLocations: |
+            ${{github.workspace}}/coverage.out:gocov
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
