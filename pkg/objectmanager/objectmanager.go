@@ -2,6 +2,8 @@ package objectmanager
 
 import (
 	"strings"
+	"sync"
+	"time"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
@@ -27,6 +29,7 @@ var (
 	objectRequestType      = object.Request{}.GetType()
 	streamRequestType      = stream.Request{}.GetType()
 	streamSubscriptionType = stream.Subscription{}.GetType()
+	streamAnnouncementType = stream.Announcement{}.GetType()
 )
 
 //go:generate $GOBIN/mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
@@ -68,6 +71,10 @@ type (
 	Option func(*manager)
 )
 
+// Object manager is responsible for:
+// * adding objects (Put) to the store
+// * adding objects (Put) to the local peer's content hashes
+
 func New(
 	ctx context.Context,
 	net network.Network,
@@ -98,6 +105,18 @@ func New(
 	)
 
 	go func() {
+		hashes, err := m.objectstore.GetPinned()
+		if err != nil {
+			logger.Error("error getting pinned objects", log.Error(err))
+			return
+		}
+		if len(hashes) == 0 {
+			return
+		}
+		m.localpeer.PutContentHashes(hashes...)
+	}()
+
+	go func() {
 		if err := m.handleObjects(subs); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
 		}
@@ -119,16 +138,21 @@ func (m *manager) isRegisteredContentType(
 }
 
 // TODO add support for multiple recipients
+// TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
 	ctx context.Context,
 	rootHash object.Hash,
 	recipients ...*peer.Peer,
 ) (object.ReadCloser, error) {
+	if len(recipients) == 0 {
+		return m.objectstore.GetByStream(rootHash)
+	}
+
 	nonce := m.newNonce()
 	responses := make(chan stream.Response)
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(stream.Response{}.GetType()),
+		network.FilterByObjectType(new(stream.Response).GetType()),
 	)
 
 	go func() {
@@ -150,15 +174,13 @@ func (m *manager) RequestStream(
 		}
 	}()
 
-	if len(recipients) == 0 {
-		return m.objectstore.GetByStream(rootHash)
-	}
-
+	// TODO support more than 1 recipient
 	if len(recipients) > 1 {
 		panic(errors.New("currently only a single recipient is supported"))
 	}
 
 	req := stream.Request{
+		Nonce:    nonce,
 		RootHash: rootHash,
 	}
 	if err := m.network.Send(
@@ -169,71 +191,91 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	var objectHashes []object.Hash
+	// TODO refactor to remove buffer
+	objectHashes := make(chan object.Hash, 1000)
+
+	wg := sync.WaitGroup{}
 
 	select {
 	case res := <-responses:
-		objectHashes = append(objectHashes, res.Children...)
-
+		// TODO consider refactoring, or moving into a goroutine
+		for _, leaf := range res.Leaves {
+			objectHashes <- leaf
+		}
+		wg.Add(len(res.Leaves))
 	case <-ctx.Done():
 		return nil, ErrTimeout
 	}
 
-	requestHandler := func(
-		ctx context.Context,
-		objectHash object.Hash,
-	) (*object.Object, error) {
-		// TODO(geoah) check store before requesting the object
-		// obj, err := m.objectstore.Get(objectHash)
-		// if err == nil {
-		// 	return &obj, nil
-		// }
-		return m.Request(
-			ctx,
-			objectHash,
-			recipients[0],
-			true,
-		)
-	}
-
-	objectChan := make(chan *object.Object)
 	errorChan := make(chan error)
-	closeChan := make(chan struct{})
-
-	reader := object.NewReadCloser(
-		ctx,
-		objectChan,
-		errorChan,
-		closeChan,
-	)
+	doneChan := make(chan struct{})
 
 	go func() {
-		defer close(objectChan)
-		defer close(errorChan)
-		for _, objectHash := range objectHashes {
-			fullObj, err := object.LoadReferences(
-				ctx,
-				objectHash,
-				requestHandler,
-			)
-			if err != nil {
-				errorChan <- err
-				return
-			}
-			// TODO check the validity of each event, they should be ordered
-			// so we should already have its parents.
-			select {
-			case objectChan <- fullObj:
-				// all good
-			case <-ctx.Done():
-				return
-			case <-closeChan:
-				return
-			}
-		}
+		wg.Wait()
+		close(objectHashes)
 	}()
 
-	return reader, nil
+	go func() {
+		for objectHash := range objectHashes {
+			// check if we have object stored
+			dCtx := context.New(
+				context.WithTimeout(3 * time.Second),
+			)
+			if _, err := m.objectstore.Get(objectHash); err == nil {
+				// TODO consider checking the whole stream for missing objects
+				// parents := obj.GetParents()
+				// TODO consider refactoring, or moving into a goroutine
+				// for _, parent := range parents {
+				// 	objectHashes <- parent
+				// }
+				// wg.Add(len(parents))
+				wg.Done()
+				continue
+			}
+			// TODO consider exluding nexted objects
+			fullObj, err := m.Request(
+				dCtx,
+				objectHash,
+				recipients[0],
+				false,
+			)
+			if err != nil {
+				wg.Done()
+				continue
+			}
+
+			parents := fullObj.GetParents()
+			// TODO check the validity of the object
+			// * it should have objects
+			// * it should have a stream root hash
+			// * should it be signed?
+			// * is its policy valid?
+			// TODO consider refactoring, or moving into a goroutine
+			for _, parent := range parents {
+				objectHashes <- parent
+				wg.Add(len(parents))
+			}
+
+			// so we should already have its parents.
+			if err := m.storeObject(dCtx, *fullObj); err != nil {
+				// TODO what do we do now?
+				wg.Done()
+				continue
+			}
+
+			wg.Done()
+		}
+		close(doneChan)
+	}()
+
+	select {
+	case <-doneChan:
+		return m.objectstore.GetByStream(rootHash)
+	case err := <-errorChan:
+		return nil, err
+	case <-ctx.Done():
+		return nil, ErrTimeout
+	}
 }
 
 func (m *manager) Request(
@@ -246,7 +288,7 @@ func (m *manager) Request(
 	errCh := make(chan error)
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectHash(hash),
+	// network.FilterByObjectHash(hash),
 	)
 	defer sub.Cancel()
 
@@ -278,6 +320,7 @@ func (m *manager) Request(
 	case err := <-errCh:
 		return nil, err
 	case obj := <-objCh:
+		// TODO verify we have all parents?
 		return obj, nil
 	case <-ctx.Done():
 		return nil, ErrTimeout
@@ -340,6 +383,16 @@ func (m *manager) handleObjects(
 					log.Error(err),
 				)
 			}
+		case streamAnnouncementType:
+			if err := m.handleStreamAnnouncement(
+				ctx,
+				env,
+			); err != nil {
+				logger.Warn(
+					"could not handle stream announcement",
+					log.Error(err),
+				)
+			}
 		}
 
 		// publish to pubsub
@@ -351,6 +404,7 @@ func (m *manager) storeObject(
 	ctx context.Context,
 	obj object.Object,
 ) error {
+	// TODO is registered content type, OR is part of a peristed stream
 	ok := m.isRegisteredContentType(obj.GetType())
 	if !ok {
 		return nil
@@ -359,6 +413,8 @@ func (m *manager) storeObject(
 	logger := log.FromContext(ctx)
 	objType := obj.GetType()
 	objHash := obj.Hash()
+
+	// TODO should we be de-reffing the object? I think so at least.
 
 	// deref nested objects
 	mainObj, refObjs, err := object.UnloadReferences(ctx, obj)
@@ -386,13 +442,17 @@ func (m *manager) storeObject(
 	}
 
 	// store primary object
-	if err := m.objectstore.PutWithTimeout(*mainObj, 0); err != nil {
+	if err := m.objectstore.Put(*mainObj); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
 			log.String("hash", objHash.String()),
 			log.String("type", objType),
 			log.Error(err),
 		)
+	}
+
+	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
+		return nil
 	}
 
 	// TODO check if object already exists in feed
@@ -495,6 +555,7 @@ func (m *manager) announceObject(
 		},
 	}.ToObject()
 	for _, subscriber := range subscribers {
+		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
 		peers, err := m.resolver.Lookup(
 			ctx,
@@ -580,36 +641,34 @@ func (m *manager) handleStreamRequest(
 		return err
 	}
 
-	// get the entire graph for this stream
-	or, err := m.objectstore.GetByStream(req.Metadata.Stream)
+	// get the whole stream
+	or, err := m.objectstore.GetByStream(req.RootHash)
 	if err != nil {
 		return err
 	}
-
-	// get only the object hashes
-	hs := []object.Hash{}
-	for {
-		o, err := or.Read()
-		if err == object.ErrReaderDone {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		hs = append(hs, o.Hash())
+	os, err := object.ReadAll(or)
+	if err != nil {
+		return err
+	}
+	leaves := stream.GetStreamLeaves(os)
+	leaveHashes := []object.Hash{}
+	for _, o := range leaves {
+		leaveHashes = append(leaveHashes, o.Hash())
 	}
 
 	res := &stream.Response{
 		Metadata: object.Metadata{
-			Stream: req.Metadata.Stream,
+			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
-		Nonce:    req.Nonce,
-		Children: hs,
+		Nonce: req.Nonce,
+		// RootHash: req.RootHash, // TODO ADD THIS
+		Leaves: leaveHashes,
 	}
 
 	if err := m.network.Send(
 		ctx,
 		res.ToObject(),
+		// TODO we should probably resolve this peer
 		&peer.Peer{
 			Metadata: object.Metadata{
 				Owner: env.Sender,
@@ -643,26 +702,68 @@ func (m *manager) handleStreamSubscription(
 	return nil
 }
 
+func (m *manager) handleStreamAnnouncement(
+	ctx context.Context,
+	env *network.Envelope,
+) error {
+	ann := &stream.Announcement{}
+	if err := ann.FromObject(env.Payload); err != nil {
+		return err
+	}
+
+	// TODO check if this a stream we care about
+	// TODO maybe verify nested objects
+	// TODO request missing objects if missing
+
+	// go through all objects
+	for _, obj := range ann.Objects {
+		// store object
+		if err := m.storeObject(ctx, *obj); err != nil {
+			// TODO should we move on?
+			return err
+		}
+		// publish to pubsub
+		m.pubsub.Publish(*obj)
+	}
+
+	return nil
+}
+
 // Put stores a given object
 // TODO(geoah) what happened if the stream graph is not complete? Do we care?
 func (m *manager) Put(
 	ctx context.Context,
 	o object.Object,
 ) (object.Object, error) {
-	// add owners
-	// TODO should we be adding owners?
-	if ik := m.localpeer.GetPrimaryIdentityKey(); !ik.IsEmpty() {
-		o = o.SetOwner(
-			ik.PublicKey(),
-		)
-	} else {
-		o = o.SetOwner(
-			m.localpeer.GetPrimaryPeerKey().PublicKey(),
-		)
+	// if this is not ours, just persist it
+	// TODO check identity as well?
+	if o.GetOwner() != m.localpeer.GetPrimaryPeerKey().PublicKey() {
+		// add to store
+		if err := m.storeObject(ctx, o); err != nil {
+			return o, err
+		}
+		// publish to pubsub
+		m.pubsub.Publish(o)
+		return o, nil
 	}
+	// Note: Please don't add owners as it messes with hypothetical objects
+	// if o.GetOwner() == m.localpeer.GetPrimaryPeerKey().PublicKey() {
+	// 	sig, err := object.NewSignature(
+	// 		m.localpeer.GetPrimaryPeerKey(),
+	// 		o,
+	// 	)
+	// 	if err != nil {
+	// 		return o, errors.Wrap(
+	// 			errors.New("unable to sign object"),
+	// 			err,
+	// 		)
+	// 	}
+	// 	o = o.SetSignature(sig)
+	// }
+	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
-	if !streamHash.IsEmpty() {
+	if !streamHash.IsEmpty() && len(o.GetParents()) == 0 {
 		or, err := m.objectstore.GetByStream(streamHash)
 		if err != nil && err != objectstore.ErrNotFound {
 			return o, err
@@ -685,9 +786,14 @@ func (m *manager) Put(
 		return o, err
 	}
 	// announce to subscribers
-	if err := m.announceObject(ctx, o); err != nil {
-		return o, err
-	}
+	// TODO consider removing the err return from announceObject
+	// TODO make async
+	go m.announceObject(
+		context.New(
+			context.WithTimeout(1*time.Second),
+		),
+		o,
+	) // nolint: errcheck
 	// publish to pubsub
 	m.pubsub.Publish(o)
 	return o, nil

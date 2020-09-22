@@ -22,13 +22,13 @@ type (
 		Metadata object.Metadata
 		Nonce    string
 		RootHash object.Hash
-		Leaves   []object.Hash
 	}
 	Response struct {
 		raw      object.Object
 		Metadata object.Metadata
 		Nonce    string
-		Children []object.Hash
+		RootHash object.Hash
+		Leaves   []object.Hash
 	}
 	Announcement struct {
 		raw      object.Object
@@ -189,6 +189,81 @@ func (e Request) GetSchema() *object.SchemaObject {
 			Hint:       "s",
 			IsRepeated: false,
 			IsOptional: false,
+		}},
+	}
+}
+
+func (e Request) ToObject() object.Object {
+	o := object.Object{}
+	o = o.SetType("nimona.io/stream.Request")
+	if len(e.Metadata.Stream) > 0 {
+		o = o.SetStream(e.Metadata.Stream)
+	}
+	if len(e.Metadata.Parents) > 0 {
+		o = o.SetParents(e.Metadata.Parents)
+	}
+	if !e.Metadata.Owner.IsEmpty() {
+		o = o.SetOwner(e.Metadata.Owner)
+	}
+	if !e.Metadata.Signature.IsEmpty() {
+		o = o.SetSignature(e.Metadata.Signature)
+	}
+	o = o.SetPolicy(e.Metadata.Policy)
+	if e.Nonce != "" {
+		o = o.Set("nonce:s", e.Nonce)
+	}
+	if e.RootHash != "" {
+		o = o.Set("rootHash:s", e.RootHash)
+	}
+	// if schema := e.GetSchema(); schema != nil {
+	// 	m["_schema:m"] = schema.ToObject().ToMap()
+	// }
+	return o
+}
+
+func (e *Request) FromObject(o object.Object) error {
+	data, ok := o.Raw().Value("data:m").(object.Map)
+	if !ok {
+		return errors.New("missing data")
+	}
+	e.raw = object.Object{}
+	e.raw = e.raw.SetType(o.GetType())
+	e.Metadata.Stream = o.GetStream()
+	e.Metadata.Parents = o.GetParents()
+	e.Metadata.Owner = o.GetOwner()
+	e.Metadata.Signature = o.GetSignature()
+	e.Metadata.Policy = o.GetPolicy()
+	if v := data.Value("nonce:s"); v != nil {
+		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	if v := data.Value("rootHash:s"); v != nil {
+		e.RootHash = object.Hash(v.PrimitiveHinted().(string))
+	}
+	return nil
+}
+
+func (e Response) GetType() string {
+	return "nimona.io/stream.Response"
+}
+
+func (e Response) IsStreamRoot() bool {
+	return false
+}
+
+func (e Response) GetSchema() *object.SchemaObject {
+	return &object.SchemaObject{
+		Properties: []*object.SchemaProperty{{
+			Name:       "nonce",
+			Type:       "string",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
+			Name:       "rootHash",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
 		}, {
 			Name:       "leaves",
 			Type:       "nimona.io/object.Hash",
@@ -199,9 +274,9 @@ func (e Request) GetSchema() *object.SchemaObject {
 	}
 }
 
-func (e Request) ToObject() object.Object {
+func (e Response) ToObject() object.Object {
 	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Request")
+	o = o.SetType("nimona.io/stream.Response")
 	if len(e.Metadata.Stream) > 0 {
 		o = o.SetStream(e.Metadata.Stream)
 	}
@@ -234,7 +309,7 @@ func (e Request) ToObject() object.Object {
 	return o
 }
 
-func (e *Request) FromObject(o object.Object) error {
+func (e *Response) FromObject(o object.Object) error {
 	data, ok := o.Raw().Value("data:m").(object.Map)
 	if !ok {
 		return errors.New("missing data")
@@ -257,89 +332,6 @@ func (e *Request) FromObject(o object.Object) error {
 		e.Leaves = make([]object.Hash, len(m))
 		for i, iv := range m {
 			e.Leaves[i] = object.Hash(iv)
-		}
-	}
-	return nil
-}
-
-func (e Response) GetType() string {
-	return "nimona.io/stream.Response"
-}
-
-func (e Response) IsStreamRoot() bool {
-	return false
-}
-
-func (e Response) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "children",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
-	}
-}
-
-func (e Response) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Response")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if len(e.Children) > 0 {
-		v := object.List{}
-		for _, iv := range e.Children {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("children:as", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
-	return o
-}
-
-func (e *Response) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("children:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Children = make([]object.Hash, len(m))
-		for i, iv := range m {
-			e.Children[i] = object.Hash(iv)
 		}
 	}
 	return nil

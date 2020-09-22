@@ -3,7 +3,6 @@ package objectmanager
 import (
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -156,6 +155,7 @@ func Test_manager_handle_request(t *testing.T) {
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
 					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
 				networkHandler: func(
@@ -212,6 +212,7 @@ func Test_manager_handle_request(t *testing.T) {
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
 					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
 				networkHandler: func(
@@ -295,15 +296,23 @@ func Test_manager_RequestStream(t *testing.T) {
 		},
 	}
 	f00 := object.Object{}.
+		SetType("foo").
 		Set("f00:s", "f00")
 	f01 := object.Object{}.
+		SetType("foo").
+		SetStream(f00.Hash()).
+		SetParents([]object.Hash{f00.Hash()}).
 		Set("f01:s", "f01")
 	f02 := object.Object{}.
+		SetType("foo").
+		SetStream(f00.Hash()).
+		SetParents([]object.Hash{f01.Hash()}).
 		Set("f02:s", "f02")
 
 	type fields struct {
 		store   func(*testing.T) objectstore.Store
 		network func(*testing.T) network.Network
+		local   func(*testing.T) localpeer.LocalPeer
 	}
 	type args struct {
 		ctx      context.Context
@@ -317,11 +326,41 @@ func Test_manager_RequestStream(t *testing.T) {
 		want    []object.Object
 		wantErr bool
 	}{{
-		name: "should pass",
+		name: "should pass, all missing",
 		fields: fields{
 			store: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				m.EXPECT().
+					Get(f00.Hash()).
+					Return(object.Empty, objectstore.ErrNotFound)
+				m.EXPECT().
+					Get(f01.Hash()).
+					Return(object.Empty, objectstore.ErrNotFound)
+				m.EXPECT().
+					Get(f02.Hash()).
+					Return(object.Empty, objectstore.ErrNotFound)
+				m.EXPECT().
+					Put(f00).
+					Return(nil)
+				m.EXPECT().
+					Put(f01).
+					Return(nil)
+				m.EXPECT().
+					Put(f02).
+					Return(nil)
+				m.EXPECT().
+					GetByStream(f00.Hash()).
+					Return(object.NewReadCloserFromObjects([]object.Object{
+						f00,
+						f01,
+						f02,
+					}), err)
 				return m
+			},
+			local: func(t *testing.T) localpeer.LocalPeer {
+				l := localpeer.New()
+				l.PutContentTypes("foo")
+				return l
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
@@ -336,9 +375,7 @@ func Test_manager_RequestStream(t *testing.T) {
 							Objects: []*network.Envelope{{
 								Payload: stream.Response{
 									Nonce: "7",
-									Children: []object.Hash{
-										f00.Hash(),
-										f01.Hash(),
+									Leaves: []object.Hash{
 										f02.Hash(),
 									},
 								}.ToObject(),
@@ -346,7 +383,7 @@ func Test_manager_RequestStream(t *testing.T) {
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f00,
+								Payload: f02,
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
@@ -356,7 +393,7 @@ func Test_manager_RequestStream(t *testing.T) {
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f02,
+								Payload: f00,
 							}},
 						},
 					},
@@ -378,6 +415,7 @@ func Test_manager_RequestStream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
+				localpeer:   tt.fields.local(t),
 				objectstore: tt.fields.store(t),
 				network:     tt.fields.network(t),
 				newNonce: func() string {
@@ -435,29 +473,32 @@ func Test_manager_Put(t *testing.T) {
 	}
 	testObjectSimple := object.Object{}.
 		SetType("foo").
-		Set("foo:s", "bar")
-	testObjectSimpleUpdated := object.Object{}.
-		SetType("foo").
 		Set("foo:s", "bar").
 		SetOwner(testOwnPublicKey)
+	// testObjectSimple := object.Object{}.
+	// 	SetType("foo").
+	// 	Set("foo:s", "bar").
+	// 	SetOwner(testOwnPublicKey)
 	testObjectStreamRoot := object.Object{}.
 		SetType("fooRoot").
-		Set("root:s", "true")
+		Set("root:s", "true").
+		SetOwner(testOwnPublicKey)
 	testObjectWithStream := object.Object{}.
 		SetType("foo").
 		SetStream(testObjectStreamRoot.Hash()).
-		Set("foo:s", "bar")
+		Set("foo:s", "bar").
+		SetOwner(testOwnPublicKey)
 	testObjectWithStreamUpdated := object.Object{}.
 		SetType("foo").
 		SetStream(testObjectStreamRoot.Hash()).
 		Set("foo:s", "bar").
-		SetOwner(testOwnPublicKey).
 		SetParents(
 			[]object.Hash{
 				object.Object{}.Set("foo:s", "bar1").Hash(),
 				object.Object{}.Set("foo:s", "bar2").Hash(),
 			},
-		)
+		).
+		SetOwner(testOwnPublicKey)
 	testObjectSubscriptionInline := stream.Subscription{
 		Metadata: object.Metadata{
 			Owner:  testSubscriberPublicKey,
@@ -471,12 +512,10 @@ func Test_manager_Put(t *testing.T) {
 	testObjectComplexUpdated := object.Object{}.
 		SetType("foo-complex").
 		Set("foo:s", "bar").
-		SetOwner(testOwnPublicKey).
 		Set("nested-simple:r", object.Ref(testObjectSimple.Hash()))
 	testObjectComplexReturned := object.Object{}.
 		SetType("foo-complex").
 		Set("foo:s", "bar").
-		SetOwner(testOwnPublicKey).
 		Set("nested-simple:m", testObjectSimple.Raw())
 	testFeedHash := getFeedRootHash(
 		testOwnPrivateKey.PublicKey(),
@@ -484,7 +523,7 @@ func Test_manager_Put(t *testing.T) {
 	)
 	testFeedFirst := feed.Added{
 		ObjectHash: []object.Hash{
-			testObjectSimpleUpdated.Hash(),
+			testObjectSimple.Hash(),
 		},
 		Metadata: object.Metadata{
 			Stream: testFeedHash,
@@ -516,7 +555,11 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					Put(testObjectSimpleUpdated)
+					GetPinned().
+					Return(nil, nil)
+				m.EXPECT().
+					Put(testObjectSimple).
+					Return(nil)
 				return m
 			},
 			network: func(t *testing.T) network.Network {
@@ -539,7 +582,7 @@ func Test_manager_Put(t *testing.T) {
 		args: args{
 			o: testObjectSimple,
 		},
-		want: testObjectSimpleUpdated,
+		want: testObjectSimple,
 	}, {
 		name: "should pass, complex object",
 		fields: fields{
@@ -547,6 +590,9 @@ func Test_manager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
 				m.EXPECT().
 					Put(testObjectSimple)
 				m.EXPECT().
@@ -582,18 +628,11 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
-					Return(
-						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
-							},
-						),
-						nil,
-					)
+					GetPinned().
+					Return(nil, nil)
 				m.EXPECT().
 					GetByStream(testObjectStreamRoot.Hash()).
+					MaxTimes(2).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]object.Object{
@@ -636,10 +675,10 @@ func Test_manager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					PutWithTimeout(
-						testObjectSimpleUpdated,
-						time.Duration(0),
-					)
+					GetPinned().
+					Return(nil, nil)
+				m.EXPECT().
+					Put(testObjectSimple)
 				m.EXPECT().
 					GetByStream(testFeedHash).
 					Return(nil, objectstore.ErrNotFound)
@@ -675,7 +714,7 @@ func Test_manager_Put(t *testing.T) {
 		args: args{
 			o: testObjectSimple,
 		},
-		want: testObjectSimpleUpdated,
+		want: testObjectSimple,
 	}, {
 		name: "should pass, stream event, with subscribers",
 		fields: fields{
@@ -683,6 +722,9 @@ func Test_manager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
 				m.EXPECT().
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
@@ -767,6 +809,9 @@ func Test_manager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
 				m.EXPECT().
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
