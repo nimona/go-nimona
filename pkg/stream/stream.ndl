@@ -13,12 +13,12 @@ object nimona.io/stream.Policy {
 signed object nimona.io/stream.Request {
     nonce string
     rootHash nimona.io/object.Hash
-    leaves repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.Response {
     nonce string
-    children repeated nimona.io/object.Hash
+    rootHash nimona.io/object.Hash
+    leaves repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.Announcement {
