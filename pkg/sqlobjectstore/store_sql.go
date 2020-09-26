@@ -225,6 +225,7 @@ func (st *Store) GetRelations(
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not query"))
 	}
+	defer rows.Close() // nolint: errcheck
 
 	hashList := []object.Hash{}
 
@@ -374,6 +375,7 @@ func (st *Store) Filter(
 			errors.New("could not query"),
 		)
 	}
+	defer rows.Close() // nolint: errcheck
 
 	hashes := []string{}
 	hashesForUpdate := []interface{}{}
@@ -458,6 +460,7 @@ func (st *Store) GetPinned() ([]object.Hash, error) {
 			errors.New("could not query"),
 		)
 	}
+	defer rows.Close() // nolint: errcheck
 
 	hs := []object.Hash{}
 	for rows.Next() {
