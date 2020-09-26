@@ -49,6 +49,7 @@ func New() PubSub {
 }
 
 func (ps *QueueSubscription) Cancel() {
+	ps.Queue.Prepend(nil)
 	ps.cancel()
 }
 
