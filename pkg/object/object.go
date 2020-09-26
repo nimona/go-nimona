@@ -11,6 +11,10 @@ const (
 	ErrNoSignature = errors.Error("object has no signature")
 )
 
+var (
+	Empty = Object{}
+)
+
 type (
 	// Object for everything f12n
 	Object Map
