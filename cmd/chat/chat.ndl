@@ -1,0 +1,18 @@
+package main
+
+import nimona.io/crypto crypto
+import nimona.io/stream stream
+
+stream poc.nimona.io/conversation {
+    root object Created {
+        nonce string
+    }
+    signed object SetNickname {
+        datetime string
+        nickname string
+    }
+    signed object MessageAdded {
+        datetime string
+        body string
+    }
+}
