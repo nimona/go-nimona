@@ -144,3 +144,18 @@ func (mr *MockStoreMockRecorder) PutWithTimeout(arg0, arg1 interface{}) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutWithTimeout", reflect.TypeOf((*MockStore)(nil).PutWithTimeout), arg0, arg1)
 }
+
+// GetPinned mocks base method
+func (m *MockStore) GetPinned() ([]object.Hash, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPinned")
+	ret0, _ := ret[0].([]object.Hash)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPinned indicates an expected call of GetPinned
+func (mr *MockStoreMockRecorder) GetPinned() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinned", reflect.TypeOf((*MockStore)(nil).GetPinned))
+}
