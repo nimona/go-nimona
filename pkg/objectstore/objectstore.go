@@ -23,6 +23,9 @@ type (
 		GetByType(string) (object.ReadCloser, error)
 		GetByStream(object.Hash) (object.ReadCloser, error)
 		Put(object.Object) error
+		// TODO rename to PutWithTTL
 		PutWithTimeout(object.Object, time.Duration) error
+		// TODO GetPinned should be replaced with something "better"
+		GetPinned() ([]object.Hash, error)
 	}
 )
