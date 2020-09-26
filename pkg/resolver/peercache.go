@@ -54,6 +54,20 @@ func (m *peerCache) Put(p *peer.Peer, ttl time.Duration) {
 	})
 }
 
+// Put -
+func (m *peerCache) Touch(k crypto.PublicKey, ttl time.Duration) {
+	v, ok := m.m.Load(k)
+	if !ok {
+		return
+	}
+	e := v.(entry)
+	m.m.Store(k, entry{
+		ttl:       ttl,
+		createdAt: time.Now(),
+		pr:        e.pr,
+	})
+}
+
 // Get -
 func (m *peerCache) Get(k crypto.PublicKey) (*peer.Peer, error) {
 	p, ok := m.m.Load(k)

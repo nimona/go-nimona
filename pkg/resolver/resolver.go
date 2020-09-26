@@ -25,6 +25,8 @@ var (
 	peerType               = new(peer.Peer).GetType()
 	peerLookupRequestType  = new(peer.LookupRequest).GetType()
 	peerLookupResponseType = new(peer.LookupResponse).GetType()
+
+	peerCacheTTL = 1 * time.Minute
 )
 
 const (
@@ -102,6 +104,27 @@ func New(
 	if err := r.Bootstrap(ctx, r.initialBootstrapPeers...); err != nil {
 		logger.Error("could not bootstrap", log.Error(err))
 	}
+
+	go func() {
+		announceTicker := time.NewTicker(10 * time.Second)
+		bootstrapTicker := time.NewTicker(30 * time.Second)
+		for {
+			select {
+			case <-announceTicker.C:
+				for _, p := range r.peerCache.List() {
+					r.announceSelf(p.PublicKey())
+				}
+			case <-bootstrapTicker.C:
+				bCtx := context.New(
+					context.WithTimeout(10 * time.Second),
+				)
+				// TODO log error
+				r.Bootstrap(bCtx, r.peerCache.List()...)
+			}
+			time.Sleep(10 * time.Second)
+
+		}
+	}()
 
 	return r
 }
@@ -184,7 +207,6 @@ func (r *resolver) Lookup(
 		// just in case timeout
 		// TODO maybe figure out if the ctx as a timeout before adding one
 		timeout := time.NewTimer(time.Second * 10)
-		defer close(initialRecipients)
 		defer close(peers)
 		defer resSub.Cancel()
 		for {
@@ -239,7 +261,7 @@ func (r *resolver) Lookup(
 				for _, p := range res.Peers {
 					// add peers to our peerstore
 					// TODO pin this in the cache
-					r.peerCache.Put(p, 1*time.Minute)
+					r.peerCache.Put(p, peerCacheTTL)
 					r.removeBlock(p)
 
 					// if blocklisted skip it
@@ -305,12 +327,18 @@ func (r *resolver) handleObject(
 	// attempt to recover correlation id from request id
 	ctx := r.context
 
-	// check if this is a peer we've received objects from in the past x minutes
+	// check if this is a peer we've received objects from in the last x seconds
 	// and if not, announce ourselves to them
 	lastConn := r.peerConnections.GetOrPut(e.Sender)
-	if lastConn == nil || lastConn.Add(time.Minute*5).Before(time.Now()) {
-		r.announceSelf(e.Sender)
+	if lastConn == nil {
+		go r.announceSelf(e.Sender)
+	} else if lastConn.Add(30 * time.Second).Before(time.Now()) {
+		r.peerConnections.Put(e.Sender)
+		go r.announceSelf(e.Sender)
 	}
+
+	// touch peer so it doesn't expire
+	r.peerCache.Touch(e.Sender, peerCacheTTL)
 
 	// handle payload
 	o := e.Payload
@@ -349,7 +377,7 @@ func (r *resolver) handlePeer(
 		log.Strings("peer.addresses", p.Addresses),
 	)
 	logger.Debug("adding peer to cache")
-	r.peerCache.Put(p, 1*time.Minute)
+	r.peerCache.Put(p, peerCacheTTL)
 	r.removeBlock(p)
 }
 
@@ -446,20 +474,24 @@ func (r *resolver) Bootstrap(
 	return nil
 }
 
-func (r *resolver) announceSelf(p crypto.PublicKey) {
+func (r *resolver) announceSelf(k crypto.PublicKey) {
 	ctx := context.New(
 		context.WithTimeout(time.Second * 3),
 	)
-	err := r.network.Send(
+	p, err := r.peerCache.Get(k)
+	if err != nil {
+		p = &peer.Peer{
+			Metadata: object.Metadata{
+				Owner: k,
+			},
+		}
+	}
+	if err := r.network.Send(
 		ctx,
 		r.getLocalPeer().ToObject(),
-		&peer.Peer{
-			Metadata: object.Metadata{
-				Owner: p,
-			},
-		},
-	)
-	if err != nil {
+		p,
+	); err != nil {
+		// TODO log error
 		return
 	}
 }

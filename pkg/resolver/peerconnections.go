@@ -33,6 +33,11 @@ func (m *peerConnections) GetOrPut(k crypto.PublicKey) *time.Time {
 	return &t
 }
 
+// Put -
+func (m *peerConnections) Put(k crypto.PublicKey) {
+	m.m.Store(k, time.Now())
+}
+
 // Cleanup -
 func (m *peerConnections) Cleanup(d time.Duration) {
 	m.m.Range(func(k, v interface{}) bool {
