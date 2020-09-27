@@ -1,0 +1,10 @@
+---
+bootstrap:
+  instances:
+    - clarke
+    - palmer
+    - watts
+  inbound_ports:
+    - 22581
+  tags:
+    - nimona

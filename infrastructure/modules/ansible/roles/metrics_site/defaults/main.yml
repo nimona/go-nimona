@@ -1,0 +1,8 @@
+---
+metrics_site_caddy_sites_enabled_dir: /etc/caddy/sites-enabled
+metrics_site_host_path:
+metrics_site_name:
+metrics_site_password_salt:
+metrics_site_upstream:
+metrics_site_upstream_path:
+metrics_site_users: {}

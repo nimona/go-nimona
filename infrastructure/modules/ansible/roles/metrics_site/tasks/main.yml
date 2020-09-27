@@ -1,0 +1,23 @@
+---
+- name: Install passlib python module
+  pip:
+    name: passlib
+    state: latest
+  when: metrics_site_users != {}
+
+- name: Create caddy config directory
+  file:
+    path: "{{ metrics_site_caddy_sites_enabled_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create caddy config file
+  template:
+    dest: "{{ metrics_site_caddy_sites_enabled_dir }}/{{ metrics_site_name }}"
+    src: "site.j2"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload caddy

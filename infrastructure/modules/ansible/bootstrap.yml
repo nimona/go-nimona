@@ -1,0 +1,6 @@
+---
+- hosts:
+    - bootstrap
+  roles:
+    - role: nimona_bootstrap
+      tags: ["services", "nimona", "bootstrap"]

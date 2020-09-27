@@ -1,6 +1,0 @@
----
-- { src: geerlingguy.docker, version: 2.8.1 }
-- { src: oefenweb.fail2ban, version: v3.3.13 }
-- { src: oefenweb.ssh_server, version: v1.3.24 }
-- { src: oefenweb.ufw, version: v4.1.1 }
-- { src: oefenweb.docker, version: v2.1.29 }
