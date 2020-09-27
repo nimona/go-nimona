@@ -1,0 +1,6 @@
+- name: restart node_exporter
+  community.general.docker_container:
+    name: node_exporter
+    state: started
+    container_default_behavior: no_defaults
+    restart: yes

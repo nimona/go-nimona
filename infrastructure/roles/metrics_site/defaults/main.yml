@@ -1,7 +1,0 @@
----
-metrics_site_host_path:
-metrics_site_name:
-metrics_site_password_salt:
-metrics_site_upstream:
-metrics_site_upstream_path:
-metrics_site_users: {}

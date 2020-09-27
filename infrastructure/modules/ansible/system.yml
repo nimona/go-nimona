@@ -1,0 +1,13 @@
+---
+- hosts: all
+  roles:
+    - role: oefenweb.ssh_server
+      tags: ["network", "ssh"]
+    - role: oefenweb.ufw
+      tags: ["network", "ufw"]
+    - role: oefenweb.fail2ban
+      tags: ["network", "fail2ban"]
+    - role: docker
+      tags: ["tools", "docker"]
+    - role: caddy
+      tags: ["tools", "caddy", "http"]
