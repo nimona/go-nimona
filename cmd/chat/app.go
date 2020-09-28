@@ -21,6 +21,7 @@ type (
 		InputHistoryHead *list.Element
 		InputPos         *list.Element
 		InputLines       chan string
+		Chat             *chat
 	}
 	Windows struct {
 		Users *tview.List
@@ -107,6 +108,19 @@ func (app *App) Show() {
 				switch words[0] {
 				case "quit", "q":
 					app.Quit()
+				case "whoami", "i":
+					app.AddStatusText(
+						fmt.Sprintf(
+							"> public key: %s",
+							app.Chat.local.GetPrimaryPeerKey().PublicKey(),
+						),
+					)
+					app.AddStatusText(
+						fmt.Sprintf(
+							"> addresses: %s",
+							app.Chat.local.GetAddresses(),
+						),
+					)
 				default:
 					app.AddStatusText(fmt.Sprintf("[red]No such command '%s'.", text[1:]))
 				}
