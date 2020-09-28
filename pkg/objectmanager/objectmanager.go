@@ -877,9 +877,9 @@ func (m *manager) Put(
 	if err := m.storeObject(ctx, o); err != nil {
 		return o, err
 	}
+
 	// announce to subscribers
 	// TODO consider removing the err return from announceObject
-	// TODO make async
 	go m.announceObject(
 		context.New(
 			context.WithCorrelationID(ctx.CorrelationID()),
