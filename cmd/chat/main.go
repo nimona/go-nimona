@@ -84,6 +84,15 @@ func (c *chat) subscribe(
 		return nil, err
 	}
 
+	// os, _ := object.ReadAll(or)
+	// fmt.Println(dot.Dot(os))
+	// panic("asd")
+	// // get objects from db first
+	// or, err = c.objectstore.GetByStream(conversationRootHash)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	go func() {
 		for {
 			o, err := or.Read()
@@ -99,6 +108,7 @@ func (c *chat) subscribe(
 		for {
 			o, err := sub.Next()
 			if err != nil {
+				panic(err)
 				break
 			}
 			objects <- o
@@ -307,6 +317,7 @@ func main() {
 	}
 
 	app := NewApp()
+	app.Chat = c
 	go app.Show()
 
 	go func() {
@@ -328,6 +339,7 @@ func main() {
 			// }
 			if _, err := man.Put(
 				context.New(
+					context.WithCorrelationID("PUTPUT"+input),
 					context.WithTimeout(time.Second*5),
 				),
 				ConversationMessageAdded{
@@ -339,8 +351,9 @@ func main() {
 					Datetime: time.Now().Format(time.RFC3339),
 				}.ToObject(),
 			); err != nil {
+				panic(err)
 				logger.Warn(
-					"error persisting message",
+					"error putting message",
 					log.Error(err),
 				)
 			}
