@@ -118,11 +118,13 @@ func New(
 				bCtx := context.New(
 					context.WithTimeout(10 * time.Second),
 				)
-				// TODO log error
-				r.Bootstrap(bCtx, r.peerCache.List()...)
+				if err := r.Bootstrap(bCtx, r.peerCache.List()...); err != nil {
+					logger.Warn(
+						"error refreshing peers",
+						log.Error(err),
+					)
+				}
 			}
-			time.Sleep(10 * time.Second)
-
 		}
 	}()
 
