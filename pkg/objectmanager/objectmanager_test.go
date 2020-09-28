@@ -762,7 +762,7 @@ func Test_manager_Put(t *testing.T) {
 					},
 				}
 				t.Cleanup(func() {
-					assert.Equal(t, 1, m.SendCalled)
+					assert.Equal(t, int32(1), m.SendCalled)
 				})
 				return m
 			},

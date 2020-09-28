@@ -31,10 +31,10 @@ type (
 		Leaves   []object.Hash
 	}
 	Announcement struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Nonce    string
-		Objects  []*object.Object
+		raw          object.Object
+		Metadata     object.Metadata
+		Nonce        string
+		ObjectHashes []object.Hash
 	}
 	Subscription struct {
 		raw        object.Object
@@ -354,9 +354,9 @@ func (e Announcement) GetSchema() *object.SchemaObject {
 			IsRepeated: false,
 			IsOptional: false,
 		}, {
-			Name:       "objects",
-			Type:       "nimona.io/object.Object",
-			Hint:       "m",
+			Name:       "objectHashes",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
 			IsRepeated: true,
 			IsOptional: false,
 		}},
@@ -382,12 +382,12 @@ func (e Announcement) ToObject() object.Object {
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
 	}
-	if len(e.Objects) > 0 {
+	if len(e.ObjectHashes) > 0 {
 		v := object.List{}
-		for _, iv := range e.Objects {
-			v = v.Append(iv.ToObject().Raw())
+		for _, iv := range e.ObjectHashes {
+			v = v.Append(object.String(iv))
 		}
-		o = o.Set("objects:am", v)
+		o = o.Set("objectHashes:as", v)
 	}
 	// if schema := e.GetSchema(); schema != nil {
 	// 	m["_schema:m"] = schema.ToObject().ToMap()
@@ -410,12 +410,11 @@ func (e *Announcement) FromObject(o object.Object) error {
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
 	}
-	if v := data.Value("objects:am"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]interface{})
-		e.Objects = make([]*object.Object, len(m))
+	if v := data.Value("objectHashes:as"); v != nil && v.IsList() {
+		m := v.PrimitiveHinted().([]string)
+		e.ObjectHashes = make([]object.Hash, len(m))
 		for i, iv := range m {
-			eo := object.FromMap(iv.(map[string]interface{}))
-			e.Objects[i] = &eo
+			e.ObjectHashes[i] = object.Hash(iv)
 		}
 	}
 	return nil
