@@ -31,6 +31,7 @@ func UnloadReferences(
 	for k, ref := range objs {
 		obj = obj.Set(k, nil)
 		nk := strings.Replace(k, ":m", ":r", 1)
+		nk = strings.Replace(nk, ":am", ":ar", 1)
 		obj = obj.Set(nk, Ref(ref))
 	}
 	return &obj, unloaded, nil

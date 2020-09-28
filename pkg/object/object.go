@@ -163,7 +163,7 @@ func (o Object) GetPolicy() Policy {
 func GetReferences(o Object) []Hash {
 	refs := []Hash{}
 	Traverse(o.data(), func(k string, v Value) bool {
-		if !v.IsRef() {
+		if v == nil || !v.IsRef() {
 			return true
 		}
 		refs = append(refs, Hash(v.(Ref)))

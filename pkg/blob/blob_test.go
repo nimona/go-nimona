@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/object"
 )
 
 func TestToBlob(t *testing.T) {
@@ -211,4 +213,21 @@ func Test_blobReader_Read(t *testing.T) {
 			assert.Equal(t, exphash, gothash)
 		})
 	}
+}
+
+func TestUnloadRefs(t *testing.T) {
+	blob1 := &blob.Blob{}
+	chunk1 := &blob.Chunk{Data: []byte("ooh wee")}
+	chunk2 := &blob.Chunk{Data: []byte("ooh lala")}
+
+	blob1.Chunks = []*blob.Chunk{chunk1, chunk2}
+
+	obj, _, err := object.UnloadReferences(context.TODO(), blob1.ToObject())
+	assert.NoError(t, err)
+	assert.NotNil(t, obj)
+
+	refs := object.GetReferences(*obj)
+
+	assert.Contains(t, refs, chunk1.ToObject().Hash())
+	assert.Contains(t, refs, chunk2.ToObject().Hash())
 }
