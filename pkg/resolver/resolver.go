@@ -604,6 +604,8 @@ func (r *resolver) getClosest(q bloom.Bloom, n int) []*peer.Peer {
 		}
 	}
 
+	fs = append(fs, r.getLocalPeer())
+
 	return fs
 }
 

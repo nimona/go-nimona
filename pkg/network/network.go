@@ -339,7 +339,7 @@ func (w *network) processOutbox(outbox *outbox) {
 				lastErr = err
 				continue
 			}
-			logger.Debug("trying write object", log.Int("attempt", i+1))
+			logger.Debug("trying to write object", log.Int("attempt", i+1))
 			if err := net.Write(req.object, conn); err != nil {
 				lastErr = err
 				continue
@@ -522,6 +522,10 @@ func (w *network) Send(
 	o object.Object,
 	p *peer.Peer,
 ) error {
+	if p.PublicKey() == w.localpeer.GetPrimaryPeerKey().PublicKey() {
+		return ErrCannotSendToSelf
+	}
+
 	dedupKey := ctx.CorrelationID() + p.PublicKey().String() + o.Hash().String()
 	if _, ok := w.deduplist.Get(dedupKey); ok {
 		return ErrAlreadySentDuringContext

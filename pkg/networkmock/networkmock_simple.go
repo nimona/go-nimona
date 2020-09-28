@@ -2,6 +2,7 @@ package networkmock
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
@@ -14,9 +15,9 @@ import (
 type (
 	MockNetworkSimple struct {
 		mutex           sync.Mutex
-		SubscribeCalled int
+		SubscribeCalled int32
 		SubscribeCalls  []network.EnvelopeSubscription
-		SendCalled      int
+		SendCalled      int32
 		SendCalls       []error
 		ReturnAddresses []string
 		ReturnLocalPeer localpeer.LocalPeer
@@ -28,11 +29,12 @@ func (m *MockNetworkSimple) Subscribe(
 ) network.EnvelopeSubscription {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	if m.SubscribeCalled >= len(m.SubscribeCalls) {
+	subscribeCalled := atomic.LoadInt32(&m.SubscribeCalled)
+	if int(subscribeCalled) >= len(m.SubscribeCalls) {
 		panic("too many calls to subscribe")
 	}
 	r := m.SubscribeCalls[m.SubscribeCalled]
-	m.SubscribeCalled++
+	atomic.AddInt32(&m.SubscribeCalled, 1)
 	return r
 }
 
@@ -43,11 +45,12 @@ func (m *MockNetworkSimple) Send(
 ) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	if m.SendCalled >= len(m.SendCalls) {
+	sendCalled := atomic.LoadInt32(&m.SendCalled)
+	if int(sendCalled) >= len(m.SendCalls) {
 		panic("too many calls to send")
 	}
 	r := m.SendCalls[m.SendCalled]
-	m.SendCalled++
+	atomic.AddInt32(&m.SendCalled, 1)
 	return r
 }
 

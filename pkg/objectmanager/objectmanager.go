@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -191,21 +193,38 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	// TODO refactor to remove buffer
-	objectHashes := make(chan object.Hash, 1000)
-
-	wg := sync.WaitGroup{}
+	var leaves []object.Hash
 
 	select {
 	case res := <-responses:
-		// TODO consider refactoring, or moving into a goroutine
-		for _, leaf := range res.Leaves {
-			objectHashes <- leaf
-		}
-		wg.Add(len(res.Leaves))
+		leaves = res.Leaves
 	case <-ctx.Done():
 		return nil, ErrTimeout
 	}
+
+	if err := m.fetchFromLeaves(ctx, leaves, recipients[0]); err != nil {
+		return nil, err
+	}
+
+	return m.objectstore.GetByStream(rootHash)
+}
+
+func (m *manager) fetchFromLeaves(
+	ctx context.Context,
+	leaves []object.Hash,
+	recipient *peer.Peer,
+) error {
+	// TODO refactor to remove buffer
+	objectHashes := make(chan object.Hash, 1000)
+
+	go func() {
+		for _, l := range leaves {
+			objectHashes <- l
+		}
+	}()
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(leaves))
 
 	errorChan := make(chan error)
 	doneChan := make(chan struct{})
@@ -221,14 +240,14 @@ func (m *manager) RequestStream(
 			dCtx := context.New(
 				context.WithTimeout(3 * time.Second),
 			)
-			if _, err := m.objectstore.Get(objectHash); err == nil {
+			if obj, err := m.objectstore.Get(objectHash); err == nil {
 				// TODO consider checking the whole stream for missing objects
-				// parents := obj.GetParents()
+				parents := obj.GetParents()
 				// TODO consider refactoring, or moving into a goroutine
-				// for _, parent := range parents {
-				// 	objectHashes <- parent
-				// }
-				// wg.Add(len(parents))
+				for _, parent := range parents {
+					objectHashes <- parent
+				}
+				wg.Add(len(parents))
 				wg.Done()
 				continue
 			}
@@ -236,7 +255,7 @@ func (m *manager) RequestStream(
 			fullObj, err := m.Request(
 				dCtx,
 				objectHash,
-				recipients[0],
+				recipient,
 				false,
 			)
 			if err != nil {
@@ -270,11 +289,11 @@ func (m *manager) RequestStream(
 
 	select {
 	case <-doneChan:
-		return m.objectstore.GetByStream(rootHash)
+		return nil
 	case err := <-errorChan:
-		return nil, err
+		return err
 	case <-ctx.Done():
-		return nil, ErrTimeout
+		return ErrTimeout
 	}
 }
 
@@ -288,7 +307,8 @@ func (m *manager) Request(
 	errCh := make(chan error)
 
 	sub := m.network.Subscribe(
-	// network.FilterByObjectHash(hash),
+		// TODO why was this commented out?
+		network.FilterByObjectHash(hash),
 	)
 	defer sub.Cancel()
 
@@ -342,57 +362,82 @@ func (m *manager) handleObjects(
 			Named("objectmanager").
 			With(
 				log.String("method", "objectmanager.handleObjects"),
-				log.String("payload", env.Payload.GetType()),
+				log.String("payload", object.Dump(env.Payload)),
 			)
 
 		logger.Debug("handling object")
 
 		// store object
+		// TODO why store here?
 		if err := m.storeObject(ctx, env.Payload); err != nil {
 			return err
 		}
 
 		switch env.Payload.GetType() {
 		case objectRequestType:
-			if err := m.handleObjectRequest(
-				ctx,
-				env,
-			); err != nil {
-				logger.Warn(
-					"could not handle object request",
-					log.Error(err),
+			go func() {
+				hCtx := context.New(
+					context.WithParent(ctx),
 				)
-			}
+				if err := m.handleObjectRequest(
+					hCtx,
+					env,
+				); err != nil {
+					logger.Warn(
+						"could not handle object request",
+						log.Error(err),
+					)
+				}
+			}()
+			continue
 		case streamRequestType:
-			if err := m.handleStreamRequest(
-				ctx,
-				env,
-			); err != nil {
-				logger.Warn(
-					"could not handle stream request",
-					log.Error(err),
+			go func() {
+				hCtx := context.New(
+					context.WithParent(ctx),
 				)
-			}
+				if err := m.handleStreamRequest(
+					hCtx,
+					env,
+				); err != nil {
+					logger.Warn(
+						"could not handle stream request",
+						log.Error(err),
+					)
+				}
+			}()
+			continue
 		case streamSubscriptionType:
-			if err := m.handleStreamSubscription(
-				ctx,
-				env,
-			); err != nil {
-				logger.Warn(
-					"could not handle stream request",
-					log.Error(err),
+			go func() {
+				hCtx := context.New(
+					context.WithParent(ctx),
 				)
-			}
+				if err := m.handleStreamSubscription(
+					hCtx,
+					env,
+				); err != nil {
+					logger.Warn(
+						"could not handle stream request",
+						log.Error(err),
+					)
+				}
+			}()
+			continue
 		case streamAnnouncementType:
-			if err := m.handleStreamAnnouncement(
-				ctx,
-				env,
-			); err != nil {
-				logger.Warn(
-					"could not handle stream announcement",
-					log.Error(err),
+			go func() {
+				hCtx := context.New(
+					context.WithParent(ctx),
 				)
-			}
+				if err := m.handleStreamAnnouncement(
+					hCtx,
+					env,
+				); err != nil {
+					logger.Warn(
+						"could not handle stream announcement",
+						log.Error(err),
+					)
+				}
+			}()
+			continue
 		}
 
 		// publish to pubsub
@@ -400,6 +445,7 @@ func (m *manager) handleObjects(
 	}
 }
 
+// Note: please do not .pubsub.Publish() in here
 func (m *manager) storeObject(
 	ctx context.Context,
 	obj object.Object,
@@ -455,6 +501,7 @@ func (m *manager) storeObject(
 		return nil
 	}
 
+	// TODO decouple feeds from object manager
 	// TODO check if object already exists in feed
 
 	// add to feed
@@ -504,6 +551,7 @@ func (m *manager) announceObject(
 	ctx context.Context,
 	obj object.Object,
 ) error {
+	logger := log.FromContext(ctx)
 	// if this is not part of a stream, we're done here
 	if obj.GetStream().IsEmpty() {
 		return nil
@@ -522,6 +570,7 @@ func (m *manager) announceObject(
 	if err != nil {
 		return err
 	}
+
 	for {
 		obj, err := r.Read()
 		// TODO do we want to return if error is not EOF?
@@ -541,6 +590,11 @@ func (m *manager) announceObject(
 		subscribers = append(subscribers, subscriber)
 	}
 
+	logger.Info("trying to announce",
+		log.String("hash", obj.Hash().String()),
+		log.Any("subscribers", subscribers),
+	)
+
 	if len(subscribers) == 0 {
 		return nil
 	}
@@ -550,30 +604,63 @@ func (m *manager) announceObject(
 		Metadata: object.Metadata{
 			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
-		Objects: []*object.Object{
-			&obj,
+		ObjectHashes: []object.Hash{
+			obj.Hash(),
 		},
 	}.ToObject()
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		peers, err := m.resolver.Lookup(
-			ctx,
-			resolver.LookupByOwner(subscriber),
+		if err := m.send(ctx, &announcement, subscriber); err != nil {
+			logger.Info(
+				"error sending announcement",
+				log.Error(err),
+				log.String("subscriber", subscriber.String()),
+			)
+		}
+		logger.Debug(
+			"sent announcement",
+			log.Any("sub", subscriber),
+			log.Error(err),
 		)
-		if err != nil {
-			// TODO log error
-			continue
-		}
-		for peer := range peers {
-			if err := m.network.Send(ctx, announcement, peer); err != nil {
-				// TODO log error
-				continue
-			}
-		}
 	}
 
 	return nil
+}
+
+func (m *manager) send(
+	ctx context.Context,
+	obj *object.Object,
+	rec crypto.PublicKey,
+) error {
+
+	if err := m.network.Send(ctx, *obj, &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: rec,
+		},
+	}); err == nil {
+		return nil
+	} else if err == network.ErrCannotSendToSelf {
+		return err
+	}
+
+	peers, err := m.resolver.Lookup(
+		ctx,
+		resolver.LookupByOwner(rec),
+	)
+	if err != nil {
+		return err
+	}
+	// TODO add error group
+	var errs error
+	for peer := range peers {
+		if err := m.network.Send(ctx, *obj, peer); err != nil {
+			errs = multierror.Append(errs, err)
+			continue
+		}
+		return nil
+	}
+	return errs
 }
 
 func (m *manager) handleObjectRequest(
@@ -588,6 +675,12 @@ func (m *manager) handleObjectRequest(
 	hash := req.ObjectHash
 	obj, err := m.objectstore.Get(hash)
 	if err != nil {
+		log.FromContext(ctx).Error(
+			"handleObjectRequest error getting obj",
+			log.String("env", req.ObjectHash.String()),
+			log.String("from", env.Sender.String()),
+			log.Error(err),
+		)
 		return err
 	}
 
@@ -611,7 +704,7 @@ func (m *manager) handleObjectRequest(
 		}
 	}
 
-	if err := m.network.Send(
+	err = m.network.Send(
 		ctx,
 		*robj,
 		&peer.Peer{
@@ -619,7 +712,16 @@ func (m *manager) handleObjectRequest(
 				Owner: env.Sender,
 			},
 		},
-	); err != nil {
+	)
+
+	log.FromContext(ctx).Info(
+		"handleObjectRequest",
+		log.String("env", req.ObjectHash.String()),
+		log.String("from", env.Sender.String()),
+		log.Error(err),
+	)
+
+	if err != nil {
 		return errors.Wrap(
 			errors.Error("could not send object"),
 			err,
@@ -715,15 +817,17 @@ func (m *manager) handleStreamAnnouncement(
 	// TODO maybe verify nested objects
 	// TODO request missing objects if missing
 
-	// go through all objects
-	for _, obj := range ann.Objects {
-		// store object
-		if err := m.storeObject(ctx, *obj); err != nil {
-			// TODO should we move on?
-			return err
-		}
-		// publish to pubsub
-		m.pubsub.Publish(*obj)
+	log.FromContext(ctx).Info("got stream announcement ",
+		log.Any("sender", env.Sender),
+		log.Any("hashes", ann.ObjectHashes),
+	)
+
+	if err := m.fetchFromLeaves(ctx, ann.ObjectHashes, &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: env.Sender,
+		},
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -743,23 +847,11 @@ func (m *manager) Put(
 			return o, err
 		}
 		// publish to pubsub
+		// TODO why do we publish this?
 		m.pubsub.Publish(o)
 		return o, nil
 	}
 	// Note: Please don't add owners as it messes with hypothetical objects
-	// if o.GetOwner() == m.localpeer.GetPrimaryPeerKey().PublicKey() {
-	// 	sig, err := object.NewSignature(
-	// 		m.localpeer.GetPrimaryPeerKey(),
-	// 		o,
-	// 	)
-	// 	if err != nil {
-	// 		return o, errors.Wrap(
-	// 			errors.New("unable to sign object"),
-	// 			err,
-	// 		)
-	// 	}
-	// 	o = o.SetSignature(sig)
-	// }
 	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
 	streamHash := o.GetStream()
@@ -790,7 +882,8 @@ func (m *manager) Put(
 	// TODO make async
 	go m.announceObject(
 		context.New(
-			context.WithTimeout(1*time.Second),
+			context.WithCorrelationID(ctx.CorrelationID()),
+			// context.WithTimeout(5*time.Second),
 		),
 		o,
 	) // nolint: errcheck
