@@ -61,4 +61,7 @@ func TestList(t *testing.T) {
 
 	la = la.Set("0", String("0"))
 	assert.Equal(t, []string{"0", "1", "9", "10", "11"}, la.PrimitiveHinted())
+
+	la = la.Set("0", String("A"))
+	assert.Equal(t, []string{"A", "1", "9", "10", "11"}, la.PrimitiveHinted())
 }

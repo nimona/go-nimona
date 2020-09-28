@@ -137,55 +137,62 @@ func (l List) Length() (n int) {
 
 func (l List) PrimitiveHinted() interface{} {
 	if l.value == nil {
-		return nil
+		if l.prev == nil {
+			return nil
+		}
+		return l.prev.PrimitiveHinted()
 	}
+
+	// TODO should we be keeping the original indices? ie:
+	// > p := make([]interface{}, l.size)
+	// > p[i] = v.PrimitiveHinted()
 
 	switch {
 	case l.value.IsList():
 		p := []interface{}{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted())
 			return true
 		})
 		return p
 	case l.value.IsMap():
 		p := []interface{}{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted())
 			return true
 		})
 		return p
 	case l.value.IsBool():
 		p := []bool{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted().(bool))
 			return true
 		})
 		return p
 	case l.value.IsString():
 		p := []string{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted().(string))
 			return true
 		})
 		return p
 	case l.value.IsInt():
 		p := []int64{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted().(int64))
 			return true
 		})
 		return p
 	case l.value.IsFloat():
 		p := []float64{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted().(float64))
 			return true
 		})
 		return p
 	case l.value.IsBytes():
 		p := [][]byte{}
-		l.Iterate(func(_ int, v Value) bool {
+		l.Iterate(func(i int, v Value) bool {
 			p = append(p, v.PrimitiveHinted().([]byte))
 			return true
 		})

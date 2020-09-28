@@ -79,6 +79,11 @@ func setPath(target Value, path string, value Value) (Value, error) {
 			case HintMap:
 				newTarget = Map{}
 			default:
+				// handle lists
+				if hs[0] == "a" {
+					newTarget = List{}
+					break
+				}
 				// TODO do we need to implement more cases, maybe lists?
 				return nil, fmt.Errorf(
 					"empty target for type %s is not supported", hs[0],
