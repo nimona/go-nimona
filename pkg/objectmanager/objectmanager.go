@@ -633,7 +633,6 @@ func (m *manager) send(
 	obj *object.Object,
 	rec crypto.PublicKey,
 ) error {
-
 	if err := m.network.Send(ctx, *obj, &peer.Peer{
 		Metadata: object.Metadata{
 			Owner: rec,
@@ -880,6 +879,7 @@ func (m *manager) Put(
 
 	// announce to subscribers
 	// TODO consider removing the err return from announceObject
+	// nolint: errcheck
 	go m.announceObject(
 		context.New(
 			context.WithCorrelationID(ctx.CorrelationID()),
