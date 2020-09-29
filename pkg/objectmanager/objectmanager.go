@@ -362,7 +362,8 @@ func (m *manager) handleObjects(
 			Named("objectmanager").
 			With(
 				log.String("method", "objectmanager.handleObjects"),
-				log.String("payload", object.Dump(env.Payload)),
+				log.String("payload.type", env.Payload.GetType()),
+				log.String("payload.hash", env.Payload.Hash().String()),
 			)
 
 		logger.Debug("handling object")
