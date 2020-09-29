@@ -72,6 +72,7 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 				errors.New("could not run migration"),
 			)
 		}
+		defer rows.Close()
 
 		mgr := migrationRow{}
 
@@ -105,6 +106,7 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 				errors.New("could not insert to migrations table"),
 			)
 		}
+		defer stmt.Close()
 
 		_, err = stmt.Exec(index, time.Now().Unix())
 		if err != nil {

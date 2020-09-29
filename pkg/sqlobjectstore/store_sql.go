@@ -82,6 +82,7 @@ func (st *Store) Get(
 			errors.New("could not prepare query"),
 		)
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	row := stmt.QueryRow(hash.String())
 
@@ -113,6 +114,7 @@ func (st *Store) Get(
 			errors.New("could not prepare query"),
 		)
 	}
+	defer istmt.Close() // nolint: errcheck
 
 	if _, err := istmt.Exec(
 		time.Now().Unix(),
@@ -173,6 +175,7 @@ func (st *Store) PutWithTimeout(
 		return errors.Wrap(err,
 			errors.New("could not prepare insert to objects table"))
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	body, err := json.Marshal(obj.ToMap())
 	if err != nil {
@@ -220,6 +223,7 @@ func (st *Store) GetRelations(
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query(parent.String())
 	if err != nil {
@@ -249,6 +253,7 @@ func (st *Store) GetRelations(
 			errors.New("could not prepare query"),
 		)
 	}
+	defer istmt.Close() // nolint: errcheck
 
 	if _, err := istmt.Exec(
 		time.Now().Unix(),
@@ -271,6 +276,7 @@ func (st *Store) UpdateTTL(
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(minutes, hash.String()); err != nil {
 		return errors.Wrap(
@@ -291,6 +297,7 @@ func (st *Store) Remove(
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(
 		hash.String(),
@@ -313,6 +320,7 @@ func (st *Store) gc() error {
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(); err != nil {
 		return errors.Wrap(
@@ -367,6 +375,7 @@ func (st *Store) Filter(
 			errors.New("could not prepare statement"),
 		)
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query(whereArgs...)
 	if err != nil {
@@ -416,6 +425,7 @@ func (st *Store) Filter(
 	if err != nil {
 		return nil, err
 	}
+	defer istmt.Close() // nolint: errcheck
 
 	if _, err := istmt.Exec(
 		append([]interface{}{time.Now().Unix()}, hashesForUpdate...)...,
@@ -452,6 +462,7 @@ func (st *Store) GetPinned() ([]object.Hash, error) {
 			errors.New("could not prepare statement"),
 		)
 	}
+	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query()
 	if err != nil {
