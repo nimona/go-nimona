@@ -1,72 +1,187 @@
 package main
 
 import (
-	"container/list"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+
+	"nimona.io/internal/rand"
 )
 
 type (
 	App struct {
-		Windows          Windows
-		StatusText       []Status
-		InputHistory     *list.List
-		InputHistoryHead *list.Element
-		InputPos         *list.Element
-		InputLines       chan string
-		Chat             *chat
+		Windows       Windows
+		StatusText    []Status
+		Conversations Conversations
+		Channels      Channels
+		Chat          *chat
+	}
+	Channels struct {
+		InputLines   chan string
+		MessageAdded chan *Message
 	}
 	Windows struct {
-		Users *tview.List
-		Input *tview.InputField
-		Chat  *tview.TextView
-		App   *tview.Application
+		Participants *tview.List
+		Input        *tview.InputField
+		Chat         *tview.TextView
+		App          *tview.Application
 	}
 	Status struct {
 		Text    string
 		Created string
 	}
+	Conversations []*Conversation // helper, used for sorting
+	Conversation  struct {
+		Hash         string
+		Messages     Messages
+		Participants Participants
+		LastActivity time.Time
+	}
+	Messages []*Message // helper, used for sorting
+	Message  struct {
+		Hash             string
+		ConversationHash string
+		Body             string
+		SenderHash       string
+		SenderNickname   string
+		Created          time.Time
+	}
+	Participants []*Participant // helper, used for sorting
+	Participant  struct {
+		Hash     string
+		Nickname string
+	}
 )
 
-func NewApp() *App {
-	inputHistory := list.New()
-	return &App{
+func (a Messages) Len() int {
+	return len(a)
+}
+
+func (a Messages) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a Messages) Less(i, j int) bool {
+	return a[i].Created.Before(a[j].Created)
+}
+
+func (a Participants) Len() int {
+	return len(a)
+}
+
+func (a Participants) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a Participants) Less(i, j int) bool {
+	return a[i].Nickname < a[j].Nickname
+}
+
+func NewApp(conversationHash string) *App {
+	app := &App{
 		Windows: Windows{
-			Users: tview.NewList(),
-			Input: tview.NewInputField(),
-			Chat:  tview.NewTextView(),
-			App:   tview.NewApplication(),
+			Participants: tview.NewList(),
+			Input:        tview.NewInputField(),
+			Chat:         tview.NewTextView(),
+			App:          tview.NewApplication(),
 		},
-		StatusText:       []Status{},
-		InputHistory:     inputHistory,
-		InputHistoryHead: inputHistory.PushFront(""),
-		InputPos:         inputHistory.Front(),
-		InputLines:       make(chan string, 100),
+		StatusText: []Status{},
+		Channels: Channels{
+			InputLines:   make(chan string, 100),
+			MessageAdded: make(chan *Message, 100),
+		},
+		Conversations: Conversations{
+			&Conversation{
+				Hash:     conversationHash,
+				Messages: Messages{},
+			},
+		},
 	}
+
+	go func() {
+		conv := app.Conversations[0]
+		for {
+			select {
+			case messageAdded := <-app.Channels.MessageAdded:
+				conv.Messages = append(
+					conv.Messages,
+					messageAdded,
+				)
+				sort.Sort(conv.Messages)
+				// TODO only do this if the message is in the wrong order
+				app.Windows.Chat.Clear()
+				max := len(conv.Messages)
+				if max > 100 {
+					max -= 100
+				}
+				for _, message := range conv.Messages[max:] {
+					if message.SenderHash == "system" {
+						app.Windows.Chat.Write([]byte(
+							fmt.Sprintf(
+								"\n[red][%s] %s",
+								message.Created.Format("02/01 15:04:05"),
+								message.Body,
+							),
+						))
+						continue
+					}
+					app.Windows.Chat.Write([]byte(
+						fmt.Sprintf(
+							"\n[lightcyan][%s][gold] <%s>[white] %s",
+							message.Created.Format("02/01 15:04:05"),
+							message.SenderNickname,
+							message.Body,
+						),
+					))
+				}
+				app.Windows.Chat.ScrollToEnd()
+				app.Windows.App.Draw()
+				// deal with users
+				if messageAdded.SenderHash == "system" {
+					continue
+				}
+				userExists := false
+				for _, u := range conv.Participants {
+					if u.Hash == messageAdded.SenderHash {
+						userExists = true
+						break
+					}
+				}
+				if !userExists {
+					conv.Participants = append(
+						conv.Participants,
+						&Participant{
+							Hash:     messageAdded.SenderHash,
+							Nickname: messageAdded.SenderNickname,
+						},
+					)
+					sort.Sort(conv.Participants)
+					app.Windows.Participants.Clear()
+					for _, user := range conv.Participants {
+						app.Windows.Participants.AddItem(user.Nickname, "", 0, func() {})
+					}
+				}
+			}
+		}
+	}()
+
+	return app
 }
 
-func (app *App) AddStatusText(msg string) {
-	app.Windows.Chat.Write([]byte(fmt.Sprintf("[red]%s %s\n", time.Now().Format("02/01 15:04:05"), msg)))
-	app.Windows.Chat.ScrollToEnd()
-	app.StatusText = append(app.StatusText, Status{Text: msg, Created: time.Now().Format("02/01 15:04:05")})
-
-}
-
-func (app *App) AddUserText(msg, usr string, t time.Time) {
-	app.Windows.Chat.Write([]byte(fmt.Sprintf("[cyan][%s][yellow] <%s>[white] %s\n", t.Format("02/01 15:04:05"), usr, msg)))
-	app.Windows.Chat.ScrollToEnd()
-	app.Windows.App.Draw()
-}
-
-func (app *App) ResetInputHistoryPosition() {
-	app.InputPos = app.InputHistory.Front()
+func (app *App) AddSystemText(msg string) {
+	app.Channels.MessageAdded <- &Message{
+		Hash:       rand.String(16),
+		SenderHash: "system",
+		Body:       msg,
+		Created:    time.Now(),
+	}
 }
 
 func (app *App) Quit() {
@@ -77,17 +192,18 @@ func (app *App) Quit() {
 func (app *App) Show() {
 	log.SetOutput(ioutil.Discard)
 
-	app.Windows.Users.SetBorder(true).SetTitle("Users")
-	app.Windows.Users.SetTitleColor(tcell.ColorGreen)
-	app.Windows.Users.ShowSecondaryText(false)
-	app.Windows.Users.SetSelectedBackgroundColor(tcell.ColorBlack)
-	app.Windows.Users.SetSelectedTextColor(tcell.ColorNavy)
+	app.Windows.Participants.SetBorder(true).SetTitle(" Participants ")
+	app.Windows.Participants.ShowSecondaryText(false)
+	app.Windows.Participants.SetSelectedBackgroundColor(tcell.ColorBlack)
+	app.Windows.Participants.SetSelectedTextColor(tcell.ColorWhite)
+	app.Windows.Participants.SetBorderPadding(0, 0, 1, 1)
 
 	app.Windows.Chat.SetBorder(true)
 	app.Windows.Chat.SetTitleAlign(tview.AlignLeft)
 	app.Windows.Chat.SetDynamicColors(true)
 	app.Windows.Chat.SetScrollable(true)
 	app.Windows.Chat.SetWordWrap(true)
+	app.Windows.Chat.SetBorderPadding(0, 0, 0, 0)
 
 	app.Windows.Input.SetFieldBackgroundColor(tcell.ColorBlack)
 	app.Windows.Input.SetBorder(true)
@@ -98,7 +214,6 @@ func (app *App) Show() {
 			}
 
 			text := app.Windows.Input.GetText()
-			// AddInputHistory(text)
 
 			if text[0] == '/' {
 				words := strings.Fields(text[1:])
@@ -108,81 +223,47 @@ func (app *App) Show() {
 				switch words[0] {
 				case "quit", "q":
 					app.Quit()
+					os.Exit(0)
 				case "whoami", "i":
-					app.AddStatusText(
+					app.AddSystemText("Peer info:")
+					app.AddSystemText(
 						fmt.Sprintf(
-							"> public key: %s",
+							"* public key: %s",
 							app.Chat.local.GetPrimaryPeerKey().PublicKey(),
 						),
 					)
-					app.AddStatusText(
+					app.AddSystemText(
 						fmt.Sprintf(
-							"> addresses: %s",
+							"* addresses: %s",
 							app.Chat.local.GetAddresses(),
 						),
 					)
 				default:
-					app.AddStatusText(fmt.Sprintf("[red]No such command '%s'.", text[1:]))
+					app.AddSystemText(fmt.Sprintf("[red]No such command '%s'.", text[1:]))
 				}
 				app.Windows.Input.SetText("")
-				app.ResetInputHistoryPosition()
 				return
 			}
 
-			// if user.ActiveSpaceId != "status" {
-			// go SendMessageToChannel(text)
-			// AddOwnText(text, user.Info.DisplayName, "")
-			// own = append(own, OwnMessages{SpaceId: user.ActiveSpaceId, Text: text})
-			app.InputLines <- text
+			app.Channels.InputLines <- text
 			app.Windows.Input.SetText("")
-			app.ResetInputHistoryPosition()
-			// }
 		}
 	})
 	app.Windows.Input.SetInputCapture(app.Windows.Input.GetInputCapture())
 
-	app.Windows.Chat.SetTitle("foo")
+	app.Windows.Chat.SetTitle(" " + app.Conversations[0].Hash + " ")
 
 	flexLists := tview.NewFlex().SetDirection(tview.FlexRow)
 	flexChat := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	flex := tview.NewFlex()
-	flexLists.AddItem(app.Windows.Users, 0, 4, false)
+	flexLists.AddItem(app.Windows.Participants, 0, 4, false)
 	flexChat.AddItem(app.Windows.Chat, 0, 10, false)
 	flexChat.AddItem(app.Windows.Input, 3, 2, false)
 	flex.AddItem(flexLists, 0, 1, false)
 	flex.AddItem(flexChat, 0, 5, false)
 
-	// AddStatusText(`[#A60000] ███╗   ██╗██╗███╗   ███╗ ██████╗ ███╗   ██╗ █████╗  `)
-	// AddStatusText(`[#C40000] ████╗  ██║██║████╗ ████║██╔═══██╗████╗  ██║██╔══██╗ `)
-	// AddStatusText(`[#EC1E0D] ██╔██╗ ██║██║██╔████╔██║██║   ██║██╔██╗ ██║███████║ `)
-	// AddStatusText(`[#F54E16] ██║╚██╗██║██║██║╚██╔╝██║██║   ██║██║╚██╗██║██╔══██║ `)
-	// AddStatusText(`[#F57316] ██║ ╚████║██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║██║  ██║ `)
-	// AddStatusText(`[#F5E216] ╚═╝  ╚═══╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝ `)
-
-	// AddStatusText(`[#A60000]         _                                    `)
-	// AddStatusText(`[#C40000]        (_)                                   `)
-	// AddStatusText(`[#EC1E0D]   _ __  _ _ __ ___   ___  _ __   __ _        `)
-	// AddStatusText(`[#F54E16]  | '_ \| | '_ ' _ \ / _ \| '_ \ / _' |       `)
-	// AddStatusText(`[#F57316]  | | | | | | | | | | (_) | | | | (_| |       `)
-	// AddStatusText(`[#F5E216]  |_| |_|_|_| |_| |_|\___/|_| |_|\__,_|       `)
-	// AddStatusText(`                                                       `)
-
-	// AddStatusText("[#A60000]                     ")
-	// AddStatusText("[#C40000]    .                ")
-	// AddStatusText("[#EC1E0D] .-...-.-..-..-..-.  ")
-	// AddStatusText("[#F54E16] ' ''' ' '`-'' '`-`- ")
-	// AddStatusText("[#F57316]                     ")
-
-	// AddStatusText(fmt.Sprintf("Theme used: %s", config.ThemeFile))
-	// AddStatusText(fmt.Sprintf("Webhook url used: %s", user.GrokUrl))
-
 	if err := app.Windows.App.SetRoot(flex, true).SetFocus(app.Windows.Input).Run(); err != nil {
 		panic(err)
 	}
-
-	// End all workers
-	// for i := 0; i < channels.workers; i++ {
-	// 	channels.Quit <- 1
-	// }
 }
