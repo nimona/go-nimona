@@ -243,9 +243,9 @@ func (log *logger) Panic(msg string, fields ...Field) {
 
 func (log *logger) Fatal(msg string, fields ...Field) {
 	log.mu.RLock()
-	defer log.mu.RUnlock()
 	if FatalLevel >= *log.logLevel {
 		log.write(FatalLevel, msg, fields...)
 	}
+	log.mu.RUnlock()
 	os.Exit(1)
 }
