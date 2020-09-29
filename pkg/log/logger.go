@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"nimona.io/pkg/context"
@@ -12,18 +13,21 @@ import (
 
 type (
 	logger struct {
-		name    string
-		context context.Context
-		parent  *logger
-		fields  []Field
-		output  io.Writer
-		writer  Writer
+		mu       sync.RWMutex
+		name     string
+		logLevel *Level
+		context  context.Context
+		parent   *logger
+		fields   []Field
+		output   io.Writer
+		writer   Writer
 	}
 	Field struct {
 		Key   string
 		Value interface{}
 	}
 	Logger interface {
+		SetOutput(w io.Writer)
 		With(fields ...Field) Logger
 		Named(name string) Logger
 		Debug(msg string, fields ...Field)
@@ -37,11 +41,12 @@ type (
 
 var (
 	DefaultLogLevel Level     = ErrorLevel
-	DefaultOutput   io.Writer = os.Stdout
-	DefaultWriter   Writer    = JSONWriter()
+	defaultOutput   io.Writer = os.Stdout
+	defaultWriter   Writer    = JSONWriter()
 	DefaultLogger   Logger    = &logger{
-		writer: DefaultWriter,
-		output: DefaultOutput,
+		logLevel: &DefaultLogLevel,
+		writer:   defaultWriter,
+		output:   defaultOutput,
 	}
 )
 
@@ -121,10 +126,21 @@ func Any(k string, v interface{}) Field {
 
 func FromContext(ctx context.Context) Logger {
 	log := &logger{
-		parent:  DefaultLogger.(*logger),
-		context: ctx,
-		writer:  DefaultWriter,
-		output:  DefaultOutput,
+		parent:   DefaultLogger.(*logger),
+		context:  ctx,
+		logLevel: &DefaultLogLevel,
+		writer:   defaultWriter,
+		output:   defaultOutput,
+	}
+	return log
+}
+
+func New() Logger {
+	log := &logger{
+		parent:   DefaultLogger.(*logger),
+		logLevel: &DefaultLogLevel,
+		writer:   defaultWriter,
+		output:   defaultOutput,
 	}
 	return log
 }
@@ -159,56 +175,76 @@ func (log *logger) getContext() context.Context {
 
 func (log *logger) With(fields ...Field) Logger {
 	nlog := &logger{
-		parent: log,
-		fields: fields,
-		writer: log.writer,
-		output: log.output,
+		parent:   log,
+		logLevel: log.logLevel,
+		fields:   fields,
+		writer:   log.writer,
+		output:   log.output,
 	}
 	return nlog
 }
 
 func (log *logger) Named(name string) Logger {
 	nlog := &logger{
-		name:   strings.Join([]string{log.name, name}, "/"),
-		parent: log,
-		writer: log.writer,
-		output: log.output,
+		name:     strings.Join([]string{log.name, name}, "/"),
+		parent:   log,
+		logLevel: log.logLevel,
+		writer:   log.writer,
+		output:   log.output,
 	}
 	return nlog
 }
 
+func (log *logger) SetOutput(w io.Writer) {
+	log.mu.Lock()
+	defer log.mu.Unlock()
+	log.output = w
+}
+
 func (log *logger) Debug(msg string, fields ...Field) {
-	if DebugLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if DebugLevel >= *log.logLevel {
 		log.write(DebugLevel, msg, fields...)
 	}
 }
 
 func (log *logger) Info(msg string, fields ...Field) {
-	if InfoLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if InfoLevel >= *log.logLevel {
 		log.write(InfoLevel, msg, fields...)
 	}
 }
 
 func (log *logger) Warn(msg string, fields ...Field) {
-	if WarnLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if WarnLevel >= *log.logLevel {
 		log.write(WarnLevel, msg, fields...)
 	}
 }
 
 func (log *logger) Error(msg string, fields ...Field) {
-	if ErrorLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if ErrorLevel >= *log.logLevel {
 		log.write(ErrorLevel, msg, fields...)
 	}
 }
 
 func (log *logger) Panic(msg string, fields ...Field) {
-	if PanicLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if PanicLevel >= *log.logLevel {
 		log.write(PanicLevel, msg, fields...)
 	}
 }
 
 func (log *logger) Fatal(msg string, fields ...Field) {
-	if FatalLevel >= DefaultLogLevel {
+	log.mu.RLock()
+	defer log.mu.RUnlock()
+	if FatalLevel >= *log.logLevel {
 		log.write(FatalLevel, msg, fields...)
 	}
 	os.Exit(1)
