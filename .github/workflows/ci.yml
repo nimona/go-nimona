@@ -20,8 +20,10 @@ jobs:
           CI: 'true'
           VERBOSE: 'true'
 
-      - name: Make lint
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.31
         env:
           CI: 'true'
           VERBOSE: 'true'
