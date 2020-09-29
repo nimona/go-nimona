@@ -84,15 +84,6 @@ func (c *chat) subscribe(
 		return nil, err
 	}
 
-	// os, _ := object.ReadAll(or)
-	// fmt.Println(dot.Dot(os))
-	// panic("asd")
-	// // get objects from db first
-	// or, err = c.objectstore.GetByStream(conversationRootHash)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	go func() {
 		for {
 			o, err := or.Read()
@@ -108,7 +99,6 @@ func (c *chat) subscribe(
 		for {
 			o, err := sub.Next()
 			if err != nil {
-				panic(err)
 				break
 			}
 			objects <- o
@@ -137,16 +127,12 @@ func (c *chat) subscribe(
 		peers, err := c.resolver.Lookup(
 			queryCtx,
 			resolver.LookupByContentHash(conversationRootHash),
-			// resolver.LookupByOwner(crypto.PublicKey("ed25519.2DCm9n7waPmgCfKZcQGmh6tb5fCppxZxR4aVvA6cHcRe")),
 		)
 		if err != nil {
-			// fmt.Println("REQUESTING FROM PEER --- FUCKING NONE")
-			// fmt.Println("could not find any peers that have this hash")
 			c.logger.Error("could not find any peers that have this hash")
 			return
 		}
 		for p := range peers {
-			// fmt.Println("REQUESTING FROM PEER", p.PublicKey())
 			reqCtx := context.New(context.WithTimeout(time.Second * 5))
 			cr, err := c.objectmanager.RequestStream(
 				reqCtx,
@@ -154,7 +140,6 @@ func (c *chat) subscribe(
 				p,
 			)
 			if err != nil {
-				// fmt.Println("REQUESTING FROM PEER", p.PublicKey(), "ERR", err)
 				c.logger.Warn(
 					"could not ask peer for stream",
 					log.String("peer", p.PublicKey().String()),
@@ -218,8 +203,8 @@ func main() {
 			ctx,
 			cfg.Peer.BindAddress,
 			network.ListenOnLocalIPs,
-			// network.ListenOnPrivateIPs,
-			// network.ListenOnExternalPort,
+			network.ListenOnPrivateIPs,
+			network.ListenOnExternalPort,
 		)
 		if err != nil {
 			logger.Fatal("error while listening", log.Error(err))
@@ -262,7 +247,7 @@ func main() {
 	logger.Info("ready")
 
 	// construct object store
-	db, err := sql.Open("sqlite3", "sqlite3.db")
+	db, err := sql.Open("sqlite3", "chat.db")
 	if err != nil {
 		logger.Fatal("error opening sql file", log.Error(err))
 	}
@@ -289,7 +274,6 @@ func main() {
 	conversationRoot := ConversationStreamRoot{
 		Nonce: cfg.Chat.Nonce,
 	}
-	conversationRootHash := conversationRoot.ToObject().Hash()
 
 	// register types so object manager persists them
 	local.PutContentTypes(
@@ -298,8 +282,11 @@ func main() {
 		new(stream.Subscription).GetType(),
 	)
 
+	conversationRootObject := conversationRoot.ToObject()
+	conversationRootHash := conversationRootObject.Hash()
+
 	// register conversation in object manager
-	if _, err := man.Put(ctx, conversationRoot.ToObject()); err != nil {
+	if _, err := man.Put(ctx, conversationRootObject); err != nil {
 		logger.Fatal("could not persist conversation root", log.Error(err))
 	}
 
@@ -316,30 +303,14 @@ func main() {
 		logger.Fatal("error subscribing to conversation", log.Error(err))
 	}
 
-	app := NewApp()
+	app := NewApp(conversationRootHash.String())
 	app.Chat = c
 	go app.Show()
 
 	go func() {
-		for input := range app.InputLines {
-			// input := ""
-			// fmt.Scanln(&input)
-			// input = strings.TrimSpace(input)
-			// if input == "" {
-			// 	continue
-			// }
-			// if input == "/exit" {
-			// 	fmt.Println("> Bye bye")
-			// 	os.Exit(0)
-			// }
-			// if input == "/whoami" {
-			// 	fmt.Println("> Public key:", local.GetPrimaryPeerKey().PublicKey())
-			// 	fmt.Println("> Addresses:", local.GetAddresses())
-			// 	continue
-			// }
+		for input := range app.Channels.InputLines {
 			if _, err := man.Put(
 				context.New(
-					context.WithCorrelationID("PUTPUT"+input),
 					context.WithTimeout(time.Second*5),
 				),
 				ConversationMessageAdded{
@@ -348,10 +319,9 @@ func main() {
 						Stream: conversationRootHash,
 					},
 					Body:     input,
-					Datetime: time.Now().Format(time.RFC3339),
+					Datetime: time.Now().Format(time.RFC3339Nano),
 				}.ToObject(),
 			); err != nil {
-				panic(err)
 				logger.Warn(
 					"error putting message",
 					log.Error(err),
@@ -363,24 +333,19 @@ func main() {
 	for event := range events {
 		switch v := event.(type) {
 		case *ConversationMessageAdded:
-			t, err := time.Parse(time.RFC3339, v.Datetime)
+			t, err := time.Parse(time.RFC3339Nano, v.Datetime)
 			if err != nil {
 				continue
 			}
-			// if t.Before(time.Now().Add(-24 * time.Hour)) {
-			// 	continue
-			// }
-			app.AddUserText(
-				strings.TrimSpace(v.Body),
-				last(v.Metadata.Owner.String(), 8),
-				t,
-			)
-			// fmt.Printf(
-			// 	"[%s] <%s> %s\n",
-			// 	v.Datetime,
-			// 	last(v.Metadata.Owner.String(), 6),
-			// 	strings.TrimSpace(v.Body),
-			// )
+			usr := last(v.Metadata.Owner.String(), 8)
+			app.Channels.MessageAdded <- &Message{
+				Hash:             v.ToObject().Hash().String(),
+				ConversationHash: v.Metadata.Stream.String(),
+				SenderHash:       v.Metadata.Owner.String(),
+				SenderNickname:   usr,
+				Body:             strings.TrimSpace(v.Body),
+				Created:          t,
+			}
 		}
 	}
 }
