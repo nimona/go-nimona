@@ -50,6 +50,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - sqlclosecheck
     - bodyclose
     - deadcode
     - depguard
@@ -117,6 +118,7 @@ issues:
       text: "hugeParam:"
 
 run:
+  timeout: 2m
   skip-dirs:
     - vendor
     - cmd
