@@ -224,8 +224,8 @@ func (app *App) Show() {
 				case "quit", "q":
 					app.Quit()
 					os.Exit(0)
-				case "whoami", "i":
-					app.AddSystemText("Peer info:")
+				case "info", "i":
+					app.AddSystemText("Info:")
 					app.AddSystemText(
 						fmt.Sprintf(
 							"* public key: %s",
@@ -236,6 +236,12 @@ func (app *App) Show() {
 						fmt.Sprintf(
 							"* addresses: %s",
 							app.Chat.local.GetAddresses(),
+						),
+					)
+					app.AddSystemText(
+						fmt.Sprintf(
+							"* pinned hashes: %v",
+							app.Chat.local.GetContentHashes(),
 						),
 					)
 				default:
