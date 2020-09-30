@@ -13,6 +13,8 @@ BINS = bootstrap
 BINS += keygen
 BINS += sonar
 
+EXAMPLES = chat
+
 SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
 
 # Tools
@@ -70,6 +72,15 @@ $(BINS): %:
 	go install $(V) \
 		-ldflags '$(LDFLAGS)' \
 		./cmd/$*
+
+build-examples: $(EXAMPLES)
+
+$(EXAMPLES): %:
+	@mkdir -p $(GOBIN)/example; \
+	cd examples; \
+	go build $(V) \
+		-ldflags '$(LDFLAGS)' \
+		-i -o $(GOBIN)/examples/$* ./$*
 
 # Clean up everything
 .PHONY: clean
