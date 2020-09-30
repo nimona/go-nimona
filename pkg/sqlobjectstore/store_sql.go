@@ -454,8 +454,12 @@ func (st *Store) Filter(
 	return reader, nil
 }
 
+const (
+	pinnedQuery = "SELECT Hash FROM Objects WHERE TTL = 0 AND Hash = RootHash"
+)
+
 func (st *Store) GetPinned() ([]object.Hash, error) {
-	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE TTL = 0")
+	stmt, err := st.db.Prepare(pinnedQuery)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
