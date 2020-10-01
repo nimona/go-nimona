@@ -127,11 +127,11 @@ func NewApp(conversationHash string) *App {
 				sort.Sort(conv.Messages)
 				// TODO only do this if the message is in the wrong order
 				app.Windows.Chat.Clear()
-				max := len(conv.Messages)
-				if max > 100 {
-					max -= 100
+				min := 0
+				if len(conv.Messages) > 100 {
+					min = len(conv.Messages) - 100
 				}
-				for _, message := range conv.Messages[max:] {
+				for _, message := range conv.Messages[min:] {
 					if message.SenderHash == "system" {
 						app.Windows.Chat.Write([]byte(
 							fmt.Sprintf(
