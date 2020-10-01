@@ -4,9 +4,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nimona.io/internal/version"
@@ -103,6 +106,19 @@ func main() {
 	logger.Info("bootstrap node ready")
 
 	go func() {
+		promauto.NewGaugeFunc(
+			prometheus.GaugeOpts{
+				Name: "build_info",
+				Help: "Build info",
+				ConstLabels: prometheus.Labels{
+					"commit":     version.Commit,
+					"build_date": version.Date,
+					"version":    version.Version,
+					"goversion":  runtime.Version(),
+				},
+			},
+			func() float64 { return 1 },
+		)
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(cfg.Metrics.BindAddress, nil)
 		if err != nil {
