@@ -110,6 +110,16 @@ func NewApp(conversationHash string) *App {
 		for {
 			select {
 			case messageAdded := <-app.Channels.MessageAdded:
+				duplicate := false
+				for _, message := range conv.Messages {
+					if message.Hash == messageAdded.Hash {
+						duplicate = true
+						break
+					}
+				}
+				if duplicate {
+					break
+				}
 				conv.Messages = append(
 					conv.Messages,
 					messageAdded,
