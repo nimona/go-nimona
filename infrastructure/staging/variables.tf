@@ -15,6 +15,11 @@ variable "environment" {
   default = ""
 }
 
+variable "reverse_dns" {
+  type    = bool
+  default = false
+}
+
 variable "server_groups_file" {
   type    = string
   default = "server_groups.yml"
