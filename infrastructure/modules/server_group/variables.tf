@@ -47,3 +47,8 @@ variable "inbound_ports" {
   type    = set(number)
   default = []
 }
+
+variable "reverse_dns" {
+  type    = bool
+  default = false
+}

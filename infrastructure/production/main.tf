@@ -34,6 +34,7 @@ module "server_groups" {
   image         = lookup(each.value, "image", "")
   tags          = lookup(each.value, "tags", [])
   inbound_ports = lookup(each.value, "inbound_ports", [])
+  reverse_dns   = var.reverse_dns
 
   cloudflare_zone_id   = var.cloudflare_zone_id
   ssh_private_key_file = local.ssh_private_key_file

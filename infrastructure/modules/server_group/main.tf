@@ -115,7 +115,7 @@ resource "scaleway_instance_server" "server" {
 }
 
 resource "scaleway_instance_ip_reverse_dns" "base" {
-  for_each = scaleway_instance_server.server
+  for_each = var.reverse_dns ? scaleway_instance_server.server : {}
 
   ip_id   = scaleway_instance_ip.server[each.key].id
   reverse = cloudflare_record.server[each.key].hostname
