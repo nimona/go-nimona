@@ -9,13 +9,17 @@ locals {
   environment   = coalesce(var.environment, basename(abspath(path.root)))
   server_groups = yamldecode(file(var.server_groups_file))
 
-  ssh_private_key_file = coalesce(
-    pathexpand(var.ssh_private_key_file),
-    "${path.module}/ssh/id_rsa"
+  ssh_private_key_file = abspath(
+    coalesce(
+      pathexpand(var.ssh_private_key_file),
+      "${path.module}/ssh/id_rsa"
+    )
   )
-  ssh_public_key_file = coalesce(
-    pathexpand(var.ssh_public_key_file),
-    "${path.module}/ssh/id_rsa.pub"
+  ssh_public_key_file = abspath(
+    coalesce(
+      pathexpand(var.ssh_public_key_file),
+      "${path.module}/ssh/id_rsa.pub"
+    )
   )
 }
 
