@@ -33,7 +33,7 @@ module "server_groups" {
   type          = lookup(each.value, "type", "")
   image         = lookup(each.value, "image", "")
   tags          = lookup(each.value, "tags", [])
-  inbound_ports = []
+  inbound_ports = lookup(each.value, "inbound_ports", [])
 
   cloudflare_zone_id   = var.cloudflare_zone_id
   ssh_private_key_file = local.ssh_private_key_file
