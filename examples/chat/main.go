@@ -107,19 +107,42 @@ func (c *chat) subscribe(
 
 	// create subscription for stream
 	go func() {
-		// add a subscription to the stream
-		// TODO check if we are already subscribed
-		ctx := context.New(context.WithTimeout(time.Second * 5))
-		if _, err := c.objectmanager.Put(ctx, stream.Subscription{
-			Metadata: object.Metadata{
-				Owner:  c.local.GetPrimaryPeerKey().PublicKey(),
-				Stream: conversationRootHash,
-			},
-			RootHashes: []object.Hash{
-				conversationRootHash,
-			},
-		}.ToObject()); err != nil {
-			c.logger.Fatal("could not persist conversation sub", log.Error(err))
+		// add a subscription to the stream if one doesn't already exist
+		or, err := c.objectstore.GetByStream(conversationRootHash)
+		if err != nil {
+			c.logger.Fatal("error checking for subscription", log.Error(err))
+		}
+		alreadySubscribed := false
+		for {
+			o, err := or.Read()
+			if err != nil {
+				break
+			}
+			if o.GetType() == new(stream.Subscription).GetType() {
+				s := &stream.Subscription{}
+				if err := s.FromObject(*o); err != nil {
+					continue
+				}
+				if s.Metadata.Owner == c.local.GetPrimaryPeerKey().PublicKey() {
+					alreadySubscribed = true
+					or.Close()
+					break
+				}
+			}
+		}
+		if !alreadySubscribed {
+			ctx := context.New(context.WithTimeout(time.Second * 5))
+			if _, err := c.objectmanager.Put(ctx, stream.Subscription{
+				Metadata: object.Metadata{
+					Owner:  c.local.GetPrimaryPeerKey().PublicKey(),
+					Stream: conversationRootHash,
+				},
+				RootHashes: []object.Hash{
+					conversationRootHash,
+				},
+			}.ToObject()); err != nil {
+				c.logger.Fatal("could not persist conversation sub", log.Error(err))
+			}
 		}
 
 		// sync conversation
