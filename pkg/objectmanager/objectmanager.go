@@ -547,12 +547,11 @@ func (m *manager) storeObject(
 	return nil
 }
 
-// TODO should announceStreamChildren be best effort and not return an error?
 func (m *manager) announceStreamChildren(
 	ctx context.Context,
 	streamHash object.Hash,
 	children []object.Hash,
-) error {
+) {
 	logger := log.FromContext(ctx)
 
 	// find ephemeral subscriptions for this stream
@@ -567,7 +566,7 @@ func (m *manager) announceStreamChildren(
 	// find subscriptions that are attached in the stream
 	r, err := m.objectstore.GetByStream(streamHash)
 	if err != nil {
-		return err
+		return
 	}
 
 	for {
@@ -595,7 +594,7 @@ func (m *manager) announceStreamChildren(
 	)
 
 	if len(subscribers) == 0 {
-		return nil
+		return
 	}
 
 	// notify subscribers
@@ -622,8 +621,6 @@ func (m *manager) announceStreamChildren(
 			log.Error(err),
 		)
 	}
-
-	return nil
 }
 
 func (m *manager) send(
@@ -842,7 +839,6 @@ func (m *manager) handleStreamAnnouncement(
 	}
 
 	// announce to subscribers
-	// TODO consider removing the err return from announceStreamChildren
 	go m.announceStreamChildren(
 		context.New(
 			context.WithCorrelationID(ctx.CorrelationID()),
@@ -850,7 +846,7 @@ func (m *manager) handleStreamAnnouncement(
 		),
 		ann.StreamHash,
 		ann.ObjectHashes,
-	) // nolint: errcheck
+	)
 
 	return nil
 }
@@ -903,8 +899,6 @@ func (m *manager) Put(
 
 	if !streamHash.IsEmpty() {
 		// announce to subscribers
-		// TODO consider removing the err return from announceStreamChildren
-		// nolint: errcheck
 		go m.announceStreamChildren(
 			context.New(
 				context.WithCorrelationID(ctx.CorrelationID()),
