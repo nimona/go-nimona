@@ -194,7 +194,7 @@ $(BIN_GOBIN): %:
 .PHONY: lint
 lint:
 	$(info Running Go linters)
-	@$(GOBIN)/golangci-lint $(V) run
+	@GOGC=off $(GOBIN)/golangci-lint $(V) run
 
 # Check licenses
 licenses:
