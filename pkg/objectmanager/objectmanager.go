@@ -547,18 +547,16 @@ func (m *manager) storeObject(
 	return nil
 }
 
-// TODO should announceObject be best effort and not return an error?
-func (m *manager) announceObject(
+// TODO should announceStreamChildren be best effort and not return an error?
+func (m *manager) announceStreamChildren(
 	ctx context.Context,
-	obj object.Object,
+	streamHash object.Hash,
+	children []object.Hash,
 ) error {
 	logger := log.FromContext(ctx)
-	// if this is not part of a stream, we're done here
-	if obj.GetStream().IsEmpty() {
-		return nil
-	}
 
 	// find ephemeral subscriptions for this stream
+	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[crypto.PublicKey]struct{}{}
 	m.subscriptions.Range(func(_ object.Hash, sub *stream.Subscription) bool {
 		// TODO check expiry
@@ -567,7 +565,7 @@ func (m *manager) announceObject(
 	})
 
 	// find subscriptions that are attached in the stream
-	r, err := m.objectstore.GetByStream(obj.GetStream())
+	r, err := m.objectstore.GetByStream(streamHash)
 	if err != nil {
 		return err
 	}
@@ -592,7 +590,7 @@ func (m *manager) announceObject(
 	}
 
 	logger.Info("trying to announce",
-		log.String("hash", obj.Hash().String()),
+		log.String("hash", streamHash.String()),
 		log.Any("subscribers", subscribers),
 	)
 
@@ -605,9 +603,8 @@ func (m *manager) announceObject(
 		Metadata: object.Metadata{
 			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
-		ObjectHashes: []object.Hash{
-			obj.Hash(),
-		},
+		StreamHash:   streamHash,
+		ObjectHashes: children,
 	}.ToObject()
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
@@ -813,15 +810,24 @@ func (m *manager) handleStreamAnnouncement(
 		return err
 	}
 
-	// TODO check if this a stream we care about
-	// TODO maybe verify nested objects
-	// TODO request missing objects if missing
+	// TODO check if this a stream we care about using ann.StreamHash
 
 	log.FromContext(ctx).Info("got stream announcement ",
 		log.Any("sender", env.Sender),
 		log.Any("hashes", ann.ObjectHashes),
 	)
 
+	// check if we already know about these objects
+	allKnown := true
+	for _, hash := range ann.ObjectHashes {
+		_, err := m.objectstore.Get(hash)
+		if err == objectstore.ErrNotFound {
+			allKnown = false
+			break
+		}
+	}
+
+	// fetch announced objects and their parents
 	if err := m.fetchFromLeaves(ctx, ann.ObjectHashes, &peer.Peer{
 		Metadata: object.Metadata{
 			Owner: env.Sender,
@@ -829,6 +835,22 @@ func (m *manager) handleStreamAnnouncement(
 	}); err != nil {
 		return err
 	}
+
+	// if we didn't know about all of them, announce to other subscribers
+	if allKnown {
+		return nil
+	}
+
+	// announce to subscribers
+	// TODO consider removing the err return from announceStreamChildren
+	go m.announceStreamChildren(
+		context.New(
+			context.WithCorrelationID(ctx.CorrelationID()),
+			// context.WithTimeout(5*time.Second),
+		),
+		ann.StreamHash,
+		ann.ObjectHashes,
+	) // nolint: errcheck
 
 	return nil
 }
@@ -873,21 +895,28 @@ func (m *manager) Put(
 			o = o.SetParents(parentHashes)
 		}
 	}
+
 	// add to store
 	if err := m.storeObject(ctx, o); err != nil {
 		return o, err
 	}
 
-	// announce to subscribers
-	// TODO consider removing the err return from announceObject
-	// nolint: errcheck
-	go m.announceObject(
-		context.New(
-			context.WithCorrelationID(ctx.CorrelationID()),
-			// context.WithTimeout(5*time.Second),
-		),
-		o,
-	) // nolint: errcheck
+	if !streamHash.IsEmpty() {
+		// announce to subscribers
+		// TODO consider removing the err return from announceStreamChildren
+		// nolint: errcheck
+		go m.announceStreamChildren(
+			context.New(
+				context.WithCorrelationID(ctx.CorrelationID()),
+				// TODO timeout?
+			),
+			o.GetStream(),
+			[]object.Hash{
+				o.Hash(),
+			},
+		)
+	}
+
 	// publish to pubsub
 	m.pubsub.Publish(o)
 	return o, nil

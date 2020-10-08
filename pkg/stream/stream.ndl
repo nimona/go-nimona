@@ -23,6 +23,7 @@ signed object nimona.io/stream.Response {
 
 signed object nimona.io/stream.Announcement {
     nonce string
+    streamHash nimona.io/object.Hash
     objectHashes repeated nimona.io/object.Hash
 }
 

@@ -34,6 +34,7 @@ type (
 		raw          object.Object
 		Metadata     object.Metadata
 		Nonce        string
+		StreamHash   object.Hash
 		ObjectHashes []object.Hash
 	}
 	Subscription struct {
@@ -354,6 +355,12 @@ func (e Announcement) GetSchema() *object.SchemaObject {
 			IsRepeated: false,
 			IsOptional: false,
 		}, {
+			Name:       "streamHash",
+			Type:       "nimona.io/object.Hash",
+			Hint:       "s",
+			IsRepeated: false,
+			IsOptional: false,
+		}, {
 			Name:       "objectHashes",
 			Type:       "nimona.io/object.Hash",
 			Hint:       "s",
@@ -382,6 +389,9 @@ func (e Announcement) ToObject() object.Object {
 	if e.Nonce != "" {
 		o = o.Set("nonce:s", e.Nonce)
 	}
+	if e.StreamHash != "" {
+		o = o.Set("streamHash:s", e.StreamHash)
+	}
 	if len(e.ObjectHashes) > 0 {
 		v := object.List{}
 		for _, iv := range e.ObjectHashes {
@@ -409,6 +419,9 @@ func (e *Announcement) FromObject(o object.Object) error {
 	e.Metadata.Policy = o.GetPolicy()
 	if v := data.Value("nonce:s"); v != nil {
 		e.Nonce = string(v.PrimitiveHinted().(string))
+	}
+	if v := data.Value("streamHash:s"); v != nil {
+		e.StreamHash = object.Hash(v.PrimitiveHinted().(string))
 	}
 	if v := data.Value("objectHashes:as"); v != nil && v.IsList() {
 		m := v.PrimitiveHinted().([]string)
