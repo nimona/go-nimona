@@ -120,6 +120,7 @@ issues:
 run:
   timeout: 2m
   allow-parallel-runners: true
+  modules-download-mode: readonly
   skip-dirs:
     - vendor
     - cmd
