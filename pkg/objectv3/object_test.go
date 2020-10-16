@@ -40,13 +40,14 @@ func (v Blob) Type() string {
 
 func TestEncodeDecode(t *testing.T) {
 	tests := []struct {
-		name    string
-		typed   Typed
-		object  *Object
-		wantErr bool
+		name       string
+		source     interface{}
+		object     *Object
+		encodeOnly bool
+		wantErr    bool
 	}{{
-		name: "single",
-		typed: &Chunk{
+		name: "object to struct, encode-decode",
+		source: &Chunk{
 			Metadata: Metadata{
 				Owner: "foo",
 			},
@@ -62,8 +63,50 @@ func TestEncodeDecode(t *testing.T) {
 			},
 		},
 	}, {
-		name: "nested",
-		typed: &Blob{
+		name: "map[string]interface{} to struct, encode",
+		source: map[string]interface{}{
+			"type:s": "chunk",
+			"metadata:m": map[string]interface{}{
+				"owner:s": "foo",
+			},
+			"data:m": map[string]interface{}{
+				"index:i": 1,
+			},
+		},
+		object: &Object{
+			Type: "chunk",
+			Metadata: Metadata{
+				Owner: "foo",
+			},
+			Data: map[string]interface{}{
+				"index:i": 1,
+			},
+		},
+		encodeOnly: true,
+	}, {
+		name: "map[interface{}]interface{} to struct, encode",
+		source: map[interface{}]interface{}{
+			"type:s": "chunk",
+			"metadata:m": map[interface{}]interface{}{
+				"owner:s": "foo",
+			},
+			"data:m": map[interface{}]interface{}{
+				"index:i": 1,
+			},
+		},
+		object: &Object{
+			Type: "chunk",
+			Metadata: Metadata{
+				Owner: "foo",
+			},
+			Data: map[string]interface{}{
+				"index:i": 1,
+			},
+		},
+		encodeOnly: true,
+	}, {
+		name: "object to struct, with nested object, encode-decode",
+		source: &Blob{
 			Filename: "foo",
 			Dummy: &Dummy{
 				Metadata: Metadata{
@@ -88,8 +131,8 @@ func TestEncodeDecode(t *testing.T) {
 			},
 		},
 	}, {
-		name: "slices",
-		typed: &Blob{
+		name: "object to struct, with nested slice of objects, encode-decode",
+		source: &Blob{
 			Filename: "foo",
 			Chunks: []*Chunk{{
 				Metadata: Metadata{
@@ -129,19 +172,21 @@ func TestEncodeDecode(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			object, err := Encode(tt.typed)
+			object, err := Encode(tt.source)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			assert.Equal(t, tt.object, object)
-			typed := reflect.New(reflect.TypeOf(tt.typed).Elem()).Interface().(Typed)
-			err = Decode(tt.object, typed)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			assert.Equal(t, tt.object, object, "during encode")
+			if !tt.encodeOnly {
+				source := reflect.New(reflect.TypeOf(tt.source).Elem()).Interface().(Typed)
+				err = Decode(tt.object, source)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				assert.Equal(t, tt.source, source, "during decode")
 			}
-			assert.Equal(t, tt.typed, typed)
 		})
 	}
 }
