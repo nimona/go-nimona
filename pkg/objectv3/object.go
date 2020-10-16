@@ -114,27 +114,29 @@ var (
 	typeOfObject = reflect.TypeOf((*Object)(nil)).Elem()
 )
 
-func nilHookfunc() mapstructure.DecodeHookFuncValue {
+func nilHookfunc() mapstructure.DecodeHookFuncValueContext {
 	return func(
 		f reflect.Value,
 		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
 	) (interface{}, error) {
 		return f.Interface(), nil
 	}
 }
 
-func encodeHookfunc() mapstructure.DecodeHookFuncValue {
+func encodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 	topLevelTyped := true
 	return func(
 		f reflect.Value,
 		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
 	) (interface{}, error) {
-		if t.Type() == reflect.TypeOf(reflect.Value{}) {
-			return f.Interface(), nil
-		}
-		if f.Type() == reflect.TypeOf(reflect.Value{}) {
-			return f.Interface(), nil
-		}
+		// if t.Type() == reflect.TypeOf(reflect.Value{}) {
+		// 	return f.Interface(), nil
+		// }
+		// if f.Type() == reflect.TypeOf(reflect.Value{}) {
+		// 	return f.Interface(), nil
+		// }
 		// (encode) Typed to *Object
 		if _, ok := f.Interface().(Typed); ok {
 			if topLevelTyped {
@@ -160,15 +162,24 @@ func encodeHookfunc() mapstructure.DecodeHookFuncValue {
 			}
 			return os, nil
 		}
+		// simpler things
+		if !ctx.IsKey {
+			r, err := normalizeFromKey(ctx.Name, f.Interface())
+			if err != nil {
+				return nil, err
+			}
+			return r, nil
+		}
 		return f.Interface(), nil
 	}
 }
 
-func decodeHookfunc() mapstructure.DecodeHookFuncValue {
+func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 	topLevelTyped := true
 	return func(
 		f reflect.Value,
 		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
 	) (interface{}, error) {
 		if t.Type() == reflect.TypeOf(reflect.Value{}) {
 			return f.Interface(), nil
@@ -222,7 +233,7 @@ func decodeHookfunc() mapstructure.DecodeHookFuncValue {
 func decode(
 	from interface{},
 	to interface{},
-	hook mapstructure.DecodeHookFuncValue,
+	hook mapstructure.DecodeHookFuncValueContext,
 ) (*mapstructure.Metadata, error) {
 	md := &mapstructure.Metadata{}
 	config := &mapstructure.DecoderConfig{
