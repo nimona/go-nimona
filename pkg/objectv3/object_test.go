@@ -1,6 +1,7 @@
 package objectv3
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -16,14 +17,24 @@ type (
 	}
 	Blob struct {
 		Metadata Metadata `nimona:"metadata:m"`
-		Dummy    *Dummy   `nimona:"dummy:o,omitempty"`
+		Dummy    *Dummy   `nimona:"dummy:m,omitempty"`
 		Filename string   `nimona:"filename:s,omitempty"`
-		Chunks   []*Chunk `nimona:"chunks:ao,omitempty"`
+		Chunks   []*Chunk `nimona:"chunks:am,omitempty"`
 	}
 	Dummy struct {
 		Metadata Metadata `nimona:"metadata:m"`
 		Foo      string   `nimona:"foo:s,omitempty"`
 	}
+	// BlobUnloaded struct {
+	// 	Metadata    object.Metadata `nimona:",metadata"`
+	// 	Filename    string          `nimona:"filename,string"`
+	// 	ChunkHashes []object.Hash   `nimona:"chunks,object"`
+	// }
+	// BlobMaybeUnloaded struct {
+	// 	Metadata    object.Metadata           `nimona:",metadata"`
+	// 	Filename    string                    `nimona:"filename,string"`
+	// 	ChunkHashes []object.ResolvableObject `nimona:"chunks,object"`
+	// }
 )
 
 func (v Dummy) Type() string {
@@ -59,7 +70,7 @@ func TestEncodeDecode(t *testing.T) {
 				Owner: "foo",
 			},
 			Data: map[string]interface{}{
-				"index:i": 1,
+				"index:i": int64(1),
 			},
 		},
 	}, {
@@ -79,7 +90,7 @@ func TestEncodeDecode(t *testing.T) {
 				Owner: "foo",
 			},
 			Data: map[string]interface{}{
-				"index:i": 1,
+				"index:i": int64(1),
 			},
 		},
 		encodeOnly: true,
@@ -100,7 +111,36 @@ func TestEncodeDecode(t *testing.T) {
 				Owner: "foo",
 			},
 			Data: map[string]interface{}{
-				"index:i": 1,
+				"index:i": int64(1),
+			},
+		},
+		encodeOnly: true,
+	}, {
+		name: "json to struct, encode",
+		source: func() interface{} {
+			s := map[string]interface{}{
+				"type:s": "chunk",
+				"metadata:m": map[string]interface{}{
+					"owner:s": "foo",
+				},
+				"data:m": map[string]interface{}{
+					"index:i": 1,
+				},
+			}
+			b, err := json.Marshal(s)
+			require.NoError(t, err)
+			r := map[string]interface{}{}
+			err = json.Unmarshal(b, &r)
+			require.NoError(t, err)
+			return r
+		}(),
+		object: &Object{
+			Type: "chunk",
+			Metadata: Metadata{
+				Owner: "foo",
+			},
+			Data: map[string]interface{}{
+				"index:i": int64(1),
 			},
 		},
 		encodeOnly: true,
@@ -119,7 +159,7 @@ func TestEncodeDecode(t *testing.T) {
 			Type: "blob",
 			Data: map[string]interface{}{
 				"filename:s": "foo",
-				"dummy:o": &Object{
+				"dummy:m": &Object{
 					Type: "dummy",
 					Metadata: Metadata{
 						Owner: "foo",
@@ -150,13 +190,13 @@ func TestEncodeDecode(t *testing.T) {
 			Type: "blob",
 			Data: map[string]interface{}{
 				"filename:s": "foo",
-				"chunks:ao": []*Object{{
+				"chunks:am": []*Object{{
 					Type: "chunk",
 					Metadata: Metadata{
 						Owner: "foo",
 					},
 					Data: map[string]interface{}{
-						"index:i": 1,
+						"index:i": int64(1),
 					},
 				}, {
 					Type: "chunk",
@@ -164,7 +204,7 @@ func TestEncodeDecode(t *testing.T) {
 						Owner: "foo2",
 					},
 					Data: map[string]interface{}{
-						"index:i": 2,
+						"index:i": int64(2),
 					},
 				}},
 			},
@@ -206,7 +246,7 @@ func TestDecode_ObjectWithNestedTyped(t *testing.T) {
 		Type: "blob",
 		Data: map[string]interface{}{
 			"filename:s": "foo",
-			"dummy:o": &Dummy{
+			"dummy:m": &Dummy{
 				Metadata: Metadata{
 					Owner: "foo",
 				},

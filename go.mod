@@ -29,4 +29,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace github.com/mitchellh/mapstructure => github.com/geoah/mapstructure v1.3.4-rc2
+replace github.com/mitchellh/mapstructure => github.com/geoah/mapstructure v1.3.4-rc3
