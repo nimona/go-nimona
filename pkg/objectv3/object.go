@@ -2,13 +2,23 @@ package objectv3
 
 import (
 	"crypto"
+	"fmt"
 	"reflect"
+
+	"nimona.io/pkg/errors"
 
 	"github.com/mitchellh/mapstructure"
 )
 
 const (
 	keyMetadata = "metadata:m"
+	keyData     = "data:m"
+	keyType     = "type:s"
+)
+
+const (
+	ErrSourceNotSupported = errors.Error("encoding source not supported")
+	ErrNoType             = errors.Error("unable to find a type")
 )
 
 type (
@@ -37,22 +47,54 @@ type (
 	}
 )
 
-func Encode(v Typed) (*Object, error) {
+func Encode(v interface{}) (*Object, error) {
 	m := map[string]interface{}{}
-	if _, err := decode(v, &m, encodeHookfunc()); err != nil {
-		return nil, err
+	switch vi := v.(type) {
+	case Typed:
+		d := map[string]interface{}{}
+		if _, err := decode(v, &d, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+		m = map[string]interface{}{
+			keyType:     vi.Type(),
+			keyData:     d,
+			keyMetadata: d[keyMetadata],
+		}
+		delete(d, keyMetadata)
+	case map[string]interface{}:
+		m = vi
+	case map[interface{}]interface{}:
+		if _, err := decode(vi, &m, nilHookfunc()); err != nil {
+			return nil, err
+		}
+	default:
+		fmt.Println(reflect.TypeOf(v))
+		return nil, ErrSourceNotSupported
+	}
+	mt, ok := m[keyType]
+	if !ok {
+		return nil, ErrNoType
+	}
+	t := mt.(string)
+	if t == "" {
+		return nil, ErrNoType
 	}
 	o := &Object{
-		Type:     v.Type(),
+		Type:     t,
 		Metadata: Metadata{},
-		Data:     m,
+		Data:     map[string]interface{}{},
+	}
+	if mm, ok := m[keyData]; ok {
+		if _, err := decode(mm, &o.Data, encodeHookfunc()); err != nil {
+			return nil, err
+		}
 	}
 	if mm, ok := m[keyMetadata]; ok {
 		if _, err := decode(mm, &o.Metadata, encodeHookfunc()); err != nil {
 			return nil, err
 		}
-		delete(m, keyMetadata)
 	}
+	delete(o.Data, keyMetadata)
 	return o, nil
 }
 
@@ -71,6 +113,15 @@ var (
 	typeOfTyped  = reflect.TypeOf((*Typed)(nil)).Elem()
 	typeOfObject = reflect.TypeOf((*Object)(nil)).Elem()
 )
+
+func nilHookfunc() mapstructure.DecodeHookFuncValue {
+	return func(
+		f reflect.Value,
+		t reflect.Value,
+	) (interface{}, error) {
+		return f.Interface(), nil
+	}
+}
 
 func encodeHookfunc() mapstructure.DecodeHookFuncValue {
 	topLevelTyped := true
