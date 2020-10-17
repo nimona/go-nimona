@@ -3,6 +3,8 @@ package object
 import (
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
+
 	"nimona.io/pkg/context"
 )
 
@@ -21,28 +23,24 @@ func LoadReferences(
 	if err != nil {
 		return nil, err
 	}
-	refs := map[string]Hash{}
-	data := obj.Raw().Value("data:m")
-	Traverse(data, func(k string, v Value) bool {
-		if !v.IsRef() {
-			return true
+	var getError error
+	traverseObject(obj, func(k string, v interface{}) (string, interface{}, bool) {
+		h, ok := v.(Hash)
+		if !ok {
+			return "", nil, false
 		}
-		refs[k] = Hash(v.(Ref))
-		return true
+		switch {
+		case strings.HasSuffix(k, ":r"):
+			o, err := getter(ctx, h)
+			if err != nil {
+				getError = multierror.Append(getError, err)
+				return "", nil, false
+			}
+			return strings.Replace(k, ":r", ":m", 1), o, true
+		case strings.HasSuffix(k, ":am"):
+			panic("LoadReferences doesn't implement loading from slices")
+		}
+		return "", nil, false
 	})
-	refObjs := map[string]*Object{}
-	for k, ref := range refs {
-		refObj, err := getter(ctx, ref)
-		if err != nil {
-			return nil, err
-		}
-		refObjs[k] = refObj
-	}
-	fullObj := *obj
-	for k, refObj := range refObjs {
-		fullObj = fullObj.Set(k, nil)
-		nk := strings.Replace(k, ":r", ":m", 1)
-		fullObj = fullObj.Set(nk, refObj.ToMap())
-	}
-	return &fullObj, nil
+	return obj, nil
 }

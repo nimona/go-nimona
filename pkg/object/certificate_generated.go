@@ -2,263 +2,53 @@
 
 package object
 
-import "nimona.io/pkg/errors"
-
 type (
 	Certificate struct {
-		raw      Object
-		Metadata Metadata
-		Nonce    string
-		Created  string
-		Expires  string
+		Metadata Metadata `nimona:"metadata:m"`
+		Nonce    string   `nimona:"nonce:s",omitempty`
+		Created  string   `nimona:"created:s",omitempty`
+		Expires  string   `nimona:"expires:s",omitempty`
 	}
 	CertificateRequest struct {
-		raw                    Object
-		Metadata               Metadata
-		ApplicationName        string
-		ApplicationDescription string
-		ApplicationURL         string
-		Subject                string
-		Resources              []string
-		Actions                []string
-		Nonce                  string
+		Metadata               Metadata `nimona:"metadata:m"`
+		ApplicationName        string   `nimona:"applicationName:s",omitempty`
+		ApplicationDescription string   `nimona:"applicationDescription:s",omitempty`
+		ApplicationURL         string   `nimona:"applicationURL:s",omitempty`
+		Subject                string   `nimona:"subject:s",omitempty`
+		Resources              []string `nimona:"resources:as",omitempty`
+		Actions                []string `nimona:"actions:as",omitempty`
+		Nonce                  string   `nimona:"nonce:s",omitempty`
 	}
 )
 
-func (e Certificate) GetType() string {
+func (e *Certificate) Type() string {
 	return "nimona.io/Certificate"
 }
 
-func (e Certificate) IsStreamRoot() bool {
-	return false
-}
-
-func (e Certificate) GetSchema() *SchemaObject {
-	return &SchemaObject{
-		Properties: []*SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "created",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "expires",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e *Certificate) ToObject() *Object {
+	o, err := Encode(e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Certificate) ToObject() Object {
-	o := Object{}
-	o = o.SetType("nimona.io/Certificate")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if e.Created != "" {
-		o = o.Set("created:s", e.Created)
-	}
-	if e.Expires != "" {
-		o = o.Set("expires:s", e.Expires)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Certificate) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("created:s"); v != nil {
-		e.Created = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("expires:s"); v != nil {
-		e.Expires = string(v.PrimitiveHinted().(string))
-	}
-	return nil
+func (e *Certificate) FromObject(o *Object) error {
+	return Decode(o, e)
 }
 
-func (e CertificateRequest) GetType() string {
+func (e *CertificateRequest) Type() string {
 	return "nimona.io/CertificateRequest"
 }
 
-func (e CertificateRequest) IsStreamRoot() bool {
-	return false
-}
-
-func (e CertificateRequest) GetSchema() *SchemaObject {
-	return &SchemaObject{
-		Properties: []*SchemaProperty{{
-			Name:       "applicationName",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "applicationDescription",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "applicationURL",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "subject",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "resources",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "actions",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e *CertificateRequest) ToObject() *Object {
+	o, err := Encode(e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e CertificateRequest) ToObject() Object {
-	o := Object{}
-	o = o.SetType("nimona.io/CertificateRequest")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.ApplicationName != "" {
-		o = o.Set("applicationName:s", e.ApplicationName)
-	}
-	if e.ApplicationDescription != "" {
-		o = o.Set("applicationDescription:s", e.ApplicationDescription)
-	}
-	if e.ApplicationURL != "" {
-		o = o.Set("applicationURL:s", e.ApplicationURL)
-	}
-	if e.Subject != "" {
-		o = o.Set("subject:s", e.Subject)
-	}
-	if len(e.Resources) > 0 {
-		v := List{}
-		for _, iv := range e.Resources {
-			v = v.Append(String(iv))
-		}
-		o = o.Set("resources:as", v)
-	}
-	if len(e.Actions) > 0 {
-		v := List{}
-		for _, iv := range e.Actions {
-			v = v.Append(String(iv))
-		}
-		o = o.Set("actions:as", v)
-	}
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *CertificateRequest) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("applicationName:s"); v != nil {
-		e.ApplicationName = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("applicationDescription:s"); v != nil {
-		e.ApplicationDescription = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("applicationURL:s"); v != nil {
-		e.ApplicationURL = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("subject:s"); v != nil {
-		e.Subject = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("resources:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Resources = make([]string, len(m))
-		for i, iv := range m {
-			e.Resources[i] = string(iv)
-		}
-	}
-	if v := data.Value("actions:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Actions = make([]string, len(m))
-		for i, iv := range m {
-			e.Actions[i] = string(iv)
-		}
-	}
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	return nil
+func (e *CertificateRequest) FromObject(o *Object) error {
+	return Decode(o, e)
 }

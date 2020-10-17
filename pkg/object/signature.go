@@ -20,30 +20,26 @@ const (
 )
 
 type Signature struct {
-	Signer      crypto.PublicKey `json:"signer:s,omitempty" mapstructure:"signer:s,omitempty"`
-	Alg         string           `json:"alg:s,omitempty" mapstructure:"alg:s,omitempty"`
-	X           []byte           `json:"x:d,omitempty" mapstructure:"x:d,omitempty"`
-	Certificate *Certificate     `json:"certificate:m,omitempty" mapstructure:"certificate:m,omitempty"`
+	Signer      crypto.PublicKey `nimona:"signer:s,omitempty"`
+	Alg         string           `nimona:"alg:s,omitempty"`
+	X           []byte           `nimona:"x:d,omitempty"`
+	Certificate *Certificate     `nimona:"certificate:m,omitempty"`
 }
 
-func (s Signature) ToMap() map[string]interface{} {
-	m := map[string]interface{}{
-		"signer:s": s.Signer.String(),
-		"alg:s":    s.Alg,
-		"x:d":      s.X,
-	}
-	if s.Certificate != nil {
-		m["certificate:m"] = s.Certificate.ToObject().ToMap()
-	}
-	return m
+func (s Signature) IsEmpty() bool {
+	return len(s.X) == 0
 }
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
 	k crypto.PrivateKey,
-	o Object,
+	o *Object,
 ) (Signature, error) {
-	x := k.Sign(o.Hash().rawBytes())
+	h, err := NewHash(o)
+	if err != nil {
+		return Signature{}, err
+	}
+	x := k.Sign([]byte(h))
 	s := Signature{
 		Signer: k.PublicKey(),
 		Alg:    AlgorithmObjectHash,

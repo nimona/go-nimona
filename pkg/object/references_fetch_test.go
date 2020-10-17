@@ -11,14 +11,23 @@ import (
 )
 
 func TestFetchReferences(t *testing.T) {
-	f00 := Object{}.
-		Set("f00:s", "f00").
-		Set("f01:r", "f01").
-		Set("f02:r", "f02")
-	f01 := Object{}.
-		Set("f01:s", "f01")
-	f02 := Object{}.
-		Set("f02:s", "f02")
+	f00 := &Object{
+		Data: map[string]interface{}{
+			"f00:s": "f00",
+			"f01:r": Hash("f01"),
+			"f02:r": Hash("f02"),
+		},
+	}
+	f01 := &Object{
+		Data: map[string]interface{}{
+			"f01:s": "f01",
+		},
+	}
+	f02 := &Object{
+		Data: map[string]interface{}{
+			"f02:s": "f02",
+		},
+	}
 
 	type args struct {
 		ctx        context.Context
@@ -28,7 +37,7 @@ func TestFetchReferences(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []Object
+		want    []*Object
 		wantErr bool
 	}{{
 		name: "should pass, one object, no references",
@@ -39,13 +48,13 @@ func TestFetchReferences(t *testing.T) {
 				hash Hash,
 			) (*Object, error) {
 				if hash == "f01" {
-					return &f01, nil
+					return f01, nil
 				}
 				return nil, errors.New("not found")
 			},
 			objectHash: "f01",
 		},
-		want: []Object{
+		want: []*Object{
 			f01,
 		},
 	}, {
@@ -58,17 +67,17 @@ func TestFetchReferences(t *testing.T) {
 			) (*Object, error) {
 				switch hash {
 				case "f00":
-					return &f00, nil
+					return f00, nil
 				case "f01":
-					return &f01, nil
+					return f01, nil
 				case "f02":
-					return &f02, nil
+					return f02, nil
 				}
 				return nil, errors.New("not found")
 			},
 			objectHash: "f00",
 		},
-		want: []Object{
+		want: []*Object{
 			f00,
 			f01,
 			f02,
@@ -86,23 +95,16 @@ func TestFetchReferences(t *testing.T) {
 				return
 			}
 			if tt.want != nil {
-				objs := []Object{}
+				objs := []*Object{}
 				for {
 					obj, err := got.Read()
 					if err != nil {
 						break
 					}
-					objs = append(objs, *obj)
+					objs = append(objs, obj)
 				}
 				require.Equal(t, len(tt.want), len(objs))
-				for i := 0; i < len(tt.want); i++ {
-					assert.Equal(
-						t,
-						tt.want[i].ToMap(),
-						objs[i].ToMap(),
-						"for index %d", i,
-					)
-				}
+				assert.ElementsMatch(t, tt.want, objs)
 			}
 		})
 	}

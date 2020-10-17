@@ -84,7 +84,7 @@ func ReadAll(r Reader) ([]*Object, error) {
 
 // NewReadCloserFromObjects is mainly used for testing and mocks that return
 // a Reader, or ReadCloser.
-func NewReadCloserFromObjects(objects []Object) ReadCloser {
+func NewReadCloserFromObjects(objects []*Object) ReadCloser {
 	objectChan := make(chan *Object)
 	errorChan := make(chan error)
 	closeChan := make(chan struct{})
@@ -100,7 +100,7 @@ func NewReadCloserFromObjects(objects []Object) ReadCloser {
 		defer close(objectChan)
 		defer close(errorChan)
 		for i := range objects {
-			objectChan <- &objects[i]
+			objectChan <- objects[i]
 		}
 	}()
 
