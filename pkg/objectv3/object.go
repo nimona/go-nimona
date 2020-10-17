@@ -50,6 +50,8 @@ type (
 func Encode(v interface{}) (*Object, error) {
 	m := map[string]interface{}{}
 	switch vi := v.(type) {
+	case *Object:
+		return vi, nil
 	case Typed:
 		d := map[string]interface{}{}
 		if _, err := decode(v, &d, encodeHookfunc()); err != nil {
@@ -71,31 +73,7 @@ func Encode(v interface{}) (*Object, error) {
 		fmt.Println(reflect.TypeOf(v))
 		return nil, ErrSourceNotSupported
 	}
-	mt, ok := m[keyType]
-	if !ok {
-		return nil, ErrNoType
-	}
-	t := mt.(string)
-	if t == "" {
-		return nil, ErrNoType
-	}
-	o := &Object{
-		Type:     t,
-		Metadata: Metadata{},
-		Data:     map[string]interface{}{},
-	}
-	if mm, ok := m[keyData]; ok {
-		if _, err := decode(mm, &o.Data, encodeHookfunc()); err != nil {
-			return nil, err
-		}
-	}
-	if mm, ok := m[keyMetadata]; ok {
-		if _, err := decode(mm, &o.Metadata, encodeHookfunc()); err != nil {
-			return nil, err
-		}
-	}
-	delete(o.Data, keyMetadata)
-	return o, nil
+	return mapToObject(m)
 }
 
 func Decode(o *Object, v Typed) error {
@@ -131,12 +109,6 @@ func encodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 		t reflect.Value,
 		ctx *mapstructure.DecodeContext,
 	) (interface{}, error) {
-		// if t.Type() == reflect.TypeOf(reflect.Value{}) {
-		// 	return f.Interface(), nil
-		// }
-		// if f.Type() == reflect.TypeOf(reflect.Value{}) {
-		// 	return f.Interface(), nil
-		// }
 		// (encode) Typed to *Object
 		if _, ok := f.Interface().(Typed); ok {
 			if topLevelTyped {
@@ -162,6 +134,7 @@ func encodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 			}
 			return os, nil
 		}
+		// (encode) map[string]interface{} with type/data/metadat to *Object
 		// simpler things
 		if !ctx.IsKey {
 			r, err := normalizeFromKey(ctx.Name, f.Interface())
@@ -181,12 +154,6 @@ func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 		t reflect.Value,
 		ctx *mapstructure.DecodeContext,
 	) (interface{}, error) {
-		if t.Type() == reflect.TypeOf(reflect.Value{}) {
-			return f.Interface(), nil
-		}
-		if f.Type() == reflect.TypeOf(reflect.Value{}) {
-			return f.Interface(), nil
-		}
 		// (decode) *Object to Typed
 		if _, ok := t.Interface().(Typed); ok &&
 			f.Type().Elem() == typeOfObject {
@@ -254,4 +221,31 @@ func decode(
 		return md, err
 	}
 	return md, nil
+}
+
+func mapToObject(m map[string]interface{}) (*Object, error) {
+	ti, ok := m[keyType]
+	if !ok {
+		return nil, ErrNoType
+	}
+	t := ti.(string)
+	if t == "" {
+		return nil, ErrNoType
+	}
+	o := &Object{
+		Type:     t,
+		Metadata: Metadata{},
+		Data:     map[string]interface{}{},
+	}
+	if mm, ok := m[keyData]; ok {
+		if _, err := decode(mm, &o.Data, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+	}
+	if mm, ok := m[keyMetadata]; ok {
+		if _, err := decode(mm, &o.Metadata, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+	}
+	return o, nil
 }

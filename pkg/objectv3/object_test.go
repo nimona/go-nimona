@@ -17,9 +17,9 @@ type (
 	}
 	Blob struct {
 		Metadata Metadata `nimona:"metadata:m"`
-		Dummy    *Dummy   `nimona:"dummy:m,omitempty"`
+		Dummy    *Dummy   `nimona:"dummy:o,omitempty"`
 		Filename string   `nimona:"filename:s,omitempty"`
-		Chunks   []*Chunk `nimona:"chunks:am,omitempty"`
+		Chunks   []*Chunk `nimona:"chunks:ao,omitempty"`
 	}
 	Dummy struct {
 		Metadata Metadata `nimona:"metadata:m"`
@@ -159,7 +159,7 @@ func TestEncodeDecode(t *testing.T) {
 			Type: "blob",
 			Data: map[string]interface{}{
 				"filename:s": "foo",
-				"dummy:m": &Object{
+				"dummy:o": &Object{
 					Type: "dummy",
 					Metadata: Metadata{
 						Owner: "foo",
@@ -170,6 +170,47 @@ func TestEncodeDecode(t *testing.T) {
 				},
 			},
 		},
+	}, {
+		name: "json to struct, with nested object, encode",
+		source: func() interface{} {
+			s := map[string]interface{}{
+				"type:s": "blob",
+				"data:m": map[string]interface{}{
+					"filename:s": "foo",
+					"dummy:o": map[string]interface{}{
+						"type:s": "dummy",
+						"metadata:m": map[string]interface{}{
+							"owner:s": "foo",
+						},
+						"data:m": map[string]interface{}{
+							"foo:s": "bar",
+						},
+					},
+				},
+			}
+			b, err := json.Marshal(s)
+			require.NoError(t, err)
+			r := map[string]interface{}{}
+			err = json.Unmarshal(b, &r)
+			require.NoError(t, err)
+			return r
+		}(),
+		object: &Object{
+			Type: "blob",
+			Data: map[string]interface{}{
+				"filename:s": "foo",
+				"dummy:o": &Object{
+					Type: "dummy",
+					Metadata: Metadata{
+						Owner: "foo",
+					},
+					Data: map[string]interface{}{
+						"foo:s": "bar",
+					},
+				},
+			},
+		},
+		encodeOnly: true,
 	}, {
 		name: "object to struct, with nested slice of objects, encode-decode",
 		source: &Blob{
@@ -190,7 +231,7 @@ func TestEncodeDecode(t *testing.T) {
 			Type: "blob",
 			Data: map[string]interface{}{
 				"filename:s": "foo",
-				"chunks:am": []*Object{{
+				"chunks:ao": []*Object{{
 					Type: "chunk",
 					Metadata: Metadata{
 						Owner: "foo",
@@ -209,6 +250,66 @@ func TestEncodeDecode(t *testing.T) {
 				}},
 			},
 		},
+	}, {
+		name: "json to struct, with nested slice of objects, encode",
+		source: func() interface{} {
+			s := map[string]interface{}{
+				"type:s": "blob",
+				"data:m": map[string]interface{}{
+					"filename:s": "foo",
+					"chunks:ao": []interface{}{
+						map[string]interface{}{
+							"type:s": "chunk",
+							"metadata:m": map[string]interface{}{
+								"owner:s": "foo",
+							},
+							"data:m": map[string]interface{}{
+								"index:i": 1,
+							},
+						},
+						map[string]interface{}{
+							"type:s": "chunk",
+							"metadata:m": map[string]interface{}{
+								"owner:s": "foo2",
+							},
+							"data:m": map[string]interface{}{
+								"index:i": 2,
+							},
+						},
+					},
+				},
+			}
+			b, err := json.Marshal(s)
+			require.NoError(t, err)
+			r := map[string]interface{}{}
+			err = json.Unmarshal(b, &r)
+			require.NoError(t, err)
+			return r
+		}(),
+		object: &Object{
+			Type: "blob",
+			Data: map[string]interface{}{
+				"filename:s": "foo",
+				"chunks:ao": []*Object{{
+					Type: "chunk",
+					Metadata: Metadata{
+						Owner: "foo",
+					},
+					Data: map[string]interface{}{
+						"index:i": int64(1),
+					},
+				}, {
+					Type: "chunk",
+					Metadata: Metadata{
+						Owner: "foo2",
+					},
+					Data: map[string]interface{}{
+						"index:i": int64(2),
+					},
+				}},
+			},
+		},
+		encodeOnly: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -246,7 +347,7 @@ func TestDecode_ObjectWithNestedTyped(t *testing.T) {
 		Type: "blob",
 		Data: map[string]interface{}{
 			"filename:s": "foo",
-			"dummy:m": &Dummy{
+			"dummy:o": &Dummy{
 				Metadata: Metadata{
 					Owner: "foo",
 				},

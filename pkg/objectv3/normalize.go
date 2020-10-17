@@ -33,8 +33,6 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	if i == nil {
 		return nil, nil
 	}
-	// k = strings.TrimLeft(k, "[")
-	// k = strings.TrimRight(k, "]")
 	if k == "" {
 		return i, nil
 	}
@@ -65,6 +63,29 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					}
 				}
 				return m, nil
+			case 'o':
+				switch v := i.(type) {
+				case []*Object:
+					return i, nil
+				case []interface{}:
+					os := make([]*Object, len(v))
+					for vk, vv := range v {
+						o, err := Encode(vv)
+						if err != nil {
+							return nil, err
+						}
+						os[vk] = o
+					}
+					return os, nil
+				default:
+					return nil, errors.Wrap(
+						err,
+						fmt.Errorf(
+							"invalid ao type, t=%s",
+							reflect.TypeOf(i).String(),
+						),
+					)
+				}
 			case 'm':
 				return i, nil
 				// v := reflect.ValueOf(i)
@@ -175,6 +196,8 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	case 'm':
 		// return normalizeObject(i)
 		return i, nil
+	case 'o':
+		return Encode(i)
 	case 's':
 		return normalizeString(i)
 	case 'd':
