@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,34 +16,50 @@ func TestVerify(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		object  Object
+		object  *Object
 		wantErr bool
 	}{{
 		name: "should pass, no signature, no owner",
-		object: new(Object).
-			Set("foo:s", "bar"),
+		object: &Object{
+			Data: map[string]interface{}{
+				"foo:s": "bar",
+			},
+		},
 	}, {
 		name: "should pass, no owner, with signature",
 		object: mustSign(
 			t,
 			testKey0,
-			new(Object).
-				Set("foo:s", "bar"),
+			&Object{
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+				},
+			},
 		),
 	}, {
 		name: "should fail, with owner, no signature",
-		object: new(Object).
-			Set("foo:s", "bar").
-			SetOwner(testKey0.PublicKey()),
+		object: &Object{
+			Metadata: Metadata{
+				Owner: testKey0.PublicKey(),
+			},
+			Data: map[string]interface{}{
+				"foo:s": "bar",
+			},
+		},
 		wantErr: true,
 	}, {
 		name: "should fail, with owner, with wrong signature",
 		object: mustSign(
 			t,
 			testKey1,
-			new(Object).
-				Set("foo:s", "bar").
-				SetOwner(testKey0.PublicKey()),
+			&Object{
+				Metadata: Metadata{
+					Owner: testKey0.PublicKey(),
+				},
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+				},
+			},
 		),
 		wantErr: true,
 	}, {
@@ -52,19 +67,32 @@ func TestVerify(t *testing.T) {
 		object: mustSign(
 			t,
 			testKey1,
-			new(Object).
-				Set("foo:s", "bar").
-				SetOwner(testKey0.PublicKey()),
-		).set("metadata:m/_signature:m/x:d", Bytes([]byte{1, 2, 3})),
+			&Object{
+				Metadata: Metadata{
+					Owner: testKey0.PublicKey(),
+					Signature: Signature{
+						X: []byte{1, 2, 3},
+					},
+				},
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+				},
+			},
+		),
 		wantErr: true,
 	}, {
 		name: "should pass, with owner, owner's valid signature",
 		object: mustSign(
 			t,
 			testKey0,
-			new(Object).
-				Set("foo:s", "bar").
-				SetOwner(testKey0.PublicKey()),
+			&Object{
+				Metadata: Metadata{
+					Owner: testKey0.PublicKey(),
+				},
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+				},
+			},
 		),
 	}, {
 		name: "should pass, with owner, other valid signature, with certificate",
@@ -72,63 +100,90 @@ func TestVerify(t *testing.T) {
 			t,
 			testKey0,
 			testKey1,
-			new(Object).
-				Set("foo:s", "bar").
-				SetOwner(testKey0.PublicKey()),
+			&Object{
+				Type: "",
+				Metadata: Metadata{
+					Owner: testKey0.PublicKey(),
+				},
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+				},
+			},
 		),
 	}, {
 		name: "should fail, with owner, with invalid certificate signature",
-		object: mustSignWithCertificate(
-			t,
-			testKey0,
-			testKey1,
-			new(Object).
-				Set("foo:s", "bar").
-				SetOwner(testKey0.PublicKey()),
-		).set(
-			"metadata:m/_signature:m/certificate:m/metadata:m/_signature:m/x:d",
-			Bytes([]byte{1, 2, 3}),
-		),
-		wantErr: true,
-	}, {
-		name: "should fail, with owner, invalid certificate signer",
-		object: func() Object {
-			o := mustSignWithCertificate(
-				t,
-				testKey2,
-				testKey1,
-				new(Object).
-					Set("foo:s", "bar").
-					SetOwner(testKey0.PublicKey()),
-			)
-			// resign with random key
-			sig, err := NewSignature(testKey2, o)
-			assert.NoError(t, err)
-			sig.Certificate = o.GetSignature().Certificate
-			return o.SetSignature(sig)
-		}(),
-		wantErr: true,
-	}, {
-		name: "should fail, with owner, wrong signature, valid certificate",
-		object: func() Object {
+		object: func() *Object {
 			o := mustSignWithCertificate(
 				t,
 				testKey0,
 				testKey1,
-				new(Object).
-					Set("foo:s", "bar").
-					SetOwner(testKey0.PublicKey()),
+				&Object{
+					Type: "",
+					Metadata: Metadata{
+						Owner: testKey0.PublicKey(),
+					},
+					Data: map[string]interface{}{
+						"foo:s": "bar",
+					},
+				},
+			)
+			sig := []byte{1, 2, 3}
+			o.Metadata.Signature.Certificate.Metadata.Signature.X = sig
+			return o
+		}(),
+		wantErr: true,
+	}, {
+		name: "should fail, with owner, invalid certificate signer",
+		object: func() *Object {
+			o := mustSignWithCertificate(
+				t,
+				testKey2,
+				testKey1,
+				&Object{
+					Type: "",
+					Metadata: Metadata{
+						Owner: testKey0.PublicKey(),
+					},
+					Data: map[string]interface{}{
+						"foo:s": "bar",
+					},
+				},
+			)
+			// resign with random key
+			sig, err := NewSignature(testKey2, o)
+			assert.NoError(t, err)
+			sig.Certificate = o.Metadata.Signature.Certificate
+			o.Metadata.Signature = sig
+			return o
+		}(),
+		wantErr: true,
+	}, {
+		name: "should fail, with owner, wrong signature, valid certificate",
+		object: func() *Object {
+			o := mustSignWithCertificate(
+				t,
+				testKey0,
+				testKey1,
+				&Object{
+					Type: "",
+					Metadata: Metadata{
+						Owner: testKey0.PublicKey(),
+					},
+					Data: map[string]interface{}{
+						"foo:s": "bar",
+					},
+				},
 			)
 			sig, err := NewSignature(testKey2, o)
 			assert.NoError(t, err)
-			sig.Certificate = o.GetSignature().Certificate
-			return o.SetSignature(sig)
+			sig.Certificate = o.Metadata.Signature.Certificate
+			o.Metadata.Signature = sig
+			return o
 		}(),
 		wantErr: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(Dump(tt.object))
 			if err := Verify(tt.object); (err != nil) != tt.wantErr {
 				t.Errorf("Verify() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -140,14 +195,15 @@ func mustSignWithCertificate(
 	t *testing.T,
 	owner crypto.PrivateKey,
 	signer crypto.PrivateKey,
-	o Object,
-) Object {
+	o *Object,
+) *Object {
 	c, err := NewCertificate(signer.PublicKey(), owner)
 	require.NoError(t, err)
 	sig, err := NewSignature(signer, o)
 	assert.NoError(t, err)
 	sig.Certificate = c
-	return o.SetSignature(sig)
+	o.Metadata.Signature = sig
+	return o
 }
 
 func mustGenerateKey(t *testing.T) crypto.PrivateKey {
@@ -156,8 +212,9 @@ func mustGenerateKey(t *testing.T) crypto.PrivateKey {
 	return k
 }
 
-func mustSign(t *testing.T, k crypto.PrivateKey, o Object) Object {
+func mustSign(t *testing.T, k crypto.PrivateKey, o *Object) *Object {
 	sig, err := NewSignature(k, o)
 	assert.NoError(t, err)
-	return o.SetSignature(sig)
+	o.Metadata.Signature = sig
+	return o
 }

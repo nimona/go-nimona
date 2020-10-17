@@ -1,6 +1,9 @@
 package object
 
 import (
+	"reflect"
+
+	"github.com/mitchellh/copystructure"
 	"github.com/mitchellh/mapstructure"
 
 	"nimona.io/pkg/crypto"
@@ -8,310 +11,393 @@ import (
 )
 
 const (
-	ErrNoSignature = errors.Error("object has no signature")
+	keyMetadata = "metadata:m"
+	keyData     = "data:m"
+	keyType     = "type:s"
 )
 
-var (
-	Empty = Object{}
+const (
+	ErrSourceNotSupported = errors.Error("encoding source not supported")
 )
 
 type (
-	// Object for everything f12n
-	Object Map
+	Typed interface {
+		Type() string
+	}
+	Hash   string
+	Object struct {
+		Type     string                 `nimona:"type:s,omitempty"`
+		Metadata Metadata               `nimona:"metadata:m,omitempty"`
+		Data     map[string]interface{} `nimona:"data:m,omitempty"`
+	}
 	// Metadata for object
 	Metadata struct {
-		Owner     crypto.PublicKey `json:"owner"`
-		Parents   []Hash           `json:"parents"`
-		Policy    Policy           `json:"policy"`
-		Signature Signature        `json:"_signature"`
-		Stream    Hash             `json:"stream"`
+		Owner     crypto.PublicKey `nimona:"owner:s,omitempty"`
+		Parents   []Hash           `nimona:"parents:as,omitempty"`
+		Policy    Policy           `nimona:"policy:m,omitempty"`
+		Stream    Hash             `nimona:"stream:s,omitempty"`
+		Signature Signature        `nimona:"_signature:m,omitempty"`
 	}
 	// Policy for object metadata
 	Policy struct {
-		Subjects  []string `json:"subjects:as,omitempty" mapstructure:"subjects:as,omitempty"`
-		Resources []string `json:"resources:as,omitempty" mapstructure:"resources:as,omitempty"`
-		Actions   []string `json:"actions:as,omitempty" mapstructure:"actions:as,omitempty"`
-		Effect    string   `json:"effect:s,omitempty" mapstructure:"effect:s,omitempty"`
+		Subjects  []string `nimona:"subjects:as,omitempty"`
+		Resources []string `nimona:"resources:as,omitempty"`
+		Actions   []string `nimona:"actions:as,omitempty"`
+		Effect    string   `nimona:"effect:s,omitempty"`
 	}
 )
 
-func (v Signature) IsEmpty() bool {
-	return v.Signer.IsEmpty()
-}
-
-func (v Policy) IsEmpty() bool {
-	return len(v.Subjects) == 0
-}
-
-func (o Object) data() Map {
-	data := Map(o).Value("data:m")
-	if data == nil {
-		return Map{}
-	}
-
-	mdata, ok := data.(Map)
-	if !ok {
-		return Map{}
-	}
-
-	return mdata
-}
-
-func (o Object) meta() Map {
-	data := Map(o).Value("metadata:m")
-	if data == nil {
-		return Map{}
-	}
-
-	mdata, ok := data.(Map)
-	if !ok {
-		return Map{}
-	}
-
-	return mdata
-}
-
-// TODO(geoah) don't use primitives for header values
-
-func (o Object) GetType() string {
-	im := Map(o).Value("type:s")
-	if im == nil {
-		return ""
-	}
-	v, ok := im.PrimitiveHinted().(string)
-	if !ok {
-		return ""
-	}
-	return v
-}
-
-func (o Object) SetType(v string) Object {
-	return o.set("type:s", String(v))
-}
-
-func (o Object) SetStream(v Hash) Object {
-	return o.setMeta("stream:s", String(v.String()))
-}
-
-func (o Object) GetStream() Hash {
-	im := o.getMeta("stream:s")
-	if im == nil {
-		return ""
-	}
-	v, ok := im.PrimitiveHinted().(string)
-	if !ok {
-		return ""
-	}
-	return Hash(v)
-}
-
-func (o Object) SetParents(hashes []Hash) Object {
-	SortHashSlice(hashes)
-	v := List{}
-	for _, hash := range hashes {
-		v = v.Append(String(hash.String()))
-	}
-	return o.setMeta("parents:as", v)
-}
-
-func (o Object) GetParents() []Hash {
-	im := o.getMeta("parents:as")
-	if im == nil {
-		return []Hash{}
-	}
-	v, ok := im.PrimitiveHinted().([]string)
-	if !ok {
-		return []Hash{}
-	}
-	ps := make([]Hash, len(v))
-	for i, p := range v {
-		ps[i] = Hash(p)
-	}
-	return ps
-}
-
-func (o Object) SetPolicy(policy Policy) Object {
-	v := Map{}
-	if len(policy.Subjects) > 0 {
-		v = v.Set("subjects:as", AnyToValue(":as", policy.Subjects))
-	}
-	if len(policy.Resources) > 0 {
-		v = v.Set("resources:as", AnyToValue(":as", policy.Resources))
-	}
-	if len(policy.Actions) > 0 {
-		v = v.Set("actions:as", AnyToValue(":as", policy.Actions))
-	}
-	if len(policy.Effect) > 0 {
-		v = v.Set("effect:s", AnyToValue(":s", policy.Effect))
-	}
-	if v.IsEmpty() {
-		return o
-	}
-	return o.setMeta("policy:m", v)
-}
-
-func (o Object) GetPolicy() Policy {
-	im := o.getMeta("policy:m")
-	if im == nil {
-		return Policy{}
-	}
-	v, ok := im.PrimitiveHinted().(map[string]interface{})
-	if !ok {
-		return Policy{}
-	}
-	p := Policy{}
-	mapstructure.Decode(v, &p) // nolint: errcheck
-	return p
-}
-
-func GetReferences(o Object) []Hash {
-	refs := []Hash{}
-	Traverse(o.data(), func(k string, v Value) bool {
-		if v == nil || !v.IsRef() {
-			return true
-		}
-		refs = append(refs, Hash(v.(Ref)))
-		return true
-	})
-	return refs
-}
-
-func immutableMapToSignature(im Map) Signature {
-	if im.IsEmpty() {
-		return Signature{}
-	}
-	v, ok := im.PrimitiveHinted().(map[string]interface{})
-	if !ok {
-		return Signature{}
-	}
-	s := Signature{}
-	mapstructure.Decode(v, &s) // nolint: errcheck
-	// check if signature has a certificate
-	if v := im.Value("certificate:m"); v != nil {
-		if !v.IsMap() {
-			panic("invalid signature object")
-		}
-		c := &Certificate{}
-		if err := c.FromObject(Object(v.(Map))); err != nil {
-			panic("invalid signature")
-		}
-		s.Certificate = c
-	}
-	return s
-}
-
-func (o Object) SetSignature(signature Signature) Object {
-	return o.setMeta("_signature:m", AnyToValue(":m", signature.ToMap()))
-}
-
-func (o Object) GetSignature() Signature {
-	signatureMap := o.getMeta("_signature:m")
-	if signatureMap == nil || !signatureMap.IsMap() {
-		return Signature{}
-	}
-	return immutableMapToSignature(signatureMap.(Map))
-}
-
-func (o Object) SetOwner(owner crypto.PublicKey) Object {
-	return o.setMeta("owner:s", String(owner.String()))
-}
-
-func (o Object) GetOwner() crypto.PublicKey {
-	im := o.getMeta("owner:s")
-	if im == nil || !im.IsString() {
-		return ""
-	}
-	return crypto.PublicKey(im.(String))
-}
-
-// FromMap returns an object from a map
-func FromMap(m map[string]interface{}) Object {
-	if len(m) == 0 {
-		return Object{}
-	}
-
-	n, err := normalizeObject(m)
+func FromMap(m map[string]interface{}) *Object {
+	o, err := mapToObject(m)
 	if err != nil {
 		panic(err)
 	}
-
-	return Object(
-		AnyToValue(":m", n).(Map),
-	)
-}
-
-// ToObject returns the same object, this is a helper method for codegen
-func (o Object) ToObject() Object {
 	return o
 }
 
-// IsEmpty returns whether the object is empty
-func (o Object) IsEmpty() bool {
-	return Map(o).IsEmpty()
-}
-
-// ToMap returns the object as a map
 func (o Object) ToMap() map[string]interface{} {
-	im := Map(o)
-	if im.IsEmpty() {
-		return map[string]interface{}{}
+	m, err := objectToMap(&o)
+	if err != nil {
+		panic(err)
 	}
-	return im.PrimitiveHinted().(map[string]interface{})
+	return m
 }
 
-// Get -
-func (o Object) Get(k string) interface{} {
-	// remove hint from key
-	// ps := strings.Split(k, ":")
-	// if len(ps) > 1 {
-	// 	k = ps[0]
-	// }
-	v := o.data().Value(k)
-	if v == nil {
-		return nil
+func (o *Object) Hash() Hash {
+	h, err := NewHash(o)
+	if err != nil {
+		panic(err)
 	}
-	return v.PrimitiveHinted()
+	return h
 }
 
-// Set -
-func (o Object) Set(k string, v interface{}) Object {
-	data := o.data()
-	if iv, ok := v.(Value); ok {
-		data = data.Set(k, iv)
-	} else {
-		data = data.Set(k, AnyToValue(k, v))
+func (h Hash) String() string {
+	return string(h)
+}
+
+func Encode(v interface{}) (*Object, error) {
+	m := map[string]interface{}{}
+	switch vi := v.(type) {
+	case *Object:
+		return vi, nil
+	case Typed:
+		d := map[string]interface{}{}
+		if _, err := decode(v, &d, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+		m = map[string]interface{}{
+			keyType:     vi.Type(),
+			keyData:     d,
+			keyMetadata: d[keyMetadata],
+		}
+		delete(d, keyMetadata)
+	case map[string]interface{}:
+		m = vi
+	case map[interface{}]interface{}:
+		if _, err := decode(vi, &m, nilHookfunc()); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, ErrSourceNotSupported
 	}
-	return Object(
-		Map(o).Set("data:m", data),
-	)
+	return mapToObject(m)
 }
 
-func (o Object) getMeta(k string) Value {
-	return o.meta().Value(k)
+func Decode(o *Object, v Typed) error {
+	// TODO check type equality
+	if _, err := decode(o, v, decodeHookfunc()); err != nil {
+		return err
+	}
+	if _, err := decode(o.Data, v, decodeHookfunc()); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (o Object) setMeta(k string, v Value) Object {
-	meta := o.meta().Set(k, v)
-	return Object(
-		Map(o).Set("metadata:m", meta),
-	)
+var (
+	typeOfTyped  = reflect.TypeOf((*Typed)(nil)).Elem()
+	typeOfObject = reflect.TypeOf((*Object)(nil)).Elem()
+)
+
+func nilHookfunc() mapstructure.DecodeHookFuncValueContext {
+	return func(
+		f reflect.Value,
+		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
+	) (interface{}, error) {
+		return f.Interface(), nil
+	}
 }
 
-func (o Object) Hash() Hash {
-	return Map(o).Hash()
+func encodeHookfunc() mapstructure.DecodeHookFuncValueContext {
+	topLevelTyped := true
+	return func(
+		f reflect.Value,
+		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
+	) (interface{}, error) {
+		// (encode) crypto.PrivateKey
+		if v, ok := f.Interface().(crypto.PrivateKey); ok {
+			return string(v), nil
+		}
+		// (encode) crypto.PublicKey
+		if v, ok := f.Interface().(crypto.PublicKey); ok {
+			return string(v), nil
+		}
+		// (encode) Typed to *Object
+		if _, ok := f.Interface().(Typed); ok {
+			if topLevelTyped {
+				topLevelTyped = false
+				return f.Interface(), nil
+			}
+			o, err := Encode(f.Interface().(Typed))
+			if err != nil {
+				return nil, err
+			}
+			return o, nil
+		}
+		// (encode) []Typed to []*Object
+		if f.Kind() == reflect.Slice &&
+			f.Type().Elem().Implements(typeOfTyped) {
+			os := make([]*Object, f.Len())
+			for i := 0; i < f.Len(); i++ {
+				o, err := Encode(f.Index(i).Interface().(Typed))
+				if err != nil {
+					return nil, err
+				}
+				os[i] = o
+			}
+			return os, nil
+		}
+		// (encode) map[string]interface{} with type/data/metadat to *Object
+		// simpler things
+		// if !ctx.IsKey {
+		// 	r, err := normalizeFromKey(ctx.Name, f.Interface())
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+		// 	return r, nil
+		// }
+		return f.Interface(), nil
+	}
 }
 
-func (o Object) Raw() Map {
-	return Map(o)
+func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
+	topLevelTyped := true
+	return func(
+		f reflect.Value,
+		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
+	) (interface{}, error) {
+		// (decode) crypto.PrivateKey
+		if v, ok := f.Interface().(crypto.PrivateKey); ok {
+			return string(v), nil
+		}
+		// (decode) crypto.PublicKey
+		if v, ok := f.Interface().(crypto.PublicKey); ok {
+			return string(v), nil
+		}
+		// (decode) *Object to Typed
+		if _, ok := t.Interface().(Typed); ok &&
+			f.Type().Elem() == typeOfObject {
+			if topLevelTyped {
+				topLevelTyped = false
+				return f.Interface(), nil
+			}
+			tt := t.Type()
+			if tt.Kind() == reflect.Ptr {
+				tt = t.Type().Elem()
+			}
+			tv := reflect.New(tt).Interface()
+			err := Decode(f.Interface().(*Object), tv.(Typed))
+			if err != nil {
+				return nil, err
+			}
+			return tv, nil
+		}
+		// (decode) []*Object to []Typed
+		if t.Kind() == reflect.Slice &&
+			t.Type().Elem().Implements(typeOfTyped) {
+			reflection := reflect.MakeSlice(reflect.SliceOf(t.Type().Elem()), 0, 0)
+			reflectionValue := reflect.New(reflection.Type())
+			reflectionValue.Elem().Set(reflection)
+			slicePtr := reflect.ValueOf(reflectionValue.Interface())
+			sliceValuePtr := slicePtr.Elem()
+			for i := 0; i < f.Len(); i++ {
+				fv := f.Index(i).Interface()
+				tv := reflect.Zero(t.Type().Elem()).Interface()
+				switch fvv := fv.(type) {
+				case *Object:
+					if _, err := decode(fvv, &tv, decodeHookfunc()); err != nil {
+						return nil, err
+					}
+					if _, err := decode(fvv.Data, &tv, decodeHookfunc()); err != nil {
+						return nil, err
+					}
+					sliceValuePtr.Set(reflect.Append(sliceValuePtr, reflect.ValueOf(tv)))
+				case map[string]interface{}:
+					if _, err := decode(fvv, &tv, decodeHookfunc()); err != nil {
+						return nil, err
+					}
+					md, ok := fvv[keyData]
+					if ok {
+						if _, err := decode(md, &tv, decodeHookfunc()); err != nil {
+							return nil, err
+						}
+					}
+					sliceValuePtr.Set(reflect.Append(sliceValuePtr, reflect.ValueOf(tv)))
+				}
+			}
+			return slicePtr.Interface(), nil
+		}
+		// (decode) slice of struct to []interface
+		if f.Kind() == reflect.Slice {
+			var i interface{} = struct{}{}
+			if t.Type() != reflect.TypeOf(&i).Elem() {
+				return f.Interface(), nil
+			}
+			m := make([]interface{}, 0)
+			t.Set(reflect.ValueOf(m))
+			return f.Interface(), nil
+		}
+		// (decode) struct to map[string]interface{}
+		// mapstructure.RecursiveStructToMapHookFunc
+		var i interface{} = struct{}{}
+		if f.Kind() == reflect.Struct && t.Type() == reflect.TypeOf(&i).Elem() {
+			m := make(map[string]interface{})
+			t.Set(reflect.ValueOf(m))
+			return f.Interface(), nil
+		}
+		return f.Interface(), nil
+	}
 }
 
-func (o Object) set(k string, v Value) Object {
-	return Object(Map(o).Set(k, v))
+func mapHookfunc() mapstructure.DecodeHookFuncValueContext {
+	return func(
+		f reflect.Value,
+		t reflect.Value,
+		ctx *mapstructure.DecodeContext,
+	) (interface{}, error) {
+		// (decode) struct to map[string]interface{}
+		// mapstructure.RecursiveStructToMapHookFunc
+		if f.Kind() == reflect.Slice ||
+			(f.Kind() == reflect.Ptr && f.Elem().Kind() == reflect.Slice) {
+			var i interface{} = struct{}{}
+			if t.Type() != reflect.TypeOf(&i).Elem() {
+				return f.Interface(), nil
+			}
+			m := make([]interface{}, 0)
+			t.Set(reflect.ValueOf(m))
+		}
+		// (decode) crypto.PrivateKey
+		if v, ok := f.Interface().(crypto.PrivateKey); ok {
+			return string(v), nil
+		}
+		// (decode) crypto.PublicKey
+		if v, ok := f.Interface().(crypto.PublicKey); ok {
+			return string(v), nil
+		}
+		// (decode) slice of struct to []interface
+		if f.Kind() == reflect.Slice {
+			var i interface{} = struct{}{}
+			if t.Type() != reflect.TypeOf(&i).Elem() {
+				return f.Interface(), nil
+			}
+			m := make([]interface{}, 0)
+			t.Set(reflect.ValueOf(m))
+			return f.Interface(), nil
+		}
+		return f.Interface(), nil
+	}
 }
 
-// Collapse the object's immutable values into a single layer in order to reduce
-// its complexity. Most usually used for tests.
-func Collapse(o Object) Object {
-	m := o.ToMap()
-	return FromMap(m)
+func decode(
+	from interface{},
+	to interface{},
+	hook mapstructure.DecodeHookFuncValueContext,
+) (*mapstructure.Metadata, error) {
+	md := &mapstructure.Metadata{}
+	config := &mapstructure.DecoderConfig{
+		DecodeHook:       hook,
+		ErrorUnused:      false,
+		ZeroFields:       false,
+		WeaklyTypedInput: true,
+		Squash:           false,
+		Metadata:         md,
+		Result:           to,
+		TagName:          "nimona",
+	}
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return md, err
+	}
+	if err := decoder.Decode(from); err != nil {
+		return md, err
+	}
+	return md, nil
+}
+
+func objectToMap(o *Object) (map[string]interface{}, error) {
+	d := map[string]interface{}{}
+	m := map[string]interface{}{}
+	if _, err := decode(o.Data, &d, mapHookfunc()); err != nil {
+		return nil, err
+	}
+	if _, err := decode(o.Metadata, &m, mapHookfunc()); err != nil {
+		return nil, err
+	}
+	r := map[string]interface{}{
+		keyType:     o.Type,
+		keyData:     d,
+		keyMetadata: m,
+	}
+	traverseValues(reflect.ValueOf(r), func(v reflect.Value) {
+		vo, ok := v.Interface().(*Object)
+		if !ok {
+			return
+		}
+		if v.CanSet() {
+			v.Set(reflect.ValueOf(vo.ToMap()))
+		}
+	})
+	return r, nil
+}
+
+func mapToObject(m map[string]interface{}) (*Object, error) {
+	t := ""
+	if ti, ok := m[keyType]; ok {
+		t = ti.(string)
+	}
+	o := &Object{
+		Type:     t,
+		Metadata: Metadata{},
+		Data:     map[string]interface{}{},
+	}
+	if mm, ok := m[keyData]; ok {
+		d, err := normalizeFromKey(":m", mm)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := decode(d, &o.Data, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+	}
+	if mm, ok := m[keyMetadata]; ok {
+		d, err := normalizeFromKey(":m", mm)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := decode(d, &o.Metadata, encodeHookfunc()); err != nil {
+			return nil, err
+		}
+	}
+	return o, nil
+}
+
+func Copy(s *Object) *Object {
+	r, err := copystructure.Copy(s)
+	if err != nil {
+		panic(err)
+	}
+	return r.(*Object)
 }

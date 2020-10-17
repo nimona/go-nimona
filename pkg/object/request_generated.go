@@ -2,155 +2,46 @@
 
 package object
 
-import "nimona.io/pkg/errors"
-
 type (
 	Request struct {
-		raw                   Object
-		Metadata              Metadata
-		ObjectHash            Hash
-		ExcludedNestedObjects bool
+		Metadata              Metadata `nimona:"metadata:m"`
+		ObjectHash            Hash     `nimona:"objectHash:s",omitempty`
+		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b",omitempty`
 	}
 	Response struct {
-		raw        Object
-		Metadata   Metadata
-		ObjectHash *Object
+		Metadata   Metadata `nimona:"metadata:m"`
+		ObjectHash *Object  `nimona:"objectHash:m",omitempty`
 	}
 )
 
-func (e Request) GetType() string {
+func (e *Request) Type() string {
 	return "nimona.io/Request"
 }
 
-func (e Request) IsStreamRoot() bool {
-	return false
-}
-
-func (e Request) GetSchema() *SchemaObject {
-	return &SchemaObject{
-		Properties: []*SchemaProperty{{
-			Name:       "objectHash",
-			Type:       "nimona.io/Hash",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "excludedNestedObjects",
-			Type:       "bool",
-			Hint:       "b",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Request) ToObject() *Object {
+	o, err := Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Request) ToObject() Object {
-	o := Object{}
-	o = o.SetType("nimona.io/Request")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.ObjectHash != "" {
-		o = o.Set("objectHash:s", e.ObjectHash)
-	}
-	o = o.Set("excludedNestedObjects:b", e.ExcludedNestedObjects)
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Request) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("objectHash:s"); v != nil {
-		e.ObjectHash = Hash(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("excludedNestedObjects:b"); v != nil {
-		e.ExcludedNestedObjects = bool(v.PrimitiveHinted().(bool))
-	}
-	return nil
+func (e *Request) FromObject(o *Object) error {
+	return Decode(o, e)
 }
 
-func (e Response) GetType() string {
+func (e *Response) Type() string {
 	return "nimona.io/Response"
 }
 
-func (e Response) IsStreamRoot() bool {
-	return false
-}
-
-func (e Response) GetSchema() *SchemaObject {
-	return &SchemaObject{
-		Properties: []*SchemaProperty{{
-			Name:       "objectHash",
-			Type:       "nimona.io/Object",
-			Hint:       "m",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Response) ToObject() *Object {
+	o, err := Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Response) ToObject() Object {
-	o := Object{}
-	o = o.SetType("nimona.io/Response")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.ObjectHash != nil {
-		o = o.Set("objectHash:m", e.ObjectHash.ToObject().Raw())
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Response) FromObject(o Object) error {
-	data, ok := o.Raw().Value("data:m").(Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("objectHash:m"); v != nil && v.IsMap() {
-		eo := Object(v.(Map))
-		e.ObjectHash = &eo
-	}
-	return nil
+func (e *Response) FromObject(o *Object) error {
+	return Decode(o, e)
 }

@@ -12,9 +12,12 @@ const (
 
 // Verify object
 // TODO should this verify nested objects as well?
-func Verify(o Object) error {
-	sig := o.GetSignature()
-	own := o.GetOwner()
+func Verify(o *Object) error {
+	if o == nil {
+		return errors.New("no object")
+	}
+	sig := o.Metadata.Signature
+	own := o.Metadata.Owner
 
 	// if there is no owner and no signature, we're fine
 	if sig.IsEmpty() && own.IsEmpty() {
@@ -26,9 +29,15 @@ func Verify(o Object) error {
 		return ErrMissingSignature
 	}
 
+	// get object hash
+	h, err := NewHash(o)
+	if err != nil {
+		return err
+	}
+
 	// verify the signature
 	if err := sig.Signer.Verify(
-		o.Hash().rawBytes(),
+		[]byte(h),
 		sig.X,
 	); err != nil {
 		return err

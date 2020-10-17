@@ -7,8 +7,6 @@ import (
 type (
 	// TypeHint are the hints of a member's type
 	TypeHint string
-	// TODO v is only used for arrays, we should find a better way to do this.
-	typeHints []TypeHint
 )
 
 // String implements the Stringer interface
@@ -16,37 +14,45 @@ func (t TypeHint) String() string {
 	return string(t)
 }
 
-// String implements the Stringer interface
-func (ts typeHints) String() string {
-	s := ""
-	for _, t := range ts {
-		s += t.String()
-	}
-	return s
-}
-
-// TypeHint for a composite hint.
-func (ts typeHints) TypeHint() TypeHint {
-	s := ""
-	for _, t := range ts {
-		s += t.String()
-	}
-	return TypeHint(s)
-}
-
 const (
 	HintUndefined TypeHint = ""
-	HintMap       TypeHint = "m"
 	HintArray     TypeHint = "a"
 	HintBool      TypeHint = "b"
 	HintData      TypeHint = "d"
 	HintFloat     TypeHint = "f"
 	HintInt       TypeHint = "i"
+	HintMap       TypeHint = "m"
 	HintNil       TypeHint = "n"
-	HintString    TypeHint = "s"
+	HintObject    TypeHint = "o"
 	HintRef       TypeHint = "r"
+	HintString    TypeHint = "s"
 	HintUint      TypeHint = "u"
 )
+
+var (
+	hints = map[string]TypeHint{
+		"":  HintUndefined,
+		"a": HintArray,
+		"b": HintBool,
+		"d": HintData,
+		"f": HintFloat,
+		"i": HintInt,
+		"m": HintMap,
+		"n": HintNil,
+		"o": HintObject,
+		"r": HintRef,
+		"s": HintString,
+		"u": HintUint,
+	}
+)
+
+// GetTypeHint returns a TypeHint from a string
+func GetTypeHint(t string) TypeHint {
+	if t, ok := hints[t]; ok {
+		return t
+	}
+	return HintUndefined
+}
 
 // DeduceTypeHint returns a TypeHint from a given value
 func DeduceTypeHint(o interface{}) TypeHint {

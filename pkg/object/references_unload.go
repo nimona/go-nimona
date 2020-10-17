@@ -8,31 +8,46 @@ import (
 
 func UnloadReferences(
 	ctx context.Context,
-	obj Object,
+	obj *Object,
 ) (
 	result *Object,
-	unloaded []Object,
+	unloaded []*Object,
 	err error,
 ) {
-	objs := map[string]Hash{}
-	data := obj.Raw().Value("data:m")
-	Traverse(data, func(k string, v Value) bool {
-		if !v.IsMap() {
-			return true
+	traverseObject(obj, func(k string, v interface{}) (string, interface{}, bool) {
+		switch {
+		case strings.HasSuffix(k, ":m"):
+			o, ok := v.(*Object)
+			if !ok {
+				return "", nil, false
+			}
+			unloaded = append(unloaded, o)
+			return strings.Replace(k, ":m", ":r", 1), o.Hash(), true
+		case strings.HasSuffix(k, ":am"):
+			switch vs := v.(type) {
+			case []*Object:
+				hs := []Hash{}
+				for _, o := range vs {
+					unloaded = append(unloaded, o)
+					hs = append(hs, o.Hash())
+				}
+				return strings.Replace(k, ":am", ":ar", 1), hs, true
+			case []interface{}:
+				hs := []Hash{}
+				for _, vsv := range vs {
+					o, ok := vsv.(*Object)
+					if !ok {
+						continue
+					}
+					unloaded = append(unloaded, o)
+					hs = append(hs, o.Hash())
+				}
+				if len(hs) > 0 {
+					return strings.Replace(k, ":am", ":ar", 1), hs, true
+				}
+			}
 		}
-		t := v.(Map).Value("type:s")
-		if t == nil {
-			return true
-		}
-		objs[k] = v.Hash()
-		unloaded = append(unloaded, Object(v.(Map)))
-		return true
+		return "", nil, false
 	})
-	for k, ref := range objs {
-		obj = obj.Set(k, nil)
-		nk := strings.Replace(k, ":m", ":r", 1)
-		nk = strings.Replace(nk, ":am", ":ar", 1)
-		obj = obj.Set(nk, Ref(ref))
-	}
-	return &obj, unloaded, nil
+	return obj, unloaded, nil
 }

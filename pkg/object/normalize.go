@@ -33,6 +33,9 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 	if i == nil {
 		return nil, nil
 	}
+	if k == "" {
+		return i, nil
+	}
 	ps := strings.Split(k, ":")
 	t := ps[len(ps)-1]
 	switch t[0] {
@@ -60,23 +63,47 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					}
 				}
 				return m, nil
-			case 'm':
-				v := reflect.ValueOf(i)
-				m := make([]interface{}, v.Len())
-				for i := 0; i < v.Len(); i++ {
-					m[i], err = normalizeObject(v.Index(i).Interface())
-					if err != nil {
-						return nil, errors.Wrap(
-							err,
-							fmt.Errorf(
-								"invalid object type, t=%v k=%v",
-								reflect.TypeOf(i).String(),
-								k,
-							),
-						)
+			case 'o':
+				switch v := i.(type) {
+				case []*Object:
+					return i, nil
+				case []interface{}:
+					os := make([]*Object, len(v))
+					for vk, vv := range v {
+						o, err := Encode(vv)
+						if err != nil {
+							return nil, err
+						}
+						os[vk] = o
 					}
+					return os, nil
+				default:
+					return nil, errors.Wrap(
+						err,
+						fmt.Errorf(
+							"invalid ao type, t=%s",
+							reflect.TypeOf(i).String(),
+						),
+					)
 				}
-				return m, nil
+			case 'm':
+				return i, nil
+				// v := reflect.ValueOf(i)
+				// m := make([]interface{}, v.Len())
+				// for i := 0; i < v.Len(); i++ {
+				// 	m[i], err = normalizeObject(v.Index(i).Interface())
+				// 	if err != nil {
+				// 		return nil, errors.Wrap(
+				// 			err,
+				// 			fmt.Errorf(
+				// 				"invalid object type, t=%v k=%v",
+				// 				reflect.TypeOf(i).String(),
+				// 				k,
+				// 			),
+				// 		)
+				// 	}
+				// }
+				// return m, nil
 			case 's':
 				v := reflect.ValueOf(i)
 				m := make([]string, v.Len())
@@ -168,6 +195,8 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 		}
 	case 'm':
 		return normalizeObject(i)
+	case 'o':
+		return Encode(i)
 	case 's':
 		return normalizeString(i)
 	case 'd':
@@ -195,18 +224,20 @@ func normalizeBool(i interface{}) (bool, error) {
 }
 
 func normalizeString(i interface{}) (string, error) {
-	v, ok := i.(string)
-	if !ok {
-		return "", errors.New("invalid string type, got " +
-			reflect.TypeOf(i).String(),
-		)
+	switch v := i.(type) {
+	case string:
+		return v, nil
+	case interface{ String() string }:
+		return v.String(), nil
 	}
-	return v, nil
+	return "", errors.New("invalid string type, got " +
+		reflect.TypeOf(i).String(),
+	)
 }
 
 func NormalizeData(i interface{}) ([]byte, error) {
 	switch v := i.(type) {
-	case []byte:
+	case []uint8:
 		return v, nil
 	case []interface{}:
 		d := make([]byte, len(v))
