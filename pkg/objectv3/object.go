@@ -223,6 +223,14 @@ func decode(
 	return md, nil
 }
 
+func objectToMap(o *Object) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	if _, err := decode(o, &m, decodeHookfunc()); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func mapToObject(m map[string]interface{}) (*Object, error) {
 	ti, ok := m[keyType]
 	if !ok {
