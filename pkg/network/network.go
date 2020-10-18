@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/geoah/go-queue"
+	"github.com/joeycumines/go-dotnotation/dotnotation"
 	"github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -30,7 +31,7 @@ import (
 //go:generate $GOBIN/mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
 
 var (
-	dataForwardType   = new(DataForward).GetType()
+	dataForwardType   = new(DataForward).Type()
 	objHandledCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_received_total",
@@ -85,7 +86,7 @@ type (
 		) EnvelopeSubscription
 		Send(
 			ctx context.Context,
-			object object.Object,
+			object *object.Object,
 			recipient *peer.Peer,
 		) error
 		Listen(
@@ -117,7 +118,7 @@ type (
 	outgoingObject struct {
 		context   context.Context
 		recipient *peer.Peer
-		object    object.Object
+		object    *object.Object
 		err       chan error
 	}
 )
@@ -282,12 +283,12 @@ func (w *network) handleConnection(conn *net.Connection) error {
 
 			log.DefaultLogger.Debug(
 				"reading from connection",
-				log.String("payload", payload.GetType()),
+				log.String("payload", payload.Type),
 			)
 
 			w.inboxes.Publish(&Envelope{
 				Sender:  conn.RemotePeerKey,
-				Payload: *payload,
+				Payload: payload,
 			})
 		}
 	}()
@@ -320,7 +321,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		// make a logger from our req context
 		logger := log.FromContext(req.context).With(
 			log.String("recipient", req.recipient.PublicKey().String()),
-			log.String("object.type", req.object.GetType()),
+			log.String("object.type", req.object.Type),
 		)
 		// validate req
 		if req.recipient == nil {
@@ -350,7 +351,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		}
 
 		// Only try the relays if we fail to write the object
-		if lastErr != nil && req.object.GetType() != "nimona.io/LookupRequest" {
+		if lastErr != nil && req.object.Type != "nimona.io/LookupRequest" {
 			for _, relayPeer := range req.recipient.Relays {
 				df, err := w.wrapInDataForward(
 					req.object,
@@ -421,13 +422,13 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			Named("network").
 			With(
 				log.String("method", "network.handleObjects"),
-				log.String("payload", e.Payload.GetType()),
+				log.String("payload", e.Payload.Type),
 			)
 
 		// TODO verify signature
 		logger.Debug("getting payload")
 		// nolint: gocritic // don't care about singleCaseSwitch here
-		switch e.Payload.GetType() {
+		switch e.Payload.Type {
 		case dataForwardType:
 			// if we receive a dataForward payload we check if it is meant for
 			// this peer, if yes try to decode it, if not forward it
@@ -465,13 +466,13 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			o := object.FromMap(m)
 
 			// and if this is not a dataforward then we assume it is for us
-			if o.GetType() != dataForwardType {
-				if o.GetSignature().IsEmpty() {
+			if o.Type != dataForwardType {
+				if o.Metadata.Signature.IsEmpty() {
 					logger.Error("forwarded object has no signature")
 					continue
 				}
 				w.inboxes.Publish(&Envelope{
-					Sender:  o.GetSignature().Signer,
+					Sender:  o.Metadata.Signature.Signer,
 					Payload: o,
 				})
 				continue
@@ -487,7 +488,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			pk := w.localpeer.GetPrimaryPeerKey().PublicKey()
 			if nfwd.Recipient.Equals(pk) {
 				w.inboxes.Publish(&Envelope{
-					Sender:  o.GetSignature().Signer,
+					Sender:  o.Metadata.Signature.Signer,
 					Payload: o,
 				})
 				continue
@@ -519,7 +520,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 // Before sending, we'll go through the root object as well as any embedded
 func (w *network) Send(
 	ctx context.Context,
-	o object.Object,
+	o *object.Object,
 	p *peer.Peer,
 ) error {
 	if p.PublicKey() == w.localpeer.GetPrimaryPeerKey().PublicKey() {
@@ -568,37 +569,29 @@ func (w *network) Send(
 	}
 }
 
-func signAll(k crypto.PrivateKey, o object.Object) (object.Object, error) {
-	os := map[string]object.Object{}
-	object.Traverse(o.Raw(), func(path string, v object.Value) bool {
-		if !v.IsMap() {
+func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
+	os := map[string]*object.Object{}
+	object.Traverse(o, func(path string, v interface{}) bool {
+		nObj, ok := v.(*object.Object)
+		if !ok {
 			return true
 		}
-		m := v.(object.Map)
-		t := m.Value("type:s")
-		if t == nil || !t.IsString() || t.(object.String) == "" {
-			return true
-		}
-		os[path] = object.Object(m)
+		os[path] = nObj
 		return true
 	})
 	for path, obj := range os {
-		if obj.GetOwner() != k.PublicKey() {
+		if obj.Metadata.Owner != k.PublicKey() {
 			continue
 		}
 		sig, err := object.NewSignature(k, obj)
 		if err != nil {
-			return object.Object{}, err
+			return nil, err
 		}
 
-		signedObj := obj.SetSignature(sig)
-		if path == "" {
-			o = signedObj
-		} else {
-			o = object.Object(
-				o.Raw().Set(path, signedObj.Raw()),
-			)
-		}
+		obj.Metadata.Signature = sig
+		// TODO replace with traversWithValues
+		// nolint: errcheck // we don't really care ^
+		dotnotation.Set(o, path, obj)
 	}
 	return o, nil
 }
@@ -636,7 +629,7 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 }
 
 func (w *network) wrapInDataForward(
-	o object.Object,
+	o *object.Object,
 	rks ...crypto.PublicKey,
 ) (*DataForward, error) {
 	if len(rks) == 0 {

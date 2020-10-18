@@ -30,7 +30,7 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	}
 	return func(e *Envelope) bool {
 		for _, pattern := range patterns {
-			if pattern.Match(e.Payload.GetType()) {
+			if pattern.Match(e.Payload.Type) {
 				return true
 			}
 		}
@@ -51,6 +51,6 @@ func FilterByObjectHash(objectHashes ...object.Hash) EnvelopeFilter {
 
 func FilterByNonce(nonce string) EnvelopeFilter {
 	return func(e *Envelope) bool {
-		return e.Payload.Get("nonce:s").(string) == nonce
+		return e.Payload.Data["nonce:s"].(string) == nonce
 	}
 }

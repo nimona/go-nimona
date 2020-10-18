@@ -58,7 +58,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	sc, err := n1.Accept()
 	require.NoError(t, err)
 
-	reqObj := object.FromMap(map[string]interface{}{ // nolint: errcheck
+	reqObj := object.FromMap(map[string]interface{}{
 		"data:m": map[string]interface{}{
 			"foo:s": "bar",
 		},
@@ -68,7 +68,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	gotObj, err := Read(sc)
 	require.NoError(t, err)
-	assert.Equal(t, "ping", gotObj.GetType())
+	assert.Equal(t, "ping", gotObj.Type)
 
 	gotObj, err = Read(sc)
 	require.NoError(t, err)
