@@ -48,11 +48,15 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	p := fixtures.TestStream{
 		Nonce: "asdf",
 	}
-	c := fixtures.TestSubscribed{}
-	obj := c.ToObject()
-	obj = obj.SetType("foo")
-	obj = obj.SetStream(p.ToObject().Hash())
-	obj = obj.Set("key:s", "value")
+	obj := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Stream: p.ToObject().Hash(),
+		},
+		Data: map[string]interface{}{
+			"key:s": "value",
+		},
+	}
 
 	err = store.Put(
 		obj,
@@ -70,11 +74,11 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	retrievedObj, err := store.Get(obj.Hash())
 	require.NoError(t, err)
 
-	val := retrievedObj.Raw().Value("data:m").(object.Map).Value("key:s")
+	val := retrievedObj.Data["key:s"]
 	require.NotNil(t, val)
-	assert.Equal(t, "value", string(val.(object.String)))
+	assert.Equal(t, "value", val.(string))
 
-	stHash := obj.GetStream()
+	stHash := obj.Metadata.Stream
 	require.NotEmpty(t, stHash)
 
 	err = store.UpdateTTL(obj.Hash(), 10)
@@ -89,7 +93,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	retrievedObj2, err := store.Get(p.ToObject().Hash())
 	require.True(t, errors.CausedBy(err, objectstore.ErrNotFound))
-	require.True(t, retrievedObj2.IsEmpty())
+	require.Nil(t, retrievedObj2)
 
 	err = store.Close()
 	require.NoError(t, err)
@@ -123,11 +127,17 @@ func TestFilter(t *testing.T) {
 
 	hashes := []object.Hash{}
 	for i := 0; i < 5; i++ {
-		obj := c.ToObject()
-		obj = obj.SetType(c.GetType())
-		obj = obj.Set("key:s", fmt.Sprintf("value_%d", i))
+		obj := &object.Object{
+			Type: new(fixtures.TestSubscribed).Type(),
+			Metadata: object.Metadata{
+				Stream: ph,
+			},
+			Data: map[string]interface{}{
+				"keys:s": fmt.Sprintf("value_%d", i),
+			},
+		}
 		if i%2 == 0 {
-			obj = obj.SetOwner(k.PublicKey())
+			obj.Metadata.Owner = k.PublicKey()
 		}
 		err = store.Put(obj)
 		require.NoError(t, err)
@@ -155,7 +165,7 @@ func TestFilter(t *testing.T) {
 	require.Equal(t, 3, len(objects))
 
 	objectReader, err = store.Filter(
-		FilterByObjectType(c.GetType()),
+		FilterByObjectType(c.Type()),
 	)
 	require.NoError(t, err)
 	objects, err = object.ReadAll(objectReader)
@@ -172,7 +182,7 @@ func TestFilter(t *testing.T) {
 
 	objectReader, err = store.Filter(
 		FilterByHash(hashes[0]),
-		FilterByObjectType(c.GetType()),
+		FilterByObjectType(c.Type()),
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
