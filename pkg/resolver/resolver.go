@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	peerType               = new(peer.Peer).GetType()
-	peerLookupRequestType  = new(peer.LookupRequest).GetType()
-	peerLookupResponseType = new(peer.LookupResponse).GetType()
+	peerType               = new(peer.Peer).Type()
+	peerLookupRequestType  = new(peer.LookupRequest).Type()
+	peerLookupResponseType = new(peer.LookupResponse).Type()
 
 	peerCacheTTL = 1 * time.Minute
 )
@@ -165,7 +165,7 @@ func (r *resolver) Lookup(
 	resSub := r.network.Subscribe(
 		network.FilterByObjectType(peerLookupResponseType),
 		func(e *network.Envelope) bool {
-			v := e.Payload.Get("nonce:s")
+			v := e.Payload.Data["nonce:s"]
 			rn, ok := v.(string)
 			return ok && rn == req.Nonce
 		},
@@ -344,7 +344,7 @@ func (r *resolver) handleObject(
 
 	// handle payload
 	o := e.Payload
-	switch o.GetType() {
+	switch o.Type {
 	case peerType:
 		v := &peer.Peer{}
 		if err := v.FromObject(o); err != nil {
@@ -393,7 +393,7 @@ func (r *resolver) handlePeerLookup(
 		log.String("method", "resolver.handlePeerLookup"),
 		log.String("e.sender", e.Sender.String()),
 		log.Any("query.bloom", q.Bloom),
-		log.Any("o.signer", e.Payload.GetSignature().Signer),
+		log.Any("o.signer", e.Payload.Metadata.Signature.Signer),
 	)
 
 	logger.Debug("handling peer lookup")
