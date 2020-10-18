@@ -37,10 +37,10 @@ func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 }
 
 // Put mocks base method
-func (m *MockObjectManager) Put(ctx context.Context, o object.Object) (object.Object, error) {
+func (m *MockObjectManager) Put(ctx context.Context, o *object.Object) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", ctx, o)
-	ret0, _ := ret[0].(object.Object)
+	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

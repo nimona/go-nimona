@@ -35,7 +35,7 @@ func (m *MockObjectPubSub) EXPECT() *MockObjectPubSubMockRecorder {
 }
 
 // Publish mocks base method
-func (m *MockObjectPubSub) Publish(arg0 object.Object) {
+func (m *MockObjectPubSub) Publish(arg0 *object.Object) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Publish", arg0)
 }
@@ -88,10 +88,10 @@ func (m *MockObjectSubscription) EXPECT() *MockObjectSubscriptionMockRecorder {
 }
 
 // Next mocks base method
-func (m *MockObjectSubscription) Next() (object.Object, error) {
+func (m *MockObjectSubscription) Next() (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Next")
-	ret0, _ := ret[0].(object.Object)
+	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

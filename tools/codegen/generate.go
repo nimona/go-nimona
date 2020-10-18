@@ -47,21 +47,20 @@ import (
 type (
 	{{- range $object := .Objects }}
 	{{ structName $object.Name }} struct {
-		raw object.Object
-		Metadata object.Metadata
+		Metadata object.Metadata {{ tagMetadata }}
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{- if $member.IsObject }}
-					{{ $member.Name }} []*{{ memberType $member.Type }}
+					{{ $member.Name }} []*{{ memberType $member.Type }} {{ tag $member }}
 				{{- else }}
-					{{ $member.Name }} []{{ memberType $member.Type }}
+					{{ $member.Name }} []{{ memberType $member.Type }} {{ tag $member }}
 				{{- end }}
 			{{- else if $member.IsPrimitive }}
-				{{ $member.Name }} {{ memberType $member.Type }}
+				{{ $member.Name }} {{ memberType $member.Type }} {{ tag $member }}
 			{{- else if $member.IsObject }}
-				{{ $member.Name }} *{{ memberType $member.Type }}
+				{{ $member.Name }} *{{ memberType $member.Type }} {{ tag $member }}
 			{{- else }}
-				{{ $member.Name }} {{ memberType $member.Type }}
+				{{ $member.Name }} {{ memberType $member.Type }} {{ tag $member }}
 			{{- end }}
 		{{- end }}
 	}
@@ -69,224 +68,20 @@ type (
 )
 
 {{ range $object := .Objects }}
-func (e {{ structName $object.Name }}) GetType() string {
+func (e *{{ structName $object.Name }}) Type() string {
 	return "{{ $object.Name }}"
 }
 
-func (e {{ structName $object.Name }}) IsStreamRoot() bool {
-	return {{ if $object.IsRoot }}true{{ else }}false{{ end }}
-}
-
-{{ if hnp $object.Name "nimona.io/object.Schema" }}
-func (e {{ structName $object.Name }}) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{
-		{{- range $member := $object.Members }} {
-				Name: "{{ $member.Tag }}",
-				Type: "{{ $member.SimpleType }}",
-				Hint: "{{ $member.Hint }}",
-				IsRepeated: {{ if $member.IsRepeated }} true {{ else }} false {{ end }},
-				IsOptional: {{ if $member.IsOptional }} true {{ else }} false {{ end }},
-			}, {{- end }}},
+func (e {{ structName $object.Name }}) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-{{ end }}
-
-func (e {{ structName $object.Name }}) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("{{ $object.Name }}")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	{{- range $member := $object.Members }}
-		{{- if $member.IsObject }}
-			{{- if $member.IsRepeated }}
-			if len(e.{{ $member.Name }}) > 0 {
-				v := object.List{}
-				for _, iv := range e.{{ $member.Name }} {
-					v = v.Append(iv.ToObject().Raw())
-				}
-				o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", v)
-			}
-			{{- else }}
-			if e.{{ $member.Name }} != nil {
-				o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }}.ToObject().Raw())
-			}
-			{{- end }}
-		{{- else }}
-			{{- if $member.IsRepeated }}
-				if len(e.{{ $member.Name }}) > 0 {
-					v := object.List{}
-					for _, iv := range e.{{ $member.Name }} {
-						{{- if eq $member.Hint "s" }}
-							v = v.Append(object.String(iv))
-						{{- else if eq $member.Hint "b" }}
-							v = v.Append(object.Bool(iv))
-						{{- else if eq $member.Hint "d" }}
-							v = v.Append(object.Bytes(iv))
-						{{- else if eq $member.Hint "i" }}
-							v = v.Append(object.Int(iv))
-						{{- else if eq $member.Hint "u" }}
-							// TODO(geoah) uints not implemented
-						{{- else if eq $member.Hint "f" }}
-							v = v.Append(object.Float(iv))
-						{{- else }}
-							// TODO missing type hint {{ $member.Hint }}, for repeated {{ $member.Name }}
-						{{- end }}
-					}
-					o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", v)
-				}
-			{{- else }}
-				{{- if eq $member.Hint "s" }}
-				if e.{{ $member.Name }} != "" {
-					o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }})
-				}
-				{{- else if eq $member.Hint "b" }}
-				o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }})
-				{{- else if eq $member.Hint "d" }}
-				if len(e.{{ $member.Name }}) != 0 {
-					o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }})
-				}
-				{{- else if eq $member.Hint "i" }}
-					o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }})
-				{{- else if eq $member.Hint "u" }}
-					// TODO(geoah) uints not implemented
-				{{- else if eq $member.Hint "f" }}
-					o = o.Set("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}", e.{{ $member.Name }})
-				{{- else }}
-					// TODO missing type hint {{ $member.Hint }}, for {{ $member.Name }}
-				{{- end }}
-			{{- end }}
-		{{- end }}
-	{{- end }}
-	{{- if hnp $object.Name "nimona.io/object.Schema" }}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
-	{{- end }}
 	return o
 }
 
-func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	{{- range $member := $object.Members }}
-	{{- if $member.IsObject }}
-		{{- if $member.IsRepeated }}
-		if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
-			m := v.PrimitiveHinted().([]interface{})
-			e.{{ $member.Name }} = make([]*{{ memberType $member.Type }}, len(m))
-			for i, iv := range m {
-				{{- if eq $member.Type "nimona.io/object.Object" }}
-					eo := object.FromMap(iv.(map[string]interface{}))
-					e.{{ $member.Name }}[i] = &eo
-				{{- else }}
-					es := &{{ memberType $member.Type }}{}
-					eo := object.FromMap(iv.(map[string]interface{}))
-					es.FromObject(eo)
-					e.{{ $member.Name }}[i] = es
-				{{- end }}
-			}
-		}
-		{{- else }}
-			{{- if eq $member.Type "nimona.io/object.Object" }}
-				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsMap() {
-					eo := object.Object(v.(object.Map))
-					e.{{ $member.Name }} = &eo
-				}
-			{{- else }}
-				if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
-					es := &{{ memberType $member.Type }}{}
-					eo := object.FromMap(v.PrimitiveHinted().(map[string]interface{}))
-					es.FromObject(eo)
-					e.{{ $member.Name }} = es
-				}
-			{{- end }}
-		{{- end }}
-	{{- else }}
-		{{- if $member.IsRepeated }}
-		if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil && v.IsList() {
-			{{- if eq $member.Hint "s" }}
-				m := v.PrimitiveHinted().([]string)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else if eq $member.Hint "i" }}
-				m := v.PrimitiveHinted().([]int64)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else if eq $member.Hint "d" }}
-				m := v.PrimitiveHinted().([]byte)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else if eq $member.Hint "u" }}
-				m := v.PrimitiveHinted().([]uint64)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else if eq $member.Hint "f" }}
-				m := v.PrimitiveHinted().([]float64)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else if eq $member.Hint "b" }}
-				m := v.PrimitiveHinted().([]bool)
-				e.{{ $member.Name }} = make([]{{ memberType $member.Type }}, len(m))
-				for i, iv := range m {
-					e.{{ $member.Name }}[i] = {{ memberType $member.Type }}(iv)
-				}
-			{{- else }}
-				// TODO missing implementation for repeated type hint {{ $member.Hint }}
-			{{- end }}
-		}
-		{{- else }}
-			if v := data.Value("{{ memberTag $member.Tag $member.Hint $member.IsRepeated }}"); v != nil {
-				{{- if eq $member.Hint "s" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(string))
-				{{- else if eq $member.Hint "i" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(int64))
-				{{- else if eq $member.Hint "d" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().([]byte))
-				{{- else if eq $member.Hint "u" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(uint64))
-				{{- else if eq $member.Hint "f" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(float64))
-				{{- else if eq $member.Hint "b" }}
-					e.{{ $member.Name }} = {{ memberType $member.Type }}(v.PrimitiveHinted().(bool))
-				{{- else }}
-					e.{{ $member.Name }} = v.PrimitiveHinted().({{ memberType $member.Type }})
-				{{- end }}
-			}
-		{{- end }}
-	{{- end }}
-{{- end }}
-	return nil
+func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 {{ end }}
 `
@@ -294,6 +89,16 @@ func (e *{{ structName $object.Name }}) FromObject(o object.Object) error {
 func Generate(doc *Document, output string) ([]byte, error) {
 	originalImports := map[string]string{}
 	t, err := template.New("tpl").Funcs(template.FuncMap{
+		"tag": func(m Member) string {
+			h := m.Hint
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			return "`nimona:\"" + m.Tag + ":" + h + ",omitempty\"`"
+		},
+		"tagMetadata": func() string {
+			return "`nimona:\"metadata:m,omitempty\"`"
+		},
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
 			ps = strings.Split(ps[len(ps)-1], ".")

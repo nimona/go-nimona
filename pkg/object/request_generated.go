@@ -5,12 +5,12 @@ package object
 type (
 	Request struct {
 		Metadata              Metadata `nimona:"metadata:m"`
-		ObjectHash            Hash     `nimona:"objectHash:s",omitempty`
-		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b",omitempty`
+		ObjectHash            Hash     `nimona:"objectHash:s,omitempty"`
+		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b,omitempty"`
 	}
 	Response struct {
 		Metadata   Metadata `nimona:"metadata:m"`
-		ObjectHash *Object  `nimona:"objectHash:m",omitempty`
+		ObjectHash *Object  `nimona:"objectHash:m,omitempty"`
 	}
 )
 
