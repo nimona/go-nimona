@@ -4,103 +4,30 @@ package network
 
 import (
 	crypto "nimona.io/pkg/crypto"
-	"nimona.io/pkg/errors"
 	object "nimona.io/pkg/object"
 )
 
 type (
 	DataForward struct {
-		raw        object.Object
-		Metadata   object.Metadata
-		Recipient  crypto.PublicKey
-		Ephermeral crypto.PublicKey
-		Data       []byte
+		Metadata   object.Metadata  `nimona:"metadata:m"`
+		Recipient  crypto.PublicKey `nimona:"recipient:s,omitempty"`
+		Ephermeral crypto.PublicKey `nimona:"ephermeral:s,omitempty"`
+		Data       []byte           `nimona:"data:d,omitempty"`
 	}
 )
 
-func (e DataForward) GetType() string {
+func (e *DataForward) Type() string {
 	return "nimona.io/network.DataForward"
 }
 
-func (e DataForward) IsStreamRoot() bool {
-	return false
-}
-
-func (e DataForward) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "recipient",
-			Type:       "nimona.io/crypto.PublicKey",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "ephermeral",
-			Type:       "nimona.io/crypto.PublicKey",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "data",
-			Type:       "data",
-			Hint:       "d",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e DataForward) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e DataForward) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/network.DataForward")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Recipient != "" {
-		o = o.Set("recipient:s", e.Recipient)
-	}
-	if e.Ephermeral != "" {
-		o = o.Set("ephermeral:s", e.Ephermeral)
-	}
-	if len(e.Data) != 0 {
-		o = o.Set("data:d", e.Data)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *DataForward) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("recipient:s"); v != nil {
-		e.Recipient = crypto.PublicKey(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("ephermeral:s"); v != nil {
-		e.Ephermeral = crypto.PublicKey(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("data:d"); v != nil {
-		e.Data = []byte(v.PrimitiveHinted().([]byte))
-	}
-	return nil
+func (e *DataForward) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }

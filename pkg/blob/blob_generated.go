@@ -3,157 +3,48 @@
 package blob
 
 import (
-	"errors"
-
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Chunk struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Data     []byte
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Data     []byte          `nimona:"data:d,omitempty"`
 	}
 	Blob struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Chunks   []*Chunk
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Chunks   []*Chunk        `nimona:"chunks:am,omitempty"`
 	}
 )
 
-func (e Chunk) GetType() string {
+func (e *Chunk) Type() string {
 	return "nimona.io/Chunk"
 }
 
-func (e Chunk) IsStreamRoot() bool {
-	return false
-}
-
-func (e Chunk) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "data",
-			Type:       "data",
-			Hint:       "d",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Chunk) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Chunk) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/Chunk")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if len(e.Data) != 0 {
-		o = o.Set("data:d", e.Data)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Chunk) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("data:d"); v != nil {
-		e.Data = []byte(v.PrimitiveHinted().([]byte))
-	}
-	return nil
+func (e *Chunk) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e Blob) GetType() string {
+func (e *Blob) Type() string {
 	return "nimona.io/Blob"
 }
 
-func (e Blob) IsStreamRoot() bool {
-	return false
-}
-
-func (e Blob) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "chunks",
-			Type:       "Chunk",
-			Hint:       "m",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e Blob) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Blob) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/Blob")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if len(e.Chunks) > 0 {
-		v := object.List{}
-		for _, iv := range e.Chunks {
-			v = v.Append(iv.ToObject().Raw())
-		}
-		o = o.Set("chunks:am", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Blob) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("chunks:am"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]interface{})
-		e.Chunks = make([]*Chunk, len(m))
-		for i, iv := range m {
-			es := &Chunk{}
-			eo := object.FromMap(iv.(map[string]interface{}))
-			es.FromObject(eo)
-			e.Chunks[i] = es
-		}
-	}
-	return nil
+func (e *Blob) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }

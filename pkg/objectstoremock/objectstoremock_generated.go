@@ -35,10 +35,10 @@ func (m *MockGetter) EXPECT() *MockGetterMockRecorder {
 }
 
 // Get mocks base method
-func (m *MockGetter) Get(hash object.Hash) (object.Object, error) {
+func (m *MockGetter) Get(hash object.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", hash)
-	ret0, _ := ret[0].(object.Object)
+	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -73,10 +73,10 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // Get mocks base method
-func (m *MockStore) Get(hash object.Hash) (object.Object, error) {
+func (m *MockStore) Get(hash object.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", hash)
-	ret0, _ := ret[0].(object.Object)
+	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -118,7 +118,7 @@ func (mr *MockStoreMockRecorder) GetByStream(arg0 interface{}) *gomock.Call {
 }
 
 // Put mocks base method
-func (m *MockStore) Put(arg0 object.Object) error {
+func (m *MockStore) Put(arg0 *object.Object) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", arg0)
 	ret0, _ := ret[0].(error)
@@ -132,7 +132,7 @@ func (mr *MockStoreMockRecorder) Put(arg0 interface{}) *gomock.Call {
 }
 
 // PutWithTimeout mocks base method
-func (m *MockStore) PutWithTimeout(arg0 object.Object, arg1 time.Duration) error {
+func (m *MockStore) PutWithTimeout(arg0 *object.Object, arg1 time.Duration) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PutWithTimeout", arg0, arg1)
 	ret0, _ := ret[0].(error)

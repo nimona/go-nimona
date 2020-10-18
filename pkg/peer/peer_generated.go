@@ -3,389 +3,76 @@
 package peer
 
 import (
-	"errors"
-
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Peer struct {
-		raw          object.Object
-		Metadata     object.Metadata
-		Version      int64
-		Addresses    []string
-		Bloom        []int64
-		ContentTypes []string
-		Certificates []*object.Certificate
-		Relays       []*Peer
+		Metadata     object.Metadata       `nimona:"metadata:m"`
+		Version      int64                 `nimona:"version:i,omitempty"`
+		Addresses    []string              `nimona:"addresses:as,omitempty"`
+		Bloom        []int64               `nimona:"bloom:ai,omitempty"`
+		ContentTypes []string              `nimona:"contentTypes:as,omitempty"`
+		Certificates []*object.Certificate `nimona:"certificates:am,omitempty"`
+		Relays       []*Peer               `nimona:"relays:am,omitempty"`
 	}
 	LookupRequest struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Nonce    string
-		Bloom    []int64
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Nonce    string          `nimona:"nonce:s,omitempty"`
+		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
 	}
 	LookupResponse struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Nonce    string
-		Bloom    []int64
-		Peers    []*Peer
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Nonce    string          `nimona:"nonce:s,omitempty"`
+		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
+		Peers    []*Peer         `nimona:"peers:am,omitempty"`
 	}
 )
 
-func (e Peer) GetType() string {
+func (e *Peer) Type() string {
 	return "nimona.io/peer.Peer"
 }
 
-func (e Peer) IsStreamRoot() bool {
-	return false
-}
-
-func (e Peer) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "version",
-			Type:       "int",
-			Hint:       "i",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "addresses",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "bloom",
-			Type:       "int",
-			Hint:       "i",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "contentTypes",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "certificates",
-			Type:       "nimona.io/object.Certificate",
-			Hint:       "m",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "relays",
-			Type:       "nimona.io/peer.Peer",
-			Hint:       "m",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e Peer) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Peer) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/peer.Peer")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	o = o.Set("version:i", e.Version)
-	if len(e.Addresses) > 0 {
-		v := object.List{}
-		for _, iv := range e.Addresses {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("addresses:as", v)
-	}
-	if len(e.Bloom) > 0 {
-		v := object.List{}
-		for _, iv := range e.Bloom {
-			v = v.Append(object.Int(iv))
-		}
-		o = o.Set("bloom:ai", v)
-	}
-	if len(e.ContentTypes) > 0 {
-		v := object.List{}
-		for _, iv := range e.ContentTypes {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("contentTypes:as", v)
-	}
-	if len(e.Certificates) > 0 {
-		v := object.List{}
-		for _, iv := range e.Certificates {
-			v = v.Append(iv.ToObject().Raw())
-		}
-		o = o.Set("certificates:am", v)
-	}
-	if len(e.Relays) > 0 {
-		v := object.List{}
-		for _, iv := range e.Relays {
-			v = v.Append(iv.ToObject().Raw())
-		}
-		o = o.Set("relays:am", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Peer) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("version:i"); v != nil {
-		e.Version = int64(v.PrimitiveHinted().(int64))
-	}
-	if v := data.Value("addresses:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Addresses = make([]string, len(m))
-		for i, iv := range m {
-			e.Addresses[i] = string(iv)
-		}
-	}
-	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]int64)
-		e.Bloom = make([]int64, len(m))
-		for i, iv := range m {
-			e.Bloom[i] = int64(iv)
-		}
-	}
-	if v := data.Value("contentTypes:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.ContentTypes = make([]string, len(m))
-		for i, iv := range m {
-			e.ContentTypes[i] = string(iv)
-		}
-	}
-	if v := data.Value("certificates:am"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]interface{})
-		e.Certificates = make([]*object.Certificate, len(m))
-		for i, iv := range m {
-			es := &object.Certificate{}
-			eo := object.FromMap(iv.(map[string]interface{}))
-			es.FromObject(eo)
-			e.Certificates[i] = es
-		}
-	}
-	if v := data.Value("relays:am"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]interface{})
-		e.Relays = make([]*Peer, len(m))
-		for i, iv := range m {
-			es := &Peer{}
-			eo := object.FromMap(iv.(map[string]interface{}))
-			es.FromObject(eo)
-			e.Relays[i] = es
-		}
-	}
-	return nil
+func (e *Peer) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e LookupRequest) GetType() string {
+func (e *LookupRequest) Type() string {
 	return "nimona.io/LookupRequest"
 }
 
-func (e LookupRequest) IsStreamRoot() bool {
-	return false
-}
-
-func (e LookupRequest) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "bloom",
-			Type:       "int",
-			Hint:       "i",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e LookupRequest) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e LookupRequest) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/LookupRequest")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if len(e.Bloom) > 0 {
-		v := object.List{}
-		for _, iv := range e.Bloom {
-			v = v.Append(object.Int(iv))
-		}
-		o = o.Set("bloom:ai", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *LookupRequest) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]int64)
-		e.Bloom = make([]int64, len(m))
-		for i, iv := range m {
-			e.Bloom[i] = int64(iv)
-		}
-	}
-	return nil
+func (e *LookupRequest) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e LookupResponse) GetType() string {
+func (e *LookupResponse) Type() string {
 	return "nimona.io/LookupResponse"
 }
 
-func (e LookupResponse) IsStreamRoot() bool {
-	return false
-}
-
-func (e LookupResponse) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "bloom",
-			Type:       "int",
-			Hint:       "i",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "peers",
-			Type:       "nimona.io/peer.Peer",
-			Hint:       "m",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e LookupResponse) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e LookupResponse) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/LookupResponse")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if len(e.Bloom) > 0 {
-		v := object.List{}
-		for _, iv := range e.Bloom {
-			v = v.Append(object.Int(iv))
-		}
-		o = o.Set("bloom:ai", v)
-	}
-	if len(e.Peers) > 0 {
-		v := object.List{}
-		for _, iv := range e.Peers {
-			v = v.Append(iv.ToObject().Raw())
-		}
-		o = o.Set("peers:am", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *LookupResponse) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("bloom:ai"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]int64)
-		e.Bloom = make([]int64, len(m))
-		for i, iv := range m {
-			e.Bloom[i] = int64(iv)
-		}
-	}
-	if v := data.Value("peers:am"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]interface{})
-		e.Peers = make([]*Peer, len(m))
-		for i, iv := range m {
-			es := &Peer{}
-			eo := object.FromMap(iv.(map[string]interface{}))
-			es.FromObject(eo)
-			e.Peers[i] = es
-		}
-	}
-	return nil
+func (e *LookupResponse) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }

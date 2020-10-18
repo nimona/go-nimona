@@ -5,19 +5,19 @@ package object
 type (
 	Certificate struct {
 		Metadata Metadata `nimona:"metadata:m"`
-		Nonce    string   `nimona:"nonce:s",omitempty`
-		Created  string   `nimona:"created:s",omitempty`
-		Expires  string   `nimona:"expires:s",omitempty`
+		Nonce    string   `nimona:"nonce:s,omitempty"`
+		Created  string   `nimona:"created:s,omitempty"`
+		Expires  string   `nimona:"expires:s,omitempty"`
 	}
 	CertificateRequest struct {
 		Metadata               Metadata `nimona:"metadata:m"`
-		ApplicationName        string   `nimona:"applicationName:s",omitempty`
-		ApplicationDescription string   `nimona:"applicationDescription:s",omitempty`
-		ApplicationURL         string   `nimona:"applicationURL:s",omitempty`
-		Subject                string   `nimona:"subject:s",omitempty`
-		Resources              []string `nimona:"resources:as",omitempty`
-		Actions                []string `nimona:"actions:as",omitempty`
-		Nonce                  string   `nimona:"nonce:s",omitempty`
+		ApplicationName        string   `nimona:"applicationName:s,omitempty"`
+		ApplicationDescription string   `nimona:"applicationDescription:s,omitempty"`
+		ApplicationURL         string   `nimona:"applicationURL:s,omitempty"`
+		Subject                string   `nimona:"subject:s,omitempty"`
+		Resources              []string `nimona:"resources:as,omitempty"`
+		Actions                []string `nimona:"actions:as,omitempty"`
+		Nonce                  string   `nimona:"nonce:s,omitempty"`
 	}
 )
 
@@ -25,8 +25,8 @@ func (e *Certificate) Type() string {
 	return "nimona.io/Certificate"
 }
 
-func (e *Certificate) ToObject() *Object {
-	o, err := Encode(e)
+func (e Certificate) ToObject() *Object {
+	o, err := Encode(&e)
 	if err != nil {
 		panic(err)
 	}
@@ -41,8 +41,8 @@ func (e *CertificateRequest) Type() string {
 	return "nimona.io/CertificateRequest"
 }
 
-func (e *CertificateRequest) ToObject() *Object {
-	o, err := Encode(e)
+func (e CertificateRequest) ToObject() *Object {
+	o, err := Encode(&e)
 	if err != nil {
 		panic(err)
 	}

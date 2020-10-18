@@ -3,515 +3,117 @@
 package stream
 
 import (
-	"errors"
-
 	object "nimona.io/pkg/object"
 )
 
 type (
 	Policy struct {
-		raw        object.Object
-		Metadata   object.Metadata
-		Subjects   []string
-		Resources  []string
-		Conditions []string
-		Action     string
+		Metadata   object.Metadata `nimona:"metadata:m"`
+		Subjects   []string        `nimona:"subjects:as,omitempty"`
+		Resources  []string        `nimona:"resources:as,omitempty"`
+		Conditions []string        `nimona:"conditions:as,omitempty"`
+		Action     string          `nimona:"action:s,omitempty"`
 	}
 	Request struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Nonce    string
-		RootHash object.Hash
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Nonce    string          `nimona:"nonce:s,omitempty"`
+		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
 	}
 	Response struct {
-		raw      object.Object
-		Metadata object.Metadata
-		Nonce    string
-		RootHash object.Hash
-		Leaves   []object.Hash
+		Metadata object.Metadata `nimona:"metadata:m"`
+		Nonce    string          `nimona:"nonce:s,omitempty"`
+		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
+		Leaves   []object.Hash   `nimona:"leaves:as,omitempty"`
 	}
 	Announcement struct {
-		raw          object.Object
-		Metadata     object.Metadata
-		Nonce        string
-		StreamHash   object.Hash
-		ObjectHashes []object.Hash
+		Metadata     object.Metadata `nimona:"metadata:m"`
+		Nonce        string          `nimona:"nonce:s,omitempty"`
+		StreamHash   object.Hash     `nimona:"streamHash:s,omitempty"`
+		ObjectHashes []object.Hash   `nimona:"objectHashes:as,omitempty"`
 	}
 	Subscription struct {
-		raw        object.Object
-		Metadata   object.Metadata
-		RootHashes []object.Hash
-		Expiry     string
+		Metadata   object.Metadata `nimona:"metadata:m"`
+		RootHashes []object.Hash   `nimona:"rootHashes:as,omitempty"`
+		Expiry     string          `nimona:"expiry:s,omitempty"`
 	}
 )
 
-func (e Policy) GetType() string {
+func (e *Policy) Type() string {
 	return "nimona.io/stream.Policy"
 }
 
-func (e Policy) IsStreamRoot() bool {
-	return false
-}
-
-func (e Policy) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "subjects",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "resources",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "conditions",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "action",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Policy) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Policy) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Policy")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if len(e.Subjects) > 0 {
-		v := object.List{}
-		for _, iv := range e.Subjects {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("subjects:as", v)
-	}
-	if len(e.Resources) > 0 {
-		v := object.List{}
-		for _, iv := range e.Resources {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("resources:as", v)
-	}
-	if len(e.Conditions) > 0 {
-		v := object.List{}
-		for _, iv := range e.Conditions {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("conditions:as", v)
-	}
-	if e.Action != "" {
-		o = o.Set("action:s", e.Action)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Policy) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("subjects:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Subjects = make([]string, len(m))
-		for i, iv := range m {
-			e.Subjects[i] = string(iv)
-		}
-	}
-	if v := data.Value("resources:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Resources = make([]string, len(m))
-		for i, iv := range m {
-			e.Resources[i] = string(iv)
-		}
-	}
-	if v := data.Value("conditions:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Conditions = make([]string, len(m))
-		for i, iv := range m {
-			e.Conditions[i] = string(iv)
-		}
-	}
-	if v := data.Value("action:s"); v != nil {
-		e.Action = string(v.PrimitiveHinted().(string))
-	}
-	return nil
+func (e *Policy) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e Request) GetType() string {
+func (e *Request) Type() string {
 	return "nimona.io/stream.Request"
 }
 
-func (e Request) IsStreamRoot() bool {
-	return false
-}
-
-func (e Request) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "rootHash",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Request) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Request) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Request")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if e.RootHash != "" {
-		o = o.Set("rootHash:s", e.RootHash)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Request) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("rootHash:s"); v != nil {
-		e.RootHash = object.Hash(v.PrimitiveHinted().(string))
-	}
-	return nil
+func (e *Request) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e Response) GetType() string {
+func (e *Response) Type() string {
 	return "nimona.io/stream.Response"
 }
 
-func (e Response) IsStreamRoot() bool {
-	return false
-}
-
-func (e Response) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "rootHash",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "leaves",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e Response) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Response) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Response")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if e.RootHash != "" {
-		o = o.Set("rootHash:s", e.RootHash)
-	}
-	if len(e.Leaves) > 0 {
-		v := object.List{}
-		for _, iv := range e.Leaves {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("leaves:as", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Response) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("rootHash:s"); v != nil {
-		e.RootHash = object.Hash(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("leaves:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.Leaves = make([]object.Hash, len(m))
-		for i, iv := range m {
-			e.Leaves[i] = object.Hash(iv)
-		}
-	}
-	return nil
+func (e *Response) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e Announcement) GetType() string {
+func (e *Announcement) Type() string {
 	return "nimona.io/stream.Announcement"
 }
 
-func (e Announcement) IsStreamRoot() bool {
-	return false
-}
-
-func (e Announcement) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "nonce",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "streamHash",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}, {
-			Name:       "objectHashes",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}},
+func (e Announcement) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Announcement) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Announcement")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if e.Nonce != "" {
-		o = o.Set("nonce:s", e.Nonce)
-	}
-	if e.StreamHash != "" {
-		o = o.Set("streamHash:s", e.StreamHash)
-	}
-	if len(e.ObjectHashes) > 0 {
-		v := object.List{}
-		for _, iv := range e.ObjectHashes {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("objectHashes:as", v)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Announcement) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("nonce:s"); v != nil {
-		e.Nonce = string(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("streamHash:s"); v != nil {
-		e.StreamHash = object.Hash(v.PrimitiveHinted().(string))
-	}
-	if v := data.Value("objectHashes:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.ObjectHashes = make([]object.Hash, len(m))
-		for i, iv := range m {
-			e.ObjectHashes[i] = object.Hash(iv)
-		}
-	}
-	return nil
+func (e *Announcement) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
-func (e Subscription) GetType() string {
+func (e *Subscription) Type() string {
 	return "nimona.io/stream.Subscription"
 }
 
-func (e Subscription) IsStreamRoot() bool {
-	return false
-}
-
-func (e Subscription) GetSchema() *object.SchemaObject {
-	return &object.SchemaObject{
-		Properties: []*object.SchemaProperty{{
-			Name:       "rootHashes",
-			Type:       "nimona.io/object.Hash",
-			Hint:       "s",
-			IsRepeated: true,
-			IsOptional: false,
-		}, {
-			Name:       "expiry",
-			Type:       "string",
-			Hint:       "s",
-			IsRepeated: false,
-			IsOptional: false,
-		}},
+func (e Subscription) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func (e Subscription) ToObject() object.Object {
-	o := object.Object{}
-	o = o.SetType("nimona.io/stream.Subscription")
-	if len(e.Metadata.Stream) > 0 {
-		o = o.SetStream(e.Metadata.Stream)
-	}
-	if len(e.Metadata.Parents) > 0 {
-		o = o.SetParents(e.Metadata.Parents)
-	}
-	if !e.Metadata.Owner.IsEmpty() {
-		o = o.SetOwner(e.Metadata.Owner)
-	}
-	if !e.Metadata.Signature.IsEmpty() {
-		o = o.SetSignature(e.Metadata.Signature)
-	}
-	o = o.SetPolicy(e.Metadata.Policy)
-	if len(e.RootHashes) > 0 {
-		v := object.List{}
-		for _, iv := range e.RootHashes {
-			v = v.Append(object.String(iv))
-		}
-		o = o.Set("rootHashes:as", v)
-	}
-	if e.Expiry != "" {
-		o = o.Set("expiry:s", e.Expiry)
-	}
-	// if schema := e.GetSchema(); schema != nil {
-	// 	m["_schema:m"] = schema.ToObject().ToMap()
-	// }
 	return o
 }
 
-func (e *Subscription) FromObject(o object.Object) error {
-	data, ok := o.Raw().Value("data:m").(object.Map)
-	if !ok {
-		return errors.New("missing data")
-	}
-	e.raw = object.Object{}
-	e.raw = e.raw.SetType(o.GetType())
-	e.Metadata.Stream = o.GetStream()
-	e.Metadata.Parents = o.GetParents()
-	e.Metadata.Owner = o.GetOwner()
-	e.Metadata.Signature = o.GetSignature()
-	e.Metadata.Policy = o.GetPolicy()
-	if v := data.Value("rootHashes:as"); v != nil && v.IsList() {
-		m := v.PrimitiveHinted().([]string)
-		e.RootHashes = make([]object.Hash, len(m))
-		for i, iv := range m {
-			e.RootHashes[i] = object.Hash(iv)
-		}
-	}
-	if v := data.Value("expiry:s"); v != nil {
-		e.Expiry = string(v.PrimitiveHinted().(string))
-	}
-	return nil
+func (e *Subscription) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
