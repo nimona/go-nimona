@@ -12,7 +12,7 @@ var (
 	ErrInvalidSignature = errors.Error("invalid signature")
 )
 
-func Write(o object.Object, conn *Connection) error {
+func Write(o *object.Object, conn *Connection) error {
 	if conn == nil {
 		log.DefaultLogger.Info("conn cannot be nil")
 		return errors.New("missing conn")
@@ -81,11 +81,11 @@ func Read(conn *Connection) (*object.Object, error) {
 		log.String("direction", "incoming"),
 	)
 
-	if !o.GetSignature().IsEmpty() {
+	if !o.Metadata.Signature.IsEmpty() {
 		if err := object.Verify(o); err != nil {
-			return &o, ErrInvalidSignature
+			return o, ErrInvalidSignature
 		}
 	}
 
-	return &o, nil
+	return o, nil
 }

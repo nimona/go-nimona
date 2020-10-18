@@ -24,9 +24,12 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	require.NoError(t, err)
 	defer l2.Close()
 
-	testObj := new(object.Object).
-		SetType("foo").
-		Set("foo:s", object.String("bar"))
+	testObj := &object.Object{
+		Type: "foo",
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
 
 	// subscribe to objects of type "foo" coming to n2
 	sub := n2.Subscribe(
@@ -102,7 +105,6 @@ func TestNetwork_Relay(t *testing.T) {
 	}
 
 	p2 := &peer.Peer{
-
 		Metadata: object.Metadata{
 			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
@@ -112,14 +114,32 @@ func TestNetwork_Relay(t *testing.T) {
 		},
 	}
 
-	testObj := new(object.Object).
-		SetType("foo").
-		Set("foo:s", object.String("bar"))
+	testObj := &object.Object{
+		Type: "foo",
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
 
-	testObjFromP1 := testObj.
-		SetOwner(n1.LocalPeer().GetPrimaryPeerKey().PublicKey())
-	testObjFromP2 := testObj.
-		SetOwner(n2.LocalPeer().GetPrimaryPeerKey().PublicKey())
+	testObjFromP1 := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
+
+	testObjFromP2 := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
 
 	// send from p1 to p0
 	err = n1.Send(context.Background(), testObj, p0)
@@ -139,8 +159,8 @@ func TestNetwork_Relay(t *testing.T) {
 
 	require.NotNil(t, sub)
 	assert.Equal(t,
-		testObjFromP1.SetSignature(object.Signature{}).ToMap(),
-		env.Payload.SetSignature(object.Signature{}).ToMap(),
+		testObjFromP1.Metadata.Signature,
+		env.Payload.Metadata.Signature,
 	)
 
 	// send from p2 to p1
@@ -153,8 +173,8 @@ func TestNetwork_Relay(t *testing.T) {
 
 	require.NotNil(t, sub)
 	assert.Equal(t,
-		testObjFromP2.SetSignature(object.Signature{}).ToMap(),
-		env.Payload.SetSignature(object.Signature{}).ToMap(),
+		testObjFromP2.Metadata.Signature,
+		env.Payload.Metadata.Signature,
 	)
 }
 
@@ -163,36 +183,49 @@ func Test_exchange_signAll(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("should pass, sign root object", func(t *testing.T) {
-		o := object.Object{}.
-			SetType("foo").
-			SetOwner(k.PublicKey()).
-			Set("foo:s", "data")
+		o := &object.Object{
+			Type: "foo",
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+			Data: map[string]interface{}{
+				"foo:s": "bar",
+			},
+		}
 
 		g, err := signAll(k, o)
 		assert.NoError(t, err)
 
-		assert.NotNil(t, g.GetSignature())
-		assert.False(t, g.GetSignature().IsEmpty())
-		assert.False(t, g.GetSignature().Signer.IsEmpty())
+		assert.NotNil(t, g.Metadata.Signature)
+		assert.False(t, g.Metadata.Signature.IsEmpty())
+		assert.False(t, g.Metadata.Signature.Signer.IsEmpty())
 	})
 
 	t.Run("should pass, sign nested object", func(t *testing.T) {
-		n := object.Object{}.
-			SetType("foo").
-			SetOwner(k.PublicKey()).
-			Set("foo:s", "data")
-		o := object.Object{}.
-			SetType("foo").
-			Set("foo:m", n.Raw())
+		n := &object.Object{
+			Type: "foo",
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+			Data: map[string]interface{}{
+				"foo:s": "bar",
+			},
+		}
+		o := &object.Object{
+			Type: "foo",
+			Data: map[string]interface{}{
+				"foo:m": n,
+			},
+		}
 
 		g, err := signAll(k, o)
 		assert.NoError(t, err)
 
-		assert.True(t, g.GetSignature().IsEmpty())
-		assert.True(t, g.GetSignature().Signer.IsEmpty())
+		assert.True(t, g.Metadata.Signature.IsEmpty())
+		assert.True(t, g.Metadata.Signature.Signer.IsEmpty())
 
-		gn := object.FromMap(g.Get("foo:m").(map[string]interface{}))
-		assert.False(t, gn.GetSignature().IsEmpty())
-		assert.False(t, gn.GetSignature().Signer.IsEmpty())
+		gn := g.Data["foo:m"].(*object.Object)
+		assert.False(t, gn.Metadata.Signature.IsEmpty())
+		assert.False(t, gn.Metadata.Signature.Signer.IsEmpty())
 	})
 }
