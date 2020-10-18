@@ -71,13 +71,11 @@ func (st *Store) Close() error {
 
 func (st *Store) Get(
 	hash object.Hash,
-) (object.Object, error) {
-	obj := object.Object{}
-
+) (*object.Object, error) {
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
-		return obj, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			errors.New("could not prepare query"),
 		)
@@ -90,26 +88,26 @@ func (st *Store) Get(
 	data := []byte{}
 
 	if err := row.Scan(&data); err != nil {
-		return obj, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			objectstore.ErrNotFound,
 		)
 	}
 
 	if err := json.Unmarshal(data, &m); err != nil {
-		return obj, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			errors.New("could not unmarshal data"),
 		)
 	}
 
-	obj = object.FromMap(m)
+	obj := object.FromMap(m)
 
 	// update the last accessed column
 	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
 	if err != nil {
-		return obj, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			errors.New("could not prepare query"),
 		)
@@ -120,7 +118,7 @@ func (st *Store) Get(
 		time.Now().Unix(),
 		hash.String(),
 	); err != nil {
-		return obj, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			errors.New("could not update last access"),
 		)
@@ -146,13 +144,13 @@ func (st *Store) GetByType(
 }
 
 func (st *Store) Put(
-	obj object.Object,
+	obj *object.Object,
 ) error {
 	return st.PutWithTimeout(obj, 0)
 }
 
 func (st *Store) PutWithTimeout(
-	obj object.Object,
+	obj *object.Object,
 	ttl time.Duration,
 ) error {
 	// TODO(geoah) why replace?
@@ -182,13 +180,13 @@ func (st *Store) PutWithTimeout(
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	objectType := obj.GetType()
+	objectType := obj.Type
 	objectHash := obj.Hash().String()
-	streamHash := obj.GetStream().String()
+	streamHash := obj.Metadata.Stream.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if !obj.GetOwner().IsEmpty() {
-		ownerPublicKey = obj.GetOwner().String()
+	if !obj.Metadata.Owner.IsEmpty() {
+		ownerPublicKey = obj.Metadata.Owner.String()
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
@@ -445,7 +443,7 @@ func (st *Store) Filter(
 			select {
 			case <-closeChan:
 				return
-			case objectsChan <- &o:
+			case objectsChan <- o:
 				// all good
 			}
 		}
