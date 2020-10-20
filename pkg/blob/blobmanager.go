@@ -2,7 +2,6 @@ package blob
 
 import (
 	"errors"
-	"strings"
 	"sync"
 	"time"
 
@@ -122,7 +121,7 @@ func (r *requester) Request(
 		}
 
 		chunk := &Chunk{}
-		if err := chunk.FromObject(*chObj); err != nil {
+		if err := chunk.FromObject(chObj); err != nil {
 			logger.Error("failed to convert to chunk", log.Error(err))
 			return nil, err
 		}
@@ -134,27 +133,16 @@ func (r *requester) Request(
 	return blob, nil
 }
 
-func getChunks(obj *object.Object) ([]object.Hash, error) {
-	chunks := []object.Hash{}
-	data := obj.Raw().Value("data:m")
+type blobUnloaded struct {
+	Blob
+	ChunksUnloaded []object.Hash `nimona:"chunks:ar,omitempty"`
+}
 
-	refs := map[object.Hash]string{}
-
-	object.Traverse(data, func(k string, v object.Value) bool {
-		if v == nil || !v.IsRef() {
-			return true
-		}
-
-		refs[object.Hash(v.(object.Ref))] = k
-		return true
-	})
-
-	for k, v := range refs {
-		if !strings.Contains(v, "chunks") {
-			return nil, errors.New("chunks not found")
-		}
-		chunks = append(chunks, k)
+func getChunks(o *object.Object) ([]object.Hash, error) {
+	b := &blobUnloaded{}
+	if err := object.Decode(o, b); err != nil {
+		return nil, err
 	}
 
-	return chunks, nil
+	return b.ChunksUnloaded, nil
 }

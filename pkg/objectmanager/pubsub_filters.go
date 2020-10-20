@@ -49,7 +49,7 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 func FilterByHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)
-		opts.Filters = append(opts.Filters, func(o object.Object) bool {
+		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			return o.Hash() == h
 		})
 	}
@@ -58,8 +58,8 @@ func FilterByHash(h object.Hash) LookupOption {
 func FilterByOwner(h crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Owners = append(opts.Lookups.Owners, h)
-		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			owner := o.GetOwner()
+		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
+			owner := o.Metadata.Owner
 			return !owner.IsEmpty() && owner.Equals(h)
 		})
 	}
@@ -68,8 +68,8 @@ func FilterByOwner(h crypto.PublicKey) LookupOption {
 func FilterByStreamHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
-		opts.Filters = append(opts.Filters, func(o object.Object) bool {
-			return !h.IsEmpty() && h.IsEqual(o.GetStream())
+		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
+			return !h.IsEmpty() && h == o.Metadata.Stream
 		})
 	}
 }
@@ -85,9 +85,9 @@ func FilterByObjectType(typePatterns ...string) LookupOption {
 	}
 	return func(opts *LookupOptions) {
 		opts.Lookups.ContentTypes = append(opts.Lookups.ContentTypes, typePatterns...)
-		opts.Filters = append(opts.Filters, func(o object.Object) bool {
+		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, pattern := range patterns {
-				if pattern.Match(o.GetType()) {
+				if pattern.Match(o.Type) {
 					return true
 				}
 			}

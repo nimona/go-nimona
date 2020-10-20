@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	feedObjectAddedType   = Added{}.GetType()
-	feedObjectRemovedType = Removed{}.GetType()
+	feedObjectAddedType   = new(Added).Type()
+	feedObjectRemovedType = new(Removed).Type()
 )
 
 func GetFeedHashes(
@@ -26,11 +26,11 @@ func GetFeedHashes(
 		if err != nil {
 			return nil, err
 		}
-		switch obj.GetType() {
+		switch obj.Type {
 		case feedObjectAddedType:
 			event := &Added{}
 			// TODO should this error?
-			if err := event.FromObject(*obj); err != nil {
+			if err := event.FromObject(obj); err != nil {
 				return nil, err
 			}
 			for _, hash := range event.ObjectHash {
@@ -39,7 +39,7 @@ func GetFeedHashes(
 		case feedObjectRemovedType:
 			event := &Removed{}
 			// TODO should this error?
-			if err := event.FromObject(*obj); err != nil {
+			if err := event.FromObject(obj); err != nil {
 				return nil, err
 			}
 			for _, hash := range event.ObjectHash {
@@ -60,9 +60,9 @@ func GetFeedHashes(
 func GetFeedHypotheticalRoot(
 	owner crypto.PublicKey,
 	objectType string,
-) FeedStreamRoot {
-	r := FeedStreamRoot{
-		Type: getTypeForFeed(objectType),
+) *FeedStreamRoot {
+	r := &FeedStreamRoot{
+		ObjectType: getTypeForFeed(objectType),
 		Metadata: object.Metadata{
 			Owner: owner,
 		},
