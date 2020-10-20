@@ -28,23 +28,23 @@ var (
 )
 
 var (
-	objectRequestType      = object.Request{}.GetType()
-	streamRequestType      = stream.Request{}.GetType()
-	streamSubscriptionType = stream.Subscription{}.GetType()
-	streamAnnouncementType = stream.Announcement{}.GetType()
+	objectRequestType      = new(object.Request).Type()
+	streamRequestType      = new(stream.Request).Type()
+	streamSubscriptionType = new(stream.Subscription).Type()
+	streamAnnouncementType = new(stream.Announcement).Type()
 )
 
 //go:generate $GOBIN/mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate $GOBIN/mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub_generated.go
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg objectmanager -imp=nimona.io/pkg/object gen "ObjectType=object.Object Name=Object name=object"
+//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_generated.go -pkg objectmanager -imp=nimona.io/pkg/object gen "ObjectType=*object.Object Name=Object name=object"
 //go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=object.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
 		Put(
 			ctx context.Context,
-			o object.Object,
-		) (object.Object, error)
+			o *object.Object,
+		) (*object.Object, error)
 		Request(
 			ctx context.Context,
 			hash object.Hash,
@@ -154,7 +154,7 @@ func (m *manager) RequestStream(
 	responses := make(chan stream.Response)
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(new(stream.Response).GetType()),
+		network.FilterByObjectType(new(stream.Response).Type()),
 	)
 
 	go func() {
@@ -242,7 +242,7 @@ func (m *manager) fetchFromLeaves(
 			)
 			if obj, err := m.objectstore.Get(objectHash); err == nil {
 				// TODO consider checking the whole stream for missing objects
-				parents := obj.GetParents()
+				parents := obj.Metadata.Parents
 				// TODO consider refactoring, or moving into a goroutine
 				for _, parent := range parents {
 					objectHashes <- parent
@@ -263,7 +263,7 @@ func (m *manager) fetchFromLeaves(
 				continue
 			}
 
-			parents := fullObj.GetParents()
+			parents := fullObj.Metadata.Parents
 			// TODO check the validity of the object
 			// * it should have objects
 			// * it should have a stream root hash
@@ -276,7 +276,7 @@ func (m *manager) fetchFromLeaves(
 			}
 
 			// so we should already have its parents.
-			if err := m.storeObject(dCtx, *fullObj); err != nil {
+			if err := m.storeObject(dCtx, fullObj); err != nil {
 				// TODO what do we do now?
 				wg.Done()
 				continue
@@ -323,16 +323,17 @@ func (m *manager) Request(
 				break
 			}
 			if e.Payload.Hash() == hash {
-				objCh <- &e.Payload
+				objCh <- e.Payload
 				break
 			}
 		}
 	}()
 
-	if err := m.network.Send(ctx, object.Request{
+	req := &object.Request{
 		ObjectHash:            hash,
 		ExcludedNestedObjects: excludeNested,
-	}.ToObject(), pr); err != nil {
+	}
+	if err := m.network.Send(ctx, req.ToObject(), pr); err != nil {
 		return nil, err
 	}
 
@@ -362,7 +363,7 @@ func (m *manager) handleObjects(
 			Named("objectmanager").
 			With(
 				log.String("method", "objectmanager.handleObjects"),
-				log.String("payload.type", env.Payload.GetType()),
+				log.String("payload.type", env.Payload.Type),
 				log.String("payload.hash", env.Payload.Hash().String()),
 			)
 
@@ -374,7 +375,7 @@ func (m *manager) handleObjects(
 			return err
 		}
 
-		switch env.Payload.GetType() {
+		switch env.Payload.Type {
 		case objectRequestType:
 			go func() {
 				hCtx := context.New(
@@ -449,16 +450,16 @@ func (m *manager) handleObjects(
 // Note: please do not .pubsub.Publish() in here
 func (m *manager) storeObject(
 	ctx context.Context,
-	obj object.Object,
+	obj *object.Object,
 ) error {
 	// TODO is registered content type, OR is part of a peristed stream
-	ok := m.isRegisteredContentType(obj.GetType())
+	ok := m.isRegisteredContentType(obj.Type)
 	if !ok {
 		return nil
 	}
 
 	logger := log.FromContext(ctx)
-	objType := obj.GetType()
+	objType := obj.Type
 	objHash := obj.Hash()
 
 	// TODO should we be de-reffing the object? I think so at least.
@@ -482,14 +483,14 @@ func (m *manager) storeObject(
 			logger.Error(
 				"error trying to persist incoming nested object",
 				log.String("hash", refObj.Hash().String()),
-				log.String("type", refObj.GetType()),
+				log.String("type", refObj.Type),
 				log.Error(err),
 			)
 		}
 	}
 
 	// store primary object
-	if err := m.objectstore.Put(*mainObj); err != nil {
+	if err := m.objectstore.Put(mainObj); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
 			log.String("hash", objHash.String()),
@@ -517,15 +518,15 @@ func (m *manager) storeObject(
 		ObjectHash: []object.Hash{
 			objHash,
 		},
-	}.ToObject()
+	}
 	or, err := m.objectstore.GetByStream(feedStreamHash)
 	if err != nil && err != objectstore.ErrNotFound {
 		return err
 	}
 	if err == objectstore.ErrNotFound {
-		feedEvent = feedEvent.SetParents([]object.Hash{
+		feedEvent.Metadata.Parents = []object.Hash{
 			feedStreamHash,
-		})
+		}
 	} else {
 		os, err := object.ReadAll(or)
 		if err != nil {
@@ -537,10 +538,10 @@ func (m *manager) storeObject(
 			for i, p := range parents {
 				parentHashes[i] = p.Hash()
 			}
-			feedEvent = feedEvent.SetParents(parentHashes)
+			feedEvent.Metadata.Parents = parentHashes
 		}
 	}
-	if err := m.objectstore.Put(feedEvent); err != nil {
+	if err := m.objectstore.Put(feedEvent.ToObject()); err != nil {
 		return err
 	}
 
@@ -575,13 +576,13 @@ func (m *manager) announceStreamChildren(
 		if err != nil {
 			break
 		}
-		if obj.GetType() != streamSubscriptionType {
+		if obj.Type != streamSubscriptionType {
 			continue
 		}
-		if obj.GetOwner().IsEmpty() {
+		if obj.Metadata.Owner.IsEmpty() {
 			continue
 		}
-		subscribersMap[obj.GetOwner()] = struct{}{}
+		subscribersMap[obj.Metadata.Owner] = struct{}{}
 	}
 	subscribers := []crypto.PublicKey{}
 	for subscriber := range subscribersMap {
@@ -604,11 +605,11 @@ func (m *manager) announceStreamChildren(
 		},
 		StreamHash:   streamHash,
 		ObjectHashes: children,
-	}.ToObject()
+	}
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		if err := m.send(ctx, &announcement, subscriber); err != nil {
+		if err := m.send(ctx, announcement.ToObject(), subscriber); err != nil {
 			logger.Info(
 				"error sending announcement",
 				log.Error(err),
@@ -628,7 +629,7 @@ func (m *manager) send(
 	obj *object.Object,
 	rec crypto.PublicKey,
 ) error {
-	if err := m.network.Send(ctx, *obj, &peer.Peer{
+	if err := m.network.Send(ctx, obj, &peer.Peer{
 		Metadata: object.Metadata{
 			Owner: rec,
 		},
@@ -648,7 +649,7 @@ func (m *manager) send(
 	// TODO add error group
 	var errs error
 	for peer := range peers {
-		if err := m.network.Send(ctx, *obj, peer); err != nil {
+		if err := m.network.Send(ctx, obj, peer); err != nil {
 			errs = multierror.Append(errs, err)
 			continue
 		}
@@ -678,7 +679,8 @@ func (m *manager) handleObjectRequest(
 		return err
 	}
 
-	robj := &obj
+	// TODO(geoah) FIXME copy?
+	robj := obj
 
 	switch req.ExcludedNestedObjects {
 	case true:
@@ -691,7 +693,7 @@ func (m *manager) handleObjectRequest(
 			ctx context.Context, hash object.Hash,
 		) (*object.Object, error) {
 			obj, err := m.objectstore.Get(hash)
-			return &obj, err
+			return obj, err
 		})
 		if err != nil {
 			return err
@@ -700,7 +702,7 @@ func (m *manager) handleObjectRequest(
 
 	err = m.network.Send(
 		ctx,
-		*robj,
+		robj,
 		&peer.Peer{
 			Metadata: object.Metadata{
 				Owner: env.Sender,
@@ -855,14 +857,14 @@ func (m *manager) handleStreamAnnouncement(
 // TODO(geoah) what happened if the stream graph is not complete? Do we care?
 func (m *manager) Put(
 	ctx context.Context,
-	o object.Object,
-) (object.Object, error) {
+	o *object.Object,
+) (*object.Object, error) {
 	// if this is not ours, just persist it
 	// TODO check identity as well?
-	if o.GetOwner() != m.localpeer.GetPrimaryPeerKey().PublicKey() {
+	if o.Metadata.Owner != m.localpeer.GetPrimaryPeerKey().PublicKey() {
 		// add to store
 		if err := m.storeObject(ctx, o); err != nil {
-			return o, err
+			return nil, err
 		}
 		// publish to pubsub
 		// TODO why do we publish this?
@@ -872,15 +874,15 @@ func (m *manager) Put(
 	// Note: Please don't add owners as it messes with hypothetical objects
 	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
-	streamHash := o.GetStream()
-	if !streamHash.IsEmpty() && len(o.GetParents()) == 0 {
+	streamHash := o.Metadata.Stream
+	if !streamHash.IsEmpty() && len(o.Metadata.Parents) == 0 {
 		or, err := m.objectstore.GetByStream(streamHash)
 		if err != nil && err != objectstore.ErrNotFound {
-			return o, err
+			return nil, err
 		}
 		os, err := object.ReadAll(or)
 		if err != nil {
-			return o, err
+			return nil, err
 		}
 		if len(os) > 0 {
 			parents := stream.GetStreamLeaves(os)
@@ -888,13 +890,13 @@ func (m *manager) Put(
 			for i, p := range parents {
 				parentHashes[i] = p.Hash()
 			}
-			o = o.SetParents(parentHashes)
+			o.Metadata.Parents = parentHashes
 		}
 	}
 
 	// add to store
 	if err := m.storeObject(ctx, o); err != nil {
-		return o, err
+		return nil, err
 	}
 
 	if !streamHash.IsEmpty() {
@@ -904,7 +906,7 @@ func (m *manager) Put(
 				context.WithCorrelationID(ctx.CorrelationID()),
 				// TODO timeout?
 			),
-			o.GetStream(),
+			o.Metadata.Stream,
 			[]object.Hash{
 				o.Hash(),
 			},
@@ -925,7 +927,7 @@ func (m *manager) Subscribe(
 
 func getFeedRootHash(owner crypto.PublicKey, feedType string) object.Hash {
 	r := feed.FeedStreamRoot{
-		Type: feedType,
+		ObjectType: feedType,
 		Metadata: object.Metadata{
 			Owner: owner,
 		},

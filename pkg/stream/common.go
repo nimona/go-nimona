@@ -7,15 +7,15 @@ import (
 	"nimona.io/pkg/object"
 )
 
-func GetAllowsKeysFromPolicies(os ...object.Object) []crypto.PublicKey {
+func GetAllowsKeysFromPolicies(os ...*object.Object) []crypto.PublicKey {
 	// TODO this currently only accepts allow actions
 	pkm := map[crypto.PublicKey]struct{}{}
 	for _, o := range os {
-		owner := o.GetOwner()
+		owner := o.Metadata.Owner
 		if !owner.IsEmpty() {
 			pkm[owner] = struct{}{}
 		}
-		p := o.GetPolicy()
+		p := o.Metadata.Policy
 		for _, a := range p.Actions {
 			if strings.EqualFold(a, "allow") {
 				for _, s := range p.Subjects {
@@ -39,7 +39,7 @@ func GetStreamLeaves(os []*object.Object) []*object.Object {
 		if _, ok := hm[h]; !ok {
 			hm[h] = false
 		}
-		for _, p := range o.GetParents() {
+		for _, p := range o.Metadata.Parents {
 			hm[p.String()] = true
 		}
 		om[h] = o

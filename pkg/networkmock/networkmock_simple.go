@@ -40,7 +40,7 @@ func (m *MockNetworkSimple) Subscribe(
 
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
-	obj object.Object,
+	obj *object.Object,
 	rec *peer.Peer,
 ) error {
 	m.mutex.Lock()

@@ -32,8 +32,11 @@ func Test_manager_Request(t *testing.T) {
 			Owner: testPeerKey.PublicKey(),
 		},
 	}
-	f00 := object.Object{}.
-		Set("f00:s", "f00")
+	f00 := &object.Object{
+		Data: map[string]interface{}{
+			"f00:s": "f00",
+		},
+	}
 	type fields struct {
 		store   func(*testing.T) objectstore.Store
 		network func(*testing.T) network.Network
@@ -64,7 +67,7 @@ func Test_manager_Request(t *testing.T) {
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f00,
+								Payload: object.Copy(f00),
 							}},
 						},
 					},
@@ -77,7 +80,7 @@ func Test_manager_Request(t *testing.T) {
 			rootHash: f00.Hash(),
 			peer:     testPeer,
 		},
-		want: &f00,
+		want: f00,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -119,12 +122,21 @@ func Test_manager_handle_request(t *testing.T) {
 	localPeer.PutPrimaryIdentityKey(localPeerKey)
 
 	f00 := peer1.ToObject()
-	f01 := object.Object{}.
-		Set("f01:s", "f01").
-		Set("asdf:m", f00.Raw())
+	f01 := &object.Object{
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"f01:s":  "f01",
+			"asdf:m": object.Copy(f00),
+		},
+	}
 
-	unloadedF01 := f01.Set("asdf:m", nil)
-	unloadedF01 = unloadedF01.Set("asdf:r", object.Ref(f00.Hash()))
+	unloadedF01 := &object.Object{
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"f01:s":  "f01",
+			"asdf:r": f00.Hash(),
+		},
+	}
 
 	type fields struct {
 		storeHandler   func(*testing.T) objectstore.Store
@@ -132,7 +144,7 @@ func Test_manager_handle_request(t *testing.T) {
 			*testing.T,
 			context.Context,
 			bool, *sync.WaitGroup,
-			object.Object,
+			*object.Object,
 		) network.Network
 		resolver func(*testing.T) resolver.Resolver
 	}
@@ -146,7 +158,7 @@ func Test_manager_handle_request(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    object.Object
+		want    *object.Object
 		wantErr bool
 	}{
 		{
@@ -154,7 +166,7 @@ func Test_manager_handle_request(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
 					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
@@ -163,7 +175,7 @@ func Test_manager_handle_request(t *testing.T) {
 					ctx context.Context,
 					excludeNested bool,
 					wg *sync.WaitGroup,
-					want object.Object,
+					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
 					m.EXPECT().LocalPeer().Return(localPeer)
@@ -177,11 +189,10 @@ func Test_manager_handle_request(t *testing.T) {
 							}},
 						},
 					)
-
 					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(
 							ctx context.Context,
-							obj object.Object,
+							obj *object.Object,
 							recipient *peer.Peer,
 						) error {
 							assert.Equal(t, want, obj)
@@ -211,7 +222,7 @@ func Test_manager_handle_request(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(f01, nil).MaxTimes(2)
+					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
 					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
@@ -220,7 +231,7 @@ func Test_manager_handle_request(t *testing.T) {
 					ctx context.Context,
 					excludeNested bool,
 					wg *sync.WaitGroup,
-					want object.Object,
+					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
 					m.EXPECT().LocalPeer().Return(localPeer)
@@ -238,7 +249,7 @@ func Test_manager_handle_request(t *testing.T) {
 					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(
 							ctx context.Context,
-							obj object.Object,
+							obj *object.Object,
 							recipient *peer.Peer,
 						) error {
 							assert.Equal(t, want, obj)
@@ -295,19 +306,33 @@ func Test_manager_RequestStream(t *testing.T) {
 			Owner: testPeerKey.PublicKey(),
 		},
 	}
-	f00 := object.Object{}.
-		SetType("foo").
-		Set("f00:s", "f00")
-	f01 := object.Object{}.
-		SetType("foo").
-		SetStream(f00.Hash()).
-		SetParents([]object.Hash{f00.Hash()}).
-		Set("f01:s", "f01")
-	f02 := object.Object{}.
-		SetType("foo").
-		SetStream(f00.Hash()).
-		SetParents([]object.Hash{f01.Hash()}).
-		Set("f02:s", "f02")
+	f00 := &object.Object{
+		Type:     "foo",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"f00:s": "f00",
+		},
+	}
+	f01 := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Stream:  f00.Hash(),
+			Parents: []object.Hash{f00.Hash()},
+		},
+		Data: map[string]interface{}{
+			"f01:s": "f01",
+		},
+	}
+	f02 := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Stream:  f00.Hash(),
+			Parents: []object.Hash{f01.Hash()},
+		},
+		Data: map[string]interface{}{
+			"f02:s": "f02",
+		},
+	}
 
 	type fields struct {
 		store   func(*testing.T) objectstore.Store
@@ -323,7 +348,7 @@ func Test_manager_RequestStream(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []object.Object
+		want    []*object.Object
 		wantErr bool
 	}{{
 		name: "should pass, all missing",
@@ -332,13 +357,13 @@ func Test_manager_RequestStream(t *testing.T) {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
 					Get(f00.Hash()).
-					Return(object.Empty, objectstore.ErrNotFound)
+					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Get(f01.Hash()).
-					Return(object.Empty, objectstore.ErrNotFound)
+					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Get(f02.Hash()).
-					Return(object.Empty, objectstore.ErrNotFound)
+					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(f00).
 					Return(nil)
@@ -350,10 +375,10 @@ func Test_manager_RequestStream(t *testing.T) {
 					Return(nil)
 				m.EXPECT().
 					GetByStream(f00.Hash()).
-					Return(object.NewReadCloserFromObjects([]object.Object{
-						f00,
-						f01,
-						f02,
+					Return(object.NewReadCloserFromObjects([]*object.Object{
+						object.Copy(f00),
+						object.Copy(f01),
+						object.Copy(f02),
 					}), err)
 				return m
 			},
@@ -388,7 +413,7 @@ func Test_manager_RequestStream(t *testing.T) {
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f01,
+								Payload: object.Copy(f01),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
@@ -406,7 +431,7 @@ func Test_manager_RequestStream(t *testing.T) {
 			rootHash: f00.Hash(),
 			peer:     testPeer,
 		},
-		want: []object.Object{
+		want: []*object.Object{
 			f00,
 			f01,
 			f02,
@@ -428,7 +453,7 @@ func Test_manager_RequestStream(t *testing.T) {
 				return
 			}
 			if tt.want != nil {
-				objs := []object.Object{}
+				objs := []*object.Object{}
 				for {
 					obj, err := got.Read()
 					if err == object.ErrReaderDone {
@@ -437,7 +462,7 @@ func Test_manager_RequestStream(t *testing.T) {
 					if err != nil {
 						break
 					}
-					objs = append(objs, *obj)
+					objs = append(objs, obj)
 				}
 				require.Equal(t, len(tt.want), len(objs))
 				for i := 0; i < len(tt.want); i++ {
@@ -471,51 +496,91 @@ func Test_manager_Put(t *testing.T) {
 			"not-important",
 		},
 	}
-	testObjectSimple := object.Object{}.
-		SetType("foo").
-		Set("foo:s", "bar").
-		SetOwner(testOwnPublicKey)
-	testObjectStreamRoot := object.Object{}.
-		SetType("fooRoot").
-		Set("root:s", "true").
-		SetOwner(testOwnPublicKey)
-	testObjectWithStream := object.Object{}.
-		SetType("foo").
-		SetStream(testObjectStreamRoot.Hash()).
-		Set("foo:s", "bar").
-		SetOwner(testOwnPublicKey)
-	testObjectWithStreamUpdated := object.Object{}.
-		SetType("foo").
-		SetStream(testObjectStreamRoot.Hash()).
-		Set("foo:s", "bar").
-		SetParents(
-			[]object.Hash{
-				object.Object{}.Set("foo:s", "bar1").Hash(),
-				object.Object{}.Set("foo:s", "bar2").Hash(),
+	testObjectSimple := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner: testOwnPublicKey,
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
+	testObjectStreamRoot := &object.Object{
+		Type: "fooRoot",
+		Metadata: object.Metadata{
+			Owner: testOwnPublicKey,
+		},
+		Data: map[string]interface{}{
+			"root:s": "true",
+		},
+	}
+	testObjectWithStream := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner:  testOwnPublicKey,
+			Stream: testObjectStreamRoot.Hash(),
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
+	bar1 := &object.Object{
+		Data: map[string]interface{}{
+			"foo:s": "bar1",
+		},
+	}
+	bar2 := &object.Object{
+		Data: map[string]interface{}{
+			"foo:s": "bar2",
+		},
+	}
+	testObjectWithStreamUpdated := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner:  testOwnPublicKey,
+			Stream: testObjectStreamRoot.Hash(),
+			Parents: []object.Hash{
+				bar1.Hash(),
+				bar2.Hash(),
 			},
-		).
-		SetOwner(testOwnPublicKey)
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
 	testObjectSubscriptionInline := stream.Subscription{
 		Metadata: object.Metadata{
 			Owner:  testSubscriberPublicKey,
 			Stream: testObjectStreamRoot.Hash(),
 		},
 	}.ToObject()
-	testObjectComplex := object.Object{}.
-		SetType("foo-complex").
-		Set("foo:s", "bar").
-		Set("nested-simple:m", testObjectSimple.Raw())
-	testObjectComplexUpdated := object.Object{}.
-		SetType("foo-complex").
-		Set("foo:s", "bar").
-		Set("nested-simple:r", object.Ref(testObjectSimple.Hash()))
-	testObjectComplexReturned := object.Object{}.
-		SetType("foo-complex").
-		Set("foo:s", "bar").
-		Set("nested-simple:m", testObjectSimple.Raw())
+	testObjectComplex := &object.Object{
+		Type:     "foo-complex",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"foo:s":           "bar",
+			"nested-simple:m": testObjectSimple,
+		},
+	}
+	testObjectComplexUpdated := &object.Object{
+		Type:     "foo-complex",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"foo:s":           "bar",
+			"nested-simple:r": testObjectSimple.Hash(),
+		},
+	}
+	testObjectComplexReturned := &object.Object{
+		Type:     "foo-complex",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"foo:s":           "bar",
+			"nested-simple:m": testObjectSimple,
+		},
+	}
 	testFeedHash := getFeedRootHash(
 		testOwnPrivateKey.PublicKey(),
-		getTypeForFeed(testObjectSimple.GetType()),
+		getTypeForFeed(testObjectSimple.Type),
 	)
 	testFeedFirst := feed.Added{
 		ObjectHash: []object.Hash{
@@ -532,16 +597,16 @@ func Test_manager_Put(t *testing.T) {
 		store                 func(*testing.T) objectstore.Store
 		network               func(*testing.T) network.Network
 		resolver              func(*testing.T) resolver.Resolver
-		receivedSubscriptions []object.Object
+		receivedSubscriptions []*object.Object
 	}
 	type args struct {
-		o object.Object
+		o *object.Object
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    object.Object
+		want    *object.Object
 		wantErr bool
 	}{{
 		name: "should pass, simple object",
@@ -576,7 +641,7 @@ func Test_manager_Put(t *testing.T) {
 			},
 		},
 		args: args{
-			o: testObjectSimple,
+			o: object.Copy(testObjectSimple),
 		},
 		want: testObjectSimple,
 	}, {
@@ -613,7 +678,7 @@ func Test_manager_Put(t *testing.T) {
 			},
 		},
 		args: args{
-			o: testObjectComplex,
+			o: object.Copy(testObjectComplex),
 		},
 		want: testObjectComplexReturned,
 	}, {
@@ -631,9 +696,9 @@ func Test_manager_Put(t *testing.T) {
 					MaxTimes(2).
 					Return(
 						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
+							[]*object.Object{
+								bar1,
+								bar2,
 							},
 						),
 						nil,
@@ -660,7 +725,7 @@ func Test_manager_Put(t *testing.T) {
 			},
 		},
 		args: args{
-			o: testObjectWithStream,
+			o: object.Copy(testObjectWithStream),
 		},
 		want: testObjectWithStreamUpdated,
 	}, {
@@ -708,7 +773,7 @@ func Test_manager_Put(t *testing.T) {
 			},
 		},
 		args: args{
-			o: testObjectSimple,
+			o: object.Copy(testObjectSimple),
 		},
 		want: testObjectSimple,
 	}, {
@@ -725,9 +790,9 @@ func Test_manager_Put(t *testing.T) {
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
+							[]*object.Object{
+								bar1,
+								bar2,
 							},
 						),
 						nil,
@@ -736,9 +801,9 @@ func Test_manager_Put(t *testing.T) {
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
+							[]*object.Object{
+								bar1,
+								bar2,
 							},
 						),
 						nil,
@@ -778,7 +843,7 @@ func Test_manager_Put(t *testing.T) {
 				).Return(r, nil)
 				return m
 			},
-			receivedSubscriptions: []object.Object{
+			receivedSubscriptions: []*object.Object{
 				stream.Subscription{
 					Metadata: object.Metadata{
 						Owner: testSubscriberPublicKey,
@@ -790,7 +855,7 @@ func Test_manager_Put(t *testing.T) {
 			},
 		},
 		args: args{
-			o: testObjectWithStream,
+			o: object.Copy(testObjectWithStream),
 		},
 		want: testObjectWithStreamUpdated,
 	}, {
@@ -814,9 +879,9 @@ func Test_manager_Put(t *testing.T) {
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
+							[]*object.Object{
+								bar1,
+								bar2,
 								testObjectSubscriptionInline,
 							},
 						),
@@ -826,9 +891,9 @@ func Test_manager_Put(t *testing.T) {
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
-							[]object.Object{
-								object.Object{}.Set("foo:s", "bar1"),
-								object.Object{}.Set("foo:s", "bar2"),
+							[]*object.Object{
+								bar1,
+								bar2,
 								testObjectSubscriptionInline,
 							},
 						),
@@ -869,23 +934,26 @@ func Test_manager_Put(t *testing.T) {
 				).Return(r, nil)
 				return m
 			},
-			receivedSubscriptions: []object.Object{},
+			receivedSubscriptions: []*object.Object{},
 		},
 		args: args{
-			o: testObjectWithStream,
+			o: object.Copy(testObjectWithStream),
 		},
-		want: object.Object{}.
-			SetType("foo").
-			SetStream(testObjectStreamRoot.Hash()).
-			Set("foo:s", "bar").
-			SetOwner(testOwnPublicKey).
-			SetParents(
-				[]object.Hash{
-					object.Object{}.Set("foo:s", "bar1").Hash(),
-					object.Object{}.Set("foo:s", "bar2").Hash(),
+		want: &object.Object{
+			Type: "foo",
+			Metadata: object.Metadata{
+				Stream: testObjectStreamRoot.Hash(),
+				Owner:  testOwnPublicKey,
+				Parents: []object.Hash{
+					bar1.Hash(),
+					bar2.Hash(),
 					testObjectSubscriptionInline.Hash(),
 				},
-			),
+			},
+			Data: map[string]interface{}{
+				"foo:s": "bar",
+			},
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -912,7 +980,7 @@ func Test_manager_Put(t *testing.T) {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			assert.Equal(t, tt.want.ToMap(), got.ToMap())
+			assert.EqualValues(t, tt.want, got)
 		})
 	}
 }

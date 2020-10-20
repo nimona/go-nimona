@@ -5,7 +5,7 @@ import nimona.io/object object
 
 stream nimona.io/feed {
     signed root event Created {
-        type string
+        objectType string
         datetime string
     }
     signed event Added {

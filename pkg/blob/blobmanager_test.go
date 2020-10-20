@@ -1,7 +1,6 @@
 package blob_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -24,11 +23,16 @@ import (
 func Test_requester_Request(t *testing.T) {
 	localPeer1 := newPeer()
 
-	blob1 := &blob.Blob{}
-	chunk1 := &blob.Chunk{Data: []byte("ooh wee")}
-	chunk2 := &blob.Chunk{Data: []byte("ooh lala")}
+	chunk1 := &blob.Chunk{
+		Data: []byte("ooh wee"),
+	}
+	chunk2 := &blob.Chunk{
+		Data: []byte("ooh lala"),
+	}
 
-	blob1.Chunks = []*blob.Chunk{chunk1, chunk2}
+	blob1 := &blob.Blob{
+		Chunks: []*blob.Chunk{chunk1, chunk2},
+	}
 
 	peer1 := &peer.Peer{
 		Metadata: object.Metadata{
@@ -98,7 +102,7 @@ func Test_requester_Request(t *testing.T) {
 							ch.ToObject().Hash(),
 							peer1,
 							true,
-						).Return(&o, nil)
+						).Return(o, nil)
 					}
 
 					mobm.EXPECT().Subscribe(
@@ -133,12 +137,7 @@ func Test_requester_Request(t *testing.T) {
 			}
 
 			// we check the objects because they are easier to compare
-			if !reflect.DeepEqual(
-				got.ToObject().ToMap(),
-				tt.want.ToObject().ToMap(),
-			) {
-				t.Errorf("requester.Request() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -165,7 +164,7 @@ func TestUnload(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, obj)
 
-	refs := object.GetReferences(*obj)
+	refs := object.GetReferences(obj)
 
 	assert.Contains(t, refs, chunk1.ToObject().Hash())
 	assert.Contains(t, refs, chunk2.ToObject().Hash())

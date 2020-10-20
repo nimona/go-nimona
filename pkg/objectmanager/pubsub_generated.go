@@ -12,13 +12,13 @@ import (
 type (
 	// ObjectPubSub -
 	ObjectPubSub interface {
-		Publish(object.Object)
+		Publish(*object.Object)
 		Subscribe(...ObjectFilter) ObjectSubscription
 	}
-	ObjectFilter func(object.Object) bool
+	ObjectFilter func(*object.Object) bool
 	// ObjectSubscription is returned for every subscription
 	ObjectSubscription interface {
-		Next() (object.Object, error)
+		Next() (*object.Object, error)
 		Cancel()
 	}
 	objectSubscription struct {
@@ -42,12 +42,12 @@ func (s *objectSubscription) Cancel() {
 }
 
 // Next returns the an item from the queue
-func (s *objectSubscription) Next() (r object.Object, err error) {
+func (s *objectSubscription) Next() (r *object.Object, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
 		return
 	}
-	return next.(object.Object), nil
+	return next.(*object.Object), nil
 }
 
 // Subscribe to published events with optional filters
@@ -57,7 +57,7 @@ func (ps *objectPubSub) Subscribe(filters ...ObjectFilter) ObjectSubscription {
 	for i, filter := range filters {
 		filter := filter
 		iFilters[i] = func(v interface{}) bool {
-			return filter(v.(object.Object))
+			return filter(v.(*object.Object))
 		}
 	}
 	// create a new subscription
@@ -69,6 +69,6 @@ func (ps *objectPubSub) Subscribe(filters ...ObjectFilter) ObjectSubscription {
 }
 
 // Publish to all subscribers
-func (ps *objectPubSub) Publish(v object.Object) {
+func (ps *objectPubSub) Publish(v *object.Object) {
 	ps.pubsub.Publish(v)
 }

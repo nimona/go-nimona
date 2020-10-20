@@ -226,7 +226,7 @@ func TestUnloadRefs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, obj)
 
-	refs := object.GetReferences(*obj)
+	refs := object.GetReferences(obj)
 
 	assert.Contains(t, refs, chunk1.ToObject().Hash())
 	assert.Contains(t, refs, chunk2.ToObject().Hash())
