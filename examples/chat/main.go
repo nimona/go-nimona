@@ -54,14 +54,14 @@ type chat struct {
 func (c *chat) subscribe(
 	conversationRootHash object.Hash,
 ) (chan interface{}, error) {
-	objects := make(chan object.Object)
+	objects := make(chan *object.Object)
 	events := make(chan interface{})
 
 	// handle objects from subscriptions or store
 	go func() {
-		typeConversationMessageAdded := new(ConversationMessageAdded).GetType()
+		typeConversationMessageAdded := new(ConversationMessageAdded).Type()
 		for o := range objects {
-			switch o.GetType() {
+			switch o.Type {
 			case typeConversationMessageAdded:
 				v := &ConversationMessageAdded{}
 				v.FromObject(o)
@@ -90,7 +90,7 @@ func (c *chat) subscribe(
 			if err != nil {
 				break
 			}
-			objects <- *o
+			objects <- o
 		}
 		// subscribe to conversation updates
 		sub := c.objectmanager.Subscribe(
@@ -118,9 +118,9 @@ func (c *chat) subscribe(
 			if err != nil {
 				break
 			}
-			if o.GetType() == new(stream.Subscription).GetType() {
+			if o.Type == new(stream.Subscription).Type() {
 				s := &stream.Subscription{}
-				if err := s.FromObject(*o); err != nil {
+				if err := s.FromObject(o); err != nil {
 					continue
 				}
 				if s.Metadata.Owner == c.local.GetPrimaryPeerKey().PublicKey() {
@@ -176,7 +176,7 @@ func (c *chat) subscribe(
 				}
 				c.objectmanager.Put(
 					context.New(),
-					*o,
+					o,
 				)
 			}
 			cr.Close()
@@ -300,9 +300,9 @@ func main() {
 
 	// register types so object manager persists them
 	local.PutContentTypes(
-		new(ConversationStreamRoot).GetType(),
-		new(ConversationMessageAdded).GetType(),
-		new(stream.Subscription).GetType(),
+		new(ConversationStreamRoot).Type(),
+		new(ConversationMessageAdded).Type(),
+		new(stream.Subscription).Type(),
 	)
 
 	conversationRootObject := conversationRoot.ToObject()
