@@ -145,9 +145,9 @@ func main() {
 			fmt.Printf(
 				"%s received ping from %s\n",
 				local.GetPrimaryPeerKey().PublicKey(),
-				env.GetOwner(),
+				env.Metadata.Owner,
 			)
-			pingedFromPeers[env.GetOwner()] = true
+			pingedFromPeers[env.Metadata.Owner] = true
 			// check if all have pinged us
 			allPinged := true
 			for _, pinged := range pingedFromPeers {
@@ -178,10 +178,15 @@ func main() {
 		for recipient := range recipients {
 			if err := net.Send(
 				sctx,
-				new(object.Object).
-					SetType("ping").
-					SetOwner(local.GetPrimaryPeerKey().PublicKey()).
-					Set("nonce:s", rand.String(8)),
+				&object.Object{
+					Type: "ping",
+					Metadata: object.Metadata{
+						Owner: local.GetPrimaryPeerKey().PublicKey(),
+					},
+					Data: map[string]interface{}{
+						"nonce:s": rand.String(8),
+					},
+				},
 				recipient,
 			); err != nil {
 				logger.Error(
