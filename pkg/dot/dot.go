@@ -17,34 +17,31 @@ type graphObject struct {
 	Data     string
 }
 
-func toGraphObject(v object.Object) (*graphObject, error) {
+func toGraphObject(v *object.Object) (*graphObject, error) {
 	b, err := json.Marshal(v.ToMap())
 	if err != nil {
 		return nil, err
 	}
 	nType := "object:root"
-	parents := v.GetParents()
+	parents := v.Metadata.Parents
 	if len(parents) > 0 {
 		nType = "object"
 	}
 	o := &graphObject{
 		ID:       v.Hash().String(),
 		NodeType: nType,
-		Context:  v.GetType(),
+		Context:  v.Type,
 		Parents:  []string{},
 		Data:     string(b),
 	}
-	if d, ok := v.Get("@display").(string); ok {
-		o.Display = d
-	}
-	for _, p := range v.GetParents() {
+	for _, p := range v.Metadata.Parents {
 		o.Parents = append(o.Parents, p.String())
 	}
 	return o, nil
 }
 
 // Dot returns a graphviz representation of a graph
-func Dot(objects []object.Object) (string, error) {
+func Dot(objects []*object.Object) (string, error) {
 	graphObjects := make([]graphObject, len(objects))
 	for i, o := range objects {
 		igo, err := toGraphObject(o)
