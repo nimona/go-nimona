@@ -138,6 +138,7 @@ test:
 	$(eval TAGS += integration)
 	@LOG_LEVEL=debug \
 	CGO_ENABLED=1 \
+	NIMONA_SKIP_UPNP=true \
 	go test $(V) \
 		-tags="$(TAGS)" \
 		-count=1 \
