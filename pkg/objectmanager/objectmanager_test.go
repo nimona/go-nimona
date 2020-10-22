@@ -823,9 +823,9 @@ func Test_manager_Put(t *testing.T) {
 					},
 				}
 				t.Cleanup(func() {
-					// TODO properly test this, this should be 1 but due to
-					// go m.announceObject it's not
-					assert.Equal(t, 0, m.SendCalled())
+					// TODO this is flaky, depending on how fast the runner is
+					// go m.announceObject might or might not get called
+					// assert.Equal(t, 1, m.SendCalled())
 				})
 				return m
 			},
@@ -914,9 +914,9 @@ func Test_manager_Put(t *testing.T) {
 					},
 				}
 				t.Cleanup(func() {
-					// TODO properly test this, this should be 1 but due to
-					// go m.announceObject it's not
-					assert.Equal(t, 0, m.SendCalled())
+					// TODO this is flaky, depending on how fast the runner is
+					// go m.announceObject might or might not get called
+					// assert.Equal(t, 1, m.SendCalled())
 				})
 				return m
 			},
