@@ -2,11 +2,17 @@ package nat
 
 import (
 	"fmt"
+	"os"
 
 	"gitlab.com/NebulousLabs/go-upnp"
+
+	"nimona.io/pkg/errors"
 )
 
 func MapExternalPort(port int) (address string, removeMap func(), err error) {
+	if os.Getenv("NIMONA_SKIP_UPNP") != "" {
+		return "", nil, errors.Error("skipped")
+	}
 	// connect to router
 	d, err := upnp.Discover()
 	if err != nil {
