@@ -80,14 +80,7 @@ func TestUnloadReferences(t *testing.T) {
 			}
 			assert.Equal(t, tt.want.ToMap(), got.ToMap())
 			require.Equal(t, len(tt.wantRefs), len(gotRefs))
-			for i := 0; i < len(tt.wantRefs); i++ {
-				assert.Equal(
-					t,
-					tt.wantRefs[i].ToMap(),
-					gotRefs[i].ToMap(),
-					"for index %d", i,
-				)
-			}
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }

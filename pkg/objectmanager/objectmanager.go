@@ -541,6 +541,7 @@ func (m *manager) storeObject(
 			feedEvent.Metadata.Parents = parentHashes
 		}
 	}
+	object.SortHashes(feedEvent.Metadata.Parents)
 	if err := m.objectstore.Put(feedEvent.ToObject()); err != nil {
 		return err
 	}
@@ -892,6 +893,7 @@ func (m *manager) Put(
 			}
 			o.Metadata.Parents = parentHashes
 		}
+		object.SortHashes(o.Metadata.Parents)
 	}
 
 	// add to store

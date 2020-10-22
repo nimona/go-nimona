@@ -944,11 +944,13 @@ func Test_manager_Put(t *testing.T) {
 			Metadata: object.Metadata{
 				Stream: testObjectStreamRoot.Hash(),
 				Owner:  testOwnPublicKey,
-				Parents: []object.Hash{
-					bar1.Hash(),
-					bar2.Hash(),
-					testObjectSubscriptionInline.Hash(),
-				},
+				Parents: object.SortHashes(
+					[]object.Hash{
+						bar1.Hash(),
+						bar2.Hash(),
+						testObjectSubscriptionInline.Hash(),
+					},
+				),
 			},
 			Data: map[string]interface{}{
 				"foo:s": "bar",
