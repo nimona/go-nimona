@@ -1,7 +1,9 @@
 ---
-- name: Install passlib python module
+- name: Install passlib and bcrypt python modules
   pip:
-    name: passlib
+    name:
+      - passlib
+      - bcrypt
     state: latest
   when: metrics_site_users != {}
 

@@ -14,8 +14,8 @@ jobs:
         with:
           version: v1.31
         env:
-          CI: 'true'
-          VERBOSE: 'true'
+          CI: "true"
+          VERBOSE: "true"
 
   tidy:
     name: Tidy
@@ -48,8 +48,8 @@ jobs:
         run: make test
         env:
           GOMAXPROCS: 4
-          CI: 'true'
-          VERBOSE: 'true'
+          CI: "true"
+          VERBOSE: "true"
 
   cover:
     name: Code coverage
@@ -66,8 +66,8 @@ jobs:
       - name: Publish coverage
         uses: paambaati/codeclimate-action@v2.6.0
         env:
-          CI: 'true'
-          VERBOSE: 'true'
+          CI: "true"
+          VERBOSE: "true"
           GOMAXPROCS: 4
           CC_TEST_REPORTER_ID: 085aacaf8f700db084131fa4b223c9d27718d864f26a668cd1993d46868524ac
         with:
@@ -90,12 +90,13 @@ jobs:
       - name: Make e2e
         run: make e2e
         env:
-          CI: 'true'
-          VERBOSE: 'true'
+          CI: "true"
+          VERBOSE: "true"
 
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/heads/')
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
@@ -117,3 +118,85 @@ jobs:
         run: |
           cd cmd
           ../bin/goreleaser --snapshot
+
+  release:
+    name: Relase
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/v')
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Export version from tag name
+        run: |
+          echo "NIMONA_VERSION=$(git describe)" >> $GITHUB_ENV
+
+      - name: Publish docker container
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_GHCR_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_GHCR_PASSWORD }}
+        run: |
+          docker login ghcr.io -u=$DOCKER_USERNAME -p="$DOCKER_PASSWORD"
+          docker build -t ghcr.io/nimona/nimona:{$NIMONA_VERSION} .
+          docker push ghcr.io/nimona/nimona:{$NIMONA_VERSION}
+
+      - name: Download binary tools
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
+
+      - name: Release binaries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd cmd
+          ../bin/goreleaser
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [release]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/v')
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Export version from tag name
+        run: |
+          echo "NIMONA_VERSION=$(git describe)" >> $GITHUB_ENV
+
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.13.5
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Deploy services
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_DEFAULT_ORGANIZATION_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SSH_KEY: ${{secrets.DEPLOY_PRIVATE_SSH_KEY}}
+          TF_VAR_cloudflare_zone_id: ${{ secrets.TF_VAR_CLOUDFLARE_ZONE_ID }}
+          TF_VAR_ansible_vault_password: ${{ secrets.TF_VAR_ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          cd infrastructure/production
+          echo "$SSH_KEY" > ssh/id_rsa
+          chmod 0600 ssh/id_rsa
+          terraform init
+          terraform apply -auto-approve -var "nimona_version=${NIMONA_VERSION}"
