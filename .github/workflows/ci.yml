@@ -143,8 +143,8 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_GHCR_PASSWORD }}
         run: |
           docker login ghcr.io -u=$DOCKER_USERNAME -p="$DOCKER_PASSWORD"
-          docker build -t ghcr.io/nimona/nimona:{$NIMONA_VERSION} .
-          docker push ghcr.io/nimona/nimona:{$NIMONA_VERSION}
+          docker build -t ghcr.io/nimona/nimona:${NIMONA_VERSION} .
+          docker push ghcr.io/nimona/nimona:${NIMONA_VERSION}
 
       - name: Download binary tools
         env:
