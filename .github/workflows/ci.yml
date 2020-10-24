@@ -135,7 +135,7 @@ jobs:
 
       - name: Export version from tag name
         run: |
-          echo "NIMONA_VERSION=$(git describe)" >> $GITHUB_ENV
+          echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - name: Publish docker container
         env:
@@ -172,7 +172,7 @@ jobs:
 
       - name: Export version from tag name
         run: |
-          echo "NIMONA_VERSION=$(git describe)" >> $GITHUB_ENV
+          echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - uses: hashicorp/setup-terraform@v1
         with:
