@@ -41,7 +41,7 @@ func TestSimulation(t *testing.T) {
 		node.WithName("nimona-e2e-bootstrap-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
-			"NIMONA_SKIP_UPNP=true",
+			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17000",
 			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.Jf3xha8ZqEnFv9T9UDcN41nFFfZpc9MY4tzUnpgGHx8ZwKQ6uXX6PGY1nHLQAKhPiFtV4YEqMsCd5vjkdRyC5nJ",
@@ -66,7 +66,7 @@ func TestSimulation(t *testing.T) {
 		node.WithName("nimona-e2e-1-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
-			"NIMONA_SKIP_UPNP=true",
+			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17001",
 			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.2bAdgQxfcJsGRMccgMXkGSPQt396g77KKq8y6fEeQbxpnPqS5Ujh1DXTNU539wW5ispS1McLyKjrJDsgxYKneyCZ",
@@ -89,7 +89,7 @@ func TestSimulation(t *testing.T) {
 		node.WithName("nimona-e2e-2-"+rand.String(4)),
 		node.WithCount(1),
 		node.WithEnv([]string{
-			"NIMONA_SKIP_UPNP=true",
+			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002",
 			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.4i1anFeotM4TKnjLsJFLgwERtq4rD5yaR6AQ5HuChgNBfzrApXpQYA8WT83bMSc8CLj76LbJfdSKn3HiKmSpn25U",

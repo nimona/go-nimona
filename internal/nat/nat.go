@@ -10,7 +10,7 @@ import (
 )
 
 func MapExternalPort(port int) (address string, removeMap func(), err error) {
-	if os.Getenv("NIMONA_SKIP_UPNP") != "" {
+	if os.Getenv("NIMONA_UPNP_DISABLE") != "" {
 		return "", nil, errors.Error("skipped")
 	}
 	// connect to router
