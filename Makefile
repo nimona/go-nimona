@@ -5,7 +5,7 @@ BINDIR       := bin
 GOBIN        := $(CURDIR)/$(BINDIR)
 PATH         := $(GOBIN):$(PATH)
 CLITOOL      := cli-tool
-VERSION      := dev # TODO get VERSION from git
+VERSION      ?= dev
 CI           := $(CI)
 
 # Targets & Sources
