@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/geoah/go-queue"
-	"github.com/joeycumines/go-dotnotation/dotnotation"
 	"github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -570,30 +569,27 @@ func (w *network) Send(
 }
 
 func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
-	os := map[string]*object.Object{}
+	var signErr error
 	object.Traverse(o, func(path string, v interface{}) bool {
 		nObj, ok := v.(*object.Object)
 		if !ok {
 			return true
 		}
-		os[path] = nObj
+		if !nObj.Metadata.Signature.IsEmpty() {
+			return true
+		}
+		if nObj.Metadata.Owner != k.PublicKey() {
+			return true
+		}
+		sig, err := object.NewSignature(k, nObj)
+		if err != nil {
+			signErr = err
+			return true
+		}
+		nObj.Metadata.Signature = sig
 		return true
 	})
-	for path, obj := range os {
-		if obj.Metadata.Owner != k.PublicKey() {
-			continue
-		}
-		sig, err := object.NewSignature(k, obj)
-		if err != nil {
-			return nil, err
-		}
-
-		obj.Metadata.Signature = sig
-		// TODO replace with traversWithValues
-		// nolint: errcheck // we don't really care ^
-		dotnotation.Set(o, path, obj)
-	}
-	return o, nil
+	return o, signErr
 }
 
 func encrypt(data []byte, key []byte) ([]byte, error) {
