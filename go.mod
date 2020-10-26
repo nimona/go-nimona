@@ -3,7 +3,7 @@ go 1.15
 module nimona.io
 
 require (
-	github.com/bmatcuk/doublestar v1.3.2
+	github.com/bmatcuk/doublestar v1.3.3
 	github.com/elliotchance/orderedmap v1.3.0
 	github.com/gdamore/tcell v1.4.0
 	github.com/geoah/genny v1.0.3
