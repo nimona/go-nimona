@@ -91,6 +91,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	t, err := template.New("tpl").Funcs(template.FuncMap{
 		"tag": func(m Member) string {
 			h := m.Hint
+			if m.Type == "nimona.io/object.Object" {
+				h = "o"
+			}
 			if m.IsRepeated {
 				h = "a" + h
 			}
@@ -121,12 +124,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			}
 			ps := strings.Split(name, "/")
 			return strings.TrimPrefix(ps[len(ps)-1], doc.PackageAlias+".")
-		},
-		"memberTag": func(tag, hint string, isRepeated bool) string {
-			if isRepeated {
-				return tag + ":a" + hint
-			}
-			return tag + ":" + hint
 		},
 		"neq": func(a, b string) bool {
 			return a != b
