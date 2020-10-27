@@ -4,13 +4,15 @@ package object
 
 type (
 	Request struct {
-		Metadata              Metadata `nimona:"metadata:m"`
+		Metadata              Metadata `nimona:"metadata:m,omitempty"`
+		RequestID             string   `nimona:"requestID:s,omitempty"`
 		ObjectHash            Hash     `nimona:"objectHash:s,omitempty"`
 		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b,omitempty"`
 	}
 	Response struct {
-		Metadata   Metadata `nimona:"metadata:m"`
-		ObjectHash *Object  `nimona:"objectHash:m,omitempty"`
+		Metadata  Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string   `nimona:"requestID:s,omitempty"`
+		Object    *Object  `nimona:"object:o,omitempty"`
 	}
 )
 
