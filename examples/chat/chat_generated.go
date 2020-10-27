@@ -8,16 +8,16 @@ import (
 
 type (
 	ConversationStreamRoot struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 	}
 	ConversationSetNickname struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Datetime string          `nimona:"datetime:s,omitempty"`
 		Nickname string          `nimona:"nickname:s,omitempty"`
 	}
 	ConversationMessageAdded struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Datetime string          `nimona:"datetime:s,omitempty"`
 		Body     string          `nimona:"body:s,omitempty"`
 	}

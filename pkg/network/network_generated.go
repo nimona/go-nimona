@@ -9,7 +9,7 @@ import (
 
 type (
 	DataForward struct {
-		Metadata   object.Metadata  `nimona:"metadata:m"`
+		Metadata   object.Metadata  `nimona:"metadata:m,omitempty"`
 		Recipient  crypto.PublicKey `nimona:"recipient:s,omitempty"`
 		Ephermeral crypto.PublicKey `nimona:"ephermeral:s,omitempty"`
 		Data       []byte           `nimona:"data:d,omitempty"`

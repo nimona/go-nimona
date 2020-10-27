@@ -8,31 +8,31 @@ import (
 
 type (
 	Policy struct {
-		Metadata   object.Metadata `nimona:"metadata:m"`
+		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
 		Subjects   []string        `nimona:"subjects:as,omitempty"`
 		Resources  []string        `nimona:"resources:as,omitempty"`
 		Conditions []string        `nimona:"conditions:as,omitempty"`
 		Action     string          `nimona:"action:s,omitempty"`
 	}
 	Request struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
 	}
 	Response struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
 		Leaves   []object.Hash   `nimona:"leaves:as,omitempty"`
 	}
 	Announcement struct {
-		Metadata     object.Metadata `nimona:"metadata:m"`
+		Metadata     object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce        string          `nimona:"nonce:s,omitempty"`
 		StreamHash   object.Hash     `nimona:"streamHash:s,omitempty"`
 		ObjectHashes []object.Hash   `nimona:"objectHashes:as,omitempty"`
 	}
 	Subscription struct {
-		Metadata   object.Metadata `nimona:"metadata:m"`
+		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
 		RootHashes []object.Hash   `nimona:"rootHashes:as,omitempty"`
 		Expiry     string          `nimona:"expiry:s,omitempty"`
 	}
