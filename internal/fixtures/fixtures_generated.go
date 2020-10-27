@@ -8,23 +8,23 @@ import (
 
 type (
 	TestPolicy struct {
-		Metadata   object.Metadata `nimona:"metadata:m"`
+		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
 		Subjects   []string        `nimona:"subjects:as,omitempty"`
 		Resources  []string        `nimona:"resources:as,omitempty"`
 		Conditions []string        `nimona:"conditions:as,omitempty"`
 		Action     string          `nimona:"action:s,omitempty"`
 	}
 	TestStream struct {
-		Metadata        object.Metadata `nimona:"metadata:m"`
+		Metadata        object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce           string          `nimona:"nonce:s,omitempty"`
 		CreatedDateTime string          `nimona:"createdDateTime:s,omitempty"`
 	}
 	TestSubscribed struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 	}
 	TestUnsubscribed struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 	}
 )

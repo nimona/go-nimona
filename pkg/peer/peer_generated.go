@@ -8,7 +8,7 @@ import (
 
 type (
 	Peer struct {
-		Metadata     object.Metadata       `nimona:"metadata:m"`
+		Metadata     object.Metadata       `nimona:"metadata:m,omitempty"`
 		Version      int64                 `nimona:"version:i,omitempty"`
 		Addresses    []string              `nimona:"addresses:as,omitempty"`
 		Bloom        []int64               `nimona:"bloom:ai,omitempty"`
@@ -17,12 +17,12 @@ type (
 		Relays       []*Peer               `nimona:"relays:am,omitempty"`
 	}
 	LookupRequest struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
 	}
 	LookupResponse struct {
-		Metadata object.Metadata `nimona:"metadata:m"`
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
 		Peers    []*Peer         `nimona:"peers:am,omitempty"`

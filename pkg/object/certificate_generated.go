@@ -4,13 +4,13 @@ package object
 
 type (
 	Certificate struct {
-		Metadata Metadata `nimona:"metadata:m"`
+		Metadata Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string   `nimona:"nonce:s,omitempty"`
 		Created  string   `nimona:"created:s,omitempty"`
 		Expires  string   `nimona:"expires:s,omitempty"`
 	}
 	CertificateRequest struct {
-		Metadata               Metadata `nimona:"metadata:m"`
+		Metadata               Metadata `nimona:"metadata:m,omitempty"`
 		ApplicationName        string   `nimona:"applicationName:s,omitempty"`
 		ApplicationDescription string   `nimona:"applicationDescription:s,omitempty"`
 		ApplicationURL         string   `nimona:"applicationURL:s,omitempty"`
