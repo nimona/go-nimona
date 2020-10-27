@@ -29,6 +29,7 @@ var (
 
 var (
 	objectRequestType      = new(object.Request).Type()
+	objectResponseType     = new(object.Response).Type()
 	streamRequestType      = new(stream.Request).Type()
 	streamSubscriptionType = new(stream.Subscription).Type()
 	streamAnnouncementType = new(stream.Announcement).Type()
@@ -306,9 +307,10 @@ func (m *manager) Request(
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
 
+	rID := m.newNonce()
+
 	sub := m.network.Subscribe(
-		// TODO why was this commented out?
-		network.FilterByObjectHash(hash),
+		network.FilterByObjectType(objectResponseType),
 	)
 	defer sub.Cancel()
 
@@ -322,14 +324,19 @@ func (m *manager) Request(
 			if e == nil {
 				break
 			}
-			if e.Payload.Hash() == hash {
-				objCh <- e.Payload
+			res := &object.Response{}
+			if err := res.FromObject(e.Payload); err != nil {
+				continue
+			}
+			if res.RequestID == rID && res.Object != nil {
+				objCh <- res.Object
 				break
 			}
 		}
 	}()
 
 	req := &object.Request{
+		RequestID:             rID,
 		ObjectHash:            hash,
 		ExcludedNestedObjects: excludeNested,
 	}
@@ -668,20 +675,45 @@ func (m *manager) handleObjectRequest(
 		return err
 	}
 
+	resp := &object.Response{
+		Metadata: object.Metadata{
+			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
+		},
+		Object: nil,
+	}
+
 	hash := req.ObjectHash
 	obj, err := m.objectstore.Get(hash)
 	if err != nil {
 		log.FromContext(ctx).Error(
 			"handleObjectRequest error getting obj",
-			log.String("env", req.ObjectHash.String()),
+			log.String("reqHash", req.ObjectHash.String()),
 			log.String("from", env.Sender.String()),
 			log.Error(err),
 		)
+		if err != objectstore.ErrNotFound {
+			return err
+		}
+		if sErr := m.network.Send(
+			ctx,
+			resp.ToObject(),
+			&peer.Peer{
+				Metadata: object.Metadata{
+					Owner: env.Sender,
+				},
+			},
+		); err != nil {
+			log.FromContext(ctx).Info(
+				"handleObjectRequest error while responding with error",
+				log.String("reqHash", req.ObjectHash.String()),
+				log.String("from", env.Sender.String()),
+				log.Error(sErr),
+			)
+		}
 		return err
 	}
 
-	// TODO(geoah) FIXME copy?
-	robj := obj
+	robj := object.Copy(obj)
 
 	switch req.ExcludedNestedObjects {
 	case true:
@@ -701,9 +733,11 @@ func (m *manager) handleObjectRequest(
 		}
 	}
 
+	resp.Object = robj
+
 	err = m.network.Send(
 		ctx,
-		robj,
+		resp.ToObject(),
 		&peer.Peer{
 			Metadata: object.Metadata{
 				Owner: env.Sender,

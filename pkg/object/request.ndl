@@ -1,11 +1,13 @@
 package nimona.io/object
 
 signed object nimona.io/object.Request {
+    requestID string
     objectHash nimona.io/object.Hash
     excludedNestedObjects bool
 }
 
 signed object nimona.io/object.Response {
-    objectHash nimona.io/object.Object
+    requestID string
+    object nimona.io/object.Object
 }
 

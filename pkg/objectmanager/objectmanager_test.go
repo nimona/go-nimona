@@ -24,7 +24,7 @@ import (
 	"nimona.io/pkg/stream"
 )
 
-func Test_manager_Request(t *testing.T) {
+func TestManager_Request(t *testing.T) {
 	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testPeer := &peer.Peer{
@@ -67,7 +67,10 @@ func Test_manager_Request(t *testing.T) {
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Copy(f00),
+								Payload: object.Response{
+									RequestID: "7",
+									Object:    object.Copy(f00),
+								}.ToObject(),
 							}},
 						},
 					},
@@ -105,7 +108,7 @@ func Test_manager_Request(t *testing.T) {
 	}
 }
 
-func Test_manager_handle_request(t *testing.T) {
+func TestManager_handleObjectRequest(t *testing.T) {
 	localPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
@@ -119,6 +122,7 @@ func Test_manager_handle_request(t *testing.T) {
 	}
 
 	localPeer := localpeer.New()
+	localPeer.PutPrimaryPeerKey(localPeerKey)
 	localPeer.PutPrimaryIdentityKey(localPeerKey)
 
 	f00 := peer1.ToObject()
@@ -215,7 +219,12 @@ func Test_manager_handle_request(t *testing.T) {
 				peer:          peer1,
 				excludeNested: true,
 			},
-			want: unloadedF01,
+			want: object.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				Object: unloadedF01,
+			}.ToObject(),
 		},
 		{
 			name: "object should NOT be unloaded",
@@ -245,7 +254,6 @@ func Test_manager_handle_request(t *testing.T) {
 							}},
 						},
 					)
-
 					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(
 							ctx context.Context,
@@ -256,7 +264,6 @@ func Test_manager_handle_request(t *testing.T) {
 							wg.Done()
 							return nil
 						})
-
 					return m
 				},
 				resolver: func(t *testing.T) resolver.Resolver {
@@ -272,7 +279,72 @@ func Test_manager_handle_request(t *testing.T) {
 				peer:          peer1,
 				excludeNested: false,
 			},
-			want: f01,
+			want: object.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				Object: f01,
+			}.ToObject(),
+		},
+		{
+			name: "object missing, return empty response",
+			fields: fields{
+				storeHandler: func(t *testing.T) objectstore.Store {
+					m := objectstoremock.NewMockStore(gomock.NewController(t))
+					m.EXPECT().Get(f01.Hash()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
+					m.EXPECT().GetPinned().Return(nil, nil)
+					return m
+				},
+				networkHandler: func(
+					t *testing.T,
+					ctx context.Context,
+					excludeNested bool,
+					wg *sync.WaitGroup,
+					want *object.Object,
+				) network.Network {
+					m := networkmock.NewMockNetwork(gomock.NewController(t))
+					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().Subscribe(gomock.Any()).Return(
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
+								Payload: object.Request{
+									ObjectHash:            f01.Hash(),
+									ExcludedNestedObjects: excludeNested,
+								}.ToObject(),
+							}},
+						},
+					)
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+						DoAndReturn(func(
+							ctx context.Context,
+							obj *object.Object,
+							recipient *peer.Peer,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						})
+					return m
+				},
+				resolver: func(t *testing.T) resolver.Resolver {
+					m := resolvermock.NewMockResolver(
+						gomock.NewController(t),
+					)
+					return m
+				},
+			},
+			args: args{
+				ctx:           context.Background(),
+				rootHash:      f00.Hash(),
+				peer:          peer1,
+				excludeNested: false,
+			},
+			want: object.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				Object: nil,
+			}.ToObject(),
 		},
 	}
 	for _, tt := range tests {
@@ -298,7 +370,7 @@ func Test_manager_handle_request(t *testing.T) {
 	}
 }
 
-func Test_manager_RequestStream(t *testing.T) {
+func TestManager_RequestStream(t *testing.T) {
 	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testPeer := &peer.Peer{
@@ -478,7 +550,7 @@ func Test_manager_RequestStream(t *testing.T) {
 	}
 }
 
-func Test_manager_Put(t *testing.T) {
+func TestManager_Put(t *testing.T) {
 	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testOwnPublicKey := testOwnPrivateKey.PublicKey()
