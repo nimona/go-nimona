@@ -66,7 +66,6 @@ $(TOOLDIR)/$(1): $(SOURCES)
 endef
 
 $(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
-$(eval $(call tool,go-acc,github.com/ory/go-acc@v0.2.3))
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31))
 $(eval $(call tool,gold,go101.org/gold@v0.1.1))
@@ -132,7 +131,7 @@ $(EXAMPLES): $(BINDIR)/examples/%: $(SOURCES)
 # Clean up everything
 .PHONY: clean
 clean:
-	rm -f *.cov
+	rm -f coverage.out coverage.tmp.out
 	rm -f $(BINS) $(TOOLS) $(EXAMPLES)
 	rm -f ./go.mod.tidy-check ./go.sum.tidy-check
 
@@ -198,26 +197,24 @@ licenses: wwhrd
 # Coverage
 #
 
-# Code coverage
 .PHONY: cover
-cover: go-acc
-	$(info Checking code coverage)
-	@LOG_LEVEL=debug go-acc ./... --output coverage.tmp.out
-	@cat coverage.tmp.out | \
-		grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.out
-	@rm -f coverage.tmp.out
-	@go tool cover -func=coverage.out
+cover: coverage.out
 
-# Code coverage for code climate
-.PHONY: cover-codeclimate
-cover-codeclimate: go-acc
-	$(info Checking code coverage)
-	@LOG_LEVEL=debug go-acc ./... --output coverage.raw.out
-	@cat coverage.raw.out | \
-		grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.cln.out
-	@sed "s/nimona.io\///" coverage.cln.out > coverage.out
-	@rm -f coverage.raw.out
-	@rm -f coverage.cln.out
+.PHONY: cover-html
+cover-html: coverage.out
+	go tool cover -html=coverage.out
+
+.PHONY: cover-func
+cover-func: coverage.out
+	go tool cover -func=coverage.out
+
+coverage.out: $(SOURCES)
+	-@NIMONA_UPNP_DISABLE=true \
+		go test $(V) -covermode=count -coverprofile=coverage.tmp.out ./...
+	-@cat coverage.tmp.out | \
+		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/playground/' \
+			> coverage.out
+	-@rm -f coverage.tmp.out
 
 #
 # Documentation
