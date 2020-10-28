@@ -232,12 +232,14 @@ func (w *network) Listen(
 			err,
 		)
 	}
-	externalAddress, _, err := nat.MapExternalPort(int(localPort))
-	if err != nil {
-		// TODO return error or simply log it?
-		return listener, nil
+	if listenConfig.upnp {
+		externalAddress, _, err := nat.MapExternalPort(int(localPort))
+		if err != nil {
+			// TODO return error or simply log it?
+			return listener, nil
+		}
+		w.localpeer.PutAddresses(externalAddress)
 	}
-	w.localpeer.PutAddresses(externalAddress)
 	return listener, nil
 }
 
