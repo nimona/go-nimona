@@ -14,7 +14,6 @@ jobs:
         with:
           version: v1.31
         env:
-          CI: "true"
           VERBOSE: "true"
 
   tidy:
@@ -48,7 +47,6 @@ jobs:
         run: make test
         env:
           GOMAXPROCS: 4
-          CI: "true"
           VERBOSE: "true"
 
   cover:
@@ -63,16 +61,20 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v1
 
+        # Required as deps installation within paambaati/codeclimate-action
+        # fails for reasons unknown.
+      - name: Ensure go-acc is available
+        run: make go-acc
+
       - name: Publish coverage
         uses: paambaati/codeclimate-action@v2.6.0
         env:
-          CI: "true"
           VERBOSE: "true"
           GOMAXPROCS: 4
           CC_TEST_REPORTER_ID: 085aacaf8f700db084131fa4b223c9d27718d864f26a668cd1993d46868524ac
         with:
           debug: true
-          coverageCommand: make tools cover-codeclimate
+          coverageCommand: make cover-codeclimate
           coverageLocations: |
             ${{github.workspace}}/coverage.out:gocov
   e2e:
@@ -90,7 +92,6 @@ jobs:
       - name: Make e2e
         run: make e2e
         env:
-          CI: "true"
           VERBOSE: "true"
 
   build:

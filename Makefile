@@ -1,92 +1,140 @@
-# Go Options
-MODULE       := nimona.io
-LDFLAGS      := -w -s
-BINDIR       := bin
-GOBIN        := $(CURDIR)/$(BINDIR)
-PATH         := $(GOBIN):$(PATH)
-CLITOOL      := cli-tool
-VERSION      ?= dev
-CI           := $(CI)
-
-# Targets & Sources
-BINS = bootstrap
-BINS += keygen
-BINS += sonar
-
-EXAMPLES = chat
-
-SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum")
-
-# Tools
-BIN_GOBIN = github.com/myitcv/gobin
-TOOLS += github.com/geoah/genny@v1.0.3
-TOOLS += github.com/goreleaser/goreleaser@v0.143.0
-TOOLS += github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31
-TOOLS += mvdan.cc/gofumpt/gofumports
-TOOLS += github.com/golang/mock/mockgen@v1.4.3
-TOOLS += github.com/frapposelli/wwhrd@v0.3.0
-TOOLS += github.com/ory/go-acc@v0.2.3
-TOOLS += go101.org/gold@v0.1.1
-
-# Internal tools
-TOOLS_INTERNAL += codegen
-TOOLS_INTERNAL += community
-TOOLS_INTERNAL += vanity
-
-# Go env vars
-export GO111MODULE=on
-export CGO_ENABLED=1
-
-# Go bin for tools
-export GOBIN=$(CURDIR)/$(BINDIR)
-
-# Generators path
-export GENERATORS=$(CURDIR)/internal/generator
-
-# Default target
-.DEFAULT_GOAL := build
+ROOT := $(CURDIR)
+SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum" \
+	-or -name "Makefile")
 
 # Verbose output
 ifdef VERBOSE
 V = -v
 endif
 
-# Git dependencies
-HAS_GIT := $(shell command -v git;)
-ifndef HAS_GIT
-	$(error Please install git)
-endif
+#
+# Environment
+#
 
-# Git Status
-GIT_SHA ?= $(shell git rev-parse --short HEAD)
+BINDIR := bin
+TOOLDIR := $(BINDIR)/tools
+
+# Global environment variables for all targets
+SHELL ?= /bin/bash
+SHELL := env \
+	GO111MODULE=on \
+	GOBIN=$(CURDIR)/$(TOOLDIR) \
+	CGO_ENABLED=1 \
+	GENERATORS=$(CURDIR)/internal/generator \
+	PATH='$(CURDIR)/$(BINDIR):$(CURDIR)/$(TOOLDIR):$(PATH)' \
+	$(SHELL)
+
+#
+# Defaults
+#
+
+# Default target
+.DEFAULT_GOAL := build
 
 .PHONY: all
-all: deps lint test build
+all: lint test build
 
+#
+# Tools
+#
+
+TOOLS += $(TOOLDIR)/gobin
+gobin: $(TOOLDIR)/gobin
+$(TOOLDIR)/gobin:
+	GO111MODULE=off go get -u github.com/myitcv/gobin
+
+# external tool
+define tool # 1: binary-name, 2: go-import-path
+TOOLS += $(TOOLDIR)/$(1)
+
+.PHONY: $(1)
+$(1): $(TOOLDIR)/$(1)
+
+$(TOOLDIR)/$(1): $(TOOLDIR)/gobin Makefile
+	gobin $(V) "$(2)"
+endef
+
+# internal tool
+define inttool # 1: name
+TOOLS += $(TOOLDIR)/$(1)
+
+.PHONY: $(1)
+$(1): $(TOOLDIR)/$(1)
+
+$(TOOLDIR)/$(1): $(SOURCES)
+	cd "tools/$(1)" && go build $(V) -o "$(ROOT)/$(TOOLDIR)/$(1)"
+endef
+
+$(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
+$(eval $(call tool,go-acc,github.com/ory/go-acc@v0.2.3))
+$(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31))
+$(eval $(call tool,gold,go101.org/gold@v0.1.1))
+$(eval $(call tool,goreleaser,github.com/goreleaser/goreleaser@v0.143.0))
+$(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.4.3))
+$(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.3.0))
+
+$(eval $(call inttool,codegen))
+$(eval $(call inttool,community))
+$(eval $(call inttool,vanity))
+
+.PHONY: tools
+tools: $(TOOLS)
+
+#
+# Build
+#
+
+MODULE := nimona.io
+LDFLAGS := -w -s
+
+VERSION ?= dev
+DATE ?= $(shell date +%s)
+GIT_SHA ?= $(shell git rev-parse --short HEAD)
+
+CMDDIR := cmd
+BINS := $(shell cd "$(CMDDIR)" && \
+	find * -maxdepth 0 -type d -exec echo $(BINDIR)/{} \;)
+
+.PHONY: build
 build: $(BINS)
 
-$(BINS): %:
-	$(eval LDFLAGS += -X $(MODULE)/internal/version.Date=$(shell date +%s))
-	$(eval LDFLAGS += -X $(MODULE)/internal/version.Version=$(VERSION))
-	$(eval LDFLAGS += -X $(MODULE)/internal/version.Commit=$(GIT_SHA))
-	go install $(V) \
-		-ldflags '$(LDFLAGS)' \
-		./cmd/$*
+$(BINS): $(BINDIR)/%: $(SOURCES)
+	mkdir -p "$(BINDIR)"
+	cd "$(CMDDIR)/$*" && go build -a $(V) \
+		-o "$(ROOT)/$(BINDIR)/$*" \
+		-ldflags "$(LDFLAGS) \
+			-X $(MODULE)/internal/version.Date=$(DATE) \
+			-X $(MODULE)/internal/version.Version=$(VERSION) \
+			-X $(MODULE)/internal/version.Commit=$(GIT_SHA)"
 
+#
+# Examples
+#
+
+EXAMPLEDIR := $(CURDIR)/examples
+EXAMPLES := $(shell cd "$(EXAMPLEDIR)" && \
+	find * -maxdepth 0 -type d -exec echo $(BINDIR)/examples/{} \;)
+
+.PHONY: build-examples
 build-examples: $(EXAMPLES)
 
-$(EXAMPLES): %:
-	@mkdir -p $(GOBIN)/example; \
-	cd examples; \
-	go build $(V) \
-		-ldflags '$(LDFLAGS)' \
-		-i -o $(GOBIN)/examples/$* ./$*
+$(EXAMPLES): $(BINDIR)/examples/%: $(SOURCES)
+	mkdir -p "$(BINDIR)/examples"
+	cd "examples/$*" && go build $(V) -i \
+		-o "$(ROOT)/$(BINDIR)/examples/$*" \
+		-ldflags '$(LDFLAGS)'
+
+#
+# Development
+#
 
 # Clean up everything
 .PHONY: clean
 clean:
-	@rm -f *.cov
-	@rm -rf $(GOBIN)
+	rm -f *.cov
+	rm -f $(BINS) $(TOOLS) $(EXAMPLES)
+	rm -f ./go.mod.tidy-check ./go.sum.tidy-check
 
 # Tidy go modules
 .PHONY: tidy
@@ -97,16 +145,17 @@ tidy:
 
 # Tidy dependecies and make sure go.mod has been committed
 # Currently only checks the main go.mod
-.PHONY: tidy
+.PHONY: check-tidy
 check-tidy:
 	$(info Checking if go.mod is tidy)
-	@go mod tidy
-	@git diff --exit-code go.mod
-
-# Generate community docs
-.PHONY: community-docs
-community-docs: community
-	@$(GOBIN)/community
+	cp go.mod go.mod.tidy-check
+	cp go.sum go.sum.tidy-check
+	go mod tidy
+	-diff go.mod go.mod.tidy-check
+	-diff go.sum go.sum.tidy-check
+	-rm -f go.mod go.sum
+	-mv go.mod.tidy-check go.mod
+	-mv go.sum.tidy-check go.sum
 
 # Install deps
 .PHONY: deps
@@ -116,95 +165,71 @@ deps:
 
 # Run go generate
 .PHONY: generate
-generate: github.com/myitcv/gobin codegen
+generate: codegen genny mockgen
 	@go generate $(V) ./...
-	@$(GOBIN)/codegen -a .
-
-# Run e2e tests
-.PHONY: e2e
-e2e: clean
-	$(eval TAGS += e2e)
-	docker build -t nimona:dev .
-	E2E_DOCKER_IMAGE=nimona:dev \
-	cd internal/simulation; \
-	go test $(V) \
-		-tags="$(TAGS)" \
-		-count=1 \
-		./...
+	@codegen -a .
 
 # Run go test
 .PHONY: test
 test:
-	$(eval TAGS += integration)
-	@LOG_LEVEL=debug \
-	CGO_ENABLED=1 \
-	NIMONA_UPNP_DISABLE=true \
-	go test $(V) \
-		-tags="$(TAGS)" \
-		-count=1 \
-		--race \
-		./...
+	@LOG_LEVEL=debug NIMONA_UPNP_DISABLE=true \
+		go test $(V) -tags="integration" -count=1 --race ./...
+
+# Run e2e tests
+.PHONY: e2e
+e2e: clean
+	docker build -t nimona:dev .
+	cd internal/simulation && E2E_DOCKER_IMAGE=nimona:dev \
+		go test $(V) -tags="e2e" -count=1 ./...
+
+# Lint code
+.PHONY: lint
+lint: golangci-lint
+	$(info Running Go linters)
+	@GOGC=off golangci-lint $(V) run
+
+# Check licenses
+licenses: wwhrd
+	$(info Checking licenses)
+	@go mod vendor
+	@wwhrd check
+
+#
+# Coverage
+#
+
+# Code coverage
+.PHONY: cover
+cover: go-acc
+	$(info Checking code coverage)
+	@LOG_LEVEL=debug go-acc ./... --output coverage.tmp.out
+	@cat coverage.tmp.out | \
+		grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.out
+	@rm -f coverage.tmp.out
+	@go tool cover -func=coverage.out
 
 # Code coverage for code climate
-cover-codeclimate:
+.PHONY: cover-codeclimate
+cover-codeclimate: go-acc
 	$(info Checking code coverage)
-	$(eval TAGS += integration)
-	@LOG_LEVEL=debug \
-	CGO_ENABLED=1 \
-	$(BINDIR)/go-acc ./... --output coverage.raw.out
-	@cat coverage.raw.out | grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.cln.out
+	@LOG_LEVEL=debug go-acc ./... --output coverage.raw.out
+	@cat coverage.raw.out | \
+		grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.cln.out
 	@sed "s/nimona.io\///" coverage.cln.out > coverage.out
 	@rm -f coverage.raw.out
 	@rm -f coverage.cln.out
 
+#
+# Documentation
+#
 
-# Code coverage
-cover:
-	$(info Checking code coverage)
-	$(eval TAGS += integration)
-	@LOG_LEVEL=debug \
-	CGO_ENABLED=1 \
-	$(BINDIR)/go-acc ./... --output coverage.tmp.out
-	@cat coverage.tmp.out | grep -Ev "_generated|_mock|.pb.go|cmd|playground" > coverage.out
-	@rm -f coverage.tmp.out
-	@go tool cover -func=coverage.out
-
-# Install tools
-.PHONY: tools
-tools: github.com/myitcv/gobin $(TOOLS) $(TOOLS_INTERNAL)
-
-# Check tools
-.PHONY: $(TOOLS)
-$(TOOLS): %:
-	@$(GOBIN)/gobin "$*"
-
-# Check internal tools
-.PHONY: $(TOOLS_INTERNAL)
-$(TOOLS_INTERNAL): %:
-ifndef CI
-	$(info Installing tools/$*)
-	@cd tools/$*; go install $(V)
-endif
-
-# Check gobin
-.PHONY: $(BIN_GOBIN)
-$(BIN_GOBIN): %:
-	@GO111MODULE=off go get -u $(BIN_GOBIN)
-
-# Lint code
-.PHONY: lint
-lint:
-	$(info Running Go linters)
-	@GOGC=off $(GOBIN)/golangci-lint $(V) run
-
-# Check licenses
-licenses:
-	$(info Checking licenses)
-	@$(GOCMD) mod vendor
-	@$(GOBIN)/wwhrd check
+# Generate community docs
+.PHONY: community-docs
+community-docs: community
+	@community
 
 # Serve docs
 .PHONY: docs
-docs:
+docs: gold
 	$(info Serving go docs)
-	@$(GOBIN)/gold -emphasize-wdpkgs ./...
+	@gold -emphasize-wdpkgs ./...

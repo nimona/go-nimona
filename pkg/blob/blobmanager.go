@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 )
 
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=requests_generated.go -pkg=blob gen "KeyType=string ValueType=request SyncmapName=requests"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=requests_generated.go -pkg=blob gen "KeyType=string ValueType=request SyncmapName=requests"
 const (
 	peerLookupTime = 5
 )
