@@ -27,7 +27,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-//go:generate $GOBIN/mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
+//go:generate mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
 
 var (
 	dataForwardType   = new(DataForward).Type()
@@ -74,8 +74,8 @@ const (
 )
 
 // nolint: lll
-//go:generate $GOBIN/genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
-//go:generate $GOBIN/genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
+//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
 
 type (
 	// Network interface for mocking

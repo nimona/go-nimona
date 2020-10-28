@@ -7,7 +7,7 @@ WORKDIR /src/nimona.io
 ENV CGO_ENABLED=1
 ENV VERSION=$version
 
-ADD . .
+COPY . .
 
 RUN make build
 RUN make build-examples

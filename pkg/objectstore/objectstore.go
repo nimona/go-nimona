@@ -12,7 +12,7 @@ const (
 	ErrNotFound = errors.Error("not found")
 )
 
-//go:generate $GOBIN/mockgen -destination=../objectstoremock/objectstoremock_generated.go -package=objectstoremock -source=objectstore.go
+//go:generate mockgen -destination=../objectstoremock/objectstoremock_generated.go -package=objectstoremock -source=objectstore.go
 
 type (
 	Getter interface {
