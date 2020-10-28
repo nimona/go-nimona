@@ -16,11 +16,11 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	n1 := New(context.Background())
 	n2 := New(context.Background())
 
-	l1, err := n1.Listen(context.Background(), "0.0.0.0:0", ListenOnLocalIPs)
+	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
 	defer l1.Close()
 
-	l2, err := n2.Listen(context.Background(), "0.0.0.0:0", ListenOnLocalIPs)
+	l2, err := n2.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
 	defer l2.Close()
 
@@ -83,7 +83,7 @@ func TestNetwork_Relay(t *testing.T) {
 	n1 := New(context.Background())
 	n2 := New(context.Background())
 
-	l0, err := n0.Listen(context.Background(), "0.0.0.0:0", ListenOnLocalIPs)
+	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
 	defer l0.Close()
 
