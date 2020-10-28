@@ -26,7 +26,7 @@ func TestGetConnection(t *testing.T) {
 
 	mgr := New(ctx, n1, handler)
 
-	lst1, err := n1.Listen(ctx, "0.0.0.0:0", &net.ListenConfig{
+	lst1, err := n1.Listen(ctx, "127.0.0.1:0", &net.ListenConfig{
 		BindLocal: true,
 	})
 	assert.NoError(t, err)
@@ -35,7 +35,7 @@ func TestGetConnection(t *testing.T) {
 	mgr2 := New(ctx, n2, handler)
 	assert.NotNil(t, mgr2)
 
-	lst2, err := n2.Listen(ctx, "0.0.0.0:0", &net.ListenConfig{
+	lst2, err := n2.Listen(ctx, "127.0.0.1:0", &net.ListenConfig{
 		BindLocal: true,
 	})
 	assert.NoError(t, err)

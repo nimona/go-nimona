@@ -20,7 +20,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	kc1, n1 := newPeer(t)
 	_, n2 := newPeer(t)
 
-	_, err := n1.Listen(ctx, "0.0.0.0:0", &ListenConfig{
+	_, err := n1.Listen(ctx, "127.0.0.1:0", &ListenConfig{
 		BindLocal: true,
 	})
 	assert.NoError(t, err)
