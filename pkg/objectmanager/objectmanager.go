@@ -813,12 +813,12 @@ func (m *manager) handleStreamRequest(
 		return err
 	}
 	leaves := stream.GetStreamLeaves(os)
-	leaveHashes := []object.Hash{}
+	leafHashes := []object.Hash{}
 	for _, o := range leaves {
-		leaveHashes = append(leaveHashes, o.Hash())
+		leafHashes = append(leafHashes, o.Hash())
 	}
 
-	res.Leaves = leaveHashes
+	res.Leaves = leafHashes
 
 	if err := m.network.Send(
 		ctx,
