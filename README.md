@@ -8,6 +8,9 @@
   <a href="https://github.com/nimona/go-nimona/actions">
     <img src="https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat" alt="Actions Status">
   </a>
+  <a href="https://codeclimate.com/github/nimona/go-nimona">
+    <img src="https://img.shields.io/codeclimate/coverage/nimona/go-nimona" alt="Coverage">
+  </a>
   <a href="https://github.com/nimona/go-nimona/commits/master">
     <img src="https://img.shields.io/github/last-commit/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
 alt="GitHub last commit">
