@@ -31,3 +31,6 @@ vendor
 
 # Local testing
 .local
+
+# Infrastructure
+infrastructure/.pyenv
