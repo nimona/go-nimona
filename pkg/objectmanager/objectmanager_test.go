@@ -90,7 +90,7 @@ func TestManager_Request(t *testing.T) {
 			m := &manager{
 				objectstore: tt.fields.store(t),
 				network:     tt.fields.network(t),
-				newNonce: func() string {
+				newRequestID: func() string {
 					return "7"
 				},
 			}
@@ -477,7 +477,7 @@ func TestManager_RequestStream(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: stream.Response{
-									Nonce: "7",
+									RequestID: "7",
 									Leaves: []object.Hash{
 										f02.Hash(),
 									},
@@ -521,7 +521,7 @@ func TestManager_RequestStream(t *testing.T) {
 				localpeer:   tt.fields.local(t),
 				objectstore: tt.fields.store(t),
 				network:     tt.fields.network(t),
-				newNonce: func() string {
+				newRequestID: func() string {
 					return "7"
 				},
 			}
@@ -552,6 +552,230 @@ func TestManager_RequestStream(t *testing.T) {
 					)
 				}
 			}
+		})
+	}
+}
+
+func TestManager_handleStreamRequest(t *testing.T) {
+	localPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	peer1Key, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	peer1 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: peer1Key.PublicKey(),
+		},
+	}
+
+	localPeer := localpeer.New()
+	localPeer.PutPrimaryPeerKey(localPeerKey)
+	localPeer.PutPrimaryIdentityKey(localPeerKey)
+
+	f00 := &object.Object{
+		Type:     "foo",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"foo": "bar",
+		},
+	}
+
+	f01 := &object.Object{
+		Type: "foo-child",
+		Metadata: object.Metadata{
+			Stream: f00.Hash(),
+			Parents: []object.Hash{
+				f00.Hash(),
+			},
+		},
+		Data: map[string]interface{}{
+			"foo": "bar",
+		},
+	}
+
+	type fields struct {
+		storeHandler   func(*testing.T) objectstore.Store
+		networkHandler func(
+			*testing.T,
+			context.Context,
+			bool, *sync.WaitGroup,
+			*object.Object,
+		) network.Network
+		resolver func(*testing.T) resolver.Resolver
+	}
+	type args struct {
+		ctx           context.Context
+		rootHash      object.Hash
+		peer          *peer.Peer
+		excludeNested bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *object.Object
+		wantErr bool
+	}{{
+		name: "should pass, stream found",
+		fields: fields{
+			storeHandler: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
+				m.EXPECT().
+					GetByStream(f00.Hash()).
+					Return(
+						object.NewReadCloserFromObjects(
+							[]*object.Object{
+								f00,
+								f01,
+							},
+						),
+						nil,
+					)
+				return m
+			},
+			networkHandler: func(
+				t *testing.T,
+				ctx context.Context,
+				excludeNested bool,
+				wg *sync.WaitGroup,
+				want *object.Object,
+			) network.Network {
+				m := networkmock.NewMockNetwork(gomock.NewController(t))
+				m.EXPECT().LocalPeer().Return(localPeer)
+				m.EXPECT().Subscribe(gomock.Any()).Return(
+					&networkmock.MockSubscriptionSimple{
+						Objects: []*network.Envelope{{
+							Payload: stream.Request{
+								RequestID: "7",
+								RootHash:  f00.Hash(),
+							}.ToObject(),
+						}},
+					},
+				)
+				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(
+						ctx context.Context,
+						obj *object.Object,
+						recipient *peer.Peer,
+					) error {
+						assert.Equal(t, want, obj)
+						wg.Done()
+						return nil
+					})
+
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
+			},
+		},
+		args: args{
+			ctx:           context.Background(),
+			rootHash:      f00.Hash(),
+			peer:          peer1,
+			excludeNested: true,
+		},
+		want: stream.Response{
+			Metadata: object.Metadata{
+				Owner: localPeerKey.PublicKey(),
+			},
+			RequestID: "7",
+			RootHash:  f00.Hash(),
+			Leaves:    []object.Hash{f01.Hash()},
+		}.ToObject(),
+	}, {
+		name: "should pass, unknown stream",
+		fields: fields{
+			storeHandler: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
+				m.EXPECT().
+					GetByStream(f00.Hash()).
+					Return(nil, objectstore.ErrNotFound)
+				return m
+			},
+			networkHandler: func(
+				t *testing.T,
+				ctx context.Context,
+				excludeNested bool,
+				wg *sync.WaitGroup,
+				want *object.Object,
+			) network.Network {
+				m := networkmock.NewMockNetwork(gomock.NewController(t))
+				m.EXPECT().LocalPeer().Return(localPeer)
+				m.EXPECT().Subscribe(gomock.Any()).Return(
+					&networkmock.MockSubscriptionSimple{
+						Objects: []*network.Envelope{{
+							Payload: stream.Request{
+								RequestID: "7",
+								RootHash:  f00.Hash(),
+							}.ToObject(),
+						}},
+					},
+				)
+				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(
+						ctx context.Context,
+						obj *object.Object,
+						recipient *peer.Peer,
+					) error {
+						assert.Equal(t, want, obj)
+						wg.Done()
+						return nil
+					})
+
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
+			},
+		},
+		args: args{
+			ctx:           context.Background(),
+			rootHash:      f00.Hash(),
+			peer:          peer1,
+			excludeNested: true,
+		},
+		want: stream.Response{
+			Metadata: object.Metadata{
+				Owner: localPeerKey.PublicKey(),
+			},
+			RequestID: "7",
+			RootHash:  f00.Hash(),
+			Leaves:    []object.Hash{},
+		}.ToObject(),
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			mgr := New(
+				tt.args.ctx,
+				tt.fields.networkHandler(
+					t,
+					tt.args.ctx,
+					tt.args.excludeNested,
+					&wg,
+					tt.want,
+				),
+				tt.fields.resolver(t),
+				tt.fields.storeHandler(t),
+			)
+			assert.NotNil(t, mgr)
+			wg.Wait()
 		})
 	}
 }

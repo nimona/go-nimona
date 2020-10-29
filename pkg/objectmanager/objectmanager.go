@@ -68,7 +68,7 @@ type (
 		localpeer     localpeer.LocalPeer
 		resolver      resolver.Resolver
 		pubsub        ObjectPubSub
-		newNonce      func() string
+		newRequestID  func() string
 		subscriptions *SubscriptionsMap
 	}
 	Option func(*manager)
@@ -85,7 +85,7 @@ func New(
 	str objectstore.Store,
 ) ObjectManager {
 	m := &manager{
-		newNonce: func() string {
+		newRequestID: func() string {
 			return rand.String(16)
 		},
 		pubsub:        NewObjectPubSub(),
@@ -151,7 +151,7 @@ func (m *manager) RequestStream(
 		return m.objectstore.GetByStream(rootHash)
 	}
 
-	nonce := m.newNonce()
+	rID := m.newRequestID()
 	responses := make(chan stream.Response)
 
 	sub := m.network.Subscribe(
@@ -169,7 +169,7 @@ func (m *manager) RequestStream(
 			if err := streamResp.FromObject(env.Payload); err != nil {
 				continue
 			}
-			if streamResp.Nonce != nonce {
+			if streamResp.RequestID != rID {
 				continue
 			}
 			responses <- *streamResp
@@ -183,8 +183,8 @@ func (m *manager) RequestStream(
 	}
 
 	req := stream.Request{
-		Nonce:    nonce,
-		RootHash: rootHash,
+		RequestID: rID,
+		RootHash:  rootHash,
 	}
 	if err := m.network.Send(
 		ctx,
@@ -307,7 +307,7 @@ func (m *manager) Request(
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
 
-	rID := m.newNonce()
+	rID := m.newRequestID()
 
 	sub := m.network.Subscribe(
 		network.FilterByObjectType(objectResponseType),
@@ -775,9 +775,37 @@ func (m *manager) handleStreamRequest(
 		return err
 	}
 
+	// start response
+	res := &stream.Response{
+		Metadata: object.Metadata{
+			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
+		},
+		RequestID: req.RequestID,
+		RootHash:  req.RootHash,
+	}
+
 	// get the whole stream
 	or, err := m.objectstore.GetByStream(req.RootHash)
 	if err != nil {
+		if err != objectstore.ErrNotFound {
+			return err
+		}
+		if sErr := m.network.Send(
+			ctx,
+			res.ToObject(),
+			&peer.Peer{
+				Metadata: object.Metadata{
+					Owner: env.Sender,
+				},
+			},
+		); err != nil {
+			log.FromContext(ctx).Info(
+				"handleStreamRequest error while responding with error",
+				log.String("reqHash", req.RootHash.String()),
+				log.String("from", env.Sender.String()),
+				log.Error(sErr),
+			)
+		}
 		return err
 	}
 	os, err := object.ReadAll(or)
@@ -790,14 +818,7 @@ func (m *manager) handleStreamRequest(
 		leaveHashes = append(leaveHashes, o.Hash())
 	}
 
-	res := &stream.Response{
-		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
-		},
-		Nonce: req.Nonce,
-		// RootHash: req.RootHash, // TODO ADD THIS
-		Leaves: leaveHashes,
-	}
+	res.Leaves = leaveHashes
 
 	if err := m.network.Send(
 		ctx,
