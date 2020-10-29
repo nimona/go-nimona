@@ -679,7 +679,8 @@ func (m *manager) handleObjectRequest(
 		Metadata: object.Metadata{
 			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
-		Object: nil,
+		Object:    nil,
+		RequestID: req.RequestID,
 	}
 
 	hash := req.ObjectHash

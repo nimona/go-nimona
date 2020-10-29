@@ -187,6 +187,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: object.Request{
+									RequestID:             "8",
 									ObjectHash:            f01.Hash(),
 									ExcludedNestedObjects: excludeNested,
 								}.ToObject(),
@@ -223,7 +224,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				Metadata: object.Metadata{
 					Owner: localPeerKey.PublicKey(),
 				},
-				Object: unloadedF01,
+				Object:    unloadedF01,
+				RequestID: "8",
 			}.ToObject(),
 		},
 		{
@@ -248,6 +250,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: object.Request{
+									RequestID:             "8",
 									ObjectHash:            f01.Hash(),
 									ExcludedNestedObjects: excludeNested,
 								}.ToObject(),
@@ -283,7 +286,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				Metadata: object.Metadata{
 					Owner: localPeerKey.PublicKey(),
 				},
-				Object: f01,
+				Object:    f01,
+				RequestID: "8",
 			}.ToObject(),
 		},
 		{
@@ -308,6 +312,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: object.Request{
+									RequestID:             "8",
 									ObjectHash:            f01.Hash(),
 									ExcludedNestedObjects: excludeNested,
 								}.ToObject(),
@@ -343,7 +348,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				Metadata: object.Metadata{
 					Owner: localPeerKey.PublicKey(),
 				},
-				Object: nil,
+				Object:    nil,
+				RequestID: "8",
 			}.ToObject(),
 		},
 	}
