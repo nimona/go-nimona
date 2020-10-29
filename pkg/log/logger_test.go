@@ -13,6 +13,8 @@ func Test_TestNestedNamedOutput(t *testing.T) {
 	r0, w0, _ := os.Pipe()
 	r1, w1, _ := os.Pipe()
 
+	DefaultLogLevel = DebugLevel
+
 	logger := New()
 	logger.SetOutput(w0)
 	logger.Debug("foo")
