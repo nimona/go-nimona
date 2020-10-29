@@ -11,18 +11,17 @@ object nimona.io/stream.Policy {
 }
 
 signed object nimona.io/stream.Request {
-    nonce string
+    requestID string
     rootHash nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.Response {
-    nonce string
+    requestID string
     rootHash nimona.io/object.Hash
     leaves repeated nimona.io/object.Hash
 }
 
 signed object nimona.io/stream.Announcement {
-    nonce string
     streamHash nimona.io/object.Hash
     objectHashes repeated nimona.io/object.Hash
 }

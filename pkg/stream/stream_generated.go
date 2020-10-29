@@ -15,19 +15,18 @@ type (
 		Action     string          `nimona:"action:s,omitempty"`
 	}
 	Request struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
-		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string          `nimona:"requestID:s,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
 	}
 	Response struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
-		RootHash object.Hash     `nimona:"rootHash:s,omitempty"`
-		Leaves   []object.Hash   `nimona:"leaves:as,omitempty"`
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string          `nimona:"requestID:s,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
+		Leaves    []object.Hash   `nimona:"leaves:as,omitempty"`
 	}
 	Announcement struct {
 		Metadata     object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce        string          `nimona:"nonce:s,omitempty"`
 		StreamHash   object.Hash     `nimona:"streamHash:s,omitempty"`
 		ObjectHashes []object.Hash   `nimona:"objectHashes:as,omitempty"`
 	}
