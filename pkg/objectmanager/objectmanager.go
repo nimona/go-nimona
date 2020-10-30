@@ -526,8 +526,9 @@ func (m *manager) storeObject(
 			objHash,
 		},
 	}
-	or, err := m.objectstore.GetByStream(feedStreamHash)
-	if err != nil && err != objectstore.ErrNotFound {
+	_, err = m.objectstore.Get(feedStreamHash)
+	if err != nil &&
+		err != objectstore.ErrNotFound {
 		return err
 	}
 	if err == objectstore.ErrNotFound {
@@ -535,18 +536,11 @@ func (m *manager) storeObject(
 			feedStreamHash,
 		}
 	} else {
-		os, err := object.ReadAll(or)
+		leaves, err := m.objectstore.GetStreamLeaves(feedStreamHash)
 		if err != nil {
 			return err
 		}
-		if len(os) > 0 {
-			parents := stream.GetStreamLeaves(os)
-			parentHashes := make([]object.Hash, len(parents))
-			for i, p := range parents {
-				parentHashes[i] = p.Hash()
-			}
-			feedEvent.Metadata.Parents = parentHashes
-		}
+		feedEvent.Metadata.Parents = leaves
 	}
 	object.SortHashes(feedEvent.Metadata.Parents)
 	if err := m.objectstore.Put(feedEvent.ToObject()); err != nil {
@@ -784,41 +778,12 @@ func (m *manager) handleStreamRequest(
 		RootHash:  req.RootHash,
 	}
 
-	// get the whole stream
-	or, err := m.objectstore.GetByStream(req.RootHash)
-	if err != nil {
-		if err != objectstore.ErrNotFound {
-			return err
-		}
-		if sErr := m.network.Send(
-			ctx,
-			res.ToObject(),
-			&peer.Peer{
-				Metadata: object.Metadata{
-					Owner: env.Sender,
-				},
-			},
-		); err != nil {
-			log.FromContext(ctx).Info(
-				"handleStreamRequest error while responding with error",
-				log.String("reqHash", req.RootHash.String()),
-				log.String("from", env.Sender.String()),
-				log.Error(sErr),
-			)
-		}
+	leaves, err := m.objectstore.GetStreamLeaves(res.RootHash)
+	if err != nil && !errors.CausedBy(err, objectstore.ErrNotFound) {
 		return err
-	}
-	os, err := object.ReadAll(or)
-	if err != nil {
-		return err
-	}
-	leaves := stream.GetStreamLeaves(os)
-	leafHashes := []object.Hash{}
-	for _, o := range leaves {
-		leafHashes = append(leafHashes, o.Hash())
 	}
 
-	res.Leaves = leafHashes
+	res.Leaves = leaves
 
 	if err := m.network.Send(
 		ctx,
@@ -933,22 +898,11 @@ func (m *manager) Put(
 	// figure out if we need to add parents to the object
 	streamHash := o.Metadata.Stream
 	if !streamHash.IsEmpty() && len(o.Metadata.Parents) == 0 {
-		or, err := m.objectstore.GetByStream(streamHash)
-		if err != nil && err != objectstore.ErrNotFound {
-			return nil, err
-		}
-		os, err := object.ReadAll(or)
+		leaves, err := m.objectstore.GetStreamLeaves(streamHash)
 		if err != nil {
 			return nil, err
 		}
-		if len(os) > 0 {
-			parents := stream.GetStreamLeaves(os)
-			parentHashes := make([]object.Hash, len(parents))
-			for i, p := range parents {
-				parentHashes[i] = p.Hash()
-			}
-			o.Metadata.Parents = parentHashes
-		}
+		o.Metadata.Parents = leaves
 		object.SortHashes(o.Metadata.Parents)
 	}
 
