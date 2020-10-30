@@ -193,3 +193,60 @@ func TestFilter(t *testing.T) {
 	err = store.Close()
 	require.NoError(t, err)
 }
+
+func TestStore_Relations(t *testing.T) {
+	f00 := &object.Object{
+		Type:     "f00",
+		Metadata: object.Metadata{},
+		Data: map[string]interface{}{
+			"f00:s": "f00",
+		},
+	}
+
+	f01 := &object.Object{
+		Type: "f01",
+		Metadata: object.Metadata{
+			Stream: f00.Hash(),
+			Parents: []object.Hash{
+				f00.Hash(),
+			},
+		},
+		Data: map[string]interface{}{
+			"f01:s": "f01",
+		},
+	}
+
+	f02 := &object.Object{
+		Type: "f02",
+		Metadata: object.Metadata{
+			Stream: f00.Hash(),
+			Parents: []object.Hash{
+				f01.Hash(),
+			},
+		},
+		Data: map[string]interface{}{
+			"f02:s": "f02",
+		},
+	}
+
+	fmt.Println("f00", f00.Hash())
+	fmt.Println("f01", f01.Hash())
+	fmt.Println("f02", f02.Hash())
+
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	require.NoError(t, store.Put(f00))
+	require.NoError(t, store.Put(f01))
+	require.NoError(t, store.Put(f02))
+
+	leaves, err := store.GetStreamLeaves(f00.Hash())
+	require.NoError(t, err)
+	require.NotNil(t, leaves)
+	assert.Len(t, leaves, 1)
+	assert.Equal(t, []object.Hash{f02.Hash()}, leaves)
+
+	fmt.Println(leaves)
+}

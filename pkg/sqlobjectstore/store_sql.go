@@ -36,6 +36,9 @@ var migrations = []string{
 	`CREATE INDEX RootHash_idx ON Objects(RootHash);`,
 	`CREATE INDEX RootHash_TTL_idx ON Objects(RootHash, TTL);`,
 	`CREATE INDEX Hash_LastAccessed_idx ON Objects(Hash, LastAccessed);`,
+	`CREATE TABLE IF NOT EXISTS Relations (Parent TEXT NOT NULL, Child TEXT NOT NULL, PRIMARY KEY (Parent, Child));`,
+	`ALTER TABLE Relations ADD RootHash TEXT;`,
+	`CREATE INDEX Relations_RootHash_idx ON Relations(RootHash);`,
 }
 
 type Store struct {
@@ -211,7 +214,88 @@ func (st *Store) PutWithTimeout(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
+	for _, p := range obj.Metadata.Parents {
+		err := st.putRelation(object.Hash(streamHash), obj.Hash(), p)
+		if err != nil {
+			return errors.Wrap(err, errors.New("could not create relation"))
+		}
+	}
+
 	return nil
+}
+
+func (st *Store) putRelation(
+	stream object.Hash,
+	parent object.Hash,
+	child object.Hash,
+) error {
+	stmt, err := st.db.Prepare(`
+		INSERT OR IGNORE INTO Relations (
+			RootHash,
+			Parent,
+			Child
+		) VALUES (
+			?, ?, ?
+		)
+	`)
+	if err != nil {
+		return errors.Wrap(err,
+			errors.New("could not prepare insert to objects table"))
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	_, err = stmt.Exec(
+		stream.String(),
+		parent.String(),
+		child.String(),
+	)
+	if err != nil {
+		return errors.Wrap(err, errors.New("could not insert to objects table"))
+	}
+
+	return nil
+}
+
+func (st *Store) GetStreamLeaves(
+	streamRootHash object.Hash,
+) ([]object.Hash, error) {
+	stmt, err := st.db.Prepare(`
+		SELECT Parent
+		FROM Relations
+		WHERE
+			RootHash=?
+			AND Parent NOT IN (
+				SELECT DISTINCT Child
+				FROM Relations
+				WHERE
+					RootHash=?
+			)
+	`)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.New("could not prepare query"))
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	rows, err := stmt.Query(streamRootHash.String(), streamRootHash.String())
+	if err != nil {
+		return nil, errors.Wrap(err, errors.New("could not query"))
+	}
+	defer rows.Close() // nolint: errcheck
+
+	hashList := []object.Hash{}
+
+	for rows.Next() {
+		data := ""
+		if err := rows.Scan(&data); err != nil {
+			return nil, errors.Wrap(
+				err,
+				objectstore.ErrNotFound,
+			)
+		}
+		hashList = append(hashList, object.Hash(data))
+	}
+
+	return hashList, nil
 }
 
 func (st *Store) GetRelations(

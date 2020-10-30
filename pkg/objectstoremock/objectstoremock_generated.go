@@ -131,6 +131,21 @@ func (mr *MockStoreMockRecorder) Put(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStore)(nil).Put), arg0)
 }
 
+// GetStreamLeaves mocks base method
+func (m *MockStore) GetStreamLeaves(streamRootHash object.Hash) ([]object.Hash, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStreamLeaves", streamRootHash)
+	ret0, _ := ret[0].([]object.Hash)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStreamLeaves indicates an expected call of GetStreamLeaves
+func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStreamLeaves", reflect.TypeOf((*MockStore)(nil).GetStreamLeaves), streamRootHash)
+}
+
 // PutWithTimeout mocks base method
 func (m *MockStore) PutWithTimeout(arg0 *object.Object, arg1 time.Duration) error {
 	m.ctrl.T.Helper()
