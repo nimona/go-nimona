@@ -625,6 +625,14 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
+					GetStreamLeaves(f00.Hash()).
+					Return(
+						[]object.Hash{
+							f01.Hash(),
+						},
+						nil,
+					)
+				m.EXPECT().
 					GetByStream(f00.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -699,7 +707,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetByStream(f00.Hash()).
+					GetStreamLeaves(f00.Hash()).
 					Return(nil, objectstore.ErrNotFound)
 				return m
 			},
@@ -995,7 +1003,6 @@ func TestManager_Put(t *testing.T) {
 					Return(nil, nil)
 				m.EXPECT().
 					GetByStream(testObjectStreamRoot.Hash()).
-					MaxTimes(2).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -1003,6 +1010,15 @@ func TestManager_Put(t *testing.T) {
 								bar2,
 							},
 						),
+						nil,
+					)
+				m.EXPECT().
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
+					Return(
+						[]object.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
+						},
 						nil,
 					)
 				m.EXPECT().
@@ -1043,7 +1059,7 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					Put(testObjectSimple)
 				m.EXPECT().
-					GetByStream(testFeedHash).
+					Get(testFeedHash).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(
@@ -1089,14 +1105,12 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						object.NewReadCloserFromObjects(
-							[]*object.Object{
-								bar1,
-								bar2,
-							},
-						),
+						[]object.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
+						},
 						nil,
 					)
 				m.EXPECT().
@@ -1190,15 +1204,13 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						object.NewReadCloserFromObjects(
-							[]*object.Object{
-								bar1,
-								bar2,
-								testObjectSubscriptionInline,
-							},
-						),
+						[]object.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
+							testObjectSubscriptionInline.Hash(),
+						},
 						nil,
 					)
 				m.EXPECT().
