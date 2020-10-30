@@ -149,10 +149,10 @@ func (st *Store) GetByType(
 func (st *Store) Put(
 	obj *object.Object,
 ) error {
-	return st.PutWithTimeout(obj, 0)
+	return st.PutWithTTL(obj, 0)
 }
 
-func (st *Store) PutWithTimeout(
+func (st *Store) PutWithTTL(
 	obj *object.Object,
 	ttl time.Duration,
 ) error {

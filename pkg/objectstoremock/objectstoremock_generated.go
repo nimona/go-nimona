@@ -146,18 +146,18 @@ func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootHash interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStreamLeaves", reflect.TypeOf((*MockStore)(nil).GetStreamLeaves), streamRootHash)
 }
 
-// PutWithTimeout mocks base method
-func (m *MockStore) PutWithTimeout(arg0 *object.Object, arg1 time.Duration) error {
+// PutWithTTL mocks base method
+func (m *MockStore) PutWithTTL(arg0 *object.Object, arg1 time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutWithTimeout", arg0, arg1)
+	ret := m.ctrl.Call(m, "PutWithTTL", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PutWithTimeout indicates an expected call of PutWithTimeout
-func (mr *MockStoreMockRecorder) PutWithTimeout(arg0, arg1 interface{}) *gomock.Call {
+// PutWithTTL indicates an expected call of PutWithTTL
+func (mr *MockStoreMockRecorder) PutWithTTL(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutWithTimeout", reflect.TypeOf((*MockStore)(nil).PutWithTimeout), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutWithTTL", reflect.TypeOf((*MockStore)(nil).PutWithTTL), arg0, arg1)
 }
 
 // GetPinned mocks base method
