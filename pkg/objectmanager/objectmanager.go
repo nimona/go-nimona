@@ -486,7 +486,7 @@ func (m *manager) storeObject(
 	// store nested objects
 	for _, refObj := range refObjs {
 		// TODO reconsider ttls for nested objects
-		if err := m.objectstore.PutWithTimeout(refObj, 0); err != nil {
+		if err := m.objectstore.PutWithTTL(refObj, 0); err != nil {
 			logger.Error(
 				"error trying to persist incoming nested object",
 				log.String("hash", refObj.Hash().String()),

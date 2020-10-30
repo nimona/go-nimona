@@ -63,7 +63,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = store.PutWithTimeout(
+	err = store.PutWithTTL(
 		obj,
 		10*time.Second,
 	)
