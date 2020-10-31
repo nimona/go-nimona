@@ -121,6 +121,23 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 					}
 				}
 				return m, nil
+			case 'r':
+				v := reflect.ValueOf(i)
+				m := make([]Hash, v.Len())
+				for i := 0; i < v.Len(); i++ {
+					m[i], err = normalizeHash(v.Index(i).Interface())
+					if err != nil {
+						return nil, errors.Wrap(
+							err,
+							fmt.Errorf(
+								"invalid hash type, t=%v k=%v",
+								reflect.TypeOf(i).String(),
+								k,
+							),
+						)
+					}
+				}
+				return m, nil
 			case 'd':
 				v := reflect.ValueOf(i)
 				m := make([][]byte, v.Len())
@@ -207,6 +224,8 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 		return normalizeInt(i)
 	case 'f':
 		return normalizeFloat(i)
+	case 'r':
+		return normalizeHash(i)
 	}
 	return nil, errors.New("unknown key hint " + t)
 }
@@ -233,6 +252,14 @@ func normalizeString(i interface{}) (string, error) {
 	return "", errors.New("invalid string type, got " +
 		reflect.TypeOf(i).String(),
 	)
+}
+
+func normalizeHash(i interface{}) (Hash, error) {
+	s, err := normalizeString(i)
+	if err != nil {
+		return "", err
+	}
+	return Hash(s), nil
 }
 
 func NormalizeData(i interface{}) ([]byte, error) {
