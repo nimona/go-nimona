@@ -5,6 +5,7 @@ signed object nimona.io/Chunk {
 }
 
 signed object nimona.io/Blob {
+   name  string
    chunks repeated Chunk
 }
 

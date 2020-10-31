@@ -251,6 +251,42 @@ func TestBlob_Hash(t *testing.T) {
 	assert.Equal(t, bh, uh)
 }
 
+func TestBlob_ResponseHash(t *testing.T) {
+	c := &blob.Chunk{
+		Data: []byte("foo"),
+	}
+	b := &blob.Blob{
+		Chunks: []*blob.Chunk{c},
+	}
+	r := &object.Response{
+		RequestID: "foo",
+		Object:    b.ToObject(),
+	}
+	s, err := json.Marshal(r.ToObject().ToMap())
+	require.NoError(t, err)
+
+	fmt.Println(string(s))
+
+	m := map[string]interface{}{}
+	err = json.Unmarshal(s, &m)
+	require.NoError(t, err)
+	o := object.FromMap(m)
+
+	s, err = json.Marshal(o.ToMap())
+	require.NoError(t, err)
+
+	fmt.Println(string(s))
+
+	fmt.Println("---")
+	bh := r.ToObject().Hash()
+	fmt.Println("---")
+	uh := o.Hash()
+	fmt.Println("---")
+
+	assert.Equal(t, bh, uh)
+
+}
+
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
 		Chunks: []*blob.Chunk{{
