@@ -21,6 +21,12 @@ type (
 		Filename string   `nimona:"filename:s,omitempty"`
 		Chunks   []*Chunk `nimona:"chunks:ao,omitempty"`
 	}
+	BlobUnloaded struct {
+		Metadata       Metadata `nimona:"metadata:m"`
+		Dummy          Hash     `nimona:"dummy:r,omitempty"`
+		Filename       string   `nimona:"filename:s,omitempty"`
+		ChunksUnloaded []Hash   `nimona:"chunks:ar,omitempty"`
+	}
 	Dummy struct {
 		Metadata Metadata `nimona:"metadata:m"`
 		Foo      string   `nimona:"foo:s,omitempty"`
@@ -36,6 +42,10 @@ func (v Chunk) Type() string {
 }
 
 func (v Blob) Type() string {
+	return "blob"
+}
+
+func (v BlobUnloaded) Type() string {
 	return "blob"
 }
 
@@ -157,6 +167,27 @@ func TestEncodeDecode(t *testing.T) {
 					Data: map[string]interface{}{
 						"foo:s": "bar",
 					},
+				},
+			},
+		},
+	}, {
+		name: "object to struct, with nested reference, encode-decode",
+		source: &BlobUnloaded{
+			Filename: "foo",
+			Dummy:    Hash("dummy"),
+			ChunksUnloaded: []Hash{
+				"foo",
+				"bar",
+			},
+		},
+		object: &Object{
+			Type: "blob",
+			Data: map[string]interface{}{
+				"filename:s": "foo",
+				"dummy:r":    Hash("dummy"),
+				"chunks:ar": []Hash{
+					"foo",
+					"bar",
 				},
 			},
 		},
