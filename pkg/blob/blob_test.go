@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -230,4 +231,49 @@ func TestUnloadRefs(t *testing.T) {
 
 	assert.Contains(t, refs, chunk1.ToObject().Hash())
 	assert.Contains(t, refs, chunk2.ToObject().Hash())
+}
+
+func TestBlob_Hash(t *testing.T) {
+	c := &blob.Chunk{
+		Data: []byte("foo"),
+	}
+	b := &blob.Blob{
+		Chunks: []*blob.Chunk{c},
+	}
+	u := &blob.BlobUnloaded{
+		ChunksUnloaded: []object.Hash{
+			c.ToObject().Hash(),
+		},
+	}
+
+	bh := b.ToObject().Hash()
+	uh := u.ToObject().Hash()
+	assert.Equal(t, bh, uh)
+}
+
+func TestBlob_ToMap(t *testing.T) {
+	b := &blob.Blob{
+		Chunks: []*blob.Chunk{{
+			Data: []byte("foo"),
+		}},
+	}
+	s, err := json.Marshal(b.ToObject().ToMap())
+	require.NoError(t, err)
+	fmt.Println(string(s))
+
+	m := map[string]interface{}{}
+	err = json.Unmarshal(s, &m)
+	require.NoError(t, err)
+	o := object.FromMap(m)
+
+	s2, err := json.Marshal(o.ToMap())
+	require.NoError(t, err)
+	fmt.Println(string(s2))
+	assert.Equal(t, s, s2)
+
+	b2 := &blob.Blob{}
+	err = b2.FromObject(o)
+	require.NoError(t, err)
+
+	require.Equal(t, b, b2)
 }

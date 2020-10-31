@@ -126,13 +126,13 @@ func (p *Parser) parseField() (interface{}, error) {
 		member.SimpleType = "data"
 		member.Hint = "d"
 	case "map":
-		member.Type = "object.Map"
+		member.Type = "map[string]interface{}"
 		member.SimpleType = "map"
 		member.Hint = "m"
 	default:
 		member.Type = value
 		member.SimpleType = value
-		member.Hint = "m"
+		member.Hint = "o"
 		member.IsObject = true
 	}
 	fmt.Println("\tFound attribute", member.Name, "of type", member.Type)

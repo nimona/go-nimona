@@ -133,13 +133,30 @@ func (r *requester) Request(
 	return blob, nil
 }
 
-type blobUnloaded struct {
-	Blob
-	ChunksUnloaded []object.Hash `nimona:"chunks:ar,omitempty"`
+// nolint: golint // stuttering is fine for this one
+type BlobUnloaded struct {
+	Metadata       object.Metadata `nimona:"metadata:m,omitempty"`
+	ChunksUnloaded []object.Hash   `nimona:"chunks:ar,omitempty"`
+}
+
+func (e *BlobUnloaded) Type() string {
+	return "nimona.io/Blob"
+}
+
+func (e BlobUnloaded) ToObject() *object.Object {
+	o, err := object.Encode(&e)
+	if err != nil {
+		panic(err)
+	}
+	return o
+}
+
+func (e *BlobUnloaded) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
 }
 
 func getChunks(o *object.Object) ([]object.Hash, error) {
-	b := &blobUnloaded{}
+	b := &BlobUnloaded{}
 	if err := object.Decode(o, b); err != nil {
 		return nil, err
 	}
