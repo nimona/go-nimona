@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
+	"io"
 	olog "log"
 	"net/http"
 	"os"
@@ -126,6 +128,7 @@ func (ft *fileTransfer) serve(
 	if err != nil {
 		logger.Fatal("failed to covert to blob", log.Error(err))
 	}
+	bl.Name = filename
 
 	obj, err := ft.objectmanager.Put(ctx, bl.ToObject())
 	if err != nil {
@@ -156,6 +159,18 @@ func (ft *fileTransfer) get(
 	}
 
 	logger.Info(bl.ToObject().Hash().String())
+
+	f, err := os.Create(bl.Name + ".recv")
+	if err != nil {
+		logger.Fatal("failed to create file", log.Error(err))
+	}
+
+	r := blob.FromBlob(bl)
+	bf := bufio.NewReader(r)
+	if _, err := io.Copy(f, bf); err != nil {
+		logger.Fatal("failed to write file", log.Error(err))
+	}
+
 }
 
 func (ft *fileTransfer) close() {

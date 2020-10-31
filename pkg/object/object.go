@@ -297,6 +297,10 @@ func mapHookfunc() mapstructure.DecodeHookFuncValueContext {
 		if v, ok := f.Interface().(crypto.PublicKey); ok {
 			return string(v), nil
 		}
+		// (decode) *Object
+		if v, ok := f.Interface().(*Object); ok {
+			return v.ToMap(), nil
+		}
 		// (decode) slice of struct to []interface
 		if f.Kind() == reflect.Slice {
 			var i interface{} = struct{}{}
@@ -351,15 +355,6 @@ func objectToMap(o *Object) (map[string]interface{}, error) {
 		keyData:     d,
 		keyMetadata: m,
 	}
-	traverseValues(reflect.ValueOf(r), func(v reflect.Value) {
-		vo, ok := v.Interface().(*Object)
-		if !ok {
-			return
-		}
-		if v.CanSet() {
-			v.Set(reflect.ValueOf(vo.ToMap()))
-		}
-	})
 	return r, nil
 }
 
