@@ -23,7 +23,7 @@ func UnloadReferences(
 			}
 			unloaded = append(unloaded, o)
 			return strings.Replace(k, ":m", ":r", 1), o.Hash(), true
-		case strings.HasSuffix(k, ":am"):
+		case strings.HasSuffix(k, ":ao"):
 			switch vs := v.(type) {
 			case []*Object:
 				hs := []Hash{}
@@ -31,7 +31,7 @@ func UnloadReferences(
 					unloaded = append(unloaded, o)
 					hs = append(hs, o.Hash())
 				}
-				return strings.Replace(k, ":am", ":ar", 1), hs, true
+				return strings.Replace(k, ":ao", ":ar", 1), hs, true
 			case []interface{}:
 				hs := []Hash{}
 				for _, vsv := range vs {
@@ -43,7 +43,7 @@ func UnloadReferences(
 					hs = append(hs, o.Hash())
 				}
 				if len(hs) > 0 {
-					return strings.Replace(k, ":am", ":ar", 1), hs, true
+					return strings.Replace(k, ":ao", ":ar", 1), hs, true
 				}
 			}
 		}

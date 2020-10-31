@@ -65,6 +65,12 @@ func hintFromKey(k string) string {
 	if len(ps) == 1 {
 		return ""
 	}
+	if ps[1] == HintObject.String() {
+		return HintRef.String()
+	}
+	if ps[1] == HintArray.String()+HintObject.String() {
+		return HintArray.String() + HintRef.String()
+	}
 	return ps[1]
 }
 
@@ -100,8 +106,16 @@ func hashMap(m map[string]interface{}) (Hash, error) {
 		if strings.HasSuffix(k, ":"+HintObject.String()) {
 			ck = k[:len(k)-2] + ":" + HintRef.String()
 		}
+		// TODO consider not replacing hints for maps
 		if strings.HasSuffix(k, ":"+HintMap.String()) {
 			ck = k[:len(k)-2] + ":" + HintRef.String()
+		}
+		if strings.HasSuffix(k, ":a"+HintObject.String()) {
+			ck = k[:len(k)-3] + ":a" + HintRef.String()
+		}
+		// TODO consider not replacing hints for maps
+		if strings.HasSuffix(k, ":a"+HintMap.String()) {
+			ck = k[:len(k)-3] + ":a" + HintRef.String()
 		}
 		hk, _ := hash("", []byte(ck)) // nolint: errcheck
 		b = append(b, hk...)
