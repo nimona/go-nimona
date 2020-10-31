@@ -13,7 +13,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Chunks   []*Chunk        `nimona:"chunks:am,omitempty"`
+		Chunks   []*Chunk        `nimona:"chunks:ao,omitempty"`
 	}
 )
 

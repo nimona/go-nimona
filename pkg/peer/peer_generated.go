@@ -13,8 +13,8 @@ type (
 		Addresses    []string              `nimona:"addresses:as,omitempty"`
 		Bloom        []int64               `nimona:"bloom:ai,omitempty"`
 		ContentTypes []string              `nimona:"contentTypes:as,omitempty"`
-		Certificates []*object.Certificate `nimona:"certificates:am,omitempty"`
-		Relays       []*Peer               `nimona:"relays:am,omitempty"`
+		Certificates []*object.Certificate `nimona:"certificates:ao,omitempty"`
+		Relays       []*Peer               `nimona:"relays:ao,omitempty"`
 	}
 	LookupRequest struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
@@ -25,7 +25,7 @@ type (
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
-		Peers    []*Peer         `nimona:"peers:am,omitempty"`
+		Peers    []*Peer         `nimona:"peers:ao,omitempty"`
 	}
 )
 
