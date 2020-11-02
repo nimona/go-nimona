@@ -888,18 +888,30 @@ func TestManager_Put(t *testing.T) {
 			"nested-simple:m": testObjectSimple,
 		},
 	}
-	testFeedHash := getFeedRootHash(
+	testFeedRoot := getFeedRoot(
 		testOwnPrivateKey.PublicKey(),
 		getTypeForFeed(testObjectSimple.Type),
-	)
+	).ToObject()
+	testFeedRootHash := testFeedRoot.Hash()
 	testFeedFirst := feed.Added{
 		ObjectHash: []object.Hash{
 			testObjectSimple.Hash(),
 		},
 		Metadata: object.Metadata{
-			Stream: testFeedHash,
+			Stream: testFeedRootHash,
 			Parents: []object.Hash{
-				testFeedHash,
+				testFeedRootHash,
+			},
+		},
+	}.ToObject()
+	testFeedSecond := feed.Added{
+		ObjectHash: []object.Hash{
+			testObjectSimple.Hash(),
+		},
+		Metadata: object.Metadata{
+			Stream: testFeedRootHash,
+			Parents: []object.Hash{
+				testFeedFirst.Hash(),
 			},
 		},
 	}.ToObject()
@@ -1059,11 +1071,65 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					Put(testObjectSimple)
 				m.EXPECT().
-					Get(testFeedHash).
+					Get(testFeedRootHash).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(
 						gomockutil.ObjectEq(testFeedFirst),
+					)
+				return m
+			},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: func() localpeer.LocalPeer {
+						tmpLocalPeer := localpeer.New()
+						tmpLocalPeer.PutContentTypes("foo")
+						tmpLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
+						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
+						return tmpLocalPeer
+					}(),
+					SendCalls: []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
+			},
+		},
+		args: args{
+			o: object.Copy(testObjectSimple),
+		},
+		want: testObjectSimple,
+	}, {
+		name: "should pass, simple object, registered, second item in feed",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				m.EXPECT().
+					GetPinned().
+					Return(nil, nil)
+				m.EXPECT().
+					Put(testObjectSimple)
+				m.EXPECT().
+					Get(testFeedRootHash).
+					Return(testFeedRoot, nil)
+				m.EXPECT().
+					Put(gomockutil.ObjectEq(testFeedSecond))
+				m.EXPECT().
+					GetStreamLeaves(testFeedRootHash).
+					Return(
+						[]object.Hash{
+							testFeedFirst.Hash(),
+						},
+						nil,
 					)
 				return m
 			},

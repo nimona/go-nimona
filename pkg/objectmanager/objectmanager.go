@@ -514,10 +514,10 @@ func (m *manager) storeObject(
 	// TODO check if object already exists in feed
 
 	// add to feed
-	feedStreamHash := getFeedRootHash(
+	feedStreamHash := getFeedRoot(
 		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
 		getTypeForFeed(objType),
-	)
+	).ToObject().Hash()
 	feedEvent := feed.Added{
 		Metadata: object.Metadata{
 			Stream: feedStreamHash,
@@ -937,14 +937,13 @@ func (m *manager) Subscribe(
 	return m.pubsub.Subscribe(options.Filters...)
 }
 
-func getFeedRootHash(owner crypto.PublicKey, feedType string) object.Hash {
-	r := feed.FeedStreamRoot{
+func getFeedRoot(owner crypto.PublicKey, feedType string) *feed.FeedStreamRoot {
+	return &feed.FeedStreamRoot{
 		ObjectType: feedType,
 		Metadata: object.Metadata{
 			Owner: owner,
 		},
 	}
-	return r.ToObject().Hash()
 }
 
 func getTypeForFeed(objectType string) string {
