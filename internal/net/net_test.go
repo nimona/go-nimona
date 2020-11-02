@@ -86,6 +86,13 @@ func TestNetDialBackoff(t *testing.T) {
 		Addresses: []string{"tcps:240.0.0.1:1000"},
 	}
 
+	p2 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: crypto.PublicKey("bar"),
+		},
+		Addresses: p.Addresses,
+	}
+
 	// attempt 1, failed
 	_, n1 := newPeer(t)
 	_, err := n1.Dial(ctx, p)
@@ -94,6 +101,10 @@ func TestNetDialBackoff(t *testing.T) {
 	// attempt 2, blocked
 	_, err = n1.Dial(ctx, p)
 	assert.Equal(t, ErrAllAddressesBlocked, err)
+
+	// attempt 2, same address different key, failed
+	_, err = n1.Dial(ctx, p2)
+	assert.Equal(t, ErrAllAddressesFailed, err)
 
 	// wait for backoff to expire
 	time.Sleep(time.Second * 2)

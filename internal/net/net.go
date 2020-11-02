@@ -128,7 +128,7 @@ func (n *network) Dial(
 	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
 		// check if address is currently blocklisted
-		if _, blocklisted := n.blocklist.Get(address); blocklisted {
+		if n.isAddressBlocked(p.PublicKey(), address) {
 			logger.Debug("address is blocklisted, skipping")
 			continue
 		}
@@ -149,7 +149,10 @@ func (n *network) Dial(
 		conn, err := trsp.Dial(ctx, address)
 		if err != nil {
 			// blocking address
-			attempts, backoff := n.exponentialyBlockAddress(address)
+			attempts, backoff := n.blockAddress(
+				p.PublicKey(),
+				address,
+			)
 			logger.Error("could not dial address, blocking",
 				log.Int("failedAttempts", attempts),
 				log.String("backoff", backoff.String()),
@@ -161,7 +164,10 @@ func (n *network) Dial(
 
 		// check negotiated key against dialed
 		if conn.RemotePeerKey != p.PublicKey() {
-			n.exponentialyBlockAddress(address)
+			n.blockAddress(
+				p.PublicKey(),
+				address,
+			)
 			logger.Error("remote didn't match expect key, blocking",
 				log.String("expected", p.PublicKey().String()),
 				log.String("received", conn.RemotePeerKey.String()),
@@ -180,7 +186,10 @@ func (n *network) Dial(
 			ping,
 			conn,
 		); err != nil {
-			n.exponentialyBlockAddress(address)
+			n.blockAddress(
+				p.PublicKey(),
+				address,
+			)
 			logger.Error("could not actually write to remote, blocking")
 			continue
 		}
@@ -208,17 +217,29 @@ func (n *network) Dial(
 	return nil, err
 }
 
-func (n *network) exponentialyBlockAddress(k string) (int, time.Duration) {
+func (n *network) isAddressBlocked(
+	publicKey crypto.PublicKey,
+	address string,
+) bool {
+	_, blocked := n.blocklist.Get(publicKey.String() + "/" + address)
+	return blocked
+}
+
+func (n *network) blockAddress(
+	publicKey crypto.PublicKey,
+	address string,
+) (int, time.Duration) {
+	pk := publicKey.String() + "/" + address
 	baseBackoff := float64(time.Second * 1)
 	maxBackoff := float64(time.Minute * 10)
-	attempts, _ := n.attempts.Get(k)
+	attempts, _ := n.attempts.Get(pk)
 	attempts++
 	backoff := baseBackoff * math.Pow(1.5, float64(attempts))
 	if backoff > maxBackoff {
 		backoff = maxBackoff
 	}
-	n.attempts.Put(k, attempts)
-	n.blocklist.Set(k, attempts, time.Duration(backoff))
+	n.attempts.Put(pk, attempts)
+	n.blocklist.Set(pk, attempts, time.Duration(backoff))
 	return attempts, time.Duration(backoff)
 }
 
@@ -331,7 +352,7 @@ func (n *network) Listen(
 	}
 	// block our own addresses, just in case anyone tries to dial them
 	for _, addr := range mlst.addresses {
-		n.blocklist.Set(addr, 0, cache.NoExpiration)
+		n.blocklist.Set(k.PublicKey().String()+"/"+addr, 0, cache.NoExpiration)
 	}
 	return mlst, nil
 }
