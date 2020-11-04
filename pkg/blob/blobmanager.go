@@ -77,6 +77,9 @@ func (r *requester) Request(
 	chunks := []*Chunk{}
 
 	blob := &Blob{}
+	if err := blob.FromObject(obj); err != nil {
+		return nil, err
+	}
 
 	// Request all the chunks
 	for _, ch := range chunksHash {
