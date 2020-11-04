@@ -284,7 +284,6 @@ func TestBlob_ResponseHash(t *testing.T) {
 	fmt.Println("---")
 
 	assert.Equal(t, bh, uh)
-
 }
 
 func TestBlob_ToMap(t *testing.T) {
