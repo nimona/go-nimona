@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
@@ -37,6 +38,7 @@ type fileTransfer struct {
 	objectstore   objectstore.Store
 	resolver      resolver.Resolver
 	listener      net.Listener
+	config        *config
 }
 
 // nolint: lll
@@ -47,7 +49,8 @@ type config struct {
 		Bootstraps  []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 
-	Debug struct {
+	ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
+	Debug          struct {
 		MetricsPort string `envconfig:"METRICS_PORT"`
 	} `envconfig:"DEBUG"`
 }
@@ -160,7 +163,8 @@ func (ft *fileTransfer) get(
 
 	logger.Info(bl.ToObject().Hash().String())
 
-	f, err := os.Create(bl.Name + ".recv")
+	_ = os.MkdirAll(ft.config.ReceivedFolder, os.ModePerm)
+	f, err := os.Create(filepath.Join(ft.config.ReceivedFolder, bl.Name))
 	if err != nil {
 		logger.Fatal("failed to create file", log.Error(err))
 	}
@@ -184,7 +188,7 @@ func newFileTransfer(
 	logger log.Logger,
 ) (*fileTransfer, error) {
 	files := &fileTransfer{}
-
+	files.config = cfg
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
