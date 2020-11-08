@@ -1,6 +1,6 @@
 # Bootstrap
 
-Bootstrap daemon.
+Bootstrap is basically a Hyperspace v2 provider
 
 ## Env vars
 

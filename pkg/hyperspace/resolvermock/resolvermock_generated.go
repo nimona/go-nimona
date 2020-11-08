@@ -7,8 +7,8 @@ package resolvermock
 import (
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
+	resolver "nimona.io/pkg/hyperspace/resolver"
 	peer "nimona.io/pkg/peer"
-	resolver "nimona.io/pkg/resolver"
 	reflect "reflect"
 )
 
@@ -36,14 +36,14 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 }
 
 // Lookup mocks base method
-func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) (<-chan *peer.Peer, error) {
+func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) ([]*peer.Peer, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Lookup", varargs...)
-	ret0, _ := ret[0].(<-chan *peer.Peer)
+	ret0, _ := ret[0].([]*peer.Peer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -53,23 +53,4 @@ func (mr *MockResolverMockRecorder) Lookup(ctx interface{}, opts ...interface{})
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lookup", reflect.TypeOf((*MockResolver)(nil).Lookup), varargs...)
-}
-
-// Bootstrap mocks base method
-func (m *MockResolver) Bootstrap(ctx context.Context, bootstrapPeers ...*peer.Peer) error {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx}
-	for _, a := range bootstrapPeers {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Bootstrap", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Bootstrap indicates an expected call of Bootstrap
-func (mr *MockResolverMockRecorder) Bootstrap(ctx interface{}, bootstrapPeers ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx}, bootstrapPeers...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bootstrap", reflect.TypeOf((*MockResolver)(nil).Bootstrap), varargs...)
 }

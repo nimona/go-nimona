@@ -3,7 +3,7 @@ package objectmanager
 // import (
 // 	"nimona.io/pkg/network"
 // 	"nimona.io/pkg/objectstore"
-// 	"nimona.io/pkg/resolver"
+// 	"nimona.io/pkg/hyperspace/resolver"
 // )
 
 // func WithStore(st objectstore.Store) func(*manager) {

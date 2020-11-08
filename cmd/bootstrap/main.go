@@ -15,11 +15,12 @@ import (
 	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace/provider"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
 )
 
 // nolint: lll
@@ -66,10 +67,18 @@ func main() {
 		network.WithLocalPeer(local),
 	)
 
+	// construct new hyperspace provider
+	_, err := provider.New(ctx, net)
+	if err != nil {
+		logger.Fatal("error while constructing provider", log.Error(err))
+	}
+
 	// start listening
 	lis, err := net.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
+		network.ListenOnLocalIPs,
+		network.ListenOnPrivateIPs,
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
@@ -94,7 +103,7 @@ func main() {
 	resolver.New(
 		ctx,
 		net,
-		resolver.WithBoostrapPeers(bootstrapPeers),
+		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
 	logger = logger.With(

@@ -12,13 +12,13 @@ import (
 	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
@@ -91,7 +91,7 @@ func main() {
 	res := resolver.New(
 		ctx,
 		net,
-		resolver.WithBoostrapPeers(bootstrapPeers),
+		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
 	logger = logger.With(
@@ -175,7 +175,10 @@ func main() {
 		if err != nil {
 			return err
 		}
-		for recipient := range recipients {
+		if len(recipients) == 0 {
+			return errors.New("no recipients")
+		}
+		for _, recipient := range recipients {
 			if err := net.Send(
 				sctx,
 				&object.Object{

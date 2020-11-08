@@ -12,6 +12,8 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/feed"
+	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
@@ -19,8 +21,6 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
-	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/stream"
 )
 
@@ -1215,14 +1215,10 @@ func TestManager_Put(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
-				r := make(chan *peer.Peer, 10)
-				r <- testSubscriberPeer
-				close(r)
 				m.EXPECT().Lookup(
 					gomock.Any(),
-					// TODO we need a custom matcher for options
 					gomock.Any(),
-				).Return(r, nil)
+				).Return([]*peer.Peer{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
@@ -1304,14 +1300,11 @@ func TestManager_Put(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
-				r := make(chan *peer.Peer, 10)
-				r <- testSubscriberPeer
-				close(r)
 				m.EXPECT().Lookup(
 					gomock.Any(),
 					// TODO we need a custom matcher for options
 					gomock.Any(),
-				).Return(r, nil)
+				).Return([]*peer.Peer{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{},

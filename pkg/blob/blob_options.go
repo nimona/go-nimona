@@ -1,8 +1,8 @@
 package blob
 
 import (
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/objectmanager"
-	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
