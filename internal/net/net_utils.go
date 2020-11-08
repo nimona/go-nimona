@@ -83,7 +83,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	if !o.Metadata.Signature.IsEmpty() {
 		if err := object.Verify(o); err != nil {
-			return o, ErrInvalidSignature
+			return o, errors.Wrap(ErrInvalidSignature, err)
 		}
 	}
 

@@ -1,0 +1,101 @@
+package resolver
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace"
+	"nimona.io/pkg/hyperspace/provider"
+	"nimona.io/pkg/localpeer"
+	"nimona.io/pkg/network"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
+)
+
+func TestResolver(t *testing.T) {
+	// net0 is our provider
+	net0 := newPeer(t)
+	pr0 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		},
+		Addresses: net0.LocalPeer().GetAddresses(),
+	}
+
+	// net1 is a normal peer
+	net1 := newPeer(t)
+	pr1 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		},
+		Addresses: net1.LocalPeer().GetAddresses(),
+	}
+
+	// construct provider
+	prv, err := provider.New(context.New(), net0)
+	require.NoError(t, err)
+
+	// net1 announces to provider
+	err = net1.Send(
+		context.New(),
+		pr1.ToObject(),
+		pr0,
+	)
+	require.NoError(t, err)
+
+	// add a couple more random peers to the provider's cache
+	pr2 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: "a",
+		},
+		QueryVector: hyperspace.New("foo", "bar"),
+	}
+	pr3 := &peer.Peer{
+		Metadata: object.Metadata{
+			Owner: "b",
+		},
+		QueryVector: hyperspace.New("foo"),
+	}
+	prv.Put(pr2)
+	prv.Put(pr3)
+
+	// construct resolver
+	res := New(context.New(), net1, WithBoostrapPeers(pr0))
+
+	// lookup by content
+	pr, err := res.Lookup(context.New(), LookupByContentHash("bar"))
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []*peer.Peer{pr2}, pr)
+}
+
+func newPeer(t *testing.T) network.Network {
+	k, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	ctx := context.New()
+
+	local := localpeer.New()
+	local.PutPrimaryPeerKey(k)
+
+	net := network.New(
+		ctx,
+		network.WithLocalPeer(local),
+	)
+
+	lis, err := net.Listen(
+		ctx,
+		"127.0.0.1:0",
+		network.ListenOnLocalIPs,
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		lis.Close() // nolint: errcheck
+	})
+
+	return net
+}

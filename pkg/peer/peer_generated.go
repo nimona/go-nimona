@@ -11,21 +11,21 @@ type (
 		Metadata     object.Metadata       `nimona:"metadata:m,omitempty"`
 		Version      int64                 `nimona:"version:i,omitempty"`
 		Addresses    []string              `nimona:"addresses:as,omitempty"`
-		Bloom        []int64               `nimona:"bloom:ai,omitempty"`
+		QueryVector  []uint64              `nimona:"queryVector:au,omitempty"`
 		ContentTypes []string              `nimona:"contentTypes:as,omitempty"`
 		Certificates []*object.Certificate `nimona:"certificates:ao,omitempty"`
 		Relays       []*Peer               `nimona:"relays:ao,omitempty"`
 	}
 	LookupRequest struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
-		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
+		Metadata    object.Metadata `nimona:"metadata:m,omitempty"`
+		Nonce       string          `nimona:"nonce:s,omitempty"`
+		QueryVector []uint64        `nimona:"queryVector:au,omitempty"`
 	}
 	LookupResponse struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
-		Bloom    []int64         `nimona:"bloom:ai,omitempty"`
-		Peers    []*Peer         `nimona:"peers:ao,omitempty"`
+		Metadata    object.Metadata `nimona:"metadata:m,omitempty"`
+		Nonce       string          `nimona:"nonce:s,omitempty"`
+		QueryVector []uint64        `nimona:"queryVector:au,omitempty"`
+		Peers       []*Peer         `nimona:"peers:ao,omitempty"`
 	}
 )
 

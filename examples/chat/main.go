@@ -13,6 +13,7 @@ import (
 	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
@@ -20,7 +21,6 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -155,7 +155,7 @@ func (c *chat) subscribe(
 			c.logger.Error("could not find any peers that have this hash")
 			return
 		}
-		for p := range peers {
+		for _, p := range peers {
 			reqCtx := context.New(context.WithTimeout(time.Second * 5))
 			cr, err := c.objectmanager.RequestStream(
 				reqCtx,
@@ -258,7 +258,7 @@ func main() {
 	res := resolver.New(
 		ctx,
 		net,
-		resolver.WithBoostrapPeers(bootstrapPeers),
+		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
 	logger = logger.With(

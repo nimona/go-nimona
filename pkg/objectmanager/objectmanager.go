@@ -12,13 +12,13 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/feed"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/stream"
 )
 
@@ -650,8 +650,8 @@ func (m *manager) send(
 	}
 	// TODO add error group
 	var errs error
-	for peer := range peers {
-		if err := m.network.Send(ctx, obj, peer); err != nil {
+	for _, pr := range peers {
+		if err := m.network.Send(ctx, obj, pr); err != nil {
 			errs = multierror.Append(errs, err)
 			continue
 		}

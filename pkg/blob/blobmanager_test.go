@@ -10,13 +10,13 @@ import (
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
-	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
@@ -63,17 +63,9 @@ func Test_requester_Request(t *testing.T) {
 				resolver: func(t *testing.T, pr *peer.Peer) resolver.Resolver {
 					ctrl := gomock.NewController(t)
 					mr := resolvermock.NewMockResolver(ctrl)
-					mr.EXPECT().Lookup(gomock.Any(), gomock.Any()).DoAndReturn(
-						func(
-							ctx context.Context,
-							opts ...resolver.LookupOption,
-						) (<-chan *peer.Peer, error) {
-							ch := make(chan *peer.Peer)
-							go func() {
-								ch <- pr
-							}()
-							return ch, nil
-						})
+					mr.EXPECT().
+						Lookup(gomock.Any(), gomock.Any()).
+						Return([]*peer.Peer{pr}, nil)
 					return mr
 				},
 				objmgr: func(t *testing.T, pr *peer.Peer) objectmanager.ObjectManager {

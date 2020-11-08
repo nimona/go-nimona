@@ -1,8 +1,8 @@
 package resolver
 
 import (
-	"nimona.io/pkg/bloom"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -52,8 +52,8 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 		opts.Filters = append(
 			opts.Filters,
 			func(p *peer.Peer) bool {
-				return bloom.Bloom(p.Bloom).Contains(
-					bloom.New(hash.String()),
+				return hyperspace.Bloom(p.QueryVector).Test(
+					hyperspace.New(hash.String()),
 				)
 			},
 		)

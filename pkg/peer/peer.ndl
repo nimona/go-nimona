@@ -6,7 +6,7 @@ import nimona.io/peer peer
 signed object nimona.io/peer.Peer {
     version int
     addresses repeated string
-    bloom repeated int
+    queryVector repeated uint
     contentTypes repeated string
     certificates repeated nimona.io/object.Certificate
     relays repeated nimona.io/peer.Peer
@@ -14,11 +14,11 @@ signed object nimona.io/peer.Peer {
 
 signed object nimona.io/LookupRequest {
     nonce string
-    bloom repeated int
+    queryVector repeated uint
 }
 
 signed object nimona.io/LookupResponse {
     nonce string
-    bloom repeated int
+    queryVector repeated uint
     peers repeated nimona.io/peer.Peer
 }

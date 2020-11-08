@@ -316,7 +316,7 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) (Hash, error) {
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", uint64(v.Uint()))))
+			return hash(HintInt, []byte(fmt.Sprintf("%d", v.Uint())))
 		}
 		panic("unknown type for uint")
 	case HintBool:
