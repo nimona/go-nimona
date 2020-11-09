@@ -54,7 +54,7 @@ func TestSimulation(t *testing.T) {
 	require.NotNil(t, bNodes)
 
 	// wait for the containers to settle
-	time.Sleep(time.Second * 15)
+	time.Sleep(time.Second * 5)
 
 	// setup node 1
 	nodes := bNodes
@@ -112,8 +112,8 @@ func TestSimulation(t *testing.T) {
 	wgSent := &sync.WaitGroup{}
 	wgReceived := &sync.WaitGroup{}
 
-	wgSent.Add(len(nodes))
-	wgReceived.Add(len(nodes))
+	wgSent.Add(len(nodes) - 1)
+	wgReceived.Add(len(nodes) - 1)
 
 	for _, nd := range nodes {
 		go func(nd *node.Node) {
