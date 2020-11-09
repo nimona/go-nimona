@@ -2,8 +2,12 @@ variable "environment" {
   type = string
 }
 
-variable "server_groups" {
-  type = map(any)
+variable "servers" {
+  type = list(map(string))
+}
+
+variable "volumes" {
+  type = list(map(string))
 }
 
 variable "vault_password" {

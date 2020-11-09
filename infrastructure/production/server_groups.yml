@@ -8,3 +8,12 @@ bootstrap:
     - 22581
   tags:
     - nimona
+metrics:
+  instances:
+    - metrics
+  volumes:
+    data:
+      size_in_gb: 40
+      mountpoint: /mnt/data
+  tags:
+    - nimona

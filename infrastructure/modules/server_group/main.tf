@@ -67,6 +67,37 @@ resource "scaleway_instance_security_group" "server" {
   }
 }
 
+locals {
+  volumes = {
+    for s in setproduct(keys(scaleway_instance_ip.server), keys(var.volumes)) :
+    "${s[0]}-${s[1]}" => {
+      name       = "${s[0]}-${s[1]}"
+      vol_name   = s[1]
+      server     = s[0]
+      size_in_gb = var.volumes[s[1]].size_in_gb
+      mountpoint = var.volumes[s[1]].mountpoint
+    }
+  }
+}
+
+resource "scaleway_instance_volume" "block" {
+  for_each = local.volumes
+
+  name       = each.value.name
+  size_in_gb = each.value.size_in_gb
+  type       = "b_ssd"
+}
+
+locals {
+  volume_ids = {
+    for server_name, _ in scaleway_instance_ip.server :
+    server_name => [
+      for vol_name, attrs in scaleway_instance_volume.block :
+      attrs.id if local.volumes[vol_name].server == server_name
+    ]
+  }
+}
+
 resource "scaleway_instance_server" "server" {
   for_each = scaleway_instance_ip.server
 
@@ -75,11 +106,12 @@ resource "scaleway_instance_server" "server" {
     each.key != var.group ? each.key : ""
   ]))
 
-  type              = local.type
-  image             = local.image
-  tags              = concat([var.environment, var.group], var.tags)
-  ip_id             = each.value.id
-  security_group_id = scaleway_instance_security_group.server.id
+  type                  = local.type
+  image                 = local.image
+  tags                  = concat([var.environment, var.group], var.tags)
+  ip_id                 = each.value.id
+  additional_volume_ids = local.volume_ids[each.key]
+  security_group_id     = scaleway_instance_security_group.server.id
 
   # initialization sequence
   cloud_init = templatefile("${path.module}/cloud-init.tpl", {

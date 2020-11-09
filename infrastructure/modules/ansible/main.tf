@@ -1,6 +1,28 @@
 provider "local" {}
 provider "null" {}
 
+locals {
+  servers_by_hostname = {
+    for server in var.servers :
+    server.hostname => server
+  }
+  server_groups = distinct([for server in var.servers : server.group])
+  servers_by_group = {
+    for group in local.server_groups :
+    group => {
+      for server in var.servers :
+      server.name => server if server.group == group
+    }
+  }
+  volumes_by_hostname = {
+    for hostname in keys(local.servers_by_hostname) :
+    hostname => {
+      for volume in var.volumes :
+      volume.name => volume if volume.hostname == hostname
+    }
+  }
+}
+
 resource "local_file" "vault_password" {
   filename        = "${path.module}/.vault-password"
   file_permission = "0644"
@@ -8,14 +30,32 @@ resource "local_file" "vault_password" {
 }
 
 resource "local_file" "inventory" {
-  filename = "${path.module}/inventories/${var.environment}"
+  filename        = "${path.module}/inventories/${var.environment}"
+  file_permission = "0644"
   content = templatefile("${path.module}/templates/inventory.tpl", {
-    server_groups = var.server_groups
+    server_groups = tomap(local.servers_by_group)
+  })
+}
+
+resource "local_file" "volumes" {
+  for_each = local.volumes_by_hostname
+
+  filename        = "${path.module}/host_vars/${each.key}/volumes.yml"
+  file_permission = "0644"
+  content = templatefile("${path.module}/templates/volumes.tpl", {
+    volumes = {
+      for name, vol in each.value :
+      name => {
+        id         = split("/", vol.id)[length(split("/", vol.id)) - 1]
+        size_in_gb = tonumber(vol.size_in_gb)
+        mountpoint = vol.mountpoint
+      }
+    }
   })
 }
 
 resource "null_resource" "run" {
-  triggers = { always_run = "${timestamp()}" }
+  triggers = { always_run = timestamp() }
 
   depends_on = [
     local_file.vault_password,

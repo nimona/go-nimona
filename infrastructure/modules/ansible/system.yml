@@ -7,6 +7,8 @@
       tags: ["network", "ufw"]
     - role: oefenweb.fail2ban
       tags: ["network", "fail2ban"]
+    - role: volumes
+      tags: ["storage", "volumes"]
     - role: docker
       tags: ["tools", "docker"]
     - role: caddy

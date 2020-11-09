@@ -1,0 +1,43 @@
+---
+- name: get device name
+  set_fact:
+    block_device: "/dev/disk/by-id/{{ device.value.links.ids[0] }}"
+  no_log: yes
+  loop: "{{ ansible_devices | dict2items  }}"
+  loop_control:
+    loop_var: device
+  when: >-
+    device.value.vendor == 'SCW' and
+    device.value.model == 'b_ssd' and
+    device.value.links.ids[0] is search(item.value.id)
+
+- name: "Attempt to import {{ item.key }} ZSF pool"
+  command: "zpool import {{ item.key }}"
+  register: zpool_import
+  failed_when: zpool_import.rc >= 2
+  changed_when: zpool_import.rc == 0
+
+- name: "Check if {{ item.key }} ZFS pool exists"
+  command: "zpool status {{ item.key }}"
+  register: zpool_status
+  failed_when: zpool_status.rc >= 2
+  changed_when: zpool_status.rc != 0
+
+- name: "Create {{ item.key }} ZFS pool"
+  command: >-
+    zpool create -f -o ashift=12
+      -O atime=off
+      -O canmount=off
+      -O compression=lz4
+      -O mountpoint=none
+      -O normalization=formD
+      -O xattr=sa
+      {{ item.key }} "{{ block_device }}"
+  when: zpool_status.rc != 0
+
+- name: "Create {{ item.key }}/{{ item.key }} ZFS dataset"
+  zfs:
+    name: "{{ item.key }}/{{ item.key }}"
+    state: present
+    extra_zfs_properties:
+      mountpoint: "{{ item.value.mountpoint }}"
