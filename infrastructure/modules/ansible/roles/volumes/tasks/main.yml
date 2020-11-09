@@ -1,0 +1,11 @@
+---
+- when: volumes != {}
+  block:
+    - name: Install ZFS
+      apt:
+        name: zfsutils-linux
+        update_cache: yes
+        state: present
+
+    - include_tasks: zpool.yml
+      loop: "{{ volumes | dict2items }}"

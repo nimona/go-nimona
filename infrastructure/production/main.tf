@@ -55,8 +55,19 @@ module "ansible" {
   skip                 = var.ansible_skip
   skip_prepare         = var.ansible_skip_prepare
 
-  server_groups = {
+  servers = flatten([
     for name, group in module.server_groups :
-    name => group.servers
-  }
+    [
+      for server in group.servers :
+      merge({ group = name }, server)
+    ]
+  ])
+
+  volumes = flatten([
+    for name, group in module.server_groups :
+    [
+      for volume in group.volumes :
+      merge({ group = name }, volume)
+    ]
+  ])
 }

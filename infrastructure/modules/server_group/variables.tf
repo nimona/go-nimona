@@ -11,6 +11,10 @@ variable "instances" {
   type = set(string)
 }
 
+variable "volumes" {
+  type = map(any)
+}
+
 variable "ssh_private_key_file" {
   type = string
 }

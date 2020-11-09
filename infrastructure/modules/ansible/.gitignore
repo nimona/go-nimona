@@ -1,3 +1,4 @@
 /.vault-password
 /inventories/
 /vendor/
+/host_vars/**/volumes.yml
