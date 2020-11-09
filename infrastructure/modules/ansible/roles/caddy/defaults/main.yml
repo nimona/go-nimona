@@ -1,4 +1,12 @@
 ---
+caddy_acme_ca: ""
+caddy_acme_eab: {}
+caddy_auto_https: "on"
 caddy_caddyfile: /etc/caddy/Caddyfile
-caddy_sites_enabled_dir: /etc/caddy/sites-enabled
+caddy_cert_issuer: ""
+caddy_default_hostname: "{{ inventory_hostname }}"
 caddy_default_message: "OK"
+caddy_email: ""
+caddy_conf_dir: /etc/caddy
+caddy_rootd_dir: "{{ caddy_conf_dir }}/root.d"
+caddy_sitesd_dir: "{{ caddy_conf_dir }}/sites.d"

@@ -20,10 +20,11 @@
 
 - name: Configure caddy
   import_role:
-    name: metrics_site
+    name: caddy_path
   vars:
-    metrics_site_name: node_exporter
-    metrics_site_host_path: /metrics/node
-    metrics_site_upstream_path: /metrics
-    metrics_site_upstream: "127.0.0.1:{{ node_exporter_port }}"
-    metrics_site_users: "{{ metrics_users }}"
+    caddy_path_name: node_exporter_metrics
+    caddy_path_host_path: /metrics/node
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:{{ node_exporter_port }}"
+    caddy_path_users: "{{ metrics_users }}"
+  notify: reload caddy

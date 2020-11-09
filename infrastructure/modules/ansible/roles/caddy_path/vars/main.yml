@@ -1,0 +1,11 @@
+---
+caddy_path_conf_dir: /etc/caddy
+caddy_path_rootd_dir: "{{ caddy_path_conf_dir }}/root.d"
+caddy_path_host_path:
+caddy_path_name:
+caddy_path_password_salt:
+caddy_path_upstream:
+caddy_path_upstream_path:
+caddy_path_uri:
+caddy_path_users: {}
+caddy_path_host_header:

@@ -1,0 +1,24 @@
+---
+- name: Install passlib python module
+  pip:
+    name: passlib
+    state: present
+  when: caddy_path_users != {}
+
+- name: Create caddy configuration directories
+  file:
+    path: "{{ caddy_path_rootd_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create caddy config file
+  template:
+    dest: >-
+      {{ caddy_path_rootd_dir }}/{{ caddy_path_name }}
+    src: "path.j2"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload caddy
