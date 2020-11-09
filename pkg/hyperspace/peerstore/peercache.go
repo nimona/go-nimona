@@ -5,6 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/peer"
@@ -12,7 +15,10 @@ import (
 
 type (
 	PeerCache struct {
-		m sync.Map
+		m                   sync.Map
+		promKnownPeersGauge prometheus.Gauge
+		promGCedPeersGauge  prometheus.Gauge
+		promIncPeersGauge   prometheus.Gauge
 	}
 )
 
@@ -22,9 +28,47 @@ type entry struct {
 	pr        *peer.Peer
 }
 
-func NewPeerCache(gcTime time.Duration) *PeerCache {
+var promMetrics = map[string]prometheus.Gauge{}
+
+func NewPeerCache(
+	gcTime time.Duration,
+	metricPrefix string,
+) *PeerCache {
+	promKnownPeersGauge, ok := promMetrics[metricPrefix+"_known_peers"]
+	if !ok {
+		promKnownPeersGauge = promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: metricPrefix + "_known_peers",
+				Help: "Total number of known peers",
+			},
+		)
+		promMetrics[metricPrefix+"_known_peers"] = promKnownPeersGauge
+	}
+	promIncPeersGauge, ok := promMetrics[metricPrefix+"_incoming_peers"]
+	if !ok {
+		promIncPeersGauge = promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: metricPrefix + "_incoming_peers",
+				Help: "Total number of incoming peers",
+			},
+		)
+		promMetrics[metricPrefix+"_incoming_peers"] = promIncPeersGauge
+	}
+	promGCedPeersGauge, ok := promMetrics[metricPrefix+"_gced_peers"]
+	if !ok {
+		promGCedPeersGauge = promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: metricPrefix + "_gced_peers",
+				Help: "Total number of GCed peers",
+			},
+		)
+		promMetrics[metricPrefix+"_gced_peers"] = promGCedPeersGauge
+	}
 	pc := &PeerCache{
-		m: sync.Map{},
+		m:                   sync.Map{},
+		promKnownPeersGauge: promKnownPeersGauge,
+		promIncPeersGauge:   promIncPeersGauge,
+		promGCedPeersGauge:  promGCedPeersGauge,
 	}
 	go func() {
 		for {
@@ -36,6 +80,7 @@ func NewPeerCache(gcTime time.Duration) *PeerCache {
 					diff := now.Sub(e.createdAt)
 					if diff >= e.ttl {
 						pc.m.Delete(key)
+						pc.promGCedPeersGauge.Add(-1)
 					}
 				}
 				return true
@@ -47,6 +92,10 @@ func NewPeerCache(gcTime time.Duration) *PeerCache {
 
 // Put -
 func (m *PeerCache) Put(p *peer.Peer, ttl time.Duration) {
+	if _, ok := m.m.Load(p.PublicKey()); !ok {
+		m.promKnownPeersGauge.Inc()
+	}
+	m.promIncPeersGauge.Inc()
 	m.m.Store(p.PublicKey(), entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
@@ -80,6 +129,7 @@ func (m *PeerCache) Get(k crypto.PublicKey) (*peer.Peer, error) {
 // Remove -
 func (m *PeerCache) Remove(k crypto.PublicKey) {
 	m.m.Delete(k)
+	m.promKnownPeersGauge.Add(-1)
 }
 
 // List -

@@ -128,6 +128,10 @@ func main() {
 			},
 			func() float64 { return 1 },
 		)
+		logger.Info(
+			"serving metrics",
+			log.String("address", cfg.Metrics.BindAddress),
+		)
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(cfg.Metrics.BindAddress, nil)
 		if err != nil {
