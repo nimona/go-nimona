@@ -23,10 +23,10 @@
 
 - name: Configure caddy
   import_role:
-    name: metrics_site
+    name: caddy_path
   vars:
-    metrics_site_name: cadvisor
-    metrics_site_host_path: /metrics/cadvisor
-    metrics_site_upstream_path: /metrics
-    metrics_site_upstream: "127.0.0.1:8080"
-    metrics_site_users: "{{ metrics_users }}"
+    caddy_path_name: cadvisor_metrics
+    caddy_path_host_path: /metrics/cadvisor
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:8080"
+    caddy_path_users: "{{ metrics_users }}"

@@ -1,6 +1,39 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
 {{ ansible_managed | comment }}
-{{ inventory_hostname }}
 
-respond "{{ caddy_default_message }}"
+{% set caddy_global_options %}
+  {% if caddy_auto_https != "on" %}
+    auto_https {{ caddy_auto_https }}
+  {% endif %}
+  {% if caddy_acme_ca != "" %}
+    acme_ca {{ caddy_acme_ca }}
+  {% endif %}
+  {% if caddy_email != "" %}
+    email {{ caddy_email }}
+  {% endif %}
+  {% if caddy_acme_eab != {} %}
+    acme_eab {
+        key_id {{ caddy_acme_eab.key_id }}
+        mac_key {{ caddy_acme_eab.mac_key }}
+    }
+  {% endif %}
+  {% if caddy_cert_issuer != "" %}
+    cert_issuer {{ caddy_cert_issuer }}
+  {% endif %}
+{% endset %}
+{% if caddy_global_options != "" %}
+{
+    {{ caddy_global_options | trim }}
+}
 
-import "{{ caddy_sites_enabled_dir }}/*"
+{% endif %}
+{% if caddy_auto_https == "off" %}
+{{ caddy_default_hostname }}:80 {
+{% else %}
+{{ caddy_default_hostname }} {
+{% endif %}
+  respond "{{ caddy_default_message }}"
+  import "{{ caddy_rootd_dir }}/*"
+}
+
+import "{{ caddy_sitesd_dir }}/*"

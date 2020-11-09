@@ -1,0 +1,27 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{{ ansible_managed | comment }}
+
+route {{ caddy_path_host_path }} {
+    {% if caddy_path_upstream_path != None %}
+    rewrite * {{ caddy_path_upstream_path }}
+    {% elif caddy_path_uri != None %}
+    uri {{ caddy_path_uri }}
+    {% endif %}
+    {% set proxy_opts -%}
+    {% if caddy_path_host_header != None %}
+    header_up Host {{ caddy_path_host_header }}
+    {% endif %}
+    {%- endset %}
+    reverse_proxy {{ caddy_path_upstream }}{% if proxy_opts != "" %} {
+        {{ proxy_opts | trim }}
+    }{% endif %}
+
+}
+{% if caddy_path_users != {} %}
+
+basicauth {{ caddy_path_host_path }} {
+    {% for user, pass in caddy_path_users.items() %}
+    {{ user }} {{ pass | password_hash('bcrypt', caddy_path_password_salt) | b64encode }}
+    {% endfor %}
+}
+{% endif %}

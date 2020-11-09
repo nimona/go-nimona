@@ -1,2 +1,0 @@
----
-metrics_site_password_salt: "{{ vault_password_salt }}"
