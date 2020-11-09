@@ -33,7 +33,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 		QueryVector: hyperspace.New("foo", "not-bar"),
 	}
 
-	pc := NewPeerCache(200 * time.Millisecond)
+	pc := NewPeerCache(200*time.Millisecond, "test0")
 
 	pc.Put(p1, 200*time.Millisecond)
 	pc.Put(p2, 200*time.Millisecond)
@@ -76,7 +76,7 @@ func TestPeerCache_List(t *testing.T) {
 		Addresses: []string{"foo"},
 	}
 
-	pc := NewPeerCache(200 * time.Millisecond)
+	pc := NewPeerCache(200*time.Millisecond, "test1")
 
 	pc.Put(p1a, 200*time.Millisecond)
 	pc.Put(p1b, 200*time.Millisecond)
@@ -90,7 +90,7 @@ func TestPeerCache_Remove(t *testing.T) {
 	opk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	pc := NewPeerCache(200 * time.Millisecond)
+	pc := NewPeerCache(200*time.Millisecond, "test2")
 
 	pc.Put(
 		&peer.Peer{
@@ -112,7 +112,7 @@ func TestPeerCache_Touch(t *testing.T) {
 	opk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	pc := NewPeerCache(200 * time.Millisecond)
+	pc := NewPeerCache(200*time.Millisecond, "test3")
 
 	pc.Put(
 		&peer.Peer{
@@ -146,7 +146,7 @@ func TestPeerCache_TTL(t *testing.T) {
 	opk, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	pc := NewPeerCache(200 * time.Millisecond)
+	pc := NewPeerCache(200*time.Millisecond, "test4")
 
 	pc.Put(&peer.Peer{
 		Metadata: object.Metadata{

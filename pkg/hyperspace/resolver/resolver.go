@@ -61,9 +61,12 @@ func New(
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
-		context:   ctx,
-		network:   netw,
-		peerCache: peerstore.NewPeerCache(time.Minute),
+		context: ctx,
+		network: netw,
+		peerCache: peerstore.NewPeerCache(
+			time.Minute,
+			"nimona_hyperspace_resolver",
+		),
 		peerConnections: &peerConnections{
 			m: sync.Map{},
 		},

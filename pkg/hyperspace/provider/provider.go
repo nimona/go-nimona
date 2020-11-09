@@ -3,6 +3,9 @@ package provider
 import (
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
@@ -23,6 +26,15 @@ var (
 	peerLookupRequestType = new(peer.LookupRequest).Type()
 )
 
+var (
+	promIncRequestsCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_hyperspace_provider_lookup_requests",
+			Help: "Total number of incoming lookup requests",
+		},
+	)
+)
+
 type (
 	Provider struct {
 		context   context.Context
@@ -36,7 +48,7 @@ func New(
 	ctx context.Context,
 	net network.Network,
 ) (*Provider, error) {
-	c := peerstore.NewPeerCache(peerCacheGC)
+	c := peerstore.NewPeerCache(peerCacheGC, "nimona_hyperspace_provider")
 	p := &Provider{
 		context:   ctx,
 		network:   net,
@@ -112,6 +124,8 @@ func (p *Provider) handlePeerLookup(
 		log.Any("q.vector", q.QueryVector),
 		log.Any("o.signer", e.Payload.Metadata.Signature.Signer),
 	)
+
+	promIncRequestsCounter.Inc()
 
 	logger.Debug("handling peer lookup")
 
