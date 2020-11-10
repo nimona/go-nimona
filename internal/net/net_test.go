@@ -34,10 +34,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	})
 
 	go func() {
-		cconn, err := n2.Dial(ctx, &peer.Peer{
-			Metadata: object.Metadata{
-				Owner: kc1.GetPrimaryPeerKey().PublicKey(),
-			},
+		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
+			PublicKey: kc1.GetPrimaryPeerKey().PublicKey(),
 			Addresses: n1.Addresses(),
 		})
 		assert.NoError(t, err)
@@ -47,10 +45,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	}()
 
 	// attempt to dial own address, should fail
-	_, err = n1.Dial(ctx, &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: kc1.GetPrimaryPeerKey().PublicKey(),
-		},
+	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
+		PublicKey: kc1.GetPrimaryPeerKey().PublicKey(),
 		Addresses: n1.Addresses(),
 	})
 	require.Equal(t, ErrAllAddressesBlocked, err)
@@ -79,17 +75,13 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 func TestNetDialBackoff(t *testing.T) {
 	ctx := context.New()
-	p := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: crypto.PublicKey("foo"),
-		},
+	p := &peer.ConnectionInfo{
+		PublicKey: crypto.PublicKey("foo"),
 		Addresses: []string{"tcps:240.0.0.1:1000"},
 	}
 
-	p2 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: crypto.PublicKey("bar"),
-		},
+	p2 := &peer.ConnectionInfo{
+		PublicKey: crypto.PublicKey("bar"),
 		Addresses: p.Addresses,
 	}
 

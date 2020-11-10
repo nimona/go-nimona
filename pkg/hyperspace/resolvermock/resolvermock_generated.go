@@ -36,14 +36,14 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 }
 
 // Lookup mocks base method
-func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) ([]*peer.Peer, error) {
+func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Lookup", varargs...)
-	ret0, _ := ret[0].([]*peer.Peer)
+	ret0, _ := ret[0].([]*peer.ConnectionInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

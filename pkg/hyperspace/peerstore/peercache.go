@@ -10,7 +10,6 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
-	"nimona.io/pkg/peer"
 )
 
 type (
@@ -25,7 +24,7 @@ type (
 type entry struct {
 	ttl       time.Duration
 	createdAt time.Time
-	pr        *peer.Peer
+	pr        *hyperspace.Announcement
 }
 
 var promMetrics = map[string]prometheus.Gauge{}
@@ -91,12 +90,12 @@ func NewPeerCache(
 }
 
 // Put -
-func (m *PeerCache) Put(p *peer.Peer, ttl time.Duration) {
-	if _, ok := m.m.Load(p.PublicKey()); !ok {
+func (m *PeerCache) Put(p *hyperspace.Announcement, ttl time.Duration) {
+	if _, ok := m.m.Load(p.Peer.PublicKey); !ok {
 		m.promKnownPeersGauge.Inc()
 	}
 	m.promIncPeersGauge.Inc()
-	m.m.Store(p.PublicKey(), entry{
+	m.m.Store(p.Peer.PublicKey, entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
 		pr:        p,
@@ -118,7 +117,7 @@ func (m *PeerCache) Touch(k crypto.PublicKey, ttl time.Duration) {
 }
 
 // Get -
-func (m *PeerCache) Get(k crypto.PublicKey) (*peer.Peer, error) {
+func (m *PeerCache) Get(k crypto.PublicKey) (*hyperspace.Announcement, error) {
 	p, ok := m.m.Load(k)
 	if !ok {
 		return nil, fmt.Errorf("missing")
@@ -133,8 +132,8 @@ func (m *PeerCache) Remove(k crypto.PublicKey) {
 }
 
 // List -
-func (m *PeerCache) List() []*peer.Peer {
-	ps := []*peer.Peer{}
+func (m *PeerCache) List() []*hyperspace.Announcement {
+	ps := []*hyperspace.Announcement{}
 	m.m.Range(func(_, p interface{}) bool {
 		ps = append(ps, p.(entry).pr)
 		return true
@@ -143,10 +142,10 @@ func (m *PeerCache) List() []*peer.Peer {
 }
 
 // Lookup -
-func (m *PeerCache) Lookup(q hyperspace.Bloom) []*peer.Peer {
-	ps := []*peer.Peer{}
+func (m *PeerCache) Lookup(q hyperspace.Bloom) []*hyperspace.Announcement {
+	ps := []*hyperspace.Announcement{}
 	m.m.Range(func(_, p interface{}) bool {
-		if hyperspace.Bloom(p.(entry).pr.QueryVector).Test(q) {
+		if hyperspace.Bloom(p.(entry).pr.PeerVector).Test(q) {
 			ps = append(ps, p.(entry).pr)
 		}
 		return true

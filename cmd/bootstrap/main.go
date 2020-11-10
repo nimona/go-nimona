@@ -90,7 +90,7 @@ func main() {
 	}
 
 	// convert shorthands into peers
-	bootstrapPeers := []*peer.Peer{}
+	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
 		bootstrapPeer, err := s.Peer()
 		if err != nil {

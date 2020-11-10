@@ -169,22 +169,12 @@ func encodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 			}
 			return os, nil
 		}
-		// (encode) map[string]interface{} with type/data/metadat to *Object
-		// simpler things
-		// if !ctx.IsKey {
-		// 	r, err := normalizeFromKey(ctx.Name, f.Interface())
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	return r, nil
-		// }
 		return f.Interface(), nil
 	}
 }
 
 func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
-	topLevelTyped := true
-	return func(
+	decodeFunc := func(
 		f reflect.Value,
 		t reflect.Value,
 		ctx *mapstructure.DecodeContext,
@@ -199,18 +189,18 @@ func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 		}
 		// (decode) *Object to Typed
 		if _, ok := t.Interface().(Typed); ok &&
-			f.Type().Elem() == typeOfObject {
-			if topLevelTyped {
-				topLevelTyped = false
-				return f.Interface(), nil
-			}
+			f.Type().Elem() == typeOfObject &&
+			(t.Kind() == reflect.Ptr && t.IsNil()) {
 			tt := t.Type()
 			if tt.Kind() == reflect.Ptr {
 				tt = t.Type().Elem()
 			}
 			tv := reflect.New(tt).Interface()
-			err := Decode(f.Interface().(*Object), tv.(Typed))
-			if err != nil {
+			fvv := f.Interface().(*Object)
+			if _, err := decode(fvv, tv, decodeHookfunc()); err != nil {
+				return nil, err
+			}
+			if _, err := decode(fvv.Data, tv, decodeHookfunc()); err != nil {
 				return nil, err
 			}
 			return tv, nil
@@ -270,6 +260,7 @@ func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 		}
 		return f.Interface(), nil
 	}
+	return decodeFunc
 }
 
 func mapHookfunc() mapstructure.DecodeHookFuncValueContext {

@@ -64,7 +64,7 @@ type (
 	Network interface {
 		Dial(
 			ctx context.Context,
-			peer *peer.Peer,
+			peer *peer.ConnectionInfo,
 		) (*Connection, error)
 		Listen(
 			ctx context.Context,
@@ -107,10 +107,10 @@ type network struct {
 // Dial to a peer and return a net.Conn or error
 func (n *network) Dial(
 	ctx context.Context,
-	p *peer.Peer,
+	p *peer.ConnectionInfo,
 ) (*Connection, error) {
 	logger := log.FromContext(ctx).With(
-		log.String("peer", p.PublicKey().String()),
+		log.String("peer", p.PublicKey.String()),
 		log.Strings("addresses", p.Addresses),
 	)
 
@@ -128,7 +128,7 @@ func (n *network) Dial(
 	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
 		// check if address is currently blocklisted
-		if n.isAddressBlocked(p.PublicKey(), address) {
+		if n.isAddressBlocked(p.PublicKey, address) {
 			logger.Debug("address is blocklisted, skipping")
 			continue
 		}
@@ -150,7 +150,7 @@ func (n *network) Dial(
 		if err != nil {
 			// blocking address
 			attempts, backoff := n.blockAddress(
-				p.PublicKey(),
+				p.PublicKey,
 				address,
 			)
 			logger.Error("could not dial address, blocking",
@@ -163,13 +163,13 @@ func (n *network) Dial(
 		}
 
 		// check negotiated key against dialed
-		if conn.RemotePeerKey != p.PublicKey() {
+		if conn.RemotePeerKey != p.PublicKey {
 			n.blockAddress(
-				p.PublicKey(),
+				p.PublicKey,
 				address,
 			)
 			logger.Error("remote didn't match expect key, blocking",
-				log.String("expected", p.PublicKey().String()),
+				log.String("expected", p.PublicKey.String()),
 				log.String("received", conn.RemotePeerKey.String()),
 			)
 			continue
@@ -187,7 +187,7 @@ func (n *network) Dial(
 			conn,
 		); err != nil {
 			n.blockAddress(
-				p.PublicKey(),
+				p.PublicKey,
 				address,
 			)
 			logger.Error("could not actually write to remote, blocking")
@@ -197,7 +197,7 @@ func (n *network) Dial(
 		// at this point we consider the connection successful, so we can
 		// reset the failed attempts
 		n.attempts.Put(address, 0)
-		n.attempts.Put(p.PublicKey().String(), 0)
+		n.attempts.Put(p.PublicKey.String(), 0)
 
 		connDialSuccessCounter.Inc()
 		connConnOutCounter.Inc()

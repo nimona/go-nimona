@@ -10,7 +10,7 @@ import (
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=contenthashes_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.Hash"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.Peer"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.ConnectionInfo"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
 
@@ -28,8 +28,8 @@ type (
 		PutContentTypes(...string)
 		GetAddresses() []string
 		PutAddresses(...string)
-		GetRelays() []*peer.Peer
-		PutRelays(...*peer.Peer)
+		GetRelays() []*peer.ConnectionInfo
+		PutRelays(...*peer.ConnectionInfo)
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
@@ -116,11 +116,11 @@ func (s *localPeer) PutContentTypes(contentTypes ...string) {
 	}
 }
 
-func (s *localPeer) GetRelays() []*peer.Peer {
+func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
 	return s.relays.List()
 }
 
-func (s *localPeer) PutRelays(relays ...*peer.Peer) {
+func (s *localPeer) PutRelays(relays ...*peer.ConnectionInfo) {
 	for _, r := range relays {
 		s.relays.Put(r)
 	}

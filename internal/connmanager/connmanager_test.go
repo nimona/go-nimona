@@ -10,7 +10,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/localpeer"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -41,18 +40,14 @@ func TestGetConnection(t *testing.T) {
 	assert.NoError(t, err)
 	defer lst2.Close()
 
-	conn1, err := mgr.GetConnection(ctx, &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
-		},
+	conn1, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
+		PublicKey: kc2.GetPrimaryPeerKey().PublicKey(),
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
 
-	conn2, err := mgr.GetConnection(ctx, &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: kc2.GetPrimaryPeerKey().PublicKey(),
-		},
+	conn2, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
+		PublicKey: kc2.GetPrimaryPeerKey().PublicKey(),
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)

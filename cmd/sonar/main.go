@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// convert shorthands into peers
-	bootstrapPeers := []*peer.Peer{}
+	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
 		bootstrapPeer, err := s.Peer()
 		if err != nil {
@@ -194,7 +194,7 @@ func main() {
 			); err != nil {
 				logger.Error(
 					"error sending ping to peer",
-					log.String("publicKey", recipient.PublicKey().String()),
+					log.String("publicKey", recipient.PublicKey.String()),
 					log.Strings("addresses", recipient.Addresses),
 					log.Error(err),
 				)
@@ -202,7 +202,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s sent ping to %s\n",
-				recipient.PublicKey().String(),
+				recipient.PublicKey.String(),
 				local.GetPrimaryPeerKey().PublicKey(),
 			)
 			return nil

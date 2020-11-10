@@ -57,7 +57,7 @@ func (mr *MockNetworkMockRecorder) Subscribe(filters ...interface{}) *gomock.Cal
 }
 
 // Send mocks base method
-func (m *MockNetwork) Send(ctx context.Context, object *object.Object, recipient *peer.Peer) error {
+func (m *MockNetwork) Send(ctx context.Context, object *object.Object, recipient *peer.ConnectionInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Send", ctx, object, recipient)
 	ret0, _ := ret[0].(error)

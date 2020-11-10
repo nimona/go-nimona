@@ -4,12 +4,11 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
 )
 
 // LookupOptions
 type (
-	LookupFilter  func(*peer.Peer) bool
+	LookupFilter  func(*hyperspace.Announcement) bool
 	LookupOption  func(*LookupOptions)
 	LookupOptions struct {
 		Local bool
@@ -29,7 +28,7 @@ func ParseLookupOptions(opts ...LookupOption) *LookupOptions {
 	return options
 }
 
-func (l LookupOptions) Match(p *peer.Peer) bool {
+func (l LookupOptions) Match(p *hyperspace.Announcement) bool {
 	for _, f := range l.Filters {
 		if !f(p) {
 			return false
@@ -51,8 +50,8 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 		opts.Lookups = append(opts.Lookups, hash.String())
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
-				return hyperspace.Bloom(p.QueryVector).Test(
+			func(p *hyperspace.Announcement) bool {
+				return hyperspace.Bloom(p.PeerVector).Test(
 					hyperspace.New(hash.String()),
 				)
 			},
@@ -68,19 +67,20 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 		}
 		opts.Filters = append(
 			opts.Filters,
-			func(p *peer.Peer) bool {
+			func(p *hyperspace.Announcement) bool {
 				for _, key := range keys {
-					owner := p.Metadata.Owner
+					// TODO check announcement signature
+					owner := p.Peer.PublicKey
 					if owner.Equals(key) {
 						return true
 					}
 					// TODO(geoah) should certs and sigs be considered owners?
-					for _, c := range p.Certificates {
-						sig := c.Metadata.Signature
-						if sig.Signer.Equals(key) {
-							return true
-						}
-					}
+					// for _, c := range p.Certificates {
+					// 	sig := c.Metadata.Signature
+					// 	if sig.Signer.Equals(key) {
+					// 		return true
+					// 	}
+					// }
 					sig := p.Metadata.Signature
 					if sig.Signer.Equals(key) {
 						return true
@@ -93,38 +93,40 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 }
 
 // LookupByContentType matches content hashes
-func LookupByContentType(contentType string) LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Lookups = append(opts.Lookups, contentType)
-		opts.Filters = append(
-			opts.Filters,
-			func(p *peer.Peer) bool {
-				for _, t := range p.ContentTypes {
-					if contentType == t {
-						return true
-					}
-				}
-				return false
-			},
-		)
-	}
-}
+// TODO support capabilities
+// func LookupByContentType(contentType string) LookupOption {
+// 	return func(opts *LookupOptions) {
+// 		opts.Lookups = append(opts.Lookups, contentType)
+// 		opts.Filters = append(
+// 			opts.Filters,
+// 			func(p *hyperspace.Announcement) bool {
+// 				for _, t := range p.ContentTypes {
+// 					if contentType == t {
+// 						return true
+// 					}
+// 				}
+// 				return false
+// 			},
+// 		)
+// 	}
+// }
 
 // LookupByCertificateSigner matches certificate signers
-func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Lookups = append(opts.Lookups, certSigner.String())
-		opts.Filters = append(
-			opts.Filters,
-			func(p *peer.Peer) bool {
-				for _, c := range p.Certificates {
-					sig := c.Metadata.Signature
-					if certSigner.Equals(sig.Signer) {
-						return true
-					}
-				}
-				return false
-			},
-		)
-	}
-}
+// TODO support
+// func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
+// 	return func(opts *LookupOptions) {
+// 		opts.Lookups = append(opts.Lookups, certSigner.String())
+// 		opts.Filters = append(
+// 			opts.Filters,
+// 			func(p *hyperspace.Announcement) bool {
+// 				for _, c := range p.Certificates {
+// 					sig := c.Metadata.Signature
+// 					if certSigner.Equals(sig.Signer) {
+// 						return true
+// 					}
+// 				}
+// 				return false
+// 			},
+// 		)
+// 	}
+// }

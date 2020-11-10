@@ -52,7 +52,7 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method
-func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.Peer, excludeNested bool) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.ConnectionInfo, excludeNested bool) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Request", ctx, hash, peer, excludeNested)
 	ret0, _ := ret[0].(*object.Object)
@@ -67,7 +67,7 @@ func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer, excludeNested 
 }
 
 // RequestStream mocks base method
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, recipients ...*peer.Peer) (object.ReadCloser, error) {
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, rootHash}
 	for _, a := range recipients {
