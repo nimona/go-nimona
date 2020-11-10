@@ -165,7 +165,7 @@ func (c *chat) subscribe(
 			if err != nil {
 				c.logger.Warn(
 					"could not ask peer for stream",
-					log.String("peer", p.PublicKey().String()),
+					log.String("peer", p.PublicKey.String()),
 				)
 				continue
 			}
@@ -245,7 +245,7 @@ func main() {
 	}
 
 	// convert shorthands into peers
-	bootstrapPeers := []*peer.Peer{}
+	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
 		bootstrapPeer, err := s.Peer()
 		if err != nil {

@@ -16,23 +16,29 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-func TestResolver(t *testing.T) {
+func TestResolver_Integration(t *testing.T) {
 	// net0 is our provider
 	net0 := newPeer(t)
-	pr0 := &peer.Peer{
+	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: net0.LocalPeer().GetAddresses(),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Addresses: net0.LocalPeer().GetAddresses(),
+		},
 	}
 
 	// net1 is a normal peer
 	net1 := newPeer(t)
-	pr1 := &peer.Peer{
+	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: net1.LocalPeer().GetAddresses(),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Addresses: net1.LocalPeer().GetAddresses(),
+		},
 	}
 
 	// construct provider
@@ -43,33 +49,39 @@ func TestResolver(t *testing.T) {
 	err = net1.Send(
 		context.New(),
 		pr1.ToObject(),
-		pr0,
+		pr0.Peer,
 	)
 	require.NoError(t, err)
 
 	// add a couple more random peers to the provider's cache
-	pr2 := &peer.Peer{
+	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: "a",
 		},
-		QueryVector: hyperspace.New("foo", "bar"),
-	}
-	pr3 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: "b",
+		Peer: &peer.ConnectionInfo{
+			PublicKey: "a",
 		},
-		QueryVector: hyperspace.New("foo"),
+		PeerVector: hyperspace.New("foo", "bar"),
+	}
+	pr3 := &hyperspace.Announcement{
+		Metadata: object.Metadata{
+			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		},
+		Peer: &peer.ConnectionInfo{
+			PublicKey: "b",
+		},
+		PeerVector: hyperspace.New("foo"),
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
 
 	// construct resolver
-	res := New(context.New(), net1, WithBoostrapPeers(pr0))
+	res := New(context.New(), net1, WithBoostrapPeers(pr0.Peer))
 
 	// lookup by content
 	pr, err := res.Lookup(context.New(), LookupByContentHash("bar"))
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []*peer.Peer{pr2}, pr)
+	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.Peer}, pr)
 }
 
 func newPeer(t *testing.T) network.Network {

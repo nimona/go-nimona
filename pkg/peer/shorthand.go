@@ -5,7 +5,6 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object"
 )
 
 const (
@@ -41,15 +40,13 @@ func (s Shorthand) Addresses() []string {
 	}
 }
 
-func (s Shorthand) Peer() (*Peer, error) {
+func (s Shorthand) Peer() (*ConnectionInfo, error) {
 	ps := strings.Split(string(s), "@")
 	if len(ps) != 2 {
 		return nil, ErrInvalidShorthand
 	}
-	return &Peer{
-		Metadata: object.Metadata{
-			Owner: crypto.PublicKey(ps[0]),
-		},
+	return &ConnectionInfo{
+		PublicKey: crypto.PublicKey(ps[0]),
 		Addresses: []string{
 			ps[1],
 		},

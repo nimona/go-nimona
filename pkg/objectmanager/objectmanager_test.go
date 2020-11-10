@@ -27,10 +27,8 @@ import (
 func TestManager_Request(t *testing.T) {
 	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
-	testPeer := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: testPeerKey.PublicKey(),
-		},
+	testPeer := &peer.ConnectionInfo{
+		PublicKey: testPeerKey.PublicKey(),
 	}
 	f00 := &object.Object{
 		Data: map[string]interface{}{
@@ -44,7 +42,7 @@ func TestManager_Request(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		rootHash object.Hash
-		peer     *peer.Peer
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -115,10 +113,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	peer1Key, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
-	peer1 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: peer1Key.PublicKey(),
-		},
+	peer1 := &peer.ConnectionInfo{
+		PublicKey: peer1Key.PublicKey(),
 	}
 
 	localPeer := localpeer.New()
@@ -155,7 +151,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	type args struct {
 		ctx           context.Context
 		rootHash      object.Hash
-		peer          *peer.Peer
+		peer          *peer.ConnectionInfo
 		excludeNested bool
 	}
 	tests := []struct {
@@ -198,7 +194,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.Peer,
+							recipient *peer.ConnectionInfo,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -261,7 +257,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.Peer,
+							recipient *peer.ConnectionInfo,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -323,7 +319,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.Peer,
+							recipient *peer.ConnectionInfo,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -379,10 +375,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 func TestManager_RequestStream(t *testing.T) {
 	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
-	testPeer := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: testPeerKey.PublicKey(),
-		},
+	testPeer := &peer.ConnectionInfo{
+		PublicKey: testPeerKey.PublicKey(),
 	}
 	f00 := &object.Object{
 		Type:     "foo",
@@ -420,7 +414,7 @@ func TestManager_RequestStream(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		rootHash object.Hash
-		peer     *peer.Peer
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -563,10 +557,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	peer1Key, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 
-	peer1 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: peer1Key.PublicKey(),
-		},
+	peer1 := &peer.ConnectionInfo{
+		PublicKey: peer1Key.PublicKey(),
 	}
 
 	localPeer := localpeer.New()
@@ -607,7 +599,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	type args struct {
 		ctx           context.Context
 		rootHash      object.Hash
-		peer          *peer.Peer
+		peer          *peer.ConnectionInfo
 		excludeNested bool
 	}
 	tests := []struct {
@@ -668,7 +660,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient *peer.Peer,
+						recipient *peer.ConnectionInfo,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -734,7 +726,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient *peer.Peer,
+						recipient *peer.ConnectionInfo,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -798,10 +790,8 @@ func TestManager_Put(t *testing.T) {
 	testLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
 	testLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
-	testSubscriberPeer := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: testSubscriberPublicKey,
-		},
+	testSubscriberPeer := &peer.ConnectionInfo{
+		PublicKey: testSubscriberPublicKey,
 		Addresses: []string{
 			"not-important",
 		},
@@ -1218,7 +1208,7 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().Lookup(
 					gomock.Any(),
 					gomock.Any(),
-				).Return([]*peer.Peer{testSubscriberPeer}, nil)
+				).Return([]*peer.ConnectionInfo{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
@@ -1304,7 +1294,7 @@ func TestManager_Put(t *testing.T) {
 					gomock.Any(),
 					// TODO we need a custom matcher for options
 					gomock.Any(),
-				).Return([]*peer.Peer{testSubscriberPeer}, nil)
+				).Return([]*peer.ConnectionInfo{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{},

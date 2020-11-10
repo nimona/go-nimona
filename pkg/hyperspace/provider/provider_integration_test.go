@@ -19,21 +19,22 @@ import (
 func TestProvider_handlePeer(t *testing.T) {
 	// net0 is our provider
 	net0 := newPeer(t)
-	pr0 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		},
+	pr0 := &peer.ConnectionInfo{
+		PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		Addresses: net0.LocalPeer().GetAddresses(),
 	}
 
 	// net1 is a normal peer
 	net1 := newPeer(t)
-	pr1 := &peer.Peer{
+	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		QueryVector: hyperspace.New("foo", "bar"),
-		Addresses:   net1.LocalPeer().GetAddresses(),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Addresses: net1.LocalPeer().GetAddresses(),
+		},
+		PeerVector: hyperspace.New("foo", "bar"),
 	}
 
 	// construct provider
@@ -56,11 +57,14 @@ func TestProvider_handlePeer(t *testing.T) {
 func TestProvider_handlePeerLookup(t *testing.T) {
 	// net0 is our provider
 	net0 := newPeer(t)
-	pr0 := &peer.Peer{
+	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Addresses: net0.LocalPeer().GetAddresses(),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Addresses: net0.LocalPeer().GetAddresses(),
+		},
 	}
 
 	// net1 is a normal peer
@@ -71,34 +75,34 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	// add a couple more random peers to the provider's cache
-	pr2 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: "a",
+	pr2 := &hyperspace.Announcement{
+		Peer: &peer.ConnectionInfo{
+			PublicKey: "a",
 		},
-		QueryVector: hyperspace.New("foo", "bar"),
+		PeerVector: hyperspace.New("foo", "bar"),
 	}
-	pr3 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: "b",
+	pr3 := &hyperspace.Announcement{
+		Peer: &peer.ConnectionInfo{
+			PublicKey: "b",
 		},
-		QueryVector: hyperspace.New("foo"),
+		PeerVector: hyperspace.New("foo"),
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
 
 	// start listening for lookup responses on net1
 	sub := net1.Subscribe(
-		network.FilterByObjectType(new(peer.LookupResponse).Type()),
+		network.FilterByObjectType(new(hyperspace.LookupResponse).Type()),
 	)
 
 	// lookup "foo" as net1
 	err = net1.Send(
 		context.New(),
-		peer.LookupRequest{
+		hyperspace.LookupRequest{
 			Nonce:       "1",
 			QueryVector: hyperspace.New("foo", "bar"),
 		}.ToObject(),
-		pr0,
+		pr0.Peer,
 	)
 	require.NoError(t, err)
 
@@ -107,11 +111,11 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	// check response
-	res := &peer.LookupResponse{}
+	res := &hyperspace.LookupResponse{}
 	err = res.FromObject(env.Payload)
 	require.NoError(t, err)
 	assert.Equal(t, "1", res.Nonce)
-	assert.ElementsMatch(t, []*peer.Peer{pr2}, res.Peers)
+	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
 }
 
 func newPeer(t *testing.T) network.Network {

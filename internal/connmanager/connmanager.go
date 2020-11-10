@@ -25,7 +25,7 @@ type peerbox struct {
 type Manager interface {
 	GetConnection(
 		context.Context,
-		*peer.Peer,
+		*peer.ConnectionInfo,
 	) (*net.Connection, error)
 }
 
@@ -69,9 +69,9 @@ func New(
 
 func (m *manager) GetConnection(
 	ctx context.Context,
-	pr *peer.Peer,
+	pr *peer.ConnectionInfo,
 ) (*net.Connection, error) {
-	pbox := m.getPeerbox(pr.PublicKey())
+	pbox := m.getPeerbox(pr.PublicKey)
 
 	pbox.connLock.RLock()
 	if pbox.conn != nil {

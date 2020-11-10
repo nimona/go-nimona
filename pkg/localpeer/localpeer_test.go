@@ -36,15 +36,11 @@ func TestLocalPeer(t *testing.T) {
 	lp.PutContentHashes(ch1, ch2)
 	assert.ElementsMatch(t, []object.Hash{ch1, ch2}, lp.GetContentHashes())
 
-	lp.PutRelays(&peer.Peer{
-		Metadata: object.Metadata{
-			Owner: k1.PublicKey(),
-		},
+	lp.PutRelays(&peer.ConnectionInfo{
+		PublicKey: k1.PublicKey(),
 	})
-	assert.ElementsMatch(t, []*peer.Peer{{
-		Metadata: object.Metadata{
-			Owner: k1.PublicKey(),
-		},
+	assert.ElementsMatch(t, []*peer.ConnectionInfo{{
+		PublicKey: k1.PublicKey(),
 	}}, lp.GetRelays())
 
 	c1 := &object.Certificate{

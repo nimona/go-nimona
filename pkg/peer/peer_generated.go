@@ -3,37 +3,24 @@
 package peer
 
 import (
+	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
 )
 
 type (
-	Peer struct {
-		Metadata     object.Metadata       `nimona:"metadata:m,omitempty"`
-		Version      int64                 `nimona:"version:i,omitempty"`
-		Addresses    []string              `nimona:"addresses:as,omitempty"`
-		QueryVector  []uint64              `nimona:"queryVector:au,omitempty"`
-		ContentTypes []string              `nimona:"contentTypes:as,omitempty"`
-		Certificates []*object.Certificate `nimona:"certificates:ao,omitempty"`
-		Relays       []*Peer               `nimona:"relays:ao,omitempty"`
-	}
-	LookupRequest struct {
-		Metadata    object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce       string          `nimona:"nonce:s,omitempty"`
-		QueryVector []uint64        `nimona:"queryVector:au,omitempty"`
-	}
-	LookupResponse struct {
-		Metadata    object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce       string          `nimona:"nonce:s,omitempty"`
-		QueryVector []uint64        `nimona:"queryVector:au,omitempty"`
-		Peers       []*Peer         `nimona:"peers:ao,omitempty"`
+	ConnectionInfo struct {
+		Metadata  object.Metadata   `nimona:"metadata:m,omitempty"`
+		PublicKey crypto.PublicKey  `nimona:"publicKey:s,omitempty"`
+		Addresses []string          `nimona:"addresses:as,omitempty"`
+		Relays    []*ConnectionInfo `nimona:"relays:ao,omitempty"`
 	}
 )
 
-func (e *Peer) Type() string {
-	return "nimona.io/peer.Peer"
+func (e *ConnectionInfo) Type() string {
+	return "nimona.io/peer.ConnectionInfo"
 }
 
-func (e Peer) ToObject() *object.Object {
+func (e ConnectionInfo) ToObject() *object.Object {
 	o, err := object.Encode(&e)
 	if err != nil {
 		panic(err)
@@ -41,38 +28,6 @@ func (e Peer) ToObject() *object.Object {
 	return o
 }
 
-func (e *Peer) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
-}
-
-func (e *LookupRequest) Type() string {
-	return "nimona.io/LookupRequest"
-}
-
-func (e LookupRequest) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
-	}
-	return o
-}
-
-func (e *LookupRequest) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
-}
-
-func (e *LookupResponse) Type() string {
-	return "nimona.io/LookupResponse"
-}
-
-func (e LookupResponse) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
-	}
-	return o
-}
-
-func (e *LookupResponse) FromObject(o *object.Object) error {
+func (e *ConnectionInfo) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }

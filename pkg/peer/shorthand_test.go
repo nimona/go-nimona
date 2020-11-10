@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
 )
 
 // nolint: lll
@@ -17,7 +16,7 @@ func TestShorthand(t *testing.T) {
 		wantValid     bool
 		wantPublicKey crypto.PublicKey
 		wantAddresses []string
-		wantPeer      *Peer
+		wantPeer      *ConnectionInfo
 		wantPeerError error
 	}{{
 		name:          "should pass, valid shorthand",
@@ -25,10 +24,8 @@ func TestShorthand(t *testing.T) {
 		wantValid:     true,
 		wantPublicKey: "ed25519.2BrcMfGTaVDo2xdbXESsXKNwqA478vrdynJrb4hqtdus",
 		wantAddresses: []string{"127.0.0.1:18000"},
-		wantPeer: &Peer{
-			Metadata: object.Metadata{
-				Owner: crypto.PublicKey("ed25519.2BrcMfGTaVDo2xdbXESsXKNwqA478vrdynJrb4hqtdus"),
-			},
+		wantPeer: &ConnectionInfo{
+			PublicKey: crypto.PublicKey("ed25519.2BrcMfGTaVDo2xdbXESsXKNwqA478vrdynJrb4hqtdus"),
 			Addresses: []string{
 				"127.0.0.1:18000",
 			},

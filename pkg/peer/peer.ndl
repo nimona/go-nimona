@@ -3,22 +3,8 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 import nimona.io/peer peer
 
-signed object nimona.io/peer.Peer {
-    version int
+object nimona.io/peer.ConnectionInfo {
+    publicKey nimona.io/crypto.PublicKey
     addresses repeated string
-    queryVector repeated uint
-    contentTypes repeated string
-    certificates repeated nimona.io/object.Certificate
-    relays repeated nimona.io/peer.Peer
-}
-
-signed object nimona.io/LookupRequest {
-    nonce string
-    queryVector repeated uint
-}
-
-signed object nimona.io/LookupResponse {
-    nonce string
-    queryVector repeated uint
-    peers repeated nimona.io/peer.Peer
+    relays repeated nimona.io/peer.ConnectionInfo
 }

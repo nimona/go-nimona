@@ -83,7 +83,7 @@ type Network interface {
     Send(
         ctx context.Context,
         object object.Object,
-        recipient *peer.Peer,
+        recipient *peer.ConnectionInfo,
     ) error
     Listen(
         ctx context.Context,
@@ -102,7 +102,7 @@ type Resolver interface {
     Lookup(
         ctx context.Context,
         opts ...LookupOption,
-    ) (<-chan *peer.Peer, error)
+    ) (<-chan *peer.ConnectionInfo, error)
 }
 ```
 

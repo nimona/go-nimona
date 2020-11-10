@@ -122,9 +122,9 @@ be removed soon enough._
 * `nimona.io/crypto.PublicKey`
 * `nimona.io/crypto.PrivateKey`
 * `nimona.io/object.Hash`
-* `nimona.io/peer.PeerInfo`
-* `nimona.io/peer.PeerRequest`
-* `nimona.io/peer.PeerResponse`
+* `nimona.io/peer.ConnectionInfoInfo`
+* `nimona.io/peer.ConnectionInfoRequest`
+* `nimona.io/peer.ConnectionInfoResponse`
 * `nimona.io/object.Certificate`
 * `nimona.io/object.CertificateRequest`
 * `nimona.io/exchange.ObjectRequest`

@@ -34,17 +34,14 @@ func Test_requester_Request(t *testing.T) {
 		Chunks: []*blob.Chunk{chunk1, chunk2},
 	}
 
-	peer1 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: localPeer1.GetPrimaryIdentityKey().PublicKey(),
-			// Addresses: n2.Addresses(),
-		},
+	peer1 := &peer.ConnectionInfo{
+		PublicKey: localPeer1.GetPrimaryIdentityKey().PublicKey(),
 	}
 
 	type fields struct {
 		store    *sqlobjectstore.Store
-		resolver func(*testing.T, *peer.Peer) resolver.Resolver
-		objmgr   func(*testing.T, *peer.Peer) objectmanager.ObjectManager
+		resolver func(*testing.T, *peer.ConnectionInfo) resolver.Resolver
+		objmgr   func(*testing.T, *peer.ConnectionInfo) objectmanager.ObjectManager
 	}
 	type args struct {
 		ctx  context.Context
@@ -60,22 +57,30 @@ func Test_requester_Request(t *testing.T) {
 		{
 			name: "should pass",
 			fields: fields{
-				resolver: func(t *testing.T, pr *peer.Peer) resolver.Resolver {
+				resolver: func(t *testing.T,
+					pr *peer.ConnectionInfo,
+				) resolver.Resolver {
 					ctrl := gomock.NewController(t)
 					mr := resolvermock.NewMockResolver(ctrl)
 					mr.EXPECT().
 						Lookup(gomock.Any(), gomock.Any()).
-						Return([]*peer.Peer{pr}, nil)
+						Return([]*peer.ConnectionInfo{pr}, nil)
 					return mr
 				},
-				objmgr: func(t *testing.T, pr *peer.Peer) objectmanager.ObjectManager {
+				objmgr: func(
+					t *testing.T,
+					pr *peer.ConnectionInfo,
+				) objectmanager.ObjectManager {
 					ctrl := gomock.NewController(t)
 					mobm := objectmanagermock.NewMockObjectManager(ctrl)
 
 					pubSub := objectmanager.NewObjectPubSub()
 					pubSub.Publish(blob1.ToObject())
 
-					obj, _, err := object.UnloadReferences(context.TODO(), blob1.ToObject())
+					obj, _, err := object.UnloadReferences(
+						context.TODO(),
+						blob1.ToObject(),
+					)
 
 					assert.Len(t, blob1.Chunks, 2)
 					assert.NoError(t, err)

@@ -41,10 +41,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		&peer.Peer{
-			Metadata: object.Metadata{
-				Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			},
+		&peer.ConnectionInfo{
+			PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: n2.LocalPeer().GetAddresses(),
 		},
 	)
@@ -62,10 +60,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		&peer.Peer{
-			Metadata: object.Metadata{
-				Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			},
+		&peer.ConnectionInfo{
+			PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: n1.LocalPeer().GetAddresses(),
 		},
 	)
@@ -87,29 +83,23 @@ func TestNetwork_Relay(t *testing.T) {
 	require.NoError(t, err)
 	defer l0.Close()
 
-	p0 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: n0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		},
+	p0 := &peer.ConnectionInfo{
+		PublicKey: n0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		Addresses: n0.LocalPeer().GetAddresses(),
 	}
 
-	p1 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		},
+	p1 := &peer.ConnectionInfo{
+		PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		Addresses: n1.LocalPeer().GetAddresses(),
-		Relays: []*peer.Peer{
+		Relays: []*peer.ConnectionInfo{
 			p0,
 		},
 	}
 
-	p2 := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		},
+	p2 := &peer.ConnectionInfo{
+		PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		Addresses: n2.LocalPeer().GetAddresses(),
-		Relays: []*peer.Peer{
+		Relays: []*peer.ConnectionInfo{
 			p0,
 		},
 	}

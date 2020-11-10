@@ -19,18 +19,24 @@ func TestPeerCache_Lookup(t *testing.T) {
 	opk2, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	p1 := &peer.Peer{
+	p1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		QueryVector: hyperspace.New("foo", "bar"),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: opk.PublicKey(),
+		},
+		PeerVector: hyperspace.New("foo", "bar"),
 	}
 
-	p2 := &peer.Peer{
+	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: opk2.PublicKey(),
 		},
-		QueryVector: hyperspace.New("foo", "not-bar"),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: opk2.PublicKey(),
+		},
+		PeerVector: hyperspace.New("foo", "not-bar"),
 	}
 
 	pc := NewPeerCache(200*time.Millisecond, "test0")
@@ -39,13 +45,13 @@ func TestPeerCache_Lookup(t *testing.T) {
 	pc.Put(p2, 200*time.Millisecond)
 
 	ps := pc.Lookup(hyperspace.New("foo"))
-	assert.ElementsMatch(t, []*peer.Peer{p1, p2}, ps)
+	assert.ElementsMatch(t, []*hyperspace.Announcement{p1, p2}, ps)
 
 	ps = pc.Lookup(hyperspace.New("foo", "bar"))
-	assert.ElementsMatch(t, []*peer.Peer{p1}, ps)
+	assert.ElementsMatch(t, []*hyperspace.Announcement{p1}, ps)
 
 	ps = pc.Lookup(hyperspace.New("foo", "not-bar"))
-	assert.ElementsMatch(t, []*peer.Peer{p2}, ps)
+	assert.ElementsMatch(t, []*hyperspace.Announcement{p2}, ps)
 }
 
 func TestPeerCache_List(t *testing.T) {
@@ -55,25 +61,34 @@ func TestPeerCache_List(t *testing.T) {
 	opk2, err := crypto.GenerateEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	p1a := &peer.Peer{
+	p1a := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		Addresses: []string{"foo"},
+		Peer: &peer.ConnectionInfo{
+			PublicKey: opk.PublicKey(),
+			Addresses: []string{"foo"},
+		},
 	}
 
-	p1b := &peer.Peer{
+	p1b := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		Addresses: []string{"bar"},
+		Peer: &peer.ConnectionInfo{
+			PublicKey: opk.PublicKey(),
+			Addresses: []string{"bar"},
+		},
 	}
 
-	p2 := &peer.Peer{
+	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: opk2.PublicKey(),
 		},
-		Addresses: []string{"foo"},
+		Peer: &peer.ConnectionInfo{
+			PublicKey: opk2.PublicKey(),
+			Addresses: []string{"foo"},
+		},
 	}
 
 	pc := NewPeerCache(200*time.Millisecond, "test1")
@@ -83,7 +98,7 @@ func TestPeerCache_List(t *testing.T) {
 	pc.Put(p2, 200*time.Millisecond)
 
 	ps := pc.List()
-	assert.ElementsMatch(t, []*peer.Peer{p1b, p2}, ps)
+	assert.ElementsMatch(t, []*hyperspace.Announcement{p1b, p2}, ps)
 }
 
 func TestPeerCache_Remove(t *testing.T) {
@@ -93,9 +108,12 @@ func TestPeerCache_Remove(t *testing.T) {
 	pc := NewPeerCache(200*time.Millisecond, "test2")
 
 	pc.Put(
-		&peer.Peer{
+		&hyperspace.Announcement{
 			Metadata: object.Metadata{
 				Owner: opk.PublicKey(),
+			},
+			Peer: &peer.ConnectionInfo{
+				PublicKey: opk.PublicKey(),
 			},
 		},
 		200*time.Millisecond,
@@ -115,9 +133,12 @@ func TestPeerCache_Touch(t *testing.T) {
 	pc := NewPeerCache(200*time.Millisecond, "test3")
 
 	pc.Put(
-		&peer.Peer{
+		&hyperspace.Announcement{
 			Metadata: object.Metadata{
 				Owner: opk.PublicKey(),
+			},
+			Peer: &peer.ConnectionInfo{
+				PublicKey: opk.PublicKey(),
 			},
 		},
 		200*time.Millisecond,
@@ -131,7 +152,7 @@ func TestPeerCache_Touch(t *testing.T) {
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.Metadata.Owner)
+	assert.Equal(t, opk.PublicKey(), pr.Peer.PublicKey)
 
 	time.Sleep(300 * time.Millisecond)
 
@@ -148,17 +169,23 @@ func TestPeerCache_TTL(t *testing.T) {
 
 	pc := NewPeerCache(200*time.Millisecond, "test4")
 
-	pc.Put(&peer.Peer{
-		Metadata: object.Metadata{
-			Owner: opk.PublicKey(),
+	pc.Put(
+		&hyperspace.Announcement{
+			Metadata: object.Metadata{
+				Owner: opk.PublicKey(),
+			},
+			Peer: &peer.ConnectionInfo{
+				PublicKey: opk.PublicKey(),
+			},
 		},
-	}, 600*time.Millisecond)
+		600*time.Millisecond,
+	)
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.Metadata.Owner)
+	assert.Equal(t, opk.PublicKey(), pr.Peer.PublicKey)
 
-	time.Sleep(700 * time.Millisecond)
+	time.Sleep(900 * time.Millisecond)
 
 	pr, err = pc.Get(opk.PublicKey())
 	assert.Error(t, err)

@@ -49,13 +49,13 @@ type (
 		Request(
 			ctx context.Context,
 			hash object.Hash,
-			peer *peer.Peer,
+			peer *peer.ConnectionInfo,
 			excludeNested bool,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
 			rootHash object.Hash,
-			recipients ...*peer.Peer,
+			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -145,7 +145,7 @@ func (m *manager) isRegisteredContentType(
 func (m *manager) RequestStream(
 	ctx context.Context,
 	rootHash object.Hash,
-	recipients ...*peer.Peer,
+	recipients ...*peer.ConnectionInfo,
 ) (object.ReadCloser, error) {
 	if len(recipients) == 0 {
 		return m.objectstore.GetByStream(rootHash)
@@ -213,7 +213,7 @@ func (m *manager) RequestStream(
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
 	leaves []object.Hash,
-	recipient *peer.Peer,
+	recipient *peer.ConnectionInfo,
 ) error {
 	// TODO refactor to remove buffer
 	objectHashes := make(chan object.Hash, 1000)
@@ -301,7 +301,7 @@ func (m *manager) fetchFromLeaves(
 func (m *manager) Request(
 	ctx context.Context,
 	hash object.Hash,
-	pr *peer.Peer,
+	pr *peer.ConnectionInfo,
 	excludeNested bool,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
@@ -631,10 +631,8 @@ func (m *manager) send(
 	obj *object.Object,
 	rec crypto.PublicKey,
 ) error {
-	if err := m.network.Send(ctx, obj, &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: rec,
-		},
+	if err := m.network.Send(ctx, obj, &peer.ConnectionInfo{
+		PublicKey: rec,
 	}); err == nil {
 		return nil
 	} else if err == network.ErrCannotSendToSelf {
@@ -692,10 +690,8 @@ func (m *manager) handleObjectRequest(
 		if sErr := m.network.Send(
 			ctx,
 			resp.ToObject(),
-			&peer.Peer{
-				Metadata: object.Metadata{
-					Owner: env.Sender,
-				},
+			&peer.ConnectionInfo{
+				PublicKey: env.Sender,
 			},
 		); err != nil {
 			log.FromContext(ctx).Info(
@@ -733,10 +729,8 @@ func (m *manager) handleObjectRequest(
 	err = m.network.Send(
 		ctx,
 		resp.ToObject(),
-		&peer.Peer{
-			Metadata: object.Metadata{
-				Owner: env.Sender,
-			},
+		&peer.ConnectionInfo{
+			PublicKey: env.Sender,
 		},
 	)
 
@@ -789,10 +783,8 @@ func (m *manager) handleStreamRequest(
 		ctx,
 		res.ToObject(),
 		// TODO we should probably resolve this peer
-		&peer.Peer{
-			Metadata: object.Metadata{
-				Owner: env.Sender,
-			},
+		&peer.ConnectionInfo{
+			PublicKey: env.Sender,
 		},
 	); err != nil {
 		logger.Warn(
@@ -849,10 +841,8 @@ func (m *manager) handleStreamAnnouncement(
 	}
 
 	// fetch announced objects and their parents
-	if err := m.fetchFromLeaves(ctx, ann.ObjectHashes, &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: env.Sender,
-		},
+	if err := m.fetchFromLeaves(ctx, ann.ObjectHashes, &peer.ConnectionInfo{
+		PublicKey: env.Sender,
 	}); err != nil {
 		return err
 	}

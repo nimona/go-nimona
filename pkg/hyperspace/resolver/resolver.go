@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	peerType               = new(peer.Peer).Type()
-	peerLookupResponseType = new(peer.LookupResponse).Type()
+	hyperspaceAnnouncementType   = new(hyperspace.Announcement).Type()
+	hyperspaceLookupResponseType = new(hyperspace.LookupResponse).Type()
 
 	peerCacheTTL = 1 * time.Minute
 )
@@ -37,18 +37,18 @@ type (
 		Lookup(
 			ctx context.Context,
 			opts ...LookupOption,
-		) ([]*peer.Peer, error)
+		) ([]*peer.ConnectionInfo, error)
 	}
 	resolver struct {
-		context            context.Context
-		network            network.Network
-		localpeer          localpeer.LocalPeer
-		peerCache          *peerstore.PeerCache
-		peerConnections    *peerConnections
-		localPeerCache     *peer.Peer
-		localPeerCacheLock sync.RWMutex
-		bootstrapPeers     []*peer.Peer
-		blocklist          *cache.Cache
+		context                        context.Context
+		network                        network.Network
+		localpeer                      localpeer.LocalPeer
+		peerCache                      *peerstore.PeerCache
+		peerConnections                *peerConnections
+		localPeerAnnouncementCache     *hyperspace.Announcement
+		localPeerAnnouncementCacheLock sync.RWMutex
+		bootstrapPeers                 []*peer.ConnectionInfo
+		blocklist                      *cache.Cache
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -70,9 +70,9 @@ func New(
 		peerConnections: &peerConnections{
 			m: sync.Map{},
 		},
-		localPeerCacheLock: sync.RWMutex{},
-		bootstrapPeers:     []*peer.Peer{},
-		blocklist:          cache.New(time.Second*5, time.Second*60),
+		localPeerAnnouncementCacheLock: sync.RWMutex{},
+		bootstrapPeers:                 []*peer.ConnectionInfo{},
+		blocklist:                      cache.New(time.Second*5, time.Second*60),
 	}
 
 	for _, opt := range opts {
@@ -89,7 +89,9 @@ func New(
 	)
 
 	for _, p := range r.bootstrapPeers {
-		r.peerCache.Put(p, 0)
+		r.peerCache.Put(&hyperspace.Announcement{
+			Peer: p,
+		}, 0)
 	}
 
 	go func() {
@@ -108,7 +110,7 @@ func New(
 func (r *resolver) Lookup(
 	ctx context.Context,
 	opts ...LookupOption,
-) ([]*peer.Peer, error) {
+) ([]*peer.ConnectionInfo, error) {
 	if len(r.bootstrapPeers) == 0 {
 		return nil, errors.New("no peers to ask")
 	}
@@ -122,7 +124,7 @@ func (r *resolver) Lookup(
 	bl := hyperspace.New(opt.Lookups...)
 
 	// send content requests to recipients
-	req := &peer.LookupRequest{
+	req := &hyperspace.LookupRequest{
 		Metadata: object.Metadata{
 			Owner: r.localpeer.GetPrimaryPeerKey().PublicKey(),
 		},
@@ -133,7 +135,7 @@ func (r *resolver) Lookup(
 
 	// listen for lookup responses
 	resSub := r.network.Subscribe(
-		network.FilterByObjectType(peerLookupResponseType),
+		network.FilterByObjectType(hyperspaceLookupResponseType),
 		func(e *network.Envelope) bool {
 			v := e.Payload.Data["nonce:s"]
 			rn, ok := v.(string)
@@ -154,13 +156,13 @@ func (r *resolver) Lookup(
 			}
 			logger.Debug(
 				"asked peer",
-				log.String("peer", bp.PublicKey().String()),
+				log.String("peer", bp.PublicKey.String()),
 			)
 		}
 	}()
 
 	// create channel to keep peers we find
-	peers := []*peer.Peer{}
+	peers := []*peer.ConnectionInfo{}
 	done := make(chan struct{})
 
 	go func() {
@@ -169,12 +171,14 @@ func (r *resolver) Lookup(
 			if err != nil {
 				break
 			}
-			r := &peer.LookupResponse{}
+			r := &hyperspace.LookupResponse{}
 			if err := r.FromObject(e.Payload); err != nil {
 				continue
 			}
 			// TODO verify peer?
-			peers = append(peers, r.Peers...)
+			for _, ann := range r.Announcements {
+				peers = append(peers, ann.Peer)
+			}
 			close(done)
 			break
 		}
@@ -196,24 +200,24 @@ func (r *resolver) handleObject(
 
 	// handle payload
 	o := e.Payload
-	if o.Type == peerType {
-		v := &peer.Peer{}
+	if o.Type == hyperspaceAnnouncementType {
+		v := &hyperspace.Announcement{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		r.handlePeer(ctx, v)
+		r.handleAnnouncement(ctx, v)
 	}
 	return nil
 }
 
-func (r *resolver) handlePeer(
+func (r *resolver) handleAnnouncement(
 	ctx context.Context,
-	p *peer.Peer,
+	p *hyperspace.Announcement,
 ) {
 	logger := log.FromContext(ctx).With(
-		log.String("method", "resolver.handlePeer"),
-		log.String("peer.publicKey", p.PublicKey().String()),
-		log.Strings("peer.addresses", p.Addresses),
+		log.String("method", "resolver.handleAnnouncement"),
+		log.String("peer.publicKey", p.Peer.PublicKey.String()),
+		log.Strings("peer.addresses", p.Peer.Addresses),
 	)
 	logger.Debug("adding peer to cache")
 	r.peerCache.Put(p, peerCacheTTL)
@@ -233,12 +237,12 @@ func (r *resolver) announceSelf() {
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*3),
 			),
-			r.getLocalPeer().ToObject(),
+			r.getLocalPeerAnnouncement().ToObject(),
 			p,
 		); err != nil {
 			logger.Error(
 				"error announcing self to bootstrap",
-				log.String("peer", p.PublicKey().String()),
+				log.String("peer", p.PublicKey.String()),
 				log.Error(err),
 			)
 			continue
@@ -248,10 +252,10 @@ func (r *resolver) announceSelf() {
 	logger.Info("announced self to bootstrap peers", log.Int("n", n))
 }
 
-func (r *resolver) getLocalPeer() *peer.Peer {
-	r.localPeerCacheLock.RLock()
-	lastPeer := r.localPeerCache
-	r.localPeerCacheLock.RUnlock()
+func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
+	r.localPeerAnnouncementCacheLock.RLock()
+	lastAnnouncement := r.localPeerAnnouncementCache
+	r.localPeerAnnouncementCacheLock.RUnlock()
 
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
 	certificates := r.localpeer.GetCertificates()
@@ -273,26 +277,29 @@ func (r *resolver) getLocalPeer() *peer.Peer {
 	}
 	vec := hyperspace.New(hs...)
 
-	if lastPeer != nil &&
-		cmp.Equal(lastPeer.Addresses, addresses) &&
-		cmp.Equal(lastPeer.QueryVector, vec) {
-		return lastPeer
+	if lastAnnouncement != nil &&
+		cmp.Equal(lastAnnouncement.Peer.Addresses, addresses) &&
+		cmp.Equal(lastAnnouncement.PeerVector, vec) {
+		return lastAnnouncement
 	}
 
-	localPeerCache := &peer.Peer{
-		Version:      time.Now().Unix(),
-		QueryVector:  vec,
-		Addresses:    addresses,
-		Relays:       relays,
-		Certificates: certificates,
+	localPeerAnnouncementCache := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: peerKey,
 		},
+		Version: time.Now().Unix(),
+		Peer: &peer.ConnectionInfo{
+			PublicKey: peerKey,
+			Addresses: addresses,
+			Relays:    relays,
+			// Certificates: certificates,
+		},
+		PeerVector: vec,
 	}
 
-	r.localPeerCacheLock.Lock()
-	r.localPeerCache = localPeerCache
-	r.localPeerCacheLock.Unlock()
+	r.localPeerAnnouncementCacheLock.Lock()
+	r.localPeerAnnouncementCache = localPeerAnnouncementCache
+	r.localPeerAnnouncementCacheLock.Unlock()
 
-	return localPeerCache
+	return localPeerAnnouncementCache
 }

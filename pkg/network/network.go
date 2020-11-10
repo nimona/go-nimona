@@ -86,7 +86,7 @@ type (
 		Send(
 			ctx context.Context,
 			object *object.Object,
-			recipient *peer.Peer,
+			recipient *peer.ConnectionInfo,
 		) error
 		Listen(
 			ctx context.Context,
@@ -116,7 +116,7 @@ type (
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
 		context   context.Context
-		recipient *peer.Peer
+		recipient *peer.ConnectionInfo
 		object    *object.Object
 		err       chan error
 	}
@@ -321,7 +321,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		}
 		// make a logger from our req context
 		logger := log.FromContext(req.context).With(
-			log.String("recipient", req.recipient.PublicKey().String()),
+			log.String("recipient", req.recipient.PublicKey.String()),
 			log.String("object.type", req.object.Type),
 		)
 		// validate req
@@ -356,8 +356,8 @@ func (w *network) processOutbox(outbox *outbox) {
 			for _, relayPeer := range req.recipient.Relays {
 				df, err := w.wrapInDataForward(
 					req.object,
-					req.recipient.PublicKey(),
-					relayPeer.PublicKey(),
+					req.recipient.PublicKey,
+					relayPeer.PublicKey,
 				)
 				if err != nil {
 					logger.Error(
@@ -368,8 +368,8 @@ func (w *network) processOutbox(outbox *outbox) {
 				}
 				logger.Debug(
 					"trying relay peer",
-					log.String("relay", relayPeer.PublicKey().String()),
-					log.String("recipient", req.recipient.PublicKey().String()),
+					log.String("relay", relayPeer.PublicKey.String()),
+					log.String("recipient", req.recipient.PublicKey.String()),
 				)
 				ctx := context.New(
 					context.WithTimeout(time.Second * 5),
@@ -383,8 +383,8 @@ func (w *network) processOutbox(outbox *outbox) {
 				if err != nil {
 					logger.Error(
 						"trying relay peer",
-						log.String("relay", relayPeer.PublicKey().String()),
-						log.String("recipient", req.recipient.PublicKey().String()),
+						log.String("relay", relayPeer.PublicKey.String()),
+						log.String("recipient", req.recipient.PublicKey.String()),
 						log.Error(err),
 					)
 					continue
@@ -502,10 +502,8 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			if err := w.Send(
 				context.Background(),
 				o,
-				&peer.Peer{
-					Metadata: object.Metadata{
-						Owner: nfwd.Recipient,
-					},
+				&peer.ConnectionInfo{
+					PublicKey: nfwd.Recipient,
 				},
 			); err != nil {
 				return errors.Wrap(
@@ -522,13 +520,13 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 func (w *network) Send(
 	ctx context.Context,
 	o *object.Object,
-	p *peer.Peer,
+	p *peer.ConnectionInfo,
 ) error {
-	if p.PublicKey() == w.localpeer.GetPrimaryPeerKey().PublicKey() {
+	if p.PublicKey == w.localpeer.GetPrimaryPeerKey().PublicKey() {
 		return ErrCannotSendToSelf
 	}
 
-	dedupKey := ctx.CorrelationID() + p.PublicKey().String() + o.Hash().String()
+	dedupKey := ctx.CorrelationID() + p.PublicKey.String() + o.Hash().String()
 	if _, ok := w.deduplist.Get(dedupKey); ok {
 		return ErrAlreadySentDuringContext
 	}
@@ -552,7 +550,7 @@ func (w *network) Send(
 
 	objAttemptedCounter.Inc()
 
-	outbox := w.getOutbox(p.PublicKey())
+	outbox := w.getOutbox(p.PublicKey)
 	errRecv := make(chan error, 1)
 	req := &outgoingObject{
 		context:   ctx,

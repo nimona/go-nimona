@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	peerType              = new(peer.Peer).Type()
-	peerLookupRequestType = new(peer.LookupRequest).Type()
+	hyperspaceAnnouncementType  = new(hyperspace.Announcement).Type()
+	hyperspaceLookupRequestType = new(hyperspace.LookupRequest).Type()
 )
 
 var (
@@ -65,7 +65,7 @@ func New(
 }
 
 func (p *Provider) Put(
-	prs ...*peer.Peer,
+	prs ...*hyperspace.Announcement,
 ) {
 	for _, pr := range prs {
 		p.peerCache.Put(pr, peerCacheTTL)
@@ -79,14 +79,14 @@ func (p *Provider) handleObject(
 
 	o := e.Payload
 	switch o.Type {
-	case peerType:
-		v := &peer.Peer{}
+	case hyperspaceAnnouncementType:
+		v := &hyperspace.Announcement{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
-		p.handlePeer(ctx, v)
-	case peerLookupRequestType:
-		v := &peer.LookupRequest{}
+		p.handleAnnouncement(ctx, v)
+	case hyperspaceLookupRequestType:
+		v := &hyperspace.LookupRequest{}
 		if err := v.FromObject(o); err != nil {
 			return err
 		}
@@ -97,24 +97,24 @@ func (p *Provider) handleObject(
 	return nil
 }
 
-func (p *Provider) handlePeer(
+func (p *Provider) handleAnnouncement(
 	ctx context.Context,
-	incPeer *peer.Peer,
+	ann *hyperspace.Announcement,
 ) {
 	logger := log.FromContext(ctx).With(
-		log.String("method", "provider.handlePeer"),
-		log.String("peer.publicKey", incPeer.PublicKey().String()),
-		log.Strings("peer.addresses", incPeer.Addresses),
+		log.String("method", "provider.handleAnnouncement"),
+		log.String("peer.publicKey", ann.Peer.PublicKey.String()),
+		log.Strings("peer.addresses", ann.Peer.Addresses),
 	)
 	// TODO check if we've already received this peer, and if not forward it
 	// to the other hyperspace providers
 	logger.Debug("adding peer to cache")
-	p.peerCache.Put(incPeer, peerCacheTTL)
+	p.peerCache.Put(ann, peerCacheTTL)
 }
 
 func (p *Provider) handlePeerLookup(
 	ctx context.Context,
-	q *peer.LookupRequest,
+	q *hyperspace.LookupRequest,
 	e *network.Envelope,
 ) {
 	ctx = context.FromContext(ctx)
@@ -129,25 +129,23 @@ func (p *Provider) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	ps := p.peerCache.Lookup(hyperspace.Bloom(q.QueryVector))
+	ans := p.peerCache.Lookup(hyperspace.Bloom(q.QueryVector))
 
 	ctx = context.New(
 		context.WithParent(ctx),
 	)
 
-	res := &peer.LookupResponse{
+	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
 			Owner: p.local.GetPrimaryPeerKey().PublicKey(),
 		},
-		Nonce:       q.Nonce,
-		QueryVector: q.QueryVector,
-		Peers:       ps,
+		Nonce:         q.Nonce,
+		QueryVector:   q.QueryVector,
+		Announcements: ans,
 	}
 
-	pr := &peer.Peer{
-		Metadata: object.Metadata{
-			Owner: e.Sender,
-		},
+	pr := &peer.ConnectionInfo{
+		PublicKey: e.Sender,
 	}
 
 	err := p.network.Send(
@@ -163,6 +161,6 @@ func (p *Provider) handlePeerLookup(
 	}
 
 	logger.With(
-		log.Int("n", len(ps)),
+		log.Int("n", len(ans)),
 	).Debug("handling done, sent n peers")
 }
