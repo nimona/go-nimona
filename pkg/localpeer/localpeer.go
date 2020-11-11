@@ -30,6 +30,7 @@ type (
 		PutAddresses(...string)
 		GetRelays() []*peer.ConnectionInfo
 		PutRelays(...*peer.ConnectionInfo)
+		ConnectionInfo() *peer.ConnectionInfo
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
@@ -39,7 +40,7 @@ type (
 		contentTypes       *StringSyncList
 		certificates       *ObjectCertificateSyncList
 		addresses          *StringSyncList
-		relays             *PeerPeerSyncList
+		relays             *PeerConnectionInfoSyncList
 	}
 )
 
@@ -50,7 +51,7 @@ func New() LocalPeer {
 		contentTypes:  &StringSyncList{},
 		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
-		relays:        &PeerPeerSyncList{},
+		relays:        &PeerConnectionInfoSyncList{},
 	}
 }
 
@@ -123,5 +124,13 @@ func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
 func (s *localPeer) PutRelays(relays ...*peer.ConnectionInfo) {
 	for _, r := range relays {
 		s.relays.Put(r)
+	}
+}
+
+func (s *localPeer) ConnectionInfo() *peer.ConnectionInfo {
+	return &peer.ConnectionInfo{
+		PublicKey: s.GetPrimaryPeerKey().PublicKey(),
+		Addresses: s.GetAddresses(),
+		Relays:    s.GetRelays(),
 	}
 }
