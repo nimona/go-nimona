@@ -3,6 +3,7 @@ package object
 import (
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 func traverseObject(
@@ -66,14 +67,16 @@ func traverse(k string, i interface{}, f func(string, interface{}) bool) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Slice:
 		for j := 0; j < v.Len(); j++ {
-			cont = traverse(k+strconv.Itoa(j), v.Index(j).Interface(), f)
+			kk := strings.Trim(k+"/"+strconv.Itoa(j), "/")
+			cont = traverse(kk, v.Index(j).Interface(), f)
 			if !cont {
 				return false
 			}
 		}
 	case reflect.Map:
 		for _, vk := range v.MapKeys() {
-			cont = traverse(k+vk.Interface().(string), v.MapIndex(vk).Interface(), f)
+			kk := strings.Trim(k+"/"+vk.Interface().(string), "/")
+			cont = traverse(kk, v.MapIndex(vk).Interface(), f)
 			if !cont {
 				return false
 			}
@@ -81,7 +84,8 @@ func traverse(k string, i interface{}, f func(string, interface{}) bool) bool {
 	case reflect.Struct:
 		for j := 0; j < v.NumField(); j++ {
 			vf := v.Field(j)
-			cont = traverse(k+vf.Type().Name(), vf.Interface(), f)
+			kk := strings.Trim(k+"/"+vf.Type().Name(), "/")
+			cont = traverse(kk, vf.Interface(), f)
 			if !cont {
 				return false
 			}
