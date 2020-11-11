@@ -20,27 +20,7 @@ func (s Shorthand) IsValid() bool {
 	return len(strings.Split(string(s), "@")) == 2
 }
 
-func (s Shorthand) PublicKey() crypto.PublicKey {
-	// TODO validate key
-	ps := strings.Split(string(s), "@")
-	if len(ps) != 2 {
-		return ""
-	}
-	return crypto.PublicKey(ps[0])
-}
-
-func (s Shorthand) Addresses() []string {
-	// TODO validate address
-	ps := strings.Split(string(s), "@")
-	if len(ps) != 2 {
-		return nil
-	}
-	return []string{
-		ps[1],
-	}
-}
-
-func (s Shorthand) Peer() (*ConnectionInfo, error) {
+func (s Shorthand) ConnectionInfo() (*ConnectionInfo, error) {
 	ps := strings.Split(string(s), "@")
 	if len(ps) != 2 {
 		return nil, ErrInvalidShorthand
