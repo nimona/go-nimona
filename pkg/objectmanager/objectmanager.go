@@ -641,7 +641,7 @@ func (m *manager) send(
 
 	peers, err := m.resolver.Lookup(
 		ctx,
-		resolver.LookupByOwner(rec),
+		resolver.LookupByPeerKey(rec),
 	)
 	if err != nil {
 		return err

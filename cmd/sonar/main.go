@@ -170,7 +170,7 @@ func main() {
 		)
 		recipients, err := res.Lookup(
 			sctx,
-			resolver.LookupByOwner(peerKey),
+			resolver.LookupByPeerKey(peerKey),
 		)
 		if err != nil {
 			return err

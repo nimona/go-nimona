@@ -59,8 +59,8 @@ func LookupByContentHash(hash object.Hash) LookupOption {
 	}
 }
 
-// LookupByOwner matches the peer key
-func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
+// LookupByPeerKey matches the peer key
+func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		for _, key := range keys {
 			opts.Lookups = append(opts.Lookups, key.String())
@@ -74,13 +74,6 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 					if owner.Equals(key) {
 						return true
 					}
-					// TODO(geoah) should certs and sigs be considered owners?
-					// for _, c := range p.Certificates {
-					// 	sig := c.Metadata.Signature
-					// 	if sig.Signer.Equals(key) {
-					// 		return true
-					// 	}
-					// }
 					sig := p.Metadata.Signature
 					if sig.Signer.Equals(key) {
 						return true
@@ -91,42 +84,3 @@ func LookupByOwner(keys ...crypto.PublicKey) LookupOption {
 		)
 	}
 }
-
-// LookupByContentType matches content hashes
-// TODO support capabilities
-// func LookupByContentType(contentType string) LookupOption {
-// 	return func(opts *LookupOptions) {
-// 		opts.Lookups = append(opts.Lookups, contentType)
-// 		opts.Filters = append(
-// 			opts.Filters,
-// 			func(p *hyperspace.Announcement) bool {
-// 				for _, t := range p.ContentTypes {
-// 					if contentType == t {
-// 						return true
-// 					}
-// 				}
-// 				return false
-// 			},
-// 		)
-// 	}
-// }
-
-// LookupByCertificateSigner matches certificate signers
-// TODO support
-// func LookupByCertificateSigner(certSigner crypto.PublicKey) LookupOption {
-// 	return func(opts *LookupOptions) {
-// 		opts.Lookups = append(opts.Lookups, certSigner.String())
-// 		opts.Filters = append(
-// 			opts.Filters,
-// 			func(p *hyperspace.Announcement) bool {
-// 				for _, c := range p.Certificates {
-// 					sig := c.Metadata.Signature
-// 					if certSigner.Equals(sig.Signer) {
-// 						return true
-// 					}
-// 				}
-// 				return false
-// 			},
-// 		)
-// 	}
-// }
