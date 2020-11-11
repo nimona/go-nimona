@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	olog "log"
@@ -12,7 +11,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -21,6 +19,7 @@ import (
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
@@ -28,14 +27,9 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 
 	_ "github.com/arl/statsviz"
-)
-
-const (
-	peerLookupTime = 5
 )
 
 type fileTransfer struct {
@@ -174,22 +168,12 @@ func (ft *fileTransfer) findAndRequest(
 	*object.Object,
 	error,
 ) {
-	peersCh, err := ft.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
+	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
 	if err != nil {
 		return nil, err
 	}
 
-	peerFound := &peer.Peer{}
-
-	select {
-	case peerFound = <-peersCh:
-	case <-ctx.Done():
-		return nil, errors.New("context")
-	case <-time.After(peerLookupTime * time.Second):
-		break
-	}
-
-	obj, err := ft.objectmanager.Request(ctx, hash, peerFound, true)
+	obj, err := ft.objectmanager.Request(ctx, hash, peers[0], true)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +302,7 @@ func newFileTransfer(
 	res := resolver.New(
 		ctx,
 		net,
-		resolver.WithBoostrapPeers(bootstrapPeers),
+		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 	ft.resolver = res
 

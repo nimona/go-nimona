@@ -28,6 +28,7 @@ func traverseObject(
 	}
 }
 
+// nolint: unused
 func traverseValues(v reflect.Value, f func(reflect.Value)) {
 	f(v)
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
