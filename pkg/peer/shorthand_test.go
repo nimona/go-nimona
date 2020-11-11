@@ -43,13 +43,7 @@ func TestShorthand(t *testing.T) {
 			gotValid := tt.shorthand.IsValid()
 			assert.Equal(t, tt.wantValid, gotValid)
 
-			gotPublicKey := tt.shorthand.PublicKey()
-			assert.Equal(t, tt.wantPublicKey, gotPublicKey)
-
-			gotAddresses := tt.shorthand.Addresses()
-			assert.Equal(t, tt.wantAddresses, gotAddresses)
-
-			gotPeer, gotPeerError := tt.shorthand.Peer()
+			gotPeer, gotPeerError := tt.shorthand.ConnectionInfo()
 			assert.Equal(t, tt.wantPeer, gotPeer)
 			assert.Equal(t, tt.wantPeerError, gotPeerError)
 		})

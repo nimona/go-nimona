@@ -89,10 +89,10 @@ func main() {
 		local.PutAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
-	// convert shorthands into peers
+	// convert shorthands into connection infos
 	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
-		bootstrapPeer, err := s.Peer()
+		bootstrapPeer, err := s.ConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
