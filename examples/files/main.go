@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	olog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -90,11 +89,11 @@ func main() {
 			return
 		}
 
-		olog.Println(
-			http.ListenAndServe(
-				fmt.Sprintf("localhost:%s", cfg.Debug.MetricsPort),
-				nil,
-			))
+		// nolint: errcheck
+		http.ListenAndServe(
+			fmt.Sprintf("localhost:%s", cfg.Debug.MetricsPort),
+			nil,
+		)
 	}()
 
 	ft, err := newFileTransfer(ctx, cfg, logger)
@@ -289,9 +288,9 @@ func newFileTransfer(
 	}
 
 	// convert shorthands into peers
-	bootstrapPeers := []*peer.Peer{}
+	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
-		bootstrapPeer, err := s.Peer()
+		bootstrapPeer, err := s.ConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
