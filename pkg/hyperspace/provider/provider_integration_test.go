@@ -30,7 +30,7 @@ func TestProvider_handlePeer(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net1.LocalPeer().GetAddresses(),
 		},
@@ -61,7 +61,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net0.LocalPeer().GetAddresses(),
 		},
@@ -76,13 +76,13 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 
 	// add a couple more random peers to the provider's cache
 	pr2 := &hyperspace.Announcement{
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: "a",
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
 	pr3 := &hyperspace.Announcement{
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: "b",
 		},
 		PeerVector: hyperspace.New("foo"),
@@ -102,7 +102,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 			Nonce:       "1",
 			QueryVector: hyperspace.New("foo", "bar"),
 		}.ToObject(),
-		pr0.Peer,
+		pr0.ConnectionInfo,
 	)
 	require.NoError(t, err)
 

@@ -9,15 +9,17 @@ import (
 
 type (
 	Announcement struct {
-		Metadata   object.Metadata      `nimona:"metadata:m,omitempty"`
-		Version    int64                `nimona:"version:i,omitempty"`
-		Peer       *peer.ConnectionInfo `nimona:"peer:o,omitempty"`
-		PeerVector []uint64             `nimona:"peerVector:au,omitempty"`
+		Metadata         object.Metadata      `nimona:"metadata:m,omitempty"`
+		Version          int64                `nimona:"version:i,omitempty"`
+		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:o,omitempty"`
+		PeerVector       []uint64             `nimona:"peerVector:au,omitempty"`
+		PeerCapabilities []string             `nimona:"peerCapabilities:as,omitempty"`
 	}
 	LookupRequest struct {
-		Metadata    object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce       string          `nimona:"nonce:s,omitempty"`
-		QueryVector []uint64        `nimona:"queryVector:au,omitempty"`
+		Metadata            object.Metadata `nimona:"metadata:m,omitempty"`
+		Nonce               string          `nimona:"nonce:s,omitempty"`
+		QueryVector         []uint64        `nimona:"queryVector:au,omitempty"`
+		RequireCapabilities []string        `nimona:"requireCapabilities:as,omitempty"`
 	}
 	LookupResponse struct {
 		Metadata      object.Metadata `nimona:"metadata:m,omitempty"`

@@ -90,7 +90,7 @@ func New(
 
 	for _, p := range r.bootstrapPeers {
 		r.peerCache.Put(&hyperspace.Announcement{
-			Peer: p,
+			ConnectionInfo: p,
 		}, 0)
 	}
 
@@ -177,7 +177,7 @@ func (r *resolver) Lookup(
 			}
 			// TODO verify peer?
 			for _, ann := range r.Announcements {
-				peers = append(peers, ann.Peer)
+				peers = append(peers, ann.ConnectionInfo)
 			}
 			close(done)
 			break
@@ -216,8 +216,8 @@ func (r *resolver) handleAnnouncement(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver.handleAnnouncement"),
-		log.String("peer.publicKey", p.Peer.PublicKey.String()),
-		log.Strings("peer.addresses", p.Peer.Addresses),
+		log.String("peer.publicKey", p.ConnectionInfo.PublicKey.String()),
+		log.Strings("peer.addresses", p.ConnectionInfo.Addresses),
 	)
 	logger.Debug("adding peer to cache")
 	r.peerCache.Put(p, peerCacheTTL)
@@ -278,7 +278,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	vec := hyperspace.New(hs...)
 
 	if lastAnnouncement != nil &&
-		cmp.Equal(lastAnnouncement.Peer.Addresses, addresses) &&
+		cmp.Equal(lastAnnouncement.ConnectionInfo.Addresses, addresses) &&
 		cmp.Equal(lastAnnouncement.PeerVector, vec) {
 		return lastAnnouncement
 	}
@@ -288,7 +288,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 			Owner: peerKey,
 		},
 		Version: time.Now().Unix(),
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: peerKey,
 			Addresses: addresses,
 			Relays:    relays,

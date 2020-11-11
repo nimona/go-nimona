@@ -5,13 +5,15 @@ import nimona.io/peer peer
 
 signed object nimona.io/hyperspace.Announcement {
     version int
-    peer nimona.io/peer.ConnectionInfo
+    connectionInfo nimona.io/peer.ConnectionInfo
     peerVector repeated uint
+    peerCapabilities repeated string
 }
 
 signed object nimona.io/hyperspace.LookupRequest {
     nonce string
     queryVector repeated uint
+    requireCapabilities repeated string
 }
 
 signed object nimona.io/hyperspace.LookupResponse {

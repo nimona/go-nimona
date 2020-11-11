@@ -70,7 +70,7 @@ func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
 			func(p *hyperspace.Announcement) bool {
 				for _, key := range keys {
 					// TODO check announcement signature
-					owner := p.Peer.PublicKey
+					owner := p.ConnectionInfo.PublicKey
 					if owner.Equals(key) {
 						return true
 					}
