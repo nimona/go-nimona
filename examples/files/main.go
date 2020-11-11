@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	olog "log"
@@ -11,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -30,6 +32,10 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 
 	_ "github.com/arl/statsviz"
+)
+
+const (
+	peerLookupTime = 5
 )
 
 type fileTransfer struct {
@@ -53,6 +59,15 @@ type config struct {
 	Debug          struct {
 		MetricsPort string `envconfig:"METRICS_PORT"`
 	} `envconfig:"DEBUG"`
+}
+
+type fileUnloaded struct {
+	Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+	BlobHash object.Hash     `nimona:"blob:r,omitempty"`
+}
+
+func (e *fileUnloaded) Type() string {
+	return "nimona.io/File"
 }
 
 func main() {
@@ -99,13 +114,50 @@ func main() {
 
 	switch command {
 	case "get":
-		ft.get(ctx, object.Hash(param), logger)
+		ft.get(ctx, object.Hash(param))
 	case "serve":
-		ft.serve(ctx, param, logger)
+		ft.serve(ctx, param)
 	default:
 		fmt.Println("command not supported")
 		return
 	}
+
+}
+
+func (ft *fileTransfer) serve(
+	ctx context.Context,
+	filename string,
+) {
+
+	f, err := os.Open(filename)
+	if err != nil {
+		fmt.Println("failed to open file:", err)
+		return
+	}
+
+	bl, err := blob.ToBlob(f)
+	if err != nil {
+		fmt.Println("failed to covert to blob", err)
+		return
+	}
+
+	fl := &File{}
+	fl.Name = filename
+	fl.Blob = bl
+
+	_, err = ft.objectmanager.Put(ctx, fl.ToObject())
+	if err != nil {
+		fmt.Println("failed to store file", err)
+		return
+	}
+
+	blobj, err := ft.objectmanager.Put(ctx, bl.ToObject())
+	if err != nil {
+		fmt.Println("failed to store blob", err)
+		return
+	}
+	fmt.Println("blob hash:", blobj.Hash())
+	fmt.Println("file hash:", fl.ToObject().Hash().String())
 
 	// register for termination signals
 	sigs := make(chan os.Signal, 1)
@@ -113,67 +165,90 @@ func main() {
 
 	// and wait for one
 	<-sigs
-
 }
 
-func (ft *fileTransfer) serve(
+func (ft *fileTransfer) findAndRequest(
 	ctx context.Context,
-	filename string,
-	logger log.Logger,
+	hash object.Hash,
+) (
+	*object.Object,
+	error,
 ) {
-
-	f, err := os.Open(filename)
+	peersCh, err := ft.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
 	if err != nil {
-		logger.Fatal("failed to open file", log.Error(err))
+		return nil, err
 	}
 
-	bl, err := blob.ToBlob(f)
-	if err != nil {
-		logger.Fatal("failed to covert to blob", log.Error(err))
-	}
-	bl.Name = filename
+	peerFound := &peer.Peer{}
 
-	obj, err := ft.objectmanager.Put(ctx, bl.ToObject())
-	if err != nil {
-		logger.Fatal("failed to store blob", log.Error(err))
+	select {
+	case peerFound = <-peersCh:
+	case <-ctx.Done():
+		return nil, errors.New("context")
+	case <-time.After(peerLookupTime * time.Second):
+		break
 	}
 
-	logger.Info("blob sharing",
-		log.String("hash", bl.ToObject().Hash().String()),
-		log.String("obj_hash", obj.Hash().String()),
-	)
+	obj, err := ft.objectmanager.Request(ctx, hash, peerFound, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (ft *fileTransfer) get(
 	ctx context.Context,
 	hash object.Hash,
-	logger log.Logger,
 ) {
-	logger.Info("getting blob")
+	fmt.Println("getting file:", hash)
+
+	obj, err := ft.findAndRequest(ctx, hash)
+	if err != nil {
+		fmt.Println("failed to request file: ", err)
+		return
+	}
+
+	fl := &File{}
+	if err := fl.FromObject(obj); err != nil {
+		fmt.Println("object not of type file: ", err)
+		return
+	}
+
+	flun := &fileUnloaded{}
+
+	err = object.Decode(obj, flun)
 	bmgr := blob.NewRequester(
 		ctx,
 		blob.WithObjectManager(ft.objectmanager),
 		blob.WithResolver(ft.resolver),
 	)
-
-	bl, err := bmgr.Request(ctx, hash)
 	if err != nil {
-		logger.Fatal("failed to request blob", log.Error(err))
+		fmt.Println("failed to decode:", err)
+		return
 	}
 
-	logger.Info(bl.ToObject().Hash().String())
+	fmt.Println("getting blob:", flun.BlobHash)
+	bl, err := bmgr.Request(ctx, flun.BlobHash)
+	if err != nil {
+		fmt.Println("failed to request file:", err)
+	}
 
 	_ = os.MkdirAll(ft.config.ReceivedFolder, os.ModePerm)
-	f, err := os.Create(filepath.Join(ft.config.ReceivedFolder, bl.Name))
+	f, err := os.Create(filepath.Join(ft.config.ReceivedFolder, fl.Name))
 	if err != nil {
-		logger.Fatal("failed to create file", log.Error(err))
+		fmt.Println("failed to create file:", err)
+		return
 	}
 
+	fmt.Println("writing file:", fl.Name)
 	r := blob.FromBlob(bl)
 	bf := bufio.NewReader(r)
 	if _, err := io.Copy(f, bf); err != nil {
-		logger.Fatal("failed to write file", log.Error(err))
+		fmt.Println("failed to write to file:", err)
 	}
+
+	fmt.Println("done")
 
 }
 
@@ -187,17 +262,18 @@ func newFileTransfer(
 	cfg *config,
 	logger log.Logger,
 ) (*fileTransfer, error) {
-	files := &fileTransfer{}
-	files.config = cfg
+	ft := &fileTransfer{}
+	ft.config = cfg
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
 	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
 	local.PutContentTypes(
+		new(File).Type(),
 		new(blob.Blob).Type(),
 		new(blob.Chunk).Type(),
 	)
-	files.local = local
+	ft.local = local
 
 	// construct new network
 	net := network.New(
@@ -216,7 +292,7 @@ func newFileTransfer(
 		if err != nil {
 			logger.Fatal("error while listening", log.Error(err))
 		}
-		files.listener = lis
+		ft.listener = lis
 	}
 
 	// make sure we have some bootstrap peers to start with
@@ -244,15 +320,13 @@ func newFileTransfer(
 		net,
 		resolver.WithBoostrapPeers(bootstrapPeers),
 	)
-	files.resolver = res
+	ft.resolver = res
 
 	logger = logger.With(
 		log.String("peer.privateKey", local.GetPrimaryPeerKey().String()),
 		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
-
-	logger.Info("ready")
 
 	// construct object store
 	db, err := sql.Open("sqlite3", "file_transfer.db")
@@ -264,7 +338,7 @@ func newFileTransfer(
 	if err != nil {
 		logger.Fatal("error starting sql store", log.Error(err))
 	}
-	files.objectstore = str
+	ft.objectstore = str
 
 	// construct manager
 	man := objectmanager.New(
@@ -273,8 +347,8 @@ func newFileTransfer(
 		res,
 		str,
 	)
-	files.objectmanager = man
+	ft.objectmanager = man
 
-	return files, nil
+	return ft, nil
 
 }
