@@ -17,8 +17,10 @@ import (
 )
 
 const (
-	peerCacheTTL = time.Minute * 15
-	peerCacheGC  = time.Minute * 1
+	peerCacheTTL     = time.Minute * 15
+	peerCacheGC      = time.Minute * 1
+	providerCacheTTL = time.Minute * 5
+	providerCacheGC  = time.Minute * 1
 )
 
 var (
@@ -37,29 +39,58 @@ var (
 
 type (
 	Provider struct {
-		context   context.Context
-		network   network.Network
-		peerCache *peerstore.PeerCache
-		local     localpeer.LocalPeer
+		context       context.Context
+		network       network.Network
+		peerCache     *peerstore.PeerCache
+		providerCache *peerstore.PeerCache
+		local         localpeer.LocalPeer
 	}
 )
 
 func New(
 	ctx context.Context,
 	net network.Network,
+	bootstrapProviders []*peer.ConnectionInfo,
 ) (*Provider, error) {
-	c := peerstore.NewPeerCache(peerCacheGC, "nimona_hyperspace_provider")
 	p := &Provider{
-		context:   ctx,
-		network:   net,
-		local:     net.LocalPeer(),
-		peerCache: c,
+		context: ctx,
+		network: net,
+		local:   net.LocalPeer(),
+		peerCache: peerstore.NewPeerCache(
+			peerCacheGC,
+			"nimona_hyperspace_provider_peers",
+		),
+		providerCache: peerstore.NewPeerCache(
+			providerCacheGC,
+			"nimona_hyperspace_provider_bootstraps",
+		),
 	}
 
 	go network.HandleEnvelopeSubscription(
 		p.network.Subscribe(),
 		p.handleObject,
 	)
+
+	for _, ci := range bootstrapProviders {
+		p.providerCache.Put(
+			&hyperspace.Announcement{
+				ConnectionInfo: ci,
+				PeerCapabilities: []string{
+					hyperspaceAnnouncementType,
+					hyperspaceLookupRequestType,
+				},
+			},
+			providerCacheTTL,
+		)
+	}
+
+	go func() {
+		p.announceSelf()
+		announceTimer := time.NewTicker(30 * time.Second)
+		for range announceTimer.C {
+			p.announceSelf()
+		}
+	}()
 
 	return p, nil
 }
@@ -69,6 +100,9 @@ func (p *Provider) Put(
 ) {
 	for _, pr := range prs {
 		p.peerCache.Put(pr, peerCacheTTL)
+		if hasHyperspaceCapability(pr) {
+			p.providerCache.Put(pr, providerCacheTTL)
+		}
 	}
 }
 
@@ -80,11 +114,7 @@ func (p *Provider) handleObject(
 	o := e.Payload
 	switch o.Type {
 	case hyperspaceAnnouncementType:
-		v := &hyperspace.Announcement{}
-		if err := v.FromObject(o); err != nil {
-			return err
-		}
-		p.handleAnnouncement(ctx, v)
+		return p.handleAnnouncement(ctx, o)
 	case hyperspaceLookupRequestType:
 		v := &hyperspace.LookupRequest{}
 		if err := v.FromObject(o); err != nil {
@@ -93,14 +123,17 @@ func (p *Provider) handleObject(
 		p.handlePeerLookup(ctx, v, e)
 		return nil
 	}
-
 	return nil
 }
 
 func (p *Provider) handleAnnouncement(
 	ctx context.Context,
-	ann *hyperspace.Announcement,
-) {
+	annObj *object.Object,
+) error {
+	ann := &hyperspace.Announcement{}
+	if err := ann.FromObject(annObj); err != nil {
+		return err
+	}
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.handleAnnouncement"),
 		log.String("peer.publicKey", ann.ConnectionInfo.PublicKey.String()),
@@ -109,7 +142,14 @@ func (p *Provider) handleAnnouncement(
 	// TODO check if we've already received this peer, and if not forward it
 	// to the other hyperspace providers
 	logger.Debug("adding peer to cache")
-	p.peerCache.Put(ann, peerCacheTTL)
+	ok := p.peerCache.Put(ann, peerCacheTTL)
+	if ok {
+		p.distributeAnnouncement(annObj)
+	}
+	if hasHyperspaceCapability(ann) {
+		p.providerCache.Put(ann, providerCacheTTL)
+	}
+	return nil
 }
 
 func (p *Provider) handlePeerLookup(
@@ -163,4 +203,86 @@ func (p *Provider) handlePeerLookup(
 	logger.With(
 		log.Int("n", len(ans)),
 	).Debug("handling done, sent n peers")
+}
+
+// distributeAnnouncement to all relevant hyperspace providers, this should
+// only be called when we received an announcement that we did not already
+// know about.
+//
+// NOTE: in this version of the hyperspace all providers have a complete
+// picture of the network.
+// TODO: consider batching up announcements somehow
+func (p *Provider) distributeAnnouncement(
+	annObj *object.Object,
+) {
+	ctx := context.New(
+		context.WithParent(p.context),
+	)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "provider.distributeAnnouncement"),
+	)
+	n := 0
+	for _, ci := range p.providerCache.List() {
+		if err := p.network.Send(
+			context.New(
+				context.WithParent(ctx),
+				context.WithTimeout(time.Second*3),
+			),
+			annObj,
+			ci.ConnectionInfo,
+		); err != nil {
+			logger.Error(
+				"error announcing self to other provider",
+				log.String("provider", ci.ConnectionInfo.PublicKey.String()),
+				log.Error(err),
+			)
+		}
+		n++
+	}
+	logger.Info("forwarded announcement to other provider", log.Int("n", n))
+}
+
+func (p *Provider) announceSelf() {
+	ctx := context.New(
+		context.WithParent(p.context),
+	)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "provider.announceSelf"),
+	)
+	annObj := hyperspace.Announcement{
+		ConnectionInfo: p.local.ConnectionInfo(),
+		PeerCapabilities: []string{
+			hyperspaceAnnouncementType,
+			hyperspaceLookupRequestType,
+		},
+	}.ToObject()
+
+	n := 0
+	for _, ci := range p.providerCache.List() {
+		if err := p.network.Send(
+			context.New(
+				context.WithParent(ctx),
+				context.WithTimeout(time.Second*3),
+			),
+			annObj,
+			ci.ConnectionInfo,
+		); err != nil {
+			logger.Error(
+				"error announcing self to other provider",
+				log.String("provider", ci.ConnectionInfo.PublicKey.String()),
+				log.Error(err),
+			)
+		}
+		n++
+	}
+	logger.Info("announced self to other provider", log.Int("n", n))
+}
+
+func hasHyperspaceCapability(ann *hyperspace.Announcement) bool {
+	for _, c := range ann.PeerCapabilities {
+		if c == hyperspaceAnnouncementType {
+			return true
+		}
+	}
+	return false
 }

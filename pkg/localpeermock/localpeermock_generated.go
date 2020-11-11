@@ -232,3 +232,17 @@ func (mr *MockLocalPeerMockRecorder) PutRelays(arg0 ...interface{}) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutRelays", reflect.TypeOf((*MockLocalPeer)(nil).PutRelays), arg0...)
 }
+
+// ConnectionInfo mocks base method
+func (m *MockLocalPeer) ConnectionInfo() *peer.ConnectionInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConnectionInfo")
+	ret0, _ := ret[0].(*peer.ConnectionInfo)
+	return ret0
+}
+
+// ConnectionInfo indicates an expected call of ConnectionInfo
+func (mr *MockLocalPeerMockRecorder) ConnectionInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConnectionInfo", reflect.TypeOf((*MockLocalPeer)(nil).ConnectionInfo))
+}

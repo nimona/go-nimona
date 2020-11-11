@@ -27,6 +27,7 @@ func TestResolver_Integration(t *testing.T) {
 			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net0.LocalPeer().GetAddresses(),
 		},
+		PeerCapabilities: []string{"foo", "bar"},
 	}
 
 	// net1 is a normal peer
@@ -39,10 +40,11 @@ func TestResolver_Integration(t *testing.T) {
 			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net1.LocalPeer().GetAddresses(),
 		},
+		PeerCapabilities: []string{"foo"},
 	}
 
 	// construct provider
-	prv, err := provider.New(context.New(), net0)
+	prv, err := provider.New(context.New(), net0, nil)
 	require.NoError(t, err)
 
 	// net1 announces to provider

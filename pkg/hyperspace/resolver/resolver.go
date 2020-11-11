@@ -292,9 +292,9 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 			PublicKey: peerKey,
 			Addresses: addresses,
 			Relays:    relays,
-			// Certificates: certificates,
 		},
-		PeerVector: vec,
+		PeerVector:       vec,
+		PeerCapabilities: contentTypes,
 	}
 
 	r.localPeerAnnouncementCacheLock.Lock()
