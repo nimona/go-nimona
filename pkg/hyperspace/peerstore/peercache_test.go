@@ -23,7 +23,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
@@ -33,7 +33,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: opk2.PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk2.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo", "not-bar"),
@@ -65,7 +65,7 @@ func TestPeerCache_List(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
 			Addresses: []string{"foo"},
 		},
@@ -75,7 +75,7 @@ func TestPeerCache_List(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
 			Addresses: []string{"bar"},
 		},
@@ -85,7 +85,7 @@ func TestPeerCache_List(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: opk2.PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk2.PublicKey(),
 			Addresses: []string{"foo"},
 		},
@@ -93,9 +93,14 @@ func TestPeerCache_List(t *testing.T) {
 
 	pc := NewPeerCache(200*time.Millisecond, "test1")
 
-	pc.Put(p1a, 200*time.Millisecond)
-	pc.Put(p1b, 200*time.Millisecond)
-	pc.Put(p2, 200*time.Millisecond)
+	ok := pc.Put(p1a, 200*time.Millisecond)
+	assert.True(t, ok)
+	ok = pc.Put(p1a, 200*time.Millisecond)
+	assert.False(t, ok)
+	ok = pc.Put(p1b, 200*time.Millisecond)
+	assert.True(t, ok)
+	ok = pc.Put(p2, 200*time.Millisecond)
+	assert.True(t, ok)
 
 	ps := pc.List()
 	assert.ElementsMatch(t, []*hyperspace.Announcement{p1b, p2}, ps)
@@ -112,7 +117,7 @@ func TestPeerCache_Remove(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: opk.PublicKey(),
 			},
-			Peer: &peer.ConnectionInfo{
+			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),
 			},
 		},
@@ -137,7 +142,7 @@ func TestPeerCache_Touch(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: opk.PublicKey(),
 			},
-			Peer: &peer.ConnectionInfo{
+			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),
 			},
 		},
@@ -152,7 +157,7 @@ func TestPeerCache_Touch(t *testing.T) {
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.Peer.PublicKey)
+	assert.Equal(t, opk.PublicKey(), pr.ConnectionInfo.PublicKey)
 
 	time.Sleep(300 * time.Millisecond)
 
@@ -174,7 +179,7 @@ func TestPeerCache_TTL(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: opk.PublicKey(),
 			},
-			Peer: &peer.ConnectionInfo{
+			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),
 			},
 		},
@@ -183,7 +188,7 @@ func TestPeerCache_TTL(t *testing.T) {
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.Peer.PublicKey)
+	assert.Equal(t, opk.PublicKey(), pr.ConnectionInfo.PublicKey)
 
 	time.Sleep(900 * time.Millisecond)
 

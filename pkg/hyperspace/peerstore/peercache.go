@@ -90,16 +90,26 @@ func NewPeerCache(
 }
 
 // Put -
-func (m *PeerCache) Put(p *hyperspace.Announcement, ttl time.Duration) {
-	if _, ok := m.m.Load(p.Peer.PublicKey); !ok {
+func (m *PeerCache) Put(p *hyperspace.Announcement, ttl time.Duration) bool {
+	// check if we already know about this announcement
+	pann, ok := m.m.Load(p.ConnectionInfo.PublicKey)
+	// if it's the same as before, don't do antyhing
+	if ok && pann.(entry).pr.ToObject().Hash() == p.ToObject().Hash() {
+		return false
+	}
+	// if we don't know about it, increment the known peers counter
+	if !ok {
 		m.promKnownPeersGauge.Inc()
 	}
+	// in any case increment the incoming peers counter
 	m.promIncPeersGauge.Inc()
-	m.m.Store(p.Peer.PublicKey, entry{
+	// and finally store it
+	m.m.Store(p.ConnectionInfo.PublicKey, entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
 		pr:        p,
 	})
+	return true
 }
 
 // Put -

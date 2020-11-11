@@ -23,7 +23,7 @@ func TestResolver_Integration(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net0.LocalPeer().GetAddresses(),
 		},
@@ -35,7 +35,7 @@ func TestResolver_Integration(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 			Addresses: net1.LocalPeer().GetAddresses(),
 		},
@@ -49,7 +49,7 @@ func TestResolver_Integration(t *testing.T) {
 	err = net1.Send(
 		context.New(),
 		pr1.ToObject(),
-		pr0.Peer,
+		pr0.ConnectionInfo,
 	)
 	require.NoError(t, err)
 
@@ -58,7 +58,7 @@ func TestResolver_Integration(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: "a",
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: "a",
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
@@ -67,7 +67,7 @@ func TestResolver_Integration(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: "b",
 		},
 		PeerVector: hyperspace.New("foo"),
@@ -76,12 +76,12 @@ func TestResolver_Integration(t *testing.T) {
 	prv.Put(pr3)
 
 	// construct resolver
-	res := New(context.New(), net1, WithBoostrapPeers(pr0.Peer))
+	res := New(context.New(), net1, WithBoostrapPeers(pr0.ConnectionInfo))
 
 	// lookup by content
 	pr, err := res.Lookup(context.New(), LookupByContentHash("bar"))
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.Peer}, pr)
+	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 }
 
 func newPeer(t *testing.T) network.Network {

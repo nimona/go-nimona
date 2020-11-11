@@ -18,7 +18,7 @@ func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
 	require.NoError(t, err)
 
 	p := &Announcement{
-		Peer: &peer.ConnectionInfo{
+		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: k.PublicKey(),
 			Addresses: []string{"foo", "foo"},
 		},
@@ -63,7 +63,7 @@ func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
 
 	p := &LookupResponse{
 		Announcements: []*Announcement{{
-			Peer: &peer.ConnectionInfo{
+			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: k.PublicKey(),
 				Addresses: []string{"foo", "foo"},
 			},

@@ -103,8 +103,8 @@ func (p *Provider) handleAnnouncement(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.handleAnnouncement"),
-		log.String("peer.publicKey", ann.Peer.PublicKey.String()),
-		log.Strings("peer.addresses", ann.Peer.Addresses),
+		log.String("peer.publicKey", ann.ConnectionInfo.PublicKey.String()),
+		log.Strings("peer.addresses", ann.ConnectionInfo.Addresses),
 	)
 	// TODO check if we've already received this peer, and if not forward it
 	// to the other hyperspace providers
