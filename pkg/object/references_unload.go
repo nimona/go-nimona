@@ -23,6 +23,13 @@ func UnloadReferences(
 			}
 			unloaded = append(unloaded, o)
 			return strings.Replace(k, ":m", ":r", 1), o.Hash(), true
+		case strings.HasSuffix(k, ":o"):
+			o, ok := v.(*Object)
+			if !ok {
+				return "", nil, false
+			}
+			unloaded = append(unloaded, o)
+			return strings.Replace(k, ":o", ":r", 1), o.Hash(), true
 		case strings.HasSuffix(k, ":ao"):
 			switch vs := v.(type) {
 			case []*Object:
