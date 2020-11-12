@@ -79,7 +79,8 @@ func NewPeerCache(
 					diff := now.Sub(e.createdAt)
 					if diff >= e.ttl {
 						pc.m.Delete(key)
-						pc.promGCedPeersGauge.Add(-1)
+						pc.promKnownPeersGauge.Add(-1)
+						pc.promGCedPeersGauge.Inc()
 					}
 				}
 				return true
