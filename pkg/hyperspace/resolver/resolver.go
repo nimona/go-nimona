@@ -44,7 +44,6 @@ type (
 		network                        network.Network
 		localpeer                      localpeer.LocalPeer
 		peerCache                      *peerstore.PeerCache
-		peerConnections                *peerConnections
 		localPeerAnnouncementCache     *hyperspace.Announcement
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
@@ -67,9 +66,6 @@ func New(
 			time.Minute,
 			"nimona_hyperspace_resolver",
 		),
-		peerConnections: &peerConnections{
-			m: sync.Map{},
-		},
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
