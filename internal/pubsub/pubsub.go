@@ -49,7 +49,7 @@ func New() PubSub {
 }
 
 func (ps *QueueSubscription) Cancel() {
-	ps.Queue.Prepend(nil)
+	ps.Queue.Append(nil)
 	ps.cancel()
 }
 
@@ -77,11 +77,9 @@ func (ps *pubsub) Subscribe(filters ...Filter) Subscription {
 	sub.cancel = func() {
 		// delete the subscription
 		ps.subscriptions.Delete(sub)
-		// wipe the queue
-		sub.Queue.Clean()
-		// prepend the queue with a nil item that will cause Next() to error
+		// add a nil item in the queue that will cause Next() to error
 		// with ErrSubscriptionCanceled
-		sub.Queue.Prepend(nil)
+		sub.Queue.Append(nil)
 	}
 
 	// and store it
