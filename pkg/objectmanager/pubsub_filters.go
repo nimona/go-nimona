@@ -50,7 +50,7 @@ func FilterByHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
-			return o.Hash() == h
+			return !h.IsEmpty() && o != nil && o.Hash() == h
 		})
 	}
 }
@@ -69,7 +69,7 @@ func FilterByStreamHash(h object.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
-			return !h.IsEmpty() && h == o.Metadata.Stream
+			return !h.IsEmpty() && o != nil && h == o.Metadata.Stream
 		})
 	}
 }

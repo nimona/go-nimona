@@ -3,6 +3,7 @@ package objectmanager
 import (
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -1346,6 +1347,100 @@ func TestManager_Put(t *testing.T) {
 				return
 			}
 			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func Test_manager_Subscribe(t *testing.T) {
+	o1 := &object.Object{
+		Type: "not-bar",
+		Metadata: object.Metadata{
+			Owner: "foo",
+		},
+		Data: map[string]interface{}{
+			"foo:s": "not-bar",
+		},
+	}
+	o2 := &object.Object{
+		Type: "bar",
+		Metadata: object.Metadata{
+			Stream: "foo",
+		},
+		Data: map[string]interface{}{
+			"foo:s": "bar",
+		},
+	}
+	tests := []struct {
+		name          string
+		lookupOptions []LookupOption
+		publish       []*object.Object
+		want          []*object.Object
+	}{{
+		name: "subscribe by hash",
+		lookupOptions: []LookupOption{
+			FilterByHash(o2.Hash()),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{o2},
+	}, {
+		name: "subscribe by owner",
+		lookupOptions: []LookupOption{
+			FilterByOwner("foo"),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{o1},
+	}, {
+		name: "subscribe by type",
+		lookupOptions: []LookupOption{
+			FilterByObjectType("bar"),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{o2},
+	}, {
+		name: "subscribe by stream",
+		lookupOptions: []LookupOption{
+			FilterByStreamHash("foo"),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{o2},
+	}, {
+		name: "subscribe by stream and owner",
+		lookupOptions: []LookupOption{
+			FilterByStreamHash("foo"),
+			FilterByOwner("foo"),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{},
+	}, {
+		name: "subscribe by hash and type",
+		lookupOptions: []LookupOption{
+			FilterByHash(o2.Hash()),
+			FilterByObjectType("bar"),
+		},
+		publish: []*object.Object{o1, o2},
+		want:    []*object.Object{o2},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &manager{
+				pubsub:        NewObjectPubSub(),
+				subscriptions: &SubscriptionsMap{},
+			}
+			sub := m.Subscribe(tt.lookupOptions...)
+			for _, o := range tt.publish {
+				m.pubsub.Publish(o)
+			}
+			time.Sleep(100 * time.Millisecond)
+			sub.Cancel()
+			os := []*object.Object{}
+			for {
+				o, err := sub.Next()
+				if err != nil || o == nil {
+					break
+				}
+				os = append(os, o)
+			}
+			assert.ElementsMatch(t, tt.want, os)
 		})
 	}
 }
