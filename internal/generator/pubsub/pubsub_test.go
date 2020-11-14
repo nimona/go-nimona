@@ -82,6 +82,10 @@ func TestPubSubCancel(t *testing.T) {
 	s.Cancel()
 
 	next, err = s.Next()
+	require.Equal(t, "two", next)
+	require.NoError(t, err)
+
+	next, err = s.Next()
 	require.Equal(t, nil, next)
 	require.Error(t, err, pubsub.ErrSubscriptionCanceled)
 }
