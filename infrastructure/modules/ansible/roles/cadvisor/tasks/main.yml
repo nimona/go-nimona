@@ -2,9 +2,9 @@
 - name: Create and start cadvisor container
   community.general.docker_container:
     name: cadvisor
-    image: "gcr.io/google-containers/cadvisor:{{ cadvisor_version }}"
+    image: "{{ cadvisor_docker_image }}:{{ cadvisor_docker_tag }}"
     pull: yes
-    recreate: '{{ cadvisor_version == "latest" }}'
+    recreate: "{{ cadvisor_docker_tag == 'latest' }}"
     restart_policy: always
     state: started
     container_default_behavior: no_defaults
