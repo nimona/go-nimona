@@ -1,4 +1,4 @@
 ---
 - import_playbook: system.yml
 - import_playbook: system_metrics.yml
-- import_playbook: bootstrap.yml
+- import_playbook: services.yml
