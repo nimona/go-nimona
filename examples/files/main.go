@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -18,6 +19,7 @@ import (
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
@@ -27,14 +29,13 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
-
-	_ "github.com/arl/statsviz"
 )
 
 type fileTransfer struct {
 	local         localpeer.LocalPeer
 	objectmanager objectmanager.ObjectManager
 	objectstore   objectstore.Store
+	blobmanager   blob.Manager
 	resolver      resolver.Resolver
 	listener      net.Listener
 	config        *config
@@ -119,38 +120,30 @@ func main() {
 
 func (ft *fileTransfer) serve(
 	ctx context.Context,
-	filename string,
+	filePath string,
 ) {
+	fileName := filepath.Base(filePath)
+	start := time.Now()
 
-	f, err := os.Open(filename)
+	blobUnl, err := ft.blobmanager.ImportFromFile(ctx, filePath)
 	if err != nil {
-		fmt.Println("failed to open file:", err)
+		fmt.Println("failed to import blob", err)
 		return
 	}
 
-	bl, err := blob.ToBlob(f)
-	if err != nil {
-		fmt.Println("failed to covert to blob", err)
-		return
+	fl := &File{
+		Name: fileName,
+		Blob: blobUnl.ToObject().Hash(),
 	}
 
-	fl := &File{}
-	fl.Name = filename
-	fl.Blob = bl
-
-	_, err = ft.objectmanager.Put(ctx, fl.ToObject())
-	if err != nil {
-		fmt.Println("failed to store file", err)
-		return
-	}
-
-	blobj, err := ft.objectmanager.Put(ctx, bl.ToObject())
-	if err != nil {
+	if _, err := ft.objectmanager.Put(ctx, fl.ToObject()); err != nil {
 		fmt.Println("failed to store blob", err)
 		return
 	}
-	fmt.Println("blob hash:", blobj.Hash())
-	fmt.Println("file hash:", fl.ToObject().Hash().String())
+	fmt.Println("blob hash:", blobUnl.ToObject().Hash())
+	fmt.Println("file hash:", fl.ToObject().Hash())
+
+	fmt.Println(">>> loading took", time.Now().Sub(start))
 
 	// register for termination signals
 	sigs := make(chan os.Signal, 1)
@@ -170,6 +163,10 @@ func (ft *fileTransfer) findAndRequest(
 	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
 	if err != nil {
 		return nil, err
+	}
+
+	if len(peers) == 0 {
+		return nil, errors.New("no providers found")
 	}
 
 	obj, err := ft.objectmanager.Request(ctx, hash, peers[0], true)
@@ -201,18 +198,9 @@ func (ft *fileTransfer) get(
 	flun := &fileUnloaded{}
 
 	err = object.Decode(obj, flun)
-	bmgr := blob.NewRequester(
-		ctx,
-		blob.WithObjectManager(ft.objectmanager),
-		blob.WithResolver(ft.resolver),
-	)
-	if err != nil {
-		fmt.Println("failed to decode:", err)
-		return
-	}
 
 	fmt.Println("getting blob:", flun.BlobHash)
-	bl, err := bmgr.Request(ctx, flun.BlobHash)
+	bl, err := ft.blobmanager.Request(ctx, flun.BlobHash)
 	if err != nil {
 		fmt.Println("failed to request file:", err)
 	}
@@ -323,7 +311,7 @@ func newFileTransfer(
 	}
 	ft.objectstore = str
 
-	// construct manager
+	// construct object manager
 	man := objectmanager.New(
 		ctx,
 		net,
@@ -331,6 +319,14 @@ func newFileTransfer(
 		str,
 	)
 	ft.objectmanager = man
+
+	// construct blob manager
+	bm := blob.NewManager(
+		ctx,
+		blob.WithObjectManager(man),
+		blob.WithResolver(res),
+	)
+	ft.blobmanager = bm
 
 	return ft, nil
 
