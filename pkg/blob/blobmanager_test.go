@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
@@ -162,4 +161,90 @@ func TestUnload(t *testing.T) {
 
 	assert.Contains(t, refs, chunk1.ToObject().Hash())
 	assert.Contains(t, refs, chunk2.ToObject().Hash())
+}
+
+func Test_manager_ImportFromFile(t *testing.T) {
+	tests := []struct {
+		name          string
+		objectmanager func(*testing.T) objectmanager.ObjectManager
+		path          string
+		chunkSize     int
+		want          *blob.BlobUnloaded
+		wantErr       bool
+	}{{
+		name:      "3 chunks, should pass",
+		path:      "test-blob.bin",
+		chunkSize: 50,
+		objectmanager: func(t *testing.T) objectmanager.ObjectManager {
+			c := gomock.NewController(t)
+			m := objectmanagermock.NewMockObjectManager(c)
+			m.EXPECT().
+				Put(gomock.Any(), &object.Object{
+					Type: new(blob.Chunk).Type(),
+					Data: map[string]interface{}{
+						"data:d": []byte(
+							"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
+								"\n15\n16\n17\n18\n19\n20",
+						),
+					},
+				}).
+				MaxTimes(1)
+			m.EXPECT().
+				Put(gomock.Any(), &object.Object{
+					Type: new(blob.Chunk).Type(),
+					Data: map[string]interface{}{
+						"data:d": []byte(
+							"\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n" +
+								"32\n33\n34\n35\n36\n3",
+						),
+					},
+				}).
+				MaxTimes(1)
+			m.EXPECT().
+				Put(gomock.Any(), &object.Object{
+					Type: new(blob.Chunk).Type(),
+					Data: map[string]interface{}{
+						"data:d": []byte(
+							"7\n38\n39\n40\n",
+						),
+					},
+				}).
+				MaxTimes(1)
+			m.EXPECT().
+				Put(gomock.Any(), &object.Object{
+					Type: new(blob.Blob).Type(),
+					Data: map[string]interface{}{
+						"chunks:ar": []object.Hash{
+							"oh1.3dJZwtJ4eQBHAKtxPNixsVxPy5inC4HYgXbNQGUCzDLQ",
+							"oh1.DUhpZNYXCQH4pTitQqj2PmcQBWr2NNz5Z1E1KQdU9YNP",
+							"oh1.8CjpVvGhHZZ7yBNxpS6mYgau67AwxZf6K4GUMrbANBAm",
+						},
+					},
+				}).
+				MaxTimes(1)
+			return m
+		},
+		want: &blob.BlobUnloaded{
+			ChunksUnloaded: []object.Hash{
+				"oh1.3dJZwtJ4eQBHAKtxPNixsVxPy5inC4HYgXbNQGUCzDLQ",
+				"oh1.DUhpZNYXCQH4pTitQqj2PmcQBWr2NNz5Z1E1KQdU9YNP",
+				"oh1.8CjpVvGhHZZ7yBNxpS6mYgau67AwxZf6K4GUMrbANBAm",
+			},
+		},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := blob.NewManager(
+				context.Background(),
+				blob.WithChunkSize(tt.chunkSize),
+				blob.WithObjectManager(tt.objectmanager(t)),
+			)
+			got, err := r.ImportFromFile(context.Background(), tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
