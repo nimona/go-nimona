@@ -19,11 +19,14 @@ func (e *File) Type() string {
 }
 
 func (e File) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/File",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["name:s"] = e.Name
+	r.Data["blob:r"] = e.Blob
+	return r
 }
 
 func (e *File) FromObject(o *object.Object) error {

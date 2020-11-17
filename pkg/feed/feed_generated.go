@@ -31,11 +31,14 @@ func (e *FeedStreamRoot) Type() string {
 }
 
 func (e FeedStreamRoot) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "stream:nimona.io/feed",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["objectType:s"] = e.ObjectType
+	r.Data["datetime:s"] = e.Datetime
+	return r
 }
 
 func (e *FeedStreamRoot) FromObject(o *object.Object) error {
@@ -47,11 +50,21 @@ func (e *Added) Type() string {
 }
 
 func (e Added) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "event:nimona.io/feed.Added",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	if len(e.ObjectHash) > 0 {
+		// rv := make([]object.Hash, len(e.ObjectHash))
+		// for i, v := range e.ObjectHash {
+		// 	rv[i] = v
+		// }
+		r.Data["objectHash:ar"] = e.ObjectHash
+	}
+	r.Data["sequence:i"] = e.Sequence
+	r.Data["datetime:s"] = e.Datetime
+	return r
 }
 
 func (e *Added) FromObject(o *object.Object) error {
@@ -63,11 +76,21 @@ func (e *Removed) Type() string {
 }
 
 func (e Removed) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "event:nimona.io/feed.Removed",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	if len(e.ObjectHash) > 0 {
+		// rv := make([]object.Hash, len(e.ObjectHash))
+		// for i, v := range e.ObjectHash {
+		// 	rv[i] = v
+		// }
+		r.Data["objectHash:ar"] = e.ObjectHash
+	}
+	r.Data["sequence:i"] = e.Sequence
+	r.Data["datetime:s"] = e.Datetime
+	return r
 }
 
 func (e *Removed) FromObject(o *object.Object) error {

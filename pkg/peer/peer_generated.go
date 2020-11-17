@@ -21,11 +21,27 @@ func (e *ConnectionInfo) Type() string {
 }
 
 func (e ConnectionInfo) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/peer.ConnectionInfo",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["publicKey:s"] = e.PublicKey
+	if len(e.Addresses) > 0 {
+		// rv := make([]string, len(e.Addresses))
+		// for i, v := range e.Addresses {
+		// 	rv[i] = v
+		// }
+		r.Data["addresses:as"] = e.Addresses
+	}
+	if len(e.Relays) > 0 {
+		rv := make([]*object.Object, len(e.Relays))
+		for i, v := range e.Relays {
+			rv[i] = v.ToObject()
+		}
+		r.Data["relays:ao"] = rv
+	}
+	return r
 }
 
 func (e *ConnectionInfo) FromObject(o *object.Object) error {

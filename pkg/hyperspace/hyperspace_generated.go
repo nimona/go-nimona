@@ -34,11 +34,30 @@ func (e *Announcement) Type() string {
 }
 
 func (e Announcement) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/hyperspace.Announcement",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["version:i"] = e.Version
+	if e.ConnectionInfo != nil {
+		r.Data["connectionInfo:o"] = e.ConnectionInfo.ToObject()
+	}
+	if len(e.PeerVector) > 0 {
+		// rv := make([]uint64, len(e.PeerVector))
+		// for i, v := range e.PeerVector {
+		// 	rv[i] = v
+		// }
+		r.Data["peerVector:au"] = e.PeerVector
+	}
+	if len(e.PeerCapabilities) > 0 {
+		// rv := make([]string, len(e.PeerCapabilities))
+		// for i, v := range e.PeerCapabilities {
+		// 	rv[i] = v
+		// }
+		r.Data["peerCapabilities:as"] = e.PeerCapabilities
+	}
+	return r
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
@@ -50,11 +69,27 @@ func (e *LookupRequest) Type() string {
 }
 
 func (e LookupRequest) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/hyperspace.LookupRequest",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["nonce:s"] = e.Nonce
+	if len(e.QueryVector) > 0 {
+		// rv := make([]uint64, len(e.QueryVector))
+		// for i, v := range e.QueryVector {
+		// 	rv[i] = v
+		// }
+		r.Data["queryVector:au"] = e.QueryVector
+	}
+	if len(e.RequireCapabilities) > 0 {
+		// rv := make([]string, len(e.RequireCapabilities))
+		// for i, v := range e.RequireCapabilities {
+		// 	rv[i] = v
+		// }
+		r.Data["requireCapabilities:as"] = e.RequireCapabilities
+	}
+	return r
 }
 
 func (e *LookupRequest) FromObject(o *object.Object) error {
@@ -66,11 +101,27 @@ func (e *LookupResponse) Type() string {
 }
 
 func (e LookupResponse) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/hyperspace.LookupResponse",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["nonce:s"] = e.Nonce
+	if len(e.QueryVector) > 0 {
+		// rv := make([]uint64, len(e.QueryVector))
+		// for i, v := range e.QueryVector {
+		// 	rv[i] = v
+		// }
+		r.Data["queryVector:au"] = e.QueryVector
+	}
+	if len(e.Announcements) > 0 {
+		rv := make([]*object.Object, len(e.Announcements))
+		for i, v := range e.Announcements {
+			rv[i] = v.ToObject()
+		}
+		r.Data["announcements:ao"] = rv
+	}
+	return r
 }
 
 func (e *LookupResponse) FromObject(o *object.Object) error {

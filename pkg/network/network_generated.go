@@ -21,11 +21,15 @@ func (e *DataForward) Type() string {
 }
 
 func (e DataForward) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/network.DataForward",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["recipient:s"] = e.Recipient
+	r.Data["ephermeral:s"] = e.Ephermeral
+	r.Data["data:d"] = e.Data
+	return r
 }
 
 func (e *DataForward) FromObject(o *object.Object) error {

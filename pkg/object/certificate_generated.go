@@ -26,11 +26,15 @@ func (e *Certificate) Type() string {
 }
 
 func (e Certificate) ToObject() *Object {
-	o, err := Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &Object{
+		Type:     "nimona.io/Certificate",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["nonce:s"] = e.Nonce
+	r.Data["created:s"] = e.Created
+	r.Data["expires:s"] = e.Expires
+	return r
 }
 
 func (e *Certificate) FromObject(o *Object) error {
@@ -42,11 +46,31 @@ func (e *CertificateRequest) Type() string {
 }
 
 func (e CertificateRequest) ToObject() *Object {
-	o, err := Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &Object{
+		Type:     "nimona.io/CertificateRequest",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["applicationName:s"] = e.ApplicationName
+	r.Data["applicationDescription:s"] = e.ApplicationDescription
+	r.Data["applicationURL:s"] = e.ApplicationURL
+	r.Data["subject:s"] = e.Subject
+	if len(e.Resources) > 0 {
+		// rv := make([]string, len(e.Resources))
+		// for i, v := range e.Resources {
+		// 	rv[i] = v
+		// }
+		r.Data["resources:as"] = e.Resources
+	}
+	if len(e.Actions) > 0 {
+		// rv := make([]string, len(e.Actions))
+		// for i, v := range e.Actions {
+		// 	rv[i] = v
+		// }
+		r.Data["actions:as"] = e.Actions
+	}
+	r.Data["nonce:s"] = e.Nonce
+	return r
 }
 
 func (e *CertificateRequest) FromObject(o *Object) error {

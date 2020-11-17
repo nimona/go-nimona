@@ -28,11 +28,13 @@ func (e *ConversationStreamRoot) Type() string {
 }
 
 func (e ConversationStreamRoot) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "stream:poc.nimona.io/conversation",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["nonce:s"] = e.Nonce
+	return r
 }
 
 func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
@@ -44,11 +46,14 @@ func (e *ConversationSetNickname) Type() string {
 }
 
 func (e ConversationSetNickname) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "poc.nimona.io/conversation.SetNickname",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["datetime:s"] = e.Datetime
+	r.Data["nickname:s"] = e.Nickname
+	return r
 }
 
 func (e *ConversationSetNickname) FromObject(o *object.Object) error {
@@ -60,11 +65,14 @@ func (e *ConversationMessageAdded) Type() string {
 }
 
 func (e ConversationMessageAdded) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "poc.nimona.io/conversation.MessageAdded",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["datetime:s"] = e.Datetime
+	r.Data["body:s"] = e.Body
+	return r
 }
 
 func (e *ConversationMessageAdded) FromObject(o *object.Object) error {
