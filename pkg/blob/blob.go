@@ -44,6 +44,7 @@ func ToBlob(r io.Reader) (*Blob, error) {
 
 	return &blob, nil
 }
+
 func FromBlob(bl *Blob) Reader {
 	return &blobReader{
 		blob:      bl,

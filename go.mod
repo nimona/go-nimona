@@ -4,7 +4,9 @@ module nimona.io
 
 require (
 	github.com/bmatcuk/doublestar v1.3.3
+	github.com/docker/go-units v0.4.0
 	github.com/elliotchance/orderedmap v1.3.0
+	github.com/gammazero/workerpool v1.1.1
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/gobwas/glob v0.2.3
