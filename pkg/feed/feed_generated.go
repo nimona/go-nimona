@@ -14,13 +14,13 @@ type (
 	}
 	Added struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash   `nimona:"objectHash:as,omitempty"`
+		ObjectHash []object.Hash   `nimona:"objectHash:ar,omitempty"`
 		Sequence   int64           `nimona:"sequence:i,omitempty"`
 		Datetime   string          `nimona:"datetime:s,omitempty"`
 	}
 	Removed struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash   `nimona:"objectHash:as,omitempty"`
+		ObjectHash []object.Hash   `nimona:"objectHash:ar,omitempty"`
 		Sequence   int64           `nimona:"sequence:i,omitempty"`
 		Datetime   string          `nimona:"datetime:s,omitempty"`
 	}

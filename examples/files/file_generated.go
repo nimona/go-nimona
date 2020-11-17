@@ -3,7 +3,6 @@
 package main
 
 import (
-	blob "nimona.io/pkg/blob"
 	object "nimona.io/pkg/object"
 )
 
@@ -11,7 +10,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Name     string          `nimona:"name:s,omitempty"`
-		Blob     *blob.Blob      `nimona:"blob:o,omitempty"`
+		Blob     object.Hash     `nimona:"blob:r,omitempty"`
 	}
 )
 

@@ -6,7 +6,7 @@ type (
 	Request struct {
 		Metadata              Metadata `nimona:"metadata:m,omitempty"`
 		RequestID             string   `nimona:"requestID:s,omitempty"`
-		ObjectHash            Hash     `nimona:"objectHash:s,omitempty"`
+		ObjectHash            Hash     `nimona:"objectHash:r,omitempty"`
 		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b,omitempty"`
 	}
 	Response struct {
