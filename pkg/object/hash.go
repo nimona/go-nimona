@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"nimona.io/internal/encoding/base58"
@@ -41,9 +42,10 @@ func (h Hash) IsEmpty() bool {
 }
 
 func NewHash(o *Object) (Hash, error) {
-	m, err := objectToMap(o)
-	if err != nil {
-		return "", err
+	m := map[string]interface{}{
+		keyType:     o.Type,
+		keyMetadata: MetadataToMap(&o.Metadata),
+		keyData:     o.Data,
 	}
 	return hashMap(m)
 }
@@ -285,38 +287,38 @@ func hashValueAs(k string, o interface{}, ts ...TypeHint) (Hash, error) {
 		switch t.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", int64(v.Float()))))
+			return hash(HintInt, []byte(strconv.FormatInt(int64(v.Float()), 10)))
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", v.Int())))
+			return hash(HintInt, []byte(strconv.FormatInt(v.Int(), 10)))
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", int64(v.Uint()))))
+			return hash(HintInt, []byte(strconv.FormatInt(int64(v.Uint()), 10)))
 		}
 		panic("unknown type for int")
 	case HintUint:
 		switch t.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", uint64(v.Float()))))
+			return hash(HintInt, []byte(strconv.FormatUint(uint64(v.Float()), 10)))
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", uint64(v.Int()))))
+			return hash(HintInt, []byte(strconv.FormatUint(uint64(v.Int()), 10)))
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return hash(HintInt, []byte(fmt.Sprintf("%d", v.Uint())))
+			return hash(HintInt, []byte(strconv.FormatUint(v.Uint(), 10)))
 		}
 		panic("unknown type for uint")
 	case HintBool:

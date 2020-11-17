@@ -47,6 +47,30 @@ type (
 	}
 )
 
+func MetadataToMap(m *Metadata) map[string]interface{} {
+	r := map[string]interface{}{}
+	if !m.Owner.IsEmpty() {
+		r["owner:s"] = m.Owner
+	}
+	if len(m.Parents) > 0 {
+		rv := make([]string, len(m.Parents))
+		for i, v := range m.Parents {
+			rv[i] = v.String()
+		}
+		r["parents:as"] = rv
+	}
+	if len(m.Policy.Actions) > 0 {
+		r["policy:m"] = m.Policy
+	}
+	if !m.Stream.IsEmpty() {
+		r["stream:s"] = m.Stream.String()
+	}
+	if !m.Signature.IsEmpty() {
+		r["_signature:m"] = SignatureToMap(&m.Signature)
+	}
+	return r
+}
+
 func FromMap(m map[string]interface{}) *Object {
 	o, err := mapToObject(m)
 	if err != nil {
@@ -334,17 +358,13 @@ func decode(
 
 func objectToMap(o *Object) (map[string]interface{}, error) {
 	d := map[string]interface{}{}
-	m := map[string]interface{}{}
 	if _, err := decode(o.Data, &d, mapHookfunc()); err != nil {
-		return nil, err
-	}
-	if _, err := decode(o.Metadata, &m, mapHookfunc()); err != nil {
 		return nil, err
 	}
 	r := map[string]interface{}{
 		keyType:     o.Type,
 		keyData:     d,
-		keyMetadata: m,
+		keyMetadata: MetadataToMap(&o.Metadata),
 	}
 	return r, nil
 }

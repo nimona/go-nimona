@@ -30,6 +30,26 @@ func (s Signature) IsEmpty() bool {
 	return len(s.X) == 0
 }
 
+func SignatureToMap(s *Signature) map[string]interface{} {
+	if s == nil || s.IsEmpty() {
+		return nil
+	}
+	r := map[string]interface{}{}
+	if !s.Signer.IsEmpty() {
+		r["signer:s"] = s.Signer.String()
+	}
+	if s.Alg != "" {
+		r["alg:s"] = s.Alg
+	}
+	if len(s.X) > 0 {
+		r["x:d"] = s.X
+	}
+	if s.Certificate != nil {
+		r["certificate:m"] = s.Certificate.ToObject().ToMap()
+	}
+	return r
+}
+
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
 	k crypto.PrivateKey,
