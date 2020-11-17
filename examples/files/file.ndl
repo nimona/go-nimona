@@ -4,6 +4,5 @@ import nimona.io/blob blob
 
 signed object nimona.io/File {
   name string
-  blob nimona.io/blob.Blob
+  blob nimona.io/object.Hash
 }
-

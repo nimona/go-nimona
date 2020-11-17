@@ -17,22 +17,22 @@ type (
 	Request struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string          `nimona:"requestID:s,omitempty"`
-		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:r,omitempty"`
 	}
 	Response struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string          `nimona:"requestID:s,omitempty"`
-		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
-		Leaves    []object.Hash   `nimona:"leaves:as,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:r,omitempty"`
+		Leaves    []object.Hash   `nimona:"leaves:ar,omitempty"`
 	}
 	Announcement struct {
 		Metadata     object.Metadata `nimona:"metadata:m,omitempty"`
-		StreamHash   object.Hash     `nimona:"streamHash:s,omitempty"`
-		ObjectHashes []object.Hash   `nimona:"objectHashes:as,omitempty"`
+		StreamHash   object.Hash     `nimona:"streamHash:r,omitempty"`
+		ObjectHashes []object.Hash   `nimona:"objectHashes:ar,omitempty"`
 	}
 	Subscription struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		RootHashes []object.Hash   `nimona:"rootHashes:as,omitempty"`
+		RootHashes []object.Hash   `nimona:"rootHashes:ar,omitempty"`
 		Expiry     string          `nimona:"expiry:s,omitempty"`
 	}
 )
