@@ -8,6 +8,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func BenchmarkHash(b *testing.B) {
+	o := &Object{
+		Type: "blob",
+		Data: map[string]interface{}{
+			"filename:s": "foo",
+			"dummy:o": &Object{
+				Type: "dummy",
+				Metadata: Metadata{
+					Owner: "foo",
+				},
+				Data: map[string]interface{}{
+					"foo:s": "bar",
+					"data:d": []byte(
+						"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
+							"\n15\n16\n17\n18\n19\n20",
+					),
+				},
+			},
+		},
+	}
+	for n := 0; n < b.N; n++ {
+		o.Hash()
+	}
+}
 func TestNewHash(t *testing.T) {
 	tests := []struct {
 		name    string
