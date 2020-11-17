@@ -3,23 +3,16 @@ package blob
 import (
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/objectmanager"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
-func WithStore(st *sqlobjectstore.Store) func(*requester) {
-	return func(r *requester) {
-		r.store = st
+func WithObjectManager(x objectmanager.ObjectManager) func(*manager) {
+	return func(r *manager) {
+		r.objectmanager = x
 	}
 }
 
-func WithObjectManager(x objectmanager.ObjectManager) func(*requester) {
-	return func(r *requester) {
-		r.objmgr = x
-	}
-}
-
-func WithResolver(res resolver.Resolver) func(*requester) {
-	return func(r *requester) {
+func WithResolver(res resolver.Resolver) func(*manager) {
+	return func(r *manager) {
 		r.resolver = res
 	}
 }

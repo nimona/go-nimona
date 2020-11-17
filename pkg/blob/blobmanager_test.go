@@ -17,7 +17,6 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 func Test_requester_Request(t *testing.T) {
@@ -39,7 +38,6 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	type fields struct {
-		store    *sqlobjectstore.Store
 		resolver func(*testing.T, *peer.ConnectionInfo) resolver.Resolver
 		objmgr   func(*testing.T, *peer.ConnectionInfo) objectmanager.ObjectManager
 	}
@@ -120,11 +118,10 @@ func Test_requester_Request(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := blob.NewRequester(
+			r := blob.NewManager(
 				tt.args.ctx,
 				blob.WithObjectManager(tt.fields.objmgr(t, peer1)),
 				blob.WithResolver(tt.fields.resolver(t, peer1)),
-				blob.WithStore(tt.fields.store),
 			)
 
 			got, err := r.Request(tt.args.ctx, tt.args.hash)
