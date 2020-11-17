@@ -183,8 +183,9 @@ func (st *Store) PutWithTTL(
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
+	objHash := obj.Hash()
 	objectType := obj.Type
-	objectHash := obj.Hash().String()
+	objectHash := objHash.String()
 	streamHash := obj.Metadata.Stream.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
@@ -215,7 +216,7 @@ func (st *Store) PutWithTTL(
 	}
 
 	for _, p := range obj.Metadata.Parents {
-		err := st.putRelation(object.Hash(streamHash), obj.Hash(), p)
+		err := st.putRelation(object.Hash(streamHash), objHash, p)
 		if err != nil {
 			return errors.Wrap(err, errors.New("could not create relation"))
 		}
