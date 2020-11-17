@@ -21,11 +21,15 @@ func (e *Request) Type() string {
 }
 
 func (e Request) ToObject() *Object {
-	o, err := Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &Object{
+		Type:     "nimona.io/Request",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["objectHash:r"] = e.ObjectHash
+	r.Data["excludedNestedObjects:b"] = e.ExcludedNestedObjects
+	return r
 }
 
 func (e *Request) FromObject(o *Object) error {
@@ -37,11 +41,16 @@ func (e *Response) Type() string {
 }
 
 func (e Response) ToObject() *Object {
-	o, err := Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &Object{
+		Type:     "nimona.io/Response",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["requestID:s"] = e.RequestID
+	if e.Object != nil {
+		r.Data["object:o"] = e.Object
+	}
+	return r
 }
 
 func (e *Response) FromObject(o *Object) error {

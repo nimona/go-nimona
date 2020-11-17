@@ -22,11 +22,13 @@ func (e *Chunk) Type() string {
 }
 
 func (e Chunk) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/Chunk",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["data:d"] = e.Data
+	return r
 }
 
 func (e *Chunk) FromObject(o *object.Object) error {
@@ -38,11 +40,19 @@ func (e *Blob) Type() string {
 }
 
 func (e Blob) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/Blob",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	if len(e.Chunks) > 0 {
+		rv := make([]*object.Object, len(e.Chunks))
+		for i, v := range e.Chunks {
+			rv[i] = v.ToObject()
+		}
+		r.Data["chunks:ao"] = rv
+	}
+	return r
 }
 
 func (e *Blob) FromObject(o *object.Object) error {

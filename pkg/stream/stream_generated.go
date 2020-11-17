@@ -42,11 +42,34 @@ func (e *Policy) Type() string {
 }
 
 func (e Policy) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/stream.Policy",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	if len(e.Subjects) > 0 {
+		// rv := make([]string, len(e.Subjects))
+		// for i, v := range e.Subjects {
+		// 	rv[i] = v
+		// }
+		r.Data["subjects:as"] = e.Subjects
+	}
+	if len(e.Resources) > 0 {
+		// rv := make([]string, len(e.Resources))
+		// for i, v := range e.Resources {
+		// 	rv[i] = v
+		// }
+		r.Data["resources:as"] = e.Resources
+	}
+	if len(e.Conditions) > 0 {
+		// rv := make([]string, len(e.Conditions))
+		// for i, v := range e.Conditions {
+		// 	rv[i] = v
+		// }
+		r.Data["conditions:as"] = e.Conditions
+	}
+	r.Data["action:s"] = e.Action
+	return r
 }
 
 func (e *Policy) FromObject(o *object.Object) error {
@@ -58,11 +81,14 @@ func (e *Request) Type() string {
 }
 
 func (e Request) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/stream.Request",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["rootHash:r"] = e.RootHash
+	return r
 }
 
 func (e *Request) FromObject(o *object.Object) error {
@@ -74,11 +100,21 @@ func (e *Response) Type() string {
 }
 
 func (e Response) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/stream.Response",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["rootHash:r"] = e.RootHash
+	if len(e.Leaves) > 0 {
+		// rv := make([]object.Hash, len(e.Leaves))
+		// for i, v := range e.Leaves {
+		// 	rv[i] = v
+		// }
+		r.Data["leaves:ar"] = e.Leaves
+	}
+	return r
 }
 
 func (e *Response) FromObject(o *object.Object) error {
@@ -90,11 +126,20 @@ func (e *Announcement) Type() string {
 }
 
 func (e Announcement) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/stream.Announcement",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	r.Data["streamHash:r"] = e.StreamHash
+	if len(e.ObjectHashes) > 0 {
+		// rv := make([]object.Hash, len(e.ObjectHashes))
+		// for i, v := range e.ObjectHashes {
+		// 	rv[i] = v
+		// }
+		r.Data["objectHashes:ar"] = e.ObjectHashes
+	}
+	return r
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
@@ -106,11 +151,20 @@ func (e *Subscription) Type() string {
 }
 
 func (e Subscription) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type:     "nimona.io/stream.Subscription",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
 	}
-	return o
+	if len(e.RootHashes) > 0 {
+		// rv := make([]object.Hash, len(e.RootHashes))
+		// for i, v := range e.RootHashes {
+		// 	rv[i] = v
+		// }
+		r.Data["rootHashes:ar"] = e.RootHashes
+	}
+	r.Data["expiry:s"] = e.Expiry
+	return r
 }
 
 func (e *Subscription) FromObject(o *object.Object) error {

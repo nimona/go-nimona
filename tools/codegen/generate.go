@@ -73,11 +73,43 @@ func (e *{{ structName $object.Name }}) Type() string {
 }
 
 func (e {{ structName $object.Name }}) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	r := &object.Object{
+		Type: "{{ $object.Name }}",
+		Metadata: e.Metadata,
+		Data: map[string]interface{}{},
 	}
-	return o
+	{{- range $member := $object.Members }}
+		{{- if $member.IsRepeated }}
+			if len(e.{{ $member.Name }}) > 0 {
+			{{- if $member.IsObject }}
+				rv := make([]*object.Object, len(e.{{ $member.Name }}))
+				for i, v := range e.{{ $member.Name }} {
+					{{- if eq $member.Type "nimona.io/object.Object" }}
+					rv[i] = v
+					{{- else }}
+					rv[i] = v.ToObject()
+					{{- end }}
+				}
+				r.Data["{{ key $member }}"] = rv
+			{{- else }}
+				r.Data["{{ key $member }}"] = e.{{ $member.Name }}
+			{{- end }}
+			}
+		{{- else if $member.IsPrimitive }}
+			r.Data["{{ key $member }}"] = e.{{ $member.Name }}
+		{{- else if $member.IsObject }}
+			if e.{{ $member.Name }} != nil {
+				{{- if eq $member.Type "nimona.io/object.Object" }}
+				r.Data["{{ key $member }}"] = e.{{ $member.Name }}
+				{{- else }}
+				r.Data["{{ key $member }}"] = e.{{ $member.Name }}.ToObject()
+				{{- end }}
+			}
+		{{- else }}
+			r.Data["{{ key $member }}"] = e.{{ $member.Name }}
+		{{- end }}
+	{{- end }}
+	return r
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
@@ -98,6 +130,16 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				h = "a" + h
 			}
 			return "`nimona:\"" + m.Tag + ":" + h + ",omitempty\"`"
+		},
+		"key": func(m Member) string {
+			h := m.Hint
+			if m.Type == "nimona.io/object.Object" {
+				h = "o"
+			}
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			return m.Tag + ":" + h
 		},
 		"tagMetadata": func() string {
 			return "`nimona:\"metadata:m,omitempty\"`"
