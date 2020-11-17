@@ -16,3 +16,9 @@ func WithResolver(res resolver.Resolver) func(*manager) {
 		r.resolver = res
 	}
 }
+
+func WithChunkSize(bytes int) func(*manager) {
+	return func(r *manager) {
+		r.chunkSize = bytes
+	}
+}

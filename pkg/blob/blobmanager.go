@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/go-units"
 	"github.com/gammazero/workerpool"
 
 	"nimona.io/pkg/context"
@@ -32,6 +31,7 @@ type (
 	manager struct {
 		resolver      resolver.Resolver
 		objectmanager objectmanager.ObjectManager
+		chunkSize     int
 	}
 	Option func(*manager)
 )
@@ -40,7 +40,9 @@ func NewManager(
 	ctx context.Context,
 	opts ...Option,
 ) Manager {
-	mgr := &manager{}
+	mgr := &manager{
+		chunkSize: maxCapacity,
+	}
 	for _, opt := range opts {
 		opt(mgr)
 	}
@@ -73,7 +75,7 @@ func (r *manager) ImportFromFile(
 
 	// go through the file, makee chunks, and store them
 	for {
-		chunkBody := make([]byte, units.MB)
+		chunkBody := make([]byte, r.chunkSize)
 		n, err := inputFile.Read(chunkBody)
 		if err != nil && err != io.EOF {
 			return nil, err
@@ -86,7 +88,7 @@ func (r *manager) ImportFromFile(
 		}
 		// construct the next chunk
 		chunk := &Chunk{
-			Data: chunkBody,
+			Data: chunkBody[:n],
 		}
 		chunkObj := chunk.ToObject()
 		// store it

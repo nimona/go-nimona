@@ -3,9 +3,11 @@ package blob
 import (
 	"bufio"
 	"io"
+
+	"github.com/docker/go-units"
 )
 
-const maxCapacity = 1000 * 1000
+const maxCapacity = units.MB
 
 type Reader interface {
 	Read(p []byte) (n int, err error)
