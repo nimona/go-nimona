@@ -15,7 +15,7 @@ require (
 	github.com/google/go-cmp v0.5.3
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.4
+	github.com/mattn/go-sqlite3 v1.14.5
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
