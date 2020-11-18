@@ -26,24 +26,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 645390,
-            "unit": "ns/op",
-            "extra": "1658 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 127499798,
-            "unit": "ns/op",
-            "extra": "8 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 10459145082,
-            "unit": "ns/op",
-            "extra": "1 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 139239,
             "unit": "ns/op",
