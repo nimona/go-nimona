@@ -126,3 +126,33 @@ func TestNewHash(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkHash(b *testing.B) {
+	o := &Object{
+		Type: "blob",
+		Data: map[string]interface{}{
+			"filename:s": "foo",
+			"chunks:ao": []*Object{{
+				Type: "chunk",
+				Metadata: Metadata{
+					Owner: "foo",
+				},
+				Data: map[string]interface{}{
+					"index:i": int64(1),
+				},
+			}, {
+				Type: "chunk",
+				Metadata: Metadata{
+					Owner: "foo2",
+				},
+				Data: map[string]interface{}{
+					"index:i": int64(2),
+					"data:d":  []byte("12345690"),
+				},
+			}},
+		},
+	}
+	for n := 0; n < b.N; n++ {
+		NewHash(o) // nolint: errcheck
+	}
+}
