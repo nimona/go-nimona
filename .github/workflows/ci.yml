@@ -49,6 +49,40 @@ jobs:
           GOMAXPROCS: 4
           VERBOSE: "true"
 
+  benchmark:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Run benchmark
+        run: make benchmark | tee output.txt
+
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          fail-on-alert: true
+          comment-on-alert: true
+          alert-comment-cc-users: '@geoah'
+          external-data-json-path: ./cache/benchmark-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-always: true
+          auto-push: false
+
   cover:
     name: Code coverage
     runs-on: ubuntu-latest
@@ -89,6 +123,36 @@ jobs:
         run: make e2e
         env:
           VERBOSE: "true"
+
+  benchmark-store:
+    name: Store benchmarks
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out the code
+        uses: actions/checkout@v1
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Run benchmark
+        run: make benchmark | tee output.txt
+
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          github-token: ${{ secrets.BOT_PAT }}
+          auto-push: true
 
   build:
     name: Build
