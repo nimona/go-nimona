@@ -52,6 +52,7 @@ jobs:
   benchmark:
     name: Benchmarks
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
@@ -71,7 +72,6 @@ jobs:
           output-file-path: output.txt
           fail-on-alert: true
           comment-on-alert: true
-          alert-comment-cc-users: '@geoah'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-always: true
           auto-push: false
@@ -145,6 +145,7 @@ jobs:
           tool: 'go'
           output-file-path: output.txt
           github-token: ${{ secrets.BOT_PAT }}
+          comment-on-alert: true
           auto-push: true
 
   build:
