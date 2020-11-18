@@ -12,7 +12,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.31
+          version: v1.32
         env:
           VERBOSE: "true"
 
@@ -73,7 +73,6 @@ jobs:
           fail-on-alert: true
           comment-on-alert: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-always: true
           auto-push: false
 
   cover:
