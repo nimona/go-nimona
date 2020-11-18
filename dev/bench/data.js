@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1605667509227,
+  "lastUpdate": 1605707929035,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -72,6 +72,42 @@ window.BENCHMARK_DATA = {
             "value": 91.6,
             "unit": "ns/op",
             "extra": "13436479 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "0ac7f68ad0132fcb0d63f9d994b566392eaea556",
+          "message": "chore(ci): only store on master",
+          "timestamp": "2020-11-18T13:57:17Z",
+          "tree_id": "2581f292278acf1775d00ae657f2771a4087a080",
+          "url": "https://github.com/nimona/go-nimona/commit/0ac7f68ad0132fcb0d63f9d994b566392eaea556"
+        },
+        "date": 1605707928535,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkHash",
+            "value": 141862,
+            "unit": "ns/op",
+            "extra": "8306 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 97.2,
+            "unit": "ns/op",
+            "extra": "13403028 times\n2 procs"
           }
         ]
       }
