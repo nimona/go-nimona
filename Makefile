@@ -67,7 +67,7 @@ endef
 
 $(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.32))
 $(eval $(call tool,gold,go101.org/gold@v0.1.1))
 $(eval $(call tool,goreleaser,github.com/goreleaser/goreleaser@v0.143.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.4.3))
