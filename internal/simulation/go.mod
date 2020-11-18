@@ -13,5 +13,3 @@ require (
 )
 
 replace nimona.io => ../../
-
-replace github.com/mitchellh/mapstructure => github.com/geoah/mapstructure v1.3.4-rc4
