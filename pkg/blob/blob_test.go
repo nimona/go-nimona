@@ -33,42 +33,6 @@ func TestToBlob(t *testing.T) {
 	}
 }
 
-func BenchmarkToBlob1(b *testing.B) {
-	tempFile := newTestFile(1)
-
-	for n := 0; n < b.N; n++ {
-		fr, _ := os.Open(tempFile)
-		_, err := blob.ToBlob(fr)
-		if err != nil {
-			b.Fail()
-		}
-	}
-}
-
-func BenchmarkToBlob100(b *testing.B) {
-	tempFile := newTestFile(100)
-
-	for n := 0; n < b.N; n++ {
-		fr, _ := os.Open(tempFile)
-		_, err := blob.ToBlob(fr)
-		if err != nil {
-			b.Fail()
-		}
-	}
-}
-
-func BenchmarkToBlob1000(b *testing.B) {
-	tempFile := newTestFile(1000)
-
-	for n := 0; n < b.N; n++ {
-		fr, _ := os.Open(tempFile)
-		_, err := blob.ToBlob(fr)
-		if err != nil {
-			b.Fail()
-		}
-	}
-}
-
 // size in megabytes
 func newTestFile(size int) string {
 	return newTestFileBytes(size * 1000 * 1000)
