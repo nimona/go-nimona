@@ -3,8 +3,8 @@ package object
 import (
 	"reflect"
 
+	"github.com/geoah/mapstructure"
 	"github.com/mitchellh/copystructure"
-	"github.com/mitchellh/mapstructure"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
