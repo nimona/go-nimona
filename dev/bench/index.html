@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes" />
     <style>
       html {
-        font-family: BlinkMacSystemFont,-apple-system,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+        font-family: Helvetica;
         -webkit-font-smoothing: antialiased;
         background-color: #fff;
         font-size: 16px;
@@ -13,13 +13,16 @@
       body {
         color: #4a4a4a;
         margin: 8px;
-        font-size: 1em;
+        font-size: 0.8em;
         font-weight: 400;
       }
       header {
         margin-bottom: 8px;
         display: flex;
         flex-direction: column;
+      }
+      h1 {
+
       }
       main {
         width: 100%;
@@ -56,20 +59,11 @@
         display: flex;
         align-items: center;
       }
-      .header-label {
-        margin-right: 4px;
-      }
       .benchmark-set {
         margin: 8px 0;
         width: 100%;
         display: flex;
         flex-direction: column;
-      }
-      .benchmark-title {
-        font-size: 3rem;
-        font-weight: 600;
-        word-break: break-word;
-        text-align: center;
       }
       .benchmark-graphs {
         display: flex;
@@ -77,16 +71,16 @@
         justify-content: space-around;
         align-items: center;
         flex-wrap: wrap;
-        width: 100%;
       }
       .benchmark-chart {
-        max-width: 1000px;
+        max-width: 500px;
       }
     </style>
     <title>Benchmarks</title>
   </head>
 
   <body>
+    <main id="main"></main>
     <header id="header">
       <div class="header-item">
         <strong class="header-label">Last Update:</strong>
@@ -94,15 +88,13 @@
       </div>
       <div class="header-item">
         <strong class="header-label">Repository:</strong>
-        <a id="repository-link" rel="noopener"></a>
+        <a rel="noopener" href="https://github.com/nimona/go-nimona">nimona/go-nimona</a>
+      </div>
+      <div class="header-item">
+        <strong class="header-label">Powered by:</strong>
+        <a rel="noopener" href="https://github.com/marketplace/actions/continuous-benchmark">github-action-benchmark</a>
       </div>
     </header>
-    <main id="main"></main>
-    <footer>
-      <button id="dl-button">Download data as JSON</button>
-      <div class="spacer"></div>
-      <div class="small">Powered by <a rel="noopener" href="https://github.com/marketplace/actions/continuous-benchmark">github-action-benchmark</a></div>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.2/dist/Chart.min.js"></script>
     <script src="data.js"></script>
@@ -142,18 +134,6 @@
 
           // Render header
           document.getElementById('last-update').textContent = new Date(data.lastUpdate).toString();
-          const repoLink = document.getElementById('repository-link');
-          repoLink.href = data.repoUrl;
-          repoLink.textContent = data.repoUrl;
-
-          // Render footer
-          document.getElementById('dl-button').onclick = () => {
-            const dataUrl = 'data:,' + JSON.stringify(data, null, 2);
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = 'benchmark_data.json';
-            a.click();
-          };
 
           // Prepare data points for charts
           return Object.keys(data.entries).map(name => ({
@@ -250,7 +230,7 @@
 
             const nameElem = document.createElement('h1');
             nameElem.className = 'benchmark-title';
-            nameElem.textContent = name;
+            nameElem.textContent = "Nimona benchmarks";
             setElem.appendChild(nameElem);
 
             const graphsElem = document.createElement('div');
