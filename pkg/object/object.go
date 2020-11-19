@@ -24,6 +24,9 @@ type (
 	Typed interface {
 		Type() string
 	}
+	Mapped interface {
+		ToObjectMap() map[string]interface{}
+	}
 	Hash   string
 	Object struct {
 		Type     string                 `nimona:"type:s,omitempty"`
@@ -80,7 +83,9 @@ func FromMap(m map[string]interface{}) *Object {
 }
 
 func (o Object) ToMap() map[string]interface{} {
-	m, err := objectToMap(&o)
+	m, err := objectToMap(&o, &NormalizeConfig{
+		ObjectToMap: true,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -356,9 +361,13 @@ func decode(
 	return md, nil
 }
 
-func objectToMap(o *Object) (map[string]interface{}, error) {
-	d := map[string]interface{}{}
-	if _, err := decode(o.Data, &d, mapHookfunc()); err != nil {
+func objectToMap(o *Object, c *NormalizeConfig) (map[string]interface{}, error) {
+	// d := map[string]interface{}{}
+	// if _, err := decode(o.Data, &d, mapHookfunc()); err != nil {
+	// 	return nil, err
+	// }
+	d, err := normalizeObject(o.Data, c)
+	if err != nil {
 		return nil, err
 	}
 	r := map[string]interface{}{
@@ -380,7 +389,7 @@ func mapToObject(m map[string]interface{}) (*Object, error) {
 		Data:     map[string]interface{}{},
 	}
 	if mm, ok := m[keyData]; ok {
-		d, err := normalizeFromKey(":m", mm)
+		d, err := normalizeFromKey(":m", mm, &NormalizeConfig{})
 		if err != nil {
 			return nil, err
 		}
@@ -389,7 +398,7 @@ func mapToObject(m map[string]interface{}) (*Object, error) {
 		}
 	}
 	if mm, ok := m[keyMetadata]; ok {
-		d, err := normalizeFromKey(":m", mm)
+		d, err := normalizeFromKey(":m", mm, &NormalizeConfig{})
 		if err != nil {
 			return nil, err
 		}

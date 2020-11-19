@@ -10,6 +10,10 @@ import (
 	"nimona.io/pkg/errors"
 )
 
+type NormalizeConfig struct {
+	ObjectToMap bool
+}
+
 // Normalize maps to get them ready to be used as objects.
 // This is supposed to convert a map's values into something more usable by
 // using the type hints from the key as guide.
@@ -24,12 +28,12 @@ import (
 // * `"some-int:i": "7"` becomes `"some-int:i": uint64(7)`
 //
 // NOTE: This should work for the most part but needs additional testing.
-func Normalize(i interface{}) (map[string]interface{}, error) {
-	return normalizeObject(i)
+func Normalize(i interface{}, c *NormalizeConfig) (map[string]interface{}, error) {
+	return normalizeObject(i, c)
 }
 
 // nolint: gocritic
-func normalizeFromKey(k string, i interface{}) (interface{}, error) {
+func normalizeFromKey(k string, i interface{}, c *NormalizeConfig) (interface{}, error) {
 	if i == nil {
 		return nil, nil
 	}
@@ -64,29 +68,64 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 				}
 				return m, nil
 			case 'o':
-				switch v := i.(type) {
-				case []*Object:
-					return i, nil
-				case []interface{}:
-					os := make([]*Object, len(v))
-					for vk, vv := range v {
-						o, err := Encode(vv)
-						if err != nil {
-							return nil, err
+				if c.ObjectToMap {
+					switch v := i.(type) {
+					case []*Object:
+						os := make([]map[string]interface{}, len(v))
+						for vk, vv := range v {
+							vm, err := objectToMap(vv, c)
+							if err != nil {
+								return nil, err
+							}
+							os[vk] = vm
 						}
-						os[vk] = o
+						return os, nil
+					case []interface{}:
+						panic("not sure what to do for oa []interface{}")
+						// os := make([]map[string]interface{}, len(v))
+						// for vk, vv := range v {
+						// 	vm, err := objectToMap(vv, c)
+						// 	if err != nil {
+						// 		return nil, err
+						// 	}
+						// 	os[vk] = vm
+						// }
+						// return os, nil
+					default:
+						return nil, errors.Wrap(
+							err,
+							fmt.Errorf(
+								"invalid ao type, t=%s",
+								reflect.TypeOf(i).String(),
+							),
+						)
 					}
-					return os, nil
-				default:
-					return nil, errors.Wrap(
-						err,
-						fmt.Errorf(
-							"invalid ao type, t=%s",
-							reflect.TypeOf(i).String(),
-						),
-					)
+				} else {
+					switch v := i.(type) {
+					case []*Object:
+						return i, nil
+					case []interface{}:
+						os := make([]*Object, len(v))
+						for vk, vv := range v {
+							o, err := Encode(vv)
+							if err != nil {
+								return nil, err
+							}
+							os[vk] = o
+						}
+						return os, nil
+					default:
+						return nil, errors.Wrap(
+							err,
+							fmt.Errorf(
+								"invalid ao type, t=%s",
+								reflect.TypeOf(i).String(),
+							),
+						)
+					}
 				}
 			case 'm':
+				// TODO normalize object?
 				return i, nil
 				// v := reflect.ValueOf(i)
 				// m := make([]interface{}, v.Len())
@@ -211,9 +250,37 @@ func normalizeFromKey(k string, i interface{}) (interface{}, error) {
 			}
 		}
 	case 'm':
-		return normalizeObject(i)
+		return normalizeObject(i, c)
 	case 'o':
-		return Encode(i)
+		if c.ObjectToMap {
+			switch v := i.(type) {
+			case map[string]interface{}:
+				return normalizeObject(v, c)
+			case *Object:
+				return objectToMap(v, c)
+			case interface{ ToObjectMap() map[string]interface{} }:
+				return v.ToObjectMap(), nil
+			default:
+				return nil, fmt.Errorf(
+					"invalid o type, t=%s",
+					reflect.TypeOf(i).String(),
+				)
+			}
+		} else {
+			switch v := i.(type) {
+			case *Object:
+				return v, nil
+			case interface{ ToObject() map[string]interface{} }:
+				return v.ToObject(), nil
+			case map[string]interface{}:
+				return Encode(i)
+			default:
+				return nil, fmt.Errorf(
+					"invalid o type, t=%s",
+					reflect.TypeOf(i).String(),
+				)
+			}
+		}
 	case 's':
 		return normalizeString(i)
 	case 'd':
@@ -408,12 +475,21 @@ func normalizeFloat(i interface{}) (float64, error) {
 	return 0, errors.New("invalid float type")
 }
 
-func normalizeObject(i interface{}) (map[string]interface{}, error) {
+func normalizeObject(i interface{}, c *NormalizeConfig) (map[string]interface{}, error) {
 	nm := map[string]interface{}{}
 	switch m := i.(type) {
+	case Mapped:
+		// TODO this ignores the config
+		return m.ToObjectMap(), nil
+	case *Object:
+		mm, err := objectToMap(m, c)
+		if err != nil {
+			return nil, fmt.Errorf("error normalising object, err: %w", err)
+		}
+		return mm, nil
 	case map[string]interface{}:
 		for k, v := range m {
-			nv, err := normalizeFromKey(k, v)
+			nv, err := normalizeFromKey(k, v, c)
 			if err != nil {
 				return nil, errors.Wrap(err,
 					errors.New("error normalising value for map with key "+k),
@@ -428,7 +504,7 @@ func normalizeObject(i interface{}) (map[string]interface{}, error) {
 			if !ok {
 				return nil, errors.New("invalid map key")
 			}
-			nv, err := normalizeFromKey(s, v)
+			nv, err := normalizeFromKey(s, v, c)
 			if err != nil {
 				return nil, errors.Wrap(err,
 					errors.New("error normalising value for map with key "+s),
