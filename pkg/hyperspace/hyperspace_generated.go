@@ -44,18 +44,30 @@ func (e Announcement) ToObject() *object.Object {
 		r.Data["connectionInfo:o"] = e.ConnectionInfo.ToObject()
 	}
 	if len(e.PeerVector) > 0 {
-		// rv := make([]uint64, len(e.PeerVector))
-		// for i, v := range e.PeerVector {
-		// 	rv[i] = v
-		// }
 		r.Data["peerVector:au"] = e.PeerVector
 	}
 	if len(e.PeerCapabilities) > 0 {
-		// rv := make([]string, len(e.PeerCapabilities))
-		// for i, v := range e.PeerCapabilities {
-		// 	rv[i] = v
-		// }
 		r.Data["peerCapabilities:as"] = e.PeerCapabilities
+	}
+	return r
+}
+
+func (e Announcement) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["version:i"] = e.Version
+	if e.ConnectionInfo != nil {
+		d["connectionInfo:o"] = e.ConnectionInfo.ToObject()
+	}
+	if len(e.PeerVector) > 0 {
+		d["peerVector:au"] = e.PeerVector
+	}
+	if len(e.PeerCapabilities) > 0 {
+		d["peerCapabilities:as"] = e.PeerCapabilities
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/hyperspace.Announcement",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }
@@ -76,18 +88,27 @@ func (e LookupRequest) ToObject() *object.Object {
 	}
 	r.Data["nonce:s"] = e.Nonce
 	if len(e.QueryVector) > 0 {
-		// rv := make([]uint64, len(e.QueryVector))
-		// for i, v := range e.QueryVector {
-		// 	rv[i] = v
-		// }
 		r.Data["queryVector:au"] = e.QueryVector
 	}
 	if len(e.RequireCapabilities) > 0 {
-		// rv := make([]string, len(e.RequireCapabilities))
-		// for i, v := range e.RequireCapabilities {
-		// 	rv[i] = v
-		// }
 		r.Data["requireCapabilities:as"] = e.RequireCapabilities
+	}
+	return r
+}
+
+func (e LookupRequest) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	if len(e.QueryVector) > 0 {
+		d["queryVector:au"] = e.QueryVector
+	}
+	if len(e.RequireCapabilities) > 0 {
+		d["requireCapabilities:as"] = e.RequireCapabilities
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/hyperspace.LookupRequest",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }
@@ -108,10 +129,6 @@ func (e LookupResponse) ToObject() *object.Object {
 	}
 	r.Data["nonce:s"] = e.Nonce
 	if len(e.QueryVector) > 0 {
-		// rv := make([]uint64, len(e.QueryVector))
-		// for i, v := range e.QueryVector {
-		// 	rv[i] = v
-		// }
 		r.Data["queryVector:au"] = e.QueryVector
 	}
 	if len(e.Announcements) > 0 {
@@ -120,6 +137,27 @@ func (e LookupResponse) ToObject() *object.Object {
 			rv[i] = v.ToObject()
 		}
 		r.Data["announcements:ao"] = rv
+	}
+	return r
+}
+
+func (e LookupResponse) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	if len(e.QueryVector) > 0 {
+		d["queryVector:au"] = e.QueryVector
+	}
+	if len(e.Announcements) > 0 {
+		rv := make([]*object.Object, len(e.Announcements))
+		for i, v := range e.Announcements {
+			rv[i] = v.ToObject()
+		}
+		d["announcements:ao"] = rv
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/hyperspace.LookupResponse",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }

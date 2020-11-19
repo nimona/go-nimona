@@ -32,6 +32,19 @@ func (e DataForward) ToObject() *object.Object {
 	return r
 }
 
+func (e DataForward) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["recipient:s"] = e.Recipient
+	d["ephermeral:s"] = e.Ephermeral
+	d["data:d"] = e.Data
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/network.DataForward",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *DataForward) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }

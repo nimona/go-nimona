@@ -32,6 +32,19 @@ func (e Request) ToObject() *Object {
 	return r
 }
 
+func (e Request) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
+	d["objectHash:r"] = e.ObjectHash
+	d["excludedNestedObjects:b"] = e.ExcludedNestedObjects
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/Request",
+		"metadata:m": MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *Request) FromObject(o *Object) error {
 	return Decode(o, e)
 }
@@ -49,6 +62,20 @@ func (e Response) ToObject() *Object {
 	r.Data["requestID:s"] = e.RequestID
 	if e.Object != nil {
 		r.Data["object:o"] = e.Object
+	}
+	return r
+}
+
+func (e Response) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
+	if e.Object != nil {
+		d["object:o"] = e.Object
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/Response",
+		"metadata:m": MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }

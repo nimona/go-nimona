@@ -37,6 +37,17 @@ func (e ConversationStreamRoot) ToObject() *object.Object {
 	return r
 }
 
+func (e ConversationStreamRoot) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	r := map[string]interface{}{
+		"type:s":     "stream:poc.nimona.io/conversation",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -56,6 +67,18 @@ func (e ConversationSetNickname) ToObject() *object.Object {
 	return r
 }
 
+func (e ConversationSetNickname) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["datetime:s"] = e.Datetime
+	d["nickname:s"] = e.Nickname
+	r := map[string]interface{}{
+		"type:s":     "poc.nimona.io/conversation.SetNickname",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *ConversationSetNickname) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -72,6 +95,18 @@ func (e ConversationMessageAdded) ToObject() *object.Object {
 	}
 	r.Data["datetime:s"] = e.Datetime
 	r.Data["body:s"] = e.Body
+	return r
+}
+
+func (e ConversationMessageAdded) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["datetime:s"] = e.Datetime
+	d["body:s"] = e.Body
+	r := map[string]interface{}{
+		"type:s":     "poc.nimona.io/conversation.MessageAdded",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 

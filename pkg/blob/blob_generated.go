@@ -31,6 +31,17 @@ func (e Chunk) ToObject() *object.Object {
 	return r
 }
 
+func (e Chunk) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["data:d"] = e.Data
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/Chunk",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *Chunk) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -51,6 +62,23 @@ func (e Blob) ToObject() *object.Object {
 			rv[i] = v.ToObject()
 		}
 		r.Data["chunks:ao"] = rv
+	}
+	return r
+}
+
+func (e Blob) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	if len(e.Chunks) > 0 {
+		rv := make([]*object.Object, len(e.Chunks))
+		for i, v := range e.Chunks {
+			rv[i] = v.ToObject()
+		}
+		d["chunks:ao"] = rv
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/Blob",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }

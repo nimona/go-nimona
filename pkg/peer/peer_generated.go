@@ -28,10 +28,6 @@ func (e ConnectionInfo) ToObject() *object.Object {
 	}
 	r.Data["publicKey:s"] = e.PublicKey
 	if len(e.Addresses) > 0 {
-		// rv := make([]string, len(e.Addresses))
-		// for i, v := range e.Addresses {
-		// 	rv[i] = v
-		// }
 		r.Data["addresses:as"] = e.Addresses
 	}
 	if len(e.Relays) > 0 {
@@ -40,6 +36,27 @@ func (e ConnectionInfo) ToObject() *object.Object {
 			rv[i] = v.ToObject()
 		}
 		r.Data["relays:ao"] = rv
+	}
+	return r
+}
+
+func (e ConnectionInfo) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["publicKey:s"] = e.PublicKey
+	if len(e.Addresses) > 0 {
+		d["addresses:as"] = e.Addresses
+	}
+	if len(e.Relays) > 0 {
+		rv := make([]*object.Object, len(e.Relays))
+		for i, v := range e.Relays {
+			rv[i] = v.ToObject()
+		}
+		d["relays:ao"] = rv
+	}
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/peer.ConnectionInfo",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
 	}
 	return r
 }
