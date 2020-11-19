@@ -37,6 +37,19 @@ func (e Certificate) ToObject() *Object {
 	return r
 }
 
+func (e Certificate) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	d["created:s"] = e.Created
+	d["expires:s"] = e.Expires
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/Certificate",
+		"metadata:m": MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *Certificate) FromObject(o *Object) error {
 	return Decode(o, e)
 }
@@ -56,20 +69,33 @@ func (e CertificateRequest) ToObject() *Object {
 	r.Data["applicationURL:s"] = e.ApplicationURL
 	r.Data["subject:s"] = e.Subject
 	if len(e.Resources) > 0 {
-		// rv := make([]string, len(e.Resources))
-		// for i, v := range e.Resources {
-		// 	rv[i] = v
-		// }
 		r.Data["resources:as"] = e.Resources
 	}
 	if len(e.Actions) > 0 {
-		// rv := make([]string, len(e.Actions))
-		// for i, v := range e.Actions {
-		// 	rv[i] = v
-		// }
 		r.Data["actions:as"] = e.Actions
 	}
 	r.Data["nonce:s"] = e.Nonce
+	return r
+}
+
+func (e CertificateRequest) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["applicationName:s"] = e.ApplicationName
+	d["applicationDescription:s"] = e.ApplicationDescription
+	d["applicationURL:s"] = e.ApplicationURL
+	d["subject:s"] = e.Subject
+	if len(e.Resources) > 0 {
+		d["resources:as"] = e.Resources
+	}
+	if len(e.Actions) > 0 {
+		d["actions:as"] = e.Actions
+	}
+	d["nonce:s"] = e.Nonce
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/CertificateRequest",
+		"metadata:m": MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 

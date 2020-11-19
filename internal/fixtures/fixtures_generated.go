@@ -40,27 +40,35 @@ func (e TestPolicy) ToObject() *object.Object {
 		Data:     map[string]interface{}{},
 	}
 	if len(e.Subjects) > 0 {
-		// rv := make([]string, len(e.Subjects))
-		// for i, v := range e.Subjects {
-		// 	rv[i] = v
-		// }
 		r.Data["subjects:as"] = e.Subjects
 	}
 	if len(e.Resources) > 0 {
-		// rv := make([]string, len(e.Resources))
-		// for i, v := range e.Resources {
-		// 	rv[i] = v
-		// }
 		r.Data["resources:as"] = e.Resources
 	}
 	if len(e.Conditions) > 0 {
-		// rv := make([]string, len(e.Conditions))
-		// for i, v := range e.Conditions {
-		// 	rv[i] = v
-		// }
 		r.Data["conditions:as"] = e.Conditions
 	}
 	r.Data["action:s"] = e.Action
+	return r
+}
+
+func (e TestPolicy) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	if len(e.Subjects) > 0 {
+		d["subjects:as"] = e.Subjects
+	}
+	if len(e.Resources) > 0 {
+		d["resources:as"] = e.Resources
+	}
+	if len(e.Conditions) > 0 {
+		d["conditions:as"] = e.Conditions
+	}
+	d["action:s"] = e.Action
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestPolicy",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 
@@ -83,6 +91,18 @@ func (e TestStream) ToObject() *object.Object {
 	return r
 }
 
+func (e TestStream) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	d["createdDateTime:s"] = e.CreatedDateTime
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestStream",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *TestStream) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -101,6 +121,17 @@ func (e TestSubscribed) ToObject() *object.Object {
 	return r
 }
 
+func (e TestSubscribed) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestSubscribed",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *TestSubscribed) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -116,6 +147,17 @@ func (e TestUnsubscribed) ToObject() *object.Object {
 		Data:     map[string]interface{}{},
 	}
 	r.Data["nonce:s"] = e.Nonce
+	return r
+}
+
+func (e TestUnsubscribed) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["nonce:s"] = e.Nonce
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestUnsubscribed",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 

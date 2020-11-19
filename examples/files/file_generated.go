@@ -29,6 +29,18 @@ func (e File) ToObject() *object.Object {
 	return r
 }
 
+func (e File) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["name:s"] = e.Name
+	d["blob:r"] = e.Blob
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/File",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *File) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }

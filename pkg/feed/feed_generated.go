@@ -41,6 +41,18 @@ func (e FeedStreamRoot) ToObject() *object.Object {
 	return r
 }
 
+func (e FeedStreamRoot) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["objectType:s"] = e.ObjectType
+	d["datetime:s"] = e.Datetime
+	r := map[string]interface{}{
+		"type:s":     "stream:nimona.io/feed",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
 func (e *FeedStreamRoot) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
@@ -56,14 +68,25 @@ func (e Added) ToObject() *object.Object {
 		Data:     map[string]interface{}{},
 	}
 	if len(e.ObjectHash) > 0 {
-		// rv := make([]object.Hash, len(e.ObjectHash))
-		// for i, v := range e.ObjectHash {
-		// 	rv[i] = v
-		// }
 		r.Data["objectHash:ar"] = e.ObjectHash
 	}
 	r.Data["sequence:i"] = e.Sequence
 	r.Data["datetime:s"] = e.Datetime
+	return r
+}
+
+func (e Added) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	if len(e.ObjectHash) > 0 {
+		d["objectHash:ar"] = e.ObjectHash
+	}
+	d["sequence:i"] = e.Sequence
+	d["datetime:s"] = e.Datetime
+	r := map[string]interface{}{
+		"type:s":     "event:nimona.io/feed.Added",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 
@@ -82,14 +105,25 @@ func (e Removed) ToObject() *object.Object {
 		Data:     map[string]interface{}{},
 	}
 	if len(e.ObjectHash) > 0 {
-		// rv := make([]object.Hash, len(e.ObjectHash))
-		// for i, v := range e.ObjectHash {
-		// 	rv[i] = v
-		// }
 		r.Data["objectHash:ar"] = e.ObjectHash
 	}
 	r.Data["sequence:i"] = e.Sequence
 	r.Data["datetime:s"] = e.Datetime
+	return r
+}
+
+func (e Removed) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	if len(e.ObjectHash) > 0 {
+		d["objectHash:ar"] = e.ObjectHash
+	}
+	d["sequence:i"] = e.Sequence
+	d["datetime:s"] = e.Datetime
+	r := map[string]interface{}{
+		"type:s":     "event:nimona.io/feed.Removed",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
 	return r
 }
 

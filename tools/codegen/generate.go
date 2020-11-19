@@ -112,6 +112,47 @@ func (e {{ structName $object.Name }}) ToObject() *object.Object {
 	return r
 }
 
+func (e {{ structName $object.Name }}) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	{{- range $member := $object.Members }}
+		{{- if $member.IsRepeated }}
+			if len(e.{{ $member.Name }}) > 0 {
+			{{- if $member.IsObject }}
+				rv := make([]*object.Object, len(e.{{ $member.Name }}))
+				for i, v := range e.{{ $member.Name }} {
+					{{- if eq $member.Type "nimona.io/object.Object" }}
+					rv[i] = v
+					{{- else }}
+					rv[i] = v.ToObject()
+					{{- end }}
+				}
+				d["{{ key $member }}"] = rv
+			{{- else }}
+				d["{{ key $member }}"] = e.{{ $member.Name }}
+			{{- end }}
+			}
+		{{- else if $member.IsPrimitive }}
+			d["{{ key $member }}"] = e.{{ $member.Name }}
+		{{- else if $member.IsObject }}
+			if e.{{ $member.Name }} != nil {
+				{{- if eq $member.Type "nimona.io/object.Object" }}
+				d["{{ key $member }}"] = e.{{ $member.Name }}
+				{{- else }}
+				d["{{ key $member }}"] = e.{{ $member.Name }}.ToObject()
+				{{- end }}
+			}
+		{{- else }}
+			d["{{ key $member }}"] = e.{{ $member.Name }}
+		{{- end }}
+	{{- end }}
+	r := map[string]interface{}{
+		"type:s": "{{ $object.Name }}",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m": d,
+	}
+	return r
+}
+
 func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
