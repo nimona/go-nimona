@@ -54,6 +54,22 @@ resource "local_file" "volumes" {
   })
 }
 
+resource "local_file" "prometheus_jobs" {
+  for_each = {
+    for server in var.servers :
+    server.name => server if server.group == "metrics"
+  }
+
+  filename = join("/", [
+    path.module, "host_vars", each.value.hostname, "prometheus_jobs.yml"
+  ])
+  file_permission = "0644"
+  content = templatefile("${path.module}/templates/prometheus_jobs.tpl", {
+    servers_by_group = local.servers_by_group
+    prometheus_jobs  = var.prometheus_jobs
+  })
+}
+
 resource "null_resource" "run" {
   triggers = { always_run = timestamp() }
 

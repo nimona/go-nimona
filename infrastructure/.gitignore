@@ -1,3 +1,4 @@
 */.terraform/
 */ssh/id_rsa
 */.envrc.local
+*/.pyenv

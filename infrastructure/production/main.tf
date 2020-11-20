@@ -70,4 +70,12 @@ module "ansible" {
       merge({ group = name }, volume)
     ]
   ])
+
+  prometheus_jobs = flatten([
+    for group, details in local.server_groups :
+    [
+      for job in details.prometheus_jobs :
+      merge({ group = group }, job)
+    ] if length(lookup(details, "prometheus_jobs", [])) > 0
+  ])
 }

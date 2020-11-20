@@ -4,3 +4,8 @@
   roles:
     - role: nimona_bootstrap
       tags: ["services", "nimona", "bootstrap"]
+- hosts:
+    - metrics
+  roles:
+    - role: prometheus
+      tags: ["services", "metrics", "prometheus"]

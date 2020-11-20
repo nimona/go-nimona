@@ -1,0 +1,44 @@
+---
+- name: Ensure configuration directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ prometheus_data_path }}/config"
+    - "{{ prometheus_data_path }}/config/rules"
+    - "{{ prometheus_data_path }}/config/file_sd"
+
+- name: alerting rules file
+  template:
+    src: "alert.rules.j2"
+    dest: "{{ prometheus_data_path }}/config/rules/ansible_managed.rules"
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: 0640
+  when:
+    - prometheus_alert_rules != []
+  notify: restart prometheus
+
+- name: configure prometheus
+  template:
+    src: "prometheus.yml.j2"
+    dest: "{{ prometheus_data_path }}/config/prometheus.yml"
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: 0640
+  notify: restart prometheus
+
+- name: configure prometheus static targets
+  copy:
+    content: |
+      #jinja2: lstrip_blocks: True
+      {{ item.value | to_nice_yaml(indent=2) }}
+    dest: "{{ prometheus_data_path }}/config/file_sd/{{ item.key }}.yml"
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: 0640
+  with_dict: "{{ prometheus_targets }}"
+  when: prometheus_targets != {}
