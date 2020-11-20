@@ -150,11 +150,18 @@ check-tidy:
 	cp go.mod go.mod.tidy-check
 	cp go.sum go.sum.tidy-check
 	go mod tidy
-	-diff go.mod go.mod.tidy-check
-	-diff go.sum go.sum.tidy-check
-	-rm -f go.mod go.sum
-	-mv go.mod.tidy-check go.mod
-	-mv go.sum.tidy-check go.sum
+	( \
+		diff go.mod go.mod.tidy-check && \
+		diff go.sum go.sum.tidy-check && \
+		rm -f go.mod go.sum && \
+		mv go.mod.tidy-check go.mod && \
+		mv go.sum.tidy-check go.sum \
+	) || ( \
+		rm -f go.mod go.sum && \
+		mv go.mod.tidy-check go.mod && \
+		mv go.sum.tidy-check go.sum; \
+		exit 1 \
+	)
 
 # Install deps
 .PHONY: deps
