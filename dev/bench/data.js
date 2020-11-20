@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1605738370733,
+  "lastUpdate": 1605880145581,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -252,6 +252,42 @@ window.BENCHMARK_DATA = {
             "value": 68,
             "unit": "ns/op",
             "extra": "18657666 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "dc62d82fb8e82cc3d0a1e6ff0fe2127e15a1047e",
+          "message": "fix(makefile): fix check-tidy make target",
+          "timestamp": "2020-11-20T13:47:47Z",
+          "tree_id": "30f647d492ac5866a34ea1b5fb3d82e241d8fe93",
+          "url": "https://github.com/nimona/go-nimona/commit/dc62d82fb8e82cc3d0a1e6ff0fe2127e15a1047e"
+        },
+        "date": 1605880145041,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkHash",
+            "value": 137230,
+            "unit": "ns/op",
+            "extra": "7779 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 82,
+            "unit": "ns/op",
+            "extra": "14180936 times\n2 procs"
           }
         ]
       }
