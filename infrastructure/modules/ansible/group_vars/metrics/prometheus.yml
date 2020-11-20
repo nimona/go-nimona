@@ -1,0 +1,10 @@
+---
+prometheus_version: "2.22.2"
+prometheus_docker_network: "metrics"
+
+prometheus_data_path: "/mnt/data/prometheus"
+prometheus_data_retention_size: "25GB"
+
+prometheus_users: "{{ vault_prometheus_users }}"
+
+prometheus_alert_rules: []

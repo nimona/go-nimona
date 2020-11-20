@@ -7,6 +7,9 @@ bootstrap:
     - 22581
   tags:
     - nimona
+  prometheus_jobs:
+    - name: bootstrap
+      metrics_path: "/metrics/bootstrap"
 metrics:
   instances:
     - metrics

@@ -1,9 +1,7 @@
 %{for group, instances in server_groups~}
 [${group}]
 %{for name, instance in instances~}
-%{if name != group~}
 ${instance.hostname} ansible_host=${instance.ip_address} ansible_user=${instance.user}
-%{endif~}
 %{endfor~}
 %{if contains(keys(instances), group)~}
 

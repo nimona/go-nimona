@@ -2,3 +2,4 @@
 /inventories/
 /vendor/
 /host_vars/**/volumes.yml
+/host_vars/**/prometheus_jobs.yml

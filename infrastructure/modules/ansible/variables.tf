@@ -10,6 +10,10 @@ variable "volumes" {
   type = list(map(string))
 }
 
+variable "prometheus_jobs" {
+  type = list(map(string))
+}
+
 variable "vault_password" {
   type = string
 }
