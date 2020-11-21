@@ -35,6 +35,12 @@ var (
 			Help: "Total number of incoming lookup requests",
 		},
 	)
+	promIncResponsesHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name: "nimona_hyperspace_provider_lookup_response_peers",
+			Help: "Number of peers in response",
+		},
+	)
 )
 
 type (
@@ -174,6 +180,8 @@ func (p *Provider) handlePeerLookup(
 	ctx = context.New(
 		context.WithParent(ctx),
 	)
+
+	promIncResponsesHistogram.Observe(float64(len(ans)))
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
