@@ -184,7 +184,7 @@ test:
 # Run go test -bench
 .PHONY: benchmark
 benchmark:
-	@go test $(V) -run=^$$ -bench=. ./...
+	@go test -run=^$$ -bench=. ./...
 
 # Run e2e tests
 .PHONY: e2e
