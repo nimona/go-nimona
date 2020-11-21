@@ -31,6 +31,21 @@ jobs:
       - name: Check if mods are tidy
         run: make check-tidy
 
+  check-licenses:
+    name: Check licenses
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.15
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Check licenses
+      run: make tools check-licenses
+
   test:
     name: Unit tests
     runs-on: ubuntu-latest

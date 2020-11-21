@@ -1,0 +1,17 @@
+---
+blacklist:
+  - AGPL
+  - GPL-2.0
+
+whitelist:
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - MIT
+  - MPL-2.0
+  - MPL-2.0-no-copyleft-exception
+
+# exceptions only for incorrectly identified dependencies
+exceptions:
+  - github.com/geoah/go-queue # MIT
+  - github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg # Apache-2.0
