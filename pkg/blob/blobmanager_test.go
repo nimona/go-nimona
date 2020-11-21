@@ -237,6 +237,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			r := blob.NewManager(
 				context.Background(),
 				blob.WithChunkSize(tt.chunkSize),
+				blob.WithImportWorkers(2),
 				blob.WithObjectManager(tt.objectmanager(t)),
 			)
 			got, err := r.ImportFromFile(context.Background(), tt.path)
