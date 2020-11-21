@@ -88,7 +88,7 @@ MODULE := nimona.io
 LDFLAGS := -w -s
 
 VERSION ?= dev
-DATE ?= $(shell date +%s)
+DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
 
 CMDDIR := cmd
