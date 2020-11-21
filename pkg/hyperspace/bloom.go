@@ -3,7 +3,7 @@ package hyperspace
 import (
 	"sort"
 
-	"github.com/twmb/murmur3"
+	"github.com/vcaesar/murmur"
 )
 
 type (
@@ -67,7 +67,7 @@ func intersectionCount(a, b []uint64) int {
 func hash(b []byte) []uint64 {
 	h := make([]uint64, noOfHashes)
 	for i := range h {
-		h[i] = uint64(murmur3.SeedSum32(uint32(i), b))
+		h[i] = uint64(murmur.Murmur3(b, uint32(i)))
 	}
 	return h
 }
