@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
@@ -119,7 +120,10 @@ func main() {
 					"commit":     version.Commit,
 					"build_date": version.Date,
 					"version":    version.Version,
-					"goversion":  runtime.Version(),
+					"goversion": strings.Replace(
+						runtime.Version(),
+						"go", "v", 1,
+					),
 				},
 			},
 			func() float64 { return 1 },
