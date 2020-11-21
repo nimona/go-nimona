@@ -1,0 +1,79 @@
+---
+- name: Create group for Grafana
+  group:
+    name: "{{ grafana_user_group }}"
+    system: true
+    state: present
+  register: grafana_group_info
+
+- name: Create user for Grafana
+  user:
+    name: "{{ grafana_user_name }}"
+    group: "{{ grafana_user_group }}"
+    system: true
+    state: present
+  register: grafana_user_info
+
+- name: Create config/data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ grafana_user_name }}"
+    group: "{{ grafana_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ grafana_data_path }}"
+    - "{{ grafana_data_path }}/config"
+    - "{{ grafana_data_path }}/data"
+    - "{{ grafana_data_path }}/plugins"
+    - "{{ grafana_data_path }}/provisioning"
+
+- name: Set config/data directory ownership/group
+  file:
+    path: "{{ grafana_data_path }}"
+    state: directory
+    owner: "{{ grafana_user_name }}"
+    group: "{{ grafana_user_group }}"
+    recurse: yes
+
+- name: Configure grafana via grafana.ini
+  template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_data_path }}/config/grafana.ini"
+    owner: "{{ grafana_user_name }}"
+    group: "{{ grafana_user_group }}"
+    mode: "0644"
+  notify: restart grafana
+
+- name: Create and start grafana container
+  docker_container:
+    name: grafana
+    image: "{{ grafana_docker_image }}:{{ grafana_docker_tag }}"
+    pull: yes
+    recreate: "{{ grafana_docker_tag == 'latest' }}"
+    restart_policy: always
+    state: started
+    container_default_behavior: no_defaults
+    user: "{{ grafana_user_info.uid }}:{{ grafana_group_info.gid }}"
+    networks_cli_compatible: yes
+    network_mode: default
+    networks:
+      - name: "{{ grafana_docker_network }}"
+    volumes:
+      - "{{ grafana_data_path }}/config/grafana.ini:/etc/grafana/grafana.ini"
+      - "{{ grafana_data_path }}/data:/var/lib/grafana"
+      - "{{ grafana_data_path }}/plugins:/var/lib/grafana/plugins"
+      - "{{ grafana_data_path }}/provisioning:/etc/grafana/provisioning"
+    env:
+      GF_INSTALL_PLUGINS: "{{ grafana_plugins | join(',') }}"
+    published_ports:
+      - "127.0.0.1:{{ grafana_host_port }}:3000"
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: grafana
+    caddy_path_host_path: "{{ grafana_server_host_path }}"
+    caddy_path_upstream: "127.0.0.1:{{ grafana_host_port }}"
+  notify: reload caddy

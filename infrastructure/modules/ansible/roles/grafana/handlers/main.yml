@@ -1,0 +1,6 @@
+- name: restart grafana
+  docker_container:
+    name: grafana
+    state: started
+    restart: yes
+    container_default_behavior: no_defaults
