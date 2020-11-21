@@ -312,10 +312,12 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4 h1:Sq/68UWgBzKT+pLTUTkSf0jS2IUwwXLFlZmeh+nAzQM=
 github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4/go.mod h1:9PdLyPiZIiW3UopXyRnPYyjUXSpiQNHRLu8fOsR3o8M=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/twmb/murmur3 v1.1.5 h1:i9OLS9fkuLzBXjt6dptlAEyk58fJsSTXbRg3SgVyqgk=
-github.com/twmb/murmur3 v1.1.5/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
+github.com/vcaesar/murmur v0.20.1 h1:6oeQV4ctnBk2ViMdhkCS6wxXKwAH1KH20Xe4JgisIwE=
+github.com/vcaesar/murmur v0.20.1/go.mod h1:vcVwpXxZVshUjD5PXVu63T7Y0J2TQnV2/1Njr/kvaD8=
+github.com/vcaesar/tt v0.10.1 h1:0DEl+XkyXivEwb/7jIYhDQ1g7KtMYqD/ZqABcMwC3wo=
+github.com/vcaesar/tt v0.10.1/go.mod h1:GHPxQYhn+7OgKakRusH7KJ0M5MhywoeLb8Fcffs/Gtg=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 h1:dizWJqTWjwyD8KGcMOwgrkqu1JIkofYgKkmDeNE7oAs=

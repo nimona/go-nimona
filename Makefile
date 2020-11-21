@@ -200,7 +200,8 @@ lint: golangci-lint
 	@GOGC=off golangci-lint $(V) run
 
 # Check licenses
-licenses: wwhrd
+.PHONY: check-licenses
+check-licenses: wwhrd
 	$(info Checking licenses)
 	@go mod vendor
 	@wwhrd check
