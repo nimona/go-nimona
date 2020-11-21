@@ -9,3 +9,5 @@
   roles:
     - role: prometheus
       tags: ["services", "metrics", "prometheus"]
+    - role: grafana
+      tags: ["services", "metrics", "grafana"]

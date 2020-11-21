@@ -1,0 +1,5 @@
+---
+grafana_auth_github_client_id: |-
+  {{ vault_grafana_auth_github_client_id }}
+grafana_auth_github_client_secret: |-
+  {{ vault_grafana_auth_github_client_secret }}
