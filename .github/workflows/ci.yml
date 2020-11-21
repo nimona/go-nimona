@@ -215,6 +215,13 @@ jobs:
     needs: [release]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/v')
     steps:
+      - uses: chrnorm/deployment-action@releases/v1
+        name: Create GitHub deployment
+        id: deployment
+        with:
+          token: "${{ github.token }}"
+          environment: production
+
       - name: Check out the code
         uses: actions/checkout@v1
 
@@ -248,3 +255,19 @@ jobs:
           chmod 0600 ssh/id_rsa
           terraform init
           terraform apply -auto-approve -var "nimona_version=${NIMONA_VERSION}"
+
+      - name: Update deployment status (success)
+        if: success()
+        uses: chrnorm/deployment-status@releases/v1
+        with:
+          token: "${{ github.token }}"
+          state: "success"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+
+      - name: Update deployment status (failure)
+        if: failure()
+        uses: chrnorm/deployment-status@releases/v1
+        with:
+          token: "${{ github.token }}"
+          state: "failure"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
