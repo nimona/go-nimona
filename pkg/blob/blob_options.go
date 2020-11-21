@@ -22,3 +22,9 @@ func WithChunkSize(bytes int) func(*manager) {
 		r.chunkSize = bytes
 	}
 }
+
+func WithImportWorkers(n int) func(*manager) {
+	return func(r *manager) {
+		r.importWorkers = n
+	}
+}

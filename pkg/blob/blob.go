@@ -3,11 +3,7 @@ package blob
 import (
 	"bufio"
 	"io"
-
-	"github.com/docker/go-units"
 )
-
-const maxCapacity = units.MB
 
 type Reader interface {
 	Read(p []byte) (n int, err error)
@@ -24,9 +20,9 @@ func ToBlob(r io.Reader) (*Blob, error) {
 	blob := Blob{}
 	chunks := make([]*Chunk, 0)
 
-	br := bufio.NewReaderSize(r, maxCapacity)
+	br := bufio.NewReaderSize(r, defaultChunkSize)
 	for {
-		buf := make([]byte, maxCapacity)
+		buf := make([]byte, defaultChunkSize)
 		n, err := br.Read(buf)
 		if err == io.EOF {
 			break

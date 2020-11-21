@@ -4,7 +4,9 @@ import (
 	"errors"
 	"io"
 	"os"
+	"runtime"
 
+	"github.com/docker/go-units"
 	"github.com/gammazero/workerpool"
 
 	"nimona.io/pkg/context"
@@ -32,8 +34,14 @@ type (
 		resolver      resolver.Resolver
 		objectmanager objectmanager.ObjectManager
 		chunkSize     int
+		importWorkers int
 	}
 	Option func(*manager)
+)
+
+var (
+	defaultImportWorkers = runtime.NumCPU()
+	defaultChunkSize     = 256 * units.KB
 )
 
 func NewManager(
@@ -41,7 +49,8 @@ func NewManager(
 	opts ...Option,
 ) Manager {
 	mgr := &manager{
-		chunkSize: maxCapacity,
+		chunkSize:     defaultChunkSize,
+		importWorkers: defaultImportWorkers,
 	}
 	for _, opt := range opts {
 		opt(mgr)
@@ -62,7 +71,7 @@ func (r *manager) ImportFromFile(
 	chunkHashes := []object.Hash{}
 
 	// start a workerpool to store chunks
-	wp := workerpool.New(3)
+	wp := workerpool.New(r.importWorkers)
 	chunksErr := make(chan error)
 	store := func(chunk *object.Object) func() {
 		return func() {
