@@ -1,9 +1,0 @@
-coverage:
-  bot: nimona-bot
-  status:
-    project:
-      default: false
-    patch:
-      default:
-        target: auto
-        threshold: 1%
