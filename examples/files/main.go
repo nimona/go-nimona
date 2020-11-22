@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -123,6 +124,8 @@ func (ft *fileTransfer) serve(
 ) {
 	fileName := filepath.Base(filePath)
 
+	start := time.Now()
+
 	blobUnl, err := ft.blobmanager.ImportFromFile(ctx, filePath)
 	if err != nil {
 		fmt.Println("failed to import blob", err)
@@ -138,9 +141,11 @@ func (ft *fileTransfer) serve(
 		fmt.Println("failed to store blob", err)
 		return
 	}
-	fmt.Println("blob hash:", blobUnl.ToObject().Hash())
-	fmt.Println("file hash:", fl.ToObject().Hash())
+	fmt.Println(">> imported in", time.Now().Sub(start))
+	fmt.Println(">> blob hash:", blobUnl.ToObject().Hash())
+	fmt.Println(">> file hash:", fl.ToObject().Hash())
 
+	// os.Exit(1)
 	// register for termination signals
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
