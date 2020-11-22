@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606060486822,
+  "lastUpdate": 1606070655674,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -612,6 +612,60 @@ window.BENCHMARK_DATA = {
             "value": 68.4,
             "unit": "ns/op",
             "extra": "16240178 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "decimal@darkstar.gr",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "committer": {
+            "email": "decimal@darkstar.gr",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "distinct": true,
+          "id": "4e74143f9d23b7f2a99484973e1ec6250041f819",
+          "message": "asdf",
+          "timestamp": "2020-11-22T18:42:11Z",
+          "tree_id": "38547c7955deb7cdae52baf14f8d7af0f5f7ef97",
+          "url": "https://github.com/nimona/go-nimona/commit/4e74143f9d23b7f2a99484973e1ec6250041f819"
+        },
+        "date": 1606070655233,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 82568,
+            "unit": "ns/op",
+            "extra": "14602 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 84809,
+            "unit": "ns/op",
+            "extra": "12158 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 103260,
+            "unit": "ns/op",
+            "extra": "10854 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 115639,
+            "unit": "ns/op",
+            "extra": "10000 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 80.2,
+            "unit": "ns/op",
+            "extra": "14840221 times\n2 procs"
           }
         ]
       }
