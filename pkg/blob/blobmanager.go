@@ -41,7 +41,7 @@ type (
 
 var (
 	defaultImportWorkers = runtime.NumCPU()
-	defaultChunkSize     = 256 * units.KB
+	defaultChunkSize     = 1 * units.MB
 )
 
 func NewManager(
