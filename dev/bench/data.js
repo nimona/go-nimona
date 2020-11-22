@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606070655674,
+  "lastUpdate": 1606072711713,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -666,6 +666,60 @@ window.BENCHMARK_DATA = {
             "value": 80.2,
             "unit": "ns/op",
             "extra": "14840221 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "9114ac19a1acc831c2421365b0b0679329d961dc",
+          "message": "feat(ci): add license checks",
+          "timestamp": "2020-11-22T15:53:33Z",
+          "tree_id": "97774faef9b520fc2f3f4f0a5af681f22bc4c067",
+          "url": "https://github.com/nimona/go-nimona/commit/9114ac19a1acc831c2421365b0b0679329d961dc"
+        },
+        "date": 1606072711267,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 69564,
+            "unit": "ns/op",
+            "extra": "17163 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 70926,
+            "unit": "ns/op",
+            "extra": "15326 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 89287,
+            "unit": "ns/op",
+            "extra": "12981 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 96007,
+            "unit": "ns/op",
+            "extra": "12346 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 70,
+            "unit": "ns/op",
+            "extra": "17557342 times\n2 procs"
           }
         ]
       }
