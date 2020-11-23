@@ -1,8 +1,10 @@
 package localpeer
 
 import (
+	"sort"
 	"sync"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -31,6 +33,7 @@ type (
 		GetRelays() []*peer.ConnectionInfo
 		PutRelays(...*peer.ConnectionInfo)
 		ConnectionInfo() *peer.ConnectionInfo
+		ListenForUpdates() (<-chan UpdateEvent, func())
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
@@ -41,7 +44,17 @@ type (
 		certificates       *ObjectCertificateSyncList
 		addresses          *StringSyncList
 		relays             *PeerConnectionInfoSyncList
+		listeners          map[string]chan UpdateEvent
+		listenersLock      sync.RWMutex
 	}
+	UpdateEvent string
+)
+
+const (
+	EventContentTypesUpdated  UpdateEvent = "contentTypeUpdated"
+	EventContentHashesUpdated UpdateEvent = "contentHashesUpdated"
+	EventAddressesUpdated     UpdateEvent = "addressesUpdated"
+	EventRelaysUpdated        UpdateEvent = "relaysUpdated"
 )
 
 func New() LocalPeer {
@@ -52,6 +65,8 @@ func New() LocalPeer {
 		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
 		relays:        &PeerConnectionInfoSyncList{},
+		listeners:     map[string]chan UpdateEvent{},
+		listenersLock: sync.RWMutex{},
 	}
 }
 
@@ -88,13 +103,16 @@ func (s *localPeer) GetCertificates() []*object.Certificate {
 }
 
 func (s *localPeer) GetAddresses() []string {
-	return s.addresses.List()
+	as := s.addresses.List()
+	sort.Strings(as)
+	return as
 }
 
 func (s *localPeer) PutAddresses(addresses ...string) {
 	for _, h := range addresses {
 		s.addresses.Put(h)
 	}
+	s.publishUpdate(EventAddressesUpdated)
 }
 
 func (s *localPeer) GetContentHashes() []object.Hash {
@@ -105,6 +123,7 @@ func (s *localPeer) PutContentHashes(contentHashes ...object.Hash) {
 	for _, h := range contentHashes {
 		s.contentHashes.Put(h)
 	}
+	s.publishUpdate(EventContentHashesUpdated)
 }
 
 func (s *localPeer) GetContentTypes() []string {
@@ -115,6 +134,7 @@ func (s *localPeer) PutContentTypes(contentTypes ...string) {
 	for _, h := range contentTypes {
 		s.contentTypes.Put(h)
 	}
+	s.publishUpdate(EventContentTypesUpdated)
 }
 
 func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
@@ -125,6 +145,7 @@ func (s *localPeer) PutRelays(relays ...*peer.ConnectionInfo) {
 	for _, r := range relays {
 		s.relays.Put(r)
 	}
+	s.publishUpdate(EventRelaysUpdated)
 }
 
 func (s *localPeer) ConnectionInfo() *peer.ConnectionInfo {
@@ -133,4 +154,32 @@ func (s *localPeer) ConnectionInfo() *peer.ConnectionInfo {
 		Addresses: s.GetAddresses(),
 		Relays:    s.GetRelays(),
 	}
+}
+
+func (s *localPeer) publishUpdate(e UpdateEvent) {
+	s.listenersLock.RLock()
+	defer s.listenersLock.RUnlock()
+	for _, l := range s.listeners {
+		select {
+		case l <- e:
+		default:
+		}
+	}
+}
+
+func (s *localPeer) ListenForUpdates() (
+	updates <-chan UpdateEvent,
+	cancel func(),
+) {
+	c := make(chan UpdateEvent)
+	s.listenersLock.Lock()
+	defer s.listenersLock.Unlock()
+	id := rand.String(8)
+	s.listeners[id] = c
+	f := func() {
+		s.listenersLock.Lock()
+		defer s.listenersLock.Unlock()
+		delete(s.listeners, id)
+	}
+	return c, f
 }
