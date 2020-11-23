@@ -10,8 +10,8 @@ import (
 )
 
 func BenchmarkToBlob1(b *testing.B) {
-	fr := iotest.ZeroReader(1 * units.MB)
 	for n := 0; n < b.N; n++ {
+		fr := iotest.ZeroReader(1 * units.MB)
 		_, err := blob.ToBlob(fr)
 		if err != nil {
 			b.Fail()
@@ -20,8 +20,8 @@ func BenchmarkToBlob1(b *testing.B) {
 }
 
 func BenchmarkToBlob100(b *testing.B) {
-	fr := iotest.ZeroReader(100 * units.MB)
 	for n := 0; n < b.N; n++ {
+		fr := iotest.ZeroReader(100 * units.MB)
 		_, err := blob.ToBlob(fr)
 		if err != nil {
 			b.Fail()
@@ -30,8 +30,8 @@ func BenchmarkToBlob100(b *testing.B) {
 }
 
 func BenchmarkToBlob1000(b *testing.B) {
-	fr := iotest.ZeroReader(1000 * units.MB)
 	for n := 0; n < b.N; n++ {
+		fr := iotest.ZeroReader(1000 * units.MB)
 		_, err := blob.ToBlob(fr)
 		if err != nil {
 			b.Fail()
