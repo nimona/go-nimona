@@ -2,6 +2,7 @@ package localpeer
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,4 +57,29 @@ func TestLocalPeer(t *testing.T) {
 
 	lp.PutContentTypes(a1, a2)
 	assert.ElementsMatch(t, []string{a1, a2}, lp.GetContentTypes())
+
+	ci := lp.ConnectionInfo()
+	e := &peer.ConnectionInfo{
+		PublicKey: k1.PublicKey(),
+		Addresses: []string{"foo", "foo2"},
+		Relays: []*peer.ConnectionInfo{{
+			PublicKey: k1.PublicKey(),
+		}},
+	}
+	assert.Equal(t, ci, e)
+}
+
+func TestEventUpdates(t *testing.T) {
+	lp := New()
+
+	c, cf := lp.ListenForUpdates()
+	defer cf()
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		lp.PutAddresses("a", "b")
+	}()
+
+	e := <-c
+	assert.Equal(t, EventAddressesUpdated, e)
 }
