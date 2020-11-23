@@ -292,49 +292,6 @@ func decodeHookfunc() mapstructure.DecodeHookFuncValueContext {
 	return decodeFunc
 }
 
-func mapHookfunc() mapstructure.DecodeHookFuncValueContext {
-	return func(
-		f reflect.Value,
-		t reflect.Value,
-		ctx *mapstructure.DecodeContext,
-	) (interface{}, error) {
-		// (decode) struct to map[string]interface{}
-		// mapstructure.RecursiveStructToMapHookFunc
-		if f.Kind() == reflect.Slice ||
-			(f.Kind() == reflect.Ptr && f.Elem().Kind() == reflect.Slice) {
-			var i interface{} = struct{}{}
-			if t.Type() != reflect.TypeOf(&i).Elem() {
-				return f.Interface(), nil
-			}
-			m := make([]interface{}, 0)
-			t.Set(reflect.ValueOf(m))
-		}
-		// (decode) crypto.PrivateKey
-		if v, ok := f.Interface().(crypto.PrivateKey); ok {
-			return string(v), nil
-		}
-		// (decode) crypto.PublicKey
-		if v, ok := f.Interface().(crypto.PublicKey); ok {
-			return string(v), nil
-		}
-		// (decode) *Object
-		if v, ok := f.Interface().(*Object); ok {
-			return v.ToMap(), nil
-		}
-		// (decode) slice of struct to []interface
-		if f.Kind() == reflect.Slice {
-			var i interface{} = struct{}{}
-			if t.Type() != reflect.TypeOf(&i).Elem() {
-				return f.Interface(), nil
-			}
-			m := make([]interface{}, 0)
-			t.Set(reflect.ValueOf(m))
-			return f.Interface(), nil
-		}
-		return f.Interface(), nil
-	}
-}
-
 func decode(
 	from interface{},
 	to interface{},
@@ -361,11 +318,10 @@ func decode(
 	return md, nil
 }
 
-func objectToMap(o *Object, c *NormalizeConfig) (map[string]interface{}, error) {
-	// d := map[string]interface{}{}
-	// if _, err := decode(o.Data, &d, mapHookfunc()); err != nil {
-	// 	return nil, err
-	// }
+func objectToMap(
+	o *Object,
+	c *NormalizeConfig,
+) (map[string]interface{}, error) {
 	d, err := normalizeObject(o.Data, c)
 	if err != nil {
 		return nil, err

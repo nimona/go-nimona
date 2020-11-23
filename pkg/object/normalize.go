@@ -28,12 +28,19 @@ type NormalizeConfig struct {
 // * `"some-int:i": "7"` becomes `"some-int:i": uint64(7)`
 //
 // NOTE: This should work for the most part but needs additional testing.
-func Normalize(i interface{}, c *NormalizeConfig) (map[string]interface{}, error) {
+func Normalize(
+	i interface{},
+	c *NormalizeConfig,
+) (map[string]interface{}, error) {
 	return normalizeObject(i, c)
 }
 
 // nolint: gocritic
-func normalizeFromKey(k string, i interface{}, c *NormalizeConfig) (interface{}, error) {
+func normalizeFromKey(
+	k string,
+	i interface{},
+	c *NormalizeConfig,
+) (interface{}, error) {
 	if i == nil {
 		return nil, nil
 	}
@@ -475,7 +482,10 @@ func normalizeFloat(i interface{}) (float64, error) {
 	return 0, errors.New("invalid float type")
 }
 
-func normalizeObject(i interface{}, c *NormalizeConfig) (map[string]interface{}, error) {
+func normalizeObject(
+	i interface{},
+	c *NormalizeConfig,
+) (map[string]interface{}, error) {
 	nm := map[string]interface{}{}
 	switch m := i.(type) {
 	case Mapped:
