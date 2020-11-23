@@ -92,8 +92,13 @@ func New(
 
 	go func() {
 		r.announceSelf()
+		announceOnUpdate, cf := r.localpeer.ListenForUpdates()
+		defer cf()
 		announceTimer := time.NewTicker(30 * time.Second)
-		for range announceTimer.C {
+		select {
+		case <-announceTimer.C:
+			r.announceSelf()
+		case <-announceOnUpdate:
 			r.announceSelf()
 		}
 	}()
@@ -245,7 +250,10 @@ func (r *resolver) announceSelf() {
 		}
 		n++
 	}
-	logger.Info("announced self to bootstrap peers", log.Int("n", n))
+	logger.Info(
+		"announced self to bootstrap peers",
+		log.Int("bootstrapPeers", n),
+	)
 }
 
 func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
