@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606162764962,
+  "lastUpdate": 1606166509800,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -612,6 +612,60 @@ window.BENCHMARK_DATA = {
             "value": 80.8,
             "unit": "ns/op",
             "extra": "14377492 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "27856297+dependabot-preview[bot]@users.noreply.github.com",
+            "name": "dependabot-preview[bot]",
+            "username": "dependabot-preview[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "fbcb0492922b13c61ee8081314a1c02b51dda16a",
+          "message": "chore(deps): bump github.com/bmatcuk/doublestar from 1.3.3 to 1.3.4\n\nBumps [github.com/bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) from 1.3.3 to 1.3.4.\n- [Release notes](https://github.com/bmatcuk/doublestar/releases)\n- [Commits](https://github.com/bmatcuk/doublestar/compare/v1.3.3...v1.3.4)\n\nSigned-off-by: dependabot-preview[bot] <support@dependabot.com>",
+          "timestamp": "2020-11-23T21:20:17Z",
+          "tree_id": "92129e4a86b7cc62ced571dec7c9abd679ad1966",
+          "url": "https://github.com/nimona/go-nimona/commit/fbcb0492922b13c61ee8081314a1c02b51dda16a"
+        },
+        "date": 1606166509304,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 444787,
+            "unit": "ns/op",
+            "extra": "2480 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 17532659,
+            "unit": "ns/op",
+            "extra": "67 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 177228976,
+            "unit": "ns/op",
+            "extra": "18 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 57134,
+            "unit": "ns/op",
+            "extra": "20839 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 90.3,
+            "unit": "ns/op",
+            "extra": "13337673 times\n2 procs"
           }
         ]
       }
