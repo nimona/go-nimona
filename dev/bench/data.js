@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606072711713,
+  "lastUpdate": 1606162764962,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -720,6 +720,60 @@ window.BENCHMARK_DATA = {
             "value": 70,
             "unit": "ns/op",
             "extra": "17557342 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "bce5e8abe08775379334b4f5ae844379997c76e5",
+          "message": "chore(object): fix linting ll",
+          "timestamp": "2020-11-23T20:18:04Z",
+          "tree_id": "1d4ff0d8fd18da8aea6e77d7aa339b78a7bd7716",
+          "url": "https://github.com/nimona/go-nimona/commit/bce5e8abe08775379334b4f5ae844379997c76e5"
+        },
+        "date": 1606162763850,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 394029,
+            "unit": "ns/op",
+            "extra": "3088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 12292925,
+            "unit": "ns/op",
+            "extra": "93 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 130966920,
+            "unit": "ns/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 54567,
+            "unit": "ns/op",
+            "extra": "22455 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 80.8,
+            "unit": "ns/op",
+            "extra": "14377492 times\n2 procs"
           }
         ]
       }
