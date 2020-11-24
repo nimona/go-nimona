@@ -59,3 +59,8 @@ variable "ansible_skip" {
   type    = bool
   default = false
 }
+
+variable "ansible_skip_prepare" {
+  type    = bool
+  default = false
+}
