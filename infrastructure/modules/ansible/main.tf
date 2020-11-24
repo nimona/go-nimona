@@ -70,6 +70,19 @@ resource "local_file" "prometheus_jobs" {
   })
 }
 
+resource "local_file" "bootstrap_peers_list" {
+  filename = join("/", [
+    path.module, "group_vars", "bootstrap", "nimona_bootstrap_peers.yml"
+  ])
+  file_permission = "0644"
+  content = templatefile("${path.module}/templates/bootstrap_peers.tpl", {
+    hostnames = [
+      for _, server in lookup(local.servers_by_group, "bootstrap", {}) :
+      server.hostname
+    ]
+  })
+}
+
 resource "null_resource" "run" {
   triggers = { always_run = timestamp() }
 
