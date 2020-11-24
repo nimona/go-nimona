@@ -53,6 +53,7 @@ module "ansible" {
   extra_args           = var.ansible_extra_args
   force_color          = var.ansible_force_color
   skip                 = var.ansible_skip
+  skip_prepare         = var.ansible_skip_prepare
 
   server_groups = {
     for name, group in module.server_groups :

@@ -24,7 +24,13 @@ resource "null_resource" "run" {
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "%{if var.skip}true%{else}make prepare%{endif}"
+    command     = <<CMD
+%{if var.skip || var.skip_prepare}
+true
+%{else}
+make prepare
+%{endif}
+CMD
   }
 
   provisioner "local-exec" {
