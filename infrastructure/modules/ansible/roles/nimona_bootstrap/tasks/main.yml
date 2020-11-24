@@ -1,4 +1,16 @@
 ---
+- name: Build bootstrap peers list
+  set_fact:
+    nimona_bootstrap_peers_env_var: >-
+      {{
+        nimona_bootstrap_peers_env_var + [
+          nimona_bootstrap_public_keys[item] ~ '@' ~
+          nimona_bootstrap_peer_scheme ~ ':' ~
+          item ~ ':' ~ nimona_bootstrap_peer_port
+        ]
+      }}
+  loop: "{{ nimona_bootstrap_peers }}"
+
 - name: Create and start nimona bootstrap container
   community.general.docker_container:
     name: bootstrap
@@ -16,6 +28,8 @@
         0.0.0.0:{{ nimona_bootstrap_peer_port }}
       NIMONA_PEER_ANNOUNCE_ADDRESS: >-
         {{ nimona_bootstrap_peer_announce_address }}
+      NIMONA_PEER_BOOTSTRAPS: >-
+        {{ nimona_bootstrap_peers_env_var | join(",") }}
       NIMONA_PEER_PRIVATE_KEY: >-
         {{ nimona_bootstrap_private_keys[inventory_hostname] }}
       NIMONA_METRICS_BIND_ADDRESS: >-

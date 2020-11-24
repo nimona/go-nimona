@@ -3,3 +3,4 @@
 /vendor/
 /host_vars/**/volumes.yml
 /host_vars/**/prometheus_jobs.yml
+/group_vars/**/nimona_bootstrap_peers.yml
