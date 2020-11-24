@@ -9,3 +9,8 @@
 - name: Install docker python module
   pip:
     name: docker
+
+- name: Create docker network
+  docker_network:
+    name: "{{ item }}"
+  loop: "{{ docker_networks }}"
