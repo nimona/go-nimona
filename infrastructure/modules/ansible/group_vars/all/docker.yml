@@ -1,3 +1,4 @@
 ---
 docker_manage_ufw: false
 docker_manage_updatedb: true
+docker_networks: "{{ group_names }}"
