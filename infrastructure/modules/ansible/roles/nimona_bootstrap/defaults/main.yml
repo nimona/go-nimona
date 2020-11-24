@@ -4,3 +4,4 @@ nimona_bootstrap_peer_port: "22581"
 nimona_bootstrap_metrics_port: "22580"
 nimona_bootstrap_peer_announce_address: "{{ inventory_hostname }}:22581"
 nimona_bootstrap_private_keys: {}
+nimona_bootstrap_public_keys: {}
