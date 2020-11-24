@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606167702472,
+  "lastUpdate": 1606262025010,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -720,6 +720,60 @@ window.BENCHMARK_DATA = {
             "value": 72.1,
             "unit": "ns/op",
             "extra": "15703045 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "committer": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "distinct": true,
+          "id": "4799029ed2c76bd1f3900f89b268ab9aca6a1a21",
+          "message": "feat(infra): set NIMONA_PEER_BOOTSTRAPS env var for bootstrap containers",
+          "timestamp": "2020-11-24T23:52:23Z",
+          "tree_id": "98b624d4bc3955cbd5364d4e9b24ff888348293d",
+          "url": "https://github.com/nimona/go-nimona/commit/4799029ed2c76bd1f3900f89b268ab9aca6a1a21"
+        },
+        "date": 1606262022779,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 399121,
+            "unit": "ns/op",
+            "extra": "2528 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 15332201,
+            "unit": "ns/op",
+            "extra": "70 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 152833550,
+            "unit": "ns/op",
+            "extra": "16 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 55188,
+            "unit": "ns/op",
+            "extra": "21632 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 87.6,
+            "unit": "ns/op",
+            "extra": "13712721 times\n2 procs"
           }
         ]
       }
