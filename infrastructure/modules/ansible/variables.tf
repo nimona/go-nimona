@@ -52,3 +52,8 @@ variable "skip" {
   type    = bool
   default = false
 }
+
+variable "skip_prepare" {
+  type    = bool
+  default = false
+}
