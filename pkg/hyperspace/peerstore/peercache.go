@@ -79,7 +79,7 @@ func NewPeerCache(
 					diff := now.Sub(e.createdAt)
 					if diff >= e.ttl {
 						pc.m.Delete(key)
-						pc.promKnownPeersGauge.Add(-1)
+						pc.promKnownPeersGauge.Dec()
 						pc.promGCedPeersGauge.Inc()
 					}
 				}
@@ -107,6 +107,8 @@ func (m *PeerCache) Put(
 		if pann.(entry).pr.Version == p.Version {
 			updated = false
 		}
+	} else {
+		m.promKnownPeersGauge.Inc()
 	}
 	// increment the incoming peers counter
 	m.promIncPeersGauge.Inc()
@@ -116,6 +118,7 @@ func (m *PeerCache) Put(
 		createdAt: time.Now(),
 		pr:        p,
 	})
+
 	return updated
 }
 
@@ -145,7 +148,7 @@ func (m *PeerCache) Get(k crypto.PublicKey) (*hyperspace.Announcement, error) {
 // Remove -
 func (m *PeerCache) Remove(k crypto.PublicKey) {
 	m.m.Delete(k)
-	m.promKnownPeersGauge.Add(-1)
+	m.promKnownPeersGauge.Dec()
 }
 
 // List -
