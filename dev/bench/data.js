@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606263683106,
+  "lastUpdate": 1606263899369,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -828,6 +828,60 @@ window.BENCHMARK_DATA = {
             "value": 70.6,
             "unit": "ns/op",
             "extra": "17265192 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "committer": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "distinct": true,
+          "id": "5740df6c2d347489a75331666e043fcf8a7641b7",
+          "message": "fix(infra): add missing volumes argument in production terraform config",
+          "timestamp": "2020-11-25T00:23:40Z",
+          "tree_id": "be1b4a058942dac3e2e12903460ad3d83528592e",
+          "url": "https://github.com/nimona/go-nimona/commit/5740df6c2d347489a75331666e043fcf8a7641b7"
+        },
+        "date": 1606263898915,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 415572,
+            "unit": "ns/op",
+            "extra": "2526 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 12172370,
+            "unit": "ns/op",
+            "extra": "93 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 131774906,
+            "unit": "ns/op",
+            "extra": "15 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 61064,
+            "unit": "ns/op",
+            "extra": "19706 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 90.6,
+            "unit": "ns/op",
+            "extra": "13230169 times\n2 procs"
           }
         ]
       }
