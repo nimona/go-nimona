@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606267723664,
+  "lastUpdate": 1606271660979,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -936,6 +936,60 @@ window.BENCHMARK_DATA = {
             "value": 91.5,
             "unit": "ns/op",
             "extra": "11533020 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "1d3e84c56cc15e4f4081a955d514ff048c8ff25d",
+          "message": "fix(hyperspace/peerstore): update announncement if the version is the same",
+          "timestamp": "2020-11-25T02:33:02Z",
+          "tree_id": "af7b3b99046d23397bbeab9295575e17953c8b7f",
+          "url": "https://github.com/nimona/go-nimona/commit/1d3e84c56cc15e4f4081a955d514ff048c8ff25d"
+        },
+        "date": 1606271660500,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 386565,
+            "unit": "ns/op",
+            "extra": "3202 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 16366409,
+            "unit": "ns/op",
+            "extra": "70 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 159758324,
+            "unit": "ns/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 48750,
+            "unit": "ns/op",
+            "extra": "25068 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 75,
+            "unit": "ns/op",
+            "extra": "17077969 times\n2 procs"
           }
         ]
       }
