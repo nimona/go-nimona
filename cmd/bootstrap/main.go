@@ -17,7 +17,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
@@ -108,14 +107,6 @@ func main() {
 		log.String("peer.privateKey", local.GetPrimaryPeerKey().String()),
 		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
-	)
-
-	// construct a resolver so the providers keep each other updated about
-	// themselves
-	resolver.New(
-		ctx,
-		net,
-		resolver.WithBoostrapPeers(bootstrapProviders...),
 	)
 
 	logger.Info("bootstrap node ready")
