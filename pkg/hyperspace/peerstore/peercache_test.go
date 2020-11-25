@@ -72,6 +72,7 @@ func TestPeerCache_List(t *testing.T) {
 	}
 
 	p1b := &hyperspace.Announcement{
+		Version: 1,
 		Metadata: object.Metadata{
 			Owner: opk.PublicKey(),
 		},
