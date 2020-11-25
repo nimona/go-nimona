@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606262025010,
+  "lastUpdate": 1606263683106,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -774,6 +774,60 @@ window.BENCHMARK_DATA = {
             "value": 87.6,
             "unit": "ns/op",
             "extra": "13712721 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "committer": {
+            "email": "contact@jimeh.me",
+            "name": "Jim Myhrberg",
+            "username": "jimeh"
+          },
+          "distinct": true,
+          "id": "2a8b07330349e0fb4be3fd8f6de0c4df966e9a76",
+          "message": "chore(infra): remove use_nix from .envrc, should be in .envrc.local",
+          "timestamp": "2020-11-25T00:20:11Z",
+          "tree_id": "e49fb9c4e2a2d66cf5beac288950821982d5a220",
+          "url": "https://github.com/nimona/go-nimona/commit/2a8b07330349e0fb4be3fd8f6de0c4df966e9a76"
+        },
+        "date": 1606263682668,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 372157,
+            "unit": "ns/op",
+            "extra": "2790 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 11488908,
+            "unit": "ns/op",
+            "extra": "99 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 121962416,
+            "unit": "ns/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 52288,
+            "unit": "ns/op",
+            "extra": "23910 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 70.6,
+            "unit": "ns/op",
+            "extra": "17265192 times\n2 procs"
           }
         ]
       }
