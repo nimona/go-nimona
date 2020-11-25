@@ -244,8 +244,6 @@ func (w *network) Listen(
 }
 
 func (w *network) handleConnection(conn *net.Connection) error {
-	objHandledCounter.Inc()
-
 	if conn == nil {
 		return errors.New("missing connection")
 	}
@@ -417,6 +415,8 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 		if err != nil {
 			return err
 		}
+
+		objHandledCounter.Inc()
 
 		logger := log.
 			FromContext(context.Background()).
