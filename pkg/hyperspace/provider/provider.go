@@ -29,6 +29,7 @@ var (
 )
 
 var (
+	announceVersion        = time.Now().Unix()
 	promIncRequestsCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_hyperspace_provider_lookup_requests",
@@ -258,6 +259,7 @@ func (p *Provider) announceSelf() {
 		log.String("method", "provider.announceSelf"),
 	)
 	annObj := hyperspace.Announcement{
+		Version:        announceVersion,
 		ConnectionInfo: p.local.ConnectionInfo(),
 		PeerCapabilities: []string{
 			hyperspaceAnnouncementType,
