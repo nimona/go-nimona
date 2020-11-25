@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606263899369,
+  "lastUpdate": 1606267723664,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -882,6 +882,60 @@ window.BENCHMARK_DATA = {
             "value": 90.6,
             "unit": "ns/op",
             "extra": "13230169 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "2fd9b2708684da79261a0a104ff04bda58a433ee",
+          "message": "fix(hyperspace/provider): correctly set and use announcement.Version",
+          "timestamp": "2020-11-25T01:27:07Z",
+          "tree_id": "9802e96b438bd47319363a2415da79c89436448b",
+          "url": "https://github.com/nimona/go-nimona/commit/2fd9b2708684da79261a0a104ff04bda58a433ee"
+        },
+        "date": 1606267722134,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 427639,
+            "unit": "ns/op",
+            "extra": "2701 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 17648657,
+            "unit": "ns/op",
+            "extra": "67 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 180862464,
+            "unit": "ns/op",
+            "extra": "18 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 57753,
+            "unit": "ns/op",
+            "extra": "19910 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 91.5,
+            "unit": "ns/op",
+            "extra": "11533020 times\n2 procs"
           }
         ]
       }
