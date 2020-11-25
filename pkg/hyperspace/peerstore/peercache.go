@@ -97,8 +97,16 @@ func (m *PeerCache) Put(
 ) (updated bool) {
 	// check if we already have a newer announcement
 	pann, ok := m.m.Load(p.ConnectionInfo.PublicKey)
-	if ok && pann.(entry).pr.Version >= p.Version {
-		return false
+	// if the announcement is already know update it, but return that
+	// updated was false, this is done to renew the created attribute
+	updated = true
+	if ok {
+		if pann.(entry).pr.Version > p.Version {
+			return false
+		}
+		if pann.(entry).pr.Version == p.Version {
+			updated = false
+		}
 	}
 	// increment the incoming peers counter
 	m.promIncPeersGauge.Inc()
@@ -108,7 +116,7 @@ func (m *PeerCache) Put(
 		createdAt: time.Now(),
 		pr:        p,
 	})
-	return true
+	return updated
 }
 
 // Put -
