@@ -350,7 +350,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		}
 
 		// Only try the relays if we fail to write the object
-		if lastErr != nil && req.object.Type != "nimona.io/LookupRequest" {
+		if lastErr != nil {
 			for _, relayPeer := range req.recipient.Relays {
 				df, err := w.wrapInDataForward(
 					req.object,
