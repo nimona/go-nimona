@@ -14,6 +14,7 @@ func TestPubSubSimple(t *testing.T) {
 	s := ps.Subscribe()
 	ps.Publish("two")
 	ps.Publish("three")
+	ps.Publish("four")
 
 	next, err := s.Next()
 	require.Equal(t, "two", next)
@@ -22,6 +23,10 @@ func TestPubSubSimple(t *testing.T) {
 	next, err = s.Next()
 	require.Equal(t, "three", next)
 	require.NoError(t, err)
+
+	r := s.Channel()
+	next = <-r
+	require.Equal(t, "four", next)
 }
 
 func TestPubSubFiltered(t *testing.T) {

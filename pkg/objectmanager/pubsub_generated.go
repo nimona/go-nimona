@@ -18,6 +18,7 @@ type (
 	ObjectFilter func(*object.Object) bool
 	// ObjectSubscription is returned for every subscription
 	ObjectSubscription interface {
+		Channel() <-chan *object.Object
 		Next() (*object.Object, error)
 		Cancel()
 	}
@@ -41,7 +42,24 @@ func (s *objectSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
-// Next returns the an item from the queue
+// Channel returns a channel that will be returning the items from the queue
+func (s *objectSubscription) Channel() <-chan *object.Object {
+	c := s.subscription.Channel()
+	r := make(chan *object.Object)
+	go func() {
+		for {
+			v, ok := <-c
+			if !ok {
+				close(r)
+				return
+			}
+			r <- v.(*object.Object)
+		}
+	}()
+	return r
+}
+
+// Next returns the next item from the queue
 func (s *objectSubscription) Next() (r *object.Object, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {

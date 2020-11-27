@@ -25,6 +25,15 @@ func (s *MockSubscriptionSimple) Cancel() {
 }
 
 // Next returns the next object
+func (s *MockSubscriptionSimple) Channel() <-chan *network.Envelope {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	r := make(chan *network.Envelope, len(s.Objects))
+	close(r)
+	return r
+}
+
+// Next returns the next object
 func (s *MockSubscriptionSimple) Next() (*network.Envelope, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

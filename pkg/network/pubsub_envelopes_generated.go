@@ -17,6 +17,7 @@ type (
 	EnvelopeFilter func(*Envelope) bool
 	// EnvelopeSubscription is returned for every subscription
 	EnvelopeSubscription interface {
+		Channel() <-chan *Envelope
 		Next() (*Envelope, error)
 		Cancel()
 	}
@@ -40,7 +41,24 @@ func (s *envelopeSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
-// Next returns the an item from the queue
+// Channel returns a channel that will be returning the items from the queue
+func (s *envelopeSubscription) Channel() <-chan *Envelope {
+	c := s.subscription.Channel()
+	r := make(chan *Envelope)
+	go func() {
+		for {
+			v, ok := <-c
+			if !ok {
+				close(r)
+				return
+			}
+			r <- v.(*Envelope)
+		}
+	}()
+	return r
+}
+
+// Next returns the next item from the queue
 func (s *envelopeSubscription) Next() (r *Envelope, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {

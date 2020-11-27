@@ -16,6 +16,7 @@ type (
 	NameFilter func(ObjectType) bool
 	// NameSubscription is returned for every subscription
 	NameSubscription interface {
+		Channel() <-chan ObjectType
 		Next() (ObjectType, error)
 		Cancel()
 	}
@@ -39,7 +40,24 @@ func (s *nameSubscription) Cancel() {
 	s.subscription.Cancel()
 }
 
-// Next returns the an item from the queue
+// Channel returns a channel that will be returning the items from the queue
+func (s *nameSubscription) Channel() <-chan ObjectType {
+	c := s.subscription.Channel()
+	r := make(chan ObjectType)
+	go func() {
+		for {
+			v, ok := <-c
+			if !ok {
+				close(r)
+				return
+			}
+			r <- v.(ObjectType)
+		}
+	}()
+	return r
+}
+
+// Next returns the next item from the queue
 func (s *nameSubscription) Next() (r ObjectType, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {

@@ -87,6 +87,20 @@ func (m *MockObjectSubscription) EXPECT() *MockObjectSubscriptionMockRecorder {
 	return m.recorder
 }
 
+// Channel mocks base method
+func (m *MockObjectSubscription) Channel() chan<- *object.Object {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Channel")
+	ret0, _ := ret[0].(chan<- *object.Object)
+	return ret0
+}
+
+// Channel indicates an expected call of Channel
+func (mr *MockObjectSubscriptionMockRecorder) Channel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockObjectSubscription)(nil).Channel))
+}
+
 // Next mocks base method
 func (m *MockObjectSubscription) Next() (*object.Object, error) {
 	m.ctrl.T.Helper()
