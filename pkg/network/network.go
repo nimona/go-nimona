@@ -30,8 +30,9 @@ import (
 //go:generate mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
 
 var (
-	dataForwardType   = new(DataForward).Type()
-	objHandledCounter = promauto.NewCounter(
+	dataForwardRequestType  = new(DataForwardRequest).Type()
+	dataForwardEnvelopeType = new(DataForwardEnvelope).Type()
+	objHandledCounter       = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_received_total",
 			Help: "Total number of (top level) objects received",
@@ -154,7 +155,10 @@ func New(
 
 	// subscribe to data forward type
 	subs := w.inboxes.Subscribe(
-		FilterByObjectType(dataForwardType),
+		FilterByObjectType(
+			dataForwardRequestType,
+			dataForwardEnvelopeType,
+		),
 	)
 
 	go func() {
@@ -355,7 +359,6 @@ func (w *network) processOutbox(outbox *outbox) {
 				df, err := w.wrapInDataForward(
 					req.object,
 					req.recipient.PublicKey,
-					relayPeer.PublicKey,
 				)
 				if err != nil {
 					logger.Error(
@@ -430,22 +433,44 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 		logger.Debug("getting payload")
 		// nolint: gocritic // don't care about singleCaseSwitch here
 		switch e.Payload.Type {
-		case dataForwardType:
-			// if we receive a dataForward payload we check if it is meant for
-			// this peer, if yes try to decode it, if not forward it
-			// we treat this a data because it needs to be encrypted
-
-			// decode object
-			fwd := &DataForward{}
+		case dataForwardRequestType:
+			// forward requests are just decoded to get the recipient and their
+			// payload is sent to them
+			fwd := &DataForwardRequest{}
 			if err := fwd.FromObject(e.Payload); err != nil {
 				return err
 			}
 
-			// if the data are encrypted we should first decrupt them
-			if !fwd.Ephermeral.IsEmpty() {
+			// the way we create the peer is a hack to make sure that we only
+			// try to send this to an existing connection and not bothering
+			// with dialing the peer.
+			err := w.Send(
+				context.Background(),
+				fwd.Payload,
+				&peer.ConnectionInfo{
+					PublicKey: fwd.Recipient,
+				},
+			)
+
+			if err != nil {
+				return errors.Wrap(
+					errors.Error("could not send object"),
+					err,
+				)
+			}
+		case dataForwardEnvelopeType:
+			// envelopes contain relayed objects, so we decode them and publish
+			// them to our inboxes
+			fwd := &DataForwardEnvelope{}
+			if err := fwd.FromObject(e.Payload); err != nil {
+				return err
+			}
+
+			// if the data are encrypted we should first decrypt them
+			if !fwd.Sender.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
 					w.localpeer.GetPrimaryPeerKey(),
-					fwd.Ephermeral,
+					fwd.Sender,
 				)
 				if err != nil {
 					continue
@@ -465,52 +490,15 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 
 			// convert it into an object
 			o := object.FromMap(m)
-
-			// and if this is not a dataforward then we assume it is for us
-			if o.Type != dataForwardType {
-				if o.Metadata.Signature.IsEmpty() {
-					logger.Error("forwarded object has no signature")
-					continue
-				}
-				w.inboxes.Publish(&Envelope{
-					Sender:  o.Metadata.Signature.Signer,
-					Payload: o,
-				})
+			if o.Metadata.Signature.IsEmpty() {
+				logger.Error("forwarded object has no signature")
 				continue
 			}
-
-			// if this is a dataforward and for some reason we are the
-			// recipient, handle it
-			nfwd := &DataForward{}
-			if err := nfwd.FromObject(o); err != nil {
-				return errors.Wrap(errors.Error("could not parse nfwd"), err)
-			}
-
-			pk := w.localpeer.GetPrimaryPeerKey().PublicKey()
-			if nfwd.Recipient.Equals(pk) {
-				w.inboxes.Publish(&Envelope{
-					Sender:  o.Metadata.Signature.Signer,
-					Payload: o,
-				})
-				continue
-			}
-
-			// send the object to the intended recipient.
-			// the way we create the peer is a hack to make sure that we only
-			// try to send this to an existing connection and not bothering
-			// with dialing the peer.
-			if err := w.Send(
-				context.Background(),
-				o,
-				&peer.ConnectionInfo{
-					PublicKey: nfwd.Recipient,
-				},
-			); err != nil {
-				return errors.Wrap(
-					errors.Error("could not send object"),
-					err,
-				)
-			}
+			w.inboxes.Publish(&Envelope{
+				Sender:  o.Metadata.Signature.Signer,
+				Payload: o,
+			})
+			continue
 		}
 	}
 }
@@ -626,18 +614,15 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 
 func (w *network) wrapInDataForward(
 	o *object.Object,
-	rks ...crypto.PublicKey,
-) (*DataForward, error) {
-	if len(rks) == 0 {
-		return nil, errors.New("missing recipients")
-	}
+	recipient crypto.PublicKey,
+) (*DataForwardRequest, error) {
 	// marshal payload
 	payload, err := json.Marshal(o.ToMap())
 	if err != nil {
 		return nil, err
 	}
 	// create an ephemeral key pair, and calculate the shared key
-	ek, ss, err := crypto.NewEphemeralSharedKey(rks[0])
+	ek, ss, err := crypto.NewEphemeralSharedKey(recipient)
 	if err != nil {
 		return nil, err
 	}
@@ -646,24 +631,32 @@ func (w *network) wrapInDataForward(
 	if err != nil {
 		return nil, err
 	}
-	// create data forward object
-	df := &DataForward{
+	// create data forward envelope
+	dfe := &DataForwardEnvelope{
 		Metadata: object.Metadata{
 			Owner: ek.PublicKey(),
 		},
-		Recipient:  rks[0],
-		Ephermeral: ek.PublicKey(), // TODO to we need this attribute?
-		Data:       ep,
+		Sender: ek.PublicKey(),
+		Data:   ep,
 	}
-	sig, err := object.NewSignature(*ek, df.ToObject())
+	dfeSig, err := object.NewSignature(*ek, dfe.ToObject())
 	if err != nil {
 		return nil, err
 	}
-	df.Metadata.Signature = sig
-	// if there are more than one recipients, wrap for the next
-	if len(rks) > 1 {
-		return w.wrapInDataForward(df.ToObject(), rks[1:]...)
+	dfe.Metadata.Signature = dfeSig
+	// and wrap it in a request
+	dfr := &DataForwardRequest{
+		Metadata: object.Metadata{
+			Owner: ek.PublicKey(),
+		},
+		Recipient: recipient,
+		Payload:   dfe.ToObject(),
 	}
+	dfrSig, err := object.NewSignature(*ek, dfr.ToObject())
+	if err != nil {
+		return nil, err
+	}
+	dfr.Metadata.Signature = dfrSig
 	// else return
-	return df, nil
+	return dfr, nil
 }
