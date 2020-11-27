@@ -13,3 +13,8 @@ signed object nimona.io/network.DataForwardEnvelope {
     sender nimona.io/crypto.PublicKey
     data data
 }
+
+signed object nimona.io/network.DataForwardResponse {
+    requestID string
+    success bool
+}
