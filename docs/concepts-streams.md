@@ -8,7 +8,7 @@ Streams are identified by the hash of their root object. This means that even th
 
 The benefit of this is that there is no need to find a way to reference the stream as it changes. The downside is that you do not really know if you have actually  received the whole stream and whether peers are not holding back on you.
 
-![feed](concepts-streams.drawio.svg)
+![feed](images/concepts-streams.drawio.svg)
 
 ## Structure
 
