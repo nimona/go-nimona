@@ -7,6 +7,7 @@ package localpeermock
 import (
 	gomock "github.com/golang/mock/gomock"
 	crypto "nimona.io/pkg/crypto"
+	localpeer "nimona.io/pkg/localpeer"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
@@ -245,4 +246,19 @@ func (m *MockLocalPeer) ConnectionInfo() *peer.ConnectionInfo {
 func (mr *MockLocalPeerMockRecorder) ConnectionInfo() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConnectionInfo", reflect.TypeOf((*MockLocalPeer)(nil).ConnectionInfo))
+}
+
+// ListenForUpdates mocks base method
+func (m *MockLocalPeer) ListenForUpdates() (<-chan localpeer.UpdateEvent, func()) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListenForUpdates")
+	ret0, _ := ret[0].(<-chan localpeer.UpdateEvent)
+	ret1, _ := ret[1].(func())
+	return ret0, ret1
+}
+
+// ListenForUpdates indicates an expected call of ListenForUpdates
+func (mr *MockLocalPeerMockRecorder) ListenForUpdates() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForUpdates", reflect.TypeOf((*MockLocalPeer)(nil).ListenForUpdates))
 }

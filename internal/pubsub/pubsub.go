@@ -20,6 +20,7 @@ type (
 	Filter func(interface{}) bool
 	// Subscription is returned for every subscription
 	Subscription interface {
+		Channel() <-chan interface{}
 		Next() (interface{}, error)
 		Cancel()
 	}
@@ -51,6 +52,21 @@ func New() PubSub {
 func (ps *QueueSubscription) Cancel() {
 	ps.Queue.Append(nil)
 	ps.cancel()
+}
+
+func (ps *QueueSubscription) Channel() <-chan interface{} {
+	r := make(chan interface{})
+	go func() {
+		for {
+			next := ps.Queue.Pop()
+			if next == nil {
+				close(r)
+				return
+			}
+			r <- next
+		}
+	}()
+	return r
 }
 
 func (ps *QueueSubscription) Next() (interface{}, error) {

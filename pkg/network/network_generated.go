@@ -19,6 +19,11 @@ type (
 		Sender   crypto.PublicKey `nimona:"sender:s,omitempty"`
 		Data     []byte           `nimona:"data:d,omitempty"`
 	}
+	DataForwardResponse struct {
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string          `nimona:"requestID:s,omitempty"`
+		Success   bool            `nimona:"success:b,omitempty"`
+	}
 )
 
 func (e *DataForwardRequest) Type() string {
@@ -86,5 +91,36 @@ func (e DataForwardEnvelope) ToObjectMap() map[string]interface{} {
 }
 
 func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
+}
+
+func (e *DataForwardResponse) Type() string {
+	return "nimona.io/network.DataForwardResponse"
+}
+
+func (e DataForwardResponse) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "nimona.io/network.DataForwardResponse",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
+	}
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["success:b"] = e.Success
+	return r
+}
+
+func (e DataForwardResponse) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
+	d["success:b"] = e.Success
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/network.DataForwardResponse",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
+func (e *DataForwardResponse) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
