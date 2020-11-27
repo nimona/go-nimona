@@ -51,7 +51,8 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 
 	// wait a bit and check if provder has cached the peer
 	time.Sleep(100 * time.Millisecond)
-	assert.Len(t, prv.peerCache.List(), 1)
+	// the second peer is our own
+	assert.Len(t, prv.peerCache.List(), 2)
 }
 
 func TestProvider_distributeAnnouncement(t *testing.T) {
