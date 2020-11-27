@@ -8,43 +8,83 @@ import (
 )
 
 type (
-	DataForward struct {
-		Metadata   object.Metadata  `nimona:"metadata:m,omitempty"`
-		Recipient  crypto.PublicKey `nimona:"recipient:s,omitempty"`
-		Ephermeral crypto.PublicKey `nimona:"ephermeral:s,omitempty"`
-		Data       []byte           `nimona:"data:d,omitempty"`
+	DataForwardRequest struct {
+		Metadata  object.Metadata  `nimona:"metadata:m,omitempty"`
+		RequestID string           `nimona:"requestID:s,omitempty"`
+		Recipient crypto.PublicKey `nimona:"recipient:s,omitempty"`
+		Payload   *object.Object   `nimona:"payload:o,omitempty"`
+	}
+	DataForwardEnvelope struct {
+		Metadata object.Metadata  `nimona:"metadata:m,omitempty"`
+		Sender   crypto.PublicKey `nimona:"sender:s,omitempty"`
+		Data     []byte           `nimona:"data:d,omitempty"`
 	}
 )
 
-func (e *DataForward) Type() string {
-	return "nimona.io/network.DataForward"
+func (e *DataForwardRequest) Type() string {
+	return "nimona.io/network.DataForwardRequest"
 }
 
-func (e DataForward) ToObject() *object.Object {
+func (e DataForwardRequest) ToObject() *object.Object {
 	r := &object.Object{
-		Type:     "nimona.io/network.DataForward",
+		Type:     "nimona.io/network.DataForwardRequest",
 		Metadata: e.Metadata,
 		Data:     map[string]interface{}{},
 	}
+	r.Data["requestID:s"] = e.RequestID
 	r.Data["recipient:s"] = e.Recipient
-	r.Data["ephermeral:s"] = e.Ephermeral
-	r.Data["data:d"] = e.Data
+	if e.Payload != nil {
+		r.Data["payload:o"] = e.Payload
+	}
 	return r
 }
 
-func (e DataForward) ToObjectMap() map[string]interface{} {
+func (e DataForwardRequest) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
 	d["recipient:s"] = e.Recipient
-	d["ephermeral:s"] = e.Ephermeral
-	d["data:d"] = e.Data
+	if e.Payload != nil {
+		d["payload:o"] = e.Payload
+	}
 	r := map[string]interface{}{
-		"type:s":     "nimona.io/network.DataForward",
+		"type:s":     "nimona.io/network.DataForwardRequest",
 		"metadata:m": object.MetadataToMap(&e.Metadata),
 		"data:m":     d,
 	}
 	return r
 }
 
-func (e *DataForward) FromObject(o *object.Object) error {
+func (e *DataForwardRequest) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
+}
+
+func (e *DataForwardEnvelope) Type() string {
+	return "nimona.io/network.DataForwardEnvelope"
+}
+
+func (e DataForwardEnvelope) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "nimona.io/network.DataForwardEnvelope",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
+	}
+	r.Data["sender:s"] = e.Sender
+	r.Data["data:d"] = e.Data
+	return r
+}
+
+func (e DataForwardEnvelope) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["sender:s"] = e.Sender
+	d["data:d"] = e.Data
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/network.DataForwardEnvelope",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
+func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }

@@ -3,8 +3,13 @@ package nimona.io/network
 import nimona.io/object object
 import nimona.io/crypto crypto
 
-signed object nimona.io/network.DataForward {
+signed object nimona.io/network.DataForwardRequest {
+    requestID string
     recipient nimona.io/crypto.PublicKey
-    ephermeral nimona.io/crypto.PublicKey
+    payload nimona.io/object.Object
+}
+
+signed object nimona.io/network.DataForwardEnvelope {
+    sender nimona.io/crypto.PublicKey
     data data
 }
