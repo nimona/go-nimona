@@ -31,6 +31,7 @@ import (
 
 var (
 	dataForwardRequestType  = new(DataForwardRequest).Type()
+	dataForwardResponseType = new(DataForwardResponse).Type()
 	dataForwardEnvelopeType = new(DataForwardEnvelope).Type()
 	objHandledCounter       = promauto.NewCounter(
 		prometheus.CounterOpts{
@@ -355,6 +356,9 @@ func (w *network) processOutbox(outbox *outbox) {
 
 		// Only try the relays if we fail to write the object
 		if lastErr != nil {
+			if len(req.recipient.Relays) > 0 {
+				lastErr = errors.New("all addresses failed, all relays failed")
+			}
 			for _, relayPeer := range req.recipient.Relays {
 				df, err := w.wrapInDataForward(
 					req.object,
@@ -384,6 +388,47 @@ func (w *network) processOutbox(outbox *outbox) {
 				if err != nil {
 					logger.Error(
 						"trying relay peer",
+						log.String("relay", relayPeer.PublicKey.String()),
+						log.String("recipient", req.recipient.PublicKey.String()),
+						log.Error(err),
+					)
+					continue
+				}
+				resSub := w.Subscribe(
+					FilterByObjectType(dataForwardResponseType),
+					FilterByRequestID(df.RequestID),
+				)
+				var resObj *object.Object
+				c := resSub.Channel()
+				t := time.NewTimer(time.Second)
+				select {
+				case env := <-c:
+					resObj = env.Payload
+				case <-t.C:
+				}
+				if resObj == nil {
+					logger.Error(
+						"dind't get a data forward response in time",
+						log.String("relay", relayPeer.PublicKey.String()),
+						log.String("recipient", req.recipient.PublicKey.String()),
+						log.Error(err),
+					)
+					continue
+				}
+				res := &DataForwardResponse{}
+				if err := res.FromObject(resObj); err != nil {
+					logger.Error(
+						"got back invalid data forward response",
+						log.String("relay", relayPeer.PublicKey.String()),
+						log.String("recipient", req.recipient.PublicKey.String()),
+						log.Error(err),
+					)
+					continue
+				}
+				if !res.Success {
+					logger.Warn(
+						"got back relay response",
+						log.Bool("succes", res.Success),
 						log.String("relay", relayPeer.PublicKey.String()),
 						log.String("recipient", req.recipient.PublicKey.String()),
 						log.Error(err),
@@ -445,12 +490,37 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			// try to send this to an existing connection and not bothering
 			// with dialing the peer.
 			err := w.Send(
-				context.Background(),
+				context.New(
+					context.WithTimeout(time.Second),
+				),
 				fwd.Payload,
 				&peer.ConnectionInfo{
 					PublicKey: fwd.Recipient,
 				},
 			)
+
+			res := &DataForwardResponse{
+				Metadata: object.Metadata{
+					Owner: w.localpeer.GetPrimaryPeerKey().PublicKey(),
+				},
+				RequestID: fwd.RequestID,
+				Success:   err == nil,
+			}
+			if resErr := w.Send(
+				context.New(
+					context.WithTimeout(time.Second),
+				),
+				res.ToObject(),
+				&peer.ConnectionInfo{
+					PublicKey: e.Sender,
+				},
+			); resErr != nil {
+				logger.Error(
+					"error sending data forward response",
+					log.String("requestID", fwd.RequestID),
+					log.Error(err),
+				)
+			}
 
 			if err != nil {
 				return errors.Wrap(

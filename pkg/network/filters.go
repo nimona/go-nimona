@@ -54,3 +54,9 @@ func FilterByNonce(nonce string) EnvelopeFilter {
 		return e.Payload.Data["nonce:s"].(string) == nonce
 	}
 }
+
+func FilterByRequestID(requestID string) EnvelopeFilter {
+	return func(e *Envelope) bool {
+		return e.Payload.Data["requestID:s"].(string) == requestID
+	}
+}
