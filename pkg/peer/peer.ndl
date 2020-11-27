@@ -7,4 +7,5 @@ object nimona.io/peer.ConnectionInfo {
     publicKey nimona.io/crypto.PublicKey
     addresses repeated string
     relays repeated nimona.io/peer.ConnectionInfo
+    objectFormats repeated string
 }

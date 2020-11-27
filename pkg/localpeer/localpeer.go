@@ -153,6 +153,9 @@ func (s *localPeer) ConnectionInfo() *peer.ConnectionInfo {
 		PublicKey: s.GetPrimaryPeerKey().PublicKey(),
 		Addresses: s.GetAddresses(),
 		Relays:    s.GetRelays(),
+		ObjectFormats: []string{
+			"json",
+		},
 	}
 }
 

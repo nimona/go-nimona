@@ -9,10 +9,11 @@ import (
 
 type (
 	ConnectionInfo struct {
-		Metadata  object.Metadata   `nimona:"metadata:m,omitempty"`
-		PublicKey crypto.PublicKey  `nimona:"publicKey:s,omitempty"`
-		Addresses []string          `nimona:"addresses:as,omitempty"`
-		Relays    []*ConnectionInfo `nimona:"relays:ao,omitempty"`
+		Metadata      object.Metadata   `nimona:"metadata:m,omitempty"`
+		PublicKey     crypto.PublicKey  `nimona:"publicKey:s,omitempty"`
+		Addresses     []string          `nimona:"addresses:as,omitempty"`
+		Relays        []*ConnectionInfo `nimona:"relays:ao,omitempty"`
+		ObjectFormats []string          `nimona:"objectFormats:as,omitempty"`
 	}
 )
 
@@ -37,6 +38,9 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		}
 		r.Data["relays:ao"] = rv
 	}
+	if len(e.ObjectFormats) > 0 {
+		r.Data["objectFormats:as"] = e.ObjectFormats
+	}
 	return r
 }
 
@@ -52,6 +56,9 @@ func (e ConnectionInfo) ToObjectMap() map[string]interface{} {
 			rv[i] = v.ToObject()
 		}
 		d["relays:ao"] = rv
+	}
+	if len(e.ObjectFormats) > 0 {
+		d["objectFormats:as"] = e.ObjectFormats
 	}
 	r := map[string]interface{}{
 		"type:s":     "nimona.io/peer.ConnectionInfo",
