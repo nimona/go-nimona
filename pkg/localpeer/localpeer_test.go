@@ -65,6 +65,9 @@ func TestLocalPeer(t *testing.T) {
 		Relays: []*peer.ConnectionInfo{{
 			PublicKey: k1.PublicKey(),
 		}},
+		ObjectFormats: []string{
+			"json",
+		},
 	}
 	assert.Equal(t, ci, e)
 }
