@@ -258,15 +258,19 @@ func (p *Provider) announceSelf() {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.announceSelf"),
 	)
-	annObj := hyperspace.Announcement{
+	// construct an announcement
+	ann := &hyperspace.Announcement{
 		Version:        announceVersion,
 		ConnectionInfo: p.local.ConnectionInfo(),
 		PeerCapabilities: []string{
 			hyperspaceAnnouncementType,
 			hyperspaceLookupRequestType,
 		},
-	}.ToObject()
-
+	}
+	// make sure we have our own peer in the peer cache
+	p.peerCache.Put(ann, 24*time.Hour)
+	// and send it to all providers
+	annObj := ann.ToObject()
 	n := 0
 	for _, ci := range p.providerCache.List() {
 		if err := p.network.Send(
