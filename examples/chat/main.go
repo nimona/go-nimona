@@ -226,7 +226,6 @@ func main() {
 			ctx,
 			cfg.Peer.BindAddress,
 			network.ListenOnLocalIPs,
-			network.ListenOnPrivateIPs,
 			network.ListenOnExternalPort,
 		)
 		if err != nil {
