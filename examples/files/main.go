@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -48,11 +47,7 @@ type config struct {
 		BindAddress string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
 		Bootstraps  []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
-
 	ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
-	Debug          struct {
-		MetricsPort string `envconfig:"METRICS_PORT"`
-	} `envconfig:"DEBUG"`
 }
 
 type fileUnloaded struct {
@@ -84,18 +79,6 @@ func main() {
 	if err := envconfig.Process("nimona", cfg); err != nil {
 		logger.Fatal("error processing config", log.Error(err))
 	}
-
-	go func() {
-		if cfg.Debug.MetricsPort == "" {
-			return
-		}
-
-		// nolint: errcheck
-		http.ListenAndServe(
-			fmt.Sprintf("localhost:%s", cfg.Debug.MetricsPort),
-			nil,
-		)
-	}()
 
 	ft, err := newFileTransfer(ctx, cfg, logger)
 	if err != nil {
@@ -229,6 +212,7 @@ func (ft *fileTransfer) close() {
 		ft.listener.Close()
 	}
 }
+
 func newFileTransfer(
 	ctx context.Context,
 	cfg *config,
