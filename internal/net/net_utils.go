@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrInvalidSignature = errors.Error("invalid signature")
+	ErrConnectionClosed = errors.Error("connection closed")
 	ErrLineWasEmpty     = errors.Error("line was empty")
 )
 
@@ -50,7 +51,10 @@ func Write(o *object.Object, conn *Connection) error {
 func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
 
-	r := <-conn.lines
+	r, ok := <-conn.lines
+	if !ok {
+		return nil, ErrConnectionClosed
+	}
 	if len(r) == 0 {
 		return nil, ErrLineWasEmpty
 	}

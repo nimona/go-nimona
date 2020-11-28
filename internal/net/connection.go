@@ -44,11 +44,6 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *Connection {
 		for {
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
-				// TODO do we need to do anything with the connection?
-				if err == io.EOF {
-					return
-				}
-				// TODO log error
 				return
 			}
 			c.lines <- line

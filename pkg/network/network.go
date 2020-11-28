@@ -270,8 +270,8 @@ func (w *network) handleConnection(conn *net.Connection) error {
 			// ie a payload that cannot be unmarshalled or verified
 			// should not kill the connection
 			if err != nil {
-				if err == net.ErrInvalidSignature ||
-					err == net.ErrLineWasEmpty {
+				switch err {
+				case net.ErrInvalidSignature, net.ErrLineWasEmpty:
 					log.DefaultLogger.Warn(
 						"error reading from connection",
 						log.String(
@@ -287,7 +287,7 @@ func (w *network) handleConnection(conn *net.Connection) error {
 					continue
 				}
 				log.DefaultLogger.Warn(
-					"error reading from connection, closing connection",
+					"error reading from connection, handler returning",
 					log.Error(err),
 				)
 				return
