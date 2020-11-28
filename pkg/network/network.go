@@ -335,7 +335,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		}
 		// try to send the object
 		var lastErr error
-		maxAttempts := 1
+		maxAttempts := 2
 		for i := 0; i < maxAttempts; i++ {
 			logger.Debug("trying to get connection", log.Int("attempt", i+1))
 
@@ -346,6 +346,11 @@ func (w *network) processOutbox(outbox *outbox) {
 			}
 			logger.Debug("trying to write object", log.Int("attempt", i+1))
 			if err := net.Write(req.object, conn); err != nil {
+				// close and remove connection
+				w.connmgr.CloseConnection(
+					context.New(),
+					req.recipient.PublicKey,
+				)
 				lastErr = err
 				continue
 			}
