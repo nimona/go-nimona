@@ -72,6 +72,29 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, sub)
 	assert.Equal(t, testObj.ToMap(), env.Payload.ToMap())
+
+	t.Run("re-establish broken connections", func(t *testing.T) {
+		// close p2's connection to p1
+		c, err := n2.(*network).connmgr.GetConnection(context.
+			New(),
+			&peer.ConnectionInfo{
+				PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			},
+		)
+		require.NoError(t, err)
+		err = c.Close()
+		require.NoError(t, err)
+		// try to send something from p1 to p2
+		err = n1.Send(
+			context.Background(),
+			testObj,
+			&peer.ConnectionInfo{
+				PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				Addresses: n2.LocalPeer().GetAddresses(),
+			},
+		)
+		require.NoError(t, err)
+	})
 }
 
 func TestNetwork_Relay(t *testing.T) {

@@ -27,6 +27,10 @@ type Manager interface {
 		context.Context,
 		*peer.ConnectionInfo,
 	) (*net.Connection, error)
+	CloseConnection(
+		context.Context,
+		crypto.PublicKey,
+	)
 }
 
 type ConnectionHandler func(*net.Connection) error
@@ -98,6 +102,14 @@ func (m *manager) GetConnection(
 	}
 
 	return conn, nil
+}
+
+func (m *manager) CloseConnection(
+	ctx context.Context,
+	k crypto.PublicKey,
+) {
+	pbox := m.getPeerbox(k)
+	m.updateConnection(pbox, nil)
 }
 
 func (m *manager) updateConnection(pbox *peerbox, conn *net.Connection) {
