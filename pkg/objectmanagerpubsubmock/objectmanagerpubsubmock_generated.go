@@ -88,10 +88,10 @@ func (m *MockObjectSubscription) EXPECT() *MockObjectSubscriptionMockRecorder {
 }
 
 // Channel mocks base method
-func (m *MockObjectSubscription) Channel() chan<- *object.Object {
+func (m *MockObjectSubscription) Channel() <-chan *object.Object {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Channel")
-	ret0, _ := ret[0].(chan<- *object.Object)
+	ret0, _ := ret[0].(<-chan *object.Object)
 	return ret0
 }
 
