@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606574325262,
+  "lastUpdate": 1606584947276,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1206,6 +1206,60 @@ window.BENCHMARK_DATA = {
             "value": 81.7,
             "unit": "ns/op",
             "extra": "15172780 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "1ccd29e3d86eefc65d1c78b4ec3401799e3523d8",
+          "message": "chore(objectmanager): update mocks",
+          "timestamp": "2020-11-28T17:34:15Z",
+          "tree_id": "5d16b2bfdcdfbaf40c4059f0bd8fa5d023b54b49",
+          "url": "https://github.com/nimona/go-nimona/commit/1ccd29e3d86eefc65d1c78b4ec3401799e3523d8"
+        },
+        "date": 1606584946734,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 494299,
+            "unit": "ns/op",
+            "extra": "2376 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 14007245,
+            "unit": "ns/op",
+            "extra": "86 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 128457050,
+            "unit": "ns/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 58217,
+            "unit": "ns/op",
+            "extra": "20665 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 87.5,
+            "unit": "ns/op",
+            "extra": "12764550 times\n2 procs"
           }
         ]
       }
