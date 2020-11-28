@@ -15,23 +15,29 @@ and send messages.
 
 ## Example
 
+Create some keys for your peers.
+
+```sh
+go run ./cmd/keygen/main.go
+```
+
 ```sh
 LOG_LEVEL=fatal \
 NIMONA_BIND_ADDRESS=0.0.0.0:18000 \
-NIMONA_PEER_PRIVATE_KEY=ed25519.prv.2iFcWsLBbgtbLNX78kYfuA8ZCzaYENmsYvZVMqcLBtPrXAPbZC73T4Wo3ZMeZf93KqvNsYae9wSbsqC6P5VDod8H \
+NIMONA_PEER_PRIVATE_KEY=<key1> \
 go run ./examples/chat/*.go
 ```
 
 ```sh
 LOG_LEVEL=fatal \
 NIMONA_BIND_ADDRESS=0.0.0.0:18001 \
-NIMONA_PEER_PRIVATE_KEY=ed25519.prv.3ZJpzEB9QWzprYvbL8FdNDosv7a6gg6otrc8nHLdoyeJnxbngDcvxQtMX3Y8fkG8Dsgo58GtDzxua8YnHYBeJBub \
+NIMONA_PEER_PRIVATE_KEY=<key2> \
 go run ../examples/chat/*.go
 ```
 
 ```sh
 LOG_LEVEL=fatal \
 NIMONA_BIND_ADDRESS=0.0.0.0:18002 \
-NIMONA_PEER_PRIVATE_KEY=ed25519.prv.32KvrZFsw39TrabSNPU9oFapT7ygRHWGSL1DqiD36CZf3odwZP5TLkLNdCeN7zk6oRuMwPqRP2wDGuH1N4ukb2Vs \
+NIMONA_PEER_PRIVATE_KEY=<key3> \
 go run ./examples/chat/*.go
 ```
