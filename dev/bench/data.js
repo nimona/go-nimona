@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606569956788,
+  "lastUpdate": 1606574325262,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1152,6 +1152,60 @@ window.BENCHMARK_DATA = {
             "value": 84.5,
             "unit": "ns/op",
             "extra": "12018391 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "27856297+dependabot-preview[bot]@users.noreply.github.com",
+            "name": "dependabot-preview[bot]",
+            "username": "dependabot-preview[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "e6a5458290335e836d17a2ceb3c655093d0b6e95",
+          "message": "chore(deps): bump gopkg.in/yaml.v2 from 2.3.0 to 2.4.0\n\nBumps [gopkg.in/yaml.v2](https://github.com/go-yaml/yaml) from 2.3.0 to 2.4.0.\n- [Release notes](https://github.com/go-yaml/yaml/releases)\n- [Commits](https://github.com/go-yaml/yaml/compare/v2.3.0...v2.4.0)\n\nSigned-off-by: dependabot-preview[bot] <support@dependabot.com>",
+          "timestamp": "2020-11-28T14:37:24Z",
+          "tree_id": "5900f8e8905e0e8a92d5e6355d5ee636c075c9e6",
+          "url": "https://github.com/nimona/go-nimona/commit/e6a5458290335e836d17a2ceb3c655093d0b6e95"
+        },
+        "date": 1606574324795,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 398456,
+            "unit": "ns/op",
+            "extra": "2898 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 12432715,
+            "unit": "ns/op",
+            "extra": "91 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 127167386,
+            "unit": "ns/op",
+            "extra": "19 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 56323,
+            "unit": "ns/op",
+            "extra": "21794 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 81.7,
+            "unit": "ns/op",
+            "extra": "15172780 times\n2 procs"
           }
         ]
       }
