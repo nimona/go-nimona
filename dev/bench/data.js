@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606336899261,
+  "lastUpdate": 1606569956788,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1098,6 +1098,60 @@ window.BENCHMARK_DATA = {
             "value": 71.4,
             "unit": "ns/op",
             "extra": "17282619 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "adc00d258385906a33fe443ad0d1b62ec26554a5",
+          "message": "chore(examples/chat): fix deps, remove private ips, minor readme update",
+          "timestamp": "2020-11-28T13:24:30Z",
+          "tree_id": "b5779b352ea12d898f8564765298ab5704c50eae",
+          "url": "https://github.com/nimona/go-nimona/commit/adc00d258385906a33fe443ad0d1b62ec26554a5"
+        },
+        "date": 1606569956317,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 379887,
+            "unit": "ns/op",
+            "extra": "3039 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 13124398,
+            "unit": "ns/op",
+            "extra": "87 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 130237979,
+            "unit": "ns/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 55430,
+            "unit": "ns/op",
+            "extra": "20830 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 84.5,
+            "unit": "ns/op",
+            "extra": "12018391 times\n2 procs"
           }
         ]
       }
