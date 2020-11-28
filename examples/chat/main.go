@@ -254,6 +254,9 @@ func main() {
 		bootstrapPeers = append(bootstrapPeers, bootstrapPeer)
 	}
 
+	// add bootstrap peers as relays
+	local.PutRelays(bootstrapPeers...)
+
 	// construct new resolver
 	res := resolver.New(
 		ctx,
