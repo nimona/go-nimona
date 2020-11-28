@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrInvalidSignature = errors.Error("invalid signature")
+	ErrLineWasEmpty     = errors.Error("line was empty")
 )
 
 func Write(o *object.Object, conn *Connection) error {
@@ -51,7 +52,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	r := <-conn.lines
 	if len(r) == 0 {
-		return nil, errors.New("line was empty")
+		return nil, ErrLineWasEmpty
 	}
 
 	m := map[string]interface{}{}
@@ -77,7 +78,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		log.Any("object", o.ToMap()),
 		log.String("local.address", conn.localAddress),
 		log.String("remote.address", conn.remoteAddress),
-		log.String("remote.fingerprint", conn.RemotePeerKey.String()),
+		log.String("remote.publicKey", conn.RemotePeerKey.String()),
 		log.String("direction", "incoming"),
 	)
 

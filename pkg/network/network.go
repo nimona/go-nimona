@@ -270,11 +270,19 @@ func (w *network) handleConnection(conn *net.Connection) error {
 			// ie a payload that cannot be unmarshalled or verified
 			// should not kill the connection
 			if err != nil {
-				if err == net.ErrInvalidSignature {
+				if err == net.ErrInvalidSignature ||
+					err == net.ErrLineWasEmpty {
 					log.DefaultLogger.Warn(
 						"error reading from connection",
+						log.String(
+							"remote.publicKey",
+							conn.RemotePeerKey.String(),
+						),
+						log.String(
+							"remote.address",
+							conn.RemotePeerKey.Address(),
+						),
 						log.Error(err),
-						log.String("hash", payload.Hash().String()),
 					)
 					continue
 				}
@@ -480,7 +488,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			)
 
 		// TODO verify signature
-		logger.Debug("getting payload")
+		logger.Debug("handling object")
 		// nolint: gocritic // don't care about singleCaseSwitch here
 		switch e.Payload.Type {
 		case dataForwardRequestType:
@@ -488,7 +496,11 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			// payload is sent to them
 			fwd := &DataForwardRequest{}
 			if err := fwd.FromObject(e.Payload); err != nil {
-				return err
+				logger.Warn(
+					"error decoding DataForwardRequest",
+					log.Error(err),
+				)
+				continue
 			}
 
 			// the way we create the peer is a hack to make sure that we only
@@ -520,25 +532,32 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 					PublicKey: e.Sender,
 				},
 			); resErr != nil {
-				logger.Error(
-					"error sending data forward response",
+				logger.Warn(
+					"error sending DataForwardResponse",
 					log.String("requestID", fwd.RequestID),
 					log.Error(err),
 				)
+				continue
 			}
 
 			if err != nil {
-				return errors.Wrap(
-					errors.Error("could not send object"),
-					err,
+				logger.Warn(
+					"error sending DataForwardEnvelope",
+					log.String("requestID", fwd.RequestID),
+					log.Error(err),
 				)
+				continue
 			}
 		case dataForwardEnvelopeType:
 			// envelopes contain relayed objects, so we decode them and publish
 			// them to our inboxes
 			fwd := &DataForwardEnvelope{}
 			if err := fwd.FromObject(e.Payload); err != nil {
-				return err
+				logger.Warn(
+					"error decoding DataForwardEnvelope",
+					log.Error(err),
+				)
+				continue
 			}
 
 			// if the data are encrypted we should first decrypt them
@@ -560,15 +579,15 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 			m := map[string]interface{}{}
 			err := json.Unmarshal(fwd.Data, &m)
 			if err != nil {
-				return errors.Wrap(errors.Error("could not decode data"), err)
+				logger.Warn(
+					"error decoding DataForwardEnvelope's payload",
+					log.Error(err),
+				)
+				continue
 			}
 
 			// convert it into an object
 			o := object.FromMap(m)
-			if o.Metadata.Signature.IsEmpty() {
-				logger.Error("forwarded object has no signature")
-				continue
-			}
 			w.inboxes.Publish(&Envelope{
 				Sender:  o.Metadata.Signature.Signer,
 				Payload: o,
