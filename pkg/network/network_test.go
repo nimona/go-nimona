@@ -140,10 +140,10 @@ func TestNetwork_Relay(t *testing.T) {
 	require.NoError(t, err)
 
 	// now we should be able to send from p1 to p2
+	sub := n2.Subscribe(FilterByObjectType("foo"))
 	err = n1.Send(context.Background(), testObjFromP1, p2)
 	require.NoError(t, err)
 
-	sub := n2.Subscribe(FilterByObjectType("foo"))
 	env, err := sub.Next()
 	require.NoError(t, err)
 
@@ -154,10 +154,11 @@ func TestNetwork_Relay(t *testing.T) {
 	)
 
 	// send from p2 to p1
+	sub = n1.Subscribe(FilterByObjectType("foo"))
+
 	err = n2.Send(context.Background(), testObjFromP2, p1)
 	require.NoError(t, err)
 
-	sub = n1.Subscribe(FilterByObjectType("foo"))
 	env, err = sub.Next()
 	require.NoError(t, err)
 
