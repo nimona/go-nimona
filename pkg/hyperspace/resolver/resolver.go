@@ -94,12 +94,14 @@ func New(
 		r.announceSelf()
 		announceOnUpdate, cf := r.localpeer.ListenForUpdates()
 		defer cf()
-		announceTimer := time.NewTicker(30 * time.Second)
-		select {
-		case <-announceTimer.C:
-			r.announceSelf()
-		case <-announceOnUpdate:
-			r.announceSelf()
+		announceTicker := time.NewTicker(30 * time.Second)
+		for {
+			select {
+			case <-announceTicker.C:
+				r.announceSelf()
+			case <-announceOnUpdate:
+				r.announceSelf()
+			}
 		}
 	}()
 
