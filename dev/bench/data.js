@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606593870563,
+  "lastUpdate": 1606677937292,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1368,6 +1368,60 @@ window.BENCHMARK_DATA = {
             "value": 88,
             "unit": "ns/op",
             "extra": "13562769 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "d9be909ae19307fb47d42d34e2c50ed7d10974bc",
+          "message": "chore(examples/chat): put conversation hash to local peer",
+          "timestamp": "2020-11-29T19:24:10Z",
+          "tree_id": "628d1cc5240e30d0cbd48a4e3a30cc20d2cd85e7",
+          "url": "https://github.com/nimona/go-nimona/commit/d9be909ae19307fb47d42d34e2c50ed7d10974bc"
+        },
+        "date": 1606677936879,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 398930,
+            "unit": "ns/op",
+            "extra": "2785 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 12285146,
+            "unit": "ns/op",
+            "extra": "97 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 121152174,
+            "unit": "ns/op",
+            "extra": "25 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 55412,
+            "unit": "ns/op",
+            "extra": "21175 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 83.9,
+            "unit": "ns/op",
+            "extra": "14654343 times\n2 procs"
           }
         ]
       }
