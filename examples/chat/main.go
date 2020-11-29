@@ -31,6 +31,10 @@ func init() {
 	}()
 }
 
+var (
+	typeConversationMessageAdded = new(ConversationMessageAdded).Type()
+)
+
 // nolint: lll
 type config struct {
 	Peer struct {
@@ -59,7 +63,6 @@ func (c *chat) subscribe(
 
 	// handle objects from subscriptions or store
 	go func() {
-		typeConversationMessageAdded := new(ConversationMessageAdded).Type()
 		for o := range objects {
 			switch o.Type {
 			case typeConversationMessageAdded:
@@ -313,6 +316,9 @@ func main() {
 	if _, err := man.Put(ctx, conversationRootObject); err != nil {
 		logger.Fatal("could not persist conversation root", log.Error(err))
 	}
+
+	// add conversation to the list of content we provide
+	local.PutContentHashes(conversationRootHash)
 
 	c := &chat{
 		local:         local,
