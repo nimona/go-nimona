@@ -114,13 +114,9 @@ func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
 	return ss, nil
 }
 
-// NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
-// secret given a public key, and returns the created public key and secret
-func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
-	priv, err := GenerateEd25519PrivateKey()
-	if err != nil {
-		return nil, nil, err
-	}
+// NewSharedKey calculates a shared secret given a private and a public key,
+// and returns it
+func NewSharedKey(priv PrivateKey, pub PublicKey) (*PrivateKey, []byte, error) {
 	ca := privateEd25519KeyToCurve25519(priv.ed25519())
 	cB := publicEd25519KeyToCurve25519(pub.ed25519())
 	ss, err := curve25519.X25519(ca, cB)
@@ -128,6 +124,16 @@ func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
 		return nil, nil, err
 	}
 	return &priv, ss, nil
+}
+
+// NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
+// secret given a public key, and returns the created public key and secret
+func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
+	priv, err := GenerateEd25519PrivateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	return NewSharedKey(priv, pub)
 }
 
 func (i PrivateKey) IsEmpty() bool {
