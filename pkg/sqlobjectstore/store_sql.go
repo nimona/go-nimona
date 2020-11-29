@@ -215,10 +215,19 @@ func (st *Store) PutWithTTL(
 		return errors.Wrap(err, errors.New("could not insert to objects table"))
 	}
 
-	for _, p := range obj.Metadata.Parents {
-		err := st.putRelation(object.Hash(streamHash), objHash, p)
+	if len(obj.Metadata.Parents) > 0 {
+		for _, p := range obj.Metadata.Parents {
+			err := st.putRelation(object.Hash(streamHash), objHash, p)
+			if err != nil {
+				return errors.Wrap(err, errors.New("could not create relation"))
+			}
+		}
+	}
+
+	if streamHash == objectHash {
+		err := st.putRelation(object.Hash(streamHash), objHash, "")
 		if err != nil {
-			return errors.Wrap(err, errors.New("could not create relation"))
+			return errors.Wrap(err, errors.New("error creating self relation"))
 		}
 	}
 
@@ -265,6 +274,7 @@ func (st *Store) GetStreamLeaves(
 		FROM Relations
 		WHERE
 			RootHash=?
+			AND Parent <> ''
 			AND Parent NOT IN (
 				SELECT DISTINCT Child
 				FROM Relations
