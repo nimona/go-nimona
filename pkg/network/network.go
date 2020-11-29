@@ -645,7 +645,9 @@ func (w *network) Send(
 	case <-ctx.Done():
 		return ErrSendingTimedOut
 	case err := <-errRecv:
-		w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
+		if err != nil {
+			w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
+		}
 		return err
 	}
 }
