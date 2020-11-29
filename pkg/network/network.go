@@ -588,8 +588,17 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 
 			// convert it into an object
 			o := object.FromMap(m)
+
+			logger.Info(
+				"got relayed object",
+				log.String("sender", fwd.Sender.String()),
+				log.String("relay", e.Sender.String()),
+				log.String("payload.type", o.Type),
+				log.String("data", string(fwd.Data)),
+			)
+
 			w.inboxes.Publish(&Envelope{
-				Sender:  o.Metadata.Signature.Signer,
+				Sender:  fwd.Sender,
 				Payload: o,
 			})
 			continue
@@ -718,7 +727,10 @@ func (w *network) wrapInDataForward(
 		return nil, err
 	}
 	// create an ephemeral key pair, and calculate the shared key
-	ek, ss, err := crypto.NewEphemeralSharedKey(recipient)
+	ek, ss, err := crypto.NewSharedKey(
+		w.localpeer.GetPrimaryPeerKey(),
+		recipient,
+	)
 	if err != nil {
 		return nil, err
 	}
