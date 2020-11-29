@@ -39,28 +39,34 @@ var (
 			Help: "Total number of (top level) objects received",
 		},
 	)
-	objSentCounter = promauto.NewCounter(
+	objSendSuccessCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_send_success_total",
 			Help: "Total number of (top level) objects sent",
 		},
 	)
-	objRelayedCounter = promauto.NewCounter(
+	objSendRelayedCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_send_relayed_total",
 			Help: "Total number of (top level) objects sent via a relay",
 		},
 	)
-	objFailedCounter = promauto.NewCounter(
+	objSendFailedCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_send_failed_total",
 			Help: "Total number of (top level) objects that failed to send",
 		},
 	)
-	objAttemptedCounter = promauto.NewCounter(
+	objRelayedSuccessCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
-			Name: "nimona_exchange_object_send_attempts_total",
-			Help: "Total number of (top level) objects attempted to send",
+			Name: "nimona_exchange_object_relayed_success_total",
+			Help: "Total number of objects relayed on behalf of others",
+		},
+	)
+	objRelayedFailedCounter = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "nimona_exchange_object_relayed_failed_total",
+			Help: "Total number of objects failed to relay on behalf of others",
 		},
 	)
 )
@@ -363,7 +369,7 @@ func (w *network) processOutbox(outbox *outbox) {
 				continue
 			}
 			lastErr = nil
-			objSentCounter.Inc()
+			objSendSuccessCounter.Inc()
 			break
 		}
 
@@ -450,7 +456,7 @@ func (w *network) processOutbox(outbox *outbox) {
 				}
 				// reset error if we managed to send to at least one relay
 				lastErr = nil
-				objRelayedCounter.Inc()
+				objSendRelayedCounter.Inc()
 				break
 			}
 		}
@@ -458,7 +464,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		if lastErr == nil {
 			logger.Debug("wrote object")
 		} else {
-			objFailedCounter.Inc()
+			objSendFailedCounter.Inc()
 		}
 		req.err <- lastErr
 	}
@@ -516,6 +522,12 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 				},
 			)
 
+			if err != nil {
+				objRelayedFailedCounter.Inc()
+			} else {
+				objRelayedSuccessCounter.Inc()
+			}
+
 			res := &DataForwardResponse{
 				Metadata: object.Metadata{
 					Owner: w.localpeer.GetPrimaryPeerKey().PublicKey(),
@@ -548,6 +560,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) error {
 				)
 				continue
 			}
+
 		case dataForwardEnvelopeType:
 			// envelopes contain relayed objects, so we decode them and publish
 			// them to our inboxes
@@ -638,8 +651,6 @@ func (w *network) Send(
 			return err
 		}
 	}
-
-	objAttemptedCounter.Inc()
 
 	outbox := w.getOutbox(p.PublicKey)
 	errRecv := make(chan error, 1)
