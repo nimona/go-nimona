@@ -31,6 +31,7 @@ var (
 	objectRequestType      = new(object.Request).Type()
 	objectResponseType     = new(object.Response).Type()
 	streamRequestType      = new(stream.Request).Type()
+	streamResponseType     = new(stream.Response).Type()
 	streamSubscriptionType = new(stream.Subscription).Type()
 	streamAnnouncementType = new(stream.Announcement).Type()
 )
@@ -103,9 +104,7 @@ func New(
 			log.String("method", "objectmanager.New"),
 		)
 
-	subs := m.network.Subscribe(
-		network.FilterByObjectType("**"),
-	)
+	subs := m.network.Subscribe()
 
 	go func() {
 		hashes, err := m.objectstore.GetPinned()
@@ -155,7 +154,7 @@ func (m *manager) RequestStream(
 	responses := make(chan stream.Response)
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(new(stream.Response).Type()),
+		network.FilterByObjectType(streamResponseType),
 	)
 
 	go func() {
@@ -282,6 +281,8 @@ func (m *manager) fetchFromLeaves(
 				wg.Done()
 				continue
 			}
+
+			m.pubsub.Publish(fullObj)
 
 			wg.Done()
 		}
@@ -640,7 +641,9 @@ func (m *manager) send(
 	}
 
 	peers, err := m.resolver.Lookup(
-		ctx,
+		context.New(
+			context.WithParent(ctx),
+		),
 		resolver.LookupByPeerKey(rec),
 	)
 	if err != nil {
@@ -649,6 +652,9 @@ func (m *manager) send(
 	// TODO add error group
 	var errs error
 	for _, pr := range peers {
+		ctx := context.New(
+			context.WithParent(ctx),
+		)
 		if err := m.network.Send(ctx, obj, pr); err != nil {
 			errs = multierror.Append(errs, err)
 			continue
@@ -662,6 +668,11 @@ func (m *manager) handleObjectRequest(
 	ctx context.Context,
 	env *network.Envelope,
 ) error {
+	logger := log.FromContext(ctx).With(
+		log.String("method", "objectmanager.handleObjectRequest"),
+		log.String("from", env.Sender.String()),
+	)
+
 	req := &object.Request{}
 	if err := req.FromObject(env.Payload); err != nil {
 		return err
@@ -678,26 +689,22 @@ func (m *manager) handleObjectRequest(
 	hash := req.ObjectHash
 	obj, err := m.objectstore.Get(hash)
 	if err != nil {
-		log.FromContext(ctx).Error(
-			"handleObjectRequest error getting obj",
+		logger.Error(
+			"error getting obj",
 			log.String("reqHash", req.ObjectHash.String()),
-			log.String("from", env.Sender.String()),
 			log.Error(err),
 		)
 		if err != objectstore.ErrNotFound {
 			return err
 		}
-		if sErr := m.network.Send(
+		if sErr := m.send(
 			ctx,
 			resp.ToObject(),
-			&peer.ConnectionInfo{
-				PublicKey: env.Sender,
-			},
+			env.Sender,
 		); err != nil {
-			log.FromContext(ctx).Info(
-				"handleObjectRequest error while responding with error",
+			logger.Info(
+				"error while responding with error",
 				log.String("reqHash", req.ObjectHash.String()),
-				log.String("from", env.Sender.String()),
 				log.Error(sErr),
 			)
 		}
@@ -726,12 +733,10 @@ func (m *manager) handleObjectRequest(
 
 	resp.Object = robj
 
-	err = m.network.Send(
+	err = m.send(
 		ctx,
 		resp.ToObject(),
-		&peer.ConnectionInfo{
-			PublicKey: env.Sender,
-		},
+		env.Sender,
 	)
 
 	log.FromContext(ctx).Info(
@@ -756,7 +761,9 @@ func (m *manager) handleStreamRequest(
 	env *network.Envelope,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "objectmanager.handleStreamRequest"),
+	)
 
 	req := &stream.Request{}
 	if err := req.FromObject(env.Payload); err != nil {
@@ -779,16 +786,13 @@ func (m *manager) handleStreamRequest(
 
 	res.Leaves = leaves
 
-	if err := m.network.Send(
+	if err := m.send(
 		ctx,
 		res.ToObject(),
-		// TODO we should probably resolve this peer
-		&peer.ConnectionInfo{
-			PublicKey: env.Sender,
-		},
+		env.Sender,
 	); err != nil {
 		logger.Warn(
-			"objectmanager.handleStreamRequest could not send response",
+			"could not send response",
 			log.Error(err),
 		)
 		return err
@@ -825,8 +829,12 @@ func (m *manager) handleStreamAnnouncement(
 
 	// TODO check if this a stream we care about using ann.StreamHash
 
-	log.FromContext(ctx).Info("got stream announcement ",
+	logger := log.FromContext(ctx).With(
+		log.String("method", "objectmanager.handleStreamAnnouncement"),
 		log.Any("sender", env.Sender),
+	)
+
+	logger.Info("got stream announcement ",
 		log.Any("hashes", ann.ObjectHashes),
 	)
 
@@ -840,10 +848,30 @@ func (m *manager) handleStreamAnnouncement(
 		}
 	}
 
+	pr, err := m.resolver.Lookup(
+		ctx,
+		resolver.LookupByPeerKey(env.Sender),
+	)
+	if err != nil {
+		logger.Warn(
+			"error looking up sender, will still attempt to send response",
+			log.Error(err),
+		)
+	}
+
+	// still create a connection in case we still have an open connection
+	if len(pr) == 0 {
+		pr = []*peer.ConnectionInfo{{
+			PublicKey: env.Sender,
+		}}
+	}
+
 	// fetch announced objects and their parents
-	if err := m.fetchFromLeaves(ctx, ann.ObjectHashes, &peer.ConnectionInfo{
-		PublicKey: env.Sender,
-	}); err != nil {
+	if err := m.fetchFromLeaves(
+		ctx,
+		ann.ObjectHashes,
+		pr[0],
+	); err != nil {
 		return err
 	}
 
