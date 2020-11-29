@@ -239,6 +239,15 @@ func TestStore_Relations(t *testing.T) {
 	require.NotNil(t, store)
 
 	require.NoError(t, store.Put(f00))
+
+	t.Run("root is considered a leaf", func(t *testing.T) {
+		leaves, err := store.GetStreamLeaves(f00.Hash())
+		require.NoError(t, err)
+		require.NotNil(t, leaves)
+		assert.Len(t, leaves, 1)
+		assert.Equal(t, []object.Hash{f00.Hash()}, leaves)
+	})
+
 	require.NoError(t, store.Put(f01))
 	require.NoError(t, store.Put(f02))
 
