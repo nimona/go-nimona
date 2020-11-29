@@ -421,7 +421,7 @@ func (w *network) processOutbox(outbox *outbox) {
 				}
 				if resObj == nil {
 					logger.Error(
-						"dind't get a data forward response in time",
+						"didn't get a data forward response in time",
 						log.String("relay", relayPeer.PublicKey.String()),
 						log.String("recipient", req.recipient.PublicKey.String()),
 						log.Error(err),
@@ -451,8 +451,8 @@ func (w *network) processOutbox(outbox *outbox) {
 				// reset error if we managed to send to at least one relay
 				lastErr = nil
 				objRelayedCounter.Inc()
+				break
 			}
-			// todo: wait for ack, how??
 		}
 
 		if lastErr == nil {
