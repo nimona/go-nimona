@@ -264,7 +264,6 @@ func main() {
 	)
 
 	logger = logger.With(
-		log.String("peer.privateKey", local.GetPrimaryPeerKey().String()),
 		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
