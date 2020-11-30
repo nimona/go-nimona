@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606685477001,
+  "lastUpdate": 1606776304205,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1476,6 +1476,60 @@ window.BENCHMARK_DATA = {
             "value": 92.3,
             "unit": "ns/op",
             "extra": "12489537 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "decimal@darkstar.gr",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "committer": {
+            "email": "superdecimal@gmail.com",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "distinct": true,
+          "id": "558598e949c1eafb8a959645e9db141c76a37519",
+          "message": "feat(config): update extra (un)marshalling",
+          "timestamp": "2020-11-30T22:43:40Z",
+          "tree_id": "2781a1e3ff2bd1268ce576662c6b6c7fc4019d81",
+          "url": "https://github.com/nimona/go-nimona/commit/558598e949c1eafb8a959645e9db141c76a37519"
+        },
+        "date": 1606776303778,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 398391,
+            "unit": "ns/op",
+            "extra": "3139 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 13017578,
+            "unit": "ns/op",
+            "extra": "90 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 134539607,
+            "unit": "ns/op",
+            "extra": "20 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 57512,
+            "unit": "ns/op",
+            "extra": "20469 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 85.6,
+            "unit": "ns/op",
+            "extra": "14546889 times\n2 procs"
           }
         ]
       }
