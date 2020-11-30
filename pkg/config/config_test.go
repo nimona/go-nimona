@@ -39,9 +39,9 @@ func TestConfig(t *testing.T) {
 
 	assert.Equal(t, h1.Peer.PrivateKey, h2.Peer.PrivateKey)
 
-	extraData := &lala{}
-	err = h2.Extras.Get("lala", extraData)
 	assert.NoError(t, err)
-	assert.Equal(t, "asd", extraData.Hello)
+
+	val := h2.Extras["lala"].(map[string]interface{})
+	assert.Equal(t, "asd", val["Hello"].(string))
 
 }

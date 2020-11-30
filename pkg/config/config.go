@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -12,26 +11,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )
-
-/*
-We need a package that allows developers to create and maintain config files for their applications and services.
-
-It should:
-Create or reuse config file -- ie. When I start the file manager without any env vars or params, a peer config should be created in a default location ~/.nimona-files/config.json	that includes a new peer private key and a default bind address. When I re-run the file manager, the config should be used.
-Env vars take precedent over values from the config file.
-It could:
-Provide a basic config structure to initialize the local peer and network so the developer doesn't have to individually use the values of the config while initializing them.
-
-Features:
-* Reads configs files (v1 reads json)
-* Reads env vars
-* Has default location
-* Has basic struct for nimona
-* If empty creates a default conf that is reused
-* Knows how to populate the default config if empty
-*/
-
-type extraConfig map[string]interface{}
 
 type Config struct {
 	Path     string
@@ -44,23 +23,7 @@ type Config struct {
 		ListenOnPrivateIPs   bool              `envconfig:"LISTEN_PRIVATE"`
 		ListenOnExternalPort bool              `envconfig:"LISTEN_EXTERNAL_PORT"`
 	} `envconfig:"PEER"`
-	Extras extraConfig `json:",omitempty"`
-}
-
-func (e *extraConfig) Get(key string, cfg interface{}) error {
-	storedCfg, ok := (*e)[key]
-	if !ok {
-		return errors.New("not found")
-	}
-	data, err := json.Marshal(storedCfg)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(data, cfg); err != nil {
-		return err
-	}
-
-	return nil
+	Extras map[string]interface{} `json:",omitempty"`
 }
 
 func New(opts ...Option) (*Config, error) {
@@ -68,12 +31,6 @@ func New(opts ...Option) (*Config, error) {
 	for _, opt := range opts {
 		opt(cfg)
 	}
-
-	if err := envconfig.Process("nimona", cfg); err != nil {
-		return nil, err
-	}
-
-	cfg.setDefaults()
 
 	if err := os.MkdirAll(cfg.Path, 0700); err != nil {
 		return nil, err
@@ -94,6 +51,10 @@ func New(opts ...Option) (*Config, error) {
 		if err := json.Unmarshal(data, cfg); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := envconfig.Process("nimona", cfg); err != nil {
+		return nil, err
 	}
 
 	cfg.setDefaults()
