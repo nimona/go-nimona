@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,9 +23,11 @@ func TestConfig(t *testing.T) {
 		Hello string
 	}
 
+	fmt.Println(configPath)
+
 	h1, err := config.New(
-		config.WithPath(configPath),
-		config.WithFilename("nim.json"),
+		config.WithDefaultPath(configPath),
+		config.WithDefaultFilename("nim.json"),
 		config.WithExtraConfig("extraOne", &ExtraCfg{
 			Hello: "one",
 		}),
@@ -37,17 +40,14 @@ func TestConfig(t *testing.T) {
 
 	extraTwo := &ExtraCfg{}
 	h2, err := config.New(
-		config.WithPath(configPath),
-		config.WithFilename("nim.json"),
+		config.WithDefaultPath(configPath),
+		config.WithDefaultFilename("nim.json"),
 		config.WithExtraConfig("extraTwo", extraTwo),
 	)
 	assert.NotNil(t, h2)
 	assert.NoError(t, err)
 
 	assert.Equal(t, h1.Peer.PrivateKey, h2.Peer.PrivateKey)
-
-	assert.NoError(t, err)
-
 	assert.Equal(t, "two", extraTwo.Hello)
 }
 
@@ -60,8 +60,8 @@ func TestConfigUnmarshal(t *testing.T) {
 	extraConfig2 := &ExtraCfg{}
 
 	h1, err := config.New(
-		config.WithPath("."),
-		config.WithFilename("test_config.json"),
+		config.WithDefaultPath("."),
+		config.WithDefaultFilename("test_config.json"),
 		config.WithExtraConfig("extraOne", extraConfig1),
 		config.WithExtraConfig("extraTwo", extraConfig2),
 	)
@@ -82,8 +82,8 @@ func TestConfigEnvar(t *testing.T) {
 	extraConfig2 := &ExtraCfg{}
 
 	h1, err := config.New(
-		config.WithPath("."),
-		config.WithFilename("test_config.json"),
+		config.WithDefaultPath("."),
+		config.WithDefaultFilename("test_config.json"),
 		config.WithExtraConfig("extraOne", extraConfig1),
 		config.WithExtraConfig("extraTwo", extraConfig2),
 	)

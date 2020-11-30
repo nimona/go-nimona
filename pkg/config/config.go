@@ -7,40 +7,60 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/iancoleman/strcase"
 	"github.com/kelseyhightower/envconfig"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )
 
-type Config struct {
-	Path     string `json:"path"`
-	Filename string `json:"filename"`
-	Peer     struct {
-		PrivateKey           crypto.PrivateKey `json:"privateKey" envconfig:"PRIVATE_KEY"`
-		BindAddress          string            `json:"bindAddress" envconfig:"BIND_ADDRESS"`
-		Bootstraps           []peer.Shorthand  `json:"bootstraps" envconfig:"BOOTSTRAPS"`
-		ListenOnLocalIPs     bool              `json:"listenLocalIPs" envconfig:"LISTEN_LOCAL"`
-		ListenOnPrivateIPs   bool              `json:"listenPrivateIPs" envconfig:"LISTEN_PRIVATE"`
-		ListenOnExternalPort bool              `json:"listenExternalPort" envconfig:"LISTEN_EXTERNAL_PORT"`
-	} `json:"peer" envconfig:"PEER"`
-	Extras map[string]json.RawMessage `json:"extras,omitempty"`
-	extras map[string]interface{}
-}
+type (
+	Config struct {
+		Path  string `json:"-"`
+		Debug struct {
+			LogLevel string `json:"logLevel" envconfig:"LOG_LEVEL"`
+		} `json:"debug" envconfig:"DEBUG"`
+		Peer struct {
+			PrivateKey           crypto.PrivateKey `json:"privateKey" envconfig:"PRIVATE_KEY"`
+			BindAddress          string            `json:"bindAddress" envconfig:"BIND_ADDRESS"`
+			Bootstraps           []peer.Shorthand  `json:"bootstraps" envconfig:"BOOTSTRAPS"`
+			ListenOnLocalIPs     bool              `json:"listenLocalIPs" envconfig:"LISTEN_LOCAL"`
+			ListenOnPrivateIPs   bool              `json:"listenPrivateIPs" envconfig:"LISTEN_PRIVATE"`
+			ListenOnExternalPort bool              `json:"listenExternalPort" envconfig:"LISTEN_EXTERNAL_PORT"`
+		} `json:"peer" envconfig:"PEER"`
+		Extras map[string]json.RawMessage `json:"extras,omitempty"`
+		extras map[string]interface{}
+		// internal defaults
+		defaultConfigFilename string
+	}
+)
 
 func New(opts ...Option) (*Config, error) {
+	currentUser, _ := user.Current()
+
 	cfg := &Config{
-		Extras: map[string]json.RawMessage{},
+		Path:                  filepath.Join(currentUser.HomeDir, ".nimona"),
+		Extras:                map[string]json.RawMessage{},
+		defaultConfigFilename: "config.json",
 	}
 	for _, opt := range opts {
 		opt(cfg)
+	}
+
+	if configDir := os.Getenv("NIMONA_CONFIG_DIR"); configDir != "" {
+		cfg.Path = configDir
+	}
+
+	if configFilename := os.Getenv("NIMONA_CONFIG_FILE"); configFilename != "" {
+		cfg.defaultConfigFilename = configFilename
 	}
 
 	if err := os.MkdirAll(cfg.Path, 0700); err != nil {
 		return nil, err
 	}
 
-	fullPath := filepath.Join(cfg.Path, cfg.Filename)
+	fullPath := filepath.Join(cfg.Path, cfg.defaultConfigFilename)
+
 	configFile, err := os.OpenFile(fullPath, os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
@@ -73,7 +93,7 @@ func New(opts ...Option) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		cfg.Extras[k] = data
+		cfg.Extras[strcase.ToLowerCamel(k)] = data
 	}
 
 	updateData, err := json.MarshalIndent(cfg, "", "  ")
@@ -99,13 +119,6 @@ func New(opts ...Option) (*Config, error) {
 }
 
 func (cfg *Config) setDefaults() {
-	if cfg.Filename == "" {
-		cfg.Filename = "config.json"
-	}
-	if cfg.Path == "" {
-		usr, _ := user.Current()
-		cfg.Path = filepath.Join(usr.HomeDir, ".nimona")
-	}
 	if cfg.Peer.PrivateKey.IsEmpty() {
 		k, _ := crypto.GenerateEd25519PrivateKey()
 		cfg.Peer.PrivateKey = k
@@ -119,5 +132,8 @@ func (cfg *Config) setDefaults() {
 			"ed25519.6fVWVAK2DVGxBhtVBvzNWNKBWk9S83aQrAqGJfrxr75o@tcps:egan.bootstrap.nimona.io:22581",   // nolint: lll
 			"ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581",  // nolint: lll
 		}
+	}
+	if cfg.Debug.LogLevel == "" {
+		cfg.Debug.LogLevel = "DEBUG"
 	}
 }

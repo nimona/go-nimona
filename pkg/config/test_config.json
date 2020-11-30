@@ -1,6 +1,7 @@
 {
-  "path": ".",
-  "filename": "test_config.json",
+  "debug": {
+    "logLevel": "DEBUG"
+  },
   "peer": {
     "privateKey": "ed25519.prv.59zxgGyH7CqsX8WcfgJ3WZ56aaVxqgKXStp3sGAmPFQLpuW1r7DQkzdPGMkkxNDE3c5Rb1ojjKReMMistaK336Vc",
     "bindAddress": "0.0.0.0:0",
@@ -18,6 +19,12 @@
       "Hello": "one"
     },
     "extraTwo": {
+      "Hello": "two"
+    },
+    "extra_one": {
+      "Hello": "one"
+    },
+    "extra_two": {
       "Hello": "two"
     }
   }

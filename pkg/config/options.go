@@ -7,45 +7,49 @@ import (
 
 type Option func(*Config)
 
-func WithPath(path string) Option {
+func WithDefaultPath(path string) Option {
 	return func(cfg *Config) {
 		cfg.Path = path
 	}
 }
-func WithFilename(filename string) Option {
+
+func WithDefaultFilename(filename string) Option {
 	return func(cfg *Config) {
-		cfg.Filename = filename
+		cfg.defaultConfigFilename = filename
 	}
 }
-func WithListenOnLocalIPs() Option {
+
+func WithDefaultListenOnLocalIPs() Option {
 	return func(cfg *Config) {
 		cfg.Peer.ListenOnLocalIPs = true
 	}
 }
-func WithListenOnPrivateIPs() Option {
+
+func WithDefaultListenOnPrivateIPs() Option {
 	return func(cfg *Config) {
 		cfg.Peer.ListenOnPrivateIPs = true
 	}
 }
-func WithListenOnExternalPort() Option {
+
+func WithDefaultListenOnExternalPort() Option {
 	return func(cfg *Config) {
 		cfg.Peer.ListenOnExternalPort = true
 	}
 }
 
-func WithDefaultPeerBindAddress(address string) Option {
+func WithDefaultDefaultPeerBindAddress(address string) Option {
 	return func(cfg *Config) {
 		cfg.Peer.BindAddress = address
 	}
 }
 
-func WithBootstraps(peers []peer.Shorthand) Option {
+func WithDefaultBootstraps(peers []peer.Shorthand) Option {
 	return func(cfg *Config) {
 		cfg.Peer.Bootstraps = peers
 	}
 }
 
-func WithPrivateKey(key crypto.PrivateKey) Option {
+func WithDefaultPrivateKey(key crypto.PrivateKey) Option {
 	return func(cfg *Config) {
 		cfg.Peer.PrivateKey = key
 	}

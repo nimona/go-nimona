@@ -14,6 +14,7 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.4
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/iancoleman/strcase v0.1.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.5
 	github.com/mitchellh/copystructure v1.0.0
