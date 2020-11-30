@@ -28,6 +28,7 @@ type (
 	}
 	Logger interface {
 		SetOutput(w io.Writer)
+		SetLogLevel(level string)
 		With(fields ...Field) Logger
 		Named(name string) Logger
 		Debug(msg string, fields ...Field)
@@ -199,6 +200,31 @@ func (log *logger) SetOutput(w io.Writer) {
 	log.mu.Lock()
 	defer log.mu.Unlock()
 	log.output = w
+}
+
+func (log *logger) SetLogLevel(level string) {
+	log.mu.Lock()
+	defer log.mu.Unlock()
+	switch strings.ToUpper(level) {
+	case "DEBUG":
+		ll := DebugLevel
+		log.logLevel = &ll
+	case "INFO":
+		ll := InfoLevel
+		log.logLevel = &ll
+	case "WARN", "WARNING":
+		ll := WarnLevel
+		log.logLevel = &ll
+	case "ERR", "ERROR":
+		ll := ErrorLevel
+		log.logLevel = &ll
+	case "PANIC":
+		ll := PanicLevel
+		log.logLevel = &ll
+	case "FATAL":
+		ll := FatalLevel
+		log.logLevel = &ll
+	}
 }
 
 func (log *logger) Debug(msg string, fields ...Field) {
