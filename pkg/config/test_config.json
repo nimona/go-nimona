@@ -1,0 +1,24 @@
+{
+  "path": ".",
+  "filename": "test_config.json",
+  "peer": {
+    "privateKey": "ed25519.prv.59zxgGyH7CqsX8WcfgJ3WZ56aaVxqgKXStp3sGAmPFQLpuW1r7DQkzdPGMkkxNDE3c5Rb1ojjKReMMistaK336Vc",
+    "bindAddress": "0.0.0.0:0",
+    "bootstraps": [
+      "ed25519.CJi6yjjXuNBFDoYYPrp697d6RmpXeW8ZUZPmEce9AgEc@tcps:asimov.bootstrap.nimona.io:22581",
+      "ed25519.6fVWVAK2DVGxBhtVBvzNWNKBWk9S83aQrAqGJfrxr75o@tcps:egan.bootstrap.nimona.io:22581",
+      "ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581"
+    ],
+    "listenLocalIPs": false,
+    "listenPrivateIPs": false,
+    "listenExternalPort": false
+  },
+  "extras": {
+    "extraOne": {
+      "Hello": "one"
+    },
+    "extraTwo": {
+      "Hello": "two"
+    }
+  }
+}
