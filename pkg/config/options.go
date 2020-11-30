@@ -53,13 +53,11 @@ func WithPrivateKey(key crypto.PrivateKey) Option {
 
 func WithExtraConfig(key string, data interface{}) Option {
 	return func(cfg *Config) {
-		//TODO: when do we do when the key already exists?
-		// when to we overwrite?
-		if cfg.Extras == nil {
-			cfg.Extras = make(map[string]interface{})
+		if cfg.extras == nil {
+			cfg.extras = make(map[string]interface{})
 		}
-		if _, ok := cfg.Extras[key]; !ok {
-			cfg.Extras[key] = data
+		if _, ok := cfg.extras[key]; !ok {
+			cfg.extras[key] = data
 		}
 	}
 }
