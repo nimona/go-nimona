@@ -8,11 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kelseyhightower/envconfig"
-
 	"nimona.io/internal/version"
+	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
@@ -35,16 +33,8 @@ var (
 	typeConversationMessageAdded = new(ConversationMessageAdded).Type()
 )
 
-// nolint: lll
-type config struct {
-	Peer struct {
-		PrivateKey  crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
-		BindAddress string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
-		Bootstraps  []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
-	} `envconfig:"PEER"`
-	Chat struct {
-		Nonce string `envconfig:"NONCE"`
-	} `envconfig:"CHAT"`
+type Config struct {
+	Nonce string `envconfig:"NONCE" json:"nonce"`
 }
 
 type chat struct {
@@ -199,23 +189,22 @@ func main() {
 		log.String("build.timestamp", version.Date),
 	)
 
-	cfg := &config{}
-	if err := envconfig.Process("nimona", cfg); err != nil {
-		logger.Fatal("error processing config", log.Error(err))
+	cConfig := &Config{
+		Nonce: "hello-world!!1",
+	}
+	nConfig, err := config.New(
+		config.WithExtraConfig("CHAT", cConfig),
+	)
+	if err != nil {
+		logger.Fatal("error loading config", log.Error(err))
 	}
 
-	if cfg.Peer.PrivateKey.IsEmpty() {
-		k, err := crypto.GenerateEd25519PrivateKey()
-		if err != nil {
-			logger.Fatal("missing peer key and unable to generate one")
-		}
-		cfg.Peer.PrivateKey = k
-	}
+	log.DefaultLogger.SetLogLevel(nConfig.Debug.LogLevel)
 
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	local.PutPrimaryPeerKey(nConfig.Peer.PrivateKey)
 
 	// construct new network
 	net := network.New(
@@ -223,11 +212,11 @@ func main() {
 		network.WithLocalPeer(local),
 	)
 
-	if cfg.Peer.BindAddress != "" {
+	if nConfig.Peer.BindAddress != "" {
 		// start listening
 		lis, err := net.Listen(
 			ctx,
-			cfg.Peer.BindAddress,
+			nConfig.Peer.BindAddress,
 			network.ListenOnLocalIPs,
 			network.ListenOnExternalPort,
 		)
@@ -237,18 +226,9 @@ func main() {
 		defer lis.Close() // nolint: errcheck
 	}
 
-	// make sure we have some bootstrap peers to start with
-	if len(cfg.Peer.Bootstraps) == 0 {
-		cfg.Peer.Bootstraps = []peer.Shorthand{
-			"ed25519.CJi6yjjXuNBFDoYYPrp697d6RmpXeW8ZUZPmEce9AgEc@tcps:asimov.bootstrap.nimona.io:22581",
-			"ed25519.6fVWVAK2DVGxBhtVBvzNWNKBWk9S83aQrAqGJfrxr75o@tcps:egan.bootstrap.nimona.io:22581",
-			"ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581",
-		}
-	}
-
 	// convert shorthands into connection infos
 	bootstrapPeers := []*peer.ConnectionInfo{}
-	for _, s := range cfg.Peer.Bootstraps {
+	for _, s := range nConfig.Peer.Bootstraps {
 		bootstrapPeer, err := s.ConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
@@ -292,14 +272,9 @@ func main() {
 		str,
 	)
 
-	// if no noce is specified use a default
-	if cfg.Chat.Nonce == "" {
-		cfg.Chat.Nonce = "hello-world!!1"
-	}
-
 	// construct hypothetical root in order to get a root hash
 	conversationRoot := ConversationStreamRoot{
-		Nonce: cfg.Chat.Nonce,
+		Nonce: cConfig.Nonce,
 	}
 
 	// register types so object manager persists them
