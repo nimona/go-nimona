@@ -11,13 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kelseyhightower/envconfig"
-
 	"nimona.io/internal/net"
 	"nimona.io/internal/version"
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
@@ -37,17 +35,16 @@ type fileTransfer struct {
 	blobmanager   blob.Manager
 	resolver      resolver.Resolver
 	listener      net.Listener
-	config        *config
+	config        *comboConf
 }
 
-// nolint: lll
-type config struct {
-	Peer struct {
-		PrivateKey  crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
-		BindAddress string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
-		Bootstraps  []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
-	} `envconfig:"PEER"`
+type Config struct {
 	ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
+}
+
+type comboConf struct {
+	fconf *Config
+	nconf *config.Config
 }
 
 type fileUnloaded struct {
@@ -75,12 +72,20 @@ func main() {
 		log.String("build.timestamp", version.Date),
 	)
 
-	cfg := &config{}
-	if err := envconfig.Process("nimona", cfg); err != nil {
-		logger.Fatal("error processing config", log.Error(err))
+	cfg := &Config{}
+	ncfg, err := config.New(
+		config.WithExtraConfig("FILES", cfg),
+	)
+
+	cconf := &comboConf{
+		fconf: cfg,
+		nconf: ncfg,
+	}
+	if err != nil {
+		logger.Fatal("error parsing config", log.Error(err))
 	}
 
-	ft, err := newFileTransfer(ctx, cfg, logger)
+	ft, err := newFileTransfer(ctx, cconf, logger)
 	if err != nil {
 		logger.Fatal("error initializing", log.Error(err))
 	}
@@ -189,8 +194,8 @@ func (ft *fileTransfer) get(
 		fmt.Println("failed to request file:", err)
 	}
 
-	_ = os.MkdirAll(ft.config.ReceivedFolder, os.ModePerm)
-	f, err := os.Create(filepath.Join(ft.config.ReceivedFolder, fl.Name))
+	_ = os.MkdirAll(ft.config.fconf.ReceivedFolder, os.ModePerm)
+	f, err := os.Create(filepath.Join(ft.config.fconf.ReceivedFolder, fl.Name))
 	if err != nil {
 		fmt.Println("failed to create file:", err)
 		return
@@ -215,7 +220,7 @@ func (ft *fileTransfer) close() {
 
 func newFileTransfer(
 	ctx context.Context,
-	cfg *config,
+	cfg *comboConf,
 	logger log.Logger,
 ) (*fileTransfer, error) {
 	ft := &fileTransfer{}
@@ -223,7 +228,7 @@ func newFileTransfer(
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	local.PutPrimaryPeerKey(cfg.nconf.Peer.PrivateKey)
 	local.PutContentTypes(
 		new(File).Type(),
 		new(blob.Blob).Type(),
@@ -237,11 +242,11 @@ func newFileTransfer(
 		network.WithLocalPeer(local),
 	)
 
-	if cfg.Peer.BindAddress != "" {
+	if cfg.nconf.Peer.BindAddress != "" {
 		// start listening
 		lis, err := net.Listen(
 			ctx,
-			cfg.Peer.BindAddress,
+			cfg.nconf.Peer.BindAddress,
 			network.ListenOnLocalIPs,
 			network.ListenOnPrivateIPs,
 		)
@@ -252,8 +257,8 @@ func newFileTransfer(
 	}
 
 	// make sure we have some bootstrap peers to start with
-	if len(cfg.Peer.Bootstraps) == 0 {
-		cfg.Peer.Bootstraps = []peer.Shorthand{
+	if len(cfg.nconf.Peer.Bootstraps) == 0 {
+		cfg.nconf.Peer.Bootstraps = []peer.Shorthand{
 			"ed25519.CJi6yjjXuNBFDoYYPrp697d6RmpXeW8ZUZPmEce9AgEc@tcps:asimov.bootstrap.nimona.io:22581",
 			"ed25519.6fVWVAK2DVGxBhtVBvzNWNKBWk9S83aQrAqGJfrxr75o@tcps:egan.bootstrap.nimona.io:22581",
 			"ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581",
@@ -262,7 +267,7 @@ func newFileTransfer(
 
 	// convert shorthands into peers
 	bootstrapPeers := []*peer.ConnectionInfo{}
-	for _, s := range cfg.Peer.Bootstraps {
+	for _, s := range cfg.nconf.Peer.Bootstraps {
 		bootstrapPeer, err := s.ConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
