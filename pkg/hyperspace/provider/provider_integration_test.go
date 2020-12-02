@@ -45,7 +45,8 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	err = net1.Send(
 		context.New(),
 		pr1.ToObject(),
-		pr0,
+		pr0.PublicKey,
+		network.SendWithConnectionInfo(pr0),
 	)
 	require.NoError(t, err)
 
@@ -98,7 +99,8 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	err = net2.Send(
 		context.New(),
 		pr2.ToObject(),
-		pr0,
+		pr0.PublicKey,
+		network.SendWithConnectionInfo(pr0),
 	)
 	require.NoError(t, err)
 
@@ -158,7 +160,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 			Nonce:       "1",
 			QueryVector: hyperspace.New("foo", "bar"),
 		}.ToObject(),
-		pr0.ConnectionInfo,
+		pr0.ConnectionInfo.PublicKey,
+		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
 

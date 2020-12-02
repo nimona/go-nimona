@@ -51,7 +51,8 @@ func TestResolver_Integration(t *testing.T) {
 	err = net1.Send(
 		context.New(),
 		pr1.ToObject(),
-		pr0.ConnectionInfo,
+		pr0.ConnectionInfo.PublicKey,
+		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
 

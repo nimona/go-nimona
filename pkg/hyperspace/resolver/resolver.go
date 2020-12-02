@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
@@ -38,6 +39,10 @@ type (
 			ctx context.Context,
 			opts ...LookupOption,
 		) ([]*peer.ConnectionInfo, error)
+		LookupPeer(
+			ctx context.Context,
+			publicKey crypto.PublicKey,
+		) (*peer.ConnectionInfo, error)
 	}
 	resolver struct {
 		context                        context.Context
@@ -84,6 +89,9 @@ func New(
 		r.handleObject,
 	)
 
+	// register self to network
+	netw.RegisterResolver(r)
+
 	for _, p := range r.bootstrapPeers {
 		r.peerCache.Put(&hyperspace.Announcement{
 			ConnectionInfo: p,
@@ -106,6 +114,20 @@ func New(
 	}()
 
 	return r
+}
+
+func (r *resolver) LookupPeer(
+	ctx context.Context,
+	publicKey crypto.PublicKey,
+) (*peer.ConnectionInfo, error) {
+	ps, err := r.Lookup(ctx, LookupByPeerKey(publicKey))
+	if err != nil {
+		return nil, err
+	}
+	if len(ps) == 0 {
+		return nil, nil
+	}
+	return ps[0], nil
 }
 
 // Lookup finds and returns peer infos from a fingerprint
@@ -151,7 +173,8 @@ func (r *resolver) Lookup(
 			err := r.network.Send(
 				ctx,
 				reqObject,
-				bp,
+				bp.PublicKey,
+				network.SendWithConnectionInfo(bp),
 			)
 			if err != nil {
 				logger.Debug("could send request to peer", log.Error(err))
@@ -241,7 +264,8 @@ func (r *resolver) announceSelf() {
 				context.WithTimeout(time.Second*3),
 			),
 			r.getLocalPeerAnnouncement().ToObject(),
-			p,
+			p.PublicKey,
+			network.SendWithConnectionInfo(p),
 		); err != nil {
 			logger.Error(
 				"error announcing self to bootstrap",

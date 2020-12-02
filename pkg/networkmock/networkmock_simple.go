@@ -6,10 +6,14 @@ import (
 
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
+)
+
+var (
+	_ network.Network = (*MockNetworkSimple)(nil)
 )
 
 type (
@@ -41,7 +45,8 @@ func (m *MockNetworkSimple) Subscribe(
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
-	rec *peer.ConnectionInfo,
+	rec crypto.PublicKey,
+	opt ...network.SendOption,
 ) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -74,6 +79,11 @@ func (m *MockNetworkSimple) Listen(
 	options ...network.ListenOption,
 ) (net.Listener, error) {
 	panic("not implemented")
+}
+
+func (m *MockNetworkSimple) RegisterResolver(
+	resolver network.Resolver,
+) {
 }
 
 func (m *MockNetworkSimple) LocalPeer() localpeer.LocalPeer {

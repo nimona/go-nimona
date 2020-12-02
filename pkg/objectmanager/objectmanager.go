@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -188,7 +186,7 @@ func (m *manager) RequestStream(
 	if err := m.network.Send(
 		ctx,
 		req.ToObject(),
-		recipients[0],
+		recipients[0].PublicKey,
 	); err != nil {
 		return nil, err
 	}
@@ -341,7 +339,11 @@ func (m *manager) Request(
 		ObjectHash:            hash,
 		ExcludedNestedObjects: excludeNested,
 	}
-	if err := m.network.Send(ctx, req.ToObject(), pr); err != nil {
+	if err := m.network.Send(
+		ctx,
+		req.ToObject(),
+		pr.PublicKey,
+	); err != nil {
 		return nil, err
 	}
 
@@ -612,7 +614,8 @@ func (m *manager) announceStreamChildren(
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		if err := m.send(ctx, announcement.ToObject(), subscriber); err != nil {
+		err := m.network.Send(ctx, announcement.ToObject(), subscriber)
+		if err != nil {
 			logger.Info(
 				"error sending announcement",
 				log.Error(err),
@@ -625,43 +628,6 @@ func (m *manager) announceStreamChildren(
 			log.Error(err),
 		)
 	}
-}
-
-func (m *manager) send(
-	ctx context.Context,
-	obj *object.Object,
-	rec crypto.PublicKey,
-) error {
-	if err := m.network.Send(ctx, obj, &peer.ConnectionInfo{
-		PublicKey: rec,
-	}); err == nil {
-		return nil
-	} else if err == network.ErrCannotSendToSelf {
-		return err
-	}
-
-	peers, err := m.resolver.Lookup(
-		context.New(
-			context.WithParent(ctx),
-		),
-		resolver.LookupByPeerKey(rec),
-	)
-	if err != nil {
-		return err
-	}
-	// TODO add error group
-	var errs error
-	for _, pr := range peers {
-		ctx := context.New(
-			context.WithParent(ctx),
-		)
-		if err := m.network.Send(ctx, obj, pr); err != nil {
-			errs = multierror.Append(errs, err)
-			continue
-		}
-		return nil
-	}
-	return errs
 }
 
 func (m *manager) handleObjectRequest(
@@ -697,7 +663,7 @@ func (m *manager) handleObjectRequest(
 		if err != objectstore.ErrNotFound {
 			return err
 		}
-		if sErr := m.send(
+		if sErr := m.network.Send(
 			ctx,
 			resp.ToObject(),
 			env.Sender,
@@ -733,7 +699,7 @@ func (m *manager) handleObjectRequest(
 
 	resp.Object = robj
 
-	err = m.send(
+	err = m.network.Send(
 		ctx,
 		resp.ToObject(),
 		env.Sender,
@@ -786,7 +752,7 @@ func (m *manager) handleStreamRequest(
 
 	res.Leaves = leaves
 
-	if err := m.send(
+	if err := m.network.Send(
 		ctx,
 		res.ToObject(),
 		env.Sender,

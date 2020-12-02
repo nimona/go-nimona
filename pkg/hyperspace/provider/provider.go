@@ -200,7 +200,8 @@ func (p *Provider) handlePeerLookup(
 	err := p.network.Send(
 		ctx,
 		res.ToObject(),
-		pr,
+		pr.PublicKey,
+		network.SendWithConnectionInfo(pr),
 	)
 	if err != nil {
 		logger.Debug("could not send lookup response",
@@ -238,7 +239,8 @@ func (p *Provider) distributeAnnouncement(
 				context.WithTimeout(time.Second*3),
 			),
 			annObj,
-			ci.ConnectionInfo,
+			ci.ConnectionInfo.PublicKey,
+			network.SendWithConnectionInfo(ci.ConnectionInfo),
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
@@ -279,7 +281,8 @@ func (p *Provider) announceSelf() {
 				context.WithTimeout(time.Second*3),
 			),
 			annObj,
-			ci.ConnectionInfo,
+			ci.ConnectionInfo.PublicKey,
+			network.SendWithConnectionInfo(ci.ConnectionInfo),
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",

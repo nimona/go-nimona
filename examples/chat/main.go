@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -199,7 +200,7 @@ func main() {
 		logger.Fatal("error loading config", log.Error(err))
 	}
 
-	log.DefaultLogger.SetLogLevel(nConfig.Debug.LogLevel)
+	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
 	// construct local peer
 	local := localpeer.New()
@@ -218,7 +219,7 @@ func main() {
 			ctx,
 			nConfig.Peer.BindAddress,
 			network.ListenOnLocalIPs,
-			network.ListenOnExternalPort,
+			// network.ListenOnExternalPort,
 		)
 		if err != nil {
 			logger.Fatal("error while listening", log.Error(err))
@@ -254,7 +255,7 @@ func main() {
 	logger.Info("ready")
 
 	// construct object store
-	db, err := sql.Open("sqlite3", "chat.db")
+	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.db"))
 	if err != nil {
 		logger.Fatal("error opening sql file", log.Error(err))
 	}

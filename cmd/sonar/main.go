@@ -189,7 +189,7 @@ func main() {
 						"nonce:s": rand.String(8),
 					},
 				},
-				recipient,
+				recipient.PublicKey,
 			); err != nil {
 				logger.Error(
 					"error sending ping to peer",

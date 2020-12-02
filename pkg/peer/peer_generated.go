@@ -10,6 +10,7 @@ import (
 type (
 	ConnectionInfo struct {
 		Metadata      object.Metadata   `nimona:"metadata:m,omitempty"`
+		Version       int64             `nimona:"version:i,omitempty"`
 		PublicKey     crypto.PublicKey  `nimona:"publicKey:s,omitempty"`
 		Addresses     []string          `nimona:"addresses:as,omitempty"`
 		Relays        []*ConnectionInfo `nimona:"relays:ao,omitempty"`
@@ -27,6 +28,7 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     map[string]interface{}{},
 	}
+	r.Data["version:i"] = e.Version
 	r.Data["publicKey:s"] = e.PublicKey
 	if len(e.Addresses) > 0 {
 		r.Data["addresses:as"] = e.Addresses
@@ -46,6 +48,7 @@ func (e ConnectionInfo) ToObject() *object.Object {
 
 func (e ConnectionInfo) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
+	d["version:i"] = e.Version
 	d["publicKey:s"] = e.PublicKey
 	if len(e.Addresses) > 0 {
 		d["addresses:as"] = e.Addresses

@@ -7,6 +7,7 @@ package resolvermock
 import (
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
+	crypto "nimona.io/pkg/crypto"
 	resolver "nimona.io/pkg/hyperspace/resolver"
 	peer "nimona.io/pkg/peer"
 	reflect "reflect"
@@ -53,4 +54,19 @@ func (mr *MockResolverMockRecorder) Lookup(ctx interface{}, opts ...interface{})
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lookup", reflect.TypeOf((*MockResolver)(nil).Lookup), varargs...)
+}
+
+// LookupPeer mocks base method
+func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKey) (*peer.ConnectionInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LookupPeer", ctx, publicKey)
+	ret0, _ := ret[0].(*peer.ConnectionInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LookupPeer indicates an expected call of LookupPeer
+func (mr *MockResolverMockRecorder) LookupPeer(ctx, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupPeer", reflect.TypeOf((*MockResolver)(nil).LookupPeer), ctx, publicKey)
 }
