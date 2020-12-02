@@ -195,7 +195,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.ConnectionInfo,
+							recipient crypto.PublicKey,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -254,11 +254,11 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							}},
 						},
 					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.ConnectionInfo,
+							recipient crypto.PublicKey,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -316,11 +316,11 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							}},
 						},
 					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient *peer.ConnectionInfo,
+							recipient crypto.PublicKey,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -657,11 +657,11 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						}},
 					},
 				)
-				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient *peer.ConnectionInfo,
+						recipient crypto.PublicKey,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -723,11 +723,11 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						}},
 					},
 				)
-				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
+				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient *peer.ConnectionInfo,
+						recipient crypto.PublicKey,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()

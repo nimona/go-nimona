@@ -1,2 +1,6 @@
 bin/*
 vendor/*
+infrastructure/*
+
+# Sqlite files from local tests
+**/*.db

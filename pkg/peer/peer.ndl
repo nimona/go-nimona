@@ -3,7 +3,8 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 import nimona.io/peer peer
 
-object nimona.io/peer.ConnectionInfo {
+signed object nimona.io/peer.ConnectionInfo {
+    version int
     publicKey nimona.io/crypto.PublicKey
     addresses repeated string
     relays repeated nimona.io/peer.ConnectionInfo

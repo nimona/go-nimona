@@ -1,6 +1,8 @@
 package network
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,10 +43,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		&peer.ConnectionInfo{
-			PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			Addresses: n2.LocalPeer().GetAddresses(),
-		},
+		n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		SendWithConnectionInfo(
+			&peer.ConnectionInfo{
+				PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				Addresses: n2.LocalPeer().GetAddresses(),
+			},
+		),
 	)
 	require.NoError(t, err)
 
@@ -60,10 +65,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		&peer.ConnectionInfo{
-			PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			Addresses: n1.LocalPeer().GetAddresses(),
-		},
+		n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		SendWithConnectionInfo(
+			&peer.ConnectionInfo{
+				PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				Addresses: n1.LocalPeer().GetAddresses(),
+			},
+		),
 	)
 	require.NoError(t, err)
 
@@ -88,10 +96,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n1.Send(
 			context.Background(),
 			testObj,
-			&peer.ConnectionInfo{
-				PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-				Addresses: n2.LocalPeer().GetAddresses(),
-			},
+			n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			SendWithConnectionInfo(
+				&peer.ConnectionInfo{
+					PublicKey: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+					Addresses: n2.LocalPeer().GetAddresses(),
+				},
+			),
 		)
 		require.NoError(t, err)
 	})
@@ -155,16 +166,31 @@ func TestNetwork_Relay(t *testing.T) {
 	}
 
 	// send from p1 to p0
-	err = n1.Send(context.Background(), testObj, p0)
+	err = n1.Send(
+		context.Background(),
+		testObj,
+		p0.PublicKey,
+		SendWithConnectionInfo(p0),
+	)
 	require.NoError(t, err)
 
 	// send from p2 to p0
-	err = n2.Send(context.Background(), testObj, p0)
+	err = n2.Send(
+		context.Background(),
+		testObj,
+		p0.PublicKey,
+		SendWithConnectionInfo(p0),
+	)
 	require.NoError(t, err)
 
 	// now we should be able to send from p1 to p2
 	sub := n2.Subscribe(FilterByObjectType("foo"))
-	err = n1.Send(context.Background(), testObjFromP1, p2)
+	err = n1.Send(
+		context.Background(),
+		testObjFromP1,
+		p2.PublicKey,
+		SendWithConnectionInfo(p2),
+	)
 	require.NoError(t, err)
 
 	env, err := sub.Next()
@@ -179,7 +205,12 @@ func TestNetwork_Relay(t *testing.T) {
 	// send from p2 to p1
 	sub = n1.Subscribe(FilterByObjectType("foo"))
 
-	err = n2.Send(context.Background(), testObjFromP2, p1)
+	err = n2.Send(
+		context.Background(),
+		testObjFromP2,
+		p1.PublicKey,
+		SendWithConnectionInfo(p1),
+	)
 	require.NoError(t, err)
 
 	env, err = sub.Next()
@@ -242,4 +273,108 @@ func Test_exchange_signAll(t *testing.T) {
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
 		assert.False(t, gn.Metadata.Signature.Signer.IsEmpty())
 	})
+}
+
+func Test_network_lookup(t *testing.T) {
+	fooConnInfo := &peer.ConnectionInfo{
+		Version:   1,
+		PublicKey: "foo",
+		Addresses: []string{"a", "b"},
+	}
+	type fields struct {
+		resolvers []Resolver
+	}
+	type args struct {
+		publicKey crypto.PublicKey
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *peer.ConnectionInfo
+		wantErr bool
+	}{{
+		name: "one resolver, returns, should pass",
+		fields: fields{
+			resolvers: []Resolver{
+				&testResolver{
+					peers: map[crypto.PublicKey]*peer.ConnectionInfo{
+						fooConnInfo.PublicKey: fooConnInfo,
+					},
+				},
+			},
+		},
+		args: args{
+			publicKey: fooConnInfo.PublicKey,
+		},
+		want: fooConnInfo,
+	}, {
+		name: "two resolver, second returns, should pass",
+		fields: fields{
+			resolvers: []Resolver{
+				&testResolver{
+					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+				},
+				&testResolver{
+					peers: map[crypto.PublicKey]*peer.ConnectionInfo{
+						fooConnInfo.PublicKey: fooConnInfo,
+					},
+				},
+			},
+		},
+		args: args{
+			publicKey: fooConnInfo.PublicKey,
+		},
+		want: fooConnInfo,
+	}, {
+		name: "two resolver, none returns, should fail",
+		fields: fields{
+			resolvers: []Resolver{
+				&testResolver{
+					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+				},
+				&testResolver{
+					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+				},
+			},
+		},
+		args: args{
+			publicKey: fooConnInfo.PublicKey,
+		},
+		want:    nil,
+		wantErr: true,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := New(
+				context.Background(),
+			).(*network)
+			for _, r := range tt.fields.resolvers {
+				w.RegisterResolver(r)
+			}
+			got, err := w.lookup(context.Background(), tt.args.publicKey)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+type testResolver struct {
+	peers map[crypto.PublicKey]*peer.ConnectionInfo
+}
+
+func (r *testResolver) LookupPeer(
+	ctx context.Context,
+	publicKey crypto.PublicKey,
+) (*peer.ConnectionInfo, error) {
+	c, ok := r.peers[publicKey]
+	if !ok || c == nil {
+		return nil, errors.New("not found")
+	}
+	return c, nil
 }

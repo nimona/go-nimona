@@ -16,11 +16,9 @@ import (
 
 type (
 	Config struct {
-		Path  string `json:"-"`
-		Debug struct {
-			LogLevel string `json:"logLevel" envconfig:"LOG_LEVEL"`
-		} `json:"debug" envconfig:"DEBUG"`
-		Peer struct {
+		Path     string `json:"-"`
+		LogLevel string `json:"logLevel" envconfig:"LOG_LEVEL"`
+		Peer     struct {
 			PrivateKey           crypto.PrivateKey `json:"privateKey" envconfig:"PRIVATE_KEY"`
 			BindAddress          string            `json:"bindAddress" envconfig:"BIND_ADDRESS"`
 			Bootstraps           []peer.Shorthand  `json:"bootstraps" envconfig:"BOOTSTRAPS"`
@@ -133,7 +131,7 @@ func (cfg *Config) setDefaults() {
 			"ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581",  // nolint: lll
 		}
 	}
-	if cfg.Debug.LogLevel == "" {
-		cfg.Debug.LogLevel = "DEBUG"
+	if cfg.LogLevel == "" {
+		cfg.LogLevel = "FATAL"
 	}
 }
