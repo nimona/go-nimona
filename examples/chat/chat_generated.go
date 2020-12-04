@@ -11,7 +11,7 @@ type (
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 	}
-	ConversationSetNickname struct {
+	ConversationNicknameUpdated struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Datetime string          `nimona:"datetime:s,omitempty"`
 		Nickname string          `nimona:"nickname:s,omitempty"`
@@ -52,13 +52,13 @@ func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
 
-func (e *ConversationSetNickname) Type() string {
-	return "poc.nimona.io/conversation.SetNickname"
+func (e *ConversationNicknameUpdated) Type() string {
+	return "poc.nimona.io/conversation.NicknameUpdated"
 }
 
-func (e ConversationSetNickname) ToObject() *object.Object {
+func (e ConversationNicknameUpdated) ToObject() *object.Object {
 	r := &object.Object{
-		Type:     "poc.nimona.io/conversation.SetNickname",
+		Type:     "poc.nimona.io/conversation.NicknameUpdated",
 		Metadata: e.Metadata,
 		Data:     map[string]interface{}{},
 	}
@@ -67,19 +67,19 @@ func (e ConversationSetNickname) ToObject() *object.Object {
 	return r
 }
 
-func (e ConversationSetNickname) ToObjectMap() map[string]interface{} {
+func (e ConversationNicknameUpdated) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
 	d["datetime:s"] = e.Datetime
 	d["nickname:s"] = e.Nickname
 	r := map[string]interface{}{
-		"type:s":     "poc.nimona.io/conversation.SetNickname",
+		"type:s":     "poc.nimona.io/conversation.NicknameUpdated",
 		"metadata:m": object.MetadataToMap(&e.Metadata),
 		"data:m":     d,
 	}
 	return r
 }
 
-func (e *ConversationSetNickname) FromObject(o *object.Object) error {
+func (e *ConversationNicknameUpdated) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }
 
