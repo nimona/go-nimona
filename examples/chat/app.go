@@ -24,8 +24,10 @@ type (
 		Chat          *chat
 	}
 	Channels struct {
-		InputLines   chan string
-		MessageAdded chan *Message
+		InputLines          chan string
+		SelfNicknameUpdated chan string
+		MessageAdded        chan *Message
+		ParticipantUpdated  chan *Participant
 	}
 	Windows struct {
 		Participants *tview.List
@@ -50,7 +52,6 @@ type (
 		ConversationHash string
 		Body             string
 		SenderHash       string
-		SenderNickname   string
 		Created          time.Time
 	}
 	Participants []*Participant // helper, used for sorting
@@ -94,8 +95,10 @@ func NewApp(conversationHash string) *App {
 		},
 		StatusText: []Status{},
 		Channels: Channels{
-			InputLines:   make(chan string, 100),
-			MessageAdded: make(chan *Message, 100),
+			InputLines:          make(chan string, 100),
+			SelfNicknameUpdated: make(chan string, 100),
+			MessageAdded:        make(chan *Message, 100),
+			ParticipantUpdated:  make(chan *Participant, 100),
 		},
 		Conversations: Conversations{
 			&Conversation{
@@ -107,8 +110,71 @@ func NewApp(conversationHash string) *App {
 
 	go func() {
 		conv := app.Conversations[0]
+
+		formatParticipant := func(p *Participant) string {
+			if p.Nickname == last(p.Hash, 8) {
+				return fmt.Sprintf("<%s>", p.Nickname)
+			}
+			return fmt.Sprintf("%s <%s>", p.Nickname, last(p.Hash, 8))
+		}
+
+		participantsViewRefresh := func() {
+			app.Windows.Participants.Clear()
+			for _, p := range conv.Participants {
+				nickname := formatParticipant(p)
+				app.Windows.Participants.AddItem(nickname, "", 0, func() {})
+			}
+		}
+
+		messagesViewRefresh := func() {
+			app.Windows.Chat.Clear()
+			min := 0
+			if len(conv.Messages) > 100 {
+				min = len(conv.Messages) - 100
+			}
+			for _, message := range conv.Messages[min:] {
+				if message.SenderHash == "system" {
+					app.Windows.Chat.Write([]byte(
+						fmt.Sprintf(
+							"\n[red][%s] %s",
+							message.Created.Format("02/01 15:04:05"),
+							message.Body,
+						),
+					))
+					continue
+				}
+				nickname := ""
+				for _, p := range conv.Participants {
+					if message.SenderHash == p.Hash {
+						nickname = formatParticipant(p)
+						break
+					}
+				}
+				app.Windows.Chat.Write([]byte(
+					fmt.Sprintf(
+						"\n[lightcyan][%s][gold] %s[white] %s",
+						message.Created.Format("02/01 15:04:05"),
+						nickname,
+						message.Body,
+					),
+				))
+			}
+			app.Windows.Chat.ScrollToEnd()
+			app.Windows.App.Draw()
+		}
+
 		for {
 			select {
+			case participantUpdated := <-app.Channels.ParticipantUpdated:
+				for _, u := range conv.Participants {
+					if u.Hash == participantUpdated.Hash {
+						u.Nickname = participantUpdated.Nickname
+						break
+					}
+				}
+				participantsViewRefresh()
+				messagesViewRefresh()
+
 			case messageAdded := <-app.Channels.MessageAdded:
 				duplicate := false
 				for _, message := range conv.Messages {
@@ -125,34 +191,8 @@ func NewApp(conversationHash string) *App {
 					messageAdded,
 				)
 				sort.Sort(conv.Messages)
-				// TODO only do this if the message is in the wrong order
-				app.Windows.Chat.Clear()
-				min := 0
-				if len(conv.Messages) > 100 {
-					min = len(conv.Messages) - 100
-				}
-				for _, message := range conv.Messages[min:] {
-					if message.SenderHash == "system" {
-						app.Windows.Chat.Write([]byte(
-							fmt.Sprintf(
-								"\n[red][%s] %s",
-								message.Created.Format("02/01 15:04:05"),
-								message.Body,
-							),
-						))
-						continue
-					}
-					app.Windows.Chat.Write([]byte(
-						fmt.Sprintf(
-							"\n[lightcyan][%s][gold] <%s>[white] %s",
-							message.Created.Format("02/01 15:04:05"),
-							message.SenderNickname,
-							message.Body,
-						),
-					))
-				}
-				app.Windows.Chat.ScrollToEnd()
-				app.Windows.App.Draw()
+				messagesViewRefresh()
+
 				// deal with users
 				if messageAdded.SenderHash == "system" {
 					continue
@@ -169,15 +209,12 @@ func NewApp(conversationHash string) *App {
 						conv.Participants,
 						&Participant{
 							Hash:     messageAdded.SenderHash,
-							Nickname: messageAdded.SenderNickname,
+							Nickname: last(messageAdded.SenderHash, 8),
 						},
 					)
-					sort.Sort(conv.Participants)
-					app.Windows.Participants.Clear()
-					for _, user := range conv.Participants {
-						app.Windows.Participants.AddItem(user.Nickname, "", 0, func() {})
-					}
 				}
+				sort.Sort(conv.Participants)
+				participantsViewRefresh()
 			}
 		}
 	}()
@@ -231,6 +268,9 @@ func (app *App) Show() {
 					return
 				}
 				switch words[0] {
+				case "nick":
+					nickname := strings.TrimPrefix(text, "/nick ")
+					app.Channels.SelfNicknameUpdated <- nickname
 				case "quit", "q":
 					app.Quit()
 					os.Exit(0)

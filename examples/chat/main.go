@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
-	_ "net/http/pprof"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,14 +22,9 @@ import (
 	"nimona.io/pkg/stream"
 )
 
-func init() {
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
-}
-
 var (
-	typeConversationMessageAdded = new(ConversationMessageAdded).Type()
+	typeConversationMessageAdded    = new(ConversationMessageAdded).Type()
+	typeConversationNicknameUpdated = new(ConversationNicknameUpdated).Type()
 )
 
 type Config struct {
@@ -60,11 +53,23 @@ func (c *chat) subscribe(
 				v := &ConversationMessageAdded{}
 				v.FromObject(o)
 				if v.Body == "" || v.Datetime == "" {
-					fmt.Println("> Received message without date of body")
+					fmt.Println("> Received message without date or body")
 					continue
 				}
 				if v.Metadata.Owner.IsEmpty() {
 					fmt.Println("> Received unsigned message")
+					continue
+				}
+				events <- v
+			case typeConversationNicknameUpdated:
+				v := &ConversationNicknameUpdated{}
+				v.FromObject(o)
+				if v.Nickname == "" {
+					fmt.Println("> Received nickname update without nickname")
+					continue
+				}
+				if v.Metadata.Owner.IsEmpty() {
+					fmt.Println("> Received unsigned nickname update")
 					continue
 				}
 				events <- v
@@ -282,6 +287,7 @@ func main() {
 	local.PutContentTypes(
 		new(ConversationStreamRoot).Type(),
 		new(ConversationMessageAdded).Type(),
+		new(ConversationNicknameUpdated).Type(),
 		new(stream.Subscription).Type(),
 	)
 
@@ -314,24 +320,46 @@ func main() {
 	go app.Show()
 
 	go func() {
-		for input := range app.Channels.InputLines {
-			if _, err := man.Put(
-				context.New(
-					context.WithTimeout(time.Second*5),
-				),
-				ConversationMessageAdded{
-					Metadata: object.Metadata{
-						Owner:  local.GetPrimaryPeerKey().PublicKey(),
-						Stream: conversationRootHash,
-					},
-					Body:     input,
-					Datetime: time.Now().Format(time.RFC3339Nano),
-				}.ToObject(),
-			); err != nil {
-				logger.Warn(
-					"error putting message",
-					log.Error(err),
-				)
+		for {
+			select {
+			case nickname := <-app.Channels.SelfNicknameUpdated:
+				if _, err := man.Put(
+					context.New(
+						context.WithTimeout(time.Second*5),
+					),
+					ConversationNicknameUpdated{
+						Metadata: object.Metadata{
+							Owner:  local.GetPrimaryPeerKey().PublicKey(),
+							Stream: conversationRootHash,
+						},
+						Nickname: nickname,
+						Datetime: time.Now().Format(time.RFC3339Nano),
+					}.ToObject(),
+				); err != nil {
+					logger.Warn(
+						"error putting message",
+						log.Error(err),
+					)
+				}
+			case input := <-app.Channels.InputLines:
+				if _, err := man.Put(
+					context.New(
+						context.WithTimeout(time.Second*5),
+					),
+					ConversationMessageAdded{
+						Metadata: object.Metadata{
+							Owner:  local.GetPrimaryPeerKey().PublicKey(),
+							Stream: conversationRootHash,
+						},
+						Body:     input,
+						Datetime: time.Now().Format(time.RFC3339Nano),
+					}.ToObject(),
+				); err != nil {
+					logger.Warn(
+						"error putting message",
+						log.Error(err),
+					)
+				}
 			}
 		}
 	}()
@@ -343,14 +371,17 @@ func main() {
 			if err != nil {
 				continue
 			}
-			usr := last(v.Metadata.Owner.String(), 8)
 			app.Channels.MessageAdded <- &Message{
 				Hash:             v.ToObject().Hash().String(),
 				ConversationHash: v.Metadata.Stream.String(),
 				SenderHash:       v.Metadata.Owner.String(),
-				SenderNickname:   usr,
 				Body:             strings.TrimSpace(v.Body),
 				Created:          t,
+			}
+		case *ConversationNicknameUpdated:
+			app.Channels.ParticipantUpdated <- &Participant{
+				Hash:     v.Metadata.Owner.String(),
+				Nickname: v.Nickname,
 			}
 		}
 	}

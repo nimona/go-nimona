@@ -7,7 +7,7 @@ stream poc.nimona.io/conversation {
     root object Created {
         nonce string
     }
-    signed object SetNickname {
+    signed object NicknameUpdated {
         datetime string
         nickname string
     }
