@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1606854498974,
+  "lastUpdate": 1607092768784,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1638,6 +1638,60 @@ window.BENCHMARK_DATA = {
             "value": 68.6,
             "unit": "ns/op",
             "extra": "17550364 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "31cfa4c871fb72ec9bf0b4220dc54cfc0e1e7ec8",
+          "message": "refactor(network)!: refactor network.Send to take a publicKey and deal with lookups",
+          "timestamp": "2020-12-04T14:37:47Z",
+          "tree_id": "14871317163be9f1ab082e9e5c81c4f012e9b250",
+          "url": "https://github.com/nimona/go-nimona/commit/31cfa4c871fb72ec9bf0b4220dc54cfc0e1e7ec8"
+        },
+        "date": 1607092768272,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 457741,
+            "unit": "ns/op",
+            "extra": "2706 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 12728383,
+            "unit": "ns/op",
+            "extra": "86 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 133018434,
+            "unit": "ns/op",
+            "extra": "20 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 58637,
+            "unit": "ns/op",
+            "extra": "19719 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 83.9,
+            "unit": "ns/op",
+            "extra": "12379933 times\n2 procs"
           }
         ]
       }
