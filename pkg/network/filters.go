@@ -3,21 +3,9 @@ package network
 import (
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
-
-func FilterBySender(keys ...crypto.PublicKey) EnvelopeFilter {
-	return func(e *Envelope) bool {
-		for _, key := range keys {
-			if e.Sender.Equals(key) {
-				return true
-			}
-		}
-		return false
-	}
-}
 
 func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	patterns := make([]glob.Glob, len(typePatterns))
@@ -49,14 +37,12 @@ func FilterByObjectHash(objectHashes ...object.Hash) EnvelopeFilter {
 	}
 }
 
-func FilterByNonce(nonce string) EnvelopeFilter {
-	return func(e *Envelope) bool {
-		return e.Payload.Data["nonce:s"].(string) == nonce
-	}
-}
-
 func FilterByRequestID(requestID string) EnvelopeFilter {
 	return func(e *Envelope) bool {
-		return e.Payload.Data["requestID:s"].(string) == requestID
+		rIDVal, ok := e.Payload.Data["requestID:s"]
+		if !ok {
+			return false
+		}
+		return rIDVal.(string) == requestID
 	}
 }

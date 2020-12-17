@@ -27,6 +27,16 @@ type (
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Nonce    string          `nimona:"nonce:s,omitempty"`
 	}
+	TestRequest struct {
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string          `nimona:"requestID:s,omitempty"`
+		Foo       string          `nimona:"foo:s,omitempty"`
+	}
+	TestResponse struct {
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string          `nimona:"requestID:s,omitempty"`
+		Foo       string          `nimona:"foo:s,omitempty"`
+	}
 )
 
 func (e *TestPolicy) Type() string {
@@ -162,5 +172,67 @@ func (e TestUnsubscribed) ToObjectMap() map[string]interface{} {
 }
 
 func (e *TestUnsubscribed) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
+}
+
+func (e *TestRequest) Type() string {
+	return "nimona.io/fixtures.TestRequest"
+}
+
+func (e TestRequest) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "nimona.io/fixtures.TestRequest",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
+	}
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["foo:s"] = e.Foo
+	return r
+}
+
+func (e TestRequest) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
+	d["foo:s"] = e.Foo
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestRequest",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
+func (e *TestRequest) FromObject(o *object.Object) error {
+	return object.Decode(o, e)
+}
+
+func (e *TestResponse) Type() string {
+	return "nimona.io/fixtures.TestResponse"
+}
+
+func (e TestResponse) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "nimona.io/fixtures.TestResponse",
+		Metadata: e.Metadata,
+		Data:     map[string]interface{}{},
+	}
+	r.Data["requestID:s"] = e.RequestID
+	r.Data["foo:s"] = e.Foo
+	return r
+}
+
+func (e TestResponse) ToObjectMap() map[string]interface{} {
+	d := map[string]interface{}{}
+	d["requestID:s"] = e.RequestID
+	d["foo:s"] = e.Foo
+	r := map[string]interface{}{
+		"type:s":     "nimona.io/fixtures.TestResponse",
+		"metadata:m": object.MetadataToMap(&e.Metadata),
+		"data:m":     d,
+	}
+	return r
+}
+
+func (e *TestResponse) FromObject(o *object.Object) error {
 	return object.Decode(o, e)
 }

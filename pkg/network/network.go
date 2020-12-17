@@ -74,16 +74,6 @@ var (
 	)
 )
 
-const (
-	// ErrInvalidRequest when received an invalid request object
-	ErrInvalidRequest = errors.Error("invalid request")
-	// ErrSendingTimedOut when sending times out
-	ErrSendingTimedOut = errors.Error("sending timed out")
-	// ErrAlreadySentDuringContext when trying to send to the same peer during
-	// this context
-	ErrAlreadySentDuringContext = errors.Error("already sent to peer")
-)
-
 // nolint: lll
 //go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
 //go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
@@ -746,6 +736,21 @@ func (w *network) Send(
 		}
 	}
 
+	var rSub EnvelopeSubscription
+	if opt.waitForResponse != nil {
+		rIDVal, ok := o.Data["requestID:s"]
+		if !ok {
+			return errors.New("cannot wait for response without a request id")
+		}
+		rID := rIDVal.(string)
+		if rID == "" {
+			return errors.New("cannot wait for response with empty request id")
+		}
+		rSub = w.Subscribe(
+			FilterByRequestID(rID),
+		)
+	}
+
 	outbox := w.getOutbox(p)
 	errRecv := make(chan error, 1)
 	req := &outgoingObject{
@@ -761,10 +766,27 @@ func (w *network) Send(
 		return ErrSendingTimedOut
 	case err := <-errRecv:
 		if err != nil {
-			w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
+			return err
 		}
-		return err
 	}
+	w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
+	if rSub == nil {
+		return nil
+	}
+
+	rT := time.NewTimer(opt.waitForResponseTimeout)
+	select {
+	case <-rT.C:
+		return ErrAlreadySentDuringContext
+	case e := <-rSub.Channel():
+		if err := opt.waitForResponse.FromObject(e.Payload); err != nil {
+			return errors.Wrap(
+				ErrUnableToUnmarshalIntoResponse,
+				err,
+			)
+		}
+	}
+	return nil
 }
 
 func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
