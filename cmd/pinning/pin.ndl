@@ -1,0 +1,24 @@
+package main
+
+signed object PinRequest {
+    requestID string
+    hash nimona.io/object.Hash
+    ttl int
+}
+
+signed object PinResponse {
+    requestID string
+    hash nimona.io/object.Hash
+    success bool
+    error string
+    ttl int
+}
+
+signed object ListRequest {
+    requestID string
+}
+
+signed object ListResponse {
+    requestID string
+    hashes repeated nimona.io/object.Hash
+}
