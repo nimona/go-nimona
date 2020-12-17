@@ -22,3 +22,13 @@ signed object nimona.io/fixtures.TestSubscribed {
 signed object nimona.io/fixtures.TestUnsubscribed {
     nonce string
 }
+
+signed object nimona.io/fixtures.TestRequest {
+    requestID string
+    foo string
+}
+
+signed object nimona.io/fixtures.TestResponse {
+    requestID string
+    foo string
+}

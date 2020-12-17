@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
@@ -105,6 +106,52 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			),
 		)
 		require.NoError(t, err)
+	})
+
+	t.Run("wait for response", func(t *testing.T) {
+		req := &fixtures.TestRequest{
+			RequestID: "1",
+			Foo:       "bar",
+		}
+		res := &fixtures.TestResponse{
+			RequestID: "1",
+			Foo:       "bar",
+		}
+		// sub for p2 based on rID
+		gotRes := &fixtures.TestResponse{}
+		reqSub := n2.Subscribe(
+			FilterByRequestID("1"),
+		)
+		// send request from p1 to p2 in a go routine
+		sendErr := make(chan error)
+		go func() {
+			sendErr <- n1.Send(
+				context.Background(),
+				req.ToObject(),
+				n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				SendWithResponse(gotRes, 0),
+			)
+		}()
+		// wait for p2 to get the req
+		gotReq := <-reqSub.Channel()
+		assert.Equal(t, "1", gotReq.Payload.Data["requestID:s"].(string))
+		// send response from p2 to p1
+		// nolint: errcheck
+		n2.Send(
+			context.Background(),
+			res.ToObject(),
+			n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			SendWithConnectionInfo(
+				&peer.ConnectionInfo{
+					PublicKey: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+					Addresses: n1.LocalPeer().GetAddresses(),
+				},
+			),
+		)
+		// check response
+		err = <-sendErr
+		require.NoError(t, err)
+		assert.Equal(t, res, gotRes)
 	})
 }
 
