@@ -21,7 +21,7 @@ type (
 		Request(
 			ctx context.Context,
 			hash object.Hash,
-		) (*Blob, error)
+		) (*Blob, []*Chunk, error)
 	}
 	Manager interface {
 		Requester
@@ -132,7 +132,7 @@ func (r *manager) ImportFromFile(
 func (r *manager) Request(
 	ctx context.Context,
 	hash object.Hash,
-) (*Blob, error) {
+) (*Blob, []*Chunk, error) {
 	logger := log.
 		FromContext(ctx).
 		Named("blob").
@@ -143,11 +143,11 @@ func (r *manager) Request(
 	// find peers
 	peers, err := r.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(peers) == 0 {
-		return nil, errors.New("no peers found")
+		return nil, nil, errors.New("no peers found")
 	}
 
 	// request the blob object excluding the nested chunks
@@ -155,23 +155,22 @@ func (r *manager) Request(
 		ctx,
 		hash,
 		peers[0],
-		true,
 	)
 	if err != nil {
 		logger.Error("failed to retrieve blob", log.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	chunksHash, err := getChunks(obj)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	chunks := []*Chunk{}
 
 	blob := &Blob{}
 	if err := blob.FromObject(obj); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Request all the chunks
@@ -180,25 +179,23 @@ func (r *manager) Request(
 			ctx,
 			ch,
 			peers[0],
-			true,
 		)
 		if err != nil {
 			logger.Error("failed to request chunk", log.Error(err))
 
-			return nil, err
+			return nil, nil, err
 		}
 
 		chunk := &Chunk{}
 		if err := chunk.FromObject(chObj); err != nil {
 			logger.Error("failed to convert to chunk", log.Error(err))
-			return nil, err
+			return nil, nil, err
 		}
 
 		chunks = append(chunks, chunk)
 	}
-	blob.Chunks = chunks
 
-	return blob, nil
+	return blob, chunks, nil
 }
 
 // nolint: golint // stuttering is fine for this one

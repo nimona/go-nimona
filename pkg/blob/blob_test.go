@@ -11,7 +11,6 @@ import (
 
 	"nimona.io/internal/iotest"
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/context"
 	"nimona.io/pkg/object"
 )
 
@@ -63,41 +62,25 @@ func Test_blobReader_Read(t *testing.T) {
 			fr := iotest.ZeroReader(tt.length)
 
 			// read file into blob
-			bl, err := blob.ToBlob(fr)
+			bl, ch, err := blob.NewBlob(fr)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, bl.Chunks)
+			assert.NotEmpty(t, ch)
 
 			// checking if the generated chunks have the correct total length
 			total := 0
-			for _, ch := range bl.Chunks {
+			for _, ch := range ch {
 				total += len(ch.Data)
 				assert.NotEmpty(t, ch.Data)
 			}
 			require.Equal(t, tt.length, total)
 
 			// write blob into file
-			n, err := iotest.DrainReader(blob.FromBlob(bl))
+			n, err := iotest.DrainReader(blob.NewReader(ch))
 			assert.NoError(t, err)
 			assert.Equal(t, int64(tt.length), n)
 		})
 	}
-}
-
-func TestUnloadRefs(t *testing.T) {
-	blob1 := &blob.Blob{}
-	chunk1 := &blob.Chunk{Data: []byte("ooh wee")}
-	chunk2 := &blob.Chunk{Data: []byte("ooh lala")}
-
-	blob1.Chunks = []*blob.Chunk{chunk1, chunk2}
-
-	obj, _, err := object.UnloadReferences(context.TODO(), blob1.ToObject())
-	assert.NoError(t, err)
-	assert.NotNil(t, obj)
-
-	refs := object.GetReferences(obj)
-
-	assert.Contains(t, refs, chunk1.ToObject().Hash())
-	assert.Contains(t, refs, chunk2.ToObject().Hash())
 }
 
 func TestBlob_Hash(t *testing.T) {
@@ -105,7 +88,7 @@ func TestBlob_Hash(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []*blob.Chunk{c},
+		Chunks: []object.Hash{c.ToObject().Hash()},
 	}
 	u := &blob.BlobUnloaded{
 		ChunksUnloaded: []object.Hash{
@@ -123,7 +106,7 @@ func TestBlob_ResponseHash(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []*blob.Chunk{c},
+		Chunks: []object.Hash{c.ToObject().Hash()},
 	}
 	r := &object.Response{
 		RequestID: "foo",
@@ -155,9 +138,11 @@ func TestBlob_ResponseHash(t *testing.T) {
 
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
-		Chunks: []*blob.Chunk{{
-			Data: []byte("foo"),
-		}},
+		Chunks: []object.Hash{
+			blob.Chunk{
+				Data: []byte("foo"),
+			}.ToObject().Hash(),
+		},
 	}
 	s, err := json.Marshal(b.ToObject().ToMap())
 	require.NoError(t, err)

@@ -13,11 +13,11 @@ type blobReader struct {
 	total      int
 	chunkIndex int
 	dataIndex  int
-	blob       *Blob
+	chunks     []*Chunk
 }
 
-func ToBlob(r io.Reader) (*Blob, error) {
-	blob := Blob{}
+func NewBlob(r io.Reader) (*Blob, []*Chunk, error) {
+	blob := &Blob{}
 	chunks := make([]*Chunk, 0)
 
 	br := bufio.NewReaderSize(r, defaultChunkSize)
@@ -28,7 +28,7 @@ func ToBlob(r io.Reader) (*Blob, error) {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		ch := &Chunk{
@@ -36,16 +36,15 @@ func ToBlob(r io.Reader) (*Blob, error) {
 		}
 
 		chunks = append(chunks, ch)
+		blob.Chunks = append(blob.Chunks, ch.ToObject().Hash())
 	}
 
-	blob.Chunks = chunks
-
-	return &blob, nil
+	return blob, chunks, nil
 }
 
-func FromBlob(bl *Blob) Reader {
+func NewReader(chunks []*Chunk) Reader {
 	return &blobReader{
-		blob:      bl,
+		chunks:    chunks,
 		dataIndex: 0,
 	}
 }
@@ -60,12 +59,12 @@ func (bl *blobReader) Read(p []byte) (n int, err error) {
 	// read until while the buffer is full
 	for dataRead < maxBuffer {
 		// check if we have already read all the chunks
-		if bl.chunkIndex >= len(bl.blob.Chunks) {
+		if bl.chunkIndex >= len(bl.chunks) {
 			break
 		}
 
 		// check the remaining data on the current chunk
-		remainingData := len(bl.blob.Chunks[bl.chunkIndex].Data[bl.dataIndex:])
+		remainingData := len(bl.chunks[bl.chunkIndex].Data[bl.dataIndex:])
 		diff := remainingData - maxBuffer
 
 		// find the limits for the current read
@@ -73,11 +72,11 @@ func (bl *blobReader) Read(p []byte) (n int, err error) {
 		upper := maxBuffer + bl.dataIndex - dataRead
 
 		if diff < 0 {
-			upper = len(bl.blob.Chunks[bl.chunkIndex].Data)
+			upper = len(bl.chunks[bl.chunkIndex].Data)
 		}
 
 		// append to the temp buf
-		tempBuf = append(tempBuf, bl.blob.Chunks[bl.chunkIndex].Data[lower:upper]...)
+		tempBuf = append(tempBuf, bl.chunks[bl.chunkIndex].Data[lower:upper]...)
 		dataRead += upper - lower
 
 		// adjust the indexes

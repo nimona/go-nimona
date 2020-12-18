@@ -13,7 +13,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Chunks   []*Chunk        `nimona:"chunks:ao,omitempty"`
+		Chunks   []object.Hash   `nimona:"chunks:ar,omitempty"`
 	}
 )
 
@@ -57,11 +57,7 @@ func (e Blob) ToObject() *object.Object {
 		Data:     map[string]interface{}{},
 	}
 	if len(e.Chunks) > 0 {
-		rv := make([]*object.Object, len(e.Chunks))
-		for i, v := range e.Chunks {
-			rv[i] = v.ToObject()
-		}
-		r.Data["chunks:ao"] = rv
+		r.Data["chunks:ar"] = e.Chunks
 	}
 	return r
 }
@@ -69,11 +65,7 @@ func (e Blob) ToObject() *object.Object {
 func (e Blob) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
 	if len(e.Chunks) > 0 {
-		rv := make([]*object.Object, len(e.Chunks))
-		for i, v := range e.Chunks {
-			rv[i] = v.ToObject()
-		}
-		d["chunks:ao"] = rv
+		d["chunks:ar"] = e.Chunks
 	}
 	r := map[string]interface{}{
 		"type:s":     "nimona.io/Blob",

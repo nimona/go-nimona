@@ -5,6 +5,5 @@ signed object nimona.io/Chunk {
 }
 
 signed object nimona.io/Blob {
-   chunks repeated Chunk
+   chunks repeated nimona.io/object.Hash
 }
-

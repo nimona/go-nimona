@@ -49,7 +49,6 @@ type (
 			ctx context.Context,
 			hash object.Hash,
 			peer *peer.ConnectionInfo,
-			excludeNested bool,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
@@ -254,7 +253,6 @@ func (m *manager) fetchFromLeaves(
 				dCtx,
 				objectHash,
 				recipient,
-				false,
 			)
 			if err != nil {
 				wg.Done()
@@ -301,7 +299,6 @@ func (m *manager) Request(
 	ctx context.Context,
 	hash object.Hash,
 	pr *peer.ConnectionInfo,
-	excludeNested bool,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
@@ -335,9 +332,8 @@ func (m *manager) Request(
 	}()
 
 	req := &object.Request{
-		RequestID:             rID,
-		ObjectHash:            hash,
-		ExcludedNestedObjects: excludeNested,
+		RequestID:  rID,
+		ObjectHash: hash,
 	}
 	if err := m.network.Send(
 		ctx,
@@ -472,35 +468,8 @@ func (m *manager) storeObject(
 	objType := obj.Type
 	objHash := obj.Hash()
 
-	// TODO should we be de-reffing the object? I think so at least.
-
-	// deref nested objects
-	mainObj, refObjs, err := object.UnloadReferences(ctx, obj)
-	if err != nil {
-		logger.Error(
-			"error unloading nested objects",
-			log.String("hash", objHash.String()),
-			log.String("type", objType),
-			log.Error(err),
-		)
-		return err
-	}
-
-	// store nested objects
-	for _, refObj := range refObjs {
-		// TODO reconsider ttls for nested objects
-		if err := m.objectstore.PutWithTTL(refObj, 0); err != nil {
-			logger.Error(
-				"error trying to persist incoming nested object",
-				log.String("hash", refObj.Hash().String()),
-				log.String("type", refObj.Type),
-				log.Error(err),
-			)
-		}
-	}
-
-	// store primary object
-	if err := m.objectstore.Put(mainObj); err != nil {
+	// store object
+	if err := m.objectstore.Put(obj); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
 			log.String("hash", objHash.String()),
@@ -529,7 +498,7 @@ func (m *manager) storeObject(
 			objHash,
 		},
 	}
-	_, err = m.objectstore.Get(feedStreamHash)
+	_, err := m.objectstore.Get(feedStreamHash)
 	if err != nil &&
 		err != objectstore.ErrNotFound {
 		return err
@@ -678,24 +647,6 @@ func (m *manager) handleObjectRequest(
 	}
 
 	robj := object.Copy(obj)
-
-	switch req.ExcludedNestedObjects {
-	case true:
-		robj, _, err = object.UnloadReferences(ctx, obj)
-		if err != nil {
-			return err
-		}
-	case false:
-		robj, err = object.LoadReferences(ctx, hash, func(
-			ctx context.Context, hash object.Hash,
-		) (*object.Object, error) {
-			obj, err := m.objectstore.Get(hash)
-			return obj, err
-		})
-		if err != nil {
-			return err
-		}
-	}
 
 	resp.Object = robj
 
