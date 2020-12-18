@@ -12,12 +12,10 @@ Allows pinning objects and streams.
 * `NIMONA_PEER_BOOTSTRAPS` - Other bootstrap peers to use
   (in the `publicKey@tcps:ip:port` shorthand format).
 
-## Example
+## Commands
 
 ```sh
-LOG_LEVEL=info \
-NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002 \
-NIMONA_METRICS_BIND_ADDRESS=0.0.0.0:17001 \
-NIMONA_PEER_PRIVATE_KEY=<privateKey> \
-go run ./cmd/pinning/main.go
+go run ./cmd/pinning/main.go serve
+go run ./cmd/pinning/main.go list <pinning-service-peer-key>
+go run ./cmd/pinning/main.go pin <pinning-service-peer-key> <object-hash>
 ```

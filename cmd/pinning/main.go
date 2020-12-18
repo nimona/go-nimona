@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"sort"
 	"time"
+
+	"github.com/urfave/cli/v2"
 
 	"nimona.io/internal/version"
 	"nimona.io/pkg/config"
@@ -127,60 +130,75 @@ func main() {
 		nimonaConfig:  nimConfig,
 	}
 
-	command := os.Args[1]
-	args := os.Args[2:]
+	app := &cli.App{
+		Name:      "nimona pinning server",
+		Usage:     "serve and pin objects",
+		UsageText: "[command] [arguments]",
+		Description: "server and client for creating and managing a pinning " +
+			"service",
+		Commands: []*cli.Command{{
+			Name:  "serve",
+			Usage: "start a pinning server",
+			Action: func(c *cli.Context) error {
+				fmt.Println("public key:", srv.local.ConnectionInfo().PublicKey)
+				fmt.Println("pinned hashes:")
+				for _, hash := range srv.local.GetContentHashes() {
+					fmt.Println("-", hash)
+				}
+				srv.Serve()
+				return nil
+			},
+		}, {
+			Name:      "list",
+			Usage:     "list pinned objects on given pinning server",
+			ArgsUsage: "[pinning-server-peer-key]",
+			Action: func(c *cli.Context) error {
+				hashes, err := srv.List(
+					context.New(
+						context.WithTimeout(5*time.Second),
+					),
+					crypto.PublicKey(c.Args().Get(0)),
+				)
+				if err != nil {
+					logger.Fatal(
+						"unable to list pinned objects",
+						log.String("publicKey", c.Args().Get(0)),
+						log.Error(err),
+					)
+				}
+				fmt.Println("Pinned objects:")
+				for _, hash := range hashes {
+					fmt.Println("-", hash)
+				}
+				return nil
+			},
+		}, {
+			Name:      "pin",
+			Usage:     "pin object on given pinning server",
+			ArgsUsage: "[pinning-server-peer-key] [object-hash]",
+			Action: func(c *cli.Context) error {
+				err := srv.Pin(
+					context.New(
+						context.WithTimeout(5*time.Second),
+					),
+					crypto.PublicKey(c.Args().Get(0)),
+					object.Hash(c.Args().Get(1)),
+				)
+				if err != nil {
+					fmt.Println("error pinning object, err:", err)
+					return nil
+				}
+				fmt.Println("successfully pinned object")
+				return nil
+			},
+		}},
+	}
 
-	switch command {
-	case "pin":
-		if len(args) != 2 {
-			logger.Fatal("invalid number of arguments")
-		}
-		err := srv.Pin(
-			context.New(
-				context.WithTimeout(5*time.Second),
-			),
-			crypto.PublicKey(args[0]),
-			object.Hash(args[1]),
-		)
-		if err != nil {
-			fmt.Println("error pinning object, err:", err)
-			return
-		}
-		fmt.Println("successfully pinned object")
-	case "list":
-		if len(args) != 1 {
-			logger.Fatal("invalid number of arguments")
-		}
-		hashes, err := srv.List(
-			context.New(
-				context.WithTimeout(5*time.Second),
-			),
-			crypto.PublicKey(args[0]),
-		)
-		if err != nil {
-			logger.Fatal(
-				"unable to list pinned objects",
-				log.String("publicKey", args[0]),
-				log.Error(err),
-			)
-		}
-		fmt.Println("Pinned objects:")
-		for _, hash := range hashes {
-			fmt.Println("-", hash)
-		}
-	case "serve":
-		if len(args) != 0 {
-			logger.Fatal("invalid number of arguments")
-		}
-		fmt.Println("public key:", srv.local.ConnectionInfo().PublicKey)
-		fmt.Println("pinned hashes:")
-		for _, hash := range srv.local.GetContentHashes() {
-			fmt.Println("-", hash)
-		}
-		srv.Serve()
-	default:
-		fmt.Println("unknown command")
-		return
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
+
+	if err := app.Run(os.Args); err != nil {
+		fmt.Println(err)
 	}
 
 }
