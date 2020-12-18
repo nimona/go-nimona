@@ -93,7 +93,7 @@ func TestManager_Request(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer, false)
+			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -131,29 +131,20 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		},
 	}
 
-	unloadedF01 := &object.Object{
-		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"f01:s":  "f01",
-			"asdf:r": f00.Hash(),
-		},
-	}
-
 	type fields struct {
 		storeHandler   func(*testing.T) objectstore.Store
 		networkHandler func(
 			*testing.T,
 			context.Context,
-			bool, *sync.WaitGroup,
+			*sync.WaitGroup,
 			*object.Object,
 		) network.Network
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx           context.Context
-		rootHash      object.Hash
-		peer          *peer.ConnectionInfo
-		excludeNested bool
+		ctx      context.Context
+		rootHash object.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -161,132 +152,65 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		args    args
 		want    *object.Object
 		wantErr bool
-	}{
-		{
-			name: "object should be unloaded",
-			fields: fields{
-				storeHandler: func(t *testing.T) objectstore.Store {
-					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
-					m.EXPECT().GetPinned().Return(nil, nil)
-					return m
-				},
-				networkHandler: func(
-					t *testing.T,
-					ctx context.Context,
-					excludeNested bool,
-					wg *sync.WaitGroup,
-					want *object.Object,
-				) network.Network {
-					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().LocalPeer().Return(localPeer)
-					m.EXPECT().Subscribe(gomock.Any()).Return(
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
-								Payload: object.Request{
-									RequestID:             "8",
-									ObjectHash:            f01.Hash(),
-									ExcludedNestedObjects: excludeNested,
-								}.ToObject(),
-							}},
-						},
-					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any()).
-						DoAndReturn(func(
-							ctx context.Context,
-							obj *object.Object,
-							recipient crypto.PublicKey,
-						) error {
-							assert.Equal(t, want, obj)
-							wg.Done()
-							return nil
-						})
-
-					return m
-				},
-				resolver: func(t *testing.T) resolver.Resolver {
-					m := resolvermock.NewMockResolver(
-						gomock.NewController(t),
-					)
-					return m
-				},
+	}{{
+		name: "object returned",
+		fields: fields{
+			storeHandler: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(gomock.NewController(t))
+				m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
+				m.EXPECT().GetPinned().Return(nil, nil)
+				return m
 			},
-			args: args{
-				ctx:           context.Background(),
-				rootHash:      f00.Hash(),
-				peer:          peer1,
-				excludeNested: true,
+			networkHandler: func(
+				t *testing.T,
+				ctx context.Context,
+				wg *sync.WaitGroup,
+				want *object.Object,
+			) network.Network {
+				m := networkmock.NewMockNetwork(gomock.NewController(t))
+				m.EXPECT().LocalPeer().Return(localPeer)
+				m.EXPECT().Subscribe(gomock.Any()).Return(
+					&networkmock.MockSubscriptionSimple{
+						Objects: []*network.Envelope{{
+							Payload: object.Request{
+								RequestID:  "8",
+								ObjectHash: f01.Hash(),
+							}.ToObject(),
+						}},
+					},
+				)
+				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(
+						ctx context.Context,
+						obj *object.Object,
+						recipient crypto.PublicKey,
+					) error {
+						assert.Equal(t, want, obj)
+						wg.Done()
+						return nil
+					})
+				return m
 			},
-			want: object.Response{
-				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey(),
-				},
-				Object:    unloadedF01,
-				RequestID: "8",
-			}.ToObject(),
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
+			},
 		},
-		{
-			name: "object should NOT be unloaded",
-			fields: fields{
-				storeHandler: func(t *testing.T) objectstore.Store {
-					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
-					m.EXPECT().GetPinned().Return(nil, nil)
-					return m
-				},
-				networkHandler: func(
-					t *testing.T,
-					ctx context.Context,
-					excludeNested bool,
-					wg *sync.WaitGroup,
-					want *object.Object,
-				) network.Network {
-					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().LocalPeer().Return(localPeer)
-					m.EXPECT().Subscribe(gomock.Any()).Return(
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
-								Payload: object.Request{
-									RequestID:             "8",
-									ObjectHash:            f01.Hash(),
-									ExcludedNestedObjects: excludeNested,
-								}.ToObject(),
-							}},
-						},
-					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-						DoAndReturn(func(
-							ctx context.Context,
-							obj *object.Object,
-							recipient crypto.PublicKey,
-						) error {
-							assert.Equal(t, want, obj)
-							wg.Done()
-							return nil
-						})
-					return m
-				},
-				resolver: func(t *testing.T) resolver.Resolver {
-					m := resolvermock.NewMockResolver(
-						gomock.NewController(t),
-					)
-					return m
-				},
-			},
-			args: args{
-				ctx:           context.Background(),
-				rootHash:      f00.Hash(),
-				peer:          peer1,
-				excludeNested: false,
-			},
-			want: object.Response{
-				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey(),
-				},
-				Object:    f01,
-				RequestID: "8",
-			}.ToObject(),
+		args: args{
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     peer1,
 		},
+		want: object.Response{
+			Metadata: object.Metadata{
+				Owner: localPeerKey.PublicKey(),
+			},
+			Object:    f01,
+			RequestID: "8",
+		}.ToObject(),
+	},
 		{
 			name: "object missing, return empty response",
 			fields: fields{
@@ -299,7 +223,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				networkHandler: func(
 					t *testing.T,
 					ctx context.Context,
-					excludeNested bool,
 					wg *sync.WaitGroup,
 					want *object.Object,
 				) network.Network {
@@ -309,9 +232,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: object.Request{
-									RequestID:             "8",
-									ObjectHash:            f01.Hash(),
-									ExcludedNestedObjects: excludeNested,
+									RequestID:  "8",
+									ObjectHash: f01.Hash(),
 								}.ToObject(),
 							}},
 						},
@@ -336,10 +258,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx:           context.Background(),
-				rootHash:      f00.Hash(),
-				peer:          peer1,
-				excludeNested: false,
+				ctx:      context.Background(),
+				rootHash: f00.Hash(),
+				peer:     peer1,
 			},
 			want: object.Response{
 				Metadata: object.Metadata{
@@ -348,8 +269,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				Object:    nil,
 				RequestID: "8",
 			}.ToObject(),
-		},
-	}
+		}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
@@ -360,7 +280,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				tt.fields.networkHandler(
 					t,
 					tt.args.ctx,
-					tt.args.excludeNested,
 					&wg,
 					tt.want,
 				),
@@ -592,16 +511,15 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		networkHandler func(
 			*testing.T,
 			context.Context,
-			bool, *sync.WaitGroup,
+			*sync.WaitGroup,
 			*object.Object,
 		) network.Network
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx           context.Context
-		rootHash      object.Hash
-		peer          *peer.ConnectionInfo
-		excludeNested bool
+		ctx      context.Context
+		rootHash object.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -641,7 +559,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			networkHandler: func(
 				t *testing.T,
 				ctx context.Context,
-				excludeNested bool,
 				wg *sync.WaitGroup,
 				want *object.Object,
 			) network.Network {
@@ -678,10 +595,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:           context.Background(),
-			rootHash:      f00.Hash(),
-			peer:          peer1,
-			excludeNested: true,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     peer1,
 		},
 		want: stream.Response{
 			Metadata: object.Metadata{
@@ -707,7 +623,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			networkHandler: func(
 				t *testing.T,
 				ctx context.Context,
-				excludeNested bool,
 				wg *sync.WaitGroup,
 				want *object.Object,
 			) network.Network {
@@ -744,10 +659,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:           context.Background(),
-			rootHash:      f00.Hash(),
-			peer:          peer1,
-			excludeNested: true,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     peer1,
 		},
 		want: stream.Response{
 			Metadata: object.Metadata{
@@ -768,7 +682,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				tt.fields.networkHandler(
 					t,
 					tt.args.ctx,
-					tt.args.excludeNested,
 					&wg,
 					tt.want,
 				),

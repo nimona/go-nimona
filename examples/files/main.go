@@ -158,7 +158,7 @@ func (ft *fileTransfer) findAndRequest(
 		return nil, errors.New("no providers found")
 	}
 
-	obj, err := ft.objectmanager.Request(ctx, hash, peers[0], true)
+	obj, err := ft.objectmanager.Request(ctx, hash, peers[0])
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (ft *fileTransfer) get(
 	err = object.Decode(obj, flun)
 
 	fmt.Println("getting blob:", flun.BlobHash)
-	bl, err := ft.blobmanager.Request(ctx, flun.BlobHash)
+	_, ch, err := ft.blobmanager.Request(ctx, flun.BlobHash)
 	if err != nil {
 		fmt.Println("failed to request file:", err)
 	}
@@ -202,7 +202,7 @@ func (ft *fileTransfer) get(
 	}
 
 	fmt.Println("writing file:", fl.Name)
-	r := blob.FromBlob(bl)
+	r := blob.NewReader(ch)
 	bf := bufio.NewReader(r)
 	if _, err := io.Copy(f, bf); err != nil {
 		fmt.Println("failed to write to file:", err)

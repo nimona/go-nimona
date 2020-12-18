@@ -4,10 +4,9 @@ package object
 
 type (
 	Request struct {
-		Metadata              Metadata `nimona:"metadata:m,omitempty"`
-		RequestID             string   `nimona:"requestID:s,omitempty"`
-		ObjectHash            Hash     `nimona:"objectHash:r,omitempty"`
-		ExcludedNestedObjects bool     `nimona:"excludedNestedObjects:b,omitempty"`
+		Metadata   Metadata `nimona:"metadata:m,omitempty"`
+		RequestID  string   `nimona:"requestID:s,omitempty"`
+		ObjectHash Hash     `nimona:"objectHash:r,omitempty"`
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"metadata:m,omitempty"`
@@ -28,7 +27,6 @@ func (e Request) ToObject() *Object {
 	}
 	r.Data["requestID:s"] = e.RequestID
 	r.Data["objectHash:r"] = e.ObjectHash
-	r.Data["excludedNestedObjects:b"] = e.ExcludedNestedObjects
 	return r
 }
 
@@ -36,7 +34,6 @@ func (e Request) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
 	d["requestID:s"] = e.RequestID
 	d["objectHash:r"] = e.ObjectHash
-	d["excludedNestedObjects:b"] = e.ExcludedNestedObjects
 	r := map[string]interface{}{
 		"type:s":     "nimona.io/Request",
 		"metadata:m": MetadataToMap(&e.Metadata),
