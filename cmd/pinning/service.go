@@ -32,7 +32,6 @@ type (
 		nimonaConfig *config.Config
 	}
 	Config struct {
-		ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
 	}
 )
 
@@ -177,12 +176,7 @@ func (srv *Service) List(
 		RequestID: rand.String(8),
 	}
 
-	resChan := waitForResponse(
-		ctx,
-		srv.network,
-		req.RequestID,
-	)
-
+	listRes := &ListResponse{}
 	if err := srv.network.Send(
 		context.New(
 			context.WithTimeout(time.Second),
@@ -190,17 +184,8 @@ func (srv *Service) List(
 		req.ToObject(),
 		peer.PublicKey,
 		network.SendWithConnectionInfo(peer),
+		network.SendWithResponse(listRes, 3*time.Second),
 	); err != nil {
-		return nil, err
-	}
-
-	res := <-resChan
-	if res == nil {
-		return nil, errors.New("didn't get response in time")
-	}
-
-	listRes := &ListResponse{}
-	if err := listRes.FromObject(res); err != nil {
 		return nil, err
 	}
 
@@ -225,12 +210,7 @@ func (srv *Service) Pin(
 		Hash:      objHash,
 	}
 
-	resChan := waitForResponse(
-		ctx,
-		srv.network,
-		req.RequestID,
-	)
-
+	pinRes := &PinResponse{}
 	if err := srv.network.Send(
 		context.New(
 			context.WithTimeout(time.Second),
@@ -238,17 +218,8 @@ func (srv *Service) Pin(
 		req.ToObject(),
 		peer.PublicKey,
 		network.SendWithConnectionInfo(peer),
+		network.SendWithResponse(pinRes, 3*time.Second),
 	); err != nil {
-		return err
-	}
-
-	res := <-resChan
-	if res == nil {
-		return errors.New("didn't get response in time")
-	}
-
-	pinRes := &PinResponse{}
-	if err := pinRes.FromObject(res); err != nil {
 		return err
 	}
 
@@ -260,38 +231,4 @@ func (srv *Service) Pin(
 	}
 
 	return nil
-}
-
-func waitForResponse(
-	ctx context.Context,
-	net network.Network,
-	rID string,
-) chan *object.Object {
-	sub := net.Subscribe(
-		network.FilterByRequestID(rID),
-	)
-
-	res := make(chan *object.Object)
-
-	go func() {
-		defer close(res)
-		defer sub.Cancel()
-
-		done := ctx.Done()
-		env := sub.Channel()
-
-		for {
-			select {
-			case e := <-env:
-				if e != nil && e.Payload != nil {
-					res <- e.Payload
-				}
-				return
-			case <-done:
-				return
-			}
-		}
-	}()
-
-	return res
 }

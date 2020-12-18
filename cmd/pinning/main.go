@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
-	object "nimona.io/pkg/object"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -39,7 +39,7 @@ func main() {
 
 	pinConfig := &Config{}
 	nimConfig, err := config.New(
-		config.WithExtraConfig("PINSERVICE", pinConfig),
+		config.WithExtraConfig("PINNING", pinConfig),
 	)
 	if err != nil {
 		logger.Fatal("error parsing config", log.Error(err))
