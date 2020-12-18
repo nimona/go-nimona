@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1607189466266,
+  "lastUpdate": 1608297438971,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1746,6 +1746,60 @@ window.BENCHMARK_DATA = {
             "value": 90.2,
             "unit": "ns/op",
             "extra": "13567424 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "585615afbe4bb6bad1abf11d30a657768c517ce1",
+          "message": "feat(network): add send option to wait for response",
+          "timestamp": "2020-12-18T13:15:52Z",
+          "tree_id": "577438c8aded9faf8e01a876701dd3078d752ba6",
+          "url": "https://github.com/nimona/go-nimona/commit/585615afbe4bb6bad1abf11d30a657768c517ce1"
+        },
+        "date": 1608297438560,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkToBlob1",
+            "value": 375967,
+            "unit": "ns/op",
+            "extra": "3039 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob100",
+            "value": 11091101,
+            "unit": "ns/op",
+            "extra": "104 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkToBlob1000",
+            "value": 120295314,
+            "unit": "ns/op",
+            "extra": "22 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 59103,
+            "unit": "ns/op",
+            "extra": "20046 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 86,
+            "unit": "ns/op",
+            "extra": "13651807 times\n2 procs"
           }
         ]
       }
