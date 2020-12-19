@@ -225,7 +225,7 @@ coverage.out: $(SOURCES)
 	-@NIMONA_UPNP_DISABLE=true \
 		go test $(V) -covermode=count -coverprofile=coverage.tmp.out ./...
 	-@cat coverage.tmp.out | \
-		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/playground/' \
+		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/examples/|/playground/' \
 			> coverage.out
 	-@rm -f coverage.tmp.out
 
