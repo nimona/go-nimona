@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1608750962704,
+  "lastUpdate": 1608754606971,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1908,6 +1908,60 @@ window.BENCHMARK_DATA = {
             "value": 79.1,
             "unit": "ns/op",
             "extra": "13416111 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "db3a554a42827c00a7b8ce141ac2cae1cb38682e",
+          "message": "chore(tools/vanity): remove vanity http server",
+          "timestamp": "2020-12-23T20:15:25Z",
+          "tree_id": "5daf52d9bac76970912d8dcaa438aa43358b9f85",
+          "url": "https://github.com/nimona/go-nimona/commit/db3a554a42827c00a7b8ce141ac2cae1cb38682e"
+        },
+        "date": 1608754606555,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 12398616,
+            "unit": "ns/op",
+            "extra": "88 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1200018281,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 11917599948,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 48623,
+            "unit": "ns/op",
+            "extra": "24574 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 68.3,
+            "unit": "ns/op",
+            "extra": "17444816 times\n2 procs"
           }
         ]
       }
