@@ -1,7 +1,5 @@
 {
-  "debug": {
-    "logLevel": "DEBUG"
-  },
+  "logLevel": "FATAL",
   "peer": {
     "privateKey": "ed25519.prv.59zxgGyH7CqsX8WcfgJ3WZ56aaVxqgKXStp3sGAmPFQLpuW1r7DQkzdPGMkkxNDE3c5Rb1ojjKReMMistaK336Vc",
     "bindAddress": "0.0.0.0:0",
