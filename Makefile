@@ -226,6 +226,7 @@ coverage.out: $(SOURCES)
 	-@cat coverage.tmp.out | \
 		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/examples/|/playground/' \
 			> coverage.out
+	cat coverage.out
 	-@rm -f coverage.tmp.out
 
 #
