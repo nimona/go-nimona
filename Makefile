@@ -75,7 +75,6 @@ $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.3.0))
 
 $(eval $(call inttool,codegen))
 $(eval $(call inttool,community))
-$(eval $(call inttool,vanity))
 
 .PHONY: tools
 tools: $(TOOLS)
