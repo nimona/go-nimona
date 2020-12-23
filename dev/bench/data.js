@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1608747520005,
+  "lastUpdate": 1608750962704,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -1854,6 +1854,60 @@ window.BENCHMARK_DATA = {
             "value": 93.4,
             "unit": "ns/op",
             "extra": "12594219 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "ec73c48ff11555a3ac6b5dc21002d9c03505cd98",
+          "message": "refactor(objectmanager)!: remove option to fetch unloaded object",
+          "timestamp": "2020-12-23T19:14:30Z",
+          "tree_id": "930a379c37873b93a14975a96f89ced107808753",
+          "url": "https://github.com/nimona/go-nimona/commit/ec73c48ff11555a3ac6b5dc21002d9c03505cd98"
+        },
+        "date": 1608750961834,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 13831540,
+            "unit": "ns/op",
+            "extra": "80 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1274724989,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 12850929695,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 53132,
+            "unit": "ns/op",
+            "extra": "21400 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 79.1,
+            "unit": "ns/op",
+            "extra": "13416111 times\n2 procs"
           }
         ]
       }
