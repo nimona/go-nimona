@@ -130,7 +130,7 @@ $(EXAMPLES): $(BINDIR)/examples/%: $(SOURCES)
 # Clean up everything
 .PHONY: clean
 clean:
-	rm -f coverage.out coverage.tmp.out
+	rm -f coverage.out coverage.tmp-*.out
 	rm -f $(BINS) $(TOOLS) $(EXAMPLES)
 	rm -f ./go.mod.tidy-check ./go.sum.tidy-check
 
@@ -222,12 +222,13 @@ cover-func: coverage.out
 
 coverage.out: $(SOURCES)
 	-@NIMONA_UPNP_DISABLE=true \
-		go test $(V) -covermode=count -coverprofile=coverage.tmp.out ./...
-	-@cat coverage.tmp.out | \
+		go test $(V) -covermode=count -coverprofile=coverage.tmp-raw.out ./...
+	-@cat coverage.tmp-raw.out | \
 		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/examples/|/playground/' \
-			> coverage.out
+			> coverage.tmp-clean.out
+	-@(head -n 1 coverage.tmp-clean.out && tail -n +2 coverage.tmp-clean.out | sort) > coverage.out
 	cat coverage.out
-	-@rm -f coverage.tmp.out
+	-@rm -f coverage.tmp-raw.out coverage.tmp-clean.out
 
 #
 # Documentation
