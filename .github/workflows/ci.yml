@@ -224,6 +224,24 @@ jobs:
           cd cmd
           ../bin/goreleaser
 
+  docs:
+    name: Build and deploy docs
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Build docs
+      run: yarn && yarn docs:build
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/.vuepress/dist
+        publish_branch: gh-pages-test
+        keep_files: true
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
