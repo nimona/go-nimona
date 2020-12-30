@@ -17,10 +17,11 @@ debug
 *.txt
 !requirements.txt
 
-# build directories
+# Build directories
 dist/*
 cmd/dist/*
 tools/dist/*
+docs/*/dist/*
 
 bin/*
 cmd/bin/*
@@ -28,9 +29,13 @@ tools/bin/*
 
 # Vendor
 vendor
+node_modules
 
 # Local testing
 .local
 
 # Infrastructure
-infrastructure/.pyenv
+infrastructure/*/.terraform/
+infrastructure/*/ssh/id_rsa
+infrastructure/*/.envrc.local
+infrastructure/*/.pyenv
