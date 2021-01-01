@@ -21,7 +21,7 @@ debug
 dist/*
 cmd/dist/*
 tools/dist/*
-docs/*/dist/*
+.vuepress/dist/*
 
 bin/*
 cmd/bin/*

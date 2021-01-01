@@ -3,44 +3,45 @@ module.exports = {
   description: 'a new internet stack, or something like it',
   themeConfig: {
     navbar: false,
-    // logo: '/nimona-logo.png',
+    // logo: '/docs/nimona-logo.png',
     search: true,
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Concepts', link: '/concepts/' },
-      { text: 'Proposals', link: '/proposals/' },
+      { text: 'Home', link: '/docs/' },
+      { text: 'Concepts', link: '/docs/concepts/' },
+      { text: 'Proposals', link: '/docs/proposals/' },
     ],
     sidebar: [{
-      title: 'Nimona',
-      path: '/introduction',
+      title: 'Documentation',
       collapsable: false,
       children: [
-        '/design-decisions',
+        '/docs/',
+        '/docs/design-decisions',
       ],
+      sidebarDepth: 0,
     }, {
       title: 'Concepts',
       collapsable: false,
       children: [
-        '/networking',
+        '/docs/networking',
         {
           title: 'Objects',
-          path: '/objects',
+          path: '/docs/objects',
           collapsable: false,
           children: [[
-            '/proposals/np001-hinted-object-notation',
+            '/docs/proposals/np001-hinted-object-notation',
             'Hinting & Hashing [np001]',
           ], [
-            '/proposals/np002-structured-objects',
+            '/docs/proposals/np002-structured-objects',
             'Structure [np002]',
           ]],
           sidebarDepth: 0,
         },
         [
-          '/proposals/np003-streams',
+          '/docs/proposals/np003-streams',
           'Streams [np003]',
         ],
         [
-          '/proposals/np004-feeds',
+          '/docs/proposals/np004-feeds',
           'Feeds [np004]',
         ],
       ],
@@ -48,9 +49,17 @@ module.exports = {
       title: 'Other',
       collapsable: false,
       children: [
-        '/proposals/',
+        '/docs/proposals/',
       ],
     }],
     displayAllHeaders: true,
-  }
+  },
+  plugins: [[
+    'vuepress-plugin-clean-urls',
+    {
+      normalSuffix: '/',
+      indexSuffix: '/',
+      notFoundPath: '/404.html',
+    },
+  ]],
 }
