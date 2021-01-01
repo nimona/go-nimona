@@ -1,3 +1,10 @@
+---
+layout: Blue
+meta:
+- name: go-import
+  content: nimona.io git https://github.com/nimona/go-nimona
+---
+
 <h1 align="center">
   <img src="https://user-images.githubusercontent.com/88447/67148586-4010a580-f2a1-11e9-9ece-91acf37b0c6f.png" alt="nimona" width="250px">
 </h1>
