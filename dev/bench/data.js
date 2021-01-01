@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1609536019499,
+  "lastUpdate": 1609539680929,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2232,6 +2232,60 @@ window.BENCHMARK_DATA = {
             "value": 85.4,
             "unit": "ns/op",
             "extra": "12851685 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "2ce2dce4b7631d26061426149f412c73cf418156",
+          "message": "chore(docs): remove need for frontmatter in root readme",
+          "timestamp": "2021-01-01T22:19:16Z",
+          "tree_id": "0a20f60db8117f9a730b74235ae4a1ff7b72dc7b",
+          "url": "https://github.com/nimona/go-nimona/commit/2ce2dce4b7631d26061426149f412c73cf418156"
+        },
+        "date": 1609539680386,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 16441756,
+            "unit": "ns/op",
+            "extra": "72 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1590072410,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 15007863929,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 60367,
+            "unit": "ns/op",
+            "extra": "19040 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 86.8,
+            "unit": "ns/op",
+            "extra": "12702782 times\n2 procs"
           }
         ]
       }
