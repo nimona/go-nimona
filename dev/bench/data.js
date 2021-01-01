@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1609526014916,
+  "lastUpdate": 1609536019499,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2178,6 +2178,60 @@ window.BENCHMARK_DATA = {
             "value": 68.8,
             "unit": "ns/op",
             "extra": "17602735 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "0077543f7b1840488502260290513c755a816808",
+          "message": "chore(docs): move vuepress one level up",
+          "timestamp": "2021-01-01T21:18:46Z",
+          "tree_id": "f46ad7563689be84d2f9c8990f874071d71dee3a",
+          "url": "https://github.com/nimona/go-nimona/commit/0077543f7b1840488502260290513c755a816808"
+        },
+        "date": 1609536019012,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 16400544,
+            "unit": "ns/op",
+            "extra": "73 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1473758298,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 14072649537,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 57647,
+            "unit": "ns/op",
+            "extra": "21106 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 85.4,
+            "unit": "ns/op",
+            "extra": "12851685 times\n2 procs"
           }
         ]
       }
