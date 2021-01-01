@@ -1,10 +1,28 @@
+---
+np: 003
+title: Streams
+author: George Antoniadis (george@noodles.gr)
+status: Draft
+category: Objects
+created: 2019-10-29
+---
+
 # Streams
+
+## Simple Summary
+
+Streams provide a way of creating complex mutable data structures using
+directed acyclic graphs made from objects.
+
+## Problem Statement
 
 While objects on their own are useful for creating permanent content-addressable
 data structures, there are very few applications where data never get updated.
 This is where streams come in, they allow developers to create complex
 applications by applying event driven and event sourcing patterns using graphs
 of individually immutable objects.
+
+## Proposal
 
 Objects in a stream form a directed acyclic graph (DAG) by allowing each of the
 objects to reference others it depends on or knows of. This graph can then be
@@ -162,7 +180,7 @@ expiry is optional.
 
 ## References
 
-* <https://docs.textile.io/concepts/threads>
+* <https://docs.textile.io/threads/#threads>
 * <https://www.streamr.com/docs/streams>
 * <https://holochain.org>
 * <https://github.com/textileio/go-textile/issues/694>
