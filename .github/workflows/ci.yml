@@ -226,6 +226,7 @@ jobs:
 
   docs:
     name: Build and deploy docs
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -239,7 +240,7 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/.vuepress/dist
-        publish_branch: gh-pages-test
+        publish_branch: gh-pages
         keep_files: true
 
   deploy:
