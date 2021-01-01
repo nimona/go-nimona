@@ -1,6 +1,12 @@
 module.exports = {
   title: 'nimona',
   description: 'a new internet stack, or something like it',
+  head: [[
+    'meta', {
+      'name': 'go-import',
+      'content': 'nimona.io git https://github.com/nimona/go-nimona',
+    }, ''
+  ]],
   themeConfig: {
     navbar: false,
     // logo: '/docs/nimona-logo.png',
