@@ -1,11 +1,10 @@
 {
-  "name": "nimona.io",
+  "name": "docs.nimona.io",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "authors": {
-    "name": "the nimona devs",
-    "email": ""
+    "name": "nimona"
   },
   "repository": "github.com/nimona/go-nimona",
   "scripts": {
@@ -16,7 +15,5 @@
   "devDependencies": {
     "vuepress": "^1.5.3"
   },
-  "dependencies": {
-    "vuepress-theme-api": "^1.0.0-beta.9"
-  }
+  "dependencies": {}
 }
