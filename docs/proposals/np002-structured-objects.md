@@ -1,11 +1,27 @@
+---
+np: 002
+title: Objects
+author: George Antoniadis (george@noodles.gr)
+status: Draft
+category: Objects
+created: 2018-12-27
+---
+
 # Structured Objects
 
-Objects are expand on the work of the
-[hinted object notation](np001-hinted-object-notation.md) and further define
+## Simple Summary
+
+Objects expand on the work on [hinted object notation] and further define
 the top levels of their structure in order to add some commonly used attributes
 that applications can leverage.
 
-## Structure
+## Problem Statement
+
+In order for application and service developers to be able to identify, use, and
+create data structures compatible with other applications we need to define a
+basic list of well known attributed, some required some optional.
+
+## Proposal
 
 The top level of each object consists of three main attributes.
 
@@ -80,6 +96,7 @@ specification.
 - [Ben Laurie]
 - [Object hash]
 
+[hinted object notation]: ./np001-hinted-object-notation.md
 [JSON]: https://www.json.org
 [CBOR]: http://cbor.io
 [MsgPack]: https://msgpack.org
