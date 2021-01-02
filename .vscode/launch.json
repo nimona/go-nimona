@@ -1,4 +1,33 @@
 {
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": "Debug cmd/bootstrap",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/bootstrap"
+        },
+        {
+            "name": "Debug cmd/sonar",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/sonar"
+        },
+        {
+            "name": "Debug examples/files",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/examples/files"
+        },
+        {
+            "name": "Debug examples/files",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/examples/files"
+        },
+    ]
 }
