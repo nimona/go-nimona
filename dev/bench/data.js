@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1609540419515,
+  "lastUpdate": 1609716449134,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2340,6 +2340,60 @@ window.BENCHMARK_DATA = {
             "value": 69.3,
             "unit": "ns/op",
             "extra": "17155363 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "e98857d877850206153657cdea82e39b68e9bd72",
+          "message": "chore(vscode): add launch configs for cmds and examples",
+          "timestamp": "2021-01-03T23:25:15Z",
+          "tree_id": "f4be2c98aac91b29532d1e572a8b1e8762be019f",
+          "url": "https://github.com/nimona/go-nimona/commit/e98857d877850206153657cdea82e39b68e9bd72"
+        },
+        "date": 1609716448541,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 15979017,
+            "unit": "ns/op",
+            "extra": "73 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1513783355,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 15244059071,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 55655,
+            "unit": "ns/op",
+            "extra": "20344 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 90.3,
+            "unit": "ns/op",
+            "extra": "14142988 times\n2 procs"
           }
         ]
       }
