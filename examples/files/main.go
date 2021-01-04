@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"nimona.io/internal/net"
-	"nimona.io/internal/version"
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
@@ -26,6 +25,7 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/version"
 )
 
 type fileTransfer struct {
@@ -103,7 +103,6 @@ func main() {
 		fmt.Println("command not supported")
 		return
 	}
-
 }
 
 func (ft *fileTransfer) serve(
@@ -209,7 +208,6 @@ func (ft *fileTransfer) get(
 	}
 
 	fmt.Println("done")
-
 }
 
 func (ft *fileTransfer) close() {
@@ -321,5 +319,4 @@ func newFileTransfer(
 	ft.blobmanager = bm
 
 	return ft, nil
-
 }

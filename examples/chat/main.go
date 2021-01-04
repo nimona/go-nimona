@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"nimona.io/internal/version"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -20,6 +19,7 @@ import (
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
+	"nimona.io/pkg/version"
 )
 
 var (

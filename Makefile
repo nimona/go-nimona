@@ -102,9 +102,9 @@ $(BINS): $(BINDIR)/%: $(SOURCES)
 	cd "$(CMDDIR)/$*" && go build -a $(V) \
 		-o "$(ROOT)/$(BINDIR)/$*" \
 		-ldflags "$(LDFLAGS) \
-			-X $(MODULE)/internal/version.Date=$(DATE) \
-			-X $(MODULE)/internal/version.Version=$(VERSION) \
-			-X $(MODULE)/internal/version.Commit=$(GIT_SHA)"
+			-X $(MODULE)/pkg/version.Date=$(DATE) \
+			-X $(MODULE)/pkg/version.Version=$(VERSION) \
+			-X $(MODULE)/pkg/version.Commit=$(GIT_SHA)"
 
 #
 # Examples
