@@ -9,7 +9,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"nimona.io/internal/rand"
-	"nimona.io/internal/version"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -20,6 +19,7 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/version"
 )
 
 // nolint: lll
