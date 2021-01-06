@@ -14,13 +14,13 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.4
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/iancoleman/strcase v0.1.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.9.0
+	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.6.1
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
 	github.com/vcaesar/murmur v0.20.1

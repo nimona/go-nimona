@@ -31,7 +31,7 @@ func TestConfig(t *testing.T) {
 		config.WithExtraConfig("extraOne", &ExtraCfg{
 			Hello: "one",
 		}),
-		config.WithExtraConfig("extraTwo", &ExtraCfg{
+		config.WithExtraConfig("EXTRA_TWO", &ExtraCfg{
 			Hello: "two",
 		}),
 	)
