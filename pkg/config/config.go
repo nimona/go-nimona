@@ -7,8 +7,8 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/iancoleman/strcase"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/stoewer/go-strcase"
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
@@ -91,7 +91,7 @@ func New(opts ...Option) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		cfg.Extras[strcase.ToLowerCamel(k)] = data
+		cfg.Extras[strcase.LowerCamelCase(k)] = data
 	}
 
 	updateData, err := json.MarshalIndent(cfg, "", "  ")

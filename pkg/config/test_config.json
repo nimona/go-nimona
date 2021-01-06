@@ -18,12 +18,6 @@
     },
     "extraTwo": {
       "Hello": "two"
-    },
-    "extra_one": {
-      "Hello": "one"
-    },
-    "extra_two": {
-      "Hello": "two"
     }
   }
 }
