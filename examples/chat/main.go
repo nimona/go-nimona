@@ -333,7 +333,7 @@ func main() {
 							Stream: conversationRootHash,
 						},
 						Nickname: nickname,
-						Datetime: time.Now().Format(time.RFC3339Nano),
+						Datetime: time.Now().Format(time.RFC3339),
 					}.ToObject(),
 				); err != nil {
 					logger.Warn(
@@ -352,7 +352,7 @@ func main() {
 							Stream: conversationRootHash,
 						},
 						Body:     input,
-						Datetime: time.Now().Format(time.RFC3339Nano),
+						Datetime: time.Now().Format(time.RFC3339),
 					}.ToObject(),
 				); err != nil {
 					logger.Warn(
@@ -367,21 +367,24 @@ func main() {
 	for event := range events {
 		switch v := event.(type) {
 		case *ConversationMessageAdded:
-			t, err := time.Parse(time.RFC3339Nano, v.Datetime)
+			t, err := time.Parse(time.RFC3339, v.Datetime)
 			if err != nil {
 				continue
 			}
 			app.Channels.MessageAdded <- &Message{
 				Hash:             v.ToObject().Hash().String(),
 				ConversationHash: v.Metadata.Stream.String(),
-				SenderHash:       v.Metadata.Owner.String(),
+				SenderKey:        v.Metadata.Owner.String(),
 				Body:             strings.TrimSpace(v.Body),
 				Created:          t,
 			}
 		case *ConversationNicknameUpdated:
+			updated, _ := time.Parse(time.RFC3339, v.Datetime)
 			app.Channels.ParticipantUpdated <- &Participant{
-				Hash:     v.Metadata.Owner.String(),
-				Nickname: v.Nickname,
+				ConversationHash: v.Metadata.Stream.String(),
+				Key:              v.Metadata.Owner.String(),
+				Nickname:         v.Nickname,
+				Updated:          updated,
 			}
 		}
 	}
@@ -392,4 +395,11 @@ func last(t string, i int) string {
 		return t
 	}
 	return t[len(t)-i:]
+}
+
+func first(t string, i int) string {
+	if len(t) <= i {
+		return t
+	}
+	return t[:i]
 }
