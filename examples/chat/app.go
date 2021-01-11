@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,11 +17,11 @@ import (
 
 type (
 	App struct {
-		Windows       Windows
-		StatusText    []Status
-		Conversations Conversations
-		Channels      Channels
-		Chat          *chat
+		Windows    Windows
+		StatusText []Status
+		Store      *store
+		Channels   Channels
+		Chat       *chat
 	}
 	Channels struct {
 		InputLines          chan string
@@ -39,51 +39,7 @@ type (
 		Text    string
 		Created string
 	}
-	Conversations []*Conversation // helper, used for sorting
-	Conversation  struct {
-		Hash         string
-		Messages     Messages
-		Participants Participants
-		LastActivity time.Time
-	}
-	Messages []*Message // helper, used for sorting
-	Message  struct {
-		Hash             string
-		ConversationHash string
-		Body             string
-		SenderHash       string
-		Created          time.Time
-	}
-	Participants []*Participant // helper, used for sorting
-	Participant  struct {
-		Hash     string
-		Nickname string
-	}
 )
-
-func (a Messages) Len() int {
-	return len(a)
-}
-
-func (a Messages) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a Messages) Less(i, j int) bool {
-	return a[i].Created.Before(a[j].Created)
-}
-
-func (a Participants) Len() int {
-	return len(a)
-}
-
-func (a Participants) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a Participants) Less(i, j int) bool {
-	return a[i].Nickname < a[j].Nickname
-}
 
 func NewApp(conversationHash string) *App {
 	app := &App{
@@ -93,6 +49,7 @@ func NewApp(conversationHash string) *App {
 			Chat:         tview.NewTextView(),
 			App:          tview.NewApplication(),
 		},
+		Store:      NewMemoryStore(),
 		StatusText: []Status{},
 		Channels: Channels{
 			InputLines:          make(chan string, 100),
@@ -100,40 +57,47 @@ func NewApp(conversationHash string) *App {
 			MessageAdded:        make(chan *Message, 100),
 			ParticipantUpdated:  make(chan *Participant, 100),
 		},
-		Conversations: Conversations{
-			&Conversation{
-				Hash:     conversationHash,
-				Messages: Messages{},
-			},
-		},
 	}
 
+	app.Store.PutConversation(&Conversation{
+		Hash: conversationHash,
+	})
+
 	go func() {
-		conv := app.Conversations[0]
+		convs, _ := app.Store.GetConversations()
+		conv := convs[0]
+
+		formatKey := func(k string) string {
+			return strings.Replace(k, "ed25519.", "", 1)
+		}
 
 		formatParticipant := func(p *Participant) string {
-			if p.Nickname == last(p.Hash, 8) {
-				return fmt.Sprintf("<%s>", p.Nickname)
+			key := strings.Replace(p.Key, "ed25519.", "", 1)
+			if p.Nickname == "" {
+				return fmt.Sprintf("<%s>", first(key, 8))
 			}
-			return fmt.Sprintf("%s <%s>", p.Nickname, last(p.Hash, 8))
+			nickname := p.Nickname
+			if len(nickname) > 12 {
+				nickname = first(nickname, 11) + "…"
+			}
+			return fmt.Sprintf("%s <%s>", nickname, first(key, 8))
 		}
 
 		participantsViewRefresh := func() {
+			convParticipants, _ := app.Store.GetParticipants(conv.Hash)
 			app.Windows.Participants.Clear()
-			for _, p := range conv.Participants {
+			for _, p := range convParticipants {
 				nickname := formatParticipant(p)
 				app.Windows.Participants.AddItem(nickname, "", 0, func() {})
 			}
 		}
 
 		messagesViewRefresh := func() {
+			convMessages, _ := app.Store.GetMessages(conv.Hash, 100, 0)
+			convParticipants, _ := app.Store.GetParticipants(conv.Hash)
 			app.Windows.Chat.Clear()
-			min := 0
-			if len(conv.Messages) > 100 {
-				min = len(conv.Messages) - 100
-			}
-			for _, message := range conv.Messages[min:] {
-				if message.SenderHash == "system" {
+			for _, message := range convMessages {
+				if message.SenderKey == "system" {
 					app.Windows.Chat.Write([]byte(
 						fmt.Sprintf(
 							"\n[red][%s] %s",
@@ -144,8 +108,8 @@ func NewApp(conversationHash string) *App {
 					continue
 				}
 				nickname := ""
-				for _, p := range conv.Participants {
-					if message.SenderHash == p.Hash {
+				for _, p := range convParticipants {
+					if message.SenderKey == p.Key {
 						nickname = formatParticipant(p)
 						break
 					}
@@ -166,55 +130,35 @@ func NewApp(conversationHash string) *App {
 		for {
 			select {
 			case participantUpdated := <-app.Channels.ParticipantUpdated:
-				for _, u := range conv.Participants {
-					if u.Hash == participantUpdated.Hash {
-						u.Nickname = participantUpdated.Nickname
-						break
-					}
-				}
+				app.Store.PutMessage(&Message{
+					Hash:             strconv.Itoa(int(time.Now().UnixNano())),
+					ConversationHash: participantUpdated.ConversationHash,
+					SenderKey:        "system",
+					Created:          participantUpdated.Updated,
+					Body: fmt.Sprintf(
+						"* <%s> is now known as %s",
+						formatKey(participantUpdated.Key),
+						participantUpdated.Nickname,
+					),
+				})
+				app.Store.PutParticipant(participantUpdated)
 				participantsViewRefresh()
 				messagesViewRefresh()
 
 			case messageAdded := <-app.Channels.MessageAdded:
-				duplicate := false
-				for _, message := range conv.Messages {
-					if message.Hash == messageAdded.Hash {
-						duplicate = true
-						break
-					}
-				}
-				if duplicate {
-					break
-				}
-				conv.Messages = append(
-					conv.Messages,
-					messageAdded,
-				)
-				sort.Sort(conv.Messages)
-				messagesViewRefresh()
+				app.Store.PutMessage(messageAdded)
+				participantsViewRefresh()
 
 				// deal with users
-				if messageAdded.SenderHash == "system" {
+				if messageAdded.SenderKey == "system" {
 					continue
 				}
-				userExists := false
-				for _, u := range conv.Participants {
-					if u.Hash == messageAdded.SenderHash {
-						userExists = true
-						break
-					}
+				par := &Participant{
+					Key:              messageAdded.SenderKey,
+					ConversationHash: messageAdded.ConversationHash,
 				}
-				if !userExists {
-					conv.Participants = append(
-						conv.Participants,
-						&Participant{
-							Hash:     messageAdded.SenderHash,
-							Nickname: last(messageAdded.SenderHash, 8),
-						},
-					)
-				}
-				sort.Sort(conv.Participants)
-				participantsViewRefresh()
+				app.Store.PutParticipant(par)
+				messagesViewRefresh()
 			}
 		}
 	}()
@@ -224,10 +168,10 @@ func NewApp(conversationHash string) *App {
 
 func (app *App) AddSystemText(msg string) {
 	app.Channels.MessageAdded <- &Message{
-		Hash:       rand.String(16),
-		SenderHash: "system",
-		Body:       msg,
-		Created:    time.Now(),
+		Hash:      rand.String(16),
+		SenderKey: "system",
+		Body:      msg,
+		Created:   time.Now(),
 	}
 }
 
@@ -307,7 +251,7 @@ func (app *App) Show() {
 	})
 	app.Windows.Input.SetInputCapture(app.Windows.Input.GetInputCapture())
 
-	app.Windows.Chat.SetTitle(" " + app.Conversations[0].Hash + " ")
+	// app.Windows.Chat.SetTitle(" " + app.Conversations[0].Hash + " ")
 
 	flexLists := tview.NewFlex().SetDirection(tview.FlexRow)
 	flexChat := tview.NewFlex().SetDirection(tview.FlexRow)
