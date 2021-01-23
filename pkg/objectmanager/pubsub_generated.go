@@ -18,9 +18,8 @@ type (
 	ObjectFilter func(*object.Object) bool
 	// ObjectSubscription is returned for every subscription
 	ObjectSubscription interface {
+		object.ReadCloser
 		Channel() <-chan *object.Object
-		Next() (*object.Object, error)
-		Cancel()
 	}
 	objectSubscription struct {
 		subscription pubsub.Subscription
@@ -38,7 +37,7 @@ func NewObjectPubSub() ObjectPubSub {
 }
 
 // Cancel the subscription
-func (s *objectSubscription) Cancel() {
+func (s *objectSubscription) Close() {
 	s.subscription.Cancel()
 }
 
@@ -60,7 +59,7 @@ func (s *objectSubscription) Channel() <-chan *object.Object {
 }
 
 // Next returns the next item from the queue
-func (s *objectSubscription) Next() (r *object.Object, err error) {
+func (s *objectSubscription) Read() (r *object.Object, err error) {
 	next, err := s.subscription.Next()
 	if err != nil {
 		return
