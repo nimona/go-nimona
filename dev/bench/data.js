@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1610275424003,
+  "lastUpdate": 1611409127015,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2502,6 +2502,60 @@ window.BENCHMARK_DATA = {
             "value": 75.5,
             "unit": "ns/op",
             "extra": "15291882 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "97f2b08aaa3ea816e3a8d6d69d764d02ed4e6f7a",
+          "message": "refactor(objectmanager): make subscriptions compatible with object.Reader",
+          "timestamp": "2021-01-23T13:37:15Z",
+          "tree_id": "dd6c8cad045e275ac9356062993ad21dd9ff360c",
+          "url": "https://github.com/nimona/go-nimona/commit/97f2b08aaa3ea816e3a8d6d69d764d02ed4e6f7a"
+        },
+        "date": 1611409126477,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 12230202,
+            "unit": "ns/op",
+            "extra": "91 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1194301064,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 11876712767,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 47781,
+            "unit": "ns/op",
+            "extra": "25066 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 67.8,
+            "unit": "ns/op",
+            "extra": "17715807 times\n2 procs"
           }
         ]
       }
