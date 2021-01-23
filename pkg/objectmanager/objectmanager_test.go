@@ -1344,10 +1344,10 @@ func Test_manager_Subscribe(t *testing.T) {
 				m.pubsub.Publish(o)
 			}
 			time.Sleep(100 * time.Millisecond)
-			sub.Cancel()
+			sub.Close()
 			os := []*object.Object{}
 			for {
-				o, err := sub.Next()
+				o, err := sub.Read()
 				if err != nil || o == nil {
 					break
 				}

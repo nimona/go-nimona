@@ -96,7 +96,7 @@ func (c *chat) subscribe(
 			objectmanager.FilterByStreamHash(conversationRootHash),
 		)
 		for {
-			o, err := sub.Next()
+			o, err := sub.Read()
 			if err != nil {
 				break
 			}

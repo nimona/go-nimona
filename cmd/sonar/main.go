@@ -132,9 +132,9 @@ func main() {
 		sub := man.Subscribe(
 			objectmanager.FilterByObjectType("ping"),
 		)
-		defer sub.Cancel()
+		defer sub.Close()
 		for {
-			env, err := sub.Next()
+			env, err := sub.Read()
 			if err != nil {
 				if err != object.ErrReaderDone {
 					logger.Error("error while reading pings", log.Error(err))

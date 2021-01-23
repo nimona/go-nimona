@@ -27,7 +27,8 @@ require (
 	gitlab.com/NebulousLabs/fastrand v0.0.0-20181126182046-603482d69e40 // indirect
 	gitlab.com/NebulousLabs/go-upnp v0.0.0-20181011194642-3a71999ed0d3
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
-	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
+	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
 	gopkg.in/yaml.v2 v2.4.0
 )
