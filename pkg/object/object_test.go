@@ -60,14 +60,16 @@ func TestEncodeDecode(t *testing.T) {
 		name: "object to struct, encode-decode",
 		source: &Chunk{
 			Metadata: Metadata{
-				Owner: "foo",
+				Owner:    "foo",
+				Datetime: "testTime",
 			},
 			Index: 1,
 		},
 		object: &Object{
 			Type: "chunk",
 			Metadata: Metadata{
-				Owner: "foo",
+				Owner:    "foo",
+				Datetime: "testTime",
 			},
 			Data: map[string]interface{}{
 				"index:i": int64(1),
@@ -78,7 +80,8 @@ func TestEncodeDecode(t *testing.T) {
 		source: map[string]interface{}{
 			"type:s": "chunk",
 			"metadata:m": map[string]interface{}{
-				"owner:s": "foo",
+				"owner:s":    "foo",
+				"datetime:s": "testTime",
 			},
 			"data:m": map[string]interface{}{
 				"index:i": 1,
@@ -87,7 +90,8 @@ func TestEncodeDecode(t *testing.T) {
 		object: &Object{
 			Type: "chunk",
 			Metadata: Metadata{
-				Owner: "foo",
+				Owner:    "foo",
+				Datetime: "testTime",
 			},
 			Data: map[string]interface{}{
 				"index:i": int64(1),
