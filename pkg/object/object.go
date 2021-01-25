@@ -29,24 +29,25 @@ type (
 	}
 	Hash   string
 	Object struct {
-		Type     string                 `nimona:"type:s,omitempty"`
-		Metadata Metadata               `nimona:"metadata:m,omitempty"`
-		Data     map[string]interface{} `nimona:"data:m,omitempty"`
+		Type     string                 `json:"type:s,omitempty" nimona:"type:s,omitempty"`
+		Metadata Metadata               `json:"metadata:m,omitempty" nimona:"metadata:m,omitempty"`
+		Data     map[string]interface{} `json:"data:m,omitempty" nimona:"data:m,omitempty"`
 	}
 	// Metadata for object
 	Metadata struct {
-		Owner     crypto.PublicKey `nimona:"owner:s,omitempty"`
-		Parents   []Hash           `nimona:"parents:as,omitempty"`
-		Policy    Policy           `nimona:"policy:m,omitempty"`
-		Stream    Hash             `nimona:"stream:s,omitempty"`
-		Signature Signature        `nimona:"_signature:m,omitempty"`
+		Owner     crypto.PublicKey `json:"owner:s,omitempty" nimona:"owner:s,omitempty"`
+		Datetime  string           `json:"datetime:s,omitempty" nimona:"datetime:s,omitempty"`
+		Parents   []Hash           `json:"parents:as,omitempty" nimona:"parents:as,omitempty"`
+		Policy    Policy           `json:"policy:m,omitempty" nimona:"policy:m,omitempty"`
+		Stream    Hash             `json:"stream:s,omitempty" nimona:"stream:s,omitempty"`
+		Signature Signature        `json:"_signature:m,omitempty" nimona:"_signature:m,omitempty"`
 	}
 	// Policy for object metadata
 	Policy struct {
-		Subjects  []string `nimona:"subjects:as,omitempty"`
-		Resources []string `nimona:"resources:as,omitempty"`
-		Actions   []string `nimona:"actions:as,omitempty"`
-		Effect    string   `nimona:"effect:s,omitempty"`
+		Subjects  []string `json:"subjects:as,omitempty" nimona:"subjects:as,omitempty"`
+		Resources []string `json:"resources:as,omitempty" nimona:"resources:as,omitempty"`
+		Actions   []string `json:"actions:as,omitempty" nimona:"actions:as,omitempty"`
+		Effect    string   `json:"effect:s,omitempty" nimona:"effect:s,omitempty"`
 	}
 )
 
@@ -67,6 +68,9 @@ func MetadataToMap(m *Metadata) map[string]interface{} {
 	}
 	if !m.Stream.IsEmpty() {
 		r["stream:s"] = m.Stream.String()
+	}
+	if m.Datetime != "" {
+		r["datetime:s"] = m.Datetime
 	}
 	if !m.Signature.IsEmpty() {
 		r["_signature:m"] = SignatureToMap(&m.Signature)
@@ -336,7 +340,7 @@ func objectToMap(
 
 func mapToObject(m map[string]interface{}) (*Object, error) {
 	t := ""
-	if ti, ok := m[keyType]; ok {
+	if ti, ok := m[keyType]; ok && ti != nil {
 		t = ti.(string)
 	}
 	o := &Object{
