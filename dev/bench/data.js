@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1611409127015,
+  "lastUpdate": 1611773943730,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2556,6 +2556,60 @@ window.BENCHMARK_DATA = {
             "value": 67.8,
             "unit": "ns/op",
             "extra": "17715807 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "8515e20527371dc3ae2ab3799c829e53b28fd690",
+          "message": "feat(sqlobjectstore): add order and limit to filter",
+          "timestamp": "2021-01-27T18:57:28Z",
+          "tree_id": "1bad45c27e6eb20420e7412345192c8082c89097",
+          "url": "https://github.com/nimona/go-nimona/commit/8515e20527371dc3ae2ab3799c829e53b28fd690"
+        },
+        "date": 1611773942897,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 12431707,
+            "unit": "ns/op",
+            "extra": "93 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1205165058,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 11891686316,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 48472,
+            "unit": "ns/op",
+            "extra": "24462 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 69.5,
+            "unit": "ns/op",
+            "extra": "17169115 times\n2 procs"
           }
         ]
       }
