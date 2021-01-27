@@ -3,6 +3,7 @@ package sqlobjectstore
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -39,6 +40,7 @@ var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS Relations (Parent TEXT NOT NULL, Child TEXT NOT NULL, PRIMARY KEY (Parent, Child));`,
 	`ALTER TABLE Relations ADD RootHash TEXT;`,
 	`CREATE INDEX Relations_RootHash_idx ON Relations(RootHash);`,
+	`ALTER TABLE Objects ADD MetadataDatetime INT DEFAULT 0;`,
 }
 
 type Store struct {
@@ -166,9 +168,10 @@ func (st *Store) PutWithTTL(
 		Body,
 		Created,
 		LastAccessed,
-		TTl
+		TTL,
+		MetadataDatetime
 	) VALUES (
-		?, ?, ?, ?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?, ?
 	) ON CONFLICT (Hash) DO UPDATE SET
 		LastAccessed=?
 	`)
@@ -200,7 +203,17 @@ func (st *Store) PutWithTTL(
 		streamHash = objectHash
 	}
 
+	un := 0
+	dt, err := time.Parse(
+		time.RFC3339,
+		obj.Metadata.Datetime,
+	)
+	if err == nil {
+		un = int(dt.Unix())
+	}
+
 	_, err = stmt.Exec(
+		// VALUES
 		objectHash,
 		objectType,
 		streamHash,
@@ -209,6 +222,8 @@ func (st *Store) PutWithTTL(
 		time.Now().Unix(),
 		time.Now().Unix(),
 		ttl,
+		un,
+		// WHERE
 		time.Now().Unix(),
 	)
 	if err != nil {
@@ -426,38 +441,56 @@ func (st *Store) gc() error {
 }
 
 func (st *Store) Filter(
-	lookupOptions ...LookupOption,
+	filterOptions ...FilterOption,
 ) (object.ReadCloser, error) {
-	options := newLookupOptions(lookupOptions...)
+	options := newFilterOptions(filterOptions...)
 
 	where := "WHERE 1 "
 	whereArgs := []interface{}{}
 
-	if len(options.Lookups.ObjectHashes) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.ObjectHashes))[1:]
+	if len(options.Filters.ObjectHashes) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.ObjectHashes))[1:]
 		where += "AND Hash IN (" + qs + ") "
-		whereArgs = append(whereArgs, ahtoai(options.Lookups.ObjectHashes)...)
+		whereArgs = append(whereArgs, ahtoai(options.Filters.ObjectHashes)...)
 	}
 
-	if len(options.Lookups.ContentTypes) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.ContentTypes))[1:]
+	if len(options.Filters.ContentTypes) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.ContentTypes))[1:]
 		where += "AND Type IN (" + qs + ") "
-		whereArgs = append(whereArgs, astoai(options.Lookups.ContentTypes)...)
+		whereArgs = append(whereArgs, astoai(options.Filters.ContentTypes)...)
 	}
 
-	if len(options.Lookups.StreamHashes) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.StreamHashes))[1:]
+	if len(options.Filters.StreamHashes) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.StreamHashes))[1:]
 		where += "AND RootHash IN (" + qs + ") "
-		whereArgs = append(whereArgs, ahtoai(options.Lookups.StreamHashes)...)
+		whereArgs = append(whereArgs, ahtoai(options.Filters.StreamHashes)...)
 	}
 
-	if len(options.Lookups.Owners) > 0 {
-		qs := strings.Repeat(",?", len(options.Lookups.Owners))[1:]
+	if len(options.Filters.Owners) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.Owners))[1:]
 		where += "AND OwnerPublicKey IN (" + qs + ") "
-		whereArgs = append(whereArgs, aktoai(options.Lookups.Owners)...)
+		whereArgs = append(whereArgs, aktoai(options.Filters.Owners)...)
 	}
 
-	where += "ORDER BY Created ASC"
+	where += fmt.Sprintf(
+		"ORDER BY %s %s ",
+		options.Filters.OrderBy,
+		options.Filters.OrderDir,
+	)
+
+	if options.Filters.Limit != nil {
+		where += fmt.Sprintf(
+			"LIMIT %d ",
+			*options.Filters.Limit,
+		)
+	}
+
+	if options.Filters.Offset != nil {
+		where += fmt.Sprintf(
+			"OFFSET %d ",
+			*options.Filters.Offset,
+		)
+	}
 
 	// get the object
 	// nolint: gosec

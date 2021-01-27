@@ -125,12 +125,19 @@ func TestFilter(t *testing.T) {
 	c := fixtures.TestSubscribed{}
 	c.Metadata.Stream = ph
 
+	objects := []*object.Object{
+		p.ToObject(),
+	}
+
 	hashes := []object.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
 			Type: new(fixtures.TestSubscribed).Type(),
 			Metadata: object.Metadata{
 				Stream: ph,
+				Datetime: time.Now().
+					Add(time.Duration(i) * time.Hour).
+					Format(time.RFC3339),
 			},
 			Data: map[string]interface{}{
 				"keys:s": fmt.Sprintf("value_%d", i),
@@ -139,6 +146,7 @@ func TestFilter(t *testing.T) {
 		if i%2 == 0 {
 			obj.Metadata.Owner = k.PublicKey()
 		}
+		objects = append(objects, obj)
 		err = store.Put(obj)
 		require.NoError(t, err)
 		hashes = append(hashes, obj.Hash())
@@ -153,32 +161,60 @@ func TestFilter(t *testing.T) {
 	)
 	require.NotNil(t, objectReader)
 	require.NoError(t, err)
-	objects, err := object.ReadAll(objectReader)
+	got, err := object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(hashes), len(objects))
+	require.Equal(t, len(hashes), len(got))
 	objectReader, err = store.Filter(
 		FilterByOwner(k.PublicKey()),
 	)
 	require.NoError(t, err)
-	objects, err = object.ReadAll(objectReader)
+	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(objects))
+	require.Equal(t, 3, len(got))
 
 	objectReader, err = store.Filter(
 		FilterByObjectType(c.Type()),
 	)
 	require.NoError(t, err)
-	objects, err = object.ReadAll(objectReader)
+	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(hashes), len(objects))
+	require.Equal(t, len(hashes), len(got))
 
 	objectReader, err = store.Filter(
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
-	objects, err = object.ReadAll(objectReader)
+	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(hashes)+1, len(objects))
+	require.Equal(t, len(hashes)+1, len(got))
+
+	t.Run("filter with limit 1 offset 0", func(t *testing.T) {
+		objectReader, err = store.Filter(
+			FilterByStreamHash(ph),
+			FilterLimit(1, 0),
+			FilterOrderBy("MetadataDatetime"),
+			FilterOrderDir("ASC"),
+		)
+		require.NoError(t, err)
+		got, err = object.ReadAll(objectReader)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(got))
+		require.Equal(t, *objects[0], *got[0])
+	})
+
+	t.Run("filter with limit 1 offset 1", func(t *testing.T) {
+		objectReader, err = store.Filter(
+			FilterByStreamHash(ph),
+			FilterLimit(1, 1),
+			FilterOrderBy("MetadataDatetime"),
+			FilterOrderDir("ASC"),
+		)
+		require.NoError(t, err)
+		got, err = object.ReadAll(objectReader)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(got))
+		require.Equal(t, *objects[1], *got[0])
+	})
 
 	objectReader, err = store.Filter(
 		FilterByHash(hashes[0]),
@@ -186,9 +222,9 @@ func TestFilter(t *testing.T) {
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
-	objects, err = object.ReadAll(objectReader)
+	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(objects))
+	require.Equal(t, 1, len(got))
 
 	err = store.Close()
 	require.NoError(t, err)

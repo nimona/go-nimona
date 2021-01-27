@@ -8,60 +8,89 @@ import (
 	"nimona.io/pkg/object"
 )
 
-// LookupOptions
+// FilterOptions
 type (
-	LookupOption  func(*LookupOptions)
-	LookupOptions struct {
-		// Lookups are used to perform db queries for these filters
+	FilterOption  func(*FilterOptions)
+	FilterOptions struct {
+		// Filters are used to perform db queries for these filters
 		// TODO find a better name for this
-		Lookups struct {
+		Filters struct {
 			ObjectHashes []object.Hash
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Owners       []crypto.PublicKey
+			OrderBy      string
+			OrderDir     string
+			Limit        *int
+			Offset       *int
 		}
 	}
 )
 
-func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
-	options := &LookupOptions{
-		Lookups: struct {
+func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
+	options := &FilterOptions{
+		Filters: struct {
 			ObjectHashes []object.Hash
 			StreamHashes []object.Hash
 			ContentTypes []string
 			Owners       []crypto.PublicKey
+			OrderBy      string
+			OrderDir     string
+			Limit        *int
+			Offset       *int
 		}{
 			ObjectHashes: []object.Hash{},
 			StreamHashes: []object.Hash{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
+			OrderBy:      "Created",
+			OrderDir:     "ASC",
 		},
 	}
-	for _, lookupOption := range lookupOptions {
-		lookupOption(options)
+	for _, filterOption := range filterOptions {
+		filterOption(options)
 	}
 	return *options
 }
 
-func FilterByHash(h object.Hash) LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, h)
+func FilterOrderBy(orderBy string) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.OrderBy = orderBy
 	}
 }
 
-func FilterByOwner(h crypto.PublicKey) LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Lookups.Owners = append(opts.Lookups.Owners, h)
+func FilterOrderDir(orderDir string) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.OrderDir = orderDir
 	}
 }
 
-func FilterByStreamHash(h object.Hash) LookupOption {
-	return func(opts *LookupOptions) {
-		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, h)
+func FilterLimit(limit, offset int) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.Limit = &limit
+		opts.Filters.Offset = &offset
 	}
 }
 
-func FilterByObjectType(typePatterns ...string) LookupOption {
+func FilterByHash(h object.Hash) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.ObjectHashes = append(opts.Filters.ObjectHashes, h)
+	}
+}
+
+func FilterByOwner(h crypto.PublicKey) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.Owners = append(opts.Filters.Owners, h)
+	}
+}
+
+func FilterByStreamHash(h object.Hash) FilterOption {
+	return func(opts *FilterOptions) {
+		opts.Filters.StreamHashes = append(opts.Filters.StreamHashes, h)
+	}
+}
+
+func FilterByObjectType(typePatterns ...string) FilterOption {
 	patterns := make([]glob.Glob, len(typePatterns))
 	for i, typePattern := range typePatterns {
 		g, err := glob.Compile(typePattern, '.', '/', '#')
@@ -70,7 +99,7 @@ func FilterByObjectType(typePatterns ...string) LookupOption {
 		}
 		patterns[i] = g
 	}
-	return func(opts *LookupOptions) {
-		opts.Lookups.ContentTypes = append(opts.Lookups.ContentTypes, typePatterns...)
+	return func(opts *FilterOptions) {
+		opts.Filters.ContentTypes = append(opts.Filters.ContentTypes, typePatterns...)
 	}
 }
