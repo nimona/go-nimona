@@ -11,8 +11,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-
-	"nimona.io/internal/rand"
 )
 
 type (
@@ -147,7 +145,7 @@ func NewApp(conversationHash string) *App {
 
 			case messageAdded := <-app.Channels.MessageAdded:
 				app.Store.PutMessage(messageAdded)
-				participantsViewRefresh()
+				messagesViewRefresh()
 
 				// deal with users
 				if messageAdded.SenderKey == "system" {
@@ -158,7 +156,7 @@ func NewApp(conversationHash string) *App {
 					ConversationHash: messageAdded.ConversationHash,
 				}
 				app.Store.PutParticipant(par)
-				messagesViewRefresh()
+				participantsViewRefresh()
 			}
 		}
 	}()
@@ -166,12 +164,13 @@ func NewApp(conversationHash string) *App {
 	return app
 }
 
-func (app *App) AddSystemText(msg string) {
+func (app *App) AddSystemText(conversationHash string, msg string) {
 	app.Channels.MessageAdded <- &Message{
-		Hash:      rand.String(16),
-		SenderKey: "system",
-		Body:      msg,
-		Created:   time.Now(),
+		Hash:             strconv.Itoa(int(time.Now().UnixNano())),
+		ConversationHash: conversationHash,
+		Created:          time.Now(),
+		SenderKey:        "system",
+		Body:             msg,
 	}
 }
 
@@ -200,6 +199,10 @@ func (app *App) Show() {
 	app.Windows.Input.SetBorder(true)
 	app.Windows.Input.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
+
+			convs, _ := app.Store.GetConversations()
+			conv := convs[0]
+
 			if app.Windows.Input.GetText() == "" {
 				return
 			}
@@ -219,27 +222,36 @@ func (app *App) Show() {
 					app.Quit()
 					os.Exit(0)
 				case "info", "i":
-					app.AddSystemText("Info:")
 					app.AddSystemText(
+						conv.Hash,
+						"Info:",
+					)
+					app.AddSystemText(
+						conv.Hash,
 						fmt.Sprintf(
 							"* public key: %s",
 							app.Chat.local.GetPrimaryPeerKey().PublicKey(),
 						),
 					)
 					app.AddSystemText(
+						conv.Hash,
 						fmt.Sprintf(
 							"* addresses: %s",
 							app.Chat.local.GetAddresses(),
 						),
 					)
 					app.AddSystemText(
+						conv.Hash,
 						fmt.Sprintf(
 							"* pinned hashes: %v",
 							app.Chat.local.GetContentHashes(),
 						),
 					)
 				default:
-					app.AddSystemText(fmt.Sprintf("[red]No such command '%s'.", text[1:]))
+					app.AddSystemText(
+						conv.Hash,
+						fmt.Sprintf("[red]No such command '%s'.", text[1:]),
+					)
 				}
 				app.Windows.Input.SetText("")
 				return
