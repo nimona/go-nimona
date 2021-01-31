@@ -151,7 +151,9 @@ func (c *chat) subscribe(
 			resolver.LookupByContentHash(conversationRootHash),
 		)
 		if err != nil {
-			c.logger.Error("could not find any peers that have this hash")
+			c.logger.Error("could not find any peers that have this hash",
+				log.String("hash", string(conversationRootHash)),
+			)
 			return
 		}
 		for _, p := range peers {
@@ -245,20 +247,6 @@ func main() {
 	// add bootstrap peers as relays
 	local.PutRelays(bootstrapPeers...)
 
-	// construct new resolver
-	res := resolver.New(
-		ctx,
-		net,
-		resolver.WithBoostrapPeers(bootstrapPeers...),
-	)
-
-	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
-	)
-
-	logger.Info("ready")
-
 	// construct object store
 	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.db"))
 	if err != nil {
@@ -269,14 +257,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("error starting sql store", log.Error(err))
 	}
-
-	// construct manager
-	man := objectmanager.New(
-		ctx,
-		net,
-		res,
-		str,
-	)
 
 	// construct hypothetical root in order to get a root hash
 	conversationRoot := ConversationStreamRoot{
@@ -294,13 +274,36 @@ func main() {
 	conversationRootObject := conversationRoot.ToObject()
 	conversationRootHash := conversationRootObject.Hash()
 
+	// add conversation to the list of content we provide
+	local.PutContentHashes(conversationRootHash)
+
+	// construct new resolver
+	res := resolver.New(
+		ctx,
+		net,
+		resolver.WithBoostrapPeers(bootstrapPeers...),
+	)
+
+	// construct manager
+	man := objectmanager.New(
+		ctx,
+		net,
+		res,
+		str,
+	)
+
 	// register conversation in object manager
 	if _, err := man.Put(ctx, conversationRootObject); err != nil {
 		logger.Fatal("could not persist conversation root", log.Error(err))
 	}
 
-	// add conversation to the list of content we provide
-	local.PutContentHashes(conversationRootHash)
+	logger = logger.With(
+		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", local.GetAddresses()),
+	)
+
+	// ready
+	logger.Info("ready")
 
 	c := &chat{
 		local:         local,
