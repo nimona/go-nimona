@@ -52,7 +52,7 @@ func (c *chat) subscribe(
 			case typeConversationMessageAdded:
 				v := &ConversationMessageAdded{}
 				v.FromObject(o)
-				if v.Body == "" || v.Datetime == "" {
+				if v.Body == "" || v.Metadata.Datetime == "" {
 					fmt.Println("> Received message without date or body")
 					continue
 				}
@@ -332,11 +332,11 @@ func main() {
 					),
 					ConversationNicknameUpdated{
 						Metadata: object.Metadata{
-							Owner:  local.GetPrimaryPeerKey().PublicKey(),
-							Stream: conversationRootHash,
+							Owner:    local.GetPrimaryPeerKey().PublicKey(),
+							Stream:   conversationRootHash,
+							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Nickname: nickname,
-						Datetime: time.Now().Format(time.RFC3339),
 					}.ToObject(),
 				); err != nil {
 					logger.Warn(
@@ -351,11 +351,11 @@ func main() {
 					),
 					ConversationMessageAdded{
 						Metadata: object.Metadata{
-							Owner:  local.GetPrimaryPeerKey().PublicKey(),
-							Stream: conversationRootHash,
+							Owner:    local.GetPrimaryPeerKey().PublicKey(),
+							Stream:   conversationRootHash,
+							Datetime: time.Now().Format(time.RFC3339),
 						},
-						Body:     input,
-						Datetime: time.Now().Format(time.RFC3339),
+						Body: input,
 					}.ToObject(),
 				); err != nil {
 					logger.Warn(
@@ -370,7 +370,7 @@ func main() {
 	for event := range events {
 		switch v := event.(type) {
 		case *ConversationMessageAdded:
-			t, err := time.Parse(time.RFC3339, v.Datetime)
+			t, err := time.Parse(time.RFC3339, v.Metadata.Datetime)
 			if err != nil {
 				continue
 			}
@@ -382,7 +382,7 @@ func main() {
 				Created:          t,
 			}
 		case *ConversationNicknameUpdated:
-			updated, _ := time.Parse(time.RFC3339, v.Datetime)
+			updated, _ := time.Parse(time.RFC3339, v.Metadata.Datetime)
 			app.Channels.ParticipantUpdated <- &Participant{
 				ConversationHash: v.Metadata.Stream.String(),
 				Key:              v.Metadata.Owner.String(),

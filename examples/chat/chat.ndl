@@ -8,11 +8,9 @@ stream poc.nimona.io/conversation {
         nonce string
     }
     signed object NicknameUpdated {
-        datetime string
         nickname string
     }
     signed object MessageAdded {
-        datetime string
         body string
     }
 }

@@ -13,12 +13,10 @@ type (
 	}
 	ConversationNicknameUpdated struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Datetime string          `nimona:"datetime:s,omitempty"`
 		Nickname string          `nimona:"nickname:s,omitempty"`
 	}
 	ConversationMessageAdded struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Datetime string          `nimona:"datetime:s,omitempty"`
 		Body     string          `nimona:"body:s,omitempty"`
 	}
 )
@@ -62,14 +60,12 @@ func (e ConversationNicknameUpdated) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     map[string]interface{}{},
 	}
-	r.Data["datetime:s"] = e.Datetime
 	r.Data["nickname:s"] = e.Nickname
 	return r
 }
 
 func (e ConversationNicknameUpdated) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
-	d["datetime:s"] = e.Datetime
 	d["nickname:s"] = e.Nickname
 	r := map[string]interface{}{
 		"type:s":     "poc.nimona.io/conversation.NicknameUpdated",
@@ -93,14 +89,12 @@ func (e ConversationMessageAdded) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     map[string]interface{}{},
 	}
-	r.Data["datetime:s"] = e.Datetime
 	r.Data["body:s"] = e.Body
 	return r
 }
 
 func (e ConversationMessageAdded) ToObjectMap() map[string]interface{} {
 	d := map[string]interface{}{}
-	d["datetime:s"] = e.Datetime
 	d["body:s"] = e.Body
 	r := map[string]interface{}{
 		"type:s":     "poc.nimona.io/conversation.MessageAdded",
