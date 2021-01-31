@@ -476,6 +476,7 @@ func (m *manager) storeObject(
 			log.String("type", objType),
 			log.Error(err),
 		)
+		// TODO if we failed to store why are we not returning?
 	}
 
 	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
@@ -590,6 +591,7 @@ func (m *manager) announceStreamChildren(
 				log.Error(err),
 				log.String("subscriber", subscriber.String()),
 			)
+			continue
 		}
 		logger.Debug(
 			"sent announcement",
