@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1611773943730,
+  "lastUpdate": 1612137828081,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2610,6 +2610,60 @@ window.BENCHMARK_DATA = {
             "value": 69.5,
             "unit": "ns/op",
             "extra": "17169115 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "cf127113ddc8ffde343204ebcd13c946065d48d2",
+          "message": "chore(objectmanager): remove erroneous success log message",
+          "timestamp": "2021-02-01T00:02:26Z",
+          "tree_id": "6904e33fbe20bac8a7871777e9bdc58c7930da74",
+          "url": "https://github.com/nimona/go-nimona/commit/cf127113ddc8ffde343204ebcd13c946065d48d2"
+        },
+        "date": 1612137827553,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 12117253,
+            "unit": "ns/op",
+            "extra": "90 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1193200571,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 11836611320,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 48181,
+            "unit": "ns/op",
+            "extra": "24811 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 68.3,
+            "unit": "ns/op",
+            "extra": "17609242 times\n2 procs"
           }
         ]
       }
