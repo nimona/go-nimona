@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1612137828081,
+  "lastUpdate": 1612301526825,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2664,6 +2664,60 @@ window.BENCHMARK_DATA = {
             "value": 68.3,
             "unit": "ns/op",
             "extra": "17609242 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "e91b6025eb942362246fb4d1a329438f1b0d5217",
+          "message": "fix(objectmanager): refactor all filters to accept multiple values",
+          "timestamp": "2021-02-02T21:30:27Z",
+          "tree_id": "a68a1a894c510c6c822afae5b9f98132a1fb4d1f",
+          "url": "https://github.com/nimona/go-nimona/commit/e91b6025eb942362246fb4d1a329438f1b0d5217"
+        },
+        "date": 1612301526226,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 16562760,
+            "unit": "ns/op",
+            "extra": "72 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1462766179,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 14263031123,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 56518,
+            "unit": "ns/op",
+            "extra": "21088 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 86.3,
+            "unit": "ns/op",
+            "extra": "14097265 times\n2 procs"
           }
         ]
       }
