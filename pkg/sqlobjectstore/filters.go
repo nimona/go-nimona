@@ -72,21 +72,21 @@ func FilterLimit(limit, offset int) FilterOption {
 	}
 }
 
-func FilterByHash(h object.Hash) FilterOption {
+func FilterByHash(hs ...object.Hash) FilterOption {
 	return func(opts *FilterOptions) {
-		opts.Filters.ObjectHashes = append(opts.Filters.ObjectHashes, h)
+		opts.Filters.ObjectHashes = append(opts.Filters.ObjectHashes, hs...)
 	}
 }
 
-func FilterByOwner(h crypto.PublicKey) FilterOption {
+func FilterByOwner(hs ...crypto.PublicKey) FilterOption {
 	return func(opts *FilterOptions) {
-		opts.Filters.Owners = append(opts.Filters.Owners, h)
+		opts.Filters.Owners = append(opts.Filters.Owners, hs...)
 	}
 }
 
-func FilterByStreamHash(h object.Hash) FilterOption {
+func FilterByStreamHash(hs ...object.Hash) FilterOption {
 	return func(opts *FilterOptions) {
-		opts.Filters.StreamHashes = append(opts.Filters.StreamHashes, h)
+		opts.Filters.StreamHashes = append(opts.Filters.StreamHashes, hs...)
 	}
 }
 
