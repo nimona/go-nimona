@@ -379,7 +379,7 @@ func main() {
 				ConversationHash: v.Metadata.Stream.String(),
 				SenderKey:        v.Metadata.Owner.String(),
 				Body:             strings.TrimSpace(v.Body),
-				Created:          t,
+				Created:          t.UTC(),
 			}
 		case *ConversationNicknameUpdated:
 			updated, _ := time.Parse(time.RFC3339, v.Metadata.Datetime)
@@ -387,7 +387,7 @@ func main() {
 				ConversationHash: v.Metadata.Stream.String(),
 				Key:              v.Metadata.Owner.String(),
 				Nickname:         v.Nickname,
-				Updated:          updated,
+				Updated:          updated.UTC(),
 			}
 		}
 	}

@@ -111,13 +111,12 @@ func (s *store) GetMessages(conv string, limit, skip int) ([]*Message, error) {
 	if skip > len(p) {
 		return nil, nil
 	}
-	if limit == 0 {
-		return []*Message(p[skip:]), nil
+	last := len(p) - skip
+	first := len(p) - skip - limit
+	if first < 0 {
+		first = 0
 	}
-	if skip+limit+skip > len(p) {
-		return []*Message(p[skip:]), nil
-	}
-	return []*Message(p[skip : limit+skip]), nil
+	return []*Message(p[first:last]), nil
 }
 
 func (s *store) PutConversation(con *Conversation) error {
