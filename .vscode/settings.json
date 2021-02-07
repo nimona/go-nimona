@@ -15,7 +15,26 @@
         "LOG_LEVEL": "DEBUG",
     },
     "go.testTimeout": "60s",
+    "go.useLanguageServer": true,
     "editor.rulers": [
         80,
     ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.pyenv": true,
+        "**/.terraform": true,
+        "**/node_modules": true,
+        "**/_gen": true,
+        "examples": true,
+        "bin": true,
+    },
+    "search.exclude": {
+        "**/.git": true,
+        "**/.pyenv": true,
+        "**/.terraform": true,
+        "**/node_modules": true,
+        "**/_gen": true,
+        "examples": true,
+        "bin": true,
+    },
 }
