@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1612301526825,
+  "lastUpdate": 1612707054742,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2718,6 +2718,60 @@ window.BENCHMARK_DATA = {
             "value": 86.3,
             "unit": "ns/op",
             "extra": "14097265 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "829b0f6ed241ebd277fbce0195d11df58c042389",
+          "message": "chore(vscode): add ignored folders, use gopls, add workspace",
+          "timestamp": "2021-02-07T14:09:07Z",
+          "tree_id": "c093c0ee6cbe77da1bad122cc2b8d1ecd350e000",
+          "url": "https://github.com/nimona/go-nimona/commit/829b0f6ed241ebd277fbce0195d11df58c042389"
+        },
+        "date": 1612707054240,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 16272779,
+            "unit": "ns/op",
+            "extra": "68 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 1478729520,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 13882176867,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 57247,
+            "unit": "ns/op",
+            "extra": "20793 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkEncode",
+            "value": 81.6,
+            "unit": "ns/op",
+            "extra": "15272563 times\n2 procs"
           }
         ]
       }
