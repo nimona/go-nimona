@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "nimona.io",
+			"path": "."
+		},
+		{
+			"name": "nimona.io/examples",
+			"path": "examples"
+		}
+	],
+	"settings": {
+		"go.useLanguageServer": true,
+	}
+}
