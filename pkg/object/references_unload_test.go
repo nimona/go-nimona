@@ -12,30 +12,30 @@ import (
 func TestUnloadReferences(t *testing.T) {
 	f00 := &Object{
 		Type: "f00",
-		Data: map[string]interface{}{
-			"f00:s": "f00",
-			"f01:r": Hash("oh1.CpcViyHidQoytZo8d6jmncFzWYsXSG5nHBFZhveEjH6r"),
-			"f02:r": Hash("oh1.ABm8HB1oAZGq5TdvoGo416s71FwoZJdw3jk5zU4QRbiK"),
+		Data: Map{
+			"f00": String("f00"),
+			"f01": Hash("oh1.5DpjbdcdcmGQpyutoicXzC2BykC6EZCt2cbwyW4PRe8y"),
+			"f02": Hash("oh1.C3jCVoq3TtxKrqmGKNGup6fdZca4ScHAmv9UjG1pta1C"),
 		},
 	}
 	f01 := &Object{
 		Type: "f01",
-		Data: map[string]interface{}{
-			"f01:s": "f01",
+		Data: Map{
+			"f01": String("f01"),
 		},
 	}
 	f02 := &Object{
 		Type: "f02",
-		Data: map[string]interface{}{
-			"f02:s": "f02",
+		Data: Map{
+			"f02": String("f02"),
 		},
 	}
 	f00Full := &Object{
 		Type: "f00",
-		Data: map[string]interface{}{
-			"f00:s": "f00",
-			"f01:m": f01,
-			"f02:m": f02,
+		Data: Map{
+			"f00": String("f00"),
+			"f01": f01,
+			"f02": f02,
 		},
 	}
 

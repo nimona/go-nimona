@@ -117,7 +117,7 @@ func TestBlob_ResponseHash(t *testing.T) {
 
 	fmt.Println(string(s))
 
-	m := map[string]interface{}{}
+	m := object.Map{}
 	err = json.Unmarshal(s, &m)
 	require.NoError(t, err)
 	o := object.FromMap(m)
@@ -148,7 +148,7 @@ func TestBlob_ToMap(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println(string(s))
 
-	m := map[string]interface{}{}
+	m := object.Map{}
 	err = json.Unmarshal(s, &m)
 	require.NoError(t, err)
 	o := object.FromMap(m)

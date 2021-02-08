@@ -47,43 +47,79 @@ func (e TestPolicy) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestPolicy",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.Subjects) > 0 {
-		r.Data["subjects:as"] = e.Subjects
+		// else
+		// r.Data["subjects"] = object.ToStringArray(e.Subjects)
+		rv := make(object.StringArray, len(e.Subjects))
+		for i, iv := range e.Subjects {
+			rv[i] = object.String(iv)
+		}
+		r.Data["subjects"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		r.Data["resources:as"] = e.Resources
+		// else
+		// r.Data["resources"] = object.ToStringArray(e.Resources)
+		rv := make(object.StringArray, len(e.Resources))
+		for i, iv := range e.Resources {
+			rv[i] = object.String(iv)
+		}
+		r.Data["resources"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Conditions) > 0 {
-		r.Data["conditions:as"] = e.Conditions
+		// else
+		// r.Data["conditions"] = object.ToStringArray(e.Conditions)
+		rv := make(object.StringArray, len(e.Conditions))
+		for i, iv := range e.Conditions {
+			rv[i] = object.String(iv)
+		}
+		r.Data["conditions"] = rv
 	}
-	r.Data["action:s"] = e.Action
-	return r
-}
-
-func (e TestPolicy) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.Subjects) > 0 {
-		d["subjects:as"] = e.Subjects
-	}
-	if len(e.Resources) > 0 {
-		d["resources:as"] = e.Resources
-	}
-	if len(e.Conditions) > 0 {
-		d["conditions:as"] = e.Conditions
-	}
-	d["action:s"] = e.Action
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestPolicy",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["action"] = object.String(e.Action)
+	r.Data["action"] = object.String(e.Action)
 	return r
 }
 
 func (e *TestPolicy) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["subjects"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Subjects = rv
+		}
+	}
+	if v, ok := o.Data["resources"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Resources = rv
+		}
+	}
+	if v, ok := o.Data["conditions"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Conditions = rv
+		}
+	}
+	if v, ok := o.Data["action"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Action = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *TestStream) Type() string {
@@ -94,27 +130,30 @@ func (e TestStream) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestStream",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
-	r.Data["createdDateTime:s"] = e.CreatedDateTime
-	return r
-}
-
-func (e TestStream) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	d["createdDateTime:s"] = e.CreatedDateTime
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestStream",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["nonce"] = object.String(e.Nonce)
+	r.Data["nonce"] = object.String(e.Nonce)
+	// else
+	// r.Data["createdDateTime"] = object.String(e.CreatedDateTime)
+	r.Data["createdDateTime"] = object.String(e.CreatedDateTime)
 	return r
 }
 
 func (e *TestStream) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["createdDateTime"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.CreatedDateTime = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *TestSubscribed) Type() string {
@@ -125,25 +164,22 @@ func (e TestSubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestSubscribed",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
-	return r
-}
-
-func (e TestSubscribed) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestSubscribed",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["nonce"] = object.String(e.Nonce)
+	r.Data["nonce"] = object.String(e.Nonce)
 	return r
 }
 
 func (e *TestSubscribed) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *TestUnsubscribed) Type() string {
@@ -154,25 +190,22 @@ func (e TestUnsubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestUnsubscribed",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
-	return r
-}
-
-func (e TestUnsubscribed) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestUnsubscribed",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["nonce"] = object.String(e.Nonce)
+	r.Data["nonce"] = object.String(e.Nonce)
 	return r
 }
 
 func (e *TestUnsubscribed) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *TestRequest) Type() string {
@@ -183,27 +216,30 @@ func (e TestRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestRequest",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["foo:s"] = e.Foo
-	return r
-}
-
-func (e TestRequest) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["foo:s"] = e.Foo
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestRequest",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else
+	// r.Data["foo"] = object.String(e.Foo)
+	r.Data["foo"] = object.String(e.Foo)
 	return r
 }
 
 func (e *TestRequest) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["foo"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Foo = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *TestResponse) Type() string {
@@ -214,25 +250,28 @@ func (e TestResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestResponse",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["foo:s"] = e.Foo
-	return r
-}
-
-func (e TestResponse) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["foo:s"] = e.Foo
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/fixtures.TestResponse",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else
+	// r.Data["foo"] = object.String(e.Foo)
+	r.Data["foo"] = object.String(e.Foo)
 	return r
 }
 
 func (e *TestResponse) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["foo"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Foo = string(t)
+		}
+	}
+	return nil
 }

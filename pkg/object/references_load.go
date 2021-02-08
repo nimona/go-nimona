@@ -1,8 +1,6 @@
 package object
 
 import (
-	"strings"
-
 	"github.com/hashicorp/go-multierror"
 
 	"nimona.io/pkg/context"
@@ -24,21 +22,18 @@ func LoadReferences(
 		return nil, err
 	}
 	var getError error
-	traverseObject(obj, func(k string, v interface{}) (string, interface{}, bool) {
-		h, ok := v.(Hash)
-		if !ok {
-			return "", nil, false
-		}
-		switch {
-		case strings.HasSuffix(k, ":r"):
-			o, err := getter(ctx, h)
+	traverseObject(obj, func(k string, v Value) (string, Value, bool) {
+		switch vv := v.(type) {
+		case Hash:
+			o, err := getter(ctx, vv)
 			if err != nil {
 				getError = multierror.Append(getError, err)
 				return "", nil, false
 			}
-			return strings.Replace(k, ":r", ":m", 1), o, true
-		case strings.HasSuffix(k, ":am"):
-			panic("LoadReferences doesn't implement loading from slices")
+			return k, o, true
+		case HashArray:
+			// TODO implement and test
+			panic("LoadReferences doesn't implement loading from HashArray")
 		}
 		return "", nil, false
 	})

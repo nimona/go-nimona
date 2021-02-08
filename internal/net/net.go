@@ -178,8 +178,8 @@ func (n *network) Dial(
 		// try to write something
 		ping := &object.Object{
 			Type: "ping",
-			Data: map[string]interface{}{
-				"dt:s": time.Now().Format(time.RFC3339),
+			Data: object.Map{
+				"dt": object.String(time.Now().Format(time.RFC3339)),
 			},
 		}
 		if err := Write(

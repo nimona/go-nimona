@@ -10,7 +10,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Name     string          `nimona:"name:s,omitempty"`
-		Blob     object.Hash     `nimona:"blob:r,omitempty"`
+		Blob     object.Hash     `nimona:"blob:s,omitempty"`
 	}
 )
 
@@ -22,25 +22,27 @@ func (e File) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/File",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["name:s"] = e.Name
-	r.Data["blob:r"] = e.Blob
-	return r
-}
-
-func (e File) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["name:s"] = e.Name
-	d["blob:r"] = e.Blob
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/File",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["name"] = object.String(e.Name)
+	r.Data["name"] = object.String(e.Name)
+	// else if $member.IsPrimitive
+	r.Data["blob"] = object.String(e.Blob)
 	return r
 }
 
 func (e *File) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["name"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Name = string(t)
+		}
+	}
+	if v, ok := o.Data["blob"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Blob = object.Hash(t)
+		}
+	}
+	return nil
 }

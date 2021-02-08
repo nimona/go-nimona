@@ -6,7 +6,7 @@ type (
 	Request struct {
 		Metadata   Metadata `nimona:"metadata:m,omitempty"`
 		RequestID  string   `nimona:"requestID:s,omitempty"`
-		ObjectHash Hash     `nimona:"objectHash:r,omitempty"`
+		ObjectHash Hash     `nimona:"objectHash:s,omitempty"`
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"metadata:m,omitempty"`
@@ -23,27 +23,29 @@ func (e Request) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Request",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["objectHash:r"] = e.ObjectHash
-	return r
-}
-
-func (e Request) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["objectHash:r"] = e.ObjectHash
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/Request",
-		"metadata:m": MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["requestID"] = String(e.RequestID)
+	r.Data["requestID"] = String(e.RequestID)
+	// else if $member.IsPrimitive
+	r.Data["objectHash"] = String(e.ObjectHash)
 	return r
 }
 
 func (e *Request) FromObject(o *Object) error {
-	return Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["objectHash"]; ok {
+		if t, ok := v.(String); ok {
+			e.ObjectHash = Hash(t)
+		}
+	}
+	return nil
 }
 
 func (e *Response) Type() string {
@@ -54,29 +56,31 @@ func (e Response) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Response",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
+	// else
+	// r.Data["requestID"] = String(e.RequestID)
+	r.Data["requestID"] = String(e.RequestID)
+	// else if $member.IsObject
 	if e.Object != nil {
-		r.Data["object:o"] = e.Object
-	}
-	return r
-}
-
-func (e Response) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	if e.Object != nil {
-		d["object:o"] = e.Object
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/Response",
-		"metadata:m": MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		r.Data["object"] = e.Object
 	}
 	return r
 }
 
 func (e *Response) FromObject(o *Object) error {
-	return Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["object"]; ok {
+		if t, ok := v.(Map); ok {
+			e.Object = FromMap(t)
+		} else if t, ok := v.(*Object); ok {
+			e.Object = t
+		}
+	}
+	return nil
 }

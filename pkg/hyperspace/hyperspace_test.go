@@ -38,14 +38,12 @@ func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
 	err = object.Verify(p.ToObject())
 	require.NoError(t, err)
 
-	b, err := json.Marshal(p.ToObject().ToMap())
+	b, err := json.MarshalIndent(p.ToObject().ToMap(), "", "  ")
 	require.NoError(t, err)
 
-	m := map[string]interface{}{}
-	err = json.Unmarshal(b, &m)
+	o := &object.Object{}
+	err = json.Unmarshal(b, o)
 	require.NoError(t, err)
-
-	o := object.FromMap(m)
 
 	g := &Announcement{}
 	err = g.FromObject(o)
@@ -84,16 +82,14 @@ func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
 	err = object.Verify(p.ToObject())
 	require.NoError(t, err)
 
-	b, err := json.Marshal(p.ToObject().ToMap())
+	b, err := json.MarshalIndent(p.ToObject().ToMap(), "", "  ")
 	require.NoError(t, err)
 
 	fmt.Println(string(b))
 
-	m := map[string]interface{}{}
-	err = json.Unmarshal(b, &m)
+	o := &object.Object{}
+	err = json.Unmarshal(b, o)
 	require.NoError(t, err)
-
-	o := object.FromMap(m)
 
 	g := &LookupResponse{}
 	err = g.FromObject(o)

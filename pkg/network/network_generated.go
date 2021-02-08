@@ -34,33 +34,40 @@ func (e DataForwardRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardRequest",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["recipient:s"] = e.Recipient
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else if $member.IsPrimitive
+	r.Data["recipient"] = object.String(e.Recipient)
+	// else if $member.IsObject
 	if e.Payload != nil {
-		r.Data["payload:o"] = e.Payload
-	}
-	return r
-}
-
-func (e DataForwardRequest) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["recipient:s"] = e.Recipient
-	if e.Payload != nil {
-		d["payload:o"] = e.Payload
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/network.DataForwardRequest",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		r.Data["payload"] = e.Payload
 	}
 	return r
 }
 
 func (e *DataForwardRequest) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["recipient"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Recipient = crypto.PublicKey(t)
+		}
+	}
+	if v, ok := o.Data["payload"]; ok {
+		if t, ok := v.(object.Map); ok {
+			e.Payload = object.FromMap(t)
+		} else if t, ok := v.(*object.Object); ok {
+			e.Payload = t
+		}
+	}
+	return nil
 }
 
 func (e *DataForwardEnvelope) Type() string {
@@ -71,27 +78,29 @@ func (e DataForwardEnvelope) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardEnvelope",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["sender:s"] = e.Sender
-	r.Data["data:d"] = e.Data
-	return r
-}
-
-func (e DataForwardEnvelope) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["sender:s"] = e.Sender
-	d["data:d"] = e.Data
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/network.DataForwardEnvelope",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else if $member.IsPrimitive
+	r.Data["sender"] = object.String(e.Sender)
+	// else
+	// r.Data["data"] = object.Data(e.Data)
+	r.Data["data"] = object.Data(e.Data)
 	return r
 }
 
 func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["sender"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Sender = crypto.PublicKey(t)
+		}
+	}
+	if v, ok := o.Data["data"]; ok {
+		if t, ok := v.(object.Data); ok {
+			e.Data = []byte(t)
+		}
+	}
+	return nil
 }
 
 func (e *DataForwardResponse) Type() string {
@@ -102,25 +111,28 @@ func (e DataForwardResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardResponse",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["success:b"] = e.Success
-	return r
-}
-
-func (e DataForwardResponse) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["success:b"] = e.Success
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/network.DataForwardResponse",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else
+	// r.Data["success"] = object.Bool(e.Success)
+	r.Data["success"] = object.Bool(e.Success)
 	return r
 }
 
 func (e *DataForwardResponse) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["success"]; ok {
+		if t, ok := v.(object.Bool); ok {
+			e.Success = bool(t)
+		}
+	}
+	return nil
 }

@@ -29,8 +29,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -134,7 +134,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		}()
 		// wait for p2 to get the req
 		gotReq := <-reqSub.Channel()
-		assert.Equal(t, "1", gotReq.Payload.Data["requestID:s"].(string))
+		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(object.String)))
 		// send response from p2 to p1
 		// nolint: errcheck
 		n2.Send(
@@ -187,8 +187,8 @@ func TestNetwork_Relay(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -197,8 +197,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -207,8 +207,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -280,8 +280,8 @@ func Test_exchange_signAll(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: k.PublicKey(),
 			},
-			Data: map[string]interface{}{
-				"foo:s": "bar",
+			Data: object.Map{
+				"foo": object.String("bar"),
 			},
 		}
 
@@ -299,13 +299,13 @@ func Test_exchange_signAll(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: k.PublicKey(),
 			},
-			Data: map[string]interface{}{
-				"foo:s": "bar",
+			Data: object.Map{
+				"foo": object.String("bar"),
 			},
 		}
 		o := &object.Object{
 			Type: "foo",
-			Data: map[string]interface{}{
+			Data: object.Map{
 				"foo:m": n,
 			},
 		}

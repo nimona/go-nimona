@@ -22,10 +22,10 @@ func Test_requester_Request(t *testing.T) {
 	localPeer1 := newPeer()
 
 	chunk1 := &blob.Chunk{
-		Data: []byte("ooh wee"),
+		Data: object.Data("ooh wee"),
 	}
 	chunk2 := &blob.Chunk{
-		Data: []byte("ooh lala"),
+		Data: object.Data("ooh lala"),
 	}
 
 	blob1 := &blob.Blob{
@@ -164,8 +164,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: new(blob.Chunk).Type(),
-					Data: map[string]interface{}{
-						"data:d": []byte(
+					Data: object.Map{
+						"data": object.Data(
 							"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
 								"\n15\n16\n17\n18\n19\n20",
 						),
@@ -175,8 +175,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: new(blob.Chunk).Type(),
-					Data: map[string]interface{}{
-						"data:d": []byte(
+					Data: object.Map{
+						"data": object.Data(
 							"\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n" +
 								"32\n33\n34\n35\n36\n3",
 						),
@@ -186,8 +186,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: new(blob.Chunk).Type(),
-					Data: map[string]interface{}{
-						"data:d": []byte(
+					Data: object.Map{
+						"data": object.Data(
 							"7\n38\n39\n40\n",
 						),
 					},
@@ -196,11 +196,11 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: new(blob.Blob).Type(),
-					Data: map[string]interface{}{
-						"chunks:ar": []object.Hash{
-							"oh1.3dJZwtJ4eQBHAKtxPNixsVxPy5inC4HYgXbNQGUCzDLQ",
-							"oh1.DUhpZNYXCQH4pTitQqj2PmcQBWr2NNz5Z1E1KQdU9YNP",
-							"oh1.8CjpVvGhHZZ7yBNxpS6mYgau67AwxZf6K4GUMrbANBAm",
+					Data: object.Map{
+						"chunks": object.StringArray{
+							"oh1.GmPoQs3fuYY3onJdMw5MtRvHNKr9AWNkDqxGLueS4ig7",
+							"oh1.7HEMKNTobskFtf3RFUpRVZTVcbWHTARxSRun3emjpeUx",
+							"oh1.5W67VqeLqVtwdopGK7CPHiswucq8Jd4vZ3irkCpnY6Qn",
 						},
 					},
 				}).
@@ -209,9 +209,9 @@ func Test_manager_ImportFromFile(t *testing.T) {
 		},
 		want: &blob.BlobUnloaded{
 			ChunksUnloaded: []object.Hash{
-				"oh1.3dJZwtJ4eQBHAKtxPNixsVxPy5inC4HYgXbNQGUCzDLQ",
-				"oh1.DUhpZNYXCQH4pTitQqj2PmcQBWr2NNz5Z1E1KQdU9YNP",
-				"oh1.8CjpVvGhHZZ7yBNxpS6mYgau67AwxZf6K4GUMrbANBAm",
+				"oh1.GmPoQs3fuYY3onJdMw5MtRvHNKr9AWNkDqxGLueS4ig7",
+				"oh1.7HEMKNTobskFtf3RFUpRVZTVcbWHTARxSRun3emjpeUx",
+				"oh1.5W67VqeLqVtwdopGK7CPHiswucq8Jd4vZ3irkCpnY6Qn",
 			},
 		},
 	}}

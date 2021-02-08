@@ -162,9 +162,9 @@ func (r *resolver) Lookup(
 	resSub := r.network.Subscribe(
 		network.FilterByObjectType(hyperspaceLookupResponseType),
 		func(e *network.Envelope) bool {
-			v := e.Payload.Data["nonce:s"]
-			rn, ok := v.(string)
-			return ok && rn == req.Nonce
+			v := e.Payload.Data["nonce"]
+			rn, ok := v.(object.String)
+			return ok && string(rn) == req.Nonce
 		},
 	)
 

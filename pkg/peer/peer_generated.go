@@ -26,51 +26,92 @@ func (e ConnectionInfo) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/peer.ConnectionInfo",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["version:i"] = e.Version
-	r.Data["publicKey:s"] = e.PublicKey
+	// else
+	// r.Data["version"] = object.Int(e.Version)
+	r.Data["version"] = object.Int(e.Version)
+	// else if $member.IsPrimitive
+	r.Data["publicKey"] = object.String(e.PublicKey)
+	// if $member.IsRepeated
 	if len(e.Addresses) > 0 {
-		r.Data["addresses:as"] = e.Addresses
+		// else
+		// r.Data["addresses"] = object.ToStringArray(e.Addresses)
+		rv := make(object.StringArray, len(e.Addresses))
+		for i, iv := range e.Addresses {
+			rv[i] = object.String(iv)
+		}
+		r.Data["addresses"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Relays) > 0 {
-		rv := make([]*object.Object, len(e.Relays))
+		// if $member.IsObject
+		rv := make(object.ObjectArray, len(e.Relays))
 		for i, v := range e.Relays {
 			rv[i] = v.ToObject()
 		}
-		r.Data["relays:ao"] = rv
+		r.Data["relays"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.ObjectFormats) > 0 {
-		r.Data["objectFormats:as"] = e.ObjectFormats
-	}
-	return r
-}
-
-func (e ConnectionInfo) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["version:i"] = e.Version
-	d["publicKey:s"] = e.PublicKey
-	if len(e.Addresses) > 0 {
-		d["addresses:as"] = e.Addresses
-	}
-	if len(e.Relays) > 0 {
-		rv := make([]*object.Object, len(e.Relays))
-		for i, v := range e.Relays {
-			rv[i] = v.ToObject()
+		// else
+		// r.Data["objectFormats"] = object.ToStringArray(e.ObjectFormats)
+		rv := make(object.StringArray, len(e.ObjectFormats))
+		for i, iv := range e.ObjectFormats {
+			rv[i] = object.String(iv)
 		}
-		d["relays:ao"] = rv
-	}
-	if len(e.ObjectFormats) > 0 {
-		d["objectFormats:as"] = e.ObjectFormats
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/peer.ConnectionInfo",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		r.Data["objectFormats"] = rv
 	}
 	return r
 }
 
 func (e *ConnectionInfo) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["version"]; ok {
+		if t, ok := v.(object.Int); ok {
+			e.Version = int64(t)
+		}
+	}
+	if v, ok := o.Data["publicKey"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.PublicKey = crypto.PublicKey(t)
+		}
+	}
+	if v, ok := o.Data["addresses"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Addresses = rv
+		}
+	}
+	if v, ok := o.Data["relays"]; ok {
+		if t, ok := v.(object.MapArray); ok {
+			e.Relays = make([]*ConnectionInfo, len(t))
+			for i, iv := range t {
+				es := &ConnectionInfo{}
+				eo := object.FromMap(iv)
+				es.FromObject(eo)
+				e.Relays[i] = es
+			}
+		} else if t, ok := v.(object.ObjectArray); ok {
+			e.Relays = make([]*ConnectionInfo, len(t))
+			for i, iv := range t {
+				es := &ConnectionInfo{}
+				es.FromObject(iv)
+				e.Relays[i] = es
+			}
+		}
+	}
+	if v, ok := o.Data["objectFormats"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.ObjectFormats = rv
+		}
+	}
+	return nil
 }

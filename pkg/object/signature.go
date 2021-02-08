@@ -30,22 +30,44 @@ func (s Signature) IsEmpty() bool {
 	return len(s.X) == 0
 }
 
-func SignatureToMap(s *Signature) map[string]interface{} {
-	if s == nil || s.IsEmpty() {
-		return nil
-	}
-	r := map[string]interface{}{}
+func (s Signature) Map() Map {
+	r := Map{}
 	if !s.Signer.IsEmpty() {
-		r["signer:s"] = s.Signer.String()
+		r["signer"] = String(s.Signer)
 	}
 	if s.Alg != "" {
-		r["alg:s"] = s.Alg
+		r["alg"] = String(s.Alg)
 	}
 	if len(s.X) > 0 {
-		r["x:d"] = s.X
+		r["x"] = Data(s.X)
 	}
 	if s.Certificate != nil {
-		r["certificate:m"] = s.Certificate.ToObject().ToMap()
+		r["certificate"] = s.Certificate.ToObject()
+	}
+	return r
+}
+
+func SignatureFromMap(m Map) Signature {
+	r := Signature{}
+	if t, ok := m["signer"]; ok {
+		if s, ok := t.(String); ok {
+			r.Signer = crypto.PublicKey(s)
+		}
+	}
+	if t, ok := m["alg"]; ok {
+		if s, ok := t.(String); ok {
+			r.Alg = string(s)
+		}
+	}
+	if t, ok := m["alg"]; ok {
+		if s, ok := t.(String); ok {
+			r.Alg = string(s)
+		}
+	}
+	if t, ok := m["x"]; ok {
+		if s, ok := t.(Data); ok {
+			r.X = []byte(s)
+		}
 	}
 	return r
 }

@@ -13,7 +13,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Chunks   []object.Hash   `nimona:"chunks:ar,omitempty"`
+		Chunks   []object.Hash   `nimona:"chunks:as,omitempty"`
 	}
 )
 
@@ -25,25 +25,22 @@ func (e Chunk) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Chunk",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["data:d"] = e.Data
-	return r
-}
-
-func (e Chunk) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["data:d"] = e.Data
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/Chunk",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["data"] = object.Data(e.Data)
+	r.Data["data"] = object.Data(e.Data)
 	return r
 }
 
 func (e *Chunk) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["data"]; ok {
+		if t, ok := v.(object.Data); ok {
+			e.Data = []byte(t)
+		}
+	}
+	return nil
 }
 
 func (e *Blob) Type() string {
@@ -54,27 +51,31 @@ func (e Blob) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Blob",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.Chunks) > 0 {
-		r.Data["chunks:ar"] = e.Chunks
-	}
-	return r
-}
-
-func (e Blob) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.Chunks) > 0 {
-		d["chunks:ar"] = e.Chunks
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/Blob",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		// else
+		// r.Data["chunks"] = object.ToStringArray(e.Chunks)
+		rv := make(object.StringArray, len(e.Chunks))
+		for i, iv := range e.Chunks {
+			rv[i] = object.String(iv)
+		}
+		r.Data["chunks"] = rv
 	}
 	return r
 }
 
 func (e *Blob) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["chunks"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.Chunks = rv
+		}
+	}
+	return nil
 }
