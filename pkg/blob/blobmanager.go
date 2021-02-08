@@ -209,22 +209,38 @@ func (e *BlobUnloaded) Type() string {
 }
 
 func (e BlobUnloaded) ToObject() *object.Object {
-	o, err := object.Encode(&e)
-	if err != nil {
-		panic(err)
+	c := make(object.StringArray, len(e.ChunksUnloaded))
+	for i, v := range e.ChunksUnloaded {
+		c[i] = object.String(v)
+	}
+	o := &object.Object{
+		Type:     e.Type(),
+		Metadata: e.Metadata,
+		Data: object.Map{
+			"chunks": c,
+		},
 	}
 	return o
 }
 
 func (e *BlobUnloaded) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["chunks"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			c := make([]object.Hash, len(t))
+			for i, v := range t {
+				c[i] = object.Hash(v)
+			}
+			e.ChunksUnloaded = c
+		}
+	}
+	return nil
 }
 
 func getChunks(o *object.Object) ([]object.Hash, error) {
 	b := &BlobUnloaded{}
-	if err := object.Decode(o, b); err != nil {
+	if err := b.FromObject(o); err != nil {
 		return nil, err
 	}
-
 	return b.ChunksUnloaded, nil
 }

@@ -32,8 +32,8 @@ func TestManager_Request(t *testing.T) {
 		PublicKey: testPeerKey.PublicKey(),
 	}
 	f00 := &object.Object{
-		Data: map[string]interface{}{
-			"f00:s": "f00",
+		Data: object.Map{
+			"f00": object.String("f00"),
 		},
 	}
 	type fields struct {
@@ -125,9 +125,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	f00 := peer1.ToObject()
 	f01 := &object.Object{
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"f01:s":  "f01",
-			"asdf:m": object.Copy(f00),
+		Data: object.Map{
+			"f01":  object.String("f01"),
+			"asdf": object.Copy(f00),
 		},
 	}
 
@@ -301,8 +301,8 @@ func TestManager_RequestStream(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"f00:s": "f00",
+		Data: object.Map{
+			"f00": object.String("f00"),
 		},
 	}
 	f01 := &object.Object{
@@ -311,8 +311,8 @@ func TestManager_RequestStream(t *testing.T) {
 			Stream:  f00.Hash(),
 			Parents: []object.Hash{f00.Hash()},
 		},
-		Data: map[string]interface{}{
-			"f01:s": "f01",
+		Data: object.Map{
+			"f01": object.String("f01"),
 		},
 	}
 	f02 := &object.Object{
@@ -321,8 +321,8 @@ func TestManager_RequestStream(t *testing.T) {
 			Stream:  f00.Hash(),
 			Parents: []object.Hash{f01.Hash()},
 		},
-		Data: map[string]interface{}{
-			"f02:s": "f02",
+		Data: object.Map{
+			"f02": object.String("f02"),
 		},
 	}
 
@@ -488,8 +488,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"foo": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -501,8 +501,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				f00.Hash(),
 			},
 		},
-		Data: map[string]interface{}{
-			"foo": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 
@@ -715,8 +715,8 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey,
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 	testObjectStreamRoot := &object.Object{
@@ -724,8 +724,8 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey,
 		},
-		Data: map[string]interface{}{
-			"root:s": "true",
+		Data: object.Map{
+			"root": object.String("true"),
 		},
 	}
 	testObjectWithStream := &object.Object{
@@ -734,18 +734,18 @@ func TestManager_Put(t *testing.T) {
 			Owner:  testOwnPublicKey,
 			Stream: testObjectStreamRoot.Hash(),
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 	bar1 := &object.Object{
-		Data: map[string]interface{}{
-			"foo:s": "bar1",
+		Data: object.Map{
+			"foo": object.String("bar1"),
 		},
 	}
 	bar2 := &object.Object{
-		Data: map[string]interface{}{
-			"foo:s": "bar2",
+		Data: object.Map{
+			"foo": object.String("bar2"),
 		},
 	}
 	testObjectWithStreamUpdated := &object.Object{
@@ -758,8 +758,8 @@ func TestManager_Put(t *testing.T) {
 				bar2.Hash(),
 			},
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 	testObjectSubscriptionInline := stream.Subscription{
@@ -771,25 +771,25 @@ func TestManager_Put(t *testing.T) {
 	testObjectComplex := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"foo:s":           "bar",
-			"nested-simple:m": testObjectSimple,
+		Data: object.Map{
+			"foo":           object.String("bar"),
+			"nested-simple": testObjectSimple,
 		},
 	}
 	testObjectComplexUpdated := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"foo:s":           "bar",
+		Data: object.Map{
+			"foo":             object.String("bar"),
 			"nested-simple:r": testObjectSimple.Hash(),
 		},
 	}
 	testObjectComplexReturned := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"foo:s":           "bar",
-			"nested-simple:m": testObjectSimple,
+		Data: object.Map{
+			"foo":           object.String("bar"),
+			"nested-simple": testObjectSimple,
 		},
 	}
 	testFeedRoot := getFeedRoot(
@@ -1229,8 +1229,8 @@ func TestManager_Put(t *testing.T) {
 					},
 				),
 			},
-			Data: map[string]interface{}{
-				"foo:s": "bar",
+			Data: object.Map{
+				"foo": object.String("bar"),
 			},
 		},
 	}}
@@ -1270,8 +1270,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: "foo",
 		},
-		Data: map[string]interface{}{
-			"foo:s": "not-bar",
+		Data: object.Map{
+			"foo": object.String("not-bar"),
 		},
 	}
 	o2 := &object.Object{
@@ -1279,8 +1279,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: "foo",
 		},
-		Data: map[string]interface{}{
-			"foo:s": "bar",
+		Data: object.Map{
+			"foo": object.String("bar"),
 		},
 	}
 	tests := []struct {

@@ -667,7 +667,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			}
 
 			// unmarshal payload
-			m := map[string]interface{}{}
+			m := object.Map{}
 			err := json.Unmarshal(fwd.Data, &m)
 			if err != nil {
 				logger.Warn(
@@ -738,16 +738,19 @@ func (w *network) Send(
 
 	var rSub EnvelopeSubscription
 	if opt.waitForResponse != nil {
-		rIDVal, ok := o.Data["requestID:s"]
+		rIDVal, ok := o.Data["requestID"]
 		if !ok {
 			return errors.New("cannot wait for response without a request id")
 		}
-		rID := rIDVal.(string)
+		rID, ok := rIDVal.(object.String)
+		if !ok {
+			return errors.New("cannot wait for response with an invalid request id")
+		}
 		if rID == "" {
 			return errors.New("cannot wait for response with empty request id")
 		}
 		rSub = w.Subscribe(
-			FilterByRequestID(rID),
+			FilterByRequestID(string(rID)),
 		)
 	}
 

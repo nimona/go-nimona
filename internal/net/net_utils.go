@@ -59,7 +59,7 @@ func Read(conn *Connection) (*object.Object, error) {
 		return nil, ErrLineWasEmpty
 	}
 
-	m := map[string]interface{}{}
+	m := object.Map{}
 	if err := json.Unmarshal(r, &m); err != nil {
 		return nil, err
 	}

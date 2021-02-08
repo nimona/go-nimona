@@ -29,29 +29,38 @@ func (e Certificate) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Certificate",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
-	r.Data["created:s"] = e.Created
-	r.Data["expires:s"] = e.Expires
-	return r
-}
-
-func (e Certificate) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	d["created:s"] = e.Created
-	d["expires:s"] = e.Expires
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/Certificate",
-		"metadata:m": MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["nonce"] = String(e.Nonce)
+	r.Data["nonce"] = String(e.Nonce)
+	// else
+	// r.Data["created"] = String(e.Created)
+	r.Data["created"] = String(e.Created)
+	// else
+	// r.Data["expires"] = String(e.Expires)
+	r.Data["expires"] = String(e.Expires)
 	return r
 }
 
 func (e *Certificate) FromObject(o *Object) error {
-	return Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["created"]; ok {
+		if t, ok := v.(String); ok {
+			e.Created = string(t)
+		}
+	}
+	if v, ok := o.Data["expires"]; ok {
+		if t, ok := v.(String); ok {
+			e.Expires = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *CertificateRequest) Type() string {
@@ -62,43 +71,90 @@ func (e CertificateRequest) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/CertificateRequest",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     Map{},
 	}
-	r.Data["applicationName:s"] = e.ApplicationName
-	r.Data["applicationDescription:s"] = e.ApplicationDescription
-	r.Data["applicationURL:s"] = e.ApplicationURL
-	r.Data["subject:s"] = e.Subject
+	// else
+	// r.Data["applicationName"] = String(e.ApplicationName)
+	r.Data["applicationName"] = String(e.ApplicationName)
+	// else
+	// r.Data["applicationDescription"] = String(e.ApplicationDescription)
+	r.Data["applicationDescription"] = String(e.ApplicationDescription)
+	// else
+	// r.Data["applicationURL"] = String(e.ApplicationURL)
+	r.Data["applicationURL"] = String(e.ApplicationURL)
+	// else
+	// r.Data["subject"] = String(e.Subject)
+	r.Data["subject"] = String(e.Subject)
+	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		r.Data["resources:as"] = e.Resources
+		// else
+		// r.Data["resources"] = ToStringArray(e.Resources)
+		rv := make(StringArray, len(e.Resources))
+		for i, iv := range e.Resources {
+			rv[i] = String(iv)
+		}
+		r.Data["resources"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Actions) > 0 {
-		r.Data["actions:as"] = e.Actions
+		// else
+		// r.Data["actions"] = ToStringArray(e.Actions)
+		rv := make(StringArray, len(e.Actions))
+		for i, iv := range e.Actions {
+			rv[i] = String(iv)
+		}
+		r.Data["actions"] = rv
 	}
-	r.Data["nonce:s"] = e.Nonce
-	return r
-}
-
-func (e CertificateRequest) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["applicationName:s"] = e.ApplicationName
-	d["applicationDescription:s"] = e.ApplicationDescription
-	d["applicationURL:s"] = e.ApplicationURL
-	d["subject:s"] = e.Subject
-	if len(e.Resources) > 0 {
-		d["resources:as"] = e.Resources
-	}
-	if len(e.Actions) > 0 {
-		d["actions:as"] = e.Actions
-	}
-	d["nonce:s"] = e.Nonce
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/CertificateRequest",
-		"metadata:m": MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["nonce"] = String(e.Nonce)
+	r.Data["nonce"] = String(e.Nonce)
 	return r
 }
 
 func (e *CertificateRequest) FromObject(o *Object) error {
-	return Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["applicationName"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationName = string(t)
+		}
+	}
+	if v, ok := o.Data["applicationDescription"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationDescription = string(t)
+		}
+	}
+	if v, ok := o.Data["applicationURL"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationURL = string(t)
+		}
+	}
+	if v, ok := o.Data["subject"]; ok {
+		if t, ok := v.(String); ok {
+			e.Subject = string(t)
+		}
+	}
+	if v, ok := o.Data["resources"]; ok {
+		if t, ok := v.(StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Resources = rv
+		}
+	}
+	if v, ok := o.Data["actions"]; ok {
+		if t, ok := v.(StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Actions = rv
+		}
+	}
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	return nil
 }

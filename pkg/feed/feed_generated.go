@@ -14,13 +14,13 @@ type (
 	}
 	Added struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash   `nimona:"objectHash:ar,omitempty"`
+		ObjectHash []object.Hash   `nimona:"objectHash:as,omitempty"`
 		Sequence   int64           `nimona:"sequence:i,omitempty"`
 		Datetime   string          `nimona:"datetime:s,omitempty"`
 	}
 	Removed struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash   `nimona:"objectHash:ar,omitempty"`
+		ObjectHash []object.Hash   `nimona:"objectHash:as,omitempty"`
 		Sequence   int64           `nimona:"sequence:i,omitempty"`
 		Datetime   string          `nimona:"datetime:s,omitempty"`
 	}
@@ -34,27 +34,30 @@ func (e FeedStreamRoot) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "stream:nimona.io/feed",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["objectType:s"] = e.ObjectType
-	r.Data["datetime:s"] = e.Datetime
-	return r
-}
-
-func (e FeedStreamRoot) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["objectType:s"] = e.ObjectType
-	d["datetime:s"] = e.Datetime
-	r := map[string]interface{}{
-		"type:s":     "stream:nimona.io/feed",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["objectType"] = object.String(e.ObjectType)
+	r.Data["objectType"] = object.String(e.ObjectType)
+	// else
+	// r.Data["datetime"] = object.String(e.Datetime)
+	r.Data["datetime"] = object.String(e.Datetime)
 	return r
 }
 
 func (e *FeedStreamRoot) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["objectType"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.ObjectType = string(t)
+		}
+	}
+	if v, ok := o.Data["datetime"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Datetime = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *Added) Type() string {
@@ -65,33 +68,49 @@ func (e Added) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "event:nimona.io/feed.Added",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.ObjectHash) > 0 {
-		r.Data["objectHash:ar"] = e.ObjectHash
+		// else
+		// r.Data["objectHash"] = object.ToStringArray(e.ObjectHash)
+		rv := make(object.StringArray, len(e.ObjectHash))
+		for i, iv := range e.ObjectHash {
+			rv[i] = object.String(iv)
+		}
+		r.Data["objectHash"] = rv
 	}
-	r.Data["sequence:i"] = e.Sequence
-	r.Data["datetime:s"] = e.Datetime
-	return r
-}
-
-func (e Added) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.ObjectHash) > 0 {
-		d["objectHash:ar"] = e.ObjectHash
-	}
-	d["sequence:i"] = e.Sequence
-	d["datetime:s"] = e.Datetime
-	r := map[string]interface{}{
-		"type:s":     "event:nimona.io/feed.Added",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["sequence"] = object.Int(e.Sequence)
+	r.Data["sequence"] = object.Int(e.Sequence)
+	// else
+	// r.Data["datetime"] = object.String(e.Datetime)
+	r.Data["datetime"] = object.String(e.Datetime)
 	return r
 }
 
 func (e *Added) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["objectHash"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.ObjectHash = rv
+		}
+	}
+	if v, ok := o.Data["sequence"]; ok {
+		if t, ok := v.(object.Int); ok {
+			e.Sequence = int64(t)
+		}
+	}
+	if v, ok := o.Data["datetime"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Datetime = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *Removed) Type() string {
@@ -102,31 +121,47 @@ func (e Removed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "event:nimona.io/feed.Removed",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.ObjectHash) > 0 {
-		r.Data["objectHash:ar"] = e.ObjectHash
+		// else
+		// r.Data["objectHash"] = object.ToStringArray(e.ObjectHash)
+		rv := make(object.StringArray, len(e.ObjectHash))
+		for i, iv := range e.ObjectHash {
+			rv[i] = object.String(iv)
+		}
+		r.Data["objectHash"] = rv
 	}
-	r.Data["sequence:i"] = e.Sequence
-	r.Data["datetime:s"] = e.Datetime
-	return r
-}
-
-func (e Removed) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.ObjectHash) > 0 {
-		d["objectHash:ar"] = e.ObjectHash
-	}
-	d["sequence:i"] = e.Sequence
-	d["datetime:s"] = e.Datetime
-	r := map[string]interface{}{
-		"type:s":     "event:nimona.io/feed.Removed",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["sequence"] = object.Int(e.Sequence)
+	r.Data["sequence"] = object.Int(e.Sequence)
+	// else
+	// r.Data["datetime"] = object.String(e.Datetime)
+	r.Data["datetime"] = object.String(e.Datetime)
 	return r
 }
 
 func (e *Removed) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["objectHash"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.ObjectHash = rv
+		}
+	}
+	if v, ok := o.Data["sequence"]; ok {
+		if t, ok := v.(object.Int); ok {
+			e.Sequence = int64(t)
+		}
+	}
+	if v, ok := o.Data["datetime"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Datetime = string(t)
+		}
+	}
+	return nil
 }

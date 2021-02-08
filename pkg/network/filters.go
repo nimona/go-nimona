@@ -39,10 +39,17 @@ func FilterByObjectHash(objectHashes ...object.Hash) EnvelopeFilter {
 
 func FilterByRequestID(requestID string) EnvelopeFilter {
 	return func(e *Envelope) bool {
-		rIDVal, ok := e.Payload.Data["requestID:s"]
+		rIDVal, ok := e.Payload.Data["requestID"]
 		if !ok {
 			return false
 		}
-		return rIDVal.(string) == requestID
+		rID, ok := rIDVal.(object.String)
+		if !ok {
+			return false
+		}
+		if rID == "" {
+			return false
+		}
+		return string(rID) == requestID
 	}
 }

@@ -183,9 +183,10 @@ func (ft *fileTransfer) get(
 		return
 	}
 
-	flun := &fileUnloaded{}
-
-	err = object.Decode(obj, flun)
+	flun := &fileUnloaded{
+		Metadata: obj.Metadata,
+		BlobHash: object.Hash(obj.Data["blob"].(object.String)),
+	}
 
 	fmt.Println("getting blob:", flun.BlobHash)
 	_, ch, err := ft.blobmanager.Request(ctx, flun.BlobHash)

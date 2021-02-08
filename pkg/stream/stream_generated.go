@@ -17,22 +17,22 @@ type (
 	Request struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string          `nimona:"requestID:s,omitempty"`
-		RootHash  object.Hash     `nimona:"rootHash:r,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
 	}
 	Response struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string          `nimona:"requestID:s,omitempty"`
-		RootHash  object.Hash     `nimona:"rootHash:r,omitempty"`
-		Leaves    []object.Hash   `nimona:"leaves:ar,omitempty"`
+		RootHash  object.Hash     `nimona:"rootHash:s,omitempty"`
+		Leaves    []object.Hash   `nimona:"leaves:as,omitempty"`
 	}
 	Announcement struct {
 		Metadata     object.Metadata `nimona:"metadata:m,omitempty"`
-		StreamHash   object.Hash     `nimona:"streamHash:r,omitempty"`
-		ObjectHashes []object.Hash   `nimona:"objectHashes:ar,omitempty"`
+		StreamHash   object.Hash     `nimona:"streamHash:s,omitempty"`
+		ObjectHashes []object.Hash   `nimona:"objectHashes:as,omitempty"`
 	}
 	Subscription struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		RootHashes []object.Hash   `nimona:"rootHashes:ar,omitempty"`
+		RootHashes []object.Hash   `nimona:"rootHashes:as,omitempty"`
 		Expiry     string          `nimona:"expiry:s,omitempty"`
 	}
 )
@@ -45,43 +45,79 @@ func (e Policy) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Policy",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.Subjects) > 0 {
-		r.Data["subjects:as"] = e.Subjects
+		// else
+		// r.Data["subjects"] = object.ToStringArray(e.Subjects)
+		rv := make(object.StringArray, len(e.Subjects))
+		for i, iv := range e.Subjects {
+			rv[i] = object.String(iv)
+		}
+		r.Data["subjects"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		r.Data["resources:as"] = e.Resources
+		// else
+		// r.Data["resources"] = object.ToStringArray(e.Resources)
+		rv := make(object.StringArray, len(e.Resources))
+		for i, iv := range e.Resources {
+			rv[i] = object.String(iv)
+		}
+		r.Data["resources"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Conditions) > 0 {
-		r.Data["conditions:as"] = e.Conditions
+		// else
+		// r.Data["conditions"] = object.ToStringArray(e.Conditions)
+		rv := make(object.StringArray, len(e.Conditions))
+		for i, iv := range e.Conditions {
+			rv[i] = object.String(iv)
+		}
+		r.Data["conditions"] = rv
 	}
-	r.Data["action:s"] = e.Action
-	return r
-}
-
-func (e Policy) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.Subjects) > 0 {
-		d["subjects:as"] = e.Subjects
-	}
-	if len(e.Resources) > 0 {
-		d["resources:as"] = e.Resources
-	}
-	if len(e.Conditions) > 0 {
-		d["conditions:as"] = e.Conditions
-	}
-	d["action:s"] = e.Action
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/stream.Policy",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["action"] = object.String(e.Action)
+	r.Data["action"] = object.String(e.Action)
 	return r
 }
 
 func (e *Policy) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["subjects"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Subjects = rv
+		}
+	}
+	if v, ok := o.Data["resources"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Resources = rv
+		}
+	}
+	if v, ok := o.Data["conditions"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Conditions = rv
+		}
+	}
+	if v, ok := o.Data["action"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Action = string(t)
+		}
+	}
+	return nil
 }
 
 func (e *Request) Type() string {
@@ -92,27 +128,29 @@ func (e Request) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Request",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["rootHash:r"] = e.RootHash
-	return r
-}
-
-func (e Request) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["rootHash:r"] = e.RootHash
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/stream.Request",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else if $member.IsPrimitive
+	r.Data["rootHash"] = object.String(e.RootHash)
 	return r
 }
 
 func (e *Request) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["rootHash"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RootHash = object.Hash(t)
+		}
+	}
+	return nil
 }
 
 func (e *Response) Type() string {
@@ -123,33 +161,48 @@ func (e Response) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Response",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["requestID:s"] = e.RequestID
-	r.Data["rootHash:r"] = e.RootHash
+	// else
+	// r.Data["requestID"] = object.String(e.RequestID)
+	r.Data["requestID"] = object.String(e.RequestID)
+	// else if $member.IsPrimitive
+	r.Data["rootHash"] = object.String(e.RootHash)
+	// if $member.IsRepeated
 	if len(e.Leaves) > 0 {
-		r.Data["leaves:ar"] = e.Leaves
-	}
-	return r
-}
-
-func (e Response) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["requestID:s"] = e.RequestID
-	d["rootHash:r"] = e.RootHash
-	if len(e.Leaves) > 0 {
-		d["leaves:ar"] = e.Leaves
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/stream.Response",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		// else
+		// r.Data["leaves"] = object.ToStringArray(e.Leaves)
+		rv := make(object.StringArray, len(e.Leaves))
+		for i, iv := range e.Leaves {
+			rv[i] = object.String(iv)
+		}
+		r.Data["leaves"] = rv
 	}
 	return r
 }
 
 func (e *Response) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["requestID"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RequestID = string(t)
+		}
+	}
+	if v, ok := o.Data["rootHash"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.RootHash = object.Hash(t)
+		}
+	}
+	if v, ok := o.Data["leaves"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.Leaves = rv
+		}
+	}
+	return nil
 }
 
 func (e *Announcement) Type() string {
@@ -160,31 +213,40 @@ func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Announcement",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["streamHash:r"] = e.StreamHash
+	// else if $member.IsPrimitive
+	r.Data["streamHash"] = object.String(e.StreamHash)
+	// if $member.IsRepeated
 	if len(e.ObjectHashes) > 0 {
-		r.Data["objectHashes:ar"] = e.ObjectHashes
-	}
-	return r
-}
-
-func (e Announcement) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["streamHash:r"] = e.StreamHash
-	if len(e.ObjectHashes) > 0 {
-		d["objectHashes:ar"] = e.ObjectHashes
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/stream.Announcement",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		// else
+		// r.Data["objectHashes"] = object.ToStringArray(e.ObjectHashes)
+		rv := make(object.StringArray, len(e.ObjectHashes))
+		for i, iv := range e.ObjectHashes {
+			rv[i] = object.String(iv)
+		}
+		r.Data["objectHashes"] = rv
 	}
 	return r
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["streamHash"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.StreamHash = object.Hash(t)
+		}
+	}
+	if v, ok := o.Data["objectHashes"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.ObjectHashes = rv
+		}
+	}
+	return nil
 }
 
 func (e *Subscription) Type() string {
@@ -195,29 +257,39 @@ func (e Subscription) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Subscription",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
+	// if $member.IsRepeated
 	if len(e.RootHashes) > 0 {
-		r.Data["rootHashes:ar"] = e.RootHashes
+		// else
+		// r.Data["rootHashes"] = object.ToStringArray(e.RootHashes)
+		rv := make(object.StringArray, len(e.RootHashes))
+		for i, iv := range e.RootHashes {
+			rv[i] = object.String(iv)
+		}
+		r.Data["rootHashes"] = rv
 	}
-	r.Data["expiry:s"] = e.Expiry
-	return r
-}
-
-func (e Subscription) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	if len(e.RootHashes) > 0 {
-		d["rootHashes:ar"] = e.RootHashes
-	}
-	d["expiry:s"] = e.Expiry
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/stream.Subscription",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
-	}
+	// else
+	// r.Data["expiry"] = object.String(e.Expiry)
+	r.Data["expiry"] = object.String(e.Expiry)
 	return r
 }
 
 func (e *Subscription) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["rootHashes"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]object.Hash, len(t))
+			for i, iv := range t {
+				rv[i] = object.Hash(iv)
+			}
+			e.RootHashes = rv
+		}
+	}
+	if v, ok := o.Data["expiry"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Expiry = string(t)
+		}
+	}
+	return nil
 }

@@ -6,21 +6,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/internal/encoding/base58"
 )
 
 func BenchmarkHash(b *testing.B) {
-	o := &Object{
-		Type: "blob",
-		Data: map[string]interface{}{
-			"filename:s": "foo",
-			"dummy:o": &Object{
-				Type: "dummy",
-				Metadata: Metadata{
-					Owner: "foo",
+	o := Map{
+		"type": String("blob"),
+		"data": Map{
+			"filename": String("foo"),
+			"dummy": Map{
+				"type": String("dummy"),
+				"metadata": Map{
+					"owner": String("foo"),
 				},
-				Data: map[string]interface{}{
-					"foo:s": "bar",
-					"data:d": []byte(
+				"data": Map{
+					"foo": String("bar"),
+					"data": Data(
 						"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
 							"\n15\n16\n17\n18\n19\n20",
 					),
@@ -29,123 +31,113 @@ func BenchmarkHash(b *testing.B) {
 		},
 	}
 	for n := 0; n < b.N; n++ {
-		o.Hash()
+		fromValue(o) // nolint: errcheck
 	}
 }
-func TestNewHash(t *testing.T) {
+
+func TestFromValue(t *testing.T) {
 	tests := []struct {
 		name    string
-		key     string
+		json    string
+		want    string
+		wantErr bool
+	}{{
+		name: "5",
+		json: `{"something:s":"foo","metadata:m":{}}`,
+		want: "uvqAvGish5DVzVsZcn9aFvvFG8JgeuwgGMnLj2dfp6e",
+	}, {
+		name: "6",
+		json: `{"something:s":"foo"}`,
+		want: "uvqAvGish5DVzVsZcn9aFvvFG8JgeuwgGMnLj2dfp6e",
+	}, {
+		name: "7",
+		json: `{"something:d":"Zm9v"}`,
+		want: "GaRxrpcBkBP16rmL4kNzhwZvqo6DjqW5bccNm65okSYG",
+	}, {
+		name: "8",
+		json: `{"something:b":false}`,
+		want: "AVigrbFWTBNVXeB5Q6GDrt75sTBrpwuEqMVP7DVfW9mM",
+	}, {
+		name: "9",
+		json: `{"something:b":true}`,
+		want: "69CbvTybbM2DPrCRqoGyt7kxFUKhYwSbtUdtCs9HQLve",
+	}, {
+		name: "10",
+		json: `{"something:i":1234567890}`,
+		want: "Am2CNoZisskHDL2E8srhPHc4L5wCGUv6nuJjVT6Ca1iV",
+	}, {
+		name: "11",
+		json: `{"something:f":12345.6789}`,
+		want: "AnVQHPHdbE5VDo2XG21VRi6yESZWnwKpf3SU68WAspUC",
+	}, {
+		name: "13",
+		json: `{"something:as":["foo","bar"]}`,
+		want: "EYCgWPkfYeGew331WYBaKphmtxDgPcJet6pWpSokK9Am",
+	}, {
+		name: "14",
+		json: `{"something:ai":[123,456]}`,
+		want: "FzULygYLCUkuEibqPKYxnoEMSnnfaNfkbuJDeZgnZra5",
+	}, {
+		name: "15",
+		json: `{"foo:s":"bar"}`,
+		want: "FwXyoLg3qpzM8R8uZECrymsyGuKVTyTn3qoNsmGhEMRg",
+	}, {
+		name: "17",
+		// nolint: lll
+		json: `{"data:m":{"foo:s":"bar","nested:m":{"_sig:s":"should not matter","foo:s":"bar"}}}`,
+		want: "bmRkoyP1pWmRphQVpCGKJz7EJDY7mEpLNrPW4zRedkj",
+	}, {
+		name: "18",
+		// nolint: lll
+		json: `{"data:m":{"foo:s":"bar","nested:m":{"_signature:m":{"foo:s":"bar"},"foo:s":"bar"}}}`,
+		want: "bmRkoyP1pWmRphQVpCGKJz7EJDY7mEpLNrPW4zRedkj",
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := Map{}
+			assert.NoError(t, json.Unmarshal([]byte(tt.json), &m))
+			got, err := fromValue(m)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, base58.Encode(got[:]))
+		})
+	}
+}
+
+func TestRaw(t *testing.T) {
+	r := rawHash{12, 13, 14, 15, 15}
+	h := hashFromRaw(r)
+	g, err := hashToRaw(h)
+	require.NoError(t, err)
+	require.Equal(t, g, r)
+}
+
+func TestNewhash(t *testing.T) {
+	tests := []struct {
+		name    string
 		json    string
 		want    Hash
 		wantErr bool
 	}{{
-		name: "0",
-		key:  ":s",
-		json: `"foo"`,
-		want: "oh1.Ff8LMmDZxqL7dn9SxiBusRxKDGQ5f7NzmnHJ7tEUFkgj",
-	}, {
 		name: "1",
-		key:  ":d",
-		json: `"Zm9v"`,
-		want: "oh1.EuzQfFdCYuqmzZ5Htk56VzmYPYxdfbqPchqeps5d4q85",
+		json: `{"type:s":"foo","data:m":{"foo:s":"bar"}}`,
+		want: "oh1.D5ZyytQVJ8hLyLHL8PbGyrGkTuYNNzZanHnYATKX1ctN",
 	}, {
 		name: "2",
-		key:  ":b",
-		json: `false`,
-		want: "oh1.33SpDGfNXQXvojLuQbUeDbEjWeSTkWi1NUqS44kiUgSU",
+		// nolint: lll
+		json: `{"type:s":"foo","data:m":{"foo:o":{"type:s":"foo","data:m":{"foo:s":"bar"}}}}`,
+		want: "oh1.CCY333XK4N91Fwuunj3N1RGizqPo96JkictfjqHK68XW",
 	}, {
 		name: "3",
-		key:  ":b",
-		json: `true`,
-		want: "oh1.25Np3T8coGqqrbGwShY9xkY8VwYWP5xno3GwtrS7MZsa",
-	}, {
-		name: "4",
-		key:  ":i",
-		json: `1234567890`,
-		want: "oh1.FEeWB9Uy6jTyx6eu2FUrhFEvi555ydaxwU3VUBjzi989",
-	}, {
-		name: "5",
-		key:  ":f",
-		json: `12345.6789`,
-		want: "oh1.6YbTAHuuTfan9z8j6UVG9MYH8Y9oy9u6ZpiroFXoqXkT",
-	}, {
-		name: "6",
-		key:  ":m",
-		json: `{"something:s":"foo"}`,
-		want: "oh1.3GFaM2nhTSuEUGh29tFdktAH1u79mCFKTD3NAzwMTUVf",
-	}, {
-		name: "7",
-		key:  ":m",
-		json: `{"something:d":"Zm9v"}`,
-		want: "oh1.FHMpNW8UHavirmi6Ag9sFSVVJpNT2rgtxSTnxjmZufQ",
-	}, {
-		name: "8",
-		key:  ":m",
-		json: `{"something:b":false}`,
-		want: "oh1.FUdMm76daGuwJmMrDn2Uzb8U7Y8xSipofSSJRbKcXG4b",
-	}, {
-		name: "9",
-		key:  ":m",
-		json: `{"something:b":true}`,
-		want: "oh1.ECjyVPPabfQpqD4zdviWbVmh44VtDQrfdeiT14P7d2Kh",
-	}, {
-		name: "10",
-		key:  ":m",
-		json: `{"something:i":1234567890}`,
-		want: "oh1.DveWCsBTBBNwGmmTeZbpCedrME1E2XHe69J9PGZceDJm",
-	}, {
-		name: "11",
-		key:  ":m",
-		json: `{"something:f":12345.6789}`,
-		want: "oh1.4XiNVLLVyD3yAyZzpk7kCC6SW8t5hYaMWNK7JyGmsigJ",
-	}, {
-		name: "12",
-		key:  ":as",
-		json: `["foo","bar"]`,
-		want: "oh1.3LGHmZJpypMyxdwWtdva89cydgqfJU5W12cTrEB6erHb",
-	}, {
-		name: "13",
-		key:  ":m",
-		json: `{"something:as":["foo","bar"]}`,
-		want: "oh1.5ttZgwrbiVeERiQ17YMXbTsHP3NvLRRqsfYeNEnfxvgq",
-	}, {
-		name: "14",
-		key:  ":m",
-		json: `{"something:ai":[123,456]}`,
-		want: "oh1.GvhANQSTivbTre6UmkBEhVMFo3aGyhXscKmHCg7Nm4tT",
-	}, {
-		name: "15",
-		key:  ":m",
-		json: `{"foo:s":"bar"}`,
-		want: "oh1.CgfoHRELcu1DwPjtGcXuVr1oFbAVxF8mRTWkTyJsE9gk",
-	}, {
-		name: "16",
-		key:  ":m",
-		json: `{"data:r":"oh1.CgfoHRELcu1DwPjtGcXuVr1oFbAVxF8mRTWkTyJsE9gk"}`,
-		want: "oh1.EAKxMZySQigLYF9hZ3D4YjqrhWQ6q24NhvvbmUAsQSCt",
-	}, {
-		name: "17",
-		key:  ":m",
 		// nolint: lll
-		json: `{"data:m":{"foo:s":"bar","nested:o":{"_sig:s":"should not matter","foo:s":"bar"}}}`,
-		want: "oh1.CA3EJnaqMXGVZuMzb5DS2vTUBcjjwwsikyAFtQA1uLQm",
-	}, {
-		name: "18",
-		key:  ":m",
-		// nolint: lll
-		json: `{"data:m":{"foo:s":"bar","nested:o":{"_signature:m":{"foo:s":"bar"},"foo:s":"bar"}}}`,
-		want: "oh1.CA3EJnaqMXGVZuMzb5DS2vTUBcjjwwsikyAFtQA1uLQm",
+		json: `{"type:s":"foo","data:m":{"foo:h":"oh1.D5ZyytQVJ8hLyLHL8PbGyrGkTuYNNzZanHnYATKX1ctN"}}`,
+		want: "oh1.CCY333XK4N91Fwuunj3N1RGizqPo96JkictfjqHK68XW",
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var m interface{}
-			require.NoError(t, json.Unmarshal([]byte(tt.json), &m))
-			got, err := hashValueAs(tt.key, m, hintsFromKey(tt.key)...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewHash() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			o := &Object{}
+			assert.NoError(t, json.Unmarshal([]byte(tt.json), o))
+			got, err := NewHash(o)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}

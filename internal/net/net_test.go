@@ -27,9 +27,9 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	done := make(chan bool)
 
-	resObj := object.FromMap(map[string]interface{}{ // nolint: errcheck
-		"data:m": map[string]interface{}{
-			"foo:s": "bar",
+	resObj := object.FromMap(object.Map{ // nolint: errcheck
+		"data": object.Map{
+			"foo": object.String("bar"),
 		},
 	})
 
@@ -54,9 +54,9 @@ func TestNetConnectionSuccess(t *testing.T) {
 	sc, err := n1.Accept()
 	require.NoError(t, err)
 
-	reqObj := object.FromMap(map[string]interface{}{
-		"data:m": map[string]interface{}{
-			"foo:s": "bar",
+	reqObj := object.FromMap(object.Map{
+		"data": object.Map{
+			"foo": object.String("bar"),
 		},
 	})
 	err = Write(reqObj, sc)

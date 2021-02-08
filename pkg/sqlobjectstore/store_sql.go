@@ -89,7 +89,7 @@ func (st *Store) Get(
 
 	row := stmt.QueryRow(hash.String())
 
-	m := map[string]interface{}{}
+	obj := &object.Object{}
 	data := []byte{}
 
 	if err := row.Scan(&data); err != nil {
@@ -99,14 +99,12 @@ func (st *Store) Get(
 		)
 	}
 
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := json.Unmarshal(data, obj); err != nil {
 		return nil, errors.Wrap(
 			err,
 			errors.New("could not unmarshal data"),
 		)
 	}
-
-	obj := object.FromMap(m)
 
 	// update the last accessed column
 	istmt, err := st.db.Prepare(

@@ -37,43 +37,76 @@ func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.Announcement",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["version:i"] = e.Version
+	// else
+	// r.Data["version"] = object.Int(e.Version)
+	r.Data["version"] = object.Int(e.Version)
+	// else if $member.IsObject
 	if e.ConnectionInfo != nil {
-		r.Data["connectionInfo:o"] = e.ConnectionInfo.ToObject()
+		r.Data["connectionInfo"] = e.ConnectionInfo.ToObject()
 	}
+	// if $member.IsRepeated
 	if len(e.PeerVector) > 0 {
-		r.Data["peerVector:au"] = e.PeerVector
+		// else
+		// r.Data["peerVector"] = object.ToUintArray(e.PeerVector)
+		rv := make(object.UintArray, len(e.PeerVector))
+		for i, iv := range e.PeerVector {
+			rv[i] = object.Uint(iv)
+		}
+		r.Data["peerVector"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.PeerCapabilities) > 0 {
-		r.Data["peerCapabilities:as"] = e.PeerCapabilities
-	}
-	return r
-}
-
-func (e Announcement) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["version:i"] = e.Version
-	if e.ConnectionInfo != nil {
-		d["connectionInfo:o"] = e.ConnectionInfo.ToObject()
-	}
-	if len(e.PeerVector) > 0 {
-		d["peerVector:au"] = e.PeerVector
-	}
-	if len(e.PeerCapabilities) > 0 {
-		d["peerCapabilities:as"] = e.PeerCapabilities
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/hyperspace.Announcement",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		// else
+		// r.Data["peerCapabilities"] = object.ToStringArray(e.PeerCapabilities)
+		rv := make(object.StringArray, len(e.PeerCapabilities))
+		for i, iv := range e.PeerCapabilities {
+			rv[i] = object.String(iv)
+		}
+		r.Data["peerCapabilities"] = rv
 	}
 	return r
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["version"]; ok {
+		if t, ok := v.(object.Int); ok {
+			e.Version = int64(t)
+		}
+	}
+	if v, ok := o.Data["connectionInfo"]; ok {
+		if t, ok := v.(object.Map); ok {
+			es := &peer.ConnectionInfo{}
+			eo := object.FromMap(t)
+			es.FromObject(eo)
+			e.ConnectionInfo = es
+		} else if t, ok := v.(*object.Object); ok {
+			es := &peer.ConnectionInfo{}
+			es.FromObject(t)
+			e.ConnectionInfo = es
+		}
+	}
+	if v, ok := o.Data["peerVector"]; ok {
+		if t, ok := v.(object.UintArray); ok {
+			rv := make([]uint64, len(t))
+			for i, iv := range t {
+				rv[i] = uint64(iv)
+			}
+			e.PeerVector = rv
+		}
+	}
+	if v, ok := o.Data["peerCapabilities"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.PeerCapabilities = rv
+		}
+	}
+	return nil
 }
 
 func (e *LookupRequest) Type() string {
@@ -84,37 +117,60 @@ func (e LookupRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupRequest",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
+	// else
+	// r.Data["nonce"] = object.String(e.Nonce)
+	r.Data["nonce"] = object.String(e.Nonce)
+	// if $member.IsRepeated
 	if len(e.QueryVector) > 0 {
-		r.Data["queryVector:au"] = e.QueryVector
+		// else
+		// r.Data["queryVector"] = object.ToUintArray(e.QueryVector)
+		rv := make(object.UintArray, len(e.QueryVector))
+		for i, iv := range e.QueryVector {
+			rv[i] = object.Uint(iv)
+		}
+		r.Data["queryVector"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.RequireCapabilities) > 0 {
-		r.Data["requireCapabilities:as"] = e.RequireCapabilities
-	}
-	return r
-}
-
-func (e LookupRequest) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	if len(e.QueryVector) > 0 {
-		d["queryVector:au"] = e.QueryVector
-	}
-	if len(e.RequireCapabilities) > 0 {
-		d["requireCapabilities:as"] = e.RequireCapabilities
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/hyperspace.LookupRequest",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		// else
+		// r.Data["requireCapabilities"] = object.ToStringArray(e.RequireCapabilities)
+		rv := make(object.StringArray, len(e.RequireCapabilities))
+		for i, iv := range e.RequireCapabilities {
+			rv[i] = object.String(iv)
+		}
+		r.Data["requireCapabilities"] = rv
 	}
 	return r
 }
 
 func (e *LookupRequest) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["queryVector"]; ok {
+		if t, ok := v.(object.UintArray); ok {
+			rv := make([]uint64, len(t))
+			for i, iv := range t {
+				rv[i] = uint64(iv)
+			}
+			e.QueryVector = rv
+		}
+	}
+	if v, ok := o.Data["requireCapabilities"]; ok {
+		if t, ok := v.(object.StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.RequireCapabilities = rv
+		}
+	}
+	return nil
 }
 
 func (e *LookupResponse) Type() string {
@@ -125,43 +181,66 @@ func (e LookupResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupResponse",
 		Metadata: e.Metadata,
-		Data:     map[string]interface{}{},
+		Data:     object.Map{},
 	}
-	r.Data["nonce:s"] = e.Nonce
+	// else
+	// r.Data["nonce"] = object.String(e.Nonce)
+	r.Data["nonce"] = object.String(e.Nonce)
+	// if $member.IsRepeated
 	if len(e.QueryVector) > 0 {
-		r.Data["queryVector:au"] = e.QueryVector
+		// else
+		// r.Data["queryVector"] = object.ToUintArray(e.QueryVector)
+		rv := make(object.UintArray, len(e.QueryVector))
+		for i, iv := range e.QueryVector {
+			rv[i] = object.Uint(iv)
+		}
+		r.Data["queryVector"] = rv
 	}
+	// if $member.IsRepeated
 	if len(e.Announcements) > 0 {
-		rv := make([]*object.Object, len(e.Announcements))
+		// if $member.IsObject
+		rv := make(object.ObjectArray, len(e.Announcements))
 		for i, v := range e.Announcements {
 			rv[i] = v.ToObject()
 		}
-		r.Data["announcements:ao"] = rv
-	}
-	return r
-}
-
-func (e LookupResponse) ToObjectMap() map[string]interface{} {
-	d := map[string]interface{}{}
-	d["nonce:s"] = e.Nonce
-	if len(e.QueryVector) > 0 {
-		d["queryVector:au"] = e.QueryVector
-	}
-	if len(e.Announcements) > 0 {
-		rv := make([]*object.Object, len(e.Announcements))
-		for i, v := range e.Announcements {
-			rv[i] = v.ToObject()
-		}
-		d["announcements:ao"] = rv
-	}
-	r := map[string]interface{}{
-		"type:s":     "nimona.io/hyperspace.LookupResponse",
-		"metadata:m": object.MetadataToMap(&e.Metadata),
-		"data:m":     d,
+		r.Data["announcements"] = rv
 	}
 	return r
 }
 
 func (e *LookupResponse) FromObject(o *object.Object) error {
-	return object.Decode(o, e)
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["queryVector"]; ok {
+		if t, ok := v.(object.UintArray); ok {
+			rv := make([]uint64, len(t))
+			for i, iv := range t {
+				rv[i] = uint64(iv)
+			}
+			e.QueryVector = rv
+		}
+	}
+	if v, ok := o.Data["announcements"]; ok {
+		if t, ok := v.(object.MapArray); ok {
+			e.Announcements = make([]*Announcement, len(t))
+			for i, iv := range t {
+				es := &Announcement{}
+				eo := object.FromMap(iv)
+				es.FromObject(eo)
+				e.Announcements[i] = es
+			}
+		} else if t, ok := v.(object.ObjectArray); ok {
+			e.Announcements = make([]*Announcement, len(t))
+			for i, iv := range t {
+				es := &Announcement{}
+				es.FromObject(iv)
+				e.Announcements[i] = es
+			}
+		}
+	}
+	return nil
 }

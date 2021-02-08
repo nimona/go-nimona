@@ -53,8 +53,8 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: p.ToObject().Hash(),
 		},
-		Data: map[string]interface{}{
-			"key:s": "value",
+		Data: object.Map{
+			"key": object.String("value"),
 		},
 	}
 
@@ -74,9 +74,9 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	retrievedObj, err := store.Get(obj.Hash())
 	require.NoError(t, err)
 
-	val := retrievedObj.Data["key:s"]
+	val := retrievedObj.Data["key"]
 	require.NotNil(t, val)
-	assert.Equal(t, "value", val.(string))
+	assert.Equal(t, "value", string(val.(object.String)))
 
 	stHash := obj.Metadata.Stream
 	require.NotEmpty(t, stHash)
@@ -139,8 +139,8 @@ func TestFilter(t *testing.T) {
 					Add(time.Duration(i) * time.Hour).
 					Format(time.RFC3339),
 			},
-			Data: map[string]interface{}{
-				"keys:s": fmt.Sprintf("value_%d", i),
+			Data: object.Map{
+				"keys": object.String(fmt.Sprintf("value_%d", i)),
 			},
 		}
 		if i%2 == 0 {
@@ -234,8 +234,8 @@ func TestStore_Relations(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
-		Data: map[string]interface{}{
-			"f00:s": "f00",
+		Data: object.Map{
+			"f00": object.String("f00"),
 		},
 	}
 
@@ -247,8 +247,8 @@ func TestStore_Relations(t *testing.T) {
 				f00.Hash(),
 			},
 		},
-		Data: map[string]interface{}{
-			"f01:s": "f01",
+		Data: object.Map{
+			"f01": object.String("f01"),
 		},
 	}
 
@@ -260,8 +260,8 @@ func TestStore_Relations(t *testing.T) {
 				f01.Hash(),
 			},
 		},
-		Data: map[string]interface{}{
-			"f02:s": "f02",
+		Data: object.Map{
+			"f02": object.String("f02"),
 		},
 	}
 

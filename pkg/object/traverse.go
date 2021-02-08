@@ -7,13 +7,13 @@ import (
 )
 
 func traverseObject(
-	v interface{},
-	f func(string, interface{}) (string, interface{}, bool),
+	v Value,
+	f func(string, Value) (updatedKey string, updatedValue Value, update bool),
 ) {
 	switch vv := v.(type) {
 	case *Object:
 		traverseObject(vv.Data, f)
-	case map[string]interface{}:
+	case Map:
 		for ik, iv := range vv {
 			uk, uv, u := f(ik, iv)
 			if u {

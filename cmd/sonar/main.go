@@ -185,8 +185,8 @@ func main() {
 					Metadata: object.Metadata{
 						Owner: local.GetPrimaryPeerKey().PublicKey(),
 					},
-					Data: map[string]interface{}{
-						"nonce:s": rand.String(8),
+					Data: object.Map{
+						"nonce": object.String(rand.String(8)),
 					},
 				},
 				recipient.PublicKey,
