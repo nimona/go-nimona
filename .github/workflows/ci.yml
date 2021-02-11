@@ -102,6 +102,9 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v1
 
+      - name: Get courtney
+        run: make courtney
+
       - name: Publish coverage
         uses: paambaati/codeclimate-action@v2.7.5
         env:

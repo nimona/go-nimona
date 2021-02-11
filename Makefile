@@ -72,6 +72,7 @@ $(eval $(call tool,gold,go101.org/gold@v0.1.1))
 $(eval $(call tool,goreleaser,github.com/goreleaser/goreleaser@v0.143.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.4.3))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.3.0))
+$(eval $(call tool,courtney,github.com/geoah/go-courtney@master))
 
 $(eval $(call inttool,codegen))
 $(eval $(call inttool,community))
@@ -222,7 +223,7 @@ cover-func: coverage.out
 
 coverage.out: $(SOURCES)
 	-@NIMONA_UPNP_DISABLE=true \
-		go test $(V) -covermode=count -coverprofile=coverage.tmp-raw.out ./...
+		$(TOOLDIR)/go-courtney $(V) -o=coverage.tmp-raw.out
 	-@cat coverage.tmp-raw.out | \
 		grep -Ev '_generated\.go|_mock\.go|.pb.go|/cmd/|/examples/|/playground/' \
 			> coverage.tmp-clean.out

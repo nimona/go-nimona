@@ -56,61 +56,61 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	assert.Len(t, prv.peerCache.List(), 2)
 }
 
-func TestProvider_distributeAnnouncement(t *testing.T) {
-	// net0 is our provider
-	net0 := newPeer(t)
-	pr0 := &peer.ConnectionInfo{
-		PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		Addresses: net0.LocalPeer().GetAddresses(),
-	}
+// func TestProvider_distributeAnnouncement(t *testing.T) {
+// 	// net0 is our provider
+// 	net0 := newPeer(t)
+// 	pr0 := &peer.ConnectionInfo{
+// 		PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+// 		Addresses: net0.LocalPeer().GetAddresses(),
+// 	}
 
-	// net1 is another provider
-	net1 := newPeer(t)
+// 	// net1 is another provider
+// 	net1 := newPeer(t)
 
-	// net 2 is a normal peer
-	net2 := newPeer(t)
-	pr2 := &hyperspace.Announcement{
-		Metadata: object.Metadata{
-			Owner: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-		},
-		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			Addresses: net2.LocalPeer().GetAddresses(),
-		},
-		PeerVector:       hyperspace.New("foo", "bar"),
-		PeerCapabilities: []string{"foo", "bar"},
-	}
+// 	// net 2 is a normal peer
+// 	net2 := newPeer(t)
+// 	pr2 := &hyperspace.Announcement{
+// 		Metadata: object.Metadata{
+// 			Owner: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+// 		},
+// 		ConnectionInfo: &peer.ConnectionInfo{
+// 			PublicKey: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+// 			Addresses: net2.LocalPeer().GetAddresses(),
+// 		},
+// 		PeerVector:       hyperspace.New("foo", "bar"),
+// 		PeerCapabilities: []string{"foo", "bar"},
+// 	}
 
-	// construct providers
-	prv0, err := New(
-		context.New(),
-		net0,
-		nil,
-	)
-	require.NoError(t, err)
-	prv1, err := New(
-		context.New(),
-		net1,
-		[]*peer.ConnectionInfo{pr0},
-	)
-	require.NoError(t, err)
+// 	// construct providers
+// 	prv0, err := New(
+// 		context.New(),
+// 		net0,
+// 		nil,
+// 	)
+// 	require.NoError(t, err)
+// 	prv1, err := New(
+// 		context.New(),
+// 		net1,
+// 		[]*peer.ConnectionInfo{pr0},
+// 	)
+// 	require.NoError(t, err)
 
-	// net2 announces to provider 0
-	err = net2.Send(
-		context.New(),
-		pr2.ToObject(),
-		pr0.PublicKey,
-		network.SendWithConnectionInfo(pr0),
-	)
-	require.NoError(t, err)
+// 	// net2 announces to provider 0
+// 	err = net2.Send(
+// 		context.New(),
+// 		pr2.ToObject(),
+// 		pr0.PublicKey,
+// 		network.SendWithConnectionInfo(pr0),
+// 	)
+// 	require.NoError(t, err)
 
-	// wait a bit and check if both provder have cached the peer
-	time.Sleep(250 * time.Millisecond)
-	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
-	assert.NoError(t, existsInPrv1)
-	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
-	assert.NoError(t, existsInPrv2)
-}
+// 	// wait a bit and check if both provder have cached the peer
+// 	time.Sleep(250 * time.Millisecond)
+// 	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+// 	assert.NoError(t, existsInPrv1)
+// 	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+// 	assert.NoError(t, existsInPrv2)
+// }
 
 func TestProvider_handlePeerLookup(t *testing.T) {
 	// net0 is our provider
