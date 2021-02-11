@@ -638,24 +638,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 444787,
-            "unit": "ns/op",
-            "extra": "2480 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 17532659,
-            "unit": "ns/op",
-            "extra": "67 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 177228976,
-            "unit": "ns/op",
-            "extra": "18 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 57134,
             "unit": "ns/op",
@@ -691,24 +673,6 @@ window.BENCHMARK_DATA = {
         "date": 1606167702034,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 392621,
-            "unit": "ns/op",
-            "extra": "2881 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 14218068,
-            "unit": "ns/op",
-            "extra": "82 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 130977083,
-            "unit": "ns/op",
-            "extra": "24 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 49286,
@@ -746,24 +710,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 399121,
-            "unit": "ns/op",
-            "extra": "2528 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 15332201,
-            "unit": "ns/op",
-            "extra": "70 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 152833550,
-            "unit": "ns/op",
-            "extra": "16 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 55188,
             "unit": "ns/op",
@@ -799,24 +745,6 @@ window.BENCHMARK_DATA = {
         "date": 1606263682668,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 372157,
-            "unit": "ns/op",
-            "extra": "2790 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 11488908,
-            "unit": "ns/op",
-            "extra": "99 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 121962416,
-            "unit": "ns/op",
-            "extra": "21 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 52288,
@@ -854,24 +782,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 415572,
-            "unit": "ns/op",
-            "extra": "2526 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12172370,
-            "unit": "ns/op",
-            "extra": "93 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 131774906,
-            "unit": "ns/op",
-            "extra": "15 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 61064,
             "unit": "ns/op",
@@ -907,24 +817,6 @@ window.BENCHMARK_DATA = {
         "date": 1606267722134,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 427639,
-            "unit": "ns/op",
-            "extra": "2701 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 17648657,
-            "unit": "ns/op",
-            "extra": "67 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 180862464,
-            "unit": "ns/op",
-            "extra": "18 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 57753,
@@ -962,24 +854,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 386565,
-            "unit": "ns/op",
-            "extra": "3202 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 16366409,
-            "unit": "ns/op",
-            "extra": "70 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 159758324,
-            "unit": "ns/op",
-            "extra": "21 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 48750,
             "unit": "ns/op",
@@ -1015,24 +889,6 @@ window.BENCHMARK_DATA = {
         "date": 1606298006738,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 370294,
-            "unit": "ns/op",
-            "extra": "3166 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12724613,
-            "unit": "ns/op",
-            "extra": "88 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 124951190,
-            "unit": "ns/op",
-            "extra": "22 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 55280,
@@ -1070,24 +926,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 352696,
-            "unit": "ns/op",
-            "extra": "2919 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 11731371,
-            "unit": "ns/op",
-            "extra": "100 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 115364299,
-            "unit": "ns/op",
-            "extra": "24 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 47436,
             "unit": "ns/op",
@@ -1123,24 +961,6 @@ window.BENCHMARK_DATA = {
         "date": 1606569956317,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 379887,
-            "unit": "ns/op",
-            "extra": "3039 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 13124398,
-            "unit": "ns/op",
-            "extra": "87 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 130237979,
-            "unit": "ns/op",
-            "extra": "21 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 55430,
@@ -1178,24 +998,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 398456,
-            "unit": "ns/op",
-            "extra": "2898 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12432715,
-            "unit": "ns/op",
-            "extra": "91 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 127167386,
-            "unit": "ns/op",
-            "extra": "19 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 56323,
             "unit": "ns/op",
@@ -1231,24 +1033,6 @@ window.BENCHMARK_DATA = {
         "date": 1606584946734,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 494299,
-            "unit": "ns/op",
-            "extra": "2376 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 14007245,
-            "unit": "ns/op",
-            "extra": "86 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 128457050,
-            "unit": "ns/op",
-            "extra": "21 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 58217,
@@ -1286,24 +1070,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 392059,
-            "unit": "ns/op",
-            "extra": "3482 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12152138,
-            "unit": "ns/op",
-            "extra": "93 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 125931259,
-            "unit": "ns/op",
-            "extra": "24 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 58146,
             "unit": "ns/op",
@@ -1339,24 +1105,6 @@ window.BENCHMARK_DATA = {
         "date": 1606593870022,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 412274,
-            "unit": "ns/op",
-            "extra": "2793 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 13218664,
-            "unit": "ns/op",
-            "extra": "81 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 132685182,
-            "unit": "ns/op",
-            "extra": "24 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 60018,
@@ -1394,24 +1142,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 398930,
-            "unit": "ns/op",
-            "extra": "2785 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12285146,
-            "unit": "ns/op",
-            "extra": "97 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 121152174,
-            "unit": "ns/op",
-            "extra": "25 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 55412,
             "unit": "ns/op",
@@ -1447,24 +1177,6 @@ window.BENCHMARK_DATA = {
         "date": 1606685476437,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 448311,
-            "unit": "ns/op",
-            "extra": "2246 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 13470349,
-            "unit": "ns/op",
-            "extra": "96 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 134979364,
-            "unit": "ns/op",
-            "extra": "21 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 59810,
@@ -1502,24 +1214,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 398391,
-            "unit": "ns/op",
-            "extra": "3139 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 13017578,
-            "unit": "ns/op",
-            "extra": "90 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 134539607,
-            "unit": "ns/op",
-            "extra": "20 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 57512,
             "unit": "ns/op",
@@ -1555,24 +1249,6 @@ window.BENCHMARK_DATA = {
         "date": 1606854196955,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 393742,
-            "unit": "ns/op",
-            "extra": "3060 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 16960192,
-            "unit": "ns/op",
-            "extra": "74 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 162617479,
-            "unit": "ns/op",
-            "extra": "19 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 58700,
@@ -1610,24 +1286,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 342550,
-            "unit": "ns/op",
-            "extra": "3543 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 11834785,
-            "unit": "ns/op",
-            "extra": "96 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 116984776,
-            "unit": "ns/op",
-            "extra": "26 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 47981,
             "unit": "ns/op",
@@ -1663,24 +1321,6 @@ window.BENCHMARK_DATA = {
         "date": 1607092768272,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 457741,
-            "unit": "ns/op",
-            "extra": "2706 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 12728383,
-            "unit": "ns/op",
-            "extra": "86 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 133018434,
-            "unit": "ns/op",
-            "extra": "20 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 58637,
@@ -1718,24 +1358,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 409580,
-            "unit": "ns/op",
-            "extra": "2605 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 13419977,
-            "unit": "ns/op",
-            "extra": "81 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 134111127,
-            "unit": "ns/op",
-            "extra": "22 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 59764,
             "unit": "ns/op",
@@ -1772,24 +1394,6 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkToBlob1",
-            "value": 375967,
-            "unit": "ns/op",
-            "extra": "3039 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 11091101,
-            "unit": "ns/op",
-            "extra": "104 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 120295314,
-            "unit": "ns/op",
-            "extra": "22 times\n2 procs"
-          },
-          {
             "name": "BenchmarkHash",
             "value": 59103,
             "unit": "ns/op",
@@ -1825,24 +1429,6 @@ window.BENCHMARK_DATA = {
         "date": 1608747519504,
         "tool": "go",
         "benches": [
-          {
-            "name": "BenchmarkToBlob1",
-            "value": 406712,
-            "unit": "ns/op",
-            "extra": "2511 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob100",
-            "value": 16953760,
-            "unit": "ns/op",
-            "extra": "73 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkToBlob1000",
-            "value": 170279358,
-            "unit": "ns/op",
-            "extra": "19 times\n2 procs"
-          },
           {
             "name": "BenchmarkHash",
             "value": 58384,
