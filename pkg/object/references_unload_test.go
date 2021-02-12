@@ -10,14 +10,6 @@ import (
 )
 
 func TestUnloadReferences(t *testing.T) {
-	f00 := &Object{
-		Type: "f00",
-		Data: Map{
-			"f00": String("f00"),
-			"f01": Hash("oh1.5DpjbdcdcmGQpyutoicXzC2BykC6EZCt2cbwyW4PRe8y"),
-			"f02": Hash("oh1.C3jCVoq3TtxKrqmGKNGup6fdZca4ScHAmv9UjG1pta1C"),
-		},
-	}
 	f01 := &Object{
 		Type: "f01",
 		Data: Map{
@@ -28,6 +20,14 @@ func TestUnloadReferences(t *testing.T) {
 		Type: "f02",
 		Data: Map{
 			"f02": String("f02"),
+		},
+	}
+	f00 := &Object{
+		Type: "f00",
+		Data: Map{
+			"f00": String("f00"),
+			"f01": f01.Hash(),
+			"f02": f02.Hash(),
 		},
 	}
 	f00Full := &Object{

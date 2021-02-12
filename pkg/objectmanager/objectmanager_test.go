@@ -753,10 +753,12 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
 			Stream: testObjectStreamRoot.Hash(),
-			Parents: []object.Hash{
-				bar1.Hash(),
-				bar2.Hash(),
-			},
+			Parents: object.SortHashes(
+				[]object.Hash{
+					bar1.Hash(),
+					bar2.Hash(),
+				},
+			),
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
@@ -931,10 +933,12 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]object.Hash{
-							bar1.Hash(),
-							bar2.Hash(),
-						},
+						object.SortHashes(
+							[]object.Hash{
+								bar1.Hash(),
+								bar2.Hash(),
+							},
+						),
 						nil,
 					)
 				m.EXPECT().

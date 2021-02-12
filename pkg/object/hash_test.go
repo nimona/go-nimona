@@ -2,12 +2,11 @@ package object
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"nimona.io/internal/encoding/base58"
 )
 
 func BenchmarkHash(b *testing.B) {
@@ -44,53 +43,53 @@ func TestFromValue(t *testing.T) {
 	}{{
 		name: "5",
 		json: `{"something:s":"foo","metadata:m":{}}`,
-		want: "uvqAvGish5DVzVsZcn9aFvvFG8JgeuwgGMnLj2dfp6e",
+		want: "QmT1f4wLjS9tbf6WRUMHQAfqt7UT48qTBb1J75tmerc5rm",
 	}, {
 		name: "6",
 		json: `{"something:s":"foo"}`,
-		want: "uvqAvGish5DVzVsZcn9aFvvFG8JgeuwgGMnLj2dfp6e",
+		want: "QmT1f4wLjS9tbf6WRUMHQAfqt7UT48qTBb1J75tmerc5rm",
 	}, {
 		name: "7",
 		json: `{"something:d":"Zm9v"}`,
-		want: "GaRxrpcBkBP16rmL4kNzhwZvqo6DjqW5bccNm65okSYG",
+		want: "QmXocPFUysHQxuNifQaFyYLgcndxDvmnu1hs6BCwVHKnUJ",
 	}, {
 		name: "8",
 		json: `{"something:b":false}`,
-		want: "AVigrbFWTBNVXeB5Q6GDrt75sTBrpwuEqMVP7DVfW9mM",
+		want: "Qmaw1rVTP2y7Y4taU1GgHyyZ2BFdmdF3uA2exP4NanHjBj",
 	}, {
 		name: "9",
 		json: `{"something:b":true}`,
-		want: "69CbvTybbM2DPrCRqoGyt7kxFUKhYwSbtUdtCs9HQLve",
+		want: "QmaJoWsfScjaB3P2iEEKgWPmR1iRtG9hAswoj2w84W3FhB",
 	}, {
 		name: "10",
 		json: `{"something:i":1234567890}`,
-		want: "Am2CNoZisskHDL2E8srhPHc4L5wCGUv6nuJjVT6Ca1iV",
+		want: "QmQMB1ajKQNHpBoHmYV4vBxjoyCJn7e7c8aGkTZRoYpHte",
 	}, {
 		name: "11",
 		json: `{"something:f":12345.6789}`,
-		want: "AnVQHPHdbE5VDo2XG21VRi6yESZWnwKpf3SU68WAspUC",
+		want: "Qme79NMzWUYi2sybKZ9j4o6cmni1BAiZkFvRTbtoDPMWNn",
 	}, {
 		name: "13",
 		json: `{"something:as":["foo","bar"]}`,
-		want: "EYCgWPkfYeGew331WYBaKphmtxDgPcJet6pWpSokK9Am",
+		want: "QmSKCPJmDJEXR51YVCd2kjR1Kw8gDp2qJMSCiUwaZPnNM7",
 	}, {
 		name: "14",
 		json: `{"something:ai":[123,456]}`,
-		want: "FzULygYLCUkuEibqPKYxnoEMSnnfaNfkbuJDeZgnZra5",
+		want: "QmWk9fcxpHS4wPTprnnmi9mPevmyP21bwhfbWGtjqV2arT",
 	}, {
 		name: "15",
 		json: `{"foo:s":"bar"}`,
-		want: "FwXyoLg3qpzM8R8uZECrymsyGuKVTyTn3qoNsmGhEMRg",
+		want: "QmZP9BNzNEzxp8QnQYePUyCWEXwqUCvB16W53AoKmGFQhw",
 	}, {
 		name: "17",
 		// nolint: lll
 		json: `{"data:m":{"foo:s":"bar","nested:m":{"_sig:s":"should not matter","foo:s":"bar"}}}`,
-		want: "bmRkoyP1pWmRphQVpCGKJz7EJDY7mEpLNrPW4zRedkj",
+		want: "QmNNgkh9Yi2qPFaZQQYEkQDVjZkAU81ALg1htJukoD23wm",
 	}, {
 		name: "18",
 		// nolint: lll
 		json: `{"data:m":{"foo:s":"bar","nested:m":{"_signature:m":{"foo:s":"bar"},"foo:s":"bar"}}}`,
-		want: "bmRkoyP1pWmRphQVpCGKJz7EJDY7mEpLNrPW4zRedkj",
+		want: "QmNNgkh9Yi2qPFaZQQYEkQDVjZkAU81ALg1htJukoD23wm",
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -98,20 +97,34 @@ func TestFromValue(t *testing.T) {
 			assert.NoError(t, json.Unmarshal([]byte(tt.json), &m))
 			got, err := fromValue(m)
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, base58.Encode(got[:]))
+			assert.Equal(t, tt.want, got.B58String())
 		})
 	}
 }
 
 func TestRaw(t *testing.T) {
-	r := rawHash{12, 13, 14, 15, 15}
-	h := hashFromRaw(r)
-	g, err := hashToRaw(h)
+	r := []byte("aa")
+	h, _ := mhFromBytes("t", r)
+	c := mhToCid(h)
+	fmt.Println(c)
+	g, err := mhFromCid(c)
 	require.NoError(t, err)
-	require.Equal(t, g, r)
+	require.Equal(t, h, g)
 }
 
-func TestNewhash(t *testing.T) {
+func TestObjectReplace(t *testing.T) {
+	inner := &Object{
+		Type: "foo",
+		Data: Map{
+			"foo": String("bar"),
+		},
+	}
+	parentWithInner := &Object{
+		Type: "foo",
+		Data: Map{
+			"foo": inner,
+		},
+	}
 	tests := []struct {
 		name    string
 		json    string
@@ -120,17 +133,17 @@ func TestNewhash(t *testing.T) {
 	}{{
 		name: "1",
 		json: `{"type:s":"foo","data:m":{"foo:s":"bar"}}`,
-		want: "oh1.D5ZyytQVJ8hLyLHL8PbGyrGkTuYNNzZanHnYATKX1ctN",
+		want: inner.Hash(),
 	}, {
 		name: "2",
 		// nolint: lll
 		json: `{"type:s":"foo","data:m":{"foo:o":{"type:s":"foo","data:m":{"foo:s":"bar"}}}}`,
-		want: "oh1.CCY333XK4N91Fwuunj3N1RGizqPo96JkictfjqHK68XW",
+		want: parentWithInner.Hash(),
 	}, {
 		name: "3",
 		// nolint: lll
-		json: `{"type:s":"foo","data:m":{"foo:h":"oh1.D5ZyytQVJ8hLyLHL8PbGyrGkTuYNNzZanHnYATKX1ctN"}}`,
-		want: "oh1.CCY333XK4N91Fwuunj3N1RGizqPo96JkictfjqHK68XW",
+		json: `{"type:s":"foo","data:m":{"foo:h":"` + string(inner.Hash()) + `"}}`,
+		want: parentWithInner.Hash(),
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
