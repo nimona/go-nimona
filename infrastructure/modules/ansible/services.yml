@@ -11,3 +11,5 @@
       tags: ["services", "metrics", "prometheus"]
     - role: grafana
       tags: ["services", "metrics", "grafana"]
+    - role: pyroscope
+      tags: ["services", "metrics", "pyroscope"]

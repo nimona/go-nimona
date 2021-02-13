@@ -1,0 +1,6 @@
+- name: restart pyroscope
+  docker_container:
+    name: pyroscope
+    state: started
+    restart: yes
+    container_default_behavior: no_defaults
