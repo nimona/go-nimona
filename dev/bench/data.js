@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1612987067008,
+  "lastUpdate": 1613239782636,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2406,6 +2406,54 @@ window.BENCHMARK_DATA = {
             "value": 13991,
             "unit": "ns/op",
             "extra": "83422 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "91794e14f2e26701d47daa292c53f36a48932b31",
+          "message": "chore(hyperspace/provider): make provider test less flaky",
+          "timestamp": "2021-02-13T18:08:23Z",
+          "tree_id": "cfc8ad6cd358179d30f9d1d9959a295fac456e26",
+          "url": "https://github.com/nimona/go-nimona/commit/91794e14f2e26701d47daa292c53f36a48932b31"
+        },
+        "date": 1613239781692,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3744526,
+            "unit": "ns/op",
+            "extra": "314 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 359302371,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3885804905,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 14776,
+            "unit": "ns/op",
+            "extra": "79922 times\n2 procs"
           }
         ]
       }
