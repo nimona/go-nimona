@@ -16,11 +16,11 @@ grafana_user_system_user: yes
 
 grafana_data_path: "/mnt/data/grafana"
 
-grafana_server_schema: "https"
+grafana_server_scheme: "https"
 grafana_server_domain: "{{ inventory_hostname }}"
 grafana_server_path: "/grafana/"
 grafana_server_host_path: "/grafana*"
-grafana_server_root_url: "{{ grafana_server_schema }}://{{ grafana_server_domain }}{{ grafana_server_path }}"
+grafana_server_root_url: "{{ grafana_server_scheme }}://{{ grafana_server_domain }}{{ grafana_server_path }}"
 grafana_server_enforce_domain: yes
 grafana_server_serve_from_sub_path: yes
 

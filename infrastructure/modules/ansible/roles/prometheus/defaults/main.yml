@@ -14,11 +14,11 @@ prometheus_user_system_user: yes
 prometheus_data_path: "/mnt/data/prometheus"
 prometheus_data_retention_size: ""
 
-prometheus_server_schema: "https"
+prometheus_server_scheme: "https"
 prometheus_server_domain: "{{ inventory_hostname }}"
 prometheus_server_path: "/prometheus/"
 prometheus_server_root_url: |-
-  {{ prometheus_server_schema }}://{{ prometheus_server_domain }}{{ prometheus_server_path }}
+  {{ prometheus_server_scheme }}://{{ prometheus_server_domain }}{{ prometheus_server_path }}
 
 prometheus_users: {}
 
