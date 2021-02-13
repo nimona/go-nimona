@@ -1,12 +1,12 @@
 {
   "logLevel": "FATAL",
   "peer": {
-    "privateKey": "ed25519.prv.59zxgGyH7CqsX8WcfgJ3WZ56aaVxqgKXStp3sGAmPFQLpuW1r7DQkzdPGMkkxNDE3c5Rb1ojjKReMMistaK336Vc",
+    "privateKey": "bagacmaca7fu2erc7vnmb5fjxaeqjzm2nxty2jjltcyvv6gjxlcnvj4uer6fcdjitr4gx7ilanbeuopsafz62h7hw7vnqgvy7gxohbonqwpyfnki",
     "bindAddress": "0.0.0.0:0",
     "bootstraps": [
-      "ed25519.CJi6yjjXuNBFDoYYPrp697d6RmpXeW8ZUZPmEce9AgEc@tcps:asimov.bootstrap.nimona.io:22581",
-      "ed25519.6fVWVAK2DVGxBhtVBvzNWNKBWk9S83aQrAqGJfrxr75o@tcps:egan.bootstrap.nimona.io:22581",
-      "ed25519.7q7YpmPNQmvSCEBWW8ENw8XV8MHzETLostJTYKeaRTcL@tcps:sloan.bootstrap.nimona.io:22581"
+      "bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq@tcps:asimov.bootstrap.nimona.io:22581",
+      "bahwqcabarcrxtiaha3uq25gvntnqb6uokgdp442dysocya42ckiugohxmqkq@tcps:egan.bootstrap.nimona.io:22581",
+      "bahwqcabafguo2axx2ydpk5mrjlrsjw2rjwo34uzzr6kvtfb6cevx72q5t4bq@tcps:sloan.bootstrap.nimona.io:22581"
     ],
     "listenLocalIPs": false,
     "listenPrivateIPs": false,
