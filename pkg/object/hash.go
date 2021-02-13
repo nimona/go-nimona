@@ -16,7 +16,6 @@ import (
 
 const (
 	cidCodec = 0x6e6d // nm codec
-	mhType   = 0x12   // multihash.SHA2_256
 )
 
 func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {
