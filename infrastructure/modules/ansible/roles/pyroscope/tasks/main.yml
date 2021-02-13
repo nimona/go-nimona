@@ -58,7 +58,7 @@
     name: pyroscope
     image: "{{ pyroscope_docker_image }}:{{ pyroscope_docker_tag }}"
     pull: yes
-    recreate: "{{ pyroscope_docker_tag == 'dev' }}"
+    recreate: "{{ pyroscope_docker_tag == 'latest' }}"
     command: server
     restart_policy: always
     state: started

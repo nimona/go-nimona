@@ -1,5 +1,5 @@
 ---
-pyroscope_version: "v0.0.21"
+pyroscope_version: "latest"
 pyroscope_host_port: "4040"
 pyroscope_host_path: "/pyroscope*"
 
