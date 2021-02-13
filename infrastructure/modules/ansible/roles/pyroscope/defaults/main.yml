@@ -13,7 +13,7 @@ pyroscope_user_system_user: yes
 
 pyroscope_data_path: "/mnt/data/pyroscope"
 
-pyroscope_server_schema: "https"
+pyroscope_server_scheme: "https"
 pyroscope_server_domain: "{{ inventory_hostname }}"
 pyroscope_server_base_url: "/pyroscope/"
 pyroscope_server_strip_prefix: "pyroscope"
