@@ -9,33 +9,33 @@ import (
 type (
 	TestPolicy struct {
 		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		Subjects   []string        `nimona:"subjects:as,omitempty"`
-		Resources  []string        `nimona:"resources:as,omitempty"`
-		Conditions []string        `nimona:"conditions:as,omitempty"`
-		Action     string          `nimona:"action:s,omitempty"`
+		Subjects   []string
+		Resources  []string
+		Conditions []string
+		Action     string
 	}
 	TestStream struct {
 		Metadata        object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce           string          `nimona:"nonce:s,omitempty"`
-		CreatedDateTime string          `nimona:"createdDateTime:s,omitempty"`
+		Nonce           string
+		CreatedDateTime string
 	}
 	TestSubscribed struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
+		Nonce    string
 	}
 	TestUnsubscribed struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
+		Nonce    string
 	}
 	TestRequest struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
-		RequestID string          `nimona:"requestID:s,omitempty"`
-		Foo       string          `nimona:"foo:s,omitempty"`
+		RequestID string
+		Foo       string
 	}
 	TestResponse struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
-		RequestID string          `nimona:"requestID:s,omitempty"`
-		Foo       string          `nimona:"foo:s,omitempty"`
+		RequestID string
+		Foo       string
 	}
 )
 
