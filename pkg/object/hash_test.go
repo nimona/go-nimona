@@ -74,7 +74,7 @@ func TestObjectReplace(t *testing.T) {
 	}, {
 		name: "3",
 		// nolint: lll
-		json: `{"type:s":"foo","data:m":{"foo:h":"` + string(inner.Hash()) + `"}}`,
+		json: `{"type:s":"foo","data:m":{"foo:r":"` + string(inner.Hash()) + `"}}`,
 		want: parentWithInner.Hash(),
 	}}
 	for _, tt := range tests {

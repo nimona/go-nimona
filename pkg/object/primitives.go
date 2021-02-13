@@ -54,7 +54,7 @@ const (
 	ObjectHint Hint = "o"
 	StringHint Hint = "s"
 	UintHint   Hint = "u"
-	HashHint   Hint = "h"
+	HashHint   Hint = "r"
 	// array hints
 	BoolArrayHint   Hint = "ab"
 	DataArrayHint   Hint = "ad"
@@ -64,7 +64,7 @@ const (
 	ObjectArrayHint Hint = "ao"
 	StringArrayHint Hint = "as"
 	UintArrayHint   Hint = "au"
-	HashArrayHint   Hint = "ah"
+	HashArrayHint   Hint = "ar"
 )
 
 var hints = map[string]Hint{
