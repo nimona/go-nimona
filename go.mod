@@ -23,6 +23,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.9.0
+	github.com/pyroscope-io/pyroscope v0.0.21
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
@@ -32,7 +33,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 	golang.org/x/text v0.3.5 // indirect
-	golang.org/x/tools v0.0.0-20200318054722-11a475a590ac
+	golang.org/x/tools v0.0.0-20201121010211-780cb80bd7fb
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/pyroscope-io/pyroscope/pkg/agent/profiler"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -32,7 +33,8 @@ type config struct {
 		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 	Metrics struct {
-		BindAddress string `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+		PyroscopeServerURL string `envconfig:"PYROSCOPE_SERVER_URL"`
+		BindAddress        string `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
 	} `envconfig:"METRICS"`
 }
 
@@ -50,6 +52,17 @@ func main() {
 	cfg := &config{}
 	if err := envconfig.Process("nimona", cfg); err != nil {
 		logger.Fatal("error processing config", log.Error(err))
+	}
+
+	if cfg.Metrics.PyroscopeServerURL != "" {
+		applicationName := "bootstrap"
+		if cfg.Peer.AnnounceAddress != "" {
+			applicationName += "." + cfg.Peer.AnnounceAddress
+		}
+		profiler.Start(profiler.Config{
+			ApplicationName: applicationName,
+			ServerAddress:   cfg.Metrics.PyroscopeServerURL,
+		})
 	}
 
 	if cfg.Peer.PrivateKey.IsEmpty() {
