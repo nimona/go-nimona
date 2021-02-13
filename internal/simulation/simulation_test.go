@@ -15,6 +15,14 @@ import (
 )
 
 // nolint: lll
+// bNode0 prv bagacmacaukn7qjqmryxlatyqfmdqwhjnpmp7xpwku2bpfdjrmwqzognl53dfz7ie2itebh4qosflq7vlrs62tjomad2ak7xrgjjm6wlohmlphwi
+// bNode0 pub bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq
+// bNode1 prv bagacmaca4u5keys3owvgynw2rjmeohit5ipxuc765ysxivkrycgng7v5zp3hffixsjm6dd76z5cwp32iy34tvtulw2jjb5stcqlxywkdqj2llyq
+// bNode1 pub bahwqcabaokkrpesz4gh75t2fm7xurrxzhlhixnussd3fgfaxprmuhatuwxra
+// bNode2 prv bagacmacar6wn4q3rn6owbihzuhf442wc6rxngrbkpziwdarf7whs4g5eo6qmfek3ahjt2ekijerpchktxldlnhpbyac5d5tz7nnlv6v5nmljrci
+// bNode2 pub bahwqcabaykivwaothuiuqsjc6eovhowgw2o6dqaf2h3ht622xl5l22ywtceq
+
+// nolint: lll
 func TestSimulation(t *testing.T) {
 	// create new env
 	env, err := node.NewEnvironment()
@@ -44,7 +52,7 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17000",
-			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.Jf3xha8ZqEnFv9T9UDcN41nFFfZpc9MY4tzUnpgGHx8ZwKQ6uXX6PGY1nHLQAKhPiFtV4YEqMsCd5vjkdRyC5nJ",
+			"NIMONA_PEER_PRIVATE_KEY=bagacmacaukn7qjqmryxlatyqfmdqwhjnpmp7xpwku2bpfdjrmwqzognl53dfz7ie2itebh4qosflq7vlrs62tjomad2ak7xrgjjm6wlohmlphwi",
 		}),
 		node.WithEntrypoint([]string{
 			"/bootstrap",
@@ -68,9 +76,9 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17001",
-			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.2bAdgQxfcJsGRMccgMXkGSPQt396g77KKq8y6fEeQbxpnPqS5Ujh1DXTNU539wW5ispS1McLyKjrJDsgxYKneyCZ",
-			"NIMONA_PEER_BOOTSTRAPS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW@tcps:" + bNodes[0].Address(),
-			"NIMONA_SONAR_PING_PEERS=ed25519.9CA3BuLzPrxHAHET8zicCtTku5zAaPsA6WRFp4PRARx2",
+			"NIMONA_PEER_PRIVATE_KEY=bagacmaca4u5keys3owvgynw2rjmeohit5ipxuc765ysxivkrycgng7v5zp3hffixsjm6dd76z5cwp32iy34tvtulw2jjb5stcqlxywkdqj2llyq",
+			"NIMONA_PEER_BOOTSTRAPS=bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq@tcps:" + bNodes[0].Address(),
+			"NIMONA_SONAR_PING_PEERS=bahwqcabaykivwaothuiuqsjc6eovhowgw2o6dqaf2h3ht622xl5l22ywtceq",
 		}),
 		node.WithEntrypoint([]string{
 			"/sonar",
@@ -91,9 +99,9 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002",
-			"NIMONA_PEER_PRIVATE_KEY=ed25519.prv.4i1anFeotM4TKnjLsJFLgwERtq4rD5yaR6AQ5HuChgNBfzrApXpQYA8WT83bMSc8CLj76LbJfdSKn3HiKmSpn25U",
-			"NIMONA_PEER_BOOTSTRAPS=ed25519.J9AfT7J2SbXen83NuyVEQ7UkpCaLJbnw41nLrR82HnSW@tcps:" + bNodes[0].Address(),
-			"NIMONA_SONAR_PING_PEERS=ed25519.3ykKbHUoHE8Sa9P6ckzrsXzGw3HC9iV4vnTcNrrcBBmP",
+			"NIMONA_PEER_PRIVATE_KEY=bagacmacar6wn4q3rn6owbihzuhf442wc6rxngrbkpziwdarf7whs4g5eo6qmfek3ahjt2ekijerpchktxldlnhpbyac5d5tz7nnlv6v5nmljrci",
+			"NIMONA_PEER_BOOTSTRAPS=bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq@tcps:" + bNodes[0].Address(),
+			"NIMONA_SONAR_PING_PEERS=bahwqcabaokkrpesz4gh75t2fm7xurrxzhlhixnussd3fgfaxprmuhatuwxra",
 		}),
 		node.WithEntrypoint([]string{
 			"/sonar",

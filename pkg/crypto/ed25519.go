@@ -3,12 +3,13 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"strings"
 
+	"github.com/ipfs/go-cid"
+	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multihash"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
 	"golang.org/x/crypto/curve25519"
 
-	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/errors"
 )
 
@@ -28,56 +29,94 @@ type (
 const (
 	EmptyPrivateKey = PrivateKey("")
 	EmptyPublicKey  = PublicKey("")
+
+	cidEd25519Private = 0x1300
+	cidEd25519Public  = 0xed
 )
 
-func GenerateEd25519PrivateKey() (PrivateKey, error) {
-	_, k, err := ed25519.GenerateKey(rand.Reader)
+func ed25519PrivateToPrivateKey(k ed25519.PrivateKey) (PrivateKey, error) {
+	h, err := multihash.Encode(k, multihash.IDENTITY)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	s := "ed25519.prv." + base58.Encode(k)
+	c := cid.NewCidV1(cidEd25519Private, h)
+	s, err := multibase.Encode(multibase.Base32, c.Bytes())
+	if err != nil {
+		panic(err)
+	}
 	return PrivateKey(s), nil
 }
 
+func ed25519PrivateFromPrivateKey(k PrivateKey) (ed25519.PrivateKey, error) {
+	c, err := cid.Decode(string(k))
+	if err != nil {
+		return nil, err
+	}
+	if c.Type() != cidEd25519Private {
+		return nil, errors.New("invalid or unsupported private key type")
+	}
+	h, err := multihash.Decode(c.Hash())
+	if err != nil {
+		return nil, err
+	}
+	return ed25519.PrivateKey(h.Digest), nil
+}
+
+func ed25519PublicFromPublicKey(k PublicKey) (ed25519.PublicKey, error) {
+	c, err := cid.Decode(string(k))
+	if err != nil {
+		return nil, err
+	}
+	if c.Type() != cidEd25519Public {
+		return nil, errors.New("invalid or unsupported public key type")
+	}
+	h, err := multihash.Decode(c.Hash())
+	if err != nil {
+		return nil, err
+	}
+	return ed25519.PublicKey(h.Digest), nil
+}
+
+func ed25519PublicToPublicKey(k ed25519.PublicKey) (PublicKey, error) {
+	h, err := multihash.Encode(k, multihash.IDENTITY)
+	if err != nil {
+		panic(err)
+	}
+	c := cid.NewCidV1(cidEd25519Public, h)
+	s, err := multibase.Encode(multibase.Base32, c.Bytes())
+	if err != nil {
+		panic(err)
+	}
+	return PublicKey(s), nil
+}
+
+func GenerateEd25519PrivateKey() (PrivateKey, error) {
+	_, b, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return "", err
+	}
+	return ed25519PrivateToPrivateKey(b)
+}
+
 func NewPrivateKey(seed []byte) PrivateKey {
-	k := ed25519.NewKeyFromSeed(seed)
-	s := "ed25519.prv." + base58.Encode(k)
-	return PrivateKey(s)
+	b := ed25519.NewKeyFromSeed(seed)
+	k, err := ed25519PrivateToPrivateKey(b)
+	if err != nil {
+		panic(err)
+	}
+	return k
 }
 
 func NewPublicKey(publicKey ed25519.PublicKey) PublicKey {
-	s := "ed25519." + base58.Encode(publicKey)
-	return PublicKey(s)
-}
-
-func parse25519PublicKey(s string) (ed25519.PublicKey, error) {
-	if !strings.HasPrefix(s, "ed25519.") {
-		return nil, errors.Error("invalid key type")
-	}
-	b58 := strings.Replace(s, "ed25519.", "", 1)
-	b, err := base58.Decode(b58)
+	k, err := ed25519PublicToPublicKey(publicKey)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not decode key"))
+		panic(err)
 	}
-
-	return ed25519.PublicKey(b), nil
-}
-
-func parse25519PrivateKey(s string) (ed25519.PrivateKey, error) {
-	if !strings.HasPrefix(s, "ed25519.prv.") {
-		return nil, errors.Error("invalid key type")
-	}
-	b58 := strings.Replace(s, "ed25519.prv.", "", 1)
-	b, err := base58.Decode(b58)
-	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not decode key"))
-	}
-
-	return ed25519.PrivateKey(b), nil
+	return k
 }
 
 func (i PrivateKey) ed25519() ed25519.PrivateKey {
-	k, _ := parse25519PrivateKey(string(i))
+	k, _ := ed25519PrivateFromPrivateKey(i)
 	return k
 }
 
@@ -156,7 +195,7 @@ func (i PrivateKey) String() string {
 }
 
 func (r PublicKey) ed25519() ed25519.PublicKey {
-	k, _ := parse25519PublicKey(string(r))
+	k, _ := ed25519PublicFromPublicKey(r)
 	return k
 }
 
