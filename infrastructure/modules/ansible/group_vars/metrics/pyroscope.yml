@@ -1,5 +1,5 @@
 ---
-pyroscope_version: "dev"
+pyroscope_version: "latest"
 pyroscope_docker_network: "metrics"
 
 pyroscope_data_path: "/mnt/data/pyroscope"
