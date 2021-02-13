@@ -204,11 +204,10 @@ func (r PublicKey) IsEmpty() bool {
 }
 
 func (r PublicKey) Bytes() []byte {
-	out := make([]byte, 32)
-	for i, b := range r.ed25519() {
-		out[i] = b
+	if r.IsEmpty() {
+		return nil
 	}
-	return out
+	return r.ed25519()
 }
 
 func (r PublicKey) String() string {
@@ -228,5 +227,5 @@ func (r PublicKey) Verify(message []byte, signature []byte) error {
 }
 
 func (r PublicKey) Equals(w PublicKey) bool {
-	return string(r) == string(w)
+	return w.ed25519().Equal(r.ed25519())
 }
