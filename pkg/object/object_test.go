@@ -210,8 +210,8 @@ func TestValues(t *testing.T) {
 	}, {
 		name:  "ah",
 		value: HashArray{dummy.Hash(), dummy.Hash()},
-		want:  "QmPknQ234XZTgDaq2DRb5oHdUgss7DSKwxNDX2TvvuLeaE",
-		json:  `["bahw5yaisecncjqzdqzqdr7afbu7ocns3wie3oojpkq6ie7gfct2cbirqyzqlg","bahw5yaisecncjqzdqzqdr7afbu7ocns3wie3oojpkq6ie7gfct2cbirqyzqlg"]`,
+		want:  "QmY2Z7ah5DhKvpiJQ3TZBMjAMnx41jiSvJ42Vp48Zq7esA",
+		json:  `["bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c","bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"]`,
 	}, {
 		name: "m>s",
 		value: Map{
@@ -269,7 +269,7 @@ func TestValues(t *testing.T) {
 	}, {
 		name:  "o",
 		value: dummy,
-		want:  "QmYiN1QEUZUTxVxhZAWSV8zAkdWFcuVxoo4s5o4GyZpP9t",
+		want:  "Qmbdz3Q1vcymTUff9boRQegjrgrcR9ektTR9t6cSPrvNXS",
 		json:  `{"data:m":{"foo:s":"bar"},"type:s":"dummy"}`,
 	}, {
 		name: "ao",
@@ -277,29 +277,29 @@ func TestValues(t *testing.T) {
 			dummy,
 			dummy,
 		},
-		want: "QmWmf9FeY3sxhcNfeEErbZZkZfTxcg4VcC75RNHRVbBeg1",
+		want: "QmcDPBGm5LoCLJu9DtPkGHkxTQ3qWn7ugjN5VrZb9J1NiV",
 		json: `[{"data:m":{"foo:s":"bar"},"type:s":"dummy"},{"data:m":{"foo:s":"bar"},"type:s":"dummy"}]`,
 	}, {
 		name: "m>o",
 		value: Map{
 			"foo": dummy,
 		},
-		want: "QmcD17KTdYJ4w3HDMfXJ8mWPB7iVHWbN3LFdghu73cQ9cf",
+		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
 		json: `{"foo:o":{"data:m":{"foo:s":"bar"},"type:s":"dummy"}}`,
 	}, {
 		name: "m>h",
 		value: Map{
 			"foo": dummy.Hash(),
 		},
-		want: "QmcD17KTdYJ4w3HDMfXJ8mWPB7iVHWbN3LFdghu73cQ9cf",
-		json: `{"foo:h":"bahw5yaisecncjqzdqzqdr7afbu7ocns3wie3oojpkq6ie7gfct2cbirqyzqlg"}`,
+		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
+		json: `{"foo:r":"bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"}`,
 	}, {
 		name: "m>_sig",
 		value: Map{
 			"foo":        dummy,
 			"_signature": String("should not matter"),
 		},
-		want: "QmcD17KTdYJ4w3HDMfXJ8mWPB7iVHWbN3LFdghu73cQ9cf",
+		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
 		json: `{"_signature:s":"should not matter","foo:o":{"data:m":{"foo:s":"bar"},"type:s":"dummy"}}`,
 	}}
 	for _, tt := range tests {
