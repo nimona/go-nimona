@@ -75,13 +75,16 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		// examples of same results in other languages
 		// * ruby: `[7.30363941192626953125].pack('G').unpack('B*').first`
 		// * js: `http://weitz.de/ieee`
+		//
+		// NOTE(geoah): I have removed the inf and nan hashing for now,
+		// we can revisit them once we better understand their usecases.
 		switch {
 		case math.IsInf(float64(vv), 1):
-			return mhFromBytes(FloatHint, []byte("Infinity"))
+			return nil, errors.New("float inf is not currently supported")
 		case math.IsInf(float64(vv), -1):
-			return mhFromBytes(FloatHint, []byte("-Infinity"))
+			return nil, errors.New("float -inf is not currently supported")
 		case math.IsNaN(float64(vv)):
-			return mhFromBytes(FloatHint, []byte("NaN"))
+			return nil, errors.New("float nan is not currently supported")
 		default:
 			return mhFromBytes(FloatHint,
 				[]byte(
