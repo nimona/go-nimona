@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613239782636,
+  "lastUpdate": 1613255003153,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2454,6 +2454,54 @@ window.BENCHMARK_DATA = {
             "value": 14776,
             "unit": "ns/op",
             "extra": "79922 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "d0c1dea8c83ab19f92294241a42acbb32d3a7b01",
+          "message": "fix(infrastructure): fix metrics host for pyroscope\n\nCo-authored-by: Jim Myhrberg <contact@jimeh.me>",
+          "timestamp": "2021-02-13T22:21:46Z",
+          "tree_id": "71e610f5f76415e94d850a6acf33c975edf293d6",
+          "url": "https://github.com/nimona/go-nimona/commit/d0c1dea8c83ab19f92294241a42acbb32d3a7b01"
+        },
+        "date": 1613255000305,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4893322,
+            "unit": "ns/op",
+            "extra": "260 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 418481189,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4198828724,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 16458,
+            "unit": "ns/op",
+            "extra": "71863 times\n2 procs"
           }
         ]
       }
