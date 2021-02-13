@@ -10,18 +10,13 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multihash"
-	"github.com/multiformats/go-varint"
+
 	"nimona.io/pkg/errors"
 )
 
 const (
 	cidCodec = 0x6e6d // nm codec
 	mhType   = 0x12   // multihash.SHA2_256
-)
-
-var (
-	cidCodecVarintLen = varint.UvarintSize(cidCodec)
-	mhTypeVarintLen   = varint.UvarintSize(mhType)
 )
 
 func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {
