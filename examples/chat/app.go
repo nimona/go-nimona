@@ -65,10 +65,6 @@ func NewApp(conversationHash string) *App {
 		convs, _ := app.Store.GetConversations()
 		conv := convs[0]
 
-		formatKey := func(k string) string {
-			return strings.Replace(k, "ed25519.", "", 1)
-		}
-
 		formatParticipant := func(p *Participant) string {
 			key := strings.Replace(p.Key, "ed25519.", "", 1)
 			if p.Nickname == "" {
@@ -135,7 +131,7 @@ func NewApp(conversationHash string) *App {
 					Created:          participantUpdated.Updated,
 					Body: fmt.Sprintf(
 						"* <%s> is now known as %s",
-						formatKey(participantUpdated.Key),
+						participantUpdated.Key,
 						participantUpdated.Nickname,
 					),
 				})
