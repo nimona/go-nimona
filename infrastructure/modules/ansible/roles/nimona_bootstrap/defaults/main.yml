@@ -8,3 +8,4 @@ nimona_bootstrap_peer_announce_address: >-
 nimona_bootstrap_private_keys: {}
 nimona_bootstrap_public_keys: {}
 nimona_bootstrap_peers: []
+nimona_metrics_pyroscope_server_user: ""
