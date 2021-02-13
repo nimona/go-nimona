@@ -9,12 +9,12 @@ import (
 
 type (
 	ConnectionInfo struct {
-		Metadata      object.Metadata   `nimona:"metadata:m,omitempty"`
-		Version       int64             `nimona:"version:i,omitempty"`
-		PublicKey     crypto.PublicKey  `nimona:"publicKey:s,omitempty"`
-		Addresses     []string          `nimona:"addresses:as,omitempty"`
-		Relays        []*ConnectionInfo `nimona:"relays:ao,omitempty"`
-		ObjectFormats []string          `nimona:"objectFormats:as,omitempty"`
+		Metadata      object.Metadata `nimona:"metadata:m,omitempty"`
+		Version       int64
+		PublicKey     crypto.PublicKey
+		Addresses     []string
+		Relays        []*ConnectionInfo
+		ObjectFormats []string
 	}
 )
 

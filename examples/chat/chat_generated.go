@@ -9,15 +9,15 @@ import (
 type (
 	ConversationStreamRoot struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nonce    string          `nimona:"nonce:s,omitempty"`
+		Nonce    string
 	}
 	ConversationNicknameUpdated struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Nickname string          `nimona:"nickname:s,omitempty"`
+		Nickname string
 	}
 	ConversationMessageAdded struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Body     string          `nimona:"body:s,omitempty"`
+		Body     string
 	}
 )
 

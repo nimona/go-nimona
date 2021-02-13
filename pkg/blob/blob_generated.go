@@ -9,11 +9,11 @@ import (
 type (
 	Chunk struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Data     []byte          `nimona:"data:d,omitempty"`
+		Data     []byte
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Chunks   []object.Hash   `nimona:"chunks:as,omitempty"`
+		Chunks   []object.Hash
 	}
 )
 

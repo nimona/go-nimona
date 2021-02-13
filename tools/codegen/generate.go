@@ -325,14 +325,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	originalImports := map[string]string{}
 	t, err := template.New("tpl").Funcs(template.FuncMap{
 		"tag": func(m Member) string {
-			h := m.Hint
-			if m.Type == "nimona.io/object.Object" {
-				h = "o"
-			}
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			return "`nimona:\"" + m.Tag + ":" + h + ",omitempty\"`"
+			// NOTE(geoah): removed until we re-introduce encode/decode
+			return ""
 		},
 		"key": func(m Member) string {
 			h := m.Hint
