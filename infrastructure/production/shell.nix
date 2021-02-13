@@ -10,7 +10,7 @@ in
     buildInputs = [
       bashInteractive
       my-python
-      terraform_0_13
+      terraform_0_14
       terraform-ls
       ansible
     ];
