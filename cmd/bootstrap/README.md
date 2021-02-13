@@ -18,6 +18,6 @@ Bootstrap is basically a Hyperspace v2 provider
 LOG_LEVEL=info \
 NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002 \
 NIMONA_METRICS_BIND_ADDRESS=0.0.0.0:17001 \
-NIMONA_PEER_PRIVATE_KEY=ed25519.prv.3Bock8sqT8UWEZargCJDWo9rsG4AcEMSubdm6fHLRxR4d5S41UVmUYLQSc9qjHkKPiaobE8JEaY6Bo4YJqnEG8Y9 \
+NIMONA_PEER_PRIVATE_KEY=<private_key> \
 go run ./cmd/bootstrap/main.go
 ```
