@@ -82,6 +82,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	}
 
 	// construct providers
+	time.Sleep(250 * time.Millisecond)
 	prv0, err := New(
 		context.New(),
 		net0,
@@ -96,6 +97,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// net2 announces to provider 0
+	time.Sleep(250 * time.Millisecond)
 	err = net2.Send(
 		context.New(),
 		pr2.ToObject(),
@@ -108,6 +110,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv1)
+	time.Sleep(250 * time.Millisecond)
 	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv2)
 }
@@ -133,15 +136,19 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	// add a couple more random peers to the provider's cache
+	pr2k, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
 	pr2 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: "a",
+			PublicKey: pr2k.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
+	pr3k, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
 	pr3 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: "b",
+			PublicKey: pr3k.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo"),
 	}
