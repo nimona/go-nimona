@@ -90,8 +90,8 @@ func TestBlob_Hash(t *testing.T) {
 	b := &blob.Blob{
 		Chunks: []object.Hash{c.ToObject().Hash()},
 	}
-	u := &blob.BlobUnloaded{
-		ChunksUnloaded: []object.Hash{
+	u := &blob.Blob{
+		Chunks: []object.Hash{
 			c.ToObject().Hash(),
 		},
 	}
@@ -127,11 +127,8 @@ func TestBlob_ResponseHash(t *testing.T) {
 
 	fmt.Println(string(s))
 
-	fmt.Println("---")
 	bh := r.ToObject().Hash()
-	fmt.Println("---")
 	uh := o.Hash()
-	fmt.Println("---")
 
 	assert.Equal(t, bh, uh)
 }

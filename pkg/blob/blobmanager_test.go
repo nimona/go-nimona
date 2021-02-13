@@ -178,7 +178,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 		objectmanager func(*testing.T) objectmanager.ObjectManager
 		path          string
 		chunkSize     int
-		want          *blob.BlobUnloaded
+		want          *blob.Blob
 		wantErr       bool
 	}{{
 		name:      "3 chunks, should pass",
@@ -210,8 +210,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 				MaxTimes(1)
 			return m
 		},
-		want: &blob.BlobUnloaded{
-			ChunksUnloaded: []object.Hash{
+		want: &blob.Blob{
+			Chunks: []object.Hash{
 				chunk0.Hash(),
 				chunk1.Hash(),
 				chunk2.Hash(),

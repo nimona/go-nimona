@@ -28,7 +28,7 @@ type (
 		ImportFromFile(
 			ctx context.Context,
 			inputPath string,
-		) (*BlobUnloaded, error)
+		) (*Blob, error)
 	}
 	manager struct {
 		resolver      resolver.Resolver
@@ -61,7 +61,7 @@ func NewManager(
 func (r *manager) ImportFromFile(
 	ctx context.Context,
 	inputPath string,
-) (*BlobUnloaded, error) {
+) (*Blob, error) {
 	inputFile, err := os.Open(inputPath)
 	if err != nil {
 		return nil, err
@@ -117,8 +117,8 @@ func (r *manager) ImportFromFile(
 	}
 
 	// and finally construct the blob with the gathered list of chunks
-	blob := &BlobUnloaded{
-		ChunksUnloaded: chunkHashes,
+	blob := &Blob{
+		Chunks: chunkHashes,
 	}
 	blobObj := blob.ToObject()
 	// store it
@@ -198,49 +198,10 @@ func (r *manager) Request(
 	return blob, chunks, nil
 }
 
-// nolint: golint // stuttering is fine for this one
-type BlobUnloaded struct {
-	Metadata       object.Metadata `nimona:"metadata:m,omitempty"`
-	ChunksUnloaded []object.Hash   `nimona:"chunks:ar,omitempty"`
-}
-
-func (e *BlobUnloaded) Type() string {
-	return "nimona.io/Blob"
-}
-
-func (e BlobUnloaded) ToObject() *object.Object {
-	c := make(object.StringArray, len(e.ChunksUnloaded))
-	for i, v := range e.ChunksUnloaded {
-		c[i] = object.String(v)
-	}
-	o := &object.Object{
-		Type:     e.Type(),
-		Metadata: e.Metadata,
-		Data: object.Map{
-			"chunks": c,
-		},
-	}
-	return o
-}
-
-func (e *BlobUnloaded) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["chunks"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			c := make([]object.Hash, len(t))
-			for i, v := range t {
-				c[i] = object.Hash(v)
-			}
-			e.ChunksUnloaded = c
-		}
-	}
-	return nil
-}
-
 func getChunks(o *object.Object) ([]object.Hash, error) {
-	b := &BlobUnloaded{}
+	b := &Blob{}
 	if err := b.FromObject(o); err != nil {
 		return nil, err
 	}
-	return b.ChunksUnloaded, nil
+	return b.Chunks, nil
 }
