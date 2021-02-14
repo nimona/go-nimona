@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613315349720,
+  "lastUpdate": 1613325417658,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2598,6 +2598,54 @@ window.BENCHMARK_DATA = {
             "value": 15701,
             "unit": "ns/op",
             "extra": "75132 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "f5863013a5f8e50ec5ece4c57b1d98f6046b4795",
+          "message": "chore(dockerfile): add root ca in docker for pyroscope",
+          "timestamp": "2021-02-14T17:55:21Z",
+          "tree_id": "eb3e052fb2ebd54b080891258add46d59ec12512",
+          "url": "https://github.com/nimona/go-nimona/commit/f5863013a5f8e50ec5ece4c57b1d98f6046b4795"
+        },
+        "date": 1613325417147,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4089452,
+            "unit": "ns/op",
+            "extra": "289 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 370183283,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3881671478,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 15694,
+            "unit": "ns/op",
+            "extra": "73794 times\n2 procs"
           }
         ]
       }
