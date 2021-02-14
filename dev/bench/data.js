@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613336563413,
+  "lastUpdate": 1613346619346,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2742,6 +2742,54 @@ window.BENCHMARK_DATA = {
             "value": 16760,
             "unit": "ns/op",
             "extra": "72477 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "60767af9236d03638960409df398e9599a948ac4",
+          "message": "chore(object): fix unconvert errors for streams",
+          "timestamp": "2021-02-14T23:48:14Z",
+          "tree_id": "f532314588cf8a7993430a291581868d980c1e53",
+          "url": "https://github.com/nimona/go-nimona/commit/60767af9236d03638960409df398e9599a948ac4"
+        },
+        "date": 1613346618845,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4477798,
+            "unit": "ns/op",
+            "extra": "253 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 406594798,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4056490972,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 15833,
+            "unit": "ns/op",
+            "extra": "75092 times\n2 procs"
           }
         ]
       }
