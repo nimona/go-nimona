@@ -53,7 +53,7 @@ func mhFromCid(h Hash) (multihash.Multihash, error) {
 
 func NewHash(o *Object) (Hash, error) {
 	r, err := fromValue(o)
-	if err != nil {
+	if err != nil || r == nil {
 		return EmptyHash, err
 	}
 	return mhToCid(r), nil

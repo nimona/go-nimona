@@ -299,6 +299,9 @@ func (v Map) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
+		if dataType == jsonparser.Null {
+			return nil
+		}
 		iv, err := jsonUnmarshalValue(h, value)
 		if err != nil {
 			return err

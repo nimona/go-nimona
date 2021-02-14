@@ -89,6 +89,9 @@ func FromMap(m Map) *Object {
 }
 
 func (o *Object) Hash() Hash {
+	if o == nil {
+		return EmptyHash
+	}
 	h, err := NewHash(o)
 	if err != nil {
 		panic(err)

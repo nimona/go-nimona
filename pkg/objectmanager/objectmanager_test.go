@@ -1269,6 +1269,9 @@ func TestManager_Put(t *testing.T) {
 }
 
 func Test_manager_Subscribe(t *testing.T) {
+	o0 := &object.Object{
+		Type: "foo",
+	}
 	o1 := &object.Object{
 		Type: "not-bar",
 		Metadata: object.Metadata{
@@ -1281,7 +1284,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	o2 := &object.Object{
 		Type: "bar",
 		Metadata: object.Metadata{
-			Stream: "foo",
+			Stream: o0.Hash(),
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
@@ -1316,7 +1319,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by stream",
 		lookupOptions: []LookupOption{
-			FilterByStreamHash("foo"),
+			FilterByStreamHash(o0.Hash()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o2},

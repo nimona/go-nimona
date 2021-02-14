@@ -28,7 +28,7 @@ func (m Metadata) Map() Map {
 		r["policy"] = m.Policy.Map()
 	}
 	if m.Stream != "" {
-		r["stream"] = String(m.Stream)
+		r["stream"] = Hash(m.Stream)
 	}
 	if m.Datetime != "" {
 		r["datetime"] = String(m.Datetime)
@@ -66,7 +66,7 @@ func MetadataFromMap(s Map) Metadata {
 		}
 	}
 	if t, ok := s["stream"]; ok {
-		if s, ok := t.(String); ok {
+		if s, ok := t.(Hash); ok {
 			r.Stream = Hash(s)
 		}
 	}
