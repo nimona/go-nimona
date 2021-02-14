@@ -89,6 +89,7 @@ func TestObjectReplace(t *testing.T) {
 }
 
 func TestEdgecases_NullStream(t *testing.T) {
+	// nolint: lll
 	b := `{"data:m":{"nonce:s":"44273fc3-5bd0-4ed5-a9eb-3abb588f68cd"},"metadata:m":{"owner:s":"@peer","stream:r":null,"datetime:s":"2021-02-14T20:51:38.989872"},"type:s":"stream:poc.nimona.io/conversation"}`
 	o := &Object{}
 	err := json.Unmarshal([]byte(b), o)
