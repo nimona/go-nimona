@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613331440213,
+  "lastUpdate": 1613336563413,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2694,6 +2694,54 @@ window.BENCHMARK_DATA = {
             "value": 16307,
             "unit": "ns/op",
             "extra": "75950 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "1d49ee54f5beca9a9678595599e945b0be5eda1c",
+          "message": "fix(object): fix unmarshalling empty values",
+          "timestamp": "2021-02-14T21:00:56Z",
+          "tree_id": "8c8989f265b92f080fd2ef02fb953911ee8b87c5",
+          "url": "https://github.com/nimona/go-nimona/commit/1d49ee54f5beca9a9678595599e945b0be5eda1c"
+        },
+        "date": 1613336562528,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4597349,
+            "unit": "ns/op",
+            "extra": "259 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 408364966,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4182667949,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 16760,
+            "unit": "ns/op",
+            "extra": "72477 times\n2 procs"
           }
         ]
       }
