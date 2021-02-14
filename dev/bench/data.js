@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613255548599,
+  "lastUpdate": 1613315349720,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2550,6 +2550,54 @@ window.BENCHMARK_DATA = {
             "value": 17211,
             "unit": "ns/op",
             "extra": "71337 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "bafee4b74acfa2b6e59f80b2ad66c48a04f83702",
+          "message": "chore(bootstrap): use patched pyroscope agent",
+          "timestamp": "2021-02-14T15:07:42Z",
+          "tree_id": "45407c2af77edb5f38a1ff22b9a3d61dcc279123",
+          "url": "https://github.com/nimona/go-nimona/commit/bafee4b74acfa2b6e59f80b2ad66c48a04f83702"
+        },
+        "date": 1613315346896,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4047613,
+            "unit": "ns/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 370706668,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3893573375,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 15701,
+            "unit": "ns/op",
+            "extra": "75132 times\n2 procs"
           }
         ]
       }
