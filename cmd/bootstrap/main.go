@@ -33,8 +33,9 @@ type config struct {
 		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 	Metrics struct {
-		PyroscopeServerURL string `envconfig:"PYROSCOPE_SERVER_URL"`
-		BindAddress        string `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+		PyroscopeServerName string `envconfig:"PYROSCOPE_SERVER_NAME"`
+		PyroscopeServerURL  string `envconfig:"PYROSCOPE_SERVER_URL"`
+		BindAddress         string `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
 	} `envconfig:"METRICS"`
 }
 
@@ -56,9 +57,10 @@ func main() {
 
 	if cfg.Metrics.PyroscopeServerURL != "" {
 		applicationName := "bootstrap"
-		if cfg.Peer.AnnounceAddress != "" {
-			applicationName += "." + cfg.Peer.AnnounceAddress
+		if cfg.Metrics.PyroscopeServerName != "" {
+			applicationName = cfg.Metrics.PyroscopeServerName
 		}
+		// nolint: errcheck
 		profiler.Start(profiler.Config{
 			ApplicationName: applicationName,
 			ServerAddress:   cfg.Metrics.PyroscopeServerURL,

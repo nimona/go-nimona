@@ -35,7 +35,9 @@
       NIMONA_METRICS_BIND_ADDRESS: >-
         0.0.0.0:{{ nimona_bootstrap_metrics_port }}
       NIMONA_METRICS_PYROSCOPE_SERVER_URL: >-
-        "https://{{ groups['metrics_root'][0] }}/pyroscope/"
+        https://{{ groups['metrics_root'][0] }}/pyroscope/
+      NIMONA_METRICS_PYROSCOPE_SERVER_NAME: >-
+        {{ inventory_hostname }}
     published_ports:
       - "0.0.0.0:{{ nimona_bootstrap_peer_port }}:{{ nimona_bootstrap_peer_port }}"
       - "127.0.0.1:{{ nimona_bootstrap_metrics_port }}:{{ nimona_bootstrap_metrics_port }}"
