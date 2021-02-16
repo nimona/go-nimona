@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613434351858,
+  "lastUpdate": 1613512613990,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2838,6 +2838,54 @@ window.BENCHMARK_DATA = {
             "value": 15775,
             "unit": "ns/op",
             "extra": "74426 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "8ff9337a4d108b59c2d1a7a395f9972d181f4608",
+          "message": "feat(docs/proposals): add hyperspace v2 proposal",
+          "timestamp": "2021-02-16T21:55:23Z",
+          "tree_id": "818ce0b5277038b5ce4b27e10fb2b624845dc5a3",
+          "url": "https://github.com/nimona/go-nimona/commit/8ff9337a4d108b59c2d1a7a395f9972d181f4608"
+        },
+        "date": 1613512613455,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3777900,
+            "unit": "ns/op",
+            "extra": "316 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 352275963,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3560187434,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 13729,
+            "unit": "ns/op",
+            "extra": "85657 times\n2 procs"
           }
         ]
       }
