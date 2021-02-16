@@ -29,8 +29,8 @@ func Verify(o *Object) error {
 		return ErrMissingSignature
 	}
 
-	// get object hash
-	h, err := NewHash(o)
+	// get object cid
+	h, err := NewCID(o)
 	if err != nil {
 		return err
 	}

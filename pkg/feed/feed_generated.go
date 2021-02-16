@@ -13,16 +13,16 @@ type (
 		Datetime   string
 	}
 	Added struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash
-		Sequence   int64
-		Datetime   string
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		ObjectCID []object.CID
+		Sequence  int64
+		Datetime  string
 	}
 	Removed struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		ObjectHash []object.Hash
-		Sequence   int64
-		Datetime   string
+		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		ObjectCID []object.CID
+		Sequence  int64
+		Datetime  string
 	}
 )
 
@@ -71,14 +71,14 @@ func (e Added) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	// if $member.IsRepeated
-	if len(e.ObjectHash) > 0 {
+	if len(e.ObjectCID) > 0 {
 		// else
-		// r.Data["objectHash"] = object.ToStringArray(e.ObjectHash)
-		rv := make(object.StringArray, len(e.ObjectHash))
-		for i, iv := range e.ObjectHash {
+		// r.Data["objectCID"] = object.ToStringArray(e.ObjectCID)
+		rv := make(object.StringArray, len(e.ObjectCID))
+		for i, iv := range e.ObjectCID {
 			rv[i] = object.String(iv)
 		}
-		r.Data["objectHash"] = rv
+		r.Data["objectCID"] = rv
 	}
 	// else
 	// r.Data["sequence"] = object.Int(e.Sequence)
@@ -91,13 +91,13 @@ func (e Added) ToObject() *object.Object {
 
 func (e *Added) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
-	if v, ok := o.Data["objectHash"]; ok {
+	if v, ok := o.Data["objectCID"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
-			e.ObjectHash = rv
+			e.ObjectCID = rv
 		}
 	}
 	if v, ok := o.Data["sequence"]; ok {
@@ -124,14 +124,14 @@ func (e Removed) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	// if $member.IsRepeated
-	if len(e.ObjectHash) > 0 {
+	if len(e.ObjectCID) > 0 {
 		// else
-		// r.Data["objectHash"] = object.ToStringArray(e.ObjectHash)
-		rv := make(object.StringArray, len(e.ObjectHash))
-		for i, iv := range e.ObjectHash {
+		// r.Data["objectCID"] = object.ToStringArray(e.ObjectCID)
+		rv := make(object.StringArray, len(e.ObjectCID))
+		for i, iv := range e.ObjectCID {
 			rv[i] = object.String(iv)
 		}
-		r.Data["objectHash"] = rv
+		r.Data["objectCID"] = rv
 	}
 	// else
 	// r.Data["sequence"] = object.Int(e.Sequence)
@@ -144,13 +144,13 @@ func (e Removed) ToObject() *object.Object {
 
 func (e *Removed) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
-	if v, ok := o.Data["objectHash"]; ok {
+	if v, ok := o.Data["objectCID"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
-			e.ObjectHash = rv
+			e.ObjectCID = rv
 		}
 	}
 	if v, ok := o.Data["sequence"]; ok {

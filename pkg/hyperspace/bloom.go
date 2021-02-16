@@ -11,7 +11,7 @@ type (
 )
 
 const (
-	noOfHashes = 3
+	noOfCIDs = 3
 )
 
 func New(content ...string) Bloom {
@@ -65,7 +65,7 @@ func intersectionCount(a, b []uint64) int {
 }
 
 func hash(b []byte) []uint64 {
-	h := make([]uint64, noOfHashes)
+	h := make([]uint64, noOfCIDs)
 	for i := range h {
 		h[i] = uint64(murmur.Murmur3(b, uint32(i)))
 	}

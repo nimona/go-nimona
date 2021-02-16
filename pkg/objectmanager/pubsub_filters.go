@@ -15,8 +15,8 @@ type (
 		// Lookups are used to perform db queries for these filters
 		// TODO find a better name for this
 		Lookups struct {
-			ObjectHashes []object.Hash
-			StreamHashes []object.Hash
+			ObjectCIDs   []object.CID
+			StreamCIDs   []object.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}
@@ -28,13 +28,13 @@ type (
 func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	options := &LookupOptions{
 		Lookups: struct {
-			ObjectHashes []object.Hash
-			StreamHashes []object.Hash
+			ObjectCIDs   []object.CID
+			StreamCIDs   []object.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}{
-			ObjectHashes: []object.Hash{},
-			StreamHashes: []object.Hash{},
+			ObjectCIDs:   []object.CID{},
+			StreamCIDs:   []object.CID{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 		},
@@ -46,12 +46,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	return *options
 }
 
-func FilterByHash(hs ...object.Hash) LookupOption {
+func FilterByCID(hs ...object.CID) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, hs...)
+		opts.Lookups.ObjectCIDs = append(opts.Lookups.ObjectCIDs, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
-				if !h.IsEmpty() && o != nil && o.Hash() == h {
+				if !h.IsEmpty() && o != nil && o.CID() == h {
 					return true
 				}
 			}
@@ -75,9 +75,9 @@ func FilterByOwner(hs ...crypto.PublicKey) LookupOption {
 	}
 }
 
-func FilterByStreamHash(hs ...object.Hash) LookupOption {
+func FilterByStreamCID(hs ...object.CID) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, hs...)
+		opts.Lookups.StreamCIDs = append(opts.Lookups.StreamCIDs, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
 				if !h.IsEmpty() && o != nil && h == o.Metadata.Stream {

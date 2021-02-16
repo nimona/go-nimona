@@ -11,40 +11,40 @@ import (
 )
 
 type (
-	// ObjectHashSyncList -
-	ObjectHashSyncList struct {
+	// ObjectCIDSyncList -
+	ObjectCIDSyncList struct {
 		m sync.Map
 	}
 )
 
 // Put -
-func (m *ObjectHashSyncList) Put(k object.Hash) {
+func (m *ObjectCIDSyncList) Put(k object.CID) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ObjectHashSyncList) Exists(k object.Hash) bool {
+func (m *ObjectCIDSyncList) Exists(k object.CID) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *ObjectHashSyncList) Delete(k object.Hash) {
+func (m *ObjectCIDSyncList) Delete(k object.CID) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ObjectHashSyncList) Range(i func(k object.Hash) bool) {
+func (m *ObjectCIDSyncList) Range(i func(k object.CID) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(object.Hash))
+		return i(k.(object.CID))
 	})
 }
 
 // List -
-func (m *ObjectHashSyncList) List() []object.Hash {
-	r := []object.Hash{}
+func (m *ObjectCIDSyncList) List() []object.CID {
+	r := []object.CID{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(object.Hash))
+		r = append(r, k.(object.CID))
 		return true
 	})
 	return r

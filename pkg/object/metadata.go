@@ -6,9 +6,9 @@ import "nimona.io/pkg/crypto"
 type Metadata struct {
 	Owner     crypto.PublicKey
 	Datetime  string
-	Parents   []Hash
+	Parents   []CID
 	Policy    Policy
-	Stream    Hash
+	Stream    CID
 	Signature Signature
 }
 
@@ -53,9 +53,9 @@ func MetadataFromMap(s Map) Metadata {
 	}
 	if t, ok := s["parents"]; ok {
 		if s, ok := t.(StringArray); ok {
-			hs := make([]Hash, len(s))
+			hs := make([]CID, len(s))
 			for i, h := range s {
-				hs[i] = Hash(h)
+				hs[i] = CID(h)
 			}
 			r.Parents = hs
 		}
@@ -66,7 +66,7 @@ func MetadataFromMap(s Map) Metadata {
 		}
 	}
 	if t, ok := s["stream"]; ok {
-		if s, ok := t.(Hash); ok {
+		if s, ok := t.(CID); ok {
 			r.Stream = s
 		}
 	}

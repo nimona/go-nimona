@@ -26,8 +26,8 @@ func TestUnloadReferences(t *testing.T) {
 		Type: "f00",
 		Data: Map{
 			"f00": String("f00"),
-			"f01": f01.Hash(),
-			"f02": f02.Hash(),
+			"f01": f01.CID(),
+			"f02": f02.CID(),
 		},
 	}
 	f00Full := &Object{

@@ -20,10 +20,10 @@ import (
 
 // nolint: lll
 var migrations = []string{
-	`CREATE TABLE IF NOT EXISTS Objects (Hash TEXT NOT NULL PRIMARY KEY);`,
+	`CREATE TABLE IF NOT EXISTS Objects (CID TEXT NOT NULL PRIMARY KEY);`,
 	`ALTER TABLE Objects ADD Type TEXT;`,
 	`ALTER TABLE Objects ADD Body TEXT;`,
-	`ALTER TABLE Objects ADD RootHash TEXT;`,
+	`ALTER TABLE Objects ADD RootCID TEXT;`,
 	`ALTER TABLE Objects ADD TTL INT;`,
 	`ALTER TABLE Objects ADD Created INT;`,
 	`ALTER TABLE Objects ADD LastAccessed INT;`,
@@ -33,13 +33,13 @@ var migrations = []string{
 	`ALTER TABLE Objects RENAME SignerPublicKey TO _DeprecatedSignerPublicKey;`,
 	`CREATE INDEX Created_idx ON Objects(Created);`,
 	`CREATE INDEX TTL_LastAccessed_idx ON Objects(TTL, LastAccessed);`,
-	`CREATE INDEX Type_RootHash_OwnerPublicKey_idx ON Objects(Type, RootHash, OwnerPublicKey);`,
-	`CREATE INDEX RootHash_idx ON Objects(RootHash);`,
-	`CREATE INDEX RootHash_TTL_idx ON Objects(RootHash, TTL);`,
-	`CREATE INDEX Hash_LastAccessed_idx ON Objects(Hash, LastAccessed);`,
+	`CREATE INDEX Type_RootCID_OwnerPublicKey_idx ON Objects(Type, RootCID, OwnerPublicKey);`,
+	`CREATE INDEX RootCID_idx ON Objects(RootCID);`,
+	`CREATE INDEX RootCID_TTL_idx ON Objects(RootCID, TTL);`,
+	`CREATE INDEX CID_LastAccessed_idx ON Objects(CID, LastAccessed);`,
 	`CREATE TABLE IF NOT EXISTS Relations (Parent TEXT NOT NULL, Child TEXT NOT NULL, PRIMARY KEY (Parent, Child));`,
-	`ALTER TABLE Relations ADD RootHash TEXT;`,
-	`CREATE INDEX Relations_RootHash_idx ON Relations(RootHash);`,
+	`ALTER TABLE Relations ADD RootCID TEXT;`,
+	`CREATE INDEX Relations_RootCID_idx ON Relations(RootCID);`,
 	`ALTER TABLE Objects ADD MetadataDatetime INT DEFAULT 0;`,
 }
 
@@ -75,10 +75,10 @@ func (st *Store) Close() error {
 }
 
 func (st *Store) Get(
-	hash object.Hash,
+	cid object.CID,
 ) (*object.Object, error) {
 	// get the object
-	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
+	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE CID=?")
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -87,7 +87,7 @@ func (st *Store) Get(
 	}
 	defer stmt.Close() // nolint: errcheck
 
-	row := stmt.QueryRow(hash.String())
+	row := stmt.QueryRow(cid.String())
 
 	obj := &object.Object{}
 	data := []byte{}
@@ -108,7 +108,7 @@ func (st *Store) Get(
 
 	// update the last accessed column
 	istmt, err := st.db.Prepare(
-		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
+		"UPDATE Objects SET LastAccessed=? WHERE CID=?")
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -119,7 +119,7 @@ func (st *Store) Get(
 
 	if _, err := istmt.Exec(
 		time.Now().Unix(),
-		hash.String(),
+		cid.String(),
 	); err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -131,10 +131,10 @@ func (st *Store) Get(
 }
 
 func (st *Store) GetByStream(
-	streamRootHash object.Hash,
+	streamRootCID object.CID,
 ) (object.ReadCloser, error) {
 	return st.Filter(
-		FilterByStreamHash(streamRootHash),
+		FilterByStreamCID(streamRootCID),
 	)
 }
 
@@ -159,9 +159,9 @@ func (st *Store) PutWithTTL(
 	// TODO(geoah) why replace?
 	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects (
-		Hash,
+		CID,
 		Type,
-		RootHash,
+		RootCID,
 		OwnerPublicKey,
 		Body,
 		Created,
@@ -170,7 +170,7 @@ func (st *Store) PutWithTTL(
 		MetadataDatetime
 	) VALUES (
 		?, ?, ?, ?, ?, ?, ?, ?, ?
-	) ON CONFLICT (Hash) DO UPDATE SET
+	) ON CONFLICT (CID) DO UPDATE SET
 		LastAccessed=?
 	`)
 	if err != nil {
@@ -184,10 +184,10 @@ func (st *Store) PutWithTTL(
 		return errors.Wrap(err, errors.New("could not marshal object"))
 	}
 
-	objHash := obj.Hash()
+	objCID := obj.CID()
 	objectType := obj.Type
-	objectHash := objHash.String()
-	streamHash := obj.Metadata.Stream.String()
+	objectCID := objCID.String()
+	streamCID := obj.Metadata.Stream.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
 	if !obj.Metadata.Owner.IsEmpty() {
@@ -195,10 +195,10 @@ func (st *Store) PutWithTTL(
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
-	// to the object's hash.
+	// to the object's cid.
 	// This should allow queries to consider the root object part of the stream.
-	if streamHash == "" {
-		streamHash = objectHash
+	if streamCID == "" {
+		streamCID = objectCID
 	}
 
 	un := 0
@@ -212,9 +212,9 @@ func (st *Store) PutWithTTL(
 
 	_, err = stmt.Exec(
 		// VALUES
-		objectHash,
+		objectCID,
 		objectType,
-		streamHash,
+		streamCID,
 		ownerPublicKey,
 		body,
 		time.Now().Unix(),
@@ -230,15 +230,15 @@ func (st *Store) PutWithTTL(
 
 	if len(obj.Metadata.Parents) > 0 {
 		for _, p := range obj.Metadata.Parents {
-			err := st.putRelation(object.Hash(streamHash), objHash, p)
+			err := st.putRelation(object.CID(streamCID), objCID, p)
 			if err != nil {
 				return errors.Wrap(err, errors.New("could not create relation"))
 			}
 		}
 	}
 
-	if streamHash == objectHash {
-		err := st.putRelation(object.Hash(streamHash), objHash, "")
+	if streamCID == objectCID {
+		err := st.putRelation(object.CID(streamCID), objCID, "")
 		if err != nil {
 			return errors.Wrap(err, errors.New("error creating self relation"))
 		}
@@ -248,13 +248,13 @@ func (st *Store) PutWithTTL(
 }
 
 func (st *Store) putRelation(
-	stream object.Hash,
-	parent object.Hash,
-	child object.Hash,
+	stream object.CID,
+	parent object.CID,
+	child object.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Relations (
-			RootHash,
+			RootCID,
 			Parent,
 			Child
 		) VALUES (
@@ -280,19 +280,19 @@ func (st *Store) putRelation(
 }
 
 func (st *Store) GetStreamLeaves(
-	streamRootHash object.Hash,
-) ([]object.Hash, error) {
+	streamRootCID object.CID,
+) ([]object.CID, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
 		WHERE
-			RootHash=?
+			RootCID=?
 			AND Parent <> ''
 			AND Parent NOT IN (
 				SELECT DISTINCT Child
 				FROM Relations
 				WHERE
-					RootHash=?
+					RootCID=?
 			)
 	`)
 	if err != nil {
@@ -300,13 +300,13 @@ func (st *Store) GetStreamLeaves(
 	}
 	defer stmt.Close() // nolint: errcheck
 
-	rows, err := stmt.Query(streamRootHash.String(), streamRootHash.String())
+	rows, err := stmt.Query(streamRootCID.String(), streamRootCID.String())
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not query"))
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []object.Hash{}
+	cidList := []object.CID{}
 
 	for rows.Next() {
 		data := ""
@@ -316,16 +316,16 @@ func (st *Store) GetStreamLeaves(
 				objectstore.ErrNotFound,
 			)
 		}
-		hashList = append(hashList, object.Hash(data))
+		cidList = append(cidList, object.CID(data))
 	}
 
-	return hashList, nil
+	return cidList, nil
 }
 
 func (st *Store) GetRelations(
-	parent object.Hash,
-) ([]object.Hash, error) {
-	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE RootHash=?")
+	parent object.CID,
+) ([]object.CID, error) {
+	stmt, err := st.db.Prepare("SELECT CID FROM Objects WHERE RootCID=?")
 	if err != nil {
 		return nil, errors.Wrap(err, errors.New("could not prepare query"))
 	}
@@ -337,7 +337,7 @@ func (st *Store) GetRelations(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []object.Hash{}
+	cidList := []object.CID{}
 
 	for rows.Next() {
 		data := ""
@@ -347,11 +347,11 @@ func (st *Store) GetRelations(
 				objectstore.ErrNotFound,
 			)
 		}
-		hashList = append(hashList, object.Hash(data))
+		cidList = append(cidList, object.CID(data))
 	}
 
 	istmt, err := st.db.Prepare(
-		"UPDATE Objects SET LastAccessed=? WHERE RootHash=?",
+		"UPDATE Objects SET LastAccessed=? WHERE RootCID=?",
 	)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -371,20 +371,20 @@ func (st *Store) GetRelations(
 		)
 	}
 
-	return hashList, nil
+	return cidList, nil
 }
 
 func (st *Store) UpdateTTL(
-	hash object.Hash,
+	cid object.CID,
 	minutes int,
 ) error {
-	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootHash=?`)
+	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootCID=?`)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
 	defer stmt.Close() // nolint: errcheck
 
-	if _, err := stmt.Exec(minutes, hash.String()); err != nil {
+	if _, err := stmt.Exec(minutes, cid.String()); err != nil {
 		return errors.Wrap(
 			err,
 			errors.New("could not update last access and ttl"),
@@ -395,18 +395,18 @@ func (st *Store) UpdateTTL(
 }
 
 func (st *Store) Remove(
-	hash object.Hash,
+	cid object.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
-	WHERE Hash=?`)
+	WHERE CID=?`)
 	if err != nil {
 		return errors.Wrap(err, errors.New("could not prepare query"))
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(
-		hash.String(),
+		cid.String(),
 	); err != nil {
 		return errors.Wrap(
 			err,
@@ -446,10 +446,10 @@ func (st *Store) Filter(
 	where := "WHERE 1 "
 	whereArgs := []interface{}{}
 
-	if len(options.Filters.ObjectHashes) > 0 {
-		qs := strings.Repeat(",?", len(options.Filters.ObjectHashes))[1:]
-		where += "AND Hash IN (" + qs + ") "
-		whereArgs = append(whereArgs, ahtoai(options.Filters.ObjectHashes)...)
+	if len(options.Filters.ObjectCIDs) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.ObjectCIDs))[1:]
+		where += "AND CID IN (" + qs + ") "
+		whereArgs = append(whereArgs, ahtoai(options.Filters.ObjectCIDs)...)
 	}
 
 	if len(options.Filters.ContentTypes) > 0 {
@@ -458,10 +458,10 @@ func (st *Store) Filter(
 		whereArgs = append(whereArgs, astoai(options.Filters.ContentTypes)...)
 	}
 
-	if len(options.Filters.StreamHashes) > 0 {
-		qs := strings.Repeat(",?", len(options.Filters.StreamHashes))[1:]
-		where += "AND RootHash IN (" + qs + ") "
-		whereArgs = append(whereArgs, ahtoai(options.Filters.StreamHashes)...)
+	if len(options.Filters.StreamCIDs) > 0 {
+		qs := strings.Repeat(",?", len(options.Filters.StreamCIDs))[1:]
+		where += "AND RootCID IN (" + qs + ") "
+		whereArgs = append(whereArgs, ahtoai(options.Filters.StreamCIDs)...)
 	}
 
 	if len(options.Filters.Owners) > 0 {
@@ -492,7 +492,7 @@ func (st *Store) Filter(
 
 	// get the object
 	// nolint: gosec
-	stmt, err := st.db.Prepare("SELECT Hash FROM Objects " + where)
+	stmt, err := st.db.Prepare("SELECT CID FROM Objects " + where)
 	if err != nil {
 		return nil, errors.Wrap(
 			err,
@@ -510,8 +510,8 @@ func (st *Store) Filter(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashes := []string{}
-	hashesForUpdate := []interface{}{}
+	cids := []string{}
+	cidsForUpdate := []interface{}{}
 
 	errorChan := make(chan error)
 	objectsChan := make(chan *object.Object)
@@ -525,26 +525,26 @@ func (st *Store) Filter(
 	)
 
 	for rows.Next() {
-		hash := ""
-		if err := rows.Scan(&hash); err != nil {
+		cid := ""
+		if err := rows.Scan(&cid); err != nil {
 			return nil, errors.Wrap(
 				err,
 				objectstore.ErrNotFound,
 			)
 		}
-		hashes = append(hashes, hash)
-		hashesForUpdate = append(hashesForUpdate, hash)
+		cids = append(cids, cid)
+		cidsForUpdate = append(cidsForUpdate, cid)
 	}
 
-	if len(hashes) == 0 {
+	if len(cids) == 0 {
 		return nil, objectstore.ErrNotFound
 	}
 
 	// update the last accessed column
-	updateQs := strings.Repeat(",?", len(hashes))[1:]
+	updateQs := strings.Repeat(",?", len(cids))[1:]
 	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed = ? " +
-			"WHERE Hash IN (" + updateQs + ")",
+			"WHERE CID IN (" + updateQs + ")",
 	)
 	if err != nil {
 		return nil, err
@@ -552,7 +552,7 @@ func (st *Store) Filter(
 	defer istmt.Close() // nolint: errcheck
 
 	if _, err := istmt.Exec(
-		append([]interface{}{time.Now().Unix()}, hashesForUpdate...)...,
+		append([]interface{}{time.Now().Unix()}, cidsForUpdate...)...,
 	); err != nil {
 		return nil, err
 	}
@@ -560,8 +560,8 @@ func (st *Store) Filter(
 	go func() {
 		defer close(objectsChan)
 		defer close(errorChan)
-		for _, hash := range hashes {
-			o, err := st.Get(object.Hash(hash))
+		for _, cid := range cids {
+			o, err := st.Get(object.CID(cid))
 			if err != nil {
 				errorChan <- err
 				return
@@ -579,10 +579,10 @@ func (st *Store) Filter(
 }
 
 const (
-	pinnedQuery = "SELECT Hash FROM Objects WHERE TTL = 0 AND Hash = RootHash"
+	pinnedQuery = "SELECT CID FROM Objects WHERE TTL = 0 AND CID = RootCID"
 )
 
-func (st *Store) GetPinned() ([]object.Hash, error) {
+func (st *Store) GetPinned() ([]object.CID, error) {
 	stmt, err := st.db.Prepare(pinnedQuery)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -601,7 +601,7 @@ func (st *Store) GetPinned() ([]object.Hash, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hs := []object.Hash{}
+	hs := []object.CID{}
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
@@ -611,7 +611,7 @@ func (st *Store) GetPinned() ([]object.Hash, error) {
 			)
 		}
 		if h != "" {
-			hs = append(hs, object.Hash(h))
+			hs = append(hs, object.CID(h))
 		}
 	}
 
@@ -626,7 +626,7 @@ func astoai(ah []string) []interface{} {
 	return as
 }
 
-func ahtoai(ah []object.Hash) []interface{} {
+func ahtoai(ah []object.CID) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

@@ -295,7 +295,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
 	certificates := r.localpeer.GetCertificates()
-	contentHashes := r.localpeer.GetContentHashes()
+	cids := r.localpeer.GetCIDs()
 	contentTypes := r.localpeer.GetContentTypes()
 	addresses := r.localpeer.GetAddresses()
 	relays := r.localpeer.GetRelays()
@@ -303,7 +303,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	// gather up peer key, certificates, content ids and types
 	hs := contentTypes
 	hs = append(hs, peerKey.String())
-	for _, c := range contentHashes {
+	for _, c := range cids {
 		hs = append(hs, c.String())
 	}
 	for _, c := range certificates {

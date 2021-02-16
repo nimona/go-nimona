@@ -11,7 +11,7 @@ import (
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=contenthashes_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.Hash"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=contentcids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.ConnectionInfo"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
@@ -24,8 +24,8 @@ type (
 		PutPrimaryIdentityKey(crypto.PrivateKey)
 		GetCertificates() []*object.Certificate
 		PutCertificate(*object.Certificate)
-		GetContentHashes() []object.Hash
-		PutContentHashes(...object.Hash)
+		GetCIDs() []object.CID
+		PutCIDs(...object.CID)
 		GetContentTypes() []string
 		PutContentTypes(...string)
 		GetAddresses() []string
@@ -39,7 +39,7 @@ type (
 		keyLock            sync.RWMutex
 		primaryPeerKey     crypto.PrivateKey
 		primaryIdentityKey crypto.PrivateKey
-		contentHashes      *ObjectHashSyncList
+		cids               *ObjectCIDSyncList
 		contentTypes       *StringSyncList
 		certificates       *ObjectCertificateSyncList
 		addresses          *StringSyncList
@@ -51,16 +51,16 @@ type (
 )
 
 const (
-	EventContentTypesUpdated  UpdateEvent = "contentTypeUpdated"
-	EventContentHashesUpdated UpdateEvent = "contentHashesUpdated"
-	EventAddressesUpdated     UpdateEvent = "addressesUpdated"
-	EventRelaysUpdated        UpdateEvent = "relaysUpdated"
+	EventContentTypesUpdated UpdateEvent = "contentTypeUpdated"
+	EventCIDsUpdated         UpdateEvent = "cidsUpdated"
+	EventAddressesUpdated    UpdateEvent = "addressesUpdated"
+	EventRelaysUpdated       UpdateEvent = "relaysUpdated"
 )
 
 func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
-		contentHashes: &ObjectHashSyncList{},
+		cids:          &ObjectCIDSyncList{},
 		contentTypes:  &StringSyncList{},
 		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
@@ -115,15 +115,15 @@ func (s *localPeer) PutAddresses(addresses ...string) {
 	s.publishUpdate(EventAddressesUpdated)
 }
 
-func (s *localPeer) GetContentHashes() []object.Hash {
-	return s.contentHashes.List()
+func (s *localPeer) GetCIDs() []object.CID {
+	return s.cids.List()
 }
 
-func (s *localPeer) PutContentHashes(contentHashes ...object.Hash) {
-	for _, h := range contentHashes {
-		s.contentHashes.Put(h)
+func (s *localPeer) PutCIDs(cids ...object.CID) {
+	for _, h := range cids {
+		s.cids.Put(h)
 	}
-	s.publishUpdate(EventContentHashesUpdated)
+	s.publishUpdate(EventCIDsUpdated)
 }
 
 func (s *localPeer) GetContentTypes() []string {

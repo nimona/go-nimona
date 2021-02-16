@@ -32,15 +32,15 @@ func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {
 // - <cid-version>
 // - <multicodec-content-type>
 // - <multihash-content>
-func mhToCid(h multihash.Multihash) Hash {
+func mhToCid(h multihash.Multihash) CID {
 	c := cid.NewCidV1(cidCodec, h)
 	// nolint: errcheck
 	// there is nothing that can go wrong here
 	s, _ := multibase.Encode(multibase.Base32, c.Bytes())
-	return Hash(s)
+	return CID(s)
 }
 
-func mhFromCid(h Hash) (multihash.Multihash, error) {
+func mhFromCid(h CID) (multihash.Multihash, error) {
 	c, err := cid.Decode(string(h))
 	if err != nil {
 		return nil, err
@@ -51,10 +51,10 @@ func mhFromCid(h Hash) (multihash.Multihash, error) {
 	return c.Hash(), nil
 }
 
-func NewHash(o *Object) (Hash, error) {
+func NewCID(o *Object) (CID, error) {
 	r, err := fromValue(o)
 	if err != nil || r == nil {
-		return EmptyHash, err
+		return EmptyCID, err
 	}
 	return mhToCid(r), nil
 }
@@ -110,7 +110,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		var m Map
 		if o, ok := vv.(*Object); ok {
 			m = o.Map()
-			f = HashHint
+			f = CIDHint
 		} else {
 			m = v.(Map)
 			f = MapHint
@@ -131,7 +131,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			}
 			mkf := mk.Hint()
 			if _, ok := mk.(*Object); ok {
-				mkf = HashHint
+				mkf = CIDHint
 			}
 			vh, err := fromValue(mk)
 			if err != nil {
@@ -180,7 +180,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 				),
 			),
 		)
-	case Hash:
+	case CID:
 		return mhFromCid(vv)
 	case BoolArray:
 		h := multihash.Multihash{}
@@ -262,7 +262,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			h = append(h, vh...)
 		}
 		return mhFromBytes(UintArrayHint, h)
-	case HashArray:
+	case CIDArray:
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			ivvh, err := mhFromCid(ivv)
@@ -271,7 +271,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			}
 			h = append(h, ivvh...)
 		}
-		return mhFromBytes(HashArrayHint, h)
+		return mhFromBytes(CIDArrayHint, h)
 	}
 	panic("unknown value " + reflect.TypeOf(v).Name())
 }

@@ -708,7 +708,7 @@ func (w *network) Send(
 		r(opt)
 	}
 
-	dedupKey := ctx.CorrelationID() + p.String() + o.Hash().String()
+	dedupKey := ctx.CorrelationID() + p.String() + o.CID().String()
 	if _, ok := w.deduplist.Get(dedupKey); ok {
 		return ErrAlreadySentDuringContext
 	}

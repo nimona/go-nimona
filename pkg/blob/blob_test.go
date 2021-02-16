@@ -83,30 +83,30 @@ func Test_blobReader_Read(t *testing.T) {
 	}
 }
 
-func TestBlob_Hash(t *testing.T) {
+func TestBlob_CID(t *testing.T) {
 	c := &blob.Chunk{
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.Hash{c.ToObject().Hash()},
+		Chunks: []object.CID{c.ToObject().CID()},
 	}
 	u := &blob.Blob{
-		Chunks: []object.Hash{
-			c.ToObject().Hash(),
+		Chunks: []object.CID{
+			c.ToObject().CID(),
 		},
 	}
 
-	bh := b.ToObject().Hash()
-	uh := u.ToObject().Hash()
+	bh := b.ToObject().CID()
+	uh := u.ToObject().CID()
 	assert.Equal(t, bh, uh)
 }
 
-func TestBlob_ResponseHash(t *testing.T) {
+func TestBlob_ResponseCID(t *testing.T) {
 	c := &blob.Chunk{
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.Hash{c.ToObject().Hash()},
+		Chunks: []object.CID{c.ToObject().CID()},
 	}
 	r := &object.Response{
 		RequestID: "foo",
@@ -127,18 +127,18 @@ func TestBlob_ResponseHash(t *testing.T) {
 
 	fmt.Println(string(s))
 
-	bh := r.ToObject().Hash()
-	uh := o.Hash()
+	bh := r.ToObject().CID()
+	uh := o.CID()
 
 	assert.Equal(t, bh, uh)
 }
 
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
-		Chunks: []object.Hash{
+		Chunks: []object.CID{
 			blob.Chunk{
 				Data: []byte("foo"),
-			}.ToObject().Hash(),
+			}.ToObject().CID(),
 		},
 	}
 	s, err := json.Marshal(b.ToObject().ToMap())

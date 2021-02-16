@@ -88,17 +88,17 @@ func FromMap(m Map) *Object {
 	return o
 }
 
-func (o *Object) Hash() Hash {
+func (o *Object) CID() CID {
 	if o == nil {
-		return EmptyHash
+		return EmptyCID
 	}
-	h, err := NewHash(o)
+	h, err := NewCID(o)
 	if err != nil {
 		panic(err)
 	}
 	return h
 }
 
-func (h Hash) String() string {
+func (h CID) String() string {
 	return string(h)
 }

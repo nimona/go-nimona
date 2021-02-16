@@ -52,24 +52,24 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method
-func (m *MockObjectManager) Request(ctx context.Context, hash object.Hash, peer *peer.ConnectionInfo) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, cid object.CID, peer *peer.ConnectionInfo) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Request", ctx, hash, peer)
+	ret := m.ctrl.Call(m, "Request", ctx, cid, peer)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Request indicates an expected call of Request
-func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) Request(ctx, cid, peer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, peer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, cid, peer)
 }
 
 // RequestStream mocks base method
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.Hash, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootCID object.CID, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, rootHash}
+	varargs := []interface{}{ctx, rootCID}
 	for _, a := range recipients {
 		varargs = append(varargs, a)
 	}
@@ -80,9 +80,9 @@ func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash object.H
 }
 
 // RequestStream indicates an expected call of RequestStream
-func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash interface{}, recipients ...interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootCID interface{}, recipients ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, rootHash}, recipients...)
+	varargs := append([]interface{}{ctx, rootCID}, recipients...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), varargs...)
 }
 

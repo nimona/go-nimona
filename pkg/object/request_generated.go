@@ -4,9 +4,9 @@ package object
 
 type (
 	Request struct {
-		Metadata   Metadata `nimona:"metadata:m,omitempty"`
-		RequestID  string
-		ObjectHash Hash
+		Metadata  Metadata `nimona:"metadata:m,omitempty"`
+		RequestID string
+		ObjectCID CID
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"metadata:m,omitempty"`
@@ -29,7 +29,7 @@ func (e Request) ToObject() *Object {
 	// r.Data["requestID"] = String(e.RequestID)
 	r.Data["requestID"] = String(e.RequestID)
 	// else if $member.IsPrimitive
-	r.Data["objectHash"] = String(e.ObjectHash)
+	r.Data["objectCID"] = String(e.ObjectCID)
 	return r
 }
 
@@ -40,9 +40,9 @@ func (e *Request) FromObject(o *Object) error {
 			e.RequestID = string(t)
 		}
 	}
-	if v, ok := o.Data["objectHash"]; ok {
+	if v, ok := o.Data["objectCID"]; ok {
 		if t, ok := v.(String); ok {
-			e.ObjectHash = Hash(t)
+			e.ObjectCID = CID(t)
 		}
 	}
 	return nil

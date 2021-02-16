@@ -114,34 +114,34 @@ func (mr *MockLocalPeerMockRecorder) PutCertificate(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutCertificate", reflect.TypeOf((*MockLocalPeer)(nil).PutCertificate), arg0)
 }
 
-// GetContentHashes mocks base method
-func (m *MockLocalPeer) GetContentHashes() []object.Hash {
+// GetCIDs mocks base method
+func (m *MockLocalPeer) GetCIDs() []object.CID {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentHashes")
-	ret0, _ := ret[0].([]object.Hash)
+	ret := m.ctrl.Call(m, "GetCIDs")
+	ret0, _ := ret[0].([]object.CID)
 	return ret0
 }
 
-// GetContentHashes indicates an expected call of GetContentHashes
-func (mr *MockLocalPeerMockRecorder) GetContentHashes() *gomock.Call {
+// GetCIDs indicates an expected call of GetCIDs
+func (mr *MockLocalPeerMockRecorder) GetCIDs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentHashes", reflect.TypeOf((*MockLocalPeer)(nil).GetContentHashes))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCIDs", reflect.TypeOf((*MockLocalPeer)(nil).GetCIDs))
 }
 
-// PutContentHashes mocks base method
-func (m *MockLocalPeer) PutContentHashes(arg0 ...object.Hash) {
+// PutCIDs mocks base method
+func (m *MockLocalPeer) PutCIDs(arg0 ...object.CID) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range arg0 {
 		varargs = append(varargs, a)
 	}
-	m.ctrl.Call(m, "PutContentHashes", varargs...)
+	m.ctrl.Call(m, "PutCIDs", varargs...)
 }
 
-// PutContentHashes indicates an expected call of PutContentHashes
-func (mr *MockLocalPeerMockRecorder) PutContentHashes(arg0 ...interface{}) *gomock.Call {
+// PutCIDs indicates an expected call of PutCIDs
+func (mr *MockLocalPeerMockRecorder) PutCIDs(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutContentHashes", reflect.TypeOf((*MockLocalPeer)(nil).PutContentHashes), arg0...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutCIDs", reflect.TypeOf((*MockLocalPeer)(nil).PutCIDs), arg0...)
 }
 
 // GetContentTypes mocks base method

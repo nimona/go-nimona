@@ -49,7 +49,7 @@ type comboConf struct {
 
 type fileUnloaded struct {
 	Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-	BlobHash object.Hash     `nimona:"blob:r,omitempty"`
+	BlobCID  object.CID      `nimona:"blob:r,omitempty"`
 }
 
 func (e *fileUnloaded) Type() string {
@@ -59,7 +59,7 @@ func (e *fileUnloaded) Type() string {
 func main() {
 	args := os.Args
 	if len(args) != 3 {
-		fmt.Printf("usage: %s <get/serve> <hash/file>\n", args[0])
+		fmt.Printf("usage: %s <get/serve> <cid/file>\n", args[0])
 		return
 	}
 
@@ -96,7 +96,7 @@ func main() {
 
 	switch command {
 	case "get":
-		ft.get(ctx, object.Hash(param))
+		ft.get(ctx, object.CID(param))
 	case "serve":
 		ft.serve(ctx, param)
 	default:
@@ -121,7 +121,7 @@ func (ft *fileTransfer) serve(
 
 	fl := &File{
 		Name: fileName,
-		Blob: blobUnl.ToObject().Hash(),
+		Blob: blobUnl.ToObject().CID(),
 	}
 
 	if _, err := ft.objectmanager.Put(ctx, fl.ToObject()); err != nil {
@@ -129,8 +129,8 @@ func (ft *fileTransfer) serve(
 		return
 	}
 	fmt.Println(">> imported in", time.Now().Sub(start))
-	fmt.Println(">> blob hash:", blobUnl.ToObject().Hash())
-	fmt.Println(">> file hash:", fl.ToObject().Hash())
+	fmt.Println(">> blob cid:", blobUnl.ToObject().CID())
+	fmt.Println(">> file cid:", fl.ToObject().CID())
 
 	// os.Exit(1)
 	// register for termination signals
@@ -143,12 +143,12 @@ func (ft *fileTransfer) serve(
 
 func (ft *fileTransfer) findAndRequest(
 	ctx context.Context,
-	hash object.Hash,
+	cid object.CID,
 ) (
 	*object.Object,
 	error,
 ) {
-	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
+	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByCID(cid))
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (ft *fileTransfer) findAndRequest(
 		return nil, errors.New("no providers found")
 	}
 
-	obj, err := ft.objectmanager.Request(ctx, hash, peers[0])
+	obj, err := ft.objectmanager.Request(ctx, cid, peers[0])
 	if err != nil {
 		return nil, err
 	}
@@ -167,11 +167,11 @@ func (ft *fileTransfer) findAndRequest(
 
 func (ft *fileTransfer) get(
 	ctx context.Context,
-	hash object.Hash,
+	cid object.CID,
 ) {
-	fmt.Println("getting file:", hash)
+	fmt.Println("getting file:", cid)
 
-	obj, err := ft.findAndRequest(ctx, hash)
+	obj, err := ft.findAndRequest(ctx, cid)
 	if err != nil {
 		fmt.Println("failed to request file: ", err)
 		return
@@ -185,11 +185,11 @@ func (ft *fileTransfer) get(
 
 	flun := &fileUnloaded{
 		Metadata: obj.Metadata,
-		BlobHash: object.Hash(obj.Data["blob"].(object.String)),
+		BlobCID:  object.CID(obj.Data["blob"].(object.String)),
 	}
 
-	fmt.Println("getting blob:", flun.BlobHash)
-	_, ch, err := ft.blobmanager.Request(ctx, flun.BlobHash)
+	fmt.Println("getting blob:", flun.BlobCID)
+	_, ch, err := ft.blobmanager.Request(ctx, flun.BlobCID)
 	if err != nil {
 		fmt.Println("failed to request file:", err)
 	}

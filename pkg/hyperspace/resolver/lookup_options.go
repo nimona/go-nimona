@@ -44,15 +44,15 @@ func LookupOnlyLocal() LookupOption {
 	}
 }
 
-// LookupByContentHash matches content hashes
-func LookupByContentHash(hash object.Hash) LookupOption {
+// LookupByCID matches content cids
+func LookupByCID(cid object.CID) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups = append(opts.Lookups, hash.String())
+		opts.Lookups = append(opts.Lookups, cid.String())
 		opts.Filters = append(
 			opts.Filters,
 			func(p *hyperspace.Announcement) bool {
 				return hyperspace.Bloom(p.PeerVector).Test(
-					hyperspace.New(hash.String()),
+					hyperspace.New(cid.String()),
 				)
 			},
 		)

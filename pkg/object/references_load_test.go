@@ -14,8 +14,8 @@ func TestLoadReferences(t *testing.T) {
 		Type: "f00",
 		Data: Map{
 			"f00": String("f00"),
-			"f01": Hash("f01"),
-			"f02": Hash("f02"),
+			"f01": CID("f01"),
+			"f02": CID("f02"),
 		},
 	}
 	f01 := &Object{
@@ -40,9 +40,9 @@ func TestLoadReferences(t *testing.T) {
 	}
 
 	type args struct {
-		ctx        context.Context
-		getter     GetterFunc
-		objectHash Hash
+		ctx       context.Context
+		getter    GetterFunc
+		objectCID CID
 	}
 	tests := []struct {
 		name    string
@@ -55,14 +55,14 @@ func TestLoadReferences(t *testing.T) {
 			ctx: context.Background(),
 			getter: func(
 				ctx context.Context,
-				hash Hash,
+				cid CID,
 			) (*Object, error) {
-				if hash == "f01" {
+				if cid == "f01" {
 					return f01, nil
 				}
 				return nil, errors.New("not found")
 			},
-			objectHash: "f01",
+			objectCID: "f01",
 		},
 		want: f01,
 	}, {
@@ -71,9 +71,9 @@ func TestLoadReferences(t *testing.T) {
 			ctx: context.Background(),
 			getter: func(
 				ctx context.Context,
-				hash Hash,
+				cid CID,
 			) (*Object, error) {
-				switch hash {
+				switch cid {
 				case "f00":
 					return f00, nil
 				case "f01":
@@ -83,7 +83,7 @@ func TestLoadReferences(t *testing.T) {
 				}
 				return nil, errors.New("not found")
 			},
-			objectHash: "f00",
+			objectCID: "f00",
 		},
 		want: f00Full,
 	}}
@@ -91,7 +91,7 @@ func TestLoadReferences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := LoadReferences(
 				tt.args.ctx,
-				tt.args.objectHash,
+				tt.args.objectCID,
 				tt.args.getter,
 			)
 			if (err != nil) != tt.wantErr {

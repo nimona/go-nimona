@@ -41,9 +41,9 @@ func TestManager_Request(t *testing.T) {
 		network func(*testing.T) network.Network
 	}
 	type args struct {
-		ctx      context.Context
-		rootHash object.Hash
-		peer     *peer.ConnectionInfo
+		ctx     context.Context
+		rootCID object.CID
+		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -78,9 +78,9 @@ func TestManager_Request(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:      context.Background(),
-			rootHash: f00.Hash(),
-			peer:     testPeer,
+			ctx:     context.Background(),
+			rootCID: f00.CID(),
+			peer:    testPeer,
 		},
 		want: f00,
 	}}
@@ -93,7 +93,7 @@ func TestManager_Request(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.Request(tt.args.ctx, tt.args.rootCID, tt.args.peer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -142,9 +142,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx      context.Context
-		rootHash object.Hash
-		peer     *peer.ConnectionInfo
+		ctx     context.Context
+		rootCID object.CID
+		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -157,7 +157,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		fields: fields{
 			storeHandler: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
-				m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
+				m.EXPECT().Get(f01.CID()).Return(object.Copy(f01), nil).MaxTimes(2)
 				m.EXPECT().GetPinned().Return(nil, nil)
 				return m
 			},
@@ -173,8 +173,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					&networkmock.MockSubscriptionSimple{
 						Objects: []*network.Envelope{{
 							Payload: object.Request{
-								RequestID:  "8",
-								ObjectHash: f01.Hash(),
+								RequestID: "8",
+								ObjectCID: f01.CID(),
 							}.ToObject(),
 						}},
 					},
@@ -199,9 +199,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:      context.Background(),
-			rootHash: f00.Hash(),
-			peer:     peer1,
+			ctx:     context.Background(),
+			rootCID: f00.CID(),
+			peer:    peer1,
 		},
 		want: object.Response{
 			Metadata: object.Metadata{
@@ -216,7 +216,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
+					m.EXPECT().Get(f01.CID()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
 					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
@@ -232,8 +232,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
 								Payload: object.Request{
-									RequestID:  "8",
-									ObjectHash: f01.Hash(),
+									RequestID: "8",
+									ObjectCID: f01.CID(),
 								}.ToObject(),
 							}},
 						},
@@ -258,9 +258,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx:      context.Background(),
-				rootHash: f00.Hash(),
-				peer:     peer1,
+				ctx:     context.Background(),
+				rootCID: f00.CID(),
+				peer:    peer1,
 			},
 			want: object.Response{
 				Metadata: object.Metadata{
@@ -308,8 +308,8 @@ func TestManager_RequestStream(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream:  f00.Hash(),
-			Parents: []object.Hash{f00.Hash()},
+			Stream:  f00.CID(),
+			Parents: []object.CID{f00.CID()},
 		},
 		Data: object.Map{
 			"f01": object.String("f01"),
@@ -318,8 +318,8 @@ func TestManager_RequestStream(t *testing.T) {
 	f02 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream:  f00.Hash(),
-			Parents: []object.Hash{f01.Hash()},
+			Stream:  f00.CID(),
+			Parents: []object.CID{f01.CID()},
 		},
 		Data: object.Map{
 			"f02": object.String("f02"),
@@ -332,9 +332,9 @@ func TestManager_RequestStream(t *testing.T) {
 		local   func(*testing.T) localpeer.LocalPeer
 	}
 	type args struct {
-		ctx      context.Context
-		rootHash object.Hash
-		peer     *peer.ConnectionInfo
+		ctx     context.Context
+		rootCID object.CID
+		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -348,13 +348,13 @@ func TestManager_RequestStream(t *testing.T) {
 			store: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
-					Get(f00.Hash()).
+					Get(f00.CID()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
-					Get(f01.Hash()).
+					Get(f01.CID()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
-					Get(f02.Hash()).
+					Get(f02.CID()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(f00).
@@ -366,7 +366,7 @@ func TestManager_RequestStream(t *testing.T) {
 					Put(f02).
 					Return(nil)
 				m.EXPECT().
-					GetByStream(f00.Hash()).
+					GetByStream(f00.CID()).
 					Return(object.NewReadCloserFromObjects([]*object.Object{
 						object.Copy(f00),
 						object.Copy(f01),
@@ -392,8 +392,8 @@ func TestManager_RequestStream(t *testing.T) {
 							Objects: []*network.Envelope{{
 								Payload: stream.Response{
 									RequestID: "7",
-									Leaves: []object.Hash{
-										f02.Hash(),
+									Leaves: []object.CID{
+										f02.CID(),
 									},
 								}.ToObject(),
 							}},
@@ -419,9 +419,9 @@ func TestManager_RequestStream(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:      context.Background(),
-			rootHash: f00.Hash(),
-			peer:     testPeer,
+			ctx:     context.Background(),
+			rootCID: f00.CID(),
+			peer:    testPeer,
 		},
 		want: []*object.Object{
 			f00,
@@ -439,7 +439,7 @@ func TestManager_RequestStream(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.RequestStream(tt.args.ctx, tt.args.rootCID, tt.args.peer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("manager.RequestStream() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -496,9 +496,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo-child",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
-			Parents: []object.Hash{
-				f00.Hash(),
+			Stream: f00.CID(),
+			Parents: []object.CID{
+				f00.CID(),
 			},
 		},
 		Data: object.Map{
@@ -517,9 +517,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx      context.Context
-		rootHash object.Hash
-		peer     *peer.ConnectionInfo
+		ctx     context.Context
+		rootCID object.CID
+		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -536,15 +536,15 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetStreamLeaves(f00.Hash()).
+					GetStreamLeaves(f00.CID()).
 					Return(
-						[]object.Hash{
-							f01.Hash(),
+						[]object.CID{
+							f01.CID(),
 						},
 						nil,
 					)
 				m.EXPECT().
-					GetByStream(f00.Hash()).
+					GetByStream(f00.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -569,7 +569,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						Objects: []*network.Envelope{{
 							Payload: stream.Request{
 								RequestID: "7",
-								RootHash:  f00.Hash(),
+								RootCID:   f00.CID(),
 							}.ToObject(),
 						}},
 					},
@@ -595,17 +595,17 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:      context.Background(),
-			rootHash: f00.Hash(),
-			peer:     peer1,
+			ctx:     context.Background(),
+			rootCID: f00.CID(),
+			peer:    peer1,
 		},
 		want: stream.Response{
 			Metadata: object.Metadata{
 				Owner: localPeerKey.PublicKey(),
 			},
 			RequestID: "7",
-			RootHash:  f00.Hash(),
-			Leaves:    []object.Hash{f01.Hash()},
+			RootCID:   f00.CID(),
+			Leaves:    []object.CID{f01.CID()},
 		}.ToObject(),
 	}, {
 		name: "should pass, unknown stream",
@@ -616,7 +616,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetStreamLeaves(f00.Hash()).
+					GetStreamLeaves(f00.CID()).
 					Return(nil, objectstore.ErrNotFound)
 				return m
 			},
@@ -633,7 +633,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						Objects: []*network.Envelope{{
 							Payload: stream.Request{
 								RequestID: "7",
-								RootHash:  f00.Hash(),
+								RootCID:   f00.CID(),
 							}.ToObject(),
 						}},
 					},
@@ -659,17 +659,17 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:      context.Background(),
-			rootHash: f00.Hash(),
-			peer:     peer1,
+			ctx:     context.Background(),
+			rootCID: f00.CID(),
+			peer:    peer1,
 		},
 		want: stream.Response{
 			Metadata: object.Metadata{
 				Owner: localPeerKey.PublicKey(),
 			},
 			RequestID: "7",
-			RootHash:  f00.Hash(),
-			Leaves:    []object.Hash{},
+			RootCID:   f00.CID(),
+			Leaves:    []object.CID{},
 		}.ToObject(),
 	}}
 	for _, tt := range tests {
@@ -732,7 +732,7 @@ func TestManager_Put(t *testing.T) {
 		Type: "foo",
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
-			Stream: testObjectStreamRoot.Hash(),
+			Stream: testObjectStreamRoot.CID(),
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
@@ -752,11 +752,11 @@ func TestManager_Put(t *testing.T) {
 		Type: "foo",
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
-			Stream: testObjectStreamRoot.Hash(),
-			Parents: object.SortHashes(
-				[]object.Hash{
-					bar1.Hash(),
-					bar2.Hash(),
+			Stream: testObjectStreamRoot.CID(),
+			Parents: object.SortCIDs(
+				[]object.CID{
+					bar1.CID(),
+					bar2.CID(),
 				},
 			),
 		},
@@ -767,7 +767,7 @@ func TestManager_Put(t *testing.T) {
 	testObjectSubscriptionInline := stream.Subscription{
 		Metadata: object.Metadata{
 			Owner:  testSubscriberPublicKey,
-			Stream: testObjectStreamRoot.Hash(),
+			Stream: testObjectStreamRoot.CID(),
 		},
 	}.ToObject()
 	testObjectComplex := &object.Object{
@@ -783,7 +783,7 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{},
 		Data: object.Map{
 			"foo":             object.String("bar"),
-			"nested-simple:r": testObjectSimple.Hash(),
+			"nested-simple:r": testObjectSimple.CID(),
 		},
 	}
 	testObjectComplexReturned := &object.Object{
@@ -798,26 +798,26 @@ func TestManager_Put(t *testing.T) {
 		testOwnPrivateKey.PublicKey(),
 		getTypeForFeed(testObjectSimple.Type),
 	).ToObject()
-	testFeedRootHash := testFeedRoot.Hash()
+	testFeedRootCID := testFeedRoot.CID()
 	testFeedFirst := feed.Added{
-		ObjectHash: []object.Hash{
-			testObjectSimple.Hash(),
+		ObjectCID: []object.CID{
+			testObjectSimple.CID(),
 		},
 		Metadata: object.Metadata{
-			Stream: testFeedRootHash,
-			Parents: []object.Hash{
-				testFeedRootHash,
+			Stream: testFeedRootCID,
+			Parents: []object.CID{
+				testFeedRootCID,
 			},
 		},
 	}.ToObject()
 	testFeedSecond := feed.Added{
-		ObjectHash: []object.Hash{
-			testObjectSimple.Hash(),
+		ObjectCID: []object.CID{
+			testObjectSimple.CID(),
 		},
 		Metadata: object.Metadata{
-			Stream: testFeedRootHash,
-			Parents: []object.Hash{
-				testFeedFirst.Hash(),
+			Stream: testFeedRootCID,
+			Parents: []object.CID{
+				testFeedFirst.CID(),
 			},
 		},
 	}.ToObject()
@@ -920,7 +920,7 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
+					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -931,12 +931,12 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.Hash()).
+					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						object.SortHashes(
-							[]object.Hash{
-								bar1.Hash(),
-								bar2.Hash(),
+						object.SortCIDs(
+							[]object.CID{
+								bar1.CID(),
+								bar2.CID(),
 							},
 						),
 						nil,
@@ -979,7 +979,7 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					Put(testObjectSimple)
 				m.EXPECT().
-					Get(testFeedRootHash).
+					Get(testFeedRootCID).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(
@@ -1027,15 +1027,15 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					Put(testObjectSimple)
 				m.EXPECT().
-					Get(testFeedRootHash).
+					Get(testFeedRootCID).
 					Return(testFeedRoot, nil)
 				m.EXPECT().
 					Put(gomockutil.ObjectEq(testFeedSecond))
 				m.EXPECT().
-					GetStreamLeaves(testFeedRootHash).
+					GetStreamLeaves(testFeedRootCID).
 					Return(
-						[]object.Hash{
-							testFeedFirst.Hash(),
+						[]object.CID{
+							testFeedFirst.CID(),
 						},
 						nil,
 					)
@@ -1079,16 +1079,16 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.Hash()).
+					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						[]object.Hash{
-							bar1.Hash(),
-							bar2.Hash(),
+						[]object.CID{
+							bar1.CID(),
+							bar2.CID(),
 						},
 						nil,
 					)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
+					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -1134,8 +1134,8 @@ func TestManager_Put(t *testing.T) {
 					Metadata: object.Metadata{
 						Owner: testSubscriberPublicKey,
 					},
-					RootHashes: []object.Hash{
-						testObjectStreamRoot.Hash(),
+					RootCIDs: []object.CID{
+						testObjectStreamRoot.CID(),
 					},
 				}.ToObject(),
 			},
@@ -1162,7 +1162,7 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.Hash()).
+					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -1174,12 +1174,12 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.Hash()).
+					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						[]object.Hash{
-							bar1.Hash(),
-							bar2.Hash(),
-							testObjectSubscriptionInline.Hash(),
+						[]object.CID{
+							bar1.CID(),
+							bar2.CID(),
+							testObjectSubscriptionInline.CID(),
 						},
 						nil,
 					)
@@ -1223,13 +1223,13 @@ func TestManager_Put(t *testing.T) {
 		want: &object.Object{
 			Type: "foo",
 			Metadata: object.Metadata{
-				Stream: testObjectStreamRoot.Hash(),
+				Stream: testObjectStreamRoot.CID(),
 				Owner:  testOwnPublicKey,
-				Parents: object.SortHashes(
-					[]object.Hash{
-						bar1.Hash(),
-						bar2.Hash(),
-						testObjectSubscriptionInline.Hash(),
+				Parents: object.SortCIDs(
+					[]object.CID{
+						bar1.CID(),
+						bar2.CID(),
+						testObjectSubscriptionInline.CID(),
 					},
 				),
 			},
@@ -1284,7 +1284,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	o2 := &object.Object{
 		Type: "bar",
 		Metadata: object.Metadata{
-			Stream: o0.Hash(),
+			Stream: o0.CID(),
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
@@ -1296,9 +1296,9 @@ func Test_manager_Subscribe(t *testing.T) {
 		publish       []*object.Object
 		want          []*object.Object
 	}{{
-		name: "subscribe by hash",
+		name: "subscribe by cid",
 		lookupOptions: []LookupOption{
-			FilterByHash(o2.Hash()),
+			FilterByCID(o2.CID()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o2},
@@ -1319,22 +1319,22 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by stream",
 		lookupOptions: []LookupOption{
-			FilterByStreamHash(o0.Hash()),
+			FilterByStreamCID(o0.CID()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o2},
 	}, {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
-			FilterByStreamHash("foo"),
+			FilterByStreamCID("foo"),
 			FilterByOwner("foo"),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{},
 	}, {
-		name: "subscribe by hash and type",
+		name: "subscribe by cid and type",
 		lookupOptions: []LookupOption{
-			FilterByHash(o2.Hash()),
+			FilterByCID(o2.CID()),
 			FilterByObjectType("bar"),
 		},
 		publish: []*object.Object{o1, o2},

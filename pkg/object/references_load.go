@@ -11,12 +11,12 @@ import (
 // with the actual object before returning the complete
 func LoadReferences(
 	ctx context.Context,
-	objectHash Hash,
+	objectCID CID,
 	getter GetterFunc,
 ) (*Object, error) {
 	obj, err := getter(
 		ctx,
-		objectHash,
+		objectCID,
 	)
 	if err != nil {
 		return nil, err
@@ -24,16 +24,16 @@ func LoadReferences(
 	var getError error
 	traverseObject(obj, func(k string, v Value) (string, Value, bool) {
 		switch vv := v.(type) {
-		case Hash:
+		case CID:
 			o, err := getter(ctx, vv)
 			if err != nil {
 				getError = multierror.Append(getError, err)
 				return "", nil, false
 			}
 			return k, o, true
-		case HashArray:
+		case CIDArray:
 			// TODO implement and test
-			panic("LoadReferences doesn't implement loading from HashArray")
+			panic("LoadReferences doesn't implement loading from CIDArray")
 		}
 		return "", nil, false
 	})
