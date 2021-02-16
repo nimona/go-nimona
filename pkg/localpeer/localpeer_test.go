@@ -28,14 +28,14 @@ func TestLocalPeer(t *testing.T) {
 	lp.PutPrimaryIdentityKey(k2)
 	assert.Equal(t, k2, lp.GetPrimaryIdentityKey())
 
-	ch1 := object.Hash("f01")
-	ch2 := object.Hash("f02")
+	ch1 := object.CID("f01")
+	ch2 := object.CID("f02")
 
-	lp.PutContentHashes(ch1)
-	assert.ElementsMatch(t, []object.Hash{ch1}, lp.GetContentHashes())
+	lp.PutCIDs(ch1)
+	assert.ElementsMatch(t, []object.CID{ch1}, lp.GetCIDs())
 
-	lp.PutContentHashes(ch1, ch2)
-	assert.ElementsMatch(t, []object.Hash{ch1, ch2}, lp.GetContentHashes())
+	lp.PutCIDs(ch1, ch2)
+	assert.ElementsMatch(t, []object.CID{ch1, ch2}, lp.GetCIDs())
 
 	lp.PutRelays(&peer.ConnectionInfo{
 		PublicKey: k1.PublicKey(),

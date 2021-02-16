@@ -29,9 +29,9 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	blob1 := &blob.Blob{
-		Chunks: []object.Hash{
-			chunk1.ToObject().Hash(),
-			chunk2.ToObject().Hash(),
+		Chunks: []object.CID{
+			chunk1.ToObject().CID(),
+			chunk2.ToObject().CID(),
 		},
 	}
 
@@ -44,8 +44,8 @@ func Test_requester_Request(t *testing.T) {
 		objmgr   func(*testing.T, *peer.ConnectionInfo) objectmanager.ObjectManager
 	}
 	type args struct {
-		ctx  context.Context
-		hash object.Hash
+		ctx context.Context
+		cid object.CID
 	}
 	tests := []struct {
 		name       string
@@ -79,19 +79,19 @@ func Test_requester_Request(t *testing.T) {
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					blob1.ToObject().Hash(),
+					blob1.ToObject().CID(),
 					peer1,
 				).Return(blob1.ToObject(), nil).MaxTimes(1)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					chunk1.ToObject().Hash(),
+					chunk1.ToObject().CID(),
 					peer1,
 				).Return(chunk1.ToObject(), nil)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					chunk2.ToObject().Hash(),
+					chunk2.ToObject().CID(),
 					peer1,
 				).Return(chunk2.ToObject(), nil)
 
@@ -105,8 +105,8 @@ func Test_requester_Request(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:  context.Background(),
-			hash: blob1.ToObject().Hash(),
+			ctx: context.Background(),
+			cid: blob1.ToObject().CID(),
 		},
 		want: blob1,
 		wantChunks: []*blob.Chunk{
@@ -122,7 +122,7 @@ func Test_requester_Request(t *testing.T) {
 				blob.WithResolver(tt.fields.resolver(t, peer1)),
 			)
 
-			got, gotChunks, err := r.Request(tt.args.ctx, tt.args.hash)
+			got, gotChunks, err := r.Request(tt.args.ctx, tt.args.cid)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("requester.Request() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -201,9 +201,9 @@ func Test_manager_ImportFromFile(t *testing.T) {
 					Type: new(blob.Blob).Type(),
 					Data: object.Map{
 						"chunks": object.StringArray{
-							object.String(chunk0.Hash()),
-							object.String(chunk1.Hash()),
-							object.String(chunk2.Hash()),
+							object.String(chunk0.CID()),
+							object.String(chunk1.CID()),
+							object.String(chunk2.CID()),
 						},
 					},
 				}).
@@ -211,10 +211,10 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			return m
 		},
 		want: &blob.Blob{
-			Chunks: []object.Hash{
-				chunk0.Hash(),
-				chunk1.Hash(),
-				chunk2.Hash(),
+			Chunks: []object.CID{
+				chunk0.CID(),
+				chunk1.CID(),
+				chunk2.CID(),
 			},
 		},
 	}}

@@ -16,12 +16,12 @@ func UnloadReferences(
 		switch vv := v.(type) {
 		case *Object:
 			unloaded = append(unloaded, vv)
-			return k, vv.Hash(), true
+			return k, vv.CID(), true
 		case ObjectArray:
-			hs := HashArray{}
+			hs := CIDArray{}
 			for _, o := range vv {
 				unloaded = append(unloaded, o)
-				hs = append(hs, o.Hash())
+				hs = append(hs, o.CID())
 			}
 			return k, hs, true
 		}

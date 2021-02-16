@@ -10,7 +10,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Name     string
-		Blob     object.Hash
+		Blob     object.CID
 	}
 )
 
@@ -41,7 +41,7 @@ func (e *File) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["blob"]; ok {
 		if t, ok := v.(object.String); ok {
-			e.Blob = object.Hash(t)
+			e.Blob = object.CID(t)
 		}
 	}
 	return nil

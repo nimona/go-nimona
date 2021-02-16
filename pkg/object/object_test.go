@@ -209,7 +209,7 @@ func TestValues(t *testing.T) {
 		json:  `[123456789,123456789]`,
 	}, {
 		name:  "ah",
-		value: HashArray{dummy.Hash(), dummy.Hash()},
+		value: CIDArray{dummy.CID(), dummy.CID()},
 		want:  "QmY2Z7ah5DhKvpiJQ3TZBMjAMnx41jiSvJ42Vp48Zq7esA",
 		json:  `["bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c","bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"]`,
 	}, {
@@ -289,7 +289,7 @@ func TestValues(t *testing.T) {
 	}, {
 		name: "m>h",
 		value: Map{
-			"foo": dummy.Hash(),
+			"foo": dummy.CID(),
 		},
 		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
 		json: `{"foo:r":"bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"}`,

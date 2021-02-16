@@ -13,7 +13,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
-		Chunks   []object.Hash
+		Chunks   []object.CID
 	}
 )
 
@@ -70,9 +70,9 @@ func (e *Blob) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["chunks"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
 			e.Chunks = rv
 		}

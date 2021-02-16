@@ -82,7 +82,7 @@ func TestResolver_Integration(t *testing.T) {
 	res := New(context.New(), net1, WithBoostrapPeers(pr0.ConnectionInfo))
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByContentHash("bar"))
+	pr, err := res.Lookup(context.New(), LookupByCID("bar"))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 }

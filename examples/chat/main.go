@@ -40,7 +40,7 @@ type chat struct {
 }
 
 func (c *chat) subscribe(
-	conversationRootHash object.Hash,
+	conversationRootCID object.CID,
 ) (chan interface{}, error) {
 	objects := make(chan *object.Object)
 	events := make(chan interface{})
@@ -78,7 +78,7 @@ func (c *chat) subscribe(
 	}()
 
 	// get objects from db first
-	or, err := c.objectstore.GetByStream(conversationRootHash)
+	or, err := c.objectstore.GetByStream(conversationRootCID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (c *chat) subscribe(
 		}
 		// subscribe to conversation updates
 		sub := c.objectmanager.Subscribe(
-			objectmanager.FilterByStreamHash(conversationRootHash),
+			objectmanager.FilterByStreamCID(conversationRootCID),
 		)
 		for {
 			o, err := sub.Read()
@@ -107,7 +107,7 @@ func (c *chat) subscribe(
 	// create subscription for stream
 	go func() {
 		// add a subscription to the stream if one doesn't already exist
-		or, err := c.objectstore.GetByStream(conversationRootHash)
+		or, err := c.objectstore.GetByStream(conversationRootCID)
 		if err != nil {
 			c.logger.Fatal("error checking for subscription", log.Error(err))
 		}
@@ -134,10 +134,10 @@ func (c *chat) subscribe(
 			if _, err := c.objectmanager.Put(ctx, stream.Subscription{
 				Metadata: object.Metadata{
 					Owner:  c.local.GetPrimaryPeerKey().PublicKey(),
-					Stream: conversationRootHash,
+					Stream: conversationRootCID,
 				},
-				RootHashes: []object.Hash{
-					conversationRootHash,
+				RootCIDs: []object.CID{
+					conversationRootCID,
 				},
 			}.ToObject()); err != nil {
 				c.logger.Fatal("could not persist conversation sub", log.Error(err))
@@ -148,11 +148,11 @@ func (c *chat) subscribe(
 		queryCtx := context.New(context.WithTimeout(time.Second * 5))
 		peers, err := c.resolver.Lookup(
 			queryCtx,
-			resolver.LookupByContentHash(conversationRootHash),
+			resolver.LookupByCID(conversationRootCID),
 		)
 		if err != nil {
-			c.logger.Error("could not find any peers that have this hash",
-				log.String("hash", string(conversationRootHash)),
+			c.logger.Error("could not find any peers that have this cid",
+				log.String("cid", string(conversationRootCID)),
 			)
 			return
 		}
@@ -160,7 +160,7 @@ func (c *chat) subscribe(
 			reqCtx := context.New(context.WithTimeout(time.Second * 5))
 			cr, err := c.objectmanager.RequestStream(
 				reqCtx,
-				conversationRootHash,
+				conversationRootCID,
 				p,
 			)
 			if err != nil {
@@ -258,7 +258,7 @@ func main() {
 		logger.Fatal("error starting sql store", log.Error(err))
 	}
 
-	// construct hypothetical root in order to get a root hash
+	// construct hypothetical root in order to get a root cid
 	conversationRoot := ConversationStreamRoot{
 		Nonce: cConfig.Nonce,
 	}
@@ -272,10 +272,10 @@ func main() {
 	)
 
 	conversationRootObject := conversationRoot.ToObject()
-	conversationRootHash := conversationRootObject.Hash()
+	conversationRootCID := conversationRootObject.CID()
 
 	// add conversation to the list of content we provide
-	local.PutContentHashes(conversationRootHash)
+	local.PutCIDs(conversationRootCID)
 
 	// construct new resolver
 	res := resolver.New(
@@ -313,12 +313,12 @@ func main() {
 		logger:        logger,
 	}
 
-	events, err := c.subscribe(conversationRootHash)
+	events, err := c.subscribe(conversationRootCID)
 	if err != nil {
 		logger.Fatal("error subscribing to conversation", log.Error(err))
 	}
 
-	app := NewApp(conversationRootHash.String())
+	app := NewApp(conversationRootCID.String())
 	app.Chat = c
 	go app.Show()
 
@@ -333,7 +333,7 @@ func main() {
 					ConversationNicknameUpdated{
 						Metadata: object.Metadata{
 							Owner:    local.GetPrimaryPeerKey().PublicKey(),
-							Stream:   conversationRootHash,
+							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Nickname: nickname,
@@ -352,7 +352,7 @@ func main() {
 					ConversationMessageAdded{
 						Metadata: object.Metadata{
 							Owner:    local.GetPrimaryPeerKey().PublicKey(),
-							Stream:   conversationRootHash,
+							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Body: input,
@@ -375,19 +375,19 @@ func main() {
 				continue
 			}
 			app.Channels.MessageAdded <- &Message{
-				Hash:             v.ToObject().Hash().String(),
-				ConversationHash: v.Metadata.Stream.String(),
-				SenderKey:        v.Metadata.Owner.String(),
-				Body:             strings.TrimSpace(v.Body),
-				Created:          t.UTC(),
+				CID:             v.ToObject().CID().String(),
+				ConversationCID: v.Metadata.Stream.String(),
+				SenderKey:       v.Metadata.Owner.String(),
+				Body:            strings.TrimSpace(v.Body),
+				Created:         t.UTC(),
 			}
 		case *ConversationNicknameUpdated:
 			updated, _ := time.Parse(time.RFC3339, v.Metadata.Datetime)
 			app.Channels.ParticipantUpdated <- &Participant{
-				ConversationHash: v.Metadata.Stream.String(),
-				Key:              v.Metadata.Owner.String(),
-				Nickname:         v.Nickname,
-				Updated:          updated.UTC(),
+				ConversationCID: v.Metadata.Stream.String(),
+				Key:             v.Metadata.Owner.String(),
+				Nickname:        v.Nickname,
+				Updated:         updated.UTC(),
 			}
 		}
 	}

@@ -17,23 +17,23 @@ type (
 	Request struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string
-		RootHash  object.Hash
+		RootCID   object.CID
 	}
 	Response struct {
 		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
 		RequestID string
-		RootHash  object.Hash
-		Leaves    []object.Hash
+		RootCID   object.CID
+		Leaves    []object.CID
 	}
 	Announcement struct {
-		Metadata     object.Metadata `nimona:"metadata:m,omitempty"`
-		StreamHash   object.Hash
-		ObjectHashes []object.Hash
+		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
+		StreamCID  object.CID
+		ObjectCIDs []object.CID
 	}
 	Subscription struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
-		RootHashes []object.Hash
-		Expiry     string
+		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		RootCIDs []object.CID
+		Expiry   string
 	}
 )
 
@@ -134,7 +134,7 @@ func (e Request) ToObject() *object.Object {
 	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
 	// else if $member.IsPrimitive
-	r.Data["rootHash"] = object.String(e.RootHash)
+	r.Data["rootCID"] = object.String(e.RootCID)
 	return r
 }
 
@@ -145,9 +145,9 @@ func (e *Request) FromObject(o *object.Object) error {
 			e.RequestID = string(t)
 		}
 	}
-	if v, ok := o.Data["rootHash"]; ok {
+	if v, ok := o.Data["rootCID"]; ok {
 		if t, ok := v.(object.String); ok {
-			e.RootHash = object.Hash(t)
+			e.RootCID = object.CID(t)
 		}
 	}
 	return nil
@@ -167,7 +167,7 @@ func (e Response) ToObject() *object.Object {
 	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
 	// else if $member.IsPrimitive
-	r.Data["rootHash"] = object.String(e.RootHash)
+	r.Data["rootCID"] = object.String(e.RootCID)
 	// if $member.IsRepeated
 	if len(e.Leaves) > 0 {
 		// else
@@ -188,16 +188,16 @@ func (e *Response) FromObject(o *object.Object) error {
 			e.RequestID = string(t)
 		}
 	}
-	if v, ok := o.Data["rootHash"]; ok {
+	if v, ok := o.Data["rootCID"]; ok {
 		if t, ok := v.(object.String); ok {
-			e.RootHash = object.Hash(t)
+			e.RootCID = object.CID(t)
 		}
 	}
 	if v, ok := o.Data["leaves"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
 			e.Leaves = rv
 		}
@@ -216,34 +216,34 @@ func (e Announcement) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	// else if $member.IsPrimitive
-	r.Data["streamHash"] = object.String(e.StreamHash)
+	r.Data["streamCID"] = object.String(e.StreamCID)
 	// if $member.IsRepeated
-	if len(e.ObjectHashes) > 0 {
+	if len(e.ObjectCIDs) > 0 {
 		// else
-		// r.Data["objectHashes"] = object.ToStringArray(e.ObjectHashes)
-		rv := make(object.StringArray, len(e.ObjectHashes))
-		for i, iv := range e.ObjectHashes {
+		// r.Data["objectCIDs"] = object.ToStringArray(e.ObjectCIDs)
+		rv := make(object.StringArray, len(e.ObjectCIDs))
+		for i, iv := range e.ObjectCIDs {
 			rv[i] = object.String(iv)
 		}
-		r.Data["objectHashes"] = rv
+		r.Data["objectCIDs"] = rv
 	}
 	return r
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
-	if v, ok := o.Data["streamHash"]; ok {
+	if v, ok := o.Data["streamCID"]; ok {
 		if t, ok := v.(object.String); ok {
-			e.StreamHash = object.Hash(t)
+			e.StreamCID = object.CID(t)
 		}
 	}
-	if v, ok := o.Data["objectHashes"]; ok {
+	if v, ok := o.Data["objectCIDs"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
-			e.ObjectHashes = rv
+			e.ObjectCIDs = rv
 		}
 	}
 	return nil
@@ -260,14 +260,14 @@ func (e Subscription) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	// if $member.IsRepeated
-	if len(e.RootHashes) > 0 {
+	if len(e.RootCIDs) > 0 {
 		// else
-		// r.Data["rootHashes"] = object.ToStringArray(e.RootHashes)
-		rv := make(object.StringArray, len(e.RootHashes))
-		for i, iv := range e.RootHashes {
+		// r.Data["rootCIDs"] = object.ToStringArray(e.RootCIDs)
+		rv := make(object.StringArray, len(e.RootCIDs))
+		for i, iv := range e.RootCIDs {
 			rv[i] = object.String(iv)
 		}
-		r.Data["rootHashes"] = rv
+		r.Data["rootCIDs"] = rv
 	}
 	// else
 	// r.Data["expiry"] = object.String(e.Expiry)
@@ -277,13 +277,13 @@ func (e Subscription) ToObject() *object.Object {
 
 func (e *Subscription) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
-	if v, ok := o.Data["rootHashes"]; ok {
+	if v, ok := o.Data["rootCIDs"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
-			e.RootHashes = rv
+			e.RootCIDs = rv
 		}
 	}
 	if v, ok := o.Data["expiry"]; ok {

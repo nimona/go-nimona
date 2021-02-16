@@ -20,7 +20,7 @@ type (
 	Requester interface {
 		Request(
 			ctx context.Context,
-			hash object.Hash,
+			cid object.CID,
 		) (*Blob, []*Chunk, error)
 	}
 	Manager interface {
@@ -67,8 +67,8 @@ func (r *manager) ImportFromFile(
 		return nil, err
 	}
 
-	// keep a list of all chunk hashes
-	chunkHashes := []object.Hash{}
+	// keep a list of all chunk cids
+	chunkCIDs := []object.CID{}
 
 	// start a workerpool to store chunks
 	wp := workerpool.New(r.importWorkers)
@@ -102,8 +102,8 @@ func (r *manager) ImportFromFile(
 		chunkObj := chunk.ToObject()
 		// store it
 		wp.Submit(store(chunkObj))
-		// and add its hash to our list
-		chunkHashes = append(chunkHashes, chunkObj.Hash())
+		// and add its cid to our list
+		chunkCIDs = append(chunkCIDs, chunkObj.CID())
 	}
 
 	wp.StopWait()
@@ -118,20 +118,20 @@ func (r *manager) ImportFromFile(
 
 	// and finally construct the blob with the gathered list of chunks
 	blob := &Blob{
-		Chunks: chunkHashes,
+		Chunks: chunkCIDs,
 	}
 	blobObj := blob.ToObject()
 	// store it
 	if _, err := r.objectmanager.Put(ctx, blobObj); err != nil {
 		return nil, err
 	}
-	// and return its hash
+	// and return its cid
 	return blob, nil
 }
 
 func (r *manager) Request(
 	ctx context.Context,
-	hash object.Hash,
+	cid object.CID,
 ) (*Blob, []*Chunk, error) {
 	logger := log.
 		FromContext(ctx).
@@ -141,7 +141,7 @@ func (r *manager) Request(
 		)
 
 	// find peers
-	peers, err := r.resolver.Lookup(ctx, resolver.LookupByContentHash(hash))
+	peers, err := r.resolver.Lookup(ctx, resolver.LookupByCID(cid))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -153,7 +153,7 @@ func (r *manager) Request(
 	// request the blob object excluding the nested chunks
 	obj, err := r.objectmanager.Request(
 		ctx,
-		hash,
+		cid,
 		peers[0],
 	)
 	if err != nil {
@@ -161,7 +161,7 @@ func (r *manager) Request(
 		return nil, nil, err
 	}
 
-	chunksHash, err := getChunks(obj)
+	chunksCID, err := getChunks(obj)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,7 +174,7 @@ func (r *manager) Request(
 	}
 
 	// Request all the chunks
-	for _, ch := range chunksHash {
+	for _, ch := range chunksCID {
 		chObj, err := r.objectmanager.Request(
 			ctx,
 			ch,
@@ -198,7 +198,7 @@ func (r *manager) Request(
 	return blob, chunks, nil
 }
 
-func getChunks(o *object.Object) ([]object.Hash, error) {
+func getChunks(o *object.Object) ([]object.CID, error) {
 	b := &Blob{}
 	if err := b.FromObject(o); err != nil {
 		return nil, err

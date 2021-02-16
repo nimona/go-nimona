@@ -15,21 +15,21 @@ const (
 // models
 type (
 	Conversation struct {
-		Hash         string
+		CID          string
 		LastActivity time.Time
 	}
 	Message struct {
-		Hash             string
-		ConversationHash string
-		Body             string
-		SenderKey        string
-		Created          time.Time
+		CID             string
+		ConversationCID string
+		Body            string
+		SenderKey       string
+		Created         time.Time
 	}
 	Participant struct {
-		Key              string
-		ConversationHash string
-		Nickname         string
-		Updated          time.Time
+		Key             string
+		ConversationCID string
+		Nickname        string
+		Updated         time.Time
 	}
 )
 
@@ -133,11 +133,11 @@ func (s *store) PutConversation(con *Conversation) error {
 func (s *store) PutParticipant(par *Participant) error {
 	s.participantsLock.Lock()
 	defer s.participantsLock.Unlock()
-	_, ok := s.participants[par.ConversationHash]
+	_, ok := s.participants[par.ConversationCID]
 	if !ok {
-		s.participants[par.ConversationHash] = []*Participant{}
+		s.participants[par.ConversationCID] = []*Participant{}
 	}
-	for _, xpar := range s.participants[par.ConversationHash] {
+	for _, xpar := range s.participants[par.ConversationCID] {
 		if xpar.Key == par.Key {
 			if par.Nickname != "" {
 				xpar.Nickname = par.Nickname
@@ -145,11 +145,11 @@ func (s *store) PutParticipant(par *Participant) error {
 			return nil
 		}
 	}
-	s.participants[par.ConversationHash] = append(
-		s.participants[par.ConversationHash],
+	s.participants[par.ConversationCID] = append(
+		s.participants[par.ConversationCID],
 		par,
 	)
-	sort.Sort(s.participants[par.ConversationHash])
+	sort.Sort(s.participants[par.ConversationCID])
 	return nil
 }
 
@@ -157,19 +157,19 @@ func (s *store) PutParticipant(par *Participant) error {
 func (s *store) PutMessage(msg *Message) error {
 	s.messagesLock.Lock()
 	defer s.messagesLock.Unlock()
-	_, ok := s.messages[msg.ConversationHash]
+	_, ok := s.messages[msg.ConversationCID]
 	if !ok {
-		s.messages[msg.ConversationHash] = []*Message{}
+		s.messages[msg.ConversationCID] = []*Message{}
 	}
-	for _, message := range s.messages[msg.ConversationHash] {
-		if message.Hash == msg.Hash {
+	for _, message := range s.messages[msg.ConversationCID] {
+		if message.CID == msg.CID {
 			return nil
 		}
 	}
-	s.messages[msg.ConversationHash] = append(
-		s.messages[msg.ConversationHash],
+	s.messages[msg.ConversationCID] = append(
+		s.messages[msg.ConversationCID],
 		msg,
 	)
-	sort.Sort(s.messages[msg.ConversationHash])
+	sort.Sort(s.messages[msg.ConversationCID])
 	return nil
 }

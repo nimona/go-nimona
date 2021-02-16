@@ -2,7 +2,7 @@ package nimona.io/object
 
 signed object nimona.io/object.Request {
     requestID string
-    objectHash nimona.io/object.Hash
+    objectCID nimona.io/object.CID
 }
 
 signed object nimona.io/object.Response {

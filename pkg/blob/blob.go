@@ -36,7 +36,7 @@ func NewBlob(r io.Reader) (*Blob, []*Chunk, error) {
 		}
 
 		chunks = append(chunks, ch)
-		blob.Chunks = append(blob.Chunks, ch.ToObject().Hash())
+		blob.Chunks = append(blob.Chunks, ch.ToObject().CID())
 	}
 
 	return blob, chunks, nil

@@ -26,9 +26,9 @@ var primitives = map[string]struct {
 		IsObject:  false,
 		IsPrimary: true,
 	},
-	"nimona.io/object.Hash": {
+	"nimona.io/object.CID": {
 		Hint:      "s",
-		Type:      "object.Hash",
+		Type:      "object.CID",
 		IsObject:  false,
 		IsPrimary: true,
 	},

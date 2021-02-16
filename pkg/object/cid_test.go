@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BenchmarkHash(b *testing.B) {
+func BenchmarkCID(b *testing.B) {
 	o := Map{
 		"type": String("blob"),
 		"data": Map{
@@ -60,28 +60,28 @@ func TestObjectReplace(t *testing.T) {
 	tests := []struct {
 		name    string
 		json    string
-		want    Hash
+		want    CID
 		wantErr bool
 	}{{
 		name: "1",
 		json: `{"type:s":"foo","data:m":{"foo:s":"bar"}}`,
-		want: inner.Hash(),
+		want: inner.CID(),
 	}, {
 		name: "2",
 		// nolint: lll
 		json: `{"type:s":"foo","data:m":{"foo:o":{"type:s":"foo","data:m":{"foo:s":"bar"}}}}`,
-		want: parentWithInner.Hash(),
+		want: parentWithInner.CID(),
 	}, {
 		name: "3",
 		// nolint: lll
-		json: `{"type:s":"foo","data:m":{"foo:r":"` + string(inner.Hash()) + `"}}`,
-		want: parentWithInner.Hash(),
+		json: `{"type:s":"foo","data:m":{"foo:r":"` + string(inner.CID()) + `"}}`,
+		want: parentWithInner.CID(),
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			o := &Object{}
 			assert.NoError(t, json.Unmarshal([]byte(tt.json), o))
-			got, err := NewHash(o)
+			got, err := NewCID(o)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
@@ -94,6 +94,6 @@ func TestEdgecases_NullStream(t *testing.T) {
 	o := &Object{}
 	err := json.Unmarshal([]byte(b), o)
 	require.NoError(t, err)
-	h := o.Hash()
+	h := o.CID()
 	assert.NotEmpty(t, h)
 }

@@ -15,8 +15,8 @@ type (
 		// Filters are used to perform db queries for these filters
 		// TODO find a better name for this
 		Filters struct {
-			ObjectHashes []object.Hash
-			StreamHashes []object.Hash
+			ObjectCIDs   []object.CID
+			StreamCIDs   []object.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 			OrderBy      string
@@ -30,8 +30,8 @@ type (
 func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 	options := &FilterOptions{
 		Filters: struct {
-			ObjectHashes []object.Hash
-			StreamHashes []object.Hash
+			ObjectCIDs   []object.CID
+			StreamCIDs   []object.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 			OrderBy      string
@@ -39,8 +39,8 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			Limit        *int
 			Offset       *int
 		}{
-			ObjectHashes: []object.Hash{},
-			StreamHashes: []object.Hash{},
+			ObjectCIDs:   []object.CID{},
+			StreamCIDs:   []object.CID{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 			OrderBy:      "Created",
@@ -72,9 +72,9 @@ func FilterLimit(limit, offset int) FilterOption {
 	}
 }
 
-func FilterByHash(hs ...object.Hash) FilterOption {
+func FilterByCID(hs ...object.CID) FilterOption {
 	return func(opts *FilterOptions) {
-		opts.Filters.ObjectHashes = append(opts.Filters.ObjectHashes, hs...)
+		opts.Filters.ObjectCIDs = append(opts.Filters.ObjectCIDs, hs...)
 	}
 }
 
@@ -84,9 +84,9 @@ func FilterByOwner(hs ...crypto.PublicKey) FilterOption {
 	}
 }
 
-func FilterByStreamHash(hs ...object.Hash) FilterOption {
+func FilterByStreamCID(hs ...object.CID) FilterOption {
 	return func(opts *FilterOptions) {
-		opts.Filters.StreamHashes = append(opts.Filters.StreamHashes, hs...)
+		opts.Filters.StreamCIDs = append(opts.Filters.StreamCIDs, hs...)
 	}
 }
 

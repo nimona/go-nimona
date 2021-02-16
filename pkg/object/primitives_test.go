@@ -14,7 +14,7 @@ func TestValue(t *testing.T) {
 		new(Map),
 		new(String),
 		new(Uint),
-		new(Hash),
+		new(CID),
 		&Object{},
 	}
 	for _, tt := range tests {
@@ -34,7 +34,7 @@ func TestIsX(t *testing.T) {
 		make(MapArray, 2),
 		make(StringArray, 2),
 		make(UintArray, 2),
-		make(HashArray, 2),
+		make(CIDArray, 2),
 		make(ObjectArray, 2),
 	}
 	for _, tt := range tests {

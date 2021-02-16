@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// ErrNotFound is returned when a requested object or hash is not found
+	// ErrNotFound is returned when a requested object or cid is not found
 	ErrNotFound = errors.Error("not found")
 )
 
@@ -16,16 +16,16 @@ const (
 
 type (
 	Getter interface {
-		Get(hash object.Hash) (*object.Object, error)
+		Get(cid object.CID) (*object.Object, error)
 	}
 	Store interface {
-		Get(hash object.Hash) (*object.Object, error)
+		Get(cid object.CID) (*object.Object, error)
 		GetByType(string) (object.ReadCloser, error)
-		GetByStream(object.Hash) (object.ReadCloser, error)
+		GetByStream(object.CID) (object.ReadCloser, error)
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
-		GetStreamLeaves(streamRootHash object.Hash) ([]object.Hash, error)
+		GetStreamLeaves(streamRootCID object.CID) ([]object.CID, error)
 		// TODO GetPinned should be replaced with something "better"
-		GetPinned() ([]object.Hash, error)
+		GetPinned() ([]object.CID, error)
 	}
 )

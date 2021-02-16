@@ -15,8 +15,8 @@ var (
 )
 
 const (
-	// AlgorithmObjectHash for creating ObjectHash+ES256 based signatures
-	AlgorithmObjectHash = "OH_ES256"
+	// AlgorithmObjectCID for creating ObjectCID+ES256 based signatures
+	AlgorithmObjectCID = "OH_ES256"
 )
 
 type Signature struct {
@@ -77,14 +77,14 @@ func NewSignature(
 	k crypto.PrivateKey,
 	o *Object,
 ) (Signature, error) {
-	h, err := NewHash(o)
+	h, err := NewCID(o)
 	if err != nil {
 		return Signature{}, err
 	}
 	x := k.Sign([]byte(h))
 	s := Signature{
 		Signer: k.PublicKey(),
-		Alg:    AlgorithmObjectHash,
+		Alg:    AlgorithmObjectCID,
 		X:      x,
 	}
 	return s, nil

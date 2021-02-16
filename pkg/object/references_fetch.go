@@ -9,13 +9,13 @@ var (
 	ErrTimeout = errors.New("timeout")
 )
 
-func GetReferences(o *Object) []Hash {
-	refs := []Hash{}
+func GetReferences(o *Object) []CID {
+	refs := []CID{}
 	Traverse(o.Data, func(k string, v interface{}) bool {
 		if v == nil {
 			return true
 		}
-		h, ok := v.(Hash)
+		h, ok := v.(CID)
 		if !ok {
 			return true
 		}
@@ -31,9 +31,9 @@ func GetReferences(o *Object) []Hash {
 func FetchWithReferences(
 	ctx context.Context,
 	getter GetterFunc,
-	objectHash Hash,
+	objectCID CID,
 ) (ReadCloser, error) {
-	obj, err := getter(ctx, objectHash)
+	obj, err := getter(ctx, objectCID)
 	if err != nil {
 		return nil, err
 	}

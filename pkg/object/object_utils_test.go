@@ -12,7 +12,7 @@ func TestCopy(t *testing.T) {
 		source *Object
 		want   *Object
 	}{{
-		name: "same hash, different ptr",
+		name: "same cid, different ptr",
 		source: &Object{
 			Type: "foo",
 			Data: Map{
@@ -23,7 +23,7 @@ func TestCopy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Copy(tt.source)
-			assert.Equal(t, tt.source.Hash(), got.Hash())
+			assert.Equal(t, tt.source.CID(), got.CID())
 			assert.NotSame(t, tt.source, got)
 			assert.NotSame(t, tt.source.Data, got.Data)
 		})
@@ -126,17 +126,17 @@ func TestUintArray(t *testing.T) {
 	}
 }
 
-func TestHashArray(t *testing.T) {
+func TestCIDArray(t *testing.T) {
 	tests := []struct {
 		have []string
-		want HashArray
+		want CIDArray
 	}{{
 		have: []string{"foo", "bar"},
-		want: HashArray{"foo", "bar"},
+		want: CIDArray{"foo", "bar"},
 	}}
 	for _, tt := range tests {
-		t.Run("HashArray", func(t *testing.T) {
-			got := ToHashArray(tt.have)
+		t.Run("CIDArray", func(t *testing.T) {
+			got := ToCIDArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -238,17 +238,17 @@ func TestFromUintArray(t *testing.T) {
 	}
 }
 
-func TestFromHashArray(t *testing.T) {
+func TestFromCIDArray(t *testing.T) {
 	tests := []struct {
-		have HashArray
+		have CIDArray
 		want []string
 	}{{
-		have: HashArray{"foo", "bar"},
+		have: CIDArray{"foo", "bar"},
 		want: []string{"foo", "bar"},
 	}}
 	for _, tt := range tests {
-		t.Run("HashArray", func(t *testing.T) {
-			got := FromHashArray(tt.have)
+		t.Run("CIDArray", func(t *testing.T) {
+			got := FromCIDArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}

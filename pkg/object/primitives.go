@@ -31,7 +31,7 @@ type (
 	Map    map[string]Value
 	String string
 	Uint   uint64
-	Hash   string
+	CID    string
 	// array types
 	BoolArray   []Bool
 	DataArray   []Data
@@ -41,7 +41,7 @@ type (
 	ObjectArray []*Object // nolint: golint
 	StringArray []String
 	UintArray   []Uint
-	HashArray   []Hash
+	CIDArray    []CID
 )
 
 const (
@@ -54,7 +54,7 @@ const (
 	ObjectHint Hint = "o"
 	StringHint Hint = "s"
 	UintHint   Hint = "u"
-	HashHint   Hint = "r"
+	CIDHint    Hint = "r"
 	// array hints
 	BoolArrayHint   Hint = "ab"
 	DataArrayHint   Hint = "ad"
@@ -64,7 +64,7 @@ const (
 	ObjectArrayHint Hint = "ao"
 	StringArrayHint Hint = "as"
 	UintArrayHint   Hint = "au"
-	HashArrayHint   Hint = "ar"
+	CIDArrayHint    Hint = "ar"
 )
 
 var hints = map[string]Hint{
@@ -77,7 +77,7 @@ var hints = map[string]Hint{
 	string(ObjectHint): ObjectHint,
 	string(StringHint): StringHint,
 	string(UintHint):   UintHint,
-	string(HashHint):   HashHint,
+	string(CIDHint):    CIDHint,
 	// array hints
 	string(BoolArrayHint):   BoolArrayHint,
 	string(DataArrayHint):   DataArrayHint,
@@ -87,7 +87,7 @@ var hints = map[string]Hint{
 	string(ObjectArrayHint): ObjectArrayHint,
 	string(StringArrayHint): StringArrayHint,
 	string(UintArrayHint):   UintArrayHint,
-	string(HashArrayHint):   HashArrayHint,
+	string(CIDArrayHint):    CIDArrayHint,
 }
 
 func splitHint(b []byte) (string, Hint, error) {
@@ -208,8 +208,8 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case HashHint:
-		return Hash(value), nil
+	case CIDHint:
+		return CID(value), nil
 	case BoolArrayHint:
 		var iv BoolArray = BoolArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
@@ -278,8 +278,8 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case HashArrayHint:
-		var iv HashArray = HashArray{}
+	case CIDArrayHint:
+		var iv CIDArray = CIDArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
@@ -342,8 +342,8 @@ func (v String) _isValue()  {}
 func (v Uint) Hint() Hint { return UintHint }
 func (v Uint) _isValue()  {}
 
-func (v Hash) Hint() Hint { return HashHint }
-func (v Hash) _isValue()  {}
+func (v CID) Hint() Hint { return CIDHint }
+func (v CID) _isValue()  {}
 
 func (v *Uint) UnmarshalJSON(b []byte) error {
 	var iv uint64
@@ -450,11 +450,11 @@ func (v UintArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v HashArray) Hint() Hint { return HashArrayHint }
-func (v HashArray) _isValue()  {}
-func (v HashArray) _isArray()  {}
-func (v HashArray) Len() int   { return len(v) }
-func (v HashArray) Range(f func(int, Value) bool) {
+func (v CIDArray) Hint() Hint { return CIDArrayHint }
+func (v CIDArray) _isValue()  {}
+func (v CIDArray) _isArray()  {}
+func (v CIDArray) Len() int   { return len(v) }
+func (v CIDArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
 			return

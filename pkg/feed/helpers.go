@@ -14,9 +14,9 @@ var (
 	feedObjectRemovedType = new(Removed).Type()
 )
 
-func GetFeedHashes(
+func GetFeedCIDs(
 	objectReader object.Reader,
-) ([]object.Hash, error) {
+) ([]object.CID, error) {
 	objects := orderedmap.NewOrderedMap()
 	for {
 		obj, err := objectReader.Read()
@@ -33,8 +33,8 @@ func GetFeedHashes(
 			if err := event.FromObject(obj); err != nil {
 				return nil, err
 			}
-			for _, hash := range event.ObjectHash {
-				objects.Set(hash, true)
+			for _, cid := range event.ObjectCID {
+				objects.Set(cid, true)
 			}
 		case feedObjectRemovedType:
 			event := &Removed{}
@@ -42,19 +42,19 @@ func GetFeedHashes(
 			if err := event.FromObject(obj); err != nil {
 				return nil, err
 			}
-			for _, hash := range event.ObjectHash {
-				objects.Set(hash, false)
+			for _, cid := range event.ObjectCID {
+				objects.Set(cid, false)
 			}
 		}
 	}
-	hashes := []object.Hash{}
+	cids := []object.CID{}
 	for el := objects.Front(); el != nil; el = el.Next() {
 		if !el.Value.(bool) {
 			continue
 		}
-		hashes = append(hashes, el.Key.(object.Hash))
+		cids = append(cids, el.Key.(object.CID))
 	}
-	return hashes, nil
+	return cids, nil
 }
 
 func GetFeedHypotheticalRoot(
@@ -70,14 +70,14 @@ func GetFeedHypotheticalRoot(
 	return r
 }
 
-func GetFeedHypotheticalRootHash(
+func GetFeedHypotheticalRootCID(
 	owner crypto.PublicKey,
 	objectType string,
-) object.Hash {
+) object.CID {
 	return GetFeedHypotheticalRoot(
 		owner,
 		objectType,
-	).ToObject().Hash()
+	).ToObject().CID()
 }
 
 func getTypeForFeed(objectType string) string {
