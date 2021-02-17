@@ -1,0 +1,16 @@
+package filesharing
+
+signed object nimona.io/File {
+    name string
+    chunks repeated nimona.io/object.Hash
+}
+
+signed object nimona.io/TransferRequest {
+    file nimona.io/File
+    nonce string
+}
+
+signed object nimona.io/TransferResponse {
+    nonce string
+    accepted bool
+}
