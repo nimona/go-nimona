@@ -14,4 +14,5 @@ whitelist:
 # exceptions only for incorrectly identified dependencies
 exceptions:
   - github.com/geoah/go-queue # MIT
+  - github.com/ghodss/yaml # MIT
   - github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg # Apache-2.0
