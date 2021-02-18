@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613512613990,
+  "lastUpdate": 1613690634652,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -2886,6 +2886,54 @@ window.BENCHMARK_DATA = {
             "value": 13729,
             "unit": "ns/op",
             "extra": "85657 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "410e2b01174024fed64ae35007bd0a144d4a2243",
+          "message": "chore(wwhrd): allow github.com/ghodss/yaml as MIT",
+          "timestamp": "2021-02-18T23:22:24Z",
+          "tree_id": "28d4115e31c546a47a542886fb2678ed9bd3357c",
+          "url": "https://github.com/nimona/go-nimona/commit/410e2b01174024fed64ae35007bd0a144d4a2243"
+        },
+        "date": 1613690634107,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4299994,
+            "unit": "ns/op",
+            "extra": "277 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 391073446,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4068357742,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 16351,
+            "unit": "ns/op",
+            "extra": "75063 times\n2 procs"
           }
         ]
       }
