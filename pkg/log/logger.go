@@ -44,16 +44,18 @@ var (
 	DefaultLogLevel Level     = ErrorLevel
 	defaultOutput   io.Writer = os.Stdout
 	defaultWriter   Writer    = JSONWriter()
-	DefaultLogger   Logger    = &logger{
-		logLevel: &DefaultLogLevel,
-		writer:   defaultWriter,
-		output:   defaultOutput,
-	}
+	DefaultLogger   Logger
 )
 
 // TODO is there an alternative to init for here?
 // nolint: gochecknoinits
 func init() {
+	switch os.Getenv("NIMONA_LOG_WRITER") {
+	case "json":
+		defaultWriter = JSONWriter()
+	default:
+		defaultWriter = StringWriter()
+	}
 	logLevel := os.Getenv("NIMONA_LOG_LEVEL")
 	if logLevel == "" {
 		logLevel = os.Getenv("LOG_LEVEL")
@@ -73,6 +75,11 @@ func init() {
 		DefaultLogLevel = FatalLevel
 	default:
 		DefaultLogLevel = ErrorLevel
+	}
+	DefaultLogger = &logger{
+		logLevel: &DefaultLogLevel,
+		writer:   defaultWriter,
+		output:   defaultOutput,
 	}
 }
 
@@ -149,7 +156,7 @@ func New() Logger {
 func (log *logger) write(level Level, msg string, extraFields ...Field) {
 	extraFields = append(
 		extraFields,
-		String("$$time", time.Now().Format(time.RFC3339Nano)),
+		String("datetime", time.Now().Format(time.RFC3339Nano)),
 	)
 	log.writer(log, level, msg, extraFields...)
 }
