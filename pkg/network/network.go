@@ -472,30 +472,32 @@ func (w *network) processOutbox(outbox *outbox) {
 			)
 		}
 		// try to lookup the peer's connInfo via a resolver
-		newConnInfo, err := w.lookup(req.context, req.recipient)
-		if err == nil && newConnInfo != nil {
-			// use this connInfo from now on
-			connInfo = newConnInfo
-			// try to get a connection
-			newConn, err := w.connmgr.GetConnection(
-				req.context,
-				connInfo,
-			)
-			if err == nil {
-				// attempt to send the object
-				err := net.Write(req.object, newConn)
-				if err == nil {
-					// update conn and connInfo and return
-					conn = newConn
-					objSendSuccessCounter.Inc()
-					return nil
-				}
-				// if that fails, close and remove connection
-				errs = multierror.Append(errs, err)
-				w.connmgr.CloseConnection(
-					context.New(),
-					req.recipient,
+		if req.connectionInfo == nil {
+			newConnInfo, err := w.lookup(req.context, req.recipient)
+			if err == nil && newConnInfo != nil {
+				// use this connInfo from now on
+				connInfo = newConnInfo
+				// try to get a connection
+				newConn, err := w.connmgr.GetConnection(
+					req.context,
+					connInfo,
 				)
+				if err == nil {
+					// attempt to send the object
+					err := net.Write(req.object, newConn)
+					if err == nil {
+						// update conn and connInfo and return
+						conn = newConn
+						objSendSuccessCounter.Inc()
+						return nil
+					}
+					// if that fails, close and remove connection
+					errs = multierror.Append(errs, err)
+					w.connmgr.CloseConnection(
+						context.New(),
+						req.recipient,
+					)
+				}
 			}
 		}
 		// try to send via relay
@@ -533,22 +535,14 @@ func (w *network) processOutbox(outbox *outbox) {
 			log.String("recipient", req.recipient.String()),
 			log.String("object.type", req.object.Type),
 		)
-		var err error
-		for i := 0; i < 3; i++ {
-			err = processRequest(req)
-			if err == nil {
-				break
-			}
-		}
-		if err == nil {
-			logger.Info("sent object")
-			req.err <- nil
+		if err := processRequest(req); err != nil {
+			logger.Error("error sending object", log.Error(err))
+			objSendFailedCounter.Inc()
+			req.err <- err
 			continue
 		}
-		logger.Error("error sending object", log.Error(err))
-		objSendFailedCounter.Inc()
-		req.err <- err
-		continue
+		logger.Info("sent object")
+		req.err <- nil
 	}
 }
 
