@@ -14,6 +14,7 @@ func Test_TestNestedNamedOutput(t *testing.T) {
 	r1, w1, _ := os.Pipe()
 
 	DefaultLogLevel = DebugLevel
+	defaultWriter = JSONWriter()
 
 	logger := New()
 	logger.SetOutput(w0)
