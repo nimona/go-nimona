@@ -276,6 +276,12 @@ func (r *resolver) announceSelf() {
 		}
 		n++
 	}
+	if n == 0 {
+		logger.Error(
+			"failed to announce self to any bootstrap peers",
+		)
+		return
+	}
 	logger.Info(
 		"announced self to bootstrap peers",
 		log.Int("bootstrapPeers", n),
