@@ -11,7 +11,7 @@
   <a href="https://codeclimate.com/github/nimona/go-nimona">
     <img src="https://img.shields.io/codeclimate/coverage/nimona/go-nimona" alt="Coverage">
   </a>
-  <a href="https://github.com/nimona/go-nimona/commits/master">
+  <a href="https://github.com/nimona/go-nimona/commits/main">
     <img src="https://img.shields.io/github/last-commit/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
 alt="GitHub last commit">
   </a>
@@ -22,7 +22,7 @@ alt="GitHub issues">
   <a href="https://github.com/nimona/go-nimona/pulls">
     <img src="https://img.shields.io/github/issues-pr-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests">
   </a>
-  <a href="https://github.com/nimona/go-nimona/blob/master/LICENSE">
+  <a href="https://github.com/nimona/go-nimona/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat" alt="License Status">
   </a>
 </p>
