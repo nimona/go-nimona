@@ -10,6 +10,7 @@ require (
 	github.com/gammazero/workerpool v1.1.1
 	github.com/geoah/genny v1.0.3
 	github.com/geoah/go-queue v2.0.0+incompatible
+	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.4
@@ -19,6 +20,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/mr-tron/base58 v1.2.0
+	github.com/muesli/termenv v0.7.4
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/patrickmn/go-cache v2.1.0+incompatible
