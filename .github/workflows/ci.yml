@@ -67,7 +67,7 @@ jobs:
   benchmark:
     name: Benchmarks
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/master'
+    if: github.ref != 'refs/heads/main'
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
@@ -134,7 +134,7 @@ jobs:
   benchmark-store:
     name: Store benchmarks
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Set up Go
         uses: actions/setup-go@v1
@@ -226,7 +226,7 @@ jobs:
 
   docs:
     name: Build and deploy docs
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
