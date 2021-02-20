@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613844677270,
+  "lastUpdate": 1613856666695,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3030,6 +3030,54 @@ window.BENCHMARK_DATA = {
             "value": 16138,
             "unit": "ns/op",
             "extra": "69027 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "7450fe9c3bbbb93669c72fa5a23d8ffcb07066f2",
+          "message": "chore(objectmanager): fix pubsub mock generation",
+          "timestamp": "2021-02-20T21:29:01Z",
+          "tree_id": "f66910ac8078fd02c0e51fa3dfca34f563079a36",
+          "url": "https://github.com/nimona/go-nimona/commit/7450fe9c3bbbb93669c72fa5a23d8ffcb07066f2"
+        },
+        "date": 1613856666143,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4306320,
+            "unit": "ns/op",
+            "extra": "285 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 363324968,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3819195862,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 15649,
+            "unit": "ns/op",
+            "extra": "74278 times\n2 procs"
           }
         ]
       }
