@@ -87,6 +87,33 @@ func (m *MockObjectSubscription) EXPECT() *MockObjectSubscriptionMockRecorder {
 	return m.recorder
 }
 
+// Read mocks base method
+func (m *MockObjectSubscription) Read() (*object.Object, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read")
+	ret0, _ := ret[0].(*object.Object)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read
+func (mr *MockObjectSubscriptionMockRecorder) Read() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockObjectSubscription)(nil).Read))
+}
+
+// Close mocks base method
+func (m *MockObjectSubscription) Close() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close
+func (mr *MockObjectSubscriptionMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockObjectSubscription)(nil).Close))
+}
+
 // Channel mocks base method
 func (m *MockObjectSubscription) Channel() <-chan *object.Object {
 	m.ctrl.T.Helper()
@@ -99,31 +126,4 @@ func (m *MockObjectSubscription) Channel() <-chan *object.Object {
 func (mr *MockObjectSubscriptionMockRecorder) Channel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockObjectSubscription)(nil).Channel))
-}
-
-// Next mocks base method
-func (m *MockObjectSubscription) Next() (*object.Object, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Next")
-	ret0, _ := ret[0].(*object.Object)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Next indicates an expected call of Next
-func (mr *MockObjectSubscriptionMockRecorder) Next() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockObjectSubscription)(nil).Next))
-}
-
-// Cancel mocks base method
-func (m *MockObjectSubscription) Cancel() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Cancel")
-}
-
-// Cancel indicates an expected call of Cancel
-func (mr *MockObjectSubscriptionMockRecorder) Cancel() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockObjectSubscription)(nil).Cancel))
 }
