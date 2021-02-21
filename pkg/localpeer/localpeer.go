@@ -11,7 +11,7 @@ import (
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=contentcids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.ConnectionInfo"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
