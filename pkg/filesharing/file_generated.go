@@ -10,7 +10,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
 		Name     string
-		Chunks   []object.Hash
+		Chunks   []object.CID
 	}
 	TransferRequest struct {
 		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
@@ -59,9 +59,9 @@ func (e *File) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["chunks"]; ok {
 		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.Hash, len(t))
+			rv := make([]object.CID, len(t))
 			for i, iv := range t {
-				rv[i] = object.Hash(iv)
+				rv[i] = object.CID(iv)
 			}
 			e.Chunks = rv
 		}
