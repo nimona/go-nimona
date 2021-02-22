@@ -1,4 +1,4 @@
-package filesharing
+package filesharing_test
 
 import (
 	"os"
@@ -6,26 +6,25 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/filesharing"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
-	object "nimona.io/pkg/object"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 )
 
 func Test_fileSharer_RequestTransfer(t *testing.T) {
-	file1 := File{
+	file1 := filesharing.File{
 		Name: "testfile",
 	}
 
 	type fields struct {
-		objm func(
-			*testing.T,
-			context.Context,
-		) objectmanager.ObjectManager
 		net func(
 			*testing.T,
 			context.Context,
@@ -33,7 +32,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 	}
 	type args struct {
 		ctx     context.Context
-		file    File
+		file    filesharing.File
 		peerKey crypto.PublicKey
 	}
 	tests := []struct {
@@ -64,7 +63,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsh := New(
+			fsh := filesharing.New(
 				nil,
 				tt.fields.net(t, tt.args.ctx),
 				"",
@@ -85,10 +84,10 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 }
 
 func Test_fileSharer_Listen(t *testing.T) {
-	file1 := File{
+	file1 := filesharing.File{
 		Name: "testfile",
 	}
-	req := &TransferRequest{
+	req := &filesharing.TransferRequest{
 		File: &file1,
 	}
 
@@ -147,7 +146,7 @@ func Test_fileSharer_Listen(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsh := New(
+			fsh := filesharing.New(
 				tt.fields.objm(t, tt.args.ctx),
 				tt.fields.net(t, tt.args.ctx),
 				"",
@@ -160,7 +159,6 @@ func Test_fileSharer_Listen(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.NotNil(t, events)
-
 		})
 	}
 }
@@ -177,11 +175,11 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 		) network.Network
 	}
 
-	file1 := File{
+	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []object.Hash{"1234"},
+		Chunks: []object.CID{"1234"},
 	}
-	req := &TransferRequest{
+	req := &filesharing.TransferRequest{
 		File:  &file1,
 		Nonce: "1234",
 	}
@@ -189,7 +187,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	type args struct {
 		ctx   context.Context
-		hash  object.Hash
+		CID   object.CID
 		nonce string
 	}
 	tests := []struct {
@@ -239,22 +237,19 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsh := New(
+			fsh := filesharing.New(
 				tt.fields.objm(t, tt.args.ctx),
 				tt.fields.net(t, tt.args.ctx),
 				"",
 			)
 
-			f := fsh.(*fileSharer)
-			f.incomingTransfer[req.Nonce] = &Transfer{
-				Request: *req,
-			}
-
 			events, err := fsh.Listen(tt.args.ctx)
 			assert.NoError(t, err)
 			assert.NotNil(t, events)
 
-			file, err := fsh.RequestFile(tt.args.ctx, tt.args.hash, tt.args.nonce)
+			file, err := fsh.RequestFile(tt.args.ctx, &filesharing.Transfer{
+				Request: *req,
+			})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

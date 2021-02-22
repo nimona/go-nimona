@@ -13,7 +13,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
-	object "nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 )
@@ -22,7 +21,6 @@ var (
 	ErrTransferRejected  = errors.New("transfer rejected")
 	transferRequestType  = new(TransferRequest).Type()
 	transferResponseType = new(TransferResponse).Type()
-	fileType             = new(File).Type()
 )
 
 type (
@@ -35,28 +33,26 @@ type (
 		)
 		RequestTransfer(
 			ctx context.Context,
-			file *File, peerKey crypto.PublicKey,
+			file *File,
+			peerKey crypto.PublicKey,
 		) error
 		RespondTransfer(
 			ctx context.Context,
-			nonce string,
+			transfer Transfer,
 			accepted bool,
 		) error
 		RequestFile(
 			ctx context.Context,
-			hash object.Hash,
-			nonce string,
+			transfer *Transfer,
 		) (
 			*os.File,
 			error,
 		)
 	}
 	fileSharer struct {
-		objmgr           objectmanager.ObjectManager
-		net              network.Network
-		incomingTransfer map[string]*Transfer
-		outgoingIntents  map[string]*Transfer
-		receivedFolder   string
+		objmgr         objectmanager.ObjectManager
+		net            network.Network
+		receivedFolder string
 	}
 	Transfer struct {
 		Request TransferRequest
@@ -70,33 +66,27 @@ func New(
 	receivedFolder string,
 ) Filesharer {
 	return &fileSharer{
-		objmgr:           objectManager,
-		net:              net,
-		incomingTransfer: make(map[string]*Transfer),
-		outgoingIntents:  make(map[string]*Transfer),
-		receivedFolder:   receivedFolder,
+		objmgr:         objectManager,
+		net:            net,
+		receivedFolder: receivedFolder,
 	}
 }
 
 func (fsh *fileSharer) RequestTransfer(
 	ctx context.Context,
 	file *File,
-	peer crypto.PublicKey,
+	peerReq crypto.PublicKey,
 ) error {
 	nonce := rand.String(8)
 	req := &TransferRequest{
 		File:  file,
 		Nonce: nonce,
 	}
-	fsh.outgoingIntents[nonce] = &Transfer{
-		Peer:    peer,
-		Request: *req,
-	}
 
 	err := fsh.net.Send(
 		ctx,
 		req.ToObject(),
-		peer,
+		peerReq,
 	)
 	if err != nil {
 		return err
@@ -165,18 +155,16 @@ func (fsh *fileSharer) handleObjects(
 				Peer:    env.Sender,
 				Request: *req,
 			}
-			fsh.incomingTransfer[req.Nonce] = trf
 
 			reqs <- trf
 		case transferResponseType:
 			resp := &TransferResponse{}
 			if err = resp.FromObject(env.Payload); err != nil {
-				// TODO log
+				logger.Error("error loading from payload", log.Error(err))
 				continue
 			}
 
 			if !resp.Accepted {
-				delete(fsh.outgoingIntents, resp.Nonce)
 				continue
 			}
 		}
@@ -185,17 +173,11 @@ func (fsh *fileSharer) handleObjects(
 
 func (fsh *fileSharer) RequestFile(
 	ctx context.Context,
-	hash object.Hash,
-	nonce string,
+	transfer *Transfer,
 ) (
 	*os.File,
 	error,
 ) {
-	transfer, ok := fsh.incomingTransfer[nonce]
-	if !ok {
-		return nil, errors.New("TODO fix this error")
-	}
-
 	// TODO this needs to be improved to not store data in memory
 	// and do all the operations in disk
 	chunks := []*blob.Chunk{}
@@ -221,7 +203,10 @@ func (fsh *fileSharer) RequestFile(
 	}
 
 	_ = os.MkdirAll(fsh.receivedFolder, os.ModePerm)
-	f, err := os.Create(filepath.Join(fsh.receivedFolder, transfer.Request.File.Name))
+	f, err := os.Create(filepath.Join(
+		fsh.receivedFolder,
+		transfer.Request.File.Name,
+	))
 	if err != nil {
 		return nil, err
 	}
@@ -237,14 +222,9 @@ func (fsh *fileSharer) RequestFile(
 
 func (fsh *fileSharer) RespondTransfer(
 	ctx context.Context,
-	nonce string,
+	transfer Transfer,
 	accepted bool,
 ) error {
-	transfer, ok := fsh.incomingTransfer[nonce]
-	if !ok {
-		return errors.New("TODO fix this error")
-	}
-
 	resp := &TransferResponse{
 		Nonce:    transfer.Request.Nonce,
 		Accepted: accepted,

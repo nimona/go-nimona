@@ -2,7 +2,7 @@ package filesharing
 
 signed object nimona.io/File {
     name string
-    chunks repeated nimona.io/object.Hash
+    chunks repeated nimona.io/object.CID
 }
 
 signed object nimona.io/TransferRequest {

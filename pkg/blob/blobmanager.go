@@ -82,7 +82,7 @@ func (r *manager) ImportFromFile(
 		}
 	}
 
-	// go through the file, makee chunks, and store them
+	// go through the file, make chunks, and store them
 	for {
 		chunkBody := make([]byte, r.chunkSize)
 		n, err := inputFile.Read(chunkBody)
