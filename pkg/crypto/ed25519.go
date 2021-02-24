@@ -227,5 +227,8 @@ func (r PublicKey) Verify(message []byte, signature []byte) error {
 }
 
 func (r PublicKey) Equals(w PublicKey) bool {
+	if r == w {
+		return true
+	}
 	return w.ed25519().Equal(r.ed25519())
 }
