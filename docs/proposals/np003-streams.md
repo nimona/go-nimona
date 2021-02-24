@@ -50,20 +50,51 @@ you.
 }
 ```
 
-## Access control
+## Access control policy
 
 _Note: Work in progress._
 
+* `type` required. [`signature`].
+* `subjects` optional (public key).
+* `actions` optional [`read`, `append`].
+* `resources` optional (only used for stream policies).
+* `effect` required [`allow`, `deny`].
+
+The decision about whether an action is allowed or not is reached after
+applying the following rules:
+
+1. If a policy for a given subject, action, and resource matches, and the
+  effect is deny, the request is always denied.
+2. If no policy with effect deny matches, and at least one policy with effect
+  allow, the request is allowed.
+3. If no policies match at all, the request is denied.
+
+### Example
+
 ```json
 {
-  "type:s": "nimona.io/profile.Created",
-  "owner:a": "f00",
-  "policy:m": {
-    "subjects:as": ["*"],
-    "resources:as": ["*"],
-    "action:s": "READ",
-    "allow:b": true
-  }
+  "type:s": "stream:conversation",
+  "owner:s": "bah0",
+  "policies:am": [{
+    // allow everyone to read the whole stream
+    "type:s": "signature",
+    "actions:as": ["read"],
+    "effect:s": "allow",
+  }, {
+    // allow a couple of keys to send messages
+    "type:s": "signature",
+    "subjects:as": ["bah1", "bah2", "bah3"],
+    "actions:as": ["append"],
+    "resources:as": ["conversation.MessageAdded"],
+    "effect:s": "allow",
+  }, {
+    // allow owner to modify conversation topic
+    "type:s": "signature",
+    "subjects:as": ["bah0"],
+    "actions:as": ["append"],
+    "resources:as": ["conversation.TopicUpdated"],
+    "effect:s": "allow",
+  }]
 }
 ```
 
