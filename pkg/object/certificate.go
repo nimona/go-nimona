@@ -14,8 +14,8 @@ func NewCertificate(
 		Metadata: Metadata{
 			Owner: issuer.PublicKey(),
 			Policy: Policy{
-				Subjects: []string{
-					subject.String(),
+				Subjects: []crypto.PublicKey{
+					subject,
 				},
 			},
 		},
