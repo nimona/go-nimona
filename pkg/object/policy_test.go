@@ -27,6 +27,15 @@ func TestPolicies_Evaluate(t *testing.T) {
 		args     args
 		want     EvaluationResult
 	}{{
+		name: "valid, no policies",
+		args: args{
+			subject:  p0,
+			action:   ReadAction,
+			resource: "foo",
+		},
+		policies: Policies{},
+		want:     ExplicitAllow,
+	}, {
 		name: "valid, all match",
 		args: args{
 			subject:  p0,
