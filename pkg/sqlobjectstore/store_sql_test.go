@@ -3,7 +3,6 @@ package sqlobjectstore
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"path"
 	"testing"
 	"time"
@@ -21,8 +20,8 @@ import (
 )
 
 func tempSqlite3(t *testing.T) *sql.DB {
-	dirPath, err := ioutil.TempDir("", "nimona-store-sql")
-	require.NoError(t, err)
+	t.Helper()
+	dirPath := t.TempDir()
 	fmt.Println(path.Join(dirPath, "sqlite3.db"))
 	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
