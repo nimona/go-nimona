@@ -2,11 +2,11 @@ package daemon
 
 import (
 	"database/sql"
+	"fmt"
 	"path/filepath"
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
@@ -50,7 +50,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// load config with given options
 	cfg, err := config.New(d.configOptions...)
 	if err != nil {
-		return nil, errors.Wrap(errors.New("error loading config"), err)
+		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
 	// construct local peer
@@ -73,7 +73,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 			// network.ListenOnExternalPort,
 		)
 		if err != nil {
-			return nil, errors.Wrap(errors.New("error while listening"), err)
+			return nil, fmt.Errorf("listening: %w", err)
 		}
 		defer lis.Close() // nolint: errcheck
 	}
@@ -83,7 +83,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	for _, s := range cfg.Peer.Bootstraps {
 		bootstrapPeer, err := s.ConnectionInfo()
 		if err != nil {
-			return nil, errors.Wrap(errors.New("error parsing bootstraps"), err)
+			return nil, fmt.Errorf("parsing bootstraps: %w", err)
 		}
 		bootstrapPeers = append(bootstrapPeers, bootstrapPeer)
 	}
@@ -94,12 +94,12 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct object store
 	db, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "chat.db"))
 	if err != nil {
-		return nil, errors.Wrap(errors.New("error opening sql file"), err)
+		return nil, fmt.Errorf("opening sql file: %w", err)
 	}
 
 	str, err := sqlobjectstore.New(db)
 	if err != nil {
-		return nil, errors.Wrap(errors.New("error starting sql store"), err)
+		return nil, fmt.Errorf("starting sql store: %w", err)
 	}
 
 	// construct new resolver
