@@ -63,6 +63,7 @@ _Note: Work in progress._
 The decision about whether an action is allowed or not is reached after
 applying the following rules:
 
+0. If no policies are provided, the object is considered public.
 1. If a policy for a given subject, action, and resource matches, and the
   effect is deny, the request is always denied.
 2. If no policy with effect deny matches, and at least one policy with effect

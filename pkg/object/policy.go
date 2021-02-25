@@ -6,7 +6,7 @@ type (
 	PolicyType       string
 	PolicyAction     string
 	PolicyEffect     string
-	EvaluationResult int
+	EvaluationResult string
 
 	// Policy for object metadata
 	Policy struct {
@@ -33,9 +33,9 @@ const (
 	DenyEffect  PolicyEffect = "deny"
 
 	// Policy Evaluation results
-	ExplicitDeny  EvaluationResult = 0
-	ImplicitDeny  EvaluationResult = 1
-	ExplicitAllow EvaluationResult = 2
+	ExplicitDeny  EvaluationResult = "ExplicitDeny"
+	ImplicitDeny  EvaluationResult = "ImplicitDeny"
+	ExplicitAllow EvaluationResult = "ExplicitAllow"
 )
 
 func (ps Policies) Evaluate(
@@ -43,6 +43,9 @@ func (ps Policies) Evaluate(
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
+	if len(ps) == 0 {
+		return ExplicitAllow
+	}
 	allowed := false
 	for _, p := range ps {
 		r := p.Evaluate(
