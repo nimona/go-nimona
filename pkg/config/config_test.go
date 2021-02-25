@@ -2,22 +2,16 @@ package config_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/config"
 )
 
 func TestConfig(t *testing.T) {
-	tempRootDir := os.TempDir()
-	tempDir, err := ioutil.TempDir(tempRootDir, "nimona-test")
-	require.NoError(t, err)
-	configPath := filepath.Join(tempDir, "nimona")
+	configPath := t.TempDir()
 
 	type ExtraCfg struct {
 		Hello string
