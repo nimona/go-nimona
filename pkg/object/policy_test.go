@@ -287,3 +287,28 @@ func TestPolicy_Map(t *testing.T) {
 	g := PolicyFromMap(m)
 	require.Equal(t, p, g)
 }
+
+func TestPolicies_Map(t *testing.T) {
+	k0, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	k1, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+	p0 := k0.PublicKey()
+	p1 := k1.PublicKey()
+	a := Policies{{
+		Type:      SignaturePolicy,
+		Subjects:  []crypto.PublicKey{p0, p1},
+		Resources: []string{"foo", "bar"},
+		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
+		Effect:    AllowEffect,
+	}, {
+		Type:      SignaturePolicy,
+		Subjects:  []crypto.PublicKey{p0},
+		Resources: []string{"foo"},
+		Actions:   []PolicyAction{ReadAction},
+		Effect:    DenyEffect,
+	}}
+	m := a.Value()
+	g := PoliciesFromValue(m)
+	require.Equal(t, a, g)
+}

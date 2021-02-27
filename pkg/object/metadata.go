@@ -7,7 +7,7 @@ type Metadata struct {
 	Owner     crypto.PublicKey
 	Datetime  string
 	Parents   []CID
-	Policy    Policy
+	Policies  Policies
 	Stream    CID
 	Signature Signature
 }
@@ -24,8 +24,8 @@ func (m Metadata) Map() Map {
 		}
 		r["parents"] = rv
 	}
-	if len(m.Policy.Actions) > 0 {
-		r["policy"] = m.Policy.Map()
+	if len(m.Policies) > 0 {
+		r["policies"] = m.Policies.Value()
 	}
 	if m.Stream != "" {
 		r["stream"] = m.Stream
@@ -60,9 +60,9 @@ func MetadataFromMap(s Map) Metadata {
 			r.Parents = hs
 		}
 	}
-	if t, ok := s["policy"]; ok {
-		if s, ok := t.(Map); ok {
-			r.Policy = PolicyFromMap(s)
+	if t, ok := s["policies"]; ok {
+		if s, ok := t.(MapArray); ok {
+			r.Policies = PoliciesFromValue(s)
 		}
 	}
 	if t, ok := s["stream"]; ok {

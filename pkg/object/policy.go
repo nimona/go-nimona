@@ -38,6 +38,14 @@ const (
 	ExplicitAllow EvaluationResult = "ExplicitAllow"
 )
 
+func (ps Policies) Value() MapArray {
+	a := make(MapArray, len(ps))
+	for i, p := range ps {
+		a[i] = p.Map()
+	}
+	return a
+}
+
 func (ps Policies) Evaluate(
 	subject crypto.PublicKey,
 	resource string,
@@ -143,6 +151,14 @@ func (p Policy) Map() Map {
 		r["effect"] = String(p.Effect)
 	}
 	return r
+}
+
+func PoliciesFromValue(a MapArray) Policies {
+	p := make(Policies, len(a))
+	for i, m := range a {
+		p[i] = PolicyFromMap(m)
+	}
+	return p
 }
 
 func PolicyFromMap(m Map) Policy {
