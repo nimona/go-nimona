@@ -13,11 +13,16 @@ func NewCertificate(
 	c := &Certificate{
 		Metadata: Metadata{
 			Owner: issuer.PublicKey(),
-			Policy: Policy{
+			Policies: Policies{{
+				Type: SignaturePolicy,
 				Subjects: []crypto.PublicKey{
 					subject,
 				},
-			},
+				Actions: []PolicyAction{
+					ReadAction,
+				},
+				Effect: AllowEffect,
+			}},
 		},
 		Created: time.Now().
 			UTC().
