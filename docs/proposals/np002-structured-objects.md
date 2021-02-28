@@ -33,16 +33,16 @@ The top level of each object consists of three main attributes.
 {
   "type:s": "type",
   "metadata:m": {
-    "stream:s": "0x...",
-    "owner:s": "0x...",
-    "parents:as": [
-      "0x...",
-      "0x..."
+    "stream:s": "bah...",
+    "owner:s": "bah...",
+    "parents:m": [
+      "*:as": ["bah..."],
+      "some-type:as": ["bah..."],
     ],
     "_signature:m": {
       "alg:s": "hashing-algorithm",
-      "signer:s": "0x...",
-      "x:d": "0x..."
+      "signer:s": "bah...",
+      "x:d": "bah..."
     }
   },
   "data:m": {
@@ -62,7 +62,7 @@ deprecated in the future in favor once schemes are introduced.
 
 - `nimona.io/crypto.PublicKey`
 - `nimona.io/crypto.PrivateKey`
-- `nimona.io/object.Hash`
+- `nimona.io/object.CID`
 - `nimona.io/peer.ConnectionInfoInfo`
 - `nimona.io/peer.ConnectionInfoRequest`
 - `nimona.io/peer.ConnectionInfoResponse`
@@ -76,7 +76,7 @@ deprecated in the future in favor once schemes are introduced.
 
 - `owner:s` (optional) Public keys of the owner of the object.  
 - `stream:s` (optional) Root hash of the stream the object is part of.  
-- `parents:as` (optional) Array of hashes of parent objects, this is used
+- `parents:as` (optional) Array of cids of parent objects, this is used
   for streams
 - `_signature:m` (optional) Cryptographic signature by the owner.
 
