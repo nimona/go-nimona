@@ -29,9 +29,9 @@ objects to reference others it depends on or knows of. This graph can then be
 serialized into a linear series of objects that can be replayed consistently by
 everyone that has the same representation of the graph.
 
-Streams are identified by the hash of their root object. This means that even
+Streams are identified by the cid of their root object. This means that even
 though each of their objects is content-addressable; the stream as a whole is
-not, as its root hash (and thus identifier) does not change when more objects
+not, as its root cid (and thus identifier) does not change when more objects
 are added to the graph.
 
 The benefit of this is that there is no need to find a way to reference the
@@ -41,12 +41,29 @@ you.
 
 ![stream](./np003-streams.drawio.svg)
 
-## Structure
+## Structures
+
+### Root Object
 
 ```json
 {
-    "type:s": "stream:nimona.io/kv",
-    "data:m": {}
+  "type:s": "stream:nimona.io/kv",
+  "data:m": {}
+}
+```
+
+### Child Object
+
+```json
+{
+  "type:s": "<any-type>",
+  "metadata:m": {
+    "stream:s": "<stream-root-cid>",
+    "parents:m": {
+      "*:as": ["<last-known-leaf-cids>"],
+    },
+  },
+  "data:m": {}
 }
 ```
 
@@ -139,7 +156,7 @@ Else, For each policy:
 
 ## Hypothetical roots
 
-As mentioned before, streams are identified by the hash of their root object. In
+As mentioned before, streams are identified by the CID of their root object. In
 order for a peer to find the providers of a stream and get its objects, it must
 at the very least know its identifier. This is usually not an issue as most
 times a peer will learn about the existence of a stream from somewhere before
@@ -168,7 +185,7 @@ decide to restrict the rest of the stream by using a more strict policy.
 Let's go back to our original example of profile streams.
 
 Assuming that peer `a11` wants the profile stream for the identity `f00`, all it
-has to do is construct the hypothetical root, calculate its hash, and find
+has to do is construct the hypothetical root, calculate its CID, and find
 providers for it on the network.
 
 ```json
@@ -178,7 +195,7 @@ providers for it on the network.
 }
 ```
 
-The hash of this object is `oh1.9KQhQ4UGaQPEyUDAAPDmVJCoHnGtJY7Aun4coFATXCYK`
+The CID of this object is `oh1.9KQhQ4UGaQPEyUDAAPDmVJCoHnGtJY7Aun4coFATXCYK`
 and the peer can now lookup the providers for this object, and sync the
 remaining stream.
 
@@ -206,21 +223,21 @@ _Note: Work in progress._
 ```ndl
     signed object nimona.io/stream.StreamRequest {
         nonce string
-        leaves repeated nimona.io/object.Hash
+        leaves repeated nimona.io/object.CID
     }
 ```
 
 ```ndl
     signed object nimona.io/stream.StreamResponse {
         nonce string
-        children repeated nimona.io/object.Hash
+        children repeated nimona.io/object.CID
     }
 ```
 
 ```ndl
     signed object nimona.io/stream.Announcement {
         nonce string
-        leaves repeated nimona.io/object.Hash
+        leaves repeated nimona.io/object.CID
     }
 ```
 
@@ -228,7 +245,7 @@ _Note: Work in progress._
 
 Peers can "subscribe" to stream updates by creating and sending subscriptions to
 other peers. A subscription can be used to subscribe on updates to one or more
-streams using the streams' root hash and must also specify an expiration time
+streams using the streams' root CID and must also specify an expiration time
 for the subscription.
 
 When a peer receives or creates an update for a stream, they will go through the
@@ -238,14 +255,14 @@ notification will be sent.
 
 ```ndl
 signed object nimona.io/stream.Subscription {
-    rootHashes nimona.io/object.Hash
+    rootCIDs nimona.io/object.CID
     expiry nimona.io/object.DateTime
 }
 ```
 
 Subscriptions can also be added as stream events. This allows identities and
 peers that have write access to a stream to denote their interest in receiving
-updates about that stream. In this case `rootHashes` should be empty and the
+updates about that stream. In this case `rootCIDs` should be empty and the
 expiry is optional.
 
 ## References
