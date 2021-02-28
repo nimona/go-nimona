@@ -229,10 +229,12 @@ func (st *Store) PutWithTTL(
 	}
 
 	if len(obj.Metadata.Parents) > 0 {
-		for _, p := range obj.Metadata.Parents {
-			err := st.putRelation(object.CID(streamCID), objCID, p)
-			if err != nil {
-				return errors.Wrap(err, errors.New("could not create relation"))
+		for _, group := range obj.Metadata.Parents {
+			for _, p := range group {
+				err := st.putRelation(object.CID(streamCID), objCID, p)
+				if err != nil {
+					return errors.Wrap(err, errors.New("could not create relation"))
+				}
 			}
 		}
 	}
