@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1613945544414,
+  "lastUpdate": 1614526134233,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3126,6 +3126,54 @@ window.BENCHMARK_DATA = {
             "value": 15192,
             "unit": "ns/op",
             "extra": "76146 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "723c896202d3a671309c6b79b32d26057611c731",
+          "message": "refactor(object): update metadata to use policies instead of policy",
+          "timestamp": "2021-02-28T15:27:38Z",
+          "tree_id": "5267ccdb7a8bd9c31f3cc492b68867c6a10a1662",
+          "url": "https://github.com/nimona/go-nimona/commit/723c896202d3a671309c6b79b32d26057611c731"
+        },
+        "date": 1614526133718,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3617305,
+            "unit": "ns/op",
+            "extra": "328 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 327589258,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3429689529,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 12979,
+            "unit": "ns/op",
+            "extra": "92460 times\n2 procs"
           }
         ]
       }
