@@ -6,7 +6,7 @@ import "nimona.io/pkg/crypto"
 type Metadata struct {
 	Owner     crypto.PublicKey
 	Datetime  string
-	Parents   []CID
+	Parents   Parents
 	Policies  Policies
 	Stream    CID
 	Signature Signature
@@ -18,9 +18,9 @@ func (m Metadata) Map() Map {
 		r["owner"] = String(m.Owner)
 	}
 	if len(m.Parents) > 0 {
-		rv := make(StringArray, len(m.Parents))
-		for i, v := range m.Parents {
-			rv[i] = String(v)
+		rv := Map{}
+		for mk, mv := range m.Parents {
+			rv[mk] = CIDArray(mv)
 		}
 		r["parents"] = rv
 	}
@@ -52,12 +52,16 @@ func MetadataFromMap(s Map) Metadata {
 		}
 	}
 	if t, ok := s["parents"]; ok {
-		if s, ok := t.(StringArray); ok {
-			hs := make([]CID, len(s))
-			for i, h := range s {
-				hs[i] = CID(h)
+		if s, ok := t.(Map); ok {
+			p := Parents{}
+			for mk, mv := range s {
+				ma, ok := mv.(CIDArray)
+				if !ok {
+					continue
+				}
+				p[mk] = ma
 			}
-			r.Parents = hs
+			r.Parents = p
 		}
 	}
 	if t, ok := s["policies"]; ok {
