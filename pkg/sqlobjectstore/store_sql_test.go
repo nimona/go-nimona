@@ -243,8 +243,10 @@ func TestStore_Relations(t *testing.T) {
 		Type: "f01",
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
-			Parents: []object.CID{
-				f00.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{
+					f00.CID(),
+				},
 			},
 		},
 		Data: object.Map{
@@ -256,8 +258,10 @@ func TestStore_Relations(t *testing.T) {
 		Type: "f02",
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
-			Parents: []object.CID{
-				f01.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{
+					f01.CID(),
+				},
 			},
 		},
 		Data: object.Map{
