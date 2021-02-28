@@ -34,8 +34,10 @@ func toGraphObject(v *object.Object) (*graphObject, error) {
 		Parents:  []string{},
 		Data:     string(b),
 	}
-	for _, p := range v.Metadata.Parents {
-		o.Parents = append(o.Parents, p.String())
+	for _, group := range v.Metadata.Parents {
+		for _, p := range group {
+			o.Parents = append(o.Parents, p.String())
+		}
 	}
 	return o, nil
 }
@@ -54,9 +56,6 @@ func Dot(objects []*object.Object) (string, error) {
 }
 
 func dot(objects []graphObject) string {
-	clean := func(s string) string {
-		return strings.Replace(s, "oh1.", "", 1)[:5]
-	}
 	s := ""
 	objectIDs := []string{}
 	mutationIDs := []string{}
@@ -65,12 +64,12 @@ func dot(objects []graphObject) string {
 		for i, p := range o.Parents {
 			parents[i] = fmt.Sprintf(
 				`<%s>`,
-				clean(p),
+				p,
 			)
 		}
 		id := fmt.Sprintf(
 			`<%s>`,
-			clean(o.ID),
+			o.ID,
 		)
 		if len(parents) == 0 {
 			s += fmt.Sprintf(
