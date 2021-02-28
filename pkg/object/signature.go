@@ -72,8 +72,9 @@ func SignatureFromMap(m Map) Signature {
 	if t, ok := m["certificate"]; ok {
 		if s, ok := t.(*Object); ok {
 			c := &Certificate{}
-			c.FromObject(s)
-			r.Certificate = c
+			if err := c.FromObject(s); err == nil {
+				r.Certificate = c
+			}
 		}
 	}
 	return r
