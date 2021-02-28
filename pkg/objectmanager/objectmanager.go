@@ -232,12 +232,13 @@ func (m *manager) fetchFromLeaves(
 			)
 			if obj, err := m.objectstore.Get(objectCID); err == nil {
 				// TODO consider checking the whole stream for missing objects
-				parents := obj.Metadata.Parents
 				// TODO consider refactoring, or moving into a goroutine
-				for _, parent := range parents {
-					objectCIDs <- parent
+				for _, group := range obj.Metadata.Parents {
+					for _, parent := range group {
+						wg.Add(1)
+						objectCIDs <- parent
+					}
 				}
-				wg.Add(len(parents))
 				wg.Done()
 				continue
 			}
@@ -252,16 +253,17 @@ func (m *manager) fetchFromLeaves(
 				continue
 			}
 
-			parents := fullObj.Metadata.Parents
 			// TODO check the validity of the object
 			// * it should have objects
 			// * it should have a stream root cid
 			// * should it be signed?
 			// * is its policy valid?
 			// TODO consider refactoring, or moving into a goroutine
-			for _, parent := range parents {
-				objectCIDs <- parent
-				wg.Add(len(parents))
+			for _, group := range fullObj.Metadata.Parents {
+				for _, parent := range group {
+					objectCIDs <- parent
+					wg.Add(1)
+				}
 			}
 
 			// so we should already have its parents.
@@ -477,10 +479,6 @@ func (m *manager) storeObject(
 	// a stream root
 	if obj.Metadata.Stream.IsEmpty() {
 		m.localpeer.PutCIDs(objCID)
-	}
-
-	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
-		return nil
 	}
 
 	return nil
@@ -824,8 +822,10 @@ func (m *manager) Put(
 				streamCID,
 			}
 		}
-		o.Metadata.Parents = leaves
-		object.SortCIDs(o.Metadata.Parents)
+		object.SortCIDs(leaves)
+		o.Metadata.Parents = object.Parents{
+			"*": leaves,
+		}
 	}
 
 	// add to store

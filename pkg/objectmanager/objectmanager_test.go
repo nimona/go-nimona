@@ -306,8 +306,10 @@ func TestManager_RequestStream(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream:  f00.CID(),
-			Parents: []object.CID{f00.CID()},
+			Stream: f00.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{f00.CID()},
+			},
 		},
 		Data: object.Map{
 			"f01": object.String("f01"),
@@ -316,8 +318,10 @@ func TestManager_RequestStream(t *testing.T) {
 	f02 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream:  f00.CID(),
-			Parents: []object.CID{f01.CID()},
+			Stream: f00.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{f01.CID()},
+			},
 		},
 		Data: object.Map{
 			"f02": object.String("f02"),
@@ -505,8 +509,10 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		Type: "foo-child",
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
-			Parents: []object.CID{
-				f00.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{
+					f00.CID(),
+				},
 			},
 		},
 		Data: object.Map{
@@ -749,12 +755,14 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
 			Stream: testObjectStreamRoot.CID(),
-			Parents: object.SortCIDs(
-				[]object.CID{
-					bar1.CID(),
-					bar2.CID(),
-				},
-			),
+			Parents: object.Parents{
+				"*": object.SortCIDs(
+					[]object.CID{
+						bar1.CID(),
+						bar2.CID(),
+					},
+				),
+			},
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
@@ -791,6 +799,7 @@ func TestManager_Put(t *testing.T) {
 			"nested-simple": testObjectSimple,
 		},
 	}
+
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
 		network               func(*testing.T) network.Network
@@ -1104,13 +1113,15 @@ func TestManager_Put(t *testing.T) {
 			Metadata: object.Metadata{
 				Stream: testObjectStreamRoot.CID(),
 				Owner:  testOwnPublicKey,
-				Parents: object.SortCIDs(
-					[]object.CID{
-						bar1.CID(),
-						bar2.CID(),
-						testObjectSubscriptionInline.CID(),
-					},
-				),
+				Parents: object.Parents{
+					"*": object.SortCIDs(
+						[]object.CID{
+							bar1.CID(),
+							bar2.CID(),
+							testObjectSubscriptionInline.CID(),
+						},
+					),
+				},
 			},
 			Data: object.Map{
 				"foo": object.String("bar"),
