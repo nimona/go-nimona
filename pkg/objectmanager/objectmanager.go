@@ -538,6 +538,11 @@ func (m *manager) announceStreamChildren(
 		return true
 	})
 
+	// add stream root owner to the list of subscribers
+	if root, err := m.objectstore.Get(streamCID); err == nil {
+		subscribersMap[root.Metadata.Owner] = struct{}{}
+	}
+
 	// find subscriptions that are attached in the stream
 	r, err := m.objectstore.GetByStream(streamCID)
 	if err != nil {
@@ -849,7 +854,7 @@ func (m *manager) Put(
 
 	if !streamCID.IsEmpty() {
 		// announce to subscribers
-		go m.announceStreamChildren(
+		m.announceStreamChildren(
 			context.New(
 				context.WithCorrelationID(ctx.CorrelationID()),
 				// TODO timeout?
