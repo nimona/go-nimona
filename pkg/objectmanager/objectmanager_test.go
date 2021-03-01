@@ -920,6 +920,12 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
+					Get(testObjectStreamRoot.CID()).
+					Return(
+						testObjectStreamRoot,
+						nil,
+					)
+				m.EXPECT().
 					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -948,7 +954,9 @@ func TestManager_Put(t *testing.T) {
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
 					ReturnLocalPeer: testLocalPeer,
-					SendCalls:       []error{},
+					SendCalls: []error{
+						nil,
+					},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -996,7 +1004,9 @@ func TestManager_Put(t *testing.T) {
 						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
 						return tmpLocalPeer
 					}(),
-					SendCalls: []error{},
+					SendCalls: []error{
+						nil,
+					},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -1050,7 +1060,9 @@ func TestManager_Put(t *testing.T) {
 						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
 						return tmpLocalPeer
 					}(),
-					SendCalls: []error{},
+					SendCalls: []error{
+						nil,
+					},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -1088,6 +1100,12 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
+					Get(testObjectStreamRoot.CID()).
+					Return(
+						testObjectStreamRoot,
+						nil,
+					)
+				m.EXPECT().
 					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -1106,6 +1124,7 @@ func TestManager_Put(t *testing.T) {
 				m := &networkmock.MockNetworkSimple{
 					ReturnLocalPeer: testLocalPeer,
 					SendCalls: []error{
+						nil,
 						nil,
 					},
 					SubscribeCalls: []network.EnvelopeSubscription{
@@ -1162,6 +1181,12 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
+					Get(testObjectStreamRoot.CID()).
+					Return(
+						testObjectStreamRoot,
+						nil,
+					)
+				m.EXPECT().
 					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -1191,6 +1216,7 @@ func TestManager_Put(t *testing.T) {
 				m := &networkmock.MockNetworkSimple{
 					ReturnLocalPeer: testLocalPeer,
 					SendCalls: []error{
+						nil,
 						nil,
 					},
 					SubscribeCalls: []network.EnvelopeSubscription{
