@@ -478,6 +478,13 @@ func (m *manager) storeObject(
 		// TODO if we failed to store why are we not returning?
 	}
 
+	// add CID to local peer
+	// we currently only do this if we are dealing with a single object or
+	// a stream root
+	if obj.Metadata.Stream.IsEmpty() {
+		m.localpeer.PutCIDs(objCID)
+	}
+
 	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
 		return nil
 	}
