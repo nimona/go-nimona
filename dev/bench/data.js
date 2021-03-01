@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1614526134233,
+  "lastUpdate": 1614639922864,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3174,6 +3174,54 @@ window.BENCHMARK_DATA = {
             "value": 12979,
             "unit": "ns/op",
             "extra": "92460 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "3cbb2d93349d1afb6f16f4572249f7dd1753f65b",
+          "message": "feat(objectmanager): add simple and root object CIDs to local peer",
+          "timestamp": "2021-03-01T23:04:03Z",
+          "tree_id": "8b582f71efff781561e01ca3535b3723d2954a74",
+          "url": "https://github.com/nimona/go-nimona/commit/3cbb2d93349d1afb6f16f4572249f7dd1753f65b"
+        },
+        "date": 1614639922357,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3607653,
+            "unit": "ns/op",
+            "extra": "330 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 330620646,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3435438742,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 13000,
+            "unit": "ns/op",
+            "extra": "90034 times\n2 procs"
           }
         ]
       }
