@@ -437,14 +437,15 @@ func (w *network) processOutbox(outbox *outbox) {
 		// if we have a connection
 		if conn != nil {
 			// attempt to send the object
-			if err := net.Write(req.object, conn); err == nil {
+			err := net.Write(req.object, conn)
+			if err == nil {
 				objSendSuccessCounter.Inc()
 				return nil
 			}
+			fmt.Println("> WRITE FIRST FAILED", conn.ID, err)
 			// if that fails, close and remove connection
 			w.connmgr.CloseConnection(
-				context.New(),
-				req.recipient,
+				conn,
 			)
 			conn = nil
 		}
@@ -475,11 +476,11 @@ func (w *network) processOutbox(outbox *outbox) {
 				objSendSuccessCounter.Inc()
 				return nil
 			}
+			fmt.Println("> WRITE SECOND FAILED", newConn.ID, err)
 			// if that fails, close and remove connection
 			errs = multierror.Append(errs, err)
 			w.connmgr.CloseConnection(
-				context.New(),
-				req.recipient,
+				conn,
 			)
 		}
 		// try to lookup the peer's connInfo via a resolver
@@ -505,8 +506,7 @@ func (w *network) processOutbox(outbox *outbox) {
 					// if that fails, close and remove connection
 					errs = multierror.Append(errs, err)
 					w.connmgr.CloseConnection(
-						context.New(),
-						req.recipient,
+						conn,
 					)
 				}
 			}

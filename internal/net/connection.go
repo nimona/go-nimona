@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"io"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 )
 
 type Connection struct {
+	ID string
+
 	LocalPeerKey  crypto.PublicKey
 	RemotePeerKey crypto.PublicKey
 	IsIncoming    bool
@@ -35,6 +38,7 @@ func (c *Connection) RemoteAddr() string {
 
 func newConnection(conn io.ReadWriteCloser, incoming bool) *Connection {
 	c := &Connection{
+		ID:         rand.String(12),
 		conn:       conn,
 		IsIncoming: incoming,
 		encoder:    json.NewEncoder(conn),
