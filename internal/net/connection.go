@@ -1,10 +1,12 @@
 package net
 
 import (
-	"bufio"
+	"encoding/json"
+	"fmt"
 	"io"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object"
 )
 
 type Connection struct {
@@ -15,8 +17,11 @@ type Connection struct {
 	remoteAddress string
 	localAddress  string
 
+	encoder *json.Encoder
+	decoder *json.Decoder
+
 	conn  io.ReadWriteCloser
-	lines chan []byte
+	lines chan *object.Object
 }
 
 func (c *Connection) Close() error {
@@ -35,18 +40,22 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *Connection {
 	c := &Connection{
 		conn:       conn,
 		IsIncoming: incoming,
-		lines:      make(chan []byte, 100),
+		lines:      make(chan *object.Object, 100),
+		encoder:    json.NewEncoder(conn),
+		decoder:    json.NewDecoder(conn),
 	}
 
 	go func() {
 		defer close(c.lines)
-		reader := bufio.NewReader(conn)
+		defer conn.Close()
 		for {
-			line, err := reader.ReadBytes('\n')
+			o := &object.Object{}
+			err := c.decoder.Decode(o)
 			if err != nil {
+				fmt.Println(">>>>> READ BYTES DONE", err)
 				return
 			}
-			c.lines <- line
+			c.lines <- o
 		}
 	}()
 
