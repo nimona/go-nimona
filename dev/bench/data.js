@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1614716202413,
+  "lastUpdate": 1614721176262,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3462,6 +3462,54 @@ window.BENCHMARK_DATA = {
             "value": 13653,
             "unit": "ns/op",
             "extra": "92725 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "0c4951a5916f1c3a241d520cff2a360915478eff",
+          "message": "chore(objectmanager): add todo for requesting stream root first",
+          "timestamp": "2021-03-02T21:34:09Z",
+          "tree_id": "4c2f948d8caa4a653b30be469448572f034a0ba8",
+          "url": "https://github.com/nimona/go-nimona/commit/0c4951a5916f1c3a241d520cff2a360915478eff"
+        },
+        "date": 1614721175717,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4178730,
+            "unit": "ns/op",
+            "extra": "289 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 372623637,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3853317264,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15332,
+            "unit": "ns/op",
+            "extra": "74274 times\n2 procs"
           }
         ]
       }
