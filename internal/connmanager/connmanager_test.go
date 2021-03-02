@@ -16,7 +16,7 @@ import (
 func TestGetConnection(t *testing.T) {
 	ctx := context.Background()
 
-	handler := func(conn *net.Connection) error {
+	handler := func(conn *net.Connection, clr ConnectionCleanup) error {
 		return nil
 	}
 

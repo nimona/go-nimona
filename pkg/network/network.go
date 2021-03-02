@@ -280,14 +280,17 @@ func (w *network) Listen(
 	return listener, nil
 }
 
-func (w *network) handleConnection(conn *net.Connection) error {
+func (w *network) handleConnection(
+	conn *net.Connection,
+	clnFn connmanager.ConnectionCleanup,
+) error {
 	if conn == nil {
 		return errors.New("missing connection")
 	}
 
 	go func() {
 		defer func() {
-			conn.Close() // nolint: errcheck
+			clnFn() // cleanup connection in mgr
 			if r := recover(); r != nil {
 				log.DefaultLogger.Error(
 					"recovered from panic, closed conn",
@@ -302,10 +305,11 @@ func (w *network) handleConnection(conn *net.Connection) error {
 			// ie a payload that cannot be unmarshalled or verified
 			// should not kill the connection
 			if err != nil {
+				// nolint: singleCaseSwitch
 				switch err {
-				case net.ErrInvalidSignature, net.ErrLineWasEmpty:
+				case net.ErrInvalidSignature:
 					log.DefaultLogger.Warn(
-						"error reading from connection",
+						"error reading from connection, non fatal",
 						log.String(
 							"remote.publicKey",
 							conn.RemotePeerKey.String(),
@@ -318,9 +322,16 @@ func (w *network) handleConnection(conn *net.Connection) error {
 					)
 					continue
 				}
-				conn.Close() // nolint: errcheck
 				log.DefaultLogger.Warn(
 					"error reading from connection, handler returning",
+					log.String(
+						"remote.publicKey",
+						conn.RemotePeerKey.String(),
+					),
+					log.String(
+						"remote.address",
+						conn.RemotePeerKey.Address(),
+					),
 					log.Error(err),
 				)
 				return
@@ -681,6 +692,8 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				log.String("payload.type", o.Type),
 				log.String("data", string(fwd.Data)),
 			)
+
+			fmt.Println("GOT RELAYED OBJ")
 
 			w.inboxes.Publish(&Envelope{
 				Sender:  fwd.Sender,
