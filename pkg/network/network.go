@@ -442,7 +442,6 @@ func (w *network) processOutbox(outbox *outbox) {
 				objSendSuccessCounter.Inc()
 				return nil
 			}
-			fmt.Println("> WRITE FIRST FAILED", conn.ID, err)
 			// if that fails, close and remove connection
 			w.connmgr.CloseConnection(
 				conn,
@@ -476,7 +475,6 @@ func (w *network) processOutbox(outbox *outbox) {
 				objSendSuccessCounter.Inc()
 				return nil
 			}
-			fmt.Println("> WRITE SECOND FAILED", newConn.ID, err)
 			// if that fails, close and remove connection
 			errs = multierror.Append(errs, err)
 			w.connmgr.CloseConnection(
@@ -692,8 +690,6 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				log.String("payload.type", o.Type),
 				log.String("data", string(fwd.Data)),
 			)
-
-			fmt.Println("GOT RELAYED OBJ")
 
 			w.inboxes.Publish(&Envelope{
 				Sender:  fwd.Sender,
