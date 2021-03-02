@@ -1,8 +1,6 @@
 package net
 
 import (
-	"encoding/json"
-
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -11,19 +9,12 @@ import (
 var (
 	ErrInvalidSignature = errors.Error("invalid signature")
 	ErrConnectionClosed = errors.Error("connection closed")
-	ErrLineWasEmpty     = errors.Error("line was empty")
 )
 
 func Write(o *object.Object, conn *Connection) error {
 	if conn == nil {
 		log.DefaultLogger.Info("conn cannot be nil")
 		return errors.New("missing conn")
-	}
-
-	m := o.ToMap()
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
 	}
 
 	ra := ""
@@ -40,9 +31,8 @@ func Write(o *object.Object, conn *Connection) error {
 		log.String("direction", "outgoing"),
 	)
 
-	b = append(b, '\n')
-	if _, err := conn.conn.Write(b); err != nil {
-		return err
+	if err := conn.encoder.Encode(o); err != nil {
+		return errors.Wrap(errors.New("error marshaling object"), err)
 	}
 
 	return nil
@@ -50,19 +40,6 @@ func Write(o *object.Object, conn *Connection) error {
 
 func Read(conn *Connection) (*object.Object, error) {
 	logger := log.DefaultLogger
-
-	r, ok := <-conn.lines
-	if !ok {
-		return nil, ErrConnectionClosed
-	}
-	if len(r) == 0 {
-		return nil, ErrLineWasEmpty
-	}
-
-	m := object.Map{}
-	if err := json.Unmarshal(r, &m); err != nil {
-		return nil, err
-	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -74,12 +51,14 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}()
 
-	o := object.FromMap(m)
+	o, ok := <-conn.lines
+	if !ok {
+		return nil, ErrConnectionClosed
+	}
 
 	logger.Debug(
 		"reading from connection",
-		log.Any("map", m),
-		log.Any("object", o.ToMap()),
+		log.Any("object", o),
 		log.String("local.address", conn.localAddress),
 		log.String("remote.address", conn.remoteAddress),
 		log.String("remote.publicKey", conn.RemotePeerKey.String()),
