@@ -177,6 +177,8 @@ func (m *manager) RequestStream(
 		panic(errors.New("currently only a single recipient is supported"))
 	}
 
+	// TODO we should first request and store stream root I guess
+
 	req := stream.Request{
 		RequestID: rID,
 		RootCID:   rootCID,
@@ -852,6 +854,7 @@ func (m *manager) Put(
 		m.pubsub.Publish(o)
 		return o, nil
 	}
+
 	// Note: Please don't add owners as it messes with hypothetical objects
 	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
