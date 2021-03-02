@@ -75,7 +75,10 @@ func New(
 
 	go network.HandleEnvelopeSubscription(
 		p.network.Subscribe(),
-		p.handleObject,
+		func(e *network.Envelope) error {
+			go p.handleObject(e)
+			return nil
+		},
 	)
 
 	for _, ci := range bootstrapProviders {
@@ -115,22 +118,34 @@ func (p *Provider) Put(
 
 func (p *Provider) handleObject(
 	e *network.Envelope,
-) error {
+) {
 	ctx := p.context
+
+	logger := log.FromContext(ctx).With(
+		log.String("method", "Provider.handleObject"),
+		log.String("env.Sender", e.Sender.String()),
+	)
 
 	o := e.Payload
 	switch o.Type {
 	case hyperspaceAnnouncementType:
-		return p.handleAnnouncement(ctx, o)
+		if err := p.handleAnnouncement(ctx, o); err != nil {
+			logger.Warn(
+				"error handling announcement",
+				log.Error(err),
+			)
+		}
 	case hyperspaceLookupRequestType:
 		v := &hyperspace.LookupRequest{}
 		if err := v.FromObject(o); err != nil {
-			return err
+			logger.Warn(
+				"error decoding lookup request",
+				log.Error(err),
+			)
+			return
 		}
 		p.handlePeerLookup(ctx, v, e)
-		return nil
 	}
-	return nil
 }
 
 func (p *Provider) handleAnnouncement(
