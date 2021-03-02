@@ -620,13 +620,23 @@ func (m *manager) handleObjectRequest(
 ) error {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "objectmanager.handleObjectRequest"),
-		log.String("from", env.Sender.String()),
+		log.String("env.Sender", env.Sender.String()),
 	)
 
 	req := &object.Request{}
 	if err := req.FromObject(env.Payload); err != nil {
+		logger.Warn(
+			"received invalid object request",
+			log.Error(err),
+		)
 		return err
 	}
+
+	logger = logger.With(
+		log.String("req.objectID", req.ObjectCID.String()),
+	)
+
+	logger.Info("handling object request")
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
@@ -636,12 +646,10 @@ func (m *manager) handleObjectRequest(
 		RequestID: req.RequestID,
 	}
 
-	cid := req.ObjectCID
-	obj, err := m.objectstore.Get(cid)
+	obj, err := m.objectstore.Get(req.ObjectCID)
 	if err != nil {
 		logger.Error(
-			"error getting obj",
-			log.String("reqCID", req.ObjectCID.String()),
+			"error getting object to respond with",
 			log.Error(err),
 		)
 		if err != objectstore.ErrNotFound {
@@ -653,8 +661,7 @@ func (m *manager) handleObjectRequest(
 			env.Sender,
 		); err != nil {
 			logger.Info(
-				"error while responding with error",
-				log.String("reqCID", req.ObjectCID.String()),
+				"error sending failure response",
 				log.Error(sErr),
 			)
 		}
@@ -671,19 +678,21 @@ func (m *manager) handleObjectRequest(
 		env.Sender,
 	)
 
-	log.FromContext(ctx).Info(
-		"handleObjectRequest",
-		log.String("env", req.ObjectCID.String()),
-		log.String("from", env.Sender.String()),
-		log.Error(err),
-	)
-
 	if err != nil {
+		logger.Warn(
+			"error sending object response",
+			log.Error(err),
+		)
 		return errors.Wrap(
 			errors.Error("could not send object"),
 			err,
 		)
 	}
+
+	logger.Info(
+		"sent object response",
+		log.Error(err),
+	)
 
 	return nil
 }
