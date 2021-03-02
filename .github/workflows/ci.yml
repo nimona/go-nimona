@@ -175,7 +175,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-multilib g++-multilib
-          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.158.0
 
       - name: Release
         run: |
@@ -215,7 +215,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-multilib g++-multilib
-          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.116.0
+          curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s v0.158.0
 
       - name: Release binaries
         env:
