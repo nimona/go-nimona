@@ -33,7 +33,10 @@ type Manager interface {
 	)
 }
 
-type ConnectionHandler func(*net.Connection) error
+type (
+	ConnectionCleanup func()
+	ConnectionHandler func(*net.Connection, ConnectionCleanup) error
+)
 
 type manager struct {
 	net net.Network
@@ -62,8 +65,14 @@ func New(
 				// find existing peerbox and update it
 				pbox := mgr.getPeerbox(conn.RemotePeerKey)
 				mgr.updateConnection(pbox, conn)
-				// TODO handle error, or close connection?
-				mgr.connHandler(conn) // nolint: errcheck
+				// make a cleanup function
+				clsr := func() {
+					fmt.Println("> CONN INC CLEARED")
+					mgr.updateConnection(pbox, nil)
+				}
+				fmt.Println("> ACCEPTED")
+				// and pass the connection and cleanup to the handler
+				mgr.connHandler(conn, clsr) // nolint: errcheck
 			}(conn)
 		}
 	}()
@@ -92,12 +101,19 @@ func (m *manager) GetConnection(
 	conn, err := m.net.Dial(ctx, pr)
 	if err != nil {
 		// todo log
+		fmt.Println("> DIAL ERR", pr.Addresses)
 		return nil, err
 	}
 
+	fmt.Println("> DIALED", pr.Addresses)
+
 	m.updateConnection(pbox, conn)
 
-	if err := m.connHandler(conn); err != nil {
+	clsr := func() {
+		fmt.Println("> CONN OUT CLEARED", pr.Addresses)
+		m.updateConnection(pbox, nil)
+	}
+	if err := m.connHandler(conn, clsr); err != nil {
 		return nil, err
 	}
 
