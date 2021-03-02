@@ -308,7 +308,7 @@ func TestValues(t *testing.T) {
 			b, err := json.Marshal(tt.value)
 			require.NoError(t, err)
 			assert.Equal(t, tt.json, string(b))
-			// test unmarshalling of maps
+			// test unmarshaling of maps
 			// TODO add the remaining types by reflecting tt.value
 			if _, ok := tt.value.(Map); ok {
 				m := Map{}
