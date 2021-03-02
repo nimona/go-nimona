@@ -861,6 +861,11 @@ func (m *manager) Put(
 		if err != nil {
 			return nil, err
 		}
+		if len(leaves) == 0 {
+			leaves = []object.CID{
+				streamCID,
+			}
+		}
 		o.Metadata.Parents = leaves
 		object.SortCIDs(o.Metadata.Parents)
 	}
