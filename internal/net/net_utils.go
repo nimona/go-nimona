@@ -1,6 +1,8 @@
 package net
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -51,9 +53,11 @@ func Read(conn *Connection) (*object.Object, error) {
 		}
 	}()
 
-	o, ok := <-conn.lines
-	if !ok {
-		return nil, ErrConnectionClosed
+	o := &object.Object{}
+	err := conn.decoder.Decode(o)
+	if err != nil {
+		fmt.Println(">>>>> READ BYTES DONE", err)
+		return nil, err
 	}
 
 	logger.Debug(
