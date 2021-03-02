@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -13,6 +14,7 @@ import (
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
@@ -23,28 +25,39 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 )
 
-type Config struct {
-	ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
-}
+type (
+	Config struct {
+		ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
+	}
+	comboConf struct {
+		hconf *Config
+		nconf *config.Config
+	}
+	hermod struct {
+		textInput textinput.Model
+		result    string
 
-type comboConf struct {
-	hconf *Config
-	nconf *config.Config
-}
+		config *comboConf
 
-type hermod struct {
-	textInput textinput.Model
-	result    string
+		local         localpeer.LocalPeer
+		objectmanager objectmanager.ObjectManager
+		blobmanager   blob.Manager
+		objectstore   objectstore.Store
+		resolver      resolver.Resolver
+		fsh           filesharing.Filesharer
+		listener      net.Listener
 
-	config *comboConf
-
-	local         localpeer.LocalPeer
-	objectmanager objectmanager.ObjectManager
-	objectstore   objectstore.Store
-	resolver      resolver.Resolver
-	fsh           filesharing.Filesharer
-	listener      net.Listener
-}
+		incomingTransfers map[string]*filesharing.Transfer
+		outgoingTransfers map[string]*filesharing.Transfer
+		receivedTransfers map[string]*filesharing.Transfer
+	}
+	transferMsg struct {
+		trf *filesharing.Transfer
+	}
+	fileReceivedMsg struct {
+		nonce string
+	}
+)
 
 func NewHermod() hermod {
 	her := &hermod{}
@@ -165,7 +178,23 @@ func NewHermod() hermod {
 	her.listener = lis
 	her.objectmanager = man
 	her.fsh = fsh
+	her.blobmanager = blob.NewManager(ctx, blob.WithObjectManager(man))
+	her.incomingTransfers = make(map[string]*filesharing.Transfer)
+	her.receivedTransfers = make(map[string]*filesharing.Transfer)
 
+	go func() {
+		transfers, err := her.fsh.Listen(ctx)
+		if err != nil {
+			fmt.Println("failed to listen: ", err)
+			os.Exit(-1)
+		}
+
+		for transfer := range transfers {
+			her.Update(transferMsg{
+				trf: transfer,
+			})
+		}
+	}()
 	return *her
 }
 
@@ -177,46 +206,108 @@ func (h hermod) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	// Is it a key press?
 	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return h, tea.Quit
 		case "enter":
 			return h.execute()
 		}
-	case tea.Cmd:
-		fmt.Println("asdf")
+	case transferMsg:
+		return h.handleTransferMsg(msg)
+	case fileReceivedMsg:
+		return h.handleFileReceivedMsg(msg)
 	}
 
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
 	h.textInput, cmd = h.textInput.Update(msg)
 
 	return h, cmd
 }
 
+func (h *hermod) handleFileReceivedMsg(
+	msg fileReceivedMsg,
+) (
+	tea.Model, tea.Cmd,
+) {
+	var cmd tea.Cmd
+	trf := h.incomingTransfers[msg.nonce]
+	h.receivedTransfers[msg.nonce] = trf
+	delete(h.incomingTransfers, msg.nonce)
+	return h, cmd
+}
+
+func (h *hermod) handleTransferMsg(
+	msg transferMsg,
+) (
+	tea.Model,
+	tea.Cmd,
+) {
+	var cmd tea.Cmd
+	h.incomingTransfers[msg.trf.Request.Nonce] = msg.trf
+	return h, cmd
+}
+
 func (h hermod) View() string {
-	return fmt.Sprintf(
-		"%s\n%s\n",
+	tpl := "%s\n%s\n"
+	if len(h.incomingTransfers) > 0 {
+		tpl += "TransferRequests\n"
+		for _, trf := range h.incomingTransfers {
+			tpl += fmt.Sprintf(
+				"Peer: %s requested to send file: %s id: %s\n",
+				trf.Peer.String(),
+				trf.Request.File.Name,
+				trf.Request.Nonce,
+			)
+		}
+	}
+	if len(h.receivedTransfers) > 0 {
+		tpl += "Received Files\n"
+		for _, trf := range h.receivedTransfers {
+			tpl += fmt.Sprintf(
+				"Peer: %s sent file: %s\n",
+				trf.Peer.String(),
+				trf.Request.File.Name,
+			)
+		}
+	}
+	v := fmt.Sprintf(
+		tpl,
 		h.textInput.View(),
 		h.result,
 	)
+	return v
 }
 
-func (h hermod) execute() (tea.Model, tea.Cmd) {
+func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	h.textInput.Blur()
 
 	fullCommand := h.textInput.Value()
 
 	commands := strings.Split(fullCommand, " ")
 
-	switch {
-	case commands[0] == "send" && len(commands) == 3:
+	switch commands[0] {
+	case "send":
+		if len(commands) != 3 {
+			h.result = "invalid command"
+		}
 		h.result = fmt.Sprintf("Sending file %s to %s ...", commands[1], commands[2])
-	case commands[0] == "list":
+		h.sendFile(commands[1], crypto.PublicKey(commands[2]))
+	case "list":
 		h.result = "Listing local files..."
+	case "local":
+		h.result = fmt.Sprintf(
+			"public_key: %s\naddresses: %s\n",
+			h.local.ConnectionInfo().PublicKey,
+			h.local.ConnectionInfo().Addresses,
+		)
+	case "request":
+		h.result = fmt.Sprintf(
+			"Requesting transfer: %s ...",
+			commands[1],
+		)
+		h.requestFile(commands[1])
+	case "quit":
+		return h, tea.Quit
 	default:
 		h.result = ""
 	}
@@ -227,6 +318,38 @@ func (h hermod) execute() (tea.Model, tea.Cmd) {
 	return h, nil
 }
 
-func (h hermod) sendFile(file string) {
+func (h *hermod) sendFile(
+	file string,
+	peerKey crypto.PublicKey,
+) {
+	ctx := context.Background()
+	filename := filepath.Base(file)
+	bl, err := h.blobmanager.ImportFromFile(ctx, file)
+	if err != nil {
+		h.result = err.Error()
+		return
+	}
+	h.fsh.RequestTransfer(
+		ctx,
+		&filesharing.File{
+			Name:   filename,
+			Chunks: bl.Chunks,
+		},
+		peerKey,
+	)
+}
 
+func (h *hermod) requestFile(
+	nonce string,
+) {
+	trf := h.incomingTransfers[nonce]
+	h.result = fmt.Sprintf("%v", trf)
+	_, err := h.fsh.RequestFile(context.Background(), trf)
+	if err != nil {
+		h.result = err.Error()
+		return
+	}
+	h.Update(fileReceivedMsg{
+		nonce: trf.Request.Nonce,
+	})
 }
