@@ -86,7 +86,10 @@ func New(
 	// new peers that are talking to us so we can announce ourselves to them
 	go network.HandleEnvelopeSubscription(
 		r.network.Subscribe(),
-		r.handleObject,
+		func(e *network.Envelope) error {
+			go r.handleObject(e)
+			return nil
+		},
 	)
 
 	// register self to network
@@ -220,20 +223,28 @@ func (r *resolver) Lookup(
 
 func (r *resolver) handleObject(
 	e *network.Envelope,
-) error {
+) {
 	// attempt to recover correlation id from request id
 	ctx := r.context
+
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver.handleObject"),
+		log.String("env.Sender", e.Sender.String()),
+	)
 
 	// handle payload
 	o := e.Payload
 	if o.Type == hyperspaceAnnouncementType {
 		v := &hyperspace.Announcement{}
 		if err := v.FromObject(o); err != nil {
-			return err
+			logger.Warn(
+				"error handling announcement",
+				log.Error(err),
+			)
+			return
 		}
 		r.handleAnnouncement(ctx, v)
 	}
-	return nil
 }
 
 func (r *resolver) handleAnnouncement(
