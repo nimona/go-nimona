@@ -66,10 +66,8 @@ func New(
 				mgr.updateConnection(pbox, conn)
 				// make a cleanup function
 				clsr := func() {
-					fmt.Println("> CONN INC CLEARED", conn.ID)
 					mgr.removeConnection(pbox, conn.ID)
 				}
-				fmt.Println("> ACCEPTED")
 				// and pass the connection and cleanup to the handler
 				mgr.connHandler(conn, clsr) // nolint: errcheck
 			}(conn)
@@ -100,16 +98,12 @@ func (m *manager) GetConnection(
 	conn, err := m.net.Dial(ctx, pr)
 	if err != nil {
 		// todo log
-		fmt.Println("> DIAL ERR", err)
 		return nil, err
 	}
-
-	fmt.Println("> DIALED", pr.Addresses, conn.ID)
 
 	m.updateConnection(pbox, conn)
 
 	clsr := func() {
-		fmt.Println("> CONN OUT CLEARED", pr.Addresses, conn.ID)
 		m.removeConnection(pbox, conn.ID)
 	}
 	if err := m.connHandler(conn, clsr); err != nil {
@@ -122,21 +116,17 @@ func (m *manager) GetConnection(
 func (m *manager) CloseConnection(
 	conn *net.Connection,
 ) {
-	fmt.Println("> CONN CLOSING", conn.ID)
 	pbox := m.getPeerbox(conn.RemotePeerKey)
 	m.removeConnection(pbox, conn.ID)
 }
 
 func (m *manager) removeConnection(pbox *peerbox, connID string) {
-	fmt.Println("> CONN REMOVING", pbox.addresses, connID)
 	pbox.connLock.Lock()
 	defer pbox.connLock.Unlock()
 	if pbox.conn == nil {
-		fmt.Println("> CONN REMOVING - WAS EMPTY", pbox.addresses, connID)
 		return
 	}
 	if pbox.conn.ID != connID {
-		fmt.Println("> CONN REMOVING - ID MISMATCH", pbox.addresses, connID)
 		return
 	}
 	pbox.conn.Close() // nolint: errcheck
