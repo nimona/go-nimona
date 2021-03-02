@@ -14,14 +14,11 @@ type Config struct {
 
 func main() {
 	h := tui.NewHermod()
-
 	p := tea.NewProgram(h)
-	p.EnterAltScreen()
-
 	err := p.Start()
 	p.ExitAltScreen()
 	if err != nil {
-		fmt.Println("Oh no, it didn't work:", err)
+		fmt.Println("Failed to start:", err)
 		os.Exit(1)
 	}
 }
