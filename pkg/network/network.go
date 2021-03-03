@@ -247,6 +247,11 @@ func (w *network) Listen(
 	for _, o := range options {
 		o(listenConfig)
 	}
+	logger := log.FromContext(ctx).With(
+		log.String("method", "network.Listen"),
+		log.String("bindAddress", bindAddress),
+		log.Any("listenConfig", listenConfig),
+	)
 	listener, err := w.net.Listen(
 		ctx,
 		bindAddress,
@@ -273,8 +278,16 @@ func (w *network) Listen(
 		externalAddress, _, err := nat.MapExternalPort(int(localPort))
 		if err != nil {
 			// TODO return error or simply log it?
+			logger.Warn(
+				"unable to create port mapping",
+				log.Error(err),
+			)
 			return listener, nil
 		}
+		logger.Info(
+			"created port mapping",
+			log.String("externalAddress", externalAddress),
+		)
 		w.localpeer.PutAddresses(externalAddress)
 	}
 	return listener, nil
