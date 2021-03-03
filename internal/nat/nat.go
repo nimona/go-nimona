@@ -3,43 +3,70 @@ package nat
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
-	"gitlab.com/NebulousLabs/go-upnp"
+	"github.com/libp2p/go-nat"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/log"
 )
 
-func MapExternalPort(port int) (address string, removeMap func(), err error) {
-	if os.Getenv("NIMONA_UPNP_DISABLE") != "" {
+func MapExternalPort(localPort int) (address string, rm func(), err error) {
+	if skip, _ := strconv.ParseBool(os.Getenv("NIMONA_UPNP_DISABLE")); skip {
 		return "", nil, errors.Error("skipped")
 	}
 	// connect to router
-	d, err := upnp.Discover()
+	gw, err := nat.DiscoverGateway()
 	if err != nil {
 		return "", nil, err
 	}
-
-	// clear existing mappings
-	d.Clear(uint16(port)) // nolint: errcheck
 
 	// discover external IP
-	ip, err := d.ExternalIP()
+	externalIP, err := gw.GetExternalAddress()
 	if err != nil {
 		return "", nil, err
 	}
 
+	// TODO make service name configurable, maybe using the `version` pkg?
+	serviceName := "nimona"
+
 	// add port mapping
-	err = d.Forward(uint16(port), "nimona daemon")
+	externalPort, err := gw.AddPortMapping(
+		"tcp",
+		localPort,
+		serviceName,
+		time.Minute,
+	)
 	if err != nil {
 		return "", nil, err
 	}
+
+	go func() {
+		for {
+			<-time.After(30 * time.Second)
+			if _, err := gw.AddPortMapping(
+				"tcp",
+				localPort,
+				serviceName,
+				60,
+			); err != nil {
+				// TODO should we exist after X failed attempts?
+				log.DefaultLogger.Error(
+					"error adding port mapping",
+					log.String("method", "MapExternalPort"),
+					log.Error(err),
+				)
+			}
+		}
+	}()
 
 	return fmt.Sprintf(
 			"tcps:%s:%d",
-			ip,
-			port,
+			externalIP,
+			externalPort,
 		), func() {
 			// clear mappings
-			d.Clear(uint16(port)) // nolint: errcheck
+			gw.DeletePortMapping("tcp", localPort) // nolint: errcheck
 		}, nil
 }
