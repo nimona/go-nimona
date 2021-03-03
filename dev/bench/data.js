@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1614721176262,
+  "lastUpdate": 1614812127034,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3510,6 +3510,54 @@ window.BENCHMARK_DATA = {
             "value": 15332,
             "unit": "ns/op",
             "extra": "74274 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "faf5b394d99e66d566331bb6bec881c8da0f8a21",
+          "message": "chore(network): add internal info to mapping log",
+          "timestamp": "2021-03-03T22:53:36Z",
+          "tree_id": "8be09efd7135dda54eebf8ec04c3aaa26858dc02",
+          "url": "https://github.com/nimona/go-nimona/commit/faf5b394d99e66d566331bb6bec881c8da0f8a21"
+        },
+        "date": 1614812126466,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4743174,
+            "unit": "ns/op",
+            "extra": "248 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 406570032,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4247249105,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16411,
+            "unit": "ns/op",
+            "extra": "72555 times\n2 procs"
           }
         ]
       }
