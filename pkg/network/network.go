@@ -286,6 +286,8 @@ func (w *network) Listen(
 		}
 		logger.Info(
 			"created port mapping",
+			log.Strings("internalAddress", listener.Addresses()),
+			log.Int("internalPort", int(localPort)),
 			log.String("externalAddress", externalAddress),
 		)
 		w.localpeer.PutAddresses(externalAddress)
