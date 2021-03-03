@@ -49,7 +49,7 @@ func MapExternalPort(localPort int) (address string, rm func(), err error) {
 				"tcp",
 				localPort,
 				serviceName,
-				60,
+				time.Minute,
 			); err != nil {
 				// TODO should we exist after X failed attempts?
 				log.DefaultLogger.Error(
