@@ -163,6 +163,7 @@ func NewHermod() hermod {
 		cconf.nconf.Peer.BindAddress,
 		network.ListenOnLocalIPs,
 		network.ListenOnPrivateIPs,
+		network.ListenOnExternalPort,
 	)
 	if err != nil {
 		fmt.Println("error while listening", err)
