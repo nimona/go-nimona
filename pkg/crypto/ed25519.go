@@ -226,9 +226,18 @@ func (r PublicKey) Verify(message []byte, signature []byte) error {
 	return nil
 }
 
+// TODO invalid public keys should not be evaluated for equality
 func (r PublicKey) Equals(w PublicKey) bool {
 	if r == w {
 		return true
 	}
-	return w.ed25519().Equal(r.ed25519())
+	ew := w.ed25519()
+	if ew == nil {
+		return false
+	}
+	rw := r.ed25519()
+	if rw == nil {
+		return false
+	}
+	return ew.Equal(rw)
 }
