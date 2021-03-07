@@ -1,7 +1,7 @@
 repository:
   name: "go-nimona"
   description: "Peer to peer networking library"
-  homepage: "https://nimona.io/"
+  homepage: "https://nimona.io"
   private: false
   has_issues: true
   has_wiki: false
@@ -48,6 +48,8 @@ labels:
   - name: "Type: Enhancement"
     color: bfd4f2
     oldname: enhancement
+  - name: "Type: Dependency"
+    color: a6c4ed
   - name: "Type: Maintenance"
     color: c5def5
   - name: "Type: Question"
