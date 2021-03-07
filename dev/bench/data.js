@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615155973448,
+  "lastUpdate": 1615156325984,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3798,6 +3798,54 @@ window.BENCHMARK_DATA = {
             "value": 16779,
             "unit": "ns/op",
             "extra": "71353 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "4cbb6cbebe2198820efbaf8b5f329efa6be749f9",
+          "message": "chore(deps): update actions/checkout requirement to v2.3.4\n\nUpdates the requirements on [actions/checkout](https://github.com/actions/checkout) to permit the latest version.\n- [Release notes](https://github.com/actions/checkout/releases)\n- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/actions/checkout/commits/5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-03-07T22:30:25Z",
+          "tree_id": "a11c842c797fb52f8a13cd106113763186e7cd9b",
+          "url": "https://github.com/nimona/go-nimona/commit/4cbb6cbebe2198820efbaf8b5f329efa6be749f9"
+        },
+        "date": 1615156325314,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3890670,
+            "unit": "ns/op",
+            "extra": "297 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 358955045,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3633420440,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 14804,
+            "unit": "ns/op",
+            "extra": "84962 times\n2 procs"
           }
         ]
       }
