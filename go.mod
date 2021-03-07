@@ -13,7 +13,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.4.4
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ipfs/go-cid v0.0.7
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -26,7 +26,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.9.0
-	github.com/pyroscope-io/pyroscope v0.0.21
+	github.com/pyroscope-io/pyroscope v0.0.25
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
