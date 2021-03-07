@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615156325984,
+  "lastUpdate": 1615157204402,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3846,6 +3846,54 @@ window.BENCHMARK_DATA = {
             "value": 14804,
             "unit": "ns/op",
             "extra": "84962 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "27856297+dependabot-preview[bot]@users.noreply.github.com",
+            "name": "dependabot-preview[bot]",
+            "username": "dependabot-preview[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "09329925d37ec91d92112912b249ef3ca608ce1c",
+          "message": "chore(deps): bump github.com/pyroscope-io/pyroscope\n\nBumps [github.com/pyroscope-io/pyroscope](https://github.com/pyroscope-io/pyroscope) from 0.0.21 to 0.0.25.\n- [Release notes](https://github.com/pyroscope-io/pyroscope/releases)\n- [Changelog](https://github.com/pyroscope-io/pyroscope/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/pyroscope-io/pyroscope/compare/v0.0.21...v0.0.25)\n\nSigned-off-by: dependabot-preview[bot] <support@dependabot.com>",
+          "timestamp": "2021-03-07T22:44:56Z",
+          "tree_id": "da5034ba4f83b99d5d6b22c43e5434f25cdefe95",
+          "url": "https://github.com/nimona/go-nimona/commit/09329925d37ec91d92112912b249ef3ca608ce1c"
+        },
+        "date": 1615157203692,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4565556,
+            "unit": "ns/op",
+            "extra": "248 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 396750301,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4129202473,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16274,
+            "unit": "ns/op",
+            "extra": "74607 times\n2 procs"
           }
         ]
       }
