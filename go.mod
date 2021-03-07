@@ -23,7 +23,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/muesli/termenv v0.7.4
 	github.com/multiformats/go-multibase v0.0.3
-	github.com/multiformats/go-multihash v0.0.13
+	github.com/multiformats/go-multihash v0.0.14
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.9.0
 	github.com/pyroscope-io/pyroscope v0.0.25
