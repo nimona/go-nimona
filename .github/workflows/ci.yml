@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
@@ -26,7 +26,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Check if mods are tidy
         run: make check-tidy
@@ -41,7 +41,7 @@ jobs:
         go-version: 1.16
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2.3.4
 
     - name: Check licenses
       run: make tools check-licenses
@@ -56,7 +56,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Make test
         run: make test
@@ -75,7 +75,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Run benchmark
         run: make benchmark | tee output.txt
@@ -100,7 +100,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Publish coverage
         uses: paambaati/codeclimate-action@v2.7.5
@@ -124,7 +124,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Make e2e
         run: make e2e
@@ -142,7 +142,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Run benchmark
         run: make benchmark | tee output.txt
@@ -167,7 +167,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Download binary tools
         env:
@@ -194,7 +194,7 @@ jobs:
           go-version: 1.16
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Export version from tag name
         run: |
@@ -230,7 +230,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2.3.4
 
     - name: Build docs
       run: yarn && yarn docs:build
@@ -257,7 +257,7 @@ jobs:
           environment: production
 
       - name: Check out the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
 
       - name: Export version from tag name
         run: |
