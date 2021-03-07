@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615155655140,
+  "lastUpdate": 1615155973448,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3750,6 +3750,54 @@ window.BENCHMARK_DATA = {
             "value": 12765,
             "unit": "ns/op",
             "extra": "95017 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "6dd2803e8475ca192e7254605ae676c113c27c6b",
+          "message": "chore(deps): bump actions/setup-go from v1 to v2.1.3\n\nBumps [actions/setup-go](https://github.com/actions/setup-go) from v1 to v2.1.3.\n- [Release notes](https://github.com/actions/setup-go/releases)\n- [Commits](https://github.com/actions/setup-go/compare/v1...37335c7bb261b353407cff977110895fa0b4f7d8)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-03-07T22:24:22Z",
+          "tree_id": "4b41c202d59cbb9029f9f2bee061ad4f74fa36d8",
+          "url": "https://github.com/nimona/go-nimona/commit/6dd2803e8475ca192e7254605ae676c113c27c6b"
+        },
+        "date": 1615155972654,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4727776,
+            "unit": "ns/op",
+            "extra": "247 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 419521659,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4161466415,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16779,
+            "unit": "ns/op",
+            "extra": "71353 times\n2 procs"
           }
         ]
       }
