@@ -13,7 +13,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.5.0
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ipfs/go-cid v0.0.7
 	github.com/kelseyhightower/envconfig v1.4.0
