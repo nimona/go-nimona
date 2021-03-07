@@ -54,21 +54,59 @@ you.
 
 _Note: Work in progress._
 
+Policy parameters:
+
 * `type` required. [`signature`].
 * `subjects` optional (public key).
 * `actions` optional [`read`, `append`].
 * `resources` optional (only used for stream policies).
 * `effect` required [`allow`, `deny`].
 
-The decision about whether an action is allowed or not is reached after
-applying the following rules:
+### Evaluation
 
-0. If no policies are provided, the object is considered public.
-1. If a policy for a given subject, action, and resource matches, and the
-  effect is deny, the request is always denied.
-2. If no policy with effect deny matches, and at least one policy with effect
-  allow, the request is allowed.
-3. If no policies match at all, the request is denied.
+A request is a combination of a `subject`, `resource`, and `action`.
+
+A request *matches* a policy if each of the policy's parameters (`subjects`,
+`resources`, `actions`) are either empty or explicitly match the equivalent
+parameter of the request being evaluated.
+
+In order to check whether the given request is allowed or not we evaluate each
+policy against the request using the following rules.
+
+1. If there are no policies the action is allowed.
+
+Else, For each policy:
+
+1. If the request doesn't match the policy we move on to the next policy.
+2. We count how many parameters were *explicitly* matched and if the previous
+   match had the same or more parameters matched, we consider the policy's
+   effect as the latest evaluation result.
+3. When all policies have been evaluated the latest result is used.
+
+### Policy example table 1
+
+|        NAME        | SUBJECT | RESOURCE | ACTION | S0, R0, A1 | S0, R0, A2 | S1, R0, A1 | S1, R0, A2 |
+| ------------------ | ------- | -------- | ------ | ---------- | ---------- | ---------- | ---------- |
+| 0 - allow s* r* a* | *       | *        | *      | allow      | allow      | allow      | allow      |
+| 1 - deny s* r* a1  | *       | *        | a1     | deny       | allow      | deny       | allow      |
+| 2 - deny s0 r* a*  | s0      | *        | *      | deny       | deny       | deny       | allow      |
+| 3 - allow s0 r* a2 | s0      | *        | a2     | deny       | allow      | deny       | allow      |
+| 4 - allow s0 r0 a1 | s0      | r0       | a1     | allow      | allow      | deny       | allow      |
+| 5 - deny s* r0 a2  | *       | r0       | a2     | allow      | deny       | deny       | deny       |
+| 6 - deny s* r* a*  | *       | *        | *      | allow      | deny       | deny       | deny       |
+
+### Policy example table 2
+
+|        NAME        | SUBJECT | RESOURCE | ACTION | S0, R0, A1 | S0, R0, A2 | S1, R0, A1 | S1, R0, A2 |
+| ------------------ | ------- | -------- | ------ | ---------- | ---------- | ---------- | ---------- |
+| 0 - allow s1 r0 a1 | s1      | r0       | a1     | allow      | allow      | allow      | allow      |
+| 1 - deny s* r* a*  | *       | *        | *      | deny       | deny       | allow      | deny       |
+| 2 - allow s* r* a* | *       | *        | *      | allow      | allow      | allow      | allow      |
+| 3 - deny s0 r* a*  | s0      | *        | *      | deny       | deny       | allow      | allow      |
+| 4 - deny s* r0 a*  | *       | r0       | *      | deny       | deny       | allow      | deny       |
+| 5 - deny s* r0 a2  | *       | r0       | a2     | deny       | deny       | allow      | deny       |
+| 6 - allow s* r* a2 | *       | *        | a2     | deny       | deny       | allow      | deny       |
+| 7 - allow s0 r0 a* | s0      | r0       | *      | allow      | allow      | allow      | deny       |
 
 ### Example
 

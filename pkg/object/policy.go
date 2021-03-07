@@ -1,6 +1,8 @@
 package object
 
-import "nimona.io/pkg/crypto"
+import (
+	"nimona.io/pkg/crypto"
+)
 
 type (
 	PolicyType       string
@@ -10,6 +12,7 @@ type (
 
 	// Policy for object metadata
 	Policy struct {
+		Name      string
 		Type      PolicyType
 		Subjects  []crypto.PublicKey
 		Resources []string
@@ -19,6 +22,17 @@ type (
 
 	// Policies
 	Policies []Policy
+
+	// evaluation state
+	evaluation struct {
+		// target
+		subject  crypto.PublicKey
+		resource string
+		action   PolicyAction
+		// result
+		explicitMatches int
+		effect          EvaluationResult
+	}
 )
 
 const (
@@ -33,9 +47,8 @@ const (
 	DenyEffect  PolicyEffect = "deny"
 
 	// Policy Evaluation results
-	ExplicitDeny  EvaluationResult = "ExplicitDeny"
-	ImplicitDeny  EvaluationResult = "ImplicitDeny"
-	ExplicitAllow EvaluationResult = "ExplicitAllow"
+	Deny  EvaluationResult = "deny"
+	Allow EvaluationResult = "allow"
 )
 
 func (ps Policies) Value() MapArray {
@@ -46,79 +59,82 @@ func (ps Policies) Value() MapArray {
 	return a
 }
 
-func (ps Policies) Evaluate(
-	subject crypto.PublicKey,
-	resource string,
-	action PolicyAction,
-) EvaluationResult {
-	if len(ps) == 0 {
-		return ExplicitAllow
-	}
-	allowed := false
-	for _, p := range ps {
-		r := p.Evaluate(
-			subject,
-			resource,
-			action,
-		)
-		if r == ExplicitDeny {
-			return ExplicitDeny
-		}
-		if r == ExplicitAllow {
-			allowed = true
-		}
-	}
-	if allowed {
-		return ExplicitAllow
-	}
-	return ImplicitDeny
-}
-
 func (p Policy) Evaluate(
 	subject crypto.PublicKey,
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
-	subjectMatches := false
-	resourceMatches := false
-	actionMatches := false
-	if len(p.Subjects) == 0 {
-		subjectMatches = true
-	} else {
+	e := &evaluation{
+		subject:  subject,
+		resource: resource,
+		action:   action,
+		effect:   Allow,
+	}
+	e.Process(p)
+	return e.effect
+}
+
+func (ps Policies) Evaluate(
+	subject crypto.PublicKey,
+	resource string,
+	action PolicyAction,
+) EvaluationResult {
+	e := &evaluation{
+		subject:  subject,
+		resource: resource,
+		action:   action,
+		effect:   Allow,
+	}
+	for _, p := range ps {
+		e.Process(p)
+	}
+	return e.effect
+}
+
+func (e *evaluation) Process(
+	p Policy,
+) {
+	explicitMatches := 0
+	subjectMatches := len(p.Subjects) == 0
+	if len(p.Subjects) > 0 {
 		for _, s := range p.Subjects {
-			if subject.Equals(s) {
+			if e.subject == s {
+				explicitMatches++
 				subjectMatches = true
 				break
 			}
 		}
 	}
-	if len(p.Resources) == 0 {
-		resourceMatches = true
-	} else {
+
+	resourceMatches := len(p.Resources) == 0
+	if len(p.Resources) > 0 {
 		for _, s := range p.Resources {
-			if resource == s {
+			if e.resource == s {
+				explicitMatches++
 				resourceMatches = true
 				break
 			}
 		}
 	}
-	if len(p.Actions) == 0 {
-		actionMatches = true
-	} else {
+
+	actionMatches := len(p.Actions) == 0
+	if len(p.Actions) > 0 {
 		for _, s := range p.Actions {
-			if action == s {
+			if e.action == s {
+				explicitMatches++
 				actionMatches = true
 				break
 			}
 		}
 	}
-	if subjectMatches && resourceMatches && actionMatches {
-		if p.Effect == AllowEffect {
-			return ExplicitAllow
+
+	policyMatched := subjectMatches && resourceMatches && actionMatches
+	if policyMatched {
+		if explicitMatches >= e.explicitMatches {
+			e.effect = EvaluationResult(p.Effect)
+			e.explicitMatches = explicitMatches
 		}
-		return ExplicitDeny
 	}
-	return ImplicitDeny
 }
 
 func (p Policy) Map() Map {
