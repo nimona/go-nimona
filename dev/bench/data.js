@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615151468623,
+  "lastUpdate": 1615155655140,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3702,6 +3702,54 @@ window.BENCHMARK_DATA = {
             "value": 12842,
             "unit": "ns/op",
             "extra": "98968 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "5705adb8ddb3db51868c726fa0802dd4e349ada2",
+          "message": "chore(github): add dependabot config",
+          "timestamp": "2021-03-07T22:19:22Z",
+          "tree_id": "67092c8ac693b0515ab905160ba4dcb44bfdfa8d",
+          "url": "https://github.com/nimona/go-nimona/commit/5705adb8ddb3db51868c726fa0802dd4e349ada2"
+        },
+        "date": 1615155654604,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3533723,
+            "unit": "ns/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 324321700,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3342760985,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 12765,
+            "unit": "ns/op",
+            "extra": "95017 times\n2 procs"
           }
         ]
       }
