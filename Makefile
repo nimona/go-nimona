@@ -69,8 +69,9 @@ $(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.32))
 $(eval $(call tool,gold,go101.org/gold@v0.1.1))
-$(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.4.3))
+$(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.3.0))
+$(eval $(call tool,golines,github.com/segmentio/golines@v0.1.0))
 
 $(eval $(call inttool,codegen))
 $(eval $(call inttool,community))
@@ -112,6 +113,10 @@ $(BINS): $(BINDIR)/%: $(SOURCES)
 EXAMPLEDIR := $(CURDIR)/examples
 EXAMPLES := $(shell cd "$(EXAMPLEDIR)" && \
 	find * -maxdepth 0 -type d -exec echo $(BINDIR)/examples/{} \;)
+
+.PHONY: fmt
+fmt: gofumports golines
+	golines -t 4 -m 78 --no-reformat-tags --base-formatter=gofumports -w .
 
 .PHONY: build-examples
 build-examples: $(EXAMPLES)
