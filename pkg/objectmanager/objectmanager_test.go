@@ -815,6 +815,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				m.EXPECT().
 					GetPinned().
+					AnyTimes().
 					Return(nil, nil)
 				m.EXPECT().
 					Put(testObjectSimple).
@@ -851,6 +852,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				m.EXPECT().
 					GetPinned().
+					AnyTimes().
 					Return(nil, nil)
 				m.EXPECT().
 					Put(testObjectComplex)
@@ -886,6 +888,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				m.EXPECT().
 					GetPinned().
+					AnyTimes().
 					Return(nil, nil)
 				m.EXPECT().
 					Get(testObjectStreamRoot.CID()).
@@ -951,6 +954,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				m.EXPECT().
 					GetPinned().
+					AnyTimes().
 					Return(nil, nil)
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
@@ -1037,6 +1041,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				m.EXPECT().
 					GetPinned().
+					AnyTimes().
 					Return(nil, nil)
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
