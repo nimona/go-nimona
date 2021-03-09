@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615157204402,
+  "lastUpdate": 1615317511190,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3894,6 +3894,54 @@ window.BENCHMARK_DATA = {
             "value": 16274,
             "unit": "ns/op",
             "extra": "74607 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "137c4c0e2229122cce55b4676e0308d1f575d115",
+          "message": "chore(objectmanager): fix flaky put test",
+          "timestamp": "2021-03-09T19:16:49Z",
+          "tree_id": "ac18bd6b56de290647052e306dcb779dde7e8ba3",
+          "url": "https://github.com/nimona/go-nimona/commit/137c4c0e2229122cce55b4676e0308d1f575d115"
+        },
+        "date": 1615317510469,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4453710,
+            "unit": "ns/op",
+            "extra": "264 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 394849556,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3952009973,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15891,
+            "unit": "ns/op",
+            "extra": "78027 times\n2 procs"
           }
         ]
       }
