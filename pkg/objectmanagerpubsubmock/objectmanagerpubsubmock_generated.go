@@ -5,48 +5,49 @@
 package objectmanagerpubsubmock
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	object "nimona.io/pkg/object"
 	objectmanager "nimona.io/pkg/objectmanager"
-	reflect "reflect"
 )
 
-// MockObjectPubSub is a mock of ObjectPubSub interface
+// MockObjectPubSub is a mock of ObjectPubSub interface.
 type MockObjectPubSub struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectPubSubMockRecorder
 }
 
-// MockObjectPubSubMockRecorder is the mock recorder for MockObjectPubSub
+// MockObjectPubSubMockRecorder is the mock recorder for MockObjectPubSub.
 type MockObjectPubSubMockRecorder struct {
 	mock *MockObjectPubSub
 }
 
-// NewMockObjectPubSub creates a new mock instance
+// NewMockObjectPubSub creates a new mock instance.
 func NewMockObjectPubSub(ctrl *gomock.Controller) *MockObjectPubSub {
 	mock := &MockObjectPubSub{ctrl: ctrl}
 	mock.recorder = &MockObjectPubSubMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockObjectPubSub) EXPECT() *MockObjectPubSubMockRecorder {
 	return m.recorder
 }
 
-// Publish mocks base method
+// Publish mocks base method.
 func (m *MockObjectPubSub) Publish(arg0 *object.Object) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Publish", arg0)
 }
 
-// Publish indicates an expected call of Publish
+// Publish indicates an expected call of Publish.
 func (mr *MockObjectPubSubMockRecorder) Publish(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockObjectPubSub)(nil).Publish), arg0)
 }
 
-// Subscribe mocks base method
+// Subscribe mocks base method.
 func (m *MockObjectPubSub) Subscribe(arg0 ...objectmanager.ObjectFilter) objectmanager.ObjectSubscription {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -58,36 +59,62 @@ func (m *MockObjectPubSub) Subscribe(arg0 ...objectmanager.ObjectFilter) objectm
 	return ret0
 }
 
-// Subscribe indicates an expected call of Subscribe
+// Subscribe indicates an expected call of Subscribe.
 func (mr *MockObjectPubSubMockRecorder) Subscribe(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockObjectPubSub)(nil).Subscribe), arg0...)
 }
 
-// MockObjectSubscription is a mock of ObjectSubscription interface
+// MockObjectSubscription is a mock of ObjectSubscription interface.
 type MockObjectSubscription struct {
 	ctrl     *gomock.Controller
 	recorder *MockObjectSubscriptionMockRecorder
 }
 
-// MockObjectSubscriptionMockRecorder is the mock recorder for MockObjectSubscription
+// MockObjectSubscriptionMockRecorder is the mock recorder for MockObjectSubscription.
 type MockObjectSubscriptionMockRecorder struct {
 	mock *MockObjectSubscription
 }
 
-// NewMockObjectSubscription creates a new mock instance
+// NewMockObjectSubscription creates a new mock instance.
 func NewMockObjectSubscription(ctrl *gomock.Controller) *MockObjectSubscription {
 	mock := &MockObjectSubscription{ctrl: ctrl}
 	mock.recorder = &MockObjectSubscriptionMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockObjectSubscription) EXPECT() *MockObjectSubscriptionMockRecorder {
 	return m.recorder
 }
 
-// Read mocks base method
+// Channel mocks base method.
+func (m *MockObjectSubscription) Channel() <-chan *object.Object {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Channel")
+	ret0, _ := ret[0].(<-chan *object.Object)
+	return ret0
+}
+
+// Channel indicates an expected call of Channel.
+func (mr *MockObjectSubscriptionMockRecorder) Channel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockObjectSubscription)(nil).Channel))
+}
+
+// Close mocks base method.
+func (m *MockObjectSubscription) Close() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockObjectSubscriptionMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockObjectSubscription)(nil).Close))
+}
+
+// Read mocks base method.
 func (m *MockObjectSubscription) Read() (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read")
@@ -96,34 +123,8 @@ func (m *MockObjectSubscription) Read() (*object.Object, error) {
 	return ret0, ret1
 }
 
-// Read indicates an expected call of Read
+// Read indicates an expected call of Read.
 func (mr *MockObjectSubscriptionMockRecorder) Read() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockObjectSubscription)(nil).Read))
-}
-
-// Close mocks base method
-func (m *MockObjectSubscription) Close() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close")
-}
-
-// Close indicates an expected call of Close
-func (mr *MockObjectSubscriptionMockRecorder) Close() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockObjectSubscription)(nil).Close))
-}
-
-// Channel mocks base method
-func (m *MockObjectSubscription) Channel() <-chan *object.Object {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Channel")
-	ret0, _ := ret[0].(<-chan *object.Object)
-	return ret0
-}
-
-// Channel indicates an expected call of Channel
-func (mr *MockObjectSubscriptionMockRecorder) Channel() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockObjectSubscription)(nil).Channel))
 }

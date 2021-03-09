@@ -5,38 +5,39 @@
 package resolvermock
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
 	crypto "nimona.io/pkg/crypto"
 	resolver "nimona.io/pkg/hyperspace/resolver"
 	peer "nimona.io/pkg/peer"
-	reflect "reflect"
 )
 
-// MockResolver is a mock of Resolver interface
+// MockResolver is a mock of Resolver interface.
 type MockResolver struct {
 	ctrl     *gomock.Controller
 	recorder *MockResolverMockRecorder
 }
 
-// MockResolverMockRecorder is the mock recorder for MockResolver
+// MockResolverMockRecorder is the mock recorder for MockResolver.
 type MockResolverMockRecorder struct {
 	mock *MockResolver
 }
 
-// NewMockResolver creates a new mock instance
+// NewMockResolver creates a new mock instance.
 func NewMockResolver(ctrl *gomock.Controller) *MockResolver {
 	mock := &MockResolver{ctrl: ctrl}
 	mock.recorder = &MockResolverMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 	return m.recorder
 }
 
-// Lookup mocks base method
+// Lookup mocks base method.
 func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
@@ -49,14 +50,14 @@ func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption
 	return ret0, ret1
 }
 
-// Lookup indicates an expected call of Lookup
+// Lookup indicates an expected call of Lookup.
 func (mr *MockResolverMockRecorder) Lookup(ctx interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lookup", reflect.TypeOf((*MockResolver)(nil).Lookup), varargs...)
 }
 
-// LookupPeer mocks base method
+// LookupPeer mocks base method.
 func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKey) (*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupPeer", ctx, publicKey)
@@ -65,7 +66,7 @@ func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKe
 	return ret0, ret1
 }
 
-// LookupPeer indicates an expected call of LookupPeer
+// LookupPeer indicates an expected call of LookupPeer.
 func (mr *MockResolverMockRecorder) LookupPeer(ctx, publicKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupPeer", reflect.TypeOf((*MockResolver)(nil).LookupPeer), ctx, publicKey)

@@ -9,10 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/gomockutil"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/localpeer"
@@ -400,17 +398,26 @@ func TestManager_RequestStream(t *testing.T) {
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f02,
+								Payload: object.Response{
+									RequestID: "7",
+									Object:    object.Copy(f02),
+								}.ToObject(),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Copy(f01),
+								Payload: object.Response{
+									RequestID: "7",
+									Object:    object.Copy(f01),
+								}.ToObject(),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: f00,
+								Payload: object.Response{
+									RequestID: "7",
+									Object:    object.Copy(f00),
+								}.ToObject(),
 							}},
 						},
 					},
@@ -433,6 +440,7 @@ func TestManager_RequestStream(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
 				localpeer:   tt.fields.local(t),
+				pubsub:      NewObjectPubSub(),
 				objectstore: tt.fields.store(t),
 				network:     tt.fields.network(t),
 				newRequestID: func() string {
@@ -541,17 +549,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						[]object.CID{
 							f01.CID(),
 						},
-						nil,
-					)
-				m.EXPECT().
-					GetByStream(f00.CID()).
-					Return(
-						object.NewReadCloserFromObjects(
-							[]*object.Object{
-								f00,
-								f01,
-							},
-						),
 						nil,
 					)
 				return m
@@ -701,15 +698,14 @@ func TestManager_Put(t *testing.T) {
 	testSubscriberPrivateKey, err := crypto.GenerateEd25519PrivateKey()
 	require.NoError(t, err)
 	testLocalPeer := localpeer.New()
+	testLocalPeer.PutContentTypes(
+		"foo",
+		"foo-root",
+		"foo-complex",
+	)
 	testLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
 	testLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
-	testSubscriberPeer := &peer.ConnectionInfo{
-		PublicKey: testSubscriberPublicKey,
-		Addresses: []string{
-			"not-important",
-		},
-	}
 	testObjectSimple := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
@@ -720,7 +716,7 @@ func TestManager_Put(t *testing.T) {
 		},
 	}
 	testObjectStreamRoot := &object.Object{
-		Type: "fooRoot",
+		Type: "foo-root",
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey,
 		},
@@ -770,6 +766,23 @@ func TestManager_Put(t *testing.T) {
 			Stream: testObjectStreamRoot.CID(),
 		},
 	}.ToObject()
+	testObjectWithStreamInlineUpdated := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner:  testOwnPublicKey,
+			Stream: testObjectStreamRoot.CID(),
+			Parents: object.SortCIDs(
+				[]object.CID{
+					bar1.CID(),
+					bar2.CID(),
+					testObjectSubscriptionInline.CID(),
+				},
+			),
+		},
+		Data: object.Map{
+			"foo": object.String("bar"),
+		},
+	}
 	testObjectComplex := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
@@ -778,49 +791,6 @@ func TestManager_Put(t *testing.T) {
 			"nested-simple": testObjectSimple,
 		},
 	}
-	testObjectComplexUpdated := &object.Object{
-		Type:     "foo-complex",
-		Metadata: object.Metadata{},
-		Data: object.Map{
-			"foo":             object.String("bar"),
-			"nested-simple:r": testObjectSimple.CID(),
-		},
-	}
-	testObjectComplexReturned := &object.Object{
-		Type:     "foo-complex",
-		Metadata: object.Metadata{},
-		Data: object.Map{
-			"foo":           object.String("bar"),
-			"nested-simple": testObjectSimple,
-		},
-	}
-	testFeedRoot := getFeedRoot(
-		testOwnPrivateKey.PublicKey(),
-		getTypeForFeed(testObjectSimple.Type),
-	).ToObject()
-	testFeedRootCID := testFeedRoot.CID()
-	testFeedFirst := feed.Added{
-		ObjectCID: []object.CID{
-			testObjectSimple.CID(),
-		},
-		Metadata: object.Metadata{
-			Stream: testFeedRootCID,
-			Parents: []object.CID{
-				testFeedRootCID,
-			},
-		},
-	}.ToObject()
-	testFeedSecond := feed.Added{
-		ObjectCID: []object.CID{
-			testObjectSimple.CID(),
-		},
-		Metadata: object.Metadata{
-			Stream: testFeedRootCID,
-			Parents: []object.CID{
-				testFeedFirst.CID(),
-			},
-		},
-	}.ToObject()
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
 		network               func(*testing.T) network.Network
@@ -883,9 +853,7 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					Put(testObjectSimple)
-				m.EXPECT().
-					Put(testObjectComplexUpdated)
+					Put(testObjectComplex)
 				return m
 			},
 			network: func(t *testing.T) network.Network {
@@ -908,7 +876,7 @@ func TestManager_Put(t *testing.T) {
 		args: args{
 			o: object.Copy(testObjectComplex),
 		},
-		want: testObjectComplexReturned,
+		want: testObjectComplex,
 	}, {
 		name: "should pass, stream event",
 		fields: fields{
@@ -975,112 +943,6 @@ func TestManager_Put(t *testing.T) {
 		},
 		want: testObjectWithStreamUpdated,
 	}, {
-		name: "should pass, simple object, registered, first item in feed",
-		fields: fields{
-			store: func(t *testing.T) objectstore.Store {
-				m := objectstoremock.NewMockStore(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
-				m.EXPECT().
-					Put(testObjectSimple)
-				m.EXPECT().
-					Get(testFeedRootCID).
-					Return(nil, objectstore.ErrNotFound)
-				m.EXPECT().
-					Put(
-						gomockutil.ObjectEq(testFeedFirst),
-					)
-				return m
-			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: func() localpeer.LocalPeer {
-						tmpLocalPeer := localpeer.New()
-						tmpLocalPeer.PutContentTypes("foo")
-						tmpLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
-						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
-						return tmpLocalPeer
-					}(),
-					SendCalls: []error{
-						nil,
-					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
-					},
-				}
-				return m
-			},
-			resolver: func(t *testing.T) resolver.Resolver {
-				m := resolvermock.NewMockResolver(
-					gomock.NewController(t),
-				)
-				return m
-			},
-		},
-		args: args{
-			o: object.Copy(testObjectSimple),
-		},
-		want: testObjectSimple,
-	}, {
-		name: "should pass, simple object, registered, second item in feed",
-		fields: fields{
-			store: func(t *testing.T) objectstore.Store {
-				m := objectstoremock.NewMockStore(
-					gomock.NewController(t),
-				)
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
-				m.EXPECT().
-					Put(testObjectSimple)
-				m.EXPECT().
-					Get(testFeedRootCID).
-					Return(testFeedRoot, nil)
-				m.EXPECT().
-					Put(gomockutil.ObjectEq(testFeedSecond))
-				m.EXPECT().
-					GetStreamLeaves(testFeedRootCID).
-					Return(
-						[]object.CID{
-							testFeedFirst.CID(),
-						},
-						nil,
-					)
-				return m
-			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: func() localpeer.LocalPeer {
-						tmpLocalPeer := localpeer.New()
-						tmpLocalPeer.PutContentTypes("foo")
-						tmpLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
-						tmpLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
-						return tmpLocalPeer
-					}(),
-					SendCalls: []error{
-						nil,
-					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
-					},
-				}
-				return m
-			},
-			resolver: func(t *testing.T) resolver.Resolver {
-				m := resolvermock.NewMockResolver(
-					gomock.NewController(t),
-				)
-				return m
-			},
-		},
-		args: args{
-			o: object.Copy(testObjectSimple),
-		},
-		want: testObjectSimple,
-	}, {
 		name: "should pass, stream event, with subscribers",
 		fields: fields{
 			store: func(t *testing.T) objectstore.Store {
@@ -1142,10 +1004,6 @@ func TestManager_Put(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
-				m.EXPECT().Lookup(
-					gomock.Any(),
-					gomock.Any(),
-				).Return([]*peer.ConnectionInfo{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
@@ -1181,9 +1039,13 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					Get(testObjectStreamRoot.CID()).
+					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						testObjectStreamRoot,
+						[]object.CID{
+							bar1.CID(),
+							bar2.CID(),
+							testObjectSubscriptionInline.CID(),
+						},
 						nil,
 					)
 				m.EXPECT().
@@ -1199,17 +1061,13 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.CID()).
+					Get(testObjectStreamRoot.CID()).
 					Return(
-						[]object.CID{
-							bar1.CID(),
-							bar2.CID(),
-							testObjectSubscriptionInline.CID(),
-						},
+						testObjectStreamRoot,
 						nil,
 					)
 				m.EXPECT().
-					Put(testObjectWithStreamUpdated)
+					Put(testObjectWithStreamInlineUpdated)
 				return m
 			},
 			network: func(t *testing.T) network.Network {
@@ -1234,11 +1092,6 @@ func TestManager_Put(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
-				m.EXPECT().Lookup(
-					gomock.Any(),
-					// TODO we need a custom matcher for options
-					gomock.Any(),
-				).Return([]*peer.ConnectionInfo{testSubscriberPeer}, nil)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{},

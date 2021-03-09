@@ -5,6 +5,8 @@
 package networkmock
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	net "nimona.io/internal/net"
 	context "nimona.io/pkg/context"
@@ -13,33 +15,32 @@ import (
 	network "nimona.io/pkg/network"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
-	reflect "reflect"
 )
 
-// MockResolver is a mock of Resolver interface
+// MockResolver is a mock of Resolver interface.
 type MockResolver struct {
 	ctrl     *gomock.Controller
 	recorder *MockResolverMockRecorder
 }
 
-// MockResolverMockRecorder is the mock recorder for MockResolver
+// MockResolverMockRecorder is the mock recorder for MockResolver.
 type MockResolverMockRecorder struct {
 	mock *MockResolver
 }
 
-// NewMockResolver creates a new mock instance
+// NewMockResolver creates a new mock instance.
 func NewMockResolver(ctrl *gomock.Controller) *MockResolver {
 	mock := &MockResolver{ctrl: ctrl}
 	mock.recorder = &MockResolverMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 	return m.recorder
 }
 
-// LookupPeer mocks base method
+// LookupPeer mocks base method.
 func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKey) (*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupPeer", ctx, publicKey)
@@ -48,73 +49,36 @@ func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKe
 	return ret0, ret1
 }
 
-// LookupPeer indicates an expected call of LookupPeer
+// LookupPeer indicates an expected call of LookupPeer.
 func (mr *MockResolverMockRecorder) LookupPeer(ctx, publicKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupPeer", reflect.TypeOf((*MockResolver)(nil).LookupPeer), ctx, publicKey)
 }
 
-// MockNetwork is a mock of Network interface
+// MockNetwork is a mock of Network interface.
 type MockNetwork struct {
 	ctrl     *gomock.Controller
 	recorder *MockNetworkMockRecorder
 }
 
-// MockNetworkMockRecorder is the mock recorder for MockNetwork
+// MockNetworkMockRecorder is the mock recorder for MockNetwork.
 type MockNetworkMockRecorder struct {
 	mock *MockNetwork
 }
 
-// NewMockNetwork creates a new mock instance
+// NewMockNetwork creates a new mock instance.
 func NewMockNetwork(ctrl *gomock.Controller) *MockNetwork {
 	mock := &MockNetwork{ctrl: ctrl}
 	mock.recorder = &MockNetworkMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockNetwork) EXPECT() *MockNetworkMockRecorder {
 	return m.recorder
 }
 
-// Subscribe mocks base method
-func (m *MockNetwork) Subscribe(filters ...network.EnvelopeFilter) network.EnvelopeSubscription {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{}
-	for _, a := range filters {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Subscribe", varargs...)
-	ret0, _ := ret[0].(network.EnvelopeSubscription)
-	return ret0
-}
-
-// Subscribe indicates an expected call of Subscribe
-func (mr *MockNetworkMockRecorder) Subscribe(filters ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockNetwork)(nil).Subscribe), filters...)
-}
-
-// Send mocks base method
-func (m *MockNetwork) Send(ctx context.Context, object *object.Object, publicKey crypto.PublicKey, sendOptions ...network.SendOption) error {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, object, publicKey}
-	for _, a := range sendOptions {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Send", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Send indicates an expected call of Send
-func (mr *MockNetworkMockRecorder) Send(ctx, object, publicKey interface{}, sendOptions ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, object, publicKey}, sendOptions...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Send", reflect.TypeOf((*MockNetwork)(nil).Send), varargs...)
-}
-
-// Listen mocks base method
+// Listen mocks base method.
 func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ...network.ListenOption) (net.Listener, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, bindAddress}
@@ -127,14 +91,14 @@ func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ..
 	return ret0, ret1
 }
 
-// Listen indicates an expected call of Listen
+// Listen indicates an expected call of Listen.
 func (mr *MockNetworkMockRecorder) Listen(ctx, bindAddress interface{}, options ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, bindAddress}, options...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Listen", reflect.TypeOf((*MockNetwork)(nil).Listen), varargs...)
 }
 
-// LocalPeer mocks base method
+// LocalPeer mocks base method.
 func (m *MockNetwork) LocalPeer() localpeer.LocalPeer {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LocalPeer")
@@ -142,20 +106,57 @@ func (m *MockNetwork) LocalPeer() localpeer.LocalPeer {
 	return ret0
 }
 
-// LocalPeer indicates an expected call of LocalPeer
+// LocalPeer indicates an expected call of LocalPeer.
 func (mr *MockNetworkMockRecorder) LocalPeer() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalPeer", reflect.TypeOf((*MockNetwork)(nil).LocalPeer))
 }
 
-// RegisterResolver mocks base method
+// RegisterResolver mocks base method.
 func (m *MockNetwork) RegisterResolver(resolver network.Resolver) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RegisterResolver", resolver)
 }
 
-// RegisterResolver indicates an expected call of RegisterResolver
+// RegisterResolver indicates an expected call of RegisterResolver.
 func (mr *MockNetworkMockRecorder) RegisterResolver(resolver interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterResolver", reflect.TypeOf((*MockNetwork)(nil).RegisterResolver), resolver)
+}
+
+// Send mocks base method.
+func (m *MockNetwork) Send(ctx context.Context, object *object.Object, publicKey crypto.PublicKey, sendOptions ...network.SendOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, object, publicKey}
+	for _, a := range sendOptions {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Send", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Send indicates an expected call of Send.
+func (mr *MockNetworkMockRecorder) Send(ctx, object, publicKey interface{}, sendOptions ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, object, publicKey}, sendOptions...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Send", reflect.TypeOf((*MockNetwork)(nil).Send), varargs...)
+}
+
+// Subscribe mocks base method.
+func (m *MockNetwork) Subscribe(filters ...network.EnvelopeFilter) network.EnvelopeSubscription {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Subscribe", varargs...)
+	ret0, _ := ret[0].(network.EnvelopeSubscription)
+	return ret0
+}
+
+// Subscribe indicates an expected call of Subscribe.
+func (mr *MockNetworkMockRecorder) Subscribe(filters ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockNetwork)(nil).Subscribe), filters...)
 }

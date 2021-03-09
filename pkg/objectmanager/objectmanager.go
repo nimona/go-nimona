@@ -1,7 +1,6 @@
 package objectmanager
 
 import (
-	"strings"
 	"sync"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
@@ -491,43 +489,6 @@ func (m *manager) storeObject(
 		return nil
 	}
 
-	// TODO decouple feeds from object manager
-	// TODO check if object already exists in feed
-
-	// add to feed
-	feedStreamCID := getFeedRoot(
-		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
-		getTypeForFeed(objType),
-	).ToObject().CID()
-	feedEvent := feed.Added{
-		Metadata: object.Metadata{
-			Stream: feedStreamCID,
-		},
-		ObjectCID: []object.CID{
-			objCID,
-		},
-	}
-	_, err := m.objectstore.Get(feedStreamCID)
-	if err != nil &&
-		err != objectstore.ErrNotFound {
-		return err
-	}
-	if err == objectstore.ErrNotFound {
-		feedEvent.Metadata.Parents = []object.CID{
-			feedStreamCID,
-		}
-	} else {
-		leaves, err := m.objectstore.GetStreamLeaves(feedStreamCID)
-		if err != nil {
-			return err
-		}
-		feedEvent.Metadata.Parents = leaves
-	}
-	object.SortCIDs(feedEvent.Metadata.Parents)
-	if err := m.objectstore.Put(feedEvent.ToObject()); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -902,18 +863,4 @@ func (m *manager) Subscribe(
 ) ObjectSubscription {
 	options := newLookupOptions(lookupOptions...)
 	return m.pubsub.Subscribe(options.Filters...)
-}
-
-func getFeedRoot(owner crypto.PublicKey, feedType string) *feed.FeedStreamRoot {
-	return &feed.FeedStreamRoot{
-		ObjectType: feedType,
-		Metadata: object.Metadata{
-			Owner: owner,
-		},
-	}
-}
-
-func getTypeForFeed(objectType string) string {
-	pt := object.ParseType(objectType)
-	return strings.TrimLeft(pt.Namespace+"/"+pt.Object, "/")
 }
