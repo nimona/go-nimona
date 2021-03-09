@@ -70,7 +70,7 @@ $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.38.0))
 $(eval $(call tool,golds,go101.org/golds@v0.2.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
-$(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.3.0))
+$(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.4.0))
 $(eval $(call tool,golines,github.com/segmentio/golines@v0.1.0))
 
 $(eval $(call inttool,codegen))
