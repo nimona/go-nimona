@@ -2,6 +2,7 @@ package errors_test
 
 import (
 	stderrors "errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,12 +18,10 @@ func TestWrap(t *testing.T) {
 	)
 
 	err := errors.Wrap(errB, errA)
-	assert.True(t, errors.CausedBy(err, errA))
-	assert.True(t, errors.CausedBy(err, errB))
-	assert.False(t, errors.CausedBy(err, errC))
+	assert.True(t, errors.Is(err, errA))
+	assert.True(t, errors.Is(err, errB))
+	assert.False(t, errors.Is(err, errC))
 	assert.Equal(t, errA, errors.Unwrap(err))
-	assert.Equal(t, errB, err.(interface{ Latest() error }).Latest())
-	assert.Equal(t, errA, err.(interface{ Cause() error }).Cause())
 	assert.Equal(t, "a", errA.Error())
 	assert.Equal(t, "b", errB.Error())
 	assert.Equal(t, "b: a", err.Error())
@@ -34,5 +33,5 @@ func TestWrap(t *testing.T) {
 	err = stderrors.New("d")
 	assert.Nil(t, errors.Unwrap(err))
 
-	assert.False(t, errors.CausedBy(nil, errors.New("something")))
+	assert.False(t, errors.Is(nil, fmt.Errorf("something")))
 }

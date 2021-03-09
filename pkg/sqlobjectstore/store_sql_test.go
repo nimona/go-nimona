@@ -91,7 +91,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	retrievedObj2, err := store.Get(p.ToObject().CID())
-	require.True(t, errors.CausedBy(err, objectstore.ErrNotFound))
+	require.True(t, errors.Is(err, objectstore.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
 	err = store.Close()
