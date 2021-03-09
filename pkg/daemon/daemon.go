@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -33,6 +34,8 @@ type (
 		localpeer     localpeer.LocalPeer
 		objectstore   objectstore.Store
 		objectmanager objectmanager.ObjectManager
+		// internal
+		listener net.Listener
 	}
 	Option func(d *daemon) error
 )
@@ -75,7 +78,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		if err != nil {
 			return nil, fmt.Errorf("listening: %w", err)
 		}
-		defer lis.Close() // nolint: errcheck
+		d.listener = lis
 	}
 
 	// convert shorthands into connection infos
@@ -149,4 +152,10 @@ func (d *daemon) ObjectStore() objectstore.Store {
 
 func (d *daemon) ObjectManager() objectmanager.ObjectManager {
 	return d.objectmanager
+}
+
+func (d *daemon) Close() {
+	if d.listener != nil {
+		d.listener.Close() // nolint: errcheck
+	}
 }
