@@ -676,7 +676,7 @@ func (m *manager) handleStreamRequest(
 	}
 
 	leaves, err := m.objectstore.GetStreamLeaves(res.RootCID)
-	if err != nil && !errors.CausedBy(err, objectstore.ErrNotFound) {
+	if err != nil && !errors.Is(err, objectstore.ErrNotFound) {
 		return err
 	}
 

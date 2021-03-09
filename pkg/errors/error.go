@@ -1,17 +1,17 @@
 package errors
 
+import (
+	"errors"
+	"fmt"
+)
+
 type (
 	Error string
-	// fError is a fundamental error with just a message
-	// TODO(geoah): consider adding a stack as pkg/errors does
-	fError struct {
-		message string
-	}
 	// wError is a wrapper to allow nesting errors
 	// Holds two errors, a latest and a cause
 	wError struct {
-		error error
-		cause error
+		outer error
+		inner error
 	}
 )
 
@@ -20,64 +20,46 @@ func (e Error) Error() string {
 	return string(e)
 }
 
-// iError prints the message error, appended with the underlying cause
-func (e fError) Error() string {
-	return e.message
-}
-
-// iError prints the message error, appended with the underlying cause
-func (e wError) Error() string {
-	if e.cause == nil {
-		return e.error.Error()
+// Error prints the message error, appended with the underlying cause
+func (err wError) Error() string {
+	if err.inner != nil {
+		return fmt.Sprintf("%s: %v", err.outer, err.inner)
 	}
-	return e.error.Error() + ": " + e.cause.Error()
+	return err.outer.Error()
 }
 
-// Cause returns the next error in the error chain.
-// If there is no next error, Cause returns nil.
-func (e wError) Cause() error {
-	return e.cause
+func (err wError) Unwrap() error {
+	return err.inner
 }
 
-// Latest returns the last error in its original form
-func (e wError) Latest() error {
-	return e.error
+func (err wError) Is(target error) bool {
+	if errors.Is(err.inner, target) {
+		return true
+	}
+	return errors.Is(err.outer, target)
 }
 
 // New returns an error with the supplied message.
 func New(message string) error {
-	return fError{
-		message: message,
-	}
+	return Error(message)
 }
 
 // Wrap an error with a cause
-func Wrap(err, cause error) error {
+func Wrap(outer, inner error) error {
 	return wError{
-		cause: cause,
-		error: err,
+		outer: outer,
+		inner: inner,
 	}
 }
 
-// Unwrap returns the next error in the error chain.
-// If there is no next error, Unwrap returns nil.
 func Unwrap(err error) error {
-	if e, ok := err.(interface{ Cause() error }); ok {
-		return e.Cause()
-	}
-	return nil
+	return errors.Unwrap(err)
 }
 
-// CausedBy checks if an error was caused by another
-func CausedBy(err, cause error) bool {
-	if err == nil {
-		return false
-	}
-	if err == cause {
-		return true
-	}
-	if e, ok := err.(wError); ok {
-		return CausedBy(cause, e.error) || CausedBy(cause, e.cause)
-	}
-	return false
+func Is(err, target error) bool {
+	return errors.Is(err, target)
+}
+
+func As(err error, target interface{}) bool {
+	return errors.As(err, target)
 }
