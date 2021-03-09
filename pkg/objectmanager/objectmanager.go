@@ -100,17 +100,11 @@ func New(
 
 	subs := m.network.Subscribe()
 
-	go func() {
-		cids, err := m.objectstore.GetPinned()
-		if err != nil {
-			logger.Error("error getting pinned objects", log.Error(err))
-			return
-		}
-		if len(cids) == 0 {
-			return
-		}
+	if cids, err := m.objectstore.GetPinned(); err == nil {
 		m.localpeer.PutCIDs(cids...)
-	}()
+	} else {
+		logger.Error("error getting pinned objects", log.Error(err))
+	}
 
 	go func() {
 		if err := m.handleObjects(subs); err != nil {
