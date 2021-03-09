@@ -62,14 +62,14 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
-	net := network.New(
+	ntw := network.New(
 		ctx,
 		network.WithLocalPeer(local),
 	)
 
 	if cfg.Peer.BindAddress != "" {
 		// start listening
-		lis, err := net.Listen(
+		lis, err := ntw.Listen(
 			ctx,
 			cfg.Peer.BindAddress,
 			network.ListenOnLocalIPs,
@@ -108,20 +108,20 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		net,
+		ntw,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		net,
+		ntw,
 		res,
 		str,
 	)
 
 	d.config = *cfg
-	d.network = net
+	d.network = ntw
 	d.resolver = res
 	d.localpeer = local
 	d.objectstore = str
