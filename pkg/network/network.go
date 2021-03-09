@@ -320,7 +320,7 @@ func (w *network) handleConnection(
 			// ie a payload that cannot be unmarshalled or verified
 			// should not kill the connection
 			if err != nil {
-				// nolint: singleCaseSwitch
+				// nolint: gocritic
 				switch err {
 				case net.ErrInvalidSignature:
 					log.DefaultLogger.Warn(
