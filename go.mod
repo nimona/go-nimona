@@ -20,6 +20,7 @@ require (
 	github.com/libp2p/go-nat v0.0.5
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mitchellh/copystructure v1.1.1
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/muesli/termenv v0.8.0
 	github.com/multiformats/go-multibase v0.0.3
