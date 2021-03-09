@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615318345382,
+  "lastUpdate": 1615324302398,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -3990,6 +3990,54 @@ window.BENCHMARK_DATA = {
             "value": 11993,
             "unit": "ns/op",
             "extra": "93522 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "e42ded694401aa1e5e138a983f7eecf98ad3d78e",
+          "message": "chore(objectmanager): update test to play nice with group parents",
+          "timestamp": "2021-03-09T21:09:59Z",
+          "tree_id": "3db51c6e7b5aa1018571937c8deeb983246288d0",
+          "url": "https://github.com/nimona/go-nimona/commit/e42ded694401aa1e5e138a983f7eecf98ad3d78e"
+        },
+        "date": 1615324299741,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4182858,
+            "unit": "ns/op",
+            "extra": "283 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 385204782,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4025043597,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15624,
+            "unit": "ns/op",
+            "extra": "76755 times\n2 procs"
           }
         ]
       }
