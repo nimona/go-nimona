@@ -779,13 +779,15 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
 			Stream: testObjectStreamRoot.CID(),
-			Parents: object.SortCIDs(
-				[]object.CID{
-					bar1.CID(),
-					bar2.CID(),
-					testObjectSubscriptionInline.CID(),
-				},
-			),
+			Parents: object.Parents{
+				"*": object.SortCIDs(
+					[]object.CID{
+						bar1.CID(),
+						bar2.CID(),
+						testObjectSubscriptionInline.CID(),
+					},
+				),
+			},
 		},
 		Data: object.Map{
 			"foo": object.String("bar"),
