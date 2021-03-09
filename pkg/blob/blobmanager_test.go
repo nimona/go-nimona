@@ -95,12 +95,6 @@ func Test_requester_Request(t *testing.T) {
 					peer1,
 				).Return(chunk2.ToObject(), nil)
 
-				mobm.EXPECT().Subscribe(
-					gomock.Any(),
-				).Return(
-					pubSub.Subscribe(),
-				)
-
 				return mobm
 			},
 		},
