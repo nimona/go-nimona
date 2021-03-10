@@ -1,11 +1,11 @@
 package peer
 
-import "errors"
+import "nimona.io/pkg/errors"
 
-var (
+const (
 	// ErrMissingKey when a key is not passed
-	ErrMissingKey = errors.New("missing key")
+	ErrMissingKey = errors.Error("missing key")
 	// ErrECDSAPrivateKeyRequired when a key is not an ECDSA key
-	ErrECDSAPrivateKeyRequired = errors.New(
+	ErrECDSAPrivateKeyRequired = errors.Error(
 		"network currently requires an ecdsa private key")
 )

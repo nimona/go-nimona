@@ -18,9 +18,9 @@ import (
 	"nimona.io/pkg/stream"
 )
 
-var (
-	ErrDone    = errors.New("done")
-	ErrTimeout = errors.New("request timed out")
+const (
+	ErrDone    = errors.Error("done")
+	ErrTimeout = errors.Error("request timed out")
 )
 
 var (

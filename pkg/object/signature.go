@@ -5,13 +5,13 @@ import (
 	"nimona.io/pkg/errors"
 )
 
-var (
+const (
 	// ErrInvalidObjectType is returned when the signature being verified
 	// is not an encoded object of type "signature".
-	ErrInvalidObjectType = errors.New("invalid object type")
+	ErrInvalidObjectType = errors.Error("invalid object type")
 	// ErrAlgorithNotImplemented is returned when the algorithm specified
 	// has not been implemented
-	ErrAlgorithNotImplemented = errors.New("algorithm not implemented")
+	ErrAlgorithNotImplemented = errors.Error("algorithm not implemented")
 )
 
 const (
