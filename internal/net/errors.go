@@ -1,24 +1,19 @@
 package net
 
-import "errors"
+import "nimona.io/pkg/errors"
 
-var (
+const (
 	// ErrAllAddressesFailed for when a peer cannot be dialed
-	ErrAllAddressesFailed = errors.New("all addresses failed to dial")
+	ErrAllAddressesFailed = errors.Error("all addresses failed to dial")
 	// ErrNoAddresses for when a peer has no addresses
-	ErrNoAddresses = errors.New("no addresses")
-	// ErrNotForUs object is not meant for us
-	ErrNotForUs = errors.New("object not for us")
-	// ErrMissingKey when a key is not passed
-	ErrMissingKey = errors.New("missing key")
-	// ErrECDSAPrivateKeyRequired when a key is not an ECDSA key
-	ErrECDSAPrivateKeyRequired = errors.New(
-		"network currently requires an ecdsa private key",
-	)
-	// ErrNonce is when the nonce does not match
-	ErrNonce = errors.New("nonce does not match")
+	ErrNoAddresses = errors.Error("no addresses")
 	// ErrMissingSignature is when the signature is missing
-	ErrMissingSignature = errors.New("signature missing")
+	ErrMissingSignature = errors.Error("signature missing")
 	// ErrAllAddressesBlocked all peer's addresses are currently blocked
-	ErrAllAddressesBlocked = errors.New("all addresses blocked")
+	ErrAllAddressesBlocked = errors.Error("all addresses blocked")
+	// ErrInvalidSignature signature is invalid
+	ErrInvalidSignature = errors.Error("invalid signature")
+	// ErrConnectionClosed connection is closed, will usually be merged with
+	// an underlying error
+	ErrConnectionClosed = errors.Error("connection closed")
 )

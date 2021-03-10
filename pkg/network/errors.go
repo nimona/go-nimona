@@ -4,11 +4,11 @@ import (
 	"nimona.io/pkg/errors"
 )
 
-var (
+const (
 	// ErrNotFound is returned by Get() when the object was not found
-	ErrNotFound = errors.New("not found")
+	ErrNotFound = errors.Error("not found")
 	// ErrCannotSendToSelf is returned when trying to Send() to our own peer
-	ErrCannotSendToSelf = errors.New("cannot send objects to ourself")
+	ErrCannotSendToSelf = errors.Error("cannot send objects to ourself")
 	// ErrInvalidRequest when received an invalid request object
 	ErrInvalidRequest = errors.Error("invalid request")
 	// ErrSendingTimedOut when sending times out

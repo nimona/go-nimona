@@ -6,11 +6,6 @@ import (
 	"nimona.io/pkg/object"
 )
 
-var (
-	ErrInvalidSignature = errors.Error("invalid signature")
-	ErrConnectionClosed = errors.Error("connection closed")
-)
-
 func Write(o *object.Object, conn *Connection) error {
 	if conn == nil {
 		log.DefaultLogger.Info("conn cannot be nil")

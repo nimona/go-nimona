@@ -5,8 +5,8 @@ import (
 	"nimona.io/pkg/errors"
 )
 
-var (
-	ErrTimeout = errors.New("timeout")
+const (
+	ErrTimeout = errors.Error("timeout")
 )
 
 func GetReferences(o *Object) []CID {
