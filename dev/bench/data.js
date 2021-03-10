@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615324302398,
+  "lastUpdate": 1615403962719,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4038,6 +4038,54 @@ window.BENCHMARK_DATA = {
             "value": 15624,
             "unit": "ns/op",
             "extra": "76755 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "8cf1877625032b6bc2115af9579bf8ff9cad60d7",
+          "message": "chore(deps): bump github.com/olekukonko/tablewriter from 0.0.4 to 0.0.5\n\nBumps [github.com/olekukonko/tablewriter](https://github.com/olekukonko/tablewriter) from 0.0.4 to 0.0.5.\n- [Release notes](https://github.com/olekukonko/tablewriter/releases)\n- [Commits](https://github.com/olekukonko/tablewriter/compare/v0.0.4...v0.0.5)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-03-10T19:17:26Z",
+          "tree_id": "7c5ff70621866df7c57517125eea616625312519",
+          "url": "https://github.com/nimona/go-nimona/commit/8cf1877625032b6bc2115af9579bf8ff9cad60d7"
+        },
+        "date": 1615403960617,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4720112,
+            "unit": "ns/op",
+            "extra": "224 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 398933354,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4113401713,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16671,
+            "unit": "ns/op",
+            "extra": "67699 times\n2 procs"
           }
         ]
       }
