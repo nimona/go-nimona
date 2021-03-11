@@ -1,5 +1,6 @@
 <template>
   <section class="welcome">
+    <script async defer data-domain="nimona.io" src="https://plausible.io/js/plausible.js"></script>
     <div class="container">
       <h1 class="welcome__title">nimona</h1>
       <p class="welcome__description">

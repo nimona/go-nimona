@@ -1,5 +1,8 @@
 <template>
-  <component :is="layout" />
+  <div>
+    <script async defer data-domain="nimona.io" src="https://plausible.io/js/plausible.js"></script>
+    <component :is="layout" />
+  </div>
 </template>
 
 <script>

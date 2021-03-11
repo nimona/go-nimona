@@ -248,3 +248,9 @@ community-docs: community
 docs: golds
 	$(info Serving go docs)
 	@golds -emphasize-wdpkgs ./...
+
+# Serve site
+.PHONY: site
+site:
+	$(info Serving vuepress)
+	@yarn docs:dev
