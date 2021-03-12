@@ -21,7 +21,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/mr-tron/base58 v1.2.0
-	github.com/muesli/termenv v0.7.4
+	github.com/muesli/termenv v0.8.0
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/olekukonko/tablewriter v0.0.5
