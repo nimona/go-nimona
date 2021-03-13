@@ -41,7 +41,10 @@ var migrations = []string{
 	`ALTER TABLE Relations ADD RootCID TEXT;`,
 	`CREATE INDEX Relations_RootCID_idx ON Relations(RootCID);`,
 	`ALTER TABLE Objects ADD MetadataDatetime INT DEFAULT 0;`,
+	`CREATE TABLE IF NOT EXISTS Pins (CID TEXT NOT NULL PRIMARY KEY);`,
 }
+
+var defaultTTL = time.Hour * 24 * 7
 
 type Store struct {
 	db *sql.DB
@@ -134,7 +137,7 @@ func (st *Store) GetByType(
 func (st *Store) Put(
 	obj *object.Object,
 ) error {
-	return st.PutWithTTL(obj, 0)
+	return st.PutWithTTL(obj, defaultTTL)
 }
 
 func (st *Store) PutWithTTL(
@@ -203,7 +206,7 @@ func (st *Store) PutWithTTL(
 		body,
 		time.Now().Unix(),
 		time.Now().Unix(),
-		ttl,
+		int64(ttl.Seconds()),
 		un,
 		// WHERE
 		time.Now().Unix(),
@@ -387,8 +390,11 @@ func (st *Store) Remove(
 func (st *Store) gc() error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects WHERE
-	  TTL > 0 AND
-	  datetime(LastAccessed + TTL * 60, 'unixepoch') < datetime ('now');
+		CID NOT IN (
+			SELECT CID FROM Pins
+		)
+		AND TTL > 0
+		AND datetime(LastAccessed + TTL, 'unixepoch') < datetime ('now');
 	`)
 	if err != nil {
 		return fmt.Errorf("could not prepare query: %w", err)
@@ -533,12 +539,31 @@ func (st *Store) Filter(
 	return reader, nil
 }
 
-const (
-	pinnedQuery = "SELECT CID FROM Objects WHERE TTL = 0 AND CID = RootCID"
-)
+func (st *Store) Pin(
+	cid object.CID,
+) error {
+	stmt, err := st.db.Prepare(`
+		INSERT OR IGNORE INTO Pins (CID) VALUES (?)
+	`)
+	if err != nil {
+		return fmt.Errorf("could not prepare insert to pins table, %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	_, err = stmt.Exec(
+		cid,
+	)
+	if err != nil {
+		return fmt.Errorf("could not insert to pins table, %w", err)
+	}
+
+	return nil
+}
 
 func (st *Store) GetPinned() ([]object.CID, error) {
-	stmt, err := st.db.Prepare(pinnedQuery)
+	stmt, err := st.db.Prepare(`
+		SELECT CID FROM Pins
+	`)
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare statement: %w", err)
 	}
@@ -562,6 +587,49 @@ func (st *Store) GetPinned() ([]object.CID, error) {
 	}
 
 	return hs, nil
+}
+
+func (st *Store) IsPinned(cid object.CID) (bool, error) {
+	stmt, err := st.db.Prepare(`
+		SELECT CID FROM Pins WHERE CID = ?
+	`)
+	if err != nil {
+		return false, fmt.Errorf("could not prepare statement: %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	rows, err := stmt.Query(cid.String())
+	if err != nil {
+		return false, fmt.Errorf("could not query: %w", err)
+	}
+	defer rows.Close() // nolint: errcheck
+
+	if !rows.Next() {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (st *Store) RemovePin(
+	cid object.CID,
+) error {
+	stmt, err := st.db.Prepare(`
+		DELETE FROM Pins
+		WHERE CID=?
+	`)
+	if err != nil {
+		return fmt.Errorf("could not prepare query, %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	if _, err := stmt.Exec(
+		cid.String(),
+	); err != nil {
+		return fmt.Errorf("could not delete object, %w", err)
+	}
+
+	return nil
 }
 
 func astoai(ah []string) []interface{} {

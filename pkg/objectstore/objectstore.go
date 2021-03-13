@@ -25,7 +25,9 @@ type (
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
 		GetStreamLeaves(streamRootCID object.CID) ([]object.CID, error)
-		// TODO GetPinned should be replaced with something "better"
+		Pin(object.CID) error
+		IsPinned(object.CID) (bool, error)
 		GetPinned() ([]object.CID, error)
+		RemovePin(object.CID) error
 	}
 )
