@@ -148,6 +148,35 @@ func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootCID interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStreamLeaves", reflect.TypeOf((*MockStore)(nil).GetStreamLeaves), streamRootCID)
 }
 
+// IsPinned mocks base method.
+func (m *MockStore) IsPinned(arg0 object.CID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsPinned", arg0)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsPinned indicates an expected call of IsPinned.
+func (mr *MockStoreMockRecorder) IsPinned(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPinned", reflect.TypeOf((*MockStore)(nil).IsPinned), arg0)
+}
+
+// Pin mocks base method.
+func (m *MockStore) Pin(arg0 object.CID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pin", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Pin indicates an expected call of Pin.
+func (mr *MockStoreMockRecorder) Pin(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pin", reflect.TypeOf((*MockStore)(nil).Pin), arg0)
+}
+
 // Put mocks base method.
 func (m *MockStore) Put(arg0 *object.Object) error {
 	m.ctrl.T.Helper()
@@ -174,4 +203,18 @@ func (m *MockStore) PutWithTTL(arg0 *object.Object, arg1 time.Duration) error {
 func (mr *MockStoreMockRecorder) PutWithTTL(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutWithTTL", reflect.TypeOf((*MockStore)(nil).PutWithTTL), arg0, arg1)
+}
+
+// RemovePin mocks base method.
+func (m *MockStore) RemovePin(arg0 object.CID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePin", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePin indicates an expected call of RemovePin.
+func (mr *MockStoreMockRecorder) RemovePin(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePin", reflect.TypeOf((*MockStore)(nil).RemovePin), arg0)
 }

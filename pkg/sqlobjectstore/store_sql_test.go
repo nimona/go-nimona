@@ -298,3 +298,118 @@ func TestStore_Relations(t *testing.T) {
 
 	fmt.Println(leaves)
 }
+
+func TestStore_Pinned(t *testing.T) {
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("pin a", func(t *testing.T) {
+		err := store.Pin("a")
+		require.NoError(t, err)
+	})
+
+	t.Run("check pin a", func(t *testing.T) {
+		pinned, err := store.IsPinned("a")
+		require.NoError(t, err)
+		assert.True(t, pinned)
+	})
+
+	t.Run("check pin x", func(t *testing.T) {
+		pinned, err := store.IsPinned("x")
+		require.NoError(t, err)
+		assert.False(t, pinned)
+	})
+
+	t.Run("pin a again, no error", func(t *testing.T) {
+		err = store.Pin("a")
+		require.NoError(t, err)
+	})
+
+	t.Run("pin b", func(t *testing.T) {
+		err = store.Pin("b")
+		require.NoError(t, err)
+	})
+
+	t.Run("get pins (a, b)", func(t *testing.T) {
+		got, err := store.GetPinned()
+		require.NoError(t, err)
+		require.Equal(t, []object.CID{"a", "b"}, got)
+	})
+
+	t.Run("remove pin a", func(t *testing.T) {
+		err = store.RemovePin("a")
+		require.NoError(t, err)
+	})
+
+	t.Run("get pins (b)", func(t *testing.T) {
+		got, err := store.GetPinned()
+		require.NoError(t, err)
+		require.Equal(t, []object.CID{"b"}, got)
+	})
+}
+
+func TestStore_GC(t *testing.T) {
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	o := &object.Object{
+		Type: "foo",
+		Data: object.Map{
+			"foo": object.String("bar"),
+		},
+	}
+
+	// store object
+	err = store.PutWithTTL(o, time.Second*3)
+	require.NoError(t, err)
+
+	// check object
+	got, err := store.Get(o.CID())
+	require.NoError(t, err)
+	require.Equal(t, o, got)
+
+	// gc()
+	err = store.gc()
+	require.NoError(t, err)
+
+	// object should still be there
+	got, err = store.Get(o.CID())
+	require.NoError(t, err)
+	require.Equal(t, o, got)
+
+	// wait 5 seconds and check again
+	time.Sleep(time.Second * 5)
+
+	// gc()
+	err = store.gc()
+	require.NoError(t, err)
+
+	// object should not be there any more
+	got, err = store.Get(o.CID())
+	require.Error(t, err)
+	require.Nil(t, got)
+
+	// pin object
+	err = store.Pin(o.CID())
+	require.NoError(t, err)
+
+	// store object again with 1 second TTL
+	err = store.PutWithTTL(o, time.Second)
+	require.NoError(t, err)
+
+	// wait 2 seconds and check again
+	time.Sleep(time.Second * 2)
+
+	// gc()
+	err = store.gc()
+	require.NoError(t, err)
+
+	// object should still be there
+	got, err = store.Get(o.CID())
+	require.NoError(t, err)
+	require.Equal(t, o, got)
+}
