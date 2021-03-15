@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615847921855,
+  "lastUpdate": 1615848916275,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4230,6 +4230,54 @@ window.BENCHMARK_DATA = {
             "value": 17252,
             "unit": "ns/op",
             "extra": "71280 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "21be7c69b7ae0a7cce588fa3ef09fac0544e627a",
+          "message": "refactor(errors): move everything to go1.13 errors",
+          "timestamp": "2021-03-15T22:53:30Z",
+          "tree_id": "a566cc29df3ec3084b6a4282105857212ab06ae3",
+          "url": "https://github.com/nimona/go-nimona/commit/21be7c69b7ae0a7cce588fa3ef09fac0544e627a"
+        },
+        "date": 1615848913692,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4414995,
+            "unit": "ns/op",
+            "extra": "261 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 387633940,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4049623574,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16136,
+            "unit": "ns/op",
+            "extra": "74905 times\n2 procs"
           }
         ]
       }
