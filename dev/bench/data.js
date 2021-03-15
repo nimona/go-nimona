@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615749808178,
+  "lastUpdate": 1615847921855,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4182,6 +4182,54 @@ window.BENCHMARK_DATA = {
             "value": 16525,
             "unit": "ns/op",
             "extra": "75909 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "47a0cee1ba43a8887d16ac8ab741250bd574a9bd",
+          "message": "chore(daemon): fix shadowed var",
+          "timestamp": "2021-03-15T22:36:46Z",
+          "tree_id": "2d0882bd29b081419b8a98ac6446c21e4346d75d",
+          "url": "https://github.com/nimona/go-nimona/commit/47a0cee1ba43a8887d16ac8ab741250bd574a9bd"
+        },
+        "date": 1615847921055,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4535602,
+            "unit": "ns/op",
+            "extra": "262 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 425835871,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4241807429,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 17252,
+            "unit": "ns/op",
+            "extra": "71280 times\n2 procs"
           }
         ]
       }
