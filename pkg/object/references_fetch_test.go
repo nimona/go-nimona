@@ -50,7 +50,7 @@ func TestFetchReferences(t *testing.T) {
 				if cid == "f01" {
 					return f01, nil
 				}
-				return nil, errors.New("not found")
+				return nil, errors.Error("not found")
 			},
 			objectCID: "f01",
 		},
@@ -73,7 +73,7 @@ func TestFetchReferences(t *testing.T) {
 				case "f02":
 					return f02, nil
 				}
-				return nil, errors.New("not found")
+				return nil, errors.Error("not found")
 			},
 			objectCID: "f00",
 		},

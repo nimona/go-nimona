@@ -53,7 +53,7 @@ func ed25519PrivateFromPrivateKey(k PrivateKey) (ed25519.PrivateKey, error) {
 		return nil, err
 	}
 	if c.Type() != cidEd25519Private {
-		return nil, errors.New("invalid or unsupported private key type")
+		return nil, errors.Error("invalid or unsupported private key type")
 	}
 	h, err := multihash.Decode(c.Hash())
 	if err != nil {
@@ -68,7 +68,7 @@ func ed25519PublicFromPublicKey(k PublicKey) (ed25519.PublicKey, error) {
 		return nil, err
 	}
 	if c.Type() != cidEd25519Public {
-		return nil, errors.New("invalid or unsupported public key type")
+		return nil, errors.Error("invalid or unsupported public key type")
 	}
 	h, err := multihash.Decode(c.Hash())
 	if err != nil {

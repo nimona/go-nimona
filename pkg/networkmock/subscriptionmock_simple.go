@@ -39,7 +39,7 @@ func (s *MockSubscriptionSimple) Next() (*network.Envelope, error) {
 	defer s.mutex.Unlock()
 	if s.index >= len(s.Objects) {
 		s.done <- struct{}{}
-		return nil, errors.New("done")
+		return nil, errors.Error("done")
 	}
 	r := s.Objects[s.index]
 	s.index++

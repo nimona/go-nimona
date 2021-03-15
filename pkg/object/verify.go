@@ -14,7 +14,7 @@ const (
 // TODO should this verify nested objects as well?
 func Verify(o *Object) error {
 	if o == nil {
-		return errors.New("no object")
+		return errors.Error("no object")
 	}
 	sig := o.Metadata.Signature
 	own := o.Metadata.Owner
@@ -62,8 +62,8 @@ func Verify(o *Object) error {
 	// then let's make sure that the certificate is properly signed
 	// if err := Verify(sig.Certificate.ToObject()); err != nil {
 	// 	return errors.Wrap(
-	// 		errors.New("error verifying certificate"),
-	// 		err,
+	// 		errors.Error("error verifying certificate"),
+	// 		err,errors.Merge(
 	// 	)
 	// }
 

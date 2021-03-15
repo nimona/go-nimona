@@ -2,9 +2,8 @@ package migration
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
-
-	"nimona.io/pkg/errors"
 )
 
 const migrationsTable string = `
@@ -39,7 +38,7 @@ func Up(db *sql.DB, migrations ...string) error {
 func createMigrationTable(db *sql.DB) error {
 	_, err := db.Exec(migrationsTable)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not create migrations table"))
+		return fmt.Errorf("could not create migrations table: %w", err)
 	}
 
 	return nil
@@ -50,7 +49,7 @@ func createMigrationTable(db *sql.DB) error {
 func migrateUp(db *sql.DB, migrations ...string) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not start transaction"))
+		return fmt.Errorf("could not start transaction: %w", err)
 	}
 
 	// iterate over the migrations array
@@ -67,10 +66,7 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 		`)
 		if err != nil {
 			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not run migration"),
-			)
+			return fmt.Errorf("could not run migration: %w", err)
 		}
 		defer rows.Close()
 
@@ -90,10 +86,7 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 		_, err = tx.Exec(mig)
 		if err != nil {
 			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not run migration"),
-			)
+			return fmt.Errorf("could not run migration: %w", err)
 		}
 
 		// store the migration status state in the table
@@ -101,29 +94,20 @@ func migrateUp(db *sql.DB, migrations ...string) error {
 			"INSERT INTO Migrations(LastIndex, Datetime) VALUES(?, ?)")
 		if err != nil {
 			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not insert to migrations table"),
-			)
+			return fmt.Errorf("could not insert to migrations table: %w", err)
 		}
 		defer stmt.Close()
 
 		_, err = stmt.Exec(index, time.Now().Unix())
 		if err != nil {
 			tx.Rollback() // nolint
-			return errors.Wrap(
-				err,
-				errors.New("could not insert to migrations table"),
-			)
+			return fmt.Errorf("could not insert to migrations table: %w", err)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
 		tx.Rollback() // nolint
-		return errors.Wrap(
-			err,
-			errors.New("could not insert to migrations table"),
-		)
+		return fmt.Errorf("could not insert to migrations table: %w", err)
 	}
 
 	return nil

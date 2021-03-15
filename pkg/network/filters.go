@@ -1,9 +1,10 @@
 package network
 
 import (
+	"fmt"
+
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 )
 
@@ -12,7 +13,7 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	for i, typePattern := range typePatterns {
 		g, err := glob.Compile(typePattern, '.', '/', '#')
 		if err != nil {
-			panic(errors.Wrap(err, errors.New("invalid pattern")))
+			panic(fmt.Errorf("invalid pattern: %w", err))
 		}
 		patterns[i] = g
 	}

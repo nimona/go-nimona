@@ -39,13 +39,8 @@ func (err wError) Is(target error) bool {
 	return errors.Is(err.outer, target)
 }
 
-// New returns an error with the supplied message.
-func New(message string) error {
-	return Error(message)
-}
-
-// Wrap an error with a cause
-func Wrap(outer, inner error) error {
+// Merge two errors
+func Merge(outer, inner error) error {
 	return wError{
 		outer: outer,
 		inner: inner,

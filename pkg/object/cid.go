@@ -46,7 +46,7 @@ func mhFromCid(h CID) (multihash.Multihash, error) {
 		return nil, err
 	}
 	if c.Prefix().Codec != cidCodec {
-		return nil, errors.New("invalid cid codec")
+		return nil, errors.Error("invalid cid codec")
 	}
 	return c.Hash(), nil
 }
@@ -80,11 +80,11 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		// we can revisit them once we better understand their usecases.
 		switch {
 		case math.IsInf(float64(vv), 1):
-			return nil, errors.New("float inf is not currently supported")
+			return nil, errors.Error("float inf is not currently supported")
 		case math.IsInf(float64(vv), -1):
-			return nil, errors.New("float -inf is not currently supported")
+			return nil, errors.Error("float -inf is not currently supported")
 		case math.IsNaN(float64(vv)):
-			return nil, errors.New("float nan is not currently supported")
+			return nil, errors.Error("float nan is not currently supported")
 		default:
 			return mhFromBytes(FloatHint,
 				[]byte(

@@ -140,7 +140,7 @@ func (r *resolver) Lookup(
 	opts ...LookupOption,
 ) ([]*peer.ConnectionInfo, error) {
 	if len(r.bootstrapPeers) == 0 {
-		return nil, errors.New("no peers to ask")
+		return nil, errors.Error("no peers to ask")
 	}
 
 	logger := log.FromContext(ctx).With(

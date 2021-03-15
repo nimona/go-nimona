@@ -12,12 +12,12 @@ import (
 
 func TestWrap(t *testing.T) {
 	var (
-		errA = errors.New("a")
-		errB = errors.New("b")
-		errC = errors.New("c")
+		errA = errors.Error("a")
+		errB = errors.Error("b")
+		errC = errors.Error("c")
 	)
 
-	err := errors.Wrap(errB, errA)
+	err := errors.Merge(errB, errA)
 	assert.True(t, errors.Is(err, errA))
 	assert.True(t, errors.Is(err, errB))
 	assert.False(t, errors.Is(err, errC))
@@ -26,7 +26,7 @@ func TestWrap(t *testing.T) {
 	assert.Equal(t, "b", errB.Error())
 	assert.Equal(t, "b: a", err.Error())
 
-	err = errors.Wrap(errB, nil)
+	err = errors.Merge(errB, nil)
 	assert.Equal(t, "b", err.Error())
 	assert.Nil(t, errors.Unwrap(err))
 

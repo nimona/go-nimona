@@ -1,6 +1,8 @@
 package net
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -9,7 +11,7 @@ import (
 func Write(o *object.Object, conn *Connection) error {
 	if conn == nil {
 		log.DefaultLogger.Info("conn cannot be nil")
-		return errors.New("missing conn")
+		return fmt.Errorf("missing conn")
 	}
 
 	ra := ""
@@ -27,7 +29,7 @@ func Write(o *object.Object, conn *Connection) error {
 	)
 
 	if err := conn.encoder.Encode(o); err != nil {
-		return errors.Wrap(errors.New("error marshaling object"), err)
+		return fmt.Errorf("error marshaling object: %w", err)
 	}
 
 	return nil
@@ -63,7 +65,7 @@ func Read(conn *Connection) (*object.Object, error) {
 
 	if !o.Metadata.Signature.IsEmpty() {
 		if err := object.Verify(o); err != nil {
-			return o, errors.Wrap(ErrInvalidSignature, err)
+			return o, errors.Merge(ErrInvalidSignature, err)
 		}
 	}
 

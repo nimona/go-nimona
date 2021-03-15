@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
@@ -175,7 +175,7 @@ func main() {
 			return err
 		}
 		if len(recipients) == 0 {
-			return errors.New("no recipients")
+			return errors.Error("no recipients")
 		}
 		for _, recipient := range recipients {
 			if err := net.Send(
@@ -206,7 +206,7 @@ func main() {
 			)
 			return nil
 		}
-		return errors.New("unable to ping")
+		return errors.Error("unable to ping")
 	}
 
 	go func() {
