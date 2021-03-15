@@ -2,10 +2,10 @@ package node
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/errors"
 )
 
 // Logs filters the node json logs for the specific tag
@@ -18,8 +18,7 @@ func (n *Node) Logs() (chan string, chan error) {
 
 		rdr, err := n.container.Logs(ctx)
 		if err != nil {
-			errCh <- errors.Wrap(err,
-				errors.New("could not read container log"))
+			errCh <- fmt.Errorf("could not read container log: %w", err)
 		}
 
 		brdr := bufio.NewReader(rdr)
@@ -32,8 +31,7 @@ func (n *Node) Logs() (chan string, chan error) {
 				return
 			}
 			if err != nil {
-				errCh <- errors.Wrap(err,
-					errors.New("could not read container reader"))
+				errCh <- fmt.Errorf("could not read container reader: %w", err)
 			}
 
 			logCh <- string(line)

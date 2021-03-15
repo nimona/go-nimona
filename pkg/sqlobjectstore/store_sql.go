@@ -56,7 +56,7 @@ func New(
 
 	// run migrations
 	if err := migration.Up(db, migrations...); err != nil {
-		return nil, errors.Wrap(err, errors.New("failed to run migrations"))
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// Initialize the garbage collector in the background to run every minute
@@ -80,10 +80,7 @@ func (st *Store) Get(
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE CID=?")
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not prepare query"),
-		)
+		return nil, fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
@@ -93,27 +90,18 @@ func (st *Store) Get(
 	data := []byte{}
 
 	if err := row.Scan(&data); err != nil {
-		return nil, errors.Wrap(
-			err,
-			objectstore.ErrNotFound,
-		)
+		return nil, errors.Merge(objectstore.ErrNotFound, err)
 	}
 
 	if err := json.Unmarshal(data, obj); err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not unmarshal data"),
-		)
+		return nil, fmt.Errorf("could not unmarshal data: %w", err)
 	}
 
 	// update the last accessed column
 	istmt, err := st.db.Prepare(
 		"UPDATE Objects SET LastAccessed=? WHERE CID=?")
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not prepare query"),
-		)
+		return nil, fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer istmt.Close() // nolint: errcheck
 
@@ -121,10 +109,7 @@ func (st *Store) Get(
 		time.Now().Unix(),
 		cid.String(),
 	); err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not update last access"),
-		)
+		return nil, fmt.Errorf("could not update last access: %w", err)
 	}
 
 	return obj, nil
@@ -174,14 +159,13 @@ func (st *Store) PutWithTTL(
 		LastAccessed=?
 	`)
 	if err != nil {
-		return errors.Wrap(err,
-			errors.New("could not prepare insert to objects table"))
+		return fmt.Errorf("could not prepare insert to objects table: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	body, err := json.Marshal(obj.ToMap())
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not marshal object"))
+		return fmt.Errorf("could not marshal object: %w", err)
 	}
 
 	objCID := obj.CID()
@@ -225,7 +209,7 @@ func (st *Store) PutWithTTL(
 		time.Now().Unix(),
 	)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not insert to objects table"))
+		return fmt.Errorf("could not insert to objects table: %w", err)
 	}
 
 	if len(obj.Metadata.Parents) > 0 {
@@ -233,7 +217,7 @@ func (st *Store) PutWithTTL(
 			for _, p := range group {
 				err := st.putRelation(object.CID(streamCID), objCID, p)
 				if err != nil {
-					return errors.Wrap(err, errors.New("could not create relation"))
+					return fmt.Errorf("could not create relation: %w", err)
 				}
 			}
 		}
@@ -242,7 +226,7 @@ func (st *Store) PutWithTTL(
 	if streamCID == objectCID {
 		err := st.putRelation(object.CID(streamCID), objCID, "")
 		if err != nil {
-			return errors.Wrap(err, errors.New("error creating self relation"))
+			return fmt.Errorf("error creating self relation: %w", err)
 		}
 	}
 
@@ -264,8 +248,7 @@ func (st *Store) putRelation(
 		)
 	`)
 	if err != nil {
-		return errors.Wrap(err,
-			errors.New("could not prepare insert to objects table"))
+		return fmt.Errorf("could not prepare insert to objects table: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
@@ -275,7 +258,7 @@ func (st *Store) putRelation(
 		child.String(),
 	)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not insert to objects table"))
+		return fmt.Errorf("could not insert to objects table: %w", err)
 	}
 
 	return nil
@@ -298,13 +281,13 @@ func (st *Store) GetStreamLeaves(
 			)
 	`)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not prepare query"))
+		return nil, fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query(streamRootCID.String(), streamRootCID.String())
 	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not query"))
+		return nil, fmt.Errorf("could not query: %w", err)
 	}
 	defer rows.Close() // nolint: errcheck
 
@@ -313,10 +296,7 @@ func (st *Store) GetStreamLeaves(
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
-			return nil, errors.Wrap(
-				err,
-				objectstore.ErrNotFound,
-			)
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		cidList = append(cidList, object.CID(data))
 	}
@@ -329,13 +309,13 @@ func (st *Store) GetRelations(
 ) ([]object.CID, error) {
 	stmt, err := st.db.Prepare("SELECT CID FROM Objects WHERE RootCID=?")
 	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not prepare query"))
+		return nil, fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query(parent.String())
 	if err != nil {
-		return nil, errors.Wrap(err, errors.New("could not query"))
+		return nil, fmt.Errorf("could not query: %w", err)
 	}
 	defer rows.Close() // nolint: errcheck
 
@@ -344,10 +324,7 @@ func (st *Store) GetRelations(
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
-			return nil, errors.Wrap(
-				err,
-				objectstore.ErrNotFound,
-			)
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		cidList = append(cidList, object.CID(data))
 	}
@@ -356,10 +333,7 @@ func (st *Store) GetRelations(
 		"UPDATE Objects SET LastAccessed=? WHERE RootCID=?",
 	)
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not prepare query"),
-		)
+		return nil, fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer istmt.Close() // nolint: errcheck
 
@@ -367,10 +341,7 @@ func (st *Store) GetRelations(
 		time.Now().Unix(),
 		parent.String(),
 	); err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not update last access"),
-		)
+		return nil, fmt.Errorf("could not update last access: %w", err)
 	}
 
 	return cidList, nil
@@ -382,15 +353,12 @@ func (st *Store) UpdateTTL(
 ) error {
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootCID=?`)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not prepare query"))
+		return fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(minutes, cid.String()); err != nil {
-		return errors.Wrap(
-			err,
-			errors.New("could not update last access and ttl"),
-		)
+		return fmt.Errorf("could not update last access and ttl: %w", err)
 	}
 
 	return nil
@@ -403,17 +371,14 @@ func (st *Store) Remove(
 	DELETE FROM Objects
 	WHERE CID=?`)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not prepare query"))
+		return fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(
 		cid.String(),
 	); err != nil {
-		return errors.Wrap(
-			err,
-			errors.New("could not delete object"),
-		)
+		return fmt.Errorf("could not delete object: %w", err)
 	}
 
 	return nil
@@ -426,15 +391,12 @@ func (st *Store) gc() error {
 	  datetime(LastAccessed + TTL * 60, 'unixepoch') < datetime ('now');
 	`)
 	if err != nil {
-		return errors.Wrap(err, errors.New("could not prepare query"))
+		return fmt.Errorf("could not prepare query: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	if _, err := stmt.Exec(); err != nil {
-		return errors.Wrap(
-			err,
-			errors.New("could not gc delete objects"),
-		)
+		return fmt.Errorf("could not gc delete objects: %w", err)
 	}
 
 	return nil
@@ -496,19 +458,13 @@ func (st *Store) Filter(
 	// nolint: gosec
 	stmt, err := st.db.Prepare("SELECT CID FROM Objects " + where)
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not prepare statement"),
-		)
+		return nil, fmt.Errorf("could not prepare statement: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query(whereArgs...)
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not query"),
-		)
+		return nil, fmt.Errorf("could not query: %w", err)
 	}
 	defer rows.Close() // nolint: errcheck
 
@@ -529,10 +485,7 @@ func (st *Store) Filter(
 	for rows.Next() {
 		cid := ""
 		if err := rows.Scan(&cid); err != nil {
-			return nil, errors.Wrap(
-				err,
-				objectstore.ErrNotFound,
-			)
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		cids = append(cids, cid)
 		cidsForUpdate = append(cidsForUpdate, cid)
@@ -587,19 +540,13 @@ const (
 func (st *Store) GetPinned() ([]object.CID, error) {
 	stmt, err := st.db.Prepare(pinnedQuery)
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not prepare statement"),
-		)
+		return nil, fmt.Errorf("could not prepare statement: %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
 	rows, err := stmt.Query()
 	if err != nil {
-		return nil, errors.Wrap(
-			err,
-			errors.New("could not query"),
-		)
+		return nil, fmt.Errorf("could not query: %w", err)
 	}
 	defer rows.Close() // nolint: errcheck
 
@@ -607,10 +554,7 @@ func (st *Store) GetPinned() ([]object.CID, error) {
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
-			return nil, errors.Wrap(
-				err,
-				objectstore.ErrNotFound,
-			)
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		if h != "" {
 			hs = append(hs, object.CID(h))

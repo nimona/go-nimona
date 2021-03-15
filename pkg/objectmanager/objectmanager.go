@@ -1,6 +1,7 @@
 package objectmanager
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -166,7 +167,7 @@ func (m *manager) RequestStream(
 
 	// TODO support more than 1 recipient
 	if len(recipients) > 1 {
-		panic(errors.New("currently only a single recipient is supported"))
+		panic(errors.Error("currently only a single recipient is supported"))
 	}
 
 	// TODO we should first request and store stream root I guess
@@ -638,10 +639,7 @@ func (m *manager) handleObjectRequest(
 			"error sending object response",
 			log.Error(err),
 		)
-		return errors.Wrap(
-			errors.Error("could not send object"),
-			err,
-		)
+		return fmt.Errorf("could not send object: %w", err)
 	}
 
 	logger.Info(

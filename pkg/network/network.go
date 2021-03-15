@@ -222,7 +222,7 @@ func (w *network) lookup(
 ) (*peer.ConnectionInfo, error) {
 	resolvers := w.resolvers.List()
 	if len(resolvers) == 0 {
-		return nil, errors.New("no resolvers")
+		return nil, errors.Error("no resolvers")
 	}
 	var errs error
 	for _, r := range resolvers {
@@ -269,8 +269,8 @@ func (w *network) Listen(
 		strings.Split(listener.Addresses()[0], ":")[2], 10, 64,
 	)
 	if err != nil || localPort == 0 {
-		return nil, errors.Wrap(
-			errors.New("unable to get port from address"),
+		return nil, errors.Merge(
+			errors.Error("unable to get port from address"),
 			err,
 		)
 	}
@@ -300,7 +300,7 @@ func (w *network) handleConnection(
 	clnFn connmanager.ConnectionCleanup,
 ) error {
 	if conn == nil {
-		return errors.New("missing connection")
+		return errors.Error("missing connection")
 	}
 
 	go func() {
@@ -424,7 +424,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		case <-ctx.Done():
 		}
 		if resObj == nil {
-			return errors.New("didn't get a data forward response in time")
+			return errors.Error("didn't get a data forward response in time")
 		}
 		res := &DataForwardResponse{}
 		if err := res.FromObject(resObj); err != nil {
@@ -526,7 +526,7 @@ func (w *network) processOutbox(outbox *outbox) {
 		}
 		// try to send via relay
 		if len(connInfo.Relays) == 0 {
-			return errors.New("all addresses failed")
+			return errors.Error("all addresses failed")
 		}
 		// TODO use lastRelay first
 		for _, relay := range connInfo.Relays {
@@ -758,14 +758,14 @@ func (w *network) Send(
 	if opt.waitForResponse != nil {
 		rIDVal, ok := o.Data["requestID"]
 		if !ok {
-			return errors.New("cannot wait for response without a request id")
+			return errors.Error("cannot wait for response without a request id")
 		}
 		rID, ok := rIDVal.(object.String)
 		if !ok {
-			return errors.New("cannot wait for response with an invalid request id")
+			return errors.Error("cannot wait for response with an invalid request id")
 		}
 		if rID == "" {
-			return errors.New("cannot wait for response with empty request id")
+			return errors.Error("cannot wait for response with empty request id")
 		}
 		rSub = w.Subscribe(
 			FilterByRequestID(string(rID)),
@@ -801,7 +801,7 @@ func (w *network) Send(
 		return ErrAlreadySentDuringContext
 	case e := <-rSub.Channel():
 		if err := opt.waitForResponse.FromObject(e.Payload); err != nil {
-			return errors.Wrap(
+			return errors.Merge(
 				ErrUnableToUnmarshalIntoResponse,
 				err,
 			)

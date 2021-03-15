@@ -1,12 +1,12 @@
 package tasklist
 
 import (
-	"errors"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -70,7 +70,7 @@ func Test_TaskList_Simple(t *testing.T) {
 	}()
 
 	// complete second task with error
-	d2(errors.New("something bad"))
+	d2(errors.Error("something bad"))
 
 	// task list should now be done
 	time.Sleep(time.Millisecond)

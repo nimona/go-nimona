@@ -93,11 +93,11 @@ var hints = map[string]Hint{
 func splitHint(b []byte) (string, Hint, error) {
 	ps := strings.Split(string(b), ":")
 	if len(ps) != 2 {
-		return "", "", errors.New("invalid hinted key")
+		return "", "", errors.Error("invalid hinted key")
 	}
 	h, ok := hints[ps[1]]
 	if !ok {
-		return "", "", errors.New("unknown hint")
+		return "", "", errors.Error("unknown hint")
 	}
 	return ps[0], h, nil
 }
@@ -160,7 +160,7 @@ func jsonUnmarshalValue(
 	value []byte,
 ) (Value, error) {
 	if len(hints) == 0 {
-		return nil, errors.New("no hints supplied")
+		return nil, errors.Error("no hints supplied")
 	}
 	switch hint {
 	case BoolHint:
@@ -285,7 +285,7 @@ func jsonUnmarshalValue(
 		}
 		return iv, nil
 	}
-	return nil, errors.New("map includes unimplemented hint")
+	return nil, errors.Error("map includes unimplemented hint")
 }
 
 func (v Map) UnmarshalJSON(b []byte) error {

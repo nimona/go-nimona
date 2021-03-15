@@ -1,7 +1,6 @@
 package blob
 
 import (
-	"errors"
 	"io"
 	"os"
 	"runtime"
@@ -10,6 +9,7 @@ import (
 	"github.com/gammazero/workerpool"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -147,7 +147,7 @@ func (r *manager) Request(
 	}
 
 	if len(peers) == 0 {
-		return nil, nil, errors.New("no peers found")
+		return nil, nil, errors.Error("no peers found")
 	}
 
 	// request the blob object excluding the nested chunks

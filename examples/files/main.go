@@ -154,7 +154,7 @@ func (ft *fileTransfer) findAndRequest(
 	}
 
 	if len(peers) == 0 {
-		return nil, errors.New("no providers found")
+		return nil, errors.Error("no providers found")
 	}
 
 	obj, err := ft.objectmanager.Request(ctx, cid, peers[0])

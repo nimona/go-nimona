@@ -1,18 +1,19 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"unicode"
+
+	"nimona.io/pkg/errors"
 )
 
 var (
-	ErrNotField  = errors.New("not a field")
-	ErrNotStream = errors.New("not a stream")
-	ErrNotStruct = errors.New("not a object")
+	ErrNotField  = errors.Error("not a field")
+	ErrNotStream = errors.Error("not a stream")
+	ErrNotStruct = errors.Error("not a object")
 )
 
 type Parser struct {

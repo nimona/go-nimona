@@ -1,7 +1,6 @@
 package network
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 
@@ -11,6 +10,7 @@ import (
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -421,7 +421,7 @@ func (r *testResolver) LookupPeer(
 ) (*peer.ConnectionInfo, error) {
 	c, ok := r.peers[publicKey]
 	if !ok || c == nil {
-		return nil, errors.New("not found")
+		return nil, errors.Error("not found")
 	}
 	return c, nil
 }
