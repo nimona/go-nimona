@@ -53,6 +53,10 @@ type (
 			rootCID object.CID,
 			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
+		AddStreamSubscription(
+			ctx context.Context,
+			rootCID object.CID,
+		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
 		) ObjectSubscription
@@ -528,6 +532,10 @@ func (m *manager) announceStreamChildren(
 		}
 		subscribersMap[obj.Metadata.Owner] = struct{}{}
 	}
+
+	// remove self
+	delete(subscribersMap, m.localpeer.GetPrimaryPeerKey().PublicKey())
+
 	subscribers := []crypto.PublicKey{}
 	for subscriber := range subscribersMap {
 		subscribers = append(subscribers, subscriber)
@@ -848,6 +856,64 @@ func (m *manager) Put(
 	// publish to pubsub
 	m.pubsub.Publish(o)
 	return o, nil
+}
+
+func (m *manager) AddStreamSubscription(
+	ctx context.Context,
+	rootCID object.CID,
+) error {
+	r, err := m.objectstore.GetByStream(rootCID)
+	if err != nil {
+		return fmt.Errorf("error trying to get stream objects, %w", err)
+	}
+
+	pub := m.localpeer.GetPrimaryPeerKey().PublicKey()
+
+	for {
+		o, err := r.Read()
+		if errors.Is(err, object.ErrReaderDone) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("error reading stream objects, %w", err)
+		}
+
+		if o.Type != streamSubscriptionType {
+			continue
+		}
+
+		s := &stream.Subscription{}
+		if err := s.FromObject(o); err != nil {
+			continue
+		}
+
+		if !s.Metadata.Owner.Equals(pub) {
+			continue
+		}
+
+		// TODO check if the subscription has expired
+
+		// already subscribed
+
+		return nil
+	}
+
+	s := &stream.Subscription{
+		Metadata: object.Metadata{
+			Owner:  pub,
+			Stream: rootCID,
+		},
+		RootCIDs: []object.CID{
+			rootCID,
+		},
+		// TODO add expiry
+	}
+
+	if _, err := m.Put(ctx, s.ToObject()); err != nil {
+		return fmt.Errorf("error storing subscription, %w", err)
+	}
+
+	return nil
 }
 
 func (m *manager) Subscribe(

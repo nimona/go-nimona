@@ -1,6 +1,8 @@
 package objectmanager
 
 import (
+	"database/sql"
+	"path"
 	"sync"
 	"testing"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -20,6 +23,7 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
 
@@ -1255,4 +1259,65 @@ func Test_manager_Subscribe(t *testing.T) {
 			assert.ElementsMatch(t, tt.want, os)
 		})
 	}
+}
+
+func TestManager_Integration_AddStreamSubscription(t *testing.T) {
+	prv0, err := crypto.GenerateEd25519PrivateKey()
+	require.NoError(t, err)
+
+	lpr := localpeer.New()
+	lpr.PutPrimaryPeerKey(prv0)
+	lpr.PutContentTypes(
+		fixtures.TestStream{}.ToObject().Type,
+		streamSubscriptionType,
+	)
+
+	ntw := &networkmock.MockNetworkSimple{
+		ReturnLocalPeer: lpr,
+		SubscribeCalls: []network.EnvelopeSubscription{
+			&networkmock.MockSubscriptionSimple{},
+		},
+	}
+	res := resolvermock.NewMockResolver(gomock.NewController(t))
+	str, err := sqlobjectstore.New(tempSqlite3(t))
+	require.NoError(t, err)
+
+	man := New(
+		context.TODO(),
+		ntw,
+		res,
+		str,
+	)
+
+	// create a new stream
+	rootObj := fixtures.TestStream{
+		Metadata: object.Metadata{
+			Owner: prv0.PublicKey(),
+		},
+		Nonce: "foo",
+	}.ToObject()
+	rootObj, err = man.Put(context.TODO(), rootObj)
+	require.NoError(t, err)
+
+	// subscribe to stream
+	err = man.AddStreamSubscription(context.TODO(), rootObj.CID())
+	require.NoError(t, err)
+
+	// subscribe to stream
+	err = man.AddStreamSubscription(context.TODO(), rootObj.CID())
+	require.NoError(t, err)
+
+	// check if the subscription has been added once
+	r, err := str.GetByStream(rootObj.CID())
+	require.NoError(t, err)
+	os, err := object.ReadAll(r)
+	require.NoError(t, err)
+	require.Len(t, os, 2)
+}
+
+func tempSqlite3(t *testing.T) *sql.DB {
+	t.Helper()
+	db, err := sql.Open("sqlite3", path.Join(t.TempDir(), "sqlite3.db"))
+	require.NoError(t, err)
+	return db
 }
