@@ -37,6 +37,20 @@ func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 	return m.recorder
 }
 
+// AddStreamSubscription mocks base method.
+func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootCID object.CID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddStreamSubscription", ctx, rootCID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddStreamSubscription indicates an expected call of AddStreamSubscription.
+func (mr *MockObjectManagerMockRecorder) AddStreamSubscription(ctx, rootCID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStreamSubscription", reflect.TypeOf((*MockObjectManager)(nil).AddStreamSubscription), ctx, rootCID)
+}
+
 // Put mocks base method.
 func (m *MockObjectManager) Put(ctx context.Context, o *object.Object) (*object.Object, error) {
 	m.ctrl.T.Helper()
