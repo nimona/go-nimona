@@ -535,7 +535,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	logger.Info("trying to announce",
-		log.String("cid", streamCID.String()),
+		log.String("streamCID", streamCID.String()),
 		log.Any("subscribers", subscribers),
 	)
 
@@ -795,8 +795,14 @@ func (m *manager) Put(
 	o *object.Object,
 ) (*object.Object, error) {
 	// if this is not ours, just persist it
-	// TODO check identity as well?
-	if o.Metadata.Owner != m.localpeer.GetPrimaryPeerKey().PublicKey() {
+	owner := o.Metadata.Owner
+	ownPeer := owner == m.localpeer.GetPrimaryPeerKey().PublicKey()
+	ownIdentity := false
+	if k := m.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
+		ownIdentity = owner == m.localpeer.GetPrimaryIdentityKey().
+			PublicKey()
+	}
+	if !ownPeer && !ownIdentity {
 		// add to store
 		if err := m.storeObject(ctx, o); err != nil {
 			return nil, err
