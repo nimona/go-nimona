@@ -25,6 +25,8 @@ type (
 		LocalPeer() localpeer.LocalPeer
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
+		// daemon specific methods
+		Close()
 	}
 	daemon struct {
 		config        config.Config
