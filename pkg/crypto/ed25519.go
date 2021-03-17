@@ -3,13 +3,14 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
 
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multihash"
+	"github.com/multiformats/go-varint"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
 	"golang.org/x/crypto/curve25519"
-
 	"nimona.io/pkg/errors"
 )
 
@@ -22,107 +23,145 @@ import (
 // we are opting for ed to x at this point based on FiloSottile's age spec
 
 type (
-	PrivateKey string
-	PublicKey  string
+	Ed25519PublicKey struct {
+		t KeyType
+		k ed25519.PublicKey
+	}
+	Ed25519PrivateKey struct {
+		t KeyType
+		k ed25519.PrivateKey
+		p Ed25519PublicKey
+	}
 )
 
-const (
-	EmptyPrivateKey = PrivateKey("")
-	EmptyPublicKey  = PublicKey("")
-
-	cidEd25519Private = 0x1300
-	cidEd25519Public  = 0xed
-)
-
-func ed25519PrivateToPrivateKey(k ed25519.PrivateKey) (PrivateKey, error) {
-	h, err := multihash.Encode(k, multihash.IDENTITY)
-	if err != nil {
-		panic(err)
-	}
-	c := cid.NewCidV1(cidEd25519Private, h)
-	s, err := multibase.Encode(multibase.Base32, c.Bytes())
-	if err != nil {
-		panic(err)
-	}
-	return PrivateKey(s), nil
+func (k Ed25519PublicKey) Type() KeyType {
+	return k.t
 }
 
-func ed25519PrivateFromPrivateKey(k PrivateKey) (ed25519.PrivateKey, error) {
-	c, err := cid.Decode(string(k))
+func (k Ed25519PublicKey) String() string {
+	return encodeToCID(cidEd25519Public, uint64(k.t), k.k)
+}
+
+func (k Ed25519PublicKey) MarshalString() (string, error) {
+	return k.String(), nil
+}
+
+func (k *Ed25519PublicKey) UnmarshalString(s string) error {
+	return k.String(), nil
+}
+
+func (k Ed25519PrivateKey) Type() KeyType {
+	return k.t
+}
+
+func (k Ed25519PrivateKey) String() string {
+	return encodeToCID(cidEd25519Private, uint64(k.t), k.k)
+}
+
+func (k Ed25519PrivateKey) MarshalString() (string, error) {
+	return k.String(), nil
+}
+
+func (k *Ed25519PrivateKey) UnmarshalString(s string) error {
+	c, err := cid.Decode(s)
 	if err != nil {
-		return nil, err
+		return err
 	}
+
 	if c.Type() != cidEd25519Private {
-		return nil, errors.Error("invalid or unsupported private key type")
+		return errors.Error("invalid or unsupported private key type")
 	}
+
 	h, err := multihash.Decode(c.Hash())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return ed25519.PrivateKey(h.Digest), nil
+	
+	return nil
 }
 
-func ed25519PublicFromPublicKey(k PublicKey) (ed25519.PublicKey, error) {
-	c, err := cid.Decode(string(k))
+func (k Ed25519PrivateKey) String() PublicKey {
+	return encodeToCID(cidEd25519Private, uint64(k.t), k.k)
+}
+
+// func ed25519PrivateToPrivateKey(k ed25519.PrivateKey) (PrivateKey, error) {
+// 	h, err := multihash.Encode(k, multihash.IDENTITY)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	c := cid.NewCidV1(cidEd25519Private, h)
+// 	s, err := multibase.Encode(multibase.Base32, c.Bytes())
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return PrivateKey(s), nil
+// }
+
+// func ed25519PrivateFromPrivateKey(k PrivateKey) (ed25519.PrivateKey, error) {
+// 	c, err := cid.Decode(string(k))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if c.Type() != cidEd25519Private {
+// 		return nil, errors.Error("invalid or unsupported private key type")
+// 	}
+// 	h, err := multihash.Decode(c.Hash())
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return ed25519.PrivateKey(h.Digest), nil
+// }
+
+// func ed25519PublicFromPublicKey(k PublicKey) (ed25519.PublicKey, error) {
+// 	c, err := cid.Decode(string(k))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if c.Type() != cidEd25519Public {
+// 		return nil, errors.Error("invalid or unsupported public key type")
+// 	}
+// 	h, err := multihash.Decode(c.Hash())
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return ed25519.PublicKey(h.Digest), nil
+// }
+
+// func ed25519PublicToPublicKey(k ed25519.PublicKey) (PublicKey, error) {
+// 	h, err := multihash.Encode(k, multihash.IDENTITY)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	c := cid.NewCidV1(cidEd25519Public, h)
+// 	s, err := multibase.Encode(multibase.Base32, c.Bytes())
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return PublicKey(s), nil
+// }
+
+func GenerateEd25519PrivateKey(keyType KeyType) (PrivateKey, error) {
+	_, k, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	if c.Type() != cidEd25519Public {
-		return nil, errors.Error("invalid or unsupported public key type")
-	}
-	h, err := multihash.Decode(c.Hash())
-	if err != nil {
-		return nil, err
-	}
-	return ed25519.PublicKey(h.Digest), nil
+	return &Ed25519PrivateKey{
+		t: keyType,
+		k: k,
+		p: &Ed25519PublicKey{
+			t: keyType,
+		},
+	}, nil
 }
 
-func ed25519PublicToPublicKey(k ed25519.PublicKey) (PublicKey, error) {
-	h, err := multihash.Encode(k, multihash.IDENTITY)
-	if err != nil {
-		panic(err)
-	}
-	c := cid.NewCidV1(cidEd25519Public, h)
-	s, err := multibase.Encode(multibase.Base32, c.Bytes())
-	if err != nil {
-		panic(err)
-	}
-	return PublicKey(s), nil
-}
-
-func GenerateEd25519PrivateKey() (PrivateKey, error) {
-	_, b, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		return "", err
-	}
-	return ed25519PrivateToPrivateKey(b)
-}
-
-func NewPrivateKey(seed []byte) PrivateKey {
-	b := ed25519.NewKeyFromSeed(seed)
-	k, err := ed25519PrivateToPrivateKey(b)
-	if err != nil {
-		panic(err)
-	}
-	return k
-}
-
-func NewPublicKey(publicKey ed25519.PublicKey) PublicKey {
-	k, err := ed25519PublicToPublicKey(publicKey)
-	if err != nil {
-		panic(err)
-	}
-	return k
-}
-
-func (i PrivateKey) ed25519() ed25519.PrivateKey {
-	k, _ := ed25519PrivateFromPrivateKey(i)
-	return k
-}
-
-func (i PrivateKey) PublicKey() PublicKey {
-	return NewPublicKey(i.ed25519().Public().(ed25519.PublicKey))
-}
+// func NewPrivateKey(seed []byte) PrivateKey {
+// 	b := ed25519.NewKeyFromSeed(seed)
+// 	k, err := ed25519PrivateToPrivateKey(b)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return k
+// }
 
 func publicEd25519KeyToCurve25519(pub ed25519.PublicKey) []byte {
 	var edPk [ed25519.PublicKeySize]byte
@@ -144,30 +183,39 @@ func privateEd25519KeyToCurve25519(priv ed25519.PrivateKey) []byte {
 
 // CalculateSharedKey calculates a shared secret given a private an public key
 func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
-	ca := privateEd25519KeyToCurve25519(priv.ed25519())
-	cB := publicEd25519KeyToCurve25519(pub.ed25519())
+	ed25519Priv, ok := priv.(*Ed25519PrivateKey)
+	if !ok {
+		return nil, ErrOnlyEd25519KeysSupported
+	}
+	ed25519Pub, ok := pub.(*Ed25519PublicKey)
+	if !ok {
+		return nil, ErrOnlyEd25519KeysSupported
+	}
+	ca := privateEd25519KeyToCurve25519(ed25519Priv.k)
+	cB := publicEd25519KeyToCurve25519(ed25519Pub.k)
 	ss, err := curve25519.X25519(ca, cB)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting x25519, %w", err)
 	}
 	return ss, nil
 }
 
-// NewSharedKey calculates a shared secret given a private and a public key,
-// and returns it
-func NewSharedKey(priv PrivateKey, pub PublicKey) (*PrivateKey, []byte, error) {
-	ca := privateEd25519KeyToCurve25519(priv.ed25519())
-	cB := publicEd25519KeyToCurve25519(pub.ed25519())
-	ss, err := curve25519.X25519(ca, cB)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &priv, ss, nil
-}
+// // NewSharedKey calculates a shared secret given a private and a public key,
+// // and returns it
+// func NewSharedKey(priv PrivateKey, pub PublicKey) (*PrivateKey, []byte, error) {
+// 	ca := privateEd25519KeyToCurve25519(priv.ed25519())
+// 	cB := publicEd25519KeyToCurve25519(pub.ed25519())
+// 	ss, err := curve25519.X25519(ca, cB)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return &priv, ss, nil
+// }
 
-// NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
-// secret given a public key, and returns the created public key and secret
-func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
+// CalculateEphemeralSharedKey creates a new ec25519 key pair, calculates a
+// shared secret given a public key, and returns the created public key and
+// secret
+func CalculateEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
 	priv, err := GenerateEd25519PrivateKey()
 	if err != nil {
 		return nil, nil, err
@@ -175,69 +223,46 @@ func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
 	return NewSharedKey(priv, pub)
 }
 
-func (i PrivateKey) IsEmpty() bool {
-	return i == ""
-}
+// func (i PrivateKey) Sign(message []byte) []byte {
+// 	return ed25519.Sign(i.ed25519(), message)
+// }
 
-func (i PrivateKey) Bytes() []byte {
-	if i.IsEmpty() {
-		return nil
-	}
-	return i.ed25519().Seed()
-}
+// func (r PublicKey) Verify(message []byte, signature []byte) error {
+// 	ok := ed25519.Verify(r.ed25519(), message, signature)
+// 	if !ok {
+// 		return errors.Error("invalid signature")
+// 	}
+// 	return nil
+// }
 
-func (i PrivateKey) Sign(message []byte) []byte {
-	return ed25519.Sign(i.ed25519(), message)
-}
+// // TODO invalid public keys should not be evaluated for equality
+// func (r PublicKey) Equals(w PublicKey) bool {
+// 	if r == w {
+// 		return true
+// 	}
+// 	ew := w.ed25519()
+// 	if ew == nil {
+// 		return false
+// 	}
+// 	rw := r.ed25519()
+// 	if rw == nil {
+// 		return false
+// 	}
+// 	return ew.Equal(rw)
+// }
 
-func (i PrivateKey) String() string {
-	return string(i)
-}
-
-func (r PublicKey) ed25519() ed25519.PublicKey {
-	k, _ := ed25519PublicFromPublicKey(r)
-	return k
-}
-
-func (r PublicKey) IsEmpty() bool {
-	return r == ""
-}
-
-func (r PublicKey) Bytes() []byte {
-	if r.IsEmpty() {
-		return nil
-	}
-	return r.ed25519()
-}
-
-func (r PublicKey) String() string {
-	return string(r)
-}
-
-func (r PublicKey) Address() string {
-	return "peer:" + r.String()
-}
-
-func (r PublicKey) Verify(message []byte, signature []byte) error {
-	ok := ed25519.Verify(r.ed25519(), message, signature)
-	if !ok {
-		return errors.Error("invalid signature")
-	}
-	return nil
-}
-
-// TODO invalid public keys should not be evaluated for equality
-func (r PublicKey) Equals(w PublicKey) bool {
-	if r == w {
-		return true
-	}
-	ew := w.ed25519()
-	if ew == nil {
-		return false
-	}
-	rw := r.ed25519()
-	if rw == nil {
-		return false
-	}
-	return ew.Equal(rw)
+func encodeToCID(cidCode, multihashCode uint64, raw []byte) string {
+	mh := make(
+		[]byte,
+		varint.UvarintSize(multihashCode)+
+			varint.UvarintSize(uint64(len(raw)))+
+			len(raw),
+	)
+	n := varint.PutUvarint(mh, multihashCode)
+	n += varint.PutUvarint(mh[n:], uint64(len(raw)))
+	copy(mh[n:], raw)
+	c := cid.NewCidV1(cidCode, mh)
+	// nolint: errcheck // cannot error
+	s, _ := multibase.Encode(multibase.Base32, c.Bytes())
+	return s
 }
