@@ -51,10 +51,11 @@ type (
 )
 
 const (
-	EventContentTypesUpdated UpdateEvent = "contentTypeUpdated"
-	EventCIDsUpdated         UpdateEvent = "cidsUpdated"
-	EventAddressesUpdated    UpdateEvent = "addressesUpdated"
-	EventRelaysUpdated       UpdateEvent = "relaysUpdated"
+	EventContentTypesUpdated       UpdateEvent = "contentTypeUpdated"
+	EventCIDsUpdated               UpdateEvent = "cidsUpdated"
+	EventAddressesUpdated          UpdateEvent = "addressesUpdated"
+	EventRelaysUpdated             UpdateEvent = "relaysUpdated"
+	EventPrimaryIdentityKeyUpdated UpdateEvent = "primaryIdentityKeyUpdated"
 )
 
 func New() LocalPeer {
@@ -80,6 +81,7 @@ func (s *localPeer) PutPrimaryIdentityKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryIdentityKey = k
 	s.keyLock.Unlock()
+	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
 func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
