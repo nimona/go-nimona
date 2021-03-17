@@ -8,6 +8,7 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
@@ -59,14 +60,14 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct local peer
-	local := localpeer.New()
+	lpr := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	lpr.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
 	ntw := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithLocalPeer(lpr),
 	)
 
 	if cfg.Peer.BindAddress != "" {
@@ -94,10 +95,10 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	local.PutRelays(bootstrapPeers...)
+	lpr.PutRelays(bootstrapPeers...)
 
 	// construct object store
-	db, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "chat.db"))
+	db, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "nimona.db"))
 	if err != nil {
 		return nil, fmt.Errorf("opening sql file: %w", err)
 	}
@@ -122,10 +123,20 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		str,
 	)
 
+	// construct feed manager
+	if err := feedmanager.New(
+		ctx,
+		lpr,
+		res,
+		man,
+	); err != nil {
+		return nil, fmt.Errorf("constructing feed manager, %w", err)
+	}
+
 	d.config = *cfg
 	d.network = ntw
 	d.resolver = res
-	d.localpeer = local
+	d.localpeer = lpr
 	d.objectstore = str
 	d.objectmanager = man
 
