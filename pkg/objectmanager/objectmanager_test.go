@@ -903,12 +903,6 @@ func TestManager_Put(t *testing.T) {
 					GetPinned().
 					Return(nil, nil)
 				m.EXPECT().
-					Get(testObjectStreamRoot.CID()).
-					Return(
-						testObjectStreamRoot,
-						nil,
-					)
-				m.EXPECT().
 					GetByStream(testObjectStreamRoot.CID()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -974,12 +968,6 @@ func TestManager_Put(t *testing.T) {
 							bar1.CID(),
 							bar2.CID(),
 						},
-						nil,
-					)
-				m.EXPECT().
-					Get(testObjectStreamRoot.CID()).
-					Return(
-						testObjectStreamRoot,
 						nil,
 					)
 				m.EXPECT().
@@ -1073,12 +1061,6 @@ func TestManager_Put(t *testing.T) {
 								testObjectSubscriptionInline,
 							},
 						),
-						nil,
-					)
-				m.EXPECT().
-					Get(testObjectStreamRoot.CID()).
-					Return(
-						testObjectStreamRoot,
 						nil,
 					)
 				m.EXPECT().
