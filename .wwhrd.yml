@@ -17,3 +17,4 @@ exceptions:
   - github.com/ghodss/yaml # MIT
   - github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg # Apache-2.0
   - github.com/multiformats/go-base36 # Apache-2.0 OR MIT
+  - github.com/davecgh/go-spew/spew # ISC
