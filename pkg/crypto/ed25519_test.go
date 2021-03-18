@@ -10,25 +10,31 @@ import (
 )
 
 func TestEd(t *testing.T) {
-	p1, err := GenerateEd25519PrivateKey()
+	p1, err := NewEd25519PrivateKey(PeerKey)
 
 	t.Run("generate new private key", func(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, p1)
 	})
 
-	t.Run("try encoding/decoding private key", func(t *testing.T) {
-		rp1, err := ed25519PrivateFromPrivateKey(p1)
-		assert.NoError(t, err)
-		assert.Equal(t, p1.ed25519(), rp1)
+	t.Run("try marshaling/unmarshaling private key", func(t *testing.T) {
+		p1s, err := p1.MarshalString()
+		require.NoError(t, err)
+		p1g := &PrivateKey{}
+		err = p1g.UnmarshalString(p1s)
+		require.NoError(t, err)
+		assert.Equal(t, p1, p1g)
 	})
 
-	t.Run("try encoding/decoding public key", func(t *testing.T) {
+	t.Run("try marshaling/unmarshaling public key", func(t *testing.T) {
 		r1 := p1.PublicKey()
-		rr1, err := ed25519PublicFromPublicKey(r1)
-		assert.NoError(t, err)
-		assert.Equal(t, r1.ed25519(), rr1)
-		require.Equal(t, r1, NewPublicKey(rr1))
+		r1s, err := r1.MarshalString()
+		require.NoError(t, err)
+		r1g := &PublicKey{}
+		err = r1g.UnmarshalString(r1s)
+		require.NoError(t, err)
+		assert.Equal(t, r1, r1g)
+		assert.True(t, r1.Equals(*r1g))
 	})
 
 	b := make([]byte, 5647)
