@@ -41,5 +41,5 @@ func NewCertificate(
 }
 
 func NewCertificateSelfSigned(k crypto.PrivateKey) (*Certificate, error) {
-	return NewCertificate(k.PublicKey(), k)
+	return NewCertificate(*k.PublicKey(), k)
 }

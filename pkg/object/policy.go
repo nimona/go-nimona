@@ -98,7 +98,7 @@ func (e *evaluation) Process(
 	subjectMatches := len(p.Subjects) == 0
 	if len(p.Subjects) > 0 {
 		for _, s := range p.Subjects {
-			if e.subject == s {
+			if e.subject.Equals(s) {
 				explicitMatches++
 				subjectMatches = true
 				break
@@ -145,7 +145,7 @@ func (p Policy) Map() Map {
 	if len(p.Subjects) > 0 {
 		ss := make(StringArray, len(p.Subjects))
 		for i, s := range p.Subjects {
-			ss[i] = String(s)
+			ss[i] = String(s.String())
 		}
 		r["subjects"] = ss
 	}
@@ -188,7 +188,10 @@ func PolicyFromMap(m Map) Policy {
 		if s, ok := t.(StringArray); ok {
 			p := make([]crypto.PublicKey, len(s))
 			for i, v := range s {
-				p[i] = crypto.PublicKey(v)
+				k := &crypto.PublicKey{}
+				if err := k.UnmarshalString(string(v)); err == nil {
+					p[i] = *k
+				}
 			}
 			r.Subjects = p
 		}

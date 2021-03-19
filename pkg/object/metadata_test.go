@@ -10,11 +10,11 @@ import (
 )
 
 func TestMetadata_Map(t *testing.T) {
-	k0, err := crypto.GenerateEd25519PrivateKey()
+	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	pk0 := k0.PublicKey()
 
-	k1, err := crypto.GenerateEd25519PrivateKey()
+	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	pk1 := k1.PublicKey()
 
@@ -32,13 +32,13 @@ func TestMetadata_Map(t *testing.T) {
 		},
 		Policies: Policies{{
 			Type:      SignaturePolicy,
-			Subjects:  []crypto.PublicKey{pk0, pk1},
+			Subjects:  []crypto.PublicKey{*pk0, *pk1},
 			Resources: []string{"foo", "bar"},
 			Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 			Effect:    AllowEffect,
 		}, {
 			Type:      SignaturePolicy,
-			Subjects:  []crypto.PublicKey{pk0},
+			Subjects:  []crypto.PublicKey{*pk0},
 			Resources: []string{"foo"},
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,

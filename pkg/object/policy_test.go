@@ -13,6 +13,10 @@ import (
 )
 
 func TestPolicy_Evaluate_Table1(t *testing.T) {
+	s0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
 	policies := Policies{{
 		Name:      "#0 - allow s* r* a*",
 		Effect:    AllowEffect,
@@ -28,19 +32,19 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	}, {
 		Name:      "#2 - deny s0 r* a*",
 		Effect:    DenyEffect,
-		Subjects:  []crypto.PublicKey{"s0"},
+		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
 		Resources: nil,
 		Actions:   nil,
 	}, {
 		Name:      "#3 - allow s0 r* a2",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{"s0"},
+		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
 		Resources: nil,
 		Actions:   []PolicyAction{"a2"},
 	}, {
 		Name:      "#4 - allow s0 r0 a1",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{"s0"},
+		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   []PolicyAction{"a1"},
 	}, {
@@ -95,7 +99,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	}
 
 	// s0, r0, a1
-	runTest(t, "s0, r0, a1", "s0", "r0", "a1", []EvaluationResult{
+	runTest(t, "s0, r0, a1", *s0.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Deny,
@@ -106,7 +110,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s0, r0, a2
-	runTest(t, "s0, r0, a2", "s0", "r0", "a2", []EvaluationResult{
+	runTest(t, "s0, r0, a2", *s0.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Allow,
 		Deny,
@@ -117,7 +121,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s1, r0, a1
-	runTest(t, "s1, r0, a1", "s1", "r0", "a1", []EvaluationResult{
+	runTest(t, "s1, r0, a1", *s1.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Deny,
@@ -128,7 +132,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s1, r0, a2
-	runTest(t, "s1, r0, a2", "s1", "r0", "a2", []EvaluationResult{
+	runTest(t, "s1, r0, a2", *s1.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Allow,
 		Allow,
@@ -140,10 +144,14 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 }
 
 func TestPolicy_Evaluate_Table2(t *testing.T) {
+	s0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
 	policies := Policies{{
 		Name:      "#0 - allow s1 r0 a1",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{"s1"},
+		Subjects:  []crypto.PublicKey{*s1.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   []PolicyAction{"a1"},
 	}, {
@@ -161,7 +169,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}, {
 		Name:      "#3 - deny s0 r* a*",
 		Effect:    DenyEffect,
-		Subjects:  []crypto.PublicKey{"s0"},
+		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
 		Resources: nil,
 		Actions:   nil,
 	}, {
@@ -185,7 +193,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}, {
 		Name:      "#7 - allow s0 r0 a*",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{"s0"},
+		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   nil,
 	}}
@@ -228,7 +236,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}
 
 	// s0, r0, a1
-	runTest(t, "s0, r0, a1", "s0", "r0", "a1", []EvaluationResult{
+	runTest(t, "s0, r0, a1", *s0.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -240,7 +248,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s0, r0, a2
-	runTest(t, "s0, r0, a2", "s0", "r0", "a2", []EvaluationResult{
+	runTest(t, "s0, r0, a2", *s0.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -252,7 +260,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s1, r0, a1
-	runTest(t, "s1, r0, a1", "s1", "r0", "a1", []EvaluationResult{
+	runTest(t, "s1, r0, a1", *s1.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Allow,
 		Allow,
@@ -264,7 +272,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s1, r0, a2
-	runTest(t, "s1, r0, a2", "s1", "r0", "a2", []EvaluationResult{
+	runTest(t, "s1, r0, a2", *s1.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -277,9 +285,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 }
 
 // func TestPolicies_Evaluate(t *testing.T) {
-// 	k0, err := crypto.GenerateEd25519PrivateKey()
+// 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
-// 	k1, err := crypto.GenerateEd25519PrivateKey()
+// 	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
 // 	p0 := k0.PublicKey()
 // 	p1 := k1.PublicKey()
@@ -537,9 +545,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // }
 
 // func TestPolicy_Map(t *testing.T) {
-// 	k0, err := crypto.GenerateEd25519PrivateKey()
+// 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
-// 	k1, err := crypto.GenerateEd25519PrivateKey()
+// 	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
 // 	p0 := k0.PublicKey()
 // 	p1 := k1.PublicKey()
@@ -556,21 +564,21 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // }
 
 func TestPolicies_Map(t *testing.T) {
-	k0, err := crypto.GenerateEd25519PrivateKey()
+	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
-	k1, err := crypto.GenerateEd25519PrivateKey()
+	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	p0 := k0.PublicKey()
 	p1 := k1.PublicKey()
 	a := Policies{{
 		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{p0, p1},
+		Subjects:  []crypto.PublicKey{*p0, *p1},
 		Resources: []string{"foo", "bar"},
 		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 		Effect:    AllowEffect,
 	}, {
 		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{p0},
+		Subjects:  []crypto.PublicKey{*p0},
 		Resources: []string{"foo"},
 		Actions:   []PolicyAction{ReadAction},
 		Effect:    DenyEffect,

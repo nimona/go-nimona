@@ -10,7 +10,7 @@ package object
 // )
 
 // func TestNewSignature(t *testing.T) {
-// 	sk, err := crypto.GenerateEd25519PrivateKey()
+// 	sk, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	assert.NoError(t, err)
 
 // 	o := FromMap(map[string]interface{}{

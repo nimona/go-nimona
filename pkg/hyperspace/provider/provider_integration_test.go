@@ -136,7 +136,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	// add a couple more random peers to the provider's cache
-	pr2k, err := crypto.GenerateEd25519PrivateKey()
+	pr2k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	pr2 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
@@ -144,7 +144,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
-	pr3k, err := crypto.GenerateEd25519PrivateKey()
+	pr3k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	pr3 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
@@ -185,7 +185,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 }
 
 func newPeer(t *testing.T) network.Network {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	ctx := context.New()

@@ -207,7 +207,7 @@ package object
 // }
 
 // func mustGenerateKey(t *testing.T) crypto.PrivateKey {
-// 	k, err := crypto.GenerateEd25519PrivateKey()
+// 	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
 // 	return k
 // }

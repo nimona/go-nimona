@@ -177,7 +177,7 @@ func (st *Store) PutWithTTL(
 	streamCID := obj.Metadata.Stream.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if !obj.Metadata.Owner.IsEmpty() {
+	if obj.Metadata.Owner != nil {
 		ownerPublicKey = obj.Metadata.Owner.String()
 	}
 
