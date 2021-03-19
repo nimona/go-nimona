@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1615848916275,
+  "lastUpdate": 1616173888594,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4278,6 +4278,54 @@ window.BENCHMARK_DATA = {
             "value": 16136,
             "unit": "ns/op",
             "extra": "74905 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "9247697a01024d2381cd0ce4996dda2f4a88577e",
+          "message": "chore(wwhrd): add spew license",
+          "timestamp": "2021-03-19T17:09:39Z",
+          "tree_id": "b074e74975177f285e851b374208bbd339438f2e",
+          "url": "https://github.com/nimona/go-nimona/commit/9247697a01024d2381cd0ce4996dda2f4a88577e"
+        },
+        "date": 1616173887908,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4714946,
+            "unit": "ns/op",
+            "extra": "243 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 411233754,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4288083685,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 16420,
+            "unit": "ns/op",
+            "extra": "72679 times\n2 procs"
           }
         ]
       }
