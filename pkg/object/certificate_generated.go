@@ -4,13 +4,13 @@ package object
 
 type (
 	Certificate struct {
-		Metadata Metadata `nimona:"metadata:m,omitempty"`
+		Metadata Metadata
 		Nonce    string
 		Created  string
 		Expires  string
 	}
 	CertificateRequest struct {
-		Metadata               Metadata `nimona:"metadata:m,omitempty"`
+		Metadata               Metadata
 		ApplicationName        string
 		ApplicationDescription string
 		ApplicationURL         string
@@ -25,22 +25,24 @@ func (e *Certificate) Type() string {
 	return "nimona.io/Certificate"
 }
 
+func (e *Certificate) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Certificate) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Certificate",
 		Metadata: e.Metadata,
 		Data:     Map{},
 	}
-	// else
-	// r.Data["nonce"] = String(e.Nonce)
 	r.Data["nonce"] = String(e.Nonce)
-	// else
-	// r.Data["created"] = String(e.Created)
 	r.Data["created"] = String(e.Created)
-	// else
-	// r.Data["expires"] = String(e.Expires)
 	r.Data["expires"] = String(e.Expires)
 	return r
+}
+
+func (e *Certificate) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
 }
 
 func (e *Certificate) FromObject(o *Object) error {
@@ -67,48 +69,40 @@ func (e *CertificateRequest) Type() string {
 	return "nimona.io/CertificateRequest"
 }
 
+func (e *CertificateRequest) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e CertificateRequest) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/CertificateRequest",
 		Metadata: e.Metadata,
 		Data:     Map{},
 	}
-	// else
-	// r.Data["applicationName"] = String(e.ApplicationName)
 	r.Data["applicationName"] = String(e.ApplicationName)
-	// else
-	// r.Data["applicationDescription"] = String(e.ApplicationDescription)
 	r.Data["applicationDescription"] = String(e.ApplicationDescription)
-	// else
-	// r.Data["applicationURL"] = String(e.ApplicationURL)
 	r.Data["applicationURL"] = String(e.ApplicationURL)
-	// else
-	// r.Data["subject"] = String(e.Subject)
 	r.Data["subject"] = String(e.Subject)
-	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		// else
-		// r.Data["resources"] = ToStringArray(e.Resources)
 		rv := make(StringArray, len(e.Resources))
 		for i, iv := range e.Resources {
 			rv[i] = String(iv)
 		}
 		r.Data["resources"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Actions) > 0 {
-		// else
-		// r.Data["actions"] = ToStringArray(e.Actions)
 		rv := make(StringArray, len(e.Actions))
 		for i, iv := range e.Actions {
 			rv[i] = String(iv)
 		}
 		r.Data["actions"] = rv
 	}
-	// else
-	// r.Data["nonce"] = String(e.Nonce)
 	r.Data["nonce"] = String(e.Nonce)
 	return r
+}
+
+func (e *CertificateRequest) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
 }
 
 func (e *CertificateRequest) FromObject(o *Object) error {

@@ -8,11 +8,11 @@ import (
 
 type (
 	Chunk struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Data     []byte
 	}
 	Blob struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Chunks   []object.CID
 	}
 )
@@ -21,16 +21,22 @@ func (e *Chunk) Type() string {
 	return "nimona.io/Chunk"
 }
 
+func (e *Chunk) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Chunk) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Chunk",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["data"] = object.Data(e.Data)
 	r.Data["data"] = object.Data(e.Data)
 	return r
+}
+
+func (e *Chunk) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Chunk) FromObject(o *object.Object) error {
@@ -47,16 +53,17 @@ func (e *Blob) Type() string {
 	return "nimona.io/Blob"
 }
 
+func (e *Blob) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Blob) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Blob",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// if $member.IsRepeated
 	if len(e.Chunks) > 0 {
-		// else
-		// r.Data["chunks"] = object.ToStringArray(e.Chunks)
 		rv := make(object.StringArray, len(e.Chunks))
 		for i, iv := range e.Chunks {
 			rv[i] = object.String(iv)
@@ -64,6 +71,10 @@ func (e Blob) ToObject() *object.Object {
 		r.Data["chunks"] = rv
 	}
 	return r
+}
+
+func (e *Blob) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Blob) FromObject(o *object.Object) error {

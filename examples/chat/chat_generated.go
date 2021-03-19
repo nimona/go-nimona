@@ -8,15 +8,15 @@ import (
 
 type (
 	ConversationStreamRoot struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Nonce    string
 	}
 	ConversationNicknameUpdated struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Nickname string
 	}
 	ConversationMessageAdded struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Body     string
 	}
 )
@@ -25,16 +25,22 @@ func (e *ConversationStreamRoot) Type() string {
 	return "stream:poc.nimona.io/conversation"
 }
 
+func (e *ConversationStreamRoot) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e ConversationStreamRoot) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "stream:poc.nimona.io/conversation",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
 	return r
+}
+
+func (e *ConversationStreamRoot) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
@@ -51,16 +57,22 @@ func (e *ConversationNicknameUpdated) Type() string {
 	return "poc.nimona.io/conversation.NicknameUpdated"
 }
 
+func (e *ConversationNicknameUpdated) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e ConversationNicknameUpdated) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "poc.nimona.io/conversation.NicknameUpdated",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nickname"] = object.String(e.Nickname)
 	r.Data["nickname"] = object.String(e.Nickname)
 	return r
+}
+
+func (e *ConversationNicknameUpdated) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *ConversationNicknameUpdated) FromObject(o *object.Object) error {
@@ -77,16 +89,22 @@ func (e *ConversationMessageAdded) Type() string {
 	return "poc.nimona.io/conversation.MessageAdded"
 }
 
+func (e *ConversationMessageAdded) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e ConversationMessageAdded) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "poc.nimona.io/conversation.MessageAdded",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["body"] = object.String(e.Body)
 	r.Data["body"] = object.String(e.Body)
 	return r
+}
+
+func (e *ConversationMessageAdded) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *ConversationMessageAdded) FromObject(o *object.Object) error {

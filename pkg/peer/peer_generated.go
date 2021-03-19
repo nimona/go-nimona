@@ -9,7 +9,7 @@ import (
 
 type (
 	ConnectionInfo struct {
-		Metadata      object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata      object.Metadata
 		Version       int64
 		PublicKey     crypto.PublicKey
 		Addresses     []string
@@ -22,40 +22,38 @@ func (e *ConnectionInfo) Type() string {
 	return "nimona.io/peer.ConnectionInfo"
 }
 
+func (e *ConnectionInfo) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e ConnectionInfo) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/peer.ConnectionInfo",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["version"] = object.Int(e.Version)
 	r.Data["version"] = object.Int(e.Version)
-	// else if $member.IsPrimitive
 	r.Data["publicKey"] = object.String(e.PublicKey)
-	// if $member.IsRepeated
 	if len(e.Addresses) > 0 {
-		// else
-		// r.Data["addresses"] = object.ToStringArray(e.Addresses)
 		rv := make(object.StringArray, len(e.Addresses))
 		for i, iv := range e.Addresses {
 			rv[i] = object.String(iv)
 		}
 		r.Data["addresses"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Relays) > 0 {
-		// if $member.IsObject
-		rv := make(object.ObjectArray, len(e.Relays))
+		rv := make(object.MapArray, len(e.Relays))
 		for i, v := range e.Relays {
-			rv[i] = v.ToObject()
+			iv, err := v.MarshalMap()
+			if err != nil {
+				// TODO error
+			} else {
+				rv[i] = object.Map(iv)
+			}
 		}
 		r.Data["relays"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.ObjectFormats) > 0 {
-		// else
-		// r.Data["objectFormats"] = object.ToStringArray(e.ObjectFormats)
 		rv := make(object.StringArray, len(e.ObjectFormats))
 		for i, iv := range e.ObjectFormats {
 			rv[i] = object.String(iv)
@@ -63,6 +61,10 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		r.Data["objectFormats"] = rv
 	}
 	return r
+}
+
+func (e *ConnectionInfo) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *ConnectionInfo) FromObject(o *object.Object) error {
@@ -87,20 +89,15 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["relays"]; ok {
-		if t, ok := v.(object.MapArray); ok {
-			e.Relays = make([]*ConnectionInfo, len(t))
-			for i, iv := range t {
+		if ev, ok := v.(object.MapArray); ok {
+			e.Relays = make([]*ConnectionInfo, len(ev))
+			for i, iv := range ev {
 				es := &ConnectionInfo{}
-				eo := object.FromMap(iv)
-				es.FromObject(eo)
-				e.Relays[i] = es
-			}
-		} else if t, ok := v.(object.ObjectArray); ok {
-			e.Relays = make([]*ConnectionInfo, len(t))
-			for i, iv := range t {
-				es := &ConnectionInfo{}
-				es.FromObject(iv)
-				e.Relays[i] = es
+				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+					// TODO error
+				} else {
+					e.Relays[i] = es
+				}
 			}
 		}
 	}

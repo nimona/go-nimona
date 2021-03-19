@@ -9,20 +9,20 @@ import (
 
 type (
 	Announcement struct {
-		Metadata         object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata         object.Metadata
 		Version          int64
 		ConnectionInfo   *peer.ConnectionInfo
 		PeerVector       []uint64
 		PeerCapabilities []string
 	}
 	LookupRequest struct {
-		Metadata            object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata            object.Metadata
 		Nonce               string
 		QueryVector         []uint64
 		RequireCapabilities []string
 	}
 	LookupResponse struct {
-		Metadata      object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata      object.Metadata
 		Nonce         string
 		QueryVector   []uint64
 		Announcements []*Announcement
@@ -33,33 +33,33 @@ func (e *Announcement) Type() string {
 	return "nimona.io/hyperspace.Announcement"
 }
 
+func (e *Announcement) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.Announcement",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["version"] = object.Int(e.Version)
 	r.Data["version"] = object.Int(e.Version)
-	// else if $member.IsObject
 	if e.ConnectionInfo != nil {
-		r.Data["connectionInfo"] = e.ConnectionInfo.ToObject()
+		v, err := e.ConnectionInfo.MarshalMap()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["connectionInfo"] = object.Map(v)
+		}
 	}
-	// if $member.IsRepeated
 	if len(e.PeerVector) > 0 {
-		// else
-		// r.Data["peerVector"] = object.ToUintArray(e.PeerVector)
 		rv := make(object.UintArray, len(e.PeerVector))
 		for i, iv := range e.PeerVector {
 			rv[i] = object.Uint(iv)
 		}
 		r.Data["peerVector"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.PeerCapabilities) > 0 {
-		// else
-		// r.Data["peerCapabilities"] = object.ToStringArray(e.PeerCapabilities)
 		rv := make(object.StringArray, len(e.PeerCapabilities))
 		for i, iv := range e.PeerCapabilities {
 			rv[i] = object.String(iv)
@@ -67,6 +67,10 @@ func (e Announcement) ToObject() *object.Object {
 		r.Data["peerCapabilities"] = rv
 	}
 	return r
+}
+
+func (e *Announcement) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
@@ -77,15 +81,13 @@ func (e *Announcement) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["connectionInfo"]; ok {
-		if t, ok := v.(object.Map); ok {
+		if ev, ok := v.(object.Map); ok {
 			es := &peer.ConnectionInfo{}
-			eo := object.FromMap(t)
-			es.FromObject(eo)
-			e.ConnectionInfo = es
-		} else if t, ok := v.(*object.Object); ok {
-			es := &peer.ConnectionInfo{}
-			es.FromObject(t)
-			e.ConnectionInfo = es
+			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+				// TODO error
+			} else {
+				e.ConnectionInfo = es
+			}
 		}
 	}
 	if v, ok := o.Data["peerVector"]; ok {
@@ -113,29 +115,25 @@ func (e *LookupRequest) Type() string {
 	return "nimona.io/hyperspace.LookupRequest"
 }
 
+func (e *LookupRequest) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e LookupRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupRequest",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
-	// if $member.IsRepeated
 	if len(e.QueryVector) > 0 {
-		// else
-		// r.Data["queryVector"] = object.ToUintArray(e.QueryVector)
 		rv := make(object.UintArray, len(e.QueryVector))
 		for i, iv := range e.QueryVector {
 			rv[i] = object.Uint(iv)
 		}
 		r.Data["queryVector"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.RequireCapabilities) > 0 {
-		// else
-		// r.Data["requireCapabilities"] = object.ToStringArray(e.RequireCapabilities)
 		rv := make(object.StringArray, len(e.RequireCapabilities))
 		for i, iv := range e.RequireCapabilities {
 			rv[i] = object.String(iv)
@@ -143,6 +141,10 @@ func (e LookupRequest) ToObject() *object.Object {
 		r.Data["requireCapabilities"] = rv
 	}
 	return r
+}
+
+func (e *LookupRequest) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *LookupRequest) FromObject(o *object.Object) error {
@@ -177,35 +179,41 @@ func (e *LookupResponse) Type() string {
 	return "nimona.io/hyperspace.LookupResponse"
 }
 
+func (e *LookupResponse) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e LookupResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupResponse",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
-	// if $member.IsRepeated
 	if len(e.QueryVector) > 0 {
-		// else
-		// r.Data["queryVector"] = object.ToUintArray(e.QueryVector)
 		rv := make(object.UintArray, len(e.QueryVector))
 		for i, iv := range e.QueryVector {
 			rv[i] = object.Uint(iv)
 		}
 		r.Data["queryVector"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Announcements) > 0 {
-		// if $member.IsObject
-		rv := make(object.ObjectArray, len(e.Announcements))
+		rv := make(object.MapArray, len(e.Announcements))
 		for i, v := range e.Announcements {
-			rv[i] = v.ToObject()
+			iv, err := v.MarshalMap()
+			if err != nil {
+				// TODO error
+			} else {
+				rv[i] = object.Map(iv)
+			}
 		}
 		r.Data["announcements"] = rv
 	}
 	return r
+}
+
+func (e *LookupResponse) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *LookupResponse) FromObject(o *object.Object) error {
@@ -225,20 +233,15 @@ func (e *LookupResponse) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["announcements"]; ok {
-		if t, ok := v.(object.MapArray); ok {
-			e.Announcements = make([]*Announcement, len(t))
-			for i, iv := range t {
+		if ev, ok := v.(object.MapArray); ok {
+			e.Announcements = make([]*Announcement, len(ev))
+			for i, iv := range ev {
 				es := &Announcement{}
-				eo := object.FromMap(iv)
-				es.FromObject(eo)
-				e.Announcements[i] = es
-			}
-		} else if t, ok := v.(object.ObjectArray); ok {
-			e.Announcements = make([]*Announcement, len(t))
-			for i, iv := range t {
-				es := &Announcement{}
-				es.FromObject(iv)
-				e.Announcements[i] = es
+				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+					// TODO error
+				} else {
+					e.Announcements[i] = es
+				}
 			}
 		}
 	}

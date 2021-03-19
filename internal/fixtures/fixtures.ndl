@@ -3,6 +3,13 @@ package nimona.io/fixtures
 import nimona.io/crypto crypto
 import nimona.io/object object
 
+object compositeTest {
+    compositeStringTest string type=nimona.io/fixtures.Composite
+    compositeDataTest data type=nimona.io/fixtures.Composite
+    repeatedCompositeStringTest repeated string type=nimona.io/fixtures.Composite
+    repeatedCompositeDataTest repeated data type=nimona.io/fixtures.Composite
+}
+
 object nimona.io/fixtures.TestPolicy {
     subjects repeated string
     resources repeated string
@@ -32,3 +39,14 @@ signed object nimona.io/fixtures.TestResponse {
     requestID string
     foo string
 }
+
+object parent {
+    foo string
+    child map type=Child
+    repeatedChild repeated map type=Child
+}
+
+object child {
+    foo string
+}
+

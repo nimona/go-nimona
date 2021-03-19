@@ -8,30 +8,30 @@ import (
 
 type (
 	Policy struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata   object.Metadata
 		Subjects   []string
 		Resources  []string
 		Conditions []string
 		Action     string
 	}
 	Request struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		RootCID   object.CID
 	}
 	Response struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		RootCID   object.CID
 		Leaves    []object.CID
 	}
 	Announcement struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata   object.Metadata
 		StreamCID  object.CID
 		ObjectCIDs []object.CID
 	}
 	Subscription struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		RootCIDs []object.CID
 		Expiry   string
 	}
@@ -41,46 +41,43 @@ func (e *Policy) Type() string {
 	return "nimona.io/stream.Policy"
 }
 
+func (e *Policy) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Policy) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Policy",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// if $member.IsRepeated
 	if len(e.Subjects) > 0 {
-		// else
-		// r.Data["subjects"] = object.ToStringArray(e.Subjects)
 		rv := make(object.StringArray, len(e.Subjects))
 		for i, iv := range e.Subjects {
 			rv[i] = object.String(iv)
 		}
 		r.Data["subjects"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		// else
-		// r.Data["resources"] = object.ToStringArray(e.Resources)
 		rv := make(object.StringArray, len(e.Resources))
 		for i, iv := range e.Resources {
 			rv[i] = object.String(iv)
 		}
 		r.Data["resources"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Conditions) > 0 {
-		// else
-		// r.Data["conditions"] = object.ToStringArray(e.Conditions)
 		rv := make(object.StringArray, len(e.Conditions))
 		for i, iv := range e.Conditions {
 			rv[i] = object.String(iv)
 		}
 		r.Data["conditions"] = rv
 	}
-	// else
-	// r.Data["action"] = object.String(e.Action)
 	r.Data["action"] = object.String(e.Action)
 	return r
+}
+
+func (e *Policy) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Policy) FromObject(o *object.Object) error {
@@ -124,18 +121,23 @@ func (e *Request) Type() string {
 	return "nimona.io/stream.Request"
 }
 
+func (e *Request) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Request) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Request",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else if $member.IsPrimitive
 	r.Data["rootCID"] = object.String(e.RootCID)
 	return r
+}
+
+func (e *Request) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Request) FromObject(o *object.Object) error {
@@ -157,21 +159,19 @@ func (e *Response) Type() string {
 	return "nimona.io/stream.Response"
 }
 
+func (e *Response) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Response) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Response",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else if $member.IsPrimitive
 	r.Data["rootCID"] = object.String(e.RootCID)
-	// if $member.IsRepeated
 	if len(e.Leaves) > 0 {
-		// else
-		// r.Data["leaves"] = object.ToStringArray(e.Leaves)
 		rv := make(object.StringArray, len(e.Leaves))
 		for i, iv := range e.Leaves {
 			rv[i] = object.String(iv)
@@ -179,6 +179,10 @@ func (e Response) ToObject() *object.Object {
 		r.Data["leaves"] = rv
 	}
 	return r
+}
+
+func (e *Response) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Response) FromObject(o *object.Object) error {
@@ -209,18 +213,18 @@ func (e *Announcement) Type() string {
 	return "nimona.io/stream.Announcement"
 }
 
+func (e *Announcement) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Announcement",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else if $member.IsPrimitive
 	r.Data["streamCID"] = object.String(e.StreamCID)
-	// if $member.IsRepeated
 	if len(e.ObjectCIDs) > 0 {
-		// else
-		// r.Data["objectCIDs"] = object.ToStringArray(e.ObjectCIDs)
 		rv := make(object.StringArray, len(e.ObjectCIDs))
 		for i, iv := range e.ObjectCIDs {
 			rv[i] = object.String(iv)
@@ -228,6 +232,10 @@ func (e Announcement) ToObject() *object.Object {
 		r.Data["objectCIDs"] = rv
 	}
 	return r
+}
+
+func (e *Announcement) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
@@ -253,26 +261,29 @@ func (e *Subscription) Type() string {
 	return "nimona.io/stream.Subscription"
 }
 
+func (e *Subscription) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Subscription) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Subscription",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// if $member.IsRepeated
 	if len(e.RootCIDs) > 0 {
-		// else
-		// r.Data["rootCIDs"] = object.ToStringArray(e.RootCIDs)
 		rv := make(object.StringArray, len(e.RootCIDs))
 		for i, iv := range e.RootCIDs {
 			rv[i] = object.String(iv)
 		}
 		r.Data["rootCIDs"] = rv
 	}
-	// else
-	// r.Data["expiry"] = object.String(e.Expiry)
 	r.Data["expiry"] = object.String(e.Expiry)
 	return r
+}
+
+func (e *Subscription) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *Subscription) FromObject(o *object.Object) error {

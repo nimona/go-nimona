@@ -4,12 +4,12 @@ package object
 
 type (
 	Request struct {
-		Metadata  Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  Metadata
 		RequestID string
 		ObjectCID CID
 	}
 	Response struct {
-		Metadata  Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  Metadata
 		RequestID string
 		Object    *Object
 	}
@@ -19,18 +19,23 @@ func (e *Request) Type() string {
 	return "nimona.io/Request"
 }
 
+func (e *Request) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Request) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Request",
 		Metadata: e.Metadata,
 		Data:     Map{},
 	}
-	// else
-	// r.Data["requestID"] = String(e.RequestID)
 	r.Data["requestID"] = String(e.RequestID)
-	// else if $member.IsPrimitive
 	r.Data["objectCID"] = String(e.ObjectCID)
 	return r
+}
+
+func (e *Request) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
 }
 
 func (e *Request) FromObject(o *Object) error {
@@ -52,20 +57,30 @@ func (e *Response) Type() string {
 	return "nimona.io/Response"
 }
 
+func (e *Response) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e Response) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Response",
 		Metadata: e.Metadata,
 		Data:     Map{},
 	}
-	// else
-	// r.Data["requestID"] = String(e.RequestID)
 	r.Data["requestID"] = String(e.RequestID)
-	// else if $member.IsObject
 	if e.Object != nil {
-		r.Data["object"] = e.Object
+		v, err := e.Object.MarshalMap()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["object"] = Map(v)
+		}
 	}
 	return r
+}
+
+func (e *Response) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
 }
 
 func (e *Response) FromObject(o *Object) error {
@@ -76,10 +91,13 @@ func (e *Response) FromObject(o *Object) error {
 		}
 	}
 	if v, ok := o.Data["object"]; ok {
-		if t, ok := v.(Map); ok {
-			e.Object = FromMap(t)
-		} else if t, ok := v.(*Object); ok {
-			e.Object = t
+		if ev, ok := v.(Map); ok {
+			es := &Object{}
+			if err := es.UnmarshalMap(Map(ev)); err != nil {
+				// TODO error
+			} else {
+				e.Object = es
+			}
 		}
 	}
 	return nil
