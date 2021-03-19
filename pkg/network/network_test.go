@@ -290,7 +290,7 @@ func Test_exchange_signAll(t *testing.T) {
 
 		assert.NotNil(t, g.Metadata.Signature)
 		assert.False(t, g.Metadata.Signature.IsEmpty())
-		assert.False(t, g.Metadata.Signature.Signer.IsEmpty())
+		assert.NotNil(t, g.Metadata.Signature.Signer)
 	})
 
 	t.Run("should pass, sign nested object", func(t *testing.T) {
@@ -314,25 +314,28 @@ func Test_exchange_signAll(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, g.Metadata.Signature.IsEmpty())
-		assert.True(t, g.Metadata.Signature.Signer.IsEmpty())
+		assert.Nil(t, g.Metadata.Signature.Signer)
 
 		gn := g.Data["foo:m"].(*object.Object)
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
-		assert.False(t, gn.Metadata.Signature.Signer.IsEmpty())
+		assert.NotNil(t, gn.Metadata.Signature.Signer)
 	})
 }
 
 func Test_network_lookup(t *testing.T) {
+	p0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
 	fooConnInfo := &peer.ConnectionInfo{
 		Version:   1,
-		PublicKey: "foo",
+		PublicKey: p0.PublicKey(),
 		Addresses: []string{"a", "b"},
 	}
 	type fields struct {
 		resolvers []Resolver
 	}
 	type args struct {
-		publicKey crypto.PublicKey
+		publicKey *crypto.PublicKey
 	}
 	tests := []struct {
 		name    string
@@ -345,8 +348,8 @@ func Test_network_lookup(t *testing.T) {
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[crypto.PublicKey]*peer.ConnectionInfo{
-						fooConnInfo.PublicKey: fooConnInfo,
+					peers: map[string]*peer.ConnectionInfo{
+						fooConnInfo.PublicKey.String(): fooConnInfo,
 					},
 				},
 			},
@@ -360,11 +363,11 @@ func Test_network_lookup(t *testing.T) {
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+					peers: map[string]*peer.ConnectionInfo{},
 				},
 				&testResolver{
-					peers: map[crypto.PublicKey]*peer.ConnectionInfo{
-						fooConnInfo.PublicKey: fooConnInfo,
+					peers: map[string]*peer.ConnectionInfo{
+						fooConnInfo.PublicKey.String(): fooConnInfo,
 					},
 				},
 			},
@@ -378,10 +381,10 @@ func Test_network_lookup(t *testing.T) {
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+					peers: map[string]*peer.ConnectionInfo{},
 				},
 				&testResolver{
-					peers: map[crypto.PublicKey]*peer.ConnectionInfo{},
+					peers: map[string]*peer.ConnectionInfo{},
 				},
 			},
 		},
@@ -412,14 +415,14 @@ func Test_network_lookup(t *testing.T) {
 }
 
 type testResolver struct {
-	peers map[crypto.PublicKey]*peer.ConnectionInfo
+	peers map[string]*peer.ConnectionInfo
 }
 
 func (r *testResolver) LookupPeer(
 	ctx context.Context,
-	publicKey crypto.PublicKey,
+	publicKey *crypto.PublicKey,
 ) (*peer.ConnectionInfo, error) {
-	c, ok := r.peers[publicKey]
+	c, ok := r.peers[publicKey.String()]
 	if !ok || c == nil {
 		return nil, errors.Error("not found")
 	}

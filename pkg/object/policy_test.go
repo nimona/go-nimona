@@ -32,19 +32,19 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	}, {
 		Name:      "#2 - deny s0 r* a*",
 		Effect:    DenyEffect,
-		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s0.PublicKey()},
 		Resources: nil,
 		Actions:   nil,
 	}, {
 		Name:      "#3 - allow s0 r* a2",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s0.PublicKey()},
 		Resources: nil,
 		Actions:   []PolicyAction{"a2"},
 	}, {
 		Name:      "#4 - allow s0 r0 a1",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s0.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   []PolicyAction{"a1"},
 	}, {
@@ -151,7 +151,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	policies := Policies{{
 		Name:      "#0 - allow s1 r0 a1",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{*s1.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s1.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   []PolicyAction{"a1"},
 	}, {
@@ -169,7 +169,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}, {
 		Name:      "#3 - deny s0 r* a*",
 		Effect:    DenyEffect,
-		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s0.PublicKey()},
 		Resources: nil,
 		Actions:   nil,
 	}, {
@@ -193,7 +193,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}, {
 		Name:      "#7 - allow s0 r0 a*",
 		Effect:    AllowEffect,
-		Subjects:  []crypto.PublicKey{*s0.PublicKey()},
+		Subjects:  []*crypto.PublicKey{s0.PublicKey()},
 		Resources: []string{"r0"},
 		Actions:   nil,
 	}}
@@ -319,7 +319,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -341,7 +341,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -375,7 +375,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Resources: []string{"something"},
@@ -417,7 +417,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -434,7 +434,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -452,7 +452,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -473,7 +473,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -490,7 +490,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 		},
 // 		policies: Policies{{
 // 			Type: SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{
+// 			Subjects: []*crypto.PublicKey{
 // 				p0,
 // 			},
 // 			Actions: []PolicyAction{
@@ -511,7 +511,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 			Effect: AllowEffect,
 // 		}, {
 // 			Type:     SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{p0},
+// 			Subjects: []*crypto.PublicKey{p0},
 // 			Effect:   DenyEffect,
 // 		}},
 // 		want: Deny,
@@ -527,7 +527,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 			Effect: AllowEffect,
 // 		}, {
 // 			Type:     SignaturePolicy,
-// 			Subjects: []crypto.PublicKey{p0},
+// 			Subjects: []*crypto.PublicKey{p0},
 // 			Effect:   DenyEffect,
 // 		}},
 // 		want: Allow,
@@ -553,7 +553,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // 	p1 := k1.PublicKey()
 // 	p := Policy{
 // 		Type:      SignaturePolicy,
-// 		Subjects:  []crypto.PublicKey{p0, p1},
+// 		Subjects:  []*crypto.PublicKey{p0, p1},
 // 		Resources: []string{"foo", "bar"},
 // 		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 // 		Effect:    AllowEffect,
@@ -572,13 +572,13 @@ func TestPolicies_Map(t *testing.T) {
 	p1 := k1.PublicKey()
 	a := Policies{{
 		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{*p0, *p1},
+		Subjects:  []*crypto.PublicKey{p0, p1},
 		Resources: []string{"foo", "bar"},
 		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 		Effect:    AllowEffect,
 	}, {
 		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{*p0},
+		Subjects:  []*crypto.PublicKey{p0},
 		Resources: []string{"foo"},
 		Actions:   []PolicyAction{ReadAction},
 		Effect:    DenyEffect,

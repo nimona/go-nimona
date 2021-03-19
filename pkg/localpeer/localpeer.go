@@ -18,10 +18,10 @@ import (
 
 type (
 	LocalPeer interface {
-		GetPrimaryPeerKey() crypto.PrivateKey
-		PutPrimaryPeerKey(crypto.PrivateKey)
-		GetPrimaryIdentityKey() crypto.PrivateKey
-		PutPrimaryIdentityKey(crypto.PrivateKey)
+		GetPrimaryPeerKey() *crypto.PrivateKey
+		PutPrimaryPeerKey(*crypto.PrivateKey)
+		GetPrimaryIdentityKey() *crypto.PrivateKey
+		PutPrimaryIdentityKey(*crypto.PrivateKey)
 		GetCertificates() []*object.Certificate
 		PutCertificate(*object.Certificate)
 		GetCIDs() []object.CID
@@ -37,8 +37,8 @@ type (
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
-		primaryPeerKey     crypto.PrivateKey
-		primaryIdentityKey crypto.PrivateKey
+		primaryPeerKey     *crypto.PrivateKey
+		primaryIdentityKey *crypto.PrivateKey
 		cids               *ObjectCIDSyncList
 		contentTypes       *StringSyncList
 		certificates       *ObjectCertificateSyncList
@@ -71,26 +71,26 @@ func New() LocalPeer {
 	}
 }
 
-func (s *localPeer) PutPrimaryPeerKey(k crypto.PrivateKey) {
+func (s *localPeer) PutPrimaryPeerKey(k *crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryPeerKey = k
 	s.keyLock.Unlock()
 }
 
-func (s *localPeer) PutPrimaryIdentityKey(k crypto.PrivateKey) {
+func (s *localPeer) PutPrimaryIdentityKey(k *crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryIdentityKey = k
 	s.keyLock.Unlock()
 	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
-func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
+func (s *localPeer) GetPrimaryPeerKey() *crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
 }
 
-func (s *localPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
+func (s *localPeer) GetPrimaryIdentityKey() *crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryIdentityKey

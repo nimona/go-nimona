@@ -331,7 +331,6 @@ func eventName(str string) string {
 func ucFirst(str string) string {
 	for i, v := range str {
 		return string(unicode.ToUpper(v)) + str[i+1:]
-		break
 	}
 	return ""
 }

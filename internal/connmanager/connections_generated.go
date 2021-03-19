@@ -24,19 +24,19 @@ func NewConnectionsMap() *ConnectionsMap {
 }
 
 // GetOrPut -
-func (m *ConnectionsMap) GetOrPut(k crypto.PublicKey, v *peerbox) (*peerbox, bool) {
-	nv, ok := m.m.LoadOrStore(k, v)
+func (m *ConnectionsMap) GetOrPut(k *crypto.PublicKey, v *peerbox) (*peerbox, bool) {
+	nv, ok := m.m.LoadOrStore(k.String(), v)
 	return nv.(*peerbox), ok
 }
 
 // Put -
-func (m *ConnectionsMap) Put(k crypto.PublicKey, v *peerbox) {
-	m.m.Store(k, v)
+func (m *ConnectionsMap) Put(k *crypto.PublicKey, v *peerbox) {
+	m.m.Store(k.String(), v)
 }
 
 // Get -
-func (m *ConnectionsMap) Get(k crypto.PublicKey) (*peerbox, bool) {
-	i, ok := m.m.Load(k)
+func (m *ConnectionsMap) Get(k *crypto.PublicKey) (*peerbox, bool) {
+	i, ok := m.m.Load(k.String())
 	if !ok {
 		return nil, false
 	}
@@ -50,22 +50,30 @@ func (m *ConnectionsMap) Get(k crypto.PublicKey) (*peerbox, bool) {
 }
 
 // Delete -
-func (m *ConnectionsMap) Delete(k crypto.PublicKey) {
-	m.m.Delete(k)
+func (m *ConnectionsMap) Delete(k *crypto.PublicKey) {
+	m.m.Delete(k.String())
 }
 
 // Range -
-func (m *ConnectionsMap) Range(i func(k crypto.PublicKey, v *peerbox) bool) {
+func (m *ConnectionsMap) Range(i func(k *crypto.PublicKey, v *peerbox) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(crypto.PublicKey), v.(*peerbox))
+		kk := &crypto.PublicKey{}
+		if err := kk.UnmarshalString(k.(string)); err != nil {
+			panic(err)
+		}
+		return i(kk, v.(*peerbox))
 	})
 }
 
 // ListKeys -
-func (m *ConnectionsMap) ListKeys() []crypto.PublicKey {
-	vs := []crypto.PublicKey{}
+func (m *ConnectionsMap) ListKeys() []*crypto.PublicKey {
+	vs := []*crypto.PublicKey{}
 	m.m.Range(func(k, v interface{}) bool {
-		vs = append(vs, k.(crypto.PublicKey))
+		kk := &crypto.PublicKey{}
+		if err := kk.UnmarshalString(k.(string)); err != nil {
+			panic(err)
+		}
+		vs = append(vs, kk)
 		return true
 	})
 	return vs

@@ -498,10 +498,10 @@ func (m *manager) announceStreamChildren(
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
-	subscribersMap := map[crypto.PublicKey]struct{}{}
+	subscribersMap := map[string]struct{}{}
 	m.subscriptions.Range(func(_ object.CID, sub *stream.Subscription) bool {
 		// TODO check expiry
-		subscribersMap[sub.Metadata.Owner] = struct{}{}
+		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
 		return true
 	})
 
@@ -520,16 +520,16 @@ func (m *manager) announceStreamChildren(
 		if obj.Type != streamSubscriptionType {
 			continue
 		}
-		if obj.Metadata.Owner.IsEmpty() {
+		if obj.Metadata.Owner == nil {
 			continue
 		}
-		subscribersMap[obj.Metadata.Owner] = struct{}{}
+		subscribersMap[obj.Metadata.Owner.String()] = struct{}{}
 	}
 
 	// remove self
-	delete(subscribersMap, m.localpeer.GetPrimaryPeerKey().PublicKey())
+	delete(subscribersMap, m.localpeer.GetPrimaryPeerKey().PublicKey().String())
 
-	subscribers := []crypto.PublicKey{}
+	subscribers := []string{}
 	for subscriber := range subscribersMap {
 		subscribers = append(subscribers, subscriber)
 	}
@@ -554,12 +554,21 @@ func (m *manager) announceStreamChildren(
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		err := m.network.Send(ctx, announcement.ToObject(), subscriber)
+		k := &crypto.PublicKey{}
+		if err := k.UnmarshalString(subscriber); err != nil {
+			logger.Info(
+				"error unmarshaling subscriber key",
+				log.String("subscriber", subscriber),
+				log.Error(err),
+			)
+			continue
+		}
+		err := m.network.Send(ctx, announcement.ToObject(), k)
 		if err != nil {
 			logger.Info(
 				"error sending announcement",
 				log.Error(err),
-				log.String("subscriber", subscriber.String()),
+				log.String("subscriber", subscriber),
 			)
 			continue
 		}
@@ -798,7 +807,7 @@ func (m *manager) Put(
 	owner := o.Metadata.Owner
 	ownPeer := owner == m.localpeer.GetPrimaryPeerKey().PublicKey()
 	ownIdentity := false
-	if k := m.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
+	if k := m.localpeer.GetPrimaryIdentityKey(); k != nil {
 		ownIdentity = owner == m.localpeer.GetPrimaryIdentityKey().
 			PublicKey()
 	}

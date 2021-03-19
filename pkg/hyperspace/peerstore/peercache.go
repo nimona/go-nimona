@@ -123,7 +123,7 @@ func (m *PeerCache) Put(
 }
 
 // Put -
-func (m *PeerCache) Touch(k crypto.PublicKey, ttl time.Duration) {
+func (m *PeerCache) Touch(k *crypto.PublicKey, ttl time.Duration) {
 	v, ok := m.m.Load(k)
 	if !ok {
 		return
@@ -137,7 +137,7 @@ func (m *PeerCache) Touch(k crypto.PublicKey, ttl time.Duration) {
 }
 
 // Get -
-func (m *PeerCache) Get(k crypto.PublicKey) (*hyperspace.Announcement, error) {
+func (m *PeerCache) Get(k *crypto.PublicKey) (*hyperspace.Announcement, error) {
 	p, ok := m.m.Load(k)
 	if !ok {
 		return nil, fmt.Errorf("missing")
@@ -146,7 +146,7 @@ func (m *PeerCache) Get(k crypto.PublicKey) (*hyperspace.Announcement, error) {
 }
 
 // Remove -
-func (m *PeerCache) Remove(k crypto.PublicKey) {
+func (m *PeerCache) Remove(k *crypto.PublicKey) {
 	m.m.Delete(k)
 	m.promKnownPeersGauge.Dec()
 }

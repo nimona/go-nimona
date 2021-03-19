@@ -34,7 +34,7 @@ func TestEd(t *testing.T) {
 		err = r1g.UnmarshalString(r1s)
 		require.NoError(t, err)
 		assert.Equal(t, r1, r1g)
-		assert.True(t, r1.Equals(*r1g))
+		assert.True(t, r1.Equals(r1g))
 	})
 
 	b := make([]byte, 5647)

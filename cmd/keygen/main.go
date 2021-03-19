@@ -8,9 +8,11 @@ import (
 )
 
 func main() {
-	var k crypto.PrivateKey
+	k := &crypto.PrivateKey{}
 	if len(os.Args) > 1 {
-		k = crypto.PrivateKey(os.Args[1])
+		if err := k.UnmarshalString(os.Args[1]); err != nil {
+			panic(err)
+		}
 	} else {
 		k, _ = crypto.NewEd25519PrivateKey(crypto.PeerKey) // nolint: errcheck
 	}

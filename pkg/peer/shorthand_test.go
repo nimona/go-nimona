@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"nimona.io/pkg/crypto"
 )
 
 // nolint: lll
@@ -14,9 +12,8 @@ func TestShorthand(t *testing.T) {
 		name          string
 		shorthand     Shorthand
 		wantValid     bool
-		wantPublicKey crypto.PublicKey
+		wantPublicKey string
 		wantAddresses []string
-		wantPeer      *ConnectionInfo
 		wantPeerError error
 	}{{
 		name:          "should pass, valid shorthand",
@@ -24,12 +21,6 @@ func TestShorthand(t *testing.T) {
 		wantValid:     true,
 		wantPublicKey: "bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq",
 		wantAddresses: []string{"127.0.0.1:18000"},
-		wantPeer: &ConnectionInfo{
-			PublicKey: crypto.PublicKey("bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq"),
-			Addresses: []string{
-				"127.0.0.1:18000",
-			},
-		},
 	}, {
 		name:          "should fail, invalid shorthand",
 		shorthand:     "foo",
@@ -44,7 +35,8 @@ func TestShorthand(t *testing.T) {
 			assert.Equal(t, tt.wantValid, gotValid)
 
 			gotPeer, gotPeerError := tt.shorthand.ConnectionInfo()
-			assert.Equal(t, tt.wantPeer, gotPeer)
+			assert.Equal(t, tt.wantAddresses, gotPeer.Addresses)
+			assert.Equal(t, tt.wantPublicKey, gotPeer.PublicKey.String())
 			assert.Equal(t, tt.wantPeerError, gotPeerError)
 		})
 	}

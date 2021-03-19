@@ -19,7 +19,7 @@ type (
 			ObjectCIDs   []object.CID
 			StreamCIDs   []object.CID
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []*crypto.PublicKey
 			OrderBy      string
 			OrderDir     string
 			Limit        *int
@@ -34,7 +34,7 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			ObjectCIDs   []object.CID
 			StreamCIDs   []object.CID
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []*crypto.PublicKey
 			OrderBy      string
 			OrderDir     string
 			Limit        *int
@@ -43,7 +43,7 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			ObjectCIDs:   []object.CID{},
 			StreamCIDs:   []object.CID{},
 			ContentTypes: []string{},
-			Owners:       []crypto.PublicKey{},
+			Owners:       []*crypto.PublicKey{},
 			OrderBy:      "Created",
 			OrderDir:     "ASC",
 		},
@@ -79,7 +79,7 @@ func FilterByCID(hs ...object.CID) FilterOption {
 	}
 }
 
-func FilterByOwner(hs ...crypto.PublicKey) FilterOption {
+func FilterByOwner(hs ...*crypto.PublicKey) FilterOption {
 	return func(opts *FilterOptions) {
 		opts.Filters.Owners = append(opts.Filters.Owners, hs...)
 	}
