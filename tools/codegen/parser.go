@@ -98,45 +98,60 @@ func (p *Parser) parseField() (interface{}, error) {
 		token, value = p.scanIgnoreWhiteSpace()
 	}
 	switch value {
-	case "relationship":
-		member.Type = "object.CID"
-		member.SimpleType = "relationship"
-		member.Hint = "r"
+	// case "relationship":
+	// 	member.GoFullType = "object.CID"
+	// 	member.SimpleType = "relationship"
+	// 	member.Hint = "r"
 	case "string":
-		member.Type = "string"
+		member.GoFullType = "string"
 		member.SimpleType = "string"
 		member.Hint = "s"
+		member.IsPrimitive = true
 	case "int":
-		member.Type = "int64"
+		member.GoFullType = "int64"
 		member.SimpleType = "int"
 		member.Hint = "i"
+		member.IsPrimitive = true
 	case "uint":
-		member.Type = "uint64"
+		member.GoFullType = "uint64"
 		member.SimpleType = "uint"
 		member.Hint = "u"
+		member.IsPrimitive = true
 	case "float":
-		member.Type = "float64"
+		member.GoFullType = "float64"
 		member.SimpleType = "float"
 		member.Hint = "f"
+		member.IsPrimitive = true
 	case "bool":
-		member.Type = "bool"
+		member.GoFullType = "bool"
 		member.SimpleType = "bool"
 		member.Hint = "b"
+		member.IsPrimitive = true
 	case "data":
-		member.Type = "[]byte"
+		member.GoFullType = "[]byte"
 		member.SimpleType = "data"
 		member.Hint = "d"
+		member.IsPrimitive = true
 	case "map":
-		member.Type = "map[string]interface{}"
+		member.GoFullType = "map[string]interface{}"
 		member.SimpleType = "map"
 		member.Hint = "m"
 	default:
-		member.Type = value
+		member.GoFullType = value
 		member.SimpleType = value
 		member.Hint = "o"
 		member.IsObject = true
 	}
-	fmt.Println("\tFound attribute", member.Name, "of type", member.Type)
+	// expect TEXT for optional Member.GoFullType
+	token, value = p.scanIgnoreWhiteSpace()
+	if strings.HasPrefix(value, "type=") {
+		member.GoFullType = strings.TrimPrefix(value, "type=")
+		member.IsObject = true
+		member.IsPrimitive = false
+	} else {
+		p.unscan()
+	}
+	fmt.Println("\tFound attribute", member.Name, "with hint", member.SimpleType, "of type", member.GoFullType)
 	return member, nil
 }
 

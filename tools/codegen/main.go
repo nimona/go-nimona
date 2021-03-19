@@ -22,6 +22,8 @@ var (
 )
 
 func codegen(in, out string) {
+	fmt.Fprintf(os.Stderr, "starting (%v -> %v)\n", in, out)
+
 	rf, err := ioutil.ReadFile(in)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error reading file", err)

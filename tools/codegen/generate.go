@@ -49,20 +49,20 @@ import (
 type (
 	{{- range $object := .Objects }}
 	{{ structName $object.Name }} struct {
-		Metadata object.Metadata {{ tagMetadata }}
+		Metadata object.Metadata
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{- if $member.IsObject }}
-					{{ $member.Name }} []*{{ memberType $member.Type }} {{ tag $member }}
+					{{ $member.Name }} []*{{ memberType $member.GoFullType }} {{ tag $member }}
 				{{- else }}
-					{{ $member.Name }} []{{ memberType $member.Type }} {{ tag $member }}
+					{{ $member.Name }} []{{ memberType $member.GoFullType }} {{ tag $member }}
 				{{- end }}
 			{{- else if $member.IsPrimitive }}
-				{{ $member.Name }} {{ memberType $member.Type }} {{ tag $member }}
+				{{ $member.Name }} {{ memberType $member.GoFullType }} {{ tag $member }}
 			{{- else if $member.IsObject }}
-				{{ $member.Name }} *{{ memberType $member.Type }} {{ tag $member }}
+				{{ $member.Name }} *{{ memberType $member.GoFullType }} {{ tag $member }}
 			{{- else }}
-				{{ $member.Name }} {{ memberType $member.Type }} {{ tag $member }}
+				{{ $member.Name }} {{ memberType $member.GoFullType }} {{ tag $member }}
 			{{- end }}
 		{{- end }}
 	}
@@ -74,6 +74,10 @@ func (e *{{ structName $object.Name }}) Type() string {
 	return "{{ $object.Name }}"
 }
 
+func (e *{{ structName $object.Name }}) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e {{ structName $object.Name }}) ToObject() *object.Object {
 	r := &object.Object{
 		Type: "{{ $object.Name }}",
@@ -82,236 +86,92 @@ func (e {{ structName $object.Name }}) ToObject() *object.Object {
 	}
 	{{- range $member := $object.Members }}
 		{{- if $member.IsRepeated }}
-			// if $member.IsRepeated
 			if len(e.{{ $member.Name }}) > 0 {
-			{{- if $member.IsObject }}
-				// if $member.IsObject
-				rv := make(object.ObjectArray, len(e.{{ $member.Name }}))
-				for i, v := range e.{{ $member.Name }} {
-					{{- if eq $member.Type "nimona.io/object.Object" }}
-					rv[i] = v
-					{{- else }}
-					rv[i] = v.ToObject()
-					{{- end }}
+			{{- if $member.IsPrimitive }}
+				rv := make({{ primitive $member }}, len(e.{{ $member.Name }}))
+				for i, iv := range e.{{ $member.Name }} {
+					rv[i] = {{ primitiveSingular $member }}(iv)
 				}
 				r.Data["{{ $member.Tag }}"] = rv
 			{{- else }}
-				// else
-				// r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-				{{- if eq $member.Hint "s" }}
-					rv := make(object.StringArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.String(iv)
+				rv := make({{ primitive $member }}, len(e.{{ $member.Name }}))
+				for i, v := range e.{{ $member.Name }} {
+					iv, err := v.{{ marshalFunc $member }}()
+					if err != nil {
+						// TODO error
+					} else {
+						rv[i] = {{ primitiveSingular $member }}(iv)
 					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else if eq $member.Hint "i" }}
-					rv := make(object.IntArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.Int(iv)
-					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else if eq $member.Hint "d" }}
-					rv := make(object.DataArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.Data(iv)
-					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else if eq $member.Hint "u" }}
-					rv := make(object.UintArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.Uint(iv)
-					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else if eq $member.Hint "f" }}
-					rv := make(object.FloatArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.Float(iv)
-					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else if eq $member.Hint "b" }}
-					rv := make(object.BoolArray, len(e.{{ $member.Name }}))
-					for i, iv := range e.{{ $member.Name }} {
-						rv[i] = object.Bool(iv)
-					}
-					r.Data["{{ $member.Tag }}"] = rv
-				{{- else }}
-					// e.{{ $member.Name }} = object.FromMap(t)
-				{{- end }}
+				}
+				r.Data["{{ $member.Tag }}"] = rv
 			{{- end }}
 			}
 		{{- else if $member.IsPrimitive }}
-			// else if $member.IsPrimitive
 			r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-		{{- else if $member.IsObject }}
-			// else if $member.IsObject
-			if e.{{ $member.Name }} != nil {
-				{{- if eq $member.Type "nimona.io/object.Object" }}
-					r.Data["{{ $member.Tag }}"] = e.{{ $member.Name }}
-				{{- else }}
-					r.Data["{{ $member.Tag }}"] = e.{{ $member.Name }}.ToObject()
-				{{- end }}
-			}
 		{{- else }}
-			// else
-			// r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- if eq $member.Hint "s" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else if eq $member.Hint "i" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else if eq $member.Hint "d" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else if eq $member.Hint "u" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else if eq $member.Hint "f" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else if eq $member.Hint "b" }}
-				r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-			{{- else }}
-				// e.{{ $member.Name }} = object.FromMap(t)
-			{{- end }}
+			if e.{{ $member.Name }} != nil {
+				v, err := e.{{ $member.Name }}.{{ marshalFunc $member }}()
+				if err != nil {
+					// TODO error
+				} else {
+					r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(v)
+				}
+			}
 		{{- end }}
 	{{- end }}
 	return r
 }
 
+func (e *{{ structName $object.Name }}) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
 func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	{{- range $member := $object.Members }}
-	{{- if $member.IsObject }}
+	{{- if $member.IsPrimitive }}
 		{{- if $member.IsRepeated }}
-		if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-			if t, ok := v.(object.MapArray); ok {
-				e.{{ $member.Name }} = make([]*{{ memberType $member.Type }}, len(t))
-				for i, iv := range t {
-					{{- if eq $member.Type "nimona.io/object.Object" }}
-						eo := object.FromMap(iv)
-						e.{{ $member.Name }}[i] = &eo
-					{{- else }}
-						es := &{{ memberType $member.Type }}{}
-						eo := object.FromMap(iv)
-						es.FromObject(eo)
-						e.{{ $member.Name }}[i] = es
-					{{- end }}
-				}
-			} else if t, ok := v.(object.ObjectArray); ok {
-				e.{{ $member.Name }} = make([]*{{ memberType $member.Type }}, len(t))
-				for i, iv := range t {
-					{{- if eq $member.Type "nimona.io/object.Object" }}
-						e.{{ $member.Name }}[i] = iv
-					{{- else }}
-						es := &{{ memberType $member.Type }}{}
-						es.FromObject(iv)
-						e.{{ $member.Name }}[i] = es
-					{{- end }}
+			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
+				if t, ok := v.({{ primitive $member }}); ok {
+					rv := make([]{{ $member.GoFullType }}, len(t))
+					for i, iv := range t {
+						rv[i] = {{ $member.GoFullType }}(iv)
+					}
+					e.{{ $member.Name }} = rv
 				}
 			}
-		}
 		{{- else }}
-		if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-			if t, ok := v.(object.Map); ok {
-				{{- if eq $member.Type "nimona.io/object.Object" }}
-					e.{{ $member.Name }} = object.FromMap(t)
-				{{- else }}
-					es := &{{ memberType $member.Type }}{}
-					eo := object.FromMap(t)
-					es.FromObject(eo)
-					e.{{ $member.Name }} = es
-				{{- end }}
-			} else if t, ok := v.(*object.Object); ok {
-				{{- if eq $member.Type "nimona.io/object.Object" }}
-					e.{{ $member.Name }} = t
-				{{- else }}
-					es := &{{ memberType $member.Type }}{}
-					es.FromObject(t)
-					e.{{ $member.Name }} = es
-				{{- end }}
+			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
+				if t, ok := v.({{ primitive $member }}); ok {
+					e.{{ $member.Name }} = {{ memberType $member.GoFullType }}(t)
+				}
 			}
-		}
 		{{- end }}
 	{{- else }}
 		{{- if $member.IsRepeated }}
-		if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-			{{- if eq $member.Hint "s" }}
-				if t, ok := v.(object.StringArray); ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
+			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
+				if ev, ok := v.({{ primitive $member }}); ok {
+					e.{{ $member.Name }} = make([]*{{ memberType $member.GoFullType }}, len(ev))
+					for i, iv := range ev {
+						es := &{{ memberType $member.GoFullType }}{}
+						if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(iv)); err != nil {
+							// TODO error
+						} else {
+							e.{{ $member.Name }}[i] = es
+						}
 					}
-					e.{{ $member.Name }} = rv
 				}
-			{{- else if eq $member.Hint "i" }}
-				if t, ok := v.(object.Int);Array ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			{{- else if eq $member.Hint "d" }}
-				if t, ok := v.(object.DataArray); ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			{{- else if eq $member.Hint "u" }}
-				if t, ok := v.(object.UintArray); ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			{{- else if eq $member.Hint "f" }}
-				if t, ok := v.(object.FloatArray); ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			{{- else if eq $member.Hint "b" }}
-				if t, ok := v.(object.BoolArray); ok {
-					rv := make([]{{ $member.Type }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.Type }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			{{- else }}
-				// e.{{ $member.Name }} = object.FromMap(t)
-			{{- end }}
-		}
+			}
 		{{- else }}
 			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-				{{- if eq $member.Hint "s" }}
-					if t, ok := v.(object.String); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
+				if ev, ok := v.({{ primitive $member }}); ok {
+					es := &{{ memberType $member.GoFullType }}{}
+					if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(ev)); err != nil {
+						// TODO error
+					} else {
+						e.{{ $member.Name }} = es
 					}
-				{{- else if eq $member.Hint "i" }}
-					if t, ok := v.(object.Int); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
-					}
-				{{- else if eq $member.Hint "d" }}
-					if t, ok := v.(object.Data); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
-					}
-				{{- else if eq $member.Hint "u" }}
-					if t, ok := v.(object.Uint); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
-					}
-				{{- else if eq $member.Hint "f" }}
-					if t, ok := v.(object.Float); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
-					}
-				{{- else if eq $member.Hint "b" }}
-					if t, ok := v.(object.Bool); ok {
-						e.{{ $member.Name }} = {{ memberType $member.Type }}(t)
-					}
-				{{- else }}
-					// e.{{ $member.Name }} = v.PrimitiveHinted().({{ memberType $member.Type }})
-				{{- end }}
+				}
 			}
 		{{- end }}
 	{{- end }}
@@ -330,9 +190,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		},
 		"key": func(m Member) string {
 			h := m.Hint
-			if m.Type == "nimona.io/object.Object" {
-				h = "o"
-			}
 			if m.IsRepeated {
 				h = "a" + h
 			}
@@ -340,9 +197,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 		},
 		"fromPrimitive": func(m Member) string {
 			h := m.Hint
-			if m.Type == "nimona.io/object.Object" {
-				h = "o"
-			}
 			if m.IsRepeated {
 				h = "a" + h
 			}
@@ -355,7 +209,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "object.Float"
 			case object.IntHint:
 				return "object.Int"
-			case object.MapHint:
+			case object.ObjectHint, object.MapHint:
 				return "object.Map"
 			case object.StringHint:
 				return "object.String"
@@ -376,13 +230,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			case object.UintArrayHint:
 				return "object.ToUintArray"
 			}
-			panic("unknown primitive " + m.Hint)
+			panic("unknown hint in fromPrimitive " + m.Hint)
 		},
 		"toPrimitive": func(m Member) string {
 			h := m.Hint
-			if m.Type == "nimona.io/object.Object" {
-				h = "o"
-			}
 			if m.IsRepeated {
 				h = "a" + h
 			}
@@ -399,6 +250,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "string"
 			case object.UintHint:
 				return "uint64"
+			case object.ObjectHint, object.MapHint:
+				return "object.Map"
 			case object.BoolArrayHint:
 				return "object.FromBoolArray"
 			case object.DataArrayHint:
@@ -414,10 +267,120 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			case object.UintArrayHint:
 				return "object.FromUintArray"
 			}
-			panic("unknown primitive " + m.Hint)
+			panic("unknown hint in toPrimitive " + m.Hint)
 		},
-		"tagMetadata": func() string {
-			return "`nimona:\"metadata:m,omitempty\"`"
+		"primitive": func(m Member) string {
+			h := m.Hint
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			switch object.Hint(h) {
+			case object.BoolHint:
+				return "object.Bool"
+			case object.DataHint:
+				return "object.Data"
+			case object.FloatHint:
+				return "object.Float"
+			case object.IntHint:
+				return "object.Int"
+			case object.StringHint:
+				return "object.String"
+			case object.ObjectHint, object.MapHint:
+				return "object.Map"
+			case object.UintHint:
+				return "object.Uint"
+			case object.BoolArrayHint:
+				return "object.BoolArray"
+			case object.DataArrayHint:
+				return "object.DataArray"
+			case object.FloatArrayHint:
+				return "object.FloatArray"
+			case object.IntArrayHint:
+				return "object.IntArray"
+			case object.MapArrayHint:
+				return "object.MapArray"
+			case object.StringArrayHint:
+				return "object.StringArray"
+			case object.UintArrayHint:
+				return "object.UintArray"
+			}
+			panic("unknown hint in primitive " + m.Hint)
+		},
+		"primitiveSingular": func(m Member) string {
+			h := m.Hint
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			switch object.Hint(h) {
+			case object.BoolArrayHint:
+				return "object.Bool"
+			case object.DataArrayHint:
+				return "object.Data"
+			case object.FloatArrayHint:
+				return "object.Float"
+			case object.IntArrayHint:
+				return "object.Int"
+			case object.MapArrayHint, object.ObjectArrayHint:
+				return "object.Map"
+			case object.StringArrayHint:
+				return "object.String"
+			case object.UintArrayHint:
+				return "object.Uint"
+			}
+			panic("unknown hint in primitive " + m.Hint)
+		},
+		"marshalFunc": func(m Member) string {
+			switch m.SimpleType {
+			case "data":
+				return "MarshalBytes"
+			default:
+				return "Marshal" + strings.Title(m.SimpleType)
+			}
+		},
+		"unmarshalFunc": func(m Member) string {
+			switch m.SimpleType {
+			case "data":
+				return "UnmarshalBytes"
+			default:
+				return "Unmarshal" + strings.Title(m.SimpleType)
+			}
+		},
+		"unmarshalArg": func(m Member) string {
+			h := m.Hint
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			switch object.Hint(h) {
+			case object.BoolHint:
+				return "bool"
+			case object.DataHint:
+				return "[]byte"
+			case object.FloatHint:
+				return "float64"
+			case object.IntHint:
+				return "int64"
+			case object.StringHint:
+				return "string"
+			case object.UintHint:
+				return "uint64"
+			case object.ObjectHint, object.MapHint:
+				return "object.Map"
+			case object.BoolArrayHint:
+				return "bool"
+			case object.DataArrayHint:
+				return "[]byte"
+			case object.FloatArrayHint:
+				return "float64"
+			case object.IntArrayHint:
+				return "int64"
+			case object.MapArrayHint, object.ObjectArrayHint:
+				return "object.Map"
+			case object.StringArrayHint:
+				return "string"
+			case object.UintArrayHint:
+				return "uint64"
+			}
+			panic("unknown primitive " + m.Hint)
 		},
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
@@ -476,9 +439,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	for _, e := range doc.Objects {
 		for _, mv := range e.Members {
 			for pk, pv := range primitives {
-				if strings.HasSuffix(mv.Type, pk) {
+				if strings.HasSuffix(mv.GoFullType, pk) {
 					mv.Hint = pv.Hint
-					mv.Type = pv.Type
+					mv.GoFullType = pv.Type
 					mv.IsObject = pv.IsObject
 					mv.IsPrimitive = pv.IsPrimary
 					break

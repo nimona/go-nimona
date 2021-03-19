@@ -27,7 +27,7 @@ const (
 var (
 	eof       = rune(0)
 	wsRegex   = regexp.MustCompile("^[\\n\\t\\s]+")
-	textRegex = regexp.MustCompile("^[a-zA-Z0-9\\._@\\/]+$")
+	textRegex = regexp.MustCompile("^[a-zA-Z0-9\\._@\\/=]+$")
 	keywords  = map[string]Token{
 		"package":  PACKAGE,
 		"import":   IMPORT,
