@@ -9,18 +9,18 @@ import (
 
 type (
 	DataForwardRequest struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		Recipient crypto.PublicKey
 		Payload   *object.Object
 	}
 	DataForwardEnvelope struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Sender   crypto.PublicKey
 		Data     []byte
 	}
 	DataForwardResponse struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		Success   bool
 	}
@@ -30,22 +30,31 @@ func (e *DataForwardRequest) Type() string {
 	return "nimona.io/network.DataForwardRequest"
 }
 
+func (e *DataForwardRequest) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e DataForwardRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardRequest",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else if $member.IsPrimitive
 	r.Data["recipient"] = object.String(e.Recipient)
-	// else if $member.IsObject
 	if e.Payload != nil {
-		r.Data["payload"] = e.Payload
+		v, err := e.Payload.MarshalMap()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["payload"] = object.Map(v)
+		}
 	}
 	return r
+}
+
+func (e *DataForwardRequest) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *DataForwardRequest) FromObject(o *object.Object) error {
@@ -61,10 +70,13 @@ func (e *DataForwardRequest) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["payload"]; ok {
-		if t, ok := v.(object.Map); ok {
-			e.Payload = object.FromMap(t)
-		} else if t, ok := v.(*object.Object); ok {
-			e.Payload = t
+		if ev, ok := v.(object.Map); ok {
+			es := &object.Object{}
+			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+				// TODO error
+			} else {
+				e.Payload = es
+			}
 		}
 	}
 	return nil
@@ -74,18 +86,23 @@ func (e *DataForwardEnvelope) Type() string {
 	return "nimona.io/network.DataForwardEnvelope"
 }
 
+func (e *DataForwardEnvelope) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e DataForwardEnvelope) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardEnvelope",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else if $member.IsPrimitive
 	r.Data["sender"] = object.String(e.Sender)
-	// else
-	// r.Data["data"] = object.Data(e.Data)
 	r.Data["data"] = object.Data(e.Data)
 	return r
+}
+
+func (e *DataForwardEnvelope) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
@@ -107,19 +124,23 @@ func (e *DataForwardResponse) Type() string {
 	return "nimona.io/network.DataForwardResponse"
 }
 
+func (e *DataForwardResponse) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e DataForwardResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardResponse",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else
-	// r.Data["success"] = object.Bool(e.Success)
 	r.Data["success"] = object.Bool(e.Success)
 	return r
+}
+
+func (e *DataForwardResponse) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *DataForwardResponse) FromObject(o *object.Object) error {

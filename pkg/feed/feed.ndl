@@ -9,12 +9,12 @@ stream nimona.io/feed {
         datetime string
     }
     signed event Added {
-        objectCID repeated nimona.io/object.CID
+        objectCID repeated string type=nimona.io/object.CID
         sequence int
         datetime string
     }
     signed event Removed {
-        objectCID repeated nimona.io/object.CID
+        objectCID repeated string type=nimona.io/object.CID
         sequence int
         datetime string
     }

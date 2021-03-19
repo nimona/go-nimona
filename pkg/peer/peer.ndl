@@ -5,8 +5,8 @@ import nimona.io/peer peer
 
 signed object nimona.io/peer.ConnectionInfo {
     version int
-    publicKey nimona.io/crypto.PublicKey
+    publicKey string type=nimona.io/crypto.PublicKey
     addresses repeated string
-    relays repeated nimona.io/peer.ConnectionInfo
+    relays repeated map type=nimona.io/peer.ConnectionInfo
     objectFormats repeated string
 }

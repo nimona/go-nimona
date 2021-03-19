@@ -8,7 +8,7 @@ import (
 
 type (
 	File struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Name     string
 		Blob     object.CID
 	}
@@ -18,18 +18,23 @@ func (e *File) Type() string {
 	return "nimona.io/File"
 }
 
+func (e *File) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e File) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/File",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["name"] = object.String(e.Name)
 	r.Data["name"] = object.String(e.Name)
-	// else if $member.IsPrimitive
 	r.Data["blob"] = object.String(e.Blob)
 	return r
+}
+
+func (e *File) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *File) FromObject(o *object.Object) error {
