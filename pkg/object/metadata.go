@@ -4,7 +4,7 @@ import "nimona.io/pkg/crypto"
 
 // Metadata for object
 type Metadata struct {
-	Owner     crypto.PublicKey
+	Owner     *crypto.PublicKey
 	Datetime  string
 	Parents   Parents
 	Policies  Policies
@@ -14,8 +14,8 @@ type Metadata struct {
 
 func (m Metadata) Map() Map {
 	r := Map{}
-	if !m.Owner.IsEmpty() {
-		r["owner"] = String(m.Owner)
+	if m.Owner != nil {
+		r["owner"] = String(m.Owner.String())
 	}
 	if len(m.Parents) > 0 {
 		rv := Map{}
@@ -43,7 +43,10 @@ func MetadataFromMap(s Map) Metadata {
 	r := Metadata{}
 	if t, ok := s["owner"]; ok {
 		if s, ok := t.(String); ok {
-			r.Owner = crypto.PublicKey(s)
+			k := &crypto.PublicKey{}
+			if err := k.UnmarshalString(string(s)); err == nil {
+				r.Owner = k
+			}
 		}
 	}
 	if t, ok := s["datetime"]; ok {

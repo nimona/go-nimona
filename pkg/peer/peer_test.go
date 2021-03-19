@@ -12,7 +12,7 @@ import (
 )
 
 func TestPeer_EncodeDecode(t *testing.T) {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	p := &ConnectionInfo{

@@ -271,7 +271,7 @@ func TestNetwork_Relay(t *testing.T) {
 }
 
 func Test_exchange_signAll(t *testing.T) {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	t.Run("should pass, sign root object", func(t *testing.T) {

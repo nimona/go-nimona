@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	cidCodec = 0x6e6d // nm codec
+	cidCodec = 0x6E6D // codec code for nimona object
 )
 
 func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {

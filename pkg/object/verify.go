@@ -20,7 +20,7 @@ func Verify(o *Object) error {
 	own := o.Metadata.Owner
 
 	// if there is no owner and no signature, we're fine
-	if sig.IsEmpty() && own.IsEmpty() {
+	if sig.IsEmpty() && own == nil {
 		return nil
 	}
 
@@ -44,7 +44,7 @@ func Verify(o *Object) error {
 	}
 
 	// if there is no owner, we're fine
-	if own.IsEmpty() {
+	if own == nil {
 		return nil
 	}
 

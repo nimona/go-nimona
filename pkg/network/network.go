@@ -154,11 +154,11 @@ func New(
 	}
 	if w.localpeer == nil {
 		w.localpeer = localpeer.New()
-		k, err := crypto.GenerateEd25519PrivateKey()
+		k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 		if err != nil {
 			panic(err)
 		}
-		w.localpeer.PutPrimaryPeerKey(k)
+		w.localpeer.PutPrimaryPeerKey(*k)
 	}
 	w.net = net.New(w.localpeer)
 
@@ -329,10 +329,6 @@ func (w *network) handleConnection(
 							"remote.publicKey",
 							conn.RemotePeerKey.String(),
 						),
-						log.String(
-							"remote.address",
-							conn.RemotePeerKey.Address(),
-						),
 						log.Error(err),
 					)
 					continue
@@ -342,10 +338,6 @@ func (w *network) handleConnection(
 					log.String(
 						"remote.publicKey",
 						conn.RemotePeerKey.String(),
-					),
-					log.String(
-						"remote.address",
-						conn.RemotePeerKey.Address(),
 					),
 					log.Error(err),
 				)
@@ -670,7 +662,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			}
 
 			// if the data are encrypted we should first decrypt them
-			if !fwd.Sender.IsEmpty() {
+			if fwd.Sender == nil {
 				ss, err := crypto.CalculateSharedKey(
 					w.localpeer.GetPrimaryPeerKey(),
 					fwd.Sender,
