@@ -7,40 +7,173 @@ import (
 )
 
 type (
+	CompositeTest struct {
+		Metadata                    object.Metadata
+		CompositeStringTest         *Composite
+		CompositeDataTest           *Composite
+		RepeatedCompositeStringTest []*Composite
+		RepeatedCompositeDataTest   []*Composite
+	}
 	TestPolicy struct {
-		Metadata   object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata   object.Metadata
 		Subjects   []string
 		Resources  []string
 		Conditions []string
 		Action     string
 	}
 	TestStream struct {
-		Metadata        object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata        object.Metadata
 		Nonce           string
 		CreatedDateTime string
 	}
 	TestSubscribed struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Nonce    string
 	}
 	TestUnsubscribed struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Nonce    string
 	}
 	TestRequest struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		Foo       string
 	}
 	TestResponse struct {
-		Metadata  object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata  object.Metadata
 		RequestID string
 		Foo       string
 	}
+	Parent struct {
+		Metadata      object.Metadata
+		Foo           string
+		Child         *Child
+		RepeatedChild []*Child
+	}
+	Child struct {
+		Metadata object.Metadata
+		Foo      string
+	}
 )
+
+func (e *CompositeTest) Type() string {
+	return "compositeTest"
+}
+
+func (e *CompositeTest) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e CompositeTest) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "compositeTest",
+		Metadata: e.Metadata,
+		Data:     object.Map{},
+	}
+	if e.CompositeStringTest != nil {
+		v, err := e.CompositeStringTest.MarshalString()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["compositeStringTest"] = object.String(v)
+		}
+	}
+	if e.CompositeDataTest != nil {
+		v, err := e.CompositeDataTest.MarshalBytes()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["compositeDataTest"] = object.Data(v)
+		}
+	}
+	if len(e.RepeatedCompositeStringTest) > 0 {
+		rv := make(object.StringArray, len(e.RepeatedCompositeStringTest))
+		for i, v := range e.RepeatedCompositeStringTest {
+			iv, err := v.MarshalString()
+			if err != nil {
+				// TODO error
+			} else {
+				rv[i] = object.String(iv)
+			}
+		}
+		r.Data["repeatedCompositeStringTest"] = rv
+	}
+	if len(e.RepeatedCompositeDataTest) > 0 {
+		rv := make(object.DataArray, len(e.RepeatedCompositeDataTest))
+		for i, v := range e.RepeatedCompositeDataTest {
+			iv, err := v.MarshalBytes()
+			if err != nil {
+				// TODO error
+			} else {
+				rv[i] = object.Data(iv)
+			}
+		}
+		r.Data["repeatedCompositeDataTest"] = rv
+	}
+	return r
+}
+
+func (e *CompositeTest) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *CompositeTest) FromObject(o *object.Object) error {
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["compositeStringTest"]; ok {
+		if ev, ok := v.(object.String); ok {
+			es := &Composite{}
+			if err := es.UnmarshalString(string(ev)); err != nil {
+				// TODO error
+			} else {
+				e.CompositeStringTest = es
+			}
+		}
+	}
+	if v, ok := o.Data["compositeDataTest"]; ok {
+		if ev, ok := v.(object.Data); ok {
+			es := &Composite{}
+			if err := es.UnmarshalBytes([]byte(ev)); err != nil {
+				// TODO error
+			} else {
+				e.CompositeDataTest = es
+			}
+		}
+	}
+	if v, ok := o.Data["repeatedCompositeStringTest"]; ok {
+		if ev, ok := v.(object.StringArray); ok {
+			e.RepeatedCompositeStringTest = make([]*Composite, len(ev))
+			for i, iv := range ev {
+				es := &Composite{}
+				if err := es.UnmarshalString(string(iv)); err != nil {
+					// TODO error
+				} else {
+					e.RepeatedCompositeStringTest[i] = es
+				}
+			}
+		}
+	}
+	if v, ok := o.Data["repeatedCompositeDataTest"]; ok {
+		if ev, ok := v.(object.DataArray); ok {
+			e.RepeatedCompositeDataTest = make([]*Composite, len(ev))
+			for i, iv := range ev {
+				es := &Composite{}
+				if err := es.UnmarshalBytes([]byte(iv)); err != nil {
+					// TODO error
+				} else {
+					e.RepeatedCompositeDataTest[i] = es
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func (e *TestPolicy) Type() string {
 	return "nimona.io/fixtures.TestPolicy"
+}
+
+func (e *TestPolicy) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
 }
 
 func (e TestPolicy) ToObject() *object.Object {
@@ -49,40 +182,33 @@ func (e TestPolicy) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// if $member.IsRepeated
 	if len(e.Subjects) > 0 {
-		// else
-		// r.Data["subjects"] = object.ToStringArray(e.Subjects)
 		rv := make(object.StringArray, len(e.Subjects))
 		for i, iv := range e.Subjects {
 			rv[i] = object.String(iv)
 		}
 		r.Data["subjects"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Resources) > 0 {
-		// else
-		// r.Data["resources"] = object.ToStringArray(e.Resources)
 		rv := make(object.StringArray, len(e.Resources))
 		for i, iv := range e.Resources {
 			rv[i] = object.String(iv)
 		}
 		r.Data["resources"] = rv
 	}
-	// if $member.IsRepeated
 	if len(e.Conditions) > 0 {
-		// else
-		// r.Data["conditions"] = object.ToStringArray(e.Conditions)
 		rv := make(object.StringArray, len(e.Conditions))
 		for i, iv := range e.Conditions {
 			rv[i] = object.String(iv)
 		}
 		r.Data["conditions"] = rv
 	}
-	// else
-	// r.Data["action"] = object.String(e.Action)
 	r.Data["action"] = object.String(e.Action)
 	return r
+}
+
+func (e *TestPolicy) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestPolicy) FromObject(o *object.Object) error {
@@ -126,19 +252,23 @@ func (e *TestStream) Type() string {
 	return "nimona.io/fixtures.TestStream"
 }
 
+func (e *TestStream) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e TestStream) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestStream",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
-	// else
-	// r.Data["createdDateTime"] = object.String(e.CreatedDateTime)
 	r.Data["createdDateTime"] = object.String(e.CreatedDateTime)
 	return r
+}
+
+func (e *TestStream) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestStream) FromObject(o *object.Object) error {
@@ -160,16 +290,22 @@ func (e *TestSubscribed) Type() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
 
+func (e *TestSubscribed) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e TestSubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestSubscribed",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
 	return r
+}
+
+func (e *TestSubscribed) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestSubscribed) FromObject(o *object.Object) error {
@@ -186,16 +322,22 @@ func (e *TestUnsubscribed) Type() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
 }
 
+func (e *TestUnsubscribed) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e TestUnsubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestUnsubscribed",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
 	return r
+}
+
+func (e *TestUnsubscribed) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestUnsubscribed) FromObject(o *object.Object) error {
@@ -212,19 +354,23 @@ func (e *TestRequest) Type() string {
 	return "nimona.io/fixtures.TestRequest"
 }
 
+func (e *TestRequest) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e TestRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestRequest",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else
-	// r.Data["foo"] = object.String(e.Foo)
 	r.Data["foo"] = object.String(e.Foo)
 	return r
+}
+
+func (e *TestRequest) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestRequest) FromObject(o *object.Object) error {
@@ -246,19 +392,23 @@ func (e *TestResponse) Type() string {
 	return "nimona.io/fixtures.TestResponse"
 }
 
+func (e *TestResponse) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
 func (e TestResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestResponse",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["requestID"] = object.String(e.RequestID)
-	// else
-	// r.Data["foo"] = object.String(e.Foo)
 	r.Data["foo"] = object.String(e.Foo)
 	return r
+}
+
+func (e *TestResponse) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
 }
 
 func (e *TestResponse) FromObject(o *object.Object) error {
@@ -268,6 +418,113 @@ func (e *TestResponse) FromObject(o *object.Object) error {
 			e.RequestID = string(t)
 		}
 	}
+	if v, ok := o.Data["foo"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Foo = string(t)
+		}
+	}
+	return nil
+}
+
+func (e *Parent) Type() string {
+	return "parent"
+}
+
+func (e *Parent) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e Parent) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "parent",
+		Metadata: e.Metadata,
+		Data:     object.Map{},
+	}
+	r.Data["foo"] = object.String(e.Foo)
+	if e.Child != nil {
+		v, err := e.Child.MarshalMap()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["child"] = object.Map(v)
+		}
+	}
+	if len(e.RepeatedChild) > 0 {
+		rv := make(object.MapArray, len(e.RepeatedChild))
+		for i, v := range e.RepeatedChild {
+			iv, err := v.MarshalMap()
+			if err != nil {
+				// TODO error
+			} else {
+				rv[i] = object.Map(iv)
+			}
+		}
+		r.Data["repeatedChild"] = rv
+	}
+	return r
+}
+
+func (e *Parent) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Parent) FromObject(o *object.Object) error {
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["foo"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Foo = string(t)
+		}
+	}
+	if v, ok := o.Data["child"]; ok {
+		if ev, ok := v.(object.Map); ok {
+			es := &Child{}
+			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+				// TODO error
+			} else {
+				e.Child = es
+			}
+		}
+	}
+	if v, ok := o.Data["repeatedChild"]; ok {
+		if ev, ok := v.(object.MapArray); ok {
+			e.RepeatedChild = make([]*Child, len(ev))
+			for i, iv := range ev {
+				es := &Child{}
+				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+					// TODO error
+				} else {
+					e.RepeatedChild[i] = es
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Child) Type() string {
+	return "child"
+}
+
+func (e *Child) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e Child) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "child",
+		Metadata: e.Metadata,
+		Data:     object.Map{},
+	}
+	r.Data["foo"] = object.String(e.Foo)
+	return r
+}
+
+func (e *Child) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Child) FromObject(o *object.Object) error {
+	e.Metadata = o.Metadata
 	if v, ok := o.Data["foo"]; ok {
 		if t, ok := v.(object.String); ok {
 			e.Foo = string(t)
