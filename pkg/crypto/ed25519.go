@@ -128,9 +128,12 @@ func NewEd25519PrivateKey(keyType KeyType) (*PrivateKey, error) {
 	}, nil
 }
 
-func NewEd25519PrivateKeyFromSeed(seed []byte, keyType KeyType) PrivateKey {
+func NewEd25519PrivateKeyFromSeed(
+	seed []byte,
+	keyType KeyType,
+) *PrivateKey {
 	b := ed25519.NewKeyFromSeed(seed)
-	return PrivateKey{
+	return &PrivateKey{
 		a: Ed25519Private,
 		t: keyType,
 		k: b,
@@ -139,6 +142,17 @@ func NewEd25519PrivateKeyFromSeed(seed []byte, keyType KeyType) PrivateKey {
 			t: keyType,
 			k: b.Public().(ed25519.PublicKey),
 		},
+	}
+}
+
+func NewEd25519PublicKeyFromRaw(
+	raw ed25519.PublicKey,
+	keyType KeyType,
+) *PublicKey {
+	return &PublicKey{
+		a: Ed25519Public,
+		t: keyType,
+		k: raw,
 	}
 }
 
@@ -161,7 +175,10 @@ func privateEd25519KeyToCurve25519(priv ed25519.PrivateKey) []byte {
 }
 
 // CalculateSharedKey calculates a shared secret given a private an public key
-func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
+func CalculateSharedKey(
+	priv *PrivateKey,
+	pub *PublicKey,
+) ([]byte, error) {
 	if priv.a != Ed25519Private || pub.a != Ed25519Public {
 		return nil, ErrUnsupportedKeyAlgorithm
 	}
@@ -176,25 +193,30 @@ func CalculateSharedKey(priv PrivateKey, pub PublicKey) ([]byte, error) {
 
 // NewSharedKey calculates a shared secret given a private and a public key,
 // and returns it
-func NewSharedKey(priv PrivateKey, pub PublicKey) (*PrivateKey, []byte, error) {
+func NewSharedKey(
+	priv *PrivateKey,
+	pub *PublicKey,
+) (*PrivateKey, []byte, error) {
 	ca := privateEd25519KeyToCurve25519(priv.k)
 	cB := publicEd25519KeyToCurve25519(pub.k)
 	ss, err := curve25519.X25519(ca, cB)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &priv, ss, nil
+	return priv, ss, nil
 }
 
 // CalculateEphemeralSharedKey creates a new ec25519 key pair, calculates a
 // shared secret given a public key, and returns the created public key and
 // secret
-func CalculateEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
+func CalculateEphemeralSharedKey(
+	pub *PublicKey,
+) (*PrivateKey, []byte, error) {
 	priv, err := NewEd25519PrivateKey(PeerKey)
 	if err != nil {
 		return nil, nil, err
 	}
-	return NewSharedKey(*priv, pub)
+	return NewSharedKey(priv, pub)
 }
 
 func (k PrivateKey) Sign(message []byte) []byte {
@@ -209,8 +231,8 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 	return nil
 }
 
-func (r PublicKey) Equals(w PublicKey) bool {
-	return r.a == w.a && r.t == w.t && r.k.Equal(w.k)
+func (k PublicKey) Equals(w *PublicKey) bool {
+	return k.a == w.a && k.t == w.t && k.k.Equal(w.k)
 }
 
 func encodeToCID(cidCode, multihashCode uint64, raw []byte) string {

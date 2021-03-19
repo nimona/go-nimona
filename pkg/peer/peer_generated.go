@@ -11,7 +11,7 @@ type (
 	ConnectionInfo struct {
 		Metadata      object.Metadata
 		Version       int64
-		PublicKey     crypto.PublicKey
+		PublicKey     *crypto.PublicKey
 		Addresses     []string
 		Relays        []*ConnectionInfo
 		ObjectFormats []string
@@ -37,7 +37,14 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	r.Data["version"] = object.Int(e.Version)
-	r.Data["publicKey"] = object.String(e.PublicKey)
+	if e.PublicKey != nil {
+		v, err := e.PublicKey.MarshalString()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["publicKey"] = object.String(v)
+		}
+	}
 	if len(e.Addresses) > 0 {
 		rv := make(object.StringArray, len(e.Addresses))
 		for i, iv := range e.Addresses {
@@ -83,8 +90,13 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["publicKey"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.PublicKey = crypto.PublicKey(t)
+		if ev, ok := v.(object.String); ok {
+			es := &crypto.PublicKey{}
+			if err := es.UnmarshalString(string(ev)); err != nil {
+				// TODO error
+			} else {
+				e.PublicKey = es
+			}
 		}
 	}
 	if v, ok := o.Data["addresses"]; ok {

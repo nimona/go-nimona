@@ -14,18 +14,6 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/crypto.PrivateKey": {
-		Hint:      "s",
-		Type:      "crypto.PrivateKey",
-		IsObject:  false,
-		IsPrimary: true,
-	},
-	"nimona.io/crypto.PublicKey": {
-		Hint:      "s",
-		Type:      "crypto.PublicKey",
-		IsObject:  false,
-		IsPrimary: true,
-	},
 	"nimona.io/object.CID": {
 		Hint:      "s",
 		Type:      "object.CID",

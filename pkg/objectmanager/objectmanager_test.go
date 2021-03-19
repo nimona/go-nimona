@@ -1147,13 +1147,16 @@ func TestManager_Put(t *testing.T) {
 }
 
 func Test_manager_Subscribe(t *testing.T) {
+	p, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
 	o0 := &object.Object{
 		Type: "foo",
 	}
 	o1 := &object.Object{
 		Type: "not-bar",
 		Metadata: object.Metadata{
-			Owner: "foo",
+			Owner: p.PublicKey(),
 		},
 		Data: object.Map{
 			"foo": object.String("not-bar"),
@@ -1183,7 +1186,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by owner",
 		lookupOptions: []LookupOption{
-			FilterByOwner("foo"),
+			FilterByOwner(p.PublicKey()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o1},
@@ -1205,7 +1208,7 @@ func Test_manager_Subscribe(t *testing.T) {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
 			FilterByStreamCID("foo"),
-			FilterByOwner("foo"),
+			FilterByOwner(p.PublicKey()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{},
@@ -1244,7 +1247,7 @@ func Test_manager_Subscribe(t *testing.T) {
 }
 
 func TestManager_Integration_AddStreamSubscription(t *testing.T) {
-	prv0, err := crypto.GenerateEd25519PrivateKey()
+	prv0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	lpr := localpeer.New()

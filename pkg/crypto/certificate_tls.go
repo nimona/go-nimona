@@ -10,7 +10,7 @@ import (
 )
 
 // GenerateTLSCertificate for TLS serverset
-func GenerateTLSCertificate(privateKey PrivateKey) (*tls.Certificate, error) {
+func GenerateTLSCertificate(privateKey *PrivateKey) (*tls.Certificate, error) {
 	k := privateKey.k
 	p := privateKey.PublicKey().k
 	now := time.Now()

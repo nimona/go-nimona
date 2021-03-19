@@ -71,7 +71,10 @@ func (tt *tcpTransport) Dial(
 		return nil, fmt.Errorf("only ed25519 keys are currently supported")
 	}
 
-	conn.RemotePeerKey = crypto.NewPublicKey(pubKey)
+	conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
+		pubKey,
+		crypto.PeerKey,
+	)
 
 	return conn, nil
 }
@@ -79,7 +82,7 @@ func (tt *tcpTransport) Dial(
 func (tt *tcpTransport) Listen(
 	ctx context.Context,
 	bindAddress string,
-	key crypto.PrivateKey,
+	key *crypto.PrivateKey,
 ) (net.Listener, error) {
 	cert, err := crypto.GenerateTLSCertificate(key)
 	if err != nil {

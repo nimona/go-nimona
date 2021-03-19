@@ -56,13 +56,19 @@ func TestResolver_Integration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	p2, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+	require.NoError(t, err)
+
+	p3, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+	require.NoError(t, err)
+
 	// add a couple more random peers to the provider's cache
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: "a",
+			Owner: p2.PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: "a",
+			PublicKey: p2.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
@@ -71,7 +77,7 @@ func TestResolver_Integration(t *testing.T) {
 			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: "b",
+			PublicKey: p3.PublicKey(),
 		},
 		PeerVector: hyperspace.New("foo"),
 	}

@@ -648,7 +648,7 @@ func ahtoai(ah []object.CID) []interface{} {
 	return as
 }
 
-func aktoai(ah []crypto.PublicKey) []interface{} {
+func aktoai(ah []*crypto.PublicKey) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

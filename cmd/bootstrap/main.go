@@ -27,10 +27,10 @@ import (
 // nolint: lll
 type config struct {
 	Peer struct {
-		PrivateKey      crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
-		BindAddress     string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
-		AnnounceAddress string            `envconfig:"ANNOUNCE_ADDRESS"`
-		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
+		PrivateKey      *crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
+		BindAddress     string             `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+		AnnounceAddress string             `envconfig:"ANNOUNCE_ADDRESS"`
+		Bootstraps      []peer.Shorthand   `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 	Metrics struct {
 		PyroscopeServerName string `envconfig:"PYROSCOPE_SERVER_NAME"`
@@ -67,7 +67,7 @@ func main() {
 		})
 	}
 
-	if cfg.Peer.PrivateKey.IsEmpty() {
+	if cfg.Peer.PrivateKey == nil {
 		logger.Fatal("missing peer private key")
 	}
 

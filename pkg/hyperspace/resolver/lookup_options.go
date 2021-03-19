@@ -60,7 +60,7 @@ func LookupByCID(cid object.CID) LookupOption {
 }
 
 // LookupByPeerKey matches the peer key
-func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
+func LookupByPeerKey(keys ...*crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		for _, key := range keys {
 			opts.Lookups = append(opts.Lookups, key.String())

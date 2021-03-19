@@ -74,20 +74,26 @@ func TestNetConnectionSuccess(t *testing.T) {
 }
 
 func TestNetDialBackoff(t *testing.T) {
+	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
+	s2, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
 	ctx := context.New()
 	p := &peer.ConnectionInfo{
-		PublicKey: crypto.PublicKey("foo"),
+		PublicKey: s1.PublicKey(),
 		Addresses: []string{"tcps:240.0.0.1:1000"},
 	}
 
 	p2 := &peer.ConnectionInfo{
-		PublicKey: crypto.PublicKey("bar"),
+		PublicKey: s2.PublicKey(),
 		Addresses: p.Addresses,
 	}
 
 	// attempt 1, failed
 	_, n1 := newPeer(t)
-	_, err := n1.Dial(ctx, p)
+	_, err = n1.Dial(ctx, p)
 	assert.Equal(t, ErrAllAddressesFailed, err)
 
 	// attempt 2, blocked

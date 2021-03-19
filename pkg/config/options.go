@@ -56,7 +56,7 @@ func WithDefaultBootstraps(peers []peer.Shorthand) Option {
 	}
 }
 
-func WithDefaultPrivateKey(key crypto.PrivateKey) Option {
+func WithDefaultPrivateKey(key *crypto.PrivateKey) Option {
 	return func(cfg *Config) {
 		cfg.Peer.PrivateKey = key
 	}

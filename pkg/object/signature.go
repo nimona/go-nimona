@@ -85,7 +85,7 @@ func SignatureFromMap(m Map) Signature {
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
-	k crypto.PrivateKey,
+	k *crypto.PrivateKey,
 	o *Object,
 ) (Signature, error) {
 	h, err := NewCID(o)

@@ -7,6 +7,6 @@ import (
 
 // Envelope -
 type Envelope struct {
-	Sender  crypto.PublicKey
+	Sender  *crypto.PublicKey
 	Payload *object.Object
 }

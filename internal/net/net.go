@@ -163,7 +163,7 @@ func (n *network) Dial(
 		}
 
 		// check negotiated key against dialed
-		if conn.RemotePeerKey != p.PublicKey {
+		if !conn.RemotePeerKey.Equals(p.PublicKey) {
 			n.blockAddress(
 				p.PublicKey,
 				address,
@@ -218,7 +218,7 @@ func (n *network) Dial(
 }
 
 func (n *network) isAddressBlocked(
-	publicKey crypto.PublicKey,
+	publicKey *crypto.PublicKey,
 	address string,
 ) bool {
 	_, blocked := n.blocklist.Get(publicKey.String() + "/" + address)
@@ -226,7 +226,7 @@ func (n *network) isAddressBlocked(
 }
 
 func (n *network) blockAddress(
-	publicKey crypto.PublicKey,
+	publicKey *crypto.PublicKey,
 	address string,
 ) (int, time.Duration) {
 	pk := publicKey.String() + "/" + address
@@ -337,7 +337,10 @@ func (n *network) Listen(
 						conn.Close() // nolint: errcheck
 						continue
 					}
-					conn.RemotePeerKey = crypto.NewPublicKey(pubKey)
+					conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
+						pubKey,
+						crypto.PeerKey,
+					)
 				} else {
 					// not currently supported
 					// TODO find a way to surface this error

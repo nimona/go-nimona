@@ -19,7 +19,7 @@ type (
 			ObjectCIDs   []object.CID
 			StreamCIDs   []object.CID
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []*crypto.PublicKey
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []ObjectFilter
@@ -32,12 +32,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ObjectCIDs   []object.CID
 			StreamCIDs   []object.CID
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []*crypto.PublicKey
 		}{
 			ObjectCIDs:   []object.CID{},
 			StreamCIDs:   []object.CID{},
 			ContentTypes: []string{},
-			Owners:       []crypto.PublicKey{},
+			Owners:       []*crypto.PublicKey{},
 		},
 		Filters: []ObjectFilter{},
 	}
@@ -61,13 +61,13 @@ func FilterByCID(hs ...object.CID) LookupOption {
 	}
 }
 
-func FilterByOwner(hs ...crypto.PublicKey) LookupOption {
+func FilterByOwner(hs ...*crypto.PublicKey) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Owners = append(opts.Lookups.Owners, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
 				owner := o.Metadata.Owner
-				if !owner.IsEmpty() && owner.Equals(h) {
+				if owner != nil && h != nil && owner.Equals(h) {
 					return true
 				}
 			}

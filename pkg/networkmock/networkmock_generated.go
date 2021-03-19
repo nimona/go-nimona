@@ -41,7 +41,7 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 }
 
 // LookupPeer mocks base method.
-func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKey) (*peer.ConnectionInfo, error) {
+func (m *MockResolver) LookupPeer(ctx context.Context, publicKey *crypto.PublicKey) (*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupPeer", ctx, publicKey)
 	ret0, _ := ret[0].(*peer.ConnectionInfo)
@@ -125,7 +125,7 @@ func (mr *MockNetworkMockRecorder) RegisterResolver(resolver interface{}) *gomoc
 }
 
 // Send mocks base method.
-func (m *MockNetwork) Send(ctx context.Context, object *object.Object, publicKey crypto.PublicKey, sendOptions ...network.SendOption) error {
+func (m *MockNetwork) Send(ctx context.Context, object *object.Object, publicKey *crypto.PublicKey, sendOptions ...network.SendOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, object, publicKey}
 	for _, a := range sendOptions {
