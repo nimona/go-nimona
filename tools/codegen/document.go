@@ -22,9 +22,17 @@ type Object struct {
 	Members   []*Member
 }
 
+// rootCIDs repeated string nimona.io/object.CID
+// ^        ^        ^      ^
+// |        |        |      |
+// |        |        |      - GoType
+// |        |        - SimpleType
+// |        - IsRepeated
+// - Tag
+//
 type Member struct {
 	Name       string
-	Type       string
+	GoFullType string
 	SimpleType string
 	Tag        string
 	Hint       string
