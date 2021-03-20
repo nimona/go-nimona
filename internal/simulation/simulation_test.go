@@ -15,12 +15,12 @@ import (
 )
 
 // nolint: lll
-// bNode0 prv bagacmacaukn7qjqmryxlatyqfmdqwhjnpmp7xpwku2bpfdjrmwqzognl53dfz7ie2itebh4qosflq7vlrs62tjomad2ak7xrgjjm6wlohmlphwi
-// bNode0 pub bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq
-// bNode1 prv bagacmaca4u5keys3owvgynw2rjmeohit5ipxuc765ysxivkrycgng7v5zp3hffixsjm6dd76z5cwp32iy34tvtulw2jjb5stcqlxywkdqj2llyq
-// bNode1 pub bahwqcabaokkrpesz4gh75t2fm7xurrxzhlhixnussd3fgfaxprmuhatuwxra
-// bNode2 prv bagacmacar6wn4q3rn6owbihzuhf442wc6rxngrbkpziwdarf7whs4g5eo6qmfek3ahjt2ekijerpchktxldlnhpbyac5d5tz7nnlv6v5nmljrci
-// bNode2 pub bahwqcabaykivwaothuiuqsjc6eovhowgw2o6dqaf2h3ht622xl5l22ywtceq
+// bNode0 prv bagacnag4afabniaa2p4s2uqgd5yonz3jgmaa6xdhcmior27g7arawskmizawinxoozfmzvcmsqygfqpowo2o6pw72f54vjw4ei7lb6txcmilxwn76q
+// bNode0 pub bahwqdag4aeqo45skztkezfbqmla65m5u547n7ul3zktnyir6wd5hoeyqxpm375a
+// bNode1 prv bagacnag4afadjifs2n3ol7npnmv7ipddig4sfm4dtpfhgud2e7q2e4q64s3kxdxu7mlszjtgruxmhbzmobimlsrcvigs7bbpfrdu7tcplvzutditsi
+// bNode1 pub bahwqdag4aeqpj6yxfstgndjoyodsy4cqyxfcfkqnf6cc6lchj7ge6xltjggrheq
+// bNode2 prv bagacnag4afag2oulialyc5cad6iy5eztg4tnu4apeqoocemp4t3lw6orbxh3zvhzh47kjakhohbekc6gybt5kauwafffanr65mpvn6gb6kjnkifebu
+// bNode2 pub bahwqdag4aeqpspz6usauo4ociuf4nqdh2ubjmakkka3d52y7k34md4us2uqkidi
 
 // nolint: lll
 func TestSimulation(t *testing.T) {
@@ -52,7 +52,7 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17000",
-			"NIMONA_PEER_PRIVATE_KEY=bagacmacaukn7qjqmryxlatyqfmdqwhjnpmp7xpwku2bpfdjrmwqzognl53dfz7ie2itebh4qosflq7vlrs62tjomad2ak7xrgjjm6wlohmlphwi",
+			"NIMONA_PEER_PRIVATE_KEY=bagacnag4afabniaa2p4s2uqgd5yonz3jgmaa6xdhcmior27g7arawskmizawinxoozfmzvcmsqygfqpowo2o6pw72f54vjw4ei7lb6txcmilxwn76q",
 		}),
 		node.WithEntrypoint([]string{
 			"/bootstrap",
@@ -76,9 +76,9 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17001",
-			"NIMONA_PEER_PRIVATE_KEY=bagacmaca4u5keys3owvgynw2rjmeohit5ipxuc765ysxivkrycgng7v5zp3hffixsjm6dd76z5cwp32iy34tvtulw2jjb5stcqlxywkdqj2llyq",
-			"NIMONA_PEER_BOOTSTRAPS=bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq@tcps:" + bNodes[0].Address(),
-			"NIMONA_SONAR_PING_PEERS=bahwqcabaykivwaothuiuqsjc6eovhowgw2o6dqaf2h3ht622xl5l22ywtceq",
+			"NIMONA_PEER_PRIVATE_KEY=bagacnag4afadjifs2n3ol7npnmv7ipddig4sfm4dtpfhgud2e7q2e4q64s3kxdxu7mlszjtgruxmhbzmobimlsrcvigs7bbpfrdu7tcplvzutditsi",
+			"NIMONA_PEER_BOOTSTRAPS=bahwqdag4aeqo45skztkezfbqmla65m5u547n7ul3zktnyir6wd5hoeyqxpm375a@tcps:" + bNodes[0].Address(),
+			"NIMONA_SONAR_PING_PEERS=bahwqdag4aeqpspz6usauo4ociuf4nqdh2ubjmakkka3d52y7k34md4us2uqkidi",
 		}),
 		node.WithEntrypoint([]string{
 			"/sonar",
@@ -99,9 +99,9 @@ func TestSimulation(t *testing.T) {
 			"NIMONA_UPNP_DISABLE=true",
 			"NIMONA_LOG_LEVEL=error",
 			"NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002",
-			"NIMONA_PEER_PRIVATE_KEY=bagacmacar6wn4q3rn6owbihzuhf442wc6rxngrbkpziwdarf7whs4g5eo6qmfek3ahjt2ekijerpchktxldlnhpbyac5d5tz7nnlv6v5nmljrci",
-			"NIMONA_PEER_BOOTSTRAPS=bahwqcabalt6qjurgicpza5ekxb7kxdf5vgs4yahuav7pcmssz5mw4oyw6pmq@tcps:" + bNodes[0].Address(),
-			"NIMONA_SONAR_PING_PEERS=bahwqcabaokkrpesz4gh75t2fm7xurrxzhlhixnussd3fgfaxprmuhatuwxra",
+			"NIMONA_PEER_PRIVATE_KEY=bagacnag4afag2oulialyc5cad6iy5eztg4tnu4apeqoocemp4t3lw6orbxh3zvhzh47kjakhohbekc6gybt5kauwafffanr65mpvn6gb6kjnkifebu",
+			"NIMONA_PEER_BOOTSTRAPS=bahwqdag4aeqo45skztkezfbqmla65m5u547n7ul3zktnyir6wd5hoeyqxpm375a@tcps:" + bNodes[0].Address(),
+			"NIMONA_SONAR_PING_PEERS=bahwqdag4aeqpj6yxfstgndjoyodsy4cqyxfcfkqnf6cc6lchj7ge6xltjggrheq",
 		}),
 		node.WithEntrypoint([]string{
 			"/sonar",
