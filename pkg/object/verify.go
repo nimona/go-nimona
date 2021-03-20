@@ -49,7 +49,7 @@ func Verify(o *Object) error {
 	}
 
 	// check if the owner matches the signer
-	if own == sig.Signer {
+	if own.Equals(sig.Signer) {
 		return nil
 	}
 

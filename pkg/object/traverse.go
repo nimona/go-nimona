@@ -84,7 +84,9 @@ func traverse(k string, i interface{}, f func(string, interface{}) bool) bool {
 	case reflect.Struct:
 		for j := 0; j < v.NumField(); j++ {
 			vf := v.Field(j)
-			if _, ok := vf.Interface().(Value); !ok {
+			// !CanInterface() is a workaround for:
+			// `cannot return value obtained from unexported field or method`
+			if !vf.CanInterface() {
 				return true
 			}
 			kk := strings.Trim(k+"/"+vf.Type().Name(), "/")
