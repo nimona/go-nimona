@@ -31,7 +31,7 @@ type config struct {
 		Bootstraps      []peer.Shorthand   `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 	Sonar struct {
-		PingPeers []*crypto.PublicKey `envconfig:"PING_PEERS"`
+		PingPeers []string `envconfig:"PING_PEERS"`
 	} `envconfig:"SONAR"`
 }
 
@@ -127,7 +127,7 @@ func main() {
 	go func() {
 		pingedFromPeers := map[string]bool{} // [key]pinged
 		for _, p := range cfg.Sonar.PingPeers {
-			pingedFromPeers[p.String()] = false
+			pingedFromPeers[p] = false
 		}
 		sub := man.Subscribe(
 			objectmanager.FilterByObjectType("ping"),
@@ -214,7 +214,15 @@ func main() {
 	go func() {
 		pingPeers := map[string]*crypto.PublicKey{} // [key]pinged
 		for _, p := range cfg.Sonar.PingPeers {
-			pingPeers[p.String()] = p
+			k := &crypto.PublicKey{}
+			if err := k.UnmarshalString(p); err != nil {
+				logger.Fatal(
+					"error unmarshaling key to ping",
+					log.String("publicKey", p),
+					log.Error(err),
+				)
+			}
+			pingPeers[p] = k
 		}
 		for {
 			time.Sleep(time.Second)
