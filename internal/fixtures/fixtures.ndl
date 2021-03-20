@@ -42,8 +42,8 @@ signed object nimona.io/fixtures.TestResponse {
 
 object parent {
     foo string
-    child map type=Child
-    repeatedChild repeated map type=Child
+    child object type=Child
+    repeatedChild repeated object type=Child
 }
 
 object child {

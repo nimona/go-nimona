@@ -34,6 +34,10 @@ func (e *DataForwardRequest) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *DataForwardRequest) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e DataForwardRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardRequest",
@@ -43,11 +47,11 @@ func (e DataForwardRequest) ToObject() *object.Object {
 	r.Data["requestID"] = object.String(e.RequestID)
 	r.Data["recipient"] = object.String(e.Recipient)
 	if e.Payload != nil {
-		v, err := e.Payload.MarshalMap()
+		v, err := e.Payload.MarshalObject()
 		if err != nil {
 			// TODO error
 		} else {
-			r.Data["payload"] = object.Map(v)
+			r.Data["payload"] = (v)
 		}
 	}
 	return r
@@ -55,6 +59,10 @@ func (e DataForwardRequest) ToObject() *object.Object {
 
 func (e *DataForwardRequest) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *DataForwardRequest) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *DataForwardRequest) FromObject(o *object.Object) error {
@@ -70,9 +78,9 @@ func (e *DataForwardRequest) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["payload"]; ok {
-		if ev, ok := v.(object.Map); ok {
+		if ev, ok := v.(*object.Object); ok {
 			es := &object.Object{}
-			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+			if err := es.UnmarshalObject((ev)); err != nil {
 				// TODO error
 			} else {
 				e.Payload = es
@@ -90,6 +98,10 @@ func (e *DataForwardEnvelope) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *DataForwardEnvelope) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e DataForwardEnvelope) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardEnvelope",
@@ -103,6 +115,10 @@ func (e DataForwardEnvelope) ToObject() *object.Object {
 
 func (e *DataForwardEnvelope) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *DataForwardEnvelope) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
@@ -128,6 +144,10 @@ func (e *DataForwardResponse) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *DataForwardResponse) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e DataForwardResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/network.DataForwardResponse",
@@ -141,6 +161,10 @@ func (e DataForwardResponse) ToObject() *object.Object {
 
 func (e *DataForwardResponse) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *DataForwardResponse) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *DataForwardResponse) FromObject(o *object.Object) error {

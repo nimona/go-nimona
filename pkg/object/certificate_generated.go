@@ -29,6 +29,10 @@ func (e *Certificate) MarshalMap() (Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Certificate) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Certificate) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Certificate",
@@ -43,6 +47,10 @@ func (e Certificate) ToObject() *Object {
 
 func (e *Certificate) UnmarshalMap(m Map) error {
 	return e.FromObject(FromMap(m))
+}
+
+func (e *Certificate) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Certificate) FromObject(o *Object) error {
@@ -71,6 +79,10 @@ func (e *CertificateRequest) Type() string {
 
 func (e *CertificateRequest) MarshalMap() (Map, error) {
 	return e.ToObject().Map(), nil
+}
+
+func (e *CertificateRequest) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
 }
 
 func (e CertificateRequest) ToObject() *Object {
@@ -103,6 +115,10 @@ func (e CertificateRequest) ToObject() *Object {
 
 func (e *CertificateRequest) UnmarshalMap(m Map) error {
 	return e.FromObject(FromMap(m))
+}
+
+func (e *CertificateRequest) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
 }
 
 func (e *CertificateRequest) FromObject(o *Object) error {

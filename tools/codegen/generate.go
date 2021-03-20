@@ -78,6 +78,10 @@ func (e *{{ structName $object.Name }}) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *{{ structName $object.Name }}) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e {{ structName $object.Name }}) ToObject() *object.Object {
 	r := &object.Object{
 		Type: "{{ $object.Name }}",
@@ -124,6 +128,10 @@ func (e {{ structName $object.Name }}) ToObject() *object.Object {
 
 func (e *{{ structName $object.Name }}) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *{{ structName $object.Name }}) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
@@ -209,8 +217,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "object.Float"
 			case object.IntHint:
 				return "object.Int"
-			case object.ObjectHint, object.MapHint:
+			case object.MapHint:
 				return "object.Map"
+			case object.ObjectHint:
+				return ""
 			case object.StringHint:
 				return "object.String"
 			case object.UintHint:
@@ -250,8 +260,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "string"
 			case object.UintHint:
 				return "uint64"
-			case object.ObjectHint, object.MapHint:
+			case object.MapHint:
 				return "object.Map"
+			case object.ObjectHint:
+				return ""
 			case object.BoolArrayHint:
 				return "object.FromBoolArray"
 			case object.DataArrayHint:
@@ -285,8 +297,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "object.Int"
 			case object.StringHint:
 				return "object.String"
-			case object.ObjectHint, object.MapHint:
+			case object.MapHint:
 				return "object.Map"
+			case object.ObjectHint:
+				return "*object.Object"
 			case object.UintHint:
 				return "object.Uint"
 			case object.BoolArrayHint:
@@ -297,6 +311,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "object.FloatArray"
 			case object.IntArrayHint:
 				return "object.IntArray"
+			case object.ObjectArrayHint:
+				return "object.ObjectArray"
 			case object.MapArrayHint:
 				return "object.MapArray"
 			case object.StringArrayHint:
@@ -320,14 +336,16 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "object.Float"
 			case object.IntArrayHint:
 				return "object.Int"
-			case object.MapArrayHint, object.ObjectArrayHint:
+			case object.MapArrayHint:
 				return "object.Map"
+			case object.ObjectArrayHint:
+				return ""
 			case object.StringArrayHint:
 				return "object.String"
 			case object.UintArrayHint:
 				return "object.Uint"
 			}
-			panic("unknown hint in primitive " + m.Hint)
+			panic("unknown hint in primitiveSingular " + m.Hint)
 		},
 		"marshalFunc": func(m Member) string {
 			switch m.SimpleType {
@@ -363,8 +381,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "string"
 			case object.UintHint:
 				return "uint64"
-			case object.ObjectHint, object.MapHint:
+			case object.MapHint:
 				return "object.Map"
+			case object.ObjectHint:
+				return ""
 			case object.BoolArrayHint:
 				return "bool"
 			case object.DataArrayHint:
@@ -373,8 +393,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				return "float64"
 			case object.IntArrayHint:
 				return "int64"
-			case object.MapArrayHint, object.ObjectArrayHint:
+			case object.MapArrayHint:
 				return "object.Map"
+			case object.ObjectArrayHint:
+				return ""
 			case object.StringArrayHint:
 				return "string"
 			case object.UintArrayHint:

@@ -26,6 +26,10 @@ func (e *ConnectionInfo) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *ConnectionInfo) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e ConnectionInfo) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/peer.ConnectionInfo",
@@ -42,13 +46,13 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		r.Data["addresses"] = rv
 	}
 	if len(e.Relays) > 0 {
-		rv := make(object.MapArray, len(e.Relays))
+		rv := make(object.ObjectArray, len(e.Relays))
 		for i, v := range e.Relays {
-			iv, err := v.MarshalMap()
+			iv, err := v.MarshalObject()
 			if err != nil {
 				// TODO error
 			} else {
-				rv[i] = object.Map(iv)
+				rv[i] = (iv)
 			}
 		}
 		r.Data["relays"] = rv
@@ -65,6 +69,10 @@ func (e ConnectionInfo) ToObject() *object.Object {
 
 func (e *ConnectionInfo) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *ConnectionInfo) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *ConnectionInfo) FromObject(o *object.Object) error {
@@ -89,11 +97,11 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["relays"]; ok {
-		if ev, ok := v.(object.MapArray); ok {
+		if ev, ok := v.(object.ObjectArray); ok {
 			e.Relays = make([]*ConnectionInfo, len(ev))
 			for i, iv := range ev {
 				es := &ConnectionInfo{}
-				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+				if err := es.UnmarshalObject((iv)); err != nil {
 					// TODO error
 				} else {
 					e.Relays[i] = es

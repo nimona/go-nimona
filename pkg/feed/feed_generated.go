@@ -34,6 +34,10 @@ func (e *FeedStreamRoot) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *FeedStreamRoot) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e FeedStreamRoot) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "stream:nimona.io/feed",
@@ -47,6 +51,10 @@ func (e FeedStreamRoot) ToObject() *object.Object {
 
 func (e *FeedStreamRoot) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *FeedStreamRoot) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *FeedStreamRoot) FromObject(o *object.Object) error {
@@ -72,6 +80,10 @@ func (e *Added) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Added) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Added) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "event:nimona.io/feed.Added",
@@ -92,6 +104,10 @@ func (e Added) ToObject() *object.Object {
 
 func (e *Added) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Added) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Added) FromObject(o *object.Object) error {
@@ -126,6 +142,10 @@ func (e *Removed) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Removed) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Removed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "event:nimona.io/feed.Removed",
@@ -146,6 +166,10 @@ func (e Removed) ToObject() *object.Object {
 
 func (e *Removed) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Removed) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Removed) FromObject(o *object.Object) error {

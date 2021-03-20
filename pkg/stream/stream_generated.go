@@ -45,6 +45,10 @@ func (e *Policy) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Policy) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Policy) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Policy",
@@ -78,6 +82,10 @@ func (e Policy) ToObject() *object.Object {
 
 func (e *Policy) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Policy) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Policy) FromObject(o *object.Object) error {
@@ -125,6 +133,10 @@ func (e *Request) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Request) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Request) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Request",
@@ -138,6 +150,10 @@ func (e Request) ToObject() *object.Object {
 
 func (e *Request) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Request) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Request) FromObject(o *object.Object) error {
@@ -163,6 +179,10 @@ func (e *Response) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Response) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Response) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Response",
@@ -183,6 +203,10 @@ func (e Response) ToObject() *object.Object {
 
 func (e *Response) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Response) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Response) FromObject(o *object.Object) error {
@@ -217,6 +241,10 @@ func (e *Announcement) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Announcement) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Announcement",
@@ -236,6 +264,10 @@ func (e Announcement) ToObject() *object.Object {
 
 func (e *Announcement) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Announcement) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Announcement) FromObject(o *object.Object) error {
@@ -265,6 +297,10 @@ func (e *Subscription) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Subscription) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Subscription) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/stream.Subscription",
@@ -284,6 +320,10 @@ func (e Subscription) ToObject() *object.Object {
 
 func (e *Subscription) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Subscription) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Subscription) FromObject(o *object.Object) error {
