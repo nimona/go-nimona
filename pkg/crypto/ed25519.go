@@ -39,12 +39,21 @@ func (k PublicKey) String() string {
 	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
 }
 
+func (k PublicKey) MarshalText() ([]byte, error) {
+	s, err := k.MarshalString()
+	return []byte(s), err
+}
+
 func (k PublicKey) MarshalString() (string, error) {
 	return k.String(), nil
 }
 
 func (k PublicKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
+}
+
+func (k *PublicKey) UnmarshalText(s []byte) error {
+	return k.UnmarshalString(string(s))
 }
 
 func (k *PublicKey) UnmarshalString(s string) error {
@@ -81,12 +90,21 @@ func (k PrivateKey) String() string {
 	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
 }
 
+func (k PrivateKey) MarshalText() ([]byte, error) {
+	s, err := k.MarshalString()
+	return []byte(s), err
+}
+
 func (k PrivateKey) MarshalString() (string, error) {
 	return k.String(), nil
 }
 
 func (k PrivateKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
+}
+
+func (k *PrivateKey) UnmarshalText(s []byte) error {
+	return k.UnmarshalString(string(s))
 }
 
 func (k *PrivateKey) UnmarshalString(s string) error {
