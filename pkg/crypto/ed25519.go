@@ -238,7 +238,9 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 }
 
 func (k PublicKey) Equals(w *PublicKey) bool {
-	return k.Algorithm == w.Algorithm && k.Type == w.Type && k.RawKey.Equal(w.RawKey)
+	return k.Algorithm == w.Algorithm &&
+		k.Type == w.Type &&
+		k.RawKey.Equal(w.RawKey)
 }
 
 func encodeToCID(cidCode, multihashCode uint64, raw []byte) string {
