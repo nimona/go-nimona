@@ -25,6 +25,10 @@ func (e *Chunk) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Chunk) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Chunk) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Chunk",
@@ -37,6 +41,10 @@ func (e Chunk) ToObject() *object.Object {
 
 func (e *Chunk) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Chunk) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Chunk) FromObject(o *object.Object) error {
@@ -57,6 +65,10 @@ func (e *Blob) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Blob) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Blob) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/Blob",
@@ -75,6 +87,10 @@ func (e Blob) ToObject() *object.Object {
 
 func (e *Blob) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Blob) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Blob) FromObject(o *object.Object) error {

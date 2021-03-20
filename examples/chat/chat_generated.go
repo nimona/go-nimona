@@ -29,6 +29,10 @@ func (e *ConversationStreamRoot) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *ConversationStreamRoot) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e ConversationStreamRoot) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "stream:poc.nimona.io/conversation",
@@ -41,6 +45,10 @@ func (e ConversationStreamRoot) ToObject() *object.Object {
 
 func (e *ConversationStreamRoot) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *ConversationStreamRoot) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
@@ -61,6 +69,10 @@ func (e *ConversationNicknameUpdated) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *ConversationNicknameUpdated) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e ConversationNicknameUpdated) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "poc.nimona.io/conversation.NicknameUpdated",
@@ -73,6 +85,10 @@ func (e ConversationNicknameUpdated) ToObject() *object.Object {
 
 func (e *ConversationNicknameUpdated) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *ConversationNicknameUpdated) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *ConversationNicknameUpdated) FromObject(o *object.Object) error {
@@ -93,6 +109,10 @@ func (e *ConversationMessageAdded) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *ConversationMessageAdded) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e ConversationMessageAdded) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "poc.nimona.io/conversation.MessageAdded",
@@ -105,6 +125,10 @@ func (e ConversationMessageAdded) ToObject() *object.Object {
 
 func (e *ConversationMessageAdded) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *ConversationMessageAdded) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *ConversationMessageAdded) FromObject(o *object.Object) error {

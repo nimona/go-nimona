@@ -43,6 +43,10 @@ func (o Object) ToMap() Map {
 	return o.Map()
 }
 
+func (o Object) MarshalObject() (*Object, error) {
+	return &o, nil
+}
+
 func (o Object) MarshalMap() (Map, error) {
 	return o.Map(), nil
 }
@@ -72,6 +76,13 @@ func (o *Object) UnmarshalJSON(b []byte) error {
 
 func (o Object) MarshalJSON() ([]byte, error) {
 	return json.Marshal(o.Map())
+}
+
+func (o *Object) UnmarshalObject(n *Object) error {
+	o.Type = n.Type
+	o.Data = n.Data
+	o.Metadata = n.Metadata
+	return nil
 }
 
 func (o *Object) UnmarshalMap(m Map) error {

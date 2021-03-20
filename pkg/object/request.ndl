@@ -7,5 +7,5 @@ signed object nimona.io/object.Request {
 
 signed object nimona.io/object.Response {
     requestID string
-    object map type=nimona.io/object.Object
+    object object type=nimona.io/object.Object
 }

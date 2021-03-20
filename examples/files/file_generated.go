@@ -22,6 +22,10 @@ func (e *File) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *File) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e File) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/File",
@@ -35,6 +39,10 @@ func (e File) ToObject() *object.Object {
 
 func (e *File) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *File) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *File) FromObject(o *object.Object) error {

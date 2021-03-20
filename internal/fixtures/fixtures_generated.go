@@ -64,6 +64,10 @@ func (e *CompositeTest) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *CompositeTest) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e CompositeTest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "compositeTest",
@@ -115,6 +119,10 @@ func (e CompositeTest) ToObject() *object.Object {
 
 func (e *CompositeTest) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *CompositeTest) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *CompositeTest) FromObject(o *object.Object) error {
@@ -176,6 +184,10 @@ func (e *TestPolicy) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestPolicy) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestPolicy) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestPolicy",
@@ -209,6 +221,10 @@ func (e TestPolicy) ToObject() *object.Object {
 
 func (e *TestPolicy) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestPolicy) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestPolicy) FromObject(o *object.Object) error {
@@ -256,6 +272,10 @@ func (e *TestStream) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestStream) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestStream) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestStream",
@@ -269,6 +289,10 @@ func (e TestStream) ToObject() *object.Object {
 
 func (e *TestStream) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestStream) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestStream) FromObject(o *object.Object) error {
@@ -294,6 +318,10 @@ func (e *TestSubscribed) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestSubscribed) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestSubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestSubscribed",
@@ -306,6 +334,10 @@ func (e TestSubscribed) ToObject() *object.Object {
 
 func (e *TestSubscribed) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestSubscribed) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestSubscribed) FromObject(o *object.Object) error {
@@ -326,6 +358,10 @@ func (e *TestUnsubscribed) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestUnsubscribed) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestUnsubscribed) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestUnsubscribed",
@@ -338,6 +374,10 @@ func (e TestUnsubscribed) ToObject() *object.Object {
 
 func (e *TestUnsubscribed) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestUnsubscribed) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestUnsubscribed) FromObject(o *object.Object) error {
@@ -358,6 +398,10 @@ func (e *TestRequest) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestRequest) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestRequest",
@@ -371,6 +415,10 @@ func (e TestRequest) ToObject() *object.Object {
 
 func (e *TestRequest) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestRequest) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestRequest) FromObject(o *object.Object) error {
@@ -396,6 +444,10 @@ func (e *TestResponse) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *TestResponse) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TestResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/fixtures.TestResponse",
@@ -409,6 +461,10 @@ func (e TestResponse) ToObject() *object.Object {
 
 func (e *TestResponse) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TestResponse) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TestResponse) FromObject(o *object.Object) error {
@@ -434,6 +490,10 @@ func (e *Parent) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Parent) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Parent) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "parent",
@@ -442,21 +502,21 @@ func (e Parent) ToObject() *object.Object {
 	}
 	r.Data["foo"] = object.String(e.Foo)
 	if e.Child != nil {
-		v, err := e.Child.MarshalMap()
+		v, err := e.Child.MarshalObject()
 		if err != nil {
 			// TODO error
 		} else {
-			r.Data["child"] = object.Map(v)
+			r.Data["child"] = (v)
 		}
 	}
 	if len(e.RepeatedChild) > 0 {
-		rv := make(object.MapArray, len(e.RepeatedChild))
+		rv := make(object.ObjectArray, len(e.RepeatedChild))
 		for i, v := range e.RepeatedChild {
-			iv, err := v.MarshalMap()
+			iv, err := v.MarshalObject()
 			if err != nil {
 				// TODO error
 			} else {
-				rv[i] = object.Map(iv)
+				rv[i] = (iv)
 			}
 		}
 		r.Data["repeatedChild"] = rv
@@ -468,6 +528,10 @@ func (e *Parent) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
 }
 
+func (e *Parent) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
+}
+
 func (e *Parent) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["foo"]; ok {
@@ -476,9 +540,9 @@ func (e *Parent) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["child"]; ok {
-		if ev, ok := v.(object.Map); ok {
+		if ev, ok := v.(*object.Object); ok {
 			es := &Child{}
-			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+			if err := es.UnmarshalObject((ev)); err != nil {
 				// TODO error
 			} else {
 				e.Child = es
@@ -486,11 +550,11 @@ func (e *Parent) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["repeatedChild"]; ok {
-		if ev, ok := v.(object.MapArray); ok {
+		if ev, ok := v.(object.ObjectArray); ok {
 			e.RepeatedChild = make([]*Child, len(ev))
 			for i, iv := range ev {
 				es := &Child{}
-				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+				if err := es.UnmarshalObject((iv)); err != nil {
 					// TODO error
 				} else {
 					e.RepeatedChild[i] = es
@@ -509,6 +573,10 @@ func (e *Child) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Child) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Child) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "child",
@@ -521,6 +589,10 @@ func (e Child) ToObject() *object.Object {
 
 func (e *Child) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *Child) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Child) FromObject(o *object.Object) error {

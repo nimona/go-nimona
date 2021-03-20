@@ -23,6 +23,10 @@ func (e *Request) MarshalMap() (Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Request) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Request) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Request",
@@ -36,6 +40,10 @@ func (e Request) ToObject() *Object {
 
 func (e *Request) UnmarshalMap(m Map) error {
 	return e.FromObject(FromMap(m))
+}
+
+func (e *Request) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Request) FromObject(o *Object) error {
@@ -61,6 +69,10 @@ func (e *Response) MarshalMap() (Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Response) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Response) ToObject() *Object {
 	r := &Object{
 		Type:     "nimona.io/Response",
@@ -69,11 +81,11 @@ func (e Response) ToObject() *Object {
 	}
 	r.Data["requestID"] = String(e.RequestID)
 	if e.Object != nil {
-		v, err := e.Object.MarshalMap()
+		v, err := e.Object.MarshalObject()
 		if err != nil {
 			// TODO error
 		} else {
-			r.Data["object"] = Map(v)
+			r.Data["object"] = (v)
 		}
 	}
 	return r
@@ -81,6 +93,10 @@ func (e Response) ToObject() *Object {
 
 func (e *Response) UnmarshalMap(m Map) error {
 	return e.FromObject(FromMap(m))
+}
+
+func (e *Response) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
 }
 
 func (e *Response) FromObject(o *Object) error {
@@ -91,9 +107,9 @@ func (e *Response) FromObject(o *Object) error {
 		}
 	}
 	if v, ok := o.Data["object"]; ok {
-		if ev, ok := v.(Map); ok {
+		if ev, ok := v.(*Object); ok {
 			es := &Object{}
-			if err := es.UnmarshalMap(Map(ev)); err != nil {
+			if err := es.UnmarshalObject((ev)); err != nil {
 				// TODO error
 			} else {
 				e.Object = es

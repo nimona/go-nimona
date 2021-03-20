@@ -37,6 +37,10 @@ func (e *Announcement) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *Announcement) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e Announcement) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.Announcement",
@@ -45,11 +49,11 @@ func (e Announcement) ToObject() *object.Object {
 	}
 	r.Data["version"] = object.Int(e.Version)
 	if e.ConnectionInfo != nil {
-		v, err := e.ConnectionInfo.MarshalMap()
+		v, err := e.ConnectionInfo.MarshalObject()
 		if err != nil {
 			// TODO error
 		} else {
-			r.Data["connectionInfo"] = object.Map(v)
+			r.Data["connectionInfo"] = (v)
 		}
 	}
 	if len(e.PeerVector) > 0 {
@@ -73,6 +77,10 @@ func (e *Announcement) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
 }
 
+func (e *Announcement) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
+}
+
 func (e *Announcement) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["version"]; ok {
@@ -81,9 +89,9 @@ func (e *Announcement) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["connectionInfo"]; ok {
-		if ev, ok := v.(object.Map); ok {
+		if ev, ok := v.(*object.Object); ok {
 			es := &peer.ConnectionInfo{}
-			if err := es.UnmarshalMap(object.Map(ev)); err != nil {
+			if err := es.UnmarshalObject((ev)); err != nil {
 				// TODO error
 			} else {
 				e.ConnectionInfo = es
@@ -119,6 +127,10 @@ func (e *LookupRequest) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *LookupRequest) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e LookupRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupRequest",
@@ -145,6 +157,10 @@ func (e LookupRequest) ToObject() *object.Object {
 
 func (e *LookupRequest) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *LookupRequest) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *LookupRequest) FromObject(o *object.Object) error {
@@ -183,6 +199,10 @@ func (e *LookupResponse) MarshalMap() (object.Map, error) {
 	return e.ToObject().Map(), nil
 }
 
+func (e *LookupResponse) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e LookupResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/hyperspace.LookupResponse",
@@ -198,13 +218,13 @@ func (e LookupResponse) ToObject() *object.Object {
 		r.Data["queryVector"] = rv
 	}
 	if len(e.Announcements) > 0 {
-		rv := make(object.MapArray, len(e.Announcements))
+		rv := make(object.ObjectArray, len(e.Announcements))
 		for i, v := range e.Announcements {
-			iv, err := v.MarshalMap()
+			iv, err := v.MarshalObject()
 			if err != nil {
 				// TODO error
 			} else {
-				rv[i] = object.Map(iv)
+				rv[i] = (iv)
 			}
 		}
 		r.Data["announcements"] = rv
@@ -214,6 +234,10 @@ func (e LookupResponse) ToObject() *object.Object {
 
 func (e *LookupResponse) UnmarshalMap(m object.Map) error {
 	return e.FromObject(object.FromMap(m))
+}
+
+func (e *LookupResponse) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *LookupResponse) FromObject(o *object.Object) error {
@@ -233,11 +257,11 @@ func (e *LookupResponse) FromObject(o *object.Object) error {
 		}
 	}
 	if v, ok := o.Data["announcements"]; ok {
-		if ev, ok := v.(object.MapArray); ok {
+		if ev, ok := v.(object.ObjectArray); ok {
 			e.Announcements = make([]*Announcement, len(ev))
 			for i, iv := range ev {
 				es := &Announcement{}
-				if err := es.UnmarshalMap(object.Map(iv)); err != nil {
+				if err := es.UnmarshalObject((iv)); err != nil {
 					// TODO error
 				} else {
 					e.Announcements[i] = es

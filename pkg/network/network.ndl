@@ -6,7 +6,7 @@ import nimona.io/crypto crypto
 signed object nimona.io/network.DataForwardRequest {
     requestID string
     recipient string type=nimona.io/crypto.PublicKey
-    payload map type=nimona.io/object.Object
+    payload object type=nimona.io/object.Object
 }
 
 signed object nimona.io/network.DataForwardEnvelope {
