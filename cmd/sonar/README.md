@@ -22,25 +22,25 @@ Create three peers, one that will be a bootstrap peer.
 ```txt
 Peer 1 (bootstrap):
   * port: 17000
-  * private: bagacmacaslgzj7n6d4fwxs3by7nuqog45gwm5khjgtrm2eqpntui544swrlxc4cxrivfd2utkafyfkealenybtoxgsbqi5ow3wjfnj3iiyrmcuq
-  * public: bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja
+  * private: bagacnag4afafnpql33c4aezi6wqduwc45qd3evanoowrz66vjpapoz7zzmakbpnvq2jerpsoygzdincom76dovh7szmo5r5eug5atlk6tsf53hqyz4
+  * public: bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty
 
 Peer 2:
   * port: 17001
-  * private: bagacmacatzmnsq5kjjs2xmmhu6pnruu54uvmonpmjkpjd32sptnszpsejm6hyhbnffcrryogndoa2yhe2g4xcr7stib5w6yggu5yepqvz7mnzwi
-  * public: bahwqcabapqoc2kkfddq4m2g4bvqojunzofd7fgqd3n5qmnj3qi7blt6y3tmq
+  * private: bagacnag4afagf2gpy7rkgni3ytui7kkyfek2mnc25qru4hh35owk4mdkorc632bhv2mglq52q4n3yi6x4nehagak3p2tqjow5ss2zfttatri6xsdvm
+  * public: bahwqdag4aeqcpluymxb3vby3xqr5py2ioamavw7vhas5n3ffvslhgbhcr5pehky
 
 Peer 3:
   * port: 17002
-  * private: bagacmacaekai32qmxeol6thr5ml6vpym3mx74zlelifwdhw3smynevgv726mlqvzatc67d5apqkebqdxvggxrfx2ifyfkb53fftqnde5vlctx3i
-  * public: bahwqcabayxblsbgf56h2a7auidahpkmnpclpuqlqkud3wklha2gj3kwfhpwq
+  * private: bagacnag4afamw4hk6fk2yqr7fyug4cpf6fs6pzhkyttmwt4m27emmc76sdjcg6o7xfkyfrhw5gs3sx6r5aorj66xnveeo7wpeu456c4vsp3ga4z6ie
+  * public: bahwqdag4aeqn7okvqlcpn2nfxfp5d2a5ct55o3kii57m6jjz34fzle7wmbzt4qi
 ```
 
 ```sh
 NIMONA_LOG_LEVEL=error \
 NIMONA_UPNP_DISABLE=true \
 NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17000 \
-NIMONA_PEER_PRIVATE_KEY=bagacmacaslgzj7n6d4fwxs3by7nuqog45gwm5khjgtrm2eqpntui544swrlxc4cxrivfd2utkafyfkealenybtoxgsbqi5ow3wjfnj3iiyrmcuq \
+NIMONA_PEER_PRIVATE_KEY=bagacnag4afafnpql33c4aezi6wqduwc45qd3evanoowrz66vjpapoz7zzmakbpnvq2jerpsoygzdincom76dovh7szmo5r5eug5atlk6tsf53hqyz4 \
 go run ./cmd/bootstrap/main.go
 ```
 
@@ -48,9 +48,9 @@ go run ./cmd/bootstrap/main.go
 NIMONA_LOG_LEVEL=error \
 NIMONA_UPNP_DISABLE=true \
 NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17001 \
-NIMONA_PEER_PRIVATE_KEY=bagacmacatzmnsq5kjjs2xmmhu6pnruu54uvmonpmjkpjd32sptnszpsejm6hyhbnffcrryogndoa2yhe2g4xcr7stib5w6yggu5yepqvz7mnzwi \
-NIMONA_SONAR_PING_PEERS=bahwqcabayxblsbgf56h2a7auidahpkmnpclpuqlqkud3wklha2gj3kwfhpwq \
-NIMONA_PEER_BOOTSTRAPS=bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja@tcps:0.0.0.0:17000 \
+NIMONA_PEER_PRIVATE_KEY=bagacnag4afagf2gpy7rkgni3ytui7kkyfek2mnc25qru4hh35owk4mdkorc632bhv2mglq52q4n3yi6x4nehagak3p2tqjow5ss2zfttatri6xsdvm \
+NIMONA_SONAR_PING_PEERS=bahwqdag4aeqn7okvqlcpn2nfxfp5d2a5ct55o3kii57m6jjz34fzle7wmbzt4qi \
+NIMONA_PEER_BOOTSTRAPS=bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty@tcps:0.0.0.0:17000 \
 go run ./cmd/sonar/main.go
 ```
 
@@ -58,8 +58,8 @@ go run ./cmd/sonar/main.go
 NIMONA_LOG_LEVEL=error \
 NIMONA_UPNP_DISABLE=true \
 NIMONA_PEER_BIND_ADDRESS=0.0.0.0:17002 \
-NIMONA_PEER_PRIVATE_KEY=bagacmacaekai32qmxeol6thr5ml6vpym3mx74zlelifwdhw3smynevgv726mlqvzatc67d5apqkebqdxvggxrfx2ifyfkb53fftqnde5vlctx3i \
-NIMONA_SONAR_PING_PEERS=bahwqcabapqoc2kkfddq4m2g4bvqojunzofd7fgqd3n5qmnj3qi7blt6y3tmq \
-NIMONA_PEER_BOOTSTRAPS=bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja@tcps:0.0.0.0:17000 \
+NIMONA_PEER_PRIVATE_KEY=bagacnag4afamw4hk6fk2yqr7fyug4cpf6fs6pzhkyttmwt4m27emmc76sdjcg6o7xfkyfrhw5gs3sx6r5aorj66xnveeo7wpeu456c4vsp3ga4z6ie \
+NIMONA_SONAR_PING_PEERS=bahwqdag4aeqcpluymxb3vby3xqr5py2ioamavw7vhas5n3ffvslhgbhcr5pehky \
+NIMONA_PEER_BOOTSTRAPS=bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty@tcps:0.0.0.0:17000 \
 go run ./cmd/sonar/main.go
 ```
