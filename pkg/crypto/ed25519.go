@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 
 	"github.com/ipfs/go-cid"
@@ -23,28 +24,27 @@ import (
 
 type (
 	PublicKey struct {
-		t KeyType
-		a KeyAlgorithm
-		k ed25519.PublicKey
+		Type      KeyType
+		Algorithm KeyAlgorithm
+		RawKey    ed25519.PublicKey
 	}
 	PrivateKey struct {
-		t KeyType
-		a KeyAlgorithm
-		k ed25519.PrivateKey
-		p PublicKey
+		Type      KeyType
+		Algorithm KeyAlgorithm
+		RawKey    ed25519.PrivateKey
 	}
 )
 
-func (k PublicKey) Type() KeyType {
-	return k.t
-}
-
 func (k PublicKey) String() string {
-	return encodeToCID(uint64(k.a), uint64(k.t), k.k)
+	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
 }
 
 func (k PublicKey) MarshalString() (string, error) {
 	return k.String(), nil
+}
+
+func (k PublicKey) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
 }
 
 func (k *PublicKey) UnmarshalString(s string) error {
@@ -62,23 +62,31 @@ func (k *PublicKey) UnmarshalString(s string) error {
 		return err
 	}
 
-	k.a = Ed25519Public
-	k.k = ed25519.PublicKey(h.Digest)
-	k.t = KeyType(h.Code)
+	k.Algorithm = Ed25519Public
+	k.RawKey = ed25519.PublicKey(h.Digest)
+	k.Type = KeyType(h.Code)
 
 	return nil
 }
 
-func (k PrivateKey) Type() KeyType {
-	return k.t
+func (k *PublicKey) UnmarshalJSON(s []byte) error {
+	v := ""
+	if err := json.Unmarshal(s, &v); err != nil {
+		return err
+	}
+	return k.UnmarshalString(v)
 }
 
 func (k PrivateKey) String() string {
-	return encodeToCID(uint64(k.a), uint64(k.t), k.k)
+	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
 }
 
 func (k PrivateKey) MarshalString() (string, error) {
 	return k.String(), nil
+}
+
+func (k PrivateKey) MarshalJSON() ([]byte, error) {
+	return json.Marshal(k.String())
 }
 
 func (k *PrivateKey) UnmarshalString(s string) error {
@@ -96,19 +104,27 @@ func (k *PrivateKey) UnmarshalString(s string) error {
 		return err
 	}
 
-	k.a = Ed25519Private
-	k.k = ed25519.PrivateKey(h.Digest)
-	k.t = KeyType(h.Code)
-
-	k.p.a = Ed25519Public
-	k.p.k = k.k.Public().(ed25519.PublicKey)
-	k.p.t = KeyType(h.Code)
+	k.Algorithm = Ed25519Private
+	k.RawKey = ed25519.PrivateKey(h.Digest)
+	k.Type = KeyType(h.Code)
 
 	return nil
 }
 
+func (k *PrivateKey) UnmarshalJSON(s []byte) error {
+	v := ""
+	if err := json.Unmarshal(s, &v); err != nil {
+		return err
+	}
+	return k.UnmarshalString(v)
+}
+
 func (k PrivateKey) PublicKey() *PublicKey {
-	return &k.p
+	return &PublicKey{
+		Algorithm: Ed25519Public,
+		Type:      k.Type,
+		RawKey:    k.RawKey.Public().(ed25519.PublicKey),
+	}
 }
 
 func NewEd25519PrivateKey(keyType KeyType) (*PrivateKey, error) {
@@ -117,14 +133,9 @@ func NewEd25519PrivateKey(keyType KeyType) (*PrivateKey, error) {
 		return nil, err
 	}
 	return &PrivateKey{
-		a: Ed25519Private,
-		t: keyType,
-		k: k,
-		p: PublicKey{
-			a: Ed25519Public,
-			t: keyType,
-			k: k.Public().(ed25519.PublicKey),
-		},
+		Algorithm: Ed25519Private,
+		Type:      keyType,
+		RawKey:    k,
 	}, nil
 }
 
@@ -134,14 +145,9 @@ func NewEd25519PrivateKeyFromSeed(
 ) *PrivateKey {
 	b := ed25519.NewKeyFromSeed(seed)
 	return &PrivateKey{
-		a: Ed25519Private,
-		t: keyType,
-		k: b,
-		p: PublicKey{
-			a: Ed25519Public,
-			t: keyType,
-			k: b.Public().(ed25519.PublicKey),
-		},
+		Algorithm: Ed25519Private,
+		Type:      keyType,
+		RawKey:    b,
 	}
 }
 
@@ -150,9 +156,9 @@ func NewEd25519PublicKeyFromRaw(
 	keyType KeyType,
 ) *PublicKey {
 	return &PublicKey{
-		a: Ed25519Public,
-		t: keyType,
-		k: raw,
+		Algorithm: Ed25519Public,
+		Type:      keyType,
+		RawKey:    raw,
 	}
 }
 
@@ -179,11 +185,11 @@ func CalculateSharedKey(
 	priv *PrivateKey,
 	pub *PublicKey,
 ) ([]byte, error) {
-	if priv.a != Ed25519Private || pub.a != Ed25519Public {
+	if priv.Algorithm != Ed25519Private || pub.Algorithm != Ed25519Public {
 		return nil, ErrUnsupportedKeyAlgorithm
 	}
-	ca := privateEd25519KeyToCurve25519(priv.k)
-	cB := publicEd25519KeyToCurve25519(pub.k)
+	ca := privateEd25519KeyToCurve25519(priv.RawKey)
+	cB := publicEd25519KeyToCurve25519(pub.RawKey)
 	ss, err := curve25519.X25519(ca, cB)
 	if err != nil {
 		return nil, fmt.Errorf("error getting x25519, %w", err)
@@ -197,8 +203,8 @@ func NewSharedKey(
 	priv *PrivateKey,
 	pub *PublicKey,
 ) (*PrivateKey, []byte, error) {
-	ca := privateEd25519KeyToCurve25519(priv.k)
-	cB := publicEd25519KeyToCurve25519(pub.k)
+	ca := privateEd25519KeyToCurve25519(priv.RawKey)
+	cB := publicEd25519KeyToCurve25519(pub.RawKey)
 	ss, err := curve25519.X25519(ca, cB)
 	if err != nil {
 		return nil, nil, err
@@ -220,11 +226,11 @@ func CalculateEphemeralSharedKey(
 }
 
 func (k PrivateKey) Sign(message []byte) []byte {
-	return ed25519.Sign(k.k, message)
+	return ed25519.Sign(k.RawKey, message)
 }
 
 func (k PublicKey) Verify(message []byte, signature []byte) error {
-	ok := ed25519.Verify(k.k, message, signature)
+	ok := ed25519.Verify(k.RawKey, message, signature)
 	if !ok {
 		return ErrInvalidSignature
 	}
@@ -232,7 +238,7 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 }
 
 func (k PublicKey) Equals(w *PublicKey) bool {
-	return k.a == w.a && k.t == w.t && k.k.Equal(w.k)
+	return k.Algorithm == w.Algorithm && k.Type == w.Type && k.RawKey.Equal(w.RawKey)
 }
 
 func encodeToCID(cidCode, multihashCode uint64, raw []byte) string {

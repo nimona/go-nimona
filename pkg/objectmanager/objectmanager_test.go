@@ -185,7 +185,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient crypto.PublicKey,
+						recipient *crypto.PublicKey,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -244,7 +244,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient crypto.PublicKey,
+							recipient *crypto.PublicKey,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -585,7 +585,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient crypto.PublicKey,
+						recipient *crypto.PublicKey,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -649,7 +649,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient crypto.PublicKey,
+						recipient *crypto.PublicKey,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()

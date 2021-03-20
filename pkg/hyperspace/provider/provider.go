@@ -182,10 +182,23 @@ func (p *Provider) handlePeerLookup(
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.handlePeerLookup"),
-		log.String("e.sender", e.Sender.String()),
 		log.Any("q.vector", q.QueryVector),
-		log.Any("o.signer", e.Payload.Metadata.Signature.Signer),
 	)
+
+	if e.Sender != nil {
+		logger = logger.With(
+			log.String("e.sender", e.Sender.String()),
+		)
+	}
+
+	if e.Payload.Metadata.Signature.Signer != nil {
+		logger = logger.With(
+			log.String(
+				"o.signer",
+				e.Payload.Metadata.Signature.Signer.String(),
+			),
+		)
+	}
 
 	promIncRequestsCounter.Inc()
 

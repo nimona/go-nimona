@@ -11,8 +11,8 @@ import (
 
 // GenerateTLSCertificate for TLS serverset
 func GenerateTLSCertificate(privateKey *PrivateKey) (*tls.Certificate, error) {
-	k := privateKey.k
-	p := privateKey.PublicKey().k
+	k := privateKey.RawKey
+	p := privateKey.PublicKey().RawKey
 	now := time.Now()
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(now.Unix()),
