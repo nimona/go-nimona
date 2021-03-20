@@ -143,7 +143,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				local.GetPrimaryPeerKey().PublicKey(),
+				local.GetPrimaryPeerKey().PublicKey().String(),
 				env.Metadata.Owner,
 			)
 			if env.Metadata.Owner != nil {
@@ -204,7 +204,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.PublicKey.String(),
-				local.GetPrimaryPeerKey().PublicKey(),
+				local.GetPrimaryPeerKey().PublicKey().String(),
 			)
 			return nil
 		}
@@ -212,35 +212,24 @@ func main() {
 	}
 
 	go func() {
-		pingPeers := map[string]bool{} // [key]pinged
+		pingPeers := map[string]*crypto.PublicKey{} // [key]pinged
 		for _, p := range cfg.Sonar.PingPeers {
-			pingPeers[p.String()] = false
+			pingPeers[p.String()] = p
 		}
 		for {
 			time.Sleep(time.Second)
 			leftToPing := 0
-			for peerKey, pinged := range pingPeers {
-				if pinged {
-					continue
-				}
+			for k, peerKey := range pingPeers {
 				leftToPing++
-				k := &crypto.PublicKey{}
-				if err := k.UnmarshalString(peerKey); err != nil {
-					logger.Error(
-						"error unmarshaling key",
-						log.String("peerKey", peerKey),
-						log.Error(err),
-					)
-				}
-				if err := ping(k); err != nil {
+				if err := ping(peerKey); err != nil {
 					logger.Error(
 						"error trying to ping peer",
-						log.String("publicKey", peerKey),
+						log.String("publicKey", peerKey.String()),
 						log.Error(err),
 					)
 					continue
 				}
-				pingPeers[peerKey] = true
+				delete(pingPeers, k)
 			}
 			if leftToPing == 0 {
 				close(allPingsSent)
