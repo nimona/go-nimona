@@ -111,7 +111,7 @@ func New(opts ...Option) (*Config, error) {
 	}
 
 	if err := ioutil.WriteFile(fullPath, updateData, 0600); err != nil {
-		return nil, fmt.Errorf("error writting file, %w", err)
+		return nil, fmt.Errorf("error writing file, %w", err)
 	}
 
 	return cfg, nil
