@@ -26,6 +26,7 @@ require (
 	github.com/muesli/termenv v0.8.0
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.15
+	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.9.0

@@ -586,7 +586,6 @@ func (m *manager) handleObjectRequest(
 ) error {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "objectmanager.handleObjectRequest"),
-		log.String("env.Sender", env.Sender.String()),
 	)
 
 	req := &object.Request{}
@@ -805,11 +804,15 @@ func (m *manager) Put(
 ) (*object.Object, error) {
 	// if this is not ours, just persist it
 	owner := o.Metadata.Owner
-	ownPeer := owner == m.localpeer.GetPrimaryPeerKey().PublicKey()
+	ownPeer := false
 	ownIdentity := false
-	if k := m.localpeer.GetPrimaryIdentityKey(); k != nil {
-		ownIdentity = owner == m.localpeer.GetPrimaryIdentityKey().
-			PublicKey()
+	if owner != nil {
+		if k := m.localpeer.GetPrimaryPeerKey().PublicKey(); k != nil {
+			ownPeer = owner.Equals(k)
+		}
+		if k := m.localpeer.GetPrimaryIdentityKey(); k != nil {
+			ownIdentity = owner.Equals(k.PublicKey())
+		}
 	}
 	if !ownPeer && !ownIdentity {
 		// add to store

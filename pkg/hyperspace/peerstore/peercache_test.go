@@ -158,7 +158,7 @@ func TestPeerCache_Touch(t *testing.T) {
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.ConnectionInfo.PublicKey)
+	assert.True(t, opk.PublicKey().Equals(pr.ConnectionInfo.PublicKey))
 
 	time.Sleep(300 * time.Millisecond)
 
@@ -189,7 +189,7 @@ func TestPeerCache_TTL(t *testing.T) {
 
 	pr, err := pc.Get(opk.PublicKey())
 	assert.NoError(t, err)
-	assert.Equal(t, opk.PublicKey(), pr.ConnectionInfo.PublicKey)
+	assert.True(t, opk.PublicKey().Equals(pr.ConnectionInfo.PublicKey))
 
 	time.Sleep(900 * time.Millisecond)
 

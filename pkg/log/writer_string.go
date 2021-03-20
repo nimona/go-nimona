@@ -34,6 +34,9 @@ func StringWriter() Writer {
 		for _, field := range fields {
 			k := field.Key
 			v := field.Value
+			if v == nil {
+				continue
+			}
 			if k == "datetime" {
 				dt = v.(string)
 				continue

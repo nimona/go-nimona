@@ -96,7 +96,7 @@ func (m *PeerCache) Put(
 	ttl time.Duration,
 ) (updated bool) {
 	// check if we already have a newer announcement
-	pann, ok := m.m.Load(p.ConnectionInfo.PublicKey)
+	pann, ok := m.m.Load(p.ConnectionInfo.PublicKey.String())
 	// if the announcement is already know update it, but return that
 	// updated was false, this is done to renew the created attribute
 	updated = true
@@ -113,7 +113,7 @@ func (m *PeerCache) Put(
 	// increment the incoming peers counter
 	m.promIncPeersGauge.Inc()
 	// and finally store it
-	m.m.Store(p.ConnectionInfo.PublicKey, entry{
+	m.m.Store(p.ConnectionInfo.PublicKey.String(), entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
 		pr:        p,
@@ -124,12 +124,12 @@ func (m *PeerCache) Put(
 
 // Put -
 func (m *PeerCache) Touch(k *crypto.PublicKey, ttl time.Duration) {
-	v, ok := m.m.Load(k)
+	v, ok := m.m.Load(k.String())
 	if !ok {
 		return
 	}
 	e := v.(entry)
-	m.m.Store(k, entry{
+	m.m.Store(k.String(), entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
 		pr:        e.pr,
@@ -138,7 +138,7 @@ func (m *PeerCache) Touch(k *crypto.PublicKey, ttl time.Duration) {
 
 // Get -
 func (m *PeerCache) Get(k *crypto.PublicKey) (*hyperspace.Announcement, error) {
-	p, ok := m.m.Load(k)
+	p, ok := m.m.Load(k.String())
 	if !ok {
 		return nil, fmt.Errorf("missing")
 	}
@@ -147,7 +147,7 @@ func (m *PeerCache) Get(k *crypto.PublicKey) (*hyperspace.Announcement, error) {
 
 // Remove -
 func (m *PeerCache) Remove(k *crypto.PublicKey) {
-	m.m.Delete(k)
+	m.m.Delete(k.String())
 	m.promKnownPeersGauge.Dec()
 }
 

@@ -116,6 +116,9 @@ func (m *manager) GetConnection(
 func (m *manager) CloseConnection(
 	conn *net.Connection,
 ) {
+	if conn == nil {
+		return
+	}
 	pbox := m.getPeerbox(conn.RemotePeerKey)
 	m.removeConnection(pbox, conn.ID)
 }

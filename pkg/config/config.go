@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -54,24 +55,24 @@ func New(opts ...Option) (*Config, error) {
 	}
 
 	if err := os.MkdirAll(cfg.Path, 0700); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating directory, %w", err)
 	}
 
 	fullPath := filepath.Join(cfg.Path, cfg.defaultConfigFilename)
 
 	configFile, err := os.OpenFile(fullPath, os.O_CREATE, 0600)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file, %w", err)
 	}
 
 	data, err := ioutil.ReadAll(configFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading file, %w", err)
 	}
 
 	if len(data) != 0 {
 		if err := json.Unmarshal(data, cfg); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshaling file, %w", err)
 		}
 		for k, r := range cfg.Extras {
 			target, ok := cfg.extras[k]
@@ -79,7 +80,7 @@ func New(opts ...Option) (*Config, error) {
 				continue
 			}
 			if err := json.Unmarshal(r, target); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error unmarshaling extras, %w", err)
 			}
 		}
 	}
@@ -89,28 +90,28 @@ func New(opts ...Option) (*Config, error) {
 	for k, r := range cfg.extras {
 		data, err := json.MarshalIndent(r, "", "  ")
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error marshaling extras, %w", err)
 		}
 		cfg.Extras[strcase.LowerCamelCase(k)] = data
 	}
 
 	updateData, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error marshaling config, %w", err)
 	}
 
 	if err := envconfig.Process("nimona", cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error processing env vars, %w", err)
 	}
 
 	for k, r := range cfg.extras {
 		if err := envconfig.Process("nimona_"+k, r); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error processing extra env vars, %w", err)
 		}
 	}
 
 	if err := ioutil.WriteFile(fullPath, updateData, 0600); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error writting file, %w", err)
 	}
 
 	return cfg, nil
