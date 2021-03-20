@@ -662,7 +662,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			}
 
 			// if the data are encrypted we should first decrypt them
-			if fwd.Sender == nil {
+			if fwd.Sender != nil {
 				ss, err := crypto.CalculateSharedKey(
 					w.localpeer.GetPrimaryPeerKey(),
 					fwd.Sender,
@@ -812,7 +812,10 @@ func signAll(k *crypto.PrivateKey, o *object.Object) (*object.Object, error) {
 		if !nObj.Metadata.Signature.IsEmpty() {
 			return true
 		}
-		if nObj.Metadata.Owner != k.PublicKey() {
+		if nObj.Metadata.Owner == nil {
+			return true
+		}
+		if !nObj.Metadata.Owner.Equals(k.PublicKey()) {
 			return true
 		}
 		sig, err := object.NewSignature(k, nObj)

@@ -306,7 +306,7 @@ func Test_exchange_signAll(t *testing.T) {
 		o := &object.Object{
 			Type: "foo",
 			Data: object.Map{
-				"foo:m": n,
+				"foo": n,
 			},
 		}
 
@@ -316,7 +316,7 @@ func Test_exchange_signAll(t *testing.T) {
 		assert.True(t, g.Metadata.Signature.IsEmpty())
 		assert.Nil(t, g.Metadata.Signature.Signer)
 
-		gn := g.Data["foo:m"].(*object.Object)
+		gn := g.Data["foo"].(*object.Object)
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
 		assert.NotNil(t, gn.Metadata.Signature.Signer)
 	})
