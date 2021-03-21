@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616173888594,
+  "lastUpdate": 1616367316682,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4326,6 +4326,54 @@ window.BENCHMARK_DATA = {
             "value": 16420,
             "unit": "ns/op",
             "extra": "72679 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "152113c9912718f4697f56cc7f8d1744973b9570",
+          "message": "fix(tools/codegen): fix nested object support",
+          "timestamp": "2021-03-21T22:53:36Z",
+          "tree_id": "9c5f307bada5d0cc365279be5b0c78da68dd9bf4",
+          "url": "https://github.com/nimona/go-nimona/commit/152113c9912718f4697f56cc7f8d1744973b9570"
+        },
+        "date": 1616367315890,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4626228,
+            "unit": "ns/op",
+            "extra": "250 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 388926110,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3988238697,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15184,
+            "unit": "ns/op",
+            "extra": "75498 times\n2 procs"
           }
         ]
       }
