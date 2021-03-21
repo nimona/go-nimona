@@ -258,9 +258,9 @@ func newFileTransfer(
 	// make sure we have some bootstrap peers to start with
 	if len(cfg.nconf.Peer.Bootstraps) == 0 {
 		cfg.nconf.Peer.Bootstraps = []peer.Shorthand{
-			"bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq@tcps:asimov.bootstrap.nimona.io:22581",
-			"bahwqcabarcrxtiaha3uq25gvntnqb6uokgdp442dysocya42ckiugohxmqkq@tcps:egan.bootstrap.nimona.io:22581",
-			"bahwqcabafguo2axx2ydpk5mrjlrsjw2rjwo34uzzr6kvtfb6cevx72q5t4bq@tcps:sloan.bootstrap.nimona.io:22581",
+			"bahwqdag4aeqewwlutsgr7kv2iaqsrnppbdcmyykpckqn5uaqczae6fergklclea@tcps:asimov.bootstrap.nimona.io:22581",
+			"bahwqdag4aeqomor45il7jjxlox7y5aj6cigawcljgsfftytwf6ulrpfqtiuzsya@tcps:egan.bootstrap.nimona.io:22581",
+			"bahwqdag4aeqm5gkdk7dlbzke6wgc7rkm67cnqiv2jctfoxoo3vjmbdpjt5qi6za@tcps:sloan.bootstrap.nimona.io:22581",
 		}
 	}
 
