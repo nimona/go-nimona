@@ -26,7 +26,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 139239,
             "unit": "ns/op",
             "extra": "8443 times\n2 procs"
@@ -62,7 +62,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 140312,
             "unit": "ns/op",
             "extra": "8456 times\n2 procs"
@@ -98,7 +98,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 141862,
             "unit": "ns/op",
             "extra": "8306 times\n2 procs"
@@ -134,7 +134,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 124014,
             "unit": "ns/op",
             "extra": "9220 times\n2 procs"
@@ -170,7 +170,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 142555,
             "unit": "ns/op",
             "extra": "7761 times\n2 procs"
@@ -206,7 +206,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 115383,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
@@ -242,7 +242,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 111859,
             "unit": "ns/op",
             "extra": "9919 times\n2 procs"
@@ -278,7 +278,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 137230,
             "unit": "ns/op",
             "extra": "7779 times\n2 procs"
@@ -314,7 +314,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 142750,
             "unit": "ns/op",
             "extra": "8154 times\n2 procs"
@@ -350,7 +350,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 117121,
             "unit": "ns/op",
             "extra": "9495 times\n2 procs"
@@ -386,7 +386,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 115360,
             "unit": "ns/op",
             "extra": "9890 times\n2 procs"
@@ -422,7 +422,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 119060,
             "unit": "ns/op",
             "extra": "9609 times\n2 procs"
@@ -458,7 +458,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 112823,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
@@ -494,7 +494,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 96342,
             "unit": "ns/op",
             "extra": "12531 times\n2 procs"
@@ -530,7 +530,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 115639,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
@@ -566,7 +566,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 96007,
             "unit": "ns/op",
             "extra": "12346 times\n2 procs"
@@ -602,7 +602,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 54567,
             "unit": "ns/op",
             "extra": "22455 times\n2 procs"
@@ -638,7 +638,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 57134,
             "unit": "ns/op",
             "extra": "20839 times\n2 procs"
@@ -674,7 +674,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 49286,
             "unit": "ns/op",
             "extra": "24123 times\n2 procs"
@@ -710,7 +710,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 55188,
             "unit": "ns/op",
             "extra": "21632 times\n2 procs"
@@ -746,7 +746,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 52288,
             "unit": "ns/op",
             "extra": "23910 times\n2 procs"
@@ -782,7 +782,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 61064,
             "unit": "ns/op",
             "extra": "19706 times\n2 procs"
@@ -818,7 +818,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 57753,
             "unit": "ns/op",
             "extra": "19910 times\n2 procs"
@@ -854,7 +854,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48750,
             "unit": "ns/op",
             "extra": "25068 times\n2 procs"
@@ -890,7 +890,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 55280,
             "unit": "ns/op",
             "extra": "20871 times\n2 procs"
@@ -926,7 +926,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 47436,
             "unit": "ns/op",
             "extra": "23649 times\n2 procs"
@@ -962,7 +962,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 55430,
             "unit": "ns/op",
             "extra": "20830 times\n2 procs"
@@ -998,7 +998,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 56323,
             "unit": "ns/op",
             "extra": "21794 times\n2 procs"
@@ -1034,7 +1034,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58217,
             "unit": "ns/op",
             "extra": "20665 times\n2 procs"
@@ -1070,7 +1070,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58146,
             "unit": "ns/op",
             "extra": "20688 times\n2 procs"
@@ -1106,7 +1106,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 60018,
             "unit": "ns/op",
             "extra": "20010 times\n2 procs"
@@ -1142,7 +1142,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 55412,
             "unit": "ns/op",
             "extra": "21175 times\n2 procs"
@@ -1178,7 +1178,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 59810,
             "unit": "ns/op",
             "extra": "20038 times\n2 procs"
@@ -1214,7 +1214,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 57512,
             "unit": "ns/op",
             "extra": "20469 times\n2 procs"
@@ -1250,7 +1250,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58700,
             "unit": "ns/op",
             "extra": "20218 times\n2 procs"
@@ -1286,7 +1286,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 47981,
             "unit": "ns/op",
             "extra": "24966 times\n2 procs"
@@ -1322,7 +1322,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58637,
             "unit": "ns/op",
             "extra": "19719 times\n2 procs"
@@ -1358,7 +1358,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 59764,
             "unit": "ns/op",
             "extra": "20056 times\n2 procs"
@@ -1394,7 +1394,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 59103,
             "unit": "ns/op",
             "extra": "20046 times\n2 procs"
@@ -1430,7 +1430,7 @@ window.BENCHMARK_DATA = {
         "tool": "go",
         "benches": [
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58384,
             "unit": "ns/op",
             "extra": "20481 times\n2 procs"
@@ -1484,7 +1484,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 53132,
             "unit": "ns/op",
             "extra": "21400 times\n2 procs"
@@ -1538,7 +1538,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48623,
             "unit": "ns/op",
             "extra": "24574 times\n2 procs"
@@ -1592,7 +1592,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48193,
             "unit": "ns/op",
             "extra": "24594 times\n2 procs"
@@ -1646,7 +1646,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 58918,
             "unit": "ns/op",
             "extra": "20592 times\n2 procs"
@@ -1700,7 +1700,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 52625,
             "unit": "ns/op",
             "extra": "23583 times\n2 procs"
@@ -1754,7 +1754,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 47995,
             "unit": "ns/op",
             "extra": "24876 times\n2 procs"
@@ -1808,7 +1808,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 57647,
             "unit": "ns/op",
             "extra": "21106 times\n2 procs"
@@ -1862,7 +1862,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 60367,
             "unit": "ns/op",
             "extra": "19040 times\n2 procs"
@@ -1916,7 +1916,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48899,
             "unit": "ns/op",
             "extra": "24518 times\n2 procs"
@@ -1970,7 +1970,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 55655,
             "unit": "ns/op",
             "extra": "20344 times\n2 procs"
@@ -2024,7 +2024,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 50460,
             "unit": "ns/op",
             "extra": "24188 times\n2 procs"
@@ -2078,7 +2078,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 53469,
             "unit": "ns/op",
             "extra": "22784 times\n2 procs"
@@ -2132,7 +2132,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 47781,
             "unit": "ns/op",
             "extra": "25066 times\n2 procs"
@@ -2186,7 +2186,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48472,
             "unit": "ns/op",
             "extra": "24462 times\n2 procs"
@@ -2240,7 +2240,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 48181,
             "unit": "ns/op",
             "extra": "24811 times\n2 procs"
@@ -2294,7 +2294,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 56518,
             "unit": "ns/op",
             "extra": "21088 times\n2 procs"
@@ -2348,7 +2348,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 57247,
             "unit": "ns/op",
             "extra": "20793 times\n2 procs"
@@ -2402,7 +2402,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 13991,
             "unit": "ns/op",
             "extra": "83422 times\n2 procs"
@@ -2450,7 +2450,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 14776,
             "unit": "ns/op",
             "extra": "79922 times\n2 procs"
@@ -2498,7 +2498,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 16458,
             "unit": "ns/op",
             "extra": "71863 times\n2 procs"
@@ -2546,7 +2546,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 17211,
             "unit": "ns/op",
             "extra": "71337 times\n2 procs"
@@ -2594,7 +2594,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15701,
             "unit": "ns/op",
             "extra": "75132 times\n2 procs"
@@ -2642,7 +2642,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15694,
             "unit": "ns/op",
             "extra": "73794 times\n2 procs"
@@ -2690,7 +2690,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 16307,
             "unit": "ns/op",
             "extra": "75950 times\n2 procs"
@@ -2738,7 +2738,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 16760,
             "unit": "ns/op",
             "extra": "72477 times\n2 procs"
@@ -2786,7 +2786,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15833,
             "unit": "ns/op",
             "extra": "75092 times\n2 procs"
@@ -2834,7 +2834,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15775,
             "unit": "ns/op",
             "extra": "74426 times\n2 procs"
@@ -2882,7 +2882,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 13729,
             "unit": "ns/op",
             "extra": "85657 times\n2 procs"
@@ -2930,7 +2930,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 16351,
             "unit": "ns/op",
             "extra": "75063 times\n2 procs"
@@ -2978,7 +2978,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15991,
             "unit": "ns/op",
             "extra": "75013 times\n2 procs"
@@ -3026,7 +3026,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 16138,
             "unit": "ns/op",
             "extra": "69027 times\n2 procs"
@@ -3074,7 +3074,7 @@ window.BENCHMARK_DATA = {
             "extra": "1 times\n2 procs"
           },
           {
-            "name": "BenchmarkHash",
+            "name": "BenchmarkCID",
             "value": 15649,
             "unit": "ns/op",
             "extra": "74278 times\n2 procs"
