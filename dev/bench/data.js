@@ -30,12 +30,6 @@ window.BENCHMARK_DATA = {
             "value": 139239,
             "unit": "ns/op",
             "extra": "8443 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 83.9,
-            "unit": "ns/op",
-            "extra": "14145715 times\n2 procs"
           }
         ]
       },
@@ -66,12 +60,6 @@ window.BENCHMARK_DATA = {
             "value": 140312,
             "unit": "ns/op",
             "extra": "8456 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 91.6,
-            "unit": "ns/op",
-            "extra": "13436479 times\n2 procs"
           }
         ]
       },
@@ -102,12 +90,6 @@ window.BENCHMARK_DATA = {
             "value": 141862,
             "unit": "ns/op",
             "extra": "8306 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 97.2,
-            "unit": "ns/op",
-            "extra": "13403028 times\n2 procs"
           }
         ]
       },
@@ -138,12 +120,6 @@ window.BENCHMARK_DATA = {
             "value": 124014,
             "unit": "ns/op",
             "extra": "9220 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 73.8,
-            "unit": "ns/op",
-            "extra": "15869284 times\n2 procs"
           }
         ]
       },
@@ -174,12 +150,6 @@ window.BENCHMARK_DATA = {
             "value": 142555,
             "unit": "ns/op",
             "extra": "7761 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 88.2,
-            "unit": "ns/op",
-            "extra": "12715318 times\n2 procs"
           }
         ]
       },
@@ -210,12 +180,6 @@ window.BENCHMARK_DATA = {
             "value": 115383,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 74.2,
-            "unit": "ns/op",
-            "extra": "16424238 times\n2 procs"
           }
         ]
       },
@@ -246,12 +210,6 @@ window.BENCHMARK_DATA = {
             "value": 111859,
             "unit": "ns/op",
             "extra": "9919 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68,
-            "unit": "ns/op",
-            "extra": "18657666 times\n2 procs"
           }
         ]
       },
@@ -282,12 +240,6 @@ window.BENCHMARK_DATA = {
             "value": 137230,
             "unit": "ns/op",
             "extra": "7779 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 82,
-            "unit": "ns/op",
-            "extra": "14180936 times\n2 procs"
           }
         ]
       },
@@ -318,12 +270,6 @@ window.BENCHMARK_DATA = {
             "value": 142750,
             "unit": "ns/op",
             "extra": "8154 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 94.6,
-            "unit": "ns/op",
-            "extra": "12480988 times\n2 procs"
           }
         ]
       },
@@ -354,12 +300,6 @@ window.BENCHMARK_DATA = {
             "value": 117121,
             "unit": "ns/op",
             "extra": "9495 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 87.4,
-            "unit": "ns/op",
-            "extra": "14045331 times\n2 procs"
           }
         ]
       },
@@ -390,12 +330,6 @@ window.BENCHMARK_DATA = {
             "value": 115360,
             "unit": "ns/op",
             "extra": "9890 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 87.6,
-            "unit": "ns/op",
-            "extra": "14409523 times\n2 procs"
           }
         ]
       },
@@ -426,12 +360,6 @@ window.BENCHMARK_DATA = {
             "value": 119060,
             "unit": "ns/op",
             "extra": "9609 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 85.9,
-            "unit": "ns/op",
-            "extra": "14116321 times\n2 procs"
           }
         ]
       },
@@ -462,12 +390,6 @@ window.BENCHMARK_DATA = {
             "value": 112823,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 80.7,
-            "unit": "ns/op",
-            "extra": "14959828 times\n2 procs"
           }
         ]
       },
@@ -498,12 +420,6 @@ window.BENCHMARK_DATA = {
             "value": 96342,
             "unit": "ns/op",
             "extra": "12531 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68.4,
-            "unit": "ns/op",
-            "extra": "16240178 times\n2 procs"
           }
         ]
       },
@@ -534,12 +450,6 @@ window.BENCHMARK_DATA = {
             "value": 115639,
             "unit": "ns/op",
             "extra": "10000 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 80.2,
-            "unit": "ns/op",
-            "extra": "14840221 times\n2 procs"
           }
         ]
       },
@@ -570,12 +480,6 @@ window.BENCHMARK_DATA = {
             "value": 96007,
             "unit": "ns/op",
             "extra": "12346 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 70,
-            "unit": "ns/op",
-            "extra": "17557342 times\n2 procs"
           }
         ]
       },
@@ -606,12 +510,6 @@ window.BENCHMARK_DATA = {
             "value": 54567,
             "unit": "ns/op",
             "extra": "22455 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 80.8,
-            "unit": "ns/op",
-            "extra": "14377492 times\n2 procs"
           }
         ]
       },
@@ -642,12 +540,6 @@ window.BENCHMARK_DATA = {
             "value": 57134,
             "unit": "ns/op",
             "extra": "20839 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 90.3,
-            "unit": "ns/op",
-            "extra": "13337673 times\n2 procs"
           }
         ]
       },
@@ -678,12 +570,6 @@ window.BENCHMARK_DATA = {
             "value": 49286,
             "unit": "ns/op",
             "extra": "24123 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 72.1,
-            "unit": "ns/op",
-            "extra": "15703045 times\n2 procs"
           }
         ]
       },
@@ -714,12 +600,6 @@ window.BENCHMARK_DATA = {
             "value": 55188,
             "unit": "ns/op",
             "extra": "21632 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 87.6,
-            "unit": "ns/op",
-            "extra": "13712721 times\n2 procs"
           }
         ]
       },
@@ -750,12 +630,6 @@ window.BENCHMARK_DATA = {
             "value": 52288,
             "unit": "ns/op",
             "extra": "23910 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 70.6,
-            "unit": "ns/op",
-            "extra": "17265192 times\n2 procs"
           }
         ]
       },
@@ -786,12 +660,6 @@ window.BENCHMARK_DATA = {
             "value": 61064,
             "unit": "ns/op",
             "extra": "19706 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 90.6,
-            "unit": "ns/op",
-            "extra": "13230169 times\n2 procs"
           }
         ]
       },
@@ -822,12 +690,6 @@ window.BENCHMARK_DATA = {
             "value": 57753,
             "unit": "ns/op",
             "extra": "19910 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 91.5,
-            "unit": "ns/op",
-            "extra": "11533020 times\n2 procs"
           }
         ]
       },
@@ -858,12 +720,6 @@ window.BENCHMARK_DATA = {
             "value": 48750,
             "unit": "ns/op",
             "extra": "25068 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 75,
-            "unit": "ns/op",
-            "extra": "17077969 times\n2 procs"
           }
         ]
       },
@@ -894,12 +750,6 @@ window.BENCHMARK_DATA = {
             "value": 55280,
             "unit": "ns/op",
             "extra": "20871 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 81,
-            "unit": "ns/op",
-            "extra": "14819409 times\n2 procs"
           }
         ]
       },
@@ -930,12 +780,6 @@ window.BENCHMARK_DATA = {
             "value": 47436,
             "unit": "ns/op",
             "extra": "23649 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 71.4,
-            "unit": "ns/op",
-            "extra": "17282619 times\n2 procs"
           }
         ]
       },
@@ -966,12 +810,6 @@ window.BENCHMARK_DATA = {
             "value": 55430,
             "unit": "ns/op",
             "extra": "20830 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 84.5,
-            "unit": "ns/op",
-            "extra": "12018391 times\n2 procs"
           }
         ]
       },
@@ -1002,12 +840,6 @@ window.BENCHMARK_DATA = {
             "value": 56323,
             "unit": "ns/op",
             "extra": "21794 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 81.7,
-            "unit": "ns/op",
-            "extra": "15172780 times\n2 procs"
           }
         ]
       },
@@ -1038,12 +870,6 @@ window.BENCHMARK_DATA = {
             "value": 58217,
             "unit": "ns/op",
             "extra": "20665 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 87.5,
-            "unit": "ns/op",
-            "extra": "12764550 times\n2 procs"
           }
         ]
       },
@@ -1074,12 +900,6 @@ window.BENCHMARK_DATA = {
             "value": 58146,
             "unit": "ns/op",
             "extra": "20688 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 85.4,
-            "unit": "ns/op",
-            "extra": "14612419 times\n2 procs"
           }
         ]
       },
@@ -1110,12 +930,6 @@ window.BENCHMARK_DATA = {
             "value": 60018,
             "unit": "ns/op",
             "extra": "20010 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 88,
-            "unit": "ns/op",
-            "extra": "13562769 times\n2 procs"
           }
         ]
       },
@@ -1146,12 +960,6 @@ window.BENCHMARK_DATA = {
             "value": 55412,
             "unit": "ns/op",
             "extra": "21175 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 83.9,
-            "unit": "ns/op",
-            "extra": "14654343 times\n2 procs"
           }
         ]
       },
@@ -1182,12 +990,6 @@ window.BENCHMARK_DATA = {
             "value": 59810,
             "unit": "ns/op",
             "extra": "20038 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 92.3,
-            "unit": "ns/op",
-            "extra": "12489537 times\n2 procs"
           }
         ]
       },
@@ -1218,12 +1020,6 @@ window.BENCHMARK_DATA = {
             "value": 57512,
             "unit": "ns/op",
             "extra": "20469 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 85.6,
-            "unit": "ns/op",
-            "extra": "14546889 times\n2 procs"
           }
         ]
       },
@@ -1254,12 +1050,6 @@ window.BENCHMARK_DATA = {
             "value": 58700,
             "unit": "ns/op",
             "extra": "20218 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 89.3,
-            "unit": "ns/op",
-            "extra": "12043248 times\n2 procs"
           }
         ]
       },
@@ -1290,12 +1080,6 @@ window.BENCHMARK_DATA = {
             "value": 47981,
             "unit": "ns/op",
             "extra": "24966 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68.6,
-            "unit": "ns/op",
-            "extra": "17550364 times\n2 procs"
           }
         ]
       },
@@ -1326,12 +1110,6 @@ window.BENCHMARK_DATA = {
             "value": 58637,
             "unit": "ns/op",
             "extra": "19719 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 83.9,
-            "unit": "ns/op",
-            "extra": "12379933 times\n2 procs"
           }
         ]
       },
@@ -1362,12 +1140,6 @@ window.BENCHMARK_DATA = {
             "value": 59764,
             "unit": "ns/op",
             "extra": "20056 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 90.2,
-            "unit": "ns/op",
-            "extra": "13567424 times\n2 procs"
           }
         ]
       },
@@ -1398,12 +1170,6 @@ window.BENCHMARK_DATA = {
             "value": 59103,
             "unit": "ns/op",
             "extra": "20046 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 86,
-            "unit": "ns/op",
-            "extra": "13651807 times\n2 procs"
           }
         ]
       },
@@ -1434,12 +1200,6 @@ window.BENCHMARK_DATA = {
             "value": 58384,
             "unit": "ns/op",
             "extra": "20481 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 93.4,
-            "unit": "ns/op",
-            "extra": "12594219 times\n2 procs"
           }
         ]
       },
@@ -1488,12 +1248,6 @@ window.BENCHMARK_DATA = {
             "value": 53132,
             "unit": "ns/op",
             "extra": "21400 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 79.1,
-            "unit": "ns/op",
-            "extra": "13416111 times\n2 procs"
           }
         ]
       },
@@ -1542,12 +1296,6 @@ window.BENCHMARK_DATA = {
             "value": 48623,
             "unit": "ns/op",
             "extra": "24574 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68.3,
-            "unit": "ns/op",
-            "extra": "17444816 times\n2 procs"
           }
         ]
       },
@@ -1596,12 +1344,6 @@ window.BENCHMARK_DATA = {
             "value": 48193,
             "unit": "ns/op",
             "extra": "24594 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 69.5,
-            "unit": "ns/op",
-            "extra": "17413501 times\n2 procs"
           }
         ]
       },
@@ -1650,12 +1392,6 @@ window.BENCHMARK_DATA = {
             "value": 58918,
             "unit": "ns/op",
             "extra": "20592 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 87.5,
-            "unit": "ns/op",
-            "extra": "13459050 times\n2 procs"
           }
         ]
       },
@@ -1704,12 +1440,6 @@ window.BENCHMARK_DATA = {
             "value": 52625,
             "unit": "ns/op",
             "extra": "23583 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 83.3,
-            "unit": "ns/op",
-            "extra": "14489160 times\n2 procs"
           }
         ]
       },
@@ -1758,12 +1488,6 @@ window.BENCHMARK_DATA = {
             "value": 47995,
             "unit": "ns/op",
             "extra": "24876 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68.8,
-            "unit": "ns/op",
-            "extra": "17602735 times\n2 procs"
           }
         ]
       },
@@ -1812,12 +1536,6 @@ window.BENCHMARK_DATA = {
             "value": 57647,
             "unit": "ns/op",
             "extra": "21106 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 85.4,
-            "unit": "ns/op",
-            "extra": "12851685 times\n2 procs"
           }
         ]
       },
@@ -1866,12 +1584,6 @@ window.BENCHMARK_DATA = {
             "value": 60367,
             "unit": "ns/op",
             "extra": "19040 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 86.8,
-            "unit": "ns/op",
-            "extra": "12702782 times\n2 procs"
           }
         ]
       },
@@ -1920,12 +1632,6 @@ window.BENCHMARK_DATA = {
             "value": 48899,
             "unit": "ns/op",
             "extra": "24518 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 69.3,
-            "unit": "ns/op",
-            "extra": "17155363 times\n2 procs"
           }
         ]
       },
@@ -1974,12 +1680,6 @@ window.BENCHMARK_DATA = {
             "value": 55655,
             "unit": "ns/op",
             "extra": "20344 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 90.3,
-            "unit": "ns/op",
-            "extra": "14142988 times\n2 procs"
           }
         ]
       },
@@ -2028,12 +1728,6 @@ window.BENCHMARK_DATA = {
             "value": 50460,
             "unit": "ns/op",
             "extra": "24188 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 73.6,
-            "unit": "ns/op",
-            "extra": "17467362 times\n2 procs"
           }
         ]
       },
@@ -2082,12 +1776,6 @@ window.BENCHMARK_DATA = {
             "value": 53469,
             "unit": "ns/op",
             "extra": "22784 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 75.5,
-            "unit": "ns/op",
-            "extra": "15291882 times\n2 procs"
           }
         ]
       },
@@ -2136,12 +1824,6 @@ window.BENCHMARK_DATA = {
             "value": 47781,
             "unit": "ns/op",
             "extra": "25066 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 67.8,
-            "unit": "ns/op",
-            "extra": "17715807 times\n2 procs"
           }
         ]
       },
@@ -2190,12 +1872,6 @@ window.BENCHMARK_DATA = {
             "value": 48472,
             "unit": "ns/op",
             "extra": "24462 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 69.5,
-            "unit": "ns/op",
-            "extra": "17169115 times\n2 procs"
           }
         ]
       },
@@ -2244,12 +1920,6 @@ window.BENCHMARK_DATA = {
             "value": 48181,
             "unit": "ns/op",
             "extra": "24811 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 68.3,
-            "unit": "ns/op",
-            "extra": "17609242 times\n2 procs"
           }
         ]
       },
@@ -2298,12 +1968,6 @@ window.BENCHMARK_DATA = {
             "value": 56518,
             "unit": "ns/op",
             "extra": "21088 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 86.3,
-            "unit": "ns/op",
-            "extra": "14097265 times\n2 procs"
           }
         ]
       },
@@ -2352,12 +2016,6 @@ window.BENCHMARK_DATA = {
             "value": 57247,
             "unit": "ns/op",
             "extra": "20793 times\n2 procs"
-          },
-          {
-            "name": "BenchmarkEncode",
-            "value": 81.6,
-            "unit": "ns/op",
-            "extra": "15272563 times\n2 procs"
           }
         ]
       },
