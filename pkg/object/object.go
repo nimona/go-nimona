@@ -2,12 +2,6 @@ package object
 
 import (
 	"encoding/json"
-
-	"nimona.io/pkg/errors"
-)
-
-const (
-	ErrSourceNotSupported = errors.Error("encoding source not supported")
 )
 
 type (
@@ -16,6 +10,7 @@ type (
 	}
 	// Object
 	Object struct {
+		Context  string
 		Type     string
 		Metadata Metadata
 		Data     Map
@@ -24,18 +19,21 @@ type (
 
 // TODO: Deprecate
 func (o Object) Map() Map {
-	r := Map{}
+	m := Map{}
+	for k, v := range o.Data {
+		m[k] = v
+	}
+	if o.Context != "" {
+		m["@context"] = String(o.Context)
+	}
 	if o.Type != "" {
-		r["type"] = String(o.Type)
+		m["@type"] = String(o.Type)
 	}
 	mm := o.Metadata.Map()
 	if len(mm) > 0 {
-		r["metadata"] = o.Metadata.Map()
+		m["@metadata"] = o.Metadata.Map()
 	}
-	if len(o.Data) > 0 {
-		r["data"] = o.Data
-	}
-	return r
+	return m
 }
 
 // TODO: Deprecate
@@ -56,22 +54,7 @@ func (o *Object) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
-	if t, ok := m["type"]; ok {
-		if s, ok := t.(String); ok {
-			o.Type = string(s)
-		}
-	}
-	if t, ok := m["metadata"]; ok {
-		if s, ok := t.(Map); ok {
-			o.Metadata = MetadataFromMap(s)
-		}
-	}
-	if t, ok := m["data"]; ok {
-		if s, ok := t.(Map); ok {
-			o.Data = s
-		}
-	}
-	return nil
+	return o.UnmarshalMap(m)
 }
 
 func (o Object) MarshalJSON() ([]byte, error) {
@@ -86,42 +69,32 @@ func (o *Object) UnmarshalObject(n *Object) error {
 }
 
 func (o *Object) UnmarshalMap(m Map) error {
-	if t, ok := m["type"]; ok {
+	if t, ok := m["@context"]; ok {
+		if s, ok := t.(String); ok {
+			o.Context = string(s)
+			delete(m, "@context")
+		}
+	}
+	if t, ok := m["@type"]; ok {
 		if s, ok := t.(String); ok {
 			o.Type = string(s)
+			delete(m, "@type")
 		}
 	}
-	if t, ok := m["metadata"]; ok {
+	if t, ok := m["@metadata"]; ok {
 		if s, ok := t.(Map); ok {
 			o.Metadata = MetadataFromMap(s)
+			delete(m, "@metadata")
 		}
 	}
-	if t, ok := m["data"]; ok {
-		if s, ok := t.(Map); ok {
-			o.Data = s
-		}
-	}
+	o.Data = m
 	return nil
 }
 
 // TODO: Deprecate
 func FromMap(m Map) *Object {
 	o := &Object{}
-	if t, ok := m["type"]; ok {
-		if s, ok := t.(String); ok {
-			o.Type = string(s)
-		}
-	}
-	if t, ok := m["metadata"]; ok {
-		if s, ok := t.(Map); ok {
-			o.Metadata = MetadataFromMap(s)
-		}
-	}
-	if t, ok := m["data"]; ok {
-		if s, ok := t.(Map); ok {
-			o.Data = s
-		}
-	}
+	o.UnmarshalMap(m) // nolint: errcheck
 	return o
 }
 
