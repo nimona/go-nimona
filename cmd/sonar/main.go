@@ -25,10 +25,10 @@ import (
 // nolint: lll
 type config struct {
 	Peer struct {
-		PrivateKey      *crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
-		BindAddress     string             `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
-		AnnounceAddress string             `envconfig:"ANNOUNCE_ADDRESS"`
-		Bootstraps      []peer.Shorthand   `envconfig:"BOOTSTRAPS"`
+		PrivateKey      crypto.PrivateKey `envconfig:"PRIVATE_KEY"`
+		BindAddress     string            `envconfig:"BIND_ADDRESS" default:"0.0.0.0:0"`
+		AnnounceAddress string            `envconfig:"ANNOUNCE_ADDRESS"`
+		Bootstraps      []peer.Shorthand  `envconfig:"BOOTSTRAPS"`
 	} `envconfig:"PEER"`
 	Sonar struct {
 		PingPeers []string `envconfig:"PING_PEERS"`
@@ -51,7 +51,7 @@ func main() {
 		logger.Fatal("error processing config", log.Error(err))
 	}
 
-	if cfg.Peer.PrivateKey == nil {
+	if cfg.Peer.PrivateKey.IsEmpty() {
 		logger.Fatal("missing peer private key")
 	}
 
@@ -146,7 +146,7 @@ func main() {
 				local.GetPrimaryPeerKey().PublicKey().String(),
 				env.Metadata.Owner,
 			)
-			if env.Metadata.Owner != nil {
+			if !env.Metadata.Owner.IsEmpty() {
 				pingedFromPeers[env.Metadata.Owner.String()] = true
 			}
 			// check if all have pinged us
@@ -164,7 +164,7 @@ func main() {
 		}
 	}()
 
-	ping := func(peerKey *crypto.PublicKey) error {
+	ping := func(peerKey crypto.PublicKey) error {
 		sctx := context.New(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
@@ -212,9 +212,9 @@ func main() {
 	}
 
 	go func() {
-		pingPeers := map[string]*crypto.PublicKey{} // [key]pinged
+		pingPeers := map[string]crypto.PublicKey{} // [key]pinged
 		for _, p := range cfg.Sonar.PingPeers {
-			k := &crypto.PublicKey{}
+			k := crypto.PublicKey{}
 			if err := k.UnmarshalString(p); err != nil {
 				logger.Fatal(
 					"error unmarshaling key to ping",

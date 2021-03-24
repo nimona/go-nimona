@@ -32,13 +32,13 @@ func TestMetadata_Map(t *testing.T) {
 		},
 		Policies: Policies{{
 			Type:      SignaturePolicy,
-			Subjects:  []*crypto.PublicKey{pk0, pk1},
+			Subjects:  []crypto.PublicKey{pk0, pk1},
 			Resources: []string{"foo", "bar"},
 			Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 			Effect:    AllowEffect,
 		}, {
 			Type:      SignaturePolicy,
-			Subjects:  []*crypto.PublicKey{pk0},
+			Subjects:  []crypto.PublicKey{pk0},
 			Resources: []string{"foo"},
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,

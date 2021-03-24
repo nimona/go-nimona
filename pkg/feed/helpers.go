@@ -58,7 +58,7 @@ func GetFeedCIDs(
 }
 
 func GetFeedHypotheticalRoot(
-	owner *crypto.PublicKey,
+	owner crypto.PublicKey,
 	objectType string,
 ) *FeedStreamRoot {
 	r := &FeedStreamRoot{
@@ -71,7 +71,7 @@ func GetFeedHypotheticalRoot(
 }
 
 func GetFeedHypotheticalRootCID(
-	owner *crypto.PublicKey,
+	owner crypto.PublicKey,
 	objectType string,
 ) object.CID {
 	return GetFeedHypotheticalRoot(

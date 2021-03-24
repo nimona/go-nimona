@@ -83,7 +83,7 @@ type (
 	Resolver interface {
 		LookupPeer(
 			ctx context.Context,
-			publicKey *crypto.PublicKey,
+			publicKey crypto.PublicKey,
 		) (*peer.ConnectionInfo, error)
 	}
 	// Network interface for mocking
@@ -94,7 +94,7 @@ type (
 		Send(
 			ctx context.Context,
 			object *object.Object,
-			publicKey *crypto.PublicKey,
+			publicKey crypto.PublicKey,
 			sendOptions ...SendOption,
 		) error
 		Listen(
@@ -125,13 +125,13 @@ type (
 	// and the messages for it.
 	// the queue should only hold `*outgoingObject`s.
 	outbox struct {
-		peer  *crypto.PublicKey
+		peer  crypto.PublicKey
 		queue *queue.Queue
 	}
 	// outgoingObject holds an object that is about to be sent
 	outgoingObject struct {
 		context        context.Context
-		recipient      *crypto.PublicKey
+		recipient      crypto.PublicKey
 		connectionInfo *peer.ConnectionInfo
 		object         *object.Object
 		err            chan error
@@ -218,7 +218,7 @@ func (w *network) RegisterResolver(
 
 func (w *network) lookup(
 	ctx context.Context,
-	publicKey *crypto.PublicKey,
+	publicKey crypto.PublicKey,
 ) (*peer.ConnectionInfo, error) {
 	resolvers := w.resolvers.List()
 	if len(resolvers) == 0 {
@@ -358,7 +358,7 @@ func (w *network) handleConnection(
 	return nil
 }
 
-func (w *network) getOutbox(recipient *crypto.PublicKey) *outbox {
+func (w *network) getOutbox(recipient crypto.PublicKey) *outbox {
 	outbox := &outbox{
 		peer:  recipient,
 		queue: queue.New(),
@@ -380,7 +380,7 @@ func (w *network) processOutbox(outbox *outbox) {
 	sendViaRelay := func(
 		ctx context.Context,
 		relayConnInfo *peer.ConnectionInfo,
-		recipient *crypto.PublicKey,
+		recipient crypto.PublicKey,
 		obj *object.Object,
 	) error {
 		// wrap object
@@ -662,7 +662,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			}
 
 			// if the data are encrypted we should first decrypt them
-			if fwd.Sender != nil {
+			if !fwd.Sender.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
 					w.localpeer.GetPrimaryPeerKey(),
 					fwd.Sender,
@@ -712,7 +712,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 func (w *network) Send(
 	ctx context.Context,
 	o *object.Object,
-	p *crypto.PublicKey,
+	p crypto.PublicKey,
 	opts ...SendOption,
 ) error {
 	if p.Equals(w.localpeer.GetPrimaryPeerKey().PublicKey()) {
@@ -732,14 +732,14 @@ func (w *network) Send(
 	ctx = context.FromContext(ctx)
 
 	var err error
-	if k := w.localpeer.GetPrimaryPeerKey(); k != nil {
+	if k := w.localpeer.GetPrimaryPeerKey(); !k.IsEmpty() {
 		o, err = signAll(k, o)
 		if err != nil {
 			return err
 		}
 	}
 
-	if k := w.localpeer.GetPrimaryIdentityKey(); k != nil {
+	if k := w.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
 		o, err = signAll(k, o)
 		if err != nil {
 			return err
@@ -802,7 +802,7 @@ func (w *network) Send(
 	return nil
 }
 
-func signAll(k *crypto.PrivateKey, o *object.Object) (*object.Object, error) {
+func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
 	var signErr error
 	object.Traverse(o, func(path string, v interface{}) bool {
 		nObj, ok := v.(*object.Object)
@@ -812,7 +812,7 @@ func signAll(k *crypto.PrivateKey, o *object.Object) (*object.Object, error) {
 		if !nObj.Metadata.Signature.IsEmpty() {
 			return true
 		}
-		if nObj.Metadata.Owner == nil {
+		if nObj.Metadata.Owner.IsEmpty() {
 			return true
 		}
 		if !nObj.Metadata.Owner.Equals(k.PublicKey()) {
@@ -863,7 +863,7 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 
 func (w *network) wrapInDataForward(
 	o *object.Object,
-	recipient *crypto.PublicKey,
+	recipient crypto.PublicKey,
 ) (*DataForwardRequest, error) {
 	// marshal payload
 	payload, err := json.Marshal(o.ToMap())

@@ -41,7 +41,7 @@ type (
 		) ([]*peer.ConnectionInfo, error)
 		LookupPeer(
 			ctx context.Context,
-			publicKey *crypto.PublicKey,
+			publicKey crypto.PublicKey,
 		) (*peer.ConnectionInfo, error)
 	}
 	resolver struct {
@@ -121,7 +121,7 @@ func New(
 
 func (r *resolver) LookupPeer(
 	ctx context.Context,
-	publicKey *crypto.PublicKey,
+	publicKey crypto.PublicKey,
 ) (*peer.ConnectionInfo, error) {
 	ps, err := r.Lookup(ctx, LookupByPeerKey(publicKey))
 	if err != nil {

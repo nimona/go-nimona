@@ -218,7 +218,7 @@ func (n *network) Dial(
 }
 
 func (n *network) isAddressBlocked(
-	publicKey *crypto.PublicKey,
+	publicKey crypto.PublicKey,
 	address string,
 ) bool {
 	_, blocked := n.blocklist.Get(publicKey.String() + "/" + address)
@@ -226,7 +226,7 @@ func (n *network) isAddressBlocked(
 }
 
 func (n *network) blockAddress(
-	publicKey *crypto.PublicKey,
+	publicKey crypto.PublicKey,
 	address string,
 ) (int, time.Duration) {
 	pk := publicKey.String() + "/" + address

@@ -7,6 +7,6 @@ signed object nimona.io/peer.ConnectionInfo {
     version int
     publicKey string type=nimona.io/crypto.PublicKey
     addresses repeated string
-    relays repeated object type=nimona.io/peer.ConnectionInfo
+    optional relays repeated object type=nimona.io/peer.ConnectionInfo
     objectFormats repeated string
 }

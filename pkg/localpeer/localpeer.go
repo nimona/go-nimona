@@ -12,16 +12,15 @@ import (
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=relays_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*peer.ConnectionInfo"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
 
 type (
 	LocalPeer interface {
-		GetPrimaryPeerKey() *crypto.PrivateKey
-		PutPrimaryPeerKey(*crypto.PrivateKey)
-		GetPrimaryIdentityKey() *crypto.PrivateKey
-		PutPrimaryIdentityKey(*crypto.PrivateKey)
+		GetPrimaryPeerKey() crypto.PrivateKey
+		PutPrimaryPeerKey(crypto.PrivateKey)
+		GetPrimaryIdentityKey() crypto.PrivateKey
+		PutPrimaryIdentityKey(crypto.PrivateKey)
 		GetCertificates() []*object.Certificate
 		PutCertificate(*object.Certificate)
 		GetCIDs() []object.CID
@@ -37,13 +36,13 @@ type (
 	}
 	localPeer struct {
 		keyLock            sync.RWMutex
-		primaryPeerKey     *crypto.PrivateKey
-		primaryIdentityKey *crypto.PrivateKey
+		primaryPeerKey     crypto.PrivateKey
+		primaryIdentityKey crypto.PrivateKey
 		cids               *ObjectCIDSyncList
 		contentTypes       *StringSyncList
 		certificates       *ObjectCertificateSyncList
 		addresses          *StringSyncList
-		relays             *PeerConnectionInfoSyncList
+		relays             []*peer.ConnectionInfo
 		listeners          map[string]chan UpdateEvent
 		listenersLock      sync.RWMutex
 	}
@@ -65,32 +64,32 @@ func New() LocalPeer {
 		contentTypes:  &StringSyncList{},
 		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
-		relays:        &PeerConnectionInfoSyncList{},
+		relays:        []*peer.ConnectionInfo{},
 		listeners:     map[string]chan UpdateEvent{},
 		listenersLock: sync.RWMutex{},
 	}
 }
 
-func (s *localPeer) PutPrimaryPeerKey(k *crypto.PrivateKey) {
+func (s *localPeer) PutPrimaryPeerKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryPeerKey = k
 	s.keyLock.Unlock()
 }
 
-func (s *localPeer) PutPrimaryIdentityKey(k *crypto.PrivateKey) {
+func (s *localPeer) PutPrimaryIdentityKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryIdentityKey = k
 	s.keyLock.Unlock()
 	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
-func (s *localPeer) GetPrimaryPeerKey() *crypto.PrivateKey {
+func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
 }
 
-func (s *localPeer) GetPrimaryIdentityKey() *crypto.PrivateKey {
+func (s *localPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryIdentityKey
@@ -140,13 +139,15 @@ func (s *localPeer) PutContentTypes(contentTypes ...string) {
 }
 
 func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
-	return s.relays.List()
+	s.keyLock.RLock()
+	defer s.keyLock.RUnlock()
+	return s.relays
 }
 
 func (s *localPeer) PutRelays(relays ...*peer.ConnectionInfo) {
-	for _, r := range relays {
-		s.relays.Put(r)
-	}
+	s.keyLock.Lock()
+	defer s.keyLock.Unlock()
+	s.relays = append(s.relays, relays...)
 	s.publishUpdate(EventRelaysUpdated)
 }
 

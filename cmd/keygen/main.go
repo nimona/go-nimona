@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	k := &crypto.PrivateKey{}
+	k := crypto.PrivateKey{}
 	if len(os.Args) > 1 {
 		if err := k.UnmarshalString(os.Args[1]); err != nil {
 			panic(err)

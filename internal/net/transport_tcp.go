@@ -82,7 +82,7 @@ func (tt *tcpTransport) Dial(
 func (tt *tcpTransport) Listen(
 	ctx context.Context,
 	bindAddress string,
-	key *crypto.PrivateKey,
+	key crypto.PrivateKey,
 ) (net.Listener, error) {
 	cert, err := crypto.GenerateTLSCertificate(key)
 	if err != nil {

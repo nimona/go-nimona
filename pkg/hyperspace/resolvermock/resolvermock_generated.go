@@ -58,7 +58,7 @@ func (mr *MockResolverMockRecorder) Lookup(ctx interface{}, opts ...interface{})
 }
 
 // LookupPeer mocks base method.
-func (m *MockResolver) LookupPeer(ctx context.Context, publicKey *crypto.PublicKey) (*peer.ConnectionInfo, error) {
+func (m *MockResolver) LookupPeer(ctx context.Context, publicKey crypto.PublicKey) (*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupPeer", ctx, publicKey)
 	ret0, _ := ret[0].(*peer.ConnectionInfo)

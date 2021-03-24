@@ -177,7 +177,7 @@ func (st *Store) PutWithTTL(
 	streamCID := obj.Metadata.Stream.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
-	if obj.Metadata.Owner != nil {
+	if !obj.Metadata.Owner.IsEmpty() {
 		ownerPublicKey = obj.Metadata.Owner.String()
 	}
 
@@ -648,7 +648,7 @@ func ahtoai(ah []object.CID) []interface{} {
 	return as
 }
 
-func aktoai(ah []*crypto.PublicKey) []interface{} {
+func aktoai(ah []crypto.PublicKey) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

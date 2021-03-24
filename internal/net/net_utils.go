@@ -15,7 +15,7 @@ func Write(o *object.Object, conn *Connection) error {
 	}
 
 	ra := ""
-	if conn.RemotePeerKey != nil {
+	if !conn.RemotePeerKey.IsEmpty() {
 		ra = conn.RemotePeerKey.String()
 	}
 

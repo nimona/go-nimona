@@ -45,7 +45,7 @@ func (m *MockNetworkSimple) Subscribe(
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
-	rec *crypto.PublicKey,
+	rec crypto.PublicKey,
 	opt ...network.SendOption,
 ) error {
 	m.mutex.Lock()

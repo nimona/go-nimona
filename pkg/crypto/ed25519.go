@@ -35,8 +35,16 @@ type (
 	}
 )
 
+var (
+	EmptyPublicKey  = PublicKey{}
+	EmptyPrivateKey = PrivateKey{}
+)
+
 func (k PublicKey) String() string {
 	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
+
+func (k PublicKey) IsEmpty() bool {
+	return k.RawKey == nil
 }
 
 func (k PublicKey) MarshalText() ([]byte, error) {
@@ -84,6 +92,10 @@ func (k *PublicKey) UnmarshalJSON(s []byte) error {
 		return err
 	}
 	return k.UnmarshalString(v)
+}
+
+func (k PrivateKey) IsEmpty() bool {
+	return k.RawKey == nil
 }
 
 func (k PrivateKey) String() string {
@@ -137,8 +149,8 @@ func (k *PrivateKey) UnmarshalJSON(s []byte) error {
 	return k.UnmarshalString(v)
 }
 
-func (k PrivateKey) PublicKey() *PublicKey {
-	return &PublicKey{
+func (k PrivateKey) PublicKey() PublicKey {
+	return PublicKey{
 		Algorithm: Ed25519Public,
 		Type:      k.Type,
 		RawKey:    k.RawKey.Public().(ed25519.PublicKey),
@@ -148,9 +160,9 @@ func (k PrivateKey) PublicKey() *PublicKey {
 func NewEd25519PrivateKey(keyType KeyType) (*PrivateKey, error) {
 	_, k, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, err
+		return EmptyPrivateKey, err
 	}
-	return &PrivateKey{
+	return PrivateKey{
 		Algorithm: Ed25519Private,
 		Type:      keyType,
 		RawKey:    k,
@@ -200,8 +212,8 @@ func privateEd25519KeyToCurve25519(priv ed25519.PrivateKey) []byte {
 
 // CalculateSharedKey calculates a shared secret given a private an public key
 func CalculateSharedKey(
-	priv *PrivateKey,
-	pub *PublicKey,
+	priv PrivateKey,
+	pub PublicKey,
 ) ([]byte, error) {
 	if priv.Algorithm != Ed25519Private || pub.Algorithm != Ed25519Public {
 		return nil, ErrUnsupportedKeyAlgorithm
@@ -218,14 +230,14 @@ func CalculateSharedKey(
 // NewSharedKey calculates a shared secret given a private and a public key,
 // and returns it
 func NewSharedKey(
-	priv *PrivateKey,
-	pub *PublicKey,
-) (*PrivateKey, []byte, error) {
+	priv PrivateKey,
+	pub PublicKey,
+) (PrivateKey, []byte, error) {
 	ca := privateEd25519KeyToCurve25519(priv.RawKey)
 	cB := publicEd25519KeyToCurve25519(pub.RawKey)
 	ss, err := curve25519.X25519(ca, cB)
 	if err != nil {
-		return nil, nil, err
+		return EmptyPrivateKey, nil, err
 	}
 	return priv, ss, nil
 }
@@ -234,11 +246,11 @@ func NewSharedKey(
 // shared secret given a public key, and returns the created public key and
 // secret
 func CalculateEphemeralSharedKey(
-	pub *PublicKey,
-) (*PrivateKey, []byte, error) {
+	pub PublicKey,
+) (PrivateKey, []byte, error) {
 	priv, err := NewEd25519PrivateKey(PeerKey)
 	if err != nil {
-		return nil, nil, err
+		return EmptyPrivateKey, nil, err
 	}
 	return NewSharedKey(priv, pub)
 }
@@ -255,7 +267,7 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 	return nil
 }
 
-func (k PublicKey) Equals(w *PublicKey) bool {
+func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
 		k.Type == w.Type &&
 		k.RawKey.Equal(w.RawKey)

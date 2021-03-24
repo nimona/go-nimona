@@ -14,7 +14,7 @@ type (
 	Policy struct {
 		Name      string
 		Type      PolicyType
-		Subjects  []*crypto.PublicKey
+		Subjects  []crypto.PublicKey
 		Resources []string
 		Actions   []PolicyAction
 		Effect    PolicyEffect
@@ -26,7 +26,7 @@ type (
 	// evaluation state
 	evaluation struct {
 		// target
-		subject  *crypto.PublicKey
+		subject  crypto.PublicKey
 		resource string
 		action   PolicyAction
 		// result
@@ -60,7 +60,7 @@ func (ps Policies) Value() MapArray {
 }
 
 func (p Policy) Evaluate(
-	subject *crypto.PublicKey,
+	subject crypto.PublicKey,
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
@@ -75,7 +75,7 @@ func (p Policy) Evaluate(
 }
 
 func (ps Policies) Evaluate(
-	subject *crypto.PublicKey,
+	subject crypto.PublicKey,
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
@@ -186,9 +186,9 @@ func PolicyFromMap(m Map) Policy {
 	}
 	if t, ok := m["subjects"]; ok {
 		if s, ok := t.(StringArray); ok {
-			p := make([]*crypto.PublicKey, len(s))
+			p := make([]crypto.PublicKey, len(s))
 			for i, v := range s {
-				k := &crypto.PublicKey{}
+				k := crypto.PublicKey{}
 				if err := k.UnmarshalString(string(v)); err == nil {
 					p[i] = k
 				}

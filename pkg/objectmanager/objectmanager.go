@@ -520,7 +520,7 @@ func (m *manager) announceStreamChildren(
 		if obj.Type != streamSubscriptionType {
 			continue
 		}
-		if obj.Metadata.Owner == nil {
+		if obj.Metadata.Owner.IsEmpty() {
 			continue
 		}
 		subscribersMap[obj.Metadata.Owner.String()] = struct{}{}
@@ -554,7 +554,7 @@ func (m *manager) announceStreamChildren(
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		k := &crypto.PublicKey{}
+		k := crypto.PublicKey{}
 		if err := k.UnmarshalString(subscriber); err != nil {
 			logger.Info(
 				"error unmarshaling subscriber key",
@@ -806,11 +806,11 @@ func (m *manager) Put(
 	owner := o.Metadata.Owner
 	ownPeer := false
 	ownIdentity := false
-	if owner != nil {
-		if k := m.localpeer.GetPrimaryPeerKey().PublicKey(); k != nil {
+	if !owner.IsEmpty() {
+		if k := m.localpeer.GetPrimaryPeerKey().PublicKey(); !k.IsEmpty() {
 			ownPeer = owner.Equals(k)
 		}
-		if k := m.localpeer.GetPrimaryIdentityKey(); k != nil {
+		if k := m.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
 			ownIdentity = owner.Equals(k.PublicKey())
 		}
 	}

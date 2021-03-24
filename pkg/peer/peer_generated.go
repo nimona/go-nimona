@@ -13,7 +13,7 @@ type (
 		Version       int64
 		PublicKey     crypto.PublicKey
 		Addresses     []string
-		Relays        []ConnectionInfo
+		Relays        []*ConnectionInfo
 		ObjectFormats []string
 	}
 )
@@ -100,9 +100,9 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["relays"]; ok {
 		if ev, ok := v.(object.ObjectArray); ok {
-			e.Relays = make([]ConnectionInfo, len(ev))
+			e.Relays = make([]*ConnectionInfo, len(ev))
 			for i, iv := range ev {
-				es := ConnectionInfo{}
+				es := &ConnectionInfo{}
 				if err := es.UnmarshalObject((iv)); err == nil {
 					e.Relays[i] = es
 				}

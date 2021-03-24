@@ -20,7 +20,7 @@ func TestEd(t *testing.T) {
 	t.Run("try marshaling/unmarshaling private key", func(t *testing.T) {
 		p1s, err := p1.MarshalString()
 		require.NoError(t, err)
-		p1g := &PrivateKey{}
+		p1g := PrivateKey{}
 		err = p1g.UnmarshalString(p1s)
 		require.NoError(t, err)
 		assert.Equal(t, p1, p1g)
@@ -30,7 +30,7 @@ func TestEd(t *testing.T) {
 		r1 := p1.PublicKey()
 		r1s, err := r1.MarshalString()
 		require.NoError(t, err)
-		r1g := &PublicKey{}
+		r1g := PublicKey{}
 		err = r1g.UnmarshalString(r1s)
 		require.NoError(t, err)
 		assert.Equal(t, r1, r1g)

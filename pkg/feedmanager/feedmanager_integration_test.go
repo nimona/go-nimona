@@ -81,7 +81,7 @@ func TestManager_Integration(t *testing.T) {
 func newDaemon(
 	t *testing.T,
 	name string,
-	id *crypto.PrivateKey,
+	id crypto.PrivateKey,
 	bootstrapConnectionInfo *peer.ConnectionInfo,
 ) daemon.Daemon {
 	d, err := daemon.New(

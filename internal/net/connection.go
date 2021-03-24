@@ -11,8 +11,8 @@ import (
 type Connection struct {
 	ID string
 
-	LocalPeerKey  *crypto.PublicKey
-	RemotePeerKey *crypto.PublicKey
+	LocalPeerKey  crypto.PublicKey
+	RemotePeerKey crypto.PublicKey
 	IsIncoming    bool
 
 	remoteAddress string

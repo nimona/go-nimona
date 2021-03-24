@@ -20,12 +20,12 @@ type (
 		Path     string `json:"-"`
 		LogLevel string `json:"logLevel" envconfig:"LOG_LEVEL"`
 		Peer     struct {
-			PrivateKey           *crypto.PrivateKey `json:"privateKey" envconfig:"PRIVATE_KEY"`
-			BindAddress          string             `json:"bindAddress" envconfig:"BIND_ADDRESS"`
-			Bootstraps           []peer.Shorthand   `json:"bootstraps" envconfig:"BOOTSTRAPS"`
-			ListenOnLocalIPs     bool               `json:"listenLocalIPs" envconfig:"LISTEN_LOCAL"`
-			ListenOnPrivateIPs   bool               `json:"listenPrivateIPs" envconfig:"LISTEN_PRIVATE"`
-			ListenOnExternalPort bool               `json:"listenExternalPort" envconfig:"LISTEN_EXTERNAL_PORT"`
+			PrivateKey           crypto.PrivateKey `json:"privateKey" envconfig:"PRIVATE_KEY"`
+			BindAddress          string            `json:"bindAddress" envconfig:"BIND_ADDRESS"`
+			Bootstraps           []peer.Shorthand  `json:"bootstraps" envconfig:"BOOTSTRAPS"`
+			ListenOnLocalIPs     bool              `json:"listenLocalIPs" envconfig:"LISTEN_LOCAL"`
+			ListenOnPrivateIPs   bool              `json:"listenPrivateIPs" envconfig:"LISTEN_PRIVATE"`
+			ListenOnExternalPort bool              `json:"listenExternalPort" envconfig:"LISTEN_EXTERNAL_PORT"`
 		} `json:"peer" envconfig:"PEER"`
 		Extras map[string]json.RawMessage `json:"extras,omitempty"`
 		extras map[string]interface{}
@@ -118,7 +118,7 @@ func New(opts ...Option) (*Config, error) {
 }
 
 func (cfg *Config) setDefaults() {
-	if cfg.Peer.PrivateKey == nil {
+	if cfg.Peer.PrivateKey.IsEmpty() {
 		k, _ := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 		cfg.Peer.PrivateKey = k
 	}
