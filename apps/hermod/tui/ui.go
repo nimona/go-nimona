@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,6 +27,12 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 )
 
+const (
+	OutgoingTransferRequestSent     = "TransferRequestSent"
+	IncomingTransferRequestReceived = "IncomingTransferRequestReceived"
+	IncomingTransferFileReceived    = "IncomingTransferFileReceived"
+)
+
 type (
 	Config struct {
 		ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
@@ -32,6 +40,11 @@ type (
 	comboConf struct {
 		hconf *Config
 		nconf *config.Config
+	}
+	transferWrap struct {
+		transfer *filesharing.Transfer
+		status   string
+		updated  time.Time
 	}
 	hermod struct {
 		textInput textinput.Model
@@ -46,10 +59,7 @@ type (
 		resolver      resolver.Resolver
 		fsh           filesharing.Filesharer
 		listener      net.Listener
-
-		incomingTransfers map[string]*filesharing.Transfer
-		outgoingTransfers map[string]*filesharing.Transfer
-		receivedTransfers map[string]*filesharing.Transfer
+		transfers     map[string]*transferWrap
 	}
 	transferMsg struct {
 		trf *filesharing.Transfer
@@ -180,8 +190,7 @@ func NewHermod() hermod {
 	her.objectmanager = man
 	her.fsh = fsh
 	her.blobmanager = blob.NewManager(ctx, blob.WithObjectManager(man))
-	her.incomingTransfers = make(map[string]*filesharing.Transfer)
-	her.receivedTransfers = make(map[string]*filesharing.Transfer)
+	her.transfers = make(map[string]*transferWrap)
 
 	go func() {
 		transfers, err := her.fsh.Listen(ctx)
@@ -231,9 +240,7 @@ func (h *hermod) handleFileReceivedMsg(
 	tea.Model, tea.Cmd,
 ) {
 	var cmd tea.Cmd
-	trf := h.incomingTransfers[msg.nonce]
-	h.receivedTransfers[msg.nonce] = trf
-	delete(h.incomingTransfers, msg.nonce)
+	h.transfers[msg.nonce].status = IncomingTransferFileReceived
 	return h, cmd
 }
 
@@ -244,33 +251,41 @@ func (h *hermod) handleTransferMsg(
 	tea.Cmd,
 ) {
 	var cmd tea.Cmd
-	h.incomingTransfers[msg.trf.Request.Nonce] = msg.trf
+	h.transfers[msg.trf.Request.Nonce] = &transferWrap{
+		status:   IncomingTransferRequestReceived,
+		transfer: msg.trf,
+		updated:  time.Now(),
+	}
 	return h, cmd
 }
 
 func (h hermod) View() string {
 	tpl := "%s\n%s\n"
-	if len(h.incomingTransfers) > 0 {
-		tpl += "TransferRequests\n"
-		for _, trf := range h.incomingTransfers {
+	if len(h.transfers) > 0 {
+		tpl += "Transfers:\n"
+
+		transfers := []*transferWrap{}
+
+		for _, trw := range h.transfers {
+			transfers = append(transfers, trw)
+		}
+
+		sort.SliceStable(transfers, func(i, j int) bool {
+			return transfers[i].updated.Unix() > transfers[j].updated.Unix()
+		})
+
+		for _, tr := range transfers {
 			tpl += fmt.Sprintf(
-				"Peer: %s requested to send file: %s id: %s\n",
-				trf.Peer.String(),
-				trf.Request.File.Name,
-				trf.Request.Nonce,
+				"-> Peer: %s File: %s ID: %s Status: %s\n", // TODO arrow based on direction?
+				tr.transfer.Peer.String(),
+				tr.transfer.Request.File.Name,
+				tr.transfer.Request.Nonce,
+				tr.status, // TODO convert status to string
 			)
 		}
+
 	}
-	if len(h.receivedTransfers) > 0 {
-		tpl += "Received Files\n"
-		for _, trf := range h.receivedTransfers {
-			tpl += fmt.Sprintf(
-				"Peer: %s sent file: %s\n",
-				trf.Peer.String(),
-				trf.Request.File.Name,
-			)
-		}
-	}
+
 	v := fmt.Sprintf(
 		tpl,
 		h.textInput.View(),
@@ -284,15 +299,29 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 
 	fullCommand := h.textInput.Value()
 
-	commands := strings.Split(fullCommand, " ")
+	fc := strings.Split(fullCommand, " ")
+	command := fc[0]
+	params := []string{}
 
-	switch commands[0] {
-	case "send":
-		if len(commands) != 3 {
-			h.result = "invalid command"
+	for _, p := range fc[1:] {
+		np := strings.Trim(p, " ")
+		if np != "" {
+			params = append(params, np)
 		}
-		h.result = fmt.Sprintf("Sending file %s to %s ...", commands[1], commands[2])
-		h.sendFile(commands[1], crypto.PublicKey(commands[2]))
+	}
+
+	switch command {
+	case "send":
+		if len(params) < 2 {
+			h.result = "usage: send <file> <peer>"
+			break
+		}
+		h.result = fmt.Sprintf("%d", len(params))
+		file := strings.Join(params[:len(params)-1], " ")
+		toPeer := params[len(params)-1]
+
+		h.result = fmt.Sprintf("Sending file %s to %s ...", file, toPeer)
+		h.sendFile(file, crypto.PublicKey(toPeer))
 	case "list":
 		h.result = "Listing local files..."
 	case "local":
@@ -302,11 +331,15 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 			h.local.ConnectionInfo().Addresses,
 		)
 	case "request":
+		if len(params) != 1 {
+			h.result = "usage: request <hash>"
+			break
+		}
 		h.result = fmt.Sprintf(
 			"Requesting transfer: %s ...",
-			commands[1],
+			params,
 		)
-		h.requestFile(commands[1])
+		h.requestFile(params[0])
 	case "quit":
 		return h, tea.Quit
 	default:
@@ -330,27 +363,43 @@ func (h *hermod) sendFile(
 		h.result = err.Error()
 		return
 	}
-	h.fsh.RequestTransfer(
+
+	fr := &filesharing.File{
+		Name:   filename,
+		Chunks: bl.Chunks,
+	}
+	nonce, err := h.fsh.RequestTransfer(
 		ctx,
-		&filesharing.File{
-			Name:   filename,
-			Chunks: bl.Chunks,
-		},
+		fr,
 		peerKey,
 	)
+	h.transfers[nonce] = &transferWrap{
+		status: OutgoingTransferRequestSent,
+		transfer: &filesharing.Transfer{
+			Request: filesharing.TransferRequest{
+				Nonce: nonce,
+				File:  fr,
+			},
+			Peer: peerKey,
+		},
+		updated: time.Now(),
+	}
+	if err != nil {
+		h.result = err.Error()
+		return
+	}
 }
 
 func (h *hermod) requestFile(
 	nonce string,
 ) {
-	trf := h.incomingTransfers[nonce]
-	h.result = fmt.Sprintf("%v", trf)
-	_, err := h.fsh.RequestFile(context.Background(), trf)
+	trf := h.transfers[nonce]
+	_, err := h.fsh.RequestFile(context.Background(), trf.transfer)
 	if err != nil {
 		h.result = err.Error()
 		return
 	}
 	h.Update(fileReceivedMsg{
-		nonce: trf.Request.Nonce,
+		nonce: trf.transfer.Request.Nonce,
 	})
 }
