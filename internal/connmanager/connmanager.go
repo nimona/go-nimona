@@ -11,7 +11,7 @@ import (
 )
 
 //go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=addresses_generated.go -pkg=connmanager gen "KeyType=string ValueType=addressState SyncmapName=addresses"
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=connections_generated.go -imp=nimona.io/pkg/crypto -pkg=connmanager gen "KeyType=*crypto.PublicKey ValueType=peerbox SyncmapName=connections"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=connections_generated.go -imp=nimona.io/pkg/crypto -pkg=connmanager gen "KeyType=string ValueType=peerbox SyncmapName=connections"
 
 type addressState int
 
@@ -151,7 +151,7 @@ func (m *manager) getPeerbox(pr *crypto.PublicKey) *peerbox {
 		addresses: NewAddressesMap(),
 	}
 
-	pbx, _ = m.connections.GetOrPut(pr, pbx)
+	pbx, _ = m.connections.GetOrPut(pr.String(), pbx)
 
 	return pbx
 }

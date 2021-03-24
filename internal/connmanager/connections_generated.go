@@ -6,8 +6,6 @@ package connmanager
 
 import (
 	"sync"
-
-	"nimona.io/pkg/crypto"
 )
 
 type (
@@ -24,19 +22,19 @@ func NewConnectionsMap() *ConnectionsMap {
 }
 
 // GetOrPut -
-func (m *ConnectionsMap) GetOrPut(k *crypto.PublicKey, v *peerbox) (*peerbox, bool) {
-	nv, ok := m.m.LoadOrStore(k.String(), v)
+func (m *ConnectionsMap) GetOrPut(k string, v *peerbox) (*peerbox, bool) {
+	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*peerbox), ok
 }
 
 // Put -
-func (m *ConnectionsMap) Put(k *crypto.PublicKey, v *peerbox) {
-	m.m.Store(k.String(), v)
+func (m *ConnectionsMap) Put(k string, v *peerbox) {
+	m.m.Store(k, v)
 }
 
 // Get -
-func (m *ConnectionsMap) Get(k *crypto.PublicKey) (*peerbox, bool) {
-	i, ok := m.m.Load(k.String())
+func (m *ConnectionsMap) Get(k string) (*peerbox, bool) {
+	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
 	}
@@ -50,30 +48,22 @@ func (m *ConnectionsMap) Get(k *crypto.PublicKey) (*peerbox, bool) {
 }
 
 // Delete -
-func (m *ConnectionsMap) Delete(k *crypto.PublicKey) {
-	m.m.Delete(k.String())
+func (m *ConnectionsMap) Delete(k string) {
+	m.m.Delete(k)
 }
 
 // Range -
-func (m *ConnectionsMap) Range(i func(k *crypto.PublicKey, v *peerbox) bool) {
+func (m *ConnectionsMap) Range(i func(k string, v *peerbox) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		kk := &crypto.PublicKey{}
-		if err := kk.UnmarshalString(k.(string)); err != nil {
-			panic(err)
-		}
-		return i(kk, v.(*peerbox))
+		return i(k.(string), v.(*peerbox))
 	})
 }
 
 // ListKeys -
-func (m *ConnectionsMap) ListKeys() []*crypto.PublicKey {
-	vs := []*crypto.PublicKey{}
+func (m *ConnectionsMap) ListKeys() []string {
+	vs := []string{}
 	m.m.Range(func(k, v interface{}) bool {
-		kk := &crypto.PublicKey{}
-		if err := kk.UnmarshalString(k.(string)); err != nil {
-			panic(err)
-		}
-		vs = append(vs, kk)
+		vs = append(vs, k.(string))
 		return true
 	})
 	return vs
