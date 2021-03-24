@@ -35,7 +35,7 @@ type (
 			ctx context.Context,
 			file *File,
 			peerKey crypto.PublicKey,
-		) error
+		) (string, error)
 		RespondTransfer(
 			ctx context.Context,
 			transfer Transfer,
@@ -76,7 +76,7 @@ func (fsh *fileSharer) RequestTransfer(
 	ctx context.Context,
 	file *File,
 	peerReq crypto.PublicKey,
-) error {
+) (string, error) {
 	nonce := rand.String(8)
 	req := &TransferRequest{
 		File:  file,
@@ -89,10 +89,10 @@ func (fsh *fileSharer) RequestTransfer(
 		peerReq,
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return nonce, nil
 }
 
 func (fsh *fileSharer) Listen(
