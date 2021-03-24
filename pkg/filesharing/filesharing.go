@@ -217,6 +217,16 @@ func (fsh *fileSharer) RequestFile(
 		return nil, err
 	}
 
+	done := &TransferDone{
+		Nonce: transfer.Request.Nonce,
+	}
+	if err := fsh.net.Send(
+		ctx, done.ToObject(),
+		transfer.Peer,
+	); err != nil {
+		return f, err
+	}
+
 	return f, nil
 }
 

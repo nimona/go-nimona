@@ -5,6 +5,10 @@ signed object nimona.io/File {
     chunks repeated string type=nimona.io/object.CID
 }
 
+signed object nimona.io/TransferDone {
+    nonce string
+}
+
 signed object nimona.io/TransferRequest {
     file object type=nimona.io/File
     nonce string
