@@ -12,6 +12,10 @@ type (
 		Name     string
 		Chunks   []object.CID
 	}
+	TransferDone struct {
+		Metadata object.Metadata
+		Nonce    string
+	}
 	TransferRequest struct {
 		Metadata object.Metadata
 		File     *File
@@ -75,6 +79,46 @@ func (e *File) FromObject(o *object.Object) error {
 				rv[i] = object.CID(iv)
 			}
 			e.Chunks = rv
+		}
+	}
+	return nil
+}
+
+func (e *TransferDone) Type() string {
+	return "nimona.io/TransferDone"
+}
+
+func (e *TransferDone) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *TransferDone) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
+func (e TransferDone) ToObject() *object.Object {
+	r := &object.Object{
+		Type:     "nimona.io/TransferDone",
+		Metadata: e.Metadata,
+		Data:     object.Map{},
+	}
+	r.Data["nonce"] = object.String(e.Nonce)
+	return r
+}
+
+func (e *TransferDone) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TransferDone) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
+}
+
+func (e *TransferDone) FromObject(o *object.Object) error {
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(object.String); ok {
+			e.Nonce = string(t)
 		}
 	}
 	return nil
