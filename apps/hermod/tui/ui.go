@@ -29,8 +29,18 @@ import (
 
 const (
 	OutgoingTransferRequestSent     = "TransferRequestSent"
+	OutgoingTransferFileSent        = "OutgoingTransferFileSent"
+	OutgoingTransferAccepted        = "OutgoingTransferAccepted"
+	OutgoingTransferRejected        = "OutgoingTransferRejected"
 	IncomingTransferRequestReceived = "IncomingTransferRequestReceived"
 	IncomingTransferFileReceived    = "IncomingTransferFileReceived"
+	IncomingTransferAccepted        = "IncomingTransferAccepted"
+	IncomingTransferRejected        = "IncomingTransferRejected"
+)
+
+var (
+	transferResponseType = new(filesharing.TransferResponse).Type()
+	transferDoneType     = new(filesharing.TransferDone).Type()
 )
 
 type (
@@ -205,6 +215,43 @@ func NewHermod() hermod {
 			})
 		}
 	}()
+
+	go func() {
+		sub := nnet.Subscribe()
+		for {
+			env, err := sub.Next()
+			if err != nil {
+				fmt.Println("Failed to get object: ", err)
+				return
+			}
+			switch env.Payload.Type {
+			case transferDoneType:
+				req := &filesharing.TransferDone{}
+
+				if err := req.FromObject(env.Payload); err != nil {
+					fmt.Println("Failed to get object: ", err)
+					continue
+				}
+
+				her.transfers[req.Nonce].status = OutgoingTransferFileSent
+
+			case transferResponseType:
+				req := &filesharing.TransferResponse{}
+
+				if err := req.FromObject(env.Payload); err != nil {
+					fmt.Println("Failed to get object: ", err)
+					continue
+				}
+
+				if !req.Accepted {
+					her.transfers[req.Nonce].status = OutgoingTransferRejected
+				}
+				her.transfers[req.Nonce].status = OutgoingTransferAccepted
+
+			}
+		}
+	}()
+
 	return *her
 }
 
