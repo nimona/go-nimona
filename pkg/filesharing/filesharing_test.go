@@ -69,7 +69,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 				"",
 			)
 
-			err := fsh.RequestTransfer(
+			nonce, err := fsh.RequestTransfer(
 				tt.args.ctx,
 				&tt.args.file,
 				tt.args.peerKey,
@@ -78,6 +78,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+			assert.NotEmpty(t, nonce)
 			assert.NoError(t, err)
 		})
 	}
