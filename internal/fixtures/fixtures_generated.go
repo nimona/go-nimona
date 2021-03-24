@@ -75,28 +75,19 @@ func (e CompositeTest) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	if e.CompositeStringTest != nil {
-		v, err := e.CompositeStringTest.MarshalString()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.CompositeStringTest.MarshalString(); err == nil {
 			r.Data["compositeStringTest"] = object.String(v)
 		}
 	}
 	if e.CompositeDataTest != nil {
-		v, err := e.CompositeDataTest.MarshalBytes()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.CompositeDataTest.MarshalBytes(); err == nil {
 			r.Data["compositeDataTest"] = object.Data(v)
 		}
 	}
 	if len(e.RepeatedCompositeStringTest) > 0 {
 		rv := make(object.StringArray, len(e.RepeatedCompositeStringTest))
 		for i, v := range e.RepeatedCompositeStringTest {
-			iv, err := v.MarshalString()
-			if err != nil {
-				// TODO error
-			} else {
+			if iv, err := v.MarshalString(); err == nil {
 				rv[i] = object.String(iv)
 			}
 		}
@@ -105,10 +96,7 @@ func (e CompositeTest) ToObject() *object.Object {
 	if len(e.RepeatedCompositeDataTest) > 0 {
 		rv := make(object.DataArray, len(e.RepeatedCompositeDataTest))
 		for i, v := range e.RepeatedCompositeDataTest {
-			iv, err := v.MarshalBytes()
-			if err != nil {
-				// TODO error
-			} else {
+			if iv, err := v.MarshalBytes(); err == nil {
 				rv[i] = object.Data(iv)
 			}
 		}
@@ -130,9 +118,7 @@ func (e *CompositeTest) FromObject(o *object.Object) error {
 	if v, ok := o.Data["compositeStringTest"]; ok {
 		if ev, ok := v.(object.String); ok {
 			es := &Composite{}
-			if err := es.UnmarshalString(string(ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalString(string(ev)); err == nil {
 				e.CompositeStringTest = es
 			}
 		}
@@ -140,9 +126,7 @@ func (e *CompositeTest) FromObject(o *object.Object) error {
 	if v, ok := o.Data["compositeDataTest"]; ok {
 		if ev, ok := v.(object.Data); ok {
 			es := &Composite{}
-			if err := es.UnmarshalBytes([]byte(ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalBytes([]byte(ev)); err == nil {
 				e.CompositeDataTest = es
 			}
 		}
@@ -152,9 +136,7 @@ func (e *CompositeTest) FromObject(o *object.Object) error {
 			e.RepeatedCompositeStringTest = make([]*Composite, len(ev))
 			for i, iv := range ev {
 				es := &Composite{}
-				if err := es.UnmarshalString(string(iv)); err != nil {
-					// TODO error
-				} else {
+				if err := es.UnmarshalString(string(iv)); err == nil {
 					e.RepeatedCompositeStringTest[i] = es
 				}
 			}
@@ -165,9 +147,7 @@ func (e *CompositeTest) FromObject(o *object.Object) error {
 			e.RepeatedCompositeDataTest = make([]*Composite, len(ev))
 			for i, iv := range ev {
 				es := &Composite{}
-				if err := es.UnmarshalBytes([]byte(iv)); err != nil {
-					// TODO error
-				} else {
+				if err := es.UnmarshalBytes([]byte(iv)); err == nil {
 					e.RepeatedCompositeDataTest[i] = es
 				}
 			}
@@ -502,20 +482,14 @@ func (e Parent) ToObject() *object.Object {
 	}
 	r.Data["foo"] = object.String(e.Foo)
 	if e.Child != nil {
-		v, err := e.Child.MarshalObject()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.Child.MarshalObject(); err == nil {
 			r.Data["child"] = (v)
 		}
 	}
 	if len(e.RepeatedChild) > 0 {
 		rv := make(object.ObjectArray, len(e.RepeatedChild))
 		for i, v := range e.RepeatedChild {
-			iv, err := v.MarshalObject()
-			if err != nil {
-				// TODO error
-			} else {
+			if iv, err := v.MarshalObject(); err == nil {
 				rv[i] = (iv)
 			}
 		}
@@ -542,9 +516,7 @@ func (e *Parent) FromObject(o *object.Object) error {
 	if v, ok := o.Data["child"]; ok {
 		if ev, ok := v.(*object.Object); ok {
 			es := &Child{}
-			if err := es.UnmarshalObject((ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalObject((ev)); err == nil {
 				e.Child = es
 			}
 		}
@@ -554,9 +526,7 @@ func (e *Parent) FromObject(o *object.Object) error {
 			e.RepeatedChild = make([]*Child, len(ev))
 			for i, iv := range ev {
 				es := &Child{}
-				if err := es.UnmarshalObject((iv)); err != nil {
-					// TODO error
-				} else {
+				if err := es.UnmarshalObject((iv)); err == nil {
 					e.RepeatedChild[i] = es
 				}
 			}

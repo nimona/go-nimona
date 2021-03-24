@@ -81,10 +81,7 @@ func (e Response) ToObject() *Object {
 	}
 	r.Data["requestID"] = String(e.RequestID)
 	if e.Object != nil {
-		v, err := e.Object.MarshalObject()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.Object.MarshalObject(); err == nil {
 			r.Data["object"] = (v)
 		}
 	}
@@ -109,9 +106,7 @@ func (e *Response) FromObject(o *Object) error {
 	if v, ok := o.Data["object"]; ok {
 		if ev, ok := v.(*Object); ok {
 			es := &Object{}
-			if err := es.UnmarshalObject((ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalObject((ev)); err == nil {
 				e.Object = es
 			}
 		}

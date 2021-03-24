@@ -11,9 +11,9 @@ type (
 	ConnectionInfo struct {
 		Metadata      object.Metadata
 		Version       int64
-		PublicKey     *crypto.PublicKey
+		PublicKey     crypto.PublicKey
 		Addresses     []string
-		Relays        []*ConnectionInfo
+		Relays        []ConnectionInfo
 		ObjectFormats []string
 	}
 )
@@ -37,13 +37,8 @@ func (e ConnectionInfo) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	r.Data["version"] = object.Int(e.Version)
-	if e.PublicKey != nil {
-		v, err := e.PublicKey.MarshalString()
-		if err != nil {
-			// TODO error
-		} else {
-			r.Data["publicKey"] = object.String(v)
-		}
+	if v, err := e.PublicKey.MarshalString(); err == nil {
+		r.Data["publicKey"] = object.String(v)
 	}
 	if len(e.Addresses) > 0 {
 		rv := make(object.StringArray, len(e.Addresses))
@@ -55,10 +50,7 @@ func (e ConnectionInfo) ToObject() *object.Object {
 	if len(e.Relays) > 0 {
 		rv := make(object.ObjectArray, len(e.Relays))
 		for i, v := range e.Relays {
-			iv, err := v.MarshalObject()
-			if err != nil {
-				// TODO error
-			} else {
+			if iv, err := v.MarshalObject(); err == nil {
 				rv[i] = (iv)
 			}
 		}
@@ -91,10 +83,8 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["publicKey"]; ok {
 		if ev, ok := v.(object.String); ok {
-			es := &crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err != nil {
-				// TODO error
-			} else {
+			es := crypto.PublicKey{}
+			if err := es.UnmarshalString(string(ev)); err == nil {
 				e.PublicKey = es
 			}
 		}
@@ -110,12 +100,10 @@ func (e *ConnectionInfo) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["relays"]; ok {
 		if ev, ok := v.(object.ObjectArray); ok {
-			e.Relays = make([]*ConnectionInfo, len(ev))
+			e.Relays = make([]ConnectionInfo, len(ev))
 			for i, iv := range ev {
-				es := &ConnectionInfo{}
-				if err := es.UnmarshalObject((iv)); err != nil {
-					// TODO error
-				} else {
+				es := ConnectionInfo{}
+				if err := es.UnmarshalObject((iv)); err == nil {
 					e.Relays[i] = es
 				}
 			}

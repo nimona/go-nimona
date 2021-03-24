@@ -4,10 +4,10 @@ import nimona.io/crypto crypto
 import nimona.io/object object
 
 object compositeTest {
-    compositeStringTest string type=nimona.io/fixtures.Composite
-    compositeDataTest data type=nimona.io/fixtures.Composite
-    repeatedCompositeStringTest repeated string type=nimona.io/fixtures.Composite
-    repeatedCompositeDataTest repeated data type=nimona.io/fixtures.Composite
+    optional compositeStringTest string type=nimona.io/fixtures.Composite
+    optional compositeDataTest data type=nimona.io/fixtures.Composite
+    optional repeatedCompositeStringTest repeated string type=nimona.io/fixtures.Composite
+    optional repeatedCompositeDataTest repeated data type=nimona.io/fixtures.Composite
 }
 
 object nimona.io/fixtures.TestPolicy {
@@ -42,8 +42,8 @@ signed object nimona.io/fixtures.TestResponse {
 
 object parent {
     foo string
-    child object type=Child
-    repeatedChild repeated object type=Child
+    optional child object type=Child
+    optional repeatedChild repeated object type=Child
 }
 
 object child {

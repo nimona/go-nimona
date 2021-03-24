@@ -108,10 +108,10 @@ func (mr *MockLocalPeerMockRecorder) GetContentTypes() *gomock.Call {
 }
 
 // GetPrimaryIdentityKey mocks base method.
-func (m *MockLocalPeer) GetPrimaryIdentityKey() *crypto.PrivateKey {
+func (m *MockLocalPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPrimaryIdentityKey")
-	ret0, _ := ret[0].(*crypto.PrivateKey)
+	ret0, _ := ret[0].(crypto.PrivateKey)
 	return ret0
 }
 
@@ -122,10 +122,10 @@ func (mr *MockLocalPeerMockRecorder) GetPrimaryIdentityKey() *gomock.Call {
 }
 
 // GetPrimaryPeerKey mocks base method.
-func (m *MockLocalPeer) GetPrimaryPeerKey() *crypto.PrivateKey {
+func (m *MockLocalPeer) GetPrimaryPeerKey() crypto.PrivateKey {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPrimaryPeerKey")
-	ret0, _ := ret[0].(*crypto.PrivateKey)
+	ret0, _ := ret[0].(crypto.PrivateKey)
 	return ret0
 }
 
@@ -136,10 +136,10 @@ func (mr *MockLocalPeerMockRecorder) GetPrimaryPeerKey() *gomock.Call {
 }
 
 // GetRelays mocks base method.
-func (m *MockLocalPeer) GetRelays() []*peer.ConnectionInfo {
+func (m *MockLocalPeer) GetRelays() []peer.ConnectionInfo {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRelays")
-	ret0, _ := ret[0].([]*peer.ConnectionInfo)
+	ret0, _ := ret[0].([]peer.ConnectionInfo)
 	return ret0
 }
 
@@ -225,7 +225,7 @@ func (mr *MockLocalPeerMockRecorder) PutContentTypes(arg0 ...interface{}) *gomoc
 }
 
 // PutPrimaryIdentityKey mocks base method.
-func (m *MockLocalPeer) PutPrimaryIdentityKey(arg0 *crypto.PrivateKey) {
+func (m *MockLocalPeer) PutPrimaryIdentityKey(arg0 crypto.PrivateKey) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PutPrimaryIdentityKey", arg0)
 }
@@ -237,7 +237,7 @@ func (mr *MockLocalPeerMockRecorder) PutPrimaryIdentityKey(arg0 interface{}) *go
 }
 
 // PutPrimaryPeerKey mocks base method.
-func (m *MockLocalPeer) PutPrimaryPeerKey(arg0 *crypto.PrivateKey) {
+func (m *MockLocalPeer) PutPrimaryPeerKey(arg0 crypto.PrivateKey) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PutPrimaryPeerKey", arg0)
 }
@@ -249,7 +249,7 @@ func (mr *MockLocalPeerMockRecorder) PutPrimaryPeerKey(arg0 interface{}) *gomock
 }
 
 // PutRelays mocks base method.
-func (m *MockLocalPeer) PutRelays(arg0 ...*peer.ConnectionInfo) {
+func (m *MockLocalPeer) PutRelays(arg0 ...peer.ConnectionInfo) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range arg0 {
