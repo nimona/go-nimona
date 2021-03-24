@@ -20,10 +20,10 @@ const (
 )
 
 type Signature struct {
-	Signer      *crypto.PublicKey `nimona:"signer:s,omitempty"`
-	Alg         string            `nimona:"alg:s,omitempty"`
-	X           []byte            `nimona:"x:d,omitempty"`
-	Certificate *Certificate      `nimona:"certificate:m,omitempty"`
+	Signer      crypto.PublicKey `nimona:"signer:s,omitempty"`
+	Alg         string           `nimona:"alg:s,omitempty"`
+	X           []byte           `nimona:"x:d,omitempty"`
+	Certificate *Certificate     `nimona:"certificate:m,omitempty"`
 }
 
 func (s Signature) IsEmpty() bool {
@@ -32,7 +32,7 @@ func (s Signature) IsEmpty() bool {
 
 func (s Signature) Map() Map {
 	r := Map{}
-	if s.Signer != nil {
+	if !s.Signer.IsEmpty() {
 		r["signer"] = String(s.Signer.String())
 	}
 	if s.Alg != "" {
@@ -51,7 +51,7 @@ func SignatureFromMap(m Map) Signature {
 	r := Signature{}
 	if t, ok := m["signer"]; ok {
 		if s, ok := t.(String); ok {
-			k := &crypto.PublicKey{}
+			k := crypto.PublicKey{}
 			if err := k.UnmarshalString(string(s)); err == nil {
 				r.Signer = k
 			}
@@ -85,7 +85,7 @@ func SignatureFromMap(m Map) Signature {
 
 // NewSignature returns a signature given some bytes and a private key
 func NewSignature(
-	k *crypto.PrivateKey,
+	k crypto.PrivateKey,
 	o *Object,
 ) (Signature, error) {
 	h, err := NewCID(o)

@@ -185,13 +185,13 @@ func (p *Provider) handlePeerLookup(
 		log.Any("q.vector", q.QueryVector),
 	)
 
-	if e.Sender != nil {
+	if !e.Sender.IsEmpty() {
 		logger = logger.With(
 			log.String("e.sender", e.Sender.String()),
 		)
 	}
 
-	if e.Payload.Metadata.Signature.Signer != nil {
+	if !e.Payload.Metadata.Signature.Signer.IsEmpty() {
 		logger = logger.With(
 			log.String(
 				"o.signer",

@@ -56,7 +56,7 @@ func (c *chat) subscribe(
 					fmt.Println("> Received message without date or body")
 					continue
 				}
-				if v.Metadata.Owner == nil {
+				if v.Metadata.Owner.IsEmpty() {
 					fmt.Println("> Received unsigned message")
 					continue
 				}
@@ -68,7 +68,7 @@ func (c *chat) subscribe(
 					fmt.Println("> Received nickname update without nickname")
 					continue
 				}
-				if v.Metadata.Owner == nil {
+				if v.Metadata.Owner.IsEmpty() {
 					fmt.Println("> Received unsigned nickname update")
 					continue
 				}

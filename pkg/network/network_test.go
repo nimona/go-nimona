@@ -314,7 +314,7 @@ func Test_exchange_signAll(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, g.Metadata.Signature.IsEmpty())
-		assert.Nil(t, g.Metadata.Signature.Signer)
+		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
 
 		gn := g.Data["foo"].(*object.Object)
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
@@ -335,7 +335,7 @@ func Test_network_lookup(t *testing.T) {
 		resolvers []Resolver
 	}
 	type args struct {
-		publicKey *crypto.PublicKey
+		publicKey crypto.PublicKey
 	}
 	tests := []struct {
 		name    string
@@ -420,7 +420,7 @@ type testResolver struct {
 
 func (r *testResolver) LookupPeer(
 	ctx context.Context,
-	publicKey *crypto.PublicKey,
+	publicKey crypto.PublicKey,
 ) (*peer.ConnectionInfo, error) {
 	c, ok := r.peers[publicKey.String()]
 	if !ok || c == nil {

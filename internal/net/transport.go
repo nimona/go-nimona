@@ -15,6 +15,6 @@ type Transport interface {
 	Listen(
 		ctx context.Context,
 		bindAddress string,
-		key *crypto.PrivateKey,
+		key crypto.PrivateKey,
 	) (net.Listener, error)
 }

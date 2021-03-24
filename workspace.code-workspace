@@ -5,8 +5,12 @@
 			"path": "."
 		},
 		{
-			"name": "nimona.io/examples",
+			"name": "examples",
 			"path": "examples"
+		},
+		{
+			"name": "simulation",
+			"path": "internal/simulation"
 		}
 	],
 	"settings": {

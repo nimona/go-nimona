@@ -25,7 +25,7 @@ func (s Shorthand) ConnectionInfo() (*ConnectionInfo, error) {
 	if len(ps) != 2 {
 		return nil, ErrInvalidShorthand
 	}
-	pk := &crypto.PublicKey{}
+	pk := crypto.PublicKey{}
 	if err := pk.UnmarshalString(ps[0]); err != nil {
 		return nil, err
 	}

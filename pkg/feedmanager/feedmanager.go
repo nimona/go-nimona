@@ -43,7 +43,7 @@ func New(
 
 	// if there is no primary identity key set, we should wait for one to be
 	// set before initializing the manager
-	if m.localpeer.GetPrimaryIdentityKey() == nil {
+	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
 		localPeerUpdates, lpDone := m.localpeer.ListenForUpdates()
 		go func() {
 			for {
@@ -367,7 +367,7 @@ func (m *FeedManager) isRegisteredContentType(
 }
 
 func GetFeedRoot(
-	owner *crypto.PublicKey,
+	owner crypto.PublicKey,
 	feedType string,
 ) *feed.FeedStreamRoot {
 	return &feed.FeedStreamRoot{
