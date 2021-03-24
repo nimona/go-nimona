@@ -26,7 +26,7 @@ type (
 	// evaluation state
 	evaluation struct {
 		// target
-		subject  crypto.PublicKey
+		subject  *crypto.PublicKey
 		resource string
 		action   PolicyAction
 		// result
@@ -60,7 +60,7 @@ func (ps Policies) Value() MapArray {
 }
 
 func (p Policy) Evaluate(
-	subject crypto.PublicKey,
+	subject *crypto.PublicKey,
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
@@ -75,7 +75,7 @@ func (p Policy) Evaluate(
 }
 
 func (ps Policies) Evaluate(
-	subject crypto.PublicKey,
+	subject *crypto.PublicKey,
 	resource string,
 	action PolicyAction,
 ) EvaluationResult {
