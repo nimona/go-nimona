@@ -8,17 +8,17 @@ import (
 
 type (
 	File struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Name     string
 		Chunks   []object.CID
 	}
 	TransferRequest struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		File     *File
 		Nonce    string
 	}
 	TransferResponse struct {
-		Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+		Metadata object.Metadata
 		Nonce    string
 		Accepted bool
 	}
@@ -28,19 +28,22 @@ func (e *File) Type() string {
 	return "nimona.io/File"
 }
 
+func (e *File) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *File) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e File) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/File",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["name"] = object.String(e.Name)
 	r.Data["name"] = object.String(e.Name)
-	// if $member.IsRepeated
 	if len(e.Chunks) > 0 {
-		// else
-		// r.Data["chunks"] = object.ToStringArray(e.Chunks)
 		rv := make(object.StringArray, len(e.Chunks))
 		for i, iv := range e.Chunks {
 			rv[i] = object.String(iv)
@@ -48,6 +51,14 @@ func (e File) ToObject() *object.Object {
 		r.Data["chunks"] = rv
 	}
 	return r
+}
+
+func (e *File) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *File) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *File) FromObject(o *object.Object) error {
@@ -73,34 +84,50 @@ func (e *TransferRequest) Type() string {
 	return "nimona.io/TransferRequest"
 }
 
+func (e *TransferRequest) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *TransferRequest) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TransferRequest) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/TransferRequest",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else if $member.IsObject
 	if e.File != nil {
-		r.Data["file"] = e.File.ToObject()
+		v, err := e.File.MarshalObject()
+		if err != nil {
+			// TODO error
+		} else {
+			r.Data["file"] = (v)
+		}
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
 	return r
+}
+
+func (e *TransferRequest) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TransferRequest) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TransferRequest) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["file"]; ok {
-		if t, ok := v.(object.Map); ok {
+		if ev, ok := v.(*object.Object); ok {
 			es := &File{}
-			eo := object.FromMap(t)
-			es.FromObject(eo)
-			e.File = es
-		} else if t, ok := v.(*object.Object); ok {
-			es := &File{}
-			es.FromObject(t)
-			e.File = es
+			if err := es.UnmarshalObject((ev)); err != nil {
+				// TODO error
+			} else {
+				e.File = es
+			}
 		}
 	}
 	if v, ok := o.Data["nonce"]; ok {
@@ -115,19 +142,31 @@ func (e *TransferResponse) Type() string {
 	return "nimona.io/TransferResponse"
 }
 
+func (e *TransferResponse) MarshalMap() (object.Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *TransferResponse) MarshalObject() (*object.Object, error) {
+	return e.ToObject(), nil
+}
+
 func (e TransferResponse) ToObject() *object.Object {
 	r := &object.Object{
 		Type:     "nimona.io/TransferResponse",
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	// else
-	// r.Data["nonce"] = object.String(e.Nonce)
 	r.Data["nonce"] = object.String(e.Nonce)
-	// else
-	// r.Data["accepted"] = object.Bool(e.Accepted)
 	r.Data["accepted"] = object.Bool(e.Accepted)
 	return r
+}
+
+func (e *TransferResponse) UnmarshalMap(m object.Map) error {
+	return e.FromObject(object.FromMap(m))
+}
+
+func (e *TransferResponse) UnmarshalObject(o *object.Object) error {
+	return e.FromObject(o)
 }
 
 func (e *TransferResponse) FromObject(o *object.Object) error {
