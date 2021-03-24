@@ -40,17 +40,11 @@ type (
 		Metadata object.Metadata
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
-				{{- if $member.IsObject }}
-					{{ $member.Name }} []*{{ memberType $member.GoFullType }} {{ tag $member }}
-				{{- else }}
-					{{ $member.Name }} []{{ memberType $member.GoFullType }} {{ tag $member }}
-				{{- end }}
+				{{ $member.Name }} []{{ memberType $member true }} {{ tag $member }}
 			{{- else if $member.IsPrimitive }}
-				{{ $member.Name }} {{ memberType $member.GoFullType }} {{ tag $member }}
-			{{- else if $member.IsObject }}
-				{{ $member.Name }} *{{ memberType $member.GoFullType }} {{ tag $member }}
+				{{ $member.Name }} {{ memberType $member true }} {{ tag $member }}
 			{{- else }}
-				{{ $member.Name }} {{ memberType $member.GoFullType }} {{ tag $member }}
+				{{ $member.Name }} {{ memberType $member true}} {{ tag $member }}
 			{{- end }}
 		{{- end }}
 	}
@@ -88,10 +82,7 @@ func (e {{ structName $object.Name }}) ToObject() *object.Object {
 			{{- else }}
 				rv := make({{ primitive $member }}, len(e.{{ $member.Name }}))
 				for i, v := range e.{{ $member.Name }} {
-					iv, err := v.{{ marshalFunc $member }}()
-					if err != nil {
-						// TODO error
-					} else {
+					if iv, err := v.{{ marshalFunc $member }}(); err == nil {
 						rv[i] = {{ primitiveSingular $member }}(iv)
 					}
 				}
@@ -101,14 +92,15 @@ func (e {{ structName $object.Name }}) ToObject() *object.Object {
 		{{- else if $member.IsPrimitive }}
 			r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
 		{{- else }}
+			{{- if $member.IsOptional }}
 			if e.{{ $member.Name }} != nil {
-				v, err := e.{{ $member.Name }}.{{ marshalFunc $member }}()
-				if err != nil {
-					// TODO error
-				} else {
+			{{- end }}
+				if v, err := e.{{ $member.Name }}.{{ marshalFunc $member }}(); err == nil {
 					r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(v)
 				}
+			{{- if $member.IsOptional }}
 			}
+			{{- end }}
 		{{- end }}
 	{{- end }}
 	return r
@@ -139,7 +131,7 @@ func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
 		{{- else }}
 			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
 				if t, ok := v.({{ primitive $member }}); ok {
-					e.{{ $member.Name }} = {{ memberType $member.GoFullType }}(t)
+					e.{{ $member.Name }} = {{ memberType $member false }}(t)
 				}
 			}
 		{{- end }}
@@ -147,12 +139,10 @@ func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
 		{{- if $member.IsRepeated }}
 			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
 				if ev, ok := v.({{ primitive $member }}); ok {
-					e.{{ $member.Name }} = make([]*{{ memberType $member.GoFullType }}, len(ev))
+					e.{{ $member.Name }} = make([]{{ memberType $member true }}, len(ev))
 					for i, iv := range ev {
-						es := &{{ memberType $member.GoFullType }}{}
-						if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(iv)); err != nil {
-							// TODO error
-						} else {
+						es := {{ memberType $member false }}{}
+						if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(iv)); err == nil {
 							e.{{ $member.Name }}[i] = es
 						}
 					}
@@ -161,10 +151,8 @@ func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
 		{{- else }}
 			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
 				if ev, ok := v.({{ primitive $member }}); ok {
-					es := &{{ memberType $member.GoFullType }}{}
-					if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(ev)); err != nil {
-						// TODO error
-					} else {
+					es := {{ memberType $member false }}{}
+					if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(ev)); err == nil {
 						e.{{ $member.Name }} = es
 					}
 				}
@@ -408,12 +396,21 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			}
 			return nn
 		},
-		"memberType": func(name string) string {
+		"memberType": func(m Member, dec bool) string {
+			name := m.GoFullType
 			for alias, pkg := range originalImports {
 				name = strings.Replace(name, pkg, alias, 1)
 			}
 			ps := strings.Split(name, "/")
-			return strings.TrimPrefix(ps[len(ps)-1], doc.PackageAlias+".")
+			name = strings.TrimPrefix(ps[len(ps)-1], doc.PackageAlias+".")
+			if m.IsObject && m.IsOptional {
+				if dec {
+					name = "*" + name
+				} else {
+					name = "&" + name
+				}
+			}
+			return name
 		},
 		"neq": func(a, b string) bool {
 			return a != b

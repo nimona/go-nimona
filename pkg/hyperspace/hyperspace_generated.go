@@ -49,10 +49,7 @@ func (e Announcement) ToObject() *object.Object {
 	}
 	r.Data["version"] = object.Int(e.Version)
 	if e.ConnectionInfo != nil {
-		v, err := e.ConnectionInfo.MarshalObject()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.ConnectionInfo.MarshalObject(); err == nil {
 			r.Data["connectionInfo"] = (v)
 		}
 	}
@@ -91,9 +88,7 @@ func (e *Announcement) FromObject(o *object.Object) error {
 	if v, ok := o.Data["connectionInfo"]; ok {
 		if ev, ok := v.(*object.Object); ok {
 			es := &peer.ConnectionInfo{}
-			if err := es.UnmarshalObject((ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalObject((ev)); err == nil {
 				e.ConnectionInfo = es
 			}
 		}
@@ -220,10 +215,7 @@ func (e LookupResponse) ToObject() *object.Object {
 	if len(e.Announcements) > 0 {
 		rv := make(object.ObjectArray, len(e.Announcements))
 		for i, v := range e.Announcements {
-			iv, err := v.MarshalObject()
-			if err != nil {
-				// TODO error
-			} else {
+			if iv, err := v.MarshalObject(); err == nil {
 				rv[i] = (iv)
 			}
 		}
@@ -261,9 +253,7 @@ func (e *LookupResponse) FromObject(o *object.Object) error {
 			e.Announcements = make([]*Announcement, len(ev))
 			for i, iv := range ev {
 				es := &Announcement{}
-				if err := es.UnmarshalObject((iv)); err != nil {
-					// TODO error
-				} else {
+				if err := es.UnmarshalObject((iv)); err == nil {
 					e.Announcements[i] = es
 				}
 			}

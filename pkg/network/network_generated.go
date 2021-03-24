@@ -11,12 +11,12 @@ type (
 	DataForwardRequest struct {
 		Metadata  object.Metadata
 		RequestID string
-		Recipient *crypto.PublicKey
+		Recipient crypto.PublicKey
 		Payload   *object.Object
 	}
 	DataForwardEnvelope struct {
 		Metadata object.Metadata
-		Sender   *crypto.PublicKey
+		Sender   crypto.PublicKey
 		Data     []byte
 	}
 	DataForwardResponse struct {
@@ -45,19 +45,11 @@ func (e DataForwardRequest) ToObject() *object.Object {
 		Data:     object.Map{},
 	}
 	r.Data["requestID"] = object.String(e.RequestID)
-	if e.Recipient != nil {
-		v, err := e.Recipient.MarshalString()
-		if err != nil {
-			// TODO error
-		} else {
-			r.Data["recipient"] = object.String(v)
-		}
+	if v, err := e.Recipient.MarshalString(); err == nil {
+		r.Data["recipient"] = object.String(v)
 	}
 	if e.Payload != nil {
-		v, err := e.Payload.MarshalObject()
-		if err != nil {
-			// TODO error
-		} else {
+		if v, err := e.Payload.MarshalObject(); err == nil {
 			r.Data["payload"] = (v)
 		}
 	}
@@ -81,10 +73,8 @@ func (e *DataForwardRequest) FromObject(o *object.Object) error {
 	}
 	if v, ok := o.Data["recipient"]; ok {
 		if ev, ok := v.(object.String); ok {
-			es := &crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err != nil {
-				// TODO error
-			} else {
+			es := crypto.PublicKey{}
+			if err := es.UnmarshalString(string(ev)); err == nil {
 				e.Recipient = es
 			}
 		}
@@ -92,9 +82,7 @@ func (e *DataForwardRequest) FromObject(o *object.Object) error {
 	if v, ok := o.Data["payload"]; ok {
 		if ev, ok := v.(*object.Object); ok {
 			es := &object.Object{}
-			if err := es.UnmarshalObject((ev)); err != nil {
-				// TODO error
-			} else {
+			if err := es.UnmarshalObject((ev)); err == nil {
 				e.Payload = es
 			}
 		}
@@ -120,13 +108,8 @@ func (e DataForwardEnvelope) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	if e.Sender != nil {
-		v, err := e.Sender.MarshalString()
-		if err != nil {
-			// TODO error
-		} else {
-			r.Data["sender"] = object.String(v)
-		}
+	if v, err := e.Sender.MarshalString(); err == nil {
+		r.Data["sender"] = object.String(v)
 	}
 	r.Data["data"] = object.Data(e.Data)
 	return r
@@ -144,10 +127,8 @@ func (e *DataForwardEnvelope) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["sender"]; ok {
 		if ev, ok := v.(object.String); ok {
-			es := &crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err != nil {
-				// TODO error
-			} else {
+			es := crypto.PublicKey{}
+			if err := es.UnmarshalString(string(ev)); err == nil {
 				e.Sender = es
 			}
 		}
