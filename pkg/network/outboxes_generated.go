@@ -6,8 +6,6 @@ package network
 
 import (
 	"sync"
-
-	"nimona.io/pkg/crypto"
 )
 
 type (
@@ -24,18 +22,18 @@ func NewOutboxesMap() *OutboxesMap {
 }
 
 // GetOrPut -
-func (m *OutboxesMap) GetOrPut(k *crypto.PublicKey, v *outbox) (*outbox, bool) {
+func (m *OutboxesMap) GetOrPut(k string, v *outbox) (*outbox, bool) {
 	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*outbox), ok
 }
 
 // Put -
-func (m *OutboxesMap) Put(k *crypto.PublicKey, v *outbox) {
+func (m *OutboxesMap) Put(k string, v *outbox) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *OutboxesMap) Get(k *crypto.PublicKey) (*outbox, bool) {
+func (m *OutboxesMap) Get(k string) (*outbox, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -50,22 +48,22 @@ func (m *OutboxesMap) Get(k *crypto.PublicKey) (*outbox, bool) {
 }
 
 // Delete -
-func (m *OutboxesMap) Delete(k *crypto.PublicKey) {
+func (m *OutboxesMap) Delete(k string) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *OutboxesMap) Range(i func(k *crypto.PublicKey, v *outbox) bool) {
+func (m *OutboxesMap) Range(i func(k string, v *outbox) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(*crypto.PublicKey), v.(*outbox))
+		return i(k.(string), v.(*outbox))
 	})
 }
 
 // ListKeys -
-func (m *OutboxesMap) ListKeys() []*crypto.PublicKey {
-	vs := []*crypto.PublicKey{}
+func (m *OutboxesMap) ListKeys() []string {
+	vs := []string{}
 	m.m.Range(func(k, v interface{}) bool {
-		vs = append(vs, k.(*crypto.PublicKey))
+		vs = append(vs, k.(string))
 		return true
 	})
 	return vs

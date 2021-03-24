@@ -75,7 +75,7 @@ var (
 )
 
 // nolint: lll
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=*crypto.PublicKey ValueType=outbox SyncmapName=outboxes"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=string ValueType=outbox SyncmapName=outboxes"
 //go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=resolvers_generated.go -imp=nimona.io/pkg/object -pkg=network gen "KeyType=Resolver"
 
@@ -363,7 +363,7 @@ func (w *network) getOutbox(recipient *crypto.PublicKey) *outbox {
 		peer:  recipient,
 		queue: queue.New(),
 	}
-	outbox, loaded := w.outboxes.GetOrPut(recipient, outbox)
+	outbox, loaded := w.outboxes.GetOrPut(recipient.String(), outbox)
 	if !loaded {
 		go w.processOutbox(outbox)
 	}
@@ -715,7 +715,7 @@ func (w *network) Send(
 	p *crypto.PublicKey,
 	opts ...SendOption,
 ) error {
-	if p == w.localpeer.GetPrimaryPeerKey().PublicKey() {
+	if p.Equals(w.localpeer.GetPrimaryPeerKey().PublicKey()) {
 		return ErrCannotSendToSelf
 	}
 
