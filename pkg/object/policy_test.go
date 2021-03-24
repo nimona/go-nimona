@@ -64,7 +64,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	runTest := func(
 		t *testing.T,
 		targetName string,
-		subject crypto.PublicKey,
+		subject *crypto.PublicKey,
 		resource string,
 		action PolicyAction,
 		expectations []EvaluationResult,
@@ -99,7 +99,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	}
 
 	// s0, r0, a1
-	runTest(t, "s0, r0, a1", *s0.PublicKey(), "r0", "a1", []EvaluationResult{
+	runTest(t, "s0, r0, a1", s0.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Deny,
@@ -110,7 +110,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s0, r0, a2
-	runTest(t, "s0, r0, a2", *s0.PublicKey(), "r0", "a2", []EvaluationResult{
+	runTest(t, "s0, r0, a2", s0.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Allow,
 		Deny,
@@ -121,7 +121,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s1, r0, a1
-	runTest(t, "s1, r0, a1", *s1.PublicKey(), "r0", "a1", []EvaluationResult{
+	runTest(t, "s1, r0, a1", s1.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Deny,
@@ -132,7 +132,7 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 	})
 
 	// s1, r0, a2
-	runTest(t, "s1, r0, a2", *s1.PublicKey(), "r0", "a2", []EvaluationResult{
+	runTest(t, "s1, r0, a2", s1.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Allow,
 		Allow,
@@ -201,7 +201,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	runTest := func(
 		t *testing.T,
 		targetName string,
-		subject crypto.PublicKey,
+		subject *crypto.PublicKey,
 		resource string,
 		action PolicyAction,
 		expectations []EvaluationResult,
@@ -236,7 +236,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	}
 
 	// s0, r0, a1
-	runTest(t, "s0, r0, a1", *s0.PublicKey(), "r0", "a1", []EvaluationResult{
+	runTest(t, "s0, r0, a1", s0.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -248,7 +248,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s0, r0, a2
-	runTest(t, "s0, r0, a2", *s0.PublicKey(), "r0", "a2", []EvaluationResult{
+	runTest(t, "s0, r0, a2", s0.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -260,7 +260,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s1, r0, a1
-	runTest(t, "s1, r0, a1", *s1.PublicKey(), "r0", "a1", []EvaluationResult{
+	runTest(t, "s1, r0, a1", s1.PublicKey(), "r0", "a1", []EvaluationResult{
 		Allow,
 		Allow,
 		Allow,
@@ -272,7 +272,7 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 
 	// s1, r0, a2
-	runTest(t, "s1, r0, a2", *s1.PublicKey(), "r0", "a2", []EvaluationResult{
+	runTest(t, "s1, r0, a2", s1.PublicKey(), "r0", "a2", []EvaluationResult{
 		Allow,
 		Deny,
 		Allow,
@@ -284,284 +284,24 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 }
 
-// func TestPolicies_Evaluate(t *testing.T) {
-// 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
-// 	require.NoError(t, err)
-// 	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
-// 	require.NoError(t, err)
-// 	p0 := k0.PublicKey()
-// 	p1 := k1.PublicKey()
-// 	type args struct {
-// 		subject  crypto.PublicKey
-// 		resource string
-// 		action   PolicyAction
-// 	}
-// 	tests := []struct {
-// 		name     string
-// 		policies Policies
-// 		args     args
-// 		want     EvaluationResult
-// 	}{{
-// 		name: "valid, no policies",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "foo",
-// 		},
-// 		policies: Policies{},
-// 		want:     Allow,
-// 	}, {
-// 		name: "valid, all match",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "foo",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Resources: []string{
-// 				"foo",
-// 				"bar",
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "valid, no resource",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "something",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "valid, no subject",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "something",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Resources: []string{"something"},
-// 			Effect:    AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "valid, no action",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "something",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Resources: []string{"something"},
-// 			Effect:    AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "valid, no subject, no subject",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "something",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "valid, no subject, no subject, no action",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "something",
-// 		},
-// 		policies: Policies{{
-// 			Type:   SignaturePolicy,
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Allow,
-// 	}, {
-// 		name: "invalid, no resource, subject doesn't match",
-// 		args: args{
-// 			subject: p1,
-// 			action:  ReadAction,
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "invalid, no resource, action doesn't match",
-// 		args: args{
-// 			subject: p0,
-// 			action:  PolicyAction("foo"),
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "invalid, resource doesn't match",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "foo",
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Resources: []string{
-// 				"not-foo",
-// 				"bar",
-// 			},
-// 			Effect: AllowEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "invalid, no resource, deny",
-// 		args: args{
-// 			subject: p0,
-// 			action:  ReadAction,
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: DenyEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "invalid, no resource, deny",
-// 		args: args{
-// 			subject: p0,
-// 			action:  ReadAction,
-// 		},
-// 		policies: Policies{{
-// 			Type: SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{
-// 				p0,
-// 			},
-// 			Actions: []PolicyAction{
-// 				ReadAction,
-// 			},
-// 			Effect: DenyEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "multiple, invalid, allow all, deny one",
-// 		args: args{
-// 			subject:  p0,
-// 			action:   ReadAction,
-// 			resource: "foo",
-// 		},
-// 		policies: Policies{{
-// 			Type:   SignaturePolicy,
-// 			Effect: AllowEffect,
-// 		}, {
-// 			Type:     SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{p0},
-// 			Effect:   DenyEffect,
-// 		}},
-// 		want: Deny,
-// 	}, {
-// 		name: "multiple, valid, allow all, deny one",
-// 		args: args{
-// 			subject:  p1,
-// 			action:   ReadAction,
-// 			resource: "foo",
-// 		},
-// 		policies: Policies{{
-// 			Type:   SignaturePolicy,
-// 			Effect: AllowEffect,
-// 		}, {
-// 			Type:     SignaturePolicy,
-// 			Subjects: []*crypto.PublicKey{p0},
-// 			Effect:   DenyEffect,
-// 		}},
-// 		want: Allow,
-// 	}}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got := tt.policies.Evaluate(
-// 				tt.args.subject,
-// 				tt.args.resource,
-// 				tt.args.action,
-// 			)
-// 			assert.Equal(t, tt.want, got)
-// 		})
-// 	}
-// }
-
-// func TestPolicy_Map(t *testing.T) {
-// 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
-// 	require.NoError(t, err)
-// 	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
-// 	require.NoError(t, err)
-// 	p0 := k0.PublicKey()
-// 	p1 := k1.PublicKey()
-// 	p := Policy{
-// 		Type:      SignaturePolicy,
-// 		Subjects:  []*crypto.PublicKey{p0, p1},
-// 		Resources: []string{"foo", "bar"},
-// 		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
-// 		Effect:    AllowEffect,
-// 	}
-// 	m := p.Map()
-// 	g := PolicyFromMap(m)
-// 	require.Equal(t, p, g)
-// }
+func TestPolicy_Map(t *testing.T) {
+	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+	p0 := k0.PublicKey()
+	p1 := k1.PublicKey()
+	p := Policy{
+		Type:      SignaturePolicy,
+		Subjects:  []*crypto.PublicKey{p0, p1},
+		Resources: []string{"foo", "bar"},
+		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
+		Effect:    AllowEffect,
+	}
+	m := p.Map()
+	g := PolicyFromMap(m)
+	require.Equal(t, p, g)
+}
 
 func TestPolicies_Map(t *testing.T) {
 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
