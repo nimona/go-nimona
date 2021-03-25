@@ -130,8 +130,8 @@ func Test_requester_Request(t *testing.T) {
 }
 
 func newPeer() localpeer.LocalPeer {
-	pk, _ := crypto.GenerateEd25519PrivateKey()
-	pk1, _ := crypto.GenerateEd25519PrivateKey()
+	pk, _ := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
+	pk1, _ := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 
 	kc := localpeer.New()
 	kc.PutPrimaryPeerKey(pk)

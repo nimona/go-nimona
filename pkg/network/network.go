@@ -154,7 +154,7 @@ func New(
 	}
 	if w.localpeer == nil {
 		w.localpeer = localpeer.New()
-		k, err := crypto.GenerateEd25519PrivateKey()
+		k, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 		if err != nil {
 			panic(err)
 		}

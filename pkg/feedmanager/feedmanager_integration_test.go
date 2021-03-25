@@ -25,7 +25,7 @@ func TestManager_Integration(t *testing.T) {
 	time.Sleep(time.Second * 5)
 
 	// construct new identity key
-	id, err := crypto.GenerateEd25519PrivateKey()
+	id, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	// construct peer 0

@@ -14,7 +14,7 @@ import (
 )
 
 func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	p := &Announcement{
@@ -56,7 +56,7 @@ func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
 }
 
 func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	p := &LookupResponse{

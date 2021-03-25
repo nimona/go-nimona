@@ -71,7 +71,10 @@ func (tt *tcpTransport) Dial(
 		return nil, fmt.Errorf("only ed25519 keys are currently supported")
 	}
 
-	conn.RemotePeerKey = crypto.NewPublicKey(pubKey)
+	conn.RemotePeerKey = crypto.NewPublicKey(
+		pubKey,
+		crypto.PeerKey,
+	)
 
 	return conn, nil
 }

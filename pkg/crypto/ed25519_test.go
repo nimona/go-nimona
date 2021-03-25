@@ -10,7 +10,10 @@ import (
 )
 
 func TestEd(t *testing.T) {
-	p1, err := GenerateEd25519PrivateKey()
+	p1, err := GenerateEd25519PrivateKey(PeerKey)
+
+	require.Equal(t, PeerKey, p1.Type())
+	require.Equal(t, PeerKey, p1.PublicKey().Type())
 
 	t.Run("generate new private key", func(t *testing.T) {
 		require.NoError(t, err)
@@ -28,7 +31,6 @@ func TestEd(t *testing.T) {
 		rr1, err := ed25519PublicFromPublicKey(r1)
 		assert.NoError(t, err)
 		assert.Equal(t, r1.ed25519(), rr1)
-		require.Equal(t, r1, NewPublicKey(rr1))
 	})
 
 	b := make([]byte, 5647)

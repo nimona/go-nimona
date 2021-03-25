@@ -12,7 +12,7 @@ func main() {
 	if len(os.Args) > 1 {
 		k = crypto.PrivateKey(os.Args[1])
 	} else {
-		k, _ = crypto.GenerateEd25519PrivateKey() // nolint: errcheck
+		k, _ = crypto.GenerateEd25519PrivateKey(crypto.PeerKey) // nolint: errcheck
 	}
 	fmt.Println("private key:", k.String())
 	fmt.Println("public key:", k.PublicKey().String())

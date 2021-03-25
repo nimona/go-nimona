@@ -277,9 +277,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 }
 
 // func TestPolicies_Evaluate(t *testing.T) {
-// 	k0, err := crypto.GenerateEd25519PrivateKey()
+// 	k0, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
-// 	k1, err := crypto.GenerateEd25519PrivateKey()
+// 	k1, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
 // 	p0 := k0.PublicKey()
 // 	p1 := k1.PublicKey()
@@ -537,9 +537,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // }
 
 // func TestPolicy_Map(t *testing.T) {
-// 	k0, err := crypto.GenerateEd25519PrivateKey()
+// 	k0, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
-// 	k1, err := crypto.GenerateEd25519PrivateKey()
+// 	k1, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 // 	require.NoError(t, err)
 // 	p0 := k0.PublicKey()
 // 	p1 := k1.PublicKey()
@@ -556,9 +556,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 // }
 
 func TestPolicies_Map(t *testing.T) {
-	k0, err := crypto.GenerateEd25519PrivateKey()
+	k0, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
-	k1, err := crypto.GenerateEd25519PrivateKey()
+	k1, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	p0 := k0.PublicKey()
 	p1 := k1.PublicKey()

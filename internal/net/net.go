@@ -337,7 +337,10 @@ func (n *network) Listen(
 						conn.Close() // nolint: errcheck
 						continue
 					}
-					conn.RemotePeerKey = crypto.NewPublicKey(pubKey)
+					conn.RemotePeerKey = crypto.NewPublicKey(
+						pubKey,
+						crypto.PeerKey,
+					)
 				} else {
 					// not currently supported
 					// TODO find a way to surface this error

@@ -129,7 +129,7 @@ func newPeer(t *testing.T) (
 	*network,
 ) {
 	kc := localpeer.New()
-	pk, err := crypto.GenerateEd25519PrivateKey()
+	pk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 	kc.PutPrimaryPeerKey(pk)
 	return kc, New(

@@ -88,7 +88,7 @@ func TestResolver_Integration(t *testing.T) {
 }
 
 func newPeer(t *testing.T) network.Network {
-	k, err := crypto.GenerateEd25519PrivateKey()
+	k, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	ctx := context.New()

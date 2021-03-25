@@ -22,6 +22,7 @@ import (
 // we are opting for ed to x at this point based on FiloSottile's age spec
 
 type (
+	KeyType    uint64
 	PrivateKey string
 	PublicKey  string
 )
@@ -32,10 +33,17 @@ const (
 
 	cidEd25519Private = 0x1300
 	cidEd25519Public  = 0xed
+
+	UnknownKey  KeyType = 0
+	PeerKey     KeyType = 0x6E00 // codec code for nimona _peer_ key
+	IdentityKey KeyType = 0x6E01 // codec code for nimona _identity_ key
 )
 
-func ed25519PrivateToPrivateKey(k ed25519.PrivateKey) (PrivateKey, error) {
-	h, err := multihash.Encode(k, multihash.IDENTITY)
+func ed25519PrivateToPrivateKey(
+	k ed25519.PrivateKey,
+	t KeyType,
+) (PrivateKey, error) {
+	h, err := multihash.Encode(k, uint64(t))
 	if err != nil {
 		panic(err)
 	}
@@ -77,8 +85,11 @@ func ed25519PublicFromPublicKey(k PublicKey) (ed25519.PublicKey, error) {
 	return ed25519.PublicKey(h.Digest), nil
 }
 
-func ed25519PublicToPublicKey(k ed25519.PublicKey) (PublicKey, error) {
-	h, err := multihash.Encode(k, multihash.IDENTITY)
+func ed25519PublicToPublicKey(
+	k ed25519.PublicKey,
+	t KeyType,
+) (PublicKey, error) {
+	h, err := multihash.Encode(k, uint64(t))
 	if err != nil {
 		panic(err)
 	}
@@ -90,25 +101,25 @@ func ed25519PublicToPublicKey(k ed25519.PublicKey) (PublicKey, error) {
 	return PublicKey(s), nil
 }
 
-func GenerateEd25519PrivateKey() (PrivateKey, error) {
+func GenerateEd25519PrivateKey(keyType KeyType) (PrivateKey, error) {
 	_, b, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return "", err
 	}
-	return ed25519PrivateToPrivateKey(b)
+	return ed25519PrivateToPrivateKey(b, keyType)
 }
 
-func NewPrivateKey(seed []byte) PrivateKey {
+func NewPrivateKey(seed []byte, keyType KeyType) PrivateKey {
 	b := ed25519.NewKeyFromSeed(seed)
-	k, err := ed25519PrivateToPrivateKey(b)
+	k, err := ed25519PrivateToPrivateKey(b, keyType)
 	if err != nil {
 		panic(err)
 	}
 	return k
 }
 
-func NewPublicKey(publicKey ed25519.PublicKey) PublicKey {
-	k, err := ed25519PublicToPublicKey(publicKey)
+func NewPublicKey(publicKey ed25519.PublicKey, keyType KeyType) PublicKey {
+	k, err := ed25519PublicToPublicKey(publicKey, keyType)
 	if err != nil {
 		panic(err)
 	}
@@ -120,8 +131,26 @@ func (i PrivateKey) ed25519() ed25519.PrivateKey {
 	return k
 }
 
+func (i PrivateKey) Type() KeyType {
+	c, err := cid.Decode(string(i))
+	if err != nil {
+		return UnknownKey
+	}
+	if c.Type() != cidEd25519Private {
+		return UnknownKey
+	}
+	h, err := multihash.Decode(c.Hash())
+	if err != nil {
+		return UnknownKey
+	}
+	return KeyType(h.Code)
+}
+
 func (i PrivateKey) PublicKey() PublicKey {
-	return NewPublicKey(i.ed25519().Public().(ed25519.PublicKey))
+	return NewPublicKey(
+		i.ed25519().Public().(ed25519.PublicKey),
+		i.Type(),
+	)
 }
 
 func publicEd25519KeyToCurve25519(pub ed25519.PublicKey) []byte {
@@ -168,7 +197,7 @@ func NewSharedKey(priv PrivateKey, pub PublicKey) (*PrivateKey, []byte, error) {
 // NewEphemeralSharedKey creates a new ec25519 key pair, calculates a shared
 // secret given a public key, and returns the created public key and secret
 func NewEphemeralSharedKey(pub PublicKey) (*PrivateKey, []byte, error) {
-	priv, err := GenerateEd25519PrivateKey()
+	priv, err := GenerateEd25519PrivateKey(PeerKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -197,6 +226,21 @@ func (i PrivateKey) String() string {
 func (r PublicKey) ed25519() ed25519.PublicKey {
 	k, _ := ed25519PublicFromPublicKey(r)
 	return k
+}
+
+func (r PublicKey) Type() KeyType {
+	c, err := cid.Decode(string(r))
+	if err != nil {
+		return UnknownKey
+	}
+	if c.Type() != cidEd25519Public {
+		return UnknownKey
+	}
+	h, err := multihash.Decode(c.Hash())
+	if err != nil {
+		return UnknownKey
+	}
+	return KeyType(h.Code)
 }
 
 func (r PublicKey) IsEmpty() bool {

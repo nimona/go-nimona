@@ -13,10 +13,10 @@ import (
 )
 
 func TestPeerCache_Lookup(t *testing.T) {
-	opk, err := crypto.GenerateEd25519PrivateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
-	opk2, err := crypto.GenerateEd25519PrivateKey()
+	opk2, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
 	p1 := &hyperspace.Announcement{
@@ -55,10 +55,10 @@ func TestPeerCache_Lookup(t *testing.T) {
 }
 
 func TestPeerCache_List(t *testing.T) {
-	opk, err := crypto.GenerateEd25519PrivateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
-	opk2, err := crypto.GenerateEd25519PrivateKey()
+	opk2, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
 	p1a := &hyperspace.Announcement{
@@ -108,7 +108,7 @@ func TestPeerCache_List(t *testing.T) {
 }
 
 func TestPeerCache_Remove(t *testing.T) {
-	opk, err := crypto.GenerateEd25519PrivateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
 	pc := NewPeerCache(200*time.Millisecond, "test2")
@@ -133,7 +133,7 @@ func TestPeerCache_Remove(t *testing.T) {
 }
 
 func TestPeerCache_Touch(t *testing.T) {
-	opk, err := crypto.GenerateEd25519PrivateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
 	pc := NewPeerCache(200*time.Millisecond, "test3")
@@ -170,7 +170,7 @@ func TestPeerCache_Touch(t *testing.T) {
 }
 
 func TestPeerCache_TTL(t *testing.T) {
-	opk, err := crypto.GenerateEd25519PrivateKey()
+	opk, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
 
 	pc := NewPeerCache(200*time.Millisecond, "test4")

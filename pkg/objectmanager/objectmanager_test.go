@@ -28,7 +28,7 @@ import (
 )
 
 func TestManager_Request(t *testing.T) {
-	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	testPeerKey, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	testPeer := &peer.ConnectionInfo{
 		PublicKey: testPeerKey.PublicKey(),
@@ -110,10 +110,10 @@ func TestManager_Request(t *testing.T) {
 }
 
 func TestManager_handleObjectRequest(t *testing.T) {
-	localPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	localPeerKey, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
-	peer1Key, err := crypto.GenerateEd25519PrivateKey()
+	peer1Key, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	peer1 := &peer.ConnectionInfo{
@@ -295,7 +295,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 }
 
 func TestManager_RequestStream(t *testing.T) {
-	testPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	testPeerKey, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	testPeer := &peer.ConnectionInfo{
 		PublicKey: testPeerKey.PublicKey(),
@@ -487,10 +487,10 @@ func TestManager_RequestStream(t *testing.T) {
 }
 
 func TestManager_handleStreamRequest(t *testing.T) {
-	localPeerKey, err := crypto.GenerateEd25519PrivateKey()
+	localPeerKey, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
-	peer1Key, err := crypto.GenerateEd25519PrivateKey()
+	peer1Key, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	peer1 := &peer.ConnectionInfo{
@@ -702,10 +702,14 @@ func TestManager_handleStreamRequest(t *testing.T) {
 }
 
 func TestManager_Put(t *testing.T) {
-	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	testOwnPrivateKey, err := crypto.GenerateEd25519PrivateKey(
+		crypto.PeerKey,
+	)
 	require.NoError(t, err)
 	testOwnPublicKey := testOwnPrivateKey.PublicKey()
-	testSubscriberPrivateKey, err := crypto.GenerateEd25519PrivateKey()
+	testSubscriberPrivateKey, err := crypto.GenerateEd25519PrivateKey(
+		crypto.PeerKey,
+	)
 	require.NoError(t, err)
 	testLocalPeer := localpeer.New()
 	testLocalPeer.PutContentTypes(
@@ -1244,7 +1248,7 @@ func Test_manager_Subscribe(t *testing.T) {
 }
 
 func TestManager_Integration_AddStreamSubscription(t *testing.T) {
-	prv0, err := crypto.GenerateEd25519PrivateKey()
+	prv0, err := crypto.GenerateEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
 	lpr := localpeer.New()
