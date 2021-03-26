@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616367316682,
+  "lastUpdate": 1616791896519,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4032,6 +4032,54 @@ window.BENCHMARK_DATA = {
             "value": 15184,
             "unit": "ns/op",
             "extra": "75498 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "f16093f445ffbb343a2332ead7248934ce7946c6",
+          "message": "refactor(crypto): rename KeyType to KeyUsage",
+          "timestamp": "2021-03-26T20:49:58Z",
+          "tree_id": "993c49cd969127310a91bdbdbafaa8c0c0bf185a",
+          "url": "https://github.com/nimona/go-nimona/commit/f16093f445ffbb343a2332ead7248934ce7946c6"
+        },
+        "date": 1616791895782,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4283985,
+            "unit": "ns/op",
+            "extra": "259 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 382323189,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3991095144,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15076,
+            "unit": "ns/op",
+            "extra": "78489 times\n2 procs"
           }
         ]
       }
