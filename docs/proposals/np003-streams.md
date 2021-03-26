@@ -47,8 +47,8 @@ you.
 
 ```json
 {
-  "type:s": "stream:nimona.io/kv",
-  "data:m": {}
+  "@type:s": "stream:nimona.io/kv"
+  ...
 }
 ```
 
@@ -56,14 +56,14 @@ you.
 
 ```json
 {
-  "type:s": "<any-type>",
-  "metadata:m": {
+  "@type:s": "<any-type>",
+  "@metadata:m": {
     "stream:s": "<stream-root-cid>",
     "parents:m": {
       "*:as": ["<last-known-leaf-cids>"],
     },
   },
-  "data:m": {}
+  ...
 }
 ```
 
@@ -129,28 +129,30 @@ Else, For each policy:
 
 ```json
 {
-  "type:s": "stream:conversation",
-  "owner:s": "bah0",
-  "policies:am": [{
-    // allow everyone to read the whole stream
-    "type:s": "signature",
-    "actions:as": ["read"],
-    "effect:s": "allow",
-  }, {
-    // allow a couple of keys to send messages
-    "type:s": "signature",
-    "subjects:as": ["bah1", "bah2", "bah3"],
-    "actions:as": ["append"],
-    "resources:as": ["conversation.MessageAdded"],
-    "effect:s": "allow",
-  }, {
-    // allow owner to modify conversation topic
-    "type:s": "signature",
-    "subjects:as": ["bah0"],
-    "actions:as": ["append"],
-    "resources:as": ["conversation.TopicUpdated"],
-    "effect:s": "allow",
-  }]
+  "@type:s": "stream:conversation",
+  "@metadata:m": {
+    "owner:s": "bah0",
+    "policies:am": [{
+      // allow everyone to read the whole stream
+      "type:s": "signature",
+      "actions:as": ["read"],
+      "effect:s": "allow",
+    }, {
+      // allow a couple of keys to send messages
+      "type:s": "signature",
+      "subjects:as": ["bah1", "bah2", "bah3"],
+      "actions:as": ["append"],
+      "resources:as": ["conversation.MessageAdded"],
+      "effect:s": "allow",
+    }, {
+      // allow owner to modify conversation topic
+      "type:s": "signature",
+      "subjects:as": ["bah0"],
+      "actions:as": ["append"],
+      "resources:as": ["conversation.TopicUpdated"],
+      "effect:s": "allow",
+    }]
+  }
 }
 ```
 
