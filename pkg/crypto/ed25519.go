@@ -24,12 +24,12 @@ import (
 
 type (
 	PublicKey struct {
-		Type      KeyType
+		Usage     KeyUsage
 		Algorithm KeyAlgorithm
 		RawKey    ed25519.PublicKey
 	}
 	PrivateKey struct {
-		Type      KeyType
+		Usage     KeyUsage
 		Algorithm KeyAlgorithm
 		RawKey    ed25519.PrivateKey
 	}
@@ -41,7 +41,8 @@ var (
 )
 
 func (k PublicKey) String() string {
-	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
+	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
+}
 
 func (k PublicKey) IsEmpty() bool {
 	return k.RawKey == nil
@@ -81,7 +82,7 @@ func (k *PublicKey) UnmarshalString(s string) error {
 
 	k.Algorithm = Ed25519Public
 	k.RawKey = ed25519.PublicKey(h.Digest)
-	k.Type = KeyType(h.Code)
+	k.Usage = KeyUsage(h.Code)
 
 	return nil
 }
@@ -99,7 +100,7 @@ func (k PrivateKey) IsEmpty() bool {
 }
 
 func (k PrivateKey) String() string {
-	return encodeToCID(uint64(k.Algorithm), uint64(k.Type), k.RawKey)
+	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
 }
 
 func (k PrivateKey) MarshalText() ([]byte, error) {
@@ -136,7 +137,7 @@ func (k *PrivateKey) UnmarshalString(s string) error {
 
 	k.Algorithm = Ed25519Private
 	k.RawKey = ed25519.PrivateKey(h.Digest)
-	k.Type = KeyType(h.Code)
+	k.Usage = KeyUsage(h.Code)
 
 	return nil
 }
@@ -152,42 +153,42 @@ func (k *PrivateKey) UnmarshalJSON(s []byte) error {
 func (k PrivateKey) PublicKey() PublicKey {
 	return PublicKey{
 		Algorithm: Ed25519Public,
-		Type:      k.Type,
+		Usage:     k.Usage,
 		RawKey:    k.RawKey.Public().(ed25519.PublicKey),
 	}
 }
 
-func NewEd25519PrivateKey(keyType KeyType) (*PrivateKey, error) {
+func NewEd25519PrivateKey(keyType KeyUsage) (PrivateKey, error) {
 	_, k, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return EmptyPrivateKey, err
 	}
 	return PrivateKey{
 		Algorithm: Ed25519Private,
-		Type:      keyType,
+		Usage:     keyType,
 		RawKey:    k,
 	}, nil
 }
 
 func NewEd25519PrivateKeyFromSeed(
 	seed []byte,
-	keyType KeyType,
-) *PrivateKey {
+	keyType KeyUsage,
+) PrivateKey {
 	b := ed25519.NewKeyFromSeed(seed)
-	return &PrivateKey{
+	return PrivateKey{
 		Algorithm: Ed25519Private,
-		Type:      keyType,
+		Usage:     keyType,
 		RawKey:    b,
 	}
 }
 
 func NewEd25519PublicKeyFromRaw(
 	raw ed25519.PublicKey,
-	keyType KeyType,
-) *PublicKey {
-	return &PublicKey{
+	keyType KeyUsage,
+) PublicKey {
+	return PublicKey{
 		Algorithm: Ed25519Public,
-		Type:      keyType,
+		Usage:     keyType,
 		RawKey:    raw,
 	}
 }
@@ -269,7 +270,7 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 
 func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
-		k.Type == w.Type &&
+		k.Usage == w.Usage &&
 		k.RawKey.Equal(w.RawKey)
 }
 

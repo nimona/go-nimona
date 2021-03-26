@@ -122,7 +122,9 @@ func (c *chat) subscribe(
 				if err := s.FromObject(o); err != nil {
 					continue
 				}
-				if s.Metadata.Owner == c.local.GetPrimaryPeerKey().PublicKey() {
+				if s.Metadata.Owner.Equals(
+					c.local.GetPrimaryPeerKey().PublicKey(),
+				) {
 					alreadySubscribed = true
 					or.Close()
 					break
