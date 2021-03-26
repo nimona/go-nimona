@@ -163,7 +163,7 @@ func (n *network) Dial(
 		}
 
 		// check negotiated key against dialed
-		if conn.RemotePeerKey != p.PublicKey {
+		if !conn.RemotePeerKey.Equals(p.PublicKey) {
 			n.blockAddress(
 				p.PublicKey,
 				address,

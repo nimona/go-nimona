@@ -820,7 +820,7 @@ func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
 		if !nObj.Metadata.Signature.IsEmpty() {
 			return true
 		}
-		if nObj.Metadata.Owner != k.PublicKey() {
+		if !nObj.Metadata.Owner.Equals(k.PublicKey()) {
 			return true
 		}
 		sig, err := object.NewSignature(k, nObj)
