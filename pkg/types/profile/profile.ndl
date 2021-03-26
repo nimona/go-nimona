@@ -1,0 +1,19 @@
+package nimona.io/schema/profile
+
+import nimona.io/crypto crypto
+import nimona.io/time time
+
+object DisplayPicture {
+    w100px string type=nimona.io/object.CID
+    w1000px string type=nimona.io/object.CID
+    wAny string type=nimona.io/object.CID
+}
+
+signed object Profile {
+    nickname string
+    givenName string
+    middleName string
+    familyName string
+    displayPicture object type=DisplayPicture
+    created string type=nimona.io/pkg/time.DateTime
+}

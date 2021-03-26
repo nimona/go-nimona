@@ -1,0 +1,11 @@
+package nimona.io/relationship
+
+import nimona.io/crypto crypto
+import nimona.io/time time
+import nimona.io/types/profile profile
+
+signed object Relationship {
+    alias string
+    profile object type=nimona.io/profile.Profile
+    created string type=nimona.io/pkg/time.DateTime
+}
