@@ -25,14 +25,13 @@ basic list of well known attributed, some required some optional.
 
 The top level of each object consists of three main attributes.
 
-- `type:s` is an arbitrary string defining the type of the object's content.
-- `metadata:m` are a fixed set of attributes that add extra info to the object.
-- `data:m` is the content of the object itself.
+- `@type:s` is an arbitrary string defining the type of the object's content.
+- `@metadata:m` are a fixed set of attributes that add extra info to the object.
 
 ```json
 {
-  "type:s": "type",
-  "metadata:m": {
+  "@type:s": "type",
+  "@metadata:m": {
     "stream:s": "bah...",
     "owner:s": "bah...",
     "parents:m": [
@@ -45,9 +44,7 @@ The top level of each object consists of three main attributes.
       "x:d": "bah..."
     }
   },
-  "data:m": {
-    "foo:s": "bar"
-  }
+  "foo:s": "bar"
 }
 ```
 

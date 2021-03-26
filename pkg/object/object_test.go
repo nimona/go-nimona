@@ -210,8 +210,8 @@ func TestValues(t *testing.T) {
 	}, {
 		name:  "ah",
 		value: CIDArray{dummy.CID(), dummy.CID()},
-		want:  "QmY2Z7ah5DhKvpiJQ3TZBMjAMnx41jiSvJ42Vp48Zq7esA",
-		json:  `["bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c","bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"]`,
+		want:  "QmVHnb5wNonYoaPyqpcJkJcu38QJpW3dNk2MiXBCL3zBtT",
+		json:  `["bahw5yaisecl5762aft2rdcnsockiea3nxjpdnvbbys5dnbho77svapvwsagwi","bahw5yaisecl5762aft2rdcnsockiea3nxjpdnvbbys5dnbho77svapvwsagwi"]`,
 	}, {
 		name: "m>s",
 		value: Map{
@@ -269,38 +269,38 @@ func TestValues(t *testing.T) {
 	}, {
 		name:  "o",
 		value: dummy,
-		want:  "Qmbdz3Q1vcymTUff9boRQegjrgrcR9ektTR9t6cSPrvNXS",
-		json:  `{"data:m":{"foo:s":"bar"},"type:s":"dummy"}`,
+		want:  "QmYZWMxneHYqxSoZHr45cXPLGPzRrLLdgDsCAqc7XnFWCK",
+		json:  `{"@type:s":"dummy","foo:s":"bar"}`,
 	}, {
 		name: "ao",
 		value: ObjectArray{
 			dummy,
 			dummy,
 		},
-		want: "QmcDPBGm5LoCLJu9DtPkGHkxTQ3qWn7ugjN5VrZb9J1NiV",
-		json: `[{"data:m":{"foo:s":"bar"},"type:s":"dummy"},{"data:m":{"foo:s":"bar"},"type:s":"dummy"}]`,
+		want: "QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
+		json: `[{"@type:s":"dummy","foo:s":"bar"},{"@type:s":"dummy","foo:s":"bar"}]`,
 	}, {
 		name: "m>o",
 		value: Map{
 			"foo": dummy,
 		},
-		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
-		json: `{"foo:o":{"data:m":{"foo:s":"bar"},"type:s":"dummy"}}`,
+		want: "QmR7sCawpQ2Eu6BkSnjRKKLzuRmR6PXhxBrHmnzHfKSbVk",
+		json: `{"foo:o":{"@type:s":"dummy","foo:s":"bar"}}`,
 	}, {
 		name: "m>h",
 		value: Map{
 			"foo": dummy.CID(),
 		},
-		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
-		json: `{"foo:r":"bahw5yaisedczrkokf3i4viubpuh7mjeqjvpgwscoiyr2fgamuzc5f2jedw73c"}`,
+		want: "QmR7sCawpQ2Eu6BkSnjRKKLzuRmR6PXhxBrHmnzHfKSbVk",
+		json: `{"foo:r":"bahw5yaisecl5762aft2rdcnsockiea3nxjpdnvbbys5dnbho77svapvwsagwi"}`,
 	}, {
 		name: "m>_sig",
 		value: Map{
 			"foo":        dummy,
 			"_signature": String("should not matter"),
 		},
-		want: "QmbJryPi1ufVK6tPeSrQ38QdJM5wA6S7DEAQKsQcxJk96h",
-		json: `{"_signature:s":"should not matter","foo:o":{"data:m":{"foo:s":"bar"},"type:s":"dummy"}}`,
+		want: "QmR7sCawpQ2Eu6BkSnjRKKLzuRmR6PXhxBrHmnzHfKSbVk",
+		json: `{"_signature:s":"should not matter","foo:o":{"@type:s":"dummy","foo:s":"bar"}}`,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

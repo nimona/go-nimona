@@ -28,22 +28,20 @@ the remote party simply ignores the object or request.
 
 ```json
 {
-  "type:s": "nimona.io/object.Certificate",
-  "data:m": {
-    "subject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
-    "resources:as": [
-      "nimona.io/profile.Profile",
-      "nimona.io/profile.ProfileRequest",
-      "mochi.io/conversation.*"
-    ],
-    "actions:as": [
-      "create",
-      "create",
-      "read"
-    ],
-    "created:s": "2020-06-25T19:16:43Z",
-    "expires:s": "2021-06-25T19:16:43Z",
-  },
+  "@type:s": "nimona.io/object.Certificate",
+  "subject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
+  "resources:as": [
+    "nimona.io/profile.Profile",
+    "nimona.io/profile.ProfileRequest",
+    "mochi.io/conversation.*"
+  ],
+  "actions:as": [
+    "create",
+    "create",
+    "read"
+  ],
+  "created:s": "2020-06-25T19:16:43Z",
+  "expires:s": "2021-06-25T19:16:43Z",
   "_signature:m": {
       "signer:o": "ed25519.8mE4CeLLCwpyfqyNFkT6gV32ZYcYP6jt1yzMDmzbxxRL",
       "alg:o": "OH_ES256",
@@ -66,26 +64,24 @@ the user.
 
 ```json
 {
-  "type:s": "nimona.io/object.CertificateRequest",
-  "data:m": {
-    "applicationName:s": "Foobar",
-    "applicationDescription:s": "An app that does nothing",
-    "applicationURL:s": "https://github.com/nimona",
-    "applicationIcon:d": "x0...",
-    "applicationBanner:d": "x0...",
-    "requestProfile:b": true,
-    "certificateSubject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
-    "certificateResources:as": [
-      "nimona.io/profile.Profile",
-      "nimona.io/profile.ProfileRequest",
-      "mochi.io/conversation.*"
-    ],
-    "certificateActions:as": [
-      "create",
-      "create",
-      "read"
-    ]
-  }
+  "@type:s": "nimona.io/object.CertificateRequest",
+  "applicationName:s": "Foobar",
+  "applicationDescription:s": "An app that does nothing",
+  "applicationURL:s": "https://github.com/nimona",
+  "applicationIcon:d": "x0...",
+  "applicationBanner:d": "x0...",
+  "requestProfile:b": true,
+  "certificateSubject:s": "ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs",
+  "certificateResources:as": [
+    "nimona.io/profile.Profile",
+    "nimona.io/profile.ProfileRequest",
+    "mochi.io/conversation.*"
+  ],
+  "certificateActions:as": [
+    "create",
+    "create",
+    "read"
+  ]
 }
 ```
 

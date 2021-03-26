@@ -48,7 +48,7 @@ type comboConf struct {
 }
 
 type fileUnloaded struct {
-	Metadata object.Metadata `nimona:"metadata:m,omitempty"`
+	Metadata object.Metadata `nimona:"@metadata:m,omitempty"`
 	BlobCID  object.CID      `nimona:"blob:r,omitempty"`
 }
 

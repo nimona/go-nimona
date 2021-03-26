@@ -28,9 +28,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	done := make(chan bool)
 
 	resObj := object.FromMap(object.Map{ // nolint: errcheck
-		"data": object.Map{
-			"foo": object.String("bar"),
-		},
+		"foo": object.String("bar"),
 	})
 
 	go func() {
@@ -55,9 +53,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	require.NoError(t, err)
 
 	reqObj := object.FromMap(object.Map{
-		"data": object.Map{
-			"foo": object.String("bar"),
-		},
+		"foo": object.String("bar"),
 	})
 	err = Write(reqObj, sc)
 	assert.NoError(t, err)
