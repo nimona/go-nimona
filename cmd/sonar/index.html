@@ -9,7 +9,7 @@
     <meta name="description" content="a new internet stack, or something like it">
     <meta name="go-import" content="nimona.io git https://github.com/nimona/go-nimona">
     
-    <link rel="preload" href="/assets/css/0.styles.783eb1d4.css" as="style"><link rel="preload" href="/assets/js/app.7fbac23b.js" as="script"><link rel="preload" href="/assets/js/2.355328b7.js" as="script"><link rel="preload" href="/assets/js/13.0da69d07.js" as="script"><link rel="prefetch" href="/assets/js/10.65bdc6d0.js"><link rel="prefetch" href="/assets/js/11.2383f1c3.js"><link rel="prefetch" href="/assets/js/12.12478c15.js"><link rel="prefetch" href="/assets/js/14.a63652e7.js"><link rel="prefetch" href="/assets/js/15.ca6a3d56.js"><link rel="prefetch" href="/assets/js/16.a388a17e.js"><link rel="prefetch" href="/assets/js/17.f7136bb7.js"><link rel="prefetch" href="/assets/js/18.5a62ec84.js"><link rel="prefetch" href="/assets/js/19.a86c0054.js"><link rel="prefetch" href="/assets/js/20.ac4ff4e5.js"><link rel="prefetch" href="/assets/js/21.40272cbc.js"><link rel="prefetch" href="/assets/js/22.e27db5ed.js"><link rel="prefetch" href="/assets/js/23.e1c48005.js"><link rel="prefetch" href="/assets/js/24.f2e7ad36.js"><link rel="prefetch" href="/assets/js/25.2dce1ccb.js"><link rel="prefetch" href="/assets/js/26.e9532d85.js"><link rel="prefetch" href="/assets/js/27.cb5e53df.js"><link rel="prefetch" href="/assets/js/28.ad827213.js"><link rel="prefetch" href="/assets/js/29.947b96e0.js"><link rel="prefetch" href="/assets/js/3.55a58f96.js"><link rel="prefetch" href="/assets/js/30.783321d0.js"><link rel="prefetch" href="/assets/js/31.f309fa31.js"><link rel="prefetch" href="/assets/js/32.9e4e440a.js"><link rel="prefetch" href="/assets/js/33.c155b873.js"><link rel="prefetch" href="/assets/js/34.1a928b65.js"><link rel="prefetch" href="/assets/js/35.3545bbaf.js"><link rel="prefetch" href="/assets/js/36.d3c18b04.js"><link rel="prefetch" href="/assets/js/4.85df2f2d.js"><link rel="prefetch" href="/assets/js/5.f0970314.js"><link rel="prefetch" href="/assets/js/6.249944e7.js"><link rel="prefetch" href="/assets/js/7.ec62f796.js"><link rel="prefetch" href="/assets/js/8.cb8aee27.js"><link rel="prefetch" href="/assets/js/9.1f421e0d.js">
+    <link rel="preload" href="/assets/css/0.styles.783eb1d4.css" as="style"><link rel="preload" href="/assets/js/app.4d7b2d06.js" as="script"><link rel="preload" href="/assets/js/2.355328b7.js" as="script"><link rel="preload" href="/assets/js/13.3fac11e9.js" as="script"><link rel="prefetch" href="/assets/js/10.65bdc6d0.js"><link rel="prefetch" href="/assets/js/11.2383f1c3.js"><link rel="prefetch" href="/assets/js/12.12478c15.js"><link rel="prefetch" href="/assets/js/14.a63652e7.js"><link rel="prefetch" href="/assets/js/15.ca6a3d56.js"><link rel="prefetch" href="/assets/js/16.a388a17e.js"><link rel="prefetch" href="/assets/js/17.f7136bb7.js"><link rel="prefetch" href="/assets/js/18.5a62ec84.js"><link rel="prefetch" href="/assets/js/19.a86c0054.js"><link rel="prefetch" href="/assets/js/20.ac4ff4e5.js"><link rel="prefetch" href="/assets/js/21.40272cbc.js"><link rel="prefetch" href="/assets/js/22.e27db5ed.js"><link rel="prefetch" href="/assets/js/23.e1c48005.js"><link rel="prefetch" href="/assets/js/24.f2e7ad36.js"><link rel="prefetch" href="/assets/js/25.2dce1ccb.js"><link rel="prefetch" href="/assets/js/26.e9532d85.js"><link rel="prefetch" href="/assets/js/27.cb5e53df.js"><link rel="prefetch" href="/assets/js/28.ad827213.js"><link rel="prefetch" href="/assets/js/29.947b96e0.js"><link rel="prefetch" href="/assets/js/3.55a58f96.js"><link rel="prefetch" href="/assets/js/30.783321d0.js"><link rel="prefetch" href="/assets/js/31.f309fa31.js"><link rel="prefetch" href="/assets/js/32.9e4e440a.js"><link rel="prefetch" href="/assets/js/33.c155b873.js"><link rel="prefetch" href="/assets/js/34.1a928b65.js"><link rel="prefetch" href="/assets/js/35.3545bbaf.js"><link rel="prefetch" href="/assets/js/36.d3c18b04.js"><link rel="prefetch" href="/assets/js/4.85df2f2d.js"><link rel="prefetch" href="/assets/js/5.f0970314.js"><link rel="prefetch" href="/assets/js/6.249944e7.js"><link rel="prefetch" href="/assets/js/7.ec62f796.js"><link rel="prefetch" href="/assets/js/8.cb8aee27.js"><link rel="prefetch" href="/assets/js/9.1f421e0d.js">
     <link rel="stylesheet" href="/assets/css/0.styles.783eb1d4.css">
   </head>
   <body>
@@ -25,38 +25,38 @@ peers and wait for them to ping back.</p> <p>Once sonar has managed to ping all 
 from all other defined peers, and exits.</p> <h2 id="env-vars"><a href="#env-vars" class="header-anchor">#</a> Env vars</h2> <ul><li><code>NIMONA_PEER_PRIVATE_KEY</code> - Private key for peer.</li> <li><code>NIMONA_PEER_BIND_ADDRESS</code> - Address (in the <code>ip:port</code> format) to bind sonar to.</li> <li><code>NIMONA_PEER_BOOTSTRAPS</code> - Bootstrap peers to use (in the <code>publicKey@tcps:ip:port</code>
 shorthand format).</li> <li><code>NIMONA_SONAR_PING_PEERS</code> - Public keys of the peers to lookup and ping.</li></ul> <h2 id="example"><a href="#example" class="header-anchor">#</a> Example</h2> <p>Create three peers, one that will be a bootstrap peer.</p> <div class="language-txt extra-class"><pre class="language-text"><code>Peer 1 (bootstrap):
   * port: 17000
-  * private: bagacmacaslgzj7n6d4fwxs3by7nuqog45gwm5khjgtrm2eqpntui544swrlxc4cxrivfd2utkafyfkealenybtoxgsbqi5ow3wjfnj3iiyrmcuq
-  * public: bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja
+  * private: bagacnag4afafnpql33c4aezi6wqduwc45qd3evanoowrz66vjpapoz7zzmakbpnvq2jerpsoygzdincom76dovh7szmo5r5eug5atlk6tsf53hqyz4
+  * public: bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty
 
 Peer 2:
   * port: 17001
-  * private: bagacmacatzmnsq5kjjs2xmmhu6pnruu54uvmonpmjkpjd32sptnszpsejm6hyhbnffcrryogndoa2yhe2g4xcr7stib5w6yggu5yepqvz7mnzwi
-  * public: bahwqcabapqoc2kkfddq4m2g4bvqojunzofd7fgqd3n5qmnj3qi7blt6y3tmq
+  * private: bagacnag4afagf2gpy7rkgni3ytui7kkyfek2mnc25qru4hh35owk4mdkorc632bhv2mglq52q4n3yi6x4nehagak3p2tqjow5ss2zfttatri6xsdvm
+  * public: bahwqdag4aeqcpluymxb3vby3xqr5py2ioamavw7vhas5n3ffvslhgbhcr5pehky
 
 Peer 3:
   * port: 17002
-  * private: bagacmacaekai32qmxeol6thr5ml6vpym3mx74zlelifwdhw3smynevgv726mlqvzatc67d5apqkebqdxvggxrfx2ifyfkb53fftqnde5vlctx3i
-  * public: bahwqcabayxblsbgf56h2a7auidahpkmnpclpuqlqkud3wklha2gj3kwfhpwq
+  * private: bagacnag4afamw4hk6fk2yqr7fyug4cpf6fs6pzhkyttmwt4m27emmc76sdjcg6o7xfkyfrhw5gs3sx6r5aorj66xnveeo7wpeu456c4vsp3ga4z6ie
+  * public: bahwqdag4aeqn7okvqlcpn2nfxfp5d2a5ct55o3kii57m6jjz34fzle7wmbzt4qi
 </code></pre></div><div class="language-sh extra-class"><pre class="language-sh"><code><span class="token assign-left variable">NIMONA_LOG_LEVEL</span><span class="token operator">=</span>error <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_UPNP_DISABLE</span><span class="token operator">=</span>true <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_PEER_BIND_ADDRESS</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0:17000 <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacmacaslgzj7n6d4fwxs3by7nuqog45gwm5khjgtrm2eqpntui544swrlxc4cxrivfd2utkafyfkealenybtoxgsbqi5ow3wjfnj3iiyrmcuq <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacnag4afafnpql33c4aezi6wqduwc45qd3evanoowrz66vjpapoz7zzmakbpnvq2jerpsoygzdincom76dovh7szmo5r5eug5atlk6tsf53hqyz4 <span class="token punctuation">\</span>
 go run ./cmd/bootstrap/main.go
 </code></pre></div><div class="language-sh extra-class"><pre class="language-sh"><code><span class="token assign-left variable">NIMONA_LOG_LEVEL</span><span class="token operator">=</span>error <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_UPNP_DISABLE</span><span class="token operator">=</span>true <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_PEER_BIND_ADDRESS</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0:17001 <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacmacatzmnsq5kjjs2xmmhu6pnruu54uvmonpmjkpjd32sptnszpsejm6hyhbnffcrryogndoa2yhe2g4xcr7stib5w6yggu5yepqvz7mnzwi <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_SONAR_PING_PEERS</span><span class="token operator">=</span>bahwqcabayxblsbgf56h2a7auidahpkmnpclpuqlqkud3wklha2gj3kwfhpwq <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_PEER_BOOTSTRAPS</span><span class="token operator">=</span>bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja@tcps:0.0.0.0:17000 <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacnag4afagf2gpy7rkgni3ytui7kkyfek2mnc25qru4hh35owk4mdkorc632bhv2mglq52q4n3yi6x4nehagak3p2tqjow5ss2zfttatri6xsdvm <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_SONAR_PING_PEERS</span><span class="token operator">=</span>bahwqdag4aeqn7okvqlcpn2nfxfp5d2a5ct55o3kii57m6jjz34fzle7wmbzt4qi <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_PEER_BOOTSTRAPS</span><span class="token operator">=</span>bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty@tcps:0.0.0.0:17000 <span class="token punctuation">\</span>
 go run ./cmd/sonar/main.go
 </code></pre></div><div class="language-sh extra-class"><pre class="language-sh"><code><span class="token assign-left variable">NIMONA_LOG_LEVEL</span><span class="token operator">=</span>error <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_UPNP_DISABLE</span><span class="token operator">=</span>true <span class="token punctuation">\</span>
 <span class="token assign-left variable">NIMONA_PEER_BIND_ADDRESS</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0:17002 <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacmacaekai32qmxeol6thr5ml6vpym3mx74zlelifwdhw3smynevgv726mlqvzatc67d5apqkebqdxvggxrfx2ifyfkb53fftqnde5vlctx3i <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_SONAR_PING_PEERS</span><span class="token operator">=</span>bahwqcabapqoc2kkfddq4m2g4bvqojunzofd7fgqd3n5qmnj3qi7blt6y3tmq <span class="token punctuation">\</span>
-<span class="token assign-left variable">NIMONA_PEER_BOOTSTRAPS</span><span class="token operator">=</span>bahwqcabaofyfpcrkkhvjgualqkuiawi3qdg5onedar25nxmsk2twqrrcyfja@tcps:0.0.0.0:17000 <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_PEER_PRIVATE_KEY</span><span class="token operator">=</span>bagacnag4afamw4hk6fk2yqr7fyug4cpf6fs6pzhkyttmwt4m27emmc76sdjcg6o7xfkyfrhw5gs3sx6r5aorj66xnveeo7wpeu456c4vsp3ga4z6ie <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_SONAR_PING_PEERS</span><span class="token operator">=</span>bahwqdag4aeqcpluymxb3vby3xqr5py2ioamavw7vhas5n3ffvslhgbhcr5pehky <span class="token punctuation">\</span>
+<span class="token assign-left variable">NIMONA_PEER_BOOTSTRAPS</span><span class="token operator">=</span>bahwqdag4aeqllbusjc7e5qnsgq2e4z74g5kp7fsy53d2jin2bgwv5hel3wpbrty@tcps:0.0.0.0:17000 <span class="token punctuation">\</span>
 go run ./cmd/sonar/main.go
 </code></pre></div></div> <footer class="page-edit"><!----> <!----></footer> <!----> </main></div></div><div class="global-ui"></div></div>
-    <script src="/assets/js/app.7fbac23b.js" defer></script><script src="/assets/js/2.355328b7.js" defer></script><script src="/assets/js/13.0da69d07.js" defer></script>
+    <script src="/assets/js/app.4d7b2d06.js" defer></script><script src="/assets/js/2.355328b7.js" defer></script><script src="/assets/js/13.3fac11e9.js" defer></script>
   </body>
 </html>
