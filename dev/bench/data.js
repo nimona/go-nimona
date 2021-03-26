@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616791896519,
+  "lastUpdate": 1616793890010,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4080,6 +4080,54 @@ window.BENCHMARK_DATA = {
             "value": 15076,
             "unit": "ns/op",
             "extra": "78489 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "85101bb30013d278bbddfda94e2f1ea80af9186a",
+          "message": "chore(deps): bump peaceiris/actions-gh-pages from v3 to v3.8.0\n\nBumps [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) from v3 to v3.8.0.\n- [Release notes](https://github.com/peaceiris/actions-gh-pages/releases)\n- [Changelog](https://github.com/peaceiris/actions-gh-pages/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/peaceiris/actions-gh-pages/compare/v3...068dc23d9710f1ba62e86896f84735d869951305)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-03-26T21:23:17Z",
+          "tree_id": "7e3d116d6a82632f01a819420e56629782dc693a",
+          "url": "https://github.com/nimona/go-nimona/commit/85101bb30013d278bbddfda94e2f1ea80af9186a"
+        },
+        "date": 1616793888825,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3538054,
+            "unit": "ns/op",
+            "extra": "300 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 340726404,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3478410966,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 13219,
+            "unit": "ns/op",
+            "extra": "92025 times\n2 procs"
           }
         ]
       }
