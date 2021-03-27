@@ -9,7 +9,7 @@
     <meta name="description" content="a new internet stack, or something like it">
     <meta name="go-import" content="nimona.io git https://github.com/nimona/go-nimona">
     
-    <link rel="preload" href="/assets/css/0.styles.783eb1d4.css" as="style"><link rel="preload" href="/assets/js/app.6533eab6.js" as="script"><link rel="preload" href="/assets/js/2.355328b7.js" as="script"><link rel="preload" href="/assets/js/21.40272cbc.js" as="script"><link rel="prefetch" href="/assets/js/10.65bdc6d0.js"><link rel="prefetch" href="/assets/js/11.2383f1c3.js"><link rel="prefetch" href="/assets/js/12.12478c15.js"><link rel="prefetch" href="/assets/js/13.3fac11e9.js"><link rel="prefetch" href="/assets/js/14.a63652e7.js"><link rel="prefetch" href="/assets/js/15.ca6a3d56.js"><link rel="prefetch" href="/assets/js/16.a388a17e.js"><link rel="prefetch" href="/assets/js/17.f7136bb7.js"><link rel="prefetch" href="/assets/js/18.5a62ec84.js"><link rel="prefetch" href="/assets/js/19.a86c0054.js"><link rel="prefetch" href="/assets/js/20.ac4ff4e5.js"><link rel="prefetch" href="/assets/js/22.e27db5ed.js"><link rel="prefetch" href="/assets/js/23.e1c48005.js"><link rel="prefetch" href="/assets/js/24.f2e7ad36.js"><link rel="prefetch" href="/assets/js/25.2dce1ccb.js"><link rel="prefetch" href="/assets/js/26.e9532d85.js"><link rel="prefetch" href="/assets/js/27.cb5e53df.js"><link rel="prefetch" href="/assets/js/28.ad827213.js"><link rel="prefetch" href="/assets/js/29.947b96e0.js"><link rel="prefetch" href="/assets/js/3.55a58f96.js"><link rel="prefetch" href="/assets/js/30.783321d0.js"><link rel="prefetch" href="/assets/js/31.f309fa31.js"><link rel="prefetch" href="/assets/js/32.9e4e440a.js"><link rel="prefetch" href="/assets/js/33.c155b873.js"><link rel="prefetch" href="/assets/js/34.1a928b65.js"><link rel="prefetch" href="/assets/js/35.3545bbaf.js"><link rel="prefetch" href="/assets/js/36.d3c18b04.js"><link rel="prefetch" href="/assets/js/4.85df2f2d.js"><link rel="prefetch" href="/assets/js/5.f0970314.js"><link rel="prefetch" href="/assets/js/6.249944e7.js"><link rel="prefetch" href="/assets/js/7.ec62f796.js"><link rel="prefetch" href="/assets/js/8.cb8aee27.js"><link rel="prefetch" href="/assets/js/9.1f421e0d.js">
+    <link rel="preload" href="/assets/css/0.styles.783eb1d4.css" as="style"><link rel="preload" href="/assets/js/app.71a0a366.js" as="script"><link rel="preload" href="/assets/js/2.355328b7.js" as="script"><link rel="preload" href="/assets/js/21.876e3e4b.js" as="script"><link rel="prefetch" href="/assets/js/10.65bdc6d0.js"><link rel="prefetch" href="/assets/js/11.2383f1c3.js"><link rel="prefetch" href="/assets/js/12.12478c15.js"><link rel="prefetch" href="/assets/js/13.3fac11e9.js"><link rel="prefetch" href="/assets/js/14.a63652e7.js"><link rel="prefetch" href="/assets/js/15.ca6a3d56.js"><link rel="prefetch" href="/assets/js/16.a388a17e.js"><link rel="prefetch" href="/assets/js/17.f7136bb7.js"><link rel="prefetch" href="/assets/js/18.5a62ec84.js"><link rel="prefetch" href="/assets/js/19.a86c0054.js"><link rel="prefetch" href="/assets/js/20.ac4ff4e5.js"><link rel="prefetch" href="/assets/js/22.e27db5ed.js"><link rel="prefetch" href="/assets/js/23.e1c48005.js"><link rel="prefetch" href="/assets/js/24.f2e7ad36.js"><link rel="prefetch" href="/assets/js/25.2dce1ccb.js"><link rel="prefetch" href="/assets/js/26.e9532d85.js"><link rel="prefetch" href="/assets/js/27.cb5e53df.js"><link rel="prefetch" href="/assets/js/28.ad827213.js"><link rel="prefetch" href="/assets/js/29.947b96e0.js"><link rel="prefetch" href="/assets/js/3.55a58f96.js"><link rel="prefetch" href="/assets/js/30.783321d0.js"><link rel="prefetch" href="/assets/js/31.f309fa31.js"><link rel="prefetch" href="/assets/js/32.f3792db6.js"><link rel="prefetch" href="/assets/js/33.c155b873.js"><link rel="prefetch" href="/assets/js/34.1a928b65.js"><link rel="prefetch" href="/assets/js/35.3545bbaf.js"><link rel="prefetch" href="/assets/js/36.d3c18b04.js"><link rel="prefetch" href="/assets/js/4.85df2f2d.js"><link rel="prefetch" href="/assets/js/5.f0970314.js"><link rel="prefetch" href="/assets/js/6.249944e7.js"><link rel="prefetch" href="/assets/js/7.ec62f796.js"><link rel="prefetch" href="/assets/js/8.c2428ec2.js"><link rel="prefetch" href="/assets/js/9.1f421e0d.js">
     <link rel="stylesheet" href="/assets/css/0.styles.783eb1d4.css">
   </head>
   <body>
@@ -30,22 +30,20 @@ are only <code>read</code> and <code>create</code>.</li> <li><code>created</code
 a user.</p> <p>If a peer receives an object with a certificate that has either expired, or
 does not grant the requester the permissions it needs to perform an action,
 the remote party simply ignores the object or request.</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
-  <span class="token property">&quot;type:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;nimona.io/object.Certificate&quot;</span><span class="token punctuation">,</span>
-  <span class="token property">&quot;data:m&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-    <span class="token property">&quot;subject:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;resources:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
-      <span class="token string">&quot;nimona.io/profile.Profile&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;nimona.io/profile.ProfileRequest&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;mochi.io/conversation.*&quot;</span>
-    <span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;actions:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
-      <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;read&quot;</span>
-    <span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;created:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-06-25T19:16:43Z&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;expires:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2021-06-25T19:16:43Z&quot;</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;@type:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;nimona.io/object.Certificate&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;subject:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;resources:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;nimona.io/profile.Profile&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;nimona.io/profile.ProfileRequest&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;mochi.io/conversation.*&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;actions:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;read&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;created:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-06-25T19:16:43Z&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;expires:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2021-06-25T19:16:43Z&quot;</span><span class="token punctuation">,</span>
   <span class="token property">&quot;_signature:m&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
       <span class="token property">&quot;signer:o&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ed25519.8mE4CeLLCwpyfqyNFkT6gV32ZYcYP6jt1yzMDmzbxxRL&quot;</span><span class="token punctuation">,</span>
       <span class="token property">&quot;alg:o&quot;</span><span class="token operator">:</span> <span class="token string">&quot;OH_ES256&quot;</span><span class="token punctuation">,</span>
@@ -57,26 +55,24 @@ To do that they create, sign, and give to the user a certificate request.</p> <p
 that manages their identity keys, verify that they are happy with the
 permissions the application is asking for, create a certificate and sign it.</p> <p>The certificate request can optionally include a request for a profile from
 the user.</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
-  <span class="token property">&quot;type:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;nimona.io/object.CertificateRequest&quot;</span><span class="token punctuation">,</span>
-  <span class="token property">&quot;data:m&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-    <span class="token property">&quot;applicationName:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Foobar&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;applicationDescription:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An app that does nothing&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;applicationURL:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://github.com/nimona&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;applicationIcon:d&quot;</span><span class="token operator">:</span> <span class="token string">&quot;x0...&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;applicationBanner:d&quot;</span><span class="token operator">:</span> <span class="token string">&quot;x0...&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;requestProfile:b&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;certificateSubject:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs&quot;</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;certificateResources:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
-      <span class="token string">&quot;nimona.io/profile.Profile&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;nimona.io/profile.ProfileRequest&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;mochi.io/conversation.*&quot;</span>
-    <span class="token punctuation">]</span><span class="token punctuation">,</span>
-    <span class="token property">&quot;certificateActions:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
-      <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
-      <span class="token string">&quot;read&quot;</span>
-    <span class="token punctuation">]</span>
-  <span class="token punctuation">}</span>
+  <span class="token property">&quot;@type:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;nimona.io/object.CertificateRequest&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;applicationName:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Foobar&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;applicationDescription:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An app that does nothing&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;applicationURL:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://github.com/nimona&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;applicationIcon:d&quot;</span><span class="token operator">:</span> <span class="token string">&quot;x0...&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;applicationBanner:d&quot;</span><span class="token operator">:</span> <span class="token string">&quot;x0...&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;requestProfile:b&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;certificateSubject:s&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ed25519.2h8Qu2TJCpnwv7jUaQLpazsxMW4iCaTAFgxoi5crsEAs&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;certificateResources:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;nimona.io/profile.Profile&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;nimona.io/profile.ProfileRequest&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;mochi.io/conversation.*&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;certificateActions:as&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;create&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;read&quot;</span>
+  <span class="token punctuation">]</span>
 <span class="token punctuation">}</span>
 </code></pre></div><p>The certificate request can be currently provided in two ways:</p> <p>a. Through the use of a QR code that the user must scan using their identity
 application.
@@ -92,6 +88,6 @@ requester.</p> <p>If not set, the identity app will lookup the requester on the 
 them the certificate.</p> <p>If the <code>returnPath</code> is set to a URL with either HTTPS or custom scheme, the
 identity application will append <code>&amp;certificate=xxx</code> to the return path and
 redirect the user to it.</p> <h2 id="revocation"><a href="#revocation" class="header-anchor">#</a> Revocation</h2> <p>Currently certificate revocation is not supported, we are working hard on that.</p></div> <footer class="page-edit"><!----> <!----></footer> <!----> </main></div></div><div class="global-ui"></div></div>
-    <script src="/assets/js/app.6533eab6.js" defer></script><script src="/assets/js/2.355328b7.js" defer></script><script src="/assets/js/21.40272cbc.js" defer></script>
+    <script src="/assets/js/app.71a0a366.js" defer></script><script src="/assets/js/2.355328b7.js" defer></script><script src="/assets/js/21.876e3e4b.js" defer></script>
   </body>
 </html>
