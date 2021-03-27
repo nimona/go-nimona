@@ -304,10 +304,17 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 		}
 		h.result = fmt.Sprintf("%d", len(params))
 		file := strings.Join(params[:len(params)-1], " ")
-		toPeer := params[len(params)-1]
-
-		h.result = fmt.Sprintf("Sending file %s to %s ...", file, toPeer)
-		h.sendFile(file, crypto.PublicKey(toPeer))
+		recipient := crypto.PublicKey{}
+		err := recipient.UnmarshalString(params[len(params)-1])
+		if err != nil {
+			h.result = "invalid recipient key"
+		}
+		h.result = fmt.Sprintf(
+			"Sending file %s to %s ...",
+			file,
+			recipient.String(),
+		)
+		h.sendFile(file, recipient)
 	case "list":
 		h.result = "Listing local files..."
 	case "local":
