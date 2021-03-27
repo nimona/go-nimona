@@ -5,6 +5,10 @@
 			"path": "."
 		},
 		{
+			"name": "apps",
+			"path": "apps"
+		},
+		{
 			"name": "examples",
 			"path": "examples"
 		},
@@ -15,5 +19,10 @@
 	],
 	"settings": {
 		"go.useLanguageServer": true,
+		"files.exclude": {
+			"apps": true,
+			"examples": true,
+			"internal/simulation": true,
+		},
 	}
 }
