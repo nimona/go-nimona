@@ -293,7 +293,6 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	case "help":
 		r := "* Send file: `send <file> <peer>`\n"
 		r += "* Request offered file: `request <hash>`\n"
-		r += "* List local files: `list`\n"
 		r += "* Show local peer info: `local`\n"
 		r += "* Quit: `quit`\n"
 		h.result = r
@@ -315,8 +314,6 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 			recipient.String(),
 		)
 		h.sendFile(file, recipient)
-	case "list":
-		h.result = "Listing local files..."
 	case "local":
 		h.result = fmt.Sprintf(
 			"public_key: %s\naddresses: %s\n",
