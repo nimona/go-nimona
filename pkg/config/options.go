@@ -9,6 +9,12 @@ import (
 
 type Option func(*Config)
 
+func WithoutPersistence() Option {
+	return func(cfg *Config) {
+		cfg.withoutPersistence = true
+	}
+}
+
 func WithDefaultPath(path string) Option {
 	return func(cfg *Config) {
 		cfg.Path = path

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
@@ -31,14 +30,13 @@ type (
 		extras map[string]interface{}
 		// internal defaults
 		defaultConfigFilename string
+		withoutPersistence    bool
 	}
 )
 
 func New(opts ...Option) (*Config, error) {
-	currentUser, _ := user.Current()
-
 	cfg := &Config{
-		Path:                  filepath.Join(currentUser.HomeDir, ".nimona"),
+		Path:                  "~/.nimona",
 		Extras:                map[string]json.RawMessage{},
 		defaultConfigFilename: "config.json",
 	}
@@ -56,6 +54,11 @@ func New(opts ...Option) (*Config, error) {
 
 	if err := os.MkdirAll(cfg.Path, 0700); err != nil {
 		return nil, fmt.Errorf("error creating directory, %w", err)
+	}
+
+	if cfg.withoutPersistence {
+		cfg.setDefaults()
+		return cfg, nil
 	}
 
 	fullPath := filepath.Join(cfg.Path, cfg.defaultConfigFilename)
