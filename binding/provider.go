@@ -1,16 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
-	"os/user"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
@@ -35,7 +33,11 @@ type (
 	Config struct{}
 )
 
-func New() *Provider {
+type InitRequest struct {
+	ConfigPath string `json:"configPath"`
+}
+
+func New(initRequest *InitRequest) *Provider {
 	ctx := context.New(
 		context.WithCorrelationID("nimona"),
 	)
@@ -46,71 +48,30 @@ func New() *Provider {
 		log.String("build.timestamp", version.Date),
 	)
 
-	currentUser, _ := user.Current()
 	cConfig := &Config{}
-	nConfig, err := config.New(
-		config.WithDefaultPath(
-			filepath.Join(currentUser.HomeDir, ".mochi"),
+	d, err := daemon.New(
+		ctx,
+		daemon.WithConfigOptions(
+			config.WithoutPersistence(),
+			config.WithDefaultPath(initRequest.ConfigPath),
+			config.WithExtraConfig("CHAT", cConfig),
+			config.WithDefaultListenOnLocalIPs(),
+			config.WithDefaultListenOnPrivateIPs(),
+			config.WithDefaultListenOnExternalPort(),
 		),
-		config.WithExtraConfig("CHAT", cConfig),
-		config.WithDefaultListenOnLocalIPs(),
-		config.WithDefaultListenOnPrivateIPs(),
-		config.WithDefaultListenOnExternalPort(),
 	)
 	if err != nil {
 		logger.Fatal("error loading config", log.Error(err))
 	}
 
+	nConfig := d.Config()
+	local := d.LocalPeer()
+	net := d.Network()
+	str := d.ObjectStore().(*sqlobjectstore.Store)
+	res := d.Resolver()
+	man := d.ObjectManager()
+
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
-
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.PutPrimaryPeerKey(nConfig.Peer.PrivateKey)
-
-	// construct new network
-	net := network.New(
-		ctx,
-		network.WithLocalPeer(local),
-	)
-
-	if nConfig.Peer.BindAddress != "" {
-		// start listening
-		_, err := net.Listen(
-			ctx,
-			nConfig.Peer.BindAddress,
-			network.ListenOnLocalIPs,
-			network.ListenOnPrivateIPs,
-			network.ListenOnExternalPort,
-		)
-		if err != nil {
-			logger.Fatal("error while listening", log.Error(err))
-		}
-	}
-
-	// convert shorthands into connection infos
-	bootstrapPeers := []*peer.ConnectionInfo{}
-	for _, s := range nConfig.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
-		if err != nil {
-			logger.Fatal("error parsing bootstrap peer", log.Error(err))
-		}
-		bootstrapPeers = append(bootstrapPeers, bootstrapPeer)
-	}
-
-	// add bootstrap peers as relays
-	local.PutRelays(bootstrapPeers...)
-
-	// construct object store
-	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "nimona.db"))
-	if err != nil {
-		logger.Fatal("error opening sql file", log.Error(err))
-	}
-
-	str, err := sqlobjectstore.New(db)
-	if err != nil {
-		logger.Fatal("error starting sql store", log.Error(err))
-	}
 
 	// TODO application specific
 	// register all stream roots
@@ -131,13 +92,6 @@ func New() *Provider {
 		}
 	}
 
-	// construct new resolver
-	res := resolver.New(
-		ctx,
-		net,
-		resolver.WithBoostrapPeers(bootstrapPeers...),
-	)
-
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
@@ -146,14 +100,6 @@ func New() *Provider {
 	logger.Error(
 		"ready",
 		log.Any("addresses", local.GetAddresses()),
-	)
-
-	// construct manager
-	man := objectmanager.New(
-		ctx,
-		net,
-		res,
-		str,
 	)
 
 	// TODO: application specifc
