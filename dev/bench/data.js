@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616793890010,
+  "lastUpdate": 1616879435648,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4128,6 +4128,54 @@ window.BENCHMARK_DATA = {
             "value": 13219,
             "unit": "ns/op",
             "extra": "92025 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "paris@darkstar.gr",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "committer": {
+            "email": "superdecimal@gmail.com",
+            "name": "Paris Goudas",
+            "username": "superdecimal"
+          },
+          "distinct": true,
+          "id": "59735d79490ca7a7bd12d9c8cbce986775d5fc59",
+          "message": "refactor(app/hermod): remove list command",
+          "timestamp": "2021-03-27T21:08:53Z",
+          "tree_id": "1fee06cd1c04691c5733a4bbe109130ab9855da0",
+          "url": "https://github.com/nimona/go-nimona/commit/59735d79490ca7a7bd12d9c8cbce986775d5fc59"
+        },
+        "date": 1616879434425,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4247666,
+            "unit": "ns/op",
+            "extra": "244 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 382650167,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4052970638,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 15028,
+            "unit": "ns/op",
+            "extra": "80360 times\n2 procs"
           }
         ]
       }
