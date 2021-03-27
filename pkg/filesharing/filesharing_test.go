@@ -93,10 +93,6 @@ func Test_fileSharer_Listen(t *testing.T) {
 	}
 
 	type fields struct {
-		objm func(
-			*testing.T,
-			context.Context,
-		) objectmanager.ObjectManager
 		net func(
 			*testing.T,
 			context.Context,
@@ -114,16 +110,6 @@ func Test_fileSharer_Listen(t *testing.T) {
 		{
 			name: "receive one TransferRequest",
 			fields: fields{
-				objm: func(
-					t *testing.T,
-					ctx context.Context,
-				) objectmanager.ObjectManager {
-					ctrl := gomock.NewController(t)
-					mobm := objectmanagermock.NewMockObjectManager(ctrl)
-
-					mobm.EXPECT().Put(ctx, req.ToObject())
-					return mobm
-				},
 				net: func(
 					t *testing.T,
 					ctx context.Context,
@@ -148,7 +134,7 @@ func Test_fileSharer_Listen(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fsh := filesharing.New(
-				tt.fields.objm(t, tt.args.ctx),
+				nil,
 				tt.fields.net(t, tt.args.ctx),
 				"",
 			)
