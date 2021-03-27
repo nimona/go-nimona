@@ -63,13 +63,18 @@ func NimonaBridgeCall(
 
 	switch nameString {
 	case "init":
+		fmt.Println("++ Call(get) RESP version=", version.Version)
 		if nimonaProvider != nil {
 			return renderBytes(nil, nil)
 		}
-		nimonaProvider = New()
+		req := &InitRequest{}
+		if err := json.Unmarshal(payloadBytes, req); err != nil {
+			return renderBytes(nil, err)
+		}
+		nimonaProvider = New(req)
 		subscriptionsMutex = sync.RWMutex{}
 		subscriptions = map[string]object.ReadCloser{}
-		return renderBytes(nil, nil)
+		return renderBytes([]byte("ok"), nil)
 	case "get":
 		ctx := context.New(
 			context.WithTimeout(3 * time.Second),
