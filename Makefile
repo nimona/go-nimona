@@ -254,3 +254,152 @@ docs: golds
 site:
 	$(info Serving vuepress)
 	@yarn docs:dev
+
+
+#
+# Bindings
+#
+
+BUILD_MODE?=c-shared
+OUTPUT_DIR?=output
+BINDING_NAME?=libnimona
+BINDING_FILE?=$(BINDING_NAME).so
+BINDING_ARGS?=
+BINDING_OUTPUT?=$(OUTPUT_DIR)/binding
+
+.PHONY: bindings
+bindings: binding_ios binding_darwin binding_linux binding_windows
+
+.PHONY: binding
+binding:
+	mkdir -p $(BINDING_OUTPUT)
+	go build -ldflags="-w -s" -o $(BINDING_OUTPUT)/$(BINDING_FILE) -buildmode=$(BUILD_MODE) $(BINDING_ARGS) binding/*.go
+
+IOS_OUTPUT?=ios
+IOS_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(IOS_OUTPUT)
+
+.PHONY: binding_ios
+binding_ios: binding_ios_arm64 binding_ios_x86_64
+	lipo $(IOS_BINDING_OUTPUT)/x86_64.a $(IOS_BINDING_OUTPUT)/arm64.a -create -output $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).a
+	cp $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).h
+	rm $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/arm64.a $(IOS_BINDING_OUTPUT)/x86_64.h $(IOS_BINDING_OUTPUT)/x86_64.a
+
+.PHONY: binding_ios_arm64
+binding_ios_arm64:
+	BINDING_FILE=$(IOS_OUTPUT)/arm64.a BUILD_MODE="c-archive" \
+	SDK=iphoneos CC=$(PWD)/clangwrap.sh CGO_CFLAGS="-fembed-bitcode" \
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
+	make binding
+
+.PHONY: binding_ios_x86_64
+binding_ios_x86_64:
+	BINDING_FILE=$(IOS_OUTPUT)/x86_64.a BUILD_MODE="c-archive" \
+	SDK=iphonesimulator CC=$(PWD)/clangwrap.sh \
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
+	make binding
+
+DARWIN_OUTPUT?=darwin
+DARWIN_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(DARWIN_OUTPUT)
+DARWIN_TARGET?=10.11
+
+.PHONY: binding_darwin
+binding_darwin: binding_darwin_x86_64 binding_darwin_arm64
+	lipo \
+		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
+		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
+		-create -output $(DARWIN_BINDING_OUTPUT)/$(BINDING_NAME).dylib
+	rm \
+		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
+		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
+		$(DARWIN_BINDING_OUTPUT)/*.h
+
+# this exists only bc of github actions
+.PHONY: binding_darwin_github_actions_limit_macos
+binding_darwin_github_actions_limit_macos: binding_darwin_x86_64
+	mv $(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
+		$(DARWIN_BINDING_OUTPUT)/$(BINDING_NAME).dylib
+	rm $(DARWIN_BINDING_OUTPUT)/*.h
+
+.PHONY: binding_darwin_x86_64
+binding_darwin_x86_64:
+	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.dylib \
+	BUILD_MODE="c-shared" \
+	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
+	make binding
+
+.PHONY: binding_darwin_arm64
+binding_darwin_arm64:
+	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.dylib \
+	BUILD_MODE="c-shared" \
+	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
+	make binding
+
+.PHONY: binding_darwin_archive_x86_64
+binding_darwin_archive_x86_64:
+	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.a \
+	BUILD_MODE="c-archive" \
+	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
+	make binding
+
+.PHONY: binding_darwin_archive_arm64
+binding_darwin_archive_arm64:
+	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.a \
+	BUILD_MODE="c-archive" \
+	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
+	make binding
+
+LINUX_OUTPUT?=linux
+LINUX_BINDING_NAME?=$(BINDING_NAME).so
+
+.PHONY: binding_linux
+binding_linux: binding_linux_386 binding_linux_amd64 binding_linux_arm64 binding_linux_armv7
+
+.PHONY: binding_linux_386
+binding_linux_386:
+	GOOS=linux GOARCH=386 TAG=main \
+	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/386/$(LINUX_BINDING_NAME)" \
+	CMD="make binding" ./cross_build.sh
+
+.PHONY: binding_linux_amd64
+binding_linux_amd64:
+	GOOS=linux GOARCH=amd64 TAG=main \
+	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/amd64/$(LINUX_BINDING_NAME)" \
+	CMD="make binding" ./cross_build.sh
+
+.PHONY: binding_linux_arm64
+binding_linux_arm64:
+	GOOS=linux GOARCH=arm64 TAG=arm \
+	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/arm64/$(LINUX_BINDING_NAME)" \
+	CMD="make binding" ./cross_build.sh
+
+.PHONY: binding_linux_armv7
+binding_linux_armv7:
+	GOOS=linux GOARCH=armv7 TAG=arm \
+	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/armv7/$(LINUX_BINDING_NAME)" \
+	CMD="make binding" ./cross_build.sh
+
+WINDOWS_OUTPUT?=windows
+WINDOWS_BINDING_NAME?=$(BINDING_NAME).dll
+
+.PHONY: binding_windows
+binding_windows: binding_windows_386 binding_windows_amd64
+
+.PHONY: binding_windows_386
+binding_windows_386:
+	GOOS=windows GOARCH=386 \
+	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/386/$(WINDOWS_BINDING_NAME)" \
+	TAG=main CMD="make binding" ./cross_build.sh
+
+.PHONY: binding_windows_amd64
+binding_windows_amd64:
+	GOOS=windows GOARCH=amd64 TAG=main \
+	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/amd64/$(WINDOWS_BINDING_NAME)" \
+	CMD="make binding" ./cross_build.sh
