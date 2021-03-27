@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,19 +11,16 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
-	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 const (
@@ -68,7 +64,6 @@ type (
 		objectstore   objectstore.Store
 		resolver      resolver.Resolver
 		fsh           filesharing.Filesharer
-		listener      net.Listener
 		transfers     map[string]*transferWrap
 	}
 	transferMsg struct {
@@ -88,84 +83,35 @@ func NewHermod() hermod {
 
 	// init config
 	cfg := &Config{}
-	ncfg, err := config.New(
-		config.WithExtraConfig("HERMOD", cfg),
+
+	d, err := daemon.New(
+		ctx,
+		daemon.WithConfigOptions(
+			config.WithDefaultPath("~/.nimona-hermod"),
+			config.WithExtraConfig("HERMOD", cfg),
+		),
 	)
-	cconf := &comboConf{
-		hconf: cfg,
-		nconf: ncfg,
-	}
 	if err != nil {
-		fmt.Println("Failed to parse config: ", err)
-		os.Exit(-1)
+		panic(err)
 	}
 
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.PutPrimaryPeerKey(cconf.nconf.Peer.PrivateKey)
+	local := d.LocalPeer()
+	man := d.ObjectManager()
+	nnet := d.Network()
+	res := d.Resolver()
+	str := d.ObjectStore()
+	nconf := d.Config()
+
 	local.PutContentTypes(
 		new(filesharing.File).Type(),
 		new(blob.Blob).Type(),
 		new(blob.Chunk).Type(),
 	)
 
-	// construct new network
-	nnet := network.New(
-		ctx,
-		network.WithLocalPeer(local),
-	)
-
-	// make sure we have some bootstrap peers to start with
-	if len(cconf.nconf.Peer.Bootstraps) == 0 {
-		cconf.nconf.Peer.Bootstraps = []peer.Shorthand{
-			"bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq@tcps:asimov.bootstrap.nimona.io:22581",
-			"bahwqcabarcrxtiaha3uq25gvntnqb6uokgdp442dysocya42ckiugohxmqkq@tcps:egan.bootstrap.nimona.io:22581",
-			"bahwqcabafguo2axx2ydpk5mrjlrsjw2rjwo34uzzr6kvtfb6cevx72q5t4bq@tcps:sloan.bootstrap.nimona.io:22581",
-		}
+	cconf := &comboConf{
+		hconf: cfg,
+		nconf: &nconf,
 	}
-
-	// convert shorthands into peers
-	bootstrapPeers := []*peer.ConnectionInfo{}
-	for _, s := range cconf.nconf.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
-		if err != nil {
-			fmt.Println("error parsing bootstrap peer:", err)
-			os.Exit(-1)
-		}
-		bootstrapPeers = append(bootstrapPeers, bootstrapPeer)
-	}
-
-	// add bootstrap peers as relays
-	local.PutRelays(bootstrapPeers...)
-
-	// construct new resolver
-	res := resolver.New(
-		ctx,
-		nnet,
-		resolver.WithBoostrapPeers(bootstrapPeers...),
-	)
-
-	// construct object store
-	db, err := sql.Open("sqlite3", "file_transfer.db")
-	if err != nil {
-		fmt.Println("error opening sql file", err)
-		os.Exit(-1)
-	}
-
-	str, err := sqlobjectstore.New(db)
-	if err != nil {
-		fmt.Println("error starting sql store", err)
-		os.Exit(-1)
-	}
-
-	// construct object manager
-	man := objectmanager.New(
-		ctx,
-		nnet,
-		res,
-		str,
-	)
 
 	// init textinput
 	ti := textinput.NewModel()
@@ -177,26 +123,12 @@ func NewHermod() hermod {
 		cfg.ReceivedFolder,
 	)
 
-	// start listening
-	lis, err := nnet.Listen(
-		ctx,
-		cconf.nconf.Peer.BindAddress,
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
-		network.ListenOnExternalPort,
-	)
-	if err != nil {
-		fmt.Println("error while listening", err)
-		os.Exit(-1)
-	}
-
 	her.config = cconf
 	her.local = local
 	her.textInput = ti
 	her.config = cconf
 	her.resolver = res
 	her.objectstore = str
-	her.listener = lis
 	her.objectmanager = man
 	her.fsh = fsh
 	her.blobmanager = blob.NewManager(ctx, blob.WithObjectManager(man))
