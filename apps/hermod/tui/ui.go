@@ -290,6 +290,13 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	}
 
 	switch command {
+	case "help":
+		r := "* Send file: `send <file> <peer>`\n"
+		r += "* Request offered file: `request <hash>`\n"
+		r += "* List local files: `list`\n"
+		r += "* Show local peer info: `local`\n"
+		r += "* Quit: `quit`\n"
+		h.result = r
 	case "send":
 		if len(params) < 2 {
 			h.result = "usage: send <file> <peer>"
