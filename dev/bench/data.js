@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616972789594,
+  "lastUpdate": 1616972875317,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4272,6 +4272,54 @@ window.BENCHMARK_DATA = {
             "value": 11820,
             "unit": "ns/op",
             "extra": "101528 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "be5fb21615c814eb95eb1ddf31a4000ab038f90a",
+          "message": "chore(ci): fix android release conditions",
+          "timestamp": "2021-03-29T00:06:19+01:00",
+          "tree_id": "8c4ad4227fc8dd5649f802cd80b27396aba3ab66",
+          "url": "https://github.com/nimona/go-nimona/commit/be5fb21615c814eb95eb1ddf31a4000ab038f90a"
+        },
+        "date": 1616972874471,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3844604,
+            "unit": "ns/op",
+            "extra": "288 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 360887133,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3624175861,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 11213,
+            "unit": "ns/op",
+            "extra": "112314 times\n2 procs"
           }
         ]
       }
