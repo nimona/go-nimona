@@ -273,7 +273,15 @@ bindings: binding_ios binding_darwin binding_linux binding_windows
 .PHONY: binding
 binding:
 	mkdir -p $(BINDING_OUTPUT)
-	go build -ldflags="-w -s" -o $(BINDING_OUTPUT)/$(BINDING_FILE) -buildmode=$(BUILD_MODE) $(BINDING_ARGS) binding/*.go
+	go build \
+		-ldflags "$(LDFLAGS) \
+			-X $(MODULE)/pkg/version.Date=$(DATE) \
+			-X $(MODULE)/pkg/version.Version=$(VERSION) \
+			-X $(MODULE)/pkg/version.Commit=$(GIT_SHA)" \
+	 	-o $(BINDING_OUTPUT)/$(BINDING_FILE) \
+		-buildmode=$(BUILD_MODE) \
+		$(BINDING_ARGS) \
+		binding/*.go
 
 IOS_OUTPUT?=ios
 IOS_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(IOS_OUTPUT)
