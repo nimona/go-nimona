@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616879435648,
+  "lastUpdate": 1616889612975,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4176,6 +4176,54 @@ window.BENCHMARK_DATA = {
             "value": 15028,
             "unit": "ns/op",
             "extra": "80360 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "58313733611dfe87968fe0146224870984a54740",
+          "message": "chore(deps): bump github.com/prometheus/client_golang\n\nBumps [github.com/prometheus/client_golang](https://github.com/prometheus/client_golang) from 1.9.0 to 1.10.0.\n- [Release notes](https://github.com/prometheus/client_golang/releases)\n- [Changelog](https://github.com/prometheus/client_golang/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/prometheus/client_golang/compare/v1.9.0...v1.10.0)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-03-27T23:58:47Z",
+          "tree_id": "fbaef34dfb138af1f320ef54cdc3ea15334dba6b",
+          "url": "https://github.com/nimona/go-nimona/commit/58313733611dfe87968fe0146224870984a54740"
+        },
+        "date": 1616889611742,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3365866,
+            "unit": "ns/op",
+            "extra": "303 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 317633396,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3129087597,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 9606,
+            "unit": "ns/op",
+            "extra": "129496 times\n2 procs"
           }
         ]
       }
