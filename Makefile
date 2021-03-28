@@ -137,6 +137,7 @@ clean:
 	rm -f coverage.out coverage.tmp-*.out
 	rm -f $(BINS) $(TOOLS) $(EXAMPLES)
 	rm -f ./go.mod.tidy-check ./go.sum.tidy-check
+	rm -f $(OUTPUT_DIR)
 
 # Tidy go modules
 .PHONY: tidy
@@ -260,6 +261,13 @@ site:
 # Bindings
 #
 
+.PHONY: cross-build
+cross-build:
+	docker run -t --rm -v "${CURDIR}":/app -w /app \
+		-e CGO_ENABLED=1 ${ARGS} \
+		docker.elastic.co/beats-dev/golang-crossbuild:1.15.10-main \
+		--build-cmd "${CMD}" -p "${GOOS}/${GOARCH}"
+
 BUILD_MODE?=c-shared
 OUTPUT_DIR?=output
 BINDING_NAME?=libnimona
@@ -268,10 +276,10 @@ BINDING_ARGS?=
 BINDING_OUTPUT?=$(OUTPUT_DIR)/binding
 
 .PHONY: bindings
-bindings: binding_ios binding_darwin binding_linux binding_windows
+bindings: bindings-ios bindings-darwin bindings-linux bindings-windows
 
-.PHONY: binding
-binding:
+.PHONY: _bindings
+_bindings:
 	mkdir -p $(BINDING_OUTPUT)
 	go build \
 		-ldflags "$(LDFLAGS) \
@@ -286,32 +294,32 @@ binding:
 IOS_OUTPUT?=ios
 IOS_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(IOS_OUTPUT)
 
-.PHONY: binding_ios
-binding_ios: binding_ios_arm64 binding_ios_x86_64
+.PHONY: bindings-ios
+bindings-ios: bindings-ios-arm64 bindings-ios-x86-64
 	lipo $(IOS_BINDING_OUTPUT)/x86_64.a $(IOS_BINDING_OUTPUT)/arm64.a -create -output $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).a
 	cp $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).h
 	rm $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/arm64.a $(IOS_BINDING_OUTPUT)/x86_64.h $(IOS_BINDING_OUTPUT)/x86_64.a
 
-.PHONY: binding_ios_arm64
-binding_ios_arm64:
+.PHONY: bindings-ios-arm64
+bindings-ios-arm64:
 	BINDING_FILE=$(IOS_OUTPUT)/arm64.a BUILD_MODE="c-archive" \
 	SDK=iphoneos CC=$(PWD)/clangwrap.sh CGO_CFLAGS="-fembed-bitcode" \
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
-	make binding
+	make _bindings
 
-.PHONY: binding_ios_x86_64
-binding_ios_x86_64:
+.PHONY: bindings-ios-x86-64
+bindings-ios-x86-64:
 	BINDING_FILE=$(IOS_OUTPUT)/x86_64.a BUILD_MODE="c-archive" \
 	SDK=iphonesimulator CC=$(PWD)/clangwrap.sh \
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
-	make binding
+	make _bindings
 
 DARWIN_OUTPUT?=darwin
 DARWIN_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(DARWIN_OUTPUT)
 DARWIN_TARGET?=10.11
 
-.PHONY: binding_darwin
-binding_darwin: binding_darwin_x86_64 binding_darwin_arm64
+.PHONY: bindings-darwin
+bindings-darwin: bindings-darwin-x86-64 bindings-darwin-arm64
 	lipo \
 		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
 		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
@@ -321,93 +329,92 @@ binding_darwin: binding_darwin_x86_64 binding_darwin_arm64
 		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
 		$(DARWIN_BINDING_OUTPUT)/*.h
 
-# this exists only bc of github actions
-.PHONY: binding_darwin_github_actions_limit_macos
-binding_darwin_github_actions_limit_macos: binding_darwin_x86_64
-	mv $(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
-		$(DARWIN_BINDING_OUTPUT)/$(BINDING_NAME).dylib
-	rm $(DARWIN_BINDING_OUTPUT)/*.h
-
-.PHONY: binding_darwin_x86_64
-binding_darwin_x86_64:
+.PHONY: bindings-darwin-x86-64
+bindings-darwin-x86-64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.dylib \
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
-	make binding
+	make _bindings
 
-.PHONY: binding_darwin_arm64
-binding_darwin_arm64:
+.PHONY: bindings-darwin-arm64
+bindings-darwin-arm64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.dylib \
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
-	make binding
+	make _bindings
 
-.PHONY: binding_darwin_archive_x86_64
-binding_darwin_archive_x86_64:
+.PHONY: bindings-darwin-archive-x86-64
+bindings-darwin-archive-x86-64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.a \
 	BUILD_MODE="c-archive" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
-	make binding
+	make _bindings
 
-.PHONY: binding_darwin_archive_arm64
-binding_darwin_archive_arm64:
+.PHONY: bindings-darwin-archive-arm64
+bindings-darwin-archive-arm64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.a \
 	BUILD_MODE="c-archive" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
-	make binding
+	make _bindings
 
 LINUX_OUTPUT?=linux
 LINUX_BINDING_NAME?=$(BINDING_NAME).so
 
-.PHONY: binding_linux
-binding_linux: binding_linux_386 binding_linux_amd64 binding_linux_arm64 binding_linux_armv7
+.PHONY: bindings-linux
+bindings-linux: bindings-linux-386 bindings-linux-amd64 bindings-linux-arm64 bindings-linux-armv7
 
-.PHONY: binding_linux_386
-binding_linux_386:
+.PHONY: bindings-linux-386
+bindings-linux-386:
 	GOOS=linux GOARCH=386 TAG=main \
 	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/386/$(LINUX_BINDING_NAME)" \
-	CMD="make binding" ./cross_build.sh
+	CMD="make _bindings" \
+	make cross-build
 
-.PHONY: binding_linux_amd64
-binding_linux_amd64:
+.PHONY: bindings-linux-amd64
+bindings-linux-amd64:
 	GOOS=linux GOARCH=amd64 TAG=main \
 	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/amd64/$(LINUX_BINDING_NAME)" \
-	CMD="make binding" ./cross_build.sh
+	CMD="make _bindings" \
+	make cross-build
 
-.PHONY: binding_linux_arm64
-binding_linux_arm64:
+.PHONY: bindings-linux-arm64
+bindings-linux-arm64:
 	GOOS=linux GOARCH=arm64 TAG=arm \
 	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/arm64/$(LINUX_BINDING_NAME)" \
-	CMD="make binding" ./cross_build.sh
+	CMD="make _bindings" \
+	make cross-build
 
-.PHONY: binding_linux_armv7
-binding_linux_armv7:
+.PHONY: bindings-linux-armv7
+bindings-linux-armv7:
 	GOOS=linux GOARCH=armv7 TAG=arm \
 	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/armv7/$(LINUX_BINDING_NAME)" \
-	CMD="make binding" ./cross_build.sh
+	CMD="make _bindings" \
+	make cross-build
 
 WINDOWS_OUTPUT?=windows
 WINDOWS_BINDING_NAME?=$(BINDING_NAME).dll
 
-.PHONY: binding_windows
-binding_windows: binding_windows_386 binding_windows_amd64
+.PHONY: bindings-windows
+bindings-windows: bindings-windows-386 bindings-windows-amd64
 
-.PHONY: binding_windows_386
-binding_windows_386:
+.PHONY: bindings-windows-386
+bindings-windows-386:
 	GOOS=windows GOARCH=386 \
 	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/386/$(WINDOWS_BINDING_NAME)" \
-	TAG=main CMD="make binding" ./cross_build.sh
+	TAG=main CMD="make _bindings" \
+	make cross-build
 
-.PHONY: binding_windows_amd64
-binding_windows_amd64:
+.PHONY: bindings-windows-amd64
+bindings-windows-amd64:
 	GOOS=windows GOARCH=amd64 TAG=main \
 	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/amd64/$(WINDOWS_BINDING_NAME)" \
-	CMD="make binding" ./cross_build.sh
+	CMD="make _bindings" \
+	make cross-build
