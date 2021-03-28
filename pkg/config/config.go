@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/mitchellh/go-homedir"
 	"github.com/stoewer/go-strcase"
 
 	"nimona.io/pkg/crypto"
@@ -36,7 +37,7 @@ type (
 
 func New(opts ...Option) (*Config, error) {
 	cfg := &Config{
-		Path:                  "~/.nimona",
+		Path:                  ".nimona",
 		Extras:                map[string]json.RawMessage{},
 		defaultConfigFilename: "config.json",
 	}
@@ -47,6 +48,12 @@ func New(opts ...Option) (*Config, error) {
 	if configDir := os.Getenv("NIMONA_CONFIG_DIR"); configDir != "" {
 		cfg.Path = configDir
 	}
+
+	newPath, err := homedir.Expand(cfg.Path)
+	if err != nil {
+		return nil, err
+	}
+	cfg.Path = newPath
 
 	if configFilename := os.Getenv("NIMONA_CONFIG_FILE"); configFilename != "" {
 		cfg.defaultConfigFilename = configFilename
