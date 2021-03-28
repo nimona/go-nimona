@@ -3,8 +3,6 @@ package config
 import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 type Option func(*Config)
@@ -18,11 +16,6 @@ func WithoutPersistence() Option {
 func WithDefaultPath(path string) Option {
 	return func(cfg *Config) {
 		cfg.Path = path
-		newPath, err := homedir.Expand(path)
-		if err != nil {
-			return
-		}
-		cfg.Path = newPath
 	}
 }
 
