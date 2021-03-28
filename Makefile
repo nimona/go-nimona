@@ -295,7 +295,7 @@ IOS_OUTPUT?=ios
 IOS_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(IOS_OUTPUT)
 
 .PHONY: bindings-ios
-bindings-ios: bindings-ios-arm64 bindings-ios-x86-64
+bindings-ios: bindings-ios-arm64 bindings-ios-x86_64
 	lipo $(IOS_BINDING_OUTPUT)/x86_64.a $(IOS_BINDING_OUTPUT)/arm64.a -create -output $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).a
 	cp $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/$(BINDING_NAME).h
 	rm $(IOS_BINDING_OUTPUT)/arm64.h $(IOS_BINDING_OUTPUT)/arm64.a $(IOS_BINDING_OUTPUT)/x86_64.h $(IOS_BINDING_OUTPUT)/x86_64.a
@@ -307,8 +307,8 @@ bindings-ios-arm64:
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
 	make _bindings
 
-.PHONY: bindings-ios-x86-64
-bindings-ios-x86-64:
+.PHONY: bindings-ios-x86_64
+bindings-ios-x86_64:
 	BINDING_FILE=$(IOS_OUTPUT)/x86_64.a BUILD_MODE="c-archive" \
 	SDK=iphonesimulator CC=$(PWD)/clangwrap.sh \
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
@@ -319,7 +319,7 @@ DARWIN_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(DARWIN_OUTPUT)
 DARWIN_TARGET?=10.11
 
 .PHONY: bindings-darwin
-bindings-darwin: bindings-darwin-x86-64 bindings-darwin-arm64
+bindings-darwin: bindings-darwin-x86_64 bindings-darwin-arm64
 	lipo \
 		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
 		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
@@ -329,8 +329,8 @@ bindings-darwin: bindings-darwin-x86-64 bindings-darwin-arm64
 		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
 		$(DARWIN_BINDING_OUTPUT)/*.h
 
-.PHONY: bindings-darwin-x86-64
-bindings-darwin-x86-64:
+.PHONY: bindings-darwin-x86_64
+bindings-darwin-x86_64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.dylib \
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
@@ -347,8 +347,8 @@ bindings-darwin-arm64:
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
 	make _bindings
 
-.PHONY: bindings-darwin-archive-x86-64
-bindings-darwin-archive-x86-64:
+.PHONY: bindings-darwin-archive-x86_64
+bindings-darwin-archive-x86_64:
 	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.a \
 	BUILD_MODE="c-archive" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
@@ -418,3 +418,35 @@ bindings-windows-amd64:
 	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/amd64/$(WINDOWS_BINDING_NAME)" \
 	CMD="make _bindings" \
 	make cross-build
+
+ANDROID_HOME?=$(HOME)/Android/Sdk
+ANDROID_NDK_HOME?=$(ANDROID_HOME)/ndk/21.3.6528147
+ANDROID_NDK_TOOLCHAIN?=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64/bin
+ANDROID_OUTPUT?=android
+ANDROID_BINDING_NAME?=$(BINDING_NAME).so
+
+bindings-android: bindings-android-arm64 bindings-android_armv7a bindings-android-x86 bindings-android-x86_64
+
+bindings-android-arm64:
+	BINDING_FILE=$(ANDROID_OUTPUT)/arm64-v8a/$(ANDROID_BINDING_NAME) \
+	CC=$(ANDROID_NDK_TOOLCHAIN)/aarch64-linux-android21-clang \
+	GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
+	make _bindings
+
+bindings-android_armv7a:
+	BINDING_FILE=$(ANDROID_OUTPUT)/armeabi-v7a/$(ANDROID_BINDING_NAME) \
+	CC=$(ANDROID_NDK_TOOLCHAIN)/armv7a-linux-androideabi21-clang \
+	GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 \
+	make _bindings
+
+bindings-android-x86:
+	BINDING_FILE=$(ANDROID_OUTPUT)/x86/$(ANDROID_BINDING_NAME) \
+	CC=$(ANDROID_NDK_TOOLCHAIN)/i686-linux-android21-clang \
+	GOOS=android GOARCH=386 CGO_ENABLED=1 \
+	make _bindings
+
+bindings-android-x86_64:
+	BINDING_FILE=$(ANDROID_OUTPUT)/x86_64/$(ANDROID_BINDING_NAME) \
+	CC=$(ANDROID_NDK_TOOLCHAIN)/x86_64-linux-android21-clang \
+	GOOS=android GOARCH=amd64 CGO_ENABLED=1 \
+	make _bindings
