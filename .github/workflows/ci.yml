@@ -224,6 +224,98 @@ jobs:
           cd cmd
           ../bin/goreleaser
 
+  release-bindings-ios:
+    name: Relase IOS Bindings
+    runs-on: macos-10.15
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.2'
+      - name: Build
+        run: make bindings-ios
+      - name: Archive
+        run: tar -czvf libnimona_ios.tar.gz -C output/binding/ios .
+      - name: Export version from tag name
+        run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          asset_name: libnimona-${{ env.NIMONA_VERSION }}-ios.tar.gz
+          file: libnimona_ios.tar.gz
+          tag: ${{ env.NIMONA_VERSION }}
+          overwrite: true
+
+  release-bindings-darwin:
+    name: Relase Macos Bindings
+    runs-on: macos-10.15
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.2'
+      - name: Build
+        run: make bindings-darwin-x86-64
+      - name: Archive
+        run: tar -czvf libnimona_darwin.tar.gz -C output/binding/darwin .
+      - name: Export version from tag name
+        run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          asset_name: libnimona-${{ env.NIMONA_VERSION }}-darwin.tar.gz
+          file: libnimona_darwin.tar.gz
+          tag: ${{ env.NIMONA_VERSION }}
+          overwrite: true
+
+  release-bindings-linux:
+    name: Relase Linux Bindings
+    runs-on: ubuntu-20.04
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.2'
+      - name: Build
+        run: make bindings-linux-386 bindings-linux-amd64
+      - name: Archive
+        run: tar -czvf libnimona_linux.tar.gz -C output/binding/linux .
+      - name: Export version from tag name
+        run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          asset_name: libnimona-${{ env.NIMONA_VERSION }}-linux.tar.gz
+          file: libnimona_linux.tar.gz
+          tag: ${{ env.NIMONA_VERSION }}
+          overwrite: true
+
+  release-bindings-windows:
+    name: Relase Windows Bindings
+    runs-on: ubuntu-20.04
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.2'
+      - name: Build
+        run: make bindings-windows
+      - name: Archive
+        run: tar -czvf libnimona_windows.tar.gz -C output/binding/windows .
+      - name: Export version from tag name
+        run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          asset_name: libnimona-${{ env.NIMONA_VERSION }}-windows.tar.gz
+          file: libnimona_windows.tar.gz
+          tag: ${{ env.NIMONA_VERSION }}
+          overwrite: true
+
   docs:
     name: Build and deploy docs
     if: github.ref == 'refs/heads/main'
