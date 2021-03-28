@@ -296,7 +296,7 @@ jobs:
   release-bindings-android:
     name: Relase Android Bindings
     runs-on: ubuntu-20.04
-    # needs: [release]
+    needs: [release]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -318,8 +318,7 @@ jobs:
       - name: Archive
         run: tar -czvf libnimona_android.tar.gz -C output/binding/android .
       - name: Export version from tag name
-        # run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-        run: echo "NIMONA_VERSION=v0.18.0-rc2" >> $GITHUB_ENV
+        run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
       - uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
