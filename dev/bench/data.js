@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616889612975,
+  "lastUpdate": 1616972789594,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4224,6 +4224,54 @@ window.BENCHMARK_DATA = {
             "value": 9606,
             "unit": "ns/op",
             "extra": "129496 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "c7214f615182b910c0782e7d75449a10823ae134",
+          "message": "feat(ci): add android bindings",
+          "timestamp": "2021-03-29T00:05:00+01:00",
+          "tree_id": "fba0e021f770846ad102e3d326bca85847098582",
+          "url": "https://github.com/nimona/go-nimona/commit/c7214f615182b910c0782e7d75449a10823ae134"
+        },
+        "date": 1616972788767,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4122493,
+            "unit": "ns/op",
+            "extra": "258 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 378928106,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3901395488,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 11820,
+            "unit": "ns/op",
+            "extra": "101528 times\n2 procs"
           }
         ]
       }
