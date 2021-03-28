@@ -16,7 +16,7 @@ builds:
       - amd64
       - 386
 archives:
-  - name_template: '{{ .ProjectName }}-{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
+  - name_template: '{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm
       }}v{{ .Arm }}{{ end }}'
     format: tar.gz
     wrap_in_directory: true
