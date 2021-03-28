@@ -34,7 +34,8 @@ type (
 )
 
 type InitRequest struct {
-	ConfigPath string `json:"configPath"`
+	ConfigPath   string   `json:"configPath"`
+	ContentTypes []string `json:"contentTypes"`
 }
 
 func New(initRequest *InitRequest) *Provider {
@@ -73,25 +74,6 @@ func New(initRequest *InitRequest) *Provider {
 
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
-	// TODO application specific
-	// register all stream roots
-	r, err := str.Filter(
-		sqlobjectstore.FilterByObjectType("stream:poc.nimona.io/conversation"),
-	)
-	if err == nil {
-		hs := []object.CID{}
-		for {
-			o, err := r.Read()
-			if err != nil || o == nil {
-				break
-			}
-			hs = append(hs, o.CID())
-		}
-		if len(hs) > 0 {
-			local.PutCIDs(hs...)
-		}
-	}
-
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
@@ -102,15 +84,7 @@ func New(initRequest *InitRequest) *Provider {
 		log.Any("addresses", local.GetAddresses()),
 	)
 
-	// TODO: application specifc
-	// register types so object manager persists them
-	local.PutContentTypes(
-		"stream:poc.nimona.io/conversation",
-		"poc.nimona.io/conversation.NicknameUpdated",
-		"poc.nimona.io/conversation.MessageAdded",
-		"poc.nimona.io/conversation.TopicUpdated",
-		"nimona.io/stream.Subscription",
-	)
+	local.PutContentTypes(initRequest.ContentTypes...)
 
 	return &Provider{
 		local:         local,
@@ -167,10 +141,10 @@ func (p *Provider) Get(
 			)
 		case "owner":
 			k := crypto.PublicKey{}
-			k.UnmarshalString(value)
+			k.UnmarshalString(value) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
-				crypto.PublicKey(k),
+				k,
 			)
 		case "stream":
 			filterByStreamCID = append(
@@ -262,10 +236,10 @@ func (p *Provider) Subscribe(
 			)
 		case "owner":
 			k := crypto.PublicKey{}
-			k.UnmarshalString(value)
+			k.UnmarshalString(value) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
-				crypto.PublicKey(k),
+				k,
 			)
 		case "stream":
 			filterByStreamCID = append(
@@ -326,7 +300,7 @@ func (p *Provider) RequestStream(
 			if err != nil {
 				return
 			}
-			object.ReadAll(r)
+			object.ReadAll(r) // nolint: errcheck
 			r.Close()
 		}(recipient)
 	}
@@ -338,13 +312,17 @@ func (p *Provider) Put(
 	obj *object.Object,
 ) (*object.Object, error) {
 	obj = object.Copy(obj)
-	// TODO fix
-	// switch obj.Metadata.Owner {
-	// case "@peer":
-	// 	obj.Metadata.Owner = p.local.GetPrimaryPeerKey().PublicKey()
-	// case "@identity":
-	// 	obj.Metadata.Owner = p.local.GetPrimaryIdentityKey().PublicKey()
-	// }
+	if setOwnerS, ok := obj.Data["_setOwner:s"]; ok {
+		if setOwner, ok := setOwnerS.(object.String); ok {
+			switch setOwner {
+			case "@peer":
+				obj.Metadata.Owner = p.local.GetPrimaryPeerKey().PublicKey()
+			case "@identity":
+				obj.Metadata.Owner = p.local.GetPrimaryIdentityKey().PublicKey()
+			}
+		}
+		delete(obj.Data, "_setOwner:s")
+	}
 	return p.objectmanager.Put(ctx, obj)
 }
 

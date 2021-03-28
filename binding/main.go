@@ -1,8 +1,8 @@
 package main
 
-//#include <stdint.h>
-//#include <stdlib.h>
-//typedef struct { void* message; int size; char* error; } BytesReturn;
+// #include <stdint.h>
+// #include <stdlib.h>
+// typedef struct { void* message; int size; char* error; } BytesReturn;
 import "C"
 
 import (
@@ -47,7 +47,7 @@ func marshalObject(o *object.Object) ([]byte, error) {
 
 func renderObject(o *object.Object) *C.BytesReturn {
 	b, err := marshalObject(o)
-	fmt.Println("++ renderObject() RESP body=", string(string(b)))
+	fmt.Println("++ renderObject() RESP body=", string(b))
 	return renderBytes(b, err)
 }
 
