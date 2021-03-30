@@ -304,14 +304,14 @@ bindings-ios: bindings-ios-arm64 bindings-ios-x86_64
 bindings-ios-arm64:
 	BINDING_FILE=$(IOS_OUTPUT)/arm64.a BUILD_MODE="c-archive" \
 	SDK=iphoneos CC=$(PWD)/clangwrap.sh CGO_CFLAGS="-fembed-bitcode" \
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
+	GOOS=ios GOARCH=arm64 CGO_ENABLED=1 \
 	make _bindings
 
 .PHONY: bindings-ios-x86_64
 bindings-ios-x86_64:
 	BINDING_FILE=$(IOS_OUTPUT)/x86_64.a BUILD_MODE="c-archive" \
 	SDK=iphonesimulator CC=$(PWD)/clangwrap.sh \
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 BINDING_ARGS="-tags ios" \
+	GOOS=ios GOARCH=amd64 CGO_ENABLED=1 \
 	make _bindings
 
 DARWIN_OUTPUT?=darwin
@@ -344,6 +344,7 @@ bindings-darwin-arm64:
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	SDKROOT=$(xcrun --sdk macosx --show-sdk-path) \
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
 	make _bindings
 
