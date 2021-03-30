@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1616972875317,
+  "lastUpdate": 1617114035218,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4320,6 +4320,54 @@ window.BENCHMARK_DATA = {
             "value": 11213,
             "unit": "ns/op",
             "extra": "112314 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "954e8e1bfb46e4569b5124755cee652bb87303e0",
+          "message": "chore(ci): release bindings after build",
+          "timestamp": "2021-03-30T15:18:53+01:00",
+          "tree_id": "a74f5d216cb48100fa3bb62f584c5e44ee28ebfb",
+          "url": "https://github.com/nimona/go-nimona/commit/954e8e1bfb46e4569b5124755cee652bb87303e0"
+        },
+        "date": 1617114034412,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4529941,
+            "unit": "ns/op",
+            "extra": "234 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 395812165,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 4173505901,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 13439,
+            "unit": "ns/op",
+            "extra": "89952 times\n2 procs"
           }
         ]
       }
