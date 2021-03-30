@@ -241,7 +241,7 @@ jobs:
           java-version: 8
           distribution: zulu
       - uses: android-actions/setup-android@v2
-      - uses: nttld/setup-ndk@v1
+      - uses: nttld/setup-ndk@v1.0.3
         id: setup-ndk
         with:
           ndk-version: r21d
@@ -410,7 +410,7 @@ jobs:
           java-version: 8
           distribution: zulu
       - uses: android-actions/setup-android@v2
-      - uses: nttld/setup-ndk@v1
+      - uses: nttld/setup-ndk@v1.0.3
         id: setup-ndk
         with:
           ndk-version: r21d
