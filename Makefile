@@ -261,19 +261,26 @@ site:
 # Bindings
 #
 
+BUILD_MODE      ?= c-shared
+OUTPUT_DIR      ?= output
+BINDING_NAME    ?= libnimona
+BINDING_FILE    ?= $(BINDING_NAME).so
+BINDING_ARGS    ?=
+BINDING_SDKROOT ?=
+BINDING_OUTPUT  ?= $(OUTPUT_DIR)/binding
+
+BINDING_CROSS_ARGS ?=
+BINDING_CROSS_TAG  ?= main
+BINDING_CROSS_CMD  ?= make _bindings
+
+BINDING_MACOS_SDK_ROOT = $(shell xcrun --sdk macosx --show-sdk-path)
+
 .PHONY: cross-build
 cross-build:
 	docker run -t --rm -v "${CURDIR}":/app -w /app \
-		-e CGO_ENABLED=1 ${ARGS} \
-		docker.elastic.co/beats-dev/golang-crossbuild:1.15.10-main \
-		--build-cmd "${CMD}" -p "${GOOS}/${GOARCH}"
-
-BUILD_MODE?=c-shared
-OUTPUT_DIR?=output
-BINDING_NAME?=libnimona
-BINDING_FILE?=$(BINDING_NAME).so
-BINDING_ARGS?=
-BINDING_OUTPUT?=$(OUTPUT_DIR)/binding
+		-e CGO_ENABLED=1 ${BINDING_CROSS_ARGS} \
+		docker.elastic.co/beats-dev/golang-crossbuild:1.15.10-${BINDING_CROSS_TAG} \
+		--build-cmd "${BINDING_CROSS_CMD}" -p "${GOOS}/${GOARCH}"
 
 .PHONY: bindings
 bindings: bindings-ios bindings-darwin bindings-linux bindings-windows
@@ -281,7 +288,8 @@ bindings: bindings-ios bindings-darwin bindings-linux bindings-windows
 .PHONY: _bindings
 _bindings:
 	mkdir -p $(BINDING_OUTPUT)
-	go build \
+	SDKROOT=$(BINDING_SDKROOT) \
+		go build \
 		-ldflags "$(LDFLAGS) \
 			-X $(MODULE)/pkg/version.Date=$(DATE) \
 			-X $(MODULE)/pkg/version.Version=$(VERSION) \
@@ -304,14 +312,18 @@ bindings-ios: bindings-ios-arm64 bindings-ios-x86_64
 bindings-ios-arm64:
 	BINDING_FILE=$(IOS_OUTPUT)/arm64.a BUILD_MODE="c-archive" \
 	SDK=iphoneos CC=$(PWD)/clangwrap.sh CGO_CFLAGS="-fembed-bitcode" \
-	GOOS=ios GOARCH=arm64 CGO_ENABLED=1 \
+	GOOS=ios \
+	GOARCH=arm64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 .PHONY: bindings-ios-x86_64
 bindings-ios-x86_64:
 	BINDING_FILE=$(IOS_OUTPUT)/x86_64.a BUILD_MODE="c-archive" \
 	SDK=iphonesimulator CC=$(PWD)/clangwrap.sh \
-	GOOS=ios GOARCH=amd64 CGO_ENABLED=1 \
+	GOOS=ios \
+	GOARCH=amd64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 DARWIN_OUTPUT?=darwin
@@ -335,17 +347,22 @@ bindings-darwin-x86_64:
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
+	GOOS=darwin \
+	GOARCH=amd64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 .PHONY: bindings-darwin-arm64
 bindings-darwin-arm64:
+	echo $(BINDING_MACOS_SDK_ROOT)
 	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.dylib \
 	BUILD_MODE="c-shared" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
-	SDKROOT=$(xcrun --sdk macosx --show-sdk-path) \
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
+	BINDING_SDKROOT=$(BINDING_MACOS_SDK_ROOT) \
+	GOOS=darwin \
+	GOARCH=arm64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 .PHONY: bindings-darwin-archive-x86_64
@@ -354,7 +371,9 @@ bindings-darwin-archive-x86_64:
 	BUILD_MODE="c-archive" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
+	GOOS=darwin \
+	GOARCH=amd64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 .PHONY: bindings-darwin-archive-arm64
@@ -363,7 +382,9 @@ bindings-darwin-archive-arm64:
 	BUILD_MODE="c-archive" \
 	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
 	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
+	GOOS=darwin \
+	GOARCH=arm64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 LINUX_OUTPUT?=linux
@@ -374,30 +395,38 @@ bindings-linux: bindings-linux-386 bindings-linux-amd64 bindings-linux-arm64 bin
 
 .PHONY: bindings-linux-386
 bindings-linux-386:
-	GOOS=linux GOARCH=386 TAG=main \
-	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/386/$(LINUX_BINDING_NAME)" \
-	CMD="make _bindings" \
+	GOOS=linux \
+	GOARCH=386 \
+	TAG=main \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/386/$(LINUX_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 .PHONY: bindings-linux-amd64
 bindings-linux-amd64:
-	GOOS=linux GOARCH=amd64 TAG=main \
-	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/amd64/$(LINUX_BINDING_NAME)" \
-	CMD="make _bindings" \
+	GOOS=linux \
+	GOARCH=amd64 \
+	TAG=main \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/amd64/$(LINUX_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 .PHONY: bindings-linux-arm64
 bindings-linux-arm64:
-	GOOS=linux GOARCH=arm64 TAG=arm \
-	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/arm64/$(LINUX_BINDING_NAME)" \
-	CMD="make _bindings" \
+	GOOS=linux \
+	GOARCH=arm64 \
+	TAG=arm \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/arm64/$(LINUX_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 .PHONY: bindings-linux-armv7
 bindings-linux-armv7:
-	GOOS=linux GOARCH=armv7 TAG=arm \
-	ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/armv7/$(LINUX_BINDING_NAME)" \
-	CMD="make _bindings" \
+	GOOS=linux \
+	GOARCH=armv7 \
+	TAG=arm \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(LINUX_OUTPUT)/armv7/$(LINUX_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 WINDOWS_OUTPUT?=windows
@@ -408,16 +437,20 @@ bindings-windows: bindings-windows-386 bindings-windows-amd64
 
 .PHONY: bindings-windows-386
 bindings-windows-386:
-	GOOS=windows GOARCH=386 \
-	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/386/$(WINDOWS_BINDING_NAME)" \
-	TAG=main CMD="make _bindings" \
+	GOOS=windows \
+	GOARCH=386 \
+	BINDING_CROSS_TAG=main \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/386/$(WINDOWS_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 .PHONY: bindings-windows-amd64
 bindings-windows-amd64:
-	GOOS=windows GOARCH=amd64 TAG=main \
-	ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/amd64/$(WINDOWS_BINDING_NAME)" \
-	CMD="make _bindings" \
+	GOOS=windows \
+	GOARCH=amd64 \
+	TAG=main \
+	BINDING_CROSS_ARGS="-e BINDING_FILE=$(WINDOWS_OUTPUT)/amd64/$(WINDOWS_BINDING_NAME)" \
+	BINDING_CROSS_CMD="make _bindings" \
 	make cross-build
 
 ANDROID_HOME?=$(HOME)/Android/Sdk
@@ -431,23 +464,31 @@ bindings-android: bindings-android-arm64 bindings-android_armv7a bindings-androi
 bindings-android-arm64:
 	BINDING_FILE=$(ANDROID_OUTPUT)/arm64-v8a/$(ANDROID_BINDING_NAME) \
 	CC=$(ANDROID_NDK_TOOLCHAIN)/aarch64-linux-android21-clang \
-	GOOS=android GOARCH=arm64 CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=arm64 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 bindings-android_armv7a:
 	BINDING_FILE=$(ANDROID_OUTPUT)/armeabi-v7a/$(ANDROID_BINDING_NAME) \
 	CC=$(ANDROID_NDK_TOOLCHAIN)/armv7a-linux-androideabi21-clang \
-	GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=arm \
+	GOARM=7 CGO_ENABLED=1 \
 	make _bindings
 
 bindings-android-x86:
 	BINDING_FILE=$(ANDROID_OUTPUT)/x86/$(ANDROID_BINDING_NAME) \
 	CC=$(ANDROID_NDK_TOOLCHAIN)/i686-linux-android21-clang \
-	GOOS=android GOARCH=386 CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=386 \
+	CGO_ENABLED=1 \
 	make _bindings
 
 bindings-android-x86_64:
 	BINDING_FILE=$(ANDROID_OUTPUT)/x86_64/$(ANDROID_BINDING_NAME) \
 	CC=$(ANDROID_NDK_TOOLCHAIN)/x86_64-linux-android21-clang \
-	GOOS=android GOARCH=amd64 CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=amd64 \
+	CGO_ENABLED=1 \
 	make _bindings
