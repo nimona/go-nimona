@@ -283,7 +283,7 @@ cross-build:
 		--build-cmd "${BINDING_CROSS_CMD}" -p "${GOOS}/${GOARCH}"
 
 .PHONY: bindings
-bindings: bindings-ios bindings-darwin bindings-linux bindings-windows
+bindings: bindings-ios bindings-macos bindings-linux bindings-windows
 
 .PHONY: _bindings
 _bindings:
@@ -326,62 +326,61 @@ bindings-ios-x86_64:
 	CGO_ENABLED=1 \
 	make _bindings
 
-DARWIN_OUTPUT?=darwin
-DARWIN_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(DARWIN_OUTPUT)
-DARWIN_TARGET?=10.11
+MACOS_OUTPUT?=macos
+MACOS_BINDING_OUTPUT?=$(BINDING_OUTPUT)/$(MACOS_OUTPUT)
+MACOS_TARGET?=10.11
 
-.PHONY: bindings-darwin
-bindings-darwin: bindings-darwin-x86_64 bindings-darwin-arm64
+.PHONY: bindings-macos
+bindings-macos: bindings-macos-x86_64 bindings-macos-arm64
 	lipo \
-		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
-		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
-		-create -output $(DARWIN_BINDING_OUTPUT)/$(BINDING_NAME).dylib
+		$(MACOS_BINDING_OUTPUT)/x86_64.dylib \
+		$(MACOS_BINDING_OUTPUT)/arm64.dylib \
+		-create -output $(MACOS_BINDING_OUTPUT)/$(BINDING_NAME).dylib
 	rm \
-		$(DARWIN_BINDING_OUTPUT)/x86_64.dylib \
-		$(DARWIN_BINDING_OUTPUT)/arm64.dylib \
-		$(DARWIN_BINDING_OUTPUT)/*.h
+		$(MACOS_BINDING_OUTPUT)/x86_64.dylib \
+		$(MACOS_BINDING_OUTPUT)/arm64.dylib \
+		$(MACOS_BINDING_OUTPUT)/*.h
 
-.PHONY: bindings-darwin-x86_64
-bindings-darwin-x86_64:
-	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.dylib \
+.PHONY: bindings-macos-x86_64
+bindings-macos-x86_64:
+	BINDING_FILE=$(MACOS_OUTPUT)/x86_64.dylib \
 	BUILD_MODE="c-shared" \
-	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
-	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	CGO_CFLAGS=-mmacosx-version-min=$(MACOS_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(MACOS_TARGET) \
 	GOOS=darwin \
 	GOARCH=amd64 \
 	CGO_ENABLED=1 \
 	make _bindings
 
-.PHONY: bindings-darwin-arm64
-bindings-darwin-arm64:
-	echo $(BINDING_MACOS_SDK_ROOT)
-	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.dylib \
+.PHONY: bindings-macos-arm64
+bindings-macos-arm64:
+	BINDING_FILE=$(MACOS_OUTPUT)/arm64.dylib \
 	BUILD_MODE="c-shared" \
-	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
-	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	CGO_CFLAGS=-mmacosx-version-min=$(MACOS_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(MACOS_TARGET) \
 	BINDING_SDKROOT=$(BINDING_MACOS_SDK_ROOT) \
 	GOOS=darwin \
 	GOARCH=arm64 \
 	CGO_ENABLED=1 \
 	make _bindings
 
-.PHONY: bindings-darwin-archive-x86_64
-bindings-darwin-archive-x86_64:
-	BINDING_FILE=$(DARWIN_OUTPUT)/x86_64.a \
+.PHONY: bindings-macos-archive-x86_64
+bindings-macos-archive-x86_64:
+	BINDING_FILE=$(MACOS_OUTPUT)/x86_64.a \
 	BUILD_MODE="c-archive" \
-	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
-	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	CGO_CFLAGS=-mmacosx-version-min=$(MACOS_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(MACOS_TARGET) \
 	GOOS=darwin \
 	GOARCH=amd64 \
 	CGO_ENABLED=1 \
 	make _bindings
 
-.PHONY: bindings-darwin-archive-arm64
-bindings-darwin-archive-arm64:
-	BINDING_FILE=$(DARWIN_OUTPUT)/arm64.a \
+.PHONY: bindings-macos-archive-arm64
+bindings-macos-archive-arm64:
+	BINDING_FILE=$(MACOS_OUTPUT)/arm64.a \
 	BUILD_MODE="c-archive" \
-	CGO_CFLAGS=-mmacosx-version-min=$(DARWIN_TARGET) \
-	MACOSX_DEPLOYMENT_TARGET=$(DARWIN_TARGET) \
+	CGO_CFLAGS=-mmacosx-version-min=$(MACOS_TARGET) \
+	MACOSX_DEPLOYMENT_TARGET=$(MACOS_TARGET) \
 	GOOS=darwin \
 	GOARCH=arm64 \
 	CGO_ENABLED=1 \

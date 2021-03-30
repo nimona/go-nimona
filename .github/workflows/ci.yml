@@ -194,7 +194,7 @@ jobs:
       - name: Build
         run: make bindings-ios
       
-  build-bindings-darwin:
+  build-bindings-macos:
     name: Build Macos Bindings
     runs-on: macos-10.15
     needs: [build]
@@ -204,7 +204,7 @@ jobs:
         with:
           go-version: 1.16
       - name: Build
-        run: make bindings-darwin
+        run: make bindings-macos
       
   build-bindings-linux:
     name: Build Linux Bindings
@@ -319,7 +319,7 @@ jobs:
           tag: ${{ env.NIMONA_VERSION }}
           overwrite: true
 
-  release-bindings-darwin:
+  release-bindings-macos:
     name: Relase Macos Bindings
     runs-on: macos-10.15
     needs: [release]
@@ -329,16 +329,16 @@ jobs:
         with:
           go-version: 1.16
       - name: Build
-        run: make bindings-darwin-x86_64
+        run: make bindings-macos
       - name: Archive
-        run: tar -czvf libnimona_darwin.tar.gz -C output/binding/darwin .
+        run: tar -czvf libnimona_macos.tar.gz -C output/binding/macos .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
       - uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          asset_name: libnimona-${{ env.NIMONA_VERSION }}-darwin.tar.gz
-          file: libnimona_darwin.tar.gz
+          asset_name: libnimona-${{ env.NIMONA_VERSION }}-macos.tar.gz
+          file: libnimona_macos.tar.gz
           tag: ${{ env.NIMONA_VERSION }}
           overwrite: true
 
