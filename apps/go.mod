@@ -8,6 +8,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.2
 	github.com/gotailwindcss/tailwind v0.0.0-20200831135354-a06d2b86d455
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	nimona.io v0.0.0-00010101000000-000000000000
 )
