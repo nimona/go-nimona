@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>{{template "title"}}</title>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+  <script crossorigin="anonymous" src="https://unpkg.com/@hotwired/turbo@7.0.0-beta.4/dist/turbo.es5-umd.js"></script>
+  <head><link rel="stylesheet" href="/css/main.css"/></head>
+
+  {{- template "head" }}
+  {{- define "head" }}{{ end }}
+
+</head>
+
+<body class="antialiased font-sans bg-gray-200">
+  {{- template "body" . }}
+</body>
+
+</html>
