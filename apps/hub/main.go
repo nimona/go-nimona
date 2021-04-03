@@ -37,13 +37,13 @@ var (
 				"assets/inner.peer-content-types.html",
 			),
 	)
-	tplPeerIdentity = template.Must(
+	tplIdentity = template.Must(
 		template.New("base.html").
 			Funcs(sprig.FuncMap()).
 			ParseFS(
 				assets,
 				"assets/base.html",
-				"assets/frame.peer-identity.html",
+				"assets/frame.identity.html",
 			),
 	)
 	tplObjects = template.Must(
@@ -88,7 +88,6 @@ func main() {
 			if !ok {
 				return
 			}
-
 			if err := es.SendEvent(
 				hotwire.StreamActionReplace,
 				"peer-content-types",
@@ -124,7 +123,7 @@ func main() {
 		}
 	})
 
-	r.Get("/peer/identity", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
 		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
 		values := struct {
@@ -140,7 +139,7 @@ func main() {
 			values.PublicKey = k.PublicKey().String()
 			values.PrivateBIP39 = k.BIP39()
 		}
-		err := tplPeerIdentity.Execute(
+		err := tplIdentity.Execute(
 			w,
 			values,
 		)
@@ -150,7 +149,7 @@ func main() {
 		}
 	})
 
-	r.Get("/peer/identity-new", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
 		k, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -158,10 +157,10 @@ func main() {
 		}
 		// TODO persist key in config
 		d.LocalPeer().PutPrimaryIdentityKey(k)
-		http.Redirect(w, r, "/peer/identity", http.StatusFound)
+		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
-	r.Post("/peer/identity-link", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/identity/link", func(w http.ResponseWriter, r *http.Request) {
 		k, err := crypto.NewEd25519PrivateKeyFromBIP39(
 			r.PostFormValue("mnemonic"),
 			crypto.IdentityKey,
@@ -172,7 +171,7 @@ func main() {
 		}
 		// TODO persist key in config
 		d.LocalPeer().PutPrimaryIdentityKey(k)
-		http.Redirect(w, r, "/peer/identity", http.StatusFound)
+		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/objects", func(w http.ResponseWriter, r *http.Request) {
