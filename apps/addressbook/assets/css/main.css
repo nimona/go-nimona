@@ -1,4 +1,6 @@
 @tailwind base;
 @tailwind components;
-.button { @apply inline-block m-2 p-2 rounded-md bg-green-400; }
 @tailwind utilities;
+
+a { @apply text-blue-500; }
+a:hover { @apply text-blue-700 underline; }

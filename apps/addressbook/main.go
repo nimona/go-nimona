@@ -52,7 +52,7 @@ func main() {
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		identityKey := d.LocalPeer().GetPrimaryIdentityKey()
-		identityPublicKey := "-"
+		identityPublicKey := ""
 		if !identityKey.IsEmpty() {
 			identityPublicKey = identityKey.PublicKey().String()
 		}
