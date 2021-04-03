@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/Masterminds/sprig"
+	"github.com/geoah/go-hotwire"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gotailwindcss/tailwind/twembed"
@@ -33,6 +34,7 @@ var (
 				assets,
 				"assets/base.html",
 				"assets/frame.peer.html",
+				"assets/inner.peer-content-types.html",
 			),
 	)
 	tplPeerIdentity = template.Must(
@@ -53,6 +55,14 @@ var (
 				"assets/frame.objects.html",
 			),
 	)
+	tplInnerPeerContentTypes = template.Must(
+		template.New("inner.peer-content-types.html").
+			Funcs(sprig.FuncMap()).
+			ParseFS(
+				assets,
+				"assets/inner.peer-content-types.html",
+			),
+	)
 )
 
 func main() {
@@ -65,6 +75,34 @@ func main() {
 	cssAssets, _ := fs.Sub(assets, "assets/css")
 	r.Use(middleware.Logger)
 	r.Mount("/css", twhandler.New(http.FS(cssAssets), "/css", twembed.New()))
+
+	es := hotwire.NewEventStream()
+	r.Get("/events", es.ServeHTTP)
+
+	events, eventsClose := d.LocalPeer().ListenForUpdates()
+	defer eventsClose()
+
+	go func() {
+		for {
+			_, ok := <-events
+			if !ok {
+				return
+			}
+
+			if err := es.SendEvent(
+				hotwire.StreamActionReplace,
+				"peer-content-types",
+				tplInnerPeerContentTypes,
+				struct {
+					ContentTypes []string
+				}{
+					ContentTypes: d.LocalPeer().GetContentTypes(),
+				},
+			); err != nil {
+				log.Println(err)
+			}
+		}
+	}()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		connInfo := d.LocalPeer().ConnectionInfo()
@@ -88,12 +126,15 @@ func main() {
 
 	r.Get("/peer/identity", func(w http.ResponseWriter, r *http.Request) {
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
+		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
 		values := struct {
 			PublicKey    string
 			PrivateBIP39 string
 			Show         bool
+			Link         bool
 		}{
 			Show: showMnemonic,
+			Link: linkMnemonic,
 		}
 		if k := d.LocalPeer().GetPrimaryIdentityKey(); !k.IsEmpty() {
 			values.PublicKey = k.PublicKey().String()
@@ -111,6 +152,20 @@ func main() {
 
 	r.Get("/peer/identity-new", func(w http.ResponseWriter, r *http.Request) {
 		k, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// TODO persist key in config
+		d.LocalPeer().PutPrimaryIdentityKey(k)
+		http.Redirect(w, r, "/peer/identity", http.StatusFound)
+	})
+
+	r.Post("/peer/identity-link", func(w http.ResponseWriter, r *http.Request) {
+		k, err := crypto.NewEd25519PrivateKeyFromBIP39(
+			r.PostFormValue("mnemonic"),
+			crypto.IdentityKey,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

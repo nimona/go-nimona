@@ -1,0 +1,8 @@
+<ul>
+  {{- if not .ContentTypes }}
+    <li>-</li>
+  {{- end }}
+  {{- range sortAlpha .ContentTypes }}
+    <li>{{ . }}</li>
+  {{- end}}
+</ul>
