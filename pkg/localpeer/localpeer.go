@@ -17,6 +17,7 @@ import (
 
 type (
 	LocalPeer interface {
+		// TODO merge peer/id methods, use .Usage to distinguish
 		GetPrimaryPeerKey() crypto.PrivateKey
 		PutPrimaryPeerKey(crypto.PrivateKey)
 		GetPrimaryIdentityKey() crypto.PrivateKey
