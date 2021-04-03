@@ -5,12 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multihash"
 	"github.com/multiformats/go-varint"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
+	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/curve25519"
 )
 
@@ -26,12 +29,12 @@ type (
 	PublicKey struct {
 		Usage     KeyUsage
 		Algorithm KeyAlgorithm
-		RawKey    ed25519.PublicKey
+		RawKey    ed25519.PublicKey // TODO use crypto.PublicKey
 	}
 	PrivateKey struct {
 		Usage     KeyUsage
 		Algorithm KeyAlgorithm
-		RawKey    ed25519.PrivateKey
+		RawKey    ed25519.PrivateKey // TODO use crypto.PrivateKey
 	}
 )
 
@@ -103,6 +106,15 @@ func (k PrivateKey) String() string {
 	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
 }
 
+func (k PrivateKey) Seed() []byte {
+	return k.RawKey.Seed()
+}
+
+func (k PrivateKey) BIP39() string {
+	m, _ := bip39.NewMnemonic(k.Seed())
+	return m
+}
+
 func (k PrivateKey) MarshalText() ([]byte, error) {
 	s, err := k.MarshalString()
 	return []byte(s), err
@@ -170,6 +182,7 @@ func NewEd25519PrivateKey(keyType KeyUsage) (PrivateKey, error) {
 	}, nil
 }
 
+// TODO check validity and return error
 func NewEd25519PrivateKeyFromSeed(
 	seed []byte,
 	keyType KeyUsage,
@@ -182,6 +195,28 @@ func NewEd25519PrivateKeyFromSeed(
 	}
 }
 
+var (
+	charRegex  = regexp.MustCompile(`[^a-zA-Z ]+`)
+	spaceRegex = regexp.MustCompile(`\s+`)
+)
+
+// TODO check validity and return error
+func NewEd25519PrivateKeyFromBIP39(
+	mnemonic string,
+	keyType KeyUsage,
+) (PrivateKey, error) {
+	mnemonicClean := mnemonic
+	mnemonicClean = charRegex.ReplaceAllString(mnemonicClean, " ")
+	mnemonicClean = spaceRegex.ReplaceAllString(mnemonicClean, " ")
+	mnemonicClean = strings.TrimSpace(mnemonicClean)
+	seed, err := bip39.EntropyFromMnemonic(mnemonicClean)
+	if err != nil {
+		return EmptyPrivateKey, fmt.Errorf("error parsing mnemonic, %w", err)
+	}
+	return NewEd25519PrivateKeyFromSeed(seed, keyType), nil
+}
+
+// TODO check validity and return error
 func NewEd25519PublicKeyFromRaw(
 	raw ed25519.PublicKey,
 	keyType KeyUsage,
