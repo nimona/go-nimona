@@ -35,6 +35,7 @@ require (
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
+	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vcaesar/murmur v0.20.1
 	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
 	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
