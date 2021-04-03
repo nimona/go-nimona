@@ -4,3 +4,6 @@
 
 a { @apply text-blue-500; }
 a:hover { @apply text-blue-700 underline; }
+
+public-key { @apply block whitespace-pre overflow-x-scroll font-small; }
+private-key { @apply block whitespace-pre overflow-x-scrol font-smalll; }

@@ -6,13 +6,16 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/Masterminds/sprig"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gotailwindcss/tailwind/twembed"
 	"github.com/gotailwindcss/tailwind/twhandler"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
@@ -23,19 +26,32 @@ import (
 var assets embed.FS
 
 var (
-	tplIndex = template.Must(
-		template.ParseFS(
-			assets,
-			"assets/base.html",
-			"assets/frame.peer.html",
-		),
+	tplPeer = template.Must(
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/frame.peer.html",
+			),
+	)
+	tplPeerIdentity = template.Must(
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/frame.peer-identity.html",
+			),
 	)
 	tplObjects = template.Must(
-		template.ParseFS(
-			assets,
-			"assets/base.html",
-			"assets/frame.objects.html",
-		),
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/frame.objects.html",
+			),
 	)
 )
 
@@ -51,30 +67,57 @@ func main() {
 	r.Mount("/css", twhandler.New(http.FS(cssAssets), "/css", twembed.New()))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		identityKey := d.LocalPeer().GetPrimaryIdentityKey()
-		identityPublicKey := ""
-		if !identityKey.IsEmpty() {
-			identityPublicKey = identityKey.PublicKey().String()
-		}
 		connInfo := d.LocalPeer().ConnectionInfo()
-		err := tplIndex.Execute(
+		err := tplPeer.Execute(
 			w,
 			struct {
-				PublicKey         string
-				IdentityPublicKey string
-				Addresses         []string
-				ContentTypes      []string
+				PublicKey    string
+				Addresses    []string
+				ContentTypes []string
 			}{
-				PublicKey:         connInfo.PublicKey.String(),
-				IdentityPublicKey: identityPublicKey,
-				Addresses:         connInfo.Addresses,
-				ContentTypes:      d.LocalPeer().GetContentTypes(),
+				PublicKey:    connInfo.PublicKey.String(),
+				Addresses:    connInfo.Addresses,
+				ContentTypes: d.LocalPeer().GetContentTypes(),
 			},
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	})
+
+	r.Get("/peer/identity", func(w http.ResponseWriter, r *http.Request) {
+		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
+		values := struct {
+			PublicKey    string
+			PrivateBIP39 string
+			Show         bool
+		}{
+			Show: showMnemonic,
+		}
+		if k := d.LocalPeer().GetPrimaryIdentityKey(); !k.IsEmpty() {
+			values.PublicKey = k.PublicKey().String()
+			values.PrivateBIP39 = k.BIP39()
+		}
+		err := tplPeerIdentity.Execute(
+			w,
+			values,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/peer/identity-new", func(w http.ResponseWriter, r *http.Request) {
+		k, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// TODO persist key in config
+		d.LocalPeer().PutPrimaryIdentityKey(k)
+		http.Redirect(w, r, "/peer/identity", http.StatusFound)
 	})
 
 	r.Get("/objects", func(w http.ResponseWriter, r *http.Request) {

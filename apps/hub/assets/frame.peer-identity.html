@@ -1,0 +1,34 @@
+{{- define "title" }}{{ end }}
+{{- define "body" }}
+<turbo-frame id="peer-identity">
+  <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+    <dt class="text-sm font-medium text-gray-500">
+      Identity PublicKey
+    </dt>
+    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {{- if .PublicKey }}
+        <code class="public-key">{{- .PublicKey }}</code>
+      {{- else }}
+        <a href="/peer/identity-link">Link existing identity</a>
+        or
+        <a href="/peer/identity-new">create new identity</a>
+      {{- end }}
+    </dd>
+  </div>
+  <div class="bg-gray-100 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+    <dt class="text-sm font-medium text-gray-500">
+      Identity Mnemonic Phrase
+    </dt>
+    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {{- if .PublicKey }}
+        {{- if .Show }}
+          <code class="block mnemonic border-gray-200 border p-2 my-2 rounded-lg">{{ .PrivateBIP39 }}</code>
+          <a href="/peer/identity" class="text-red-600">Hide mnemonic phrase</a>
+        {{- else }}
+          <a href="/peer/identity?show=true" class="text-red-600">Show mnemonic phrase</a>
+        {{- end }}
+      {{- end }}
+    </dd>
+  </div>
+</turbo-frame>
+{{- end }}

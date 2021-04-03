@@ -39,3 +39,6 @@ infrastructure/*/.terraform/
 infrastructure/*/ssh/id_rsa
 infrastructure/*/.envrc.local
 infrastructure/*/.pyenv
+
+# Apps
+apps/**/tmp
