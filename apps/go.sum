@@ -113,6 +113,8 @@ github.com/gammazero/deque v0.0.0-20200721202602-07291166fe33/go.mod h1:D90+MBHV
 github.com/gammazero/workerpool v1.1.1 h1:MN29GcZtZZAgzTU+Zk54Y+J9XkE54MoXON/NCZvNulo=
 github.com/gammazero/workerpool v1.1.1/go.mod h1:5BN0IJVRjSFAypo9QTJCaWdijjNz9Jjl6VFS1PRjCeg=
 github.com/geoah/genny v1.0.3/go.mod h1:Xa40Z5y4m0PEvYcyHrHuz7qzqA/YE1BlsGGtosR2yIQ=
+github.com/geoah/go-hotwire v0.0.0-20210403142409-b24e1f385185 h1:95zdYOju6yPXUJ9tQKU5mVy6t6uFuelQpU/pAFI1JCc=
+github.com/geoah/go-hotwire v0.0.0-20210403142409-b24e1f385185/go.mod h1:Mkt5woae0+l+scUQC9ipt+iiNTrm+FHECZ89wF3FSFk=
 github.com/geoah/go-queue v2.0.0+incompatible h1:eLFmhPSYebanEi7t6D80vNBvPv0V6lLGyiMg6TFoEXY=
 github.com/geoah/go-queue v2.0.0+incompatible/go.mod h1:NPL2o6Frb0vYP2U/WlgENrrYsd8kN0fdq946szaCbY4=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
@@ -685,6 +687,8 @@ google.golang.org/protobuf v1.23.1-0.20200526195155-81db48ad09cc/go.mod h1:EGpAD
 google.golang.org/protobuf v1.25.0 h1:Ejskq+SyPohKW+1uil0JJMtmHCgJPJ/qWTxr8qp+R4c=
 google.golang.org/protobuf v1.25.0/go.mod h1:9JNX74DMeImyA3h4bdi1ymwjUzf21/xIlbajtzgsN7c=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
+gopkg.in/antage/eventsource.v1 v1.0.0-20150318155416-803f4c5af225 h1:xy+AV3uSExoRQc2qWXeZdbhFGwBFK/AmGlrBZEjbvuQ=
+gopkg.in/antage/eventsource.v1 v1.0.0-20150318155416-803f4c5af225/go.mod h1:SiXNRpUllqhl+GIw2V/BtKI7BUlz+uxov9vBFtXHqh8=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

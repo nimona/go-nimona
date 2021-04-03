@@ -43,14 +43,9 @@
                 Registered Content Types
               </dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                <ul>
-                  {{- if not .ContentTypes }}
-                    <li>-</li>
-                  {{- end }}
-                  {{- range sortAlpha .ContentTypes }}
-                    <li>{{ . }}</li>
-                  {{- end}}
-                </ul>
+                <turbo-frame id="peer-content-types">
+                  {{- template "inner.peer-content-types.html" . }}
+                </turbo-frame>
               </dd>
             </div>
           </dl>
