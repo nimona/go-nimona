@@ -134,19 +134,19 @@ Else, For each policy:
     "owner:s": "bah0",
     "policies:am": [{
       // allow everyone to read the whole stream
-      "type:s": "signature",
+      "@type:s": "signature",
       "actions:as": ["read"],
       "effect:s": "allow",
     }, {
       // allow a couple of keys to send messages
-      "type:s": "signature",
+      "@type:s": "signature",
       "subjects:as": ["bah1", "bah2", "bah3"],
       "actions:as": ["append"],
       "resources:as": ["conversation.MessageAdded"],
       "effect:s": "allow",
     }, {
       // allow owner to modify conversation topic
-      "type:s": "signature",
+      "@type:s": "signature",
       "subjects:as": ["bah0"],
       "actions:as": ["append"],
       "resources:as": ["conversation.TopicUpdated"],
@@ -192,7 +192,7 @@ providers for it on the network.
 
 ```json
 {
-  "type:s": "nimona.io/profile.Created",
+  "@type:s": "nimona.io/profile.Created",
   "author:s": "f00"
 }
 ```
