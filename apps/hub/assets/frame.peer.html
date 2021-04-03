@@ -19,49 +19,36 @@
                 Peer Public key
               </dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {{ .PublicKey }}
+                <code class="public-key">{{ .PublicKey }}</code>
               </dd>
             </div>
+            <turbo-frame id="peer-identity" src="/peer/identity"></turbo-frame>
             <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
-                Identity PublicKey
-              </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {{- if .IdentityPublicKey }}
-                  {{ .IdentityPublicKey }}
-                {{- else }}
-                <turbo-frame id="peer-link-identity">
-                  <a href="/peer/link-identity">Link identity</a>
-                </turbo-frame>
-                {{- end }}
-              </dd>
-            </div>
-            <div class="bg-gray-100 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">
                 Addresses
               </dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 <ul>
                   {{- if not .Addresses }}
-                  <li>-</li>
+                    <li>-</li>
                   {{- end }}
-                  {{- range .Addresses }}
-                  <li>{{ . }}</li>
+                  {{- range sortAlpha .Addresses }}
+                    <li>{{ . }}</li>
                   {{- end}}
                 </ul>
               </dd>
             </div>
-            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div class="bg-gray-100 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">
                 Registered Content Types
               </dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 <ul>
                   {{- if not .ContentTypes }}
-                  <li>-</li>
+                    <li>-</li>
                   {{- end }}
-                  {{- range .ContentTypes }}
-                  <li>{{ . }}</li>
+                  {{- range sortAlpha .ContentTypes }}
+                    <li>{{ . }}</li>
                   {{- end}}
                 </ul>
               </dd>
