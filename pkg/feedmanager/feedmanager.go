@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
+	"nimona.io/pkg/objectstore"
 )
 
 var (
@@ -25,6 +26,7 @@ type (
 	FeedManager struct {
 		localpeer     localpeer.LocalPeer
 		resolver      resolver.Resolver
+		objectstore   objectstore.Store
 		objectmanager objectmanager.ObjectManager
 	}
 )
@@ -33,11 +35,13 @@ func New(
 	ctx context.Context,
 	lpr localpeer.LocalPeer,
 	res resolver.Resolver,
+	str objectstore.Store,
 	man objectmanager.ObjectManager,
 ) error {
 	m := &FeedManager{
 		localpeer:     lpr,
 		resolver:      res,
+		objectstore:   str,
 		objectmanager: man,
 	}
 
@@ -73,6 +77,9 @@ func (m *FeedManager) initialize(ctx context.Context) error {
 		"nimona.io/stream.Response",
 		"nimona.io/stream.Announcement",
 		"nimona.io/stream.Subscription",
+		"stream:nimona.io/schema/relationship",
+		"event:nimona.io/schema/relationship.Added",
+		"event:nimona.io/schema/relationship.Removed",
 	)
 	subs := m.objectmanager.Subscribe()
 	go func() {
@@ -150,7 +157,6 @@ func (m *FeedManager) createFeed(
 		objectmanager.FilterByStreamCID(feedRootObj.CID()),
 		objectmanager.FilterByObjectType(new(feed.Added).Type()),
 	)
-	defer sub.Close()
 
 	go func() {
 		for {
@@ -174,12 +180,21 @@ func (m *FeedManager) createFeed(
 			}
 
 			for _, objCID := range feedAdded.ObjectCID {
+				// check if we already have this object
+				if _, err := m.objectstore.Get(objCID); err == nil {
+					continue
+				}
 				peers, err := m.resolver.Lookup(
 					context.New(
 						context.WithParent(ctx),
 						context.WithTimeout(time.Second),
 					),
-					resolver.LookupByCID(objCID),
+					// TODO lookup by something better?
+					// we were using `resolver.LookupByCID(objCID)` but it was
+					// not really working as we don't seem to be publishing
+					// stream events.
+					// TODO we should at least be caching possible peers
+					resolver.LookupByCID(feedRootObj.CID()),
 				)
 				if err != nil {
 					// TODO log
