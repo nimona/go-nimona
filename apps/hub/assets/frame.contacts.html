@@ -45,7 +45,7 @@
                         </td>
                       </form>
                     </tr>
-                    {{- range $alias, $publicKey := .Contacts }}
+                    {{- range $publicKey, $alias := .Contacts }}
                     <tr>
                       <td class="px-4 py-2 whitespace-nowrap">
                         {{ $alias }}
@@ -54,9 +54,12 @@
                         <code class="public-key">{{ $publicKey }}</code>
                       </td>
                       <td class="px-2 py-2 whitespace-nowrap">
-                        <button type="submit" class="table-button danger">
-                          Remove
-                        </button>
+                        <form action="/contacts/remove" method="POST">
+                          <input type="hidden" name="remoteParty" value="{{ $publicKey }}">
+                          <button type="submit" class="table-button danger">
+                            Remove
+                          </button>
+                        </form>
                       </td>
                     </tr>
                     {{- end }}

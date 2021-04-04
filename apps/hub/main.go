@@ -240,7 +240,7 @@ func main() {
 		k := d.LocalPeer().GetPrimaryIdentityKey()
 		values := struct {
 			IdentityLinked bool
-			Contacts       map[string]string
+			Contacts       map[string]string // map[publicKey]alias
 		}{
 			IdentityLinked: false,
 			Contacts:       map[string]string{},
@@ -284,9 +284,16 @@ func main() {
 					if r.Alias == "" || r.RemoteParty.IsEmpty() {
 						continue
 					}
-					values.Contacts[r.Alias] = r.RemoteParty.String()
+					values.Contacts[r.RemoteParty.String()] = r.Alias
 				case new(relationship.Removed).Type():
-					// TODO implement removal
+					r := &relationship.Removed{}
+					if err := r.FromObject(o); err != nil {
+						continue
+					}
+					if r.RemoteParty.IsEmpty() {
+						continue
+					}
+					delete(values.Contacts, r.RemoteParty.String())
 				}
 			}
 		}
@@ -348,6 +355,73 @@ func main() {
 				Stream: contactsStreemRootCID,
 			},
 			Alias:       alias,
+			RemoteParty: remotePartyKey,
+			Datetime:    time.Now().UTC().Format(time.RFC3339),
+		}
+		if _, err := d.ObjectManager().Put(
+			context.FromContext(r.Context()),
+			contactsStreemRoot.ToObject(),
+		); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if _, err := d.ObjectManager().Put(
+			context.FromContext(r.Context()),
+			rel.ToObject(),
+		); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/contacts", http.StatusFound)
+	})
+
+	r.Post("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
+		k := d.LocalPeer().GetPrimaryIdentityKey()
+		values := struct {
+			IdentityLinked bool
+			Contacts       map[string]string
+		}{
+			IdentityLinked: false,
+			Contacts:       map[string]string{},
+		}
+		if k.IsEmpty() {
+			err := tplContacts.Execute(
+				w,
+				values,
+			)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		values.IdentityLinked = true
+		contactsStreemRoot := relationship.RelationshipStreamRoot{
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+		}
+		contactsStreemRootCID := contactsStreemRoot.ToObject().CID()
+		remoteParty := r.PostFormValue("remoteParty")
+		if remoteParty == "" {
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		remotePartyKey := crypto.PublicKey{}
+		if err := remotePartyKey.UnmarshalString(remoteParty); err != nil {
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+		rel := relationship.Removed{
+			Metadata: object.Metadata{
+				Owner:  k.PublicKey(),
+				Stream: contactsStreemRootCID,
+			},
 			RemoteParty: remotePartyKey,
 			Datetime:    time.Now().UTC().Format(time.RFC3339),
 		}
