@@ -3,9 +3,11 @@ package main
 import (
 	"embed"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -14,8 +16,11 @@ import (
 	"github.com/geoah/go-hotwire"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gotailwindcss/tailwind"
 	"github.com/gotailwindcss/tailwind/twembed"
 	"github.com/gotailwindcss/tailwind/twhandler"
+	"github.com/gotailwindcss/tailwind/twpurge"
+	"github.com/shurcooL/httpfs/vfsutil"
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
@@ -107,7 +112,27 @@ func main() {
 	cssAssets, _ := fs.Sub(assets, "assets/css")
 	r.Use(middleware.Logger)
 
-	cssHandler := twhandler.New(http.FS(cssAssets), "/css", twembed.New())
+	cssHandler := twhandler.NewFromFunc(
+		http.FS(cssAssets),
+		"/css",
+		func(w io.Writer) *tailwind.Converter {
+			dist := twembed.New()
+			pscanner, err := twpurge.NewScannerFromDist(dist)
+			if err != nil {
+				log.Fatal(err)
+			}
+			vfsutil.Walk(http.FS(assets), "assets", pscanner.WalkFunc(func(fn string) bool {
+				switch filepath.Ext(fn) {
+				case ".html":
+					return true
+				}
+				return false
+			}))
+			conv := tailwind.New(w, dist)
+			conv.SetPurgeChecker(pscanner.Map())
+			return conv
+		},
+	)
 	cssHandler.SetWriteCloserFunc(brotli.HTTPCompressor)
 	r.Mount("/css", cssHandler)
 
