@@ -14,6 +14,7 @@ require (
 	github.com/gotailwindcss/tailwind v0.0.0-20200831135354-a06d2b86d455
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	nimona.io v0.0.0-00010101000000-000000000000
