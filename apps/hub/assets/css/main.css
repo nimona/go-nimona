@@ -2,8 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-a { @apply text-blue-500; }
-a:hover { @apply text-blue-700 underline; }
+a {
+    @apply text-blue-500;
+}
 
-public-key { @apply block whitespace-pre overflow-x-scroll font-small; }
-private-key { @apply block whitespace-pre overflow-x-scrol font-smalll; }
+a:hover {
+    @apply text-blue-700 underline;
+}
+
+.cid { 
+    @apply block whitespace-pre overflow-x-scroll text-xs;
+}
+
+.public-key {
+    @apply block whitespace-pre overflow-x-scroll text-xs;
+}
+
+.private-key {
+    @apply block whitespace-pre overflow-x-scroll text-xs;
+}
+
+.table-button {
+    @apply justify-center px-1 py-1 w-full rounded-md text-xs text-white;
+}
+
+.table-button.primary {
+    @apply bg-blue-500 py-2;
+}
+
+.table-button.primary:hover {
+    @apply bg-blue-600;
+}
+
+.table-button.danger {
+    @apply bg-red-500;
+}
+
+.table-button.danger:hover {
+    @apply bg-red-600;
+}
+
+.table-input {
+    @apply block w-full rounded-md border-gray-300 shadow-sm text-xs;
+}
+
+.table-input:focus {
+    @apply border-indigo-300 ring ring-indigo-200 ring-opacity-50;
+}

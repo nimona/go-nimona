@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/andybalholm/brotli v1.0.1
 	github.com/charmbracelet/bubbles v0.7.6
 	github.com/charmbracelet/bubbletea v0.12.4
 	github.com/geoah/go-hotwire v0.0.0-20210403142409-b24e1f385185
@@ -19,3 +20,5 @@ require (
 )
 
 replace nimona.io => ../
+
+replace github.com/gotailwindcss/tailwind => github.com/geoah/tailwind v0.0.0-20210403221214-ff2660192bb2
