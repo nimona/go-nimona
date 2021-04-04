@@ -128,6 +128,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		ctx,
 		lpr,
 		res,
+		str,
 		man,
 	); err != nil {
 		return nil, fmt.Errorf("constructing feed manager, %w", err)
