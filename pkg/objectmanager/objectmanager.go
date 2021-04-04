@@ -132,6 +132,20 @@ func (m *manager) isRegisteredContentType(
 	return false
 }
 
+func (m *manager) isWellKnownEphemeral(
+	contentType string,
+) bool {
+	switch contentType {
+	case "nimona.io/stream.Announcement",
+		"nimona.io/stream.Request",
+		"nimona.io/stream.Response",
+		"nimona.io/Request",
+		"nimona.io/Response":
+		return true
+	}
+	return false
+}
+
 // TODO add support for multiple recipients
 // TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
@@ -461,6 +475,10 @@ func (m *manager) storeObject(
 	// TODO is registered content type, OR is part of a peristed stream
 	ok := m.isRegisteredContentType(obj.Type)
 	if !ok {
+		return nil
+	}
+
+	if skip := m.isWellKnownEphemeral(obj.Type); skip {
 		return nil
 	}
 
