@@ -1,9 +1,14 @@
-{{- define "title" }}Local Peer Information{{ end }}
+{{- define "title" }}Contacts{{ end }}
 {{- define "body" }}
 <turbo-frame id="main">
   <div class="max-w-7xl mx-auto py-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
       <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        {{- if not .IdentityLinked }}
+        <div class="px-6 py-4 whitespace-nowrap font-small text-gray-500 text-center">
+          No identity linked
+        </div>
+        {{- else }}
         <div class="flex flex-col">
           <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -13,48 +18,45 @@
                     <tr>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
+                        Alias
                       </th>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        CID
+                        Public Key
                       </th>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Stream
                       </th>
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    {{- if not . }}
                     <tr>
-                      <td class="px-6 py-4 whitespace-nowrap font-small text-gray-500 text-center" colspan="100%">
-                        no objects found
-                      </td>
+                      <form action="/contacts/add" method="POST">
+                        <td class="p-2">
+                          <input name="alias" type="text" placeholder="alias" class="table-input">
+                        </td>
+                        <td class="p-2">
+                          <input name="remoteParty" type="text" placeholder="public key" class="table-input">
+                        </td>
+                        <td class="p-2">
+                          <button type="submit" class="table-button primary">
+                            Add
+                          </button>
+                        </td>
+                      </form>
                     </tr>
-                    {{- end }}
-                    {{ $i := 0}}
-                    {{- range . }}
-                    {{ $i = add1 $i }}
-                    <tr class="{{ if mod $i 2 }}bg-white{{ else }}bg-gray-50{{ end }}">
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {{ .Type }}
-                        </span>
+                    {{- range $alias, $publicKey := .Contacts }}
+                    <tr>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        {{ $alias }}
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <code class="cid">{{ lastN .CID.String 16 }}</code>
+                      <td class="px-4 py-2 whitespace-nowrap">
+                        <code class="public-key">{{ $publicKey }}</code>
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        {{- if contains "stream:" .Type }}
-                        <span
-                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                          root
-                        </span>
-                        {{- else }}
-                          <code class="cid">{{ lastN .Metadata.Stream.String 16 }}</code>
-                        {{- end}}
+                      <td class="px-2 py-2 whitespace-nowrap">
+                        <button type="submit" class="table-button danger">
+                          Remove
+                        </button>
                       </td>
                     </tr>
                     {{- end }}
@@ -64,6 +66,7 @@
             </div>
           </div>
         </div>
+        {{- end }}
       </div>
     </div>
   </div>

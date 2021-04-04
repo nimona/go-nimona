@@ -14,7 +14,7 @@
         </div>
         <div class="border-t border-gray-200">
           <dl>
-            <div class="bg-gray-100 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">
                 Peer Public key
               </dt>
@@ -37,7 +37,7 @@
                 </ul>
               </dd>
             </div>
-            <div class="bg-gray-100 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">
                 Registered Content Types
               </dt>
@@ -45,6 +45,14 @@
                 <turbo-frame id="peer-content-types">
                   {{- template "inner.peer-content-types.html" . }}
                 </turbo-frame>
+              </dd>
+            </div>
+            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500">
+                Config location
+              </dt>
+              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {{ .ConfigPath }}
               </dd>
             </div>
           </dl>
