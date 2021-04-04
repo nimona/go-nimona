@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -98,11 +99,19 @@ var (
 )
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	r := chi.NewRouter()
 	d, err := daemon.New(
 		context.New(),
 		daemon.WithConfigOptions(
 			config.WithDefaultPath("~/.nimona-hub"),
+			config.WithDefaultListenOnLocalIPs(),
+			config.WithDefaultListenOnPrivateIPs(),
+			config.WithDefaultListenOnExternalPort(),
 		),
 	)
 	if err != nil {
@@ -466,5 +475,5 @@ func main() {
 		}
 	})
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":"+port, r)
 }
