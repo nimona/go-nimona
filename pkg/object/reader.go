@@ -61,7 +61,10 @@ func (r *readCloser) Read() (*Object, error) {
 }
 
 func (r *readCloser) Close() {
-	r.closer <- struct{}{}
+	select {
+	case r.closer <- struct{}{}:
+	default:
+	}
 }
 
 // ReadAll is a helper method that
