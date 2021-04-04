@@ -115,7 +115,9 @@ func (m *FeedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
 			"nimona.io/stream.Request",
 			"nimona.io/stream.Response",
 			"nimona.io/stream.Announcement",
-			"nimona.io/stream.Subscription":
+			"nimona.io/stream.Subscription",
+			"nimona.io/Request",
+			"nimona.io/Response":
 			continue
 		}
 		if err := m.createFeed(ctx, registeredType); err != nil {
