@@ -81,6 +81,15 @@ func (s *localPeer) PutPrimaryIdentityKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryIdentityKey = k
 	s.keyLock.Unlock()
+	c, err := object.NewCertificate(
+		s.GetPrimaryPeerKey().PublicKey(),
+		k,
+	)
+	if err != nil {
+		// TODO should be able to return error, or not do this here
+		return
+	}
+	s.PutCertificate(c)
 	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
