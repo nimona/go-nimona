@@ -28,6 +28,10 @@ func TestLocalPeer(t *testing.T) {
 	lp.PutPrimaryIdentityKey(k2)
 	assert.Equal(t, k2, lp.GetPrimaryIdentityKey())
 
+	// PutPrimaryIdentityKey currently also adds a blanket certificate
+	certs := lp.GetCertificates()
+	assert.Len(t, certs, 1)
+
 	ch1 := object.CID("f01")
 	ch2 := object.CID("f02")
 
@@ -48,7 +52,8 @@ func TestLocalPeer(t *testing.T) {
 		Nonce: rand.String(6),
 	}
 	lp.PutCertificate(c1)
-	assert.ElementsMatch(t, []*object.Certificate{c1}, lp.GetCertificates())
+	assert.Len(t, lp.GetCertificates(), 2)
+	assert.ElementsMatch(t, append(certs, c1), lp.GetCertificates())
 
 	a1 := "foo"
 	a2 := "foo2"
