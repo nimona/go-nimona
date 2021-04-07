@@ -30,7 +30,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.10.0
-	github.com/pyroscope-io/pyroscope v0.0.28
+	github.com/pyroscope-io/pyroscope v0.0.29
 	github.com/rs/xid v1.3.0
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
