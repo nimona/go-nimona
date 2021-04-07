@@ -1,34 +1,46 @@
 {{- define "title" }}Object {{ .CID }}{{ end }}
 {{- define "head" }}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretty-print-json@1.0/dist/pretty-print-json.css">
-<script src="https://cdn.jsdelivr.net/npm/pretty-print-json@1.0/dist/pretty-print-json.min.js"></script>
+<link href="//unpkg.com/prismjs@1.23.0/themes/prism-solarizedlight.css" rel="stylesheet" />
+<script src="//unpkg.com/prismjs@1.23.0/components/prism-core.min.js"></script>
+<script src="//unpkg.com/prismjs@1.23.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="//unpkg.com/prismjs@1.23.0/plugins/keep-markup/prism-keep-markup.min.js"></script>
 {{ end }}
 {{- define "body" }}
-<div class="max-w-7xl mx-auto py-6 lg:px-8">
-  <div class="max-w-4xl mx-auto">
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-      <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">
-          {{ .CID }}
-        </h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">
-          {{ .Type }}
-        </p>
-      </div>
-      <div class="border-t border-gray-200">
-        <pre id="object-map">{{ .JSON }}</pre>
-      </div>
+<div class="mx-auto py-6">
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+      <h3 class="text-lg leading-6 font-medium text-gray-900">
+        {{ .CID }}
+      </h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">
+        {{ .Type }}
+      </p>
+    </div>
+    <div class="border-t border-gray-200 stream-children">
+      {{- if .StreamObjects }}
+      <ul class="stream-children">
+        {{- range .StreamObjects }}
+          <li class="stream-child">
+            {{- if eq .CID $.CID }}
+              <code class="selected">{{ .CID }}</code>
+            {{- else }}
+              <a href="/objects/{{ .CID }}" target="_top">
+                <code>{{ .CID.String }}</code>
+              </a>
+            {{- end }}
+            <span class="object-type">{{ .Type }}</span>
+            {{- if eq .CID $.StreamRoot}}
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-blue-100 text-blue-800">
+              stream root
+            </span>
+            {{- end }}
+          </li>
+        {{- end }}
+      {{- end }}
+    </div>
+    <div class="border-t border-gray-200">
+      <pre><code class="language-json">{{ .JSON }}</code></pre>
     </div>
   </div>
 </div>
-<script>
-const data = JSON.parse({{ .JSON }});
-const options = {
-  indent: 3,
-  linkUrls: true,
-  quoteKeys: false
-};
-const elem = document.getElementById('object-map');
-elem.innerHTML = prettyPrintJson.toHtml(data, options);
-</script>
 {{- end }}

@@ -11,15 +11,18 @@ a:hover {
 }
 
 .cid { 
-    @apply overflow-x-scroll text-xs;
+    @apply overflow-x-scroll;
+    font-size: 0.75em !important;
 }
 
 .public-key {
-    @apply overflow-x-scroll text-xs;
+    @apply overflow-x-scroll;
+    font-size: 0.75em !important;
 }
 
 .private-key {
-    @apply overflow-x-scroll text-xs;
+    @apply overflow-x-scroll;
+    font-size: 0.75em !important;
 }
 
 .table-button {
@@ -50,7 +53,25 @@ a:hover {
     @apply border-indigo-300 ring ring-indigo-200 ring-opacity-50;
 }
 
-pre#object-map {
-    padding: 25px;
-    font-size: 0.75em;
+pre[class*="language-"] {
+    background-color: #fff !important;
+    padding: 25px !important;
+    font-size: 0.75em !important;
+}
+
+div.stream-children {
+    @apply p-4;
+}
+
+ul.stream-children {
+    @apply pl-2;
+}
+
+li.stream-child, li.stream-child code {
+    font-size: 0.75rem;
+    padding: 0.25em;
+}
+
+.object-type {
+    @apply px-2 inline-flex text-xs leading-5 font-semibold rounded bg-green-100 text-green-800
 }

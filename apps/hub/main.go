@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/sprig"
@@ -488,7 +490,7 @@ func main() {
 
 	r.Get("/objects/{cid}", func(w http.ResponseWriter, r *http.Request) {
 		cid := chi.URLParam(r, "cid")
-		object, err := d.ObjectStore().Get(object.CID(cid))
+		obj, err := d.ObjectStore().Get(object.CID(cid))
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -497,23 +499,41 @@ func main() {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		json, err := json.MarshalIndent(object.ToMap(), "", "  ")
-		// json, err := json.Marshal(object.ToMap())
+		body, err := json.MarshalIndent(obj.ToMap(), "", "  ")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		values := struct {
+			CID           string
+			Type          string
+			JSON          template.HTML
+			StreamRoot    string
+			StreamObjects []*object.Object
+		}{
+			CID:  cid,
+			Type: obj.Type,
+			JSON: template.HTML(prettyJSON(string(body))),
+		}
+		if strings.HasPrefix(obj.Type, "stream:") {
+			values.StreamRoot = obj.CID().String()
+		} else if !obj.Metadata.Stream.IsEmpty() {
+			values.StreamRoot = obj.Metadata.Stream.String()
+		}
+		if values.StreamRoot != "" {
+			or, err := d.ObjectStore().GetByStream(
+				object.CID(values.StreamRoot),
+			)
+			if err == nil {
+				os, err := object.ReadAll(or)
+				if err == nil {
+					values.StreamObjects = os
+				}
+			}
+		}
 		err = tplObject.Execute(
 			w,
-			struct {
-				CID  string
-				Type string
-				JSON string
-			}{
-				CID:  cid,
-				Type: object.Type,
-				JSON: string(json),
-			},
+			values,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -522,4 +542,16 @@ func main() {
 	})
 
 	http.ListenAndServe(":"+port, r)
+}
+
+var prettyJSONReg = regexp.MustCompile(`(?mi)"(bah[a-z0-9]{59})"`)
+
+func prettyJSON(b string) string {
+	matches := prettyJSONReg.FindAllString(b, -1)
+	for _, match := range matches {
+		cid := strings.Trim(match, `"`)
+		pretty := `"<a href="/objects/` + cid + `" target="_top">` + cid + `</a>"`
+		b = strings.Replace(b, match, pretty, -1)
+	}
+	return b
 }
