@@ -11,15 +11,15 @@ a:hover {
 }
 
 .cid { 
-    @apply block whitespace-pre overflow-x-scroll text-xs;
+    @apply overflow-x-scroll text-xs;
 }
 
 .public-key {
-    @apply block whitespace-pre overflow-x-scroll text-xs;
+    @apply overflow-x-scroll text-xs;
 }
 
 .private-key {
-    @apply block whitespace-pre overflow-x-scroll text-xs;
+    @apply overflow-x-scroll text-xs;
 }
 
 .table-button {
@@ -48,4 +48,9 @@ a:hover {
 
 .table-input:focus {
     @apply border-indigo-300 ring ring-indigo-200 ring-opacity-50;
+}
+
+pre#object-map {
+    padding: 25px;
+    font-size: 0.75em;
 }

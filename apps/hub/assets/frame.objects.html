@@ -44,7 +44,11 @@
                         </span>
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
-                        <code class="cid">{{ lastN .CID.String 24 }}</code>
+                        <a href="/objects/{{ .CID.String }}" target="_top">
+                          <code class="cid">
+                            {{ lastN .CID.String 24 }}
+                          </code>
+                        </a>
                       </td>
                       <td class="px-4 py-2 whitespace-nowrap">
                         {{- if contains "stream:" .Type }}
@@ -53,7 +57,11 @@
                           stream root
                         </span>
                         {{- else }}
-                          <code class="cid">{{ lastN .Metadata.Stream.String 24 }}</code>
+                          <a href="/streams/{{ .Metadata.Stream.String }}" target="_top">
+                            <code class="cid">
+                              {{ lastN .Metadata.Stream.String 24 }}
+                            </code>
+                          </a>
                         {{- end}}
                       </td>
                     </tr>
