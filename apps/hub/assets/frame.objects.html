@@ -1,74 +1,72 @@
 {{- define "title" }}Local Peer Information{{ end }}
 {{- define "body" }}
 <turbo-frame id="main">
-  <div class="max-w-7xl mx-auto py-6 lg:px-8">
-    <div class="max-w-4xl mx-auto">
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="flex flex-col">
-          <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-              <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        CID
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Stream
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    {{- if not . }}
-                    <tr>
-                      <td class="px-4 py-2 whitespace-nowrap font-small text-gray-500 text-center" colspan="100%">
-                        no objects found
-                      </td>
-                    </tr>
-                    {{- end }}
-                    {{ $i := 0}}
-                    {{- range . }}
-                    {{ $i = add1 $i }}
-                    <tr class="{{ if mod $i 2 }}bg-white{{ else }}bg-gray-50{{ end }}">
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        <span
-                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-green-100 text-green-800">
-                          {{ .Type }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        <a href="/objects/{{ .CID.String }}" target="_top">
+  <div class="mx-auto py-6">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="flex flex-col">
+        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th scope="col"
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th scope="col"
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      CID
+                    </th>
+                    <th scope="col"
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stream
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {{- if not . }}
+                  <tr>
+                    <td class="px-2 py-2 whitespace-nowrap font-small text-gray-500 text-center" colspan="100%">
+                      no objects found
+                    </td>
+                  </tr>
+                  {{- end }}
+                  {{ $i := 0}}
+                  {{- range . }}
+                  {{ $i = add1 $i }}
+                  <tr class="{{ if mod $i 2 }}bg-white{{ else }}bg-gray-50{{ end }}">
+                    <td class="px-2 py-1 whitespace-nowrap">
+                      <span
+                        class="object-type">
+                        {{ .Type }}
+                      </span>
+                    </td>
+                    <td class="pl-2 pr-1 py-1 whitespace-nowrap">
+                      <a href="/objects/{{ .CID.String }}" target="_top">
+                        <code class="cid">
+                          {{ .CID.String }}
+                        </code>
+                      </a>
+                    </td>
+                    <td class="pl-1 pr-1 py-1 whitespace-nowrap">
+                      {{- if contains "stream:" .Type }}
+                      <span
+                        class="pl-1 pr-2 inline-flex text-xs leading-5 font-semibold rounded bg-blue-100 text-blue-800">
+                        stream root
+                      </span>
+                      {{- else }}
+                        <a href="/objects/{{ .Metadata.Stream.String }}" target="_top">
                           <code class="cid">
-                            {{ lastN .CID.String 24 }}
+                            {{ lastN .Metadata.Stream.String 24 }}
                           </code>
                         </a>
-                      </td>
-                      <td class="px-4 py-2 whitespace-nowrap">
-                        {{- if contains "stream:" .Type }}
-                        <span
-                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-blue-100 text-blue-800">
-                          stream root
-                        </span>
-                        {{- else }}
-                          <a href="/streams/{{ .Metadata.Stream.String }}" target="_top">
-                            <code class="cid">
-                              {{ lastN .Metadata.Stream.String 24 }}
-                            </code>
-                          </a>
-                        {{- end}}
-                      </td>
-                    </tr>
-                    {{- end }}
-                  </tbody>
-                </table>
-              </div>
+                      {{- end}}
+                    </td>
+                  </tr>
+                  {{- end }}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
