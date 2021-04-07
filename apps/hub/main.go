@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"html/template"
 	"io"
 	"io/fs"
@@ -94,6 +95,16 @@ var (
 				assets,
 				"assets/base.html",
 				"assets/frame.objects.html",
+			),
+	)
+	tplObject = template.Must(
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			Funcs(tplFuncMap).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/frame.object.html",
 			),
 	)
 )
@@ -468,6 +479,41 @@ func main() {
 		err = tplObjects.Execute(
 			w,
 			objects,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/objects/{cid}", func(w http.ResponseWriter, r *http.Request) {
+		cid := chi.URLParam(r, "cid")
+		object, err := d.ObjectStore().Get(object.CID(cid))
+		if err != nil && err != objectstore.ErrNotFound {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err == objectstore.ErrNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		json, err := json.MarshalIndent(object.ToMap(), "", "  ")
+		// json, err := json.Marshal(object.ToMap())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = tplObject.Execute(
+			w,
+			struct {
+				CID  string
+				Type string
+				JSON string
+			}{
+				CID:  cid,
+				Type: object.Type,
+				JSON: string(json),
+			},
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
