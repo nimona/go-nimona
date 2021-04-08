@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1617114035218,
+  "lastUpdate": 1617870506675,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4368,6 +4368,54 @@ window.BENCHMARK_DATA = {
             "value": 13439,
             "unit": "ns/op",
             "extra": "89952 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "6b76d2d99bbb2ed881128bd73acc409d07f5b904",
+          "message": "chore(deps): bump nttld/setup-ndk from v1 to v1.0.3\n\nBumps [nttld/setup-ndk](https://github.com/nttld/setup-ndk) from v1 to v1.0.3.\n- [Release notes](https://github.com/nttld/setup-ndk/releases)\n- [Commits](https://github.com/nttld/setup-ndk/compare/v1...d872bb763b4256e42ab6f7e962a0617364a39656)\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-04-08T09:26:30+01:00",
+          "tree_id": "49bc63b5b9f3e320879fa9dde5a7ea78e171c3cb",
+          "url": "https://github.com/nimona/go-nimona/commit/6b76d2d99bbb2ed881128bd73acc409d07f5b904"
+        },
+        "date": 1617870505874,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5544778,
+            "unit": "ns/op",
+            "extra": "208 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 395227840,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3906271935,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 11713,
+            "unit": "ns/op",
+            "extra": "103818 times\n2 procs"
           }
         ]
       }
