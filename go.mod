@@ -16,6 +16,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ipfs/go-cid v0.0.7
+	github.com/jimeh/envctl v0.1.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/cpuid/v2 v2.0.5 // indirect
 	github.com/libp2p/go-nat v0.0.5
@@ -23,16 +24,15 @@ require (
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
-	github.com/muesli/termenv v0.8.1
+	github.com/muesli/termenv v0.8.0
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.15
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.10.0
-	github.com/pyroscope-io/pyroscope v0.0.29
-	github.com/rs/xid v1.3.0
-	github.com/stoewer/go-strcase v1.2.0
+	github.com/pyroscope-io/pyroscope v0.0.28
+	github.com/rs/xid v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
 	github.com/vcaesar/murmur v0.20.1
