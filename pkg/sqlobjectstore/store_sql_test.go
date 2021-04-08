@@ -413,3 +413,31 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, o, got)
 }
+
+func TestStore_Config(t *testing.T) {
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	t.Run("put a=0", func(t *testing.T) {
+		err := store.PutPair("a", "0")
+		require.NoError(t, err)
+	})
+
+	t.Run("put a=1", func(t *testing.T) {
+		err := store.PutPair("a", "1")
+		require.NoError(t, err)
+	})
+
+	t.Run("put b=1", func(t *testing.T) {
+		err := store.PutPair("b", "1")
+		require.NoError(t, err)
+	})
+
+	t.Run("get configs", func(t *testing.T) {
+		got, err := store.GetPairs()
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"a": "1", "b": "1"}, got)
+	})
+}

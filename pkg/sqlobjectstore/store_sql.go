@@ -42,6 +42,8 @@ var migrations = []string{
 	`CREATE INDEX Relations_RootCID_idx ON Relations(RootCID);`,
 	`ALTER TABLE Objects ADD MetadataDatetime INT DEFAULT 0;`,
 	`CREATE TABLE IF NOT EXISTS Pins (CID TEXT NOT NULL PRIMARY KEY);`,
+	`CREATE TABLE IF NOT EXISTS Configs (Key TEXT NOT NULL PRIMARY KEY);`,
+	`ALTER TABLE Configs ADD Value TEXT;`,
 }
 
 var defaultTTL = time.Hour * 24 * 7
@@ -609,6 +611,58 @@ func (st *Store) IsPinned(cid object.CID) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (st *Store) PutPair(
+	key string,
+	value string,
+) error {
+	stmt, err := st.db.Prepare(`
+		INSERT OR REPLACE INTO Configs (Key, Value) VALUES (?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("could not prepare insert to configs table, %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	_, err = stmt.Exec(
+		key,
+		value,
+	)
+	if err != nil {
+		return fmt.Errorf("could not insert to configs table, %w", err)
+	}
+
+	return nil
+}
+func (st *Store) GetPairs() (map[string]string, error) {
+	stmt, err := st.db.Prepare(`
+		SELECT Key, Value FROM Configs
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("could not prepare statement: %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, fmt.Errorf("could not query: %w", err)
+	}
+	defer rows.Close() // nolint: errcheck
+
+	cfg := map[string]string{}
+	for rows.Next() {
+		k := ""
+		v := ""
+		if err := rows.Scan(&k, &v); err != nil {
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
+		}
+		if k != "" {
+			cfg[k] = v
+		}
+	}
+
+	return cfg, nil
 }
 
 func (st *Store) RemovePin(
