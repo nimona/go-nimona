@@ -1,88 +1,65 @@
 package config_test
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/config"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 )
 
-func TestConfig(t *testing.T) {
-	configPath := t.TempDir()
+type ExtraCfg struct {
+	Hello string
+}
 
-	type ExtraCfg struct {
-		Hello string
-	}
-
-	fmt.Println(configPath)
+func Test(t *testing.T) {
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
 
 	h1, err := config.New(
-		config.WithDefaultPath(configPath),
-		config.WithDefaultFilename("nim.json"),
-		config.WithExtraConfig("extraOne", &ExtraCfg{
+		config.WithDefaultPath("path"),
+		config.WithDefaultListenOnLocalIPs(),
+		config.WithDefaultListenOnPrivateIPs(),
+		config.WithDefaultListenOnExternalPort(),
+		config.WithDefaultDefaultPeerBindAddress("addr"),
+		config.WithDefaultBootstraps([]peer.Shorthand{"foo", "bar"}),
+		config.WithDefaultPrivateKey(k),
+		config.WithDefaultListenOnExternalPort(),
+		config.WithExtraConfig("one", &ExtraCfg{
 			Hello: "one",
 		}),
-		config.WithExtraConfig("EXTRA_TWO", &ExtraCfg{
+		config.WithExtraConfig("TWO", &ExtraCfg{
 			Hello: "two",
 		}),
 	)
-	assert.NotNil(t, h1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	extraTwo := &ExtraCfg{}
+	m1, err := config.ToEnvPairs("NIMONA", h1)
+	assert.NotNil(t, h1)
+	require.NoError(t, err)
+
+	gm1 := map[string]string{
+		"NIMONA_EXTRAS_ONE_HELLO":          "one",
+		"NIMONA_EXTRAS_TWO_HELLO":          "two",
+		"NIMONA_LOG_LEVEL":                 "DEBUG",
+		"NIMONA_PATH":                      "path",
+		"NIMONA_PEER_BIND_ADDRESS":         "addr",
+		"NIMONA_PEER_BOOTSTRAPS":           "foo,bar",
+		"NIMONA_PEER_LISTEN_EXTERNAL_PORT": "true",
+		"NIMONA_PEER_LISTEN_LOCAL":         "true",
+		"NIMONA_PEER_LISTEN_PRIVATE":       "true",
+		"NIMONA_PEER_PRIVATE_KEY":          k.String(),
+	}
+	assert.Equal(t, gm1, m1)
+
 	h2, err := config.New(
-		config.WithDefaultPath(configPath),
-		config.WithDefaultFilename("nim.json"),
-		config.WithExtraConfig("extraTwo", extraTwo),
+		config.WithAdditionalEnvVars(m1),
+		config.WithExtraConfig("one", &ExtraCfg{}),
+		config.WithExtraConfig("TWO", &ExtraCfg{}),
 	)
-	assert.NotNil(t, h2)
-	assert.NoError(t, err)
-
-	assert.Equal(t, h1.Peer.PrivateKey, h2.Peer.PrivateKey)
-	assert.Equal(t, "two", extraTwo.Hello)
-}
-
-func TestConfigUnmarshal(t *testing.T) {
-	type ExtraCfg struct {
-		Hello string
-	}
-
-	extraConfig1 := &ExtraCfg{}
-	extraConfig2 := &ExtraCfg{}
-
-	h1, err := config.New(
-		config.WithDefaultPath("."),
-		config.WithDefaultFilename("test_config.json"),
-		config.WithExtraConfig("extraOne", extraConfig1),
-		config.WithExtraConfig("extraTwo", extraConfig2),
-	)
-	assert.NotNil(t, h1)
-	assert.NoError(t, err)
-	assert.Equal(t, "one", extraConfig1.Hello)
-	assert.Equal(t, "two", extraConfig2.Hello)
-}
-
-func TestConfigEnvar(t *testing.T) {
-	type ExtraCfg struct {
-		Hello string `envconfig:"HELLO"`
-	}
-
-	os.Setenv("NIMONA_EXTRAONE_HELLO", "envar")
-
-	extraConfig1 := &ExtraCfg{}
-	extraConfig2 := &ExtraCfg{}
-
-	h1, err := config.New(
-		config.WithDefaultPath("."),
-		config.WithDefaultFilename("test_config.json"),
-		config.WithExtraConfig("extraOne", extraConfig1),
-		config.WithExtraConfig("extraTwo", extraConfig2),
-	)
-	assert.NotNil(t, h1)
-	assert.NoError(t, err)
-	assert.Equal(t, "envar", extraConfig1.Hello)
-	assert.Equal(t, "two", extraConfig2.Hello)
+	require.NoError(t, err)
+	assert.Equal(t, h1, h2)
 }
