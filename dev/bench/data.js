@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1617870506675,
+  "lastUpdate": 1618169518441,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4416,6 +4416,54 @@ window.BENCHMARK_DATA = {
             "value": 11713,
             "unit": "ns/op",
             "extra": "103818 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "9478b6c2d68917574d34659ec3de1f9c7ae476ef",
+          "message": "feat(apps/hub): store private key in local preferences",
+          "timestamp": "2021-04-11T20:30:31+01:00",
+          "tree_id": "da2ab8084e216a937dab43fee9e6651657c772a9",
+          "url": "https://github.com/nimona/go-nimona/commit/9478b6c2d68917574d34659ec3de1f9c7ae476ef"
+        },
+        "date": 1618169517749,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3651061,
+            "unit": "ns/op",
+            "extra": "302 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 331986416,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3437695904,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 10094,
+            "unit": "ns/op",
+            "extra": "118297 times\n2 procs"
           }
         ]
       }
