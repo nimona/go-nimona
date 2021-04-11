@@ -40,6 +40,10 @@ import (
 //go:embed assets/*
 var assets embed.FS
 
+const (
+	pKeyIdentity = "IDENTITY_PRIVATE_KEY"
+)
+
 var (
 	tplFuncMap = map[string]interface{}{
 		"lastN": func(s string, n int) string {
@@ -131,6 +135,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
+		privateIdentityKey := &crypto.PrivateKey{}
+		if err := privateIdentityKey.UnmarshalString(v); err == nil {
+			d.LocalPeer().PutPrimaryIdentityKey(*privateIdentityKey)
+		}
+	}
+
 	cssAssets, _ := fs.Sub(assets, "assets/css")
 	r.Use(middleware.Logger)
 
@@ -143,13 +154,19 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			vfsutil.Walk(http.FS(assets), "assets", pscanner.WalkFunc(func(fn string) bool {
-				switch filepath.Ext(fn) {
-				case ".html":
-					return true
-				}
-				return false
-			}))
+			vfsutil.Walk(
+				http.FS(assets),
+				"assets",
+				pscanner.WalkFunc(
+					func(fn string) bool {
+						switch filepath.Ext(fn) {
+						case ".html":
+							return true
+						}
+						return false
+					},
+				),
+			)
 			conv := tailwind.New(w, dist)
 			conv.SetPurgeChecker(pscanner.Map())
 			return conv
@@ -250,6 +267,10 @@ func main() {
 			crypto.IdentityKey,
 		)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err := d.Preferences().Put(pKeyIdentity, k.String()); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
