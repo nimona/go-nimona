@@ -15,12 +15,14 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/preferences"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
 type (
 	Daemon interface {
 		Config() config.Config
+		Preferences() preferences.Preferences
 		Network() network.Network
 		Resolver() resolver.Resolver
 		LocalPeer() localpeer.LocalPeer
@@ -31,6 +33,7 @@ type (
 	}
 	daemon struct {
 		config        config.Config
+		preferences   preferences.Preferences
 		configOptions []config.Option
 		network       network.Network
 		resolver      resolver.Resolver
@@ -97,6 +100,18 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// add bootstrap peers as relays
 	lpr.PutRelays(bootstrapPeers...)
 
+	// construct preferences db
+	pdb, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "preferences.db"))
+	if err != nil {
+		return nil, fmt.Errorf("opening sql file for preferences: %w", err)
+	}
+
+	// construct preferences
+	prf, err := preferences.NewSQLProvider(pdb)
+	if err != nil {
+		return nil, fmt.Errorf("constructing preferences provider: %w", err)
+	}
+
 	// construct object store
 	db, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "nimona.db"))
 	if err != nil {
@@ -135,6 +150,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	d.config = *cfg
+	d.preferences = prf
 	d.network = ntw
 	d.resolver = res
 	d.localpeer = lpr
@@ -146,6 +162,10 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 func (d *daemon) Config() config.Config {
 	return d.config
+}
+
+func (d *daemon) Preferences() preferences.Preferences {
+	return d.preferences
 }
 
 func (d *daemon) Network() network.Network {
