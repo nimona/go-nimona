@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
@@ -31,6 +32,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
 
@@ -90,7 +92,17 @@ var (
 			ParseFS(
 				assets,
 				"assets/base.html",
+				"assets/inner.contact.html",
 				"assets/frame.contacts.html",
+			),
+	)
+	tplInnerContact = template.Must(
+		template.New("inner.contact.html").
+			Funcs(sprig.FuncMap()).
+			Funcs(tplFuncMap).
+			ParseFS(
+				assets,
+				"assets/inner.contact.html",
 			),
 	)
 	tplObjects = template.Must(
@@ -100,6 +112,7 @@ var (
 			ParseFS(
 				assets,
 				"assets/base.html",
+				"assets/inner.object.html",
 				"assets/frame.objects.html",
 			),
 	)
@@ -113,6 +126,13 @@ var (
 				"assets/frame.object.html",
 			),
 	)
+)
+
+type (
+	Contact struct {
+		Alias     string
+		PublicKey string
+	}
 )
 
 func main() {
@@ -137,6 +157,7 @@ func main() {
 
 	if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
 		privateIdentityKey := &crypto.PrivateKey{}
+		fmt.Println("GOT ID", string(v))
 		if err := privateIdentityKey.UnmarshalString(v); err == nil {
 			d.LocalPeer().PutPrimaryIdentityKey(*privateIdentityKey)
 		}
@@ -175,8 +196,8 @@ func main() {
 	cssHandler.SetWriteCloserFunc(brotli.HTTPCompressor)
 	r.Mount("/css", cssHandler)
 
-	es := hotwire.NewEventStream()
-	r.Get("/events", es.ServeHTTP)
+	turboStream := hotwire.NewEventStream()
+	r.Get("/events", turboStream.ServeHTTP)
 
 	events, eventsClose := d.LocalPeer().ListenForUpdates()
 	defer eventsClose()
@@ -187,7 +208,7 @@ func main() {
 			if !ok {
 				return
 			}
-			if err := es.SendEvent(
+			if err := turboStream.SendEvent(
 				hotwire.StreamActionReplace,
 				"peer-content-types",
 				tplInnerPeerContentTypes,
@@ -198,6 +219,62 @@ func main() {
 				},
 			); err != nil {
 				log.Println(err)
+			}
+		}
+	}()
+
+	go func() {
+		k := d.LocalPeer().GetPrimaryIdentityKey()
+		if k.IsEmpty() {
+			return
+		}
+		contactsStreamRoot := relationship.RelationshipStreamRoot{
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+		}
+		contactEvents := d.ObjectManager().Subscribe(
+			objectmanager.FilterByStreamCID(
+				contactsStreamRoot.ToObject().CID(),
+			),
+		)
+		for {
+			o, err := contactEvents.Read()
+			if err != nil {
+				return
+			}
+			switch o.Type {
+			case new(relationship.Added).Type():
+				r := &relationship.Added{}
+				if err := r.FromObject(o); err != nil {
+					continue
+				}
+				if r.Alias == "" || r.RemoteParty.IsEmpty() {
+					continue
+				}
+				turboStream.SendEvent(
+					hotwire.StreamActionAppend,
+					"contacts",
+					tplInnerContact,
+					Contact{
+						Alias:     r.Alias,
+						PublicKey: r.RemoteParty.String(),
+					},
+				)
+			case new(relationship.Removed).Type():
+				r := &relationship.Removed{}
+				if err := r.FromObject(o); err != nil {
+					continue
+				}
+				if r.RemoteParty.IsEmpty() {
+					continue
+				}
+				turboStream.SendEvent(
+					hotwire.StreamActionRemove,
+					"contact-"+r.RemoteParty.String(),
+					tplInnerContact,
+					Contact{},
+				)
 			}
 		}
 	}()
@@ -281,12 +358,13 @@ func main() {
 
 	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
 		k := d.LocalPeer().GetPrimaryIdentityKey()
+		contacts := map[string]string{} // publickey/alias
 		values := struct {
 			IdentityLinked bool
-			Contacts       map[string]string // map[publicKey]alias
+			Contacts       []Contact
 		}{
 			IdentityLinked: false,
-			Contacts:       map[string]string{},
+			Contacts:       []Contact{},
 		}
 		if k.IsEmpty() {
 			err := tplContacts.Execute(
@@ -301,13 +379,13 @@ func main() {
 		}
 
 		values.IdentityLinked = true
-		contactsStreemRoot := relationship.RelationshipStreamRoot{
+		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
 				Owner: k.PublicKey(),
 			},
 		}
-		contactsStreemRootCID := contactsStreemRoot.ToObject().CID()
-		objectReader, err := d.ObjectStore().GetByStream(contactsStreemRootCID)
+		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
+		objectReader, err := d.ObjectStore().GetByStream(contactsStreamRootCID)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -327,7 +405,7 @@ func main() {
 					if r.Alias == "" || r.RemoteParty.IsEmpty() {
 						continue
 					}
-					values.Contacts[r.RemoteParty.String()] = r.Alias
+					contacts[r.RemoteParty.String()] = r.Alias
 				case new(relationship.Removed).Type():
 					r := &relationship.Removed{}
 					if err := r.FromObject(o); err != nil {
@@ -336,9 +414,18 @@ func main() {
 					if r.RemoteParty.IsEmpty() {
 						continue
 					}
-					delete(values.Contacts, r.RemoteParty.String())
+					delete(contacts, r.RemoteParty.String())
 				}
 			}
+		}
+		for pk, alias := range contacts {
+			values.Contacts = append(
+				values.Contacts,
+				Contact{
+					Alias:     alias,
+					PublicKey: pk,
+				},
+			)
 		}
 		if err := tplContacts.Execute(
 			w,
@@ -371,12 +458,12 @@ func main() {
 		}
 
 		values.IdentityLinked = true
-		contactsStreemRoot := relationship.RelationshipStreamRoot{
+		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
 				Owner: k.PublicKey(),
 			},
 		}
-		contactsStreemRootCID := contactsStreemRoot.ToObject().CID()
+		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
 		alias := r.PostFormValue("alias")
 		remoteParty := r.PostFormValue("remoteParty")
 		if alias == "" || remoteParty == "" {
@@ -395,7 +482,7 @@ func main() {
 		rel := relationship.Added{
 			Metadata: object.Metadata{
 				Owner:  k.PublicKey(),
-				Stream: contactsStreemRootCID,
+				Stream: contactsStreamRootCID,
 			},
 			Alias:       alias,
 			RemoteParty: remotePartyKey,
@@ -403,7 +490,7 @@ func main() {
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			contactsStreemRoot.ToObject(),
+			contactsStreamRoot.ToObject(),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -418,7 +505,7 @@ func main() {
 		http.Redirect(w, r, "/contacts", http.StatusFound)
 	})
 
-	r.Post("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
 		k := d.LocalPeer().GetPrimaryIdentityKey()
 		values := struct {
 			IdentityLinked bool
@@ -440,13 +527,13 @@ func main() {
 		}
 
 		values.IdentityLinked = true
-		contactsStreemRoot := relationship.RelationshipStreamRoot{
+		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
 				Owner: k.PublicKey(),
 			},
 		}
-		contactsStreemRootCID := contactsStreemRoot.ToObject().CID()
-		remoteParty := r.PostFormValue("remoteParty")
+		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
+		remoteParty := r.URL.Query().Get("publicKey")
 		if remoteParty == "" {
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -463,14 +550,14 @@ func main() {
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
 				Owner:  k.PublicKey(),
-				Stream: contactsStreemRootCID,
+				Stream: contactsStreamRootCID,
 			},
 			RemoteParty: remotePartyKey,
 			Datetime:    time.Now().UTC().Format(time.RFC3339),
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			contactsStreemRoot.ToObject(),
+			contactsStreamRoot.ToObject(),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -562,7 +649,9 @@ func main() {
 		}
 	})
 
-	http.ListenAndServe(":"+port, r)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
+		fmt.Printf("unable to start http server, %s", err.Error())
+	}
 }
 
 var prettyJSONReg = regexp.MustCompile(`(?mi)"(bah[a-z0-9]{59})"`)

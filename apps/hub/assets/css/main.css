@@ -25,8 +25,12 @@ a:hover {
     font-size: 0.75em !important;
 }
 
+.table-button:hover {
+    @apply text-white no-underline;
+}
+
 .table-button {
-    @apply justify-center px-1 py-1 w-full rounded-md text-xs text-white;
+    @apply text-center px-1 py-1 w-full rounded-md text-xs text-white block;
 }
 
 .table-button.primary {
