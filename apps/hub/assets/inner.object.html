@@ -1,0 +1,29 @@
+<tr>
+  <td class="px-2 py-1 whitespace-nowrap">
+    <span
+      class="object-type">
+      {{ .Type }}
+    </span>
+  </td>
+  <td class="pl-2 pr-1 py-1 whitespace-nowrap">
+    <a href="/objects/{{ .CID.String }}" target="_top">
+      <code class="cid">
+        {{ .CID.String }}
+      </code>
+    </a>
+  </td>
+  <td class="pl-1 pr-1 py-1 whitespace-nowrap">
+    {{- if contains "stream:" .Type }}
+    <span
+      class="pl-1 pr-2 inline-flex text-xs leading-5 font-semibold rounded bg-blue-100 text-blue-800">
+      stream root
+    </span>
+    {{- else }}
+      <a href="/objects/{{ .Metadata.Stream.String }}" target="_top">
+        <code class="cid">
+          {{ lastN .Metadata.Stream.String 24 }}
+        </code>
+      </a>
+    {{- end}}
+  </td>
+</tr>
