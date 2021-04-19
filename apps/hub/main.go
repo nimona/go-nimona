@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -54,6 +55,9 @@ var (
 			}
 			return s[len(s)-n:]
 		},
+		"setQueryParam":    setQueryParam,
+		"addQueryParam":    addQueryParam,
+		"removeQueryParam": removeQueryParam,
 	}
 	tplPeer = template.Must(
 		template.New("base.html").
@@ -573,14 +577,36 @@ func main() {
 	})
 
 	r.Get("/objects", func(w http.ResponseWriter, r *http.Request) {
-		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter()
+		sqlFilters := []sqlobjectstore.FilterOption{}
+		filters := []string{}
+		vs, _ := url.ParseQuery(r.URL.RawQuery)
+		if vf, ok := vs["type"]; ok {
+			filters = vf
+			for _, vvf := range vf {
+				sqlFilters = append(
+					sqlFilters,
+					sqlobjectstore.FilterByObjectType(vvf),
+				)
+			}
+		}
+		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(sqlFilters...)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		objects := []*object.Object{}
+		values := struct {
+			URL     string
+			Filters []string
+			Types   []string
+			Objects []*object.Object
+		}{
+			URL:     r.URL.String(),
+			Filters: filters,
+			Types:   d.LocalPeer().GetContentTypes(),
+			Objects: []*object.Object{},
+		}
 		if err != objectstore.ErrNotFound {
-			objects, err = object.ReadAll(reader)
+			values.Objects, err = object.ReadAll(reader)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -588,7 +614,7 @@ func main() {
 		}
 		err = tplObjects.Execute(
 			w,
-			objects,
+			values,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -664,4 +690,38 @@ func prettyJSON(b string) string {
 		b = strings.Replace(b, match, pretty, -1)
 	}
 	return b
+}
+
+func setQueryParam(u, k, v string) string {
+	vu, _ := url.Parse(u)
+	vq := vu.Query()
+	vq.Set(k, v)
+	vu.RawQuery = vq.Encode()
+	return vu.String()
+}
+
+func addQueryParam(u, k, v string) string {
+	vu, _ := url.Parse(u)
+	vq := vu.Query()
+	vq.Add(k, v)
+	vu.RawQuery = vq.Encode()
+	return vu.String()
+}
+
+func removeQueryParam(u, k, v string) string {
+	vu, _ := url.Parse(u)
+	if vq, ok := vu.Query()[k]; ok {
+		// left:=[]string{}
+		vuq := vu.Query()
+		vuq.Del(k)
+		for _, vv := range vq {
+			if vv == v {
+				continue
+			}
+			// left=append(left, vv)
+			vuq.Add(k, vv)
+		}
+		vu.RawQuery = vuq.Encode()
+	}
+	return vu.String()
 }
