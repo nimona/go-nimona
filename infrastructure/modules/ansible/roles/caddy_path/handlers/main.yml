@@ -1,0 +1,4 @@
+- name: reload caddy
+  service:
+    name: caddy
+    state: reloaded

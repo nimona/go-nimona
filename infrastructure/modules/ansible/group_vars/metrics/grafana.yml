@@ -1,0 +1,14 @@
+---
+grafana_version: "7.3.3"
+grafana_data_path: "/mnt/data/grafana"
+grafana_docker_network: "metrics"
+
+grafana_security_admin_user: "admin"
+grafana_security_admin_password: "{{ vault_grafana_security_admin_password }}"
+grafana_security_cookie_secure: yes
+
+grafana_auth_github_enabled: yes
+grafana_auth_github_allow_sign_up: yes
+grafana_auth_github_team_ids: "{{ vault_grafana_auth_github_team_ids }}"
+grafana_auth_github_allowed_organizations: |-
+  {{ vault_grafana_auth_github_allowed_organizations }}

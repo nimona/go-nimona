@@ -1,0 +1,5 @@
+---
+nimona_chat_version: "v0.11.3"
+nimona_chat_peer_port: "22581"
+nimona_chat_metrics_port: "22580"
+nimona_chat_private_keys: {}

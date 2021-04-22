@@ -1,0 +1,48 @@
+- name: Operations
+  label: sig-ops
+  description: Standards, Operations, Tooling
+  leads:
+  - name: Jim Myhrberg
+    github: jimeh
+  subprojects:
+  - name: standards
+  - name: processes
+  - name: tooling
+  - name: testing
+  - name: libraries
+
+- name: Network
+  label: sig-net
+  description: Networking, Transport, Discovery, Relaying, etc. 
+  leads:
+  - name: Paris Goudas
+    github: superdecimal
+  subprojects:
+  - name: transports
+  - name: exchange
+  - name: discovery
+  - name: mandates
+  - name: security
+
+- name: Objects
+  label: sig-obj
+  description: Everything around objects.
+  leads:
+  - name: George Antoniadis
+    github: geoah
+  subprojects:
+  - name: object typing
+  - name: object hashing
+  - name: object schemas
+  - name: object mutations
+  - name: object exchange
+
+- name: Application Development
+  label: sig-app
+  description: Application development, prototypes, and apis.
+  leads:
+  - name: Alex Reis
+    github: alexmreis
+  subprojects:
+  - name: prototypes
+  - name: apis

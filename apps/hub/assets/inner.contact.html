@@ -1,0 +1,13 @@
+<tr id="contact-{{ .PublicKey }}">
+  <td class="px-4 py-2 whitespace-nowrap">
+    {{ .Alias }}
+  </td>
+  <td class="px-4 py-2 whitespace-nowrap">
+    <code class="public-key">{{ .PublicKey }}</code>
+  </td>
+  <td class="px-2 py-2 whitespace-nowrap">
+    <a href="/contacts/remove?publicKey={{ .PublicKey }}" class="table-button danger">
+      Remove
+    </button>
+  </td>
+</tr>

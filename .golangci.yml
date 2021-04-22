@@ -1,0 +1,133 @@
+linters-settings:
+  depguard:
+    list-type: blacklist
+    packages:
+      - github.com/sirupsen/logrus
+      - gotest.tools/assert
+    packages-with-error-message:
+      - github.com/sirupsen/logrus: "logging is allowed only by nimona.io/pkg/log"
+  funlen:
+    lines: 100
+    # TODO try and reduce
+    statements: 150
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+  gocyclo:
+    min-complexity: 20
+  goimports:
+    local-prefixes: nimona.io
+  golint:
+    min-confidence: 0
+  gomnd:
+    settings:
+      mnd:
+        # don't include the "operation" and "assign"
+        checks: argument,case,condition,return
+  govet:
+    # TODO reconsider checking for shadowing
+    check-shadowing: false
+  lll:
+    line-length: 80
+  maligned:
+    suggest-new: true
+  misspell:
+    locale: US
+
+linters:
+  disable-all: true
+  enable:
+    - sqlclosecheck
+    - bodyclose
+    - deadcode
+    - depguard
+    - errcheck
+    - gochecknoinits
+    - gocritic
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - scopelint
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
+
+    # TODO consider enabling
+    # - rowserrcheck
+    # - stylecheck
+    # - gomnd
+    # - interfacer
+    # - unparam
+    # - funlen
+    # - goconst
+    # - gocyclo
+
+    # don't enable:
+    # - gofmt, superseded by goimports
+    # - dupl
+    # - gochecknoglobals
+    # - gocognit
+    # - godox
+    # - maligned
+    # - prealloc
+    # - dogsled
+
+issues:
+  exclude:
+     - Using the variable on range scope `tt` in function literal
+     - Using the variable on range scope `tc` in function literal
+  exclude-rules:
+    - linters:
+        - lll
+      source: "^//go:generate "
+    - linters:
+        - lll
+      source: "`json:"
+    - linters:
+        - golint
+      text: "returns unexported type"
+    - linters:
+        - gocritic
+      text: "paramTypeCombine:"
+    - linters:
+        - gocritic
+      text: "hugeParam:"
+
+run:
+  timeout: 2m
+  allow-parallel-runners: true
+  modules-download-mode: readonly
+  skip-dirs:
+    - vendor
+    - cmd
+    - tools
+    - playground
+    - internal/generator
+  skip-files:
+    - .*_generated.go
+    - .*_mock.go
+    - .*_mock_test.go

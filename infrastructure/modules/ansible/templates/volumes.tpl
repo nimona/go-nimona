@@ -1,0 +1,2 @@
+---
+${ yamlencode({volumes = volumes}) }

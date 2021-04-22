@@ -1,0 +1,17 @@
+package nimona.io/object
+
+object nimona.io/object.Certificate {
+    nonce string
+    created string
+    expires string
+}
+
+object nimona.io/object.CertificateRequest {
+    applicationName string
+    applicationDescription string
+    applicationURL string
+    subject string
+    resources repeated string
+    actions repeated string
+    nonce string
+}

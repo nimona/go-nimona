@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"name": "nimona.io",
+			"path": "."
+		},
+		{
+			"name": "apps",
+			"path": "apps"
+		},
+		{
+			"name": "examples",
+			"path": "examples"
+		},
+		{
+			"name": "simulation",
+			"path": "internal/simulation"
+		}
+	],
+	"settings": {
+		"go.useLanguageServer": true,
+		"files.exclude": {
+			"apps": true,
+			"examples": true,
+			"internal/simulation": true,
+		},
+	}
+}

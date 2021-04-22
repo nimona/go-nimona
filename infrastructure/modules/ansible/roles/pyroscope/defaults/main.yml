@@ -1,0 +1,22 @@
+---
+pyroscope_version: "latest"
+pyroscope_host_port: "4040"
+pyroscope_host_path: "/pyroscope*"
+
+pyroscope_docker_network: "bridge"
+pyroscope_docker_image: "pyroscope/pyroscope"
+pyroscope_docker_tag: "{{ pyroscope_version }}"
+
+pyroscope_user_name: pyroscope
+pyroscope_user_group: pyroscope
+pyroscope_user_system_user: yes
+
+pyroscope_data_path: "/mnt/data/pyroscope"
+
+pyroscope_server_scheme: "https"
+pyroscope_server_domain: "{{ inventory_hostname }}"
+pyroscope_server_base_url: "/pyroscope/"
+pyroscope_server_strip_prefix: "pyroscope"
+pyroscope_server_host_path: "/pyroscope*"
+
+pyroscope_users: {}

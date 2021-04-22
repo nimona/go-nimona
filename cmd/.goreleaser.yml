@@ -1,0 +1,35 @@
+project_name: nimona
+builds:
+  - id: linux
+    main: ./bootstrap
+    binary: bootstrap
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=1
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - 386
+archives:
+  - name_template: '{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm
+      }}v{{ .Arm }}{{ end }}'
+    format: tar.gz
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+snapshot:
+  name_template: dev-{{.ShortCommit}}
+release:
+  prerelease: auto
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^chore'
+      - '^docs'

@@ -1,0 +1,23 @@
+{
+  "logLevel": "FATAL",
+  "peer": {
+    "privateKey": "bagacmaca7fu2erc7vnmb5fjxaeqjzm2nxty2jjltcyvv6gjxlcnvj4uer6fcdjitr4gx7ilanbeuopsafz62h7hw7vnqgvy7gxohbonqwpyfnki",
+    "bindAddress": "0.0.0.0:0",
+    "bootstraps": [
+      "bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq@tcps:asimov.bootstrap.nimona.io:22581",
+      "bahwqcabarcrxtiaha3uq25gvntnqb6uokgdp442dysocya42ckiugohxmqkq@tcps:egan.bootstrap.nimona.io:22581",
+      "bahwqcabafguo2axx2ydpk5mrjlrsjw2rjwo34uzzr6kvtfb6cevx72q5t4bq@tcps:sloan.bootstrap.nimona.io:22581"
+    ],
+    "listenLocalIPs": false,
+    "listenPrivateIPs": false,
+    "listenExternalPort": false
+  },
+  "extras": {
+    "extraOne": {
+      "Hello": "one"
+    },
+    "extraTwo": {
+      "Hello": "two"
+    }
+  }
+}

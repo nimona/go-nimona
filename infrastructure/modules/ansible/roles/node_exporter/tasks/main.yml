@@ -1,0 +1,30 @@
+---
+- name: Create and start node_exporter container
+  community.general.docker_container:
+    name: node_exporter
+    image: "{{ node_exporter_docker_image }}:{{ node_exporter_docker_tag }}"
+    command:
+      - "--path.rootfs=/host"
+      - '--web.listen-address="{{ node_exporter_web_listen_address }}"'
+    pull: yes
+    recreate: "{{ node_exporter_docker_tag == 'latest' }}"
+    restart_policy: always
+    state: started
+    container_default_behavior: no_defaults
+    capabilities:
+      - SYS_TIME
+    pid_mode: host
+    network_mode: host
+    volumes:
+      - "/:/host:ro,rslave"
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: node_exporter_metrics
+    caddy_path_host_path: /metrics/node
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:{{ node_exporter_port }}"
+    caddy_path_users: "{{ metrics_users }}"
+  notify: reload caddy

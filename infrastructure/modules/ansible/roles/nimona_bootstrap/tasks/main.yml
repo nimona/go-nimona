@@ -1,0 +1,53 @@
+---
+- name: Build bootstrap peers list
+  set_fact:
+    nimona_bootstrap_peers_env_var: >-
+      {{
+        nimona_bootstrap_peers_env_var + [
+          nimona_bootstrap_public_keys[item] ~ '@' ~
+          nimona_bootstrap_peer_scheme ~ ':' ~
+          item ~ ':' ~ nimona_bootstrap_peer_port
+        ]
+      }}
+  loop: "{{ nimona_bootstrap_peers }}"
+
+- name: Create and start nimona bootstrap container
+  community.general.docker_container:
+    name: bootstrap
+    image: "ghcr.io/nimona/nimona:{{ nimona_bootstrap_version }}"
+    pull: yes
+    recreate: '{{ nimona_bootstrap_version == "latest" }}'
+    restart_policy: always
+    state: started
+    container_default_behavior: no_defaults
+    privileged: yes
+    networks_cli_compatible: yes
+    env:
+      NIMONA_LOG_LEVEL: "info"
+      NIMONA_PEER_BIND_ADDRESS: >-
+        0.0.0.0:{{ nimona_bootstrap_peer_port }}
+      NIMONA_PEER_ANNOUNCE_ADDRESS: >-
+        {{ nimona_bootstrap_peer_announce_address }}
+      NIMONA_PEER_BOOTSTRAPS: >-
+        {{ nimona_bootstrap_peers_env_var | join(",") }}
+      NIMONA_PEER_PRIVATE_KEY: >-
+        {{ nimona_bootstrap_private_keys[inventory_hostname] }}
+      NIMONA_METRICS_BIND_ADDRESS: >-
+        0.0.0.0:{{ nimona_bootstrap_metrics_port }}
+      NIMONA_METRICS_PYROSCOPE_SERVER_URL: >-
+        https://{{ groups['metrics_root'][0] }}/pyroscope/
+      NIMONA_METRICS_PYROSCOPE_SERVER_NAME: >-
+        {{ inventory_hostname }}
+    published_ports:
+      - "0.0.0.0:{{ nimona_bootstrap_peer_port }}:{{ nimona_bootstrap_peer_port }}"
+      - "127.0.0.1:{{ nimona_bootstrap_metrics_port }}:{{ nimona_bootstrap_metrics_port }}"
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: bootstrap
+    caddy_path_host_path: /metrics/bootstrap
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:{{ nimona_bootstrap_metrics_port }}"
+    caddy_path_users: "{{ metrics_users }}"

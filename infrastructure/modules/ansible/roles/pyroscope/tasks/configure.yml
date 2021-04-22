@@ -1,0 +1,10 @@
+---
+- name: Ensure configuration directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ pyroscope_data_path }}/config"

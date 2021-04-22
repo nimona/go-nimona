@@ -1,0 +1,15 @@
+---
+- hosts:
+    - bootstrap
+  roles:
+    - role: nimona_bootstrap
+      tags: ["services", "nimona", "bootstrap"]
+- hosts:
+    - metrics
+  roles:
+    - role: prometheus
+      tags: ["services", "metrics", "prometheus"]
+    - role: grafana
+      tags: ["services", "metrics", "grafana"]
+    - role: pyroscope
+      tags: ["services", "metrics", "pyroscope"]

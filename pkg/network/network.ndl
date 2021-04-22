@@ -1,0 +1,20 @@
+package nimona.io/network
+
+import nimona.io/object object
+import nimona.io/crypto crypto
+
+signed object nimona.io/network.DataForwardRequest {
+    requestID string
+    recipient string type=nimona.io/crypto.PublicKey
+    optional payload object type=nimona.io/object.Object
+}
+
+signed object nimona.io/network.DataForwardEnvelope {
+    sender string type=nimona.io/crypto.PublicKey
+    data data
+}
+
+signed object nimona.io/network.DataForwardResponse {
+    requestID string
+    success bool
+}

@@ -1,0 +1,32 @@
+package nimona.io/stream
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+object nimona.io/stream.Policy {
+    subjects repeated string
+    resources repeated string
+    conditions repeated string
+    action string
+}
+
+signed object nimona.io/stream.Request {
+    requestID string
+    rootCID string type=nimona.io/object.CID
+}
+
+signed object nimona.io/stream.Response {
+    requestID string
+    rootCID string type=nimona.io/object.CID
+    leaves repeated string type=nimona.io/object.CID
+}
+
+signed object nimona.io/stream.Announcement {
+    streamCID string type=nimona.io/object.CID
+    objectCIDs repeated string type=nimona.io/object.CID
+}
+
+signed object nimona.io/stream.Subscription {
+    rootCIDs repeated string type=nimona.io/object.CID
+    expiry string
+}

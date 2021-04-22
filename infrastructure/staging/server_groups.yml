@@ -1,0 +1,21 @@
+---
+bootstrap:
+  instances:
+    - clarke
+    - palmer
+  inbound_ports:
+    - 22581
+  tags:
+    - nimona
+  prometheus_jobs:
+    - name: bootstrap
+      metrics_path: "/metrics/bootstrap"
+metrics:
+  instances:
+    - metrics
+  volumes:
+    data:
+      size_in_gb: 40
+      mountpoint: /mnt/data
+  tags:
+    - nimona

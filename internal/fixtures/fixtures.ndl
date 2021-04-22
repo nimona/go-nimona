@@ -1,0 +1,52 @@
+package nimona.io/fixtures
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+object compositeTest {
+    optional compositeStringTest string type=nimona.io/fixtures.Composite
+    optional compositeDataTest data type=nimona.io/fixtures.Composite
+    optional repeatedCompositeStringTest repeated string type=nimona.io/fixtures.Composite
+    optional repeatedCompositeDataTest repeated data type=nimona.io/fixtures.Composite
+}
+
+object nimona.io/fixtures.TestPolicy {
+    subjects repeated string
+    resources repeated string
+    conditions repeated string
+    action string
+}
+
+signed object nimona.io/fixtures.TestStream {
+    nonce string
+    createdDateTime string
+}
+
+signed object nimona.io/fixtures.TestSubscribed {
+    nonce string
+}
+
+signed object nimona.io/fixtures.TestUnsubscribed {
+    nonce string
+}
+
+signed object nimona.io/fixtures.TestRequest {
+    requestID string
+    foo string
+}
+
+signed object nimona.io/fixtures.TestResponse {
+    requestID string
+    foo string
+}
+
+object parent {
+    foo string
+    optional child object type=Child
+    optional repeatedChild repeated object type=Child
+}
+
+object child {
+    foo string
+}
+

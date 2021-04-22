@@ -1,0 +1,8 @@
+---
+node_exporter_version: "1.0.1"
+node_exporter_docker_image: "prom/node-exporter"
+node_exporter_docker_tag: "{{ 'v' if node_exporter_version != 'latest' }}{{ node_exporter_version }}"
+node_exporter_port: "9100"
+node_exporter_bind: "127.0.0.1"
+node_exporter_web_listen_address: |-
+  {{ node_exporter_bind }}:{{ node_exporter_port }}

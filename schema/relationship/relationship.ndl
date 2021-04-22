@@ -1,0 +1,17 @@
+package nimona.io/schema/relationship
+
+import nimona.io/crypto crypto
+
+stream nimona.io/schema/relationship {
+    signed root event Created {
+    }
+    signed event Added {
+        alias string
+        remoteParty string type=nimona.io/crypto.PublicKey
+        datetime string
+    }
+    signed event Removed {
+        remoteParty string type=nimona.io/crypto.PublicKey
+        datetime string
+    }
+}

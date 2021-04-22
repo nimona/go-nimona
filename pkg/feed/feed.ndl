@@ -1,0 +1,21 @@
+package nimona.io/feed
+
+import nimona.io/crypto crypto
+import nimona.io/object object
+
+stream nimona.io/feed {
+    signed root event Created {
+        objectType string
+        datetime string
+    }
+    signed event Added {
+        objectCID repeated string type=nimona.io/object.CID
+        sequence int
+        datetime string
+    }
+    signed event Removed {
+        objectCID repeated string type=nimona.io/object.CID
+        sequence int
+        datetime string
+    }
+}

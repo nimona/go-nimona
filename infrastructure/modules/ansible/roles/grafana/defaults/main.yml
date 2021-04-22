@@ -1,0 +1,64 @@
+---
+grafana_version: "7.3.3"
+grafana_host_port: "3000"
+
+grafana_docker_network: "metrics"
+grafana_docker_image: "grafana/grafana"
+grafana_docker_tag: "{{ grafana_version }}"
+
+grafana_plugins:
+  - grafana-clock-panel
+  - grafana-piechart-panel
+
+grafana_user_name: grafana
+grafana_user_group: grafana
+grafana_user_system_user: yes
+
+grafana_data_path: "/mnt/data/grafana"
+
+grafana_server_scheme: "https"
+grafana_server_domain: "{{ inventory_hostname }}"
+grafana_server_path: "/grafana/"
+grafana_server_host_path: "/grafana*"
+grafana_server_root_url: "{{ grafana_server_scheme }}://{{ grafana_server_domain }}{{ grafana_server_path }}"
+grafana_server_enforce_domain: yes
+grafana_server_serve_from_sub_path: yes
+
+grafana_analytics_reporting_enabled: no
+
+grafana_security_disable_initial_admin_creation: no
+grafana_security_admin_user: "admin"
+grafana_security_admin_password: "admin"
+grafana_security_disable_gravatar: no
+grafana_security_cookie_secure: no
+grafana_security_cookie_samesite: "lax"
+grafana_security_allow_embedding: no
+
+grafana_dashboards_versions_to_keep: 20
+grafana_dashboards_min_refresh_interval: "5s"
+
+grafana_users_allow_sign_up: yes
+grafana_users_allow_org_create: no
+grafana_users_auto_assign_org: yes
+grafana_users_auto_assign_org_id: 1
+grafana_users_auto_assign_org_role: "Viewer"
+grafana_users_verify_email_enabled: no
+grafana_users_default_theme: "dark"
+grafana_users_viewers_can_edit: no
+grafana_users_editors_can_admin: no
+
+grafana_auth_anonymous_enabled: no
+grafana_auth_anonymous_org_name: "Main Org."
+grafana_auth_anonymous_org_role: "Viewer"
+grafana_auth_anonymous_hide_version: no
+
+grafana_auth_github_enabled: no
+grafana_auth_github_allow_sign_up: yes
+grafana_auth_github_client_id: ""
+grafana_auth_github_client_secret: ""
+grafana_auth_github_scopes: "user:email,read:org"
+grafana_auth_github_auth_url: "https://github.com/login/oauth/authorize"
+grafana_auth_github_token_url: "https://github.com/login/oauth/access_token"
+grafana_auth_github_api_url: "https://api.github.com/user"
+grafana_auth_github_allowed_organizations: []
+grafana_auth_github_team_ids: []

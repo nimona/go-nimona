@@ -1,0 +1,2 @@
+---
+caddy_path_default_password_salt: "{{ vault_caddy_path_default_password_salt }}"

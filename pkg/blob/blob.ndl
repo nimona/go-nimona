@@ -1,0 +1,9 @@
+package nimona.io/blob
+
+signed object nimona.io/Chunk {
+  data data
+}
+
+signed object nimona.io/Blob {
+   chunks repeated string type=nimona.io/object.CID
+}

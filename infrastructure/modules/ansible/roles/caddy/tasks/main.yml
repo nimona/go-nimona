@@ -1,0 +1,45 @@
+---
+- name: Add caddy apt repository
+  apt_repository:
+    repo: "deb [trusted=yes] https://apt.fury.io/caddy/ /"
+    state: present
+    update_cache: true
+
+- name: Install caddy
+  apt:
+    name: caddy
+    state: present
+  notify: restart caddy
+
+- name: Create caddy configuration directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ caddy_conf_dir }}"
+    - "{{ caddy_rootd_dir }}"
+    - "{{ caddy_sitesd_dir }}"
+
+- name: Configure Caddyfile
+  template:
+    src: "Caddyfile.j2"
+    dest: "{{ caddy_caddyfile }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload caddy
+
+- name: Configure caddy metrics
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: caddy
+    caddy_path_host_path: /metrics/caddy
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:2019"
+    caddy_path_users: "{{ metrics_users }}"
+    caddy_path_host_header: "127.0.0.1:2019"
+  notify: reload caddy

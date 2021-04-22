@@ -1,0 +1,7 @@
+---
+pyroscope_version: "latest"
+pyroscope_docker_network: "metrics"
+
+pyroscope_data_path: "/mnt/data/pyroscope"
+
+pyroscope_users: "{{ vault_pyroscope_users }}"

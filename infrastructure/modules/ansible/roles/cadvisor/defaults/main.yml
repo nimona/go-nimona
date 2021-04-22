@@ -1,0 +1,5 @@
+---
+cadvisor_version: "0.36.0"
+cadvisor_docker_image: "gcr.io/google-containers/cadvisor"
+cadvisor_docker_tag: "{{ 'v' if cadvisor_version != 'latest' }}{{ cadvisor_version }}"
+cadvisor_docker_network: "cadvisor"

@@ -1,0 +1,92 @@
+---
+- name: Create group for Prometheus
+  group:
+    name: "{{ prometheus_user_group }}"
+    system: "{{ prometheus_user_system_user }}"
+    state: present
+  register: prometheus_group_info
+
+- name: Create user for Prometheus
+  user:
+    name: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    system: "{{ prometheus_user_system_user }}"
+    state: present
+  register: prometheus_user_info
+
+- name: Configure prometheus
+  include: configure.yml
+
+- name: Create config/data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ prometheus_data_path }}"
+    - "{{ prometheus_data_path }}/config"
+    - "{{ prometheus_data_path }}/data"
+
+- name: Set config/data directory ownership/group
+  file:
+    path: "{{ prometheus_data_path }}"
+    state: directory
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    recurse: yes
+
+- name: Ensure data directory exist
+  file:
+    path: "{{ prometheus_data_path }}"
+    state: directory
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    mode: "0755"
+
+- name: Set config/data directory ownership/group
+  file:
+    path: "{{ prometheus_data_path }}"
+    state: directory
+    owner: "{{ prometheus_user_name }}"
+    group: "{{ prometheus_user_group }}"
+    recurse: yes
+
+- name: Create and start prometheus container
+  docker_container:
+    name: prometheus
+    image: "{{ prometheus_docker_image }}:{{ prometheus_docker_tag }}"
+    pull: yes
+    recreate: "{{ prometheus_docker_tag == 'latest' }}"
+    command: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles
+      {% if prometheus_data_retention_size != "" %}
+      --storage.tsdb.retention.size={{ prometheus_data_retention_size }}
+      {% endif %}
+      --web.external-url={{ prometheus_server_root_url }}
+    restart_policy: always
+    state: started
+    user: "{{ prometheus_user_info.uid }}:{{ prometheus_group_info.gid }}"
+    networks_cli_compatible: yes
+    network_mode: default
+    networks:
+      - name: "{{ prometheus_docker_network }}"
+    volumes:
+      - "{{ prometheus_data_path }}/config:/etc/prometheus"
+      - "{{ prometheus_data_path }}/data:/prometheus"
+    published_ports:
+      - "127.0.0.1:{{ prometheus_host_port }}:9090"
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: prometheus
+    caddy_path_host_path: "{{ prometheus_host_path }}"
+    caddy_path_upstream: "127.0.0.1:{{ prometheus_host_port }}"
+    caddy_path_users: "{{ prometheus_users }}"
+  notify: reload caddy

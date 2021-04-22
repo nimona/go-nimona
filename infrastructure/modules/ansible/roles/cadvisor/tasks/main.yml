@@ -1,0 +1,32 @@
+---
+- name: Create and start cadvisor container
+  community.general.docker_container:
+    name: cadvisor
+    image: "{{ cadvisor_docker_image }}:{{ cadvisor_docker_tag }}"
+    pull: yes
+    recreate: "{{ cadvisor_docker_tag == 'latest' }}"
+    restart_policy: always
+    state: started
+    container_default_behavior: no_defaults
+    privileged: yes
+    networks_cli_compatible: yes
+    devices:
+      - "/dev/kmsg"
+    volumes:
+      - "/var/lib/docker/:/var/lib/docker:ro"
+      - "/:/rootfs:ro"
+      - "/dev/disk/:/dev/disk:ro"
+      - "/sys:/sys:ro"
+      - "/var/run:/var/run:ro"
+    published_ports:
+      - "127.0.0.1:8080:8080"
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: cadvisor_metrics
+    caddy_path_host_path: /metrics/cadvisor
+    caddy_path_upstream_path: /metrics
+    caddy_path_upstream: "127.0.0.1:8080"
+    caddy_path_users: "{{ metrics_users }}"

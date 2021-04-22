@@ -1,0 +1,3 @@
+nimona_bootstrap_version: "{{ nimona_version }}"
+nimona_bootstrap_private_keys: "{{ vault_nimona_bootstrap_private_keys }}"
+nimona_bootstrap_public_keys: "{{ vault_nimona_bootstrap_public_keys }}"

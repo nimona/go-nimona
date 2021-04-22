@@ -1,0 +1,88 @@
+---
+- name: Create group for pyroscope
+  group:
+    name: "{{ pyroscope_user_group }}"
+    system: "{{ pyroscope_user_system_user }}"
+    state: present
+  register: pyroscope_group_info
+
+- name: Create user for pyroscope
+  user:
+    name: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    system: "{{ pyroscope_user_system_user }}"
+    state: present
+  register: pyroscope_user_info
+
+- name: Configure pyroscope
+  include: configure.yml
+
+- name: Create config/data directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ pyroscope_data_path }}"
+    - "{{ pyroscope_data_path }}/config"
+    - "{{ pyroscope_data_path }}/data"
+
+- name: Set config/data directory ownership/group
+  file:
+    path: "{{ pyroscope_data_path }}"
+    state: directory
+    owner: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    recurse: yes
+
+- name: Ensure data directory exist
+  file:
+    path: "{{ pyroscope_data_path }}"
+    state: directory
+    owner: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    mode: "0755"
+
+- name: Set config/data directory ownership/group
+  file:
+    path: "{{ pyroscope_data_path }}"
+    state: directory
+    owner: "{{ pyroscope_user_name }}"
+    group: "{{ pyroscope_user_group }}"
+    recurse: yes
+
+- name: Create and start pyroscope container
+  docker_container:
+    name: pyroscope
+    image: "{{ pyroscope_docker_image }}:{{ pyroscope_docker_tag }}"
+    pull: yes
+    recreate: "{{ pyroscope_docker_tag == 'latest' }}"
+    command: server
+    restart_policy: always
+    state: started
+    user: "{{ pyroscope_user_info.uid }}:{{ pyroscope_group_info.gid }}"
+    networks_cli_compatible: yes
+    network_mode: default
+    env:
+      PYROSCOPE_BASE_URL: "{{ pyroscope_server_base_url }}"
+    networks:
+      - name: "{{ pyroscope_docker_network }}"
+    volumes:
+      - "{{ pyroscope_data_path }}/data:/pyroscope"
+    published_ports:
+      - "127.0.0.1:{{ pyroscope_host_port }}:4040"
+    capabilities:
+      - SYS_PTRACE
+
+- name: Configure caddy
+  import_role:
+    name: caddy_path
+  vars:
+    caddy_path_name: pyroscope
+    caddy_path_uri: "strip_prefix {{ pyroscope_server_strip_prefix }}"
+    caddy_path_host_path: "{{ pyroscope_server_host_path }}"
+    caddy_path_upstream: "127.0.0.1:{{ pyroscope_host_port }}"
+    # caddy_path_users: "{{ pyroscope_users }}"
+  notify: reload caddy

@@ -1,0 +1,34 @@
+name: Dependabot
+on:
+  push:
+    branches:
+      - 'dependabot/**'
+
+jobs:
+  some-job:
+    name: Tidy up
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.16
+
+      - name: Checkout code
+        uses: actions/checkout@v2.3.4
+
+      - name: Make tidy
+        run: make tidy
+
+      - name: Amend commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_options: '--amend'
+          file_pattern: '*.mod *.sum'
+          commit_user_name: nimona-bot
+          commit_user_email: bot@nimonna.io
+          commit_author: Nimona Bot <bot@nimona.io>
+          push_options: '--force'
+          skip_dirty_check: true    
+          skip_fetch: true    
+          disable_globbing: true

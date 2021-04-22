@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>{{template "title"}}</title>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+  <script crossorigin="anonymous" src="https://unpkg.com/@hotwired/turbo@7.0.0-beta.5/dist/turbo.es5-umd.js"></script>
+
+  <head>
+    <link rel="stylesheet" href="/css/main.css" />
+    <script type="text/javascript">
+      if (window["EventSource"] && window["Turbo"]) {
+        Turbo.connectStreamSource(new EventSource("/events"));
+      } else {
+        console.warn("events not available");
+      }
+    </script>
+  </head>
+
+  {{- template "head" }}
+  {{- define "head" }}{{ end }}
+
+</head>
+
+<body class="antialiased font-sans bg-gray-200">
+  <div class="max-w-5xl mx-auto py-12 sm:px-6 lg:px-8">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <div class="flex justify-between items-center md:justify-start md:space-x-10">
+          <div class="flex justify-start lg:w-0 lg:flex-1">
+            <a href="/">
+              <img class="h-8 w-auto sm:h-10" src="https://user-images.githubusercontent.com/88447/67148586-4010a580-f2a1-11e9-9ece-91acf37b0c6f.png">
+            </a>
+          </div>
+          <nav class="md:flex space-x-10">
+            <a href="/" class="text-sm font-medium text-blue-400 hover:text-blue-500" target="_top">
+              Peer
+            </a>
+            <a href="/identity" class="text-sm font-medium text-blue-400 hover:text-blue-500" target="_top">
+              Identity
+            </a>
+            <a href="/contacts" class="text-sm font-medium text-blue-400 hover:text-blue-500" target="_top">
+              Contacts
+            </a>
+            <a href="/objects" class="text-sm font-medium text-blue-400 hover:text-blue-500" target="_top">
+              Objects
+            </a>
+          </nav>
+          <div class="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
+          <!-- <a href="#" class="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900">
+            Sign in
+          </a> -->
+          <!-- <a href="#"
+            class="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+            Shut down
+          </a> -->
+        </div>
+      </div>
+    </div>
+  </div>
+  {{- template "body" . }}
+</body>
+
+</html>

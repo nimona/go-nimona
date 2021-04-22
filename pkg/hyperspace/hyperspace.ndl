@@ -1,0 +1,23 @@
+package nimona.io/hyperspace
+
+import nimona.io/crypto crypto
+import nimona.io/peer peer
+
+signed object nimona.io/hyperspace.Announcement {
+    version int
+    optional connectionInfo object type=nimona.io/peer.ConnectionInfo
+    peerVector repeated uint
+    peerCapabilities repeated string
+}
+
+signed object nimona.io/hyperspace.LookupRequest {
+    nonce string
+    queryVector repeated uint
+    requireCapabilities repeated string
+}
+
+signed object nimona.io/hyperspace.LookupResponse {
+    nonce string
+    queryVector repeated uint
+    optional announcements repeated object type=nimona.io/hyperspace.Announcement
+}

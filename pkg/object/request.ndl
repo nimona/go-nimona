@@ -1,0 +1,11 @@
+package nimona.io/object
+
+signed object nimona.io/object.Request {
+    requestID string
+    objectCID string type=nimona.io/object.CID
+}
+
+signed object nimona.io/object.Response {
+    requestID string
+    optional object object type=nimona.io/object.Object
+}

@@ -1,0 +1,62 @@
+{{- define "title" }}Local Peer Information{{ end }}
+{{- define "body" }}
+<turbo-frame id="main">
+  <div class="mx-auto py-6">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Local Peer Information
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+          Various local peer and connection information
+        </p>
+      </div>
+      <div class="border-t border-gray-200">
+        <dl>
+          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <dt class="text-sm font-medium text-gray-500">
+              Peer Public key
+            </dt>
+            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <code class="public-key">{{ .PublicKey }}</code>
+            </dd>
+          </div>
+          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <dt class="text-sm font-medium text-gray-500">
+              Addresses
+            </dt>
+            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <ul>
+                {{- if not .Addresses }}
+                  <li>-</li>
+                {{- end }}
+                {{- range sortAlpha .Addresses }}
+                  <li>{{ . }}</li>
+                {{- end}}
+              </ul>
+            </dd>
+          </div>
+          <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <dt class="text-sm font-medium text-gray-500">
+              Registered Content Types
+            </dt>
+            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <turbo-frame id="peer-content-types">
+                {{- template "inner.peer-content-types.html" . }}
+              </turbo-frame>
+            </dd>
+          </div>
+          <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <dt class="text-sm font-medium text-gray-500">
+              Config location
+            </dt>
+            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              {{ .ConfigPath }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</turbo-frame>
+{{- end }}

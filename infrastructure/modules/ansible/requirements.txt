@@ -1,0 +1,4 @@
+ansible-lint~=4.3
+ansible~=2.10
+bcrypt~=3.2
+passlib~=1.7
