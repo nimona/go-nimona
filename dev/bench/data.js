@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1618169518441,
+  "lastUpdate": 1619120688310,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4464,6 +4464,54 @@ window.BENCHMARK_DATA = {
             "value": 10094,
             "unit": "ns/op",
             "extra": "118297 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "c402379847c7cb98b78f22703de1ef21fc9d5e1c",
+          "message": "chore(apps/hub): remove go tailwindcss fork",
+          "timestamp": "2021-04-22T20:43:17+01:00",
+          "tree_id": "ccb4531d4a05caff43c6841026617f5919ec181f",
+          "url": "https://github.com/nimona/go-nimona/commit/c402379847c7cb98b78f22703de1ef21fc9d5e1c"
+        },
+        "date": 1619120686955,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3970719,
+            "unit": "ns/op",
+            "extra": "292 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 368777084,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3700828334,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 11349,
+            "unit": "ns/op",
+            "extra": "111712 times\n2 procs"
           }
         ]
       }
