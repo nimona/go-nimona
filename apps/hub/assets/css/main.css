@@ -79,11 +79,3 @@ li.stream-child, li.stream-child code {
 .object-type {
     @apply px-2 inline-flex text-xs leading-5 font-semibold rounded bg-green-100 text-green-800
 }
-
-.object-type-filter {
-    @apply px-2 inline-flex text-xs leading-5 font-semibold rounded bg-gray-100
-}
-
-.object-type-filter.selected {
-    @apply bg-green-50;
-}
