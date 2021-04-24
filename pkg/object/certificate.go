@@ -7,23 +7,14 @@ import (
 )
 
 func NewCertificate(
-	subject crypto.PublicKey,
 	issuer crypto.PrivateKey,
+	subjects ...crypto.PublicKey,
 ) (*Certificate, error) {
 	c := &Certificate{
 		Metadata: Metadata{
 			Owner: issuer.PublicKey(),
-			Policies: Policies{{
-				Type: SignaturePolicy,
-				Subjects: []crypto.PublicKey{
-					subject,
-				},
-				Actions: []PolicyAction{
-					ReadAction,
-				},
-				Effect: AllowEffect,
-			}},
 		},
+		Subjects: subjects,
 		Created: time.Now().
 			UTC().
 			Format(time.RFC3339),
@@ -41,5 +32,5 @@ func NewCertificate(
 }
 
 func NewCertificateSelfSigned(k crypto.PrivateKey) (*Certificate, error) {
-	return NewCertificate(k.PublicKey(), k)
+	return NewCertificate(k, k.PublicKey())
 }

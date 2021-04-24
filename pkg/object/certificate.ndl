@@ -1,7 +1,9 @@
 package nimona.io/object
 
-object nimona.io/object.Certificate {
+signed object nimona.io/object.Certificate {
     nonce string
+    description string
+    subjects repeated string type=nimona.io/crypto.PublicKey
     created string
     expires string
 }

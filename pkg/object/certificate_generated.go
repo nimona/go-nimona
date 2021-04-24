@@ -2,10 +2,15 @@
 
 package object
 
+import (
+	crypto "nimona.io/pkg/crypto"
+)
+
 type (
 	Certificate struct {
 		Metadata Metadata
 		Nonce    string
+		Subjects []crypto.PublicKey
 		Created  string
 		Expires  string
 	}
@@ -40,6 +45,15 @@ func (e Certificate) ToObject() *Object {
 		Data:     Map{},
 	}
 	r.Data["nonce"] = String(e.Nonce)
+	if len(e.Subjects) > 0 {
+		rv := make(StringArray, len(e.Subjects))
+		for i, v := range e.Subjects {
+			if iv, err := v.MarshalString(); err == nil {
+				rv[i] = String(iv)
+			}
+		}
+		r.Data["subjects"] = rv
+	}
 	r.Data["created"] = String(e.Created)
 	r.Data["expires"] = String(e.Expires)
 	return r
@@ -58,6 +72,17 @@ func (e *Certificate) FromObject(o *Object) error {
 	if v, ok := o.Data["nonce"]; ok {
 		if t, ok := v.(String); ok {
 			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["subjects"]; ok {
+		if ev, ok := v.(StringArray); ok {
+			e.Subjects = make([]crypto.PublicKey, len(ev))
+			for i, iv := range ev {
+				es := crypto.PublicKey{}
+				if err := es.UnmarshalString(string(iv)); err == nil {
+					e.Subjects[i] = es
+				}
+			}
 		}
 	}
 	if v, ok := o.Data["created"]; ok {

@@ -1,6 +1,8 @@
 package object
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/errors"
 )
 
@@ -55,29 +57,26 @@ func Verify(o *Object) error {
 
 	// or that the signature contains a valid certificate signed by the owner
 	// check if there is a certifiate
-	// if sig.Certificate == nil {
-	// 	return ErrInvalidSigner
-	// }
+	if sig.Certificate == nil {
+		return ErrInvalidSigner
+	}
 
 	// then let's make sure that the certificate is properly signed
-	// if err := Verify(sig.Certificate.ToObject()); err != nil {
-	// 	return errors.Wrap(
-	// 		errors.Error("error verifying certificate"),
-	// 		err,errors.Merge(
-	// 	)
-	// }
+	if err := Verify(sig.Certificate.ToObject()); err != nil {
+		return fmt.Errorf("error verifying certificate, %w", err)
+	}
 
 	// finally check that the certificate signer matches the object owner
-	// if sig.Certificate.Metadata.Signature.Signer != own {
-	// 	return ErrInvalidSigner
-	// }
+	if !sig.Certificate.Metadata.Signature.Signer.Equals(own) {
+		return ErrInvalidSigner
+	}
 
 	// and the certificate subject matches the object signer
-	// for _, sub := range sig.Certificate.Metadata.Policy.Subjects {
-	// 	if sub == sig.Signer.String() {
-	// 		return nil
-	// 	}
-	// }
+	for _, sub := range sig.Certificate.Subjects {
+		if sub.Equals(sig.Signer) {
+			return nil
+		}
+	}
 
 	// or, error out
 	return ErrInvalidSigner
