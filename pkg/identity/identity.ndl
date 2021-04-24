@@ -1,0 +1,33 @@
+package nimona.io/identity
+
+import nimona.io/crypto crypto
+
+signed object nimona.io/identity.Profile {
+    version int
+    datetime string
+    name string
+    image string type=nimona.io/object.CID
+}
+
+stream nimona.io/identity.Profile {
+    signed root event Created {
+    }
+    signed event Updated {
+        profile object type=nimona.io/identity.Profile
+    }
+}
+
+stream nimona.io/identity/addressbook {
+    signed root event Created {
+    }
+    signed event ContactAdded {
+        alias string
+        remoteParty string type=nimona.io/crypto.PublicKey
+        profile object type=nimona.io/identity.Profile
+        datetime string
+    }
+    signed event ContactRemoved {
+        remoteParty string type=nimona.io/crypto.PublicKey
+        datetime string
+    }
+}
