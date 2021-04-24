@@ -72,10 +72,8 @@ func Verify(o *Object) error {
 	}
 
 	// and the certificate subject matches the object signer
-	for _, sub := range sig.Certificate.Subjects {
-		if sub.Equals(sig.Signer) {
-			return nil
-		}
+	if sig.Certificate.Subject.Equals(sig.Signer) {
+		return nil
 	}
 
 	// or, error out

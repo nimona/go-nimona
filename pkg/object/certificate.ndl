@@ -1,19 +1,27 @@
 package nimona.io/object
 
-signed object nimona.io/object.Certificate {
+object nimona.io/object.Certificate {
     nonce string
-    description string
-    subjects repeated string type=nimona.io/crypto.PublicKey
-    created string
-    expires string
-}
-
-object nimona.io/object.CertificateRequest {
+    vendorName string
     applicationName string
     applicationDescription string
     applicationURL string
-    subject string
-    resources repeated string
+    subject string type=nimona.io/crypto.PublicKey
+    permissions repeated object type=nimona.io/object.CertificatePermission
+    starts string
+    expires string
+}
+
+object nimona.io/object.CertificatePermission {
+    types repeated string
     actions repeated string
+}
+
+object nimona.io/object.CertificateRequest {
     nonce string
+    vendorName string
+    applicationName string
+    applicationDescription string
+    applicationURL string
+    permissions repeated object type=nimona.io/object.CertificatePermission
 }

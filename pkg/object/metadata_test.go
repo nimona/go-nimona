@@ -58,7 +58,7 @@ func TestMetadata_Map(t *testing.T) {
 					}},
 				},
 				Nonce:   "nonce",
-				Created: time.Now().UTC().Format(time.RFC3339),
+				Starts:  time.Now().UTC().Format(time.RFC3339),
 				Expires: time.Now().UTC().Format(time.RFC3339),
 			},
 		},
