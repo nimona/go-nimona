@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 )
 
@@ -193,13 +194,27 @@ func TestVerify(t *testing.T) {
 
 func mustSignWithCertificate(
 	t *testing.T,
-	owner crypto.PrivateKey,
-	signer crypto.PrivateKey,
+	identityKey crypto.PrivateKey,
+	peerKey crypto.PrivateKey,
 	o *Object,
 ) *Object {
-	c, err := NewCertificate(owner, signer.PublicKey())
+	r := CertificateRequest{
+		Metadata: Metadata{
+			Owner: peerKey.PublicKey(),
+		},
+		Nonce:                  rand.String(5),
+		VendorName:             "vendor",
+		ApplicationName:        "app-name",
+		ApplicationDescription: "app-descr",
+		ApplicationURL:         "https://foo",
+		Permissions: []CertificatePermission{{
+			Types:   []string{"*"},
+			Actions: []string{"*"},
+		}},
+	}
+	c, err := NewCertificate(identityKey, r)
 	require.NoError(t, err)
-	sig, err := NewSignature(signer, o)
+	sig, err := NewSignature(peerKey, o)
 	assert.NoError(t, err)
 	sig.Certificate = c
 	o.Metadata.Signature = sig

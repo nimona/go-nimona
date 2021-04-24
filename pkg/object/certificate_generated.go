@@ -8,21 +8,30 @@ import (
 
 type (
 	Certificate struct {
-		Metadata Metadata
-		Nonce    string
-		Subjects []crypto.PublicKey
-		Created  string
-		Expires  string
-	}
-	CertificateRequest struct {
 		Metadata               Metadata
+		Nonce                  string
+		VendorName             string
 		ApplicationName        string
 		ApplicationDescription string
 		ApplicationURL         string
-		Subject                string
-		Resources              []string
-		Actions                []string
+		Subject                crypto.PublicKey
+		Permissions            []CertificatePermission
+		Starts                 string
+		Expires                string
+	}
+	CertificatePermission struct {
+		Metadata Metadata
+		Types    []string
+		Actions  []string
+	}
+	CertificateRequest struct {
+		Metadata               Metadata
 		Nonce                  string
+		VendorName             string
+		ApplicationName        string
+		ApplicationDescription string
+		ApplicationURL         string
+		Permissions            []CertificatePermission
 	}
 )
 
@@ -45,16 +54,23 @@ func (e Certificate) ToObject() *Object {
 		Data:     Map{},
 	}
 	r.Data["nonce"] = String(e.Nonce)
-	if len(e.Subjects) > 0 {
-		rv := make(StringArray, len(e.Subjects))
-		for i, v := range e.Subjects {
-			if iv, err := v.MarshalString(); err == nil {
-				rv[i] = String(iv)
+	r.Data["vendorName"] = String(e.VendorName)
+	r.Data["applicationName"] = String(e.ApplicationName)
+	r.Data["applicationDescription"] = String(e.ApplicationDescription)
+	r.Data["applicationURL"] = String(e.ApplicationURL)
+	if v, err := e.Subject.MarshalString(); err == nil {
+		r.Data["subject"] = String(v)
+	}
+	if len(e.Permissions) > 0 {
+		rv := make(ObjectArray, len(e.Permissions))
+		for i, v := range e.Permissions {
+			if iv, err := v.MarshalObject(); err == nil {
+				rv[i] = (iv)
 			}
 		}
-		r.Data["subjects"] = rv
+		r.Data["permissions"] = rv
 	}
-	r.Data["created"] = String(e.Created)
+	r.Data["starts"] = String(e.Starts)
 	r.Data["expires"] = String(e.Expires)
 	return r
 }
@@ -74,25 +90,119 @@ func (e *Certificate) FromObject(o *Object) error {
 			e.Nonce = string(t)
 		}
 	}
-	if v, ok := o.Data["subjects"]; ok {
-		if ev, ok := v.(StringArray); ok {
-			e.Subjects = make([]crypto.PublicKey, len(ev))
+	if v, ok := o.Data["vendorName"]; ok {
+		if t, ok := v.(String); ok {
+			e.VendorName = string(t)
+		}
+	}
+	if v, ok := o.Data["applicationName"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationName = string(t)
+		}
+	}
+	if v, ok := o.Data["applicationDescription"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationDescription = string(t)
+		}
+	}
+	if v, ok := o.Data["applicationURL"]; ok {
+		if t, ok := v.(String); ok {
+			e.ApplicationURL = string(t)
+		}
+	}
+	if v, ok := o.Data["subject"]; ok {
+		if ev, ok := v.(String); ok {
+			es := crypto.PublicKey{}
+			if err := es.UnmarshalString(string(ev)); err == nil {
+				e.Subject = es
+			}
+		}
+	}
+	if v, ok := o.Data["permissions"]; ok {
+		if ev, ok := v.(ObjectArray); ok {
+			e.Permissions = make([]CertificatePermission, len(ev))
 			for i, iv := range ev {
-				es := crypto.PublicKey{}
-				if err := es.UnmarshalString(string(iv)); err == nil {
-					e.Subjects[i] = es
+				es := CertificatePermission{}
+				if err := es.UnmarshalObject((iv)); err == nil {
+					e.Permissions[i] = es
 				}
 			}
 		}
 	}
-	if v, ok := o.Data["created"]; ok {
+	if v, ok := o.Data["starts"]; ok {
 		if t, ok := v.(String); ok {
-			e.Created = string(t)
+			e.Starts = string(t)
 		}
 	}
 	if v, ok := o.Data["expires"]; ok {
 		if t, ok := v.(String); ok {
 			e.Expires = string(t)
+		}
+	}
+	return nil
+}
+
+func (e *CertificatePermission) Type() string {
+	return "nimona.io/CertificatePermission"
+}
+
+func (e *CertificatePermission) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *CertificatePermission) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
+}
+
+func (e CertificatePermission) ToObject() *Object {
+	r := &Object{
+		Type:     "nimona.io/CertificatePermission",
+		Metadata: e.Metadata,
+		Data:     Map{},
+	}
+	if len(e.Types) > 0 {
+		rv := make(StringArray, len(e.Types))
+		for i, iv := range e.Types {
+			rv[i] = String(iv)
+		}
+		r.Data["types"] = rv
+	}
+	if len(e.Actions) > 0 {
+		rv := make(StringArray, len(e.Actions))
+		for i, iv := range e.Actions {
+			rv[i] = String(iv)
+		}
+		r.Data["actions"] = rv
+	}
+	return r
+}
+
+func (e *CertificatePermission) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
+}
+
+func (e *CertificatePermission) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
+}
+
+func (e *CertificatePermission) FromObject(o *Object) error {
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["types"]; ok {
+		if t, ok := v.(StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Types = rv
+		}
+	}
+	if v, ok := o.Data["actions"]; ok {
+		if t, ok := v.(StringArray); ok {
+			rv := make([]string, len(t))
+			for i, iv := range t {
+				rv[i] = string(iv)
+			}
+			e.Actions = rv
 		}
 	}
 	return nil
@@ -116,25 +226,20 @@ func (e CertificateRequest) ToObject() *Object {
 		Metadata: e.Metadata,
 		Data:     Map{},
 	}
+	r.Data["nonce"] = String(e.Nonce)
+	r.Data["vendorName"] = String(e.VendorName)
 	r.Data["applicationName"] = String(e.ApplicationName)
 	r.Data["applicationDescription"] = String(e.ApplicationDescription)
 	r.Data["applicationURL"] = String(e.ApplicationURL)
-	r.Data["subject"] = String(e.Subject)
-	if len(e.Resources) > 0 {
-		rv := make(StringArray, len(e.Resources))
-		for i, iv := range e.Resources {
-			rv[i] = String(iv)
+	if len(e.Permissions) > 0 {
+		rv := make(ObjectArray, len(e.Permissions))
+		for i, v := range e.Permissions {
+			if iv, err := v.MarshalObject(); err == nil {
+				rv[i] = (iv)
+			}
 		}
-		r.Data["resources"] = rv
+		r.Data["permissions"] = rv
 	}
-	if len(e.Actions) > 0 {
-		rv := make(StringArray, len(e.Actions))
-		for i, iv := range e.Actions {
-			rv[i] = String(iv)
-		}
-		r.Data["actions"] = rv
-	}
-	r.Data["nonce"] = String(e.Nonce)
 	return r
 }
 
@@ -148,6 +253,16 @@ func (e *CertificateRequest) UnmarshalObject(o *Object) error {
 
 func (e *CertificateRequest) FromObject(o *Object) error {
 	e.Metadata = o.Metadata
+	if v, ok := o.Data["nonce"]; ok {
+		if t, ok := v.(String); ok {
+			e.Nonce = string(t)
+		}
+	}
+	if v, ok := o.Data["vendorName"]; ok {
+		if t, ok := v.(String); ok {
+			e.VendorName = string(t)
+		}
+	}
 	if v, ok := o.Data["applicationName"]; ok {
 		if t, ok := v.(String); ok {
 			e.ApplicationName = string(t)
@@ -163,32 +278,15 @@ func (e *CertificateRequest) FromObject(o *Object) error {
 			e.ApplicationURL = string(t)
 		}
 	}
-	if v, ok := o.Data["subject"]; ok {
-		if t, ok := v.(String); ok {
-			e.Subject = string(t)
-		}
-	}
-	if v, ok := o.Data["resources"]; ok {
-		if t, ok := v.(StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
+	if v, ok := o.Data["permissions"]; ok {
+		if ev, ok := v.(ObjectArray); ok {
+			e.Permissions = make([]CertificatePermission, len(ev))
+			for i, iv := range ev {
+				es := CertificatePermission{}
+				if err := es.UnmarshalObject((iv)); err == nil {
+					e.Permissions[i] = es
+				}
 			}
-			e.Resources = rv
-		}
-	}
-	if v, ok := o.Data["actions"]; ok {
-		if t, ok := v.(StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Actions = rv
-		}
-	}
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(String); ok {
-			e.Nonce = string(t)
 		}
 	}
 	return nil

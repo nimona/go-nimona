@@ -8,14 +8,23 @@ import (
 
 func NewCertificate(
 	issuer crypto.PrivateKey,
-	subjects ...crypto.PublicKey,
+	req CertificateRequest,
 ) (*Certificate, error) {
 	c := &Certificate{
 		Metadata: Metadata{
 			Owner: issuer.PublicKey(),
+			Datetime: time.Now().
+				UTC().
+				Format(time.RFC3339),
 		},
-		Subjects: subjects,
-		Created: time.Now().
+		Nonce:                  req.Nonce,
+		VendorName:             req.VendorName,
+		ApplicationName:        req.ApplicationName,
+		ApplicationDescription: req.ApplicationDescription,
+		ApplicationURL:         req.ApplicationURL,
+		Subject:                req.Metadata.Owner,
+		Permissions:            req.Permissions,
+		Starts: time.Now().
 			UTC().
 			Format(time.RFC3339),
 		Expires: time.Now().
@@ -29,8 +38,4 @@ func NewCertificate(
 	}
 	c.Metadata.Signature = s
 	return c, nil
-}
-
-func NewCertificateSelfSigned(k crypto.PrivateKey) (*Certificate, error) {
-	return NewCertificate(k, k.PublicKey())
 }
