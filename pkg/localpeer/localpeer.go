@@ -20,8 +20,8 @@ type (
 		// TODO merge peer/id methods, use .Usage to distinguish
 		GetPrimaryPeerKey() crypto.PrivateKey
 		PutPrimaryPeerKey(crypto.PrivateKey)
-		GetPrimaryIdentityKey() crypto.PrivateKey
-		PutPrimaryIdentityKey(crypto.PrivateKey)
+		GetIdentityPublicKey() crypto.PublicKey
+		PutIdentityPublicKey(crypto.PublicKey)
 		GetCertificates() []*object.Certificate
 		PutCertificate(*object.Certificate)
 		GetCIDs() []object.CID
@@ -36,16 +36,16 @@ type (
 		ListenForUpdates() (<-chan UpdateEvent, func())
 	}
 	localPeer struct {
-		keyLock            sync.RWMutex
-		primaryPeerKey     crypto.PrivateKey
-		primaryIdentityKey crypto.PrivateKey
-		cids               *ObjectCIDSyncList
-		contentTypes       *StringSyncList
-		certificates       *ObjectCertificateSyncList
-		addresses          *StringSyncList
-		relays             []*peer.ConnectionInfo
-		listeners          map[string]chan UpdateEvent
-		listenersLock      sync.RWMutex
+		keyLock           sync.RWMutex
+		primaryPeerKey    crypto.PrivateKey
+		identityPublicKey crypto.PublicKey
+		cids              *ObjectCIDSyncList
+		contentTypes      *StringSyncList
+		certificates      *ObjectCertificateSyncList
+		addresses         *StringSyncList
+		relays            []*peer.ConnectionInfo
+		listeners         map[string]chan UpdateEvent
+		listenersLock     sync.RWMutex
 	}
 	UpdateEvent string
 )
@@ -55,7 +55,7 @@ const (
 	EventCIDsUpdated               UpdateEvent = "cidsUpdated"
 	EventAddressesUpdated          UpdateEvent = "addressesUpdated"
 	EventRelaysUpdated             UpdateEvent = "relaysUpdated"
-	EventPrimaryIdentityKeyUpdated UpdateEvent = "primaryIdentityKeyUpdated"
+	EventPrimaryIdentityKeyUpdated UpdateEvent = "identityPublicKeyUpdated"
 )
 
 func New() LocalPeer {
@@ -77,19 +77,10 @@ func (s *localPeer) PutPrimaryPeerKey(k crypto.PrivateKey) {
 	s.keyLock.Unlock()
 }
 
-func (s *localPeer) PutPrimaryIdentityKey(k crypto.PrivateKey) {
+func (s *localPeer) PutIdentityPublicKey(k crypto.PublicKey) {
 	s.keyLock.Lock()
-	s.primaryIdentityKey = k
+	s.identityPublicKey = k
 	s.keyLock.Unlock()
-	c, err := object.NewCertificate(
-		k,
-		s.GetPrimaryPeerKey().PublicKey(),
-	)
-	if err != nil {
-		// TODO should be able to return error, or not do this here
-		return
-	}
-	s.PutCertificate(c)
 	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
@@ -99,10 +90,10 @@ func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
 	return s.primaryPeerKey
 }
 
-func (s *localPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
+func (s *localPeer) GetIdentityPublicKey() crypto.PublicKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
-	return s.primaryIdentityKey
+	return s.identityPublicKey
 }
 
 func (s *localPeer) PutCertificate(c *object.Certificate) {
