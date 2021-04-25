@@ -52,4 +52,15 @@ func TestStore_Config(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"a": "1", "b": "1"}, got)
 	})
+
+	t.Run("del config", func(t *testing.T) {
+		err := store.Remove("a")
+		require.NoError(t, err)
+	})
+
+	t.Run("list configs", func(t *testing.T) {
+		got, err := store.List()
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"b": "1"}, got)
+	})
 }

@@ -116,3 +116,19 @@ func (p *SQLProvider) List() (map[string]string, error) {
 
 	return cfg, nil
 }
+
+func (p *SQLProvider) Remove(key string) error {
+	stmt, err := p.db.Prepare(`
+		DELETE FROM Preferences WHERE Key = ?
+	`)
+	if err != nil {
+		return fmt.Errorf("could not prepare statement: %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	if _, err := stmt.Exec(key); err != nil {
+		return fmt.Errorf("could not query: %w", err)
+	}
+
+	return nil
+}
