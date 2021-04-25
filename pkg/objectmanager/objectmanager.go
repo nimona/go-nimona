@@ -828,8 +828,8 @@ func (m *manager) Put(
 		if k := m.localpeer.GetPrimaryPeerKey().PublicKey(); !k.IsEmpty() {
 			ownPeer = owner.Equals(k)
 		}
-		if k := m.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
-			ownIdentity = owner.Equals(k.PublicKey())
+		if k := m.localpeer.GetIdentityPublicKey(); !k.IsEmpty() {
+			ownIdentity = owner.Equals(k)
 		}
 	}
 	if !ownPeer && !ownIdentity {

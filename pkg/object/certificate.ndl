@@ -2,10 +2,6 @@ package nimona.io/object
 
 object nimona.io/object.Certificate {
     nonce string
-    vendorName string
-    applicationName string
-    applicationDescription string
-    applicationURL string
     subject string type=nimona.io/crypto.PublicKey
     permissions repeated object type=nimona.io/object.CertificatePermission
     starts string
@@ -24,4 +20,11 @@ object nimona.io/object.CertificateRequest {
     applicationDescription string
     applicationURL string
     permissions repeated object type=nimona.io/object.CertificatePermission
+}
+
+object nimona.io/object.CertificateResponse {
+    signed bool
+    notes string
+    request object type=nimona.io/object.CertificateRequest
+    certificate object type=nimona.io/object.Certificate
 }

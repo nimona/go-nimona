@@ -8,16 +8,12 @@ import (
 
 type (
 	Certificate struct {
-		Metadata               Metadata
-		Nonce                  string
-		VendorName             string
-		ApplicationName        string
-		ApplicationDescription string
-		ApplicationURL         string
-		Subject                crypto.PublicKey
-		Permissions            []CertificatePermission
-		Starts                 string
-		Expires                string
+		Metadata    Metadata
+		Nonce       string
+		Subject     crypto.PublicKey
+		Permissions []CertificatePermission
+		Starts      string
+		Expires     string
 	}
 	CertificatePermission struct {
 		Metadata Metadata
@@ -32,6 +28,13 @@ type (
 		ApplicationDescription string
 		ApplicationURL         string
 		Permissions            []CertificatePermission
+	}
+	CertificateResponse struct {
+		Metadata    Metadata
+		Signed      bool
+		Notes       string
+		Request     CertificateRequest
+		Certificate Certificate
 	}
 )
 
@@ -54,10 +57,6 @@ func (e Certificate) ToObject() *Object {
 		Data:     Map{},
 	}
 	r.Data["nonce"] = String(e.Nonce)
-	r.Data["vendorName"] = String(e.VendorName)
-	r.Data["applicationName"] = String(e.ApplicationName)
-	r.Data["applicationDescription"] = String(e.ApplicationDescription)
-	r.Data["applicationURL"] = String(e.ApplicationURL)
 	if v, err := e.Subject.MarshalString(); err == nil {
 		r.Data["subject"] = String(v)
 	}
@@ -88,26 +87,6 @@ func (e *Certificate) FromObject(o *Object) error {
 	if v, ok := o.Data["nonce"]; ok {
 		if t, ok := v.(String); ok {
 			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["vendorName"]; ok {
-		if t, ok := v.(String); ok {
-			e.VendorName = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationName"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationName = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationDescription"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationDescription = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationURL"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationURL = string(t)
 		}
 	}
 	if v, ok := o.Data["subject"]; ok {
@@ -286,6 +265,74 @@ func (e *CertificateRequest) FromObject(o *Object) error {
 				if err := es.UnmarshalObject((iv)); err == nil {
 					e.Permissions[i] = es
 				}
+			}
+		}
+	}
+	return nil
+}
+
+func (e *CertificateResponse) Type() string {
+	return "nimona.io/CertificateResponse"
+}
+
+func (e *CertificateResponse) MarshalMap() (Map, error) {
+	return e.ToObject().Map(), nil
+}
+
+func (e *CertificateResponse) MarshalObject() (*Object, error) {
+	return e.ToObject(), nil
+}
+
+func (e CertificateResponse) ToObject() *Object {
+	r := &Object{
+		Type:     "nimona.io/CertificateResponse",
+		Metadata: e.Metadata,
+		Data:     Map{},
+	}
+	r.Data["signed"] = Bool(e.Signed)
+	r.Data["notes"] = String(e.Notes)
+	if v, err := e.Request.MarshalObject(); err == nil {
+		r.Data["request"] = (v)
+	}
+	if v, err := e.Certificate.MarshalObject(); err == nil {
+		r.Data["certificate"] = (v)
+	}
+	return r
+}
+
+func (e *CertificateResponse) UnmarshalMap(m Map) error {
+	return e.FromObject(FromMap(m))
+}
+
+func (e *CertificateResponse) UnmarshalObject(o *Object) error {
+	return e.FromObject(o)
+}
+
+func (e *CertificateResponse) FromObject(o *Object) error {
+	e.Metadata = o.Metadata
+	if v, ok := o.Data["signed"]; ok {
+		if t, ok := v.(Bool); ok {
+			e.Signed = bool(t)
+		}
+	}
+	if v, ok := o.Data["notes"]; ok {
+		if t, ok := v.(String); ok {
+			e.Notes = string(t)
+		}
+	}
+	if v, ok := o.Data["request"]; ok {
+		if ev, ok := v.(*Object); ok {
+			es := CertificateRequest{}
+			if err := es.UnmarshalObject((ev)); err == nil {
+				e.Request = es
+			}
+		}
+	}
+	if v, ok := o.Data["certificate"]; ok {
+		if ev, ok := v.(*Object); ok {
+			es := Certificate{}
+			if err := es.UnmarshalObject((ev)); err == nil {
+				e.Certificate = es
 			}
 		}
 	}

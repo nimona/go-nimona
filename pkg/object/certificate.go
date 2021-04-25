@@ -9,33 +9,43 @@ import (
 func NewCertificate(
 	issuer crypto.PrivateKey,
 	req CertificateRequest,
-) (*Certificate, error) {
-	c := &Certificate{
+	sign bool,
+	notes string,
+) (*CertificateResponse, error) {
+	now := time.Now().UTC()
+	exp := now.Add(time.Hour * 24 * 365)
+	nowString := now.Format(time.RFC3339)
+	expString := exp.Format(time.RFC3339)
+	crt := &Certificate{
 		Metadata: Metadata{
-			Owner: issuer.PublicKey(),
-			Datetime: time.Now().
-				UTC().
-				Format(time.RFC3339),
+			Owner:    issuer.PublicKey(),
+			Datetime: nowString,
 		},
-		Nonce:                  req.Nonce,
-		VendorName:             req.VendorName,
-		ApplicationName:        req.ApplicationName,
-		ApplicationDescription: req.ApplicationDescription,
-		ApplicationURL:         req.ApplicationURL,
-		Subject:                req.Metadata.Owner,
-		Permissions:            req.Permissions,
-		Starts: time.Now().
-			UTC().
-			Format(time.RFC3339),
-		Expires: time.Now().
-			UTC().
-			Add(time.Hour * 24 * 365).
-			Format(time.RFC3339),
+		Nonce:       req.Nonce,
+		Subject:     req.Metadata.Owner,
+		Permissions: req.Permissions,
+		Starts:      nowString,
+		Expires:     expString,
 	}
-	s, err := NewSignature(issuer, c.ToObject())
+	crtSig, err := NewSignature(issuer, crt.ToObject())
 	if err != nil {
 		return nil, err
 	}
-	c.Metadata.Signature = s
-	return c, nil
+	crt.Metadata.Signature = crtSig
+	res := &CertificateResponse{
+		Metadata: Metadata{
+			Owner:    issuer.PublicKey(),
+			Datetime: nowString,
+		},
+		Signed:      sign,
+		Notes:       notes,
+		Request:     req,
+		Certificate: *crt,
+	}
+	resSig, err := NewSignature(issuer, res.ToObject())
+	if err != nil {
+		return nil, err
+	}
+	res.Metadata.Signature = resSig
+	return res, nil
 }
