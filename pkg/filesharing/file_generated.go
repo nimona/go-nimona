@@ -18,7 +18,7 @@ type (
 	}
 	TransferRequest struct {
 		Metadata object.Metadata
-		File     *File
+		File     File
 		Nonce    string
 	}
 	TransferResponse struct {
@@ -142,13 +142,8 @@ func (e TransferRequest) ToObject() *object.Object {
 		Metadata: e.Metadata,
 		Data:     object.Map{},
 	}
-	if e.File != nil {
-		v, err := e.File.MarshalObject()
-		if err != nil {
-			// TODO error
-		} else {
-			r.Data["file"] = (v)
-		}
+	if v, err := e.File.MarshalObject(); err == nil {
+		r.Data["file"] = (v)
 	}
 	r.Data["nonce"] = object.String(e.Nonce)
 	return r
@@ -166,10 +161,8 @@ func (e *TransferRequest) FromObject(o *object.Object) error {
 	e.Metadata = o.Metadata
 	if v, ok := o.Data["file"]; ok {
 		if ev, ok := v.(*object.Object); ok {
-			es := &File{}
-			if err := es.UnmarshalObject((ev)); err != nil {
-				// TODO error
-			} else {
+			es := File{}
+			if err := es.UnmarshalObject((ev)); err == nil {
 				e.File = es
 			}
 		}

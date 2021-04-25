@@ -89,7 +89,7 @@ func Test_fileSharer_Listen(t *testing.T) {
 		Name: "testfile",
 	}
 	req := &filesharing.TransferRequest{
-		File: &file1,
+		File: file1,
 	}
 
 	type fields struct {
@@ -167,7 +167,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 		Chunks: []object.CID{"1234"},
 	}
 	req := &filesharing.TransferRequest{
-		File:  &file1,
+		File:  file1,
 		Nonce: "1234",
 	}
 	chunk1 := blob.Chunk{Data: []byte("asdf")}
