@@ -79,7 +79,7 @@ func (fsh *fileSharer) RequestTransfer(
 ) (string, error) {
 	nonce := rand.String(8)
 	req := &TransferRequest{
-		File:  file,
+		File:  *file,
 		Nonce: nonce,
 	}
 

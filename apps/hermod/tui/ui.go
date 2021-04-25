@@ -368,7 +368,7 @@ func (h *hermod) sendFile(
 		transfer: &filesharing.Transfer{
 			Request: filesharing.TransferRequest{
 				Nonce: nonce,
-				File:  fr,
+				File:  *fr,
 			},
 			Peer: peerKey,
 		},

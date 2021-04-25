@@ -17,4 +17,4 @@ signed object nimona.io/TransferRequest {
 signed object nimona.io/TransferResponse {
     nonce string
     accepted bool
-} 
+}
