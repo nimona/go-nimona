@@ -733,13 +733,7 @@ func (w *network) Send(
 
 	var err error
 	if k := w.localpeer.GetPrimaryPeerKey(); !k.IsEmpty() {
-		o, err = signAll(k, o)
-		if err != nil {
-			return err
-		}
-	}
-
-	if k := w.localpeer.GetPrimaryIdentityKey(); !k.IsEmpty() {
+		// TODO(geoah) we should be passing the certificates to signAll
 		o, err = signAll(k, o)
 		if err != nil {
 			return err

@@ -122,7 +122,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 
 	localPeer := localpeer.New()
 	localPeer.PutPrimaryPeerKey(localPeerKey)
-	localPeer.PutPrimaryIdentityKey(localPeerKey)
+	localPeer.PutIdentityPublicKey(localPeerKey.PublicKey())
 
 	f00 := peer1.ToObject()
 	f01 := &object.Object{
@@ -271,7 +271,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				Object:    nil,
 				RequestID: "8",
 			}.ToObject(),
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
@@ -499,7 +500,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 
 	localPeer := localpeer.New()
 	localPeer.PutPrimaryPeerKey(localPeerKey)
-	localPeer.PutPrimaryIdentityKey(localPeerKey)
+	localPeer.PutIdentityPublicKey(localPeerKey.PublicKey())
 
 	f00 := &object.Object{
 		Type:     "foo",
@@ -714,7 +715,7 @@ func TestManager_Put(t *testing.T) {
 		"foo-complex",
 	)
 	testLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
-	testLocalPeer.PutPrimaryIdentityKey(testOwnPrivateKey)
+	testLocalPeer.PutIdentityPublicKey(testOwnPrivateKey.PublicKey())
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testObjectSimple := &object.Object{
 		Type: "foo",

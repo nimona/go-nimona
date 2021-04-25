@@ -106,7 +106,7 @@ func newDaemon(
 	)
 	require.NoError(t, err)
 	time.Sleep(time.Second)
-	d.LocalPeer().PutPrimaryIdentityKey(id)
+	d.LocalPeer().PutIdentityPublicKey(id.PublicKey())
 	d.LocalPeer().PutContentTypes(new(fixtures.TestStream).Type())
 	return d
 }

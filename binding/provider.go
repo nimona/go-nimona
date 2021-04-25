@@ -318,7 +318,7 @@ func (p *Provider) Put(
 			case "@peer":
 				obj.Metadata.Owner = p.local.GetPrimaryPeerKey().PublicKey()
 			case "@identity":
-				obj.Metadata.Owner = p.local.GetPrimaryIdentityKey().PublicKey()
+				obj.Metadata.Owner = p.local.GetIdentityPublicKey()
 			}
 		}
 		delete(obj.Data, "_setOwner:s")

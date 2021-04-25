@@ -36,7 +36,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	peer1 := &peer.ConnectionInfo{
-		PublicKey: localPeer1.GetPrimaryIdentityKey().PublicKey(),
+		PublicKey: localPeer1.GetIdentityPublicKey(),
 	}
 
 	type fields struct {
@@ -135,7 +135,7 @@ func newPeer() localpeer.LocalPeer {
 
 	kc := localpeer.New()
 	kc.PutPrimaryPeerKey(pk)
-	kc.PutPrimaryIdentityKey(pk1)
+	kc.PutIdentityPublicKey(pk1.PublicKey())
 
 	return kc
 }

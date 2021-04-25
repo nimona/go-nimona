@@ -47,7 +47,7 @@ func New(
 
 	// if there is no primary identity key set, we should wait for one to be
 	// set before initializing the manager
-	if m.localpeer.GetPrimaryIdentityKey().IsEmpty() {
+	if m.localpeer.GetIdentityPublicKey().IsEmpty() {
 		localPeerUpdates, lpDone := m.localpeer.ListenForUpdates()
 		go func() {
 			for {
@@ -135,7 +135,7 @@ func (m *FeedManager) createFeed(
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
-		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
+		m.localpeer.GetIdentityPublicKey(),
 		getTypeForFeed(registeredType),
 	)
 	feedRootObj := feedRoot.ToObject()
@@ -260,7 +260,7 @@ func (m *FeedManager) createFeed(
 func (m *FeedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
-	identityKey := m.localpeer.GetPrimaryIdentityKey().PublicKey()
+	identityKey := m.localpeer.GetIdentityPublicKey()
 	peerKey := m.localpeer.GetPrimaryPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
@@ -354,7 +354,7 @@ func (m *FeedManager) handleObjects(
 // 	recipients ...*peer.ConnectionInfo,
 // ) (object.ReadCloser, error) {
 // 	feedRoot := GetFeedRoot(
-// 		m.localpeer.GetPrimaryIdentityKey().PublicKey(),
+// 		m.localpeer.GetIdentityPublicKey().PublicKey(),
 // 		getTypeForFeed(objectType),
 // 	)
 

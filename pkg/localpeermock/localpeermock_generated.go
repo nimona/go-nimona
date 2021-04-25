@@ -107,18 +107,18 @@ func (mr *MockLocalPeerMockRecorder) GetContentTypes() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentTypes", reflect.TypeOf((*MockLocalPeer)(nil).GetContentTypes))
 }
 
-// GetPrimaryIdentityKey mocks base method.
-func (m *MockLocalPeer) GetPrimaryIdentityKey() crypto.PrivateKey {
+// GetIdentityPublicKey mocks base method.
+func (m *MockLocalPeer) GetIdentityPublicKey() crypto.PrivateKey {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPrimaryIdentityKey")
+	ret := m.ctrl.Call(m, "GetIdentityPublicKey")
 	ret0, _ := ret[0].(crypto.PrivateKey)
 	return ret0
 }
 
-// GetPrimaryIdentityKey indicates an expected call of GetPrimaryIdentityKey.
-func (mr *MockLocalPeerMockRecorder) GetPrimaryIdentityKey() *gomock.Call {
+// GetIdentityPublicKey indicates an expected call of GetIdentityPublicKey.
+func (mr *MockLocalPeerMockRecorder) GetIdentityPublicKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryIdentityKey", reflect.TypeOf((*MockLocalPeer)(nil).GetPrimaryIdentityKey))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIdentityPublicKey", reflect.TypeOf((*MockLocalPeer)(nil).GetIdentityPublicKey))
 }
 
 // GetPrimaryPeerKey mocks base method.
@@ -224,16 +224,16 @@ func (mr *MockLocalPeerMockRecorder) PutContentTypes(arg0 ...interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutContentTypes", reflect.TypeOf((*MockLocalPeer)(nil).PutContentTypes), arg0...)
 }
 
-// PutPrimaryIdentityKey mocks base method.
-func (m *MockLocalPeer) PutPrimaryIdentityKey(arg0 crypto.PrivateKey) {
+// PutIdentityPublicKey mocks base method.
+func (m *MockLocalPeer) PutIdentityPublicKey(arg0 crypto.PrivateKey) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PutPrimaryIdentityKey", arg0)
+	m.ctrl.Call(m, "PutIdentityPublicKey", arg0)
 }
 
-// PutPrimaryIdentityKey indicates an expected call of PutPrimaryIdentityKey.
-func (mr *MockLocalPeerMockRecorder) PutPrimaryIdentityKey(arg0 interface{}) *gomock.Call {
+// PutIdentityPublicKey indicates an expected call of PutIdentityPublicKey.
+func (mr *MockLocalPeerMockRecorder) PutIdentityPublicKey(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutPrimaryIdentityKey", reflect.TypeOf((*MockLocalPeer)(nil).PutPrimaryIdentityKey), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutIdentityPublicKey", reflect.TypeOf((*MockLocalPeer)(nil).PutIdentityPublicKey), arg0)
 }
 
 // PutPrimaryPeerKey mocks base method.
