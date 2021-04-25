@@ -154,65 +154,66 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		args    args
 		want    *object.Object
 		wantErr bool
-	}{{
-		name: "object returned",
-		fields: fields{
-			storeHandler: func(t *testing.T) objectstore.Store {
-				m := objectstoremock.NewMockStore(gomock.NewController(t))
-				m.EXPECT().Get(f01.CID()).Return(object.Copy(f01), nil).MaxTimes(2)
-				m.EXPECT().GetPinned().Return(nil, nil)
-				return m
+	}{
+		{
+			name: "object returned",
+			fields: fields{
+				storeHandler: func(t *testing.T) objectstore.Store {
+					m := objectstoremock.NewMockStore(gomock.NewController(t))
+					m.EXPECT().Get(f01.CID()).Return(object.Copy(f01), nil).MaxTimes(2)
+					m.EXPECT().GetPinned().Return(nil, nil)
+					return m
+				},
+				networkHandler: func(
+					t *testing.T,
+					ctx context.Context,
+					wg *sync.WaitGroup,
+					want *object.Object,
+				) network.Network {
+					m := networkmock.NewMockNetwork(gomock.NewController(t))
+					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().Subscribe(gomock.Any()).Return(
+						&networkmock.MockSubscriptionSimple{
+							Objects: []*network.Envelope{{
+								Payload: object.Request{
+									RequestID: "8",
+									ObjectCID: f01.CID(),
+								}.ToObject(),
+							}},
+						},
+					)
+					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+						DoAndReturn(func(
+							ctx context.Context,
+							obj *object.Object,
+							recipient crypto.PublicKey,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						})
+					return m
+				},
+				resolver: func(t *testing.T) resolver.Resolver {
+					m := resolvermock.NewMockResolver(
+						gomock.NewController(t),
+					)
+					return m
+				},
 			},
-			networkHandler: func(
-				t *testing.T,
-				ctx context.Context,
-				wg *sync.WaitGroup,
-				want *object.Object,
-			) network.Network {
-				m := networkmock.NewMockNetwork(gomock.NewController(t))
-				m.EXPECT().LocalPeer().Return(localPeer)
-				m.EXPECT().Subscribe(gomock.Any()).Return(
-					&networkmock.MockSubscriptionSimple{
-						Objects: []*network.Envelope{{
-							Payload: object.Request{
-								RequestID: "8",
-								ObjectCID: f01.CID(),
-							}.ToObject(),
-						}},
-					},
-				)
-				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					DoAndReturn(func(
-						ctx context.Context,
-						obj *object.Object,
-						recipient crypto.PublicKey,
-					) error {
-						assert.Equal(t, want, obj)
-						wg.Done()
-						return nil
-					})
-				return m
+			args: args{
+				ctx:     context.Background(),
+				rootCID: f00.CID(),
+				peer:    peer1,
 			},
-			resolver: func(t *testing.T) resolver.Resolver {
-				m := resolvermock.NewMockResolver(
-					gomock.NewController(t),
-				)
-				return m
-			},
+			want: object.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				Object:    f01,
+				RequestID: "8",
+			}.ToObject(),
 		},
-		args: args{
-			ctx:     context.Background(),
-			rootCID: f00.CID(),
-			peer:    peer1,
-		},
-		want: object.Response{
-			Metadata: object.Metadata{
-				Owner: localPeerKey.PublicKey(),
-			},
-			Object:    f01,
-			RequestID: "8",
-		}.ToObject(),
-	},
 		{
 			name: "object missing, return empty response",
 			fields: fields{
