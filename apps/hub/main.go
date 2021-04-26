@@ -27,7 +27,9 @@ import (
 	"github.com/gotailwindcss/tailwind/twhandler"
 	"github.com/gotailwindcss/tailwind/twpurge"
 	"github.com/shurcooL/httpfs/vfsutil"
+	"github.com/skip2/go-qrcode"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -159,12 +161,38 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var csr *object.CertificateRequest
+
 	if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
 		privateIdentityKey := &crypto.PrivateKey{}
-		fmt.Println("GOT ID", string(v))
 		if err := privateIdentityKey.UnmarshalString(v); err == nil {
-			d.LocalPeer().PutPrimaryIdentityKey(*privateIdentityKey)
+			d.LocalPeer().PutIdentityPublicKey(privateIdentityKey.PublicKey())
 		}
+	} else {
+		csr = &object.CertificateRequest{
+			Metadata: object.Metadata{
+				Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			},
+			Nonce:                  rand.String(12),
+			VendorName:             "Nimona",
+			VendorURL:              "https://nimona.io",
+			ApplicationName:        "Hub",
+			ApplicationDescription: "Nimona Hub",
+			ApplicationURL:         "https://nimona.io/hub",
+			Permissions: []object.CertificatePermission{{
+				Metadata: object.Metadata{
+					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				},
+				Types:   []string{"*"},
+				Actions: []string{"*"},
+			}},
+		}
+		k := d.LocalPeer().GetPrimaryPeerKey()
+		csrSig, err := object.NewSignature(k, csr.ToObject())
+		if err != nil {
+			log.Fatal(err)
+		}
+		csr.Metadata.Signature = csrSig
 	}
 
 	cssAssets, _ := fs.Sub(assets, "assets/css")
@@ -228,13 +256,13 @@ func main() {
 	}()
 
 	go func() {
-		k := d.LocalPeer().GetPrimaryIdentityKey()
+		k := d.LocalPeer().GetIdentityPublicKey()
 		if k.IsEmpty() {
 			return
 		}
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.PublicKey(),
+				Owner: k,
 			},
 		}
 		contactEvents := d.ObjectManager().Subscribe(
@@ -305,6 +333,19 @@ func main() {
 		}
 	})
 
+	r.Get("/identity/csr.png", func(w http.ResponseWriter, r *http.Request) {
+		b, _ := json.Marshal(csr.ToObject())
+
+		q, _ := qrcode.New(
+			string(b),
+			qrcode.Medium,
+		)
+		q.DisableBorder = true
+		png, _ := q.PNG(256)
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(png)
+	})
+
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
 		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
@@ -313,13 +354,20 @@ func main() {
 			PrivateBIP39 string
 			Show         bool
 			Link         bool
+			CSR          *object.CertificateRequest
 		}{
 			Show: showMnemonic,
 			Link: linkMnemonic,
+			CSR:  csr,
 		}
-		if k := d.LocalPeer().GetPrimaryIdentityKey(); !k.IsEmpty() {
-			values.PublicKey = k.PublicKey().String()
-			values.PrivateBIP39 = k.BIP39()
+		if k := d.LocalPeer().GetIdentityPublicKey(); !k.IsEmpty() {
+			values.PublicKey = k.String()
+			if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
+				privateIdentityKey := &crypto.PrivateKey{}
+				if err := privateIdentityKey.UnmarshalString(v); err == nil {
+					values.PrivateBIP39 = privateIdentityKey.BIP39()
+				}
+			}
 		}
 		err := tplIdentity.Execute(
 			w,
@@ -338,7 +386,7 @@ func main() {
 			return
 		}
 		// TODO persist key in config
-		d.LocalPeer().PutPrimaryIdentityKey(k)
+		d.LocalPeer().PutIdentityPublicKey(k.PublicKey())
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
@@ -356,12 +404,22 @@ func main() {
 			return
 		}
 		// TODO persist key in config
-		d.LocalPeer().PutPrimaryIdentityKey(k)
+		d.LocalPeer().PutIdentityPublicKey(k.PublicKey())
+		http.Redirect(w, r, "/identity", http.StatusFound)
+	})
+
+	r.Get("/identity/forget", func(w http.ResponseWriter, r *http.Request) {
+		if err := d.Preferences().Remove(pKeyIdentity); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// TODO truncate db
+		d.LocalPeer().PutIdentityPublicKey(crypto.EmptyPublicKey)
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetPrimaryIdentityKey()
+		k := d.LocalPeer().GetIdentityPublicKey()
 		contacts := map[string]string{} // publickey/alias
 		values := struct {
 			IdentityLinked bool
@@ -385,7 +443,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.PublicKey(),
+				Owner: k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -441,7 +499,7 @@ func main() {
 	})
 
 	r.Post("/contacts/add", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetPrimaryIdentityKey()
+		k := d.LocalPeer().GetIdentityPublicKey()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -464,7 +522,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.PublicKey(),
+				Owner: k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -485,7 +543,7 @@ func main() {
 		}
 		rel := relationship.Added{
 			Metadata: object.Metadata{
-				Owner:  k.PublicKey(),
+				Owner:  k,
 				Stream: contactsStreamRootCID,
 			},
 			Alias:       alias,
@@ -510,7 +568,7 @@ func main() {
 	})
 
 	r.Get("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetPrimaryIdentityKey()
+		k := d.LocalPeer().GetIdentityPublicKey()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -533,7 +591,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.PublicKey(),
+				Owner: k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -553,7 +611,7 @@ func main() {
 		}
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
-				Owner:  k.PublicKey(),
+				Owner:  k,
 				Stream: contactsStreamRootCID,
 			},
 			RemoteParty: remotePartyKey,
