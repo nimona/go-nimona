@@ -122,6 +122,17 @@ var (
 				"assets/frame.objects.html",
 			),
 	)
+	tplCertificates = template.Must(
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			Funcs(tplFuncMap).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/inner.certificate.html",
+				"assets/frame.certificates.html",
+			),
+	)
 	tplObject = template.Must(
 		template.New("base.html").
 			Funcs(sprig.FuncMap()).
@@ -161,38 +172,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var csr *object.CertificateRequest
-
 	if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
 		privateIdentityKey := &crypto.PrivateKey{}
 		if err := privateIdentityKey.UnmarshalString(v); err == nil {
 			d.LocalPeer().PutIdentityPublicKey(privateIdentityKey.PublicKey())
 		}
-	} else {
-		csr = &object.CertificateRequest{
-			Metadata: object.Metadata{
-				Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-			},
-			Nonce:                  rand.String(12),
-			VendorName:             "Nimona",
-			VendorURL:              "https://nimona.io",
-			ApplicationName:        "Hub",
-			ApplicationDescription: "Nimona Hub",
-			ApplicationURL:         "https://nimona.io/hub",
-			Permissions: []object.CertificatePermission{{
-				Metadata: object.Metadata{
-					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
-				},
-				Types:   []string{"*"},
-				Actions: []string{"*"},
-			}},
-		}
-		k := d.LocalPeer().GetPrimaryPeerKey()
-		csrSig, err := object.NewSignature(k, csr.ToObject())
-		if err != nil {
-			log.Fatal(err)
-		}
-		csr.Metadata.Signature = csrSig
 	}
 
 	cssAssets, _ := fs.Sub(assets, "assets/css")
@@ -221,7 +205,7 @@ func main() {
 				),
 			)
 			conv := tailwind.New(w, dist)
-			conv.SetPurgeChecker(pscanner.Map())
+			// conv.SetPurgeChecker(pscanner.Map())
 			return conv
 		},
 	)
@@ -334,10 +318,9 @@ func main() {
 	})
 
 	r.Get("/identity/csr.png", func(w http.ResponseWriter, r *http.Request) {
-		b, _ := json.Marshal(csr.ToObject())
-
+		cid := r.URL.Query().Get("cid")
 		q, _ := qrcode.New(
-			string(b),
+			"nimona://identity/csr?cid="+cid,
 			qrcode.Medium,
 		)
 		q.DisableBorder = true
@@ -349,6 +332,41 @@ func main() {
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
 		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
+		var csr *object.CertificateRequest
+		if linkMnemonic {
+			csr = &object.CertificateRequest{
+				Metadata: object.Metadata{
+					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				},
+				Nonce:                  rand.String(12),
+				VendorName:             "Nimona",
+				VendorURL:              "https://nimona.io",
+				ApplicationName:        "Hub",
+				ApplicationDescription: "Nimona Hub",
+				ApplicationURL:         "https://nimona.io/hub",
+				Permissions: []object.CertificatePermission{{
+					Metadata: object.Metadata{
+						Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+					},
+					Types:   []string{"*"},
+					Actions: []string{"*"},
+				}},
+			}
+			k := d.LocalPeer().GetPrimaryPeerKey()
+			csrSig, err := object.NewSignature(k, csr.ToObject())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			csr.Metadata.Signature = csrSig
+			if err = d.ObjectStore().PutWithTTL(
+				csr.ToObject(),
+				time.Hour,
+			); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 		values := struct {
 			PublicKey    string
 			PrivateBIP39 string
@@ -395,6 +413,37 @@ func main() {
 			r.PostFormValue("mnemonic"),
 			crypto.IdentityKey,
 		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csrCID := object.CID(r.PostFormValue("csr"))
+		if err = d.ObjectStore().Pin(csrCID); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csrObj, err := d.ObjectStore().Get(csrCID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csr := &object.CertificateRequest{}
+		err = csr.FromObject(csrObj)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csrRes, err := object.NewCertificate(k, *csr, true, "Signed by Hub")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = d.ObjectStore().Put(csrRes.ToObject())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = d.ObjectStore().Pin(csrRes.ToObject().CID())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -724,6 +773,52 @@ func main() {
 			}
 		}
 		err = tplObject.Execute(
+			w,
+			values,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/certificates", func(w http.ResponseWriter, r *http.Request) {
+		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
+			sqlobjectstore.FilterByObjectType(
+				new(object.CertificateResponse).Type(),
+			),
+			sqlobjectstore.FilterByOwner(
+				d.LocalPeer().GetIdentityPublicKey(),
+			),
+		)
+		if err != nil && err != objectstore.ErrNotFound {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		values := struct {
+			URL                 string
+			CertificateReponses []*object.CertificateResponse
+		}{
+			URL:                 r.URL.String(),
+			CertificateReponses: []*object.CertificateResponse{},
+		}
+		if err != objectstore.ErrNotFound {
+			for {
+				o, err := reader.Read()
+				if err != nil {
+					break
+				}
+				crtRes := &object.CertificateResponse{}
+				if err := crtRes.FromObject(o); err != nil {
+					continue
+				}
+				values.CertificateReponses = append(
+					values.CertificateReponses,
+					crtRes,
+				)
+			}
+		}
+		err = tplCertificates.Execute(
 			w,
 			values,
 		)

@@ -56,7 +56,7 @@
               </li>
             </ul>
             <p class="pt-2">You can either scan this QR code with your identity app, or paste the CSR CID below in the app.</p>
-            <img src="/identity/csr.png" alt="CSR" width="256" class="pt-2">
+            <img src="/identity/csr.png?cid={{ .CSR.ToObject.CID }}" alt="CSR" width="256" class="pt-2">
             <code class="pt-2 block">{{ .CSR.ToObject.CID }}</code>
           </dd>
           <dt class="text-sm font-medium text-gray-500">
@@ -64,6 +64,7 @@
           </dt>
           <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
             <form action="/identity/link" method="post">
+              <input type="hidden" name="csr" value="{{ .CSR.ToObject.CID }}">
               <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" rows="4" name="mnemonic"></textarea>
               <button type="submit" class="whitespace-nowrap inline-flex items-center justify-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs text-white bg-indigo-600 hover:bg-indigo-700">
                 Link

@@ -30,7 +30,11 @@ a:hover {
 }
 
 .table-button {
-    @apply text-center px-1 py-1 w-full rounded-md text-xs text-white block;
+    @apply text-center w-full rounded-md text-xs text-white block;
+}
+
+table .table-button {
+    @apply p-1;
 }
 
 .table-button.primary {
