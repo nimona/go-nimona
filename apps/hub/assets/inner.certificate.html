@@ -1,0 +1,24 @@
+<tr id="contact-{{ .Certificate.ToObject.CID }}">
+  <td class="px-4 py-2 whitespace-nowrap">
+    {{- if .Request.VendorURL }}
+      <a href="{{ .Request.VendorURL }}">{{ .Request.VendorName }}</a>
+    {{- else }}
+      {{ .Request.VendorName }}
+    {{- end }}
+  </td>
+  <td class="px-4 py-2 whitespace-nowrap">
+    {{- if .Request.ApplicationURL }}
+      <a href="{{ .Request.ApplicationURL }}">{{ .Request.ApplicationName }}</a>
+    {{- else }}
+      {{ .Request.ApplicationName }}
+    {{- end }}
+  </td>
+  <td class="px-4 py-2 whitespace-nowrap">
+    {{ toDate "2006-01-02T15:04:05Z07:00" .Certificate.Expires | date "02/01/2006" }}
+  </td>
+  <!-- <td class="px-2 py-2 whitespace-nowrap">
+    <a href="/certificates/revoke?cid={{ .Certificate.ToObject.CID }}" class="table-button danger">
+      Revoke
+    </button>
+  </td> -->
+</tr>
