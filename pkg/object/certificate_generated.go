@@ -24,6 +24,7 @@ type (
 		Metadata               Metadata
 		Nonce                  string
 		VendorName             string
+		VendorURL              string
 		ApplicationName        string
 		ApplicationDescription string
 		ApplicationURL         string
@@ -207,6 +208,7 @@ func (e CertificateRequest) ToObject() *Object {
 	}
 	r.Data["nonce"] = String(e.Nonce)
 	r.Data["vendorName"] = String(e.VendorName)
+	r.Data["vendorURL"] = String(e.VendorURL)
 	r.Data["applicationName"] = String(e.ApplicationName)
 	r.Data["applicationDescription"] = String(e.ApplicationDescription)
 	r.Data["applicationURL"] = String(e.ApplicationURL)
@@ -240,6 +242,11 @@ func (e *CertificateRequest) FromObject(o *Object) error {
 	if v, ok := o.Data["vendorName"]; ok {
 		if t, ok := v.(String); ok {
 			e.VendorName = string(t)
+		}
+	}
+	if v, ok := o.Data["vendorURL"]; ok {
+		if t, ok := v.(String); ok {
+			e.VendorURL = string(t)
 		}
 	}
 	if v, ok := o.Data["applicationName"]; ok {

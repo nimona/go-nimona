@@ -16,6 +16,7 @@ object nimona.io/object.CertificatePermission {
 object nimona.io/object.CertificateRequest {
     nonce string
     vendorName string
+    vendorURL string
     applicationName string
     applicationDescription string
     applicationURL string
