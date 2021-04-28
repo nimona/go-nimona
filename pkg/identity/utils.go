@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/objectmanager"
 )
 
+// TODO Implement
 func Lookup(
 	ctx context.Context,
 	idKey crypto.PublicKey,
@@ -33,11 +34,14 @@ func Lookup(
 		return nil, fmt.Errorf("error looking up stream providers, %w", err)
 	}
 
-	man.RequestStream(
+	_, err = man.RequestStream(
 		ctx,
 		streamRootCID,
 		recipients...,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to request stream, %w", err)
+	}
 
 	return nil, fmt.Errorf("not implemented")
 }
