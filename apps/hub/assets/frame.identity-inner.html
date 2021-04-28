@@ -73,27 +73,23 @@
     {{- if .Show }}
     <div>
       <code class="block mnemonic bg-white border-gray-200 border p-2 my-2 rounded-lg">{{ .PrivateBIP39 }}</code>
-      <a href="/identity" class="text-red-600 hover:text-red-700">Hide mnemonic phrase</a>
+      <a href="/identity" class="text-blue-600 hover:text-blue-700">Hide mnemonic phrase</a>
     </div>
     {{- else }}
     <div class="relative flex-auto">
-      <a href="/identity?show=true" class="text-red-600 hover:text-red-700">Show mnemonic phrase</a>
+      <a href="/identity?show=true" class="text-blue-600 hover:text-blue-700">Show mnemonic phrase</a>
     </div>
-    <div class="relative">
-      <a href="/identity/forget" class="table-button p-2 danger">
-        Forget identity
-      </a>
-    </div>
+    <a href="/identity/forget" class="relative block text-red-600 hover:text-red-700">
+      Forget identity
+    </a>
     {{- end }}
     {{- else }}
       <div class="relative flex-auto">
         The identity's private key is not stored locally.
       </div>
-      <div class="relative">
-        <a href="/identity/forget" class="table-button p-2 danger">
-          Forget identity
-        </a>
-      </div>
+      <a href="/identity/forget" class="relative block text-red-600 hover:text-red-700">
+        Forget identity
+      </a>
     {{- end }}
   </dd>
 </div>

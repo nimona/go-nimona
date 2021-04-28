@@ -12,17 +12,14 @@ a:hover {
 
 .cid { 
     @apply overflow-x-scroll;
-    font-size: 0.75em !important;
 }
 
 .public-key {
     @apply overflow-x-scroll;
-    font-size: 0.75em !important;
 }
 
 .private-key {
     @apply overflow-x-scroll;
-    font-size: 0.75em !important;
 }
 
 .table-button:hover {

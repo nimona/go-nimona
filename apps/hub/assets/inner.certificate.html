@@ -1,6 +1,6 @@
 <tr id="contact-{{ .Certificate.ToObject.CID }}">
   <td class="px-4 py-2 whitespace-nowrap">
-    <code class="public-key">{{ .Request.Metadata.Signature.Signer }}</code> {{ .Request.Nonce }}
+    <code class="public-key">{{ .Request.Metadata.Signature.Signer }}</code>
   </td>
   <td class="px-4 py-2 whitespace-nowrap">
     {{- if .Request.VendorURL }}

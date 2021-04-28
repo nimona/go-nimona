@@ -3,7 +3,7 @@
 {{- if .Types }}
 <div class="mx-auto mt-6 shadow overflow-hidden rounded-lg">
   <div class="bg-gray-100 border-b">
-    <h5 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filter objects by type</h5>
+    <h5 class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filter objects by type</h5>
   </div>
   <div class="bg-white p-3 grid grid-cols-3 gap-1">
     {{- range sortAlpha .Types }}
@@ -28,18 +28,18 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-100">
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Type
           </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             CID
           </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Stream
           </th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody class="bg-white divide-y divide-gray-200 text-xs">
         {{- if not .Objects }}
         <tr>
           <td class="px-2 py-2 whitespace-nowrap font-small text-gray-500 text-center" colspan="100%">
