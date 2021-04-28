@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Masterminds/sprig"
@@ -30,10 +31,12 @@ import (
 	"github.com/skip2/go-qrcode"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/certificateutils"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -46,7 +49,8 @@ import (
 var assets embed.FS
 
 const (
-	pKeyIdentity = "IDENTITY_PRIVATE_KEY"
+	pkKeyIdentity     = "IDENTITY_PRIVATE_KEY"
+	pkPeerCertificate = "PEER_CERTIFICATE_JSON"
 )
 
 var (
@@ -80,6 +84,16 @@ var (
 				assets,
 				"assets/base.html",
 				"assets/frame.identity.html",
+				"assets/frame.identity-inner.html",
+			),
+	)
+	tplIdentityInner = template.Must(
+		template.New("frame.identity-inner.html").
+			Funcs(sprig.FuncMap()).
+			Funcs(tplFuncMap).
+			ParseFS(
+				assets,
+				"assets/frame.identity-inner.html",
 			),
 	)
 	tplInnerPeerContentTypes = template.Must(
@@ -133,6 +147,16 @@ var (
 				"assets/frame.certificates.html",
 			),
 	)
+	tplCertificatesCsr = template.Must(
+		template.New("base.html").
+			Funcs(sprig.FuncMap()).
+			Funcs(tplFuncMap).
+			ParseFS(
+				assets,
+				"assets/base.html",
+				"assets/frame.certificates-csr.html",
+			),
+	)
 	tplObject = template.Must(
 		template.New("base.html").
 			Funcs(sprig.FuncMap()).
@@ -150,7 +174,92 @@ type (
 		Alias     string
 		PublicKey string
 	}
+	Hub struct {
+		daemon daemon.Daemon
+		// identity
+		sync.RWMutex
+		peerCertificateResponse *object.CertificateResponse
+		identityPrivateKey      *crypto.PrivateKey
+	}
 )
+
+// TODO(geoah): Not sure if we should be setting the identity public key from
+// both the certificate and the private key.
+
+func New(
+	dae daemon.Daemon,
+) (*Hub, error) {
+	h := &Hub{
+		daemon: dae,
+	}
+
+	if v, err := h.daemon.Preferences().Get(pkPeerCertificate); err == nil {
+		crtResObj := &object.Object{}
+		if err := json.Unmarshal([]byte(v), crtResObj); err != nil {
+			return nil, err
+		}
+		crtRes := &object.CertificateResponse{}
+		if err := crtRes.FromObject(crtResObj); err != nil {
+			return nil, err
+		}
+		h.peerCertificateResponse = crtRes
+	}
+
+	if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
+		privateIdentityKey := &crypto.PrivateKey{}
+		if err := privateIdentityKey.UnmarshalString(v); err != nil {
+			return nil, err
+		}
+		h.identityPrivateKey = privateIdentityKey
+	}
+
+	return h, nil
+}
+
+func (h *Hub) PutPeerCertificate(r *object.CertificateResponse) {
+	h.Lock()
+	defer h.Unlock()
+	h.daemon.ObjectStore().Pin(r.ToObject().CID())
+	h.daemon.ObjectStore().Put(r.ToObject())
+	h.peerCertificateResponse = r
+	b, _ := json.Marshal(r.ToObject())
+	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
+	h.daemon.LocalPeer().PutPeerCertificate(r)
+}
+
+func (h *Hub) PutIdentityPrivateKey(k crypto.PrivateKey) {
+	h.Lock()
+	defer h.Unlock()
+	h.identityPrivateKey = &k
+	h.daemon.Preferences().Put(pkKeyIdentity, k.String())
+}
+
+func (h *Hub) GetIdentityPrivateKey() *crypto.PrivateKey {
+	h.RLock()
+	defer h.RUnlock()
+	return h.identityPrivateKey
+}
+
+func (h *Hub) GetIdentityPublicKey() *crypto.PublicKey {
+	h.RLock()
+	defer h.RUnlock()
+	if h.peerCertificateResponse != nil {
+		// TODO(geoah) Owner or Signer? Can they be different? DOCUMENT
+		return &h.peerCertificateResponse.Metadata.Owner
+	}
+	return nil
+}
+
+func (h *Hub) ForgetIdentity() {
+	h.Lock()
+	defer h.Unlock()
+	h.daemon.Preferences().Remove(pkKeyIdentity)
+	h.daemon.Preferences().Remove(pkPeerCertificate)
+	h.daemon.LocalPeer().ForgetPeerCertificate()
+	h.identityPrivateKey = nil
+	h.peerCertificateResponse = nil
+	// TODO truncate db
+}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -172,11 +281,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
-		privateIdentityKey := &crypto.PrivateKey{}
-		if err := privateIdentityKey.UnmarshalString(v); err == nil {
-			d.LocalPeer().PutIdentityPublicKey(privateIdentityKey.PublicKey())
-		}
+	h, err := New(d)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	cssAssets, _ := fs.Sub(assets, "assets/css")
@@ -240,13 +347,13 @@ func main() {
 	}()
 
 	go func() {
-		k := d.LocalPeer().GetIdentityPublicKey()
-		if k.IsEmpty() {
+		k := h.GetIdentityPublicKey()
+		if k == nil {
 			return
 		}
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k,
+				Owner: *k,
 			},
 		}
 		contactEvents := d.ObjectManager().Subscribe(
@@ -359,9 +466,12 @@ func main() {
 				return
 			}
 			csr.Metadata.Signature = csrSig
-			if err = d.ObjectStore().PutWithTTL(
+			if _, err = d.ObjectManager().Put(
+				context.New(
+					context.WithParent(r.Context()),
+					context.WithTimeout(3*time.Second),
+				),
 				csr.ToObject(),
-				time.Hour,
 			); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -378,14 +488,33 @@ func main() {
 			Link: linkMnemonic,
 			CSR:  csr,
 		}
-		if k := d.LocalPeer().GetIdentityPublicKey(); !k.IsEmpty() {
-			values.PublicKey = k.String()
-			if v, err := d.Preferences().Get(pKeyIdentity); err == nil {
-				privateIdentityKey := &crypto.PrivateKey{}
-				if err := privateIdentityKey.UnmarshalString(v); err == nil {
-					values.PrivateBIP39 = privateIdentityKey.BIP39()
-				}
+		go func() {
+			csrResCh := certificateutils.WaitForCertificateResponse(
+				context.New(
+					context.WithTimeout(15*time.Minute),
+				),
+				d.Network(),
+				csr,
+			)
+			csrRes := <-csrResCh
+			if csrRes == nil {
+				return
 			}
+			h.PutPeerCertificate(csrRes)
+			values.PublicKey = h.GetIdentityPublicKey().String()
+			turboStream.SendEvent(
+				hotwire.StreamActionReplace,
+				"peer-identity",
+				tplIdentityInner,
+				values,
+			) // nolint: errcheck
+			// TODO figure out how to surface errors?
+		}()
+		if k := h.GetIdentityPublicKey(); k != nil {
+			values.PublicKey = k.String()
+		}
+		if k := h.GetIdentityPrivateKey(); k != nil {
+			values.PrivateBIP39 = k.BIP39()
 		}
 		err := tplIdentity.Execute(
 			w,
@@ -403,8 +532,42 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// TODO persist key in config
-		d.LocalPeer().PutIdentityPublicKey(k.PublicKey())
+		// TODO(geoah): also create a certificate
+		req := object.CertificateRequest{
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+			Nonce:                  rand.String(12),
+			VendorName:             "Nimona",
+			VendorURL:              "https://nimona.io",
+			ApplicationName:        "Hub",
+			ApplicationDescription: "Nimona Hub",
+			ApplicationURL:         "https://nimona.io/hub",
+			Permissions: []object.CertificatePermission{{
+				Metadata: object.Metadata{
+					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+				},
+				Types:   []string{"*"},
+				Actions: []string{"*"},
+			}},
+		}
+		req.Metadata.Signature, err = object.NewSignature(k, req.ToObject())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		crtRes, err := object.NewCertificate(
+			k,
+			req,
+			true,
+			"Created by Nimona Hub",
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		h.PutPeerCertificate(crtRes)
+		h.PutIdentityPrivateKey(k)
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
@@ -448,27 +611,18 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if err := d.Preferences().Put(pKeyIdentity, k.String()); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// TODO persist key in config
-		d.LocalPeer().PutIdentityPublicKey(k.PublicKey())
+		h.PutPeerCertificate(csrRes)
+		h.PutIdentityPrivateKey(k)
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/identity/forget", func(w http.ResponseWriter, r *http.Request) {
-		if err := d.Preferences().Remove(pKeyIdentity); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// TODO truncate db
-		d.LocalPeer().PutIdentityPublicKey(crypto.EmptyPublicKey)
+		h.ForgetIdentity()
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetIdentityPublicKey()
+		k := h.GetIdentityPublicKey()
 		contacts := map[string]string{} // publickey/alias
 		values := struct {
 			IdentityLinked bool
@@ -477,7 +631,7 @@ func main() {
 			IdentityLinked: false,
 			Contacts:       []Contact{},
 		}
-		if k.IsEmpty() {
+		if k == nil {
 			err := tplContacts.Execute(
 				w,
 				values,
@@ -492,7 +646,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k,
+				Owner: *k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -548,7 +702,7 @@ func main() {
 	})
 
 	r.Post("/contacts/add", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetIdentityPublicKey()
+		k := h.GetIdentityPublicKey()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -556,7 +710,7 @@ func main() {
 			IdentityLinked: false,
 			Contacts:       map[string]string{},
 		}
-		if k.IsEmpty() {
+		if k == nil {
 			err := tplContacts.Execute(
 				w,
 				values,
@@ -571,7 +725,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k,
+				Owner: *k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -592,7 +746,7 @@ func main() {
 		}
 		rel := relationship.Added{
 			Metadata: object.Metadata{
-				Owner:  k,
+				Owner:  *k,
 				Stream: contactsStreamRootCID,
 			},
 			Alias:       alias,
@@ -617,7 +771,7 @@ func main() {
 	})
 
 	r.Get("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
-		k := d.LocalPeer().GetIdentityPublicKey()
+		k := h.GetIdentityPublicKey()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -625,7 +779,7 @@ func main() {
 			IdentityLinked: false,
 			Contacts:       map[string]string{},
 		}
-		if k.IsEmpty() {
+		if k == nil {
 			err := tplContacts.Execute(
 				w,
 				values,
@@ -640,7 +794,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k,
+				Owner: *k,
 			},
 		}
 		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
@@ -660,7 +814,7 @@ func main() {
 		}
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
-				Owner:  k,
+				Owner:  *k,
 				Stream: contactsStreamRootCID,
 			},
 			RemoteParty: remotePartyKey,
@@ -783,25 +937,39 @@ func main() {
 	})
 
 	r.Get("/certificates", func(w http.ResponseWriter, r *http.Request) {
+		values := struct {
+			URL                 string
+			HasIdentity         bool
+			CertificateReponses []*object.CertificateResponse
+		}{
+			URL:                 r.URL.String(),
+			HasIdentity:         h.GetIdentityPublicKey() != nil,
+			CertificateReponses: []*object.CertificateResponse{},
+		}
+		if h.GetIdentityPublicKey() == nil {
+			err = tplCertificates.Execute(
+				w,
+				values,
+			)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			return
+		}
 		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
 			sqlobjectstore.FilterByObjectType(
 				new(object.CertificateResponse).Type(),
 			),
 			sqlobjectstore.FilterByOwner(
-				d.LocalPeer().GetIdentityPublicKey(),
+				*h.GetIdentityPublicKey(),
 			),
 		)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		values := struct {
-			URL                 string
-			CertificateReponses []*object.CertificateResponse
-		}{
-			URL:                 r.URL.String(),
-			CertificateReponses: []*object.CertificateResponse{},
-		}
+
 		if err != objectstore.ErrNotFound {
 			for {
 				o, err := reader.Read()
@@ -826,6 +994,117 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	})
+
+	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
+		csrCID := object.CID(r.PostFormValue("csrCID"))
+		csrProviders, err := d.Resolver().Lookup(
+			context.New(
+				context.WithParent(r.Context()),
+				context.WithTimeout(3*time.Second),
+			),
+			resolver.LookupByCID(csrCID),
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(csrProviders) == 0 {
+			http.Error(w, "no results", http.StatusNotFound)
+			return
+		}
+		csrObj, err := d.ObjectManager().Request(
+			context.New(
+				context.WithParent(r.Context()),
+				context.WithTimeout(3*time.Second),
+			),
+			csrCID,
+			csrProviders[0],
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = d.ObjectManager().Put(
+			context.New(
+				context.WithParent(r.Context()),
+				context.WithTimeout(time.Second),
+			),
+			csrObj,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csr := &object.CertificateRequest{}
+		err = csr.FromObject(csrObj)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		values := struct {
+			URL                string
+			CertificateRequest *object.CertificateRequest
+		}{
+			URL:                r.URL.String(),
+			CertificateRequest: csr,
+		}
+		err = tplCertificatesCsr.Execute(
+			w,
+			values,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
+		csrCID := object.CID(r.PostFormValue("csrCID"))
+		csrObj, err := d.ObjectStore().Get(csrCID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = d.ObjectStore().Pin(csrCID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		csr := &object.CertificateRequest{}
+		err = csr.FromObject(csrObj)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		privateIdentityKey := h.GetIdentityPrivateKey()
+		if privateIdentityKey == nil {
+			http.Error(w, "no private key", http.StatusInternalServerError)
+			return
+		}
+		csrRes, err := object.NewCertificate(
+			*privateIdentityKey,
+			*csr,
+			true,
+			"",
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = d.Network().Send(
+			context.New(
+				context.WithParent(r.Context()),
+				context.WithTimeout(3*time.Second),
+			),
+			csrRes.ToObject(),
+			csr.Metadata.Signature.Signer,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/certificates", http.StatusFound)
 	})
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {
