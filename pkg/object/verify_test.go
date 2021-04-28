@@ -212,6 +212,9 @@ func mustSignWithCertificate(
 			Actions: []string{"*"},
 		}},
 	}
+	resSig, err := NewSignature(peerKey, req.ToObject())
+	require.NoError(t, err)
+	req.Metadata.Signature = resSig
 	res, err := NewCertificate(identityKey, req, true, "")
 	require.NoError(t, err)
 	sig, err := NewSignature(peerKey, o)

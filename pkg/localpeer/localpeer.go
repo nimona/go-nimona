@@ -20,8 +20,6 @@ type (
 		// TODO merge peer/id methods, use .Usage to distinguish
 		GetPrimaryPeerKey() crypto.PrivateKey
 		PutPrimaryPeerKey(crypto.PrivateKey)
-		GetIdentityPublicKey() crypto.PublicKey
-		PutIdentityPublicKey(crypto.PublicKey)
 		GetCertificates() []*object.Certificate
 		PutCertificate(*object.Certificate)
 		GetCIDs() []object.CID
@@ -34,18 +32,26 @@ type (
 		PutRelays(...*peer.ConnectionInfo)
 		ConnectionInfo() *peer.ConnectionInfo
 		ListenForUpdates() (<-chan UpdateEvent, func())
+		// peer certificates
+		GetIdentityPublicKey() crypto.PublicKey
+		GetPeerCertificate() *object.CertificateResponse
+		PutPeerCertificate(*object.CertificateResponse)
+		ForgetPeerCertificate()
 	}
 	localPeer struct {
-		keyLock           sync.RWMutex
-		primaryPeerKey    crypto.PrivateKey
-		identityPublicKey crypto.PublicKey
-		cids              *ObjectCIDSyncList
-		contentTypes      *StringSyncList
-		certificates      *ObjectCertificateSyncList
-		addresses         *StringSyncList
-		relays            []*peer.ConnectionInfo
-		listeners         map[string]chan UpdateEvent
-		listenersLock     sync.RWMutex
+		keyLock        sync.RWMutex
+		primaryPeerKey crypto.PrivateKey
+		cids           *ObjectCIDSyncList
+		contentTypes   *StringSyncList
+		certificates   *ObjectCertificateSyncList
+		addresses      *StringSyncList
+		relays         []*peer.ConnectionInfo
+		// peer certificates
+		peerCertificateRequest  *object.CertificateRequest
+		peerCertificateResponse *object.CertificateResponse
+		// listeners
+		listeners     map[string]chan UpdateEvent
+		listenersLock sync.RWMutex
 	}
 	UpdateEvent string
 )
@@ -77,13 +83,6 @@ func (s *localPeer) PutPrimaryPeerKey(k crypto.PrivateKey) {
 	s.keyLock.Unlock()
 }
 
-func (s *localPeer) PutIdentityPublicKey(k crypto.PublicKey) {
-	s.keyLock.Lock()
-	s.identityPublicKey = k
-	s.keyLock.Unlock()
-	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
-}
-
 func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
@@ -93,7 +92,30 @@ func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
 func (s *localPeer) GetIdentityPublicKey() crypto.PublicKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
-	return s.identityPublicKey
+	if s.peerCertificateResponse == nil {
+		return crypto.EmptyPublicKey
+	}
+	return s.peerCertificateResponse.Metadata.Signature.Signer
+}
+
+func (s *localPeer) GetPeerCertificate() *object.CertificateResponse {
+	s.keyLock.Lock()
+	defer s.keyLock.Unlock()
+	return s.peerCertificateResponse
+}
+
+func (s *localPeer) PutPeerCertificate(c *object.CertificateResponse) {
+	s.keyLock.Lock()
+	s.peerCertificateResponse = c
+	s.keyLock.Unlock()
+	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
+}
+
+func (s *localPeer) ForgetPeerCertificate() {
+	s.keyLock.Lock()
+	s.peerCertificateResponse = nil
+	s.keyLock.Unlock()
+	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
 }
 
 func (s *localPeer) PutCertificate(c *object.Certificate) {
