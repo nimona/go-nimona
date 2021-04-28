@@ -20,8 +20,6 @@ type (
 		// TODO merge peer/id methods, use .Usage to distinguish
 		GetPrimaryPeerKey() crypto.PrivateKey
 		PutPrimaryPeerKey(crypto.PrivateKey)
-		GetCertificates() []*object.Certificate
-		PutCertificate(*object.Certificate)
 		GetCIDs() []object.CID
 		PutCIDs(...object.CID)
 		GetContentTypes() []string
@@ -43,7 +41,6 @@ type (
 		primaryPeerKey crypto.PrivateKey
 		cids           *ObjectCIDSyncList
 		contentTypes   *StringSyncList
-		certificates   *ObjectCertificateSyncList
 		addresses      *StringSyncList
 		relays         []*peer.ConnectionInfo
 		// peer certificates
@@ -57,11 +54,11 @@ type (
 )
 
 const (
-	EventContentTypesUpdated       UpdateEvent = "contentTypeUpdated"
-	EventCIDsUpdated               UpdateEvent = "cidsUpdated"
-	EventAddressesUpdated          UpdateEvent = "addressesUpdated"
-	EventRelaysUpdated             UpdateEvent = "relaysUpdated"
-	EventPrimaryIdentityKeyUpdated UpdateEvent = "identityPublicKeyUpdated"
+	EventContentTypesUpdated UpdateEvent = "contentTypeUpdated"
+	EventCIDsUpdated         UpdateEvent = "cidsUpdated"
+	EventAddressesUpdated    UpdateEvent = "addressesUpdated"
+	EventRelaysUpdated       UpdateEvent = "relaysUpdated"
+	EventIdentityKeyUpdated  UpdateEvent = "identityPublicKeyUpdated"
 )
 
 func New() LocalPeer {
@@ -69,7 +66,6 @@ func New() LocalPeer {
 		keyLock:       sync.RWMutex{},
 		cids:          &ObjectCIDSyncList{},
 		contentTypes:  &StringSyncList{},
-		certificates:  &ObjectCertificateSyncList{},
 		addresses:     &StringSyncList{},
 		relays:        []*peer.ConnectionInfo{},
 		listeners:     map[string]chan UpdateEvent{},
@@ -108,22 +104,14 @@ func (s *localPeer) PutPeerCertificate(c *object.CertificateResponse) {
 	s.keyLock.Lock()
 	s.peerCertificateResponse = c
 	s.keyLock.Unlock()
-	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
+	s.publishUpdate(EventIdentityKeyUpdated)
 }
 
 func (s *localPeer) ForgetPeerCertificate() {
 	s.keyLock.Lock()
 	s.peerCertificateResponse = nil
 	s.keyLock.Unlock()
-	s.publishUpdate(EventPrimaryIdentityKeyUpdated)
-}
-
-func (s *localPeer) PutCertificate(c *object.Certificate) {
-	s.certificates.Put(c)
-}
-
-func (s *localPeer) GetCertificates() []*object.Certificate {
-	return s.certificates.List()
+	s.publishUpdate(EventIdentityKeyUpdated)
 }
 
 func (s *localPeer) GetAddresses() []string {
