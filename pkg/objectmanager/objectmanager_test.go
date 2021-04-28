@@ -122,7 +122,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 
 	localPeer := localpeer.New()
 	localPeer.PutPrimaryPeerKey(localPeerKey)
-	localPeer.PutIdentityPublicKey(localPeerKey.PublicKey())
 
 	f00 := peer1.ToObject()
 	f01 := &object.Object{
@@ -501,7 +500,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 
 	localPeer := localpeer.New()
 	localPeer.PutPrimaryPeerKey(localPeerKey)
-	localPeer.PutIdentityPublicKey(localPeerKey.PublicKey())
 
 	f00 := &object.Object{
 		Type:     "foo",
@@ -716,7 +714,6 @@ func TestManager_Put(t *testing.T) {
 		"foo-complex",
 	)
 	testLocalPeer.PutPrimaryPeerKey(testOwnPrivateKey)
-	testLocalPeer.PutIdentityPublicKey(testOwnPrivateKey.PublicKey())
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testObjectSimple := &object.Object{
 		Type: "foo",

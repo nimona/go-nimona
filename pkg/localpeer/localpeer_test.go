@@ -25,7 +25,20 @@ func TestLocalPeer(t *testing.T) {
 	lp.PutPrimaryPeerKey(k1)
 	assert.Equal(t, k1, lp.GetPrimaryPeerKey())
 
-	lp.PutIdentityPublicKey(k2.PublicKey())
+	csr := &object.CertificateRequest{
+		Metadata: object.Metadata{
+			Owner: k2.PublicKey(),
+		},
+		Nonce:      rand.String(8),
+		VendorName: "foo",
+	}
+	csr.Metadata.Signature, err = object.NewSignature(k2, csr.ToObject())
+	require.NoError(t, err)
+
+	csrRes, err := object.NewCertificate(k2, *csr, true, "bar")
+	require.NoError(t, err)
+
+	lp.PutPeerCertificate(csrRes)
 	assert.Equal(t, k2.PublicKey(), lp.GetIdentityPublicKey())
 
 	ch1 := object.CID("f01")

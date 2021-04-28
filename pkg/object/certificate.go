@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/errors"
 )
 
 func NewCertificate(
@@ -12,6 +13,9 @@ func NewCertificate(
 	sign bool,
 	notes string,
 ) (*CertificateResponse, error) {
+	if req.Metadata.Signature.IsEmpty() {
+		return nil, errors.Error("missing signature")
+	}
 	now := time.Now().UTC()
 	exp := now.Add(time.Hour * 24 * 365)
 	nowString := now.Format(time.RFC3339)

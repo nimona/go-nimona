@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -106,7 +107,23 @@ func newDaemon(
 	)
 	require.NoError(t, err)
 	time.Sleep(time.Second)
-	d.LocalPeer().PutIdentityPublicKey(id.PublicKey())
+
+	peerKey := d.LocalPeer().GetPrimaryPeerKey()
+	csr := &object.CertificateRequest{
+		Metadata: object.Metadata{
+			Owner: peerKey.PublicKey(),
+		},
+		Nonce:      rand.String(8),
+		VendorName: "foo",
+	}
+	csr.Metadata.Signature, err = object.NewSignature(peerKey, csr.ToObject())
+	require.NoError(t, err)
+
+	csrRes, err := object.NewCertificate(id, *csr, true, "bar")
+	require.NoError(t, err)
+
+	d.LocalPeer().PutPeerCertificate(csrRes)
+
 	d.LocalPeer().PutContentTypes(new(fixtures.TestStream).Type())
 	return d
 }

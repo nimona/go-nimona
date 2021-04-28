@@ -108,10 +108,10 @@ func (mr *MockLocalPeerMockRecorder) GetContentTypes() *gomock.Call {
 }
 
 // GetIdentityPublicKey mocks base method.
-func (m *MockLocalPeer) GetIdentityPublicKey() crypto.PrivateKey {
+func (m *MockLocalPeer) GetIdentityPublicKey() crypto.PublicKey {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetIdentityPublicKey")
-	ret0, _ := ret[0].(crypto.PrivateKey)
+	ret0, _ := ret[0].(crypto.PublicKey)
 	return ret0
 }
 
@@ -225,7 +225,7 @@ func (mr *MockLocalPeerMockRecorder) PutContentTypes(arg0 ...interface{}) *gomoc
 }
 
 // PutIdentityPublicKey mocks base method.
-func (m *MockLocalPeer) PutIdentityPublicKey(arg0 crypto.PrivateKey) {
+func (m *MockLocalPeer) PutIdentityPublicKey(arg0 crypto.PublicKey) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PutIdentityPublicKey", arg0)
 }
