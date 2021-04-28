@@ -41,9 +41,6 @@ func WaitForCertificateResponse(
 				if err := csrRes.FromObject(env.Payload); err != nil {
 					continue
 				}
-				// if csrRes.Request.Nonce != csr.Nonce {
-				// 	continue
-				// }
 				select {
 				case ch <- csrRes:
 				default:
