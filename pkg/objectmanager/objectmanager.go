@@ -120,18 +120,6 @@ func New(
 	return m
 }
 
-func (m *manager) isRegisteredContentType(
-	contentType string,
-) bool {
-	contentTypes := m.localpeer.GetContentTypes()
-	for _, ct := range contentTypes {
-		if contentType == ct {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *manager) isWellKnownEphemeral(
 	contentType string,
 ) bool {
