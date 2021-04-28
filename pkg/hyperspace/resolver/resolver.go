@@ -305,7 +305,6 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
 	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
-	certificates := r.localpeer.GetCertificates()
 	cids := r.localpeer.GetCIDs()
 	contentTypes := r.localpeer.GetContentTypes()
 	addresses := r.localpeer.GetAddresses()
@@ -317,7 +316,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	for _, c := range cids {
 		hs = append(hs, c.String())
 	}
-	for _, c := range certificates {
+	if c := r.localpeer.GetPeerCertificate(); c != nil {
 		if !c.Metadata.Signature.IsEmpty() {
 			hs = append(hs, c.Metadata.Signature.Signer.String())
 		}

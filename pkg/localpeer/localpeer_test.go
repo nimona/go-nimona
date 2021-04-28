@@ -57,13 +57,6 @@ func TestLocalPeer(t *testing.T) {
 		PublicKey: k1.PublicKey(),
 	}}, lp.GetRelays())
 
-	c1 := &object.Certificate{
-		Nonce: rand.String(6),
-	}
-	lp.PutCertificate(c1)
-	assert.Len(t, lp.GetCertificates(), 1)
-	assert.ElementsMatch(t, []*object.Certificate{c1}, lp.GetCertificates())
-
 	a1 := "foo"
 	a2 := "foo2"
 	lp.PutAddresses(a1, a2)

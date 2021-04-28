@@ -53,7 +53,7 @@ func New(
 			for {
 				defer lpDone()
 				update := <-localPeerUpdates
-				if update == localpeer.EventPrimaryIdentityKeyUpdated {
+				if update == localpeer.EventIdentityKeyUpdated {
 					// TODO should we panic?
 					m.initialize(ctx) // nolint: errcheck
 					return
