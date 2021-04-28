@@ -389,12 +389,6 @@ func (m *manager) handleObjects(
 
 		logger.Debug("handling object")
 
-		// store object
-		// TODO why store here?
-		if err := m.storeObject(ctx, env.Payload); err != nil {
-			return err
-		}
-
 		switch env.Payload.Type {
 		case objectRequestType:
 			go func() {
