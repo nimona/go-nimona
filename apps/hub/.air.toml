@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 cmd = "go build -o ./tmp/main ."
 bin = "tmp/main"
 full_bin = "PORT=3000 ./tmp/main"
-include_ext = ["go", "tpl", "tmpl", "html"]
+include_ext = ["go", "tpl", "tmpl", "html", "css"]
 exclude_dir = ["tmp", "vendor"]
 include_dir = []
 exclude_file = []
