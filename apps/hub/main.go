@@ -203,6 +203,7 @@ func New(
 			return nil, err
 		}
 		h.peerCertificateResponse = crtRes
+		h.daemon.LocalPeer().PutPeerCertificate(crtRes)
 	}
 
 	if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
