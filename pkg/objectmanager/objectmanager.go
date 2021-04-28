@@ -466,12 +466,6 @@ func (m *manager) storeObject(
 	ctx context.Context,
 	obj *object.Object,
 ) error {
-	// TODO is registered content type, OR is part of a peristed stream
-	ok := m.isRegisteredContentType(obj.Type)
-	if !ok {
-		return nil
-	}
-
 	if skip := m.isWellKnownEphemeral(obj.Type); skip {
 		return nil
 	}
