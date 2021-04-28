@@ -44,7 +44,6 @@ type (
 		addresses      *StringSyncList
 		relays         []*peer.ConnectionInfo
 		// peer certificates
-		peerCertificateRequest  *object.CertificateRequest
 		peerCertificateResponse *object.CertificateResponse
 		// listeners
 		listeners     map[string]chan UpdateEvent
