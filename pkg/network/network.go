@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/geoah/go-queue"
@@ -78,6 +80,7 @@ var (
 //go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=string ValueType=outbox SyncmapName=outboxes"
 //go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=resolvers_generated.go -imp=nimona.io/pkg/object -pkg=network gen "KeyType=Resolver"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=network gen "KeyType=string"
 
 type (
 	Resolver interface {
@@ -106,6 +109,11 @@ type (
 		RegisterResolver(
 			resolver Resolver,
 		)
+		GetAddresses() []string
+		RegisterAddresses(...string)
+		GetRelays() []*peer.ConnectionInfo
+		RegisterRelays(...*peer.ConnectionInfo)
+		GetConnectionInfo() *peer.ConnectionInfo
 	}
 	// Option for customizing New
 	Option func(*network)
@@ -120,6 +128,9 @@ type (
 		inboxes   EnvelopePubSub
 		deduplist *cache.Cache
 		resolvers *ResolverSyncList
+		addresses *StringSyncList
+		relayLock sync.RWMutex
+		relays    []*peer.ConnectionInfo
 	}
 	// outbox holds information about a single peer, its open connection,
 	// and the messages for it.
@@ -148,6 +159,8 @@ func New(
 		inboxes:   NewEnvelopePubSub(),
 		deduplist: cache.New(10*time.Second, 1*time.Minute),
 		resolvers: &ResolverSyncList{},
+		addresses: &StringSyncList{},
+		relays:    []*peer.ConnectionInfo{},
 	}
 	for _, opt := range opts {
 		opt(w)
@@ -260,6 +273,9 @@ func (w *network) Listen(
 	if err != nil {
 		return nil, err
 	}
+
+	w.RegisterAddresses(listener.Addresses()...)
+
 	// TODO consider if we should be erroring if there are no addresses, but
 	// a upnp port was provided in the config options.
 	if len(listener.Addresses()) == 0 {
@@ -290,7 +306,7 @@ func (w *network) Listen(
 			log.Int("internalPort", int(localPort)),
 			log.String("externalAddress", externalAddress),
 		)
-		w.localpeer.RegisterAddresses(externalAddress)
+		w.RegisterAddresses(externalAddress)
 	}
 	return listener, nil
 }
@@ -906,4 +922,41 @@ func (w *network) wrapInDataForward(
 	dfr.Metadata.Signature = dfrSig
 	// else return
 	return dfr, nil
+}
+
+func (w *network) GetAddresses() []string {
+	as := w.addresses.List()
+	sort.Strings(as)
+	return as
+}
+
+func (w *network) RegisterAddresses(addresses ...string) {
+	for _, h := range addresses {
+		w.addresses.Put(h)
+	}
+	// w.publishUpdate(EventAddressesUpdated)
+}
+
+func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
+	return &peer.ConnectionInfo{
+		PublicKey: w.localpeer.GetPeerKey().PublicKey(),
+		Addresses: w.GetAddresses(),
+		Relays:    w.GetRelays(),
+		ObjectFormats: []string{
+			"json",
+		},
+	}
+}
+
+func (w *network) GetRelays() []*peer.ConnectionInfo {
+	w.relayLock.RLock()
+	defer w.relayLock.RUnlock()
+	return w.relays
+}
+
+func (w *network) RegisterRelays(relays ...*peer.ConnectionInfo) {
+	w.relayLock.Lock()
+	defer w.relayLock.Unlock()
+	w.relays = append(w.relays, relays...)
+	// w.publishUpdate(EventRelaysUpdated)
 }

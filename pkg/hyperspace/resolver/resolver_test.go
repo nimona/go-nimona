@@ -25,7 +25,7 @@ func TestResolver_Integration(t *testing.T) {
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
-			Addresses: net0.LocalPeer().GetAddresses(),
+			Addresses: net0.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
 	}
@@ -38,7 +38,7 @@ func TestResolver_Integration(t *testing.T) {
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
-			Addresses: net1.LocalPeer().GetAddresses(),
+			Addresses: net1.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo"},
 	}

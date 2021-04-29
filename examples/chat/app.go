@@ -233,7 +233,7 @@ func (app *App) Show() {
 						conv.CID,
 						fmt.Sprintf(
 							"* addresses: %s",
-							app.Chat.local.GetAddresses(),
+							app.Chat.network.GetAddresses(),
 						),
 					)
 					app.AddSystemText(

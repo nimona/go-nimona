@@ -21,7 +21,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
-		Addresses: net0.LocalPeer().GetAddresses(),
+		Addresses: net0.GetAddresses(),
 	}
 
 	// net1 is a normal peer
@@ -32,7 +32,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
-			Addresses: net1.LocalPeer().GetAddresses(),
+			Addresses: net1.GetAddresses(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
@@ -61,7 +61,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
-		Addresses: net0.LocalPeer().GetAddresses(),
+		Addresses: net0.GetAddresses(),
 	}
 
 	// net1 is another provider
@@ -75,7 +75,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net2.LocalPeer().GetPeerKey().PublicKey(),
-			Addresses: net2.LocalPeer().GetAddresses(),
+			Addresses: net2.GetAddresses(),
 		},
 		PeerVector:       hyperspace.New("foo", "bar"),
 		PeerCapabilities: []string{"foo", "bar"},
@@ -124,7 +124,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
-			Addresses: net0.LocalPeer().GetAddresses(),
+			Addresses: net0.GetAddresses(),
 		},
 	}
 

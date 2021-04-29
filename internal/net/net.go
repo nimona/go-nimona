@@ -288,8 +288,6 @@ func (n *network) Listen(
 
 		n.listeners = append(n.listeners, mlst)
 
-		n.localpeer.RegisterAddresses(mlst.addresses...)
-
 		// TODO goroutine never ends
 		go func() {
 			for {

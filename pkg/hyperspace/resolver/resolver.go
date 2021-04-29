@@ -307,8 +307,8 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	peerKey := r.localpeer.GetPeerKey().PublicKey()
 	cids := r.localpeer.GetCIDs()
 	contentTypes := r.localpeer.GetContentTypes()
-	addresses := r.localpeer.GetAddresses()
-	relays := r.localpeer.GetRelays()
+	addresses := r.network.GetAddresses()
+	relays := r.network.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
 	hs := contentTypes

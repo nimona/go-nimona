@@ -96,7 +96,7 @@ func main() {
 
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	logger.Info("ready")

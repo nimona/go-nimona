@@ -98,7 +98,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	lpr.RegisterRelays(bootstrapPeers...)
+	ntw.RegisterRelays(bootstrapPeers...)
 
 	// construct preferences db
 	pdb, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "preferences.db"))

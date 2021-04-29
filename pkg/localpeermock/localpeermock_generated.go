@@ -11,7 +11,6 @@ import (
 	crypto "nimona.io/pkg/crypto"
 	localpeer "nimona.io/pkg/localpeer"
 	object "nimona.io/pkg/object"
-	peer "nimona.io/pkg/peer"
 )
 
 // MockLocalPeer is a mock of LocalPeer interface.
@@ -49,20 +48,6 @@ func (mr *MockLocalPeerMockRecorder) ForgetPeerCertificate() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForgetPeerCertificate", reflect.TypeOf((*MockLocalPeer)(nil).ForgetPeerCertificate))
 }
 
-// GetAddresses mocks base method.
-func (m *MockLocalPeer) GetAddresses() []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAddresses")
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// GetAddresses indicates an expected call of GetAddresses.
-func (mr *MockLocalPeerMockRecorder) GetAddresses() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAddresses", reflect.TypeOf((*MockLocalPeer)(nil).GetAddresses))
-}
-
 // GetCIDs mocks base method.
 func (m *MockLocalPeer) GetCIDs() []object.CID {
 	m.ctrl.T.Helper()
@@ -75,20 +60,6 @@ func (m *MockLocalPeer) GetCIDs() []object.CID {
 func (mr *MockLocalPeerMockRecorder) GetCIDs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCIDs", reflect.TypeOf((*MockLocalPeer)(nil).GetCIDs))
-}
-
-// GetConnectionInfo mocks base method.
-func (m *MockLocalPeer) GetConnectionInfo() *peer.ConnectionInfo {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConnectionInfo")
-	ret0, _ := ret[0].(*peer.ConnectionInfo)
-	return ret0
-}
-
-// GetConnectionInfo indicates an expected call of GetConnectionInfo.
-func (mr *MockLocalPeerMockRecorder) GetConnectionInfo() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionInfo", reflect.TypeOf((*MockLocalPeer)(nil).GetConnectionInfo))
 }
 
 // GetContentTypes mocks base method.
@@ -147,20 +118,6 @@ func (mr *MockLocalPeerMockRecorder) GetPeerKey() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPeerKey", reflect.TypeOf((*MockLocalPeer)(nil).GetPeerKey))
 }
 
-// GetRelays mocks base method.
-func (m *MockLocalPeer) GetRelays() []*peer.ConnectionInfo {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRelays")
-	ret0, _ := ret[0].([]*peer.ConnectionInfo)
-	return ret0
-}
-
-// GetRelays indicates an expected call of GetRelays.
-func (mr *MockLocalPeerMockRecorder) GetRelays() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRelays", reflect.TypeOf((*MockLocalPeer)(nil).GetRelays))
-}
-
 // ListenForUpdates mocks base method.
 func (m *MockLocalPeer) ListenForUpdates() (<-chan localpeer.UpdateEvent, func()) {
 	m.ctrl.T.Helper()
@@ -174,22 +131,6 @@ func (m *MockLocalPeer) ListenForUpdates() (<-chan localpeer.UpdateEvent, func()
 func (mr *MockLocalPeerMockRecorder) ListenForUpdates() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForUpdates", reflect.TypeOf((*MockLocalPeer)(nil).ListenForUpdates))
-}
-
-// RegisterAddresses mocks base method.
-func (m *MockLocalPeer) RegisterAddresses(arg0 ...string) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{}
-	for _, a := range arg0 {
-		varargs = append(varargs, a)
-	}
-	m.ctrl.Call(m, "RegisterAddresses", varargs...)
-}
-
-// RegisterAddresses indicates an expected call of RegisterAddresses.
-func (mr *MockLocalPeerMockRecorder) RegisterAddresses(arg0 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAddresses", reflect.TypeOf((*MockLocalPeer)(nil).RegisterAddresses), arg0...)
 }
 
 // RegisterCIDs mocks base method.
@@ -222,22 +163,6 @@ func (m *MockLocalPeer) RegisterContentTypes(arg0 ...string) {
 func (mr *MockLocalPeerMockRecorder) RegisterContentTypes(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterContentTypes", reflect.TypeOf((*MockLocalPeer)(nil).RegisterContentTypes), arg0...)
-}
-
-// RegisterRelays mocks base method.
-func (m *MockLocalPeer) RegisterRelays(arg0 ...*peer.ConnectionInfo) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{}
-	for _, a := range arg0 {
-		varargs = append(varargs, a)
-	}
-	m.ctrl.Call(m, "RegisterRelays", varargs...)
-}
-
-// RegisterRelays indicates an expected call of RegisterRelays.
-func (mr *MockLocalPeerMockRecorder) RegisterRelays(arg0 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterRelays", reflect.TypeOf((*MockLocalPeer)(nil).RegisterRelays), arg0...)
 }
 
 // SetPeerCertificate mocks base method.

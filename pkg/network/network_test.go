@@ -48,7 +48,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
 				PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
-				Addresses: n2.LocalPeer().GetAddresses(),
+				Addresses: n2.GetAddresses(),
 			},
 		),
 	)
@@ -70,7 +70,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
 				PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
-				Addresses: n1.LocalPeer().GetAddresses(),
+				Addresses: n1.GetAddresses(),
 			},
 		),
 	)
@@ -101,7 +101,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
-					Addresses: n2.LocalPeer().GetAddresses(),
+					Addresses: n2.GetAddresses(),
 				},
 			),
 		)
@@ -144,7 +144,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
-					Addresses: n1.LocalPeer().GetAddresses(),
+					Addresses: n1.GetAddresses(),
 				},
 			),
 		)
@@ -166,12 +166,12 @@ func TestNetwork_Relay(t *testing.T) {
 
 	p0 := &peer.ConnectionInfo{
 		PublicKey: n0.LocalPeer().GetPeerKey().PublicKey(),
-		Addresses: n0.LocalPeer().GetAddresses(),
+		Addresses: n0.GetAddresses(),
 	}
 
 	p1 := &peer.ConnectionInfo{
 		PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
-		Addresses: n1.LocalPeer().GetAddresses(),
+		Addresses: n1.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
 		},
@@ -179,7 +179,7 @@ func TestNetwork_Relay(t *testing.T) {
 
 	p2 := &peer.ConnectionInfo{
 		PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
-		Addresses: n2.LocalPeer().GetAddresses(),
+		Addresses: n2.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
 		},

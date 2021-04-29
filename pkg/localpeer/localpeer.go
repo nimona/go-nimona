@@ -1,13 +1,11 @@
 package localpeer
 
 import (
-	"sort"
 	"sync"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
@@ -17,37 +15,29 @@ import (
 
 type (
 	LocalPeer interface {
-		// TODO merge peer/id methods, use .Usage to distinguish
-		GetPeerKey() crypto.PrivateKey
-		SetPeerKey(crypto.PrivateKey)
+		// TODO(geoah) move to object store
 		GetCIDs() []object.CID
 		RegisterCIDs(...object.CID)
+		// TODO(geoah) consider removing
 		GetContentTypes() []string
 		RegisterContentTypes(...string)
-		GetAddresses() []string
-		RegisterAddresses(...string)
-		GetRelays() []*peer.ConnectionInfo
-		RegisterRelays(...*peer.ConnectionInfo)
-		GetConnectionInfo() *peer.ConnectionInfo
-		ListenForUpdates() (<-chan UpdateEvent, func())
-		// peer certificates
+		// local peer information
+		GetPeerKey() crypto.PrivateKey
+		SetPeerKey(crypto.PrivateKey)
 		GetIdentityPublicKey() crypto.PublicKey
 		GetPeerCertificate() *object.CertificateResponse
 		SetPeerCertificate(*object.CertificateResponse)
 		ForgetPeerCertificate()
+		ListenForUpdates() (<-chan UpdateEvent, func())
 	}
 	localPeer struct {
-		keyLock        sync.RWMutex
-		primaryPeerKey crypto.PrivateKey
-		cids           *ObjectCIDSyncList
-		contentTypes   *StringSyncList
-		addresses      *StringSyncList
-		relays         []*peer.ConnectionInfo
-		// peer certificates
+		keyLock                 sync.RWMutex
+		primaryPeerKey          crypto.PrivateKey
+		cids                    *ObjectCIDSyncList
+		contentTypes            *StringSyncList
 		peerCertificateResponse *object.CertificateResponse
-		// listeners
-		listeners     map[string]chan UpdateEvent
-		listenersLock sync.RWMutex
+		listeners               map[string]chan UpdateEvent
+		listenersLock           sync.RWMutex
 	}
 	UpdateEvent string
 )
@@ -65,8 +55,6 @@ func New() LocalPeer {
 		keyLock:       sync.RWMutex{},
 		cids:          &ObjectCIDSyncList{},
 		contentTypes:  &StringSyncList{},
-		addresses:     &StringSyncList{},
-		relays:        []*peer.ConnectionInfo{},
 		listeners:     map[string]chan UpdateEvent{},
 		listenersLock: sync.RWMutex{},
 	}
@@ -113,19 +101,6 @@ func (s *localPeer) ForgetPeerCertificate() {
 	s.publishUpdate(EventIdentityKeyUpdated)
 }
 
-func (s *localPeer) GetAddresses() []string {
-	as := s.addresses.List()
-	sort.Strings(as)
-	return as
-}
-
-func (s *localPeer) RegisterAddresses(addresses ...string) {
-	for _, h := range addresses {
-		s.addresses.Put(h)
-	}
-	s.publishUpdate(EventAddressesUpdated)
-}
-
 func (s *localPeer) GetCIDs() []object.CID {
 	return s.cids.List()
 }
@@ -146,30 +121,6 @@ func (s *localPeer) RegisterContentTypes(contentTypes ...string) {
 		s.contentTypes.Put(h)
 	}
 	s.publishUpdate(EventContentTypesUpdated)
-}
-
-func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
-	s.keyLock.RLock()
-	defer s.keyLock.RUnlock()
-	return s.relays
-}
-
-func (s *localPeer) RegisterRelays(relays ...*peer.ConnectionInfo) {
-	s.keyLock.Lock()
-	defer s.keyLock.Unlock()
-	s.relays = append(s.relays, relays...)
-	s.publishUpdate(EventRelaysUpdated)
-}
-
-func (s *localPeer) GetConnectionInfo() *peer.ConnectionInfo {
-	return &peer.ConnectionInfo{
-		PublicKey: s.GetPeerKey().PublicKey(),
-		Addresses: s.GetAddresses(),
-		Relays:    s.GetRelays(),
-		ObjectFormats: []string{
-			"json",
-		},
-	}
 }
 
 func (s *localPeer) publishUpdate(e UpdateEvent) {

@@ -78,6 +78,48 @@ func (m *MockNetwork) EXPECT() *MockNetworkMockRecorder {
 	return m.recorder
 }
 
+// GetAddresses mocks base method.
+func (m *MockNetwork) GetAddresses() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAddresses")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetAddresses indicates an expected call of GetAddresses.
+func (mr *MockNetworkMockRecorder) GetAddresses() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAddresses", reflect.TypeOf((*MockNetwork)(nil).GetAddresses))
+}
+
+// GetConnectionInfo mocks base method.
+func (m *MockNetwork) GetConnectionInfo() *peer.ConnectionInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConnectionInfo")
+	ret0, _ := ret[0].(*peer.ConnectionInfo)
+	return ret0
+}
+
+// GetConnectionInfo indicates an expected call of GetConnectionInfo.
+func (mr *MockNetworkMockRecorder) GetConnectionInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionInfo", reflect.TypeOf((*MockNetwork)(nil).GetConnectionInfo))
+}
+
+// GetRelays mocks base method.
+func (m *MockNetwork) GetRelays() []*peer.ConnectionInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRelays")
+	ret0, _ := ret[0].([]*peer.ConnectionInfo)
+	return ret0
+}
+
+// GetRelays indicates an expected call of GetRelays.
+func (mr *MockNetworkMockRecorder) GetRelays() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRelays", reflect.TypeOf((*MockNetwork)(nil).GetRelays))
+}
+
 // Listen mocks base method.
 func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ...network.ListenOption) (net.Listener, error) {
 	m.ctrl.T.Helper()
@@ -110,6 +152,38 @@ func (m *MockNetwork) LocalPeer() localpeer.LocalPeer {
 func (mr *MockNetworkMockRecorder) LocalPeer() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalPeer", reflect.TypeOf((*MockNetwork)(nil).LocalPeer))
+}
+
+// RegisterAddresses mocks base method.
+func (m *MockNetwork) RegisterAddresses(arg0 ...string) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "RegisterAddresses", varargs...)
+}
+
+// RegisterAddresses indicates an expected call of RegisterAddresses.
+func (mr *MockNetworkMockRecorder) RegisterAddresses(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAddresses", reflect.TypeOf((*MockNetwork)(nil).RegisterAddresses), arg0...)
+}
+
+// RegisterRelays mocks base method.
+func (m *MockNetwork) RegisterRelays(arg0 ...*peer.ConnectionInfo) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "RegisterRelays", varargs...)
+}
+
+// RegisterRelays indicates an expected call of RegisterRelays.
+func (mr *MockNetworkMockRecorder) RegisterRelays(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterRelays", reflect.TypeOf((*MockNetwork)(nil).RegisterRelays), arg0...)
 }
 
 // RegisterResolver mocks base method.

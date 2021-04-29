@@ -95,7 +95,7 @@ func main() {
 
 	// add announce address
 	if cfg.Peer.AnnounceAddress != "" {
-		local.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
+		net.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
 	// convert shorthands into connection infos
@@ -120,7 +120,7 @@ func main() {
 
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	logger.Info("bootstrap node ready")

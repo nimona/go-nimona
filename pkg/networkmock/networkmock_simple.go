@@ -10,21 +10,22 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	peer "nimona.io/pkg/peer"
 )
 
-var (
-	_ network.Network = (*MockNetworkSimple)(nil)
-)
+var _ network.Network = (*MockNetworkSimple)(nil)
 
 type (
 	MockNetworkSimple struct {
-		mutex           sync.Mutex
-		subscribeCalled int32
-		SubscribeCalls  []network.EnvelopeSubscription
-		sendCalled      int32
-		SendCalls       []error
-		ReturnAddresses []string
-		ReturnLocalPeer localpeer.LocalPeer
+		mutex                sync.Mutex
+		subscribeCalled      int32
+		SubscribeCalls       []network.EnvelopeSubscription
+		sendCalled           int32
+		SendCalls            []error
+		ReturnAddresses      []string
+		ReturnLocalPeer      localpeer.LocalPeer
+		ReturnConnectionInfo *peer.ConnectionInfo
+		ReturnRelays         []*peer.ConnectionInfo
 	}
 )
 
@@ -88,4 +89,22 @@ func (m *MockNetworkSimple) RegisterResolver(
 
 func (m *MockNetworkSimple) LocalPeer() localpeer.LocalPeer {
 	return m.ReturnLocalPeer
+}
+
+func (m *MockNetworkSimple) GetAddresses() []string {
+	return m.ReturnAddresses
+}
+
+func (m *MockNetworkSimple) RegisterAddresses(addresses ...string) {
+}
+
+func (m *MockNetworkSimple) GetConnectionInfo() *peer.ConnectionInfo {
+	return m.ReturnConnectionInfo
+}
+
+func (m *MockNetworkSimple) GetRelays() []*peer.ConnectionInfo {
+	return m.ReturnRelays
+}
+
+func (m *MockNetworkSimple) RegisterRelays(relays ...*peer.ConnectionInfo) {
 }

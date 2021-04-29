@@ -10,7 +10,6 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/peer"
 )
 
 func TestLocalPeer(t *testing.T) {
@@ -49,34 +48,6 @@ func TestLocalPeer(t *testing.T) {
 
 	lp.RegisterCIDs(ch1, ch2)
 	assert.ElementsMatch(t, []object.CID{ch1, ch2}, lp.GetCIDs())
-
-	lp.RegisterRelays(&peer.ConnectionInfo{
-		PublicKey: k1.PublicKey(),
-	})
-	assert.ElementsMatch(t, []*peer.ConnectionInfo{{
-		PublicKey: k1.PublicKey(),
-	}}, lp.GetRelays())
-
-	a1 := "foo"
-	a2 := "foo2"
-	lp.RegisterAddresses(a1, a2)
-	assert.ElementsMatch(t, []string{a1, a2}, lp.GetAddresses())
-
-	lp.RegisterContentTypes(a1, a2)
-	assert.ElementsMatch(t, []string{a1, a2}, lp.GetContentTypes())
-
-	ci := lp.GetConnectionInfo()
-	e := &peer.ConnectionInfo{
-		PublicKey: k1.PublicKey(),
-		Addresses: []string{"foo", "foo2"},
-		Relays: []*peer.ConnectionInfo{{
-			PublicKey: k1.PublicKey(),
-		}},
-		ObjectFormats: []string{
-			"json",
-		},
-	}
-	assert.Equal(t, ci, e)
 }
 
 func TestEventUpdates(t *testing.T) {
@@ -87,9 +58,9 @@ func TestEventUpdates(t *testing.T) {
 
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		lp.RegisterAddresses("a", "b")
+		lp.SetPeerCertificate(&object.CertificateResponse{})
 	}()
 
 	e := <-c
-	assert.Equal(t, EventAddressesUpdated, e)
+	assert.Equal(t, EventIdentityKeyUpdated, e)
 }
