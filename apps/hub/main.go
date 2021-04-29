@@ -404,7 +404,7 @@ func main() {
 	}()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		connInfo := d.LocalPeer().GetConnectionInfo()
+		connInfo := d.Network().GetConnectionInfo()
 		err := tplPeer.Execute(
 			w,
 			struct {

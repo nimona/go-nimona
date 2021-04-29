@@ -275,7 +275,7 @@ func newFileTransfer(
 	}
 
 	// add bootstrap peers as relays
-	local.RegisterRelays(bootstrapPeers...)
+	net.RegisterRelays(bootstrapPeers...)
 
 	// construct new resolver
 	res := resolver.New(
@@ -287,7 +287,7 @@ func newFileTransfer(
 
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	// construct object store

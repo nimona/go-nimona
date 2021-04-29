@@ -32,6 +32,7 @@ type Config struct {
 }
 
 type chat struct {
+	network       network.Network
 	local         localpeer.LocalPeer
 	objectmanager objectmanager.ObjectManager
 	objectstore   objectstore.Store
@@ -247,7 +248,7 @@ func main() {
 	}
 
 	// add bootstrap peers as relays
-	local.RegisterRelays(bootstrapPeers...)
+	net.RegisterRelays(bootstrapPeers...)
 
 	// construct object store
 	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.db"))
@@ -301,13 +302,14 @@ func main() {
 
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	// ready
 	logger.Info("ready")
 
 	c := &chat{
+		network:       net,
 		local:         local,
 		objectmanager: man,
 		objectstore:   str,

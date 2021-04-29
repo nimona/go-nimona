@@ -76,12 +76,12 @@ func New(initRequest *InitRequest) *Provider {
 
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", local.GetAddresses()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	logger.Error(
 		"ready",
-		log.Any("addresses", local.GetAddresses()),
+		log.Any("addresses", net.GetAddresses()),
 	)
 
 	local.RegisterContentTypes(initRequest.ContentTypes...)
@@ -97,7 +97,7 @@ func New(initRequest *InitRequest) *Provider {
 }
 
 func (p *Provider) GetConnectionInfo() *peer.ConnectionInfo {
-	return p.local.GetConnectionInfo()
+	return p.network.GetConnectionInfo()
 }
 
 type GetRequest struct {

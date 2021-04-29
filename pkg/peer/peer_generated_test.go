@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"nimona.io/pkg/crypto"
-	object "nimona.io/pkg/object"
+	"nimona.io/pkg/object"
 )
 
 func TestEncoding(t *testing.T) {

@@ -54,5 +54,5 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		require.NoError(t, err)
 	})
 
-	return local.GetConnectionInfo()
+	return net.GetConnectionInfo()
 }

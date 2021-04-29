@@ -291,7 +291,7 @@ func (p *Provider) announceSelf() {
 	// construct an announcement
 	ann := &hyperspace.Announcement{
 		Version:        announceVersion,
-		ConnectionInfo: p.local.GetConnectionInfo(),
+		ConnectionInfo: p.network.GetConnectionInfo(),
 		PeerCapabilities: []string{
 			hyperspaceAnnouncementType,
 			hyperspaceLookupRequestType,

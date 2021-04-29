@@ -19,6 +19,7 @@ import (
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 )
@@ -58,6 +59,7 @@ type (
 
 		config *comboConf
 
+		network       network.Network
 		local         localpeer.LocalPeer
 		objectmanager objectmanager.ObjectManager
 		blobmanager   blob.Manager
@@ -123,6 +125,7 @@ func NewHermod() hermod {
 		cfg.ReceivedFolder,
 	)
 
+	her.network = nnet
 	her.config = cconf
 	her.local = local
 	her.textInput = ti
@@ -317,8 +320,8 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	case "local":
 		h.result = fmt.Sprintf(
 			"public_key: %s\naddresses: %s\n",
-			h.local.GetConnectionInfo().PublicKey,
-			h.local.GetConnectionInfo().Addresses,
+			h.network.GetConnectionInfo().PublicKey,
+			h.network.GetConnectionInfo().Addresses,
 		)
 	case "request":
 		if len(params) != 1 {
