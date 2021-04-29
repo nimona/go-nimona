@@ -68,7 +68,7 @@ func New(
 }
 
 func (m *FeedManager) initialize(ctx context.Context) error {
-	m.localpeer.PutContentTypes(
+	m.localpeer.RegisterContentTypes(
 		"stream:nimona.io/feed",
 		"event:nimona.io/feed.Added",
 		"event:nimona.io/feed.Removed",
@@ -131,7 +131,7 @@ func (m *FeedManager) createFeed(
 	ctx context.Context,
 	registeredType string,
 ) error {
-	ownPeer := m.localpeer.GetPrimaryPeerKey().PublicKey()
+	ownPeer := m.localpeer.GetPeerKey().PublicKey()
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
@@ -261,7 +261,7 @@ func (m *FeedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
 	identityKey := m.localpeer.GetIdentityPublicKey()
-	peerKey := m.localpeer.GetPrimaryPeerKey().PublicKey()
+	peerKey := m.localpeer.GetPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
 		if errors.Is(err, object.ErrReaderDone) {

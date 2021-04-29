@@ -265,7 +265,7 @@ func (n *network) Listen(
 		addresses: []string{},
 		listeners: []net.Listener{},
 	}
-	k := n.localpeer.GetPrimaryPeerKey()
+	k := n.localpeer.GetPeerKey()
 	for pt, tsp := range n.transports {
 		lst, err := tsp.Listen(ctx, bindAddress, k)
 		if err != nil {
@@ -288,7 +288,7 @@ func (n *network) Listen(
 
 		n.listeners = append(n.listeners, mlst)
 
-		n.localpeer.PutAddresses(mlst.addresses...)
+		n.localpeer.RegisterAddresses(mlst.addresses...)
 
 		// TODO goroutine never ends
 		go func() {

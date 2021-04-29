@@ -65,7 +65,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct local peer
 	lpr := localpeer.New()
 	// attach peer private key from config
-	lpr.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	lpr.SetPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
 	ntw := network.New(
@@ -90,7 +90,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// convert shorthands into connection infos
 	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
+		bootstrapPeer, err := s.GetConnectionInfo()
 		if err != nil {
 			return nil, fmt.Errorf("parsing bootstraps: %w", err)
 		}
@@ -98,7 +98,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	lpr.PutRelays(bootstrapPeers...)
+	lpr.RegisterRelays(bootstrapPeers...)
 
 	// construct preferences db
 	pdb, err := sql.Open("sqlite3", filepath.Join(cfg.Path, "preferences.db"))

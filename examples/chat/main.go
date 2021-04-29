@@ -123,7 +123,7 @@ func (c *chat) subscribe(
 					continue
 				}
 				if s.Metadata.Owner.Equals(
-					c.local.GetPrimaryPeerKey().PublicKey(),
+					c.local.GetPeerKey().PublicKey(),
 				) {
 					alreadySubscribed = true
 					or.Close()
@@ -135,7 +135,7 @@ func (c *chat) subscribe(
 			ctx := context.New(context.WithTimeout(time.Second * 5))
 			if _, err := c.objectmanager.Put(ctx, stream.Subscription{
 				Metadata: object.Metadata{
-					Owner:  c.local.GetPrimaryPeerKey().PublicKey(),
+					Owner:  c.local.GetPeerKey().PublicKey(),
 					Stream: conversationRootCID,
 				},
 				RootCIDs: []object.CID{
@@ -214,7 +214,7 @@ func main() {
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(nConfig.Peer.PrivateKey)
+	local.SetPeerKey(nConfig.Peer.PrivateKey)
 
 	// construct new network
 	net := network.New(
@@ -239,7 +239,7 @@ func main() {
 	// convert shorthands into connection infos
 	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range nConfig.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
+		bootstrapPeer, err := s.GetConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
@@ -247,7 +247,7 @@ func main() {
 	}
 
 	// add bootstrap peers as relays
-	local.PutRelays(bootstrapPeers...)
+	local.RegisterRelays(bootstrapPeers...)
 
 	// construct object store
 	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.db"))
@@ -266,7 +266,7 @@ func main() {
 	}
 
 	// register types so object manager persists them
-	local.PutContentTypes(
+	local.RegisterContentTypes(
 		new(ConversationStreamRoot).Type(),
 		new(ConversationMessageAdded).Type(),
 		new(ConversationNicknameUpdated).Type(),
@@ -277,7 +277,7 @@ func main() {
 	conversationRootCID := conversationRootObject.CID()
 
 	// add conversation to the list of content we provide
-	local.PutCIDs(conversationRootCID)
+	local.RegisterCIDs(conversationRootCID)
 
 	// construct new resolver
 	res := resolver.New(
@@ -300,7 +300,7 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 
@@ -334,7 +334,7 @@ func main() {
 					),
 					ConversationNicknameUpdated{
 						Metadata: object.Metadata{
-							Owner:    local.GetPrimaryPeerKey().PublicKey(),
+							Owner:    local.GetPeerKey().PublicKey(),
 							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
@@ -353,7 +353,7 @@ func main() {
 					),
 					ConversationMessageAdded{
 						Metadata: object.Metadata{
-							Owner:    local.GetPrimaryPeerKey().PublicKey(),
+							Owner:    local.GetPeerKey().PublicKey(),
 							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},

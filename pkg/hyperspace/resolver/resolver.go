@@ -154,7 +154,7 @@ func (r *resolver) Lookup(
 	// send content requests to recipients
 	req := &hyperspace.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.localpeer.GetPrimaryPeerKey().PublicKey(),
+			Owner: r.localpeer.GetPeerKey().PublicKey(),
 		},
 		Nonce:       rand.String(12),
 		QueryVector: bl,
@@ -304,7 +304,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
-	peerKey := r.localpeer.GetPrimaryPeerKey().PublicKey()
+	peerKey := r.localpeer.GetPeerKey().PublicKey()
 	cids := r.localpeer.GetCIDs()
 	contentTypes := r.localpeer.GetContentTypes()
 	addresses := r.localpeer.GetAddresses()

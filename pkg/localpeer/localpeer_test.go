@@ -22,8 +22,8 @@ func TestLocalPeer(t *testing.T) {
 
 	lp := New()
 
-	lp.PutPrimaryPeerKey(k1)
-	assert.Equal(t, k1, lp.GetPrimaryPeerKey())
+	lp.SetPeerKey(k1)
+	assert.Equal(t, k1, lp.GetPeerKey())
 
 	csr := &object.CertificateRequest{
 		Metadata: object.Metadata{
@@ -38,19 +38,19 @@ func TestLocalPeer(t *testing.T) {
 	csrRes, err := object.NewCertificate(k2, *csr, true, "bar")
 	require.NoError(t, err)
 
-	lp.PutPeerCertificate(csrRes)
+	lp.SetPeerCertificate(csrRes)
 	assert.Equal(t, k2.PublicKey(), lp.GetIdentityPublicKey())
 
 	ch1 := object.CID("f01")
 	ch2 := object.CID("f02")
 
-	lp.PutCIDs(ch1)
+	lp.RegisterCIDs(ch1)
 	assert.ElementsMatch(t, []object.CID{ch1}, lp.GetCIDs())
 
-	lp.PutCIDs(ch1, ch2)
+	lp.RegisterCIDs(ch1, ch2)
 	assert.ElementsMatch(t, []object.CID{ch1, ch2}, lp.GetCIDs())
 
-	lp.PutRelays(&peer.ConnectionInfo{
+	lp.RegisterRelays(&peer.ConnectionInfo{
 		PublicKey: k1.PublicKey(),
 	})
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{{
@@ -59,13 +59,13 @@ func TestLocalPeer(t *testing.T) {
 
 	a1 := "foo"
 	a2 := "foo2"
-	lp.PutAddresses(a1, a2)
+	lp.RegisterAddresses(a1, a2)
 	assert.ElementsMatch(t, []string{a1, a2}, lp.GetAddresses())
 
-	lp.PutContentTypes(a1, a2)
+	lp.RegisterContentTypes(a1, a2)
 	assert.ElementsMatch(t, []string{a1, a2}, lp.GetContentTypes())
 
-	ci := lp.ConnectionInfo()
+	ci := lp.GetConnectionInfo()
 	e := &peer.ConnectionInfo{
 		PublicKey: k1.PublicKey(),
 		Addresses: []string{"foo", "foo2"},
@@ -87,7 +87,7 @@ func TestEventUpdates(t *testing.T) {
 
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		lp.PutAddresses("a", "b")
+		lp.RegisterAddresses("a", "b")
 	}()
 
 	e := <-c

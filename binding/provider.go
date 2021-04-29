@@ -75,7 +75,7 @@ func New(initRequest *InitRequest) *Provider {
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 
@@ -84,7 +84,7 @@ func New(initRequest *InitRequest) *Provider {
 		log.Any("addresses", local.GetAddresses()),
 	)
 
-	local.PutContentTypes(initRequest.ContentTypes...)
+	local.RegisterContentTypes(initRequest.ContentTypes...)
 
 	return &Provider{
 		local:         local,
@@ -97,7 +97,7 @@ func New(initRequest *InitRequest) *Provider {
 }
 
 func (p *Provider) GetConnectionInfo() *peer.ConnectionInfo {
-	return p.local.ConnectionInfo()
+	return p.local.GetConnectionInfo()
 }
 
 type GetRequest struct {
@@ -316,7 +316,7 @@ func (p *Provider) Put(
 		if setOwner, ok := setOwnerS.(object.String); ok {
 			switch setOwner {
 			case "@peer":
-				obj.Metadata.Owner = p.local.GetPrimaryPeerKey().PublicKey()
+				obj.Metadata.Owner = p.local.GetPeerKey().PublicKey()
 			case "@identity":
 				obj.Metadata.Owner = p.local.GetIdentityPublicKey()
 			}
@@ -332,7 +332,7 @@ func (p *Provider) GetFeedRootCID(
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{
-			Owner: p.local.GetPrimaryPeerKey().PublicKey(),
+			Owner: p.local.GetPeerKey().PublicKey(),
 		},
 	}
 	return v.ToObject().CID()

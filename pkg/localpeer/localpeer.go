@@ -18,22 +18,22 @@ import (
 type (
 	LocalPeer interface {
 		// TODO merge peer/id methods, use .Usage to distinguish
-		GetPrimaryPeerKey() crypto.PrivateKey
-		PutPrimaryPeerKey(crypto.PrivateKey)
+		GetPeerKey() crypto.PrivateKey
+		SetPeerKey(crypto.PrivateKey)
 		GetCIDs() []object.CID
-		PutCIDs(...object.CID)
+		RegisterCIDs(...object.CID)
 		GetContentTypes() []string
-		PutContentTypes(...string)
+		RegisterContentTypes(...string)
 		GetAddresses() []string
-		PutAddresses(...string)
+		RegisterAddresses(...string)
 		GetRelays() []*peer.ConnectionInfo
-		PutRelays(...*peer.ConnectionInfo)
-		ConnectionInfo() *peer.ConnectionInfo
+		RegisterRelays(...*peer.ConnectionInfo)
+		GetConnectionInfo() *peer.ConnectionInfo
 		ListenForUpdates() (<-chan UpdateEvent, func())
 		// peer certificates
 		GetIdentityPublicKey() crypto.PublicKey
 		GetPeerCertificate() *object.CertificateResponse
-		PutPeerCertificate(*object.CertificateResponse)
+		SetPeerCertificate(*object.CertificateResponse)
 		ForgetPeerCertificate()
 	}
 	localPeer struct {
@@ -72,13 +72,13 @@ func New() LocalPeer {
 	}
 }
 
-func (s *localPeer) PutPrimaryPeerKey(k crypto.PrivateKey) {
+func (s *localPeer) SetPeerKey(k crypto.PrivateKey) {
 	s.keyLock.Lock()
 	s.primaryPeerKey = k
 	s.keyLock.Unlock()
 }
 
-func (s *localPeer) GetPrimaryPeerKey() crypto.PrivateKey {
+func (s *localPeer) GetPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
@@ -99,7 +99,7 @@ func (s *localPeer) GetPeerCertificate() *object.CertificateResponse {
 	return s.peerCertificateResponse
 }
 
-func (s *localPeer) PutPeerCertificate(c *object.CertificateResponse) {
+func (s *localPeer) SetPeerCertificate(c *object.CertificateResponse) {
 	s.keyLock.Lock()
 	s.peerCertificateResponse = c
 	s.keyLock.Unlock()
@@ -119,7 +119,7 @@ func (s *localPeer) GetAddresses() []string {
 	return as
 }
 
-func (s *localPeer) PutAddresses(addresses ...string) {
+func (s *localPeer) RegisterAddresses(addresses ...string) {
 	for _, h := range addresses {
 		s.addresses.Put(h)
 	}
@@ -130,7 +130,7 @@ func (s *localPeer) GetCIDs() []object.CID {
 	return s.cids.List()
 }
 
-func (s *localPeer) PutCIDs(cids ...object.CID) {
+func (s *localPeer) RegisterCIDs(cids ...object.CID) {
 	for _, h := range cids {
 		s.cids.Put(h)
 	}
@@ -141,7 +141,7 @@ func (s *localPeer) GetContentTypes() []string {
 	return s.contentTypes.List()
 }
 
-func (s *localPeer) PutContentTypes(contentTypes ...string) {
+func (s *localPeer) RegisterContentTypes(contentTypes ...string) {
 	for _, h := range contentTypes {
 		s.contentTypes.Put(h)
 	}
@@ -154,16 +154,16 @@ func (s *localPeer) GetRelays() []*peer.ConnectionInfo {
 	return s.relays
 }
 
-func (s *localPeer) PutRelays(relays ...*peer.ConnectionInfo) {
+func (s *localPeer) RegisterRelays(relays ...*peer.ConnectionInfo) {
 	s.keyLock.Lock()
 	defer s.keyLock.Unlock()
 	s.relays = append(s.relays, relays...)
 	s.publishUpdate(EventRelaysUpdated)
 }
 
-func (s *localPeer) ConnectionInfo() *peer.ConnectionInfo {
+func (s *localPeer) GetConnectionInfo() *peer.ConnectionInfo {
 	return &peer.ConnectionInfo{
-		PublicKey: s.GetPrimaryPeerKey().PublicKey(),
+		PublicKey: s.GetPeerKey().PublicKey(),
 		Addresses: s.GetAddresses(),
 		Relays:    s.GetRelays(),
 		ObjectFormats: []string{

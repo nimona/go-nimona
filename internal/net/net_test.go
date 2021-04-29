@@ -33,7 +33,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	go func() {
 		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
-			PublicKey: kc1.GetPrimaryPeerKey().PublicKey(),
+			PublicKey: kc1.GetPeerKey().PublicKey(),
 			Addresses: n1.Addresses(),
 		})
 		assert.NoError(t, err)
@@ -44,7 +44,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	// attempt to dial own address, should fail
 	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
-		PublicKey: kc1.GetPrimaryPeerKey().PublicKey(),
+		PublicKey: kc1.GetPeerKey().PublicKey(),
 		Addresses: n1.Addresses(),
 	})
 	require.Equal(t, ErrAllAddressesBlocked, err)
@@ -133,7 +133,7 @@ func newPeer(t *testing.T) (
 	kc := localpeer.New()
 	pk, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	assert.NoError(t, err)
-	kc.PutPrimaryPeerKey(pk)
+	kc.SetPeerKey(pk)
 	return kc, New(
 		kc,
 	).(*network)

@@ -74,7 +74,7 @@ func main() {
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	local.SetPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
 	net := network.New(
@@ -95,13 +95,13 @@ func main() {
 
 	// add announce address
 	if cfg.Peer.AnnounceAddress != "" {
-		local.PutAddresses("tcps:" + cfg.Peer.AnnounceAddress)
+		local.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
 	// convert shorthands into connection infos
 	bootstrapProviders := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
+		bootstrapPeer, err := s.GetConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 
