@@ -28,6 +28,7 @@ type (
 		LocalPeer() localpeer.LocalPeer
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
+		FeedManager() feedmanager.FeedManager
 		// daemon specific methods
 		Close()
 	}
@@ -40,6 +41,7 @@ type (
 		localpeer     localpeer.LocalPeer
 		objectstore   objectstore.Store
 		objectmanager objectmanager.ObjectManager
+		feedmanager   feedmanager.FeedManager
 		// internal
 		listener net.Listener
 	}
@@ -139,13 +141,14 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	)
 
 	// construct feed manager
-	if err := feedmanager.New(
+	fdm, err := feedmanager.New(
 		ctx,
 		lpr,
 		res,
 		str,
 		man,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, fmt.Errorf("constructing feed manager, %w", err)
 	}
 
@@ -156,6 +159,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	d.localpeer = lpr
 	d.objectstore = str
 	d.objectmanager = man
+	d.feedmanager = fdm
 
 	return d, nil
 }
@@ -186,6 +190,10 @@ func (d *daemon) ObjectStore() objectstore.Store {
 
 func (d *daemon) ObjectManager() objectmanager.ObjectManager {
 	return d.objectmanager
+}
+
+func (d *daemon) FeedManager() feedmanager.FeedManager {
+	return d.feedmanager
 }
 
 func (d *daemon) Close() {

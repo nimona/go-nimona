@@ -228,11 +228,6 @@ func newFileTransfer(
 	local := localpeer.New()
 	// attach peer private key from config
 	local.SetPeerKey(cfg.nconf.Peer.PrivateKey)
-	local.RegisterContentTypes(
-		new(File).Type(),
-		new(blob.Blob).Type(),
-		new(blob.Chunk).Type(),
-	)
 	ft.local = local
 
 	// construct new network

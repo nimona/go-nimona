@@ -266,14 +266,6 @@ func main() {
 		Nonce: cConfig.Nonce,
 	}
 
-	// register types so object manager persists them
-	local.RegisterContentTypes(
-		new(ConversationStreamRoot).Type(),
-		new(ConversationMessageAdded).Type(),
-		new(ConversationNicknameUpdated).Type(),
-		new(stream.Subscription).Type(),
-	)
-
 	conversationRootObject := conversationRoot.ToObject()
 	conversationRootCID := conversationRootObject.CID()
 

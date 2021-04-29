@@ -124,6 +124,6 @@ func newDaemon(
 
 	d.LocalPeer().SetPeerCertificate(csrRes)
 
-	d.LocalPeer().RegisterContentTypes(new(fixtures.TestStream).Type())
+	d.FeedManager().RegisterFeed(new(fixtures.TestStream).Type())
 	return d
 }

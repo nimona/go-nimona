@@ -11,16 +11,12 @@ import (
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=string"
 
 type (
 	LocalPeer interface {
 		// TODO(geoah) move to object store
 		GetCIDs() []object.CID
 		RegisterCIDs(...object.CID)
-		// TODO(geoah) consider removing
-		GetContentTypes() []string
-		RegisterContentTypes(...string)
 		// local peer information
 		GetPeerKey() crypto.PrivateKey
 		SetPeerKey(crypto.PrivateKey)
@@ -34,7 +30,6 @@ type (
 		keyLock                 sync.RWMutex
 		primaryPeerKey          crypto.PrivateKey
 		cids                    *ObjectCIDSyncList
-		contentTypes            *StringSyncList
 		peerCertificateResponse *object.CertificateResponse
 		listeners               map[string]chan UpdateEvent
 		listenersLock           sync.RWMutex
@@ -54,7 +49,6 @@ func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
 		cids:          &ObjectCIDSyncList{},
-		contentTypes:  &StringSyncList{},
 		listeners:     map[string]chan UpdateEvent{},
 		listenersLock: sync.RWMutex{},
 	}
@@ -110,17 +104,6 @@ func (s *localPeer) RegisterCIDs(cids ...object.CID) {
 		s.cids.Put(h)
 	}
 	s.publishUpdate(EventCIDsUpdated)
-}
-
-func (s *localPeer) GetContentTypes() []string {
-	return s.contentTypes.List()
-}
-
-func (s *localPeer) RegisterContentTypes(contentTypes ...string) {
-	for _, h := range contentTypes {
-		s.contentTypes.Put(h)
-	}
-	s.publishUpdate(EventContentTypesUpdated)
 }
 
 func (s *localPeer) publishUpdate(e UpdateEvent) {

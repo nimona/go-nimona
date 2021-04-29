@@ -306,13 +306,11 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 
 	peerKey := r.localpeer.GetPeerKey().PublicKey()
 	cids := r.localpeer.GetCIDs()
-	contentTypes := r.localpeer.GetContentTypes()
 	addresses := r.network.GetAddresses()
 	relays := r.network.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
-	hs := contentTypes
-	hs = append(hs, peerKey.String())
+	hs := []string{peerKey.String()}
 	for _, c := range cids {
 		hs = append(hs, c.String())
 	}
@@ -339,8 +337,8 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 			Addresses: addresses,
 			Relays:    relays,
 		},
-		PeerVector:       vec,
-		PeerCapabilities: contentTypes,
+		PeerVector: vec,
+		// TODO add capabilities
 	}
 
 	r.localPeerAnnouncementCacheLock.Lock()

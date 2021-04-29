@@ -2,7 +2,7 @@ package feedmanager
 
 import (
 	"fmt"
-	"strings"
+	"sync"
 	"time"
 
 	"nimona.io/pkg/context"
@@ -17,17 +17,17 @@ import (
 	"nimona.io/pkg/objectstore"
 )
 
-var (
-	ErrDone    = errors.Error("done")
-	ErrTimeout = errors.Error("request timed out")
-)
-
 type (
-	FeedManager struct {
-		localpeer     localpeer.LocalPeer
-		resolver      resolver.Resolver
-		objectstore   objectstore.Store
-		objectmanager objectmanager.ObjectManager
+	FeedManager interface {
+		RegisterFeed(rootType string, eventTypes ...string)
+	}
+	feedManager struct {
+		localpeer         localpeer.LocalPeer
+		resolver          resolver.Resolver
+		objectstore       objectstore.Store
+		objectmanager     objectmanager.ObjectManager
+		contentTypesMutex sync.RWMutex
+		contentTypes      map[string][]string // map[rootType][]eventTypes
 	}
 )
 
@@ -37,12 +37,18 @@ func New(
 	res resolver.Resolver,
 	str objectstore.Store,
 	man objectmanager.ObjectManager,
-) error {
-	m := &FeedManager{
+) (*feedManager, error) {
+	m := &feedManager{
 		localpeer:     lpr,
 		resolver:      res,
 		objectstore:   str,
 		objectmanager: man,
+		contentTypes: map[string][]string{
+			"stream:nimona.io/schema/relationship": {
+				"event:nimona.io/schema/relationship.Added",
+				"event:nimona.io/schema/relationship.Removed",
+			},
+		},
 	}
 
 	// if there is no primary identity key set, we should wait for one to be
@@ -61,26 +67,13 @@ func New(
 			}
 		}()
 	} else if err := m.initialize(ctx); err != nil {
-		return fmt.Errorf("error initializing feed manager, %w", err)
+		return m, fmt.Errorf("error initializing feed manager, %w", err)
 	}
 
-	return nil
+	return m, nil
 }
 
-func (m *FeedManager) initialize(ctx context.Context) error {
-	m.localpeer.RegisterContentTypes(
-		"stream:nimona.io/feed",
-		"event:nimona.io/feed.Added",
-		"event:nimona.io/feed.Removed",
-		"nimona.io/stream.Policy",
-		"nimona.io/stream.Request",
-		"nimona.io/stream.Response",
-		"nimona.io/stream.Announcement",
-		"nimona.io/stream.Subscription",
-		"stream:nimona.io/schema/relationship",
-		"event:nimona.io/schema/relationship.Added",
-		"event:nimona.io/schema/relationship.Removed",
-	)
+func (m *feedManager) initialize(ctx context.Context) error {
 	subs := m.objectmanager.Subscribe()
 	go func() {
 		m.handleObjects(subs) // nolint: errcheck
@@ -104,39 +97,29 @@ func (m *FeedManager) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (m *FeedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
-	registeredTypes := m.localpeer.GetContentTypes()
-	for _, registeredType := range registeredTypes {
-		switch registeredType {
-		case "stream:nimona.io/feed",
-			"event:nimona.io/feed.Added",
-			"event:nimona.io/feed.Removed",
-			"nimona.io/stream.Policy",
-			"nimona.io/stream.Request",
-			"nimona.io/stream.Response",
-			"nimona.io/stream.Announcement",
-			"nimona.io/stream.Subscription",
-			"nimona.io/Request",
-			"nimona.io/Response":
-			continue
-		}
-		if err := m.createFeed(ctx, registeredType); err != nil {
+func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
+	m.contentTypesMutex.RLock()
+	defer m.contentTypesMutex.RUnlock()
+
+	for streamType, eventTypes := range m.contentTypes {
+		if err := m.createFeed(ctx, streamType, eventTypes); err != nil {
 			return fmt.Errorf("error registering feed, %w", err)
 		}
 	}
 	return nil
 }
 
-func (m *FeedManager) createFeed(
+func (m *feedManager) createFeed(
 	ctx context.Context,
-	registeredType string,
+	streamType string,
+	eventTypes []string,
 ) error {
 	ownPeer := m.localpeer.GetPeerKey().PublicKey()
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
 		m.localpeer.GetIdentityPublicKey(),
-		getTypeForFeed(registeredType),
+		streamType,
 	)
 	feedRootObj := feedRoot.ToObject()
 
@@ -145,8 +128,6 @@ func (m *FeedManager) createFeed(
 	if err != nil {
 		return fmt.Errorf("error trying to store feed root, %w", err)
 	}
-
-	// TODO we should also pin the feed
 
 	// add a subscription to the feed's stream
 	err = m.objectmanager.AddStreamSubscription(ctx, feedRootObj.CID())
@@ -257,7 +238,13 @@ func (m *FeedManager) createFeed(
 	return nil
 }
 
-func (m *FeedManager) handleObjects(
+func (m *feedManager) RegisterFeed(rootType string, eventTypes ...string) {
+	m.contentTypesMutex.Lock()
+	defer m.contentTypesMutex.Unlock()
+	m.contentTypes[rootType] = eventTypes
+}
+
+func (m *feedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
 	identityKey := m.localpeer.GetIdentityPublicKey()
@@ -269,18 +256,6 @@ func (m *FeedManager) handleObjects(
 		}
 		if err != nil {
 			return err
-		}
-
-		switch obj.Type {
-		case "stream:nimona.io/feed",
-			"event:nimona.io/feed.Added",
-			"event:nimona.io/feed.Removed",
-			"nimona.io/stream.Policy",
-			"nimona.io/stream.Request",
-			"nimona.io/stream.Response",
-			"nimona.io/stream.Announcement",
-			"nimona.io/stream.Subscription":
-			continue
 		}
 
 		ctx := context.Background()
@@ -296,7 +271,8 @@ func (m *FeedManager) handleObjects(
 		objType := obj.Type
 		objCID := obj.CID()
 
-		if !m.isRegisteredContentType(objType) {
+		streamType, registered := m.isRegisteredContentType(objType)
+		if !registered {
 			continue
 		}
 
@@ -306,7 +282,7 @@ func (m *FeedManager) handleObjects(
 		// TODO check if identity key exists, this will not work without one
 		feedStreamCID := GetFeedRoot(
 			identityKey,
-			getTypeForFeed(objType),
+			streamType,
 		).ToObject().CID()
 		feedEvent := feed.Added{
 			Metadata: object.Metadata{
@@ -348,7 +324,7 @@ func (m *FeedManager) handleObjects(
 
 // TODO add support for multiple recipients
 // TODO this currently needs to be storing objects for it to work.
-// func (m *FeedManager) RequestFeed(
+// func (m *feedManager) RequestFeed(
 // 	ctx context.Context,
 // 	objectType string,
 // 	recipients ...*peer.ConnectionInfo,
@@ -371,16 +347,23 @@ func (m *FeedManager) handleObjects(
 // 	return m.objectstore.GetByStream(feedRootCID)
 // }
 
-func (m *FeedManager) isRegisteredContentType(
+func (m *feedManager) isRegisteredContentType(
 	contentType string,
-) bool {
-	contentTypes := m.localpeer.GetContentTypes()
-	for _, ct := range contentTypes {
-		if contentType == ct {
-			return true
+) (string, bool) {
+	m.contentTypesMutex.RLock()
+	defer m.contentTypesMutex.RUnlock()
+
+	for streamType, eventTypes := range m.contentTypes {
+		if streamType == contentType {
+			return streamType, true
+		}
+		for _, eventType := range eventTypes {
+			if eventType == contentType {
+				return streamType, true
+			}
 		}
 	}
-	return false
+	return "", false
 }
 
 func GetFeedRoot(
@@ -393,9 +376,4 @@ func GetFeedRoot(
 			Owner: owner,
 		},
 	}
-}
-
-func getTypeForFeed(objectType string) string {
-	pt := object.ParseType(objectType)
-	return strings.TrimLeft(pt.Namespace+"/"+pt.Object, "/")
 }
