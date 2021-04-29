@@ -104,12 +104,6 @@ func NewHermod() hermod {
 	str := d.ObjectStore()
 	nconf := d.Config()
 
-	local.RegisterContentTypes(
-		new(filesharing.File).Type(),
-		new(blob.Blob).Type(),
-		new(blob.Chunk).Type(),
-	)
-
 	cconf := &comboConf{
 		hconf: cfg,
 		nconf: &nconf,
@@ -182,7 +176,6 @@ func NewHermod() hermod {
 					her.transfers[req.Nonce].status = OutgoingTransferRejected
 				}
 				her.transfers[req.Nonce].status = OutgoingTransferAccepted
-
 			}
 		}
 	}()

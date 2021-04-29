@@ -383,7 +383,6 @@ func TestManager_RequestStream(t *testing.T) {
 			},
 			local: func(t *testing.T) localpeer.LocalPeer {
 				l := localpeer.New()
-				l.RegisterContentTypes("foo")
 				return l
 			},
 			network: func(t *testing.T) network.Network {
@@ -708,11 +707,6 @@ func TestManager_Put(t *testing.T) {
 	testSubscriberPrivateKey, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	testLocalPeer := localpeer.New()
-	testLocalPeer.RegisterContentTypes(
-		"foo",
-		"foo-root",
-		"foo-complex",
-	)
 	testLocalPeer.SetPeerKey(testOwnPrivateKey)
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testObjectSimple := &object.Object{
@@ -1251,10 +1245,6 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 
 	lpr := localpeer.New()
 	lpr.SetPeerKey(prv0)
-	lpr.RegisterContentTypes(
-		fixtures.TestStream{}.ToObject().Type,
-		streamSubscriptionType,
-	)
 
 	ntw := &networkmock.MockNetworkSimple{
 		ReturnLocalPeer: lpr,

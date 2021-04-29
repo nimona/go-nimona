@@ -339,7 +339,7 @@ func main() {
 				struct {
 					ContentTypes []string
 				}{
-					ContentTypes: d.LocalPeer().GetContentTypes(),
+					ContentTypes: []string{}, // TODO get from object store
 				},
 			); err != nil {
 				log.Println(err)
@@ -415,7 +415,7 @@ func main() {
 			}{
 				PublicKey:    connInfo.PublicKey.String(),
 				Addresses:    connInfo.Addresses,
-				ContentTypes: d.LocalPeer().GetContentTypes(),
+				ContentTypes: []string{}, // TODO get types from sql store
 				ConfigPath:   d.Config().Path,
 			},
 		)
@@ -864,7 +864,7 @@ func main() {
 		}{
 			URL:     r.URL.String(),
 			Filters: filters,
-			Types:   d.LocalPeer().GetContentTypes(),
+			Types:   []string{}, // TODO get from object store
 			Objects: []*object.Object{},
 		}
 		if err != objectstore.ErrNotFound {

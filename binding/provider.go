@@ -84,8 +84,6 @@ func New(initRequest *InitRequest) *Provider {
 		log.Any("addresses", net.GetAddresses()),
 	)
 
-	local.RegisterContentTypes(initRequest.ContentTypes...)
-
 	return &Provider{
 		local:         local,
 		network:       net,
