@@ -226,7 +226,7 @@ func (app *App) Show() {
 						conv.CID,
 						fmt.Sprintf(
 							"* public key: %s",
-							app.Chat.local.GetPrimaryPeerKey().PublicKey(),
+							app.Chat.local.GetPeerKey().PublicKey(),
 						),
 					)
 					app.AddSystemText(

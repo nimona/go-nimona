@@ -227,8 +227,8 @@ func newFileTransfer(
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.nconf.Peer.PrivateKey)
-	local.PutContentTypes(
+	local.SetPeerKey(cfg.nconf.Peer.PrivateKey)
+	local.RegisterContentTypes(
 		new(File).Type(),
 		new(blob.Blob).Type(),
 		new(blob.Chunk).Type(),
@@ -267,7 +267,7 @@ func newFileTransfer(
 	// convert shorthands into peers
 	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.nconf.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
+		bootstrapPeer, err := s.GetConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
@@ -275,7 +275,7 @@ func newFileTransfer(
 	}
 
 	// add bootstrap peers as relays
-	local.PutRelays(bootstrapPeers...)
+	local.RegisterRelays(bootstrapPeers...)
 
 	// construct new resolver
 	res := resolver.New(
@@ -286,7 +286,7 @@ func newFileTransfer(
 	ft.resolver = res
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 

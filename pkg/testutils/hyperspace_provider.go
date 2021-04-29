@@ -24,7 +24,7 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	require.NoError(t, err)
 
 	local := localpeer.New()
-	local.PutPrimaryPeerKey(peerKey)
+	local.SetPeerKey(peerKey)
 
 	// construct new network
 	net := network.New(
@@ -54,5 +54,5 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		require.NoError(t, err)
 	})
 
-	return local.ConnectionInfo()
+	return local.GetConnectionInfo()
 }

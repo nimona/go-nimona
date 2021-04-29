@@ -158,7 +158,7 @@ func New(
 		if err != nil {
 			panic(err)
 		}
-		w.localpeer.PutPrimaryPeerKey(k)
+		w.localpeer.SetPeerKey(k)
 	}
 	w.net = net.New(w.localpeer)
 
@@ -290,7 +290,7 @@ func (w *network) Listen(
 			log.Int("internalPort", int(localPort)),
 			log.String("externalAddress", externalAddress),
 		)
-		w.localpeer.PutAddresses(externalAddress)
+		w.localpeer.RegisterAddresses(externalAddress)
 	}
 	return listener, nil
 }
@@ -620,7 +620,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 			res := &DataForwardResponse{
 				Metadata: object.Metadata{
-					Owner: w.localpeer.GetPrimaryPeerKey().PublicKey(),
+					Owner: w.localpeer.GetPeerKey().PublicKey(),
 				},
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
@@ -664,7 +664,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// if the data are encrypted we should first decrypt them
 			if !fwd.Sender.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
-					w.localpeer.GetPrimaryPeerKey(),
+					w.localpeer.GetPeerKey(),
 					fwd.Sender,
 				)
 				if err != nil {
@@ -715,7 +715,7 @@ func (w *network) Send(
 	p crypto.PublicKey,
 	opts ...SendOption,
 ) error {
-	if p.Equals(w.localpeer.GetPrimaryPeerKey().PublicKey()) {
+	if p.Equals(w.localpeer.GetPeerKey().PublicKey()) {
 		return ErrCannotSendToSelf
 	}
 
@@ -732,7 +732,7 @@ func (w *network) Send(
 	ctx = context.FromContext(ctx)
 
 	var err error
-	if k := w.localpeer.GetPrimaryPeerKey(); !k.IsEmpty() {
+	if k := w.localpeer.GetPeerKey(); !k.IsEmpty() {
 		// TODO(geoah) we should be passing the certificates to signAll
 		o, err = signAll(k, o)
 		if err != nil {
@@ -866,7 +866,7 @@ func (w *network) wrapInDataForward(
 	}
 	// create an ephemeral key pair, and calculate the shared key
 	ek, ss, err := crypto.NewSharedKey(
-		w.localpeer.GetPrimaryPeerKey(),
+		w.localpeer.GetPeerKey(),
 		recipient,
 	)
 	if err != nil {

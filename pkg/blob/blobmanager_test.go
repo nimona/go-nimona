@@ -133,7 +133,7 @@ func newPeer() localpeer.LocalPeer {
 	pk, _ := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 
 	kc := localpeer.New()
-	kc.PutPrimaryPeerKey(pk)
+	kc.SetPeerKey(pk)
 
 	return kc
 }

@@ -25,7 +25,7 @@ func (tt *tcpTransport) Dial(
 	// but at this point it's kind of annoying to cache the primary peer key
 	// TODO consider storing ready made certificated in the localpeer
 	cert, err := crypto.GenerateTLSCertificate(
-		tt.localpeer.GetPrimaryPeerKey(),
+		tt.localpeer.GetPeerKey(),
 	)
 	if err != nil {
 		return nil, err

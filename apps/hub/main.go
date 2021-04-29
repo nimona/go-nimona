@@ -203,7 +203,7 @@ func New(
 			return nil, err
 		}
 		h.peerCertificateResponse = crtRes
-		h.daemon.LocalPeer().PutPeerCertificate(crtRes)
+		h.daemon.LocalPeer().SetPeerCertificate(crtRes)
 	}
 
 	if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
@@ -217,7 +217,7 @@ func New(
 	return h, nil
 }
 
-func (h *Hub) PutPeerCertificate(r *object.CertificateResponse) {
+func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
 	h.Lock()
 	defer h.Unlock()
 	h.daemon.ObjectStore().Pin(r.ToObject().CID())
@@ -225,7 +225,7 @@ func (h *Hub) PutPeerCertificate(r *object.CertificateResponse) {
 	h.peerCertificateResponse = r
 	b, _ := json.Marshal(r.ToObject())
 	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
-	h.daemon.LocalPeer().PutPeerCertificate(r)
+	h.daemon.LocalPeer().SetPeerCertificate(r)
 }
 
 func (h *Hub) PutIdentityPrivateKey(k crypto.PrivateKey) {
@@ -404,7 +404,7 @@ func main() {
 	}()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		connInfo := d.LocalPeer().ConnectionInfo()
+		connInfo := d.LocalPeer().GetConnectionInfo()
 		err := tplPeer.Execute(
 			w,
 			struct {
@@ -444,7 +444,7 @@ func main() {
 		if linkMnemonic {
 			csr = &object.CertificateRequest{
 				Metadata: object.Metadata{
-					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+					Owner: d.LocalPeer().GetPeerKey().PublicKey(),
 				},
 				Nonce:                  rand.String(12),
 				VendorName:             "Nimona",
@@ -454,13 +454,13 @@ func main() {
 				ApplicationURL:         "https://nimona.io/hub",
 				Permissions: []object.CertificatePermission{{
 					Metadata: object.Metadata{
-						Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+						Owner: d.LocalPeer().GetPeerKey().PublicKey(),
 					},
 					Types:   []string{"*"},
 					Actions: []string{"*"},
 				}},
 			}
-			k := d.LocalPeer().GetPrimaryPeerKey()
+			k := d.LocalPeer().GetPeerKey()
 			csrSig, err := object.NewSignature(k, csr.ToObject())
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -501,7 +501,7 @@ func main() {
 			if csrRes == nil {
 				return
 			}
-			h.PutPeerCertificate(csrRes)
+			h.SetPeerCertificate(csrRes)
 			values.PublicKey = h.GetIdentityPublicKey().String()
 			turboStream.SendEvent(
 				hotwire.StreamActionReplace,
@@ -546,7 +546,7 @@ func main() {
 			ApplicationURL:         "https://nimona.io/hub",
 			Permissions: []object.CertificatePermission{{
 				Metadata: object.Metadata{
-					Owner: d.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+					Owner: d.LocalPeer().GetPeerKey().PublicKey(),
 				},
 				Types:   []string{"*"},
 				Actions: []string{"*"},
@@ -567,7 +567,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		h.PutPeerCertificate(crtRes)
+		h.SetPeerCertificate(crtRes)
 		h.PutIdentityPrivateKey(k)
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
@@ -612,7 +612,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		h.PutPeerCertificate(csrRes)
+		h.SetPeerCertificate(csrRes)
 		h.PutIdentityPrivateKey(k)
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})

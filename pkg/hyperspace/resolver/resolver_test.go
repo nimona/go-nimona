@@ -21,10 +21,10 @@ func TestResolver_Integration(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
 			Addresses: net0.LocalPeer().GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
@@ -34,10 +34,10 @@ func TestResolver_Integration(t *testing.T) {
 	net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net1.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
 			Addresses: net1.LocalPeer().GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo"},
@@ -74,7 +74,7 @@ func TestResolver_Integration(t *testing.T) {
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p3.PublicKey(),
@@ -100,7 +100,7 @@ func newPeer(t *testing.T) network.Network {
 	ctx := context.New()
 
 	local := localpeer.New()
-	local.PutPrimaryPeerKey(k)
+	local.SetPeerKey(k)
 
 	net := network.New(
 		ctx,

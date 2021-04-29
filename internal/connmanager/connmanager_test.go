@@ -41,13 +41,13 @@ func TestGetConnection(t *testing.T) {
 	defer lst2.Close()
 
 	conn1, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
-		PublicKey: kc2.GetPrimaryPeerKey().PublicKey(),
+		PublicKey: kc2.GetPeerKey().PublicKey(),
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
 
 	conn2, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
-		PublicKey: kc2.GetPrimaryPeerKey().PublicKey(),
+		PublicKey: kc2.GetPeerKey().PublicKey(),
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
@@ -66,7 +66,7 @@ func newPeer(t *testing.T) (
 	assert.NoError(t, err)
 
 	kc := localpeer.New()
-	kc.PutPrimaryPeerKey(pk)
+	kc.SetPeerKey(pk)
 
 	return kc, net.New(
 		kc,

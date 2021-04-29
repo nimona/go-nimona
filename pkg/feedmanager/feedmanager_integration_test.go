@@ -37,8 +37,8 @@ func TestManager_Integration(t *testing.T) {
 	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
 	defer p1.Close()
 
-	fmt.Println("p0", p0.LocalPeer().GetPrimaryPeerKey().PublicKey())
-	fmt.Println("p1", p1.LocalPeer().GetPrimaryPeerKey().PublicKey())
+	fmt.Println("p0", p0.LocalPeer().GetPeerKey().PublicKey())
+	fmt.Println("p1", p1.LocalPeer().GetPeerKey().PublicKey())
 
 	// put a new stream on p0
 	o0 := fixtures.TestStream{
@@ -108,7 +108,7 @@ func newDaemon(
 	require.NoError(t, err)
 	time.Sleep(time.Second)
 
-	peerKey := d.LocalPeer().GetPrimaryPeerKey()
+	peerKey := d.LocalPeer().GetPeerKey()
 	csr := &object.CertificateRequest{
 		Metadata: object.Metadata{
 			Owner: peerKey.PublicKey(),
@@ -122,8 +122,8 @@ func newDaemon(
 	csrRes, err := object.NewCertificate(id, *csr, true, "bar")
 	require.NoError(t, err)
 
-	d.LocalPeer().PutPeerCertificate(csrRes)
+	d.LocalPeer().SetPeerCertificate(csrRes)
 
-	d.LocalPeer().PutContentTypes(new(fixtures.TestStream).Type())
+	d.LocalPeer().RegisterContentTypes(new(fixtures.TestStream).Type())
 	return d
 }

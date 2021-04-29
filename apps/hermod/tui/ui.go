@@ -102,7 +102,7 @@ func NewHermod() hermod {
 	str := d.ObjectStore()
 	nconf := d.Config()
 
-	local.PutContentTypes(
+	local.RegisterContentTypes(
 		new(filesharing.File).Type(),
 		new(blob.Blob).Type(),
 		new(blob.Chunk).Type(),
@@ -317,8 +317,8 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	case "local":
 		h.result = fmt.Sprintf(
 			"public_key: %s\naddresses: %s\n",
-			h.local.ConnectionInfo().PublicKey,
-			h.local.ConnectionInfo().Addresses,
+			h.local.GetConnectionInfo().PublicKey,
+			h.local.GetConnectionInfo().Addresses,
 		)
 	case "request":
 		if len(params) != 1 {

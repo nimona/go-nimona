@@ -214,7 +214,7 @@ func (p *Provider) handlePeerLookup(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.local.GetPrimaryPeerKey().PublicKey(),
+			Owner: p.local.GetPeerKey().PublicKey(),
 		},
 		Nonce:         q.Nonce,
 		QueryVector:   q.QueryVector,
@@ -291,7 +291,7 @@ func (p *Provider) announceSelf() {
 	// construct an announcement
 	ann := &hyperspace.Announcement{
 		Version:        announceVersion,
-		ConnectionInfo: p.local.ConnectionInfo(),
+		ConnectionInfo: p.local.GetConnectionInfo(),
 		PeerCapabilities: []string{
 			hyperspaceAnnouncementType,
 			hyperspaceLookupRequestType,

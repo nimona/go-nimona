@@ -20,7 +20,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
 		Addresses: net0.LocalPeer().GetAddresses(),
 	}
 
@@ -28,10 +28,10 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net1.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net1.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
 			Addresses: net1.LocalPeer().GetAddresses(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
@@ -60,7 +60,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+		PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
 		Addresses: net0.LocalPeer().GetAddresses(),
 	}
 
@@ -71,10 +71,10 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	net2 := newPeer(t)
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net2.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net2.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			PublicKey: net2.LocalPeer().GetPeerKey().PublicKey(),
 			Addresses: net2.LocalPeer().GetAddresses(),
 		},
 		PeerVector:       hyperspace.New("foo", "bar"),
@@ -120,10 +120,10 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net0.LocalPeer().GetPrimaryPeerKey().PublicKey(),
+			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
 			Addresses: net0.LocalPeer().GetAddresses(),
 		},
 	}
@@ -191,7 +191,7 @@ func newPeer(t *testing.T) network.Network {
 	ctx := context.New()
 
 	local := localpeer.New()
-	local.PutPrimaryPeerKey(k)
+	local.SetPeerKey(k)
 
 	net := network.New(
 		ctx,

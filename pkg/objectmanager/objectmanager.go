@@ -106,7 +106,7 @@ func New(
 	subs := m.network.Subscribe()
 
 	if cids, err := m.objectstore.GetPinned(); err == nil {
-		m.localpeer.PutCIDs(cids...)
+		m.localpeer.RegisterCIDs(cids...)
 	} else {
 		logger.Error("error getting pinned objects", log.Error(err))
 	}
@@ -477,7 +477,7 @@ func (m *manager) storeObject(
 	// we currently only do this if we are dealing with a single object or
 	// a stream root
 	if obj.Metadata.Stream.IsEmpty() {
-		m.localpeer.PutCIDs(objCID)
+		m.localpeer.RegisterCIDs(objCID)
 	}
 
 	return nil
@@ -521,7 +521,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	// remove self
-	delete(subscribersMap, m.localpeer.GetPrimaryPeerKey().PublicKey().String())
+	delete(subscribersMap, m.localpeer.GetPeerKey().PublicKey().String())
 
 	subscribers := []string{}
 	for subscriber := range subscribersMap {
@@ -540,7 +540,7 @@ func (m *manager) announceStreamChildren(
 	// notify subscribers
 	announcement := stream.Announcement{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
 		StreamCID:  streamCID,
 		ObjectCIDs: children,
@@ -599,7 +599,7 @@ func (m *manager) handleObjectRequest(
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
 		Object:    nil,
 		RequestID: req.RequestID,
@@ -670,7 +670,7 @@ func (m *manager) handleStreamRequest(
 	// start response
 	res := &stream.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPrimaryPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
 		RequestID: req.RequestID,
 		RootCID:   req.RootCID,
@@ -801,7 +801,7 @@ func (m *manager) Put(
 	ownPeer := false
 	ownIdentity := false
 	if !owner.IsEmpty() {
-		if k := m.localpeer.GetPrimaryPeerKey().PublicKey(); !k.IsEmpty() {
+		if k := m.localpeer.GetPeerKey().PublicKey(); !k.IsEmpty() {
 			ownPeer = owner.Equals(k)
 		}
 		if k := m.localpeer.GetIdentityPublicKey(); !k.IsEmpty() {
@@ -872,7 +872,7 @@ func (m *manager) AddStreamSubscription(
 		return fmt.Errorf("error trying to get stream objects, %w", err)
 	}
 
-	pub := m.localpeer.GetPrimaryPeerKey().PublicKey()
+	pub := m.localpeer.GetPeerKey().PublicKey()
 
 	for {
 		o, err := r.Read()

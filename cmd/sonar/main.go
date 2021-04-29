@@ -58,7 +58,7 @@ func main() {
 	// construct local peer
 	local := localpeer.New()
 	// attach peer private key from config
-	local.PutPrimaryPeerKey(cfg.Peer.PrivateKey)
+	local.SetPeerKey(cfg.Peer.PrivateKey)
 
 	// construct new network
 	net := network.New(
@@ -80,7 +80,7 @@ func main() {
 	// convert shorthands into connection infos
 	bootstrapPeers := []*peer.ConnectionInfo{}
 	for _, s := range cfg.Peer.Bootstraps {
-		bootstrapPeer, err := s.ConnectionInfo()
+		bootstrapPeer, err := s.GetConnectionInfo()
 		if err != nil {
 			logger.Fatal("error parsing bootstrap peer", log.Error(err))
 		}
@@ -95,7 +95,7 @@ func main() {
 	)
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPrimaryPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", local.GetAddresses()),
 	)
 
@@ -143,7 +143,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				local.GetPrimaryPeerKey().PublicKey().String(),
+				local.GetPeerKey().PublicKey().String(),
 				env.Metadata.Owner,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
@@ -185,7 +185,7 @@ func main() {
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: local.GetPrimaryPeerKey().PublicKey(),
+						Owner: local.GetPeerKey().PublicKey(),
 					},
 					Data: object.Map{
 						"nonce": object.String(rand.String(8)),
@@ -204,7 +204,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.PublicKey.String(),
-				local.GetPrimaryPeerKey().PublicKey().String(),
+				local.GetPeerKey().PublicKey().String(),
 			)
 			return nil
 		}

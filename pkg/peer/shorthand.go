@@ -20,7 +20,7 @@ func (s Shorthand) IsValid() bool {
 	return len(strings.Split(string(s), "@")) == 2
 }
 
-func (s Shorthand) ConnectionInfo() (*ConnectionInfo, error) {
+func (s Shorthand) GetConnectionInfo() (*ConnectionInfo, error) {
 	ps := strings.Split(string(s), "@")
 	if len(ps) != 2 {
 		return nil, ErrInvalidShorthand
