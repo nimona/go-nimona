@@ -299,6 +299,62 @@ func TestStore_Relations(t *testing.T) {
 	fmt.Println(leaves)
 }
 
+func TestStore_ListCIDs(t *testing.T) {
+	f00 := &object.Object{
+		Type:     "f00",
+		Metadata: object.Metadata{},
+		Data: object.Map{
+			"f00": object.String("f00"),
+		},
+	}
+
+	f01 := &object.Object{
+		Type: "f01",
+		Metadata: object.Metadata{
+			Stream: f00.CID(),
+			Parents: object.Parents{
+				"*": []object.CID{
+					f00.CID(),
+				},
+			},
+		},
+		Data: object.Map{
+			"f01": object.String("f01"),
+		},
+	}
+
+	f02 := &object.Object{
+		Type: "f02",
+		Data: object.Map{
+			"f02": object.String("f02"),
+		},
+	}
+
+	fmt.Println("f00", f00.CID())
+	fmt.Println("f01", f01.CID())
+	fmt.Println("f02", f02.CID())
+
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	require.NoError(t, store.Put(f00))
+	require.NoError(t, store.Put(f01))
+	require.NoError(t, store.Put(f02))
+
+	leaves, err := store.ListCIDs()
+	require.NoError(t, err)
+	require.NotNil(t, leaves)
+	assert.Len(t, leaves, 2)
+	assert.Equal(t, []object.CID{
+		f00.CID(),
+		f02.CID(),
+	}, leaves)
+
+	fmt.Println(leaves)
+}
+
 func TestStore_Pinned(t *testing.T) {
 	dblite := tempSqlite3(t)
 	store, err := New(dblite)
