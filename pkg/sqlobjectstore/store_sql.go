@@ -350,6 +350,34 @@ func (st *Store) GetRelations(
 	return cidList, nil
 }
 
+func (st *Store) ListCIDs() ([]object.CID, error) {
+	stmt, err := st.db.Prepare(
+		"SELECT CID FROM Objects WHERE CID == RootCID",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not prepare query: %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, fmt.Errorf("could not query: %w", err)
+	}
+	defer rows.Close() // nolint: errcheck
+
+	cidList := []object.CID{}
+
+	for rows.Next() {
+		data := ""
+		if err := rows.Scan(&data); err != nil {
+			return nil, errors.Merge(objectstore.ErrNotFound, err)
+		}
+		cidList = append(cidList, object.CID(data))
+	}
+
+	return cidList, nil
+}
+
 func (st *Store) UpdateTTL(
 	cid object.CID,
 	minutes int,
