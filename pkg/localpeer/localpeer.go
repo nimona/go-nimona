@@ -14,10 +14,6 @@ import (
 
 type (
 	LocalPeer interface {
-		// TODO(geoah) move to object store
-		GetCIDs() []object.CID
-		RegisterCIDs(...object.CID)
-		// local peer information
 		GetPeerKey() crypto.PrivateKey
 		SetPeerKey(crypto.PrivateKey)
 		GetIdentityPublicKey() crypto.PublicKey
@@ -38,11 +34,7 @@ type (
 )
 
 const (
-	EventContentTypesUpdated UpdateEvent = "contentTypeUpdated"
-	EventCIDsUpdated         UpdateEvent = "cidsUpdated"
-	EventAddressesUpdated    UpdateEvent = "addressesUpdated"
-	EventRelaysUpdated       UpdateEvent = "relaysUpdated"
-	EventIdentityKeyUpdated  UpdateEvent = "identityPublicKeyUpdated"
+	EventIdentityUpdated UpdateEvent = "identityPublicUpdated"
 )
 
 func New() LocalPeer {
@@ -85,25 +77,14 @@ func (s *localPeer) SetPeerCertificate(c *object.CertificateResponse) {
 	s.keyLock.Lock()
 	s.peerCertificateResponse = c
 	s.keyLock.Unlock()
-	s.publishUpdate(EventIdentityKeyUpdated)
+	s.publishUpdate(EventIdentityUpdated)
 }
 
 func (s *localPeer) ForgetPeerCertificate() {
 	s.keyLock.Lock()
 	s.peerCertificateResponse = nil
 	s.keyLock.Unlock()
-	s.publishUpdate(EventIdentityKeyUpdated)
-}
-
-func (s *localPeer) GetCIDs() []object.CID {
-	return s.cids.List()
-}
-
-func (s *localPeer) RegisterCIDs(cids ...object.CID) {
-	for _, h := range cids {
-		s.cids.Put(h)
-	}
-	s.publishUpdate(EventCIDsUpdated)
+	s.publishUpdate(EventIdentityUpdated)
 }
 
 func (s *localPeer) publishUpdate(e UpdateEvent) {

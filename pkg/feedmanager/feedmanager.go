@@ -19,7 +19,7 @@ import (
 
 type (
 	FeedManager interface {
-		RegisterFeed(rootType string, eventTypes ...string)
+		RegisterFeed(rootType string, eventTypes ...string) error
 	}
 	feedManager struct {
 		localpeer         localpeer.LocalPeer
@@ -59,7 +59,7 @@ func New(
 			for {
 				defer lpDone()
 				update := <-localPeerUpdates
-				if update == localpeer.EventIdentityKeyUpdated {
+				if update == localpeer.EventIdentityUpdated {
 					// TODO should we panic?
 					m.initialize(ctx) // nolint: errcheck
 					return
@@ -83,21 +83,14 @@ func (m *feedManager) initialize(ctx context.Context) error {
 		return err
 	}
 
-	localPeerUpdates, _ := m.localpeer.ListenForUpdates()
-	go func() {
-		for {
-			update := <-localPeerUpdates
-			if update != localpeer.EventContentTypesUpdated {
-				continue
-			}
-			m.createFeedsForRegisteredTypes(ctx) // nolint: errcheck
-		}
-	}()
-
 	return nil
 }
 
 func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
+	if m.localpeer.GetIdentityPublicKey().IsEmpty() {
+		return nil
+	}
+
 	m.contentTypesMutex.RLock()
 	defer m.contentTypesMutex.RUnlock()
 
@@ -122,22 +115,34 @@ func (m *feedManager) createFeed(
 		streamType,
 	)
 	feedRootObj := feedRoot.ToObject()
+	feedRootCID := feedRootObj.CID()
 
-	// and store it
-	_, err := m.objectmanager.Put(ctx, feedRootObj)
+	// check if it exists
+	_, err := m.objectstore.Get(feedRootCID)
+	if err == nil {
+		return nil
+	}
+
+	// and if not, store it
+	_, err = m.objectmanager.Put(ctx, feedRootObj)
 	if err != nil {
 		return fmt.Errorf("error trying to store feed root, %w", err)
 	}
 
+	err = m.objectstore.Pin(feedRootCID)
+	if err != nil {
+		return fmt.Errorf("error trying to pin feed root, %w", err)
+	}
+
 	// add a subscription to the feed's stream
-	err = m.objectmanager.AddStreamSubscription(ctx, feedRootObj.CID())
+	err = m.objectmanager.AddStreamSubscription(ctx, feedRootCID)
 	if err != nil {
 		return fmt.Errorf("error trying to subscribe to feed, %w", err)
 	}
 
 	// subscribe to stream updates and fetch any objects that have been added
 	sub := m.objectmanager.Subscribe(
-		objectmanager.FilterByStreamCID(feedRootObj.CID()),
+		objectmanager.FilterByStreamCID(feedRootCID),
 		objectmanager.FilterByObjectType(new(feed.Added).Type()),
 	)
 
@@ -177,7 +182,7 @@ func (m *feedManager) createFeed(
 					// not really working as we don't seem to be publishing
 					// stream events.
 					// TODO we should at least be caching possible peers
-					resolver.LookupByCID(feedRootObj.CID()),
+					resolver.LookupByCID(feedRootCID),
 				)
 				if err != nil {
 					// TODO log
@@ -213,7 +218,7 @@ func (m *feedManager) createFeed(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		),
-		resolver.LookupByCID(feedRootObj.CID()),
+		resolver.LookupByCID(feedRootCID),
 	)
 	if err != nil {
 		return fmt.Errorf("error looking for other feed providers, %w", err)
@@ -226,7 +231,7 @@ func (m *feedManager) createFeed(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*5),
 			),
-			feedRootObj.CID(),
+			feedRootCID,
 			connInfo,
 		)
 		if err != nil {
@@ -238,10 +243,14 @@ func (m *feedManager) createFeed(
 	return nil
 }
 
-func (m *feedManager) RegisterFeed(rootType string, eventTypes ...string) {
+func (m *feedManager) RegisterFeed(
+	rootType string,
+	eventTypes ...string,
+) error {
 	m.contentTypesMutex.Lock()
-	defer m.contentTypesMutex.Unlock()
 	m.contentTypes[rootType] = eventTypes
+	m.contentTypesMutex.Unlock()
+	return m.createFeedsForRegisteredTypes(context.New())
 }
 
 func (m *feedManager) handleObjects(
@@ -276,7 +285,7 @@ func (m *feedManager) handleObjects(
 			continue
 		}
 
-		logger.Debug("handling object")
+		logger.Debug("handling registered feed type")
 
 		// add to feed
 		// TODO check if identity key exists, this will not work without one
@@ -294,7 +303,7 @@ func (m *feedManager) handleObjects(
 			},
 		}
 		if _, err := m.objectmanager.Put(ctx, feedEvent.ToObject()); err != nil {
-			// TODO log
+			logger.Warn("error storing feed event", log.Error(err))
 			continue
 		}
 		// _, err = m.objectstore.Get(feedStreamCID)

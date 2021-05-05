@@ -39,15 +39,6 @@ func TestLocalPeer(t *testing.T) {
 
 	lp.SetPeerCertificate(csrRes)
 	assert.Equal(t, k2.PublicKey(), lp.GetIdentityPublicKey())
-
-	ch1 := object.CID("f01")
-	ch2 := object.CID("f02")
-
-	lp.RegisterCIDs(ch1)
-	assert.ElementsMatch(t, []object.CID{ch1}, lp.GetCIDs())
-
-	lp.RegisterCIDs(ch1, ch2)
-	assert.ElementsMatch(t, []object.CID{ch1, ch2}, lp.GetCIDs())
 }
 
 func TestEventUpdates(t *testing.T) {
@@ -62,5 +53,5 @@ func TestEventUpdates(t *testing.T) {
 	}()
 
 	e := <-c
-	assert.Equal(t, EventIdentityKeyUpdated, e)
+	assert.Equal(t, EventIdentityUpdated, e)
 }

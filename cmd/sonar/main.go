@@ -91,6 +91,7 @@ func main() {
 	res := resolver.New(
 		ctx,
 		net,
+		nil,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 

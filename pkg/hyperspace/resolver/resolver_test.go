@@ -1,7 +1,10 @@
 package resolver
 
 import (
+	"database/sql"
+	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +17,7 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestResolver_Integration(t *testing.T) {
@@ -85,12 +89,41 @@ func TestResolver_Integration(t *testing.T) {
 	prv.Put(pr3)
 
 	// construct resolver
-	res := New(context.New(), net1, WithBoostrapPeers(pr0.ConnectionInfo))
+	str1 := tempObjectStore(t)
+	res := New(
+		context.New(),
+		net1,
+		str1,
+		WithBoostrapPeers(pr0.ConnectionInfo),
+	)
 
 	// lookup by content
 	pr, err := res.Lookup(context.New(), LookupByCID("bar"))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
+
+	t.Run("object added", func(t *testing.T) {
+		// add new object to pr1 store
+		obj1 := &object.Object{
+			Data: object.Map{
+				"foo": object.String("bar"),
+			},
+		}
+		obj1cid := obj1.CID()
+		err = str1.Put(obj1)
+		require.NoError(t, err)
+
+		time.Sleep(250 * time.Millisecond)
+
+		// lookup by cid
+		pr, err := res.Lookup(context.New(), LookupByCID(obj1cid))
+		require.NoError(t, err)
+		assert.Len(t, pr, 1)
+		assert.Equal(t,
+			pr1.Metadata.Signature.Signer.String(),
+			pr[0].Metadata.Signature.Signer.String(),
+		)
+	})
 }
 
 func newPeer(t *testing.T) network.Network {
@@ -119,4 +152,13 @@ func newPeer(t *testing.T) network.Network {
 	})
 
 	return net
+}
+
+func tempObjectStore(t *testing.T) *sqlobjectstore.Store {
+	t.Helper()
+	db, err := sql.Open("sqlite3", path.Join(t.TempDir(), "sqlite3.db"))
+	require.NoError(t, err)
+	str, err := sqlobjectstore.New(db)
+	require.NoError(t, err)
+	return str
 }
