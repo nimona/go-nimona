@@ -105,12 +105,6 @@ func New(
 
 	subs := m.network.Subscribe()
 
-	if cids, err := m.objectstore.GetPinned(); err == nil {
-		m.localpeer.RegisterCIDs(cids...)
-	} else {
-		logger.Error("error getting pinned objects", log.Error(err))
-	}
-
 	go func() {
 		if err := m.handleObjects(subs); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
@@ -471,13 +465,6 @@ func (m *manager) storeObject(
 			log.Error(err),
 		)
 		// TODO if we failed to store why are we not returning?
-	}
-
-	// add CID to local peer
-	// we currently only do this if we are dealing with a single object or
-	// a stream root
-	if obj.Metadata.Stream.IsEmpty() {
-		m.localpeer.RegisterCIDs(objCID)
 	}
 
 	return nil

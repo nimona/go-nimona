@@ -160,7 +160,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
 					m.EXPECT().Get(f01.CID()).Return(object.Copy(f01), nil).MaxTimes(2)
-					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
 				networkHandler: func(
@@ -219,7 +218,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
 					m.EXPECT().Get(f01.CID()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
-					m.EXPECT().GetPinned().Return(nil, nil)
 					return m
 				},
 				networkHandler: func(
@@ -550,9 +548,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			storeHandler: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
-				m.EXPECT().
 					GetStreamLeaves(f00.CID()).
 					Return(
 						[]object.CID{
@@ -618,9 +613,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		fields: fields{
 			storeHandler: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
 				m.EXPECT().
 					GetStreamLeaves(f00.CID()).
 					Return(nil, objectstore.ErrNotFound)
@@ -822,9 +814,6 @@ func TestManager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
-				m.EXPECT().
 					Put(testObjectSimple).
 					Return(nil)
 				return m
@@ -858,9 +847,6 @@ func TestManager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
-				m.EXPECT().
 					Put(testObjectComplex)
 				return m
 			},
@@ -892,9 +878,6 @@ func TestManager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
 				m.EXPECT().
 					GetByStream(testObjectStreamRoot.CID()).
 					Return(
@@ -951,9 +934,6 @@ func TestManager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
@@ -1031,9 +1011,6 @@ func TestManager_Put(t *testing.T) {
 				m := objectstoremock.NewMockStore(
 					gomock.NewController(t),
 				)
-				m.EXPECT().
-					GetPinned().
-					Return(nil, nil)
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(

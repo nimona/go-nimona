@@ -122,8 +122,10 @@ func newDaemon(
 	csrRes, err := object.NewCertificate(id, *csr, true, "bar")
 	require.NoError(t, err)
 
+	err = d.FeedManager().RegisterFeed(new(fixtures.TestStream).Type())
+	require.NoError(t, err)
+
 	d.LocalPeer().SetPeerCertificate(csrRes)
 
-	d.FeedManager().RegisterFeed(new(fixtures.TestStream).Type())
 	return d
 }

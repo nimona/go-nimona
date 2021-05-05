@@ -18,6 +18,7 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/sqlobjectstore"
 )
 
 var (
@@ -32,6 +33,7 @@ const (
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=object.CID"
 
 type (
 	Resolver interface {
@@ -53,20 +55,23 @@ type (
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
+		cids                           *ObjectCIDSyncList
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
 )
 
-// New returns a new resolver
+// New returns a new resolver.
+// Object store is currently optional.
 func New(
 	ctx context.Context,
-	netw network.Network,
+	net network.Network,
+	str *sqlobjectstore.Store,
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
 		context: ctx,
-		network: netw,
+		network: net,
 		peerCache: peerstore.NewPeerCache(
 			time.Minute,
 			"nimona_hyperspace_resolver",
@@ -74,6 +79,7 @@ func New(
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
+		cids:                           &ObjectCIDSyncList{},
 	}
 
 	for _, opt := range opts {
@@ -92,8 +98,17 @@ func New(
 		},
 	)
 
+	// go through all existing objects and add them as well
+	if str != nil {
+		if cids, err := str.ListCIDs(); err == nil {
+			for _, cid := range cids {
+				r.cids.Put(cid)
+			}
+		}
+	}
+
 	// register self to network
-	netw.RegisterResolver(r)
+	net.RegisterResolver(r)
 
 	for _, p := range r.bootstrapPeers {
 		r.peerCache.Put(&hyperspace.Announcement{
@@ -102,16 +117,38 @@ func New(
 	}
 
 	go func() {
+		// announce on startup
 		r.announceSelf()
-		announceOnUpdate, cf := r.localpeer.ListenForUpdates()
-		defer cf()
+
+		// subscribe to local peer updates
+		lpSub, lpCf := r.localpeer.ListenForUpdates()
+		defer lpCf()
+
+		// subscribe to object updates
+		strSub := make(<-chan sqlobjectstore.Event)
+		strCf := func() {}
+		if str != nil {
+			strSub, strCf = str.ListenForUpdates()
+		}
+		defer strCf()
+
+		// or every 30 seconds
 		announceTicker := time.NewTicker(30 * time.Second)
 		for {
 			select {
 			case <-announceTicker.C:
 				r.announceSelf()
-			case <-announceOnUpdate:
+			case <-lpSub:
 				r.announceSelf()
+			case event := <-strSub:
+				switch event.Action {
+				case sqlobjectstore.ObjectInserted:
+					r.cids.Put(event.ObjectCID)
+					r.announceSelf()
+				case sqlobjectstore.ObjectRemoved:
+					r.cids.Put(event.ObjectCID)
+					r.announceSelf()
+				}
 			}
 		}
 	}()
@@ -305,7 +342,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
 	peerKey := r.localpeer.GetPeerKey().PublicKey()
-	cids := r.localpeer.GetCIDs()
+	cids := r.cids.List()
 	addresses := r.network.GetAddresses()
 	relays := r.network.GetRelays()
 

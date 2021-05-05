@@ -129,6 +129,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	res := resolver.New(
 		ctx,
 		ntw,
+		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
