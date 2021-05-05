@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1619726512790,
+  "lastUpdate": 1620257075412,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4656,6 +4656,54 @@ window.BENCHMARK_DATA = {
             "value": 12881,
             "unit": "ns/op",
             "extra": "93350 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "4a28691afb47f4ac4d2668a15267ed2e53955875",
+          "message": "chore(examples): update apps to use new localpeer",
+          "timestamp": "2021-05-06T00:23:10+01:00",
+          "tree_id": "b301b6187032b3ba8bd1e5e741773f06723e1118",
+          "url": "https://github.com/nimona/go-nimona/commit/4a28691afb47f4ac4d2668a15267ed2e53955875"
+        },
+        "date": 1620257072061,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3559972,
+            "unit": "ns/op",
+            "extra": "332 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 303388988,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3202863733,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 9609,
+            "unit": "ns/op",
+            "extra": "122311 times\n2 procs"
           }
         ]
       }
