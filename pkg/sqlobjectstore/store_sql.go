@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	// required for sqlite3
 	_ "github.com/mattn/go-sqlite3"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -46,15 +48,33 @@ var migrations = []string{
 
 var defaultTTL = time.Hour * 24 * 7
 
-type Store struct {
-	db *sql.DB
-}
+type (
+	Store struct {
+		db            *sql.DB
+		listeners     map[string]chan Event
+		listenersLock sync.RWMutex
+	}
+	EventAction string
+	Event       struct {
+		Action    EventAction
+		ObjectCID object.CID
+	}
+)
+
+const (
+	ObjectInserted EventAction = "objectInserted"
+	ObjectRemoved  EventAction = "objectRemoved"
+	ObjectPinned   EventAction = "objectPinned"
+	ObjectUnpinned EventAction = "objectUnpinned"
+)
 
 func New(
 	db *sql.DB,
 ) (*Store, error) {
 	ndb := &Store{
-		db: db,
+		db:            db,
+		listeners:     map[string]chan Event{},
+		listenersLock: sync.RWMutex{},
 	}
 
 	// run migrations
@@ -232,6 +252,11 @@ func (st *Store) PutWithTTL(
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
 	}
+
+	st.publishUpdate(Event{
+		Action:    ObjectInserted,
+		ObjectCID: objCID,
+	})
 
 	return nil
 }
@@ -411,6 +436,11 @@ func (st *Store) Remove(
 	); err != nil {
 		return fmt.Errorf("could not delete object: %w", err)
 	}
+
+	st.publishUpdate(Event{
+		Action:    ObjectRemoved,
+		ObjectCID: cid,
+	})
 
 	return nil
 }
@@ -632,6 +662,11 @@ func (st *Store) IsPinned(cid object.CID) (bool, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
+	st.publishUpdate(Event{
+		Action:    ObjectPinned,
+		ObjectCID: cid,
+	})
+
 	if !rows.Next() {
 		return false, nil
 	}
@@ -651,6 +686,11 @@ func (st *Store) RemovePin(
 	}
 	defer stmt.Close() // nolint: errcheck
 
+	st.publishUpdate(Event{
+		Action:    ObjectUnpinned,
+		ObjectCID: cid,
+	})
+
 	if _, err := stmt.Exec(
 		cid.String(),
 	); err != nil {
@@ -658,6 +698,34 @@ func (st *Store) RemovePin(
 	}
 
 	return nil
+}
+
+func (st *Store) ListenForUpdates() (
+	updates <-chan Event,
+	cancel func(),
+) {
+	c := make(chan Event)
+	st.listenersLock.Lock()
+	defer st.listenersLock.Unlock()
+	id := rand.String(8)
+	st.listeners[id] = c
+	f := func() {
+		st.listenersLock.Lock()
+		defer st.listenersLock.Unlock()
+		delete(st.listeners, id)
+	}
+	return c, f
+}
+
+func (st *Store) publishUpdate(e Event) {
+	st.listenersLock.RLock()
+	defer st.listenersLock.RUnlock()
+	for _, l := range st.listeners {
+		select {
+		case l <- e:
+		default:
+		}
+	}
 }
 
 func astoai(ah []string) []interface{} {
