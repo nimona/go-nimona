@@ -236,11 +236,14 @@ func (app *App) Show() {
 							app.Chat.network.GetAddresses(),
 						),
 					)
+					// TODO handle error
+					// nolint: errcheck
+					pinnedCIDs, _ := app.Chat.objectstore.GetPinned()
 					app.AddSystemText(
 						conv.CID,
 						fmt.Sprintf(
 							"* pinned cids: %v",
-							app.Chat.local.GetCIDs(),
+							pinnedCIDs,
 						),
 					)
 				default:

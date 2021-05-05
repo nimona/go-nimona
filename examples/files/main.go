@@ -272,14 +272,6 @@ func newFileTransfer(
 	// add bootstrap peers as relays
 	net.RegisterRelays(bootstrapPeers...)
 
-	// construct new resolver
-	res := resolver.New(
-		ctx,
-		net,
-		resolver.WithBoostrapPeers(bootstrapPeers...),
-	)
-	ft.resolver = res
-
 	logger = logger.With(
 		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
@@ -296,6 +288,15 @@ func newFileTransfer(
 		logger.Fatal("error starting sql store", log.Error(err))
 	}
 	ft.objectstore = str
+
+	// construct new resolver
+	res := resolver.New(
+		ctx,
+		net,
+		str,
+		resolver.WithBoostrapPeers(bootstrapPeers...),
+	)
+	ft.resolver = res
 
 	// construct object manager
 	man := objectmanager.New(

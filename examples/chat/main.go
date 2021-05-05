@@ -269,13 +269,11 @@ func main() {
 	conversationRootObject := conversationRoot.ToObject()
 	conversationRootCID := conversationRootObject.CID()
 
-	// add conversation to the list of content we provide
-	local.RegisterCIDs(conversationRootCID)
-
 	// construct new resolver
 	res := resolver.New(
 		ctx,
 		net,
+		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
@@ -387,13 +385,6 @@ func main() {
 			}
 		}
 	}
-}
-
-func last(t string, i int) string {
-	if len(t) <= i {
-		return t
-	}
-	return t[len(t)-i:]
 }
 
 func first(t string, i int) string {
