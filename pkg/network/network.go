@@ -934,7 +934,6 @@ func (w *network) RegisterAddresses(addresses ...string) {
 	for _, h := range addresses {
 		w.addresses.Put(h)
 	}
-	// w.publishUpdate(EventAddressesUpdated)
 }
 
 func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
@@ -958,5 +957,4 @@ func (w *network) RegisterRelays(relays ...*peer.ConnectionInfo) {
 	w.relayLock.Lock()
 	defer w.relayLock.Unlock()
 	w.relays = append(w.relays, relays...)
-	// w.publishUpdate(EventRelaysUpdated)
 }
