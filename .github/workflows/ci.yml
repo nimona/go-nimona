@@ -333,7 +333,7 @@ jobs:
         run: tar -czvf libnimona_ios.tar.gz -C output/binding/ios .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - uses: svenstaro/upload-release-action@v2
+      - uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           asset_name: libnimona-${{ env.NIMONA_VERSION }}-ios.tar.gz
@@ -360,7 +360,7 @@ jobs:
         run: tar -czvf libnimona_macos.tar.gz -C output/binding/macos .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - uses: svenstaro/upload-release-action@v2
+      - uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           asset_name: libnimona-${{ env.NIMONA_VERSION }}-macos.tar.gz
@@ -387,7 +387,7 @@ jobs:
         run: tar -czvf libnimona_linux.tar.gz -C output/binding/linux .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - uses: svenstaro/upload-release-action@v2
+      - uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           asset_name: libnimona-${{ env.NIMONA_VERSION }}-linux.tar.gz
@@ -426,7 +426,7 @@ jobs:
         run: tar -czvf libnimona_android.tar.gz -C output/binding/android .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - uses: svenstaro/upload-release-action@v2
+      - uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           asset_name: libnimona-${{ env.NIMONA_VERSION }}-android.tar.gz
@@ -453,7 +453,7 @@ jobs:
         run: tar -czvf libnimona_windows.tar.gz -C output/binding/windows .
       - name: Export version from tag name
         run: echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - uses: svenstaro/upload-release-action@v2
+      - uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           asset_name: libnimona-${{ env.NIMONA_VERSION }}-windows.tar.gz
