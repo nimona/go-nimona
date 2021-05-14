@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test(t *testing.T) {
+func TestObject(t *testing.T) {
 	o := Map{
 		"boolArray": BoolArray{
 			Bool(false),
