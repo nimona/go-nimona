@@ -93,7 +93,7 @@ var hints = map[string]Hint{
 func splitHint(b []byte) (string, Hint, error) {
 	ps := strings.Split(string(b), ":")
 	if len(ps) != 2 {
-		return "", "", errors.Error("invalid hinted key")
+		return "", "", errors.Error("invalid hinted key " + string(b))
 	}
 	h, ok := hints[ps[1]]
 	if !ok {
