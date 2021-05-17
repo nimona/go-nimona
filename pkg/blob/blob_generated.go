@@ -9,11 +9,11 @@ import (
 type (
 	Chunk struct {
 		Metadata object.Metadata
-		Data     []byte
+		Data     []byte `nimona:"data:d"`
 	}
 	Blob struct {
 		Metadata object.Metadata
-		Chunks   []object.CID
+		Chunks   []object.CID `nimona:"chunks:as"`
 	}
 )
 

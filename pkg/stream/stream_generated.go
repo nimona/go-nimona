@@ -9,31 +9,31 @@ import (
 type (
 	Policy struct {
 		Metadata   object.Metadata
-		Subjects   []string
-		Resources  []string
-		Conditions []string
-		Action     string
+		Subjects   []string `nimona:"subjects:as"`
+		Resources  []string `nimona:"resources:as"`
+		Conditions []string `nimona:"conditions:as"`
+		Action     string   `nimona:"action:s"`
 	}
 	Request struct {
 		Metadata  object.Metadata
-		RequestID string
-		RootCID   object.CID
+		RequestID string     `nimona:"requestID:s"`
+		RootCID   object.CID `nimona:"rootCID:s"`
 	}
 	Response struct {
 		Metadata  object.Metadata
-		RequestID string
-		RootCID   object.CID
-		Leaves    []object.CID
+		RequestID string       `nimona:"requestID:s"`
+		RootCID   object.CID   `nimona:"rootCID:s"`
+		Leaves    []object.CID `nimona:"leaves:as"`
 	}
 	Announcement struct {
 		Metadata   object.Metadata
-		StreamCID  object.CID
-		ObjectCIDs []object.CID
+		StreamCID  object.CID   `nimona:"streamCID:s"`
+		ObjectCIDs []object.CID `nimona:"objectCIDs:as"`
 	}
 	Subscription struct {
 		Metadata object.Metadata
-		RootCIDs []object.CID
-		Expiry   string
+		RootCIDs []object.CID `nimona:"rootCIDs:as"`
+		Expiry   string       `nimona:"expiry:s"`
 	}
 )
 

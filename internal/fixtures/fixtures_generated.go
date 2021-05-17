@@ -9,50 +9,50 @@ import (
 type (
 	CompositeTest struct {
 		Metadata                    object.Metadata
-		CompositeStringTest         *Composite
-		CompositeDataTest           *Composite
-		RepeatedCompositeStringTest []*Composite
-		RepeatedCompositeDataTest   []*Composite
+		CompositeStringTest         *Composite   `nimona:"compositeStringTest:s"`
+		CompositeDataTest           *Composite   `nimona:"compositeDataTest:d"`
+		RepeatedCompositeStringTest []*Composite `nimona:"repeatedCompositeStringTest:as"`
+		RepeatedCompositeDataTest   []*Composite `nimona:"repeatedCompositeDataTest:ad"`
 	}
 	TestPolicy struct {
 		Metadata   object.Metadata
-		Subjects   []string
-		Resources  []string
-		Conditions []string
-		Action     string
+		Subjects   []string `nimona:"subjects:as"`
+		Resources  []string `nimona:"resources:as"`
+		Conditions []string `nimona:"conditions:as"`
+		Action     string   `nimona:"action:s"`
 	}
 	TestStream struct {
 		Metadata        object.Metadata
-		Nonce           string
-		CreatedDateTime string
+		Nonce           string `nimona:"nonce:s"`
+		CreatedDateTime string `nimona:"createdDateTime:s"`
 	}
 	TestSubscribed struct {
 		Metadata object.Metadata
-		Nonce    string
+		Nonce    string `nimona:"nonce:s"`
 	}
 	TestUnsubscribed struct {
 		Metadata object.Metadata
-		Nonce    string
+		Nonce    string `nimona:"nonce:s"`
 	}
 	TestRequest struct {
 		Metadata  object.Metadata
-		RequestID string
-		Foo       string
+		RequestID string `nimona:"requestID:s"`
+		Foo       string `nimona:"foo:s"`
 	}
 	TestResponse struct {
 		Metadata  object.Metadata
-		RequestID string
-		Foo       string
+		RequestID string `nimona:"requestID:s"`
+		Foo       string `nimona:"foo:s"`
 	}
 	Parent struct {
 		Metadata      object.Metadata
-		Foo           string
-		Child         *Child
-		RepeatedChild []*Child
+		Foo           string   `nimona:"foo:s"`
+		Child         *Child   `nimona:"child:o"`
+		RepeatedChild []*Child `nimona:"repeatedChild:ao"`
 	}
 	Child struct {
 		Metadata object.Metadata
-		Foo      string
+		Foo      string `nimona:"foo:s"`
 	}
 )
 

@@ -9,33 +9,33 @@ import (
 type (
 	Certificate struct {
 		Metadata    Metadata
-		Nonce       string
-		Subject     crypto.PublicKey
-		Permissions []CertificatePermission
-		Starts      string
-		Expires     string
+		Nonce       string                  `nimona:"nonce:s"`
+		Subject     crypto.PublicKey        `nimona:"subject:s"`
+		Permissions []CertificatePermission `nimona:"permissions:ao"`
+		Starts      string                  `nimona:"starts:s"`
+		Expires     string                  `nimona:"expires:s"`
 	}
 	CertificatePermission struct {
 		Metadata Metadata
-		Types    []string
-		Actions  []string
+		Types    []string `nimona:"types:as"`
+		Actions  []string `nimona:"actions:as"`
 	}
 	CertificateRequest struct {
 		Metadata               Metadata
-		Nonce                  string
-		VendorName             string
-		VendorURL              string
-		ApplicationName        string
-		ApplicationDescription string
-		ApplicationURL         string
-		Permissions            []CertificatePermission
+		Nonce                  string                  `nimona:"nonce:s"`
+		VendorName             string                  `nimona:"vendorName:s"`
+		VendorURL              string                  `nimona:"vendorURL:s"`
+		ApplicationName        string                  `nimona:"applicationName:s"`
+		ApplicationDescription string                  `nimona:"applicationDescription:s"`
+		ApplicationURL         string                  `nimona:"applicationURL:s"`
+		Permissions            []CertificatePermission `nimona:"permissions:ao"`
 	}
 	CertificateResponse struct {
 		Metadata    Metadata
-		Signed      bool
-		Notes       string
-		Request     CertificateRequest
-		Certificate Certificate
+		Signed      bool               `nimona:"signed:b"`
+		Notes       string             `nimona:"notes:s"`
+		Request     CertificateRequest `nimona:"request:o"`
+		Certificate Certificate        `nimona:"certificate:o"`
 	}
 )
 

@@ -10,22 +10,22 @@ import (
 type (
 	Announcement struct {
 		Metadata         object.Metadata
-		Version          int64
-		ConnectionInfo   *peer.ConnectionInfo
-		PeerVector       []uint64
-		PeerCapabilities []string
+		Version          int64                `nimona:"version:i"`
+		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:o"`
+		PeerVector       []uint64             `nimona:"peerVector:au"`
+		PeerCapabilities []string             `nimona:"peerCapabilities:as"`
 	}
 	LookupRequest struct {
 		Metadata            object.Metadata
-		Nonce               string
-		QueryVector         []uint64
-		RequireCapabilities []string
+		Nonce               string   `nimona:"nonce:s"`
+		QueryVector         []uint64 `nimona:"queryVector:au"`
+		RequireCapabilities []string `nimona:"requireCapabilities:as"`
 	}
 	LookupResponse struct {
 		Metadata      object.Metadata
-		Nonce         string
-		QueryVector   []uint64
-		Announcements []*Announcement
+		Nonce         string          `nimona:"nonce:s"`
+		QueryVector   []uint64        `nimona:"queryVector:au"`
+		Announcements []*Announcement `nimona:"announcements:ao"`
 	}
 )
 

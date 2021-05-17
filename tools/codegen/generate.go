@@ -169,8 +169,11 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	originalImports := map[string]string{}
 	t, err := template.New("tpl").Funcs(template.FuncMap{
 		"tag": func(m Member) string {
-			// NOTE(geoah): removed until we re-introduce encode/decode
-			return ""
+			h := m.Hint
+			if m.IsRepeated {
+				h = "a" + h
+			}
+			return "`nimona:\"" + m.Tag + ":" + h + "\"`"
 		},
 		"key": func(m Member) string {
 			h := m.Hint
