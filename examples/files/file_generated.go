@@ -9,8 +9,8 @@ import (
 type (
 	File struct {
 		Metadata object.Metadata
-		Name     string
-		Blob     object.CID
+		Name     string     `nimona:"name:s"`
+		Blob     object.CID `nimona:"blob:s"`
 	}
 )
 

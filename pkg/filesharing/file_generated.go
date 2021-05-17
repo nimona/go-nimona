@@ -9,22 +9,22 @@ import (
 type (
 	File struct {
 		Metadata object.Metadata
-		Name     string
-		Chunks   []object.CID
+		Name     string       `nimona:"name:s"`
+		Chunks   []object.CID `nimona:"chunks:as"`
 	}
 	TransferDone struct {
 		Metadata object.Metadata
-		Nonce    string
+		Nonce    string `nimona:"nonce:s"`
 	}
 	TransferRequest struct {
 		Metadata object.Metadata
-		File     File
-		Nonce    string
+		File     File   `nimona:"file:o"`
+		Nonce    string `nimona:"nonce:s"`
 	}
 	TransferResponse struct {
 		Metadata object.Metadata
-		Nonce    string
-		Accepted bool
+		Nonce    string `nimona:"nonce:s"`
+		Accepted bool   `nimona:"accepted:b"`
 	}
 )
 

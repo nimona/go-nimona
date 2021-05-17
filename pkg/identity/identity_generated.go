@@ -10,32 +10,32 @@ import (
 type (
 	Profile struct {
 		Metadata object.Metadata
-		Version  int64
-		Datetime string
-		Name     string
-		Image    object.CID
+		Version  int64      `nimona:"version:i"`
+		Datetime string     `nimona:"datetime:s"`
+		Name     string     `nimona:"name:s"`
+		Image    object.CID `nimona:"image:s"`
 	}
 	ProfileStreamRoot struct {
 		Metadata object.Metadata
 	}
 	ProfileUpdated struct {
 		Metadata object.Metadata
-		Profile  Profile
+		Profile  Profile `nimona:"profile:o"`
 	}
 	AddressbookStreamRoot struct {
 		Metadata object.Metadata
 	}
 	AddressbookContactAdded struct {
 		Metadata    object.Metadata
-		Alias       string
-		RemoteParty crypto.PublicKey
-		Profile     Profile
-		Datetime    string
+		Alias       string           `nimona:"alias:s"`
+		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
+		Profile     Profile          `nimona:"profile:o"`
+		Datetime    string           `nimona:"datetime:s"`
 	}
 	AddressbookContactRemoved struct {
 		Metadata    object.Metadata
-		RemoteParty crypto.PublicKey
-		Datetime    string
+		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
+		Datetime    string           `nimona:"datetime:s"`
 	}
 )
 

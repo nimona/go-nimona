@@ -5,13 +5,13 @@ package object
 type (
 	Request struct {
 		Metadata  Metadata
-		RequestID string
-		ObjectCID CID
+		RequestID string `nimona:"requestID:s"`
+		ObjectCID CID    `nimona:"objectCID:s"`
 	}
 	Response struct {
 		Metadata  Metadata
-		RequestID string
-		Object    *Object
+		RequestID string  `nimona:"requestID:s"`
+		Object    *Object `nimona:"object:o"`
 	}
 )
 

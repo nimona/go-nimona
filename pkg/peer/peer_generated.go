@@ -10,11 +10,11 @@ import (
 type (
 	ConnectionInfo struct {
 		Metadata      object.Metadata
-		Version       int64
-		PublicKey     crypto.PublicKey
-		Addresses     []string
-		Relays        []*ConnectionInfo
-		ObjectFormats []string
+		Version       int64             `nimona:"version:i"`
+		PublicKey     crypto.PublicKey  `nimona:"publicKey:s"`
+		Addresses     []string          `nimona:"addresses:as"`
+		Relays        []*ConnectionInfo `nimona:"relays:ao"`
+		ObjectFormats []string          `nimona:"objectFormats:as"`
 	}
 )
 

@@ -9,20 +9,20 @@ import (
 type (
 	FeedStreamRoot struct {
 		Metadata   object.Metadata
-		ObjectType string
-		Datetime   string
+		ObjectType string `nimona:"objectType:s"`
+		Datetime   string `nimona:"datetime:s"`
 	}
 	Added struct {
 		Metadata  object.Metadata
-		ObjectCID []object.CID
-		Sequence  int64
-		Datetime  string
+		ObjectCID []object.CID `nimona:"objectCID:as"`
+		Sequence  int64        `nimona:"sequence:i"`
+		Datetime  string       `nimona:"datetime:s"`
 	}
 	Removed struct {
 		Metadata  object.Metadata
-		ObjectCID []object.CID
-		Sequence  int64
-		Datetime  string
+		ObjectCID []object.CID `nimona:"objectCID:as"`
+		Sequence  int64        `nimona:"sequence:i"`
+		Datetime  string       `nimona:"datetime:s"`
 	}
 )
 

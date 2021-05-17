@@ -10,19 +10,19 @@ import (
 type (
 	DataForwardRequest struct {
 		Metadata  object.Metadata
-		RequestID string
-		Recipient crypto.PublicKey
-		Payload   *object.Object
+		RequestID string           `nimona:"requestID:s"`
+		Recipient crypto.PublicKey `nimona:"recipient:s"`
+		Payload   *object.Object   `nimona:"payload:o"`
 	}
 	DataForwardEnvelope struct {
 		Metadata object.Metadata
-		Sender   crypto.PublicKey
-		Data     []byte
+		Sender   crypto.PublicKey `nimona:"sender:s"`
+		Data     []byte           `nimona:"data:d"`
 	}
 	DataForwardResponse struct {
 		Metadata  object.Metadata
-		RequestID string
-		Success   bool
+		RequestID string `nimona:"requestID:s"`
+		Success   bool   `nimona:"success:b"`
 	}
 )
 
