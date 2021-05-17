@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"nimona.io/pkg/crypto"
 )
 
 type (
@@ -42,10 +45,15 @@ type (
 		Uint32Array  []uint32               `nimona:"uint32Array:au"`
 		Uint64Array  []uint64               `nimona:"uint64Array:au"`
 		GoMap        map[string]interface{} `nimona:"gomap:m"`
+		Stringer     crypto.PublicKey       `nimona:"stringer:s"`
+		StringerPtr  *crypto.PublicKey      `nimona:"stringerPtr:s"`
 	}
 )
 
 func TestUnmarshal(t *testing.T) {
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
 	o := &Object{
 		Type: "some-type",
 		Metadata: Metadata{
@@ -80,8 +88,11 @@ func TestUnmarshal(t *testing.T) {
 			"uint16Array":  UintArray{9},
 			"uint32Array":  UintArray{10},
 			"uint64Array":  UintArray{11},
+			"stringer":     String(k.PublicKey().String()),
+			"stringerPtr":  String(k.PublicKey().String()),
 		},
 	}
+	p := k.PublicKey()
 	e := &TestUnmarshalStruct{
 		Type: "some-type",
 		Metadata: Metadata{
@@ -116,10 +127,12 @@ func TestUnmarshal(t *testing.T) {
 			Uint16Array:  []uint16{9},
 			Uint32Array:  []uint32{10},
 			Uint64Array:  []uint64{11},
+			Stringer:     p,
+			StringerPtr:  &p,
 		},
 	}
 	g := &TestUnmarshalStruct{}
-	err := Unmarshal(o, g)
+	err = Unmarshal(o, g)
 	assert.NoError(t, err)
 	assert.Equal(t, e, g)
 }
