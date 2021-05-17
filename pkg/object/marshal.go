@@ -74,33 +74,70 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
-	switch v.Kind() {
-	case reflect.String:
-		return String(v.String()), nil
-	case reflect.Bool:
-		return Bool(v.Bool()), nil
-	case reflect.Map:
-		return marshalMap(h, v)
-	case reflect.Struct:
-		return marshalStruct(h, v)
-	case reflect.Array,
-		reflect.Slice:
-		return marshalArray(h, v)
-	case reflect.Float32,
-		reflect.Float64:
-		return Float(v.Float()), nil
-	case reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-		return Int(v.Int()), nil
-	case reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-		return Uint(v.Uint()), nil
+	switch h {
+	case StringHint:
+		if v.Kind() == reflect.String {
+			return String(v.String()), nil
+		}
+		m, ok := v.Interface().(StringMashaller)
+		if ok {
+			s, err := m.MarshalString()
+			if err != nil {
+				return nil, err
+			}
+			return String(s), nil
+		}
+	case BoolHint:
+		if v.Kind() == reflect.Bool {
+			return Bool(v.Bool()), nil
+		}
+	case MapHint:
+		switch v.Kind() {
+		case reflect.Map:
+			return marshalMap(h, v)
+		case reflect.Struct:
+			return marshalStruct(h, v)
+		}
+	case FloatHint:
+		switch v.Kind() {
+		case reflect.Float32,
+			reflect.Float64:
+			return Float(v.Float()), nil
+		}
+	case IntHint:
+		switch v.Kind() {
+		case reflect.Int,
+			reflect.Int8,
+			reflect.Int16,
+			reflect.Int32,
+			reflect.Int64:
+			return Int(v.Int()), nil
+		}
+	case UintHint:
+		switch v.Kind() {
+		case reflect.Uint,
+			reflect.Uint8,
+			reflect.Uint16,
+			reflect.Uint32,
+			reflect.Uint64:
+			return Uint(v.Uint()), nil
+		}
+	case DataHint:
+		m, ok := v.Interface().(ByteMashaller)
+		if ok {
+			s, err := m.MarshalBytes()
+			if err != nil {
+				return nil, err
+			}
+			return Data(s), nil
+		}
+	}
+	if h[0] == 'a' {
+		switch v.Kind() {
+		case reflect.Array,
+			reflect.Slice:
+			return marshalArray(h, v)
+		}
 	}
 	return nil, errors.Error("unknown type " + v.Kind().String())
 }

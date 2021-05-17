@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/pkg/crypto"
 )
 
 type (
@@ -43,10 +45,14 @@ type (
 		Uint32Array  []uint32               `nimona:"uint32Array:au"`
 		Uint64Array  []uint64               `nimona:"uint64Array:au"`
 		GoMap        map[string]interface{} `nimona:"gomap:m"`
+		Stringer     crypto.PublicKey       `nimona:"stringer:s"`
 	}
 )
 
 func TestMarshal(t *testing.T) {
+	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	require.NoError(t, err)
+
 	s := &TestMarshalStruct{
 		Type: "some-type",
 		Metadata: Metadata{
@@ -111,6 +117,7 @@ func TestMarshal(t *testing.T) {
 				"uint32Array:au":  []uint32{10},
 				"uint64Array:au":  []uint64{11},
 			},
+			Stringer: k.PublicKey(),
 		},
 	}
 	e := &Object{
@@ -177,6 +184,7 @@ func TestMarshal(t *testing.T) {
 				"uint32Array":  UintArray{10},
 				"uint64Array":  UintArray{11},
 			},
+			"stringer": String(k.PublicKey().String()),
 		},
 	}
 	g, err := Marshal(s)

@@ -17,6 +17,21 @@ type (
 	}
 )
 
+type (
+	StringMashaller interface {
+		MarshalString() (string, error)
+	}
+	StringUnmashaller interface {
+		UnmarshalString(string) error
+	}
+	ByteUnmashaller interface {
+		UnmarshalBytes([]byte) error
+	}
+	ByteMashaller interface {
+		MarshalBytes() ([]byte, error)
+	}
+)
+
 // TODO: Deprecate
 func (o Object) Map() Map {
 	m := Map{}

@@ -135,6 +135,17 @@ func unmarshalAny(v Value, target reflect.Value) error {
 	}
 	switch vv := v.(type) {
 	case String:
+		// ie crypto.PublicKey
+		if ivv, ok := target.Addr().Interface().(StringUnmashaller); ok {
+			return ivv.UnmarshalString(string(vv))
+		}
+		// ie *crypto.PublicKey
+		if _, ok := target.Interface().(StringUnmashaller); ok {
+			ev := reflect.New(target.Type().Elem())
+			itv := ev.Interface().(StringUnmashaller)
+			target.Set(ev)
+			return itv.UnmarshalString(string(vv))
+		}
 		if target.Kind() != reflect.String {
 			return errors.Error(
 				"expected string target, got " + target.Kind().String(),
