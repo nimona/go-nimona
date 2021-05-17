@@ -8,12 +8,12 @@ import (
 )
 
 type (
-	TestStruct struct {
+	TestMarshalStruct struct {
 		Type     string   `nimona:"@type:s"`
 		Metadata Metadata `nimona:"@metadata:m"`
-		TestMap
+		TestMarshalMap
 	}
-	TestMap struct {
+	TestMarshalMap struct {
 		String       string                 `nimona:"string:s"`
 		Bool         bool                   `nimona:"bool:b"`
 		Float32      float32                `nimona:"float32:f"`
@@ -47,12 +47,12 @@ type (
 )
 
 func TestMarshal(t *testing.T) {
-	s := &TestStruct{
+	s := &TestMarshalStruct{
 		Type: "some-type",
 		Metadata: Metadata{
 			Datetime: "foo",
 		},
-		TestMap: TestMap{
+		TestMarshalMap: TestMarshalMap{
 			String:       "string",
 			Bool:         true,
 			Float32:      0.0,
@@ -84,18 +84,18 @@ func TestMarshal(t *testing.T) {
 			GoMap: map[string]interface{}{
 				"string:s":        "string",
 				"bool:b":          true,
-				"float32:f":       0.0,
-				"float64:f":       1.1,
-				"int:i":           -2,
-				"int8:i":          -3,
-				"int16:i":         -4,
-				"int32:i":         -5,
-				"int64:i":         -6,
-				"uint:u":          7,
-				"uint8:u":         8,
-				"uint16:u":        9,
-				"uint32:u":        10,
-				"uint64:u":        11,
+				"float32:f":       float32(0.0),
+				"float64:f":       float64(1.1),
+				"int:i":           int(-2),
+				"int8:i":          int8(-3),
+				"int16:i":         int16(-4),
+				"int32:i":         int32(-5),
+				"int64:i":         int64(-6),
+				"uint:u":          uint(7),
+				"uint8:u":         uint8(8),
+				"uint16:u":        uint16(9),
+				"uint32:u":        uint32(10),
+				"uint64:u":        uint64(11),
 				"stringArray:as":  []string{"string"},
 				"boolArray:ab":    []bool{true},
 				"float32Array:af": []float32{0.0},
@@ -113,16 +113,74 @@ func TestMarshal(t *testing.T) {
 			},
 		},
 	}
-	o, err := Marshal(s)
+	e := &Object{
+		Type: "some-type",
+		Metadata: Metadata{
+			Datetime: "foo",
+		},
+		Data: Map{
+			"string":       String("string"),
+			"bool":         Bool(true),
+			"float32":      Float(0.0),
+			"float64":      Float(1.1),
+			"int":          Int(-2),
+			"int8":         Int(-3),
+			"int16":        Int(-4),
+			"int32":        Int(-5),
+			"int64":        Int(-6),
+			"uint":         Uint(7),
+			"uint8":        Uint(8),
+			"uint16":       Uint(9),
+			"uint32":       Uint(10),
+			"uint64":       Uint(11),
+			"stringArray":  StringArray{"string"},
+			"boolArray":    BoolArray{true},
+			"float32Array": FloatArray{0.0},
+			"float64Array": FloatArray{1.1},
+			"intArray":     IntArray{-2},
+			"int8Array":    IntArray{-3},
+			"int16Array":   IntArray{-4},
+			"int32Array":   IntArray{-5},
+			"int64Array":   IntArray{-6},
+			"uintArray":    UintArray{7},
+			"uint8Array":   UintArray{8},
+			"uint16Array":  UintArray{9},
+			"uint32Array":  UintArray{10},
+			"uint64Array":  UintArray{11},
+			"gomap": Map{
+				"string":       String("string"),
+				"bool":         Bool(true),
+				"float32":      Float(0.0),
+				"float64":      Float(1.1),
+				"int":          Int(-2),
+				"int8":         Int(-3),
+				"int16":        Int(-4),
+				"int32":        Int(-5),
+				"int64":        Int(-6),
+				"uint":         Uint(7),
+				"uint8":        Uint(8),
+				"uint16":       Uint(9),
+				"uint32":       Uint(10),
+				"uint64":       Uint(11),
+				"stringArray":  StringArray{"string"},
+				"boolArray":    BoolArray{true},
+				"float32Array": FloatArray{0.0},
+				"float64Array": FloatArray{1.1},
+				"intArray":     IntArray{-2},
+				"int8Array":    IntArray{-3},
+				"int16Array":   IntArray{-4},
+				"int32Array":   IntArray{-5},
+				"int64Array":   IntArray{-6},
+				"uintArray":    UintArray{7},
+				"uint8Array":   UintArray{8},
+				"uint16Array":  UintArray{9},
+				"uint32Array":  UintArray{10},
+				"uint64Array":  UintArray{11},
+			},
+		},
+	}
+	g, err := Marshal(s)
 	require.NoError(t, err)
-	require.NotNil(t, o)
-
-	// b, err := json.MarshalIndent(o, "", "    ")
-	// require.NoError(t, err)
-	// fmt.Println(string(b))
-
-	g := &TestMap{}
-	err = Unmarshal(o, g)
-	require.NoError(t, err)
-	assert.Equal(t, s.TestMap, *g)
+	assert.NotNil(t, g)
+	assert.Equal(t, e, g)
 }
