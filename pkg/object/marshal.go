@@ -31,7 +31,7 @@ func Marshal(in interface{}) (*Object, error) {
 		return nil, err
 	}
 	if v, ok := otype.(string); ok {
-		o.Type = string(v)
+		o.Type = v
 	}
 
 	return o, nil
@@ -165,7 +165,9 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 	for _, ik := range v.MapKeys() {
 		iv := v.MapIndex(ik)
 		if ik.Kind() != reflect.String {
-			return nil, errors.Error("expected string key, got " + ik.Kind().String())
+			return nil, errors.Error(
+				"expected string key, got " + ik.Kind().String(),
+			)
 		}
 		ig := ik.String()
 		in, ih, err := splitHint([]byte(ig))
@@ -226,7 +228,6 @@ func marshalArray(h Hint, v reflect.Value) (Value, error) {
 
 	for i := 0; i < v.Len(); i++ {
 		iv := v.Index(i)
-		// it := iv.Type()
 		value, err := marshalAny(ah, iv)
 		if err != nil {
 			return nil, err
