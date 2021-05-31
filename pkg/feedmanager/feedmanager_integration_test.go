@@ -33,6 +33,8 @@ func TestManager_Integration(t *testing.T) {
 	p0 := newDaemon(t, "p0", id, bootstrapConnectionInfo)
 	defer p0.Close()
 
+	time.Sleep(time.Second)
+
 	// construct peer 1
 	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
 	defer p1.Close()
@@ -41,12 +43,14 @@ func TestManager_Integration(t *testing.T) {
 	fmt.Println("p1", p1.LocalPeer().GetPeerKey().PublicKey())
 
 	// put a new stream on p0
-	o0 := fixtures.TestStream{
-		Metadata: object.Metadata{
-			Owner: id.PublicKey(),
+	o0 := object.MustMarshal(
+		&fixtures.TestStream{
+			Metadata: object.Metadata{
+				Owner: id.PublicKey(),
+			},
+			Nonce: "foo",
 		},
-		Nonce: "foo",
-	}.ToObject()
+	)
 	_, err = p0.ObjectManager().Put(context.TODO(), o0)
 	require.NoError(t, err)
 
@@ -116,7 +120,8 @@ func newDaemon(
 		Nonce:      rand.String(8),
 		VendorName: "foo",
 	}
-	csr.Metadata.Signature, err = object.NewSignature(peerKey, csr.ToObject())
+	csrObj := object.MustMarshal(csr)
+	csr.Metadata.Signature, err = object.NewSignature(peerKey, csrObj)
 	require.NoError(t, err)
 
 	csrRes, err := object.NewCertificate(id, *csr, true, "bar")

@@ -9,31 +9,31 @@ import (
 
 type (
 	Profile struct {
-		Metadata object.Metadata
-		Version  int64      `nimona:"version:i"`
-		Datetime string     `nimona:"datetime:s"`
-		Name     string     `nimona:"name:s"`
-		Image    object.CID `nimona:"image:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Version  int64           `nimona:"version:i"`
+		Datetime string          `nimona:"datetime:s"`
+		Name     string          `nimona:"name:s"`
+		Image    object.CID      `nimona:"image:s"`
 	}
 	ProfileStreamRoot struct {
-		Metadata object.Metadata
+		Metadata object.Metadata `nimona:"@metadata:m"`
 	}
 	ProfileUpdated struct {
-		Metadata object.Metadata
-		Profile  Profile `nimona:"profile:o"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Profile  Profile         `nimona:"profile:o"`
 	}
 	AddressbookStreamRoot struct {
-		Metadata object.Metadata
+		Metadata object.Metadata `nimona:"@metadata:m"`
 	}
 	AddressbookContactAdded struct {
-		Metadata    object.Metadata
+		Metadata    object.Metadata  `nimona:"@metadata:m"`
 		Alias       string           `nimona:"alias:s"`
 		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
 		Profile     Profile          `nimona:"profile:o"`
 		Datetime    string           `nimona:"datetime:s"`
 	}
 	AddressbookContactRemoved struct {
-		Metadata    object.Metadata
+		Metadata    object.Metadata  `nimona:"@metadata:m"`
 		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
 		Datetime    string           `nimona:"datetime:s"`
 	}
@@ -43,288 +43,100 @@ func (e *Profile) Type() string {
 	return "nimona.io/identity.Profile"
 }
 
-func (e *Profile) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Profile) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Profile) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/identity.Profile",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["version"] = object.Int(e.Version)
-	r.Data["datetime"] = object.String(e.Datetime)
-	r.Data["name"] = object.String(e.Name)
-	r.Data["image"] = object.String(e.Image)
-	return r
-}
-
-func (e *Profile) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/identity.Profile"
+	return o, nil
 }
 
 func (e *Profile) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Profile) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["version"]; ok {
-		if t, ok := v.(object.Int); ok {
-			e.Version = int64(t)
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	if v, ok := o.Data["name"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Name = string(t)
-		}
-	}
-	if v, ok := o.Data["image"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Image = object.CID(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *ProfileStreamRoot) Type() string {
 	return "stream:nimona.io/identity.Profile"
 }
 
-func (e *ProfileStreamRoot) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *ProfileStreamRoot) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e ProfileStreamRoot) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "stream:nimona.io/identity.Profile",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	return r
-}
-
-func (e *ProfileStreamRoot) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "stream:nimona.io/identity.Profile"
+	return o, nil
 }
 
 func (e *ProfileStreamRoot) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *ProfileStreamRoot) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *ProfileUpdated) Type() string {
 	return "event:nimona.io/identity.Profile.Updated"
 }
 
-func (e *ProfileUpdated) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *ProfileUpdated) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e ProfileUpdated) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "event:nimona.io/identity.Profile.Updated",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if v, err := e.Profile.MarshalObject(); err == nil {
-		r.Data["profile"] = (v)
-	}
-	return r
-}
-
-func (e *ProfileUpdated) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "event:nimona.io/identity.Profile.Updated"
+	return o, nil
 }
 
 func (e *ProfileUpdated) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *ProfileUpdated) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["profile"]; ok {
-		if ev, ok := v.(*object.Object); ok {
-			es := Profile{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.Profile = es
-			}
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *AddressbookStreamRoot) Type() string {
 	return "stream:nimona.io/identity/addressbook"
 }
 
-func (e *AddressbookStreamRoot) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *AddressbookStreamRoot) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e AddressbookStreamRoot) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "stream:nimona.io/identity/addressbook",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	return r
-}
-
-func (e *AddressbookStreamRoot) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "stream:nimona.io/identity/addressbook"
+	return o, nil
 }
 
 func (e *AddressbookStreamRoot) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *AddressbookStreamRoot) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *AddressbookContactAdded) Type() string {
 	return "event:nimona.io/identity/addressbook.ContactAdded"
 }
 
-func (e *AddressbookContactAdded) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *AddressbookContactAdded) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e AddressbookContactAdded) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "event:nimona.io/identity/addressbook.ContactAdded",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["alias"] = object.String(e.Alias)
-	if v, err := e.RemoteParty.MarshalString(); err == nil {
-		r.Data["remoteParty"] = object.String(v)
-	}
-	if v, err := e.Profile.MarshalObject(); err == nil {
-		r.Data["profile"] = (v)
-	}
-	r.Data["datetime"] = object.String(e.Datetime)
-	return r
-}
-
-func (e *AddressbookContactAdded) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "event:nimona.io/identity/addressbook.ContactAdded"
+	return o, nil
 }
 
 func (e *AddressbookContactAdded) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *AddressbookContactAdded) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["alias"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Alias = string(t)
-		}
-	}
-	if v, ok := o.Data["remoteParty"]; ok {
-		if ev, ok := v.(object.String); ok {
-			es := crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err == nil {
-				e.RemoteParty = es
-			}
-		}
-	}
-	if v, ok := o.Data["profile"]; ok {
-		if ev, ok := v.(*object.Object); ok {
-			es := Profile{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.Profile = es
-			}
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *AddressbookContactRemoved) Type() string {
 	return "event:nimona.io/identity/addressbook.ContactRemoved"
 }
 
-func (e *AddressbookContactRemoved) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *AddressbookContactRemoved) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e AddressbookContactRemoved) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "event:nimona.io/identity/addressbook.ContactRemoved",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if v, err := e.RemoteParty.MarshalString(); err == nil {
-		r.Data["remoteParty"] = object.String(v)
-	}
-	r.Data["datetime"] = object.String(e.Datetime)
-	return r
-}
-
-func (e *AddressbookContactRemoved) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "event:nimona.io/identity/addressbook.ContactRemoved"
+	return o, nil
 }
 
 func (e *AddressbookContactRemoved) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *AddressbookContactRemoved) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["remoteParty"]; ok {
-		if ev, ok := v.(object.String); ok {
-			es := crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err == nil {
-				e.RemoteParty = es
-			}
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

@@ -38,7 +38,7 @@ func WaitForCertificateResponse(
 				}
 				b, _ := json.MarshalIndent(env.Payload, "", "  ")
 				fmt.Println(string(b))
-				if err := csrRes.FromObject(env.Payload); err != nil {
+				if err := csrRes.UnmarshalObject(env.Payload); err != nil {
 					continue
 				}
 				select {
@@ -69,7 +69,7 @@ func FindCertificateResponseForPeer(
 			break
 		}
 		c := &object.CertificateResponse{}
-		if err := c.FromObject(obj); err != nil {
+		if err := c.UnmarshalObject(obj); err != nil {
 			return nil, err
 		}
 		if c.Certificate.Subject.Equals(peerPublicKey) {

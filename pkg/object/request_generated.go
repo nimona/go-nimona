@@ -4,14 +4,14 @@ package object
 
 type (
 	Request struct {
-		Metadata  Metadata
-		RequestID string `nimona:"requestID:s"`
-		ObjectCID CID    `nimona:"objectCID:s"`
+		Metadata  Metadata `nimona:"@metadata:m"`
+		RequestID string   `nimona:"requestID:s"`
+		ObjectCID CID      `nimona:"objectCID:s"`
 	}
 	Response struct {
-		Metadata  Metadata
-		RequestID string  `nimona:"requestID:s"`
-		Object    *Object `nimona:"object:o"`
+		Metadata  Metadata `nimona:"@metadata:m"`
+		RequestID string   `nimona:"requestID:s"`
+		Object    *Object  `nimona:"object:o"`
 	}
 )
 
@@ -19,97 +19,32 @@ func (e *Request) Type() string {
 	return "nimona.io/Request"
 }
 
-func (e *Request) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Request) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Request) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/Request",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["requestID"] = String(e.RequestID)
-	r.Data["objectCID"] = String(e.ObjectCID)
-	return r
-}
-
-func (e *Request) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/Request"
+	return o, nil
 }
 
 func (e *Request) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Request) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["requestID"]; ok {
-		if t, ok := v.(String); ok {
-			e.RequestID = string(t)
-		}
-	}
-	if v, ok := o.Data["objectCID"]; ok {
-		if t, ok := v.(String); ok {
-			e.ObjectCID = CID(t)
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }
 
 func (e *Response) Type() string {
 	return "nimona.io/Response"
 }
 
-func (e *Response) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Response) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Response) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/Response",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["requestID"] = String(e.RequestID)
-	if e.Object != nil {
-		if v, err := e.Object.MarshalObject(); err == nil {
-			r.Data["object"] = (v)
-		}
-	}
-	return r
-}
-
-func (e *Response) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/Response"
+	return o, nil
 }
 
 func (e *Response) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Response) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["requestID"]; ok {
-		if t, ok := v.(String); ok {
-			e.RequestID = string(t)
-		}
-	}
-	if v, ok := o.Data["object"]; ok {
-		if ev, ok := v.(*Object); ok {
-			es := &Object{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.Object = es
-			}
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }

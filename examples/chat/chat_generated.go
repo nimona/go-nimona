@@ -8,16 +8,16 @@ import (
 
 type (
 	ConversationStreamRoot struct {
-		Metadata object.Metadata
-		Nonce    string `nimona:"nonce:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Nonce    string          `nimona:"nonce:s"`
 	}
 	ConversationNicknameUpdated struct {
-		Metadata object.Metadata
-		Nickname string `nimona:"nickname:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Nickname string          `nimona:"nickname:s"`
 	}
 	ConversationMessageAdded struct {
-		Metadata object.Metadata
-		Body     string `nimona:"body:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Body     string          `nimona:"body:s"`
 	}
 )
 
@@ -25,118 +25,49 @@ func (e *ConversationStreamRoot) Type() string {
 	return "stream:poc.nimona.io/conversation"
 }
 
-func (e *ConversationStreamRoot) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *ConversationStreamRoot) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e ConversationStreamRoot) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "stream:poc.nimona.io/conversation",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	return r
-}
-
-func (e *ConversationStreamRoot) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "stream:poc.nimona.io/conversation"
+	return o, nil
 }
 
 func (e *ConversationStreamRoot) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *ConversationStreamRoot) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *ConversationNicknameUpdated) Type() string {
 	return "poc.nimona.io/conversation.NicknameUpdated"
 }
 
-func (e *ConversationNicknameUpdated) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *ConversationNicknameUpdated) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e ConversationNicknameUpdated) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "poc.nimona.io/conversation.NicknameUpdated",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nickname"] = object.String(e.Nickname)
-	return r
-}
-
-func (e *ConversationNicknameUpdated) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "poc.nimona.io/conversation.NicknameUpdated"
+	return o, nil
 }
 
 func (e *ConversationNicknameUpdated) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *ConversationNicknameUpdated) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nickname"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nickname = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *ConversationMessageAdded) Type() string {
 	return "poc.nimona.io/conversation.MessageAdded"
 }
 
-func (e *ConversationMessageAdded) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *ConversationMessageAdded) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e ConversationMessageAdded) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "poc.nimona.io/conversation.MessageAdded",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["body"] = object.String(e.Body)
-	return r
-}
-
-func (e *ConversationMessageAdded) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "poc.nimona.io/conversation.MessageAdded"
+	return o, nil
 }
 
 func (e *ConversationMessageAdded) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *ConversationMessageAdded) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["body"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Body = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

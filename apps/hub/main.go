@@ -199,7 +199,7 @@ func New(
 			return nil, err
 		}
 		crtRes := &object.CertificateResponse{}
-		if err := crtRes.FromObject(crtResObj); err != nil {
+		if err := crtRes.UnmarshalObject(crtResObj); err != nil {
 			return nil, err
 		}
 		h.peerCertificateResponse = crtRes
@@ -220,10 +220,10 @@ func New(
 func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
 	h.Lock()
 	defer h.Unlock()
-	h.daemon.ObjectStore().Pin(r.ToObject().CID())
-	h.daemon.ObjectStore().Put(r.ToObject())
+	h.daemon.ObjectStore().Pin(object.MustMarshal(r).CID())
+	h.daemon.ObjectStore().Put(object.MustMarshal(r))
 	h.peerCertificateResponse = r
-	b, _ := json.Marshal(r.ToObject())
+	b, _ := json.Marshal(object.MustMarshal(r))
 	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
 	h.daemon.LocalPeer().SetPeerCertificate(r)
 }
@@ -359,7 +359,7 @@ func main() {
 		}
 		contactEvents := d.ObjectManager().Subscribe(
 			objectmanager.FilterByStreamCID(
-				contactsStreamRoot.ToObject().CID(),
+				object.MustMarshal(contactsStreamRoot).CID(),
 			),
 		)
 		for {
@@ -370,7 +370,7 @@ func main() {
 			switch o.Type {
 			case new(relationship.Added).Type():
 				r := &relationship.Added{}
-				if err := r.FromObject(o); err != nil {
+				if err := r.UnmarshalObject(o); err != nil {
 					continue
 				}
 				if r.Alias == "" || r.RemoteParty.IsEmpty() {
@@ -387,7 +387,7 @@ func main() {
 				)
 			case new(relationship.Removed).Type():
 				r := &relationship.Removed{}
-				if err := r.FromObject(o); err != nil {
+				if err := r.UnmarshalObject(o); err != nil {
 					continue
 				}
 				if r.RemoteParty.IsEmpty() {
@@ -461,7 +461,7 @@ func main() {
 				}},
 			}
 			k := d.LocalPeer().GetPeerKey()
-			csrSig, err := object.NewSignature(k, csr.ToObject())
+			csrSig, err := object.NewSignature(k, object.MustMarshal(csr))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -472,7 +472,7 @@ func main() {
 					context.WithParent(r.Context()),
 					context.WithTimeout(3*time.Second),
 				),
-				csr.ToObject(),
+				object.MustMarshal(csr),
 			); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -552,7 +552,10 @@ func main() {
 				Actions: []string{"*"},
 			}},
 		}
-		req.Metadata.Signature, err = object.NewSignature(k, req.ToObject())
+		req.Metadata.Signature, err = object.NewSignature(
+			k,
+			object.MustMarshal(req),
+		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -592,7 +595,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.FromObject(csrObj)
+		err = csr.UnmarshalObject(csrObj)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -602,12 +605,12 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = d.ObjectStore().Put(csrRes.ToObject())
+		err = d.ObjectStore().Put(object.MustMarshal(csrRes))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = d.ObjectStore().Pin(csrRes.ToObject().CID())
+		err = d.ObjectStore().Pin(object.MustMarshal(csrRes).CID())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -650,7 +653,7 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
+		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
 		objectReader, err := d.ObjectStore().GetByStream(contactsStreamRootCID)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -665,7 +668,7 @@ func main() {
 				switch o.Type {
 				case new(relationship.Added).Type():
 					r := &relationship.Added{}
-					if err := r.FromObject(o); err != nil {
+					if err := r.UnmarshalObject(o); err != nil {
 						continue
 					}
 					if r.Alias == "" || r.RemoteParty.IsEmpty() {
@@ -674,7 +677,7 @@ func main() {
 					contacts[r.RemoteParty.String()] = r.Alias
 				case new(relationship.Removed).Type():
 					r := &relationship.Removed{}
-					if err := r.FromObject(o); err != nil {
+					if err := r.UnmarshalObject(o); err != nil {
 						continue
 					}
 					if r.RemoteParty.IsEmpty() {
@@ -729,7 +732,7 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
+		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
 		alias := r.PostFormValue("alias")
 		remoteParty := r.PostFormValue("remoteParty")
 		if alias == "" || remoteParty == "" {
@@ -756,14 +759,14 @@ func main() {
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			contactsStreamRoot.ToObject(),
+			object.MustMarshal(contactsStreamRoot),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			rel.ToObject(),
+			object.MustMarshal(rel),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -798,7 +801,7 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := contactsStreamRoot.ToObject().CID()
+		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
 		remoteParty := r.URL.Query().Get("publicKey")
 		if remoteParty == "" {
 			if err != nil {
@@ -823,14 +826,14 @@ func main() {
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			contactsStreamRoot.ToObject(),
+			object.MustMarshal(contactsStreamRoot),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
-			rel.ToObject(),
+			object.MustMarshal(rel),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -895,7 +898,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		body, err := json.MarshalIndent(obj.ToMap(), "", "  ")
+		body, err := json.MarshalIndent(obj, "", "  ")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -978,7 +981,7 @@ func main() {
 					break
 				}
 				crtRes := &object.CertificateResponse{}
-				if err := crtRes.FromObject(o); err != nil {
+				if err := crtRes.UnmarshalObject(o); err != nil {
 					continue
 				}
 				values.CertificateReponses = append(
@@ -1038,7 +1041,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.FromObject(csrObj)
+		err = csr.UnmarshalObject(csrObj)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -1073,7 +1076,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.FromObject(csrObj)
+		err = csr.UnmarshalObject(csrObj)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -1098,7 +1101,7 @@ func main() {
 				context.WithParent(r.Context()),
 				context.WithTimeout(3*time.Second),
 			),
-			csrRes.ToObject(),
+			object.MustMarshal(csrRes),
 			csr.Metadata.Signature.Signer,
 		)
 		if err != nil {

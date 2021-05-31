@@ -18,7 +18,7 @@ func WithLocalPeer(k localpeer.LocalPeer) func(*network) {
 type (
 	sendOptions struct {
 		connectionInfo         *peer.ConnectionInfo
-		waitForResponse        interface{ FromObject(*object.Object) error }
+		waitForResponse        interface{ UnmarshalObject(*object.Object) error }
 		waitForResponseTimeout time.Duration
 	}
 )
@@ -30,7 +30,7 @@ func SendWithConnectionInfo(c *peer.ConnectionInfo) func(*sendOptions) {
 }
 
 func SendWithResponse(
-	v interface{ FromObject(*object.Object) error },
+	v interface{ UnmarshalObject(*object.Object) error },
 	t time.Duration,
 ) func(*sendOptions) {
 	return func(w *sendOptions) {

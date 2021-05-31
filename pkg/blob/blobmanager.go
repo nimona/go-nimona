@@ -99,7 +99,10 @@ func (r *manager) ImportFromFile(
 		chunk := &Chunk{
 			Data: chunkBody[:n],
 		}
-		chunkObj := chunk.ToObject()
+		chunkObj, err := chunk.MarshalObject()
+		if err != nil {
+			return nil, err
+		}
 		// store it
 		wp.Submit(store(chunkObj))
 		// and add its cid to our list
@@ -120,7 +123,10 @@ func (r *manager) ImportFromFile(
 	blob := &Blob{
 		Chunks: chunkCIDs,
 	}
-	blobObj := blob.ToObject()
+	blobObj, err := blob.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
 	// store it
 	if _, err := r.objectmanager.Put(ctx, blobObj); err != nil {
 		return nil, err
@@ -169,7 +175,7 @@ func (r *manager) Request(
 	chunks := []*Chunk{}
 
 	blob := &Blob{}
-	if err := blob.FromObject(obj); err != nil {
+	if err := blob.UnmarshalObject(obj); err != nil {
 		return nil, nil, err
 	}
 
@@ -187,7 +193,7 @@ func (r *manager) Request(
 		}
 
 		chunk := &Chunk{}
-		if err := chunk.FromObject(chObj); err != nil {
+		if err := chunk.UnmarshalObject(chObj); err != nil {
 			logger.Error("failed to convert to chunk", log.Error(err))
 			return nil, nil, err
 		}
@@ -200,7 +206,7 @@ func (r *manager) Request(
 
 func getChunks(o *object.Object) ([]object.CID, error) {
 	b := &Blob{}
-	if err := b.FromObject(o); err != nil {
+	if err := b.UnmarshalObject(o); err != nil {
 		return nil, err
 	}
 	return b.Chunks, nil

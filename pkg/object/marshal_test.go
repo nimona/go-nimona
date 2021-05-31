@@ -57,6 +57,12 @@ func TestMarshal(t *testing.T) {
 		Type: "some-type",
 		Metadata: Metadata{
 			Datetime: "foo",
+			Parents: Parents{
+				"*": CIDArray{
+					"foo",
+					"bar",
+				},
+			},
 		},
 		TestMarshalMap: TestMarshalMap{
 			String:       "string",
@@ -124,6 +130,12 @@ func TestMarshal(t *testing.T) {
 		Type: "some-type",
 		Metadata: Metadata{
 			Datetime: "foo",
+			Parents: Parents{
+				"*": CIDArray{
+					"foo",
+					"bar",
+				},
+			},
 		},
 		Data: Map{
 			"string":       String("string"),

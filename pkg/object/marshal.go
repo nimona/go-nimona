@@ -1,6 +1,7 @@
 package object
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strings"
@@ -8,7 +9,19 @@ import (
 	"nimona.io/pkg/errors"
 )
 
+func MustMarshal(in interface{}) *Object {
+	o, err := Marshal(in)
+	if err != nil {
+		panic(err)
+	}
+	return o
+}
+
 func Marshal(in interface{}) (*Object, error) {
+	if o, ok := in.(*Object); ok {
+		return o, nil
+	}
+
 	v := reflect.ValueOf(in)
 	m, err := marshalStruct(":m", v)
 	if err != nil {
@@ -34,6 +47,21 @@ func Marshal(in interface{}) (*Object, error) {
 		o.Type = v
 	}
 
+	octx, err := marshalPickSpecial(v, "@context:s")
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := octx.(string); ok {
+		o.Context = v
+	}
+
+	if o.Type == "" {
+		tr, ok := in.(Typed)
+		if ok {
+			o.Type = tr.Type()
+		}
+	}
+
 	return o, nil
 }
 
@@ -57,10 +85,11 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 			if s != nil {
 				return s, nil
 			}
+			continue
 		}
 		ig, err := getStructTagName(it)
 		if err != nil {
-			return nil, fmt.Errorf("attribute %s, %w", it.Name, err)
+			return nil, fmt.Errorf("marshal special: attribute %s, %w", it.Name, err)
 		}
 		if ig == k {
 			return iv.Interface(), nil
@@ -92,12 +121,29 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			return Bool(v.Bool()), nil
 		}
 	case MapHint:
+		if v.IsZero() {
+			return nil, nil
+		}
 		switch v.Kind() {
 		case reflect.Map:
 			return marshalMap(h, v)
+		case reflect.Ptr:
+			if v.IsNil() {
+				return nil, nil
+			}
+			v = v.Elem()
+			if !v.IsValid() {
+				return nil, nil
+			}
+			fallthrough
 		case reflect.Struct:
 			return marshalStruct(h, v)
 		}
+	case ObjectHint:
+		if v.IsZero() {
+			return nil, nil
+		}
+		return Marshal(v.Interface())
 	case FloatHint:
 		switch v.Kind() {
 		case reflect.Float32,
@@ -131,6 +177,18 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			}
 			return Data(s), nil
 		}
+		b, ok := v.Interface().([]byte)
+		if ok {
+			return Data(b), nil
+		}
+		s, ok := v.Interface().(string)
+		if ok {
+			b, err := base64.StdEncoding.DecodeString(s)
+			if err != nil {
+				return nil, err
+			}
+			return Data(b), nil
+		}
 	}
 	if h[0] == 'a' {
 		switch v.Kind() {
@@ -139,7 +197,8 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			return marshalArray(h, v)
 		}
 	}
-	return nil, errors.Error("unknown type " + v.Kind().String())
+	return nil, errors.Error("invalid type " + v.Kind().String() +
+		" for hint " + string(h))
 }
 
 func marshalStruct(h Hint, v reflect.Value) (Map, error) {
@@ -168,10 +227,11 @@ func marshalStruct(h Hint, v reflect.Value) (Map, error) {
 		}
 		ig, err := getStructTagName(it)
 		if err != nil {
-			return nil, fmt.Errorf("attribute %s, %w", it.Name, err)
+			return nil, fmt.Errorf("marshal: attribute %s, %w", it.Name, err)
 		}
 		switch ig {
 		case "@type:s",
+			"@context:s",
 			"@metadata:m":
 			continue
 		}
@@ -268,6 +328,10 @@ func marshalArray(h Hint, v reflect.Value) (Value, error) {
 		value, err := marshalAny(ah, iv)
 		if err != nil {
 			return nil, err
+		}
+
+		if value == nil {
+			continue
 		}
 
 		switch ah {

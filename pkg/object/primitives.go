@@ -17,10 +17,11 @@ type (
 		Hint() Hint
 		_isValue()
 	}
+	// TODO switch Range's stop?
 	ArrayValue interface {
 		Value
 		Len() int
-		Range(func(int, Value) bool)
+		Range(func(int, Value) (stop bool))
 		_isArray()
 	}
 	// basic types
@@ -93,11 +94,11 @@ var hints = map[string]Hint{
 func splitHint(b []byte) (string, Hint, error) {
 	ps := strings.Split(string(b), ":")
 	if len(ps) != 2 {
-		return "", "", errors.Error("invalid hinted key " + string(b))
+		return "", "", errors.Error("split: invalid hinted key " + string(b))
 	}
 	h, ok := hints[ps[1]]
 	if !ok {
-		return "", "", errors.Error("unknown hint")
+		return "", "", errors.Error("split: invalid hint " + ps[1])
 	}
 	return ps[0], h, nil
 }
@@ -318,6 +319,9 @@ func (v Map) UnmarshalJSON(b []byte) error {
 func (v Map) MarshalJSON() ([]byte, error) {
 	m := map[string]Value{}
 	for ik, iv := range v {
+		if iv == nil {
+			continue
+		}
 		switch ivv := iv.(type) {
 		case Map:
 			if len(ivv) == 0 {

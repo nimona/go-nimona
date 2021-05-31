@@ -83,9 +83,14 @@ func (fsh *fileSharer) RequestTransfer(
 		Nonce: nonce,
 	}
 
-	err := fsh.net.Send(
+	ro, err := req.MarshalObject()
+	if err != nil {
+		return "", err
+	}
+
+	err = fsh.net.Send(
 		ctx,
-		req.ToObject(),
+		ro,
 		peerReq,
 	)
 	if err != nil {
@@ -144,7 +149,7 @@ func (fsh *fileSharer) handleObjects(
 		case transferRequestType:
 			req := &TransferRequest{}
 
-			if err := req.FromObject(env.Payload); err != nil {
+			if err := req.UnmarshalObject(env.Payload); err != nil {
 				logger.Error(
 					"failed to load FileIntentRequest from payload",
 					log.Error(err),
@@ -159,7 +164,7 @@ func (fsh *fileSharer) handleObjects(
 			reqs <- trf
 		case transferResponseType:
 			resp := &TransferResponse{}
-			if err = resp.FromObject(env.Payload); err != nil {
+			if err = resp.UnmarshalObject(env.Payload); err != nil {
 				logger.Error("error loading from payload", log.Error(err))
 				continue
 			}
@@ -195,7 +200,7 @@ func (fsh *fileSharer) RequestFile(
 		}
 
 		chunk := &blob.Chunk{}
-		if err := chunk.FromObject(chObj); err != nil {
+		if err := chunk.UnmarshalObject(chObj); err != nil {
 			return nil, err
 		}
 
@@ -220,8 +225,13 @@ func (fsh *fileSharer) RequestFile(
 	done := &TransferDone{
 		Nonce: transfer.Request.Nonce,
 	}
+	doneObj, err := done.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
 	if err := fsh.net.Send(
-		ctx, done.ToObject(),
+		ctx,
+		doneObj,
 		transfer.Peer,
 	); err != nil {
 		return f, err
@@ -239,7 +249,11 @@ func (fsh *fileSharer) RespondTransfer(
 		Nonce:    transfer.Request.Nonce,
 		Accepted: accepted,
 	}
-	err := fsh.net.Send(ctx, resp.ToObject(), transfer.Peer)
+	ro, err := resp.MarshalObject()
+	if err != nil {
+		return err
+	}
+	err = fsh.net.Send(ctx, ro, transfer.Peer)
 	if err != nil {
 		return err
 	}

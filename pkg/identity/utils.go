@@ -18,11 +18,16 @@ func Lookup(
 	man objectmanager.ObjectManager,
 ) (*Profile, error) {
 	// TODO check key usage is identity
-	streamRootCID := ProfileStreamRoot{
+	streamRoot := &ProfileStreamRoot{
 		Metadata: object.Metadata{
 			Owner: idKey,
 		},
-	}.ToObject().CID()
+	}
+	streamRootObj, err := streamRoot.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
+	streamRootCID := streamRootObj.CID()
 
 	recipients, err := res.Lookup(
 		ctx,

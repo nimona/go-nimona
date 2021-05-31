@@ -109,7 +109,11 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		var f Hint
 		var m Map
 		if o, ok := vv.(*Object); ok {
-			m = o.Map()
+			var err error
+			m, err = o.MarshalMap()
+			if err != nil {
+				return nil, err
+			}
 			f = CIDHint
 		} else {
 			m = v.(Map)
@@ -183,6 +187,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 	case CID:
 		return mhFromCid(vv)
 	case BoolArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -193,6 +200,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(BoolArrayHint, h)
 	case DataArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -203,6 +213,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(DataArrayHint, h)
 	case FloatArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -213,6 +226,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(FloatArrayHint, h)
 	case IntArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -223,6 +239,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(IntArrayHint, h)
 	case MapArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -233,6 +252,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(MapArrayHint, h)
 	case ObjectArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -243,6 +265,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(ObjectArrayHint, h)
 	case StringArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -253,6 +278,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(StringArrayHint, h)
 	case UintArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			vh, err := fromValue(ivv)
@@ -263,6 +291,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		}
 		return mhFromBytes(UintArrayHint, h)
 	case CIDArray:
+		if vv.Len() == 0 {
+			return nil, nil
+		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
 			ivvh, err := mhFromCid(ivv)

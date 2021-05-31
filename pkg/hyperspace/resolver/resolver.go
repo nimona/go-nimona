@@ -196,7 +196,10 @@ func (r *resolver) Lookup(
 		Nonce:       rand.String(12),
 		QueryVector: bl,
 	}
-	reqObject := req.ToObject()
+	reqObject, err := req.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
 
 	// listen for lookup responses
 	resSub := r.network.Subscribe(
@@ -238,7 +241,7 @@ func (r *resolver) Lookup(
 				break
 			}
 			r := &hyperspace.LookupResponse{}
-			if err := r.FromObject(e.Payload); err != nil {
+			if err := r.UnmarshalObject(e.Payload); err != nil {
 				continue
 			}
 			// TODO verify peer?
@@ -273,7 +276,7 @@ func (r *resolver) handleObject(
 	o := e.Payload
 	if o.Type == hyperspaceAnnouncementType {
 		v := &hyperspace.Announcement{}
-		if err := v.FromObject(o); err != nil {
+		if err := v.UnmarshalObject(o); err != nil {
 			logger.Warn(
 				"error handling announcement",
 				log.Error(err),
@@ -305,13 +308,18 @@ func (r *resolver) announceSelf() {
 		log.String("method", "resolver.announceSelf"),
 	)
 	n := 0
+	anno, err := r.getLocalPeerAnnouncement().MarshalObject()
+	if err != nil {
+		logger.Error("error marshaling announcement", log.Error(err))
+		return
+	}
 	for _, p := range r.bootstrapPeers {
 		if err := r.network.Send(
 			context.New(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*3),
 			),
-			r.getLocalPeerAnnouncement().ToObject(),
+			anno,
 			p.PublicKey,
 			network.SendWithConnectionInfo(p),
 		); err != nil {

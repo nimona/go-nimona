@@ -31,7 +31,10 @@ func TestLocalPeer(t *testing.T) {
 		Nonce:      rand.String(8),
 		VendorName: "foo",
 	}
-	csr.Metadata.Signature, err = object.NewSignature(k2, csr.ToObject())
+	csr.Metadata.Signature, err = object.NewSignature(
+		k2,
+		object.MustMarshal(csr),
+	)
 	require.NoError(t, err)
 
 	csrRes, err := object.NewCertificate(k2, *csr, true, "bar")

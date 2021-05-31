@@ -1,6 +1,7 @@
 package network
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -57,7 +59,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	// wait for event from n1 to arrive
 	env, err := sub.Next()
 	require.NoError(t, err)
-	assert.Equal(t, testObj.ToMap(), env.Payload.ToMap())
+	assert.Equal(t, testObj, env.Payload)
 
 	// subscribe to all objects coming to n1
 	sub = n1.Subscribe()
@@ -80,7 +82,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	env, err = sub.Next()
 	require.NoError(t, err)
 	require.NotNil(t, sub)
-	assert.Equal(t, testObj.ToMap(), env.Payload.ToMap())
+	assert.Equal(t, testObj, env.Payload)
 
 	t.Run("re-establish broken connections", func(t *testing.T) {
 		// close p2's connection to p1
@@ -125,9 +127,11 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		// send request from p1 to p2 in a go routine
 		sendErr := make(chan error)
 		go func() {
+			reqo, err := req.MarshalObject()
+			require.NoError(t, err)
 			sendErr <- n1.Send(
 				context.Background(),
-				req.ToObject(),
+				reqo,
 				n2.LocalPeer().GetPeerKey().PublicKey(),
 				SendWithResponse(gotRes, 0),
 			)
@@ -136,10 +140,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		gotReq := <-reqSub.Channel()
 		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(object.String)))
 		// send response from p2 to p1
+		reso, err := res.MarshalObject()
+		require.NoError(t, err)
+		require.NoError(t, err)
 		// nolint: errcheck
 		n2.Send(
 			context.Background(),
-			res.ToObject(),
+			reso,
 			n1.LocalPeer().GetPeerKey().PublicKey(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
@@ -288,6 +295,9 @@ func Test_exchange_signAll(t *testing.T) {
 		g, err := signAll(k, o)
 		assert.NoError(t, err)
 
+		err = object.Verify(g)
+		require.NoError(t, err)
+
 		assert.NotNil(t, g.Metadata.Signature)
 		assert.False(t, g.Metadata.Signature.IsEmpty())
 		assert.NotNil(t, g.Metadata.Signature.Signer)
@@ -313,12 +323,115 @@ func Test_exchange_signAll(t *testing.T) {
 		g, err := signAll(k, o)
 		assert.NoError(t, err)
 
+		err = object.Verify(g)
+		require.NoError(t, err)
+
 		assert.True(t, g.Metadata.Signature.IsEmpty())
 		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
 
 		gn := g.Data["foo"].(*object.Object)
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
 		assert.NotNil(t, gn.Metadata.Signature.Signer)
+	})
+
+	t.Run("should pass, sign nested object", func(t *testing.T) {
+		n := &object.Object{
+			Type: "foo",
+			Metadata: object.Metadata{
+				Owner: k.PublicKey(),
+			},
+			Data: object.Map{
+				"foo": object.String("bar"),
+			},
+		}
+		o := &object.Object{
+			Type: "foo",
+			Data: object.Map{
+				"foo": n,
+			},
+		}
+
+		g, err := signAll(k, o)
+		assert.NoError(t, err)
+
+		err = object.Verify(g)
+		require.NoError(t, err)
+
+		assert.True(t, g.Metadata.Signature.IsEmpty())
+		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
+
+		gn := g.Data["foo"].(*object.Object)
+		assert.False(t, gn.Metadata.Signature.IsEmpty())
+		assert.NotNil(t, gn.Metadata.Signature.Signer)
+	})
+
+	t.Run("should pass, sign deeply nested object", func(t *testing.T) {
+		n := &hyperspace.Announcement{
+			Metadata: object.Metadata{
+				Owner:    k.PublicKey(),
+				Datetime: "foo",
+			},
+			ConnectionInfo: &peer.ConnectionInfo{
+				Metadata: object.Metadata{
+					Owner:    k.PublicKey(),
+					Datetime: "foo",
+				},
+				Version:       2,
+				PublicKey:     k.PublicKey(),
+				Addresses:     []string{"1", "2"},
+				ObjectFormats: []string{"foo", "bar"},
+				Relays: []*peer.ConnectionInfo{{
+					Metadata: object.Metadata{
+						Owner:    k.PublicKey(),
+						Datetime: "foo",
+					},
+					Version:       3,
+					PublicKey:     k.PublicKey(),
+					Addresses:     []string{"1", "2"},
+					ObjectFormats: []string{"foo", "bar"},
+					Relays:        []*peer.ConnectionInfo{},
+				}},
+			},
+			PeerVector:       []uint64{0, 1, 2},
+			Version:          1,
+			PeerCapabilities: []string{"a", "b"},
+		}
+
+		// marshal to object
+		no, err := n.MarshalObject()
+		assert.NoError(t, err)
+
+		// sign
+		g, err := signAll(k, no)
+		assert.NoError(t, err)
+
+		// verify
+		err = object.Verify(g)
+		require.NoError(t, err)
+
+		// marshal to json
+		b, err := json.Marshal(no)
+		assert.NoError(t, err)
+
+		// unmarshal to object
+		o := &object.Object{}
+		err = json.Unmarshal(b, o)
+		require.NoError(t, err)
+
+		// verify
+		err = object.Verify(o)
+		require.NoError(t, err)
+
+		// unmarshal to struct
+		nn := &hyperspace.Announcement{}
+		err = nn.UnmarshalObject(o)
+		require.NoError(t, err)
+		require.Equal(t, no.Metadata, nn.Metadata)
+
+		// marshal to object
+		ng, err := nn.MarshalObject()
+		assert.NoError(t, err)
+		assert.Equal(t, no, ng)
 	})
 }
 

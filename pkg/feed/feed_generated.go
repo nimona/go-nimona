@@ -8,21 +8,21 @@ import (
 
 type (
 	FeedStreamRoot struct {
-		Metadata   object.Metadata
-		ObjectType string `nimona:"objectType:s"`
-		Datetime   string `nimona:"datetime:s"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		ObjectType string          `nimona:"objectType:s"`
+		Datetime   string          `nimona:"datetime:s"`
 	}
 	Added struct {
-		Metadata  object.Metadata
-		ObjectCID []object.CID `nimona:"objectCID:as"`
-		Sequence  int64        `nimona:"sequence:i"`
-		Datetime  string       `nimona:"datetime:s"`
+		Metadata  object.Metadata `nimona:"@metadata:m"`
+		ObjectCID []object.CID    `nimona:"objectCID:as"`
+		Sequence  int64           `nimona:"sequence:i"`
+		Datetime  string          `nimona:"datetime:s"`
 	}
 	Removed struct {
-		Metadata  object.Metadata
-		ObjectCID []object.CID `nimona:"objectCID:as"`
-		Sequence  int64        `nimona:"sequence:i"`
-		Datetime  string       `nimona:"datetime:s"`
+		Metadata  object.Metadata `nimona:"@metadata:m"`
+		ObjectCID []object.CID    `nimona:"objectCID:as"`
+		Sequence  int64           `nimona:"sequence:i"`
+		Datetime  string          `nimona:"datetime:s"`
 	}
 )
 
@@ -30,168 +30,49 @@ func (e *FeedStreamRoot) Type() string {
 	return "stream:nimona.io/feed"
 }
 
-func (e *FeedStreamRoot) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *FeedStreamRoot) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e FeedStreamRoot) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "stream:nimona.io/feed",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["objectType"] = object.String(e.ObjectType)
-	r.Data["datetime"] = object.String(e.Datetime)
-	return r
-}
-
-func (e *FeedStreamRoot) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "stream:nimona.io/feed"
+	return o, nil
 }
 
 func (e *FeedStreamRoot) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *FeedStreamRoot) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["objectType"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.ObjectType = string(t)
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Added) Type() string {
 	return "event:nimona.io/feed.Added"
 }
 
-func (e *Added) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Added) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Added) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "event:nimona.io/feed.Added",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.ObjectCID) > 0 {
-		rv := make(object.StringArray, len(e.ObjectCID))
-		for i, iv := range e.ObjectCID {
-			rv[i] = object.String(iv)
-		}
-		r.Data["objectCID"] = rv
-	}
-	r.Data["sequence"] = object.Int(e.Sequence)
-	r.Data["datetime"] = object.String(e.Datetime)
-	return r
-}
-
-func (e *Added) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "event:nimona.io/feed.Added"
+	return o, nil
 }
 
 func (e *Added) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Added) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["objectCID"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.ObjectCID = rv
-		}
-	}
-	if v, ok := o.Data["sequence"]; ok {
-		if t, ok := v.(object.Int); ok {
-			e.Sequence = int64(t)
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Removed) Type() string {
 	return "event:nimona.io/feed.Removed"
 }
 
-func (e *Removed) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Removed) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Removed) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "event:nimona.io/feed.Removed",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.ObjectCID) > 0 {
-		rv := make(object.StringArray, len(e.ObjectCID))
-		for i, iv := range e.ObjectCID {
-			rv[i] = object.String(iv)
-		}
-		r.Data["objectCID"] = rv
-	}
-	r.Data["sequence"] = object.Int(e.Sequence)
-	r.Data["datetime"] = object.String(e.Datetime)
-	return r
-}
-
-func (e *Removed) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "event:nimona.io/feed.Removed"
+	return o, nil
 }
 
 func (e *Removed) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Removed) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["objectCID"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.ObjectCID = rv
-		}
-	}
-	if v, ok := o.Data["sequence"]; ok {
-		if t, ok := v.(object.Int); ok {
-			e.Sequence = int64(t)
-		}
-	}
-	if v, ok := o.Data["datetime"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Datetime = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

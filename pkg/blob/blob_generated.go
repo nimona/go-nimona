@@ -8,12 +8,12 @@ import (
 
 type (
 	Chunk struct {
-		Metadata object.Metadata
-		Data     []byte `nimona:"data:d"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Data     []byte          `nimona:"data:d"`
 	}
 	Blob struct {
-		Metadata object.Metadata
-		Chunks   []object.CID `nimona:"chunks:as"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Chunks   []object.CID    `nimona:"chunks:as"`
 	}
 )
 
@@ -21,88 +21,32 @@ func (e *Chunk) Type() string {
 	return "nimona.io/Chunk"
 }
 
-func (e *Chunk) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Chunk) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Chunk) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/Chunk",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["data"] = object.Data(e.Data)
-	return r
-}
-
-func (e *Chunk) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/Chunk"
+	return o, nil
 }
 
 func (e *Chunk) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Chunk) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["data"]; ok {
-		if t, ok := v.(object.Data); ok {
-			e.Data = []byte(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Blob) Type() string {
 	return "nimona.io/Blob"
 }
 
-func (e *Blob) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Blob) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Blob) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/Blob",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.Chunks) > 0 {
-		rv := make(object.StringArray, len(e.Chunks))
-		for i, iv := range e.Chunks {
-			rv[i] = object.String(iv)
-		}
-		r.Data["chunks"] = rv
-	}
-	return r
-}
-
-func (e *Blob) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/Blob"
+	return o, nil
 }
 
 func (e *Blob) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Blob) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["chunks"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.Chunks = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

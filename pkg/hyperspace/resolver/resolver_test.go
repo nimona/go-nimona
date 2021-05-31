@@ -54,7 +54,7 @@ func TestResolver_Integration(t *testing.T) {
 	// net1 announces to provider
 	err = net1.Send(
 		context.New(),
-		pr1.ToObject(),
+		object.MustMarshal(pr1),
 		pr0.ConnectionInfo.PublicKey,
 		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)

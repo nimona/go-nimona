@@ -20,17 +20,17 @@ const (
 )
 
 type Signature struct {
-	Signer      crypto.PublicKey `nimona:"signer:s,omitempty"`
-	Alg         string           `nimona:"alg:s,omitempty"`
-	X           []byte           `nimona:"x:d,omitempty"`
-	Certificate *Certificate     `nimona:"certificate:m,omitempty"`
+	Signer      crypto.PublicKey `nimona:"signer:s"`
+	Alg         string           `nimona:"alg:s"`
+	X           []byte           `nimona:"x:d"`
+	Certificate *Certificate     `nimona:"certificate:o"`
 }
 
-func (s Signature) IsEmpty() bool {
-	return len(s.X) == 0
+func (s *Signature) IsEmpty() bool {
+	return s == nil || len(s.X) == 0
 }
 
-func (s Signature) Map() Map {
+func (s *Signature) MarshalMap() (Map, error) {
 	r := Map{}
 	if !s.Signer.IsEmpty() {
 		r["signer"] = String(s.Signer.String())
@@ -42,45 +42,45 @@ func (s Signature) Map() Map {
 		r["x"] = Data(s.X)
 	}
 	if s.Certificate != nil {
-		r["certificate"] = s.Certificate.ToObject()
+		c, err := s.Certificate.MarshalObject()
+		if err != nil {
+			return nil, err
+		}
+		r["certificate"] = c
 	}
-	return r
+	return r, nil
 }
 
-func SignatureFromMap(m Map) Signature {
-	r := Signature{}
+func (s *Signature) UnmarshalMap(m Map) error {
 	if t, ok := m["signer"]; ok {
-		if s, ok := t.(String); ok {
+		if v, ok := t.(String); ok {
 			k := crypto.PublicKey{}
-			if err := k.UnmarshalString(string(s)); err == nil {
-				r.Signer = k
+			if err := k.UnmarshalString(string(v)); err == nil {
+				s.Signer = k
 			}
 		}
 	}
 	if t, ok := m["alg"]; ok {
-		if s, ok := t.(String); ok {
-			r.Alg = string(s)
-		}
-	}
-	if t, ok := m["alg"]; ok {
-		if s, ok := t.(String); ok {
-			r.Alg = string(s)
+		if v, ok := t.(String); ok {
+			s.Alg = string(v)
 		}
 	}
 	if t, ok := m["x"]; ok {
-		if s, ok := t.(Data); ok {
-			r.X = []byte(s)
+		if v, ok := t.(Data); ok {
+			s.X = []byte(v)
 		}
 	}
 	if t, ok := m["certificate"]; ok {
-		if s, ok := t.(*Object); ok {
+		if v, ok := t.(*Object); ok {
 			c := &Certificate{}
-			if err := c.FromObject(s); err == nil {
-				r.Certificate = c
+			err := Unmarshal(v, c)
+			if err != nil {
+				return err
 			}
+			s.Certificate = c
 		}
 	}
-	return r
+	return nil
 }
 
 // NewSignature returns a signature given some bytes and a private key

@@ -114,11 +114,14 @@ func (m *feedManager) createFeed(
 		m.localpeer.GetIdentityPublicKey(),
 		streamType,
 	)
-	feedRootObj := feedRoot.ToObject()
+	feedRootObj, err := feedRoot.MarshalObject()
+	if err != nil {
+		return err
+	}
 	feedRootCID := feedRootObj.CID()
 
 	// check if it exists
-	_, err := m.objectstore.Get(feedRootCID)
+	_, err = m.objectstore.Get(feedRootCID)
 	if err == nil {
 		return nil
 	}
@@ -158,7 +161,7 @@ func (m *feedManager) createFeed(
 			}
 
 			feedAdded := &feed.Added{}
-			if err := feedAdded.FromObject(obj); err != nil {
+			if err := feedAdded.UnmarshalObject(obj); err != nil {
 				// TODO log
 				continue
 			}
@@ -289,10 +292,15 @@ func (m *feedManager) handleObjects(
 
 		// add to feed
 		// TODO check if identity key exists, this will not work without one
-		feedStreamCID := GetFeedRoot(
+		feedStream := GetFeedRoot(
 			identityKey,
 			streamType,
-		).ToObject().CID()
+		)
+		feedStreamObj, err := feedStream.MarshalObject()
+		if err != nil {
+			continue
+		}
+		feedStreamCID := feedStreamObj.CID()
 		feedEvent := feed.Added{
 			Metadata: object.Metadata{
 				Stream: feedStreamCID,
@@ -302,7 +310,11 @@ func (m *feedManager) handleObjects(
 				objCID,
 			},
 		}
-		if _, err := m.objectmanager.Put(ctx, feedEvent.ToObject()); err != nil {
+		feedEventObj, err := feedEvent.MarshalObject()
+		if err != nil {
+			continue
+		}
+		if _, err := m.objectmanager.Put(ctx, feedEventObj); err != nil {
 			logger.Warn("error storing feed event", log.Error(err))
 			continue
 		}

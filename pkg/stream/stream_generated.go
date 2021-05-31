@@ -8,32 +8,32 @@ import (
 
 type (
 	Policy struct {
-		Metadata   object.Metadata
-		Subjects   []string `nimona:"subjects:as"`
-		Resources  []string `nimona:"resources:as"`
-		Conditions []string `nimona:"conditions:as"`
-		Action     string   `nimona:"action:s"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		Subjects   []string        `nimona:"subjects:as"`
+		Resources  []string        `nimona:"resources:as"`
+		Conditions []string        `nimona:"conditions:as"`
+		Action     string          `nimona:"action:s"`
 	}
 	Request struct {
-		Metadata  object.Metadata
-		RequestID string     `nimona:"requestID:s"`
-		RootCID   object.CID `nimona:"rootCID:s"`
+		Metadata  object.Metadata `nimona:"@metadata:m"`
+		RequestID string          `nimona:"requestID:s"`
+		RootCID   object.CID      `nimona:"rootCID:s"`
 	}
 	Response struct {
-		Metadata  object.Metadata
-		RequestID string       `nimona:"requestID:s"`
-		RootCID   object.CID   `nimona:"rootCID:s"`
-		Leaves    []object.CID `nimona:"leaves:as"`
+		Metadata  object.Metadata `nimona:"@metadata:m"`
+		RequestID string          `nimona:"requestID:s"`
+		RootCID   object.CID      `nimona:"rootCID:s"`
+		Leaves    []object.CID    `nimona:"leaves:as"`
 	}
 	Announcement struct {
-		Metadata   object.Metadata
-		StreamCID  object.CID   `nimona:"streamCID:s"`
-		ObjectCIDs []object.CID `nimona:"objectCIDs:as"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		StreamCID  object.CID      `nimona:"streamCID:s"`
+		ObjectCIDs []object.CID    `nimona:"objectCIDs:as"`
 	}
 	Subscription struct {
-		Metadata object.Metadata
-		RootCIDs []object.CID `nimona:"rootCIDs:as"`
-		Expiry   string       `nimona:"expiry:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		RootCIDs []object.CID    `nimona:"rootCIDs:as"`
+		Expiry   string          `nimona:"expiry:s"`
 	}
 )
 
@@ -41,306 +41,83 @@ func (e *Policy) Type() string {
 	return "nimona.io/stream.Policy"
 }
 
-func (e *Policy) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Policy) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Policy) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/stream.Policy",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.Subjects) > 0 {
-		rv := make(object.StringArray, len(e.Subjects))
-		for i, iv := range e.Subjects {
-			rv[i] = object.String(iv)
-		}
-		r.Data["subjects"] = rv
-	}
-	if len(e.Resources) > 0 {
-		rv := make(object.StringArray, len(e.Resources))
-		for i, iv := range e.Resources {
-			rv[i] = object.String(iv)
-		}
-		r.Data["resources"] = rv
-	}
-	if len(e.Conditions) > 0 {
-		rv := make(object.StringArray, len(e.Conditions))
-		for i, iv := range e.Conditions {
-			rv[i] = object.String(iv)
-		}
-		r.Data["conditions"] = rv
-	}
-	r.Data["action"] = object.String(e.Action)
-	return r
-}
-
-func (e *Policy) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/stream.Policy"
+	return o, nil
 }
 
 func (e *Policy) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Policy) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["subjects"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Subjects = rv
-		}
-	}
-	if v, ok := o.Data["resources"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Resources = rv
-		}
-	}
-	if v, ok := o.Data["conditions"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Conditions = rv
-		}
-	}
-	if v, ok := o.Data["action"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Action = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Request) Type() string {
 	return "nimona.io/stream.Request"
 }
 
-func (e *Request) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Request) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Request) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/stream.Request",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["requestID"] = object.String(e.RequestID)
-	r.Data["rootCID"] = object.String(e.RootCID)
-	return r
-}
-
-func (e *Request) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/stream.Request"
+	return o, nil
 }
 
 func (e *Request) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Request) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["requestID"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.RequestID = string(t)
-		}
-	}
-	if v, ok := o.Data["rootCID"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.RootCID = object.CID(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Response) Type() string {
 	return "nimona.io/stream.Response"
 }
 
-func (e *Response) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Response) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Response) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/stream.Response",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["requestID"] = object.String(e.RequestID)
-	r.Data["rootCID"] = object.String(e.RootCID)
-	if len(e.Leaves) > 0 {
-		rv := make(object.StringArray, len(e.Leaves))
-		for i, iv := range e.Leaves {
-			rv[i] = object.String(iv)
-		}
-		r.Data["leaves"] = rv
-	}
-	return r
-}
-
-func (e *Response) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/stream.Response"
+	return o, nil
 }
 
 func (e *Response) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Response) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["requestID"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.RequestID = string(t)
-		}
-	}
-	if v, ok := o.Data["rootCID"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.RootCID = object.CID(t)
-		}
-	}
-	if v, ok := o.Data["leaves"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.Leaves = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Announcement) Type() string {
 	return "nimona.io/stream.Announcement"
 }
 
-func (e *Announcement) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Announcement) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Announcement) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/stream.Announcement",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["streamCID"] = object.String(e.StreamCID)
-	if len(e.ObjectCIDs) > 0 {
-		rv := make(object.StringArray, len(e.ObjectCIDs))
-		for i, iv := range e.ObjectCIDs {
-			rv[i] = object.String(iv)
-		}
-		r.Data["objectCIDs"] = rv
-	}
-	return r
-}
-
-func (e *Announcement) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/stream.Announcement"
+	return o, nil
 }
 
 func (e *Announcement) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Announcement) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["streamCID"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.StreamCID = object.CID(t)
-		}
-	}
-	if v, ok := o.Data["objectCIDs"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.ObjectCIDs = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *Subscription) Type() string {
 	return "nimona.io/stream.Subscription"
 }
 
-func (e *Subscription) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Subscription) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Subscription) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/stream.Subscription",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.RootCIDs) > 0 {
-		rv := make(object.StringArray, len(e.RootCIDs))
-		for i, iv := range e.RootCIDs {
-			rv[i] = object.String(iv)
-		}
-		r.Data["rootCIDs"] = rv
-	}
-	r.Data["expiry"] = object.String(e.Expiry)
-	return r
-}
-
-func (e *Subscription) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/stream.Subscription"
+	return o, nil
 }
 
 func (e *Subscription) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Subscription) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["rootCIDs"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.RootCIDs = rv
-		}
-	}
-	if v, ok := o.Data["expiry"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Expiry = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

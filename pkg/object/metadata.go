@@ -4,15 +4,15 @@ import "nimona.io/pkg/crypto"
 
 // Metadata for object
 type Metadata struct {
-	Owner     crypto.PublicKey
-	Datetime  string
-	Parents   Parents
-	Policies  Policies
-	Stream    CID
-	Signature Signature
+	Owner     crypto.PublicKey `nimona:"owner:s"`
+	Datetime  string           `nimona:"datetime:s"`
+	Parents   Parents          `nimona:"parents:m"`
+	Policies  Policies         `nimona:"policies:am"`
+	Stream    CID              `nimona:"stream:s"`
+	Signature Signature        `nimona:"signature:m"`
 }
 
-func (m Metadata) Map() Map {
+func (m *Metadata) MarshalMap() (Map, error) {
 	r := Map{}
 	if !m.Owner.IsEmpty() {
 		r["owner"] = String(m.Owner.String())
@@ -34,27 +34,32 @@ func (m Metadata) Map() Map {
 		r["datetime"] = String(m.Datetime)
 	}
 	if !m.Signature.IsEmpty() {
-		r["_signature"] = m.Signature.Map()
+		v, err := m.Signature.MarshalMap()
+		if err != nil {
+			return nil, err
+		}
+		r["_signature"] = v
 	}
-	return r
+	return r, nil
 }
 
-func MetadataFromMap(s Map) Metadata {
-	r := Metadata{}
-	if t, ok := s["owner"]; ok {
+func (m *Metadata) UnmarshalMap(in Map) error {
+	if t, ok := in["owner"]; ok {
 		if s, ok := t.(String); ok {
 			k := crypto.PublicKey{}
-			if err := k.UnmarshalString(string(s)); err == nil {
-				r.Owner = k
+			err := k.UnmarshalString(string(s))
+			if err != nil {
+				return err
 			}
+			m.Owner = k
 		}
 	}
-	if t, ok := s["datetime"]; ok {
+	if t, ok := in["datetime"]; ok {
 		if s, ok := t.(String); ok {
-			r.Datetime = string(s)
+			m.Datetime = string(s)
 		}
 	}
-	if t, ok := s["parents"]; ok {
+	if t, ok := in["parents"]; ok {
 		if s, ok := t.(Map); ok {
 			p := Parents{}
 			for mk, mv := range s {
@@ -64,24 +69,27 @@ func MetadataFromMap(s Map) Metadata {
 				}
 				p[mk] = ma
 			}
-			r.Parents = p
+			m.Parents = p
 		}
 	}
-	if t, ok := s["policies"]; ok {
+	if t, ok := in["policies"]; ok {
 		if s, ok := t.(MapArray); ok {
-			r.Policies = PoliciesFromValue(s)
+			m.Policies = PoliciesFromValue(s)
 		}
 	}
-	if t, ok := s["stream"]; ok {
+	if t, ok := in["stream"]; ok {
 		if s, ok := t.(CID); ok {
-			r.Stream = s
+			m.Stream = s
 		}
 	}
-	if t, ok := s["_signature"]; ok {
+	if t, ok := in["_signature"]; ok {
 		if s, ok := t.(Map); ok {
-			r.Signature = SignatureFromMap(s)
+			err := m.Signature.UnmarshalMap(s)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	return r
+	return nil
 }

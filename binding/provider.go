@@ -333,5 +333,6 @@ func (p *Provider) GetFeedRootCID(
 			Owner: p.local.GetPeerKey().PublicKey(),
 		},
 	}
-	return v.ToObject().CID()
+	o, _ := v.MarshalObject()
+	return o.CID()
 }

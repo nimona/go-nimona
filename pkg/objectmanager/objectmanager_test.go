@@ -68,10 +68,12 @@ func TestManager_Request(t *testing.T) {
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Response{
-									RequestID: "7",
-									Object:    object.Copy(f00),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Response{
+										RequestID: "7",
+										Object:    object.Copy(f00),
+									},
+								),
 							}},
 						},
 					},
@@ -102,8 +104,8 @@ func TestManager_Request(t *testing.T) {
 			}
 			assert.Equal(
 				t,
-				tt.want.ToMap(),
-				got.ToMap(),
+				tt.want,
+				got,
 			)
 		})
 	}
@@ -123,7 +125,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	localPeer := localpeer.New()
 	localPeer.SetPeerKey(localPeerKey)
 
-	f00 := peer1.ToObject()
+	f00 := object.MustMarshal(peer1)
 	f01 := &object.Object{
 		Metadata: object.Metadata{},
 		Data: object.Map{
@@ -173,10 +175,12 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Request{
-									RequestID: "8",
-									ObjectCID: f01.CID(),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Request{
+										RequestID: "8",
+										ObjectCID: f01.CID(),
+									},
+								),
 							}},
 						},
 					)
@@ -204,13 +208,15 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				rootCID: f00.CID(),
 				peer:    peer1,
 			},
-			want: object.Response{
-				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey(),
+			want: object.MustMarshal(
+				&object.Response{
+					Metadata: object.Metadata{
+						Owner: localPeerKey.PublicKey(),
+					},
+					Object:    f01,
+					RequestID: "8",
 				},
-				Object:    f01,
-				RequestID: "8",
-			}.ToObject(),
+			),
 		},
 		{
 			name: "object missing, return empty response",
@@ -231,10 +237,12 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Request{
-									RequestID: "8",
-									ObjectCID: f01.CID(),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Request{
+										RequestID: "8",
+										ObjectCID: f01.CID(),
+									},
+								),
 							}},
 						},
 					)
@@ -262,13 +270,15 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				rootCID: f00.CID(),
 				peer:    peer1,
 			},
-			want: object.Response{
-				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey(),
+			want: object.MustMarshal(
+				&object.Response{
+					Metadata: object.Metadata{
+						Owner: localPeerKey.PublicKey(),
+					},
+					Object:    nil,
+					RequestID: "8",
 				},
-				Object:    nil,
-				RequestID: "8",
-			}.ToObject(),
+			),
 		},
 	}
 	for _, tt := range tests {
@@ -394,36 +404,44 @@ func TestManager_RequestStream(t *testing.T) {
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: stream.Response{
-									RequestID: "7",
-									Leaves: []object.CID{
-										f02.CID(),
+								Payload: object.MustMarshal(
+									&stream.Response{
+										RequestID: "7",
+										Leaves: []object.CID{
+											f02.CID(),
+										},
 									},
-								}.ToObject(),
+								),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Response{
-									RequestID: "7",
-									Object:    object.Copy(f02),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Response{
+										RequestID: "7",
+										Object:    object.Copy(f02),
+									},
+								),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Response{
-									RequestID: "7",
-									Object:    object.Copy(f01),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Response{
+										RequestID: "7",
+										Object:    object.Copy(f01),
+									},
+								),
 							}},
 						},
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
-								Payload: object.Response{
-									RequestID: "7",
-									Object:    object.Copy(f00),
-								}.ToObject(),
+								Payload: object.MustMarshal(
+									&object.Response{
+										RequestID: "7",
+										Object:    object.Copy(f00),
+									},
+								),
 							}},
 						},
 					},
@@ -474,8 +492,8 @@ func TestManager_RequestStream(t *testing.T) {
 				for i := 0; i < len(tt.want); i++ {
 					assert.Equal(
 						t,
-						tt.want[i].ToMap(),
-						objs[i].ToMap(),
+						tt.want[i],
+						objs[i],
 						"for index %d", i,
 					)
 				}
@@ -568,10 +586,12 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				m.EXPECT().Subscribe(gomock.Any()).Return(
 					&networkmock.MockSubscriptionSimple{
 						Objects: []*network.Envelope{{
-							Payload: stream.Request{
-								RequestID: "7",
-								RootCID:   f00.CID(),
-							}.ToObject(),
+							Payload: object.MustMarshal(
+								&stream.Request{
+									RequestID: "7",
+									RootCID:   f00.CID(),
+								},
+							),
 						}},
 					},
 				)
@@ -600,14 +620,16 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			rootCID: f00.CID(),
 			peer:    peer1,
 		},
-		want: stream.Response{
-			Metadata: object.Metadata{
-				Owner: localPeerKey.PublicKey(),
+		want: object.MustMarshal(
+			&stream.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				RequestID: "7",
+				RootCID:   f00.CID(),
+				Leaves:    []object.CID{f01.CID()},
 			},
-			RequestID: "7",
-			RootCID:   f00.CID(),
-			Leaves:    []object.CID{f01.CID()},
-		}.ToObject(),
+		),
 	}, {
 		name: "should pass, unknown stream",
 		fields: fields{
@@ -629,10 +651,12 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				m.EXPECT().Subscribe(gomock.Any()).Return(
 					&networkmock.MockSubscriptionSimple{
 						Objects: []*network.Envelope{{
-							Payload: stream.Request{
-								RequestID: "7",
-								RootCID:   f00.CID(),
-							}.ToObject(),
+							Payload: object.MustMarshal(
+								&stream.Request{
+									RequestID: "7",
+									RootCID:   f00.CID(),
+								},
+							),
 						}},
 					},
 				)
@@ -661,14 +685,16 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			rootCID: f00.CID(),
 			peer:    peer1,
 		},
-		want: stream.Response{
-			Metadata: object.Metadata{
-				Owner: localPeerKey.PublicKey(),
+		want: object.MustMarshal(
+			&stream.Response{
+				Metadata: object.Metadata{
+					Owner: localPeerKey.PublicKey(),
+				},
+				RequestID: "7",
+				RootCID:   f00.CID(),
+				Leaves:    []object.CID{},
 			},
-			RequestID: "7",
-			RootCID:   f00.CID(),
-			Leaves:    []object.CID{},
-		}.ToObject(),
+		),
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -757,12 +783,14 @@ func TestManager_Put(t *testing.T) {
 			"foo": object.String("bar"),
 		},
 	}
-	testObjectSubscriptionInline := stream.Subscription{
-		Metadata: object.Metadata{
-			Owner:  testSubscriberPublicKey,
-			Stream: testObjectStreamRoot.CID(),
+	testObjectSubscriptionInline := object.MustMarshal(
+		&stream.Subscription{
+			Metadata: object.Metadata{
+				Owner:  testSubscriberPublicKey,
+				Stream: testObjectStreamRoot.CID(),
+			},
 		},
-	}.ToObject()
+	)
 	testObjectWithStreamInlineUpdated := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
@@ -983,14 +1011,16 @@ func TestManager_Put(t *testing.T) {
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
-				stream.Subscription{
-					Metadata: object.Metadata{
-						Owner: testSubscriberPublicKey,
+				object.MustMarshal(
+					&stream.Subscription{
+						Metadata: object.Metadata{
+							Owner: testSubscriberPublicKey,
+						},
+						RootCIDs: []object.CID{
+							testObjectStreamRoot.CID(),
+						},
 					},
-					RootCIDs: []object.CID{
-						testObjectStreamRoot.CID(),
-					},
-				}.ToObject(),
+				),
 			},
 		},
 		args: args{
@@ -1241,12 +1271,14 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 	)
 
 	// create a new stream
-	rootObj := fixtures.TestStream{
-		Metadata: object.Metadata{
-			Owner: prv0.PublicKey(),
+	rootObj := object.MustMarshal(
+		&fixtures.TestStream{
+			Metadata: object.Metadata{
+				Owner: prv0.PublicKey(),
+			},
+			Nonce: "foo",
 		},
-		Nonce: "foo",
-	}.ToObject()
+	)
 	rootObj, err = man.Put(context.TODO(), rootObj)
 	require.NoError(t, err)
 

@@ -88,16 +88,16 @@ func TestBlob_CID(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.CID{c.ToObject().CID()},
+		Chunks: []object.CID{object.MustMarshal(c).CID()},
 	}
 	u := &blob.Blob{
 		Chunks: []object.CID{
-			c.ToObject().CID(),
+			object.MustMarshal(c).CID(),
 		},
 	}
 
-	bh := b.ToObject().CID()
-	uh := u.ToObject().CID()
+	bh := object.MustMarshal(b).CID()
+	uh := object.MustMarshal(u).CID()
 	assert.Equal(t, bh, uh)
 }
 
@@ -106,28 +106,27 @@ func TestBlob_ResponseCID(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.CID{c.ToObject().CID()},
+		Chunks: []object.CID{object.MustMarshal(c).CID()},
 	}
 	r := &object.Response{
 		RequestID: "foo",
-		Object:    b.ToObject(),
+		Object:    object.MustMarshal(b),
 	}
-	s, err := json.Marshal(r.ToObject().ToMap())
+	s, err := json.Marshal(object.MustMarshal(r))
 	require.NoError(t, err)
 
 	fmt.Println(string(s))
 
-	m := object.Map{}
-	err = json.Unmarshal(s, &m)
+	o := &object.Object{}
+	err = json.Unmarshal(s, &o)
 	require.NoError(t, err)
-	o := object.FromMap(m)
 
-	s, err = json.Marshal(o.ToMap())
+	s, err = json.Marshal(o)
 	require.NoError(t, err)
 
 	fmt.Println(string(s))
 
-	bh := r.ToObject().CID()
+	bh := object.MustMarshal(r).CID()
 	uh := o.CID()
 
 	assert.Equal(t, bh, uh)
@@ -136,27 +135,28 @@ func TestBlob_ResponseCID(t *testing.T) {
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
 		Chunks: []object.CID{
-			blob.Chunk{
-				Data: []byte("foo"),
-			}.ToObject().CID(),
+			object.MustMarshal(
+				&blob.Chunk{
+					Data: []byte("foo"),
+				},
+			).CID(),
 		},
 	}
-	s, err := json.Marshal(b.ToObject().ToMap())
+	s, err := json.Marshal(object.MustMarshal(b))
 	require.NoError(t, err)
 	fmt.Println(string(s))
 
-	m := object.Map{}
-	err = json.Unmarshal(s, &m)
+	o := &object.Object{}
+	err = json.Unmarshal(s, o)
 	require.NoError(t, err)
-	o := object.FromMap(m)
 
-	s2, err := json.Marshal(o.ToMap())
+	s2, err := json.Marshal(o)
 	require.NoError(t, err)
 	fmt.Println(string(s2))
 	assert.Equal(t, s, s2)
 
 	b2 := &blob.Blob{}
-	err = b2.FromObject(o)
+	err = b2.UnmarshalObject(o)
 	require.NoError(t, err)
 
 	require.Equal(t, b, b2)

@@ -12,12 +12,12 @@ type (
 
 	// Policy for object metadata
 	Policy struct {
-		Name      string
-		Type      PolicyType
-		Subjects  []crypto.PublicKey
-		Resources []string
-		Actions   []PolicyAction
-		Effect    PolicyEffect
+		Name      string             `nimona:"name:s"`
+		Type      PolicyType         `nimona:"type:s"`
+		Subjects  []crypto.PublicKey `nimona:"subjects:as"`
+		Resources []string           `nimona:"resources:as"`
+		Actions   []PolicyAction     `nimona:"actions:as"`
+		Effect    PolicyEffect       `nimona:"effect:s"`
 	}
 
 	// Policies

@@ -30,7 +30,7 @@ func GetFeedCIDs(
 		case feedObjectAddedType:
 			event := &Added{}
 			// TODO should this error?
-			if err := event.FromObject(obj); err != nil {
+			if err := event.UnmarshalObject(obj); err != nil {
 				return nil, err
 			}
 			for _, cid := range event.ObjectCID {
@@ -39,7 +39,7 @@ func GetFeedCIDs(
 		case feedObjectRemovedType:
 			event := &Removed{}
 			// TODO should this error?
-			if err := event.FromObject(obj); err != nil {
+			if err := event.UnmarshalObject(obj); err != nil {
 				return nil, err
 			}
 			for _, cid := range event.ObjectCID {
@@ -74,10 +74,12 @@ func GetFeedHypotheticalRootCID(
 	owner crypto.PublicKey,
 	objectType string,
 ) object.CID {
-	return GetFeedHypotheticalRoot(
-		owner,
-		objectType,
-	).ToObject().CID()
+	return object.MustMarshal(
+		GetFeedHypotheticalRoot(
+			owner,
+			objectType,
+		),
+	).CID()
 }
 
 func getTypeForFeed(objectType string) string {

@@ -119,18 +119,30 @@ func (ft *fileTransfer) serve(
 		return
 	}
 
-	fl := &File{
-		Name: fileName,
-		Blob: blobUnl.ToObject().CID(),
+	blobUnlo, err := blobUnl.MarshalObject()
+	if err != nil {
+		fmt.Println("failed to marshal blob", err)
+		return
 	}
 
-	if _, err := ft.objectmanager.Put(ctx, fl.ToObject()); err != nil {
+	fl := &File{
+		Name: fileName,
+		Blob: blobUnlo.CID(),
+	}
+
+	flo, err := fl.MarshalObject()
+	if err != nil {
+		fmt.Println("failed to marshal file", err)
+		return
+	}
+
+	if _, err := ft.objectmanager.Put(ctx, flo); err != nil {
 		fmt.Println("failed to store blob", err)
 		return
 	}
 	fmt.Println(">> imported in", time.Now().Sub(start))
-	fmt.Println(">> blob cid:", blobUnl.ToObject().CID())
-	fmt.Println(">> file cid:", fl.ToObject().CID())
+	fmt.Println(">> blob cid:", blobUnlo.CID())
+	fmt.Println(">> file cid:", flo.CID())
 
 	// os.Exit(1)
 	// register for termination signals
@@ -178,7 +190,7 @@ func (ft *fileTransfer) get(
 	}
 
 	fl := &File{}
-	if err := fl.FromObject(obj); err != nil {
+	if err := fl.UnmarshalObject(obj); err != nil {
 		fmt.Println("object not of type file: ", err)
 		return
 	}

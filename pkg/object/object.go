@@ -1,8 +1,6 @@
 package object
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 type (
 	Typed interface {
@@ -32,8 +30,7 @@ type (
 	}
 )
 
-// TODO: Deprecate
-func (o Object) Map() Map {
+func (o *Object) MarshalMap() (Map, error) {
 	m := Map{}
 	for k, v := range o.Data {
 		m[k] = v
@@ -44,24 +41,14 @@ func (o Object) Map() Map {
 	if o.Type != "" {
 		m["@type"] = String(o.Type)
 	}
-	mm := o.Metadata.Map()
-	if len(mm) > 0 {
-		m["@metadata"] = o.Metadata.Map()
+	mm, err := o.Metadata.MarshalMap()
+	if err != nil {
+		return nil, err
 	}
-	return m
-}
-
-// TODO: Deprecate
-func (o Object) ToMap() Map {
-	return o.Map()
-}
-
-func (o Object) MarshalObject() (*Object, error) {
-	return &o, nil
-}
-
-func (o Object) MarshalMap() (Map, error) {
-	return o.Map(), nil
+	if len(mm) > 0 {
+		m["@metadata"] = mm
+	}
+	return m, nil
 }
 
 func (o *Object) UnmarshalJSON(b []byte) error {
@@ -72,15 +59,12 @@ func (o *Object) UnmarshalJSON(b []byte) error {
 	return o.UnmarshalMap(m)
 }
 
-func (o Object) MarshalJSON() ([]byte, error) {
-	return json.Marshal(o.Map())
-}
-
-func (o *Object) UnmarshalObject(n *Object) error {
-	o.Type = n.Type
-	o.Data = n.Data
-	o.Metadata = n.Metadata
-	return nil
+func (o *Object) MarshalJSON() ([]byte, error) {
+	m, err := o.MarshalMap()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(m)
 }
 
 func (o *Object) UnmarshalMap(m Map) error {
@@ -98,19 +82,15 @@ func (o *Object) UnmarshalMap(m Map) error {
 	}
 	if t, ok := m["@metadata"]; ok {
 		if s, ok := t.(Map); ok {
-			o.Metadata = MetadataFromMap(s)
+			err := o.Metadata.UnmarshalMap(s)
+			if err != nil {
+				return err
+			}
 			delete(m, "@metadata")
 		}
 	}
 	o.Data = m
 	return nil
-}
-
-// TODO: Deprecate
-func FromMap(m Map) *Object {
-	o := &Object{}
-	o.UnmarshalMap(m) // nolint: errcheck
-	return o
 }
 
 func (o *Object) CID() CID {

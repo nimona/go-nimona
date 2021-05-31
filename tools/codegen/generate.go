@@ -37,7 +37,7 @@ import (
 type (
 	{{- range $object := .Objects }}
 	{{ structName $object.Name }} struct {
-		Metadata object.Metadata
+		Metadata object.Metadata {{ tagMetadata }}
 		{{- range $member := $object.Members }}
 			{{- if $member.IsRepeated }}
 				{{ $member.Name }} []{{ memberType $member true }} {{ tag $member }}
@@ -56,112 +56,19 @@ func (e *{{ structName $object.Name }}) Type() string {
 	return "{{ $object.Name }}"
 }
 
-func (e *{{ structName $object.Name }}) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *{{ structName $object.Name }}) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e {{ structName $object.Name }}) ToObject() *object.Object {
-	r := &object.Object{
-		Type: "{{ $object.Name }}",
-		Metadata: e.Metadata,
-		Data: object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	{{- range $member := $object.Members }}
-		{{- if $member.IsRepeated }}
-			if len(e.{{ $member.Name }}) > 0 {
-			{{- if $member.IsPrimitive }}
-				rv := make({{ primitive $member }}, len(e.{{ $member.Name }}))
-				for i, iv := range e.{{ $member.Name }} {
-					rv[i] = {{ primitiveSingular $member }}(iv)
-				}
-				r.Data["{{ $member.Tag }}"] = rv
-			{{- else }}
-				rv := make({{ primitive $member }}, len(e.{{ $member.Name }}))
-				for i, v := range e.{{ $member.Name }} {
-					if iv, err := v.{{ marshalFunc $member }}(); err == nil {
-						rv[i] = {{ primitiveSingular $member }}(iv)
-					}
-				}
-				r.Data["{{ $member.Tag }}"] = rv
-			{{- end }}
-			}
-		{{- else if $member.IsPrimitive }}
-			r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(e.{{ $member.Name }})
-		{{- else }}
-			{{- if $member.IsOptional }}
-			if e.{{ $member.Name }} != nil {
-			{{- end }}
-				if v, err := e.{{ $member.Name }}.{{ marshalFunc $member }}(); err == nil {
-					r.Data["{{ $member.Tag }}"] = {{ fromPrimitive $member }}(v)
-				}
-			{{- if $member.IsOptional }}
-			}
-			{{- end }}
-		{{- end }}
-	{{- end }}
-	return r
-}
-
-func (e *{{ structName $object.Name }}) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "{{ $object.Name }}"
+	return o, nil
 }
 
 func (e *{{ structName $object.Name }}) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
+	return object.Unmarshal(o, e)
 }
 
-func (e *{{ structName $object.Name }}) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	{{- range $member := $object.Members }}
-	{{- if $member.IsPrimitive }}
-		{{- if $member.IsRepeated }}
-			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-				if t, ok := v.({{ primitive $member }}); ok {
-					rv := make([]{{ $member.GoFullType }}, len(t))
-					for i, iv := range t {
-						rv[i] = {{ $member.GoFullType }}(iv)
-					}
-					e.{{ $member.Name }} = rv
-				}
-			}
-		{{- else }}
-			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-				if t, ok := v.({{ primitive $member }}); ok {
-					e.{{ $member.Name }} = {{ memberType $member false }}(t)
-				}
-			}
-		{{- end }}
-	{{- else }}
-		{{- if $member.IsRepeated }}
-			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-				if ev, ok := v.({{ primitive $member }}); ok {
-					e.{{ $member.Name }} = make([]{{ memberType $member true }}, len(ev))
-					for i, iv := range ev {
-						es := {{ memberType $member false }}{}
-						if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(iv)); err == nil {
-							e.{{ $member.Name }}[i] = es
-						}
-					}
-				}
-			}
-		{{- else }}
-			if v, ok := o.Data["{{ $member.Tag }}"]; ok {
-				if ev, ok := v.({{ primitive $member }}); ok {
-					es := {{ memberType $member false }}{}
-					if err := es.{{ unmarshalFunc $member }}({{ unmarshalArg $member }}(ev)); err == nil {
-						e.{{ $member.Name }} = es
-					}
-				}
-			}
-		{{- end }}
-	{{- end }}
-{{- end }}
-	return nil
-}
 {{ end }}
 `
 
@@ -174,6 +81,9 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				h = "a" + h
 			}
 			return "`nimona:\"" + m.Tag + ":" + h + "\"`"
+		},
+		"tagMetadata": func() string {
+			return "`nimona:\"@metadata:m\"`"
 		},
 		"key": func(m Member) string {
 			h := m.Hint

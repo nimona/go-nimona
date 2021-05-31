@@ -8,9 +8,9 @@ import (
 
 type (
 	File struct {
-		Metadata object.Metadata
-		Name     string     `nimona:"name:s"`
-		Blob     object.CID `nimona:"blob:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Name     string          `nimona:"name:s"`
+		Blob     object.CID      `nimona:"blob:s"`
 	}
 )
 
@@ -18,44 +18,15 @@ func (e *File) Type() string {
 	return "nimona.io/File"
 }
 
-func (e *File) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *File) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e File) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/File",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["name"] = object.String(e.Name)
-	r.Data["blob"] = object.String(e.Blob)
-	return r
-}
-
-func (e *File) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/File"
+	return o, nil
 }
 
 func (e *File) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *File) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["name"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Name = string(t)
-		}
-	}
-	if v, ok := o.Data["blob"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Blob = object.CID(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

@@ -8,7 +8,7 @@ import (
 
 type (
 	Certificate struct {
-		Metadata    Metadata
+		Metadata    Metadata                `nimona:"@metadata:m"`
 		Nonce       string                  `nimona:"nonce:s"`
 		Subject     crypto.PublicKey        `nimona:"subject:s"`
 		Permissions []CertificatePermission `nimona:"permissions:ao"`
@@ -16,12 +16,12 @@ type (
 		Expires     string                  `nimona:"expires:s"`
 	}
 	CertificatePermission struct {
-		Metadata Metadata
+		Metadata Metadata `nimona:"@metadata:m"`
 		Types    []string `nimona:"types:as"`
 		Actions  []string `nimona:"actions:as"`
 	}
 	CertificateRequest struct {
-		Metadata               Metadata
+		Metadata               Metadata                `nimona:"@metadata:m"`
 		Nonce                  string                  `nimona:"nonce:s"`
 		VendorName             string                  `nimona:"vendorName:s"`
 		VendorURL              string                  `nimona:"vendorURL:s"`
@@ -31,7 +31,7 @@ type (
 		Permissions            []CertificatePermission `nimona:"permissions:ao"`
 	}
 	CertificateResponse struct {
-		Metadata    Metadata
+		Metadata    Metadata           `nimona:"@metadata:m"`
 		Signed      bool               `nimona:"signed:b"`
 		Notes       string             `nimona:"notes:s"`
 		Request     CertificateRequest `nimona:"request:o"`
@@ -43,305 +43,66 @@ func (e *Certificate) Type() string {
 	return "nimona.io/Certificate"
 }
 
-func (e *Certificate) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Certificate) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Certificate) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/Certificate",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = String(e.Nonce)
-	if v, err := e.Subject.MarshalString(); err == nil {
-		r.Data["subject"] = String(v)
-	}
-	if len(e.Permissions) > 0 {
-		rv := make(ObjectArray, len(e.Permissions))
-		for i, v := range e.Permissions {
-			if iv, err := v.MarshalObject(); err == nil {
-				rv[i] = (iv)
-			}
-		}
-		r.Data["permissions"] = rv
-	}
-	r.Data["starts"] = String(e.Starts)
-	r.Data["expires"] = String(e.Expires)
-	return r
-}
-
-func (e *Certificate) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/Certificate"
+	return o, nil
 }
 
 func (e *Certificate) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Certificate) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["subject"]; ok {
-		if ev, ok := v.(String); ok {
-			es := crypto.PublicKey{}
-			if err := es.UnmarshalString(string(ev)); err == nil {
-				e.Subject = es
-			}
-		}
-	}
-	if v, ok := o.Data["permissions"]; ok {
-		if ev, ok := v.(ObjectArray); ok {
-			e.Permissions = make([]CertificatePermission, len(ev))
-			for i, iv := range ev {
-				es := CertificatePermission{}
-				if err := es.UnmarshalObject((iv)); err == nil {
-					e.Permissions[i] = es
-				}
-			}
-		}
-	}
-	if v, ok := o.Data["starts"]; ok {
-		if t, ok := v.(String); ok {
-			e.Starts = string(t)
-		}
-	}
-	if v, ok := o.Data["expires"]; ok {
-		if t, ok := v.(String); ok {
-			e.Expires = string(t)
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }
 
 func (e *CertificatePermission) Type() string {
 	return "nimona.io/CertificatePermission"
 }
 
-func (e *CertificatePermission) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *CertificatePermission) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e CertificatePermission) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/CertificatePermission",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if len(e.Types) > 0 {
-		rv := make(StringArray, len(e.Types))
-		for i, iv := range e.Types {
-			rv[i] = String(iv)
-		}
-		r.Data["types"] = rv
-	}
-	if len(e.Actions) > 0 {
-		rv := make(StringArray, len(e.Actions))
-		for i, iv := range e.Actions {
-			rv[i] = String(iv)
-		}
-		r.Data["actions"] = rv
-	}
-	return r
-}
-
-func (e *CertificatePermission) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/CertificatePermission"
+	return o, nil
 }
 
 func (e *CertificatePermission) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *CertificatePermission) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["types"]; ok {
-		if t, ok := v.(StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Types = rv
-		}
-	}
-	if v, ok := o.Data["actions"]; ok {
-		if t, ok := v.(StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.Actions = rv
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }
 
 func (e *CertificateRequest) Type() string {
 	return "nimona.io/CertificateRequest"
 }
 
-func (e *CertificateRequest) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *CertificateRequest) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e CertificateRequest) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/CertificateRequest",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = String(e.Nonce)
-	r.Data["vendorName"] = String(e.VendorName)
-	r.Data["vendorURL"] = String(e.VendorURL)
-	r.Data["applicationName"] = String(e.ApplicationName)
-	r.Data["applicationDescription"] = String(e.ApplicationDescription)
-	r.Data["applicationURL"] = String(e.ApplicationURL)
-	if len(e.Permissions) > 0 {
-		rv := make(ObjectArray, len(e.Permissions))
-		for i, v := range e.Permissions {
-			if iv, err := v.MarshalObject(); err == nil {
-				rv[i] = (iv)
-			}
-		}
-		r.Data["permissions"] = rv
-	}
-	return r
-}
-
-func (e *CertificateRequest) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/CertificateRequest"
+	return o, nil
 }
 
 func (e *CertificateRequest) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *CertificateRequest) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["vendorName"]; ok {
-		if t, ok := v.(String); ok {
-			e.VendorName = string(t)
-		}
-	}
-	if v, ok := o.Data["vendorURL"]; ok {
-		if t, ok := v.(String); ok {
-			e.VendorURL = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationName"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationName = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationDescription"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationDescription = string(t)
-		}
-	}
-	if v, ok := o.Data["applicationURL"]; ok {
-		if t, ok := v.(String); ok {
-			e.ApplicationURL = string(t)
-		}
-	}
-	if v, ok := o.Data["permissions"]; ok {
-		if ev, ok := v.(ObjectArray); ok {
-			e.Permissions = make([]CertificatePermission, len(ev))
-			for i, iv := range ev {
-				es := CertificatePermission{}
-				if err := es.UnmarshalObject((iv)); err == nil {
-					e.Permissions[i] = es
-				}
-			}
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }
 
 func (e *CertificateResponse) Type() string {
 	return "nimona.io/CertificateResponse"
 }
 
-func (e *CertificateResponse) MarshalMap() (Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *CertificateResponse) MarshalObject() (*Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e CertificateResponse) ToObject() *Object {
-	r := &Object{
-		Type:     "nimona.io/CertificateResponse",
-		Metadata: e.Metadata,
-		Data:     Map{},
+	o, err := Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["signed"] = Bool(e.Signed)
-	r.Data["notes"] = String(e.Notes)
-	if v, err := e.Request.MarshalObject(); err == nil {
-		r.Data["request"] = (v)
-	}
-	if v, err := e.Certificate.MarshalObject(); err == nil {
-		r.Data["certificate"] = (v)
-	}
-	return r
-}
-
-func (e *CertificateResponse) UnmarshalMap(m Map) error {
-	return e.FromObject(FromMap(m))
+	o.Type = "nimona.io/CertificateResponse"
+	return o, nil
 }
 
 func (e *CertificateResponse) UnmarshalObject(o *Object) error {
-	return e.FromObject(o)
-}
-
-func (e *CertificateResponse) FromObject(o *Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["signed"]; ok {
-		if t, ok := v.(Bool); ok {
-			e.Signed = bool(t)
-		}
-	}
-	if v, ok := o.Data["notes"]; ok {
-		if t, ok := v.(String); ok {
-			e.Notes = string(t)
-		}
-	}
-	if v, ok := o.Data["request"]; ok {
-		if ev, ok := v.(*Object); ok {
-			es := CertificateRequest{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.Request = es
-			}
-		}
-	}
-	if v, ok := o.Data["certificate"]; ok {
-		if ev, ok := v.(*Object); ok {
-			es := Certificate{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.Certificate = es
-			}
-		}
-	}
-	return nil
+	return Unmarshal(o, e)
 }

@@ -50,7 +50,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	obj := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: p.ToObject().CID(),
+			Stream: object.MustMarshal(p).CID(),
 		},
 		Data: object.Map{
 			"key": object.String("value"),
@@ -83,14 +83,14 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	err = store.UpdateTTL(obj.CID(), 10)
 	require.NoError(t, err)
 
-	cidList, err := store.GetRelations(p.ToObject().CID())
+	cidList, err := store.GetRelations(object.MustMarshal(p).CID())
 	require.NoError(t, err)
 	assert.NotEmpty(t, cidList)
 
-	err = store.Remove(p.ToObject().CID())
+	err = store.Remove(object.MustMarshal(p).CID())
 	require.NoError(t, err)
 
-	retrievedObj2, err := store.Get(p.ToObject().CID())
+	retrievedObj2, err := store.Get(object.MustMarshal(p).CID())
 	require.True(t, errors.Is(err, objectstore.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
@@ -111,21 +111,21 @@ func TestFilter(t *testing.T) {
 		Nonce: "asdf",
 	}
 
-	sig, err := object.NewSignature(k, p.ToObject())
+	sig, err := object.NewSignature(k, object.MustMarshal(p))
 	require.NoError(t, err)
 
 	p.Metadata.Signature = sig
 
-	err = store.Put(p.ToObject())
+	err = store.Put(object.MustMarshal(p))
 	require.NoError(t, err)
 
-	ph := p.ToObject().CID()
+	ph := object.MustMarshal(p).CID()
 
 	c := fixtures.TestSubscribed{}
 	c.Metadata.Stream = ph
 
 	objects := []*object.Object{
-		p.ToObject(),
+		object.MustMarshal(p),
 	}
 
 	cids := []object.CID{}
