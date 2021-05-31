@@ -31,7 +31,11 @@ func NewCertificate(
 		Starts:      nowString,
 		Expires:     expString,
 	}
-	crtSig, err := NewSignature(issuer, crt.ToObject())
+	co, err := crt.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
+	crtSig, err := NewSignature(issuer, co)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +50,11 @@ func NewCertificate(
 		Request:     req,
 		Certificate: *crt,
 	}
-	resSig, err := NewSignature(issuer, res.ToObject())
+	reso, err := res.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
+	resSig, err := NewSignature(issuer, reso)
 	if err != nil {
 		return nil, err
 	}

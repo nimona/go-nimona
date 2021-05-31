@@ -1,9 +1,11 @@
 package object
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
@@ -18,7 +20,7 @@ func TestMetadata_Map(t *testing.T) {
 	require.NoError(t, err)
 	pk1 := k1.PublicKey()
 
-	want := Metadata{
+	want := &Metadata{
 		Owner:    pk0,
 		Datetime: "foo",
 		Parents: Parents{
@@ -63,6 +65,46 @@ func TestMetadata_Map(t *testing.T) {
 			},
 		},
 	}
-	got := MetadataFromMap(want.Map())
-	require.Equal(t, want, got)
+
+	t.Run("metadata as map", func(t *testing.T) {
+		m, err := want.MarshalMap()
+		require.NoError(t, err)
+
+		got := &Metadata{}
+		err = got.UnmarshalMap(m)
+		require.NoError(t, err)
+		require.Equal(t, want, got)
+	})
+
+	t.Run("metadata of object", func(t *testing.T) {
+		o := &Object{
+			Metadata: *want,
+			Data:     Map{},
+		}
+		b, err := json.Marshal(o)
+		require.NoError(t, err)
+
+		g := &Object{}
+		err = json.Unmarshal(b, g)
+		require.NoError(t, err)
+		assert.Equal(t, o, g)
+	})
+
+	t.Run("metadata of nested object", func(t *testing.T) {
+		o := &Object{
+			Data: Map{
+				"foo": &Object{
+					Metadata: *want,
+					Data:     Map{},
+				},
+			},
+		}
+		b, err := json.Marshal(o)
+		require.NoError(t, err)
+
+		g := &Object{}
+		err = json.Unmarshal(b, g)
+		require.NoError(t, err)
+		assert.Equal(t, o, g)
+	})
 }

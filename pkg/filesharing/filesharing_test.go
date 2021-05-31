@@ -121,7 +121,7 @@ func Test_fileSharer_Listen(t *testing.T) {
 						SubscribeCalls: []network.EnvelopeSubscription{
 							&networkmock.MockSubscriptionSimple{
 								Objects: []*network.Envelope{{
-									Payload: req.ToObject(),
+									Payload: object.MustMarshal(req),
 								}},
 							},
 						},
@@ -198,7 +198,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 					ctrl := gomock.NewController(t)
 					mobm := objectmanagermock.NewMockObjectManager(ctrl)
 					mobm.EXPECT().Request(ctx, file1.Chunks[0], gomock.Any()).
-						Return(chunk1.ToObject(), nil)
+						Return(object.MustMarshal(chunk1), nil)
 					return mobm
 				},
 				net: func(
@@ -212,7 +212,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 						SubscribeCalls: []network.EnvelopeSubscription{
 							&networkmock.MockSubscriptionSimple{
 								Objects: []*network.Envelope{{
-									Payload: req.ToObject(),
+									Payload: object.MustMarshal(req),
 								}},
 							},
 						},

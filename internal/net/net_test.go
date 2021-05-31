@@ -27,9 +27,11 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	done := make(chan bool)
 
-	resObj := object.FromMap(object.Map{ // nolint: errcheck
-		"foo": object.String("bar"),
-	})
+	resObj := &object.Object{
+		Data: object.Map{
+			"foo": object.String("bar"),
+		},
+	}
 
 	go func() {
 		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
@@ -52,9 +54,11 @@ func TestNetConnectionSuccess(t *testing.T) {
 	sc, err := n1.Accept()
 	require.NoError(t, err)
 
-	reqObj := object.FromMap(object.Map{
-		"foo": object.String("bar"),
-	})
+	reqObj := &object.Object{
+		Data: object.Map{
+			"foo": object.String("bar"),
+		},
+	}
 	err = Write(reqObj, sc)
 	assert.NoError(t, err)
 
@@ -64,7 +68,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	gotObj, err = Read(sc)
 	require.NoError(t, err)
-	assert.EqualValues(t, resObj.ToMap(), gotObj.ToMap())
+	assert.EqualValues(t, resObj, gotObj)
 
 	<-done
 }

@@ -9,6 +9,8 @@ import (
 	"nimona.io/pkg/object"
 )
 
+// TODO is this even needed after objects v6?
+
 func ObjectEq(x *object.Object) gomock.Matcher {
 	return objectEqMatcher{x}
 }
@@ -23,8 +25,8 @@ func (e objectEqMatcher) Matches(x interface{}) bool {
 		return false
 	}
 	return reflect.DeepEqual(
-		e.x.ToMap(),
-		o.ToMap(),
+		e.x,
+		o,
 	)
 }
 

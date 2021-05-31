@@ -157,7 +157,7 @@ func NewHermod() hermod {
 			case transferDoneType:
 				req := &filesharing.TransferDone{}
 
-				if err := req.FromObject(env.Payload); err != nil {
+				if err := req.UnmarshalObject(env.Payload); err != nil {
 					fmt.Println("Failed to get object: ", err)
 					continue
 				}
@@ -167,7 +167,7 @@ func NewHermod() hermod {
 			case transferResponseType:
 				req := &filesharing.TransferResponse{}
 
-				if err := req.FromObject(env.Payload); err != nil {
+				if err := req.UnmarshalObject(env.Payload); err != nil {
 					fmt.Println("Failed to get object: ", err)
 					continue
 				}

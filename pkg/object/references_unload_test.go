@@ -78,7 +78,7 @@ func TestUnloadReferences(t *testing.T) {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			assert.Equal(t, tt.want.ToMap(), got.ToMap())
+			assert.Equal(t, tt.want, got)
 			require.Equal(t, len(tt.wantRefs), len(gotRefs))
 			require.EqualValues(t, tt.want, got)
 		})

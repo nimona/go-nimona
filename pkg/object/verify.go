@@ -62,7 +62,11 @@ func Verify(o *Object) error {
 	}
 
 	// then let's make sure that the certificate is properly signed
-	if err := Verify(sig.Certificate.ToObject()); err != nil {
+	co, err := sig.Certificate.MarshalObject()
+	if err != nil {
+		return err
+	}
+	if err := Verify(co); err != nil {
 		return fmt.Errorf("error verifying certificate, %w", err)
 	}
 

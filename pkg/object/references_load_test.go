@@ -98,7 +98,7 @@ func TestLoadReferences(t *testing.T) {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			assert.Equal(t, tt.want.ToMap(), got.ToMap())
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

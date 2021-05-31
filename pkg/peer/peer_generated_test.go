@@ -2,6 +2,7 @@ package peer
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,15 +26,19 @@ func TestEncoding(t *testing.T) {
 		Addresses:     []string{"foo", "bar"},
 		ObjectFormats: []string{"foobar"},
 	}
-	b, err := json.Marshal(c.ToObject())
+	b, err := json.Marshal(object.MustMarshal(c))
 	require.NoError(t, err)
+
+	fmt.Println(string(b))
 
 	g := &object.Object{}
 	err = json.Unmarshal(b, g)
 	require.NoError(t, err)
 
+	fmt.Println(g.Data["addresses"])
+
 	r := &ConnectionInfo{}
-	err = r.FromObject(g)
+	err = r.UnmarshalObject(g)
 	require.NoError(t, err)
 
 	require.Equal(t, c, r)

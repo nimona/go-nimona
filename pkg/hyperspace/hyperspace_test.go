@@ -32,13 +32,13 @@ func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
 		},
 	}
 
-	p.Metadata.Signature, err = object.NewSignature(k, p.ToObject())
+	p.Metadata.Signature, err = object.NewSignature(k, object.MustMarshal(p))
 	require.NoError(t, err)
 
-	err = object.Verify(p.ToObject())
+	err = object.Verify(object.MustMarshal(p))
 	require.NoError(t, err)
 
-	b, err := json.MarshalIndent(p.ToObject().ToMap(), "", "  ")
+	b, err := json.MarshalIndent(object.MustMarshal(p), "", "  ")
 	require.NoError(t, err)
 
 	o := &object.Object{}
@@ -46,7 +46,7 @@ func TestAnnounce_EncodeDecodeWithSignature(t *testing.T) {
 	require.NoError(t, err)
 
 	g := &Announcement{}
-	err = g.FromObject(o)
+	err = g.UnmarshalObject(o)
 	require.NoError(t, err)
 
 	assert.Equal(t, p, g)
@@ -76,13 +76,13 @@ func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
 		}},
 	}
 
-	p.Metadata.Signature, err = object.NewSignature(k, p.ToObject())
+	p.Metadata.Signature, err = object.NewSignature(k, object.MustMarshal(p))
 	require.NoError(t, err)
 
-	err = object.Verify(p.ToObject())
+	err = object.Verify(object.MustMarshal(p))
 	require.NoError(t, err)
 
-	b, err := json.MarshalIndent(p.ToObject().ToMap(), "", "  ")
+	b, err := json.MarshalIndent(object.MustMarshal(p), "", "  ")
 	require.NoError(t, err)
 
 	fmt.Println(string(b))
@@ -92,7 +92,7 @@ func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
 	require.NoError(t, err)
 
 	g := &LookupResponse{}
-	err = g.FromObject(o)
+	err = g.UnmarshalObject(o)
 	require.NoError(t, err)
 
 	assert.Equal(t, p, g)

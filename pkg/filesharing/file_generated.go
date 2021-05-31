@@ -8,23 +8,23 @@ import (
 
 type (
 	File struct {
-		Metadata object.Metadata
-		Name     string       `nimona:"name:s"`
-		Chunks   []object.CID `nimona:"chunks:as"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Name     string          `nimona:"name:s"`
+		Chunks   []object.CID    `nimona:"chunks:as"`
 	}
 	TransferDone struct {
-		Metadata object.Metadata
-		Nonce    string `nimona:"nonce:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Nonce    string          `nimona:"nonce:s"`
 	}
 	TransferRequest struct {
-		Metadata object.Metadata
-		File     File   `nimona:"file:o"`
-		Nonce    string `nimona:"nonce:s"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		File     File            `nimona:"file:o"`
+		Nonce    string          `nimona:"nonce:s"`
 	}
 	TransferResponse struct {
-		Metadata object.Metadata
-		Nonce    string `nimona:"nonce:s"`
-		Accepted bool   `nimona:"accepted:b"`
+		Metadata object.Metadata `nimona:"@metadata:m"`
+		Nonce    string          `nimona:"nonce:s"`
+		Accepted bool            `nimona:"accepted:b"`
 	}
 )
 
@@ -32,191 +32,66 @@ func (e *File) Type() string {
 	return "nimona.io/File"
 }
 
-func (e *File) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *File) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e File) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/File",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["name"] = object.String(e.Name)
-	if len(e.Chunks) > 0 {
-		rv := make(object.StringArray, len(e.Chunks))
-		for i, iv := range e.Chunks {
-			rv[i] = object.String(iv)
-		}
-		r.Data["chunks"] = rv
-	}
-	return r
-}
-
-func (e *File) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/File"
+	return o, nil
 }
 
 func (e *File) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *File) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["name"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Name = string(t)
-		}
-	}
-	if v, ok := o.Data["chunks"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]object.CID, len(t))
-			for i, iv := range t {
-				rv[i] = object.CID(iv)
-			}
-			e.Chunks = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *TransferDone) Type() string {
 	return "nimona.io/TransferDone"
 }
 
-func (e *TransferDone) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *TransferDone) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e TransferDone) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/TransferDone",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	return r
-}
-
-func (e *TransferDone) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/TransferDone"
+	return o, nil
 }
 
 func (e *TransferDone) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *TransferDone) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *TransferRequest) Type() string {
 	return "nimona.io/TransferRequest"
 }
 
-func (e *TransferRequest) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *TransferRequest) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e TransferRequest) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/TransferRequest",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	if v, err := e.File.MarshalObject(); err == nil {
-		r.Data["file"] = (v)
-	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	return r
-}
-
-func (e *TransferRequest) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/TransferRequest"
+	return o, nil
 }
 
 func (e *TransferRequest) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *TransferRequest) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["file"]; ok {
-		if ev, ok := v.(*object.Object); ok {
-			es := File{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.File = es
-			}
-		}
-	}
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *TransferResponse) Type() string {
 	return "nimona.io/TransferResponse"
 }
 
-func (e *TransferResponse) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *TransferResponse) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e TransferResponse) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/TransferResponse",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	r.Data["accepted"] = object.Bool(e.Accepted)
-	return r
-}
-
-func (e *TransferResponse) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/TransferResponse"
+	return o, nil
 }
 
 func (e *TransferResponse) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *TransferResponse) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["accepted"]; ok {
-		if t, ok := v.(object.Bool); ok {
-			e.Accepted = bool(t)
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

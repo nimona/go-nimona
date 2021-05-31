@@ -186,7 +186,7 @@ func (st *Store) PutWithTTL(
 	}
 	defer stmt.Close() // nolint: errcheck
 
-	body, err := json.Marshal(obj.ToMap())
+	body, err := json.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf("could not marshal object: %w", err)
 	}

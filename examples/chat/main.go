@@ -52,7 +52,7 @@ func (c *chat) subscribe(
 			switch o.Type {
 			case typeConversationMessageAdded:
 				v := &ConversationMessageAdded{}
-				v.FromObject(o)
+				v.UnmarshalObject(o)
 				if v.Body == "" || v.Metadata.Datetime == "" {
 					fmt.Println("> Received message without date or body")
 					continue
@@ -64,7 +64,7 @@ func (c *chat) subscribe(
 				events <- v
 			case typeConversationNicknameUpdated:
 				v := &ConversationNicknameUpdated{}
-				v.FromObject(o)
+				v.UnmarshalObject(o)
 				if v.Nickname == "" {
 					fmt.Println("> Received nickname update without nickname")
 					continue
@@ -120,7 +120,7 @@ func (c *chat) subscribe(
 			}
 			if o.Type == new(stream.Subscription).Type() {
 				s := &stream.Subscription{}
-				if err := s.FromObject(o); err != nil {
+				if err := s.UnmarshalObject(o); err != nil {
 					continue
 				}
 				if s.Metadata.Owner.Equals(
@@ -134,7 +134,7 @@ func (c *chat) subscribe(
 		}
 		if !alreadySubscribed {
 			ctx := context.New(context.WithTimeout(time.Second * 5))
-			if _, err := c.objectmanager.Put(ctx, stream.Subscription{
+			so := object.MustMarshal(&stream.Subscription{
 				Metadata: object.Metadata{
 					Owner:  c.local.GetPeerKey().PublicKey(),
 					Stream: conversationRootCID,
@@ -142,7 +142,8 @@ func (c *chat) subscribe(
 				RootCIDs: []object.CID{
 					conversationRootCID,
 				},
-			}.ToObject()); err != nil {
+			})
+			if _, err := c.objectmanager.Put(ctx, so); err != nil {
 				c.logger.Fatal("could not persist conversation sub", log.Error(err))
 			}
 		}
@@ -266,7 +267,7 @@ func main() {
 		Nonce: cConfig.Nonce,
 	}
 
-	conversationRootObject := conversationRoot.ToObject()
+	conversationRootObject := object.MustMarshal(conversationRoot)
 	conversationRootCID := conversationRootObject.CID()
 
 	// construct new resolver
@@ -324,14 +325,14 @@ func main() {
 					context.New(
 						context.WithTimeout(time.Second*5),
 					),
-					ConversationNicknameUpdated{
+					object.MustMarshal(&ConversationNicknameUpdated{
 						Metadata: object.Metadata{
 							Owner:    local.GetPeerKey().PublicKey(),
 							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Nickname: nickname,
-					}.ToObject(),
+					}),
 				); err != nil {
 					logger.Warn(
 						"error putting message",
@@ -343,14 +344,14 @@ func main() {
 					context.New(
 						context.WithTimeout(time.Second*5),
 					),
-					ConversationMessageAdded{
+					object.MustMarshal(&ConversationMessageAdded{
 						Metadata: object.Metadata{
 							Owner:    local.GetPeerKey().PublicKey(),
 							Stream:   conversationRootCID,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Body: input,
-					}.ToObject(),
+					}),
 				); err != nil {
 					logger.Warn(
 						"error putting message",
@@ -369,7 +370,7 @@ func main() {
 				continue
 			}
 			app.Channels.MessageAdded <- &Message{
-				CID:             v.ToObject().CID().String(),
+				CID:             object.MustMarshal(v).CID().String(),
 				ConversationCID: v.Metadata.Stream.String(),
 				SenderKey:       v.Metadata.Owner.String(),
 				Body:            strings.TrimSpace(v.Body),

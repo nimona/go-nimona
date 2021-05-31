@@ -18,7 +18,7 @@ type graphObject struct {
 }
 
 func toGraphObject(v *object.Object) (*graphObject, error) {
-	b, err := json.Marshal(v.ToMap())
+	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}

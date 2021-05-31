@@ -44,6 +44,9 @@ var (
 )
 
 func (k PublicKey) String() string {
+	if k.IsEmpty() {
+		return ""
+	}
 	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
 }
 

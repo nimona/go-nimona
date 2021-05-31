@@ -9,20 +9,20 @@ import (
 
 type (
 	Announcement struct {
-		Metadata         object.Metadata
+		Metadata         object.Metadata      `nimona:"@metadata:m"`
 		Version          int64                `nimona:"version:i"`
 		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:o"`
 		PeerVector       []uint64             `nimona:"peerVector:au"`
 		PeerCapabilities []string             `nimona:"peerCapabilities:as"`
 	}
 	LookupRequest struct {
-		Metadata            object.Metadata
-		Nonce               string   `nimona:"nonce:s"`
-		QueryVector         []uint64 `nimona:"queryVector:au"`
-		RequireCapabilities []string `nimona:"requireCapabilities:as"`
+		Metadata            object.Metadata `nimona:"@metadata:m"`
+		Nonce               string          `nimona:"nonce:s"`
+		QueryVector         []uint64        `nimona:"queryVector:au"`
+		RequireCapabilities []string        `nimona:"requireCapabilities:as"`
 	}
 	LookupResponse struct {
-		Metadata      object.Metadata
+		Metadata      object.Metadata `nimona:"@metadata:m"`
 		Nonce         string          `nimona:"nonce:s"`
 		QueryVector   []uint64        `nimona:"queryVector:au"`
 		Announcements []*Announcement `nimona:"announcements:ao"`
@@ -33,231 +33,49 @@ func (e *Announcement) Type() string {
 	return "nimona.io/hyperspace.Announcement"
 }
 
-func (e *Announcement) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *Announcement) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e Announcement) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/hyperspace.Announcement",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["version"] = object.Int(e.Version)
-	if e.ConnectionInfo != nil {
-		if v, err := e.ConnectionInfo.MarshalObject(); err == nil {
-			r.Data["connectionInfo"] = (v)
-		}
-	}
-	if len(e.PeerVector) > 0 {
-		rv := make(object.UintArray, len(e.PeerVector))
-		for i, iv := range e.PeerVector {
-			rv[i] = object.Uint(iv)
-		}
-		r.Data["peerVector"] = rv
-	}
-	if len(e.PeerCapabilities) > 0 {
-		rv := make(object.StringArray, len(e.PeerCapabilities))
-		for i, iv := range e.PeerCapabilities {
-			rv[i] = object.String(iv)
-		}
-		r.Data["peerCapabilities"] = rv
-	}
-	return r
-}
-
-func (e *Announcement) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/hyperspace.Announcement"
+	return o, nil
 }
 
 func (e *Announcement) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *Announcement) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["version"]; ok {
-		if t, ok := v.(object.Int); ok {
-			e.Version = int64(t)
-		}
-	}
-	if v, ok := o.Data["connectionInfo"]; ok {
-		if ev, ok := v.(*object.Object); ok {
-			es := &peer.ConnectionInfo{}
-			if err := es.UnmarshalObject((ev)); err == nil {
-				e.ConnectionInfo = es
-			}
-		}
-	}
-	if v, ok := o.Data["peerVector"]; ok {
-		if t, ok := v.(object.UintArray); ok {
-			rv := make([]uint64, len(t))
-			for i, iv := range t {
-				rv[i] = uint64(iv)
-			}
-			e.PeerVector = rv
-		}
-	}
-	if v, ok := o.Data["peerCapabilities"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.PeerCapabilities = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *LookupRequest) Type() string {
 	return "nimona.io/hyperspace.LookupRequest"
 }
 
-func (e *LookupRequest) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *LookupRequest) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e LookupRequest) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/hyperspace.LookupRequest",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	if len(e.QueryVector) > 0 {
-		rv := make(object.UintArray, len(e.QueryVector))
-		for i, iv := range e.QueryVector {
-			rv[i] = object.Uint(iv)
-		}
-		r.Data["queryVector"] = rv
-	}
-	if len(e.RequireCapabilities) > 0 {
-		rv := make(object.StringArray, len(e.RequireCapabilities))
-		for i, iv := range e.RequireCapabilities {
-			rv[i] = object.String(iv)
-		}
-		r.Data["requireCapabilities"] = rv
-	}
-	return r
-}
-
-func (e *LookupRequest) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/hyperspace.LookupRequest"
+	return o, nil
 }
 
 func (e *LookupRequest) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *LookupRequest) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["queryVector"]; ok {
-		if t, ok := v.(object.UintArray); ok {
-			rv := make([]uint64, len(t))
-			for i, iv := range t {
-				rv[i] = uint64(iv)
-			}
-			e.QueryVector = rv
-		}
-	}
-	if v, ok := o.Data["requireCapabilities"]; ok {
-		if t, ok := v.(object.StringArray); ok {
-			rv := make([]string, len(t))
-			for i, iv := range t {
-				rv[i] = string(iv)
-			}
-			e.RequireCapabilities = rv
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }
 
 func (e *LookupResponse) Type() string {
 	return "nimona.io/hyperspace.LookupResponse"
 }
 
-func (e *LookupResponse) MarshalMap() (object.Map, error) {
-	return e.ToObject().Map(), nil
-}
-
 func (e *LookupResponse) MarshalObject() (*object.Object, error) {
-	return e.ToObject(), nil
-}
-
-func (e LookupResponse) ToObject() *object.Object {
-	r := &object.Object{
-		Type:     "nimona.io/hyperspace.LookupResponse",
-		Metadata: e.Metadata,
-		Data:     object.Map{},
+	o, err := object.Marshal(e)
+	if err != nil {
+		return nil, err
 	}
-	r.Data["nonce"] = object.String(e.Nonce)
-	if len(e.QueryVector) > 0 {
-		rv := make(object.UintArray, len(e.QueryVector))
-		for i, iv := range e.QueryVector {
-			rv[i] = object.Uint(iv)
-		}
-		r.Data["queryVector"] = rv
-	}
-	if len(e.Announcements) > 0 {
-		rv := make(object.ObjectArray, len(e.Announcements))
-		for i, v := range e.Announcements {
-			if iv, err := v.MarshalObject(); err == nil {
-				rv[i] = (iv)
-			}
-		}
-		r.Data["announcements"] = rv
-	}
-	return r
-}
-
-func (e *LookupResponse) UnmarshalMap(m object.Map) error {
-	return e.FromObject(object.FromMap(m))
+	o.Type = "nimona.io/hyperspace.LookupResponse"
+	return o, nil
 }
 
 func (e *LookupResponse) UnmarshalObject(o *object.Object) error {
-	return e.FromObject(o)
-}
-
-func (e *LookupResponse) FromObject(o *object.Object) error {
-	e.Metadata = o.Metadata
-	if v, ok := o.Data["nonce"]; ok {
-		if t, ok := v.(object.String); ok {
-			e.Nonce = string(t)
-		}
-	}
-	if v, ok := o.Data["queryVector"]; ok {
-		if t, ok := v.(object.UintArray); ok {
-			rv := make([]uint64, len(t))
-			for i, iv := range t {
-				rv[i] = uint64(iv)
-			}
-			e.QueryVector = rv
-		}
-	}
-	if v, ok := o.Data["announcements"]; ok {
-		if ev, ok := v.(object.ObjectArray); ok {
-			e.Announcements = make([]*Announcement, len(ev))
-			for i, iv := range ev {
-				es := &Announcement{}
-				if err := es.UnmarshalObject((iv)); err == nil {
-					e.Announcements[i] = es
-				}
-			}
-		}
-	}
-	return nil
+	return object.Unmarshal(o, e)
 }

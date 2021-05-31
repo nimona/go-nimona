@@ -408,9 +408,13 @@ func (w *network) processOutbox(outbox *outbox) {
 			return err
 		}
 		// send the newly wrapped object to the relay
+		dfo, err := object.Marshal(df)
+		if err != nil {
+			return err
+		}
 		err = w.Send(
 			ctx,
-			df.ToObject(),
+			dfo,
 			relayConnInfo.PublicKey,
 			SendWithConnectionInfo(relayConnInfo),
 		)
@@ -435,7 +439,7 @@ func (w *network) processOutbox(outbox *outbox) {
 			return errors.Error("didn't get a data forward response in time")
 		}
 		res := &DataForwardResponse{}
-		if err := res.FromObject(resObj); err != nil {
+		if err := res.UnmarshalObject(resObj); err != nil {
 			return err
 		}
 		if !res.Success {
@@ -609,7 +613,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// forward requests are just decoded to get the recipient and their
 			// payload is sent to them
 			fwd := &DataForwardRequest{}
-			if err := fwd.FromObject(e.Payload); err != nil {
+			if err := fwd.UnmarshalObject(e.Payload); err != nil {
 				logger.Warn(
 					"error decoding DataForwardRequest",
 					log.Error(err),
@@ -634,18 +638,27 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				objRelayedSuccessCounter.Inc()
 			}
 
-			res := &DataForwardResponse{
+			df := &DataForwardResponse{
 				Metadata: object.Metadata{
 					Owner: w.localpeer.GetPeerKey().PublicKey(),
 				},
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
 			}
+			dfo, err := df.MarshalObject()
+			if err != nil {
+				logger.Warn(
+					"error marshaling DataForwardResponse",
+					log.String("requestID", fwd.RequestID),
+					log.Error(err),
+				)
+				continue
+			}
 			if resErr := w.Send(
 				context.New(
 					context.WithTimeout(time.Second),
 				),
-				res.ToObject(),
+				dfo,
 				e.Sender,
 			); resErr != nil {
 				logger.Warn(
@@ -669,7 +682,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// envelopes contain relayed objects, so we decode them and publish
 			// them to our inboxes
 			fwd := &DataForwardEnvelope{}
-			if err := fwd.FromObject(e.Payload); err != nil {
+			if err := fwd.UnmarshalObject(e.Payload); err != nil {
 				logger.Warn(
 					"error decoding DataForwardEnvelope",
 					log.Error(err),
@@ -693,8 +706,8 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			}
 
 			// unmarshal payload
-			m := object.Map{}
-			err := json.Unmarshal(fwd.Data, &m)
+			o := &object.Object{}
+			err := json.Unmarshal(fwd.Data, o)
 			if err != nil {
 				logger.Warn(
 					"error decoding DataForwardEnvelope's payload",
@@ -702,9 +715,6 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				)
 				continue
 			}
-
-			// convert it into an object
-			o := object.FromMap(m)
 
 			logger.Info(
 				"got relayed object",
@@ -802,7 +812,7 @@ func (w *network) Send(
 	case <-rT.C:
 		return ErrAlreadySentDuringContext
 	case e := <-rSub.Channel():
-		if err := opt.waitForResponse.FromObject(e.Payload); err != nil {
+		if err := opt.waitForResponse.UnmarshalObject(e.Payload); err != nil {
 			return errors.Merge(
 				ErrUnableToUnmarshalIntoResponse,
 				err,
@@ -834,6 +844,9 @@ func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
 			return true
 		}
 		nObj.Metadata.Signature = sig
+		if err := object.Verify(nObj); err != nil {
+			panic(err)
+		}
 		return true
 	})
 	return o, signErr
@@ -876,7 +889,7 @@ func (w *network) wrapInDataForward(
 	recipient crypto.PublicKey,
 ) (*DataForwardRequest, error) {
 	// marshal payload
-	payload, err := json.Marshal(o.ToMap())
+	payload, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -901,7 +914,11 @@ func (w *network) wrapInDataForward(
 		Sender: ek.PublicKey(),
 		Data:   ep,
 	}
-	dfeSig, err := object.NewSignature(ek, dfe.ToObject())
+	dfeo, err := dfe.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
+	dfeSig, err := object.NewSignature(ek, dfeo)
 	if err != nil {
 		return nil, err
 	}
@@ -913,9 +930,13 @@ func (w *network) wrapInDataForward(
 		},
 		RequestID: rand.String(8),
 		Recipient: recipient,
-		Payload:   dfe.ToObject(),
+		Payload:   dfeo,
 	}
-	dfrSig, err := object.NewSignature(ek, dfr.ToObject())
+	dfro, err := dfr.MarshalObject()
+	if err != nil {
+		return nil, err
+	}
+	dfrSig, err := object.NewSignature(ek, dfro)
 	if err != nil {
 		return nil, err
 	}

@@ -30,8 +30,8 @@ func Test_requester_Request(t *testing.T) {
 
 	blob1 := &blob.Blob{
 		Chunks: []object.CID{
-			chunk1.ToObject().CID(),
-			chunk2.ToObject().CID(),
+			object.MustMarshal(chunk1).CID(),
+			object.MustMarshal(chunk2).CID(),
 		},
 	}
 
@@ -75,32 +75,32 @@ func Test_requester_Request(t *testing.T) {
 				mobm := objectmanagermock.NewMockObjectManager(ctrl)
 
 				pubSub := objectmanager.NewObjectPubSub()
-				pubSub.Publish(blob1.ToObject())
+				pubSub.Publish(object.MustMarshal(blob1))
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					blob1.ToObject().CID(),
+					object.MustMarshal(blob1).CID(),
 					peer1,
-				).Return(blob1.ToObject(), nil).MaxTimes(1)
+				).Return(object.MustMarshal(blob1), nil).MaxTimes(1)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					chunk1.ToObject().CID(),
+					object.MustMarshal(chunk1).CID(),
 					peer1,
-				).Return(chunk1.ToObject(), nil)
+				).Return(object.MustMarshal(chunk1), nil)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					chunk2.ToObject().CID(),
+					object.MustMarshal(chunk2).CID(),
 					peer1,
-				).Return(chunk2.ToObject(), nil)
+				).Return(object.MustMarshal(chunk2), nil)
 
 				return mobm
 			},
 		},
 		args: args{
 			ctx: context.Background(),
-			cid: blob1.ToObject().CID(),
+			cid: object.MustMarshal(blob1).CID(),
 		},
 		want: blob1,
 		wantChunks: []*blob.Chunk{

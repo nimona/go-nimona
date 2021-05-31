@@ -21,7 +21,7 @@ func Write(o *object.Object, conn *Connection) error {
 
 	log.DefaultLogger.Debug(
 		"writing to connection",
-		log.Any("object", o.ToMap()),
+		log.Any("object", o),
 		log.String("local.address", conn.localAddress),
 		log.String("remote.address", conn.remoteAddress),
 		log.String("remote.fingerprint", ra),

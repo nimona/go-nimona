@@ -44,7 +44,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	// net1 announces to provider
 	err = net1.Send(
 		context.New(),
-		pr1.ToObject(),
+		object.MustMarshal(pr1),
 		pr0.PublicKey,
 		network.SendWithConnectionInfo(pr0),
 	)
@@ -100,7 +100,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	err = net2.Send(
 		context.New(),
-		pr2.ToObject(),
+		object.MustMarshal(pr2),
 		pr0.PublicKey,
 		network.SendWithConnectionInfo(pr0),
 	)
@@ -163,10 +163,12 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	// lookup "foo" as net1
 	err = net1.Send(
 		context.New(),
-		hyperspace.LookupRequest{
-			Nonce:       "1",
-			QueryVector: hyperspace.New("foo", "bar"),
-		}.ToObject(),
+		object.MustMarshal(
+			&hyperspace.LookupRequest{
+				Nonce:       "1",
+				QueryVector: hyperspace.New("foo", "bar"),
+			},
+		),
 		pr0.ConnectionInfo.PublicKey,
 		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
@@ -178,7 +180,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 
 	// check response
 	res := &hyperspace.LookupResponse{}
-	err = res.FromObject(env.Payload)
+	err = res.UnmarshalObject(env.Payload)
 	require.NoError(t, err)
 	assert.Equal(t, "1", res.Nonce)
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
