@@ -17,7 +17,6 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/tdewolff/parse/v2 v2.5.15 // indirect
-	golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	nimona.io v0.0.0-00010101000000-000000000000
 )

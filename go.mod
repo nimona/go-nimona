@@ -38,7 +38,6 @@ require (
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vcaesar/murmur v0.20.1
 	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
-	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.1.2
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
