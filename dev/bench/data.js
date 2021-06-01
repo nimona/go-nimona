@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1620257075412,
+  "lastUpdate": 1622572328187,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4704,6 +4704,54 @@ window.BENCHMARK_DATA = {
             "value": 9609,
             "unit": "ns/op",
             "extra": "122311 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "db9da8b73117c3be68c416dbe5053934991df0a6",
+          "message": "feat(object): refactor un/marshal methods, remove From/ToObject",
+          "timestamp": "2021-06-01T19:30:25+01:00",
+          "tree_id": "cfbbd2f9eb0741089ba232fbf884569abf38fb2b",
+          "url": "https://github.com/nimona/go-nimona/commit/db9da8b73117c3be68c416dbe5053934991df0a6"
+        },
+        "date": 1622572327307,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4227133,
+            "unit": "ns/op",
+            "extra": "261 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 382754441,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3970490466,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 12073,
+            "unit": "ns/op",
+            "extra": "100090 times\n2 procs"
           }
         ]
       }
