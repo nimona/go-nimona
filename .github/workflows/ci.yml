@@ -537,7 +537,7 @@ jobs:
           terraform init
           terraform apply -auto-approve -var "nimona_version=${NIMONA_VERSION}"
 
-      - uses: sarisia/actions-status-discord@v1.8.5
+      - uses: sarisia/actions-status-discord@v1.8.6
         if: always()
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
