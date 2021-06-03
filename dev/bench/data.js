@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1622745642707,
+  "lastUpdate": 1622759709356,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4992,6 +4992,54 @@ window.BENCHMARK_DATA = {
             "value": 12783,
             "unit": "ns/op",
             "extra": "96126 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "5d826ee5fe8510243ecb4d6a809bbbcd5749a850",
+          "message": "refactor(object): remove custom metadata an policy un/marshallers",
+          "timestamp": "2021-06-03T19:39:01+01:00",
+          "tree_id": "f94b0f5d723aa8e3b27a52e2c052d5533355def2",
+          "url": "https://github.com/nimona/go-nimona/commit/5d826ee5fe8510243ecb4d6a809bbbcd5749a850"
+        },
+        "date": 1622759708555,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3768466,
+            "unit": "ns/op",
+            "extra": "301 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 355139729,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3676426640,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 11479,
+            "unit": "ns/op",
+            "extra": "102649 times\n2 procs"
           }
         ]
       }
