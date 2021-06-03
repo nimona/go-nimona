@@ -240,7 +240,7 @@ jobs:
         with:
           java-version: 8
           distribution: zulu
-      - uses: android-actions/setup-android@v2.0.6
+      - uses: android-actions/setup-android@v2.0.7
       - uses: nttld/setup-ndk@v1.0.3
         id: setup-ndk
         with:
@@ -409,7 +409,7 @@ jobs:
         with:
           java-version: 8
           distribution: zulu
-      - uses: android-actions/setup-android@v2.0.6
+      - uses: android-actions/setup-android@v2.0.7
       - uses: nttld/setup-ndk@v1.0.3
         id: setup-ndk
         with:
