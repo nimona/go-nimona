@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1622574686154,
+  "lastUpdate": 1622717809322,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4800,6 +4800,54 @@ window.BENCHMARK_DATA = {
             "value": 12947,
             "unit": "ns/op",
             "extra": "87476 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "32f18349915353d94fd390370dbe815d00e43e8a",
+          "message": "chore(deps): bump sarisia/actions-status-discord from 1.8.5 to 1.8.6\n\nBumps [sarisia/actions-status-discord](https://github.com/sarisia/actions-status-discord) from 1.8.5 to 1.8.6.\n- [Release notes](https://github.com/sarisia/actions-status-discord/releases)\n- [Commits](https://github.com/sarisia/actions-status-discord/compare/v1.8.5...v1.8.6)\n\n---\nupdated-dependencies:\n- dependency-name: sarisia/actions-status-discord\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-06-03T11:55:18+01:00",
+          "tree_id": "e251bc1623194011ad72a1fac552901b9563970c",
+          "url": "https://github.com/nimona/go-nimona/commit/32f18349915353d94fd390370dbe815d00e43e8a"
+        },
+        "date": 1622717808504,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3669396,
+            "unit": "ns/op",
+            "extra": "312 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 332900745,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3436178947,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 10135,
+            "unit": "ns/op",
+            "extra": "119730 times\n2 procs"
           }
         ]
       }
