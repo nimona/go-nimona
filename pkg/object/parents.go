@@ -1,7 +1,7 @@
 package object
 
 type (
-	Parents map[string][]CID
+	Parents map[string]CIDArray
 )
 
 func (p Parents) All() []CID {

@@ -51,14 +51,6 @@ const (
 	Allow EvaluationResult = "allow"
 )
 
-func (ps Policies) Value() MapArray {
-	a := make(MapArray, len(ps))
-	for i, p := range ps {
-		a[i] = p.Map()
-	}
-	return a
-}
-
 func (p Policy) Evaluate(
 	subject crypto.PublicKey,
 	resource string,
@@ -135,85 +127,4 @@ func (e *evaluation) Process(
 			e.explicitMatches = explicitMatches
 		}
 	}
-}
-
-func (p Policy) Map() Map {
-	r := Map{}
-	if p.Type != "" {
-		r["type"] = String(p.Type)
-	}
-	if len(p.Subjects) > 0 {
-		ss := make(StringArray, len(p.Subjects))
-		for i, s := range p.Subjects {
-			ss[i] = String(s.String())
-		}
-		r["subjects"] = ss
-	}
-	if len(p.Resources) > 0 {
-		ss := make(StringArray, len(p.Resources))
-		for i, s := range p.Resources {
-			ss[i] = String(s)
-		}
-		r["resources"] = ss
-	}
-	if len(p.Actions) > 0 {
-		ss := make(StringArray, len(p.Actions))
-		for i, s := range p.Actions {
-			ss[i] = String(s)
-		}
-		r["actions"] = ss
-	}
-	if p.Effect != "" {
-		r["effect"] = String(p.Effect)
-	}
-	return r
-}
-
-func PoliciesFromValue(a MapArray) Policies {
-	p := make(Policies, len(a))
-	for i, m := range a {
-		p[i] = PolicyFromMap(m)
-	}
-	return p
-}
-
-func PolicyFromMap(m Map) Policy {
-	r := Policy{}
-	if t, ok := m["type"]; ok {
-		if s, ok := t.(String); ok {
-			r.Type = PolicyType(s)
-		}
-	}
-	if t, ok := m["subjects"]; ok {
-		if s, ok := t.(StringArray); ok {
-			p := make([]crypto.PublicKey, len(s))
-			for i, v := range s {
-				k := crypto.PublicKey{}
-				if err := k.UnmarshalString(string(v)); err == nil {
-					p[i] = k
-				}
-			}
-			r.Subjects = p
-		}
-	}
-	if t, ok := m["resources"]; ok {
-		if s, ok := t.(StringArray); ok {
-			r.Resources = FromStringArray(s)
-		}
-	}
-	if t, ok := m["actions"]; ok {
-		if s, ok := t.(StringArray); ok {
-			p := make([]PolicyAction, len(s))
-			for i, v := range s {
-				p[i] = PolicyAction(v)
-			}
-			r.Actions = p
-		}
-	}
-	if t, ok := m["effect"]; ok {
-		if s, ok := t.(String); ok {
-			r.Effect = PolicyEffect(s)
-		}
-	}
-	return r
 }

@@ -1,6 +1,10 @@
 package object
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+)
 
 type (
 	Typed interface {
@@ -41,7 +45,7 @@ func (o *Object) MarshalMap() (Map, error) {
 	if o.Type != "" {
 		m["@type"] = String(o.Type)
 	}
-	mm, err := o.Metadata.MarshalMap()
+	mm, err := marshalStruct(MapHint, reflect.ValueOf(o.Metadata))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +86,11 @@ func (o *Object) UnmarshalMap(m Map) error {
 	}
 	if t, ok := m["@metadata"]; ok {
 		if s, ok := t.(Map); ok {
-			err := o.Metadata.UnmarshalMap(s)
+			err := unmarshalMapToStruct(
+				MapHint,
+				s,
+				reflect.ValueOf(&o.Metadata),
+			)
 			if err != nil {
 				return err
 			}
@@ -99,7 +107,7 @@ func (o *Object) CID() CID {
 	}
 	h, err := NewCID(o)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("object.CID() panicked: %w", err))
 	}
 	return h
 }

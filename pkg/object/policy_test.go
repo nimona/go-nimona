@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/olekukonko/tablewriter"
@@ -284,46 +285,26 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 	})
 }
 
-func TestPolicy_Map(t *testing.T) {
+func TestPolicy_Marshal(t *testing.T) {
 	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 	p0 := k0.PublicKey()
 	p1 := k1.PublicKey()
-	p := Policy{
+	p := &Policy{
 		Type:      SignaturePolicy,
 		Subjects:  []crypto.PublicKey{p0, p1},
 		Resources: []string{"foo", "bar"},
 		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
 		Effect:    AllowEffect,
 	}
-	m := p.Map()
-	g := PolicyFromMap(m)
-	require.Equal(t, p, g)
-}
 
-func TestPolicies_Map(t *testing.T) {
-	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	m, err := marshalStruct(MapHint, reflect.ValueOf(p))
 	require.NoError(t, err)
-	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+
+	g := &Policy{}
+	err = unmarshalMapToStruct(MapHint, m, reflect.ValueOf(g))
 	require.NoError(t, err)
-	p0 := k0.PublicKey()
-	p1 := k1.PublicKey()
-	a := Policies{{
-		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{p0, p1},
-		Resources: []string{"foo", "bar"},
-		Actions:   []PolicyAction{ReadAction, "foo", "bar"},
-		Effect:    AllowEffect,
-	}, {
-		Type:      SignaturePolicy,
-		Subjects:  []crypto.PublicKey{p0},
-		Resources: []string{"foo"},
-		Actions:   []PolicyAction{ReadAction},
-		Effect:    DenyEffect,
-	}}
-	m := a.Value()
-	g := PoliciesFromValue(m)
-	require.Equal(t, a, g)
+	require.Equal(t, p, g)
 }

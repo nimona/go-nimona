@@ -2,6 +2,7 @@ package object
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,11 +26,11 @@ func TestMetadata_Map(t *testing.T) {
 		Datetime: "foo",
 		Parents: Parents{
 			"*": CIDArray{
-				"bah0",
+				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
 			"foo.*": CIDArray{
-				"bah1",
-				"bah2",
+				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
+				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
 		},
 		Policies: Policies{{
@@ -45,7 +46,7 @@ func TestMetadata_Map(t *testing.T) {
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,
 		}},
-		Stream: "bah1",
+		Stream: "QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 		Signature: Signature{
 			Signer: pk1,
 			Alg:    "alg",
@@ -66,23 +67,15 @@ func TestMetadata_Map(t *testing.T) {
 		},
 	}
 
-	t.Run("metadata as map", func(t *testing.T) {
-		m, err := want.MarshalMap()
-		require.NoError(t, err)
-
-		got := &Metadata{}
-		err = got.UnmarshalMap(m)
-		require.NoError(t, err)
-		require.Equal(t, want, got)
-	})
-
 	t.Run("metadata of object", func(t *testing.T) {
 		o := &Object{
 			Metadata: *want,
 			Data:     Map{},
 		}
-		b, err := json.Marshal(o)
+		b, err := json.MarshalIndent(o, "", "  ")
 		require.NoError(t, err)
+
+		fmt.Println(string(b))
 
 		g := &Object{}
 		err = json.Unmarshal(b, g)

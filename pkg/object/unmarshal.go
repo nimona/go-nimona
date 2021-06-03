@@ -62,7 +62,7 @@ func unmarshalMap(h Hint, m Map, v reflect.Value) error {
 	case reflect.Struct:
 		return unmarshalMapToStruct(h, m, v)
 	case reflect.Map:
-		return errors.Error("maps are not currently supported")
+		return unmarshalMapToMap(h, m, v)
 	}
 
 	return errors.Error("expected map or struct, got " + v.Kind().String())
@@ -109,10 +109,27 @@ func unmarshalMapToStruct(h Hint, m Map, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalAny(h Hint, v Value, target reflect.Value) error {
-	if !target.CanSet() {
-		return fmt.Errorf("cannot set value")
+func unmarshalMapToMap(h Hint, m Map, v reflect.Value) error {
+	if v.Kind() != reflect.Map {
+		return errors.Error("unmarshal: expected struct, got " + v.Kind().String())
 	}
+
+	if v.IsNil() {
+		v.Set(reflect.MakeMap(v.Type()))
+	}
+
+	for ik, iv := range m {
+		ov := reflect.Indirect(reflect.New(v.Type().Elem()))
+		err := unmarshalAny(iv.Hint(), iv, ov)
+		if err != nil {
+			return fmt.Errorf("unmarshal map: %w", err)
+		}
+		v.SetMapIndex(reflect.ValueOf(ik), ov)
+	}
+	return nil
+}
+
+func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 	switch vv := v.(type) {
 	case CID:
 		if vv == "" {
@@ -131,15 +148,19 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 			return nil
 		}
 		// ie crypto.PublicKey
-		if ivv, ok := target.Addr().Interface().(StringUnmashaller); ok {
-			return ivv.UnmarshalString(string(vv))
+		if target.Kind() == reflect.Struct {
+			if ivv, ok := target.Addr().Interface().(StringUnmashaller); ok {
+				return ivv.UnmarshalString(string(vv))
+			}
 		}
 		// ie *crypto.PublicKey
-		if _, ok := target.Interface().(StringUnmashaller); ok {
-			ev := reflect.New(target.Type().Elem())
-			itv := ev.Interface().(StringUnmashaller)
-			target.Set(ev)
-			return itv.UnmarshalString(string(vv))
+		if target.Kind() == reflect.Ptr {
+			if _, ok := target.Interface().(StringUnmashaller); ok {
+				ev := reflect.New(target.Type().Elem())
+				itv := ev.Interface().(StringUnmashaller)
+				target.Set(ev)
+				return itv.UnmarshalString(string(vv))
+			}
 		}
 		if target.Kind() != reflect.String {
 			return errors.Error(
@@ -158,13 +179,21 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		return nil
 	case Map:
 		switch target.Kind() {
-		case reflect.Struct, reflect.Map:
+		case reflect.Ptr:
+			return unmarshalMap(h, vv, target)
+		case reflect.Struct:
+			target.Set(reflect.New(target.Type()).Elem())
+			return unmarshalMap(h, vv, target)
+		case reflect.Map:
+			if target.IsNil() {
+				target.Set(reflect.New(target.Type()).Elem())
+			}
+			return unmarshalMap(h, vv, target)
 		default:
 			return errors.Error(
 				"expected map or struct target, got " + target.Kind().String(),
 			)
 		}
-		return unmarshalMap(h, vv, target)
 	case *Object:
 		var ev reflect.Value
 		if target.Kind() == reflect.Ptr {
@@ -207,7 +236,14 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		et := target.Type().Elem()
 		var err error
 		vv.(ArrayValue).Range(func(_ int, ov Value) bool {
-			ev := reflect.Indirect(reflect.New(et))
+			var ev reflect.Value
+			if et.Kind() == reflect.Ptr {
+				ev = reflect.Indirect(reflect.New(et))
+			} else if et.Kind() == reflect.Struct {
+				ev = reflect.Indirect(reflect.New(et).Elem())
+			} else {
+				ev = reflect.Indirect(reflect.New(et))
+			}
 			err = unmarshalAny(ov.Hint(), ov, ev)
 			if err != nil {
 				return true
@@ -277,11 +313,5 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		target.SetBytes([]byte(vv))
 		return nil
 	}
-	// switch h {
-	// case ObjectHint:
-	// 	ev := reflect.New(target.Type().Elem())
-	// 	fmt.Println("!!!", h, ev.Elem().Kind().String())
-	// 	Unmarshal(v, out interface{})
-	// }
 	return nil
 }
