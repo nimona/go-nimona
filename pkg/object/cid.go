@@ -170,6 +170,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			h,
 		)
 	case String:
+		if string(vv) == "" {
+			return nil, nil
+		}
 		return mhFromBytes(
 			StringHint,
 			[]byte(string(vv)),
@@ -185,6 +188,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			),
 		)
 	case CID:
+		if vv == "" {
+			return nil, nil
+		}
 		return mhFromCid(vv)
 	case BoolArray:
 		if vv.Len() == 0 {

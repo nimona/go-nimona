@@ -106,6 +106,10 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 	switch h {
 	case StringHint:
 		if v.Kind() == reflect.String {
+			// TODO only for omitempty
+			if v.String() == "" {
+				return nil, nil
+			}
 			return String(v.String()), nil
 		}
 		m, ok := v.Interface().(StringMashaller)
@@ -114,7 +118,19 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			if err != nil {
 				return nil, err
 			}
+			// TODO only for omitempty
+			if s == "" {
+				return nil, nil
+			}
 			return String(s), nil
+		}
+	case CIDHint:
+		if v.Kind() == reflect.String {
+			// TODO only for omitempty
+			if v.String() == "" {
+				return nil, nil
+			}
+			return CID(v.String()), nil
 		}
 	case BoolHint:
 		if v.Kind() == reflect.Bool {
@@ -237,13 +253,26 @@ func marshalStruct(h Hint, v reflect.Value) (Map, error) {
 		}
 		in, ih, err := splitHint([]byte(ig))
 		if err != nil {
-			return nil, err
+			// if there is hint in the key, we check if the value is a primitive
+			if ivv, ok := iv.Interface().(Value); ok {
+				in = ig
+				ih = ivv.Hint()
+			} else {
+				return nil, err
+			}
 		}
 		value, err := marshalAny(ih, iv)
 		if err != nil {
 			return nil, err
 		}
-		m[in] = value
+		if value != nil {
+			m[in] = value
+		}
+	}
+
+	// TODO only for omitempty
+	if len(m) == 0 {
+		return nil, nil
 	}
 
 	return m, nil
@@ -255,6 +284,10 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 	}
 	if v.Kind() != reflect.Map {
 		return nil, errors.Error("expected map, got " + v.Kind().String())
+	}
+
+	if v.Len() == 0 {
+		return nil, nil
 	}
 
 	m := Map{}
@@ -269,13 +302,24 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 		ig := ik.String()
 		in, ih, err := splitHint([]byte(ig))
 		if err != nil {
-			return nil, err
+			// if there is hint in the key, we check if the value is a primitive
+			if ivv, ok := iv.Interface().(Value); ok {
+				in = ig
+				ih = ivv.Hint()
+			} else {
+				return nil, err
+			}
 		}
 		value, err := marshalAny(ih, iv)
 		if err != nil {
 			return nil, err
 		}
 		m[in] = value
+	}
+
+	// TODO only for omitempty
+	if len(m) == 0 {
+		return nil, nil
 	}
 
 	return m, nil
@@ -356,6 +400,11 @@ func marshalArray(h Hint, v reflect.Value) (Value, error) {
 		default:
 			return nil, errors.Error("unknown array element hint")
 		}
+	}
+
+	// TODO only for omitempty
+	if a.Len() == 0 {
+		return nil, nil
 	}
 
 	return a, nil
