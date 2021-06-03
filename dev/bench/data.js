@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1622717809322,
+  "lastUpdate": 1622720611970,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -4848,6 +4848,54 @@ window.BENCHMARK_DATA = {
             "value": 10135,
             "unit": "ns/op",
             "extra": "119730 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "ebdf4ee658702b55bdc27115fe4ba9341ad3a3cf",
+          "message": "chore(deps): bump android-actions/setup-android from 2.0.6 to 2.0.7\n\nBumps [android-actions/setup-android](https://github.com/android-actions/setup-android) from 2.0.6 to 2.0.7.\n- [Release notes](https://github.com/android-actions/setup-android/releases)\n- [Commits](https://github.com/android-actions/setup-android/compare/v2.0.6...v2.0.7)\n\n---\nupdated-dependencies:\n- dependency-name: android-actions/setup-android\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-06-03T12:42:01+01:00",
+          "tree_id": "8cf3af938aa8b5d72d969525d820e1ba3916f94a",
+          "url": "https://github.com/nimona/go-nimona/commit/ebdf4ee658702b55bdc27115fe4ba9341ad3a3cf"
+        },
+        "date": 1622720611151,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3616036,
+            "unit": "ns/op",
+            "extra": "327 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 335861851,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3413122421,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCID",
+            "value": 10125,
+            "unit": "ns/op",
+            "extra": "119043 times\n2 procs"
           }
         ]
       }
