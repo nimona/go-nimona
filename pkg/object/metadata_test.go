@@ -2,7 +2,6 @@ package object
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object/value"
 )
 
 func TestMetadata_Map(t *testing.T) {
@@ -25,10 +25,10 @@ func TestMetadata_Map(t *testing.T) {
 		Owner:    pk0,
 		Datetime: "foo",
 		Parents: Parents{
-			"*": CIDArray{
+			"*": value.CIDArray{
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
-			"foo.*": CIDArray{
+			"foo.*": value.CIDArray{
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
@@ -70,26 +70,30 @@ func TestMetadata_Map(t *testing.T) {
 	t.Run("metadata of object", func(t *testing.T) {
 		o := &Object{
 			Metadata: *want,
-			Data:     Map{},
+			Data:     value.Map{},
 		}
+
 		b, err := json.MarshalIndent(o, "", "  ")
 		require.NoError(t, err)
 
-		fmt.Println(string(b))
-
 		g := &Object{}
 		err = json.Unmarshal(b, g)
+		require.NoError(t, err)
+
 		require.NoError(t, err)
 		assert.Equal(t, o, g)
 	})
 
 	t.Run("metadata of nested object", func(t *testing.T) {
+		no := &Object{
+			Metadata: *want,
+			Data:     value.Map{},
+		}
+		nm, err := no.MarshalMap()
+		require.NoError(t, err)
 		o := &Object{
-			Data: Map{
-				"foo": &Object{
-					Metadata: *want,
-					Data:     Map{},
-				},
+			Data: value.Map{
+				"foo": nm,
 			},
 		}
 		b, err := json.Marshal(o)

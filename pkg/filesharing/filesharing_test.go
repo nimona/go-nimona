@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/filesharing"
+	value "nimona.io/pkg/object/value"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -164,7 +165,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []object.CID{"1234"},
+		Chunks: []value.CID{"1234"},
 	}
 	req := &filesharing.TransferRequest{
 		File:  file1,
@@ -174,7 +175,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	type args struct {
 		ctx   context.Context
-		CID   object.CID
+		CID   value.CID
 		nonce string
 	}
 	tests := []struct {

@@ -2,6 +2,7 @@ package object
 
 import (
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object/value"
 )
 
 // Metadata for object
@@ -10,6 +11,6 @@ type Metadata struct {
 	Datetime  string           `nimona:"datetime:s"`
 	Parents   Parents          `nimona:"parents:m"`
 	Policies  Policies         `nimona:"policies:am"`
-	Stream    CID              `nimona:"stream:r"`
+	Stream    value.CID        `nimona:"stream:r"`
 	Signature Signature        `nimona:"_signature:m"`
 }

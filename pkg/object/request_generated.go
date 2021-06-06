@@ -2,16 +2,20 @@
 
 package object
 
+import (
+	value "nimona.io/pkg/object/value"
+)
+
 type (
 	Request struct {
-		Metadata  Metadata `nimona:"@metadata:m"`
-		RequestID string   `nimona:"requestID:s"`
-		ObjectCID CID      `nimona:"objectCID:s"`
+		Metadata  Metadata  `nimona:"@metadata:m"`
+		RequestID string    `nimona:"requestID:s"`
+		ObjectCID value.CID `nimona:"objectCID:s"`
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"@metadata:m"`
 		RequestID string   `nimona:"requestID:s"`
-		Object    *Object  `nimona:"object:o"`
+		Object    *Object  `nimona:"object:m"`
 	}
 )
 

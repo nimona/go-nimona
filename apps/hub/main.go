@@ -38,6 +38,7 @@ import (
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
@@ -313,7 +314,6 @@ func main() {
 				),
 			)
 			conv := tailwind.New(w, dist)
-			// conv.SetPurgeChecker(pscanner.Map())
 			return conv
 		},
 	)
@@ -584,7 +584,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		csrCID := object.CID(r.PostFormValue("csr"))
+		csrCID := value.CID(r.PostFormValue("csr"))
 		if err = d.ObjectStore().Pin(csrCID); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -889,7 +889,7 @@ func main() {
 
 	r.Get("/objects/{cid}", func(w http.ResponseWriter, r *http.Request) {
 		cid := chi.URLParam(r, "cid")
-		obj, err := d.ObjectStore().Get(object.CID(cid))
+		obj, err := d.ObjectStore().Get(value.CID(cid))
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -921,7 +921,7 @@ func main() {
 		}
 		if values.StreamRoot != "" {
 			or, err := d.ObjectStore().GetByStream(
-				object.CID(values.StreamRoot),
+				value.CID(values.StreamRoot),
 			)
 			if err == nil {
 				os, err := object.ReadAll(or)
@@ -1001,7 +1001,7 @@ func main() {
 	})
 
 	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
-		csrCID := object.CID(r.PostFormValue("csrCID"))
+		csrCID := value.CID(r.PostFormValue("csrCID"))
 		csrProviders, err := d.Resolver().Lookup(
 			context.New(
 				context.WithParent(r.Context()),
@@ -1064,7 +1064,7 @@ func main() {
 	})
 
 	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
-		csrCID := object.CID(r.PostFormValue("csrCID"))
+		csrCID := value.CID(r.PostFormValue("csrCID"))
 		csrObj, err := d.ObjectStore().Get(csrCID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

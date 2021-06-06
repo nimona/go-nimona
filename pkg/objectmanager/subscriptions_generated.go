@@ -7,7 +7,7 @@ package objectmanager
 import (
 	"sync"
 
-	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/stream"
 )
 
@@ -25,18 +25,18 @@ func NewSubscriptionsMap() *SubscriptionsMap {
 }
 
 // GetOrPut -
-func (m *SubscriptionsMap) GetOrPut(k object.CID, v *stream.Subscription) (*stream.Subscription, bool) {
+func (m *SubscriptionsMap) GetOrPut(k value.CID, v *stream.Subscription) (*stream.Subscription, bool) {
 	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*stream.Subscription), ok
 }
 
 // Put -
-func (m *SubscriptionsMap) Put(k object.CID, v *stream.Subscription) {
+func (m *SubscriptionsMap) Put(k value.CID, v *stream.Subscription) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *SubscriptionsMap) Get(k object.CID) (*stream.Subscription, bool) {
+func (m *SubscriptionsMap) Get(k value.CID) (*stream.Subscription, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -51,22 +51,22 @@ func (m *SubscriptionsMap) Get(k object.CID) (*stream.Subscription, bool) {
 }
 
 // Delete -
-func (m *SubscriptionsMap) Delete(k object.CID) {
+func (m *SubscriptionsMap) Delete(k value.CID) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *SubscriptionsMap) Range(i func(k object.CID, v *stream.Subscription) bool) {
+func (m *SubscriptionsMap) Range(i func(k value.CID, v *stream.Subscription) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(object.CID), v.(*stream.Subscription))
+		return i(k.(value.CID), v.(*stream.Subscription))
 	})
 }
 
 // ListKeys -
-func (m *SubscriptionsMap) ListKeys() []object.CID {
-	vs := []object.CID{}
+func (m *SubscriptionsMap) ListKeys() []value.CID {
+	vs := []value.CID{}
 	m.m.Range(func(k, v interface{}) bool {
-		vs = append(vs, k.(object.CID))
+		vs = append(vs, k.(value.CID))
 		return true
 	})
 	return vs

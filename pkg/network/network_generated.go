@@ -12,7 +12,7 @@ type (
 		Metadata  object.Metadata  `nimona:"@metadata:m"`
 		RequestID string           `nimona:"requestID:s"`
 		Recipient crypto.PublicKey `nimona:"recipient:s"`
-		Payload   *object.Object   `nimona:"payload:o"`
+		Payload   *object.Object   `nimona:"payload:m"`
 	}
 	DataForwardEnvelope struct {
 		Metadata object.Metadata  `nimona:"@metadata:m"`

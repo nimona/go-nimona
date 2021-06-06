@@ -99,7 +99,7 @@ func (p *Parser) parseField() (interface{}, error) {
 	}
 	switch value {
 	// case "relationship":
-	// 	member.GoFullType = "object.CID"
+	// 	member.GoFullType = "value.CID"
 	// 	member.SimpleType = "relationship"
 	// 	member.Hint = "r"
 	case "string":
@@ -139,7 +139,7 @@ func (p *Parser) parseField() (interface{}, error) {
 	default:
 		member.GoFullType = value
 		member.SimpleType = value
-		member.Hint = "o"
+		member.Hint = "m"
 		member.IsObject = true
 	}
 	// expect TEXT for optional Member.GoFullType

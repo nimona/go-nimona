@@ -5,6 +5,7 @@ package identity
 import (
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 type (
@@ -13,14 +14,14 @@ type (
 		Version  int64           `nimona:"version:i"`
 		Datetime string          `nimona:"datetime:s"`
 		Name     string          `nimona:"name:s"`
-		Image    object.CID      `nimona:"image:s"`
+		Image    value.CID       `nimona:"image:s"`
 	}
 	ProfileStreamRoot struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 	}
 	ProfileUpdated struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
-		Profile  Profile         `nimona:"profile:o"`
+		Profile  Profile         `nimona:"profile:m"`
 	}
 	AddressbookStreamRoot struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
@@ -29,7 +30,7 @@ type (
 		Metadata    object.Metadata  `nimona:"@metadata:m"`
 		Alias       string           `nimona:"alias:s"`
 		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
-		Profile     Profile          `nimona:"profile:o"`
+		Profile     Profile          `nimona:"profile:m"`
 		Datetime    string           `nimona:"datetime:s"`
 	}
 	AddressbookContactRemoved struct {

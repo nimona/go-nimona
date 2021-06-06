@@ -13,7 +13,7 @@ type (
 		Version       int64             `nimona:"version:i"`
 		PublicKey     crypto.PublicKey  `nimona:"publicKey:s"`
 		Addresses     []string          `nimona:"addresses:as"`
-		Relays        []*ConnectionInfo `nimona:"relays:ao"`
+		Relays        []*ConnectionInfo `nimona:"relays:am"`
 		ObjectFormats []string          `nimona:"objectFormats:as"`
 	}
 )

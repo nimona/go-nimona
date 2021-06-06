@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object/hint"
+	"nimona.io/pkg/object/value"
 )
 
 func MustMarshal(in interface{}) *Object {
@@ -99,18 +101,18 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 	return nil, nil
 }
 
-func marshalAny(h Hint, v reflect.Value) (Value, error) {
+func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
 	switch h {
-	case StringHint:
+	case hint.String:
 		if v.Kind() == reflect.String {
 			// TODO only for omitempty
 			if v.String() == "" {
 				return nil, nil
 			}
-			return String(v.String()), nil
+			return value.String(v.String()), nil
 		}
 		m, ok := v.Interface().(StringMashaller)
 		if ok {
@@ -122,23 +124,43 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			if s == "" {
 				return nil, nil
 			}
-			return String(s), nil
+			return value.String(s), nil
 		}
-	case CIDHint:
+	case hint.CID:
 		if v.Kind() == reflect.String {
 			// TODO only for omitempty
 			if v.String() == "" {
 				return nil, nil
 			}
-			return CID(v.String()), nil
+			return value.CID(v.String()), nil
 		}
-	case BoolHint:
+	case hint.Bool:
 		if v.Kind() == reflect.Bool {
-			return Bool(v.Bool()), nil
+			return value.Bool(v.Bool()), nil
 		}
-	case MapHint:
+	case hint.Map:
 		if v.IsZero() {
 			return nil, nil
+		}
+		if o, isObjPtr := v.Interface().(*Object); isObjPtr {
+			if v.IsZero() {
+				return nil, nil
+			}
+			o, err := Marshal(o)
+			if err != nil {
+				return nil, err
+			}
+			return o.MarshalMap()
+		}
+		if o, isObj := v.Interface().(Object); isObj {
+			if v.IsZero() {
+				return nil, nil
+			}
+			o, err := Marshal(o)
+			if err != nil {
+				return nil, err
+			}
+			return o.MarshalMap()
 		}
 		switch v.Kind() {
 		case reflect.Map:
@@ -155,47 +177,42 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 		case reflect.Struct:
 			return marshalStruct(h, v)
 		}
-	case ObjectHint:
-		if v.IsZero() {
-			return nil, nil
-		}
-		return Marshal(v.Interface())
-	case FloatHint:
+	case hint.Float:
 		switch v.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return Float(v.Float()), nil
+			return value.Float(v.Float()), nil
 		}
-	case IntHint:
+	case hint.Int:
 		switch v.Kind() {
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return Int(v.Int()), nil
+			return value.Int(v.Int()), nil
 		}
-	case UintHint:
+	case hint.Uint:
 		switch v.Kind() {
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return Uint(v.Uint()), nil
+			return value.Uint(v.Uint()), nil
 		}
-	case DataHint:
+	case hint.Data:
 		m, ok := v.Interface().(ByteMashaller)
 		if ok {
 			s, err := m.MarshalBytes()
 			if err != nil {
 				return nil, err
 			}
-			return Data(s), nil
+			return value.Data(s), nil
 		}
 		b, ok := v.Interface().([]byte)
 		if ok {
-			return Data(b), nil
+			return value.Data(b), nil
 		}
 		s, ok := v.Interface().(string)
 		if ok {
@@ -203,7 +220,7 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 			if err != nil {
 				return nil, err
 			}
-			return Data(b), nil
+			return value.Data(b), nil
 		}
 	}
 	if h[0] == 'a' {
@@ -217,7 +234,7 @@ func marshalAny(h Hint, v reflect.Value) (Value, error) {
 		" for hint " + string(h))
 }
 
-func marshalStruct(h Hint, v reflect.Value) (Map, error) {
+func marshalStruct(h hint.Hint, v reflect.Value) (value.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -225,7 +242,7 @@ func marshalStruct(h Hint, v reflect.Value) (Map, error) {
 		return nil, errors.Error("expected struct, got " + v.Kind().String())
 	}
 
-	m := Map{}
+	m := value.Map{}
 	t := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -251,22 +268,22 @@ func marshalStruct(h Hint, v reflect.Value) (Map, error) {
 			"@metadata:m":
 			continue
 		}
-		in, ih, err := splitHint([]byte(ig))
+		in, ih, err := hint.Extract(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(Value); ok {
+			if ivv, ok := iv.Interface().(value.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
 				return nil, err
 			}
 		}
-		value, err := marshalAny(ih, iv)
+		v, err := marshalAny(ih, iv)
 		if err != nil {
 			return nil, err
 		}
-		if value != nil {
-			m[in] = value
+		if v != nil {
+			m[in] = v
 		}
 	}
 
@@ -278,7 +295,7 @@ func marshalStruct(h Hint, v reflect.Value) (Map, error) {
 	return m, nil
 }
 
-func marshalMap(h Hint, v reflect.Value) (Map, error) {
+func marshalMap(h hint.Hint, v reflect.Value) (value.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -290,7 +307,7 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 		return nil, nil
 	}
 
-	m := Map{}
+	m := value.Map{}
 
 	for _, ik := range v.MapKeys() {
 		iv := v.MapIndex(ik)
@@ -300,21 +317,21 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 			)
 		}
 		ig := ik.String()
-		in, ih, err := splitHint([]byte(ig))
+		in, ih, err := hint.Extract(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(Value); ok {
+			if ivv, ok := iv.Interface().(value.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
 				return nil, err
 			}
 		}
-		value, err := marshalAny(ih, iv)
+		v, err := marshalAny(ih, iv)
 		if err != nil {
 			return nil, err
 		}
-		m[in] = value
+		m[in] = v
 	}
 
 	// TODO only for omitempty
@@ -325,7 +342,7 @@ func marshalMap(h Hint, v reflect.Value) (Map, error) {
 	return m, nil
 }
 
-func marshalArray(h Hint, v reflect.Value) (Value, error) {
+func marshalArray(h hint.Hint, v reflect.Value) (value.Value, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -333,72 +350,67 @@ func marshalArray(h Hint, v reflect.Value) (Value, error) {
 		return nil, errors.Error("expected slice, got " + v.Kind().String())
 	}
 
-	var a ArrayValue
-	var ah Hint
+	var a value.ArrayValue
+	var ah hint.Hint
 	switch h {
-	case BoolArrayHint:
-		a = BoolArray{}
-		ah = BoolHint
-	case DataArrayHint:
-		a = DataArray{}
-		ah = DataHint
-	case FloatArrayHint:
-		a = FloatArray{}
-		ah = FloatHint
-	case IntArrayHint:
-		a = IntArray{}
-		ah = IntHint
-	case MapArrayHint:
-		a = MapArray{}
-		ah = MapHint
-	case ObjectArrayHint:
-		a = ObjectArray{}
-		ah = ObjectHint
-	case StringArrayHint:
-		a = StringArray{}
-		ah = StringHint
-	case UintArrayHint:
-		a = UintArray{}
-		ah = UintHint
-	case CIDArrayHint:
-		a = CIDArray{}
-		ah = CIDHint
+	case hint.BoolArray:
+		a = value.BoolArray{}
+		ah = hint.Bool
+	case hint.DataArray:
+		a = value.DataArray{}
+		ah = hint.Data
+	case hint.FloatArray:
+		a = value.FloatArray{}
+		ah = hint.Float
+	case hint.IntArray:
+		a = value.IntArray{}
+		ah = hint.Int
+	case hint.MapArray:
+		a = value.MapArray{}
+		ah = hint.Map
+	case hint.StringArray:
+		a = value.StringArray{}
+		ah = hint.String
+	case hint.UintArray:
+		a = value.UintArray{}
+		ah = hint.Uint
+	case hint.CIDArray:
+		a = value.CIDArray{}
+		ah = hint.CID
 	default:
 		return nil, errors.Error("unknown array hint")
 	}
 
 	for i := 0; i < v.Len(); i++ {
 		iv := v.Index(i)
-		value, err := marshalAny(ah, iv)
+		v, err := marshalAny(ah, iv)
 		if err != nil {
 			return nil, err
 		}
 
-		if value == nil {
+		if v == nil {
 			continue
 		}
 
 		switch ah {
-		case BoolHint:
-			a = append(a.(BoolArray), value.(Bool))
-		case DataHint:
-			a = append(a.(DataArray), value.(Data))
-		case FloatHint:
-			a = append(a.(FloatArray), value.(Float))
-		case IntHint:
-			a = append(a.(IntArray), value.(Int))
-		case MapHint:
-			a = append(a.(MapArray), value.(Map))
-		case ObjectHint:
-			a = append(a.(ObjectArray), value.(*Object))
-		case StringHint:
-			a = append(a.(StringArray), value.(String))
-		case UintHint:
-			a = append(a.(UintArray), value.(Uint))
-		case CIDHint:
-			a = append(a.(CIDArray), value.(CID))
+		case hint.Bool:
+			a = append(a.(value.BoolArray), v.(value.Bool))
+		case hint.Data:
+			a = append(a.(value.DataArray), v.(value.Data))
+		case hint.Float:
+			a = append(a.(value.FloatArray), v.(value.Float))
+		case hint.Int:
+			a = append(a.(value.IntArray), v.(value.Int))
+		case hint.Map:
+			a = append(a.(value.MapArray), v.(value.Map))
+		case hint.String:
+			a = append(a.(value.StringArray), v.(value.String))
+		case hint.Uint:
+			a = append(a.(value.UintArray), v.(value.Uint))
+		case hint.CID:
+			a = append(a.(value.CIDArray), v.(value.CID))
 		default:
-			return nil, errors.Error("unknown array element hint")
+			return nil, errors.Error("unknown array element hint " + ah)
 		}
 	}
 

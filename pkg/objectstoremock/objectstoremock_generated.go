@@ -10,6 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 // MockGetter is a mock of Getter interface.
@@ -36,7 +37,7 @@ func (m *MockGetter) EXPECT() *MockGetterMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGetter) Get(cid object.CID) (*object.Object, error) {
+func (m *MockGetter) Get(cid value.CID) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", cid)
 	ret0, _ := ret[0].(*object.Object)
@@ -74,7 +75,7 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockStore) Get(cid object.CID) (*object.Object, error) {
+func (m *MockStore) Get(cid value.CID) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", cid)
 	ret0, _ := ret[0].(*object.Object)
@@ -89,7 +90,7 @@ func (mr *MockStoreMockRecorder) Get(cid interface{}) *gomock.Call {
 }
 
 // GetByStream mocks base method.
-func (m *MockStore) GetByStream(arg0 object.CID) (object.ReadCloser, error) {
+func (m *MockStore) GetByStream(arg0 value.CID) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByStream", arg0)
 	ret0, _ := ret[0].(object.ReadCloser)
@@ -119,10 +120,10 @@ func (mr *MockStoreMockRecorder) GetByType(arg0 interface{}) *gomock.Call {
 }
 
 // GetPinned mocks base method.
-func (m *MockStore) GetPinned() ([]object.CID, error) {
+func (m *MockStore) GetPinned() ([]value.CID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPinned")
-	ret0, _ := ret[0].([]object.CID)
+	ret0, _ := ret[0].([]value.CID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -134,10 +135,10 @@ func (mr *MockStoreMockRecorder) GetPinned() *gomock.Call {
 }
 
 // GetStreamLeaves mocks base method.
-func (m *MockStore) GetStreamLeaves(streamRootCID object.CID) ([]object.CID, error) {
+func (m *MockStore) GetStreamLeaves(streamRootCID value.CID) ([]value.CID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStreamLeaves", streamRootCID)
-	ret0, _ := ret[0].([]object.CID)
+	ret0, _ := ret[0].([]value.CID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -149,7 +150,7 @@ func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootCID interface{}) *gom
 }
 
 // IsPinned mocks base method.
-func (m *MockStore) IsPinned(arg0 object.CID) (bool, error) {
+func (m *MockStore) IsPinned(arg0 value.CID) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsPinned", arg0)
 	ret0, _ := ret[0].(bool)
@@ -164,7 +165,7 @@ func (mr *MockStoreMockRecorder) IsPinned(arg0 interface{}) *gomock.Call {
 }
 
 // Pin mocks base method.
-func (m *MockStore) Pin(arg0 object.CID) error {
+func (m *MockStore) Pin(arg0 value.CID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Pin", arg0)
 	ret0, _ := ret[0].(error)
@@ -206,7 +207,7 @@ func (mr *MockStoreMockRecorder) PutWithTTL(arg0, arg1 interface{}) *gomock.Call
 }
 
 // RemovePin mocks base method.
-func (m *MockStore) RemovePin(arg0 object.CID) error {
+func (m *MockStore) RemovePin(arg0 value.CID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemovePin", arg0)
 	ret0, _ := ret[0].(error)

@@ -4,13 +4,14 @@ package filesharing
 
 import (
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Chunks   []object.CID    `nimona:"chunks:as"`
+		Chunks   []value.CID     `nimona:"chunks:as"`
 	}
 	TransferDone struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
@@ -18,7 +19,7 @@ type (
 	}
 	TransferRequest struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
-		File     File            `nimona:"file:o"`
+		File     File            `nimona:"file:m"`
 		Nonce    string          `nimona:"nonce:s"`
 	}
 	TransferResponse struct {

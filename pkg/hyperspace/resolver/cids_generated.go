@@ -7,44 +7,44 @@ package resolver
 import (
 	"sync"
 
-	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 )
 
 type (
-	// ObjectCIDSyncList -
-	ObjectCIDSyncList struct {
+	// ValueCIDSyncList -
+	ValueCIDSyncList struct {
 		m sync.Map
 	}
 )
 
 // Put -
-func (m *ObjectCIDSyncList) Put(k object.CID) {
+func (m *ValueCIDSyncList) Put(k value.CID) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ObjectCIDSyncList) Exists(k object.CID) bool {
+func (m *ValueCIDSyncList) Exists(k value.CID) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *ObjectCIDSyncList) Delete(k object.CID) {
+func (m *ValueCIDSyncList) Delete(k value.CID) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ObjectCIDSyncList) Range(i func(k object.CID) bool) {
+func (m *ValueCIDSyncList) Range(i func(k value.CID) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(object.CID))
+		return i(k.(value.CID))
 	})
 }
 
 // List -
-func (m *ObjectCIDSyncList) List() []object.CID {
-	r := []object.CID{}
+func (m *ValueCIDSyncList) List() []value.CID {
+	r := []value.CID{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(object.CID))
+		r = append(r, k.(value.CID))
 		return true
 	})
 	return r

@@ -2,8 +2,13 @@ package object
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
+
+	"github.com/mitchellh/copystructure"
+
+	"nimona.io/pkg/object/cid"
+	"nimona.io/pkg/object/hint"
+	"nimona.io/pkg/object/value"
 )
 
 type (
@@ -15,7 +20,7 @@ type (
 		Context  string
 		Type     string
 		Metadata Metadata
-		Data     Map
+		Data     value.Map
 	}
 )
 
@@ -34,18 +39,34 @@ type (
 	}
 )
 
-func (o *Object) MarshalMap() (Map, error) {
-	m := Map{}
+func (o *Object) MarshalJSON() ([]byte, error) {
+	m, err := o.MarshalMap()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(m)
+}
+
+func (o *Object) UnmarshalJSON(b []byte) error {
+	m := value.Map{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	return o.UnmarshalMap(m)
+}
+
+func (o *Object) MarshalMap() (value.Map, error) {
+	m := value.Map{}
 	for k, v := range o.Data {
 		m[k] = v
 	}
 	if o.Context != "" {
-		m["@context"] = String(o.Context)
+		m["@context"] = value.String(o.Context)
 	}
 	if o.Type != "" {
-		m["@type"] = String(o.Type)
+		m["@type"] = value.String(o.Type)
 	}
-	mm, err := marshalStruct(MapHint, reflect.ValueOf(o.Metadata))
+	mm, err := marshalStruct(hint.Map, reflect.ValueOf(o.Metadata))
 	if err != nil {
 		return nil, err
 	}
@@ -55,39 +76,28 @@ func (o *Object) MarshalMap() (Map, error) {
 	return m, nil
 }
 
-func (o *Object) UnmarshalJSON(b []byte) error {
-	m := Map{}
-	if err := json.Unmarshal(b, &m); err != nil {
+func (o *Object) UnmarshalMap(v value.Map) error {
+	mm, err := copystructure.Copy(v)
+	if err != nil {
 		return err
 	}
-	return o.UnmarshalMap(m)
-}
-
-func (o *Object) MarshalJSON() ([]byte, error) {
-	m, err := o.MarshalMap()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(m)
-}
-
-func (o *Object) UnmarshalMap(m Map) error {
+	m := mm.(value.Map)
 	if t, ok := m["@context"]; ok {
-		if s, ok := t.(String); ok {
+		if s, ok := t.(value.String); ok {
 			o.Context = string(s)
 			delete(m, "@context")
 		}
 	}
 	if t, ok := m["@type"]; ok {
-		if s, ok := t.(String); ok {
+		if s, ok := t.(value.String); ok {
 			o.Type = string(s)
 			delete(m, "@type")
 		}
 	}
 	if t, ok := m["@metadata"]; ok {
-		if s, ok := t.(Map); ok {
+		if s, ok := t.(value.Map); ok {
 			err := unmarshalMapToStruct(
-				MapHint,
+				hint.Map,
 				s,
 				reflect.ValueOf(&o.Metadata),
 			)
@@ -101,17 +111,18 @@ func (o *Object) UnmarshalMap(m Map) error {
 	return nil
 }
 
-func (o *Object) CID() CID {
+// TODO also return error
+func (o *Object) CID() value.CID {
 	if o == nil {
-		return EmptyCID
+		return cid.Empty
 	}
-	h, err := NewCID(o)
+	m, err := o.MarshalMap()
 	if err != nil {
-		panic(fmt.Errorf("object.CID() panicked: %w", err))
+		return cid.Invalid
+	}
+	h, err := cid.New(m)
+	if err != nil {
+		return cid.Invalid
 	}
 	return h
-}
-
-func (h CID) String() string {
-	return string(h)
 }

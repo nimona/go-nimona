@@ -12,7 +12,7 @@ package object
 // 	sk, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 // 	assert.NoError(t, err)
 
-// 	o := FromMap(Map{
+// 	o := FromMap(value.Map{
 // 		"foo:s": String("bar"),
 // 	})
 

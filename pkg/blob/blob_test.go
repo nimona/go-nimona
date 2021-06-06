@@ -12,6 +12,7 @@ import (
 	"nimona.io/internal/iotest"
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 func Test_blobReader_Read(t *testing.T) {
@@ -88,10 +89,10 @@ func TestBlob_CID(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.CID{object.MustMarshal(c).CID()},
+		Chunks: []value.CID{object.MustMarshal(c).CID()},
 	}
 	u := &blob.Blob{
-		Chunks: []object.CID{
+		Chunks: []value.CID{
 			object.MustMarshal(c).CID(),
 		},
 	}
@@ -106,7 +107,7 @@ func TestBlob_ResponseCID(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []object.CID{object.MustMarshal(c).CID()},
+		Chunks: []value.CID{object.MustMarshal(c).CID()},
 	}
 	r := &object.Response{
 		RequestID: "foo",
@@ -134,7 +135,7 @@ func TestBlob_ResponseCID(t *testing.T) {
 
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
-		Chunks: []object.CID{
+		Chunks: []value.CID{
 			object.MustMarshal(
 				&blob.Chunk{
 					Data: []byte("foo"),

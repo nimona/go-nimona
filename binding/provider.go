@@ -15,6 +15,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -116,30 +117,30 @@ func (p *Provider) Get(
 ) (object.ReadCloser, error) {
 	opts := []sqlobjectstore.FilterOption{}
 	filterByType := []string{}
-	filterByCID := []object.CID{}
+	filterByCID := []value.CID{}
 	filterByOwner := []crypto.PublicKey{}
-	filterByStreamCID := []object.CID{}
+	filterByStreamCID := []value.CID{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
 			return nil, errors.New("invalid lookup query")
 		}
 		prefix := parts[0]
-		value := strings.Join(parts[1:], ":")
+		v := strings.Join(parts[1:], ":")
 		switch prefix {
 		case "type":
 			filterByType = append(
 				filterByType,
-				value,
+				v,
 			)
 		case "cid":
 			filterByCID = append(
 				filterByCID,
-				object.CID(value),
+				value.CID(v),
 			)
 		case "owner":
 			k := crypto.PublicKey{}
-			k.UnmarshalString(value) // nolint: errcheck
+			k.UnmarshalString(v) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
 				k,
@@ -147,7 +148,7 @@ func (p *Provider) Get(
 		case "stream":
 			filterByStreamCID = append(
 				filterByStreamCID,
-				object.CID(value),
+				value.CID(v),
 			)
 		}
 		if req.OrderBy != "" {
@@ -211,30 +212,30 @@ func (p *Provider) Subscribe(
 ) (object.ReadCloser, error) {
 	opts := []objectmanager.LookupOption{}
 	filterByType := []string{}
-	filterByCID := []object.CID{}
+	filterByCID := []value.CID{}
 	filterByOwner := []crypto.PublicKey{}
-	filterByStreamCID := []object.CID{}
+	filterByStreamCID := []value.CID{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
 			return nil, errors.New("invalid lookup query")
 		}
 		prefix := parts[0]
-		value := strings.Join(parts[1:], ":")
+		v := strings.Join(parts[1:], ":")
 		switch prefix {
 		case "type":
 			filterByType = append(
 				filterByType,
-				value,
+				v,
 			)
 		case "cid":
 			filterByCID = append(
 				filterByCID,
-				object.CID(value),
+				value.CID(v),
 			)
 		case "owner":
 			k := crypto.PublicKey{}
-			k.UnmarshalString(value) // nolint: errcheck
+			k.UnmarshalString(v) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
 				k,
@@ -242,7 +243,7 @@ func (p *Provider) Subscribe(
 		case "stream":
 			filterByStreamCID = append(
 				filterByStreamCID,
-				object.CID(value),
+				value.CID(v),
 			)
 		}
 	}
@@ -276,7 +277,7 @@ func (p *Provider) Subscribe(
 
 func (p *Provider) RequestStream(
 	ctx context.Context,
-	rootHash object.CID,
+	rootHash value.CID,
 ) error {
 	recipients, err := p.resolver.Lookup(
 		ctx,
@@ -311,7 +312,7 @@ func (p *Provider) Put(
 ) (*object.Object, error) {
 	obj = object.Copy(obj)
 	if setOwnerS, ok := obj.Data["_setOwner:s"]; ok {
-		if setOwner, ok := setOwnerS.(object.String); ok {
+		if setOwner, ok := setOwnerS.(value.String); ok {
 			switch setOwner {
 			case "@peer":
 				obj.Metadata.Owner = p.local.GetPeerKey().PublicKey()
@@ -326,7 +327,7 @@ func (p *Provider) Put(
 
 func (p *Provider) GetFeedRootCID(
 	streamRootObjectType string,
-) object.CID {
+) value.CID {
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{

@@ -17,6 +17,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/version"
 )
 
@@ -44,7 +45,7 @@ func marshalObject(o *object.Object) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	m["_cid"] = object.String(o.CID())
+	m["_cid"] = value.String(o.CID())
 	return json.Marshal(m)
 }
 
@@ -161,7 +162,7 @@ func NimonaBridgeCall(
 		)
 		if err := nimonaProvider.RequestStream(
 			ctx,
-			object.CID(string(payloadBytes)),
+			value.CID(string(payloadBytes)),
 		); err != nil {
 			return renderBytes(nil, err)
 		}

@@ -3,6 +3,8 @@ package object
 import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object/cid"
+	"nimona.io/pkg/object/value"
 )
 
 const (
@@ -23,37 +25,41 @@ type Signature struct {
 	Signer      crypto.PublicKey `nimona:"signer:s"`
 	Alg         string           `nimona:"alg:s"`
 	X           []byte           `nimona:"x:d"`
-	Certificate *Certificate     `nimona:"certificate:o"`
+	Certificate *Certificate     `nimona:"certificate:m"`
 }
 
 func (s *Signature) IsEmpty() bool {
 	return s == nil || len(s.X) == 0
 }
 
-func (s *Signature) MarshalMap() (Map, error) {
-	r := Map{}
+func (s *Signature) MarshalMap() (value.Map, error) {
+	r := value.Map{}
 	if !s.Signer.IsEmpty() {
-		r["signer"] = String(s.Signer.String())
+		r["signer"] = value.String(s.Signer.String())
 	}
 	if s.Alg != "" {
-		r["alg"] = String(s.Alg)
+		r["alg"] = value.String(s.Alg)
 	}
 	if len(s.X) > 0 {
-		r["x"] = Data(s.X)
+		r["x"] = value.Data(s.X)
 	}
 	if s.Certificate != nil {
 		c, err := s.Certificate.MarshalObject()
 		if err != nil {
 			return nil, err
 		}
-		r["certificate"] = c
+		m, err := c.MarshalMap()
+		if err != nil {
+			return nil, err
+		}
+		r["certificate"] = m
 	}
 	return r, nil
 }
 
-func (s *Signature) UnmarshalMap(m Map) error {
+func (s *Signature) UnmarshalMap(m value.Map) error {
 	if t, ok := m["signer"]; ok {
-		if v, ok := t.(String); ok {
+		if v, ok := t.(value.String); ok {
 			k := crypto.PublicKey{}
 			if err := k.UnmarshalString(string(v)); err == nil {
 				s.Signer = k
@@ -61,19 +67,24 @@ func (s *Signature) UnmarshalMap(m Map) error {
 		}
 	}
 	if t, ok := m["alg"]; ok {
-		if v, ok := t.(String); ok {
+		if v, ok := t.(value.String); ok {
 			s.Alg = string(v)
 		}
 	}
 	if t, ok := m["x"]; ok {
-		if v, ok := t.(Data); ok {
+		if v, ok := t.(value.Data); ok {
 			s.X = []byte(v)
 		}
 	}
 	if t, ok := m["certificate"]; ok {
-		if v, ok := t.(*Object); ok {
+		if m, ok := t.(value.Map); ok {
+			o := &Object{}
+			err := o.UnmarshalMap(m)
+			if err != nil {
+				return err
+			}
 			c := &Certificate{}
-			err := Unmarshal(v, c)
+			err = Unmarshal(o, c)
 			if err != nil {
 				return err
 			}
@@ -88,7 +99,11 @@ func NewSignature(
 	k crypto.PrivateKey,
 	o *Object,
 ) (Signature, error) {
-	h, err := NewCID(o)
+	m, err := o.MarshalMap()
+	if err != nil {
+		return Signature{}, err
+	}
+	h, err := cid.New(m)
 	if err != nil {
 		return Signature{}, err
 	}

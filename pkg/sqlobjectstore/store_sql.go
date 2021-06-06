@@ -17,6 +17,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 )
 
@@ -57,7 +58,7 @@ type (
 	EventAction string
 	Event       struct {
 		Action    EventAction
-		ObjectCID object.CID
+		ObjectCID value.CID
 	}
 )
 
@@ -98,7 +99,7 @@ func (st *Store) Close() error {
 }
 
 func (st *Store) Get(
-	cid object.CID,
+	cid value.CID,
 ) (*object.Object, error) {
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE CID=?")
@@ -139,7 +140,7 @@ func (st *Store) Get(
 }
 
 func (st *Store) GetByStream(
-	streamRootCID object.CID,
+	streamRootCID value.CID,
 ) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamCID(streamRootCID),
@@ -238,7 +239,7 @@ func (st *Store) PutWithTTL(
 	if len(obj.Metadata.Parents) > 0 {
 		for _, group := range obj.Metadata.Parents {
 			for _, p := range group {
-				err := st.putRelation(object.CID(streamCID), objCID, p)
+				err := st.putRelation(value.CID(streamCID), objCID, p)
 				if err != nil {
 					return fmt.Errorf("could not create relation: %w", err)
 				}
@@ -247,7 +248,7 @@ func (st *Store) PutWithTTL(
 	}
 
 	if streamCID == objectCID {
-		err := st.putRelation(object.CID(streamCID), objCID, "")
+		err := st.putRelation(value.CID(streamCID), objCID, "")
 		if err != nil {
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
@@ -262,9 +263,9 @@ func (st *Store) PutWithTTL(
 }
 
 func (st *Store) putRelation(
-	stream object.CID,
-	parent object.CID,
-	child object.CID,
+	stream value.CID,
+	parent value.CID,
+	child value.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Relations (
@@ -293,8 +294,8 @@ func (st *Store) putRelation(
 }
 
 func (st *Store) GetStreamLeaves(
-	streamRootCID object.CID,
-) ([]object.CID, error) {
+	streamRootCID value.CID,
+) ([]value.CID, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
@@ -319,22 +320,22 @@ func (st *Store) GetStreamLeaves(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []object.CID{}
+	cidList := []value.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, object.CID(data))
+		cidList = append(cidList, value.CID(data))
 	}
 
 	return cidList, nil
 }
 
 func (st *Store) GetRelations(
-	parent object.CID,
-) ([]object.CID, error) {
+	parent value.CID,
+) ([]value.CID, error) {
 	stmt, err := st.db.Prepare("SELECT CID FROM Objects WHERE RootCID=?")
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare query: %w", err)
@@ -347,14 +348,14 @@ func (st *Store) GetRelations(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []object.CID{}
+	cidList := []value.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, object.CID(data))
+		cidList = append(cidList, value.CID(data))
 	}
 
 	istmt, err := st.db.Prepare(
@@ -375,7 +376,7 @@ func (st *Store) GetRelations(
 	return cidList, nil
 }
 
-func (st *Store) ListCIDs() ([]object.CID, error) {
+func (st *Store) ListCIDs() ([]value.CID, error) {
 	stmt, err := st.db.Prepare(
 		"SELECT CID FROM Objects WHERE CID == RootCID",
 	)
@@ -390,21 +391,21 @@ func (st *Store) ListCIDs() ([]object.CID, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []object.CID{}
+	cidList := []value.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, object.CID(data))
+		cidList = append(cidList, value.CID(data))
 	}
 
 	return cidList, nil
 }
 
 func (st *Store) UpdateTTL(
-	cid object.CID,
+	cid value.CID,
 	minutes int,
 ) error {
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootCID=?`)
@@ -421,7 +422,7 @@ func (st *Store) UpdateTTL(
 }
 
 func (st *Store) Remove(
-	cid object.CID,
+	cid value.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
@@ -580,7 +581,7 @@ func (st *Store) Filter(
 		defer close(objectsChan)
 		defer close(errorChan)
 		for _, cid := range cids {
-			o, err := st.Get(object.CID(cid))
+			o, err := st.Get(value.CID(cid))
 			if err != nil {
 				errorChan <- err
 				return
@@ -598,7 +599,7 @@ func (st *Store) Filter(
 }
 
 func (st *Store) Pin(
-	cid object.CID,
+	cid value.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Pins (CID) VALUES (?)
@@ -618,7 +619,7 @@ func (st *Store) Pin(
 	return nil
 }
 
-func (st *Store) GetPinned() ([]object.CID, error) {
+func (st *Store) GetPinned() ([]value.CID, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT CID FROM Pins
 	`)
@@ -633,21 +634,21 @@ func (st *Store) GetPinned() ([]object.CID, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hs := []object.CID{}
+	hs := []value.CID{}
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		if h != "" {
-			hs = append(hs, object.CID(h))
+			hs = append(hs, value.CID(h))
 		}
 	}
 
 	return hs, nil
 }
 
-func (st *Store) IsPinned(cid object.CID) (bool, error) {
+func (st *Store) IsPinned(cid value.CID) (bool, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT CID FROM Pins WHERE CID = ?
 	`)
@@ -675,7 +676,7 @@ func (st *Store) IsPinned(cid object.CID) (bool, error) {
 }
 
 func (st *Store) RemovePin(
-	cid object.CID,
+	cid value.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		DELETE FROM Pins
@@ -736,7 +737,7 @@ func astoai(ah []string) []interface{} {
 	return as
 }
 
-func ahtoai(ah []object.CID) []interface{} {
+func ahtoai(ah []value.CID) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()
