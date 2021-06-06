@@ -1,21 +1,20 @@
 {
     "go.buildTags": "dev",
-    "go.formatTool": "goimports",
-    "go.lintTool": "golangci-lint",
-    "go.lintOnSave": "file",
-    "go.lintFlags": [
-        "--fast"
-    ],
     "go.testFlags": [
         "-v",
-        "-race",
-        "-failfast"
+        "--race",
     ],
-    "go.testEnvVars": {
-        "LOG_LEVEL": "DEBUG",
-    },
-    "go.testTimeout": "60s",
     "go.useLanguageServer": true,
+    "go.testTimeout": "60s",
+    "gopls": {
+        "build.experimentalWorkspaceModule": true,
+        "formatting.gofumpt": true,
+        "ui.completion.completionBudget": "50ms",
+        "ui.completion.matcher": "Fuzzy",
+        "ui.completion.usePlaceholders": true,
+    },
+    "go.languageServerExperimentalFeatures": {
+    },
     "editor.rulers": [
         80,
     ],
