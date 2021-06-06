@@ -6,7 +6,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 )
 
 // FilterOptions
@@ -16,8 +16,8 @@ type (
 		// Filters are used to perform db queries for these filters
 		// TODO find a better name for this
 		Filters struct {
-			ObjectCIDs   []object.CID
-			StreamCIDs   []object.CID
+			ObjectCIDs   []value.CID
+			StreamCIDs   []value.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 			OrderBy      string
@@ -31,8 +31,8 @@ type (
 func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 	options := &FilterOptions{
 		Filters: struct {
-			ObjectCIDs   []object.CID
-			StreamCIDs   []object.CID
+			ObjectCIDs   []value.CID
+			StreamCIDs   []value.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 			OrderBy      string
@@ -40,8 +40,8 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			Limit        *int
 			Offset       *int
 		}{
-			ObjectCIDs:   []object.CID{},
-			StreamCIDs:   []object.CID{},
+			ObjectCIDs:   []value.CID{},
+			StreamCIDs:   []value.CID{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 			OrderBy:      "Created",
@@ -73,7 +73,7 @@ func FilterLimit(limit, offset int) FilterOption {
 	}
 }
 
-func FilterByCID(hs ...object.CID) FilterOption {
+func FilterByCID(hs ...value.CID) FilterOption {
 	return func(opts *FilterOptions) {
 		opts.Filters.ObjectCIDs = append(opts.Filters.ObjectCIDs, hs...)
 	}
@@ -85,7 +85,7 @@ func FilterByOwner(hs ...crypto.PublicKey) FilterOption {
 	}
 }
 
-func FilterByStreamCID(hs ...object.CID) FilterOption {
+func FilterByStreamCID(hs ...value.CID) FilterOption {
 	return func(opts *FilterOptions) {
 		opts.Filters.StreamCIDs = append(opts.Filters.StreamCIDs, hs...)
 	}

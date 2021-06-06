@@ -4,6 +4,7 @@ package stream
 
 import (
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 type (
@@ -17,22 +18,22 @@ type (
 	Request struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
 		RequestID string          `nimona:"requestID:s"`
-		RootCID   object.CID      `nimona:"rootCID:s"`
+		RootCID   value.CID       `nimona:"rootCID:s"`
 	}
 	Response struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
 		RequestID string          `nimona:"requestID:s"`
-		RootCID   object.CID      `nimona:"rootCID:s"`
-		Leaves    []object.CID    `nimona:"leaves:as"`
+		RootCID   value.CID       `nimona:"rootCID:s"`
+		Leaves    []value.CID     `nimona:"leaves:as"`
 	}
 	Announcement struct {
 		Metadata   object.Metadata `nimona:"@metadata:m"`
-		StreamCID  object.CID      `nimona:"streamCID:s"`
-		ObjectCIDs []object.CID    `nimona:"objectCIDs:as"`
+		StreamCID  value.CID       `nimona:"streamCID:s"`
+		ObjectCIDs []value.CID     `nimona:"objectCIDs:as"`
 	}
 	Subscription struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
-		RootCIDs []object.CID    `nimona:"rootCIDs:as"`
+		RootCIDs []value.CID     `nimona:"rootCIDs:as"`
 		Expiry   string          `nimona:"expiry:s"`
 	}
 )

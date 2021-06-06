@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 )
 
@@ -20,7 +21,7 @@ type (
 	Requester interface {
 		Request(
 			ctx context.Context,
-			cid object.CID,
+			cid value.CID,
 		) (*Blob, []*Chunk, error)
 	}
 	Manager interface {
@@ -68,7 +69,7 @@ func (r *manager) ImportFromFile(
 	}
 
 	// keep a list of all chunk cids
-	chunkCIDs := []object.CID{}
+	chunkCIDs := []value.CID{}
 
 	// start a workerpool to store chunks
 	wp := workerpool.New(r.importWorkers)
@@ -137,7 +138,7 @@ func (r *manager) ImportFromFile(
 
 func (r *manager) Request(
 	ctx context.Context,
-	cid object.CID,
+	cid value.CID,
 ) (*Blob, []*Chunk, error) {
 	logger := log.
 		FromContext(ctx).
@@ -204,7 +205,7 @@ func (r *manager) Request(
 	return blob, chunks, nil
 }
 
-func getChunks(o *object.Object) ([]object.CID, error) {
+func getChunks(o *object.Object) ([]value.CID, error) {
 	b := &Blob{}
 	if err := b.UnmarshalObject(o); err != nil {
 		return nil, err

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/hint"
 )
 
 var primitives = map[string]struct {
@@ -14,9 +14,9 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/object.CID": {
+	"nimona.io/value.CID": {
 		Hint:      "s",
-		Type:      "object.CID",
+		Type:      "value.CID",
 		IsObject:  false,
 		IsPrimary: true,
 	},
@@ -97,36 +97,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch object.Hint(h) {
-			case object.BoolHint:
+			switch hint.Hint(h) {
+			case hint.Bool:
 				return "object.Bool"
-			case object.DataHint:
+			case hint.Data:
 				return "object.Data"
-			case object.FloatHint:
+			case hint.Float:
 				return "object.Float"
-			case object.IntHint:
+			case hint.Int:
 				return "object.Int"
-			case object.MapHint:
-				return "object.Map"
-			case object.ObjectHint:
-				return ""
-			case object.StringHint:
-				return "object.String"
-			case object.UintHint:
+			case hint.Map:
+				return "value.Map"
+			case hint.String:
+				return "value.String"
+			case hint.Uint:
 				return "object.Uint"
-			case object.BoolArrayHint:
+			case hint.BoolArray:
 				return "object.ToBoolArray"
-			case object.DataArrayHint:
+			case hint.DataArray:
 				return "object.ToDataArray"
-			case object.FloatArrayHint:
+			case hint.FloatArray:
 				return "object.ToFloatArray"
-			case object.IntArrayHint:
+			case hint.IntArray:
 				return "object.ToIntArray"
-			case object.MapArrayHint:
+			case hint.MapArray:
 				return "object.ToMapArray"
-			case object.StringArrayHint:
+			case hint.StringArray:
 				return "object.ToStringArray"
-			case object.UintArrayHint:
+			case hint.UintArray:
 				return "object.ToUintArray"
 			}
 			panic("unknown hint in fromPrimitive " + m.Hint)
@@ -136,36 +134,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch object.Hint(h) {
-			case object.BoolHint:
+			switch hint.Hint(h) {
+			case hint.Bool:
 				return "bool"
-			case object.DataHint:
+			case hint.Data:
 				return "[]byte"
-			case object.FloatHint:
+			case hint.Float:
 				return "float64"
-			case object.IntHint:
+			case hint.Int:
 				return "int64"
-			case object.StringHint:
+			case hint.String:
 				return "string"
-			case object.UintHint:
+			case hint.Uint:
 				return "uint64"
-			case object.MapHint:
-				return "object.Map"
-			case object.ObjectHint:
-				return ""
-			case object.BoolArrayHint:
+			case hint.Map:
+				return "value.Map"
+			case hint.BoolArray:
 				return "object.FromBoolArray"
-			case object.DataArrayHint:
+			case hint.DataArray:
 				return "object.FromDataArray"
-			case object.FloatArrayHint:
+			case hint.FloatArray:
 				return "object.FromFloatArray"
-			case object.IntArrayHint:
+			case hint.IntArray:
 				return "object.FromIntArray"
-			case object.MapArrayHint:
+			case hint.MapArray:
 				return "object.FromMapArray"
-			case object.StringArrayHint:
+			case hint.StringArray:
 				return "object.FromStringArray"
-			case object.UintArrayHint:
+			case hint.UintArray:
 				return "object.FromUintArray"
 			}
 			panic("unknown hint in toPrimitive " + m.Hint)
@@ -175,38 +171,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch object.Hint(h) {
-			case object.BoolHint:
+			switch hint.Hint(h) {
+			case hint.Bool:
 				return "object.Bool"
-			case object.DataHint:
+			case hint.Data:
 				return "object.Data"
-			case object.FloatHint:
+			case hint.Float:
 				return "object.Float"
-			case object.IntHint:
+			case hint.Int:
 				return "object.Int"
-			case object.StringHint:
-				return "object.String"
-			case object.MapHint:
-				return "object.Map"
-			case object.ObjectHint:
-				return "*object.Object"
-			case object.UintHint:
+			case hint.String:
+				return "value.String"
+			case hint.Map:
+				return "value.Map"
+			case hint.Uint:
 				return "object.Uint"
-			case object.BoolArrayHint:
+			case hint.BoolArray:
 				return "object.BoolArray"
-			case object.DataArrayHint:
+			case hint.DataArray:
 				return "object.DataArray"
-			case object.FloatArrayHint:
+			case hint.FloatArray:
 				return "object.FloatArray"
-			case object.IntArrayHint:
+			case hint.IntArray:
 				return "object.IntArray"
-			case object.ObjectArrayHint:
+			case hint.ObjectArray:
 				return "object.ObjectArray"
-			case object.MapArrayHint:
+			case hint.MapArray:
 				return "object.MapArray"
-			case object.StringArrayHint:
+			case hint.StringArray:
 				return "object.StringArray"
-			case object.UintArrayHint:
+			case hint.UintArray:
 				return "object.UintArray"
 			}
 			panic("unknown hint in primitive " + m.Hint)
@@ -216,22 +210,22 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch object.Hint(h) {
-			case object.BoolArrayHint:
+			switch hint.Hint(h) {
+			case hint.BoolArray:
 				return "object.Bool"
-			case object.DataArrayHint:
+			case hint.DataArray:
 				return "object.Data"
-			case object.FloatArrayHint:
+			case hint.FloatArray:
 				return "object.Float"
-			case object.IntArrayHint:
+			case hint.IntArray:
 				return "object.Int"
-			case object.MapArrayHint:
-				return "object.Map"
-			case object.ObjectArrayHint:
+			case hint.MapArray:
+				return "value.Map"
+			case hint.ObjectArray:
 				return ""
-			case object.StringArrayHint:
-				return "object.String"
-			case object.UintArrayHint:
+			case hint.StringArray:
+				return "value.String"
+			case hint.UintArray:
 				return "object.Uint"
 			}
 			panic("unknown hint in primitiveSingular " + m.Hint)
@@ -257,38 +251,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch object.Hint(h) {
-			case object.BoolHint:
+			switch hint.Hint(h) {
+			case hint.Bool:
 				return "bool"
-			case object.DataHint:
+			case hint.Data:
 				return "[]byte"
-			case object.FloatHint:
+			case hint.Float:
 				return "float64"
-			case object.IntHint:
+			case hint.Int:
 				return "int64"
-			case object.StringHint:
+			case hint.String:
 				return "string"
-			case object.UintHint:
+			case hint.Uint:
 				return "uint64"
-			case object.MapHint:
-				return "object.Map"
-			case object.ObjectHint:
-				return ""
-			case object.BoolArrayHint:
+			case hint.Map:
+				return "value.Map"
+			case hint.BoolArray:
 				return "bool"
-			case object.DataArrayHint:
+			case hint.DataArray:
 				return "[]byte"
-			case object.FloatArrayHint:
+			case hint.FloatArray:
 				return "float64"
-			case object.IntArrayHint:
+			case hint.IntArray:
 				return "int64"
-			case object.MapArrayHint:
-				return "object.Map"
-			case object.ObjectArrayHint:
+			case hint.MapArray:
+				return "value.Map"
+			case hint.ObjectArray:
 				return ""
-			case object.StringArrayHint:
+			case hint.StringArray:
 				return "string"
-			case object.UintArrayHint:
+			case hint.UintArray:
 				return "uint64"
 			}
 			panic("unknown primitive " + m.Hint)
@@ -371,6 +363,10 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	doc.Imports["json"] = "encoding/json"
+	doc.Imports["value"] = "nimona.io/object/value"
+	doc.Imports["hint"] = "nimona.io/object/hint"
+	doc.Imports["cid"] = "nimona.io/object/cid"
+
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"
 	}

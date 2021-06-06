@@ -17,6 +17,7 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 )
 
@@ -178,8 +179,8 @@ func (n *network) Dial(
 		// try to write something
 		ping := &object.Object{
 			Type: "ping",
-			Data: object.Map{
-				"dt": object.String(time.Now().Format(time.RFC3339)),
+			Data: value.Map{
+				"dt": value.String(time.Now().Format(time.RFC3339)),
 			},
 		}
 		if err := Write(

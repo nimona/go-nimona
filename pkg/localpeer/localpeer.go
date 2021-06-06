@@ -9,7 +9,7 @@ import (
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=localpeer gen "KeyType=object.CID"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object/value -pkg=localpeer gen "KeyType=value.CID"
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 
 type (
@@ -25,7 +25,7 @@ type (
 	localPeer struct {
 		keyLock                 sync.RWMutex
 		primaryPeerKey          crypto.PrivateKey
-		cids                    *ObjectCIDSyncList
+		cids                    *ValueCIDSyncList
 		peerCertificateResponse *object.CertificateResponse
 		listeners               map[string]chan UpdateEvent
 		listenersLock           sync.RWMutex
@@ -40,7 +40,7 @@ const (
 func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
-		cids:          &ObjectCIDSyncList{},
+		cids:          &ValueCIDSyncList{},
 		listeners:     map[string]chan UpdateEvent{},
 		listenersLock: sync.RWMutex{},
 	}

@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 )
 
 const (
@@ -16,18 +17,18 @@ const (
 
 type (
 	Getter interface {
-		Get(cid object.CID) (*object.Object, error)
+		Get(cid value.CID) (*object.Object, error)
 	}
 	Store interface {
-		Get(cid object.CID) (*object.Object, error)
+		Get(cid value.CID) (*object.Object, error)
 		GetByType(string) (object.ReadCloser, error)
-		GetByStream(object.CID) (object.ReadCloser, error)
+		GetByStream(value.CID) (object.ReadCloser, error)
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
-		GetStreamLeaves(streamRootCID object.CID) ([]object.CID, error)
-		Pin(object.CID) error
-		IsPinned(object.CID) (bool, error)
-		GetPinned() ([]object.CID, error)
-		RemovePin(object.CID) error
+		GetStreamLeaves(streamRootCID value.CID) ([]value.CID, error)
+		Pin(value.CID) error
+		IsPinned(value.CID) (bool, error)
+		GetPinned() ([]value.CID, error)
+		RemovePin(value.CID) error
 	}
 )

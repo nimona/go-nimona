@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object/cid"
 )
 
 const (
@@ -32,7 +33,11 @@ func Verify(o *Object) error {
 	}
 
 	// get object cid
-	h, err := NewCID(o)
+	m, err := o.MarshalMap()
+	if err != nil {
+		return err
+	}
+	h, err := cid.New(m)
 	if err != nil {
 		return err
 	}

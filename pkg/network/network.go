@@ -29,6 +29,7 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 )
 
@@ -772,7 +773,7 @@ func (w *network) Send(
 		if !ok {
 			return errors.Error("cannot wait for response without a request id")
 		}
-		rID, ok := rIDVal.(object.String)
+		rID, ok := rIDVal.(value.String)
 		if !ok {
 			return errors.Error("cannot wait for response with an invalid request id")
 		}

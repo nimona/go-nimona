@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -188,8 +189,8 @@ func main() {
 					Metadata: object.Metadata{
 						Owner: local.GetPeerKey().PublicKey(),
 					},
-					Data: object.Map{
-						"nonce": object.String(rand.String(8)),
+					Data: value.Map{
+						"nonce": value.String(rand.String(8)),
 					},
 				},
 				recipient.PublicKey,

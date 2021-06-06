@@ -5,6 +5,8 @@ import (
 	"reflect"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object/hint"
+	"nimona.io/pkg/object/value"
 )
 
 // Unmarshal an object into a tagged struct
@@ -17,7 +19,7 @@ func Unmarshal(o *Object, out interface{}) error {
 	if err != nil {
 		return err
 	}
-	return unmarshalMap(MapHint, o.Data, v)
+	return unmarshalMap(hint.Map, o.Data, v)
 }
 
 func unmarshalSpecials(o *Object, v reflect.Value) error {
@@ -53,22 +55,55 @@ func unmarshalSpecials(o *Object, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalMap(h Hint, m Map, v reflect.Value) error {
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+func unmarshalMap(h hint.Hint, m value.Map, target reflect.Value) error {
+	if target.Kind() == reflect.Ptr {
+		target = target.Elem()
 	}
 
-	switch v.Kind() {
+	if _, hasType := m["@type"]; hasType {
+		o := &Object{}
+		err := o.UnmarshalMap(m)
+		if err != nil {
+			return err
+		}
+		var ev reflect.Value
+		if target.Kind() == reflect.Ptr {
+			ev = reflect.New(target.Type().Elem())
+		} else {
+			ev = reflect.New(target.Type())
+		}
+		// if the target is an object simply set it
+		if _, isObjPtr := ev.Interface().(*Object); isObjPtr {
+			target.Set(reflect.ValueOf(*o))
+			return nil
+		}
+		if _, isObj := ev.Interface().(Object); isObj {
+			target.Set(reflect.ValueOf(*o))
+			return nil
+		}
+		// else we should try to unmarshal onto it
+		err = Unmarshal(o, ev.Interface())
+		if err != nil {
+			return err
+		}
+		if target.Kind() == reflect.Ptr {
+			target.Set(ev)
+		} else {
+			target.Set(ev.Elem())
+		}
+	}
+
+	switch target.Kind() {
 	case reflect.Struct:
-		return unmarshalMapToStruct(h, m, v)
+		return unmarshalMapToStruct(h, m, target)
 	case reflect.Map:
-		return unmarshalMapToMap(h, m, v)
+		return unmarshalMapToMap(h, m, target)
 	}
 
-	return errors.Error("expected map or struct, got " + v.Kind().String())
+	return errors.Error("expected map or struct, got " + target.Kind().String())
 }
 
-func unmarshalMapToStruct(h Hint, m Map, v reflect.Value) error {
+func unmarshalMapToStruct(h hint.Hint, m value.Map, v reflect.Value) error {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -94,7 +129,7 @@ func unmarshalMapToStruct(h Hint, m Map, v reflect.Value) error {
 			// TODO special
 			continue
 		}
-		in, ih, err := splitHint([]byte(ig))
+		in, ih, err := hint.Extract(ig)
 		if err != nil {
 			return err
 		}
@@ -109,7 +144,7 @@ func unmarshalMapToStruct(h Hint, m Map, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalMapToMap(h Hint, m Map, v reflect.Value) error {
+func unmarshalMapToMap(h hint.Hint, m value.Map, v reflect.Value) error {
 	if v.Kind() != reflect.Map {
 		return errors.Error("unmarshal: expected struct, got " + v.Kind().String())
 	}
@@ -129,9 +164,9 @@ func unmarshalMapToMap(h Hint, m Map, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalAny(h Hint, v Value, target reflect.Value) error {
+func unmarshalAny(h hint.Hint, v value.Value, target reflect.Value) error {
 	switch vv := v.(type) {
-	case CID:
+	case value.CID:
 		if vv == "" {
 			return nil
 		}
@@ -142,7 +177,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetString(string(vv))
 		return nil
-	case String:
+	case value.String:
 		// TODO is there any reason we would want to unmarshal an empty string?
 		if vv == "" {
 			return nil
@@ -169,7 +204,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetString(string(vv))
 		return nil
-	case Bool:
+	case value.Bool:
 		if target.Kind() != reflect.Bool {
 			return errors.Error(
 				"expected bool target, got " + target.Kind().String(),
@@ -177,55 +212,31 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetBool(bool(vv))
 		return nil
-	case Map:
+	case value.Map:
 		switch target.Kind() {
 		case reflect.Ptr:
-			return unmarshalMap(h, vv, target)
+			target.Set(reflect.New(target.Type().Elem()))
 		case reflect.Struct:
 			target.Set(reflect.New(target.Type()).Elem())
-			return unmarshalMap(h, vv, target)
 		case reflect.Map:
-			if target.IsNil() {
-				target.Set(reflect.New(target.Type()).Elem())
-			}
-			return unmarshalMap(h, vv, target)
+			// if target.IsNil() {
+			target.Set(reflect.New(target.Type()).Elem())
+			// }
 		default:
 			return errors.Error(
 				"expected map or struct target, got " + target.Kind().String(),
 			)
 		}
-	case *Object:
-		var ev reflect.Value
-		if target.Kind() == reflect.Ptr {
-			ev = reflect.New(target.Type().Elem())
-		} else {
-			ev = reflect.New(target.Type())
-		}
-		// if the target is an object simply set it
-		if _, ok := ev.Interface().(*Object); ok {
-			target.Set(reflect.ValueOf(vv))
-			return nil
-		}
-		// else we should try to unmarshal onto it
-		err := Unmarshal(vv, ev.Interface())
-		if err != nil {
-			return err
-		}
-		if target.Kind() == reflect.Ptr {
-			target.Set(ev)
-		} else {
-			target.Set(ev.Elem())
-		}
-		return nil
-	case BoolArray,
-		DataArray,
-		FloatArray,
-		IntArray,
-		MapArray,
-		ObjectArray,
-		StringArray,
-		UintArray,
-		CIDArray:
+		return unmarshalMap(h, vv, target)
+	case value.BoolArray,
+		value.DataArray,
+		value.FloatArray,
+		value.IntArray,
+		value.MapArray,
+		// value.ObjectArray,
+		value.StringArray,
+		value.UintArray,
+		value.CIDArray:
 		switch target.Kind() {
 		case reflect.Slice, reflect.Array:
 		default:
@@ -235,7 +246,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		et := target.Type().Elem()
 		var err error
-		vv.(ArrayValue).Range(func(_ int, ov Value) bool {
+		vv.(value.ArrayValue).Range(func(_ int, ov value.Value) bool {
 			var ev reflect.Value
 			if et.Kind() == reflect.Ptr {
 				ev = reflect.Indirect(reflect.New(et))
@@ -252,7 +263,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 			return false
 		})
 		return err
-	case Float:
+	case value.Float:
 		switch target.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
@@ -263,7 +274,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetFloat(float64(vv))
 		return nil
-	case Int:
+	case value.Int:
 		switch target.Kind() {
 		case reflect.Int,
 			reflect.Int8,
@@ -277,7 +288,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetInt(int64(vv))
 		return nil
-	case Uint:
+	case value.Uint:
 		switch target.Kind() {
 		case reflect.Uint,
 			reflect.Uint8,
@@ -291,7 +302,7 @@ func unmarshalAny(h Hint, v Value, target reflect.Value) error {
 		}
 		target.SetUint(uint64(vv))
 		return nil
-	case Data:
+	case value.Data:
 		switch target.Kind() {
 		case reflect.Ptr:
 			if _, ok := target.Interface().(ByteUnmashaller); ok {

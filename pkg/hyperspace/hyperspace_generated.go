@@ -11,7 +11,7 @@ type (
 	Announcement struct {
 		Metadata         object.Metadata      `nimona:"@metadata:m"`
 		Version          int64                `nimona:"version:i"`
-		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:o"`
+		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:m"`
 		PeerVector       []uint64             `nimona:"peerVector:au"`
 		PeerCapabilities []string             `nimona:"peerCapabilities:as"`
 	}
@@ -25,7 +25,7 @@ type (
 		Metadata      object.Metadata `nimona:"@metadata:m"`
 		Nonce         string          `nimona:"nonce:s"`
 		QueryVector   []uint64        `nimona:"queryVector:au"`
-		Announcements []*Announcement `nimona:"announcements:ao"`
+		Announcements []*Announcement `nimona:"announcements:am"`
 	}
 )
 

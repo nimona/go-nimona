@@ -8,6 +8,7 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/object/value"
 )
 
 func TestVerify(t *testing.T) {
@@ -22,8 +23,8 @@ func TestVerify(t *testing.T) {
 	}{{
 		name: "should pass, no signature, no owner",
 		object: &Object{
-			Data: Map{
-				"foo:s": String("bar"),
+			Data: value.Map{
+				"foo:s": value.String("bar"),
 			},
 		},
 	}, {
@@ -32,8 +33,8 @@ func TestVerify(t *testing.T) {
 			t,
 			testKey0,
 			&Object{
-				Data: Map{
-					"foo:s": String("bar"),
+				Data: value.Map{
+					"foo:s": value.String("bar"),
 				},
 			},
 		),
@@ -43,8 +44,8 @@ func TestVerify(t *testing.T) {
 			Metadata: Metadata{
 				Owner: testKey0.PublicKey(),
 			},
-			Data: Map{
-				"foo:s": String("bar"),
+			Data: value.Map{
+				"foo:s": value.String("bar"),
 			},
 		},
 		wantErr: true,
@@ -57,8 +58,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: Map{
-					"foo:s": String("bar"),
+				Data: value.Map{
+					"foo:s": value.String("bar"),
 				},
 			},
 		),
@@ -75,8 +76,8 @@ func TestVerify(t *testing.T) {
 						X: []byte{1, 2, 3},
 					},
 				},
-				Data: Map{
-					"foo:s": String("bar"),
+				Data: value.Map{
+					"foo:s": value.String("bar"),
 				},
 			},
 		),
@@ -90,8 +91,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: Map{
-					"foo:s": String("bar"),
+				Data: value.Map{
+					"foo:s": value.String("bar"),
 				},
 			},
 		),
@@ -106,8 +107,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: Map{
-					"foo:s": String("bar"),
+				Data: value.Map{
+					"foo:s": value.String("bar"),
 				},
 			},
 		),
@@ -123,8 +124,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: Map{
-						"foo:s": String("bar"),
+					Data: value.Map{
+						"foo:s": value.String("bar"),
 					},
 				},
 			)
@@ -145,8 +146,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: Map{
-						"foo:s": String("bar"),
+					Data: value.Map{
+						"foo:s": value.String("bar"),
 					},
 				},
 			)
@@ -170,8 +171,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: Map{
-						"foo:s": String("bar"),
+					Data: value.Map{
+						"foo:s": value.String("bar"),
 					},
 				},
 			)

@@ -11,7 +11,7 @@ type (
 		Metadata    Metadata                `nimona:"@metadata:m"`
 		Nonce       string                  `nimona:"nonce:s"`
 		Subject     crypto.PublicKey        `nimona:"subject:s"`
-		Permissions []CertificatePermission `nimona:"permissions:ao"`
+		Permissions []CertificatePermission `nimona:"permissions:am"`
 		Starts      string                  `nimona:"starts:s"`
 		Expires     string                  `nimona:"expires:s"`
 	}
@@ -28,14 +28,14 @@ type (
 		ApplicationName        string                  `nimona:"applicationName:s"`
 		ApplicationDescription string                  `nimona:"applicationDescription:s"`
 		ApplicationURL         string                  `nimona:"applicationURL:s"`
-		Permissions            []CertificatePermission `nimona:"permissions:ao"`
+		Permissions            []CertificatePermission `nimona:"permissions:am"`
 	}
 	CertificateResponse struct {
 		Metadata    Metadata           `nimona:"@metadata:m"`
 		Signed      bool               `nimona:"signed:b"`
 		Notes       string             `nimona:"notes:s"`
-		Request     CertificateRequest `nimona:"request:o"`
-		Certificate Certificate        `nimona:"certificate:o"`
+		Request     CertificateRequest `nimona:"request:m"`
+		Certificate Certificate        `nimona:"certificate:m"`
 	}
 )
 

@@ -4,16 +4,20 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"nimona.io/pkg/object/value"
 )
 
+// nolint: unused
 func traverseObject(
-	v Value,
-	f func(string, Value) (updatedKey string, updatedValue Value, update bool),
+	v value.Value,
+	f func(string, value.Value) (
+		updatedKey string,
+		updatedValue value.Value,
+		update bool,
+	),
 ) {
-	switch vv := v.(type) {
-	case *Object:
-		traverseObject(vv.Data, f)
-	case Map:
+	if vv, ok := v.(value.Map); ok {
 		for ik, iv := range vv {
 			uk, uv, u := f(ik, iv)
 			if u {

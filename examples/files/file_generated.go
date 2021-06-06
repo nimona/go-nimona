@@ -4,13 +4,14 @@ package main
 
 import (
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Blob     object.CID      `nimona:"blob:s"`
+		Blob     value.CID       `nimona:"blob:s"`
 	}
 )
 

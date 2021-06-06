@@ -14,6 +14,8 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/cid"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
@@ -35,7 +37,7 @@ var (
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=object.CID ValueType=stream.Subscription SyncmapName=subscriptions"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=value.CID ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
@@ -45,17 +47,17 @@ type (
 		) (*object.Object, error)
 		Request(
 			ctx context.Context,
-			cid object.CID,
+			cid value.CID,
 			peer *peer.ConnectionInfo,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
-			rootCID object.CID,
+			rootCID value.CID,
 			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
 		AddStreamSubscription(
 			ctx context.Context,
-			rootCID object.CID,
+			rootCID value.CID,
 		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -132,7 +134,7 @@ func (m *manager) isWellKnownEphemeral(
 // TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
 	ctx context.Context,
-	rootCID object.CID,
+	rootCID value.CID,
 	recipients ...*peer.ConnectionInfo,
 ) (object.ReadCloser, error) {
 	if len(recipients) == 0 {
@@ -188,7 +190,7 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	var leaves []object.CID
+	var leaves []value.CID
 
 	select {
 	case res := <-responses:
@@ -206,11 +208,11 @@ func (m *manager) RequestStream(
 
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
-	leaves []object.CID,
+	leaves []value.CID,
 	recipient *peer.ConnectionInfo,
 ) error {
 	// TODO refactor to remove buffer
-	objectCIDs := make(chan object.CID, 1000)
+	objectCIDs := make(chan value.CID, 1000)
 
 	go func() {
 		for _, l := range leaves {
@@ -297,7 +299,7 @@ func (m *manager) fetchFromLeaves(
 
 func (m *manager) Request(
 	ctx context.Context,
-	cid object.CID,
+	cID value.CID,
 	pr *peer.ConnectionInfo,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
@@ -334,7 +336,7 @@ func (m *manager) Request(
 
 	req := &object.Request{
 		RequestID: rID,
-		ObjectCID: cid,
+		ObjectCID: cID,
 	}
 	ro, err := req.MarshalObject()
 	if err != nil {
@@ -481,15 +483,15 @@ func (m *manager) storeObject(
 
 func (m *manager) announceStreamChildren(
 	ctx context.Context,
-	streamCID object.CID,
-	children []object.CID,
+	streamCID value.CID,
+	children []value.CID,
 ) {
 	logger := log.FromContext(ctx)
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[string]struct{}{}
-	m.subscriptions.Range(func(_ object.CID, sub *stream.Subscription) bool {
+	m.subscriptions.Range(func(_ value.CID, sub *stream.Subscription) bool {
 		// TODO check expiry
 		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
 		return true
@@ -846,11 +848,11 @@ func (m *manager) Put(
 			return nil, err
 		}
 		if len(leaves) == 0 {
-			leaves = []object.CID{
+			leaves = []value.CID{
 				streamCID,
 			}
 		}
-		object.SortCIDs(leaves)
+		cid.SortCIDs(leaves)
 		o.Metadata.Parents = object.Parents{
 			"*": leaves,
 		}
@@ -869,7 +871,7 @@ func (m *manager) Put(
 				// TODO timeout?
 			),
 			o.Metadata.Stream,
-			[]object.CID{
+			[]value.CID{
 				o.CID(),
 			},
 		)
@@ -882,7 +884,7 @@ func (m *manager) Put(
 
 func (m *manager) AddStreamSubscription(
 	ctx context.Context,
-	rootCID object.CID,
+	rootCID value.CID,
 ) error {
 	r, err := m.objectstore.GetByStream(rootCID)
 	if err != nil {
@@ -925,7 +927,7 @@ func (m *manager) AddStreamSubscription(
 			Owner:  pub,
 			Stream: rootCID,
 		},
-		RootCIDs: []object.CID{
+		RootCIDs: []value.CID{
 			rootCID,
 		},
 		// TODO add expiry

@@ -12,21 +12,21 @@ object nimona.io/stream.Policy {
 
 signed object nimona.io/stream.Request {
     requestID string
-    rootCID string type=nimona.io/object.CID
+    rootCID string type=nimona.io/value.CID
 }
 
 signed object nimona.io/stream.Response {
     requestID string
-    rootCID string type=nimona.io/object.CID
-    leaves repeated string type=nimona.io/object.CID
+    rootCID string type=nimona.io/value.CID
+    leaves repeated string type=nimona.io/value.CID
 }
 
 signed object nimona.io/stream.Announcement {
-    streamCID string type=nimona.io/object.CID
-    objectCIDs repeated string type=nimona.io/object.CID
+    streamCID string type=nimona.io/value.CID
+    objectCIDs repeated string type=nimona.io/value.CID
 }
 
 signed object nimona.io/stream.Subscription {
-    rootCIDs repeated string type=nimona.io/object.CID
+    rootCIDs repeated string type=nimona.io/value.CID
     expiry string
 }

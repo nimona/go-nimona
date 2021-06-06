@@ -1,4 +1,4 @@
-package object
+package cid
 
 import (
 	"crypto/sha256"
@@ -12,13 +12,33 @@ import (
 	"github.com/multiformats/go-multihash"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object/hint"
+	"nimona.io/pkg/object/value"
 )
 
 const (
 	cidCodec = 0x6E6D // codec code for nimona object
 )
 
-func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {
+func New(o value.Value) (value.CID, error) {
+	r, err := FromValue(o)
+	if err != nil {
+		return Invalid, err
+	}
+	if r == nil {
+		return Empty, nil
+	}
+	return mhToCid(r), nil
+}
+
+func Must(v value.CID, err error) value.CID {
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func mhFromBytes(t hint.Hint, d []byte) (multihash.Multihash, error) {
 	b := sha256.Sum256(append([]byte(t), d...))
 	h, err := multihash.Encode(b[:], multihash.SHA2_256)
 	if err != nil {
@@ -32,15 +52,15 @@ func mhFromBytes(t Hint, d []byte) (multihash.Multihash, error) {
 // - <cid-version>
 // - <multicodec-content-type>
 // - <multihash-content>
-func mhToCid(h multihash.Multihash) CID {
+func mhToCid(h multihash.Multihash) value.CID {
 	c := cid.NewCidV1(cidCodec, h)
 	// nolint: errcheck
 	// there is nothing that can go wrong here
 	s, _ := multibase.Encode(multibase.Base32, c.Bytes())
-	return CID(s)
+	return value.CID(s)
 }
 
-func mhFromCid(h CID) (multihash.Multihash, error) {
+func mhFromCid(h value.CID) (multihash.Multihash, error) {
 	c, err := cid.Decode(string(h))
 	if err != nil {
 		return nil, err
@@ -51,24 +71,16 @@ func mhFromCid(h CID) (multihash.Multihash, error) {
 	return c.Hash(), nil
 }
 
-func NewCID(o *Object) (CID, error) {
-	r, err := fromValue(o)
-	if err != nil || r == nil {
-		return EmptyCID, err
-	}
-	return mhToCid(r), nil
-}
-
-func fromValue(v Value) (multihash.Multihash, error) {
+func FromValue(v value.Value) (multihash.Multihash, error) {
 	switch vv := v.(type) {
-	case Bool:
+	case value.Bool:
 		if !vv {
-			return mhFromBytes(BoolHint, []byte{0})
+			return mhFromBytes(hint.Bool, []byte{0})
 		}
-		return mhFromBytes(BoolHint, []byte{1})
-	case Data:
-		return mhFromBytes(DataHint, vv)
-	case Float:
+		return mhFromBytes(hint.Bool, []byte{1})
+	case value.Data:
+		return mhFromBytes(hint.Data, vv)
+	case value.Float:
 		// replacing ben's implementation with something less custom, based on:
 		// * https://github.com/benlaurie/objecthash
 		// * https://play.golang.org/p/3xraud43pi
@@ -86,7 +98,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 		case math.IsNaN(float64(vv)):
 			return nil, errors.Error("float nan is not currently supported")
 		default:
-			return mhFromBytes(FloatHint,
+			return mhFromBytes(hint.Float,
 				[]byte(
 					fmt.Sprintf(
 						"%d",
@@ -95,9 +107,9 @@ func fromValue(v Value) (multihash.Multihash, error) {
 				),
 			)
 		}
-	case Int:
+	case value.Int:
 		return mhFromBytes(
-			IntHint,
+			hint.Int,
 			[]byte(
 				fmt.Sprintf(
 					"%d",
@@ -105,20 +117,8 @@ func fromValue(v Value) (multihash.Multihash, error) {
 				),
 			),
 		)
-	case *Object, Map:
-		var f Hint
-		var m Map
-		if o, ok := vv.(*Object); ok {
-			var err error
-			m, err = o.MarshalMap()
-			if err != nil {
-				return nil, err
-			}
-			f = CIDHint
-		} else {
-			m = v.(Map)
-			f = MapHint
-		}
+	case value.Map:
+		m := v.(value.Map)
 		h := multihash.Multihash{}
 		ks := []string{}
 		for k := range m {
@@ -133,11 +133,11 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			if mk == nil {
 				continue
 			}
-			mkf := mk.Hint()
-			if _, ok := mk.(*Object); ok {
-				mkf = CIDHint
+			mkf := m.Hint()
+			if _, ok := mk.(value.Map); ok {
+				mkf = hint.Map
 			}
-			vh, err := fromValue(mk)
+			vh, err := FromValue(mk)
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 
 			k = k + ":" + string(mkf)
 			kh, err := mhFromBytes(
-				StringHint,
+				hint.String,
 				[]byte(k),
 			)
 			if err != nil {
@@ -166,20 +166,20 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			return nil, nil
 		}
 		return mhFromBytes(
-			f,
+			hint.CID, // TODO(geoah) should this be hint.Map?
 			h,
 		)
-	case String:
+	case value.String:
 		if string(vv) == "" {
 			return nil, nil
 		}
 		return mhFromBytes(
-			StringHint,
+			hint.String,
 			[]byte(string(vv)),
 		)
-	case Uint:
+	case value.Uint:
 		return mhFromBytes(
-			UintHint,
+			hint.Uint,
 			[]byte(
 				fmt.Sprintf(
 					"%d",
@@ -187,116 +187,103 @@ func fromValue(v Value) (multihash.Multihash, error) {
 				),
 			),
 		)
-	case CID:
+	case value.CID:
 		if vv == "" {
 			return nil, nil
 		}
 		return mhFromCid(vv)
-	case BoolArray:
+	case value.BoolArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(BoolArrayHint, h)
-	case DataArray:
+		return mhFromBytes(hint.BoolArray, h)
+	case value.DataArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(DataArrayHint, h)
-	case FloatArray:
+		return mhFromBytes(hint.DataArray, h)
+	case value.FloatArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(FloatArrayHint, h)
-	case IntArray:
+		return mhFromBytes(hint.FloatArray, h)
+	case value.IntArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(IntArrayHint, h)
-	case MapArray:
+		return mhFromBytes(hint.IntArray, h)
+	case value.MapArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(MapArrayHint, h)
-	case ObjectArray:
+		return mhFromBytes(hint.MapArray, h)
+	case value.StringArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(ObjectArrayHint, h)
-	case StringArray:
+		return mhFromBytes(hint.StringArray, h)
+	case value.UintArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
 		h := multihash.Multihash{}
 		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
+			vh, err := FromValue(ivv)
 			if err != nil {
 				return nil, err
 			}
 			h = append(h, vh...)
 		}
-		return mhFromBytes(StringArrayHint, h)
-	case UintArray:
-		if vv.Len() == 0 {
-			return nil, nil
-		}
-		h := multihash.Multihash{}
-		for _, ivv := range vv {
-			vh, err := fromValue(ivv)
-			if err != nil {
-				return nil, err
-			}
-			h = append(h, vh...)
-		}
-		return mhFromBytes(UintArrayHint, h)
-	case CIDArray:
+		return mhFromBytes(hint.UintArray, h)
+	case value.CIDArray:
 		if vv.Len() == 0 {
 			return nil, nil
 		}
@@ -308,7 +295,7 @@ func fromValue(v Value) (multihash.Multihash, error) {
 			}
 			h = append(h, ivvh...)
 		}
-		return mhFromBytes(CIDArrayHint, h)
+		return mhFromBytes(hint.CIDArray, h)
 	}
 	panic("unknown value " + reflect.TypeOf(v).Name())
 }

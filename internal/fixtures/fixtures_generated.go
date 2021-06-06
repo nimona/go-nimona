@@ -47,8 +47,8 @@ type (
 	Parent struct {
 		Metadata      object.Metadata `nimona:"@metadata:m"`
 		Foo           string          `nimona:"foo:s"`
-		Child         *Child          `nimona:"child:o"`
-		RepeatedChild []*Child        `nimona:"repeatedChild:ao"`
+		Child         *Child          `nimona:"child:m"`
+		RepeatedChild []*Child        `nimona:"repeatedChild:am"`
 	}
 	Child struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`

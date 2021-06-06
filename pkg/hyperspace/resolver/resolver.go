@@ -17,6 +17,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 )
@@ -33,7 +34,7 @@ const (
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=object.CID"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=value.CID"
 
 type (
 	Resolver interface {
@@ -55,7 +56,7 @@ type (
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
-		cids                           *ObjectCIDSyncList
+		cids                           *ValueCIDSyncList
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -79,7 +80,7 @@ func New(
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
-		cids:                           &ObjectCIDSyncList{},
+		cids:                           &ValueCIDSyncList{},
 	}
 
 	for _, opt := range opts {
@@ -206,7 +207,7 @@ func (r *resolver) Lookup(
 		network.FilterByObjectType(hyperspaceLookupResponseType),
 		func(e *network.Envelope) bool {
 			v := e.Payload.Data["nonce"]
-			rn, ok := v.(object.String)
+			rn, ok := v.(value.String)
 			return ok && string(rn) == req.Nonce
 		},
 	)

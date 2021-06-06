@@ -4,6 +4,7 @@ package feed
 
 import (
 	object "nimona.io/pkg/object"
+	value "nimona.io/pkg/object/value"
 )
 
 type (
@@ -14,13 +15,13 @@ type (
 	}
 	Added struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
-		ObjectCID []object.CID    `nimona:"objectCID:as"`
+		ObjectCID []value.CID     `nimona:"objectCID:as"`
 		Sequence  int64           `nimona:"sequence:i"`
 		Datetime  string          `nimona:"datetime:s"`
 	}
 	Removed struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
-		ObjectCID []object.CID    `nimona:"objectCID:as"`
+		ObjectCID []value.CID     `nimona:"objectCID:as"`
 		Sequence  int64           `nimona:"sequence:i"`
 		Datetime  string          `nimona:"datetime:s"`
 	}

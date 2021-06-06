@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 )
@@ -306,7 +307,7 @@ func (m *feedManager) handleObjects(
 				Stream: feedStreamCID,
 				Owner:  peerKey,
 			},
-			ObjectCID: []object.CID{
+			ObjectCID: []value.CID{
 				objCID,
 			},
 		}
@@ -324,14 +325,14 @@ func (m *feedManager) handleObjects(
 		// 	continue
 		// }
 		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []object.CID{
+		// 	"*": []value.CID{
 		// 		feedStreamCID,
 		// 	},
 		// }
 		// if !errors.Is(err, objectstore.ErrNotFound) {
 		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamCID)
 		// 	if err == nil {
-		// 		object.SortCIDs(leaves)
+		// 		cid.SortCIDs(leaves)
 		// 		feedEvent.Metadata.Parents["*"] = leaves
 		// 	}
 		// }
