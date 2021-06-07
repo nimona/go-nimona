@@ -162,6 +162,16 @@ func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 			}
 			return o.MarshalMap()
 		}
+		if ov, isObj := v.Interface().(ObjectMashaller); isObj {
+			if v.IsZero() {
+				return nil, nil
+			}
+			o, err := ov.MarshalObject()
+			if err != nil {
+				return nil, err
+			}
+			return o.MarshalMap()
+		}
 		switch v.Kind() {
 		case reflect.Map:
 			return marshalMap(h, v)
