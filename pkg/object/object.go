@@ -25,6 +25,18 @@ type (
 )
 
 type (
+	ObjectMashaller interface {
+		MarshalObject() (*Object, error)
+	}
+	ObjectUnmashaller interface {
+		UnmarshalObject(*Object) error
+	}
+	MapMashaller interface {
+		MarshalMap() (value.Map, error)
+	}
+	MapUnmashaller interface {
+		UnmarshalMap(value.Map) error
+	}
 	StringMashaller interface {
 		MarshalString() (string, error)
 	}
