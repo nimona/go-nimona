@@ -246,6 +246,8 @@ func unmarshalAny(h hint.Hint, v value.Value, target reflect.Value) error {
 		}
 		et := target.Type().Elem()
 		var err error
+		al := vv.(value.ArrayValue).Len()
+		av := reflect.MakeSlice(target.Type(), 0, al)
 		vv.(value.ArrayValue).Range(func(_ int, ov value.Value) bool {
 			var ev reflect.Value
 			if et.Kind() == reflect.Ptr {
@@ -257,11 +259,12 @@ func unmarshalAny(h hint.Hint, v value.Value, target reflect.Value) error {
 			}
 			err = unmarshalAny(ov.Hint(), ov, ev)
 			if err != nil {
-				return true
+				return false
 			}
-			target.Set(reflect.Append(target, ev))
+			av = reflect.Append(av, ev)
 			return false
 		})
+		target.Set(av)
 		return err
 	case value.Float:
 		switch target.Kind() {
