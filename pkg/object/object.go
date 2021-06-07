@@ -24,6 +24,7 @@ type (
 	}
 )
 
+// nolint: golint
 type (
 	ObjectMashaller interface {
 		MarshalObject() (*Object, error)

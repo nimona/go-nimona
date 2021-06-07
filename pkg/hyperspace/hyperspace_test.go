@@ -2,7 +2,6 @@ package hyperspace
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,8 +83,6 @@ func TestResponse_EncodeDecodeWithSignature(t *testing.T) {
 
 	b, err := json.MarshalIndent(object.MustMarshal(p), "", "  ")
 	require.NoError(t, err)
-
-	fmt.Println(string(b))
 
 	o := &object.Object{}
 	err = json.Unmarshal(b, o)
