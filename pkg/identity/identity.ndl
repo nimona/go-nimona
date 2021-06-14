@@ -6,7 +6,7 @@ signed object nimona.io/identity.Profile {
     version int
     datetime string
     name string
-    image string type=nimona.io/value.CID
+    image string type=nimona.io/chore.CID
 }
 
 stream nimona.io/identity.Profile {

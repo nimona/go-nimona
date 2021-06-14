@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -14,7 +15,6 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
@@ -42,7 +42,7 @@ type chat struct {
 }
 
 func (c *chat) subscribe(
-	conversationRootCID value.CID,
+	conversationRootCID chore.CID,
 ) (chan interface{}, error) {
 	objects := make(chan *object.Object)
 	events := make(chan interface{})
@@ -140,7 +140,7 @@ func (c *chat) subscribe(
 					Owner:  c.local.GetPeerKey().PublicKey(),
 					Stream: conversationRootCID,
 				},
-				RootCIDs: []value.CID{
+				RootCIDs: []chore.CID{
 					conversationRootCID,
 				},
 			})

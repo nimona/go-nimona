@@ -12,12 +12,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 )
 
@@ -58,7 +58,7 @@ type (
 	EventAction string
 	Event       struct {
 		Action    EventAction
-		ObjectCID value.CID
+		ObjectCID chore.CID
 	}
 )
 
@@ -99,7 +99,7 @@ func (st *Store) Close() error {
 }
 
 func (st *Store) Get(
-	cid value.CID,
+	cid chore.CID,
 ) (*object.Object, error) {
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE CID=?")
@@ -140,7 +140,7 @@ func (st *Store) Get(
 }
 
 func (st *Store) GetByStream(
-	streamRootCID value.CID,
+	streamRootCID chore.CID,
 ) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamCID(streamRootCID),
@@ -239,7 +239,7 @@ func (st *Store) PutWithTTL(
 	if len(obj.Metadata.Parents) > 0 {
 		for _, group := range obj.Metadata.Parents {
 			for _, p := range group {
-				err := st.putRelation(value.CID(streamCID), objCID, p)
+				err := st.putRelation(chore.CID(streamCID), objCID, p)
 				if err != nil {
 					return fmt.Errorf("could not create relation: %w", err)
 				}
@@ -248,7 +248,7 @@ func (st *Store) PutWithTTL(
 	}
 
 	if streamCID == objectCID {
-		err := st.putRelation(value.CID(streamCID), objCID, "")
+		err := st.putRelation(chore.CID(streamCID), objCID, "")
 		if err != nil {
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
@@ -263,9 +263,9 @@ func (st *Store) PutWithTTL(
 }
 
 func (st *Store) putRelation(
-	stream value.CID,
-	parent value.CID,
-	child value.CID,
+	stream chore.CID,
+	parent chore.CID,
+	child chore.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Relations (
@@ -294,8 +294,8 @@ func (st *Store) putRelation(
 }
 
 func (st *Store) GetStreamLeaves(
-	streamRootCID value.CID,
-) ([]value.CID, error) {
+	streamRootCID chore.CID,
+) ([]chore.CID, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
@@ -320,22 +320,22 @@ func (st *Store) GetStreamLeaves(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []value.CID{}
+	cidList := []chore.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, value.CID(data))
+		cidList = append(cidList, chore.CID(data))
 	}
 
 	return cidList, nil
 }
 
 func (st *Store) GetRelations(
-	parent value.CID,
-) ([]value.CID, error) {
+	parent chore.CID,
+) ([]chore.CID, error) {
 	stmt, err := st.db.Prepare("SELECT CID FROM Objects WHERE RootCID=?")
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare query: %w", err)
@@ -348,14 +348,14 @@ func (st *Store) GetRelations(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []value.CID{}
+	cidList := []chore.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, value.CID(data))
+		cidList = append(cidList, chore.CID(data))
 	}
 
 	istmt, err := st.db.Prepare(
@@ -376,7 +376,7 @@ func (st *Store) GetRelations(
 	return cidList, nil
 }
 
-func (st *Store) ListCIDs() ([]value.CID, error) {
+func (st *Store) ListCIDs() ([]chore.CID, error) {
 	stmt, err := st.db.Prepare(
 		"SELECT CID FROM Objects WHERE CID == RootCID",
 	)
@@ -391,21 +391,21 @@ func (st *Store) ListCIDs() ([]value.CID, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	cidList := []value.CID{}
+	cidList := []chore.CID{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		cidList = append(cidList, value.CID(data))
+		cidList = append(cidList, chore.CID(data))
 	}
 
 	return cidList, nil
 }
 
 func (st *Store) UpdateTTL(
-	cid value.CID,
+	cid chore.CID,
 	minutes int,
 ) error {
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootCID=?`)
@@ -422,7 +422,7 @@ func (st *Store) UpdateTTL(
 }
 
 func (st *Store) Remove(
-	cid value.CID,
+	cid chore.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
@@ -581,7 +581,7 @@ func (st *Store) Filter(
 		defer close(objectsChan)
 		defer close(errorChan)
 		for _, cid := range cids {
-			o, err := st.Get(value.CID(cid))
+			o, err := st.Get(chore.CID(cid))
 			if err != nil {
 				errorChan <- err
 				return
@@ -599,7 +599,7 @@ func (st *Store) Filter(
 }
 
 func (st *Store) Pin(
-	cid value.CID,
+	cid chore.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Pins (CID) VALUES (?)
@@ -619,7 +619,7 @@ func (st *Store) Pin(
 	return nil
 }
 
-func (st *Store) GetPinned() ([]value.CID, error) {
+func (st *Store) GetPinned() ([]chore.CID, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT CID FROM Pins
 	`)
@@ -634,21 +634,21 @@ func (st *Store) GetPinned() ([]value.CID, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hs := []value.CID{}
+	hs := []chore.CID{}
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		if h != "" {
-			hs = append(hs, value.CID(h))
+			hs = append(hs, chore.CID(h))
 		}
 	}
 
 	return hs, nil
 }
 
-func (st *Store) IsPinned(cid value.CID) (bool, error) {
+func (st *Store) IsPinned(cid chore.CID) (bool, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT CID FROM Pins WHERE CID = ?
 	`)
@@ -676,7 +676,7 @@ func (st *Store) IsPinned(cid value.CID) (bool, error) {
 }
 
 func (st *Store) RemovePin(
-	cid value.CID,
+	cid chore.CID,
 ) error {
 	stmt, err := st.db.Prepare(`
 		DELETE FROM Pins
@@ -737,7 +737,7 @@ func astoai(ah []string) []interface{} {
 	return as
 }
 
-func ahtoai(ah []value.CID) []interface{} {
+func ahtoai(ah []chore.CID) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

@@ -3,9 +3,9 @@
 package identity
 
 import (
+	chore "nimona.io/pkg/chore"
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 )
 
 type (
@@ -14,7 +14,7 @@ type (
 		Version  int64           `nimona:"version:i"`
 		Datetime string          `nimona:"datetime:s"`
 		Name     string          `nimona:"name:s"`
-		Image    value.CID       `nimona:"image:s"`
+		Image    chore.CID       `nimona:"image:s"`
 	}
 	ProfileStreamRoot struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`

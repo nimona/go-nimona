@@ -7,7 +7,7 @@ package localpeer
 import (
 	"sync"
 
-	"nimona.io/pkg/object/value"
+	"nimona.io/pkg/chore"
 )
 
 type (
@@ -18,33 +18,33 @@ type (
 )
 
 // Put -
-func (m *ValueCIDSyncList) Put(k value.CID) {
+func (m *ValueCIDSyncList) Put(k chore.CID) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ValueCIDSyncList) Exists(k value.CID) bool {
+func (m *ValueCIDSyncList) Exists(k chore.CID) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *ValueCIDSyncList) Delete(k value.CID) {
+func (m *ValueCIDSyncList) Delete(k chore.CID) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ValueCIDSyncList) Range(i func(k value.CID) bool) {
+func (m *ValueCIDSyncList) Range(i func(k chore.CID) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(value.CID))
+		return i(k.(chore.CID))
 	})
 }
 
 // List -
-func (m *ValueCIDSyncList) List() []value.CID {
-	r := []value.CID{}
+func (m *ValueCIDSyncList) List() []chore.CID {
+	r := []chore.CID{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(value.CID))
+		r = append(r, k.(chore.CID))
 		return true
 	})
 	return r

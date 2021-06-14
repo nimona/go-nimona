@@ -8,6 +8,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -16,7 +17,6 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -189,8 +189,8 @@ func main() {
 					Metadata: object.Metadata{
 						Owner: local.GetPeerKey().PublicKey(),
 					},
-					Data: value.Map{
-						"nonce": value.String(rand.String(8)),
+					Data: chore.Map{
+						"nonce": chore.String(rand.String(8)),
 					},
 				},
 				recipient.PublicKey,

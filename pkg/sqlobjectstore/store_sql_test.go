@@ -13,10 +13,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/internal/fixtures"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 )
 
@@ -53,8 +53,8 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: object.MustMarshal(p).CID(),
 		},
-		Data: value.Map{
-			"key": value.String("value"),
+		Data: chore.Map{
+			"key": chore.String("value"),
 		},
 	}
 
@@ -76,7 +76,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	val := retrievedObj.Data["key"]
 	require.NotNil(t, val)
-	assert.Equal(t, "value", string(val.(value.String)))
+	assert.Equal(t, "value", string(val.(chore.String)))
 
 	stCID := obj.Metadata.Stream
 	require.NotEmpty(t, stCID)
@@ -129,7 +129,7 @@ func TestFilter(t *testing.T) {
 		object.MustMarshal(p),
 	}
 
-	cids := []value.CID{}
+	cids := []chore.CID{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
 			Type: new(fixtures.TestSubscribed).Type(),
@@ -139,8 +139,8 @@ func TestFilter(t *testing.T) {
 					Add(time.Duration(i) * time.Hour).
 					Format(time.RFC3339),
 			},
-			Data: value.Map{
-				"keys": value.String(fmt.Sprintf("value_%d", i)),
+			Data: chore.Map{
+				"keys": chore.String(fmt.Sprintf("value_%d", i)),
 			},
 		}
 		if i%2 == 0 {
@@ -234,8 +234,8 @@ func TestStore_Relations(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"f00": value.String("f00"),
+		Data: chore.Map{
+			"f00": chore.String("f00"),
 		},
 	}
 
@@ -244,13 +244,13 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{
+				"*": []chore.CID{
 					f00.CID(),
 				},
 			},
 		},
-		Data: value.Map{
-			"f01": value.String("f01"),
+		Data: chore.Map{
+			"f01": chore.String("f01"),
 		},
 	}
 
@@ -259,13 +259,13 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{
+				"*": []chore.CID{
 					f01.CID(),
 				},
 			},
 		},
-		Data: value.Map{
-			"f02": value.String("f02"),
+		Data: chore.Map{
+			"f02": chore.String("f02"),
 		},
 	}
 
@@ -285,7 +285,7 @@ func TestStore_Relations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, leaves)
 		assert.Len(t, leaves, 1)
-		assert.Equal(t, []value.CID{f00.CID()}, leaves)
+		assert.Equal(t, []chore.CID{f00.CID()}, leaves)
 	})
 
 	require.NoError(t, store.Put(f01))
@@ -295,7 +295,7 @@ func TestStore_Relations(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 1)
-	assert.Equal(t, []value.CID{f02.CID()}, leaves)
+	assert.Equal(t, []chore.CID{f02.CID()}, leaves)
 
 	fmt.Println(leaves)
 }
@@ -304,8 +304,8 @@ func TestStore_ListCIDs(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"f00": value.String("f00"),
+		Data: chore.Map{
+			"f00": chore.String("f00"),
 		},
 	}
 
@@ -314,20 +314,20 @@ func TestStore_ListCIDs(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{
+				"*": []chore.CID{
 					f00.CID(),
 				},
 			},
 		},
-		Data: value.Map{
-			"f01": value.String("f01"),
+		Data: chore.Map{
+			"f01": chore.String("f01"),
 		},
 	}
 
 	f02 := &object.Object{
 		Type: "f02",
-		Data: value.Map{
-			"f02": value.String("f02"),
+		Data: chore.Map{
+			"f02": chore.String("f02"),
 		},
 	}
 
@@ -348,7 +348,7 @@ func TestStore_ListCIDs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 2)
-	assert.Equal(t, []value.CID{
+	assert.Equal(t, []chore.CID{
 		f00.CID(),
 		f02.CID(),
 	}, leaves)
@@ -392,7 +392,7 @@ func TestStore_Pinned(t *testing.T) {
 	t.Run("get pins (a, b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []value.CID{"a", "b"}, got)
+		require.Equal(t, []chore.CID{"a", "b"}, got)
 	})
 
 	t.Run("remove pin a", func(t *testing.T) {
@@ -403,7 +403,7 @@ func TestStore_Pinned(t *testing.T) {
 	t.Run("get pins (b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []value.CID{"b"}, got)
+		require.Equal(t, []chore.CID{"b"}, got)
 	})
 }
 
@@ -415,8 +415,8 @@ func TestStore_GC(t *testing.T) {
 
 	o := &object.Object{
 		Type: "foo",
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 

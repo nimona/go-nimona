@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"nimona.io/pkg/object/hint"
+	"nimona.io/pkg/chore"
 )
 
 var primitives = map[string]struct {
@@ -14,9 +14,9 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/value.CID": {
+	"nimona.io/chore.CID": {
 		Hint:      "s",
-		Type:      "value.CID",
+		Type:      "chore.CID",
 		IsObject:  false,
 		IsPrimary: true,
 	},
@@ -97,34 +97,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch hint.Hint(h) {
-			case hint.Bool:
+			switch chore.Hint(h) {
+			case chore.BoolHint:
 				return "object.Bool"
-			case hint.Data:
+			case chore.DataHint:
 				return "object.Data"
-			case hint.Float:
+			case chore.FloatHint:
 				return "object.Float"
-			case hint.Int:
+			case chore.IntHint:
 				return "object.Int"
-			case hint.Map:
-				return "value.Map"
-			case hint.String:
-				return "value.String"
-			case hint.Uint:
+			case chore.MapHint:
+				return "chore.Map"
+			case chore.StringHint:
+				return "chore.String"
+			case chore.UintHint:
 				return "object.Uint"
-			case hint.BoolArray:
+			case chore.BoolArrayHint:
 				return "object.ToBoolArray"
-			case hint.DataArray:
+			case chore.DataArrayHint:
 				return "object.ToDataArray"
-			case hint.FloatArray:
+			case chore.FloatArrayHint:
 				return "object.ToFloatArray"
-			case hint.IntArray:
+			case chore.IntArrayHint:
 				return "object.ToIntArray"
-			case hint.MapArray:
+			case chore.MapArrayHint:
 				return "object.ToMapArray"
-			case hint.StringArray:
+			case chore.StringArrayHint:
 				return "object.ToStringArray"
-			case hint.UintArray:
+			case chore.UintArrayHint:
 				return "object.ToUintArray"
 			}
 			panic("unknown hint in fromPrimitive " + m.Hint)
@@ -134,34 +134,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch hint.Hint(h) {
-			case hint.Bool:
+			switch chore.Hint(h) {
+			case chore.BoolHint:
 				return "bool"
-			case hint.Data:
+			case chore.DataHint:
 				return "[]byte"
-			case hint.Float:
+			case chore.FloatHint:
 				return "float64"
-			case hint.Int:
+			case chore.IntHint:
 				return "int64"
-			case hint.String:
+			case chore.StringHint:
 				return "string"
-			case hint.Uint:
+			case chore.UintHint:
 				return "uint64"
-			case hint.Map:
-				return "value.Map"
-			case hint.BoolArray:
+			case chore.MapHint:
+				return "chore.Map"
+			case chore.BoolArrayHint:
 				return "object.FromBoolArray"
-			case hint.DataArray:
+			case chore.DataArrayHint:
 				return "object.FromDataArray"
-			case hint.FloatArray:
+			case chore.FloatArrayHint:
 				return "object.FromFloatArray"
-			case hint.IntArray:
+			case chore.IntArrayHint:
 				return "object.FromIntArray"
-			case hint.MapArray:
+			case chore.MapArrayHint:
 				return "object.FromMapArray"
-			case hint.StringArray:
+			case chore.StringArrayHint:
 				return "object.FromStringArray"
-			case hint.UintArray:
+			case chore.UintArrayHint:
 				return "object.FromUintArray"
 			}
 			panic("unknown hint in toPrimitive " + m.Hint)
@@ -171,36 +171,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch hint.Hint(h) {
-			case hint.Bool:
+			switch chore.Hint(h) {
+			case chore.BoolHint:
 				return "object.Bool"
-			case hint.Data:
+			case chore.DataHint:
 				return "object.Data"
-			case hint.Float:
+			case chore.FloatHint:
 				return "object.Float"
-			case hint.Int:
+			case chore.IntHint:
 				return "object.Int"
-			case hint.String:
-				return "value.String"
-			case hint.Map:
-				return "value.Map"
-			case hint.Uint:
+			case chore.StringHint:
+				return "chore.String"
+			case chore.MapHint:
+				return "chore.Map"
+			case chore.UintHint:
 				return "object.Uint"
-			case hint.BoolArray:
+			case chore.BoolArrayHint:
 				return "object.BoolArray"
-			case hint.DataArray:
+			case chore.DataArrayHint:
 				return "object.DataArray"
-			case hint.FloatArray:
+			case chore.FloatArrayHint:
 				return "object.FloatArray"
-			case hint.IntArray:
+			case chore.IntArrayHint:
 				return "object.IntArray"
-			case hint.ObjectArray:
+			case chore.ObjectArrayHint:
 				return "object.ObjectArray"
-			case hint.MapArray:
+			case chore.MapArrayHint:
 				return "object.MapArray"
-			case hint.StringArray:
+			case chore.StringArrayHint:
 				return "object.StringArray"
-			case hint.UintArray:
+			case chore.UintArrayHint:
 				return "object.UintArray"
 			}
 			panic("unknown hint in primitive " + m.Hint)
@@ -210,22 +210,22 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch hint.Hint(h) {
-			case hint.BoolArray:
+			switch chore.Hint(h) {
+			case chore.BoolArrayHint:
 				return "object.Bool"
-			case hint.DataArray:
+			case chore.DataArrayHint:
 				return "object.Data"
-			case hint.FloatArray:
+			case chore.FloatArrayHint:
 				return "object.Float"
-			case hint.IntArray:
+			case chore.IntArrayHint:
 				return "object.Int"
-			case hint.MapArray:
-				return "value.Map"
-			case hint.ObjectArray:
+			case chore.MapArrayHint:
+				return "chore.Map"
+			case chore.ObjectArrayHint:
 				return ""
-			case hint.StringArray:
-				return "value.String"
-			case hint.UintArray:
+			case chore.StringArrayHint:
+				return "chore.String"
+			case chore.UintArrayHint:
 				return "object.Uint"
 			}
 			panic("unknown hint in primitiveSingular " + m.Hint)
@@ -251,36 +251,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch hint.Hint(h) {
-			case hint.Bool:
+			switch chore.Hint(h) {
+			case chore.BoolHint:
 				return "bool"
-			case hint.Data:
+			case chore.DataHint:
 				return "[]byte"
-			case hint.Float:
+			case chore.FloatHint:
 				return "float64"
-			case hint.Int:
+			case chore.IntHint:
 				return "int64"
-			case hint.String:
+			case chore.StringHint:
 				return "string"
-			case hint.Uint:
+			case chore.UintHint:
 				return "uint64"
-			case hint.Map:
-				return "value.Map"
-			case hint.BoolArray:
+			case chore.MapHint:
+				return "chore.Map"
+			case chore.BoolArrayHint:
 				return "bool"
-			case hint.DataArray:
+			case chore.DataArrayHint:
 				return "[]byte"
-			case hint.FloatArray:
+			case chore.FloatArrayHint:
 				return "float64"
-			case hint.IntArray:
+			case chore.IntArrayHint:
 				return "int64"
-			case hint.MapArray:
-				return "value.Map"
-			case hint.ObjectArray:
+			case chore.MapArrayHint:
+				return "chore.Map"
+			case chore.ObjectArrayHint:
 				return ""
-			case hint.StringArray:
+			case chore.StringArrayHint:
 				return "string"
-			case hint.UintArray:
+			case chore.UintArrayHint:
 				return "uint64"
 			}
 			panic("unknown primitive " + m.Hint)

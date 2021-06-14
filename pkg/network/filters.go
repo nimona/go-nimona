@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gobwas/glob"
-
-	"nimona.io/pkg/object/value"
+	"nimona.io/pkg/chore"
 )
 
 func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
@@ -27,7 +26,7 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	}
 }
 
-func FilterByObjectCID(objectCIDs ...value.CID) EnvelopeFilter {
+func FilterByObjectCID(objectCIDs ...chore.CID) EnvelopeFilter {
 	return func(e *Envelope) bool {
 		for _, cid := range objectCIDs {
 			if cid == e.Payload.CID() {
@@ -44,7 +43,7 @@ func FilterByRequestID(requestID string) EnvelopeFilter {
 		if !ok {
 			return false
 		}
-		rID, ok := rIDVal.(value.String)
+		rID, ok := rIDVal.(chore.String)
 		if !ok {
 			return false
 		}

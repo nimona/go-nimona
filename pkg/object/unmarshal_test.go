@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object/value"
 )
 
 type (
@@ -62,39 +62,39 @@ func TestUnmarshal(t *testing.T) {
 		Metadata: Metadata{
 			Datetime: "foo",
 		},
-		Data: value.Map{
-			"string":           value.String("string"),
-			"bool":             value.Bool(true),
-			"float32":          value.Float(0.0),
-			"float64":          value.Float(1.1),
-			"int":              value.Int(-2),
-			"int8":             value.Int(-3),
-			"int16":            value.Int(-4),
-			"int32":            value.Int(-5),
-			"int64":            value.Int(-6),
-			"uint":             value.Uint(7),
-			"uint8":            value.Uint(8),
-			"uint16":           value.Uint(9),
-			"uint32":           value.Uint(10),
-			"uint64":           value.Uint(11),
-			"stringArray":      value.StringArray{"string"},
-			"boolArray":        value.BoolArray{true},
-			"float32Array":     value.FloatArray{0.0},
-			"float64Array":     value.FloatArray{1.1},
-			"intArray":         value.IntArray{-2},
-			"int8Array":        value.IntArray{-3},
-			"int16Array":       value.IntArray{-4},
-			"int32Array":       value.IntArray{-5},
-			"int64Array":       value.IntArray{-6},
-			"uintArray":        value.UintArray{7},
-			"uint8Array":       value.UintArray{8},
-			"uint16Array":      value.UintArray{9},
-			"uint32Array":      value.UintArray{10},
-			"uint64Array":      value.UintArray{11},
-			"stringer":         value.String(k.PublicKey().String()),
-			"stringerPtr":      value.String(k.PublicKey().String()),
-			"stringerArray":    value.StringArray{value.String(k.PublicKey().String())},
-			"stringerPtrArray": value.StringArray{value.String(k.PublicKey().String())},
+		Data: chore.Map{
+			"string":           chore.String("string"),
+			"bool":             chore.Bool(true),
+			"float32":          chore.Float(0.0),
+			"float64":          chore.Float(1.1),
+			"int":              chore.Int(-2),
+			"int8":             chore.Int(-3),
+			"int16":            chore.Int(-4),
+			"int32":            chore.Int(-5),
+			"int64":            chore.Int(-6),
+			"uint":             chore.Uint(7),
+			"uint8":            chore.Uint(8),
+			"uint16":           chore.Uint(9),
+			"uint32":           chore.Uint(10),
+			"uint64":           chore.Uint(11),
+			"stringArray":      chore.StringArray{"string"},
+			"boolArray":        chore.BoolArray{true},
+			"float32Array":     chore.FloatArray{0.0},
+			"float64Array":     chore.FloatArray{1.1},
+			"intArray":         chore.IntArray{-2},
+			"int8Array":        chore.IntArray{-3},
+			"int16Array":       chore.IntArray{-4},
+			"int32Array":       chore.IntArray{-5},
+			"int64Array":       chore.IntArray{-6},
+			"uintArray":        chore.UintArray{7},
+			"uint8Array":       chore.UintArray{8},
+			"uint16Array":      chore.UintArray{9},
+			"uint32Array":      chore.UintArray{10},
+			"uint64Array":      chore.UintArray{11},
+			"stringer":         chore.String(k.PublicKey().String()),
+			"stringerPtr":      chore.String(k.PublicKey().String()),
+			"stringerArray":    chore.StringArray{chore.String(k.PublicKey().String())},
+			"stringerPtrArray": chore.StringArray{chore.String(k.PublicKey().String())},
 		},
 	}
 	p := k.PublicKey()

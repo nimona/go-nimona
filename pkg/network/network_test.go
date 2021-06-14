@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 )
 
@@ -30,8 +30,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -137,7 +137,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		}()
 		// wait for p2 to get the req
 		gotReq := <-reqSub.Channel()
-		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(value.String)))
+		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(chore.String)))
 		// send response from p2 to p1
 		reso, err := res.MarshalObject()
 		require.NoError(t, err)
@@ -193,8 +193,8 @@ func TestNetwork_Relay(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -203,8 +203,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n1.LocalPeer().GetPeerKey().PublicKey(),
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -213,8 +213,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n2.LocalPeer().GetPeerKey().PublicKey(),
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -286,8 +286,8 @@ func TestNetwork_Relay(t *testing.T) {
 // 			Metadata: object.Metadata{
 // 				Owner: k.PublicKey(),
 // 			},
-// 			Data: value.Map{
-// 				"foo": value.String("bar"),
+// 			Data: chore.Map{
+// 				"foo": chore.String("bar"),
 // 			},
 // 		}
 
@@ -308,15 +308,15 @@ func TestNetwork_Relay(t *testing.T) {
 // 			Metadata: object.Metadata{
 // 				Owner: k.PublicKey(),
 // 			},
-// 			Data: value.Map{
-// 				"foo": value.String("bar"),
+// 			Data: chore.Map{
+// 				"foo": chore.String("bar"),
 // 			},
 // 		}
 // 		m, err := n.MarshalMap()
 // 		require.NoError(t, err)
 // 		o := &object.Object{
 // 			Type: "foo",
-// 			Data: value.Map{
+// 			Data: chore.Map{
 // 				"foo": m,
 // 			},
 // 		}
@@ -331,7 +331,7 @@ func TestNetwork_Relay(t *testing.T) {
 // 		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
 
 // 		gn := &object.Object{}
-// 		err = gn.UnmarshalMap(g.Data["foo"].(value.Map))
+// 		err = gn.UnmarshalMap(g.Data["foo"].(chore.Map))
 // 		require.NoError(t, err)
 
 // 		assert.False(t, gn.Metadata.Signature.IsEmpty())
@@ -344,15 +344,15 @@ func TestNetwork_Relay(t *testing.T) {
 // 			Metadata: object.Metadata{
 // 				Owner: k.PublicKey(),
 // 			},
-// 			Data: value.Map{
-// 				"foo": value.String("bar"),
+// 			Data: chore.Map{
+// 				"foo": chore.String("bar"),
 // 			},
 // 		}
 // 		m, err := n.MarshalMap()
 // 		require.NoError(t, err)
 // 		o := &object.Object{
 // 			Type: "foo",
-// 			Data: value.Map{
+// 			Data: chore.Map{
 // 				"foo": m,
 // 			},
 // 		}
@@ -367,7 +367,7 @@ func TestNetwork_Relay(t *testing.T) {
 // 		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
 
 // 		gn := &object.Object{}
-// 		err = gn.UnmarshalMap(g.Data["foo"].(value.Map))
+// 		err = gn.UnmarshalMap(g.Data["foo"].(chore.Map))
 // 		require.NoError(t, err)
 // 		assert.False(t, gn.Metadata.Signature.IsEmpty())
 // 		assert.NotNil(t, gn.Metadata.Signature.Signer)

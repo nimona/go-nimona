@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -13,7 +14,6 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 )
@@ -307,7 +307,7 @@ func (m *feedManager) handleObjects(
 				Stream: feedStreamCID,
 				Owner:  peerKey,
 			},
-			ObjectCID: []value.CID{
+			ObjectCID: []chore.CID{
 				objCID,
 			},
 		}
@@ -325,7 +325,7 @@ func (m *feedManager) handleObjects(
 		// 	continue
 		// }
 		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []value.CID{
+		// 	"*": []chore.CID{
 		// 		feedStreamCID,
 		// 	},
 		// }

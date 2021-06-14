@@ -5,19 +5,19 @@ import (
 	"strconv"
 	"strings"
 
-	"nimona.io/pkg/object/value"
+	"nimona.io/pkg/chore"
 )
 
 // nolint: unused
 func traverseObject(
-	v value.Value,
-	f func(string, value.Value) (
+	v chore.Value,
+	f func(string, chore.Value) (
 		updatedKey string,
-		updatedValue value.Value,
+		updatedValue chore.Value,
 		update bool,
 	),
 ) {
-	if vv, ok := v.(value.Map); ok {
+	if vv, ok := v.(chore.Map); ok {
 		for ik, iv := range vv {
 			uk, uv, u := f(ik, iv)
 			if u {

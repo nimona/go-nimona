@@ -12,12 +12,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 )
 
@@ -179,8 +179,8 @@ func (n *network) Dial(
 		// try to write something
 		ping := &object.Object{
 			Type: "ping",
-			Data: value.Map{
-				"dt": value.String(time.Now().Format(time.RFC3339)),
+			Data: chore.Map{
+				"dt": chore.String(time.Now().Format(time.RFC3339)),
 			},
 		}
 		if err := Write(

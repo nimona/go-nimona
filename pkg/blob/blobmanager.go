@@ -8,12 +8,12 @@ import (
 	"github.com/docker/go-units"
 	"github.com/gammazero/workerpool"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 )
 
@@ -21,7 +21,7 @@ type (
 	Requester interface {
 		Request(
 			ctx context.Context,
-			cid value.CID,
+			cid chore.CID,
 		) (*Blob, []*Chunk, error)
 	}
 	Manager interface {
@@ -69,7 +69,7 @@ func (r *manager) ImportFromFile(
 	}
 
 	// keep a list of all chunk cids
-	chunkCIDs := []value.CID{}
+	chunkCIDs := []chore.CID{}
 
 	// start a workerpool to store chunks
 	wp := workerpool.New(r.importWorkers)
@@ -138,7 +138,7 @@ func (r *manager) ImportFromFile(
 
 func (r *manager) Request(
 	ctx context.Context,
-	cid value.CID,
+	cid chore.CID,
 ) (*Blob, []*Chunk, error) {
 	logger := log.
 		FromContext(ctx).
@@ -205,7 +205,7 @@ func (r *manager) Request(
 	return blob, chunks, nil
 }
 
-func getChunks(o *object.Object) ([]value.CID, error) {
+func getChunks(o *object.Object) ([]chore.CID, error) {
 	b := &Blob{}
 	if err := b.UnmarshalObject(o); err != nil {
 		return nil, err
