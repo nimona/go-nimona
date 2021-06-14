@@ -1,4 +1,4 @@
-package value
+package chore
 
 import (
 	"encoding/base64"
@@ -8,12 +8,11 @@ import (
 	"github.com/buger/jsonparser"
 
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object/hint"
 )
 
 type (
 	Value interface {
-		Hint() hint.Hint
+		Hint() Hint
 		_isValue()
 	}
 
@@ -55,8 +54,8 @@ func (v CID) String() string {
 	return string(v)
 }
 
-func (v Bool) Hint() hint.Hint { return hint.Bool }
-func (v Bool) _isValue()       {}
+func (v Bool) Hint() Hint { return BoolHint }
+func (v Bool) _isValue()  {}
 
 func (v *Bool) UnmarshalJSON(b []byte) error {
 	var iv bool
@@ -67,8 +66,8 @@ func (v *Bool) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v Data) Hint() hint.Hint { return hint.Data }
-func (v Data) _isValue()       {}
+func (v Data) Hint() Hint { return DataHint }
+func (v Data) _isValue()  {}
 
 func (v *Data) UnmarshalJSON(b []byte) error {
 	iv := []byte{}
@@ -81,8 +80,8 @@ func (v *Data) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v Float) Hint() hint.Hint { return hint.Float }
-func (v Float) _isValue()       {}
+func (v Float) Hint() Hint { return FloatHint }
+func (v Float) _isValue()  {}
 
 func (v *Float) UnmarshalJSON(b []byte) error {
 	var iv float64
@@ -93,8 +92,8 @@ func (v *Float) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v Int) Hint() hint.Hint { return hint.Int }
-func (v Int) _isValue()       {}
+func (v Int) Hint() Hint { return IntHint }
+func (v Int) _isValue()  {}
 
 func (v *Int) UnmarshalJSON(b []byte) error {
 	var iv int64
@@ -105,80 +104,80 @@ func (v *Int) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v Map) Hint() hint.Hint { return hint.Map }
-func (v Map) _isValue()       {}
+func (v Map) Hint() Hint { return MapHint }
+func (v Map) _isValue()  {}
 
 func jsonUnmarshalValue(
-	h hint.Hint,
+	h Hint,
 	value []byte,
 ) (Value, error) {
 	switch h {
-	case hint.Bool:
+	case BoolHint:
 		var iv Bool
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.Data:
+	case DataHint:
 		iv, err := base64.StdEncoding.DecodeString(string(value))
 		if err != nil {
 			fmt.Println(string(value))
 			return nil, err
 		}
 		return Data(iv), nil
-	case hint.Float:
+	case FloatHint:
 		var iv Float
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.Int:
+	case IntHint:
 		var iv Int
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.Map:
+	case MapHint:
 		var iv Map = Map{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.String:
+	case StringHint:
 		return String(string(value)), nil
-	case hint.Uint:
+	case UintHint:
 		var iv Uint
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.CID:
+	case CIDHint:
 		return CID(value), nil
-	case hint.BoolArray:
+	case BoolArrayHint:
 		var iv BoolArray = BoolArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.DataArray:
+	case DataArrayHint:
 		var iv DataArray = DataArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.FloatArray:
+	case FloatArrayHint:
 		var iv FloatArray = FloatArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.IntArray:
+	case IntArrayHint:
 		var iv IntArray = IntArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.MapArray:
+	case MapArrayHint:
 		var iv MapArray = MapArray{}
 		if _, err := jsonparser.ArrayEach(value, func(
 			value []byte,
@@ -194,19 +193,19 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case hint.StringArray:
+	case StringArrayHint:
 		var iv StringArray = StringArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.UintArray:
+	case UintArrayHint:
 		var iv UintArray = UintArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case hint.CIDArray:
+	case CIDArrayHint:
 		var iv CIDArray = CIDArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
@@ -223,7 +222,7 @@ func (v Map) UnmarshalJSON(b []byte) error {
 		dataType jsonparser.ValueType,
 		offset int,
 	) error {
-		k, h, err := hint.Extract(string(key))
+		k, h, err := ExtractHint(string(key))
 		if err != nil {
 			return err
 		}
@@ -264,14 +263,14 @@ func (v Map) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (v String) Hint() hint.Hint { return hint.String }
-func (v String) _isValue()       {}
+func (v String) Hint() Hint { return StringHint }
+func (v String) _isValue()  {}
 
-func (v Uint) Hint() hint.Hint { return hint.Uint }
-func (v Uint) _isValue()       {}
+func (v Uint) Hint() Hint { return UintHint }
+func (v Uint) _isValue()  {}
 
-func (v CID) Hint() hint.Hint { return hint.CID }
-func (v CID) _isValue()       {}
+func (v CID) Hint() Hint { return CIDHint }
+func (v CID) _isValue()  {}
 
 func (v *Uint) UnmarshalJSON(b []byte) error {
 	var iv uint64
@@ -282,10 +281,10 @@ func (v *Uint) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v BoolArray) Hint() hint.Hint { return hint.BoolArray }
-func (v BoolArray) _isValue()       {}
-func (v BoolArray) _isArray()       {}
-func (v BoolArray) Len() int        { return len(v) }
+func (v BoolArray) Hint() Hint { return BoolArrayHint }
+func (v BoolArray) _isValue()  {}
+func (v BoolArray) _isArray()  {}
+func (v BoolArray) Len() int   { return len(v) }
 func (v BoolArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -294,10 +293,10 @@ func (v BoolArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v DataArray) Hint() hint.Hint { return hint.DataArray }
-func (v DataArray) _isValue()       {}
-func (v DataArray) _isArray()       {}
-func (v DataArray) Len() int        { return len(v) }
+func (v DataArray) Hint() Hint { return DataArrayHint }
+func (v DataArray) _isValue()  {}
+func (v DataArray) _isArray()  {}
+func (v DataArray) Len() int   { return len(v) }
 func (v DataArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -306,10 +305,10 @@ func (v DataArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v FloatArray) Hint() hint.Hint { return hint.FloatArray }
-func (v FloatArray) _isValue()       {}
-func (v FloatArray) _isArray()       {}
-func (v FloatArray) Len() int        { return len(v) }
+func (v FloatArray) Hint() Hint { return FloatArrayHint }
+func (v FloatArray) _isValue()  {}
+func (v FloatArray) _isArray()  {}
+func (v FloatArray) Len() int   { return len(v) }
 func (v FloatArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -318,10 +317,10 @@ func (v FloatArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v IntArray) Hint() hint.Hint { return hint.IntArray }
-func (v IntArray) _isValue()       {}
-func (v IntArray) _isArray()       {}
-func (v IntArray) Len() int        { return len(v) }
+func (v IntArray) Hint() Hint { return IntArrayHint }
+func (v IntArray) _isValue()  {}
+func (v IntArray) _isArray()  {}
+func (v IntArray) Len() int   { return len(v) }
 func (v IntArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -330,10 +329,10 @@ func (v IntArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v MapArray) Hint() hint.Hint { return hint.MapArray }
-func (v MapArray) _isValue()       {}
-func (v MapArray) _isArray()       {}
-func (v MapArray) Len() int        { return len(v) }
+func (v MapArray) Hint() Hint { return MapArrayHint }
+func (v MapArray) _isValue()  {}
+func (v MapArray) _isArray()  {}
+func (v MapArray) Len() int   { return len(v) }
 func (v MapArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -342,10 +341,10 @@ func (v MapArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v StringArray) Hint() hint.Hint { return hint.StringArray }
-func (v StringArray) _isValue()       {}
-func (v StringArray) _isArray()       {}
-func (v StringArray) Len() int        { return len(v) }
+func (v StringArray) Hint() Hint { return StringArrayHint }
+func (v StringArray) _isValue()  {}
+func (v StringArray) _isArray()  {}
+func (v StringArray) Len() int   { return len(v) }
 func (v StringArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -354,10 +353,10 @@ func (v StringArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v UintArray) Hint() hint.Hint { return hint.UintArray }
-func (v UintArray) _isValue()       {}
-func (v UintArray) _isArray()       {}
-func (v UintArray) Len() int        { return len(v) }
+func (v UintArray) Hint() Hint { return UintArrayHint }
+func (v UintArray) _isValue()  {}
+func (v UintArray) _isArray()  {}
+func (v UintArray) Len() int   { return len(v) }
 func (v UintArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -366,10 +365,10 @@ func (v UintArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v CIDArray) Hint() hint.Hint { return hint.CIDArray }
-func (v CIDArray) _isValue()       {}
-func (v CIDArray) _isArray()       {}
-func (v CIDArray) Len() int        { return len(v) }
+func (v CIDArray) Hint() Hint { return CIDArrayHint }
+func (v CIDArray) _isValue()  {}
+func (v CIDArray) _isArray()  {}
+func (v CIDArray) Len() int   { return len(v) }
 func (v CIDArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {

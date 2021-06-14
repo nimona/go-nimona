@@ -3,15 +3,15 @@
 package main
 
 import (
+	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 )
 
 type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Blob     value.CID       `nimona:"blob:s"`
+		Blob     chore.CID       `nimona:"blob:s"`
 	}
 )
 

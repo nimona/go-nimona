@@ -3,14 +3,14 @@
 package object
 
 import (
-	value "nimona.io/pkg/object/value"
+	chore "nimona.io/pkg/chore"
 )
 
 type (
 	Request struct {
 		Metadata  Metadata  `nimona:"@metadata:m"`
 		RequestID string    `nimona:"requestID:s"`
-		ObjectCID value.CID `nimona:"objectCID:s"`
+		ObjectCID chore.CID `nimona:"objectCID:s"`
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"@metadata:m"`

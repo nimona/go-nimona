@@ -3,15 +3,15 @@
 package filesharing
 
 import (
+	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 )
 
 type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Chunks   []value.CID     `nimona:"chunks:as"`
+		Chunks   []chore.CID     `nimona:"chunks:as"`
 	}
 	TransferDone struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`

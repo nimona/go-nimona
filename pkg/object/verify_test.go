@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object/value"
 )
 
 func TestVerify(t *testing.T) {
@@ -23,8 +23,8 @@ func TestVerify(t *testing.T) {
 	}{{
 		name: "should pass, no signature, no owner",
 		object: &Object{
-			Data: value.Map{
-				"foo:s": value.String("bar"),
+			Data: chore.Map{
+				"foo:s": chore.String("bar"),
 			},
 		},
 	}, {
@@ -33,8 +33,8 @@ func TestVerify(t *testing.T) {
 			t,
 			testKey0,
 			&Object{
-				Data: value.Map{
-					"foo:s": value.String("bar"),
+				Data: chore.Map{
+					"foo:s": chore.String("bar"),
 				},
 			},
 		),
@@ -44,8 +44,8 @@ func TestVerify(t *testing.T) {
 			Metadata: Metadata{
 				Owner: testKey0.PublicKey(),
 			},
-			Data: value.Map{
-				"foo:s": value.String("bar"),
+			Data: chore.Map{
+				"foo:s": chore.String("bar"),
 			},
 		},
 		wantErr: true,
@@ -58,8 +58,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: value.Map{
-					"foo:s": value.String("bar"),
+				Data: chore.Map{
+					"foo:s": chore.String("bar"),
 				},
 			},
 		),
@@ -76,8 +76,8 @@ func TestVerify(t *testing.T) {
 						X: []byte{1, 2, 3},
 					},
 				},
-				Data: value.Map{
-					"foo:s": value.String("bar"),
+				Data: chore.Map{
+					"foo:s": chore.String("bar"),
 				},
 			},
 		),
@@ -91,8 +91,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: value.Map{
-					"foo:s": value.String("bar"),
+				Data: chore.Map{
+					"foo:s": chore.String("bar"),
 				},
 			},
 		),
@@ -107,8 +107,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey(),
 				},
-				Data: value.Map{
-					"foo:s": value.String("bar"),
+				Data: chore.Map{
+					"foo:s": chore.String("bar"),
 				},
 			},
 		),
@@ -124,8 +124,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: value.Map{
-						"foo:s": value.String("bar"),
+					Data: chore.Map{
+						"foo:s": chore.String("bar"),
 					},
 				},
 			)
@@ -146,8 +146,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: value.Map{
-						"foo:s": value.String("bar"),
+					Data: chore.Map{
+						"foo:s": chore.String("bar"),
 					},
 				},
 			)
@@ -171,8 +171,8 @@ func TestVerify(t *testing.T) {
 					Metadata: Metadata{
 						Owner: testKey0.PublicKey(),
 					},
-					Data: value.Map{
-						"foo:s": value.String("bar"),
+					Data: chore.Map{
+						"foo:s": chore.String("bar"),
 					},
 				},
 			)

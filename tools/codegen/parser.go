@@ -99,7 +99,7 @@ func (p *Parser) parseField() (interface{}, error) {
 	}
 	switch value {
 	// case "relationship":
-	// 	member.GoFullType = "value.CID"
+	// 	member.GoFullType = "chore.CID"
 	// 	member.SimpleType = "relationship"
 	// 	member.Hint = "r"
 	case "string":

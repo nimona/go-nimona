@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object/value"
 )
 
 func TestMetadata_Map(t *testing.T) {
@@ -25,10 +25,10 @@ func TestMetadata_Map(t *testing.T) {
 		Owner:    pk0,
 		Datetime: "foo",
 		Parents: Parents{
-			"*": value.CIDArray{
+			"*": chore.CIDArray{
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
-			"foo.*": value.CIDArray{
+			"foo.*": chore.CIDArray{
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
 			},
@@ -70,7 +70,7 @@ func TestMetadata_Map(t *testing.T) {
 	t.Run("metadata of object", func(t *testing.T) {
 		o := &Object{
 			Metadata: *want,
-			Data:     value.Map{},
+			Data:     chore.Map{},
 		}
 
 		b, err := json.MarshalIndent(o, "", "  ")
@@ -87,12 +87,12 @@ func TestMetadata_Map(t *testing.T) {
 	t.Run("metadata of nested object", func(t *testing.T) {
 		no := &Object{
 			Metadata: *want,
-			Data:     value.Map{},
+			Data:     chore.Map{},
 		}
 		nm, err := no.MarshalMap()
 		require.NoError(t, err)
 		o := &Object{
-			Data: value.Map{
+			Data: chore.Map{
 				"foo": nm,
 			},
 		}

@@ -6,9 +6,8 @@ import (
 	"reflect"
 	"strings"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object/hint"
-	"nimona.io/pkg/object/value"
 )
 
 func MustMarshal(in interface{}) *Object {
@@ -101,18 +100,18 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 	return nil, nil
 }
 
-func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
+func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
 	switch h {
-	case hint.String:
+	case chore.StringHint:
 		if v.Kind() == reflect.String {
 			// TODO only for omitempty
 			if v.String() == "" {
 				return nil, nil
 			}
-			return value.String(v.String()), nil
+			return chore.String(v.String()), nil
 		}
 		m, ok := v.Interface().(StringMashaller)
 		if ok {
@@ -124,21 +123,21 @@ func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 			if s == "" {
 				return nil, nil
 			}
-			return value.String(s), nil
+			return chore.String(s), nil
 		}
-	case hint.CID:
+	case chore.CIDHint:
 		if v.Kind() == reflect.String {
 			// TODO only for omitempty
 			if v.String() == "" {
 				return nil, nil
 			}
-			return value.CID(v.String()), nil
+			return chore.CID(v.String()), nil
 		}
-	case hint.Bool:
+	case chore.BoolHint:
 		if v.Kind() == reflect.Bool {
-			return value.Bool(v.Bool()), nil
+			return chore.Bool(v.Bool()), nil
 		}
-	case hint.Map:
+	case chore.MapHint:
 		if v.IsZero() {
 			return nil, nil
 		}
@@ -187,42 +186,42 @@ func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 		case reflect.Struct:
 			return marshalStruct(h, v)
 		}
-	case hint.Float:
+	case chore.FloatHint:
 		switch v.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return value.Float(v.Float()), nil
+			return chore.Float(v.Float()), nil
 		}
-	case hint.Int:
+	case chore.IntHint:
 		switch v.Kind() {
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return value.Int(v.Int()), nil
+			return chore.Int(v.Int()), nil
 		}
-	case hint.Uint:
+	case chore.UintHint:
 		switch v.Kind() {
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return value.Uint(v.Uint()), nil
+			return chore.Uint(v.Uint()), nil
 		}
-	case hint.Data:
+	case chore.DataHint:
 		m, ok := v.Interface().(ByteMashaller)
 		if ok {
 			s, err := m.MarshalBytes()
 			if err != nil {
 				return nil, err
 			}
-			return value.Data(s), nil
+			return chore.Data(s), nil
 		}
 		b, ok := v.Interface().([]byte)
 		if ok {
-			return value.Data(b), nil
+			return chore.Data(b), nil
 		}
 		s, ok := v.Interface().(string)
 		if ok {
@@ -230,7 +229,7 @@ func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 			if err != nil {
 				return nil, err
 			}
-			return value.Data(b), nil
+			return chore.Data(b), nil
 		}
 	}
 	if h[0] == 'a' {
@@ -244,7 +243,7 @@ func marshalAny(h hint.Hint, v reflect.Value) (value.Value, error) {
 		" for hint " + string(h))
 }
 
-func marshalStruct(h hint.Hint, v reflect.Value) (value.Map, error) {
+func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -252,7 +251,7 @@ func marshalStruct(h hint.Hint, v reflect.Value) (value.Map, error) {
 		return nil, errors.Error("expected struct, got " + v.Kind().String())
 	}
 
-	m := value.Map{}
+	m := chore.Map{}
 	t := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -278,10 +277,10 @@ func marshalStruct(h hint.Hint, v reflect.Value) (value.Map, error) {
 			"@metadata:m":
 			continue
 		}
-		in, ih, err := hint.Extract(ig)
+		in, ih, err := chore.ExtractHint(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(value.Value); ok {
+			if ivv, ok := iv.Interface().(chore.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
@@ -305,7 +304,7 @@ func marshalStruct(h hint.Hint, v reflect.Value) (value.Map, error) {
 	return m, nil
 }
 
-func marshalMap(h hint.Hint, v reflect.Value) (value.Map, error) {
+func marshalMap(h chore.Hint, v reflect.Value) (chore.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -317,7 +316,7 @@ func marshalMap(h hint.Hint, v reflect.Value) (value.Map, error) {
 		return nil, nil
 	}
 
-	m := value.Map{}
+	m := chore.Map{}
 
 	for _, ik := range v.MapKeys() {
 		iv := v.MapIndex(ik)
@@ -327,10 +326,10 @@ func marshalMap(h hint.Hint, v reflect.Value) (value.Map, error) {
 			)
 		}
 		ig := ik.String()
-		in, ih, err := hint.Extract(ig)
+		in, ih, err := chore.ExtractHint(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(value.Value); ok {
+			if ivv, ok := iv.Interface().(chore.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
@@ -352,7 +351,7 @@ func marshalMap(h hint.Hint, v reflect.Value) (value.Map, error) {
 	return m, nil
 }
 
-func marshalArray(h hint.Hint, v reflect.Value) (value.Value, error) {
+func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -360,33 +359,33 @@ func marshalArray(h hint.Hint, v reflect.Value) (value.Value, error) {
 		return nil, errors.Error("expected slice, got " + v.Kind().String())
 	}
 
-	var a value.ArrayValue
-	var ah hint.Hint
+	var a chore.ArrayValue
+	var ah chore.Hint
 	switch h {
-	case hint.BoolArray:
-		a = value.BoolArray{}
-		ah = hint.Bool
-	case hint.DataArray:
-		a = value.DataArray{}
-		ah = hint.Data
-	case hint.FloatArray:
-		a = value.FloatArray{}
-		ah = hint.Float
-	case hint.IntArray:
-		a = value.IntArray{}
-		ah = hint.Int
-	case hint.MapArray:
-		a = value.MapArray{}
-		ah = hint.Map
-	case hint.StringArray:
-		a = value.StringArray{}
-		ah = hint.String
-	case hint.UintArray:
-		a = value.UintArray{}
-		ah = hint.Uint
-	case hint.CIDArray:
-		a = value.CIDArray{}
-		ah = hint.CID
+	case chore.BoolArrayHint:
+		a = chore.BoolArray{}
+		ah = chore.BoolHint
+	case chore.DataArrayHint:
+		a = chore.DataArray{}
+		ah = chore.DataHint
+	case chore.FloatArrayHint:
+		a = chore.FloatArray{}
+		ah = chore.FloatHint
+	case chore.IntArrayHint:
+		a = chore.IntArray{}
+		ah = chore.IntHint
+	case chore.MapArrayHint:
+		a = chore.MapArray{}
+		ah = chore.MapHint
+	case chore.StringArrayHint:
+		a = chore.StringArray{}
+		ah = chore.StringHint
+	case chore.UintArrayHint:
+		a = chore.UintArray{}
+		ah = chore.UintHint
+	case chore.CIDArrayHint:
+		a = chore.CIDArray{}
+		ah = chore.CIDHint
 	default:
 		return nil, errors.Error("unknown array hint")
 	}
@@ -403,22 +402,22 @@ func marshalArray(h hint.Hint, v reflect.Value) (value.Value, error) {
 		}
 
 		switch ah {
-		case hint.Bool:
-			a = append(a.(value.BoolArray), v.(value.Bool))
-		case hint.Data:
-			a = append(a.(value.DataArray), v.(value.Data))
-		case hint.Float:
-			a = append(a.(value.FloatArray), v.(value.Float))
-		case hint.Int:
-			a = append(a.(value.IntArray), v.(value.Int))
-		case hint.Map:
-			a = append(a.(value.MapArray), v.(value.Map))
-		case hint.String:
-			a = append(a.(value.StringArray), v.(value.String))
-		case hint.Uint:
-			a = append(a.(value.UintArray), v.(value.Uint))
-		case hint.CID:
-			a = append(a.(value.CIDArray), v.(value.CID))
+		case chore.BoolHint:
+			a = append(a.(chore.BoolArray), v.(chore.Bool))
+		case chore.DataHint:
+			a = append(a.(chore.DataArray), v.(chore.Data))
+		case chore.FloatHint:
+			a = append(a.(chore.FloatArray), v.(chore.Float))
+		case chore.IntHint:
+			a = append(a.(chore.IntArray), v.(chore.Int))
+		case chore.MapHint:
+			a = append(a.(chore.MapArray), v.(chore.Map))
+		case chore.StringHint:
+			a = append(a.(chore.StringArray), v.(chore.String))
+		case chore.UintHint:
+			a = append(a.(chore.UintArray), v.(chore.Uint))
+		case chore.CIDHint:
+			a = append(a.(chore.CIDArray), v.(chore.CID))
 		default:
 			return nil, errors.Error("unknown array element hint " + ah)
 		}

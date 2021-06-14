@@ -1,19 +1,19 @@
 package object
 
-import "nimona.io/pkg/object/value"
+import "nimona.io/pkg/chore"
 
 type (
-	Parents map[string]value.CIDArray
+	Parents map[string]chore.CIDArray
 )
 
-func (p Parents) All() []value.CID {
-	m := map[value.CID]struct{}{}
+func (p Parents) All() []chore.CID {
+	m := map[chore.CID]struct{}{}
 	for _, ps := range p {
 		for _, p := range ps {
 			m[p] = struct{}{}
 		}
 	}
-	a := []value.CID{}
+	a := []chore.CID{}
 	for c := range m {
 		a = append(a, c)
 	}

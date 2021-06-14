@@ -1,9 +1,9 @@
 package resolver
 
 import (
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
-	"nimona.io/pkg/object/value"
 )
 
 // LookupOptions
@@ -45,7 +45,7 @@ func LookupOnlyLocal() LookupOption {
 }
 
 // LookupByCID matches content cids
-func LookupByCID(cid value.CID) LookupOption {
+func LookupByCID(cid chore.CID) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups = append(opts.Lookups, cid.String())
 		opts.Filters = append(

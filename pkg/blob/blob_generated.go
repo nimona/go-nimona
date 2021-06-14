@@ -3,8 +3,8 @@
 package blob
 
 import (
+	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 )
 
 type (
@@ -14,7 +14,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
-		Chunks   []value.CID     `nimona:"chunks:as"`
+		Chunks   []chore.CID     `nimona:"chunks:as"`
 	}
 )
 

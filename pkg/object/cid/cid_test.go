@@ -7,21 +7,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"nimona.io/pkg/object/value"
+	"nimona.io/pkg/chore"
 )
 
 func BenchmarkCID(b *testing.B) {
-	o := value.Map{
-		"@type":    value.String("blob"),
-		"filename": value.String("foo"),
-		"dummy": value.Map{
-			"@type": value.String("dummy"),
-			"@metadata": value.Map{
-				"owner": value.String("foo"),
+	o := chore.Map{
+		"@type":    chore.String("blob"),
+		"filename": chore.String("foo"),
+		"dummy": chore.Map{
+			"@type": chore.String("dummy"),
+			"@metadata": chore.Map{
+				"owner": chore.String("foo"),
 			},
-			"foo": value.String("bar"),
-			"data": value.Data(
+			"foo": chore.String("bar"),
+			"data": chore.Data(
 				"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
 					"\n15\n16\n17\n18\n19\n20",
 			),
@@ -43,23 +42,23 @@ func TestRaw(t *testing.T) {
 }
 
 func TestMapRedaction(t *testing.T) {
-	inner := value.Map{
-		"@type": value.String("foo"),
-		"foo":   value.String("bar"),
+	inner := chore.Map{
+		"@type": chore.String("foo"),
+		"foo":   chore.String("bar"),
 	}
-	parentWithInner := value.Map{
-		"@type": value.String("foo"),
+	parentWithInner := chore.Map{
+		"@type": chore.String("foo"),
 		"foo":   inner,
 	}
-	parentWithInnerRedacted := value.Map{
-		"@type": value.String("foo"),
+	parentWithInnerRedacted := chore.Map{
+		"@type": chore.String("foo"),
 		"foo":   Must(New(inner)),
 	}
 	tests := []struct {
 		name      string
 		json      string
-		wantValue value.Value
-		wantCID   value.CID
+		wantValue chore.Value
+		wantCID   chore.CID
 		wantErr   bool
 	}{{
 		name:      "1",
@@ -81,9 +80,10 @@ func TestMapRedaction(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := value.Map{}
+			m := chore.Map{}
 			assert.NoError(t, json.Unmarshal([]byte(tt.json), &m))
 			assert.Equal(t, tt.wantValue, m)
+			fmt.Println(tt.json)
 			got, err := New(m)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantCID, got)
@@ -94,7 +94,7 @@ func TestMapRedaction(t *testing.T) {
 func TestEdgecases_NullStream(t *testing.T) {
 	// nolint: lll
 	b := `{"@type:s":"stream:poc.nimona.io/conversation","nonce:s":"44273fc3-5bd0-4ed5-a9eb-3abb588f68cd","metadata:m":{"owner:s":"@peer","stream:r":null,"datetime:s":"2021-02-14T20:51:38.989872"}}`
-	o := value.Map{}
+	o := chore.Map{}
 	err := json.Unmarshal([]byte(b), &o)
 	require.NoError(t, err)
 	h := Must(New(o))

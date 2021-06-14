@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"nimona.io/internal/rand"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -15,7 +16,6 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/cid"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
@@ -37,7 +37,7 @@ var (
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=value.CID ValueType=stream.Subscription SyncmapName=subscriptions"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=chore.CID ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
@@ -47,17 +47,17 @@ type (
 		) (*object.Object, error)
 		Request(
 			ctx context.Context,
-			cid value.CID,
+			cid chore.CID,
 			peer *peer.ConnectionInfo,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
-			rootCID value.CID,
+			rootCID chore.CID,
 			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
 		AddStreamSubscription(
 			ctx context.Context,
-			rootCID value.CID,
+			rootCID chore.CID,
 		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -134,7 +134,7 @@ func (m *manager) isWellKnownEphemeral(
 // TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
 	ctx context.Context,
-	rootCID value.CID,
+	rootCID chore.CID,
 	recipients ...*peer.ConnectionInfo,
 ) (object.ReadCloser, error) {
 	if len(recipients) == 0 {
@@ -190,7 +190,7 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	var leaves []value.CID
+	var leaves []chore.CID
 
 	select {
 	case res := <-responses:
@@ -208,11 +208,11 @@ func (m *manager) RequestStream(
 
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
-	leaves []value.CID,
+	leaves []chore.CID,
 	recipient *peer.ConnectionInfo,
 ) error {
 	// TODO refactor to remove buffer
-	objectCIDs := make(chan value.CID, 1000)
+	objectCIDs := make(chan chore.CID, 1000)
 
 	go func() {
 		for _, l := range leaves {
@@ -299,7 +299,7 @@ func (m *manager) fetchFromLeaves(
 
 func (m *manager) Request(
 	ctx context.Context,
-	cID value.CID,
+	cID chore.CID,
 	pr *peer.ConnectionInfo,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
@@ -483,15 +483,15 @@ func (m *manager) storeObject(
 
 func (m *manager) announceStreamChildren(
 	ctx context.Context,
-	streamCID value.CID,
-	children []value.CID,
+	streamCID chore.CID,
+	children []chore.CID,
 ) {
 	logger := log.FromContext(ctx)
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[string]struct{}{}
-	m.subscriptions.Range(func(_ value.CID, sub *stream.Subscription) bool {
+	m.subscriptions.Range(func(_ chore.CID, sub *stream.Subscription) bool {
 		// TODO check expiry
 		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
 		return true
@@ -848,7 +848,7 @@ func (m *manager) Put(
 			return nil, err
 		}
 		if len(leaves) == 0 {
-			leaves = []value.CID{
+			leaves = []chore.CID{
 				streamCID,
 			}
 		}
@@ -871,7 +871,7 @@ func (m *manager) Put(
 				// TODO timeout?
 			),
 			o.Metadata.Stream,
-			[]value.CID{
+			[]chore.CID{
 				o.CID(),
 			},
 		)
@@ -884,7 +884,7 @@ func (m *manager) Put(
 
 func (m *manager) AddStreamSubscription(
 	ctx context.Context,
-	rootCID value.CID,
+	rootCID chore.CID,
 ) error {
 	r, err := m.objectstore.GetByStream(rootCID)
 	if err != nil {
@@ -927,7 +927,7 @@ func (m *manager) AddStreamSubscription(
 			Owner:  pub,
 			Stream: rootCID,
 		},
-		RootCIDs: []value.CID{
+		RootCIDs: []chore.CID{
 			rootCID,
 		},
 		// TODO add expiry

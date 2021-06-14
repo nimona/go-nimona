@@ -5,9 +5,9 @@ import (
 
 	"github.com/gobwas/glob"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 )
 
 // LookupOptions
@@ -17,8 +17,8 @@ type (
 		// Lookups are used to perform db queries for these filters
 		// TODO find a better name for this
 		Lookups struct {
-			ObjectCIDs   []value.CID
-			StreamCIDs   []value.CID
+			ObjectCIDs   []chore.CID
+			StreamCIDs   []chore.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}
@@ -30,13 +30,13 @@ type (
 func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	options := &LookupOptions{
 		Lookups: struct {
-			ObjectCIDs   []value.CID
-			StreamCIDs   []value.CID
+			ObjectCIDs   []chore.CID
+			StreamCIDs   []chore.CID
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}{
-			ObjectCIDs:   []value.CID{},
-			StreamCIDs:   []value.CID{},
+			ObjectCIDs:   []chore.CID{},
+			StreamCIDs:   []chore.CID{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 		},
@@ -48,7 +48,7 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	return *options
 }
 
-func FilterByCID(hs ...value.CID) LookupOption {
+func FilterByCID(hs ...chore.CID) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectCIDs = append(opts.Lookups.ObjectCIDs, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
@@ -77,7 +77,7 @@ func FilterByOwner(hs ...crypto.PublicKey) LookupOption {
 	}
 }
 
-func FilterByStreamCID(hs ...value.CID) LookupOption {
+func FilterByStreamCID(hs ...chore.CID) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamCIDs = append(opts.Lookups.StreamCIDs, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {

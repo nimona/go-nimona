@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"nimona.io/pkg/object/value"
+	"nimona.io/pkg/chore"
 )
 
 func TestCopy(t *testing.T) {
@@ -17,8 +16,8 @@ func TestCopy(t *testing.T) {
 		name: "same cid, different ptr",
 		source: &Object{
 			Type: "foo",
-			Data: value.Map{
-				"foo": value.String("bar"),
+			Data: chore.Map{
+				"foo": chore.String("bar"),
 			},
 		},
 	}}

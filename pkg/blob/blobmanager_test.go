@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
@@ -23,14 +23,14 @@ func Test_requester_Request(t *testing.T) {
 	localPeer1 := newPeer()
 
 	chunk1 := &blob.Chunk{
-		Data: value.Data("ooh wee"),
+		Data: chore.Data("ooh wee"),
 	}
 	chunk2 := &blob.Chunk{
-		Data: value.Data("ooh lala"),
+		Data: chore.Data("ooh lala"),
 	}
 
 	blob1 := &blob.Blob{
-		Chunks: []value.CID{
+		Chunks: []chore.CID{
 			object.MustMarshal(chunk1).CID(),
 			object.MustMarshal(chunk2).CID(),
 		},
@@ -46,7 +46,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx context.Context
-		cid value.CID
+		cid chore.CID
 	}
 	tests := []struct {
 		name       string
@@ -142,8 +142,8 @@ func newPeer() localpeer.LocalPeer {
 func Test_manager_ImportFromFile(t *testing.T) {
 	chunk0 := &object.Object{
 		Type: new(blob.Chunk).Type(),
-		Data: value.Map{
-			"data": value.Data(
+		Data: chore.Map{
+			"data": chore.Data(
 				"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
 					"\n15\n16\n17\n18\n19\n20",
 			),
@@ -151,8 +151,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 	}
 	chunk1 := &object.Object{
 		Type: new(blob.Chunk).Type(),
-		Data: value.Map{
-			"data": value.Data(
+		Data: chore.Map{
+			"data": chore.Data(
 				"\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n" +
 					"32\n33\n34\n35\n36\n3",
 			),
@@ -160,8 +160,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 	}
 	chunk2 := &object.Object{
 		Type: new(blob.Chunk).Type(),
-		Data: value.Map{
-			"data": value.Data(
+		Data: chore.Map{
+			"data": chore.Data(
 				"7\n38\n39\n40\n",
 			),
 		},
@@ -192,11 +192,11 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: new(blob.Blob).Type(),
-					Data: value.Map{
-						"chunks": value.StringArray{
-							value.String(chunk0.CID()),
-							value.String(chunk1.CID()),
-							value.String(chunk2.CID()),
+					Data: chore.Map{
+						"chunks": chore.StringArray{
+							chore.String(chunk0.CID()),
+							chore.String(chunk1.CID()),
+							chore.String(chunk2.CID()),
 						},
 					},
 				}).
@@ -204,7 +204,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			return m
 		},
 		want: &blob.Blob{
-			Chunks: []value.CID{
+			Chunks: []chore.CID{
 				chunk0.CID(),
 				chunk1.CID(),
 				chunk2.CID(),

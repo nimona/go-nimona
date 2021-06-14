@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -16,7 +17,6 @@ import (
 	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 )
@@ -106,8 +106,8 @@ func TestResolver_Integration(t *testing.T) {
 	t.Run("object added", func(t *testing.T) {
 		// add new object to pr1 store
 		obj1 := &object.Object{
-			Data: value.Map{
-				"foo": value.String("bar"),
+			Data: chore.Map{
+				"foo": chore.String("bar"),
 			},
 		}
 		obj1cid := obj1.CID()

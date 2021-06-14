@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/filesharing"
-	value "nimona.io/pkg/object/value"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -165,7 +165,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []value.CID{"1234"},
+		Chunks: []chore.CID{"1234"},
 	}
 	req := &filesharing.TransferRequest{
 		File:  file1,
@@ -175,7 +175,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	type args struct {
 		ctx   context.Context
-		CID   value.CID
+		CID   chore.CID
 		nonce string
 	}
 	tests := []struct {

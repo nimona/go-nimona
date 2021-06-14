@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -21,7 +22,6 @@ import (
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/object/cid"
-	"nimona.io/pkg/object/value"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
@@ -37,8 +37,8 @@ func TestManager_Request(t *testing.T) {
 	}
 	f00 := &object.Object{
 		Type: "foo",
-		Data: value.Map{
-			"f00": value.String("f00"),
+		Data: chore.Map{
+			"f00": chore.String("f00"),
 		},
 	}
 	type fields struct {
@@ -47,7 +47,7 @@ func TestManager_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx     context.Context
-		rootCID value.CID
+		rootCID chore.CID
 		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -133,8 +133,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	require.NoError(t, err)
 	f01 := &object.Object{
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"f01":  value.String("f01"),
+		Data: chore.Map{
+			"f01":  chore.String("f01"),
 			"asdf": f00m,
 		},
 	}
@@ -151,7 +151,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx     context.Context
-		rootCID value.CID
+		rootCID chore.CID
 		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -317,8 +317,8 @@ func TestManager_RequestStream(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"f00": value.String("f00"),
+		Data: chore.Map{
+			"f00": chore.String("f00"),
 		},
 	}
 	f01 := &object.Object{
@@ -326,11 +326,11 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{f00.CID()},
+				"*": []chore.CID{f00.CID()},
 			},
 		},
-		Data: value.Map{
-			"f01": value.String("f01"),
+		Data: chore.Map{
+			"f01": chore.String("f01"),
 		},
 	}
 	f02 := &object.Object{
@@ -338,11 +338,11 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{f01.CID()},
+				"*": []chore.CID{f01.CID()},
 			},
 		},
-		Data: value.Map{
-			"f02": value.String("f02"),
+		Data: chore.Map{
+			"f02": chore.String("f02"),
 		},
 	}
 
@@ -353,7 +353,7 @@ func TestManager_RequestStream(t *testing.T) {
 	}
 	type args struct {
 		ctx     context.Context
-		rootCID value.CID
+		rootCID chore.CID
 		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -412,7 +412,7 @@ func TestManager_RequestStream(t *testing.T) {
 								Payload: object.MustMarshal(
 									&stream.Response{
 										RequestID: "7",
-										Leaves: []value.CID{
+										Leaves: []chore.CID{
 											f02.CID(),
 										},
 									},
@@ -524,8 +524,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -534,13 +534,13 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: f00.CID(),
 			Parents: object.Parents{
-				"*": []value.CID{
+				"*": []chore.CID{
 					f00.CID(),
 				},
 			},
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 
@@ -556,7 +556,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx     context.Context
-		rootCID value.CID
+		rootCID chore.CID
 		peer    *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -573,7 +573,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(f00.CID()).
 					Return(
-						[]value.CID{
+						[]chore.CID{
 							f01.CID(),
 						},
 						nil,
@@ -632,7 +632,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootCID:   f00.CID(),
-				Leaves:    []value.CID{f01.CID()},
+				Leaves:    []chore.CID{f01.CID()},
 			},
 		),
 	}, {
@@ -697,7 +697,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootCID:   f00.CID(),
-				Leaves:    []value.CID{},
+				Leaves:    []chore.CID{},
 			},
 		),
 	}}
@@ -737,8 +737,8 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey,
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 	testObjectSimpleMap, err := testObjectSimple.MarshalMap()
@@ -748,8 +748,8 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey,
 		},
-		Data: value.Map{
-			"root": value.String("true"),
+		Data: chore.Map{
+			"root": chore.String("true"),
 		},
 	}
 	testObjectWithStream := &object.Object{
@@ -758,18 +758,18 @@ func TestManager_Put(t *testing.T) {
 			Owner:  testOwnPublicKey,
 			Stream: testObjectStreamRoot.CID(),
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 	bar1 := &object.Object{
-		Data: value.Map{
-			"foo": value.String("bar1"),
+		Data: chore.Map{
+			"foo": chore.String("bar1"),
 		},
 	}
 	bar2 := &object.Object{
-		Data: value.Map{
-			"foo": value.String("bar2"),
+		Data: chore.Map{
+			"foo": chore.String("bar2"),
 		},
 	}
 	testObjectWithStreamUpdated := &object.Object{
@@ -779,15 +779,15 @@ func TestManager_Put(t *testing.T) {
 			Stream: testObjectStreamRoot.CID(),
 			Parents: object.Parents{
 				"*": cid.SortCIDs(
-					[]value.CID{
+					[]chore.CID{
 						bar1.CID(),
 						bar2.CID(),
 					},
 				),
 			},
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 	testObjectSubscriptionInline := object.MustMarshal(
@@ -805,7 +805,7 @@ func TestManager_Put(t *testing.T) {
 			Stream: testObjectStreamRoot.CID(),
 			Parents: object.Parents{
 				"*": cid.SortCIDs(
-					[]value.CID{
+					[]chore.CID{
 						bar1.CID(),
 						bar2.CID(),
 						testObjectSubscriptionInline.CID(),
@@ -813,15 +813,15 @@ func TestManager_Put(t *testing.T) {
 				),
 			},
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 	testObjectComplex := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
-		Data: value.Map{
-			"foo":           value.String("bar"),
+		Data: chore.Map{
+			"foo":           chore.String("bar"),
 			"nested-simple": testObjectSimpleMap,
 		},
 	}
@@ -928,7 +928,7 @@ func TestManager_Put(t *testing.T) {
 					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
 						cid.SortCIDs(
-							[]value.CID{
+							[]chore.CID{
 								bar1.CID(),
 								bar2.CID(),
 							},
@@ -972,7 +972,7 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						[]value.CID{
+						[]chore.CID{
 							bar1.CID(),
 							bar2.CID(),
 						},
@@ -1023,7 +1023,7 @@ func TestManager_Put(t *testing.T) {
 						Metadata: object.Metadata{
 							Owner: testSubscriberPublicKey,
 						},
-						RootCIDs: []value.CID{
+						RootCIDs: []chore.CID{
 							testObjectStreamRoot.CID(),
 						},
 					},
@@ -1051,7 +1051,7 @@ func TestManager_Put(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.CID()).
 					Return(
-						[]value.CID{
+						[]chore.CID{
 							bar1.CID(),
 							bar2.CID(),
 							testObjectSubscriptionInline.CID(),
@@ -1110,7 +1110,7 @@ func TestManager_Put(t *testing.T) {
 				Owner:  testOwnPublicKey,
 				Parents: object.Parents{
 					"*": cid.SortCIDs(
-						[]value.CID{
+						[]chore.CID{
 							bar1.CID(),
 							bar2.CID(),
 							testObjectSubscriptionInline.CID(),
@@ -1118,8 +1118,8 @@ func TestManager_Put(t *testing.T) {
 					),
 				},
 			},
-			Data: value.Map{
-				"foo": value.String("bar"),
+			Data: chore.Map{
+				"foo": chore.String("bar"),
 			},
 		},
 	}}
@@ -1165,8 +1165,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: p.PublicKey(),
 		},
-		Data: value.Map{
-			"foo": value.String("not-bar"),
+		Data: chore.Map{
+			"foo": chore.String("not-bar"),
 		},
 	}
 	o2 := &object.Object{
@@ -1174,8 +1174,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Stream: o0.CID(),
 		},
-		Data: value.Map{
-			"foo": value.String("bar"),
+		Data: chore.Map{
+			"foo": chore.String("bar"),
 		},
 	}
 	tests := []struct {

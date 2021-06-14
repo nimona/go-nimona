@@ -5,9 +5,9 @@ import (
 
 	"github.com/elliotchance/orderedmap"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
-	value "nimona.io/pkg/object/value"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 
 func GetFeedCIDs(
 	objectReader object.Reader,
-) ([]value.CID, error) {
+) ([]chore.CID, error) {
 	objects := orderedmap.NewOrderedMap()
 	for {
 		obj, err := objectReader.Read()
@@ -48,12 +48,12 @@ func GetFeedCIDs(
 			}
 		}
 	}
-	cids := []value.CID{}
+	cids := []chore.CID{}
 	for el := objects.Front(); el != nil; el = el.Next() {
 		if !el.Value.(bool) {
 			continue
 		}
-		cids = append(cids, el.Key.(value.CID))
+		cids = append(cids, el.Key.(chore.CID))
 	}
 	return cids, nil
 }
@@ -74,7 +74,7 @@ func GetFeedHypotheticalRoot(
 func GetFeedHypotheticalRootCID(
 	owner crypto.PublicKey,
 	objectType string,
-) value.CID {
+) chore.CID {
 	return object.MustMarshal(
 		GetFeedHypotheticalRoot(
 			owner,

@@ -1,4 +1,4 @@
-package value
+package chore
 
 func ToBoolArray(s []bool) BoolArray {
 	r := make(BoolArray, len(s))

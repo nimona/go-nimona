@@ -3,9 +3,9 @@ package objectstore
 import (
 	"time"
 
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/value"
 )
 
 const (
@@ -17,18 +17,18 @@ const (
 
 type (
 	Getter interface {
-		Get(cid value.CID) (*object.Object, error)
+		Get(cid chore.CID) (*object.Object, error)
 	}
 	Store interface {
-		Get(cid value.CID) (*object.Object, error)
+		Get(cid chore.CID) (*object.Object, error)
 		GetByType(string) (object.ReadCloser, error)
-		GetByStream(value.CID) (object.ReadCloser, error)
+		GetByStream(chore.CID) (object.ReadCloser, error)
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
-		GetStreamLeaves(streamRootCID value.CID) ([]value.CID, error)
-		Pin(value.CID) error
-		IsPinned(value.CID) (bool, error)
-		GetPinned() ([]value.CID, error)
-		RemovePin(value.CID) error
+		GetStreamLeaves(streamRootCID chore.CID) ([]chore.CID, error)
+		Pin(chore.CID) error
+		IsPinned(chore.CID) (bool, error)
+		GetPinned() ([]chore.CID, error)
+		RemovePin(chore.CID) error
 	}
 )

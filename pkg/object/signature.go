@@ -1,10 +1,10 @@
 package object
 
 import (
+	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object/cid"
-	"nimona.io/pkg/object/value"
 )
 
 const (
@@ -32,16 +32,16 @@ func (s *Signature) IsEmpty() bool {
 	return s == nil || len(s.X) == 0
 }
 
-func (s *Signature) MarshalMap() (value.Map, error) {
-	r := value.Map{}
+func (s *Signature) MarshalMap() (chore.Map, error) {
+	r := chore.Map{}
 	if !s.Signer.IsEmpty() {
-		r["signer"] = value.String(s.Signer.String())
+		r["signer"] = chore.String(s.Signer.String())
 	}
 	if s.Alg != "" {
-		r["alg"] = value.String(s.Alg)
+		r["alg"] = chore.String(s.Alg)
 	}
 	if len(s.X) > 0 {
-		r["x"] = value.Data(s.X)
+		r["x"] = chore.Data(s.X)
 	}
 	if s.Certificate != nil {
 		c, err := s.Certificate.MarshalObject()
@@ -57,9 +57,9 @@ func (s *Signature) MarshalMap() (value.Map, error) {
 	return r, nil
 }
 
-func (s *Signature) UnmarshalMap(m value.Map) error {
+func (s *Signature) UnmarshalMap(m chore.Map) error {
 	if t, ok := m["signer"]; ok {
-		if v, ok := t.(value.String); ok {
+		if v, ok := t.(chore.String); ok {
 			k := crypto.PublicKey{}
 			if err := k.UnmarshalString(string(v)); err == nil {
 				s.Signer = k
@@ -67,17 +67,17 @@ func (s *Signature) UnmarshalMap(m value.Map) error {
 		}
 	}
 	if t, ok := m["alg"]; ok {
-		if v, ok := t.(value.String); ok {
+		if v, ok := t.(chore.String); ok {
 			s.Alg = string(v)
 		}
 	}
 	if t, ok := m["x"]; ok {
-		if v, ok := t.(value.Data); ok {
+		if v, ok := t.(chore.Data); ok {
 			s.X = []byte(v)
 		}
 	}
 	if t, ok := m["certificate"]; ok {
-		if m, ok := t.(value.Map); ok {
+		if m, ok := t.(chore.Map); ok {
 			o := &Object{}
 			err := o.UnmarshalMap(m)
 			if err != nil {
