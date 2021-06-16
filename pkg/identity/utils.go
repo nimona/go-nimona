@@ -27,7 +27,7 @@ func Lookup(
 	if err != nil {
 		return nil, err
 	}
-	streamRootCID := streamRootObj.CID()
+	streamRootHash := streamRootObj.Hash()
 
 	recipients, err := res.Lookup(
 		ctx,
@@ -41,7 +41,7 @@ func Lookup(
 
 	_, err = man.RequestStream(
 		ctx,
-		streamRootCID,
+		streamRootHash,
 		recipients...,
 	)
 	if err != nil {

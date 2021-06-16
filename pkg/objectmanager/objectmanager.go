@@ -15,7 +15,6 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/cid"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
@@ -37,7 +36,7 @@ var (
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=chore.CID ValueType=stream.Subscription SyncmapName=subscriptions"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=chore.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
@@ -47,17 +46,17 @@ type (
 		) (*object.Object, error)
 		Request(
 			ctx context.Context,
-			cid chore.CID,
+			hash chore.Hash,
 			peer *peer.ConnectionInfo,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
-			rootCID chore.CID,
+			rootHash chore.Hash,
 			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
 		AddStreamSubscription(
 			ctx context.Context,
-			rootCID chore.CID,
+			rootHash chore.Hash,
 		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -78,7 +77,7 @@ type (
 
 // Object manager is responsible for:
 // * adding objects (Put) to the store
-// * adding objects (Put) to the local peer's content cids
+// * adding objects (Put) to the local peer's content hashes
 
 func New(
 	ctx context.Context,
@@ -134,11 +133,11 @@ func (m *manager) isWellKnownEphemeral(
 // TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
 	ctx context.Context,
-	rootCID chore.CID,
+	rootHash chore.Hash,
 	recipients ...*peer.ConnectionInfo,
 ) (object.ReadCloser, error) {
 	if len(recipients) == 0 {
-		return m.objectstore.GetByStream(rootCID)
+		return m.objectstore.GetByStream(rootHash)
 	}
 
 	rID := m.newRequestID()
@@ -176,7 +175,7 @@ func (m *manager) RequestStream(
 
 	req := stream.Request{
 		RequestID: rID,
-		RootCID:   rootCID,
+		RootHash:  rootHash,
 	}
 	ro, err := req.MarshalObject()
 	if err != nil {
@@ -190,7 +189,7 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	var leaves []chore.CID
+	var leaves []chore.Hash
 
 	select {
 	case res := <-responses:
@@ -203,20 +202,20 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	return m.objectstore.GetByStream(rootCID)
+	return m.objectstore.GetByStream(rootHash)
 }
 
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
-	leaves []chore.CID,
+	leaves []chore.Hash,
 	recipient *peer.ConnectionInfo,
 ) error {
 	// TODO refactor to remove buffer
-	objectCIDs := make(chan chore.CID, 1000)
+	objectHashes := make(chan chore.Hash, 1000)
 
 	go func() {
 		for _, l := range leaves {
-			objectCIDs <- l
+			objectHashes <- l
 		}
 	}()
 
@@ -228,22 +227,22 @@ func (m *manager) fetchFromLeaves(
 
 	go func() {
 		wg.Wait()
-		close(objectCIDs)
+		close(objectHashes)
 	}()
 
 	go func() {
-		for objectCID := range objectCIDs {
+		for objectHash := range objectHashes {
 			// check if we have object stored
 			dCtx := context.New(
 				context.WithTimeout(3 * time.Second),
 			)
-			if obj, err := m.objectstore.Get(objectCID); err == nil {
+			if obj, err := m.objectstore.Get(objectHash); err == nil {
 				// TODO consider checking the whole stream for missing objects
 				// TODO consider refactoring, or moving into a goroutine
 				for _, group := range obj.Metadata.Parents {
 					for _, parent := range group {
 						wg.Add(1)
-						objectCIDs <- parent
+						objectHashes <- parent
 					}
 				}
 				wg.Done()
@@ -252,7 +251,7 @@ func (m *manager) fetchFromLeaves(
 			// TODO consider exluding nexted objects
 			fullObj, err := m.Request(
 				dCtx,
-				objectCID,
+				objectHash,
 				recipient,
 			)
 			if err != nil {
@@ -262,13 +261,13 @@ func (m *manager) fetchFromLeaves(
 
 			// TODO check the validity of the object
 			// * it should have objects
-			// * it should have a stream root cid
+			// * it should have a stream root hash
 			// * should it be signed?
 			// * is its policy valid?
 			// TODO consider refactoring, or moving into a goroutine
 			for _, group := range fullObj.Metadata.Parents {
 				for _, parent := range group {
-					objectCIDs <- parent
+					objectHashes <- parent
 					wg.Add(1)
 				}
 			}
@@ -299,7 +298,7 @@ func (m *manager) fetchFromLeaves(
 
 func (m *manager) Request(
 	ctx context.Context,
-	cID chore.CID,
+	hash chore.Hash,
 	pr *peer.ConnectionInfo,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
@@ -335,8 +334,8 @@ func (m *manager) Request(
 	}()
 
 	req := &object.Request{
-		RequestID: rID,
-		ObjectCID: cID,
+		RequestID:  rID,
+		ObjectHash: hash,
 	}
 	ro, err := req.MarshalObject()
 	if err != nil {
@@ -377,7 +376,7 @@ func (m *manager) handleObjects(
 			With(
 				log.String("method", "objectmanager.handleObjects"),
 				log.String("payload.type", env.Payload.Type),
-				log.String("payload.cid", env.Payload.CID().String()),
+				log.String("payload.hash", env.Payload.Hash().String()),
 			)
 
 		logger.Debug("handling object")
@@ -465,13 +464,13 @@ func (m *manager) storeObject(
 
 	logger := log.FromContext(ctx)
 	objType := obj.Type
-	objCID := obj.CID()
+	objHash := obj.Hash()
 
 	// store object
 	if err := m.objectstore.Put(obj); err != nil {
 		logger.Error(
 			"error trying to persist incoming object",
-			log.String("cid", objCID.String()),
+			log.String("hash", objHash.String()),
 			log.String("type", objType),
 			log.Error(err),
 		)
@@ -483,22 +482,22 @@ func (m *manager) storeObject(
 
 func (m *manager) announceStreamChildren(
 	ctx context.Context,
-	streamCID chore.CID,
-	children []chore.CID,
+	streamHash chore.Hash,
+	children []chore.Hash,
 ) {
 	logger := log.FromContext(ctx)
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[string]struct{}{}
-	m.subscriptions.Range(func(_ chore.CID, sub *stream.Subscription) bool {
+	m.subscriptions.Range(func(_ chore.Hash, sub *stream.Subscription) bool {
 		// TODO check expiry
 		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
 		return true
 	})
 
 	// find subscriptions that are attached in the stream
-	r, err := m.objectstore.GetByStream(streamCID)
+	r, err := m.objectstore.GetByStream(streamHash)
 	if err != nil {
 		return
 	}
@@ -527,7 +526,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	logger.Info("trying to announce",
-		log.String("streamCID", streamCID.String()),
+		log.String("streamHash", streamHash.String()),
 		log.Any("subscribers", subscribers),
 	)
 
@@ -540,8 +539,8 @@ func (m *manager) announceStreamChildren(
 		Metadata: object.Metadata{
 			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
-		StreamCID:  streamCID,
-		ObjectCIDs: children,
+		StreamHash:   streamHash,
+		ObjectHashes: children,
 	}
 	for _, subscriber := range subscribers {
 		// TODO figure out if subscribers are peers or identities? how?
@@ -599,7 +598,7 @@ func (m *manager) handleObjectRequest(
 	}
 
 	logger = logger.With(
-		log.String("req.objectID", req.ObjectCID.String()),
+		log.String("req.objectID", req.ObjectHash.String()),
 	)
 
 	logger.Info("handling object request")
@@ -612,7 +611,7 @@ func (m *manager) handleObjectRequest(
 		RequestID: req.RequestID,
 	}
 
-	obj, err := m.objectstore.Get(req.ObjectCID)
+	obj, err := m.objectstore.Get(req.ObjectHash)
 	if err != nil {
 		logger.Error(
 			"error getting object to respond with",
@@ -688,10 +687,10 @@ func (m *manager) handleStreamRequest(
 			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
 		RequestID: req.RequestID,
-		RootCID:   req.RootCID,
+		RootHash:  req.RootHash,
 	}
 
-	leaves, err := m.objectstore.GetStreamLeaves(res.RootCID)
+	leaves, err := m.objectstore.GetStreamLeaves(res.RootHash)
 	if err != nil && !errors.Is(err, objectstore.ErrNotFound) {
 		return err
 	}
@@ -726,9 +725,9 @@ func (m *manager) handleStreamSubscription(
 		return err
 	}
 
-	for _, rootCID := range sub.RootCIDs {
+	for _, rootHash := range sub.RootHashes {
 		// TODO introduce time-to-live for subscriptions
-		m.subscriptions.Put(rootCID, sub)
+		m.subscriptions.Put(rootHash, sub)
 	}
 
 	return nil
@@ -743,7 +742,7 @@ func (m *manager) handleStreamAnnouncement(
 		return err
 	}
 
-	// TODO check if this a stream we care about using ann.StreamCID
+	// TODO check if this a stream we care about using ann.StreamHash
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "objectmanager.handleStreamAnnouncement"),
@@ -751,13 +750,13 @@ func (m *manager) handleStreamAnnouncement(
 	)
 
 	logger.Info("got stream announcement ",
-		log.Any("cids", ann.ObjectCIDs),
+		log.Any("hashes", ann.ObjectHashes),
 	)
 
 	// check if we already know about these objects
 	allKnown := true
-	for _, cid := range ann.ObjectCIDs {
-		_, err := m.objectstore.Get(cid)
+	for _, hash := range ann.ObjectHashes {
+		_, err := m.objectstore.Get(hash)
 		if err == objectstore.ErrNotFound {
 			allKnown = false
 			break
@@ -785,7 +784,7 @@ func (m *manager) handleStreamAnnouncement(
 	// fetch announced objects and their parents
 	if err := m.fetchFromLeaves(
 		ctx,
-		ann.ObjectCIDs,
+		ann.ObjectHashes,
 		pr[0],
 	); err != nil {
 		return err
@@ -802,8 +801,8 @@ func (m *manager) handleStreamAnnouncement(
 			context.WithCorrelationID(ctx.CorrelationID()),
 			// context.WithTimeout(5*time.Second),
 		),
-		ann.StreamCID,
-		ann.ObjectCIDs,
+		ann.StreamHash,
+		ann.ObjectHashes,
 	)
 
 	return nil
@@ -841,18 +840,18 @@ func (m *manager) Put(
 	// Note: Please don't add owners as it messes with hypothetical objects
 	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
-	streamCID := o.Metadata.Stream
-	if !streamCID.IsEmpty() && len(o.Metadata.Parents) == 0 {
-		leaves, err := m.objectstore.GetStreamLeaves(streamCID)
+	streamHash := o.Metadata.Stream
+	if !streamHash.IsEmpty() && len(o.Metadata.Parents) == 0 {
+		leaves, err := m.objectstore.GetStreamLeaves(streamHash)
 		if err != nil {
 			return nil, err
 		}
 		if len(leaves) == 0 {
-			leaves = []chore.CID{
-				streamCID,
+			leaves = []chore.Hash{
+				streamHash,
 			}
 		}
-		cid.SortCIDs(leaves)
+		chore.SortHashes(leaves)
 		o.Metadata.Parents = object.Parents{
 			"*": leaves,
 		}
@@ -863,7 +862,7 @@ func (m *manager) Put(
 		return nil, err
 	}
 
-	if !streamCID.IsEmpty() {
+	if !streamHash.IsEmpty() {
 		// announce to subscribers
 		m.announceStreamChildren(
 			context.New(
@@ -871,8 +870,8 @@ func (m *manager) Put(
 				// TODO timeout?
 			),
 			o.Metadata.Stream,
-			[]chore.CID{
-				o.CID(),
+			[]chore.Hash{
+				o.Hash(),
 			},
 		)
 	}
@@ -884,9 +883,9 @@ func (m *manager) Put(
 
 func (m *manager) AddStreamSubscription(
 	ctx context.Context,
-	rootCID chore.CID,
+	rootHash chore.Hash,
 ) error {
-	r, err := m.objectstore.GetByStream(rootCID)
+	r, err := m.objectstore.GetByStream(rootHash)
 	if err != nil {
 		return fmt.Errorf("error trying to get stream objects, %w", err)
 	}
@@ -925,10 +924,10 @@ func (m *manager) AddStreamSubscription(
 	s := &stream.Subscription{
 		Metadata: object.Metadata{
 			Owner:  pub,
-			Stream: rootCID,
+			Stream: rootHash,
 		},
-		RootCIDs: []chore.CID{
-			rootCID,
+		RootHashes: []chore.Hash{
+			rootHash,
 		},
 		// TODO add expiry
 	}

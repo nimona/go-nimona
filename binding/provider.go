@@ -117,9 +117,9 @@ func (p *Provider) Get(
 ) (object.ReadCloser, error) {
 	opts := []sqlobjectstore.FilterOption{}
 	filterByType := []string{}
-	filterByCID := []chore.CID{}
+	filterByHash := []chore.Hash{}
 	filterByOwner := []crypto.PublicKey{}
-	filterByStreamCID := []chore.CID{}
+	filterByStreamHash := []chore.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -133,10 +133,10 @@ func (p *Provider) Get(
 				filterByType,
 				v,
 			)
-		case "cid":
-			filterByCID = append(
-				filterByCID,
-				chore.CID(v),
+		case "hash":
+			filterByHash = append(
+				filterByHash,
+				chore.Hash(v),
 			)
 		case "owner":
 			k := crypto.PublicKey{}
@@ -146,9 +146,9 @@ func (p *Provider) Get(
 				k,
 			)
 		case "stream":
-			filterByStreamCID = append(
-				filterByStreamCID,
-				chore.CID(v),
+			filterByStreamHash = append(
+				filterByStreamHash,
+				chore.Hash(v),
 			)
 		}
 		if req.OrderBy != "" {
@@ -176,10 +176,10 @@ func (p *Provider) Get(
 			sqlobjectstore.FilterByObjectType(filterByType...),
 		)
 	}
-	if len(filterByCID) > 0 {
+	if len(filterByHash) > 0 {
 		opts = append(
 			opts,
-			sqlobjectstore.FilterByCID(filterByCID...),
+			sqlobjectstore.FilterByHash(filterByHash...),
 		)
 	}
 	if len(filterByOwner) > 0 {
@@ -188,10 +188,10 @@ func (p *Provider) Get(
 			sqlobjectstore.FilterByOwner(filterByOwner...),
 		)
 	}
-	if len(filterByStreamCID) > 0 {
+	if len(filterByStreamHash) > 0 {
 		opts = append(
 			opts,
-			sqlobjectstore.FilterByStreamCID(filterByStreamCID...),
+			sqlobjectstore.FilterByStreamHash(filterByStreamHash...),
 		)
 	}
 	return p.objectstore.Filter(opts...)
@@ -203,7 +203,7 @@ type SubscribeRequest struct {
 
 // payload should start with one of the following:
 // - type:<type>
-// - cid:<cid>
+// - hash:<hash>
 // - stream:<rootHash>
 // - owner:<publicKey>
 func (p *Provider) Subscribe(
@@ -212,9 +212,9 @@ func (p *Provider) Subscribe(
 ) (object.ReadCloser, error) {
 	opts := []objectmanager.LookupOption{}
 	filterByType := []string{}
-	filterByCID := []chore.CID{}
+	filterByHash := []chore.Hash{}
 	filterByOwner := []crypto.PublicKey{}
-	filterByStreamCID := []chore.CID{}
+	filterByStreamHash := []chore.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -228,10 +228,10 @@ func (p *Provider) Subscribe(
 				filterByType,
 				v,
 			)
-		case "cid":
-			filterByCID = append(
-				filterByCID,
-				chore.CID(v),
+		case "hash":
+			filterByHash = append(
+				filterByHash,
+				chore.Hash(v),
 			)
 		case "owner":
 			k := crypto.PublicKey{}
@@ -241,9 +241,9 @@ func (p *Provider) Subscribe(
 				k,
 			)
 		case "stream":
-			filterByStreamCID = append(
-				filterByStreamCID,
-				chore.CID(v),
+			filterByStreamHash = append(
+				filterByStreamHash,
+				chore.Hash(v),
 			)
 		}
 	}
@@ -253,10 +253,10 @@ func (p *Provider) Subscribe(
 			objectmanager.FilterByObjectType(filterByType...),
 		)
 	}
-	if len(filterByCID) > 0 {
+	if len(filterByHash) > 0 {
 		opts = append(
 			opts,
-			objectmanager.FilterByCID(filterByCID...),
+			objectmanager.FilterByHash(filterByHash...),
 		)
 	}
 	if len(filterByOwner) > 0 {
@@ -265,10 +265,10 @@ func (p *Provider) Subscribe(
 			objectmanager.FilterByOwner(filterByOwner...),
 		)
 	}
-	if len(filterByStreamCID) > 0 {
+	if len(filterByStreamHash) > 0 {
 		opts = append(
 			opts,
-			objectmanager.FilterByStreamCID(filterByStreamCID...),
+			objectmanager.FilterByStreamHash(filterByStreamHash...),
 		)
 	}
 	reader := p.objectmanager.Subscribe(opts...)
@@ -277,11 +277,11 @@ func (p *Provider) Subscribe(
 
 func (p *Provider) RequestStream(
 	ctx context.Context,
-	rootHash chore.CID,
+	rootHash chore.Hash,
 ) error {
 	recipients, err := p.resolver.Lookup(
 		ctx,
-		resolver.LookupByCID(rootHash),
+		resolver.LookupByHash(rootHash),
 	)
 	if err != nil {
 		return err
@@ -325,9 +325,9 @@ func (p *Provider) Put(
 	return p.objectmanager.Put(ctx, obj)
 }
 
-func (p *Provider) GetFeedRootCID(
+func (p *Provider) GetFeedRootHash(
 	streamRootObjectType string,
-) chore.CID {
+) chore.Hash {
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{
@@ -335,5 +335,5 @@ func (p *Provider) GetFeedRootCID(
 		},
 	}
 	o, _ := v.MarshalObject()
-	return o.CID()
+	return o.Hash()
 }

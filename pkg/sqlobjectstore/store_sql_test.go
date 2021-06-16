@@ -51,7 +51,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	obj := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: object.MustMarshal(p).CID(),
+			Stream: object.MustMarshal(p).Hash(),
 		},
 		Data: chore.Map{
 			"key": chore.String("value"),
@@ -68,30 +68,30 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		10*time.Second,
 	)
 
-	fmt.Println(obj.CID())
+	fmt.Println(obj.Hash())
 
 	require.NoError(t, err)
-	retrievedObj, err := store.Get(obj.CID())
+	retrievedObj, err := store.Get(obj.Hash())
 	require.NoError(t, err)
 
 	val := retrievedObj.Data["key"]
 	require.NotNil(t, val)
 	assert.Equal(t, "value", string(val.(chore.String)))
 
-	stCID := obj.Metadata.Stream
-	require.NotEmpty(t, stCID)
+	stHash := obj.Metadata.Stream
+	require.NotEmpty(t, stHash)
 
-	err = store.UpdateTTL(obj.CID(), 10)
+	err = store.UpdateTTL(obj.Hash(), 10)
 	require.NoError(t, err)
 
-	cidList, err := store.GetRelations(object.MustMarshal(p).CID())
+	hashList, err := store.GetRelations(object.MustMarshal(p).Hash())
 	require.NoError(t, err)
-	assert.NotEmpty(t, cidList)
+	assert.NotEmpty(t, hashList)
 
-	err = store.Remove(object.MustMarshal(p).CID())
+	err = store.Remove(object.MustMarshal(p).Hash())
 	require.NoError(t, err)
 
-	retrievedObj2, err := store.Get(object.MustMarshal(p).CID())
+	retrievedObj2, err := store.Get(object.MustMarshal(p).Hash())
 	require.True(t, errors.Is(err, objectstore.ErrNotFound))
 	require.Nil(t, retrievedObj2)
 
@@ -120,7 +120,7 @@ func TestFilter(t *testing.T) {
 	err = store.Put(object.MustMarshal(p))
 	require.NoError(t, err)
 
-	ph := object.MustMarshal(p).CID()
+	ph := object.MustMarshal(p).Hash()
 
 	c := fixtures.TestSubscribed{}
 	c.Metadata.Stream = ph
@@ -129,7 +129,7 @@ func TestFilter(t *testing.T) {
 		object.MustMarshal(p),
 	}
 
-	cids := []chore.CID{}
+	hashes := []chore.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
 			Type: new(fixtures.TestSubscribed).Type(),
@@ -149,21 +149,21 @@ func TestFilter(t *testing.T) {
 		objects = append(objects, obj)
 		err = store.Put(obj)
 		require.NoError(t, err)
-		cids = append(cids, obj.CID())
+		hashes = append(hashes, obj.Hash())
 	}
 
 	objectReader, err := store.Filter(
-		FilterByCID(cids[0]),
-		FilterByCID(cids[1]),
-		FilterByCID(cids[2]),
-		FilterByCID(cids[3]),
-		FilterByCID(cids[4]),
+		FilterByHash(hashes[0]),
+		FilterByHash(hashes[1]),
+		FilterByHash(hashes[2]),
+		FilterByHash(hashes[3]),
+		FilterByHash(hashes[4]),
 	)
 	require.NotNil(t, objectReader)
 	require.NoError(t, err)
 	got, err := object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(cids), len(got))
+	require.Equal(t, len(hashes), len(got))
 	objectReader, err = store.Filter(
 		FilterByOwner(k.PublicKey()),
 	)
@@ -178,19 +178,19 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(cids), len(got))
+	require.Equal(t, len(hashes), len(got))
 
 	objectReader, err = store.Filter(
-		FilterByStreamCID(ph),
+		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)
 	require.NoError(t, err)
-	require.Equal(t, len(cids)+1, len(got))
+	require.Equal(t, len(hashes)+1, len(got))
 
 	t.Run("filter with limit 1 offset 0", func(t *testing.T) {
 		objectReader, err = store.Filter(
-			FilterByStreamCID(ph),
+			FilterByStreamHash(ph),
 			FilterLimit(1, 0),
 			FilterOrderBy("MetadataDatetime"),
 			FilterOrderDir("ASC"),
@@ -204,7 +204,7 @@ func TestFilter(t *testing.T) {
 
 	t.Run("filter with limit 1 offset 1", func(t *testing.T) {
 		objectReader, err = store.Filter(
-			FilterByStreamCID(ph),
+			FilterByStreamHash(ph),
 			FilterLimit(1, 1),
 			FilterOrderBy("MetadataDatetime"),
 			FilterOrderDir("ASC"),
@@ -217,9 +217,9 @@ func TestFilter(t *testing.T) {
 	})
 
 	objectReader, err = store.Filter(
-		FilterByCID(cids[0]),
+		FilterByHash(hashes[0]),
 		FilterByObjectType(c.Type()),
-		FilterByStreamCID(ph),
+		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)
@@ -242,10 +242,10 @@ func TestStore_Relations(t *testing.T) {
 	f01 := &object.Object{
 		Type: "f01",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{
-					f00.CID(),
+				"*": []chore.Hash{
+					f00.Hash(),
 				},
 			},
 		},
@@ -257,10 +257,10 @@ func TestStore_Relations(t *testing.T) {
 	f02 := &object.Object{
 		Type: "f02",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{
-					f01.CID(),
+				"*": []chore.Hash{
+					f01.Hash(),
 				},
 			},
 		},
@@ -269,9 +269,9 @@ func TestStore_Relations(t *testing.T) {
 		},
 	}
 
-	fmt.Println("f00", f00.CID())
-	fmt.Println("f01", f01.CID())
-	fmt.Println("f02", f02.CID())
+	fmt.Println("f00", f00.Hash())
+	fmt.Println("f01", f01.Hash())
+	fmt.Println("f02", f02.Hash())
 
 	dblite := tempSqlite3(t)
 	store, err := New(dblite)
@@ -281,26 +281,26 @@ func TestStore_Relations(t *testing.T) {
 	require.NoError(t, store.Put(f00))
 
 	t.Run("root is considered a leaf", func(t *testing.T) {
-		leaves, err := store.GetStreamLeaves(f00.CID())
+		leaves, err := store.GetStreamLeaves(f00.Hash())
 		require.NoError(t, err)
 		require.NotNil(t, leaves)
 		assert.Len(t, leaves, 1)
-		assert.Equal(t, []chore.CID{f00.CID()}, leaves)
+		assert.Equal(t, []chore.Hash{f00.Hash()}, leaves)
 	})
 
 	require.NoError(t, store.Put(f01))
 	require.NoError(t, store.Put(f02))
 
-	leaves, err := store.GetStreamLeaves(f00.CID())
+	leaves, err := store.GetStreamLeaves(f00.Hash())
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 1)
-	assert.Equal(t, []chore.CID{f02.CID()}, leaves)
+	assert.Equal(t, []chore.Hash{f02.Hash()}, leaves)
 
 	fmt.Println(leaves)
 }
 
-func TestStore_ListCIDs(t *testing.T) {
+func TestStore_ListHashes(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
@@ -312,10 +312,10 @@ func TestStore_ListCIDs(t *testing.T) {
 	f01 := &object.Object{
 		Type: "f01",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{
-					f00.CID(),
+				"*": []chore.Hash{
+					f00.Hash(),
 				},
 			},
 		},
@@ -331,9 +331,9 @@ func TestStore_ListCIDs(t *testing.T) {
 		},
 	}
 
-	fmt.Println("f00", f00.CID())
-	fmt.Println("f01", f01.CID())
-	fmt.Println("f02", f02.CID())
+	fmt.Println("f00", f00.Hash())
+	fmt.Println("f01", f01.Hash())
+	fmt.Println("f02", f02.Hash())
 
 	dblite := tempSqlite3(t)
 	store, err := New(dblite)
@@ -344,13 +344,13 @@ func TestStore_ListCIDs(t *testing.T) {
 	require.NoError(t, store.Put(f01))
 	require.NoError(t, store.Put(f02))
 
-	leaves, err := store.ListCIDs()
+	leaves, err := store.ListHashes()
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 2)
-	assert.Equal(t, []chore.CID{
-		f00.CID(),
-		f02.CID(),
+	assert.Equal(t, []chore.Hash{
+		f00.Hash(),
+		f02.Hash(),
 	}, leaves)
 
 	fmt.Println(leaves)
@@ -363,47 +363,47 @@ func TestStore_Pinned(t *testing.T) {
 	require.NotNil(t, store)
 
 	t.Run("pin a", func(t *testing.T) {
-		err := store.Pin("a")
+		err := store.Pin(chore.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("check pin a", func(t *testing.T) {
-		pinned, err := store.IsPinned("a")
+		pinned, err := store.IsPinned(chore.Hash("a"))
 		require.NoError(t, err)
 		assert.True(t, pinned)
 	})
 
 	t.Run("check pin x", func(t *testing.T) {
-		pinned, err := store.IsPinned("x")
+		pinned, err := store.IsPinned(chore.Hash("x"))
 		require.NoError(t, err)
 		assert.False(t, pinned)
 	})
 
 	t.Run("pin a again, no error", func(t *testing.T) {
-		err = store.Pin("a")
+		err = store.Pin(chore.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("pin b", func(t *testing.T) {
-		err = store.Pin("b")
+		err = store.Pin(chore.Hash("b"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (a, b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []chore.CID{"a", "b"}, got)
+		require.Equal(t, []chore.Hash{chore.Hash("a"), chore.Hash("b")}, got)
 	})
 
 	t.Run("remove pin a", func(t *testing.T) {
-		err = store.RemovePin("a")
+		err = store.RemovePin(chore.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []chore.CID{"b"}, got)
+		require.Equal(t, []chore.Hash{chore.Hash("b")}, got)
 	})
 }
 
@@ -425,7 +425,7 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 
 	// check object
-	got, err := store.Get(o.CID())
+	got, err := store.Get(o.Hash())
 	require.NoError(t, err)
 	require.Equal(t, o, got)
 
@@ -434,7 +434,7 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 
 	// object should still be there
-	got, err = store.Get(o.CID())
+	got, err = store.Get(o.Hash())
 	require.NoError(t, err)
 	require.Equal(t, o, got)
 
@@ -446,12 +446,12 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 
 	// object should not be there any more
-	got, err = store.Get(o.CID())
+	got, err = store.Get(o.Hash())
 	require.Error(t, err)
 	require.Nil(t, got)
 
 	// pin object
-	err = store.Pin(o.CID())
+	err = store.Pin(o.Hash())
 	require.NoError(t, err)
 
 	// store object again with 1 second TTL
@@ -466,7 +466,7 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 
 	// object should still be there
-	got, err = store.Get(o.CID())
+	got, err = store.Get(o.Hash())
 	require.NoError(t, err)
 	require.Equal(t, o, got)
 }

@@ -14,9 +14,9 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/chore.CID": {
+	"nimona.io/chore.Hash": {
 		Hint:      "s",
-		Type:      "chore.CID",
+		Type:      "chore.Hash",
 		IsObject:  false,
 		IsPrimary: true,
 	},
@@ -363,9 +363,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	doc.Imports["json"] = "encoding/json"
-	doc.Imports["value"] = "nimona.io/object/value"
+	doc.Imports["chore"] = "nimona.io/chore"
 	doc.Imports["hint"] = "nimona.io/object/hint"
-	doc.Imports["cid"] = "nimona.io/object/cid"
 
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"

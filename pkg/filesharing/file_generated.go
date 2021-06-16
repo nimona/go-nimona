@@ -11,7 +11,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Chunks   []chore.CID     `nimona:"chunks:as"`
+		Chunks   []chore.Hash    `nimona:"chunks:as"`
 	}
 	TransferDone struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`

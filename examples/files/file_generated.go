@@ -11,7 +11,7 @@ type (
 	File struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
 		Name     string          `nimona:"name:s"`
-		Blob     chore.CID       `nimona:"blob:s"`
+		Blob     chore.Hash      `nimona:"blob:s"`
 	}
 )
 

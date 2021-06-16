@@ -40,7 +40,7 @@ func NewBlob(r io.Reader) (*Blob, []*Chunk, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		blob.Chunks = append(blob.Chunks, cho.CID())
+		blob.Chunks = append(blob.Chunks, cho.Hash())
 	}
 
 	return blob, chunks, nil

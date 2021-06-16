@@ -1,17 +1,26 @@
 package chore
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
+	"sort"
 
 	"github.com/buger/jsonparser"
 
+	"nimona.io/internal/encoding/base58"
 	"nimona.io/pkg/errors"
+)
+
+const (
+	EmptyHash Hash = ""
 )
 
 type (
 	Value interface {
+		Hash() Hash
 		Hint() Hint
 		_isValue()
 	}
@@ -32,7 +41,7 @@ type (
 	Map    map[string]Value
 	String string
 	Uint   uint64
-	CID    string
+	Hash   string
 
 	// array types
 	BoolArray   []Bool
@@ -42,20 +51,42 @@ type (
 	MapArray    []Map
 	StringArray []String
 	UintArray   []Uint
-	CIDArray    []CID
+	HashArray   []Hash
 )
 
-// TODO(geoah) do we need this?
-func (v CID) IsEmpty() bool {
+func hashFromBytes(d []byte) Hash {
+	if d == nil {
+		return EmptyHash
+	}
+	b := sha256.Sum256(d)
+	return Hash(base58.Encode(b[:]))
+}
+
+func (v Hash) Bytes() ([]byte, error) {
+	return base58.Decode(string(v))
+}
+
+func (v Hash) IsEmpty() bool {
 	return string(v) == ""
 }
 
-func (v CID) String() string {
+func (v Hash) Equal(h Hash) bool {
+	return h == v
+}
+
+func (v Hash) String() string {
 	return string(v)
 }
 
 func (v Bool) Hint() Hint { return BoolHint }
 func (v Bool) _isValue()  {}
+
+func (v Bool) Hash() Hash {
+	if !v {
+		return hashFromBytes([]byte{0})
+	}
+	return hashFromBytes([]byte{1})
+}
 
 func (v *Bool) UnmarshalJSON(b []byte) error {
 	var iv bool
@@ -68,6 +99,10 @@ func (v *Bool) UnmarshalJSON(b []byte) error {
 
 func (v Data) Hint() Hint { return DataHint }
 func (v Data) _isValue()  {}
+
+func (v Data) Hash() Hash {
+	return hashFromBytes(v)
+}
 
 func (v *Data) UnmarshalJSON(b []byte) error {
 	iv := []byte{}
@@ -83,6 +118,35 @@ func (v *Data) UnmarshalJSON(b []byte) error {
 func (v Float) Hint() Hint { return FloatHint }
 func (v Float) _isValue()  {}
 
+func (v Float) Hash() Hash {
+	// replacing ben's implementation with something less custom, based on:
+	// * https://github.com/benlaurie/objecthash
+	// * https://play.golang.org/p/3xraud43pi
+	// examples of same results in other languages
+	// * ruby: `[7.30363941192626953125].pack('G').unpack('B*').first`
+	// * js: `http://weitz.de/ieee`
+	//
+	// NOTE(geoah): I have removed the inf and nan hashing for now,
+	// we can revisit them once we better understand their usecases.
+	switch {
+	case math.IsInf(float64(v), 1):
+		panic(errors.Error("float inf is not currently supported"))
+	case math.IsInf(float64(v), -1):
+		panic(errors.Error("float -inf is not currently supported"))
+	case math.IsNaN(float64(v)):
+		panic(errors.Error("float nan is not currently supported"))
+	default:
+		return hashFromBytes(
+			[]byte(
+				fmt.Sprintf(
+					"%d",
+					math.Float64bits(float64(v)),
+				),
+			),
+		)
+	}
+}
+
 func (v *Float) UnmarshalJSON(b []byte) error {
 	var iv float64
 	if err := json.Unmarshal(b, &iv); err != nil {
@@ -95,6 +159,17 @@ func (v *Float) UnmarshalJSON(b []byte) error {
 func (v Int) Hint() Hint { return IntHint }
 func (v Int) _isValue()  {}
 
+func (v Int) Hash() Hash {
+	return hashFromBytes(
+		[]byte(
+			fmt.Sprintf(
+				"%d",
+				int64(v),
+			),
+		),
+	)
+}
+
 func (v *Int) UnmarshalJSON(b []byte) error {
 	var iv int64
 	if err := json.Unmarshal(b, &iv); err != nil {
@@ -106,6 +181,54 @@ func (v *Int) UnmarshalJSON(b []byte) error {
 
 func (v Map) Hint() Hint { return MapHint }
 func (v Map) _isValue()  {}
+
+func (v Map) Hash() Hash {
+	h := []byte{}
+	ks := []string{}
+	for k := range v {
+		if len(k) > 0 && k[0] == '_' {
+			continue
+		}
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+	for _, k := range ks {
+		iv := v[k]
+		if iv == nil {
+			continue
+		}
+		ivh := iv.Hash()
+		if ivh.IsEmpty() {
+			continue
+		}
+
+		k = k + ":"
+		if _, ok := iv.(Map); ok {
+			k += string(HashHint)
+		} else {
+			k += string(iv.Hint())
+		}
+		ikh := hashFromBytes(
+			append(
+				[]byte(StringHint),
+				[]byte(k)...,
+			),
+		)
+		h = append(
+			h,
+			ikh...,
+		)
+		h = append(
+			h,
+			ivh...,
+		)
+	}
+	if len(h) == 0 {
+		return EmptyHash
+	}
+
+	return hashFromBytes(h)
+}
 
 func jsonUnmarshalValue(
 	h Hint,
@@ -121,7 +244,6 @@ func jsonUnmarshalValue(
 	case DataHint:
 		iv, err := base64.StdEncoding.DecodeString(string(value))
 		if err != nil {
-			fmt.Println(string(value))
 			return nil, err
 		}
 		return Data(iv), nil
@@ -144,15 +266,15 @@ func jsonUnmarshalValue(
 		}
 		return iv, nil
 	case StringHint:
-		return String(string(value)), nil
+		return String(value), nil
 	case UintHint:
 		var iv Uint
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
-	case CIDHint:
-		return CID(value), nil
+	case HashHint:
+		return Hash(value), nil
 	case BoolArrayHint:
 		var iv BoolArray = BoolArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
@@ -205,8 +327,8 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case CIDArrayHint:
-		var iv CIDArray = CIDArray{}
+	case HashArrayHint:
+		var iv HashArray = HashArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
@@ -266,11 +388,35 @@ func (v Map) MarshalJSON() ([]byte, error) {
 func (v String) Hint() Hint { return StringHint }
 func (v String) _isValue()  {}
 
+func (v String) Hash() Hash {
+	if string(v) == "" {
+		return EmptyHash
+	}
+	return hashFromBytes(
+		[]byte(string(v)),
+	)
+}
+
 func (v Uint) Hint() Hint { return UintHint }
 func (v Uint) _isValue()  {}
 
-func (v CID) Hint() Hint { return CIDHint }
-func (v CID) _isValue()  {}
+func (v Uint) Hash() Hash {
+	return hashFromBytes(
+		[]byte(
+			fmt.Sprintf(
+				"%d",
+				uint64(v),
+			),
+		),
+	)
+}
+
+func (v Hash) Hint() Hint { return HashHint }
+func (v Hash) _isValue()  {}
+
+func (v Hash) Hash() Hash {
+	return v
+}
 
 func (v *Uint) UnmarshalJSON(b []byte) error {
 	var iv uint64
@@ -283,8 +429,19 @@ func (v *Uint) UnmarshalJSON(b []byte) error {
 
 func (v BoolArray) Hint() Hint { return BoolArrayHint }
 func (v BoolArray) _isValue()  {}
-func (v BoolArray) _isArray()  {}
-func (v BoolArray) Len() int   { return len(v) }
+
+func (v BoolArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v BoolArray) _isArray() {}
+func (v BoolArray) Len() int  { return len(v) }
 func (v BoolArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -295,8 +452,19 @@ func (v BoolArray) Range(f func(int, Value) bool) {
 
 func (v DataArray) Hint() Hint { return DataArrayHint }
 func (v DataArray) _isValue()  {}
-func (v DataArray) _isArray()  {}
-func (v DataArray) Len() int   { return len(v) }
+
+func (v DataArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v DataArray) _isArray() {}
+func (v DataArray) Len() int  { return len(v) }
 func (v DataArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -307,8 +475,19 @@ func (v DataArray) Range(f func(int, Value) bool) {
 
 func (v FloatArray) Hint() Hint { return FloatArrayHint }
 func (v FloatArray) _isValue()  {}
-func (v FloatArray) _isArray()  {}
-func (v FloatArray) Len() int   { return len(v) }
+
+func (v FloatArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v FloatArray) _isArray() {}
+func (v FloatArray) Len() int  { return len(v) }
 func (v FloatArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -319,8 +498,19 @@ func (v FloatArray) Range(f func(int, Value) bool) {
 
 func (v IntArray) Hint() Hint { return IntArrayHint }
 func (v IntArray) _isValue()  {}
-func (v IntArray) _isArray()  {}
-func (v IntArray) Len() int   { return len(v) }
+
+func (v IntArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v IntArray) _isArray() {}
+func (v IntArray) Len() int  { return len(v) }
 func (v IntArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -331,8 +521,19 @@ func (v IntArray) Range(f func(int, Value) bool) {
 
 func (v MapArray) Hint() Hint { return MapArrayHint }
 func (v MapArray) _isValue()  {}
-func (v MapArray) _isArray()  {}
-func (v MapArray) Len() int   { return len(v) }
+
+func (v MapArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v MapArray) _isArray() {}
+func (v MapArray) Len() int  { return len(v) }
 func (v MapArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -343,8 +544,19 @@ func (v MapArray) Range(f func(int, Value) bool) {
 
 func (v StringArray) Hint() Hint { return StringArrayHint }
 func (v StringArray) _isValue()  {}
-func (v StringArray) _isArray()  {}
-func (v StringArray) Len() int   { return len(v) }
+
+func (v StringArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v StringArray) _isArray() {}
+func (v StringArray) Len() int  { return len(v) }
 func (v StringArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -355,8 +567,19 @@ func (v StringArray) Range(f func(int, Value) bool) {
 
 func (v UintArray) Hint() Hint { return UintArrayHint }
 func (v UintArray) _isValue()  {}
-func (v UintArray) _isArray()  {}
-func (v UintArray) Len() int   { return len(v) }
+
+func (v UintArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v UintArray) _isArray() {}
+func (v UintArray) Len() int  { return len(v) }
 func (v UintArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
@@ -365,11 +588,22 @@ func (v UintArray) Range(f func(int, Value) bool) {
 	}
 }
 
-func (v CIDArray) Hint() Hint { return CIDArrayHint }
-func (v CIDArray) _isValue()  {}
-func (v CIDArray) _isArray()  {}
-func (v CIDArray) Len() int   { return len(v) }
-func (v CIDArray) Range(f func(int, Value) bool) {
+func (v HashArray) Hint() Hint { return HashArrayHint }
+func (v HashArray) _isValue()  {}
+
+func (v HashArray) Hash() Hash {
+	if v.Len() == 0 {
+		return EmptyHash
+	}
+	h := []byte{}
+	for _, iv := range v {
+		h = append(h, iv.Hash()...)
+	}
+	return hashFromBytes(h)
+}
+func (v HashArray) _isArray() {}
+func (v HashArray) Len() int  { return len(v) }
+func (v HashArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
 			return

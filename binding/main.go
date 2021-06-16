@@ -45,7 +45,7 @@ func marshalObject(o *object.Object) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	m["_cid"] = chore.String(o.CID())
+	m["_hash"] = o.Hash()
 	return json.Marshal(m)
 }
 
@@ -162,7 +162,7 @@ func NimonaBridgeCall(
 		)
 		if err := nimonaProvider.RequestStream(
 			ctx,
-			chore.CID(string(payloadBytes)),
+			chore.Hash(string(payloadBytes)),
 		); err != nil {
 			return renderBytes(nil, err)
 		}
@@ -181,9 +181,9 @@ func NimonaBridgeCall(
 			return renderBytes(nil, err)
 		}
 		return renderObject(u)
-	case "getFeedRootCID":
-		feedRootCID := nimonaProvider.GetFeedRootCID(string(payloadBytes))
-		return renderBytes([]byte(feedRootCID), nil)
+	case "getFeedRootHash":
+		feedRootHash := nimonaProvider.GetFeedRootHash(string(payloadBytes))
+		return renderBytes([]byte(feedRootHash), nil)
 	case "getConnectionInfo":
 		o, _ := nimonaProvider.GetConnectionInfo().MarshalObject()
 		return renderObject(o)

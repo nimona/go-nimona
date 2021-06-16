@@ -102,17 +102,17 @@ func TestUintArray(t *testing.T) {
 	}
 }
 
-func TestCIDArray(t *testing.T) {
+func TestHashArray(t *testing.T) {
 	tests := []struct {
-		have []string
-		want CIDArray
+		have [][]byte
+		want HashArray
 	}{{
-		have: []string{"foo", "bar"},
-		want: CIDArray{"foo", "bar"},
+		have: [][]byte{[]byte("foo"), []byte("bar")},
+		want: HashArray{Hash("foo"), Hash("bar")},
 	}}
 	for _, tt := range tests {
-		t.Run("CIDArray", func(t *testing.T) {
-			got := ToCIDArray(tt.have)
+		t.Run("HashArray", func(t *testing.T) {
+			got := ToHashArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -214,17 +214,17 @@ func TestFromUintArray(t *testing.T) {
 	}
 }
 
-func TestFromCIDArray(t *testing.T) {
+func TestFromHashArray(t *testing.T) {
 	tests := []struct {
-		have CIDArray
-		want []string
+		have HashArray
+		want [][]byte
 	}{{
-		have: CIDArray{"foo", "bar"},
-		want: []string{"foo", "bar"},
+		have: HashArray{Hash("foo"), Hash("bar")},
+		want: [][]byte{[]byte("foo"), []byte("bar")},
 	}}
 	for _, tt := range tests {
-		t.Run("CIDArray", func(t *testing.T) {
-			got := FromCIDArray(tt.have)
+		t.Run("HashArray", func(t *testing.T) {
+			got := FromHashArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}

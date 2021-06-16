@@ -1,21 +1,30 @@
 package object
 
-import "nimona.io/pkg/chore"
-
-type (
-	Parents map[string]chore.CIDArray
+import (
+	"nimona.io/pkg/chore"
 )
 
-func (p Parents) All() []chore.CID {
-	m := map[chore.CID]struct{}{}
-	for _, ps := range p {
-		for _, p := range ps {
-			m[p] = struct{}{}
+type (
+	Parents map[string]chore.HashArray
+)
+
+func (ps Parents) All() []chore.Hash {
+	var unique []chore.Hash
+
+	for _, ip := range ps {
+		skip := false
+		for _, iip := range ip {
+			for _, u := range unique {
+				if iip == u {
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				unique = append(unique, iip)
+			}
 		}
 	}
-	a := []chore.CID{}
-	for c := range m {
-		a = append(a, c)
-	}
-	return a
+
+	return unique
 }

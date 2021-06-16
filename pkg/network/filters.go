@@ -26,10 +26,10 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	}
 }
 
-func FilterByObjectCID(objectCIDs ...chore.CID) EnvelopeFilter {
+func FilterByObjectHash(objectHashes ...chore.Hash) EnvelopeFilter {
 	return func(e *Envelope) bool {
-		for _, cid := range objectCIDs {
-			if cid == e.Payload.CID() {
+		for _, h := range objectHashes {
+			if e.Payload.Hash().Equal(h) {
 				return true
 			}
 		}

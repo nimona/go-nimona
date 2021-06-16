@@ -2,6 +2,7 @@ package object
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,12 +26,12 @@ func TestMetadata_Map(t *testing.T) {
 		Owner:    pk0,
 		Datetime: "foo",
 		Parents: Parents{
-			"*": chore.CIDArray{
-				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
+			"*": chore.HashArray{
+				chore.Hash("foo"),
 			},
-			"foo.*": chore.CIDArray{
-				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
-				"QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
+			"foo.*": chore.HashArray{
+				chore.Hash("foo"),
+				chore.Hash("foo"),
 			},
 		},
 		Policies: Policies{{
@@ -46,7 +47,7 @@ func TestMetadata_Map(t *testing.T) {
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,
 		}},
-		Stream: "QmY9QbAQ2kJ67tms5t63QWPjXQ5pB5Zb7nsUa6UcTtCsxX",
+		Stream: chore.Hash("foo"),
 		Signature: Signature{
 			Signer: pk1,
 			Alg:    "alg",
@@ -75,6 +76,8 @@ func TestMetadata_Map(t *testing.T) {
 
 		b, err := json.MarshalIndent(o, "", "  ")
 		require.NoError(t, err)
+
+		fmt.Println(string(b))
 
 		g := &Object{}
 		err = json.Unmarshal(b, g)

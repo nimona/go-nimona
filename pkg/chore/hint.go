@@ -17,7 +17,7 @@ const (
 	MapHint    Hint = "m"
 	StringHint Hint = "s"
 	UintHint   Hint = "u"
-	CIDHint    Hint = "r"
+	HashHint   Hint = "r"
 	// array hints
 	BoolArrayHint   Hint = "ab"
 	DataArrayHint   Hint = "ad"
@@ -27,7 +27,7 @@ const (
 	ObjectArrayHint Hint = "ao"
 	StringArrayHint Hint = "as"
 	UintArrayHint   Hint = "au"
-	CIDArrayHint    Hint = "ar"
+	HashArrayHint   Hint = "ar"
 )
 
 var hints = map[string]Hint{
@@ -39,7 +39,7 @@ var hints = map[string]Hint{
 	string(MapHint):    MapHint,
 	string(StringHint): StringHint,
 	string(UintHint):   UintHint,
-	string(CIDHint):    CIDHint,
+	string(HashHint):   HashHint,
 	// array hints
 	string(BoolArrayHint):   BoolArrayHint,
 	string(DataArrayHint):   DataArrayHint,
@@ -49,7 +49,7 @@ var hints = map[string]Hint{
 	string(ObjectArrayHint): ObjectArrayHint,
 	string(StringArrayHint): StringArrayHint,
 	string(UintArrayHint):   UintArrayHint,
-	string(CIDArrayHint):    CIDArrayHint,
+	string(HashArrayHint):   HashArrayHint,
 }
 
 func ExtractHint(key string) (string, Hint, error) {

@@ -14,15 +14,15 @@ func TestContext(t *testing.T) {
 	args := map[string]interface{}{
 		"foo": "bar",
 	}
-	cid := "001"
+	cor := "001"
 	ctx := context.New(
 		context.WithMethod(method),
 		context.WithArguments(args),
-		context.WithCorrelationID(cid),
+		context.WithCorrelationID(cor),
 	)
 	assert.Equal(t, method, ctx.Method())
 	assert.Equal(t, args, ctx.Arguments())
-	assert.Equal(t, cid, ctx.CorrelationID())
+	assert.Equal(t, cor, ctx.CorrelationID())
 }
 
 func TestContextCancel(t *testing.T) {

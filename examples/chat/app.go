@@ -39,7 +39,7 @@ type (
 	}
 )
 
-func NewApp(conversationCID string) *App {
+func NewApp(conversationHash string) *App {
 	app := &App{
 		Windows: Windows{
 			Participants: tview.NewList(),
@@ -58,7 +58,7 @@ func NewApp(conversationCID string) *App {
 	}
 
 	app.Store.PutConversation(&Conversation{
-		CID: conversationCID,
+		Hash: conversationHash,
 	})
 
 	go func() {
@@ -78,7 +78,7 @@ func NewApp(conversationCID string) *App {
 		}
 
 		participantsViewRefresh := func() {
-			convParticipants, _ := app.Store.GetParticipants(conv.CID)
+			convParticipants, _ := app.Store.GetParticipants(conv.Hash)
 			app.Windows.Participants.Clear()
 			for _, p := range convParticipants {
 				nickname := formatParticipant(p)
@@ -87,8 +87,8 @@ func NewApp(conversationCID string) *App {
 		}
 
 		messagesViewRefresh := func() {
-			convMessages, _ := app.Store.GetMessages(conv.CID, 100, 0)
-			convParticipants, _ := app.Store.GetParticipants(conv.CID)
+			convMessages, _ := app.Store.GetMessages(conv.Hash, 100, 0)
+			convParticipants, _ := app.Store.GetParticipants(conv.Hash)
 			app.Windows.Chat.Clear()
 			for _, message := range convMessages {
 				if message.SenderKey == "system" {
@@ -125,10 +125,10 @@ func NewApp(conversationCID string) *App {
 			select {
 			case participantUpdated := <-app.Channels.ParticipantUpdated:
 				app.Store.PutMessage(&Message{
-					CID:             strconv.Itoa(int(time.Now().UnixNano())),
-					ConversationCID: participantUpdated.ConversationCID,
-					SenderKey:       "system",
-					Created:         participantUpdated.Updated,
+					Hash:             strconv.Itoa(int(time.Now().UnixNano())),
+					ConversationHash: participantUpdated.ConversationHash,
+					SenderKey:        "system",
+					Created:          participantUpdated.Updated,
 					Body: fmt.Sprintf(
 						"* <%s> is now known as %s",
 						participantUpdated.Key,
@@ -148,8 +148,8 @@ func NewApp(conversationCID string) *App {
 					continue
 				}
 				par := &Participant{
-					Key:             messageAdded.SenderKey,
-					ConversationCID: messageAdded.ConversationCID,
+					Key:              messageAdded.SenderKey,
+					ConversationHash: messageAdded.ConversationHash,
 				}
 				app.Store.PutParticipant(par)
 				participantsViewRefresh()
@@ -160,13 +160,13 @@ func NewApp(conversationCID string) *App {
 	return app
 }
 
-func (app *App) AddSystemText(conversationCID string, msg string) {
+func (app *App) AddSystemText(conversationHash string, msg string) {
 	app.Channels.MessageAdded <- &Message{
-		CID:             strconv.Itoa(int(time.Now().UnixNano())),
-		ConversationCID: conversationCID,
-		Created:         time.Now(),
-		SenderKey:       "system",
-		Body:            msg,
+		Hash:             strconv.Itoa(int(time.Now().UnixNano())),
+		ConversationHash: conversationHash,
+		Created:          time.Now(),
+		SenderKey:        "system",
+		Body:             msg,
 	}
 }
 
@@ -219,18 +219,18 @@ func (app *App) Show() {
 					os.Exit(0)
 				case "info", "i":
 					app.AddSystemText(
-						conv.CID,
+						conv.Hash,
 						"Info:",
 					)
 					app.AddSystemText(
-						conv.CID,
+						conv.Hash,
 						fmt.Sprintf(
 							"* public key: %s",
 							app.Chat.local.GetPeerKey().PublicKey(),
 						),
 					)
 					app.AddSystemText(
-						conv.CID,
+						conv.Hash,
 						fmt.Sprintf(
 							"* addresses: %s",
 							app.Chat.network.GetAddresses(),
@@ -238,17 +238,17 @@ func (app *App) Show() {
 					)
 					// TODO handle error
 					// nolint: errcheck
-					pinnedCIDs, _ := app.Chat.objectstore.GetPinned()
+					pinnedHashes, _ := app.Chat.objectstore.GetPinned()
 					app.AddSystemText(
-						conv.CID,
+						conv.Hash,
 						fmt.Sprintf(
-							"* pinned cids: %v",
-							pinnedCIDs,
+							"* pinned hashes: %v",
+							pinnedHashes,
 						),
 					)
 				default:
 					app.AddSystemText(
-						conv.CID,
+						conv.Hash,
 						fmt.Sprintf("[red]No such command '%s'.", text[1:]),
 					)
 				}
@@ -262,7 +262,7 @@ func (app *App) Show() {
 	})
 	app.Windows.Input.SetInputCapture(app.Windows.Input.GetInputCapture())
 
-	// app.Windows.Chat.SetTitle(" " + app.Conversations[0].CID + " ")
+	// app.Windows.Chat.SetTitle(" " + app.Conversations[0].Hash + " ")
 
 	flexLists := tview.NewFlex().SetDirection(tview.FlexRow)
 	flexChat := tview.NewFlex().SetDirection(tview.FlexRow)

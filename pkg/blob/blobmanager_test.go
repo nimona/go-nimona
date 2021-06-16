@@ -30,9 +30,9 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	blob1 := &blob.Blob{
-		Chunks: []chore.CID{
-			object.MustMarshal(chunk1).CID(),
-			object.MustMarshal(chunk2).CID(),
+		Chunks: []chore.Hash{
+			object.MustMarshal(chunk1).Hash(),
+			object.MustMarshal(chunk2).Hash(),
 		},
 	}
 
@@ -45,8 +45,8 @@ func Test_requester_Request(t *testing.T) {
 		objmgr   func(*testing.T, *peer.ConnectionInfo) objectmanager.ObjectManager
 	}
 	type args struct {
-		ctx context.Context
-		cid chore.CID
+		ctx  context.Context
+		hash chore.Hash
 	}
 	tests := []struct {
 		name       string
@@ -80,19 +80,19 @@ func Test_requester_Request(t *testing.T) {
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					object.MustMarshal(blob1).CID(),
+					object.MustMarshal(blob1).Hash(),
 					peer1,
 				).Return(object.MustMarshal(blob1), nil).MaxTimes(1)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					object.MustMarshal(chunk1).CID(),
+					object.MustMarshal(chunk1).Hash(),
 					peer1,
 				).Return(object.MustMarshal(chunk1), nil)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
-					object.MustMarshal(chunk2).CID(),
+					object.MustMarshal(chunk2).Hash(),
 					peer1,
 				).Return(object.MustMarshal(chunk2), nil)
 
@@ -100,8 +100,8 @@ func Test_requester_Request(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx: context.Background(),
-			cid: object.MustMarshal(blob1).CID(),
+			ctx:  context.Background(),
+			hash: object.MustMarshal(blob1).Hash(),
 		},
 		want: blob1,
 		wantChunks: []*blob.Chunk{
@@ -117,7 +117,7 @@ func Test_requester_Request(t *testing.T) {
 				blob.WithResolver(tt.fields.resolver(t, peer1)),
 			)
 
-			got, gotChunks, err := r.Request(tt.args.ctx, tt.args.cid)
+			got, gotChunks, err := r.Request(tt.args.ctx, tt.args.hash)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("requester.Request() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -194,9 +194,9 @@ func Test_manager_ImportFromFile(t *testing.T) {
 					Type: new(blob.Blob).Type(),
 					Data: chore.Map{
 						"chunks": chore.StringArray{
-							chore.String(chunk0.CID()),
-							chore.String(chunk1.CID()),
-							chore.String(chunk2.CID()),
+							chore.String(chunk0.Hash()),
+							chore.String(chunk1.Hash()),
+							chore.String(chunk2.Hash()),
 						},
 					},
 				}).
@@ -204,10 +204,10 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			return m
 		},
 		want: &blob.Blob{
-			Chunks: []chore.CID{
-				chunk0.CID(),
-				chunk1.CID(),
-				chunk2.CID(),
+			Chunks: []chore.Hash{
+				chunk0.Hash(),
+				chunk1.Hash(),
+				chunk2.Hash(),
 			},
 		},
 	}}

@@ -37,18 +37,18 @@ func (m *MockGetter) EXPECT() *MockGetterMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGetter) Get(cid chore.CID) (*object.Object, error) {
+func (m *MockGetter) Get(hash chore.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", cid)
+	ret := m.ctrl.Call(m, "Get", hash)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockGetterMockRecorder) Get(cid interface{}) *gomock.Call {
+func (mr *MockGetterMockRecorder) Get(hash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGetter)(nil).Get), cid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGetter)(nil).Get), hash)
 }
 
 // MockStore is a mock of Store interface.
@@ -75,22 +75,22 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockStore) Get(cid chore.CID) (*object.Object, error) {
+func (m *MockStore) Get(hash chore.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", cid)
+	ret := m.ctrl.Call(m, "Get", hash)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockStoreMockRecorder) Get(cid interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) Get(hash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStore)(nil).Get), cid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStore)(nil).Get), hash)
 }
 
 // GetByStream mocks base method.
-func (m *MockStore) GetByStream(arg0 chore.CID) (object.ReadCloser, error) {
+func (m *MockStore) GetByStream(arg0 chore.Hash) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByStream", arg0)
 	ret0, _ := ret[0].(object.ReadCloser)
@@ -120,10 +120,10 @@ func (mr *MockStoreMockRecorder) GetByType(arg0 interface{}) *gomock.Call {
 }
 
 // GetPinned mocks base method.
-func (m *MockStore) GetPinned() ([]chore.CID, error) {
+func (m *MockStore) GetPinned() ([]chore.Hash, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPinned")
-	ret0, _ := ret[0].([]chore.CID)
+	ret0, _ := ret[0].([]chore.Hash)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -135,22 +135,22 @@ func (mr *MockStoreMockRecorder) GetPinned() *gomock.Call {
 }
 
 // GetStreamLeaves mocks base method.
-func (m *MockStore) GetStreamLeaves(streamRootCID chore.CID) ([]chore.CID, error) {
+func (m *MockStore) GetStreamLeaves(streamRootHash chore.Hash) ([]chore.Hash, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStreamLeaves", streamRootCID)
-	ret0, _ := ret[0].([]chore.CID)
+	ret := m.ctrl.Call(m, "GetStreamLeaves", streamRootHash)
+	ret0, _ := ret[0].([]chore.Hash)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetStreamLeaves indicates an expected call of GetStreamLeaves.
-func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootCID interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStreamLeaves", reflect.TypeOf((*MockStore)(nil).GetStreamLeaves), streamRootCID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStreamLeaves", reflect.TypeOf((*MockStore)(nil).GetStreamLeaves), streamRootHash)
 }
 
 // IsPinned mocks base method.
-func (m *MockStore) IsPinned(arg0 chore.CID) (bool, error) {
+func (m *MockStore) IsPinned(arg0 chore.Hash) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsPinned", arg0)
 	ret0, _ := ret[0].(bool)
@@ -165,7 +165,7 @@ func (mr *MockStoreMockRecorder) IsPinned(arg0 interface{}) *gomock.Call {
 }
 
 // Pin mocks base method.
-func (m *MockStore) Pin(arg0 chore.CID) error {
+func (m *MockStore) Pin(arg0 chore.Hash) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Pin", arg0)
 	ret0, _ := ret[0].(error)
@@ -207,7 +207,7 @@ func (mr *MockStoreMockRecorder) PutWithTTL(arg0, arg1 interface{}) *gomock.Call
 }
 
 // RemovePin mocks base method.
-func (m *MockStore) RemovePin(arg0 chore.CID) error {
+func (m *MockStore) RemovePin(arg0 chore.Hash) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemovePin", arg0)
 	ret0, _ := ret[0].(error)

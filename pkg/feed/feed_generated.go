@@ -14,16 +14,16 @@ type (
 		Datetime   string          `nimona:"datetime:s"`
 	}
 	Added struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		ObjectCID []chore.CID     `nimona:"objectCID:as"`
-		Sequence  int64           `nimona:"sequence:i"`
-		Datetime  string          `nimona:"datetime:s"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		ObjectHash []chore.Hash    `nimona:"objectHash:as"`
+		Sequence   int64           `nimona:"sequence:i"`
+		Datetime   string          `nimona:"datetime:s"`
 	}
 	Removed struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		ObjectCID []chore.CID     `nimona:"objectCID:as"`
-		Sequence  int64           `nimona:"sequence:i"`
-		Datetime  string          `nimona:"datetime:s"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		ObjectHash []chore.Hash    `nimona:"objectHash:as"`
+		Sequence   int64           `nimona:"sequence:i"`
+		Datetime   string          `nimona:"datetime:s"`
 	}
 )
 
