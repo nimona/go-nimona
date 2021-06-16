@@ -4,11 +4,10 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"nimona.io/pkg/context"
-
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/simulation/containers"
+	"nimona.io/pkg/context"
 )
 
 func TestCreateContainer(t *testing.T) {
