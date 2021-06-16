@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object/cid"
 )
 
 const (
@@ -32,19 +31,20 @@ func Verify(o *Object) error {
 		return ErrMissingSignature
 	}
 
-	// get object cid
+	// get object map
 	m, err := o.MarshalMap()
 	if err != nil {
 		return err
 	}
-	h, err := cid.New(m)
-	if err != nil {
-		return err
-	}
 
+	// get the hash
+	h, err := m.Hash().Bytes()
+	if err != nil {
+		return fmt.Errorf("unable to get bytes from hash, %w", err)
+	}
 	// verify the signature
 	if err := sig.Signer.Verify(
-		[]byte(h),
+		h,
 		sig.X,
 	); err != nil {
 		return err

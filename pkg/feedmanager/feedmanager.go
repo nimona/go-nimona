@@ -119,10 +119,10 @@ func (m *feedManager) createFeed(
 	if err != nil {
 		return err
 	}
-	feedRootCID := feedRootObj.CID()
+	feedRootHash := feedRootObj.Hash()
 
 	// check if it exists
-	_, err = m.objectstore.Get(feedRootCID)
+	_, err = m.objectstore.Get(feedRootHash)
 	if err == nil {
 		return nil
 	}
@@ -133,20 +133,20 @@ func (m *feedManager) createFeed(
 		return fmt.Errorf("error trying to store feed root, %w", err)
 	}
 
-	err = m.objectstore.Pin(feedRootCID)
+	err = m.objectstore.Pin(feedRootHash)
 	if err != nil {
 		return fmt.Errorf("error trying to pin feed root, %w", err)
 	}
 
 	// add a subscription to the feed's stream
-	err = m.objectmanager.AddStreamSubscription(ctx, feedRootCID)
+	err = m.objectmanager.AddStreamSubscription(ctx, feedRootHash)
 	if err != nil {
 		return fmt.Errorf("error trying to subscribe to feed, %w", err)
 	}
 
 	// subscribe to stream updates and fetch any objects that have been added
 	sub := m.objectmanager.Subscribe(
-		objectmanager.FilterByStreamCID(feedRootCID),
+		objectmanager.FilterByStreamHash(feedRootHash),
 		objectmanager.FilterByObjectType(new(feed.Added).Type()),
 	)
 
@@ -171,9 +171,9 @@ func (m *feedManager) createFeed(
 				continue
 			}
 
-			for _, objCID := range feedAdded.ObjectCID {
+			for _, objHash := range feedAdded.ObjectHash {
 				// check if we already have this object
-				if _, err := m.objectstore.Get(objCID); err == nil {
+				if _, err := m.objectstore.Get(objHash); err == nil {
 					continue
 				}
 				peers, err := m.resolver.Lookup(
@@ -182,11 +182,11 @@ func (m *feedManager) createFeed(
 						context.WithTimeout(time.Second),
 					),
 					// TODO lookup by something better?
-					// we were using `resolver.LookupByCID(objCID)` but it was
+					// we were using `resolver.LookupByHash(objHash)` but it was
 					// not really working as we don't seem to be publishing
 					// stream events.
 					// TODO we should at least be caching possible peers
-					resolver.LookupByCID(feedRootCID),
+					resolver.LookupByHash(feedRootHash),
 				)
 				if err != nil {
 					// TODO log
@@ -198,7 +198,7 @@ func (m *feedManager) createFeed(
 							context.WithParent(ctx),
 							context.WithTimeout(time.Second),
 						),
-						objCID,
+						objHash,
 						connInfo,
 					)
 					if err != nil {
@@ -222,7 +222,7 @@ func (m *feedManager) createFeed(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		),
-		resolver.LookupByCID(feedRootCID),
+		resolver.LookupByHash(feedRootHash),
 	)
 	if err != nil {
 		return fmt.Errorf("error looking for other feed providers, %w", err)
@@ -235,7 +235,7 @@ func (m *feedManager) createFeed(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*5),
 			),
-			feedRootCID,
+			feedRootHash,
 			connInfo,
 		)
 		if err != nil {
@@ -278,11 +278,11 @@ func (m *feedManager) handleObjects(
 			With(
 				log.String("method", "feedmanager.handleObjects"),
 				log.String("payload.type", obj.Type),
-				log.String("payload.cid", obj.CID().String()),
+				log.String("payload.hash", obj.Hash().String()),
 			)
 
 		objType := obj.Type
-		objCID := obj.CID()
+		objHash := obj.Hash()
 
 		streamType, registered := m.isRegisteredContentType(objType)
 		if !registered {
@@ -301,14 +301,14 @@ func (m *feedManager) handleObjects(
 		if err != nil {
 			continue
 		}
-		feedStreamCID := feedStreamObj.CID()
+		feedStreamHash := feedStreamObj.Hash()
 		feedEvent := feed.Added{
 			Metadata: object.Metadata{
-				Stream: feedStreamCID,
+				Stream: feedStreamHash,
 				Owner:  peerKey,
 			},
-			ObjectCID: []chore.CID{
-				objCID,
+			ObjectHash: []chore.Hash{
+				objHash,
 			},
 		}
 		feedEventObj, err := feedEvent.MarshalObject()
@@ -319,20 +319,20 @@ func (m *feedManager) handleObjects(
 			logger.Warn("error storing feed event", log.Error(err))
 			continue
 		}
-		// _, err = m.objectstore.Get(feedStreamCID)
+		// _, err = m.objectstore.Get(feedStreamHash)
 		// if err != nil { // && !errors.Is(err, objectstore.ErrNotFound) {
 		// 	// TODO log
 		// 	continue
 		// }
 		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []chore.CID{
-		// 		feedStreamCID,
+		// 	"*": []chore.Hash{
+		// 		feedStreamHash,
 		// 	},
 		// }
 		// if !errors.Is(err, objectstore.ErrNotFound) {
-		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamCID)
+		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamHash)
 		// 	if err == nil {
-		// 		cid.SortCIDs(leaves)
+		// 		chore.SortHashes(leaves)
 		// 		feedEvent.Metadata.Parents["*"] = leaves
 		// 	}
 		// }
@@ -356,9 +356,9 @@ func (m *feedManager) handleObjects(
 // 		getTypeForFeed(objectType),
 // 	)
 
-// 	feedRootCID := feedRoot.ToObject().CID()
+// 	feedRootHash := feedRoot.ToObject().Hash()
 // 	if len(recipients) == 0 {
-// 		return m.objectstore.GetByStream(feedRootCID)
+// 		return m.objectstore.GetByStream(feedRootHash)
 // 	}
 
 // 	// TODO support more than 1 recipient
@@ -366,7 +366,7 @@ func (m *feedManager) handleObjects(
 // 		panic(errors.Error("currently only a single recipient is supported"))
 // 	}
 
-// 	return m.objectstore.GetByStream(feedRootCID)
+// 	return m.objectstore.GetByStream(feedRootHash)
 // }
 
 func (m *feedManager) isRegisteredContentType(

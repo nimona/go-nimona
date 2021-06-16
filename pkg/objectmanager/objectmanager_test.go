@@ -21,7 +21,6 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/object/cid"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
@@ -46,9 +45,9 @@ func TestManager_Request(t *testing.T) {
 		network func(*testing.T) network.Network
 	}
 	type args struct {
-		ctx     context.Context
-		rootCID chore.CID
-		peer    *peer.ConnectionInfo
+		ctx      context.Context
+		rootHash chore.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -85,9 +84,9 @@ func TestManager_Request(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:     context.Background(),
-			rootCID: f00.CID(),
-			peer:    testPeer,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     testPeer,
 		},
 		want: f00,
 	}}
@@ -100,7 +99,7 @@ func TestManager_Request(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.Request(tt.args.ctx, tt.args.rootCID, tt.args.peer)
+			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -150,9 +149,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx     context.Context
-		rootCID chore.CID
-		peer    *peer.ConnectionInfo
+		ctx      context.Context
+		rootHash chore.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -166,7 +165,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.CID()).Return(object.Copy(f01), nil).MaxTimes(2)
+					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
 					return m
 				},
 				networkHandler: func(
@@ -182,8 +181,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							Objects: []*network.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Request{
-										RequestID: "8",
-										ObjectCID: f01.CID(),
+										RequestID:  "8",
+										ObjectHash: f01.Hash(),
 									},
 								),
 							}},
@@ -209,9 +208,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx:     context.Background(),
-				rootCID: f00.CID(),
-				peer:    peer1,
+				ctx:      context.Background(),
+				rootHash: f00.Hash(),
+				peer:     peer1,
 			},
 			want: object.MustMarshal(
 				&object.Response{
@@ -228,7 +227,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.CID()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
+					m.EXPECT().Get(f01.Hash()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
 					return m
 				},
 				networkHandler: func(
@@ -244,8 +243,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							Objects: []*network.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Request{
-										RequestID: "8",
-										ObjectCID: f01.CID(),
+										RequestID:  "8",
+										ObjectHash: f01.Hash(),
 									},
 								),
 							}},
@@ -271,9 +270,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx:     context.Background(),
-				rootCID: f00.CID(),
-				peer:    peer1,
+				ctx:      context.Background(),
+				rootHash: f00.Hash(),
+				peer:     peer1,
 			},
 			want: object.MustMarshal(
 				&object.Response{
@@ -324,9 +323,9 @@ func TestManager_RequestStream(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{f00.CID()},
+				"*": []chore.Hash{f00.Hash()},
 			},
 		},
 		Data: chore.Map{
@@ -336,9 +335,9 @@ func TestManager_RequestStream(t *testing.T) {
 	f02 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{f01.CID()},
+				"*": []chore.Hash{f01.Hash()},
 			},
 		},
 		Data: chore.Map{
@@ -352,9 +351,9 @@ func TestManager_RequestStream(t *testing.T) {
 		local   func(*testing.T) localpeer.LocalPeer
 	}
 	type args struct {
-		ctx     context.Context
-		rootCID chore.CID
-		peer    *peer.ConnectionInfo
+		ctx      context.Context
+		rootHash chore.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -368,13 +367,13 @@ func TestManager_RequestStream(t *testing.T) {
 			store: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
-					Get(f00.CID()).
+					Get(f00.Hash()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
-					Get(f01.CID()).
+					Get(f01.Hash()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
-					Get(f02.CID()).
+					Get(f02.Hash()).
 					Return(nil, objectstore.ErrNotFound)
 				m.EXPECT().
 					Put(f00).
@@ -386,7 +385,7 @@ func TestManager_RequestStream(t *testing.T) {
 					Put(f02).
 					Return(nil)
 				m.EXPECT().
-					GetByStream(f00.CID()).
+					GetByStream(f00.Hash()).
 					Return(object.NewReadCloserFromObjects([]*object.Object{
 						object.Copy(f00),
 						object.Copy(f01),
@@ -412,8 +411,8 @@ func TestManager_RequestStream(t *testing.T) {
 								Payload: object.MustMarshal(
 									&stream.Response{
 										RequestID: "7",
-										Leaves: []chore.CID{
-											f02.CID(),
+										Leaves: []chore.Hash{
+											f02.Hash(),
 										},
 									},
 								),
@@ -455,9 +454,9 @@ func TestManager_RequestStream(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:     context.Background(),
-			rootCID: f00.CID(),
-			peer:    testPeer,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     testPeer,
 		},
 		want: []*object.Object{
 			f00,
@@ -476,7 +475,7 @@ func TestManager_RequestStream(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.RequestStream(tt.args.ctx, tt.args.rootCID, tt.args.peer)
+			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.peer)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("manager.RequestStream() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -532,10 +531,10 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo-child",
 		Metadata: object.Metadata{
-			Stream: f00.CID(),
+			Stream: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.CID{
-					f00.CID(),
+				"*": []chore.Hash{
+					f00.Hash(),
 				},
 			},
 		},
@@ -555,9 +554,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
-		ctx     context.Context
-		rootCID chore.CID
-		peer    *peer.ConnectionInfo
+		ctx      context.Context
+		rootHash chore.Hash
+		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
 		name    string
@@ -571,10 +570,10 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			storeHandler: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
-					GetStreamLeaves(f00.CID()).
+					GetStreamLeaves(f00.Hash()).
 					Return(
-						[]chore.CID{
-							f01.CID(),
+						[]chore.Hash{
+							f01.Hash(),
 						},
 						nil,
 					)
@@ -594,7 +593,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 							Payload: object.MustMarshal(
 								&stream.Request{
 									RequestID: "7",
-									RootCID:   f00.CID(),
+									RootHash:  f00.Hash(),
 								},
 							),
 						}},
@@ -621,9 +620,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:     context.Background(),
-			rootCID: f00.CID(),
-			peer:    peer1,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     peer1,
 		},
 		want: object.MustMarshal(
 			&stream.Response{
@@ -631,8 +630,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					Owner: localPeerKey.PublicKey(),
 				},
 				RequestID: "7",
-				RootCID:   f00.CID(),
-				Leaves:    []chore.CID{f01.CID()},
+				RootHash:  f00.Hash(),
+				Leaves:    []chore.Hash{f01.Hash()},
 			},
 		),
 	}, {
@@ -641,7 +640,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			storeHandler: func(t *testing.T) objectstore.Store {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				m.EXPECT().
-					GetStreamLeaves(f00.CID()).
+					GetStreamLeaves(f00.Hash()).
 					Return(nil, objectstore.ErrNotFound)
 				return m
 			},
@@ -659,7 +658,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 							Payload: object.MustMarshal(
 								&stream.Request{
 									RequestID: "7",
-									RootCID:   f00.CID(),
+									RootHash:  f00.Hash(),
 								},
 							),
 						}},
@@ -686,9 +685,9 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			},
 		},
 		args: args{
-			ctx:     context.Background(),
-			rootCID: f00.CID(),
-			peer:    peer1,
+			ctx:      context.Background(),
+			rootHash: f00.Hash(),
+			peer:     peer1,
 		},
 		want: object.MustMarshal(
 			&stream.Response{
@@ -696,8 +695,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					Owner: localPeerKey.PublicKey(),
 				},
 				RequestID: "7",
-				RootCID:   f00.CID(),
-				Leaves:    []chore.CID{},
+				RootHash:  f00.Hash(),
+				Leaves:    []chore.Hash{},
 			},
 		),
 	}}
@@ -756,7 +755,7 @@ func TestManager_Put(t *testing.T) {
 		Type: "foo",
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
-			Stream: testObjectStreamRoot.CID(),
+			Stream: testObjectStreamRoot.Hash(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),
@@ -776,12 +775,12 @@ func TestManager_Put(t *testing.T) {
 		Type: "foo",
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
-			Stream: testObjectStreamRoot.CID(),
+			Stream: testObjectStreamRoot.Hash(),
 			Parents: object.Parents{
-				"*": cid.SortCIDs(
-					[]chore.CID{
-						bar1.CID(),
-						bar2.CID(),
+				"*": chore.SortHashes(
+					[]chore.Hash{
+						bar1.Hash(),
+						bar2.Hash(),
 					},
 				),
 			},
@@ -794,7 +793,7 @@ func TestManager_Put(t *testing.T) {
 		&stream.Subscription{
 			Metadata: object.Metadata{
 				Owner:  testSubscriberPublicKey,
-				Stream: testObjectStreamRoot.CID(),
+				Stream: testObjectStreamRoot.Hash(),
 			},
 		},
 	)
@@ -802,13 +801,13 @@ func TestManager_Put(t *testing.T) {
 		Type: "foo",
 		Metadata: object.Metadata{
 			Owner:  testOwnPublicKey,
-			Stream: testObjectStreamRoot.CID(),
+			Stream: testObjectStreamRoot.Hash(),
 			Parents: object.Parents{
-				"*": cid.SortCIDs(
-					[]chore.CID{
-						bar1.CID(),
-						bar2.CID(),
-						testObjectSubscriptionInline.CID(),
+				"*": chore.SortHashes(
+					[]chore.Hash{
+						bar1.Hash(),
+						bar2.Hash(),
+						testObjectSubscriptionInline.Hash(),
 					},
 				),
 			},
@@ -914,7 +913,7 @@ func TestManager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.CID()).
+					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -925,12 +924,12 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.CID()).
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						cid.SortCIDs(
-							[]chore.CID{
-								bar1.CID(),
-								bar2.CID(),
+						chore.SortHashes(
+							[]chore.Hash{
+								bar1.Hash(),
+								bar2.Hash(),
 							},
 						),
 						nil,
@@ -970,16 +969,16 @@ func TestManager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.CID()).
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]chore.CID{
-							bar1.CID(),
-							bar2.CID(),
+						[]chore.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
 						},
 						nil,
 					)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.CID()).
+					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -1023,8 +1022,8 @@ func TestManager_Put(t *testing.T) {
 						Metadata: object.Metadata{
 							Owner: testSubscriberPublicKey,
 						},
-						RootCIDs: []chore.CID{
-							testObjectStreamRoot.CID(),
+						RootHashes: []chore.Hash{
+							testObjectStreamRoot.Hash(),
 						},
 					},
 				),
@@ -1049,17 +1048,17 @@ func TestManager_Put(t *testing.T) {
 					gomock.NewController(t),
 				)
 				m.EXPECT().
-					GetStreamLeaves(testObjectStreamRoot.CID()).
+					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]chore.CID{
-							bar1.CID(),
-							bar2.CID(),
-							testObjectSubscriptionInline.CID(),
+						[]chore.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
+							testObjectSubscriptionInline.Hash(),
 						},
 						nil,
 					)
 				m.EXPECT().
-					GetByStream(testObjectStreamRoot.CID()).
+					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
 							[]*object.Object{
@@ -1106,14 +1105,14 @@ func TestManager_Put(t *testing.T) {
 		want: &object.Object{
 			Type: "foo",
 			Metadata: object.Metadata{
-				Stream: testObjectStreamRoot.CID(),
+				Stream: testObjectStreamRoot.Hash(),
 				Owner:  testOwnPublicKey,
 				Parents: object.Parents{
-					"*": cid.SortCIDs(
-						[]chore.CID{
-							bar1.CID(),
-							bar2.CID(),
-							testObjectSubscriptionInline.CID(),
+					"*": chore.SortHashes(
+						[]chore.Hash{
+							bar1.Hash(),
+							bar2.Hash(),
+							testObjectSubscriptionInline.Hash(),
 						},
 					),
 				},
@@ -1172,7 +1171,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	o2 := &object.Object{
 		Type: "bar",
 		Metadata: object.Metadata{
-			Stream: o0.CID(),
+			Stream: o0.Hash(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),
@@ -1184,9 +1183,9 @@ func Test_manager_Subscribe(t *testing.T) {
 		publish       []*object.Object
 		want          []*object.Object
 	}{{
-		name: "subscribe by cid",
+		name: "subscribe by hash",
 		lookupOptions: []LookupOption{
-			FilterByCID(o2.CID()),
+			FilterByHash(o2.Hash()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o2},
@@ -1207,22 +1206,22 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by stream",
 		lookupOptions: []LookupOption{
-			FilterByStreamCID(o0.CID()),
+			FilterByStreamHash(o0.Hash()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o2},
 	}, {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
-			FilterByStreamCID("foo"),
+			FilterByStreamHash(chore.Hash("foo")),
 			FilterByOwner(p.PublicKey()),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{},
 	}, {
-		name: "subscribe by cid and type",
+		name: "subscribe by hash and type",
 		lookupOptions: []LookupOption{
-			FilterByCID(o2.CID()),
+			FilterByHash(o2.Hash()),
 			FilterByObjectType("bar"),
 		},
 		publish: []*object.Object{o1, o2},
@@ -1290,15 +1289,15 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 	require.NoError(t, err)
 
 	// subscribe to stream
-	err = man.AddStreamSubscription(context.TODO(), rootObj.CID())
+	err = man.AddStreamSubscription(context.TODO(), rootObj.Hash())
 	require.NoError(t, err)
 
 	// subscribe to stream
-	err = man.AddStreamSubscription(context.TODO(), rootObj.CID())
+	err = man.AddStreamSubscription(context.TODO(), rootObj.Hash())
 	require.NoError(t, err)
 
 	// check if the subscription has been added once
-	r, err := str.GetByStream(rootObj.CID())
+	r, err := str.GetByStream(rootObj.Hash())
 	require.NoError(t, err)
 	os, err := object.ReadAll(r)
 	require.NoError(t, err)

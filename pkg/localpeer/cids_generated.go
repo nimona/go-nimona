@@ -11,40 +11,40 @@ import (
 )
 
 type (
-	// ValueCIDSyncList -
-	ValueCIDSyncList struct {
+	// ChoreHashesyncList -
+	ChoreHashesyncList struct {
 		m sync.Map
 	}
 )
 
 // Put -
-func (m *ValueCIDSyncList) Put(k chore.CID) {
+func (m *ChoreHashesyncList) Put(k chore.Hash) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ValueCIDSyncList) Exists(k chore.CID) bool {
+func (m *ChoreHashesyncList) Exists(k chore.Hash) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *ValueCIDSyncList) Delete(k chore.CID) {
+func (m *ChoreHashesyncList) Delete(k chore.Hash) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ValueCIDSyncList) Range(i func(k chore.CID) bool) {
+func (m *ChoreHashesyncList) Range(i func(k chore.Hash) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(chore.CID))
+		return i(k.(chore.Hash))
 	})
 }
 
 // List -
-func (m *ValueCIDSyncList) List() []chore.CID {
-	r := []chore.CID{}
+func (m *ChoreHashesyncList) List() []chore.Hash {
+	r := []chore.Hash{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(chore.CID))
+		r = append(r, k.(chore.Hash))
 		return true
 	})
 	return r

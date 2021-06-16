@@ -59,9 +59,9 @@ func TestMarshal(t *testing.T) {
 		Metadata: Metadata{
 			Datetime: "foo",
 			Parents: Parents{
-				"*": chore.CIDArray{
-					"foo",
-					"bar",
+				"*": chore.HashArray{
+					chore.Hash("foo"),
+					chore.Hash("bar"),
 				},
 			},
 		},
@@ -132,9 +132,9 @@ func TestMarshal(t *testing.T) {
 		Metadata: Metadata{
 			Datetime: "foo",
 			Parents: Parents{
-				"*": chore.CIDArray{
-					"foo",
-					"bar",
+				"*": chore.HashArray{
+					chore.Hash("foo"),
+					chore.Hash("bar"),
 				},
 			},
 		},

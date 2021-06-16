@@ -221,7 +221,7 @@ func New(
 func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
 	h.Lock()
 	defer h.Unlock()
-	h.daemon.ObjectStore().Pin(object.MustMarshal(r).CID())
+	h.daemon.ObjectStore().Pin(object.MustMarshal(r).Hash())
 	h.daemon.ObjectStore().Put(object.MustMarshal(r))
 	h.peerCertificateResponse = r
 	b, _ := json.Marshal(object.MustMarshal(r))
@@ -358,8 +358,8 @@ func main() {
 			},
 		}
 		contactEvents := d.ObjectManager().Subscribe(
-			objectmanager.FilterByStreamCID(
-				object.MustMarshal(contactsStreamRoot).CID(),
+			objectmanager.FilterByStreamHash(
+				object.MustMarshal(contactsStreamRoot).Hash(),
 			),
 		)
 		for {
@@ -426,9 +426,9 @@ func main() {
 	})
 
 	r.Get("/identity/csr.png", func(w http.ResponseWriter, r *http.Request) {
-		cid := r.URL.Query().Get("cid")
+		hash := r.URL.Query().Get("hash")
 		q, _ := qrcode.New(
-			"nimona://identity/csr?cid="+cid,
+			"nimona://identity/csr?hash="+hash,
 			qrcode.Medium,
 		)
 		q.DisableBorder = true
@@ -584,12 +584,12 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		csrCID := chore.CID(r.PostFormValue("csr"))
-		if err = d.ObjectStore().Pin(csrCID); err != nil {
+		csrHash := chore.Hash(r.PostFormValue("csr"))
+		if err = d.ObjectStore().Pin(csrHash); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		csrObj, err := d.ObjectStore().Get(csrCID)
+		csrObj, err := d.ObjectStore().Get(csrHash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -610,7 +610,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = d.ObjectStore().Pin(object.MustMarshal(csrRes).CID())
+		err = d.ObjectStore().Pin(object.MustMarshal(csrRes).Hash())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -653,8 +653,8 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
-		objectReader, err := d.ObjectStore().GetByStream(contactsStreamRootCID)
+		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
+		objectReader, err := d.ObjectStore().GetByStream(contactsStreamRootHash)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -732,7 +732,7 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
+		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
 		alias := r.PostFormValue("alias")
 		remoteParty := r.PostFormValue("remoteParty")
 		if alias == "" || remoteParty == "" {
@@ -751,7 +751,7 @@ func main() {
 		rel := relationship.Added{
 			Metadata: object.Metadata{
 				Owner:  *k,
-				Stream: contactsStreamRootCID,
+				Stream: contactsStreamRootHash,
 			},
 			Alias:       alias,
 			RemoteParty: remotePartyKey,
@@ -801,7 +801,7 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootCID := object.MustMarshal(contactsStreamRoot).CID()
+		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
 		remoteParty := r.URL.Query().Get("publicKey")
 		if remoteParty == "" {
 			if err != nil {
@@ -819,7 +819,7 @@ func main() {
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
 				Owner:  *k,
-				Stream: contactsStreamRootCID,
+				Stream: contactsStreamRootHash,
 			},
 			RemoteParty: remotePartyKey,
 			Datetime:    time.Now().UTC().Format(time.RFC3339),
@@ -887,9 +887,9 @@ func main() {
 		}
 	})
 
-	r.Get("/objects/{cid}", func(w http.ResponseWriter, r *http.Request) {
-		cid := chi.URLParam(r, "cid")
-		obj, err := d.ObjectStore().Get(chore.CID(cid))
+	r.Get("/objects/{hash}", func(w http.ResponseWriter, r *http.Request) {
+		hash := chi.URLParam(r, "hash")
+		obj, err := d.ObjectStore().Get(chore.Hash(hash))
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -904,24 +904,24 @@ func main() {
 			return
 		}
 		values := struct {
-			CID           string
+			Hash          string
 			Type          string
 			JSON          template.HTML
 			StreamRoot    string
 			StreamObjects []*object.Object
 		}{
-			CID:  cid,
+			Hash: hash,
 			Type: obj.Type,
 			JSON: template.HTML(prettyJSON(string(body))),
 		}
 		if strings.HasPrefix(obj.Type, "stream:") {
-			values.StreamRoot = obj.CID().String()
+			values.StreamRoot = obj.Hash().String()
 		} else if !obj.Metadata.Stream.IsEmpty() {
 			values.StreamRoot = obj.Metadata.Stream.String()
 		}
 		if values.StreamRoot != "" {
 			or, err := d.ObjectStore().GetByStream(
-				chore.CID(values.StreamRoot),
+				chore.Hash(values.StreamRoot),
 			)
 			if err == nil {
 				os, err := object.ReadAll(or)
@@ -1001,13 +1001,13 @@ func main() {
 	})
 
 	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
-		csrCID := chore.CID(r.PostFormValue("csrCID"))
+		csrHash := chore.Hash(r.PostFormValue("csrHash"))
 		csrProviders, err := d.Resolver().Lookup(
 			context.New(
 				context.WithParent(r.Context()),
 				context.WithTimeout(3*time.Second),
 			),
-			resolver.LookupByCID(csrCID),
+			resolver.LookupByHash(csrHash),
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1022,7 +1022,7 @@ func main() {
 				context.WithParent(r.Context()),
 				context.WithTimeout(3*time.Second),
 			),
-			csrCID,
+			csrHash,
 			csrProviders[0],
 		)
 		if err != nil {
@@ -1064,13 +1064,13 @@ func main() {
 	})
 
 	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
-		csrCID := chore.CID(r.PostFormValue("csrCID"))
-		csrObj, err := d.ObjectStore().Get(csrCID)
+		csrHash := chore.Hash(r.PostFormValue("csrHash"))
+		csrObj, err := d.ObjectStore().Get(csrHash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = d.ObjectStore().Pin(csrCID)
+		err = d.ObjectStore().Pin(csrHash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -1121,8 +1121,8 @@ var prettyJSONReg = regexp.MustCompile(`(?mi)"(bah[a-z0-9]{59})"`)
 func prettyJSON(b string) string {
 	matches := prettyJSONReg.FindAllString(b, -1)
 	for _, match := range matches {
-		cid := strings.Trim(match, `"`)
-		pretty := `"<a href="/objects/` + cid + `" target="_top">` + cid + `</a>"`
+		hash := strings.Trim(match, `"`)
+		pretty := `"<a href="/objects/` + hash + `" target="_top">` + hash + `</a>"`
 		b = strings.Replace(b, match, pretty, -1)
 	}
 	return b

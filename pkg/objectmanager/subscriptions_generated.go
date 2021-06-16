@@ -25,18 +25,18 @@ func NewSubscriptionsMap() *SubscriptionsMap {
 }
 
 // GetOrPut -
-func (m *SubscriptionsMap) GetOrPut(k chore.CID, v *stream.Subscription) (*stream.Subscription, bool) {
+func (m *SubscriptionsMap) GetOrPut(k chore.Hash, v *stream.Subscription) (*stream.Subscription, bool) {
 	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*stream.Subscription), ok
 }
 
 // Put -
-func (m *SubscriptionsMap) Put(k chore.CID, v *stream.Subscription) {
+func (m *SubscriptionsMap) Put(k chore.Hash, v *stream.Subscription) {
 	m.m.Store(k, v)
 }
 
 // Get -
-func (m *SubscriptionsMap) Get(k chore.CID) (*stream.Subscription, bool) {
+func (m *SubscriptionsMap) Get(k chore.Hash) (*stream.Subscription, bool) {
 	i, ok := m.m.Load(k)
 	if !ok {
 		return nil, false
@@ -51,22 +51,22 @@ func (m *SubscriptionsMap) Get(k chore.CID) (*stream.Subscription, bool) {
 }
 
 // Delete -
-func (m *SubscriptionsMap) Delete(k chore.CID) {
+func (m *SubscriptionsMap) Delete(k chore.Hash) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *SubscriptionsMap) Range(i func(k chore.CID, v *stream.Subscription) bool) {
+func (m *SubscriptionsMap) Range(i func(k chore.Hash, v *stream.Subscription) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(chore.CID), v.(*stream.Subscription))
+		return i(k.(chore.Hash), v.(*stream.Subscription))
 	})
 }
 
 // ListKeys -
-func (m *SubscriptionsMap) ListKeys() []chore.CID {
-	vs := []chore.CID{}
+func (m *SubscriptionsMap) ListKeys() []chore.Hash {
+	vs := []chore.Hash{}
 	m.m.Range(func(k, v interface{}) bool {
-		vs = append(vs, k.(chore.CID))
+		vs = append(vs, k.(chore.Hash))
 		return true
 	})
 	return vs

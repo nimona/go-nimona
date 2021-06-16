@@ -125,13 +125,20 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			}
 			return chore.String(s), nil
 		}
-	case chore.CIDHint:
-		if v.Kind() == reflect.String {
+	case chore.HashHint:
+		if b, ok := v.Interface().([]byte); ok {
 			// TODO only for omitempty
-			if v.String() == "" {
+			if b == nil {
 				return nil, nil
 			}
-			return chore.CID(v.String()), nil
+			return chore.Hash(b), nil
+		}
+		if b, ok := v.Interface().(chore.Hash); ok {
+			// TODO only for omitempty
+			if b.IsEmpty() {
+				return nil, nil
+			}
+			return chore.Hash(b), nil
 		}
 	case chore.BoolHint:
 		if v.Kind() == reflect.Bool {
@@ -383,9 +390,9 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 	case chore.UintArrayHint:
 		a = chore.UintArray{}
 		ah = chore.UintHint
-	case chore.CIDArrayHint:
-		a = chore.CIDArray{}
-		ah = chore.CIDHint
+	case chore.HashArrayHint:
+		a = chore.HashArray{}
+		ah = chore.HashHint
 	default:
 		return nil, errors.Error("unknown array hint")
 	}
@@ -416,8 +423,8 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			a = append(a.(chore.StringArray), v.(chore.String))
 		case chore.UintHint:
 			a = append(a.(chore.UintArray), v.(chore.Uint))
-		case chore.CIDHint:
-			a = append(a.(chore.CIDArray), v.(chore.CID))
+		case chore.HashHint:
+			a = append(a.(chore.HashArray), v.(chore.Hash))
 		default:
 			return nil, errors.Error("unknown array element hint " + ah)
 		}

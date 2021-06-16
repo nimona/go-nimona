@@ -17,8 +17,8 @@ type (
 		// Lookups are used to perform db queries for these filters
 		// TODO find a better name for this
 		Lookups struct {
-			ObjectCIDs   []chore.CID
-			StreamCIDs   []chore.CID
+			ObjectHashes []chore.Hash
+			StreamHashes []chore.Hash
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}
@@ -30,13 +30,13 @@ type (
 func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	options := &LookupOptions{
 		Lookups: struct {
-			ObjectCIDs   []chore.CID
-			StreamCIDs   []chore.CID
+			ObjectHashes []chore.Hash
+			StreamHashes []chore.Hash
 			ContentTypes []string
 			Owners       []crypto.PublicKey
 		}{
-			ObjectCIDs:   []chore.CID{},
-			StreamCIDs:   []chore.CID{},
+			ObjectHashes: []chore.Hash{},
+			StreamHashes: []chore.Hash{},
 			ContentTypes: []string{},
 			Owners:       []crypto.PublicKey{},
 		},
@@ -48,12 +48,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	return *options
 }
 
-func FilterByCID(hs ...chore.CID) LookupOption {
+func FilterByHash(hs ...chore.Hash) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups.ObjectCIDs = append(opts.Lookups.ObjectCIDs, hs...)
+		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
-				if !h.IsEmpty() && o != nil && o.CID() == h {
+				if !h.IsEmpty() && o != nil && o.Hash().Equal(h) {
 					return true
 				}
 			}
@@ -77,12 +77,12 @@ func FilterByOwner(hs ...crypto.PublicKey) LookupOption {
 	}
 }
 
-func FilterByStreamCID(hs ...chore.CID) LookupOption {
+func FilterByStreamHash(hs ...chore.Hash) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups.StreamCIDs = append(opts.Lookups.StreamCIDs, hs...)
+		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
-				if !h.IsEmpty() && o != nil && h == o.Metadata.Stream {
+				if !h.IsEmpty() && o != nil && o.Metadata.Stream.Equal(h) {
 					return true
 				}
 			}

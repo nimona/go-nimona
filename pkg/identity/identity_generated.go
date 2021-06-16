@@ -14,7 +14,7 @@ type (
 		Version  int64           `nimona:"version:i"`
 		Datetime string          `nimona:"datetime:s"`
 		Name     string          `nimona:"name:s"`
-		Image    chore.CID       `nimona:"image:s"`
+		Image    chore.Hash      `nimona:"image:s"`
 	}
 	ProfileStreamRoot struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`

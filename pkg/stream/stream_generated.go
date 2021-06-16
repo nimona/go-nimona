@@ -18,23 +18,23 @@ type (
 	Request struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
 		RequestID string          `nimona:"requestID:s"`
-		RootCID   chore.CID       `nimona:"rootCID:s"`
+		RootHash  chore.Hash      `nimona:"rootHash:s"`
 	}
 	Response struct {
 		Metadata  object.Metadata `nimona:"@metadata:m"`
 		RequestID string          `nimona:"requestID:s"`
-		RootCID   chore.CID       `nimona:"rootCID:s"`
-		Leaves    []chore.CID     `nimona:"leaves:as"`
+		RootHash  chore.Hash      `nimona:"rootHash:s"`
+		Leaves    []chore.Hash    `nimona:"leaves:as"`
 	}
 	Announcement struct {
-		Metadata   object.Metadata `nimona:"@metadata:m"`
-		StreamCID  chore.CID       `nimona:"streamCID:s"`
-		ObjectCIDs []chore.CID     `nimona:"objectCIDs:as"`
+		Metadata     object.Metadata `nimona:"@metadata:m"`
+		StreamHash   chore.Hash      `nimona:"streamHash:s"`
+		ObjectHashes []chore.Hash    `nimona:"objectHashes:as"`
 	}
 	Subscription struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		RootCIDs []chore.CID     `nimona:"rootCIDs:as"`
-		Expiry   string          `nimona:"expiry:s"`
+		Metadata   object.Metadata `nimona:"@metadata:m"`
+		RootHashes []chore.Hash    `nimona:"rootHashes:as"`
+		Expiry     string          `nimona:"expiry:s"`
 	}
 )
 

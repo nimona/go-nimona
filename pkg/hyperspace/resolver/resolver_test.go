@@ -99,7 +99,7 @@ func TestResolver_Integration(t *testing.T) {
 	)
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByCID("bar"))
+	pr, err := res.Lookup(context.New(), LookupByHash(chore.Hash("bar")))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 
@@ -110,14 +110,14 @@ func TestResolver_Integration(t *testing.T) {
 				"foo": chore.String("bar"),
 			},
 		}
-		obj1cid := obj1.CID()
+		obj1hash := obj1.Hash()
 		err = str1.Put(obj1)
 		require.NoError(t, err)
 
 		time.Sleep(250 * time.Millisecond)
 
-		// lookup by cid
-		pr, err := res.Lookup(context.New(), LookupByCID(obj1cid))
+		// lookup by hash
+		pr, err := res.Lookup(context.New(), LookupByHash(obj1hash))
 		require.NoError(t, err)
 		assert.Len(t, pr, 1)
 		assert.Equal(t,

@@ -165,13 +165,13 @@ func unmarshalMapToMap(h chore.Hint, m chore.Map, v reflect.Value) error {
 
 func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 	switch vv := v.(type) {
-	case chore.CID:
-		if vv == "" {
+	case chore.Hash:
+		if vv.IsEmpty() {
 			return nil
 		}
 		if target.Kind() != reflect.String {
 			return errors.Error(
-				"expected cid target, got " + target.Kind().String(),
+				"expected hash target, got " + target.Kind().String(),
 			)
 		}
 		target.SetString(string(vv))
@@ -235,7 +235,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		// value.ObjectArray,
 		chore.StringArray,
 		chore.UintArray,
-		chore.CIDArray:
+		chore.HashArray:
 		switch target.Kind() {
 		case reflect.Slice, reflect.Array:
 		default:

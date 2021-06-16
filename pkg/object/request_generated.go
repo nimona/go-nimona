@@ -8,9 +8,9 @@ import (
 
 type (
 	Request struct {
-		Metadata  Metadata  `nimona:"@metadata:m"`
-		RequestID string    `nimona:"requestID:s"`
-		ObjectCID chore.CID `nimona:"objectCID:s"`
+		Metadata   Metadata   `nimona:"@metadata:m"`
+		RequestID  string     `nimona:"requestID:s"`
+		ObjectHash chore.Hash `nimona:"objectHash:s"`
 	}
 	Response struct {
 		Metadata  Metadata `nimona:"@metadata:m"`

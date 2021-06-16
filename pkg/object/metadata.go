@@ -11,6 +11,6 @@ type Metadata struct {
 	Datetime  string           `nimona:"datetime:s"`
 	Parents   Parents          `nimona:"parents:m"`
 	Policies  Policies         `nimona:"policies:am"`
-	Stream    chore.CID        `nimona:"stream:r"`
+	Stream    chore.Hash       `nimona:"stream:r"`
 	Signature Signature        `nimona:"_signature:m"`
 }

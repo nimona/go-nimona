@@ -34,7 +34,7 @@ const (
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=cids_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=chore.CID"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=chore.Hash"
 
 type (
 	Resolver interface {
@@ -56,7 +56,7 @@ type (
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
-		cids                           *ValueCIDSyncList
+		hashes                         *ChoreHashesyncList
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -80,7 +80,7 @@ func New(
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
-		cids:                           &ValueCIDSyncList{},
+		hashes:                         &ChoreHashesyncList{},
 	}
 
 	for _, opt := range opts {
@@ -101,9 +101,9 @@ func New(
 
 	// go through all existing objects and add them as well
 	if str != nil {
-		if cids, err := str.ListCIDs(); err == nil {
-			for _, cid := range cids {
-				r.cids.Put(cid)
+		if hashes, err := str.ListHashes(); err == nil {
+			for _, hash := range hashes {
+				r.hashes.Put(hash)
 			}
 		}
 	}
@@ -144,10 +144,10 @@ func New(
 			case event := <-strSub:
 				switch event.Action {
 				case sqlobjectstore.ObjectInserted:
-					r.cids.Put(event.ObjectCID)
+					r.hashes.Put(event.ObjectHash)
 					r.announceSelf()
 				case sqlobjectstore.ObjectRemoved:
-					r.cids.Put(event.ObjectCID)
+					r.hashes.Put(event.ObjectHash)
 					r.announceSelf()
 				}
 			}
@@ -351,13 +351,13 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
 	peerKey := r.localpeer.GetPeerKey().PublicKey()
-	cids := r.cids.List()
+	hashes := r.hashes.List()
 	addresses := r.network.GetAddresses()
 	relays := r.network.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
 	hs := []string{peerKey.String()}
-	for _, c := range cids {
+	for _, c := range hashes {
 		hs = append(hs, c.String())
 	}
 	if c := r.localpeer.GetPeerCertificate(); c != nil {

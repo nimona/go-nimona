@@ -430,7 +430,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj1&gt;
+                                objectHash: &lt;obj1&gt;
                                 <br/>
                                 owner: &lt;p1&gt;
                             </div>
@@ -453,7 +453,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj2&gt;
+                                objectHash: &lt;obj2&gt;
                                 <br/>
                                 owner: &lt;p1&gt;
                             </div>
@@ -476,7 +476,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj3&gt;
+                                objectHash: &lt;obj3&gt;
                                 <br/>
                                 owner: &lt;p2&gt;
                             </div>
@@ -499,7 +499,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj4&gt;
+                                objectHash: &lt;obj4&gt;
                                 <br/>
                                 owner: &lt;p3&gt;
                             </div>
@@ -522,7 +522,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj5&gt;
+                                objectHash: &lt;obj5&gt;
                                 <br/>
                                 owner: &lt;p2&gt;
                             </div>
@@ -545,7 +545,7 @@
                                     feed.ObjectAdded
                                 </b>
                                 <br/>
-                                objectCID: &lt;obj6&gt;
+                                objectHash: &lt;obj6&gt;
                                 <br/>
                                 owner: &lt;p1&gt;
                             </div>

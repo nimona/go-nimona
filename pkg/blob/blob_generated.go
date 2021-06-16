@@ -14,7 +14,7 @@ type (
 	}
 	Blob struct {
 		Metadata object.Metadata `nimona:"@metadata:m"`
-		Chunks   []chore.CID     `nimona:"chunks:as"`
+		Chunks   []chore.Hash    `nimona:"chunks:as"`
 	}
 )
 

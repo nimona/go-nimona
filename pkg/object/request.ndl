@@ -2,7 +2,7 @@ package nimona.io/object
 
 signed object nimona.io/object.Request {
     requestID string
-    objectCID string type=nimona.io/chore.CID
+    objectHash string type=nimona.io/chore.Hash
 }
 
 signed object nimona.io/object.Response {

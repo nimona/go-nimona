@@ -5,5 +5,5 @@ signed object nimona.io/Chunk {
 }
 
 signed object nimona.io/Blob {
-   chunks repeated string type=nimona.io/chore.CID
+   chunks repeated string type=nimona.io/chore.Hash
 }

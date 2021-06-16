@@ -48,10 +48,10 @@ func ToUintArray(s []uint64) UintArray {
 	return r
 }
 
-func ToCIDArray(s []string) CIDArray {
-	r := make(CIDArray, len(s))
+func ToHashArray(s [][]byte) HashArray {
+	r := make(HashArray, len(s))
 	for i, v := range s {
-		r[i] = CID(v)
+		r[i] = Hash(v)
 	}
 	return r
 }
@@ -104,10 +104,10 @@ func FromUintArray(s UintArray) []uint64 {
 	return r
 }
 
-func FromCIDArray(s CIDArray) []string {
-	r := make([]string, len(s))
+func FromHashArray(s HashArray) [][]byte {
+	r := make([][]byte, len(s))
 	for i, v := range s {
-		r[i] = string(v)
+		r[i] = []byte(v)
 	}
 	return r
 }

@@ -165,7 +165,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []chore.CID{"1234"},
+		Chunks: []chore.Hash{chore.Hash("1234")},
 	}
 	req := &filesharing.TransferRequest{
 		File:  file1,
@@ -175,7 +175,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	type args struct {
 		ctx   context.Context
-		CID   chore.CID
+		hash  chore.Hash
 		nonce string
 	}
 	tests := []struct {

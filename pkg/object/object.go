@@ -7,7 +7,6 @@ import (
 	"github.com/mitchellh/copystructure"
 
 	"nimona.io/pkg/chore"
-	"nimona.io/pkg/object/cid"
 )
 
 type (
@@ -123,18 +122,13 @@ func (o *Object) UnmarshalMap(v chore.Map) error {
 	return nil
 }
 
-// TODO also return error
-func (o *Object) CID() chore.CID {
+func (o *Object) Hash() chore.Hash {
 	if o == nil {
-		return cid.Empty
+		return chore.EmptyHash
 	}
 	m, err := o.MarshalMap()
 	if err != nil {
-		return cid.Invalid
+		panic("object.Hash(), MarshalMap should not error")
 	}
-	h, err := cid.New(m)
-	if err != nil {
-		return cid.Invalid
-	}
-	return h
+	return m.Hash()
 }

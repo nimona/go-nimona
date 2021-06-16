@@ -4,7 +4,6 @@ import (
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/object/cid"
 )
 
 const (
@@ -17,8 +16,8 @@ const (
 )
 
 const (
-	// AlgorithmObjectCID for creating ObjectCID+ES256 based signatures
-	AlgorithmObjectCID = "OH_ES256"
+	// AlgorithmObjectHash for creating ObjectHash+ES256 based signatures
+	AlgorithmObjectHash = "OH_ES256"
 )
 
 type Signature struct {
@@ -103,14 +102,14 @@ func NewSignature(
 	if err != nil {
 		return Signature{}, err
 	}
-	h, err := cid.New(m)
+	h, err := m.Hash().Bytes()
 	if err != nil {
 		return Signature{}, err
 	}
 	x := k.Sign([]byte(h))
 	s := Signature{
 		Signer: k.PublicKey(),
-		Alg:    AlgorithmObjectCID,
+		Alg:    AlgorithmObjectHash,
 		X:      x,
 	}
 	return s, nil
