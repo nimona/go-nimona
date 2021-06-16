@@ -80,7 +80,7 @@ func New(
 			Env:          env,
 		},
 		&container.HostConfig{
-			AutoRemove:   true,
+			AutoRemove:   false,
 			PortBindings: portBinding,
 		},
 		nil,
@@ -143,6 +143,13 @@ func (cnt *Container) Stop(ctx context.Context) error {
 		cnt.ID,
 		&timeout,
 	); err != nil {
+		return err
+	}
+
+	if err := cli.ContainerRemove(ctx, cnt.ID, types.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	}); err != nil {
 		return err
 	}
 
