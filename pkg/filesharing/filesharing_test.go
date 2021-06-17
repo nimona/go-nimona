@@ -175,7 +175,6 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	type args struct {
 		ctx   context.Context
-		hash  chore.Hash
 		nonce string
 	}
 	tests := []struct {

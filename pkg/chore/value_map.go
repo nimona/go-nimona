@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/buger/jsonparser"
+
 	"nimona.io/pkg/errors"
 )
 
@@ -36,7 +37,7 @@ func (v Map) Hash() Hash {
 			continue
 		}
 
-		k = k + ":"
+		k += ":"
 		if _, ok := iv.(Map); ok {
 			k += string(HashHint)
 		} else {

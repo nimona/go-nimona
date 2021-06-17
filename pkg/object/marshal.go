@@ -138,7 +138,7 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			if b.IsEmpty() {
 				return nil, nil
 			}
-			return chore.Hash(b), nil
+			return b, nil
 		}
 	case chore.BoolHint:
 		if v.Kind() == reflect.Bool {
