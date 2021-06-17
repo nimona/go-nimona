@@ -106,7 +106,7 @@ func NewSignature(
 	if err != nil {
 		return Signature{}, err
 	}
-	x := k.Sign([]byte(h))
+	x := k.Sign(h)
 	s := Signature{
 		Signer: k.PublicKey(),
 		Alg:    AlgorithmObjectHash,
