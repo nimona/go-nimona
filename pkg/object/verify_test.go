@@ -199,7 +199,7 @@ func mustSignWithCertificate(
 	peerKey crypto.PrivateKey,
 	o *Object,
 ) *Object {
-	req := CertificateRequest{
+	req := &CertificateRequest{
 		Metadata: Metadata{
 			Owner: peerKey.PublicKey(),
 		},
@@ -218,7 +218,7 @@ func mustSignWithCertificate(
 	resSig, err := NewSignature(peerKey, reso)
 	require.NoError(t, err)
 	req.Metadata.Signature = resSig
-	res, err := NewCertificate(identityKey, req, true, "")
+	res, err := NewCertificate(identityKey, *req, true, "")
 	require.NoError(t, err)
 	sig, err := NewSignature(peerKey, o)
 	assert.NoError(t, err)

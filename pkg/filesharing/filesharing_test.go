@@ -171,7 +171,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 		File:  file1,
 		Nonce: "1234",
 	}
-	chunk1 := blob.Chunk{Data: []byte("asdf")}
+	chunk1 := &blob.Chunk{Data: []byte("asdf")}
 
 	type args struct {
 		ctx   context.Context
