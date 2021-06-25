@@ -77,7 +77,6 @@ func TestManager_Integration(t *testing.T) {
 	time.Sleep(time.Second * 2)
 
 	// wait a bit, and check stream on p1
-	// time.Sleep(time.Second * 10)
 	g0, err := p1.ObjectStore().Get(o0.Hash())
 	require.NoError(t, err)
 	require.NotNil(t, g0)

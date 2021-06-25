@@ -100,7 +100,7 @@ func (r *manager) ImportFromFile(
 		chunk := &Chunk{
 			Data: chunkBody[:n],
 		}
-		chunkObj, err := chunk.MarshalObject()
+		chunkObj, err := object.Marshal(chunk)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +124,7 @@ func (r *manager) ImportFromFile(
 	blob := &Blob{
 		Chunks: chunkHashes,
 	}
-	blobObj, err := blob.MarshalObject()
+	blobObj, err := object.Marshal(blob)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (r *manager) Request(
 	chunks := []*Chunk{}
 
 	blob := &Blob{}
-	if err := blob.UnmarshalObject(obj); err != nil {
+	if err := object.Unmarshal(obj, blob); err != nil {
 		return nil, nil, err
 	}
 
@@ -194,7 +194,7 @@ func (r *manager) Request(
 		}
 
 		chunk := &Chunk{}
-		if err := chunk.UnmarshalObject(chObj); err != nil {
+		if err := object.Unmarshal(chObj, chunk); err != nil {
 			logger.Error("failed to convert to chunk", log.Error(err))
 			return nil, nil, err
 		}
@@ -207,7 +207,7 @@ func (r *manager) Request(
 
 func getChunks(o *object.Object) ([]chore.Hash, error) {
 	b := &Blob{}
-	if err := b.UnmarshalObject(o); err != nil {
+	if err := object.Unmarshal(o, b); err != nil {
 		return nil, err
 	}
 	return b.Chunks, nil

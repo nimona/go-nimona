@@ -31,7 +31,7 @@ func NewCertificate(
 		Starts:      nowString,
 		Expires:     expString,
 	}
-	co, err := crt.MarshalObject()
+	co, err := Marshal(crt)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func NewCertificate(
 		Request:     req,
 		Certificate: *crt,
 	}
-	reso, err := res.MarshalObject()
+	reso, err := Marshal(res)
 	if err != nil {
 		return nil, err
 	}

@@ -23,32 +23,6 @@ func (e *Request) Type() string {
 	return "nimona.io/Request"
 }
 
-func (e *Request) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/Request"
-	return o, nil
-}
-
-func (e *Request) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
-}
-
 func (e *Response) Type() string {
 	return "nimona.io/Response"
-}
-
-func (e *Response) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/Response"
-	return o, nil
-}
-
-func (e *Response) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
 }

@@ -157,7 +157,7 @@ func TestBlob_ToMap(t *testing.T) {
 	assert.Equal(t, s, s2)
 
 	b2 := &blob.Blob{}
-	err = b2.UnmarshalObject(o)
+	err = object.Unmarshal(o, b2)
 	require.NoError(t, err)
 
 	require.Equal(t, b, b2)

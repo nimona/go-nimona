@@ -22,7 +22,7 @@ signed object nimona.io/stream.Response {
 }
 
 signed object nimona.io/stream.Announcement {
-    streamCID string type=nimona.io/chore.Hash
+    streamHash string type=nimona.io/chore.Hash
     objectHashes repeated string type=nimona.io/chore.Hash
 }
 

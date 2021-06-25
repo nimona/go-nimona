@@ -31,49 +31,10 @@ func (e *FeedStreamRoot) Type() string {
 	return "stream:nimona.io/feed"
 }
 
-func (e *FeedStreamRoot) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "stream:nimona.io/feed"
-	return o, nil
-}
-
-func (e *FeedStreamRoot) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Added) Type() string {
 	return "event:nimona.io/feed.Added"
 }
 
-func (e *Added) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/feed.Added"
-	return o, nil
-}
-
-func (e *Added) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Removed) Type() string {
 	return "event:nimona.io/feed.Removed"
-}
-
-func (e *Removed) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/feed.Removed"
-	return o, nil
-}
-
-func (e *Removed) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

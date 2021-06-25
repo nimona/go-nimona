@@ -38,7 +38,7 @@ func TestEncoding(t *testing.T) {
 	fmt.Println(g.Data["addresses"])
 
 	r := &ConnectionInfo{}
-	err = r.UnmarshalObject(g)
+	err = object.Unmarshal(g, r)
 	require.NoError(t, err)
 
 	require.Equal(t, c, r)

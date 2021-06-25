@@ -56,19 +56,6 @@ func (e *{{ structName $object.Name }}) Type() string {
 	return "{{ $object.Name }}"
 }
 
-func (e *{{ structName $object.Name }}) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "{{ $object.Name }}"
-	return o, nil
-}
-
-func (e *{{ structName $object.Name }}) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 {{ end }}
 `
 

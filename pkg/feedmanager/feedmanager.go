@@ -115,7 +115,7 @@ func (m *feedManager) createFeed(
 		m.localpeer.GetIdentityPublicKey(),
 		streamType,
 	)
-	feedRootObj, err := feedRoot.MarshalObject()
+	feedRootObj, err := object.Marshal(feedRoot)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (m *feedManager) createFeed(
 			}
 
 			feedAdded := &feed.Added{}
-			if err := feedAdded.UnmarshalObject(obj); err != nil {
+			if err := object.Unmarshal(obj, feedAdded); err != nil {
 				// TODO log
 				continue
 			}
@@ -297,12 +297,12 @@ func (m *feedManager) handleObjects(
 			identityKey,
 			streamType,
 		)
-		feedStreamObj, err := feedStream.MarshalObject()
+		feedStreamObj, err := object.Marshal(feedStream)
 		if err != nil {
 			continue
 		}
 		feedStreamHash := feedStreamObj.Hash()
-		feedEvent := feed.Added{
+		feedEvent := &feed.Added{
 			Metadata: object.Metadata{
 				Stream: feedStreamHash,
 				Owner:  peerKey,
@@ -311,7 +311,7 @@ func (m *feedManager) handleObjects(
 				objHash,
 			},
 		}
-		feedEventObj, err := feedEvent.MarshalObject()
+		feedEventObj, err := object.Marshal(feedEvent)
 		if err != nil {
 			continue
 		}

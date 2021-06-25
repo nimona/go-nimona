@@ -21,16 +21,3 @@ type (
 func (e *ConnectionInfo) Type() string {
 	return "nimona.io/peer.ConnectionInfo"
 }
-
-func (e *ConnectionInfo) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/peer.ConnectionInfo"
-	return o, nil
-}
-
-func (e *ConnectionInfo) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}

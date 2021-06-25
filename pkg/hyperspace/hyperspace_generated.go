@@ -33,49 +33,10 @@ func (e *Announcement) Type() string {
 	return "nimona.io/hyperspace.Announcement"
 }
 
-func (e *Announcement) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/hyperspace.Announcement"
-	return o, nil
-}
-
-func (e *Announcement) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *LookupRequest) Type() string {
 	return "nimona.io/hyperspace.LookupRequest"
 }
 
-func (e *LookupRequest) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/hyperspace.LookupRequest"
-	return o, nil
-}
-
-func (e *LookupRequest) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *LookupResponse) Type() string {
 	return "nimona.io/hyperspace.LookupResponse"
-}
-
-func (e *LookupResponse) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/hyperspace.LookupResponse"
-	return o, nil
-}
-
-func (e *LookupResponse) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

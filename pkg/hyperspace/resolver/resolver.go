@@ -56,7 +56,7 @@ type (
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
-		hashes                         *ChoreHashesyncList
+		hashes                         *ChoreHashSyncList
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -80,7 +80,7 @@ func New(
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
-		hashes:                         &ChoreHashesyncList{},
+		hashes:                         &ChoreHashSyncList{},
 	}
 
 	for _, opt := range opts {
@@ -197,7 +197,7 @@ func (r *resolver) Lookup(
 		Nonce:       rand.String(12),
 		QueryVector: bl,
 	}
-	reqObject, err := req.MarshalObject()
+	reqObject, err := object.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +242,7 @@ func (r *resolver) Lookup(
 				break
 			}
 			r := &hyperspace.LookupResponse{}
-			if err := r.UnmarshalObject(e.Payload); err != nil {
+			if err := object.Unmarshal(e.Payload, r); err != nil {
 				continue
 			}
 			// TODO verify peer?
@@ -277,7 +277,7 @@ func (r *resolver) handleObject(
 	o := e.Payload
 	if o.Type == hyperspaceAnnouncementType {
 		v := &hyperspace.Announcement{}
-		if err := v.UnmarshalObject(o); err != nil {
+		if err := object.Unmarshal(o, v); err != nil {
 			logger.Warn(
 				"error handling announcement",
 				log.Error(err),
@@ -309,7 +309,7 @@ func (r *resolver) announceSelf() {
 		log.String("method", "resolver.announceSelf"),
 	)
 	n := 0
-	anno, err := r.getLocalPeerAnnouncement().MarshalObject()
+	anno, err := object.Marshal(r.getLocalPeerAnnouncement())
 	if err != nil {
 		logger.Error("error marshaling announcement", log.Error(err))
 		return
