@@ -28,49 +28,10 @@ func (e *RelationshipStreamRoot) Type() string {
 	return "stream:nimona.io/schema/relationship"
 }
 
-func (e *RelationshipStreamRoot) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "stream:nimona.io/schema/relationship"
-	return o, nil
-}
-
-func (e *RelationshipStreamRoot) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Added) Type() string {
 	return "event:nimona.io/schema/relationship.Added"
 }
 
-func (e *Added) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/schema/relationship.Added"
-	return o, nil
-}
-
-func (e *Added) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Removed) Type() string {
 	return "event:nimona.io/schema/relationship.Removed"
-}
-
-func (e *Removed) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/schema/relationship.Removed"
-	return o, nil
-}
-
-func (e *Removed) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

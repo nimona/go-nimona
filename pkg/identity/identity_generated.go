@@ -44,100 +44,22 @@ func (e *Profile) Type() string {
 	return "nimona.io/identity.Profile"
 }
 
-func (e *Profile) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/identity.Profile"
-	return o, nil
-}
-
-func (e *Profile) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *ProfileStreamRoot) Type() string {
 	return "stream:nimona.io/identity.Profile"
-}
-
-func (e *ProfileStreamRoot) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "stream:nimona.io/identity.Profile"
-	return o, nil
-}
-
-func (e *ProfileStreamRoot) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }
 
 func (e *ProfileUpdated) Type() string {
 	return "event:nimona.io/identity.Profile.Updated"
 }
 
-func (e *ProfileUpdated) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/identity.Profile.Updated"
-	return o, nil
-}
-
-func (e *ProfileUpdated) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *AddressbookStreamRoot) Type() string {
 	return "stream:nimona.io/identity/addressbook"
-}
-
-func (e *AddressbookStreamRoot) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "stream:nimona.io/identity/addressbook"
-	return o, nil
-}
-
-func (e *AddressbookStreamRoot) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }
 
 func (e *AddressbookContactAdded) Type() string {
 	return "event:nimona.io/identity/addressbook.ContactAdded"
 }
 
-func (e *AddressbookContactAdded) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/identity/addressbook.ContactAdded"
-	return o, nil
-}
-
-func (e *AddressbookContactAdded) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *AddressbookContactRemoved) Type() string {
 	return "event:nimona.io/identity/addressbook.ContactRemoved"
-}
-
-func (e *AddressbookContactRemoved) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "event:nimona.io/identity/addressbook.ContactRemoved"
-	return o, nil
-}
-
-func (e *AddressbookContactRemoved) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

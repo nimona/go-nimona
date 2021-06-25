@@ -334,6 +334,6 @@ func (p *Provider) GetFeedRootHash(
 			Owner: p.local.GetPeerKey().PublicKey(),
 		},
 	}
-	o, _ := v.MarshalObject()
+	o, _ := object.Marshal(v)
 	return o.Hash()
 }

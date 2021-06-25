@@ -3,6 +3,8 @@ package blob
 import (
 	"bufio"
 	"io"
+
+	"nimona.io/pkg/object"
 )
 
 type Reader interface {
@@ -36,7 +38,7 @@ func NewBlob(r io.Reader) (*Blob, []*Chunk, error) {
 		}
 
 		chunks = append(chunks, ch)
-		cho, err := ch.MarshalObject()
+		cho, err := object.Marshal(ch)
 		if err != nil {
 			return nil, nil, err
 		}

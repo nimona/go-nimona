@@ -18,16 +18,3 @@ type (
 func (e *File) Type() string {
 	return "nimona.io/File"
 }
-
-func (e *File) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/File"
-	return o, nil
-}
-
-func (e *File) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}

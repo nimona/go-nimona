@@ -22,32 +22,6 @@ func (e *Chunk) Type() string {
 	return "nimona.io/Chunk"
 }
 
-func (e *Chunk) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/Chunk"
-	return o, nil
-}
-
-func (e *Chunk) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Blob) Type() string {
 	return "nimona.io/Blob"
-}
-
-func (e *Blob) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/Blob"
-	return o, nil
-}
-
-func (e *Blob) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

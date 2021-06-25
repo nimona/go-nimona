@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"nimona.io/pkg/localpeer"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -18,7 +17,7 @@ func WithLocalPeer(k localpeer.LocalPeer) func(*network) {
 type (
 	sendOptions struct {
 		connectionInfo         *peer.ConnectionInfo
-		waitForResponse        interface{ UnmarshalObject(*object.Object) error }
+		waitForResponse        interface{ Type() string }
 		waitForResponseTimeout time.Duration
 	}
 )
@@ -30,7 +29,7 @@ func SendWithConnectionInfo(c *peer.ConnectionInfo) func(*sendOptions) {
 }
 
 func SendWithResponse(
-	v interface{ UnmarshalObject(*object.Object) error },
+	v interface{ Type() string },
 	t time.Duration,
 ) func(*sendOptions) {
 	return func(w *sendOptions) {

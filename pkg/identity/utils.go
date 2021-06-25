@@ -23,7 +23,7 @@ func Lookup(
 			Owner: idKey,
 		},
 	}
-	streamRootObj, err := streamRoot.MarshalObject()
+	streamRootObj, err := object.Marshal(streamRoot)
 	if err != nil {
 		return nil, err
 	}

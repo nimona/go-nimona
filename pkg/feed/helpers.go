@@ -31,7 +31,7 @@ func GetFeedHashes(
 		case feedObjectAddedType:
 			event := &Added{}
 			// TODO should this error?
-			if err := event.UnmarshalObject(obj); err != nil {
+			if err := object.Unmarshal(obj, event); err != nil {
 				return nil, err
 			}
 			for _, hash := range event.ObjectHash {
@@ -40,7 +40,7 @@ func GetFeedHashes(
 		case feedObjectRemovedType:
 			event := &Removed{}
 			// TODO should this error?
-			if err := event.UnmarshalObject(obj); err != nil {
+			if err := object.Unmarshal(obj, event); err != nil {
 				return nil, err
 			}
 			for _, hash := range event.ObjectHash {

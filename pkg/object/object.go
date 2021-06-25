@@ -9,26 +9,16 @@ import (
 	"nimona.io/pkg/chore"
 )
 
+type Object struct {
+	Context  string
+	Type     string
+	Metadata Metadata
+	Data     chore.Map
+}
+
 type (
 	Typed interface {
 		Type() string
-	}
-	// Object
-	Object struct {
-		Context  string
-		Type     string
-		Metadata Metadata
-		Data     chore.Map
-	}
-)
-
-// nolint: golint
-type (
-	ObjectMashaller interface {
-		MarshalObject() (*Object, error)
-	}
-	ObjectUnmashaller interface {
-		UnmarshalObject(*Object) error
 	}
 	MapMashaller interface {
 		MarshalMap() (chore.Map, error)

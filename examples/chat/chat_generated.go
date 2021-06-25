@@ -25,49 +25,10 @@ func (e *ConversationStreamRoot) Type() string {
 	return "stream:poc.nimona.io/conversation"
 }
 
-func (e *ConversationStreamRoot) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "stream:poc.nimona.io/conversation"
-	return o, nil
-}
-
-func (e *ConversationStreamRoot) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *ConversationNicknameUpdated) Type() string {
 	return "poc.nimona.io/conversation.NicknameUpdated"
 }
 
-func (e *ConversationNicknameUpdated) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "poc.nimona.io/conversation.NicknameUpdated"
-	return o, nil
-}
-
-func (e *ConversationNicknameUpdated) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *ConversationMessageAdded) Type() string {
 	return "poc.nimona.io/conversation.MessageAdded"
-}
-
-func (e *ConversationMessageAdded) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "poc.nimona.io/conversation.MessageAdded"
-	return o, nil
-}
-
-func (e *ConversationMessageAdded) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

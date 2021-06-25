@@ -67,7 +67,7 @@ func Verify(o *Object) error {
 	}
 
 	// then let's make sure that the certificate is properly signed
-	co, err := sig.Certificate.MarshalObject()
+	co, err := Marshal(sig.Certificate)
 	if err != nil {
 		return err
 	}

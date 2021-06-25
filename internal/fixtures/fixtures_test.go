@@ -18,7 +18,7 @@ func TestFixtures_Composite(t *testing.T) {
 		RepeatedCompositeDataTest:   []*Composite{{"foo"}, {"bar"}},
 	}
 
-	o, err := c.MarshalObject()
+	o, err := object.Marshal(c)
 	require.NoError(t, err)
 
 	b, err := json.Marshal(o)
@@ -31,7 +31,7 @@ func TestFixtures_Composite(t *testing.T) {
 	require.NoError(t, err)
 
 	gc := &CompositeTest{}
-	err = gc.UnmarshalObject(gm)
+	err = object.Unmarshal(gm, gc)
 	require.NoError(t, err)
 }
 
@@ -57,7 +57,7 @@ func TestFixtures_Nested(t *testing.T) {
 		}},
 	}
 
-	o, err := c.MarshalObject()
+	o, err := object.Marshal(c)
 	require.NoError(t, err)
 
 	b, err := json.Marshal(o)
@@ -70,6 +70,6 @@ func TestFixtures_Nested(t *testing.T) {
 	require.NoError(t, err)
 
 	gc := &Parent{}
-	err = gc.UnmarshalObject(gm)
+	err = object.Unmarshal(gm, gc)
 	require.NoError(t, err)
 }

@@ -155,7 +155,7 @@ func (m *manager) RequestStream(
 				return
 			}
 			streamResp := &stream.Response{}
-			if err := streamResp.UnmarshalObject(env.Payload); err != nil {
+			if err := object.Unmarshal(env.Payload, streamResp); err != nil {
 				continue
 			}
 			if streamResp.RequestID != rID {
@@ -173,11 +173,11 @@ func (m *manager) RequestStream(
 
 	// TODO we should first request and store stream root I guess
 
-	req := stream.Request{
+	req := &stream.Request{
 		RequestID: rID,
 		RootHash:  rootHash,
 	}
-	ro, err := req.MarshalObject()
+	ro, err := object.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func (m *manager) Request(
 				break
 			}
 			res := &object.Response{}
-			if err := res.UnmarshalObject(e.Payload); err != nil {
+			if err := object.Unmarshal(e.Payload, res); err != nil {
 				errCh <- err
 				break
 			}
@@ -337,7 +337,7 @@ func (m *manager) Request(
 		RequestID:  rID,
 		ObjectHash: hash,
 	}
-	ro, err := req.MarshalObject()
+	ro, err := object.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +535,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	// notify subscribers
-	announcement := stream.Announcement{
+	announcement := &stream.Announcement{
 		Metadata: object.Metadata{
 			Owner: m.localpeer.GetPeerKey().PublicKey(),
 		},
@@ -554,7 +554,7 @@ func (m *manager) announceStreamChildren(
 			)
 			continue
 		}
-		ao, err := announcement.MarshalObject()
+		ao, err := object.Marshal(announcement)
 		if err != nil {
 			logger.Info(
 				"error marshaling announcement",
@@ -589,7 +589,7 @@ func (m *manager) handleObjectRequest(
 	)
 
 	req := &object.Request{}
-	if err := req.UnmarshalObject(env.Payload); err != nil {
+	if err := object.Unmarshal(env.Payload, req); err != nil {
 		logger.Warn(
 			"received invalid object request",
 			log.Error(err),
@@ -620,7 +620,7 @@ func (m *manager) handleObjectRequest(
 		if err != objectstore.ErrNotFound {
 			return err
 		}
-		ro, err := resp.MarshalObject()
+		ro, err := object.Marshal(resp)
 		if err != nil {
 			return err
 		}
@@ -641,7 +641,7 @@ func (m *manager) handleObjectRequest(
 
 	resp.Object = robj
 
-	ro, err := resp.MarshalObject()
+	ro, err := object.Marshal(resp)
 	if err != nil {
 		return err
 	}
@@ -677,7 +677,7 @@ func (m *manager) handleStreamRequest(
 	)
 
 	req := &stream.Request{}
-	if err := req.UnmarshalObject(env.Payload); err != nil {
+	if err := object.Unmarshal(env.Payload, req); err != nil {
 		return err
 	}
 
@@ -697,7 +697,7 @@ func (m *manager) handleStreamRequest(
 
 	res.Leaves = leaves
 
-	ro, err := res.MarshalObject()
+	ro, err := object.Marshal(res)
 	if err != nil {
 		return err
 	}
@@ -721,7 +721,7 @@ func (m *manager) handleStreamSubscription(
 	env *network.Envelope,
 ) error {
 	sub := &stream.Subscription{}
-	if err := sub.UnmarshalObject(env.Payload); err != nil {
+	if err := object.Unmarshal(env.Payload, sub); err != nil {
 		return err
 	}
 
@@ -738,7 +738,7 @@ func (m *manager) handleStreamAnnouncement(
 	env *network.Envelope,
 ) error {
 	ann := &stream.Announcement{}
-	if err := ann.UnmarshalObject(env.Payload); err != nil {
+	if err := object.Unmarshal(env.Payload, ann); err != nil {
 		return err
 	}
 
@@ -906,7 +906,7 @@ func (m *manager) AddStreamSubscription(
 		}
 
 		s := &stream.Subscription{}
-		if err := s.UnmarshalObject(o); err != nil {
+		if err := object.Unmarshal(o, s); err != nil {
 			continue
 		}
 
@@ -932,7 +932,7 @@ func (m *manager) AddStreamSubscription(
 		// TODO add expiry
 	}
 
-	so, err := s.MarshalObject()
+	so, err := object.Marshal(s)
 	if err != nil {
 		return err
 	}

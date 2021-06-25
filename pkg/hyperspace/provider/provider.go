@@ -137,7 +137,7 @@ func (p *Provider) handleObject(
 		}
 	case hyperspaceLookupRequestType:
 		v := &hyperspace.LookupRequest{}
-		if err := v.UnmarshalObject(o); err != nil {
+		if err := object.Unmarshal(o, v); err != nil {
 			logger.Warn(
 				"error decoding lookup request",
 				log.Error(err),
@@ -153,7 +153,7 @@ func (p *Provider) handleAnnouncement(
 	annObj *object.Object,
 ) error {
 	ann := &hyperspace.Announcement{}
-	if err := ann.UnmarshalObject(annObj); err != nil {
+	if err := object.Unmarshal(annObj, ann); err != nil {
 		return err
 	}
 	logger := log.FromContext(ctx).With(
@@ -225,7 +225,7 @@ func (p *Provider) handlePeerLookup(
 		PublicKey: e.Sender,
 	}
 
-	reso, err := res.MarshalObject()
+	reso, err := object.Marshal(res)
 	if err != nil {
 		logger.Debug("could not marshal lookup response",
 			log.Error(err),
@@ -307,7 +307,7 @@ func (p *Provider) announceSelf() {
 	// make sure we have our own peer in the peer cache
 	p.peerCache.Put(ann, 24*time.Hour)
 	// and send it to all providers
-	annObj, err := ann.MarshalObject()
+	annObj, err := object.Marshal(ann)
 	if err != nil {
 		logger.Error("unable to marshal announcement", log.Error(err))
 		return

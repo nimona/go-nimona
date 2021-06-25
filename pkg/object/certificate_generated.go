@@ -43,66 +43,14 @@ func (e *Certificate) Type() string {
 	return "nimona.io/Certificate"
 }
 
-func (e *Certificate) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/Certificate"
-	return o, nil
-}
-
-func (e *Certificate) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
-}
-
 func (e *CertificatePermission) Type() string {
 	return "nimona.io/CertificatePermission"
-}
-
-func (e *CertificatePermission) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/CertificatePermission"
-	return o, nil
-}
-
-func (e *CertificatePermission) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
 }
 
 func (e *CertificateRequest) Type() string {
 	return "nimona.io/CertificateRequest"
 }
 
-func (e *CertificateRequest) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/CertificateRequest"
-	return o, nil
-}
-
-func (e *CertificateRequest) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
-}
-
 func (e *CertificateResponse) Type() string {
 	return "nimona.io/CertificateResponse"
-}
-
-func (e *CertificateResponse) MarshalObject() (*Object, error) {
-	o, err := Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/CertificateResponse"
-	return o, nil
-}
-
-func (e *CertificateResponse) UnmarshalObject(o *Object) error {
-	return Unmarshal(o, e)
 }

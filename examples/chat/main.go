@@ -53,7 +53,7 @@ func (c *chat) subscribe(
 			switch o.Type {
 			case typeConversationMessageAdded:
 				v := &ConversationMessageAdded{}
-				v.UnmarshalObject(o)
+				object.Unmarshal(o, v)
 				if v.Body == "" || v.Metadata.Datetime == "" {
 					fmt.Println("> Received message without date or body")
 					continue
@@ -65,7 +65,7 @@ func (c *chat) subscribe(
 				events <- v
 			case typeConversationNicknameUpdated:
 				v := &ConversationNicknameUpdated{}
-				v.UnmarshalObject(o)
+				object.Unmarshal(o, v)
 				if v.Nickname == "" {
 					fmt.Println("> Received nickname update without nickname")
 					continue
@@ -121,7 +121,7 @@ func (c *chat) subscribe(
 			}
 			if o.Type == new(stream.Subscription).Type() {
 				s := &stream.Subscription{}
-				if err := s.UnmarshalObject(o); err != nil {
+				if err := object.Unmarshal(o, s); err != nil {
 					continue
 				}
 				if s.Metadata.Owner.Equals(

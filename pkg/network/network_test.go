@@ -126,7 +126,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		// send request from p1 to p2 in a go routine
 		sendErr := make(chan error)
 		go func() {
-			reqo, err := req.MarshalObject()
+			reqo, err := object.Marshal(req)
 			require.NoError(t, err)
 			sendErr <- n1.Send(
 				context.Background(),
@@ -139,7 +139,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		gotReq := <-reqSub.Channel()
 		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(chore.String)))
 		// send response from p2 to p1
-		reso, err := res.MarshalObject()
+		reso, err := object.Marshal(res)
 		require.NoError(t, err)
 		require.NoError(t, err)
 		// nolint: errcheck
@@ -275,173 +275,6 @@ func TestNetwork_Relay(t *testing.T) {
 		env.Payload.Metadata.Signature,
 	)
 }
-
-// func Test_exchange_signAll(t *testing.T) {
-// 	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
-// 	require.NoError(t, err)
-
-// 	t.Run("should pass, sign root object", func(t *testing.T) {
-// 		o := &object.Object{
-// 			Type: "foo",
-// 			Metadata: object.Metadata{
-// 				Owner: k.PublicKey(),
-// 			},
-// 			Data: chore.Map{
-// 				"foo": chore.String("bar"),
-// 			},
-// 		}
-
-// 		g, err := signAll(k, o)
-// 		assert.NoError(t, err)
-
-// 		err = object.Verify(g)
-// 		require.NoError(t, err)
-
-// 		assert.NotNil(t, g.Metadata.Signature)
-// 		assert.False(t, g.Metadata.Signature.IsEmpty())
-// 		assert.NotNil(t, g.Metadata.Signature.Signer)
-// 	})
-
-// 	t.Run("should pass, sign nested object", func(t *testing.T) {
-// 		n := &object.Object{
-// 			Type: "foo",
-// 			Metadata: object.Metadata{
-// 				Owner: k.PublicKey(),
-// 			},
-// 			Data: chore.Map{
-// 				"foo": chore.String("bar"),
-// 			},
-// 		}
-// 		m, err := n.MarshalMap()
-// 		require.NoError(t, err)
-// 		o := &object.Object{
-// 			Type: "foo",
-// 			Data: chore.Map{
-// 				"foo": m,
-// 			},
-// 		}
-
-// 		g, err := signAll(k, o)
-// 		assert.NoError(t, err)
-
-// 		err = object.Verify(g)
-// 		require.NoError(t, err)
-
-// 		assert.True(t, g.Metadata.Signature.IsEmpty())
-// 		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
-
-// 		gn := &object.Object{}
-// 		err = gn.UnmarshalMap(g.Data["foo"].(chore.Map))
-// 		require.NoError(t, err)
-
-// 		assert.False(t, gn.Metadata.Signature.IsEmpty())
-// 		assert.NotNil(t, gn.Metadata.Signature.Signer)
-// 	})
-
-// 	t.Run("should pass, sign nested object", func(t *testing.T) {
-// 		n := &object.Object{
-// 			Type: "foo",
-// 			Metadata: object.Metadata{
-// 				Owner: k.PublicKey(),
-// 			},
-// 			Data: chore.Map{
-// 				"foo": chore.String("bar"),
-// 			},
-// 		}
-// 		m, err := n.MarshalMap()
-// 		require.NoError(t, err)
-// 		o := &object.Object{
-// 			Type: "foo",
-// 			Data: chore.Map{
-// 				"foo": m,
-// 			},
-// 		}
-
-// 		g, err := signAll(k, o)
-// 		assert.NoError(t, err)
-
-// 		err = object.Verify(g)
-// 		require.NoError(t, err)
-
-// 		assert.True(t, g.Metadata.Signature.IsEmpty())
-// 		assert.Equal(t, crypto.EmptyPublicKey, g.Metadata.Signature.Signer)
-
-// 		gn := &object.Object{}
-// 		err = gn.UnmarshalMap(g.Data["foo"].(chore.Map))
-// 		require.NoError(t, err)
-// 		assert.False(t, gn.Metadata.Signature.IsEmpty())
-// 		assert.NotNil(t, gn.Metadata.Signature.Signer)
-// 	})
-
-// 	t.Run("should pass, sign deeply nested object", func(t *testing.T) {
-// 		n := &hyperspace.Announcement{
-// 			Metadata: object.Metadata{
-// 				Owner:    k.PublicKey(),
-// 				Datetime: "foo",
-// 			},
-// 			ConnectionInfo: &peer.ConnectionInfo{
-// 				Metadata: object.Metadata{
-// 					Owner:    k.PublicKey(),
-// 					Datetime: "foo",
-// 				},
-// 				Version:       2,
-// 				PublicKey:     k.PublicKey(),
-// 				Addresses:     []string{"1", "2"},
-// 				ObjectFormats: []string{"foo", "bar"},
-// 				Relays: []*peer.ConnectionInfo{{
-// 					Metadata: object.Metadata{
-// 						Owner:    k.PublicKey(),
-// 						Datetime: "foo",
-// 					},
-// 					Version:       3,
-// 					PublicKey:     k.PublicKey(),
-// 					Addresses:     []string{"1", "2"},
-// 					ObjectFormats: []string{"foo", "bar"},
-// 					Relays:        []*peer.ConnectionInfo{},
-// 				}},
-// 			},
-// 			PeerVector:       []uint64{0, 1, 2},
-// 			Version:          1,
-// 			PeerCapabilities: []string{"a", "b"},
-// 		}
-
-// 		// marshal to object
-// 		no, err := n.MarshalObject()
-// 		assert.NoError(t, err)
-
-// 		// sign
-// 		g, err := signAll(k, no)
-// 		assert.NoError(t, err)
-
-// 		// verify
-// 		err = object.Verify(g)
-// 		require.NoError(t, err)
-
-// 		// marshal to json
-// 		b, err := json.Marshal(no)
-// 		assert.NoError(t, err)
-
-// 		// unmarshal to object
-// 		o := &object.Object{}
-// 		err = json.Unmarshal(b, o)
-// 		require.NoError(t, err)
-
-// 		// verify
-// 		err = object.Verify(o)
-// 		require.NoError(t, err)
-
-// 		// unmarshal to struct
-// 		nn := &hyperspace.Announcement{}
-// 		err = nn.UnmarshalObject(o)
-// 		require.NoError(t, err)
-// 		require.Equal(t, no.Metadata, nn.Metadata)
-
-// 		// marshal to object
-// 		ng, err := nn.MarshalObject()
-// 		assert.NoError(t, err)
-// 		assert.Equal(t, no, ng)
-// 	})
-// }
 
 func Test_network_lookup(t *testing.T) {
 	p0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)

@@ -200,7 +200,7 @@ func New(
 			return nil, err
 		}
 		crtRes := &object.CertificateResponse{}
-		if err := crtRes.UnmarshalObject(crtResObj); err != nil {
+		if err := object.Unmarshal(crtResObj, crtRes); err != nil {
 			return nil, err
 		}
 		h.peerCertificateResponse = crtRes
@@ -370,7 +370,7 @@ func main() {
 			switch o.Type {
 			case new(relationship.Added).Type():
 				r := &relationship.Added{}
-				if err := r.UnmarshalObject(o); err != nil {
+				if err := object.Unmarshal(o, r); err != nil {
 					continue
 				}
 				if r.Alias == "" || r.RemoteParty.IsEmpty() {
@@ -387,7 +387,7 @@ func main() {
 				)
 			case new(relationship.Removed).Type():
 				r := &relationship.Removed{}
-				if err := r.UnmarshalObject(o); err != nil {
+				if err := object.Unmarshal(o, r); err != nil {
 					continue
 				}
 				if r.RemoteParty.IsEmpty() {
@@ -595,7 +595,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.UnmarshalObject(csrObj)
+		err = object.Unmarshal(csrObj, csr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -668,7 +668,7 @@ func main() {
 				switch o.Type {
 				case new(relationship.Added).Type():
 					r := &relationship.Added{}
-					if err := r.UnmarshalObject(o); err != nil {
+					if err := object.Unmarshal(o, r); err != nil {
 						continue
 					}
 					if r.Alias == "" || r.RemoteParty.IsEmpty() {
@@ -677,7 +677,7 @@ func main() {
 					contacts[r.RemoteParty.String()] = r.Alias
 				case new(relationship.Removed).Type():
 					r := &relationship.Removed{}
-					if err := r.UnmarshalObject(o); err != nil {
+					if err := object.Unmarshal(o, r); err != nil {
 						continue
 					}
 					if r.RemoteParty.IsEmpty() {
@@ -981,7 +981,7 @@ func main() {
 					break
 				}
 				crtRes := &object.CertificateResponse{}
-				if err := crtRes.UnmarshalObject(o); err != nil {
+				if err := object.Unmarshal(o, crtRes); err != nil {
 					continue
 				}
 				values.CertificateReponses = append(
@@ -1041,7 +1041,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.UnmarshalObject(csrObj)
+		err = object.Unmarshal(csrObj, csr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -1076,7 +1076,7 @@ func main() {
 			return
 		}
 		csr := &object.CertificateRequest{}
-		err = csr.UnmarshalObject(csrObj)
+		err = object.Unmarshal(csrObj, csr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

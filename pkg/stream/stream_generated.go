@@ -42,83 +42,18 @@ func (e *Policy) Type() string {
 	return "nimona.io/stream.Policy"
 }
 
-func (e *Policy) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/stream.Policy"
-	return o, nil
-}
-
-func (e *Policy) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Request) Type() string {
 	return "nimona.io/stream.Request"
-}
-
-func (e *Request) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/stream.Request"
-	return o, nil
-}
-
-func (e *Request) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }
 
 func (e *Response) Type() string {
 	return "nimona.io/stream.Response"
 }
 
-func (e *Response) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/stream.Response"
-	return o, nil
-}
-
-func (e *Response) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Announcement) Type() string {
 	return "nimona.io/stream.Announcement"
 }
 
-func (e *Announcement) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/stream.Announcement"
-	return o, nil
-}
-
-func (e *Announcement) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *Subscription) Type() string {
 	return "nimona.io/stream.Subscription"
-}
-
-func (e *Subscription) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/stream.Subscription"
-	return o, nil
-}
-
-func (e *Subscription) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

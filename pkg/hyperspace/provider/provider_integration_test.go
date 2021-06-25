@@ -180,7 +180,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 
 	// check response
 	res := &hyperspace.LookupResponse{}
-	err = res.UnmarshalObject(env.Payload)
+	err = object.Unmarshal(env.Payload, res)
 	require.NoError(t, err)
 	assert.Equal(t, "1", res.Nonce)
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)

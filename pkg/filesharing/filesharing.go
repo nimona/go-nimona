@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 )
@@ -83,7 +84,7 @@ func (fsh *fileSharer) RequestTransfer(
 		Nonce: nonce,
 	}
 
-	ro, err := req.MarshalObject()
+	ro, err := object.Marshal(req)
 	if err != nil {
 		return "", err
 	}
@@ -149,7 +150,7 @@ func (fsh *fileSharer) handleObjects(
 		case transferRequestType:
 			req := &TransferRequest{}
 
-			if err := req.UnmarshalObject(env.Payload); err != nil {
+			if err := object.Unmarshal(env.Payload, req); err != nil {
 				logger.Error(
 					"failed to load FileIntentRequest from payload",
 					log.Error(err),
@@ -164,7 +165,7 @@ func (fsh *fileSharer) handleObjects(
 			reqs <- trf
 		case transferResponseType:
 			resp := &TransferResponse{}
-			if err = resp.UnmarshalObject(env.Payload); err != nil {
+			if err = object.Unmarshal(env.Payload, resp); err != nil {
 				logger.Error("error loading from payload", log.Error(err))
 				continue
 			}
@@ -200,7 +201,7 @@ func (fsh *fileSharer) RequestFile(
 		}
 
 		chunk := &blob.Chunk{}
-		if err := chunk.UnmarshalObject(chObj); err != nil {
+		if err := object.Unmarshal(chObj, chunk); err != nil {
 			return nil, err
 		}
 
@@ -225,7 +226,7 @@ func (fsh *fileSharer) RequestFile(
 	done := &TransferDone{
 		Nonce: transfer.Request.Nonce,
 	}
-	doneObj, err := done.MarshalObject()
+	doneObj, err := object.Marshal(done)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +250,7 @@ func (fsh *fileSharer) RespondTransfer(
 		Nonce:    transfer.Request.Nonce,
 		Accepted: accepted,
 	}
-	ro, err := resp.MarshalObject()
+	ro, err := object.Marshal(resp)
 	if err != nil {
 		return err
 	}

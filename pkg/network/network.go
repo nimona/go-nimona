@@ -440,7 +440,7 @@ func (w *network) processOutbox(outbox *outbox) {
 			return errors.Error("didn't get a data forward response in time")
 		}
 		res := &DataForwardResponse{}
-		if err := res.UnmarshalObject(resObj); err != nil {
+		if err := object.Unmarshal(resObj, res); err != nil {
 			return err
 		}
 		if !res.Success {
@@ -614,7 +614,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// forward requests are just decoded to get the recipient and their
 			// payload is sent to them
 			fwd := &DataForwardRequest{}
-			if err := fwd.UnmarshalObject(e.Payload); err != nil {
+			if err := object.Unmarshal(e.Payload, fwd); err != nil {
 				logger.Warn(
 					"error decoding DataForwardRequest",
 					log.Error(err),
@@ -646,7 +646,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
 			}
-			dfo, err := df.MarshalObject()
+			dfo, err := object.Marshal(df)
 			if err != nil {
 				logger.Warn(
 					"error marshaling DataForwardResponse",
@@ -683,7 +683,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// envelopes contain relayed objects, so we decode them and publish
 			// them to our inboxes
 			fwd := &DataForwardEnvelope{}
-			if err := fwd.UnmarshalObject(e.Payload); err != nil {
+			if err := object.Unmarshal(e.Payload, fwd); err != nil {
 				logger.Warn(
 					"error decoding DataForwardEnvelope",
 					log.Error(err),
@@ -761,7 +761,7 @@ func (w *network) Send(
 	var err error
 	if k := w.localpeer.GetPeerKey(); !k.IsEmpty() {
 		// TODO(geoah) we should be passing the certificates to signAll
-		o, err = signAll(k, o)
+		err = object.SignDeep(k, o)
 		if err != nil {
 			return err
 		}
@@ -813,7 +813,7 @@ func (w *network) Send(
 	case <-rT.C:
 		return ErrAlreadySentDuringContext
 	case e := <-rSub.Channel():
-		if err := opt.waitForResponse.UnmarshalObject(e.Payload); err != nil {
+		if err := object.Unmarshal(e.Payload, opt.waitForResponse); err != nil {
 			return errors.Merge(
 				ErrUnableToUnmarshalIntoResponse,
 				err,
@@ -821,36 +821,6 @@ func (w *network) Send(
 		}
 	}
 	return nil
-}
-
-func signAll(k crypto.PrivateKey, o *object.Object) (*object.Object, error) {
-	var signErr error
-	object.Traverse(o, func(path string, v interface{}) bool {
-		nObj, ok := v.(*object.Object)
-		if !ok {
-			return true
-		}
-		if !nObj.Metadata.Signature.IsEmpty() {
-			return true
-		}
-		if nObj.Metadata.Owner.IsEmpty() {
-			return true
-		}
-		if !nObj.Metadata.Owner.Equals(k.PublicKey()) {
-			return true
-		}
-		sig, err := object.NewSignature(k, nObj)
-		if err != nil {
-			signErr = err
-			return true
-		}
-		nObj.Metadata.Signature = sig
-		if err := object.Verify(nObj); err != nil {
-			panic(err)
-		}
-		return true
-	})
-	return o, signErr
 }
 
 func encrypt(data []byte, key []byte) ([]byte, error) {
@@ -915,7 +885,7 @@ func (w *network) wrapInDataForward(
 		Sender: ek.PublicKey(),
 		Data:   ep,
 	}
-	dfeo, err := dfe.MarshalObject()
+	dfeo, err := object.Marshal(dfe)
 	if err != nil {
 		return nil, err
 	}
@@ -933,7 +903,7 @@ func (w *network) wrapInDataForward(
 		Recipient: recipient,
 		Payload:   dfeo,
 	}
-	dfro, err := dfr.MarshalObject()
+	dfro, err := object.Marshal(dfr)
 	if err != nil {
 		return nil, err
 	}

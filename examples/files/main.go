@@ -120,7 +120,7 @@ func (ft *fileTransfer) serve(
 		return
 	}
 
-	blobUnlo, err := blobUnl.MarshalObject()
+	blobUnlo, err := object.Marshal(blobUnl)
 	if err != nil {
 		fmt.Println("failed to marshal blob", err)
 		return
@@ -131,7 +131,7 @@ func (ft *fileTransfer) serve(
 		Blob: blobUnlo.Hash(),
 	}
 
-	flo, err := fl.MarshalObject()
+	flo, err := object.Marshal(fl)
 	if err != nil {
 		fmt.Println("failed to marshal file", err)
 		return
@@ -191,7 +191,7 @@ func (ft *fileTransfer) get(
 	}
 
 	fl := &File{}
-	if err := fl.UnmarshalObject(obj); err != nil {
+	if err := object.Unmarshal(obj, fl); err != nil {
 		fmt.Println("object not of type file: ", err)
 		return
 	}

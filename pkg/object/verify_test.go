@@ -213,7 +213,7 @@ func mustSignWithCertificate(
 			Actions: []string{"*"},
 		}},
 	}
-	reso, err := req.MarshalObject()
+	reso, err := Marshal(req)
 	require.NoError(t, err)
 	resSig, err := NewSignature(peerKey, reso)
 	require.NoError(t, err)

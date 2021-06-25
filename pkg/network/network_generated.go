@@ -30,49 +30,10 @@ func (e *DataForwardRequest) Type() string {
 	return "nimona.io/network.DataForwardRequest"
 }
 
-func (e *DataForwardRequest) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/network.DataForwardRequest"
-	return o, nil
-}
-
-func (e *DataForwardRequest) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *DataForwardEnvelope) Type() string {
 	return "nimona.io/network.DataForwardEnvelope"
 }
 
-func (e *DataForwardEnvelope) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/network.DataForwardEnvelope"
-	return o, nil
-}
-
-func (e *DataForwardEnvelope) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
-}
-
 func (e *DataForwardResponse) Type() string {
 	return "nimona.io/network.DataForwardResponse"
-}
-
-func (e *DataForwardResponse) MarshalObject() (*object.Object, error) {
-	o, err := object.Marshal(e)
-	if err != nil {
-		return nil, err
-	}
-	o.Type = "nimona.io/network.DataForwardResponse"
-	return o, nil
-}
-
-func (e *DataForwardResponse) UnmarshalObject(o *object.Object) error {
-	return object.Unmarshal(o, e)
 }

@@ -185,7 +185,7 @@ func NimonaBridgeCall(
 		feedRootHash := nimonaProvider.GetFeedRootHash(string(payloadBytes))
 		return renderBytes([]byte(feedRootHash), nil)
 	case "getConnectionInfo":
-		o, _ := nimonaProvider.GetConnectionInfo().MarshalObject()
+		o, _ := object.Marshal(nimonaProvider.GetConnectionInfo())
 		return renderObject(o)
 	}
 

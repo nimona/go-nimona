@@ -1,6 +1,9 @@
 package object
 
 import (
+	"fmt"
+	"reflect"
+
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -43,7 +46,7 @@ func (s *Signature) MarshalMap() (chore.Map, error) {
 		r["x"] = chore.Data(s.X)
 	}
 	if s.Certificate != nil {
-		c, err := s.Certificate.MarshalObject()
+		c, err := Marshal(s.Certificate)
 		if err != nil {
 			return nil, err
 		}
@@ -102,6 +105,92 @@ func NewSignature(
 	if err != nil {
 		return Signature{}, err
 	}
+	return newSignature(k, m)
+}
+
+// Sign an object given a private key, updates the object's metadata in place
+func Sign(k crypto.PrivateKey, o *Object) error {
+	s, err := NewSignature(k, o)
+	if err != nil {
+		return err
+	}
+	o.Metadata.Signature = s
+	return nil
+}
+
+// SignDeep an object and all nested objects we own or have no owner
+// WARNING: THIS _WILL_ CHANGE, DO NOT USE!
+// TODO: not sure which nested objects this should sign. All? Own?
+func SignDeep(k crypto.PrivateKey, o *Object) error {
+	var signErr error
+	pk := k.PublicKey()
+	Traverse(o, func(path string, v interface{}) bool {
+		m, ok := v.(chore.Map)
+		if !ok {
+			return true
+		}
+		if !isObject(m) {
+			return true
+		}
+		meta := &Metadata{}
+		mmeta, ok := m["@metadata"].(chore.Map)
+		if !ok {
+			return true
+		}
+		err := unmarshalMap(chore.MapHint, mmeta, reflect.ValueOf(meta))
+		if err != nil {
+			fmt.Println(">>> 0", err)
+			return true
+		}
+		if !meta.Signature.IsEmpty() {
+			return true
+		}
+		if meta.Owner.IsEmpty() {
+			return true
+		}
+		if !meta.Owner.Equals(pk) {
+			return true
+		}
+		sig, err := newSignature(k, m)
+		if err != nil {
+			fmt.Println(">>> 1", err)
+			signErr = err
+			return true
+		}
+		msig, err := sig.MarshalMap()
+		if err != nil {
+			fmt.Println(">>> 2", err)
+			return true
+		}
+		mmeta["_signature"] = msig
+		return true
+	})
+	if !o.Metadata.Owner.Equals(pk) {
+		return nil
+	}
+	m, err := o.MarshalMap()
+	if err != nil {
+		return err
+	}
+	s, err := newSignature(k, m)
+	if err != nil {
+		return err
+	}
+	o.Metadata.Signature = s
+	return signErr
+}
+
+func isObject(m chore.Map) bool {
+	if _, ok := m["@type"]; ok {
+		return true
+	}
+	return false
+}
+
+func newSignature(
+	k crypto.PrivateKey,
+	m chore.Map,
+) (Signature, error) {
 	h, err := m.Hash().Bytes()
 	if err != nil {
 		return Signature{}, err

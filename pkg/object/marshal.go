@@ -168,11 +168,11 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			}
 			return o.MarshalMap()
 		}
-		if ov, isObj := v.Interface().(ObjectMashaller); isObj {
+		if ov, isObj := v.Interface().(Typed); isObj {
 			if v.IsZero() {
 				return nil, nil
 			}
-			o, err := ov.MarshalObject()
+			o, err := Marshal(ov)
 			if err != nil {
 				return nil, err
 			}
