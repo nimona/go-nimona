@@ -24,6 +24,11 @@ func Marshal(in interface{}) (*Object, error) {
 	}
 
 	v := reflect.ValueOf(in)
+
+	if v.Kind() != reflect.Ptr {
+		panic("marshal currently doesn't support non pointers")
+	}
+
 	m, err := marshalStruct(":m", v)
 	if err != nil {
 		return nil, err

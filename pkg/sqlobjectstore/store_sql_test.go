@@ -45,7 +45,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
-	p := fixtures.TestStream{
+	p := &fixtures.TestStream{
 		Nonce: "asdf",
 	}
 	obj := &object.Object{
@@ -108,7 +108,7 @@ func TestFilter(t *testing.T) {
 	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
 	require.NoError(t, err)
 
-	p := fixtures.TestStream{
+	p := &fixtures.TestStream{
 		Nonce: "asdf",
 	}
 
@@ -122,7 +122,7 @@ func TestFilter(t *testing.T) {
 
 	ph := object.MustMarshal(p).Hash()
 
-	c := fixtures.TestSubscribed{}
+	c := &fixtures.TestSubscribed{}
 	c.Metadata.Stream = ph
 
 	objects := []*object.Object{
