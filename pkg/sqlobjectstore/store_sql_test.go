@@ -132,7 +132,7 @@ func TestFilter(t *testing.T) {
 	hashes := []chore.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
-			Type: new(fixtures.TestSubscribed).Type(),
+			Type: fixtures.TestSubscribedType,
 			Metadata: object.Metadata{
 				Stream: ph,
 				Datetime: time.Now().
@@ -173,7 +173,7 @@ func TestFilter(t *testing.T) {
 	require.Equal(t, 3, len(got))
 
 	objectReader, err = store.Filter(
-		FilterByObjectType(c.Type()),
+		FilterByObjectType(fixtures.TestSubscribedType),
 	)
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)
@@ -218,7 +218,7 @@ func TestFilter(t *testing.T) {
 
 	objectReader, err = store.Filter(
 		FilterByHash(hashes[0]),
-		FilterByObjectType(c.Type()),
+		FilterByObjectType(fixtures.TestSubscribedType),
 		FilterByStreamHash(ph),
 	)
 	require.NoError(t, err)

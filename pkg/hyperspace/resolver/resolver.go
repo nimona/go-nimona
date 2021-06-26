@@ -22,15 +22,10 @@ import (
 	"nimona.io/pkg/sqlobjectstore"
 )
 
-var (
-	hyperspaceAnnouncementType   = new(hyperspace.Announcement).Type()
-	hyperspaceLookupResponseType = new(hyperspace.LookupResponse).Type()
-
-	peerCacheTTL = 1 * time.Minute
-)
-
 const (
 	ErrNoPeersToAsk = errors.Error("no peers to ask")
+
+	peerCacheTTL = 1 * time.Minute
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
@@ -204,7 +199,7 @@ func (r *resolver) Lookup(
 
 	// listen for lookup responses
 	resSub := r.network.Subscribe(
-		network.FilterByObjectType(hyperspaceLookupResponseType),
+		network.FilterByObjectType(hyperspace.LookupResponseType),
 		func(e *network.Envelope) bool {
 			v := e.Payload.Data["nonce"]
 			rn, ok := v.(chore.String)
@@ -275,7 +270,7 @@ func (r *resolver) handleObject(
 
 	// handle payload
 	o := e.Payload
-	if o.Type == hyperspaceAnnouncementType {
+	if o.Type == hyperspace.AnnouncementType {
 		v := &hyperspace.Announcement{}
 		if err := object.Unmarshal(o, v); err != nil {
 			logger.Warn(

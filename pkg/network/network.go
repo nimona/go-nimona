@@ -36,10 +36,7 @@ import (
 //go:generate mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
 
 var (
-	dataForwardRequestType  = new(DataForwardRequest).Type()
-	dataForwardResponseType = new(DataForwardResponse).Type()
-	dataForwardEnvelopeType = new(DataForwardEnvelope).Type()
-	objHandledCounter       = promauto.NewCounter(
+	objHandledCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "nimona_exchange_object_received_total",
 			Help: "Total number of (top level) objects received",
@@ -179,8 +176,8 @@ func New(
 	// subscribe to data forward type
 	subs := w.inboxes.Subscribe(
 		FilterByObjectType(
-			dataForwardRequestType,
-			dataForwardEnvelopeType,
+			DataForwardRequestType,
+			DataForwardEnvelopeType,
 		),
 	)
 
@@ -423,7 +420,7 @@ func (w *network) processOutbox(outbox *outbox) {
 			return err
 		}
 		resSub := w.Subscribe(
-			FilterByObjectType(dataForwardResponseType),
+			FilterByObjectType(DataForwardResponseType),
 			FilterByRequestID(df.RequestID),
 		)
 		var resObj *object.Object
@@ -610,7 +607,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 		logger.Debug("handling object")
 		// nolint: gocritic // don't care about singleCaseSwitch here
 		switch e.Payload.Type {
-		case dataForwardRequestType:
+		case DataForwardRequestType:
 			// forward requests are just decoded to get the recipient and their
 			// payload is sent to them
 			fwd := &DataForwardRequest{}
@@ -679,7 +676,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				continue
 			}
 
-		case dataForwardEnvelopeType:
+		case DataForwardEnvelopeType:
 			// envelopes contain relayed objects, so we decode them and publish
 			// them to our inboxes
 			fwd := &DataForwardEnvelope{}

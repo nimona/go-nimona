@@ -6,22 +6,18 @@ import (
 	chore "nimona.io/pkg/chore"
 )
 
+const RequestType = "nimona.io/Request"
+
 type Request struct {
 	Metadata   Metadata   `nimona:"@metadata:m,type=nimona.io/Request"`
 	RequestID  string     `nimona:"requestID:s"`
 	ObjectHash chore.Hash `nimona:"objectHash:s"`
 }
 
-func (e *Request) Type() string {
-	return "nimona.io/Request"
-}
+const ResponseType = "nimona.io/Response"
 
 type Response struct {
 	Metadata  Metadata `nimona:"@metadata:m,type=nimona.io/Response"`
 	RequestID string   `nimona:"requestID:s"`
 	Object    *Object  `nimona:"object:m"`
-}
-
-func (e *Response) Type() string {
-	return "nimona.io/Response"
 }

@@ -10,11 +10,6 @@ import (
 	"nimona.io/pkg/object"
 )
 
-var (
-	feedObjectAddedType   = new(Added).Type()
-	feedObjectRemovedType = new(Removed).Type()
-)
-
 func GetFeedHashes(
 	objectReader object.Reader,
 ) ([]chore.Hash, error) {
@@ -28,7 +23,7 @@ func GetFeedHashes(
 			return nil, err
 		}
 		switch obj.Type {
-		case feedObjectAddedType:
+		case AddedType:
 			event := &Added{}
 			// TODO should this error?
 			if err := object.Unmarshal(obj, event); err != nil {
@@ -37,7 +32,7 @@ func GetFeedHashes(
 			for _, hash := range event.ObjectHash {
 				objects.Set(hash, true)
 			}
-		case feedObjectRemovedType:
+		case RemovedType:
 			event := &Removed{}
 			// TODO should this error?
 			if err := object.Unmarshal(obj, event); err != nil {

@@ -37,6 +37,8 @@ func Marshal(in interface{}) (*Object, error) {
 		Data: m,
 	}
 
+	// TODO consider rewritting the pick specials
+
 	meta, err := marshalPickSpecial(v, "@metadata:m")
 	if err != nil {
 		return nil, err
@@ -61,6 +63,8 @@ func Marshal(in interface{}) (*Object, error) {
 		o.Context = v
 	}
 
+	delete(m, "@metadata")
+
 	if t, ok := m["@type"]; ok {
 		if tt, ok := t.(chore.String); ok {
 			o.Type = string(tt)
@@ -69,7 +73,7 @@ func Marshal(in interface{}) (*Object, error) {
 	}
 
 	if o.Type == "" {
-		tr, ok := in.(Typed)
+		tr, ok := in.(Typer)
 		if ok {
 			o.Type = tr.Type()
 		}
@@ -180,7 +184,7 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			}
 			return o.MarshalMap()
 		}
-		if ov, isObj := v.Interface().(Typed); isObj {
+		if ov, isObj := v.Interface().(Typer); isObj {
 			if v.IsZero() {
 				return nil, nil
 			}
@@ -295,6 +299,13 @@ func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 			"@context:s":
 			continue
 		case "@metadata:m":
+			if _, ok := iv.Interface().(Metadata); ok {
+				imm, err := marshalStruct(chore.MapHint, iv)
+				if err != nil {
+					return nil, err
+				}
+				m["@metadata"] = imm
+			}
 			if t, ok := igKvs["type"]; ok {
 				m["@type"] = chore.String(t)
 			}
@@ -458,18 +469,22 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 // - `nimona:"@metadata:m"
 // - `nimona:"@metadata:m,type=foo"
 // - `nimona:"@metadata:m,type=foo,x=y"
-func getStructTagName(f reflect.StructField) (string, map[string]string, error) {
+func getStructTagName(f reflect.StructField) (
+	name string,
+	kvs map[string]string,
+	err error,
+) {
 	tag := strings.TrimPrefix(string(f.Tag), "nimona:")
 	tag = strings.Trim(tag, `"`)
 	tagParts := strings.Split(tag, ",")
-	name := tagParts[0]
+	name = tagParts[0]
 	if name == "" {
 		return "", nil, errors.Error("tag name cannot be empty")
 	}
 	if len(tagParts) == 1 {
 		return name, nil, nil
 	}
-	kvs := map[string]string{}
+	kvs = map[string]string{}
 	for _, kv := range tagParts[1:] {
 		kvParts := strings.Split(kv, "=")
 		if len(kvParts) != 2 {

@@ -7,12 +7,10 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const FileType = "nimona.io/File"
+
 type File struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/File"`
 	Name     string          `nimona:"name:s"`
 	Blob     chore.Hash      `nimona:"blob:s"`
-}
-
-func (e *File) Type() string {
-	return "nimona.io/File"
 }

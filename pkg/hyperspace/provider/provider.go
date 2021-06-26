@@ -24,11 +24,6 @@ const (
 )
 
 var (
-	hyperspaceAnnouncementType  = new(hyperspace.Announcement).Type()
-	hyperspaceLookupRequestType = new(hyperspace.LookupRequest).Type()
-)
-
-var (
 	announceVersion        = time.Now().Unix()
 	promIncRequestsCounter = promauto.NewCounter(
 		prometheus.CounterOpts{
@@ -86,8 +81,8 @@ func New(
 			&hyperspace.Announcement{
 				ConnectionInfo: ci,
 				PeerCapabilities: []string{
-					hyperspaceAnnouncementType,
-					hyperspaceLookupRequestType,
+					hyperspace.AnnouncementType,
+					hyperspace.LookupRequestType,
 				},
 			},
 			providerCacheTTL,
@@ -128,14 +123,14 @@ func (p *Provider) handleObject(
 
 	o := e.Payload
 	switch o.Type {
-	case hyperspaceAnnouncementType:
+	case hyperspace.AnnouncementType:
 		if err := p.handleAnnouncement(ctx, o); err != nil {
 			logger.Warn(
 				"error handling announcement",
 				log.Error(err),
 			)
 		}
-	case hyperspaceLookupRequestType:
+	case hyperspace.LookupRequestType:
 		v := &hyperspace.LookupRequest{}
 		if err := object.Unmarshal(o, v); err != nil {
 			logger.Warn(
@@ -300,8 +295,8 @@ func (p *Provider) announceSelf() {
 		Version:        announceVersion,
 		ConnectionInfo: p.network.GetConnectionInfo(),
 		PeerCapabilities: []string{
-			hyperspaceAnnouncementType,
-			hyperspaceLookupRequestType,
+			hyperspace.AnnouncementType,
+			hyperspace.LookupRequestType,
 		},
 	}
 	// make sure we have our own peer in the peer cache
@@ -336,7 +331,7 @@ func (p *Provider) announceSelf() {
 
 func hasHyperspaceCapability(ann *hyperspace.Announcement) bool {
 	for _, c := range ann.PeerCapabilities {
-		if c == hyperspaceAnnouncementType {
+		if c == hyperspace.AnnouncementType {
 			return true
 		}
 	}

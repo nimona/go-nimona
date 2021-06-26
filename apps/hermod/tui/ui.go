@@ -36,11 +36,6 @@ const (
 	IncomingTransferRejected        = "IncomingTransferRejected"
 )
 
-var (
-	transferResponseType = new(filesharing.TransferResponse).Type()
-	transferDoneType     = new(filesharing.TransferDone).Type()
-)
-
 type (
 	Config struct {
 		ReceivedFolder string `envconfig:"RECEIVED_FOLDER" default:"received_files"`
@@ -155,7 +150,7 @@ func NewHermod() hermod {
 				return
 			}
 			switch env.Payload.Type {
-			case transferDoneType:
+			case filesharing.TransferDoneType:
 				req := &filesharing.TransferDone{}
 
 				if err := object.Unmarshal(env.Payload, req); err != nil {
@@ -165,7 +160,7 @@ func NewHermod() hermod {
 
 				her.transfers[req.Nonce].status = OutgoingTransferFileSent
 
-			case transferResponseType:
+			case filesharing.TransferResponseType:
 				req := &filesharing.TransferResponse{}
 
 				if err := object.Unmarshal(env.Payload, req); err != nil {

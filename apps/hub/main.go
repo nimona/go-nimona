@@ -368,7 +368,7 @@ func main() {
 				return
 			}
 			switch o.Type {
-			case new(relationship.Added).Type():
+			case relationship.AddedType:
 				r := &relationship.Added{}
 				if err := object.Unmarshal(o, r); err != nil {
 					continue
@@ -385,7 +385,7 @@ func main() {
 						PublicKey: r.RemoteParty.String(),
 					},
 				)
-			case new(relationship.Removed).Type():
+			case relationship.RemovedType:
 				r := &relationship.Removed{}
 				if err := object.Unmarshal(o, r); err != nil {
 					continue
@@ -666,7 +666,7 @@ func main() {
 					break
 				}
 				switch o.Type {
-				case new(relationship.Added).Type():
+				case relationship.AddedType:
 					r := &relationship.Added{}
 					if err := object.Unmarshal(o, r); err != nil {
 						continue
@@ -675,7 +675,7 @@ func main() {
 						continue
 					}
 					contacts[r.RemoteParty.String()] = r.Alias
-				case new(relationship.Removed).Type():
+				case relationship.RemovedType:
 					r := &relationship.Removed{}
 					if err := object.Unmarshal(o, r); err != nil {
 						continue
@@ -963,7 +963,7 @@ func main() {
 		}
 		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
 			sqlobjectstore.FilterByObjectType(
-				new(object.CertificateResponse).Type(),
+				object.CertificateResponseType,
 			),
 			sqlobjectstore.FilterByOwner(
 				*h.GetIdentityPublicKey(),

@@ -17,7 +17,7 @@ type Object struct {
 }
 
 type (
-	Typed interface {
+	Typer interface {
 		Type() string
 	}
 	MapMashaller interface {

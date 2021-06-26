@@ -23,11 +23,6 @@ import (
 	"nimona.io/pkg/version"
 )
 
-var (
-	typeConversationMessageAdded    = new(ConversationMessageAdded).Type()
-	typeConversationNicknameUpdated = new(ConversationNicknameUpdated).Type()
-)
-
 type Config struct {
 	Nonce string `envconfig:"NONCE" json:"nonce"`
 }
@@ -51,7 +46,7 @@ func (c *chat) subscribe(
 	go func() {
 		for o := range objects {
 			switch o.Type {
-			case typeConversationMessageAdded:
+			case ConversationMessageAddedType:
 				v := &ConversationMessageAdded{}
 				object.Unmarshal(o, v)
 				if v.Body == "" || v.Metadata.Datetime == "" {
@@ -63,7 +58,7 @@ func (c *chat) subscribe(
 					continue
 				}
 				events <- v
-			case typeConversationNicknameUpdated:
+			case ConversationNicknameUpdatedType:
 				v := &ConversationNicknameUpdated{}
 				object.Unmarshal(o, v)
 				if v.Nickname == "" {
@@ -119,7 +114,7 @@ func (c *chat) subscribe(
 			if err != nil {
 				break
 			}
-			if o.Type == new(stream.Subscription).Type() {
+			if o.Type == stream.SubscriptionType {
 				s := &stream.Subscription{}
 				if err := object.Unmarshal(o, s); err != nil {
 					continue

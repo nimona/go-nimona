@@ -6,6 +6,8 @@ import (
 	crypto "nimona.io/pkg/crypto"
 )
 
+const CertificateType = "nimona.io/Certificate"
+
 type Certificate struct {
 	Metadata    Metadata                `nimona:"@metadata:m,type=nimona.io/Certificate"`
 	Nonce       string                  `nimona:"nonce:s"`
@@ -15,9 +17,7 @@ type Certificate struct {
 	Expires     string                  `nimona:"expires:s"`
 }
 
-func (e *Certificate) Type() string {
-	return "nimona.io/Certificate"
-}
+const CertificatePermissionType = "nimona.io/CertificatePermission"
 
 type CertificatePermission struct {
 	Metadata Metadata `nimona:"@metadata:m,type=nimona.io/CertificatePermission"`
@@ -25,9 +25,7 @@ type CertificatePermission struct {
 	Actions  []string `nimona:"actions:as"`
 }
 
-func (e *CertificatePermission) Type() string {
-	return "nimona.io/CertificatePermission"
-}
+const CertificateRequestType = "nimona.io/CertificateRequest"
 
 type CertificateRequest struct {
 	Metadata               Metadata                `nimona:"@metadata:m,type=nimona.io/CertificateRequest"`
@@ -40,9 +38,7 @@ type CertificateRequest struct {
 	Permissions            []CertificatePermission `nimona:"permissions:am"`
 }
 
-func (e *CertificateRequest) Type() string {
-	return "nimona.io/CertificateRequest"
-}
+const CertificateResponseType = "nimona.io/CertificateResponse"
 
 type CertificateResponse struct {
 	Metadata    Metadata           `nimona:"@metadata:m,type=nimona.io/CertificateResponse"`
@@ -50,8 +46,4 @@ type CertificateResponse struct {
 	Notes       string             `nimona:"notes:s"`
 	Request     CertificateRequest `nimona:"request:m"`
 	Certificate Certificate        `nimona:"certificate:m"`
-}
-
-func (e *CertificateResponse) Type() string {
-	return "nimona.io/CertificateResponse"
 }

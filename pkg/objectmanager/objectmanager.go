@@ -25,15 +25,6 @@ const (
 	ErrTimeout = errors.Error("request timed out")
 )
 
-var (
-	objectRequestType      = new(object.Request).Type()
-	objectResponseType     = new(object.Response).Type()
-	streamRequestType      = new(stream.Request).Type()
-	streamResponseType     = new(stream.Response).Type()
-	streamSubscriptionType = new(stream.Subscription).Type()
-	streamAnnouncementType = new(stream.Announcement).Type()
-)
-
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
 //go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=chore.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
@@ -144,7 +135,7 @@ func (m *manager) RequestStream(
 	responses := make(chan stream.Response)
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(streamResponseType),
+		network.FilterByObjectType(stream.ResponseType),
 	)
 
 	go func() {
@@ -307,7 +298,7 @@ func (m *manager) Request(
 	rID := m.newRequestID()
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(objectResponseType),
+		network.FilterByObjectType(object.ResponseType),
 	)
 	defer sub.Cancel()
 
@@ -382,7 +373,7 @@ func (m *manager) handleObjects(
 		logger.Debug("handling object")
 
 		switch env.Payload.Type {
-		case objectRequestType:
+		case object.RequestType:
 			go func() {
 				hCtx := context.New(
 					context.WithParent(ctx),
@@ -398,7 +389,7 @@ func (m *manager) handleObjects(
 				}
 			}()
 			continue
-		case streamRequestType:
+		case stream.RequestType:
 			go func() {
 				hCtx := context.New(
 					context.WithParent(ctx),
@@ -414,7 +405,7 @@ func (m *manager) handleObjects(
 				}
 			}()
 			continue
-		case streamSubscriptionType:
+		case stream.SubscriptionType:
 			go func() {
 				hCtx := context.New(
 					context.WithParent(ctx),
@@ -430,7 +421,7 @@ func (m *manager) handleObjects(
 				}
 			}()
 			continue
-		case streamAnnouncementType:
+		case stream.AnnouncementType:
 			go func() {
 				hCtx := context.New(
 					context.WithParent(ctx),
@@ -508,7 +499,7 @@ func (m *manager) announceStreamChildren(
 		if err != nil {
 			break
 		}
-		if obj.Type != streamSubscriptionType {
+		if obj.Type != stream.SubscriptionType {
 			continue
 		}
 		if obj.Metadata.Owner.IsEmpty() {
@@ -901,7 +892,7 @@ func (m *manager) AddStreamSubscription(
 			return fmt.Errorf("error reading stream objects, %w", err)
 		}
 
-		if o.Type != streamSubscriptionType {
+		if o.Type != stream.SubscriptionType {
 			continue
 		}
 

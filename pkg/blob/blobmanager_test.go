@@ -141,7 +141,7 @@ func newPeer() localpeer.LocalPeer {
 
 func Test_manager_ImportFromFile(t *testing.T) {
 	chunk0 := &object.Object{
-		Type: new(blob.Chunk).Type(),
+		Type: blob.ChunkType,
 		Data: chore.Map{
 			"data": chore.Data(
 				"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
@@ -150,7 +150,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 		},
 	}
 	chunk1 := &object.Object{
-		Type: new(blob.Chunk).Type(),
+		Type: blob.ChunkType,
 		Data: chore.Map{
 			"data": chore.Data(
 				"\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n" +
@@ -159,7 +159,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 		},
 	}
 	chunk2 := &object.Object{
-		Type: new(blob.Chunk).Type(),
+		Type: blob.ChunkType,
 		Data: chore.Map{
 			"data": chore.Data(
 				"7\n38\n39\n40\n",
@@ -191,7 +191,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 				MaxTimes(1)
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
-					Type: new(blob.Blob).Type(),
+					Type: blob.BlobType,
 					Data: chore.Map{
 						"chunks": chore.StringArray{
 							chore.String(chunk0.Hash()),
