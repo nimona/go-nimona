@@ -6,86 +6,92 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	CompositeTest struct {
-		Metadata                    object.Metadata `nimona:"@metadata:m"`
-		CompositeStringTest         *Composite      `nimona:"compositeStringTest:s"`
-		CompositeDataTest           *Composite      `nimona:"compositeDataTest:d"`
-		RepeatedCompositeStringTest []*Composite    `nimona:"repeatedCompositeStringTest:as"`
-		RepeatedCompositeDataTest   []*Composite    `nimona:"repeatedCompositeDataTest:ad"`
-	}
-	TestPolicy struct {
-		Metadata   object.Metadata `nimona:"@metadata:m"`
-		Subjects   []string        `nimona:"subjects:as"`
-		Resources  []string        `nimona:"resources:as"`
-		Conditions []string        `nimona:"conditions:as"`
-		Action     string          `nimona:"action:s"`
-	}
-	TestStream struct {
-		Metadata        object.Metadata `nimona:"@metadata:m"`
-		Nonce           string          `nimona:"nonce:s"`
-		CreatedDateTime string          `nimona:"createdDateTime:s"`
-	}
-	TestSubscribed struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		Nonce    string          `nimona:"nonce:s"`
-	}
-	TestUnsubscribed struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		Nonce    string          `nimona:"nonce:s"`
-	}
-	TestRequest struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		RequestID string          `nimona:"requestID:s"`
-		Foo       string          `nimona:"foo:s"`
-	}
-	TestResponse struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		RequestID string          `nimona:"requestID:s"`
-		Foo       string          `nimona:"foo:s"`
-	}
-	Parent struct {
-		Metadata      object.Metadata `nimona:"@metadata:m"`
-		Foo           string          `nimona:"foo:s"`
-		Child         *Child          `nimona:"child:m"`
-		RepeatedChild []*Child        `nimona:"repeatedChild:am"`
-	}
-	Child struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		Foo      string          `nimona:"foo:s"`
-	}
-)
+type CompositeTest struct {
+	Metadata                    object.Metadata `nimona:"@metadata:m,type=compositeTest"`
+	CompositeStringTest         *Composite      `nimona:"compositeStringTest:s"`
+	CompositeDataTest           *Composite      `nimona:"compositeDataTest:d"`
+	RepeatedCompositeStringTest []*Composite    `nimona:"repeatedCompositeStringTest:as"`
+	RepeatedCompositeDataTest   []*Composite    `nimona:"repeatedCompositeDataTest:ad"`
+}
 
 func (e *CompositeTest) Type() string {
 	return "compositeTest"
+}
+
+type TestPolicy struct {
+	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestPolicy"`
+	Subjects   []string        `nimona:"subjects:as"`
+	Resources  []string        `nimona:"resources:as"`
+	Conditions []string        `nimona:"conditions:as"`
+	Action     string          `nimona:"action:s"`
 }
 
 func (e *TestPolicy) Type() string {
 	return "nimona.io/fixtures.TestPolicy"
 }
 
+type TestStream struct {
+	Metadata        object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestStream"`
+	Nonce           string          `nimona:"nonce:s"`
+	CreatedDateTime string          `nimona:"createdDateTime:s"`
+}
+
 func (e *TestStream) Type() string {
 	return "nimona.io/fixtures.TestStream"
+}
+
+type TestSubscribed struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestSubscribed"`
+	Nonce    string          `nimona:"nonce:s"`
 }
 
 func (e *TestSubscribed) Type() string {
 	return "nimona.io/fixtures.TestSubscribed"
 }
 
+type TestUnsubscribed struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestUnsubscribed"`
+	Nonce    string          `nimona:"nonce:s"`
+}
+
 func (e *TestUnsubscribed) Type() string {
 	return "nimona.io/fixtures.TestUnsubscribed"
+}
+
+type TestRequest struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestRequest"`
+	RequestID string          `nimona:"requestID:s"`
+	Foo       string          `nimona:"foo:s"`
 }
 
 func (e *TestRequest) Type() string {
 	return "nimona.io/fixtures.TestRequest"
 }
 
+type TestResponse struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestResponse"`
+	RequestID string          `nimona:"requestID:s"`
+	Foo       string          `nimona:"foo:s"`
+}
+
 func (e *TestResponse) Type() string {
 	return "nimona.io/fixtures.TestResponse"
 }
 
+type Parent struct {
+	Metadata      object.Metadata `nimona:"@metadata:m,type=parent"`
+	Foo           string          `nimona:"foo:s"`
+	Child         *Child          `nimona:"child:m"`
+	RepeatedChild []*Child        `nimona:"repeatedChild:am"`
+}
+
 func (e *Parent) Type() string {
 	return "parent"
+}
+
+type Child struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=child"`
+	Foo      string          `nimona:"foo:s"`
 }
 
 func (e *Child) Type() string {

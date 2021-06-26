@@ -7,29 +7,29 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	RelationshipStreamRoot struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-	}
-	Added struct {
-		Metadata    object.Metadata  `nimona:"@metadata:m"`
-		Alias       string           `nimona:"alias:s"`
-		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
-		Datetime    string           `nimona:"datetime:s"`
-	}
-	Removed struct {
-		Metadata    object.Metadata  `nimona:"@metadata:m"`
-		RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
-		Datetime    string           `nimona:"datetime:s"`
-	}
-)
+type RelationshipStreamRoot struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=stream:nimona.io/schema/relationship"`
+}
 
 func (e *RelationshipStreamRoot) Type() string {
 	return "stream:nimona.io/schema/relationship"
 }
 
+type Added struct {
+	Metadata    object.Metadata  `nimona:"@metadata:m,type=event:nimona.io/schema/relationship.Added"`
+	Alias       string           `nimona:"alias:s"`
+	RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
+	Datetime    string           `nimona:"datetime:s"`
+}
+
 func (e *Added) Type() string {
 	return "event:nimona.io/schema/relationship.Added"
+}
+
+type Removed struct {
+	Metadata    object.Metadata  `nimona:"@metadata:m,type=event:nimona.io/schema/relationship.Removed"`
+	RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
+	Datetime    string           `nimona:"datetime:s"`
 }
 
 func (e *Removed) Type() string {

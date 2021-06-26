@@ -34,24 +34,20 @@ import (
 	{{- end }}
 )
 
-type (
-	{{- range $object := .Objects }}
-	{{ structName $object.Name }} struct {
-		Metadata object.Metadata {{ tagMetadata }}
-		{{- range $member := $object.Members }}
-			{{- if $member.IsRepeated }}
-				{{ $member.Name }} []{{ memberType $member true }} {{ tag $member }}
-			{{- else if $member.IsPrimitive }}
-				{{ $member.Name }} {{ memberType $member true }} {{ tag $member }}
-			{{- else }}
-				{{ $member.Name }} {{ memberType $member true}} {{ tag $member }}
-			{{- end }}
+{{- range $object := .Objects }}
+type {{ structName $object.Name }} struct {
+	Metadata object.Metadata {{ tagMetadata $object.Name }}
+	{{- range $member := $object.Members }}
+		{{- if $member.IsRepeated }}
+			{{ $member.Name }} []{{ memberType $member true }} {{ tag $member }}
+		{{- else if $member.IsPrimitive }}
+			{{ $member.Name }} {{ memberType $member true }} {{ tag $member }}
+		{{- else }}
+			{{ $member.Name }} {{ memberType $member true}} {{ tag $member }}
 		{{- end }}
-	}
 	{{- end }}
-)
+}
 
-{{ range $object := .Objects }}
 func (e *{{ structName $object.Name }}) Type() string {
 	return "{{ $object.Name }}"
 }
@@ -69,8 +65,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			}
 			return "`nimona:\"" + m.Tag + ":" + h + "\"`"
 		},
-		"tagMetadata": func() string {
-			return "`nimona:\"@metadata:m\"`"
+		"tagMetadata": func(name string) string {
+			return "`nimona:\"@metadata:m,type=" + name + "\"`"
 		},
 		"key": func(m Member) string {
 			h := m.Hint

@@ -7,51 +7,53 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	Policy struct {
-		Metadata   object.Metadata `nimona:"@metadata:m"`
-		Subjects   []string        `nimona:"subjects:as"`
-		Resources  []string        `nimona:"resources:as"`
-		Conditions []string        `nimona:"conditions:as"`
-		Action     string          `nimona:"action:s"`
-	}
-	Request struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		RequestID string          `nimona:"requestID:s"`
-		RootHash  chore.Hash      `nimona:"rootHash:s"`
-	}
-	Response struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		RequestID string          `nimona:"requestID:s"`
-		RootHash  chore.Hash      `nimona:"rootHash:s"`
-		Leaves    []chore.Hash    `nimona:"leaves:as"`
-	}
-	Announcement struct {
-		Metadata     object.Metadata `nimona:"@metadata:m"`
-		StreamHash   chore.Hash      `nimona:"streamHash:s"`
-		ObjectHashes []chore.Hash    `nimona:"objectHashes:as"`
-	}
-	Subscription struct {
-		Metadata   object.Metadata `nimona:"@metadata:m"`
-		RootHashes []chore.Hash    `nimona:"rootHashes:as"`
-		Expiry     string          `nimona:"expiry:s"`
-	}
-)
+type Policy struct {
+	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Policy"`
+	Subjects   []string        `nimona:"subjects:as"`
+	Resources  []string        `nimona:"resources:as"`
+	Conditions []string        `nimona:"conditions:as"`
+	Action     string          `nimona:"action:s"`
+}
 
 func (e *Policy) Type() string {
 	return "nimona.io/stream.Policy"
+}
+
+type Request struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Request"`
+	RequestID string          `nimona:"requestID:s"`
+	RootHash  chore.Hash      `nimona:"rootHash:s"`
 }
 
 func (e *Request) Type() string {
 	return "nimona.io/stream.Request"
 }
 
+type Response struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Response"`
+	RequestID string          `nimona:"requestID:s"`
+	RootHash  chore.Hash      `nimona:"rootHash:s"`
+	Leaves    []chore.Hash    `nimona:"leaves:as"`
+}
+
 func (e *Response) Type() string {
 	return "nimona.io/stream.Response"
 }
 
+type Announcement struct {
+	Metadata     object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Announcement"`
+	StreamHash   chore.Hash      `nimona:"streamHash:s"`
+	ObjectHashes []chore.Hash    `nimona:"objectHashes:as"`
+}
+
 func (e *Announcement) Type() string {
 	return "nimona.io/stream.Announcement"
+}
+
+type Subscription struct {
+	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Subscription"`
+	RootHashes []chore.Hash    `nimona:"rootHashes:as"`
+	Expiry     string          `nimona:"expiry:s"`
 }
 
 func (e *Subscription) Type() string {
