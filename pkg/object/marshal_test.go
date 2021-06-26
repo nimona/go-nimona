@@ -205,3 +205,31 @@ func TestMarshal(t *testing.T) {
 	assert.NotNil(t, g)
 	assert.Equal(t, e, g)
 }
+
+type TestObjectWithTags struct {
+	Metadata Metadata `nimona:"@metadata:m,type=foo"`
+	String   string   `nimona:"string:s"`
+}
+
+func TestMarshal_ObjectWithTags(t *testing.T) {
+	s := &TestObjectWithTags{
+		Metadata: Metadata{
+			Datetime: "now",
+		},
+		String: "hello",
+	}
+
+	e := &Object{
+		Type: "foo",
+		Metadata: Metadata{
+			Datetime: "now",
+		},
+		Data: chore.Map{
+			"string": chore.String("hello"),
+		},
+	}
+
+	g, err := Marshal(s)
+	require.NoError(t, err)
+	require.Equal(t, e, g)
+}

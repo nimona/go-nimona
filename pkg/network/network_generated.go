@@ -7,31 +7,31 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	DataForwardRequest struct {
-		Metadata  object.Metadata  `nimona:"@metadata:m"`
-		RequestID string           `nimona:"requestID:s"`
-		Recipient crypto.PublicKey `nimona:"recipient:s"`
-		Payload   *object.Object   `nimona:"payload:m"`
-	}
-	DataForwardEnvelope struct {
-		Metadata object.Metadata  `nimona:"@metadata:m"`
-		Sender   crypto.PublicKey `nimona:"sender:s"`
-		Data     []byte           `nimona:"data:d"`
-	}
-	DataForwardResponse struct {
-		Metadata  object.Metadata `nimona:"@metadata:m"`
-		RequestID string          `nimona:"requestID:s"`
-		Success   bool            `nimona:"success:b"`
-	}
-)
+type DataForwardRequest struct {
+	Metadata  object.Metadata  `nimona:"@metadata:m,type=nimona.io/network.DataForwardRequest"`
+	RequestID string           `nimona:"requestID:s"`
+	Recipient crypto.PublicKey `nimona:"recipient:s"`
+	Payload   *object.Object   `nimona:"payload:m"`
+}
 
 func (e *DataForwardRequest) Type() string {
 	return "nimona.io/network.DataForwardRequest"
 }
 
+type DataForwardEnvelope struct {
+	Metadata object.Metadata  `nimona:"@metadata:m,type=nimona.io/network.DataForwardEnvelope"`
+	Sender   crypto.PublicKey `nimona:"sender:s"`
+	Data     []byte           `nimona:"data:d"`
+}
+
 func (e *DataForwardEnvelope) Type() string {
 	return "nimona.io/network.DataForwardEnvelope"
+}
+
+type DataForwardResponse struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/network.DataForwardResponse"`
+	RequestID string          `nimona:"requestID:s"`
+	Success   bool            `nimona:"success:b"`
 }
 
 func (e *DataForwardResponse) Type() string {

@@ -7,16 +7,14 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	ConnectionInfo struct {
-		Metadata      object.Metadata   `nimona:"@metadata:m"`
-		Version       int64             `nimona:"version:i"`
-		PublicKey     crypto.PublicKey  `nimona:"publicKey:s"`
-		Addresses     []string          `nimona:"addresses:as"`
-		Relays        []*ConnectionInfo `nimona:"relays:am"`
-		ObjectFormats []string          `nimona:"objectFormats:as"`
-	}
-)
+type ConnectionInfo struct {
+	Metadata      object.Metadata   `nimona:"@metadata:m,type=nimona.io/peer.ConnectionInfo"`
+	Version       int64             `nimona:"version:i"`
+	PublicKey     crypto.PublicKey  `nimona:"publicKey:s"`
+	Addresses     []string          `nimona:"addresses:as"`
+	Relays        []*ConnectionInfo `nimona:"relays:am"`
+	ObjectFormats []string          `nimona:"objectFormats:as"`
+}
 
 func (e *ConnectionInfo) Type() string {
 	return "nimona.io/peer.ConnectionInfo"

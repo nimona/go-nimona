@@ -7,19 +7,18 @@ import (
 	object "nimona.io/pkg/object"
 )
 
-type (
-	Chunk struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		Data     []byte          `nimona:"data:d"`
-	}
-	Blob struct {
-		Metadata object.Metadata `nimona:"@metadata:m"`
-		Chunks   []chore.Hash    `nimona:"chunks:as"`
-	}
-)
+type Chunk struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/Chunk"`
+	Data     []byte          `nimona:"data:d"`
+}
 
 func (e *Chunk) Type() string {
 	return "nimona.io/Chunk"
+}
+
+type Blob struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/Blob"`
+	Chunks   []chore.Hash    `nimona:"chunks:as"`
 }
 
 func (e *Blob) Type() string {

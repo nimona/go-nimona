@@ -7,34 +7,34 @@ import (
 	peer "nimona.io/pkg/peer"
 )
 
-type (
-	Announcement struct {
-		Metadata         object.Metadata      `nimona:"@metadata:m"`
-		Version          int64                `nimona:"version:i"`
-		ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:m"`
-		PeerVector       []uint64             `nimona:"peerVector:au"`
-		PeerCapabilities []string             `nimona:"peerCapabilities:as"`
-	}
-	LookupRequest struct {
-		Metadata            object.Metadata `nimona:"@metadata:m"`
-		Nonce               string          `nimona:"nonce:s"`
-		QueryVector         []uint64        `nimona:"queryVector:au"`
-		RequireCapabilities []string        `nimona:"requireCapabilities:as"`
-	}
-	LookupResponse struct {
-		Metadata      object.Metadata `nimona:"@metadata:m"`
-		Nonce         string          `nimona:"nonce:s"`
-		QueryVector   []uint64        `nimona:"queryVector:au"`
-		Announcements []*Announcement `nimona:"announcements:am"`
-	}
-)
+type Announcement struct {
+	Metadata         object.Metadata      `nimona:"@metadata:m,type=nimona.io/hyperspace.Announcement"`
+	Version          int64                `nimona:"version:i"`
+	ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:m"`
+	PeerVector       []uint64             `nimona:"peerVector:au"`
+	PeerCapabilities []string             `nimona:"peerCapabilities:as"`
+}
 
 func (e *Announcement) Type() string {
 	return "nimona.io/hyperspace.Announcement"
 }
 
+type LookupRequest struct {
+	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupRequest"`
+	Nonce               string          `nimona:"nonce:s"`
+	QueryVector         []uint64        `nimona:"queryVector:au"`
+	RequireCapabilities []string        `nimona:"requireCapabilities:as"`
+}
+
 func (e *LookupRequest) Type() string {
 	return "nimona.io/hyperspace.LookupRequest"
+}
+
+type LookupResponse struct {
+	Metadata      object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupResponse"`
+	Nonce         string          `nimona:"nonce:s"`
+	QueryVector   []uint64        `nimona:"queryVector:au"`
+	Announcements []*Announcement `nimona:"announcements:am"`
 }
 
 func (e *LookupResponse) Type() string {

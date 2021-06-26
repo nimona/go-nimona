@@ -38,7 +38,7 @@ func unmarshalSpecials(o *Object, v reflect.Value) error {
 		if it.Anonymous {
 			return unmarshalSpecials(o, iv)
 		}
-		ig, err := getStructTagName(it)
+		ig, _, err := getStructTagName(it)
 		if err != nil {
 			continue
 		}
@@ -117,7 +117,7 @@ func unmarshalMapToStruct(h chore.Hint, m chore.Map, v reflect.Value) error {
 		if it.Anonymous {
 			return unmarshalMapToStruct(h, m, iv)
 		}
-		ig, err := getStructTagName(it)
+		ig, _, err := getStructTagName(it)
 		if err != nil {
 			return fmt.Errorf("unmarshal map: attribute %s, %w", it.Name, err)
 		}

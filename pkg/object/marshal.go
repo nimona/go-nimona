@@ -61,6 +61,13 @@ func Marshal(in interface{}) (*Object, error) {
 		o.Context = v
 	}
 
+	if t, ok := m["@type"]; ok {
+		if tt, ok := t.(chore.String); ok {
+			o.Type = string(tt)
+			delete(m, "@type")
+		}
+	}
+
 	if o.Type == "" {
 		tr, ok := in.(Typed)
 		if ok {
@@ -93,7 +100,7 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 			}
 			continue
 		}
-		ig, err := getStructTagName(it)
+		ig, _, err := getStructTagName(it)
 		if err != nil {
 			return nil, fmt.Errorf("marshal special: attribute %s, %w", it.Name, err)
 		}
@@ -279,14 +286,18 @@ func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 			}
 			continue
 		}
-		ig, err := getStructTagName(it)
+		ig, igKvs, err := getStructTagName(it)
 		if err != nil {
 			return nil, fmt.Errorf("marshal: attribute %s, %w", it.Name, err)
 		}
 		switch ig {
 		case "@type:s",
-			"@context:s",
-			"@metadata:m":
+			"@context:s":
+			continue
+		case "@metadata:m":
+			if t, ok := igKvs["type"]; ok {
+				m["@type"] = chore.String(t)
+			}
 			continue
 		}
 		in, ih, err := chore.ExtractHint(ig)
@@ -443,10 +454,28 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 	return a, nil
 }
 
-func getStructTagName(f reflect.StructField) (string, error) {
-	v := strings.Replace(string(f.Tag), "nimona:", "", 1)
-	if v == "" {
-		return "", errors.Error("tag cannot be empty")
+// getStructTagName splits the tag into a name, and a number of key-value pars
+// - `nimona:"@metadata:m"
+// - `nimona:"@metadata:m,type=foo"
+// - `nimona:"@metadata:m,type=foo,x=y"
+func getStructTagName(f reflect.StructField) (string, map[string]string, error) {
+	tag := strings.TrimPrefix(string(f.Tag), "nimona:")
+	tag = strings.Trim(tag, `"`)
+	tagParts := strings.Split(tag, ",")
+	name := tagParts[0]
+	if name == "" {
+		return "", nil, errors.Error("tag name cannot be empty")
 	}
-	return strings.Trim(v, `"`), nil
+	if len(tagParts) == 1 {
+		return name, nil, nil
+	}
+	kvs := map[string]string{}
+	for _, kv := range tagParts[1:] {
+		kvParts := strings.Split(kv, "=")
+		if len(kvParts) != 2 {
+			return "", nil, errors.Error("invalid key-value parts")
+		}
+		kvs[kvParts[0]] = kvParts[1]
+	}
+	return name, kvs, nil
 }
