@@ -21,7 +21,7 @@ func WaitForCertificateResponse(
 	go func() {
 		sub := net.Subscribe(
 			network.FilterByObjectType(
-				new(object.CertificateResponse).Type(),
+				object.CertificateResponseType,
 			),
 		)
 		subCh := sub.Channel()
@@ -58,7 +58,7 @@ func FindCertificateResponseForPeer(
 	peerPublicKey crypto.PublicKey,
 ) (*object.CertificateResponse, error) {
 	rdr, err := str.GetByType(
-		new(object.CertificateResponse).Type(),
+		object.CertificateResponseType,
 	)
 	if err != nil {
 		return nil, err

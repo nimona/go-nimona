@@ -18,11 +18,7 @@ import (
 	"nimona.io/pkg/peer"
 )
 
-var (
-	ErrTransferRejected  = errors.New("transfer rejected")
-	transferRequestType  = new(TransferRequest).Type()
-	transferResponseType = new(TransferResponse).Type()
-)
+var ErrTransferRejected = errors.New("transfer rejected")
 
 type (
 	Filesharer interface {
@@ -147,7 +143,7 @@ func (fsh *fileSharer) handleObjects(
 		}
 
 		switch env.Payload.Type {
-		case transferRequestType:
+		case TransferRequestType:
 			req := &TransferRequest{}
 
 			if err := object.Unmarshal(env.Payload, req); err != nil {
@@ -163,7 +159,7 @@ func (fsh *fileSharer) handleObjects(
 			}
 
 			reqs <- trf
-		case transferResponseType:
+		case TransferResponseType:
 			resp := &TransferResponse{}
 			if err = object.Unmarshal(env.Payload, resp); err != nil {
 				logger.Error("error loading from payload", log.Error(err))

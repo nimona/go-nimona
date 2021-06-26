@@ -147,7 +147,7 @@ func (m *feedManager) createFeed(
 	// subscribe to stream updates and fetch any objects that have been added
 	sub := m.objectmanager.Subscribe(
 		objectmanager.FilterByStreamHash(feedRootHash),
-		objectmanager.FilterByObjectType(new(feed.Added).Type()),
+		objectmanager.FilterByObjectType(feed.AddedType),
 	)
 
 	go func() {

@@ -6,29 +6,23 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const ConversationStreamRootType = "stream:poc.nimona.io/conversation"
+
 type ConversationStreamRoot struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=stream:poc.nimona.io/conversation"`
 	Nonce    string          `nimona:"nonce:s"`
 }
 
-func (e *ConversationStreamRoot) Type() string {
-	return "stream:poc.nimona.io/conversation"
-}
+const ConversationNicknameUpdatedType = "poc.nimona.io/conversation.NicknameUpdated"
 
 type ConversationNicknameUpdated struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=poc.nimona.io/conversation.NicknameUpdated"`
 	Nickname string          `nimona:"nickname:s"`
 }
 
-func (e *ConversationNicknameUpdated) Type() string {
-	return "poc.nimona.io/conversation.NicknameUpdated"
-}
+const ConversationMessageAddedType = "poc.nimona.io/conversation.MessageAdded"
 
 type ConversationMessageAdded struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=poc.nimona.io/conversation.MessageAdded"`
 	Body     string          `nimona:"body:s"`
-}
-
-func (e *ConversationMessageAdded) Type() string {
-	return "poc.nimona.io/conversation.MessageAdded"
 }

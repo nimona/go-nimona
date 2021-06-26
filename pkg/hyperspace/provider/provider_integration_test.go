@@ -157,7 +157,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 
 	// start listening for lookup responses on net1
 	sub := net1.Subscribe(
-		network.FilterByObjectType(new(hyperspace.LookupResponse).Type()),
+		network.FilterByObjectType(hyperspace.LookupResponseType),
 	)
 
 	// lookup "foo" as net1

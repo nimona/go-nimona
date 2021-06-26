@@ -7,6 +7,8 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const DataForwardRequestType = "nimona.io/network.DataForwardRequest"
+
 type DataForwardRequest struct {
 	Metadata  object.Metadata  `nimona:"@metadata:m,type=nimona.io/network.DataForwardRequest"`
 	RequestID string           `nimona:"requestID:s"`
@@ -14,9 +16,7 @@ type DataForwardRequest struct {
 	Payload   *object.Object   `nimona:"payload:m"`
 }
 
-func (e *DataForwardRequest) Type() string {
-	return "nimona.io/network.DataForwardRequest"
-}
+const DataForwardEnvelopeType = "nimona.io/network.DataForwardEnvelope"
 
 type DataForwardEnvelope struct {
 	Metadata object.Metadata  `nimona:"@metadata:m,type=nimona.io/network.DataForwardEnvelope"`
@@ -24,16 +24,10 @@ type DataForwardEnvelope struct {
 	Data     []byte           `nimona:"data:d"`
 }
 
-func (e *DataForwardEnvelope) Type() string {
-	return "nimona.io/network.DataForwardEnvelope"
-}
+const DataForwardResponseType = "nimona.io/network.DataForwardResponse"
 
 type DataForwardResponse struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/network.DataForwardResponse"`
 	RequestID string          `nimona:"requestID:s"`
 	Success   bool            `nimona:"success:b"`
-}
-
-func (e *DataForwardResponse) Type() string {
-	return "nimona.io/network.DataForwardResponse"
 }

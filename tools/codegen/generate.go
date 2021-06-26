@@ -35,6 +35,8 @@ import (
 )
 
 {{- range $object := .Objects }}
+const {{ structName $object.Name }}Type = "{{ $object.Name }}"
+
 type {{ structName $object.Name }} struct {
 	Metadata object.Metadata {{ tagMetadata $object.Name }}
 	{{- range $member := $object.Members }}
@@ -46,10 +48,6 @@ type {{ structName $object.Name }} struct {
 			{{ $member.Name }} {{ memberType $member true}} {{ tag $member }}
 		{{- end }}
 	{{- end }}
-}
-
-func (e *{{ structName $object.Name }}) Type() string {
-	return "{{ $object.Name }}"
 }
 
 {{ end }}

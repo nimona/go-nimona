@@ -6,6 +6,8 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const CompositeTestType = "compositeTest"
+
 type CompositeTest struct {
 	Metadata                    object.Metadata `nimona:"@metadata:m,type=compositeTest"`
 	CompositeStringTest         *Composite      `nimona:"compositeStringTest:s"`
@@ -14,9 +16,7 @@ type CompositeTest struct {
 	RepeatedCompositeDataTest   []*Composite    `nimona:"repeatedCompositeDataTest:ad"`
 }
 
-func (e *CompositeTest) Type() string {
-	return "compositeTest"
-}
+const TestPolicyType = "nimona.io/fixtures.TestPolicy"
 
 type TestPolicy struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestPolicy"`
@@ -26,9 +26,7 @@ type TestPolicy struct {
 	Action     string          `nimona:"action:s"`
 }
 
-func (e *TestPolicy) Type() string {
-	return "nimona.io/fixtures.TestPolicy"
-}
+const TestStreamType = "nimona.io/fixtures.TestStream"
 
 type TestStream struct {
 	Metadata        object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestStream"`
@@ -36,27 +34,21 @@ type TestStream struct {
 	CreatedDateTime string          `nimona:"createdDateTime:s"`
 }
 
-func (e *TestStream) Type() string {
-	return "nimona.io/fixtures.TestStream"
-}
+const TestSubscribedType = "nimona.io/fixtures.TestSubscribed"
 
 type TestSubscribed struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestSubscribed"`
 	Nonce    string          `nimona:"nonce:s"`
 }
 
-func (e *TestSubscribed) Type() string {
-	return "nimona.io/fixtures.TestSubscribed"
-}
+const TestUnsubscribedType = "nimona.io/fixtures.TestUnsubscribed"
 
 type TestUnsubscribed struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestUnsubscribed"`
 	Nonce    string          `nimona:"nonce:s"`
 }
 
-func (e *TestUnsubscribed) Type() string {
-	return "nimona.io/fixtures.TestUnsubscribed"
-}
+const TestRequestType = "nimona.io/fixtures.TestRequest"
 
 type TestRequest struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestRequest"`
@@ -64,9 +56,7 @@ type TestRequest struct {
 	Foo       string          `nimona:"foo:s"`
 }
 
-func (e *TestRequest) Type() string {
-	return "nimona.io/fixtures.TestRequest"
-}
+const TestResponseType = "nimona.io/fixtures.TestResponse"
 
 type TestResponse struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/fixtures.TestResponse"`
@@ -74,9 +64,7 @@ type TestResponse struct {
 	Foo       string          `nimona:"foo:s"`
 }
 
-func (e *TestResponse) Type() string {
-	return "nimona.io/fixtures.TestResponse"
-}
+const ParentType = "parent"
 
 type Parent struct {
 	Metadata      object.Metadata `nimona:"@metadata:m,type=parent"`
@@ -85,15 +73,9 @@ type Parent struct {
 	RepeatedChild []*Child        `nimona:"repeatedChild:am"`
 }
 
-func (e *Parent) Type() string {
-	return "parent"
-}
+const ChildType = "child"
 
 type Child struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=child"`
 	Foo      string          `nimona:"foo:s"`
-}
-
-func (e *Child) Type() string {
-	return "child"
 }

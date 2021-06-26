@@ -7,6 +7,8 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const ConnectionInfoType = "nimona.io/peer.ConnectionInfo"
+
 type ConnectionInfo struct {
 	Metadata      object.Metadata   `nimona:"@metadata:m,type=nimona.io/peer.ConnectionInfo"`
 	Version       int64             `nimona:"version:i"`
@@ -14,8 +16,4 @@ type ConnectionInfo struct {
 	Addresses     []string          `nimona:"addresses:as"`
 	Relays        []*ConnectionInfo `nimona:"relays:am"`
 	ObjectFormats []string          `nimona:"objectFormats:as"`
-}
-
-func (e *ConnectionInfo) Type() string {
-	return "nimona.io/peer.ConnectionInfo"
 }

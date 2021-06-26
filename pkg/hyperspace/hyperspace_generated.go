@@ -7,6 +7,8 @@ import (
 	peer "nimona.io/pkg/peer"
 )
 
+const AnnouncementType = "nimona.io/hyperspace.Announcement"
+
 type Announcement struct {
 	Metadata         object.Metadata      `nimona:"@metadata:m,type=nimona.io/hyperspace.Announcement"`
 	Version          int64                `nimona:"version:i"`
@@ -15,9 +17,7 @@ type Announcement struct {
 	PeerCapabilities []string             `nimona:"peerCapabilities:as"`
 }
 
-func (e *Announcement) Type() string {
-	return "nimona.io/hyperspace.Announcement"
-}
+const LookupRequestType = "nimona.io/hyperspace.LookupRequest"
 
 type LookupRequest struct {
 	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupRequest"`
@@ -26,17 +26,11 @@ type LookupRequest struct {
 	RequireCapabilities []string        `nimona:"requireCapabilities:as"`
 }
 
-func (e *LookupRequest) Type() string {
-	return "nimona.io/hyperspace.LookupRequest"
-}
+const LookupResponseType = "nimona.io/hyperspace.LookupResponse"
 
 type LookupResponse struct {
 	Metadata      object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupResponse"`
 	Nonce         string          `nimona:"nonce:s"`
 	QueryVector   []uint64        `nimona:"queryVector:au"`
 	Announcements []*Announcement `nimona:"announcements:am"`
-}
-
-func (e *LookupResponse) Type() string {
-	return "nimona.io/hyperspace.LookupResponse"
 }

@@ -7,6 +7,8 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const PolicyType = "nimona.io/stream.Policy"
+
 type Policy struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Policy"`
 	Subjects   []string        `nimona:"subjects:as"`
@@ -15,9 +17,7 @@ type Policy struct {
 	Action     string          `nimona:"action:s"`
 }
 
-func (e *Policy) Type() string {
-	return "nimona.io/stream.Policy"
-}
+const RequestType = "nimona.io/stream.Request"
 
 type Request struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Request"`
@@ -25,9 +25,7 @@ type Request struct {
 	RootHash  chore.Hash      `nimona:"rootHash:s"`
 }
 
-func (e *Request) Type() string {
-	return "nimona.io/stream.Request"
-}
+const ResponseType = "nimona.io/stream.Response"
 
 type Response struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Response"`
@@ -36,9 +34,7 @@ type Response struct {
 	Leaves    []chore.Hash    `nimona:"leaves:as"`
 }
 
-func (e *Response) Type() string {
-	return "nimona.io/stream.Response"
-}
+const AnnouncementType = "nimona.io/stream.Announcement"
 
 type Announcement struct {
 	Metadata     object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Announcement"`
@@ -46,16 +42,10 @@ type Announcement struct {
 	ObjectHashes []chore.Hash    `nimona:"objectHashes:as"`
 }
 
-func (e *Announcement) Type() string {
-	return "nimona.io/stream.Announcement"
-}
+const SubscriptionType = "nimona.io/stream.Subscription"
 
 type Subscription struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Subscription"`
 	RootHashes []chore.Hash    `nimona:"rootHashes:as"`
 	Expiry     string          `nimona:"expiry:s"`
-}
-
-func (e *Subscription) Type() string {
-	return "nimona.io/stream.Subscription"
 }

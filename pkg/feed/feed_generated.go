@@ -7,15 +7,15 @@ import (
 	object "nimona.io/pkg/object"
 )
 
+const FeedStreamRootType = "stream:nimona.io/feed"
+
 type FeedStreamRoot struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=stream:nimona.io/feed"`
 	ObjectType string          `nimona:"objectType:s"`
 	Datetime   string          `nimona:"datetime:s"`
 }
 
-func (e *FeedStreamRoot) Type() string {
-	return "stream:nimona.io/feed"
-}
+const AddedType = "event:nimona.io/feed.Added"
 
 type Added struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Added"`
@@ -24,17 +24,11 @@ type Added struct {
 	Datetime   string          `nimona:"datetime:s"`
 }
 
-func (e *Added) Type() string {
-	return "event:nimona.io/feed.Added"
-}
+const RemovedType = "event:nimona.io/feed.Removed"
 
 type Removed struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Removed"`
 	ObjectHash []chore.Hash    `nimona:"objectHash:as"`
 	Sequence   int64           `nimona:"sequence:i"`
 	Datetime   string          `nimona:"datetime:s"`
-}
-
-func (e *Removed) Type() string {
-	return "event:nimona.io/feed.Removed"
 }
