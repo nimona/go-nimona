@@ -108,3 +108,7 @@ func (m *MockNetworkSimple) GetRelays() []*peer.ConnectionInfo {
 
 func (m *MockNetworkSimple) RegisterRelays(relays ...*peer.ConnectionInfo) {
 }
+
+func (m *MockNetworkSimple) Close() error {
+	return nil
+}
