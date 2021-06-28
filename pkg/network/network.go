@@ -112,6 +112,7 @@ type (
 		GetRelays() []*peer.ConnectionInfo
 		RegisterRelays(...*peer.ConnectionInfo)
 		GetConnectionInfo() *peer.ConnectionInfo
+		Close() error
 	}
 	// Option for customizing New
 	Option func(*network)
@@ -119,17 +120,21 @@ type (
 	SendOption func(*sendOptions)
 	// network implements a Network
 	network struct {
-		net       net.Network
-		connmgr   connmanager.Manager
-		localpeer localpeer.LocalPeer
-		outboxes  *OutboxesMap
-		inboxes   EnvelopePubSub
-		deduplist *cache.Cache
-		resolvers *ResolverSyncList
-		addresses *StringSyncList
-		relayLock sync.RWMutex
-		relays    []*peer.ConnectionInfo
+		net        net.Network
+		connmgr    connmanager.Manager
+		localpeer  localpeer.LocalPeer
+		outboxes   *OutboxesMap
+		inboxes    EnvelopePubSub
+		deduplist  *cache.Cache
+		resolvers  *ResolverSyncList
+		addresses  *StringSyncList
+		relayLock  sync.RWMutex
+		relays     []*peer.ConnectionInfo
+		closeFns   []closeFn
+		closeMutex sync.Mutex
 	}
+	// closeFn are functions that will be called during the network's Close
+	closeFn func() error
 	// outbox holds information about a single peer, its open connection,
 	// and the messages for it.
 	// the queue should only hold `*outgoingObject`s.
@@ -153,12 +158,14 @@ func New(
 	opts ...Option,
 ) Network {
 	w := &network{
-		outboxes:  NewOutboxesMap(),
-		inboxes:   NewEnvelopePubSub(),
-		deduplist: cache.New(10*time.Second, 1*time.Minute),
-		resolvers: &ResolverSyncList{},
-		addresses: &StringSyncList{},
-		relays:    []*peer.ConnectionInfo{},
+		outboxes:   NewOutboxesMap(),
+		inboxes:    NewEnvelopePubSub(),
+		deduplist:  cache.New(10*time.Second, 1*time.Minute),
+		resolvers:  &ResolverSyncList{},
+		addresses:  &StringSyncList{},
+		relays:     []*peer.ConnectionInfo{},
+		closeFns:   []closeFn{},
+		closeMutex: sync.Mutex{},
 	}
 	for _, opt := range opts {
 		opt(w)
@@ -272,6 +279,10 @@ func (w *network) Listen(
 		return nil, err
 	}
 
+	w.closeMutex.Lock()
+	w.closeFns = append(w.closeFns, listener.Close)
+	w.closeMutex.Unlock()
+
 	w.RegisterAddresses(listener.Addresses()...)
 
 	// TODO consider if we should be erroring if there are no addresses, but
@@ -289,7 +300,7 @@ func (w *network) Listen(
 		)
 	}
 	if listenConfig.upnp {
-		externalAddress, _, err := nat.MapExternalPort(int(localPort))
+		externalAddress, rm, err := nat.MapExternalPort(int(localPort))
 		if err != nil {
 			// TODO return error or simply log it?
 			logger.Warn(
@@ -298,6 +309,12 @@ func (w *network) Listen(
 			)
 			return listener, nil
 		}
+		w.closeMutex.Lock()
+		w.closeFns = append(w.closeFns, func() error {
+			rm()
+			return nil
+		})
+		w.closeMutex.Unlock()
 		logger.Info(
 			"created port mapping",
 			log.Strings("internalAddress", listener.Addresses()),
@@ -946,4 +963,19 @@ func (w *network) RegisterRelays(relays ...*peer.ConnectionInfo) {
 	w.relayLock.Lock()
 	defer w.relayLock.Unlock()
 	w.relays = append(w.relays, relays...)
+}
+
+// Close all listeners created in this network as well as remove all nat
+// mappings created
+func (w *network) Close() error {
+	w.closeMutex.Lock()
+	defer w.closeMutex.Unlock()
+	var errs error
+	for _, fn := range w.closeFns {
+		err := fn()
+		if err != nil {
+			errs = multierror.Append(errs, err)
+		}
+	}
+	return errs
 }
