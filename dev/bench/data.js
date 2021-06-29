@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1622759709356,
+  "lastUpdate": 1624989466374,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5040,6 +5040,54 @@ window.BENCHMARK_DATA = {
             "value": 11479,
             "unit": "ns/op",
             "extra": "102649 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "932f88e0c02ad26f79944872c0b521e4dbb80f45",
+          "message": "feat(network): add close method\n\nnetwork.Close() closes all listeners and removes all port mappings",
+          "timestamp": "2021-06-29T18:56:22+01:00",
+          "tree_id": "57c99871d6acd5ea0fc8e6ab6801f64b1bcb3577",
+          "url": "https://github.com/nimona/go-nimona/commit/932f88e0c02ad26f79944872c0b521e4dbb80f45"
+        },
+        "date": 1624989465573,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3649745,
+            "unit": "ns/op",
+            "extra": "330 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 338649650,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3052421116,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 31939,
+            "unit": "ns/op",
+            "extra": "36367 times\n2 procs"
           }
         ]
       }
