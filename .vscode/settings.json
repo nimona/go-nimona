@@ -9,9 +9,6 @@
     "gopls": {
         "build.experimentalWorkspaceModule": true,
         "formatting.gofumpt": true,
-        "ui.completion.completionBudget": "50ms",
-        "ui.completion.matcher": "Fuzzy",
-        "ui.completion.usePlaceholders": true,
     },
     "go.languageServerExperimentalFeatures": {
     },
