@@ -23,7 +23,9 @@ type (
 	Map    map[string]Value
 	String string
 	Uint   uint64
-	Hash   string
+	// Note(geoah): Hash should probably have been bytes, but it has been
+	// defined as a string simply cause comparing bytes in go is annoying.
+	Hash string
 
 	// array types
 	BoolArray   []Bool
