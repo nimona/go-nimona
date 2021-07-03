@@ -37,6 +37,7 @@ require (
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20200315192543-8255be791ce4
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vcaesar/murmur v0.20.1
+	github.com/xujiajun/nutsdb v0.6.0
 	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
 	golang.org/x/tools v0.1.2
 	gopkg.in/yaml.v2 v2.4.0
