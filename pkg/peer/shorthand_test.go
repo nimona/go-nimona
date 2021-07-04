@@ -17,9 +17,9 @@ func TestShorthand(t *testing.T) {
 		wantPeerError error
 	}{{
 		name:          "should pass, valid shorthand",
-		shorthand:     "bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq@127.0.0.1:18000",
+		shorthand:     "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh@127.0.0.1:18000",
 		wantValid:     true,
-		wantPublicKey: "bahwqcabae4kl233toxg4qtvual2pcwylp32ht5b4xkmbjwuqkgtweizczltq",
+		wantPublicKey: "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh",
 		wantAddresses: []string{"127.0.0.1:18000"},
 	}, {
 		name:          "should fail, invalid shorthand",

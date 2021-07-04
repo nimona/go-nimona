@@ -8,11 +8,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multicodec"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/curve25519"
+
+	"nimona.io/pkg/multiheader"
 )
 
 // https://blog.filippo.io/using-ed25519-keys-for-encryption
@@ -24,12 +26,12 @@ import (
 // we are opting for ed to x at this point based on FiloSottile's age spec
 
 type (
-	KeyAlgorithm uint64
+	KeyAlgorithm multicodec.Code
 )
 
 const (
-	Ed25519Private KeyAlgorithm = 0x1300 // well known value
-	Ed25519Public  KeyAlgorithm = 0xED   // well known value
+	Ed25519Private KeyAlgorithm = KeyAlgorithm(multicodec.Ed25519Priv)
+	Ed25519Public  KeyAlgorithm = KeyAlgorithm(multicodec.Ed25519Pub)
 )
 
 type (
@@ -52,7 +54,10 @@ func (k PublicKey) String() string {
 	if k.IsEmpty() {
 		return ""
 	}
-	return encodeToCID(uint64(k.Algorithm), k.RawKey)
+	b := multiheader.Encode(multicodec.Code(k.Algorithm), k.RawKey)
+	// nolint: errcheck // cannot error
+	s, _ := multibase.Encode(multibase.Base58BTC, b)
+	return s
 }
 
 func (k PublicKey) IsEmpty() bool {
@@ -77,17 +82,22 @@ func (k *PublicKey) UnmarshalText(s []byte) error {
 }
 
 func (k *PublicKey) UnmarshalString(s string) error {
-	c, err := cid.Decode(s)
+	_, b, err := multibase.Decode(s)
 	if err != nil {
-		return fmt.Errorf("decoding cid, %w", err)
+		return fmt.Errorf("unable to decode multibase, %w", err)
 	}
 
-	if c.Type() != uint64(Ed25519Public) {
+	c, r, err := multiheader.Decode(b)
+	if err != nil {
+		return fmt.Errorf("unable to decode multiheader, %w", err)
+	}
+
+	if c != multicodec.Ed25519Pub {
 		return ErrUnsupportedKeyAlgorithm
 	}
 
 	k.Algorithm = Ed25519Public
-	k.RawKey = ed25519.PublicKey(c.Hash())
+	k.RawKey = ed25519.PublicKey(r)
 
 	return nil
 }
@@ -105,7 +115,10 @@ func (k PrivateKey) IsEmpty() bool {
 }
 
 func (k PrivateKey) String() string {
-	return encodeToCID(uint64(k.Algorithm), k.RawKey)
+	b := multiheader.Encode(multicodec.Code(k.Algorithm), k.RawKey)
+	// nolint: errcheck // cannot error
+	s, _ := multibase.Encode(multibase.Base58BTC, b)
+	return s
 }
 
 func (k PrivateKey) Seed() []byte {
@@ -135,17 +148,22 @@ func (k *PrivateKey) UnmarshalText(s []byte) error {
 }
 
 func (k *PrivateKey) UnmarshalString(s string) error {
-	c, err := cid.Decode(s)
+	_, b, err := multibase.Decode(s)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to decode multibase, %w", err)
 	}
 
-	if c.Type() != uint64(Ed25519Private) {
+	c, r, err := multiheader.Decode(b)
+	if err != nil {
+		return fmt.Errorf("unable to decode multiheader, %w", err)
+	}
+
+	if c != multicodec.Ed25519Priv {
 		return ErrUnsupportedKeyAlgorithm
 	}
 
 	k.Algorithm = Ed25519Private
-	k.RawKey = ed25519.PrivateKey(c.Hash())
+	k.RawKey = ed25519.PrivateKey(r)
 
 	return nil
 }
@@ -289,11 +307,4 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
 		k.RawKey.Equal(w.RawKey)
-}
-
-func encodeToCID(cidCode uint64, raw []byte) string {
-	c := cid.NewCidV1(cidCode, raw)
-	// nolint: errcheck // cannot error
-	s, _ := c.StringOfBase(multibase.Base58BTC)
-	return s
 }

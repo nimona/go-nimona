@@ -73,7 +73,6 @@ func (tt *tcpTransport) Dial(
 
 	conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
 		pubKey,
-		,
 	)
 
 	return conn, nil
