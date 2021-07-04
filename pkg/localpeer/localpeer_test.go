@@ -13,10 +13,10 @@ import (
 )
 
 func TestLocalPeer(t *testing.T) {
-	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	k2, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k2, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	lp := New()

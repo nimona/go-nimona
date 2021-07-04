@@ -14,11 +14,11 @@ import (
 )
 
 func TestMetadata_Map(t *testing.T) {
-	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	pk0 := k0.PublicKey()
 
-	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	pk1 := k1.PublicKey()
 

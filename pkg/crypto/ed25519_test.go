@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/rand"
+	"fmt"
 	"io"
 	"testing"
 
@@ -10,7 +11,9 @@ import (
 )
 
 func TestEd(t *testing.T) {
-	p1, err := NewEd25519PrivateKey(PeerKey)
+	p1, err := NewEd25519PrivateKey()
+
+	fmt.Println(">>>", p1.String())
 
 	t.Run("generate new private key", func(t *testing.T) {
 		require.NoError(t, err)
@@ -41,7 +44,7 @@ func TestEd(t *testing.T) {
 		m := p1.BIP39()
 		require.NotEmpty(t, m)
 
-		g, err := NewEd25519PrivateKeyFromBIP39(m, p1.Usage)
+		g, err := NewEd25519PrivateKeyFromBIP39(m)
 		require.NoError(t, err)
 		require.Equal(t, p1, g)
 	})

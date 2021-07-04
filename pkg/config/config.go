@@ -129,7 +129,7 @@ func New(opts ...Option) (*Config, error) {
 
 func (cfg *Config) setDefaults() {
 	if cfg.Peer.PrivateKey.IsEmpty() {
-		k, _ := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+		k, _ := crypto.NewEd25519PrivateKey()
 		cfg.Peer.PrivateKey = k
 	}
 	if cfg.Peer.BindAddress == "" {

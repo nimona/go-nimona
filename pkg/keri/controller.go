@@ -51,7 +51,7 @@ func NewController(
 		state:     s,
 		activeKey: *pk,
 		newKey: func() (crypto.PrivateKey, error) {
-			return crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+			return crypto.NewEd25519PrivateKey()
 		},
 	}
 
@@ -62,7 +62,7 @@ func (c *Controller) Rotate() (*Rotation, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	newNextKey, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	newNextKey, err := crypto.NewEd25519PrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a new key, %w", err)
 	}

@@ -14,7 +14,7 @@ func main() {
 			panic(err)
 		}
 	} else {
-		k, _ = crypto.NewEd25519PrivateKey(crypto.PeerKey) // nolint: errcheck
+		k, _ = crypto.NewEd25519PrivateKey() // nolint: errcheck
 	}
 	fmt.Println("private key:", k.String())
 	fmt.Println("public key:", k.PublicKey().String())

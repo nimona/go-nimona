@@ -15,9 +15,9 @@ import (
 )
 
 func TestPolicy_Evaluate_Table1(t *testing.T) {
-	s0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	policies := Policies{{
 		Name:      "#0 - allow s* r* a*",
@@ -146,9 +146,9 @@ func TestPolicy_Evaluate_Table1(t *testing.T) {
 }
 
 func TestPolicy_Evaluate_Table2(t *testing.T) {
-	s0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	policies := Policies{{
 		Name:      "#0 - allow s1 r0 a1",
@@ -287,9 +287,9 @@ func TestPolicy_Evaluate_Table2(t *testing.T) {
 }
 
 func TestPolicy_Marshal(t *testing.T) {
-	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	p0 := k0.PublicKey()
 	p1 := k1.PublicKey()

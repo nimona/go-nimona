@@ -20,7 +20,7 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		context.WithCorrelationID("test-bootstrap"),
 	)
 
-	peerKey, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	local := localpeer.New()

@@ -11,7 +11,7 @@ import (
 )
 
 func Test_Sign(t *testing.T) {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	t.Run("should pass, sign root object", func(t *testing.T) {
