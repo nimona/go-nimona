@@ -50,9 +50,7 @@ func NewController(
 		kvStore:   kvStore,
 		state:     s,
 		activeKey: *pk,
-		newKey: func() (crypto.PrivateKey, error) {
-			return crypto.NewEd25519PrivateKey()
-		},
+		newKey:    crypto.NewEd25519PrivateKey,
 	}
 
 	return c, nil
