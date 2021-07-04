@@ -75,10 +75,10 @@ func TestNetConnectionSuccess(t *testing.T) {
 }
 
 func TestNetDialBackoff(t *testing.T) {
-	s1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	s2, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	s2, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	ctx := context.New()
@@ -136,7 +136,7 @@ func newPeer(t *testing.T) (
 	*network,
 ) {
 	kc := localpeer.New()
-	pk, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	pk, err := crypto.NewEd25519PrivateKey()
 	assert.NoError(t, err)
 	kc.SetPeerKey(pk)
 	return kc, New(

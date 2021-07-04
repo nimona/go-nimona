@@ -61,10 +61,10 @@ func TestResolver_Integration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	p2, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+	p2, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	p3, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+	p3, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	// add a couple more random peers to the provider's cache
@@ -128,7 +128,7 @@ func TestResolver_Integration(t *testing.T) {
 }
 
 func newPeer(t *testing.T) network.Network {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	ctx := context.New()

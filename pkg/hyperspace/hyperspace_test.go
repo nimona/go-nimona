@@ -13,7 +13,7 @@ import (
 )
 
 func TestAnnouncement_MarshalWithSignature(t *testing.T) {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	p := &Announcement{
@@ -55,7 +55,7 @@ func TestAnnouncement_MarshalWithSignature(t *testing.T) {
 }
 
 func TestResponse_MarshalWithSignature(t *testing.T) {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	p := &LookupResponse{
@@ -101,7 +101,7 @@ func TestResponse_MarshalWithSignature(t *testing.T) {
 // Test_SignDeep is testing announcement deep signing as the connection info
 // is pretty deeply embedded and is a good edge case for signing.
 func TestAnnouncement_SignDeep(t *testing.T) {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	t.Run("should pass, sign announcement ", func(t *testing.T) {

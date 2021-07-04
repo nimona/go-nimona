@@ -277,7 +277,7 @@ func TestNetwork_Relay(t *testing.T) {
 }
 
 func Test_network_lookup(t *testing.T) {
-	p0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	p0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	fooConnInfo := &peer.ConnectionInfo{

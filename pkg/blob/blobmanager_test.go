@@ -131,7 +131,7 @@ func Test_requester_Request(t *testing.T) {
 }
 
 func newPeer() localpeer.LocalPeer {
-	pk, _ := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	pk, _ := crypto.NewEd25519PrivateKey()
 
 	kc := localpeer.New()
 	kc.SetPeerKey(pk)

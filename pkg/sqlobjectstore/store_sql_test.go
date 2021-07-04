@@ -105,7 +105,7 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, store)
 
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	p := &fixtures.TestStream{

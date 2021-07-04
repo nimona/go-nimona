@@ -338,7 +338,6 @@ func (n *network) Listen(
 					}
 					conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
 						pubKey,
-						crypto.PeerKey,
 					)
 				} else {
 					// not currently supported

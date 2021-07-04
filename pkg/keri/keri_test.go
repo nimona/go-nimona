@@ -14,7 +14,7 @@ import (
 )
 
 func TestInception_MarshalUnmarshal(t *testing.T) {
-	k0, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	i := &Inception{
@@ -54,10 +54,10 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 }
 
 func TestCreateState(t *testing.T) {
-	k0, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	k1, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	t0Inception := &Inception{

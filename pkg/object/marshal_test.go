@@ -51,7 +51,7 @@ type (
 )
 
 func TestMarshal(t *testing.T) {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	s := &TestMarshalStruct{

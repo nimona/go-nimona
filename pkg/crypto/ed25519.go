@@ -10,8 +10,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/multiformats/go-multibase"
-	"github.com/multiformats/go-multihash"
-	"github.com/multiformats/go-varint"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/curve25519"
@@ -26,13 +24,20 @@ import (
 // we are opting for ed to x at this point based on FiloSottile's age spec
 
 type (
+	KeyAlgorithm uint64
+)
+
+const (
+	Ed25519Private KeyAlgorithm = 0x1300 // well known value
+	Ed25519Public  KeyAlgorithm = 0xED   // well known value
+)
+
+type (
 	PublicKey struct {
-		Usage     KeyUsage
 		Algorithm KeyAlgorithm
 		RawKey    ed25519.PublicKey // TODO use crypto.PublicKey
 	}
 	PrivateKey struct {
-		Usage     KeyUsage
 		Algorithm KeyAlgorithm
 		RawKey    ed25519.PrivateKey // TODO use crypto.PrivateKey
 	}
@@ -47,7 +52,7 @@ func (k PublicKey) String() string {
 	if k.IsEmpty() {
 		return ""
 	}
-	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
+	return encodeToCID(uint64(k.Algorithm), k.RawKey)
 }
 
 func (k PublicKey) IsEmpty() bool {
@@ -74,21 +79,15 @@ func (k *PublicKey) UnmarshalText(s []byte) error {
 func (k *PublicKey) UnmarshalString(s string) error {
 	c, err := cid.Decode(s)
 	if err != nil {
-		return err
+		return fmt.Errorf("decoding cid, %w", err)
 	}
 
 	if c.Type() != uint64(Ed25519Public) {
 		return ErrUnsupportedKeyAlgorithm
 	}
 
-	h, err := multihash.Decode(c.Hash())
-	if err != nil {
-		return err
-	}
-
 	k.Algorithm = Ed25519Public
-	k.RawKey = ed25519.PublicKey(h.Digest)
-	k.Usage = KeyUsage(h.Code)
+	k.RawKey = ed25519.PublicKey(c.Hash())
 
 	return nil
 }
@@ -106,7 +105,7 @@ func (k PrivateKey) IsEmpty() bool {
 }
 
 func (k PrivateKey) String() string {
-	return encodeToCID(uint64(k.Algorithm), uint64(k.Usage), k.RawKey)
+	return encodeToCID(uint64(k.Algorithm), k.RawKey)
 }
 
 func (k PrivateKey) Seed() []byte {
@@ -145,14 +144,8 @@ func (k *PrivateKey) UnmarshalString(s string) error {
 		return ErrUnsupportedKeyAlgorithm
 	}
 
-	h, err := multihash.Decode(c.Hash())
-	if err != nil {
-		return err
-	}
-
 	k.Algorithm = Ed25519Private
-	k.RawKey = ed25519.PrivateKey(h.Digest)
-	k.Usage = KeyUsage(h.Code)
+	k.RawKey = ed25519.PrivateKey(c.Hash())
 
 	return nil
 }
@@ -168,32 +161,26 @@ func (k *PrivateKey) UnmarshalJSON(s []byte) error {
 func (k PrivateKey) PublicKey() PublicKey {
 	return PublicKey{
 		Algorithm: Ed25519Public,
-		Usage:     k.Usage,
 		RawKey:    k.RawKey.Public().(ed25519.PublicKey),
 	}
 }
 
-func NewEd25519PrivateKey(keyType KeyUsage) (PrivateKey, error) {
+func NewEd25519PrivateKey() (PrivateKey, error) {
 	_, k, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return EmptyPrivateKey, err
 	}
 	return PrivateKey{
 		Algorithm: Ed25519Private,
-		Usage:     keyType,
 		RawKey:    k,
 	}, nil
 }
 
 // TODO check validity and return error
-func NewEd25519PrivateKeyFromSeed(
-	seed []byte,
-	keyType KeyUsage,
-) PrivateKey {
+func NewEd25519PrivateKeyFromSeed(seed []byte) PrivateKey {
 	b := ed25519.NewKeyFromSeed(seed)
 	return PrivateKey{
 		Algorithm: Ed25519Private,
-		Usage:     keyType,
 		RawKey:    b,
 	}
 }
@@ -204,10 +191,7 @@ var (
 )
 
 // TODO check validity and return error
-func NewEd25519PrivateKeyFromBIP39(
-	mnemonic string,
-	keyType KeyUsage,
-) (PrivateKey, error) {
+func NewEd25519PrivateKeyFromBIP39(mnemonic string) (PrivateKey, error) {
 	mnemonicClean := mnemonic
 	mnemonicClean = charRegex.ReplaceAllString(mnemonicClean, " ")
 	mnemonicClean = spaceRegex.ReplaceAllString(mnemonicClean, " ")
@@ -216,17 +200,13 @@ func NewEd25519PrivateKeyFromBIP39(
 	if err != nil {
 		return EmptyPrivateKey, fmt.Errorf("error parsing mnemonic, %w", err)
 	}
-	return NewEd25519PrivateKeyFromSeed(seed, keyType), nil
+	return NewEd25519PrivateKeyFromSeed(seed), nil
 }
 
 // TODO check validity and return error
-func NewEd25519PublicKeyFromRaw(
-	raw ed25519.PublicKey,
-	keyType KeyUsage,
-) PublicKey {
+func NewEd25519PublicKeyFromRaw(raw ed25519.PublicKey) PublicKey {
 	return PublicKey{
 		Algorithm: Ed25519Public,
-		Usage:     keyType,
 		RawKey:    raw,
 	}
 }
@@ -287,7 +267,7 @@ func NewSharedKey(
 func CalculateEphemeralSharedKey(
 	pub PublicKey,
 ) (PrivateKey, []byte, error) {
-	priv, err := NewEd25519PrivateKey(PeerKey)
+	priv, err := NewEd25519PrivateKey()
 	if err != nil {
 		return EmptyPrivateKey, nil, err
 	}
@@ -308,22 +288,12 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 
 func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
-		k.Usage == w.Usage &&
 		k.RawKey.Equal(w.RawKey)
 }
 
-func encodeToCID(cidCode, multihashCode uint64, raw []byte) string {
-	mh := make(
-		[]byte,
-		varint.UvarintSize(multihashCode)+
-			varint.UvarintSize(uint64(len(raw)))+
-			len(raw),
-	)
-	n := varint.PutUvarint(mh, multihashCode)
-	n += varint.PutUvarint(mh[n:], uint64(len(raw)))
-	copy(mh[n:], raw)
-	c := cid.NewCidV1(cidCode, mh)
+func encodeToCID(cidCode uint64, raw []byte) string {
+	c := cid.NewCidV1(cidCode, raw)
 	// nolint: errcheck // cannot error
-	s, _ := multibase.Encode(multibase.Base32, c.Bytes())
+	s, _ := c.StringOfBase(multibase.Base58BTC)
 	return s
 }

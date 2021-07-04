@@ -228,7 +228,7 @@ func mustSignWithCertificate(
 }
 
 func mustGenerateKey(t *testing.T) crypto.PrivateKey {
-	k, err := crypto.NewEd25519PrivateKey(crypto.PeerKey)
+	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	return k
 }

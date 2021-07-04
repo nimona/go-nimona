@@ -528,7 +528,7 @@ func main() {
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
-		k, err := crypto.NewEd25519PrivateKey(crypto.IdentityKey)
+		k, err := crypto.NewEd25519PrivateKey()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -578,7 +578,6 @@ func main() {
 	r.Post("/identity/link", func(w http.ResponseWriter, r *http.Request) {
 		k, err := crypto.NewEd25519PrivateKeyFromBIP39(
 			r.PostFormValue("mnemonic"),
-			crypto.IdentityKey,
 		)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
