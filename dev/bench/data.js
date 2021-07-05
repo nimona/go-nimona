@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1625524447443,
+  "lastUpdate": 1625525055455,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5136,6 +5136,54 @@ window.BENCHMARK_DATA = {
             "value": 37709,
             "unit": "ns/op",
             "extra": "29101 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bot@renovateapp.com",
+            "name": "Renovate Bot",
+            "username": "renovate-bot"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "22cfcb389307ad8f21294eadfa23e48db95b1862",
+          "message": "chore(deps): pin dependencies",
+          "timestamp": "2021-07-05T23:42:42+01:00",
+          "tree_id": "a26578e5fa46c4df4fc5e7b6850d0418eaf91d9a",
+          "url": "https://github.com/nimona/go-nimona/commit/22cfcb389307ad8f21294eadfa23e48db95b1862"
+        },
+        "date": 1625525054627,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4396814,
+            "unit": "ns/op",
+            "extra": "260 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 398515269,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3833605033,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 40219,
+            "unit": "ns/op",
+            "extra": "29683 times\n2 procs"
           }
         ]
       }
