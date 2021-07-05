@@ -1,8 +1,6 @@
 package keri
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,9 +41,6 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 
 	o, err := object.Marshal(i)
 	require.NoError(t, err)
-
-	b, _ := json.MarshalIndent(o, "", "  ")
-	fmt.Println(string(b))
 
 	g := &Inception{}
 	err = object.Unmarshal(o, g)
