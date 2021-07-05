@@ -1,0 +1,42 @@
+{
+  "extends": ["config:base"],
+  "branchPrefix": "renovate/",
+  "gitAuthor": "Nimona Bot <bot@nimona.io>",
+  "onboarding": false,
+  "platform": "github",
+  "semanticCommitScope": "deps",
+  "repositories": [
+    "nimona/go-nimona"
+  ],
+  "username": "nimona-bot",
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "groupName": "Node updates"
+    },
+    {
+      "matchManagers": ["terraform"],
+      "groupName": "Terraform updates"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "Dockerfile updates"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "Github action updates"
+    },
+    {
+      "matchFiles": ["go.mod"],
+      "groupName": "Go updates",
+      "postUpdateOptions": ["gomodTidy"]
+    },
+    {
+      "matchDepTypes": ["replace"],
+      "enabled": false
+    }
+  ]
+}
