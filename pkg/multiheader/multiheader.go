@@ -1,7 +1,6 @@
 // Package multiheader generalizes the various multiformats by allowing adding
 // and parsing a multicodec code to/from bytes without having or needing to care
 // if the value is a cid/hash/addr/etc.
-
 package multiheader
 
 import (
