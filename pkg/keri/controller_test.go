@@ -12,5 +12,6 @@ func TestController_New(t *testing.T) {
 	opt.Dir = "/tmp/nutsdb"
 	db, err := nutsdb.Open(opt)
 	require.NoError(t, err)
+	// nolint: gocritic
 	defer db.Close()
 }

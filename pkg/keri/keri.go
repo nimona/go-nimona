@@ -18,31 +18,6 @@ const (
 	ErrInvalidVersion     = errors.Error("invalid version")
 )
 
-// KERI events from kerigo
-// https://github.com/decentralized-identity/kerigo/blob/master/pkg/event/event.go
-//
-// type Event struct {
-// 	Version           string         `json:"v"`
-// 	Prefix            string         `json:"i,omitempty"`
-// 	Sequence          string         `json:"s,omitempty"`
-// 	EventType         string         `json:"t"`
-// 	EventDigest       string         `json:"d,omitempty"`
-// 	PriorEventDigest  string         `json:"p,omitempty"`
-// 	SigThreshold      *SigThreshold  `json:"kt,omitempty"`
-// 	Keys              []string       `json:"k,omitempty"`
-// 	Next              string         `json:"n,omitempty"`
-// 	WitnessThreshold  string         `json:"wt,omitempty"`
-// 	Witnesses         []string       `json:"w,omitempty"`
-// 	AddWitness        []string       `json:"wa,omitempty"`
-// 	RemoveWitness     []string       `json:"wr,omitempty"`
-// 	Config            []prefix.Trait `json:"c,omitempty" cbor:",omitempty"`
-// 	Seals             SealArray      `json:"a,omitempty"`
-// 	DelegatorSeal     *Seal          `json:"da,omitempty"`
-// 	LastEvent         *Seal          `json:"e,omitempty"`
-// 	LastEstablishment *Seal          `json:"ee,omitempty"`
-// 	_dig              string
-// }
-
 // sub-structures
 type (
 	Identity chore.Hash
@@ -154,12 +129,11 @@ type (
 	}
 	// State of a single KERI stream
 	State struct {
-		Version      string
-		RootHash     chore.Hash
-		ActiveKey    crypto.PublicKey
-		NextKeyHash  chore.Hash
-		RotatedKeys  []crypto.PublicKey
-		LatestObject *object.Object
+		Version     string
+		RootHash    chore.Hash
+		ActiveKey   crypto.PublicKey
+		NextKeyHash chore.Hash
+		RotatedKeys []crypto.PublicKey
 	}
 )
 
@@ -197,8 +171,6 @@ func CreateState(
 		if err != nil {
 			return nil, fmt.Errorf("error applying event, %w", err)
 		}
-
-		s.LatestObject = o
 	}
 
 	return s, nil

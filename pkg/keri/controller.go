@@ -87,13 +87,6 @@ func (c *Controller) Rotate() (*Rotation, error) {
 		return nil, fmt.Errorf("unable to apply rotation on state, %w", err)
 	}
 
-	o, err := object.Marshal(r)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal rotation, %w", err)
-	}
-
-	c.state.LatestObject = o
-
 	return r, nil
 }
 
@@ -105,6 +98,7 @@ func getPrivateKey(
 	if err != nil {
 		return nil, fmt.Errorf("unable to begin tx, %w", err)
 	}
+	// nolint: errcheck
 	defer tx.Commit()
 
 	en, err := tx.Get(privateKeysBucket, []byte(publicKeyHash))
@@ -129,6 +123,7 @@ func storePrivateKey(
 	if err != nil {
 		return fmt.Errorf("unable to begin tx, %w", err)
 	}
+	// nolint: errcheck
 	defer tx.Commit()
 
 	key := getPublicKeyHash(privateKey.PublicKey())
