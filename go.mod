@@ -15,9 +15,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.6
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/ipfs/go-cid v0.0.7
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/klauspost/cpuid/v2 v2.0.5 // indirect
 	github.com/libp2p/go-nat v0.0.5
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mitchellh/copystructure v1.2.0
@@ -26,7 +24,6 @@ require (
 	github.com/muesli/termenv v0.8.1
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multicodec v0.2.0
-	github.com/multiformats/go-multihash v0.0.15 // indirect
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
