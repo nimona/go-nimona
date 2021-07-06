@@ -32,7 +32,7 @@
     {
       "matchFiles": ["go.mod"],
       "groupName": "Go dependencies",
-      "postUpdateOptions": ["gomodTidy"]
+      "postUpdateOptions": ["gomodUpdateImportPaths", "gomodTidy"]
     },
     {
       "matchPackageNames": ["nimona.io"],
