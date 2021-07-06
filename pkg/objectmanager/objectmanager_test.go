@@ -193,6 +193,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							ctx context.Context,
 							obj *object.Object,
 							recipient crypto.PublicKey,
+							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -255,6 +256,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							ctx context.Context,
 							obj *object.Object,
 							recipient crypto.PublicKey,
+							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -604,6 +606,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						ctx context.Context,
 						obj *object.Object,
 						recipient crypto.PublicKey,
+						opts ...network.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -669,6 +672,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						ctx context.Context,
 						obj *object.Object,
 						recipient crypto.PublicKey,
+						opts ...network.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
