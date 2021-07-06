@@ -8,6 +8,11 @@
   "repositories": [
     "nimona/go-nimona"
   ],
+  "force": {
+    "constraints": {
+      "go": "1.16"
+    }
+  },
   "username": "nimona-bot",
   "prConcurrentLimit": 5,
   "labels": ["dependencies"],
