@@ -35,6 +35,10 @@
       "postUpdateOptions": ["gomodTidy"]
     },
     {
+      "matchPackageNames": ["nimona.io"]
+      "enabled": false
+    },
+    {
       "matchDepTypes": ["replace"],
       "enabled": false
     }
