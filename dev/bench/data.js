@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1625561270392,
+  "lastUpdate": 1625563096756,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5280,6 +5280,54 @@ window.BENCHMARK_DATA = {
             "value": 35414,
             "unit": "ns/op",
             "extra": "34269 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "feca6838b98bf9cd0f03df495c932a903e812d59",
+          "message": "chore(renovate): add gomodUpdateImportPaths",
+          "timestamp": "2021-07-06T10:16:51+01:00",
+          "tree_id": "0dc3b2fa9dbbc93a51fce3958f176f2914bdf630",
+          "url": "https://github.com/nimona/go-nimona/commit/feca6838b98bf9cd0f03df495c932a903e812d59"
+        },
+        "date": 1625563095606,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4497711,
+            "unit": "ns/op",
+            "extra": "232 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 285473019,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 2674748053,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 31473,
+            "unit": "ns/op",
+            "extra": "37758 times\n2 procs"
           }
         ]
       }
