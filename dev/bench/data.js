@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1625563096756,
+  "lastUpdate": 1625564414751,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5328,6 +5328,54 @@ window.BENCHMARK_DATA = {
             "value": 31473,
             "unit": "ns/op",
             "extra": "37758 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "45308e31699e73a50fa4700715d661e0db836614",
+          "message": "chore(renovate): force go version",
+          "timestamp": "2021-07-06T10:38:39+01:00",
+          "tree_id": "4a37ea55735f485aad8acbc18f56a8f9bd6c25ca",
+          "url": "https://github.com/nimona/go-nimona/commit/45308e31699e73a50fa4700715d661e0db836614"
+        },
+        "date": 1625564413870,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4392435,
+            "unit": "ns/op",
+            "extra": "255 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 384840703,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3664041922,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 39732,
+            "unit": "ns/op",
+            "extra": "29929 times\n2 procs"
           }
         ]
       }
