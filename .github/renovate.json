@@ -15,27 +15,27 @@
   "packageRules": [
     {
       "matchManagers": ["npm"],
-      "groupName": "Node updates"
+      "groupName": "NPM dependencies"
     },
     {
       "matchManagers": ["terraform"],
-      "groupName": "Terraform updates"
+      "groupName": "Terraform dependencies"
     },
     {
       "matchManagers": ["dockerfile"],
-      "groupName": "Dockerfile updates"
+      "groupName": "Dockerfile dependencies"
     },
     {
       "matchManagers": ["github-actions"],
-      "groupName": "Github action updates"
+      "groupName": "Github action dependencies"
     },
     {
       "matchFiles": ["go.mod"],
-      "groupName": "Go updates",
+      "groupName": "Go dependencies",
       "postUpdateOptions": ["gomodTidy"]
     },
     {
-      "matchPackageNames": ["nimona.io"]
+      "matchPackageNames": ["nimona.io"],
       "enabled": false
     },
     {
