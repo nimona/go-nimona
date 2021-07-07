@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1625693054465,
+  "lastUpdate": 1625693394044,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5520,6 +5520,54 @@ window.BENCHMARK_DATA = {
             "value": 38113,
             "unit": "ns/op",
             "extra": "30760 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "e5f02ee361a6e5f3862bd44d911a9d52e376dd27",
+          "message": "chore(apps): fix go mod version",
+          "timestamp": "2021-07-07T22:28:18+01:00",
+          "tree_id": "2b796a08118104be2d619c795d512a52947749b8",
+          "url": "https://github.com/nimona/go-nimona/commit/e5f02ee361a6e5f3862bd44d911a9d52e376dd27"
+        },
+        "date": 1625693393162,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3642894,
+            "unit": "ns/op",
+            "extra": "314 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 338398354,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3039445060,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 31772,
+            "unit": "ns/op",
+            "extra": "37831 times\n2 procs"
           }
         ]
       }
