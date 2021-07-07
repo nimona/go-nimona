@@ -35,15 +35,17 @@
       "groupName": "Github action dependencies"
     },
     {
-      "matchFiles": ["go.mod"],
+      "matchManagers": ["gomod"],
       "groupName": "Go dependencies",
       "postUpdateOptions": ["gomodUpdateImportPaths", "gomodTidy"]
     },
     {
+      "matchManagers": ["gomod"],
       "matchPackageNames": ["nimona.io"],
       "enabled": false
     },
     {
+      "matchManagers": ["gomod"],
       "matchDepTypes": ["replace"],
       "enabled": false
     }
