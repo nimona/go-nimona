@@ -8,7 +8,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/stretchr/testify v1.7.0
-	nimona.io v0.0.0
+	nimona.io v0.18.1
 )
 
 replace nimona.io => ../../
