@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1625952435781,
+  "lastUpdate": 1625953117546,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5664,6 +5664,54 @@ window.BENCHMARK_DATA = {
             "value": 38531,
             "unit": "ns/op",
             "extra": "30604 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bot@renovateapp.com",
+            "name": "Renovate Bot",
+            "username": "renovate-bot"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "49ed8aa4e634673aaa886c3621e4da6fa8d4ff79",
+          "message": "chore(deps): update dependency ansible-lint to v5",
+          "timestamp": "2021-07-10T22:37:16+01:00",
+          "tree_id": "3680cc2de740025022c52931930d9593d3a117f7",
+          "url": "https://github.com/nimona/go-nimona/commit/49ed8aa4e634673aaa886c3621e4da6fa8d4ff79"
+        },
+        "date": 1625953116750,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3528754,
+            "unit": "ns/op",
+            "extra": "338 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 338983479,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3028180419,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 31255,
+            "unit": "ns/op",
+            "extra": "38155 times\n2 procs"
           }
         ]
       }
