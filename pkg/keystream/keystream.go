@@ -1,8 +1,10 @@
-// This is not a legit or even correct implementation of KERI.
+// KeyStream is a simplified implementation of KERI.
+// It is not a full nor faithful implementation of the spec and is not intended
+// to be for the forseeable future.
 // It is just an attempt to implement some of the basic aspects of KERI using
 // nimona's streams and use the stream's root hash as an identifier.
 
-package keri
+package keystream
 
 import (
 	"fmt"
@@ -16,22 +18,6 @@ import (
 const (
 	ErrUnsupportedVersion = errors.Error("unsupported version")
 	ErrInvalidVersion     = errors.Error("invalid version")
-)
-
-// sub-structures
-type (
-	Identity chore.Hash
-	Digest   struct{}
-	Seal     struct { // Type      SealType `nimona:"-"`
-		// Root      string `nimona:"rd:s"`
-		// Prefix    string `nimona:"i:s"`
-		// Sequence  string `nimona:"s:s"`
-		// EventType string `nimona:"t:s"`
-		// Digest    string `nimona:"d:s"`
-	}
-	Config struct {
-		Trait string `nimona:"trait:s"`
-	}
 )
 
 // - KERI is the identifier of KERI events
@@ -63,9 +49,9 @@ type (
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
 		// RemoveWitness     []string  `nimona:"wr:as"`
-		Config []*Config `nimona:"c:am"`
+		// Config []*Config `nimona:"c:am"`
 		// Seals         []*Seal   `nimona:"a:am"`
-		// DelegatorSeal *Seal     `nimona:"da:m"`
+		DelegatorSeal *DelegatorSeal `nimona:"da:m"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
@@ -84,15 +70,88 @@ type (
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
 		// RemoveWitness     []string  `nimona:"wr:as"`
-		Config []*Config `nimona:"c:am"`
+		// Config []*Config `nimona:"c:am"`
 		// Seals         []*Seal   `nimona:"a:am"`
-		// DelegatorSeal *Seal     `nimona:"da:m"`
+		DelegatorSeal *DelegatorSeal `nimona:"da:m"`
+		// LastEvent         *Seal     `nimona:"e:m"`
+		// LastEstablishment *Seal     `nimona:"ee:m"`
+	}
+	InceptionDelegation struct {
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.Rotation/v0"`
+		Version  string          `nimona:"v:s"`
+		// Prefix   string          `nimona:"i:s"`
+		// Sequence int `nimona:"s:i"`
+		// EventType        string          `nimona:"t:s"`
+		// EventDigest      string          `nimona:"d:s"`
+		// PriorEventDigest string          `nimona:"p:s"`
+		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
+		// Key           crypto.PublicKey `nimona:"k:s"`
+		// NextKeyDigest chore.Hash       `nimona:"n:s"`
+		// WitnessThreshold  string    `nimona:"wt:s"`
+		// Witnesses         []string  `nimona:"w:as"`
+		// AddWitness        []string  `nimona:"wa:as"`
+		// RemoveWitness     []string  `nimona:"wr:as"`
+		// Config []*Config `nimona:"c:am"`
+		Seals []*Seal `nimona:"a:am"`
+		// DelegatorSeal *DelegatorSeal `nimona:"da:m"`
+		// LastEvent         *Seal     `nimona:"e:m"`
+		// LastEstablishment *Seal     `nimona:"ee:m"`
+	}
+	RotationDelegation struct {
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.Rotation/v0"`
+		Version  string          `nimona:"v:s"`
+		// Prefix   string          `nimona:"i:s"`
+		// Sequence int `nimona:"s:i"`
+		// EventType        string          `nimona:"t:s"`
+		// EventDigest      string          `nimona:"d:s"`
+		// PriorEventDigest string          `nimona:"p:s"`
+		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
+		// Key           crypto.PublicKey `nimona:"k:s"`
+		// NextKeyDigest chore.Hash       `nimona:"n:s"`
+		// WitnessThreshold  string    `nimona:"wt:s"`
+		// Witnesses         []string  `nimona:"w:as"`
+		// AddWitness        []string  `nimona:"wa:as"`
+		// RemoveWitness     []string  `nimona:"wr:as"`
+		// Config []*Config `nimona:"c:am"`
+		Seals []*Seal `nimona:"a:am"`
+		// DelegatorSeal *DelegatorSeal `nimona:"da:m"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
 )
 
-func (inc *Inception) apply(s *State) error {
+// components
+type (
+	Trait string
+	Seal  struct { // Type      SealType `nimona:"-"`
+		Root        chore.Hash      `nimona:"rd:s"`
+		Permissions object.Policies `nimona:"p:am"`
+		// Prefix    string `nimona:"i:s"`
+		// Sequence  string `nimona:"s:s"`
+		// EventType string `nimona:"t:s"`
+		// Digest    string `nimona:"d:s"`
+	}
+	DelegatorSeal struct { // Type      SealType `nimona:"-"`
+		// Root chore.Hash `nimona:"rd:s"`
+		// Delegation  chore.Hash      `nimona:"d:s"`
+		// Permissions object.Policies `nimona:"p:am"`
+		// Prefix    string `nimona:"i:s"`
+		// Sequence  string `nimona:"s:s"`
+		// EventType string `nimona:"t:s"`
+		// Digest    string `nimona:"d:s"`
+	}
+	Config struct {
+		Trait Trait `nimona:"trait:s"`
+	}
+)
+
+const (
+	TraitEstOnly       Trait = "EO"  //  Only allow establishment events
+	TraitDoNotDelegate Trait = "DND" //  Dot not allow delegated identifiers
+	TraitNoBackers     Trait = "NB"  // Do not allow any backers for registry
+)
+
+func (inc *Inception) apply(s *KeyStream) error {
 	if inc.Version != Version {
 		return ErrUnsupportedVersion
 	}
@@ -110,7 +169,7 @@ func (inc *Inception) apply(s *State) error {
 	return nil
 }
 
-func (rot *Rotation) apply(s *State) error {
+func (rot *Rotation) apply(s *KeyStream) error {
 	if rot.Version != s.Version {
 		return ErrInvalidVersion
 	}
@@ -125,10 +184,10 @@ func (rot *Rotation) apply(s *State) error {
 // state and key manager
 type (
 	applier interface {
-		apply(s *State) error
+		apply(s *KeyStream) error
 	}
-	// State of a single KERI stream
-	State struct {
+	// KeyStream of a single KERI stream
+	KeyStream struct {
 		Version     string
 		RootHash    chore.Hash
 		ActiveKey   crypto.PublicKey
@@ -137,14 +196,14 @@ type (
 	}
 )
 
-func (s *State) GetIdentity() Identity {
-	return Identity(s.RootHash)
+func (s *KeyStream) GetIdentity() chore.Hash {
+	return s.RootHash
 }
 
-func CreateState(
+func FromStream(
 	or object.ReadCloser,
-) (*State, error) {
-	s := &State{}
+) (*KeyStream, error) {
+	s := &KeyStream{}
 
 	for {
 		o, err := or.Read()
