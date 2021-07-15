@@ -1,4 +1,4 @@
-package keri
+package keystream
 
 import (
 	"testing"

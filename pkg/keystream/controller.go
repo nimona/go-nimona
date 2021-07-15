@@ -1,4 +1,4 @@
-package keri
+package keystream
 
 import (
 	"fmt"
@@ -13,16 +13,16 @@ import (
 
 const (
 	// the key for each private key in this bucket is the public key's hash
-	privateKeysBucket = "keri_private_keys"
+	privateKeysBucket = "keystream_private_keys"
 )
 
 type (
 	// Controller deals with the key management and event transitions for our
-	// own KERI stream
+	// own key stream
 	Controller struct {
 		mutex     sync.RWMutex
 		kvStore   *nutsdb.DB
-		state     *State
+		state     *KeyStream
 		activeKey crypto.PrivateKey
 		newKey    func() (crypto.PrivateKey, error)
 	}
@@ -32,7 +32,7 @@ func NewController(
 	kvStore *nutsdb.DB,
 	eventStream object.ReadCloser,
 ) (*Controller, error) {
-	s, err := CreateState(eventStream)
+	s, err := FromStream(eventStream)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create state, %w", err)
 	}

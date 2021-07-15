@@ -1,4 +1,4 @@
-package keri
+package keystream
 
 import (
 	"testing"
@@ -24,11 +24,11 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 		// Sequence: 2,
 		Key:           k0.PublicKey(),
 		NextKeyDigest: "some-digest",
-		Config: []*Config{{
-			Trait: "trait-a",
-		}, {
-			Trait: "trait-b",
-		}},
+		// Config: []*Config{{
+		// 	Trait: "trait-a",
+		// }, {
+		// 	Trait: "trait-b",
+		// }},
 		// Seals: []*Seal{{
 		// 	Root: "root-a",
 		// }, {
@@ -79,7 +79,7 @@ func TestCreateState(t *testing.T) {
 		name string
 		or   object.ReadCloser
 
-		want    *State
+		want    *KeyStream
 		wantErr bool
 	}{{
 		name: "small aggregate, ok",
@@ -89,7 +89,7 @@ func TestCreateState(t *testing.T) {
 				object.MustMarshal(t0Rotation),
 			},
 		),
-		want: &State{
+		want: &KeyStream{
 			Version:   Version,
 			RootHash:  object.MustMarshal(t0Inception).Hash(),
 			ActiveKey: k1.PublicKey(),
@@ -100,9 +100,9 @@ func TestCreateState(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CreateState(tt.or)
+			got, err := FromStream(tt.or)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateState() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			assert.Equal(t, tt.want, got)
