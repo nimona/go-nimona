@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"reflect"
 
 	"nimona.io/pkg/chore"
@@ -24,10 +23,9 @@ const (
 )
 
 type Signature struct {
-	Signer      crypto.PublicKey `nimona:"signer:s"`
-	Alg         string           `nimona:"alg:s"`
-	X           []byte           `nimona:"x:d"`
-	Certificate *Certificate     `nimona:"certificate:m"`
+	Signer crypto.PublicKey `nimona:"signer:s"`
+	Alg    string           `nimona:"alg:s"`
+	X      []byte           `nimona:"x:d"`
 }
 
 func (s *Signature) IsEmpty() bool {
@@ -44,17 +42,6 @@ func (s *Signature) MarshalMap() (chore.Map, error) {
 	}
 	if len(s.X) > 0 {
 		r["x"] = chore.Data(s.X)
-	}
-	if s.Certificate != nil {
-		c, err := Marshal(s.Certificate)
-		if err != nil {
-			return nil, err
-		}
-		m, err := c.MarshalMap()
-		if err != nil {
-			return nil, err
-		}
-		r["certificate"] = m
 	}
 	return r, nil
 }
@@ -76,21 +63,6 @@ func (s *Signature) UnmarshalMap(m chore.Map) error {
 	if t, ok := m["x"]; ok {
 		if v, ok := t.(chore.Data); ok {
 			s.X = []byte(v)
-		}
-	}
-	if t, ok := m["certificate"]; ok {
-		if m, ok := t.(chore.Map); ok {
-			o := &Object{}
-			err := o.UnmarshalMap(m)
-			if err != nil {
-				return err
-			}
-			c := &Certificate{}
-			err = Unmarshal(o, c)
-			if err != nil {
-				return err
-			}
-			s.Certificate = c
 		}
 	}
 	return nil
@@ -139,33 +111,32 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 		}
 		err := unmarshalMap(chore.MapHint, mmeta, reflect.ValueOf(meta))
 		if err != nil {
-			fmt.Println(">>> 0", err)
 			return true
 		}
 		if !meta.Signature.IsEmpty() {
 			return true
 		}
-		if meta.Owner.IsEmpty() {
+		if meta.Owner == nil {
 			return true
 		}
-		if !meta.Owner.Equals(pk) {
+		// TODO(geoah): figure out if we should be signing this object
+		if !meta.Owner.Equals(pk.DID()) {
 			return true
 		}
 		sig, err := newSignature(k, m)
 		if err != nil {
-			fmt.Println(">>> 1", err)
 			signErr = err
 			return true
 		}
 		msig, err := sig.MarshalMap()
 		if err != nil {
-			fmt.Println(">>> 2", err)
 			return true
 		}
 		mmeta["_signature"] = msig
 		return true
 	})
-	if !o.Metadata.Owner.Equals(pk) {
+	// TODO(geoah): figure out if we should be signing this object
+	if !o.Metadata.Owner.Equals(pk.DID()) {
 		return nil
 	}
 	m, err := o.MarshalMap()
