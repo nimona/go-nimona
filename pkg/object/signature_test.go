@@ -18,7 +18,7 @@ func Test_Sign(t *testing.T) {
 		o := &Object{
 			Type: "foo",
 			Metadata: Metadata{
-				Owner: k.PublicKey(),
+				Owner: k.PublicKey().DID(),
 			},
 			Data: chore.Map{
 				"foo": chore.String("bar"),
@@ -40,7 +40,7 @@ func Test_Sign(t *testing.T) {
 		n := &Object{
 			Type: "foo",
 			Metadata: Metadata{
-				Owner: k.PublicKey(),
+				Owner: k.PublicKey().DID(),
 			},
 			Data: chore.Map{
 				"foo": chore.String("bar"),

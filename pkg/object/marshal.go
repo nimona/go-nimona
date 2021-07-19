@@ -131,6 +131,11 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 		}
 		m, ok := v.Interface().(StringMashaller)
 		if ok {
+			if v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					return nil, nil
+				}
+			}
 			s, err := m.MarshalString()
 			if err != nil {
 				return nil, err

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 )
 
 func TestMetadata_Map(t *testing.T) {
@@ -23,7 +23,7 @@ func TestMetadata_Map(t *testing.T) {
 	pk1 := k1.PublicKey()
 
 	want := &Metadata{
-		Owner:    pk0,
+		Owner:    did.MustParse("did:nimona:foo"),
 		Datetime: "foo",
 		Parents: Parents{
 			"*": chore.HashArray{
@@ -52,19 +52,6 @@ func TestMetadata_Map(t *testing.T) {
 			Signer: pk1,
 			Alg:    "alg",
 			X:      []byte{0, 1, 2},
-			Certificate: &Certificate{
-				Metadata: Metadata{
-					Owner: pk1,
-					Policies: Policies{{
-						Type:    SignaturePolicy,
-						Actions: []PolicyAction{ReadAction},
-						Effect:  AllowEffect,
-					}},
-				},
-				Nonce:   "nonce",
-				Starts:  time.Now().UTC().Format(time.RFC3339),
-				Expires: time.Now().UTC().Format(time.RFC3339),
-			},
 		},
 	}
 

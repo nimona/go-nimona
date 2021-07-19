@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/rand"
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 )
@@ -14,7 +13,6 @@ import (
 func TestVerify(t *testing.T) {
 	testKey0 := mustGenerateKey(t)
 	testKey1 := mustGenerateKey(t)
-	testKey2 := mustGenerateKey(t)
 
 	tests := []struct {
 		name    string
@@ -42,7 +40,7 @@ func TestVerify(t *testing.T) {
 		name: "should fail, with owner, no signature",
 		object: &Object{
 			Metadata: Metadata{
-				Owner: testKey0.PublicKey(),
+				Owner: testKey0.PublicKey().DID(),
 			},
 			Data: chore.Map{
 				"foo:s": chore.String("bar"),
@@ -56,7 +54,7 @@ func TestVerify(t *testing.T) {
 			testKey1,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey(),
+					Owner: testKey0.PublicKey().DID(),
 				},
 				Data: chore.Map{
 					"foo:s": chore.String("bar"),
@@ -71,7 +69,7 @@ func TestVerify(t *testing.T) {
 			testKey1,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey(),
+					Owner: testKey0.PublicKey().DID(),
 					Signature: Signature{
 						X: []byte{1, 2, 3},
 					},
@@ -89,100 +87,13 @@ func TestVerify(t *testing.T) {
 			testKey0,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey(),
+					Owner: testKey0.PublicKey().DID(),
 				},
 				Data: chore.Map{
 					"foo:s": chore.String("bar"),
 				},
 			},
 		),
-	}, {
-		name: "should pass, with owner, other valid signature, with certificate",
-		object: mustSignWithCertificate(
-			t,
-			testKey0,
-			testKey1,
-			&Object{
-				Type: "",
-				Metadata: Metadata{
-					Owner: testKey0.PublicKey(),
-				},
-				Data: chore.Map{
-					"foo:s": chore.String("bar"),
-				},
-			},
-		),
-	}, {
-		name: "should fail, with owner, with invalid certificate signature",
-		object: func() *Object {
-			o := mustSignWithCertificate(
-				t,
-				testKey0,
-				testKey1,
-				&Object{
-					Type: "",
-					Metadata: Metadata{
-						Owner: testKey0.PublicKey(),
-					},
-					Data: chore.Map{
-						"foo:s": chore.String("bar"),
-					},
-				},
-			)
-			sig := []byte{1, 2, 3}
-			o.Metadata.Signature.Certificate.Metadata.Signature.X = sig
-			return o
-		}(),
-		wantErr: true,
-	}, {
-		name: "should fail, with owner, invalid certificate signer",
-		object: func() *Object {
-			o := mustSignWithCertificate(
-				t,
-				testKey2,
-				testKey1,
-				&Object{
-					Type: "",
-					Metadata: Metadata{
-						Owner: testKey0.PublicKey(),
-					},
-					Data: chore.Map{
-						"foo:s": chore.String("bar"),
-					},
-				},
-			)
-			// resign with random key
-			sig, err := NewSignature(testKey2, o)
-			assert.NoError(t, err)
-			sig.Certificate = o.Metadata.Signature.Certificate
-			o.Metadata.Signature = sig
-			return o
-		}(),
-		wantErr: true,
-	}, {
-		name: "should fail, with owner, wrong signature, valid certificate",
-		object: func() *Object {
-			o := mustSignWithCertificate(
-				t,
-				testKey0,
-				testKey1,
-				&Object{
-					Type: "",
-					Metadata: Metadata{
-						Owner: testKey0.PublicKey(),
-					},
-					Data: chore.Map{
-						"foo:s": chore.String("bar"),
-					},
-				},
-			)
-			sig, err := NewSignature(testKey2, o)
-			assert.NoError(t, err)
-			sig.Certificate = o.Metadata.Signature.Certificate
-			o.Metadata.Signature = sig
-			return o
-		}(),
-		wantErr: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -191,40 +102,6 @@ func TestVerify(t *testing.T) {
 			}
 		})
 	}
-}
-
-func mustSignWithCertificate(
-	t *testing.T,
-	identityKey crypto.PrivateKey,
-	peerKey crypto.PrivateKey,
-	o *Object,
-) *Object {
-	req := &CertificateRequest{
-		Metadata: Metadata{
-			Owner: peerKey.PublicKey(),
-		},
-		Nonce:                  rand.String(5),
-		VendorName:             "vendor",
-		ApplicationName:        "app-name",
-		ApplicationDescription: "app-descr",
-		ApplicationURL:         "https://foo",
-		Permissions: []CertificatePermission{{
-			Types:   []string{"*"},
-			Actions: []string{"*"},
-		}},
-	}
-	reso, err := Marshal(req)
-	require.NoError(t, err)
-	resSig, err := NewSignature(peerKey, reso)
-	require.NoError(t, err)
-	req.Metadata.Signature = resSig
-	res, err := NewCertificate(identityKey, *req, true, "")
-	require.NoError(t, err)
-	sig, err := NewSignature(peerKey, o)
-	assert.NoError(t, err)
-	sig.Certificate = &res.Certificate
-	o.Metadata.Signature = sig
-	return o
 }
 
 func mustGenerateKey(t *testing.T) crypto.PrivateKey {

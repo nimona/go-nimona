@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ErrInvalidSigner    = errors.Error("signer is does not match owner")
+	ErrInvalidSigner    = errors.Error("signer does not match owner")
 	ErrMissingSignature = errors.Error("missing signature")
 	ErrCouldNotVerify   = errors.Error("could not verify signature")
 )
@@ -18,11 +18,12 @@ func Verify(o *Object) error {
 	if o == nil {
 		return errors.Error("no object")
 	}
+
 	sig := o.Metadata.Signature
 	own := o.Metadata.Owner
 
 	// if there is no owner and no signature, we're fine
-	if sig.IsEmpty() && own.IsEmpty() {
+	if sig.IsEmpty() && own == nil {
 		return nil
 	}
 
@@ -42,6 +43,7 @@ func Verify(o *Object) error {
 	if err != nil {
 		return fmt.Errorf("unable to get bytes from hash, %w", err)
 	}
+
 	// verify the signature
 	if err := sig.Signer.Verify(
 		h,
@@ -51,37 +53,12 @@ func Verify(o *Object) error {
 	}
 
 	// if there is no owner, we're fine
-	if own.IsEmpty() {
+	if own == nil {
 		return nil
 	}
 
 	// check if the owner matches the signer
-	if own.Equals(sig.Signer) {
-		return nil
-	}
-
-	// or that the signature contains a valid certificate signed by the owner
-	// check if there is a certifiate
-	if sig.Certificate == nil {
-		return ErrInvalidSigner
-	}
-
-	// then let's make sure that the certificate is properly signed
-	co, err := Marshal(sig.Certificate)
-	if err != nil {
-		return err
-	}
-	if err := Verify(co); err != nil {
-		return fmt.Errorf("error verifying certificate, %w", err)
-	}
-
-	// finally check that the certificate signer matches the object owner
-	if !sig.Certificate.Metadata.Signature.Signer.Equals(own) {
-		return ErrInvalidSigner
-	}
-
-	// and the certificate subject matches the object signer
-	if sig.Certificate.Subject.Equals(sig.Signer) {
+	if *own == *sig.Signer.DID() {
 		return nil
 	}
 
