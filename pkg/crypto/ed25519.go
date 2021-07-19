@@ -14,6 +14,7 @@ import (
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/curve25519"
 
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/multiheader"
 )
 
@@ -60,13 +61,15 @@ func (k PublicKey) String() string {
 	return s
 }
 
-func (k PublicKey) IsEmpty() bool {
-	return k.RawKey == nil
+func (k PublicKey) DID() *did.DID {
+	return &did.DID{
+		Method:   did.MethodKey,
+		Identity: k.String(),
+	}
 }
 
-func (k PublicKey) MarshalText() ([]byte, error) {
-	s, err := k.MarshalString()
-	return []byte(s), err
+func (k PublicKey) IsEmpty() bool {
+	return k.RawKey == nil
 }
 
 func (k PublicKey) MarshalString() (string, error) {
@@ -75,10 +78,6 @@ func (k PublicKey) MarshalString() (string, error) {
 
 func (k PublicKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
-}
-
-func (k *PublicKey) UnmarshalText(s []byte) error {
-	return k.UnmarshalString(string(s))
 }
 
 func (k *PublicKey) UnmarshalString(s string) error {
@@ -130,21 +129,12 @@ func (k PrivateKey) BIP39() string {
 	return m
 }
 
-func (k PrivateKey) MarshalText() ([]byte, error) {
-	s, err := k.MarshalString()
-	return []byte(s), err
-}
-
 func (k PrivateKey) MarshalString() (string, error) {
 	return k.String(), nil
 }
 
 func (k PrivateKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
-}
-
-func (k *PrivateKey) UnmarshalText(s []byte) error {
-	return k.UnmarshalString(string(s))
 }
 
 func (k *PrivateKey) UnmarshalString(s string) error {
