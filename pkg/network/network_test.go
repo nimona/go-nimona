@@ -201,7 +201,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP1 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n1.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: n1.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),
@@ -211,7 +211,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP2 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n2.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: n2.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),

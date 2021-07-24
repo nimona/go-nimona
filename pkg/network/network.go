@@ -655,7 +655,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 			df := &DataForwardResponse{
 				Metadata: object.Metadata{
-					Owner: w.localpeer.GetPeerKey().PublicKey(),
+					Owner: w.localpeer.GetPeerKey().PublicKey().DID(),
 				},
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
@@ -894,7 +894,7 @@ func (w *network) wrapInDataForward(
 	// create data forward envelope
 	dfe := &DataForwardEnvelope{
 		Metadata: object.Metadata{
-			Owner: ek.PublicKey(),
+			Owner: ek.PublicKey().DID(),
 		},
 		Sender: ek.PublicKey(),
 		Data:   ep,
@@ -911,7 +911,7 @@ func (w *network) wrapInDataForward(
 	// and wrap it in a request
 	dfr := &DataForwardRequest{
 		Metadata: object.Metadata{
-			Owner: ek.PublicKey(),
+			Owner: ek.PublicKey().DID(),
 		},
 		RequestID: rand.String(8),
 		Recipient: recipient,

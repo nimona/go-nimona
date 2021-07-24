@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
 )
 
@@ -18,7 +19,10 @@ func TestEncoding(t *testing.T) {
 
 	c := &ConnectionInfo{
 		Metadata: object.Metadata{
-			Owner:    k.PublicKey(),
+			Owner: &did.DID{
+				Method:   did.MethodKey,
+				Identity: "foo",
+			},
 			Datetime: time.Now().Format(time.RFC3339),
 		},
 		Version:       1,
