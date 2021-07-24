@@ -131,12 +131,13 @@ type (
 		// EventType string `nimona:"t:s"`
 		// Digest    string `nimona:"d:s"`
 	}
-	DelegatorSeal struct { // Type      SealType `nimona:"-"`
-		// Root chore.Hash `nimona:"rd:s"`
+	DelegatorSeal struct {
+		Root chore.Hash `nimona:"rd:s"`
+		// Type      SealType `nimona:"-"`
 		// Delegation  chore.Hash      `nimona:"d:s"`
 		// Permissions object.Policies `nimona:"p:am"`
 		// Prefix    string `nimona:"i:s"`
-		// Sequence  string `nimona:"s:s"`
+		Sequence uint64 `nimona:"s:u"`
 		// EventType string `nimona:"t:s"`
 		// Digest    string `nimona:"d:s"`
 	}
@@ -161,7 +162,8 @@ func (inc *Inception) apply(s *KeyStream) error {
 		return fmt.Errorf("error trying to get inc hash, %w", err)
 	}
 
-	s.RootHash = o.Hash()
+	s.Root = o.Hash()
+	s.Delegator = inc.DelegatorSeal.Root
 	s.Version = inc.Version
 	s.ActiveKey = inc.Key
 	s.RotatedKeys = []crypto.PublicKey{}
@@ -189,7 +191,8 @@ type (
 	// KeyStream of a single KERI stream
 	KeyStream struct {
 		Version     string
-		RootHash    chore.Hash
+		Root        chore.Hash
+		Delegator   chore.Hash
 		ActiveKey   crypto.PublicKey
 		NextKeyHash chore.Hash
 		RotatedKeys []crypto.PublicKey
@@ -197,7 +200,7 @@ type (
 )
 
 func (s *KeyStream) GetIdentity() chore.Hash {
-	return s.RootHash
+	return s.Root
 }
 
 func FromStream(
