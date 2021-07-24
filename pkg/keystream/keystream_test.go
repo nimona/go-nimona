@@ -59,6 +59,10 @@ func TestCreateState(t *testing.T) {
 		Metadata: object.Metadata{},
 		Version:  Version,
 		Key:      k0.PublicKey(),
+		DelegatorSeal: &DelegatorSeal{
+			Root:     "delegator-root-hash",
+			Sequence: 12,
+		},
 		// NextKeyDigest: hash(k0.PublicKey()),
 	}
 
@@ -91,7 +95,8 @@ func TestCreateState(t *testing.T) {
 		),
 		want: &KeyStream{
 			Version:   Version,
-			RootHash:  object.MustMarshal(t0Inception).Hash(),
+			Root:      object.MustMarshal(t0Inception).Hash(),
+			Delegator: "delegator-root-hash",
 			ActiveKey: k1.PublicKey(),
 			RotatedKeys: []crypto.PublicKey{
 				k0.PublicKey(),
