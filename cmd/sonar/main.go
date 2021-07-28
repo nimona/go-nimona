@@ -146,10 +146,10 @@ func main() {
 			fmt.Printf(
 				"%s received ping from %s\n",
 				local.GetPeerKey().PublicKey().String(),
-				env.Metadata.Owner,
+				env.Metadata.Owner.Identity,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
-				pingedFromPeers[env.Metadata.Owner.String()] = true
+				pingedFromPeers[env.Metadata.Owner.Identity] = true
 			}
 			// check if all have pinged us
 			allPinged := true
