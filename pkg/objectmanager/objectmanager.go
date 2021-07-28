@@ -528,7 +528,7 @@ func (m *manager) announceStreamChildren(
 	// notify subscribers
 	announcement := &stream.Announcement{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
 		},
 		StreamHash:   streamHash,
 		ObjectHashes: children,
@@ -596,7 +596,7 @@ func (m *manager) handleObjectRequest(
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
 		},
 		Object:    nil,
 		RequestID: req.RequestID,
@@ -675,7 +675,7 @@ func (m *manager) handleStreamRequest(
 	// start response
 	res := &stream.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey(),
+			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
 		},
 		RequestID: req.RequestID,
 		RootHash:  req.RootHash,
@@ -810,12 +810,13 @@ func (m *manager) Put(
 	ownPeer := false
 	ownIdentity := false
 	if !owner.IsEmpty() {
-		if k := m.localpeer.GetPeerKey().PublicKey(); !k.IsEmpty() {
+		if k := m.localpeer.GetPeerKey().PublicKey().DID(); !k.IsEmpty() {
 			ownPeer = owner.Equals(k)
 		}
-		if k := m.localpeer.GetIdentityPublicKey(); !k.IsEmpty() {
-			ownIdentity = owner.Equals(k)
-		}
+		// TODO(geoah): fix identity
+		// if k := m.localpeer.GetIdentityPublicKey(); !k.IsEmpty() {
+		// 	ownIdentity = owner.Equals(k)
+		// }
 	}
 	if !ownPeer && !ownIdentity {
 		// add to store
@@ -901,7 +902,7 @@ func (m *manager) AddStreamSubscription(
 			continue
 		}
 
-		if !s.Metadata.Owner.Equals(pub) {
+		if !s.Metadata.Owner.Equals(pub.DID()) {
 			continue
 		}
 
@@ -914,7 +915,7 @@ func (m *manager) AddStreamSubscription(
 
 	s := &stream.Subscription{
 		Metadata: object.Metadata{
-			Owner:  pub,
+			Owner:  pub.DID(),
 			Stream: rootHash,
 		},
 		RootHashes: []chore.Hash{

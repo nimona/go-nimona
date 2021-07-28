@@ -5,30 +5,24 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
+	"nimona.io/pkg/keystream"
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/chore -pkg=localpeer gen "KeyType=chore.Hash"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=certificates_generated.go -imp=nimona.io/pkg/peer -pkg=localpeer gen "KeyType=*object.Certificate"
 
 type (
 	LocalPeer interface {
 		GetPeerKey() crypto.PrivateKey
 		SetPeerKey(crypto.PrivateKey)
-		GetIdentityPublicKey() crypto.PublicKey
-		GetPeerCertificate() *object.CertificateResponse
-		SetPeerCertificate(*object.CertificateResponse)
-		ForgetPeerCertificate()
 		ListenForUpdates() (<-chan UpdateEvent, func())
 	}
 	localPeer struct {
-		keyLock                 sync.RWMutex
-		primaryPeerKey          crypto.PrivateKey
-		hashes                  *ChoreHashesyncList
-		peerCertificateResponse *object.CertificateResponse
-		listeners               map[string]chan UpdateEvent
-		listenersLock           sync.RWMutex
+		keyLock            sync.RWMutex
+		primaryPeerKey     crypto.PrivateKey
+		delegateController *keystream.Controller
+		listeners          map[string]chan UpdateEvent
+		listenersLock      sync.RWMutex
 	}
 	UpdateEvent string
 )
@@ -40,7 +34,6 @@ const (
 func New() LocalPeer {
 	return &localPeer{
 		keyLock:       sync.RWMutex{},
-		hashes:        &ChoreHashesyncList{},
 		listeners:     map[string]chan UpdateEvent{},
 		listenersLock: sync.RWMutex{},
 	}
@@ -56,35 +49,6 @@ func (s *localPeer) GetPeerKey() crypto.PrivateKey {
 	s.keyLock.RLock()
 	defer s.keyLock.RUnlock() //nolint: gocritic
 	return s.primaryPeerKey
-}
-
-func (s *localPeer) GetIdentityPublicKey() crypto.PublicKey {
-	s.keyLock.RLock()
-	defer s.keyLock.RUnlock() //nolint: gocritic
-	if s.peerCertificateResponse == nil {
-		return crypto.EmptyPublicKey
-	}
-	return s.peerCertificateResponse.Metadata.Signature.Signer
-}
-
-func (s *localPeer) GetPeerCertificate() *object.CertificateResponse {
-	s.keyLock.Lock()
-	defer s.keyLock.Unlock()
-	return s.peerCertificateResponse
-}
-
-func (s *localPeer) SetPeerCertificate(c *object.CertificateResponse) {
-	s.keyLock.Lock()
-	s.peerCertificateResponse = c
-	s.keyLock.Unlock()
-	s.publishUpdate(EventIdentityUpdated)
-}
-
-func (s *localPeer) ForgetPeerCertificate() {
-	s.keyLock.Lock()
-	s.peerCertificateResponse = nil
-	s.keyLock.Unlock()
-	s.publishUpdate(EventIdentityUpdated)
 }
 
 func (s *localPeer) publishUpdate(e UpdateEvent) {

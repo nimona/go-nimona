@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 )
 
@@ -23,7 +24,7 @@ func Verify(o *Object) error {
 	own := o.Metadata.Owner
 
 	// if there is no owner and no signature, we're fine
-	if sig.IsEmpty() && own == nil {
+	if sig.IsEmpty() && own == did.Empty {
 		return nil
 	}
 
@@ -53,12 +54,12 @@ func Verify(o *Object) error {
 	}
 
 	// if there is no owner, we're fine
-	if own == nil {
+	if own == did.Empty {
 		return nil
 	}
 
 	// check if the owner matches the signer
-	if *own == *sig.Signer.DID() {
+	if own == sig.Signer.DID() {
 		return nil
 	}
 

@@ -123,7 +123,7 @@ build-examples: $(EXAMPLES)
 
 $(EXAMPLES): $(BINDIR)/examples/%: $(SOURCES)
 	mkdir -p "$(BINDIR)/examples"
-	cd "examples/$*" && go build $(V) -i \
+	cd "examples/$*" && go build $(V) \
 		-o "$(ROOT)/$(BINDIR)/examples/$*" \
 		-ldflags '$(LDFLAGS)'
 

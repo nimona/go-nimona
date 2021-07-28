@@ -120,7 +120,7 @@ func (c *chat) subscribe(
 					continue
 				}
 				if s.Metadata.Owner.Equals(
-					c.local.GetPeerKey().PublicKey(),
+					c.local.GetPeerKey().PublicKey().DID(),
 				) {
 					alreadySubscribed = true
 					or.Close()
@@ -132,7 +132,7 @@ func (c *chat) subscribe(
 			ctx := context.New(context.WithTimeout(time.Second * 5))
 			so := object.MustMarshal(&stream.Subscription{
 				Metadata: object.Metadata{
-					Owner:  c.local.GetPeerKey().PublicKey(),
+					Owner:  c.local.GetPeerKey().PublicKey().DID(),
 					Stream: conversationRootHash,
 				},
 				RootHashes: []chore.Hash{
@@ -323,7 +323,7 @@ func main() {
 					),
 					object.MustMarshal(&ConversationNicknameUpdated{
 						Metadata: object.Metadata{
-							Owner:    local.GetPeerKey().PublicKey(),
+							Owner:    local.GetPeerKey().PublicKey().DID(),
 							Stream:   conversationRootHash,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
@@ -342,7 +342,7 @@ func main() {
 					),
 					object.MustMarshal(&ConversationMessageAdded{
 						Metadata: object.Metadata{
-							Owner:    local.GetPeerKey().PublicKey(),
+							Owner:    local.GetPeerKey().PublicKey().DID(),
 							Stream:   conversationRootHash,
 							Datetime: time.Now().Format(time.RFC3339),
 						},

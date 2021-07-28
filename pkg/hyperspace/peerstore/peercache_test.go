@@ -21,7 +21,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 
 	p1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey(),
+			Owner: opk.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
@@ -31,7 +31,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 
 	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk2.PublicKey(),
+			Owner: opk2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk2.PublicKey(),
@@ -63,7 +63,7 @@ func TestPeerCache_List(t *testing.T) {
 
 	p1a := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey(),
+			Owner: opk.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
@@ -74,7 +74,7 @@ func TestPeerCache_List(t *testing.T) {
 	p1b := &hyperspace.Announcement{
 		Version: 1,
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey(),
+			Owner: opk.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
@@ -84,7 +84,7 @@ func TestPeerCache_List(t *testing.T) {
 
 	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk2.PublicKey(),
+			Owner: opk2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk2.PublicKey(),
@@ -116,7 +116,7 @@ func TestPeerCache_Remove(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey(),
+				Owner: opk.PublicKey().DID(),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),
@@ -141,7 +141,7 @@ func TestPeerCache_Touch(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey(),
+				Owner: opk.PublicKey().DID(),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),
@@ -178,7 +178,7 @@ func TestPeerCache_TTL(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey(),
+				Owner: opk.PublicKey().DID(),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
 				PublicKey: opk.PublicKey(),

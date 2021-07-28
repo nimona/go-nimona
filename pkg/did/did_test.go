@@ -42,6 +42,6 @@ func TestDID_MarshalString(t *testing.T) {
 func TestDID_Equal(t *testing.T) {
 	d1 := MustParse("did:nimona:foo")
 	d2 := MustParse("did:nimona:foo")
-	require.True(t, d1.Equals(d2))
+	require.True(t, d1.Equals(*d2))
 	require.True(t, *d1 == *d2)
 }

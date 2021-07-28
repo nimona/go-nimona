@@ -61,8 +61,8 @@ func (k PublicKey) String() string {
 	return s
 }
 
-func (k PublicKey) DID() *did.DID {
-	return &did.DID{
+func (k PublicKey) DID() did.DID {
+	return did.DID{
 		Method:   did.MethodKey,
 		Identity: k.String(),
 	}

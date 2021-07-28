@@ -135,11 +135,12 @@ func (cfg *Config) setDefaults() {
 	if cfg.Peer.BindAddress == "" {
 		cfg.Peer.BindAddress = "0.0.0.0:0"
 	}
+	// nolint: lll
 	if len(cfg.Peer.Bootstraps) == 0 {
 		cfg.Peer.Bootstraps = []peer.Shorthand{
-			"z6MkvTRseMpsTW3Knm5LJYmQU7JVjZx3gEceNGRgT8cNsf5t@tcps:asimov.bootstrap.nimona.io:22581", // nolint: lll
-			"z6MkvY55pieg8jUfyhYtv6YEmLqCsEgF8TY4QeCufHJYBnmi@tcps:egan.bootstrap.nimona.io:22581",   // nolint: lll
-			"z6MkjjHRY3jJKiWNFLULdYQUWfP8ASZmUrEnNmBtUhAGNxGB@tcps:sloan.bootstrap.nimona.io:22581",  // nolint: lll
+			"z6MkvTRseMpsTW3Knm5LJYmQU7JVjZx3gEceNGRgT8cNsf5t@tcps:asimov.bootstrap.nimona.io:22581",
+			"z6MkvY55pieg8jUfyhYtv6YEmLqCsEgF8TY4QeCufHJYBnmi@tcps:egan.bootstrap.nimona.io:22581",
+			"z6MkjjHRY3jJKiWNFLULdYQUWfP8ASZmUrEnNmBtUhAGNxGB@tcps:sloan.bootstrap.nimona.io:22581",
 		}
 	}
 	if cfg.LogLevel == "" {

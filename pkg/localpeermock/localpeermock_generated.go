@@ -10,7 +10,6 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	crypto "nimona.io/pkg/crypto"
 	localpeer "nimona.io/pkg/localpeer"
-	object "nimona.io/pkg/object"
 )
 
 // MockLocalPeer is a mock of LocalPeer interface.
@@ -34,46 +33,6 @@ func NewMockLocalPeer(ctrl *gomock.Controller) *MockLocalPeer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockLocalPeer) EXPECT() *MockLocalPeerMockRecorder {
 	return m.recorder
-}
-
-// ForgetPeerCertificate mocks base method.
-func (m *MockLocalPeer) ForgetPeerCertificate() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ForgetPeerCertificate")
-}
-
-// ForgetPeerCertificate indicates an expected call of ForgetPeerCertificate.
-func (mr *MockLocalPeerMockRecorder) ForgetPeerCertificate() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForgetPeerCertificate", reflect.TypeOf((*MockLocalPeer)(nil).ForgetPeerCertificate))
-}
-
-// GetIdentityPublicKey mocks base method.
-func (m *MockLocalPeer) GetIdentityPublicKey() crypto.PublicKey {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIdentityPublicKey")
-	ret0, _ := ret[0].(crypto.PublicKey)
-	return ret0
-}
-
-// GetIdentityPublicKey indicates an expected call of GetIdentityPublicKey.
-func (mr *MockLocalPeerMockRecorder) GetIdentityPublicKey() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIdentityPublicKey", reflect.TypeOf((*MockLocalPeer)(nil).GetIdentityPublicKey))
-}
-
-// GetPeerCertificate mocks base method.
-func (m *MockLocalPeer) GetPeerCertificate() *object.CertificateResponse {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPeerCertificate")
-	ret0, _ := ret[0].(*object.CertificateResponse)
-	return ret0
-}
-
-// GetPeerCertificate indicates an expected call of GetPeerCertificate.
-func (mr *MockLocalPeerMockRecorder) GetPeerCertificate() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPeerCertificate", reflect.TypeOf((*MockLocalPeer)(nil).GetPeerCertificate))
 }
 
 // GetPeerKey mocks base method.
@@ -103,18 +62,6 @@ func (m *MockLocalPeer) ListenForUpdates() (<-chan localpeer.UpdateEvent, func()
 func (mr *MockLocalPeerMockRecorder) ListenForUpdates() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListenForUpdates", reflect.TypeOf((*MockLocalPeer)(nil).ListenForUpdates))
-}
-
-// SetPeerCertificate mocks base method.
-func (m *MockLocalPeer) SetPeerCertificate(arg0 *object.CertificateResponse) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetPeerCertificate", arg0)
-}
-
-// SetPeerCertificate indicates an expected call of SetPeerCertificate.
-func (mr *MockLocalPeerMockRecorder) SetPeerCertificate(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPeerCertificate", reflect.TypeOf((*MockLocalPeer)(nil).SetPeerCertificate), arg0)
 }
 
 // SetPeerKey mocks base method.

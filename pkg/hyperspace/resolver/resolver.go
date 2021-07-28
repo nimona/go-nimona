@@ -187,7 +187,7 @@ func (r *resolver) Lookup(
 	// send content requests to recipients
 	req := &hyperspace.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.localpeer.GetPeerKey().PublicKey(),
+			Owner: r.localpeer.GetPeerKey().PublicKey().DID(),
 		},
 		Nonce:       rand.String(12),
 		QueryVector: bl,
@@ -355,11 +355,12 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	for _, c := range hashes {
 		hs = append(hs, c.String())
 	}
-	if c := r.localpeer.GetPeerCertificate(); c != nil {
-		if !c.Metadata.Signature.IsEmpty() {
-			hs = append(hs, c.Metadata.Signature.Signer.String())
-		}
-	}
+	// TODO(geoah): fix identity
+	// if c := r.localpeer.GetPeerCertificate(); c != nil {
+	// 	if !c.Metadata.Signature.IsEmpty() {
+	// 		hs = append(hs, c.Metadata.Signature.Signer.String())
+	// 	}
+	// }
 	vec := hyperspace.New(hs...)
 
 	if lastAnnouncement != nil &&
@@ -370,7 +371,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 
 	localPeerAnnouncementCache := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: peerKey,
+			Owner: peerKey.DID(),
 		},
 		Version: time.Now().Unix(),
 		ConnectionInfo: &peer.ConnectionInfo{

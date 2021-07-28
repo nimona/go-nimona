@@ -187,7 +187,7 @@ func main() {
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: local.GetPeerKey().PublicKey(),
+						Owner: local.GetPeerKey().PublicKey().DID(),
 					},
 					Data: chore.Map{
 						"nonce": chore.String(rand.String(8)),

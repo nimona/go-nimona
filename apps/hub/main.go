@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,14 +29,11 @@ import (
 	"github.com/shurcooL/httpfs/vfsutil"
 	"github.com/skip2/go-qrcode"
 
-	"nimona.io/internal/rand"
-	"nimona.io/pkg/certificateutils"
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -179,8 +175,9 @@ type (
 		daemon daemon.Daemon
 		// identity
 		sync.RWMutex
-		peerCertificateResponse *object.CertificateResponse
-		identityPrivateKey      *crypto.PrivateKey
+		// TODO(geoah): fix identity
+		// peerCertificateResponse *object.CertificateResponse
+		identityPrivateKey *crypto.PrivateKey
 	}
 )
 
@@ -199,12 +196,13 @@ func New(
 		if err := json.Unmarshal([]byte(v), crtResObj); err != nil {
 			return nil, err
 		}
-		crtRes := &object.CertificateResponse{}
-		if err := object.Unmarshal(crtResObj, crtRes); err != nil {
-			return nil, err
-		}
-		h.peerCertificateResponse = crtRes
-		h.daemon.LocalPeer().SetPeerCertificate(crtRes)
+		// TODO(geoah): fix identity
+		// crtRes := &object.CertificateResponse{}
+		// if err := object.Unmarshal(crtResObj, crtRes); err != nil {
+		// 	return nil, err
+		// }
+		// h.peerCertificateResponse = crtRes
+		// h.daemon.LocalPeer().SetPeerCertificate(crtRes)
 	}
 
 	if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
@@ -218,16 +216,17 @@ func New(
 	return h, nil
 }
 
-func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
-	h.Lock()
-	defer h.Unlock()
-	h.daemon.ObjectStore().Pin(object.MustMarshal(r).Hash())
-	h.daemon.ObjectStore().Put(object.MustMarshal(r))
-	h.peerCertificateResponse = r
-	b, _ := json.Marshal(object.MustMarshal(r))
-	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
-	h.daemon.LocalPeer().SetPeerCertificate(r)
-}
+// TODO(geoah): fix identity
+// func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
+// 	h.Lock()
+// 	defer h.Unlock()
+// 	h.daemon.ObjectStore().Pin(object.MustMarshal(r).Hash())
+// 	h.daemon.ObjectStore().Put(object.MustMarshal(r))
+// 	h.peerCertificateResponse = r
+// 	b, _ := json.Marshal(object.MustMarshal(r))
+// 	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
+// 	h.daemon.LocalPeer().SetPeerCertificate(r)
+// }
 
 func (h *Hub) PutIdentityPrivateKey(k crypto.PrivateKey) {
 	h.Lock()
@@ -245,10 +244,10 @@ func (h *Hub) GetIdentityPrivateKey() *crypto.PrivateKey {
 func (h *Hub) GetIdentityPublicKey() *crypto.PublicKey {
 	h.RLock()
 	defer h.RUnlock()
-	if h.peerCertificateResponse != nil {
-		// TODO(geoah) Owner or Signer? Can they be different? DOCUMENT
-		return &h.peerCertificateResponse.Metadata.Owner
-	}
+	// TODO(geoah): fix identity
+	// if h.peerCertificateResponse != nil {
+	// 	return &h.peerCertificateResponse.Metadata.Owner
+	// }
 	return nil
 }
 
@@ -257,9 +256,10 @@ func (h *Hub) ForgetIdentity() {
 	defer h.Unlock()
 	h.daemon.Preferences().Remove(pkKeyIdentity)
 	h.daemon.Preferences().Remove(pkPeerCertificate)
-	h.daemon.LocalPeer().ForgetPeerCertificate()
-	h.identityPrivateKey = nil
-	h.peerCertificateResponse = nil
+	// TODO(geoah): fix identity
+	// h.daemon.LocalPeer().ForgetPeerCertificate()
+	// h.identityPrivateKey = nil
+	// h.peerCertificateResponse = nil
 	// TODO truncate db
 }
 
@@ -354,7 +354,7 @@ func main() {
 		}
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: *k,
+				Owner: k.DID(),
 			},
 		}
 		contactEvents := d.ObjectManager().Subscribe(
@@ -438,185 +438,188 @@ func main() {
 	})
 
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
-		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
-		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
-		var csr *object.CertificateRequest
-		if linkMnemonic {
-			csr = &object.CertificateRequest{
-				Metadata: object.Metadata{
-					Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-				},
-				Nonce:                  rand.String(12),
-				VendorName:             "Nimona",
-				VendorURL:              "https://nimona.io",
-				ApplicationName:        "Hub",
-				ApplicationDescription: "Nimona Hub",
-				ApplicationURL:         "https://nimona.io/hub",
-				Permissions: []object.CertificatePermission{{
-					Metadata: object.Metadata{
-						Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-					},
-					Types:   []string{"*"},
-					Actions: []string{"*"},
-				}},
-			}
-			k := d.LocalPeer().GetPeerKey()
-			csrSig, err := object.NewSignature(k, object.MustMarshal(csr))
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			csr.Metadata.Signature = csrSig
-			if _, err = d.ObjectManager().Put(
-				context.New(
-					context.WithParent(r.Context()),
-					context.WithTimeout(3*time.Second),
-				),
-				object.MustMarshal(csr),
-			); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-		values := struct {
-			PublicKey    string
-			PrivateBIP39 string
-			Show         bool
-			Link         bool
-			CSR          *object.CertificateRequest
-		}{
-			Show: showMnemonic,
-			Link: linkMnemonic,
-			CSR:  csr,
-		}
-		go func() {
-			csrResCh := certificateutils.WaitForCertificateResponse(
-				context.New(
-					context.WithTimeout(15*time.Minute),
-				),
-				d.Network(),
-				csr,
-			)
-			csrRes := <-csrResCh
-			if csrRes == nil {
-				return
-			}
-			h.SetPeerCertificate(csrRes)
-			values.PublicKey = h.GetIdentityPublicKey().String()
-			turboStream.SendEvent(
-				hotwire.StreamActionReplace,
-				"peer-identity",
-				tplIdentityInner,
-				values,
-			) // nolint: errcheck
-			// TODO figure out how to surface errors?
-		}()
-		if k := h.GetIdentityPublicKey(); k != nil {
-			values.PublicKey = k.String()
-		}
-		if k := h.GetIdentityPrivateKey(); k != nil {
-			values.PrivateBIP39 = k.BIP39()
-		}
-		err := tplIdentity.Execute(
-			w,
-			values,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// TODO(geoah): fix identity
+		// showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
+		// linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
+		// var csr *object.CertificateRequest
+		// if linkMnemonic {
+		// 	csr = &object.CertificateRequest{
+		// 		Metadata: object.Metadata{
+		// 			Owner: d.LocalPeer().GetPeerKey().PublicKey(),
+		// 		},
+		// 		Nonce:                  rand.String(12),
+		// 		VendorName:             "Nimona",
+		// 		VendorURL:              "https://nimona.io",
+		// 		ApplicationName:        "Hub",
+		// 		ApplicationDescription: "Nimona Hub",
+		// 		ApplicationURL:         "https://nimona.io/hub",
+		// 		Permissions: []object.CertificatePermission{{
+		// 			Metadata: object.Metadata{
+		// 				Owner: d.LocalPeer().GetPeerKey().PublicKey(),
+		// 			},
+		// 			Types:   []string{"*"},
+		// 			Actions: []string{"*"},
+		// 		}},
+		// 	}
+		// 	k := d.LocalPeer().GetPeerKey()
+		// 	csrSig, err := object.NewSignature(k, object.MustMarshal(csr))
+		// 	if err != nil {
+		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 		return
+		// 	}
+		// 	csr.Metadata.Signature = csrSig
+		// 	if _, err = d.ObjectManager().Put(
+		// 		context.New(
+		// 			context.WithParent(r.Context()),
+		// 			context.WithTimeout(3*time.Second),
+		// 		),
+		// 		object.MustMarshal(csr),
+		// 	); err != nil {
+		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 		return
+		// 	}
+		// }
+		// values := struct {
+		// 	PublicKey    string
+		// 	PrivateBIP39 string
+		// 	Show         bool
+		// 	Link         bool
+		// 	CSR          *object.CertificateRequest
+		// }{
+		// 	Show: showMnemonic,
+		// 	Link: linkMnemonic,
+		// 	CSR:  csr,
+		// }
+		// go func() {
+		// 	csrResCh := certificateutils.WaitForCertificateResponse(
+		// 		context.New(
+		// 			context.WithTimeout(15*time.Minute),
+		// 		),
+		// 		d.Network(),
+		// 		csr,
+		// 	)
+		// 	csrRes := <-csrResCh
+		// 	if csrRes == nil {
+		// 		return
+		// 	}
+		// 	h.SetPeerCertificate(csrRes)
+		// 	values.PublicKey = h.GetIdentityPublicKey().String()
+		// 	turboStream.SendEvent(
+		// 		hotwire.StreamActionReplace,
+		// 		"peer-identity",
+		// 		tplIdentityInner,
+		// 		values,
+		// 	) // nolint: errcheck
+		// 	// TODO figure out how to surface errors?
+		// }()
+		// if k := h.GetIdentityPublicKey(); k != nil {
+		// 	values.PublicKey = k.String()
+		// }
+		// if k := h.GetIdentityPrivateKey(); k != nil {
+		// 	values.PrivateBIP39 = k.BIP39()
+		// }
+		// err := tplIdentity.Execute(
+		// 	w,
+		// 	values,
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
-		k, err := crypto.NewEd25519PrivateKey()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// TODO(geoah): also create a certificate
-		req := object.CertificateRequest{
-			Metadata: object.Metadata{
-				Owner: k.PublicKey(),
-			},
-			Nonce:                  rand.String(12),
-			VendorName:             "Nimona",
-			VendorURL:              "https://nimona.io",
-			ApplicationName:        "Hub",
-			ApplicationDescription: "Nimona Hub",
-			ApplicationURL:         "https://nimona.io/hub",
-			Permissions: []object.CertificatePermission{{
-				Metadata: object.Metadata{
-					Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-				},
-				Types:   []string{"*"},
-				Actions: []string{"*"},
-			}},
-		}
-		req.Metadata.Signature, err = object.NewSignature(
-			k,
-			object.MustMarshal(req),
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		crtRes, err := object.NewCertificate(
-			k,
-			req,
-			true,
-			"Created by Nimona Hub",
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		h.SetPeerCertificate(crtRes)
-		h.PutIdentityPrivateKey(k)
-		http.Redirect(w, r, "/identity", http.StatusFound)
+		// TODO(geoah): fix identity
+		// k, err := crypto.NewEd25519PrivateKey()
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// // TODO(geoah): also create a certificate
+		// req := object.CertificateRequest{
+		// 	Metadata: object.Metadata{
+		// 		Owner: k.PublicKey(),
+		// 	},
+		// 	Nonce:                  rand.String(12),
+		// 	VendorName:             "Nimona",
+		// 	VendorURL:              "https://nimona.io",
+		// 	ApplicationName:        "Hub",
+		// 	ApplicationDescription: "Nimona Hub",
+		// 	ApplicationURL:         "https://nimona.io/hub",
+		// 	Permissions: []object.CertificatePermission{{
+		// 		Metadata: object.Metadata{
+		// 			Owner: d.LocalPeer().GetPeerKey().PublicKey(),
+		// 		},
+		// 		Types:   []string{"*"},
+		// 		Actions: []string{"*"},
+		// 	}},
+		// }
+		// req.Metadata.Signature, err = object.NewSignature(
+		// 	k,
+		// 	object.MustMarshal(req),
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// crtRes, err := object.NewCertificate(
+		// 	k,
+		// 	req,
+		// 	true,
+		// 	"Created by Nimona Hub",
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// h.SetPeerCertificate(crtRes)
+		// h.PutIdentityPrivateKey(k)
+		// http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Post("/identity/link", func(w http.ResponseWriter, r *http.Request) {
-		k, err := crypto.NewEd25519PrivateKeyFromBIP39(
-			r.PostFormValue("mnemonic"),
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csrHash := chore.Hash(r.PostFormValue("csr"))
-		if err = d.ObjectStore().Pin(csrHash); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csrObj, err := d.ObjectStore().Get(csrHash)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csr := &object.CertificateRequest{}
-		err = object.Unmarshal(csrObj, csr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csrRes, err := object.NewCertificate(k, *csr, true, "Signed by Hub")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = d.ObjectStore().Put(object.MustMarshal(csrRes))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = d.ObjectStore().Pin(object.MustMarshal(csrRes).Hash())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		h.SetPeerCertificate(csrRes)
-		h.PutIdentityPrivateKey(k)
-		http.Redirect(w, r, "/identity", http.StatusFound)
+		// TODO(geoah): fix identity
+		// k, err := crypto.NewEd25519PrivateKeyFromBIP39(
+		// 	r.PostFormValue("mnemonic"),
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csrHash := chore.Hash(r.PostFormValue("csr"))
+		// if err = d.ObjectStore().Pin(csrHash); err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csrObj, err := d.ObjectStore().Get(csrHash)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csr := &object.CertificateRequest{}
+		// err = object.Unmarshal(csrObj, csr)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csrRes, err := object.NewCertificate(k, *csr, true, "Signed by Hub")
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// err = d.ObjectStore().Put(object.MustMarshal(csrRes))
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// err = d.ObjectStore().Pin(object.MustMarshal(csrRes).Hash())
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// h.SetPeerCertificate(csrRes)
+		// h.PutIdentityPrivateKey(k)
+		// http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/identity/forget", func(w http.ResponseWriter, r *http.Request) {
@@ -649,7 +652,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: *k,
+				Owner: k.DID(),
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -728,7 +731,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: *k,
+				Owner: k.DID(),
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -749,7 +752,7 @@ func main() {
 		}
 		rel := relationship.Added{
 			Metadata: object.Metadata{
-				Owner:  *k,
+				Owner:  k.DID(),
 				Stream: contactsStreamRootHash,
 			},
 			Alias:       alias,
@@ -797,7 +800,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: *k,
+				Owner: k.DID(),
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -817,7 +820,7 @@ func main() {
 		}
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
-				Owner:  *k,
+				Owner:  k.DID(),
 				Stream: contactsStreamRootHash,
 			},
 			RemoteParty: remotePartyKey,
@@ -940,174 +943,177 @@ func main() {
 	})
 
 	r.Get("/certificates", func(w http.ResponseWriter, r *http.Request) {
-		values := struct {
-			URL                 string
-			HasIdentity         bool
-			CertificateReponses []*object.CertificateResponse
-		}{
-			URL:                 r.URL.String(),
-			HasIdentity:         h.GetIdentityPublicKey() != nil,
-			CertificateReponses: []*object.CertificateResponse{},
-		}
-		if h.GetIdentityPublicKey() == nil {
-			err = tplCertificates.Execute(
-				w,
-				values,
-			)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			return
-		}
-		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
-			sqlobjectstore.FilterByObjectType(
-				object.CertificateResponseType,
-			),
-			sqlobjectstore.FilterByOwner(
-				*h.GetIdentityPublicKey(),
-			),
-		)
-		if err != nil && err != objectstore.ErrNotFound {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// TODO(geoah): fix identity
+		// values := struct {
+		// 	URL                 string
+		// 	HasIdentity         bool
+		// 	CertificateReponses []*object.CertificateResponse
+		// }{
+		// 	URL:                 r.URL.String(),
+		// 	HasIdentity:         h.GetIdentityPublicKey() != nil,
+		// 	CertificateReponses: []*object.CertificateResponse{},
+		// }
+		// if h.GetIdentityPublicKey() == nil {
+		// 	err = tplCertificates.Execute(
+		// 		w,
+		// 		values,
+		// 	)
+		// 	if err != nil {
+		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 		return
+		// 	}
+		// 	return
+		// }
+		// reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
+		// 	sqlobjectstore.FilterByObjectType(
+		// 		object.CertificateResponseType,
+		// 	),
+		// 	sqlobjectstore.FilterByOwner(
+		// 		*h.GetIdentityPublicKey(),
+		// 	),
+		// )
+		// if err != nil && err != objectstore.ErrNotFound {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
-		if err != objectstore.ErrNotFound {
-			for {
-				o, err := reader.Read()
-				if err != nil {
-					break
-				}
-				crtRes := &object.CertificateResponse{}
-				if err := object.Unmarshal(o, crtRes); err != nil {
-					continue
-				}
-				values.CertificateReponses = append(
-					values.CertificateReponses,
-					crtRes,
-				)
-			}
-		}
-		err = tplCertificates.Execute(
-			w,
-			values,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// if err != objectstore.ErrNotFound {
+		// 	for {
+		// 		o, err := reader.Read()
+		// 		if err != nil {
+		// 			break
+		// 		}
+		// 		crtRes := &object.CertificateResponse{}
+		// 		if err := object.Unmarshal(o, crtRes); err != nil {
+		// 			continue
+		// 		}
+		// 		values.CertificateReponses = append(
+		// 			values.CertificateReponses,
+		// 			crtRes,
+		// 		)
+		// 	}
+		// }
+		// err = tplCertificates.Execute(
+		// 	w,
+		// 	values,
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 	})
 
 	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
-		csrHash := chore.Hash(r.PostFormValue("csrHash"))
-		csrProviders, err := d.Resolver().Lookup(
-			context.New(
-				context.WithParent(r.Context()),
-				context.WithTimeout(3*time.Second),
-			),
-			resolver.LookupByHash(csrHash),
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if len(csrProviders) == 0 {
-			http.Error(w, "no results", http.StatusNotFound)
-			return
-		}
-		csrObj, err := d.ObjectManager().Request(
-			context.New(
-				context.WithParent(r.Context()),
-				context.WithTimeout(3*time.Second),
-			),
-			csrHash,
-			csrProviders[0],
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = d.ObjectManager().Put(
-			context.New(
-				context.WithParent(r.Context()),
-				context.WithTimeout(time.Second),
-			),
-			csrObj,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csr := &object.CertificateRequest{}
-		err = object.Unmarshal(csrObj, csr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		values := struct {
-			URL                string
-			CertificateRequest *object.CertificateRequest
-		}{
-			URL:                r.URL.String(),
-			CertificateRequest: csr,
-		}
-		err = tplCertificatesCsr.Execute(
-			w,
-			values,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// TODO(geoah): fix identity
+		// csrHash := chore.Hash(r.PostFormValue("csrHash"))
+		// csrProviders, err := d.Resolver().Lookup(
+		// 	context.New(
+		// 		context.WithParent(r.Context()),
+		// 		context.WithTimeout(3*time.Second),
+		// 	),
+		// 	resolver.LookupByHash(csrHash),
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// if len(csrProviders) == 0 {
+		// 	http.Error(w, "no results", http.StatusNotFound)
+		// 	return
+		// }
+		// csrObj, err := d.ObjectManager().Request(
+		// 	context.New(
+		// 		context.WithParent(r.Context()),
+		// 		context.WithTimeout(3*time.Second),
+		// 	),
+		// 	csrHash,
+		// 	csrProviders[0],
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// _, err = d.ObjectManager().Put(
+		// 	context.New(
+		// 		context.WithParent(r.Context()),
+		// 		context.WithTimeout(time.Second),
+		// 	),
+		// 	csrObj,
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csr := &object.CertificateRequest{}
+		// err = object.Unmarshal(csrObj, csr)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// values := struct {
+		// 	URL                string
+		// 	CertificateRequest *object.CertificateRequest
+		// }{
+		// 	URL:                r.URL.String(),
+		// 	CertificateRequest: csr,
+		// }
+		// err = tplCertificatesCsr.Execute(
+		// 	w,
+		// 	values,
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 	})
 
 	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
-		csrHash := chore.Hash(r.PostFormValue("csrHash"))
-		csrObj, err := d.ObjectStore().Get(csrHash)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = d.ObjectStore().Pin(csrHash)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		csr := &object.CertificateRequest{}
-		err = object.Unmarshal(csrObj, csr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		privateIdentityKey := h.GetIdentityPrivateKey()
-		if privateIdentityKey == nil {
-			http.Error(w, "no private key", http.StatusInternalServerError)
-			return
-		}
-		csrRes, err := object.NewCertificate(
-			*privateIdentityKey,
-			*csr,
-			true,
-			"",
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = d.Network().Send(
-			context.New(
-				context.WithParent(r.Context()),
-				context.WithTimeout(3*time.Second),
-			),
-			object.MustMarshal(csrRes),
-			csr.Metadata.Signature.Signer,
-		)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, "/certificates", http.StatusFound)
+		// TODO(geoah): fix identity
+		// csrHash := chore.Hash(r.PostFormValue("csrHash"))
+		// csrObj, err := d.ObjectStore().Get(csrHash)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// err = d.ObjectStore().Pin(csrHash)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// csr := &object.CertificateRequest{}
+		// err = object.Unmarshal(csrObj, csr)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// privateIdentityKey := h.GetIdentityPrivateKey()
+		// if privateIdentityKey == nil {
+		// 	http.Error(w, "no private key", http.StatusInternalServerError)
+		// 	return
+		// }
+		// csrRes, err := object.NewCertificate(
+		// 	*privateIdentityKey,
+		// 	*csr,
+		// 	true,
+		// 	"",
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// err = d.Network().Send(
+		// 	context.New(
+		// 		context.WithParent(r.Context()),
+		// 		context.WithTimeout(3*time.Second),
+		// 	),
+		// 	object.MustMarshal(csrRes),
+		// 	csr.Metadata.Signature.Signer,
+		// )
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+		// http.Redirect(w, r, "/certificates", http.StatusFound)
 	})
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {

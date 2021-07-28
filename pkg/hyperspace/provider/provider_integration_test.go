@@ -28,7 +28,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net1.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
@@ -71,7 +71,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	net2 := newPeer(t)
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net2.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net2.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net2.LocalPeer().GetPeerKey().PublicKey(),
@@ -120,7 +120,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
