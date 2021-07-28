@@ -6,7 +6,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"nimona.io/pkg/chore"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
 )
 
@@ -20,7 +20,7 @@ type (
 			ObjectHashes []chore.Hash
 			StreamHashes []chore.Hash
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []did.DID
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []ObjectFilter
@@ -33,12 +33,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ObjectHashes []chore.Hash
 			StreamHashes []chore.Hash
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []did.DID
 		}{
 			ObjectHashes: []chore.Hash{},
 			StreamHashes: []chore.Hash{},
 			ContentTypes: []string{},
-			Owners:       []crypto.PublicKey{},
+			Owners:       []did.DID{},
 		},
 		Filters: []ObjectFilter{},
 	}
@@ -62,7 +62,7 @@ func FilterByHash(hs ...chore.Hash) LookupOption {
 	}
 }
 
-func FilterByOwner(hs ...crypto.PublicKey) LookupOption {
+func FilterByOwner(hs ...did.DID) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Owners = append(opts.Lookups.Owners, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {

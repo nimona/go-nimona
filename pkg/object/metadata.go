@@ -13,7 +13,7 @@ type (
 	// TODO: add version
 	// TODO: consider renaming datetime to timestamp
 	Metadata struct {
-		Owner     *did.DID   `nimona:"owner:s"`
+		Owner     did.DID    `nimona:"owner:s"`
 		Datetime  string     `nimona:"datetime:s"`
 		Parents   Parents    `nimona:"parents:m"`
 		Policies  Policies   `nimona:"policies:am"`

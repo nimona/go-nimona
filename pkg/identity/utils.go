@@ -20,7 +20,7 @@ func Lookup(
 	// TODO check key usage is identity
 	streamRoot := &ProfileStreamRoot{
 		Metadata: object.Metadata{
-			Owner: idKey,
+			Owner: idKey.DID(),
 		},
 	}
 	streamRootObj, err := object.Marshal(streamRoot)

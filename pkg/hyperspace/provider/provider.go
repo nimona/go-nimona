@@ -209,7 +209,7 @@ func (p *Provider) handlePeerLookup(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.local.GetPeerKey().PublicKey(),
+			Owner: p.local.GetPeerKey().PublicKey().DID(),
 		},
 		Nonce:         q.Nonce,
 		QueryVector:   q.QueryVector,

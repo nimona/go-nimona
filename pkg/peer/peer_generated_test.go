@@ -19,7 +19,7 @@ func TestEncoding(t *testing.T) {
 
 	c := &ConnectionInfo{
 		Metadata: object.Metadata{
-			Owner: &did.DID{
+			Owner: did.DID{
 				Method:   did.MethodKey,
 				Identity: "foo",
 			},

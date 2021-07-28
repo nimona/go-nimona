@@ -26,7 +26,7 @@ func TestResolver_Integration(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
@@ -39,7 +39,7 @@ func TestResolver_Integration(t *testing.T) {
 	net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net1.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
@@ -70,7 +70,7 @@ func TestResolver_Integration(t *testing.T) {
 	// add a couple more random peers to the provider's cache
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: p2.PublicKey(),
+			Owner: p2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p2.PublicKey(),
@@ -79,7 +79,7 @@ func TestResolver_Integration(t *testing.T) {
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPeerKey().PublicKey(),
+			Owner: net0.LocalPeer().GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p3.PublicKey(),

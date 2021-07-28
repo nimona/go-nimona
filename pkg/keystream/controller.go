@@ -107,7 +107,7 @@ func getPrivateKey(
 	}
 
 	pk := &crypto.PrivateKey{}
-	err = pk.UnmarshalText(en.Value)
+	err = pk.UnmarshalString(string(en.Value))
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal active key, %w", err)
 	}
@@ -127,12 +127,12 @@ func storePrivateKey(
 	defer tx.Commit()
 
 	key := getPublicKeyHash(privateKey.PublicKey())
-	value, err := privateKey.MarshalText()
+	value, err := privateKey.MarshalString()
 	if err != nil {
 		return fmt.Errorf("unable to marshal key, %w", err)
 	}
 
-	err = tx.Put(privateKeysBucket, []byte(key), value, 0)
+	err = tx.Put(privateKeysBucket, []byte(key), []byte(value), 0)
 	if err != nil {
 		return fmt.Errorf("unable to put key, %w", err)
 	}

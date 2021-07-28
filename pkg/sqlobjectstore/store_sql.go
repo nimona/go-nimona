@@ -199,7 +199,8 @@ func (st *Store) PutWithTTL(
 	// TODO support multiple owners
 	ownerPublicKey := ""
 	if !obj.Metadata.Owner.IsEmpty() {
-		ownerPublicKey = obj.Metadata.Owner.String()
+		// nolint: errcheck
+		ownerPublicKey, _ = obj.Metadata.Owner.MarshalString()
 	}
 
 	// if the object doesn't belong to a stream, we need to set the stream
@@ -496,7 +497,7 @@ func (st *Store) Filter(
 	if len(options.Filters.Owners) > 0 {
 		qs := strings.Repeat(",?", len(options.Filters.Owners))[1:]
 		where += "AND OwnerPublicKey IN (" + qs + ") "
-		whereArgs = append(whereArgs, aktoai(options.Filters.Owners)...)
+		whereArgs = append(whereArgs, astoai(options.Filters.Owners)...)
 	}
 
 	where += fmt.Sprintf(

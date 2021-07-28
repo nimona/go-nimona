@@ -10,6 +10,8 @@ const (
 	ErrInvalidDID = errors.Error("invalid DID")
 )
 
+var Empty = DID{}
+
 type Method string
 
 const (
@@ -30,18 +32,26 @@ type DID struct {
 	Identity string
 }
 
-func (d *DID) Equals(d2 *DID) bool {
-	if d == d2 && d != nil {
-		return true
-	}
-	if d == nil || d2 == nil {
-		return false
-	}
-	return d.Method == d2.Method && d.Identity == d2.Identity
+func (d *DID) Equals(d2 DID) bool {
+	return *d == d2
 }
 
+func (d *DID) IsEmpty() bool {
+	return *d == Empty
+}
+
+// MarshalString returns the string representation of the DID.
+// Never returns an error.
 func (id DID) MarshalString() (string, error) {
-	return didPrefix + string(id.Method) + ":" + id.Identity, nil
+	return id.String(), nil
+}
+
+// String returns the string representation of the DID.
+func (id DID) String() string {
+	if id == Empty {
+		return ""
+	}
+	return didPrefix + string(id.Method) + ":" + id.Identity
 }
 
 func (id *DID) UnmarshalString(s string) error {
@@ -58,6 +68,9 @@ func (id *DID) UnmarshalString(s string) error {
 }
 
 func Parse(s string) (*DID, error) {
+	if s == "" {
+		return &Empty, nil
+	}
 	did := &DID{}
 	if err := did.UnmarshalString(s); err != nil {
 		return nil, err

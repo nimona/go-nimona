@@ -6,7 +6,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"nimona.io/pkg/chore"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 )
 
 // FilterOptions
@@ -19,7 +19,7 @@ type (
 			ObjectHashes []chore.Hash
 			StreamHashes []chore.Hash
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []string
 			OrderBy      string
 			OrderDir     string
 			Limit        *int
@@ -34,7 +34,7 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			ObjectHashes []chore.Hash
 			StreamHashes []chore.Hash
 			ContentTypes []string
-			Owners       []crypto.PublicKey
+			Owners       []string
 			OrderBy      string
 			OrderDir     string
 			Limit        *int
@@ -43,7 +43,7 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			ObjectHashes: []chore.Hash{},
 			StreamHashes: []chore.Hash{},
 			ContentTypes: []string{},
-			Owners:       []crypto.PublicKey{},
+			Owners:       []string{},
 			OrderBy:      "Created",
 			OrderDir:     "ASC",
 		},
@@ -79,7 +79,11 @@ func FilterByHash(hs ...chore.Hash) FilterOption {
 	}
 }
 
-func FilterByOwner(hs ...crypto.PublicKey) FilterOption {
+func FilterByOwner(owners ...did.DID) FilterOption {
+	hs := []string{}
+	for _, owner := range owners {
+		hs = append(hs, owner.String())
+	}
 	return func(opts *FilterOptions) {
 		opts.Filters.Owners = append(opts.Filters.Owners, hs...)
 	}

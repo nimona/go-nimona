@@ -144,7 +144,7 @@ func TestFilter(t *testing.T) {
 			},
 		}
 		if i%2 == 0 {
-			obj.Metadata.Owner = k.PublicKey()
+			obj.Metadata.Owner = k.PublicKey().DID()
 		}
 		objects = append(objects, obj)
 		err = store.Put(obj)
@@ -165,7 +165,7 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(hashes), len(got))
 	objectReader, err = store.Filter(
-		FilterByOwner(k.PublicKey()),
+		FilterByOwner(k.PublicKey().DID()),
 	)
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)

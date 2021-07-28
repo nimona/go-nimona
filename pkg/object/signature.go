@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 )
 
@@ -116,7 +117,7 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 		if !meta.Signature.IsEmpty() {
 			return true
 		}
-		if meta.Owner == nil {
+		if meta.Owner == did.Empty {
 			return true
 		}
 		// TODO(geoah): figure out if we should be signing this object
