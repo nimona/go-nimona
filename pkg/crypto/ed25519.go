@@ -80,6 +80,12 @@ func (k PublicKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
 }
 
+// UnmarshalText implements encoding.TextUnmarshaler mainly for use
+// by envconfig.
+func (k *PublicKey) UnmarshalText(b []byte) error {
+	return k.UnmarshalString(string(b))
+}
+
 func (k *PublicKey) UnmarshalString(s string) error {
 	_, b, err := multibase.Decode(s)
 	if err != nil {
@@ -135,6 +141,12 @@ func (k PrivateKey) MarshalString() (string, error) {
 
 func (k PrivateKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.String())
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler mainly for use
+// by envconfig.
+func (k *PrivateKey) UnmarshalText(b []byte) error {
+	return k.UnmarshalString(string(b))
 }
 
 func (k *PrivateKey) UnmarshalString(s string) error {
