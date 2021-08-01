@@ -23,7 +23,7 @@ func TestEncoding(t *testing.T) {
 				Method:   did.MethodKey,
 				Identity: "foo",
 			},
-			Datetime: time.Now().Format(time.RFC3339),
+			Timestamp: time.Now().Format(time.RFC3339),
 		},
 		Version:       1,
 		PublicKey:     k.PublicKey(),

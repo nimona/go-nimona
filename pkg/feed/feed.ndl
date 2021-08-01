@@ -6,16 +6,16 @@ import nimona.io/object object
 stream nimona.io/feed {
     signed root event Created {
         objectType string
-        datetime string
+        timestamp string
     }
     signed event Added {
         objectHash repeated string type=nimona.io/chore.Hash
         sequence int
-        datetime string
+        timestamp string
     }
     signed event Removed {
         objectHash repeated string type=nimona.io/chore.Hash
         sequence int
-        datetime string
+        timestamp string
     }
 }

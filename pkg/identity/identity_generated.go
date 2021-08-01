@@ -11,11 +11,11 @@ import (
 const ProfileType = "nimona.io/identity.Profile"
 
 type Profile struct {
-	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/identity.Profile"`
-	Version  int64           `nimona:"version:i"`
-	Datetime string          `nimona:"datetime:s"`
-	Name     string          `nimona:"name:s"`
-	Image    chore.Hash      `nimona:"image:s"`
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/identity.Profile"`
+	Version   int64           `nimona:"version:i"`
+	Timestamp string          `nimona:"timestamp:s"`
+	Name      string          `nimona:"name:s"`
+	Image     chore.Hash      `nimona:"image:s"`
 }
 
 const ProfileStreamRootType = "stream:nimona.io/identity.Profile"
@@ -44,7 +44,7 @@ type AddressbookContactAdded struct {
 	Alias       string           `nimona:"alias:s"`
 	RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
 	Profile     Profile          `nimona:"profile:m"`
-	Datetime    string           `nimona:"datetime:s"`
+	Timestamp   string           `nimona:"timestamp:s"`
 }
 
 const AddressbookContactRemovedType = "event:nimona.io/identity/addressbook.ContactRemoved"
@@ -52,5 +52,5 @@ const AddressbookContactRemovedType = "event:nimona.io/identity/addressbook.Cont
 type AddressbookContactRemoved struct {
 	Metadata    object.Metadata  `nimona:"@metadata:m,type=event:nimona.io/identity/addressbook.ContactRemoved"`
 	RemoteParty crypto.PublicKey `nimona:"remoteParty:s"`
-	Datetime    string           `nimona:"datetime:s"`
+	Timestamp   string           `nimona:"timestamp:s"`
 }

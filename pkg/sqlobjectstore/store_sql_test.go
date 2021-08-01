@@ -135,7 +135,7 @@ func TestFilter(t *testing.T) {
 			Type: fixtures.TestSubscribedType,
 			Metadata: object.Metadata{
 				Root: ph,
-				Datetime: time.Now().
+				Timestamp: time.Now().
 					Add(time.Duration(i) * time.Hour).
 					Format(time.RFC3339),
 			},

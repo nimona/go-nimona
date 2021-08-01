@@ -8,10 +8,10 @@ stream nimona.io/schema/relationship {
     signed event Added {
         alias string
         remoteParty string type=nimona.io/crypto.PublicKey
-        datetime string
+        timestamp string
     }
     signed event Removed {
         remoteParty string type=nimona.io/crypto.PublicKey
-        datetime string
+        timestamp string
     }
 }

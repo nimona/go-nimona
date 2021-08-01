@@ -212,7 +212,7 @@ func (st *Store) PutWithTTL(
 	un := 0
 	dt, err := time.Parse(
 		time.RFC3339,
-		obj.Metadata.Datetime,
+		obj.Metadata.Timestamp,
 	)
 	if err == nil {
 		un = int(dt.Unix())

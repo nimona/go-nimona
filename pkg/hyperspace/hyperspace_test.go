@@ -107,13 +107,13 @@ func TestAnnouncement_SignDeep(t *testing.T) {
 	t.Run("should pass, sign announcement ", func(t *testing.T) {
 		n := &Announcement{
 			Metadata: object.Metadata{
-				Owner:    k.PublicKey().DID(),
-				Datetime: "foo",
+				Owner:     k.PublicKey().DID(),
+				Timestamp: "foo",
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
 				Metadata: object.Metadata{
-					Owner:    k.PublicKey().DID(),
-					Datetime: "foo",
+					Owner:     k.PublicKey().DID(),
+					Timestamp: "foo",
 				},
 				Version:       2,
 				PublicKey:     k.PublicKey(),
@@ -121,8 +121,8 @@ func TestAnnouncement_SignDeep(t *testing.T) {
 				ObjectFormats: []string{"foo", "bar"},
 				Relays: []*peer.ConnectionInfo{{
 					Metadata: object.Metadata{
-						Owner:    k.PublicKey().DID(),
-						Datetime: "foo",
+						Owner:     k.PublicKey().DID(),
+						Timestamp: "foo",
 					},
 					Version:       3,
 					PublicKey:     k.PublicKey(),

@@ -4,7 +4,7 @@ import nimona.io/crypto crypto
 
 signed object nimona.io/identity.Profile {
     version int
-    datetime string
+    timestamp string
     name string
     image string type=nimona.io/chore.Hash
 }
@@ -24,10 +24,10 @@ stream nimona.io/identity/addressbook {
         alias string
         remoteParty string type=nimona.io/crypto.PublicKey
         profile object type=nimona.io/identity.Profile
-        datetime string
+        timestamp string
     }
     signed event ContactRemoved {
         remoteParty string type=nimona.io/crypto.PublicKey
-        datetime string
+        timestamp string
     }
 }

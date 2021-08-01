@@ -757,7 +757,7 @@ func main() {
 			},
 			Alias:       alias,
 			RemoteParty: remotePartyKey,
-			Datetime:    time.Now().UTC().Format(time.RFC3339),
+			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
@@ -824,7 +824,7 @@ func main() {
 				Root:  contactsStreamRootHash,
 			},
 			RemoteParty: remotePartyKey,
-			Datetime:    time.Now().UTC().Format(time.RFC3339),
+			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
 		if _, err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),

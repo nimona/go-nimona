@@ -23,8 +23,8 @@ func TestMetadata_Map(t *testing.T) {
 	pk1 := k1.PublicKey()
 
 	want := &Metadata{
-		Owner:    *did.MustParse("did:nimona:foo"),
-		Datetime: "foo",
+		Owner:     *did.MustParse("did:nimona:foo"),
+		Timestamp: "foo",
 		Parents: Parents{
 			"*": chore.HashArray{
 				chore.Hash("foo"),
