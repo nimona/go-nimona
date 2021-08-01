@@ -82,7 +82,7 @@ func FilterByStreamHash(hs ...chore.Hash) LookupOption {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, h := range hs {
-				if !h.IsEmpty() && o != nil && o.Metadata.Stream.Equal(h) {
+				if !h.IsEmpty() && o != nil && o.Metadata.Root.Equal(h) {
 					return true
 				}
 			}

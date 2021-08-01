@@ -325,7 +325,7 @@ func TestManager_RequestStream(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{f00.Hash()},
 			},
@@ -337,7 +337,7 @@ func TestManager_RequestStream(t *testing.T) {
 	f02 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{f01.Hash()},
 			},
@@ -533,7 +533,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f01 := &object.Object{
 		Type: "foo-child",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{
 					f00.Hash(),
@@ -758,8 +758,8 @@ func TestManager_Put(t *testing.T) {
 	testObjectWithStream := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner:  testOwnPublicKey.DID(),
-			Stream: testObjectStreamRoot.Hash(),
+			Owner: testOwnPublicKey.DID(),
+			Root:  testObjectStreamRoot.Hash(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),
@@ -778,8 +778,8 @@ func TestManager_Put(t *testing.T) {
 	testObjectWithStreamUpdated := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner:  testOwnPublicKey.DID(),
-			Stream: testObjectStreamRoot.Hash(),
+			Owner: testOwnPublicKey.DID(),
+			Root:  testObjectStreamRoot.Hash(),
 			Parents: object.Parents{
 				"*": chore.SortHashes(
 					[]chore.Hash{
@@ -796,16 +796,16 @@ func TestManager_Put(t *testing.T) {
 	testObjectSubscriptionInline := object.MustMarshal(
 		&stream.Subscription{
 			Metadata: object.Metadata{
-				Owner:  testSubscriberPublicKey.DID(),
-				Stream: testObjectStreamRoot.Hash(),
+				Owner: testSubscriberPublicKey.DID(),
+				Root:  testObjectStreamRoot.Hash(),
 			},
 		},
 	)
 	testObjectWithStreamInlineUpdated := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner:  testOwnPublicKey.DID(),
-			Stream: testObjectStreamRoot.Hash(),
+			Owner: testOwnPublicKey.DID(),
+			Root:  testObjectStreamRoot.Hash(),
 			Parents: object.Parents{
 				"*": chore.SortHashes(
 					[]chore.Hash{
@@ -1109,8 +1109,8 @@ func TestManager_Put(t *testing.T) {
 		want: &object.Object{
 			Type: "foo",
 			Metadata: object.Metadata{
-				Stream: testObjectStreamRoot.Hash(),
-				Owner:  testOwnPublicKey.DID(),
+				Root:  testObjectStreamRoot.Hash(),
+				Owner: testOwnPublicKey.DID(),
 				Parents: object.Parents{
 					"*": chore.SortHashes(
 						[]chore.Hash{
@@ -1175,7 +1175,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	o2 := &object.Object{
 		Type: "bar",
 		Metadata: object.Metadata{
-			Stream: o0.Hash(),
+			Root: o0.Hash(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),

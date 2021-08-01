@@ -132,8 +132,8 @@ func (c *chat) subscribe(
 			ctx := context.New(context.WithTimeout(time.Second * 5))
 			so := object.MustMarshal(&stream.Subscription{
 				Metadata: object.Metadata{
-					Owner:  c.local.GetPeerKey().PublicKey().DID(),
-					Stream: conversationRootHash,
+					Owner: c.local.GetPeerKey().PublicKey().DID(),
+					Root:  conversationRootHash,
 				},
 				RootHashes: []chore.Hash{
 					conversationRootHash,
@@ -324,7 +324,7 @@ func main() {
 					object.MustMarshal(&ConversationNicknameUpdated{
 						Metadata: object.Metadata{
 							Owner:    local.GetPeerKey().PublicKey().DID(),
-							Stream:   conversationRootHash,
+							Root:     conversationRootHash,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Nickname: nickname,
@@ -343,7 +343,7 @@ func main() {
 					object.MustMarshal(&ConversationMessageAdded{
 						Metadata: object.Metadata{
 							Owner:    local.GetPeerKey().PublicKey().DID(),
-							Stream:   conversationRootHash,
+							Root:     conversationRootHash,
 							Datetime: time.Now().Format(time.RFC3339),
 						},
 						Body: input,
@@ -367,7 +367,7 @@ func main() {
 			}
 			app.Channels.MessageAdded <- &Message{
 				Hash:             object.MustMarshal(v).Hash().String(),
-				ConversationHash: v.Metadata.Stream.String(),
+				ConversationHash: v.Metadata.Root.String(),
 				SenderKey:        v.Metadata.Owner.String(),
 				Body:             strings.TrimSpace(v.Body),
 				Created:          t.UTC(),
@@ -375,7 +375,7 @@ func main() {
 		case *ConversationNicknameUpdated:
 			updated, _ := time.Parse(time.RFC3339, v.Metadata.Datetime)
 			app.Channels.ParticipantUpdated <- &Participant{
-				ConversationHash: v.Metadata.Stream.String(),
+				ConversationHash: v.Metadata.Root.String(),
 				Key:              v.Metadata.Owner.String(),
 				Nickname:         v.Nickname,
 				Updated:          updated.UTC(),

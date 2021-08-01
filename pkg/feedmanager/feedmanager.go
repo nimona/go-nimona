@@ -313,8 +313,8 @@ func (m *feedManager) handleObjects(
 		feedStreamHash := feedStreamObj.Hash()
 		feedEvent := &feed.Added{
 			Metadata: object.Metadata{
-				Stream: feedStreamHash,
-				Owner:  peerKey.DID(),
+				Root:  feedStreamHash,
+				Owner: peerKey.DID(),
 			},
 			ObjectHash: []chore.Hash{
 				objHash,

@@ -832,7 +832,7 @@ func (m *manager) Put(
 	// Note: Please don't add owners as it messes with hypothetical objects
 	// TODO sign for owner = identity as well
 	// figure out if we need to add parents to the object
-	streamHash := o.Metadata.Stream
+	streamHash := o.Metadata.Root
 	if !streamHash.IsEmpty() && len(o.Metadata.Parents) == 0 {
 		leaves, err := m.objectstore.GetStreamLeaves(streamHash)
 		if err != nil {
@@ -861,7 +861,7 @@ func (m *manager) Put(
 				context.WithCorrelationID(ctx.CorrelationID()),
 				// TODO timeout?
 			),
-			o.Metadata.Stream,
+			o.Metadata.Root,
 			[]chore.Hash{
 				o.Hash(),
 			},
@@ -915,8 +915,8 @@ func (m *manager) AddStreamSubscription(
 
 	s := &stream.Subscription{
 		Metadata: object.Metadata{
-			Owner:  pub.DID(),
-			Stream: rootHash,
+			Owner: pub.DID(),
+			Root:  rootHash,
 		},
 		RootHashes: []chore.Hash{
 			rootHash,

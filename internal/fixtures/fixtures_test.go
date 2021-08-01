@@ -40,18 +40,18 @@ func TestFixtures_Nested(t *testing.T) {
 		Foo: "bar0",
 		Child: &Child{
 			Metadata: object.Metadata{
-				Stream: "random",
+				Root: "random",
 			},
 			Foo: "bar1",
 		},
 		RepeatedChild: []*Child{{
 			Metadata: object.Metadata{
-				Stream: "random",
+				Root: "random",
 			},
 			Foo: "bar2",
 		}, {
 			Metadata: object.Metadata{
-				Stream: "random",
+				Root: "random",
 			},
 			Foo: "bar3",
 		}},

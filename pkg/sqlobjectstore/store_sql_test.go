@@ -51,7 +51,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	obj := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Stream: object.MustMarshal(p).Hash(),
+			Root: object.MustMarshal(p).Hash(),
 		},
 		Data: chore.Map{
 			"key": chore.String("value"),
@@ -78,7 +78,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 	require.NotNil(t, val)
 	assert.Equal(t, "value", string(val.(chore.String)))
 
-	stHash := obj.Metadata.Stream
+	stHash := obj.Metadata.Root
 	require.NotEmpty(t, stHash)
 
 	err = store.UpdateTTL(obj.Hash(), 10)
@@ -123,7 +123,7 @@ func TestFilter(t *testing.T) {
 	ph := object.MustMarshal(p).Hash()
 
 	c := &fixtures.TestSubscribed{}
-	c.Metadata.Stream = ph
+	c.Metadata.Root = ph
 
 	objects := []*object.Object{
 		object.MustMarshal(p),
@@ -134,7 +134,7 @@ func TestFilter(t *testing.T) {
 		obj := &object.Object{
 			Type: fixtures.TestSubscribedType,
 			Metadata: object.Metadata{
-				Stream: ph,
+				Root: ph,
 				Datetime: time.Now().
 					Add(time.Duration(i) * time.Hour).
 					Format(time.RFC3339),
@@ -242,7 +242,7 @@ func TestStore_Relations(t *testing.T) {
 	f01 := &object.Object{
 		Type: "f01",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{
 					f00.Hash(),
@@ -257,7 +257,7 @@ func TestStore_Relations(t *testing.T) {
 	f02 := &object.Object{
 		Type: "f02",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{
 					f01.Hash(),
@@ -312,7 +312,7 @@ func TestStore_ListHashes(t *testing.T) {
 	f01 := &object.Object{
 		Type: "f01",
 		Metadata: object.Metadata{
-			Stream: f00.Hash(),
+			Root: f00.Hash(),
 			Parents: object.Parents{
 				"*": []chore.Hash{
 					f00.Hash(),

@@ -752,8 +752,8 @@ func main() {
 		}
 		rel := relationship.Added{
 			Metadata: object.Metadata{
-				Owner:  k.DID(),
-				Stream: contactsStreamRootHash,
+				Owner: k.DID(),
+				Root:  contactsStreamRootHash,
 			},
 			Alias:       alias,
 			RemoteParty: remotePartyKey,
@@ -820,8 +820,8 @@ func main() {
 		}
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
-				Owner:  k.DID(),
-				Stream: contactsStreamRootHash,
+				Owner: k.DID(),
+				Root:  contactsStreamRootHash,
 			},
 			RemoteParty: remotePartyKey,
 			Datetime:    time.Now().UTC().Format(time.RFC3339),
@@ -918,8 +918,8 @@ func main() {
 		}
 		if strings.HasPrefix(obj.Type, "stream:") {
 			values.StreamRoot = obj.Hash().String()
-		} else if !obj.Metadata.Stream.IsEmpty() {
-			values.StreamRoot = obj.Metadata.Stream.String()
+		} else if !obj.Metadata.Root.IsEmpty() {
+			values.StreamRoot = obj.Metadata.Root.String()
 		}
 		if values.StreamRoot != "" {
 			or, err := d.ObjectStore().GetByStream(
