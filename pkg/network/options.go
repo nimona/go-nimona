@@ -3,14 +3,15 @@ package network
 import (
 	"time"
 
-	"nimona.io/pkg/localpeer"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )
 
-// WithLocalPeer overrides the default localpeer for the network.
-func WithLocalPeer(k localpeer.LocalPeer) func(*network) {
+// WithPeerKey sets the private key for the peer, if not provided a new one
+// will be generated.
+func WithPeerKey(k crypto.PrivateKey) func(*network) {
 	return func(w *network) {
-		w.localpeer = k
+		w.peerKey = k
 	}
 }
 

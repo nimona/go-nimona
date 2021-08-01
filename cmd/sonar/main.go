@@ -13,7 +13,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -56,15 +55,10 @@ func main() {
 		logger.Fatal("missing peer private key")
 	}
 
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.SetPeerKey(cfg.Peer.PrivateKey)
-
 	// construct new network
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(cfg.Peer.PrivateKey),
 	)
 
 	// start listening
@@ -97,7 +91,7 @@ func main() {
 	)
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
@@ -145,7 +139,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				local.GetPeerKey().PublicKey().String(),
+				net.GetPeerKey().PublicKey().String(),
 				env.Metadata.Owner.Identity,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
@@ -187,7 +181,7 @@ func main() {
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: local.GetPeerKey().PublicKey().DID(),
+						Owner: net.GetPeerKey().PublicKey().DID(),
 					},
 					Data: chore.Map{
 						"nonce": chore.String(rand.String(8)),
@@ -206,7 +200,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.PublicKey.String(),
-				local.GetPeerKey().PublicKey().String(),
+				net.GetPeerKey().PublicKey().String(),
 			)
 			return nil
 		}

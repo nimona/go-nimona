@@ -9,7 +9,6 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/peer"
 )
 
@@ -41,13 +40,13 @@ func TestGetConnection(t *testing.T) {
 	defer lst2.Close()
 
 	conn1, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
-		PublicKey: kc2.GetPeerKey().PublicKey(),
+		PublicKey: kc2,
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
 
 	conn2, err := mgr.GetConnection(ctx, &peer.ConnectionInfo{
-		PublicKey: kc2.GetPeerKey().PublicKey(),
+		PublicKey: kc2,
 		Addresses: n2.Addresses(),
 	})
 	assert.NoError(t, err)
@@ -59,16 +58,13 @@ func TestGetConnection(t *testing.T) {
 }
 
 func newPeer(t *testing.T) (
-	localpeer.LocalPeer,
+	crypto.PublicKey,
 	net.Network,
 ) {
 	pk, err := crypto.NewEd25519PrivateKey()
 	assert.NoError(t, err)
 
-	kc := localpeer.New()
-	kc.SetPeerKey(pk)
-
-	return kc, net.New(
-		kc,
+	return pk.PublicKey(), net.New(
+		pk,
 	)
 }

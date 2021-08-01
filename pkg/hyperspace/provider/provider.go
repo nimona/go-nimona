@@ -9,7 +9,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -45,7 +44,6 @@ type (
 		network       network.Network
 		peerCache     *peerstore.PeerCache
 		providerCache *peerstore.PeerCache
-		local         localpeer.LocalPeer
 	}
 )
 
@@ -57,7 +55,6 @@ func New(
 	p := &Provider{
 		context: ctx,
 		network: net,
-		local:   net.LocalPeer(),
 		peerCache: peerstore.NewPeerCache(
 			peerCacheGC,
 			"nimona_hyperspace_provider_peers",
@@ -209,7 +206,7 @@ func (p *Provider) handlePeerLookup(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.local.GetPeerKey().PublicKey().DID(),
+			Owner: p.network.GetPeerKey().PublicKey().DID(),
 		},
 		Nonce:         q.Nonce,
 		QueryVector:   q.QueryVector,

@@ -10,11 +10,10 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/localpeer"
 )
 
 type tcpTransport struct {
-	localpeer localpeer.LocalPeer
+	peerKey crypto.PrivateKey
 }
 
 func (tt *tcpTransport) Dial(
@@ -25,7 +24,7 @@ func (tt *tcpTransport) Dial(
 	// but at this point it's kind of annoying to cache the primary peer key
 	// TODO consider storing ready made certificated in the localpeer
 	cert, err := crypto.GenerateTLSCertificate(
-		tt.localpeer.GetPeerKey(),
+		tt.peerKey,
 	)
 	if err != nil {
 		return nil, err

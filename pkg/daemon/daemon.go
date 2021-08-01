@@ -10,7 +10,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -25,7 +24,6 @@ type (
 		Preferences() preferences.Preferences
 		Network() network.Network
 		Resolver() resolver.Resolver
-		LocalPeer() localpeer.LocalPeer
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
 		FeedManager() feedmanager.FeedManager
@@ -38,7 +36,6 @@ type (
 		configOptions []config.Option
 		network       network.Network
 		resolver      resolver.Resolver
-		localpeer     localpeer.LocalPeer
 		objectstore   objectstore.Store
 		objectmanager objectmanager.ObjectManager
 		feedmanager   feedmanager.FeedManager
@@ -64,15 +61,10 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
-	// construct local peer
-	lpr := localpeer.New()
-	// attach peer private key from config
-	lpr.SetPeerKey(cfg.Peer.PrivateKey)
-
 	// construct new network
 	ntw := network.New(
 		ctx,
-		network.WithLocalPeer(lpr),
+		network.WithPeerKey(cfg.Peer.PrivateKey),
 	)
 
 	if cfg.Peer.BindAddress != "" {
@@ -144,7 +136,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct feed manager
 	fdm, err := feedmanager.New(
 		ctx,
-		lpr,
+		ntw,
 		res,
 		str,
 		man,
@@ -157,7 +149,6 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	d.preferences = prf
 	d.network = ntw
 	d.resolver = res
-	d.localpeer = lpr
 	d.objectstore = str
 	d.objectmanager = man
 	d.feedmanager = fdm
@@ -179,10 +170,6 @@ func (d *daemon) Network() network.Network {
 
 func (d *daemon) Resolver() resolver.Resolver {
 	return d.resolver
-}
-
-func (d *daemon) LocalPeer() localpeer.LocalPeer {
-	return d.localpeer
 }
 
 func (d *daemon) ObjectStore() objectstore.Store {

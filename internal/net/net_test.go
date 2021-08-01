@@ -10,7 +10,6 @@ import (
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -18,8 +17,8 @@ import (
 func TestNetConnectionSuccess(t *testing.T) {
 	ctx := context.New()
 
-	kc1, n1 := newPeer(t)
-	_, n2 := newPeer(t)
+	n1 := newPeer(t)
+	n2 := newPeer(t)
 
 	_, err := n1.Listen(ctx, "127.0.0.1:0", &ListenConfig{
 		BindLocal: true,
@@ -36,7 +35,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	go func() {
 		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
-			PublicKey: kc1.GetPeerKey().PublicKey(),
+			PublicKey: n1.peerKey.PublicKey(),
 			Addresses: n1.Addresses(),
 		})
 		assert.NoError(t, err)
@@ -47,7 +46,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 	// attempt to dial own address, should fail
 	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
-		PublicKey: kc1.GetPeerKey().PublicKey(),
+		PublicKey: n1.peerKey.PublicKey(),
 		Addresses: n1.Addresses(),
 	})
 	require.Equal(t, ErrAllAddressesBlocked, err)
@@ -93,7 +92,7 @@ func TestNetDialBackoff(t *testing.T) {
 	}
 
 	// attempt 1, failed
-	_, n1 := newPeer(t)
+	n1 := newPeer(t)
 	_, err = n1.Dial(ctx, p)
 	assert.Equal(t, ErrAllAddressesFailed, err)
 
@@ -131,15 +130,10 @@ func TestNetDialBackoff(t *testing.T) {
 	assert.Equal(t, ErrAllAddressesFailed, err)
 }
 
-func newPeer(t *testing.T) (
-	localpeer.LocalPeer,
-	*network,
-) {
-	kc := localpeer.New()
+func newPeer(t *testing.T) *network {
 	pk, err := crypto.NewEd25519PrivateKey()
 	assert.NoError(t, err)
-	kc.SetPeerKey(pk)
-	return kc, New(
-		kc,
+	return New(
+		pk,
 	).(*network)
 }

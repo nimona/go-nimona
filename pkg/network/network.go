@@ -27,7 +27,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -103,7 +102,6 @@ type (
 			bindAddress string,
 			options ...ListenOption,
 		) (net.Listener, error)
-		LocalPeer() localpeer.LocalPeer
 		RegisterResolver(
 			resolver Resolver,
 		)
@@ -111,6 +109,7 @@ type (
 		RegisterAddresses(...string)
 		GetRelays() []*peer.ConnectionInfo
 		RegisterRelays(...*peer.ConnectionInfo)
+		GetPeerKey() crypto.PrivateKey
 		GetConnectionInfo() *peer.ConnectionInfo
 		Close() error
 	}
@@ -122,7 +121,7 @@ type (
 	network struct {
 		net        net.Network
 		connmgr    connmanager.Manager
-		localpeer  localpeer.LocalPeer
+		peerKey    crypto.PrivateKey
 		outboxes   *OutboxesMap
 		inboxes    EnvelopePubSub
 		deduplist  *cache.Cache
@@ -170,15 +169,14 @@ func New(
 	for _, opt := range opts {
 		opt(w)
 	}
-	if w.localpeer == nil {
-		w.localpeer = localpeer.New()
+	if w.peerKey.IsEmpty() {
 		k, err := crypto.NewEd25519PrivateKey()
 		if err != nil {
 			panic(err)
 		}
-		w.localpeer.SetPeerKey(k)
+		w.peerKey = k
 	}
-	w.net = net.New(w.localpeer)
+	w.net = net.New(w.peerKey)
 
 	// subscribe to data forward type
 	subs := w.inboxes.Subscribe(
@@ -200,8 +198,8 @@ func New(
 	return w
 }
 
-func (w *network) LocalPeer() localpeer.LocalPeer {
-	return w.localpeer
+func (w *network) GetPeerKey() crypto.PrivateKey {
+	return w.peerKey
 }
 
 type (
@@ -655,7 +653,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 			df := &DataForwardResponse{
 				Metadata: object.Metadata{
-					Owner: w.localpeer.GetPeerKey().PublicKey().DID(),
+					Owner: w.peerKey.PublicKey().DID(),
 				},
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
@@ -708,7 +706,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			// if the data are encrypted we should first decrypt them
 			if !fwd.Sender.IsEmpty() {
 				ss, err := crypto.CalculateSharedKey(
-					w.localpeer.GetPeerKey(),
+					w.peerKey,
 					fwd.Sender,
 				)
 				if err != nil {
@@ -756,7 +754,7 @@ func (w *network) Send(
 	p crypto.PublicKey,
 	opts ...SendOption,
 ) error {
-	if p.Equals(w.localpeer.GetPeerKey().PublicKey()) {
+	if p.Equals(w.peerKey.PublicKey()) {
 		return ErrCannotSendToSelf
 	}
 
@@ -773,7 +771,7 @@ func (w *network) Send(
 	ctx = context.FromContext(ctx)
 
 	var err error
-	if k := w.localpeer.GetPeerKey(); !k.IsEmpty() {
+	if k := w.peerKey; !k.IsEmpty() {
 		// TODO(geoah) we should be passing the certificates to signAll
 		err = object.SignDeep(k, o)
 		if err != nil {
@@ -880,7 +878,7 @@ func (w *network) wrapInDataForward(
 	}
 	// create an ephemeral key pair, and calculate the shared key
 	ek, ss, err := crypto.NewSharedKey(
-		w.localpeer.GetPeerKey(),
+		w.peerKey,
 		recipient,
 	)
 	if err != nil {
@@ -944,7 +942,7 @@ func (w *network) RegisterAddresses(addresses ...string) {
 
 func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
 	return &peer.ConnectionInfo{
-		PublicKey: w.localpeer.GetPeerKey().PublicKey(),
+		PublicKey: w.peerKey.PublicKey(),
 		Addresses: w.GetAddresses(),
 		Relays:    w.GetRelays(),
 		ObjectFormats: []string{

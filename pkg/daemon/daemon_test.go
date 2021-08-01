@@ -20,7 +20,6 @@ func TestNew_ThingsAreThere(t *testing.T) {
 	require.NotNil(t, d.Config())
 	require.NotNil(t, d.Network())
 	require.NotNil(t, d.Resolver())
-	require.NotNil(t, d.LocalPeer())
 	require.NotNil(t, d.ObjectStore())
 	require.NotNil(t, d.ObjectManager())
 }
