@@ -194,7 +194,7 @@ func (st *Store) PutWithTTL(
 	objHash := obj.Hash()
 	objectType := obj.Type
 	objectHash := objHash.String()
-	streamHash := obj.Metadata.Stream.String()
+	streamHash := obj.Metadata.Root.String()
 	// TODO support multiple owners
 	ownerPublicKey := ""
 	if !obj.Metadata.Owner.IsEmpty() {

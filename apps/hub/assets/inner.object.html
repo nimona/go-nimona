@@ -19,9 +19,9 @@
       stream root
     </span>
     {{- else }}
-      <a href="/objects/{{ .Metadata.Stream.String }}" target="_top">
+      <a href="/objects/{{ .Metadata.Root.String }}" target="_top">
         <code class="cid">
-          {{ lastN .Metadata.Stream.String 24 }}
+          {{ lastN .Metadata.Root.String 24 }}
         </code>
       </a>
     {{- end}}

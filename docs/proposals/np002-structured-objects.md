@@ -32,8 +32,8 @@ The top level of each object consists of three main attributes.
 {
   "@type:s": "type",
   "@metadata:m": {
-    "stream:s": "bah...",
-    "owner:s": "bah...",
+    "root:r": "bah...",
+    "owner:s": "did:x:y",
     "parents:m": [
       "*:as": ["bah..."],
       "some-type:as": ["bah..."],
@@ -72,7 +72,7 @@ deprecated in the future in favor once schemes are introduced.
 ### Metadata
 
 - `owner:s` (optional) Public keys of the owner of the object.  
-- `stream:s` (optional) Root hash of the stream the object is part of.  
+- `root:r` (optional) Root hash of the stream the object is part of.  
 - `parents:as` (optional) Array of cids of parent objects, this is used
   for streams
 - `_signature:m` (optional) Cryptographic signature by the owner.

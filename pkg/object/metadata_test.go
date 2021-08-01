@@ -47,7 +47,7 @@ func TestMetadata_Map(t *testing.T) {
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,
 		}},
-		Stream: chore.Hash("foo"),
+		Root: chore.Hash("foo"),
 		Signature: Signature{
 			Signer: pk1,
 			Alg:    "alg",

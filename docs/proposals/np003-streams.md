@@ -58,7 +58,7 @@ you.
 {
   "@type:s": "<any-type>",
   "@metadata:m": {
-    "stream:s": "<stream-root-cid>",
+    "root:r": "<stream-root-cid>",
     "parents:m": {
       "*:as": ["<last-known-leaf-cids>"],
     },
