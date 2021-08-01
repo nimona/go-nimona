@@ -37,7 +37,7 @@ require (
 	github.com/vcaesar/murmur v0.20.1
 	github.com/xujiajun/nutsdb v0.6.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-	golang.org/x/tools v0.1.4
+	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
