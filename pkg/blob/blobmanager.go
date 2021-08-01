@@ -76,7 +76,7 @@ func (r *manager) ImportFromFile(
 	chunksErr := make(chan error)
 	store := func(chunk *object.Object) func() {
 		return func() {
-			if _, err := r.objectmanager.Put(ctx, chunk); err != nil {
+			if err := r.objectmanager.Put(ctx, chunk); err != nil {
 				chunksErr <- err
 				return
 			}
@@ -129,7 +129,7 @@ func (r *manager) ImportFromFile(
 		return nil, err
 	}
 	// store it
-	if _, err := r.objectmanager.Put(ctx, blobObj); err != nil {
+	if err := r.objectmanager.Put(ctx, blobObj); err != nil {
 		return nil, err
 	}
 	// and return its hash

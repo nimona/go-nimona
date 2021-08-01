@@ -139,7 +139,7 @@ func (c *chat) subscribe(
 					conversationRootHash,
 				},
 			})
-			if _, err := c.objectmanager.Put(ctx, so); err != nil {
+			if _, err := c.objectmanager.Append(ctx, so); err != nil {
 				c.logger.Fatal("could not persist conversation sub", log.Error(err))
 			}
 		}
@@ -283,7 +283,7 @@ func main() {
 	)
 
 	// register conversation in object manager
-	if _, err := man.Put(ctx, conversationRootObject); err != nil {
+	if err := man.Put(ctx, conversationRootObject); err != nil {
 		logger.Fatal("could not persist conversation root", log.Error(err))
 	}
 
@@ -317,7 +317,7 @@ func main() {
 		for {
 			select {
 			case nickname := <-app.Channels.SelfNicknameUpdated:
-				if _, err := man.Put(
+				if _, err := man.Append(
 					context.New(
 						context.WithTimeout(time.Second*5),
 					),
@@ -336,7 +336,7 @@ func main() {
 					)
 				}
 			case input := <-app.Channels.InputLines:
-				if _, err := man.Put(
+				if _, err := man.Append(
 					context.New(
 						context.WithTimeout(time.Second*5),
 					),

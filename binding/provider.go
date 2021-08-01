@@ -323,7 +323,10 @@ func (p *Provider) Put(
 		}
 		delete(obj.Data, "_setOwner:s")
 	}
-	return p.objectmanager.Put(ctx, obj)
+	if obj.Metadata.Root.IsEmpty() {
+		return obj, p.objectmanager.Put(ctx, obj)
+	}
+	return p.objectmanager.Append(ctx, obj)
 }
 
 func (p *Provider) GetFeedRootHash(
