@@ -19,6 +19,9 @@ import (
 )
 
 type (
+	// FeedManager manages feeds for the same identity.
+	// TODO(geoah): fix identity
+	// WARNING: Currently broken until we have a way to retrieve the identity.
 	FeedManager interface {
 		RegisterFeed(rootType string, eventTypes ...string) error
 	}
@@ -54,7 +57,7 @@ func New(
 
 	// if there is no primary identity key set, we should wait for one to be
 	// set before initializing the manager
-	if m.localpeer.GetIdentityPublicKey().IsEmpty() {
+	if m.getIdentityPublicKey().IsEmpty() {
 		localPeerUpdates, lpDone := m.localpeer.ListenForUpdates()
 		go func() {
 			for {
@@ -74,6 +77,12 @@ func New(
 	return m, nil
 }
 
+func (m *feedManager) getIdentityPublicKey() crypto.PublicKey {
+	return crypto.EmptyPublicKey
+	// TODO(geoah): fix identity
+	// return m.localpeer.GetIdentityPublicKey()
+}
+
 func (m *feedManager) initialize(ctx context.Context) error {
 	subs := m.objectmanager.Subscribe()
 	go func() {
@@ -88,7 +97,7 @@ func (m *feedManager) initialize(ctx context.Context) error {
 }
 
 func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
-	if m.localpeer.GetIdentityPublicKey().IsEmpty() {
+	if m.getIdentityPublicKey().IsEmpty() {
 		return nil
 	}
 
@@ -112,7 +121,7 @@ func (m *feedManager) createFeed(
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
-		m.localpeer.GetIdentityPublicKey(),
+		m.getIdentityPublicKey(),
 		streamType,
 	)
 	feedRootObj, err := object.Marshal(feedRoot)
@@ -167,7 +176,7 @@ func (m *feedManager) createFeed(
 				continue
 			}
 
-			if feedAdded.Metadata.Owner.Equals(ownPeer) {
+			if feedAdded.Metadata.Owner.Equals(ownPeer.DID()) {
 				continue
 			}
 
@@ -260,7 +269,7 @@ func (m *feedManager) RegisterFeed(
 func (m *feedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
-	identityKey := m.localpeer.GetIdentityPublicKey()
+	identityKey := m.getIdentityPublicKey()
 	peerKey := m.localpeer.GetPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
@@ -305,7 +314,7 @@ func (m *feedManager) handleObjects(
 		feedEvent := &feed.Added{
 			Metadata: object.Metadata{
 				Stream: feedStreamHash,
-				Owner:  peerKey,
+				Owner:  peerKey.DID(),
 			},
 			ObjectHash: []chore.Hash{
 				objHash,
@@ -352,7 +361,7 @@ func (m *feedManager) handleObjects(
 // 	recipients ...*peer.ConnectionInfo,
 // ) (object.ReadCloser, error) {
 // 	feedRoot := GetFeedRoot(
-// 		m.localpeer.GetIdentityPublicKey().PublicKey(),
+// 		m.getIdentityPublicKey().PublicKey(),
 // 		getTypeForFeed(objectType),
 // 	)
 
@@ -395,7 +404,7 @@ func GetFeedRoot(
 	return &feed.FeedStreamRoot{
 		ObjectType: feedType,
 		Metadata: object.Metadata{
-			Owner: owner,
+			Owner: owner.DID(),
 		},
 	}
 }
