@@ -7,10 +7,9 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	peer "nimona.io/pkg/peer"
+	"nimona.io/pkg/peer"
 )
 
 var _ network.Network = (*MockNetworkSimple)(nil)
@@ -23,7 +22,7 @@ type (
 		sendCalled           int32
 		SendCalls            []error
 		ReturnAddresses      []string
-		ReturnLocalPeer      localpeer.LocalPeer
+		ReturnPeerKey        crypto.PrivateKey
 		ReturnConnectionInfo *peer.ConnectionInfo
 		ReturnRelays         []*peer.ConnectionInfo
 	}
@@ -87,8 +86,8 @@ func (m *MockNetworkSimple) RegisterResolver(
 ) {
 }
 
-func (m *MockNetworkSimple) LocalPeer() localpeer.LocalPeer {
-	return m.ReturnLocalPeer
+func (m *MockNetworkSimple) GetPeerKey() crypto.PrivateKey {
+	return m.ReturnPeerKey
 }
 
 func (m *MockNetworkSimple) GetAddresses() []string {

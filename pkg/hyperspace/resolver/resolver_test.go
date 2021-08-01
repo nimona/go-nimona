@@ -14,7 +14,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -26,10 +25,10 @@ func TestResolver_Integration(t *testing.T) {
 	net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPeerKey().PublicKey().DID(),
+			Owner: net0.GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net0.LocalPeer().GetPeerKey().PublicKey(),
+			PublicKey: net0.GetPeerKey().PublicKey(),
 			Addresses: net0.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
@@ -39,10 +38,10 @@ func TestResolver_Integration(t *testing.T) {
 	net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.LocalPeer().GetPeerKey().PublicKey().DID(),
+			Owner: net1.GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net1.LocalPeer().GetPeerKey().PublicKey(),
+			PublicKey: net1.GetPeerKey().PublicKey(),
 			Addresses: net1.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo"},
@@ -79,7 +78,7 @@ func TestResolver_Integration(t *testing.T) {
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.LocalPeer().GetPeerKey().PublicKey().DID(),
+			Owner: net0.GetPeerKey().PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p3.PublicKey(),
@@ -133,12 +132,9 @@ func newPeer(t *testing.T) network.Network {
 
 	ctx := context.New()
 
-	local := localpeer.New()
-	local.SetPeerKey(k)
-
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(k),
 	)
 
 	lis, err := net.Listen(

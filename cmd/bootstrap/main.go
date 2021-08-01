@@ -17,7 +17,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/peer"
@@ -71,15 +70,10 @@ func main() {
 		logger.Fatal("missing peer private key")
 	}
 
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.SetPeerKey(cfg.Peer.PrivateKey)
-
 	// construct new network
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(cfg.Peer.PrivateKey),
 	)
 
 	// start listening
@@ -119,7 +113,7 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 

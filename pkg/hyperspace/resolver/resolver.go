@@ -14,7 +14,6 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -45,7 +44,6 @@ type (
 	resolver struct {
 		context                        context.Context
 		network                        network.Network
-		localpeer                      localpeer.LocalPeer
 		peerCache                      *peerstore.PeerCache
 		localPeerAnnouncementCache     *hyperspace.Announcement
 		localPeerAnnouncementCacheLock sync.RWMutex
@@ -82,8 +80,6 @@ func New(
 		opt(r)
 	}
 
-	r.localpeer = r.network.LocalPeer()
-
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
 	go network.HandleEnvelopeSubscription(
@@ -116,9 +112,10 @@ func New(
 		// announce on startup
 		r.announceSelf()
 
+		// TODO(geoah): fix identity
 		// subscribe to local peer updates
-		lpSub, lpCf := r.localpeer.ListenForUpdates()
-		defer lpCf()
+		// lpSub, lpCf := r.localpeer.ListenForUpdates()
+		// defer lpCf()
 
 		// subscribe to object updates
 		strSub := make(<-chan sqlobjectstore.Event)
@@ -134,8 +131,9 @@ func New(
 			select {
 			case <-announceTicker.C:
 				r.announceSelf()
-			case <-lpSub:
-				r.announceSelf()
+				// TODO(geoah): fix identity
+				// case <-lpSub:
+				// 	r.announceSelf()
 			case event := <-strSub:
 				switch event.Action {
 				case sqlobjectstore.ObjectInserted:
@@ -187,7 +185,7 @@ func (r *resolver) Lookup(
 	// send content requests to recipients
 	req := &hyperspace.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.localpeer.GetPeerKey().PublicKey().DID(),
+			Owner: r.network.GetPeerKey().PublicKey().DID(),
 		},
 		Nonce:       rand.String(12),
 		QueryVector: bl,
@@ -345,7 +343,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
-	peerKey := r.localpeer.GetPeerKey().PublicKey()
+	peerKey := r.network.GetPeerKey().PublicKey()
 	hashes := r.hashes.List()
 	addresses := r.network.GetAddresses()
 	relays := r.network.GetRelays()

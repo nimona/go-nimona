@@ -15,7 +15,6 @@ import (
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -79,13 +78,13 @@ type (
 
 // New creates a new p2p network
 func New(
-	local localpeer.LocalPeer,
+	peerKey crypto.PrivateKey,
 ) Network {
 	n := &network{
-		localpeer: local,
+		peerKey: peerKey,
 		transports: map[string]Transport{
 			"tcps": &tcpTransport{
-				localpeer: local,
+				peerKey: peerKey,
 			},
 		},
 		listeners:   []*listener{},
@@ -97,7 +96,7 @@ func New(
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	localpeer   localpeer.LocalPeer
+	peerKey     crypto.PrivateKey
 	transports  map[string]Transport
 	listeners   []*listener
 	connections chan *Connection
@@ -266,7 +265,7 @@ func (n *network) Listen(
 		addresses: []string{},
 		listeners: []net.Listener{},
 	}
-	k := n.localpeer.GetPeerKey()
+	k := n.peerKey
 	for pt, tsp := range n.transports {
 		lst, err := tsp.Listen(ctx, bindAddress, k)
 		if err != nil {

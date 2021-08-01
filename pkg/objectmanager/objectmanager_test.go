@@ -17,7 +17,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
@@ -114,7 +113,7 @@ func TestManager_Request(t *testing.T) {
 }
 
 func TestManager_handleObjectRequest(t *testing.T) {
-	localPeerKey, err := crypto.NewEd25519PrivateKey()
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	peer1Key, err := crypto.NewEd25519PrivateKey()
@@ -123,9 +122,6 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	peer1 := &peer.ConnectionInfo{
 		PublicKey: peer1Key.PublicKey(),
 	}
-
-	localPeer := localpeer.New()
-	localPeer.SetPeerKey(localPeerKey)
 
 	f00 := object.MustMarshal(peer1)
 	f00m, err := f00.MarshalMap()
@@ -175,7 +171,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().GetPeerKey().Return(peerKey)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
@@ -216,7 +212,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			want: object.MustMarshal(
 				&object.Response{
 					Metadata: object.Metadata{
-						Owner: localPeerKey.PublicKey().DID(),
+						Owner: peerKey.PublicKey().DID(),
 					},
 					Object:    f01,
 					RequestID: "8",
@@ -238,7 +234,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().LocalPeer().Return(localPeer)
+					m.EXPECT().GetPeerKey().Return(peerKey)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
@@ -279,7 +275,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			want: object.MustMarshal(
 				&object.Response{
 					Metadata: object.Metadata{
-						Owner: localPeerKey.PublicKey().DID(),
+						Owner: peerKey.PublicKey().DID(),
 					},
 					Object:    nil,
 					RequestID: "8",
@@ -350,7 +346,6 @@ func TestManager_RequestStream(t *testing.T) {
 	type fields struct {
 		store   func(*testing.T) objectstore.Store
 		network func(*testing.T) network.Network
-		local   func(*testing.T) localpeer.LocalPeer
 	}
 	type args struct {
 		ctx      context.Context
@@ -394,10 +389,6 @@ func TestManager_RequestStream(t *testing.T) {
 						object.Copy(f02),
 					}), err)
 				return m
-			},
-			local: func(t *testing.T) localpeer.LocalPeer {
-				l := localpeer.New()
-				return l
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
@@ -469,7 +460,6 @@ func TestManager_RequestStream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
-				localpeer:   tt.fields.local(t),
 				pubsub:      NewObjectPubSub(),
 				objectstore: tt.fields.store(t),
 				network:     tt.fields.network(t),
@@ -509,7 +499,7 @@ func TestManager_RequestStream(t *testing.T) {
 }
 
 func TestManager_handleStreamRequest(t *testing.T) {
-	localPeerKey, err := crypto.NewEd25519PrivateKey()
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	peer1Key, err := crypto.NewEd25519PrivateKey()
@@ -518,9 +508,6 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	peer1 := &peer.ConnectionInfo{
 		PublicKey: peer1Key.PublicKey(),
 	}
-
-	localPeer := localpeer.New()
-	localPeer.SetPeerKey(localPeerKey)
 
 	f00 := &object.Object{
 		Type:     "foo",
@@ -588,7 +575,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				want *object.Object,
 			) network.Network {
 				m := networkmock.NewMockNetwork(gomock.NewController(t))
-				m.EXPECT().LocalPeer().Return(localPeer)
+				m.EXPECT().GetPeerKey().Return(peerKey)
 				m.EXPECT().Subscribe(gomock.Any()).Return(
 					&networkmock.MockSubscriptionSimple{
 						Objects: []*network.Envelope{{
@@ -630,7 +617,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		want: object.MustMarshal(
 			&stream.Response{
 				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey().DID(),
+					Owner: peerKey.PublicKey().DID(),
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
@@ -654,7 +641,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				want *object.Object,
 			) network.Network {
 				m := networkmock.NewMockNetwork(gomock.NewController(t))
-				m.EXPECT().LocalPeer().Return(localPeer)
+				m.EXPECT().GetPeerKey().Return(peerKey)
 				m.EXPECT().Subscribe(gomock.Any()).Return(
 					&networkmock.MockSubscriptionSimple{
 						Objects: []*network.Envelope{{
@@ -696,7 +683,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		want: object.MustMarshal(
 			&stream.Response{
 				Metadata: object.Metadata{
-					Owner: localPeerKey.PublicKey().DID(),
+					Owner: peerKey.PublicKey().DID(),
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
@@ -727,12 +714,10 @@ func TestManager_handleStreamRequest(t *testing.T) {
 }
 
 func TestManager_Put(t *testing.T) {
-	testOwnPrivateKey, err := crypto.NewEd25519PrivateKey()
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testOwnPublicKey := testOwnPrivateKey.PublicKey()
+	testOwnPublicKey := peerKey.PublicKey()
 	require.NoError(t, err)
-	testLocalPeer := localpeer.New()
-	testLocalPeer.SetPeerKey(testOwnPrivateKey)
 	testObjectSimple := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
@@ -782,8 +767,8 @@ func TestManager_Put(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
-					SendCalls:       []error{},
+					ReturnPeerKey: peerKey,
+					SendCalls:     []error{},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -814,8 +799,8 @@ func TestManager_Put(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
-					SendCalls:       []error{},
+					ReturnPeerKey: peerKey,
+					SendCalls:     []error{},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -864,13 +849,11 @@ func TestManager_Put(t *testing.T) {
 }
 
 func TestManager_Append(t *testing.T) {
-	testOwnPrivateKey, err := crypto.NewEd25519PrivateKey()
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testOwnPublicKey := testOwnPrivateKey.PublicKey()
+	testOwnPublicKey := peerKey.PublicKey()
 	testSubscriberPrivateKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testLocalPeer := localpeer.New()
-	testLocalPeer.SetPeerKey(testOwnPrivateKey)
 	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testObjectSimple := &object.Object{
 		Type: "foo",
@@ -992,8 +975,8 @@ func TestManager_Append(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
-					SendCalls:       []error{},
+					ReturnPeerKey: peerKey,
+					SendCalls:     []error{},
 					SubscribeCalls: []network.EnvelopeSubscription{
 						&networkmock.MockSubscriptionSimple{},
 					},
@@ -1059,7 +1042,7 @@ func TestManager_Append(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
+					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 					},
@@ -1125,7 +1108,7 @@ func TestManager_Append(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
+					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 						nil,
@@ -1224,7 +1207,7 @@ func TestManager_Append(t *testing.T) {
 			},
 			network: func(t *testing.T) network.Network {
 				m := &networkmock.MockNetworkSimple{
-					ReturnLocalPeer: testLocalPeer,
+					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 						nil,
@@ -1403,14 +1386,11 @@ func Test_manager_Subscribe(t *testing.T) {
 }
 
 func TestManager_Integration_AddStreamSubscription(t *testing.T) {
-	prv0, err := crypto.NewEd25519PrivateKey()
+	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	lpr := localpeer.New()
-	lpr.SetPeerKey(prv0)
-
 	ntw := &networkmock.MockNetworkSimple{
-		ReturnLocalPeer: lpr,
+		ReturnPeerKey: peerKey,
 		SubscribeCalls: []network.EnvelopeSubscription{
 			&networkmock.MockSubscriptionSimple{},
 		},
@@ -1430,7 +1410,7 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 	rootObj := object.MustMarshal(
 		&fixtures.TestStream{
 			Metadata: object.Metadata{
-				Owner: prv0.PublicKey().DID(),
+				Owner: peerKey.PublicKey().DID(),
 			},
 			Nonce: "foo",
 		},

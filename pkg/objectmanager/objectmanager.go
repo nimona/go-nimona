@@ -11,7 +11,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -62,7 +61,6 @@ type (
 	manager struct {
 		network       network.Network
 		objectstore   objectstore.Store
-		localpeer     localpeer.LocalPeer
 		resolver      resolver.Resolver
 		pubsub        ObjectPubSub
 		newRequestID  func() string
@@ -89,7 +87,6 @@ func New(
 		subscriptions: &SubscriptionsMap{},
 		network:       net,
 		resolver:      res,
-		localpeer:     net.LocalPeer(),
 		objectstore:   str,
 	}
 
@@ -514,7 +511,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	// remove self
-	delete(subscribersMap, m.localpeer.GetPeerKey().PublicKey().String())
+	delete(subscribersMap, m.network.GetPeerKey().PublicKey().String())
 
 	subscribers := []string{}
 	for subscriber := range subscribersMap {
@@ -533,7 +530,7 @@ func (m *manager) announceStreamChildren(
 	// notify subscribers
 	announcement := &stream.Announcement{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
+			Owner: m.network.GetPeerKey().PublicKey().DID(),
 		},
 		StreamHash:   streamHash,
 		ObjectHashes: children,
@@ -601,7 +598,7 @@ func (m *manager) handleObjectRequest(
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
+			Owner: m.network.GetPeerKey().PublicKey().DID(),
 		},
 		Object:    nil,
 		RequestID: req.RequestID,
@@ -680,7 +677,7 @@ func (m *manager) handleStreamRequest(
 	// start response
 	res := &stream.Response{
 		Metadata: object.Metadata{
-			Owner: m.localpeer.GetPeerKey().PublicKey().DID(),
+			Owner: m.network.GetPeerKey().PublicKey().DID(),
 		},
 		RequestID: req.RequestID,
 		RootHash:  req.RootHash,
@@ -895,7 +892,7 @@ func (m *manager) AddStreamSubscription(
 		return fmt.Errorf("error trying to get stream objects, %w", err)
 	}
 
-	pub := m.localpeer.GetPeerKey().PublicKey()
+	pub := m.network.GetPeerKey().PublicKey()
 
 	for {
 		o, err := r.Read()

@@ -8,7 +8,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/peer"
 )
@@ -23,13 +22,10 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	local := localpeer.New()
-	local.SetPeerKey(peerKey)
-
 	// construct new network
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(peerKey),
 	)
 
 	// start listening

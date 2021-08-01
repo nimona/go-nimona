@@ -12,7 +12,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
@@ -20,7 +19,7 @@ import (
 )
 
 func Test_requester_Request(t *testing.T) {
-	localPeer1 := newPeer()
+	pk, _ := crypto.NewEd25519PrivateKey()
 
 	chunk1 := &blob.Chunk{
 		Data: chore.Data("ooh wee"),
@@ -37,7 +36,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	peer1 := &peer.ConnectionInfo{
-		PublicKey: localPeer1.GetPeerKey().PublicKey(),
+		PublicKey: pk.PublicKey(),
 	}
 
 	type fields struct {
@@ -128,15 +127,6 @@ func Test_requester_Request(t *testing.T) {
 			assert.Equal(t, tt.wantChunks, gotChunks)
 		})
 	}
-}
-
-func newPeer() localpeer.LocalPeer {
-	pk, _ := crypto.NewEd25519PrivateKey()
-
-	kc := localpeer.New()
-	kc.SetPeerKey(pk)
-
-	return kc
 }
 
 func Test_manager_ImportFromFile(t *testing.T) {

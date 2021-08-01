@@ -11,7 +11,6 @@ import (
 	net "nimona.io/internal/net"
 	context "nimona.io/pkg/context"
 	crypto "nimona.io/pkg/crypto"
-	localpeer "nimona.io/pkg/localpeer"
 	network "nimona.io/pkg/network"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
@@ -120,6 +119,20 @@ func (mr *MockNetworkMockRecorder) GetConnectionInfo() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionInfo", reflect.TypeOf((*MockNetwork)(nil).GetConnectionInfo))
 }
 
+// GetPeerKey mocks base method.
+func (m *MockNetwork) GetPeerKey() crypto.PrivateKey {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPeerKey")
+	ret0, _ := ret[0].(crypto.PrivateKey)
+	return ret0
+}
+
+// GetPeerKey indicates an expected call of GetPeerKey.
+func (mr *MockNetworkMockRecorder) GetPeerKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPeerKey", reflect.TypeOf((*MockNetwork)(nil).GetPeerKey))
+}
+
 // GetRelays mocks base method.
 func (m *MockNetwork) GetRelays() []*peer.ConnectionInfo {
 	m.ctrl.T.Helper()
@@ -152,20 +165,6 @@ func (mr *MockNetworkMockRecorder) Listen(ctx, bindAddress interface{}, options 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, bindAddress}, options...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Listen", reflect.TypeOf((*MockNetwork)(nil).Listen), varargs...)
-}
-
-// LocalPeer mocks base method.
-func (m *MockNetwork) LocalPeer() localpeer.LocalPeer {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LocalPeer")
-	ret0, _ := ret[0].(localpeer.LocalPeer)
-	return ret0
-}
-
-// LocalPeer indicates an expected call of LocalPeer.
-func (mr *MockNetworkMockRecorder) LocalPeer() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalPeer", reflect.TypeOf((*MockNetwork)(nil).LocalPeer))
 }
 
 // RegisterAddresses mocks base method.

@@ -45,10 +45,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		n2.LocalPeer().GetPeerKey().PublicKey(),
+		n2.GetPeerKey().PublicKey(),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
-				PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
+				PublicKey: n2.GetPeerKey().PublicKey(),
 				Addresses: n2.GetAddresses(),
 			},
 		),
@@ -67,10 +67,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		n1.LocalPeer().GetPeerKey().PublicKey(),
+		n1.GetPeerKey().PublicKey(),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
-				PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
+				PublicKey: n1.GetPeerKey().PublicKey(),
 				Addresses: n1.GetAddresses(),
 			},
 		),
@@ -88,7 +88,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		c, err := n2.(*network).connmgr.GetConnection(context.
 			New(),
 			&peer.ConnectionInfo{
-				PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
+				PublicKey: n1.GetPeerKey().PublicKey(),
 			},
 		)
 		require.NoError(t, err)
@@ -98,10 +98,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n1.Send(
 			context.Background(),
 			testObj,
-			n2.LocalPeer().GetPeerKey().PublicKey(),
+			n2.GetPeerKey().PublicKey(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
+					PublicKey: n2.GetPeerKey().PublicKey(),
 					Addresses: n2.GetAddresses(),
 				},
 			),
@@ -131,7 +131,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			sendErr <- n1.Send(
 				context.Background(),
 				reqo,
-				n2.LocalPeer().GetPeerKey().PublicKey(),
+				n2.GetPeerKey().PublicKey(),
 				SendWithResponse(gotRes, 0),
 			)
 		}()
@@ -146,10 +146,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		n2.Send(
 			context.Background(),
 			reso,
-			n1.LocalPeer().GetPeerKey().PublicKey(),
+			n1.GetPeerKey().PublicKey(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
+					PublicKey: n1.GetPeerKey().PublicKey(),
 					Addresses: n1.GetAddresses(),
 				},
 			),
@@ -171,12 +171,12 @@ func TestNetwork_Relay(t *testing.T) {
 	defer l0.Close()
 
 	p0 := &peer.ConnectionInfo{
-		PublicKey: n0.LocalPeer().GetPeerKey().PublicKey(),
+		PublicKey: n0.GetPeerKey().PublicKey(),
 		Addresses: n0.GetAddresses(),
 	}
 
 	p1 := &peer.ConnectionInfo{
-		PublicKey: n1.LocalPeer().GetPeerKey().PublicKey(),
+		PublicKey: n1.GetPeerKey().PublicKey(),
 		Addresses: n1.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
@@ -184,7 +184,7 @@ func TestNetwork_Relay(t *testing.T) {
 	}
 
 	p2 := &peer.ConnectionInfo{
-		PublicKey: n2.LocalPeer().GetPeerKey().PublicKey(),
+		PublicKey: n2.GetPeerKey().PublicKey(),
 		Addresses: n2.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
@@ -201,7 +201,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP1 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n1.LocalPeer().GetPeerKey().PublicKey().DID(),
+			Owner: n1.GetPeerKey().PublicKey().DID(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),
@@ -211,7 +211,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP2 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n2.LocalPeer().GetPeerKey().PublicKey().DID(),
+			Owner: n2.GetPeerKey().PublicKey().DID(),
 		},
 		Data: chore.Map{
 			"foo": chore.String("bar"),

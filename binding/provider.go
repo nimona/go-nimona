@@ -12,7 +12,6 @@ import (
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -24,7 +23,6 @@ import (
 
 type (
 	Provider struct {
-		local         localpeer.LocalPeer
 		network       network.Network
 		resolver      resolver.Resolver
 		objectstore   *sqlobjectstore.Store
@@ -67,7 +65,6 @@ func New(initRequest *InitRequest) *Provider {
 	}
 
 	nConfig := d.Config()
-	local := d.LocalPeer()
 	net := d.Network()
 	str := d.ObjectStore().(*sqlobjectstore.Store)
 	res := d.Resolver()
@@ -76,7 +73,7 @@ func New(initRequest *InitRequest) *Provider {
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
@@ -86,7 +83,6 @@ func New(initRequest *InitRequest) *Provider {
 	)
 
 	return &Provider{
-		local:         local,
 		network:       net,
 		resolver:      res,
 		objectstore:   str,
@@ -315,7 +311,7 @@ func (p *Provider) Put(
 		if setOwner, ok := setOwnerS.(chore.String); ok {
 			switch setOwner {
 			case "@peer":
-				obj.Metadata.Owner = p.local.GetPeerKey().PublicKey().DID()
+				obj.Metadata.Owner = p.network.GetPeerKey().PublicKey().DID()
 			case "@identity":
 				// TODO(geoah): fix identity
 				// obj.Metadata.Owner = p.local.GetIdentityPublicKey()
@@ -335,7 +331,7 @@ func (p *Provider) GetFeedRootHash(
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{
-			Owner: p.local.GetPeerKey().PublicKey().DID(),
+			Owner: p.network.GetPeerKey().PublicKey().DID(),
 		},
 	}
 	o, _ := object.Marshal(v)
