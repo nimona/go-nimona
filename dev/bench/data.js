@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1627821591813,
+  "lastUpdate": 1627845634058,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5808,6 +5808,54 @@ window.BENCHMARK_DATA = {
             "value": 35559,
             "unit": "ns/op",
             "extra": "34126 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "03d0727063568ed0191824bd989574fca8a96764",
+          "message": "feat(objectmanager): split put into put/append, add sequence",
+          "timestamp": "2021-08-01T20:18:54+01:00",
+          "tree_id": "1d6c4bc35fd4229cad962995fe43809b5a16ca39",
+          "url": "https://github.com/nimona/go-nimona/commit/03d0727063568ed0191824bd989574fca8a96764"
+        },
+        "date": 1627845633169,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3913097,
+            "unit": "ns/op",
+            "extra": "307 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 348999350,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3228576804,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 34650,
+            "unit": "ns/op",
+            "extra": "34462 times\n2 procs"
           }
         ]
       }
