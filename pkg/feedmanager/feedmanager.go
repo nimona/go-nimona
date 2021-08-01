@@ -137,7 +137,7 @@ func (m *feedManager) createFeed(
 	}
 
 	// and if not, store it
-	_, err = m.objectmanager.Put(ctx, feedRootObj)
+	err = m.objectmanager.Put(ctx, feedRootObj)
 	if err != nil {
 		return fmt.Errorf("error trying to store feed root, %w", err)
 	}
@@ -213,7 +213,7 @@ func (m *feedManager) createFeed(
 					if err != nil {
 						continue
 					}
-					if _, err := m.objectmanager.Put(
+					if err := m.objectmanager.Put(
 						ctx,
 						o,
 					); err != nil {
@@ -324,7 +324,7 @@ func (m *feedManager) handleObjects(
 		if err != nil {
 			continue
 		}
-		if _, err := m.objectmanager.Put(ctx, feedEventObj); err != nil {
+		if _, err := m.objectmanager.Append(ctx, feedEventObj); err != nil {
 			logger.Warn("error storing feed event", log.Error(err))
 			continue
 		}

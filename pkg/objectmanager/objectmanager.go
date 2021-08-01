@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	ErrDone    = errors.Error("done")
-	ErrTimeout = errors.Error("request timed out")
+	ErrDone        = errors.Error("done")
+	ErrTimeout     = errors.Error("request timed out")
+	ErrMissingRoot = errors.Error("missing root")
 )
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
@@ -32,6 +33,10 @@ const (
 type (
 	ObjectManager interface {
 		Put(
+			ctx context.Context,
+			o *object.Object,
+		) error
+		Append(
 			ctx context.Context,
 			o *object.Object,
 		) (*object.Object, error)
@@ -799,48 +804,42 @@ func (m *manager) handleStreamAnnouncement(
 	return nil
 }
 
-// Put stores a given object
-// TODO(geoah) what happened if the stream graph is not complete? Do we care?
+// Put stores a given object as-is, and announces it to any subscribers.
 func (m *manager) Put(
 	ctx context.Context,
 	o *object.Object,
-) (*object.Object, error) {
-	// if this is not ours, just persist it
-	owner := o.Metadata.Owner
-	ownPeer := false
-	ownIdentity := false
-	if !owner.IsEmpty() {
-		if k := m.localpeer.GetPeerKey().PublicKey().DID(); !k.IsEmpty() {
-			ownPeer = owner.Equals(k)
-		}
-		// TODO(geoah): fix identity
-		// if k := m.localpeer.GetIdentityPublicKey(); !k.IsEmpty() {
-		// 	ownIdentity = owner.Equals(k)
-		// }
+) error {
+	// add to store
+	if err := m.storeObject(ctx, o); err != nil {
+		return err
 	}
-	if !ownPeer && !ownIdentity {
-		// add to store
-		if err := m.storeObject(ctx, o); err != nil {
-			return nil, err
-		}
-		// publish to pubsub
-		// TODO why do we publish this?
-		m.pubsub.Publish(o)
-		return o, nil
-	}
+	// publish to pubsub
+	m.pubsub.Publish(o)
+	return nil
+}
 
-	// Note: Please don't add owners as it messes with hypothetical objects
-	// TODO sign for owner = identity as well
-	// figure out if we need to add parents to the object
-	streamHash := o.Metadata.Root
-	if !streamHash.IsEmpty() && len(o.Metadata.Parents) == 0 {
-		leaves, err := m.objectstore.GetStreamLeaves(streamHash)
+// Append stores a given object that is part of a stream.
+// If the object's parents and sequence are missing they will be added.
+// TODO should we check if the given parents and sequence are valid?
+// TODO should we check if the stream is valid?
+func (m *manager) Append(
+	ctx context.Context,
+	o *object.Object,
+) (*object.Object, error) {
+	root := o.Metadata.Root
+
+	// check and add parents
+	if o.Metadata.Root.IsEmpty() {
+		return nil, ErrMissingRoot
+	}
+	if len(o.Metadata.Parents) == 0 {
+		leaves, err := m.objectstore.GetStreamLeaves(root)
 		if err != nil {
 			return nil, err
 		}
 		if len(leaves) == 0 {
 			leaves = []chore.Hash{
-				streamHash,
+				root,
 			}
 		}
 		chore.SortHashes(leaves)
@@ -849,24 +848,38 @@ func (m *manager) Put(
 		}
 	}
 
+	// check and add sequence
+	// if a sequence has not been set, we find the highest sequence of the
+	// direct parents and add one to it
+	if o.Metadata.Sequence == 0 {
+		for _, ph := range o.Metadata.Parents["*"] {
+			p, err := m.objectstore.Get(ph)
+			if err != nil {
+				return nil, fmt.Errorf("missing parent, %w", err)
+			}
+			if p.Metadata.Sequence > o.Metadata.Sequence {
+				o.Metadata.Sequence = p.Metadata.Sequence
+			}
+		}
+		o.Metadata.Sequence++
+	}
+
 	// add to store
 	if err := m.storeObject(ctx, o); err != nil {
 		return nil, err
 	}
 
-	if !streamHash.IsEmpty() {
-		// announce to subscribers
-		m.announceStreamChildren(
-			context.New(
-				context.WithCorrelationID(ctx.CorrelationID()),
-				// TODO timeout?
-			),
-			o.Metadata.Root,
-			[]chore.Hash{
-				o.Hash(),
-			},
-		)
-	}
+	// announce to subscribers
+	m.announceStreamChildren(
+		context.New(
+			context.WithCorrelationID(ctx.CorrelationID()),
+			// TODO timeout?
+		),
+		root,
+		[]chore.Hash{
+			o.Hash(),
+		},
+	)
 
 	// publish to pubsub
 	m.pubsub.Publish(o)
@@ -929,7 +942,7 @@ func (m *manager) AddStreamSubscription(
 		return err
 	}
 
-	if _, err := m.Put(ctx, so); err != nil {
+	if err := m.Put(ctx, so); err != nil {
 		return fmt.Errorf("error storing subscription, %w", err)
 	}
 

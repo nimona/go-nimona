@@ -52,13 +52,27 @@ func (mr *MockObjectManagerMockRecorder) AddStreamSubscription(ctx, rootHash int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStreamSubscription", reflect.TypeOf((*MockObjectManager)(nil).AddStreamSubscription), ctx, rootHash)
 }
 
-// Put mocks base method.
-func (m *MockObjectManager) Put(ctx context.Context, o *object.Object) (*object.Object, error) {
+// Append mocks base method.
+func (m *MockObjectManager) Append(ctx context.Context, o *object.Object) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", ctx, o)
+	ret := m.ctrl.Call(m, "Append", ctx, o)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
+}
+
+// Append indicates an expected call of Append.
+func (mr *MockObjectManagerMockRecorder) Append(ctx, o interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Append", reflect.TypeOf((*MockObjectManager)(nil).Append), ctx, o)
+}
+
+// Put mocks base method.
+func (m *MockObjectManager) Put(ctx context.Context, o *object.Object) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", ctx, o)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Put indicates an expected call of Put.

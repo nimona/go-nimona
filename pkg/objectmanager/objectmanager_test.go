@@ -730,11 +730,9 @@ func TestManager_Put(t *testing.T) {
 	testOwnPrivateKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	testOwnPublicKey := testOwnPrivateKey.PublicKey()
-	testSubscriberPrivateKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	testLocalPeer := localpeer.New()
 	testLocalPeer.SetPeerKey(testOwnPrivateKey)
-	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
 	testObjectSimple := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
@@ -746,80 +744,6 @@ func TestManager_Put(t *testing.T) {
 	}
 	testObjectSimpleMap, err := testObjectSimple.MarshalMap()
 	require.NoError(t, err)
-	testObjectStreamRoot := &object.Object{
-		Type: "foo-root",
-		Metadata: object.Metadata{
-			Owner: testOwnPublicKey.DID(),
-		},
-		Data: chore.Map{
-			"root": chore.String("true"),
-		},
-	}
-	testObjectWithStream := &object.Object{
-		Type: "foo",
-		Metadata: object.Metadata{
-			Owner: testOwnPublicKey.DID(),
-			Root:  testObjectStreamRoot.Hash(),
-		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
-		},
-	}
-	bar1 := &object.Object{
-		Data: chore.Map{
-			"foo": chore.String("bar1"),
-		},
-	}
-	bar2 := &object.Object{
-		Data: chore.Map{
-			"foo": chore.String("bar2"),
-		},
-	}
-	testObjectWithStreamUpdated := &object.Object{
-		Type: "foo",
-		Metadata: object.Metadata{
-			Owner: testOwnPublicKey.DID(),
-			Root:  testObjectStreamRoot.Hash(),
-			Parents: object.Parents{
-				"*": chore.SortHashes(
-					[]chore.Hash{
-						bar1.Hash(),
-						bar2.Hash(),
-					},
-				),
-			},
-		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
-		},
-	}
-	testObjectSubscriptionInline := object.MustMarshal(
-		&stream.Subscription{
-			Metadata: object.Metadata{
-				Owner: testSubscriberPublicKey.DID(),
-				Root:  testObjectStreamRoot.Hash(),
-			},
-		},
-	)
-	testObjectWithStreamInlineUpdated := &object.Object{
-		Type: "foo",
-		Metadata: object.Metadata{
-			Owner: testOwnPublicKey.DID(),
-			Root:  testObjectStreamRoot.Hash(),
-			Parents: object.Parents{
-				"*": chore.SortHashes(
-					[]chore.Hash{
-						bar1.Hash(),
-						bar2.Hash(),
-						testObjectSubscriptionInline.Hash(),
-					},
-				),
-			},
-		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
-		},
-	}
 	testObjectComplex := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
@@ -909,6 +833,185 @@ func TestManager_Put(t *testing.T) {
 			o: object.Copy(testObjectComplex),
 		},
 		want: testObjectComplex,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := New(
+				context.Background(),
+				tt.fields.network(t),
+				tt.fields.resolver(t),
+				tt.fields.store(t),
+			)
+			for _, obj := range tt.fields.receivedSubscriptions {
+				err := m.(*manager).handleStreamSubscription(
+					context.Background(),
+					&network.Envelope{
+						Payload: obj,
+					},
+				)
+				require.NoError(t, err)
+			}
+			err := m.Put(
+				context.Background(),
+				tt.args.o,
+			)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestManager_Append(t *testing.T) {
+	testOwnPrivateKey, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+	testOwnPublicKey := testOwnPrivateKey.PublicKey()
+	testSubscriberPrivateKey, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+	testLocalPeer := localpeer.New()
+	testLocalPeer.SetPeerKey(testOwnPrivateKey)
+	testSubscriberPublicKey := testSubscriberPrivateKey.PublicKey()
+	testObjectSimple := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner: testOwnPublicKey.DID(),
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar"),
+		},
+	}
+	require.NoError(t, err)
+	testObjectStreamRoot := &object.Object{
+		Type: "foo-root",
+		Metadata: object.Metadata{
+			Owner: testOwnPublicKey.DID(),
+		},
+		Data: chore.Map{
+			"root": chore.String("true"),
+		},
+	}
+	testObjectWithStream := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner: testOwnPublicKey.DID(),
+			Root:  testObjectStreamRoot.Hash(),
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar"),
+		},
+	}
+	bar1 := &object.Object{
+		Metadata: object.Metadata{
+			Sequence: 1,
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar1"),
+		},
+	}
+	bar2 := &object.Object{
+		Metadata: object.Metadata{
+			Sequence: 2,
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar2"),
+		},
+	}
+	testObjectWithStreamUpdated := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner:    testOwnPublicKey.DID(),
+			Root:     testObjectStreamRoot.Hash(),
+			Sequence: 3,
+			Parents: object.Parents{
+				"*": chore.SortHashes(
+					[]chore.Hash{
+						bar1.Hash(),
+						bar2.Hash(),
+					},
+				),
+			},
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar"),
+		},
+	}
+	testObjectSubscriptionInline := object.MustMarshal(
+		&stream.Subscription{
+			Metadata: object.Metadata{
+				Owner:    testSubscriberPublicKey.DID(),
+				Root:     testObjectStreamRoot.Hash(),
+				Sequence: 6,
+			},
+		},
+	)
+	testObjectWithStreamInlineUpdated := &object.Object{
+		Type: "foo",
+		Metadata: object.Metadata{
+			Owner:    testOwnPublicKey.DID(),
+			Root:     testObjectStreamRoot.Hash(),
+			Sequence: 7,
+			Parents: object.Parents{
+				"*": chore.SortHashes(
+					[]chore.Hash{
+						bar1.Hash(),
+						bar2.Hash(),
+						testObjectSubscriptionInline.Hash(),
+					},
+				),
+			},
+		},
+		Data: chore.Map{
+			"foo": chore.String("bar"),
+		},
+	}
+
+	type fields struct {
+		store                 func(*testing.T) objectstore.Store
+		network               func(*testing.T) network.Network
+		resolver              func(*testing.T) resolver.Resolver
+		receivedSubscriptions []*object.Object
+	}
+	type args struct {
+		o *object.Object
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *object.Object
+		wantErr bool
+	}{{
+		name: "should fail, simple object",
+		fields: fields{
+			store: func(t *testing.T) objectstore.Store {
+				m := objectstoremock.NewMockStore(
+					gomock.NewController(t),
+				)
+				return m
+			},
+			network: func(t *testing.T) network.Network {
+				m := &networkmock.MockNetworkSimple{
+					ReturnLocalPeer: testLocalPeer,
+					SendCalls:       []error{},
+					SubscribeCalls: []network.EnvelopeSubscription{
+						&networkmock.MockSubscriptionSimple{},
+					},
+				}
+				return m
+			},
+			resolver: func(t *testing.T) resolver.Resolver {
+				m := resolvermock.NewMockResolver(
+					gomock.NewController(t),
+				)
+				return m
+			},
+		},
+		args: args{
+			o: object.Copy(testObjectSimple),
+		},
+		want:    nil,
+		wantErr: true,
 	}, {
 		name: "should pass, stream event",
 		fields: fields{
@@ -936,6 +1039,18 @@ func TestManager_Put(t *testing.T) {
 								bar2.Hash(),
 							},
 						),
+						nil,
+					)
+				m.EXPECT().
+					Get(bar1.Hash()).
+					Return(
+						bar1,
+						nil,
+					)
+				m.EXPECT().
+					Get(bar2.Hash()).
+					Return(
+						bar2,
 						nil,
 					)
 				m.EXPECT().
@@ -990,6 +1105,18 @@ func TestManager_Put(t *testing.T) {
 								bar2,
 							},
 						),
+						nil,
+					)
+				m.EXPECT().
+					Get(bar1.Hash()).
+					Return(
+						bar1,
+						nil,
+					)
+				m.EXPECT().
+					Get(bar2.Hash()).
+					Return(
+						bar2,
 						nil,
 					)
 				m.EXPECT().
@@ -1062,6 +1189,24 @@ func TestManager_Put(t *testing.T) {
 						nil,
 					)
 				m.EXPECT().
+					Get(bar1.Hash()).
+					Return(
+						bar1,
+						nil,
+					)
+				m.EXPECT().
+					Get(bar2.Hash()).
+					Return(
+						bar2,
+						nil,
+					)
+				m.EXPECT().
+					Get(testObjectSubscriptionInline.Hash()).
+					Return(
+						testObjectSubscriptionInline,
+						nil,
+					)
+				m.EXPECT().
 					GetByStream(testObjectStreamRoot.Hash()).
 					Return(
 						object.NewReadCloserFromObjects(
@@ -1109,8 +1254,9 @@ func TestManager_Put(t *testing.T) {
 		want: &object.Object{
 			Type: "foo",
 			Metadata: object.Metadata{
-				Root:  testObjectStreamRoot.Hash(),
-				Owner: testOwnPublicKey.DID(),
+				Root:     testObjectStreamRoot.Hash(),
+				Owner:    testOwnPublicKey.DID(),
+				Sequence: 7,
 				Parents: object.Parents{
 					"*": chore.SortHashes(
 						[]chore.Hash{
@@ -1143,7 +1289,7 @@ func TestManager_Put(t *testing.T) {
 				)
 				require.NoError(t, err)
 			}
-			got, err := m.Put(
+			got, err := m.Append(
 				context.Background(),
 				tt.args.o,
 			)
@@ -1289,7 +1435,7 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 			Nonce: "foo",
 		},
 	)
-	rootObj, err = man.Put(context.TODO(), rootObj)
+	err = man.Put(context.TODO(), rootObj)
 	require.NoError(t, err)
 
 	// subscribe to stream

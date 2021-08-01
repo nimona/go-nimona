@@ -137,7 +137,7 @@ func (ft *fileTransfer) serve(
 		return
 	}
 
-	if _, err := ft.objectmanager.Put(ctx, flo); err != nil {
+	if err := ft.objectmanager.Put(ctx, flo); err != nil {
 		fmt.Println("failed to store blob", err)
 		return
 	}
