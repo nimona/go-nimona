@@ -17,7 +17,7 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 
 	i := &Inception{
 		Metadata: object.Metadata{
-			Datetime: "foo",
+			Timestamp: "foo",
 		},
 		Version: Version,
 		// Prefix:        "prefix",

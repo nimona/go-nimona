@@ -49,7 +49,7 @@ func (c *chat) subscribe(
 			case ConversationMessageAddedType:
 				v := &ConversationMessageAdded{}
 				object.Unmarshal(o, v)
-				if v.Body == "" || v.Metadata.Datetime == "" {
+				if v.Body == "" || v.Metadata.Timestamp == "" {
 					fmt.Println("> Received message without date or body")
 					continue
 				}
@@ -323,9 +323,9 @@ func main() {
 					),
 					object.MustMarshal(&ConversationNicknameUpdated{
 						Metadata: object.Metadata{
-							Owner:    local.GetPeerKey().PublicKey().DID(),
-							Root:     conversationRootHash,
-							Datetime: time.Now().Format(time.RFC3339),
+							Owner:     local.GetPeerKey().PublicKey().DID(),
+							Root:      conversationRootHash,
+							Timestamp: time.Now().Format(time.RFC3339),
 						},
 						Nickname: nickname,
 					}),
@@ -342,9 +342,9 @@ func main() {
 					),
 					object.MustMarshal(&ConversationMessageAdded{
 						Metadata: object.Metadata{
-							Owner:    local.GetPeerKey().PublicKey().DID(),
-							Root:     conversationRootHash,
-							Datetime: time.Now().Format(time.RFC3339),
+							Owner:     local.GetPeerKey().PublicKey().DID(),
+							Root:      conversationRootHash,
+							Timestamp: time.Now().Format(time.RFC3339),
 						},
 						Body: input,
 					}),
@@ -361,7 +361,7 @@ func main() {
 	for event := range events {
 		switch v := event.(type) {
 		case *ConversationMessageAdded:
-			t, err := time.Parse(time.RFC3339, v.Metadata.Datetime)
+			t, err := time.Parse(time.RFC3339, v.Metadata.Timestamp)
 			if err != nil {
 				continue
 			}
@@ -373,7 +373,7 @@ func main() {
 				Created:          t.UTC(),
 			}
 		case *ConversationNicknameUpdated:
-			updated, _ := time.Parse(time.RFC3339, v.Metadata.Datetime)
+			updated, _ := time.Parse(time.RFC3339, v.Metadata.Timestamp)
 			app.Channels.ParticipantUpdated <- &Participant{
 				ConversationHash: v.Metadata.Root.String(),
 				Key:              v.Metadata.Owner.String(),

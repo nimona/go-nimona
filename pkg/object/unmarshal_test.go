@@ -60,7 +60,7 @@ func TestUnmarshal(t *testing.T) {
 	o := &Object{
 		Type: "some-type",
 		Metadata: Metadata{
-			Datetime: "foo",
+			Timestamp: "foo",
 		},
 		Data: chore.Map{
 			"string":           chore.String("string"),
@@ -101,7 +101,7 @@ func TestUnmarshal(t *testing.T) {
 	e := &TestUnmarshalStruct{
 		Type: "some-type",
 		Metadata: Metadata{
-			Datetime: "foo",
+			Timestamp: "foo",
 		},
 		TestUnmarshalMap: TestUnmarshalMap{
 			String:           "string",

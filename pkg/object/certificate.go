@@ -23,7 +23,7 @@ package object
 // 	crt := &Certificate{
 // 		Metadata: Metadata{
 // 			Owner:    issuer.PublicKey(),
-// 			Datetime: nowString,
+// 			Timestamp: nowString,
 // 		},
 // 		Nonce:       req.Nonce,
 // 		Subject:     req.Metadata.Owner,
@@ -43,7 +43,7 @@ package object
 // 	res := &CertificateResponse{
 // 		Metadata: Metadata{
 // 			Owner:    issuer.PublicKey(),
-// 			Datetime: nowString,
+// 			Timestamp: nowString,
 // 		},
 // 		Signed:      sign,
 // 		Notes:       notes,

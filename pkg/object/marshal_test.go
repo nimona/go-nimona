@@ -57,7 +57,7 @@ func TestMarshal(t *testing.T) {
 	s := &TestMarshalStruct{
 		Type: "some-type",
 		Metadata: Metadata{
-			Datetime: "foo",
+			Timestamp: "foo",
 			Parents: Parents{
 				"*": chore.HashArray{
 					chore.Hash("foo"),
@@ -130,7 +130,7 @@ func TestMarshal(t *testing.T) {
 	e := &Object{
 		Type: "some-type",
 		Metadata: Metadata{
-			Datetime: "foo",
+			Timestamp: "foo",
 			Parents: Parents{
 				"*": chore.HashArray{
 					chore.Hash("foo"),
@@ -214,7 +214,7 @@ type TestObjectWithTags struct {
 func TestMarshal_ObjectWithTags(t *testing.T) {
 	s := &TestObjectWithTags{
 		Metadata: Metadata{
-			Datetime: "now",
+			Timestamp: "now",
 		},
 		String: "hello",
 	}
@@ -222,7 +222,7 @@ func TestMarshal_ObjectWithTags(t *testing.T) {
 	e := &Object{
 		Type: "foo",
 		Metadata: Metadata{
-			Datetime: "now",
+			Timestamp: "now",
 		},
 		Data: chore.Map{
 			"string": chore.String("hello"),
