@@ -310,3 +310,12 @@ func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
 		k.RawKey.Equal(w.RawKey)
 }
+
+func PublicKeyFromDID(d did.DID) (*PublicKey, error) {
+	pk := &PublicKey{}
+	err := pk.UnmarshalString(d.Identity)
+	if err != nil {
+		return nil, err
+	}
+	return pk, nil
+}

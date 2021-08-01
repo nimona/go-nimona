@@ -1,6 +1,6 @@
 // KeyStream is a simplified implementation of KERI.
 // It is not a full nor faithful implementation of the spec and is not intended
-// to be for the forseeable future.
+// to be for the foreseeable future.
 // It is just an attempt to implement some of the basic aspects of KERI using
 // nimona's streams and use the stream's root hash as an identifier.
 

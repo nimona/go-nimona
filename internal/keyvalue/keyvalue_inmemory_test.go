@@ -4,7 +4,8 @@ import (
 	"testing"
 )
 
-// TestInMemoryStore tests the in-memory implementation of the KeyValue interface.
+// TestInMemoryStore tests the in-memory implementation of the KeyValue
+// interface.
 func TestInMemoryStore(t *testing.T) {
 	s := NewInMemoryStore()
 	defer s.Close()

@@ -24,13 +24,13 @@ func TestDID_MarshalString(t *testing.T) {
 		t.Run(tt.did, func(t *testing.T) {
 			did, err := Parse(tt.did)
 			if (err != nil) != tt.wantUnmarshalErr {
-				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantUnmarshalErr)
+				t.Errorf("error = %v, wantErr %v", err, tt.wantUnmarshalErr)
 				return
 			}
 			if did != nil {
 				got, err := did.MarshalString()
 				if (err != nil) != tt.wantMarshalErr {
-					t.Errorf("DID.MarshalString() error = %v, wantErr %v", err, tt.wantMarshalErr)
+					t.Errorf("error = %v, wantErr %v", err, tt.wantMarshalErr)
 					return
 				}
 				require.Equal(t, tt.did, got)

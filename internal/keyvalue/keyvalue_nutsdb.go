@@ -53,6 +53,7 @@ func (s *dbStore) Delete(key string) error {
 
 // Iter calls f for each key-value pair in the store.
 func (s *dbStore) Iter(f func(key string, value []byte)) {
+	// nolint: errcheck
 	s.db.View(func(tx *nutsdb.Tx) error {
 		entries, _, err := tx.PrefixScan(s.bucket, []byte{}, 0, 0)
 		if err != nil {

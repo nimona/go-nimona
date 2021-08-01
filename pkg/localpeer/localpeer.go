@@ -5,7 +5,6 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/keystream"
 )
 
 //go:generate mockgen -destination=../localpeermock/localpeermock_generated.go -package=localpeermock -source=localpeer.go
@@ -18,11 +17,10 @@ type (
 		ListenForUpdates() (<-chan UpdateEvent, func())
 	}
 	localPeer struct {
-		keyLock            sync.RWMutex
-		primaryPeerKey     crypto.PrivateKey
-		delegateController *keystream.Controller
-		listeners          map[string]chan UpdateEvent
-		listenersLock      sync.RWMutex
+		keyLock        sync.RWMutex
+		primaryPeerKey crypto.PrivateKey
+		listeners      map[string]chan UpdateEvent
+		listenersLock  sync.RWMutex
 	}
 	UpdateEvent string
 )
@@ -51,6 +49,7 @@ func (s *localPeer) GetPeerKey() crypto.PrivateKey {
 	return s.primaryPeerKey
 }
 
+// nolint: unused
 func (s *localPeer) publishUpdate(e UpdateEvent) {
 	s.listenersLock.RLock()
 	defer s.listenersLock.RUnlock()

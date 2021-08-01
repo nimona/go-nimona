@@ -42,19 +42,19 @@ func (d *DID) IsEmpty() bool {
 
 // MarshalString returns the string representation of the DID.
 // Never returns an error.
-func (id DID) MarshalString() (string, error) {
-	return id.String(), nil
+func (d DID) MarshalString() (string, error) {
+	return d.String(), nil
 }
 
 // String returns the string representation of the DID.
-func (id DID) String() string {
-	if id == Empty {
+func (d DID) String() string {
+	if d == Empty {
 		return ""
 	}
-	return didPrefix + string(id.Method) + ":" + id.Identity
+	return didPrefix + string(d.Method) + ":" + d.Identity
 }
 
-func (id *DID) UnmarshalString(s string) error {
+func (d *DID) UnmarshalString(s string) error {
 	if !strings.HasPrefix(s, didPrefix) {
 		return ErrInvalidDID
 	}
@@ -62,8 +62,8 @@ func (id *DID) UnmarshalString(s string) error {
 	if len(parts) != 2 {
 		return ErrInvalidDID
 	}
-	id.Method = Method(parts[0])
-	id.Identity = parts[1]
+	d.Method = Method(parts[0])
+	d.Identity = parts[1]
 	return nil
 }
 
