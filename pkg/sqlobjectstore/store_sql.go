@@ -14,7 +14,6 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
@@ -739,14 +738,6 @@ func astoai(ah []string) []interface{} {
 }
 
 func ahtoai(ah []chore.Hash) []interface{} {
-	as := make([]interface{}, len(ah))
-	for i, h := range ah {
-		as[i] = h.String()
-	}
-	return as
-}
-
-func aktoai(ah []crypto.PublicKey) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

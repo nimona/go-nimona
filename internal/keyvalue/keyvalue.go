@@ -1,5 +1,4 @@
 // Package keyvalue implements an in-memory key-value store.
-
 package keyvalue
 
 import (

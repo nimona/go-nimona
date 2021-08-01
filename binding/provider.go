@@ -8,8 +8,8 @@ import (
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/localpeer"
@@ -118,7 +118,7 @@ func (p *Provider) Get(
 	opts := []sqlobjectstore.FilterOption{}
 	filterByType := []string{}
 	filterByHash := []chore.Hash{}
-	filterByOwner := []crypto.PublicKey{}
+	filterByOwner := []did.DID{}
 	filterByStreamHash := []chore.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
@@ -139,7 +139,7 @@ func (p *Provider) Get(
 				chore.Hash(v),
 			)
 		case "owner":
-			k := crypto.PublicKey{}
+			k := did.DID{}
 			k.UnmarshalString(v) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
@@ -213,7 +213,7 @@ func (p *Provider) Subscribe(
 	opts := []objectmanager.LookupOption{}
 	filterByType := []string{}
 	filterByHash := []chore.Hash{}
-	filterByOwner := []crypto.PublicKey{}
+	filterByOwner := []did.DID{}
 	filterByStreamHash := []chore.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
@@ -234,7 +234,7 @@ func (p *Provider) Subscribe(
 				chore.Hash(v),
 			)
 		case "owner":
-			k := crypto.PublicKey{}
+			k := did.DID{}
 			k.UnmarshalString(v) // nolint: errcheck
 			filterByOwner = append(
 				filterByOwner,
@@ -315,9 +315,10 @@ func (p *Provider) Put(
 		if setOwner, ok := setOwnerS.(chore.String); ok {
 			switch setOwner {
 			case "@peer":
-				obj.Metadata.Owner = p.local.GetPeerKey().PublicKey()
+				obj.Metadata.Owner = p.local.GetPeerKey().PublicKey().DID()
 			case "@identity":
-				obj.Metadata.Owner = p.local.GetIdentityPublicKey()
+				// TODO(geoah): fix identity
+				// obj.Metadata.Owner = p.local.GetIdentityPublicKey()
 			}
 		}
 		delete(obj.Data, "_setOwner:s")
@@ -331,7 +332,7 @@ func (p *Provider) GetFeedRootHash(
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{
-			Owner: p.local.GetPeerKey().PublicKey(),
+			Owner: p.local.GetPeerKey().PublicKey().DID(),
 		},
 	}
 	o, _ := object.Marshal(v)
