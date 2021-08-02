@@ -18,7 +18,6 @@ import (
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
@@ -56,7 +55,6 @@ type (
 		config *comboConf
 
 		network       network.Network
-		local         localpeer.LocalPeer
 		objectmanager objectmanager.ObjectManager
 		blobmanager   blob.Manager
 		objectstore   objectstore.Store
@@ -93,7 +91,6 @@ func NewHermod() hermod {
 		panic(err)
 	}
 
-	local := d.LocalPeer()
 	man := d.ObjectManager()
 	nnet := d.Network()
 	res := d.Resolver()
@@ -117,7 +114,6 @@ func NewHermod() hermod {
 
 	her.network = nnet
 	her.config = cconf
-	her.local = local
 	her.textInput = ti
 	her.config = cconf
 	her.resolver = res
