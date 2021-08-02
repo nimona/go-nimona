@@ -226,7 +226,7 @@ func (app *App) Show() {
 						conv.Hash,
 						fmt.Sprintf(
 							"* public key: %s",
-							app.Chat.local.GetPeerKey().PublicKey(),
+							app.Chat.network.GetPeerKey().PublicKey(),
 						),
 					)
 					app.AddSystemText(

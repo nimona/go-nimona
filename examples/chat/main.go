@@ -11,7 +11,6 @@ import (
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -29,7 +28,6 @@ type Config struct {
 
 type chat struct {
 	network       network.Network
-	local         localpeer.LocalPeer
 	objectmanager objectmanager.ObjectManager
 	objectstore   objectstore.Store
 	resolver      resolver.Resolver
@@ -120,7 +118,7 @@ func (c *chat) subscribe(
 					continue
 				}
 				if s.Metadata.Owner.Equals(
-					c.local.GetPeerKey().PublicKey().DID(),
+					c.network.GetPeerKey().PublicKey().DID(),
 				) {
 					alreadySubscribed = true
 					or.Close()
@@ -132,7 +130,7 @@ func (c *chat) subscribe(
 			ctx := context.New(context.WithTimeout(time.Second * 5))
 			so := object.MustMarshal(&stream.Subscription{
 				Metadata: object.Metadata{
-					Owner: c.local.GetPeerKey().PublicKey().DID(),
+					Owner: c.network.GetPeerKey().PublicKey().DID(),
 					Root:  conversationRootHash,
 				},
 				RootHashes: []chore.Hash{
@@ -209,15 +207,10 @@ func main() {
 
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.SetPeerKey(nConfig.Peer.PrivateKey)
-
 	// construct new network
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(nConfig.Peer.PrivateKey),
 	)
 
 	if nConfig.Peer.BindAddress != "" {
@@ -288,7 +281,7 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
@@ -297,7 +290,6 @@ func main() {
 
 	c := &chat{
 		network:       net,
-		local:         local,
 		objectmanager: man,
 		objectstore:   str,
 		resolver:      res,
@@ -323,7 +315,7 @@ func main() {
 					),
 					object.MustMarshal(&ConversationNicknameUpdated{
 						Metadata: object.Metadata{
-							Owner:     local.GetPeerKey().PublicKey().DID(),
+							Owner:     net.GetPeerKey().PublicKey().DID(),
 							Root:      conversationRootHash,
 							Timestamp: time.Now().Format(time.RFC3339),
 						},
@@ -342,7 +334,7 @@ func main() {
 					),
 					object.MustMarshal(&ConversationMessageAdded{
 						Metadata: object.Metadata{
-							Owner:     local.GetPeerKey().PublicKey().DID(),
+							Owner:     net.GetPeerKey().PublicKey().DID(),
 							Root:      conversationRootHash,
 							Timestamp: time.Now().Format(time.RFC3339),
 						},
