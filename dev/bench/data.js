@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1627845634058,
+  "lastUpdate": 1627940534446,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -5856,6 +5856,54 @@ window.BENCHMARK_DATA = {
             "value": 34650,
             "unit": "ns/op",
             "extra": "34462 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "600bd5609c2ff8a7d2ed28ffb60fbfa9701920ca",
+          "message": "chore(apps): update to remove local peer",
+          "timestamp": "2021-08-02T22:40:43+01:00",
+          "tree_id": "1a985ab06ac8226a918dcefe46528314031f0181",
+          "url": "https://github.com/nimona/go-nimona/commit/600bd5609c2ff8a7d2ed28ffb60fbfa9701920ca"
+        },
+        "date": 1627940532987,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3734041,
+            "unit": "ns/op",
+            "extra": "321 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 341295014,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3101523585,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkHash",
+            "value": 32003,
+            "unit": "ns/op",
+            "extra": "37056 times\n2 procs"
           }
         ]
       }
