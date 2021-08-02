@@ -18,7 +18,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/localpeer"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -30,7 +29,6 @@ import (
 )
 
 type fileTransfer struct {
-	local         localpeer.LocalPeer
 	objectmanager objectmanager.ObjectManager
 	objectstore   objectstore.Store
 	blobmanager   blob.Manager
@@ -237,16 +235,11 @@ func newFileTransfer(
 ) (*fileTransfer, error) {
 	ft := &fileTransfer{}
 	ft.config = cfg
-	// construct local peer
-	local := localpeer.New()
-	// attach peer private key from config
-	local.SetPeerKey(cfg.nconf.Peer.PrivateKey)
-	ft.local = local
 
 	// construct new network
 	net := network.New(
 		ctx,
-		network.WithLocalPeer(local),
+		network.WithPeerKey(cfg.nconf.Peer.PrivateKey),
 	)
 
 	if cfg.nconf.Peer.BindAddress != "" {
@@ -286,7 +279,7 @@ func newFileTransfer(
 	net.RegisterRelays(bootstrapPeers...)
 
 	logger = logger.With(
-		log.String("peer.publicKey", local.GetPeerKey().PublicKey().String()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
 		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
