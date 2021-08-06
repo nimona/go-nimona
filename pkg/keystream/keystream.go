@@ -163,9 +163,12 @@ func (inc *Inception) apply(s *KeyStream) error {
 	}
 
 	s.Root = o.Hash()
-	s.Delegator = inc.DelegatorSeal.Root
+	if inc.DelegatorSeal != nil {
+		s.Delegator = inc.DelegatorSeal.Root
+	}
 	s.Version = inc.Version
 	s.ActiveKey = inc.Key
+	s.NextKeyDigest = inc.NextKeyDigest
 	s.RotatedKeys = []crypto.PublicKey{}
 
 	return nil
@@ -176,10 +179,11 @@ func (rot *Rotation) apply(s *KeyStream) error {
 		return ErrInvalidVersion
 	}
 
-	// TODO if hash(rot.Key) != s.NextKeyHash { err }
+	// TODO if hash(rot.Key) != s.NextKeyDigest { err }
 
 	s.RotatedKeys = append(s.RotatedKeys, s.ActiveKey)
 	s.ActiveKey = rot.Key
+	s.NextKeyDigest = rot.NextKeyDigest
 	return nil
 }
 
@@ -190,12 +194,12 @@ type (
 	}
 	// KeyStream of a single KERI stream
 	KeyStream struct {
-		Version     string
-		Root        chore.Hash
-		Delegator   chore.Hash
-		ActiveKey   crypto.PublicKey
-		NextKeyHash chore.Hash
-		RotatedKeys []crypto.PublicKey
+		Version       string
+		Root          chore.Hash
+		Delegator     chore.Hash
+		ActiveKey     crypto.PublicKey
+		NextKeyDigest chore.Hash
+		RotatedKeys   []crypto.PublicKey
 	}
 )
 
