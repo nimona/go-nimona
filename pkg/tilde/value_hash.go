@@ -8,53 +8,53 @@ import (
 )
 
 const (
-	EmptyHash Hash = ""
+	EmptyDigest Digest = ""
 )
 
-func (v Hash) Hint() Hint {
-	return HashHint
+func (v Digest) Hint() Hint {
+	return DigestHint
 }
 
-func (v Hash) _isValue() {
+func (v Digest) _isValue() {
 }
 
-func (v Hash) Hash() Hash {
+func (v Digest) Hash() Digest {
 	return v
 }
 
-func hashFromBytes(d []byte) Hash {
+func hashFromBytes(d []byte) Digest {
 	if d == nil {
-		return EmptyHash
+		return EmptyDigest
 	}
 	b := sha256.Sum256(d)
-	return Hash(base58.Encode(b[:]))
+	return Digest(base58.Encode(b[:]))
 }
 
-func (v Hash) Bytes() ([]byte, error) {
+func (v Digest) Bytes() ([]byte, error) {
 	return base58.Decode(string(v))
 }
 
-func (v Hash) IsEmpty() bool {
+func (v Digest) IsEmpty() bool {
 	return string(v) == ""
 }
 
-func (v Hash) Equal(h Hash) bool {
+func (v Digest) Equal(h Digest) bool {
 	return h == v
 }
 
-func (v Hash) String() string {
+func (v Digest) String() string {
 	return string(v)
 }
 
-// SortHashes sorts a slice of Hashes in increasing order, and also returns it.
+// SortDigests sorts a slice of Digestes in increasing order, and returns it.
 // The return part is mostly for allowing this to be used as a helper method in
 // tests.
-func SortHashes(a []Hash) []Hash {
+func SortDigests(a []Digest) []Digest {
 	sort.Sort(Slice(a))
 	return a
 }
 
-type Slice []Hash
+type Slice []Digest
 
 func (p Slice) Len() int           { return len(p) }
 func (p Slice) Less(i, j int) bool { return p[i] < p[j] }

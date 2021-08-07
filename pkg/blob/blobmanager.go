@@ -21,7 +21,7 @@ type (
 	Requester interface {
 		Request(
 			ctx context.Context,
-			hash tilde.Hash,
+			hash tilde.Digest,
 		) (*Blob, []*Chunk, error)
 	}
 	Manager interface {
@@ -69,7 +69,7 @@ func (r *manager) ImportFromFile(
 	}
 
 	// keep a list of all chunk hashes
-	chunkHashes := []tilde.Hash{}
+	chunkHashes := []tilde.Digest{}
 
 	// start a workerpool to store chunks
 	wp := workerpool.New(r.importWorkers)
@@ -138,7 +138,7 @@ func (r *manager) ImportFromFile(
 
 func (r *manager) Request(
 	ctx context.Context,
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) (*Blob, []*Chunk, error) {
 	logger := log.
 		FromContext(ctx).
@@ -205,7 +205,7 @@ func (r *manager) Request(
 	return blob, chunks, nil
 }
 
-func getChunks(o *object.Object) ([]tilde.Hash, error) {
+func getChunks(o *object.Object) ([]tilde.Digest, error) {
 	b := &Blob{}
 	if err := object.Unmarshal(o, b); err != nil {
 		return nil, err

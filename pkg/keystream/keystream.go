@@ -44,7 +44,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Hash       `nimona:"n:s"`
+		NextKeyDigest tilde.Digest     `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -65,7 +65,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Hash       `nimona:"n:s"`
+		NextKeyDigest tilde.Digest     `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -86,7 +86,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		// Key           crypto.PublicKey `nimona:"k:s"`
-		// NextKeyDigest tilde.Hash       `nimona:"n:s"`
+		// NextKeyDigest tilde.Digest       `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -107,7 +107,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		// Key           crypto.PublicKey `nimona:"k:s"`
-		// NextKeyDigest tilde.Hash       `nimona:"n:s"`
+		// NextKeyDigest tilde.Digest       `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -124,7 +124,7 @@ type (
 type (
 	Trait string
 	Seal  struct { // Type      SealType `nimona:"-"`
-		Root        tilde.Hash      `nimona:"rd:s"`
+		Root        tilde.Digest    `nimona:"rd:s"`
 		Permissions object.Policies `nimona:"p:am"`
 		// Prefix    string `nimona:"i:s"`
 		// Sequence  string `nimona:"s:s"`
@@ -132,9 +132,9 @@ type (
 		// Digest    string `nimona:"d:s"`
 	}
 	DelegatorSeal struct {
-		Root tilde.Hash `nimona:"rd:s"`
+		Root tilde.Digest `nimona:"rd:s"`
 		// Type      SealType `nimona:"-"`
-		// Delegation  tilde.Hash      `nimona:"d:s"`
+		// Delegation  tilde.Digest      `nimona:"d:s"`
 		// Permissions object.Policies `nimona:"p:am"`
 		// Prefix    string `nimona:"i:s"`
 		Sequence uint64 `nimona:"s:u"`
@@ -195,15 +195,15 @@ type (
 	// KeyStream of a single KERI stream
 	KeyStream struct {
 		Version       string
-		Root          tilde.Hash
-		Delegator     tilde.Hash
+		Root          tilde.Digest
+		Delegator     tilde.Digest
 		ActiveKey     crypto.PublicKey
-		NextKeyDigest tilde.Hash
+		NextKeyDigest tilde.Digest
 		RotatedKeys   []crypto.PublicKey
 	}
 )
 
-func (s *KeyStream) GetIdentity() tilde.Hash {
+func (s *KeyStream) GetIdentity() tilde.Digest {
 	return s.Root
 }
 

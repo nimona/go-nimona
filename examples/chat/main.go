@@ -35,7 +35,7 @@ type chat struct {
 }
 
 func (c *chat) subscribe(
-	conversationRootHash tilde.Hash,
+	conversationRootHash tilde.Digest,
 ) (chan interface{}, error) {
 	objects := make(chan *object.Object)
 	events := make(chan interface{})
@@ -133,7 +133,7 @@ func (c *chat) subscribe(
 					Owner: c.network.GetPeerKey().PublicKey().DID(),
 					Root:  conversationRootHash,
 				},
-				RootHashes: []tilde.Hash{
+				RootHashes: []tilde.Digest{
 					conversationRootHash,
 				},
 			})

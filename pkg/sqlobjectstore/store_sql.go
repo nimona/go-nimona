@@ -57,7 +57,7 @@ type (
 	EventAction string
 	Event       struct {
 		Action     EventAction
-		ObjectHash tilde.Hash
+		ObjectHash tilde.Digest
 	}
 )
 
@@ -98,7 +98,7 @@ func (st *Store) Close() error {
 }
 
 func (st *Store) Get(
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) (*object.Object, error) {
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
@@ -139,7 +139,7 @@ func (st *Store) Get(
 }
 
 func (st *Store) GetByStream(
-	streamRootHash tilde.Hash,
+	streamRootHash tilde.Digest,
 ) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamHash(streamRootHash),
@@ -239,7 +239,7 @@ func (st *Store) PutWithTTL(
 	if len(obj.Metadata.Parents) > 0 {
 		for _, group := range obj.Metadata.Parents {
 			for _, p := range group {
-				err := st.putRelation(tilde.Hash(streamHash), objHash, p)
+				err := st.putRelation(tilde.Digest(streamHash), objHash, p)
 				if err != nil {
 					return fmt.Errorf("could not create relation: %w", err)
 				}
@@ -248,7 +248,7 @@ func (st *Store) PutWithTTL(
 	}
 
 	if streamHash == objectHash {
-		err := st.putRelation(tilde.Hash(streamHash), objHash, tilde.EmptyHash)
+		err := st.putRelation(tilde.Digest(streamHash), objHash, tilde.EmptyDigest)
 		if err != nil {
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
@@ -263,9 +263,9 @@ func (st *Store) PutWithTTL(
 }
 
 func (st *Store) putRelation(
-	stream tilde.Hash,
-	parent tilde.Hash,
-	child tilde.Hash,
+	stream tilde.Digest,
+	parent tilde.Digest,
+	child tilde.Digest,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Relations (
@@ -294,8 +294,8 @@ func (st *Store) putRelation(
 }
 
 func (st *Store) GetStreamLeaves(
-	streamRootHash tilde.Hash,
-) ([]tilde.Hash, error) {
+	streamRootHash tilde.Digest,
+) ([]tilde.Digest, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
@@ -320,22 +320,22 @@ func (st *Store) GetStreamLeaves(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []tilde.Hash{}
+	hashList := []tilde.Digest{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, tilde.Hash(data))
+		hashList = append(hashList, tilde.Digest(data))
 	}
 
 	return hashList, nil
 }
 
 func (st *Store) GetRelations(
-	parent tilde.Hash,
-) ([]tilde.Hash, error) {
+	parent tilde.Digest,
+) ([]tilde.Digest, error) {
 	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE RootHash=?")
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare query: %w", err)
@@ -348,14 +348,14 @@ func (st *Store) GetRelations(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []tilde.Hash{}
+	hashList := []tilde.Digest{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, tilde.Hash(data))
+		hashList = append(hashList, tilde.Digest(data))
 	}
 
 	istmt, err := st.db.Prepare(
@@ -376,7 +376,7 @@ func (st *Store) GetRelations(
 	return hashList, nil
 }
 
-func (st *Store) ListHashes() ([]tilde.Hash, error) {
+func (st *Store) ListHashes() ([]tilde.Digest, error) {
 	stmt, err := st.db.Prepare(
 		"SELECT Hash FROM Objects WHERE Hash == RootHash",
 	)
@@ -391,21 +391,21 @@ func (st *Store) ListHashes() ([]tilde.Hash, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []tilde.Hash{}
+	hashList := []tilde.Digest{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, tilde.Hash(data))
+		hashList = append(hashList, tilde.Digest(data))
 	}
 
 	return hashList, nil
 }
 
 func (st *Store) UpdateTTL(
-	hash tilde.Hash,
+	hash tilde.Digest,
 	minutes int,
 ) error {
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootHash=?`)
@@ -422,7 +422,7 @@ func (st *Store) UpdateTTL(
 }
 
 func (st *Store) Remove(
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
@@ -581,7 +581,7 @@ func (st *Store) Filter(
 		defer close(objectsChan)
 		defer close(errorChan)
 		for _, hash := range hashes {
-			o, err := st.Get(tilde.Hash(hash))
+			o, err := st.Get(tilde.Digest(hash))
 			if err != nil {
 				errorChan <- err
 				return
@@ -599,7 +599,7 @@ func (st *Store) Filter(
 }
 
 func (st *Store) Pin(
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Pins (Hash) VALUES (?)
@@ -619,7 +619,7 @@ func (st *Store) Pin(
 	return nil
 }
 
-func (st *Store) GetPinned() ([]tilde.Hash, error) {
+func (st *Store) GetPinned() ([]tilde.Digest, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins
 	`)
@@ -634,21 +634,21 @@ func (st *Store) GetPinned() ([]tilde.Hash, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hs := []tilde.Hash{}
+	hs := []tilde.Digest{}
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		if h != "" {
-			hs = append(hs, tilde.Hash(h))
+			hs = append(hs, tilde.Digest(h))
 		}
 	}
 
 	return hs, nil
 }
 
-func (st *Store) IsPinned(hash tilde.Hash) (bool, error) {
+func (st *Store) IsPinned(hash tilde.Digest) (bool, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins WHERE Hash = ?
 	`)
@@ -676,7 +676,7 @@ func (st *Store) IsPinned(hash tilde.Hash) (bool, error) {
 }
 
 func (st *Store) RemovePin(
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) error {
 	stmt, err := st.db.Prepare(`
 		DELETE FROM Pins
@@ -737,7 +737,7 @@ func astoai(ah []string) []interface{} {
 	return as
 }
 
-func ahtoai(ah []tilde.Hash) []interface{} {
+func ahtoai(ah []tilde.Digest) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

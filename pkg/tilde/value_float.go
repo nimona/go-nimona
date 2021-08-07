@@ -15,7 +15,7 @@ func (v Float) Hint() Hint {
 func (v Float) _isValue() {
 }
 
-func (v Float) Hash() Hash {
+func (v Float) Hash() Digest {
 	// replacing ben's implementation with something less custom, based on:
 	// * https://github.com/benlaurie/objecthash
 	// * https://play.golang.org/p/3xraud43pi

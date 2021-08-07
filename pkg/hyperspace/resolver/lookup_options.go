@@ -45,7 +45,7 @@ func LookupOnlyLocal() LookupOption {
 }
 
 // LookupByHash matches content hashes
-func LookupByHash(hash tilde.Hash) LookupOption {
+func LookupByHash(hash tilde.Digest) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups = append(opts.Lookups, hash.String())
 		opts.Filters = append(

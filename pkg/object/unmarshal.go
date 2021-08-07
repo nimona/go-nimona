@@ -165,7 +165,7 @@ func unmarshalMapToMap(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 
 func unmarshalAny(h tilde.Hint, v tilde.Value, target reflect.Value) error {
 	switch vv := v.(type) {
-	case tilde.Hash:
+	case tilde.Digest:
 		if vv.IsEmpty() {
 			return nil
 		}
@@ -235,7 +235,7 @@ func unmarshalAny(h tilde.Hint, v tilde.Value, target reflect.Value) error {
 		// value.ObjectArray,
 		tilde.StringArray,
 		tilde.UintArray,
-		tilde.HashArray:
+		tilde.DigestArray:
 		switch target.Kind() {
 		case reflect.Slice, reflect.Array:
 		default:

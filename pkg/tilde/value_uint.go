@@ -12,7 +12,7 @@ func (v Uint) Hint() Hint {
 func (v Uint) _isValue() {
 }
 
-func (v Uint) Hash() Hash {
+func (v Uint) Hash() Digest {
 	return hashFromBytes(
 		[]byte(
 			fmt.Sprintf(

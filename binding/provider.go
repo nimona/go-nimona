@@ -113,9 +113,9 @@ func (p *Provider) Get(
 ) (object.ReadCloser, error) {
 	opts := []sqlobjectstore.FilterOption{}
 	filterByType := []string{}
-	filterByHash := []tilde.Hash{}
+	filterByHash := []tilde.Digest{}
 	filterByOwner := []did.DID{}
-	filterByStreamHash := []tilde.Hash{}
+	filterByStreamHash := []tilde.Digest{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -132,7 +132,7 @@ func (p *Provider) Get(
 		case "hash":
 			filterByHash = append(
 				filterByHash,
-				tilde.Hash(v),
+				tilde.Digest(v),
 			)
 		case "owner":
 			k := did.DID{}
@@ -144,7 +144,7 @@ func (p *Provider) Get(
 		case "stream":
 			filterByStreamHash = append(
 				filterByStreamHash,
-				tilde.Hash(v),
+				tilde.Digest(v),
 			)
 		}
 		if req.OrderBy != "" {
@@ -208,9 +208,9 @@ func (p *Provider) Subscribe(
 ) (object.ReadCloser, error) {
 	opts := []objectmanager.LookupOption{}
 	filterByType := []string{}
-	filterByHash := []tilde.Hash{}
+	filterByHash := []tilde.Digest{}
 	filterByOwner := []did.DID{}
-	filterByStreamHash := []tilde.Hash{}
+	filterByStreamHash := []tilde.Digest{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -227,7 +227,7 @@ func (p *Provider) Subscribe(
 		case "hash":
 			filterByHash = append(
 				filterByHash,
-				tilde.Hash(v),
+				tilde.Digest(v),
 			)
 		case "owner":
 			k := did.DID{}
@@ -239,7 +239,7 @@ func (p *Provider) Subscribe(
 		case "stream":
 			filterByStreamHash = append(
 				filterByStreamHash,
-				tilde.Hash(v),
+				tilde.Digest(v),
 			)
 		}
 	}
@@ -273,7 +273,7 @@ func (p *Provider) Subscribe(
 
 func (p *Provider) RequestStream(
 	ctx context.Context,
-	rootHash tilde.Hash,
+	rootHash tilde.Digest,
 ) error {
 	recipients, err := p.resolver.Lookup(
 		ctx,
@@ -327,7 +327,7 @@ func (p *Provider) Put(
 
 func (p *Provider) GetFeedRootHash(
 	streamRootObjectType string,
-) tilde.Hash {
+) tilde.Digest {
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{

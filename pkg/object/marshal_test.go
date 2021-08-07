@@ -59,9 +59,9 @@ func TestMarshal(t *testing.T) {
 		Metadata: Metadata{
 			Timestamp: "foo",
 			Parents: Parents{
-				"*": tilde.HashArray{
-					tilde.Hash("foo"),
-					tilde.Hash("bar"),
+				"*": tilde.DigestArray{
+					tilde.Digest("foo"),
+					tilde.Digest("bar"),
 				},
 			},
 		},
@@ -132,9 +132,9 @@ func TestMarshal(t *testing.T) {
 		Metadata: Metadata{
 			Timestamp: "foo",
 			Parents: Parents{
-				"*": tilde.HashArray{
-					tilde.Hash("foo"),
-					tilde.Hash("bar"),
+				"*": tilde.DigestArray{
+					tilde.Digest("foo"),
+					tilde.Digest("bar"),
 				},
 			},
 		},

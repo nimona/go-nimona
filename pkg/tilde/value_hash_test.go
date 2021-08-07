@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BenchmarkHash(b *testing.B) {
+func BenchmarkDigest(b *testing.B) {
 	o := Map{
 		"@type":    String("blob"),
 		"filename": String("foo"),
@@ -44,26 +44,26 @@ func TestMapRedaction(t *testing.T) {
 		"foo":   inner.Hash(),
 	}
 	tests := []struct {
-		name      string
-		json      string
-		wantValue Value
-		wantHash  Hash
-		wantErr   bool
+		name       string
+		json       string
+		wantValue  Value
+		wantDigest Digest
+		wantErr    bool
 	}{{
-		name:      "1",
-		json:      `{"@type:s":"foo","foo:s":"bar"}`,
-		wantValue: inner,
-		wantHash:  inner.Hash(),
+		name:       "1",
+		json:       `{"@type:s":"foo","foo:s":"bar"}`,
+		wantValue:  inner,
+		wantDigest: inner.Hash(),
 	}, {
-		name:      "2",
-		json:      `{"@type:s":"foo","foo:m":{"@type:s":"foo","foo:s":"bar"}}`,
-		wantValue: parentWithInner,
-		wantHash:  parentWithInner.Hash(),
+		name:       "2",
+		json:       `{"@type:s":"foo","foo:m":{"@type:s":"foo","foo:s":"bar"}}`,
+		wantValue:  parentWithInner,
+		wantDigest: parentWithInner.Hash(),
 	}, {
-		name:      "3",
-		json:      `{"@type:s":"foo","foo:r":"` + string(inner.Hash()) + `"}`,
-		wantValue: parentWithInnerRedacted,
-		wantHash:  parentWithInner.Hash(),
+		name:       "3",
+		json:       `{"@type:s":"foo","foo:r":"` + string(inner.Hash()) + `"}`,
+		wantValue:  parentWithInnerRedacted,
+		wantDigest: parentWithInner.Hash(),
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestMapRedaction(t *testing.T) {
 			assert.NoError(t, json.Unmarshal([]byte(tt.json), &m))
 			assert.Equal(t, tt.wantValue, m)
 			got := m.Hash()
-			assert.Equal(t, tt.wantHash, got)
+			assert.Equal(t, tt.wantDigest, got)
 		})
 	}
 }
@@ -83,12 +83,12 @@ func TestValues(t *testing.T) {
 		"@type": String("dummy"),
 		"foo":   String("bar"),
 	}
-	dummyHash := dummy.Hash()
+	dummyDigest := dummy.Hash()
 	tests := []struct {
 		name    string
 		value   Value
 		json    string
-		want    Hash
+		want    Digest
 		wantErr bool
 	}{{
 		name:  "s",
@@ -127,7 +127,7 @@ func TestValues(t *testing.T) {
 		json:  `123456789`,
 	}, {
 		name:  "r",
-		value: Hash("bQbp"),
+		value: Digest("bQbp"),
 		want:  "bQbp",
 		json:  `"bQbp"`,
 	}, {
@@ -167,7 +167,7 @@ func TestValues(t *testing.T) {
 		json:  `[123456789,123456789]`,
 	}, {
 		name:  "ah",
-		value: HashArray{dummyHash, dummyHash},
+		value: DigestArray{dummyDigest, dummyDigest},
 		want:  "CJPJ9tJF5HUGXxCeH6QPiANMSrxSZua4bKABuwnYkL63",
 		json:  `["8ik1XwTQrmt7punAKVz3AZ9HTCp9FFqocUVKre1GrVKU","8ik1XwTQrmt7punAKVz3AZ9HTCp9FFqocUVKre1GrVKU"]`,
 	}, {
@@ -239,7 +239,7 @@ func TestValues(t *testing.T) {
 	}, {
 		name: "m>h",
 		value: Map{
-			"foo": dummyHash,
+			"foo": dummyDigest,
 		},
 		want: "7wTd5d7KMQrSAZZLKBSgRwstDRrgwpUz2fwRAAFyUozr",
 		json: `{"foo:r":"8ik1XwTQrmt7punAKVz3AZ9HTCp9FFqocUVKre1GrVKU"}`,

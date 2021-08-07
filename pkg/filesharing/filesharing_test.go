@@ -165,7 +165,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []tilde.Hash{tilde.Hash("1234")},
+		Chunks: []tilde.Digest{tilde.Digest("1234")},
 	}
 	req := &filesharing.TransferRequest{
 		File:  file1,

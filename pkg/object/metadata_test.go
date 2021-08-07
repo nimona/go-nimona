@@ -26,12 +26,12 @@ func TestMetadata_Map(t *testing.T) {
 		Owner:     *did.MustParse("did:nimona:foo"),
 		Timestamp: "foo",
 		Parents: Parents{
-			"*": tilde.HashArray{
-				tilde.Hash("foo"),
+			"*": tilde.DigestArray{
+				tilde.Digest("foo"),
 			},
-			"foo.*": tilde.HashArray{
-				tilde.Hash("foo"),
-				tilde.Hash("foo"),
+			"foo.*": tilde.DigestArray{
+				tilde.Digest("foo"),
+				tilde.Digest("foo"),
 			},
 		},
 		Policies: Policies{{
@@ -47,7 +47,7 @@ func TestMetadata_Map(t *testing.T) {
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,
 		}},
-		Root: tilde.Hash("foo"),
+		Root: tilde.Digest("foo"),
 		Signature: Signature{
 			Signer: pk1,
 			Alg:    "alg",

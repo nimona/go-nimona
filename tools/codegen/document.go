@@ -22,7 +22,7 @@ type Object struct {
 	Members   []*Member
 }
 
-// rootHashes repeated string nimona.io/tilde.Hash
+// rootHashes repeated string nimona.io/tilde.Digest
 // ^        ^        ^      ^
 // |        |        |      |
 // |        |        |      - GoType

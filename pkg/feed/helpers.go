@@ -12,7 +12,7 @@ import (
 
 func GetFeedHashes(
 	objectReader object.Reader,
-) ([]tilde.Hash, error) {
+) ([]tilde.Digest, error) {
 	objects := orderedmap.NewOrderedMap()
 	for {
 		obj, err := objectReader.Read()
@@ -43,12 +43,12 @@ func GetFeedHashes(
 			}
 		}
 	}
-	hashes := []tilde.Hash{}
+	hashes := []tilde.Digest{}
 	for el := objects.Front(); el != nil; el = el.Next() {
 		if !el.Value.(bool) {
 			continue
 		}
-		hashes = append(hashes, el.Key.(tilde.Hash))
+		hashes = append(hashes, el.Key.(tilde.Digest))
 	}
 	return hashes, nil
 }
@@ -69,7 +69,7 @@ func GetFeedHypotheticalRoot(
 func GetFeedHypotheticalRootHash(
 	owner crypto.PublicKey,
 	objectType string,
-) tilde.Hash {
+) tilde.Digest {
 	return object.MustMarshal(
 		GetFeedHypotheticalRoot(
 			owner,

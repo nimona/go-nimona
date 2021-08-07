@@ -17,18 +17,18 @@ const (
 
 type (
 	Getter interface {
-		Get(hash tilde.Hash) (*object.Object, error)
+		Get(hash tilde.Digest) (*object.Object, error)
 	}
 	Store interface {
-		Get(hash tilde.Hash) (*object.Object, error)
+		Get(hash tilde.Digest) (*object.Object, error)
 		GetByType(string) (object.ReadCloser, error)
-		GetByStream(tilde.Hash) (object.ReadCloser, error)
+		GetByStream(tilde.Digest) (object.ReadCloser, error)
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
-		GetStreamLeaves(streamRootHash tilde.Hash) ([]tilde.Hash, error)
-		Pin(tilde.Hash) error
-		IsPinned(tilde.Hash) (bool, error)
-		GetPinned() ([]tilde.Hash, error)
-		RemovePin(tilde.Hash) error
+		GetStreamLeaves(streamRootHash tilde.Digest) ([]tilde.Digest, error)
+		Pin(tilde.Digest) error
+		IsPinned(tilde.Digest) (bool, error)
+		GetPinned() ([]tilde.Digest, error)
+		RemovePin(tilde.Digest) error
 	}
 )

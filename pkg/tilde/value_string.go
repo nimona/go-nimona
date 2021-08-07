@@ -7,9 +7,9 @@ func (v String) Hint() Hint {
 func (v String) _isValue() {
 }
 
-func (v String) Hash() Hash {
+func (v String) Hash() Digest {
 	if string(v) == "" {
-		return EmptyHash
+		return EmptyDigest
 	}
 	return hashFromBytes(
 		[]byte(string(v)),

@@ -146,15 +146,15 @@ func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 			}
 			return tilde.String(s), nil
 		}
-	case tilde.HashHint:
+	case tilde.DigestHint:
 		if b, ok := v.Interface().([]byte); ok {
 			// TODO only for omitempty
 			if b == nil {
 				return nil, nil
 			}
-			return tilde.Hash(b), nil
+			return tilde.Digest(b), nil
 		}
-		if b, ok := v.Interface().(tilde.Hash); ok {
+		if b, ok := v.Interface().(tilde.Digest); ok {
 			// TODO only for omitempty
 			if b.IsEmpty() {
 				return nil, nil
@@ -422,9 +422,9 @@ func marshalArray(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 	case tilde.UintArrayHint:
 		a = tilde.UintArray{}
 		ah = tilde.UintHint
-	case tilde.HashArrayHint:
-		a = tilde.HashArray{}
-		ah = tilde.HashHint
+	case tilde.DigestArrayHint:
+		a = tilde.DigestArray{}
+		ah = tilde.DigestHint
 	default:
 		return nil, errors.Error("unknown array hint")
 	}
@@ -455,8 +455,8 @@ func marshalArray(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 			a = append(a.(tilde.StringArray), v.(tilde.String))
 		case tilde.UintHint:
 			a = append(a.(tilde.UintArray), v.(tilde.Uint))
-		case tilde.HashHint:
-			a = append(a.(tilde.HashArray), v.(tilde.Hash))
+		case tilde.DigestHint:
+			a = append(a.(tilde.DigestArray), v.(tilde.Digest))
 		default:
 			return nil, errors.Error("unknown array element hint " + ah)
 		}

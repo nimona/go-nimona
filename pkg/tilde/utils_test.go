@@ -102,17 +102,17 @@ func TestUintArray(t *testing.T) {
 	}
 }
 
-func TestHashArray(t *testing.T) {
+func TestDigestArray(t *testing.T) {
 	tests := []struct {
 		have [][]byte
-		want HashArray
+		want DigestArray
 	}{{
 		have: [][]byte{[]byte("foo"), []byte("bar")},
-		want: HashArray{Hash("foo"), Hash("bar")},
+		want: DigestArray{Digest("foo"), Digest("bar")},
 	}}
 	for _, tt := range tests {
-		t.Run("HashArray", func(t *testing.T) {
-			got := ToHashArray(tt.have)
+		t.Run("DigestArray", func(t *testing.T) {
+			got := ToDigestArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -214,17 +214,17 @@ func TestFromUintArray(t *testing.T) {
 	}
 }
 
-func TestFromHashArray(t *testing.T) {
+func TestFromDigestArray(t *testing.T) {
 	tests := []struct {
-		have HashArray
+		have DigestArray
 		want [][]byte
 	}{{
-		have: HashArray{Hash("foo"), Hash("bar")},
+		have: DigestArray{Digest("foo"), Digest("bar")},
 		want: [][]byte{[]byte("foo"), []byte("bar")},
 	}}
 	for _, tt := range tests {
-		t.Run("HashArray", func(t *testing.T) {
-			got := FromHashArray(tt.have)
+		t.Run("DigestArray", func(t *testing.T) {
+			got := FromDigestArray(tt.have)
 			assert.Equal(t, tt.want, got)
 		})
 	}

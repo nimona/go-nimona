@@ -98,7 +98,7 @@ func TestResolver_Integration(t *testing.T) {
 	)
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByHash(tilde.Hash("bar")))
+	pr, err := res.Lookup(context.New(), LookupByHash(tilde.Digest("bar")))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 

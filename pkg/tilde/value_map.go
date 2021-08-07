@@ -17,7 +17,7 @@ func (v Map) Hint() Hint {
 func (v Map) _isValue() {
 }
 
-func (v Map) Hash() Hash {
+func (v Map) Hash() Digest {
 	h := []byte{}
 	ks := []string{}
 	for k := range v {
@@ -39,7 +39,7 @@ func (v Map) Hash() Hash {
 
 		k += ":"
 		if _, ok := iv.(Map); ok {
-			k += string(HashHint)
+			k += string(DigestHint)
 		} else {
 			k += string(iv.Hint())
 		}
@@ -59,7 +59,7 @@ func (v Map) Hash() Hash {
 		)
 	}
 	if len(h) == 0 {
-		return EmptyHash
+		return EmptyDigest
 	}
 
 	return hashFromBytes(h)
@@ -108,8 +108,8 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case HashHint:
-		return Hash(value), nil
+	case DigestHint:
+		return Digest(value), nil
 	case BoolArrayHint:
 		var iv BoolArray = BoolArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
@@ -162,8 +162,8 @@ func jsonUnmarshalValue(
 			return nil, err
 		}
 		return iv, nil
-	case HashArrayHint:
-		var iv HashArray = HashArray{}
+	case DigestArrayHint:
+		var iv DigestArray = DigestArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}

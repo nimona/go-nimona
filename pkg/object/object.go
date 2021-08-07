@@ -112,9 +112,9 @@ func (o *Object) UnmarshalMap(v tilde.Map) error {
 	return nil
 }
 
-func (o *Object) Hash() tilde.Hash {
+func (o *Object) Hash() tilde.Digest {
 	if o == nil {
-		return tilde.EmptyHash
+		return tilde.EmptyDigest
 	}
 	m, err := o.MarshalMap()
 	if err != nil {
