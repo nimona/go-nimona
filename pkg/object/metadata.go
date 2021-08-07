@@ -1,8 +1,8 @@
 package object
 
 import (
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/did"
+	"nimona.io/pkg/tilde"
 )
 
 type (
@@ -14,7 +14,7 @@ type (
 		Owner     did.DID    `nimona:"owner:s"`
 		Parents   Parents    `nimona:"parents:m"`
 		Policies  Policies   `nimona:"policies:am"`
-		Root      chore.Hash `nimona:"root:r"`
+		Root      tilde.Hash `nimona:"root:r"`
 		Sequence  uint64     `nimona:"sequence:u"`
 		Signature Signature  `nimona:"_signature:m"`
 		Timestamp string     `nimona:"timestamp:s"`

@@ -5,9 +5,9 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 )
 
 // LookupOptions
@@ -17,8 +17,8 @@ type (
 		// Lookups are used to perform db queries for these filters
 		// TODO find a better name for this
 		Lookups struct {
-			ObjectHashes []chore.Hash
-			StreamHashes []chore.Hash
+			ObjectHashes []tilde.Hash
+			StreamHashes []tilde.Hash
 			ContentTypes []string
 			Owners       []did.DID
 		}
@@ -30,13 +30,13 @@ type (
 func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	options := &LookupOptions{
 		Lookups: struct {
-			ObjectHashes []chore.Hash
-			StreamHashes []chore.Hash
+			ObjectHashes []tilde.Hash
+			StreamHashes []tilde.Hash
 			ContentTypes []string
 			Owners       []did.DID
 		}{
-			ObjectHashes: []chore.Hash{},
-			StreamHashes: []chore.Hash{},
+			ObjectHashes: []tilde.Hash{},
+			StreamHashes: []tilde.Hash{},
 			ContentTypes: []string{},
 			Owners:       []did.DID{},
 		},
@@ -48,7 +48,7 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 	return *options
 }
 
-func FilterByHash(hs ...chore.Hash) LookupOption {
+func FilterByHash(hs ...tilde.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.ObjectHashes = append(opts.Lookups.ObjectHashes, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
@@ -77,7 +77,7 @@ func FilterByOwner(hs ...did.DID) LookupOption {
 	}
 }
 
-func FilterByStreamHash(hs ...chore.Hash) LookupOption {
+func FilterByStreamHash(hs ...tilde.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.StreamHashes = append(opts.Lookups.StreamHashes, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {

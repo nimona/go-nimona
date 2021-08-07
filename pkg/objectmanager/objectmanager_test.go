@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -25,6 +24,7 @@ import (
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
+	"nimona.io/pkg/tilde"
 )
 
 func TestManager_Request(t *testing.T) {
@@ -35,8 +35,8 @@ func TestManager_Request(t *testing.T) {
 	}
 	f00 := &object.Object{
 		Type: "foo",
-		Data: chore.Map{
-			"f00": chore.String("f00"),
+		Data: tilde.Map{
+			"f00": tilde.String("f00"),
 		},
 	}
 	type fields struct {
@@ -45,7 +45,7 @@ func TestManager_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash chore.Hash
+		rootHash tilde.Hash
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -128,8 +128,8 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	require.NoError(t, err)
 	f01 := &object.Object{
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"f01":  chore.String("f01"),
+		Data: tilde.Map{
+			"f01":  tilde.String("f01"),
 			"asdf": f00m,
 		},
 	}
@@ -146,7 +146,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash chore.Hash
+		rootHash tilde.Hash
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -314,8 +314,8 @@ func TestManager_RequestStream(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"f00": chore.String("f00"),
+		Data: tilde.Map{
+			"f00": tilde.String("f00"),
 		},
 	}
 	f01 := &object.Object{
@@ -323,11 +323,11 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{f00.Hash()},
+				"*": []tilde.Hash{f00.Hash()},
 			},
 		},
-		Data: chore.Map{
-			"f01": chore.String("f01"),
+		Data: tilde.Map{
+			"f01": tilde.String("f01"),
 		},
 	}
 	f02 := &object.Object{
@@ -335,11 +335,11 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{f01.Hash()},
+				"*": []tilde.Hash{f01.Hash()},
 			},
 		},
-		Data: chore.Map{
-			"f02": chore.String("f02"),
+		Data: tilde.Map{
+			"f02": tilde.String("f02"),
 		},
 	}
 
@@ -349,7 +349,7 @@ func TestManager_RequestStream(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash chore.Hash
+		rootHash tilde.Hash
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -404,7 +404,7 @@ func TestManager_RequestStream(t *testing.T) {
 								Payload: object.MustMarshal(
 									&stream.Response{
 										RequestID: "7",
-										Leaves: []chore.Hash{
+										Leaves: []tilde.Hash{
 											f02.Hash(),
 										},
 									},
@@ -512,8 +512,8 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -522,13 +522,13 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{
+				"*": []tilde.Hash{
 					f00.Hash(),
 				},
 			},
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -544,7 +544,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash chore.Hash
+		rootHash tilde.Hash
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -561,7 +561,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(f00.Hash()).
 					Return(
-						[]chore.Hash{
+						[]tilde.Hash{
 							f01.Hash(),
 						},
 						nil,
@@ -621,7 +621,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
-				Leaves:    []chore.Hash{f01.Hash()},
+				Leaves:    []tilde.Hash{f01.Hash()},
 			},
 		),
 	}, {
@@ -687,7 +687,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
-				Leaves:    []chore.Hash{},
+				Leaves:    []tilde.Hash{},
 			},
 		),
 	}}
@@ -723,8 +723,8 @@ func TestManager_Put(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey.DID(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	testObjectSimpleMap, err := testObjectSimple.MarshalMap()
@@ -732,8 +732,8 @@ func TestManager_Put(t *testing.T) {
 	testObjectComplex := &object.Object{
 		Type:     "foo-complex",
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"foo":           chore.String("bar"),
+		Data: tilde.Map{
+			"foo":           tilde.String("bar"),
 			"nested-simple": testObjectSimpleMap,
 		},
 	}
@@ -860,8 +860,8 @@ func TestManager_Append(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey.DID(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	require.NoError(t, err)
@@ -870,8 +870,8 @@ func TestManager_Append(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: testOwnPublicKey.DID(),
 		},
-		Data: chore.Map{
-			"root": chore.String("true"),
+		Data: tilde.Map{
+			"root": tilde.String("true"),
 		},
 	}
 	testObjectWithStream := &object.Object{
@@ -880,24 +880,24 @@ func TestManager_Append(t *testing.T) {
 			Owner: testOwnPublicKey.DID(),
 			Root:  testObjectStreamRoot.Hash(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	bar1 := &object.Object{
 		Metadata: object.Metadata{
 			Sequence: 1,
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar1"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar1"),
 		},
 	}
 	bar2 := &object.Object{
 		Metadata: object.Metadata{
 			Sequence: 2,
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar2"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar2"),
 		},
 	}
 	testObjectWithStreamUpdated := &object.Object{
@@ -907,16 +907,16 @@ func TestManager_Append(t *testing.T) {
 			Root:     testObjectStreamRoot.Hash(),
 			Sequence: 3,
 			Parents: object.Parents{
-				"*": chore.SortHashes(
-					[]chore.Hash{
+				"*": tilde.SortHashes(
+					[]tilde.Hash{
 						bar1.Hash(),
 						bar2.Hash(),
 					},
 				),
 			},
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	testObjectSubscriptionInline := object.MustMarshal(
@@ -935,8 +935,8 @@ func TestManager_Append(t *testing.T) {
 			Root:     testObjectStreamRoot.Hash(),
 			Sequence: 7,
 			Parents: object.Parents{
-				"*": chore.SortHashes(
-					[]chore.Hash{
+				"*": tilde.SortHashes(
+					[]tilde.Hash{
 						bar1.Hash(),
 						bar2.Hash(),
 						testObjectSubscriptionInline.Hash(),
@@ -944,8 +944,8 @@ func TestManager_Append(t *testing.T) {
 				),
 			},
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -1016,8 +1016,8 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						chore.SortHashes(
-							[]chore.Hash{
+						tilde.SortHashes(
+							[]tilde.Hash{
 								bar1.Hash(),
 								bar2.Hash(),
 							},
@@ -1073,7 +1073,7 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]chore.Hash{
+						[]tilde.Hash{
 							bar1.Hash(),
 							bar2.Hash(),
 						},
@@ -1136,7 +1136,7 @@ func TestManager_Append(t *testing.T) {
 						Metadata: object.Metadata{
 							Owner: testSubscriberPublicKey.DID(),
 						},
-						RootHashes: []chore.Hash{
+						RootHashes: []tilde.Hash{
 							testObjectStreamRoot.Hash(),
 						},
 					},
@@ -1164,7 +1164,7 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]chore.Hash{
+						[]tilde.Hash{
 							bar1.Hash(),
 							bar2.Hash(),
 							testObjectSubscriptionInline.Hash(),
@@ -1241,8 +1241,8 @@ func TestManager_Append(t *testing.T) {
 				Owner:    testOwnPublicKey.DID(),
 				Sequence: 7,
 				Parents: object.Parents{
-					"*": chore.SortHashes(
-						[]chore.Hash{
+					"*": tilde.SortHashes(
+						[]tilde.Hash{
 							bar1.Hash(),
 							bar2.Hash(),
 							testObjectSubscriptionInline.Hash(),
@@ -1250,8 +1250,8 @@ func TestManager_Append(t *testing.T) {
 					),
 				},
 			},
-			Data: chore.Map{
-				"foo": chore.String("bar"),
+			Data: tilde.Map{
+				"foo": tilde.String("bar"),
 			},
 		},
 	}}
@@ -1297,8 +1297,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: p.PublicKey().DID(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("not-bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("not-bar"),
 		},
 	}
 	o2 := &object.Object{
@@ -1306,8 +1306,8 @@ func Test_manager_Subscribe(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: o0.Hash(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	tests := []struct {
@@ -1346,7 +1346,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
-			FilterByStreamHash(chore.Hash("foo")),
+			FilterByStreamHash(tilde.Hash("foo")),
 			FilterByOwner(p.PublicKey().DID()),
 		},
 		publish: []*object.Object{o1, o2},

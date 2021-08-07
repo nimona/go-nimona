@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 )
 
 func TestInception_MarshalUnmarshal(t *testing.T) {
@@ -69,7 +69,7 @@ func TestCreateState(t *testing.T) {
 	t0Rotation := &Rotation{
 		Metadata: object.Metadata{
 			Parents: object.Parents{
-				"*": chore.HashArray{
+				"*": tilde.HashArray{
 					object.MustMarshal(t0Inception).Hash(),
 				},
 			},

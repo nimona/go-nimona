@@ -12,12 +12,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/tilde"
 )
 
 // nolint: lll
@@ -57,7 +57,7 @@ type (
 	EventAction string
 	Event       struct {
 		Action     EventAction
-		ObjectHash chore.Hash
+		ObjectHash tilde.Hash
 	}
 )
 
@@ -98,7 +98,7 @@ func (st *Store) Close() error {
 }
 
 func (st *Store) Get(
-	hash chore.Hash,
+	hash tilde.Hash,
 ) (*object.Object, error) {
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
@@ -139,7 +139,7 @@ func (st *Store) Get(
 }
 
 func (st *Store) GetByStream(
-	streamRootHash chore.Hash,
+	streamRootHash tilde.Hash,
 ) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamHash(streamRootHash),
@@ -239,7 +239,7 @@ func (st *Store) PutWithTTL(
 	if len(obj.Metadata.Parents) > 0 {
 		for _, group := range obj.Metadata.Parents {
 			for _, p := range group {
-				err := st.putRelation(chore.Hash(streamHash), objHash, p)
+				err := st.putRelation(tilde.Hash(streamHash), objHash, p)
 				if err != nil {
 					return fmt.Errorf("could not create relation: %w", err)
 				}
@@ -248,7 +248,7 @@ func (st *Store) PutWithTTL(
 	}
 
 	if streamHash == objectHash {
-		err := st.putRelation(chore.Hash(streamHash), objHash, chore.EmptyHash)
+		err := st.putRelation(tilde.Hash(streamHash), objHash, tilde.EmptyHash)
 		if err != nil {
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
@@ -263,9 +263,9 @@ func (st *Store) PutWithTTL(
 }
 
 func (st *Store) putRelation(
-	stream chore.Hash,
-	parent chore.Hash,
-	child chore.Hash,
+	stream tilde.Hash,
+	parent tilde.Hash,
+	child tilde.Hash,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Relations (
@@ -294,8 +294,8 @@ func (st *Store) putRelation(
 }
 
 func (st *Store) GetStreamLeaves(
-	streamRootHash chore.Hash,
-) ([]chore.Hash, error) {
+	streamRootHash tilde.Hash,
+) ([]tilde.Hash, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
@@ -320,22 +320,22 @@ func (st *Store) GetStreamLeaves(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []chore.Hash{}
+	hashList := []tilde.Hash{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, chore.Hash(data))
+		hashList = append(hashList, tilde.Hash(data))
 	}
 
 	return hashList, nil
 }
 
 func (st *Store) GetRelations(
-	parent chore.Hash,
-) ([]chore.Hash, error) {
+	parent tilde.Hash,
+) ([]tilde.Hash, error) {
 	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE RootHash=?")
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare query: %w", err)
@@ -348,14 +348,14 @@ func (st *Store) GetRelations(
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []chore.Hash{}
+	hashList := []tilde.Hash{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, chore.Hash(data))
+		hashList = append(hashList, tilde.Hash(data))
 	}
 
 	istmt, err := st.db.Prepare(
@@ -376,7 +376,7 @@ func (st *Store) GetRelations(
 	return hashList, nil
 }
 
-func (st *Store) ListHashes() ([]chore.Hash, error) {
+func (st *Store) ListHashes() ([]tilde.Hash, error) {
 	stmt, err := st.db.Prepare(
 		"SELECT Hash FROM Objects WHERE Hash == RootHash",
 	)
@@ -391,21 +391,21 @@ func (st *Store) ListHashes() ([]chore.Hash, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hashList := []chore.Hash{}
+	hashList := []tilde.Hash{}
 
 	for rows.Next() {
 		data := ""
 		if err := rows.Scan(&data); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
-		hashList = append(hashList, chore.Hash(data))
+		hashList = append(hashList, tilde.Hash(data))
 	}
 
 	return hashList, nil
 }
 
 func (st *Store) UpdateTTL(
-	hash chore.Hash,
+	hash tilde.Hash,
 	minutes int,
 ) error {
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootHash=?`)
@@ -422,7 +422,7 @@ func (st *Store) UpdateTTL(
 }
 
 func (st *Store) Remove(
-	hash chore.Hash,
+	hash tilde.Hash,
 ) error {
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
@@ -581,7 +581,7 @@ func (st *Store) Filter(
 		defer close(objectsChan)
 		defer close(errorChan)
 		for _, hash := range hashes {
-			o, err := st.Get(chore.Hash(hash))
+			o, err := st.Get(tilde.Hash(hash))
 			if err != nil {
 				errorChan <- err
 				return
@@ -599,7 +599,7 @@ func (st *Store) Filter(
 }
 
 func (st *Store) Pin(
-	hash chore.Hash,
+	hash tilde.Hash,
 ) error {
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Pins (Hash) VALUES (?)
@@ -619,7 +619,7 @@ func (st *Store) Pin(
 	return nil
 }
 
-func (st *Store) GetPinned() ([]chore.Hash, error) {
+func (st *Store) GetPinned() ([]tilde.Hash, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins
 	`)
@@ -634,21 +634,21 @@ func (st *Store) GetPinned() ([]chore.Hash, error) {
 	}
 	defer rows.Close() // nolint: errcheck
 
-	hs := []chore.Hash{}
+	hs := []tilde.Hash{}
 	for rows.Next() {
 		h := ""
 		if err := rows.Scan(&h); err != nil {
 			return nil, errors.Merge(objectstore.ErrNotFound, err)
 		}
 		if h != "" {
-			hs = append(hs, chore.Hash(h))
+			hs = append(hs, tilde.Hash(h))
 		}
 	}
 
 	return hs, nil
 }
 
-func (st *Store) IsPinned(hash chore.Hash) (bool, error) {
+func (st *Store) IsPinned(hash tilde.Hash) (bool, error) {
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins WHERE Hash = ?
 	`)
@@ -676,7 +676,7 @@ func (st *Store) IsPinned(hash chore.Hash) (bool, error) {
 }
 
 func (st *Store) RemovePin(
-	hash chore.Hash,
+	hash tilde.Hash,
 ) error {
 	stmt, err := st.db.Prepare(`
 		DELETE FROM Pins
@@ -737,7 +737,7 @@ func astoai(ah []string) []interface{} {
 	return as
 }
 
-func ahtoai(ah []chore.Hash) []interface{} {
+func ahtoai(ah []tilde.Hash) []interface{} {
 	as := make([]interface{}, len(ah))
 	for i, h := range ah {
 		as[i] = h.String()

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 var primitives = map[string]struct {
@@ -14,9 +14,9 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/chore.Hash": {
+	"nimona.io/tilde.Hash": {
 		Hint:      "s",
-		Type:      "chore.Hash",
+		Type:      "tilde.Hash",
 		IsObject:  false,
 		IsPrimary: true,
 	},
@@ -78,34 +78,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch chore.Hint(h) {
-			case chore.BoolHint:
+			switch tilde.Hint(h) {
+			case tilde.BoolHint:
 				return "object.Bool"
-			case chore.DataHint:
+			case tilde.DataHint:
 				return "object.Data"
-			case chore.FloatHint:
+			case tilde.FloatHint:
 				return "object.Float"
-			case chore.IntHint:
+			case tilde.IntHint:
 				return "object.Int"
-			case chore.MapHint:
-				return "chore.Map"
-			case chore.StringHint:
-				return "chore.String"
-			case chore.UintHint:
+			case tilde.MapHint:
+				return "tilde.Map"
+			case tilde.StringHint:
+				return "tilde.String"
+			case tilde.UintHint:
 				return "object.Uint"
-			case chore.BoolArrayHint:
+			case tilde.BoolArrayHint:
 				return "object.ToBoolArray"
-			case chore.DataArrayHint:
+			case tilde.DataArrayHint:
 				return "object.ToDataArray"
-			case chore.FloatArrayHint:
+			case tilde.FloatArrayHint:
 				return "object.ToFloatArray"
-			case chore.IntArrayHint:
+			case tilde.IntArrayHint:
 				return "object.ToIntArray"
-			case chore.MapArrayHint:
+			case tilde.MapArrayHint:
 				return "object.ToMapArray"
-			case chore.StringArrayHint:
+			case tilde.StringArrayHint:
 				return "object.ToStringArray"
-			case chore.UintArrayHint:
+			case tilde.UintArrayHint:
 				return "object.ToUintArray"
 			}
 			panic("unknown hint in fromPrimitive " + m.Hint)
@@ -115,34 +115,34 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch chore.Hint(h) {
-			case chore.BoolHint:
+			switch tilde.Hint(h) {
+			case tilde.BoolHint:
 				return "bool"
-			case chore.DataHint:
+			case tilde.DataHint:
 				return "[]byte"
-			case chore.FloatHint:
+			case tilde.FloatHint:
 				return "float64"
-			case chore.IntHint:
+			case tilde.IntHint:
 				return "int64"
-			case chore.StringHint:
+			case tilde.StringHint:
 				return "string"
-			case chore.UintHint:
+			case tilde.UintHint:
 				return "uint64"
-			case chore.MapHint:
-				return "chore.Map"
-			case chore.BoolArrayHint:
+			case tilde.MapHint:
+				return "tilde.Map"
+			case tilde.BoolArrayHint:
 				return "object.FromBoolArray"
-			case chore.DataArrayHint:
+			case tilde.DataArrayHint:
 				return "object.FromDataArray"
-			case chore.FloatArrayHint:
+			case tilde.FloatArrayHint:
 				return "object.FromFloatArray"
-			case chore.IntArrayHint:
+			case tilde.IntArrayHint:
 				return "object.FromIntArray"
-			case chore.MapArrayHint:
+			case tilde.MapArrayHint:
 				return "object.FromMapArray"
-			case chore.StringArrayHint:
+			case tilde.StringArrayHint:
 				return "object.FromStringArray"
-			case chore.UintArrayHint:
+			case tilde.UintArrayHint:
 				return "object.FromUintArray"
 			}
 			panic("unknown hint in toPrimitive " + m.Hint)
@@ -152,36 +152,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch chore.Hint(h) {
-			case chore.BoolHint:
+			switch tilde.Hint(h) {
+			case tilde.BoolHint:
 				return "object.Bool"
-			case chore.DataHint:
+			case tilde.DataHint:
 				return "object.Data"
-			case chore.FloatHint:
+			case tilde.FloatHint:
 				return "object.Float"
-			case chore.IntHint:
+			case tilde.IntHint:
 				return "object.Int"
-			case chore.StringHint:
-				return "chore.String"
-			case chore.MapHint:
-				return "chore.Map"
-			case chore.UintHint:
+			case tilde.StringHint:
+				return "tilde.String"
+			case tilde.MapHint:
+				return "tilde.Map"
+			case tilde.UintHint:
 				return "object.Uint"
-			case chore.BoolArrayHint:
+			case tilde.BoolArrayHint:
 				return "object.BoolArray"
-			case chore.DataArrayHint:
+			case tilde.DataArrayHint:
 				return "object.DataArray"
-			case chore.FloatArrayHint:
+			case tilde.FloatArrayHint:
 				return "object.FloatArray"
-			case chore.IntArrayHint:
+			case tilde.IntArrayHint:
 				return "object.IntArray"
-			case chore.ObjectArrayHint:
+			case tilde.ObjectArrayHint:
 				return "object.ObjectArray"
-			case chore.MapArrayHint:
+			case tilde.MapArrayHint:
 				return "object.MapArray"
-			case chore.StringArrayHint:
+			case tilde.StringArrayHint:
 				return "object.StringArray"
-			case chore.UintArrayHint:
+			case tilde.UintArrayHint:
 				return "object.UintArray"
 			}
 			panic("unknown hint in primitive " + m.Hint)
@@ -191,22 +191,22 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch chore.Hint(h) {
-			case chore.BoolArrayHint:
+			switch tilde.Hint(h) {
+			case tilde.BoolArrayHint:
 				return "object.Bool"
-			case chore.DataArrayHint:
+			case tilde.DataArrayHint:
 				return "object.Data"
-			case chore.FloatArrayHint:
+			case tilde.FloatArrayHint:
 				return "object.Float"
-			case chore.IntArrayHint:
+			case tilde.IntArrayHint:
 				return "object.Int"
-			case chore.MapArrayHint:
-				return "chore.Map"
-			case chore.ObjectArrayHint:
+			case tilde.MapArrayHint:
+				return "tilde.Map"
+			case tilde.ObjectArrayHint:
 				return ""
-			case chore.StringArrayHint:
-				return "chore.String"
-			case chore.UintArrayHint:
+			case tilde.StringArrayHint:
+				return "tilde.String"
+			case tilde.UintArrayHint:
 				return "object.Uint"
 			}
 			panic("unknown hint in primitiveSingular " + m.Hint)
@@ -232,36 +232,36 @@ func Generate(doc *Document, output string) ([]byte, error) {
 			if m.IsRepeated {
 				h = "a" + h
 			}
-			switch chore.Hint(h) {
-			case chore.BoolHint:
+			switch tilde.Hint(h) {
+			case tilde.BoolHint:
 				return "bool"
-			case chore.DataHint:
+			case tilde.DataHint:
 				return "[]byte"
-			case chore.FloatHint:
+			case tilde.FloatHint:
 				return "float64"
-			case chore.IntHint:
+			case tilde.IntHint:
 				return "int64"
-			case chore.StringHint:
+			case tilde.StringHint:
 				return "string"
-			case chore.UintHint:
+			case tilde.UintHint:
 				return "uint64"
-			case chore.MapHint:
-				return "chore.Map"
-			case chore.BoolArrayHint:
+			case tilde.MapHint:
+				return "tilde.Map"
+			case tilde.BoolArrayHint:
 				return "bool"
-			case chore.DataArrayHint:
+			case tilde.DataArrayHint:
 				return "[]byte"
-			case chore.FloatArrayHint:
+			case tilde.FloatArrayHint:
 				return "float64"
-			case chore.IntArrayHint:
+			case tilde.IntArrayHint:
 				return "int64"
-			case chore.MapArrayHint:
-				return "chore.Map"
-			case chore.ObjectArrayHint:
+			case tilde.MapArrayHint:
+				return "tilde.Map"
+			case tilde.ObjectArrayHint:
 				return ""
-			case chore.StringArrayHint:
+			case tilde.StringArrayHint:
 				return "string"
-			case chore.UintArrayHint:
+			case tilde.UintArrayHint:
 				return "uint64"
 			}
 			panic("unknown primitive " + m.Hint)
@@ -344,7 +344,7 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	doc.Imports["json"] = "encoding/json"
-	doc.Imports["chore"] = "nimona.io/chore"
+	doc.Imports["tilde"] = "nimona.io/tilde"
 	doc.Imports["hint"] = "nimona.io/object/hint"
 
 	if doc.Package != "nimona.io/object" {

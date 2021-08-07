@@ -13,7 +13,6 @@ import (
 
 	"nimona.io/internal/net"
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
@@ -25,6 +24,7 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/tilde"
 	"nimona.io/pkg/version"
 )
 
@@ -48,7 +48,7 @@ type comboConf struct {
 
 type fileUnloaded struct {
 	Metadata object.Metadata `nimona:"@metadata:m,omitempty"`
-	BlobHash chore.Hash      `nimona:"blob:r,omitempty"`
+	BlobHash tilde.Hash      `nimona:"blob:r,omitempty"`
 }
 
 func (e *fileUnloaded) Type() string {
@@ -95,7 +95,7 @@ func main() {
 
 	switch command {
 	case "get":
-		ft.get(ctx, chore.Hash(param))
+		ft.get(ctx, tilde.Hash(param))
 	case "serve":
 		ft.serve(ctx, param)
 	default:
@@ -154,7 +154,7 @@ func (ft *fileTransfer) serve(
 
 func (ft *fileTransfer) findAndRequest(
 	ctx context.Context,
-	hash chore.Hash,
+	hash tilde.Hash,
 ) (
 	*object.Object,
 	error,
@@ -178,7 +178,7 @@ func (ft *fileTransfer) findAndRequest(
 
 func (ft *fileTransfer) get(
 	ctx context.Context,
-	hash chore.Hash,
+	hash tilde.Hash,
 ) {
 	fmt.Println("getting file:", hash)
 
@@ -196,7 +196,7 @@ func (ft *fileTransfer) get(
 
 	flun := &fileUnloaded{
 		Metadata: obj.Metadata,
-		BlobHash: chore.Hash(obj.Data["blob"].(chore.String)),
+		BlobHash: tilde.Hash(obj.Data["blob"].(tilde.String)),
 	}
 
 	fmt.Println("getting blob:", flun.BlobHash)

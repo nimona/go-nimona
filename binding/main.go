@@ -15,9 +15,9 @@ import (
 
 	"github.com/rs/xid"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 	"nimona.io/pkg/version"
 )
 
@@ -162,7 +162,7 @@ func NimonaBridgeCall(
 		)
 		if err := nimonaProvider.RequestStream(
 			ctx,
-			chore.Hash(string(payloadBytes)),
+			tilde.Hash(string(payloadBytes)),
 		); err != nil {
 			return renderBytes(nil, err)
 		}

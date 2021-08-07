@@ -5,8 +5,8 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/did"
+	"nimona.io/pkg/tilde"
 )
 
 // FilterOptions
@@ -16,8 +16,8 @@ type (
 		// Filters are used to perform db queries for these filters
 		// TODO find a better name for this
 		Filters struct {
-			ObjectHashes []chore.Hash
-			StreamHashes []chore.Hash
+			ObjectHashes []tilde.Hash
+			StreamHashes []tilde.Hash
 			ContentTypes []string
 			Owners       []string
 			OrderBy      string
@@ -31,8 +31,8 @@ type (
 func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 	options := &FilterOptions{
 		Filters: struct {
-			ObjectHashes []chore.Hash
-			StreamHashes []chore.Hash
+			ObjectHashes []tilde.Hash
+			StreamHashes []tilde.Hash
 			ContentTypes []string
 			Owners       []string
 			OrderBy      string
@@ -40,8 +40,8 @@ func newFilterOptions(filterOptions ...FilterOption) FilterOptions {
 			Limit        *int
 			Offset       *int
 		}{
-			ObjectHashes: []chore.Hash{},
-			StreamHashes: []chore.Hash{},
+			ObjectHashes: []tilde.Hash{},
+			StreamHashes: []tilde.Hash{},
 			ContentTypes: []string{},
 			Owners:       []string{},
 			OrderBy:      "Created",
@@ -73,7 +73,7 @@ func FilterLimit(limit, offset int) FilterOption {
 	}
 }
 
-func FilterByHash(hs ...chore.Hash) FilterOption {
+func FilterByHash(hs ...tilde.Hash) FilterOption {
 	return func(opts *FilterOptions) {
 		opts.Filters.ObjectHashes = append(opts.Filters.ObjectHashes, hs...)
 	}
@@ -89,7 +89,7 @@ func FilterByOwner(owners ...did.DID) FilterOption {
 	}
 }
 
-func FilterByStreamHash(hs ...chore.Hash) FilterOption {
+func FilterByStreamHash(hs ...tilde.Hash) FilterOption {
 	return func(opts *FilterOptions) {
 		opts.Filters.StreamHashes = append(opts.Filters.StreamHashes, hs...)
 	}

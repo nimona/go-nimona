@@ -5,19 +5,19 @@ import (
 	"strconv"
 	"strings"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 // nolint: unused
 func traverseObject(
-	v chore.Value,
-	f func(string, chore.Value) (
+	v tilde.Value,
+	f func(string, tilde.Value) (
 		updatedKey string,
-		updatedValue chore.Value,
+		updatedValue tilde.Value,
 		update bool,
 	),
 ) {
-	if vv, ok := v.(chore.Map); ok {
+	if vv, ok := v.(tilde.Map); ok {
 		for ik, iv := range vv {
 			uk, uv, u := f(ik, iv)
 			if u {

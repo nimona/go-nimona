@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/tilde"
 )
 
 func MustMarshal(in interface{}) *Object {
@@ -66,7 +66,7 @@ func Marshal(in interface{}) (*Object, error) {
 	delete(m, "@metadata")
 
 	if t, ok := m["@type"]; ok {
-		if tt, ok := t.(chore.String); ok {
+		if tt, ok := t.(tilde.String); ok {
 			o.Type = string(tt)
 			delete(m, "@type")
 		}
@@ -116,18 +116,18 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 	return nil, nil
 }
 
-func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
+func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
 	switch h {
-	case chore.StringHint:
+	case tilde.StringHint:
 		if v.Kind() == reflect.String {
 			// TODO only for omitempty
 			if v.String() == "" {
 				return nil, nil
 			}
-			return chore.String(v.String()), nil
+			return tilde.String(v.String()), nil
 		}
 		m, ok := v.Interface().(StringMashaller)
 		if ok {
@@ -144,28 +144,28 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			if s == "" {
 				return nil, nil
 			}
-			return chore.String(s), nil
+			return tilde.String(s), nil
 		}
-	case chore.HashHint:
+	case tilde.HashHint:
 		if b, ok := v.Interface().([]byte); ok {
 			// TODO only for omitempty
 			if b == nil {
 				return nil, nil
 			}
-			return chore.Hash(b), nil
+			return tilde.Hash(b), nil
 		}
-		if b, ok := v.Interface().(chore.Hash); ok {
+		if b, ok := v.Interface().(tilde.Hash); ok {
 			// TODO only for omitempty
 			if b.IsEmpty() {
 				return nil, nil
 			}
 			return b, nil
 		}
-	case chore.BoolHint:
+	case tilde.BoolHint:
 		if v.Kind() == reflect.Bool {
-			return chore.Bool(v.Bool()), nil
+			return tilde.Bool(v.Bool()), nil
 		}
-	case chore.MapHint:
+	case tilde.MapHint:
 		if v.IsZero() {
 			return nil, nil
 		}
@@ -214,42 +214,42 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 		case reflect.Struct:
 			return marshalStruct(h, v)
 		}
-	case chore.FloatHint:
+	case tilde.FloatHint:
 		switch v.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
-			return chore.Float(v.Float()), nil
+			return tilde.Float(v.Float()), nil
 		}
-	case chore.IntHint:
+	case tilde.IntHint:
 		switch v.Kind() {
 		case reflect.Int,
 			reflect.Int8,
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
-			return chore.Int(v.Int()), nil
+			return tilde.Int(v.Int()), nil
 		}
-	case chore.UintHint:
+	case tilde.UintHint:
 		switch v.Kind() {
 		case reflect.Uint,
 			reflect.Uint8,
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
-			return chore.Uint(v.Uint()), nil
+			return tilde.Uint(v.Uint()), nil
 		}
-	case chore.DataHint:
+	case tilde.DataHint:
 		m, ok := v.Interface().(ByteMashaller)
 		if ok {
 			s, err := m.MarshalBytes()
 			if err != nil {
 				return nil, err
 			}
-			return chore.Data(s), nil
+			return tilde.Data(s), nil
 		}
 		b, ok := v.Interface().([]byte)
 		if ok {
-			return chore.Data(b), nil
+			return tilde.Data(b), nil
 		}
 		s, ok := v.Interface().(string)
 		if ok {
@@ -257,7 +257,7 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 			if err != nil {
 				return nil, err
 			}
-			return chore.Data(b), nil
+			return tilde.Data(b), nil
 		}
 	}
 	if h[0] == 'a' {
@@ -271,7 +271,7 @@ func marshalAny(h chore.Hint, v reflect.Value) (chore.Value, error) {
 		" for hint " + string(h))
 }
 
-func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
+func marshalStruct(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -279,7 +279,7 @@ func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 		return nil, errors.Error("expected struct, got " + v.Kind().String())
 	}
 
-	m := chore.Map{}
+	m := tilde.Map{}
 	t := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -305,21 +305,21 @@ func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 			continue
 		case "@metadata:m":
 			if _, ok := iv.Interface().(Metadata); ok {
-				imm, err := marshalStruct(chore.MapHint, iv)
+				imm, err := marshalStruct(tilde.MapHint, iv)
 				if err != nil {
 					return nil, err
 				}
 				m["@metadata"] = imm
 			}
 			if t, ok := igKvs["type"]; ok {
-				m["@type"] = chore.String(t)
+				m["@type"] = tilde.String(t)
 			}
 			continue
 		}
-		in, ih, err := chore.ExtractHint(ig)
+		in, ih, err := tilde.ExtractHint(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(chore.Value); ok {
+			if ivv, ok := iv.Interface().(tilde.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
@@ -343,7 +343,7 @@ func marshalStruct(h chore.Hint, v reflect.Value) (chore.Map, error) {
 	return m, nil
 }
 
-func marshalMap(h chore.Hint, v reflect.Value) (chore.Map, error) {
+func marshalMap(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -355,7 +355,7 @@ func marshalMap(h chore.Hint, v reflect.Value) (chore.Map, error) {
 		return nil, nil
 	}
 
-	m := chore.Map{}
+	m := tilde.Map{}
 
 	for _, ik := range v.MapKeys() {
 		iv := v.MapIndex(ik)
@@ -365,10 +365,10 @@ func marshalMap(h chore.Hint, v reflect.Value) (chore.Map, error) {
 			)
 		}
 		ig := ik.String()
-		in, ih, err := chore.ExtractHint(ig)
+		in, ih, err := tilde.ExtractHint(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive
-			if ivv, ok := iv.Interface().(chore.Value); ok {
+			if ivv, ok := iv.Interface().(tilde.Value); ok {
 				in = ig
 				ih = ivv.Hint()
 			} else {
@@ -390,7 +390,7 @@ func marshalMap(h chore.Hint, v reflect.Value) (chore.Map, error) {
 	return m, nil
 }
 
-func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
+func marshalArray(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -398,33 +398,33 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 		return nil, errors.Error("expected slice, got " + v.Kind().String())
 	}
 
-	var a chore.ArrayValue
-	var ah chore.Hint
+	var a tilde.ArrayValue
+	var ah tilde.Hint
 	switch h {
-	case chore.BoolArrayHint:
-		a = chore.BoolArray{}
-		ah = chore.BoolHint
-	case chore.DataArrayHint:
-		a = chore.DataArray{}
-		ah = chore.DataHint
-	case chore.FloatArrayHint:
-		a = chore.FloatArray{}
-		ah = chore.FloatHint
-	case chore.IntArrayHint:
-		a = chore.IntArray{}
-		ah = chore.IntHint
-	case chore.MapArrayHint:
-		a = chore.MapArray{}
-		ah = chore.MapHint
-	case chore.StringArrayHint:
-		a = chore.StringArray{}
-		ah = chore.StringHint
-	case chore.UintArrayHint:
-		a = chore.UintArray{}
-		ah = chore.UintHint
-	case chore.HashArrayHint:
-		a = chore.HashArray{}
-		ah = chore.HashHint
+	case tilde.BoolArrayHint:
+		a = tilde.BoolArray{}
+		ah = tilde.BoolHint
+	case tilde.DataArrayHint:
+		a = tilde.DataArray{}
+		ah = tilde.DataHint
+	case tilde.FloatArrayHint:
+		a = tilde.FloatArray{}
+		ah = tilde.FloatHint
+	case tilde.IntArrayHint:
+		a = tilde.IntArray{}
+		ah = tilde.IntHint
+	case tilde.MapArrayHint:
+		a = tilde.MapArray{}
+		ah = tilde.MapHint
+	case tilde.StringArrayHint:
+		a = tilde.StringArray{}
+		ah = tilde.StringHint
+	case tilde.UintArrayHint:
+		a = tilde.UintArray{}
+		ah = tilde.UintHint
+	case tilde.HashArrayHint:
+		a = tilde.HashArray{}
+		ah = tilde.HashHint
 	default:
 		return nil, errors.Error("unknown array hint")
 	}
@@ -441,22 +441,22 @@ func marshalArray(h chore.Hint, v reflect.Value) (chore.Value, error) {
 		}
 
 		switch ah {
-		case chore.BoolHint:
-			a = append(a.(chore.BoolArray), v.(chore.Bool))
-		case chore.DataHint:
-			a = append(a.(chore.DataArray), v.(chore.Data))
-		case chore.FloatHint:
-			a = append(a.(chore.FloatArray), v.(chore.Float))
-		case chore.IntHint:
-			a = append(a.(chore.IntArray), v.(chore.Int))
-		case chore.MapHint:
-			a = append(a.(chore.MapArray), v.(chore.Map))
-		case chore.StringHint:
-			a = append(a.(chore.StringArray), v.(chore.String))
-		case chore.UintHint:
-			a = append(a.(chore.UintArray), v.(chore.Uint))
-		case chore.HashHint:
-			a = append(a.(chore.HashArray), v.(chore.Hash))
+		case tilde.BoolHint:
+			a = append(a.(tilde.BoolArray), v.(tilde.Bool))
+		case tilde.DataHint:
+			a = append(a.(tilde.DataArray), v.(tilde.Data))
+		case tilde.FloatHint:
+			a = append(a.(tilde.FloatArray), v.(tilde.Float))
+		case tilde.IntHint:
+			a = append(a.(tilde.IntArray), v.(tilde.Int))
+		case tilde.MapHint:
+			a = append(a.(tilde.MapArray), v.(tilde.Map))
+		case tilde.StringHint:
+			a = append(a.(tilde.StringArray), v.(tilde.String))
+		case tilde.UintHint:
+			a = append(a.(tilde.UintArray), v.(tilde.Uint))
+		case tilde.HashHint:
+			a = append(a.(tilde.HashArray), v.(tilde.Hash))
 		default:
 			return nil, errors.Error("unknown array element hint " + ah)
 		}

@@ -7,7 +7,7 @@ package resolver
 import (
 	"sync"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 type (
@@ -18,33 +18,33 @@ type (
 )
 
 // Put -
-func (m *ChoreHashSyncList) Put(k chore.Hash) {
+func (m *ChoreHashSyncList) Put(k tilde.Hash) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *ChoreHashSyncList) Exists(k chore.Hash) bool {
+func (m *ChoreHashSyncList) Exists(k tilde.Hash) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *ChoreHashSyncList) Delete(k chore.Hash) {
+func (m *ChoreHashSyncList) Delete(k tilde.Hash) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *ChoreHashSyncList) Range(i func(k chore.Hash) bool) {
+func (m *ChoreHashSyncList) Range(i func(k tilde.Hash) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(chore.Hash))
+		return i(k.(tilde.Hash))
 	})
 }
 
 // List -
-func (m *ChoreHashSyncList) List() []chore.Hash {
-	r := []chore.Hash{}
+func (m *ChoreHashSyncList) List() []tilde.Hash {
+	r := []tilde.Hash{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(chore.Hash))
+		r = append(r, k.(tilde.Hash))
 		return true
 	})
 	return r

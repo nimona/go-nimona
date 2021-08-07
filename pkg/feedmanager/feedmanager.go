@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -16,6 +15,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/tilde"
 )
 
 type (
@@ -319,7 +319,7 @@ func (m *feedManager) handleObjects(
 				Root:  feedStreamHash,
 				Owner: peerKey.DID(),
 			},
-			ObjectHash: []chore.Hash{
+			ObjectHash: []tilde.Hash{
 				objHash,
 			},
 		}
@@ -337,14 +337,14 @@ func (m *feedManager) handleObjects(
 		// 	continue
 		// }
 		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []chore.Hash{
+		// 	"*": []tilde.Hash{
 		// 		feedStreamHash,
 		// 	},
 		// }
 		// if !errors.Is(err, objectstore.ErrNotFound) {
 		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamHash)
 		// 	if err == nil {
-		// 		chore.SortHashes(leaves)
+		// 		tilde.SortHashes(leaves)
 		// 		feedEvent.Metadata.Parents["*"] = leaves
 		// 	}
 		// }

@@ -8,7 +8,6 @@ import (
 	"github.com/patrickmn/go-cache"
 
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -19,6 +18,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/tilde"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=chore.Hash"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=tilde.Hash"
 
 type (
 	Resolver interface {
@@ -200,7 +200,7 @@ func (r *resolver) Lookup(
 		network.FilterByObjectType(hyperspace.LookupResponseType),
 		func(e *network.Envelope) bool {
 			v := e.Payload.Data["nonce"]
-			rn, ok := v.(chore.String)
+			rn, ok := v.(tilde.String)
 			return ok && string(rn) == req.Nonce
 		},
 	)

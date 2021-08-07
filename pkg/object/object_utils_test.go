@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 func TestCopy(t *testing.T) {
@@ -17,8 +17,8 @@ func TestCopy(t *testing.T) {
 		name: "same hash, different ptr",
 		source: &Object{
 			Type: "foo",
-			Data: chore.Map{
-				"foo": chore.String("bar"),
+			Data: tilde.Map{
+				"foo": tilde.String("bar"),
 			},
 		},
 	}}

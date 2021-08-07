@@ -23,13 +23,13 @@ import (
 	"nimona.io/internal/nat"
 	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 //go:generate mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
@@ -785,7 +785,7 @@ func (w *network) Send(
 		if !ok {
 			return errors.Error("cannot wait for response without a request id")
 		}
-		rID, ok := rIDVal.(chore.String)
+		rID, ok := rIDVal.(tilde.String)
 		if !ok {
 			return errors.Error("cannot wait for response with an invalid request id")
 		}

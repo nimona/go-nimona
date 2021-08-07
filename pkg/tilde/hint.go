@@ -1,4 +1,4 @@
-package chore
+package tilde
 
 import (
 	"strings"

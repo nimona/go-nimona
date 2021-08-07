@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/daemon"
@@ -18,6 +17,7 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/tilde"
 	"nimona.io/pkg/version"
 )
 
@@ -113,9 +113,9 @@ func (p *Provider) Get(
 ) (object.ReadCloser, error) {
 	opts := []sqlobjectstore.FilterOption{}
 	filterByType := []string{}
-	filterByHash := []chore.Hash{}
+	filterByHash := []tilde.Hash{}
 	filterByOwner := []did.DID{}
-	filterByStreamHash := []chore.Hash{}
+	filterByStreamHash := []tilde.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -132,7 +132,7 @@ func (p *Provider) Get(
 		case "hash":
 			filterByHash = append(
 				filterByHash,
-				chore.Hash(v),
+				tilde.Hash(v),
 			)
 		case "owner":
 			k := did.DID{}
@@ -144,7 +144,7 @@ func (p *Provider) Get(
 		case "stream":
 			filterByStreamHash = append(
 				filterByStreamHash,
-				chore.Hash(v),
+				tilde.Hash(v),
 			)
 		}
 		if req.OrderBy != "" {
@@ -208,9 +208,9 @@ func (p *Provider) Subscribe(
 ) (object.ReadCloser, error) {
 	opts := []objectmanager.LookupOption{}
 	filterByType := []string{}
-	filterByHash := []chore.Hash{}
+	filterByHash := []tilde.Hash{}
 	filterByOwner := []did.DID{}
-	filterByStreamHash := []chore.Hash{}
+	filterByStreamHash := []tilde.Hash{}
 	for _, lookup := range req.Lookups {
 		parts := strings.Split(lookup, ":")
 		if len(parts) < 2 {
@@ -227,7 +227,7 @@ func (p *Provider) Subscribe(
 		case "hash":
 			filterByHash = append(
 				filterByHash,
-				chore.Hash(v),
+				tilde.Hash(v),
 			)
 		case "owner":
 			k := did.DID{}
@@ -239,7 +239,7 @@ func (p *Provider) Subscribe(
 		case "stream":
 			filterByStreamHash = append(
 				filterByStreamHash,
-				chore.Hash(v),
+				tilde.Hash(v),
 			)
 		}
 	}
@@ -273,7 +273,7 @@ func (p *Provider) Subscribe(
 
 func (p *Provider) RequestStream(
 	ctx context.Context,
-	rootHash chore.Hash,
+	rootHash tilde.Hash,
 ) error {
 	recipients, err := p.resolver.Lookup(
 		ctx,
@@ -308,7 +308,7 @@ func (p *Provider) Put(
 ) (*object.Object, error) {
 	obj = object.Copy(obj)
 	if setOwnerS, ok := obj.Data["_setOwner:s"]; ok {
-		if setOwner, ok := setOwnerS.(chore.String); ok {
+		if setOwner, ok := setOwnerS.(tilde.String); ok {
 			switch setOwner {
 			case "@peer":
 				obj.Metadata.Owner = p.network.GetPeerKey().PublicKey().DID()
@@ -327,7 +327,7 @@ func (p *Provider) Put(
 
 func (p *Provider) GetFeedRootHash(
 	streamRootObjectType string,
-) chore.Hash {
+) tilde.Hash {
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{

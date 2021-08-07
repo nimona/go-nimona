@@ -3,9 +3,9 @@
 package identity
 
 import (
-	chore "nimona.io/pkg/chore"
 	crypto "nimona.io/pkg/crypto"
 	object "nimona.io/pkg/object"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const ProfileType = "nimona.io/identity.Profile"
@@ -15,7 +15,7 @@ type Profile struct {
 	Version   int64           `nimona:"version:i"`
 	Timestamp string          `nimona:"timestamp:s"`
 	Name      string          `nimona:"name:s"`
-	Image     chore.Hash      `nimona:"image:s"`
+	Image     tilde.Hash      `nimona:"image:s"`
 }
 
 const ProfileStreamRootType = "stream:nimona.io/identity.Profile"

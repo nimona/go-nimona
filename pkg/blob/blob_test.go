@@ -11,8 +11,8 @@ import (
 
 	"nimona.io/internal/iotest"
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 )
 
 func Test_blobReader_Read(t *testing.T) {
@@ -89,10 +89,10 @@ func TestBlob_Hash(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []chore.Hash{object.MustMarshal(c).Hash()},
+		Chunks: []tilde.Hash{object.MustMarshal(c).Hash()},
 	}
 	u := &blob.Blob{
-		Chunks: []chore.Hash{
+		Chunks: []tilde.Hash{
 			object.MustMarshal(c).Hash(),
 		},
 	}
@@ -107,7 +107,7 @@ func TestBlob_ResponseHash(t *testing.T) {
 		Data: []byte("foo"),
 	}
 	b := &blob.Blob{
-		Chunks: []chore.Hash{object.MustMarshal(c).Hash()},
+		Chunks: []tilde.Hash{object.MustMarshal(c).Hash()},
 	}
 	r := &object.Response{
 		RequestID: "foo",
@@ -135,7 +135,7 @@ func TestBlob_ResponseHash(t *testing.T) {
 
 func TestBlob_ToMap(t *testing.T) {
 	b := &blob.Blob{
-		Chunks: []chore.Hash{
+		Chunks: []tilde.Hash{
 			object.MustMarshal(
 				&blob.Chunk{
 					Data: []byte("foo"),

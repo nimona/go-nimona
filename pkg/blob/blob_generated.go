@@ -3,8 +3,8 @@
 package blob
 
 import (
-	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const ChunkType = "nimona.io/Chunk"
@@ -18,5 +18,5 @@ const BlobType = "nimona.io/Blob"
 
 type Blob struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/Blob"`
-	Chunks   []chore.Hash    `nimona:"chunks:as"`
+	Chunks   []tilde.Hash    `nimona:"chunks:as"`
 }

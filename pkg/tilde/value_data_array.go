@@ -1,4 +1,4 @@
-package chore
+package tilde
 
 func (v DataArray) Hint() Hint {
 	return DataArrayHint

@@ -3,7 +3,7 @@
 package object
 
 import (
-	chore "nimona.io/pkg/chore"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const RequestType = "nimona.io/Request"
@@ -11,7 +11,7 @@ const RequestType = "nimona.io/Request"
 type Request struct {
 	Metadata   Metadata   `nimona:"@metadata:m,type=nimona.io/Request"`
 	RequestID  string     `nimona:"requestID:s"`
-	ObjectHash chore.Hash `nimona:"objectHash:s"`
+	ObjectHash tilde.Hash `nimona:"objectHash:s"`
 }
 
 const ResponseType = "nimona.io/Response"

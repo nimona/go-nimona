@@ -9,8 +9,8 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
-	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
+	tilde "nimona.io/pkg/tilde"
 )
 
 // MockGetter is a mock of Getter interface.
@@ -37,7 +37,7 @@ func (m *MockGetter) EXPECT() *MockGetterMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGetter) Get(hash chore.Hash) (*object.Object, error) {
+func (m *MockGetter) Get(hash tilde.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", hash)
 	ret0, _ := ret[0].(*object.Object)
@@ -75,7 +75,7 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockStore) Get(hash chore.Hash) (*object.Object, error) {
+func (m *MockStore) Get(hash tilde.Hash) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", hash)
 	ret0, _ := ret[0].(*object.Object)
@@ -90,7 +90,7 @@ func (mr *MockStoreMockRecorder) Get(hash interface{}) *gomock.Call {
 }
 
 // GetByStream mocks base method.
-func (m *MockStore) GetByStream(arg0 chore.Hash) (object.ReadCloser, error) {
+func (m *MockStore) GetByStream(arg0 tilde.Hash) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByStream", arg0)
 	ret0, _ := ret[0].(object.ReadCloser)
@@ -120,10 +120,10 @@ func (mr *MockStoreMockRecorder) GetByType(arg0 interface{}) *gomock.Call {
 }
 
 // GetPinned mocks base method.
-func (m *MockStore) GetPinned() ([]chore.Hash, error) {
+func (m *MockStore) GetPinned() ([]tilde.Hash, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPinned")
-	ret0, _ := ret[0].([]chore.Hash)
+	ret0, _ := ret[0].([]tilde.Hash)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -135,10 +135,10 @@ func (mr *MockStoreMockRecorder) GetPinned() *gomock.Call {
 }
 
 // GetStreamLeaves mocks base method.
-func (m *MockStore) GetStreamLeaves(streamRootHash chore.Hash) ([]chore.Hash, error) {
+func (m *MockStore) GetStreamLeaves(streamRootHash tilde.Hash) ([]tilde.Hash, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStreamLeaves", streamRootHash)
-	ret0, _ := ret[0].([]chore.Hash)
+	ret0, _ := ret[0].([]tilde.Hash)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -150,7 +150,7 @@ func (mr *MockStoreMockRecorder) GetStreamLeaves(streamRootHash interface{}) *go
 }
 
 // IsPinned mocks base method.
-func (m *MockStore) IsPinned(arg0 chore.Hash) (bool, error) {
+func (m *MockStore) IsPinned(arg0 tilde.Hash) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsPinned", arg0)
 	ret0, _ := ret[0].(bool)
@@ -165,7 +165,7 @@ func (mr *MockStoreMockRecorder) IsPinned(arg0 interface{}) *gomock.Call {
 }
 
 // Pin mocks base method.
-func (m *MockStore) Pin(arg0 chore.Hash) error {
+func (m *MockStore) Pin(arg0 tilde.Hash) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Pin", arg0)
 	ret0, _ := ret[0].(error)
@@ -207,7 +207,7 @@ func (mr *MockStoreMockRecorder) PutWithTTL(arg0, arg1 interface{}) *gomock.Call
 }
 
 // RemovePin mocks base method.
-func (m *MockStore) RemovePin(arg0 chore.Hash) error {
+func (m *MockStore) RemovePin(arg0 tilde.Hash) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemovePin", arg0)
 	ret0, _ := ret[0].(error)

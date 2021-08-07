@@ -6,118 +6,118 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 func TestObject(t *testing.T) {
-	o := chore.Map{
-		"boolArray": chore.BoolArray{
-			chore.Bool(false),
-			chore.Bool(true),
+	o := tilde.Map{
+		"boolArray": tilde.BoolArray{
+			tilde.Bool(false),
+			tilde.Bool(true),
 		},
-		"dataArray": chore.DataArray{
-			chore.Data("v0"),
-			chore.Data("v1"),
+		"dataArray": tilde.DataArray{
+			tilde.Data("v0"),
+			tilde.Data("v1"),
 		},
-		"floatArray": chore.FloatArray{
-			chore.Float(0.10),
-			chore.Float(1.12),
+		"floatArray": tilde.FloatArray{
+			tilde.Float(0.10),
+			tilde.Float(1.12),
 		},
-		"intArray": chore.IntArray{
-			chore.Int(0),
-			chore.Int(1),
+		"intArray": tilde.IntArray{
+			tilde.Int(0),
+			tilde.Int(1),
 		},
-		"mapArray": chore.MapArray{
-			chore.Map{"foo0": chore.String("bar0")},
-			chore.Map{
-				"boolArray": chore.BoolArray{
-					chore.Bool(false),
-					chore.Bool(true),
+		"mapArray": tilde.MapArray{
+			tilde.Map{"foo0": tilde.String("bar0")},
+			tilde.Map{
+				"boolArray": tilde.BoolArray{
+					tilde.Bool(false),
+					tilde.Bool(true),
 				},
-				"dataArray": chore.DataArray{
-					chore.Data("v0"),
-					chore.Data("v1"),
+				"dataArray": tilde.DataArray{
+					tilde.Data("v0"),
+					tilde.Data("v1"),
 				},
-				"floatArray": chore.FloatArray{
-					chore.Float(0.10),
-					chore.Float(1.12),
+				"floatArray": tilde.FloatArray{
+					tilde.Float(0.10),
+					tilde.Float(1.12),
 				},
-				"intArray": chore.IntArray{
-					chore.Int(0),
-					chore.Int(1),
+				"intArray": tilde.IntArray{
+					tilde.Int(0),
+					tilde.Int(1),
 				},
-				"mapArray": chore.MapArray{
-					chore.Map{"foo0": chore.String("bar0")},
-					chore.Map{"foo1": chore.String("bar1")},
+				"mapArray": tilde.MapArray{
+					tilde.Map{"foo0": tilde.String("bar0")},
+					tilde.Map{"foo1": tilde.String("bar1")},
 				},
-				"stringArray": chore.StringArray{
-					chore.String("v0"),
-					chore.String("v1"),
+				"stringArray": tilde.StringArray{
+					tilde.String("v0"),
+					tilde.String("v1"),
 				},
-				"uintArray": chore.UintArray{
-					chore.Uint(0),
-					chore.Uint(1),
+				"uintArray": tilde.UintArray{
+					tilde.Uint(0),
+					tilde.Uint(1),
 				},
 			},
 		},
-		"stringArray": chore.StringArray{
-			chore.String("v0"),
-			chore.String("v1"),
+		"stringArray": tilde.StringArray{
+			tilde.String("v0"),
+			tilde.String("v1"),
 		},
-		"uintArray": chore.UintArray{
-			chore.Uint(0),
-			chore.Uint(1),
+		"uintArray": tilde.UintArray{
+			tilde.Uint(0),
+			tilde.Uint(1),
 		},
-		"bool":  chore.Bool(true),
-		"data":  chore.Data("foo"),
-		"float": chore.Float(1.1),
-		"int":   chore.Int(2),
-		"map": chore.Map{
-			"boolArray": chore.BoolArray{
-				chore.Bool(false),
-				chore.Bool(true),
+		"bool":  tilde.Bool(true),
+		"data":  tilde.Data("foo"),
+		"float": tilde.Float(1.1),
+		"int":   tilde.Int(2),
+		"map": tilde.Map{
+			"boolArray": tilde.BoolArray{
+				tilde.Bool(false),
+				tilde.Bool(true),
 			},
-			"dataArray": chore.DataArray{
-				chore.Data("v0"),
-				chore.Data("v1"),
+			"dataArray": tilde.DataArray{
+				tilde.Data("v0"),
+				tilde.Data("v1"),
 			},
-			"floatArray": chore.FloatArray{
-				chore.Float(0.10),
-				chore.Float(1.12),
+			"floatArray": tilde.FloatArray{
+				tilde.Float(0.10),
+				tilde.Float(1.12),
 			},
-			"chore.IntArray": chore.IntArray{
-				chore.Int(0),
-				chore.Int(1),
+			"tilde.IntArray": tilde.IntArray{
+				tilde.Int(0),
+				tilde.Int(1),
 			},
-			"mapArray": chore.MapArray{
-				chore.Map{"foo0": chore.String("bar0")},
-				chore.Map{"foo1": chore.String("bar1")},
+			"mapArray": tilde.MapArray{
+				tilde.Map{"foo0": tilde.String("bar0")},
+				tilde.Map{"foo1": tilde.String("bar1")},
 			},
-			"stringArray": chore.StringArray{
-				chore.String("v0"),
-				chore.String("v1"),
+			"stringArray": tilde.StringArray{
+				tilde.String("v0"),
+				tilde.String("v1"),
 			},
-			"chore.UintArray": chore.UintArray{
-				chore.Uint(0),
-				chore.Uint(1),
+			"tilde.UintArray": tilde.UintArray{
+				tilde.Uint(0),
+				tilde.Uint(1),
 			},
-			"bool":  chore.Bool(true),
-			"data":  chore.Data("foo"),
-			"float": chore.Float(1.1),
-			"int":   chore.Int(2),
-			"map": chore.Map{
-				"int": chore.Int(42),
+			"bool":  tilde.Bool(true),
+			"data":  tilde.Data("foo"),
+			"float": tilde.Float(1.1),
+			"int":   tilde.Int(2),
+			"map": tilde.Map{
+				"int": tilde.Int(42),
 			},
-			"string": chore.String("foo"),
-			"uint":   chore.Uint(3),
+			"string": tilde.String("foo"),
+			"uint":   tilde.Uint(3),
 		},
-		"string": chore.String("foo"),
-		"uint":   chore.Uint(3),
+		"string": tilde.String("foo"),
+		"uint":   tilde.Uint(3),
 	}
 	b, err := json.MarshalIndent(o, "", "  ")
 	require.NoError(t, err)
 
-	g := chore.Map{}
+	g := tilde.Map{}
 	err = json.Unmarshal(b, &g)
 	require.NoError(t, err)
 
