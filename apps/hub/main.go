@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +30,7 @@ import (
 	"github.com/shurcooL/httpfs/vfsutil"
 	"github.com/skip2/go-qrcode"
 
+	"nimona.io/internal/rand"
 	"nimona.io/pkg/chore"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
@@ -323,29 +325,30 @@ func main() {
 	turboStream := hotwire.NewEventStream()
 	r.Get("/events", turboStream.ServeHTTP)
 
-	events, eventsClose := d.LocalPeer().ListenForUpdates()
-	defer eventsClose()
+	// events, eventsClose := d.LocalPeer().ListenForUpdates()
+	// defer eventsClose()
 
-	go func() {
-		for {
-			_, ok := <-events
-			if !ok {
-				return
-			}
-			if err := turboStream.SendEvent(
-				hotwire.StreamActionReplace,
-				"peer-content-types",
-				tplInnerPeerContentTypes,
-				struct {
-					ContentTypes []string
-				}{
-					ContentTypes: []string{}, // TODO get from object store
-				},
-			); err != nil {
-				log.Println(err)
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		_, ok := <-events
+	// 		if !ok {
+	// 			return
+	// 		}
+	// 		if err := turboStream.SendEvent(
+	// 			"*",
+	// 			hotwire.StreamActionReplace,
+	// 			"peer-content-types",
+	// 			tplInnerPeerContentTypes,
+	// 			struct {
+	// 				ContentTypes []string
+	// 			}{
+	// 				ContentTypes: []string{}, // TODO get from object store
+	// 			},
+	// 		); err != nil {
+	// 			log.Println(err)
+	// 		}
+	// 	}
+	// }()
 
 	go func() {
 		k := h.GetIdentityPublicKey()
@@ -377,6 +380,7 @@ func main() {
 					continue
 				}
 				turboStream.SendEvent(
+					"*",
 					hotwire.StreamActionAppend,
 					"contacts",
 					tplInnerContact,
@@ -394,6 +398,7 @@ func main() {
 					continue
 				}
 				turboStream.SendEvent(
+					"*",
 					hotwire.StreamActionRemove,
 					"contact-"+r.RemoteParty.String(),
 					tplInnerContact,
@@ -439,57 +444,62 @@ func main() {
 
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
 		// TODO(geoah): fix identity
-		// showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
-		// linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
-		// var csr *object.CertificateRequest
-		// if linkMnemonic {
-		// 	csr = &object.CertificateRequest{
-		// 		Metadata: object.Metadata{
-		// 			Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-		// 		},
-		// 		Nonce:                  rand.String(12),
-		// 		VendorName:             "Nimona",
-		// 		VendorURL:              "https://nimona.io",
-		// 		ApplicationName:        "Hub",
-		// 		ApplicationDescription: "Nimona Hub",
-		// 		ApplicationURL:         "https://nimona.io/hub",
-		// 		Permissions: []object.CertificatePermission{{
-		// 			Metadata: object.Metadata{
-		// 				Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-		// 			},
-		// 			Types:   []string{"*"},
-		// 			Actions: []string{"*"},
-		// 		}},
-		// 	}
-		// 	k := d.LocalPeer().GetPeerKey()
-		// 	csrSig, err := object.NewSignature(k, object.MustMarshal(csr))
-		// 	if err != nil {
-		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// 	csr.Metadata.Signature = csrSig
-		// 	if _, err = d.ObjectManager().Put(
-		// 		context.New(
-		// 			context.WithParent(r.Context()),
-		// 			context.WithTimeout(3*time.Second),
-		// 		),
-		// 		object.MustMarshal(csr),
-		// 	); err != nil {
-		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// }
-		// values := struct {
-		// 	PublicKey    string
-		// 	PrivateBIP39 string
-		// 	Show         bool
-		// 	Link         bool
-		// 	CSR          *object.CertificateRequest
-		// }{
-		// 	Show: showMnemonic,
-		// 	Link: linkMnemonic,
-		// 	CSR:  csr,
-		// }
+		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
+		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
+		peerKey := d.Network().GetPeerKey()
+		var csr *object.CertificateRequest
+		if linkMnemonic {
+			csr = &object.CertificateRequest{
+				Metadata: object.Metadata{
+					Owner: peerKey.PublicKey().DID(),
+				},
+				Nonce:                  rand.String(12),
+				VendorName:             "Nimona",
+				VendorURL:              "https://nimona.io",
+				ApplicationName:        "Hub",
+				ApplicationDescription: "Nimona Hub",
+				ApplicationURL:         "https://nimona.io/hub",
+				Permissions: []object.CertificatePermission{{
+					Metadata: object.Metadata{
+						Owner: peerKey.PublicKey().DID(),
+					},
+					Types:   []string{"*"},
+					Actions: []string{"*"},
+				}},
+			}
+			csrSig, err := object.NewSignature(peerKey, object.MustMarshal(csr))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			csr.Metadata.Signature = csrSig
+			if err = d.ObjectManager().Put(
+				context.New(
+					context.WithParent(r.Context()),
+					context.WithTimeout(3*time.Second),
+				),
+				object.MustMarshal(csr),
+			); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		values := struct {
+			PublicKey    string
+			PrivateBIP39 string
+			Show         bool
+			Link         bool
+			CSR          *object.CertificateRequest
+			CSRHash      chore.Hash
+		}{
+			Show: showMnemonic,
+			Link: linkMnemonic,
+			CSR:  csr,
+		}
+		if csr != nil {
+			values.CSRHash = object.MustMarshal(csr).Hash()
+		}
+
 		// go func() {
 		// 	csrResCh := certificateutils.WaitForCertificateResponse(
 		// 		context.New(
@@ -505,6 +515,7 @@ func main() {
 		// 	h.SetPeerCertificate(csrRes)
 		// 	values.PublicKey = h.GetIdentityPublicKey().String()
 		// 	turboStream.SendEvent(
+		// 		"*",
 		// 		hotwire.StreamActionReplace,
 		// 		"peer-identity",
 		// 		tplIdentityInner,
@@ -512,20 +523,20 @@ func main() {
 		// 	) // nolint: errcheck
 		// 	// TODO figure out how to surface errors?
 		// }()
-		// if k := h.GetIdentityPublicKey(); k != nil {
-		// 	values.PublicKey = k.String()
-		// }
-		// if k := h.GetIdentityPrivateKey(); k != nil {
-		// 	values.PrivateBIP39 = k.BIP39()
-		// }
-		// err := tplIdentity.Execute(
-		// 	w,
-		// 	values,
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		if k := h.GetIdentityPublicKey(); k != nil {
+			values.PublicKey = k.String()
+		}
+		if k := h.GetIdentityPrivateKey(); k != nil {
+			values.PrivateBIP39 = k.BIP39()
+		}
+		err := tplIdentity.Execute(
+			w,
+			values,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
@@ -759,14 +770,14 @@ func main() {
 			RemoteParty: remotePartyKey,
 			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
-		if _, err := d.ObjectManager().Put(
+		if err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
 			object.MustMarshal(contactsStreamRoot),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if _, err := d.ObjectManager().Put(
+		if _, err := d.ObjectManager().Append(
 			context.FromContext(r.Context()),
 			object.MustMarshal(rel),
 		); err != nil {
@@ -826,14 +837,14 @@ func main() {
 			RemoteParty: remotePartyKey,
 			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
-		if _, err := d.ObjectManager().Put(
+		if err := d.ObjectManager().Put(
 			context.FromContext(r.Context()),
 			object.MustMarshal(contactsStreamRoot),
 		); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if _, err := d.ObjectManager().Put(
+		if _, err := d.ObjectManager().Append(
 			context.FromContext(r.Context()),
 			object.MustMarshal(rel),
 		); err != nil {

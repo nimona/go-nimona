@@ -25,7 +25,7 @@
         </li>
       </ul>
       <form action="/certificates/csr-sign" method="POST">
-        <input type="hidden" name="csrCID" value="{{ .CertificateRequest.ToObject.CID }}">
+        <input type="hidden" name="csrCID" value="{{ .CertificateRequestHash }}">
         <button type="submit" class="mx-4 mt-4 bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline relative">Sign Certificate</button>
       </form>
     </div>
