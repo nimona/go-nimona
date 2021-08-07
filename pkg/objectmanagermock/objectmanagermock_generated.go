@@ -8,11 +8,11 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	chore "nimona.io/pkg/chore"
 	context "nimona.io/pkg/context"
 	object "nimona.io/pkg/object"
 	objectmanager "nimona.io/pkg/objectmanager"
 	peer "nimona.io/pkg/peer"
+	tilde "nimona.io/pkg/tilde"
 )
 
 // MockObjectManager is a mock of ObjectManager interface.
@@ -39,7 +39,7 @@ func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 }
 
 // AddStreamSubscription mocks base method.
-func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootHash chore.Hash) error {
+func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootHash tilde.Hash) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddStreamSubscription", ctx, rootHash)
 	ret0, _ := ret[0].(error)
@@ -82,7 +82,7 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method.
-func (m *MockObjectManager) Request(ctx context.Context, hash chore.Hash, peer *peer.ConnectionInfo) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Hash, peer *peer.ConnectionInfo) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Request", ctx, hash, peer)
 	ret0, _ := ret[0].(*object.Object)
@@ -97,7 +97,7 @@ func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *g
 }
 
 // RequestStream mocks base method.
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash chore.Hash, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash tilde.Hash, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, rootHash}
 	for _, a := range recipients {

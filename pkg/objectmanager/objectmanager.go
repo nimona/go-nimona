@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"nimona.io/internal/rand"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -17,6 +16,7 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
+	"nimona.io/pkg/tilde"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=chore.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
+//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=tilde.Hash ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
@@ -41,17 +41,17 @@ type (
 		) (*object.Object, error)
 		Request(
 			ctx context.Context,
-			hash chore.Hash,
+			hash tilde.Hash,
 			peer *peer.ConnectionInfo,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
-			rootHash chore.Hash,
+			rootHash tilde.Hash,
 			recipients ...*peer.ConnectionInfo,
 		) (object.ReadCloser, error)
 		AddStreamSubscription(
 			ctx context.Context,
-			rootHash chore.Hash,
+			rootHash tilde.Hash,
 		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -126,7 +126,7 @@ func (m *manager) isWellKnownEphemeral(
 // TODO this currently needs to be storing objects for it to work.
 func (m *manager) RequestStream(
 	ctx context.Context,
-	rootHash chore.Hash,
+	rootHash tilde.Hash,
 	recipients ...*peer.ConnectionInfo,
 ) (object.ReadCloser, error) {
 	if len(recipients) == 0 {
@@ -182,7 +182,7 @@ func (m *manager) RequestStream(
 		return nil, err
 	}
 
-	var leaves []chore.Hash
+	var leaves []tilde.Hash
 
 	select {
 	case res := <-responses:
@@ -200,11 +200,11 @@ func (m *manager) RequestStream(
 
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
-	leaves []chore.Hash,
+	leaves []tilde.Hash,
 	recipient *peer.ConnectionInfo,
 ) error {
 	// TODO refactor to remove buffer
-	objectHashes := make(chan chore.Hash, 1000)
+	objectHashes := make(chan tilde.Hash, 1000)
 
 	go func() {
 		for _, l := range leaves {
@@ -291,7 +291,7 @@ func (m *manager) fetchFromLeaves(
 
 func (m *manager) Request(
 	ctx context.Context,
-	hash chore.Hash,
+	hash tilde.Hash,
 	pr *peer.ConnectionInfo,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
@@ -475,15 +475,15 @@ func (m *manager) storeObject(
 
 func (m *manager) announceStreamChildren(
 	ctx context.Context,
-	streamHash chore.Hash,
-	children []chore.Hash,
+	streamHash tilde.Hash,
+	children []tilde.Hash,
 ) {
 	logger := log.FromContext(ctx)
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[string]struct{}{}
-	m.subscriptions.Range(func(_ chore.Hash, sub *stream.Subscription) bool {
+	m.subscriptions.Range(func(_ tilde.Hash, sub *stream.Subscription) bool {
 		// TODO check expiry
 		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
 		return true
@@ -835,11 +835,11 @@ func (m *manager) Append(
 			return nil, err
 		}
 		if len(leaves) == 0 {
-			leaves = []chore.Hash{
+			leaves = []tilde.Hash{
 				root,
 			}
 		}
-		chore.SortHashes(leaves)
+		tilde.SortHashes(leaves)
 		o.Metadata.Parents = object.Parents{
 			"*": leaves,
 		}
@@ -873,7 +873,7 @@ func (m *manager) Append(
 			// TODO timeout?
 		),
 		root,
-		[]chore.Hash{
+		[]tilde.Hash{
 			o.Hash(),
 		},
 	)
@@ -885,7 +885,7 @@ func (m *manager) Append(
 
 func (m *manager) AddStreamSubscription(
 	ctx context.Context,
-	rootHash chore.Hash,
+	rootHash tilde.Hash,
 ) error {
 	r, err := m.objectstore.GetByStream(rootHash)
 	if err != nil {
@@ -928,7 +928,7 @@ func (m *manager) AddStreamSubscription(
 			Owner: pub.DID(),
 			Root:  rootHash,
 		},
-		RootHashes: []chore.Hash{
+		RootHashes: []tilde.Hash{
 			rootHash,
 		},
 		// TODO add expiry

@@ -6,14 +6,14 @@ import (
 
 	"github.com/mitchellh/copystructure"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 type Object struct {
 	Context  string
 	Type     string
 	Metadata Metadata
-	Data     chore.Map
+	Data     tilde.Map
 }
 
 type (
@@ -21,10 +21,10 @@ type (
 		Type() string
 	}
 	MapMashaller interface {
-		MarshalMap() (chore.Map, error)
+		MarshalMap() (tilde.Map, error)
 	}
 	MapUnmashaller interface {
-		UnmarshalMap(chore.Map) error
+		UnmarshalMap(tilde.Map) error
 	}
 	StringMashaller interface {
 		MarshalString() (string, error)
@@ -49,25 +49,25 @@ func (o *Object) MarshalJSON() ([]byte, error) {
 }
 
 func (o *Object) UnmarshalJSON(b []byte) error {
-	m := chore.Map{}
+	m := tilde.Map{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
 	return o.UnmarshalMap(m)
 }
 
-func (o *Object) MarshalMap() (chore.Map, error) {
-	m := chore.Map{}
+func (o *Object) MarshalMap() (tilde.Map, error) {
+	m := tilde.Map{}
 	for k, v := range o.Data {
 		m[k] = v
 	}
 	if o.Context != "" {
-		m["@context"] = chore.String(o.Context)
+		m["@context"] = tilde.String(o.Context)
 	}
 	if o.Type != "" {
-		m["@type"] = chore.String(o.Type)
+		m["@type"] = tilde.String(o.Type)
 	}
-	mm, err := marshalStruct(chore.MapHint, reflect.ValueOf(o.Metadata))
+	mm, err := marshalStruct(tilde.MapHint, reflect.ValueOf(o.Metadata))
 	if err != nil {
 		return nil, err
 	}
@@ -77,28 +77,28 @@ func (o *Object) MarshalMap() (chore.Map, error) {
 	return m, nil
 }
 
-func (o *Object) UnmarshalMap(v chore.Map) error {
+func (o *Object) UnmarshalMap(v tilde.Map) error {
 	mm, err := copystructure.Copy(v)
 	if err != nil {
 		return err
 	}
-	m := mm.(chore.Map)
+	m := mm.(tilde.Map)
 	if t, ok := m["@context"]; ok {
-		if s, ok := t.(chore.String); ok {
+		if s, ok := t.(tilde.String); ok {
 			o.Context = string(s)
 			delete(m, "@context")
 		}
 	}
 	if t, ok := m["@type"]; ok {
-		if s, ok := t.(chore.String); ok {
+		if s, ok := t.(tilde.String); ok {
 			o.Type = string(s)
 			delete(m, "@type")
 		}
 	}
 	if t, ok := m["@metadata"]; ok {
-		if s, ok := t.(chore.Map); ok {
+		if s, ok := t.(tilde.Map); ok {
 			err := unmarshalMapToStruct(
-				chore.MapHint,
+				tilde.MapHint,
 				s,
 				reflect.ValueOf(&o.Metadata),
 			)
@@ -112,9 +112,9 @@ func (o *Object) UnmarshalMap(v chore.Map) error {
 	return nil
 }
 
-func (o *Object) Hash() chore.Hash {
+func (o *Object) Hash() tilde.Hash {
 	if o == nil {
-		return chore.EmptyHash
+		return tilde.EmptyHash
 	}
 	m, err := o.MarshalMap()
 	if err != nil {

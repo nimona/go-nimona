@@ -6,10 +6,10 @@ import (
 
 	"github.com/xujiajun/nutsdb"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/tilde"
 )
 
 const (
@@ -42,7 +42,7 @@ func NewController(
 	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
 	if err == nil {
 		eventStream, err := objectStore.GetByStream(
-			chore.Hash(keyStreamRootHashBytes),
+			tilde.Hash(keyStreamRootHashBytes),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get keystream objects, %w", err)
@@ -166,7 +166,7 @@ func (c *Controller) Rotate() (*Rotation, error) {
 }
 
 func getPrivateKey(
-	publicKeyHash chore.Hash,
+	publicKeyHash tilde.Hash,
 	kvStore *nutsdb.DB,
 ) (*crypto.PrivateKey, error) {
 	tx, err := kvStore.Begin(false)
@@ -215,8 +215,8 @@ func putPrivateKey(
 	return nil
 }
 
-func getPublicKeyHash(k crypto.PublicKey) chore.Hash {
-	return chore.String(k.String()).Hash()
+func getPublicKeyHash(k crypto.PublicKey) tilde.Hash {
+	return tilde.String(k.String()).Hash()
 }
 
 func getConfigValue(

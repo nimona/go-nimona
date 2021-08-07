@@ -3,8 +3,8 @@
 package stream
 
 import (
-	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const PolicyType = "nimona.io/stream.Policy"
@@ -22,7 +22,7 @@ const RequestType = "nimona.io/stream.Request"
 type Request struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Request"`
 	RequestID string          `nimona:"requestID:s"`
-	RootHash  chore.Hash      `nimona:"rootHash:s"`
+	RootHash  tilde.Hash      `nimona:"rootHash:s"`
 }
 
 const ResponseType = "nimona.io/stream.Response"
@@ -30,22 +30,22 @@ const ResponseType = "nimona.io/stream.Response"
 type Response struct {
 	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Response"`
 	RequestID string          `nimona:"requestID:s"`
-	RootHash  chore.Hash      `nimona:"rootHash:s"`
-	Leaves    []chore.Hash    `nimona:"leaves:as"`
+	RootHash  tilde.Hash      `nimona:"rootHash:s"`
+	Leaves    []tilde.Hash    `nimona:"leaves:as"`
 }
 
 const AnnouncementType = "nimona.io/stream.Announcement"
 
 type Announcement struct {
 	Metadata     object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Announcement"`
-	StreamHash   chore.Hash      `nimona:"streamHash:s"`
-	ObjectHashes []chore.Hash    `nimona:"objectHashes:as"`
+	StreamHash   tilde.Hash      `nimona:"streamHash:s"`
+	ObjectHashes []tilde.Hash    `nimona:"objectHashes:as"`
 }
 
 const SubscriptionType = "nimona.io/stream.Subscription"
 
 type Subscription struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.Subscription"`
-	RootHashes []chore.Hash    `nimona:"rootHashes:as"`
+	RootHashes []tilde.Hash    `nimona:"rootHashes:as"`
 	Expiry     string          `nimona:"expiry:s"`
 }

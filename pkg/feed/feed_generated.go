@@ -3,8 +3,8 @@
 package feed
 
 import (
-	chore "nimona.io/pkg/chore"
 	object "nimona.io/pkg/object"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const FeedStreamRootType = "stream:nimona.io/feed"
@@ -19,7 +19,7 @@ const AddedType = "event:nimona.io/feed.Added"
 
 type Added struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Added"`
-	ObjectHash []chore.Hash    `nimona:"objectHash:as"`
+	ObjectHash []tilde.Hash    `nimona:"objectHash:as"`
 	Sequence   int64           `nimona:"sequence:i"`
 	Timestamp  string          `nimona:"timestamp:s"`
 }
@@ -28,7 +28,7 @@ const RemovedType = "event:nimona.io/feed.Removed"
 
 type Removed struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Removed"`
-	ObjectHash []chore.Hash    `nimona:"objectHash:as"`
+	ObjectHash []tilde.Hash    `nimona:"objectHash:as"`
 	Sequence   int64           `nimona:"sequence:i"`
 	Timestamp  string          `nimona:"timestamp:s"`
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/filesharing"
+	"nimona.io/pkg/tilde"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -165,7 +165,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 
 	file1 := filesharing.File{
 		Name:   "testfile",
-		Chunks: []chore.Hash{chore.Hash("1234")},
+		Chunks: []tilde.Hash{tilde.Hash("1234")},
 	}
 	req := &filesharing.TransferRequest{
 		File:  file1,

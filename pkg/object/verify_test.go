@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/tilde"
 )
 
 func TestVerify(t *testing.T) {
@@ -21,8 +21,8 @@ func TestVerify(t *testing.T) {
 	}{{
 		name: "should pass, no signature, no owner",
 		object: &Object{
-			Data: chore.Map{
-				"foo:s": chore.String("bar"),
+			Data: tilde.Map{
+				"foo:s": tilde.String("bar"),
 			},
 		},
 	}, {
@@ -31,8 +31,8 @@ func TestVerify(t *testing.T) {
 			t,
 			testKey0,
 			&Object{
-				Data: chore.Map{
-					"foo:s": chore.String("bar"),
+				Data: tilde.Map{
+					"foo:s": tilde.String("bar"),
 				},
 			},
 		),
@@ -42,8 +42,8 @@ func TestVerify(t *testing.T) {
 			Metadata: Metadata{
 				Owner: testKey0.PublicKey().DID(),
 			},
-			Data: chore.Map{
-				"foo:s": chore.String("bar"),
+			Data: tilde.Map{
+				"foo:s": tilde.String("bar"),
 			},
 		},
 		wantErr: true,
@@ -56,8 +56,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey().DID(),
 				},
-				Data: chore.Map{
-					"foo:s": chore.String("bar"),
+				Data: tilde.Map{
+					"foo:s": tilde.String("bar"),
 				},
 			},
 		),
@@ -74,8 +74,8 @@ func TestVerify(t *testing.T) {
 						X: []byte{1, 2, 3},
 					},
 				},
-				Data: chore.Map{
-					"foo:s": chore.String("bar"),
+				Data: tilde.Map{
+					"foo:s": tilde.String("bar"),
 				},
 			},
 		),
@@ -89,8 +89,8 @@ func TestVerify(t *testing.T) {
 				Metadata: Metadata{
 					Owner: testKey0.PublicKey().DID(),
 				},
-				Data: chore.Map{
-					"foo:s": chore.String("bar"),
+				Data: tilde.Map{
+					"foo:s": tilde.String("bar"),
 				},
 			},
 		),

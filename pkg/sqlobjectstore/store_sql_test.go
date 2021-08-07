@@ -13,11 +13,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/tilde"
 )
 
 func tempSqlite3(t *testing.T) *sql.DB {
@@ -53,8 +53,8 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: object.MustMarshal(p).Hash(),
 		},
-		Data: chore.Map{
-			"key": chore.String("value"),
+		Data: tilde.Map{
+			"key": tilde.String("value"),
 		},
 	}
 
@@ -76,7 +76,7 @@ func TestStoreRetrieveUpdate(t *testing.T) {
 
 	val := retrievedObj.Data["key"]
 	require.NotNil(t, val)
-	assert.Equal(t, "value", string(val.(chore.String)))
+	assert.Equal(t, "value", string(val.(tilde.String)))
 
 	stHash := obj.Metadata.Root
 	require.NotEmpty(t, stHash)
@@ -129,7 +129,7 @@ func TestFilter(t *testing.T) {
 		object.MustMarshal(p),
 	}
 
-	hashes := []chore.Hash{}
+	hashes := []tilde.Hash{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
 			Type: fixtures.TestSubscribedType,
@@ -139,8 +139,8 @@ func TestFilter(t *testing.T) {
 					Add(time.Duration(i) * time.Hour).
 					Format(time.RFC3339),
 			},
-			Data: chore.Map{
-				"keys": chore.String(fmt.Sprintf("value_%d", i)),
+			Data: tilde.Map{
+				"keys": tilde.String(fmt.Sprintf("value_%d", i)),
 			},
 		}
 		if i%2 == 0 {
@@ -234,8 +234,8 @@ func TestStore_Relations(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"f00": chore.String("f00"),
+		Data: tilde.Map{
+			"f00": tilde.String("f00"),
 		},
 	}
 
@@ -244,13 +244,13 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{
+				"*": []tilde.Hash{
 					f00.Hash(),
 				},
 			},
 		},
-		Data: chore.Map{
-			"f01": chore.String("f01"),
+		Data: tilde.Map{
+			"f01": tilde.String("f01"),
 		},
 	}
 
@@ -259,13 +259,13 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{
+				"*": []tilde.Hash{
 					f01.Hash(),
 				},
 			},
 		},
-		Data: chore.Map{
-			"f02": chore.String("f02"),
+		Data: tilde.Map{
+			"f02": tilde.String("f02"),
 		},
 	}
 
@@ -285,7 +285,7 @@ func TestStore_Relations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, leaves)
 		assert.Len(t, leaves, 1)
-		assert.Equal(t, []chore.Hash{f00.Hash()}, leaves)
+		assert.Equal(t, []tilde.Hash{f00.Hash()}, leaves)
 	})
 
 	require.NoError(t, store.Put(f01))
@@ -295,7 +295,7 @@ func TestStore_Relations(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 1)
-	assert.Equal(t, []chore.Hash{f02.Hash()}, leaves)
+	assert.Equal(t, []tilde.Hash{f02.Hash()}, leaves)
 
 	fmt.Println(leaves)
 }
@@ -304,8 +304,8 @@ func TestStore_ListHashes(t *testing.T) {
 	f00 := &object.Object{
 		Type:     "f00",
 		Metadata: object.Metadata{},
-		Data: chore.Map{
-			"f00": chore.String("f00"),
+		Data: tilde.Map{
+			"f00": tilde.String("f00"),
 		},
 	}
 
@@ -314,20 +314,20 @@ func TestStore_ListHashes(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []chore.Hash{
+				"*": []tilde.Hash{
 					f00.Hash(),
 				},
 			},
 		},
-		Data: chore.Map{
-			"f01": chore.String("f01"),
+		Data: tilde.Map{
+			"f01": tilde.String("f01"),
 		},
 	}
 
 	f02 := &object.Object{
 		Type: "f02",
-		Data: chore.Map{
-			"f02": chore.String("f02"),
+		Data: tilde.Map{
+			"f02": tilde.String("f02"),
 		},
 	}
 
@@ -348,7 +348,7 @@ func TestStore_ListHashes(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 2)
-	assert.Equal(t, []chore.Hash{
+	assert.Equal(t, []tilde.Hash{
 		f00.Hash(),
 		f02.Hash(),
 	}, leaves)
@@ -363,47 +363,47 @@ func TestStore_Pinned(t *testing.T) {
 	require.NotNil(t, store)
 
 	t.Run("pin a", func(t *testing.T) {
-		err := store.Pin(chore.Hash("a"))
+		err := store.Pin(tilde.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("check pin a", func(t *testing.T) {
-		pinned, err := store.IsPinned(chore.Hash("a"))
+		pinned, err := store.IsPinned(tilde.Hash("a"))
 		require.NoError(t, err)
 		assert.True(t, pinned)
 	})
 
 	t.Run("check pin x", func(t *testing.T) {
-		pinned, err := store.IsPinned(chore.Hash("x"))
+		pinned, err := store.IsPinned(tilde.Hash("x"))
 		require.NoError(t, err)
 		assert.False(t, pinned)
 	})
 
 	t.Run("pin a again, no error", func(t *testing.T) {
-		err = store.Pin(chore.Hash("a"))
+		err = store.Pin(tilde.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("pin b", func(t *testing.T) {
-		err = store.Pin(chore.Hash("b"))
+		err = store.Pin(tilde.Hash("b"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (a, b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []chore.Hash{chore.Hash("a"), chore.Hash("b")}, got)
+		require.Equal(t, []tilde.Hash{tilde.Hash("a"), tilde.Hash("b")}, got)
 	})
 
 	t.Run("remove pin a", func(t *testing.T) {
-		err = store.RemovePin(chore.Hash("a"))
+		err = store.RemovePin(tilde.Hash("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []chore.Hash{chore.Hash("b")}, got)
+		require.Equal(t, []tilde.Hash{tilde.Hash("b")}, got)
 	})
 }
 
@@ -415,8 +415,8 @@ func TestStore_GC(t *testing.T) {
 
 	o := &object.Object{
 		Type: "foo",
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 

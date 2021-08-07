@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 func TestNetwork_SimpleConnection(t *testing.T) {
@@ -30,8 +30,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -137,7 +137,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		}()
 		// wait for p2 to get the req
 		gotReq := <-reqSub.Channel()
-		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(chore.String)))
+		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(tilde.String)))
 		// send response from p2 to p1
 		reso, err := object.Marshal(res)
 		require.NoError(t, err)
@@ -193,8 +193,8 @@ func TestNetwork_Relay(t *testing.T) {
 
 	testObj := &object.Object{
 		Type: "foo",
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -203,8 +203,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n1.GetPeerKey().PublicKey().DID(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -213,8 +213,8 @@ func TestNetwork_Relay(t *testing.T) {
 		Metadata: object.Metadata{
 			Owner: n2.GetPeerKey().PublicKey().DID(),
 		},
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 

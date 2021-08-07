@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/tilde"
 )
 
 func Test_Sign(t *testing.T) {
@@ -20,8 +20,8 @@ func Test_Sign(t *testing.T) {
 			Metadata: Metadata{
 				Owner: k.PublicKey().DID(),
 			},
-			Data: chore.Map{
-				"foo": chore.String("bar"),
+			Data: tilde.Map{
+				"foo": tilde.String("bar"),
 			},
 		}
 
@@ -42,15 +42,15 @@ func Test_Sign(t *testing.T) {
 			Metadata: Metadata{
 				Owner: k.PublicKey().DID(),
 			},
-			Data: chore.Map{
-				"foo": chore.String("bar"),
+			Data: tilde.Map{
+				"foo": tilde.String("bar"),
 			},
 		}
 		m, err := n.MarshalMap()
 		require.NoError(t, err)
 		o := &Object{
 			Type: "foo",
-			Data: chore.Map{
+			Data: tilde.Map{
 				"foo": m,
 			},
 		}
@@ -65,7 +65,7 @@ func Test_Sign(t *testing.T) {
 		assert.Equal(t, crypto.EmptyPublicKey, o.Metadata.Signature.Signer)
 
 		gn := &Object{}
-		gm := o.Data["foo"].(chore.Map)
+		gm := o.Data["foo"].(tilde.Map)
 		err = gn.UnmarshalMap(gm)
 		require.NoError(t, err)
 

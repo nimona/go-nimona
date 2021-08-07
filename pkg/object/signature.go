@@ -3,10 +3,10 @@ package object
 import (
 	"reflect"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/tilde"
 )
 
 const (
@@ -33,23 +33,23 @@ func (s *Signature) IsEmpty() bool {
 	return s == nil || len(s.X) == 0
 }
 
-func (s *Signature) MarshalMap() (chore.Map, error) {
-	r := chore.Map{}
+func (s *Signature) MarshalMap() (tilde.Map, error) {
+	r := tilde.Map{}
 	if !s.Signer.IsEmpty() {
-		r["signer"] = chore.String(s.Signer.String())
+		r["signer"] = tilde.String(s.Signer.String())
 	}
 	if s.Alg != "" {
-		r["alg"] = chore.String(s.Alg)
+		r["alg"] = tilde.String(s.Alg)
 	}
 	if len(s.X) > 0 {
-		r["x"] = chore.Data(s.X)
+		r["x"] = tilde.Data(s.X)
 	}
 	return r, nil
 }
 
-func (s *Signature) UnmarshalMap(m chore.Map) error {
+func (s *Signature) UnmarshalMap(m tilde.Map) error {
 	if t, ok := m["signer"]; ok {
-		if v, ok := t.(chore.String); ok {
+		if v, ok := t.(tilde.String); ok {
 			k := crypto.PublicKey{}
 			if err := k.UnmarshalString(string(v)); err == nil {
 				s.Signer = k
@@ -57,12 +57,12 @@ func (s *Signature) UnmarshalMap(m chore.Map) error {
 		}
 	}
 	if t, ok := m["alg"]; ok {
-		if v, ok := t.(chore.String); ok {
+		if v, ok := t.(tilde.String); ok {
 			s.Alg = string(v)
 		}
 	}
 	if t, ok := m["x"]; ok {
-		if v, ok := t.(chore.Data); ok {
+		if v, ok := t.(tilde.Data); ok {
 			s.X = []byte(v)
 		}
 	}
@@ -98,7 +98,7 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 	var signErr error
 	pk := k.PublicKey()
 	Traverse(o, func(path string, v interface{}) bool {
-		m, ok := v.(chore.Map)
+		m, ok := v.(tilde.Map)
 		if !ok {
 			return true
 		}
@@ -106,11 +106,11 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 			return true
 		}
 		meta := &Metadata{}
-		mmeta, ok := m["@metadata"].(chore.Map)
+		mmeta, ok := m["@metadata"].(tilde.Map)
 		if !ok {
 			return true
 		}
-		err := unmarshalMap(chore.MapHint, mmeta, reflect.ValueOf(meta))
+		err := unmarshalMap(tilde.MapHint, mmeta, reflect.ValueOf(meta))
 		if err != nil {
 			return true
 		}
@@ -152,7 +152,7 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 	return signErr
 }
 
-func isObject(m chore.Map) bool {
+func isObject(m tilde.Map) bool {
 	if _, ok := m["@type"]; ok {
 		return true
 	}
@@ -161,7 +161,7 @@ func isObject(m chore.Map) bool {
 
 func newSignature(
 	k crypto.PrivateKey,
-	m chore.Map,
+	m tilde.Map,
 ) (Signature, error) {
 	h, err := m.Hash().Bytes()
 	if err != nil {

@@ -22,7 +22,7 @@ type Object struct {
 	Members   []*Member
 }
 
-// rootHashes repeated string nimona.io/chore.Hash
+// rootHashes repeated string nimona.io/tilde.Hash
 // ^        ^        ^      ^
 // |        |        |      |
 // |        |        |      - GoType

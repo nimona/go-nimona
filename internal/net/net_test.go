@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 func TestNetConnectionSuccess(t *testing.T) {
@@ -28,8 +28,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	done := make(chan bool)
 
 	resObj := &object.Object{
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 
@@ -55,8 +55,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	require.NoError(t, err)
 
 	reqObj := &object.Object{
-		Data: chore.Map{
-			"foo": chore.String("bar"),
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
 		},
 	}
 	err = Write(reqObj, sc)

@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
+	"nimona.io/pkg/tilde"
 )
 
 func TestMetadata_Map(t *testing.T) {
@@ -26,12 +26,12 @@ func TestMetadata_Map(t *testing.T) {
 		Owner:     *did.MustParse("did:nimona:foo"),
 		Timestamp: "foo",
 		Parents: Parents{
-			"*": chore.HashArray{
-				chore.Hash("foo"),
+			"*": tilde.HashArray{
+				tilde.Hash("foo"),
 			},
-			"foo.*": chore.HashArray{
-				chore.Hash("foo"),
-				chore.Hash("foo"),
+			"foo.*": tilde.HashArray{
+				tilde.Hash("foo"),
+				tilde.Hash("foo"),
 			},
 		},
 		Policies: Policies{{
@@ -47,7 +47,7 @@ func TestMetadata_Map(t *testing.T) {
 			Actions:   []PolicyAction{ReadAction},
 			Effect:    DenyEffect,
 		}},
-		Root: chore.Hash("foo"),
+		Root: tilde.Hash("foo"),
 		Signature: Signature{
 			Signer: pk1,
 			Alg:    "alg",
@@ -58,7 +58,7 @@ func TestMetadata_Map(t *testing.T) {
 	t.Run("metadata of object", func(t *testing.T) {
 		o := &Object{
 			Metadata: *want,
-			Data:     chore.Map{},
+			Data:     tilde.Map{},
 		}
 
 		b, err := json.MarshalIndent(o, "", "  ")
@@ -77,12 +77,12 @@ func TestMetadata_Map(t *testing.T) {
 	t.Run("metadata of nested object", func(t *testing.T) {
 		no := &Object{
 			Metadata: *want,
-			Data:     chore.Map{},
+			Data:     tilde.Map{},
 		}
 		nm, err := no.MarshalMap()
 		require.NoError(t, err)
 		o := &Object{
-			Data: chore.Map{
+			Data: tilde.Map{
 				"foo": nm,
 			},
 		}

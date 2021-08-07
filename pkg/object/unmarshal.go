@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/tilde"
 )
 
 // Unmarshal an object into a tagged struct
@@ -18,7 +18,7 @@ func Unmarshal(o *Object, out interface{}) error {
 	if err != nil {
 		return err
 	}
-	return unmarshalMap(chore.MapHint, o.Data, v)
+	return unmarshalMap(tilde.MapHint, o.Data, v)
 }
 
 func unmarshalSpecials(o *Object, v reflect.Value) error {
@@ -54,7 +54,7 @@ func unmarshalSpecials(o *Object, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalMap(h chore.Hint, m chore.Map, target reflect.Value) error {
+func unmarshalMap(h tilde.Hint, m tilde.Map, target reflect.Value) error {
 	if target.Kind() == reflect.Ptr {
 		target = target.Elem()
 	}
@@ -102,7 +102,7 @@ func unmarshalMap(h chore.Hint, m chore.Map, target reflect.Value) error {
 	return errors.Error("expected map or struct, got " + target.Kind().String())
 }
 
-func unmarshalMapToStruct(h chore.Hint, m chore.Map, v reflect.Value) error {
+func unmarshalMapToStruct(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -128,7 +128,7 @@ func unmarshalMapToStruct(h chore.Hint, m chore.Map, v reflect.Value) error {
 			// TODO special
 			continue
 		}
-		in, ih, err := chore.ExtractHint(ig)
+		in, ih, err := tilde.ExtractHint(ig)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func unmarshalMapToStruct(h chore.Hint, m chore.Map, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalMapToMap(h chore.Hint, m chore.Map, v reflect.Value) error {
+func unmarshalMapToMap(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 	if v.Kind() != reflect.Map {
 		return errors.Error("unmarshal: expected struct, got " + v.Kind().String())
 	}
@@ -163,9 +163,9 @@ func unmarshalMapToMap(h chore.Hint, m chore.Map, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
+func unmarshalAny(h tilde.Hint, v tilde.Value, target reflect.Value) error {
 	switch vv := v.(type) {
-	case chore.Hash:
+	case tilde.Hash:
 		if vv.IsEmpty() {
 			return nil
 		}
@@ -176,7 +176,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetString(string(vv))
 		return nil
-	case chore.String:
+	case tilde.String:
 		// TODO is there any reason we would want to unmarshal an empty string?
 		if vv == "" {
 			return nil
@@ -203,7 +203,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetString(string(vv))
 		return nil
-	case chore.Bool:
+	case tilde.Bool:
 		if target.Kind() != reflect.Bool {
 			return errors.Error(
 				"expected bool target, got " + target.Kind().String(),
@@ -211,7 +211,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetBool(bool(vv))
 		return nil
-	case chore.Map:
+	case tilde.Map:
 		switch target.Kind() {
 		case reflect.Ptr:
 			target.Set(reflect.New(target.Type().Elem()))
@@ -227,15 +227,15 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 			)
 		}
 		return unmarshalMap(h, vv, target)
-	case chore.BoolArray,
-		chore.DataArray,
-		chore.FloatArray,
-		chore.IntArray,
-		chore.MapArray,
+	case tilde.BoolArray,
+		tilde.DataArray,
+		tilde.FloatArray,
+		tilde.IntArray,
+		tilde.MapArray,
 		// value.ObjectArray,
-		chore.StringArray,
-		chore.UintArray,
-		chore.HashArray:
+		tilde.StringArray,
+		tilde.UintArray,
+		tilde.HashArray:
 		switch target.Kind() {
 		case reflect.Slice, reflect.Array:
 		default:
@@ -245,9 +245,9 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		et := target.Type().Elem()
 		var err error
-		al := vv.(chore.ArrayValue).Len()
+		al := vv.(tilde.ArrayValue).Len()
 		av := reflect.MakeSlice(target.Type(), 0, al)
-		vv.(chore.ArrayValue).Range(func(_ int, ov chore.Value) bool {
+		vv.(tilde.ArrayValue).Range(func(_ int, ov tilde.Value) bool {
 			var ev reflect.Value
 			if et.Kind() == reflect.Ptr {
 				ev = reflect.Indirect(reflect.New(et))
@@ -265,7 +265,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		})
 		target.Set(av)
 		return err
-	case chore.Float:
+	case tilde.Float:
 		switch target.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
@@ -276,7 +276,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetFloat(float64(vv))
 		return nil
-	case chore.Int:
+	case tilde.Int:
 		switch target.Kind() {
 		case reflect.Int,
 			reflect.Int8,
@@ -290,7 +290,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetInt(int64(vv))
 		return nil
-	case chore.Uint:
+	case tilde.Uint:
 		switch target.Kind() {
 		case reflect.Uint,
 			reflect.Uint8,
@@ -304,7 +304,7 @@ func unmarshalAny(h chore.Hint, v chore.Value, target reflect.Value) error {
 		}
 		target.SetUint(uint64(vv))
 		return nil
-	case chore.Data:
+	case tilde.Data:
 		switch target.Kind() {
 		case reflect.Ptr:
 			if _, ok := target.Interface().(ByteUnmashaller); ok {

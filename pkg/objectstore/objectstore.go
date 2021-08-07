@@ -3,9 +3,9 @@ package objectstore
 import (
 	"time"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 )
 
 const (
@@ -17,18 +17,18 @@ const (
 
 type (
 	Getter interface {
-		Get(hash chore.Hash) (*object.Object, error)
+		Get(hash tilde.Hash) (*object.Object, error)
 	}
 	Store interface {
-		Get(hash chore.Hash) (*object.Object, error)
+		Get(hash tilde.Hash) (*object.Object, error)
 		GetByType(string) (object.ReadCloser, error)
-		GetByStream(chore.Hash) (object.ReadCloser, error)
+		GetByStream(tilde.Hash) (object.ReadCloser, error)
 		Put(*object.Object) error
 		PutWithTTL(*object.Object, time.Duration) error
-		GetStreamLeaves(streamRootHash chore.Hash) ([]chore.Hash, error)
-		Pin(chore.Hash) error
-		IsPinned(chore.Hash) (bool, error)
-		GetPinned() ([]chore.Hash, error)
-		RemovePin(chore.Hash) error
+		GetStreamLeaves(streamRootHash tilde.Hash) ([]tilde.Hash, error)
+		Pin(tilde.Hash) error
+		IsPinned(tilde.Hash) (bool, error)
+		GetPinned() ([]tilde.Hash, error)
+		RemovePin(tilde.Hash) error
 	}
 )

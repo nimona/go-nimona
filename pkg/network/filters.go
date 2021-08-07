@@ -5,7 +5,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
@@ -27,7 +27,7 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	}
 }
 
-func FilterByObjectHash(objectHashes ...chore.Hash) EnvelopeFilter {
+func FilterByObjectHash(objectHashes ...tilde.Hash) EnvelopeFilter {
 	return func(e *Envelope) bool {
 		for _, h := range objectHashes {
 			if e.Payload.Hash().Equal(h) {
@@ -44,7 +44,7 @@ func FilterByRequestID(requestID string) EnvelopeFilter {
 		if !ok {
 			return false
 		}
-		rID, ok := rIDVal.(chore.String)
+		rID, ok := rIDVal.(tilde.String)
 		if !ok {
 			return false
 		}

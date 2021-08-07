@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/tilde"
 )
 
 func TestPolicy_Evaluate_Table1(t *testing.T) {
@@ -301,11 +301,11 @@ func TestPolicy_Marshal(t *testing.T) {
 		Effect:    AllowEffect,
 	}
 
-	m, err := marshalStruct(chore.MapHint, reflect.ValueOf(p))
+	m, err := marshalStruct(tilde.MapHint, reflect.ValueOf(p))
 	require.NoError(t, err)
 
 	g := &Policy{}
-	err = unmarshalMapToStruct(chore.MapHint, m, reflect.ValueOf(g))
+	err = unmarshalMapToStruct(tilde.MapHint, m, reflect.ValueOf(g))
 	require.NoError(t, err)
 	require.Equal(t, p, g)
 }

@@ -1,15 +1,15 @@
 package object
 
 import (
-	"nimona.io/pkg/chore"
+	"nimona.io/pkg/tilde"
 )
 
 type (
-	Parents map[string]chore.HashArray
+	Parents map[string]tilde.HashArray
 )
 
-func (ps Parents) All() []chore.Hash {
-	var unique []chore.Hash
+func (ps Parents) All() []tilde.Hash {
+	var unique []tilde.Hash
 
 	for _, ip := range ps {
 		skip := false

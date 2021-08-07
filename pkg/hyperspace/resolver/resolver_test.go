@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -18,6 +17,7 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/tilde"
 )
 
 func TestResolver_Integration(t *testing.T) {
@@ -98,15 +98,15 @@ func TestResolver_Integration(t *testing.T) {
 	)
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByHash(chore.Hash("bar")))
+	pr, err := res.Lookup(context.New(), LookupByHash(tilde.Hash("bar")))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 
 	t.Run("object added", func(t *testing.T) {
 		// add new object to pr1 store
 		obj1 := &object.Object{
-			Data: chore.Map{
-				"foo": chore.String("bar"),
+			Data: tilde.Map{
+				"foo": tilde.String("bar"),
 			},
 		}
 		obj1hash := obj1.Hash()

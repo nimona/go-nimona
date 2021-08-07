@@ -1,4 +1,4 @@
-package chore
+package tilde
 
 func ToBoolArray(s []bool) BoolArray {
 	r := make(BoolArray, len(s))

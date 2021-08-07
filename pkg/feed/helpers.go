@@ -5,14 +5,14 @@ import (
 
 	"github.com/elliotchance/orderedmap"
 
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/tilde"
 )
 
 func GetFeedHashes(
 	objectReader object.Reader,
-) ([]chore.Hash, error) {
+) ([]tilde.Hash, error) {
 	objects := orderedmap.NewOrderedMap()
 	for {
 		obj, err := objectReader.Read()
@@ -43,12 +43,12 @@ func GetFeedHashes(
 			}
 		}
 	}
-	hashes := []chore.Hash{}
+	hashes := []tilde.Hash{}
 	for el := objects.Front(); el != nil; el = el.Next() {
 		if !el.Value.(bool) {
 			continue
 		}
-		hashes = append(hashes, el.Key.(chore.Hash))
+		hashes = append(hashes, el.Key.(tilde.Hash))
 	}
 	return hashes, nil
 }
@@ -69,7 +69,7 @@ func GetFeedHypotheticalRoot(
 func GetFeedHypotheticalRootHash(
 	owner crypto.PublicKey,
 	objectType string,
-) chore.Hash {
+) tilde.Hash {
 	return object.MustMarshal(
 		GetFeedHypotheticalRoot(
 			owner,

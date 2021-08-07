@@ -1,9 +1,9 @@
 package resolver
 
 import (
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
+	"nimona.io/pkg/tilde"
 )
 
 // LookupOptions
@@ -45,7 +45,7 @@ func LookupOnlyLocal() LookupOption {
 }
 
 // LookupByHash matches content hashes
-func LookupByHash(hash chore.Hash) LookupOption {
+func LookupByHash(hash tilde.Hash) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups = append(opts.Lookups, hash.String())
 		opts.Filters = append(

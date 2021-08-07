@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/chore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -16,20 +15,21 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 func Test_requester_Request(t *testing.T) {
 	pk, _ := crypto.NewEd25519PrivateKey()
 
 	chunk1 := &blob.Chunk{
-		Data: chore.Data("ooh wee"),
+		Data: tilde.Data("ooh wee"),
 	}
 	chunk2 := &blob.Chunk{
-		Data: chore.Data("ooh lala"),
+		Data: tilde.Data("ooh lala"),
 	}
 
 	blob1 := &blob.Blob{
-		Chunks: []chore.Hash{
+		Chunks: []tilde.Hash{
 			object.MustMarshal(chunk1).Hash(),
 			object.MustMarshal(chunk2).Hash(),
 		},
@@ -45,7 +45,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx  context.Context
-		hash chore.Hash
+		hash tilde.Hash
 	}
 	tests := []struct {
 		name       string
@@ -132,8 +132,8 @@ func Test_requester_Request(t *testing.T) {
 func Test_manager_ImportFromFile(t *testing.T) {
 	chunk0 := &object.Object{
 		Type: blob.ChunkType,
-		Data: chore.Map{
-			"data": chore.Data(
+		Data: tilde.Map{
+			"data": tilde.Data(
 				"1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14" +
 					"\n15\n16\n17\n18\n19\n20",
 			),
@@ -141,8 +141,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 	}
 	chunk1 := &object.Object{
 		Type: blob.ChunkType,
-		Data: chore.Map{
-			"data": chore.Data(
+		Data: tilde.Map{
+			"data": tilde.Data(
 				"\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n" +
 					"32\n33\n34\n35\n36\n3",
 			),
@@ -150,8 +150,8 @@ func Test_manager_ImportFromFile(t *testing.T) {
 	}
 	chunk2 := &object.Object{
 		Type: blob.ChunkType,
-		Data: chore.Map{
-			"data": chore.Data(
+		Data: tilde.Map{
+			"data": tilde.Data(
 				"7\n38\n39\n40\n",
 			),
 		},
@@ -182,11 +182,11 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			m.EXPECT().
 				Put(gomock.Any(), &object.Object{
 					Type: blob.BlobType,
-					Data: chore.Map{
-						"chunks": chore.StringArray{
-							chore.String(chunk0.Hash()),
-							chore.String(chunk1.Hash()),
-							chore.String(chunk2.Hash()),
+					Data: tilde.Map{
+						"chunks": tilde.StringArray{
+							tilde.String(chunk0.Hash()),
+							tilde.String(chunk1.Hash()),
+							tilde.String(chunk2.Hash()),
 						},
 					},
 				}).
@@ -194,7 +194,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			return m
 		},
 		want: &blob.Blob{
-			Chunks: []chore.Hash{
+			Chunks: []tilde.Hash{
 				chunk0.Hash(),
 				chunk1.Hash(),
 				chunk2.Hash(),
