@@ -490,7 +490,7 @@ func main() {
 			Show         bool
 			Link         bool
 			CSR          *object.CertificateRequest
-			CSRHash      tilde.Hash
+			CSRHash      tilde.Digest
 		}{
 			Show: showMnemonic,
 			Link: linkMnemonic,
@@ -597,7 +597,7 @@ func main() {
 		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
 		// 	return
 		// }
-		// csrHash := tilde.Hash(r.PostFormValue("csr"))
+		// csrHash := tilde.Digest(r.PostFormValue("csr"))
 		// if err = d.ObjectStore().Pin(csrHash); err != nil {
 		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
 		// 	return
@@ -902,7 +902,7 @@ func main() {
 
 	r.Get("/objects/{hash}", func(w http.ResponseWriter, r *http.Request) {
 		hash := chi.URLParam(r, "hash")
-		obj, err := d.ObjectStore().Get(tilde.Hash(hash))
+		obj, err := d.ObjectStore().Get(tilde.Digest(hash))
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -934,7 +934,7 @@ func main() {
 		}
 		if values.StreamRoot != "" {
 			or, err := d.ObjectStore().GetByStream(
-				tilde.Hash(values.StreamRoot),
+				tilde.Digest(values.StreamRoot),
 			)
 			if err == nil {
 				os, err := object.ReadAll(or)
@@ -1016,7 +1016,7 @@ func main() {
 
 	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
 		// TODO(geoah): fix identity
-		// csrHash := tilde.Hash(r.PostFormValue("csrHash"))
+		// csrHash := tilde.Digest(r.PostFormValue("csrHash"))
 		// csrProviders, err := d.Resolver().Lookup(
 		// 	context.New(
 		// 		context.WithParent(r.Context()),
@@ -1080,7 +1080,7 @@ func main() {
 
 	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
 		// TODO(geoah): fix identity
-		// csrHash := tilde.Hash(r.PostFormValue("csrHash"))
+		// csrHash := tilde.Digest(r.PostFormValue("csrHash"))
 		// csrObj, err := d.ObjectStore().Get(csrHash)
 		// if err != nil {
 		// 	http.Error(w, err.Error(), http.StatusInternalServerError)

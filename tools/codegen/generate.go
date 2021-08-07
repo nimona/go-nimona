@@ -14,9 +14,9 @@ var primitives = map[string]struct {
 	IsObject  bool
 	IsPrimary bool
 }{
-	"nimona.io/tilde.Hash": {
+	"nimona.io/tilde.Digest": {
 		Hint:      "s",
-		Type:      "tilde.Hash",
+		Type:      "tilde.Digest",
 		IsObject:  false,
 		IsPrimary: true,
 	},

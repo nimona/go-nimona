@@ -48,7 +48,7 @@ type comboConf struct {
 
 type fileUnloaded struct {
 	Metadata object.Metadata `nimona:"@metadata:m,omitempty"`
-	BlobHash tilde.Hash      `nimona:"blob:r,omitempty"`
+	BlobHash tilde.Digest    `nimona:"blob:r,omitempty"`
 }
 
 func (e *fileUnloaded) Type() string {
@@ -95,7 +95,7 @@ func main() {
 
 	switch command {
 	case "get":
-		ft.get(ctx, tilde.Hash(param))
+		ft.get(ctx, tilde.Digest(param))
 	case "serve":
 		ft.serve(ctx, param)
 	default:
@@ -154,7 +154,7 @@ func (ft *fileTransfer) serve(
 
 func (ft *fileTransfer) findAndRequest(
 	ctx context.Context,
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) (
 	*object.Object,
 	error,
@@ -178,7 +178,7 @@ func (ft *fileTransfer) findAndRequest(
 
 func (ft *fileTransfer) get(
 	ctx context.Context,
-	hash tilde.Hash,
+	hash tilde.Digest,
 ) {
 	fmt.Println("getting file:", hash)
 
@@ -196,7 +196,7 @@ func (ft *fileTransfer) get(
 
 	flun := &fileUnloaded{
 		Metadata: obj.Metadata,
-		BlobHash: tilde.Hash(obj.Data["blob"].(tilde.String)),
+		BlobHash: tilde.Digest(obj.Data["blob"].(tilde.String)),
 	}
 
 	fmt.Println("getting blob:", flun.BlobHash)

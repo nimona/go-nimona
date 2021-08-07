@@ -1,15 +1,15 @@
 package tilde
 
-func (v HashArray) Hint() Hint {
-	return HashArrayHint
+func (v DigestArray) Hint() Hint {
+	return DigestArrayHint
 }
 
-func (v HashArray) _isValue() {
+func (v DigestArray) _isValue() {
 }
 
-func (v HashArray) Hash() Hash {
+func (v DigestArray) Hash() Digest {
 	if v.Len() == 0 {
-		return EmptyHash
+		return EmptyDigest
 	}
 	h := []byte{}
 	for _, iv := range v {
@@ -18,13 +18,13 @@ func (v HashArray) Hash() Hash {
 	return hashFromBytes(h)
 }
 
-func (v HashArray) _isArray() {}
+func (v DigestArray) _isArray() {}
 
-func (v HashArray) Len() int {
+func (v DigestArray) Len() int {
 	return len(v)
 }
 
-func (v HashArray) Range(f func(int, Value) bool) {
+func (v DigestArray) Range(f func(int, Value) bool) {
 	for k, v := range v {
 		if f(k, v) {
 			return

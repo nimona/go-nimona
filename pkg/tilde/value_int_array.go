@@ -7,9 +7,9 @@ func (v IntArray) Hint() Hint {
 func (v IntArray) _isValue() {
 }
 
-func (v IntArray) Hash() Hash {
+func (v IntArray) Hash() Digest {
 	if v.Len() == 0 {
-		return EmptyHash
+		return EmptyDigest
 	}
 	h := []byte{}
 	for _, iv := range v {

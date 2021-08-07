@@ -9,9 +9,9 @@ import (
 const RequestType = "nimona.io/Request"
 
 type Request struct {
-	Metadata   Metadata   `nimona:"@metadata:m,type=nimona.io/Request"`
-	RequestID  string     `nimona:"requestID:s"`
-	ObjectHash tilde.Hash `nimona:"objectHash:s"`
+	Metadata   Metadata     `nimona:"@metadata:m,type=nimona.io/Request"`
+	RequestID  string       `nimona:"requestID:s"`
+	ObjectHash tilde.Digest `nimona:"objectHash:s"`
 }
 
 const ResponseType = "nimona.io/Response"

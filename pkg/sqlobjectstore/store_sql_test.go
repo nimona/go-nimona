@@ -129,7 +129,7 @@ func TestFilter(t *testing.T) {
 		object.MustMarshal(p),
 	}
 
-	hashes := []tilde.Hash{}
+	hashes := []tilde.Digest{}
 	for i := 0; i < 5; i++ {
 		obj := &object.Object{
 			Type: fixtures.TestSubscribedType,
@@ -244,7 +244,7 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{
+				"*": []tilde.Digest{
 					f00.Hash(),
 				},
 			},
@@ -259,7 +259,7 @@ func TestStore_Relations(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{
+				"*": []tilde.Digest{
 					f01.Hash(),
 				},
 			},
@@ -285,7 +285,7 @@ func TestStore_Relations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, leaves)
 		assert.Len(t, leaves, 1)
-		assert.Equal(t, []tilde.Hash{f00.Hash()}, leaves)
+		assert.Equal(t, []tilde.Digest{f00.Hash()}, leaves)
 	})
 
 	require.NoError(t, store.Put(f01))
@@ -295,7 +295,7 @@ func TestStore_Relations(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 1)
-	assert.Equal(t, []tilde.Hash{f02.Hash()}, leaves)
+	assert.Equal(t, []tilde.Digest{f02.Hash()}, leaves)
 
 	fmt.Println(leaves)
 }
@@ -314,7 +314,7 @@ func TestStore_ListHashes(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{
+				"*": []tilde.Digest{
 					f00.Hash(),
 				},
 			},
@@ -348,7 +348,7 @@ func TestStore_ListHashes(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, leaves)
 	assert.Len(t, leaves, 2)
-	assert.Equal(t, []tilde.Hash{
+	assert.Equal(t, []tilde.Digest{
 		f00.Hash(),
 		f02.Hash(),
 	}, leaves)
@@ -363,47 +363,47 @@ func TestStore_Pinned(t *testing.T) {
 	require.NotNil(t, store)
 
 	t.Run("pin a", func(t *testing.T) {
-		err := store.Pin(tilde.Hash("a"))
+		err := store.Pin(tilde.Digest("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("check pin a", func(t *testing.T) {
-		pinned, err := store.IsPinned(tilde.Hash("a"))
+		pinned, err := store.IsPinned(tilde.Digest("a"))
 		require.NoError(t, err)
 		assert.True(t, pinned)
 	})
 
 	t.Run("check pin x", func(t *testing.T) {
-		pinned, err := store.IsPinned(tilde.Hash("x"))
+		pinned, err := store.IsPinned(tilde.Digest("x"))
 		require.NoError(t, err)
 		assert.False(t, pinned)
 	})
 
 	t.Run("pin a again, no error", func(t *testing.T) {
-		err = store.Pin(tilde.Hash("a"))
+		err = store.Pin(tilde.Digest("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("pin b", func(t *testing.T) {
-		err = store.Pin(tilde.Hash("b"))
+		err = store.Pin(tilde.Digest("b"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (a, b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []tilde.Hash{tilde.Hash("a"), tilde.Hash("b")}, got)
+		require.Equal(t, []tilde.Digest{tilde.Digest("a"), tilde.Digest("b")}, got)
 	})
 
 	t.Run("remove pin a", func(t *testing.T) {
-		err = store.RemovePin(tilde.Hash("a"))
+		err = store.RemovePin(tilde.Digest("a"))
 		require.NoError(t, err)
 	})
 
 	t.Run("get pins (b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []tilde.Hash{tilde.Hash("b")}, got)
+		require.Equal(t, []tilde.Digest{tilde.Digest("b")}, got)
 	})
 }
 

@@ -162,7 +162,7 @@ func NimonaBridgeCall(
 		)
 		if err := nimonaProvider.RequestStream(
 			ctx,
-			tilde.Hash(string(payloadBytes)),
+			tilde.Digest(string(payloadBytes)),
 		); err != nil {
 			return renderBytes(nil, err)
 		}

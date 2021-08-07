@@ -27,7 +27,7 @@ func FilterByObjectType(typePatterns ...string) EnvelopeFilter {
 	}
 }
 
-func FilterByObjectHash(objectHashes ...tilde.Hash) EnvelopeFilter {
+func FilterByObjectHash(objectHashes ...tilde.Digest) EnvelopeFilter {
 	return func(e *Envelope) bool {
 		for _, h := range objectHashes {
 			if e.Payload.Hash().Equal(h) {

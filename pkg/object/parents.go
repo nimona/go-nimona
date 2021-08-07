@@ -5,11 +5,11 @@ import (
 )
 
 type (
-	Parents map[string]tilde.HashArray
+	Parents map[string]tilde.DigestArray
 )
 
-func (ps Parents) All() []tilde.Hash {
-	var unique []tilde.Hash
+func (ps Parents) All() []tilde.Digest {
+	var unique []tilde.Digest
 
 	for _, ip := range ps {
 		skip := false

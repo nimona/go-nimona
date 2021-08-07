@@ -45,7 +45,7 @@ func TestManager_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash tilde.Hash
+		rootHash tilde.Digest
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -146,7 +146,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash tilde.Hash
+		rootHash tilde.Digest
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -323,7 +323,7 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{f00.Hash()},
+				"*": []tilde.Digest{f00.Hash()},
 			},
 		},
 		Data: tilde.Map{
@@ -335,7 +335,7 @@ func TestManager_RequestStream(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{f01.Hash()},
+				"*": []tilde.Digest{f01.Hash()},
 			},
 		},
 		Data: tilde.Map{
@@ -349,7 +349,7 @@ func TestManager_RequestStream(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash tilde.Hash
+		rootHash tilde.Digest
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -404,7 +404,7 @@ func TestManager_RequestStream(t *testing.T) {
 								Payload: object.MustMarshal(
 									&stream.Response{
 										RequestID: "7",
-										Leaves: []tilde.Hash{
+										Leaves: []tilde.Digest{
 											f02.Hash(),
 										},
 									},
@@ -522,7 +522,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 		Metadata: object.Metadata{
 			Root: f00.Hash(),
 			Parents: object.Parents{
-				"*": []tilde.Hash{
+				"*": []tilde.Digest{
 					f00.Hash(),
 				},
 			},
@@ -544,7 +544,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		rootHash tilde.Hash
+		rootHash tilde.Digest
 		peer     *peer.ConnectionInfo
 	}
 	tests := []struct {
@@ -561,7 +561,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(f00.Hash()).
 					Return(
-						[]tilde.Hash{
+						[]tilde.Digest{
 							f01.Hash(),
 						},
 						nil,
@@ -621,7 +621,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
-				Leaves:    []tilde.Hash{f01.Hash()},
+				Leaves:    []tilde.Digest{f01.Hash()},
 			},
 		),
 	}, {
@@ -687,7 +687,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 				},
 				RequestID: "7",
 				RootHash:  f00.Hash(),
-				Leaves:    []tilde.Hash{},
+				Leaves:    []tilde.Digest{},
 			},
 		),
 	}}
@@ -907,8 +907,8 @@ func TestManager_Append(t *testing.T) {
 			Root:     testObjectStreamRoot.Hash(),
 			Sequence: 3,
 			Parents: object.Parents{
-				"*": tilde.SortHashes(
-					[]tilde.Hash{
+				"*": tilde.SortDigests(
+					[]tilde.Digest{
 						bar1.Hash(),
 						bar2.Hash(),
 					},
@@ -935,8 +935,8 @@ func TestManager_Append(t *testing.T) {
 			Root:     testObjectStreamRoot.Hash(),
 			Sequence: 7,
 			Parents: object.Parents{
-				"*": tilde.SortHashes(
-					[]tilde.Hash{
+				"*": tilde.SortDigests(
+					[]tilde.Digest{
 						bar1.Hash(),
 						bar2.Hash(),
 						testObjectSubscriptionInline.Hash(),
@@ -1016,8 +1016,8 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						tilde.SortHashes(
-							[]tilde.Hash{
+						tilde.SortDigests(
+							[]tilde.Digest{
 								bar1.Hash(),
 								bar2.Hash(),
 							},
@@ -1073,7 +1073,7 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]tilde.Hash{
+						[]tilde.Digest{
 							bar1.Hash(),
 							bar2.Hash(),
 						},
@@ -1136,7 +1136,7 @@ func TestManager_Append(t *testing.T) {
 						Metadata: object.Metadata{
 							Owner: testSubscriberPublicKey.DID(),
 						},
-						RootHashes: []tilde.Hash{
+						RootHashes: []tilde.Digest{
 							testObjectStreamRoot.Hash(),
 						},
 					},
@@ -1164,7 +1164,7 @@ func TestManager_Append(t *testing.T) {
 				m.EXPECT().
 					GetStreamLeaves(testObjectStreamRoot.Hash()).
 					Return(
-						[]tilde.Hash{
+						[]tilde.Digest{
 							bar1.Hash(),
 							bar2.Hash(),
 							testObjectSubscriptionInline.Hash(),
@@ -1241,8 +1241,8 @@ func TestManager_Append(t *testing.T) {
 				Owner:    testOwnPublicKey.DID(),
 				Sequence: 7,
 				Parents: object.Parents{
-					"*": tilde.SortHashes(
-						[]tilde.Hash{
+					"*": tilde.SortDigests(
+						[]tilde.Digest{
 							bar1.Hash(),
 							bar2.Hash(),
 							testObjectSubscriptionInline.Hash(),
@@ -1346,7 +1346,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
-			FilterByStreamHash(tilde.Hash("foo")),
+			FilterByStreamHash(tilde.Digest("foo")),
 			FilterByOwner(p.PublicKey().DID()),
 		},
 		publish: []*object.Object{o1, o2},

@@ -319,7 +319,7 @@ func (m *feedManager) handleObjects(
 				Root:  feedStreamHash,
 				Owner: peerKey.DID(),
 			},
-			ObjectHash: []tilde.Hash{
+			ObjectHash: []tilde.Digest{
 				objHash,
 			},
 		}
@@ -337,14 +337,14 @@ func (m *feedManager) handleObjects(
 		// 	continue
 		// }
 		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []tilde.Hash{
+		// 	"*": []tilde.Digest{
 		// 		feedStreamHash,
 		// 	},
 		// }
 		// if !errors.Is(err, objectstore.ErrNotFound) {
 		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamHash)
 		// 	if err == nil {
-		// 		tilde.SortHashes(leaves)
+		// 		tilde.SortDigests(leaves)
 		// 		feedEvent.Metadata.Parents["*"] = leaves
 		// 	}
 		// }

@@ -29,7 +29,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	blob1 := &blob.Blob{
-		Chunks: []tilde.Hash{
+		Chunks: []tilde.Digest{
 			object.MustMarshal(chunk1).Hash(),
 			object.MustMarshal(chunk2).Hash(),
 		},
@@ -45,7 +45,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 	type args struct {
 		ctx  context.Context
-		hash tilde.Hash
+		hash tilde.Digest
 	}
 	tests := []struct {
 		name       string
@@ -194,7 +194,7 @@ func Test_manager_ImportFromFile(t *testing.T) {
 			return m
 		},
 		want: &blob.Blob{
-			Chunks: []tilde.Hash{
+			Chunks: []tilde.Digest{
 				chunk0.Hash(),
 				chunk1.Hash(),
 				chunk2.Hash(),

@@ -12,7 +12,7 @@ func (v Data) Hint() Hint {
 func (v Data) _isValue() {
 }
 
-func (v Data) Hash() Hash {
+func (v Data) Hash() Digest {
 	return hashFromBytes(v)
 }
 

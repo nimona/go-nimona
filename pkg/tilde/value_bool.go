@@ -9,7 +9,7 @@ func (v Bool) Hint() Hint {
 func (v Bool) _isValue() {
 }
 
-func (v Bool) Hash() Hash {
+func (v Bool) Hash() Digest {
 	if !v {
 		return hashFromBytes([]byte{0})
 	}

@@ -28,7 +28,7 @@ const (
 )
 
 //go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=tilde.Hash"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=tilde.Digest"
 
 type (
 	Resolver interface {

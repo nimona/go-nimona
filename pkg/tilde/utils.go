@@ -48,10 +48,10 @@ func ToUintArray(s []uint64) UintArray {
 	return r
 }
 
-func ToHashArray(s [][]byte) HashArray {
-	r := make(HashArray, len(s))
+func ToDigestArray(s [][]byte) DigestArray {
+	r := make(DigestArray, len(s))
 	for i, v := range s {
-		r[i] = Hash(v)
+		r[i] = Digest(v)
 	}
 	return r
 }
@@ -104,7 +104,7 @@ func FromUintArray(s UintArray) []uint64 {
 	return r
 }
 
-func FromHashArray(s HashArray) [][]byte {
+func FromDigestArray(s DigestArray) [][]byte {
 	r := make([][]byte, len(s))
 	for i, v := range s {
 		r[i] = []byte(v)

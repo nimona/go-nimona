@@ -2,7 +2,7 @@ package tilde
 
 type (
 	Value interface {
-		Hash() Hash
+		Hash() Digest
 		Hint() Hint
 		_isValue()
 	}
@@ -23,9 +23,9 @@ type (
 	Map    map[string]Value
 	String string
 	Uint   uint64
-	// Note(geoah): Hash should probably have been bytes, but it has been
+	// Note(geoah): Digest should probably have been bytes, but it has been
 	// defined as a string simply cause comparing bytes in go is annoying.
-	Hash string
+	Digest string
 
 	// array types
 	BoolArray   []Bool
@@ -35,5 +35,5 @@ type (
 	MapArray    []Map
 	StringArray []String
 	UintArray   []Uint
-	HashArray   []Hash
+	DigestArray []Digest
 )

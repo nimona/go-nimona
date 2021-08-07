@@ -19,7 +19,7 @@ const AddedType = "event:nimona.io/feed.Added"
 
 type Added struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Added"`
-	ObjectHash []tilde.Hash    `nimona:"objectHash:as"`
+	ObjectHash []tilde.Digest  `nimona:"objectHash:as"`
 	Sequence   int64           `nimona:"sequence:i"`
 	Timestamp  string          `nimona:"timestamp:s"`
 }
@@ -28,7 +28,7 @@ const RemovedType = "event:nimona.io/feed.Removed"
 
 type Removed struct {
 	Metadata   object.Metadata `nimona:"@metadata:m,type=event:nimona.io/feed.Removed"`
-	ObjectHash []tilde.Hash    `nimona:"objectHash:as"`
+	ObjectHash []tilde.Digest  `nimona:"objectHash:as"`
 	Sequence   int64           `nimona:"sequence:i"`
 	Timestamp  string          `nimona:"timestamp:s"`
 }

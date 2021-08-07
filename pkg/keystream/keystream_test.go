@@ -69,7 +69,7 @@ func TestCreateState(t *testing.T) {
 	t0Rotation := &Rotation{
 		Metadata: object.Metadata{
 			Parents: object.Parents{
-				"*": tilde.HashArray{
+				"*": tilde.DigestArray{
 					object.MustMarshal(t0Inception).Hash(),
 				},
 			},

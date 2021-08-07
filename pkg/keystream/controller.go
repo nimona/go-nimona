@@ -42,7 +42,7 @@ func NewController(
 	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
 	if err == nil {
 		eventStream, err := objectStore.GetByStream(
-			tilde.Hash(keyStreamRootHashBytes),
+			tilde.Digest(keyStreamRootHashBytes),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get keystream objects, %w", err)
@@ -166,7 +166,7 @@ func (c *Controller) Rotate() (*Rotation, error) {
 }
 
 func getPrivateKey(
-	publicKeyHash tilde.Hash,
+	publicKeyHash tilde.Digest,
 	kvStore *nutsdb.DB,
 ) (*crypto.PrivateKey, error) {
 	tx, err := kvStore.Begin(false)
@@ -215,7 +215,7 @@ func putPrivateKey(
 	return nil
 }
 
-func getPublicKeyHash(k crypto.PublicKey) tilde.Hash {
+func getPublicKeyHash(k crypto.PublicKey) tilde.Digest {
 	return tilde.String(k.String()).Hash()
 }
 
