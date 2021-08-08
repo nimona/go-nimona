@@ -116,7 +116,11 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 	return nil, nil
 }
 
-func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
+func marshalAny(
+	h tilde.Hint,
+	tagOptions map[string]string,
+	v reflect.Value,
+) (tilde.Value, error) {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
@@ -218,6 +222,9 @@ func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 		switch v.Kind() {
 		case reflect.Float32,
 			reflect.Float64:
+			if _, ok := tagOptions["omitzero"]; ok && v.IsZero() {
+				return nil, nil
+			}
 			return tilde.Float(v.Float()), nil
 		}
 	case tilde.IntHint:
@@ -227,6 +234,9 @@ func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 			reflect.Int16,
 			reflect.Int32,
 			reflect.Int64:
+			if _, ok := tagOptions["omitzero"]; ok && v.IsZero() {
+				return nil, nil
+			}
 			return tilde.Int(v.Int()), nil
 		}
 	case tilde.UintHint:
@@ -236,6 +246,9 @@ func marshalAny(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 			reflect.Uint16,
 			reflect.Uint32,
 			reflect.Uint64:
+			if _, ok := tagOptions["omitzero"]; ok && v.IsZero() {
+				return nil, nil
+			}
 			return tilde.Uint(v.Uint()), nil
 		}
 	case tilde.DataHint:
@@ -330,7 +343,7 @@ func marshalStruct(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 				return nil, err
 			}
 		}
-		v, err := marshalAny(ih, iv)
+		v, err := marshalAny(ih, igKvs, iv)
 		if err != nil {
 			return nil, err
 		}
@@ -379,7 +392,7 @@ func marshalMap(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 				return nil, err
 			}
 		}
-		v, err := marshalAny(ih, iv)
+		v, err := marshalAny(ih, nil, iv)
 		if err != nil {
 			return nil, err
 		}
@@ -435,7 +448,7 @@ func marshalArray(h tilde.Hint, v reflect.Value) (tilde.Value, error) {
 
 	for i := 0; i < v.Len(); i++ {
 		iv := v.Index(i)
-		v, err := marshalAny(ah, iv)
+		v, err := marshalAny(ah, nil, iv)
 		if err != nil {
 			return nil, err
 		}
@@ -496,10 +509,14 @@ func getStructTagName(f reflect.StructField) (
 	kvs = map[string]string{}
 	for _, kv := range tagParts[1:] {
 		kvParts := strings.Split(kv, "=")
-		if len(kvParts) != 2 {
-			return "", nil, errors.Error("invalid key-value parts")
+		switch len(kvParts) {
+		case 1:
+			kvs[kvParts[0]] = ""
+		case 2:
+			kvs[kvParts[0]] = kvParts[1]
+		default:
+			return "", nil, errors.Error("invalid tag options")
 		}
-		kvs[kvParts[0]] = kvParts[1]
 	}
 	return name, kvs, nil
 }

@@ -1,6 +1,8 @@
 package object
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,8 @@ type (
 		Int16        int16                  `nimona:"int16:i"`
 		Int32        int32                  `nimona:"int32:i"`
 		Int64        int64                  `nimona:"int64:i"`
-		Uint         uint                   `nimona:"uint:u"`
+		UintZero     uint                   `nimona:"uintZero:u,omitzero"`
+		Uint         uint                   `nimona:"uint:u,omitzero"`
 		Uint8        uint8                  `nimona:"uint8:u"`
 		Uint16       uint16                 `nimona:"uint16:u"`
 		Uint32       uint32                 `nimona:"uint32:u"`
@@ -204,6 +207,9 @@ func TestMarshal(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, g)
 	assert.Equal(t, e, g)
+
+	b, err := json.MarshalIndent(g, "", "  ")
+	fmt.Println(string(b))
 }
 
 type TestObjectWithTags struct {
