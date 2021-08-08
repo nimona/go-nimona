@@ -42,6 +42,9 @@ func unmarshalSpecials(o *Object, v reflect.Value) error {
 		if err != nil {
 			continue
 		}
+		if !iv.CanSet() {
+			continue
+		}
 		switch ig {
 		case "@type:s":
 			iv.Set(reflect.ValueOf(o.Type))
