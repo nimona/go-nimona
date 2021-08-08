@@ -149,7 +149,9 @@ func (c *Controller) Rotate() (*Rotation, error) {
 	}
 
 	r := &Rotation{
-		Metadata:      object.Metadata{},
+		Metadata: object.Metadata{
+			Sequence: c.state.Sequence + 1,
+		},
 		Version:       Version,
 		Key:           newCurrentKey.PublicKey(),
 		NextKeyDigest: getPublicKeyHash(newNextKey.PublicKey()),
