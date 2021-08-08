@@ -209,6 +209,7 @@ func TestMarshal(t *testing.T) {
 	assert.Equal(t, e, g)
 
 	b, err := json.MarshalIndent(g, "", "  ")
+	require.NoError(t, err)
 	fmt.Println(string(b))
 }
 

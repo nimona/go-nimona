@@ -19,54 +19,21 @@ const (
 )
 
 const (
-	// AlgorithmObjectHash for creating ObjectHash+ES256 based signatures
-	AlgorithmObjectHash = "OH_ES256"
+	// AlgorithmObjectHash is the only supported signing algorithm right now.
+	AlgorithmObjectHash = "EdDSA"
 )
 
 type Signature struct {
-	Signer crypto.PublicKey `nimona:"signer:s"`
-	Alg    string           `nimona:"alg:s"`
-	X      []byte           `nimona:"x:d"`
+	_         *Metadata        `nimona:"@metadata:m,type=Signature"`
+	Delegator did.DID          `nimona:"d:s"`
+	Signer    did.DID          `nimona:"s:s"`
+	Key       crypto.PublicKey `nimona:"jwk:s"`
+	Alg       string           `nimona:"alg:s"`
+	X         []byte           `nimona:"x:d"`
 }
 
 func (s *Signature) IsEmpty() bool {
 	return s == nil || len(s.X) == 0
-}
-
-func (s *Signature) MarshalMap() (tilde.Map, error) {
-	r := tilde.Map{}
-	if !s.Signer.IsEmpty() {
-		r["signer"] = tilde.String(s.Signer.String())
-	}
-	if s.Alg != "" {
-		r["alg"] = tilde.String(s.Alg)
-	}
-	if len(s.X) > 0 {
-		r["x"] = tilde.Data(s.X)
-	}
-	return r, nil
-}
-
-func (s *Signature) UnmarshalMap(m tilde.Map) error {
-	if t, ok := m["signer"]; ok {
-		if v, ok := t.(tilde.String); ok {
-			k := crypto.PublicKey{}
-			if err := k.UnmarshalString(string(v)); err == nil {
-				s.Signer = k
-			}
-		}
-	}
-	if t, ok := m["alg"]; ok {
-		if v, ok := t.(tilde.String); ok {
-			s.Alg = string(v)
-		}
-	}
-	if t, ok := m["x"]; ok {
-		if v, ok := t.(tilde.Data); ok {
-			s.X = []byte(v)
-		}
-	}
-	return nil
 }
 
 // NewSignature returns a signature given some bytes and a private key
@@ -78,7 +45,29 @@ func NewSignature(
 	if err != nil {
 		return Signature{}, err
 	}
-	return newSignature(k, m)
+	s, err := newSignature(k, m)
+	if err != nil {
+		return Signature{}, err
+	}
+	return *s, nil
+}
+
+func newSignature(
+	k crypto.PrivateKey,
+	m tilde.Map,
+) (*Signature, error) {
+	h, err := m.Hash().Bytes()
+	if err != nil {
+		return nil, err
+	}
+	x := k.Sign(h)
+	s := &Signature{
+		Signer: k.PublicKey().DID(),
+		Key:    k.PublicKey(),
+		Alg:    AlgorithmObjectHash,
+		X:      x,
+	}
+	return s, nil
 }
 
 // Sign an object given a private key, updates the object's metadata in place
@@ -129,7 +118,11 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 			signErr = err
 			return true
 		}
-		msig, err := sig.MarshalMap()
+		osig, err := Marshal(sig)
+		if err != nil {
+			return true
+		}
+		msig, err := osig.MarshalMap()
 		if err != nil {
 			return true
 		}
@@ -148,7 +141,7 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 	if err != nil {
 		return err
 	}
-	o.Metadata.Signature = s
+	o.Metadata.Signature = *s
 	return signErr
 }
 
@@ -157,21 +150,4 @@ func isObject(m tilde.Map) bool {
 		return true
 	}
 	return false
-}
-
-func newSignature(
-	k crypto.PrivateKey,
-	m tilde.Map,
-) (Signature, error) {
-	h, err := m.Hash().Bytes()
-	if err != nil {
-		return Signature{}, err
-	}
-	x := k.Sign(h)
-	s := Signature{
-		Signer: k.PublicKey(),
-		Alg:    AlgorithmObjectHash,
-		X:      x,
-	}
-	return s, nil
 }

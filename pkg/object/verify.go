@@ -46,7 +46,7 @@ func Verify(o *Object) error {
 	}
 
 	// verify the signature
-	if err := sig.Signer.Verify(
+	if err := sig.Key.Verify(
 		h,
 		sig.X,
 	); err != nil {
@@ -59,7 +59,7 @@ func Verify(o *Object) error {
 	}
 
 	// check if the owner matches the signer
-	if own == sig.Signer.DID() {
+	if own == sig.Key.DID() {
 		return nil
 	}
 
