@@ -20,12 +20,12 @@ const (
 	ErrInvalidVersion     = errors.Error("invalid version")
 )
 
+// - ~ (tilde) is used to denote that this is not a real KERI implementation
+//   but rather a version re-designed to work with nimona's tild objects.
 // - KERI is the identifier of KERI events
-// - 1 is the hex major version code
-// - 0 the hex minor version code
-// - CBOR, is the code for the serialized encoding format of the event
-// - 0001c2 is the hex size of the serialized event
-// const Version = "KERI10CBOR0001c2"
+// - 0 is the major version code
+// - 0 the minor version code
+// - Serialization encoding and size are no longer used
 const (
 	Version       = "~KERI00"
 	InceptionType = "keri.Inception/v0"
