@@ -108,7 +108,7 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("marshal special: attribute %s, %w", it.Name, err)
 		}
-		if ig == k {
+		if ig == k && iv.CanInterface() {
 			return iv.Interface(), nil
 		}
 	}
@@ -304,12 +304,16 @@ func marshalStruct(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 			"@context:s":
 			continue
 		case "@metadata:m":
-			if _, ok := iv.Interface().(Metadata); ok {
-				imm, err := marshalStruct(tilde.MapHint, iv)
-				if err != nil {
-					return nil, err
+			// we check can interface to allow for unexported metadata such
+			// as how the signature works
+			if iv.CanInterface() {
+				if _, ok := iv.Interface().(Metadata); ok {
+					imm, err := marshalStruct(tilde.MapHint, iv)
+					if err != nil {
+						return nil, err
+					}
+					m["@metadata"] = imm
 				}
-				m["@metadata"] = imm
 			}
 			if t, ok := igKvs["type"]; ok {
 				m["@type"] = tilde.String(t)
