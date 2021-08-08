@@ -76,8 +76,9 @@ type (
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
+	// nolint: lll
 	InceptionDelegation struct {
-		Metadata object.Metadata `nimona:"@metadata:m,type=keri.Rotation/v0"`
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.InceptionDelegation/v0"`
 		Version  string          `nimona:"v:s"`
 		// Prefix   string          `nimona:"i:s"`
 		// Sequence int `nimona:"s:i"`
@@ -97,8 +98,9 @@ type (
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
+	// nolint: lll
 	RotationDelegation struct {
-		Metadata object.Metadata `nimona:"@metadata:m,type=keri.Rotation/v0"`
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.RotationDelegation/v0"`
 		Version  string          `nimona:"v:s"`
 		// Prefix   string          `nimona:"i:s"`
 		// Sequence int `nimona:"s:i"`
