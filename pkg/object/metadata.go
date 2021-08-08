@@ -15,7 +15,7 @@ type (
 		Parents   Parents      `nimona:"parents:m"`
 		Policies  Policies     `nimona:"policies:am"`
 		Root      tilde.Digest `nimona:"root:r"`
-		Sequence  uint64       `nimona:"sequence:u"`
+		Sequence  uint64       `nimona:"sequence:u,omitzero"`
 		Signature Signature    `nimona:"_signature:m"`
 		Timestamp string       `nimona:"timestamp:s"`
 	}
