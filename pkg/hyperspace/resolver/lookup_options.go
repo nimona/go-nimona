@@ -75,7 +75,7 @@ func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
 						return true
 					}
 					sig := p.Metadata.Signature
-					if sig.Signer.Equals(key) {
+					if sig.Key.Equals(key) {
 						return true
 					}
 				}

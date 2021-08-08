@@ -1,6 +1,8 @@
 package object
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +36,11 @@ func Test_Sign(t *testing.T) {
 		assert.NotNil(t, o.Metadata.Signature)
 		assert.False(t, o.Metadata.Signature.IsEmpty())
 		assert.NotNil(t, o.Metadata.Signature.Signer)
+
+		b, err := json.MarshalIndent(o, "", "  ")
+		require.NoError(t, err)
+
+		fmt.Println(string(b))
 	})
 
 	t.Run("should pass, sign nested object", func(t *testing.T) {
@@ -62,7 +69,7 @@ func Test_Sign(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.True(t, o.Metadata.Signature.IsEmpty())
-		assert.Equal(t, crypto.EmptyPublicKey, o.Metadata.Signature.Signer)
+		assert.Equal(t, crypto.EmptyPublicKey, o.Metadata.Signature.Key)
 
 		gn := &Object{}
 		gm := o.Data["foo"].(tilde.Map)
@@ -70,6 +77,6 @@ func Test_Sign(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.False(t, gn.Metadata.Signature.IsEmpty())
-		assert.NotNil(t, gn.Metadata.Signature.Signer)
+		assert.NotNil(t, gn.Metadata.Signature.Key)
 	})
 }

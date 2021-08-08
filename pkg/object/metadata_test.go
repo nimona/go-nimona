@@ -49,7 +49,8 @@ func TestMetadata_Map(t *testing.T) {
 		}},
 		Root: tilde.Digest("foo"),
 		Signature: Signature{
-			Signer: pk1,
+			Signer: pk1.DID(),
+			Key:    pk1,
 			Alg:    "alg",
 			X:      []byte{0, 1, 2},
 		},
