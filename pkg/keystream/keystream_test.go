@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/tilde"
 )
@@ -19,24 +20,9 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 		Metadata: object.Metadata{
 			Timestamp: "foo",
 		},
-		Version: Version,
-		// Prefix:        "prefix",
-		// Sequence: 2,
+		Version:       Version,
 		Key:           k0.PublicKey(),
 		NextKeyDigest: "some-digest",
-		// Config: []*Config{{
-		// 	Trait: "trait-a",
-		// }, {
-		// 	Trait: "trait-b",
-		// }},
-		// Seals: []*Seal{{
-		// 	Root: "root-a",
-		// }, {
-		// 	Root: "root-b",
-		// }},
-		// DelegatorSeal: &Seal{
-		// 	Root: "root-c",
-		// },
 	}
 
 	o, err := object.Marshal(i)
@@ -48,22 +34,27 @@ func TestInception_MarshalUnmarshal(t *testing.T) {
 	require.Equal(t, i, g)
 }
 
-func TestCreateState(t *testing.T) {
+func Test_FromStream_InceptionRotation(t *testing.T) {
 	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
+	k2, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
 	t0Inception := &Inception{
-		Metadata: object.Metadata{},
-		Version:  Version,
-		Key:      k0.PublicKey(),
+		Metadata: object.Metadata{
+			Sequence: 0,
+		},
+		Version: Version,
+		Key:     k0.PublicKey(),
 		DelegatorSeal: &DelegatorSeal{
 			Root:     "delegator-root-hash",
 			Sequence: 12,
 		},
-		// NextKeyDigest: hash(k0.PublicKey()),
+		NextKeyDigest: getPublicKeyHash(k1.PublicKey()),
 	}
 
 	t0Rotation := &Rotation{
@@ -73,10 +64,11 @@ func TestCreateState(t *testing.T) {
 					object.MustMarshal(t0Inception).Hash(),
 				},
 			},
+			Sequence: 1,
 		},
-		Version: Version,
-		Key:     k1.PublicKey(),
-		// NextKeyDigest: hash(k0.PublicKey()),
+		Version:       Version,
+		Key:           k1.PublicKey(),
+		NextKeyDigest: getPublicKeyHash(k2.PublicKey()),
 	}
 
 	tests := []struct {
@@ -94,10 +86,16 @@ func TestCreateState(t *testing.T) {
 			},
 		),
 		want: &KeyStream{
-			Version:   Version,
-			Root:      object.MustMarshal(t0Inception).Hash(),
-			Delegator: "delegator-root-hash",
-			ActiveKey: k1.PublicKey(),
+			Version:       Version,
+			Sequence:      1,
+			Root:          object.MustMarshal(t0Inception).Hash(),
+			DelegatorRoot: "delegator-root-hash",
+			Delegator: did.DID{
+				Method:   did.MethodNimona,
+				Identity: "delegator-root-hash",
+			},
+			ActiveKey:     k1.PublicKey(),
+			NextKeyDigest: getPublicKeyHash(k2.PublicKey()),
 			RotatedKeys: []crypto.PublicKey{
 				k0.PublicKey(),
 			},

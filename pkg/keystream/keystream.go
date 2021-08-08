@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/tilde"
@@ -73,12 +74,15 @@ type (
 		// Config []*Config `nimona:"c:am"`
 		// Seals         []*Seal   `nimona:"a:am"`
 		DelegatorSeal *DelegatorSeal `nimona:"da:m"`
+		Seals         []*Seal        `nimona:"a:am"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
+	// TODO(geoah): implement RotationInteraction
+	RotationInteraction struct{}
 	// nolint: lll
-	InceptionDelegation struct {
-		Metadata object.Metadata `nimona:"@metadata:m,type=keri.InceptionDelegation/v0"`
+	DelegationInteraction struct {
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.DelegationInteraction/v0"`
 		Version  string          `nimona:"v:s"`
 		// Prefix   string          `nimona:"i:s"`
 		// Sequence int `nimona:"s:i"`
@@ -98,27 +102,16 @@ type (
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
-	// nolint: lll
-	RotationDelegation struct {
-		Metadata object.Metadata `nimona:"@metadata:m,type=keri.RotationDelegation/v0"`
-		Version  string          `nimona:"v:s"`
-		// Prefix   string          `nimona:"i:s"`
-		// Sequence int `nimona:"s:i"`
-		// EventType        string          `nimona:"t:s"`
-		// EventDigest      string          `nimona:"d:s"`
-		// PriorEventDigest string          `nimona:"p:s"`
-		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
-		// Key           crypto.PublicKey `nimona:"k:s"`
-		// NextKeyDigest tilde.Digest       `nimona:"n:s"`
-		// WitnessThreshold  string    `nimona:"wt:s"`
-		// Witnesses         []string  `nimona:"w:as"`
-		// AddWitness        []string  `nimona:"wa:as"`
-		// RemoveWitness     []string  `nimona:"wr:as"`
-		// Config []*Config `nimona:"c:am"`
-		Seals []*Seal `nimona:"a:am"`
-		// DelegatorSeal *DelegatorSeal `nimona:"da:m"`
-		// LastEvent         *Seal     `nimona:"e:m"`
-		// LastEstablishment *Seal     `nimona:"ee:m"`
+	// Note(geoah): Delegation events don't exist in KERI.
+	// _Do not use for now_
+	// This is an attempt to allow for a keystream to become a delegate
+	// after having been incepted.
+	// Moving delegation events outside of inception might cause security
+	// problems and will need to be carefully considered.
+	Delegation struct {
+		Metadata      object.Metadata `nimona:"@metadata:m,type=keri.Delegation/v0"`
+		Version       string          `nimona:"v:s"`
+		DelegatorSeal *DelegatorSeal  `nimona:"da:m"`
 	}
 )
 
@@ -159,6 +152,22 @@ func (inc *Inception) apply(s *KeyStream) error {
 		return ErrUnsupportedVersion
 	}
 
+	if s.Sequence != 0 {
+		return fmt.Errorf("invalid keystream sequence")
+	}
+
+	if inc.Metadata.Sequence != 0 {
+		return fmt.Errorf("invalid event sequence")
+	}
+
+	if inc.Key.IsEmpty() {
+		return fmt.Errorf("key cannot be empty")
+	}
+
+	if inc.NextKeyDigest.IsEmpty() {
+		return fmt.Errorf("next key digest cannot be empty")
+	}
+
 	o, err := object.Marshal(inc)
 	if err != nil {
 		return fmt.Errorf("error trying to get inc hash, %w", err)
@@ -166,7 +175,11 @@ func (inc *Inception) apply(s *KeyStream) error {
 
 	s.Root = o.Hash()
 	if inc.DelegatorSeal != nil {
-		s.Delegator = inc.DelegatorSeal.Root
+		s.DelegatorRoot = inc.DelegatorSeal.Root
+		s.Delegator = did.DID{
+			Method:   did.MethodNimona,
+			Identity: string(s.DelegatorRoot),
+		}
 	}
 	s.Version = inc.Version
 	s.ActiveKey = inc.Key
@@ -181,11 +194,74 @@ func (rot *Rotation) apply(s *KeyStream) error {
 		return ErrInvalidVersion
 	}
 
-	// TODO if hash(rot.Key) != s.NextKeyDigest { err }
+	if rot.Metadata.Sequence != s.Sequence+1 {
+		return fmt.Errorf("invalid event sequence")
+	}
+
+	if rot.Key.IsEmpty() {
+		return fmt.Errorf("key cannot be empty")
+	}
+
+	if getPublicKeyHash(rot.Key) != s.NextKeyDigest {
+		return fmt.Errorf("current key digest doesn't match previous next key")
+	}
+
+	if rot.NextKeyDigest.IsEmpty() {
+		return fmt.Errorf("next key digest cannot be empty")
+	}
 
 	s.RotatedKeys = append(s.RotatedKeys, s.ActiveKey)
 	s.ActiveKey = rot.Key
 	s.NextKeyDigest = rot.NextKeyDigest
+	s.Sequence = rot.Metadata.Sequence
+	return nil
+}
+
+func (del *DelegationInteraction) apply(s *KeyStream) error {
+	if del.Version != Version {
+		return ErrUnsupportedVersion
+	}
+
+	if del.Metadata.Sequence != s.Sequence+1 {
+		return fmt.Errorf("invalid event sequence")
+	}
+
+	if del.Seals != nil {
+		if s.Delegates == nil {
+			s.DelegateRoots = []tilde.Digest{}
+			s.Delegates = []did.DID{}
+		}
+		for _, seal := range del.Seals {
+			s.DelegateRoots = append(s.DelegateRoots, seal.Root)
+			s.Delegates = append(s.Delegates, did.DID{
+				Method:   did.MethodNimona,
+				Identity: string(seal.Root),
+			})
+		}
+	}
+
+	s.Sequence = del.Metadata.Sequence
+	return nil
+}
+
+func (del *Delegation) apply(s *KeyStream) error {
+	if del.Version != Version {
+		return ErrUnsupportedVersion
+	}
+
+	if del.Metadata.Sequence != s.Sequence+1 {
+		return fmt.Errorf("invalid event sequence")
+	}
+
+	if del.DelegatorSeal != nil && !del.DelegatorSeal.Root.IsEmpty() {
+		s.DelegatorRoot = del.DelegatorSeal.Root
+		s.Delegator = did.DID{
+			Method:   did.MethodNimona,
+			Identity: string(s.DelegatorRoot),
+		}
+	}
+
+	s.Sequence = del.Metadata.Sequence
 	return nil
 }
 
@@ -198,10 +274,16 @@ type (
 	KeyStream struct {
 		Version       string
 		Root          tilde.Digest
-		Delegator     tilde.Digest
 		ActiveKey     crypto.PublicKey
 		NextKeyDigest tilde.Digest
 		RotatedKeys   []crypto.PublicKey
+		Sequence      uint64
+		// Delegator
+		DelegatorRoot tilde.Digest
+		Delegator     did.DID
+		// Delegates
+		DelegateRoots []tilde.Digest
+		Delegates     []did.DID
 	}
 )
 
@@ -239,6 +321,9 @@ func FromStream(
 		if err != nil {
 			return nil, fmt.Errorf("error applying event, %w", err)
 		}
+
+		// TODO: before or after applying each event we should be verifying
+		// that any seals are actually valid by fetching the stream.
 	}
 
 	return s, nil
