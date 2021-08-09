@@ -467,18 +467,18 @@ func main() {
 					Actions: []string{"*"},
 				}},
 			}
-			csrSig, err := object.NewSignature(peerKey, object.MustMarshal(csr))
+			csrObj := object.MustMarshal(csr)
+			err := object.Sign(peerKey, csrObj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			csr.Metadata.Signature = csrSig
 			if err = d.ObjectManager().Put(
 				context.New(
 					context.WithParent(r.Context()),
 					context.WithTimeout(3*time.Second),
 				),
-				object.MustMarshal(csr),
+				csrObj,
 			); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
