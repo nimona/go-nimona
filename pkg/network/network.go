@@ -901,11 +901,10 @@ func (w *network) wrapInDataForward(
 	if err != nil {
 		return nil, err
 	}
-	dfeSig, err := object.NewSignature(ek, dfeo)
+	err = object.Sign(ek, dfeo)
 	if err != nil {
 		return nil, err
 	}
-	dfe.Metadata.Signature = dfeSig
 	// and wrap it in a request
 	dfr := &DataForwardRequest{
 		Metadata: object.Metadata{
@@ -919,11 +918,11 @@ func (w *network) wrapInDataForward(
 	if err != nil {
 		return nil, err
 	}
-	dfrSig, err := object.NewSignature(ek, dfro)
+	err = object.Sign(ek, dfro)
 	if err != nil {
 		return nil, err
 	}
-	dfr.Metadata.Signature = dfrSig
+	dfr.Metadata.Signature = dfro.Metadata.Signature
 	// else return
 	return dfr, nil
 }
