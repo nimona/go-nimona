@@ -60,7 +60,7 @@ func Marshal(in interface{}) (*Object, error) {
 		return nil, err
 	}
 	if v, ok := octx.(string); ok {
-		o.Context = v
+		o.Context = tilde.Digest(v)
 	}
 
 	delete(m, "@metadata")
@@ -327,6 +327,9 @@ func marshalStruct(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 					}
 					m["@metadata"] = imm
 				}
+			}
+			if t, ok := igKvs["context"]; ok {
+				m["@context"] = tilde.Digest(t)
 			}
 			if t, ok := igKvs["type"]; ok {
 				m["@type"] = tilde.String(t)

@@ -10,7 +10,7 @@ import (
 )
 
 type Object struct {
-	Context  string
+	Context  tilde.Digest
 	Type     string
 	Metadata Metadata
 	Data     tilde.Map
@@ -85,7 +85,7 @@ func (o *Object) UnmarshalMap(v tilde.Map) error {
 	m := mm.(tilde.Map)
 	if t, ok := m["@context"]; ok {
 		if s, ok := t.(tilde.String); ok {
-			o.Context = string(s)
+			o.Context = tilde.Digest(s)
 			delete(m, "@context")
 		}
 	}
