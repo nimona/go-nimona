@@ -14,7 +14,7 @@ a:hover {
     @apply overflow-x-scroll;
 }
 
-.public-key {
+.public-key, .did {
     @apply overflow-x-scroll;
 }
 

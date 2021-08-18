@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -29,12 +30,14 @@ import (
 	"github.com/gotailwindcss/tailwind/twpurge"
 	"github.com/shurcooL/httpfs/vfsutil"
 	"github.com/skip2/go-qrcode"
+	"github.com/xujiajun/nutsdb"
 
-	"nimona.io/internal/rand"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
+	"nimona.io/pkg/did"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -47,10 +50,10 @@ import (
 //go:embed assets/*
 var assets embed.FS
 
-const (
-	pkKeyIdentity     = "IDENTITY_PRIVATE_KEY"
-	pkPeerCertificate = "PEER_CERTIFICATE_JSON"
-)
+// const (
+// 	pkKeyIdentity     = "IDENTITY_KEYSTREAM_ROOT"
+// 	// pkPeerCertificate = "PEER_CERTIFICATE_JSON"
+// )
 
 var (
 	tplFuncMap = map[string]interface{}{
@@ -174,17 +177,11 @@ type (
 		PublicKey string
 	}
 	Hub struct {
-		daemon daemon.Daemon
-		// identity
+		daemon   daemon.Daemon
+		identity keystream.Controller
 		sync.RWMutex
-		// TODO(geoah): fix identity
-		// peerCertificateResponse *object.CertificateResponse
-		identityPrivateKey *crypto.PrivateKey
 	}
 )
-
-// TODO(geoah): Not sure if we should be setting the identity public key from
-// both the certificate and the private key.
 
 func New(
 	dae daemon.Daemon,
@@ -193,27 +190,13 @@ func New(
 		daemon: dae,
 	}
 
-	if v, err := h.daemon.Preferences().Get(pkPeerCertificate); err == nil {
-		crtResObj := &object.Object{}
-		if err := json.Unmarshal([]byte(v), crtResObj); err != nil {
-			return nil, err
-		}
-		// TODO(geoah): fix identity
-		// crtRes := &object.CertificateResponse{}
-		// if err := object.Unmarshal(crtResObj, crtRes); err != nil {
-		// 	return nil, err
-		// }
-		// h.peerCertificateResponse = crtRes
-		// h.daemon.LocalPeer().SetPeerCertificate(crtRes)
-	}
-
-	if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
-		privateIdentityKey := &crypto.PrivateKey{}
-		if err := privateIdentityKey.UnmarshalString(v); err != nil {
-			return nil, err
-		}
-		h.identityPrivateKey = privateIdentityKey
-	}
+	// if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
+	// 	privateIdentityKey := &crypto.PrivateKey{}
+	// 	if err := privateIdentityKey.UnmarshalString(v); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	h.identityPrivateKey = privateIdentityKey
+	// }
 
 	return h, nil
 }
@@ -230,34 +213,34 @@ func New(
 // 	h.daemon.LocalPeer().SetPeerCertificate(r)
 // }
 
-func (h *Hub) PutIdentityPrivateKey(k crypto.PrivateKey) {
+func (h *Hub) PutIdentityController(c keystream.Controller) {
 	h.Lock()
 	defer h.Unlock()
-	h.identityPrivateKey = &k
-	h.daemon.Preferences().Put(pkKeyIdentity, k.String())
+	h.identity = c
+	// h.daemon.Preferences().Put(pkKeyIdentity, k.String())
 }
 
-func (h *Hub) GetIdentityPrivateKey() *crypto.PrivateKey {
+func (h *Hub) GetIdentityController() keystream.Controller {
 	h.RLock()
 	defer h.RUnlock()
-	return h.identityPrivateKey
+	return h.identity
 }
 
-func (h *Hub) GetIdentityPublicKey() *crypto.PublicKey {
+func (h *Hub) GetIdentityDID() *did.DID {
 	h.RLock()
 	defer h.RUnlock()
-	// TODO(geoah): fix identity
-	// if h.peerCertificateResponse != nil {
-	// 	return &h.peerCertificateResponse.Metadata.Owner
-	// }
-	return nil
+	if h.identity == nil {
+		return nil
+	}
+	d := h.identity.GetKeyStream().GetDID()
+	return &d
 }
 
 func (h *Hub) ForgetIdentity() {
 	h.Lock()
 	defer h.Unlock()
-	h.daemon.Preferences().Remove(pkKeyIdentity)
-	h.daemon.Preferences().Remove(pkPeerCertificate)
+	// h.daemon.Preferences().Remove(pkKeyIdentity)
+	// h.daemon.Preferences().Remove(pkPeerCertificate)
 	// TODO(geoah): fix identity
 	// h.daemon.LocalPeer().ForgetPeerCertificate()
 	// h.identityPrivateKey = nil
@@ -351,13 +334,13 @@ func main() {
 	// }()
 
 	go func() {
-		k := h.GetIdentityPublicKey()
+		k := h.GetIdentityDID()
 		if k == nil {
 			return
 		}
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 			},
 		}
 		contactEvents := d.ObjectManager().Subscribe(
@@ -446,58 +429,63 @@ func main() {
 		// TODO(geoah): fix identity
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
 		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
-		peerKey := d.Network().GetPeerKey()
-		var csr *object.CertificateRequest
-		if linkMnemonic {
-			csr = &object.CertificateRequest{
-				Metadata: object.Metadata{
-					Owner: peerKey.PublicKey().DID(),
-				},
-				Nonce:                  rand.String(12),
-				VendorName:             "Nimona",
-				VendorURL:              "https://nimona.io",
-				ApplicationName:        "Hub",
-				ApplicationDescription: "Nimona Hub",
-				ApplicationURL:         "https://nimona.io/hub",
-				Permissions: []object.CertificatePermission{{
-					Metadata: object.Metadata{
-						Owner: peerKey.PublicKey().DID(),
-					},
-					Types:   []string{"*"},
-					Actions: []string{"*"},
-				}},
-			}
-			csrObj := object.MustMarshal(csr)
-			err := object.Sign(peerKey, csrObj)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if err = d.ObjectManager().Put(
-				context.New(
-					context.WithParent(r.Context()),
-					context.WithTimeout(3*time.Second),
-				),
-				csrObj,
-			); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
+		// peerKey := d.Network().GetPeerKey()
+		// var csr *object.CertificateRequest
+		// if linkMnemonic {
+		// 	csr = &object.CertificateRequest{
+		// 		Metadata: object.Metadata{
+		// 			Owner: peerKey.PublicKey().DID(),
+		// 		},
+		// 		Nonce:                  rand.String(12),
+		// 		VendorName:             "Nimona",
+		// 		VendorURL:              "https://nimona.io",
+		// 		ApplicationName:        "Hub",
+		// 		ApplicationDescription: "Nimona Hub",
+		// 		ApplicationURL:         "https://nimona.io/hub",
+		// 		Permissions: []object.CertificatePermission{{
+		// 			Metadata: object.Metadata{
+		// 				Owner: peerKey.PublicKey().DID(),
+		// 			},
+		// 			Types:   []string{"*"},
+		// 			Actions: []string{"*"},
+		// 		}},
+		// 	}
+		// 	csrObj := object.MustMarshal(csr)
+		// 	err := object.Sign(peerKey, csrObj)
+		// 	if err != nil {
+		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 		return
+		// 	}
+		// 	if err = d.ObjectManager().Put(
+		// 		context.New(
+		// 			context.WithParent(r.Context()),
+		// 			context.WithTimeout(3*time.Second),
+		// 		),
+		// 		csrObj,
+		// 	); err != nil {
+		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 		return
+		// 	}
+		// }
 		values := struct {
-			PublicKey    string
+			DID          string
 			PrivateBIP39 string
 			Show         bool
 			Link         bool
-			CSR          *object.CertificateRequest
-			CSRHash      tilde.Digest
+			// CSR          *object.CertificateRequest
+			CSRHash tilde.Digest
 		}{
 			Show: showMnemonic,
 			Link: linkMnemonic,
-			CSR:  csr,
+			// CSR:  csr,
 		}
-		if csr != nil {
-			values.CSRHash = object.MustMarshal(csr).Hash()
+		// if csr != nil {
+		// 	values.CSRHash = object.MustMarshal(csr).Hash()
+		// }
+
+		k := h.GetIdentityDID()
+		if k != nil {
+			values.DID = k.String()
 		}
 
 		// go func() {
@@ -523,12 +511,12 @@ func main() {
 		// 	) // nolint: errcheck
 		// 	// TODO figure out how to surface errors?
 		// }()
-		if k := h.GetIdentityPublicKey(); k != nil {
-			values.PublicKey = k.String()
-		}
-		if k := h.GetIdentityPrivateKey(); k != nil {
-			values.PrivateBIP39 = k.BIP39()
-		}
+		// if k := h.GetIdentityPublicKey(); k != nil {
+		// 	values.PublicKey = k.String()
+		// }
+		// if k := h.GetIdentityPrivateKey(); k != nil {
+		// 	values.PrivateBIP39 = k.BIP39()
+		// }
 		err := tplIdentity.Execute(
 			w,
 			values,
@@ -540,12 +528,22 @@ func main() {
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
-		// k, err := crypto.NewEd25519PrivateKey()
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		opt := nutsdb.DefaultOptions
+		opt.Dir = path.Join(d.Config().Path, "identity.nutsdb")
+		kvStore, err := nutsdb.Open(opt)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		kc, err := keystream.NewController(kvStore, d.ObjectStore())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ksm := d.KeyStreamManager()
+		ksm.AddController(kc)
+		h.PutIdentityController(kc)
+
 		// // TODO(geoah): also create a certificate
 		// req := object.CertificateRequest{
 		// 	Metadata: object.Metadata{
@@ -585,7 +583,7 @@ func main() {
 		// }
 		// h.SetPeerCertificate(crtRes)
 		// h.PutIdentityPrivateKey(k)
-		// http.Redirect(w, r, "/identity", http.StatusFound)
+		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Post("/identity/link", func(w http.ResponseWriter, r *http.Request) {
@@ -639,7 +637,7 @@ func main() {
 	})
 
 	r.Get("/contacts", func(w http.ResponseWriter, r *http.Request) {
-		k := h.GetIdentityPublicKey()
+		k := h.GetIdentityDID()
 		contacts := map[string]string{} // publickey/alias
 		values := struct {
 			IdentityLinked bool
@@ -663,7 +661,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -719,7 +717,7 @@ func main() {
 	})
 
 	r.Post("/contacts/add", func(w http.ResponseWriter, r *http.Request) {
-		k := h.GetIdentityPublicKey()
+		k := h.GetIdentityDID()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -742,7 +740,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -763,7 +761,7 @@ func main() {
 		}
 		rel := relationship.Added{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 				Root:  contactsStreamRootHash,
 			},
 			Alias:       alias,
@@ -788,7 +786,7 @@ func main() {
 	})
 
 	r.Get("/contacts/remove", func(w http.ResponseWriter, r *http.Request) {
-		k := h.GetIdentityPublicKey()
+		k := h.GetIdentityDID()
 		values := struct {
 			IdentityLinked bool
 			Contacts       map[string]string
@@ -811,7 +809,7 @@ func main() {
 		values.IdentityLinked = true
 		contactsStreamRoot := relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 			},
 		}
 		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
@@ -831,7 +829,7 @@ func main() {
 		}
 		rel := relationship.Removed{
 			Metadata: object.Metadata{
-				Owner: k.DID(),
+				Owner: *k,
 				Root:  contactsStreamRootHash,
 			},
 			RemoteParty: remotePartyKey,

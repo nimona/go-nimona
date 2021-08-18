@@ -4,8 +4,8 @@
     Identity Public Key
   </dt>
   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-    {{- if .PublicKey }}
-      <code class="public-key">{{ .PublicKey }}</code>
+    {{- if .DID }}
+      <code class="did">{{ .DID }}</code>
     {{- else if .Link }}
       <form action="/identity/link" method="post">
         <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" rows="4" name="mnemonic"></textarea>
@@ -63,7 +63,7 @@
   </dd>
 </div>
 {{- end }}
-{{- if .PublicKey }}
+{{- if .DID }}
 <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
   <dt class="text-sm font-medium text-gray-500">
     Identity Private Key
