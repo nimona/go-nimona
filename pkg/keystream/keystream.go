@@ -119,15 +119,15 @@ type (
 type (
 	Trait string
 	Seal  struct { // Type      SealType `nimona:"-"`
-		Root        tilde.Digest    `nimona:"rd:s"`
-		Permissions object.Policies `nimona:"p:am"`
+		Root        tilde.Digest `nimona:"rd:r"`
+		Permissions Permissions  `nimona:"p:am"`
 		// Prefix    string `nimona:"i:s"`
 		// Sequence  string `nimona:"s:s"`
 		// EventType string `nimona:"t:s"`
 		// Digest    string `nimona:"d:s"`
 	}
 	DelegatorSeal struct {
-		Root tilde.Digest `nimona:"rd:s"`
+		Root tilde.Digest `nimona:"rd:r"`
 		// Type      SealType `nimona:"-"`
 		// Delegation  tilde.Digest      `nimona:"d:s"`
 		// Permissions object.Policies `nimona:"p:am"`
@@ -136,7 +136,9 @@ type (
 		// EventType string `nimona:"t:s"`
 		// Digest    string `nimona:"d:s"`
 	}
-	Config struct {
+	// TODO: implement permissions
+	Permissions struct{}
+	Config      struct {
 		Trait Trait `nimona:"trait:s"`
 	}
 )

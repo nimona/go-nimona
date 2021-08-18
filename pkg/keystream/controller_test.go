@@ -27,7 +27,7 @@ func TestController_New(t *testing.T) {
 	require.NoError(t, err)
 
 	// create a controller with empty stores
-	ctrl, err := NewController(kvStore, objectStore)
+	ctrl, err := NewController(kvStore, objectStore, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl)
 
@@ -36,7 +36,7 @@ func TestController_New(t *testing.T) {
 	wantNextKeyDigest := ctrl.state.NextKeyDigest
 
 	// create a new controller with the now not empty stores
-	ctrl2, err := NewController(kvStore, objectStore)
+	ctrl2, err := NewController(kvStore, objectStore, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl2)
 

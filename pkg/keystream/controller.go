@@ -26,6 +26,8 @@ type (
 	// single key stream
 	Controller interface {
 		Rotate() (*Rotation, error)
+		Delegate(tilde.Digest, Permissions) (*DelegationInteraction, error)
+		CurrentKey() crypto.PrivateKey
 		// TODO should this be returning a pointer or copy?
 		GetKeyStream() *KeyStream
 	}
@@ -42,6 +44,7 @@ type (
 func NewController(
 	kvStore *nutsdb.DB,
 	objectStore objectstore.Store,
+	delegatorSeal *DelegatorSeal,
 ) (*controller, error) {
 	var keyStream *KeyStream
 	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
@@ -82,6 +85,7 @@ func NewController(
 			Version:       Version,
 			Key:           k0.PublicKey(),
 			NextKeyDigest: getPublicKeyHash(k1.PublicKey()),
+			DelegatorSeal: delegatorSeal,
 		}
 		inceptionObject, err := object.Marshal(inceptionEvent)
 		if err != nil {
@@ -134,6 +138,10 @@ func NewController(
 	return c, nil
 }
 
+func (c *controller) CurrentKey() crypto.PrivateKey {
+	return c.currentPrivateKey
+}
+
 func (c *controller) GetKeyStream() *KeyStream {
 	return c.state
 }
@@ -174,6 +182,32 @@ func (c *controller) Rotate() (*Rotation, error) {
 	}
 
 	return r, nil
+}
+
+func (c *controller) Delegate(
+	root tilde.Digest,
+	permissions Permissions,
+) (*DelegationInteraction, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	d := &DelegationInteraction{
+		Metadata: object.Metadata{
+			Sequence: c.state.Sequence + 1,
+		},
+		Version: Version,
+		Seals: []*Seal{{
+			Root:        root,
+			Permissions: permissions,
+		}},
+	}
+
+	err := d.apply(c.state)
+	if err != nil {
+		return nil, fmt.Errorf("unable to apply delegation on state, %w", err)
+	}
+
+	return d, nil
 }
 
 func getPrivateKey(
