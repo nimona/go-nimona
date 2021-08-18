@@ -1,4 +1,4 @@
-<tr id="contact-{{ .Certificate.ToObject.CID }}">
+<tr id="contact-{{ .Certificate.ToObject.Hash }}">
   <td class="px-4 py-2 whitespace-nowrap">
     <code class="public-key">{{ .Request.Metadata.Signature.Signer }}</code>
   </td>
@@ -20,7 +20,7 @@
     {{ toDate "2006-01-02T15:04:05Z07:00" .Certificate.Expires | date "02/01/2006" }}
   </td>
   <!-- <td class="px-2 py-2 whitespace-nowrap">
-    <a href="/certificates/revoke?cid={{ .Certificate.ToObject.CID }}" class="table-button danger">
+    <a href="/certificates/revoke?Hash={{ .Certificate.ToObject.Hash }}" class="table-button danger">
       Revoke
     </button>
   </td> -->

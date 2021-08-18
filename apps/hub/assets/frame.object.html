@@ -1,4 +1,4 @@
-{{- define "title" }}Object {{ .CID }}{{ end }}
+{{- define "title" }}Object {{ .Hash }}{{ end }}
 {{- define "head" }}
 <link href="//unpkg.com/prismjs@1.23.0/themes/prism-solarizedlight.css" rel="stylesheet" />
 <script src="//unpkg.com/prismjs@1.23.0/components/prism-core.min.js"></script>
@@ -9,35 +9,35 @@
 <div class="mx-auto py-6">
   <div class="bg-white shadow overflow-hidden sm:rounded-lg">
     <div class="px-4 py-5 sm:px-6">
-      <h3 class="text-lg leading-6 font-medium text-gray-900">
-        {{ .CID }}
+      <h3 class="text-lg leading-6 font-medium text-gray-900 did">
+        <pre>{{ .Hash }}</pre>
       </h3>
       <p class="mt-1 max-w-2xl text-sm text-gray-500">
         {{ .Type }}
       </p>
     </div>
+    {{- if .StreamObjects }}
     <div class="border-t border-gray-200 stream-children">
-      {{- if .StreamObjects }}
       <ul class="stream-children">
         {{- range .StreamObjects }}
           <li class="stream-child">
-            {{- if eq .CID $.CID }}
-              <code class="selected">{{ .CID }}</code>
+            {{- if eq .Hash $.Hash }}
+              <code class="selected">{{ .Hash }}</code>
             {{- else }}
-              <a href="/objects/{{ .CID }}" target="_top">
-                <code>{{ .CID.String }}</code>
+              <a href="/objects/{{ .Hash }}" target="_top">
+                <code>{{ .Hash.String }}</code>
               </a>
             {{- end }}
             <span class="object-type">{{ .Type }}</span>
-            {{- if eq .CID $.StreamRoot}}
+            {{- if eq .Hash $.StreamRoot}}
             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-blue-100 text-blue-800">
               stream root
             </span>
             {{- end }}
           </li>
         {{- end }}
-      {{- end }}
     </div>
+    {{- end }}
     <div class="border-t border-gray-200">
       <pre><code class="language-json">{{ .JSON }}</code></pre>
     </div>
