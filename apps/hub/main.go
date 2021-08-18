@@ -43,17 +43,16 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
-
 	"nimona.io/schema/relationship"
 )
 
 //go:embed assets/*
 var assets embed.FS
 
-// const (
-// 	pkKeyIdentity     = "IDENTITY_KEYSTREAM_ROOT"
-// 	// pkPeerCertificate = "PEER_CERTIFICATE_JSON"
-// )
+const (
+	keystreamIdentityPath = "identity.nuts"
+	keystreamDelegatePath = "delegate.nuts"
+)
 
 var (
 	tplFuncMap = map[string]interface{}{
@@ -179,6 +178,7 @@ type (
 	Hub struct {
 		daemon   daemon.Daemon
 		identity keystream.Controller
+		delegate keystream.Controller
 		sync.RWMutex
 	}
 )
@@ -190,13 +190,41 @@ func New(
 		daemon: dae,
 	}
 
-	// if v, err := h.daemon.Preferences().Get(pkKeyIdentity); err == nil {
-	// 	privateIdentityKey := &crypto.PrivateKey{}
-	// 	if err := privateIdentityKey.UnmarshalString(v); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	h.identityPrivateKey = privateIdentityKey
-	// }
+	// load identity keystream
+	identityKeyStreamPath := path.Join(dae.Config().Path, keystreamIdentityPath)
+	if _, err := os.Stat(identityKeyStreamPath); err == nil {
+		opt := nutsdb.DefaultOptions
+		opt.Dir = identityKeyStreamPath
+		kvStore, err := nutsdb.Open(opt)
+		if err != nil {
+			return nil, err
+		}
+		kc, err := keystream.NewController(kvStore, dae.ObjectStore(), nil)
+		if err != nil {
+			return nil, err
+		}
+		ksm := dae.KeyStreamManager()
+		ksm.AddController(kc)
+		h.PutIdentityController(kc)
+	}
+
+	// load delegate keystream
+	delegateKeyStreamPath := path.Join(dae.Config().Path, keystreamDelegatePath)
+	if _, err := os.Stat(delegateKeyStreamPath); err == nil {
+		opt := nutsdb.DefaultOptions
+		opt.Dir = delegateKeyStreamPath
+		kvStore, err := nutsdb.Open(opt)
+		if err != nil {
+			return nil, err
+		}
+		kc, err := keystream.NewController(kvStore, dae.ObjectStore(), nil)
+		if err != nil {
+			return nil, err
+		}
+		ksm := dae.KeyStreamManager()
+		ksm.AddController(kc)
+		h.PutDelegateController(kc)
+	}
 
 	return h, nil
 }
@@ -217,13 +245,24 @@ func (h *Hub) PutIdentityController(c keystream.Controller) {
 	h.Lock()
 	defer h.Unlock()
 	h.identity = c
-	// h.daemon.Preferences().Put(pkKeyIdentity, k.String())
+}
+
+func (h *Hub) PutDelegateController(c keystream.Controller) {
+	h.Lock()
+	defer h.Unlock()
+	h.delegate = c
 }
 
 func (h *Hub) GetIdentityController() keystream.Controller {
 	h.RLock()
 	defer h.RUnlock()
 	return h.identity
+}
+
+func (h *Hub) GetDelegateController() keystream.Controller {
+	h.RLock()
+	defer h.RUnlock()
+	return h.delegate
 }
 
 func (h *Hub) GetIdentityDID() *did.DID {
@@ -338,7 +377,7 @@ func main() {
 		if k == nil {
 			return
 		}
-		contactsStreamRoot := relationship.RelationshipStreamRoot{
+		contactsStreamRoot := &relationship.RelationshipStreamRoot{
 			Metadata: object.Metadata{
 				Owner: *k,
 			},
@@ -469,6 +508,7 @@ func main() {
 		// }
 		values := struct {
 			DID          string
+			DelegateDID  string
 			PrivateBIP39 string
 			Show         bool
 			Link         bool
@@ -479,6 +519,7 @@ func main() {
 			Link: linkMnemonic,
 			// CSR:  csr,
 		}
+
 		// if csr != nil {
 		// 	values.CSRHash = object.MustMarshal(csr).Hash()
 		// }
@@ -486,6 +527,12 @@ func main() {
 		k := h.GetIdentityDID()
 		if k != nil {
 			values.DID = k.String()
+			values.PrivateBIP39 = h.GetIdentityController().CurrentKey().BIP39()
+		}
+
+		d := h.GetDelegateController()
+		if d != nil {
+			values.DelegateDID = d.GetKeyStream().GetDID().String()
 		}
 
 		// go func() {
@@ -511,12 +558,7 @@ func main() {
 		// 	) // nolint: errcheck
 		// 	// TODO figure out how to surface errors?
 		// }()
-		// if k := h.GetIdentityPublicKey(); k != nil {
-		// 	values.PublicKey = k.String()
-		// }
-		// if k := h.GetIdentityPrivateKey(); k != nil {
-		// 	values.PrivateBIP39 = k.BIP39()
-		// }
+
 		err := tplIdentity.Execute(
 			w,
 			values,
@@ -528,61 +570,50 @@ func main() {
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
+		// create a new identity key stream
 		opt := nutsdb.DefaultOptions
-		opt.Dir = path.Join(d.Config().Path, "identity.nutsdb")
+		opt.Dir = path.Join(d.Config().Path, keystreamIdentityPath)
 		kvStore, err := nutsdb.Open(opt)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		kc, err := keystream.NewController(kvStore, d.ObjectStore())
+		ikc, err := keystream.NewController(kvStore, d.ObjectStore(), nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		ksm := d.KeyStreamManager()
-		ksm.AddController(kc)
-		h.PutIdentityController(kc)
+		ksm.AddController(ikc)
+		h.PutIdentityController(ikc)
 
-		// // TODO(geoah): also create a certificate
-		// req := object.CertificateRequest{
-		// 	Metadata: object.Metadata{
-		// 		Owner: k.PublicKey(),
-		// 	},
-		// 	Nonce:                  rand.String(12),
-		// 	VendorName:             "Nimona",
-		// 	VendorURL:              "https://nimona.io",
-		// 	ApplicationName:        "Hub",
-		// 	ApplicationDescription: "Nimona Hub",
-		// 	ApplicationURL:         "https://nimona.io/hub",
-		// 	Permissions: []object.CertificatePermission{{
-		// 		Metadata: object.Metadata{
-		// 			Owner: d.LocalPeer().GetPeerKey().PublicKey(),
-		// 		},
-		// 		Types:   []string{"*"},
-		// 		Actions: []string{"*"},
-		// 	}},
-		// }
-		// req.Metadata.Signature, err = object.NewSignature(
-		// 	k,
-		// 	object.MustMarshal(req),
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// crtRes, err := object.NewCertificate(
-		// 	k,
-		// 	req,
-		// 	true,
-		// 	"Created by Nimona Hub",
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// h.SetPeerCertificate(crtRes)
-		// h.PutIdentityPrivateKey(k)
+		// create a new delegate keystream for our peer
+		opt = nutsdb.DefaultOptions
+		opt.Dir = path.Join(d.Config().Path, keystreamDelegatePath)
+		kvStore, err = nutsdb.Open(opt)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ds := &keystream.DelegatorSeal{
+			Root:     ikc.GetKeyStream().Root,
+			Sequence: ikc.GetKeyStream().Sequence + 1,
+		}
+		dkc, err := keystream.NewController(kvStore, d.ObjectStore(), ds)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ksm.AddController(dkc)
+		h.PutDelegateController(dkc)
+
+		// add delegation event
+		_, err = ikc.Delegate(ikc.GetKeyStream().Root, keystream.Permissions{})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
