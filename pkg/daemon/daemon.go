@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -27,18 +28,20 @@ type (
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
 		FeedManager() feedmanager.FeedManager
+		KeyStreamManager() keystream.KeyStreamManager
 		// daemon specific methods
 		Close()
 	}
 	daemon struct {
-		config        config.Config
-		preferences   preferences.Preferences
-		configOptions []config.Option
-		network       network.Network
-		resolver      resolver.Resolver
-		objectstore   objectstore.Store
-		objectmanager objectmanager.ObjectManager
-		feedmanager   feedmanager.FeedManager
+		config          config.Config
+		preferences     preferences.Preferences
+		configOptions   []config.Option
+		network         network.Network
+		resolver        resolver.Resolver
+		objectstore     objectstore.Store
+		objectmanager   objectmanager.ObjectManager
+		feedmanager     feedmanager.FeedManager
+		keystreamanager keystream.KeyStreamManager
 		// internal
 		listener net.Listener
 	}
@@ -145,6 +148,9 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		return nil, fmt.Errorf("constructing feed manager, %w", err)
 	}
 
+	// construct key stream manager
+	ksm := keystream.NewKeyManager()
+
 	d.config = *cfg
 	d.preferences = prf
 	d.network = ntw
@@ -152,6 +158,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	d.objectstore = str
 	d.objectmanager = man
 	d.feedmanager = fdm
+	d.keystreamanager = ksm
 
 	return d, nil
 }
@@ -182,6 +189,10 @@ func (d *daemon) ObjectManager() objectmanager.ObjectManager {
 
 func (d *daemon) FeedManager() feedmanager.FeedManager {
 	return d.feedmanager
+}
+
+func (d *daemon) KeyStreamManager() keystream.KeyStreamManager {
+	return d.keystreamanager
 }
 
 func (d *daemon) Close() {
