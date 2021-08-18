@@ -22,7 +22,7 @@ const (
 )
 
 // - ~ (tilde) is used to denote that this is not a real KERI implementation
-//   but rather a version re-designed to work with nimona's tild objects.
+//   but rather a version re-designed to work with nimona's tilde objects.
 // - KERI is the identifier of KERI events
 // - 0 is the major version code
 // - 0 the minor version code
@@ -286,6 +286,13 @@ type (
 		Delegates     []did.DID
 	}
 )
+
+func (s KeyStream) GetDID() did.DID {
+	return did.DID{
+		Method:   did.MethodNimona,
+		Identity: string(s.Root),
+	}
+}
 
 func (s *KeyStream) GetIdentity() tilde.Digest {
 	return s.Root
