@@ -24,7 +24,12 @@ const (
 type (
 	// Controller deals with the key management and event transitions for a
 	// single key stream
-	Controller struct {
+	Controller interface {
+		Rotate() (*Rotation, error)
+		// TODO should this be returning a pointer or copy?
+		GetKeyStream() *KeyStream
+	}
+	controller struct {
 		mutex             sync.RWMutex
 		kvStore           *nutsdb.DB
 		objectStore       objectstore.Store
@@ -37,7 +42,7 @@ type (
 func NewController(
 	kvStore *nutsdb.DB,
 	objectStore objectstore.Store,
-) (*Controller, error) {
+) (*controller, error) {
 	var keyStream *KeyStream
 	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
 	if err == nil {
@@ -117,7 +122,7 @@ func NewController(
 		return nil, fmt.Errorf("unable to get private active key, %w", err)
 	}
 
-	c := &Controller{
+	c := &controller{
 		mutex:             sync.RWMutex{},
 		kvStore:           kvStore,
 		objectStore:       objectStore,
@@ -129,7 +134,11 @@ func NewController(
 	return c, nil
 }
 
-func (c *Controller) Rotate() (*Rotation, error) {
+func (c *controller) GetKeyStream() *KeyStream {
+	return c.state
+}
+
+func (c *controller) Rotate() (*Rotation, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
