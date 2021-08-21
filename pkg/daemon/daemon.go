@@ -28,7 +28,7 @@ type (
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
 		FeedManager() feedmanager.FeedManager
-		KeyStreamManager() keystream.KeyStreamManager
+		KeyStreamManager() keystream.Manager
 		// daemon specific methods
 		Close()
 	}
@@ -41,7 +41,7 @@ type (
 		objectstore     objectstore.Store
 		objectmanager   objectmanager.ObjectManager
 		feedmanager     feedmanager.FeedManager
-		keystreamanager keystream.KeyStreamManager
+		keystreamanager keystream.Manager
 		// internal
 		listener net.Listener
 	}
@@ -191,7 +191,7 @@ func (d *daemon) FeedManager() feedmanager.FeedManager {
 	return d.feedmanager
 }
 
-func (d *daemon) KeyStreamManager() keystream.KeyStreamManager {
+func (d *daemon) KeyStreamManager() keystream.Manager {
 	return d.keystreamanager
 }
 
