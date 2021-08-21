@@ -1,4 +1,4 @@
-// KeyStream is a simplified implementation of KERI.
+// State is a simplified implementation of KERI.
 // It is not a full nor faithful implementation of the spec and is not intended
 // to be for the foreseeable future.
 // It is just an attempt to implement some of the basic aspects of KERI using
@@ -149,7 +149,7 @@ const (
 	TraitNoBackers     Trait = "NB"  // Do not allow any backers for registry
 )
 
-func (inc *Inception) apply(s *KeyStream) error {
+func (inc *Inception) apply(s *State) error {
 	if inc.Version != Version {
 		return ErrUnsupportedVersion
 	}
@@ -191,7 +191,7 @@ func (inc *Inception) apply(s *KeyStream) error {
 	return nil
 }
 
-func (rot *Rotation) apply(s *KeyStream) error {
+func (rot *Rotation) apply(s *State) error {
 	if rot.Version != s.Version {
 		return ErrInvalidVersion
 	}
@@ -219,7 +219,7 @@ func (rot *Rotation) apply(s *KeyStream) error {
 	return nil
 }
 
-func (del *DelegationInteraction) apply(s *KeyStream) error {
+func (del *DelegationInteraction) apply(s *State) error {
 	if del.Version != Version {
 		return ErrUnsupportedVersion
 	}
@@ -246,7 +246,7 @@ func (del *DelegationInteraction) apply(s *KeyStream) error {
 	return nil
 }
 
-func (del *Delegation) apply(s *KeyStream) error {
+func (del *Delegation) apply(s *State) error {
 	if del.Version != Version {
 		return ErrUnsupportedVersion
 	}
@@ -270,10 +270,10 @@ func (del *Delegation) apply(s *KeyStream) error {
 // state and key manager
 type (
 	applier interface {
-		apply(s *KeyStream) error
+		apply(s *State) error
 	}
-	// KeyStream of a single KERI stream
-	KeyStream struct {
+	// State of a single KERI stream
+	State struct {
 		Version       string
 		Root          tilde.Digest
 		ActiveKey     crypto.PublicKey
@@ -289,21 +289,21 @@ type (
 	}
 )
 
-func (s KeyStream) GetDID() did.DID {
+func (s State) GetDID() did.DID {
 	return did.DID{
 		Method:   did.MethodNimona,
 		Identity: string(s.Root),
 	}
 }
 
-func (s *KeyStream) GetIdentity() tilde.Digest {
+func (s *State) GetIdentity() tilde.Digest {
 	return s.Root
 }
 
 func FromStream(
 	or object.ReadCloser,
-) (*KeyStream, error) {
-	s := &KeyStream{}
+) (*State, error) {
+	s := &State{}
 
 	for {
 		o, err := or.Read()

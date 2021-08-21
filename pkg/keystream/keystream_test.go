@@ -75,7 +75,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 		name string
 		or   object.ReadCloser
 
-		want    *KeyStream
+		want    *State
 		wantErr bool
 	}{{
 		name: "small aggregate, ok",
@@ -85,7 +85,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 				object.MustMarshal(t0Rotation),
 			},
 		),
-		want: &KeyStream{
+		want: &State{
 			Version:       Version,
 			Sequence:      1,
 			Root:          object.MustMarshal(t0Inception).Hash(),
