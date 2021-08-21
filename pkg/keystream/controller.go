@@ -29,13 +29,13 @@ type (
 		Delegate(tilde.Digest, Permissions) (*DelegationInteraction, error)
 		CurrentKey() crypto.PrivateKey
 		// TODO should this be returning a pointer or copy?
-		GetKeyStream() *KeyStream
+		GetKeyStream() *State
 	}
 	controller struct {
 		mutex             sync.RWMutex
 		kvStore           *nutsdb.DB
 		objectStore       objectstore.Store
-		state             *KeyStream
+		state             *State
 		currentPrivateKey crypto.PrivateKey
 		newKey            func() (crypto.PrivateKey, error)
 	}
@@ -46,7 +46,7 @@ func NewController(
 	objectStore objectstore.Store,
 	delegatorSeal *DelegatorSeal,
 ) (*controller, error) {
-	var keyStream *KeyStream
+	var keyStream *State
 	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
 	if err == nil {
 		eventStream, err := objectStore.GetByStream(
@@ -142,7 +142,7 @@ func (c *controller) CurrentKey() crypto.PrivateKey {
 	return c.currentPrivateKey
 }
 
-func (c *controller) GetKeyStream() *KeyStream {
+func (c *controller) GetKeyStream() *State {
 	return c.state
 }
 
