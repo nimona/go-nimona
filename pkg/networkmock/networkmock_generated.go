@@ -247,3 +247,23 @@ func (mr *MockNetworkMockRecorder) Subscribe(filters ...interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockNetwork)(nil).Subscribe), filters...)
 }
+
+// SubscribeOnce mocks base method.
+func (m *MockNetwork) SubscribeOnce(ctx context.Context, filters ...network.EnvelopeFilter) (*network.Envelope, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range filters {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SubscribeOnce", varargs...)
+	ret0, _ := ret[0].(*network.Envelope)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SubscribeOnce indicates an expected call of SubscribeOnce.
+func (mr *MockNetworkMockRecorder) SubscribeOnce(ctx interface{}, filters ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, filters...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeOnce", reflect.TypeOf((*MockNetwork)(nil).SubscribeOnce), varargs...)
+}

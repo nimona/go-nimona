@@ -42,6 +42,14 @@ func (m *MockNetworkSimple) Subscribe(
 	return r
 }
 
+func (m *MockNetworkSimple) SubscribeOnce(
+	ctx context.Context,
+	filters ...network.EnvelopeFilter,
+) (*network.Envelope, error) {
+	// TODO Implement SubscribeOnce()
+	panic("SubscribeOnce() is not implemented")
+}
+
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
