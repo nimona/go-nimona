@@ -103,7 +103,7 @@ func (ps *pubsub) Subscribe(filters ...Filter) Subscription {
 	return sub
 }
 
-// Publish to all subscribers
+// Publish an event to the subscribers whose filters all match the given event
 func (ps *pubsub) Publish(v interface{}) {
 	// go through our subscriptions
 	ps.subscriptions.Range(func(k, _ interface{}) bool {
