@@ -6,7 +6,7 @@ signed object nimona.io/identity.Profile {
     version int
     timestamp string
     name string
-    image string type=nimona.io/chore.Hash
+    image string type=nimona.io/tilde.Digest
 }
 
 stream nimona.io/identity.Profile {
