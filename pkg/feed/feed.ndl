@@ -9,12 +9,12 @@ stream nimona.io/feed {
         timestamp string
     }
     signed event Added {
-        objectHash repeated string type=nimona.io/chore.Hash
+        objectHash repeated string type=nimona.io/tilde.Digest
         sequence int
         timestamp string
     }
     signed event Removed {
-        objectHash repeated string type=nimona.io/chore.Hash
+        objectHash repeated string type=nimona.io/tilde.Digest
         sequence int
         timestamp string
     }

@@ -49,7 +49,7 @@ type (
 		localPeerAnnouncementCacheLock sync.RWMutex
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
-		hashes                         *ChoreHashSyncList
+		hashes                         *TildeDigestSyncList
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -73,7 +73,7 @@ func New(
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
-		hashes:                         &ChoreHashSyncList{},
+		hashes:                         &TildeDigestSyncList{},
 	}
 
 	for _, opt := range opts {

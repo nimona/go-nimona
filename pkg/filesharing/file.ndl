@@ -2,7 +2,7 @@ package filesharing
 
 signed object nimona.io/File {
     name string
-    chunks repeated string type=nimona.io/chore.Hash
+    chunks repeated string type=nimona.io/tilde.Digest
 }
 
 signed object nimona.io/TransferDone {
