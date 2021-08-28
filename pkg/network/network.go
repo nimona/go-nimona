@@ -91,6 +91,10 @@ type (
 		Subscribe(
 			filters ...EnvelopeFilter,
 		) EnvelopeSubscription
+		SubscribeOnce(
+			ctx context.Context,
+			filters ...EnvelopeFilter,
+		) (*Envelope, error)
 		Send(
 			ctx context.Context,
 			object *object.Object,
@@ -598,6 +602,22 @@ func (w *network) processOutbox(outbox *outbox) {
 // Subscribe to incoming objects as envelopes
 func (w *network) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
+}
+
+// SubscribeOnce will wait for the next envelope matching the given filters
+// and return it or error if the context is done first.
+func (w *network) SubscribeOnce(
+	ctx context.Context,
+	filters ...EnvelopeFilter,
+) (*Envelope, error) {
+	s := w.inboxes.Subscribe(filters...)
+	select {
+	case <-ctx.Done():
+		s.Cancel() // TODO verify that Cancel() is non blocking
+		return nil, ctx.Err()
+	case e := <-s.Channel():
+		return e, nil
+	}
 }
 
 // handleObjects -
