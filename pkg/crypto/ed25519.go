@@ -16,6 +16,7 @@ import (
 
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/multiheader"
+	"nimona.io/pkg/tilde"
 )
 
 // https://blog.filippo.io/using-ed25519-keys-for-encryption
@@ -70,6 +71,10 @@ func (k PublicKey) DID() did.DID {
 
 func (k PublicKey) IsEmpty() bool {
 	return k.RawKey == nil
+}
+
+func (k PublicKey) Hash() tilde.Digest {
+	return tilde.String(k.String()).Hash()
 }
 
 func (k PublicKey) MarshalString() (string, error) {
