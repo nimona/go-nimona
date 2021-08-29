@@ -470,3 +470,46 @@ func TestStore_GC(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, o, got)
 }
+
+func TestStore_Keys(t *testing.T) {
+	dblite := tempSqlite3(t)
+	store, err := New(dblite)
+	require.NoError(t, err)
+	require.NotNil(t, store)
+
+	k1, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	k2, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	t.Run("put k1", func(t *testing.T) {
+		err := store.PutKey(
+			k1,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("put k2", func(t *testing.T) {
+		err := store.PutKey(
+			k2,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("get k1", func(t *testing.T) {
+		g1, err := store.GetKey(
+			k1.PublicKey().Hash(),
+		)
+		require.NoError(t, err)
+		require.Equal(t, k1, *g1)
+	})
+
+	t.Run("get k2", func(t *testing.T) {
+		g1, err := store.GetKey(
+			k2.PublicKey().Hash(),
+		)
+		require.NoError(t, err)
+		require.Equal(t, k2, *g1)
+	})
+}
