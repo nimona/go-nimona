@@ -54,7 +54,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 			Root:     "delegator-root-hash",
 			Sequence: 12,
 		},
-		NextKeyDigest: getPublicKeyHash(k1.PublicKey()),
+		NextKeyDigest: k1.PublicKey().Hash(),
 	}
 
 	t0Rotation := &Rotation{
@@ -68,7 +68,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 		},
 		Version:       Version,
 		Key:           k1.PublicKey(),
-		NextKeyDigest: getPublicKeyHash(k2.PublicKey()),
+		NextKeyDigest: k2.PublicKey().Hash(),
 	}
 
 	tests := []struct {
@@ -95,7 +95,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 				Identity: "delegator-root-hash",
 			},
 			ActiveKey:     k1.PublicKey(),
-			NextKeyDigest: getPublicKeyHash(k2.PublicKey()),
+			NextKeyDigest: k2.PublicKey().Hash(),
 			RotatedKeys: []crypto.PublicKey{
 				k0.PublicKey(),
 			},

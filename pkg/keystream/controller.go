@@ -70,7 +70,7 @@ func NewController(
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate key, %w", err)
 		}
-		err = putPrivateKey(k0, kvStore)
+		err = (k0, kvStore)
 		if err != nil {
 			return nil, fmt.Errorf("unable to put key, %w", err)
 		}
@@ -84,7 +84,7 @@ func NewController(
 			},
 			Version:       Version,
 			Key:           k0.PublicKey(),
-			NextKeyDigest: getPublicKeyHash(k1.PublicKey()),
+			NextKeyDigest: k1.PublicKey().Hash(),
 			DelegatorSeal: delegatorSeal,
 		}
 		inceptionObject, err := object.Marshal(inceptionEvent)
@@ -121,7 +121,7 @@ func NewController(
 
 	// TODO check that we have the next key as well
 
-	pk, err := getPrivateKey(getPublicKeyHash(keyStream.ActiveKey), kvStore)
+	pk, err := getPrivateKey(keyStream.ActiveKey.Hash(), kvStore)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get private active key, %w", err)
 	}
@@ -171,7 +171,7 @@ func (c *controller) Rotate() (*Rotation, error) {
 		},
 		Version:       Version,
 		Key:           newCurrentKey.PublicKey(),
-		NextKeyDigest: getPublicKeyHash(newNextKey.PublicKey()),
+		NextKeyDigest: newNextKey.PublicKey().Hash(),
 	}
 
 	c.currentPrivateKey = *newCurrentKey
@@ -259,11 +259,6 @@ func putPrivateKey(
 
 	return nil
 }
-
-func getPublicKeyHash(k crypto.PublicKey) tilde.Digest {
-	return tilde.String(k.String()).Hash()
-}
-
 func getConfigValue(
 	key string,
 	kvStore *nutsdb.DB,

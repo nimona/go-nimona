@@ -57,7 +57,7 @@ func TestController_New(t *testing.T) {
 	require.NotNil(t, rotationEvent)
 
 	// and check the rotation worked
-	require.Equal(t, wantNextKeyDigest, getPublicKeyHash(rotationEvent.Key))
+	require.Equal(t, wantNextKeyDigest, rotationEvent.Key.Hash())
 
 	gotActiveKey = ctrl2.currentPrivateKey.PublicKey()
 	gotNextKeyHash = ctrl2.state.NextKeyDigest
