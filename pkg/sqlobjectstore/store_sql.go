@@ -13,6 +13,7 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"
 	"nimona.io/pkg/object"
@@ -44,6 +45,8 @@ var migrations = []string{
 	`CREATE INDEX Relations_RootHash_idx ON Relations(RootHash);`,
 	`ALTER TABLE Objects ADD MetadataDatetime INT DEFAULT 0;`,
 	`CREATE TABLE IF NOT EXISTS Pins (Hash TEXT NOT NULL PRIMARY KEY);`,
+	`CREATE TABLE IF NOT EXISTS Keys (PublicKeyDigest TEXT NOT NULL PRIMARY KEY);`,
+	`ALTER TABLE Keys ADD PrivateKey TEXT;`,
 }
 
 var defaultTTL = time.Hour * 24 * 7
@@ -743,4 +746,55 @@ func ahtoai(ah []tilde.Digest) []interface{} {
 		as[i] = h.String()
 	}
 	return as
+}
+
+func (st *Store) PutKey(
+	privateKey crypto.PrivateKey,
+) error {
+	stmt, err := st.db.Prepare(`
+		INSERT OR IGNORE INTO Keys (PublicKeyDigest, PrivateKey) VALUES (?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("could not prepare insert to keys table, %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	data, _ := json.Marshal(privateKey) // nolint: errcheck // cannot error
+
+	_, err = stmt.Exec(
+		privateKey.PublicKey().Hash().String(),
+		string(data),
+	)
+	if err != nil {
+		return fmt.Errorf("could not insert to keys table, %w", err)
+	}
+
+	return nil
+}
+
+func (st *Store) GetKey(
+	publicKeyDigest tilde.Digest,
+) (*crypto.PrivateKey, error) {
+	stmt, err := st.db.Prepare(
+		"SELECT PrivateKey FROM Keys WHERE PublicKeyDigest=?",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not prepare query: %w", err)
+	}
+	defer stmt.Close() // nolint: errcheck
+
+	row := stmt.QueryRow(publicKeyDigest.String())
+
+	key := &crypto.PrivateKey{}
+	data := []byte{}
+
+	if err := row.Scan(&data); err != nil {
+		return nil, errors.Merge(objectstore.ErrNotFound, err)
+	}
+
+	if err := json.Unmarshal(data, key); err != nil {
+		return nil, fmt.Errorf("could not unmarshal key: %w", err)
+	}
+
+	return key, nil
 }
