@@ -204,7 +204,7 @@ func (rot *Rotation) apply(s *State) error {
 		return fmt.Errorf("key cannot be empty")
 	}
 
-	if getPublicKeyHash(rot.Key) != s.NextKeyDigest {
+	if rot.Key.Hash() != s.NextKeyDigest {
 		return fmt.Errorf("current key digest doesn't match previous next key")
 	}
 
