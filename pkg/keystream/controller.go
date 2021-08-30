@@ -7,6 +7,7 @@ import (
 	"github.com/xujiajun/nutsdb"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/keystore"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/tilde"
@@ -33,7 +34,7 @@ type (
 	}
 	controller struct {
 		mutex             sync.RWMutex
-		kvStore           *nutsdb.DB
+		keyStore          keystore.KeyStore
 		objectStore       objectstore.Store
 		state             *State
 		currentPrivateKey crypto.PrivateKey
@@ -41,97 +42,98 @@ type (
 	}
 )
 
-func NewController(
-	kvStore *nutsdb.DB,
+func RestoreController(
+	keyStreamRootHash tilde.Digest,
+	keyStore keystore.KeyStore,
 	objectStore objectstore.Store,
-	delegatorSeal *DelegatorSeal,
 ) (*controller, error) {
-	var keyStream *State
-	keyStreamRootHashBytes, err := getConfigValue(keyKeyStreamRootHash, kvStore)
-	if err == nil {
-		eventStream, err := objectStore.GetByStream(
-			tilde.Digest(keyStreamRootHashBytes),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get keystream objects, %w", err)
-		}
-		keyStream, err = FromStream(eventStream)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create state, %w", err)
-		}
+	eventStream, err := objectStore.GetByStream(
+		keyStreamRootHash,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get keystream objects, %w", err)
 	}
 
-	if keyStream == nil {
-		k0, err := crypto.NewEd25519PrivateKey()
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate key, %w", err)
-		}
-		k1, err := crypto.NewEd25519PrivateKey()
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate key, %w", err)
-		}
-		err = (k0, kvStore)
-		if err != nil {
-			return nil, fmt.Errorf("unable to put key, %w", err)
-		}
-		err = putPrivateKey(k1, kvStore)
-		if err != nil {
-			return nil, fmt.Errorf("unable to put key, %w", err)
-		}
-		inceptionEvent := &Inception{
-			Metadata: object.Metadata{
-				Sequence: 0,
-			},
-			Version:       Version,
-			Key:           k0.PublicKey(),
-			NextKeyDigest: k1.PublicKey().Hash(),
-			DelegatorSeal: delegatorSeal,
-		}
-		inceptionObject, err := object.Marshal(inceptionEvent)
-		if err != nil {
-			return nil, fmt.Errorf("unable to marshal object, %w", err)
-		}
-		err = object.Sign(k0, inceptionObject)
-		if err != nil {
-			return nil, fmt.Errorf("unable to sign object, %w", err)
-		}
-		err = objectStore.Put(inceptionObject)
-		if err != nil {
-			return nil, fmt.Errorf("unable to put object, %w", err)
-		}
-		err = putConfigValue(
-			keyKeyStreamRootHash,
-			[]byte(inceptionObject.Hash()),
-			kvStore,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("unable to put config value, %w", err)
-		}
-		keyStream, err = FromStream(
-			object.NewReadCloserFromObjects(
-				[]*object.Object{
-					inceptionObject,
-				},
-			),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create new state, %w", err)
-		}
+	keyStream, err := FromStream(eventStream)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create state, %w", err)
 	}
 
-	// TODO check that we have the next key as well
-
-	pk, err := getPrivateKey(keyStream.ActiveKey.Hash(), kvStore)
+	pk, err := keyStore.GetKey(keyStream.ActiveKey.Hash())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get private active key, %w", err)
 	}
 
 	c := &controller{
 		mutex:             sync.RWMutex{},
-		kvStore:           kvStore,
+		keyStore:          keyStore,
 		objectStore:       objectStore,
 		state:             keyStream,
 		currentPrivateKey: *pk,
+		newKey:            crypto.NewEd25519PrivateKey,
+	}
+	return c, nil
+}
+
+func NewController(
+	keyStore keystore.KeyStore,
+	objectStore objectstore.Store,
+	delegatorSeal *DelegatorSeal,
+) (*controller, error) {
+	k0, err := crypto.NewEd25519PrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate key, %w", err)
+	}
+	k1, err := crypto.NewEd25519PrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate key, %w", err)
+	}
+	err = keyStore.PutKey(k0)
+	if err != nil {
+		return nil, fmt.Errorf("unable to put key, %w", err)
+	}
+	err = keyStore.PutKey(k1)
+	if err != nil {
+		return nil, fmt.Errorf("unable to put key, %w", err)
+	}
+	inceptionEvent := &Inception{
+		Metadata: object.Metadata{
+			Sequence: 0,
+		},
+		Version:       Version,
+		Key:           k0.PublicKey(),
+		NextKeyDigest: k1.PublicKey().Hash(),
+		DelegatorSeal: delegatorSeal,
+	}
+	inceptionObject, err := object.Marshal(inceptionEvent)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal object, %w", err)
+	}
+	err = object.Sign(k0, inceptionObject)
+	if err != nil {
+		return nil, fmt.Errorf("unable to sign object, %w", err)
+	}
+	err = objectStore.Put(inceptionObject)
+	if err != nil {
+		return nil, fmt.Errorf("unable to put object, %w", err)
+	}
+	keyStream, err := FromStream(
+		object.NewReadCloserFromObjects(
+			[]*object.Object{
+				inceptionObject,
+			},
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create new state, %w", err)
+	}
+
+	c := &controller{
+		mutex:             sync.RWMutex{},
+		keyStore:          keyStore,
+		objectStore:       objectStore,
+		state:             keyStream,
+		currentPrivateKey: k0,
 		newKey:            crypto.NewEd25519PrivateKey,
 	}
 
@@ -155,12 +157,12 @@ func (c *controller) Rotate() (*Rotation, error) {
 		return nil, fmt.Errorf("unable to create a new key, %w", err)
 	}
 
-	newCurrentKey, err := getPrivateKey(c.state.NextKeyDigest, c.kvStore)
+	newCurrentKey, err := c.keyStore.GetKey(c.state.NextKeyDigest)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get next private key, %w", err)
 	}
 
-	err = putPrivateKey(newNextKey, c.kvStore)
+	err = c.keyStore.PutKey(newNextKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to store new next private key, %w", err)
 	}
@@ -235,30 +237,6 @@ func getPrivateKey(
 	return pk, nil
 }
 
-func putPrivateKey(
-	privateKey crypto.PrivateKey,
-	kvStore *nutsdb.DB,
-) error {
-	tx, err := kvStore.Begin(true)
-	if err != nil {
-		return fmt.Errorf("unable to begin tx, %w", err)
-	}
-	// nolint: errcheck
-	defer tx.Commit()
-
-	key := getPublicKeyHash(privateKey.PublicKey())
-	value, err := privateKey.MarshalString()
-	if err != nil {
-		return fmt.Errorf("unable to marshal key, %w", err)
-	}
-
-	err = tx.Put(bucketPrivateKeys, []byte(key), []byte(value), 0)
-	if err != nil {
-		return fmt.Errorf("unable to put key, %w", err)
-	}
-
-	return nil
-}
 func getConfigValue(
 	key string,
 	kvStore *nutsdb.DB,
