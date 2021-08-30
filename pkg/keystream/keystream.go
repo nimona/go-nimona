@@ -120,17 +120,18 @@ type (
 	Trait string
 	Seal  struct { // Type      SealType `nimona:"-"`
 		Root        tilde.Digest `nimona:"rd:r"`
-		Permissions Permissions  `nimona:"p:am"`
+		Permissions Permissions  `nimona:"p:m"`
 		// Prefix    string `nimona:"i:s"`
 		// Sequence  string `nimona:"s:s"`
 		// EventType string `nimona:"t:s"`
 		// Digest    string `nimona:"d:s"`
 	}
 	DelegatorSeal struct {
-		Root tilde.Digest `nimona:"rd:r"`
+		Metadata object.Metadata `nimona:"@metadata:m,type=keri.DelegatorSeal/v0"`
+		Root     tilde.Digest    `nimona:"rd:r"`
 		// Type      SealType `nimona:"-"`
 		// Delegation  tilde.Digest      `nimona:"d:s"`
-		// Permissions object.Policies `nimona:"p:am"`
+		Permissions Permissions `nimona:"p:m"`
 		// Prefix    string `nimona:"i:s"`
 		Sequence uint64 `nimona:"s:u"`
 		// EventType string `nimona:"t:s"`

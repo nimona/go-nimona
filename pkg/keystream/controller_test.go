@@ -18,16 +18,16 @@ func TestController_New(t *testing.T) {
 	require.NoError(t, err)
 	defer kvStore.Close()
 
-	objectStoreDB, err := sql.Open(
+	sqlStoreDB, err := sql.Open(
 		"sqlite3",
 		path.Join(t.TempDir(), "db.sqlite"),
 	)
 	require.NoError(t, err)
-	objectStore, err := sqlobjectstore.New(objectStoreDB)
+	sqlStore, err := sqlobjectstore.New(sqlStoreDB)
 	require.NoError(t, err)
 
 	// create a controller with empty stores
-	ctrl, err := NewController(kvStore, objectStore, nil)
+	ctrl, err := NewController(sqlStore, sqlStore, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl)
 
@@ -35,8 +35,8 @@ func TestController_New(t *testing.T) {
 	wantActiveKey := ctrl.currentPrivateKey.PublicKey()
 	wantNextKeyDigest := ctrl.state.NextKeyDigest
 
-	// create a new controller with the now not empty stores
-	ctrl2, err := NewController(kvStore, objectStore, nil)
+	// restore controller from same stores
+	ctrl2, err := RestoreController(ctrl.state.Root, sqlStore, sqlStore)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl2)
 
