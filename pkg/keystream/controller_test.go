@@ -6,18 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/xujiajun/nutsdb"
 
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
 func TestController_New(t *testing.T) {
-	opt := nutsdb.DefaultOptions
-	opt.Dir = t.TempDir()
-	kvStore, err := nutsdb.Open(opt)
-	require.NoError(t, err)
-	defer kvStore.Close()
-
 	sqlStoreDB, err := sql.Open(
 		"sqlite3",
 		path.Join(t.TempDir(), "db.sqlite"),
@@ -26,8 +20,11 @@ func TestController_New(t *testing.T) {
 	sqlStore, err := sqlobjectstore.New(sqlStoreDB)
 	require.NoError(t, err)
 
+	k, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
 	// create a controller with empty stores
-	ctrl, err := NewController(sqlStore, sqlStore, nil)
+	ctrl, err := NewController(k.PublicKey().DID(), sqlStore, sqlStore, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl)
 

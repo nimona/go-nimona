@@ -7,6 +7,7 @@ import (
 	"github.com/xujiajun/nutsdb"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/keystore"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
@@ -76,6 +77,7 @@ func RestoreController(
 }
 
 func NewController(
+	owner did.DID,
 	keyStore keystore.KeyStore,
 	objectStore objectstore.Store,
 	delegatorSeal *DelegatorSeal,
@@ -98,6 +100,7 @@ func NewController(
 	}
 	inceptionEvent := &Inception{
 		Metadata: object.Metadata{
+			Owner:    owner,
 			Sequence: 0,
 		},
 		Version:       Version,
