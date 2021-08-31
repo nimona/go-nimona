@@ -5,7 +5,6 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/tilde"
 )
 
 // Handshake allows a peer to initiate a request for a new delegated key stream
@@ -33,10 +32,38 @@ import (
 //    controller.
 // 8. The primary keystream controller receives the Inception object, checks
 //    that the Delegator Seal matches the one sent, and creates a Delegation
-//    Interaction object that contains the Inception object with the Inception
-//    object's hash and permissions in the Seal.
+//    Interaction event with the Inception object's hash and permissions in
+//    its Seal.
 // 9. The primary keystream controller sends the Delegation Interaction object
 //    to the initiator peer for verification.
+//
+//    ╔════════════════════════╗                  ╔════════════════════════╗
+//    ║       Initiator        ║                  ║       Delegator        ║
+//    ╚═══════════╦════════════╝                  ╚════════════╦═══════════╝
+//                │ ┌───────────────────┐                      │
+//                │ │DelegationRequest  │                      │
+//                │─┤-------------------├─────────────────────▶│
+//                │ │* Permissions      │                      │
+//                │ └───────────────────┘                      │
+//                │               ┌──────────────────────────┐ │
+//                │               │DelegationOffer           │ │
+//                │◀──────────────┤--------------------------├─│
+//      ┌─────────┴─────────┐     │* DelegatorSeal           │ │
+//      │Inception          │     │  * DelegatorKeyStreamRoot│ │
+//      │-------------------│     │  * Next stream sequence  │ │
+//      │* DelegatorSeal    │     └──────────────────────────┘ │
+//      └─────────┬─────────┘                                  │
+//                │ ┌──────────────────────┐                   │
+//                │ │DelegationVerification│                   │
+//                │─┤----------------------├──────────────────▶│
+//                │ │* DelegateSeal        │        ┌──────────┴──────────┐
+//                │ └──────────────────────┘        │DelegationInteraction│
+//                │                                 │---------------------│
+//                │                                 │* DelegateSeal       │
+//                │                                 └──────────┬──────────┘
+//                │                                            │
+//                ■                                            ■
+//
 
 type (
 	DelegationRequest struct {
@@ -45,20 +72,21 @@ type (
 		RequestedPermissions    Permissions          `nimona:"requestedPermissions:m"`
 	}
 	DelegationOffer struct {
-		Metadata                      object.Metadata `nimona:"@metadata:m,type=keystream.DelegationOffer"`
-		DelegatorKeyStreamRoot        tilde.Digest    `nimona:"delegatorKeyStreamRoot:m"`
-		DelegationInteractionSequence uint64          `nimona:"delegationInteractionSequence:i"`
-		GrantedPermissions            Permissions     `nimona:"grantedPermissions:m"`
+		Metadata      object.Metadata `nimona:"@metadata:m,type=keystream.DelegationOffer"`
+		DelegatorSeal DelegatorSeal   `nimona:"delegatorSeal:m"`
+	}
+	DelegationVerification struct {
+		Metadata     object.Metadata `nimona:"@metadata:m,type=keystream.DelegationVerification"`
+		DelegateSeal DelegateSeal    `nimona:"delegateSeal:m"`
 	}
 )
 
-// InitiateDelegationRequest creates a new Delegation Request object.
-func InitiateDelegationRequest(
+// NewDelegationRequest creates a new Delegation Request object.
+func (m *manager) NewDelegationRequest(
 	ctx context.Context,
-	net network.Network,
 	requestedPermissions Permissions,
-) (*DelegationRequest, error) {
-	ci := net.GetConnectionInfo()
+) (*DelegationRequest, chan Controller, error) {
+	ci := m.network.GetConnectionInfo()
 	dr := &DelegationRequest{
 		Metadata: object.Metadata{
 			Owner: ci.PublicKey.DID(),
@@ -67,12 +95,12 @@ func InitiateDelegationRequest(
 		RequestedPermissions:    requestedPermissions,
 	}
 
-	ks := make(chan Controller)
+	res := make(chan Controller)
 
 	go func() {
-		defer close(ks)
+		defer close(res)
 		// wait for a Delegation Offer
-		env, err := net.SubscribeOnce(
+		env, err := m.network.SubscribeOnce(
 			ctx,
 			network.FilterByObjectType("keystream.DelegationOffer"),
 		)
@@ -85,14 +113,41 @@ func InitiateDelegationRequest(
 			return
 		}
 		// verify Offer
-		if dr.RequestedPermissions != do.GrantedPermissions {
+		if dr.RequestedPermissions != do.DelegatorSeal.Permissions {
 			return
 		}
 		// create new KeyStream
-		// ctrl, err := NewController()
+		ctrl, err := m.NewController(&do.DelegatorSeal)
+		if err != nil {
+			return
+		}
+		// send back the root hash of the keystream
+		ver := &DelegationVerification{
+			Metadata: object.Metadata{
+				Owner: ci.PublicKey.DID(),
+			},
+			DelegateSeal: DelegateSeal{
+				Root:        ctrl.GetKeyStream().Root,
+				Permissions: requestedPermissions,
+			},
+		}
+		verObj, err := object.Marshal(ver)
+		if err != nil {
+			return
+		}
+		err = m.network.Send(
+			ctx,
+			verObj,
+			env.Sender,
+		)
+		if err != nil {
+			return
+		}
+		// and pass the controller to the caller
+		res <- ctrl
 	}()
 
-	return dr, nil
+	return dr, res, nil
 }
 
 // HandleDelegationRequest handles a Delegation Request object.
