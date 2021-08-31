@@ -17,7 +17,7 @@ type (
 	// single key stream
 	Controller interface {
 		Rotate() (*Rotation, error)
-		Delegate(tilde.Digest, Permissions) (*DelegationInteraction, error)
+		Delegate(DelegateSeal) (*DelegationInteraction, error)
 		CurrentKey() crypto.PrivateKey
 		// TODO should this be returning a pointer or copy?
 		GetKeyStream() *State
@@ -179,8 +179,7 @@ func (c *controller) Rotate() (*Rotation, error) {
 }
 
 func (c *controller) Delegate(
-	root tilde.Digest,
-	permissions Permissions,
+	ds DelegateSeal,
 ) (*DelegationInteraction, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -189,11 +188,8 @@ func (c *controller) Delegate(
 		Metadata: object.Metadata{
 			Sequence: c.state.Sequence + 1,
 		},
-		Version: Version,
-		DelegateSeal: DelegateSeal{
-			Root:        root,
-			Permissions: permissions,
-		},
+		Version:      Version,
+		DelegateSeal: ds,
 	}
 
 	err := d.apply(c.state)

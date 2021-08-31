@@ -1,6 +1,8 @@
 package keystream
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -150,8 +152,57 @@ func (m *manager) NewDelegationRequest(
 	return dr, res, nil
 }
 
-// HandleDelegationRequest handles a Delegation Request object.
+// HandleDelegationRequest handles a DelegationRequest object.
 //
-// Given a Delegation Request object, creates a Delegation Offer, sends it to
-// the Initiator peer, waits for the Inception event, and finally creates a
+// Given a Delegation Request object, creates a DelegationOffer, sends it to
+// the Initiator peer, waits for the DelegationVerification, creates a
 // Delegation Interaction event and stores it in the controller.
+func (m *manager) HandleDelegationRequest(
+	ctx context.Context,
+	dr *DelegationRequest,
+	ks Controller,
+) error {
+	// create a new Delegation Offer and send it to the
+	do := &DelegationOffer{
+		Metadata: object.Metadata{
+			Owner: ks.GetKeyStream().GetDID(),
+		},
+		DelegatorSeal: DelegatorSeal{
+			Root:        ks.GetKeyStream().Root,
+			Sequence:    ks.GetKeyStream().Sequence + 1,
+			Permissions: dr.RequestedPermissions,
+		},
+	}
+	doObj, err := object.Marshal(do)
+	if err != nil {
+		return fmt.Errorf("failed to marshal DelegationOffer: %w", err)
+	}
+	err = m.network.Send(ctx, doObj, dr.InitiatorConnectionInfo.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to send DelegationOffer: %w", err)
+	}
+
+	// wait for the DelegationVerification
+	env, err := m.network.SubscribeOnce(
+		ctx,
+		network.FilterByObjectType("keystream.DelegationVerification"),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to wait for DelegationVerification: %w", err)
+	}
+	dv := &DelegationVerification{}
+	err = object.Unmarshal(env.Payload, dv)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal DelegationVerification: %w", err)
+	}
+
+	// TODO: verify the DelegationVerification object
+	// TODO: we promised a specific sequence number, do we need to check it?
+
+	_, err = ks.Delegate(dv.DelegateSeal)
+	if err != nil {
+		return fmt.Errorf("failed to create DelegationInteraction: %w", err)
+	}
+
+	return nil
+}
