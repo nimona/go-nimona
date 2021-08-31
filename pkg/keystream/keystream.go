@@ -51,7 +51,7 @@ type (
 		// AddWitness        []string  `nimona:"wa:as"`
 		// RemoveWitness     []string  `nimona:"wr:as"`
 		// Config []*Config `nimona:"c:am"`
-		// Seals         []*Seal   `nimona:"a:am"`
+		// Seals         DelegateSeal   `nimona:"dr:m"`
 		DelegatorSeal *DelegatorSeal `nimona:"da:m"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
@@ -72,9 +72,8 @@ type (
 		// AddWitness        []string  `nimona:"wa:as"`
 		// RemoveWitness     []string  `nimona:"wr:as"`
 		// Config []*Config `nimona:"c:am"`
-		// Seals         []*Seal   `nimona:"a:am"`
-		DelegatorSeal *DelegatorSeal `nimona:"da:m"`
-		Seals         []*Seal        `nimona:"a:am"`
+		// DelegatorSeal *DelegatorSeal `nimona:"da:m"`
+		DelegateSeal DelegateSeal `nimona:"dr:m"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
@@ -97,7 +96,7 @@ type (
 		// AddWitness        []string  `nimona:"wa:as"`
 		// RemoveWitness     []string  `nimona:"wr:as"`
 		// Config []*Config `nimona:"c:am"`
-		Seals []*Seal `nimona:"a:am"`
+		DelegateSeal DelegateSeal `nimona:"dr:m"`
 		// DelegatorSeal *DelegatorSeal `nimona:"da:m"`
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
@@ -117,10 +116,11 @@ type (
 
 // components
 type (
-	Trait string
-	Seal  struct { // Type      SealType `nimona:"-"`
+	Trait        string
+	DelegateSeal struct {
 		Root        tilde.Digest `nimona:"rd:r"`
 		Permissions Permissions  `nimona:"p:m"`
+		// Type      SealType `nimona:"-"`
 		// Prefix    string `nimona:"i:s"`
 		// Sequence  string `nimona:"s:s"`
 		// EventType string `nimona:"t:s"`
@@ -229,19 +229,11 @@ func (del *DelegationInteraction) apply(s *State) error {
 		return fmt.Errorf("invalid event sequence")
 	}
 
-	if del.Seals != nil {
-		if s.Delegates == nil {
-			s.DelegateRoots = []tilde.Digest{}
-			s.Delegates = []did.DID{}
-		}
-		for _, seal := range del.Seals {
-			s.DelegateRoots = append(s.DelegateRoots, seal.Root)
-			s.Delegates = append(s.Delegates, did.DID{
-				Method:   did.MethodNimona,
-				Identity: string(seal.Root),
-			})
-		}
-	}
+	s.DelegateRoots = append(s.DelegateRoots, del.DelegateSeal.Root)
+	s.Delegates = append(s.Delegates, did.DID{
+		Method:   did.MethodNimona,
+		Identity: string(del.DelegateSeal.Root),
+	})
 
 	s.Sequence = del.Metadata.Sequence
 	return nil

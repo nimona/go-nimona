@@ -4,23 +4,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/xujiajun/nutsdb"
-
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/keystore"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/tilde"
-)
-
-const (
-	// bucketPrivateKeys is the bucket that holds private keys
-	bucketPrivateKeys = "keystream_private_keys"
-	// bucketConfigs is the bucket that holds config key value pairs
-	bucketConfigs = "keystream_configs"
-	// keyKeyStreamRootHash is the config key for the keystream's root
-	keyKeyStreamRootHash = "keystream_root_hash"
 )
 
 type (
@@ -201,10 +190,10 @@ func (c *controller) Delegate(
 			Sequence: c.state.Sequence + 1,
 		},
 		Version: Version,
-		Seals: []*Seal{{
+		DelegateSeal: DelegateSeal{
 			Root:        root,
 			Permissions: permissions,
-		}},
+		},
 	}
 
 	err := d.apply(c.state)
@@ -213,63 +202,4 @@ func (c *controller) Delegate(
 	}
 
 	return d, nil
-}
-
-func getPrivateKey(
-	publicKeyHash tilde.Digest,
-	kvStore *nutsdb.DB,
-) (*crypto.PrivateKey, error) {
-	tx, err := kvStore.Begin(false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to begin tx, %w", err)
-	}
-	// nolint: errcheck
-	defer tx.Commit()
-
-	en, err := tx.Get(bucketPrivateKeys, []byte(publicKeyHash))
-	if err != nil {
-		return nil, fmt.Errorf("unable to get active key, %w", err)
-	}
-
-	pk := &crypto.PrivateKey{}
-	err = pk.UnmarshalString(string(en.Value))
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal active key, %w", err)
-	}
-
-	return pk, nil
-}
-
-func getConfigValue(
-	key string,
-	kvStore *nutsdb.DB,
-) ([]byte, error) {
-	tx, err := kvStore.Begin(false)
-	if err != nil {
-		return nil, fmt.Errorf("unable to begin tx, %w", err)
-	}
-	// nolint: errcheck
-	defer tx.Commit()
-
-	res, err := tx.Get(bucketConfigs, []byte(keyKeyStreamRootHash))
-	if err != nil {
-		return nil, fmt.Errorf("unable to get active key, %w", err)
-	}
-
-	return res.Value, nil
-}
-
-func putConfigValue(
-	key string,
-	value []byte,
-	kvStore *nutsdb.DB,
-) error {
-	tx, err := kvStore.Begin(true)
-	if err != nil {
-		return fmt.Errorf("unable to begin tx, %w", err)
-	}
-	// nolint: errcheck
-	defer tx.Commit()
-
-	return tx.Put(bucketConfigs, []byte(keyKeyStreamRootHash), value, 0)
 }
