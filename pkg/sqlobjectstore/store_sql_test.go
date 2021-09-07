@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/crypto"
@@ -24,7 +24,7 @@ func tempSqlite3(t *testing.T) *sql.DB {
 	t.Helper()
 	dirPath := t.TempDir()
 	fmt.Println(path.Join(dirPath, "sqlite3.db"))
-	db, err := sql.Open("sqlite3", path.Join(dirPath, "sqlite3.db"))
+	db, err := sql.Open("sqlite", path.Join(dirPath, "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }

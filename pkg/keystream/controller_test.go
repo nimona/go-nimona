@@ -13,7 +13,7 @@ import (
 
 func TestController_New(t *testing.T) {
 	sqlStoreDB, err := sql.Open(
-		"sqlite3",
+		"sqlite",
 		path.Join(t.TempDir(), "db.sqlite"),
 	)
 	require.NoError(t, err)

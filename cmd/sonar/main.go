@@ -98,7 +98,7 @@ func main() {
 	logger.Info("ready")
 
 	// construct object store
-	db, err := sql.Open("sqlite3", "sqlite3.db")
+	db, err := sql.Open("sqlite", "sqlite3.db")
 	if err != nil {
 		logger.Fatal("error opening sql file", log.Error(err))
 	}

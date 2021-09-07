@@ -153,7 +153,7 @@ func newPeer(t *testing.T) network.Network {
 
 func tempObjectStore(t *testing.T) *sqlobjectstore.Store {
 	t.Helper()
-	db, err := sql.Open("sqlite3", path.Join(t.TempDir(), "sqlite3.db"))
+	db, err := sql.Open("sqlite", path.Join(t.TempDir(), "sqlite3.db"))
 	require.NoError(t, err)
 	str, err := sqlobjectstore.New(db)
 	require.NoError(t, err)
