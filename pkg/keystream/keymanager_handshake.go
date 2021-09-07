@@ -177,7 +177,14 @@ func (m *manager) HandleDelegationRequest(
 	if err != nil {
 		return fmt.Errorf("failed to marshal DelegationOffer: %w", err)
 	}
-	err = m.network.Send(ctx, doObj, dr.InitiatorConnectionInfo.PublicKey)
+	err = m.network.Send(
+		ctx,
+		doObj,
+		dr.InitiatorConnectionInfo.PublicKey,
+		network.SendWithConnectionInfo(
+			dr.InitiatorConnectionInfo,
+		),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to send DelegationOffer: %w", err)
 	}

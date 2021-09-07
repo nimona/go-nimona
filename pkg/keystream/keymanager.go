@@ -3,6 +3,7 @@ package keystream
 import (
 	"sync"
 
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -21,6 +22,15 @@ type (
 		GetController(tilde.Digest) (Controller, error)
 		ListControllers() []Controller
 		NewController(*DelegatorSeal) (Controller, error)
+		NewDelegationRequest(
+			context.Context,
+			Permissions,
+		) (*DelegationRequest, chan Controller, error)
+		HandleDelegationRequest(
+			context.Context,
+			*DelegationRequest,
+			Controller,
+		) error
 	}
 	manager struct {
 		mutex       sync.RWMutex
