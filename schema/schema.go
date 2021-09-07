@@ -5,6 +5,7 @@ import (
 	"nimona.io/pkg/tilde"
 )
 
+// nolint: lll
 type (
 	Context struct {
 		Metadata    object.Metadata `nimona:"@metadata:m,type=Context,context=/schema"`

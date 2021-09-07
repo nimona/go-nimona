@@ -37,6 +37,7 @@ type InitRequest struct {
 	ContentTypes []string `json:"contentTypes"`
 }
 
+// nolint: deadcode
 func New(initRequest *InitRequest) *Provider {
 	ctx := context.New(
 		context.WithCorrelationID("nimona"),
@@ -103,6 +104,7 @@ type GetRequest struct {
 	Offset   int      `json:"offset"`
 }
 
+// nolint: deadcode
 type GetResponse struct {
 	ObjectBodies []string `json:"objectBodies"`
 }

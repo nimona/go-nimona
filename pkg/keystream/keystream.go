@@ -101,17 +101,6 @@ type (
 		// LastEvent         *Seal     `nimona:"e:m"`
 		// LastEstablishment *Seal     `nimona:"ee:m"`
 	}
-	// Note(geoah): Delegation events don't exist in KERI.
-	// _Do not use for now_
-	// This is an attempt to allow for a keystream to become a delegate
-	// after having been incepted.
-	// Moving delegation events outside of inception might cause security
-	// problems and will need to be carefully considered.
-	Delegation struct {
-		Metadata      object.Metadata `nimona:"@metadata:m,type=keri.Delegation/v0"`
-		Version       string          `nimona:"v:s"`
-		DelegatorSeal *DelegatorSeal  `nimona:"da:m"`
-	}
 )
 
 // components
@@ -234,27 +223,6 @@ func (del *DelegationInteraction) apply(s *State) error {
 		Method:   did.MethodNimona,
 		Identity: string(del.DelegateSeal.Root),
 	})
-
-	s.Sequence = del.Metadata.Sequence
-	return nil
-}
-
-func (del *Delegation) apply(s *State) error {
-	if del.Version != Version {
-		return ErrUnsupportedVersion
-	}
-
-	if del.Metadata.Sequence != s.Sequence+1 {
-		return fmt.Errorf("invalid event sequence")
-	}
-
-	if del.DelegatorSeal != nil && !del.DelegatorSeal.Root.IsEmpty() {
-		s.DelegatorRoot = del.DelegatorSeal.Root
-		s.Delegator = did.DID{
-			Method:   did.MethodNimona,
-			Identity: string(s.DelegatorRoot),
-		}
-	}
 
 	s.Sequence = del.Metadata.Sequence
 	return nil

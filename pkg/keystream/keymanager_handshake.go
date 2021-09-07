@@ -67,6 +67,7 @@ import (
 //                ■                                            ■
 //
 
+// nolint: lll
 type (
 	DelegationRequest struct {
 		Metadata                object.Metadata      `nimona:"@metadata:m,type=keystream.DelegationRequest"`
