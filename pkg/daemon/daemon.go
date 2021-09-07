@@ -149,7 +149,13 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct key stream manager
-	ksm := keystream.NewKeyManager()
+	ksm, err := keystream.NewKeyManager(
+		ntw,
+		str,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("constructing keystream manager, %w", err)
+	}
 
 	d.config = *cfg
 	d.preferences = prf
