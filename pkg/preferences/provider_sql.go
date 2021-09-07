@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	// required for sqlite3
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/migration"

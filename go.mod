@@ -17,7 +17,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/libp2p/go-nat v0.0.5
-	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
@@ -40,4 +39,5 @@ require (
 	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	modernc.org/sqlite v1.13.0
 )

@@ -1436,7 +1436,7 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 
 func tempSqlite3(t *testing.T) *sql.DB {
 	t.Helper()
-	db, err := sql.Open("sqlite3", path.Join(t.TempDir(), "sqlite3.db"))
+	db, err := sql.Open("sqlite", path.Join(t.TempDir(), "sqlite3.db"))
 	require.NoError(t, err)
 	return db
 }
