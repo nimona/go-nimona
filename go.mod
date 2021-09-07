@@ -22,12 +22,12 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/muesli/termenv v0.9.0
 	github.com/multiformats/go-multibase v0.0.3
-	github.com/multiformats/go-multicodec v0.2.0
+	github.com/multiformats/go-multicodec v0.3.0
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.11.0
-	github.com/pyroscope-io/pyroscope v0.0.37
+	github.com/pyroscope-io/pyroscope v0.0.39
 	github.com/rs/xid v1.3.0
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
@@ -35,9 +35,8 @@ require (
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vcaesar/murmur v0.20.1
 	github.com/xujiajun/nutsdb v0.6.0
-	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/tools v0.1.5
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	modernc.org/sqlite v1.13.0
 )
