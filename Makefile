@@ -15,6 +15,7 @@ BINDIR := bin
 TOOLDIR := $(BINDIR)/tools
 
 # Global environment variables for all targets
+# - go test with race requires CGO
 SHELL ?= /bin/bash
 SHELL := env \
 	GO111MODULE=on \
@@ -73,6 +74,7 @@ $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.4.0))
 $(eval $(call tool,golines,github.com/segmentio/golines@v0.1.0))
 $(eval $(call tool,go-mod-upgrade,github.com/oligot/go-mod-upgrade@v0.6.1))
+$(eval $(call tool,goreleaser,github.com/goreleaser/goreleaser@v0.177.0))
 
 $(eval $(call inttool,codegen))
 $(eval $(call inttool,community))
@@ -241,6 +243,14 @@ coverage.out: $(SOURCES)
 	-@(head -n 1 coverage.tmp-clean.out && tail -n +2 coverage.tmp-clean.out | sort) > coverage.out
 	cat coverage.out
 	-@rm -f coverage.tmp-raw.out coverage.tmp-clean.out
+
+#
+# Release
+#
+
+.PHONY: release
+release: goreleaser
+	@cd cmd; ../$(TOOLDIR)/goreleaser release --skip-publish --snapshot --rm-dist
 
 #
 # Documentation
