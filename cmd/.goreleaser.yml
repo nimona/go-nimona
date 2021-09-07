@@ -1,20 +1,50 @@
 project_name: nimona
 builds:
-  - id: linux
+  - id: bootstrap
     main: ./bootstrap
     binary: bootstrap
     env:
       - GO111MODULE=on
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     flags:
       - -tags=releaser
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
-      - 386
+  - id: keygen
+    main: ./keygen
+    binary: keygen
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+  - id: sonar
+    main: ./sonar
+    binary: sonar
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    flags:
+      - -tags=releaser
+    ldflags:
+      - -s -w -X main.Version={{.Version}} -X main.Commit={{.ShortCommit}} -X main.Date={{.Date}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
 archives:
   - name_template: '{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm
       }}v{{ .Arm }}{{ end }}'
