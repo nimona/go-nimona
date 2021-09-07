@@ -72,6 +72,7 @@ $(eval $(call tool,golds,go101.org/golds@v0.2.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.4.0))
 $(eval $(call tool,golines,github.com/segmentio/golines@v0.1.0))
+$(eval $(call tool,go-mod-upgrade,github.com/oligot/go-mod-upgrade@v0.6.1))
 
 $(eval $(call inttool,codegen))
 $(eval $(call inttool,community))
@@ -145,6 +146,12 @@ tidy:
 	$(info Tidying go modules)
 	@find . -type f -name "go.sum" -not -path "./vendor/*" -execdir rm {} \;
 	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy \;
+
+# Upgrade go modules
+.PHONY: upgrade
+upgrade: go-mod-upgrade
+	@$(TOOLDIR)/go-mod-upgrade
+	@make tidy
 
 # Tidy dependecies and make sure go.mod has been committed
 # Currently only checks the main go.mod
