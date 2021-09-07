@@ -19,6 +19,8 @@ type (
 		mutex                sync.Mutex
 		subscribeCalled      int32
 		SubscribeCalls       []network.EnvelopeSubscription
+		SubscribeOnceCalled  int32
+		SubscribeOnceCalls   []*network.Envelope
 		sendCalled           int32
 		SendCalls            []error
 		ReturnAddresses      []string
@@ -46,8 +48,11 @@ func (m *MockNetworkSimple) SubscribeOnce(
 	ctx context.Context,
 	filters ...network.EnvelopeFilter,
 ) (*network.Envelope, error) {
-	// TODO Implement SubscribeOnce()
-	panic("SubscribeOnce() is not implemented")
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	r := m.SubscribeOnceCalls[m.subscribeCalled]
+	m.subscribeCalled++
+	return r, nil
 }
 
 func (m *MockNetworkSimple) Send(
