@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1631207482136,
+  "lastUpdate": 1631212318211,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6048,6 +6048,54 @@ window.BENCHMARK_DATA = {
             "value": 33203,
             "unit": "ns/op",
             "extra": "38366 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "bf1390e5c457267ddcf225bd4572314dfa7c6223",
+          "message": "chore(deps): bump nttld/setup-ndk from 1.0.5 to 1.0.6\n\nBumps [nttld/setup-ndk](https://github.com/nttld/setup-ndk) from 1.0.5 to 1.0.6.\n- [Release notes](https://github.com/nttld/setup-ndk/releases)\n- [Commits](https://github.com/nttld/setup-ndk/compare/v1.0.5...v1.0.6)\n\n---\nupdated-dependencies:\n- dependency-name: nttld/setup-ndk\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2021-09-09T19:30:25+01:00",
+          "tree_id": "aae3633e080b3fa86351987fee896983cc10337b",
+          "url": "https://github.com/nimona/go-nimona/commit/bf1390e5c457267ddcf225bd4572314dfa7c6223"
+        },
+        "date": 1631212317144,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5546254,
+            "unit": "ns/op",
+            "extra": "201 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 413935784,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3690033816,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 38914,
+            "unit": "ns/op",
+            "extra": "30619 times\n2 procs"
           }
         ]
       }
