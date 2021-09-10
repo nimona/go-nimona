@@ -1,19 +1,11 @@
 {{- if not .Link }}
-<div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+<div class="bg-white-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
   <dt class="text-sm font-medium text-gray-500">
-    Identity DID
+    Identity (DID) {{ if .Delegated }}delegated{{ end}}
   </dt>
   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
     {{- if .DID }}
       <code class="did">{{ .DID }}</code>
-    {{- else if .Link }}
-      <form action="/identity/link" method="post">
-        <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" rows="4" name="mnemonic"></textarea>
-        <button type="submit" class="whitespace-nowrap inline-flex items-center justify-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs text-white bg-indigo-600 hover:bg-indigo-700">
-          Link
-        </button>
-        <a href="/identity">Cancel</a>
-      </form>
     {{- else }}
       <a href="/identity?link=true">Link existing identity</a>
       or
@@ -21,68 +13,69 @@
     {{- end }}
   </dd>
 </div>
-{{- else }}
-<div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+<div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
   <dt class="text-sm font-medium text-gray-500">
-    Certificate Signing Request
+    Delegates
   </dt>
   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-    <h3 class="py-2 text-lg">Certificate Singing Request</h3>
+    {{- if .DelegateDIDs }}
+      <ul>
+        {{- range .DelegateDIDs }}
+          <li><code class="did">{{ . }}</code></li>
+        {{- end }}
+      </ul>
+    {{- else }}
+      -
+    {{- end }}
+  </dd>
+</div>
+{{- else }}
+<div class="bg-white-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+  <dt class="text-sm font-medium text-gray-500">
+    Delegate Signing Request
+  </dt>
+  <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
     <ul class="ml-4">
       <li>
-        <strong>Vendor:</strong> {{ .CSR.VendorName }}
+        <strong>Vendor:</strong> {{ .DelegationRequest.RequestVendor.VendorName }}
       </li>
       <li>
-        <strong>Application:</strong> {{ .CSR.ApplicationName }}
+        <strong>Application:</strong> {{ .DelegationRequest.RequestVendor.ApplicationName }}
       </li>
       <li>
-        <strong>Permissions:</strong>
+        <strong>Requested Permissions:</strong>
         <ul class="ml-4">
-          {{- range .CSR.Permissions }}
-          <li>{{ join ", " .Types }} types, {{ join ", " .Actions }} actions</li>
-          {{- end }}
+          <li>Contexts: {{ join ", " .DelegationRequest.RequestedPermissions.Contexts }}</li>
+          <li>Actions: {{ join ", " .DelegationRequest.RequestedPermissions.Actions }}</li>
         </ul>
       </li>
     </ul>
-    <p class="pt-2">You can either scan this QR code with your identity app, or paste the CSR CID below in the app.</p>
-    <img src="/identity/csr.png?cid={{ .CSRHash }}" alt="CSR" width="256" class="pt-2">
-    <code class="pt-2 block">{{ .CSRHash }}</code>
-  </dd>
-  <dt class="text-sm font-medium text-gray-500">
-    Link using mnemonic
-  </dt>
-  <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-    <form action="/identity/link" method="post">
-      <input type="hidden" name="csr" value="{{ .CSRHash }}">
-      <textarea class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none" rows="4" name="mnemonic"></textarea>
-      <button type="submit" class="whitespace-nowrap inline-flex items-center justify-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs text-white bg-indigo-600 hover:bg-indigo-700">
-        Link
-      </button>
-      <a href="/identity">Cancel</a>
-    </form>
+    <p class="pt-2">You can either scan this QR code with your identity app, or paste the DelegationRequest CID below in the app.</p>
+    <img src="/identity/delegationRequest.png?cid={{ .DelegationRequestHash }}" alt="DelegationRequest" width="256" class="pt-2">
+    <code class="pt-2 block">{{ .DelegationRequestHash }}</code>
   </dd>
 </div>
 {{- end }}
 {{- if .DID }}
-<div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+<div class="bg-white-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
   <dt class="text-sm font-medium text-gray-500">
     Current Private Key
   </dt>
   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex">
     {{- if .PrivateBIP39 }}
-    {{- if .Show }}
-    <div>
-      <code class="block mnemonic bg-white border-gray-200 border p-2 my-2 rounded-lg">{{ .PrivateBIP39 }}</code>
-      <a href="/identity" class="text-blue-600 hover:text-blue-700">Hide mnemonic phrase</a>
-    </div>
-    {{- else }}
-    <div class="relative flex-auto">
-      <a href="/identity?show=true" class="text-blue-600 hover:text-blue-700">Show mnemonic phrase</a>
-    </div>
-    <a href="/identity/forget" class="relative block text-red-600 hover:text-red-700">
-      Forget identity
-    </a>
-    {{- end }}
+      {{- if .Show }}
+        <div>
+          <code class="block mnemonic bg-white border-gray-200 border p-2 my-2 rounded-lg">{{ .PrivateBIP39 }}</code>
+          <a href="/identity" class="text-blue-600 hover:text-blue-700">Hide mnemonic phrase</a>
+        </div>
+        {{- else }}
+        <div class="relative flex-auto">
+          <a href="/identity?show=true" class="text-blue-600 hover:text-blue-700">Show mnemonic phrase</a>
+        </div>
+        <a href="/identity/forget" class="relative block text-red-600 hover:text-red-700">
+          Forget identity
+        </a>
+      {{- end }}
     {{- else }}
       <div class="relative flex-auto">
         The identity's private key is not stored locally.
@@ -93,14 +86,47 @@
     {{- end }}
   </dd>
 </div>
-{{- end }}
-{{- if .DelegateDID }}
-<div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+<div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
   <dt class="text-sm font-medium text-gray-500">
-    Delegate DID
+    Delegate
   </dt>
-  <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex">
-    <code class="did">{{ .DelegateDID }}</code>
+  <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+    <form action="/identity" method="GET">
+      <input type="text" name="delegateRequestHash" value="">
+      <button type="submit" class="mx-4 mt-4 bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline relative">Find delegation request</button>
+    </form>
+    {{- if .DelegationRequestHash }}
+      <h3 class="py-2 text-lg">Delegate Singing Request</h3>
+      {{- if .DelegationRequestError }}
+        <div class="color-red">{{ .DelegationRequestError}} </div>
+      {{- end }}
+      {{- if .DelegationRequestSuccess }}
+        <div class="color-blue">Successfully signed delegated request</div>
+      {{- else }}
+        {{- if .DelegationRequest }}
+          <ul class="ml-4">
+            <li>
+              <strong>Vendor:</strong> {{ .DelegationRequest.RequestVendor.VendorName }}
+            </li>
+            <li>
+              <strong>Application:</strong> {{ .DelegationRequest.RequestVendor.ApplicationName }}
+            </li>
+            <li>
+              <strong>Requested Permissions:</strong>
+              <ul class="ml-4">
+                <li>Contexts: {{ join ", " .DelegationRequest.RequestedPermissions.Contexts }}</li>
+                <li>Actions: {{ join ", " .DelegationRequest.RequestedPermissions.Actions }}</li>
+              </ul>
+            </li>
+          </ul>
+          <form action="/identity" method="GET">
+            <input type="hidden" name="delegateRequestHash" value="{{ .DelegationRequestHash }}">
+            <input type="hidden" name="delegateRequestSign" value="true">
+            <button type="submit" class="mx-4 mt-4 bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline relative">Sign delegation request</button>
+          </form>
+        {{- end }}
+      {{- end }}
+    {{- end }}
   </dd>
 </div>
 {{- end }}

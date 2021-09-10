@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -30,13 +29,13 @@ import (
 	"github.com/gotailwindcss/tailwind/twpurge"
 	"github.com/shurcooL/httpfs/vfsutil"
 	"github.com/skip2/go-qrcode"
-	"github.com/xujiajun/nutsdb"
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/did"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
@@ -48,11 +47,6 @@ import (
 
 //go:embed assets/*
 var assets embed.FS
-
-const (
-	keystreamIdentityPath = "identity.nuts"
-	keystreamDelegatePath = "delegate.nuts"
-)
 
 var (
 	tplFuncMap = map[string]interface{}{
@@ -137,27 +131,6 @@ var (
 				"assets/frame.objects.html",
 			),
 	)
-	tplCertificates = template.Must(
-		template.New("base.html").
-			Funcs(sprig.FuncMap()).
-			Funcs(tplFuncMap).
-			ParseFS(
-				assets,
-				"assets/base.html",
-				"assets/inner.certificate.html",
-				"assets/frame.certificates.html",
-			),
-	)
-	tplCertificatesCsr = template.Must(
-		template.New("base.html").
-			Funcs(sprig.FuncMap()).
-			Funcs(tplFuncMap).
-			ParseFS(
-				assets,
-				"assets/base.html",
-				"assets/frame.certificates-csr.html",
-			),
-	)
 	tplObject = template.Must(
 		template.New("base.html").
 			Funcs(sprig.FuncMap()).
@@ -176,9 +149,9 @@ type (
 		PublicKey string
 	}
 	Hub struct {
-		daemon   daemon.Daemon
-		identity keystream.Controller
-		delegate keystream.Controller
+		daemon              daemon.Daemon
+		keyStreamManager    keystream.Manager
+		keyStreamController keystream.Controller
 		sync.RWMutex
 	}
 )
@@ -186,44 +159,29 @@ type (
 func New(
 	dae daemon.Daemon,
 ) (*Hub, error) {
+	ksm, err := keystream.NewKeyManager(
+		dae.Network(),
+		dae.ObjectStore().(*sqlobjectstore.Store),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct keystream manager: %w", err)
+	}
+
 	h := &Hub{
-		daemon: dae,
+		daemon:           dae,
+		keyStreamManager: ksm,
 	}
 
-	// load identity keystream
-	identityKeyStreamPath := path.Join(dae.Config().Path, keystreamIdentityPath)
-	if _, err := os.Stat(identityKeyStreamPath); err == nil {
-		opt := nutsdb.DefaultOptions
-		opt.Dir = identityKeyStreamPath
-		kvStore, err := nutsdb.Open(opt)
-		if err != nil {
-			return nil, err
-		}
-		kc, err := keystream.NewController(kvStore, dae.ObjectStore(), nil)
-		if err != nil {
-			return nil, err
-		}
-		ksm := dae.KeyStreamManager()
-		ksm.AddController(kc)
-		h.PutIdentityController(kc)
-	}
-
-	// load delegate keystream
-	delegateKeyStreamPath := path.Join(dae.Config().Path, keystreamDelegatePath)
-	if _, err := os.Stat(delegateKeyStreamPath); err == nil {
-		opt := nutsdb.DefaultOptions
-		opt.Dir = delegateKeyStreamPath
-		kvStore, err := nutsdb.Open(opt)
-		if err != nil {
-			return nil, err
-		}
-		kc, err := keystream.NewController(kvStore, dae.ObjectStore(), nil)
-		if err != nil {
-			return nil, err
-		}
-		ksm := dae.KeyStreamManager()
-		ksm.AddController(kc)
-		h.PutDelegateController(kc)
+	kscs := ksm.ListControllers()
+	switch len(kscs) {
+	case 0:
+	case 1:
+		h.keyStreamController = kscs[0]
+	default:
+		return nil, fmt.Errorf(
+			"expected 1 keystream controller, got %d",
+			len(kscs),
+		)
 	}
 
 	return h, nil
@@ -241,37 +199,25 @@ func New(
 // 	h.daemon.LocalPeer().SetPeerCertificate(r)
 // }
 
-func (h *Hub) PutIdentityController(c keystream.Controller) {
+func (h *Hub) PutKeyStreamController(c keystream.Controller) {
 	h.Lock()
 	defer h.Unlock()
-	h.identity = c
+	h.keyStreamController = c
 }
 
-func (h *Hub) PutDelegateController(c keystream.Controller) {
-	h.Lock()
-	defer h.Unlock()
-	h.delegate = c
-}
-
-func (h *Hub) GetIdentityController() keystream.Controller {
+func (h *Hub) GetKeyStreamController() keystream.Controller {
 	h.RLock()
 	defer h.RUnlock()
-	return h.identity
-}
-
-func (h *Hub) GetDelegateController() keystream.Controller {
-	h.RLock()
-	defer h.RUnlock()
-	return h.delegate
+	return h.keyStreamController
 }
 
 func (h *Hub) GetIdentityDID() *did.DID {
 	h.RLock()
 	defer h.RUnlock()
-	if h.identity == nil {
+	if h.keyStreamController == nil {
 		return nil
 	}
-	d := h.identity.GetKeyStream().GetDID()
+	d := h.keyStreamController.GetKeyStream().GetDID()
 	return &d
 }
 
@@ -357,7 +303,7 @@ func main() {
 	// 			return
 	// 		}
 	// 		if err := turboStream.SendEvent(
-	// 			"*",
+	// 			"any",
 	// 			hotwire.StreamActionReplace,
 	// 			"peer-content-types",
 	// 			tplInnerPeerContentTypes,
@@ -402,7 +348,7 @@ func main() {
 					continue
 				}
 				turboStream.SendEvent(
-					"*",
+					"any",
 					hotwire.StreamActionAppend,
 					"contacts",
 					tplInnerContact,
@@ -420,7 +366,7 @@ func main() {
 					continue
 				}
 				turboStream.SendEvent(
-					"*",
+					"any",
 					hotwire.StreamActionRemove,
 					"contact-"+r.RemoteParty.String(),
 					tplInnerContact,
@@ -452,10 +398,10 @@ func main() {
 		}
 	})
 
-	r.Get("/identity/csr.png", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/identity/delegationRequest.png", func(w http.ResponseWriter, r *http.Request) {
 		hash := r.URL.Query().Get("hash")
 		q, _ := qrcode.New(
-			"nimona://identity/csr?hash="+hash,
+			"nimona://identity/delegationRequest?hash="+hash,
 			qrcode.Medium,
 		)
 		q.DisableBorder = true
@@ -465,99 +411,129 @@ func main() {
 	})
 
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
-		linkMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("link"))
-		// peerKey := d.Network().GetPeerKey()
-		// var csr *object.CertificateRequest
-		// if linkMnemonic {
-		// 	csr = &object.CertificateRequest{
-		// 		Metadata: object.Metadata{
-		// 			Owner: peerKey.PublicKey().DID(),
-		// 		},
-		// 		Nonce:                  rand.String(12),
-		// 		VendorName:             "Nimona",
-		// 		VendorURL:              "https://nimona.io",
-		// 		ApplicationName:        "Hub",
-		// 		ApplicationDescription: "Nimona Hub",
-		// 		ApplicationURL:         "https://nimona.io/hub",
-		// 		Permissions: []object.CertificatePermission{{
-		// 			Metadata: object.Metadata{
-		// 				Owner: peerKey.PublicKey().DID(),
-		// 			},
-		// 			Types:   []string{"*"},
-		// 			Actions: []string{"*"},
-		// 		}},
-		// 	}
-		// 	csrObj := object.MustMarshal(csr)
-		// 	err := object.Sign(peerKey, csrObj)
-		// 	if err != nil {
-		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// 	if err = d.ObjectManager().Put(
-		// 		context.New(
-		// 			context.WithParent(r.Context()),
-		// 			context.WithTimeout(3*time.Second),
-		// 		),
-		// 		csrObj,
-		// 	); err != nil {
-		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// }
+		requestDelegation, _ := strconv.ParseBool(r.URL.Query().Get("link"))
+		delegateRequestHash := r.URL.Query().Get("delegateRequestHash")
+		delegateRequestSign, _ := strconv.ParseBool(r.URL.Query().Get("delegateRequestSign"))
+		peerKey := d.Network().GetPeerKey()
+
 		values := struct {
-			DID          string
-			DelegateDID  string
-			PrivateBIP39 string
-			Show         bool
-			Link         bool
-			// CSR          *object.CertificateRequest
-			CSRHash tilde.Digest
+			DID                      string
+			DelegateDIDs             []did.DID
+			Delegated                bool
+			PrivateBIP39             string
+			Show                     bool
+			Link                     bool
+			DelegationRequest        *keystream.DelegationRequest
+			DelegationRequestHash    string
+			DelegationRequestSuccess bool
+			DelegationRequestError   string
 		}{
-			Show: showMnemonic,
-			Link: linkMnemonic,
-			// CSR:  csr,
+			Show:                  showMnemonic,
+			Link:                  requestDelegation,
+			DelegationRequestHash: delegateRequestHash,
 		}
 
-		// if csr != nil {
-		// 	values.CSRHash = object.MustMarshal(csr).Hash()
-		// }
+		if requestDelegation {
+			dr, cCh, err := h.keyStreamManager.NewDelegationRequest(
+				context.Background(), // TODO: add timeout
+				keystream.DelegationRequestVendor{
+					VendorName:             "Nimona",
+					VendorURL:              "https://nimona.io",
+					ApplicationName:        "Hub",
+					ApplicationDescription: "Nimona Hub",
+					ApplicationURL:         "https://nimona.io/hub",
+				},
+				keystream.Permissions{
+					Contexts: []string{"*"},
+					Actions:  []string{"*"},
+				},
+			)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-		k := h.GetIdentityDID()
-		if k != nil {
-			values.DID = k.String()
-			values.PrivateBIP39 = h.GetIdentityController().CurrentKey().BIP39()
+			csrObj := object.MustMarshal(dr)
+			err = object.Sign(peerKey, csrObj)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			go func() {
+				cC := <-cCh
+				if cC == nil {
+					return
+				}
+				values.Link = false
+				h.PutKeyStreamController(cC)
+				kss := h.GetKeyStreamController().GetKeyStream()
+				values.DID = kss.GetDID().String()
+				values.DelegateDIDs = kss.Delegates
+				values.Delegated = !kss.Delegator.IsEmpty()
+				fmt.Println(">>> pushing")
+				turboStream.SendEvent(
+					"any",
+					hotwire.StreamActionReplace,
+					"peer-identity",
+					tplIdentityInner,
+					values,
+				) // nolint: errcheck
+				// TODO figure out how to surface errors?
+			}()
+
+			values.DelegationRequest = dr
+			values.DelegationRequestHash = csrObj.Hash().String()
 		}
 
-		d := h.GetDelegateController()
-		if d != nil {
-			values.DelegateDID = d.GetKeyStream().GetDID().String()
+		if delegateRequestHash != "" {
+			drh := tilde.Digest(delegateRequestHash)
+			ps, err := h.daemon.Resolver().Lookup(
+				context.New(context.WithTimeout(5*time.Second)),
+				resolver.LookupByHash(drh),
+			)
+
+			if err != nil || len(ps) == 0 {
+				values.DelegationRequestError = "Could not find request providers"
+				if err != nil {
+					values.DelegationRequestError += ", " + err.Error()
+				}
+			} else {
+				dro, err := h.daemon.ObjectManager().Request(
+					context.New(context.WithTimeout(time.Second)),
+					drh,
+					ps[0],
+				)
+				if err != nil {
+					values.DelegationRequestError = "Could not fetch request"
+				} else {
+					dr := &keystream.DelegationRequest{}
+					object.Unmarshal(dro, dr)
+					values.DelegationRequest = dr
+					if delegateRequestSign {
+						err := h.keyStreamManager.HandleDelegationRequest(
+							context.New(context.WithTimeout(5*time.Second)),
+							dr,
+							h.GetKeyStreamController(),
+						)
+						if err != nil {
+							values.DelegationRequestError = "Could not handle request"
+						} else {
+							values.DelegationRequestSuccess = true
+						}
+					}
+				}
+			}
 		}
 
-		// go func() {
-		// 	csrResCh := certificateutils.WaitForCertificateResponse(
-		// 		context.New(
-		// 			context.WithTimeout(15*time.Minute),
-		// 		),
-		// 		d.Network(),
-		// 		csr,
-		// 	)
-		// 	csrRes := <-csrResCh
-		// 	if csrRes == nil {
-		// 		return
-		// 	}
-		// 	h.SetPeerCertificate(csrRes)
-		// 	values.PublicKey = h.GetIdentityPublicKey().String()
-		// 	turboStream.SendEvent(
-		// 		"*",
-		// 		hotwire.StreamActionReplace,
-		// 		"peer-identity",
-		// 		tplIdentityInner,
-		// 		values,
-		// 	) // nolint: errcheck
-		// 	// TODO figure out how to surface errors?
-		// }()
+		if h.GetKeyStreamController() != nil {
+			kss := h.GetKeyStreamController().GetKeyStream()
+			values.DID = kss.GetDID().String()
+			values.DelegateDIDs = kss.Delegates
+			values.Delegated = !kss.Delegator.IsEmpty()
+			// values.PrivateBIP39 = kss.CurrentKey().BIP39()
+		}
 
 		err := tplIdentity.Execute(
 			w,
@@ -570,96 +546,14 @@ func main() {
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
-		// create a new identity key stream
-		opt := nutsdb.DefaultOptions
-		opt.Dir = path.Join(d.Config().Path, keystreamIdentityPath)
-		kvStore, err := nutsdb.Open(opt)
+		ikc, err := h.keyStreamManager.NewController(nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		ikc, err := keystream.NewController(kvStore, d.ObjectStore(), nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		ksm := d.KeyStreamManager()
-		ksm.AddController(ikc)
-		h.PutIdentityController(ikc)
-
-		// create a new delegate keystream for our peer
-		opt = nutsdb.DefaultOptions
-		opt.Dir = path.Join(d.Config().Path, keystreamDelegatePath)
-		kvStore, err = nutsdb.Open(opt)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		ds := &keystream.DelegatorSeal{
-			Root:     ikc.GetKeyStream().Root,
-			Sequence: ikc.GetKeyStream().Sequence + 1,
-		}
-		dkc, err := keystream.NewController(kvStore, d.ObjectStore(), ds)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		ksm.AddController(dkc)
-		h.PutDelegateController(dkc)
-
-		// add delegation event
-		_, err = ikc.Delegate(ikc.GetKeyStream().Root, keystream.Permissions{})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		h.PutKeyStreamController(ikc)
 
 		http.Redirect(w, r, "/identity", http.StatusFound)
-	})
-
-	r.Post("/identity/link", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
-		// k, err := crypto.NewEd25519PrivateKeyFromBIP39(
-		// 	r.PostFormValue("mnemonic"),
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csrHash := tilde.Digest(r.PostFormValue("csr"))
-		// if err = d.ObjectStore().Pin(csrHash); err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csrObj, err := d.ObjectStore().Get(csrHash)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csr := &object.CertificateRequest{}
-		// err = object.Unmarshal(csrObj, csr)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csrRes, err := object.NewCertificate(k, *csr, true, "Signed by Hub")
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// err = d.ObjectStore().Put(object.MustMarshal(csrRes))
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// err = d.ObjectStore().Pin(object.MustMarshal(csrRes).Hash())
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// h.SetPeerCertificate(csrRes)
-		// h.PutIdentityPrivateKey(k)
-		// http.Redirect(w, r, "/identity", http.StatusFound)
 	})
 
 	r.Get("/identity/forget", func(w http.ResponseWriter, r *http.Request) {
@@ -980,180 +874,6 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-	})
-
-	r.Get("/certificates", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
-		// values := struct {
-		// 	URL                 string
-		// 	HasIdentity         bool
-		// 	CertificateReponses []*object.CertificateResponse
-		// }{
-		// 	URL:                 r.URL.String(),
-		// 	HasIdentity:         h.GetIdentityPublicKey() != nil,
-		// 	CertificateReponses: []*object.CertificateResponse{},
-		// }
-		// if h.GetIdentityPublicKey() == nil {
-		// 	err = tplCertificates.Execute(
-		// 		w,
-		// 		values,
-		// 	)
-		// 	if err != nil {
-		// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// 	return
-		// }
-		// reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
-		// 	sqlobjectstore.FilterByObjectType(
-		// 		object.CertificateResponseType,
-		// 	),
-		// 	sqlobjectstore.FilterByOwner(
-		// 		*h.GetIdentityPublicKey(),
-		// 	),
-		// )
-		// if err != nil && err != objectstore.ErrNotFound {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-
-		// if err != objectstore.ErrNotFound {
-		// 	for {
-		// 		o, err := reader.Read()
-		// 		if err != nil {
-		// 			break
-		// 		}
-		// 		crtRes := &object.CertificateResponse{}
-		// 		if err := object.Unmarshal(o, crtRes); err != nil {
-		// 			continue
-		// 		}
-		// 		values.CertificateReponses = append(
-		// 			values.CertificateReponses,
-		// 			crtRes,
-		// 		)
-		// 	}
-		// }
-		// err = tplCertificates.Execute(
-		// 	w,
-		// 	values,
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-	})
-
-	r.Post("/certificates/csr", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
-		// csrHash := tilde.Digest(r.PostFormValue("csrHash"))
-		// csrProviders, err := d.Resolver().Lookup(
-		// 	context.New(
-		// 		context.WithParent(r.Context()),
-		// 		context.WithTimeout(3*time.Second),
-		// 	),
-		// 	resolver.LookupByHash(csrHash),
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// if len(csrProviders) == 0 {
-		// 	http.Error(w, "no results", http.StatusNotFound)
-		// 	return
-		// }
-		// csrObj, err := d.ObjectManager().Request(
-		// 	context.New(
-		// 		context.WithParent(r.Context()),
-		// 		context.WithTimeout(3*time.Second),
-		// 	),
-		// 	csrHash,
-		// 	csrProviders[0],
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// _, err = d.ObjectManager().Put(
-		// 	context.New(
-		// 		context.WithParent(r.Context()),
-		// 		context.WithTimeout(time.Second),
-		// 	),
-		// 	csrObj,
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csr := &object.CertificateRequest{}
-		// err = object.Unmarshal(csrObj, csr)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// values := struct {
-		// 	URL                string
-		// 	CertificateRequest *object.CertificateRequest
-		// }{
-		// 	URL:                r.URL.String(),
-		// 	CertificateRequest: csr,
-		// }
-		// err = tplCertificatesCsr.Execute(
-		// 	w,
-		// 	values,
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-	})
-
-	r.Post("/certificates/csr-sign", func(w http.ResponseWriter, r *http.Request) {
-		// TODO(geoah): fix identity
-		// csrHash := tilde.Digest(r.PostFormValue("csrHash"))
-		// csrObj, err := d.ObjectStore().Get(csrHash)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// err = d.ObjectStore().Pin(csrHash)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// csr := &object.CertificateRequest{}
-		// err = object.Unmarshal(csrObj, csr)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// privateIdentityKey := h.GetIdentityPrivateKey()
-		// if privateIdentityKey == nil {
-		// 	http.Error(w, "no private key", http.StatusInternalServerError)
-		// 	return
-		// }
-		// csrRes, err := object.NewCertificate(
-		// 	*privateIdentityKey,
-		// 	*csr,
-		// 	true,
-		// 	"",
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// err = d.Network().Send(
-		// 	context.New(
-		// 		context.WithParent(r.Context()),
-		// 		context.WithTimeout(3*time.Second),
-		// 	),
-		// 	object.MustMarshal(csrRes),
-		// 	csr.Metadata.Signature.Signer,
-		// )
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-		// http.Redirect(w, r, "/certificates", http.StatusFound)
 	})
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {
