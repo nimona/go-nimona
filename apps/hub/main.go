@@ -850,20 +850,18 @@ func main() {
 			Type: obj.Type,
 			JSON: template.HTML(prettyJSON(string(body))),
 		}
-		if strings.HasPrefix(obj.Type, "stream:") {
-			values.StreamRoot = obj.Hash().String()
-		} else if !obj.Metadata.Root.IsEmpty() {
+		if !obj.Metadata.Root.IsEmpty() {
 			values.StreamRoot = obj.Metadata.Root.String()
+		} else {
+			values.StreamRoot = obj.Hash().String()
 		}
-		if values.StreamRoot != "" {
-			or, err := d.ObjectStore().GetByStream(
-				tilde.Digest(values.StreamRoot),
-			)
+		or, err := d.ObjectStore().GetByStream(
+			tilde.Digest(values.StreamRoot),
+		)
+		if err == nil {
+			os, err := object.ReadAll(or)
 			if err == nil {
-				os, err := object.ReadAll(or)
-				if err == nil {
-					values.StreamObjects = os
-				}
+				values.StreamObjects = os
 			}
 		}
 		err = tplObject.Execute(
