@@ -80,3 +80,7 @@ li.stream-child, li.stream-child code {
 .object-type {
     @apply px-2 inline-flex text-xs leading-5 font-semibold rounded bg-green-100 text-green-800
 }
+
+.selected {
+    @apply font-bold;
+}
