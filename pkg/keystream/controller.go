@@ -186,13 +186,32 @@ func (c *controller) Delegate(
 
 	d := &DelegationInteraction{
 		Metadata: object.Metadata{
+			Owner: c.state.GetDID(),
+			Root:  c.state.Root,
+			Parents: object.Parents{
+				"*": []tilde.Digest{
+					c.state.latestObject,
+				},
+			},
 			Sequence: c.state.Sequence + 1,
 		},
 		Version:      Version,
 		DelegateSeal: ds,
 	}
 
-	err := d.apply(c.state)
+	do, err := object.Marshal(d)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal object, %w", err)
+	}
+
+	d.Metadata.Signature = do.Metadata.Signature
+
+	err = c.objectStore.Put(do)
+	if err != nil {
+		return nil, fmt.Errorf("unable to put object, %w", err)
+	}
+
+	err = d.apply(c.state)
 	if err != nil {
 		return nil, fmt.Errorf("unable to apply delegation on state, %w", err)
 	}

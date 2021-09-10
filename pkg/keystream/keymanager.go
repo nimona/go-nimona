@@ -24,6 +24,7 @@ type (
 		NewController(*DelegatorSeal) (Controller, error)
 		NewDelegationRequest(
 			context.Context,
+			DelegationRequestVendor,
 			Permissions,
 		) (*DelegationRequest, chan Controller, error)
 		HandleDelegationRequest(
