@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/main.css" />
     <script type="text/javascript">
       if (window["EventSource"] && window["Turbo"]) {
-        Turbo.connectStreamSource(new EventSource("/events"));
+        Turbo.connectStreamSource(new EventSource("/events?group=any"));
       } else {
         console.warn("events not available");
       }
