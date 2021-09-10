@@ -140,7 +140,7 @@ func New(
 					r.hashes.Put(event.ObjectHash)
 					r.announceSelf()
 				case sqlobjectstore.ObjectRemoved:
-					r.hashes.Put(event.ObjectHash)
+					r.hashes.Delete(event.ObjectHash)
 					r.announceSelf()
 				}
 			}
