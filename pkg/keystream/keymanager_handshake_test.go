@@ -52,6 +52,7 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	// create new delegation request
 	dr, c1ch, err := m1.NewDelegationRequest(
 		context.Background(), // no timeout
+		DelegationRequestVendor{},
 		Permissions{},
 	)
 	require.NoError(t, err)

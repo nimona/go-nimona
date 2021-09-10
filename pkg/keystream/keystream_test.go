@@ -99,6 +99,7 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 			RotatedKeys: []crypto.PublicKey{
 				k0.PublicKey(),
 			},
+			latestObject: object.MustMarshal(t0Rotation).Hash(),
 		},
 	}}
 	for _, tt := range tests {

@@ -28,9 +28,10 @@ const (
 // - 0 the minor version code
 // - Serialization encoding and size are no longer used
 const (
-	Version       = "~KERI00"
-	InceptionType = "keri.Inception/v0"
-	RotationType  = "keri.Rotation/v0"
+	Version                   = "~KERI00"
+	InceptionType             = "keri.Inception/v0"
+	RotationType              = "keri.Rotation/v0"
+	DelegationInteractionType = "keri.DelegationInteraction/v0"
 )
 
 // events
@@ -127,8 +128,11 @@ type (
 		// Digest    string `nimona:"d:s"`
 	}
 	// TODO: implement permissions
-	Permissions struct{}
-	Config      struct {
+	Permissions struct {
+		Contexts []string `nimona:"c:as"`
+		Actions  []string `nimona:"a:as"`
+	}
+	Config struct {
 		Trait Trait `nimona:"trait:s"`
 	}
 )
@@ -247,10 +251,15 @@ type (
 		// Delegates
 		DelegateRoots []tilde.Digest
 		Delegates     []did.DID
+		// Local
+		latestObject tilde.Digest
 	}
 )
 
 func (s State) GetDID() did.DID {
+	if !s.Delegator.IsEmpty() {
+		return s.Delegator
+	}
 	return did.DID{
 		Method:   did.MethodNimona,
 		Identity: string(s.Root),
@@ -280,6 +289,10 @@ func FromStream(
 			v = &Inception{}
 		case RotationType:
 			v = &Rotation{}
+		case DelegationInteractionType:
+			v = &DelegationInteraction{}
+		default:
+			return nil, fmt.Errorf("unsupported event type, %s", o.Type)
 		}
 
 		err = object.Unmarshal(o, v)
@@ -291,6 +304,8 @@ func FromStream(
 		if err != nil {
 			return nil, fmt.Errorf("error applying event, %w", err)
 		}
+
+		s.latestObject = o.Hash()
 
 		// TODO: before or after applying each event we should be verifying
 		// that any seals are actually valid by fetching the stream.

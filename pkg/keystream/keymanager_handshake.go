@@ -70,9 +70,18 @@ import (
 // nolint: lll
 type (
 	DelegationRequest struct {
-		Metadata                object.Metadata      `nimona:"@metadata:m,type=keystream.DelegationRequest"`
-		InitiatorConnectionInfo *peer.ConnectionInfo `nimona:"initiatorConnectionInfo:m"`
-		RequestedPermissions    Permissions          `nimona:"requestedPermissions:m"`
+		Metadata                object.Metadata         `nimona:"@metadata:m,type=keystream.DelegationRequest"`
+		InitiatorConnectionInfo *peer.ConnectionInfo    `nimona:"initiatorConnectionInfo:m"`
+		RequestVendor           DelegationRequestVendor `nimona:"requestVendor:m"`
+		RequestedPermissions    Permissions             `nimona:"requestedPermissions:m"`
+		Nonce                   string                  `nimona:"nonce:s"`
+	}
+	DelegationRequestVendor struct {
+		VendorName             string `nimona:"vendorName:s"`
+		VendorURL              string `nimona:"vendorURL:s"`
+		ApplicationName        string `nimona:"applicationName:s"`
+		ApplicationDescription string `nimona:"applicationDescription:s"`
+		ApplicationURL         string `nimona:"applicationURL:s"`
 	}
 	DelegationOffer struct {
 		Metadata      object.Metadata `nimona:"@metadata:m,type=keystream.DelegationOffer"`
@@ -87,15 +96,35 @@ type (
 // NewDelegationRequest creates a new Delegation Request object.
 func (m *manager) NewDelegationRequest(
 	ctx context.Context,
-	requestedPermissions Permissions,
+	vendor DelegationRequestVendor,
+	permissions Permissions,
 ) (*DelegationRequest, chan Controller, error) {
+	ck := m.network.GetPeerKey()
 	ci := m.network.GetConnectionInfo()
 	dr := &DelegationRequest{
 		Metadata: object.Metadata{
-			Owner: ci.PublicKey.DID(),
+			Owner: ck.PublicKey().DID(),
+			// Timestamp: time.Now().Format(time.RFC3339),
 		},
+		// Nonce:                   rand.String(16),
 		InitiatorConnectionInfo: ci,
-		RequestedPermissions:    requestedPermissions,
+		RequestVendor:           vendor,
+		RequestedPermissions:    permissions,
+	}
+
+	drObj, err := object.Marshal(dr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal delegation request: %w", err)
+	}
+
+	err = object.Sign(m.network.GetPeerKey(), drObj)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to sign delegation request: %w", err)
+	}
+
+	err = m.objectStore.Put(drObj)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to store delegation request: %w", err)
 	}
 
 	res := make(chan Controller)
@@ -108,20 +137,25 @@ func (m *manager) NewDelegationRequest(
 			network.FilterByObjectType("keystream.DelegationOffer"),
 		)
 		if err != nil {
+			// TODO: handle error
 			return
 		}
 		do := &DelegationOffer{}
 		err = object.Unmarshal(env.Payload, do)
 		if err != nil {
+			// TODO: handle error
 			return
 		}
 		// verify Offer
-		if dr.RequestedPermissions != do.DelegatorSeal.Permissions {
-			return
-		}
+		// TODO compare offer and request
+		// if dr.RequestedPermissions != do.DelegatorSeal.Permissions {
+		// TODO: handle error
+		// return
+		// }
 		// create new KeyStream
 		ctrl, err := m.NewController(&do.DelegatorSeal)
 		if err != nil {
+			// TODO: handle error
 			return
 		}
 		// send back the root hash of the keystream
@@ -131,11 +165,17 @@ func (m *manager) NewDelegationRequest(
 			},
 			DelegateSeal: DelegateSeal{
 				Root:        ctrl.GetKeyStream().Root,
-				Permissions: requestedPermissions,
+				Permissions: permissions,
 			},
 		}
 		verObj, err := object.Marshal(ver)
 		if err != nil {
+			// TODO: handle error
+			return
+		}
+		err = m.objectStore.Put(verObj)
+		if err != nil {
+			// TODO: handle error
 			return
 		}
 		err = m.network.Send(
@@ -144,6 +184,7 @@ func (m *manager) NewDelegationRequest(
 			env.Sender,
 		)
 		if err != nil {
+			// TODO: handle error
 			return
 		}
 		// and pass the controller to the caller
