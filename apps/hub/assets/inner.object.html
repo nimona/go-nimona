@@ -21,7 +21,7 @@
     {{- else }}
       <a href="/objects/{{ .Metadata.Root.String }}" target="_top">
         <code class="cid">
-          {{ lastN .Metadata.Root.String 24 }}
+          {{ .Metadata.Root.String }}
         </code>
       </a>
     {{- end}}
