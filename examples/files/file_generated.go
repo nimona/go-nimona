@@ -12,5 +12,5 @@ const FileType = "nimona.io/File"
 type File struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/File"`
 	Name     string          `nimona:"name:s"`
-	Blob     tilde.Digest    `nimona:"blob:s"`
+	Blob     tilde.Digest    `nimona:"blob:r"`
 }
