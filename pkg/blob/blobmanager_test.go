@@ -183,10 +183,10 @@ func Test_manager_ImportFromFile(t *testing.T) {
 				Put(gomock.Any(), &object.Object{
 					Type: blob.BlobType,
 					Data: tilde.Map{
-						"chunks": tilde.StringArray{
-							tilde.String(chunk0.Hash()),
-							tilde.String(chunk1.Hash()),
-							tilde.String(chunk2.Hash()),
+						"chunks": tilde.DigestArray{
+							chunk0.Hash(),
+							chunk1.Hash(),
+							chunk2.Hash(),
 						},
 					},
 				}).
