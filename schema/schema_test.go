@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/tilde"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_Self(t *testing.T) {
