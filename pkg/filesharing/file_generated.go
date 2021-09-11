@@ -12,7 +12,7 @@ const FileType = "nimona.io/File"
 type File struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/File"`
 	Name     string          `nimona:"name:s"`
-	Chunks   []tilde.Digest  `nimona:"chunks:as"`
+	Chunks   []tilde.Digest  `nimona:"chunks:ar"`
 }
 
 const TransferDoneType = "nimona.io/TransferDone"

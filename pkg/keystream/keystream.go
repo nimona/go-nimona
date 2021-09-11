@@ -46,7 +46,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Digest     `nimona:"n:s"`
+		NextKeyDigest tilde.Digest     `nimona:"n:r"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -67,7 +67,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Digest     `nimona:"n:s"`
+		NextKeyDigest tilde.Digest     `nimona:"n:r"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -91,7 +91,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		// Key           crypto.PublicKey `nimona:"k:s"`
-		// NextKeyDigest tilde.Digest       `nimona:"n:s"`
+		// NextKeyDigest tilde.Digest       `nimona:"n:r"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -120,7 +120,7 @@ type (
 		Metadata object.Metadata `nimona:"@metadata:m,type=keri.DelegatorSeal/v0"`
 		Root     tilde.Digest    `nimona:"rd:r"`
 		// Type      SealType `nimona:"-"`
-		// Delegation  tilde.Digest      `nimona:"d:s"`
+		// Delegation  tilde.Digest      `nimona:"d:r"`
 		Permissions Permissions `nimona:"p:m"`
 		// Prefix    string `nimona:"i:s"`
 		Sequence uint64 `nimona:"s:u"`

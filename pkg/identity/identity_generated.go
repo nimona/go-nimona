@@ -15,7 +15,7 @@ type Profile struct {
 	Version   int64           `nimona:"version:i"`
 	Timestamp string          `nimona:"timestamp:s"`
 	Name      string          `nimona:"name:s"`
-	Image     tilde.Digest    `nimona:"image:s"`
+	Image     tilde.Digest    `nimona:"image:r"`
 }
 
 const ProfileStreamRootType = "stream:nimona.io/identity.Profile"

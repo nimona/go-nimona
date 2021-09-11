@@ -18,5 +18,5 @@ const BlobType = "nimona.io/Blob"
 
 type Blob struct {
 	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/Blob"`
-	Chunks   []tilde.Digest  `nimona:"chunks:as"`
+	Chunks   []tilde.Digest  `nimona:"chunks:ar"`
 }

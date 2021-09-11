@@ -11,7 +11,7 @@ const RequestType = "nimona.io/Request"
 type Request struct {
 	Metadata   Metadata     `nimona:"@metadata:m,type=nimona.io/Request"`
 	RequestID  string       `nimona:"requestID:s"`
-	ObjectHash tilde.Digest `nimona:"objectHash:s"`
+	ObjectHash tilde.Digest `nimona:"objectHash:r"`
 }
 
 const ResponseType = "nimona.io/Response"

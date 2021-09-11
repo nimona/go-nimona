@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"strings"
 	"text/template"
-
-	"nimona.io/pkg/tilde"
 )
 
 var primitives = map[string]struct {
@@ -15,7 +13,7 @@ var primitives = map[string]struct {
 	IsPrimary bool
 }{
 	"nimona.io/tilde.Digest": {
-		Hint:      "s",
+		Hint:      "r",
 		Type:      "tilde.Digest",
 		IsObject:  false,
 		IsPrimary: true,
@@ -72,199 +70,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 				h = "a" + h
 			}
 			return m.Tag + ":" + h
-		},
-		"fromPrimitive": func(m Member) string {
-			h := m.Hint
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			switch tilde.Hint(h) {
-			case tilde.BoolHint:
-				return "object.Bool"
-			case tilde.DataHint:
-				return "object.Data"
-			case tilde.FloatHint:
-				return "object.Float"
-			case tilde.IntHint:
-				return "object.Int"
-			case tilde.MapHint:
-				return "tilde.Map"
-			case tilde.StringHint:
-				return "tilde.String"
-			case tilde.UintHint:
-				return "object.Uint"
-			case tilde.BoolArrayHint:
-				return "object.ToBoolArray"
-			case tilde.DataArrayHint:
-				return "object.ToDataArray"
-			case tilde.FloatArrayHint:
-				return "object.ToFloatArray"
-			case tilde.IntArrayHint:
-				return "object.ToIntArray"
-			case tilde.MapArrayHint:
-				return "object.ToMapArray"
-			case tilde.StringArrayHint:
-				return "object.ToStringArray"
-			case tilde.UintArrayHint:
-				return "object.ToUintArray"
-			}
-			panic("unknown hint in fromPrimitive " + m.Hint)
-		},
-		"toPrimitive": func(m Member) string {
-			h := m.Hint
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			switch tilde.Hint(h) {
-			case tilde.BoolHint:
-				return "bool"
-			case tilde.DataHint:
-				return "[]byte"
-			case tilde.FloatHint:
-				return "float64"
-			case tilde.IntHint:
-				return "int64"
-			case tilde.StringHint:
-				return "string"
-			case tilde.UintHint:
-				return "uint64"
-			case tilde.MapHint:
-				return "tilde.Map"
-			case tilde.BoolArrayHint:
-				return "object.FromBoolArray"
-			case tilde.DataArrayHint:
-				return "object.FromDataArray"
-			case tilde.FloatArrayHint:
-				return "object.FromFloatArray"
-			case tilde.IntArrayHint:
-				return "object.FromIntArray"
-			case tilde.MapArrayHint:
-				return "object.FromMapArray"
-			case tilde.StringArrayHint:
-				return "object.FromStringArray"
-			case tilde.UintArrayHint:
-				return "object.FromUintArray"
-			}
-			panic("unknown hint in toPrimitive " + m.Hint)
-		},
-		"primitive": func(m Member) string {
-			h := m.Hint
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			switch tilde.Hint(h) {
-			case tilde.BoolHint:
-				return "object.Bool"
-			case tilde.DataHint:
-				return "object.Data"
-			case tilde.FloatHint:
-				return "object.Float"
-			case tilde.IntHint:
-				return "object.Int"
-			case tilde.StringHint:
-				return "tilde.String"
-			case tilde.MapHint:
-				return "tilde.Map"
-			case tilde.UintHint:
-				return "object.Uint"
-			case tilde.BoolArrayHint:
-				return "object.BoolArray"
-			case tilde.DataArrayHint:
-				return "object.DataArray"
-			case tilde.FloatArrayHint:
-				return "object.FloatArray"
-			case tilde.IntArrayHint:
-				return "object.IntArray"
-			case tilde.ObjectArrayHint:
-				return "object.ObjectArray"
-			case tilde.MapArrayHint:
-				return "object.MapArray"
-			case tilde.StringArrayHint:
-				return "object.StringArray"
-			case tilde.UintArrayHint:
-				return "object.UintArray"
-			}
-			panic("unknown hint in primitive " + m.Hint)
-		},
-		"primitiveSingular": func(m Member) string {
-			h := m.Hint
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			switch tilde.Hint(h) {
-			case tilde.BoolArrayHint:
-				return "object.Bool"
-			case tilde.DataArrayHint:
-				return "object.Data"
-			case tilde.FloatArrayHint:
-				return "object.Float"
-			case tilde.IntArrayHint:
-				return "object.Int"
-			case tilde.MapArrayHint:
-				return "tilde.Map"
-			case tilde.ObjectArrayHint:
-				return ""
-			case tilde.StringArrayHint:
-				return "tilde.String"
-			case tilde.UintArrayHint:
-				return "object.Uint"
-			}
-			panic("unknown hint in primitiveSingular " + m.Hint)
-		},
-		"marshalFunc": func(m Member) string {
-			switch m.SimpleType {
-			case "data":
-				return "MarshalBytes"
-			default:
-				return "Marshal" + strings.Title(m.SimpleType)
-			}
-		},
-		"unmarshalFunc": func(m Member) string {
-			switch m.SimpleType {
-			case "data":
-				return "UnmarshalBytes"
-			default:
-				return "Unmarshal" + strings.Title(m.SimpleType)
-			}
-		},
-		"unmarshalArg": func(m Member) string {
-			h := m.Hint
-			if m.IsRepeated {
-				h = "a" + h
-			}
-			switch tilde.Hint(h) {
-			case tilde.BoolHint:
-				return "bool"
-			case tilde.DataHint:
-				return "[]byte"
-			case tilde.FloatHint:
-				return "float64"
-			case tilde.IntHint:
-				return "int64"
-			case tilde.StringHint:
-				return "string"
-			case tilde.UintHint:
-				return "uint64"
-			case tilde.MapHint:
-				return "tilde.Map"
-			case tilde.BoolArrayHint:
-				return "bool"
-			case tilde.DataArrayHint:
-				return "[]byte"
-			case tilde.FloatArrayHint:
-				return "float64"
-			case tilde.IntArrayHint:
-				return "int64"
-			case tilde.MapArrayHint:
-				return "tilde.Map"
-			case tilde.ObjectArrayHint:
-				return ""
-			case tilde.StringArrayHint:
-				return "string"
-			case tilde.UintArrayHint:
-				return "uint64"
-			}
-			panic("unknown primitive " + m.Hint)
 		},
 		"structName": func(name string) string {
 			ps := strings.Split(name, "/")
@@ -345,7 +150,6 @@ func Generate(doc *Document, output string) ([]byte, error) {
 
 	doc.Imports["json"] = "encoding/json"
 	doc.Imports["tilde"] = "nimona.io/tilde"
-	doc.Imports["hint"] = "nimona.io/object/hint"
 
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"
@@ -379,11 +183,4 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	return []byte(res), nil
-}
-
-// lastSegment returns the last part of a namespace,
-// ie lastSegment(nimona.io/stream) returns stream
-func lastSegment(s string) string {
-	ps := strings.Split(s, "/")
-	return ps[len(ps)-1]
 }
