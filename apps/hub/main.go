@@ -879,12 +879,16 @@ func main() {
 	}
 }
 
-var prettyJSONReg = regexp.MustCompile(`(?mi):r": "([a-zA-Z0-9]{44})"`)
+var prettyJSONReg = regexp.MustCompile(`(?mi)"([a-zA-Z0-9]{44})"`)
 
 func prettyJSON(b string) string {
 	matches := prettyJSONReg.FindAllStringSubmatch(b, -1)
+	hashes := map[string]struct{}{}
 	for _, match := range matches {
 		hash := strings.Trim(match[1], `"`)
+		hashes[hash] = struct{}{}
+	}
+	for hash := range hashes {
 		pretty := `<a href="/objects/` + hash + `" target="_top">` + hash + `</a>`
 		b = strings.Replace(b, hash, pretty, -1)
 	}
