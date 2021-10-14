@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634254408891,
+  "lastUpdate": 1634255270597,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6240,6 +6240,54 @@ window.BENCHMARK_DATA = {
             "value": 39133,
             "unit": "ns/op",
             "extra": "29848 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "128be5b99636b76166d5e4e04870b48ec2d0c4fe",
+          "message": "chore(deps): upgrade x tools to v0.1.7",
+          "timestamp": "2021-10-15T00:41:23+01:00",
+          "tree_id": "fed00f9c0fed48933b82612e2e5d28e68d728bd4",
+          "url": "https://github.com/nimona/go-nimona/commit/128be5b99636b76166d5e4e04870b48ec2d0c4fe"
+        },
+        "date": 1634255269617,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5031085,
+            "unit": "ns/op",
+            "extra": "252 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 339328120,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3037449766,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 31775,
+            "unit": "ns/op",
+            "extra": "36922 times\n2 procs"
           }
         ]
       }
