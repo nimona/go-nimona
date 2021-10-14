@@ -1,6 +1,7 @@
 package nat
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,12 +13,15 @@ import (
 	"nimona.io/pkg/log"
 )
 
-func MapExternalPort(localPort int) (address string, rm func(), err error) {
+func MapExternalPort(
+	ctx context.Context,
+	localPort int,
+) (address string, rm func(), err error) {
 	if skip, _ := strconv.ParseBool(os.Getenv("NIMONA_UPNP_DISABLE")); skip {
 		return "", nil, errors.Error("skipped")
 	}
 	// connect to router
-	gw, err := nat.DiscoverGateway()
+	gw, err := nat.DiscoverGateway(ctx)
 	if err != nil {
 		return "", nil, err
 	}
