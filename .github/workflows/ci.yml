@@ -13,7 +13,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
-          version: v1.32
+          version: v1.42.1
         env:
           VERBOSE: "true"
 

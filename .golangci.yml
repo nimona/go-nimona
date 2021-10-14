@@ -31,7 +31,7 @@ linters-settings:
     min-complexity: 20
   goimports:
     local-prefixes: nimona.io
-  golint:
+  revive:
     min-confidence: 0
   gomnd:
     settings:
@@ -59,7 +59,7 @@ linters:
     - gochecknoinits
     - gocritic
     - goimports
-    - golint
+    - revive
     - goprintffuncname
     - gosec
     - gosimple
@@ -68,7 +68,7 @@ linters:
     - lll
     - misspell
     - nakedret
-    - scopelint
+    - exportloopref
     - staticcheck
     - structcheck
     - typecheck
@@ -109,7 +109,7 @@ issues:
         - lll
       source: "`json:"
     - linters:
-        - golint
+        - revive
       text: "returns unexported type"
     - linters:
         - gocritic
