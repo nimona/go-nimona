@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1631212318211,
+  "lastUpdate": 1634254092747,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6096,6 +6096,54 @@ window.BENCHMARK_DATA = {
             "value": 38914,
             "unit": "ns/op",
             "extra": "30619 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "0fab845c7e0fa838f8c8ab6e963956c820aca2c1",
+          "message": "chore(deps): upgrade libp2p to v0.1.0",
+          "timestamp": "2021-10-15T00:26:41+01:00",
+          "tree_id": "d0850be1dcd8dcad190f65733200d29485f06e44",
+          "url": "https://github.com/nimona/go-nimona/commit/0fab845c7e0fa838f8c8ab6e963956c820aca2c1"
+        },
+        "date": 1634254091683,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5240650,
+            "unit": "ns/op",
+            "extra": "198 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 400358917,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3419657957,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 37349,
+            "unit": "ns/op",
+            "extra": "33470 times\n2 procs"
           }
         ]
       }
