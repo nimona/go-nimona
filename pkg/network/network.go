@@ -302,7 +302,10 @@ func (w *network) Listen(
 		)
 	}
 	if listenConfig.upnp {
-		externalAddress, rm, err := nat.MapExternalPort(int(localPort))
+		externalAddress, rm, err := nat.MapExternalPort(
+			context.Background(),
+			int(localPort),
+		)
 		if err != nil {
 			// TODO return error or simply log it?
 			logger.Warn(
