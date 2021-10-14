@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634254357168,
+  "lastUpdate": 1634254408891,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6192,6 +6192,54 @@ window.BENCHMARK_DATA = {
             "value": 41244,
             "unit": "ns/op",
             "extra": "29851 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "5233fd9eb5b9926ca1a7a2423f95f8c7e240b05a",
+          "message": "chore(deps): upgrade murmur to v0.20.0",
+          "timestamp": "2021-10-15T00:27:58+01:00",
+          "tree_id": "559a48d431299bf7ed78dafd7e7cc988e83a4026",
+          "url": "https://github.com/nimona/go-nimona/commit/5233fd9eb5b9926ca1a7a2423f95f8c7e240b05a"
+        },
+        "date": 1634254407296,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6157117,
+            "unit": "ns/op",
+            "extra": "165 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 503067714,
+            "unit": "ns/op",
+            "extra": "2 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3981132410,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 39133,
+            "unit": "ns/op",
+            "extra": "29848 times\n2 procs"
           }
         ]
       }
