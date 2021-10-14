@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634254092747,
+  "lastUpdate": 1634254357168,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6144,6 +6144,54 @@ window.BENCHMARK_DATA = {
             "value": 37349,
             "unit": "ns/op",
             "extra": "33470 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "a34661cf4c07bebad989c2ff502475307ef5e94e",
+          "message": "chore(deps): upgrade pyroscope to v0.2.0",
+          "timestamp": "2021-10-15T00:27:32+01:00",
+          "tree_id": "0194ce78b6c83e5ec21995954aecd7a00cd5e449",
+          "url": "https://github.com/nimona/go-nimona/commit/a34661cf4c07bebad989c2ff502475307ef5e94e"
+        },
+        "date": 1634254355639,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6748238,
+            "unit": "ns/op",
+            "extra": "189 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 452267458,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3916649580,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 41244,
+            "unit": "ns/op",
+            "extra": "29851 times\n2 procs"
           }
         ]
       }
