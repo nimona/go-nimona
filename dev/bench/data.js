@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634255270597,
+  "lastUpdate": 1634256638553,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6288,6 +6288,54 @@ window.BENCHMARK_DATA = {
             "value": 31775,
             "unit": "ns/op",
             "extra": "36922 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "848a8c3741321236f184dcad92898a55462ad4d4",
+          "message": "chore(deps): bump golangci-lint to v1.42.1",
+          "timestamp": "2021-10-15T01:09:13+01:00",
+          "tree_id": "0225ea1343ea7ebea982b7659c9597a8abac41de",
+          "url": "https://github.com/nimona/go-nimona/commit/848a8c3741321236f184dcad92898a55462ad4d4"
+        },
+        "date": 1634256637434,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 4991188,
+            "unit": "ns/op",
+            "extra": "236 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 338039004,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3043219949,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 31614,
+            "unit": "ns/op",
+            "extra": "37568 times\n2 procs"
           }
         ]
       }
