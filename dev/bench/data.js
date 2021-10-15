@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634256638553,
+  "lastUpdate": 1634257086860,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6336,6 +6336,54 @@ window.BENCHMARK_DATA = {
             "value": 31614,
             "unit": "ns/op",
             "extra": "37568 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "a83b36b96c818983a2ed9015b606c37b6e45c3ac",
+          "message": "chore(deps): bump golang to 1.17.2",
+          "timestamp": "2021-10-15T01:16:37+01:00",
+          "tree_id": "fb0ffb67afc23731270cfca796e7500fa67ffc78",
+          "url": "https://github.com/nimona/go-nimona/commit/a83b36b96c818983a2ed9015b606c37b6e45c3ac"
+        },
+        "date": 1634257084960,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6463221,
+            "unit": "ns/op",
+            "extra": "184 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 402191089,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3716102945,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 58676,
+            "unit": "ns/op",
+            "extra": "20544 times\n2 procs"
           }
         ]
       }
