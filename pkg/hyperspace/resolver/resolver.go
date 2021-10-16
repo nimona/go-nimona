@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/patrickmn/go-cache"
 
-	"nimona.io/internal/connmanager"
 	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
@@ -16,7 +15,6 @@ import (
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -44,8 +42,9 @@ type (
 		) (*peer.ConnectionInfo, error)
 	}
 	resolver struct {
+		peerKey                        crypto.PrivateKey
 		context                        context.Context
-		connmanager                    connmanager.Manager
+		network                        net.Network
 		peerCache                      *peerstore.PeerCache
 		localPeerAnnouncementCache     *hyperspace.Announcement
 		localPeerAnnouncementCacheLock sync.RWMutex
@@ -61,13 +60,15 @@ type (
 // Object store is currently optional.
 func New(
 	ctx context.Context,
-	cmg connmanager.Manager,
+	peerKey crypto.PrivateKey,
+	network net.Network,
 	str *sqlobjectstore.Store,
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
-		context:     ctx,
-		connmanager: cmg,
+		context: ctx,
+		peerKey: peerKey,
+		network: network,
 		peerCache: peerstore.NewPeerCache(
 			time.Minute,
 			"nimona_hyperspace_resolver",
@@ -84,15 +85,15 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	go cmg.HandleConnection(
-		func(c *net.Connection, _ connmanager.ConnectionCleanup) error {
+	go r.network.RegisterConnectionHandler(
+		func(c net.Connection) {
 			or := c.Read(ctx)
 			for {
 				o, err := or.Read()
 				if err != nil {
-					return nil
+					return
 				}
-				r.handleObject(o)
+				r.handleObject(c.RemotePeerKey(), o)
 			}
 		},
 	)
@@ -189,7 +190,7 @@ func (r *resolver) Lookup(
 	// send content requests to recipients
 	req := &hyperspace.LookupRequest{
 		Metadata: object.Metadata{
-			Owner: r.network.GetPeerKey().PublicKey().DID(),
+			Owner: r.peerKey.PublicKey().DID(),
 		},
 		Nonce:       rand.String(12),
 		QueryVector: bl,
@@ -199,23 +200,35 @@ func (r *resolver) Lookup(
 		return nil, err
 	}
 
-	// listen for lookup responses
-	resSub := r.network.Subscribe(
-		network.FilterByObjectType(hyperspace.LookupResponseType),
-		func(e *network.Envelope) bool {
-			v := e.Payload.Data["nonce"]
-			rn, ok := v.(tilde.String)
-			return ok && string(rn) == req.Nonce
-		},
-	)
+	responses := make(chan *object.Object)
 
 	go func() {
 		for _, bp := range r.bootstrapPeers {
-			err := r.network.Send(
+			conn, err := r.network.Dial(ctx, bp)
+			if err != nil {
+				logger.Debug("failed to dial peer", log.Error(err))
+				continue
+			}
+			// read all objects from the connection
+			reader := conn.Read(ctx)
+			go func() {
+				for {
+					o, err := reader.Read()
+					if err != nil {
+						return
+					}
+					// find any responses
+					v := o.Data["nonce"]
+					rn, ok := v.(tilde.String)
+					if ok && string(rn) == req.Nonce {
+						// and write them to the channel
+						responses <- o
+					}
+				}
+			}()
+			err = conn.Write(
 				ctx,
 				reqObject,
-				bp.PublicKey,
-				network.SendWithConnectionInfo(bp),
 			)
 			if err != nil {
 				logger.Debug("could send request to peer", log.Error(err))
@@ -234,12 +247,9 @@ func (r *resolver) Lookup(
 
 	go func() {
 		for {
-			e, err := resSub.Next()
-			if err != nil {
-				break
-			}
+			o := <-responses
 			r := &hyperspace.LookupResponse{}
-			if err := object.Unmarshal(e.Payload, r); err != nil {
+			if err := object.Unmarshal(o, r); err != nil {
 				continue
 			}
 			// TODO verify peer?
@@ -260,7 +270,7 @@ func (r *resolver) Lookup(
 }
 
 func (r *resolver) handleObject(
-	// e *network.Envelope,
+	sender crypto.PublicKey,
 	o *object.Object,
 ) {
 	// attempt to recover correlation id from request id
@@ -268,7 +278,7 @@ func (r *resolver) handleObject(
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver.handleObject"),
-		log.String("env.Sender", e.Sender.String()),
+		log.String("env.Sender", sender.String()),
 	)
 
 	// handle payload
@@ -313,15 +323,22 @@ func (r *resolver) announceSelf() {
 		return
 	}
 	for _, p := range r.bootstrapPeers {
-		if err := r.network.Send(
+		conn, err := r.network.Dial(
 			context.New(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*3),
 			),
+			p,
+		)
+		if err != nil {
+			logger.Debug("failed to dial peer", log.Error(err))
+			continue
+		}
+		err = conn.Write(
+			ctx,
 			anno,
-			p.PublicKey,
-			network.SendWithConnectionInfo(p),
-		); err != nil {
+		)
+		if err != nil {
 			logger.Error(
 				"error announcing self to bootstrap",
 				log.String("peer", p.PublicKey.String()),
@@ -348,10 +365,11 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
-	peerKey := r.network.GetPeerKey().PublicKey()
+	peerKey := r.peerKey.PublicKey()
 	hashes := r.hashes.List()
-	addresses := r.network.GetAddresses()
-	relays := r.network.GetRelays()
+	addresses := r.network.Addresses()
+	// TODO support relays
+	// relays := r.network.GetRelays()
 
 	// gather up peer key, certificates, content ids and types
 	hs := []string{peerKey.String()}
@@ -380,7 +398,7 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: peerKey,
 			Addresses: addresses,
-			Relays:    relays,
+			// Relays:    relays,
 		},
 		PeerVector: vec,
 		// TODO add capabilities
