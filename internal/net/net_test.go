@@ -25,6 +25,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
+	time.Sleep(time.Millisecond * 250)
+
 	done := make(chan bool)
 
 	resObj := &object.Object{
@@ -33,17 +35,6 @@ func TestNetConnectionSuccess(t *testing.T) {
 		},
 	}
 
-	go func() {
-		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
-			PublicKey: n1.peerKey.PublicKey(),
-			Addresses: n1.Addresses(),
-		})
-		assert.NoError(t, err)
-		err = Write(resObj, cconn)
-		assert.NoError(t, err)
-		done <- true
-	}()
-
 	// attempt to dial own address, should fail
 	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
 		PublicKey: n1.peerKey.PublicKey(),
@@ -51,26 +42,53 @@ func TestNetConnectionSuccess(t *testing.T) {
 	})
 	require.Equal(t, ErrAllAddressesBlocked, err)
 
-	sc, err := n1.Accept()
-	require.NoError(t, err)
+	// wait for new connections on n1
+	scs := make(chan *Connection)
+	n1.RegisterConnectionHandler(func(c *Connection) {
+		scs <- c
+	})
 
-	reqObj := &object.Object{
-		Data: tilde.Map{
-			"foo": tilde.String("bar"),
-		},
+	// dial n1 from n2
+	go func() {
+		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
+			PublicKey: n1.peerKey.PublicKey(),
+			Addresses: n1.Addresses(),
+		})
+		assert.NoError(t, err)
+		err = cconn.Write(resObj)
+		assert.NoError(t, err)
+		done <- true
+	}()
+
+	// wait for connection
+	var sc *Connection
+	select {
+	case sc = <-scs:
+	case <-time.After(time.Second):
+		t.Error("timed out waiting for connection")
+		t.FailNow()
 	}
-	err = Write(reqObj, sc)
-	assert.NoError(t, err)
 
-	gotObj, err := Read(sc)
+	// start listening for incoming messages
+	scReader := sc.Read(ctx)
+
+	// wait for ping message
+	gotObj, err := scReader.Read()
 	require.NoError(t, err)
-	assert.Equal(t, "ping", gotObj.Type)
+	require.Equal(t, "ping", gotObj.Type)
 
-	gotObj, err = Read(sc)
+	// wait for foobar message
+	gotObj, err = scReader.Read()
 	require.NoError(t, err)
-	assert.EqualValues(t, resObj, gotObj)
+	require.EqualValues(t, resObj, gotObj)
 
-	<-done
+	// wait for done
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Error("timed out waiting for done")
+		t.Fail()
+	}
 }
 
 func TestNetDialBackoff(t *testing.T) {

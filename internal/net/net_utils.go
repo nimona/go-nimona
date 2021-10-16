@@ -1,73 +1,59 @@
 package net
 
-import (
-	"fmt"
+// func Write(o *object.Object, conn *Connection) error {
+// 	if conn == nil {
+// 		log.DefaultLogger.Info("conn cannot be nil")
+// 		return fmt.Errorf("missing conn")
+// 	}
 
-	"nimona.io/pkg/errors"
-	"nimona.io/pkg/log"
-	"nimona.io/pkg/object"
-)
+// 	ra := ""
+// 	if !conn.RemotePeerKey.IsEmpty() {
+// 		ra = conn.RemotePeerKey.String()
+// 	}
 
-func Write(o *object.Object, conn *Connection) error {
-	if conn == nil {
-		log.DefaultLogger.Info("conn cannot be nil")
-		return fmt.Errorf("missing conn")
-	}
+// 	log.DefaultLogger.Debug(
+// 		"writing to connection",
+// 		log.Any("object", o),
+// 		log.String("local.address", conn.localAddress),
+// 		log.String("remote.address", conn.remoteAddress),
+// 		log.String("remote.fingerprint", ra),
+// 		log.String("direction", "outgoing"),
+// 	)
 
-	ra := ""
-	if !conn.RemotePeerKey.IsEmpty() {
-		ra = conn.RemotePeerKey.String()
-	}
+// 	if err := conn.encoder.Encode(o); err != nil {
+// 		return fmt.Errorf("error marshaling object: %w", err)
+// 	}
 
-	log.DefaultLogger.Debug(
-		"writing to connection",
-		log.Any("object", o),
-		log.String("local.address", conn.localAddress),
-		log.String("remote.address", conn.remoteAddress),
-		log.String("remote.fingerprint", ra),
-		log.String("direction", "outgoing"),
-	)
+// 	return nil
+// }
 
-	if err := conn.encoder.Encode(o); err != nil {
-		return fmt.Errorf("error marshaling object: %w", err)
-	}
+// func Read(conn *Connection) (*object.Object, error) {
+// 	logger := log.DefaultLogger
 
-	return nil
-}
+// 	defer func() {
+// 		if r := recover(); r != nil {
+// 			logger.Error(
+// 				"recovered from panic during read",
+// 				log.Any("r", r),
+// 				log.Stack(),
+// 			)
+// 		}
+// 	}()
 
-func Read(conn *Connection) (*object.Object, error) {
-	logger := log.DefaultLogger
+// 	o := &object.Object{}
+// 	err := conn.decoder.Decode(o)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error(
-				"recovered from panic during read",
-				log.Any("r", r),
-				log.Stack(),
-			)
-		}
-	}()
+// 	logger.Debug(
+// 		"reading from connection",
+// 		log.Any("object", o),
+// 		log.String("local.address", conn.localAddress),
+// 		log.String("remote.address", conn.remoteAddress),
+// 		log.String("remote.publicKey", conn.RemotePeerKey.String()),
+// 		log.String("direction", "incoming"),
+// 	)
 
-	o := &object.Object{}
-	err := conn.decoder.Decode(o)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debug(
-		"reading from connection",
-		log.Any("object", o),
-		log.String("local.address", conn.localAddress),
-		log.String("remote.address", conn.remoteAddress),
-		log.String("remote.publicKey", conn.RemotePeerKey.String()),
-		log.String("direction", "incoming"),
-	)
-
-	if !o.Metadata.Signature.IsEmpty() {
-		if err := object.Verify(o); err != nil {
-			return o, errors.Merge(ErrInvalidSignature, err)
-		}
-	}
-
-	return o, nil
-}
+// 	return o, nil
+// }
