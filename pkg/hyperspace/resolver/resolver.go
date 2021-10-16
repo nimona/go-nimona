@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/patrickmn/go-cache"
 
+	"nimona.io/internal/connmanager"
+	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -43,7 +45,7 @@ type (
 	}
 	resolver struct {
 		context                        context.Context
-		network                        network.Network
+		connmanager                    connmanager.Manager
 		peerCache                      *peerstore.PeerCache
 		localPeerAnnouncementCache     *hyperspace.Announcement
 		localPeerAnnouncementCacheLock sync.RWMutex
@@ -59,13 +61,13 @@ type (
 // Object store is currently optional.
 func New(
 	ctx context.Context,
-	net network.Network,
+	cmg connmanager.Manager,
 	str *sqlobjectstore.Store,
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
-		context: ctx,
-		network: net,
+		context:     ctx,
+		connmanager: cmg,
 		peerCache: peerstore.NewPeerCache(
 			time.Minute,
 			"nimona_hyperspace_resolver",
@@ -82,11 +84,16 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	go network.HandleEnvelopeSubscription(
-		r.network.Subscribe(),
-		func(e *network.Envelope) error {
-			go r.handleObject(e)
-			return nil
+	go cmg.HandleConnection(
+		func(c *net.Connection, _ connmanager.ConnectionCleanup) error {
+			or := c.Read(ctx)
+			for {
+				o, err := or.Read()
+				if err != nil {
+					return nil
+				}
+				r.handleObject(o)
+			}
 		},
 	)
 
@@ -98,9 +105,6 @@ func New(
 			}
 		}
 	}
-
-	// register self to network
-	net.RegisterResolver(r)
 
 	for _, p := range r.bootstrapPeers {
 		r.peerCache.Put(&hyperspace.Announcement{
@@ -256,7 +260,8 @@ func (r *resolver) Lookup(
 }
 
 func (r *resolver) handleObject(
-	e *network.Envelope,
+	// e *network.Envelope,
+	o *object.Object,
 ) {
 	// attempt to recover correlation id from request id
 	ctx := r.context
@@ -267,7 +272,7 @@ func (r *resolver) handleObject(
 	)
 
 	// handle payload
-	o := e.Payload
+	// o := e.Payload
 	if o.Type == hyperspace.AnnouncementType {
 		v := &hyperspace.Announcement{}
 		if err := object.Unmarshal(o, v); err != nil {

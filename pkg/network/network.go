@@ -195,8 +195,9 @@ func New(
 	connmgr := connmanager.New(
 		ctx,
 		w.net,
-		w.handleConnection,
 	)
+
+	connmgr.HandleConnection(w.handleConnection)
 
 	w.connmgr = connmgr
 	return w

@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -19,6 +20,8 @@ import (
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
+
+//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_objects_generated.go -pkg=net gen "ObjectType=*object.Object Name=Object name=object"
 
 var (
 	connConnOutCounter = promauto.NewCounter(
@@ -71,9 +74,10 @@ type (
 			bindAddress string,
 			listenConfig *ListenConfig,
 		) (Listener, error)
-		Accept() (*Connection, error)
+		// Accept() (*Connection, error)
 		Addresses() []string
 	}
+	ConnectionHandler func(*Connection)
 )
 
 // New creates a new p2p network
@@ -87,21 +91,31 @@ func New(
 				peerKey: peerKey,
 			},
 		},
-		listeners:   []*listener{},
-		connections: make(chan *Connection),
-		blocklist:   cache.New(time.Second*5, time.Second*60),
+		listeners:        []*listener{},
+		blocklist:        cache.New(time.Second*5, time.Second*60),
+		connections:      map[string]*Connection{},
+		connectionsMutex: &sync.RWMutex{},
+		connHandlers:     []ConnectionHandler{},
+		connHandlerMutex: sync.RWMutex{},
 	}
 	return n
 }
 
 // network allows dialing and listening for p2p connections
 type network struct {
-	peerKey     crypto.PrivateKey
-	transports  map[string]Transport
-	listeners   []*listener
-	connections chan *Connection
-	attempts    attemptsMap
-	blocklist   *cache.Cache
+	peerKey    crypto.PrivateKey
+	transports map[string]Transport
+	listeners  []*listener
+	attempts   attemptsMap
+	blocklist  *cache.Cache
+
+	// connections
+	connections      map[string]*Connection
+	connectionsMutex *sync.RWMutex
+
+	// handlers
+	connHandlers     []ConnectionHandler
+	connHandlerMutex sync.RWMutex
 }
 
 // Dial to a peer and return a net.Conn or error
@@ -182,10 +196,7 @@ func (n *network) Dial(
 				"dt": tilde.String(time.Now().Format(time.RFC3339)),
 			},
 		}
-		if err := Write(
-			ping,
-			conn,
-		); err != nil {
+		if err := conn.Write(ping); err != nil {
 			n.blockAddress(
 				p.PublicKey,
 				address,
@@ -243,10 +254,10 @@ func (n *network) blockAddress(
 	return attempts, time.Duration(backoff)
 }
 
-func (n *network) Accept() (*Connection, error) {
-	conn := <-n.connections
-	return conn, nil
-}
+// func (n *network) Accept() (*Connection, error) {
+// 	conn := <-n.connections
+// 	return conn, nil
+// }
 
 type ListenConfig struct {
 	BindLocal   bool
@@ -345,8 +356,11 @@ func (n *network) Listen(
 					continue
 				}
 
+				// TODO check if the remote key is the expected one
+
 				connConnIncCounter.Inc()
-				n.connections <- conn
+
+				n.handleNewConnection(conn)
 			}
 		}()
 	}
@@ -363,4 +377,25 @@ func (n *network) Addresses() []string {
 		addrs = append(addrs, l.Addresses()...)
 	}
 	return addrs
+}
+
+func (n *network) RegisterConnectionHandler(
+	handler ConnectionHandler,
+) {
+	n.connHandlerMutex.Lock()
+	n.connHandlers = append(n.connHandlers, handler)
+	n.connHandlerMutex.Unlock()
+}
+
+func (n *network) handleNewConnection(conn *Connection) {
+	// add connection to list of connections
+	n.connectionsMutex.Lock()
+	n.connections[conn.RemotePeerKey.String()] = conn
+	n.connectionsMutex.Unlock()
+	// call all connection handlers
+	n.connHandlerMutex.Lock()
+	for _, handler := range n.connHandlers {
+		handler(conn)
+	}
+	n.connHandlerMutex.Unlock()
 }
