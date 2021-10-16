@@ -12,41 +12,61 @@ import (
 	"nimona.io/pkg/object"
 )
 
-type Connection struct {
-	ID string
+type (
+	Connection interface {
+		Close() error
+		LocalAddr() string
+		RemoteAddr() string
+		LocalPeerKey() crypto.PublicKey
+		RemotePeerKey() crypto.PublicKey
+		Write(ctx context.Context, o *object.Object) error
+		Read(ctx context.Context) object.ReadCloser
+	}
+	connection struct {
+		ID string
 
-	LocalPeerKey  crypto.PublicKey
-	RemotePeerKey crypto.PublicKey
-	IsIncoming    bool
+		localPeerKey  crypto.PublicKey
+		remotePeerKey crypto.PublicKey
+		IsIncoming    bool
 
-	remoteAddress string
-	localAddress  string
+		remoteAddress string
+		localAddress  string
 
-	encoder *json.Encoder
-	decoder *json.Decoder
+		encoder *json.Encoder
+		decoder *json.Decoder
 
-	conn   io.ReadWriteCloser
-	closer chan struct{}
+		conn   io.ReadWriteCloser
+		closer chan struct{}
 
-	pubsub ObjectPubSub
-	mutex  sync.Mutex
-}
+		pubsub ObjectPubSub
+		mutex  sync.Mutex
+	}
+)
 
-func (c *Connection) Close() error {
+func (c *connection) Close() error {
 	// TODO close all subs
 	close(c.closer)
 	return c.conn.Close()
 }
 
-func (c *Connection) LocalAddr() string {
+func (c *connection) LocalAddr() string {
 	return c.localAddress
 }
 
-func (c *Connection) RemoteAddr() string {
+func (c *connection) RemoteAddr() string {
 	return c.remoteAddress
 }
 
-func (c *Connection) Write(o *object.Object) error {
+func (c *connection) LocalPeerKey() crypto.PublicKey {
+	return c.localPeerKey
+}
+
+func (c *connection) RemotePeerKey() crypto.PublicKey {
+	return c.remotePeerKey
+}
+
+func (c *connection) Write(ctx context.Context, o *object.Object) error {
+	// TODO use context for timeout
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	if err := c.encoder.Encode(o); err != nil {
@@ -55,7 +75,7 @@ func (c *Connection) Write(o *object.Object) error {
 	return nil
 }
 
-func (c *Connection) read() (o *object.Object, err error) {
+func (c *connection) read() (o *object.Object, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -72,7 +92,7 @@ func (c *Connection) read() (o *object.Object, err error) {
 	return o, nil
 }
 
-func (c *Connection) Read(ctx context.Context) object.ReadCloser {
+func (c *connection) Read(ctx context.Context) object.ReadCloser {
 	errCh := make(chan error)
 	sub := c.pubsub.Subscribe()
 	return object.NewReadCloser(
@@ -83,8 +103,8 @@ func (c *Connection) Read(ctx context.Context) object.ReadCloser {
 	)
 }
 
-func newConnection(conn io.ReadWriteCloser, incoming bool) *Connection {
-	c := &Connection{
+func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
+	c := &connection{
 		ID:         rand.String(12),
 		conn:       conn,
 		IsIncoming: incoming,

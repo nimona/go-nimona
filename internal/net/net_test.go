@@ -55,7 +55,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 			Addresses: n1.Addresses(),
 		})
 		assert.NoError(t, err)
-		err = cconn.Write(resObj)
+		err = cconn.Write(context.Background(), resObj)
 		assert.NoError(t, err)
 		done <- true
 	}()
