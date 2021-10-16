@@ -19,7 +19,7 @@ type tcpTransport struct {
 func (tt *tcpTransport) Dial(
 	ctx context.Context,
 	address string,
-) (*Connection, error) {
+) (*connection, error) {
 	// TODO we probably should not be generating the certificate every time
 	// but at this point it's kind of annoying to cache the primary peer key
 	// TODO consider storing ready made certificated in the localpeer
@@ -70,7 +70,7 @@ func (tt *tcpTransport) Dial(
 		return nil, fmt.Errorf("only ed25519 keys are currently supported")
 	}
 
-	conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
+	conn.remotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
 		pubKey,
 	)
 

@@ -68,16 +68,18 @@ type (
 		Dial(
 			ctx context.Context,
 			peer *peer.ConnectionInfo,
-		) (*Connection, error)
+		) (Connection, error)
 		Listen(
 			ctx context.Context,
 			bindAddress string,
 			listenConfig *ListenConfig,
 		) (Listener, error)
-		// Accept() (*Connection, error)
+		RegisterConnectionHandler(
+			handler ConnectionHandler,
+		)
 		Addresses() []string
 	}
-	ConnectionHandler func(*Connection)
+	ConnectionHandler func(Connection)
 )
 
 // New creates a new p2p network
@@ -93,7 +95,7 @@ func New(
 		},
 		listeners:        []*listener{},
 		blocklist:        cache.New(time.Second*5, time.Second*60),
-		connections:      map[string]*Connection{},
+		connections:      map[string]*connection{},
 		connectionsMutex: &sync.RWMutex{},
 		connHandlers:     []ConnectionHandler{},
 		connHandlerMutex: sync.RWMutex{},
@@ -110,7 +112,7 @@ type network struct {
 	blocklist  *cache.Cache
 
 	// connections
-	connections      map[string]*Connection
+	connections      map[string]*connection
 	connectionsMutex *sync.RWMutex
 
 	// handlers
@@ -122,7 +124,7 @@ type network struct {
 func (n *network) Dial(
 	ctx context.Context,
 	p *peer.ConnectionInfo,
-) (*Connection, error) {
+) (Connection, error) {
 	logger := log.FromContext(ctx).With(
 		log.String("peer", p.PublicKey.String()),
 		log.Strings("addresses", p.Addresses),
@@ -177,14 +179,14 @@ func (n *network) Dial(
 		}
 
 		// check negotiated key against dialed
-		if !conn.RemotePeerKey.Equals(p.PublicKey) {
+		if !conn.remotePeerKey.Equals(p.PublicKey) {
 			n.blockAddress(
 				p.PublicKey,
 				address,
 			)
 			logger.Error("remote didn't match expect key, blocking",
 				log.String("expected", p.PublicKey.String()),
-				log.String("received", conn.RemotePeerKey.String()),
+				log.String("received", conn.remotePeerKey.String()),
 			)
 			continue
 		}
@@ -196,7 +198,7 @@ func (n *network) Dial(
 				"dt": tilde.String(time.Now().Format(time.RFC3339)),
 			},
 		}
-		if err := conn.Write(ping); err != nil {
+		if err := conn.Write(ctx, ping); err != nil {
 			n.blockAddress(
 				p.PublicKey,
 				address,
@@ -346,7 +348,7 @@ func (n *network) Listen(
 						conn.Close() // nolint: errcheck
 						continue
 					}
-					conn.RemotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
+					conn.remotePeerKey = crypto.NewEd25519PublicKeyFromRaw(
 						pubKey,
 					)
 				} else {
@@ -387,10 +389,10 @@ func (n *network) RegisterConnectionHandler(
 	n.connHandlerMutex.Unlock()
 }
 
-func (n *network) handleNewConnection(conn *Connection) {
+func (n *network) handleNewConnection(conn *connection) {
 	// add connection to list of connections
 	n.connectionsMutex.Lock()
-	n.connections[conn.RemotePeerKey.String()] = conn
+	n.connections[conn.remotePeerKey.String()] = conn
 	n.connectionsMutex.Unlock()
 	// call all connection handlers
 	n.connHandlerMutex.Lock()

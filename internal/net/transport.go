@@ -11,7 +11,7 @@ type Transport interface {
 	Dial(
 		ctx context.Context,
 		address string,
-	) (*Connection, error)
+	) (*connection, error)
 	Listen(
 		ctx context.Context,
 		bindAddress string,
