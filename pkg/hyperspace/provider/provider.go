@@ -6,11 +6,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -40,21 +41,26 @@ var (
 
 type (
 	Provider struct {
-		context       context.Context
-		network       network.Network
-		peerCache     *peerstore.PeerCache
-		providerCache *peerstore.PeerCache
+		context             context.Context
+		network             net.Network
+		announcementVersion int64
+		peerKey             *crypto.PrivateKey
+		peerCache           *peerstore.PeerCache
+		providerCache       *peerstore.PeerCache
 	}
 )
 
 func New(
 	ctx context.Context,
-	net network.Network,
+	network net.Network,
+	peerKey *crypto.PrivateKey,
 	bootstrapProviders []*peer.ConnectionInfo,
 ) (*Provider, error) {
 	p := &Provider{
-		context: ctx,
-		network: net,
+		context:             ctx,
+		network:             network,
+		announcementVersion: time.Now().Unix(),
+		peerKey:             peerKey,
 		peerCache: peerstore.NewPeerCache(
 			peerCacheGC,
 			"nimona_hyperspace_provider_peers",
@@ -65,11 +71,18 @@ func New(
 		),
 	}
 
-	go network.HandleEnvelopeSubscription(
-		p.network.Subscribe(),
-		func(e *network.Envelope) error {
-			go p.handleObject(e)
-			return nil
+	// we are listening for all incoming object types in order to learn about
+	// new peers that are talking to us so we can announce ourselves to them
+	go p.network.RegisterConnectionHandler(
+		func(c net.Connection) {
+			or := c.Read(ctx)
+			for {
+				o, err := or.Read()
+				if err != nil {
+					return
+				}
+				p.handleObject(c.RemotePeerKey(), o)
+			}
 		},
 	)
 
@@ -109,16 +122,16 @@ func (p *Provider) Put(
 }
 
 func (p *Provider) handleObject(
-	e *network.Envelope,
+	s crypto.PublicKey,
+	o *object.Object,
 ) {
 	ctx := p.context
 
 	logger := log.FromContext(ctx).With(
 		log.String("method", "Provider.handleObject"),
-		log.String("env.Sender", e.Sender.String()),
+		log.String("env.Sender", s.String()),
 	)
 
-	o := e.Payload
 	switch o.Type {
 	case hyperspace.AnnouncementType:
 		if err := p.handleAnnouncement(ctx, o); err != nil {
@@ -136,7 +149,7 @@ func (p *Provider) handleObject(
 			)
 			return
 		}
-		p.handlePeerLookup(ctx, v, e)
+		p.handlePeerLookup(ctx, v, s, o)
 	}
 }
 
@@ -169,7 +182,8 @@ func (p *Provider) handleAnnouncement(
 func (p *Provider) handlePeerLookup(
 	ctx context.Context,
 	q *hyperspace.LookupRequest,
-	e *network.Envelope,
+	s crypto.PublicKey,
+	o *object.Object,
 ) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
@@ -177,17 +191,17 @@ func (p *Provider) handlePeerLookup(
 		log.Any("q.vector", q.QueryVector),
 	)
 
-	if !e.Sender.IsEmpty() {
+	if !s.IsEmpty() {
 		logger = logger.With(
-			log.String("e.sender", e.Sender.String()),
+			log.String("sender", s.String()),
 		)
 	}
 
-	if !e.Payload.Metadata.Signature.Signer.IsEmpty() {
+	if !o.Metadata.Signature.Signer.IsEmpty() {
 		logger = logger.With(
 			log.String(
 				"o.signer",
-				e.Payload.Metadata.Signature.Signer.String(),
+				o.Metadata.Signature.Signer.String(),
 			),
 		)
 	}
@@ -206,7 +220,7 @@ func (p *Provider) handlePeerLookup(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.network.GetPeerKey().PublicKey().DID(),
+			Owner: p.peerKey.PublicKey().DID(),
 		},
 		Nonce:         q.Nonce,
 		QueryVector:   q.QueryVector,
@@ -214,7 +228,7 @@ func (p *Provider) handlePeerLookup(
 	}
 
 	pr := &peer.ConnectionInfo{
-		PublicKey: e.Sender,
+		PublicKey: s,
 	}
 
 	reso, err := object.Marshal(res)
@@ -224,16 +238,18 @@ func (p *Provider) handlePeerLookup(
 		)
 		return
 	}
-	err = p.network.Send(
-		ctx,
-		reso,
-		pr.PublicKey,
-		network.SendWithConnectionInfo(pr),
-	)
+
+	pc, err := p.network.Dial(ctx, pr)
 	if err != nil {
-		logger.Debug("could not send lookup response",
+		logger.Debug("could not dial peer",
 			log.Error(err),
 		)
+		return
+	}
+
+	err = pc.Write(ctx, reso)
+	if err != nil {
+		logger.Debug("could not write lookup response", log.Error(err))
 		return
 	}
 
@@ -260,14 +276,17 @@ func (p *Provider) distributeAnnouncement(
 	)
 	n := 0
 	for _, ci := range p.providerCache.List() {
-		if err := p.network.Send(
+		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
+		if err != nil {
+			logger.Debug("could not dial peer", log.Error(err))
+			return
+		}
+		if err := pc.Write(
 			context.New(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*3),
 			),
 			annObj,
-			ci.ConnectionInfo.PublicKey,
-			network.SendWithConnectionInfo(ci.ConnectionInfo),
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
@@ -289,8 +308,12 @@ func (p *Provider) announceSelf() {
 	)
 	// construct an announcement
 	ann := &hyperspace.Announcement{
-		Version:        announceVersion,
-		ConnectionInfo: p.network.GetConnectionInfo(),
+		Version: announceVersion,
+		ConnectionInfo: &peer.ConnectionInfo{
+			Version:   p.announcementVersion,
+			PublicKey: p.peerKey.PublicKey(),
+			Addresses: p.network.Addresses(),
+		},
 		PeerCapabilities: []string{
 			hyperspace.AnnouncementType,
 			hyperspace.LookupRequestType,
@@ -306,14 +329,17 @@ func (p *Provider) announceSelf() {
 	}
 	n := 0
 	for _, ci := range p.providerCache.List() {
-		if err := p.network.Send(
+		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
+		if err != nil {
+			logger.Error("unable to dial provider", log.Error(err))
+			return
+		}
+		if err := pc.Write(
 			context.New(
 				context.WithParent(ctx),
 				context.WithTimeout(time.Second*3),
 			),
 			annObj,
-			ci.ConnectionInfo.PublicKey,
-			network.SendWithConnectionInfo(ci.ConnectionInfo),
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
