@@ -37,6 +37,7 @@ type (
 
 		conn   io.ReadWriteCloser
 		closer chan struct{}
+		closed bool
 
 		pubsub ObjectPubSub
 		mutex  sync.Mutex
@@ -44,8 +45,15 @@ type (
 )
 
 func (c *connection) Close() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.closed {
+		return nil
+	}
+
 	// TODO close all subs
 	close(c.closer)
+	c.closed = true
 	return c.conn.Close()
 }
 
@@ -93,6 +101,9 @@ func (c *connection) read() (o *object.Object, err error) {
 }
 
 func (c *connection) Read(ctx context.Context) object.ReadCloser {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	errCh := make(chan error)
 	sub := c.pubsub.Subscribe()
 	return object.NewReadCloser(
@@ -112,6 +123,7 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 		decoder:    json.NewDecoder(conn),
 		pubsub:     NewObjectPubSub(),
 		mutex:      sync.Mutex{},
+		closer:     make(chan struct{}),
 	}
 
 	go func() {

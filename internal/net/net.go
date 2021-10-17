@@ -130,6 +130,17 @@ func (n *network) Dial(
 		log.Strings("addresses", p.Addresses),
 	)
 
+	if !p.PublicKey.IsEmpty() {
+		n.connectionsMutex.RLock()
+		conn, ok := n.connections[p.PublicKey.String()]
+		if ok {
+			// TODO check if connection is still open and alive
+			n.connectionsMutex.RUnlock()
+			return conn, nil
+		}
+		n.connectionsMutex.RUnlock()
+	}
+
 	if len(p.Addresses) == 0 {
 		return nil, ErrNoAddresses
 	}
@@ -214,6 +225,8 @@ func (n *network) Dial(
 
 		connDialSuccessCounter.Inc()
 		connConnOutCounter.Inc()
+
+		n.handleNewConnection(conn)
 
 		return conn, nil
 	}
@@ -323,7 +336,7 @@ func (n *network) Listen(
 				}
 
 				conn := newConnection(rawConn, true)
-				conn.remoteAddress = rawConn.RemoteAddr().String()
+				conn.remoteAddress = "tcps:" + rawConn.RemoteAddr().String()
 				conn.localAddress = rawConn.LocalAddr().String()
 
 				if tlsConn, ok := rawConn.(*tls.Conn); ok {

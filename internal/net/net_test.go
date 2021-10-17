@@ -43,8 +43,8 @@ func TestNetConnectionSuccess(t *testing.T) {
 	require.Equal(t, ErrAllAddressesBlocked, err)
 
 	// wait for new connections on n1
-	scs := make(chan *Connection)
-	n1.RegisterConnectionHandler(func(c *Connection) {
+	scs := make(chan Connection)
+	n1.RegisterConnectionHandler(func(c Connection) {
 		scs <- c
 	})
 
@@ -61,7 +61,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 	}()
 
 	// wait for connection
-	var sc *Connection
+	var sc Connection
 	select {
 	case sc = <-scs:
 	case <-time.After(time.Second):
