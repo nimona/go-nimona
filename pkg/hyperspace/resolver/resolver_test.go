@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -22,27 +23,27 @@ import (
 
 func TestResolver_Integration(t *testing.T) {
 	// net0 is our provider
-	net0 := newPeer(t)
+	k0, net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.GetPeerKey().PublicKey().DID(),
+			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net0.GetPeerKey().PublicKey(),
-			Addresses: net0.GetAddresses(),
+			PublicKey: k0.PublicKey(),
+			Addresses: net0.Addresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
 	// net1 is a normal peer
-	net1 := newPeer(t)
+	k1, net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.GetPeerKey().PublicKey().DID(),
+			Owner: k1.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net1.GetPeerKey().PublicKey(),
-			Addresses: net1.GetAddresses(),
+			PublicKey: k1.PublicKey(),
+			Addresses: net1.Addresses(),
 		},
 		PeerCapabilities: []string{"foo"},
 	}
@@ -92,6 +93,7 @@ func TestResolver_Integration(t *testing.T) {
 	str1 := tempObjectStore(t)
 	res := New(
 		context.New(),
+		k1,
 		net1,
 		str1,
 		WithBoostrapPeers(pr0.ConnectionInfo),
@@ -126,21 +128,19 @@ func TestResolver_Integration(t *testing.T) {
 	})
 }
 
-func newPeer(t *testing.T) network.Network {
+func newPeer(t *testing.T) (crypto.PrivateKey, net.Network) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	ctx := context.New()
 
-	net := network.New(
-		ctx,
-		network.WithPeerKey(k),
-	)
-
-	lis, err := net.Listen(
+	n := net.New(k)
+	lis, err := n.Listen(
 		ctx,
 		"127.0.0.1:0",
-		network.ListenOnLocalIPs,
+		&net.ListenConfig{
+			BindLocal: true,
+		},
 	)
 	require.NoError(t, err)
 
@@ -148,7 +148,7 @@ func newPeer(t *testing.T) network.Network {
 		lis.Close() // nolint: errcheck
 	})
 
-	return net
+	return k, n
 }
 
 func tempObjectStore(t *testing.T) *sqlobjectstore.Store {
