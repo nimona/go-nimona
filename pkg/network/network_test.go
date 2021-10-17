@@ -37,10 +37,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	}
 
 	// subscribe to objects of type "foo" coming to n2
-	sub := n2.Subscribe(
+	s2 := n2.Subscribe(
 		FilterByObjectType("foo"),
 	)
-	require.NotNil(t, sub)
+	require.NotNil(t, s2)
 
 	// send from p1 to p2
 	err = n1.Send(
@@ -57,12 +57,12 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	require.NoError(t, err)
 
 	// wait for event from n1 to arrive
-	env, err := sub.Next()
+	env, err := s2.Next()
 	require.NoError(t, err)
 	assert.Equal(t, testObj, env.Payload)
 
 	// subscribe to all objects coming to n1
-	sub = n1.Subscribe()
+	s1 := n1.Subscribe()
 
 	// send from p2 to p1
 	err = n2.Send(
@@ -79,15 +79,15 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	require.NoError(t, err)
 
 	// next object should be our foo
-	env, err = sub.Next()
+	env, err = s1.Next()
 	require.NoError(t, err)
-	require.NotNil(t, sub)
+	require.NotNil(t, s1)
 	assert.Equal(t, testObj, env.Payload)
 
 	t.Run("re-establish broken connections", func(t *testing.T) {
 		// close p2's connection to p1
-		c, err := n2.(*network).connmgr.GetConnection(context.
-			New(),
+		c, err := n2.(*network).net.Dial(
+			context.New(),
 			&peer.ConnectionInfo{
 				PublicKey: n1.GetPeerKey().PublicKey(),
 			},
@@ -162,120 +162,120 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	})
 }
 
-func TestNetwork_Relay(t *testing.T) {
-	n0 := New(context.Background())
-	n1 := New(context.Background())
-	n2 := New(context.Background())
+// func TestNetwork_Relay(t *testing.T) {
+// 	n0 := New(context.Background())
+// 	n1 := New(context.Background())
+// 	n2 := New(context.Background())
 
-	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
-	require.NoError(t, err)
-	defer l0.Close()
+// 	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+// 	require.NoError(t, err)
+// 	defer l0.Close()
 
-	p0 := &peer.ConnectionInfo{
-		PublicKey: n0.GetPeerKey().PublicKey(),
-		Addresses: n0.GetAddresses(),
-	}
+// 	p0 := &peer.ConnectionInfo{
+// 		PublicKey: n0.GetPeerKey().PublicKey(),
+// 		Addresses: n0.GetAddresses(),
+// 	}
 
-	p1 := &peer.ConnectionInfo{
-		PublicKey: n1.GetPeerKey().PublicKey(),
-		Addresses: n1.GetAddresses(),
-		Relays: []*peer.ConnectionInfo{
-			p0,
-		},
-	}
+// 	p1 := &peer.ConnectionInfo{
+// 		PublicKey: n1.GetPeerKey().PublicKey(),
+// 		Addresses: n1.GetAddresses(),
+// 		Relays: []*peer.ConnectionInfo{
+// 			p0,
+// 		},
+// 	}
 
-	p2 := &peer.ConnectionInfo{
-		PublicKey: n2.GetPeerKey().PublicKey(),
-		Addresses: n2.GetAddresses(),
-		Relays: []*peer.ConnectionInfo{
-			p0,
-		},
-	}
+// 	p2 := &peer.ConnectionInfo{
+// 		PublicKey: n2.GetPeerKey().PublicKey(),
+// 		Addresses: n2.GetAddresses(),
+// 		Relays: []*peer.ConnectionInfo{
+// 			p0,
+// 		},
+// 	}
 
-	testObj := &object.Object{
-		Type: "foo",
-		Data: tilde.Map{
-			"foo": tilde.String("bar"),
-		},
-	}
+// 	testObj := &object.Object{
+// 		Type: "foo",
+// 		Data: tilde.Map{
+// 			"foo": tilde.String("bar"),
+// 		},
+// 	}
 
-	testObjFromP1 := &object.Object{
-		Type: "foo",
-		Metadata: object.Metadata{
-			Owner: n1.GetPeerKey().PublicKey().DID(),
-		},
-		Data: tilde.Map{
-			"foo": tilde.String("bar"),
-		},
-	}
+// 	testObjFromP1 := &object.Object{
+// 		Type: "foo",
+// 		Metadata: object.Metadata{
+// 			Owner: n1.GetPeerKey().PublicKey().DID(),
+// 		},
+// 		Data: tilde.Map{
+// 			"foo": tilde.String("bar"),
+// 		},
+// 	}
 
-	testObjFromP2 := &object.Object{
-		Type: "foo",
-		Metadata: object.Metadata{
-			Owner: n2.GetPeerKey().PublicKey().DID(),
-		},
-		Data: tilde.Map{
-			"foo": tilde.String("bar"),
-		},
-	}
+// 	testObjFromP2 := &object.Object{
+// 		Type: "foo",
+// 		Metadata: object.Metadata{
+// 			Owner: n2.GetPeerKey().PublicKey().DID(),
+// 		},
+// 		Data: tilde.Map{
+// 			"foo": tilde.String("bar"),
+// 		},
+// 	}
 
-	// send from p1 to p0
-	err = n1.Send(
-		context.Background(),
-		testObj,
-		p0.PublicKey,
-		SendWithConnectionInfo(p0),
-	)
-	require.NoError(t, err)
+// 	// send from p1 to p0
+// 	err = n1.Send(
+// 		context.Background(),
+// 		testObj,
+// 		p0.PublicKey,
+// 		SendWithConnectionInfo(p0),
+// 	)
+// 	require.NoError(t, err)
 
-	// send from p2 to p0
-	err = n2.Send(
-		context.Background(),
-		testObj,
-		p0.PublicKey,
-		SendWithConnectionInfo(p0),
-	)
-	require.NoError(t, err)
+// 	// send from p2 to p0
+// 	err = n2.Send(
+// 		context.Background(),
+// 		testObj,
+// 		p0.PublicKey,
+// 		SendWithConnectionInfo(p0),
+// 	)
+// 	require.NoError(t, err)
 
-	// now we should be able to send from p1 to p2
-	sub := n2.Subscribe(FilterByObjectType("foo"))
-	err = n1.Send(
-		context.Background(),
-		testObjFromP1,
-		p2.PublicKey,
-		SendWithConnectionInfo(p2),
-	)
-	require.NoError(t, err)
+// 	// now we should be able to send from p1 to p2
+// 	sub := n2.Subscribe(FilterByObjectType("foo"))
+// 	err = n1.Send(
+// 		context.Background(),
+// 		testObjFromP1,
+// 		p2.PublicKey,
+// 		SendWithConnectionInfo(p2),
+// 	)
+// 	require.NoError(t, err)
 
-	env, err := sub.Next()
-	require.NoError(t, err)
+// 	env, err := sub.Next()
+// 	require.NoError(t, err)
 
-	require.NotNil(t, sub)
-	assert.Equal(t,
-		testObjFromP1.Metadata.Signature,
-		env.Payload.Metadata.Signature,
-	)
+// 	require.NotNil(t, sub)
+// 	assert.Equal(t,
+// 		testObjFromP1.Metadata.Signature,
+// 		env.Payload.Metadata.Signature,
+// 	)
 
-	// send from p2 to p1
-	sub = n1.Subscribe(FilterByObjectType("foo"))
+// 	// send from p2 to p1
+// 	sub = n1.Subscribe(FilterByObjectType("foo"))
 
-	err = n2.Send(
-		context.Background(),
-		testObjFromP2,
-		p1.PublicKey,
-		SendWithConnectionInfo(p1),
-	)
-	require.NoError(t, err)
+// 	err = n2.Send(
+// 		context.Background(),
+// 		testObjFromP2,
+// 		p1.PublicKey,
+// 		SendWithConnectionInfo(p1),
+// 	)
+// 	require.NoError(t, err)
 
-	env, err = sub.Next()
-	require.NoError(t, err)
+// 	env, err = sub.Next()
+// 	require.NoError(t, err)
 
-	require.NotNil(t, sub)
-	assert.Equal(t,
-		testObjFromP2.Metadata.Signature,
-		env.Payload.Metadata.Signature,
-	)
-}
+// 	require.NotNil(t, sub)
+// 	assert.Equal(t,
+// 		testObjFromP2.Metadata.Signature,
+// 		env.Payload.Metadata.Signature,
+// 	)
+// }
 
 func Test_network_lookup(t *testing.T) {
 	p0, err := crypto.NewEd25519PrivateKey()
