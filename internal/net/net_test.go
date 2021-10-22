@@ -25,8 +25,6 @@ func TestNetConnectionSuccess(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	time.Sleep(time.Millisecond * 250)
-
 	done := make(chan bool)
 
 	resObj := &object.Object{
