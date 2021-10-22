@@ -347,8 +347,6 @@ func (w *network) handleConnection(
 				log.String("payload", payload.Type),
 			)
 
-			fmt.Println("++", remotePeerKey, payload.Type)
-
 			w.inboxes.Publish(&Envelope{
 				Sender:  remotePeerKey,
 				Payload: payload,
@@ -804,6 +802,8 @@ func (w *network) Send(
 
 	rT := time.NewTimer(opt.waitForResponseTimeout)
 	select {
+	case <-ctx.Done():
+		return ctx.Err()
 	case <-rT.C:
 		// TODO should we return an error if no response came?
 		return nil

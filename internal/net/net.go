@@ -134,9 +134,10 @@ func (n *network) Dial(
 		n.connectionsMutex.RLock()
 		conn, ok := n.connections[p.PublicKey.String()]
 		if ok {
-			// TODO check if connection is still open and alive
-			n.connectionsMutex.RUnlock()
-			return conn, nil
+			if !conn.IsClosed() {
+				n.connectionsMutex.RUnlock()
+				return conn, nil
+			}
 		}
 		n.connectionsMutex.RUnlock()
 	}

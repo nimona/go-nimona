@@ -40,7 +40,7 @@ type (
 		closed bool
 
 		pubsub ObjectPubSub
-		mutex  sync.Mutex
+		mutex  sync.RWMutex // R used to check if closed
 	}
 )
 
@@ -54,7 +54,15 @@ func (c *connection) Close() error {
 	// TODO close all subs
 	close(c.closer)
 	c.closed = true
-	return c.conn.Close()
+	err := c.conn.Close()
+	c.conn = nil
+	return err
+}
+
+func (c *connection) IsClosed() bool {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	return c.closed
 }
 
 func (c *connection) LocalAddr() string {
@@ -87,7 +95,7 @@ func (c *connection) read() (o *object.Object, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
-			err = fmt.Errorf("paniced while reading object: %w", r)
+			err = fmt.Errorf("paniced while reading object: %w", r.(error))
 		}
 	}()
 
@@ -122,7 +130,7 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 		encoder:    json.NewEncoder(conn),
 		decoder:    json.NewDecoder(conn),
 		pubsub:     NewObjectPubSub(),
-		mutex:      sync.Mutex{},
+		mutex:      sync.RWMutex{},
 		closer:     make(chan struct{}),
 	}
 
@@ -130,12 +138,8 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 		for {
 			o, err := c.read()
 			if err != nil {
-				if err == io.EOF {
-					// TODO make connection as closed
-					return
-				}
-				// TODO consider closing on some errors
-				continue
+				c.Close()
+				return
 			}
 			c.pubsub.Publish(o)
 		}
