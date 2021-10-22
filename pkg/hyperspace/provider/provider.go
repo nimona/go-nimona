@@ -44,7 +44,7 @@ type (
 		context             context.Context
 		network             net.Network
 		announcementVersion int64
-		peerKey             *crypto.PrivateKey
+		peerKey             crypto.PrivateKey
 		peerCache           *peerstore.PeerCache
 		providerCache       *peerstore.PeerCache
 	}
@@ -53,7 +53,7 @@ type (
 func New(
 	ctx context.Context,
 	network net.Network,
-	peerKey *crypto.PrivateKey,
+	peerKey crypto.PrivateKey,
 	bootstrapProviders []*peer.ConnectionInfo,
 ) (*Provider, error) {
 	p := &Provider{
@@ -73,16 +73,18 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	go p.network.RegisterConnectionHandler(
+	p.network.RegisterConnectionHandler(
 		func(c net.Connection) {
-			or := c.Read(ctx)
-			for {
-				o, err := or.Read()
-				if err != nil {
-					return
+			go func() {
+				or := c.Read(ctx)
+				for {
+					o, err := or.Read()
+					if err != nil {
+						return
+					}
+					go p.handleObject(c.RemotePeerKey(), o)
 				}
-				p.handleObject(c.RemotePeerKey(), o)
-			}
+			}()
 		},
 	)
 

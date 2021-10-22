@@ -7,45 +7,45 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
 func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0 := newPeer(t)
+	net0, k0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: net0.GetPeerKey().PublicKey(),
-		Addresses: net0.GetAddresses(),
+		PublicKey: k0.PublicKey(),
+		Addresses: net0.Addresses(),
 	}
 
 	// net1 is a normal peer
-	net1 := newPeer(t)
+	net1, k1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net1.GetPeerKey().PublicKey().DID(),
+			Owner: k1.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net1.GetPeerKey().PublicKey(),
-			Addresses: net1.GetAddresses(),
+			PublicKey: k1.PublicKey(),
+			Addresses: net1.Addresses(),
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
 
 	// construct provider
-	prv, err := New(context.New(), net0, nil)
+	prv, err := New(context.New(), net0, k0, nil)
 	require.NoError(t, err)
 
 	// net1 announces to provider
-	err = net1.Send(
+	c0, err := net1.Dial(context.New(), pr0)
+	require.NoError(t, err)
+	err = c0.Write(
 		context.New(),
 		object.MustMarshal(pr1),
-		pr0.PublicKey,
-		network.SendWithConnectionInfo(pr0),
 	)
 	require.NoError(t, err)
 
@@ -57,24 +57,24 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 
 func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0 := newPeer(t)
+	net0, k0 := newPeer(t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: net0.GetPeerKey().PublicKey(),
-		Addresses: net0.GetAddresses(),
+		PublicKey: k0.PublicKey(),
+		Addresses: net0.Addresses(),
 	}
 
 	// net1 is another provider
-	net1 := newPeer(t)
+	net1, k1 := newPeer(t)
 
 	// net 2 is a normal peer
-	net2 := newPeer(t)
+	net2, k2 := newPeer(t)
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net2.GetPeerKey().PublicKey().DID(),
+			Owner: k2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net2.GetPeerKey().PublicKey(),
-			Addresses: net2.GetAddresses(),
+			PublicKey: k2.PublicKey(),
+			Addresses: net2.Addresses(),
 		},
 		PeerVector:       hyperspace.New("foo", "bar"),
 		PeerCapabilities: []string{"foo", "bar"},
@@ -85,23 +85,25 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	prv0, err := New(
 		context.New(),
 		net0,
+		k0,
 		nil,
 	)
 	require.NoError(t, err)
 	prv1, err := New(
 		context.New(),
 		net1,
+		k1,
 		[]*peer.ConnectionInfo{pr0},
 	)
 	require.NoError(t, err)
 
 	// net2 announces to provider 0
 	time.Sleep(250 * time.Millisecond)
-	err = net2.Send(
+	c2, err := net2.Dial(context.New(), pr0)
+	require.NoError(t, err)
+	err = c2.Write(
 		context.New(),
 		object.MustMarshal(pr2),
-		pr0.PublicKey,
-		network.SendWithConnectionInfo(pr0),
 	)
 	require.NoError(t, err)
 
@@ -116,23 +118,43 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 
 func TestProvider_handlePeerLookup(t *testing.T) {
 	// net0 is our provider
-	net0 := newPeer(t)
+	net0, k0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.GetPeerKey().PublicKey().DID(),
+			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: net0.GetPeerKey().PublicKey(),
-			Addresses: net0.GetAddresses(),
+			PublicKey: k0.PublicKey(),
+			Addresses: net0.Addresses(),
 		},
 	}
 
 	// net1 is a normal peer
-	net1 := newPeer(t)
+	net1, k1 := newPeer(t)
 
 	// construct provider
-	prv, err := New(context.New(), net0, nil)
+	prv, err := New(context.New(), net0, k1, nil)
 	require.NoError(t, err)
+
+	// start listening for lookup responses on net1
+	resp := make(chan *object.Object)
+	net1.RegisterConnectionHandler(
+		func(c net.Connection) {
+			go func() {
+				or := c.Read(context.New())
+				for {
+					o, err := or.Read()
+					if err != nil {
+						return
+					}
+					if o.Type == hyperspace.LookupResponseType {
+						resp <- o
+						return
+					}
+				}
+			}()
+		},
+	)
 
 	// add a couple more random peers to the provider's cache
 	pr2k, err := crypto.NewEd25519PrivateKey()
@@ -154,13 +176,12 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	prv.Put(pr2)
 	prv.Put(pr3)
 
-	// start listening for lookup responses on net1
-	sub := net1.Subscribe(
-		network.FilterByObjectType(hyperspace.LookupResponseType),
-	)
-
 	// lookup "foo" as net1
-	err = net1.Send(
+	ctx := context.New(context.WithTimeout(time.Second))
+	c0, err := net1.Dial(ctx, pr0.ConnectionInfo)
+	require.NoError(t, err)
+
+	err = c0.Write(
 		context.New(),
 		object.MustMarshal(
 			&hyperspace.LookupRequest{
@@ -168,38 +189,31 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 				QueryVector: hyperspace.New("foo", "bar"),
 			},
 		),
-		pr0.ConnectionInfo.PublicKey,
-		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
 
 	// wait for response
-	env, err := sub.Next()
-	require.NoError(t, err)
+	respObj := <-resp
 
 	// check response
 	res := &hyperspace.LookupResponse{}
-	err = object.Unmarshal(env.Payload, res)
+	err = object.Unmarshal(respObj, res)
 	require.NoError(t, err)
 	assert.Equal(t, "1", res.Nonce)
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
 }
 
-func newPeer(t *testing.T) network.Network {
+func newPeer(t *testing.T) (net.Network, crypto.PrivateKey) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	ctx := context.New()
-
-	net := network.New(
-		ctx,
-		network.WithPeerKey(k),
-	)
-
-	lis, err := net.Listen(
-		ctx,
+	n := net.New(k)
+	lis, err := n.Listen(
+		context.New(),
 		"127.0.0.1:0",
-		network.ListenOnLocalIPs,
+		&net.ListenConfig{
+			BindLocal: true,
+		},
 	)
 	require.NoError(t, err)
 
@@ -207,5 +221,5 @@ func newPeer(t *testing.T) network.Network {
 		lis.Close() // nolint: errcheck
 	})
 
-	return net
+	return n, k
 }
