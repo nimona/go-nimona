@@ -139,7 +139,8 @@ type (
 // New creates a network on a given network
 func New(
 	ctx context.Context,
-	opts ...Option,
+	nnet net.Network,
+	peerKey crypto.PrivateKey,
 ) Network {
 	w := &network{
 		inboxes:    NewEnvelopePubSub(),
@@ -149,10 +150,10 @@ func New(
 		relays:     []*peer.ConnectionInfo{},
 		closeFns:   []closeFn{},
 		closeMutex: sync.Mutex{},
+		peerKey:    peerKey,
+		net:        nnet,
 	}
-	for _, opt := range opts {
-		opt(w)
-	}
+
 	if w.peerKey.IsEmpty() {
 		k, err := crypto.NewEd25519PrivateKey()
 		if err != nil {
@@ -160,7 +161,6 @@ func New(
 		}
 		w.peerKey = k
 	}
-	w.net = net.New(w.peerKey)
 
 	// subscribe to data forward type
 	subs := w.inboxes.Subscribe(
@@ -791,9 +791,11 @@ func (w *network) Send(
 
 	err = c.Write(ctx, o)
 	if err != nil {
+		objSendFailedCounter.Inc()
 		return fmt.Errorf("error writing object: %w", err)
 	}
 
+	objSendSuccessCounter.Inc()
 	w.deduplist.Set(dedupKey, struct{}{}, cache.DefaultExpiration)
 
 	if rSub == nil {

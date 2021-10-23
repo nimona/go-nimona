@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
@@ -18,8 +19,14 @@ import (
 )
 
 func TestNetwork_SimpleConnection(t *testing.T) {
-	n1 := New(context.Background())
-	n2 := New(context.Background())
+	k1, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	k2, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	n1 := New(context.Background(), net.New(k1), k1)
+	n2 := New(context.Background(), net.New(k2), k2)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
@@ -351,8 +358,12 @@ func Test_network_lookup(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			k, err := crypto.NewEd25519PrivateKey()
+			require.NoError(t, err)
 			w := New(
 				context.Background(),
+				net.New(k),
+				k,
 			).(*network)
 			for _, r := range tt.fields.resolvers {
 				w.RegisterResolver(r)

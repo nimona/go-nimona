@@ -7,6 +7,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
+	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -56,9 +57,11 @@ func main() {
 	}
 
 	// construct new network
+	nnet := net.New(cfg.Peer.PrivateKey)
 	net := network.New(
 		ctx,
-		network.WithPeerKey(cfg.Peer.PrivateKey),
+		nnet,
+		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
@@ -85,7 +88,8 @@ func main() {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		net,
+		nnet,
+		cfg.Peer.PrivateKey,
 		nil,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)

@@ -3,17 +3,8 @@ package network
 import (
 	"time"
 
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/peer"
 )
-
-// WithPeerKey sets the private key for the peer, if not provided a new one
-// will be generated.
-func WithPeerKey(k crypto.PrivateKey) func(*network) {
-	return func(w *network) {
-		w.peerKey = k
-	}
-}
 
 type (
 	sendOptions struct {

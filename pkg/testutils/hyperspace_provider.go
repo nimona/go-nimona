@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
@@ -23,9 +24,11 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	require.NoError(t, err)
 
 	// construct new network
+	nnet := net.New(peerKey)
 	net := network.New(
 		ctx,
-		network.WithPeerKey(peerKey),
+		nnet,
+		peerKey,
 	)
 
 	// start listening
@@ -40,7 +43,8 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		net,
+		nnet,
+		peerKey,
 		nil,
 	)
 	require.NoError(t, err)

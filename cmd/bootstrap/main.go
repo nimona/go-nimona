@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/pyroscope-io/pyroscope/pkg/agent/profiler"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
@@ -71,9 +72,11 @@ func main() {
 	}
 
 	// construct new network
+	nnet := net.New(cfg.Peer.PrivateKey)
 	net := network.New(
 		ctx,
-		network.WithPeerKey(cfg.Peer.PrivateKey),
+		nnet,
+		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
@@ -105,7 +108,8 @@ func main() {
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		net,
+		nnet,
+		cfg.Peer.PrivateKey,
 		bootstrapProviders,
 	)
 	if err != nil {

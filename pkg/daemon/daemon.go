@@ -65,9 +65,11 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct new network
+	nnet := net.New(cfg.Peer.PrivateKey)
 	ntw := network.New(
 		ctx,
-		network.WithPeerKey(cfg.Peer.PrivateKey),
+		nnet,
+		cfg.Peer.PrivateKey,
 	)
 
 	if cfg.Peer.BindAddress != "" {
@@ -123,7 +125,8 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		ntw,
+		nnet,
+		cfg.Peer.PrivateKey,
 		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)

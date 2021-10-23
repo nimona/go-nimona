@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -208,9 +209,11 @@ func main() {
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
 	// construct new network
+	nnet := net.New(nConfig.Peer.PrivateKey)
 	net := network.New(
 		ctx,
-		network.WithPeerKey(nConfig.Peer.PrivateKey),
+		nnet,
+		nConfig.Peer.PrivateKey,
 	)
 
 	if nConfig.Peer.BindAddress != "" {
@@ -262,7 +265,8 @@ func main() {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		net,
+		nnet,
+		nConfig.Peer.PrivateKey,
 		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)

@@ -237,9 +237,11 @@ func newFileTransfer(
 	ft.config = cfg
 
 	// construct new network
+	nnet := net.New(cfg.nconf.Peer.PrivateKey)
 	net := network.New(
 		ctx,
-		network.WithPeerKey(cfg.nconf.Peer.PrivateKey),
+		nnet,
+		cfg.nconf.Peer.PrivateKey,
 	)
 
 	if cfg.nconf.Peer.BindAddress != "" {
@@ -298,7 +300,8 @@ func newFileTransfer(
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		net,
+		nnet,
+		cfg.nconf.Peer.PrivateKey,
 		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
