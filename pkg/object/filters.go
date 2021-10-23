@@ -9,6 +9,7 @@ import (
 	"nimona.io/pkg/tilde"
 )
 
+// nolint: revive
 type ObjectFilter func(*Object) bool
 
 func FilterByType(typePatterns ...string) ObjectFilter {

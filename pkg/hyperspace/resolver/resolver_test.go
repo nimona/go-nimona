@@ -52,7 +52,7 @@ func TestResolver_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	// net1 announces to provider
-	c0, err := net1.Dial(context.New(), pr1.ConnectionInfo)
+	c0, err := net1.Dial(context.New(), pr0.ConnectionInfo)
 	require.NoError(t, err)
 
 	err = c0.Write(
@@ -93,8 +93,8 @@ func TestResolver_Integration(t *testing.T) {
 	str1 := tempObjectStore(t)
 	res := New(
 		context.New(),
-		k1,
 		net1,
+		k1,
 		str1,
 		WithBoostrapPeers(pr0.ConnectionInfo),
 	)

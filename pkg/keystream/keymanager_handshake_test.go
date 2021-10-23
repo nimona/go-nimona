@@ -7,7 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/sqlobjectstore"
 )
@@ -19,7 +21,9 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.NoError(t, err)
 	sqlStore0, err := sqlobjectstore.New(sqlStoreDB0)
 	require.NoError(t, err)
-	n0 := network.New(context.Background())
+	k0, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+	n0 := network.New(context.Background(), net.New(k0), k0)
 	l0, err := n0.Listen(
 		context.Background(),
 		"127.0.0.1:0",
@@ -38,7 +42,9 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.NoError(t, err)
 	sqlStore1, err := sqlobjectstore.New(sqlStoreDB1)
 	require.NoError(t, err)
-	n1 := network.New(context.Background())
+	k1, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+	n1 := network.New(context.Background(), net.New(k1), k1)
 	l1, err := n1.Listen(
 		context.Background(),
 		"127.0.0.1:0",

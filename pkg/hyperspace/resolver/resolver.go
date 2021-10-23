@@ -60,8 +60,8 @@ type (
 // Object store is currently optional.
 func New(
 	ctx context.Context,
-	peerKey crypto.PrivateKey,
 	network net.Network,
+	peerKey crypto.PrivateKey,
 	str *sqlobjectstore.Store,
 	opts ...Option,
 ) Resolver {
@@ -85,7 +85,7 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	r.network.RegisterConnectionHandler(
+	go r.network.RegisterConnectionHandler(
 		func(c net.Connection) {
 			go func() {
 				or := c.Read(ctx)
