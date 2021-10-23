@@ -14,7 +14,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -49,15 +48,16 @@ func TestResolver_Integration(t *testing.T) {
 	}
 
 	// construct provider
-	prv, err := provider.New(context.New(), net0, nil)
+	prv, err := provider.New(context.New(), net0, k0, nil)
 	require.NoError(t, err)
 
 	// net1 announces to provider
-	err = net1.Send(
+	c0, err := net1.Dial(context.New(), pr1.ConnectionInfo)
+	require.NoError(t, err)
+
+	err = c0.Write(
 		context.New(),
 		object.MustMarshal(pr1),
-		pr0.ConnectionInfo.PublicKey,
-		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
 
@@ -79,7 +79,7 @@ func TestResolver_Integration(t *testing.T) {
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: net0.GetPeerKey().PublicKey().DID(),
+			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p3.PublicKey(),

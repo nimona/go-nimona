@@ -85,16 +85,18 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	go r.network.RegisterConnectionHandler(
+	r.network.RegisterConnectionHandler(
 		func(c net.Connection) {
-			or := c.Read(ctx)
-			for {
-				o, err := or.Read()
-				if err != nil {
-					return
+			go func() {
+				or := c.Read(ctx)
+				for {
+					o, err := or.Read()
+					if err != nil {
+						return
+					}
+					r.handleObject(c.RemotePeerKey(), o)
 				}
-				r.handleObject(c.RemotePeerKey(), o)
-			}
+			}()
 		},
 	)
 
@@ -210,8 +212,8 @@ func (r *resolver) Lookup(
 				continue
 			}
 			// read all objects from the connection
-			reader := conn.Read(ctx)
 			go func() {
+				reader := conn.Read(ctx)
 				for {
 					o, err := reader.Read()
 					if err != nil {
