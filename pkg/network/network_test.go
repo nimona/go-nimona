@@ -3,6 +3,7 @@ package network
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -365,6 +366,45 @@ func Test_network_lookup(t *testing.T) {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
+	n1 := New(context.Background())
+
+	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	require.NoError(b, err)
+	defer l1.Close()
+
+	n1s := n1.Subscribe(FilterByObjectType("foo")).Channel()
+
+	for n := 0; n < b.N; n++ {
+		n2 := New(context.Background())
+		err = n2.Send(
+			context.Background(),
+			&object.Object{
+				Type: "foo",
+				Data: tilde.Map{
+					"foo": tilde.String("bar"),
+				},
+			},
+			n1.GetPeerKey().PublicKey(),
+			SendWithConnectionInfo(
+				&peer.ConnectionInfo{
+					PublicKey: n1.GetPeerKey().PublicKey(),
+					Addresses: n1.GetAddresses(),
+				},
+			),
+		)
+		require.NoError(b, err)
+		select {
+		case env := <-n1s:
+			require.NotNil(b, env)
+		case <-time.After(time.Second):
+			b.Fatal("timeout")
+		}
+		err = n2.Close()
+		require.NoError(b, err)
 	}
 }
 
