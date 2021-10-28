@@ -381,7 +381,9 @@ func Test_network_lookup(t *testing.T) {
 }
 
 func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
-	n1 := New(context.Background())
+	k1, err := crypto.NewEd25519PrivateKey()
+	require.NoError(b, err)
+	n1 := New(context.Background(), net.New(k1), k1).(*network)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(b, err)
@@ -390,7 +392,9 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	n1s := n1.Subscribe(FilterByObjectType("foo")).Channel()
 
 	for n := 0; n < b.N; n++ {
-		n2 := New(context.Background())
+		k2, err := crypto.NewEd25519PrivateKey()
+		require.NoError(b, err)
+		n2 := New(context.Background(), net.New(k2), k2).(*network)
 		err = n2.Send(
 			context.Background(),
 			&object.Object{
@@ -399,10 +403,10 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 					"foo": tilde.String("bar"),
 				},
 			},
-			n1.GetPeerKey().PublicKey(),
+			k1.PublicKey(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					PublicKey: n1.GetPeerKey().PublicKey(),
+					PublicKey: k1.PublicKey(),
 					Addresses: n1.GetAddresses(),
 				},
 			),
@@ -411,7 +415,7 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 		select {
 		case env := <-n1s:
 			require.NotNil(b, env)
-		case <-time.After(time.Second):
+		case <-time.After(time.Second * 2):
 			b.Fatal("timeout")
 		}
 		err = n2.Close()

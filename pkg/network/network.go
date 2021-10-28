@@ -309,9 +309,9 @@ func (w *network) Listen(
 func (w *network) handleConnection(
 	conn net.Connection,
 ) {
+	remotePeerKey := conn.RemotePeerKey()
+	reader := conn.Read(context.Background())
 	go func() {
-		remotePeerKey := conn.RemotePeerKey()
-		reader := conn.Read(context.Background())
 		for {
 			payload, err := reader.Read()
 			// TODO split errors into connection or payload
