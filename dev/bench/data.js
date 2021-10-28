@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1634428362185,
+  "lastUpdate": 1635458887322,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6432,6 +6432,60 @@ window.BENCHMARK_DATA = {
             "value": 53744,
             "unit": "ns/op",
             "extra": "22718 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "2f22f19d98d16a7a18059fa611d8fb80897980fe",
+          "message": "test(network): add benchmark for network send",
+          "timestamp": "2021-10-28T23:06:31+01:00",
+          "tree_id": "841a5267e9d35cb48a7aec70490838795c743552",
+          "url": "https://github.com/nimona/go-nimona/commit/2f22f19d98d16a7a18059fa611d8fb80897980fe"
+        },
+        "date": 1635458885644,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6728434,
+            "unit": "ns/op",
+            "extra": "170 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 384791345,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3655467432,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 2016075,
+            "unit": "ns/op",
+            "extra": "556 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 59223,
+            "unit": "ns/op",
+            "extra": "20173 times\n2 procs"
           }
         ]
       }
