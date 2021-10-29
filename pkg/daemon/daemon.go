@@ -65,16 +65,16 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct new network
-	nnet := net.New(cfg.Peer.PrivateKey)
-	ntw := network.New(
+	inet := net.New(cfg.Peer.PrivateKey)
+	nnet := network.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	if cfg.Peer.BindAddress != "" {
 		// start listening
-		lis, err := ntw.Listen(
+		lis, err := nnet.Listen(
 			ctx,
 			cfg.Peer.BindAddress,
 			network.ListenOnLocalIPs,
@@ -97,7 +97,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	ntw.RegisterRelays(bootstrapPeers...)
+	nnet.RegisterRelays(bootstrapPeers...)
 
 	// construct preferences db
 	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "preferences.db"))
@@ -125,16 +125,19 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 		str,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
+	// register resolver
+	nnet.RegisterResolver(res)
+
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		ntw,
+		nnet,
 		res,
 		str,
 	)
@@ -142,7 +145,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct feed manager
 	fdm, err := feedmanager.New(
 		ctx,
-		ntw,
+		nnet,
 		res,
 		str,
 		man,
@@ -153,7 +156,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	// construct key stream manager
 	ksm, err := keystream.NewKeyManager(
-		ntw,
+		nnet,
 		str,
 	)
 	if err != nil {
@@ -162,7 +165,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	d.config = *cfg
 	d.preferences = prf
-	d.network = ntw
+	d.network = nnet
 	d.resolver = res
 	d.objectstore = str
 	d.objectmanager = man

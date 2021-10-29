@@ -57,15 +57,15 @@ func main() {
 	}
 
 	// construct new network
-	nnet := net.New(cfg.Peer.PrivateKey)
-	net := network.New(
+	inet := net.New(cfg.Peer.PrivateKey)
+	nnet := network.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
-	lis, err := net.Listen(
+	lis, err := nnet.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
 		network.ListenOnLocalIPs,
@@ -88,15 +88,18 @@ func main() {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 		nil,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
+	// register resolver
+	nnet.RegisterResolver(res)
+
 	logger = logger.With(
-		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", net.GetAddresses()),
+		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", nnet.GetAddresses()),
 	)
 
 	logger.Info("ready")
@@ -115,7 +118,7 @@ func main() {
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		net,
+		nnet,
 		res,
 		str,
 	)
@@ -143,7 +146,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				net.GetPeerKey().PublicKey().String(),
+				nnet.GetPeerKey().PublicKey().String(),
 				env.Metadata.Owner.Identity,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
@@ -180,12 +183,12 @@ func main() {
 			return errors.Error("no recipients")
 		}
 		for _, recipient := range recipients {
-			if err := net.Send(
+			if err := nnet.Send(
 				sctx,
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: net.GetPeerKey().PublicKey().DID(),
+						Owner: nnet.GetPeerKey().PublicKey().DID(),
 					},
 					Data: tilde.Map{
 						"nonce": tilde.String(rand.String(8)),
@@ -204,7 +207,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.PublicKey.String(),
-				net.GetPeerKey().PublicKey().String(),
+				nnet.GetPeerKey().PublicKey().String(),
 			)
 			return nil
 		}

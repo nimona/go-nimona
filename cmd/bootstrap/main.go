@@ -72,15 +72,15 @@ func main() {
 	}
 
 	// construct new network
-	nnet := net.New(cfg.Peer.PrivateKey)
-	net := network.New(
+	inet := net.New(cfg.Peer.PrivateKey)
+	nnet := network.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
-	lis, err := net.Listen(
+	lis, err := nnet.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
 		network.ListenOnLocalIPs,
@@ -92,7 +92,7 @@ func main() {
 
 	// add announce address
 	if cfg.Peer.AnnounceAddress != "" {
-		net.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
+		nnet.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
 	// convert shorthands into connection infos
@@ -108,7 +108,7 @@ func main() {
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		nnet,
+		inet,
 		cfg.Peer.PrivateKey,
 		bootstrapProviders,
 	)
@@ -117,8 +117,8 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", net.GetAddresses()),
+		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", nnet.GetAddresses()),
 	)
 
 	logger.Info("bootstrap node ready")
