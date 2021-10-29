@@ -548,7 +548,6 @@ func (w *network) Send(
 
 	var err error
 	if k := w.peerKey; !k.IsEmpty() {
-		// TODO(geoah) we should be passing the certificates to signAll
 		err = object.SignDeep(k, o)
 		if err != nil {
 			return err
@@ -643,7 +642,7 @@ func (w *network) Send(
 		if err != nil {
 			errs = multierror.Append(
 				errs,
-				fmt.Errorf("error dialing peer: %w", err),
+				fmt.Errorf("error dialing [$1] peer: %w", err),
 			)
 		}
 		relays = opt.connectionInfo.Relays
@@ -655,7 +654,7 @@ func (w *network) Send(
 		if err != nil {
 			errs = multierror.Append(
 				errs,
-				fmt.Errorf("error dialing peer: %w", err),
+				fmt.Errorf("error dialing [$2] peer: %w", err),
 			)
 		}
 	}
@@ -681,7 +680,7 @@ func (w *network) Send(
 		if err != nil {
 			errs = multierror.Append(
 				errs,
-				fmt.Errorf("error dialing peer: %w", err),
+				fmt.Errorf("error dialing [$3] peer: %w", err),
 			)
 		}
 	}
