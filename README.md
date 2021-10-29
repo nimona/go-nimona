@@ -46,7 +46,7 @@ applications.
 
 ### Requirements
 
-- Go 1.16+ with modules enabled
+- Go 1.17+ with modules enabled
 - Make
 
 ### Getting Started
