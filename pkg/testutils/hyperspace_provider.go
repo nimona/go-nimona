@@ -24,15 +24,15 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	require.NoError(t, err)
 
 	// construct new network
-	nnet := net.New(peerKey)
-	net := network.New(
+	inet := net.New(peerKey)
+	nnet := network.New(
 		ctx,
-		nnet,
+		inet,
 		peerKey,
 	)
 
 	// start listening
-	lis, err := net.Listen(
+	lis, err := nnet.Listen(
 		ctx,
 		"0.0.0.0:0",
 		network.ListenOnLocalIPs,
@@ -43,7 +43,7 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		nnet,
+		inet,
 		peerKey,
 		nil,
 	)
@@ -54,5 +54,5 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		require.NoError(t, err)
 	})
 
-	return net.GetConnectionInfo()
+	return nnet.GetConnectionInfo()
 }
