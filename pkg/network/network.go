@@ -355,202 +355,6 @@ func (w *network) handleConnection(
 	}()
 }
 
-// func (w *network) processOutbox(outbox *outbox) {
-// 	var (
-// 		conn     *net.Connection
-// 		connInfo *peer.ConnectionInfo
-// 		// lastRelay *peer.ConnectionInfo
-// 	)
-// 	// sendViaRelay:
-// 	sendViaRelay := func(
-// 		ctx context.Context,
-// 		relayConnInfo *peer.ConnectionInfo,
-// 		recipient crypto.PublicKey,
-// 		obj *object.Object,
-// 	) error {
-// 		// wrap object
-// 		df, err := w.wrapInDataForward(
-// 			obj,
-// 			recipient,
-// 		)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		// send the newly wrapped object to the relay
-// 		dfo, err := object.Marshal(df)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		err = w.Send(
-// 			ctx,
-// 			dfo,
-// 			relayConnInfo.PublicKey,
-// 			SendWithConnectionInfo(relayConnInfo),
-// 		)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		resSub := w.Subscribe(
-// 			FilterByObjectType(DataForwardResponseType),
-// 			FilterByRequestID(df.RequestID),
-// 		)
-// 		var resObj *object.Object
-// 		c := resSub.Channel()
-// 		// TODO arbitrary timeout
-// 		t := time.NewTimer(time.Second)
-// 		select {
-// 		case env := <-c:
-// 			resObj = env.Payload
-// 		case <-t.C:
-// 		case <-ctx.Done():
-// 		}
-// 		if resObj == nil {
-// 			return errors.Error("didn't get a data forward response in time")
-// 		}
-// 		res := &DataForwardResponse{}
-// 		if err := object.Unmarshal(resObj, res); err != nil {
-// 			return err
-// 		}
-// 		if !res.Success {
-// 			return fmt.Errorf(
-// 				"relay %v wasn't able to delivery object",
-// 				relayConnInfo.Addresses,
-// 			)
-// 		}
-// 		return nil
-// 	}
-// 	// processRequest:
-// 	// - if there is already an established connection:
-// 	//   - try to write to it
-// 	// - if we have been given a connInfo:
-// 	//   - try to establish a connection and try to write to it
-// 	// - if there is an existing connInfo:
-// 	//   - try to establish a connection and try to write to it
-// 	// - try to lookup the peer's connInfo via a resolver and try to write to it
-// 	// - try to send via relay
-// 	processRequest := func(req *outgoingObject) error {
-// 		var errs error
-// 		// if we have a connection
-// 		if conn != nil {
-// 			// attempt to send the object
-// 			err := net.Write(req.object, conn)
-// 			if err == nil {
-// 				objSendSuccessCounter.Inc()
-// 				return nil
-// 			}
-// 			// if that fails, close and remove connection
-// 			w.connmgr.CloseConnection(
-// 				conn,
-// 			)
-// 			conn = nil
-// 		}
-// 		// decide which connInfo to use
-// 		switch {
-// 		case connInfo == nil && req.connectionInfo != nil:
-// 			connInfo = req.connectionInfo
-// 		case connInfo != nil && req.connectionInfo != nil:
-// 			if req.connectionInfo.Version >= connInfo.Version {
-// 				connInfo = req.connectionInfo
-// 			}
-// 		case connInfo == nil && req.connectionInfo == nil:
-// 			connInfo = &peer.ConnectionInfo{
-// 				PublicKey: req.recipient,
-// 			}
-// 		}
-// 		// try to get establish a connection
-// 		newConn, err := w.connmgr.GetConnection(
-// 			req.context,
-// 			connInfo,
-// 		)
-// 		if err == nil {
-// 			// attempt to send the object
-// 			err := net.Write(req.object, newConn)
-// 			if err == nil {
-// 				// update conn and connInfo and return
-// 				conn = newConn
-// 				objSendSuccessCounter.Inc()
-// 				return nil
-// 			}
-// 			// if that fails, close and remove connection
-// 			errs = multierror.Append(errs, err)
-// 			w.connmgr.CloseConnection(
-// 				conn,
-// 			)
-// 		}
-// 		// try to lookup the peer's connInfo via a resolver
-// 		if req.connectionInfo == nil {
-// 			newConnInfo, err := w.lookup(req.context, req.recipient)
-// 			if err == nil && newConnInfo != nil {
-// 				// use this connInfo from now on
-// 				connInfo = newConnInfo
-// 				// try to get a connection
-// 				newConn, err := w.connmgr.GetConnection(
-// 					req.context,
-// 					connInfo,
-// 				)
-// 				if err == nil {
-// 					// attempt to send the object
-// 					err := net.Write(req.object, newConn)
-// 					if err == nil {
-// 						// update conn and connInfo and return
-// 						conn = newConn
-// 						objSendSuccessCounter.Inc()
-// 						return nil
-// 					}
-// 					// if that fails, close and remove connection
-// 					errs = multierror.Append(errs, err)
-// 					w.connmgr.CloseConnection(
-// 						conn,
-// 					)
-// 				}
-// 			}
-// 		}
-// 		// try to send via relay
-// 		if len(connInfo.Relays) == 0 {
-// 			return errors.Error("all addresses failed")
-// 		}
-// 		// TODO use lastRelay first
-// 		for _, relay := range connInfo.Relays {
-// 			err := sendViaRelay(
-// 				req.context,
-// 				relay,
-// 				req.recipient,
-// 				req.object,
-// 			)
-// 			if err == nil {
-// 				objSendRelayedCounter.Inc()
-// 				return nil
-// 			}
-// 			errs = multierror.Append(errs, err)
-// 		}
-// 		return fmt.Errorf("all addresses failed, all relays failed, %w", errs)
-// 	}
-// 	for {
-// 		// dequeue the next item to send
-// 		// TODO figure out what can go wrong here
-// 		v := outbox.queue.Pop()
-// 		req := v.(*outgoingObject)
-// 		// check if the context for this is done
-// 		if err := req.context.Err(); err != nil {
-// 			req.err <- err
-// 			continue
-// 		}
-// 		// make a logger from our req context
-// 		logger := log.FromContext(req.context).With(
-// 			log.String("recipient", req.recipient.String()),
-// 			log.String("object.type", req.object.Type),
-// 		)
-// 		if err := processRequest(req); err != nil {
-// 			logger.Error("error sending object", log.Error(err))
-// 			objSendFailedCounter.Inc()
-// 			req.err <- err
-// 			continue
-// 		}
-// 		logger.Info("sent object")
-// 		req.err <- nil
-// 	}
-// }
-
 // Subscribe to incoming objects as envelopes
 func (w *network) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
@@ -769,30 +573,153 @@ func (w *network) Send(
 		)
 	}
 
-	ci := opt.connectionInfo
-	if ci == nil {
-		ci = &peer.ConnectionInfo{
-			PublicKey: p,
+	// sendViaRelay:
+	sendViaRelay := func(
+		ctx context.Context,
+		relayConnInfo *peer.ConnectionInfo,
+		recipient crypto.PublicKey,
+		obj *object.Object,
+	) error {
+		// wrap object
+		df, err := w.wrapInDataForward(
+			obj,
+			recipient,
+		)
+		if err != nil {
+			return err
 		}
+		// send the newly wrapped object to the relay
+		dfo, err := object.Marshal(df)
+		if err != nil {
+			return err
+		}
+		err = w.Send(
+			ctx,
+			dfo,
+			relayConnInfo.PublicKey,
+			SendWithConnectionInfo(relayConnInfo),
+		)
+		if err != nil {
+			return err
+		}
+		resSub := w.Subscribe(
+			FilterByObjectType(DataForwardResponseType),
+			FilterByRequestID(df.RequestID),
+		)
+		var resObj *object.Object
+		c := resSub.Channel()
+		// TODO arbitrary timeout
+		t := time.NewTimer(time.Second)
+		select {
+		case env := <-c:
+			resObj = env.Payload
+		case <-t.C:
+		case <-ctx.Done():
+		}
+		if resObj == nil {
+			return errors.Error("didn't get a data forward response in time")
+		}
+		res := &DataForwardResponse{}
+		if err := object.Unmarshal(resObj, res); err != nil {
+			return err
+		}
+		if !res.Success {
+			return fmt.Errorf(
+				"relay %v wasn't able to delivery object",
+				relayConnInfo.Addresses,
+			)
+		}
+		return nil
 	}
 
 	var c net.Connection
-	c, err = w.net.Dial(ctx, ci)
-	if err != nil {
-		cp, err := w.lookup(ctx, p)
+	var ci *peer.ConnectionInfo
+	var errs error
+	var relays []*peer.ConnectionInfo
+
+	// dial with given connection info
+	if opt.connectionInfo != nil {
+		c, err = w.net.Dial(ctx, opt.connectionInfo)
 		if err != nil {
-			return fmt.Errorf("error dialing peer: %w", err)
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error dialing peer: %w", err),
+			)
 		}
-		c, err = w.net.Dial(ctx, cp)
+		relays = opt.connectionInfo.Relays
+	}
+
+	// dial with basic connection info
+	if c == nil {
+		c, err = w.net.Dial(ctx, &peer.ConnectionInfo{PublicKey: p})
 		if err != nil {
-			return fmt.Errorf("error dialing peer: %w", err)
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error dialing peer: %w", err),
+			)
 		}
 	}
 
-	err = c.Write(ctx, o)
-	if err != nil {
-		objSendFailedCounter.Inc()
-		return fmt.Errorf("error writing object: %w", err)
+	// lookup with basic connection info
+	if c == nil {
+		ci, err = w.lookup(ctx, p)
+		if err != nil {
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error looking up peer: %w", err),
+			)
+		}
+		// TODO: should we append or replace the relays?
+		if ci != nil && len(ci.Relays) > 0 {
+			relays = append(relays, ci.Relays...)
+		}
+	}
+
+	// dial with lookup connection info
+	if c == nil && ci != nil {
+		c, err = w.net.Dial(ctx, ci)
+		if err != nil {
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error dialing peer: %w", err),
+			)
+		}
+	}
+
+	// attempt to write the object
+	sent := false
+	if c != nil {
+		err = c.Write(ctx, o)
+		if err != nil {
+			objSendFailedCounter.Inc()
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error writing object: %w", err),
+			)
+		} else {
+			sent = true
+		}
+	}
+
+	// if all else fails, send via relay
+	if !sent && len(relays) > 0 {
+		for _, relay := range relays {
+			err := sendViaRelay(ctx, relay, p, o)
+			if err != nil {
+				errs = multierror.Append(
+					errs,
+					fmt.Errorf("error sending via relay: %w", err),
+				)
+				continue
+			}
+			sent = true
+			objSendRelayedCounter.Inc()
+			break
+		}
+	}
+
+	if !sent {
+		return errs
 	}
 
 	objSendSuccessCounter.Inc()
