@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
@@ -27,7 +27,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Check if mods are tidy
         run: make check-tidy
@@ -42,7 +42,7 @@ jobs:
         go-version: 1.17
 
     - name: Checkout code
-      uses: actions/checkout@v2.3.4
+      uses: actions/checkout@v2.3.5
 
     - name: Check licenses
       run: make tools check-licenses
@@ -57,7 +57,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Make test
         run: make test
@@ -76,7 +76,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Run benchmark
         run: make benchmark | tee output.txt
@@ -101,7 +101,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Publish coverage
         uses: paambaati/codeclimate-action@v2.7.5
@@ -125,7 +125,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Make e2e
         run: make e2e
@@ -143,7 +143,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Run benchmark
         run: make benchmark | tee output.txt
@@ -167,7 +167,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Download binary tools
         env:
@@ -190,7 +190,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -205,7 +205,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -220,7 +220,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -235,7 +235,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-java@v2
         with:
           java-version: 8
@@ -262,7 +262,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -284,7 +284,7 @@ jobs:
           go-version: 1.17
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Export version from tag name
         run: |
@@ -323,7 +323,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -350,7 +350,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -377,7 +377,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -404,7 +404,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-java@v2
         with:
           java-version: 8
@@ -443,7 +443,7 @@ jobs:
       - test
       - build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.5
       - uses: actions/setup-go@v2.1.4
         with:
           go-version: 1.17
@@ -471,7 +471,7 @@ jobs:
       - build
     steps:
     - name: Checkout
-      uses: actions/checkout@v2.3.4
+      uses: actions/checkout@v2.3.5
 
     - name: Build docs
       run: yarn && yarn docs:build
@@ -504,7 +504,7 @@ jobs:
           environment: production
 
       - name: Check out the code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
 
       - name: Export version from tag name
         run: |
