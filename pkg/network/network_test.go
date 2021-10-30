@@ -115,6 +115,19 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			),
 		)
 		require.NoError(t, err)
+		// try to send something from p2 to p1
+		err = n2.Send(
+			context.Background(),
+			testObj,
+			k1.PublicKey(),
+			SendWithConnectionInfo(
+				&peer.ConnectionInfo{
+					PublicKey: k1.PublicKey(),
+					Addresses: n1.GetAddresses(),
+				},
+			),
+		)
+		require.NoError(t, err)
 	})
 
 	t.Run("wait for response", func(t *testing.T) {
@@ -136,16 +149,29 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		go func() {
 			reqo, err := object.Marshal(req)
 			require.NoError(t, err)
-			sendErr <- n1.Send(
+			err = n1.Send(
 				context.Background(),
 				reqo,
 				n2.GetPeerKey().PublicKey(),
+				SendWithConnectionInfo(
+					&peer.ConnectionInfo{
+						PublicKey: n2.GetPeerKey().PublicKey(),
+						Addresses: n2.GetAddresses(),
+					},
+				),
 				SendWithResponse(gotRes, 0),
 			)
+			require.NoError(t, err)
+			sendErr <- err
 		}()
 		// wait for p2 to get the req
-		gotReq := <-reqSub.Channel()
-		assert.Equal(t, "1", string(gotReq.Payload.Data["requestID"].(tilde.String)))
+		select {
+		case gotReq := <-reqSub.Channel():
+			v := string(gotReq.Payload.Data["requestID"].(tilde.String))
+			assert.Equal(t, "1", v)
+		case <-time.After(time.Second * 2):
+			t.Fatal("timed out waiting for request")
+		}
 		// send response from p2 to p1
 		reso, err := object.Marshal(res)
 		require.NoError(t, err)
@@ -163,9 +189,13 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			),
 		)
 		// check response
-		err = <-sendErr
-		require.NoError(t, err)
-		assert.Equal(t, res, gotRes)
+		select {
+		case err := <-sendErr:
+			require.NoError(t, err)
+			assert.Equal(t, res, gotRes)
+		case <-time.After(time.Second * 2):
+			t.Fatal("timeout waiting for response")
+		}
 	})
 }
 
