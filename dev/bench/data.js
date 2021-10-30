@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1635603582773,
+  "lastUpdate": 1635635220943,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6642,6 +6642,60 @@ window.BENCHMARK_DATA = {
             "value": 53935,
             "unit": "ns/op",
             "extra": "21793 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "10311b5c2564d8f50e03150818bdc0d2ae743d5f",
+          "message": "fix(network): fix network test for GOMAXPROCS=1\n\nWhen running the TestNetwork_SimpleConnection tests with GOMAXPROCS=1, sometimes after the disconnect test, the next dialling happens before we're able to properly store the connection so the network can't find the existing connection. Adding SendWithConnectionInfo resolves this issue but we probably need a better fix.",
+          "timestamp": "2021-10-31T00:05:25+01:00",
+          "tree_id": "70df3f8fdab3beeee0196fddafe8381c32c8c230",
+          "url": "https://github.com/nimona/go-nimona/commit/10311b5c2564d8f50e03150818bdc0d2ae743d5f"
+        },
+        "date": 1635635219801,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6181806,
+            "unit": "ns/op",
+            "extra": "201 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 362193947,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3554921867,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1918095,
+            "unit": "ns/op",
+            "extra": "592 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 54750,
+            "unit": "ns/op",
+            "extra": "20985 times\n2 procs"
           }
         ]
       }
