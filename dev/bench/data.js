@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1635549152648,
+  "lastUpdate": 1635603582773,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6588,6 +6588,60 @@ window.BENCHMARK_DATA = {
             "value": 54603,
             "unit": "ns/op",
             "extra": "21385 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "021e33cef64732d0ae65b40bd054a7a9201dd520",
+          "message": "feat(deps): upgrade mods to go1.17",
+          "timestamp": "2021-10-30T00:00:35+01:00",
+          "tree_id": "5deede41ee4cccec90e4ca0fbf858219098140ea",
+          "url": "https://github.com/nimona/go-nimona/commit/021e33cef64732d0ae65b40bd054a7a9201dd520"
+        },
+        "date": 1635603581716,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5913901,
+            "unit": "ns/op",
+            "extra": "177 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 376488560,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3540023721,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1703306,
+            "unit": "ns/op",
+            "extra": "630 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 53935,
+            "unit": "ns/op",
+            "extra": "21793 times\n2 procs"
           }
         ]
       }
