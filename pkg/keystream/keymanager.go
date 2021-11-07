@@ -5,7 +5,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
@@ -35,20 +35,20 @@ type (
 	}
 	manager struct {
 		mutex       sync.RWMutex
-		network     network.Network
+		mesh        mesh.Mesh
 		objectStore *sqlobjectstore.Store
 		controllers map[tilde.Digest]Controller
 	}
 )
 
 func NewKeyManager(
-	net network.Network,
+	msh mesh.Mesh,
 	objectStore *sqlobjectstore.Store,
 ) (Manager, error) {
 	// load all our controllers from the objectstore
 	cs := map[tilde.Digest]Controller{}
 	streamRootsReader, err := objectStore.Filter(
-		sqlobjectstore.FilterByOwner(net.GetConnectionInfo().Metadata.Owner),
+		sqlobjectstore.FilterByOwner(msh.GetConnectionInfo().Metadata.Owner),
 		sqlobjectstore.FilterByObjectType("keri.Inception/v0"),
 	)
 	if err != nil && !errors.Is(err, objectstore.ErrNotFound) {
@@ -77,7 +77,7 @@ func NewKeyManager(
 	}
 
 	return &manager{
-		network:     net,
+		mesh:        msh,
 		objectStore: objectStore,
 		controllers: cs,
 	}, nil
@@ -88,7 +88,7 @@ func (m *manager) NewController(
 	delegatorSeal *DelegatorSeal,
 ) (Controller, error) {
 	c, err := NewController(
-		m.network.GetConnectionInfo().Metadata.Owner,
+		m.mesh.GetConnectionInfo().Metadata.Owner,
 		m.objectStore,
 		m.objectStore,
 		delegatorSeal,

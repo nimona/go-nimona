@@ -8,7 +8,7 @@ These peers can still participate in the network but to a limited extend. By usi
 
 ## Proposal: Relays
 
-Peers can chose to act as relays and advertise the fact on the network. Peers unable to accept incoming connections can use those peers to receive objects from others. Such peers will look for available relays and advertise them as their relays in their connection infos. Relays peers should be used after dialing all the peer's addresses has failed.
+Peers can chose to act as relays and advertise the fact on the mesh. Peers unable to accept incoming connections can use those peers to receive objects from others. Such peers will look for available relays and advertise them as their relays in their connection infos. Relays peers should be used after dialing all the peer's addresses has failed.
 
 In order for relays not to be able to read the objects being given to them, the payload objects themselves will have to be encrypted. To remove the need for the peers to perform a handshake a shared key will be [derived](https://blog.filippo.io/using-ed25519-keys-for-encryption) from the sender's and recipient's keys pairs allowing both peers to construct the encryption and decryption secret without any previous communication.
 
@@ -42,7 +42,7 @@ Let's say that **Alice** (sender) wants to send a `Whatever` object to **Bob** (
 
 ### Example data forward request
 
-![images/network-relays-object.svg](images/network-relays-object.svg)
+![images/mesh-relays-object.svg](images/mesh-relays-object.svg)
 
 ## Messages
 
@@ -59,7 +59,7 @@ object nimona.io/peer.ConnectionInfo {
 ### Data Forward Request
 
 ```ndl
-signed object nimona.io/network.DataForwardRequest {
+signed object nimona.io/mesh.DataForwardRequest {
     requestID string
     recipient nimona.io/crypto.PublicKey
     envelope nimona.io/object.Object
@@ -69,7 +69,7 @@ signed object nimona.io/network.DataForwardRequest {
 ### Data Forward Envelope
 
 ```ndl
-signed object nimona.io/network.DataForwardEnvelope {
+signed object nimona.io/mesh.DataForwardEnvelope {
         requestID string
     sender nimona.io/crypto.PublicKey
     data data
@@ -79,7 +79,7 @@ signed object nimona.io/network.DataForwardEnvelope {
 ### Data Forward Response
 
 ```ndl
-signed object nimona.io/network.DataForwardResponse {
+signed object nimona.io/mesh.DataForwardResponse {
         requestID string
         success bool
         error string

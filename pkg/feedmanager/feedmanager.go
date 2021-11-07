@@ -11,7 +11,7 @@ import (
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -26,7 +26,7 @@ type (
 		RegisterFeed(rootType string, eventTypes ...string) error
 	}
 	feedManager struct {
-		network           network.Network
+		mesh              mesh.Mesh
 		resolver          resolver.Resolver
 		objectstore       objectstore.Store
 		objectmanager     objectmanager.ObjectManager
@@ -37,13 +37,13 @@ type (
 
 func New(
 	ctx context.Context,
-	net network.Network,
+	msh mesh.Mesh,
 	res resolver.Resolver,
 	str objectstore.Store,
 	man objectmanager.ObjectManager,
 ) (*feedManager, error) {
 	m := &feedManager{
-		network:       net,
+		mesh:          msh,
 		resolver:      res,
 		objectstore:   str,
 		objectmanager: man,
@@ -119,7 +119,7 @@ func (m *feedManager) createFeed(
 	streamType string,
 	eventTypes []string,
 ) error {
-	ownPeer := m.network.GetPeerKey().PublicKey()
+	ownPeer := m.mesh.GetPeerKey().PublicKey()
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
@@ -273,7 +273,7 @@ func (m *feedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
 	identityKey := m.getIdentityPublicKey()
-	peerKey := m.network.GetPeerKey().PublicKey()
+	peerKey := m.mesh.GetPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
 		if errors.Is(err, object.ErrReaderDone) {

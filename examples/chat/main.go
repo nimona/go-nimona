@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -28,7 +28,7 @@ type Config struct {
 }
 
 type chat struct {
-	network       network.Network
+	mesh          mesh.Mesh
 	objectmanager objectmanager.ObjectManager
 	objectstore   objectstore.Store
 	resolver      resolver.Resolver
@@ -119,7 +119,7 @@ func (c *chat) subscribe(
 					continue
 				}
 				if s.Metadata.Owner.Equals(
-					c.network.GetPeerKey().PublicKey().DID(),
+					c.mesh.GetPeerKey().PublicKey().DID(),
 				) {
 					alreadySubscribed = true
 					or.Close()
@@ -131,7 +131,7 @@ func (c *chat) subscribe(
 			ctx := context.New(context.WithTimeout(time.Second * 5))
 			so := object.MustMarshal(&stream.Subscription{
 				Metadata: object.Metadata{
-					Owner: c.network.GetPeerKey().PublicKey().DID(),
+					Owner: c.mesh.GetPeerKey().PublicKey().DID(),
 					Root:  conversationRootHash,
 				},
 				RootHashes: []tilde.Digest{
@@ -208,9 +208,9 @@ func main() {
 
 	log.DefaultLogger.SetLogLevel(nConfig.LogLevel)
 
-	// construct new network
+	// construct new mesh
 	nnet := net.New(nConfig.Peer.PrivateKey)
-	net := network.New(
+	net := mesh.New(
 		ctx,
 		nnet,
 		nConfig.Peer.PrivateKey,
@@ -221,8 +221,8 @@ func main() {
 		lis, err := net.Listen(
 			ctx,
 			nConfig.Peer.BindAddress,
-			network.ListenOnLocalIPs,
-			// network.ListenOnExternalPort,
+			mesh.ListenOnLocalIPs,
+			// mesh.ListenOnExternalPort,
 		)
 		if err != nil {
 			logger.Fatal("error while listening", log.Error(err))
@@ -293,7 +293,7 @@ func main() {
 	logger.Info("ready")
 
 	c := &chat{
-		network:       net,
+		mesh:          net,
 		objectmanager: man,
 		objectstore:   str,
 		resolver:      res,

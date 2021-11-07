@@ -1,4 +1,4 @@
-package network
+package mesh
 
 func HandleEnvelopeSubscription(
 	sub EnvelopeSubscription,

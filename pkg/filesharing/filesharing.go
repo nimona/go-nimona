@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
@@ -48,7 +48,7 @@ type (
 	}
 	fileSharer struct {
 		objmgr         objectmanager.ObjectManager
-		net            network.Network
+		mesh           mesh.Mesh
 		receivedFolder string
 	}
 	Transfer struct {
@@ -59,12 +59,12 @@ type (
 
 func New(
 	objectManager objectmanager.ObjectManager,
-	net network.Network,
+	msh mesh.Mesh,
 	receivedFolder string,
 ) Filesharer {
 	return &fileSharer{
 		objmgr:         objectManager,
-		net:            net,
+		mesh:           msh,
 		receivedFolder: receivedFolder,
 	}
 }
@@ -85,7 +85,7 @@ func (fsh *fileSharer) RequestTransfer(
 		return "", err
 	}
 
-	err = fsh.net.Send(
+	err = fsh.mesh.Send(
 		ctx,
 		ro,
 		peerReq,
@@ -113,7 +113,7 @@ func (fsh *fileSharer) Listen(
 	reqs := make(chan *Transfer)
 
 	go func() {
-		subs := fsh.net.Subscribe()
+		subs := fsh.mesh.Subscribe()
 		err := fsh.handleObjects(ctx, subs, reqs)
 		if err != nil {
 			logger.Error("error getting objects", log.Error(err))
@@ -126,7 +126,7 @@ func (fsh *fileSharer) Listen(
 
 func (fsh *fileSharer) handleObjects(
 	ctx context.Context,
-	sub network.EnvelopeSubscription,
+	sub mesh.EnvelopeSubscription,
 	reqs chan *Transfer,
 ) error {
 	logger := log.
@@ -226,7 +226,7 @@ func (fsh *fileSharer) RequestFile(
 	if err != nil {
 		return nil, err
 	}
-	if err := fsh.net.Send(
+	if err := fsh.mesh.Send(
 		ctx,
 		doneObj,
 		transfer.Peer,
@@ -250,7 +250,7 @@ func (fsh *fileSharer) RespondTransfer(
 	if err != nil {
 		return err
 	}
-	err = fsh.net.Send(ctx, ro, transfer.Peer)
+	err = fsh.mesh.Send(ctx, ro, transfer.Peer)
 	if err != nil {
 		return err
 	}

@@ -9,12 +9,12 @@ import (
 
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/filesharing"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/tilde"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/network"
-	"nimona.io/pkg/networkmock"
+	"nimona.io/pkg/meshmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
@@ -29,7 +29,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 		net func(
 			*testing.T,
 			context.Context,
-		) network.Network
+		) mesh.Mesh
 	}
 	type args struct {
 		ctx     context.Context
@@ -52,8 +52,8 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 				net: func(
 					*testing.T,
 					context.Context,
-				) network.Network {
-					return &networkmock.MockNetworkSimple{
+				) mesh.Mesh {
+					return &meshmock.MockMeshSimple{
 						SendCalls: []error{
 							nil,
 						},
@@ -97,7 +97,7 @@ func Test_fileSharer_Listen(t *testing.T) {
 		net func(
 			*testing.T,
 			context.Context,
-		) network.Network
+		) mesh.Mesh
 	}
 	type args struct {
 		ctx context.Context
@@ -114,14 +114,14 @@ func Test_fileSharer_Listen(t *testing.T) {
 				net: func(
 					t *testing.T,
 					ctx context.Context,
-				) network.Network {
-					m := &networkmock.MockNetworkSimple{
+				) mesh.Mesh {
+					m := &meshmock.MockMeshSimple{
 						SendCalls: []error{
 							nil,
 						},
-						SubscribeCalls: []network.EnvelopeSubscription{
-							&networkmock.MockSubscriptionSimple{
-								Objects: []*network.Envelope{{
+						SubscribeCalls: []mesh.EnvelopeSubscription{
+							&meshmock.MockSubscriptionSimple{
+								Objects: []*mesh.Envelope{{
 									Payload: object.MustMarshal(req),
 								}},
 							},
@@ -160,7 +160,7 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 		net func(
 			*testing.T,
 			context.Context,
-		) network.Network
+		) mesh.Mesh
 	}
 
 	file1 := filesharing.File{
@@ -204,14 +204,14 @@ func Test_fileSharer_RequestFile(t *testing.T) {
 				net: func(
 					t *testing.T,
 					ctx context.Context,
-				) network.Network {
-					m := &networkmock.MockNetworkSimple{
+				) mesh.Mesh {
+					m := &meshmock.MockMeshSimple{
 						SendCalls: []error{
 							nil,
 						},
-						SubscribeCalls: []network.EnvelopeSubscription{
-							&networkmock.MockSubscriptionSimple{
-								Objects: []*network.Envelope{{
+						SubscribeCalls: []mesh.EnvelopeSubscription{
+							&meshmock.MockSubscriptionSimple{
+								Objects: []*mesh.Envelope{{
 									Payload: object.MustMarshal(req),
 								}},
 							},

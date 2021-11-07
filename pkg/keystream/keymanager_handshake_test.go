@@ -10,7 +10,7 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
@@ -23,11 +23,11 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.NoError(t, err)
 	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	n0 := network.New(context.Background(), net.New(k0), k0)
+	n0 := mesh.New(context.Background(), net.New(k0), k0)
 	l0, err := n0.Listen(
 		context.Background(),
 		"127.0.0.1:0",
-		network.ListenOnLocalIPs,
+		mesh.ListenOnLocalIPs,
 	)
 	require.NoError(t, err)
 	defer l0.Close()
@@ -44,11 +44,11 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.NoError(t, err)
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	n1 := network.New(context.Background(), net.New(k1), k1)
+	n1 := mesh.New(context.Background(), net.New(k1), k1)
 	l1, err := n1.Listen(
 		context.Background(),
 		"127.0.0.1:0",
-		network.ListenOnLocalIPs,
+		mesh.ListenOnLocalIPs,
 	)
 	require.NoError(t, err)
 	defer l1.Close()

@@ -14,7 +14,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
@@ -58,18 +58,18 @@ func main() {
 
 	// construct new network
 	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
+	msh := mesh.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := msh.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
+		mesh.ListenOnLocalIPs,
+		mesh.ListenOnPrivateIPs,
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
@@ -95,11 +95,11 @@ func main() {
 	)
 
 	// register resolver
-	nnet.RegisterResolver(res)
+	msh.RegisterResolver(res)
 
 	logger = logger.With(
-		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", nnet.GetAddresses()),
+		log.String("peer.publicKey", msh.GetPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", msh.GetAddresses()),
 	)
 
 	logger.Info("ready")
@@ -118,7 +118,7 @@ func main() {
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		nnet,
+		msh,
 		res,
 		str,
 	)
@@ -146,7 +146,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				nnet.GetPeerKey().PublicKey().String(),
+				msh.GetPeerKey().PublicKey().String(),
 				env.Metadata.Owner.Identity,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
@@ -183,12 +183,12 @@ func main() {
 			return errors.Error("no recipients")
 		}
 		for _, recipient := range recipients {
-			if err := nnet.Send(
+			if err := msh.Send(
 				sctx,
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: nnet.GetPeerKey().PublicKey().DID(),
+						Owner: msh.GetPeerKey().PublicKey().DID(),
 					},
 					Data: tilde.Map{
 						"nonce": tilde.String(rand.String(8)),
@@ -207,7 +207,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.PublicKey.String(),
-				nnet.GetPeerKey().PublicKey().String(),
+				msh.GetPeerKey().PublicKey().String(),
 			)
 			return nil
 		}

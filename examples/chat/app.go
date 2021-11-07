@@ -226,14 +226,14 @@ func (app *App) Show() {
 						conv.Hash,
 						fmt.Sprintf(
 							"* public key: %s",
-							app.Chat.network.GetPeerKey().PublicKey(),
+							app.Chat.mesh.GetPeerKey().PublicKey(),
 						),
 					)
 					app.AddSystemText(
 						conv.Hash,
 						fmt.Sprintf(
 							"* addresses: %s",
-							app.Chat.network.GetAddresses(),
+							app.Chat.mesh.GetAddresses(),
 						),
 					)
 					// TODO handle error

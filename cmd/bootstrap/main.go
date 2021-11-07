@@ -19,7 +19,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/version"
 )
@@ -73,18 +73,18 @@ func main() {
 
 	// construct new network
 	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
+	msh := mesh.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := msh.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
+		mesh.ListenOnLocalIPs,
+		mesh.ListenOnPrivateIPs,
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
@@ -92,7 +92,7 @@ func main() {
 
 	// add announce address
 	if cfg.Peer.AnnounceAddress != "" {
-		nnet.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
+		msh.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
 	// convert shorthands into connection infos
@@ -117,8 +117,8 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", nnet.GetAddresses()),
+		log.String("peer.publicKey", msh.GetPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", msh.GetAddresses()),
 	)
 
 	logger.Info("bootstrap node ready")

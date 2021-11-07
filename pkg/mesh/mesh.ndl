@@ -1,20 +1,20 @@
-package nimona.io/network
+package nimona.io/mesh
 
 import nimona.io/object object
 import nimona.io/crypto crypto
 
-signed object nimona.io/network.DataForwardRequest {
+signed object nimona.io/mesh.DataForwardRequest {
     requestID string
     recipient string type=nimona.io/crypto.PublicKey
     optional payload object type=nimona.io/object.Object
 }
 
-signed object nimona.io/network.DataForwardEnvelope {
+signed object nimona.io/mesh.DataForwardEnvelope {
     sender string type=nimona.io/crypto.PublicKey
     data data
 }
 
-signed object nimona.io/network.DataForwardResponse {
+signed object nimona.io/mesh.DataForwardResponse {
     requestID string
     success bool
 }

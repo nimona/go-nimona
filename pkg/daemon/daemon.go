@@ -11,7 +11,7 @@ import (
 	"nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/keystream"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
@@ -23,7 +23,7 @@ type (
 	Daemon interface {
 		Config() config.Config
 		Preferences() preferences.Preferences
-		Network() network.Network
+		Network() mesh.Mesh
 		Resolver() resolver.Resolver
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
@@ -36,7 +36,7 @@ type (
 		config          config.Config
 		preferences     preferences.Preferences
 		configOptions   []config.Option
-		network         network.Network
+		mesh            mesh.Mesh
 		resolver        resolver.Resolver
 		objectstore     objectstore.Store
 		objectmanager   objectmanager.ObjectManager
@@ -64,9 +64,9 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
-	// construct new network
+	// construct new mesh
 	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
+	msh := mesh.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
@@ -74,11 +74,11 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	if cfg.Peer.BindAddress != "" {
 		// start listening
-		lis, err := nnet.Listen(
+		lis, err := msh.Listen(
 			ctx,
 			cfg.Peer.BindAddress,
-			network.ListenOnLocalIPs,
-			// network.ListenOnExternalPort,
+			mesh.ListenOnLocalIPs,
+			// mesh.ListenOnExternalPort,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("listening: %w", err)
@@ -97,7 +97,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	nnet.RegisterRelays(bootstrapPeers...)
+	msh.RegisterRelays(bootstrapPeers...)
 
 	// construct preferences db
 	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "preferences.db"))
@@ -132,12 +132,12 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	)
 
 	// register resolver
-	nnet.RegisterResolver(res)
+	msh.RegisterResolver(res)
 
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		nnet,
+		msh,
 		res,
 		str,
 	)
@@ -145,7 +145,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct feed manager
 	fdm, err := feedmanager.New(
 		ctx,
-		nnet,
+		msh,
 		res,
 		str,
 		man,
@@ -156,7 +156,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	// construct key stream manager
 	ksm, err := keystream.NewKeyManager(
-		nnet,
+		msh,
 		str,
 	)
 	if err != nil {
@@ -165,7 +165,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	d.config = *cfg
 	d.preferences = prf
-	d.network = nnet
+	d.mesh = msh
 	d.resolver = res
 	d.objectstore = str
 	d.objectmanager = man
@@ -183,8 +183,8 @@ func (d *daemon) Preferences() preferences.Preferences {
 	return d.preferences
 }
 
-func (d *daemon) Network() network.Network {
-	return d.network
+func (d *daemon) Network() mesh.Mesh {
+	return d.mesh
 }
 
 func (d *daemon) Resolver() resolver.Resolver {

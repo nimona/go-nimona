@@ -1,4 +1,4 @@
-package network
+package mesh
 
 import (
 	"nimona.io/pkg/errors"

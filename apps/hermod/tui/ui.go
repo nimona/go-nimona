@@ -18,7 +18,7 @@ import (
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -54,7 +54,7 @@ type (
 
 		config *comboConf
 
-		network       network.Network
+		network       mesh.Mesh
 		objectmanager objectmanager.ObjectManager
 		blobmanager   blob.Manager
 		objectstore   objectstore.Store
@@ -92,7 +92,7 @@ func NewHermod() hermod {
 	}
 
 	man := d.ObjectManager()
-	nnet := d.Network()
+	msh := d.Network()
 	res := d.Resolver()
 	str := d.ObjectStore()
 	nconf := d.Config()
@@ -108,11 +108,11 @@ func NewHermod() hermod {
 
 	fsh := filesharing.New(
 		man,
-		nnet,
+		msh,
 		cfg.ReceivedFolder,
 	)
 
-	her.network = nnet
+	her.network = msh
 	her.config = cconf
 	her.textInput = ti
 	her.config = cconf
@@ -138,7 +138,7 @@ func NewHermod() hermod {
 	}()
 
 	go func() {
-		sub := nnet.Subscribe()
+		sub := msh.Subscribe()
 		for {
 			env, err := sub.Next()
 			if err != nil {
@@ -305,8 +305,8 @@ func (h *hermod) execute() (tea.Model, tea.Cmd) {
 	case "local":
 		h.result = fmt.Sprintf(
 			"public_key: %s\naddresses: %s\n",
-			h.network.GetConnectionInfo().PublicKey,
-			h.network.GetConnectionInfo().Addresses,
+			h.mesh.GetConnectionInfo().PublicKey,
+			h.mesh.GetConnectionInfo().Addresses,
 		)
 	case "request":
 		if len(params) != 1 {

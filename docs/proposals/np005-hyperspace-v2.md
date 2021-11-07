@@ -53,7 +53,7 @@ is the fact that they are both pretty demanding in terms of cpu, memory,
 and bandwidth. Peers participating in the network have to constantly be
 sending queries to keep a list of healthy peers, as well as continuously
 advertise themselves and the content they can provide so they aren't
-forgotten by the network.
+forgotten by the mesh.
 
 This is especially hard for applications on mobile phones or other low
 power/bandwidth devices as actively participating in the network costs both
@@ -99,7 +99,7 @@ implement and debug.
 In the first version of the network, and while the number of peers and
 advertised content is small, the providers will be gossiping everything
 between them and thus should all have a complete and common understanding
-of the network.
+of the mesh.
 
 We will also be moving away from creating the vectors from ngrams but rather
 opt for hashing the content id with murmur3 multiple (3 for now) times with

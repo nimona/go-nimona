@@ -11,7 +11,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
@@ -59,7 +59,7 @@ type (
 	}
 
 	manager struct {
-		network       network.Network
+		mesh          mesh.Mesh
 		objectstore   objectstore.Store
 		resolver      resolver.Resolver
 		pubsub        ObjectPubSub
@@ -75,7 +75,7 @@ type (
 
 func New(
 	ctx context.Context,
-	net network.Network,
+	msh mesh.Mesh,
 	res resolver.Resolver,
 	str objectstore.Store,
 ) ObjectManager {
@@ -85,7 +85,7 @@ func New(
 		},
 		pubsub:        NewObjectPubSub(),
 		subscriptions: &SubscriptionsMap{},
-		network:       net,
+		mesh:          msh,
 		resolver:      res,
 		objectstore:   str,
 	}
@@ -97,7 +97,7 @@ func New(
 			log.String("method", "objectmanager.New"),
 		)
 
-	subs := m.network.Subscribe()
+	subs := m.mesh.Subscribe()
 
 	go func() {
 		if err := m.handleObjects(subs); err != nil {
@@ -136,8 +136,8 @@ func (m *manager) RequestStream(
 	rID := m.newRequestID()
 	responses := make(chan stream.Response)
 
-	sub := m.network.Subscribe(
-		network.FilterByObjectType(stream.ResponseType),
+	sub := m.mesh.Subscribe(
+		mesh.FilterByObjectType(stream.ResponseType),
 	)
 
 	go func() {
@@ -174,7 +174,7 @@ func (m *manager) RequestStream(
 	if err != nil {
 		return nil, err
 	}
-	if err := m.network.Send(
+	if err := m.mesh.Send(
 		ctx,
 		ro,
 		recipients[0].PublicKey,
@@ -299,8 +299,8 @@ func (m *manager) Request(
 
 	rID := m.newRequestID()
 
-	sub := m.network.Subscribe(
-		network.FilterByObjectType(object.ResponseType),
+	sub := m.mesh.Subscribe(
+		mesh.FilterByObjectType(object.ResponseType),
 	)
 	defer sub.Cancel()
 
@@ -334,7 +334,7 @@ func (m *manager) Request(
 	if err != nil {
 		return nil, err
 	}
-	if err := m.network.Send(
+	if err := m.mesh.Send(
 		ctx,
 		ro,
 		pr.PublicKey,
@@ -354,7 +354,7 @@ func (m *manager) Request(
 }
 
 func (m *manager) handleObjects(
-	sub network.EnvelopeSubscription,
+	sub mesh.EnvelopeSubscription,
 ) error {
 	for {
 		env, err := sub.Next()
@@ -511,7 +511,7 @@ func (m *manager) announceStreamChildren(
 	}
 
 	// remove self
-	delete(subscribersMap, m.network.GetPeerKey().PublicKey().String())
+	delete(subscribersMap, m.mesh.GetPeerKey().PublicKey().String())
 
 	subscribers := []string{}
 	for subscriber := range subscribersMap {
@@ -530,7 +530,7 @@ func (m *manager) announceStreamChildren(
 	// notify subscribers
 	announcement := &stream.Announcement{
 		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
+			Owner: m.mesh.GetPeerKey().PublicKey().DID(),
 		},
 		StreamHash:   streamHash,
 		ObjectHashes: children,
@@ -556,7 +556,7 @@ func (m *manager) announceStreamChildren(
 			)
 			continue
 		}
-		err = m.network.Send(ctx, ao, k)
+		err = m.mesh.Send(ctx, ao, k)
 		if err != nil {
 			logger.Info(
 				"error sending announcement",
@@ -575,7 +575,7 @@ func (m *manager) announceStreamChildren(
 
 func (m *manager) handleObjectRequest(
 	ctx context.Context,
-	env *network.Envelope,
+	env *mesh.Envelope,
 ) error {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "objectmanager.handleObjectRequest"),
@@ -598,7 +598,7 @@ func (m *manager) handleObjectRequest(
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
+			Owner: m.mesh.GetPeerKey().PublicKey().DID(),
 		},
 		Object:    nil,
 		RequestID: req.RequestID,
@@ -617,7 +617,7 @@ func (m *manager) handleObjectRequest(
 		if err != nil {
 			return err
 		}
-		if sErr := m.network.Send(
+		if sErr := m.mesh.Send(
 			ctx,
 			ro,
 			env.Sender,
@@ -638,7 +638,7 @@ func (m *manager) handleObjectRequest(
 	if err != nil {
 		return err
 	}
-	err = m.network.Send(
+	err = m.mesh.Send(
 		ctx,
 		ro,
 		env.Sender,
@@ -662,7 +662,7 @@ func (m *manager) handleObjectRequest(
 
 func (m *manager) handleStreamRequest(
 	ctx context.Context,
-	env *network.Envelope,
+	env *mesh.Envelope,
 ) error {
 	// TODO check if policy allows requested to retrieve the object
 	logger := log.FromContext(ctx).With(
@@ -677,7 +677,7 @@ func (m *manager) handleStreamRequest(
 	// start response
 	res := &stream.Response{
 		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
+			Owner: m.mesh.GetPeerKey().PublicKey().DID(),
 		},
 		RequestID: req.RequestID,
 		RootHash:  req.RootHash,
@@ -694,7 +694,7 @@ func (m *manager) handleStreamRequest(
 	if err != nil {
 		return err
 	}
-	if err := m.network.Send(
+	if err := m.mesh.Send(
 		ctx,
 		ro,
 		env.Sender,
@@ -711,7 +711,7 @@ func (m *manager) handleStreamRequest(
 
 func (m *manager) handleStreamSubscription(
 	ctx context.Context,
-	env *network.Envelope,
+	env *mesh.Envelope,
 ) error {
 	sub := &stream.Subscription{}
 	if err := object.Unmarshal(env.Payload, sub); err != nil {
@@ -728,7 +728,7 @@ func (m *manager) handleStreamSubscription(
 
 func (m *manager) handleStreamAnnouncement(
 	ctx context.Context,
-	env *network.Envelope,
+	env *mesh.Envelope,
 ) error {
 	ann := &stream.Announcement{}
 	if err := object.Unmarshal(env.Payload, ann); err != nil {
@@ -892,7 +892,7 @@ func (m *manager) AddStreamSubscription(
 		return fmt.Errorf("error trying to get stream objects, %w", err)
 	}
 
-	pub := m.network.GetPeerKey().PublicKey()
+	pub := m.mesh.GetPeerKey().PublicKey()
 
 	for {
 		o, err := r.Read()

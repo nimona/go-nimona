@@ -1,4 +1,4 @@
-package networkmock
+package meshmock
 
 import (
 	"sync"
@@ -7,20 +7,20 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
-var _ network.Network = (*MockNetworkSimple)(nil)
+var _ mesh.Mesh = (*MockMeshSimple)(nil)
 
 type (
-	MockNetworkSimple struct {
+	MockMeshSimple struct {
 		mutex                sync.Mutex
 		subscribeCalled      int32
-		SubscribeCalls       []network.EnvelopeSubscription
+		SubscribeCalls       []mesh.EnvelopeSubscription
 		SubscribeOnceCalled  int32
-		SubscribeOnceCalls   []*network.Envelope
+		SubscribeOnceCalls   []*mesh.Envelope
 		sendCalled           int32
 		SendCalls            []error
 		ReturnAddresses      []string
@@ -30,9 +30,9 @@ type (
 	}
 )
 
-func (m *MockNetworkSimple) Subscribe(
-	filters ...network.EnvelopeFilter,
-) network.EnvelopeSubscription {
+func (m *MockMeshSimple) Subscribe(
+	filters ...mesh.EnvelopeFilter,
+) mesh.EnvelopeSubscription {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	subscribeCalled := atomic.LoadInt32(&m.subscribeCalled)
@@ -44,10 +44,10 @@ func (m *MockNetworkSimple) Subscribe(
 	return r
 }
 
-func (m *MockNetworkSimple) SubscribeOnce(
+func (m *MockMeshSimple) SubscribeOnce(
 	ctx context.Context,
-	filters ...network.EnvelopeFilter,
-) (*network.Envelope, error) {
+	filters ...mesh.EnvelopeFilter,
+) (*mesh.Envelope, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	r := m.SubscribeOnceCalls[m.subscribeCalled]
@@ -55,11 +55,11 @@ func (m *MockNetworkSimple) SubscribeOnce(
 	return r, nil
 }
 
-func (m *MockNetworkSimple) Send(
+func (m *MockMeshSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
 	rec crypto.PublicKey,
-	opt ...network.SendOption,
+	opt ...mesh.SendOption,
 ) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -72,55 +72,55 @@ func (m *MockNetworkSimple) Send(
 	return r
 }
 
-func (m *MockNetworkSimple) SendCalled() int {
+func (m *MockMeshSimple) SendCalled() int {
 	sendCalled := atomic.LoadInt32(&m.sendCalled)
 	return int(sendCalled)
 }
 
-func (m *MockNetworkSimple) SubscribeCalled() int {
+func (m *MockMeshSimple) SubscribeCalled() int {
 	subscribeCalled := atomic.LoadInt32(&m.subscribeCalled)
 	return int(subscribeCalled)
 }
 
-func (m *MockNetworkSimple) Addresses() []string {
+func (m *MockMeshSimple) Addresses() []string {
 	return m.ReturnAddresses
 }
 
-func (m *MockNetworkSimple) Listen(
+func (m *MockMeshSimple) Listen(
 	ctx context.Context,
 	bindAddress string,
-	options ...network.ListenOption,
+	options ...mesh.ListenOption,
 ) (net.Listener, error) {
 	panic("not implemented")
 }
 
-func (m *MockNetworkSimple) RegisterResolver(
-	resolver network.Resolver,
+func (m *MockMeshSimple) RegisterResolver(
+	resolver mesh.Resolver,
 ) {
 }
 
-func (m *MockNetworkSimple) GetPeerKey() crypto.PrivateKey {
+func (m *MockMeshSimple) GetPeerKey() crypto.PrivateKey {
 	return m.ReturnPeerKey
 }
 
-func (m *MockNetworkSimple) GetAddresses() []string {
+func (m *MockMeshSimple) GetAddresses() []string {
 	return m.ReturnAddresses
 }
 
-func (m *MockNetworkSimple) RegisterAddresses(addresses ...string) {
+func (m *MockMeshSimple) RegisterAddresses(addresses ...string) {
 }
 
-func (m *MockNetworkSimple) GetConnectionInfo() *peer.ConnectionInfo {
+func (m *MockMeshSimple) GetConnectionInfo() *peer.ConnectionInfo {
 	return m.ReturnConnectionInfo
 }
 
-func (m *MockNetworkSimple) GetRelays() []*peer.ConnectionInfo {
+func (m *MockMeshSimple) GetRelays() []*peer.ConnectionInfo {
 	return m.ReturnRelays
 }
 
-func (m *MockNetworkSimple) RegisterRelays(relays ...*peer.ConnectionInfo) {
+func (m *MockMeshSimple) RegisterRelays(relays ...*peer.ConnectionInfo) {
 }
 
-func (m *MockNetworkSimple) Close() error {
+func (m *MockMeshSimple) Close() error {
 	return nil
 }

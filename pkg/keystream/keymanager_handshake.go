@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -99,8 +99,8 @@ func (m *manager) NewDelegationRequest(
 	vendor DelegationRequestVendor,
 	permissions Permissions,
 ) (*DelegationRequest, chan Controller, error) {
-	ck := m.network.GetPeerKey()
-	ci := m.network.GetConnectionInfo()
+	ck := m.mesh.GetPeerKey()
+	ci := m.mesh.GetConnectionInfo()
 	dr := &DelegationRequest{
 		Metadata: object.Metadata{
 			Owner: ck.PublicKey().DID(),
@@ -117,7 +117,7 @@ func (m *manager) NewDelegationRequest(
 		return nil, nil, fmt.Errorf("failed to marshal delegation request: %w", err)
 	}
 
-	err = object.Sign(m.network.GetPeerKey(), drObj)
+	err = object.Sign(m.mesh.GetPeerKey(), drObj)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to sign delegation request: %w", err)
 	}
@@ -132,9 +132,9 @@ func (m *manager) NewDelegationRequest(
 	go func() {
 		defer close(res)
 		// wait for a Delegation Offer
-		env, err := m.network.SubscribeOnce(
+		env, err := m.mesh.SubscribeOnce(
 			ctx,
-			network.FilterByObjectType("keystream.DelegationOffer"),
+			mesh.FilterByObjectType("keystream.DelegationOffer"),
 		)
 		if err != nil {
 			// TODO: handle error
@@ -178,7 +178,7 @@ func (m *manager) NewDelegationRequest(
 			// TODO: handle error
 			return
 		}
-		err = m.network.Send(
+		err = m.mesh.Send(
 			ctx,
 			verObj,
 			env.Sender,
@@ -219,11 +219,11 @@ func (m *manager) HandleDelegationRequest(
 	if err != nil {
 		return fmt.Errorf("failed to marshal DelegationOffer: %w", err)
 	}
-	err = m.network.Send(
+	err = m.mesh.Send(
 		ctx,
 		doObj,
 		dr.InitiatorConnectionInfo.PublicKey,
-		network.SendWithConnectionInfo(
+		mesh.SendWithConnectionInfo(
 			dr.InitiatorConnectionInfo,
 		),
 	)
@@ -232,9 +232,9 @@ func (m *manager) HandleDelegationRequest(
 	}
 
 	// wait for the DelegationVerification
-	env, err := m.network.SubscribeOnce(
+	env, err := m.mesh.SubscribeOnce(
 		ctx,
-		network.FilterByObjectType("keystream.DelegationVerification"),
+		mesh.FilterByObjectType("keystream.DelegationVerification"),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to wait for DelegationVerification: %w", err)

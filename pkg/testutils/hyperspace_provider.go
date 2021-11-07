@@ -9,7 +9,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/peer"
 )
 
@@ -25,18 +25,18 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 
 	// construct new network
 	inet := net.New(peerKey)
-	nnet := network.New(
+	msh := mesh.New(
 		ctx,
 		inet,
 		peerKey,
 	)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := msh.Listen(
 		ctx,
 		"0.0.0.0:0",
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
+		mesh.ListenOnLocalIPs,
+		mesh.ListenOnPrivateIPs,
 	)
 	require.NoError(t, err)
 
@@ -54,5 +54,5 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		require.NoError(t, err)
 	})
 
-	return nnet.GetConnectionInfo()
+	return msh.GetConnectionInfo()
 }

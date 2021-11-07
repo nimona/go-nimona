@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/networkmock"
+	"nimona.io/pkg/meshmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -26,7 +26,7 @@ func TestKeyManager(t *testing.T) {
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	net := &networkmock.MockNetworkSimple{
+	net := &meshmock.MockMeshSimple{
 		ReturnConnectionInfo: &peer.ConnectionInfo{
 			Metadata: object.Metadata{
 				Owner: k1.PublicKey().DID(),

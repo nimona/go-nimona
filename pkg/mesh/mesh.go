@@ -1,4 +1,4 @@
-package network
+package mesh
 
 import (
 	"crypto/aes"
@@ -30,7 +30,7 @@ import (
 	"nimona.io/pkg/tilde"
 )
 
-//go:generate mockgen -destination=../networkmock/networkmock_generated.go -package=networkmock -source=network.go
+//go:generate mockgen -destination=../meshmock/meshmock_generated.go -package=meshmock -source=mesh.go
 
 var (
 	objHandledCounter = promauto.NewCounter(
@@ -72,10 +72,9 @@ var (
 )
 
 // nolint: lll
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=outboxes_generated.go -imp=nimona.io/pkg/crypto -pkg=network gen "KeyType=string ValueType=outbox SyncmapName=outboxes"
-//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=network gen "ObjectType=*Envelope Name=Envelope name=envelope"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=resolvers_generated.go -imp=nimona.io/pkg/object -pkg=network gen "KeyType=Resolver"
-//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=network gen "KeyType=string"
+//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_envelopes_generated.go -pkg=mesh gen "ObjectType=*Envelope Name=Envelope name=envelope"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=resolvers_generated.go -imp=nimona.io/pkg/object -pkg=mesh gen "KeyType=Resolver"
+//go:generate genny -in=$GENERATORS/synclist/synclist.go -out=addresses_generated.go -imp=nimona.io/pkg/peer -pkg=mesh gen "KeyType=string"
 
 type (
 	Resolver interface {
@@ -84,8 +83,8 @@ type (
 			publicKey crypto.PublicKey,
 		) (*peer.ConnectionInfo, error)
 	}
-	// Network interface for mocking
-	Network interface {
+	// Mesh interface for mocking
+	Mesh interface {
 		Subscribe(
 			filters ...EnvelopeFilter,
 		) EnvelopeSubscription
@@ -116,11 +115,11 @@ type (
 		Close() error
 	}
 	// Option for customizing New
-	Option func(*network)
+	Option func(*mesh)
 	// SendOption for customizing a Send method
 	SendOption func(*sendOptions)
-	// network implements a Network
-	network struct {
+	// mesh implements a Network
+	mesh struct {
 		net        net.Network
 		peerKey    crypto.PrivateKey
 		inboxes    EnvelopePubSub
@@ -132,17 +131,17 @@ type (
 		closeFns   []closeFn
 		closeMutex sync.Mutex
 	}
-	// closeFn are functions that will be called during the network's Close
+	// closeFn are functions that will be called during the mesh's Close
 	closeFn func() error
 )
 
-// New creates a network on a given network
+// New creates a mesh on a given mesh
 func New(
 	ctx context.Context,
-	nnet net.Network,
+	msh net.Network,
 	peerKey crypto.PrivateKey,
-) Network {
-	w := &network{
+) Mesh {
+	w := &mesh{
 		inboxes:    NewEnvelopePubSub(),
 		deduplist:  cache.New(10*time.Second, 1*time.Minute),
 		resolvers:  &ResolverSyncList{},
@@ -151,7 +150,7 @@ func New(
 		closeFns:   []closeFn{},
 		closeMutex: sync.Mutex{},
 		peerKey:    peerKey,
-		net:        nnet,
+		net:        msh,
 	}
 
 	if w.peerKey.IsEmpty() {
@@ -177,7 +176,7 @@ func New(
 	return w
 }
 
-func (w *network) GetPeerKey() crypto.PrivateKey {
+func (w *mesh) GetPeerKey() crypto.PrivateKey {
 	return w.peerKey
 }
 
@@ -205,13 +204,13 @@ func ListenOnExternalPort(c *listenConfig) {
 	c.upnp = true
 }
 
-func (w *network) RegisterResolver(
+func (w *mesh) RegisterResolver(
 	resolver Resolver,
 ) {
 	w.resolvers.Put(resolver)
 }
 
-func (w *network) lookup(
+func (w *mesh) lookup(
 	ctx context.Context,
 	publicKey crypto.PublicKey,
 ) (*peer.ConnectionInfo, error) {
@@ -233,7 +232,7 @@ func (w *network) lookup(
 	return nil, errs
 }
 
-func (w *network) Listen(
+func (w *mesh) Listen(
 	ctx context.Context,
 	bindAddress string,
 	options ...ListenOption,
@@ -243,7 +242,7 @@ func (w *network) Listen(
 		o(listenConfig)
 	}
 	logger := log.FromContext(ctx).With(
-		log.String("method", "network.Listen"),
+		log.String("method", "mesh.Listen"),
 		log.String("bindAddress", bindAddress),
 		log.Any("listenConfig", listenConfig),
 	)
@@ -306,7 +305,7 @@ func (w *network) Listen(
 	return listener, nil
 }
 
-func (w *network) handleConnection(
+func (w *mesh) handleConnection(
 	conn net.Connection,
 ) {
 	remotePeerKey := conn.RemotePeerKey()
@@ -356,13 +355,13 @@ func (w *network) handleConnection(
 }
 
 // Subscribe to incoming objects as envelopes
-func (w *network) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
+func (w *mesh) Subscribe(filters ...EnvelopeFilter) EnvelopeSubscription {
 	return w.inboxes.Subscribe(filters...)
 }
 
 // SubscribeOnce will wait for the next envelope matching the given filters
 // and return it or error if the context is done first.
-func (w *network) SubscribeOnce(
+func (w *mesh) SubscribeOnce(
 	ctx context.Context,
 	filters ...EnvelopeFilter,
 ) (*Envelope, error) {
@@ -377,7 +376,7 @@ func (w *network) SubscribeOnce(
 }
 
 // handleObjects -
-func (w *network) handleObjects(sub EnvelopeSubscription) {
+func (w *mesh) handleObjects(sub EnvelopeSubscription) {
 	for {
 		e, err := sub.Next()
 		if err != nil {
@@ -388,9 +387,9 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 		logger := log.
 			FromContext(context.Background()).
-			Named("network").
+			Named("mesh").
 			With(
-				log.String("method", "network.handleObjects"),
+				log.String("method", "mesh.handleObjects"),
 				log.String("payload", e.Payload.Type),
 			)
 
@@ -524,7 +523,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 // Send an object to the given peer.
 // Before sending, we'll go through the root object as well as any embedded
-func (w *network) Send(
+func (w *mesh) Send(
 	ctx context.Context,
 	o *object.Object,
 	p crypto.PublicKey,
@@ -778,7 +777,7 @@ func decrypt(data []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (w *network) wrapInDataForward(
+func (w *mesh) wrapInDataForward(
 	o *object.Object,
 	recipient crypto.PublicKey,
 ) (*DataForwardRequest, error) {
@@ -838,19 +837,19 @@ func (w *network) wrapInDataForward(
 	return dfr, nil
 }
 
-func (w *network) GetAddresses() []string {
+func (w *mesh) GetAddresses() []string {
 	as := w.addresses.List()
 	sort.Strings(as)
 	return as
 }
 
-func (w *network) RegisterAddresses(addresses ...string) {
+func (w *mesh) RegisterAddresses(addresses ...string) {
 	for _, h := range addresses {
 		w.addresses.Put(h)
 	}
 }
 
-func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
+func (w *mesh) GetConnectionInfo() *peer.ConnectionInfo {
 	return &peer.ConnectionInfo{
 		PublicKey: w.peerKey.PublicKey(),
 		Addresses: w.GetAddresses(),
@@ -861,21 +860,21 @@ func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
 	}
 }
 
-func (w *network) GetRelays() []*peer.ConnectionInfo {
+func (w *mesh) GetRelays() []*peer.ConnectionInfo {
 	w.relayLock.RLock()
 	defer w.relayLock.RUnlock()
 	return w.relays
 }
 
-func (w *network) RegisterRelays(relays ...*peer.ConnectionInfo) {
+func (w *mesh) RegisterRelays(relays ...*peer.ConnectionInfo) {
 	w.relayLock.Lock()
 	defer w.relayLock.Unlock()
 	w.relays = append(w.relays, relays...)
 }
 
-// Close all listeners created in this network as well as remove all nat
+// Close all listeners created in this mesh as well as remove all nat
 // mappings created
-func (w *network) Close() error {
+func (w *mesh) Close() error {
 	w.closeMutex.Lock()
 	defer w.closeMutex.Unlock()
 	var errs error

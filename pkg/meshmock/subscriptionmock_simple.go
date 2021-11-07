@@ -1,17 +1,17 @@
-package networkmock
+package meshmock
 
 import (
 	"sync"
 
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 )
 
 type (
 	MockSubscriptionSimple struct {
 		mutex   sync.Mutex
 		index   int
-		Objects []*network.Envelope
+		Objects []*mesh.Envelope
 		done    chan struct{}
 	}
 )
@@ -25,16 +25,16 @@ func (s *MockSubscriptionSimple) Cancel() {
 }
 
 // Next returns the next object
-func (s *MockSubscriptionSimple) Channel() <-chan *network.Envelope {
+func (s *MockSubscriptionSimple) Channel() <-chan *mesh.Envelope {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	r := make(chan *network.Envelope, len(s.Objects))
+	r := make(chan *mesh.Envelope, len(s.Objects))
 	close(r)
 	return r
 }
 
 // Next returns the next object
-func (s *MockSubscriptionSimple) Next() (*network.Envelope, error) {
+func (s *MockSubscriptionSimple) Next() (*mesh.Envelope, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if s.index >= len(s.Objects) {

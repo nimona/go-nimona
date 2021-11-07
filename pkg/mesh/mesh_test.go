@@ -1,4 +1,4 @@
-package network
+package mesh
 
 import (
 	"reflect"
@@ -93,7 +93,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 
 	t.Run("re-establish broken connections", func(t *testing.T) {
 		// close p2's connection to p1
-		c, err := n2.(*network).net.Dial(
+		c, err := n2.(*mesh).net.Dial(
 			context.New(),
 			&peer.ConnectionInfo{
 				PublicKey: n1.GetPeerKey().PublicKey(),
@@ -323,7 +323,7 @@ func TestNetwork_Relay(t *testing.T) {
 	)
 }
 
-func Test_network_lookup(t *testing.T) {
+func Test_mesh_lookup(t *testing.T) {
 	p0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
@@ -403,7 +403,7 @@ func Test_network_lookup(t *testing.T) {
 				context.Background(),
 				net.New(k),
 				k,
-			).(*network)
+			).(*mesh)
 			for _, r := range tt.fields.resolvers {
 				w.RegisterResolver(r)
 			}
@@ -422,7 +422,7 @@ func Test_network_lookup(t *testing.T) {
 func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(b, err)
-	n1 := New(context.Background(), net.New(k1), k1).(*network)
+	n1 := New(context.Background(), net.New(k1), k1).(*mesh)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(b, err)
@@ -433,7 +433,7 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		k2, err := crypto.NewEd25519PrivateKey()
 		require.NoError(b, err)
-		n2 := New(context.Background(), net.New(k2), k2).(*network)
+		n2 := New(context.Background(), net.New(k2), k2).(*mesh)
 		err = n2.Send(
 			context.Background(),
 			&object.Object{

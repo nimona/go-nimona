@@ -1,4 +1,4 @@
-package network
+package mesh
 
 import (
 	"fmt"

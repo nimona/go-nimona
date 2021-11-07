@@ -18,7 +18,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
@@ -236,9 +236,9 @@ func newFileTransfer(
 	ft := &fileTransfer{}
 	ft.config = cfg
 
-	// construct new network
+	// construct new mesh
 	nnet := net.New(cfg.nconf.Peer.PrivateKey)
-	net := network.New(
+	net := mesh.New(
 		ctx,
 		nnet,
 		cfg.nconf.Peer.PrivateKey,
@@ -249,8 +249,8 @@ func newFileTransfer(
 		lis, err := net.Listen(
 			ctx,
 			cfg.nconf.Peer.BindAddress,
-			network.ListenOnLocalIPs,
-			network.ListenOnPrivateIPs,
+			mesh.ListenOnLocalIPs,
+			mesh.ListenOnPrivateIPs,
 		)
 		if err != nil {
 			logger.Fatal("error while listening", log.Error(err))

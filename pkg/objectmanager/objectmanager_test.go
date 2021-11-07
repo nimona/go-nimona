@@ -16,8 +16,8 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
-	"nimona.io/pkg/network"
-	"nimona.io/pkg/networkmock"
+	"nimona.io/pkg/mesh"
+	"nimona.io/pkg/meshmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
@@ -40,8 +40,8 @@ func TestManager_Request(t *testing.T) {
 		},
 	}
 	type fields struct {
-		store   func(*testing.T) objectstore.Store
-		network func(*testing.T) network.Network
+		store func(*testing.T) objectstore.Store
+		mesh  func(*testing.T) mesh.Mesh
 	}
 	type args struct {
 		ctx      context.Context
@@ -61,14 +61,14 @@ func TestManager_Request(t *testing.T) {
 				m := objectstoremock.NewMockStore(gomock.NewController(t))
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					SendCalls: []error{
 						nil,
 					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Response{
 										RequestID: "7",
@@ -93,7 +93,7 @@ func TestManager_Request(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &manager{
 				objectstore: tt.fields.store(t),
-				network:     tt.fields.network(t),
+				mesh:        tt.fields.mesh(t),
 				newRequestID: func() string {
 					return "7"
 				},
@@ -135,13 +135,13 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	}
 
 	type fields struct {
-		storeHandler   func(*testing.T) objectstore.Store
-		networkHandler func(
+		storeHandler func(*testing.T) objectstore.Store
+		meshHandler  func(
 			*testing.T,
 			context.Context,
 			*sync.WaitGroup,
 			*object.Object,
-		) network.Network
+		) mesh.Mesh
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
@@ -164,17 +164,17 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
 					return m
 				},
-				networkHandler: func(
+				meshHandler: func(
 					t *testing.T,
 					ctx context.Context,
 					wg *sync.WaitGroup,
 					want *object.Object,
-				) network.Network {
-					m := networkmock.NewMockNetwork(gomock.NewController(t))
+				) mesh.Mesh {
+					m := meshmock.NewMockMesh(gomock.NewController(t))
 					m.EXPECT().GetPeerKey().Return(peerKey)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Request{
 										RequestID:  "8",
@@ -189,7 +189,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							ctx context.Context,
 							obj *object.Object,
 							recipient crypto.PublicKey,
-							opts ...network.SendOption,
+							opts ...mesh.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -227,17 +227,17 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					m.EXPECT().Get(f01.Hash()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
 					return m
 				},
-				networkHandler: func(
+				meshHandler: func(
 					t *testing.T,
 					ctx context.Context,
 					wg *sync.WaitGroup,
 					want *object.Object,
-				) network.Network {
-					m := networkmock.NewMockNetwork(gomock.NewController(t))
+				) mesh.Mesh {
+					m := meshmock.NewMockMesh(gomock.NewController(t))
 					m.EXPECT().GetPeerKey().Return(peerKey)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Request{
 										RequestID:  "8",
@@ -252,7 +252,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							ctx context.Context,
 							obj *object.Object,
 							recipient crypto.PublicKey,
-							opts ...network.SendOption,
+							opts ...mesh.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
 							wg.Done()
@@ -290,7 +290,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			wg.Add(1)
 			mgr := New(
 				tt.args.ctx,
-				tt.fields.networkHandler(
+				tt.fields.meshHandler(
 					t,
 					tt.args.ctx,
 					&wg,
@@ -344,8 +344,8 @@ func TestManager_RequestStream(t *testing.T) {
 	}
 
 	type fields struct {
-		store   func(*testing.T) objectstore.Store
-		network func(*testing.T) network.Network
+		store func(*testing.T) objectstore.Store
+		mesh  func(*testing.T) mesh.Mesh
 	}
 	type args struct {
 		ctx      context.Context
@@ -390,17 +390,17 @@ func TestManager_RequestStream(t *testing.T) {
 					}), err)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					SendCalls: []error{
 						nil,
 						nil,
 						nil,
 						nil,
 					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&stream.Response{
 										RequestID: "7",
@@ -411,8 +411,8 @@ func TestManager_RequestStream(t *testing.T) {
 								),
 							}},
 						},
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Response{
 										RequestID: "7",
@@ -421,8 +421,8 @@ func TestManager_RequestStream(t *testing.T) {
 								),
 							}},
 						},
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Response{
 										RequestID: "7",
@@ -431,8 +431,8 @@ func TestManager_RequestStream(t *testing.T) {
 								),
 							}},
 						},
-						&networkmock.MockSubscriptionSimple{
-							Objects: []*network.Envelope{{
+						&meshmock.MockSubscriptionSimple{
+							Objects: []*mesh.Envelope{{
 								Payload: object.MustMarshal(
 									&object.Response{
 										RequestID: "7",
@@ -462,7 +462,7 @@ func TestManager_RequestStream(t *testing.T) {
 			m := &manager{
 				pubsub:      NewObjectPubSub(),
 				objectstore: tt.fields.store(t),
-				network:     tt.fields.network(t),
+				mesh:        tt.fields.mesh(t),
 				newRequestID: func() string {
 					return "7"
 				},
@@ -533,13 +533,13 @@ func TestManager_handleStreamRequest(t *testing.T) {
 	}
 
 	type fields struct {
-		storeHandler   func(*testing.T) objectstore.Store
-		networkHandler func(
+		storeHandler func(*testing.T) objectstore.Store
+		meshHandler  func(
 			*testing.T,
 			context.Context,
 			*sync.WaitGroup,
 			*object.Object,
-		) network.Network
+		) mesh.Mesh
 		resolver func(*testing.T) resolver.Resolver
 	}
 	type args struct {
@@ -568,17 +568,17 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					)
 				return m
 			},
-			networkHandler: func(
+			meshHandler: func(
 				t *testing.T,
 				ctx context.Context,
 				wg *sync.WaitGroup,
 				want *object.Object,
-			) network.Network {
-				m := networkmock.NewMockNetwork(gomock.NewController(t))
+			) mesh.Mesh {
+				m := meshmock.NewMockMesh(gomock.NewController(t))
 				m.EXPECT().GetPeerKey().Return(peerKey)
 				m.EXPECT().Subscribe(gomock.Any()).Return(
-					&networkmock.MockSubscriptionSimple{
-						Objects: []*network.Envelope{{
+					&meshmock.MockSubscriptionSimple{
+						Objects: []*mesh.Envelope{{
 							Payload: object.MustMarshal(
 								&stream.Request{
 									RequestID: "7",
@@ -593,7 +593,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						ctx context.Context,
 						obj *object.Object,
 						recipient crypto.PublicKey,
-						opts ...network.SendOption,
+						opts ...mesh.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -634,17 +634,17 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					Return(nil, objectstore.ErrNotFound)
 				return m
 			},
-			networkHandler: func(
+			meshHandler: func(
 				t *testing.T,
 				ctx context.Context,
 				wg *sync.WaitGroup,
 				want *object.Object,
-			) network.Network {
-				m := networkmock.NewMockNetwork(gomock.NewController(t))
+			) mesh.Mesh {
+				m := meshmock.NewMockMesh(gomock.NewController(t))
 				m.EXPECT().GetPeerKey().Return(peerKey)
 				m.EXPECT().Subscribe(gomock.Any()).Return(
-					&networkmock.MockSubscriptionSimple{
-						Objects: []*network.Envelope{{
+					&meshmock.MockSubscriptionSimple{
+						Objects: []*mesh.Envelope{{
 							Payload: object.MustMarshal(
 								&stream.Request{
 									RequestID: "7",
@@ -659,7 +659,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						ctx context.Context,
 						obj *object.Object,
 						recipient crypto.PublicKey,
-						opts ...network.SendOption,
+						opts ...mesh.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
 						wg.Done()
@@ -698,7 +698,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 			wg.Add(1)
 			mgr := New(
 				tt.args.ctx,
-				tt.fields.networkHandler(
+				tt.fields.meshHandler(
 					t,
 					tt.args.ctx,
 					&wg,
@@ -740,7 +740,7 @@ func TestManager_Put(t *testing.T) {
 
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
-		network               func(*testing.T) network.Network
+		mesh                  func(*testing.T) mesh.Mesh
 		resolver              func(*testing.T) resolver.Resolver
 		receivedSubscriptions []*object.Object
 	}
@@ -765,12 +765,12 @@ func TestManager_Put(t *testing.T) {
 					Return(nil)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls:     []error{},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -797,12 +797,12 @@ func TestManager_Put(t *testing.T) {
 					Put(testObjectComplex)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls:     []error{},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -823,14 +823,14 @@ func TestManager_Put(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := New(
 				context.Background(),
-				tt.fields.network(t),
+				tt.fields.mesh(t),
 				tt.fields.resolver(t),
 				tt.fields.store(t),
 			)
 			for _, obj := range tt.fields.receivedSubscriptions {
 				err := m.(*manager).handleStreamSubscription(
 					context.Background(),
-					&network.Envelope{
+					&mesh.Envelope{
 						Payload: obj,
 					},
 				)
@@ -951,7 +951,7 @@ func TestManager_Append(t *testing.T) {
 
 	type fields struct {
 		store                 func(*testing.T) objectstore.Store
-		network               func(*testing.T) network.Network
+		mesh                  func(*testing.T) mesh.Mesh
 		resolver              func(*testing.T) resolver.Resolver
 		receivedSubscriptions []*object.Object
 	}
@@ -973,12 +973,12 @@ func TestManager_Append(t *testing.T) {
 				)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls:     []error{},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -1040,14 +1040,14 @@ func TestManager_Append(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				return m
@@ -1106,15 +1106,15 @@ func TestManager_Append(t *testing.T) {
 					Put(testObjectWithStreamUpdated)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 						nil,
 					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				t.Cleanup(func() {
@@ -1205,15 +1205,15 @@ func TestManager_Append(t *testing.T) {
 					Put(testObjectWithStreamInlineUpdated)
 				return m
 			},
-			network: func(t *testing.T) network.Network {
-				m := &networkmock.MockNetworkSimple{
+			mesh: func(t *testing.T) mesh.Mesh {
+				m := &meshmock.MockMeshSimple{
 					ReturnPeerKey: peerKey,
 					SendCalls: []error{
 						nil,
 						nil,
 					},
-					SubscribeCalls: []network.EnvelopeSubscription{
-						&networkmock.MockSubscriptionSimple{},
+					SubscribeCalls: []mesh.EnvelopeSubscription{
+						&meshmock.MockSubscriptionSimple{},
 					},
 				}
 				t.Cleanup(func() {
@@ -1259,14 +1259,14 @@ func TestManager_Append(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := New(
 				context.Background(),
-				tt.fields.network(t),
+				tt.fields.mesh(t),
 				tt.fields.resolver(t),
 				tt.fields.store(t),
 			)
 			for _, obj := range tt.fields.receivedSubscriptions {
 				err := m.(*manager).handleStreamSubscription(
 					context.Background(),
-					&network.Envelope{
+					&mesh.Envelope{
 						Payload: obj,
 					},
 				)
@@ -1389,10 +1389,10 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	ntw := &networkmock.MockNetworkSimple{
+	ntw := &meshmock.MockMeshSimple{
 		ReturnPeerKey: peerKey,
-		SubscribeCalls: []network.EnvelopeSubscription{
-			&networkmock.MockSubscriptionSimple{},
+		SubscribeCalls: []mesh.EnvelopeSubscription{
+			&meshmock.MockSubscriptionSimple{},
 		},
 	}
 	res := resolvermock.NewMockResolver(gomock.NewController(t))

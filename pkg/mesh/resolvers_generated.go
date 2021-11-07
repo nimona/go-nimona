@@ -2,47 +2,47 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/geoah/genny
 
-package network
+package mesh
 
 import (
 	"sync"
 )
 
 type (
-	// StringSyncList -
-	StringSyncList struct {
+	// ResolverSyncList -
+	ResolverSyncList struct {
 		m sync.Map
 	}
 )
 
 // Put -
-func (m *StringSyncList) Put(k string) {
+func (m *ResolverSyncList) Put(k Resolver) {
 	m.m.Store(k, true)
 }
 
 // Exists -
-func (m *StringSyncList) Exists(k string) bool {
+func (m *ResolverSyncList) Exists(k Resolver) bool {
 	_, ok := m.m.Load(k)
 	return ok
 }
 
 // Delete -
-func (m *StringSyncList) Delete(k string) {
+func (m *ResolverSyncList) Delete(k Resolver) {
 	m.m.Delete(k)
 }
 
 // Range -
-func (m *StringSyncList) Range(i func(k string) bool) {
+func (m *ResolverSyncList) Range(i func(k Resolver) bool) {
 	m.m.Range(func(k, v interface{}) bool {
-		return i(k.(string))
+		return i(k.(Resolver))
 	})
 }
 
 // List -
-func (m *StringSyncList) List() []string {
-	r := []string{}
+func (m *ResolverSyncList) List() []Resolver {
+	r := []Resolver{}
 	m.m.Range(func(k, v interface{}) bool {
-		r = append(r, k.(string))
+		r = append(r, k.(Resolver))
 		return true
 	})
 	return r

@@ -1,7 +1,7 @@
 package objectmanager
 
 // import (
-// 	"nimona.io/pkg/network"
+// 	"nimona.io/pkg/mesh"
 // 	"nimona.io/pkg/objectstore"
 // 	"nimona.io/pkg/hyperspace/resolver"
 // )
@@ -12,7 +12,7 @@ package objectmanager
 // 	}
 // }
 
-// func WithNetwork(x network.Network) func(*manager) {
+// func WithNetwork(x mesh.Mesh) func(*manager) {
 // 	return func(m *manager) {
 // 		m.network = x
 // 	}

@@ -188,7 +188,7 @@ Let's go back to our original example of profile streams.
 
 Assuming that peer `a11` wants the profile stream for the identity `f00`, all it
 has to do is construct the hypothetical root, calculate its CID, and find
-providers for it on the network.
+providers for it on the mesh.
 
 ```json
 {

@@ -12,7 +12,7 @@ import (
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/mesh"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"
@@ -23,7 +23,7 @@ import (
 
 type (
 	Provider struct {
-		network       network.Network
+		mesh          mesh.Mesh
 		resolver      resolver.Resolver
 		objectstore   *sqlobjectstore.Store
 		objectmanager objectmanager.ObjectManager
@@ -84,7 +84,7 @@ func New(initRequest *InitRequest) *Provider {
 	)
 
 	return &Provider{
-		network:       net,
+		mesh:          net,
 		resolver:      res,
 		objectstore:   str,
 		objectmanager: man,
@@ -93,7 +93,7 @@ func New(initRequest *InitRequest) *Provider {
 }
 
 func (p *Provider) GetConnectionInfo() *peer.ConnectionInfo {
-	return p.network.GetConnectionInfo()
+	return p.mesh.GetConnectionInfo()
 }
 
 type GetRequest struct {
@@ -313,7 +313,7 @@ func (p *Provider) Put(
 		if setOwner, ok := setOwnerS.(tilde.String); ok {
 			switch setOwner {
 			case "@peer":
-				obj.Metadata.Owner = p.network.GetPeerKey().PublicKey().DID()
+				obj.Metadata.Owner = p.mesh.GetPeerKey().PublicKey().DID()
 			case "@identity":
 				// TODO(geoah): fix identity
 				// obj.Metadata.Owner = p.local.GetIdentityPublicKey()
@@ -333,7 +333,7 @@ func (p *Provider) GetFeedRootHash(
 	v := &feed.FeedStreamRoot{
 		ObjectType: streamRootObjectType,
 		Metadata: object.Metadata{
-			Owner: p.network.GetPeerKey().PublicKey().DID(),
+			Owner: p.mesh.GetPeerKey().PublicKey().DID(),
 		},
 	}
 	o, _ := object.Marshal(v)
