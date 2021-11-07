@@ -8,10 +8,10 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	net "nimona.io/internal/net"
 	context "nimona.io/pkg/context"
 	crypto "nimona.io/pkg/crypto"
 	mesh "nimona.io/pkg/mesh"
+	net "nimona.io/pkg/net"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
 )

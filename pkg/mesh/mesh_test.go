@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"

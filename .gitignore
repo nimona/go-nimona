@@ -42,3 +42,4 @@ infrastructure/*/.pyenv
 
 # Apps
 apps/**/tmp
+*.db

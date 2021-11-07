@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/patrickmn/go-cache"
 
-	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -15,6 +14,7 @@ import (
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"

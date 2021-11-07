@@ -14,12 +14,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/pyroscope-io/pyroscope/pkg/agent/profiler"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/mesh"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/version"
 )

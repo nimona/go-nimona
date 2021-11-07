@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
@@ -22,6 +22,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 		PublicKey: k0.PublicKey(),
 		Addresses: net0.Addresses(),
 	}
+	time.Sleep(500 * time.Millisecond)
 
 	// net1 is a normal peer
 	net1, k1 := newPeer(t)
@@ -35,6 +36,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 		},
 		PeerVector: hyperspace.New("foo", "bar"),
 	}
+	time.Sleep(500 * time.Millisecond)
 
 	// construct provider
 	prv, err := New(context.New(), net0, k0, nil)
@@ -50,7 +52,8 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// wait a bit and check if provder has cached the peer
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
+
 	// the second peer is our own
 	assert.Len(t, prv.peerCache.List(), 2)
 }
@@ -81,7 +84,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	}
 
 	// construct providers
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	prv0, err := New(
 		context.New(),
 		net0,
@@ -98,7 +101,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// net2 announces to provider 0
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	c2, err := net2.Dial(context.New(), pr0)
 	require.NoError(t, err)
 	err = c2.Write(
@@ -108,10 +111,10 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// wait a bit and check if both provder have cached the peer
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv1)
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv2)
 }
@@ -131,10 +134,12 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 
 	// net1 is a normal peer
 	net1, k1 := newPeer(t)
+	time.Sleep(500 * time.Millisecond)
 
 	// construct provider
 	prv, err := New(context.New(), net0, k1, nil)
 	require.NoError(t, err)
+	time.Sleep(500 * time.Millisecond)
 
 	// start listening for lookup responses on net1
 	resp := make(chan *object.Object)
@@ -155,6 +160,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 			}()
 		},
 	)
+	time.Sleep(500 * time.Millisecond)
 
 	// add a couple more random peers to the provider's cache
 	pr2k, err := crypto.NewEd25519PrivateKey()

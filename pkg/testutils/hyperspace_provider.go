@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/mesh"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/peer"
 )
 

@@ -4,10 +4,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/mesh"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )

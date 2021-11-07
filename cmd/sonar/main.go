@@ -7,7 +7,6 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
-	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -15,6 +14,7 @@ import (
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/mesh"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/peer"

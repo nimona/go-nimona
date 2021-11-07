@@ -19,12 +19,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"nimona.io/internal/nat"
-	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
+	"nimona.io/pkg/net"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
