@@ -67,7 +67,7 @@ $(TOOLDIR)/$(1): $(SOURCES)
 endef
 
 $(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
-$(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
+$(eval $(call tool,gofumpt,mvdan.cc/gofumpt@v0.2.0))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1))
 $(eval $(call tool,golds,go101.org/golds@v0.2.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
@@ -118,8 +118,8 @@ EXAMPLES := $(shell cd "$(EXAMPLEDIR)" && \
 	find * -maxdepth 0 -type d -exec echo $(BINDIR)/examples/{} \;)
 
 .PHONY: fmt
-fmt: gofumports golines
-	golines -t 4 -m 78 --no-reformat-tags --base-formatter=gofumports -w .
+fmt: gofumpt golines
+	golines -t 4 -m 78 --no-reformat-tags --base-formatter=gofumpt -w .
 
 .PHONY: build-examples
 build-examples: $(EXAMPLES)
