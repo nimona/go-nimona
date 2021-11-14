@@ -101,7 +101,9 @@ func FilterByObjectType(typePatterns ...string) LookupOption {
 		patterns[i] = g
 	}
 	return func(opts *LookupOptions) {
-		opts.Lookups.ContentTypes = append(opts.Lookups.ContentTypes, typePatterns...)
+		opts.Lookups.ContentTypes = append(
+			opts.Lookups.ContentTypes,
+			typePatterns...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {
 			for _, pattern := range patterns {
 				if pattern.Match(o.Type) {

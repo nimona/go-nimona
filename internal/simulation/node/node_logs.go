@@ -37,7 +37,6 @@ func (n *Node) Logs() (chan string, chan error) {
 			logCh <- string(line)
 
 		}
-
 	}()
 	return logCh, errCh
 }

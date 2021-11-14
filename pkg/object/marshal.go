@@ -106,7 +106,11 @@ func marshalPickSpecial(v reflect.Value, k string) (interface{}, error) {
 		}
 		ig, _, err := getStructTagName(it)
 		if err != nil {
-			return nil, fmt.Errorf("marshal special: attribute %s, %w", it.Name, err)
+			return nil, fmt.Errorf(
+				"marshal special: attribute %s, %w",
+				it.Name,
+				err,
+			)
 		}
 		if ig == k && iv.CanInterface() {
 			return iv.Interface(), nil

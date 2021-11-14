@@ -98,7 +98,10 @@ func (s *store) GetParticipants(conv string) ([]*Participant, error) {
 }
 
 // GetMessages returns a conversation's messages in descending order.
-func (s *store) GetMessages(conv string, limit, skip int) ([]*Message, error) {
+func (s *store) GetMessages(
+	conv string,
+	limit, skip int,
+) ([]*Message, error) {
 	s.messagesLock.RLock()
 	defer s.messagesLock.RUnlock()
 	p, ok := s.messages[conv]

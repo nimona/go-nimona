@@ -114,17 +114,26 @@ func (m *manager) NewDelegationRequest(
 
 	drObj, err := object.Marshal(dr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal delegation request: %w", err)
+		return nil, nil, fmt.Errorf(
+			"failed to marshal delegation request: %w",
+			err,
+		)
 	}
 
 	err = object.Sign(m.mesh.GetPeerKey(), drObj)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to sign delegation request: %w", err)
+		return nil, nil, fmt.Errorf(
+			"failed to sign delegation request: %w",
+			err,
+		)
 	}
 
 	err = m.objectStore.Put(drObj)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to store delegation request: %w", err)
+		return nil, nil, fmt.Errorf(
+			"failed to store delegation request: %w",
+			err,
+		)
 	}
 
 	res := make(chan Controller)
@@ -237,12 +246,18 @@ func (m *manager) HandleDelegationRequest(
 		mesh.FilterByObjectType("keystream.DelegationVerification"),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to wait for DelegationVerification: %w", err)
+		return fmt.Errorf(
+			"failed to wait for DelegationVerification: %w",
+			err,
+		)
 	}
 	dv := &DelegationVerification{}
 	err = object.Unmarshal(env.Payload, dv)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal DelegationVerification: %w", err)
+		return fmt.Errorf(
+			"failed to unmarshal DelegationVerification: %w",
+			err,
+		)
 	}
 
 	// TODO: verify the DelegationVerification object

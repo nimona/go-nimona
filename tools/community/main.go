@@ -84,7 +84,7 @@ func writeTemplate(templatePath, outputPath string, data interface{}) error {
 		log.Fatal(err)
 	}
 
-	f, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		return err
 	}

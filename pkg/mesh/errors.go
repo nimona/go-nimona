@@ -18,9 +18,13 @@ const (
 	ErrAlreadySentDuringContext = errors.Error("already sent to peer")
 	// ErrWaitingForResponseTimedOut is returned when Send is waiting for a
 	// response given a response id
-	ErrWaitingForResponseTimedOut = errors.Error("time out waiting for response")
+	ErrWaitingForResponseTimedOut = errors.Error(
+		"time out waiting for response",
+	)
 	// ErrUnableToUnmarshalIntoResponse is returned when the returned object
 	// cannot be unmarshalled into given struct
-	ErrUnableToUnmarshalIntoResponse = errors.Error("unable to unmarshal into" +
-		" given response")
+	ErrUnableToUnmarshalIntoResponse = errors.Error(
+		"unable to unmarshal into" +
+			" given response",
+	)
 )

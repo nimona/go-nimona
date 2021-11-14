@@ -206,7 +206,9 @@ func (ft *fileTransfer) get(
 	}
 
 	_ = os.MkdirAll(ft.config.fconf.ReceivedFolder, os.ModePerm)
-	f, err := os.Create(filepath.Join(ft.config.fconf.ReceivedFolder, fl.Name))
+	f, err := os.Create(
+		filepath.Join(ft.config.fconf.ReceivedFolder, fl.Name),
+	)
 	if err != nil {
 		fmt.Println("failed to create file:", err)
 		return

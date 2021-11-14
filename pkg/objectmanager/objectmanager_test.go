@@ -161,7 +161,14 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(object.Copy(f01), nil).MaxTimes(2)
+					m.EXPECT().Get(
+						f01.Hash(),
+					).Return(
+						object.Copy(f01),
+						nil,
+					).MaxTimes(
+						2,
+					)
 					return m
 				},
 				meshHandler: func(
@@ -184,17 +191,24 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							}},
 						},
 					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-						DoAndReturn(func(
-							ctx context.Context,
-							obj *object.Object,
-							recipient crypto.PublicKey,
-							opts ...mesh.SendOption,
-						) error {
-							assert.Equal(t, want, obj)
-							wg.Done()
-							return nil
-						})
+					m.EXPECT().Send(
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+					).
+						DoAndReturn(
+							func(
+								ctx context.Context,
+								obj *object.Object,
+								recipient crypto.PublicKey,
+								opts ...mesh.SendOption,
+							) error {
+								assert.Equal(t, want, obj)
+								wg.Done()
+								return nil
+							},
+						)
 					return m
 				},
 				resolver: func(t *testing.T) resolver.Resolver {
@@ -224,7 +238,14 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			fields: fields{
 				storeHandler: func(t *testing.T) objectstore.Store {
 					m := objectstoremock.NewMockStore(gomock.NewController(t))
-					m.EXPECT().Get(f01.Hash()).Return(nil, objectstore.ErrNotFound).MaxTimes(2)
+					m.EXPECT().Get(
+						f01.Hash(),
+					).Return(
+						nil,
+						objectstore.ErrNotFound,
+					).MaxTimes(
+						2,
+					)
 					return m
 				},
 				meshHandler: func(
@@ -247,17 +268,24 @@ func TestManager_handleObjectRequest(t *testing.T) {
 							}},
 						},
 					)
-					m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-						DoAndReturn(func(
-							ctx context.Context,
-							obj *object.Object,
-							recipient crypto.PublicKey,
-							opts ...mesh.SendOption,
-						) error {
-							assert.Equal(t, want, obj)
-							wg.Done()
-							return nil
-						})
+					m.EXPECT().Send(
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+					).
+						DoAndReturn(
+							func(
+								ctx context.Context,
+								obj *object.Object,
+								recipient crypto.PublicKey,
+								opts ...mesh.SendOption,
+							) error {
+								assert.Equal(t, want, obj)
+								wg.Done()
+								return nil
+							},
+						)
 					return m
 				},
 				resolver: func(t *testing.T) resolver.Resolver {
@@ -467,9 +495,17 @@ func TestManager_RequestStream(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.RequestStream(
+				tt.args.ctx,
+				tt.args.rootHash,
+				tt.args.peer,
+			)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("manager.RequestStream() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(
+					"manager.RequestStream() error = %v, wantErr %v",
+					err,
+					tt.wantErr,
+				)
 				return
 			}
 			if tt.want != nil {
@@ -588,17 +624,24 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						}},
 					},
 				)
-				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					DoAndReturn(func(
-						ctx context.Context,
-						obj *object.Object,
-						recipient crypto.PublicKey,
-						opts ...mesh.SendOption,
-					) error {
-						assert.Equal(t, want, obj)
-						wg.Done()
-						return nil
-					})
+				m.EXPECT().Send(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+					DoAndReturn(
+						func(
+							ctx context.Context,
+							obj *object.Object,
+							recipient crypto.PublicKey,
+							opts ...mesh.SendOption,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						},
+					)
 
 				return m
 			},
@@ -654,17 +697,24 @@ func TestManager_handleStreamRequest(t *testing.T) {
 						}},
 					},
 				)
-				m.EXPECT().Send(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					DoAndReturn(func(
-						ctx context.Context,
-						obj *object.Object,
-						recipient crypto.PublicKey,
-						opts ...mesh.SendOption,
-					) error {
-						assert.Equal(t, want, obj)
-						wg.Done()
-						return nil
-					})
+				m.EXPECT().Send(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+					DoAndReturn(
+						func(
+							ctx context.Context,
+							obj *object.Object,
+							recipient crypto.PublicKey,
+							opts ...mesh.SendOption,
+						) error {
+							assert.Equal(t, want, obj)
+							wg.Done()
+							return nil
+						},
+					)
 
 				return m
 			},

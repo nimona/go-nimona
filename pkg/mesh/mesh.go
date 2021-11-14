@@ -557,14 +557,20 @@ func (w *mesh) Send(
 	if opt.waitForResponse != nil {
 		rIDVal, ok := o.Data["requestID"]
 		if !ok {
-			return errors.Error("cannot wait for response without a request id")
+			return errors.Error(
+				"cannot wait for response without a request id",
+			)
 		}
 		rID, ok := rIDVal.(tilde.String)
 		if !ok {
-			return errors.Error("cannot wait for response with an invalid request id")
+			return errors.Error(
+				"cannot wait for response with an invalid request id",
+			)
 		}
 		if rID == "" {
-			return errors.Error("cannot wait for response with empty request id")
+			return errors.Error(
+				"cannot wait for response with empty request id",
+			)
 		}
 		rSub = w.Subscribe(
 			FilterByRequestID(string(rID)),

@@ -37,14 +37,17 @@ func TestEd(t *testing.T) {
 		assert.True(t, r1.Equals(r1g))
 	})
 
-	t.Run("try bip39 marshaling/unmarshaling private key", func(t *testing.T) {
-		m := p1.BIP39()
-		require.NotEmpty(t, m)
+	t.Run(
+		"try bip39 marshaling/unmarshaling private key",
+		func(t *testing.T) {
+			m := p1.BIP39()
+			require.NotEmpty(t, m)
 
-		g, err := NewEd25519PrivateKeyFromBIP39(m)
-		require.NoError(t, err)
-		require.Equal(t, p1, g)
-	})
+			g, err := NewEd25519PrivateKeyFromBIP39(m)
+			require.NoError(t, err)
+			require.Equal(t, p1, g)
+		},
+	)
 
 	b := make([]byte, 5647)
 	n, err := io.ReadFull(rand.Reader, b)

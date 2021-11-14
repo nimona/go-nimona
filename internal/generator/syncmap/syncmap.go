@@ -46,7 +46,9 @@ func (m *KeyTypeValueTypeSyncMap) Delete(k KeyType) {
 }
 
 // Range -
-func (m *KeyTypeValueTypeSyncMap) Range(i func(k KeyType, v *ValueType) bool) {
+func (m *KeyTypeValueTypeSyncMap) Range(
+	i func(k KeyType, v *ValueType) bool,
+) {
 	m.m.Range(func(k, v interface{}) bool {
 		return i(k.(KeyType), v.(*ValueType))
 	})

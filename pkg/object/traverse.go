@@ -56,7 +56,11 @@ func traverseValues(v reflect.Value, f func(reflect.Value)) {
 	}
 }
 
-func traverse(k string, i interface{}, f func(string, interface{}) bool) bool {
+func traverse(
+	k string,
+	i interface{},
+	f func(string, interface{}) bool,
+) bool {
 	cont := f(k, i)
 	if !cont {
 		return false

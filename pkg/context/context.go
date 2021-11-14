@@ -32,9 +32,7 @@ type (
 	}
 )
 
-var (
-	todo = New()
-)
+var todo = New()
 
 // TODO returns a non-nil, empty Context. Code should use context.TODO when
 // it's unclear which Context to use or it is not yet available.

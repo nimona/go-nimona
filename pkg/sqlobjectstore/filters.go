@@ -105,6 +105,8 @@ func FilterByObjectType(typePatterns ...string) FilterOption {
 		patterns[i] = g
 	}
 	return func(opts *FilterOptions) {
-		opts.Filters.ContentTypes = append(opts.Filters.ContentTypes, typePatterns...)
+		opts.Filters.ContentTypes = append(
+			opts.Filters.ContentTypes,
+			typePatterns...)
 	}
 }

@@ -102,7 +102,9 @@ func unmarshalMap(h tilde.Hint, m tilde.Map, target reflect.Value) error {
 		return unmarshalMapToMap(h, m, target)
 	}
 
-	return errors.Error("expected map or struct, got " + target.Kind().String())
+	return errors.Error(
+		"expected map or struct, got " + target.Kind().String(),
+	)
 }
 
 func unmarshalMapToStruct(h tilde.Hint, m tilde.Map, v reflect.Value) error {
@@ -110,7 +112,9 @@ func unmarshalMapToStruct(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
-		return errors.Error("unmarshal: expected struct, got " + v.Kind().String())
+		return errors.Error(
+			"unmarshal: expected struct, got " + v.Kind().String(),
+		)
 	}
 
 	t := v.Type()
@@ -148,7 +152,9 @@ func unmarshalMapToStruct(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 
 func unmarshalMapToMap(h tilde.Hint, m tilde.Map, v reflect.Value) error {
 	if v.Kind() != reflect.Map {
-		return errors.Error("unmarshal: expected struct, got " + v.Kind().String())
+		return errors.Error(
+			"unmarshal: expected struct, got " + v.Kind().String(),
+		)
 	}
 
 	if v.IsNil() {

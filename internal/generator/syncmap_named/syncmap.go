@@ -22,7 +22,10 @@ func NewSyncmapNameMap() *SyncmapNameMap {
 }
 
 // GetOrPut -
-func (m *SyncmapNameMap) GetOrPut(k KeyType, v *ValueType) (*ValueType, bool) {
+func (m *SyncmapNameMap) GetOrPut(
+	k KeyType,
+	v *ValueType,
+) (*ValueType, bool) {
 	nv, ok := m.m.LoadOrStore(k, v)
 	return nv.(*ValueType), ok
 }

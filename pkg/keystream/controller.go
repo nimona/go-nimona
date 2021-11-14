@@ -156,7 +156,10 @@ func (c *controller) Rotate() (*Rotation, error) {
 
 	err = c.keyStore.PutKey(newNextKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to store new next private key, %w", err)
+		return nil, fmt.Errorf(
+			"unable to store new next private key, %w",
+			err,
+		)
 	}
 
 	r := &Rotation{

@@ -125,7 +125,9 @@ func NewApp(conversationHash string) *App {
 			select {
 			case participantUpdated := <-app.Channels.ParticipantUpdated:
 				app.Store.PutMessage(&Message{
-					Hash:             strconv.Itoa(int(time.Now().UnixNano())),
+					Hash: strconv.Itoa(
+						int(time.Now().UnixNano()),
+					),
 					ConversationHash: participantUpdated.ConversationHash,
 					SenderKey:        "system",
 					Created:          participantUpdated.Updated,

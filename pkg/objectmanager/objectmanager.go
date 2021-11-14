@@ -483,11 +483,13 @@ func (m *manager) announceStreamChildren(
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
 	subscribersMap := map[string]struct{}{}
-	m.subscriptions.Range(func(_ tilde.Digest, sub *stream.Subscription) bool {
-		// TODO check expiry
-		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
-		return true
-	})
+	m.subscriptions.Range(
+		func(_ tilde.Digest, sub *stream.Subscription) bool {
+			// TODO check expiry
+			subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
+			return true
+		},
+	)
 
 	// find subscriptions that are attached in the stream
 	r, err := m.objectstore.GetByStream(streamHash)

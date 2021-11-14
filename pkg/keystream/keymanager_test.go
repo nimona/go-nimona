@@ -62,5 +62,9 @@ func TestKeyManager(t *testing.T) {
 	require.Equal(t, 1, len(ms))
 	require.Equal(t, c1.GetKeyStream().Root, ms[0].GetKeyStream().Root)
 	require.Equal(t, c1.CurrentKey(), ms[0].CurrentKey())
-	require.Equal(t, c1.GetKeyStream().Sequence, ms[0].GetKeyStream().Sequence)
+	require.Equal(
+		t,
+		c1.GetKeyStream().Sequence,
+		ms[0].GetKeyStream().Sequence,
+	)
 }

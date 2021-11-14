@@ -392,7 +392,11 @@ func TestStore_Pinned(t *testing.T) {
 	t.Run("get pins (a, b)", func(t *testing.T) {
 		got, err := store.GetPinned()
 		require.NoError(t, err)
-		require.Equal(t, []tilde.Digest{tilde.Digest("a"), tilde.Digest("b")}, got)
+		require.Equal(
+			t,
+			[]tilde.Digest{tilde.Digest("a"), tilde.Digest("b")},
+			got,
+		)
 	})
 
 	t.Run("remove pin a", func(t *testing.T) {

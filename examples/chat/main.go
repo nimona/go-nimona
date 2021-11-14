@@ -139,7 +139,10 @@ func (c *chat) subscribe(
 				},
 			})
 			if _, err := c.objectmanager.Append(ctx, so); err != nil {
-				c.logger.Fatal("could not persist conversation sub", log.Error(err))
+				c.logger.Fatal(
+					"could not persist conversation sub",
+					log.Error(err),
+				)
 			}
 		}
 

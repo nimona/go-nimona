@@ -206,7 +206,11 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	err = object.Unmarshal(respObj, res)
 	require.NoError(t, err)
 	assert.Equal(t, "1", res.Nonce)
-	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
+	assert.ElementsMatch(
+		t,
+		[]*hyperspace.Announcement{pr2},
+		res.Announcements,
+	)
 }
 
 func newPeer(t *testing.T) (net.Network, crypto.PrivateKey) {

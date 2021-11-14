@@ -28,11 +28,19 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	n1 := New(context.Background(), net.New(k1), k1)
 	n2 := New(context.Background(), net.New(k2), k2)
 
-	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	l1, err := n1.Listen(
+		context.Background(),
+		"127.0.0.1:0",
+		ListenOnLocalIPs,
+	)
 	require.NoError(t, err)
 	defer l1.Close()
 
-	l2, err := n2.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	l2, err := n2.Listen(
+		context.Background(),
+		"127.0.0.1:0",
+		ListenOnLocalIPs,
+	)
 	require.NoError(t, err)
 	defer l2.Close()
 
@@ -213,7 +221,11 @@ func TestNetwork_Relay(t *testing.T) {
 	n1 := New(context.Background(), net.New(k1), k1)
 	n2 := New(context.Background(), net.New(k2), k2)
 
-	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	l0, err := n0.Listen(
+		context.Background(),
+		"127.0.0.1:0",
+		ListenOnLocalIPs,
+	)
 	require.NoError(t, err)
 	defer l0.Close()
 
@@ -424,7 +436,11 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	require.NoError(b, err)
 	n1 := New(context.Background(), net.New(k1), k1).(*mesh)
 
-	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	l1, err := n1.Listen(
+		context.Background(),
+		"127.0.0.1:0",
+		ListenOnLocalIPs,
+	)
 	require.NoError(b, err)
 	defer l1.Close()
 

@@ -30,7 +30,11 @@ type (
 )
 
 // NewQueue constructs a new queue
-func NewQueue(ctx context.Context, workers int, done chan ObservableType) Queue {
+func NewQueue(
+	ctx context.Context,
+	workers int,
+	done chan ObservableType,
+) Queue {
 	ctx = context.New(
 		context.WithParent(ctx),
 		context.WithCancel(),

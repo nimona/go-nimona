@@ -64,7 +64,9 @@ func (s *objectSubscription) Read() (r *object.Object, err error) {
 }
 
 // Subscribe to published events with optional filters
-func (ps *objectPubSub) Subscribe(filters ...ObjectFilter) ObjectSubscription {
+func (ps *objectPubSub) Subscribe(
+	filters ...ObjectFilter,
+) ObjectSubscription {
 	// cast filters
 	iFilters := make([]pubsub.Filter, len(filters))
 	for i, filter := range filters {

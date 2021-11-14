@@ -189,7 +189,10 @@ func NimonaBridgeCall(
 		return renderObject(o)
 	}
 
-	return renderBytes([]byte("error"), errors.New(nameString+" not implemented"))
+	return renderBytes(
+		[]byte("error"),
+		errors.New(nameString+" not implemented"),
+	)
 }
 
 // Unused

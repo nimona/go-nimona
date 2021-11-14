@@ -118,7 +118,11 @@ func Test_requester_Request(t *testing.T) {
 
 			got, gotChunks, err := r.Request(tt.args.ctx, tt.args.hash)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("requester.Request() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(
+					"requester.Request() error = %v, wantErr %v",
+					err,
+					tt.wantErr,
+				)
 				return
 			}
 

@@ -60,8 +60,10 @@ func TestMapRedaction(t *testing.T) {
 		wantValue:  parentWithInner,
 		wantDigest: parentWithInner.Hash(),
 	}, {
-		name:       "3",
-		json:       `{"@type:s":"foo","foo:r":"` + string(inner.Hash()) + `"}`,
+		name: "3",
+		json: `{"@type:s":"foo","foo:r":"` + string(
+			inner.Hash(),
+		) + `"}`,
 		wantValue:  parentWithInnerRedacted,
 		wantDigest: parentWithInner.Hash(),
 	}}

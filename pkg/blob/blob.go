@@ -82,7 +82,9 @@ func (bl *blobReader) Read(p []byte) (n int, err error) {
 		}
 
 		// append to the temp buf
-		tempBuf = append(tempBuf, bl.chunks[bl.chunkIndex].Data[lower:upper]...)
+		tempBuf = append(
+			tempBuf,
+			bl.chunks[bl.chunkIndex].Data[lower:upper]...)
 		dataRead += upper - lower
 
 		// adjust the indexes

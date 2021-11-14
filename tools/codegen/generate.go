@@ -169,7 +169,12 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	}
 
 	for i, pkg := range doc.Imports {
-		doc.Imports[i] = strings.Replace(pkg, "nimona.io/", "nimona.io/pkg/", 1)
+		doc.Imports[i] = strings.Replace(
+			pkg,
+			"nimona.io/",
+			"nimona.io/pkg/",
+			1,
+		)
 	}
 
 	out := bytes.NewBuffer([]byte{})

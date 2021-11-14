@@ -98,7 +98,9 @@ func (m *feedManager) initialize(ctx context.Context) error {
 	return nil
 }
 
-func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
+func (m *feedManager) createFeedsForRegisteredTypes(
+	ctx context.Context,
+) error {
 	if m.getIdentityPublicKey().IsEmpty() {
 		return nil
 	}

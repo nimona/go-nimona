@@ -2,13 +2,11 @@ package object
 
 import "regexp"
 
-var (
-	regexObjectType = regexp.MustCompile(
-		`(?m)` +
-			`(?:(?P<type>[a-zA-Z0-9]+):)?` +
-			`(?:(?P<namespace>[a-zA-Z0-9\.]+)/)?` +
-			`(?P<object>[a-zA-Z0-9\.]+)`,
-	)
+var regexObjectType = regexp.MustCompile(
+	`(?m)` +
+		`(?:(?P<type>[a-zA-Z0-9]+):)?` +
+		`(?:(?P<namespace>[a-zA-Z0-9\.]+)/)?` +
+		`(?P<object>[a-zA-Z0-9\.]+)`,
 )
 
 type (

@@ -199,7 +199,9 @@ func (rot *Rotation) apply(s *State) error {
 	}
 
 	if rot.Key.Hash() != s.NextKeyDigest {
-		return fmt.Errorf("current key digest doesn't match previous next key")
+		return fmt.Errorf(
+			"current key digest doesn't match previous next key",
+		)
 	}
 
 	if rot.NextKeyDigest.IsEmpty() {

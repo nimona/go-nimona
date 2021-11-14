@@ -151,7 +151,14 @@ func (p *Parser) parseField() (interface{}, error) {
 	} else {
 		p.unscan()
 	}
-	fmt.Println("\tFound attribute", member.Name, "with hint", member.SimpleType, "of type", member.GoFullType)
+	fmt.Println(
+		"\tFound attribute",
+		member.Name,
+		"with hint",
+		member.SimpleType,
+		"of type",
+		member.GoFullType,
+	)
 	return member, nil
 }
 
@@ -279,7 +286,10 @@ func (p *Parser) Parse() (*Document, error) {
 		token, importAlias := p.scanIgnoreWhiteSpace()
 		// doesn't really matter what the token is here, as long as it's not eof
 		if token == EOF {
-			return nil, fmt.Errorf("found %q, expected TEXT for import alias", token)
+			return nil, fmt.Errorf(
+				"found %q, expected TEXT for import alias",
+				token,
+			)
 		}
 		fmt.Println("Found import", importPkg, "as", importAlias)
 		doc.Imports[importAlias] = importPkg

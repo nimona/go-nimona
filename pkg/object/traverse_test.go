@@ -50,7 +50,6 @@ func Test_Traverse(t *testing.T) {
 			"foo1:s": "bar1",
 		},
 	}, {
-
 		name: "should pass, complex map",
 		args: args{
 			v: map[string]interface{}{

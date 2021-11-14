@@ -164,7 +164,10 @@ func New(
 		dae.ObjectStore().(*sqlobjectstore.Store),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct keystream manager: %w", err)
+		return nil, fmt.Errorf(
+			"failed to construct keystream manager: %w",
+			err,
+		)
 	}
 
 	h := &Hub{
@@ -398,23 +401,28 @@ func main() {
 		}
 	})
 
-	r.Get("/identity/delegationRequest.png", func(w http.ResponseWriter, r *http.Request) {
-		hash := r.URL.Query().Get("hash")
-		q, _ := qrcode.New(
-			"nimona://identity/delegationRequest?hash="+hash,
-			qrcode.Medium,
-		)
-		q.DisableBorder = true
-		png, _ := q.PNG(256)
-		w.Header().Set("Content-Type", "image/png")
-		w.Write(png)
-	})
+	r.Get(
+		"/identity/delegationRequest.png",
+		func(w http.ResponseWriter, r *http.Request) {
+			hash := r.URL.Query().Get("hash")
+			q, _ := qrcode.New(
+				"nimona://identity/delegationRequest?hash="+hash,
+				qrcode.Medium,
+			)
+			q.DisableBorder = true
+			png, _ := q.PNG(256)
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(png)
+		},
+	)
 
 	r.Get("/identity", func(w http.ResponseWriter, r *http.Request) {
 		showMnemonic, _ := strconv.ParseBool(r.URL.Query().Get("show"))
 		requestDelegation, _ := strconv.ParseBool(r.URL.Query().Get("link"))
 		delegateRequestHash := r.URL.Query().Get("delegateRequestHash")
-		delegateRequestSign, _ := strconv.ParseBool(r.URL.Query().Get("delegateRequestSign"))
+		delegateRequestSign, _ := strconv.ParseBool(
+			r.URL.Query().Get("delegateRequestSign"),
+		)
 		peerKey := d.Network().GetPeerKey()
 
 		values := struct {
@@ -589,8 +597,12 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
-		objectReader, err := d.ObjectStore().GetByStream(contactsStreamRootHash)
+		contactsStreamRootHash := object.MustMarshal(
+			contactsStreamRoot,
+		).Hash()
+		objectReader, err := d.ObjectStore().GetByStream(
+			contactsStreamRootHash,
+		)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -668,7 +680,9 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
+		contactsStreamRootHash := object.MustMarshal(
+			contactsStreamRoot,
+		).Hash()
 		alias := r.PostFormValue("alias")
 		remoteParty := r.PostFormValue("remoteParty")
 		if alias == "" || remoteParty == "" {
@@ -737,7 +751,9 @@ func main() {
 				Owner: *k,
 			},
 		}
-		contactsStreamRootHash := object.MustMarshal(contactsStreamRoot).Hash()
+		contactsStreamRootHash := object.MustMarshal(
+			contactsStreamRoot,
+		).Hash()
 		remoteParty := r.URL.Query().Get("publicKey")
 		if remoteParty == "" {
 			if err != nil {
@@ -790,7 +806,8 @@ func main() {
 				)
 			}
 		}
-		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(sqlFilters...)
+		reader, err := d.ObjectStore().(*sqlobjectstore.Store).Filter(
+			sqlFilters...)
 		if err != nil && err != objectstore.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

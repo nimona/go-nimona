@@ -1,15 +1,15 @@
 package containers_test
 
 import (
-	"nimona.io/pkg/context"
 	"testing"
+
+	"nimona.io/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"nimona.io/internal/simulation/containers"
 )
 
 func TestNetwork(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		netType string
@@ -33,5 +33,4 @@ func TestNetwork(t *testing.T) {
 			}()
 		})
 	}
-
 }

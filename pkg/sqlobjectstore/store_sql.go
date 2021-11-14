@@ -185,7 +185,10 @@ func (st *Store) PutWithTTL(
 		LastAccessed=?
 	`)
 	if err != nil {
-		return fmt.Errorf("could not prepare insert to objects table: %w", err)
+		return fmt.Errorf(
+			"could not prepare insert to objects table: %w",
+			err,
+		)
 	}
 	defer stmt.Close() // nolint: errcheck
 
@@ -251,7 +254,11 @@ func (st *Store) PutWithTTL(
 	}
 
 	if streamHash == objectHash {
-		err := st.putRelation(tilde.Digest(streamHash), objHash, tilde.EmptyDigest)
+		err := st.putRelation(
+			tilde.Digest(streamHash),
+			objHash,
+			tilde.EmptyDigest,
+		)
 		if err != nil {
 			return fmt.Errorf("error creating self relation: %w", err)
 		}
@@ -280,7 +287,10 @@ func (st *Store) putRelation(
 		)
 	`)
 	if err != nil {
-		return fmt.Errorf("could not prepare insert to objects table: %w", err)
+		return fmt.Errorf(
+			"could not prepare insert to objects table: %w",
+			err,
+		)
 	}
 	defer stmt.Close() // nolint: errcheck
 

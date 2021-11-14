@@ -59,7 +59,7 @@ func New(opts ...Option) (*Config, error) {
 		cfg.defaultConfigFilename = configFilename
 	}
 
-	if err := os.MkdirAll(cfg.Path, 0700); err != nil {
+	if err := os.MkdirAll(cfg.Path, 0o700); err != nil {
 		return nil, fmt.Errorf("error creating directory, %w", err)
 	}
 
@@ -70,7 +70,7 @@ func New(opts ...Option) (*Config, error) {
 
 	fullPath := filepath.Join(cfg.Path, cfg.defaultConfigFilename)
 
-	configFile, err := os.OpenFile(fullPath, os.O_CREATE, 0600)
+	configFile, err := os.OpenFile(fullPath, os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file, %w", err)
 	}
@@ -120,7 +120,7 @@ func New(opts ...Option) (*Config, error) {
 		}
 	}
 
-	if err := ioutil.WriteFile(fullPath, updateData, 0600); err != nil {
+	if err := ioutil.WriteFile(fullPath, updateData, 0o600); err != nil {
 		return nil, fmt.Errorf("error writing file, %w", err)
 	}
 
