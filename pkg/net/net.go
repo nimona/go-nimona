@@ -270,11 +270,6 @@ func (n *network) blockAddress(
 	return attempts, time.Duration(backoff)
 }
 
-// func (n *network) Accept() (*Connection, error) {
-// 	conn := <-n.connections
-// 	return conn, nil
-// }
-
 type ListenConfig struct {
 	BindLocal   bool
 	BindPrivate bool
@@ -382,7 +377,11 @@ func (n *network) Listen(
 	}
 	// block our own addresses, just in case anyone tries to dial them
 	for _, addr := range mlst.addresses {
-		n.blocklist.Set(k.PublicKey().String()+"/"+addr, 0, cache.NoExpiration)
+		n.blocklist.Set(
+			k.PublicKey().String()+"/"+addr,
+			0,
+			cache.NoExpiration,
+		)
 	}
 	return mlst, nil
 }
@@ -409,9 +408,9 @@ func (n *network) handleNewConnection(conn *connection) {
 	n.connections[conn.remotePeerKey.String()] = conn
 	n.connectionsMutex.Unlock()
 	// call all connection handlers
-	n.connHandlerMutex.Lock()
+	n.connHandlerMutex.RLock()
 	for _, handler := range n.connHandlers {
 		handler(conn)
 	}
-	n.connHandlerMutex.Unlock()
+	n.connHandlerMutex.RUnlock()
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
@@ -35,9 +36,10 @@ type (
 		encoder *json.Encoder
 		decoder *json.Decoder
 
-		conn   io.ReadWriteCloser
-		closer chan struct{}
-		closed bool
+		conn    io.ReadWriteCloser
+		closer  chan struct{}
+		closed  bool
+		reading chan struct{}
 
 		pubsub ObjectPubSub
 		mutex  sync.RWMutex // R used to check if closed
@@ -91,35 +93,22 @@ func (c *connection) Write(ctx context.Context, o *object.Object) error {
 	return nil
 }
 
-func (c *connection) read() (o *object.Object, err error) {
-	defer func() {
-		r := recover()
-		if r != nil {
-			err = fmt.Errorf("paniced while reading object: %w", r.(error))
-		}
-	}()
-
-	o = &object.Object{}
-	err = c.decoder.Decode(o)
-	if err != nil {
-		return nil, err
-	}
-
-	return o, nil
-}
-
 func (c *connection) Read(ctx context.Context) object.ReadCloser {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
+	// TODO: link ctx with errCh?
 	errCh := make(chan error)
 	sub := c.pubsub.Subscribe()
-	return object.NewReadCloser(
+	r := object.NewReadCloser(
 		ctx,
 		sub.Channel(),
 		errCh,
 		c.closer,
 	)
+	// TODO: refactor, this seems kind of hacky
+	select {
+	case c.reading <- struct{}{}:
+	default:
+	}
+	return r
 }
 
 func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
@@ -131,12 +120,25 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 		decoder:    json.NewDecoder(conn),
 		pubsub:     NewObjectPubSub(),
 		mutex:      sync.RWMutex{},
-		closer:     make(chan struct{}),
+		closer:     make(chan struct{}, 1),
+		reading:    make(chan struct{}, 1),
 	}
 
 	go func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				c.Close()
+			}
+		}()
+		// wait until someone is reading
+		select {
+		case <-c.reading:
+		case <-time.After(250 * time.Millisecond):
+		}
 		for {
-			o, err := c.read()
+			o := &object.Object{}
+			err := c.decoder.Decode(o)
 			if err != nil {
 				c.Close()
 				return

@@ -28,22 +28,24 @@ func TestNetConnectionSuccess(t *testing.T) {
 	done := make(chan bool)
 
 	resObj := &object.Object{
+		Type: "test",
 		Data: tilde.Map{
 			"foo": tilde.String("bar"),
 		},
 	}
 
-	// attempt to dial own address, should fail
-	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
-		PublicKey: n1.peerKey.PublicKey(),
-		Addresses: n1.Addresses(),
-	})
-	require.Equal(t, ErrAllAddressesBlocked, err)
-
 	// wait for new connections on n1
-	scs := make(chan Connection)
+	scs := make(chan Connection, 1)
 	n1.RegisterConnectionHandler(func(c Connection) {
 		scs <- c
+	})
+
+	t.Run("dial own address, should fail", func(t *testing.T) {
+		_, err = n1.Dial(ctx, &peer.ConnectionInfo{
+			PublicKey: n1.peerKey.PublicKey(),
+			Addresses: n1.Addresses(),
+		})
+		require.Equal(t, ErrAllAddressesBlocked, err)
 	})
 
 	// dial n1 from n2
@@ -58,7 +60,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 		done <- true
 	}()
 
-	// wait for connection
+	// wait for connection on n1
 	var sc Connection
 	select {
 	case sc = <-scs:
@@ -149,7 +151,8 @@ func TestNetDialBackoff(t *testing.T) {
 func newPeer(t *testing.T) *network {
 	pk, err := crypto.NewEd25519PrivateKey()
 	assert.NoError(t, err)
-	return New(
+	n := New(
 		pk,
 	).(*network)
+	return n
 }
