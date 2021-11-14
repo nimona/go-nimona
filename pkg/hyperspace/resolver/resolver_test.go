@@ -34,6 +34,8 @@ func TestResolver_Integration(t *testing.T) {
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
+	time.Sleep(250 * time.Millisecond)
+
 	// net1 is a normal peer
 	k1, net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
@@ -46,6 +48,8 @@ func TestResolver_Integration(t *testing.T) {
 		},
 		PeerCapabilities: []string{"foo"},
 	}
+
+	time.Sleep(250 * time.Millisecond)
 
 	// construct provider
 	prv, err := provider.New(context.New(), net0, k0, nil)

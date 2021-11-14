@@ -75,8 +75,11 @@ func New(
 		),
 		localPeerAnnouncementCacheLock: sync.RWMutex{},
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
-		blocklist:                      cache.New(time.Second*5, time.Second*60),
-		hashes:                         &TildeDigestSyncList{},
+		blocklist: cache.New(
+			time.Second*5,
+			time.Second*60,
+		),
+		hashes: &TildeDigestSyncList{},
 	}
 
 	for _, opt := range opts {
