@@ -267,7 +267,7 @@ func (w *mesh) Listen(
 		return listener, nil
 	}
 	localPort, err := strconv.ParseInt(
-		strings.Split(listener.Addresses()[0], ":")[2], 10, 64,
+		strings.Split(listener.Addresses()[0], ":")[2], 10, 32,
 	)
 	if err != nil || localPort == 0 {
 		return nil, errors.Merge(
