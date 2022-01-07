@@ -1,4 +1,4 @@
-FROM golang:1.17.2-buster AS builder
+FROM golang:1.17.6-buster AS builder
 
 RUN apt-get update && apt-get install -y ca-certificates openssl
 
