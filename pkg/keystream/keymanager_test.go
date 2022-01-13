@@ -45,10 +45,10 @@ func TestKeyManager(t *testing.T) {
 	c1, err := m1.NewController(nil)
 	require.NoError(t, err)
 
-	// check that controller exists
-	ms := m1.ListControllers()
-	require.Equal(t, 1, len(ms))
-	require.Equal(t, c1, ms[0])
+	// check we set controller
+	gc, err := m1.GetController()
+	require.Equal(t, c1, gc)
+	require.NoError(t, err)
 
 	// construct a new manager that should restore the previous controller
 	m2, err := NewKeyManager(
@@ -58,9 +58,9 @@ func TestKeyManager(t *testing.T) {
 	require.NoError(t, err)
 
 	// check that controller exists
-	ms = m2.ListControllers()
-	require.Equal(t, 1, len(ms))
-	require.Equal(t, c1.GetKeyStream().Root, ms[0].GetKeyStream().Root)
-	require.Equal(t, c1.CurrentKey(), ms[0].CurrentKey())
-	require.Equal(t, c1.GetKeyStream().Sequence, ms[0].GetKeyStream().Sequence)
+	gc, err = m2.GetController()
+	require.NoError(t, err)
+	require.Equal(t, c1.GetKeyStream().Root, gc.GetKeyStream().Root)
+	require.Equal(t, c1.CurrentKey(), gc.CurrentKey())
+	require.Equal(t, c1.GetKeyStream().Sequence, gc.GetKeyStream().Sequence)
 }
