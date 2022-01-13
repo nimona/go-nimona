@@ -99,8 +99,8 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// add bootstrap peers as relays
 	nnet.RegisterRelays(bootstrapPeers...)
 
-	// construct preferences db
-	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "preferences.db"))
+	// construct configstore db
+	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "config.sqlite"))
 	if err != nil {
 		return nil, fmt.Errorf("opening sql file for configstore: %w", err)
 	}
@@ -112,7 +112,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct object store
-	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "nimona.db"))
+	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "object.sqlite"))
 	if err != nil {
 		return nil, fmt.Errorf("opening sql file: %w", err)
 	}
