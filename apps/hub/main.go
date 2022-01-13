@@ -149,9 +149,7 @@ type (
 		PublicKey string
 	}
 	Hub struct {
-		daemon              daemon.Daemon
-		keyStreamManager    keystream.Manager
-		keyStreamController keystream.Controller
+		daemon daemon.Daemon
 		sync.RWMutex
 	}
 )
@@ -159,29 +157,8 @@ type (
 func New(
 	dae daemon.Daemon,
 ) (*Hub, error) {
-	ksm, err := keystream.NewKeyManager(
-		dae.Network(),
-		dae.ObjectStore().(*sqlobjectstore.Store),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct keystream manager: %w", err)
-	}
-
 	h := &Hub{
-		daemon:           dae,
-		keyStreamManager: ksm,
-	}
-
-	kscs := ksm.ListControllers()
-	switch len(kscs) {
-	case 0:
-	case 1:
-		h.keyStreamController = kscs[0]
-	default:
-		return nil, fmt.Errorf(
-			"expected 1 keystream controller, got %d",
-			len(kscs),
-		)
+		daemon: dae,
 	}
 
 	return h, nil
@@ -199,25 +176,12 @@ func New(
 // 	h.daemon.LocalPeer().SetPeerCertificate(r)
 // }
 
-func (h *Hub) PutKeyStreamController(c keystream.Controller) {
-	h.Lock()
-	defer h.Unlock()
-	h.keyStreamController = c
-}
-
-func (h *Hub) GetKeyStreamController() keystream.Controller {
-	h.RLock()
-	defer h.RUnlock()
-	return h.keyStreamController
-}
-
 func (h *Hub) GetIdentityDID() *did.DID {
-	h.RLock()
-	defer h.RUnlock()
-	if h.keyStreamController == nil {
+	keyStreamController, err := h.daemon.KeyStreamManager().GetController()
+	if err != nil || keyStreamController == nil {
 		return nil
 	}
-	d := h.keyStreamController.GetKeyStream().GetDID()
+	d := keyStreamController.GetKeyStream().GetDID()
 	return &d
 }
 
@@ -435,7 +399,7 @@ func main() {
 		}
 
 		if requestDelegation {
-			dr, cCh, err := h.keyStreamManager.NewDelegationRequest(
+			dr, cCh, err := h.daemon.KeyStreamManager().NewDelegationRequest(
 				context.Background(), // TODO: add timeout
 				keystream.DelegationRequestVendor{
 					VendorName:             "Nimona",
@@ -467,8 +431,11 @@ func main() {
 					return
 				}
 				values.Link = false
-				h.PutKeyStreamController(cC)
-				kss := h.GetKeyStreamController().GetKeyStream()
+				ksc, err := h.daemon.KeyStreamManager().GetController()
+				if err != nil {
+					return
+				}
+				kss := ksc.GetKeyStream()
 				values.DID = kss.GetDID().String()
 				values.DelegateDIDs = kss.Delegates
 				values.Delegated = !kss.Delegator.IsEmpty()
@@ -512,10 +479,9 @@ func main() {
 					object.Unmarshal(dro, dr)
 					values.DelegationRequest = dr
 					if delegateRequestSign {
-						err := h.keyStreamManager.HandleDelegationRequest(
+						err := h.daemon.KeyStreamManager().HandleDelegationRequest(
 							context.New(context.WithTimeout(5*time.Second)),
 							dr,
-							h.GetKeyStreamController(),
 						)
 						if err != nil {
 							values.DelegationRequestError = "Could not handle request"
@@ -527,15 +493,16 @@ func main() {
 			}
 		}
 
-		if h.GetKeyStreamController() != nil {
-			kss := h.GetKeyStreamController().GetKeyStream()
+		ksc, err := h.daemon.KeyStreamManager().GetController()
+		if err == nil {
+			kss := ksc.GetKeyStream()
 			values.DID = kss.GetDID().String()
 			values.DelegateDIDs = kss.Delegates
 			values.Delegated = !kss.Delegator.IsEmpty()
 			// values.PrivateBIP39 = kss.CurrentKey().BIP39()
 		}
 
-		err := tplIdentity.Execute(
+		err = tplIdentity.Execute(
 			w,
 			values,
 		)
@@ -546,12 +513,11 @@ func main() {
 	})
 
 	r.Get("/identity/new", func(w http.ResponseWriter, r *http.Request) {
-		ikc, err := h.keyStreamManager.NewController(nil)
+		_, err := h.daemon.KeyStreamManager().NewController(nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		h.PutKeyStreamController(ikc)
 
 		http.Redirect(w, r, "/identity", http.StatusFound)
 	})
