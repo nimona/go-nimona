@@ -1,7 +1,7 @@
-package preferences
+package configstore
 
 type (
-	Preferences interface {
+	Store interface {
 		Put(key string, value string) error
 		Get(key string) (string, error)
 		Remove(key string) error

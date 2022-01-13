@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
@@ -17,10 +18,19 @@ import (
 func TestKeyManager(t *testing.T) {
 	sqlStoreDB, err := sql.Open(
 		"sqlite",
-		path.Join(t.TempDir(), "db.sqlite"),
+		path.Join(t.TempDir(), "object.sqlite"),
 	)
 	require.NoError(t, err)
+
 	sqlStore, err := sqlobjectstore.New(sqlStoreDB)
+	require.NoError(t, err)
+	configStoreDB, err := sql.Open(
+		"sqlite",
+		path.Join(t.TempDir(), "config.sqlite"),
+	)
+	require.NoError(t, err)
+
+	configStore, err := configstore.NewSQLProvider(configStoreDB)
 	require.NoError(t, err)
 
 	k1, err := crypto.NewEd25519PrivateKey()
@@ -38,6 +48,7 @@ func TestKeyManager(t *testing.T) {
 	m1, err := NewKeyManager(
 		net,
 		sqlStore,
+		configStore,
 	)
 	require.NoError(t, err)
 
@@ -54,6 +65,7 @@ func TestKeyManager(t *testing.T) {
 	m2, err := NewKeyManager(
 		net,
 		sqlStore,
+		configStore,
 	)
 	require.NoError(t, err)
 

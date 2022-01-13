@@ -7,6 +7,7 @@ import (
 
 	"nimona.io/internal/net"
 	"nimona.io/pkg/config"
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/feedmanager"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -15,14 +16,13 @@ import (
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/preferences"
 	"nimona.io/pkg/sqlobjectstore"
 )
 
 type (
 	Daemon interface {
 		Config() config.Config
-		Preferences() preferences.Preferences
+		ConfigStore() configstore.Store
 		Network() network.Network
 		Resolver() resolver.Resolver
 		ObjectStore() objectstore.Store
@@ -34,7 +34,7 @@ type (
 	}
 	daemon struct {
 		config          config.Config
-		preferences     preferences.Preferences
+		configstore     configstore.Store
 		configOptions   []config.Option
 		network         network.Network
 		resolver        resolver.Resolver
@@ -102,13 +102,13 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct preferences db
 	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "preferences.db"))
 	if err != nil {
-		return nil, fmt.Errorf("opening sql file for preferences: %w", err)
+		return nil, fmt.Errorf("opening sql file for configstore: %w", err)
 	}
 
-	// construct preferences
-	prf, err := preferences.NewSQLProvider(pdb)
+	// construct configstore
+	prf, err := configstore.NewSQLProvider(pdb)
 	if err != nil {
-		return nil, fmt.Errorf("constructing preferences provider: %w", err)
+		return nil, fmt.Errorf("constructing configstore provider: %w", err)
 	}
 
 	// construct object store
@@ -158,13 +158,14 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	ksm, err := keystream.NewKeyManager(
 		nnet,
 		str,
+		prf,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("constructing keystream manager, %w", err)
 	}
 
 	d.config = *cfg
-	d.preferences = prf
+	d.configstore = prf
 	d.network = nnet
 	d.resolver = res
 	d.objectstore = str
@@ -179,8 +180,8 @@ func (d *daemon) Config() config.Config {
 	return d.config
 }
 
-func (d *daemon) Preferences() preferences.Preferences {
-	return d.preferences
+func (d *daemon) ConfigStore() configstore.Store {
+	return d.configstore
 }
 
 func (d *daemon) Network() network.Network {

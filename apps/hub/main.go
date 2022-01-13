@@ -186,15 +186,6 @@ func (h *Hub) GetIdentityDID() *did.DID {
 }
 
 func (h *Hub) ForgetIdentity() {
-	h.Lock()
-	defer h.Unlock()
-	// h.daemon.Preferences().Remove(pkKeyIdentity)
-	// h.daemon.Preferences().Remove(pkPeerCertificate)
-	// TODO(geoah): fix identity
-	// h.daemon.LocalPeer().ForgetPeerCertificate()
-	// h.identityPrivateKey = nil
-	// h.peerCertificateResponse = nil
-	// TODO truncate db
 }
 
 func main() {
