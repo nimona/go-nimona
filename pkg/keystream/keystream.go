@@ -46,7 +46,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Digest     `nimona:"n:r"`
+		NextKeyDigest tilde.Digest     `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -67,7 +67,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		Key           crypto.PublicKey `nimona:"k:s"`
-		NextKeyDigest tilde.Digest     `nimona:"n:r"`
+		NextKeyDigest tilde.Digest     `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`
@@ -91,7 +91,7 @@ type (
 		// PriorEventDigest string          `nimona:"p:s"`
 		// SigThreshold      *SigThreshold  `nimona:"kt"` // [][]*big.Rat
 		// Key           crypto.PublicKey `nimona:"k:s"`
-		// NextKeyDigest tilde.Digest       `nimona:"n:r"`
+		// NextKeyDigest tilde.Digest       `nimona:"n:s"`
 		// WitnessThreshold  string    `nimona:"wt:s"`
 		// Witnesses         []string  `nimona:"w:as"`
 		// AddWitness        []string  `nimona:"wa:as"`

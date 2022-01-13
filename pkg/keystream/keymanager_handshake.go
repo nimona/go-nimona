@@ -202,8 +202,12 @@ func (m *manager) NewDelegationRequest(
 func (m *manager) HandleDelegationRequest(
 	ctx context.Context,
 	dr *DelegationRequest,
-	ks Controller,
 ) error {
+	// check we own a controller
+	ks, err := m.GetController()
+	if err != nil {
+		return fmt.Errorf("can't find a controller: %w", err)
+	}
 	// create a new Delegation Offer and send it to the
 	do := &DelegationOffer{
 		Metadata: object.Metadata{

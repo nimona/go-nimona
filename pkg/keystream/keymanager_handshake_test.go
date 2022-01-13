@@ -67,7 +67,6 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	err = m0.HandleDelegationRequest(
 		context.Background(),
 		dr,
-		c0,
 	)
 	require.NoError(t, err)
 

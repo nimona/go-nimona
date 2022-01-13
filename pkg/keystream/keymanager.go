@@ -1,13 +1,13 @@
 package keystream
 
 import (
+	"fmt"
 	"sync"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
@@ -18,9 +18,7 @@ const (
 
 type (
 	Manager interface {
-		AddController(Controller)
-		GetController(tilde.Digest) (Controller, error)
-		ListControllers() []Controller
+		GetController() (Controller, error)
 		NewController(*DelegatorSeal) (Controller, error)
 		NewDelegationRequest(
 			context.Context,
@@ -30,14 +28,14 @@ type (
 		HandleDelegationRequest(
 			context.Context,
 			*DelegationRequest,
-			Controller,
 		) error
+		// WaitForDelegationRequests(context.Context) (chan *DelegationRequest, error)
 	}
 	manager struct {
 		mutex       sync.RWMutex
 		network     network.Network
 		objectStore *sqlobjectstore.Store
-		controllers map[tilde.Digest]Controller
+		controller  Controller
 	}
 )
 
@@ -45,19 +43,24 @@ func NewKeyManager(
 	net network.Network,
 	objectStore *sqlobjectstore.Store,
 ) (Manager, error) {
-	// load all our controllers from the objectstore
-	cs := map[tilde.Digest]Controller{}
-	streamRootsReader, err := objectStore.Filter(
-		sqlobjectstore.FilterByOwner(net.GetConnectionInfo().Metadata.Owner),
-		sqlobjectstore.FilterByObjectType("keri.Inception/v0"),
-	)
-	if err != nil && !errors.Is(err, objectstore.ErrNotFound) {
-		return nil, err
+	m := &manager{
+		network:     net,
+		objectStore: objectStore,
 	}
 
-	if streamRootsReader != nil {
+	// find controller from config
+	controllerHash, err := objectStore.GetConfig("nimona/keymanager/controller")
+	if err == nil && controllerHash != "" {
+		// load the controller
+		reader, err := objectStore.GetByStream(
+			tilde.Digest(controllerHash),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not load stream: %w", err)
+		}
+
 		for {
-			streamRoot, err := streamRootsReader.Read()
+			streamRoot, err := reader.Read()
 			if err != nil {
 				if errors.Is(err, object.ErrReaderDone) {
 					break
@@ -72,21 +75,18 @@ func NewKeyManager(
 			if err != nil {
 				return nil, err
 			}
-			cs[streamRoot.Hash()] = c
+			m.controller = c
 		}
 	}
 
-	return &manager{
-		network:     net,
-		objectStore: objectStore,
-		controllers: cs,
-	}, nil
+	return m, nil
 }
 
 // NewController creates a new controller in the manager's objectstore
 func (m *manager) NewController(
 	delegatorSeal *DelegatorSeal,
 ) (Controller, error) {
+	// create controller
 	c, err := NewController(
 		m.network.GetConnectionInfo().Metadata.Owner,
 		m.objectStore,
@@ -96,35 +96,25 @@ func (m *manager) NewController(
 	if err != nil {
 		return nil, err
 	}
+	// put controller in config
+	err = m.objectStore.PutConfig(
+		"nimona/keymanager/controller",
+		string(c.GetKeyStream().Root),
+	)
+	if err != nil {
+		return nil, err
+	}
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	m.controllers[c.GetKeyStream().Root] = c
+	m.controller = c
 	return c, nil
 }
 
-// ListControllers returns a list of all controllers
-func (m *manager) ListControllers() []Controller {
+func (m *manager) GetController() (Controller, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-	ds := []Controller{}
-	for _, d := range m.controllers {
-		ds = append(ds, d)
+	if m.controller != nil {
+		return m.controller, nil
 	}
-	return ds
-}
-
-func (m *manager) GetController(d tilde.Digest) (Controller, error) {
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
-	c, ok := m.controllers[d]
-	if !ok {
-		return nil, ErrControllerNotFound
-	}
-	return c, nil
-}
-
-func (m *manager) AddController(c Controller) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	m.controllers[c.GetKeyStream().Root] = c
+	return nil, ErrControllerNotFound
 }
