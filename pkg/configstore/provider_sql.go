@@ -1,4 +1,4 @@
-package preferences
+package configstore
 
 import (
 	"database/sql"
@@ -13,8 +13,8 @@ import (
 )
 
 var migrations = []string{
-	`CREATE TABLE IF NOT EXISTS Preferences (Key TEXT NOT NULL PRIMARY KEY);`,
-	`ALTER TABLE Preferences ADD Value TEXT;`,
+	`CREATE TABLE IF NOT EXISTS Configs (Key TEXT NOT NULL PRIMARY KEY);`,
+	`ALTER TABLE Configs ADD Value TEXT;`,
 }
 
 type SQLProvider struct {
@@ -45,10 +45,10 @@ func (p *SQLProvider) Put(
 	value string,
 ) error {
 	stmt, err := p.db.Prepare(`
-		INSERT OR REPLACE INTO Preferences (Key, Value) VALUES (?, ?)
+		INSERT OR REPLACE INTO Configs (Key, Value) VALUES (?, ?)
 	`)
 	if err != nil {
-		return fmt.Errorf("could not prepare insert to preferences, %w", err)
+		return fmt.Errorf("could not prepare insert to configs, %w", err)
 	}
 	defer stmt.Close() // nolint: errcheck
 
@@ -57,7 +57,7 @@ func (p *SQLProvider) Put(
 		value,
 	)
 	if err != nil {
-		return fmt.Errorf("could not insert to preferences table, %w", err)
+		return fmt.Errorf("could not insert to configs table, %w", err)
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (p *SQLProvider) Put(
 
 func (p *SQLProvider) Get(key string) (string, error) {
 	stmt, err := p.db.Prepare(`
-		SELECT Value FROM Preferences WHERE Key = ?
+		SELECT Value FROM Configs WHERE Key = ?
 	`)
 	if err != nil {
 		return "", fmt.Errorf("could not prepare statement: %w", err)
@@ -89,7 +89,7 @@ func (p *SQLProvider) Get(key string) (string, error) {
 
 func (p *SQLProvider) List() (map[string]string, error) {
 	stmt, err := p.db.Prepare(`
-		SELECT Key, Value FROM Preferences
+		SELECT Key, Value FROM Configs
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare statement: %w", err)
@@ -119,7 +119,7 @@ func (p *SQLProvider) List() (map[string]string, error) {
 
 func (p *SQLProvider) Remove(key string) error {
 	stmt, err := p.db.Prepare(`
-		DELETE FROM Preferences WHERE Key = ?
+		DELETE FROM Configs WHERE Key = ?
 	`)
 	if err != nil {
 		return fmt.Errorf("could not prepare statement: %w", err)

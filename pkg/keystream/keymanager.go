@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/network"
@@ -35,6 +36,7 @@ type (
 		mutex       sync.RWMutex
 		network     network.Network
 		objectStore *sqlobjectstore.Store
+		configStore configstore.Store
 		controller  Controller
 	}
 )
@@ -42,14 +44,16 @@ type (
 func NewKeyManager(
 	net network.Network,
 	objectStore *sqlobjectstore.Store,
+	configStore configstore.Store,
 ) (Manager, error) {
 	m := &manager{
 		network:     net,
 		objectStore: objectStore,
+		configStore: configStore,
 	}
 
 	// find controller from config
-	controllerHash, err := objectStore.GetConfig("nimona/keymanager/controller")
+	controllerHash, err := configStore.Get("nimona/keymanager/controller")
 	if err == nil && controllerHash != "" {
 		// load the controller
 		reader, err := objectStore.GetByStream(
@@ -97,7 +101,7 @@ func (m *manager) NewController(
 		return nil, err
 	}
 	// put controller in config
-	err = m.objectStore.PutConfig(
+	err = m.configStore.Put(
 		"nimona/keymanager/controller",
 		string(c.GetKeyStream().Root),
 	)

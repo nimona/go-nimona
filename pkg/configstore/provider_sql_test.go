@@ -1,4 +1,4 @@
-package preferences
+package configstore
 
 import (
 	"database/sql"

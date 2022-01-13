@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/net"
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/network"
@@ -16,10 +17,15 @@ import (
 
 func TestKeyStreamManager_Handshake(t *testing.T) {
 	// construct manager and controller for delegator
-	sqlStorePath0 := path.Join(t.TempDir(), "db0.sqlite")
+	sqlStorePath0 := path.Join(t.TempDir(), "object.sqlite")
 	sqlStoreDB0, err := sql.Open("sqlite", sqlStorePath0)
 	require.NoError(t, err)
 	sqlStore0, err := sqlobjectstore.New(sqlStoreDB0)
+	require.NoError(t, err)
+	configStorePath0 := path.Join(t.TempDir(), "config.sqlite")
+	configStoreDB0, err := sql.Open("sqlite", configStorePath0)
+	require.NoError(t, err)
+	configStore0, err := configstore.NewSQLProvider(configStoreDB0)
 	require.NoError(t, err)
 	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
@@ -31,17 +37,23 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	)
 	require.NoError(t, err)
 	defer l0.Close()
-	m0, err := NewKeyManager(n0, sqlStore0)
+	m0, err := NewKeyManager(n0, sqlStore0, configStore0)
 	require.NoError(t, err)
 	c0, err := m0.NewController(nil)
 	require.NoError(t, err)
 
 	// construct manager for initiator
-	sqlStorePath1 := path.Join(t.TempDir(), "db1.sqlite")
+	sqlStorePath1 := path.Join(t.TempDir(), "object.sqlite")
 	sqlStoreDB1, err := sql.Open("sqlite", sqlStorePath1)
 	require.NoError(t, err)
 	sqlStore1, err := sqlobjectstore.New(sqlStoreDB1)
 	require.NoError(t, err)
+	configStorePath1 := path.Join(t.TempDir(), "config.sqlite")
+	configStoreDB1, err := sql.Open("sqlite", configStorePath1)
+	require.NoError(t, err)
+	configStore1, err := configstore.NewSQLProvider(configStoreDB1)
+	require.NoError(t, err)
+
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 	n1 := network.New(context.Background(), net.New(k1), k1)
@@ -52,7 +64,7 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	)
 	require.NoError(t, err)
 	defer l1.Close()
-	m1, err := NewKeyManager(n1, sqlStore1)
+	m1, err := NewKeyManager(n1, sqlStore1, configStore1)
 	require.NoError(t, err)
 
 	// create new delegation request

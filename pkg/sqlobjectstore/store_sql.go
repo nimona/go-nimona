@@ -47,8 +47,6 @@ var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS Pins (Hash TEXT NOT NULL PRIMARY KEY);`,
 	`CREATE TABLE IF NOT EXISTS Keys (PublicKeyDigest TEXT NOT NULL PRIMARY KEY);`,
 	`ALTER TABLE Keys ADD PrivateKey TEXT;`,
-	`CREATE TABLE IF NOT EXISTS Configs (Key TEXT NOT NULL PRIMARY KEY);`,
-	`ALTER TABLE Configs ADD Value TEXT;`,
 }
 
 var defaultTTL = time.Hour * 24 * 7
@@ -799,45 +797,4 @@ func (st *Store) GetKey(
 	}
 
 	return key, nil
-}
-
-func (st *Store) PutConfig(
-	key, value string,
-) error {
-	stmt, err := st.db.Prepare(`
-		INSERT OR IGNORE INTO Configs (Key, Value) VALUES (?, ?)
-	`)
-	if err != nil {
-		return fmt.Errorf("could not prepare insert to keys table, %w", err)
-	}
-	defer stmt.Close() // nolint: errcheck
-
-	_, err = stmt.Exec(key, value)
-	if err != nil {
-		return fmt.Errorf("could not insert to keys table, %w", err)
-	}
-
-	return nil
-}
-
-func (st *Store) GetConfig(
-	key string,
-) (string, error) {
-	stmt, err := st.db.Prepare(
-		"SELECT Value FROM Configs WHERE Key=?",
-	)
-	if err != nil {
-		return "", fmt.Errorf("could not prepare query: %w", err)
-	}
-	defer stmt.Close() // nolint: errcheck
-
-	row := stmt.QueryRow(key)
-
-	value := ""
-
-	if err := row.Scan(&value); err != nil {
-		return "", errors.Merge(objectstore.ErrNotFound, err)
-	}
-
-	return value, nil
 }
