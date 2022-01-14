@@ -136,6 +136,7 @@ github.com/gdamore/tcell v1.4.0/go.mod h1:vxEiSDZdW3L+Uhjii9c3375IlDmR05bzxY404Z
 github.com/gdamore/tcell/v2 v2.2.0 h1:vSyEgKwraXPSOkvCk7IwOSyX+Pv3V2cV9CikJMXg4U4=
 github.com/gdamore/tcell/v2 v2.2.0/go.mod h1:cTTuF84Dlj/RqmaCIV5p4w8uG1zWdk0SF6oBpwHp4fU=
 github.com/geoah/genny v1.0.3/go.mod h1:Xa40Z5y4m0PEvYcyHrHuz7qzqA/YE1BlsGGtosR2yIQ=
+github.com/geoah/go-pubsub v0.0.0-20220114001406-8822c630d414/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
 github.com/geoah/go-queue v2.0.0+incompatible h1:eLFmhPSYebanEi7t6D80vNBvPv0V6lLGyiMg6TFoEXY=
 github.com/geoah/go-queue v2.0.0+incompatible/go.mod h1:NPL2o6Frb0vYP2U/WlgENrrYsd8kN0fdq946szaCbY4=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=

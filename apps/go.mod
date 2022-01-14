@@ -29,6 +29,7 @@ require (
 	github.com/elliotchance/orderedmap v1.4.0 // indirect
 	github.com/gammazero/deque v0.1.0 // indirect
 	github.com/gammazero/workerpool v1.1.2 // indirect
+	github.com/geoah/go-pubsub v0.0.0-20220114001406-8822c630d414 // indirect
 	github.com/geoah/go-queue v2.0.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect

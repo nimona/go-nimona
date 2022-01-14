@@ -1,5 +1,9 @@
 package configstore
 
+const (
+	ConfigKeyManagerController = "nimona/keymanager/controller"
+)
+
 type (
 	Store interface {
 		Put(key string, value string) error

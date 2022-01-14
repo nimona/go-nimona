@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/geoah/go-pubsub"
 	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
@@ -30,6 +31,7 @@ type (
 			context.Context,
 			*DelegationRequest,
 		) error
+		WaitForController(context.Context) (Controller, error)
 		// WaitForDelegationRequests(context.Context) (chan *DelegationRequest, error)
 	}
 	manager struct {
@@ -38,6 +40,7 @@ type (
 		objectStore *sqlobjectstore.Store
 		configStore configstore.Store
 		controller  Controller
+		topic       *pubsub.Topic[Controller]
 	}
 )
 
@@ -50,10 +53,11 @@ func NewKeyManager(
 		network:     net,
 		objectStore: objectStore,
 		configStore: configStore,
+		topic:       pubsub.NewTopic[Controller](),
 	}
 
 	// find controller from config
-	controllerHash, err := configStore.Get("nimona/keymanager/controller")
+	controllerHash, err := configStore.Get(configstore.ConfigKeyManagerController)
 	if err == nil && controllerHash != "" {
 		// load the controller
 		reader, err := objectStore.GetByStream(
@@ -102,7 +106,7 @@ func (m *manager) NewController(
 	}
 	// put controller in config
 	err = m.configStore.Put(
-		"nimona/keymanager/controller",
+		configstore.ConfigKeyManagerController,
 		string(c.GetKeyStream().Root),
 	)
 	if err != nil {
@@ -111,6 +115,7 @@ func (m *manager) NewController(
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.controller = c
+	m.topic.Publish(c)
 	return c, nil
 }
 
@@ -121,4 +126,13 @@ func (m *manager) GetController() (Controller, error) {
 		return m.controller, nil
 	}
 	return nil, ErrControllerNotFound
+}
+
+func (m *manager) WaitForController(ctx context.Context) (Controller, error) {
+	select {
+	case c := <-m.topic.Subscribe():
+		return c, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
