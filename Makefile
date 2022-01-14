@@ -39,11 +39,6 @@ all: lint test build
 # Tools
 #
 
-TOOLS += $(TOOLDIR)/gobin
-gobin: $(TOOLDIR)/gobin
-$(TOOLDIR)/gobin:
-	GO111MODULE=off go get -u github.com/myitcv/gobin
-
 # external tool
 define tool # 1: binary-name, 2: go-import-path
 TOOLS += $(TOOLDIR)/$(1)
@@ -51,8 +46,8 @@ TOOLS += $(TOOLDIR)/$(1)
 .PHONY: $(1)
 $(1): $(TOOLDIR)/$(1)
 
-$(TOOLDIR)/$(1): $(TOOLDIR)/gobin Makefile
-	gobin $(V) "$(2)"
+$(TOOLDIR)/$(1): Makefile
+	go install "$(2)"
 endef
 
 # internal tool
@@ -67,8 +62,8 @@ $(TOOLDIR)/$(1): $(SOURCES)
 endef
 
 $(eval $(call tool,genny,github.com/geoah/genny@v1.0.3))
-$(eval $(call tool,gofumpt,mvdan.cc/gofumpt))
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1))
+$(eval $(call tool,gofumpt,mvdan.cc/gofumpt@v0.2.1))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0))
 $(eval $(call tool,golds,go101.org/golds@v0.2.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.4.0))

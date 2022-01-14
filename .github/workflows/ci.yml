@@ -7,15 +7,17 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2.1.4
+        with:
+          stable: "false"
+          go-version: "1.18.0-beta1"
+
       - name: Check out the code
         uses: actions/checkout@v2.3.4
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2.5.2
-        with:
-          version: v1.42.1
-        env:
-          VERBOSE: "true"
+      - name: Run linter
+        run: make lint
 
   tidy:
     name: Tidy
