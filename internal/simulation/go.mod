@@ -1,6 +1,6 @@
 module nimona.io/internal/simulation
 
-go 1.17
+go 1.18
 
 require (
 	github.com/docker/docker v1.13.1
