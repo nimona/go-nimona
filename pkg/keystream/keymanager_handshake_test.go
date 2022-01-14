@@ -90,4 +90,9 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.Equal(t, uint64(0), c1.GetKeyStream().Sequence)
 	require.Len(t, c0.GetKeyStream().Delegates, 1)
 	require.Equal(t, c0.GetKeyStream().GetDID(), c1.GetKeyStream().Delegator)
+
+	// and check it's set corectly
+	gc1, err := m1.GetController()
+	require.NotNil(t, gc1)
+	require.NoError(t, err)
 }
