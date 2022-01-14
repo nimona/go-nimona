@@ -1,4 +1,4 @@
-go 1.17
+go 1.18
 
 module nimona.io
 
@@ -9,6 +9,7 @@ require (
 	github.com/elliotchance/orderedmap v1.4.0
 	github.com/gammazero/workerpool v1.1.2
 	github.com/geoah/genny v1.0.3
+	github.com/geoah/go-pubsub v0.0.0-20220114001406-8822c630d414
 	github.com/geoah/go-queue v2.0.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobwas/glob v0.2.3

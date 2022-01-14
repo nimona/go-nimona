@@ -147,7 +147,7 @@ clean:
 tidy:
 	$(info Tidying go modules)
 	@find . -type f -name "go.sum" -not -path "./vendor/*" -execdir rm {} \;
-	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy -compat=1.17 \;
+	@find . -type f -name "go.mod" -not -path "./vendor/*" -execdir go mod tidy -compat=1.18 \;
 
 # Upgrade go modules
 .PHONY: upgrade
@@ -162,7 +162,7 @@ check-tidy:
 	$(info Checking if go.mod is tidy)
 	cp go.mod go.mod.tidy-check
 	cp go.sum go.sum.tidy-check
-	go mod tidy -compat=1.17
+	go mod tidy -compat=1.18
 	( \
 		diff go.mod go.mod.tidy-check && \
 		diff go.sum go.sum.tidy-check && \
