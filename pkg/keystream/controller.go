@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jinzhu/copier"
+
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/keystore"
@@ -137,7 +139,11 @@ func (c *controller) CurrentKey() crypto.PrivateKey {
 }
 
 func (c *controller) GetKeyStream() *State {
-	return c.state
+	c.mutex.RLock()
+	state := &State{}
+	copier.Copy(&state, c.state)
+	c.mutex.RUnlock()
+	return state
 }
 
 func (c *controller) Rotate() (*Rotation, error) {
