@@ -96,8 +96,8 @@ github.com/gammazero/workerpool v1.1.2 h1:vuioDQbgrz4HoaCi2q1HLlOXdpbap5AET7xu5/
 github.com/gammazero/workerpool v1.1.2/go.mod h1:UelbXcO0zCIGFcufcirHhq2/xtLXJdQ29qZNlXG9OjQ=
 github.com/geoah/go-hotwire v0.0.2 h1:7jrJTMuNKPJMlXzDhdlaXdbXKFzk3xlMT5iNQ6TWMBM=
 github.com/geoah/go-hotwire v0.0.2/go.mod h1:Mkt5woae0+l+scUQC9ipt+iiNTrm+FHECZ89wF3FSFk=
-github.com/geoah/go-pubsub v0.0.0-20220114001406-8822c630d414 h1:S6DYB6kq9XF3J9qohCjxK6gTsfxz6q+hqP38Wmn2bFg=
-github.com/geoah/go-pubsub v0.0.0-20220114001406-8822c630d414/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
+github.com/geoah/go-pubsub v0.0.1 h1:w6A1KA60NVKus8RwJKpMi/fqQBY5gLw+JhbDDkxXkrE=
+github.com/geoah/go-pubsub v0.0.1/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
 github.com/geoah/go-queue v2.0.0+incompatible h1:eLFmhPSYebanEi7t6D80vNBvPv0V6lLGyiMg6TFoEXY=
 github.com/geoah/go-queue v2.0.0+incompatible/go.mod h1:NPL2o6Frb0vYP2U/WlgENrrYsd8kN0fdq946szaCbY4=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
