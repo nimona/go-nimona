@@ -43,6 +43,7 @@ require (
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
+	github.com/jinzhu/copier v0.3.4 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/koron/go-ssdp v0.0.0-20191105050749-2e1c40ed0b5d // indirect
